@@ -1,0 +1,10 @@
+project(SIMDIS_SDK_Testing)
+
+add_subdirectory(SimNotify)
+add_subdirectory(SimCore)
+add_subdirectory(SimData)
+add_subdirectory(SimUtil)
+add_subdirectory(SimVis)
+if(QT_FOUND)
+    add_subdirectory(SimQt)
+endif(QT_FOUND)

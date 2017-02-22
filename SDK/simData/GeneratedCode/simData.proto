@@ -1,0 +1,1288 @@
+package simData;
+
+/**
+ * simData.proto Defines the underlying data format for SIMDIS SDK's simData module.
+ *
+ * Entity types include platforms, beams, gates, lasers, projectors, and line of bearing (LOB) group.  Entities are
+ * generally broken up into 4 components:
+ *
+ *   Updates - A single data point, possibly with a high data rate
+ *   Properties - Settings for an entity, such as ID that are mostly unchanging
+ *   Preferences - Changeable settings for an entity, including Superform-like settings;
+ *                 can be time stamped by using Commands
+ *   Commands - A time stamp and a (likely) sparse list of preferences to apply at the time
+ *
+ * Colors are encoded in fixed32, which is more efficient than uint32 when the MSB values are
+ * likely to be set.  Colors are defined as 0xRRGGBBAA, with the MSB as part of the red component.
+ *
+ * Unless otherwise specified, all units are in metric: radians for angles, meters for distance,
+ * and meters per second for speed values.
+ *
+ * Notes on Draw / dataDraw flags: Draw is a user preference.  This is equivalent to the Draw setting
+ * in SuperForm.  The dataDraw flag is a data setting that is managed through the data provider and
+ * is similar to the On/Off settings in SIMDIS 9.  The dataDraw flag is hierarchical -- a gate is not
+ * drawn if its beam's dataDraw is off, and even if the gate's dataDraw and draw flags are true.  The draw flag is not
+ * hierarchical.  An entity is only drawn if its dataDraw is on, its host is active, and its draw flag is on.
+ * The dataDraw flag is not set for, and is completely ignored by Platforms.
+ * Beams and gates still require that their platform host be active, but this is signalled by other means than the dataDraw flag.
+ */
+
+
+/// Polygon draw style for models; can draw filled (solid), lines (wireframe), or points
+enum ModelDrawMode {
+  MDM_SOLID = 0; ///< polygons are filled by surface textures
+  MDM_WIRE = 1; ///< model is shown as a wireframe (polygons are lines)
+  MDM_POINTS = 2; ///< a cloud of points (no lines between the points of the polygons)
+};
+
+/**
+ * Settings for how to orient an image icon relative to the eye.  This option is unused unless an
+ * image icon (PNG, JPG, BMP, etc.) is loaded for the platform model.
+ */
+enum IconRotation {
+
+  /**
+   * Billboard Pointing Up -- orient the icon so that "up is up" and the full icon always faces viewer
+   */
+  IR_2D_UP = 0;
+
+  /**
+   * Billboard with Yaw -- Orient icon based on yaw of platform it represents.  Icon will always be oriented
+   * so that it faces the viewer, but can rotate about the center to reflect platform yaw.
+   */
+  IR_2D_YAW = 1;
+
+  /**
+   * Follow Platform -- orient icon using the yaw, pitch, and roll of the platform it represents.
+   */
+  IR_3D_YPR = 2;
+
+  /**
+   * Flat Oriented North -- Orient the icon flat (zero pitch) with respect to the Earth's surface.  The
+   * orientation of the icon will always be facing North.
+   */
+  IR_3D_NORTH = 3;
+
+  /**
+   * Flat with Yaw -- Orient the icon flat (zero pitch) with respect to the Earth's surface.  Orientation
+   * of the icon will be rotated based on the y aw of the platform it represents.
+   */
+  IR_3D_YAW = 4;
+};
+
+
+/// Elapsed time formats supported in the SDK.  Elapsed time is a relative measure of time from some epoch.
+enum ElapsedTimeFormat {
+  ELAPSED_SECONDS = 1;  ///< SS.sssss
+  ELAPSED_MINUTES = 2;  ///< MM:SS.sssss
+  ELAPSED_HOURS = 3;    ///< HH:MM:SS.sssss
+};
+
+/// Units for angular measurement
+enum AngleUnits {
+  UNITS_RADIANS = 10;                  ///< Radians flag
+  UNITS_DEGREES = 11;                  ///< Degrees flag
+  UNITS_DEGREES_MINUTES = 12;          ///< DM format
+  UNITS_DEGREES_MINUTES_SECONDS = 13;  ///< DMS format
+  UNITS_UTM = 14;                      ///< UTM flag
+  UNITS_BAM = 15;                      ///< BAM (Binary Angular Measure) flag
+  UNITS_MIL = 16;                      ///< Angular Mil (NATO variant) flag
+  UNITS_MILLIRADIANS = 17;             ///< Milliradians (0.001 radians) flag
+};
+
+/// Units for geodetic angular measurement
+enum GeodeticUnits {
+  GEODETIC_DEGREES = 11;                  ///< Degrees flag
+  GEODETIC_DEGREES_MINUTES = 12;          ///< DM format
+  GEODETIC_DEGREES_MINUTES_SECONDS = 13;  ///< DMS format
+};
+
+/// Units for distance measurement
+enum DistanceUnits {
+  UNITS_METERS = 20;         ///< Meters constant flag
+  UNITS_KILOMETERS = 21;     ///< Kilometers constant flag
+  UNITS_YARDS = 22;          ///< Yards constant flag
+  UNITS_MILES = 23;          ///< Statute Miles constant flag
+  UNITS_FEET = 24;           ///< Feet constant flag
+  UNITS_INCHES = 25;         ///< Inches constant flag
+  UNITS_NAUTICAL_MILES = 26; ///< Nautical Miles constant flag
+  UNITS_CENTIMETERS = 27;    ///< Centimeters constant flag
+  UNITS_MILLIMETERS = 28;    ///< Millimeters constant flag
+  UNITS_KILOYARDS = 29;      ///< Kiloyards constant flag
+  UNITS_DATAMILES = 30;      ///< Data Miles constant flag
+  UNITS_FATHOMS = 31;        ///< Fathoms constant flag
+  UNITS_KILOFEET = 32;       ///< Kilofeet constant flag = 1000 feet)
+};
+
+
+/// Units for speed measurement.
+enum SpeedUnits {
+  UNITS_METERS_PER_SECOND = 40;     ///< m/s constant flag
+  UNITS_KILOMETERS_PER_HOUR = 41;   ///< km/h constant flag
+  UNITS_KNOTS = 42;                 ///< knots constant flag
+  UNITS_MILES_PER_HOUR = 43;        ///< mph constant flag
+  UNITS_FEET_PER_SECOND = 44;       ///< ft/sec constant flag
+  // Note: Index 45 is reserved and not for public use.
+  UNITS_KILOMETERS_PER_SECOND = 46; ///< km/s constant flag
+  UNITS_DATAMILES_PER_HOUR = 47;    ///< Data miles per hour constant flag
+  UNITS_YARDS_PER_SECOND = 48;      ///< Yds per second constant flag
+};
+
+
+/// Enumeration of antenna/rcs polarizations
+enum Polarity {
+  POL_UNKNOWN = 0;     ///< Unknown polarity
+  POL_HORIZONTAL = 1;  ///< Horizontal RCV and XMT polarity
+  POL_VERTICAL = 2;    ///< Vertical RCV and XMT polarity
+  POL_CIRCULAR = 3;    ///< Circular RCV and XMT polarity
+  POL_HORZVERT = 4;    ///< Horizontal RCV and vertical XMT polarity
+  POL_VERTHORZ = 5;    ///< Vertical RCV and horizontal XMT polarity
+  POL_LEFTCIRC = 6;    ///< Left circular RCV and XMT polarity
+  POL_RIGHTCIRC = 7;   ///< Right circular RCV and XMT polarity
+  POL_LINEAR = 8;      ///< Linear RCV and XMT polarity
+}
+
+
+/// Position in 3D space
+message Position {
+  optional double x = 1;
+  optional double y = 2;
+  optional double z = 3;
+};
+
+/// Alignment of a body in 3D space, angles in radians; body centric
+message BodyOrientation {
+  optional double yaw = 1;
+  optional double pitch = 2;
+  optional double roll = 3;
+};
+
+/// Reference origins, in geodetic coordinates
+message Reference {
+  optional double lat = 1;  ///< Latitude value, in radians
+  optional double lon = 2;  ///< Longitude value, in radians
+  optional double alt = 3;  ///< Altitude value, in meters
+};
+
+/// Supported geographic reference frames
+enum CoordinateSystem {
+  NED = 1;   ///< North/East/Down
+  NWU = 2;   ///< North/West/Up
+  ENU = 3;   ///< East/North/Up
+  LLA = 4;   ///< Lat/Lon/Alt
+  ECEF = 5;  ///< Earth-centered, Earth-fixed (stationary frame)
+  ECI = 6;   ///< Earth-centered, inertial (rotates in time)
+  XEAST = 7; ///< Tangent plane, X-axis pointing East
+  GTP = 8;   ///< Generic tangent plane that can be rotated and/or translated
+};
+
+/// Magnetic variance to apply to orientation angles
+enum MagneticVariance {
+  MV_WMM = 1;   ///< Variance based on World Magnetic Model (WMM)
+  MV_TRUE = 2;  ///< No variance, also known as True North
+  MV_USER = 3;  ///< User defined variance
+};
+
+/// Vertical datum to apply to altitude values in certain systems
+enum VerticalDatum {
+  VD_WGS84 = 1;  ///< Referenced to WGS-84 ellipsoid
+  VD_MSL = 2;    ///< Referenced to Earth Gravity Model (EGM)
+  VD_USER = 3;   ///< User defined datum
+};
+
+/// Polygon face corresponds to the front, back, or the front-and-back faces
+enum PolygonFace {
+  FRONT_AND_BACK = 0;  ///< Corresponds to GL_FRONT_AND_BACK
+  FRONT = 1;           ///< GL_FRONT
+  BACK = 2;            ///< GL_BACK
+};
+
+/// Polygon rasterization mode; these values match GL defines, and osg::PolygonMode enum
+enum PolygonMode {
+  POINT = 0x1B00;   ///< GL_POINT
+  LINE = 0x1B01;    ///< GL_LINE
+  FILL = 0x1B02;    ///< GL_FILL
+};
+
+/// Coordinate system definition for scenario and platforms
+message CoordinateFrame {
+  /// Coordinate system flag.  SIMDIS SDK stores all data internally as ECEF; this is only descriptive for input/output
+  optional CoordinateSystem coordinateSystem = 1;
+  /// Reference origin of the coordinate system; required for tangent plane systems
+  optional Reference referenceLla = 2;
+
+  /// Magnetic variance, defaulting to True angles; data normalized in SDK to TRUE angles, this is only descriptive for input/output
+  optional MagneticVariance magneticVariance = 3;
+  /// Offset to apply if magneticVariance is set to user defined
+  optional double magneticVarianceUserValue = 4;
+
+  /// Vertical datum to apply to altitudes, defaulting to WGS-84 ellipsoid; data normalized in SDK to WGS84, this is only descriptive for input/output
+  optional VerticalDatum verticalDatum = 5;
+  /// Offset to apply if verticalDatum is set to user defined
+  optional double verticalDatumUserValue = 6;
+
+  /// Reference for ECI coordinate frame, in seconds since reference year
+  optional double eciReferenceTime = 7;
+
+  /// The raw position values are translated by x and y, then rotated clockwise by angle
+  message TangentPlaneOffsets {
+    /// Distance along true east from origin
+    optional double tx = 1;
+    /// Distance along true north from origin
+    optional double ty = 2;
+    /// Clockwise Rotation angle, applied after translation
+    optional double angle = 3;
+  };
+
+  /// Generic Tangent Plane offset from the origin; Defined as X offset, Y offset, and tangent plane angle in radians
+  optional TangentPlaneOffsets tangentPlaneOffset = 8;
+};
+
+/// preferences for the display of platform tracks
+message TrackPrefs {
+   /// off-white, the default color to use for track history. Track color history at time is defined in a data table, simData::INTERNAL_TRACK_HISTORY_TABLE, in column simData::INTERNAL_TRACK_HISTORY_COLOR_COLUMN
+  optional fixed32 trackColor = 1 [default = 0xFBFBFBFF];
+  optional bool multiTrackColor = 2 [default = true];
+  /// Flattens the track history to the earth surface
+  optional bool flatMode = 3 [default = false];
+  /// Indicates whether to drop a line to the earth for altitude mode
+  optional bool altMode = 4 [default = false];
+  optional bool expireMode = 5 [default = false];
+  optional bool usePlatformColor = 6 [default = false];
+  optional bool useTrackOverrideColor = 7 [default = false];
+  optional fixed32 trackOverrideColor = 8 [default = 0x19E500FF];
+  optional int32 trackLength = 9 [default = 60];  ///< Length in seconds with < 0 meaning unlimited
+  optional double lineWidth = 10 [default = 1.0];
+
+  /// mode for drawing track position
+  enum Mode {
+    OFF = 0;     ///< nothing is drawn
+    POINT = 1;   ///< draw a point at each previous position
+    LINE = 2;    ///< draw a line connecting previous positions
+    RIBBON = 3;  ///< a line with wings showing roll
+    BRIDGE = 4;  ///< "ribbon" plus a drop line down to the ground
+  };
+
+  optional Mode trackDrawMode = 11 [default = POINT];
+};
+
+/// define the text outline style
+enum TextOutline {
+  TO_NONE = 0;
+  TO_THIN = 1;
+  TO_THICK = 2;
+};
+
+/// define OSG text backdrop types
+enum BackdropType {
+  BDT_SHADOW_BOTTOM_RIGHT = 0;
+  BDT_SHADOW_CENTER_RIGHT = 1;
+  BDT_SHADOW_TOP_RIGHT = 2;
+  BDT_SHADOW_BOTTOM_CENTER = 3;
+  BDT_SHADOW_TOP_CENTER = 4;
+  BDT_SHADOW_BOTTOM_LEFT = 5;
+  BDT_SHADOW_CENTER_LEFT = 6;
+  BDT_SHADOW_TOP_LEFT = 7;
+  BDT_OUTLINE = 8;
+  BDT_NONE = 9;
+};
+
+/// define OSG text backdrop implementation
+enum BackdropImplementation {
+  BDI_POLYGON_OFFSET = 0;
+  BDI_NO_DEPTH_BUFFER = 1;
+  BDI_DEPTH_RANGE = 2;
+  BDI_STENCIL_BUFFER = 3;
+  BDI_DELAYED_DEPTH_WRITES = 4;
+};
+
+/// define OSG text alignment
+enum TextAlignment {
+  ALIGN_LEFT_TOP = 0;
+  ALIGN_LEFT_CENTER = 1;
+  ALIGN_LEFT_BOTTOM = 2;
+  ALIGN_CENTER_TOP = 3;
+  ALIGN_CENTER_CENTER = 4;
+  ALIGN_CENTER_BOTTOM = 5;
+  ALIGN_RIGHT_TOP = 6;
+  ALIGN_RIGHT_CENTER = 7;
+  ALIGN_RIGHT_BOTTOM = 8;
+};
+
+/// preferences which all labels share
+message LabelPrefs {
+  /// Toggles display of the label
+  optional bool draw = 1 [default = false];
+  /// Label color
+  optional fixed32 color = 2 [default = 0xFBFBFBFF]; // off-white
+
+  optional TextOutline textOutline = 3 [default = TO_THIN];
+  optional fixed32 outlineColor = 4 [default = 255]; // black (full alpha)
+  optional BackdropType backdropType = 33 [default = BDT_OUTLINE];
+  optional BackdropImplementation backdropImplementation = 34 [default = BDI_POLYGON_OFFSET];
+
+  optional string overlayFontName = 5 [default = "arial.ttf"];
+  optional fixed32 overlayFontPointSize = 6 [default = 14];
+
+  optional int32 offsetX = 7 [default = 0];
+  optional int32 offsetY = 8 [default = 0];
+  optional TextAlignment alignment = 35 [default = ALIGN_CENTER_TOP];
+
+  /// Positive high values have precedence over positive low values; Negative values are always shown
+  optional double priority = 26 [default = 100.0];
+
+  message DisplayFields {
+    /// Toggle display of X or Latitude value in the label (based on coordinateSystem)
+    optional bool xLat = 1 [default = false];
+    /// Toggle display of Y or Longitude value in the label (based on coordinateSystem)
+    optional bool yLon = 2 [default = false];
+    /// Toggle display of Z or Altitude value in the label (based on coordinateSystem)
+    optional bool zAlt = 3 [default = false];
+    /// Toggle all generic data
+    optional bool genericData = 4 [default = false];
+    /// Toggle all category data on and off
+    optional bool categoryData = 5 [default = false];
+    /// Toggle Platform Yaw or Psi (based on coordinateSystem)
+    optional bool yaw = 6 [default = false];
+    /// Toggle Platform Pitch or Theta (based on coordinateSystem)
+    optional bool pitch = 7 [default = false];
+    /// Toggle Platform Roll or Phi (based on coordinateSystem)
+    optional bool roll = 8 [default = false];
+
+    // Fields 9 and 10 are reserved.
+
+    /// Toggle course on/off for platform (velocity-based azimuth)
+    optional bool course = 11 [default = false];
+    /// Toggle flight path angle on/off for platform (velocity-based elevation)
+    optional bool flightPathElevation = 12 [default = false];
+    /// Toggle velocity X component (based on coordinateSystem)
+    optional bool displayVX = 13 [default = false];
+    /// Toggle velocity Y component (based on coordinateSystem)
+    optional bool displayVY = 14 [default = false];
+    /// Toggle velocity Z component (based on coordinateSystem)
+    optional bool displayVZ = 15 [default = false];
+    /// Toggle speed component
+    optional bool speed = 16 [default = false];
+    /// Toggle mach component
+    optional bool mach = 17 [default = false];
+    /// Toggle angle of attack (alpha) component; roll affects calculation if applyRoll set
+    optional bool angleOfAttack = 18 [default = false];
+    /// Toggle side slip (beta) component; roll affects calculation if applyRoll is set
+    optional bool sideSlip = 19 [default = false];
+    /// Toggle total angle of attack
+    optional bool totalAngleOfAttack = 20 [default = false];
+    /// Toggle azimuth angle to sun
+    optional bool solarAzimuth = 21 [default = false];
+    /// Toggle elevation angle to the sun
+    optional bool solarElevation = 22 [default = false];
+    /// Toggle solar illuminance value
+    optional bool solarIlluminance = 23 [default = false];
+    /// Toggle azimuth angle to moon
+    optional bool lunarAzimuth = 24 [default = false];
+    /// Toggle elevation angle to the moon
+    optional bool lunarElevation = 25 [default = false];
+    /// Toggle illuminance value from moon
+    optional bool lunarIlluminance = 26 [default = false];
+    /// Toggle late value which is seconds since last point
+    optional bool late = 27 [default = false];
+
+    /// Flag to use embedded scripting to generate the label text
+    optional bool useLabelCode = 28 [default = false];
+    /// Embedded scripting code to generate the label
+    optional string labelCode = 29 [default = ""];
+  };
+
+  /// Bit field of flags to display
+  optional DisplayFields displayFields = 11;
+  /// Bit field of legend display fields
+  optional DisplayFields legendDisplayFields = 22;
+  /// Bit field of display fields for the mouse-over popup
+  optional DisplayFields hoverDisplayFields = 23;
+
+  /// Toggle height above terrain for LLA altitude
+  optional bool applyHeightAboveTerrain = 12 [default = false];
+  /// Toggle use of roll in AoA and Side slip calculations
+  optional bool applyRoll = 13 [default = false];
+
+  /// Earth model to use for label calculations
+  optional CoordinateSystem coordinateSystem = 14 [default = LLA];
+  /// Vertical datum to apply to altitude values for display
+  optional VerticalDatum verticalDatum = 15 [default = VD_WGS84];
+  /// Magnetic variance to apply to horizontal angle calculations for display
+  optional MagneticVariance magneticVariance = 16 [default = MV_TRUE];
+  /// Distance units for distance based label values
+  optional DistanceUnits distanceUnits = 17 [default = UNITS_METERS];
+  /// Angle units for angle based label values
+  optional AngleUnits angleUnits = 18 [default = UNITS_DEGREES];
+  /// Speed units are only used in platform calculations
+  optional SpeedUnits speedUnits = 19 [default = UNITS_KNOTS];
+  /// number of digits of precision in numerical displays but can be overridden by the fields below
+  optional int32 precision = 20 [default = 2];
+  /// Maximum length of the name (character limit)
+  optional int32 nameLength = 21 [default = 0];
+  /// Units for display LLA angles, Degrees, Degrees-Minutes, Degrees-Minutes-Seconds
+  optional GeodeticUnits geodeticUnits = 24 [default = GEODETIC_DEGREES];
+  /// Units for displaying altitude
+  optional DistanceUnits altitudeUnits = 25 [default = UNITS_METERS];
+
+  /// If set overrides the precision field and sets the precision for distance
+  optional int32 distancePrecision = 27 [default = 1];
+  /// If set overrides the precision field and sets the precision for angle
+  optional int32 anglePrecision = 28 [default = 1];
+  /// If set overrides the precision field and sets the precision for speed
+  optional int32 speedPrecision = 29 [default = 1];
+  /// If set overrides the precision field and sets the precision for geodetic
+  optional int32 geodeticPrecision = 30 [default = 6];
+  /// If set overrides the precision field and sets the precision for altitude
+  optional int32 altitudePrecision = 31 [default = 1];
+  /// If set overrides the precision field and sets the precision for time
+  optional int32 timePrecision = 32 [default = 0];
+};
+
+/// a grid attached to an entity
+message LocalGridPrefs {
+  /// shape of local grid
+  enum Type {
+    CARTESIAN = 1; ///< a square grid
+    POLAR = 2; ///< circles drawn at each range subdivision, with lines sectoring
+    RANGE_RINGS = 3; ///< polar, with no sector lines
+    SPEED_RINGS = 4; ///< polar rings, where the size is based on speed * time
+    SPEED_LINE = 5; ///< a line drawn out to speed * time
+  };
+
+  /// settings for SPEED_RINGS mode
+  message SpeedRing {
+    optional bool useFixedTime = 1 [default = false]; ///< use fixedTime below, instead of using radius (which is a relative time)
+    optional string fixedTime = 2 [default = ""]; ///< this ordinal-format time specifies speed rings extent for speed rings
+    optional ElapsedTimeFormat timeFormat = 3 [default = ELAPSED_HOURS]; ///< user-specified units for the speed rings radius value and for speed ring labels
+
+    optional double radius = 4 [default = 1.0]; ///< if !useFixedTimetime, this value specifies speed rings extent for speed rings, in units specified by timeFormat above
+
+    optional bool usePlatformSpeed = 5 [default = true]; ///< use platform's speed for speed rings calculations
+    optional double speedToUse = 6 [default = 10]; ///< if !usePlatformSpeed, use this user-specified speed for speed rings calculations
+    optional bool displayTime = 7 [default = true]; ///< when set, speed rings labels display time, rather than distance
+    optional SpeedUnits speedUnits = 8 [default = UNITS_KNOTS]; ///< user-specified units for speedToUse, determines conversion of speedToUse to m/s
+  };
+
+  /// grid division settings (all modes)
+  message GridSettings {
+    optional uint32 numDivisions = 1 [default = 1]; ///< bold, thick lines spaced evenly out to grid size
+    optional uint32 numSubDivisions = 2 [default = 1]; ///< lighter lines placed in between divisions
+    optional double sectorAngle = 3 [default = 30]; ///< for polar plots and speed rings
+  };
+
+  optional Type gridType = 1 [default = POLAR]; ///< draw mode
+
+  optional bool gridLabelDraw = 2 [default = true]; ///< is the grid label shown in the display
+  optional fixed32 gridLabelColor = 3 [default = 0xFFFF00FF]; ///< color of the grid label text (default: yellow)
+  optional TextOutline gridLabelTextOutline = 4 [default = TO_THIN]; ///< style of the grid label text outline
+  optional fixed32 gridLabelOutlineColor = 5 [default = 255]; ///< color of the grid label text outline (default: black)
+  optional string gridLabelFontName = 6 [default = "arialbd.ttf"]; ///< font file name of the grid label text
+  optional fixed32 gridLabelFontSize = 7 [default = 14]; ///< font point size of the grid label text
+  optional int32 gridLabelPrecision = 19 [default = 1]; ///< precision to use for grid label text
+
+  optional bool drawGrid = 8 [default = false]; ///< is the grid shown in the display
+  optional fixed32 gridColor = 9 [default = 0xFFFF00FF]; ///< color for lines (text has its own color settings)(default: yellow)
+  optional double size = 10 [default = 20.0]; ///< total grid size (full diameter of the local grid, in sizeUnits)
+
+  optional SpeedRing speedRing = 11;
+
+  optional GridSettings gridSettings = 12;
+
+  optional Position gridPositionOffset = 13; ///< x/y/z offset in units as described below
+  optional DistanceUnits positionOffsetUnits = 20 [default = UNITS_METERS];
+
+  optional BodyOrientation gridOrientationOffset = 14; ///< yaw/pitch/roll offset in radians
+  optional bool followYaw = 15 [default = true];
+  optional bool followPitch = 16 [default = false];
+  optional bool followRoll = 17 [default = false];
+  optional DistanceUnits sizeUnits = 18 [default = UNITS_NAUTICAL_MILES]; ///< units of the local grid size value, and of grid labels
+};
+
+/// Preferences shared by all entity types
+message CommonPrefs {
+  /**
+   * Indicates that the entity is marked for drawing in the data stream.  This is intended as an internal
+   * flag that is supposed to match up with items like a BeamOnOffCmd.  A user may alter the "draw" flag
+   * to turn an object on or off, but if the data overrides the draw from the user, the item is still not
+   * drawn.  In other words, an entity that is off in data cannot be forced to draw by the end user.
+   */
+  optional bool dataDraw = 1 [default = true];
+
+  /**
+   * User-controlled preference for drawing or not drawing an entity.  An entity is only drawn if this flag
+   * is turned on, and the dataDraw flag is also enabled.  This is a more-or-less public flag that corresponds
+   * to the Draw flag in Super Form.
+   */
+  optional bool draw = 2 [default = true];
+
+  /// Entity name string
+  optional string name = 3 [default = "entity"];
+
+  /// Indicates whether alias should be used over proper name
+  optional bool useAlias = 4 [default = false];
+  /// Optional secondary name that can be swapped in and out
+  optional string alias = 5 [default = ""];
+
+  /// Points to label preferences, includes alias settings
+  optional LabelPrefs labelPrefs = 6;
+
+  /// Data-driven color for the entity
+  optional fixed32 color = 7 [default = 0xFFFF00FF]; // yellow
+  /// override the normal coloration
+  optional bool useOverrideColor = 8 [default = false];
+  /// Override color when useOverrideColor is true
+  optional fixed32 overrideColor = 9 [default = 0xFF0000FF]; // red
+
+  /// Entity-specific data limiting value in seconds of history; <= 0 indicates no limiting applied
+  optional double dataLimitTime = 10 [default = -1.0];
+  /// Entity-specific data limiting value in number of data points; == 0 indicates no limiting applied
+  optional uint32 dataLimitPoints = 11 [default = 1000];
+
+  /// controls the local grid
+  optional LocalGridPrefs localGrid = 12;
+
+  /// Control Legend display; this may get replaced by more detailed control of legends
+  optional bool includeInLegend = 13 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// Global settings for a scene
+message ScenarioProperties {
+  /// User defined version field
+  optional uint32 version = 1 [default = 20];
+  /// Note that all values stored internally as ECEF; this is a hint to import/export code
+  optional CoordinateFrame coordinateFrame = 2;
+  /// Reference year that time values are referenced to
+  optional uint32 referenceYear = 3 [default = 1970];
+
+  message Classification {
+    optional string label = 1 [default = ""];
+    optional fixed32 fontColor = 2 [default = 0x00FF00FF]; // green
+  };
+
+  optional Classification classification = 4;
+  /// Note that degreeAngles only affects input and output.  All angles are stored internally as radians
+  optional bool degreeAngles = 5 [default = true];
+  /// Textual scenario description, e.g. as set by PIData::setDescription()
+  optional string description = 6 [default = ""];
+  /**
+   * Source location for the data store, typically a file path.  For
+   * live data, this may be set to a generic description or empty.  For
+   * example, SIMDIS 10 will place the filename hint from
+   * PIData::initializeScenario() in this field.
+   */
+ optional string source = 19 [default = ""];
+
+  /// Wind direction in radians
+  optional double windAngle = 7 [default = 0.0];
+  /// Wind speed in meters per second
+  optional double windSpeed = 8 [default = 0.0];
+
+  optional string viewFile = 9 [default = ""];
+  optional string ruleFile = 10 [default = ""];
+  optional string terrainFile = 11 [default = ""];
+
+  message SoundFile {
+    optional string filename = 1 [default = ""];
+    optional double startTime = 2 [default = 0.0];
+    optional double endTime = 3 [default = 0.0];
+  };
+  optional SoundFile soundFile = 12;
+
+  repeated string mediaFile = 13;
+  repeated string dedFile = 14;
+  repeated string wvsFile = 15;
+  repeated string gogFile = 16;
+
+  /// Scenario level data table and generic data limiting value in seconds of history; <= 0 indicates no limiting applied
+  optional double dataLimitTime = 17 [default = 600.0];
+  /// Scenario level data table and generic data limiting value in number of data points; == 0 indicates no limiting applied
+  optional uint32 dataLimitPoints = 18 [default = 1000];
+
+  /// Flags whether Generic Data duplicate entries should be filtered (live mode only)
+  optional bool ignoreDuplicateGenericData = 20 [default = true];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// (mostly) unchanging aspects of a platform
+message PlatformProperties {
+  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
+  optional uint64 id = 1;
+  /// User-defined ID value, will not change during file conversion
+  optional uint64 originalId = 2;
+  /// User-defined source string
+  optional string source = 3;
+  /// Coordinate reference frame, used for defining input/output formats; data still stored internally as ECEF
+  optional CoordinateFrame coordinateFrame = 6;
+};
+
+/// preferences for the display of a platform
+message PlatformPrefs {
+  /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
+  optional CommonPrefs commonPrefs = 1;
+
+  /// 2D or 3D model file location
+  optional string icon = 2;
+  /// Model draw mode for wireframe, points, or solid models
+  optional ModelDrawMode drawMode = 3 [default = MDM_SOLID];
+  /// Flag indicating how to draw 2D icons in 3D space; only applies to image icons
+  optional IconRotation rotateIcons = 4 [default = IR_2D_YAW];
+  /// Turns off the depth buffer for drawing 2D icons; can address flickering with surface icons
+  optional bool noDepthIcons = 5 [default = true];
+
+  /// Display options for the track history
+  optional TrackPrefs trackPrefs = 6;
+
+  /// Clamps the altitude between certain geodetic values during display
+  optional bool useClampAlt = 7 [default = false];
+  /// Minimum altitude when useClampAlt is enabled, in meters
+  optional double clampValAltMin = 8 [default = -100000.0];
+  /// Maximum altitude when useClampAlt is enabled, in meters
+  optional double clampValAltMax = 9 [default = 1000000000.0];
+
+  /// Enables clamping for the Yaw values; useful to keep stationary entities pointing in the same direction
+  optional bool useClampYaw = 10 [default = false];
+  /// Yaw orientation for clamping, in radians
+  optional double clampValYaw = 11 [default = 0.0];
+
+  /// Enables clamping for the Pitch values; useful to keep stationary entities pointing in the same direction
+  optional bool useClampPitch = 12 [default = false];
+  /// Pitch orientation for clamping, in radians
+  optional double clampValPitch = 13 [default = 0.0];
+
+  /// Enables clamping for the Roll values; useful to keep stationary entities pointing in the same direction
+  optional bool useClampRoll = 14 [default = false];
+  /// Roll orientation for clamping, in radians
+  optional double clampValRoll = 15 [default = 0.0];
+
+  /// Automatically use the platform's orientation clamp values at extremely low velocity.
+  optional bool clampOrientationAtLowVelocity = 60 [default = false];
+
+  // Toggle surface clamping of the platform
+  optional bool surfaceClamping = 61 [default = false];
+
+  /// Toggles lighting
+  optional bool lighted = 16 [default = true];
+  /// Toggles box mode, drawing a 3D box around the entity position
+  optional bool drawBox = 17 [default = false];
+
+  /// Toggles flag for drawing the body rotational axis
+  optional bool drawBodyAxis = 18 [default = false];
+  /// Toggle scenario reference axis
+  optional bool drawInertialAxis = 19 [default = false];
+  /// Toggles a vector drawn towards the current sun position
+  optional bool drawSunVec = 20 [default = false];
+  /// Toggles a vector drawn towards the current moon position
+  optional bool drawMoonVec = 21 [default = false];
+  /// Scale for the body, inertial, sun, and moon axis
+  optional double axisScale = 22 [default = 1.0];
+
+  /// Toggle wireframe display of EM/EO beam
+  optional bool wireFrame = 23 [default = false];
+  /// Toggle display of optical line of sight range
+  optional bool drawOpticLos = 24 [default = false];
+  /// Toggle display of radio horizon range
+  optional bool drawRfLos = 25 [default = false];
+
+  /// Radar cross section file specific to the platform
+  optional string rcsFile = 26 [default = ""];
+  /// Toggle display of the 2-D RCS pattern; white ring at 0 dB, rings every 10 dB
+  optional bool drawRcs = 27 [default = false];
+  /// Toggle display of the 3-D RCS pattern
+  optional bool draw3dRcs = 28 [default = false];
+  /// RCS data color
+  optional fixed32 rcsColor = 29 [default = 0xFFFFFF80];
+  /// Applies a color gradient based on RCS return
+  optional bool rcsColorScale = 30 [default = false];
+  /// RCS pattern polarization
+  optional Polarity rcsPolarity = 31 [default = POL_UNKNOWN];
+  /// Elevation angle incident on RCS pattern, in degrees
+  optional double rcsElevation = 32 [default = 0.0];
+  /// RF frequency in MHz
+  optional double rcsFrequency = 33 [default = 7000.0];
+  /// Angular detail of RCS pattern in degrees
+  optional double rcsDetail = 34 [default = 1.0];
+
+  /// Draws a rotating circle highlight about the model position; useful for drawing attention to platforms
+  optional bool drawCircleHilight = 35 [default = false];
+  /// Color value for the circular highlight; see drawCircleHilight
+  optional fixed32 circleHilightColor = 36 [default = 0xFFFFFFFF];
+
+  /// Position values are interpolated between data points
+  optional bool interpolatePos = 37 [default = true];
+  /// Position values are extrapolated past end of time for a platform
+  optional bool extrapolatePos = 38 [default = false];
+
+  /// Scalar to apply to the model, applies same scale to all dimensions of model
+  optional double scale = 39 [default = 1.0];
+
+  /// Adjusts platform brightness (0-100)
+  optional int32 brightness = 40 [default = 36];
+
+  /// Toggle dynamic scaling based on eye position
+  optional bool dynamicScale = 41 [default = false];
+  optional double dynamicScaleOffset = 42 [default = 0.0];
+  optional double dynamicScaleScalar = 43 [default = 1.0];
+
+  /// Toggle velocity vector
+  optional bool drawVelocityVec = 44 [default = false];
+  /// Toggle between static length and length based on time
+  optional bool velVecUseStaticLength = 45 [default = true];
+
+  /// Sets the length of the velocity vector, in velVecSlUnits
+  optional double velVecStaticLen = 46 [default = 0.5];
+  /// Velocity vector length's distance units
+  optional DistanceUnits velVecStaticLenUnits = 47 [default = UNITS_NAUTICAL_MILES];
+
+  /// If velVecUseStaticLength is false, this is time value for velocity length calculation in velVecTimeUnits
+  optional double velVecTime = 48 [default = 1.0];
+  /// Velocity vector length's time units
+  optional ElapsedTimeFormat velVecTimeUnits = 62 [default = ELAPSED_SECONDS];
+
+  /// Position offset in X/Y/Z space relative to an ENU frame at platform center
+  optional Position platPositionOffset = 49;
+  /// Offset to apply to orientation values, in body angles
+  optional BodyOrientation orientationOffset = 50;
+
+  /// Attached GOG files
+  repeated string gogFile = 51;
+
+  /**
+   * Vector scale to apply to the model, where x is the major axis/length of the model, y is the width, and z the depth;
+   * overrides scaleLevel when applied at same time
+   *
+   * Note:  A value of 0.0 or less for any component means no scaling
+   */
+  optional Position scaleXYZ = 52;
+  /// Toggles drawing the platform icon with a second pass that draws back-facing polygons, to show model even when inside
+  optional bool alphaVolume = 53 [default = false];
+
+  /// Toggles the use of polygon culling for the platform icon
+  optional bool useCullFace = 54 [default = false];
+
+  /// The platform icon polygon faces to be culled
+  optional PolygonFace cullFace = 55 [default = FRONT_AND_BACK];
+
+  /// Polygon face to be rendered using the specified polygonMode
+  optional PolygonFace polygonModeFace = 56 [default = FRONT_AND_BACK];
+
+  /// Polygon rasterization mode to be applied to the face specified by polygonModeFace; mode may be GL_POINT, GL_LINE, or GL_FILL
+  optional PolygonMode polygonMode = 57 [default = FILL];
+
+  /// Toggles drawing the platform icon using the polygonStipple option
+  optional bool usePolygonStipple = 58 [default = false];
+
+  /// The polygonStipple rendering option, a value between 1 and 9 corresponding to 9 SIMDIS stipple patterns
+  optional uint32 polygonStipple = 59;
+};
+
+/// timed update to platform prefs; commands override prefs
+message PlatformCommand {
+  /// The time at which the command should be executed
+  optional double time = 1;
+  /// The prefs message that will contain the command's settings
+  optional PlatformPrefs updatePrefs = 2;
+  /// Indicates that the command will clear the values that are set in updatePrefs from the command set
+  optional bool isClearCommand = 3 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// (mostly) unchanging aspects of a beam
+message BeamProperties {
+  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
+  optional uint64 id = 1;
+  /// ID of the beam's host platform
+  optional uint64 hostId = 2;
+  /// User-defined ID value, will not change during file conversion
+  optional uint64 originalId = 4;
+  /// User-defined source string
+  optional string source = 5;
+
+  /// Describes how to interpret data points (updates)
+  enum BeamType {
+    ABSOLUTE_POSITION = 1;  ///< Beam pointing is defined based on data
+    BODY_RELATIVE = 2;      ///< Beam pointing is relative to host's body orientation
+    TARGET = 3;             ///< Beam pointing is towards specified target platform
+  };
+
+  /// Beam type affects how BeamUpdate values are interpreted
+  optional BeamType type = 6;
+};
+
+/// preferences for the display of a beam
+message BeamPrefs {
+  /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
+  optional CommonPrefs commonPrefs = 1;
+
+  /// Beams can be drawn as a wire, as solid, or solid with wires; NOTE: different than Platform's draw mode
+  enum DrawMode {
+    WIRE = 0;
+    SOLID = 1;
+    WIRE_ON_SOLID = 2;
+  };
+
+  /// Rendering type can draw using a pattern or as a 3 dB beam
+  enum DrawType {
+    BEAM_3DB = 0;         ///< Beam drawn using 3 dB half power points
+    ANTENNA_PATTERN = 1;  ///< Beam drawn using antenna pattern
+    COVERAGE = 2;         ///< Beam drawn as a spherical slice (cap only)
+  };
+
+  /// Describes the beam's antenna pattern settings
+  message AntennaPattern {
+    /// Antenna patterns can be read from a file or generated from an algorithm
+    enum Type {
+      NONE = 0;
+      FILE = 1;  ///< File based antenna pattern
+      ALGORITHM = 2;  ///< Algorithmic based antenna pattern
+    };
+
+    /// Type of pattern; either from a file, or from an algorithm
+    optional Type type = 1 [default = NONE];
+
+    /// Different file formats that are supported
+    enum FileFormat {
+      TABLE = 6;           ///< Look-up table antenna pattern
+      MONOPULSE = 7;       ///< Monopulse (sum and delta) antenna pattern
+      RELATIVE_TABLE = 9;  ///< Relative look-up table antenna pattern
+      BILINEAR = 10;       ///< Bilinear antenna pattern (type of interpolation)
+      NSMA = 11;           ///< NSMA antenna pattern format
+      EZNEC = 12;          ///< EZNEC antenna pattern format
+      XFDTD = 13;          ///< XFDTD antenna pattern format
+    };
+
+    /// The following should be specified for file type antenna patterns
+    optional FileFormat fileFormat = 2 [default = TABLE];
+    /// Filename of the antenna, for file-type patterns
+    optional string fileName = 3 [default = ""];
+
+    /// Algorithms that can be used instead of a file
+    enum Algorithm {
+      PEDESTAL = 1;  ///< Pedestal algorithm
+      GAUSS = 2;     ///< Gaussian algorithm
+      CSCSQ = 3;     ///< Cosecant squared algorithm
+      SINXX = 4;     ///< Sin(x/x) algorithm
+      OMNI = 5;      ///< Omni directional algorithm
+    };
+
+    /// The following should be specified for algorithm type antenna patterns
+    optional Algorithm algorithm = 4 [default = PEDESTAL];
+  };
+
+  /// Toggle lighting (shading)
+  optional bool shaded = 2 [default = false];
+  /// Toggle alpha blending
+  optional bool blended = 3 [default = true];
+
+  /// Rendering mode: solid, wire, combined
+  optional DrawMode beamDrawMode = 4 [default = SOLID];
+  /// Rendering scale, typically 1.0; multiplier that applies to the beam length
+  optional double beamScale = 5 [default = 1.0];
+  /// Rendering style, either as a full pattern or just as a 3 dB beam
+  optional DrawType drawType = 6 [default = BEAM_3DB];
+
+  /// Number of polygons in the beam's end cap resolution
+  optional uint32 capResolution = 7 [default = 5];
+  /// Number of polygons in the beam's cone
+  optional uint32 coneResolution = 8 [default = 30];
+  /// Render beam as a cone instead of a spherical wedge
+  optional bool renderCone = 9 [default = true];
+
+  /// Controls antenna pattern visibility based on gain (dB)
+  optional double sensitivity = 10 [default = -50.0];
+  /// Main lobe antenna pattern gain (dB)
+  optional double gain = 11 [default = 20.0];
+  /// Antenna pattern angular field of view (radians)
+  optional double fieldOfView = 12 [default = 1.5707963267];
+  /// Angular step size, controlling antenna pattern's degree of detail, in degrees
+  optional double detail = 13 [default = 1.0];
+  /// Antenna transmitter peak power, in watts
+  optional double power = 14 [default = 0.0];
+  /// Antenna transmitter frequency, in MHz
+  optional double frequency = 15 [default = 0.0];
+  /// Polarization of the antenna
+  optional Polarity polarity = 16 [default = POL_UNKNOWN];
+
+  /// Applies a color gradient based on antenna pattern gain
+  optional bool colorScale = 17 [default = false];
+  /// Antenna pattern data for the beam
+  optional AntennaPattern antennaPattern = 18;
+  /// AREPS file associated with the beam
+  optional string arepsFile = 19 [default = ""];
+  /// Channel is used for monopulse beams
+  optional bool channel = 20 [default = false];
+  /// Apply a weighting function to gain value based on beam width (table and relative patterns only)
+  optional bool weighting = 21 [default = true];
+
+  /// Interpolate between data points
+  optional bool interpolateBeamPos = 22 [default = true];
+
+  /// Toggle use of platform offsets (as defined by the host platform) in positioning beam
+  /// Beams should use host platform offset when setting beam origin
+  optional bool useOffsetPlatform = 23 [default = true];
+  /// Toggle use of icon offset (as defined by the host platform) in positioning beam
+  /// Icon offset is controlled by data, default condition is to originate from center of host
+  optional bool useOffsetIcon = 24 [default = false];
+  /// Toggle use of beam position and orientation offsets defined below
+  /// Beam offset is controlled by data, default condition is to originate from center of host
+  optional bool useOffsetBeam = 25 [default = false];
+
+  /// Azimuth offset to apply to updates, in radians
+  optional double azimuthOffset = 26 [default = 0.0];
+  /// Elevation offset to apply to updates, in radians
+  optional double elevationOffset = 27 [default = 0.0];
+  /// Roll offset to apply to updates, in radians
+  optional double rollOffset = 28 [default = 0.0];
+  /// Specify an offset relative to center of host platform
+  optional Position beamPositionOffset = 29;
+
+  /// Current target platform; if a BeamType is target, the beam always points to this target
+  optional uint64 targetId = 30 [default = 0];
+
+  /// Full height of the beam relative, in radians; [0, PI/2]
+  optional double verticalWidth = 31 [default = 0.0];
+  /// Full width of the beam relative, in radians; [0, 2*PI]
+  optional double horizontalWidth = 32 [default = 0.0];
+};
+
+/// common update to beam data
+message BeamUpdate {
+  /// Seconds since scenario reference year for the data posit time
+  optional double time = 1;
+  /// Range in meters from the platform origin
+  optional double range = 2;
+  /// Azimuth; relative to north for linear beams, or relative to platform orientation for body beams; radians
+  optional double azimuth = 3;
+  /// Elevation; relative to horizon for linear beams, or relative to platform orientation for body beams; radians
+  optional double elevation = 4;
+};
+
+/// timed update to beam prefs; commands override prefs
+message BeamCommand {
+  /// The time at which the command should be executed
+  optional double time = 1;
+  /// The prefs message that will contain the command's settings
+  optional BeamPrefs updatePrefs = 2;
+  /// Indicates that the command will clear the values that are set in updatePrefs from the command set
+  optional bool isClearCommand = 3 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// (mostly) unchanging aspects of a gate
+message GateProperties {
+  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
+  optional uint64 id = 1;
+  /// ID of the gate's host beam
+  optional uint64 hostId = 2;
+  /// User-defined ID value, will not change during file conversion
+  optional uint64 originalId = 4;
+  /// User-defined source string
+  optional string source = 5;
+
+  /// Describes how to interpret data points (updates)
+  enum GateType {
+    ABSOLUTE_POSITION = 1;  ///< Gate pointing is defined based on data
+    BODY_RELATIVE = 2;      ///< Gate pointing is relative to host's body orientation
+    TARGET = 3;             ///< Gate pointing is towards specified target platform
+  };
+
+  /// Gate type affects how GateUpdate values are interpreted
+  optional GateType type = 6;
+};
+
+/// preferences for the display of a gate
+message GatePrefs {
+  /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
+  optional CommonPrefs commonPrefs = 1;
+
+  /// Toggle lighting (shading)
+  optional bool gateLighting = 2 [default = false];
+  /// Toggle alpha blending
+  optional bool gateBlending = 3 [default = true];
+
+  /// Enumerations of different types of gates
+  enum DrawMode {
+    UNKNOWN = 0;
+    RANGE = 1;
+    GUARD = 2;
+    // TARGET = 3;
+    ANGLE = 4;
+    RAIN = 5;
+    CLUTTER = 6;
+    FOOTPRINT = 7;
+    SECTOR = 8;
+    PUSH = 9;
+    COVERAGE = 10;  ///< Gate rendered as a spherical slice
+    // BODY = 11;
+  };
+  /// Type of gate to draw
+  optional DrawMode gateDrawMode = 4 [default = UNKNOWN];
+
+  /// Different ways to fill the gate area
+  enum FillPattern {
+    STIPPLE = 0;
+    SOLID = 1;
+    ALPHA = 2;
+    WIRE = 3;
+    CENTROID = 4;
+  };
+  /// Specifies the way the gate volume is filled
+  optional FillPattern fillPattern = 5 [default = STIPPLE];
+  /// Toggle drawing of the centroid
+  optional bool drawCentroid = 6 [default = true];
+
+  /// Interpolate between data points
+  optional bool interpolateGatePos = 7 [default = true];
+
+  /// Azimuth offset to apply to updates, in radians
+  optional double gateAzimuthOffset = 8 [default = 0.0];
+  /// Elevation offset to apply to updates, in radians
+  optional double gateElevationOffset = 9 [default = 0.0];
+  /// Roll offset to apply to updates, in radians
+  optional double gateRollOffset = 10 [default = 0.0];
+
+  /// Toggle drawing of the outline
+  optional bool drawOutline = 11 [default = true];
+};
+
+/// common update to gate data
+message GateUpdate {
+  /// Seconds since scenario reference year for the data posit time
+  optional double time = 1;
+  /// Azimuth; relative to north for linear gates, or relative to platform orientation for body gates; radians
+  optional double azimuth = 2;
+  /// Elevation; relative to horizon for linear gates, or relative to platform orientation for body gates; radians
+  optional double elevation = 3;
+  /// Full width of the gate in radians
+  optional double width = 4;
+  /// Full height of the gate in radians
+  optional double height = 5;
+  /// Range in meters from the platform origin to start of gate
+  optional double minRange = 6;
+  /// Range in meters from the platform origin to end of gate
+  optional double maxRange = 7;
+  /// Range in meters from the platform origin to centroid; often the middle of start and end
+  optional double centroid = 8;
+};
+
+/// timed update to gate prefs; commands override prefs
+message GateCommand {
+  /// The time at which the command should be executed
+  optional double time = 1;
+  /// The prefs message that will contain the command's settings
+  optional GatePrefs updatePrefs = 2;
+  /// Indicates that the command will clear the values that are set in updatePrefs from the command set
+  optional bool isClearCommand = 3 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// (mostly) unchanging aspects of a laser
+message LaserProperties {
+  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
+  optional uint64 id = 1;
+  /// ID of the laser's host platform
+  optional uint64 hostId = 2;
+  /// User-defined ID value, will not change during file conversion
+  optional uint64 originalId = 3;
+  /// User-defined source string
+  optional string source = 4;
+
+  /// Coordinate system for orientation angle interpretation; only used in loading/saving, all angles stored internally are normalized
+  optional CoordinateSystem coordinateSystem = 5;
+  /// Indicates that the orientation values are in body angles relative to platform (true), or true angles (false)
+  optional bool azElRelativeToHostOri = 6;
+};
+
+/// preferences for the display of a laser
+message LaserPrefs {
+  /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
+  optional CommonPrefs commonPrefs = 1;
+
+  /// Positional offset from the host platform
+  optional Position laserXyzOffset = 2;
+  /// Range of the laser in meters
+  optional double maxRange = 3 [default = 1000000.0];
+  /// Width of the laser in pixels on the screen
+  optional int32 laserWidth = 4 [default = 1];
+};
+
+/// common update to laser data
+message LaserUpdate {
+  optional double time = 1;
+  /// Note that the orientation is affected by the LaserProperties azElRelativeToHostOri flag
+  optional BodyOrientation orientation = 2;
+};
+
+/// timed update to laser prefs; commands override prefs
+message LaserCommand {
+  /// The time at which the command should be executed
+  optional double time = 1;
+  /// The prefs message that will contain the command's settings
+  optional LaserPrefs updatePrefs = 2;
+  /// Indicates that the command will clear the values that are set in updatePrefs from the command set
+  optional bool isClearCommand = 3 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// Unchanging aspects of a projector
+message ProjectorProperties {
+  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
+  optional uint64 id = 1;
+  /// ID of the projector's host platform
+  optional uint64 hostId = 2;
+  /// User-defined ID value, will not change during file conversion
+  optional uint64 originalId = 3;
+  /// User-defined source string
+  optional string source = 4;
+};
+
+/// preferences for the display of a projector
+message ProjectorPrefs {
+  /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
+  optional CommonPrefs commonPrefs = 1;
+  /// Projector image filename
+  optional string rasterFile = 2;
+  /// Determine if we want to show projector frustum
+  optional bool showFrustum = 3 [default = false];
+  /// Projector alpha for blending [0.0, 1.0]
+  optional float projectorAlpha = 4 [default = 0.1];
+  /// Determine if we should interpolate FOV
+  optional bool interpolateProjectorFov = 5 [default = true];
+};
+
+/// common update to projector data
+message ProjectorUpdate {
+  optional double time = 1;
+  // Projector field of view: radians
+  optional double fov = 2;
+};
+
+/// timed update to projector prefs; commands override prefs
+message ProjectorCommand {
+  /// The time at which the command should be executed
+  optional double time = 1;
+  /// The prefs message that will contain the command's settings
+  optional ProjectorPrefs updatePrefs = 2;
+  /// Indicates that the command will clear the values that are set in updatePrefs from the command set
+  optional bool isClearCommand = 3 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// (mostly) unchanging aspects of a line of bearing (LOB) group
+message LobGroupProperties {
+  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
+  optional uint64 id = 1;
+  /// ID of the LOB's host platform
+  optional uint64 hostId = 2;
+  /// User-defined ID value, will not change during file conversion
+  optional uint64 originalId = 3;
+  /// User-defined source string
+  optional string source = 4;
+
+  /// Coordinate system for orientation angle interpretation; only used in loading/saving, all angles stored internally are normalized
+  optional CoordinateSystem coordinateSystem = 5;
+  /// Indicates that the orientation values are in body angles relative to platform (true), or true angles (false)
+  optional bool azElRelativeToHostOri = 6;
+};
+
+/// preferences for the display of a line of bearing (LOB) group
+message LobGroupPrefs {
+  /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
+  optional CommonPrefs commonPrefs = 1;
+
+  /// Positional offset from the host platform
+  optional Position xyzOffset = 2;
+  /// Width of the LOBs in pixels on the screen
+  optional int32 lobwidth = 3 [default = 2];
+  /// Color of the first part of the stipple pattern; RRGGBBA
+  optional fixed32 color1 = 4 [default = 0x00FF00FF]; // green
+  /// Color of the second part of the stipple pattern; RRGGBBA
+  optional fixed32 color2 = 5 [default = 0xFF0000FF]; // red
+  /// GL stipple pattern of color1; 0xffff for a solid line
+  optional uint32 stipple1 = 6 [default = 0xFF00];
+  /// GL stipple pattern of color2; 0xffff for a solid line
+  optional uint32 stipple2 = 7 [default = 0x00FF];
+
+  /// the maximum number of seconds of history data to display
+  optional double maxDataSeconds = 8 [default = 5.0];
+  /// the maximum number of data points to display
+  optional uint32 maxDataPoints = 9 [default = 1800];
+  /// Clamp to ground if true, otherwise no clamping
+  optional bool lobUseClampAlt = 10 [default = false];
+
+  /// Override the range indicated by data
+  optional bool useRangeOverride = 11 [default = false];
+  /// Value to use for range (m) when overriding
+  optional double rangeOverrideValue = 12 [default = 1000.0];
+};
+
+/// update data point for line of bearing (LOB) group
+message LobGroupUpdatePoint {
+  /// time of the data point
+  optional double time = 1;
+  /// Range in meters from the host platform origin
+  optional double range = 2;
+  /// Azimuth; radians
+  optional double azimuth = 3;
+  /// Elevation; radians
+  optional double elevation = 4;
+};
+
+/**
+ common update to line of bearing (LOB) group data, holds a list of LobGroupUpdatePoints.
+ Note that when points are inserted, the time of the points inserted must match the time of the update.
+*/
+message LobGroupUpdate {
+  /// time of the update
+  optional double time = 1;
+  repeated LobGroupUpdatePoint dataPoints = 2;
+};
+
+/// timed update to line of bearing (LOB) group prefs; commands override prefs
+message LobGroupCommand {
+  /// The time at which the command should be executed
+  optional double time = 1;
+  /// The prefs message that will contain the command's settings
+  optional LobGroupPrefs updatePrefs = 2;
+  /// Indicates that the command will clear the values that are set in updatePrefs from the command set
+  optional bool isClearCommand = 3 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/// key,value data intended to categorize a platform
+/// for example: friendly, hostile; ship, plane
+message CategoryData {
+  optional double time = 1;
+
+  message Entry {
+    optional string key = 1;
+    optional string value = 2;
+  };
+
+  repeated Entry entry = 2;
+};
+
+/// key,value data which is attached to time, but unrelated to spatial
+/// location or orientation (display)
+/// for example: fuel, or temperature
+message GenericData {
+  optional double time = 1;
+  optional double duration = 2;
+
+  message Entry {
+    optional string key = 2;
+    optional string value = 3;
+  };
+
+  repeated Entry entry = 3;
+};
+

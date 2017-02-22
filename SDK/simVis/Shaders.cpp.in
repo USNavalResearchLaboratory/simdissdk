@@ -1,0 +1,145 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+#include "simVis/Shaders.h"
+
+namespace simVis {
+
+Shaders::Shaders()
+{
+  // Assign the fall-back shaders if the files are not found
+  add(alphaColorFilterFragment(), "@AlphaColorFilter.frag.glsl@");
+  add(areaHighlightVertex(), "@AreaHighlight.vert.glsl@");
+  add(areaHighlightFragment(), "@AreaHighlight.frag.glsl@");
+  add(bathymetryGeneratorVertex(), "@BathymetryGenerator.vert.glsl@");
+  add(glowHighlightFragment(), "@GlowHighlight.frag.glsl@");
+  add(overheadModeVertex(), "@OverheadMode.vert.glsl@");
+  add(overrideColorFragment(), "@OverrideColor.frag.glsl@");
+  add(platformAzimElevWarpVertex(), "@PlatformAzimElevViewTool.vert.glsl@");
+  add(projectorManagerVertex(), "@Projector.vert.glsl@");
+  add(projectorManagerFragment(), "@Projector.frag.glsl@");
+  add(rfPropVertexBasedVertex(), "@RF.Vertex.vert.glsl@");
+  add(rfPropVertexBasedFragment(), "@RF.Vertex.frag.glsl@");
+  add(rfPropTextureBasedVertex(), "@RF.Texture.vert.glsl@");
+  add(rfPropTextureBasedFragment(), "@RF.Texture.frag.glsl@");
+  add(rfPropLossToColorDefault(), "@RF.LossToColor.Default.lib.glsl@");
+  add(rfPropLossToColorThreshold(), "@RF.LossToColor.Threshold.lib.glsl@");
+  add(setClipVertex(), "@SetClipVertex.vert.glsl@");
+  add(trackHistoryVertex(), "@TrackHistory.vert.glsl@");
+  add(trackHistoryFragment(), "@TrackHistory.frag.glsl@");
+}
+
+std::string Shaders::alphaColorFilterFragment() const
+{
+  return "AlphaColorFilter.frag.glsl";
+}
+
+std::string Shaders::areaHighlightVertex() const
+{
+  return "AreaHighlight.vert.glsl";
+}
+
+std::string Shaders::areaHighlightFragment() const
+{
+  return "AreaHighlight.frag.glsl";
+}
+
+std::string Shaders::projectorManagerVertex() const
+{
+  return "Projector.vert.glsl";
+}
+
+std::string Shaders::projectorManagerFragment() const
+{
+  return "Projector.frag.glsl";
+}
+
+std::string Shaders::trackHistoryVertex() const
+{
+  return "TrackHistory.vert.glsl";
+}
+
+std::string Shaders::trackHistoryFragment() const
+{
+  return "TrackHistory.frag.glsl";
+}
+
+std::string Shaders::overrideColorFragment() const
+{
+  return "OverrideColor.frag.glsl";
+}
+
+std::string Shaders::bathymetryGeneratorVertex() const
+{
+  return "BathymetryGenerator.vert.glsl";
+}
+
+std::string Shaders::overheadModeVertex() const
+{
+  return "OverheadMode.vert.glsl";
+}
+
+std::string Shaders::glowHighlightFragment() const
+{
+  return "GlowHighlight.frag.glsl";
+}
+
+std::string Shaders::platformAzimElevWarpVertex() const
+{
+  return "PlatformAzimElevViewTool.vert.glsl";
+}
+
+std::string Shaders::rfPropVertexBasedVertex() const
+{
+  return "RF.Vertex.vert.glsl";
+}
+
+std::string Shaders::rfPropVertexBasedFragment() const
+{
+  return "RF.Vertex.frag.glsl";
+}
+
+std::string Shaders::rfPropTextureBasedVertex() const
+{
+  return "RF.Texture.vert.glsl";
+}
+
+std::string Shaders::rfPropTextureBasedFragment() const
+{
+  return "RF.Texture.frag.glsl";
+}
+
+std::string Shaders::rfPropLossToColorDefault() const
+{
+  return "RF.LossToColor.Default.lib.glsl";
+}
+
+std::string Shaders::rfPropLossToColorThreshold() const
+{
+  return "RF.LossToColor.Threshold.lib.glsl";
+}
+
+std::string Shaders::setClipVertex() const
+{
+  return "SetClipVertex.vert.glsl";
+}
+
+}

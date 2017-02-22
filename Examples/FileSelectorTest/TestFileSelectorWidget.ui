@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>332</width>
+    <height>176</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="simQt::FileSelectorWidget" name="FileSelectorWidget">
+     <property name="toolTip">
+      <string>Plain Example</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="simQt::FileSelectorWidget" name="FileSelectorWidget_2">
+     <property name="toolTip">
+      <string>Load File Example</string>
+     </property>
+     <property name="includeLabel">
+      <bool>true</bool>
+     </property>
+     <property name="label">
+      <string>Load</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="simQt::FileSelectorWidget" name="FileSelectorWidget_3">
+     <property name="toolTip">
+      <string>A Save File Example</string>
+     </property>
+     <property name="includeLabel">
+      <bool>true</bool>
+     </property>
+     <property name="label">
+      <string>Save</string>
+     </property>
+     <property name="typeOfOperation" stdset="0">
+      <enum>simQt::FileSelectorWidget::FileSave</enum>
+     </property>
+     <property name="titleForFileBrowser" stdset="0">
+      <string>Save Data File</string>
+     </property>
+     <property name="filterForFileBrowser" stdset="0">
+      <enum>simQt::FileSelectorWidget::SIMDIS_ZIP_FILE_PATTERNS</enum>
+     </property>
+     <property name="defaultFilename" stdset="0">
+      <string>Test.zip</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>simQt::FileSelectorWidget</class>
+   <extends>QWidget</extends>
+   <header>simQt/FileSelectorWidget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

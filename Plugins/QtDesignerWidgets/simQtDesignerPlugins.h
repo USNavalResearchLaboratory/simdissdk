@@ -1,0 +1,47 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+#ifndef SIMQT_QTDESIGNER_PLUGINS_H
+#define SIMQT_QTDESIGNER_PLUGINS_H
+
+#include <QDesignerCustomWidgetCollectionInterface>
+#include <QObject>
+
+//  This class collects all the plug-in widgets for the Qt Designer; update constructor with new plug-in widgets
+class simQtDesignerPlugins : public QObject, public QDesignerCustomWidgetCollectionInterface
+{
+  Q_OBJECT
+  Q_INTERFACES(QDesignerCustomWidgetCollectionInterface)
+#if(QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+  Q_PLUGIN_METADATA(IID "mil.navy.nrl.simdis.SIMDIS_SDK.simQtDesignerPlugins")
+#endif
+
+public:
+  explicit simQtDesignerPlugins(QObject* parent = NULL);
+
+public: // QDesignerCustomWidgetCollectionInterface API
+  virtual QList<QDesignerCustomWidgetInterface*> customWidgets() const;
+
+private:
+  QList<QDesignerCustomWidgetInterface*> widgetFactories_;
+};
+
+#endif

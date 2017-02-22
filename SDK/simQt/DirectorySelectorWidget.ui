@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DirectorySelectorWidget</class>
+ <widget class="QWidget" name="DirectorySelectorWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>289</width>
+    <height>24</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>true</bool>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QLineEdit" name="directoryText">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="readOnly">
+      <bool>false</bool>
+     </property>
+     <property name="placeholderText">
+      <string>No Directory Selected</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="directoryButton">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="icon">
+      <iconset resource="simQtResources.qrc">
+       <normaloff>:/simQt/images/Folder.png</normaloff>:/simQt/images/Folder.png</iconset>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="simQtResources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

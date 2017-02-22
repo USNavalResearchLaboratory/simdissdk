@@ -1,0 +1,40 @@
+# Generated file to create a target named ${IMPORTED_LIBRARY_NAME}
+# with the properly defined library locations, compile options,
+# definitions, include directories, and dependencies.
+#
+# You can link your project to ${IMPORTED_LIBRARY_NAME} by using it in a
+# target_link_libraries command, such as:
+#
+#    target_link_libraries(myExe PUBLIC ${IMPORTED_LIBRARY_NAME})
+#
+
+if(NOT TARGET ${IMPORTED_LIBRARY_NAME})
+    add_library(${IMPORTED_LIBRARY_NAME} ${LIB_STATIC_OR_SHARED} IMPORTED)
+    set_target_properties(${IMPORTED_LIBRARY_NAME} PROPERTIES
+        INTERFACE_COMPILE_OPTIONS "${LIB_INTERFACE_COMPILE_OPTIONS}"
+        INTERFACE_COMPILE_DEFINITIONS "${LIB_INTERFACE_COMPILE_DEFINITIONS}"
+        INTERFACE_INCLUDE_DIRECTORIES "${LIB_INTERFACE_INCLUDE_DIRECTORIES}"
+        INTERFACE_LINK_LIBRARIES "${LIB_INTERFACE_LINK_LIBRARIES}"
+        IMPORTED_LOCATION "${LIB_IMPORTED_LOCATION}"
+    )
+    # Several properties are optional and are only set if non-empty
+    if("${LIB_IMPORTED_LOCATION_DEBUG}" STREQUAL "")
+        set_target_properties(${IMPORTED_LIBRARY_NAME} PROPERTIES
+            IMPORTED_LOCATION_DEBUG "${LIB_IMPORTED_LOCATION_DEBUG}"
+        )
+    endif()
+
+    # Configure implibs as needed for Windows builds
+    if(WIN32)
+        if(NOT "${LIB_IMPORTED_IMPLIB}" STREQUAL "")
+            set_target_properties(${IMPORTED_LIBRARY_NAME} PROPERTIES
+                IMPORTED_IMPLIB "${LIB_IMPORTED_IMPLIB}"
+            )
+        endif()
+        if(NOT "${LIB_IMPORTED_IMPLIB_DEBUG}" STREQUAL "")
+            set_target_properties(${IMPORTED_LIBRARY_NAME} PROPERTIES
+                IMPORTED_IMPLIB_DEBUG "${LIB_IMPORTED_IMPLIB_DEBUG}"
+            )
+        endif()
+    endif()
+endif()

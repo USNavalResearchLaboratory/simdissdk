@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EntityTreeComposite</class>
+ <widget class="QWidget" name="EntityTreeComposite">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>262</width>
+    <height>274</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="countLabel">
+     <property name="toolTip">
+      <string>Number of entries in the top level hierarchy</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTreeView" name="treeView">
+     <property name="contextMenuPolicy">
+      <enum>Qt::ActionsContextMenu</enum>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::ExtendedSelection</enum>
+     </property>
+     <property name="uniformRowHeights">
+      <bool>true</bool>
+     </property>
+     <property name="allColumnsShowFocus">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="toolTip">
+        <string>Toggles between Tree View and List View</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="simQtResources.qrc">
+         <normaloff>:/simQt/images/Tree View.png</normaloff>:/simQt/images/Tree View.png</iconset>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="filterButton">
+       <property name="toolTip">
+        <string>Open the Entity Filter Dialog</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="simQtResources.qrc">
+         <normaloff>:/simQt/images/Filter.png</normaloff>:/simQt/images/Filter.png</iconset>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frame">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background: white;</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="simQtResources.qrc">:/simQt/images/Search.png</pixmap>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="simQt::EntityFilterLineEdit" name="lineEdit">
+          <property name="toolTip">
+           <string/>
+          </property>
+          <property name="frame">
+           <bool>false</bool>
+          </property>
+          <property name="placeholderText">
+           <string>Search Entity Names</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+  <action name="actionExpand_All">
+   <property name="icon">
+    <iconset resource="simQtResources.qrc">
+     <normaloff>:/simQt/images/Expand.png</normaloff>:/simQt/images/Expand.png</iconset>
+   </property>
+   <property name="text">
+    <string>Expand All</string>
+   </property>
+   <property name="toolTip">
+    <string>Expand All</string>
+   </property>
+  </action>
+  <action name="actionCollapse_All">
+   <property name="icon">
+    <iconset resource="simQtResources.qrc">
+     <normaloff>:/simQt/images/Collapse.png</normaloff>:/simQt/images/Collapse.png</iconset>
+   </property>
+   <property name="text">
+    <string>Collapse All</string>
+   </property>
+   <property name="toolTip">
+    <string>Collapse All</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>simQt::EntityFilterLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>simQt/EntityFilterLineEdit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="simQtResources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>actionExpand_All</sender>
+   <signal>triggered()</signal>
+   <receiver>treeView</receiver>
+   <slot>expandAll()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>119</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCollapse_All</sender>
+   <signal>triggered()</signal>
+   <receiver>treeView</receiver>
+   <slot>collapseAll()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>119</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

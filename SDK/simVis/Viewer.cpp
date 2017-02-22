@@ -1,0 +1,224 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+#include "simVis/Viewer.h"
+
+#include "osg/OperationThread"
+#include "osgGA/StateSetManipulator"
+#include "osgViewer/ViewerEventHandlers"
+
+/****************************************************************************/
+namespace simVis
+{
+Viewer::Viewer()
+{
+  init_();
+}
+
+Viewer::Viewer(osg::ArgumentParser& parser) :
+simVis::ViewManager(parser)
+{
+  init_();
+}
+
+void Viewer::init_()
+{
+  // create a scene manager that all the views will share.
+  scene_ = new SceneManager();
+  // Logarithmic depth buffer managing view depth buffer settings
+  logDb_ = new ViewManagerLogDbAdapter;
+  setLogarithmicDepthBufferEnabled(true);
+
+  // start by adding a default Main view.
+  simVis::View* mainView = new simVis::View();
+  addView(mainView);
+  mainView->setName("Main View");
+  mainView->setUpViewOnSingleScreen();
+  mainView->setSceneManager(scene_.get());
+
+  const char* win = ::getenv("OSG_WINDOW");
+  if (win)
+  {
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    std::istringstream iss(win);
+    iss >> x >> y >> width >> height;
+    if (!iss.fail() && width > 0 && height > 0)
+      mainView->setUpViewInWindow(x, y, width, height, 0u);
+  }
+
+  // by default, the database pager unreferenced image objects once it downloads them
+  // the driver. In composite viewer mode we don't want that since we may be
+  // adding and removing views.
+  mainView->getScene()->getDatabasePager()->setUnrefImageDataAfterApplyPolicy(true, false);
+}
+
+void Viewer::setMapNode(osgEarth::MapNode* mapNode)
+{
+  // assign it to the scene manager:
+  scene_->setMapNode(mapNode);
+
+  // update each of the views' camera manipulator:
+  std::vector<simVis::View*> views;
+  getViews(views);
+  for (std::vector<simVis::View*>::const_iterator i = views.begin(); i != views.end(); ++i)
+  {
+    // Each view in the views list should be valid and non-NULL
+    assert(*i);
+    if (*i == NULL)
+      continue;
+
+    // Not every view necessarily has a camera manipulator (e.g. SuperHud doesn't)
+    osgGA::CameraManipulator* manip = (*i)->getCameraManipulator();
+    if (manip)
+    {
+      // Changing the manipulator attach point will reset the view; save and restore the view.
+      simVis::Viewpoint vp = (*i)->getViewpoint();
+      manip->setNode(NULL);
+      manip->setNode(scene_->getManipulatorAttachPoint());
+      (*i)->setViewpoint(vp, 0);
+    }
+  }
+}
+
+void Viewer::setMap(osgEarth::Map* map)
+{
+  // assign it to the scene manager:
+  scene_->setMap(map);
+}
+
+int Viewer::run()
+{
+  bool hasManip = getMainView()->getCameraManipulator() != NULL;
+  osg::Matrix savedViewMatrix;
+
+  // do some final set up before running the frame loop.
+  if (scene_.valid())
+  {
+    if (hasManip)
+    {
+      Viewpoint saveVP = getMainView()->getViewpoint();
+      getMainView()->getCameraManipulator()->setNode(scene_->getManipulatorAttachPoint());
+      getMainView()->setViewpoint(saveVP);
+    }
+  }
+
+  savedViewMatrix = getMainView()->getCamera()->getViewMatrix();
+
+  // temporary
+  // getMainView()->setUpViewInWindow(30, 30, 1280, 800, 0);
+
+  if (!hasManip)
+  {
+    getMainView()->setCameraManipulator(NULL);
+    getMainView()->getCamera()->setViewMatrix(savedViewMatrix);
+  }
+
+  // install a persistent update operation that will run the inset manager's
+  // update operation.
+  //getViewer()->addUpdateOperation( new RunInsetManagerUpdateOperations(insetMan_.get()) );
+
+  return ViewManager::run();
+}
+
+View* Viewer::getMainView()
+{
+  return getNumViews() > 0 ? getView(0) : NULL;
+}
+
+const View* Viewer::getMainView() const
+{
+  return getNumViews() > 0 ? getView(0) : NULL;
+}
+
+void Viewer::addEventHandler(osgGA::GUIEventHandler* handler)
+{
+  getMainView()->addEventHandler(handler);
+}
+
+void Viewer::removeEventHandler(osgGA::GUIEventHandler* handler)
+{
+  getMainView()->removeEventHandler(handler);
+}
+
+void Viewer::addGlobalEventHandler(osgGA::GUIEventHandler* handler)
+{
+//  insetMan_->addEventHandler(handler);
+  getMainView()->addEventHandler(handler);
+}
+
+void Viewer::setNavigationMode(const NavMode& mode)
+{
+  // update each of the views' camera manipulator:
+  std::vector<simVis::View*> views;
+  this->getViews(views);
+
+  for (std::vector<simVis::View*>::const_iterator i = views.begin(); i != views.end(); ++i)
+  {
+    (*i)->setNavigationMode(mode);
+  }
+}
+
+void Viewer::installDebugHandlers()
+{
+  installBasicDebugHandlers();
+  addEventHandler(new osgViewer::WindowSizeHandler());
+}
+
+void Viewer::installBasicDebugHandlers()
+{
+  osgViewer::StatsHandler* stats = new osgViewer::StatsHandler();
+  stats->getCamera()->setAllowEventFocus(false);
+  addEventHandler(stats);
+  addEventHandler(new osgGA::StateSetManipulator(getMainView()->getCamera()->getOrCreateStateSet()));
+}
+
+void Viewer::setUpDatabasePagerThreads(unsigned int totalNumThreads, unsigned int numHttpThreads)
+{
+  osg::observer_ptr<simVis::View> mainView = getMainView();
+  if (mainView.valid())
+    mainView->getDatabasePager()->setUpThreads(totalNumThreads, numHttpThreads);
+}
+
+unsigned int Viewer::getNumDatabasePagerThreads() const
+{
+  osg::observer_ptr<const simVis::View> mainView = getMainView();
+  if (mainView.valid())
+    return mainView->getDatabasePager()->getNumDatabaseThreads();
+  return 0;
+}
+
+void Viewer::setLogarithmicDepthBufferEnabled(bool enabled)
+{
+  if (enabled)
+    logDb_->install(this);
+  else
+    logDb_->uninstall(this);
+}
+
+bool Viewer::isLogarithmicDepthBufferEnabled() const
+{
+  return logDb_->isInstalled(this);
+}
+
+}

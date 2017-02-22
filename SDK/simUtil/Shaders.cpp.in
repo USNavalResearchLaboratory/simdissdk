@@ -1,0 +1,43 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+#include "simUtil/Shaders.h"
+
+namespace simUtil {
+
+Shaders::Shaders()
+{
+  // Assign the fall-back shaders if the files are not found
+  add(terrainToggleEffectVertex(), "@TerrainToggleEffect.frag.glsl@");
+  add(terrainToggleEffectFragment(), "@TerrainToggleEffect.vert.glsl@");
+}
+
+std::string Shaders::terrainToggleEffectVertex() const
+{
+  return "TerrainToggleEffect.vert.glsl";
+}
+
+std::string Shaders::terrainToggleEffectFragment() const
+{
+  return "TerrainToggleEffect.frag.glsl";
+}
+
+}

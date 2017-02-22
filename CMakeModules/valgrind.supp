@@ -1,0 +1,227 @@
+{
+   Protobuf_SuppressStaticDescriptor
+   Memcheck:Leak
+   ...
+   fun:_Z41__static_initialization_and_destruction_0ii
+}
+
+{
+  GLlib:Cond
+  Memcheck:Cond
+  obj:*/libGLcore.so.*
+  ...
+}
+
+{
+  AllofGL
+  Memcheck:Value8
+  obj:*/libGLcore.so.*.*
+  ...
+}
+
+{
+  AllofX
+  Memcheck:Cond
+  obj:*/libXft.so.*.*.*
+  ...
+}
+
+{
+  AllofX
+  Memcheck:Cond
+  obj:*/libXcursor.so.*.*.*
+  ...
+}
+
+{
+  AllofX
+  Memcheck:Param
+  writev(vector[...])
+  fun:writev
+  obj:*/libX11.so.*.*.*
+  ...
+}
+
+{
+  AllofThread
+  Memcheck:Param
+  write(buf)
+  obj:*/libpthread-2.*.so
+  ...
+}
+
+{
+   GLIssue
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.*
+   obj:*/libGL.so.*
+   obj:*/libGLcore.so.*
+   obj:*
+}
+
+{
+   GLIssue
+   Memcheck:Leak
+   fun:?alloc
+   ...
+   fun:dlopen@@GLIBC_2.*
+   obj:*/libGL.so.*.*
+}
+
+{
+   GLIssue
+   Memcheck:Leak
+   fun:realloc
+   obj:*/libGL.so.*.*
+}
+
+{
+  Ignore CPLCreateOrAcquireMutex issues
+  Memcheck:Leak
+  ...
+  fun:CPLCreateOrAcquireMutex
+  ...
+}
+
+{
+   QDir::homePath leaves reachable memory
+   Memcheck:Leak
+   ...
+   fun:*QString*Local8Bit*
+   ...
+   fun:*QDir*homePath*
+   ...
+}
+
+{
+   QDir::exists leaves reachable memory
+   Memcheck:Leak
+   ...
+   fun:*QString*Local8Bit*
+   ...
+   fun:*QDir*exist*
+   ...
+}
+
+{
+   QFile::exists leaves reachable memory
+   Memcheck:Leak
+   ...
+   fun:*QString*Local8Bit*
+   ...
+   fun:*QFile*exist*
+   ...
+}
+
+{
+   QFile constructor leaves reachable memory
+   Memcheck:Leak
+   ...
+   fun:*QObject*QObjectPrivate*
+   fun:*QIODevice*QIODevicePrivate*QObject*
+   fun:*QFile*QString*
+   ...
+}
+
+{
+   osgEarth CURL Leak ignored
+   Memcheck:Leak
+   ...
+   fun:curl_global_init
+   fun:*osgEarth*HTTPClient*globalInit*
+   ...
+}
+
+{
+   osgEarth Registry initialization of GDAL ignored (OGR)
+   Memcheck:Leak
+   ...
+   fun:OGRRegisterAll
+   ...
+}
+
+{
+   Initialization of GDAL ignored (GDAL)
+   Memcheck:Leak
+   ...
+   fun:GDALAllRegister
+   ...
+}
+
+{
+   osgEarth Registry initialization
+   Memcheck:Leak
+   ...
+   fun:*osgEarth*Registry*instance*
+   ...
+}
+
+{
+   osgEarth Registry initialization of GDAL ignored (GDAL)
+   Memcheck:Leak
+   ...
+   fun:*LoadProjLibrary*
+   ...
+}
+
+{
+   GDAL File Manager
+   Memcheck:Leak
+   ...
+   fun:*VSIFileManager*
+   ...
+}
+
+{
+   QSettings leaks in QLockFile/QTemporaryFile/QFile/qrand.
+   Memcheck:Leak
+   ...
+   fun:*qrand*
+   ...
+   fun:*QTemporaryFile*open*
+   ...
+   fun:*QSettings*
+   ...
+}
+
+{
+   QSettings leaks in QLibraryInfo::location.
+   Memcheck:Leak
+   ...
+   fun:*QLibraryInfo*location*
+   ...
+   fun:*QSettings*
+   ...
+}
+
+{
+   Invalid free / delete / delete[] in exit on unit tests
+   Memcheck:Free
+   fun:free
+   ...
+   fun:_vgnU_freeres
+   fun:exit
+   ...
+}
+
+
+{
+   UnitsFormatter test issue from OSG if DLL not found
+   Memcheck:Leak
+   ...
+   fun:_dlerror_run*
+   ...
+   fun:dlopen*
+   ...
+   fun:*osgDB*DynamicLibrary*getLibraryHandle*
+   ...
+}
+

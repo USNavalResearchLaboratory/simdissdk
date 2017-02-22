@@ -1,0 +1,637 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+#include <osg/LineWidth>
+#include <osgEarth/GeoData>
+#include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simNotify/Notify.h"
+#include "simData/LinearInterpolator.h"
+#include "simVis/AnimatedLine.h"
+#include "simVis/Utils.h"
+#include "simVis/OverheadMode.h"
+#include "simVis/LobGroup.h"
+
+#define LC "[simVis::LobGroup] "
+
+namespace
+{
+
+/** Determines whether the new prefs will require new geometry */
+bool prefsRequiresRebuild(const simData::LobGroupPrefs* a, const simData::LobGroupPrefs* b)
+{
+  if (a == NULL || b == NULL)
+    return false; // simple case
+
+  if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor))
+  {
+    // force rebuild if useOverrideColor pref changed
+    return true;
+  }
+  else if (b->commonprefs().useoverridecolor() && PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
+  {
+    // force rebuild if override color changed and it is being used
+    return true;
+  }
+
+  return false; // TODO, further optimization
+}
+} // anonymous namespace
+
+namespace simVis
+{
+
+// Observer for the DataTableManager for new and removed data tables
+class LobGroupNode::InternalTableObserver : public simData::DataTableManager::ManagerObserver
+{
+public:
+  explicit InternalTableObserver(LobGroupNode& parent)
+    : parent_(parent)
+  {}
+  void onAddTable(simData::DataTable* table)
+  {
+    if ((table != NULL) && (table->ownerId() == parent_.getId()) && (table->tableName() == simData::INTERNAL_LOB_DRAWSTYLE_TABLE))
+      parent_.initializeTableId_();
+  }
+  void onPreRemoveTable(simData::DataTable* table)
+  {
+    if (table != NULL && table->tableId() == parent_.drawStyleTableId_)
+      parent_.drawStyleTableId_ = 0;
+  }
+private:
+  LobGroupNode& parent_;
+};
+
+
+
+/// maps time to one or more animated lines
+class LobGroupNode::Cache
+{
+public:
+  /** Constructor */
+  Cache()
+  {
+  }
+
+  ~Cache()
+  {
+  }
+
+  /** Retrieves the number of animated lines in the cache */
+  int numLines() const
+  {
+    return static_cast<int>(entries_.size());
+  }
+
+  /** Removes all animated lines from the cache under the parent */
+  void clearCache(osg::Group* parent)
+  {
+    // removes all LOB draw nodes
+    for (LineCache::const_iterator iter = entries_.begin(); iter != entries_.end(); ++iter)
+    {
+      parent->removeChild(iter->second);
+    }
+    // clear out cache
+    entries_.clear();
+  }
+
+  /** Removes items from the cache that are outside [firstTime,lastTime] */
+  void pruneCache(osg::Group* parent, double firstTime, double lastTime)
+  {
+    // since the ordered multimap keys are ordered by time, remove all entries < firstTime time
+    const LineCache::iterator newStart = entries_.find(firstTime);
+    for (LineCache::const_iterator iter = entries_.begin(); iter != newStart; ++iter)
+    {
+      parent->removeChild(iter->second);
+    }
+    if (newStart != entries_.begin())
+      entries_.erase(entries_.begin(), newStart);
+
+    // since the ordered multimap keys are ordered by time, remove all entries > lastTime time
+    const LineCache::iterator newEnd = entries_.upper_bound(lastTime);
+    for (LineCache::const_iterator iter = newEnd; iter != entries_.end(); ++iter)
+    {
+      parent->removeChild(iter->second);
+    }
+    if (newEnd != entries_.end())
+      entries_.erase(newEnd, entries_.end());
+  }
+
+  /// update all lines to have the prefs in 'p'
+  void setAllLineProperties(const simData::LobGroupPrefs &p)
+  {
+    // TODO body offset
+    for (LineCache::const_iterator i = entries_.begin(); i != entries_.end(); ++i)
+    {
+      // only changeable pref is color override (maxdatapoints and maxdataseconds are handled in refresh())
+      if (p.commonprefs().useoverridecolor())
+        i->second->setColorOverride(simVis::ColorUtils::RgbaToVec4(p.commonprefs().overridecolor()));
+      else
+        i->second->clearColorOverride();
+    }
+  }
+
+  /// return true if there are any lines for time 't'
+  bool hasTime(double t) const
+  {
+    return (entries_.find(t) != entries_.end());
+  }
+
+  /// add animated line 'a' at time 't'
+  void addLineAtTime(double t, AnimatedLineNode *a)
+  {
+    entries_.insert(std::make_pair(t, osg::ref_ptr<AnimatedLineNode>(a)));
+  }
+
+protected:
+  typedef std::multimap<double, osg::ref_ptr<AnimatedLineNode> > LineCache;
+  /** Multimap of scenario time to the animated lines at that time */
+  LineCache entries_;
+};
+
+LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props,
+                           EntityNode* host,
+                           CoordSurfaceClamping* surfaceClamping,
+                           simData::DataStore &ds)
+  : EntityNode(simData::DataStore::LOB_GROUP, new Locator(host->getLocator(), Locator::COMP_POSITION)),
+    lastProps_(props),
+    hasLastUpdate_(false),
+    lastPrefsValid_(false),
+    surfaceClamping_(surfaceClamping),
+    coordConverter_(new simCore::CoordinateConverter()),
+    ds_(ds),
+    hostId_(host->getId()),
+    drawStyleTableId_(0),
+    lineCache_(new Cache),
+    label_(NULL),
+    contentCallback_(new NullEntityCallback())
+{
+  setName("LobGroup");
+  localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
+  addChild(localGrid_);
+
+  osg::Group* labelRoot = new LocatorNode(new Locator(getLocator(), Locator::COMP_POSITION));
+  label_ = new EntityLabelNode(labelRoot);
+  this->addChild(labelRoot);
+
+  // horizon culling:
+  this->addCullCallback( new osgEarth::HorizonCullCallback() );
+
+  osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
+  callback->setCullByCenterPointOnly(true);
+  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
+  callback->setProxyNode(this);
+  label_->addCullCallback(callback);
+
+  // flatten in overhead mode.
+  simVis::OverheadMode::enableGeometryFlattening(true, this);
+
+  initializeTableId_();
+  internalTableObserver_.reset(new InternalTableObserver(*this));
+  ds.dataTableManager().addObserver(internalTableObserver_);
+}
+
+LobGroupNode::~LobGroupNode()
+{
+  ds_.dataTableManager().removeObserver(internalTableObserver_);
+  delete coordConverter_;
+  coordConverter_ = NULL;
+  lineCache_->clearCache(this);
+  delete lineCache_;
+  lineCache_ = NULL;
+}
+
+void LobGroupNode::updateLabel_(const simData::LobGroupPrefs& prefs)
+{
+  if (hasLastUpdate_)
+  {
+    std::string label = getEntityName(EntityNode::DISPLAY_NAME);
+    if (prefs.commonprefs().labelprefs().namelength() > 0)
+      label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
+
+    std::string text;
+    if (prefs.commonprefs().labelprefs().draw())
+      text = contentCallback_->createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+
+    if (!text.empty())
+    {
+      label += "\n";
+      label += text;
+    }
+
+    const float zOffset = 0.0f;
+    label_->update(prefs.commonprefs(), label, zOffset);
+  }
+}
+
+void LobGroupNode::setLabelContentCallback(LabelContentCallback* cb)
+{
+  if (cb == NULL)
+    contentCallback_ = new NullEntityCallback();
+  else
+    contentCallback_ = cb;
+}
+
+LabelContentCallback* LobGroupNode::labelContentCallback() const
+{
+  return contentCallback_.get();
+}
+
+std::string LobGroupNode::legendText() const
+{
+  if (hasLastUpdate_ && lastPrefsValid_)
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+
+  return "";
+}
+
+void LobGroupNode::setPrefs(const simData::LobGroupPrefs &prefs)
+{
+  // update the visibility
+  const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
+  const bool drawn = prefs.commonprefs().datadraw() && prefs.commonprefs().draw();
+  setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
+
+  // validate local grid prefs changes that might provide user notifications
+  localGrid_->validatePrefs(prefs.commonprefs().localgrid());
+  localGrid_->setPrefs(prefs.commonprefs().localgrid());
+
+  // process pref change - only override color
+  if (!lastPrefsValid_ || prefsRequiresRebuild(&lastPrefs_, &prefs))
+    lineCache_->setAllLineProperties(prefs);
+
+  // check for override range change or clamping change
+  // either: use override change or
+  // we are using override, and the override value changed
+  if (!lastPrefsValid_ ||
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, userangeoverride) ||
+      (lastPrefs_.userangeoverride() && PB_FIELD_CHANGED(&lastPrefs_, &prefs, rangeoverridevalue)) ||
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, lobuseclampalt))
+  {
+    // rebuild all lines
+    lineCache_->clearCache(this);
+    const simData::LobGroupUpdateSlice *updateSlice = ds_.lobGroupUpdateSlice(lastProps_.id());
+    if (updateSlice)
+    {
+      const simData::LobGroupUpdate *currentUpdate = ds_.lobGroupUpdateSlice(lastProps_.id())->current();
+      if (currentUpdate)
+        updateCache_(*currentUpdate, prefs);
+    }
+  }
+
+  lastPrefs_ = prefs;
+  lastPrefsValid_ = true;
+
+  // label does not perform any PB_FIELD_CHANGED tests on prefs, requires that lastPrefs_ be the up-to-date prefs.
+  updateLabel_(prefs);
+}
+
+int LobGroupNode::initializeTableId_()
+{
+  // try to initialize the table id for quick access to the internal table, if it exists
+  if (drawStyleTableId_ != 0)
+    return 0;
+  simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
+  if (table == NULL)
+    return 1;
+  drawStyleTableId_ = table->tableId();
+  assert(drawStyleTableId_ > 0); // a table was created with an invalid table id, check that DataTableManager has not changed how it creates table ids
+  return 0;
+}
+
+void LobGroupNode::setLineDrawStyle_(double time, simVis::AnimatedLineNode& line, const simData::LobGroupPrefs& defaultValues)
+{
+  if (drawStyleTableId_ == 0)
+  {
+    setLineValueFromPrefs_(line, defaultValues);
+    return;
+  }
+  simData::DataTable* table = NULL;
+  // use the drawStyleTableId_ if we have it
+  table = ds_.dataTableManager().getTable(drawStyleTableId_);
+  // no draw style history table, simply use the default values from prefs
+  if (table == NULL)
+  {
+    setLineValueFromPrefs_(line, defaultValues);
+    return;
+  }
+
+  simData::LobGroupPrefs prefs;
+  // initialize to the current pref values
+  prefs.CopyFrom(defaultValues);
+  uint32_t color1;
+  uint32_t color2;
+  uint16_t stipple1;
+  uint16_t stipple2;
+  uint8_t lineWidth;
+  // update the draw style values from internal data table, if the values exist
+  if (getColumnValue_(simData::INTERNAL_LOB_COLOR1_COLUMN, *table, time, color1) == 0)
+    prefs.set_color1(color1);
+  if (getColumnValue_(simData::INTERNAL_LOB_COLOR2_COLUMN, *table, time, color2) == 0)
+    prefs.set_color2(color2);
+  if (getColumnValue_(simData::INTERNAL_LOB_STIPPLE1_COLUMN, *table, time, stipple1) == 0)
+    prefs.set_stipple1(stipple1);
+  if (getColumnValue_(simData::INTERNAL_LOB_STIPPLE2_COLUMN, *table, time, stipple2) == 0)
+    prefs.set_stipple2(stipple2);
+  if (getColumnValue_(simData::INTERNAL_LOB_LINEWIDTH_COLUMN, *table, time, lineWidth) == 0)
+    prefs.set_lobwidth(lineWidth);
+
+  setLineValueFromPrefs_(line, prefs);
+}
+
+void LobGroupNode::setLineValueFromPrefs_(AnimatedLineNode& line, const simData::LobGroupPrefs& prefs) const
+{
+  line.setStipple1(prefs.stipple1());
+  line.setStipple2(prefs.stipple2());
+  line.setLineWidth(prefs.lobwidth());
+  line.setColor1(simVis::ColorUtils::RgbaToVec4(prefs.color1()));
+  line.setColor2(simVis::ColorUtils::RgbaToVec4(prefs.color2()));
+
+  if (prefs.commonprefs().useoverridecolor())
+    line.setColorOverride(simVis::ColorUtils::RgbaToVec4(prefs.commonprefs().overridecolor()));
+}
+
+template <class T>
+int LobGroupNode::getColumnValue_(const std::string& columnName, const simData::DataTable& table, double time, T& value) const
+{
+  simData::TableColumn* column = table.column(columnName);
+  if (column == NULL)
+    return 1;
+
+  simData::TableColumn::Iterator iter = column->findAtOrBeforeTime(time);
+  if (!iter.hasNext())
+  {
+    return 1;
+  }
+  if (iter.next()->getValue(value).isError())
+  {
+    assert(0); // getValue failed, but hasNext claims it exists. Check DataSlice Iterator logic for data tables
+    return 1;
+  }
+  return 0;
+}
+
+void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const simData::LobGroupPrefs& prefs)
+{
+  const int numLines = update.datapoints_size();
+  const simData::PlatformUpdateSlice *platformData = ds_.platformUpdateSlice(hostId_);
+  if ((numLines <= 0) || (platformData == NULL))
+  {
+    // no lines, clear out cache and remove all draw nodes
+    lineCache_->clearCache(this);
+    return;
+  }
+
+  // prune the cache, since the data max values may adjust how much data is shown
+  const double firstTime = update.datapoints(0).time();
+  const double lastTime = update.datapoints(numLines-1).time();
+  lineCache_->pruneCache(this, firstTime, lastTime);
+
+  simData::Interpolator* li = ds_.interpolator();
+  for (int index = 0; index < numLines;) // Incremented in the for loop below
+  {
+    // handle all lines with this time (if time is not already in the cache)
+    const double time = update.datapoints(index).time();
+    if (lineCache_->hasTime(time))
+    {
+      ++index;
+      continue;
+    }
+
+    // prepare to add this line to the cache - process the host platform position once for all endpoints
+    const simData::PlatformUpdateSlice::Iterator platformIter = platformData->upper_bound(time);
+    if (!platformIter.hasPrevious())
+    {
+      // cannot process this LOB since there is no platform position at or before lob time; possibly the platform point was removed by data limiting.
+      ++index;
+      continue;
+      // note that this will create the condition that numLines != lineCache_->numLines()
+    }
+    // last update at or before t:
+    const simData::PlatformUpdate* platformUpdate = platformIter.peekPrevious();
+
+    // interpolation may be required for LOBs on a moving platform
+    simData::PlatformUpdate interpolatedPlatformUpdate;
+    if (platformUpdate->time() != time && li != NULL && platformIter.hasNext())
+    {
+      // defn of upper_bound previous()
+      assert(platformUpdate->time() < time);
+      // defn of upper_bound next()
+      assert(platformIter.peekNext()->time() > time);
+      li->interpolate(time, *platformUpdate, *(platformIter.peekNext()), &interpolatedPlatformUpdate);
+      platformUpdate = &interpolatedPlatformUpdate;
+    }
+
+    // construct the starting coordinate
+    const simCore::Coordinate platformCoordPosOnly(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate->x(), platformUpdate->y(), platformUpdate->z()));
+    // create a copy to use for clamping, if needed
+    simCore::Coordinate clampedPlatformCoord(platformCoordPosOnly);
+
+    simCore::Coordinate llaCoord;
+    if (lastProps_.azelrelativetohostori())
+    {
+      // calculate host orientation in LLA, used for determining a relative LOB's true angle
+      const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate->x(), platformUpdate->y(), platformUpdate->z()),
+                                          simCore::Vec3(platformUpdate->psi(), platformUpdate->theta(), platformUpdate->phi()));
+      simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoord, llaCoord);
+    }
+
+    // calculate the clamped host platform coord only once, for all lines at this same time
+    if (prefs.lobuseclampalt())
+    {
+      applyPlatformCoordClamping_(clampedPlatformCoord);
+    }
+
+    // processs endpoints for all lines at same time; all share same host platform position just calc'd
+    for (; index < update.datapoints_size() && update.datapoints(index).time() == time; ++index)
+    {
+      // calculate end point based on update point RAE
+      const simData::LobGroupUpdatePoint &curP = update.datapoints(index);
+
+      // find the point relative to the start
+      simCore::Vec3 endPoint;
+
+      simCore::Vec3 lobAngles(curP.azimuth(), curP.elevation(), 0.0);
+      if (lastProps_.azelrelativetohostori())
+      {
+        // Offset the host orientation angles via the LOB relative orientation for body-relative mode
+        lobAngles = simCore::rotateEulerAngle(llaCoord.orientation(), lobAngles);
+      }
+
+      // check for minimum range
+      const double range = prefs.userangeoverride() ? prefs.rangeoverridevalue() : curP.range();
+      simCore::v3SphtoRec(range, lobAngles.yaw(), lobAngles.pitch(), endPoint);
+      simCore::Coordinate endCoord(simCore::COORD_SYS_XEAST, endPoint);
+
+      if (prefs.lobuseclampalt())
+        applyEndpointCoordClamping_(endCoord);
+
+      //--- construct the line
+      AnimatedLineNode *line = new AnimatedLineNode;
+      line->setShiftsPerSecond(0);
+
+      // set starting prefs
+      setLineDrawStyle_(time, *line, prefs);
+
+      // set coordinates
+      line->setEndPoints(clampedPlatformCoord, endCoord);
+
+      // insert into cache
+      lineCache_->addLineAtTime(time, line);
+      addChild(line);
+    }
+
+    // set the local grid for platform's position and az/el of the last of the lobs
+    if (index == numLines)
+    {
+      const simData::LobGroupUpdatePoint &curP = update.datapoints(update.datapoints_size()-1);
+      simCore::Vec3 lobAngles(curP.azimuth(), curP.elevation(), 0.0);
+      if (lastProps_.azelrelativetohostori())
+      {
+        // Offset the host orientation angles via the LOB relative orientation for body-relative mode
+        lobAngles = simCore::rotateEulerAngle(llaCoord.orientation(), lobAngles);
+      }
+      // Use position only, otherwise rendering will be adversely affected
+      getLocator()->setCoordinate(platformCoordPosOnly, time);
+      getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles);
+    }
+  }
+}
+
+bool LobGroupNode::isActive() const
+{
+  return hasLastUpdate_ && lastPrefs_.commonprefs().datadraw();
+}
+
+const std::string LobGroupNode::getEntityName(EntityNode::NameType nameType, bool allowBlankAlias) const
+{
+  if (!lastPrefsValid_)
+  {
+    assert(0);
+    return "";
+  }
+  switch (nameType)
+  {
+  case EntityNode::REAL_NAME:
+    return lastPrefs_.commonprefs().name();
+  case EntityNode::ALIAS_NAME:
+    return lastPrefs_.commonprefs().alias();
+  case EntityNode::DISPLAY_NAME:
+    if (lastPrefs_.commonprefs().usealias())
+    {
+      if (!lastPrefs_.commonprefs().alias().empty() || allowBlankAlias)
+        return lastPrefs_.commonprefs().alias();
+    }
+    return lastPrefs_.commonprefs().name();
+  }
+  return "";
+}
+
+simData::ObjectId LobGroupNode::getId() const
+{
+  return lastProps_.id();
+}
+
+bool LobGroupNode::getHostId(simData::ObjectId& out_hostId) const
+{
+  out_hostId = lastProps_.hostid();
+  return true;
+}
+
+bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSliceBase, bool force)
+{
+  const simData::LobGroupUpdateSlice *updateSlice = static_cast<const simData::LobGroupUpdateSlice*>(updateSliceBase);
+  assert(updateSlice);
+  const simData::LobGroupUpdate* current = updateSlice->current();
+  const bool lobChangedToActive = (current != NULL && !hasLastUpdate_);
+
+  if (!updateSlice->hasChanged() && !force && !lobChangedToActive)
+    return false;
+
+  if (current)
+  {
+    // lobGroup gets a pref update immediately after creation; after that, lastPrefsValid_ should always be true
+    assert(lastPrefsValid_);
+    updateCache_(*current, lastPrefs_);
+    lastUpdate_ = *current;
+    hasLastUpdate_ = true;
+
+    // update the visibility
+    const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
+    const bool drawn = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
+    setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
+
+    // if this lobgroup is drawn, tell its local grid to update
+    assert(localGrid_);
+    if (getNodeMask() != DISPLAY_MASK_NONE)
+      localGrid_->notifyHostLocatorChange();
+  }
+  else
+  {
+    setNodeMask(DISPLAY_MASK_NONE);
+    hasLastUpdate_ = false;
+  }
+  return true;
+}
+
+void LobGroupNode::flush()
+{
+  lineCache_->clearCache(this);
+}
+
+double LobGroupNode::range() const
+{
+  if (!hasLastUpdate_)
+    return 0.0;
+
+  if (lastUpdate_.datapoints_size() == 0)
+    return 0.0;
+
+  const simData::LobGroupUpdatePoint &curP = lastUpdate_.datapoints(lastUpdate_.datapoints_size()-1);
+  return curP.range();
+}
+
+void LobGroupNode::applyPlatformCoordClamping_(simCore::Coordinate& platformCoord)
+{
+  if (!surfaceClamping_)
+    return;
+
+  surfaceClamping_->clampCoordToMapSurface(platformCoord);
+
+  // platform position is always our coordinate converter reference origin, in LLA
+  simCore::Coordinate platLla;
+  simCore::CoordinateConverter::convertEcefToGeodetic(platformCoord, platLla);
+  coordConverter_->setReferenceOrigin(platLla.position());
+}
+
+void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoord)
+{
+  if (!surfaceClamping_)
+    return;
+
+  // convert to lla for surface clamping call
+  simCore::Coordinate endLla;
+  coordConverter_->convert(endpointCoord, endLla, simCore::COORD_SYS_LLA);
+  surfaceClamping_->clampCoordToMapSurface(endLla);
+  coordConverter_->convert(endLla, endpointCoord, simCore::COORD_SYS_XEAST);
+}
+
+} // namespace simVis
