@@ -183,7 +183,7 @@ int GogToGeoFence::parseEndKeyword_(int lineNumber, bool& start, bool& poly, boo
     // Check that newly created GeoFence is convex
     if (!fence->valid())
     {
-      SIM_ERROR << "Fence \"" << (name == "" ? "no name" : name) << "\" is convex. This shape will be drawn but will not act as an exclusion zone.\n";
+      SIM_ERROR << "Fence \"" << (name == "" ? "no name" : name) << "\" is concave. This shape will be drawn but will not act as an exclusion zone.\n";
     }
     fences_.push_back(fence);
   }
