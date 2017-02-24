@@ -133,6 +133,13 @@ int GogToGeoFence::parse(std::istream& is)
     }
   }
 
+  // If fences_ is empty, then all GOG shapes parsed were invalid
+  if (fences_.empty())
+  {
+    SIM_ERROR << "The GOG file contains only invalid (concave) shapes. GeoFence parsing failed.\n";
+    return 1;
+  }
+
   return 0;
 }
 
@@ -185,7 +192,9 @@ int GogToGeoFence::parseEndKeyword_(int lineNumber, bool& start, bool& poly, boo
     {
       SIM_ERROR << "Fence \"" << (name == "" ? "no name" : name) << "\" is concave. This shape will be drawn but will not act as an exclusion zone.\n";
     }
-    fences_.push_back(fence);
+    // Only keep the fence if it is valid
+    else
+      fences_.push_back(fence);
   }
 
   // Clear coordinates for the next poly

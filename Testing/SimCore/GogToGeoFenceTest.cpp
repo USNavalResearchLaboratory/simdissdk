@@ -339,7 +339,7 @@ int testValidity()
   g.parse(is);
   g.getFences(fences);
 
-  rv += SDK_ASSERT(!fences[0]->valid());
+  rv += SDK_ASSERT(fences.empty());
 
   return rv;
 }
