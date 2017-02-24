@@ -842,7 +842,7 @@ message BeamPrefs {
     };
 
     /// Type of pattern; either from a file, or from an algorithm
-    optional Type type = 1 [default = NONE];
+    optional Type type = 1 [default = ALGORITHM];
 
     /// Different file formats that are supported
     enum FileFormat {
