@@ -21,7 +21,6 @@
  */
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osg/MatrixTransform"
 #include "osgEarthSymbology/MeshConsolidator"
 
 #include "simCore/Calc/Angle.h"
@@ -61,17 +60,10 @@ AntennaNode::~AntennaNode()
 void AntennaNode::setRange(float range)
 {
   beamRange_ = range;
-  if (getNumChildren() == 1)
-  {
-    osg::MatrixTransform* antennaMatrix = dynamic_cast<osg::MatrixTransform*>(getChild(0));
-    if (antennaMatrix == NULL)
-    {
-      // the antenna MatrixTransform should be the only child of this antennaNode. this must be updated if other children are being added
-      assert(0);
-      return;
-    }
-    applyScale_(*antennaMatrix);
-  }
+
+  // only applyScale if we have a geode/geometry
+  if (getNumChildren() != 0)
+    applyScale_();
 }
 
 bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
@@ -161,9 +153,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
     beamScale_ = prefs.beamscale();
     lastPrefs_ = prefs;
     render_();
-    // render logic always creates the child and adds it; if assert fails, check for changes in render logic
-    assert(getNumChildren() == 1);
-    getChild(0)->setNodeMask(simVis::DISPLAY_MASK_BEAM);
+    setNodeMask(simVis::DISPLAY_MASK_BEAM);
     updateLighting_(prefs.shaded());
     updateBlending_(prefs.blended());
     return true;
@@ -191,16 +181,14 @@ void AntennaNode::updateLighting_(bool shaded)
 {
   osg::StateSet* stateSet = getOrCreateStateSet();
   simVis::setLighting(stateSet,
-    (shaded ? osg::StateAttribute::ON : osg::StateAttribute::OFF) |
-    osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
+    (shaded ? osg::StateAttribute::ON : osg::StateAttribute::OFF));
 }
 
 void AntennaNode::updateBlending_(bool blending)
 {
   osg::StateSet* stateSet = getOrCreateStateSet();
-  stateSet->setMode(GL_BLEND, blending ?
-    osg::StateAttribute::ON :
-    (osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE));
+  stateSet->setMode(GL_BLEND, 
+    (blending ? osg::StateAttribute::ON : osg::StateAttribute::OFF));
 }
 
 float AntennaNode::PatternGain(float azim, float elev, simCore::PolarityType polarity) const
@@ -253,13 +241,13 @@ float AntennaNode::ComputeRadius_(float azim, float elev, simCore::PolarityType 
 }
 
 // antennaPattern's scale is a product of update range (in m) and beamScale preference (no units, 1.0 default)
-void AntennaNode::applyScale_(osg::MatrixTransform& antennaMatrix)
+void AntennaNode::applyScale_()
 {
-  float newScale = beamRange_ * beamScale_;
-  antennaMatrix.setMatrix(osg::Matrixf::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
+  const float newScale = beamRange_ * beamScale_;
+  setMatrix(osg::Matrixf::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
   if (newScale != 1.0f)
   {
-    antennaMatrix.getOrCreateStateSet()->setMode(GL_RESCALE_NORMAL, 1);
+    getOrCreateStateSet()->setMode(GL_RESCALE_NORMAL, 1);
   }
 }
 
@@ -271,7 +259,7 @@ void AntennaNode::render_()
   // lastPrefs_ must be valid before a pattern can be rendered; if assert fails, check for changes in setPrefs
   assert(lastPrefs_.isSet());
 
-  this->removeChildren(0, this->getNumChildren());
+  removeChildren(0, getNumChildren());
 
   osg::Geometry* antGeom = new osg::Geometry();
   antGeom->setDataVariance(osg::Object::DYNAMIC);
@@ -552,10 +540,7 @@ void AntennaNode::render_()
 
   // optimize the geode:
   osgEarth::Symbology::MeshConsolidator::run(*geode);
-
-  osg::MatrixTransform* mat = new osg::MatrixTransform;
-  mat->addChild(geode);
-  applyScale_(*mat);
-  addChild(mat);
+  addChild(geode);
+  applyScale_();
 }
 }

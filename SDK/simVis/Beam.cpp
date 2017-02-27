@@ -556,7 +556,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 
     if (refreshRequiresNewNode)
     {
-      node_ = dynamic_cast<osg::MatrixTransform*>(antenna_->getChild(0));
+      node_ = antenna_;
       if (locatorNode_->getNumChildren() > 0)
         locatorNode_->replaceChild(locatorNode_->getChild(0), node_);
       else

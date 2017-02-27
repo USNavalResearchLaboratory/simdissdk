@@ -22,7 +22,7 @@
 #ifndef SIMVIS_ANTENNA_H
 #define SIMVIS_ANTENNA_H
 
-#include "osg/Group"
+#include "osg/MatrixTransform"
 #include "osgEarth/Config"
 #include "simCore/Common/Common.h"
 #include "simCore/EM/Constants.h"
@@ -40,7 +40,7 @@ namespace simVis
   /**
    * Represents an antenna pattern.
    */
-  class SDKVIS_EXPORT AntennaNode : public osg::Group
+  class SDKVIS_EXPORT AntennaNode : public osg::MatrixTransform
   {
   public:
     /**
@@ -88,7 +88,7 @@ namespace simVis
     void updateBlending_(bool blending);
 
     // antennaPattern is scaled by the product of update range (in m) and pref beamScale (no units, 1.0 default)
-    void applyScale_(osg::MatrixTransform& antennaMatrix);
+    void applyScale_();
 
     float ComputeRadius_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const;
     void render_();
