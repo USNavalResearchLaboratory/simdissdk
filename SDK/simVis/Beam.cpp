@@ -548,10 +548,9 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       antenna_->setRange(static_cast<float>(simCore::sdkMax(1.0, activeUpdate->range())));
 
     // all activePrefs must be applied during this creation
-    if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended) ||
-      PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, shaded))
+    if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
     {
-      depthAttr_->setWriteMask(!activePrefs->blended() || activePrefs->shaded());
+      depthAttr_->setWriteMask(!activePrefs->blended());
     }
 
     if (refreshRequiresNewNode)
@@ -580,7 +579,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       node_ = createBeamSV(*activePrefs, *activeUpdate);
       node_->setNodeMask(DISPLAY_MASK_BEAM);
       // all activePrefs must be applied during this creation - most activePrefs already are applied in createBeamSV
-      depthAttr_->setWriteMask(!activePrefs->blended() || activePrefs->shaded());
+      depthAttr_->setWriteMask(!activePrefs->blended());
       setBeamScale_(node_, activePrefs->beamscale());
 
       if (locatorNode_->getNumChildren() > 0)
@@ -723,7 +722,7 @@ void BeamNode::performInPlacePrefChanges_(const simData::BeamPrefs* a, const sim
     {
       SVFactory::updateBlending(node, b->blended());
       // only write to the depth buffer if it's NOT blended.
-      depthAttr_->setWriteMask(!b->blended() || b->shaded());
+      depthAttr_->setWriteMask(!b->blended());
     }
   }
 
