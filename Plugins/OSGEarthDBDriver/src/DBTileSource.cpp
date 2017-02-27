@@ -155,9 +155,9 @@ TileSource::Status DBTileSource::initialize(const osgDB::Options* dbOptions)
 {
   if (options_.url().isSet())
   {
-    pathname_ = options_.url()->full();
+    pathname_ = osgDB::findDataFile(options_.url()->full(), dbOptions);
 
-    if (dbUtil_.OpenDataBaseFile(options_.url()->full(), &db_, SQLITE_OPEN_READONLY|SQLITE_OPEN_FULLMUTEX) != QS_IS_OK)
+    if (dbUtil_.OpenDataBaseFile(pathname_, &db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != QS_IS_OK)
     {
       db_ = NULL;
       return Status::Error(Stringify() << "Failed to open DB file at " << options_.url()->full());
