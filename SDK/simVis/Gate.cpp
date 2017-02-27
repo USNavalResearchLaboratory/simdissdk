@@ -33,8 +33,6 @@
 #include "simVis/OverheadMode.h"
 #include "simVis/Gate.h"
 
-#define GATE_RENDER_BIN_NUMBER 99 // higher than BEAM_
-
 // --------------------------------------------------------------------------
 
 namespace
@@ -592,9 +590,13 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   const bool refreshRequiresNewNode = force || changeRequiresRebuild_(newUpdate, newPrefs);
   if (refreshRequiresNewNode)
   {
-    // blending is off for solid, so depth writing is on, otherwise off
-    depthAttr_->setWriteMask(
-      activePrefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID);
+    // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
+    const bool isOpaque = activePrefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
+                          activePrefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID;
+    getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
+
+    // blending is off for solid or outline-only, so depth writing is on, otherwise off
+    depthAttr_->setWriteMask(isOpaque);
 
     gateMatrixTransform_ = createNode(&lastProps_, activePrefs, activeUpdate);
     gateMatrixTransform_->setNodeMask(DISPLAY_MASK_GATE);

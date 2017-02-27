@@ -105,6 +105,8 @@ namespace simVis
     BIN_LOCAL_GRID          = 13,
     BIN_TRACK_HISTORY       = 13,
     BIN_LASER               = 13,
+    BIN_OPAQUE_BEAM         = 13,
+    BIN_OPAQUE_GATE         = 13,
 
     // Transparent items are drawn after opaque items to maximize likelihood of
     // correct colorization.  OSG will sort from back to front in the same render

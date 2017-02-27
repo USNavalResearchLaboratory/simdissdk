@@ -551,6 +551,8 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
     {
       depthAttr_->setWriteMask(!activePrefs->blended());
+      getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+
     }
 
     if (refreshRequiresNewNode)
@@ -580,6 +582,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       node_->setNodeMask(DISPLAY_MASK_BEAM);
       // all activePrefs must be applied during this creation - most activePrefs already are applied in createBeamSV
       depthAttr_->setWriteMask(!activePrefs->blended());
+      getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
       setBeamScale_(node_, activePrefs->beamscale());
 
       if (locatorNode_->getNumChildren() > 0)
@@ -723,6 +726,7 @@ void BeamNode::performInPlacePrefChanges_(const simData::BeamPrefs* a, const sim
       SVFactory::updateBlending(node, b->blended());
       // only write to the depth buffer if it's NOT blended.
       depthAttr_->setWriteMask(!b->blended());
+      getOrCreateStateSet()->setRenderBinDetails((b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
     }
   }
 
