@@ -907,26 +907,22 @@ void RFPropagationFacade::enableDepthBuffer(bool enable)
     return;
   osg::StateSet* stateset = profileManager_->getOrCreateStateSet();
   if (enable)
-  {
     stateset->setMode(GL_DEPTH_TEST, osg::StateAttribute::ON);
-    stateset->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, true));
-  }
   else
-  {
     stateset->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
-    stateset->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
-  }
 }
 
 bool RFPropagationFacade::isDepthBufferEnabled() const
 {
   if (!profileManager_.valid())
     return false;
-  osg::StateSet* stateset = profileManager_->getStateSet();
+  const osg::StateSet* stateset = profileManager_->getStateSet();
+  if (!stateset)
+    return false;
+  const osg::StateAttribute::GLModeValue values = stateset->getMode(GL_DEPTH_TEST);
+
   // Note the use of bitwise-AND (&) below is intentional
-  return stateset != NULL &&
-    ((stateset->getMode(GL_DEPTH_TEST) & osg::StateAttribute::ON) != 0);
+  return (values & osg::StateAttribute::ON) != 0;
 }
 
 }
-
