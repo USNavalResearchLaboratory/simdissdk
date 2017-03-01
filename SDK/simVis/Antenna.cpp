@@ -24,7 +24,6 @@
 #include "osgEarthSymbology/MeshConsolidator"
 
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/Math.h"
 #include "simCore/EM/AntennaPattern.h"
 
 #include "simData/DataTypes.h"
@@ -71,7 +70,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   const simData::BeamPrefs* oldPrefs = &lastPrefs_.get();
   const simData::BeamPrefs* newPrefs = &prefs;
 
-  bool requiresRebuild =
+  const bool requiresRebuild =
        !lastPrefs_.isSet() ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, antennapattern, type) ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, antennapattern, algorithm) ||
@@ -127,10 +126,10 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
 
   polarity_ = static_cast<simCore::PolarityType>(prefs.polarity());
 
-  bool drawAntennaPattern = loadedOK_ &&
+  const bool drawAntennaPattern = loadedOK_ &&
     (prefs.drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN);
 
-  bool requiresRedraw = drawAntennaPattern &&
+  const bool requiresRedraw = drawAntennaPattern &&
       (requiresRebuild ||
         PB_FIELD_CHANGED(oldPrefs, newPrefs, drawtype)      ||
         PB_FIELD_CHANGED(oldPrefs, newPrefs, colorscale)      ||
@@ -279,15 +278,13 @@ void AntennaNode::render_()
   antGeom->setColorArray(colors);
   antGeom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
-  //TODO: Add support for overriding BeamPrefs values?
-  double vRange = lastPrefs_->fieldofview();
-  double hRange = vRange;
+  // expected range for vRange is (0, M_PI]
+  const double vRange = osg::clampBetween(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_PI);
+  // expected range for vRange is (0, M_TWOPI]
+  const double hRange = osg::clampBetween(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_TWOPI);
 
-  if (vRange > M_PI)
-    vRange = M_PI;
-
-  if (hRange > M_TWOPI)
-    hRange = M_TWOPI;
+  // detail is in degrees, determines the step size between az and el points, expected value is [1, 10] degrees
+  const double degDetail = osg::clampBetween(lastPrefs_->detail(), 1.0, 10.0);
 
   // determine pattern bounds in order to normalize
   if (scaleFactor_ < 0.0)
@@ -298,78 +295,94 @@ void AntennaNode::render_()
     scaleFactor_ = (max_ == min_) ? 1.0f/max_ : 1.0f/(max_ - min_);
   }
 
-  float elev = lastPrefs_->elevationoffset();
-  float azim = 0;
-  float endelev = static_cast<float>(simCore::RAD2DEG*(vRange * 0.5));
-  float startelev = -endelev;
-  float endazim = static_cast<float>(simCore::RAD2DEG*(hRange * 0.5));
-  float startazim = -endazim;
-  float degDetail = lastPrefs_->detail();
-  float beamDetail = static_cast<float>(simCore::DEG2RAD*(degDetail));
-  int intGain = 0;
-  osg::Vec3f zeroPt = osg::Vec3f(0.0, 0.0, 0.0);
-  osg::Vec3f zeroNorm = osg::Vec3f(-1.0, 0.0, 0.0);
+  // elevationoffset is in radians, expected limits are [-90,90] (degrees)
+  const double elevationoffset = osg::clampBetween(lastPrefs_->elevationoffset(), -M_PI_2, M_PI_2);
+  const double endelev = simCore::RAD2DEG * (elevationoffset + (vRange * 0.5));
+  const double startelev = simCore::RAD2DEG * (elevationoffset - (vRange * 0.5));
+  // pre-calculate the elev points we are using
+  std::vector<float> elevPoints;
+  bool elevDone = false;
+  for (double elev = startelev; !elevDone; elev += degDetail)
+  {
+    if (elev >= endelev)
+    {
+      elev = endelev;
+      elevDone = true;
+    }
+    elevPoints.push_back(static_cast<float>(simCore::DEG2RAD * elev));
+  }
 
-  bool colorScale = lastPrefs_->colorscale();
-  osg::Vec4f color = ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().color());
-  if (lastPrefs_->commonprefs().useoverridecolor())
-    color = ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().overridecolor());
-  osg::Vec4f scaleAltColor = osg::Vec4f(0.5, 0.0, 0.5, 1.0);
+  // azimuthoffset is in radians, expected limits are [0,360) (degrees)
+  const double azimuthoffset = osg::clampBetween(lastPrefs_->azimuthoffset(), 0.0, M_TWOPI);
+  const double endazim = simCore::RAD2DEG * (azimuthoffset + (hRange * 0.5));
+  const double startazim = simCore::RAD2DEG * (azimuthoffset - (hRange * 0.5));
+  // pre-calculate the azim points we are using
+  std::vector<float> azimPoints;
+  bool azimDone = false;
+  for (double azim = startazim; !azimDone; azim += degDetail)
+  {
+    if (azim >= endazim)
+    {
+      azim = endazim;
+      azimDone = true;
+    }
+    azimPoints.push_back(static_cast<float>(simCore::DEG2RAD * azim));
+  }
+  // algorithms below require azimPoints > 1, so break out if we don't meet that requirement
+  if (azimPoints.size() < 2)
+  {
+    return;
+  }
+
+
+  const osg::Vec3f& zeroPt = osg::Vec3f(0.0f, 0.0f, 0.0f);
+  const osg::Vec3f& zeroNorm = osg::Vec3f(-1.0f, 0.0f, 0.0f);
+
+  const bool colorScale = lastPrefs_->colorscale();
+  const osg::Vec4f color = (lastPrefs_->commonprefs().useoverridecolor()) ? ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().overridecolor()) : ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().color());
+  // this is the color that corresponds to minimum gain (-100)
+  const osg::Vec4f scaleAltColor = colorUtils_->GainThresholdColor(-100);
 
   int lastCount = 0;
 
-  bool azimDone = false;
-  for (double ii = startazim; !azimDone; ii += degDetail)
-  {
-    double width = beamDetail;
-    if (ii + degDetail >= endazim)
-    {
-      width = simCore::DEG2RAD*(endazim - ii);
-      azimDone = true;
-    }
-    azim = simCore::DEG2RAD*ii;
 
-    bool elevDone = false;
-    for (double jj = startelev; !elevDone; jj += degDetail)
+  azimDone = false;
+  // unconventional iteration, due to algorithm needing *iiter and *(iiter+1)
+  for (std::vector<float>::const_iterator iiter = azimPoints.begin(); !azimDone; ++iiter)
+  {
+    const float azim = *iiter;
+    auto nextIter = iiter + 1;
+    // azimDone condition should break iteration before this can occur
+    assert(nextIter != azimPoints.end());
+    const float azim2 = *nextIter;
+    azimDone = (nextIter + 1 == azimPoints.end());
+
+    for (std::vector<float>::const_iterator jiter = elevPoints.begin(); jiter != elevPoints.end(); ++jiter)
     {
-      if (jj >= endelev)
-      {
-        jj = endelev;
-        elevDone = true;
-      }
-      elev = simCore::DEG2RAD*jj;
+      const float elev = *jiter;
 
       // compute first point in t-strip
       osg::Vec3f pt;
-      intGain = static_cast<int>(ComputeRadius_(azim, elev, polarity_, pt));
-
+      float gain = ComputeRadius_(azim, elev, polarity_, pt);
       osg::Vec3f ptNorm(pt);
       ptNorm.normalize();
-
       verts->push_back(pt);
       norms->push_back(ptNorm);
-
       if (colorScale)
-      {
-        colors->push_back(colorUtils_->GainThresholdColor(intGain));
-      }
+        colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
       else
-      {
         colors->push_back(color);
-      }
 
       // compute alternate point in t-strip
+      // TODO: this calculated result could potentially be reused in the next azim iteration; consider using an index array.
       osg::Vec3f ptne;
-      intGain = static_cast<int>(ComputeRadius_((azim + width), elev, polarity_, ptne));
-
+      gain = ComputeRadius_(azim2, elev, polarity_, ptne);
       osg::Vec3f ptneNorm(ptne);
       ptneNorm.normalize();
-
       verts->push_back(ptne);
       norms->push_back(ptneNorm);
-
       if (colorScale)
-        colors->push_back(colorUtils_->GainThresholdColor(intGain));
+        colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
       else
         colors->push_back(color);
     }
@@ -381,161 +394,119 @@ void AntennaNode::render_()
   // draw top & bottom sides of pattern
   if (vRange < M_PI)
   {
-    // draw bottom side of pattern
-    elev = static_cast<float>(simCore::DEG2RAD*(startelev));
-
-    osg::Vec3f bottomNormal = osg::Quat(elev, osg::Vec3f(1, 0, 0)) * osg::Vec3f(0, 0, -1);
-
-    verts->push_back(zeroPt);
-    norms->push_back(bottomNormal);
-
-    if (colorScale)
-      colors->push_back(scaleAltColor);
-    else
-      colors->push_back(color);
-
-    bool azimDone = false;
-    for (double ii = startazim; !azimDone; ii += degDetail)
+    // draw near face/bottom side of pattern
     {
-      if (ii >= endazim)
-      {
-        ii = endazim;
-        azimDone = true;
-      }
-      azim = simCore::DEG2RAD*ii;
-
-      osg::Vec3f pt;
-      intGain = static_cast<int>(ComputeRadius_(azim, elev, polarity_, pt));
-
-      verts->push_back(pt);
+      const float elev = static_cast<float>(simCore::DEG2RAD * startelev);
+      const osg::Vec3f bottomNormal = osg::Quat(elev, osg::Vec3f(1.f, 0.f, 0.f)) * osg::Vec3f(0.f, 0.f, -1.f);
+      verts->push_back(zeroPt);
       norms->push_back(bottomNormal);
-
       if (colorScale)
-        colors->push_back(colorUtils_->GainThresholdColor(intGain));
+        colors->push_back(scaleAltColor);
       else
         colors->push_back(color);
-    }
 
-    antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
-    lastCount = verts->size();
-
-    // draw top side of pattern
-    elev = static_cast<float>(simCore::DEG2RAD*(endelev));
-
-    osg::Vec3f topNormal = osg::Quat(elev, osg::Vec3f(1, 0, 0)) * osg::Vec3f(0, 0, 1);
-
-    verts->push_back(zeroPt);
-    norms->push_back(topNormal);
-
-    if (colorScale)
-      colors->push_back(scaleAltColor);
-    else
-      colors->push_back(color);
-
-    azimDone = false;
-    for (double ii = startazim; !azimDone; ii += degDetail)
-    {
-      if (ii >= endazim)
+      // reverse iteration to set correct polygon facing
+      for (std::vector<float>::const_reverse_iterator iriter = azimPoints.rbegin(); iriter != azimPoints.rend(); ++iriter)
       {
-        ii = endazim;
-        azimDone = true;
+        const float azim = *iriter;
+        osg::Vec3f pt;
+        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        verts->push_back(pt);
+        norms->push_back(bottomNormal);
+        if (colorScale)
+          colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
+        else
+          colors->push_back(color);
       }
-      azim = simCore::DEG2RAD*ii;
-
-      osg::Vec3f pt;
-      intGain = static_cast<int>(ComputeRadius_(azim, elev, polarity_, pt));
-
-      verts->push_back(pt);
-      norms->push_back(topNormal);
-
-      if (colorScale)
-        colors->push_back(colorUtils_->GainThresholdColor(intGain));
-      else
-        colors->push_back(color);
+      antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
+      lastCount = verts->size();
     }
 
-    antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
-    lastCount = verts->size();
+    // draw near face/top side of pattern
+    {
+      const float elev = static_cast<float>(simCore::DEG2RAD * endelev);
+      const osg::Vec3f topNormal = osg::Quat(elev, osg::Vec3f(1.f, 0.f, 0.f)) * osg::Vec3f(0.f, 0.f, 1.f);
+      verts->push_back(zeroPt);
+      norms->push_back(topNormal);
+      if (colorScale)
+        colors->push_back(scaleAltColor);
+      else
+        colors->push_back(color);
 
+      for (std::vector<float>::const_iterator iiter = azimPoints.begin(); iiter != azimPoints.end(); ++iiter)
+      {
+        const float azim = *iiter;
+        osg::Vec3f pt;
+        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        verts->push_back(pt);
+        norms->push_back(topNormal);
+        if (colorScale)
+          colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
+        else
+          colors->push_back(color);
+      }
+      antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
+      lastCount = verts->size();
+    }
   } // end of (vRange < M_PI)
 
-  // draw back sides of pattern
+
+  // draw right and left sides of pattern
   if (hRange < M_TWOPI)
   {
-    // draw left side of pattern
-    azim = static_cast<float>(simCore::DEG2RAD*(startazim));
-
-    osg::Vec3f leftNormal = osg::Quat(azim, osg::Vec3f(0, 0, 1)) * osg::Vec3f(-1, 0, 0);
-
-    verts->push_back(zeroPt);
-    norms->push_back(leftNormal);
-
-    if (colorScale)
-      colors->push_back(scaleAltColor);
-    else
-      colors->push_back(color);
-
-    bool elevDone = false;
-    for (double jj = startelev; !elevDone; jj += degDetail)
-    {
-      if (jj >= endelev)
-      {
-        jj = endelev;
-        elevDone = true;
-      }
-      elev = simCore::DEG2RAD*jj;
-
-      osg::Vec3f pt;
-      intGain = static_cast<int>(ComputeRadius_(azim, elev, polarity_, pt));
-
-      verts->push_back(pt);
-      norms->push_back(leftNormal);
-
-      if (colorScale)
-        colors->push_back(colorUtils_->GainThresholdColor(intGain));
-      else
-        colors->push_back(color);
-    }
-
-    antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
-    lastCount = verts->size();
-
     // draw right side of pattern
-    azim = static_cast<float>(simCore::DEG2RAD*(endazim));
-
-    osg::Vec3f rightNormal = osg::Quat(azim, osg::Vec3f(0, 0, 1)) * osg::Vec3f(1, 0, 0);
-
-    verts->push_back(zeroPt);
-    norms->push_back(rightNormal);
-
-    if (colorScale)
-      colors->push_back(scaleAltColor);
-    else
-      colors->push_back(color);
-
-    elevDone = false;
-    for (double jj = startelev; !elevDone; jj += degDetail)
     {
-      if (jj >= endelev)
-      {
-        jj = endelev;
-        elevDone = true;
-      }
-      elev = simCore::DEG2RAD*jj;
-
-      osg::Vec3f pt;
-      intGain = static_cast<int>(ComputeRadius_(azim, elev, polarity_, pt));
-
-      verts->push_back(pt);
+      const float azim = static_cast<float>(simCore::DEG2RAD * startazim);
+      const osg::Vec3f rightNormal = osg::Quat(azim, osg::Vec3f(0.f, 0.f, 1.f)) * osg::Vec3f(-1.f, 0.f, 0.f);
+      verts->push_back(zeroPt);
       norms->push_back(rightNormal);
-
       if (colorScale)
-        colors->push_back(colorUtils_->GainThresholdColor(intGain));
+        colors->push_back(scaleAltColor);
       else
         colors->push_back(color);
+
+      for (std::vector<float>::const_iterator jiter = elevPoints.begin(); jiter != elevPoints.end(); ++jiter)
+      {
+        const float elev = *jiter;
+        osg::Vec3f pt;
+        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        verts->push_back(pt);
+        norms->push_back(rightNormal);
+        if (colorScale)
+          colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
+        else
+          colors->push_back(color);
+      }
+      antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
+      lastCount = verts->size();
     }
 
-    antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
+    // draw left side of pattern
+    {
+      const float azim = static_cast<float>(simCore::DEG2RAD * endazim);
+      const osg::Vec3f leftNormal = osg::Quat(azim, osg::Vec3f(0.f, 0.f, 1.f)) * osg::Vec3f(1.f, 0.f, 0.f);
+      verts->push_back(zeroPt);
+      norms->push_back(leftNormal);
+      if (colorScale)
+        colors->push_back(scaleAltColor);
+      else
+        colors->push_back(color);
+
+      // reverse iteration to set correct polygon facing
+      for (std::vector<float>::const_reverse_iterator jriter = elevPoints.rbegin(); jriter != elevPoints.rend(); ++jriter)
+      {
+        const float elev = *jriter;
+        osg::Vec3f pt;
+        const float gain = ComputeRadius_(azim, elev, polarity_, pt);
+        verts->push_back(pt);
+        norms->push_back(leftNormal);
+        if (colorScale)
+          colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
+        else
+          colors->push_back(color);
+      }
+      antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
+    }
   } // end of (hRange < T_PI)
 
   // optimize the geode:
