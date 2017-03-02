@@ -27,12 +27,56 @@
 #include "simCore/EM/AntennaPattern.h"
 
 #include "simData/DataTypes.h"
-
+#include "simVis/AxisVector.h"
 #include "simVis/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/Antenna.h"
 
+// enable this to draw axes at beam origin and at pattern face vertices, for testing only
+//#define DRAW_AXES 1
+
+namespace {
+  /**
+  * Calculate a normal to the input vector, where the vector represents a vertex in the top or bottom face
+  * The normal is calculated as the input vector rotated 90 degrees around an axis in the XY plane
+  * where that axis is normal to the vector projected on the XY plane.
+  * @param[in] vec a vector in the top or bottom face of the antenna pattern
+  * @return the normal vector
+  */
+  osg::Vec3f calcNormalXY(const osg::Vec3f& vec)
+  {
+    osg::Vec3f vecNorm(vec);
+    // make a unit vector out of the original vector
+    vecNorm.normalize();
+    // construct a 2d normal to the vector, in the x-y plane
+    const osg::Vec3f axis(-vec.y(), vec.x(), 0.f);
+    // rotate the unit vector pi/2 around the 2d-normal-axis
+    const osg::Quat& normalRot = osg::Quat(M_PI_2, axis);
+    vecNorm = normalRot * vecNorm;
+    return vecNorm;
+  }
+
+  /**
+  * Calculate a normal to the input vector, where the vector represents a vertex in the left or right face
+  * The normal is calculated as the input vector rotated 90 degrees around an axis in the XZ plane
+  * where that axis is normal to the vector projected on the XZ plane.
+  * @param[in] vec a vector in the left or right face of the antenna pattern
+  * @return the normal vector
+  */
+  osg::Vec3f calcNormalXZ(const osg::Vec3f& vec)
+  {
+    osg::Vec3f vecNorm(vec);
+    // make a unit vector out of the original vector
+    vecNorm.normalize();
+    // construct a 2d normal to the vector, in the x-z plane
+    const osg::Vec3f axis(vec.z(), 0.f, -vec.x());
+    // rotate the unit vector pi/2 around the 2d-normal-axis
+    const osg::Quat& normalRot = osg::Quat(M_PI_2, axis);
+    vecNorm = normalRot * vecNorm;
+    return vecNorm;
+  }
+}
 namespace simVis
 {
 
@@ -250,6 +294,12 @@ void AntennaNode::applyScale_()
   }
 }
 
+void AntennaNode::drawAxes_(const osg::Vec3f& pos, const osg::Vec3f& vec)
+{
+  AxisVector* axes = new AxisVector();
+  axes->setPositionOrientation(pos, vec);
+  addChild(axes);
+}
 
 void AntennaNode::render_()
 {
@@ -334,17 +384,20 @@ void AntennaNode::render_()
     return;
   }
 
-
   const osg::Vec3f& zeroPt = osg::Vec3f(0.0f, 0.0f, 0.0f);
-  const osg::Vec3f& zeroNorm = osg::Vec3f(-1.0f, 0.0f, 0.0f);
-
   const bool colorScale = lastPrefs_->colorscale();
   const osg::Vec4f color = (lastPrefs_->commonprefs().useoverridecolor()) ? ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().overridecolor()) : ColorUtils::RgbaToVec4(lastPrefs_->commonprefs().color());
   // this is the color that corresponds to minimum gain (-100)
   const osg::Vec4f scaleAltColor = colorUtils_->GainThresholdColor(-100);
-
   int lastCount = 0;
 
+  #ifdef DRAW_AXES
+  // draw axes to represent beam orientation
+  {
+    AxisVector* vec = new AxisVector();
+    addChild(vec);
+  }
+  #endif
 
   azimDone = false;
   // unconventional iteration, due to algorithm needing *iiter and *(iiter+1)
@@ -395,11 +448,15 @@ void AntennaNode::render_()
   if (vRange < M_PI)
   {
     // draw near face/bottom side of pattern
+    // TODO: for some patterns (gaussian), all bottom side points will be zero, and the entire side can be skipped
     {
       const float elev = static_cast<float>(simCore::DEG2RAD * startelev);
-      const osg::Vec3f bottomNormal = osg::Quat(elev, osg::Vec3f(1.f, 0.f, 0.f)) * osg::Vec3f(0.f, 0.f, -1.f);
+      // determine a normal for the face at the beam origin - rotate the beam unit vector (x-axis) around y-axis by (elev + PI/2) radians
+      const osg::Quat& normalRot = osg::Quat(M_PI_2 - elev, osg::Y_AXIS);
+      const osg::Vec3f& zeroNormal = normalRot * osg::X_AXIS;
+
       verts->push_back(zeroPt);
-      norms->push_back(bottomNormal);
+      norms->push_back(zeroNormal);
       if (colorScale)
         colors->push_back(scaleAltColor);
       else
@@ -412,22 +469,36 @@ void AntennaNode::render_()
         osg::Vec3f pt;
         const float gain = ComputeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
-        norms->push_back(bottomNormal);
+        const osg::Vec3f& normalVec = calcNormalXY(pt);
+        norms->push_back(normalVec);
+
         if (colorScale)
           colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
         else
           colors->push_back(color);
+
+#ifdef DRAW_AXES
+        // draw axes to visualize the vertex normals, every 10th point of the triangle fan
+        if (fmod(std::distance(static_cast<std::vector<float>::const_reverse_iterator>(azimPoints.rbegin()), iriter), 10.0) == 0)
+        {
+          drawAxes_(pt, normalVec);
+        }
+#endif
       }
       antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
       lastCount = verts->size();
     }
 
     // draw near face/top side of pattern
+    // TODO: for some patterns (gaussian), all top side points will be zero, and the entire side can be skipped
     {
       const float elev = static_cast<float>(simCore::DEG2RAD * endelev);
-      const osg::Vec3f topNormal = osg::Quat(elev, osg::Vec3f(1.f, 0.f, 0.f)) * osg::Vec3f(0.f, 0.f, 1.f);
+
+      // determine a normal for the face at the beam origin - rotate the beam unit vector (x-axis) around y-axis by (-pi/2 - elev) radians
+      const osg::Quat& normalRot = osg::Quat(-M_PI_2 - elev, osg::Y_AXIS);
+      const osg::Vec3f& zeroNormal = normalRot * osg::X_AXIS;
       verts->push_back(zeroPt);
-      norms->push_back(topNormal);
+      norms->push_back(zeroNormal);
       if (colorScale)
         colors->push_back(scaleAltColor);
       else
@@ -439,11 +510,22 @@ void AntennaNode::render_()
         osg::Vec3f pt;
         const float gain = ComputeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
-        norms->push_back(topNormal);
+        // sign change is required for top side
+        const osg::Vec3f& normalVec = -calcNormalXY(pt);
+        norms->push_back(normalVec);
+
         if (colorScale)
           colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
         else
           colors->push_back(color);
+
+#ifdef DRAW_AXES
+        // draw axes to visualize the vertex normals, every 10th point of the triangle fan
+        if (fmod(std::distance(static_cast<std::vector<float>::const_iterator>(azimPoints.begin()), iiter), 10.0) == 0)
+        {
+          drawAxes_(pt, normalVec);
+        }
+#endif
       }
       antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
       lastCount = verts->size();
@@ -455,38 +537,56 @@ void AntennaNode::render_()
   if (hRange < M_TWOPI)
   {
     // draw right side of pattern
+    // TODO: for some patterns (pedestal), all right side points will be zero, and the entire right side can be skipped
     {
       const float azim = static_cast<float>(simCore::DEG2RAD * startazim);
-      const osg::Vec3f rightNormal = osg::Quat(azim, osg::Vec3f(0.f, 0.f, 1.f)) * osg::Vec3f(-1.f, 0.f, 0.f);
+      // determine a normal for the face at the beam origin - rotate the beam unit vector (x-axis) around z-axis by azim - pi/2 radians
+      const osg::Quat& normalRot = osg::Quat(-M_PI_2 + azim, osg::Z_AXIS);
+      const osg::Vec3f& zeroNormal = normalRot * osg::X_AXIS;
+
       verts->push_back(zeroPt);
-      norms->push_back(rightNormal);
+      norms->push_back(zeroNormal);
       if (colorScale)
         colors->push_back(scaleAltColor);
       else
         colors->push_back(color);
 
+      std::vector<float>::const_iterator begin = elevPoints.begin();
       for (std::vector<float>::const_iterator jiter = elevPoints.begin(); jiter != elevPoints.end(); ++jiter)
       {
         const float elev = *jiter;
         osg::Vec3f pt;
         const float gain = ComputeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
-        norms->push_back(rightNormal);
+        const osg::Vec3f& normalVec = calcNormalXZ(pt);
+        norms->push_back(normalVec);
+
         if (colorScale)
           colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
         else
           colors->push_back(color);
+
+#ifdef DRAW_AXES
+        // draw axes to visualize the vertex normals, every 10th point of the triangle fan
+        if (fmod(std::distance(static_cast<std::vector<float>::const_iterator>(elevPoints.begin()), jiter), 10.0) == 0)
+        {
+          drawAxes_(pt, normalVec);
+        }
+#endif
       }
       antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
       lastCount = verts->size();
     }
 
     // draw left side of pattern
+    // TODO: for some patterns (pedestal), all left side points will be zero, and the entire left side can be skipped
     {
       const float azim = static_cast<float>(simCore::DEG2RAD * endazim);
-      const osg::Vec3f leftNormal = osg::Quat(azim, osg::Vec3f(0.f, 0.f, 1.f)) * osg::Vec3f(1.f, 0.f, 0.f);
+      // determine a normal for the face at the beam origin - rotate the beam unit vector (x-axis) around z-axis by azim + pi/2 radians
+      const osg::Quat& normalRot = osg::Quat(M_PI_2 + azim, osg::Z_AXIS);
+      const osg::Vec3f& zeroNormal = normalRot * osg::X_AXIS;
       verts->push_back(zeroPt);
-      norms->push_back(leftNormal);
+      norms->push_back(zeroNormal);
       if (colorScale)
         colors->push_back(scaleAltColor);
       else
@@ -499,11 +599,22 @@ void AntennaNode::render_()
         osg::Vec3f pt;
         const float gain = ComputeRadius_(azim, elev, polarity_, pt);
         verts->push_back(pt);
-        norms->push_back(leftNormal);
+        // sign change is required for left side
+        const osg::Vec3f& normalVec = -calcNormalXZ(pt);
+        norms->push_back(normalVec);
+
         if (colorScale)
           colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
         else
           colors->push_back(color);
+
+#ifdef DRAW_AXES
+        // draw axes to visualize the vertex normals, every 10th point of the triangle fan
+        if (fmod(std::distance(static_cast<std::vector<float>::const_reverse_iterator>(elevPoints.rbegin()), jriter), 10.0) == 0)
+        {
+          drawAxes_(pt, normalVec);
+        }
+#endif
       }
       antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
     }

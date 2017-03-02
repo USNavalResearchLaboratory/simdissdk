@@ -90,6 +90,13 @@ namespace simVis
     // antennaPattern is scaled by the product of update range (in m) and pref beamScale (no units, 1.0 default)
     void applyScale_();
 
+    /**
+    * Draw axes at the specified pt, orienting the x-axis along the specified vector
+    * @param[in] pos the position for the axes origin
+    * @param[in] vec the orientation for the x-axis
+    */
+    void drawAxes_(const osg::Vec3f& pos, const osg::Vec3f& vec);
+
     float ComputeRadius_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const;
     void render_();
 

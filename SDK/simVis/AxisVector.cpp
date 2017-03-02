@@ -128,6 +128,18 @@ simVis::Color AxisVector::zColor() const
   return (*colors_)[2];
 }
 
+void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f& vec)
+{
+  osg::Matrixf rot;
+  if (vec != osg::Vec3f())
+  {
+    // determine a rotation matrix that rotates x-axis vector to the specified vector
+    rot.makeRotate(osg::X_AXIS, vec);
+  }
+  rot.postMultTranslate(pos);
+  setMatrix(rot);
+}
+
 void AxisVector::createAxisVectors_(osg::Geode* geode) const
 {
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();

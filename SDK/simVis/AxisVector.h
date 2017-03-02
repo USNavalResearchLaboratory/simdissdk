@@ -68,6 +68,13 @@ public:
   /** Retrieve the Z axis color */
   simVis::Color zColor() const;
 
+  /**
+  * Position the axes at the specified pos, orienting the x-axis along the specified vec
+  * @param[in] pos the position for the axes origin
+  * @param[in] vec the orientation for the x-axis
+  */
+  void setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f& vec);
+
 protected:
 
   /// osg::Referenced-derived
