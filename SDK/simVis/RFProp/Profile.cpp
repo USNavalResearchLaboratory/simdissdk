@@ -810,14 +810,14 @@ void Profile::init3DTexture_()
   verts_->push_back(osg::Vec3(0, 0, maxSampledHeight));  // 1
   tcoords->push_back(osg::Vec2(0, maxT));
 
-  // Now the left two verts of the pie slice
+  // Now the right two verts of the pie slice
   verts_->push_back(osg::Vec3(maxRange * cosTheta0, maxRange * sinTheta0, minSampledHeight)); // 2
   tcoords->push_back(osg::Vec2(1.0, minT));
 
   verts_->push_back(osg::Vec3(maxRange * cosTheta0, maxRange * sinTheta0, maxSampledHeight)); // 3
   tcoords->push_back(osg::Vec2(1.0, maxT));
 
-  // Now the right two verts of the pie slice
+  // Now the left two verts of the pie slice
   verts_->push_back(osg::Vec3(maxRange * cosTheta1, maxRange * sinTheta1, minSampledHeight)); // 4
   tcoords->push_back(osg::Vec2(1.0, minT));
 
@@ -856,72 +856,70 @@ void Profile::init3DTexture_()
 #else
 
   // Add a drawable for each of the sides of the faces.
-  // Right side
+  // Left side
   {
     osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-    idx->addElement(0);  idx->addElement(4); idx->addElement(5); idx->addElement(0); idx->addElement(5); idx->addElement(1);
+    idx->addElement(0);  idx->addElement(5); idx->addElement(4); idx->addElement(0); idx->addElement(1); idx->addElement(5);
     osg::Geometry* geometry = new osg::Geometry();
     geometry->setDataVariance(osg::Object::DYNAMIC);
     geometry->setVertexArray(verts_);
     geometry->setUseVertexBufferObjects(true);
-
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
     geode_->addDrawable(geometry);
   }
 
-  // Left side
-    {
-      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-      idx->addElement(2);  idx->addElement(0); idx->addElement(1);  idx->addElement(2); idx->addElement(1); idx->addElement(3);
-      osg::Geometry* geometry = new osg::Geometry();
-      geometry->setDataVariance(osg::Object::DYNAMIC);
-      geometry->setVertexArray(verts_);
-      geometry->setUseVertexBufferObjects(true);
-      geometry->setTexCoordArray(0, tcoords);
-      geometry->addPrimitiveSet(idx);
-      geode_->addDrawable(geometry);
-    }
+  // Right side
+  {
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
+    idx->addElement(0);  idx->addElement(2); idx->addElement(3);  idx->addElement(0); idx->addElement(3); idx->addElement(1);
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+  }
 
-    // Top side
-    {
-      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-      idx->addElement(1);  idx->addElement(5); idx->addElement(3);
-      osg::Geometry* geometry = new osg::Geometry();
-      geometry->setDataVariance(osg::Object::DYNAMIC);
-      geometry->setVertexArray(verts_);
-      geometry->setUseVertexBufferObjects(true);
-      geometry->setTexCoordArray(0, tcoords);
-      geometry->addPrimitiveSet(idx);
-      geode_->addDrawable(geometry);
-    }
+  // Top side
+  {
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
+    idx->addElement(1);  idx->addElement(3); idx->addElement(5);
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+  }
 
-    // Bottom side
-    {
+  // Bottom side
+  {
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
+    idx->addElement(0);  idx->addElement(4); idx->addElement(2);
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+  }
 
-      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-      idx->addElement(0);  idx->addElement(2); idx->addElement(4);
-      osg::Geometry* geometry = new osg::Geometry();
-      geometry->setDataVariance(osg::Object::DYNAMIC);
-      geometry->setVertexArray(verts_);
-      geometry->setUseVertexBufferObjects(true);
-      geometry->setTexCoordArray(0, tcoords);
-      geometry->addPrimitiveSet(idx);
-      geode_->addDrawable(geometry);
-    }
-
-    // Cap
-    {
-      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-      idx->addElement(5); idx->addElement(4); idx->addElement(2); idx->addElement(5); idx->addElement(2);  idx->addElement(3);
-      osg::Geometry* geometry = new osg::Geometry();
-      geometry->setDataVariance(osg::Object::DYNAMIC);
-      geometry->setVertexArray(verts_);
-      geometry->setUseVertexBufferObjects(true);
-      geometry->setTexCoordArray(0, tcoords);
-      geometry->addPrimitiveSet(idx);
-      geode_->addDrawable(geometry);
-    }
+  // Cap
+  {
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
+    idx->addElement(5); idx->addElement(2); idx->addElement(4); idx->addElement(5); idx->addElement(3);  idx->addElement(2);
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+  }
 #endif
 
     // Only create the texture if it doesn't already exist, otherwise you can just reuse it
