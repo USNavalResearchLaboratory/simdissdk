@@ -19,6 +19,7 @@
 * disclose, or release this software.
 *
 */
+#include <algorithm>
 #include <fstream>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -190,7 +191,17 @@ int GogToGeoFence::parseEndKeyword_(int lineNumber, bool& start, bool& poly, boo
     // Check that newly created GeoFence is convex
     if (!fence->valid())
     {
-      SIM_ERROR << "Fence \"" << (name == "" ? "no name" : name) << "\" is concave. This shape will be drawn but will not act as an exclusion zone.\n";
+      // Invalid, maybe the points are drawn in clockwise order?
+      // Reverse the points, and re-set the GeoFence
+      std::reverse(coordinates.begin(), coordinates.end());
+      fence->set(coordinates, simCore::COORD_SYS_LLA);
+      if (!fence->valid())
+      {
+        SIM_ERROR << "Fence \"" << (name == "" ? "no name" : name) << "\" is concave. This shape will be drawn but will not act as an exclusion zone.\n";
+      }
+      // The reversed points create a valid fence, so keep it
+      else
+        fences_.push_back(fence);
     }
     // Only keep the fence if it is valid
     else

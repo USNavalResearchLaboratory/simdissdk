@@ -222,6 +222,25 @@ namespace
                          "ll 17 -144\n"
                          "ll 19 -146\n"
                          "end\n";
+
+  std::string clockwiseGog = "start\n"    // drawn in clockwise order, making it concave by default
+                             "poly\n"
+                             "ll 32.9 -120.7\n"
+                             "ll 32.6 -120.3\n"
+                             "ll 32.3 -120.7\n"
+                             "ll 32.7 -121.1\n"
+                             "ll 32.9 -120.7\n"
+                             "end\n";
+
+  std::string clockwiseConcaveGog = "start\n"    // drawn in clockwise order and concave
+                                    "poly\n"
+                                    "ll 32.9 -120.7\n"
+                                    "ll 32.6 -120.3\n"
+                                    "ll 32.6 -120.6\n" // makes concave
+                                    "ll 32.3 -120.7\n"
+                                    "ll 32.7 -121.1\n"
+                                    "ll 32.9 -120.7\n"
+                                    "end\n";
 }
 
 int testGogSyntax()
@@ -330,6 +349,26 @@ int testValidity()
   g.getFences(fences);
 
   rv += SDK_ASSERT(fences[0]->valid());
+
+  g.clear();
+  is.clear();
+  fences.clear();
+
+  is.str(clockwiseGog);
+  g.parse(is);
+  g.getFences(fences);
+
+  rv += SDK_ASSERT(fences[0]->valid());
+
+  g.clear();
+  is.clear();
+  fences.clear();
+
+  is.str(clockwiseConcaveGog);
+  g.parse(is);
+  g.getFences(fences);
+
+  rv += SDK_ASSERT(fences.empty());
 
   g.clear();
   is.clear();
