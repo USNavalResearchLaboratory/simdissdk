@@ -51,9 +51,10 @@ int GogToGeoFence::parse(std::istream& is)
   int lineNumber = 0;
   std::string line;
   bool start = false;
-  bool poly = false;
+  bool obj = false;
   bool off = false;
   std::string name = "";
+  std::string shape;
 
   // For every line
   while (simCore::getStrippedLine(is, line))
@@ -84,20 +85,19 @@ int GogToGeoFence::parse(std::istream& is)
         keyword == "version")
       continue;
 
-    // Shapes other than poly are not accepted in this parser
+    // Shapes other than poly and line are not accepted in this parser
     if (keyword == "arc" ||
         keyword == "circle" ||
-        keyword == "ellipse" ||
-        keyword == "line")
+        keyword == "ellipse")
     {
-      SIM_ERROR << "Shape \"" << keyword << "\" not accepted (Line #" << lineNumber << "). Only poly shapes are accepted. Stopping...\n";
+      SIM_ERROR << "Shape \"" << keyword << "\" not accepted (Line #" << lineNumber << "). Only poly and line shapes are accepted. Stopping...\n";
       return 1;
     }
 
     // Check for the end of a shape
     if (keyword == "end")
     {
-      if (parseEndKeyword_(lineNumber, start, poly, off, name, coordinates) != 0)
+      if (parseEndKeyword_(lineNumber, shape, start, obj, off, name, coordinates) != 0)
         return 1;
     }
 
@@ -108,10 +108,11 @@ int GogToGeoFence::parse(std::istream& is)
         return 1;
     }
 
-    // Check for poly keyword
-    else if (keyword == "poly" || keyword == "polygon")
+    // Check for object keyword
+    else if (keyword == "poly" || keyword == "polygon" || keyword == "line")
     {
-      if (parsePolyKeyword_(lineNumber, start, poly) != 0)
+      shape = keyword;
+      if (parseObjKeyword_(lineNumber, start, obj) != 0)
         return 1;
     }
 
@@ -119,10 +120,10 @@ int GogToGeoFence::parse(std::istream& is)
     else if (keyword == "off")
       off = true;
 
-    // If we've started a shape and it's a poly
-    else if (start && poly)
+    // If we've started a shape and it's an accepted object type
+    else if (start && obj)
     {
-      if (parseShape_(tokens, lineNumber, start, poly, off, name, coordinates) != 0)
+      if (parseShape_(tokens, lineNumber, name, coordinates) != 0)
         return 1;
     }
 
@@ -156,32 +157,48 @@ int GogToGeoFence::parseStartKeyword_(int lineNumber, bool& start) const
   return 0;
 }
 
-int GogToGeoFence::parsePolyKeyword_(int lineNumber, bool& start, bool& poly) const
+int GogToGeoFence::parseObjKeyword_(int lineNumber, bool& start, bool& obj) const
 {
   // Make sure start was already found
   if (start)
   {
-    poly = true;
+    obj = true;
     return 0;
   }
   else
   {
-    SIM_ERROR << "GOG syntax error! Need \"start\" keyword before \"poly\" (Line #" << lineNumber << "). Stopping...\n";
+    SIM_ERROR << "GOG syntax error! Need \"start\" keyword before \"poly\" or \"line\" (Line #" << lineNumber << "). Stopping...\n";
     return 1;
   }
 }
 
-int GogToGeoFence::parseEndKeyword_(int lineNumber, bool& start, bool& poly, bool& off, std::string& name, simCore::Vec3String& coordinates)
+int GogToGeoFence::parseEndKeyword_(int lineNumber, std::string shape, bool& start, bool& obj, bool& off, std::string& name, simCore::Vec3String& coordinates)
 {
-  if (!start && !poly)
+  if (!start && !obj)
   {
     SIM_ERROR << "GOG syntax error! \"end\" keyword found before \"start\" (Line #" << lineNumber << "). Stopping...\n";
     return 1;
   }
 
-  // Don't create a fence if the off keyword was found in this shape
-  if (!off)
+  if (coordinates.empty())
   {
+    SIM_ERROR << "No coordinates in GOG file. Stopping...\n";
+    return 1;
+  }
+
+  // For line objects, make sure first and last coordinates are the same, shape must be closed
+  if (shape == "line" && coordinates[0] != coordinates[coordinates.size() - 1])
+  {
+    SIM_ERROR << "Fence \"" << (name == "" ? "no name" : name) << "\" is not closed. The first and last coordinates must be the same. This line shape will not act as an exclusion zone.\n";
+  }
+
+  // Don't create a fence if the off keyword was found in this shape
+  else if (!off)
+  {
+    // If we have a poly, make sure it is closed before we generate a GeoFence
+    if (shape == "poly" && coordinates[0] != coordinates[coordinates.size() - 1])
+      coordinates.push_back(coordinates[0]);
+
     // Save this shape's coordinates vector
     coordinatesVec_.push_back(coordinates);
 
@@ -208,21 +225,22 @@ int GogToGeoFence::parseEndKeyword_(int lineNumber, bool& start, bool& poly, boo
       fences_.push_back(fence);
   }
 
-  // Clear coordinates for the next poly
+  // Clear coordinates for the next object
   coordinates.clear();
 
-  // Clear 3d name
+  // Clear 3d name and shape
   name = "";
+  shape = "";
 
   // Clear flags
   start = false;
-  poly = false;
+  obj = false;
   off = false;
 
   return 0;
 }
 
-int GogToGeoFence::parseShape_(const std::vector<std::string>& tokens, int lineNumber, bool& start, bool& poly, bool& off, std::string& name, simCore::Vec3String& coordinates) const
+int GogToGeoFence::parseShape_(const std::vector<std::string>& tokens, int lineNumber, std::string& name, simCore::Vec3String& coordinates) const
 {
   // Any valid line at this point needs at least 3 tokens
   if (tokens.size() < 3)

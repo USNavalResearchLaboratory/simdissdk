@@ -81,12 +81,12 @@ private:
 
   /// Parses a "start" GOG keyword
   int parseStartKeyword_(int lineNumber, bool& start) const;
-  /// Parses a "poly" or "polygon" GOG keyword
-  int parsePolyKeyword_(int lineNumber, bool& start, bool& poly) const;
+  /// Parses a "poly", "polygon", or "line" GOG keyword
+  int parseObjKeyword_(int lineNumber, bool& start, bool& obj) const;
   /// Parses an "end" GOG keyword
-  int parseEndKeyword_(int lineNumber, bool& start, bool& poly, bool& off, std::string& name, simCore::Vec3String& coordinates);
-  /// Parses a shape, called after "start" and "poly" keywords are found
-  int parseShape_(const std::vector<std::string>& tokens, int lineNumber, bool& start, bool& poly, bool& off, std::string& name, simCore::Vec3String& coordinates) const;
+  int parseEndKeyword_(int lineNumber, std::string, bool& start, bool& obj, bool& off, std::string& name, simCore::Vec3String& coordinates);
+  /// Parses a shape, called after "start" and an object keyword are found
+  int parseShape_(const std::vector<std::string>& tokens, int lineNumber, std::string& name, simCore::Vec3String& coordinates) const;
   /// Parses an "ll", "lla", or "latlon" GOG keyword
   int parseLatLonAlt_(const std::vector<std::string>& tokens, int lineNumber, simCore::Vec3String& coordinates) const;
 

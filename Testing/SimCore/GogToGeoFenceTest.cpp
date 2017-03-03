@@ -73,6 +73,15 @@ namespace
                               "ll 39 -166\n"
                               "end\n";
 
+  std::string lineGog = "start\n"   // valid line gog
+                        "line\n"
+                        "ll 11 -144\n"
+                        "ll -6 -144\n"
+                        "ll  2 -129\n"
+                        "ll  9 -132\n"
+                        "ll 11 -144\n"
+                        "end\n";
+
   std::string invalidLatGog = "start\n"
                               "poly\n"
                               "ll xx -121\n"          // invalid latitude value
@@ -232,6 +241,22 @@ namespace
                              "ll 32.9 -120.7\n"
                              "end\n";
 
+  std::string openPolyGog = "start\n"   // poly not closed
+                            "poly\n"
+                            "ll 11 -144\n"
+                            "ll -6 -144\n"
+                            "ll  2 -129\n"
+                            "ll  9 -132\n"
+                            "end\n";
+
+  std::string openLineGog = "start\n"   // line not closed
+                            "line\n"
+                            "ll 11 -144\n"
+                            "ll -6 -144\n"
+                            "ll  2 -129\n"
+                            "ll  9 -132\n"
+                            "end\n";
+
   std::string clockwiseConcaveGog = "start\n"    // drawn in clockwise order and concave
                                     "poly\n"
                                     "ll 32.9 -120.7\n"
@@ -267,6 +292,10 @@ int testGogSyntax()
   is.str(llaCommentGog);
   rv += SDK_ASSERT(g.parse(is) == 0);
   g.clear();
+
+  is.clear();
+  is.str(lineGog);
+  rv += SDK_ASSERT(g.parse(is) == 0);
 
   is.clear();
   is.str(invalidLatGog);
@@ -359,6 +388,26 @@ int testValidity()
   g.getFences(fences);
 
   rv += SDK_ASSERT(fences[0]->valid());
+
+  g.clear();
+  is.clear();
+  fences.clear();
+
+  is.str(openPolyGog);
+  g.parse(is);
+  g.getFences(fences);
+
+  rv += SDK_ASSERT(fences[0]->valid());
+
+  g.clear();
+  is.clear();
+  fences.clear();
+
+  is.str(openLineGog);
+  g.parse(is);
+  g.getFences(fences);
+
+  rv += SDK_ASSERT(fences.empty());
 
   g.clear();
   is.clear();
