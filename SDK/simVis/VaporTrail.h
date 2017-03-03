@@ -160,9 +160,6 @@ private:
 
   /// the list of textures that cyclically initialize new puffs
   std::vector< osg::ref_ptr<osg::Billboard> > textureBillboards_;
-
-  /// the shader that will apply fading to all puffs in this vaporTrail
-  osg::ref_ptr<OverrideColor> overrideColor_;
 };
 
 /**
@@ -216,8 +213,8 @@ protected:
 
 private:
   osg::ref_ptr<osg::MatrixTransform> puff_;
-  osg::ref_ptr<osg::Uniform> overrideColor_;
-
+  /// Controls the shader that will apply fading to all puffs in this vaporTrail
+  osg::ref_ptr<OverrideColor> overrideColor_;
   /// the puff's ECEF position
   simCore::Vec3 position_;
 

@@ -42,6 +42,14 @@
 namespace simVis
 {
 
+namespace
+{
+  static const std::string SIMVIS_TRACK_FLATMODE = "simvis_track_flatmode";
+  static const std::string SIMVIS_TRACK_FALTRADIUS = "simvis_track_flatradius";
+  static const std::string SIMVIS_TRACK_ENABLE = "simvis_track_enable";
+  static const std::string SIMVIS_TRACK_OVERRIDE_COLOR = "simvis_track_overridecolor";
+}
+
 class TrackHistoryNode::ColorTableObserver : public simData::DataTableManager::ManagerObserver
 {
 public:
@@ -461,6 +469,19 @@ void TrackHistoryNode::setHostBounds(const osg::Vec2& bounds)
   }
 }
 
+void TrackHistoryNode::installShaderProgram(osg::StateSet* intoStateSet)
+{
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
+  simVis::Shaders package;
+  package.load(vp, package.trackHistoryVertex());
+  intoStateSet->getOrCreateUniform(SIMVIS_TRACK_FLATMODE, osg::Uniform::BOOL)->set(false);
+  intoStateSet->getOrCreateUniform(SIMVIS_TRACK_FALTRADIUS, osg::Uniform::FLOAT)->set(6371000.f);
+
+  package.load(vp, package.trackHistoryFragment());
+  intoStateSet->getOrCreateUniform(SIMVIS_TRACK_ENABLE, osg::Uniform::BOOL)->set(false);
+  intoStateSet->getOrCreateUniform(SIMVIS_TRACK_OVERRIDE_COLOR, osg::Uniform::FLOAT_VEC4)->set(simVis::Color::White);
+}
+
 void TrackHistoryNode::updateFlatMode_(bool flatMode)
 {
   if (!osgEarth::Registry::capabilities().supportsGLSL())
@@ -472,13 +493,7 @@ void TrackHistoryNode::updateFlatMode_(bool flatMode)
       return;    // Does not exist and not needed so return;
 
     osg::StateSet* stateset = this->getOrCreateStateSet();
-    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateset);
-    simVis::Shaders package;
-    package.load(vp, package.trackHistoryVertex());
-    flatModeUniform_ = stateset->getOrCreateUniform("simvis_track_flatmode", osg::Uniform::BOOL);
-
-    flatModeRadiusUniform_ = stateset->getOrCreateUniform("simvis_track_flatradius", osg::Uniform::FLOAT);
-    flatModeRadiusUniform_->set(6371000.f);
+    flatModeUniform_ = stateset->getOrCreateUniform(SIMVIS_TRACK_FLATMODE, osg::Uniform::BOOL);
   }
 
   flatModeUniform_->set(flatMode);
@@ -495,10 +510,8 @@ void TrackHistoryNode::setOverrideColor_(const osgEarth::Symbology::Color& color
       return;  // Does not exist and not needed so return;
 
     osg::StateSet* stateset = this->getOrCreateStateSet();
-    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateset);
-    simVis::Shaders package;
-    package.load(vp, package.trackHistoryFragment());
-    overrideColorUniform_ = stateset->getOrCreateUniform("simvis_track_overridecolor", osg::Uniform::FLOAT_VEC4);
+    overrideColorUniform_ = stateset->getOrCreateUniform(SIMVIS_TRACK_OVERRIDE_COLOR, osg::Uniform::FLOAT_VEC4);
+    stateset->getOrCreateUniform(SIMVIS_TRACK_ENABLE, osg::Uniform::BOOL)->set(true);
     lastOverrideColor_ = color;
     overrideColorUniform_->set(color);
     return;

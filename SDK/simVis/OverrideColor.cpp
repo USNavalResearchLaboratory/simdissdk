@@ -30,66 +30,37 @@
 namespace simVis
 {
 
-const std::string OverrideColor::OVERRIDECOLOR_UNIFORM = "simvis_overridecolor_color";
+namespace
+{
+  const std::string OVERRIDECOLOR_UNIFORM = "simvis_overridecolor_color";
+  const std::string USE_OVERRIDECOLOR_UNIFORM = "simvis_use_overridecolor";
+}
 
 OverrideColor::OverrideColor(osg::StateSet* stateset)
   :
+    active_(false),
 #ifdef USE_DEPRECATED_SIMDISSDK_API
-    color_(simVis::Color::White),
+    color_(simVis::Color::White)
 #endif
-    shaderCreated_(false)
 {
-  supported_ = osgEarth::Registry::capabilities().supportsGLSL(110u);
-  // Save the stateset if we can run this shader
-  if (supported_)
-    stateset_ = stateset;
+  stateset_ = stateset;
+  OverrideColor::setDefaultValues_(stateset_.get());
 }
 
 OverrideColor::~OverrideColor()
 {
-  if (supported_ && shaderCreated_)
-  {
-    osg::ref_ptr<osg::StateSet> stateset;
-    if (stateset_.lock(stateset))
-    {
-      osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateset);
-      if (vp)
-      {
-        simVis::Shaders shaders;
-        shaders.unload(vp, shaders.overrideColorFragment());
-      }
-      // Remove the uniform variable, no longer used
-      stateset->removeUniform(OVERRIDECOLOR_UNIFORM);
-    }
-  }
 }
 
-void OverrideColor::createShader_()
+void OverrideColor::installShaderProgram(osg::StateSet* intoStateSet)
 {
-  // No need to recreate if already done
-  if (shaderCreated_)
-    return;
-
-  osg::ref_ptr<osg::StateSet> stateset;
-  if (stateset_.lock(stateset))
-  {
-    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateset);
-    simVis::Shaders shaders;
-    shaders.load(vp, shaders.overrideColorFragment());
-  }
-  shaderCreated_ = true;
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
+  simVis::Shaders shaders;
+  shaders.load(vp, shaders.overrideColorFragment());
+  OverrideColor::setDefaultValues_(intoStateSet);
 }
 
 void OverrideColor::setColor(const simVis::Color& color)
 {
-  // Exit early if not supported
-  if (!supported_)
-    return;
-
-  // Exit early if setColor() would have no impact and the shader hasn't been created
-  if (color == simVis::Color::White && !shaderCreated_)
-    return;
-
 #ifdef USE_DEPRECATED_SIMDISSDK_API
   color_ = color;
 #endif
@@ -97,16 +68,42 @@ void OverrideColor::setColor(const simVis::Color& color)
   osg::ref_ptr<osg::StateSet> stateset;
   if (stateset_.lock(stateset))
   {
-    if (!shaderCreated_)
-      createShader_();
-    // Assertion failure means the shader creation failed for unknown reason
-    assert(shaderCreated_);
+    if (color == simVis::Color::White)
+    {
+      if (active_)
+      {
+        stateset
+          ->getOrCreateUniform(USE_OVERRIDECOLOR_UNIFORM, osg::Uniform::BOOL)
+          ->set(false);
+        active_ = false;
+      }
+
+      return;
+    }
+
+    if (!active_)
+    {
+      stateset
+        ->getOrCreateUniform(USE_OVERRIDECOLOR_UNIFORM, osg::Uniform::BOOL)
+        ->set(true);
+      active_ = true;
+    }
 
     // Pass the color to the shader
     stateset
       ->getOrCreateUniform(OVERRIDECOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)
       ->set(color);
   }
+}
+
+void OverrideColor::setDefaultValues_(osg::StateSet* stateSet)
+{
+  stateSet
+    ->getOrCreateUniform(USE_OVERRIDECOLOR_UNIFORM, osg::Uniform::BOOL)
+    ->set(false);
+  stateSet
+    ->getOrCreateUniform(OVERRIDECOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)
+    ->set(simVis::Color::White);
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API

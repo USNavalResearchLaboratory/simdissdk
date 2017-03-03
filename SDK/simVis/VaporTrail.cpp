@@ -71,9 +71,6 @@ VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPl
   locator_ = new Locator(hostPlatform_->getLocator());
   locator_->setLocalOffsets(simCore::Vec3(0.0, -vaporTrailData_.metersBehindCurrentPosition, 0.0), simCore::Vec3());
 
-  overrideColor_ = new simVis::OverrideColor(vaporTrailGroup_->getOrCreateStateSet());
-  overrideColor_->setColor(simVis::Color::Magenta); // set a non-White color to force shader creation
-
   OverheadMode::enableGeometryFlattening(true, vaporTrailGroup_);
 }
 
@@ -86,7 +83,6 @@ VaporTrail::~VaporTrail()
   vaporTrailGroup_ = NULL;
   textureBillboards_.clear();
   locator_ = NULL;
-  overrideColor_ = NULL;
 }
 
 void VaporTrail::update(double time)
@@ -419,8 +415,8 @@ VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::MatrixTransform* puffTransform, 
   puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
 
   // set up our uniform for parent's shader, setting the default color.
-  overrideColor_ = puff_->getOrCreateStateSet()->getOrCreateUniform(OverrideColor::OVERRIDECOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4);
-  overrideColor_->set(simVis::Color::White);
+  overrideColor_ = new OverrideColor(puff_->getOrCreateStateSet());
+  overrideColor_->setColor(simVis::Color::White);
 }
 
 VaporTrail::VaporTrailPuff::~VaporTrailPuff()
@@ -495,7 +491,7 @@ void VaporTrail::VaporTrailPuff::update(double currentTime, const VaporTrail::Va
   {
     const float alpha = 1.0f - deltaTime / puffData.fadeTimeS;
     assert(alpha > 0.0f && alpha <= 1.0f);
-    overrideColor_->set(simVis::Color(simVis::Color::White, alpha));
+    overrideColor_->setColor(simVis::Color(simVis::Color::White, alpha));
   }
 }
 

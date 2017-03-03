@@ -55,6 +55,13 @@ namespace simVis
     TrackHistoryNode(const simData::DataStore& ds, const osgEarth::SpatialReference* srs, PlatformTspiFilterManager& manager, simData::ObjectId entityId);
 
     /**
+     * Before using this class a call to installShaderProgram is required.  This
+     * method installs the shader program and default uniform variables for
+     * controlling the shader.
+     */
+    static void installShaderProgram(osg::StateSet* intoStateSet);
+
+    /**
     * Reset the track history visualization, erasing everything that exists
     * so it can start building again from scratch.
     */
@@ -227,7 +234,6 @@ namespace simVis
     osg::ref_ptr<osg::Uniform>    overrideColorUniform_;
     simVis::Color                 lastOverrideColor_;
     osg::ref_ptr<osg::Uniform>    flatModeUniform_;
-    osg::ref_ptr<osg::Uniform>    flatModeRadiusUniform_;
     osg::ref_ptr<osg::Group>      chunkGroup_;
     osg::ref_ptr<osg::Vec3Array>  dropVerts_;
     osg::ref_ptr<osg::Geometry>   dropVertsDrawable_;

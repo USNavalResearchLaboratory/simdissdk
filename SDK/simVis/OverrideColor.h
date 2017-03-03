@@ -30,21 +30,30 @@ namespace simVis
 {
 
 /**
- * Injects a color override shader component into a state set.
+ * Sets the override color via a shader.  To use this, first install the shader
+ * program (via installShaderProgram()) on a node at or above the one you want
+ * colored.  Then on node(s) to color, instantiate this class with the state set,
+ * using setColor() to change the color.
  */
 class SDKVIS_EXPORT OverrideColor : public osg::Referenced
 {
 public:
   /**
-   * Construct a color overrider and install it in a state set.
-   * It will automatically uninstall when this object destructs.
+   * Declares uniform variables for using and setting the override color
    */
   explicit OverrideColor(osg::StateSet* stateset);
 
   /**
-   * Sets the override color.
+   * Sets the override color via uniform variables.
    */
   void setColor(const simVis::Color& color);
+
+  /**
+   * Before using this class a call to installShaderProgram is required.  This
+   * method installs the shader program and default uniform variables for
+   * controlling the shader.
+   */
+  static void installShaderProgram(osg::StateSet* intoStateSet);
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
@@ -56,21 +65,20 @@ public:
   const simVis::Color& getColor() const;
 #endif
 
-  static const std::string OVERRIDECOLOR_UNIFORM;
 protected:
   /// osg::Referenced-derived
   virtual ~OverrideColor();
 
 private:
-  /** Lazy creation on the shader */
-  void createShader_();
+  /// Set the use to false and set the color to white
+  static void setDefaultValues_(osg::StateSet* stateSet);
 
   osg::observer_ptr<osg::StateSet> stateset_;
+  bool active_;
+
 #ifdef USE_DEPRECATED_SIMDISSDK_API
   simVis::Color color_;
 #endif
-  bool supported_;
-  bool shaderCreated_;
 };
 
 } // namespace simVis

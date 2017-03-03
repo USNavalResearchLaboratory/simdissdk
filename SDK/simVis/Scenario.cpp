@@ -35,8 +35,11 @@
 #include "simVis/View.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/OverrideColor.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/PlatformFilter.h"
+#include "simVis/Shaders.h"
+#include "simVis/TrackHistory.h"
 #include "simVis/RFProp/RFPropagationManager.h"
 
 #include "osgUtil/IntersectionVisitor"
@@ -180,6 +183,10 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   this->setName("simVis::ScenarioManager");
 
   platformTspiFilterManager_->addFilter(surfaceClamping_);
+
+  // Install shaders used by multiple entities at the scenario level
+  OverrideColor::installShaderProgram(stateSet);
+  TrackHistoryNode::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()
