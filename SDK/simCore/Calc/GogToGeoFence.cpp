@@ -63,12 +63,13 @@ int GogToGeoFence::parse(std::istream& is)
     std::vector<std::string> tokens;
     simCore::quoteCommentTokenizer(line, tokens); // Tokenize the line
 
+    // We can ignore empty lines
     if (tokens.empty())
       continue;
 
     const std::string keyword = simCore::lowerCase(tokens[0]); // Make the keyword lowercase
 
-    // We can safely ignore empty lines and lines beginning with these keywords
+    // We can safely ignore lines beginning with these keywords
     if (keyword == "annotation" ||
         keyword == "comment" ||
         keyword == "depthbuffer" ||
@@ -76,6 +77,7 @@ int GogToGeoFence::parse(std::istream& is)
         keyword == "fillcolor" ||
         keyword == "filled" ||
         keyword == "linecolor" ||
+        keyword == "lineprojection" ||
         keyword == "linestyle" ||
         keyword == "linewidth" ||
         keyword == "outline" ||
