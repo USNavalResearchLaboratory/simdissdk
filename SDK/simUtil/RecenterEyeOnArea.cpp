@@ -110,8 +110,15 @@ int RecenterEyeOnArea::centerOn(const osgEarth::GeoExtent& extent, double transi
 {
   if (!view_.valid() || extent.isInvalid())
     return 1;
+
+  // Create halfway point along the longitude and send that to centerOn()
+  // as left and right longitudes to account for date line crosses
+  double halfway = 0.5 * (extent.west() + extent.east());
+  if (extent.east() - extent.west() > 180.0)
+    halfway += 180.0;
+
   return centerOn(simCore::DEG2RAD * extent.south(), simCore::DEG2RAD * extent.north(),
-    simCore::DEG2RAD * extent.west(), simCore::DEG2RAD * extent.east(), transitionSec);
+    simCore::DEG2RAD * halfway, simCore::DEG2RAD * halfway, transitionSec);
 }
 
 int RecenterEyeOnArea::makeGeoExtent_(const osgEarth::DataExtentList& extents, osgEarth::GeoExtent& geoExtent) const
