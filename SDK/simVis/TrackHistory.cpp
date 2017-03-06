@@ -773,9 +773,10 @@ void TrackHistoryNode::backfillTrackHistory_(double endTime, double beginTime)
     simData::PlatformUpdateSlice::Iterator iter = updateSlice->upper_bound(endTime);
     while (iter.hasPrevious() && iter.peekPrevious()->time() >= beginTime)
     {
-      const simData::PlatformUpdate* u = iter.previous();
+      // since this is going backwards in time, prevIter is actually next, grab it before iterator moves backwards
       simData::PlatformUpdateSlice::Iterator prevIter = iter;
-      const simData::PlatformUpdate* prevUpdate = prevIter.previous();
+      const simData::PlatformUpdate* prevUpdate = prevIter.next();
+      const simData::PlatformUpdate* u = iter.previous();
       // if assert fails, hasPrevious() and previous() are not in agreement, check iterator implementation
       assert(u);
       addUpdate_(*u, prevUpdate);
