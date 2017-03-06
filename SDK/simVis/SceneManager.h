@@ -119,11 +119,14 @@ namespace simVis
     */
     osg::Group* getOrCreateAttachPoint(const std::string& name) const;
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
     /**
     * Applies display hints to assist with large-scale visualizations
     * @param hints Display hints
+    * @deprecated Use ScenarioManager::setEntityGraphStrategy(new ScenarioManager::GeoGraphEntityGraph(hints)) instead.
     */
     void setScenarioDisplayHints(const ScenarioDisplayHints& hints);
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
 
     /** Turns scenario draping on and off, for use with overhead mode. */
     void setScenarioDraping(bool value);

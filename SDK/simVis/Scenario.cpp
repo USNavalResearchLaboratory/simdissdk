@@ -137,6 +137,110 @@ bool ScenarioManager::EntityRecord::updateFromDataStore(bool force) const
 
 // -----------------------------------------------------------------------
 
+ScenarioManager::SimpleEntityGraph::SimpleEntityGraph()
+  : group_(new osg::Group)
+{
+  group_->setName("Entity Group");
+}
+
+ScenarioManager::SimpleEntityGraph::~SimpleEntityGraph()
+{
+}
+
+osg::Group* ScenarioManager::SimpleEntityGraph::node() const
+{
+  return group_;
+}
+
+int ScenarioManager::SimpleEntityGraph::addOrUpdate(EntityRecord* record)
+{
+  // Assertion failure means ScenarioManager error
+  assert(record != NULL && record->getEntityNode() != NULL);
+
+  // Only need to insert in Group, and only if we're not on parents list
+  const auto node = record->getNode();
+  const int numParents = node->getNumParents();
+  for (int k = 0; k < numParents; ++k)
+  {
+    // This is an update -- don't need to do anything
+    if (node->getParent(k) == group_)
+      return 0;
+  }
+
+  // Is not in the group -- will need to add the entity
+  return group_->addChild(record->getEntityNode()) ? 0 : 1;
+}
+
+int ScenarioManager::SimpleEntityGraph::removeEntity(EntityRecord* record)
+{
+  // Assertion failure means the entity is in multiple parents and this removal won't work
+  assert(record->getEntityNode()->getNumParents() == 1);
+  if (record->getEntityNode()->getNumParents() > 0)
+  {
+    osg::Group* parent = record->getEntityNode()->getParent(0);
+    // Assertion failure means the parent is different than what we expect,
+    // so we can't use group_->removeChild(record->getEntityNode())
+    return parent->removeChild(record->getEntityNode()) ? 0 : 1;
+  }
+  return 1;
+}
+
+int ScenarioManager::SimpleEntityGraph::clear()
+{
+  group_->removeChildren(0, group_->getNumChildren());
+  return 0;
+}
+
+// -----------------------------------------------------------------------
+
+ScenarioManager::GeoGraphEntityGraph::GeoGraphEntityGraph(const ScenarioDisplayHints& hints)
+  : hints_(hints),
+    group_(new osg::Group),
+    graph_(NULL)
+{
+  group_->setName("Entity Group");
+  // clear() will instantiate the graph
+  clear();
+}
+
+ScenarioManager::GeoGraphEntityGraph::~GeoGraphEntityGraph()
+{
+}
+
+osg::Group* ScenarioManager::GeoGraphEntityGraph::node() const
+{
+  return group_;
+}
+
+int ScenarioManager::GeoGraphEntityGraph::addOrUpdate(EntityRecord* record)
+{
+  const bool inGraph = (record->getGeoCell() != NULL);
+  if (inGraph)
+    return graph_->reindexObject(record) ? 0 : 1;
+  return graph_->insertObject(record) ? 0 : 1;
+}
+
+int ScenarioManager::GeoGraphEntityGraph::removeEntity(EntityRecord* record)
+{
+  return graph_->removeObject(record) ? 0 : 1;
+}
+
+int ScenarioManager::GeoGraphEntityGraph::clear()
+{
+  // NOTE: No way to clear out the GeoGraph, so we create a new one that's empty
+  if (graph_)
+    group_->removeChild(graph_);
+  // Reallocate graph_, destroying the old one in the process
+  graph_ = new osgEarth::Util::GeoGraph(
+    osgEarth::Registry::instance()->getGlobalGeodeticProfile()->getExtent(),
+    hints_.maxRange_, hints_.maxPerCell_, 2, 0.5f, hints_.cellsX_, hints_.cellsY_);
+  graph_->setName("GeoGraphEntityGraph GeoGraph");
+  group_->addChild(graph_);
+  return 0;
+}
+
+// -----------------------------------------------------------------------
+
 /// Clamps a platform to the surface (terrain). Expects coordinates to be in LLA
 class ScenarioManager::SurfaceClamping : public PlatformTspiFilter
 {
@@ -185,14 +289,17 @@ private:
 ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan)
   : locatorFactory_(factory),
     platformTspiFilterManager_(new PlatformTspiFilterManager()),
+    surfaceClamping_(NULL),
+    lobSurfaceClamping_(NULL),
+    root_(new osg::Group),
+    entityGraph_(new SimpleEntityGraph),
     projectorManager_(projMan),
     labelContentManager_(new NullLabelContentManager()),
     rfManager_(new simRF::NullRFPropagationManager())
 {
-  root_ = new osg::Group();
   root_->setName("root");
-  setDisplayHints_(ScenarioDisplayHints());
-  this->addChild(root_.get());
+  root_->addChild(entityGraph_->node());
+  addChild(root_.get());
 
   // Install a callback that will convey the Horizon info
   osg::EllipsoidModel em;
@@ -218,7 +325,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // set a default render bin to propagate down to child nodes
   stateSet->setRenderBinDetails(BIN_POST_TERRAIN, BIN_GLOBAL_SIMSDK);
 
-  this->setName("simVis::ScenarioManager");
+  setName("simVis::ScenarioManager");
 
   platformTspiFilterManager_->addFilter(surfaceClamping_);
 
@@ -315,11 +422,7 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
             projectorManager_->unregisterProjector(projectorNode);
 
           // remove it from the scene graph:
-          if (record->getEntityNode()->getNumParents() > 0)
-          {
-            osg::Group* parent = record->getEntityNode()->getParent(0);
-            parent->removeChild(record->getEntityNode());
-          }
+          entityGraph_->removeEntity(record);
 
           // remove it from the entities list (works because EntityRepo is a map, will not work for vector)
           entities_.erase(i++);
@@ -335,7 +438,7 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
   else
   {
     // just remove everything.
-    graph_->removeChildren(0, graph_->getNumChildren());
+    entityGraph_->clear();
     entities_.clear();
     projectorManager_->clear();
   }
@@ -358,11 +461,7 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
     {
       projectorManager_->unregisterProjector(projectorNode);
     }
-
-    if (record->getEntityNode()->getNumParents() > 0)
-    {
-      record->getEntityNode()->getParent(0)->removeChild(record->getEntityNode());
-    }
+    entityGraph_->removeEntity(record);
 
     // remove it from the entities list
     entities_.erase(i);
@@ -370,20 +469,22 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
   SAFETRYEND("removing entity from scenario");
 }
 
-void ScenarioManager::setDisplayHints_(const ScenarioDisplayHints& s)
+void ScenarioManager::setEntityGraphStrategy(AbstractEntityGraph* strategy)
 {
-  if (graph_ && entityGroup_)
-  {
-    root_->removeChild(entityGroup_);
-  }
+  if (strategy == NULL || strategy == entityGraph_)
+    return;
+  // Hold onto the old strategy so it doesn't get removed until we've added all the entities
+  osg::ref_ptr<AbstractEntityGraph> oldStrategy = entityGraph_;
 
-  graph_ = new osg::Group();
+  root_->removeChild(entityGraph_->node());
+  entityGraph_ = strategy;
+  // Make sure the graph is clear so that we don't add extra entities
+  entityGraph_->clear();
+  root_->addChild(entityGraph_->node());
 
-  entityGroup_ = new osg::Group();
-  entityGroup_->setName("Entity Group");
-
-  entityGroup_->addChild(graph_);
-  root_->addChild(entityGroup_);
+  // Add each entity to the graph
+  for (EntityRepo::const_iterator i = entities_.begin(); i != entities_.end(); ++i)
+    entityGraph_->addOrUpdate(i->second);
 }
 
 void ScenarioManager::setMap(const osgEarth::Map* map)
@@ -868,7 +969,6 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
   {
     EntityRecord* record = i->second.get();
 
-    bool inGraph = record->getNode()->getNumParents() > 0;
     bool appliedUpdate = false;
 
     // Note that entity classes decide how to process 'force' and record->updateSlice_->hasChanged()
@@ -879,22 +979,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     }
 
     if (appliedUpdate)
-    {
-      if (!inGraph)
-      {
-        // if the node has no locator, always add it.
-        if (record->getEntityNode()->getLocator() == NULL)
-        {
-          graph_->addChild(record->getNode());
-        }
-
-        // if there is a locator and it's not empty, add it
-        else if (!record->getEntityNode()->getLocator()->isEmpty())
-        {
-          graph_->addChild(record->getNode());
-        }
-      }
-    }
+      entityGraph_->addOrUpdate(record);
   }
   SAFETRYEND("checking scenario for updates");
 
@@ -971,7 +1056,7 @@ osg::Group* ScenarioManager::getOrCreateAttachPoint(const std::string& name)
     result = new osg::Group();
     result->setName(name);
     customAttachPoints_[name] = result;
-    this->addChild(result); // Ownership through ref_ptr
+    addChild(result); // Ownership through ref_ptr
   }
   return result;
 }

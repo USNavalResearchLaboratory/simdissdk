@@ -247,10 +247,20 @@ void SceneManager::init_()
   osgEarth::Registry::shaderGenerator().run(this);
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void SceneManager::setScenarioDisplayHints(const ScenarioDisplayHints& hints)
 {
-  scenarioManager_->setDisplayHints_(hints);
+  // Deprecated.  Instead use ScenarioManager::setEntityGraphStrategy(new ScenarioManager::GeoGraphEntityGraph(hints)).
+  // Note that this will use the GeoGraph entity grouping strategy instead of a flat osg::Group, which has
+  // typically positive performance ramifications, but may also have correctness ramifications.  EG:
+  // scenarioManager_->setEntityGraphStrategy(new ScenarioManager::GeoGraphEntityGraph(hints));
+
+  // noop -- This SceneManager method does nothing, to match previous behavior.
+
+  // Assert to catch the problem of using this method, which should not be used.
+  assert(0);
 }
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
 
 void SceneManager::setSkyNode(osgEarth::Util::SkyNode* skyNode)
 {

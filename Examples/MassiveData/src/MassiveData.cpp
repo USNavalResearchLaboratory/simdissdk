@@ -103,6 +103,28 @@ namespace
     }
     App& app_;
   };
+
+  struct ToggleGeoGraph : public ui::ControlEventHandler
+  {
+    explicit ToggleGeoGraph(App& app) : app_(app) {}
+    void onValueChanged(ui::Control*, bool value)
+    {
+      // Allocate the strategy
+      simVis::ScenarioManager::AbstractEntityGraph* graph = NULL;
+      if (value)
+      {
+        simVis::ScenarioDisplayHints hints;
+        // 50 is a reasonable value for 10,000 entities
+        hints.maxPerCell_ = 50;
+        graph = new simVis::ScenarioManager::GeoGraphEntityGraph(hints);
+      }
+      else
+        graph = new simVis::ScenarioManager::SimpleEntityGraph;
+      // Change the strategy
+      app_.scenario_->setEntityGraphStrategy(graph);
+    }
+    App& app_;
+  };
 }
 
 
@@ -129,6 +151,11 @@ ui::Control* createUI(App& app, float duration)
   ++r;
   grid->setControl(0, r, new ui::LabelControl("Overhead:"));
   grid->setControl(1, r, new ui::CheckBoxControl(false, new ToggleOverhead(app)));
+
+  ++r;
+  // Turning on Geo Graph will improve cull for a lot of situations with lots of data
+  grid->setControl(0, r, new ui::LabelControl("Geo Graph:"));
+  grid->setControl(1, r, new ui::CheckBoxControl(false, new ToggleGeoGraph(app)));
 
   return grid;
 }
