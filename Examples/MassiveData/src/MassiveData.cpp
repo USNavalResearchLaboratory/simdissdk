@@ -39,6 +39,7 @@
 
 #include "simData/DataSlice.h"
 #include "simData/MemoryDataStore.h"
+#include "simData/LinearInterpolator.h"
 
 #include "simVis/Viewer.h"
 #include "simVis/Platform.h"
@@ -195,21 +196,15 @@ void configPlatform(const simData::ObjectId&  id,
     prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_OFF);
   }
 
-
+  // Set the icon to either a 2D image or a 3D shape
   if (icons)
-  {
     prefs->set_icon(EXAMPLE_IMAGE_ICON);
-  }
   else
-  {
     prefs->set_icon(!iconFile.empty() ? iconFile : EXAMPLE_AIRPLANE_ICON);
-  }
 
-  // icons always get a dynamic scale.
-  if ((!nodynscale) || icons)
-  {
+  // Dynamic scale is on by default
+  if (!nodynscale)
     prefs->set_dynamicscale(true);
-  }
 
   prefs->set_rotateicons(simData::IR_2D_YAW);
   xaction.complete(&prefs);
@@ -285,7 +280,10 @@ int main(int argc, char** argv)
   viewer->setMap(map);
 
   // data source that records the platform data.
+  simData::LinearInterpolator interpolator;
   simData::MemoryDataStore dataStore;
+  dataStore.setInterpolator(&interpolator);
+  dataStore.enableInterpolation(true);
   app.scenario_ = scene->getScenario();
   app.scenario_->bind(&dataStore);
 

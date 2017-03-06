@@ -62,27 +62,31 @@ using namespace osgEarth::Util;
 
 namespace
 {
-  /**
-   * Cull callback that installs a Horizon object with the proper eyepoint
-   * in the NodeVisitor. (requires OSG 3.4+)
-   */
-  struct SetHorizonCullCallback : public osg::NodeCallback
+
+/**
+ * Cull callback that installs a Horizon object with the proper eyepoint
+ * in the NodeVisitor. (requires OSG 3.4+)
+ */
+struct SetHorizonCullCallback : public osg::NodeCallback
+{
+  osg::ref_ptr<Horizon> _horizonProto;
+
+  explicit SetHorizonCullCallback(Horizon* horizon)
+    : _horizonProto(horizon)
   {
-    osg::ref_ptr<Horizon> _horizonProto;
+  }
 
-    explicit SetHorizonCullCallback(Horizon* horizon) : _horizonProto(horizon) { }
-
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  {
+    if (_horizonProto.valid())
     {
-      if ( _horizonProto.valid() )
-      {
-        osg::ref_ptr<Horizon> horizon = osg::clone( _horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL );
-        horizon->setEye(nv->getViewPoint());
-        horizon->put( *nv );
-      }
-      traverse(node, nv);
+      osg::ref_ptr<Horizon> horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
+      horizon->setEye(nv->getViewPoint());
+      horizon->put(*nv);
     }
-  };
+    traverse(node, nv);
+  }
+};
 
 }
 
@@ -93,9 +97,43 @@ ScenarioManager::EntityRecord::EntityRecord(EntityNode* node, const simData::Dat
     updateSlice_(updateSlice),
     dataStore_(dataStore)
 {
-  //nop
 }
 
+EntityNode* ScenarioManager::EntityRecord::getEntityNode() const
+{ // Convenience method for us
+  return node_;
+}
+
+osg::Node* ScenarioManager::EntityRecord::getNode() const
+{ // GeoObject interface
+  return node_;
+}
+
+bool ScenarioManager::EntityRecord::getLocation(osg::Vec3d& output) const
+{
+  // Check for NULL
+  if (!node_.valid() || !node_->getLocator())
+    return false;
+  simCore::Vec3 outPos;
+
+  // Retrieve position and error out if needed
+  const bool rv = node_->getLocator()->getLocatorPosition(&outPos, simCore::COORD_SYS_LLA);
+  if (!rv)
+    return false;
+  // Convert to a Vec3d for LLA; note osgEarth expects Lon, Lat, Alt (XYZ)
+  output = osg::Vec3d(outPos.y() * simCore::RAD2DEG, outPos.x() * simCore::RAD2DEG, outPos.z());
+  return rv;
+}
+
+bool ScenarioManager::EntityRecord::dataStoreMatches(const simData::DataStore* dataStore) const
+{
+  return dataStore == dataStore_;
+}
+
+bool ScenarioManager::EntityRecord::updateFromDataStore(bool force) const
+{
+  return (updateSlice_ && node_.valid() && node_->updateFromDataStore(updateSlice_, force));
+}
 
 // -----------------------------------------------------------------------
 
@@ -270,19 +308,17 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
       EntityRecord* record = i->second.get();
       if (record)
       {
-        if (record->dataStore_ == dataStore)
+        if (record->dataStoreMatches(dataStore))
         {
-          ProjectorNode* projectorNode = dynamic_cast<ProjectorNode*>(record->node_.get());
+          ProjectorNode* projectorNode = dynamic_cast<ProjectorNode*>(record->getEntityNode());
           if (projectorNode)
-          {
             projectorManager_->unregisterProjector(projectorNode);
-          }
 
           // remove it from the scene graph:
-          if (record->node_->getNumParents() > 0)
+          if (record->getEntityNode()->getNumParents() > 0)
           {
-            osg::Group* parent = record->node_->getParent(0);
-            parent->removeChild(record->node_.get());
+            osg::Group* parent = record->getEntityNode()->getParent(0);
+            parent->removeChild(record->getEntityNode());
           }
 
           // remove it from the entities list (works because EntityRepo is a map, will not work for vector)
@@ -314,18 +350,18 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
   EntityRecord* record = (i != entities_.end()) ? i->second.get() : NULL;
   if (record)
   {
-    notifyToolsOfRemove_(record->node_.get());
+    notifyToolsOfRemove_(record->getEntityNode());
 
     // If this is a projector node, delete this from the projector manager
-    ProjectorNode* projectorNode = dynamic_cast<ProjectorNode*>(record->node_.get());
+    ProjectorNode* projectorNode = dynamic_cast<ProjectorNode*>(record->getEntityNode());
     if (projectorNode)
     {
       projectorManager_->unregisterProjector(projectorNode);
     }
 
-    if (record->node_->getNumParents() > 0)
+    if (record->getEntityNode()->getNumParents() > 0)
     {
-      record->node_->getParent(0)->removeChild(record->node_.get());
+      record->getEntityNode()->getParent(0)->removeChild(record->getEntityNode());
     }
 
     // remove it from the entities list
@@ -836,33 +872,24 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     bool appliedUpdate = false;
 
     // Note that entity classes decide how to process 'force' and record->updateSlice_->hasChanged()
-    if (record->updateSlice_ && record->node_->updateFromDataStore(record->updateSlice_, force))
+    if (record->updateFromDataStore(force))
     {
-      updates.push_back(record->node_.get());
+      updates.push_back(record->getEntityNode());
       appliedUpdate = true;
     }
-
-#if 0
-    // uncomment this to enable the projector's frustum graphic.
-    else if (dynamic_cast<ProjectorNode*>(se->getEntityNode()))
-    {
-      // TODO: remove this temporary code once projector is supported by datastore
-      appliedUpdate = true;
-    }
-#endif
 
     if (appliedUpdate)
     {
       if (!inGraph)
       {
         // if the node has no locator, always add it.
-        if (record->node_->getLocator() == NULL)
+        if (record->getEntityNode()->getLocator() == NULL)
         {
           graph_->addChild(record->getNode());
         }
 
         // if there is a locator and it's not empty, add it
-        else if (!record->node_->getLocator()->isEmpty())
+        else if (!record->getEntityNode()->getLocator()->isEmpty())
         {
           graph_->addChild(record->getNode());
         }

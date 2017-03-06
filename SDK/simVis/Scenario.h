@@ -29,20 +29,16 @@
 #include "osg/View"
 #include "osgEarth/CullingUtils"
 #include "osgEarthUtil/Controls"
+#include "osgEarthUtil/SpatialData"
+#include "simData/DataStore.h"
 #include "simVis/Tool.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/RFProp/RFPropagationManager.h"
-#include "simData/DataStore.h"
 
 
-//#define USE_GEO_GRAPH
-
-namespace simCore {
-    class Clock;
-}
-
+namespace simCore { class Clock; }
 namespace simVis
 {
   class BeamNode;
@@ -405,21 +401,33 @@ namespace simVis
     simRF::RFPropagationManagerPtr rfManager_;
 
     /** Association between the EntityNode, the data store, and the entity's update slice */
-    struct EntityRecord : public osg::Referenced
+    class EntityRecord : public osgEarth::Util::GeoObject
     {
+    public:
       /** Constructs a new entity record */
       EntityRecord(EntityNode* node, const simData::DataSliceBase* updateSlice, simData::DataStore* dataStore);
-      /** Retrieves the entity node */
-      EntityNode* getEntityNode() const { return node_.get(); }
-      /** Retrieves the entity node as an osg::Node */
-      osg::Node* getNode() const { return node_.get(); }
 
+      /** Retrieves the entity node as an osg::Node, from GeoObject interface */
+      virtual osg::Node* getNode() const;
+      /** Retrieves the entity node, upcasted to entity node */
+      EntityNode* getEntityNode() const;
+
+      /** Returns node's LLA position, from GeoObject interface */
+      virtual bool getLocation(osg::Vec3d& output) const;
+
+      /** Returns true if the data store passed in is the same as the entity's data store */
+      bool dataStoreMatches(const simData::DataStore* dataStore) const;
+      /** Updates the entity from the data store.  Returns true if update was applied, false otherwise */
+      bool updateFromDataStore(bool force) const;
+
+    private:
       /** Node in scene graph representing entity */
       osg::ref_ptr<EntityNode> node_;
+
       /** Const pointer to the entity's data update slice */
-      const simData::DataSliceBase*  updateSlice_;
+      const simData::DataSliceBase* updateSlice_;
       /** Convenience pointer to the data store */
-      simData::DataStore*      dataStore_;
+      simData::DataStore* dataStore_;
     };
 
     /** Typedef to map entity IDs to EntityRecord structs */
