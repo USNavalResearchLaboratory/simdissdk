@@ -214,6 +214,11 @@ RocketBurnStorage::Update RocketBurnStorage::BurnUpdates::dataForTime(double tim
     // if upper bound returns begin(), time has not advanced to the first update yet
     return invalidValue;
   }
+
+  bool lastOne = false;
+  if (i == updates_.end())
+    lastOne = true;
+
   // iterator is pointing ahead of the update we want (possibly end())
   --i; // Now pointing at-or-before
 
@@ -227,7 +232,13 @@ RocketBurnStorage::Update RocketBurnStorage::BurnUpdates::dataForTime(double tim
     return i->second;
   }
 
-  // There is no duration.  We need to interpolate between the current flame and the next flame.
+  // There is no duration.
+
+  // If its the only one or the last one, return it
+  if ((updates_.size() == 1) || lastOne)
+    return i->second;
+
+  // We need to interpolate between the current flame and the next flame.
   // This is the not-special-case (sc) case, which...by now...is a special case.... (not common)
   Update retVal;
   if (!simCore::linearInterpolate(updates_, time, retVal))
