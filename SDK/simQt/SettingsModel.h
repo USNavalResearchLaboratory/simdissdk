@@ -152,7 +152,11 @@ public slots:
   void clearUndoHistory();
   /// Reload the model from current QSettings
   void reloadModel();
-  /// Loads a settings file into this data model, returns 0 on success. Will emit the layoutLoaded signal if the specified settings file contains LAYOUT data
+  /**
+  * Loads a settings file into this data model, returns 0 on success.
+  * Will emit the layoutLoaded signal if the specified settings file contains LAYOUT data.
+  * Note that signal is queued up and emitted outside the scope of this method call, so it is safe to adjust layout within the scope of this call.
+  */
   int loadSettingsFile(const QString& path);
   /// Saves the settings to a file, return 0 on success.
   int saveSettingsFileAs(const QString& path);

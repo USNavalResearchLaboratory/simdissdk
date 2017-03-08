@@ -23,6 +23,7 @@
 #include <deque>
 #include <QSettings>
 #include <QStringList>
+#include <QTimer>
 #include <QFileIconProvider>
 #include <QApplication>
 #include "simNotify/Notify.h"
@@ -927,9 +928,9 @@ int SettingsModel::loadSettingsFile(const QString& path)
   // need to update settings meta data based on the meta data loaded from the file
   initMetaData_(settings);
 
-  // if there was a LAYOUT setting, emit signal
+  // if there was a LAYOUT setting, emit signal. Use single shot timer to ensure signal is emitted outside the scope of this method
   if (containsLayout)
-    emit layoutLoaded();
+    QTimer::singleShot(0, this, SIGNAL(layoutLoaded()));
 
   return 0;
 }
