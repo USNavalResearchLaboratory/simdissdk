@@ -350,7 +350,7 @@ int testSim1755()
   rv += SDK_ASSERT(0 == testAngle(32, 0, 0, 0.0, "32", "32 00", "32 00 00"));
   rv += SDK_ASSERT(0 == testAngle(32, 1, 0, 0.0, "32", "32 01", "32 01 00"));
   rv += SDK_ASSERT(0 == testAngle(32, 1, 1, 0.0, "32", "32 01", "32 01 01"));
-  rv += SDK_ASSERT(0 == testAngle(32, 30, 0, 0.0, "33", "32 30", "32 30 00"));
+  rv += SDK_ASSERT(0 == testAngle(33, 30, 0, 0.0, "34", "33 30", "33 30 00"));
   rv += SDK_ASSERT(0 == testAngle(32, 1, 30, 0.0, "32", "32 02", "32 01 30"));
   rv += SDK_ASSERT(0 == testAngle(32, 30, 30, 0.0, "33", "32 31", "32 30 30"));
   rv += SDK_ASSERT(0 == testAngle(32, 59, 30, 0.0, "33", "33 00", "32 59 30"));
@@ -361,7 +361,7 @@ int testSim1755()
   rv += SDK_ASSERT(0 == testAngle(-32, 0, 0, 0.0, "-32", "-32 00", "-32 00 00"));
   rv += SDK_ASSERT(0 == testAngle(-32, 1, 0, 0.0, "-32", "-32 01", "-32 01 00"));
   rv += SDK_ASSERT(0 == testAngle(-32, 1, 1, 0.0, "-32", "-32 01", "-32 01 01"));
-  rv += SDK_ASSERT(0 == testAngle(-32, 30, 0, 0.0, "-33", "-32 30", "-32 30 00"));
+  rv += SDK_ASSERT(0 == testAngle(-33, 30, 0, 0.0, "-34", "-33 30", "-33 30 00"));
   rv += SDK_ASSERT(0 == testAngle(-32, 1, 30, 0.0, "-32", "-32 02", "-32 01 30"));
   rv += SDK_ASSERT(0 == testAngle(-32, 30, 30, 0.0, "-33", "-32 31", "-32 30 30"));
   rv += SDK_ASSERT(0 == testAngle(-32, 59, 30, 0.0, "-33", "-33 00", "-32 59 30"));
