@@ -31,6 +31,7 @@
 #include "osgDB/FileUtils"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
+#include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
@@ -782,4 +783,186 @@ void SequenceTimeUpdater::operator()(osg::Node* node, osg::NodeVisitor* nv)
 
   // Revert back to the old time
   nv->setFrameStamp(const_cast<osg::FrameStamp*>(oldFs.get()));
+}
+
+//--------------------------------------------------------------------------
+
+StatsTimer::StatsTimer(osgViewer::View* mainView, const std::string& key, RecordFrequency recordFrequency)
+  : mainView_(mainView),
+    beginKey_(simVis::StatsTimer::beginName(key)),
+    endKey_(simVis::StatsTimer::endName(key)),
+    timeTakenKey_(simVis::StatsTimer::timeTakenName(key)),
+    recordFrequency_(recordFrequency),
+    cumulativeMs_(0),
+    firstStartTickMs_(0),
+    lastStopTickMs_(0),
+    startTickMs_(0),
+    currentFrameNumber_(0),
+    currentFrameStartTickMs_(0)
+{
+}
+
+StatsTimer::~StatsTimer()
+{
+  // Stop if we are started
+  if (isStarted_())
+    stop();
+}
+
+int StatsTimer::start()
+{
+  // Avoid executing if start() called while active; note that due to nested calls
+  // it is inadvisable to assert on this condition.
+  if (isStarted_())
+    return 1;
+
+  // ref_ptr from observer_ptr idiom
+  osg::ref_ptr<osgViewer::View> view;
+  if (!mainView_.lock(view) || !view.valid() || !view->getFrameStamp())
+    return 1;
+
+  // Cache some important values for timing calcs
+  const osg::Timer* timer = osg::Timer::instance();
+  const osg::Timer_t nowTick = timer->tick();
+  const unsigned int thisFrame = view->getFrameStamp()->getFrameNumber();
+
+  // If this is a new frame, we need to reset some stale values
+  if (thisFrame != currentFrameNumber_)
+  {
+    // Record frame if needed
+    if (recordFrequency_ == RECORD_PER_FRAME_ON_START || recordFrequency_ == RECORD_PER_FRAME_RESTAMPED_ON_START)
+      record_();
+
+    // Reset all values
+    reset_();
+    currentFrameNumber_ = thisFrame;
+    currentFrameStartTickMs_ = view->getStartTick();
+    firstStartTickMs_ = nowTick;
+  }
+
+  // Save the start tick so we can know the delta when stop() gets called
+  startTickMs_ = nowTick;
+  return 0;
+}
+
+int StatsTimer::stop()
+{
+  // Avoid stopping if start() has not been called; note that due to nested calls
+  // it is inadvisable to assert on this condition.
+  if (!isStarted_())
+    return 1;
+
+  // Save the current tick, and calculate new cumulative delta
+  const osg::Timer* timer = osg::Timer::instance();
+  lastStopTickMs_ = osg::Timer::instance()->tick();
+  cumulativeMs_ += (lastStopTickMs_ - startTickMs_);
+
+  // Record the frame if needed
+  if (recordFrequency_ == RECORD_PER_STOP)
+    record_();
+  // Reset startTickMs_ so we're ready for another start() this frame
+  startTickMs_ = 0;
+  return 0;
+}
+
+std::string StatsTimer::beginName(const std::string& key)
+{
+  return key + " begin";
+}
+
+std::string StatsTimer::endName(const std::string& key)
+{
+  return key + " end";
+}
+
+std::string StatsTimer::timeTakenName(const std::string& key)
+{
+  return key + " time taken";
+}
+
+void StatsTimer::addLine(osgViewer::StatsHandler* stats, const std::string& title, const std::string& key, const osg::Vec4& color)
+{
+  if (!stats)
+    return;
+  static const float SEC_TO_MSEC_MULTIPLIER = 1000.f;
+  static const float MAX_TIME = 0.016f; // 60 fps (1 / 60) == 0.016
+  stats->addUserStatsLine(title, color, color,
+    StatsTimer::timeTakenName(key),
+    SEC_TO_MSEC_MULTIPLIER, true, false,
+    StatsTimer::beginName(key),
+    StatsTimer::endName(key),
+    MAX_TIME);
+}
+
+void StatsTimer::removeLine(osgViewer::StatsHandler* stats, const std::string& title)
+{
+  if (stats)
+    stats->removeUserStatsLine(title);
+}
+
+bool StatsTimer::isStarted_() const
+{
+  return startTickMs_ != 0;
+}
+
+int StatsTimer::record_()
+{
+  // Break out if we do not have a frame number; implies invalid data
+  if (currentFrameNumber_ == 0)
+    return 1;
+
+  // ref_ptr from observer_ptr idiom
+  osg::ref_ptr<osgViewer::View> view;
+  if (!mainView_.lock(view) || !view.valid() || !view->getViewerBase())
+    return 1;
+  // Make sure stats are valid
+  osg::Stats* stats = view->getViewerBase()->getViewerStats();
+  if (!stats)
+    return 1;
+
+  // If restamping, update the frame number
+  unsigned int frameNumber = currentFrameNumber_;
+  if (recordFrequency_ == RECORD_PER_FRAME_RESTAMPED_ON_START)
+    frameNumber = simCore::sdkMax(stats->getEarliestFrameNumber(), frameNumber);
+
+  // Calculate the begin and end time for this frame's ticks
+  const osg::Timer* timer = osg::Timer::instance();
+  const double cumulativeTime = cumulativeMs_ * timer->getSecondsPerTick();
+  const double beginTime = timer->delta_s(currentFrameStartTickMs_, firstStartTickMs_);
+  const double endTime = timer->delta_s(currentFrameStartTickMs_, lastStopTickMs_);
+
+  // Set the attributes on the stats object for our key on the given frame
+  stats->setAttribute(frameNumber, timeTakenKey_, cumulativeTime);
+  stats->setAttribute(frameNumber, beginKey_, beginTime);
+  stats->setAttribute(frameNumber, endKey_, endTime);
+  return 0;
+}
+
+void StatsTimer::reset_()
+{
+  cumulativeMs_ = firstStartTickMs_ = lastStopTickMs_ = 0;
+  startTickMs_ = 0;
+  currentFrameNumber_ = 0;
+  currentFrameStartTickMs_ = 0;
+}
+
+//--------------------------------------------------------------------------
+
+ScopedStatsTimerToken::ScopedStatsTimerToken(StatsTimer& tick)
+  : tick_(tick)
+{
+  tick_.start();
+}
+
+ScopedStatsTimerToken::~ScopedStatsTimerToken()
+{
+  tick_.stop();
+}
+
+//--------------------------------------------------------------------------
+
+ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string& key)
+  : statsTimer_(mainView, key, StatsTimer::RECORD_PER_STOP)
+{
+  statsTimer_.start();
 }

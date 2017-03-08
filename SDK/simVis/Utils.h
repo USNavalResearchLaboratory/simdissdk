@@ -92,6 +92,10 @@
     PB_BOTH_HAVE_SUBFIELD((a), (b), first, second) && \
     (a)->first().second() != (b)->first().second() ) )
 
+namespace osgViewer {
+  class StatsHandler;
+  class View;
+}
 
 namespace simVis
 {
@@ -557,7 +561,155 @@ namespace simVis
     osg::ref_ptr<osg::FrameStamp> modifiedStamp_;
   };
 
+  /**
+   * Helper class that captures timing information for operations that may appear in an
+   * osg::Stats implementation.  Generic enough to handle both the case of once-per-frame
+   * operations and multiple-per-frame operations.  Timing statistics are recorded into
+   * the provided View's osg::Stats.  To visualize, add a custom line to the Stats object.
+   *
+   * This class is intended to be used either internally by the ScopedStatsTimer for
+   * once-per-frame operations, or externally and persistently using a ScopedStatsTimerToken
+   * to help with starting and stopping metrics collection.
+   */
+  class SDKVIS_EXPORT StatsTimer
+  {
+  public:
+    /** Strategy for recording values to osg::Stats */
+    enum RecordFrequency
+    {
+      /**
+       * Only record once per frame, and record in the start().  This strategy reduces mutex
+       * locks in osg::Stats.  Infrequent operations may never show in performance metrics
+       * because the frame change detection logic is in start() and the applicable frame number
+       * may be too early.
+       */
+      RECORD_PER_FRAME_ON_START = 0,
+
+      /**
+       * Records on every call to stop().  Frequent calls will result in more mutex locks on
+       * osg::Stats, potentially impacting performance, but performance metrics will be
+       * most accurate.  If an operation only occurs once per frame, this strategy is best.
+       */
+      RECORD_PER_STOP,
+
+      /**
+       * Similar to RECORD_PER_FRAME_ON_START, but restamps the frame number to force collection.
+       * The restamp will update the frame number to the latter of earliest frame number in the
+       * Stats container, or actual frame.  This is a good hybrid approach that helps keep the
+       * cumulative fairly accurate while keeping mutex locks in osg::Stats to a minimum.
+       */
+      RECORD_PER_FRAME_RESTAMPED_ON_START
+    };
+
+    /** Constructs a new Per-Frame tick */
+    StatsTimer(osgViewer::View* mainView, const std::string& key, RecordFrequency recordFrequency = RECORD_PER_FRAME_RESTAMPED_ON_START);
+    /** Clears out memory and stops timer if needed */
+    virtual ~StatsTimer();
+
+    /** Starts the timer.  Returns failure of non-zero when timer is already started. */
+    int start();
+    /** Stops the timer. Returns non-zero error if timer is not started. */
+    int stop();
+
+    /** Retrieves the actual string to use when saving begin tick data in osg::Stats for this key. */
+    static std::string beginName(const std::string& key);
+    /** Retrieves the actual string to use when saving end tick data in osg::Stats for this key. */
+    static std::string endName(const std::string& key);
+    /** Retrieves the actual string to use when saving elapsed time data in osg::Stats for this key. */
+    static std::string timeTakenName(const std::string& key);
+
+    /** For given key, add a line to the StatsHandler with a title and color provided. */
+    static void addLine(osgViewer::StatsHandler* stats, const std::string& title, const std::string& key, const osg::Vec4& color);
+    /** Removes a line from the stats handler corresponding to the title in addLine(). */
+    static void removeLine(osgViewer::StatsHandler* stats, const std::string& title);
+
+  private:
+    /** Returns true if start() has been called but not yet stop() */
+    bool isStarted_() const;
+    /** Saves the values to the Stats on the main view; returns non-zero on error */
+    int record_();
+    /** Call this once a frame is definitely done and we need to reset for a new frame */
+    void reset_();
+
+    /// View associated with the statistic
+    osg::observer_ptr<osgViewer::View> mainView_;
+    const std::string beginKey_;
+    const std::string endKey_;
+    const std::string timeTakenKey_;
+
+    /// Strategy for when to record to osg::Stats
+    RecordFrequency recordFrequency_;
+
+    /// Overall time taken in current frame
+    osg::Timer_t cumulativeMs_;
+    /// First tick contributing to cumulativeMs_ (set in start())
+    osg::Timer_t firstStartTickMs_;
+    /// Last tick contributing to cumulativeMs_ (set in stop())
+    osg::Timer_t lastStopTickMs_;
+
+    /// Time of last start() call; if 0, then timer is not started
+    osg::Timer_t startTickMs_;
+
+    /// Frame number where start() was called
+    unsigned int currentFrameNumber_;
+    /// OSG-reported time of the currentFrameNumber_'s frame start time
+    osg::Timer_t currentFrameStartTickMs_;
+  };
+
+  /**
+   * Convenience class to start and stop the timer on an existing StatsTimer.  To
+   * use, first allocate a persistent StatsTimer.  Then create a ScopedStatsTimerToken
+   * on the stack that represents the area you want to do timing.  This is suitable
+   * for operations that occur once per frame or more.  If an operation is guaranteed
+   * to occur once per frame or less, consider the simpler ScopedStatsTimer which
+   * does not require a persistent StatsTimer.  For example:
+   *
+   * <code>
+   * StatsTimer statsTimer_(mainView, "Repeated Operation"); // persistent object
+   * // ...
+   * if (...)
+   * {
+   *   ScopedStatsTimerToken token(statsTimer_);
+   *   doOperation();
+   * }
+   * </code>
+   */
+  class SDKVIS_EXPORT ScopedStatsTimerToken
+  {
+  public:
+    /** Starts a timer on the given token */
+    ScopedStatsTimerToken(StatsTimer& tick);
+    /** Stops a timer on the given token */
+    virtual ~ScopedStatsTimerToken();
+
+  private:
+    StatsTimer& tick_;
+  };
+
+  /**
+   * Convenience class to record a single per-frame timer metric into the osg::Stats.
+   * Implemented using the StatsTimer class.  Use this inside a scope before a (potentially)
+   * long operation that occurs no more than once per frame.  If an operation may occur
+   * more than once per frame, look at the ScopedStatsTimerToken class.  For example:
+   *
+   * <code>
+   * if (...)
+   * {
+   *   ScopedStatsTimer tick(mainView, "Long Operation");
+   *   doOperation();
+   * }
+   * </code>
+   */
+  class SDKVIS_EXPORT ScopedStatsTimer
+  {
+  public:
+    /** Creates a stats timer and starts it.  Will stop on instance destruction. */
+    ScopedStatsTimer(osgViewer::View* mainView, const std::string& key);
+
+  private:
+    StatsTimer statsTimer_;
+  };
+
 } // namespace simVis
 
 #endif // SIMVIS_UTILS_H
-
