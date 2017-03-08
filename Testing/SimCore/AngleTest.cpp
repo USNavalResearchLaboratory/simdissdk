@@ -444,6 +444,110 @@ int testSim2511()
   return rv;
 }
 
+int testPrecision(double deg, double min, double sec, int precision, simCore::GeodeticFormat format, const std::string& degStr)
+{
+  int rv = 0;
+  double val = dmsAsRadian(deg, min, sec);
+  std::string d = simCore::printLatitude(val, format, true, precision, simCore::DEG_SYM_NONE);
+  if (d != degStr)
+  {
+    rv += 1;
+    std::cerr << "ERROR: " << val * simCore::RAD2DEG << " in DEGREES as " << d << "; expected " << degStr << std::endl;
+  }
+
+  return rv;
+}
+
+int testSim7284()
+{
+  int rv = 0;
+  // Test precision in degrees (d) format
+  rv += SDK_ASSERT(0 == testPrecision(31.4, 0, 0, 0, simCore::FMT_DEGREES, "31"));
+  rv += SDK_ASSERT(0 == testPrecision(31.5, 0, 0, 0, simCore::FMT_DEGREES, "32"));
+  rv += SDK_ASSERT(0 == testPrecision(31.4, 0, 0, 1, simCore::FMT_DEGREES, "31.4"));
+  rv += SDK_ASSERT(0 == testPrecision(31.4, 60, 0, 1, simCore::FMT_DEGREES, "32.4"));
+  rv += SDK_ASSERT(0 == testPrecision(31.4, 59, 0, 1, simCore::FMT_DEGREES, "32.4"));
+  rv += SDK_ASSERT(0 == testPrecision(31.4, 29, 0, 1, simCore::FMT_DEGREES, "31.9"));
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 0, 0, 1, simCore::FMT_DEGREES, "32.0"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 0, 0, 2, simCore::FMT_DEGREES, "32.00"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 0, 0, 4, simCore::FMT_DEGREES, "32.0000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 0, 0, 8, simCore::FMT_DEGREES, "32.00000000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 0, 0, 10, simCore::FMT_DEGREES, "32.0000000000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 0, 0, 15, simCore::FMT_DEGREES, "32.000000000000000")); //< Max precision
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 0, 1, simCore::FMT_DEGREES, "32.5"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 0, 2, simCore::FMT_DEGREES, "32.50"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 0, 15, simCore::FMT_DEGREES, "32.500000000000000")); //< Test Max
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 0, simCore::FMT_DEGREES, "33"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 1, simCore::FMT_DEGREES, "32.5"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 2, simCore::FMT_DEGREES, "32.51"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 3, simCore::FMT_DEGREES, "32.508"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 4, simCore::FMT_DEGREES, "32.5083"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 5, simCore::FMT_DEGREES, "32.50833"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 6, simCore::FMT_DEGREES, "32.508333"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 7, simCore::FMT_DEGREES, "32.5083333"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 8, simCore::FMT_DEGREES, "32.50833333"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 10, simCore::FMT_DEGREES, "32.5083333333"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 12, simCore::FMT_DEGREES, "32.508333333333"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 15, simCore::FMT_DEGREES, "32.508333333333333")); //< Test Max
+
+  // Test precision in degrees minutes (dm) format
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 30, 0, simCore::FMT_DEGREES_MINUTES, "33 00"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 29, 0, simCore::FMT_DEGREES_MINUTES, "32 59"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 30, 1, simCore::FMT_DEGREES_MINUTES, "32 59.5"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 30, 2, simCore::FMT_DEGREES_MINUTES, "32 59.50"));
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59.5, 0, simCore::FMT_DEGREES_MINUTES, "33 00"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59.5, 1, simCore::FMT_DEGREES_MINUTES, "33 00.0"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59.5, 2, simCore::FMT_DEGREES_MINUTES, "32 59.99"));
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59, 0, simCore::FMT_DEGREES_MINUTES, "33 00"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59, 1, simCore::FMT_DEGREES_MINUTES, "33 00.0"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59, 2, simCore::FMT_DEGREES_MINUTES, "32 59.98"));
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 0, simCore::FMT_DEGREES_MINUTES, "32 31"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 1, simCore::FMT_DEGREES_MINUTES, "32 30.5"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 2, simCore::FMT_DEGREES_MINUTES, "32 30.50"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 3, simCore::FMT_DEGREES_MINUTES, "32 30.500"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 4, simCore::FMT_DEGREES_MINUTES, "32 30.5000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 8, simCore::FMT_DEGREES_MINUTES, "32 30.50000000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 13, simCore::FMT_DEGREES_MINUTES, "32 30.5000000000000")); //< Test Max
+
+  // Test precision in degrees minutes seconds (dms) format
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59.5, 0, simCore::FMT_DEGREES_MINUTES_SECONDS, "33 00 00"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59.5, 1, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 59 59.5"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59.5, 2, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 59 59.50"));
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59, 0, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 59 59"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59, 1, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 59 59.0"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 59, 59, 2, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 59 59.00"));
+
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 0, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 30 30"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 1, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 30 30.0"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 2, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 30 30.00"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 3, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 30 30.000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 4, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 30 30.0000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 8, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 30 30.00000000"));
+  rv += SDK_ASSERT(0 == testPrecision(32, 30, 30, 11, simCore::FMT_DEGREES_MINUTES_SECONDS, "32 30 30.00000000000")); //< Test Max
+
+  // Test Negative Values
+  rv += SDK_ASSERT(0 == testPrecision(-32, 30, 30, 0, simCore::FMT_DEGREES_MINUTES_SECONDS, "-32 30 30"));
+  rv += SDK_ASSERT(0 == testPrecision(-32, 30, 30, 1, simCore::FMT_DEGREES_MINUTES_SECONDS, "-32 30 30.0"));
+  rv += SDK_ASSERT(0 == testPrecision(-32, 30, 30, 2, simCore::FMT_DEGREES_MINUTES_SECONDS, "-32 30 30.00"));
+  rv += SDK_ASSERT(0 == testPrecision(-32, 30, 30, 3, simCore::FMT_DEGREES_MINUTES_SECONDS, "-32 30 30.000"));
+  rv += SDK_ASSERT(0 == testPrecision(-32, 30, 30, 4, simCore::FMT_DEGREES_MINUTES_SECONDS, "-32 30 30.0000"));
+  rv += SDK_ASSERT(0 == testPrecision(-32, 30, 30, 8, simCore::FMT_DEGREES_MINUTES_SECONDS, "-32 30 30.00000000"));
+  rv += SDK_ASSERT(0 == testPrecision(-32, 30, 30, 11, simCore::FMT_DEGREES_MINUTES_SECONDS, "-32 30 30.00000000000")); //< Test Max
+
+  // Test sample values
+  rv += SDK_ASSERT(simCore::printLongitude(36.00016850 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 10, simCore::DEG_SYM_NONE) == "36.0001685000");
+  rv += SDK_ASSERT(simCore::printLongitude(-75.4996133056 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 10, simCore::DEG_SYM_NONE) == "-75.4996133056");
+
+  return rv;
+}
+
 }
 
 int AngleTest(int argc, char* argv[])
@@ -457,6 +561,7 @@ int AngleTest(int argc, char* argv[])
   rv += testSim1755();
   rv += testSim2511();
   rv += testSim4481();
+  rv += testSim7284();
 
   return rv;
 }

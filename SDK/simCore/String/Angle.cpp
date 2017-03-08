@@ -166,7 +166,7 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
     hemiDir.clear();
   }
 
-  const double tolerance = 0.00000001;
+  const double tolerance = 0.00000001; //< Value to avoid instance of -0
   double minValue = 0;  // DM min value
   std::string angleString;
   switch (format)
@@ -180,15 +180,15 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
     degreeAngle = floor(degreeAngle);
 
     // same for seconds on minutes, with rounding
-    double secValue = (minValue - floor(minValue + tolerance)) * 60.0;
-    minValue = floor(minValue + tolerance);
+    double secValue = (minValue - floor(minValue)) * 60.0;
+    minValue = floor(minValue);
 
     // Don't permit negative seconds
     if (secValue < tolerance)
       secValue = 0.0;
 
     const double rounding = 5.0 / pow(10.0, precision + 1.0);
-    if (secValue + rounding >= 60.0)
+    if ((secValue + rounding > 60.0) || simCore::areEqual(secValue + rounding, 60.0))
     {
       secValue = 0.0;
       minValue += 1.0;
@@ -197,6 +197,14 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
         minValue = 0.0;
         degreeAngle += 1.0;
       }
+    }
+    else
+    {
+        double fraction = fmod(secValue * pow(10.0, precision + 1.0), 10.0);
+        if ((fraction > 5.0) || simCore::areEqual(fraction, 5.0))
+        {
+            secValue += rounding;
+        }
     }
 
     degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
@@ -217,17 +225,25 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
 
   case FMT_DEGREES_MINUTES:
   {
-    minValue = ((degreeAngle - floor(degreeAngle)) * 60.0) + tolerance;
+    minValue = ((degreeAngle - floor(degreeAngle)) * 60.0);
     degreeAngle = floor(degreeAngle);
 
     if (fabs(minValue) <= tolerance)
       minValue = 0.0;
 
     const double rounding = 5.0 / pow(10.0, precision + 1.0);
-    if (minValue + rounding >= 60.0)
+    if (minValue + rounding >= 60.0 || simCore::areEqual(minValue + rounding, 60.0))
     {
       degreeAngle += 1.0;
       minValue = 0.0;
+    }
+    else
+    {
+        double fraction = fmod(minValue * pow(10.0, precision + 1.0), 10.0);
+        if ((fraction > 5.0) || simCore::areEqual(fraction, 5.0))
+        {
+            minValue += rounding;
+        }
     }
 
     degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
@@ -258,8 +274,6 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
   case FMT_DEGREES:
   default:
   {
-    if (degreeAngle != 0.0)
-      degreeAngle += tolerance;
     degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
     std::stringstream str;
     str.setf(std::ios::fixed, std::ios::floatfield);
