@@ -274,13 +274,6 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
   case FMT_DEGREES:
   default:
   {
-    const double rounding = 5.0 / pow(10.0, precision + 1.0);
-    double fraction = fmod(degreeAngle * pow(10.0, precision + 1.0), 10.0);
-    if ((fraction > 5.0) || simCore::areEqual(fraction, 5.0))
-    {
-      minValue += rounding;
-    }
-
     degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
     std::stringstream str;
     str.setf(std::ios::fixed, std::ios::floatfield);
