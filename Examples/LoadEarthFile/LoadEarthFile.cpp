@@ -226,8 +226,6 @@ private:
 
 int main(int argc, char** argv)
 {
-  bool useRex = true;
-
   // Set up the scene:
   simCore::checkVersionThrow();
   simExamples::configureSearchPaths();
@@ -235,8 +233,7 @@ int main(int argc, char** argv)
   if (argc < 3)
   {
     std::cerr << "USAGE: pass in earth files on command line: \n"
-      << " --earthFiles <file1> <file2> ...\n"
-      << " [--useMp]\n";
+      << " --earthFiles <file1> <file2> ...\n";
     return 0;
   }
 
@@ -254,8 +251,6 @@ int main(int argc, char** argv)
       }
       index = newIndex;
     }
-    if (arg == "--useMp")
-      useRex = false;
   }
 
   if (earthFiles.empty())
@@ -264,9 +259,6 @@ int main(int argc, char** argv)
       << " --earthFiles <file1> <file2> ...\n";
     return 0;
   }
-
-  // set terrain engine
-  osgEarth::Registry::instance()->setDefaultTerrainEngineDriverName(useRex ? "rex" : "mp");
 
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
 
