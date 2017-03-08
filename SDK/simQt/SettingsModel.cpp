@@ -914,14 +914,22 @@ int SettingsModel::loadSettingsFile(const QString& path)
   QStringList allKeys = settings.allKeys();
   if (allKeys.empty()) // Empty file
     return 1;
+  bool containsLayout = false;
   Q_FOREACH(const QString& key, allKeys)
   {
     setValue(key, settings.value(key));
+    // now check to see if this setting is a LAYOUT
+    TreeNode* node = getNode_(key);
+    if (node && node->metaData().type() == LAYOUT)
+      containsLayout = true;
   }
+
   // need to update settings meta data based on the meta data loaded from the file
   initMetaData_(settings);
 
-  emit settingsFileLoaded(path);
+  // if there was a LAYOUT setting, emit signal
+  if (containsLayout)
+    emit layoutLoaded();
 
   return 0;
 }

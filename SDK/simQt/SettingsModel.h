@@ -136,8 +136,8 @@ public:
 signals:
   /// Indicates that settings are about to be saved to a file
   void aboutToSaveSettingsFile(const QString& path);
-  /// Indicates that a new settings file has been loaded
-  void settingsFileLoaded(const QString& path);
+  /// Indicates that a layout setting has been loaded
+  void layoutLoaded();
   /// Indicates that a setting has changed
   void settingChanged();
 
@@ -152,7 +152,7 @@ public slots:
   void clearUndoHistory();
   /// Reload the model from current QSettings
   void reloadModel();
-  /// Loads a settings file into this data model, returns 0 on success
+  /// Loads a settings file into this data model, returns 0 on success. Will emit the layoutLoaded signal if the specified settings file contains LAYOUT data
   int loadSettingsFile(const QString& path);
   /// Saves the settings to a file, return 0 on success.
   int saveSettingsFileAs(const QString& path);
