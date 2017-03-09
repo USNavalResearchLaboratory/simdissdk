@@ -99,8 +99,6 @@ namespace simVis
     /** Callback for entity */
     virtual LabelContentCallback* createLabelContentCallback(simData::ObjectId id) = 0;
 
-    //TODO SDK-49: Need to add all the other entity types.
-
   protected:
     virtual ~LabelContentManager() {}
   };

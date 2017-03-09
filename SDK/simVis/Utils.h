@@ -606,7 +606,7 @@ namespace simVis
     /** Clears out memory and stops timer if needed */
     virtual ~StatsTimer();
 
-    /** Starts the timer.  Returns failure of non-zero when timer is already started. */
+    /** Starts the timer.  Returns non-zero error if timer is already started. */
     int start();
     /** Stops the timer. Returns non-zero error if timer is not started. */
     int stop();
