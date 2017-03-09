@@ -45,6 +45,7 @@
 #include "simVis/Beam.h"
 #include "simVis/Antenna.h"
 #include "simVis/LobGroup.h"
+#include "simVis/OverheadMode.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 #include "simVis/RFProp/RFPropagationManager.h"
 #include "simVis/Text.h"
@@ -468,6 +469,7 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   xform_->addChild(geode_);
   xform_->addChild(labelsContainer);
   xform_->setName("Range Tool Association");
+  OverheadMode::enableGeometryFlattening(true, xform_);
 }
 
 void RangeTool::Association::add(Calculation* calc)

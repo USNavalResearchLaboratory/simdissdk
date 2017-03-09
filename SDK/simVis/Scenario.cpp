@@ -174,7 +174,7 @@ int ScenarioManager::SimpleEntityGraph::addOrUpdate(EntityRecord* record)
 int ScenarioManager::SimpleEntityGraph::removeEntity(EntityRecord* record)
 {
   // Assertion failure means the entity is in multiple parents and this removal won't work
-  assert(record->getEntityNode()->getNumParents() == 1);
+  assert(record->getEntityNode()->getNumParents() <= 1);
   if (record->getEntityNode()->getNumParents() > 0)
   {
     osg::Group* parent = record->getEntityNode()->getParent(0);
