@@ -162,7 +162,6 @@ RangeTool::GraphicOptions::GraphicOptions()
     lineStipple1_(0x00FF),
     lineStipple2_(0xFF00),
     lineWidth_(1),
-    lineSegments_(25),
     pieColor_(1, .5, 0, 1),  // orange
     pieSegments_(24),
     usePercentOfSlantDistance_(true),
@@ -925,20 +924,63 @@ osg::Vec3 RangeTool::PieSliceGraphic::labelPos(State& state)
 
 //----------------------------------------------------------------------------
 
-void RangeTool::State::line(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset, unsigned int numSeg, osg::Vec3Array* verts)
+void RangeTool::State::line(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset, osg::Vec3Array* verts)
 {
-  verts->reserve(numSeg+1);
-  double numSegDouble = static_cast<double>(numSeg);
+  // Use Sodano method to calculate azimuth and distance
+  double azimuth = 0.0;
+  const double distance = simCore::sodanoInverse(lla0.lat(), lla0.lon(), lla0.alt(), lla1.lat(), lla1.lon(), &azimuth);
 
-  for (unsigned int i = 0; i <= numSeg; ++i)
+  // purely vertical line will be drawn as a single segment
+  if (simCore::areEqual(distance, 0.0))
   {
-    double t = i/numSegDouble;
-
-    verts->push_back(lla2local(
-      lla0.x() + t*(lla1.x()-lla0.x()),
-      lla0.y() + t*(lla1.y()-lla0.y()),
-      (lla0.z() + t*(lla1.z()-lla0.z()))+altOffset));
+    verts->push_back(lla2local(lla0.x(), lla0.y(), lla0.z() + altOffset));
+    verts->push_back(lla2local(lla1.x(), lla1.y(), lla1.z() + altOffset));
+    return;
   }
+
+  // if total distance of the line is less than the max segment length, use that
+  double segmentLength = simCore::sdkMin(distance, MAX_SEGMENT_LENGTH);
+  // When lines are at/close to surface, we might need to tessellate more closely
+  if (fabs(lla0.alt()) < SUBDIVIDE_BY_GROUND_THRESHOLD && fabs(lla1.alt()) < SUBDIVIDE_BY_GROUND_THRESHOLD)
+  {
+    // if the total distance of the line is less than the max segment length, use that
+    segmentLength = simCore::sdkMin(distance, MAX_SEGMENT_LENGTH_GROUNDED);
+  }
+
+  // make sure there's enough room. Don't bother shrinking.
+  const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(distance / segmentLength)));
+  verts->reserve(numSegs + 1);
+  verts->clear();
+
+  // Add points to the vertex list, from back to front, for consistent stippling.  Order
+  // matters because it affects the line direction during stippling.
+  for (unsigned int k = 0; k <= numSegs; ++k)
+  {
+    const float percentOfFull = static_cast<float>(k) / static_cast<float>(numSegs); // From 0 to 1
+
+    // Calculate the LLA value of the point, and replace the altitude
+    double lat = 0.0;
+    double lon = 0.0;
+    simCore::sodanoDirect(lla0.lat(), lla0.lon(), lla0.alt(), distance * percentOfFull, azimuth, &lat, &lon);
+    verts->push_back(lla2local(lat, lon, lla0.z() + altOffset));
+  }
+}
+
+simCore::Vec3 RangeTool::State::midPoint(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset)
+{
+  // Use Sodano method to calculate azimuth and distance
+  double azimuth = 0.0;
+  const double distance = simCore::sodanoInverse(lla0.lat(), lla0.lon(), lla0.alt(), lla1.lat(), lla1.lon(), &azimuth);
+
+  // purely vertical line will be drawn as a single segment
+  if (simCore::areEqual(distance, 0.0))
+    return lla0;
+
+  // Calculate the LLA value of the point, and replace the altitude
+  double lat = 0.0;
+  double lon = 0.0;
+  simCore::sodanoDirect(lla0.lat(), lla0.lon(), lla0.alt(), distance * 0.5, azimuth, &lat, &lon);
+  return simCore::Vec3(lat, lon, (lla0.alt() + lla1.alt()) / 2.0 + altOffset);
 }
 
 osg::Vec3 RangeTool::State::lla2local(double lat, double lon, double alt)
@@ -1208,24 +1250,24 @@ osg::Vec3d RangeTool::State::simCore2osg(const simCore::Vec3& point) const
 //----------------------------------------------------------------------------
 
 RangeTool::GroundLineGraphic::GroundLineGraphic()
-  : LineGraphic("GroundLine", SEGMENTED_LINE)
+  : LineGraphic("GroundLine", LINE)
 { }
 
 void RangeTool::GroundLineGraphic::render(osg::Geode* geode, RangeTool::State& state)
 {
   osg::Vec3Array* verts = new osg::Vec3Array();
-  simCore::Vec3 lla0_msl(state.beginEntity_.lla_.x(), state.beginEntity_.lla_.y(), 0.0);
-  simCore::Vec3 lla1_msl(state.endEntity_.lla_.x(), state.endEntity_.lla_.y(), 0.0);
-  state.line(lla0_msl, lla1_msl, 1.0, options_.lineSegments_, verts);
+  simCore::Vec3 lla0(state.beginEntity_.lla_.x(), state.beginEntity_.lla_.y(), 0.0);
+  simCore::Vec3 lla1(state.endEntity_.lla_.x(), state.endEntity_.lla_.y(), 0.0);
+  state.line(lla0, lla1, 1.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
 osg::Vec3 RangeTool::GroundLineGraphic::labelPos(RangeTool::State& state)
 {
-  return state.lla2local(
-    0.5*(state.beginEntity_.lla_.x() + state.endEntity_.lla_.x()),
-    0.5*(state.beginEntity_.lla_.y() + state.endEntity_.lla_.y()),
-    0.0);
+  simCore::Vec3 lla0(state.beginEntity_.lla_.x(), state.beginEntity_.lla_.y(), 0.0);
+  simCore::Vec3 lla1(state.endEntity_.lla_.x(), state.endEntity_.lla_.y(), 0.0);
+  auto mid = state.midPoint(lla0, lla1, 0.0);
+  return state.lla2local(mid.x(), mid.y(), 0.0);
 }
 
 //----------------------------------------------------------------------------
@@ -1324,14 +1366,14 @@ osg::Vec3 RangeTool::EndAltitudeLineToBeginAltitudeGraphic::labelPos(RangeTool::
 //----------------------------------------------------------------------------
 
 RangeTool::BeginToEndLineAtBeginAltitudeGraphic::BeginToEndLineAtBeginAltitudeGraphic()
-  : LineGraphic("BeginToEndLineAtBeginAltitude", SEGMENTED_LINE)
+  : LineGraphic("BeginToEndLineAtBeginAltitude", LINE)
 { }
 
 void RangeTool::BeginToEndLineAtBeginAltitudeGraphic::render(osg::Geode* geode, RangeTool::State& state)
 {
   osg::Vec3Array* verts = new osg::Vec3Array();
   simCore::Vec3 lla1(state.endEntity_.lla_.x(), state.endEntity_.lla_.y(), state.beginEntity_.lla_.z());
-  state.line(state.beginEntity_.lla_, lla1, 0.0, options_.lineSegments_, verts);
+  state.line(state.beginEntity_.lla_, lla1, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
@@ -1343,14 +1385,14 @@ osg::Vec3 RangeTool::BeginToEndLineAtBeginAltitudeGraphic::labelPos(RangeTool::S
 //----------------------------------------------------------------------------
 
 RangeTool::BeginToEndLineAtEndAltitudeGraphic::BeginToEndLineAtEndAltitudeGraphic()
-  : LineGraphic("BeginToEndLineAtEndAltitude", SEGMENTED_LINE)
+  : LineGraphic("BeginToEndLineAtEndAltitude", LINE)
 { }
 
 void RangeTool::BeginToEndLineAtEndAltitudeGraphic::render(osg::Geode* geode, RangeTool::State& state)
 {
   osg::Vec3Array* verts = new osg::Vec3Array();
   simCore::Vec3 lla0(state.beginEntity_.lla_.x(), state.beginEntity_.lla_.y(), state.endEntity_.lla_.z());
-  state.line(lla0, state.endEntity_.lla_, 0.0, options_.lineSegments_, verts);
+  state.line(lla0, state.endEntity_.lla_, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
@@ -1362,7 +1404,7 @@ osg::Vec3 RangeTool::BeginToEndLineAtEndAltitudeGraphic::labelPos(RangeTool::Sta
 //----------------------------------------------------------------------------
 
 RangeTool::BeamGroundLineGraphic::BeamGroundLineGraphic()
-  : LineGraphic("BeamGroundLine", SEGMENTED_LINE)
+  : LineGraphic("BeamGroundLine", LINE)
 { }
 
 void RangeTool::BeamGroundLineGraphic::render(osg::Geode* geode, RangeTool::State& state)
@@ -1371,9 +1413,9 @@ void RangeTool::BeamGroundLineGraphic::render(osg::Geode* geode, RangeTool::Stat
 
   simCore::Vec3 from = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_0));
   simCore::Vec3 to = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_1));
-  simCore::Vec3 lla0_msl(from.x(), from.y(), 0.0);
-  simCore::Vec3 lla1_msl(to.x(), to.y(), 0.0);
-  state.line(lla0_msl, lla1_msl, 1.0, options_.lineSegments_, verts);
+  simCore::Vec3 lla0(from.x(), from.y(), 0.0);
+  simCore::Vec3 lla1(to.x(), to.y(), 0.0);
+  state.line(lla0, lla1, 1.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
@@ -1381,7 +1423,9 @@ osg::Vec3 RangeTool::BeamGroundLineGraphic::labelPos(RangeTool::State& state)
 {
   simCore::Vec3 from = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_0));
   simCore::Vec3 to = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_1));
-  return state.lla2local(0.5*(from.x() + to.x()), 0.5*(from.y() + to.y()), 0.0);
+  auto mid = state.midPoint(from, to, 0.0);
+  return state.lla2local(mid.x(), mid.y(), 0.0);
+
 }
 
 //----------------------------------------------------------------------------
@@ -1482,7 +1526,7 @@ osg::Vec3 RangeTool::BeamEndAltitudeLineToBeginAltitudeGraphic::labelPos(RangeTo
 //----------------------------------------------------------------------------
 
 RangeTool::BeamBeginToEndLineAtBeginAltitudeGraphic::BeamBeginToEndLineAtBeginAltitudeGraphic()
-  : LineGraphic("BeamBeginToEndLineAtBeginAltitude", SEGMENTED_LINE)
+  : LineGraphic("BeamBeginToEndLineAtBeginAltitude", LINE)
 { }
 
 void RangeTool::BeamBeginToEndLineAtBeginAltitudeGraphic::render(osg::Geode* geode, RangeTool::State& state)
@@ -1491,7 +1535,7 @@ void RangeTool::BeamBeginToEndLineAtBeginAltitudeGraphic::render(osg::Geode* geo
   simCore::Vec3 from = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_0));
   simCore::Vec3 to = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_1));
   simCore::Vec3 lla1(to.x(), to.y(), from.z());
-  state.line(from, lla1, 0.0, options_.lineSegments_, verts);
+  state.line(from, lla1, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
@@ -1505,7 +1549,7 @@ osg::Vec3 RangeTool::BeamBeginToEndLineAtBeginAltitudeGraphic::labelPos(RangeToo
 //----------------------------------------------------------------------------
 
 RangeTool::BeamBeginToEndLineAtEndAltitudeGraphic::BeamBeginToEndLineAtEndAltitudeGraphic()
-  : LineGraphic("BeamBeginToEndLineAtEndAltitude", SEGMENTED_LINE)
+  : LineGraphic("BeamBeginToEndLineAtEndAltitude", LINE)
 { }
 
 void RangeTool::BeamBeginToEndLineAtEndAltitudeGraphic::render(osg::Geode* geode, RangeTool::State& state)
@@ -1514,7 +1558,7 @@ void RangeTool::BeamBeginToEndLineAtEndAltitudeGraphic::render(osg::Geode* geode
   simCore::Vec3 from = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_0));
   simCore::Vec3 to = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_1));
   simCore::Vec3 lla0(from.x(), from.y(), to.z());
-  state.line(lla0, to, 0.0, options_.lineSegments_, verts);
+  state.line(lla0, to, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
@@ -1522,60 +1566,55 @@ osg::Vec3 RangeTool::BeamBeginToEndLineAtEndAltitudeGraphic::labelPos(RangeTool:
 {
   simCore::Vec3 from = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_0));
   simCore::Vec3 to = state.osg2simCore(state.coord(State::COORD_BEAM_LLA_1));
-
   return state.lla2local(from.x(), from.y(), to.z());
 }
 
 //----------------------------------------------------------------------------
 
 RangeTool::DownRangeLineGraphic::DownRangeLineGraphic()
-  : LineGraphic("DownRangeLine", SEGMENTED_LINE)
+  : LineGraphic("DownRangeLine", LINE)
 { }
 
 void RangeTool::DownRangeLineGraphic::render(osg::Geode* geode, RangeTool::State& state)
 {
   osg::Vec3Array* verts = new osg::Vec3Array();
   simCore::Vec3 crdr = state.local2lla(state.coord(State::COORD_DR));
-  state.line(state.beginEntity_.lla_, crdr, 0.0, options_.lineSegments_, verts);
+  state.line(state.beginEntity_.lla_, crdr, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
 osg::Vec3 RangeTool::DownRangeLineGraphic::labelPos(RangeTool::State& state)
 {
   simCore::Vec3 crdr = state.local2lla(state.coord(State::COORD_DR));
-  return state.lla2local(
-    0.5*(state.beginEntity_.lla_.x() + crdr.x()),
-    0.5*(state.beginEntity_.lla_.y() + crdr.y()),
-    state.beginEntity_.lla_.z());
+  auto mid = state.midPoint(state.beginEntity_.lla_, crdr, 0.0);
+  return state.lla2local(mid.x(), mid.y(), state.beginEntity_.lla_.z());
 }
 
 //----------------------------------------------------------------------------
 
 RangeTool::VelAzimDownRangeLineGraphic::VelAzimDownRangeLineGraphic()
-  : LineGraphic("VelAzimDownRangeLine", SEGMENTED_LINE)
+  : LineGraphic("VelAzimDownRangeLine", LINE)
 { }
 
 void RangeTool::VelAzimDownRangeLineGraphic::render(osg::Geode* geode, RangeTool::State& state)
 {
   osg::Vec3Array* verts = new osg::Vec3Array();
   simCore::Vec3 end = state.local2lla(state.coord(State::COORD_VEL_AZIM_DR));
-  state.line(state.beginEntity_.lla_, end, 0.0, options_.lineSegments_, verts);
+  state.line(state.beginEntity_.lla_, end, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
 osg::Vec3 RangeTool::VelAzimDownRangeLineGraphic::labelPos(RangeTool::State& state)
 {
   simCore::Vec3 end = state.local2lla(state.coord(State::COORD_VEL_AZIM_DR));
-  return state.lla2local(
-    0.5*(state.beginEntity_.lla_.x() + end.x()),
-    0.5*(state.beginEntity_.lla_.y() + end.y()),
-    state.beginEntity_.lla_.z());
+  auto mid = state.midPoint(state.beginEntity_.lla_, end, 0.0);
+  return state.lla2local(mid.x(), mid.y(), state.beginEntity_.lla_.z());
 }
 
 //----------------------------------------------------------------------------
 
 RangeTool::VelAzimCrossRangeLineGraphic::VelAzimCrossRangeLineGraphic()
-  : LineGraphic("VelAzimCrossRangeLine", SEGMENTED_LINE)
+  : LineGraphic("VelAzimCrossRangeLine", LINE)
 { }
 
 void RangeTool::VelAzimCrossRangeLineGraphic::render(osg::Geode* geode, RangeTool::State& state)
@@ -1583,23 +1622,21 @@ void RangeTool::VelAzimCrossRangeLineGraphic::render(osg::Geode* geode, RangeToo
   osg::Vec3Array* verts = new osg::Vec3Array();
   simCore::Vec3 start = state.local2lla(state.coord(State::COORD_VEL_AZIM_DR));
   simCore::Vec3 end = state.local2lla(state.coord(State::COORD_OBJ_1_AT_OBJ_0_ALT));
-  state.line(start, end, 0.0, options_.lineSegments_, verts);
+  state.line(start, end, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
 osg::Vec3 RangeTool::VelAzimCrossRangeLineGraphic::labelPos(RangeTool::State& state)
 {
   simCore::Vec3 start = state.local2lla(state.coord(State::COORD_VEL_AZIM_DR));
-  return state.lla2local(
-    0.5*(state.endEntity_.lla_.x() + start.x()),
-    0.5*(state.endEntity_.lla_.y() + start.y()),
-    state.endEntity_.lla_.z());
+  auto mid = state.midPoint(state.endEntity_.lla_, start, 0.0);
+  return state.lla2local(mid.x(), mid.y(), state.endEntity_.lla_.z());
 }
 
 //----------------------------------------------------------------------------
 
 RangeTool::CrossRangeLineGraphic::CrossRangeLineGraphic()
-  : LineGraphic("CrossRangeLine", SEGMENTED_LINE)
+  : LineGraphic("CrossRangeLine", LINE)
 { }
 
 void RangeTool::CrossRangeLineGraphic::render(osg::Geode* geode, RangeTool::State& state)
@@ -1607,17 +1644,15 @@ void RangeTool::CrossRangeLineGraphic::render(osg::Geode* geode, RangeTool::Stat
   osg::Vec3Array* verts = new osg::Vec3Array();
   simCore::Vec3 crdr = state.local2lla(state.coord(State::COORD_DR));
   simCore::Vec3 lla1(state.endEntity_.lla_.x(), state.endEntity_.lla_.y(), state.beginEntity_.lla_.z());
-  state.line(crdr, lla1, 0.0, options_.lineSegments_, verts);
+  state.line(crdr, lla1, 0.0, verts);
   createGeometry(verts, new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size()), geode, state);
 }
 
 osg::Vec3 RangeTool::CrossRangeLineGraphic::labelPos(RangeTool::State& state)
 {
   simCore::Vec3 crdr = state.local2lla(state.coord(State::COORD_DR));
-  return state.lla2local(
-    0.5*(state.endEntity_.lla_.x() + crdr.x()),
-    0.5*(state.endEntity_.lla_.y() + crdr.y()),
-    state.beginEntity_.lla_.z());
+  auto mid = state.midPoint(state.endEntity_.lla_, crdr, 0.0);
+  return state.lla2local(mid.x(), mid.y(), state.beginEntity_.lla_.z());
 }
 
 //----------------------------------------------------------------------------

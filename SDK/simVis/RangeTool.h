@@ -86,7 +86,6 @@ namespace simVis
       osg::Vec4f     lineColor1_,   lineColor2_;
       unsigned short lineStipple1_, lineStipple2_;
       unsigned int   lineWidth_;
-      unsigned int   lineSegments_;
 
       osg::Vec4f     pieColor_;
       unsigned int   pieSegments_;
@@ -209,8 +208,10 @@ namespace simVis
         const simCore::Vec3& lla0,
         const simCore::Vec3& lla1,
         double               altOffset,
-        unsigned int         numSeg,
         osg::Vec3Array*      verts);
+
+      /// Returns the midpoint between the two given positions
+      simCore::Vec3 midPoint(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset);
 
       ///@return the given lla to relative values scaled to the local frame (xyz)
       osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m);
@@ -251,8 +252,7 @@ namespace simVis
       /** Define the type of graphic */
       enum GraphicType
       {
-        LINE = 0,       ///< uses all line fields of the GraphicOptions except lineSegments_
-        SEGMENTED_LINE, ///< uses all line fields of the GraphicOptions including lineSegments_
+        LINE = 0,       ///< uses all line fields of the GraphicOptions
         PIE_SLICE,      ///< uses all the pie fields of the GraphicOptions
         CUSTOM          ///< custom graphic shape
       };

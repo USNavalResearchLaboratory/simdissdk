@@ -51,6 +51,16 @@ namespace simVis
    */
   static const unsigned int MIN_NUM_SEGMENTS = 4;
 
+  /** Minimum length for line segments that are entirely within a threshold value from surface (meters) */
+  static const double MAX_SEGMENT_LENGTH_GROUNDED = 100.f;
+
+  /**
+  * Threshold value to swap between segment lengths, in meters.  If both ends have altitudes
+  * within the threshold value from surface, then the line is subdivided more tightly to
+  * reduce collision with surface.
+  */
+  static const float SUBDIVIDE_BY_GROUND_THRESHOLD = 10.f; // meters altitude
+
   /** When doing file searches with osgDB, differentiate the search for Windows vs Linux */
 #ifdef WIN32
   static const osgDB::CaseSensitivity DEFAULT_CASE_SENSITIVITY = osgDB::CASE_INSENSITIVE;

@@ -45,18 +45,8 @@ using namespace simVis;
 // Local utility functions
 namespace
 {
-  /** Minimum length for line segments that are entirely within a threshold value from surface (meters) */
-  static const double MAX_SEGMENT_LENGTH_GROUNDED = 100.f;
-
   /** Depth to offset to figure out whether line intersects sphere (Mariana trench depth in meters) */
   static const double OCEAN_DEPTH_TEST_OFFSET = 11033.;
-
-  /**
-   * Threshold value to swap between segment lengths, in meters.  If both ends have altitudes
-   * within the threshold value from surface, then the line is subdivided more tightly to
-   * reduce collision with surface.
-   */
-  static const float SUBDIVIDE_BY_GROUND_THRESHOLD = 10.f; // meters altitude
 
   // rotates a 16-bit value to the left by the specified # of bits, where bits is [0,15]
   void rol(unsigned short& v, unsigned short bits)
