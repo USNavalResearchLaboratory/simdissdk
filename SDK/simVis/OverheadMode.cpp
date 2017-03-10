@@ -153,17 +153,15 @@ void OverheadMode::setEnabled(bool enable, simVis::View* view)
   // OverheadMode requires a newer version of osgEarth that includes a compute matrix callback on GeoTransform.
 
   osg::Camera* viewCam = view->getCamera();
-  ScenarioManager* sm = osgEarth::findTopMostNodeOfType<ScenarioManager>(viewCam);
-
-  if (!sm || !viewCam)
+  if (!viewCam)
   {
-    SIM_WARN << "Did not find a ScenarioManager\n";
+    SIM_WARN << "Did not find a camera\n";
     return;
   }
 
   if (enable)
   {
-    osg::StateSet* ss = sm->getOrCreateStateSet();
+    osg::StateSet* ss = viewCam->getOrCreateStateSet();
     osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(ss);
     simVis::Shaders package;
     package.replace("$EARTH_RADIUS_MAJOR", simCore::buildString("", simCore::WGS_A, 0, 1));
@@ -173,16 +171,15 @@ void OverheadMode::setEnabled(bool enable, simVis::View* view)
     // Uncomment the following line to help with debugging
     //vp->setFunction("simVis_flatten_FS_debug", s_overheadModeDebugFS, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
 
-    ss->setAttributeAndModes(
-      new osg::Depth(osg::Depth::ALWAYS, 0, 1, false),
-      osg::StateAttribute::OVERRIDE);
+    // The depth buffer code was removed per SIM-7317.  If the code must be added back in,
+    // then turn depth buffer back on for the platform icons so they look correct.
 
     OverheadMode::IndicatorCallback* icb = getOrCreateIndicatorCallback(viewCam);
     icb->setEnabled(true);
   }
   else
   {
-    osg::StateSet* ss = sm->getStateSet();
+    osg::StateSet* ss = viewCam->getStateSet();
     if (ss)
     {
       osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(ss);
@@ -194,14 +191,13 @@ void OverheadMode::setEnabled(bool enable, simVis::View* view)
         // Uncomment the following line to help with debugging
         //vp->removeShader("simVis_flatten_FS_debug");
       }
-      ss->removeAttribute(osg::StateAttribute::DEPTH);
     }
 
     OverheadMode::IndicatorCallback* icb = getOrCreateIndicatorCallback(viewCam);
     icb->setEnabled(false);
   }
   DirtyBoundVisitor dirtyBound;
-  sm->accept(dirtyBound);
+  viewCam->accept(dirtyBound);
   SIM_DEBUG << "[simVis::OverheadMode]  Count = " << dirtyBound._count << "\n";
 }
 
