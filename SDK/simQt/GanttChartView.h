@@ -116,6 +116,10 @@ signals:
 protected slots:
   /** Redraw when data changes */
   virtual void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight);
+  /** Redraw when data changes */
+  virtual void rowsInserted(const QModelIndex &parent, int start, int end);
+  /** Redraw when data changes */
+  virtual void rowsAboutToBeRemoved(const QModelIndex &parent, int start, int end);
 
 protected:
   /** Catch events sent to viewport widget when necessary */

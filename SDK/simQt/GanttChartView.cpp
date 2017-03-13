@@ -285,6 +285,16 @@ void GanttChartView::dataChanged(const QModelIndex & topLeft, const QModelIndex 
   viewport()->update();
 }
 
+void GanttChartView::rowsInserted(const QModelIndex &parent, int start, int end)
+{
+  viewport()->update();
+}
+
+void GanttChartView::rowsAboutToBeRemoved(const QModelIndex &parent, int start, int end)
+{
+  viewport()->update();
+}
+
 bool GanttChartView::viewportEvent(QEvent *event)
 {
   // Don't even try if we have no model
