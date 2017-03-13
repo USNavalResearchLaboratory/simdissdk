@@ -525,7 +525,8 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
     result,
     osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
     osgUtil::Optimizer::VERTEX_PRETRANSFORM |
-    osgUtil::Optimizer::VERTEX_POSTTRANSFORM
+    osgUtil::Optimizer::VERTEX_POSTTRANSFORM |
+    osgUtil::Optimizer::INDEX_MESH
     );
 
   // generate shaders.
