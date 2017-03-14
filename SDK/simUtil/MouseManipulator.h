@@ -59,6 +59,9 @@ public:
   virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) = 0;
   /** Mouse wheel scrolled, returns non-zero on handled */
   virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) = 0;
+  /** Frame event, returns non-zero on handled */
+  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) = 0;
+
 };
 typedef std::tr1::shared_ptr<MouseManipulator> MouseManipulatorPtr;
 
@@ -84,6 +87,8 @@ public:
   virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) { return 0; }
   /** Mouse wheel scrolled, returns non-zero on handled */
   virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) { return 0; }
+  /** Frame event, returns non-zero on handled */
+  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) { return 0; }
 };
 
 
@@ -108,6 +113,8 @@ public:
   virtual int doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
   /** Mouse wheel scrolled, returns non-zero on handled */
   virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  /** Frame event, returns non-zero on handled */
+  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
 
   /** Retrieves the real subject of the Proxy */
   MouseManipulatorPtr subject() const;

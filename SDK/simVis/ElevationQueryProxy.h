@@ -25,6 +25,7 @@
 #include "simCore/Common/Common.h"
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
+#include "osgEarth/MapFrame"
 
 namespace osg {
   class Group;
@@ -32,6 +33,7 @@ namespace osg {
 }
 namespace osgEarth {
   class ElevationQuery;
+  struct ElevationSample;
   class GeoPoint;
   class Map;
   class MapNode;
@@ -69,22 +71,38 @@ public:
   osgEarth::ElevationQuery* q() const;
 
   /**
-   * Gets the terrain elevation at a point, given a terrain resolution.
-   * Convenience method that forwards to the ElevationQuery.
+   * Gets the terrain elevation at a point, given a terrain resolution. For osgEarth API 3/2017 and forward, will call the ElevationPool::getElevation.
+   * If blocking is set to false, will start the elevation query; must call getPendingElevation to get elevation value when query has returned. Will fill
+   * out the last cached elevation and resolution in the provided parameters. If blocking is set to true, will block until the elevation query returns.
+   * For versions of osgEarth older than 3/2017, this is a convenience method that forwards to the ElevationQuery.
    *
    * @param point
    *      Coordinates for which to query elevation.
    * @param out_elevation
-   *      Stores the elevation result in this variable upon success.
+   *      Stores the elevation result in this variable upon success. Will be the last cached elevation value if not blocking.
    * @param desiredResolution
    *      Optimal resolution of elevation data to use for the query (if available).
    *      Pass in 0 (zero) to use the best available resolution.
+   *      Will be the last cached resolution if not blocking.
    * @param out_actualResolution
    *      Resolution of the resulting elevation value (if the method returns true).
-   *
+   * @param blocking true if the call should block until it gets the elevation value. Note that using osgEarth API prior to 3/2017 will always block
    * @return True if the query succeeded, false upon failure.
    */
-  bool getElevation(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution = 0.0, double* out_actualResolution = 0L);
+  bool getElevation(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution = 0.0, double* out_actualResolution = 0L, bool blocking = true);
+
+  /**
+   * Get elevation from a pending query initiated by a non-blocking getElevation() call. Will fill in the passed in values if there
+   * is a pending elevation query that has returned, otherwise does nothing. This call must be made after a non-blocking call to
+   * getElevation to retrieve the results of the asynchronous elevation query.
+   *
+   * @param out_elevation
+   *      Stores the elevation result in this variable upon success.
+   * @param out_actualResolution
+   *      Resolution of the resulting elevation value (if the method returns true).
+   * @return true if pending query was available, false otherwise
+  */
+  bool getPendingElevation(double& out_elevation, double* out_actualResolution = 0L);
 
   /**
    * @deprecated
@@ -102,12 +120,29 @@ public:
   void setMapNode(const osgEarth::MapNode* mapNode);
 
 private:
+  struct PrivateData;
+
+  /// Returns true if the sample had elevation, false otherwise. Formats out_elevation to 0 if NO_DATA_VALUE returned from query
+  bool getElevationFromSample_(osgEarth::ElevationSample* sample, double& out_elevation, double* out_actualResolution);
+  /// Uses osgEarth::ElevationPool::getElevation call to sample elevation. Returns true if query succeeded, false otherwise
+  bool getElevationFromPool_(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution, bool blocking);
+
+  /// cache of the last elevation returned, only used with osgEarth API after 3/2017
+  double lastElevation_;
+  /// cache of the last resolution returned, only used with osgEarth API after 3/2017
+  double lastResolution_;
+  /// old elevation query, only used with osgEarth API prior to 3/2017
   osgEarth::ElevationQuery* query_;
   osg::observer_ptr<const osgEarth::Map> map_;
   osg::observer_ptr<osg::Group> scene_;
+  /// keep map in a MapFrame to avoid conflicts when accessing elevation pool
+  osgEarth::MapFrame mapf_;
 
   class MapChangeListener;
+  /// listener to map changes, to update the map reference
   osg::ref_ptr<osg::Node> mapChangeListener_;
+  /// object to asynchronously monitor the status of the elevation query result
+  PrivateData* data_;
 };
 
 }

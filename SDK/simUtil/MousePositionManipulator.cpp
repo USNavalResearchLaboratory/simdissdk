@@ -137,6 +137,11 @@ void MousePositionManipulator::getLastXY(float& lastX, float& lastY) const
 
 osgEarth::GeoPoint MousePositionManipulator::getLLA(float mx, float my, bool queryElevation) const
 {
+  return getLLA_(mx, my, queryElevation, true);
+}
+
+osgEarth::GeoPoint MousePositionManipulator::getLLA_(float mx, float my, bool queryElevation, bool blocking) const
+{
   osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
   osgEarth::GeoPoint lonLatAlt(srs, INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, osgEarth::ALTMODE_ABSOLUTE);
   if (lastView_ == NULL)
@@ -156,7 +161,7 @@ osgEarth::GeoPoint MousePositionManipulator::getLLA(float mx, float my, bool que
     // Do not query altitude, if the lat and lon were invalid
     if (queryElevation && lonLatAlt.x() != INVALID_POSITION_VALUE && lonLatAlt.y() != INVALID_POSITION_VALUE)
     {
-      if (0 != getElevation(lonLatAlt, elevation))
+      if (0 != getElevation_(lonLatAlt, elevation, blocking))
         elevation = INVALID_POSITION_VALUE;
     }
   }
@@ -191,6 +196,23 @@ int MousePositionManipulator::drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIA
   return move(ea, aa);
 }
 
+int MousePositionManipulator::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  // NOTE: always return 0, since we don't need to capture the frame event
+
+  // need to fire off mouseOverLatLon on listeners if elevation query still has a pending elevation query that is finished
+  if (llaListeners_.empty() || elevationQuery_ == NULL)
+    return 0;
+  double outElevation = 0.0;
+  // this call does not block, will return false if no pending elevation query available
+  if (!elevationQuery_->getPendingElevation(outElevation))
+    return 0;
+  lastLLA_.alt() = outElevation;
+  for (std::vector<Listener*>::const_iterator iter = llaListeners_.begin(); iter != llaListeners_.end(); ++iter)
+    (*iter)->mouseOverLatLon(lastLLA_.x(), lastLLA_.y(), lastLLA_.z());
+  return 0;
+}
+
 int MousePositionManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
   lastView_ = static_cast<osgViewer::View*>(aa.asView());
@@ -205,7 +227,7 @@ int MousePositionManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIA
   else
   {
     // Only query altitude if someone cares
-    lastLLA_ = getLLA(lastMouseX_, lastMouseY_, !llaListeners_.empty());
+    lastLLA_ = getLLA_(lastMouseX_, lastMouseY_, !llaListeners_.empty(), false);
     for (std::vector<Listener*>::const_iterator iter = llListeners_.begin(); iter != llListeners_.end(); ++iter)
       (*iter)->mouseOverLatLon(lastLLA_.x(), lastLLA_.y(), INVALID_POSITION_VALUE);
     for (std::vector<Listener*>::const_iterator iter = llaListeners_.begin(); iter != llaListeners_.end(); ++iter)
@@ -218,13 +240,18 @@ int MousePositionManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIA
 
 int MousePositionManipulator::getElevation(const osgEarth::GeoPoint& lonLatAlt, double& elevationMeters) const
 {
+  return getElevation_(lonLatAlt, elevationMeters, true);
+}
+
+int MousePositionManipulator::getElevation_(const osgEarth::GeoPoint& lonLatAlt, double& elevationMeters, bool blocking) const
+{
   // It's possible that elevation query is NULL for NULL maps
   if (elevationQuery_ == NULL)
     return 1;
-  // The 3rd argument control how far down the angular resolution to get an answer
-  return elevationQuery_->getElevation(lonLatAlt, elevationMeters, terrainResolution_) ? 0 : 1;
-}
 
+  // The 3rd argument control how far down the angular resolution to get an answer
+  return elevationQuery_->getElevation(lonLatAlt, elevationMeters, terrainResolution_, NULL, blocking) ? 0 : 1;
+}
 void MousePositionManipulator::setTerrainResolution(double resolutionRadians)
 {
   terrainResolution_ = resolutionRadians;

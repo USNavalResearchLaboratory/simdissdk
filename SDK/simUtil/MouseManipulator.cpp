@@ -74,6 +74,13 @@ int MouseManipulatorProxy::scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIAc
   return manipulator_->scroll(ea, aa);
 }
 
+int MouseManipulatorProxy::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (manipulator_ == NULL)
+    return 0;
+  return manipulator_->frame(ea, aa);
+}
+
 MouseManipulatorPtr MouseManipulatorProxy::subject() const
 {
   return manipulator_;

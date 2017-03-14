@@ -54,7 +54,7 @@ public:
   {
   public:
     virtual ~Listener(){}
-    /// Called whenever the mouse moves and is at the passed in lat/lon (degrees) and alt (meters)
+    /// Called whenever the mouse moves and is at the passed in lat/lon (degrees) and alt (meters). Notification also happens in the FRAME event, for pending elevation queries.
     virtual void mouseOverLatLon(double lat, double lon, double alt) = 0;
   };
 
@@ -67,6 +67,8 @@ public:
   virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
   /** Mouse being dragged, returns non-zero on handled */
   virtual int drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  /** Frame event, returns non-zero on handled */
+  virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
 
   /// Sets the map node
   void setMapNode(osgEarth::MapNode* mapNode);
@@ -100,6 +102,21 @@ public:
   int getElevation(const osgEarth::GeoPoint& lonLatAlt, double& elevationMeters) const;
 
 private:
+
+  /**
+  * Gets the elevation from an elevation query, into elevationMeters if blocking is true. If not blocking, elevationMeters gets the last cached elevation value
+  * and elevation will be returned in the frame() event.
+  * @return 0 on success, non-zero on failure
+  */
+  int getElevation_(const osgEarth::GeoPoint& lonLatAlt, double& elevationMeters, bool blocking) const;
+
+  /**
+  * Returns an LLA point in degrees and absolute altitude in meters based on the mouse x,y point passed in or -DBL_MAX if the point is off the globe
+  * If blocking is true, will block querying elevation. Otherwise, will use the asynchronous elevation query, that will eventually return final
+  * elevation value in the frame() event.
+  */
+  osgEarth::GeoPoint getLLA_(float mx, float my, bool queryElevation, bool blocking) const;
+
 
   // Reference pointers
   osg::observer_ptr<osgEarth::MapNode> mapNode_;

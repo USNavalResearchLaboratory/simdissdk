@@ -327,6 +327,12 @@ if(NOT HAVE_ELEVQUERY_LEGACYAPI)
     target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_ELEVQUERY_1016API)
 endif()
 
+# If getElevation() exists, it's a newer API.  So if defined, we have the API from after 3/2017
+check_osgearth_method_exists(HAVE_ELEVQUERY_NEWAPI "osgEarth/ElevationPool" "getElevation")
+if(HAVE_ELEVQUERY_NEWAPI)
+    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_ELEVQUERY_0317API)
+endif()
+
 # Map API changed after 2.8 to remove getImageLayers() and friends, replaced with template methods
 check_osgearth_method_exists(HAVE_OSGEARTH_MAP_GETLAYERS "osgEarth/Map" "getLayers")
 if(HAVE_OSGEARTH_MAP_GETLAYERS)

@@ -20,11 +20,22 @@
  *
  */
 #include "osgEarth/MapNodeObserver"
+#include "osgEarth/ElevationPool"
 #include "osgEarth/ElevationQuery"
+#include "osgEarth/ThreadingUtils"
 #include "simVis/ElevationQueryProxy.h"
 
 namespace simVis
 {
+
+/// Wrapper around the osgEarth::Future class
+struct ElevationQueryProxy::PrivateData
+{
+#ifdef HAVE_ELEVQUERY_0317API
+ /// Future object that monitors the status of the elevation query result
+  osgEarth::Threading::Future<osgEarth::ElevationSample> elevationResult_;
+#endif
+};
 
 /**
  * Empty node that implements the MapNodeVisitor interface.  As it gets notifications
@@ -67,10 +78,14 @@ private:
 ///////////////////////////////////////////////////////////////////////////////////
 
 ElevationQueryProxy::ElevationQueryProxy(const osgEarth::Map* map, osg::Group* scene)
-  : query_(NULL),
+  : lastElevation_(NO_DATA_VALUE),
+    lastResolution_(NO_DATA_VALUE),
+    query_(NULL),
     map_(map),
     scene_(scene)
 {
+  data_ = new PrivateData();
+  mapf_.setMap(map);
   query_ = new osgEarth::ElevationQuery(map);
 
 #ifndef HAVE_ELEVQUERY_1016API
@@ -91,6 +106,8 @@ ElevationQueryProxy::~ElevationQueryProxy()
     scene_->removeChild(mapChangeListener_);
   delete query_;
   query_ = NULL;
+  delete data_;
+  data_ = NULL;
 }
 
 osgEarth::ElevationQuery* ElevationQueryProxy::q() const
@@ -98,8 +115,81 @@ osgEarth::ElevationQuery* ElevationQueryProxy::q() const
   return query_;
 }
 
-bool ElevationQueryProxy::getElevation(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution)
+bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out_actualResolution)
+
 {
+#ifdef HAVE_ELEVQUERY_0317API
+  // if result hasn't returned yet, return early
+  if (!data_->elevationResult_.isAvailable())
+    return false;
+
+  osg::ref_ptr<osgEarth::ElevationSample> sample = data_->elevationResult_.release();
+  getElevationFromSample_(sample.get(), out_elevation, out_actualResolution);
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool ElevationQueryProxy::getElevationFromSample_(osgEarth::ElevationSample* sample, double& out_elevation, double* out_actualResolution)
+{
+  if (sample != NULL)
+  {
+    out_elevation = sample->elevation;
+    if (out_elevation ==  NO_DATA_VALUE)
+      out_elevation = 0.0;
+
+    if (out_actualResolution)
+      *out_actualResolution = sample->resolution;
+
+    // cache values
+    lastElevation_ = out_elevation;
+    lastResolution_ = sample->resolution;
+    return true;
+  }
+
+  out_elevation = 0.0;
+  return false;
+}
+
+bool ElevationQueryProxy::getElevationFromPool_(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution, bool blocking)
+{
+// ElevationPool::getElevation was introduced in 3/2017 to the osgEarth API
+#ifdef HAVE_ELEVQUERY_0317API
+
+  unsigned int lod = 23u; // use reasonable default value, same as osgEarth::ElevationQuery
+  if (desiredResolution > 0.0)
+  {
+    int level = mapf_.getProfile()->getLevelOfDetailForHorizResolution(desiredResolution, 257);
+    if ( level > 0 )
+        lod = level;
+  }
+
+  data_->elevationResult_ = mapf_.getElevationPool()->getElevation(point, lod);
+  // if blocking, get elevation result immediately
+  if (blocking)
+  {
+    osg::ref_ptr<osgEarth::ElevationSample> sample = data_->elevationResult_.get();
+    return getElevationFromSample_(sample.get(), out_elevation, out_actualResolution);
+  }
+
+  // return cached values while waiting for query to return
+  out_elevation = lastElevation_;
+  if (out_actualResolution)
+    *out_actualResolution = lastResolution_;
+
+  return out_elevation == NO_DATA_VALUE ? false : true;
+#else
+  return false;
+#endif
+}
+
+bool ElevationQueryProxy::getElevation(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution, bool blocking)
+{
+// ElevationPool got the getElevation() method in the 3/2017 osgEarth API. If we have it, use it
+#ifdef HAVE_ELEVQUERY_0317API
+  return getElevationFromPool_(point, out_elevation, desiredResolution, out_actualResolution, blocking);
+#else
   if (query_)
   {
 #ifndef HAVE_ELEVQUERY_1016API
@@ -117,6 +207,7 @@ bool ElevationQueryProxy::getElevation(const osgEarth::GeoPoint& point, double& 
 #endif
   }
   return false; // failure
+#endif
 }
 
 void ElevationQueryProxy::setMaxTilesToCache(int value)
@@ -138,6 +229,7 @@ void ElevationQueryProxy::setMap(const osgEarth::Map* map)
 
   delete query_;
   query_ = new osgEarth::ElevationQuery(map);
+  mapf_.setMap(map);
 }
 
 void ElevationQueryProxy::setMapNode(const osgEarth::MapNode* mapNode)

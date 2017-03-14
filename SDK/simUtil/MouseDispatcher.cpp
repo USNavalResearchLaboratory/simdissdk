@@ -30,7 +30,7 @@ namespace simUtil {
 /// Mask of the various osgGA mouse events
 static const int MOUSE_EVENT_MASK = osgGA::GUIEventAdapter::PUSH | osgGA::GUIEventAdapter::RELEASE |
   osgGA::GUIEventAdapter::MOVE | osgGA::GUIEventAdapter::DRAG | osgGA::GUIEventAdapter::DOUBLECLICK |
-  osgGA::GUIEventAdapter::SCROLL;
+  osgGA::GUIEventAdapter::SCROLL | osgGA::GUIEventAdapter::FRAME;
 
 /// Encapsulates the GUI Event Handler operation as it adapts it to the MouseManipulator interface
 class MouseDispatcher::EventHandler : public osgGA::GUIEventHandler
@@ -53,6 +53,8 @@ public:
     for (MouseDispatcher::PriorityMap::const_iterator i = dispatch_.priorityMap_.begin();
       i != dispatch_.priorityMap_.end(); ++i)
     {
+      if (!i->second)
+        continue;
       // the rv gets set to non-zero if event is handled
       int rv = 0;
       switch (ea.getEventType())
@@ -79,6 +81,10 @@ public:
 
       case osgGA::GUIEventAdapter::SCROLL:
         rv = i->second->scroll(ea, aa);
+        break;
+
+      case osgGA::GUIEventAdapter::FRAME:
+        rv = i->second->frame(ea, aa);
         break;
 
       default:
@@ -110,6 +116,7 @@ protected:
   {
   }
 
+private:
   /** Reference back to the owner */
   const MouseDispatcher& dispatch_;
 };
