@@ -38,7 +38,7 @@ RocketBurn::RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture)
 {
   // Set up the render bin, turn off depth writes, and turn on depth reads
   osg::StateSet* stateSet = transform_->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_ROCKETBURN, BIN_GLOBAL_SIMSDK);
+  stateSet->setRenderBinDetails(BIN_ROCKETBURN, BIN_TRAVERSAL_ORDER_SIMSDK);
   stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
   // Must be able to blend or the graphics will look awful
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
@@ -57,9 +57,9 @@ RocketBurn::~RocketBurn()
 void RocketBurn::rebuild_()
 {
   const unsigned int textureUnit = 0; // first available unit
-
   // the geode is a node which contains the geometry to draw
   // use a billboard to keep the effect pointed at the camera
+
   if (geode_.valid())
   {
     // Remove the drawables from the geode
@@ -82,8 +82,12 @@ void RocketBurn::rebuild_()
   }
 
   transform_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
+
+  // Scaling Factor for multiple QUADS to create a Rocket burn
+  static const float ROCKETBURN_SCALE_FACTOR = 0.5f;
   double radiusCurrent = currentShape_.radiusNear;
   double currentLength = 0.0;
+
   while (currentLength < currentShape_.length)
   {
     osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
@@ -115,20 +119,19 @@ void RocketBurn::rebuild_()
     verts->push_back(osg::Vec3(radiusCurrent, 0, -radiusCurrent));
 
     texcoords->push_back(osg::Vec2(1, 1));
-    verts->push_back(osg::Vec3(radiusCurrent, 0,  radiusCurrent));
+    verts->push_back(osg::Vec3(radiusCurrent, 0, radiusCurrent));
 
     texcoords->push_back(osg::Vec2(0, 1));
-    verts->push_back(osg::Vec3(-radiusCurrent, 0,  radiusCurrent));
+    verts->push_back(osg::Vec3(-radiusCurrent, 0, radiusCurrent));
 
     // tell the geometry that the array data describes quads
-    geometry->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, verts->size()));
+    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::QUADS, 0, verts->size()));
 
     // load the geometry into the geode
     geode_->addDrawable(geometry, osg::Vec3(0, -currentLength, 0));
 
     // A heuristic algorithm for dividing up the rocket burn.
-    // scale length by .5
-    currentLength = currentLength + radiusCurrent * .5;
+    currentLength = currentLength + radiusCurrent * ROCKETBURN_SCALE_FACTOR;
     radiusCurrent = currentShape_.radiusNear + ((currentShape_.radiusFar - currentShape_.radiusNear) * (currentLength / currentShape_.length));
   }
 
