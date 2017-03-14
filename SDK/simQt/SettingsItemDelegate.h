@@ -84,9 +84,6 @@ public:
 private slots:
   /** Called on acceptance of the pop up file GUI */
   void commitEditor_();
-
-private:
-  static const QString tempKeyName_; ///< name of the temporary key created
 };
 
 /** Delegate helper for INTEGER items, using a spin box as the text editor */
@@ -140,9 +137,6 @@ class SDKQT_EXPORT SettingsFileSelectorDelegate : public QStyledItemDelegate
 private slots:
   /** Called on acceptance of the pop up file GUI */
   void commitEditor_();
-
-private:
-  static const QString tempKeyName_; ///< name of the temporary key created
 };
 
 /** Delegate helper for ENUMERATION items, using a QComboBox as the text editor */

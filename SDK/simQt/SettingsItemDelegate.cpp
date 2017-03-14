@@ -133,12 +133,9 @@ SettingsDirectorySelectorDelegate::SettingsDirectorySelectorDelegate(QObject* pa
 {
 }
 
-const QString SettingsDirectorySelectorDelegate::tempKeyName_ = "Private/DirectorySelectorDelegate TempDir";
-
 SettingsDirectorySelectorDelegate::~SettingsDirectorySelectorDelegate()
 {
-  QSettings settings;
-  settings.remove(tempKeyName_);
+  // no-op
 }
 
 QWidget* SettingsDirectorySelectorDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -156,11 +153,9 @@ void SettingsDirectorySelectorDelegate::setEditorData(QWidget* editor, const QMo
   DirectorySelectorWidget* selector = static_cast<DirectorySelectorWidget*>(editor);
 
   QString data = index.model()->data(index, Qt::EditRole).toString();
-  QSettings settings;
-  settings.setValue(tempKeyName_, data);
   QString fqn = index.model()->data(index, SettingsModel::FullyQualifiedNameRole).toString();
   selector->setWindowTitle("Select Directory for " + fqn);
-  selector->setRegistryKey(tempKeyName_);
+  selector->setRegistryKey(fqn);
   selector->setDirectory(data);
 }
 
@@ -168,8 +163,6 @@ void SettingsDirectorySelectorDelegate::setModelData(QWidget* editor, QAbstractI
 {
   DirectorySelectorWidget* selector = static_cast<DirectorySelectorWidget*>(editor);
   model->setData(index, selector->directory(), Qt::EditRole);
-  QSettings settings;
-  settings.remove(tempKeyName_);
 }
 
 void SettingsDirectorySelectorDelegate::commitEditor_()
@@ -283,12 +276,9 @@ SettingsFileSelectorDelegate::SettingsFileSelectorDelegate(QObject* parent)
 {
 }
 
-const QString SettingsFileSelectorDelegate::tempKeyName_ = "Private/FileSelectorDelegate TempFile";
-
 SettingsFileSelectorDelegate::~SettingsFileSelectorDelegate()
 {
-  QSettings settings;
-  settings.remove(tempKeyName_);
+  // no-op
 }
 
 QWidget* SettingsFileSelectorDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -324,12 +314,10 @@ void SettingsFileSelectorDelegate::setEditorData(QWidget* editor, const QModelIn
 
   // pull the current filename, and push it into our temp key
   const QString data = index.model()->data(index, Qt::EditRole).toString();
-  QSettings settings;
-  settings.setValue(tempKeyName_, data);
 
   // configure the file selector
   fileSelector->setWindowTitle(QString("Select File For ") + fqn);
-  fileSelector->setRegistryKey(tempKeyName_);
+  fileSelector->setRegistryKey(fqn);
   fileSelector->setCustomFileFilter(filter);
   fileSelector->setFilename(data);
 }
@@ -338,8 +326,6 @@ void SettingsFileSelectorDelegate::setModelData(QWidget* editor, QAbstractItemMo
 {
   FileSelectorWidget* fileSelector = static_cast<FileSelectorWidget*>(editor);
   model->setData(index, fileSelector->filename(), Qt::EditRole);
-  QSettings settings;
-  settings.remove(tempKeyName_);
 }
 
 void SettingsFileSelectorDelegate::commitEditor_()
