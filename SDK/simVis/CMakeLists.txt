@@ -327,8 +327,8 @@ if(NOT HAVE_ELEVQUERY_LEGACYAPI)
     target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_ELEVQUERY_1016API)
 endif()
 
-# If getElevation() exists, it's a newer API.  So if defined, we have the API from after 3/2017
-check_osgearth_method_exists(HAVE_ELEVQUERY_NEWAPI "osgEarth/ElevationPool" "getElevation")
+# If the Future class exists, it's a newer API that has the ElevationPool::getElevation method.  So if defined, we have the API from after 3/2017
+check_osgearth_method_exists(HAVE_ELEVQUERY_NEWAPI "osgEarth/ThreadingUtils" "Future")
 if(HAVE_ELEVQUERY_NEWAPI)
     target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_ELEVQUERY_0317API)
 endif()

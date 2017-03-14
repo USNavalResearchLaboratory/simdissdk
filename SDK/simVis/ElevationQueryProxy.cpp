@@ -25,6 +25,32 @@
 #include "osgEarth/ThreadingUtils"
 #include "simVis/ElevationQueryProxy.h"
 
+namespace
+{
+// ElevationSample only exists in osgEarth API 3/2017 and forward
+#ifdef HAVE_ELEVQUERY_0317API
+bool getElevationFromSample(osgEarth::ElevationSample* sample,
+                             double& out_elevation,
+                             double* out_actualResolution)
+{
+  if (sample != NULL)
+  {
+    out_elevation = sample->elevation;
+    if (out_elevation ==  NO_DATA_VALUE)
+      out_elevation = 0.0;
+
+    if (out_actualResolution)
+      *out_actualResolution = sample->resolution;
+
+    return true;
+  }
+
+  out_elevation = 0.0;
+  return false;
+}
+#endif
+}
+
 namespace simVis
 {
 
@@ -124,32 +150,16 @@ bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out
     return false;
 
   osg::ref_ptr<osgEarth::ElevationSample> sample = data_->elevationResult_.release();
-  getElevationFromSample_(sample.get(), out_elevation, out_actualResolution);
+  getElevationFromSample(sample.get(), out_elevation, out_actualResolution);
+
+  // cache values
+  lastElevation_ = out_elevation;
+  lastResolution_ = sample->resolution;
+
   return true;
 #else
   return false;
 #endif
-}
-
-bool ElevationQueryProxy::getElevationFromSample_(osgEarth::ElevationSample* sample, double& out_elevation, double* out_actualResolution)
-{
-  if (sample != NULL)
-  {
-    out_elevation = sample->elevation;
-    if (out_elevation ==  NO_DATA_VALUE)
-      out_elevation = 0.0;
-
-    if (out_actualResolution)
-      *out_actualResolution = sample->resolution;
-
-    // cache values
-    lastElevation_ = out_elevation;
-    lastResolution_ = sample->resolution;
-    return true;
-  }
-
-  out_elevation = 0.0;
-  return false;
 }
 
 bool ElevationQueryProxy::getElevationFromPool_(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution, bool blocking)
@@ -170,7 +180,11 @@ bool ElevationQueryProxy::getElevationFromPool_(const osgEarth::GeoPoint& point,
   if (blocking)
   {
     osg::ref_ptr<osgEarth::ElevationSample> sample = data_->elevationResult_.get();
-    return getElevationFromSample_(sample.get(), out_elevation, out_actualResolution);
+    bool rv = getElevationFromSample(sample.get(), out_elevation, out_actualResolution);
+    // cache values
+    lastElevation_ = out_elevation;
+    lastResolution_ = sample->resolution;
+    return rv;
   }
 
   // return cached values while waiting for query to return

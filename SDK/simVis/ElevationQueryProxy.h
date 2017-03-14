@@ -33,7 +33,6 @@ namespace osg {
 }
 namespace osgEarth {
   class ElevationQuery;
-  struct ElevationSample;
   class GeoPoint;
   class Map;
   class MapNode;
@@ -122,8 +121,6 @@ public:
 private:
   struct PrivateData;
 
-  /// Returns true if the sample had elevation, false otherwise. Formats out_elevation to 0 if NO_DATA_VALUE returned from query
-  bool getElevationFromSample_(osgEarth::ElevationSample* sample, double& out_elevation, double* out_actualResolution);
   /// Uses osgEarth::ElevationPool::getElevation call to sample elevation. Returns true if query succeeded, false otherwise
   bool getElevationFromPool_(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution, bool blocking);
 
