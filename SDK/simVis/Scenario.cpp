@@ -837,6 +837,37 @@ const EntityNode* ScenarioManager::getHostPlatform(const EntityNode* entity) con
   return entity;
 }
 
+namespace {
+
+#ifdef DEBUG
+/** Visitor that, in debug mode, asserts that the overhead mode hint is set to a certain value */
+class AssertOverheadModeHint : public osg::NodeVisitor
+{
+public:
+  AssertOverheadModeHint(bool expectedHint, TraversalMode tm=osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
+    : NodeVisitor(tm),
+      expectedHint_(expectedHint)
+  {
+  }
+
+  /** Assert that the hint is set to what we expect */
+  virtual void apply(osg::MatrixTransform& mx)
+  {
+    simVis::LocatorNode* node = dynamic_cast<simVis::LocatorNode*>(&mx);
+    if (node)
+    {
+      assert(node->overheadModeHint() == expectedHint_);
+    }
+    traverse(mx);
+  }
+
+private:
+  bool expectedHint_;
+};
+#endif
+
+}
+
 EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMask) const
 {
   View* view = dynamic_cast<View*>(_view);
@@ -878,14 +909,41 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
   osg::Vec3d beg(a.x() / a.w(), a.y() / a.w(), a.z() / a.w());
   osg::Vec3d end(b.x() / b.w(), b.y() / b.w(), b.z() / b.w());
 
-  osgEarth::DPLineSegmentIntersector* lsi = new osgEarth::DPLineSegmentIntersector(beg, end);
+#ifdef DEBUG
+  // In debug mode, make sure the overhead hint is false, else a release mode
+  // optimization that presumes hint is false will fail.
+  AssertOverheadModeHint assertHintIsFalse(false);
+  assertHintIsFalse.setTraversalMask(typeMask);
+  // Assertion failure means that the overhead mode hint was true.  This means
+  // someone set the hint and didn't reset it when done.  This will cause failures
+  // in the code below.  Either fix the offender that set the flag and didn't
+  // reset it, or forcibly set the flag to true/false unconditionally.
+  cam->accept(assertHintIsFalse);
+#endif
 
+  // Turn on the overhead mode hint if the View is in overhead mode
+  if (view->isOverheadEnabled())
+  {
+    // First set the overhead mode hint; this also dirties the bounds
+    SetOverheadModeHintVisitor setOverheadMode(true);
+    setOverheadMode.setTraversalMask(typeMask);
+    cam->accept(setOverheadMode);
+  }
+
+  // configure the line segment intersector
+  osgEarth::DPLineSegmentIntersector* lsi = new osgEarth::DPLineSegmentIntersector(beg, end);
   osgUtil::IntersectionVisitor iv(lsi);
   iv.setTraversalMask(typeMask);
-
   simVis::OverheadMode::prepareVisitor(view, &iv);
-
   cam->accept(iv);
+
+  // Go back and turn off overhead mode if needed, so that bounds are correctly recomputed
+  if (view->isOverheadEnabled())
+  {
+    SetOverheadModeHintVisitor setOverheadMode(false);
+    setOverheadMode.setTraversalMask(typeMask);
+    cam->accept(setOverheadMode);
+  }
 
   if (lsi->containsIntersections())
   {
@@ -1060,5 +1118,3 @@ osg::Group* ScenarioManager::getOrCreateAttachPoint(const std::string& name)
   }
   return result;
 }
-
-
