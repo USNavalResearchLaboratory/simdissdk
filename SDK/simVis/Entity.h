@@ -22,6 +22,8 @@
 #ifndef SIMVIS_ENTITY_NODE_H
 #define SIMVIS_ENTITY_NODE_H
 
+#include "osg/observer_ptr"
+#include "osgEarth/MapNode"
 #include "simVis/Locator.h"
 #include "simData/DataStore.h"
 #include <vector>
@@ -36,8 +38,6 @@ namespace simCore {
 
 namespace simVis
 {
-  class ElevationQueryProxy;
-
   /**
    * Pure interface class for a node that you can call EntityNode::attach with
    * and that will communicate tracking components
@@ -55,12 +55,11 @@ namespace simVis
   class SDKVIS_EXPORT CoordSurfaceClamping
   {
   public:
-    /** Constructor that takes a scene node */
-    CoordSurfaceClamping(osg::Group* scene);
+    CoordSurfaceClamping();
     virtual ~CoordSurfaceClamping();
 
     /**
-    * reset coordinate's altitude value to be clamped to the surface. Query's the map for
+    * reset coordinate's altitude value to be clamped to the surface. Query's the terrain for
     * elevation at the specified coordinate position. Coordinate must be in LLA or ECEF
     * @param coord  coordinate to clamp to map surface, will do nothing if coordinate is not LLA or ECEF
     */
@@ -69,11 +68,11 @@ namespace simVis
     /** Return true if able to apply clamping, false otherwise */
     bool isValid() const;
 
-    /** Set the map for conducting elevation query for clamping */
-    void setMap(const osgEarth::Map* map);
+    /** Set the map node for querying terrain height for clamping */
+    void setMapNode(const osgEarth::MapNode* map);
 
   private:
-    simVis::ElevationQueryProxy* elevationQuery_;
+    osg::observer_ptr<const osgEarth::MapNode> mapNode_;
   };
 
   /**

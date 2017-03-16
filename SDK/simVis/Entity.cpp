@@ -19,9 +19,9 @@
  * disclose, or release this software.
  *
  */
+#include "osgEarth/Terrain"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
-#include "simVis/ElevationQueryProxy.h"
 #include "simVis/Utils.h"
 #include "simVis/Entity.h"
 
@@ -31,21 +31,19 @@
 namespace simVis
 {
 
-CoordSurfaceClamping::CoordSurfaceClamping(osg::Group* scene)
-  : elevationQuery_(new simVis::ElevationQueryProxy(NULL, scene))
+CoordSurfaceClamping::CoordSurfaceClamping()
 {}
 
 CoordSurfaceClamping::~CoordSurfaceClamping()
 {
-  delete elevationQuery_;
 }
 
 void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
 {
-  // nothing to do if we don't have a valid elevation query
-  if (elevationQuery_ == NULL)
+  // nothing to do if we don't have a valid map node
+  if (!mapNode_.valid())
   {
-    assert(0); // called this method without setting the map
+    assert(0); // called this method without setting the map node
     return;
   }
   if (coord.coordinateSystem() != simCore::COORD_SYS_LLA && coord.coordinateSystem() != simCore::COORD_SYS_ECEF)
@@ -55,19 +53,19 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
     return;
   }
 
-  // convert from ECEF to LLA if necessary, since osgEarth elevation query requires LLA
+  // convert from ECEF to LLA if necessary, since osgEarth Terrain getHeight requires LLA
   simCore::Coordinate llaCoord;
   if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
     simCore::CoordinateConverter::convertEcefToGeodetic(coord, llaCoord);
   else
     llaCoord = coord;
 
-  osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
-  osgEarth::GeoPoint lonLatAlt(srs, llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0.0, osgEarth::ALTMODE_ABSOLUTE);
-  double alt;
-  static const double angluarResolution = 0.00001;
-  if (elevationQuery_->getElevation(lonLatAlt, alt, angluarResolution))
-    llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), alt);
+  double hamsl = 0.0; // not used
+  double hae = 0.0; // height above ellipsoid, the rough elevation
+
+  osgEarth::GeoPoint lonLatAlt(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0.0, osgEarth::ALTMODE_ABSOLUTE);
+  if (mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), lonLatAlt.x(), lonLatAlt.y(), &hamsl, &hae))
+    llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), hae);
   else
     llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), 0.0);  // Assume over the ocean and clamp to zero
 
@@ -80,12 +78,12 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
 
 bool CoordSurfaceClamping::isValid() const
 {
-  return elevationQuery_ != NULL;
+  return mapNode_.valid();
 }
 
-void CoordSurfaceClamping::setMap(const osgEarth::Map* map)
+void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 {
-  elevationQuery_->setMap(map);
+  mapNode_ = map;
 }
 
 /////////////////////////////////////////////////////////////////////////////////

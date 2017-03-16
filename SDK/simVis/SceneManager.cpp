@@ -378,7 +378,7 @@ void SceneManager::setMapNode(osgEarth::MapNode* mapNode)
     if (mapNode_.valid())
     {
       parent->addChild(mapNode_.get());
-      scenarioManager_->setMap(mapNode_->getMap());
+      scenarioManager_->setMapNode(mapNode_);
 
       // By default, the lighting on the terrain is enabled.  This can be changed
       // after calling setMapNode() by calling something like:

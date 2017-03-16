@@ -246,9 +246,9 @@ class ScenarioManager::SurfaceClamping : public PlatformTspiFilter
 {
 public:
   /** Constructor */
-  explicit SurfaceClamping(osg::Group* scene)
+  SurfaceClamping()
     : PlatformTspiFilter(),
-      coordSurfaceClamping_(scene)
+      coordSurfaceClamping_()
   {
   }
 
@@ -274,9 +274,9 @@ public:
   }
 
   /** Sets the map pointer, required for proper clamping */
-  void setMap(const osgEarth::Map* map)
+  void setMapNode(const osgEarth::MapNode* map)
   {
-    coordSurfaceClamping_.setMap(map);
+    coordSurfaceClamping_.setMapNode(map);
   }
 
 private:
@@ -310,8 +310,8 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   root_->addCullCallback(setHorizon);
 
   // Clamping requires a Group for MapNode changes
-  surfaceClamping_ = new SurfaceClamping(root_);
-  lobSurfaceClamping_ = new CoordSurfaceClamping(root_);
+  surfaceClamping_ = new SurfaceClamping();
+  lobSurfaceClamping_ = new CoordSurfaceClamping();
 
   // set normal rescaling so that dynamically-scaled platforms have
   // proper lighting. Note: once we move to using shaders we don't
@@ -487,13 +487,13 @@ void ScenarioManager::setEntityGraphStrategy(AbstractEntityGraph* strategy)
     entityGraph_->addOrUpdate(i->second);
 }
 
-void ScenarioManager::setMap(const osgEarth::Map* map)
+void ScenarioManager::setMapNode(const osgEarth::MapNode* map)
 {
   SAFETRYBEGIN;
-  map_ = map;
+  mapNode_ = map;
 
-  surfaceClamping_->setMap(map);
-  lobSurfaceClamping_->setMap(map);
+  surfaceClamping_->setMapNode(mapNode_.get());
+  lobSurfaceClamping_->setMapNode(mapNode_.get());
   if (map)
   {
     // update all the entity locators with the new SRS.
@@ -503,7 +503,7 @@ void ScenarioManager::setMap(const osgEarth::Map* map)
       if (record)
       {
         EntityNode* node = record->getEntityNode();
-        node->getLocator()->setMapSRS(map_->getSRS());
+        node->getLocator()->setMapSRS(mapNode_->getMapSRS());
       }
     }
   }

@@ -417,7 +417,7 @@ namespace simVis
     /**
      * Sets map information
      */
-    void setMap(const osgEarth::Map* map);
+    void setMapNode(const osgEarth::MapNode* map);
 
   protected:
     /// osg::Referenced-derived
@@ -442,7 +442,7 @@ namespace simVis
     std::map<std::string, osg::observer_ptr<osg::Group> > customAttachPoints_;
 
     /** Observer to the current map */
-    osg::observer_ptr<const osgEarth::Map> map_;
+    osg::observer_ptr<const osgEarth::MapNode> mapNode_;
     /** Responsible for managing Projector entities */
     ProjectorManager*         projectorManager_;
     /** Responsible for linking a data store to this instance */
