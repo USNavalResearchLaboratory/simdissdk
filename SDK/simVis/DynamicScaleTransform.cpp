@@ -52,6 +52,61 @@ static const double INVALID_SCALE_FACTOR = 0.0;
 /** Indicates a scaling of 1 (no scaling) */
 static const osg::Vec3f NO_SCALE = osg::Vec3f(1.f, 1.f, 1.f);
 
+///////////////////////////////////////////////////////////////////////
+
+/**
+ * Visitor that will touch every DynamicScaleTransform and call the recalculate_() method
+ * with the range from the camera to the transform, so that the transform can figure out
+ * the dynamic scaling aspect, which will directly impact the bounds of the node.
+ *
+ * This is required during intersection tests with anything that might involve a dynamic
+ * scale node because the bounds must be correct before the intersection visitor comes
+ * through, else the node's traverse() will not even be called.
+ */
+class DynamicScaleTransform::RecalculateScaleVisitor : public osg::NodeVisitor
+{
+public:
+  RecalculateScaleVisitor(TraversalMode tm=osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
+    : NodeVisitor(tm)
+  {
+  }
+
+  // Build up a list of transforms along the node path
+  virtual void apply(osg::Transform& xform)
+  {
+    // Presumption/Optimization: We only fix the top DST in the node path
+    simVis::DynamicScaleTransform* dst = dynamic_cast<simVis::DynamicScaleTransform*>(&xform);
+    if (dst)
+    {
+      // getTrans().length() returns the distance from center to the eye
+      if (!matrices_.empty())
+        dst->recalculate_(matrices_.back()->getTrans().length());
+      return;
+    }
+
+    // Fill out the matrix to match the last one, then transform via this xform
+    osg::ref_ptr<osg::RefMatrix> matrix = matrices_.empty() ? new osg::RefMatrix() : new osg::RefMatrix(*matrices_.back());
+    xform.computeLocalToWorldMatrix(*matrix,this);
+
+    // We want to ignore the view matrix if the transform is an absolute reference
+    if (xform.getReferenceFrame() != osg::Transform::RELATIVE_RF)
+      matrices_.push_back(new osg::RefMatrix());
+
+    matrices_.push_back(matrix);
+    traverse(xform);
+    matrices_.pop_back();
+    // Take off the empty matrix if needed
+    if (xform.getReferenceFrame() != osg::Transform::RELATIVE_RF)
+      matrices_.pop_back();
+  }
+
+private:
+  /// Deque of all matrices as we traverse the scene
+  std::deque<osg::ref_ptr<osg::RefMatrix> > matrices_;
+};
+
+///////////////////////////////////////////////////////////////////////
+
 DynamicScaleTransform::DynamicScaleTransform()
   : osg::Transform(),
     dynamicEnabled_(true),
@@ -225,8 +280,9 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
   if (!nv.validNodeMask(*this))
     return;
 
-  // Only care about cull visitor
-  if (nv.getVisitorType() != osg::NodeVisitor::CULL_VISITOR)
+  // Only care about cull visitor and intersection visitor
+  if (nv.getVisitorType() != osg::NodeVisitor::CULL_VISITOR &&
+    nv.getVisitorType() != osg::NodeVisitor::INTERSECTION_VISITOR)
   {
     Transform::accept(nv);
     return;
@@ -243,7 +299,10 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
   else if (!isDynamicScalingEnabled())
     newScale.set(staticScalar_, staticScalar_, staticScalar_);
   else
-    newScale = computeDynamicScale_(dynamic_cast<osgUtil::CullVisitor*>(&nv));
+  {
+    // Compute the dynamic scale based on the distance from the eye
+    newScale = computeDynamicScale_(nv.getEyePoint().length());
+  }
 
   // Dirty the bounding sphere and return the size
   if (cachedScale_ != newScale && newScale.x() > 0.0 && newScale.y() > 0.0 && newScale.z() > 0.0)
@@ -254,24 +313,42 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
   Transform::accept(nv);
 }
 
-osg::Vec3f DynamicScaleTransform::computeDynamicScale_(const osgUtil::CullVisitor* cullVisitor)
+void DynamicScaleTransform::recalculate_(double range)
+{
+  // noop; don't adjust bounds
+  if (hasOverrideScale() || !isDynamicScalingEnabled() || range <= 0.0)
+    return;
+  const osg::Vec3f newScale = computeDynamicScale_(range);
+  // Dirty the bounding sphere
+  if (cachedScale_ != newScale && newScale.x() > 0.0 && newScale.y() > 0.0 && newScale.z() > 0.0)
+  {
+    cachedScale_ = newScale;
+    dirtyBound();
+  }
+}
+
+osg::Vec3f DynamicScaleTransform::computeDynamicScale_(double range)
 {
   osg::ref_ptr<const osg::Node> sizeNode = getSizingNode_();
-  if (cullVisitor && sizeNode.valid() && iconScaleFactor_ != INVALID_SCALE_FACTOR)
+  if (sizeNode.valid() && iconScaleFactor_ != INVALID_SCALE_FACTOR)
   {
-    // Compute distance from entity to the eye
-    const double distance = cullVisitor->getEyeLocal().length();
-
     // Compute the distance at which scaling begins
     const float maxLen = iconScaleFactor_ * dynamicScalar_ + scaleOffset_;
 
     // Calculate the scale value
     float scale = staticScalar_;
-    if (distance > maxLen && maxLen != 0.f)
-      scale = staticScalar_ * distance / maxLen;
+    if (range > maxLen && maxLen != 0.f)
+      scale = staticScalar_ * range / maxLen;
     return osg::Vec3f(scale, scale, scale);
   }
   return NO_SCALE;
+}
+
+void DynamicScaleTransform::recalculateAllDynamicScaleBounds(osg::Camera& camera)
+{
+  // Set up the visitor and have it go
+  RecalculateScaleVisitor updateDynamicScaleBounds;
+  camera.accept(updateDynamicScaleBounds);
 }
 
 }

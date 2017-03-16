@@ -27,7 +27,10 @@
 #include "osg/Quat"
 #include "simCore/Common/Export.h"
 
-namespace osgUtil { class CullVisitor; }
+namespace osg {
+  class NodeVisitor;
+  class Camera;
+}
 
 namespace simVis
 {
@@ -112,15 +115,30 @@ public:
   /** Override accept() to compute per-view bounds */
   virtual void accept(osg::NodeVisitor& nv);
 
+  /**
+   * Given a camera, iterates through the scene and recalculates the bounding spheres on
+   * all DynamicScaleTransform in the scene.  This is useful before doing an intersection
+   * test in cases where there are multiple insets.  Failure to use this before an
+   * intersection test means that the bounds on the dynamic scale node may not be appropriate
+   * for the given intersection.  This is only done on active nodes.
+   * @param camera Visited to rescale all dynamic scale transforms.
+   */
+  static void recalculateAllDynamicScaleBounds(osg::Camera& camera);
+
 protected:
   /** Protected destructor to force use of osg::ref_ptr */
   virtual ~DynamicScaleTransform();
 
 private:
+  /// Helper class to recalculate bounds
+  class RecalculateScaleVisitor;
+
   /** Returns first child if sizingNode_ is unset */
   osg::Node* getSizingNode_();
-  /** Computes the dynamic scale; requires valid sizing node, valid cull visitor, and valid icon scale factor */
-  osg::Vec3f computeDynamicScale_(const osgUtil::CullVisitor* cv);
+  /** Computes the dynamic scale; requires valid sizing node and valid icon scale factor */
+  osg::Vec3f computeDynamicScale_(double range);
+  /** Recalculates the bounds if in dynamic scale mode, called by the recalculateAllDynamicScaleBounds() */
+  void recalculate_(double range);
 
   /// Sizing node that is used for appropriate scaling based on eye distance
   osg::observer_ptr<osg::Node> sizingNode_;

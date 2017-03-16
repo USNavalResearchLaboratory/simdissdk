@@ -930,6 +930,9 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
     cam->accept(setOverheadMode);
   }
 
+  // Dynamic scale cache will be out of date and needs a visitation to fix
+  DynamicScaleTransform::recalculateAllDynamicScaleBounds(*cam);
+
   // configure the line segment intersector
   osgEarth::DPLineSegmentIntersector* lsi = new osgEarth::DPLineSegmentIntersector(beg, end);
   osgUtil::IntersectionVisitor iv(lsi);
