@@ -131,7 +131,7 @@ namespace
 
 bool simVis::useRexEngine()
 {
-  return simCore::caseCompare(osgEarth::Registry::instance()->getDefaultTerrainEngineDriverName(), "rex") == 0;
+  return simCore::caseCompare(osgEarth::Registry::instance()->overrideTerrainEngineDriverName().value(), "rex") == 0;
 }
 
 void simVis::setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value)
