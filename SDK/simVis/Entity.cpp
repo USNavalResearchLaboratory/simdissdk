@@ -63,8 +63,7 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
   double hamsl = 0.0; // not used
   double hae = 0.0; // height above ellipsoid, the rough elevation
 
-  osgEarth::GeoPoint lonLatAlt(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0.0, osgEarth::ALTMODE_ABSOLUTE);
-  if (mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), lonLatAlt.x(), lonLatAlt.y(), &hamsl, &hae))
+  if (mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, &hamsl, &hae))
     llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), hae);
   else
     llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), 0.0);  // Assume over the ocean and clamp to zero
