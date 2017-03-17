@@ -24,6 +24,7 @@
 #include "osgEarth/Registry"
 #include "osgEarth/ImageLayer"
 #include "osgEarthDrivers/cache_filesystem/FileSystemCache"
+#include "osgEarthDrivers/mbtiles/MBTilesOptions"
 #include "osgEarthDrivers/tms/TMSOptions"
 #include "osgEarthDrivers/gdal/GDALOptions"
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
@@ -101,7 +102,7 @@ Map* simExamples::createDefaultExampleMap()
   return createRemoteWorldMap();
 #else
   //return createHawaiiTMSMap();
-  return createHawaiiDbMap();
+  return createHawaiiMap();
 #endif
 
 }
@@ -169,7 +170,7 @@ Map* simExamples::createHawaiiTMSMap()
 
 // A sample map that demonstrates SIMDIS .db format support (Hi-res Hawaii inset)
 
-Map* simExamples::createHawaiiDbMap()
+Map* simExamples::createHawaiiMap()
 {
   // configure an EGM96 MSL globe.
   ProfileOptions profileOptions;
@@ -183,17 +184,17 @@ Map* simExamples::createHawaiiDbMap()
 
   // the SIMDIS etopo2 default imagery:
   {
-    simVis::DBOptions sourceOptions;
-    sourceOptions.url() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB;
-    addLayer(map, new ImageLayer("simdis.imagery.topo2", sourceOptions));
+    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
+    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB;
+    addLayer(map, new ImageLayer("Earth", sourceOptions));
   }
 
   // the PDC Hawaii hi-res inset:
   {
-    simVis::DBOptions sourceOptions;
-    sourceOptions.url() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB;
+    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
+    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB;
 
-    ImageLayerOptions layerOptions("simdis.imagery.pdc", sourceOptions);
+    ImageLayerOptions layerOptions("Kauai Niihau", sourceOptions);
     layerOptions.minLevel() = 3;
 
     addLayer(map, new ImageLayer(layerOptions));
@@ -209,10 +210,10 @@ Map* simExamples::createHawaiiDbMap()
 
   // the USGS elevation data inset for Kauai
   {
-    simVis::DBOptions sourceOptions;
-    sourceOptions.url() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB;
+    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
+    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB;
 
-    ElevationLayerOptions layerOptions("simdis.elevation.usgs-elevation", sourceOptions);
+    ElevationLayerOptions layerOptions("Kauai Elevation", sourceOptions);
     //layerOptions.minLevel() = 7;
 
     addLayer(map, new ElevationLayer(layerOptions));
@@ -222,7 +223,7 @@ Map* simExamples::createHawaiiDbMap()
 }
 
 // A sample map that uses SIMDIS db and local bathymetric GeoTIFF
-Map* simExamples::createHawaiiDbMapLocalWithBathymetry()
+Map* simExamples::createHawaiiMapLocalWithBathymetry()
 {
   // configure an EGM96 MSL globe.
   ProfileOptions profileOptions;
@@ -236,15 +237,15 @@ Map* simExamples::createHawaiiDbMapLocalWithBathymetry()
 
   // the SIMDIS etopo2 default imagery:
   {
-    simVis::DBOptions sourceOptions;
-    sourceOptions.url() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB;
+    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
+    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB;
     addLayer(map, new ImageLayer("simdis.imagery.topo2", sourceOptions));
   }
 
   // the PDC Hawaii hi-res inset:
   {
-    simVis::DBOptions sourceOptions;
-    sourceOptions.url() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB;
+    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
+    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB;
 
     ImageLayerOptions layerOptions("simdis.imagery.pdc", sourceOptions);
     //layerOptions.minLevel() = 3;
@@ -264,8 +265,8 @@ Map* simExamples::createHawaiiDbMapLocalWithBathymetry()
 
   // the USGS elevation data inset for Kauai
   {
-    simVis::DBOptions sourceOptions;
-    sourceOptions.url() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB;
+    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
+    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB;
 
     ElevationLayerOptions layerOptions("simdis.elevation.usgs-elevation", sourceOptions);
     //layerOptions.minLevel() = 7;

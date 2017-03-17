@@ -224,7 +224,7 @@ int main(int argc, char** argv)
 
   // Construct a map - this one uses all local data and was bathymetry
   // which is required for an ocean surface.
-  osg::ref_ptr<osgEarth::Map> map = simExamples::createHawaiiDbMapLocalWithBathymetry();
+  osg::ref_ptr<osgEarth::Map> map = simExamples::createHawaiiMapLocalWithBathymetry();
 
   // check for ocean and sky options.
   osg::ArgumentParser ap(&argc, argv);

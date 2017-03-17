@@ -43,9 +43,9 @@
 #define EXAMPLE_DEFAULT_DATA_PATH       "/usr/local/share/SIMDIS_SDK-Data"
 #endif // WIN32
 
-#define EXAMPLE_GLOBAL_IMAGERY_LAYER_DB   "blueMarbleETOPO2ShadedLevel0-35zc.db"
-#define EXAMPLE_HIRES_INSET_LAYER_DB      "pdcLandsatKauaiNiihau5zc.db"
-#define EXAMPLE_ELEVATION_LAYER_DB        "usgsKauaiSubSampledFzc.db"
+#define EXAMPLE_GLOBAL_IMAGERY_LAYER_DB   "lowResEarth.mbtiles"
+#define EXAMPLE_HIRES_INSET_LAYER_DB      "highResKauaiNiihau.mbtiles"
+#define EXAMPLE_ELEVATION_LAYER_DB        "kauaiElevation.mbtiles"
 
 #define EXAMPLE_HAWAII_LOCAL_BATHYMETRY   "SRTM30Plus_Hawaii.tif" // includes bathymetry
 
@@ -86,11 +86,11 @@ namespace simExamples
   /** Creates a map in which the ocean elevation is 0. */
   extern SDKUTIL_EXPORT osgEarth::Map* createWorldMapWithFlatOcean();
 
-  /** Creates a sample map that demonstrates SIMDIS .db format support (Hi-res Hawaii inset) */
-  extern SDKUTIL_EXPORT osgEarth::Map* createHawaiiDbMap();
+  /** Creates a sample map that demonstrates .mbtiles format support (Hi-res Hawaii inset) */
+  extern SDKUTIL_EXPORT osgEarth::Map* createHawaiiMap();
 
   /** Creates a sample map of Hawaii and surrounding area from local data (no Internet) */
-  extern SDKUTIL_EXPORT osgEarth::Map* createHawaiiDbMapLocalWithBathymetry();
+  extern SDKUTIL_EXPORT osgEarth::Map* createHawaiiMapLocalWithBathymetry();
 
   /** Creates a sample map from the SIMDIS TMS example repo (hi-res Hawaii and San Diego) */
   extern SDKUTIL_EXPORT osgEarth::Map* createHawaiiTMSMap();
