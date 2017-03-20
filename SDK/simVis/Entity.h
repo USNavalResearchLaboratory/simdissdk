@@ -59,7 +59,7 @@ namespace simVis
     virtual ~CoordSurfaceClamping();
 
     /**
-    * reset coordinate's altitude value to be clamped to the surface. Query's the terrain for
+    * reset coordinate's altitude value to be clamped to the surface. Queries the terrain for
     * elevation at the specified coordinate position. Coordinate must be in LLA or ECEF
     * @param coord  coordinate to clamp to map surface, will do nothing if coordinate is not LLA or ECEF
     */
