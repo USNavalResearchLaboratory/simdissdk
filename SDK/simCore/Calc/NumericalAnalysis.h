@@ -74,7 +74,6 @@ namespace simCore
 
     /**
     * BisectionSearch count
-    * @param[in] miter Maximum number of iterations
     * @return number of iterations during last search
     */
     int count() const { return counter_; }
@@ -123,7 +122,6 @@ namespace simCore
 
     /**
     * LinearSearch count
-    * @param[in] miter Maximum number of iterations
     * @return number of iterations during last search
     */
     int count() const { return counter_; }

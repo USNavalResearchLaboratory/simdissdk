@@ -29,6 +29,7 @@
 #include "simCore/Calc/CoordinateSystem.h"
 #include "simCore/Calc/DatumConvert.h"
 #include "simCore/Calc/Geometry.h"
+#include "simCore/Calc/GogToGeoFence.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simCore/Calc/MagneticVariance.h"
 #include "simCore/Calc/Math.h"

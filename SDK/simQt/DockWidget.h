@@ -205,7 +205,7 @@ protected slots:
   * Update the disableDocking state. If true, docking capability will be disabled, while false will restore
   * the widget to the isDockable state. It will not restore previously docked widgets to their docked location
   * This overrides the effects of setDockable. Note that isDockable will not reflect the overridden state
-  * @param dockable  False restores the isDockable state, true disables docking capability and makes window float
+  * @param disable  False restores the isDockable state, true disables docking capability and makes window float
   */
   void setDisableDocking_(bool disable);
   /** Need to verify that our docked state is consistent with our allowed areas */

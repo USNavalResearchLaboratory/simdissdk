@@ -121,6 +121,7 @@
 #include "simVis/Scenario.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/SceneManager.h"
+#include "simVis/Shaders.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/TargetDelegation.h"
 #include "simVis/Text.h"

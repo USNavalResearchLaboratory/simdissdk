@@ -91,7 +91,7 @@ namespace simCore
 
   /**
   *  Verify a given day, month and year is valid.
-  * @param[in ] monthday Day of month (1-31)
+  * @param[in ] monthDay Day of month (1-31)
   * @param[in ] month Month of year (1-12)
   * @param[in ] year Gregorian calendar year (1900-)
   * @throw TimeException
