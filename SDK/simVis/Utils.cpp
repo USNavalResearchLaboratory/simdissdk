@@ -130,7 +130,13 @@ namespace
 
 bool simVis::useRexEngine()
 {
-  return simCore::caseCompare(osgEarth::Registry::instance()->getDefaultTerrainEngineDriverName(), "rex") == 0;
+  // first try the override name. This will be the same as default name if terrain engine was set by envar OSGEARTH_TERRAIN_ENGINE
+  std::string engineName = osgEarth::Registry::instance()->overrideTerrainEngineDriverName().value();
+  // fall back on the default name if the override name is not set.
+  if (engineName.empty())
+    engineName = osgEarth::Registry::instance()->getDefaultTerrainEngineDriverName();
+
+  return simCore::caseCompare(engineName, "rex") == 0;
 }
 
 void simVis::setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value)
