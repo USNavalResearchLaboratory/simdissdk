@@ -130,11 +130,14 @@ namespace
 
 bool simVis::useRexEngine()
 {
-  // first try the override name. This will be the same as default name if terrain engine was set by envar OSGEARTH_TERRAIN_ENGINE
-  std::string engineName = osgEarth::Registry::instance()->overrideTerrainEngineDriverName().value();
-  // fall back on the default name if the override name is not set.
-  if (engineName.empty())
-    engineName = osgEarth::Registry::instance()->getDefaultTerrainEngineDriverName();
+  osgEarth::Registry* reg = osgEarth::Registry::instance();
+  // first use the default name
+  std::string engineName = reg->getDefaultTerrainEngineDriverName();
+#ifdef HAVE_ENGINE_OVERRIDE_NAME
+  // See if the override is set, which takes precedence. This will be the same as default name if terrain engine was set by envar OSGEARTH_TERRAIN_ENGINE
+  if (reg->overrideTerrainEngineDriverName().isSet())
+    engineName = reg->overrideTerrainEngineDriverName().value();
+#endif
 
   return simCore::caseCompare(engineName, "rex") == 0;
 }
