@@ -72,13 +72,15 @@ public:
    *   directly allocated driver options like GDALOptions or DBOptions, but it could be set
    *   up using an osgEarth::Config passed into an osgEarth::TileSourceOptions constructor.
    * @param cachePolicy When non-NULL, sets the cache policy on the layer.
+   * @param extraOptions Additional elevation layer options to merge in, such as noDataValue()
    * @return Elevation layer on success; NULL on failure.  Caller responsible for memory.
    *   (put in ref_ptr)
    */
   static osgEarth::ElevationLayer* newElevationLayer(
     const std::string& layerName,
     const osgEarth::TileSourceOptions& options,
-    const osgEarth::CachePolicy* cachePolicy=NULL);
+    const osgEarth::CachePolicy* cachePolicy=NULL,
+    const osgEarth::ElevationLayerOptions* extraOptions=NULL);
 };
 
 }

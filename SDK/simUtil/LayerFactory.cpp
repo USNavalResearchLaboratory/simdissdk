@@ -63,7 +63,8 @@ osgEarth::ImageLayer* LayerFactory::newImageLayer(
 osgEarth::ElevationLayer* LayerFactory::newElevationLayer(
   const std::string& layerName,
   const osgEarth::TileSourceOptions& options,
-  const osgEarth::CachePolicy* cachePolicy)
+  const osgEarth::CachePolicy* cachePolicy,
+  const osgEarth::ElevationLayerOptions* extraOptions)
 {
   SAFETRYBEGIN;
 
@@ -76,6 +77,10 @@ osgEarth::ElevationLayer* LayerFactory::newElevationLayer(
   // Set the cache policy if there is one
   if (cachePolicy)
     elOptions.cachePolicy() = *cachePolicy;
+
+  // Merge in the extra options if specified
+  if (extraOptions)
+    elOptions.merge(*extraOptions);
 
   // Allocate the elevation layer now with the provided options
   osg::ref_ptr<osgEarth::ElevationLayer> elevationLayer = new osgEarth::ElevationLayer(elOptions);
