@@ -11,14 +11,4 @@ set_target_properties(example_load_layer PROPERTIES
     PROJECT_LABEL "Example - Load Terrain Layers"
 )
 
-check_osgearth_method_exists(HAVE_OSGEARTH_LAYEROPTIONS "osgEarth/Layer" "options")
-if(HAVE_OSGEARTH_LAYEROPTIONS)
-    target_compile_definitions(example_load_layer PRIVATE HAVE_OSGEARTH_LAYEROPTIONS)
-endif()
-
 vsi_install_target(example_load_layer SDK_Examples)
-
-check_osgearth_method_exists(HAVE_OSGEARTH_MAP_GETLAYERS "osgEarth/Map" "getLayers")
-if(HAVE_OSGEARTH_MAP_GETLAYERS)
-    target_compile_definitions(example_load_layer PRIVATE HAVE_OSGEARTH_MAP_GETLAYERS)
-endif()

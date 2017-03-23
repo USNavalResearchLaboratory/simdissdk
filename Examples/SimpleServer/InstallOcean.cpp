@@ -23,6 +23,10 @@
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarthUtil/Ocean"
+
+// Potentially defines HAVE_TRITON_NODEKIT, include first
+#include "simVis/osgEarthVersion.h"
+
 #ifdef HAVE_TRITON_NODEKIT
 #include "osgEarthTriton/TritonOptions"
 #else

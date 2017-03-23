@@ -42,6 +42,7 @@
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/Registry.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
@@ -216,7 +217,7 @@ void SceneManager::init_()
   // an empty map for starters
   osgEarth::Map* map = getMap();
   if (map)
-#ifdef HAVE_OSGEARTH_MAP_SETMAPNAME
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->setMapName("Empty Map");
 #else
     map->setName("Empty Map");
@@ -401,7 +402,7 @@ void SceneManager::setMap(osgEarth::Map* map)
   if (mapNode_.valid())
   {
     osgEarth::Map* currentMap = mapNode_->getMap();
-#ifdef HAVE_OSGEARTH_MAP_SETMAPNAME
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     currentMap->setMapName(map->getMapName());
 #else
     currentMap->setName(map->getName());
@@ -432,7 +433,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
   // first, figure out what layers we already have
   std::map<std::string, osgEarth::ImageLayer*> loadedLayerHash;
   osgEarth::ImageLayerVector currentLayers;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   currentMap->getLayers(currentLayers);
 #else
   currentMap->getImageLayers(currentLayers);
@@ -445,7 +446,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
 
   // now figure out which layers we need to add
   osgEarth::ImageLayerVector newLayers;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   newMap.getLayers(newLayers);
 #else
   newMap.getImageLayers(newLayers);
@@ -458,7 +459,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
     if (loadedLayerIter == loadedLayerHash.end())
     {
       if ((*iter)->getTileSource() != NULL && (*iter)->getTileSource()->isOK())
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         currentMap->addLayer(*iter);
 #else
         currentMap->addImageLayer(*iter);
@@ -480,7 +481,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
   // remove any layers leftover from currentMap not in the newMap
   for (std::map<std::string, osgEarth::ImageLayer*>::const_iterator iter = loadedLayerHash.begin(); iter != loadedLayerHash.end(); ++iter)
   {
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     currentMap->removeLayer(iter->second);
 #else
     currentMap->removeImageLayer(iter->second);
@@ -493,7 +494,7 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
   // first, figure out what layers we already have
   std::map<std::string, osgEarth::ElevationLayer*> loadedLayerHash;
   osgEarth::ElevationLayerVector currentLayers;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   currentMap->getLayers(currentLayers);
 #else
   currentMap->getElevationLayers(currentLayers);
@@ -506,7 +507,7 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
 
   // now figure out which layers we need to add
   osgEarth::ElevationLayerVector newLayers;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   newMap.getLayers(newLayers);
 #else
   newMap.getElevationLayers(newLayers);
@@ -517,7 +518,7 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
     if (loadedLayerHash.find(layerHash) == loadedLayerHash.end())
     {
       if ((*iter)->getTileSource() != NULL && (*iter)->getTileSource()->isOK())
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         currentMap->addLayer(*iter);
 #else
         currentMap->addElevationLayer(*iter);
@@ -534,7 +535,7 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
   // remove any layers leftover from currentMap not in the newMap
   for (std::map<std::string, osgEarth::ElevationLayer*>::const_iterator iter = loadedLayerHash.begin(); iter != loadedLayerHash.end(); ++iter)
   {
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     currentMap->removeLayer(iter->second);
 #else
     currentMap->removeElevationLayer(iter->second);
@@ -546,7 +547,7 @@ void SceneManager::updateModelLayers_(const osgEarth::Map& newMap, osgEarth::Map
 {
   // first, remove all current model layers
   osgEarth::ModelLayerVector currentLayers;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   currentMap->getLayers(currentLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
     currentMap->removeLayer(*iter);
@@ -558,7 +559,7 @@ void SceneManager::updateModelLayers_(const osgEarth::Map& newMap, osgEarth::Map
 
   // now add the new model layers
   osgEarth::ModelLayerVector newLayers;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   newMap.getLayers(newLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
     currentMap->addLayer(*iter);
@@ -581,10 +582,8 @@ std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
 
   // system will generate a cacheId. technically, this is not quite right, we need to remove everything that's
   // an image layer property and just use the tilesource properties.
-#ifdef HAVE_OSGEARTH_LAYEROPTIONS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   const auto& layerOptions = layer->options();
-#elif defined(HAVE_OSGEARTH_TERRAINLAYEROPTIONS)
-  const auto& layerOptions = layer->getTerrainLayerOptions();
 #else
   const auto& layerOptions = layer->getTerrainLayerRuntimeOptions();
 #endif
@@ -657,7 +656,7 @@ void SceneManager::initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine:
 {
   // Drop default tile size down to 7 by default to reduce tile subdivision (suggested by GW 5/13/15)
   options.tileSize() = 7;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   // edges will be normalized, reducing seam stitch artifacts
   options.normalizeEdges() = true;
 #endif

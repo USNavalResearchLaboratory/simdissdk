@@ -218,16 +218,12 @@ endif()
 if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
     target_link_libraries(SIMDIS_SDKQt PRIVATE SIMDIS_SDKVis PUBLIC SIMDIS_SDKData)
 else()
-    target_include_directories(SIMDIS_SDKQt PUBLIC
-        $<BUILD_INTERFACE:${SIMDIS_SDK_BINARY_DIR}/simData>)
-endif()
-
-# Detect updated map layer API from October 2016
-include(CheckOSGEarthMethodExists)
-# Map API changed after 2.8 to remove getImageLayers() and friends, replaced with template methods
-check_osgearth_method_exists(HAVE_OSGEARTH_MAP_GETLAYERS "osgEarth/Map" "getLayers")
-if(HAVE_OSGEARTH_MAP_GETLAYERS)
-    target_compile_definitions(SIMDIS_SDKQt PRIVATE HAVE_OSGEARTH_MAP_GETLAYERS)
+    target_include_directories(SIMDIS_SDKQt
+        PUBLIC
+            $<BUILD_INTERFACE:${SIMDIS_SDK_BINARY_DIR}/simData>
+        PRIVATE
+            ${SIMDIS_SDK_BINARY_DIR}/simVis/include
+    )
 endif()
 
 

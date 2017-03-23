@@ -35,7 +35,9 @@
 
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
-#ifndef HAVE_SHADERFACTORY_CREATEUNIFORM
+#include "simVis/osgEarthVersion.h"
+
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
 #include "osgEarth/Lighting"
 #endif
 
@@ -133,8 +135,9 @@ bool simVis::useRexEngine()
   osgEarth::Registry* reg = osgEarth::Registry::instance();
   // first use the default name
   std::string engineName = reg->getDefaultTerrainEngineDriverName();
-#ifdef HAVE_ENGINE_OVERRIDE_NAME
-  // See if the override is set, which takes precedence. This will be the same as default name if terrain engine was set by envar OSGEARTH_TERRAIN_ENGINE
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+  // See if the override is set, which takes precedence. This will be the same as default name
+  // if terrain engine was set by environment variable OSGEARTH_TERRAIN_ENGINE
   if (reg->overrideTerrainEngineDriverName().isSet())
     engineName = reg->overrideTerrainEngineDriverName().value();
 #endif
@@ -146,13 +149,13 @@ void simVis::setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeVal
 {
   if (stateset)
   {
-#ifdef HAVE_SHADERFACTORY_CREATEUNIFORM
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+    stateset->setDefine(OE_LIGHTING_DEFINE, value);
+    stateset->setMode(GL_LIGHTING, value);
+#else
     osg::Uniform* u = osgEarth::Registry::shaderFactory()->createUniformForGLMode(GL_LIGHTING, value);
     u->set((value & osg::StateAttribute::ON) != 0);
     stateset->addUniform(u, value);
-#else
-    stateset->setDefine(OE_LIGHTING_DEFINE, value);
-    stateset->setMode(GL_LIGHTING, value);
 #endif
   }
 }
@@ -164,13 +167,13 @@ void simVis::setLightingToInherit(osg::StateSet* stateset)
   // to properly query the name instead. -gw)
   if (stateset)
   {
-#ifdef HAVE_SHADERFACTORY_CREATEUNIFORM
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+    stateset->removeDefine(OE_LIGHTING_DEFINE);
+    stateset->removeMode(GL_LIGHTING);
+#else
     osg::ref_ptr<osg::Uniform> temp = osgEarth::Registry::shaderFactory()
       ->createUniformForGLMode(GL_LIGHTING, 0);
     stateset->removeUniform(temp->getName());
-#else
-    stateset->removeDefine(OE_LIGHTING_DEFINE);
-    stateset->removeMode(GL_LIGHTING);
 #endif
   }
 }

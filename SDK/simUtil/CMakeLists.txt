@@ -127,21 +127,6 @@ else()
 endif()
 
 
-# Detect updated osgEarth API changes from after October 2016
-include(CheckOSGEarthMethodExists)
-# Map API changed after 2.8 to change setName() to setMapName() after Map became an osg::Object
-check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-if(HAVE_OSGEARTH_MAP_SETMAPNAME)
-    target_compile_definitions(SIMDIS_SDKUtil PRIVATE HAVE_OSGEARTH_MAP_SETMAPNAME)
-endif()
-
-# Map API changed after 2.8 to remove getImageLayers() and friends, replaced with template methods
-check_osgearth_method_exists(HAVE_OSGEARTH_MAP_GETLAYERS "osgEarth/Map" "getLayers")
-if(HAVE_OSGEARTH_MAP_GETLAYERS)
-    target_compile_definitions(SIMDIS_SDKUtil PRIVATE HAVE_OSGEARTH_MAP_GETLAYERS)
-endif()
-
-
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     set_target_properties(SIMDIS_SDKUtil PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
     vsi_install_target(SIMDIS_SDKUtil SDK_Library)

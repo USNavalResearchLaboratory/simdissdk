@@ -102,6 +102,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}Viewer.h
     ${VIS_INC}ViewManager.h
     ${VIS_INC}ViewManagerLogDbAdapter.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/simVis/osgEarthVersion.h
 )
 
 set(VIS_HEADERS_RFPROP
@@ -264,6 +265,48 @@ set(VIS_ALL_HEADER
     ${VIS_INC}../simVis.h
 )
 
+# Detect the osgEarth version
+set(SDK_OSGEARTH_DEVEL 0)
+if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
+    set(HAVE_TRITON_NODEKIT 1)
+endif()
+if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
+    set(HAVE_SILVERLINING_NODEKIT 1)
+endif()
+include(CheckOSGEarthMethodExists)
+# Newer than 1.6.0 release removes tileSize() from TileSource
+check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
+if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
+    set(SDK_OSGEARTH_DEVEL 1)
+    # Next anticipated version is 1.7.0
+    set(SDK_OSGEARTH_VERSION_MAJOR 1)
+    set(SDK_OSGEARTH_VERSION_MINOR 7)
+    set(SDK_OSGEARTH_VERSION_PATCH 0)
+else()
+    # Version 1.6.0 changed Map's setName to setMapName
+    check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
+    if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+        set(SDK_OSGEARTH_VERSION_MAJOR 1)
+        set(SDK_OSGEARTH_VERSION_MINOR 6)
+        set(SDK_OSGEARTH_VERSION_PATCH 0)
+    else()
+        # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
+        set(SDK_OSGEARTH_VERSION_MAJOR 1)
+        set(SDK_OSGEARTH_VERSION_MINOR 5)
+        set(SDK_OSGEARTH_VERSION_PATCH 0)
+    endif()
+endif()
+
+# Configure the osgEarth versions file and print out the information to CMake
+if(VERBOSE)
+    if(SDK_OSGEARTH_DEVEL)
+        message(STATUS "Detected development osgEarth version.")
+    else()
+        message(STATUS "Detected osgEarth version osgearth-simdis-sdk-${SDK_OSGEARTH_VERSION_MAJOR}.${SDK_OSGEARTH_VERSION_MINOR}")
+    endif()
+endif()
+configure_file(${VIS_INC}osgEarthVersion.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/simVis/osgEarthVersion.h @ONLY)
+
 # Note that shaders do not go into simVis.h and header/cpp don't get installed
 set(VIS_SHADER_FILES
     ${SHADER_FILES}
@@ -308,6 +351,7 @@ set_target_properties(SIMDIS_SDKVis PROPERTIES
 )
 target_include_directories(SIMDIS_SDKVis PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(SIMDIS_SDKVis PUBLIC SIMDIS_SDKData SIMDIS_SDKCore SIMDIS_SDKNotify
@@ -316,54 +360,6 @@ if(SIMVIS_SHARED)
     target_compile_definitions(SIMDIS_SDKVis PRIVATE SIMDIS_SDKVis_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(SIMDIS_SDKVis PUBLIC SIMDIS_SDKVis_LIB_EXPORT_STATIC)
-endif()
-
-
-# Detect updated osgEarth API changes from after October 2016
-include(CheckOSGEarthMethodExists)
-# If setFallbackOnNoData() exists, it's an older API.  So if not defined, we have the API from after 10/2016
-check_osgearth_method_exists(HAVE_ELEVQUERY_LEGACYAPI "osgEarth/ElevationQuery" "setFallBackOnNoData")
-if(NOT HAVE_ELEVQUERY_LEGACYAPI)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_ELEVQUERY_1016API)
-endif()
-
-# If the Future class exists, it's a newer API that has the ElevationPool::getElevation method.  So if defined, we have the API from after 3/2017
-check_osgearth_method_exists(HAVE_ELEVQUERY_NEWAPI "osgEarth/ThreadingUtils" "Future")
-if(HAVE_ELEVQUERY_NEWAPI)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_ELEVQUERY_0317API)
-endif()
-
-# Check for the overrideTerrainEngineDriverName method in Registry
-check_osgearth_method_exists(HAVE_ENGINE_OVERRIDE_NAME "osgEarth/Registry" "overrideTerrainEngineDriverName")
-if(HAVE_ENGINE_OVERRIDE_NAME)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_ENGINE_OVERRIDE_NAME)
-endif()
-
-# Map API changed after 2.8 to remove getImageLayers() and friends, replaced with template methods
-check_osgearth_method_exists(HAVE_OSGEARTH_MAP_GETLAYERS "osgEarth/Map" "getLayers")
-if(HAVE_OSGEARTH_MAP_GETLAYERS)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_OSGEARTH_MAP_GETLAYERS)
-else()
-    # ShaderFactory's createUniformForGLMode() is used for lighting in osgEarth 2.8, but was removed after (at the same time as Map API
-    # update). The check_osgearth_method_exists() macro doesn't successfully detect this change, so piggyback on getLayers detection
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_SHADERFACTORY_CREATEUNIFORM)
-endif()
-
-# Map API changed after 2.8 to change setName() to setMapName() after Map became an osg::Object
-check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-if(HAVE_OSGEARTH_MAP_SETMAPNAME)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_OSGEARTH_MAP_SETMAPNAME)
-endif()
-
-# TerrainLayer API changed after 2.8 to change getTerrainLayerRuntimeOptions() to getTerrainLayerOptions()
-check_osgearth_method_exists(HAVE_OSGEARTH_TERRAINLAYEROPTIONS "osgEarth/TerrainLayer" "getTerrainLayerOptions")
-if(HAVE_OSGEARTH_TERRAINLAYEROPTIONS)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_OSGEARTH_TERRAINLAYEROPTIONS)
-endif()
-# It changed again to remove getTerrainLayerOptions to just options
-check_osgearth_method_exists(HAVE_OSGEARTH_LAYEROPTIONS "osgEarth/Layer" "options")
-if(HAVE_OSGEARTH_LAYEROPTIONS)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE HAVE_OSGEARTH_LAYEROPTIONS)
 endif()
 
 

@@ -32,6 +32,7 @@
 #include "simUtil/ExampleResources.h"
 #include "simVis/Viewer.h"
 #include "simVis/DBOptions.h"
+#include "simVis/osgEarthVersion.h"
 #include "simUtil/ExampleResources.h"
 
 int main(int argc, char** argv)
@@ -55,7 +56,7 @@ int main(int argc, char** argv)
       // Add the debug driver
       simVis::DBOptions driverOptions;
       driverOptions.setDriver("debug");
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
       map->addLayer(new osgEarth::ImageLayer("debug", driverOptions));
 #else
       map->addImageLayer(new osgEarth::ImageLayer("debug", driverOptions));
@@ -81,7 +82,7 @@ int main(int argc, char** argv)
     simVis::DBOptions driverOptions;
     driverOptions.url() = token;
 
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->addLayer(new osgEarth::ElevationLayer(token, driverOptions));
 #else
     if (isElevation)

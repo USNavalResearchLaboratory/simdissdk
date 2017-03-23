@@ -28,7 +28,7 @@ set(PROJECT_HEADERS
 )
 
 add_library(osgdb_osgearth_db SHARED ${PROJECT_HEADERS} ${PROJECT_SRC})
-target_include_directories(osgdb_osgearth_db PRIVATE include)
+target_include_directories(osgdb_osgearth_db PRIVATE include ${SIMDIS_SDK_BINARY_DIR}/simVis/include)
 target_link_libraries(osgdb_osgearth_db
     PRIVATE
         SQLITE3
@@ -41,11 +41,6 @@ if(SDK_BIG_ENDIAN)
     target_compile_definitions(osgdb_osgearth_db PRIVATE SIM_BIG_ENDIAN)
 else()
     target_compile_definitions(osgdb_osgearth_db PRIVATE SIM_LITTLE_ENDIAN)
-endif()
-
-# Use osgEarth Status header file if detected
-if(EXISTS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/osgEarth/Status")
-    target_compile_definitions(osgdb_osgearth_db PRIVATE HAVE_OSGEARTH_STATUS)
 endif()
 
 set_target_properties(osgdb_osgearth_db PROPERTIES

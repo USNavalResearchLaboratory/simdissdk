@@ -35,6 +35,7 @@
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 
+#include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 #include "simVis/AlphaColorFilter.h"
 #include "simVis/SceneManager.h"
@@ -139,7 +140,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
 
   // set the map's name
   if (mapNode->getMap() != NULL)
-#ifdef HAVE_OSGEARTH_MAP_SETMAPNAME
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     mapNode->getMap()->setMapName(osgDB::getSimpleFileName(adjustedConfigFile));
 #else
     mapNode->getMap()->setName(osgDB::getSimpleFileName(adjustedConfigFile));
@@ -400,7 +401,7 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
           osgEarth::ImageLayer* imageLayer = new osgEarth::ImageLayer(options);
           imageLayer->setOpacity(opacity);
           imageLayer->setVisible(active);
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
           map->addLayer(imageLayer);
 #else
           map->addImageLayer(imageLayer);
@@ -426,7 +427,7 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
           osgEarth::ElevationLayerOptions layerOptions(layerName, layerDriver);
           osgEarth::ElevationLayer* newLayer = new osgEarth::ElevationLayer(layerOptions);
           // elevation layers in a .txt file by convention are ordered in reverse of osgEarth stacking priority
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
           map->addLayer(newLayer);
           map->moveLayer(newLayer, 0);
 #else
@@ -464,7 +465,7 @@ void DbConfigurationFile::parseCloudLayers_(const std::vector<std::string>& toke
       const osgEarth::ImageLayerOptions options(layerName, layerDriver);
       osgEarth::ImageLayer* imageLayer = new osgEarth::ImageLayer(options);
       imageLayer->setVisible(false);
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
       map->addLayer(imageLayer);
 #else
       map->addImageLayer(imageLayer);

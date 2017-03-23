@@ -30,6 +30,7 @@
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
 
 #include "simNotify/Notify.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
@@ -48,7 +49,7 @@ using namespace osgEarth::Drivers;
 namespace {
 
 // Stub functions to replace deprecated add__Layer methods in Map
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
 void addLayer(osgEarth::Map* map, osgEarth::Layer* layer)
 {
   map->addLayer(layer);

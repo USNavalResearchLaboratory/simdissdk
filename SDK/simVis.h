@@ -80,6 +80,7 @@
 #include "simVis/Locator.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/ObjectSelectionHandler.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/PlanetariumViewTool.h"

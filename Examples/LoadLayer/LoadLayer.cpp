@@ -34,6 +34,7 @@
 #include "simVis/Viewer.h"
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/Platform.h"
+#include "simVis/osgEarthVersion.h"
 #include "simUtil/DbConfigurationFile.h"
 #include "simUtil/PlatformSimulator.h"
 #include "simUtil/ExampleResources.h"
@@ -79,7 +80,7 @@ void addImageLayer(osgEarth::Map* map)
     return;
   osgEarth::CachePolicy cachePolicy;
   osg::ref_ptr<osgEarth::ImageLayer> imageLayer = simUtil::LayerFactory::newImageLayer("ImageLayer", imageDriver, map->getProfile(), &cachePolicy);
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   map->addLayer(imageLayer);
 #else
   map->addImageLayer(imageLayer);
@@ -94,7 +95,7 @@ void addElevationLayer(osgEarth::Map* map)
     return;
   osgEarth::CachePolicy cachePolicy;
   osg::ref_ptr<osgEarth::ElevationLayer> elevationLayer = simUtil::LayerFactory::newElevationLayer("ElevationLayer", elevationDriver, &cachePolicy);
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   map->addLayer(elevationLayer);
 #else
   map->addElevationLayer(elevationLayer);
@@ -130,43 +131,52 @@ void removeAllLayers(osgEarth::Map* map)
   if (map == NULL)
     return;
   osgEarth::ImageLayerVector imageLayers;
+  osgEarth::ElevationLayerVector elevationLayers;
+  osgEarth::ModelLayerVector modelLayers;
+
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   map->getLayers(imageLayers);
   for (osgEarth::ImageLayerVector::const_iterator iter = imageLayers.begin(); iter != imageLayers.end(); ++iter)
   {
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
     map->removeLayer(*iter);
-#else
-    map->removeImageLayer(*iter);
-#endif
   }
-
-  osgEarth::ElevationLayerVector elevationLayers;
   map->getLayers(elevationLayers);
   for (osgEarth::ElevationLayerVector::const_iterator iter = elevationLayers.begin(); iter != elevationLayers.end(); ++iter)
   {
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
     map->removeLayer(*iter);
-#else
-    map->removeElevationLayer(*iter);
-#endif
   }
-
-  osgEarth::ModelLayerVector modelLayers;
   map->getLayers(modelLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = modelLayers.begin(); iter != modelLayers.end(); ++iter)
   {
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
     map->removeLayer(*iter);
-#else
-    map->removeModelLayer(*iter);
-#endif
   }
+#else
+  map->getImageLayers(imageLayers);
+  for (osgEarth::ImageLayerVector::const_iterator iter = imageLayers.begin(); iter != imageLayers.end(); ++iter)
+  {
+    map->removeImageLayer(*iter);
+  }
+  map->getElevationLayers(elevationLayers);
+  for (osgEarth::ElevationLayerVector::const_iterator iter = elevationLayers.begin(); iter != elevationLayers.end(); ++iter)
+  {
+    map->removeElevationLayer(*iter);
+  }
+  map->getModelLayers(modelLayers);
+  for (osgEarth::ModelLayerVector::const_iterator iter = modelLayers.begin(); iter != modelLayers.end(); ++iter)
+  {
+    map->removeModelLayer(*iter);
+  }
+#endif
 }
 
 void toggleElevationLayers(osgEarth::Map* map)
 {
   osgEarth::ElevationLayerVector elevationLayers;
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   map->getLayers(elevationLayers);
+#else
+  map->getElevationLayers(elevationLayers);
+#endif
   for (osgEarth::ElevationLayerVector::const_iterator iter = elevationLayers.begin(); iter != elevationLayers.end(); ++iter)
   {
     (*iter)->setVisible(!(*iter)->getVisible());
@@ -306,11 +316,15 @@ int main(int argc, char** argv)
 
   // now store off the image and elevation layers
   osgEarth::ImageLayerVector imageLayers;
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   viewer->getSceneManager()->getMap()->getLayers(imageLayers);
+#else
+  viewer->getSceneManager()->getMap()->getImageLayers(imageLayers);
+#endif
   if (!imageLayers.empty())
   {
     foundImage = true;
-#ifdef HAVE_OSGEARTH_LAYEROPTIONS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     imageDriver = imageLayers.front()->options().driver().get();
 #else
     imageDriver = imageLayers.front()->getImageLayerOptions().driver().get();
@@ -320,11 +334,15 @@ int main(int argc, char** argv)
     std::cerr << "Failed to find an image layer in supplied configuration.\n";
 
   osgEarth::ElevationLayerVector elevationLayers;
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   viewer->getSceneManager()->getMap()->getLayers(elevationLayers);
+#else
+  viewer->getSceneManager()->getMap()->getElevationLayers(elevationLayers);
+#endif
   if (!elevationLayers.empty())
   {
     foundElevation = true;
-#ifdef HAVE_OSGEARTH_LAYEROPTIONS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     elevationDriver = elevationLayers.front()->options().driver().get();
 #else
     elevationDriver = elevationLayers.front()->getElevationLayerOptions().driver().get();

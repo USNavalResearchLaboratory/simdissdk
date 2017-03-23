@@ -147,11 +147,7 @@ DBTileSource::~DBTileSource()
   }
 }
 
-#ifdef HAVE_OSGEARTH_STATUS
 Status DBTileSource::initialize(const osgDB::Options* dbOptions)
-#else
-TileSource::Status DBTileSource::initialize(const osgDB::Options* dbOptions)
-#endif
 {
   if (options_.url().isSet())
   {

@@ -19,8 +19,12 @@
  * disclose, or release this software.
  *
  */
+#include "simVis/osgEarthVersion.h"
+
 #include "osgEarth/MapNodeObserver"
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
 #include "osgEarth/ElevationPool"
+#endif
 #include "osgEarth/ElevationQuery"
 #include "osgEarth/ThreadingUtils"
 #include "simVis/ElevationQueryProxy.h"
@@ -28,7 +32,7 @@
 namespace
 {
 // ElevationSample only exists in osgEarth API 3/2017 and forward
-#ifdef HAVE_ELEVQUERY_0317API
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
 bool getElevationFromSample(osgEarth::ElevationSample* sample,
                              double& out_elevation,
                              double* out_actualResolution)
@@ -57,7 +61,7 @@ namespace simVis
 /// Wrapper around the osgEarth::Future class
 struct ElevationQueryProxy::PrivateData
 {
-#ifdef HAVE_ELEVQUERY_0317API
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
  /// Future object that monitors the status of the elevation query result
   osgEarth::Threading::Future<osgEarth::ElevationSample> elevationResult_;
 #endif
@@ -114,7 +118,7 @@ ElevationQueryProxy::ElevationQueryProxy(const osgEarth::Map* map, osg::Group* s
   mapf_.setMap(map);
   query_ = new osgEarth::ElevationQuery(map);
 
-#ifndef HAVE_ELEVQUERY_1016API
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,6,0)
   // Prior to the 10/2016 API, this had to be set to true; now that's the default
   query_->setFallBackOnNoData(true);
 #endif
@@ -144,7 +148,7 @@ osgEarth::ElevationQuery* ElevationQueryProxy::q() const
 bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out_actualResolution)
 
 {
-#ifdef HAVE_ELEVQUERY_0317API
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   // if result hasn't returned yet, return early
   if (!data_->elevationResult_.isAvailable())
     return false;
@@ -165,7 +169,7 @@ bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out
 bool ElevationQueryProxy::getElevationFromPool_(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution, bool blocking)
 {
 // ElevationPool::getElevation was introduced in 3/2017 to the osgEarth API
-#ifdef HAVE_ELEVQUERY_0317API
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
 
   unsigned int lod = 23u; // use reasonable default value, same as osgEarth::ElevationQuery
   if (desiredResolution > 0.0)
@@ -201,24 +205,13 @@ bool ElevationQueryProxy::getElevationFromPool_(const osgEarth::GeoPoint& point,
 bool ElevationQueryProxy::getElevation(const osgEarth::GeoPoint& point, double& out_elevation, double desiredResolution, double* out_actualResolution, bool blocking)
 {
 // ElevationPool got the getElevation() method in the 3/2017 osgEarth API. If we have it, use it
-#ifdef HAVE_ELEVQUERY_0317API
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   return getElevationFromPool_(point, out_elevation, desiredResolution, out_actualResolution, blocking);
 #else
   if (query_)
   {
-#ifndef HAVE_ELEVQUERY_1016API
     // Older API used a double value and returned a boolean, like our method
     return query_->getElevation(point, out_elevation, desiredResolution, out_actualResolution);
-#else
-    const float value = query_->getElevation(point, desiredResolution, out_actualResolution);
-    if (value ==  NO_DATA_VALUE)
-    {
-      out_elevation = 0.0;
-      return false; // fail
-    }
-    out_elevation = value;
-    return true;
-#endif
   }
   return false; // failure
 #endif
@@ -226,7 +219,7 @@ bool ElevationQueryProxy::getElevation(const osgEarth::GeoPoint& point, double& 
 
 void ElevationQueryProxy::setMaxTilesToCache(int value)
 {
-#ifndef HAVE_ELEVQUERY_1016API
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,6,0)
   // After 10/2016 API, now uses map's elevation tile pool and this method is gone.
   // If you really want to change it from default of 128, you can do so by
   // calling map->getElevationPool()->setMaxEntries().

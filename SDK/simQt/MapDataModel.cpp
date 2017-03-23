@@ -24,6 +24,7 @@
 #include <QIcon>
 #include "osgEarth/Map"
 #include "simCore/Calc/Math.h"
+#include "simVis/osgEarthVersion.h"
 #include "simQt/MapDataModel.h"
 
 namespace simQt {
@@ -57,7 +58,7 @@ MapReindexer::~MapReindexer()
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ImageLayerVector& imageLayers)
 {
   if (map != NULL)
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->getLayers(imageLayers);
 #else
     map->getImageLayers(imageLayers);
@@ -67,7 +68,7 @@ void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ImageLayerVector& ima
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers)
 {
   if (map != NULL)
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->getLayers(elevationLayers);
 #else
     map->getElevationLayers(elevationLayers);
@@ -77,7 +78,7 @@ void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector&
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ModelLayerVector& modelLayers)
 {
   if (map != NULL)
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->getLayers(modelLayers);
 #else
     map->getModelLayers(modelLayers);
@@ -1150,7 +1151,7 @@ QVariant MapDataModel::layerMapIndex_(osgEarth::Layer* layer) const
     return QVariant();
 
   unsigned int index = MapReindexer::INVALID_INDEX;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   osgEarth::LayerVector layers;
   map_->getLayers(layers);
   index = indexOf(layers, layer);

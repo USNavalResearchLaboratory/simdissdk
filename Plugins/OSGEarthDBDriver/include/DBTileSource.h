@@ -26,6 +26,7 @@
 #include "osgEarth/TileSource"
 #include "simCore/Time/Utils.h"
 #include "simVis/DBOptions.h"
+#include "simVis/osgEarthVersion.h"
 #include "sqlite/sqlite3.h"
 #include "SQLiteDataBaseReadUtil.h"
 #include "QSPosXYExtents.h"
@@ -39,11 +40,7 @@ namespace simVis_db
     DBTileSource(const osgEarth::TileSourceOptions& options);
 
     /// TileSource interface
-#ifdef HAVE_OSGEARTH_STATUS
     virtual osgEarth::Status initialize(const osgDB::Options* dbOptions);
-#else
-    virtual osgEarth::TileSource::Status initialize(const osgDB::Options* dbOptions);
-#endif
     virtual osg::Image* createImage(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress);
     virtual osg::HeightField* createHeightField(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress);
     virtual std::string getExtension() const;

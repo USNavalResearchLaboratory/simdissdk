@@ -40,6 +40,7 @@
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
 
+#include "simVis/osgEarthVersion.h"
 #include "simVis/Viewer.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Platform.h"
@@ -710,7 +711,7 @@ int main(int argc, char** argv)
   {
     TMSOptions options;
     options.url() = EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->addLayer(new ImageLayer("simdis.imagery", options));
 #else
     map->addImageLayer(new ImageLayer("simdis.imagery", options));
@@ -722,7 +723,7 @@ int main(int argc, char** argv)
   {
     simVis::DBOptions options;
     options.url() = simExamples::getSampleDataPath() + "/terrain/" + EXAMPLE_ELEVATION_LAYER_DB;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->addLayer(new ElevationLayer("simdis.elevation.no.bathy", options));
 #else
     map->addElevationLayer(new ElevationLayer("simdis.elevation.no.bathy", options));
@@ -733,7 +734,7 @@ int main(int argc, char** argv)
     // Otherwise load the global elevation layer with bathymetry.
     TMSOptions options;
     options.url() = EXAMPLE_ELEVATION_LAYER_TMS;
-#ifdef HAVE_OSGEARTH_MAP_GETLAYERS
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->addLayer(new ElevationLayer("simdis.elevation", options));
 #else
     map->addElevationLayer(new ElevationLayer("simdis.elevation", options));
