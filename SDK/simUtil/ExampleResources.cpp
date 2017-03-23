@@ -150,7 +150,9 @@ Map* simExamples::createWorldMapWithFlatOcean()
   {
     TMSOptions options;
     options.url() = EXAMPLE_ELEVATION_LAYER_TMS;
+#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
     options.noDataMinValue() = -1.0;
+#endif
     addLayer(map, new ElevationLayer("simdis.elevation.nobathy", options));
   }
 

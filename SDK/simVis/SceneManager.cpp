@@ -587,7 +587,11 @@ std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
 #else
   const auto& layerOptions = layer->getTerrainLayerRuntimeOptions();
 #endif
+#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
   osgEarth::Config layerConf  = layerOptions.getConfig(true);
+#else
+  osgEarth::Config layerConf  = layerOptions.getConfig();
+#endif
   osgEarth::Config driverConf = layerOptions.driver()->getConfig();
   // remove everything from driverConf that also appears in layerConf
   osgEarth::Config hashConf = driverConf - layerConf;

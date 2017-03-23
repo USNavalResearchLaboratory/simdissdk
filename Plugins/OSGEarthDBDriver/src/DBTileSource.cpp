@@ -31,6 +31,7 @@
 #include "osgDB/ObjectWrapper"
 #include "osgDB/WriteFile"
 #include "osgDB/FileUtils"
+#include "simVis/osgEarthVersion.h"
 #include "QSCommon.h"
 #include "SQLiteDataBaseReadUtil.h"
 #include "swapbytes.h"
@@ -450,6 +451,7 @@ osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
     {
       if (decodeRaster_(rasterFormat_, (const char*)buf, currentRasterSize, result))
       {
+#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
         // Resize if necessary:
         if (options_.tileSize().isSet() && options_.tileSize().value() >= 0)
         {
@@ -461,6 +463,7 @@ osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
               result = resizedImage.get();
           }
         }
+#endif
 
         // If result is 1x1, skip border processing
         if (result->s() >= 1 && result->t() >= 1)

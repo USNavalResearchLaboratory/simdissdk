@@ -423,8 +423,13 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
             std::istringstream iStr(noDataValueStr);
             iStr >> noDataValue;
           }
+#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
           layerDriver.noDataValue() = noDataValue;
+#endif
           osgEarth::ElevationLayerOptions layerOptions(layerName, layerDriver);
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,6,0)
+          layerOptions.noDataValue() = noDataValue;
+#endif
           osgEarth::ElevationLayer* newLayer = new osgEarth::ElevationLayer(layerOptions);
           // elevation layers in a .txt file by convention are ordered in reverse of osgEarth stacking priority
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
