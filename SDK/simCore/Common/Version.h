@@ -31,11 +31,11 @@ namespace simCore
   /** SIMDIS SDK major version number */
   static const int SDKVERSION_MAJOR = 1;
   /** SIMDIS SDK minor version number */
-  static const int SDKVERSION_MINOR = 5;
+  static const int SDKVERSION_MINOR = 6;
   /** SIMDIS SDK revision version number */
   static const int SDKVERSION_REVISION = 0;
   /** Numeric version of SIMDIS SDK in single variable; [MAJOR][MINOR][REVISION], 2 digits per */
-  static const int SDKVERSION_BUILDNUMBER = 10500;
+  static const int SDKVERSION_BUILDNUMBER = 10600;
 
   /** Retrieves the SDKVERSION_MAJOR in the compiled library */
   SDKCORE_EXPORT int majorVersion();
