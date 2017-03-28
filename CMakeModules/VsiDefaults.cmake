@@ -44,9 +44,12 @@ macro(vsi_configure_qt5)
             set(QT_GLU_PATHS
                 "c:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64"
                 "c:/Program Files/Microsoft SDKs/Windows/7.1A/Lib"
+                "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.1A/Lib/x64"
                 "c:/Program Files (x86)/Microsoft SDKs/Windows/7.1A/Lib"
                 "c:/Program Files/Microsoft SDKs/Windows/7.0A/Lib"
+                "c:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
                 "c:/Program Files (x86)/Microsoft SDKs/Windows/7.0A/Lib"
+                "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
                 "c:/Program Files/Microsoft SDKs/Windows/6.0A/Lib"
                 "c:/Program Files (x86)/Microsoft SDKs/Windows/6.0A/Lib"
             )
@@ -56,7 +59,9 @@ macro(vsi_configure_qt5)
                 "c:/Program Files (x86)/Microsoft SDKs/Windows/7.1A/Lib"
                 "c:/Program Files/Microsoft SDKs/Windows/7.1A/Lib"
                 "c:/Program Files (x86)/Microsoft SDKs/Windows/7.0A/Lib"
+                "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
                 "c:/Program Files/Microsoft SDKs/Windows/7.0A/Lib"
+                "c:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
                 "c:/Program Files (x86)/Microsoft SDKs/Windows/6.0A/Lib"
                 "c:/Program Files/Microsoft SDKs/Windows/6.0A/Lib"
             )

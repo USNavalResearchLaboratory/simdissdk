@@ -54,6 +54,8 @@ set_target_properties(GDAL PROPERTIES
 )
 if(GDAL_LIBRARY_DEBUG)
     set_target_properties(GDAL PROPERTIES IMPORTED_IMPLIB_DEBUG "${GDAL_LIBRARY_DEBUG}")
+else()
+    set_target_properties(GDAL PROPERTIES IMPORTED_IMPLIB_DEBUG "${GDAL_LIBRARY}")
 endif()
 vsi_set_imported_locations_from_implibs(GDAL)
 

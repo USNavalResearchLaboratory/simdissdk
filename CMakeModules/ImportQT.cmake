@@ -30,6 +30,29 @@ function(install_qt_library LIBNAME COMPONENT)
     endif()
 endfunction()
 
+# Helper function to install Qt5 plugins to the binary directory
+function(install_qt5plugins PLUGINDIR)
+    set(EXPECTED_SUBDIR "${_qt5Core_install_prefix}/plugins/${PLUGINDIR}")
+    if(NOT IS_DIRECTORY "${EXPECTED_SUBDIR}")
+        return()
+    endif()
+    foreach(COMP ${ARGN})
+        if(WIN32)
+            INSTALL(DIRECTORY "${EXPECTED_SUBDIR}"
+                DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}
+                COMPONENT ${COMP}
+                FILES_MATCHING PATTERN *.dll
+                PATTERN *d.dll EXCLUDE)
+        else()
+            # Note that on Linux the plugins go under the executable's directory, not the lib directory
+            INSTALL(DIRECTORY "${EXPECTED_SUBDIR}"
+                DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}
+                COMPONENT ${COMP}
+                FILES_MATCHING PATTERN *.so)
+        endif()
+    endforeach()
+endfunction()
+
 # Locate qmake, which could make finding the other Qt stuff much easier.
 find_program(QT_QMAKE_EXECUTABLE
     NAME qmake
@@ -110,6 +133,14 @@ if(Qt5Widgets_FOUND)
         install_qt_library(5Gui THIRDPARTY)
         install_qt_library(5Widgets THIRDPARTY)
         install_qt_library(5OpenGL THIRDPARTY)
+
+        # Copy over the Platforms and Image Formats plug-ins for Qt
+        install_qt5plugins(platforms THIRDPARTY)
+        install_qt5plugins(imageformats THIRDPARTY)
+        # Linux may require XCB GL Integrations plug-in too
+        if(NOT WIN32)
+            install_qt5plugins(xcbglintegrations THIRDPARTY)
+        endif()
         return()
     endif()
 endif()
