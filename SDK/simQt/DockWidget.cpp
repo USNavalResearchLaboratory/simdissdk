@@ -157,6 +157,31 @@ private:
 
 ///////////////////////////////////////////////////////////////
 
+/** Intercept double clicks on the title bar icon.  Closes window on double click */
+class DockWidget::DoubleClickIcon : public QLabel
+{
+public:
+  DoubleClickIcon(DockWidget& dockWidget, QWidget* parent = NULL, Qt::WindowFlags flags = 0)
+    : QLabel(parent, flags),
+    dockWidget_(dockWidget)
+  {
+  }
+
+protected:
+  /** Overridden from QLabel */
+  virtual void mouseDoubleClickEvent(QMouseEvent* evt)
+  {
+    // If upper left corner is double clicked, close window
+    dockWidget_.closeWindow_();
+    evt->accept();
+  }
+
+private:
+  DockWidget& dockWidget_;
+};
+
+///////////////////////////////////////////////////////////////
+
 DockWidget::DockWidget(QWidget* parent)
   : QDockWidget(parent),
     globalSettings_(NULL),
@@ -363,7 +388,7 @@ QWidget* DockWidget::createTitleBar_()
   titleBar->setFrameShape(QFrame::StyledPanel);
 
   // Create the icon holders
-  titleBarIcon_ = new QLabel();
+  titleBarIcon_ = new DoubleClickIcon(*this);
   titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(16, 16)));
   titleBarIcon_->setScaledContents(true);
   titleBarIcon_->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));

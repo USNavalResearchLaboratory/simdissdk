@@ -321,6 +321,9 @@ private:
   /** Helper class that deals with double click on title bar to maximize */
   class DoubleClickFrame;
 
+  /** Helper class that deals with double click on title bar icon to close */
+  class DoubleClickIcon;
+
   /** Class that caches original icon and provides monochromatic icons matching title color */
   class MonochromeIcon;
   /** Stores the restore icon */
