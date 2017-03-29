@@ -386,9 +386,6 @@ ParserData::ParserData(const Config& conf, const GOGContext& context, GogShape s
     }
   }
 
-  // parse altitude mode:
-  parseAltitudeMode(conf);
-
   // parse any locator components (for GOG attachments):
   parseOffsetsAndTracking(conf);
 
@@ -483,23 +480,6 @@ void ParserData::parseOffsetsAndTracking(const Config& conf)
     conf.value<float>("scalex", 1.0f),
     conf.value<float>("scaley", 1.0f),
     conf.value<float>("scalez", 1.0f));
-}
-
-void ParserData::parseAltitudeMode(const Config& parent)
-{
-  // Set up ground-clamping.
-  if (simCore::caseCompare(parent.value("altitudemode"), "relativetoground") == 0)
-  {
-    altmode_ = ALTMODE_RELATIVE;
-  }
-  else if (simCore::caseCompare(parent.value("altitudemode"), "clamptoground") == 0)
-  {
-    altmode_ = ALTMODE_RELATIVE;
-  }
-  else // if ( parent.value("altitudemode") == "absolute" )
-  {
-    altmode_ = ALTMODE_ABSOLUTE;
-  }
 }
 
 /**
@@ -680,15 +660,15 @@ GeoPoint ParserData::getMapPosition() const
 {
   if (refPointLLA_.isSet())
   {
-    return GeoPoint(srs_.get(), *refPointLLA_, altmode_);
+    return GeoPoint(srs_.get(), *refPointLLA_, osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
   }
   else if (centerLLA_.isSet())
   {
-    return GeoPoint(srs_.get(), *centerLLA_, altmode_);
+    return GeoPoint(srs_.get(), *centerLLA_, osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
   }
   else if (geom_.valid() && geomIsLLA_)
   {
-    return GeoPoint(srs_.get(), geom_->getBounds().center(), altmode_);
+    return GeoPoint(srs_.get(), geom_->getBounds().center(), osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
   }
   else if (context_.refPoint_.isSet())
   {

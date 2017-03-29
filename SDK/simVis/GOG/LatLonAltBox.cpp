@@ -53,14 +53,14 @@ GogNodeInterface* LatLonAltBox::deserialize(const osgEarth::Config&  conf,
       minLon.as(Units::DEGREES),
       minLat.as(Units::DEGREES),
       minAlt.as(Units::METERS),
-      p.altmode_);
+      osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
 
     GeoPoint maxPoint(
       p.srs_.get(),
       maxLon.as(Units::DEGREES),
       maxLat.as(Units::DEGREES),
       maxAlt.as(Units::METERS),
-      p.altmode_);
+      osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
 
     // for a 3D box, we need to adjust clamp-to-terrain mode so that
     // the upper part of the box does not get smashed down. Use relative

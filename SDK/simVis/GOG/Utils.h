@@ -254,12 +254,6 @@ namespace simVis { namespace GOG
     double parseAngle(const std::string& input, double fallback =0.0);
 
     /**
-     * Reads altitude mode from the config information.
-     * @param[in ] parent Parent object from which to read altitude mode
-     */
-    void parseAltitudeMode(const osgEarth::Config& parent);
-
-    /**
      * Reads optional offset and host-tracking properties.
      * @param[in ] parent Node from which to read data
      */
@@ -329,7 +323,6 @@ namespace simVis { namespace GOG
     UnitsState                           units_; ///< Units for the GOG
     osgEarth::optional<osgEarth::GeoInterpolation> geoInterp_; ///< Interpolation
     osg::ref_ptr<const osgEarth::SpatialReference> srs_; ///< Spatial Reference
-    osgEarth::AltitudeMode               altmode_; ///< Altitude mode of the GOG
     std::string                          name_; ///< Name of the GOG
     unsigned int                         locatorComps_;  ///< Combination of heading, pitch and roll
 
