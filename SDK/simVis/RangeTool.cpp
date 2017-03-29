@@ -524,11 +524,11 @@ bool RangeTool::Association::update(ScenarioManager* scenario, double timestamp)
   }
 
   // update visibility (association is visible only if both entities are visible)
-  if (obj1->isActive() && obj2->isActive() && visible_ && xform_->getNodeMask() == 0)
+  if (obj1->isVisible() && obj2->isVisible() && visible_ && xform_->getNodeMask() == 0)
   {
     xform_->setNodeMask(~0);
   }
-  else if ((!obj1->isActive() || !obj2->isActive() || !visible_) && xform_->getNodeMask() != 0)
+  else if ((!obj1->isVisible() || !obj2->isVisible() || !visible_) && xform_->getNodeMask() != 0)
   {
     // This refresh will cause the last calculated values to become invalid, which is good thing
     refresh_(obj1.get(), obj2.get(), scenario);
