@@ -1287,6 +1287,8 @@ void LocalGeometryNodeInterface::setAltOffset(double altOffsetMeters)
 
 void LocalGeometryNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
+  GogNodeInterface::setAltitudeMode(altMode);
   // In osgEarth LocalGeometryNode::clamp(), it is always adding the node's altituvalue as the offset.
   // So this means that both osgEarth::Symbology::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN (relativeToGround)
   // and osgEarth::Symbology::AltitudeSymbol::CLAMP_TO_TERRAIN (clampToGround) behave the same for our shapes.
@@ -1299,7 +1301,6 @@ void LocalGeometryNodeInterface::setAltitudeMode(AltitudeMode altMode)
     newPos.alt() = newAltitude;
     localNode_->setPosition(newPos);
   }
-  GogNodeInterface::setAltitudeMode(altMode);
 }
 
 void LocalGeometryNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
@@ -1492,6 +1493,8 @@ void CylinderNodeInterface::setAltOffset(double altOffsetMeters)
 
 void CylinderNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
+  GogNodeInterface::setAltitudeMode(altMode);
   if (sideNode_.valid())
   {
     double newAltitude = (altMode == ALTITUDE_GROUND_CLAMPED) ? 0.0 : altitude_;
@@ -1507,7 +1510,6 @@ void CylinderNodeInterface::setAltitudeMode(AltitudeMode altMode)
       topCapNode_->setPosition(newPos);
     }
   }
-  GogNodeInterface::setAltitudeMode(altMode);
 }
 
 void CylinderNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
@@ -1615,6 +1617,8 @@ void ArcNodeInterface::setAltOffset(double altOffsetMeters)
 
 void ArcNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
+  GogNodeInterface::setAltitudeMode(altMode);
   if (shapeNode_.valid())
   {
     double newAltitude = (altMode == ALTITUDE_GROUND_CLAMPED) ? 0.0 : altitude_;
@@ -1624,7 +1628,6 @@ void ArcNodeInterface::setAltitudeMode(AltitudeMode altMode)
     if (fillNode_.valid())
       fillNode_->setPosition(newPos);
   }
-  GogNodeInterface::setAltitudeMode(altMode);
 }
 
 void ArcNodeInterface::setFilledState(bool state)
