@@ -1691,6 +1691,7 @@ void RangeTool::TrueAzimuthPieSliceGraphic::render(osg::Geode* geode, State& sta
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
   {
     endVec = state.coord(State::COORD_OBJ_1_AT_OBJ_0_ALT);
+    endVec[2] = 0.0;  // COORD_OBJ_1_AT_OBJ_0_ALT accounts for the earth's curvature which we don't want, so jam into local plane
   }
   else
   {
@@ -1722,6 +1723,7 @@ void RangeTool::TrueElevationPieSliceGraphic::render(osg::Geode* geode, State& s
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
   {
     startVec = state.coord(State::COORD_OBJ_1_AT_OBJ_0_ALT);
+    startVec[2] = 0.0;  // COORD_OBJ_1_AT_OBJ_0_ALT accounts for the earth's curvature which we don't want, so jam into local plane
     endVec = state.coord(State::COORD_OBJ_1);
   }
   else
