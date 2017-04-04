@@ -701,12 +701,12 @@ void MemoryCategoryDataSlice::flush()
   limitByPoints_(1);
 }
 
-CategoryDataSlice::IteratorImpl* MemoryCategoryDataSlice::iterator_() const
+std::unique_ptr<CategoryDataSlice::IteratorImpl> MemoryCategoryDataSlice::iterator_() const
 {
   int intVal = CategoryNameManager::NO_CATEGORY_VALUE;
   if (!data_.empty())
     intVal = data_.begin()->first;
-  return new Iterator(*this, intVal, lastUpdateTime_);
+  return std::unique_ptr<IteratorImpl>(new Iterator(*this, intVal, lastUpdateTime_));
 }
 
 /// retrieve all

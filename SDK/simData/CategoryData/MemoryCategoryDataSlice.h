@@ -195,7 +195,7 @@ private: // methods
   void limitByTime_(double timeLimit);
 
   //--- from CategoryDataSlice
-  virtual IteratorImpl* iterator_() const;
+  virtual std::unique_ptr<IteratorImpl> iterator_() const;
 
 private: // data
   EntityData data_;
