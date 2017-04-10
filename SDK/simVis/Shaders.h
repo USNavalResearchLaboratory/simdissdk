@@ -40,6 +40,12 @@ public:
   /** Name of the fragment shader for area highlight */
   std::string areaHighlightFragment() const;
 
+  /** Vertex shader for beam pulses */
+  std::string beamPulseVertex() const;
+
+  /** Fragment shader for beam pulses */
+  std::string beamPulseFragment() const;
+
   /** Name of vertex shader for bathymetry generator */
   std::string bathymetryGeneratorVertex() const;
 

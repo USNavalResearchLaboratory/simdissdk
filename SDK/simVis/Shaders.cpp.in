@@ -30,6 +30,8 @@ Shaders::Shaders()
   add(areaHighlightVertex(), "@AreaHighlight.vert.glsl@");
   add(areaHighlightFragment(), "@AreaHighlight.frag.glsl@");
   add(bathymetryGeneratorVertex(), "@BathymetryGenerator.vert.glsl@");
+  add(beamPulseVertex(), "@BeamPulse.vert.glsl@");
+  add(beamPulseFragment(), "@BeamPulse.frag.glsl@");
   add(glowHighlightFragment(), "@GlowHighlight.frag.glsl@");
   add(overheadModeVertex(), "@OverheadMode.vert.glsl@");
   add(overrideColorFragment(), "@OverrideColor.frag.glsl@");
@@ -60,6 +62,16 @@ std::string Shaders::areaHighlightVertex() const
 std::string Shaders::areaHighlightFragment() const
 {
   return "AreaHighlight.frag.glsl";
+}
+
+std::string Shaders::beamPulseVertex() const
+{
+  return "BeamPulse.vert.glsl";
+}
+
+std::string Shaders::beamPulseFragment() const
+{
+  return "BeamPulse.frag.glsl";
 }
 
 std::string Shaders::projectorManagerVertex() const

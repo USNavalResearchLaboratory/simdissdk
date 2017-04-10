@@ -43,12 +43,17 @@
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
+#include "simVis/Shaders.h"
 #include "simVis/Beam.h"
 
 // --------------------------------------------------------------------------
 
 namespace
 {
+  static const std::string SIMVIS_BEAMPULSE_ANIMATE = "simvis_beampulse_animate";
+  static const std::string SIMVIS_BEAMPULSE_PERIOD = "simvis_beampulse_period";
+  static const std::string SIMVIS_BEAMPULSE_RATE = "simvis_beampulse_rate";
+
   osg::MatrixTransform* createBeamSV(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
   {
       simVis::SVData sv;
@@ -130,6 +135,14 @@ namespace
 namespace simVis
 {
 
+void BeamNode::installShaderProgram(osg::StateSet* intoStateSet)
+{
+  simVis::Shaders package;
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
+  package.load(vp, package.beamPulseVertex());
+  package.load(vp, package.beamPulseFragment());
+}
+
 BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
   : EntityNode(simData::DataStore::BEAM),
     hasLastUpdate_(false),
@@ -209,6 +222,11 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
+
+  osg::StateSet* stateset = this->getOrCreateStateSet();
+  animateBeam_ = stateset->getOrCreateUniform(SIMVIS_BEAMPULSE_ANIMATE, osg::Uniform::BOOL);
+  pulsePeriod_ = stateset->getOrCreateUniform(SIMVIS_BEAMPULSE_PERIOD, osg::Uniform::FLOAT);
+  pulseRate_ = stateset->getOrCreateUniform(SIMVIS_BEAMPULSE_RATE, osg::Uniform::FLOAT);
 }
 
 void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
@@ -292,6 +310,10 @@ void BeamNode::applyPrefs(const simData::BeamPrefs& prefs, bool force)
     lastPrefsApplied_ = accumulated;
     hasLastPrefs_ = true;
   }
+
+  animateBeam_->set(prefs.animate());
+  pulsePeriod_->set(static_cast<float>(prefs.pulseperiod()));
+  pulseRate_->set(static_cast<float>(prefs.pulserate()));
 }
 
 void BeamNode::setHostMissileOffset(double hostMissileOffset)
@@ -729,7 +751,6 @@ void BeamNode::performInPlacePrefChanges_(const simData::BeamPrefs* a, const sim
       getOrCreateStateSet()->setRenderBinDetails((b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
     }
   }
-
   if (PB_FIELD_CHANGED(a, b, beamscale))
   {
     setBeamScale_(node, b->beamscale());

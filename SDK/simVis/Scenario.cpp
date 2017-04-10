@@ -332,6 +332,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // Install shaders used by multiple entities at the scenario level
   OverrideColor::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
+  BeamNode::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()

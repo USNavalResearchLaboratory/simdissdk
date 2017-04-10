@@ -61,6 +61,13 @@ namespace simVis
       int                            referenceYear = 1970);
 
     /**
+    * The installshaderProgram is required prior to using this class.
+    * This will initialize shader once in the scenario
+    * @param intoStateSet State set of the scenario
+    */
+    static void installShaderProgram(osg::StateSet* intoStateSet);
+
+    /**
     * Access the properties object currently representing this beam.
     *
     * @return Current properties
@@ -314,6 +321,13 @@ namespace simVis
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;
+
+    /// Toggle beam pulse animation
+    osg::ref_ptr<osg::Uniform> animateBeam_;
+    /// The time required for a beam pulse animation, in milliseconds per scan
+    osg::ref_ptr<osg::Uniform> pulsePeriod_;
+    /// The rate for a beam to complete the animation pattern, in Hz
+    osg::ref_ptr<osg::Uniform> pulseRate_;
   };
 
 } //namespace simVis

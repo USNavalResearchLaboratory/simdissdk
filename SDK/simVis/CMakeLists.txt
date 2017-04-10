@@ -13,6 +13,8 @@ set(SHADER_FILES
     AreaHighlight.vert.glsl
     AreaHighlight.frag.glsl
     BathymetryGenerator.vert.glsl
+    BeamPulse.vert.glsl
+    BeamPulse.frag.glsl
     GlowHighlight.frag.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl

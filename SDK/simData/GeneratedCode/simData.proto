@@ -947,6 +947,13 @@ message BeamPrefs {
   optional double verticalWidth = 31 [default = 0.0];
   /// Full width of the beam relative, in radians; [0, 2*PI]
   optional double horizontalWidth = 32 [default = 0.0];
+
+  /// Toggle Beam Pulse Animation
+  optional bool animate = 33 [default = false];
+  /// The time required for a beam pulse animation, in milliseconds per scan
+  optional double pulsePeriod = 34 [default = 100.0];
+  /// The rate for a beam to complete the animation pattern, in Hz
+  optional double pulseRate = 35 [default = 1.0];
 };
 
 /// common update to beam data
