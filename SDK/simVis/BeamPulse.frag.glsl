@@ -15,25 +15,18 @@ uniform bool simvis_beampulse_animate;
 uniform float simvis_beampulse_period;
 uniform float simvis_beampulse_rate;
 
-
-
 void simvis_beampulse_frag(inout vec4 color)
 {
-  // Refactor the valueInPeriod to fit between 0.0 and 1.0
-  if (simvis_beampulse_period == 0.0)
+  if (simvis_beampulse_period == 0.0) || (!simvis_beampulse_animate)
     return;
 	
-  valueInPeriod = valueInPeriod / simvis_beampulse_period;
-
-  if (!simvis_beampulse_animate)
-    return;
-
   // Get a reasonable modulus -- mod twice to avoid overflow or precision issues
-  float timeAfterMod = simvis_beampulse_period * simvis_beampulse_rate * osg_FrameTime;
+  float timeAfterMod = mod(simvis_beampulse_period * simvis_beampulse_rate * osg_FrameTime, simvis_beampulse_period);
   float valueInPeriod = mod(timeAfterMod - simvis_beampulse_y, simvis_beampulse_period);
-  
+
   // At this point, valueInPeriod is [0.0, period] and is constantly increasing.
   // It's been modified by the period and rate to create a faster or slower pulse
+  valueInPeriod = valueInPeriod / simvis_beampulse_period;
   
   // TODO: Fancy graphics here if desired; stipples, attenuation factors, etc.
   // Below is a simple if/elseif/else to create a simple stipple.  There's probably
