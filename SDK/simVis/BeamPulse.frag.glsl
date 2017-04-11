@@ -17,7 +17,7 @@ uniform float simvis_beampulse_rate;
 
 void simvis_beampulse_frag(inout vec4 color)
 {
-  if (simvis_beampulse_period == 0.0) || (!simvis_beampulse_animate)
+  if ((simvis_beampulse_period == 0.0) || (!simvis_beampulse_animate))
     return;
 	
   // Get a reasonable modulus -- mod twice to avoid overflow or precision issues
