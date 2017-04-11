@@ -487,6 +487,9 @@ void DockWidget::updateTitleBar_()
   closeAction_->setVisible(canClose);
   closeButton_->setVisible(closeAction_->isVisible());
 
+  // Dockable
+  dockableAction_->setVisible(canFloat);
+
   // Make sure the pixmap and text are correct
   titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(16, 16)));
   titleBarTitle_->setText(windowTitle());
