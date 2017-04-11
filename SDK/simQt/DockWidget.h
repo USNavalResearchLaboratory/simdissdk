@@ -29,8 +29,8 @@
 
 #include <QDockWidget>
 #include <QRect>
-#include "simQt/SettingsGroup.h"
 #include "simCore/Common/Export.h"
+#include "simQt/SettingsGroup.h"
 
 class QAction;
 class QMainWindow;
@@ -58,18 +58,17 @@ class BoundBooleanSetting;
  * which is necessary for recognizing the instance in the saveState/restoreState, and also for setting
  * the correct icon when tabbed.
  */
-class SDKQT_EXPORT DockWidget : public QDockWidget // QDESIGNER_WIDGET_EXPORT
+class SDKQT_EXPORT DockWidget : public QDockWidget
 {
   Q_OBJECT;
   // Features that can be set in Qt Designer
   Q_FLAGS(ExtraFeatures);
-  Q_PROPERTY(bool Dockable READ isDockable WRITE setDockable);
+  Q_PROPERTY(bool dockable READ isDockable WRITE setDockable);
   Q_PROPERTY(bool searchEnabled READ searchEnabled WRITE setSearchEnabled);
   Q_PROPERTY(bool escapeClosesWidget READ escapeClosesWidget WRITE setEscapeClosesWidget);
   Q_PROPERTY(ExtraFeatures extraFeatures READ extraFeatures WRITE setExtraFeatures);
 
 public:
-
   /** QSettings key for the disable docking persistent setting */
   static const QString DISABLE_DOCKING_SETTING;
   /** Meta data for the disable docking persistent setting */
@@ -94,27 +93,43 @@ public:
     DockSearchHint = 0x0010,
 
     /** Turn off custom Qt styling for title bar; useful for overriding style sheet data */
-    DockNoTitleStylingHint = 0x0020
+    DockNoTitleStylingHint = 0x0020,
+
+    /** Escape closes the GUI */
+    DockWidgetCloseOnEscapeKey = 0x0040
   };
   /** Create a flags enumeration */
   Q_DECLARE_FLAGS(ExtraFeatures, ExtraDockFlagHint);
 
   /**
-  * Constructor, for use with QtDesigner.  The title and registryGroup will be
-  * non-unique if this constructor is called, so user should update the title
-  * and/or the registryGroup when using this constructor
-  * @param parent  The parent widget
+   * Create a new Dock Widget.  The title will be non-unique, so be sure to update the title
+   * to avoid issues with settings if settings are used.  Variant of polymorphic constructor.
   */
-  DockWidget(QWidget* parent=NULL);
+  DockWidget(QWidget* parent=NULL, Qt::WindowFlags flags=Qt::WindowFlags());
 
   /**
-  * Constructor
-  * This updates the QObject objectName, which is formed by registryGroup + title
-  * @param title  text to display in dialog header
-  * @param settings Where to save/restore window geometry info
-  * @param parent  The parent main window
+   * Create a new Dock Widget.  Variant of polymorphic constructor.
   */
-  DockWidget(const QString& title, simQt::Settings* settings, QMainWindow* parent=NULL);
+  DockWidget(const QString& title, QWidget* parent=NULL, Qt::WindowFlags flags=Qt::WindowFlags());
+
+  /**
+   * Create a new Dock Widget.  Variant of polymorphic constructor.
+  */
+  DockWidget(const QString& title, simQt::Settings* settings, QMainWindow* parent, Qt::WindowFlags flags=Qt::WindowFlags());
+
+  /**
+   * Constructor for a new Dock Widget.  Note that this constructor will set the object name based on title parameter.
+   * @param title Text to display in dialog header.  Also used as registry key via setObjectName() for saved settings.
+   *   If not set, use setObjectName() to define the registry key for settings.
+   * @param settings Where to save/restore window geometry information.  If not specified, then settings will be saved
+   *   and loaded from a Private section from QSettings.  Note that some features, such as global disable of dockability,
+   *   cannot work properly unless this is specified and non-NULL.
+   * @param parent The parent widget.  Recommend this be set to the QMainWindow.  If not set, then
+   *   the caller is responsible for calling QMainWindow::addDockWidget() and setFloating() as
+   *   needed.  Some features like docking button will not work unless this is the QMainWindow.
+   * @param flags Qt window flags
+   */
+  DockWidget(const QString& title, simQt::Settings* settings, QWidget* parent=NULL, Qt::WindowFlags flags=Qt::WindowFlags());
 
   /** Destructor */
   virtual ~DockWidget();
@@ -123,10 +138,9 @@ public:
   virtual void setVisible(bool fl);
 
   /**
-  * Set the widget that the dock widget will display.  Will restore splitter location and
-  * column widths from simQt::Settings.
-  * @param widget The widget that the dock widget will display
-  */
+   * Set the widget that the dock widget will display.
+   * @param widget The widget that the dock widget will display
+   */
   void setWidget(QWidget* widget);
 
   /**
@@ -135,10 +149,10 @@ public:
   */
   bool isDockable() const;
 
-  /** Retrieves the property for whether search is enabled. */
+  /** Retrieves the property for whether search is enabled.  Equivalent to checking the flag DockSearchHint. */
   bool searchEnabled() const;
 
-  /** Escape key will close the widget or not */
+  /** Escape key will close the widget or not.  Equivalent to checking the flag DockWidgetCloseOnEscapeKey. */
   bool escapeClosesWidget() const;
 
   /**
@@ -159,6 +173,13 @@ public:
   /** Retrieves number of widgets in the title bar (not including internal ones) */
   int titleBarWidgetCount() const;
 
+  /**
+   * Sets the main window pointer.  The Main Window is required to enable the Dock action in
+   * the title bar, and to fix tab icons.  For best results, call this before setWidget().
+   * This method is not required if the parent from constructor is a QMainWindow.
+   */
+  void setMainWindow(QMainWindow* mainWindow);
+
   /** Retrieves the currently set docking flags (additional features to features()) */
   ExtraFeatures extraFeatures() const;
 
@@ -170,13 +191,13 @@ public slots:
   */
   void setDockable(bool dockable);
 
-  /** Changes whether the search field is enabled (off by default) */
+  /** Changes whether the search field is enabled (off by default).  Equivalent to setting the DockSearchHint flag. */
   void setSearchEnabled(bool enable);
 
   /** Sets the visibility of the title bar */
   void setTitleBarVisible(bool show);
 
-  /** Changes whether escape key will close the widget or not */
+  /** Changes whether escape key will close the widget or not.  Equivalent to setting the DockWidgetCloseOnEscapeKey flag. */
   void setEscapeClosesWidget(bool escapeCloses);
 
   /** Retrieves the currently set docking flags (additional features to features()) */
@@ -185,6 +206,8 @@ public slots:
 signals:
   /** Emitted after the dock widget is closed. */
   void closedGui();
+  /** Emitted when is-dockable flag has changed via setDockable */
+  bool isDockableChanged(bool isDockable);
 
 protected:
   /** Override keyPressEvent() to handle 'escape' key */
@@ -201,41 +224,28 @@ protected slots:
   void restore_();
   /** Undocks the window */
   void undock_();
-  /**
-  * Update the disableDocking state. If true, docking capability will be disabled, while false will restore
-  * the widget to the isDockable state. It will not restore previously docked widgets to their docked location
-  * This overrides the effects of setDockable. Note that isDockable will not reflect the overridden state
-  * @param disable  False restores the isDockable state, true disables docking capability and makes window float
-  */
-  void setDisableDocking_(bool disable);
   /** Need to verify that our docked state is consistent with our allowed areas */
   void verifyDockState_(bool floating);
 
 protected:
-  /**
-  * Load the settings from simQt::Settings, resizes and moves widget based on settings
-  * Called by setWidget, so normally not called by derived classes
-  */
-  void loadSettings_();
-
-  /**
-  * Save position, size, and docked area to simQt::Settings
-  * Should be the first call in the destructor of the derived class, before any data models are deleted
-  */
-  void saveSettings_();
-
   /** Override closeEvent to emit the closedGui signal */
   virtual void closeEvent(QCloseEvent* event);
   /** Override resizeEvent to update the title bar when maximized */
   virtual void resizeEvent(QResizeEvent* event);
   /** Override resizeEvent to update the title bar when maximized windows move */
   virtual void moveEvent(QMoveEvent* event);
-  /** Determine whether the dock widget should respect the disableDocking_ override setting */
-  void setRespectDisableDockingSetting_(bool respectDisableDockingSetting);
   /** Update title bar text */
   void updateTitleBarText_();
   /** Update title bar icon */
   void updateTitleBarIcon_();
+  /** Restores the dock widget, placing it in a good position if restoration fails; uses mainWindow_ */
+  void restoreFloating_(const QByteArray& geometryBytes);
+
+  /**
+   * Save position, size, and docked area to simQt::Settings.
+   * Should be the first call in the destructor of the derived class, before any data models are deleted.
+   */
+  void saveSettings_();
 
   /** Points to the settings group for this window */
   simQt::SettingsGroupPtr settings_;
@@ -253,11 +263,6 @@ protected:
   /** Parent main window */
   QMainWindow* mainWindow_;
 
-  /** Setting for whether this window can be docked; tied to QSettings */
-  BoundBooleanSetting* isDockable_;
-  /** Setting to disable docking capability; tied to QSettings */
-  BoundBooleanSetting* disableDocking_;
-
 private slots:
   /** Applies the window's icon to the tab bar */
   void fixTabIcon_();
@@ -268,6 +273,9 @@ private slots:
 
   /** Changes the window title style based on whether the current focus widget is a child. */
   void changeTitleColorsFromFocusChange_(QWidget* oldFocus, QWidget* newFocus);
+
+  /** Enables or disables dockability from the global flag */
+  void setGlobalNotDockableFlag_(bool disallowDocking);
 
 private:
   /**
@@ -280,6 +288,11 @@ private:
    * @return QTabBar with the specified title
    */
   QTabBar* findTabWithTitle_(const QList<QTabBar*>& fromBars, const QString& title, int& index) const;
+  /**
+   * Load the settings from simQt::Settings, resizes and moves widget based on settings
+   * Called by setWidget, so normally not called by derived classes
+   */
+  void loadSettings_();
 
   /** Returns true when the window is currently maximized */
   bool isMaximized_() const;
@@ -296,15 +309,8 @@ private:
   void updateTitleBarColors_(bool haveFocus);
   /** Returns true if the given widget is (eventually) a child of "this" */
   bool isChildWidget_(const QWidget* widget) const;
-
-  /** Returns the current path for simQt::Settings */
+  /** Returns the current path for simQt::Settings, or QSettings if simQt::Settings is unavailable */
   QString path_() const;
-
-  /** Flag to indicate if the dock widget should respect the disableDocking_ setting */
-  bool respectDisableDockingSetting_;
-
-  /** Flags true or false depending on whether Escape key will close the widget */
-  bool escapeClosesWidget_;
 
   QToolButton* restoreButton_;
   QToolButton* maximizeButton_;
@@ -360,6 +366,12 @@ private:
   QColor inactiveTextColor_;
   /** Cache of whether we have focus or not */
   bool haveFocus_;
+
+  /** Flags true when widget is dockable */
+  bool isDockable_;
+
+  /** Global flag that can be used to turn off all docking at once. */
+  simQt::BoundBooleanSetting* disableAllDocking_;
 };
 
 }
