@@ -190,7 +190,6 @@ private:
 
 DockWidget::DockWidget(QWidget* parent, Qt::WindowFlags flags)
   : QDockWidget(parent, flags),
-    settings_(NULL),
     globalSettings_(NULL),
     mainWindow_(dynamic_cast<QMainWindow*>(parent))
 {
@@ -199,7 +198,6 @@ DockWidget::DockWidget(QWidget* parent, Qt::WindowFlags flags)
 
 DockWidget::DockWidget(const QString& title, QWidget* parent, Qt::WindowFlags flags)
   : QDockWidget(title, parent, flags),
-    settings_(NULL),
     globalSettings_(NULL),
     mainWindow_(dynamic_cast<QMainWindow*>(parent))
 {
@@ -209,7 +207,6 @@ DockWidget::DockWidget(const QString& title, QWidget* parent, Qt::WindowFlags fl
 
 DockWidget::DockWidget(const QString& title, simQt::Settings* settings, QMainWindow* parent, Qt::WindowFlags flags)
   : QDockWidget(title, parent, flags),
-    settings_(NULL),
     globalSettings_(settings),
     mainWindow_(parent)
 {
@@ -221,7 +218,6 @@ DockWidget::DockWidget(const QString& title, simQt::Settings* settings, QMainWin
 
 DockWidget::DockWidget(const QString& title, simQt::Settings* settings, QWidget* parent, Qt::WindowFlags flags)
   : QDockWidget(title, parent, flags),
-    settings_(NULL),
     globalSettings_(settings),
     mainWindow_(dynamic_cast<QMainWindow*>(parent))
 {
