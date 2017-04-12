@@ -38,7 +38,7 @@
 #include "simVis/OverrideColor.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/PlatformFilter.h"
-#include "simVis/Shaders.h"
+#include "simVis/BeamPulse.h"
 #include "simVis/TrackHistory.h"
 #include "simVis/RFProp/RFPropagationManager.h"
 
@@ -332,7 +332,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // Install shaders used by multiple entities at the scenario level
   OverrideColor::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
-  BeamNode::installShaderProgram(stateSet);
+  BeamPulse::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()

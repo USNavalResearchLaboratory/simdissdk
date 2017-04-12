@@ -34,6 +34,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LocalGrid.h"
 #include "simVis/LabelContentManager.h"
+#include "simVis/BeamPulse.h"
 
 namespace simVis
 {
@@ -321,13 +322,7 @@ namespace simVis
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;
-
-    /// Toggle beam pulse animation
-    osg::ref_ptr<osg::Uniform> animateBeam_;
-    /// The time required for a beam pulse animation, in milliseconds per scan
-    osg::ref_ptr<osg::Uniform> pulsePeriod_;
-    /// The rate for a beam to complete the animation pattern, in Hz
-    osg::ref_ptr<osg::Uniform> pulseRate_;
+    osg::ref_ptr<BeamPulse> beamPulse_;
   };
 
 } //namespace simVis

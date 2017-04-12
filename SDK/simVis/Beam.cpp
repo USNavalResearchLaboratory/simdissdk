@@ -43,16 +43,13 @@
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
-#include "simVis/Shaders.h"
+#include "simVis/BeamPulse.h"
 #include "simVis/Beam.h"
 
 // --------------------------------------------------------------------------
 
 namespace
 {
-  static const std::string SIMVIS_BEAMPULSE_ANIMATE = "simvis_beampulse_animate";
-  static const std::string SIMVIS_BEAMPULSE_PERIOD = "simvis_beampulse_period";
-  static const std::string SIMVIS_BEAMPULSE_RATE = "simvis_beampulse_rate";
 
   osg::MatrixTransform* createBeamSV(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
   {
@@ -135,14 +132,6 @@ namespace
 namespace simVis
 {
 
-void BeamNode::installShaderProgram(osg::StateSet* intoStateSet)
-{
-  simVis::Shaders package;
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
-  package.load(vp, package.beamPulseVertex());
-  package.load(vp, package.beamPulseFragment());
-}
-
 BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
   : EntityNode(simData::DataStore::BEAM),
     hasLastUpdate_(false),
@@ -196,6 +185,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
   osg::StateSet* stateSet = this->getOrCreateStateSet();
+  beamPulse_ = new simVis::BeamPulse(stateSet);
   stateSet->setRenderBinDetails(BIN_BEAM, BIN_GLOBAL_SIMSDK);
 
   // depth-writing is disabled for the beams by default.
@@ -222,11 +212,6 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
-
-  osg::StateSet* stateset = this->getOrCreateStateSet();
-  animateBeam_ = stateset->getOrCreateUniform(SIMVIS_BEAMPULSE_ANIMATE, osg::Uniform::BOOL);
-  pulsePeriod_ = stateset->getOrCreateUniform(SIMVIS_BEAMPULSE_PERIOD, osg::Uniform::FLOAT);
-  pulseRate_ = stateset->getOrCreateUniform(SIMVIS_BEAMPULSE_RATE, osg::Uniform::FLOAT);
 }
 
 void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
@@ -311,9 +296,14 @@ void BeamNode::applyPrefs(const simData::BeamPrefs& prefs, bool force)
     hasLastPrefs_ = true;
   }
 
-  animateBeam_->set(prefs.animate());
-  pulsePeriod_->set(static_cast<float>(prefs.pulseperiod()));
-  pulseRate_->set(static_cast<float>(prefs.pulserate()));
+  beamPulse_->setEnabled(prefs.animate());
+  // Only need to set other fields if animating is on
+  if (prefs.animate())
+  {
+    beamPulse_->setLength(static_cast<float>(prefs.pulselength()));
+    beamPulse_->setRate(static_cast<float>(prefs.pulserate()));
+    beamPulse_->setStipplePattern(prefs.pulsestipple());
+  }
 }
 
 void BeamNode::setHostMissileOffset(double hostMissileOffset)
