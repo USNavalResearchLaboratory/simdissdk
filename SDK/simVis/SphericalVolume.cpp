@@ -368,7 +368,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   // if we are drawing the face (not just the outline) add primitives that use the vertex array to the geometry
   if (drawFaces)
   {
-    osg::ref_ptr<osg::DrawElementsUShort> faces = new osg::DrawElementsUShort(GL_QUADS);
+    osg::ref_ptr<osg::DrawElementsUShort> faces = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
     const unsigned int numElements = loop * 4 * (numPointsX - 1) * (numPointsZ - 1);
     faces->reserveElements(numElements);
     // primitive set for the face:
@@ -382,15 +382,15 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           {
             faces->push_back(farFaceOffset + x*numPointsZ + z);
             faces->push_back(farFaceOffset + x*numPointsZ + z + 1);
-            faces->push_back(farFaceOffset + (x + 1)*numPointsZ + z + 1);
             faces->push_back(farFaceOffset + (x + 1)*numPointsZ + z);
+            faces->push_back(farFaceOffset + (x + 1)*numPointsZ + z + 1);
           }
           else // near
           {
             faces->push_back(nearFaceOffset + x*numPointsZ + z);
             faces->push_back(nearFaceOffset + (x + 1)*numPointsZ + z);
-            faces->push_back(nearFaceOffset + (x + 1)*numPointsZ + z + 1);
             faces->push_back(nearFaceOffset + x*numPointsZ + z + 1);
+            faces->push_back(nearFaceOffset + (x + 1)*numPointsZ + z + 1);
           }
         }
       }
