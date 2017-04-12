@@ -111,21 +111,21 @@ void RocketBurn::rebuild_()
     }
     colors->push_back(currentColor);
 
-    // add one quad
-    texcoords->push_back(osg::Vec2(0, 0));
-    verts->push_back(osg::Vec3(-radiusCurrent, 0, -radiusCurrent));
-
+    // add the vertices
     texcoords->push_back(osg::Vec2(1, 0));
     verts->push_back(osg::Vec3(radiusCurrent, 0, -radiusCurrent));
 
     texcoords->push_back(osg::Vec2(1, 1));
     verts->push_back(osg::Vec3(radiusCurrent, 0, radiusCurrent));
 
+    texcoords->push_back(osg::Vec2(0, 0));
+    verts->push_back(osg::Vec3(-radiusCurrent, 0, -radiusCurrent));
+
     texcoords->push_back(osg::Vec2(0, 1));
     verts->push_back(osg::Vec3(-radiusCurrent, 0, radiusCurrent));
 
-    // tell the geometry that the array data describes quads
-    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::QUADS, 0, verts->size()));
+    // tell the geometry that the array data describes triangle strips
+    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_STRIP, 0, verts->size()));
 
     // load the geometry into the geode
     geode_->addDrawable(geometry, osg::Vec3(0, -currentLength, 0));
