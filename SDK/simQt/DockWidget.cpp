@@ -39,6 +39,7 @@
 #include "simNotify/Notify.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/BoundSettings.h"
+#include "simQt/QtConversion.h"
 #include "simQt/DockWidget.h"
 
 namespace simQt {
@@ -260,13 +261,12 @@ void DockWidget::init_()
   connect(this, SIGNAL(topLevelChanged(bool)), this, SLOT(verifyDockState_(bool)));
 
   setAllowedAreas(Qt::AllDockWidgetAreas);
-  setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
   // Can-be-docked
   dockableAction_ = new QAction(tr("Dockable"), this);
   dockableAction_->setCheckable(true);
   dockableAction_->setChecked(isDockable_);
-  dockableAction_->setToolTip(tr("Window may be docked to main window"));
+  dockableAction_->setToolTip(formatTooltip(tr("Dockable"), tr("Window may be docked to main window")));
   connect(dockableAction_, SIGNAL(toggled(bool)), this, SLOT(setDockable(bool)));
 
   // Separator
@@ -275,31 +275,31 @@ void DockWidget::init_()
 
   // Maximize
   maximizeAction_ = new QAction(tr("Maximize"), this);
-  maximizeAction_->setToolTip(tr("Maximize"));
+  maximizeAction_->setToolTip(formatTooltip(tr("Maximize"), tr("Expand window to maximum size")));
   maximizeAction_->setIcon(QIcon(":/simQt/images/Maximize.png"));
   connect(maximizeAction_, SIGNAL(triggered()), this, SLOT(maximize_()));
 
   // Restore
   restoreAction_ = new QAction(tr("Restore"), this);
-  restoreAction_->setToolTip(tr("Restore"));
+  restoreAction_->setToolTip(formatTooltip(tr("Restore"), tr("Restore window to original size")));
   restoreAction_->setIcon(QIcon(":/simQt/images/Restore.png"));
   connect(restoreAction_, SIGNAL(triggered()), this, SLOT(restore_()));
 
   // Dock
   dockAction_ = new QAction(tr("Dock"), this);
-  dockAction_->setToolTip(tr("Dock"));
+  dockAction_->setToolTip(formatTooltip(tr("Dock"), tr("Dock the window to the main window")));
   dockAction_->setIcon(QIcon(":/simQt/images/Dock.png"));
   connect(dockAction_, SIGNAL(triggered()), this, SLOT(dock_()));
 
   // Undock
   undockAction_ = new QAction(tr("Undock"), this);
-  undockAction_->setToolTip(tr("Undock"));
+  undockAction_->setToolTip(formatTooltip(tr("Undock"), tr("Undock the window from the main window")));
   undockAction_->setIcon(QIcon(":/simQt/images/Undock.png"));
   connect(undockAction_, SIGNAL(triggered()), this, SLOT(undock_()));
 
   // Close
   closeAction_ = new QAction(tr("Close"), this);
-  closeAction_->setToolTip(tr("Close"));
+  closeAction_->setToolTip(formatTooltip(tr("Close"), tr("Close the window")));
   closeAction_->setIcon(QIcon(":/simQt/images/Close.png"));
   connect(closeAction_, SIGNAL(triggered()), this, SLOT(closeWindow_()));
   closeAction_->setShortcuts(QKeySequence::Close);
@@ -691,7 +691,6 @@ void DockWidget::setWidget(QWidget* widget)
   QDockWidget::setWidget(widget);
   if (widget == NULL)
     return;
-  widget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   setWindowIcon(widget->windowIcon());
 
   // Save the geometry now so that we have some valid value at initialization
