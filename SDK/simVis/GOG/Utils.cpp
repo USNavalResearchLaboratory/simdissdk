@@ -660,15 +660,15 @@ GeoPoint ParserData::getMapPosition() const
 {
   if (refPointLLA_.isSet())
   {
-    return GeoPoint(srs_.get(), *refPointLLA_, osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
+    return GeoPoint(srs_.get(), *refPointLLA_, ALTMODE_ABSOLUTE);
   }
   else if (centerLLA_.isSet())
   {
-    return GeoPoint(srs_.get(), *centerLLA_, osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
+    return GeoPoint(srs_.get(), *centerLLA_, ALTMODE_ABSOLUTE);
   }
   else if (geom_.valid() && geomIsLLA_)
   {
-    return GeoPoint(srs_.get(), geom_->getBounds().center(), osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
+    return GeoPoint(srs_.get(), geom_->getBounds().center(), ALTMODE_ABSOLUTE);
   }
   else if (context_.refPoint_.isSet())
   {
