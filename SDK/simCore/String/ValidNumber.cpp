@@ -293,4 +293,29 @@ bool isValidNumber(const std::string& token, float& val, bool permitPlusToken)
   return true;
 }
 
+bool isValidHexNumber(const std::string& token, uint32_t& val)
+{
+  const char* start = token.c_str();
+  char* end;
+  errno = 0;
+  unsigned long longVal = strtoul(token.c_str(), &end, 16);
+
+  // Error conditions are: Failed to convert, failed to end on a NULL, or having leading white space or leading minus sign
+  if ((errno != 0) || (end == start) || (*end != '\0') || isspace(*start) || (*start == '-') || (*start == '+'))
+  {
+    val = 0;
+    return false;
+  }
+
+  if ((longVal >= std::numeric_limits<uint32_t>::min()) &&
+    (longVal <= std::numeric_limits<uint32_t>::max()))
+  {
+    val = static_cast<uint32_t>(longVal);
+    return true;
+  }
+
+  val = 0;
+  return false;
+}
+
 }

@@ -502,6 +502,70 @@ int testPermitPlus()
   return rv;
 }
 
+int testValidHexNumber()
+{
+  int rv = 0;
+  {
+    // Test a variety of values similar to what uint32_t accepts
+    uint32_t val;
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("+8", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("8", val) && val == 0x8);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("-8", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0.0", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0", val) && val == 0x0);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1.0", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("1", val) && val == 0x1);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("10", val) && val == 0x10); // Note -- 16 decimal
+    rv += SDK_ASSERT(!simCore::isValidHexNumber(" 1 ", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("4294967295", val)); // Out of range
+    rv += SDK_ASSERT(simCore::isValidHexNumber("99999999", val) && val == 0x99999999); // Well inside range
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("100000000", val)); // Out of range by 1
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("-1.0", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("-1", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1.1.1", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1.abcd", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("Junk", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("\"20\"", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("\"20", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("20\"", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber(" ", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0xFF", val) && val == 0xff);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1,1", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1.9.9", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("050", val) && val == 0x50);
+  }
+
+  // Test variety of values that include hex numbers
+  {
+    uint32_t val;
+    rv += SDK_ASSERT(simCore::isValidHexNumber("1abcd", val) && val == 0x1abcd);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("1aBCd", val) && val == 0x1abcd);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x1aAbCd", val) && val == 0x1aabcd);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0X1aAbCd", val) && val == 0x1aabcd);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("x1aAbCd", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("00x1aAbCd", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xx1aAbCd", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0y1aAbCd", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x0", val) && val == 0);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x00", val) && val == 0);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x0000000002", val) && val == 2);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0xabcdef", val) && val == 0xabcdef);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0xABCDEF", val) && val == 0xabcdef);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0xaBcDeF", val) && val == 0xabcdef);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0xAbCdEf", val) && val == 0xabcdef);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0xabcdef00", val) && val == 0xabcdef00);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("abcdef00", val) && val == 0xabcdef00);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xabcdef000", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("abcdef000", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("ffffffff", val) && val == 0xffffffff);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0xffffffff", val) && val == 0xffffffff);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x020", val) && val == 0x20);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("020", val) && val == 0x20);
+  }
+  return rv;
+}
+
 }
 
 int ValidNumberTest(int argc, char* argv[])
@@ -509,5 +573,6 @@ int ValidNumberTest(int argc, char* argv[])
   int rv = 0;
   rv += SDK_ASSERT(testValidNumber() == 0);
   rv += SDK_ASSERT(testPermitPlus() == 0);
+  rv += SDK_ASSERT(testValidHexNumber() == 0);
   return rv;
 }

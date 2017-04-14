@@ -70,6 +70,16 @@ namespace simCore
   SDKCORE_EXPORT bool isValidNumber(const std::string& token, float& val, bool permitPlusToken=true);
   ///@}
 
+  /**
+   * Determines if the incoming string is a valid 8 digit hexadecimal number and then performs the conversion.
+   * Hexadecimal values will succeed.  Strings support but do not require a leading 0x (or 0X).  String
+   * is case insensitive.  Values outside the valid range of the data type will fail.
+   * @param[in ] token String to validate
+   * @param[out] val Converted number, set to 0 if conversion fails
+   * @return true if valid, false if not
+   */
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint32_t& val);
+
 }
 
 #endif /* SIMCORE_STRING_VALIDNUMBER_H */
