@@ -216,7 +216,7 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
   // parse each line from the stream individually
   while (simCore::getStrippedLine(input, line))
   {
-    lineNumber++;
+    ++lineNumber;
     StringVector tokens;
     StringTokenizer tokenizer;
     tokenizer.addDelims(" \t");
@@ -240,7 +240,7 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     // rewrite the line now that it's lowered.
     line = osgEarth::joinStrings(tokens, ' ');
 
-    if (tokens.size() == 0)
+    if (tokens.empty())
     {
       // skip empty line
       continue;
@@ -278,6 +278,11 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
       if (!validStartEndBlock && tokens[0] == "end")
       {
         printError_(lineNumber, "end command encountered before start");
+        continue;
+      }
+      if (tokens[0] == "end" && currentMetaData.shape == GOG::GOG_UNKNOWN)
+      {
+        printError_(lineNumber, "end command encountered before recognized GOG shape type keyword");
         continue;
       }
       if (!current.empty())
@@ -942,7 +947,7 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     }
     else // treat everything as a name/value pair
     {
-      if (tokens.size() >= 2)
+      if (!tokens.empty())
       {
         // filter out items that are stored in the Style
         if (unhandledStyleKeywords.find(tokens[0]) == unhandledStyleKeywords.end())
@@ -951,7 +956,8 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
           // NOTE: to prevent warnings for actual commands, commands should be added to if/else check
           SIM_WARN << "Unknown GOG command " << tokens[0] << " found on line " << lineNumber << std::endl;
         }
-        current.set(tokens[0], tokens[1]);
+        // Store the command anyways
+        current.set(tokens[0], (tokens.size() == 1) ? std::string() : tokens[1]);
       }
     }
   }
