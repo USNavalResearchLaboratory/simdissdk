@@ -32,6 +32,7 @@
 #include <ctype.h>
 #endif
 
+#include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 #include "simCore/Calc/Math.h"
@@ -72,6 +73,14 @@ bool stringIsIntegerNumber(const std::string& str, bool isUnsigned, bool ignoreW
   while (isdigit(static_cast<unsigned char>(*p))) {p++; foundDigit = true;}
   while (ignoreWhitespace && isspace(static_cast<unsigned char>(*p))) p++;
   return (*p == '\0') && foundDigit;
+}
+
+bool stringIsTrueToken(const std::string& str)
+{
+  return ("1" == str) ||
+    (simCore::caseCompare(str, "true") == 0) ||
+    (simCore::caseCompare(str, "on") == 0) ||
+    (simCore::caseCompare(str, "yes") == 0);
 }
 
 bool isValidNumber(const std::string& token, uint64_t& val, bool permitSign)
@@ -316,6 +325,50 @@ bool isValidHexNumber(const std::string& token, uint32_t& val)
 
   val = 0;
   return false;
+}
+
+namespace {
+
+/**
+ * Helper template method that uses isValidHexNumber uint32_t variant to convert.
+ * Presumption: std::numeric_limits<T>:max() <= std::numeric_limits<uint32_t>::max().
+ * Presumption: static_cast<T>(uint32_t) is well defined.
+ */
+template <typename T>
+bool isValidHexNumberT(const std::string& token, T& val)
+{
+  val = 0;
+  uint32_t value32;
+  if (!isValidHexNumber(token, value32) || value32 > static_cast<uint32_t>(std::numeric_limits<T>::max()))
+    return false;
+  val = static_cast<T>(value32);
+  return true;
+}
+}
+
+bool isValidHexNumber(const std::string& token, uint16_t& val)
+{
+  return isValidHexNumberT<uint16_t>(token, val);
+}
+
+bool isValidHexNumber(const std::string& token, uint8_t& val)
+{
+  return isValidHexNumberT<uint8_t>(token, val);
+}
+
+bool isValidHexNumber(const std::string& token, int32_t& val)
+{
+  return isValidHexNumberT<int32_t>(token, val);
+}
+
+bool isValidHexNumber(const std::string& token, int16_t& val)
+{
+  return isValidHexNumberT<int16_t>(token, val);
+}
+
+bool isValidHexNumber(const std::string& token, int8_t& val)
+{
+  return isValidHexNumberT<int8_t>(token, val);
 }
 
 }
