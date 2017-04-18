@@ -562,6 +562,12 @@ int testValidHexNumber()
     rv += SDK_ASSERT(simCore::isValidHexNumber("0xffffffff", val) && val == 0xffffffff);
     rv += SDK_ASSERT(simCore::isValidHexNumber("0x020", val) && val == 0x20);
     rv += SDK_ASSERT(simCore::isValidHexNumber("020", val) && val == 0x20);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xg", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x1", val, true) && val == 1);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1", val, true));
   }
 
   // uint16_t testing
@@ -594,6 +600,12 @@ int testValidHexNumber()
     rv += SDK_ASSERT(!simCore::isValidHexNumber("1.9.9", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("050", val) && val == 0x50);
     rv += SDK_ASSERT(simCore::isValidHexNumber("ffff", val) && val == 0xffff);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xg", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x1", val, true) && val == 1);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1", val, true));
   }
 
   // uint8_t testing
@@ -626,6 +638,12 @@ int testValidHexNumber()
     rv += SDK_ASSERT(!simCore::isValidHexNumber("1.9.9", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("050", val) && val == 0x50);
     rv += SDK_ASSERT(simCore::isValidHexNumber("ff", val) && val == 0xff);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xg", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x1", val, true) && val == 1);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1", val, true));
   }
 
   // int32_t testing
@@ -659,6 +677,12 @@ int testValidHexNumber()
     rv += SDK_ASSERT(!simCore::isValidHexNumber("1.9.9", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("050", val) && val == 0x50);
     rv += SDK_ASSERT(simCore::isValidHexNumber("7fffffff", val) && val == 0x7fffffff);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xg", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x1", val, true) && val == 1);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1", val, true));
   }
 
   // int16_t testing
@@ -692,6 +716,12 @@ int testValidHexNumber()
     rv += SDK_ASSERT(!simCore::isValidHexNumber("1.9.9", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("050", val) && val == 0x50);
     rv += SDK_ASSERT(simCore::isValidHexNumber("7fff", val) && val == 0x7fff);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xg", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x1", val, true) && val == 1);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1", val, true));
   }
 
   // int8_t testing
@@ -725,6 +755,14 @@ int testValidHexNumber()
     rv += SDK_ASSERT(!simCore::isValidHexNumber("1.9.9", val));
     rv += SDK_ASSERT(simCore::isValidHexNumber("050", val) && val == 0x50);
     rv += SDK_ASSERT(simCore::isValidHexNumber("7f", val) && val == 0x7f);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0x ", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0xg", val));
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0x1", val, true) && val == 1);
+    rv += SDK_ASSERT(simCore::isValidHexNumber("0X1", val, true) && val == 1);
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("0XX1", val, true));
+    rv += SDK_ASSERT(!simCore::isValidHexNumber("1", val, true));
   }
 
   return rv;

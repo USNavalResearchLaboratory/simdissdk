@@ -302,8 +302,14 @@ bool isValidNumber(const std::string& token, float& val, bool permitPlusToken)
   return true;
 }
 
-bool isValidHexNumber(const std::string& token, uint32_t& val)
+bool isValidHexNumber(const std::string& token, uint32_t& val, bool require0xPrefix)
 {
+  if (require0xPrefix)
+  {
+    // Check for 0x; note that we use minimum size of 3 for a digit after the 0x
+    if (token.size() < 3 || token[0] != '0' || (token[1] != 'x' && token[1] != 'X'))
+      return false;
+  }
   const char* start = token.c_str();
   char* end;
   errno = 0;
@@ -335,40 +341,40 @@ namespace {
  * Presumption: static_cast<T>(uint32_t) is well defined.
  */
 template <typename T>
-bool isValidHexNumberT(const std::string& token, T& val)
+bool isValidHexNumberT(const std::string& token, T& val, bool require0xPrefix)
 {
   val = 0;
   uint32_t value32;
-  if (!isValidHexNumber(token, value32) || value32 > static_cast<uint32_t>(std::numeric_limits<T>::max()))
+  if (!isValidHexNumber(token, value32, require0xPrefix) || value32 > static_cast<uint32_t>(std::numeric_limits<T>::max()))
     return false;
   val = static_cast<T>(value32);
   return true;
 }
 }
 
-bool isValidHexNumber(const std::string& token, uint16_t& val)
+bool isValidHexNumber(const std::string& token, uint16_t& val, bool require0xPrefix)
 {
-  return isValidHexNumberT<uint16_t>(token, val);
+  return isValidHexNumberT<uint16_t>(token, val, require0xPrefix);
 }
 
-bool isValidHexNumber(const std::string& token, uint8_t& val)
+bool isValidHexNumber(const std::string& token, uint8_t& val, bool require0xPrefix)
 {
-  return isValidHexNumberT<uint8_t>(token, val);
+  return isValidHexNumberT<uint8_t>(token, val, require0xPrefix);
 }
 
-bool isValidHexNumber(const std::string& token, int32_t& val)
+bool isValidHexNumber(const std::string& token, int32_t& val, bool require0xPrefix)
 {
-  return isValidHexNumberT<int32_t>(token, val);
+  return isValidHexNumberT<int32_t>(token, val, require0xPrefix);
 }
 
-bool isValidHexNumber(const std::string& token, int16_t& val)
+bool isValidHexNumber(const std::string& token, int16_t& val, bool require0xPrefix)
 {
-  return isValidHexNumberT<int16_t>(token, val);
+  return isValidHexNumberT<int16_t>(token, val, require0xPrefix);
 }
 
-bool isValidHexNumber(const std::string& token, int8_t& val)
+bool isValidHexNumber(const std::string& token, int8_t& val, bool require0xPrefix)
 {
-  return isValidHexNumberT<int8_t>(token, val);
+  return isValidHexNumberT<int8_t>(token, val, require0xPrefix);
 }
 
 }

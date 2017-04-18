@@ -86,14 +86,16 @@ namespace simCore
    * is case insensitive.  Values outside the valid range of the data type will fail.
    * @param[in ] token String to validate
    * @param[out] val Converted number, set to 0 if conversion fails
+   * @param[in ] require0xPrefix If true, the conversion will fail if the token does not start with "0x".
+   *   The 0x prefix is case insensitive.
    * @return true if valid, false if not
    */
-  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint32_t& val);
-  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint16_t& val);
-  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint8_t& val);
-  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int32_t& val);
-  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int16_t& val);
-  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int8_t& val);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint32_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint16_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint8_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int32_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int16_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int8_t& val, bool require0xPrefix=false);
   ///@}
 }
 
