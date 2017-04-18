@@ -23,6 +23,7 @@
 #include <ctype.h>
 #include <QLabel>
 #include <QLayout>
+#include <QLineEdit>
 #include <QMenu>
 #include <QDateTimeEdit>
 #include <QSpinBox>
@@ -38,7 +39,9 @@ namespace simQt {
 
 TimeWidget::TimeWidget(QWidget* parent)
   : QWidget(parent),
-    scenarioReferenceYear_(1970)
+    scenarioReferenceYear_(1970),
+    disabledLineEdit_(NULL),
+    timeEnabled_(true)
 {
   // Setup the format widgets to switch between
   addContainer_(new SecondsContainer(this), SLOT(setSeconds_()));
@@ -64,7 +67,7 @@ TimeWidget::TimeWidget(QWidget* parent)
   layout->setMargin(0);
   layout->addWidget(title_);
   layout->addWidget(currentContainer_->widget());
-  this->setLayout(layout);  // do not use parent since parent could be NULL
+  setLayout(layout);  // do not use parent since parent could be NULL
 
   colorCodeAction_ = new QAction(tr("&Color Code Text"), this);
   connect(colorCodeAction_, SIGNAL(triggered()), this, SLOT(setColorCode_()));
@@ -179,7 +182,6 @@ void TimeWidget::setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd)
     w->setEnforceLimits(limitBeforeStart, limitAfterEnd);
 }
 
-
 void TimeWidget::showRightMouseClickMenu_(const QPoint &pos)
 {
   // Put a check mark next to the current format
@@ -212,13 +214,16 @@ void TimeWidget::setTimeFormat(simCore::TimeFormat newFormat)
   {
     if (w->timeFormat() == newFormat)
     {
-      this->layout()->removeWidget(currentContainer_->widget());
+      layout()->removeWidget(currentContainer_->widget());
       currentContainer_->widget()->setHidden(true);
       // user might have changed the time before switching, so move time over to new widget
       w->setTimeStamp(currentContainer_->timeStamp());
       currentContainer_ = w;
-      currentContainer_->widget()->setHidden(false);
-      this->layout()->addWidget(currentContainer_->widget());
+      if (timeEnabled_)
+      {
+        currentContainer_->widget()->setHidden(true);
+        layout()->addWidget(currentContainer_->widget());
+      }
       break;
     }
   }
@@ -288,4 +293,40 @@ simCore::TimeStamp TimeWidget::timeRangeEnd() const
   return timeRangeEnd_;
 }
 
+bool TimeWidget::timeEnabled() const
+{
+  return !timeEnabled_;
+}
+
+void TimeWidget::setTimeEnabled(bool value)
+{
+  if (value == timeEnabled_)
+    return;
+
+  timeEnabled_ = value;
+  if (timeEnabled_)
+  {
+    if (disabledLineEdit_ != NULL)
+    {
+      disabledLineEdit_->setVisible(false);
+      layout()->removeWidget(disabledLineEdit_);
+    }
+    currentContainer_->widget()->setVisible(true);
+    layout()->addWidget(currentContainer_->widget());
+  }
+  else
+  {
+    currentContainer_->widget()->setVisible(false);
+    layout()->removeWidget(currentContainer_->widget());
+
+    if (disabledLineEdit_ == NULL)
+    {
+      disabledLineEdit_ = new QLineEdit(tr("--------------------------------------"), this);
+      disabledLineEdit_->setEnabled(false);
+      disabledLineEdit_->setMinimumWidth(175);
+    }
+    disabledLineEdit_->setVisible(true);
+    layout()->addWidget(disabledLineEdit_);
+  }
+}
 }

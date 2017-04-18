@@ -29,6 +29,7 @@
 
 class QMenu;
 class QLabel;
+class QLineEdit;
 
 namespace simQt {
 
@@ -97,11 +98,16 @@ public:
   /** Returns the number of digits after the decimal point */
   unsigned int precision() const;
 
+  /** Returns true if the time widget is enabled */
+  bool timeEnabled() const;
+
 public slots:
   /** Set the time format */
   void setTimeFormat(simCore::TimeFormat newFormat);
   /** Set the number of digits after the decimal point */
   void setPrecision(unsigned int digits);
+  /** An alternative enable that replaces the time with ----- when disabled */
+  void setTimeEnabled(bool value);
 
 signals:
   /** emitted when the time changes via the user */
@@ -151,6 +157,10 @@ private:
   simCore::TimeStamp timeRangeStart_;
   /// Cache of the end of the time range
   simCore::TimeStamp timeRangeEnd_;
+  /// A widget of "------" to show when the widget is disabled
+  QLineEdit* disabledLineEdit_;
+  /// True if the widget is enabled
+  bool timeEnabled_;
 };
 
 } // namespace
