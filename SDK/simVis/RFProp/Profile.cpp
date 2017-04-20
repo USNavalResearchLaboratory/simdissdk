@@ -442,6 +442,28 @@ void Profile::init2DHoriz_()
   geode_->addDrawable(geometry);
 }
 
+// Used to tesselate the 2D Vertical with triangle strip
+const void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry)
+{
+  for (unsigned int h = 0; h < numHeights - 1; ++h)
+  {
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    idx->reserve(2 * numRanges);
+
+    // Create row strips
+    for (unsigned int r = 0; r < numRanges; ++r)
+    {
+      const unsigned int indexBottom = startIndex + (r * numHeights) + h;
+      const unsigned int indexTop = indexBottom + 1;
+
+      idx->push_back(indexBottom);
+      idx->push_back(indexTop);
+    }
+    // Add individual row primitive set
+    geometry->addPrimitiveSet(idx);
+  }
+}
+
 void Profile::init2DVert_()
 {
   assert(data_.valid() && data_->getActiveProvider() != NULL);
@@ -484,89 +506,6 @@ void Profile::init2DVert_()
     }
   }
 
-  // Now build the indices that will actually be rendered
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_QUADS);
-  idx->reserve((numRanges - 1) * (numHeights - 1) * 4);
-
-  for (unsigned int r = 0; r < numRanges - 1; r++)
-  {
-    const unsigned int nextRange = r + 1;
-    float valueR = 0.0f;
-    float valueL = 0.0f;
-    unsigned int endIndex = 0;
-    bool optimizedQuad = false;
-
-    // build the graphic for this range cell, from bottom to top
-    for (unsigned int h = 0; h < numHeights; ++h)
-    {
-      const unsigned int indexR = startIndex + (nextRange * numHeights) + h;
-      const unsigned int indexL = startIndex + (r * numHeights) + h;
-      const float newValueR = values_->at(indexR);
-      const float newValueL = values_->at(indexL);
-
-      // we always use bottom verts
-      if (h != 0)
-      {
-        // if there is a value change between bottom and top of cell, this cell must be rendered as its own quad
-        // if there is no change in the cell, defer ending the quad, set optimizedQuad flag
-        if (newValueR == valueR && newValueL == valueL)
-        {
-          optimizedQuad = true;
-          idx->setElement(endIndex, indexL);
-          idx->setElement(endIndex + 1, indexR);
-          // if we're at last height iteration, continue will bring us to the end
-          continue;
-        }
-
-        // there is a transition in this cell, end this quad
-        // if we were optimizing the previous quad, we need to end that quad
-        if (optimizedQuad)
-        {
-          // accept the already provisionally completed quad from last iteration, by not continuing to defer
-          optimizedQuad = false;
-          // start a new quad for this cell - top indices from previous quad become the bottom indices of new quad
-          // new lr
-          idx->push_back(idx->getElement(endIndex + 1));
-          // new ll
-          idx->push_back(idx->getElement(endIndex));
-
-          endIndex = idx->getNumIndices();
-
-          // end the quad
-          // ul
-          idx->push_back(indexL);
-          // ur
-          idx->push_back(indexR);
-        }
-        else
-        {
-          // there is a transition in this cell, end the quad
-          idx->setElement(endIndex, indexL);
-          idx->setElement(endIndex + 1, indexR);
-        }
-      }
-
-      const bool lastIteration = (h == (numHeights - 1));
-      if (!lastIteration)
-      {
-        // start a new quad
-        // new lr
-        idx->push_back(indexR);
-        valueR = newValueR;
-        // new ll
-        idx->push_back(indexL);
-        valueL = newValueL;
-
-        endIndex = idx->getNumIndices();
-        // pre-set this quad's top indices (to be overwritten (using setElement) next iteration)
-        // ul
-        idx->push_back(indexL);
-        // ur
-        idx->push_back(indexR);
-      }
-    }
-  }
-
   osg::Geometry* geometry = new osg::Geometry();
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
@@ -577,7 +516,9 @@ void Profile::init2DVert_()
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
   geometry->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
-  geometry->addPrimitiveSet(idx);
+  // Call to tesselate the 2D Vertical
+  tesselate2DVert_(numRanges, numHeights, startIndex, values_, geometry);
+
   geode_->addDrawable(geometry);
 }
 

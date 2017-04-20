@@ -260,6 +260,10 @@ protected:
   osg::ref_ptr<osg::Texture> texture_;
   /** Uniform shader value for adjusting the alpha */
   osg::ref_ptr<osg::Uniform> alphaUniform_;
+
+private:
+    /** Tesselate the 2D Vertical with tringle strip */
+  const void tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry);
 };
 }
 
