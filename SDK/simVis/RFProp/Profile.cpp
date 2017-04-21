@@ -1019,7 +1019,7 @@ osg::Image* Profile::createImage_()
   }
   return image;
 }
-void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry)
+const void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry)
 {
   assert(data_.valid() && data_->getActiveProvider() != NULL);
   const double minRange = data_->getMinRange();
