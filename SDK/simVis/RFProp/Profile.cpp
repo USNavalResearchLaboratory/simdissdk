@@ -417,8 +417,8 @@ void Profile::init2DHoriz_()
       adjustSpherical_(v1, lla, &tpSphereXYZ);
     }
 
-    verts_->push_back(v0);
     verts_->push_back(v1);
+    verts_->push_back(v0);
 
     heightIndex = osg::clampBetween(heightIndex, 0u, data_->getNumHeights() - 1);
     const double value = data_->getValueByIndex(heightIndex, i);
@@ -433,11 +433,13 @@ void Profile::init2DHoriz_()
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
+
+  // GL_CULL_FACE is OFF because 2D Horizontal is a strip and not a 3D object
   geometry->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
   const unsigned int count = verts_->size() - startIndex;
 
-  geometry->addPrimitiveSet(new osg::DrawArrays(GL_QUAD_STRIP, startIndex, count));
+  geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, startIndex, count));
 
   geode_->addDrawable(geometry);
 }
