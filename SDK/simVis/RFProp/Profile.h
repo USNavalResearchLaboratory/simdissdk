@@ -205,7 +205,7 @@ protected:
   osg::Image* createImage_();
 
   /** Creates a voxel (volume pixel) at the given location */
-  void buildVoxel_(const double* lla, const simCore::Vec3* tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::DrawElementsUInt* idx);
+  void buildVoxel_(const double* lla, const simCore::Vec3* tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry);
 
   /** Fixes the orientation of the profile */
   void updateOrientation_();

@@ -1019,8 +1019,7 @@ osg::Image* Profile::createImage_()
   }
   return image;
 }
-
-void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::DrawElementsUInt* idx)
+void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry)
 {
   assert(data_.valid() && data_->getActiveProvider() != NULL);
   const double minRange = data_->getMinRange();
@@ -1167,21 +1166,31 @@ void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, u
   values_->push_back(value);
   values_->push_back(value);
 
-  // Bottom
-  idx->push_back(i0); idx->push_back(i1); idx->push_back(i2); idx->push_back(i3);
-  // Top
-  idx->push_back(i4); idx->push_back(i7); idx->push_back(i6); idx->push_back(i5);
+  // Create a triangle strip set to wrap the voxel
+  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
 
-  // Front
-  idx->push_back(i0); idx->push_back(i4); idx->push_back(i5); idx->push_back(i1);
-  // Back
-  idx->push_back(i2); idx->push_back(i6); idx->push_back(i7); idx->push_back(i3);
+  // Back Bottom
+  idx->push_back(i3); idx->push_back(i2);
 
-  // Right
-  idx->push_back(i3); idx->push_back(i7); idx->push_back(i4); idx->push_back(i0);
-  // Left
-  idx->push_back(i1); idx->push_back(i5); idx->push_back(i6); idx->push_back(i2);
+  // Back to top
+  idx->push_back(i7); idx->push_back(i6);
 
+  // Top to left
+  idx->push_back(i5); idx->push_back(i2);
+
+  // Left to bottom
+  idx->push_back(i1); idx->push_back(i3);
+
+  // Bottom to right
+  idx->push_back(i0); idx->push_back(i7);
+
+  // Right to top
+  idx->push_back(i4); idx->push_back(i5);
+
+  // Top to front
+  idx->push_back(i0); idx->push_back(i1);
+
+  geometry->addPrimitiveSet(idx);
 }
 
 void Profile::initRAE_()
@@ -1193,9 +1202,10 @@ void Profile::initRAE_()
 
   const double rangeStep = data_->getRangeStep();
 
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_QUADS);
+  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
 
   simCore::Vec3 tpSphereXYZ;
+  osg::Geometry* geometry = new osg::Geometry();
   const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };
   const double sinElevAngle = sin(elevAngle_);
   simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
@@ -1210,10 +1220,9 @@ void Profile::initRAE_()
       assert(0);
       return;
     }
-    buildVoxel_(lla, &tpSphereXYZ, heightIndex, i, idx);
+    buildVoxel_(lla, &tpSphereXYZ, heightIndex, i, geometry);
   }
 
-  osg::Geometry* geometry = new osg::Geometry();
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_);
@@ -1221,8 +1230,6 @@ void Profile::initRAE_()
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
-
-  geometry->addPrimitiveSet(idx);
 
   geode_->addDrawable(geometry);
 }
