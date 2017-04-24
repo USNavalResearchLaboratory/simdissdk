@@ -588,9 +588,6 @@ void Profile::init3D_()
 
   const unsigned int startIndex = verts_->size();
 
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_QUADS);
-  idx->reserve(24 * numVerts);
-
   const double dt0 = -halfBeamWidth_ + M_PI_2;
   const double dt1 = halfBeamWidth_ + M_PI_2;
 
@@ -630,6 +627,8 @@ void Profile::init3D_()
     }
   }
 
+  osg::Geometry* geometry = new osg::Geometry();
+
   //Now build the indices that will actually be rendered
   for (unsigned int r = 0; r < numRanges - 1; r++)
   {
@@ -647,24 +646,35 @@ void Profile::init3D_()
       const unsigned int v6 = v5 + 1; // back UR
       const unsigned int v7 = v6 + 1; // back UL
 
-      // Front
-      idx->push_back(v0); idx->push_back(v2); idx->push_back(v3); idx->push_back(v1);
-      // Back
-      idx->push_back(v5); idx->push_back(v7); idx->push_back(v6); idx->push_back(v4);
+      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+      idx->reserve(14);
 
-      // Top
-      idx->push_back(v2); idx->push_back(v6); idx->push_back(v7); idx->push_back(v3);
-      // Bottom
-      idx->push_back(v1); idx->push_back(v5); idx->push_back(v4); idx->push_back(v0);
+      // Wrap the voxel with a triangle strip
+      // Back Bottom
+      idx->push_back(v5); idx->push_back(v4);
 
-      // Left
-      idx->push_back(v1); idx->push_back(v3); idx->push_back(v7); idx->push_back(v5);
-      // Right
-      idx->push_back(v4); idx->push_back(v6); idx->push_back(v2); idx->push_back(v0);
+      // Back to top
+      idx->push_back(v6); idx->push_back(v7);
+
+      // Top to left
+      idx->push_back(v3); idx->push_back(v5);
+
+      // Left to bottom
+      idx->push_back(v1); idx->push_back(v4);
+
+      // Bottom to right
+      idx->push_back(v0); idx->push_back(v6);
+
+      // Right to top
+      idx->push_back(v2); idx->push_back(v3);
+
+      // Top to front
+      idx->push_back(v0); idx->push_back(v1);
+
+      geometry->addPrimitiveSet(idx);
     }
   }
 
-  osg::Geometry* geometry = new osg::Geometry();
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_);
   geometry->setUseVertexBufferObjects(true);
@@ -673,8 +683,6 @@ void Profile::init3D_()
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
-
-  geometry->addPrimitiveSet(idx);
   geode_->addDrawable(geometry);
 }
 
