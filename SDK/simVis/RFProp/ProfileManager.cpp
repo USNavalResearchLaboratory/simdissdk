@@ -394,7 +394,7 @@ void ProfileManager::updateVisibility_()
   double maxBearing = currentProfileMap_->getSlotBearing(bearing_ + history_ / 2.0);
   // addTwoPi indicates the condition that the display wraps 360 -> 0 and the max is shifted to > 360
   bool addTwoPi = false;
-  if (minBearing > maxBearing || history_ >= (M_TWOPI - FLT_EPSILON))
+  if (minBearing >= maxBearing || history_ >= (M_TWOPI - FLT_EPSILON))
   {
     addTwoPi = true;
     maxBearing += M_TWOPI;
