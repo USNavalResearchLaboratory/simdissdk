@@ -145,7 +145,7 @@ public:
     children_.insert(atIndex, child);
   }
 
-  ///@return the index for alphabetical insertion
+  ///Return the index for alphabetical insertion
   int positionToInsert(const QString& childName) const
   {
     // Find newPosition, the index pointing to the alphabetical insertion point
@@ -159,9 +159,10 @@ public:
   }
 
   /**
+   * Finds the child with the given name
    *@param name name to match
    *@param rowIndex row containing the match (-1 on no match)
-   *@return the item corresponding to the given name
+   *@return the item corresponding to the given name, will return NULL on no match
    */
   TreeItem* findChild(const QString& name, int& rowIndex) const
   {
@@ -311,6 +312,7 @@ QModelIndex ActionItemModel::index(int row, int column, const QModelIndex &paren
   if (!parent.isValid())
     return createIndex(row, column, groups_[row]);
   TreeItem* parentItem = static_cast<TreeItem*>(parent.internalPointer());
+  // Item was not made correctly, check index()
   assert(parentItem != NULL);
   return createIndex(row, column, parentItem->child(row));
 }
@@ -321,6 +323,7 @@ QModelIndex ActionItemModel::parent(const QModelIndex &child) const
     return QModelIndex();
 
   TreeItem *childItem = static_cast<TreeItem*>(child.internalPointer());
+  // Item was not made correctly, check index()
   assert(childItem != NULL);
   if (childItem == NULL)
     return QModelIndex();
@@ -355,6 +358,7 @@ QVariant ActionItemModel::data(const QModelIndex &index, int role) const
   if (role == Qt::DisplayRole || role == Qt::EditRole)
   {
     TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
+    // Item was not made correctly, check index()
     assert(item);
     if (index.column() >= item->numColumns())
       return QVariant();
@@ -409,6 +413,7 @@ QVariant ActionItemModel::headerData(int section, Qt::Orientation orientation, i
     if (section == 2)
       return "Secondary";
 
+    // A column was added and this section was not updated
     assert(0);
     return QVariant();
   }
@@ -490,6 +495,7 @@ void ActionItemModel::actionAdded(Action* action)
     group = new GroupItem(this, action->group());
     groups_.insert(newPosition, group);
     endInsertRows();
+    // Make sure the item was put in the correct location
     assert(newPosition == group->row());
     emit(groupAdded(createIndex(newPosition, 0, group)));
   }

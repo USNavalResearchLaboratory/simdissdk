@@ -48,21 +48,14 @@ public:
   /// Sets whether the action hotkeys are editable are not (default: editable)
   void setReadOnly(bool readOnly);
 
-  ///@return the index for the given row and column
+  // QAbstractItemModel overrides
   virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
-  ///@return the index of the parent of the item given by index
   virtual QModelIndex parent(const QModelIndex &child) const;
-  ///@return the number of rows in the data
   virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  ///@return number of columns needed to hold data
   virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  ///@return data for given item
   virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-  ///@return the header data for given section
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-  ///@return the flags on the given item
   virtual Qt::ItemFlags flags(const QModelIndex& index) const;
-  /// set the value of the given item
   virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
 
 signals:
