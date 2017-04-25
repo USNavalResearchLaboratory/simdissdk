@@ -227,32 +227,6 @@ double RangeTool::Measurement::value(const osgEarth::Units& outputUnits, State& 
   return units_.convertTo(outputUnits, value(state));
 }
 
-void RangeTool::Calculation::setLastValue(double value)
-{
-  valid_ = true;
-  lastValue_ = value;
-}
-
-double RangeTool::Calculation::lastValue() const
-{
-  return lastValue_;
-}
-
-bool RangeTool::Calculation::valid() const
-{
-  return valid_;
-}
-
-void RangeTool::Calculation::setValid(bool value)
-{
-  valid_ = value;
-}
-
-double RangeTool::Calculation::lastValue(const osgEarth::Units& outputUnits) const
-{
-  return labelMeasurement()->units().convertTo(outputUnits, lastValue_);
-}
-
 bool RangeTool::Measurement::isEntityToEntity_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const
 {
   if ((fromType == simData::DataStore::NONE) || (fromType == simData::DataStore::PROJECTOR))
@@ -384,7 +358,9 @@ void RangeTool::Measurement::calculateTrueAngles_(const RangeTool::State& state,
 RangeTool::Calculation::Calculation(const std::string& name)
   : name_(name),
     labelPrecision_(2),
+    angleType_(AZIMUTH),
     visible_(true),
+    valid_(true),
     lastValue_(0.0)
 {
   //nop
@@ -431,6 +407,28 @@ void RangeTool::Calculation::setVisible(bool visible)
 {
   visible_ = visible;
   setDirty();
+}
+
+void RangeTool::Calculation::setAngleType(AngleType type)
+{
+  angleType_ = type;
+  setDirty();
+}
+
+void RangeTool::Calculation::setLastValue(double value)
+{
+  valid_ = true;
+  lastValue_ = value;
+}
+
+double RangeTool::Calculation::lastValue(const osgEarth::Units& outputUnits) const
+{
+  return labelMeasurement()->units().convertTo(outputUnits, lastValue_);
+}
+
+void RangeTool::Calculation::setValid(bool value)
+{
+  valid_ = value;
 }
 
 //------------------------------------------------------------------------
