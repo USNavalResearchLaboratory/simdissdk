@@ -26,7 +26,6 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QDateTimeEdit>
-#include <QSpinBox>
 
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Utils.h"
@@ -221,7 +220,7 @@ void TimeWidget::setTimeFormat(simCore::TimeFormat newFormat)
       currentContainer_ = w;
       if (timeEnabled_)
       {
-        currentContainer_->widget()->setHidden(true);
+        currentContainer_->widget()->setHidden(false);
         layout()->addWidget(currentContainer_->widget());
       }
       break;
