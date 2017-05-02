@@ -556,16 +556,19 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   double speedMS = 10.0f; // m/s; this default should never be needed, should be overridden by DefaultDataStoreValues
   if (prefs.speedring().useplatformspeed())
   {
-    if (simCore::areEqual(hostSpeedMS_, 0.0))
-      return;
-
     speedMS = hostSpeedMS_;
   }
-  else if (prefs.speedring().speedtouse())
+  else if (prefs.speedring().has_speedtouse())
   {
     // using speedToUse, convert to m/s
     const Units prefSpeedUnits = simVis::convertUnitsToOsgEarth(prefs.speedring().speedunits());
     speedMS = prefSpeedUnits.convertTo(osgEarth::Units::METERS_PER_SECOND, prefs.speedring().speedtouse());
+  }
+
+  if (simCore::areEqual(speedMS, 0.0))
+  {
+    // do not display anything if speed is zero
+    return;
   }
 
   // determine the time radius for the speed rings display
@@ -591,7 +594,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   if (timeRadiusSeconds <= 0.0)
     return;
 
-  double sizeM = timeRadiusSeconds * speedMS;
+  const double sizeM = timeRadiusSeconds * speedMS;
 
   // if sizeM exceeds this number there is an excessive UI responsiveness penalty
   if (sizeM > MAX_RING_SIZE_M)
