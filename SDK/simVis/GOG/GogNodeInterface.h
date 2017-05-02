@@ -355,7 +355,7 @@ protected: // methods
   void initializeLineColor_();
 
   /** Helper method to update the altitude component of a local geometry node's local offset */
-  void setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters) const;
+  void setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters);
 
   /**
   * Begin batched updates to the Style, subsequent sets will not apply the style to the GOG

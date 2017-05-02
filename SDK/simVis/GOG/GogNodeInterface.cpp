@@ -915,7 +915,7 @@ void GogNodeInterface::initializeLineColor_()
     lineColor_ = osgEarth::Symbology::Color::Red; // default to red
 }
 
-void GogNodeInterface::setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters) const
+void GogNodeInterface::setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters)
 {
   if (!node)
     return;
@@ -924,6 +924,14 @@ void GogNodeInterface::setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometr
     return;
   offset[2] = altOffsetMeters;
   node->setLocalOffset(offset);
+
+  AltitudeMode currentMode = ALTITUDE_NONE;
+  if (getAltitudeMode(currentMode) == 0 && currentMode == ALTITUDE_GROUND_RELATIVE)
+  {
+    // toggle altitude mode to get the altitude offset to apply. Due to the way osgEarth LocalGeometryNode works, it won't update the altitude offset otherwise.
+    setAltitudeMode(ALTITUDE_NONE);
+    setAltitudeMode(ALTITUDE_GROUND_RELATIVE);
+  }
 }
 
 bool GogNodeInterface::isFillable_(simVis::GOG::GogShape shape) const
