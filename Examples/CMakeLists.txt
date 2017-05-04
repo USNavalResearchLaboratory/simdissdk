@@ -27,7 +27,7 @@ add_subdirectory(LoadEarthFile)
 add_subdirectory(LoadLayer)
 add_subdirectory(SkyModel)
 add_subdirectory(SimpleServer)
-
+add_subdirectory(TimestampedLayer)
 
 if(QT_FOUND)
     add_subdirectory(Qt)
