@@ -209,9 +209,15 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
   QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
   CategoryTreeItem *item = static_cast<CategoryTreeItem*>(index.internalPointer());
 
+  // include items that pass the filter
   if (item->text().contains(filter_, Qt::CaseInsensitive))
     return true;
 
+  // include items whose parent passes the filter, but not if parent is root "All Categories" item
+  if (item->parent() != NULL && item->parent()->text() != ALL_CATEGORIES && item->parent()->text().contains(filter_, Qt::CaseInsensitive))
+    return true;
+
+  // include items with any children that pass the filter
   for (int ii = 0; ii < item->childCount(); ++ii)
   {
     if (item->child(ii)->text().contains(filter_, Qt::CaseInsensitive))
