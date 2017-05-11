@@ -301,4 +301,46 @@ int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataSto
   return 1;
 }
 
+simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, const std::string& tableName, simData::DataStore* dataStore)
+{
+  if ((dataStore->objectType(objectId) == simData::DataStore::NONE) || tableName.empty() || (dataStore == NULL))
+    return NULL;
+
+  simData::DataTableManager& tableManager = dataStore->dataTableManager();
+  simData::DataTable* table = NULL;
+
+  table = tableManager.findTable(objectId, tableName);
+
+  // if failed to find the table, create the table.
+  if (table == NULL)
+  {
+    simData::TableStatus status = tableManager.addDataTable(objectId, tableName, &table);
+    if (status.isError())
+      return NULL;
+  }
+
+  return table;
+}
+
+
+int DataStoreHelpers::getOrCreateColumn(simData::DataTable* table, const std::string& columnName, VariableType storageType, UnitType unitType, simData::DataStore* dataStore, simData::TableColumnId& id)
+{
+  if ((table == NULL) || columnName.empty() || (dataStore == NULL))
+    return 1;
+
+  simData::TableColumn* column = table->column(columnName);
+  if (column)
+  {
+    id = column->columnId();
+    return 0;
+  }
+
+  // if failed to find the column, create the column
+  simData::TableColumn* newColumn = NULL;
+  if (table->addColumn(columnName, storageType, unitType, &newColumn).isError())
+    return 1;
+
+  id = newColumn->columnId();
+  return 0;
+}
 }

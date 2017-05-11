@@ -209,11 +209,10 @@ TableColumn* Table::column(TableColumnId id) const
 
 TableColumn* Table::column(const std::string& name) const
 {
-  for (std::map<TableColumnId, TableToColumn>::const_iterator i = columns_.begin(); i != columns_.end(); ++i)
-  {
-    if (i->second.second->name() == name)
-      return i->second.second;
-  }
+  auto i = columnsByName_.find(name);
+  if (i != columnsByName_.end())
+    return i->second;
+
   return NULL;
 }
 
@@ -275,6 +274,7 @@ TableStatus Table::addColumn(const std::string& columnName, VariableType storage
   assert(returnColumn != NULL);
   // Save the column, and do any callbacks
   columns_[nextId_++] = std::make_pair(emptyTable, returnColumn);
+  columnsByName_[columnName] = returnColumn;
   // Assertion failure means we somehow forgot to set newColumn return value
   assert(newColumn == NULL || *newColumn == returnColumn);
   // notify observers of new column
