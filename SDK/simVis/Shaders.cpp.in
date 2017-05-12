@@ -47,6 +47,7 @@ Shaders::Shaders()
   add(setClipVertex(), "@SetClipVertex.vert.glsl@");
   add(trackHistoryVertex(), "@TrackHistory.vert.glsl@");
   add(trackHistoryFragment(), "@TrackHistory.frag.glsl@");
+  add(flashingFragment(), "@Flashing.frag.glsl@");
 }
 
 std::string Shaders::alphaColorFilterFragment() const
@@ -152,6 +153,11 @@ std::string Shaders::rfPropLossToColorThreshold() const
 std::string Shaders::setClipVertex() const
 {
   return "SetClipVertex.vert.glsl";
+}
+
+std::string Shaders::flashingFragment() const
+{
+  return "Flashing.frag.glsl";
 }
 
 }

@@ -15,6 +15,7 @@ set(SHADER_FILES
     BathymetryGenerator.vert.glsl
     BeamPulse.vert.glsl
     BeamPulse.frag.glsl
+    Flashing.frag.glsl
     GlowHighlight.frag.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl

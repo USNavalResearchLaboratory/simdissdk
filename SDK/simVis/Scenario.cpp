@@ -333,6 +333,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   OverrideColor::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
   BeamPulse::installShaderProgram(stateSet);
+  LobGroupNode::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()

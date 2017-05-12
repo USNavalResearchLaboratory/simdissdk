@@ -88,6 +88,9 @@ public:
   std::string trackHistoryVertex() const;
   /** Name of fragment shader for track history (track override color) */
   std::string trackHistoryFragment() const;
+
+  /** Name of fragment shader for flashing LOB Group */
+  std::string flashingFragment() const;
 };
 
 }

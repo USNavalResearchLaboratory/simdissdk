@@ -28,12 +28,16 @@
 #include "simVis/AnimatedLine.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Shaders.h"
 #include "simVis/LobGroup.h"
 
 #define LC "[simVis::LobGroup] "
 
 namespace
 {
+
+/// Uniform shader variable for flashing the LOB
+static const std::string SIMVIS_FLASHING_ENABLE = "simvis_flashing_enable";
 
 /** Determines whether the new prefs will require new geometry */
 bool prefsRequiresRebuild(const simData::LobGroupPrefs* a, const simData::LobGroupPrefs* b)
@@ -182,7 +186,8 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props,
     drawStyleTableId_(0),
     lineCache_(new Cache),
     label_(NULL),
-    contentCallback_(new NullEntityCallback())
+    contentCallback_(new NullEntityCallback()),
+    lastFlashingState_(false)
 {
   setName("LobGroup");
   localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
@@ -217,6 +222,14 @@ LobGroupNode::~LobGroupNode()
   lineCache_->clearCache(this);
   delete lineCache_;
   lineCache_ = NULL;
+}
+
+void LobGroupNode::installShaderProgram(osg::StateSet* intoStateSet)
+{
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
+  simVis::Shaders package;
+  package.load(vp, package.flashingFragment());
+  intoStateSet->getOrCreateUniform(SIMVIS_FLASHING_ENABLE, osg::Uniform::BOOL)->set(false);
 }
 
 void LobGroupNode::updateLabel_(const simData::LobGroupPrefs& prefs)
@@ -562,6 +575,22 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
   assert(updateSlice);
   const simData::LobGroupUpdate* current = updateSlice->current();
   const bool lobChangedToActive = (current != NULL && !hasLastUpdate_);
+
+  // Do any necessary flashing
+  simData::DataTable* table = NULL;
+  table = ds_.dataTableManager().getTable(drawStyleTableId_);
+  if (table != NULL)
+  {
+    bool flashing = false;
+    uint8_t state;
+    if (getColumnValue_(simData::INTERNAL_LOB_FLASH_COLUMN, *table, ds_.updateTime(), state) == 0)
+      flashing = (state != 0);
+    if (flashing != lastFlashingState_)
+    {
+      getOrCreateStateSet()->getOrCreateUniform(SIMVIS_FLASHING_ENABLE, osg::Uniform::BOOL)->set(flashing);
+      lastFlashingState_ = flashing;
+    }
+  }
 
   if (!updateSlice->hasChanged() && !force && !lobChangedToActive)
     return false;
