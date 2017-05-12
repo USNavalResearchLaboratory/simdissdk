@@ -266,11 +266,22 @@ bool simVis::Registry::isMemoryCheck() const
   return memoryChecking_;
 }
 
+namespace {
+  /** URLRewriter that is intended to block network access by always rewriting URLs to empty string */
+  class RewriteToEmptyString : public osgEarth::URLRewriter
+  {
+  public:
+    virtual std::string rewrite(const std::string& url)
+    {
+      return "";
+    }
+  };
+}
+
 void simVis::Registry::setNetworkDisabled()
 {
-  // first, set "cache only" mode in osgEarth. This will prevent any osgEarth
-  // code from trying to access the network.
-  osgEarth::Registry::instance()->setOverrideCachePolicy(osgEarth::CachePolicy::CACHE_ONLY);
+  // Turn off HTTPClient
+  osgEarth::HTTPClient::setURLRewriter(new RewriteToEmptyString);
 
   // next, intercept the osgDB read implementation so that it will reject any network URLs.
   readFileCallback_->setNetworkDisabled();
