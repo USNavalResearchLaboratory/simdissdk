@@ -69,6 +69,9 @@ public:
 
   /// create a protobuf message for the prefs of the given entity type
   static google::protobuf::Message* makeMessage(simData::DataStore::ObjectType entityType);
+
+  /** Returns true if the entity is active, or false if inactive; e.g. for Super Form-like filtering. */
+  static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);
 };
 
 }

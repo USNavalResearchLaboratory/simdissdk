@@ -84,13 +84,6 @@ namespace simQt {
     /// Type of filtering
     enum State { ACTIVE, INACTIVE, BOTH};
 
-    // Accept routines for the different types
-    bool acceptPlatform_(simData::ObjectId id, double time) const;
-    bool acceptBeam_(simData::ObjectId id, double time) const;
-    bool acceptGate_(simData::ObjectId id, double time) const;
-    bool acceptLaser_(simData::ObjectId id, double time) const;
-    bool acceptLob_(simData::ObjectId id, double time) const;
-
     /// Updates the filtering when time changes
     void newTime_();
 
