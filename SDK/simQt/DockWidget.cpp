@@ -985,12 +985,24 @@ void DockWidget::showEvent(QShowEvent* evt)
 {
   QDockWidget::showEvent(evt);
 
+  // Queue a raise() to occur AFTER the actual show() finishes, to make window pop up
+  QTimer::singleShot(0, this, SLOT(raise()));
+
   // Do nothing if dock title styling is turned off
   if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
     return;
-  // Both set focus and activate the window to get focus in
-  setFocus();  // Covers highlighting when docked
+  setFocus();
   activateWindow();  // Covers highlighting when floating
+}
+
+void DockWidget::show()
+{
+  // The following may or may not call showEvent() based on current state
+  QDockWidget::show();
+  // Only set focus if our title bar widget is used
+  if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
+    return;
+  setFocus();
 }
 
 void DockWidget::loadSettings_()

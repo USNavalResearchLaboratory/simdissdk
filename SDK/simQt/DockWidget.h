@@ -183,6 +183,9 @@ public:
   /** Retrieves the currently set docking flags (additional features to features()) */
   ExtraFeatures extraFeatures() const;
 
+  /** Provide a custom show() method that also sets focus.  Note that QWidget::show() is not virtual. */
+  void show();
+
 public slots:
 
   /**
@@ -209,12 +212,6 @@ signals:
   /** Emitted when is-dockable flag has changed via setDockable */
   bool isDockableChanged(bool isDockable);
 
-protected:
-  /** Override keyPressEvent() to handle 'escape' key */
-  virtual void keyPressEvent(QKeyEvent* evt);
-  /** Override show event to focus the window */
-  virtual void showEvent(QShowEvent* evt);
-
 protected slots:
   /** Docks the window (as long as it's dockable) */
   void dock_();
@@ -229,11 +226,16 @@ protected slots:
 
 protected:
   /** Override closeEvent to emit the closedGui signal */
-  virtual void closeEvent(QCloseEvent* event);
+  virtual void closeEvent(QCloseEvent* evt);
   /** Override resizeEvent to update the title bar when maximized */
-  virtual void resizeEvent(QResizeEvent* event);
+  virtual void resizeEvent(QResizeEvent* evt);
   /** Override resizeEvent to update the title bar when maximized windows move */
-  virtual void moveEvent(QMoveEvent* event);
+  virtual void moveEvent(QMoveEvent* evt);
+  /** Override keyPressEvent() to handle 'escape' key */
+  virtual void keyPressEvent(QKeyEvent* evt);
+  /** Override show event to focus the window */
+  virtual void showEvent(QShowEvent* evt);
+
   /** Update title bar text */
   void updateTitleBarText_();
   /** Update title bar icon */
