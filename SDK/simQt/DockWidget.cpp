@@ -826,9 +826,9 @@ void DockWidget::setSearchEnabled(bool enable)
   searchLineEdit_->setObjectName("DockWidgetSearch");
   searchLineEdit_->setToolTip(tr("Search"));
   // Ensure horizontal policy is preferred
-  searchLineEdit_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+  searchLineEdit_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
   // Without setting a fixed height, the title bar expands a bit.  Choose any tool button for height
-  searchLineEdit_->setFixedHeight(restoreButton_->height());
+  searchLineEdit_->setFixedHeight(restoreButton_->height() + 3); // 3 from experimentation does not cut off descenders
   // Without auto-fill, style sheets for search background color sometimes don't work
   searchLineEdit_->setAutoFillBackground(true);
 
