@@ -20,11 +20,11 @@
  *
  */
 #include <cmath>
-
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
+#include "simCore/Calc/Random.h"
 #include "simCore/Calc/NumericalAnalysis.h"
 
 namespace {
@@ -1348,6 +1348,50 @@ int testMidPointHighRes()
   return rv;
 }
 
+// Completely arbitrary test of randomness, intended to make sure same
+// value is not returned X times in a row.  While this could happen in
+// a random set, the likelihood should be so low that it's not worth
+// considering.
+int testIsRandom(simCore::RandomVariable& random)
+{
+  double firstValue = random();
+  for (int k = 0; k < 100; ++k)
+  {
+    if (random() != firstValue)
+      return 0;
+  }
+  return 1;
+}
+
+int testIsRandom(simCore::DiscreteRandomVariable& random)
+{
+  int firstValue = random();
+  for (int k = 0; k < 100; ++k)
+  {
+    if (random() != firstValue)
+      return 0;
+  }
+  return 1;
+}
+
+int testRandom()
+{
+  int rv = 0;
+  simCore::NormalVariable v1;
+  rv += SDK_ASSERT(testIsRandom(v1) == 0);
+  simCore::ExponentialVariable v2;
+  rv += SDK_ASSERT(testIsRandom(v2) == 0);
+  simCore::PoissonVariable v3;
+  rv += SDK_ASSERT(testIsRandom(v3) == 0);
+  v3.setMean(2.0);
+  rv += SDK_ASSERT(testIsRandom(v3) == 0);
+  simCore::GeometricVariable v4;
+  rv += SDK_ASSERT(testIsRandom(v4) == 0);
+  simCore::BinomialVariable v5;
+  rv += SDK_ASSERT(testIsRandom(v5) == 0);
+  return rv;
+}
+
 }
 
 int CalculationTest(int argc, char* argv[])
@@ -1371,6 +1415,7 @@ int CalculationTest(int argc, char* argv[])
   rv += testCalculateVelOriFromPos();
   rv += testMidPointLowRes();
   rv += testMidPointHighRes();
+  rv += testRandom();
 
   return rv;
 }

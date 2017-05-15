@@ -50,6 +50,8 @@ namespace simCore
   // on success, the TextReplacer will assume ownership of the Replaceable
   int TextReplacer::addReplaceable(simCore::TextReplacer::Replaceable* r)
   {
+    if (!r)
+      return 1;
     std::vector<TextReplacer::Replaceable*>::const_iterator i = std::find(replaceables_.begin(), replaceables_.end(), r);
     if (i == replaceables_.end())
     {

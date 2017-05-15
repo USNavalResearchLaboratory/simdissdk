@@ -27,6 +27,7 @@
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/Tokenizer.h"
+#include "simCore/String/TextReplacer.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/SDKAssert.h"
 
@@ -369,6 +370,38 @@ int buildFormatStrTest()
   return rv;
 }
 
+int testTextReplacer()
+{
+  class VarReplaceable : public simCore::TextReplacer::Replaceable
+  {
+  public:
+    virtual std::string getText() const { return "foobar"; }
+    virtual std::string getVariableName() const { return "%VAR%"; }
+  };
+
+  simCore::TextReplacer replacer;
+  int rv = 0;
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
+
+  // Create a replaceable and test that it works
+  VarReplaceable* varReplaceable1 = new VarReplaceable;
+  rv += SDK_ASSERT(replacer.addReplaceable(NULL) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable1) == 0);
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test foobar 123");
+  // Remove it and make sure that the replacement is gone
+  replacer.deleteReplaceable(varReplaceable1);
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
+  // The memory in varReplaceable1 is considered deleted
+  varReplaceable1 = NULL;
+
+  VarReplaceable* varReplaceable2 = new VarReplaceable;
+  rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable2) == 0);
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test foobar 123");
+  rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable2) != 0);
+
+  return rv;
+}
+
 }
 
 int StringUtilsTest(int argc, char* argv[])
@@ -390,6 +423,9 @@ int StringUtilsTest(int argc, char* argv[])
 
   // buildString() testing
   rv += SDK_ASSERT(buildFormatStrTest() == 0);
+
+  // TextReplacer testing
+  rv += SDK_ASSERT(testTextReplacer() == 0);
 
   std::cout << "simCore StringUtilsTest " << ((rv == 0) ? "passed" : "failed") << std::endl;
 
