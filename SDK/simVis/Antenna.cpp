@@ -551,7 +551,6 @@ void AntennaNode::render_()
       else
         colors->push_back(color);
 
-      std::vector<float>::const_iterator begin = elevPoints.begin();
       for (std::vector<float>::const_iterator jiter = elevPoints.begin(); jiter != elevPoints.end(); ++jiter)
       {
         const float elev = *jiter;

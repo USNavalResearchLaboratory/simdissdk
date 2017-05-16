@@ -37,9 +37,12 @@ namespace ui = osgEarth::Util::Controls;
 struct App
 {
   App()
-    : activeLayer_(NULL),
+    : timeSlider_(NULL),
+      clockLabel_(NULL),
+      activeLayer_(NULL),
       firstTime_(INT_MAX),
-      lastTime_(0)
+      lastTime_(0),
+      now_(0)
   {
   }
 
@@ -93,7 +96,7 @@ struct App
 struct ChangeTime : public ui::ControlEventHandler
 {
   App& app_;
-  ChangeTime(App& app)
+  explicit ChangeTime(App& app)
     : app_(app)
   {
   }
@@ -190,7 +193,8 @@ void discoverTimestampedLayers(App& app, osgEarth::Map* map)
   if (app.layers_.size() >= 2)
   {
     App::LayerTable::const_iterator begin = app.layers_.begin();
-    double t0 = begin->first; begin++;
+    double t0 = begin->first;
+    ++begin;
     double t1 = begin->first;
     app.firstTime_ -= (t1-t0);
 
@@ -218,7 +222,6 @@ int main(int argc, char** argv)
   }
 
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  simVis::View* mainView = viewer->getMainView();
 
   // Load the earth file containing the timestamped layers:
   std::string earthFile = argv[argc-1];

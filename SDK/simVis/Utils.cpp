@@ -864,7 +864,6 @@ int StatsTimer::stop()
     return 1;
 
   // Save the current tick, and calculate new cumulative delta
-  const osg::Timer* timer = osg::Timer::instance();
   lastStopTickMs_ = osg::Timer::instance()->tick();
   cumulativeMs_ += (lastStopTickMs_ - startTickMs_);
 
