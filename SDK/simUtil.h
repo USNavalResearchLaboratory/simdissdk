@@ -31,6 +31,7 @@
 #include "simUtil/GogManager.h"
 #include "simUtil/HudManager.h"
 #include "simUtil/LayerFactory.h"
+#include "simUtil/LineGraphic.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/MouseManipulator.h"
 #include "simUtil/MousePositionManipulator.h"
