@@ -156,6 +156,16 @@ void LineGraphic::setFontSize(float fontSize)
   label_->setStyle(labelStyle_);
 }
 
+simVis::AnimatedLineNode* LineGraphic::animatedLine() const
+{
+  return animatedLine_;
+}
+
+osgEarth::Annotation::LabelNode* LineGraphic::label() const
+{
+  return label_;
+}
+
 ////////////////////////////////////////////////////////////
 
 bool Position::positionEquals_(const Position& other) const

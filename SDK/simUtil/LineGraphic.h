@@ -90,12 +90,23 @@ public:
   */
   void setFont(const std::string& fontName);
 
-  /** Size of the font, in SIMDIS units; converted into OSG units */
   /**
   * Sets the label text font size.
   * @param fontSize Size of the font, in SIMDIS units; converted into OSG units.
   */
   void setFontSize(float fontSize);
+
+  /**
+  * Retrieves the LineGraphic's line component.
+  * @return simVis::AnimatedLineNode representing the line component of the LineGraphic.
+  */
+  simVis::AnimatedLineNode* animatedLine() const;
+
+  /**
+  * Retrieves the LineGraphic's label component.
+  * @return simVis::AnimatedLineNode representing the label component of the LineGraphic.
+  */
+  osgEarth::Annotation::LabelNode* label() const;
 
 private:
   osg::Group* scene_;
