@@ -1212,8 +1212,6 @@ void Profile::initRAE_()
 
   const double rangeStep = data_->getRangeStep();
 
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
-
   simCore::Vec3 tpSphereXYZ;
   osg::Geometry* geometry = new osg::Geometry();
   const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };

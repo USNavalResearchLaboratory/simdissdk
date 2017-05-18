@@ -66,7 +66,7 @@ static const osg::Vec3f NO_SCALE = osg::Vec3f(1.f, 1.f, 1.f);
 class DynamicScaleTransform::RecalculateScaleVisitor : public osg::NodeVisitor
 {
 public:
-  RecalculateScaleVisitor(TraversalMode tm=osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
+  explicit RecalculateScaleVisitor(TraversalMode tm=osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
     : NodeVisitor(tm)
   {
   }

@@ -22,6 +22,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}GogManager.h
     ${UTIL_INC}HudManager.h
     ${UTIL_INC}LayerFactory.h
+    ${UTIL_INC}LineGraphic.h
     ${UTIL_INC}MouseDispatcher.h
     ${UTIL_INC}MouseManipulator.h
     ${UTIL_INC}MousePositionManipulator.h
@@ -49,6 +50,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}GogManager.cpp
     ${UTIL_SRC}HudManager.cpp
     ${UTIL_SRC}LayerFactory.cpp
+    ${UTIL_SRC}LineGraphic.cpp
     ${UTIL_SRC}MouseDispatcher.cpp
     ${UTIL_SRC}MouseManipulator.cpp
     ${UTIL_SRC}MousePositionManipulator.cpp
