@@ -1065,6 +1065,15 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
       mainWindow_->addDockWidget(Qt::RightDockWidgetArea, this);
     }
   }
+  else
+  {
+#ifndef WIN32
+    // On some versions of Gnome, this flag gets set and causes problems where
+    // the dock widget, when undocked, will always be in front of other modal
+    // always-on-top windows like the file dialog
+    setWindowFlags(windowFlags() & ~(Qt::X11BypassWindowManagerHint));
+#endif
+  }
 }
 
 void DockWidget::saveSettings_()
