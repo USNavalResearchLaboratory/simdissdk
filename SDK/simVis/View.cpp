@@ -1332,9 +1332,6 @@ void View::enableOverheadMode(bool enableOverhead)
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();
   if (enableOverhead)
   {
-    // Force off the elevation rendering
-    cameraState->setDefine("OE_TERRAIN_RENDER_ELEVATION", osg::StateAttribute::OVERRIDE | osg::StateAttribute::OFF);
-
     // Disable watch mode if needed
     if (isWatchEnabled())
     {
@@ -1345,9 +1342,31 @@ void View::enableOverheadMode(bool enableOverhead)
     vp.heading()->set(0.0, Units::DEGREES);
     vp.pitch()->set(-90.0, Units::DEGREES);
     this->setViewpoint(vp);
+    
+    // Set an orthographic camera. We don't call enableOrthographic() here
+    // because we'd rather quitely reset the original mode once overhead mode
+    // is disabled later.
+    if (orthoEnabled_ == false)
+    {
+      getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    }
+
+    // disable elevation rendering on the terrain surface
+    cameraState->setDefine("OE_TERRAIN_RENDER_ELEVATION", osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
   }
   else
+  {
+    // quitely revert to the perspective camera if necessary
+    if (orthoEnabled_ == false)
+    {
+      const osg::Viewport* vp = getCamera()->getViewport();
+      double aspectRatio = vp ? vp->aspectRatio() : 1.5;
+      getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+    }
+    
+    // remove elevation rendering override.
     cameraState->removeDefine("OE_TERRAIN_RENDER_ELEVATION");
+  }
 
   // Toggle the overhead clamping features on/off
   OverheadMode::setEnabled(enableOverhead && useOverheadClamping(), this);
@@ -1638,7 +1657,7 @@ void View::enableOrthographic(bool whether)
   {
     // Switch to an Ortho camera. The actual values here don't matter because the EarthManipulator
     // will take control of them in order to track the last-known YFOV.
-    getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0);
+    getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
   }
   else
   {
