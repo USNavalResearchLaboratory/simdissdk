@@ -603,7 +603,7 @@ LabelContentCallback* PlatformNode::labelContentCallback() const
 
 std::string PlatformNode::popupText() const
 {
-  if (lastPrefsValid_ && valid_)
+  if (lastPrefsValid_ && valid_ && lastUpdate_.has_time())
   {
     std::string prefix;
     /// if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
@@ -623,7 +623,7 @@ std::string PlatformNode::popupText() const
 
 std::string PlatformNode::legendText() const
 {
-  if (lastPrefsValid_ && valid_)
+  if (lastPrefsValid_ && valid_ && lastUpdate_.has_time())
   {
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   }
