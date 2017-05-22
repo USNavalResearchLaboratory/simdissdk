@@ -233,6 +233,7 @@ template<typename T>
 void MemoryDataSlice<T>::flush(bool keepStatic)
 {
   MemorySliceHelper::flush(updates_, keepStatic);
+  current_ = NULL;
   dirty_ = true;
 }
 
