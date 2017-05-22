@@ -389,15 +389,19 @@ int testTextReplacer()
   rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable1) == 0);
   rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test foobar 123");
   // Remove it and make sure that the replacement is gone
-  replacer.deleteReplaceable(varReplaceable1);
-  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
-  // The memory in varReplaceable1 is considered deleted
+  rv += SDK_ASSERT(replacer.deleteReplaceable(NULL) != 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable(varReplaceable1) == 0);
+  // Should not be able to delete twice
+  rv += SDK_ASSERT(replacer.deleteReplaceable(varReplaceable1) != 0);
+  // The memory in varReplaceable1 is considered deleted and is now invalid
   varReplaceable1 = NULL;
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
 
   VarReplaceable* varReplaceable2 = new VarReplaceable;
   rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable2) == 0);
   rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test foobar 123");
   rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable2) != 0);
+  // Note that replacer owns memory and will delete it
 
   return rv;
 }
