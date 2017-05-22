@@ -79,9 +79,9 @@ int limitByTime(std::deque<T*> &updates, double timeLimit);
 template<typename T>
 int limitByPoints(std::deque<T*> &updates, uint32_t limitPoints);
 
-/// remove all points, unless keeping a static (time = -1) point
+/// remove all points, unless keeping a static (time = -1) point; returns non-zero if flush did not occur due to static case
 template<typename T>
-void flush(std::deque<T*> &updates, bool keepStatic = true);
+int flush(std::deque<T*> &updates, bool keepStatic = true);
 } // namespace MemorySliceHelper
 
 /** Iterator for DataSlice vector */
