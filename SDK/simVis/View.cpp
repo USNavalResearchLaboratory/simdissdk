@@ -24,6 +24,8 @@
 
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
+#include "osgEarth/MapNode"
+#include "osgEarth/TerrainEngineNode"
 #include "osgEarthUtil/Sky"
 
 #include "simCore/Calc/Angle.h"
@@ -1324,6 +1326,34 @@ void View::setNavigationMode(const NavMode& mode)
   currentMode_ = mode;
 }
 
+namespace
+{
+    // Cull callback that sets the N/F planes on an orthographic camera.
+    struct SetNearFarCallback : public osg::NodeCallback
+    {
+        void operator()(osg::Node* node, osg::NodeVisitor* nv)
+        {
+            traverse(node, nv);
+            osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+            if (cv)
+            {
+                osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
+                double eyeR = eye.length();
+                const double earthR = simCore::EARTH_RADIUS;
+                double eyeAlt = std::max(0.0, eyeR - earthR);
+                const double gsoAlt = 35786000.0; // Geosynchronous orbit altitude (GS)
+                double L, R, B, T, N, F;
+                cv->getCurrentCamera()->getProjectionMatrixAsOrtho(L, R, B, T, N, F);
+                N = eyeAlt - gsoAlt;
+                F = eyeR;
+                cv->getCurrentCamera()->setProjectionMatrixAsOrtho(L, R, B, T, N, F);
+            }
+        }
+    };
+    osg::ref_ptr<SetNearFarCallback> s_SetNearFarCallback = new SetNearFarCallback();
+}
+
+
 void View::enableOverheadMode(bool enableOverhead)
 {
   if (enableOverhead == overheadEnabled_)
@@ -1348,7 +1378,14 @@ void View::enableOverheadMode(bool enableOverhead)
     // is disabled later.
     if (orthoEnabled_ == false)
     {
-      getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+      getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
+      getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+      getCamera()->setCullCallback(s_SetNearFarCallback.get());
+      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
+      mapNode->getTerrainEngine()->getOrCreateStateSet()->
+          setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
+          osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+
     }
 
     // disable elevation rendering on the terrain surface
@@ -1362,6 +1399,11 @@ void View::enableOverheadMode(bool enableOverhead)
       const osg::Viewport* vp = getCamera()->getViewport();
       double aspectRatio = vp ? vp->aspectRatio() : 1.5;
       getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+      getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
+      getCamera()->removeCullCallback(s_SetNearFarCallback.get());
+      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
+      mapNode->getTerrainEngine()->getOrCreateStateSet()->
+          removeAttribute(osg::StateAttribute::DEPTH);
     }
     
     // remove elevation rendering override.
