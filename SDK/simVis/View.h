@@ -725,6 +725,8 @@ private: // data
 
   /// If true, then the overhead mode clamping gets used
   bool useOverheadClamping_;
+  /// Points to a callback that is used for enforcing the near clipping plane when in overhead+ortho
+  osg::ref_ptr<osg::NodeCallback> overheadNearFarCallback_;
 };
 
 class FocusManager;
