@@ -1342,7 +1342,7 @@ void View::enableOverheadMode(bool enableOverhead)
     vp.heading()->set(0.0, Units::DEGREES);
     vp.pitch()->set(-90.0, Units::DEGREES);
     this->setViewpoint(vp);
-    
+
     // Set an orthographic camera. We don't call enableOrthographic() here
     // because we'd rather quitely reset the original mode once overhead mode
     // is disabled later.
@@ -1363,7 +1363,7 @@ void View::enableOverheadMode(bool enableOverhead)
       double aspectRatio = vp ? vp->aspectRatio() : 1.5;
       getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
     }
-    
+
     // remove elevation rendering override.
     cameraState->removeDefine("OE_TERRAIN_RENDER_ELEVATION");
   }
