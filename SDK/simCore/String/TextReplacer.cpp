@@ -61,11 +61,15 @@ namespace simCore
     return 1;
   }
 
-  void TextReplacer::deleteReplaceable(simCore::TextReplacer::Replaceable* r)
+  int TextReplacer::deleteReplaceable(simCore::TextReplacer::Replaceable* r)
   {
     std::vector<TextReplacer::Replaceable*>::iterator i = std::find(replaceables_.begin(), replaceables_.end(), r);
-    if (i != replaceables_.end())
-      replaceables_.erase(i);
+    if (i == replaceables_.end())
+      return 1;
+
+    replaceables_.erase(i);
+    delete r;
+    return 0;
   }
 }
 

@@ -32,6 +32,7 @@
 #include "simCore/Calc/Calculations.h"
 #include "simNotify/Notify.h"
 
+#include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/View.h"
 #include "simVis/NavigationModes.h"
@@ -119,6 +120,29 @@ public:
   virtual const char* className() const { return "BorderNode"; }
 
   simVis::View::BorderProperties props_;
+};
+
+/// Cull callback that sets the N/F planes on an orthographic camera.
+struct SetNearFarCallback : public osg::NodeCallback
+{
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  {
+    traverse(node, nv);
+    osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+    if (cv)
+    {
+      osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
+      double eyeR = eye.length();
+      const double earthR = simCore::EARTH_RADIUS;
+      double eyeAlt = std::max(0.0, eyeR - earthR);
+      const double gsoAlt = 35786000.0; // Geosynchronous orbit altitude (GS)
+      double L, R, B, T, N, F;
+      cv->getCurrentCamera()->getProjectionMatrixAsOrtho(L, R, B, T, N, F);
+      N = eyeAlt - gsoAlt;
+      F = eyeR;
+      cv->getCurrentCamera()->setProjectionMatrixAsOrtho(L, R, B, T, N, F);
+    }
+  }
 };
 
 } // namespace
@@ -496,7 +520,8 @@ View::View()
    lighting_(true),
    fovy_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
-   useOverheadClamping_(true)
+   useOverheadClamping_(true),
+   overheadNearFarCallback_(new SetNearFarCallback)
 {
   // start out displaying all things.
   setDisplayMask(simVis::DISPLAY_MASK_ALL);
@@ -1326,34 +1351,6 @@ void View::setNavigationMode(const NavMode& mode)
   currentMode_ = mode;
 }
 
-namespace
-{
-    // Cull callback that sets the N/F planes on an orthographic camera.
-    struct SetNearFarCallback : public osg::NodeCallback
-    {
-        void operator()(osg::Node* node, osg::NodeVisitor* nv)
-        {
-            traverse(node, nv);
-            osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-            if (cv)
-            {
-                osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
-                double eyeR = eye.length();
-                const double earthR = simCore::EARTH_RADIUS;
-                double eyeAlt = std::max(0.0, eyeR - earthR);
-                const double gsoAlt = 35786000.0; // Geosynchronous orbit altitude (GS)
-                double L, R, B, T, N, F;
-                cv->getCurrentCamera()->getProjectionMatrixAsOrtho(L, R, B, T, N, F);
-                N = eyeAlt - gsoAlt;
-                F = eyeR;
-                cv->getCurrentCamera()->setProjectionMatrixAsOrtho(L, R, B, T, N, F);
-            }
-        }
-    };
-    osg::ref_ptr<SetNearFarCallback> s_SetNearFarCallback = new SetNearFarCallback();
-}
-
-
 void View::enableOverheadMode(bool enableOverhead)
 {
   if (enableOverhead == overheadEnabled_)
@@ -1372,20 +1369,26 @@ void View::enableOverheadMode(bool enableOverhead)
     vp.heading()->set(0.0, Units::DEGREES);
     vp.pitch()->set(-90.0, Units::DEGREES);
     this->setViewpoint(vp);
-    
+
     // Set an orthographic camera. We don't call enableOrthographic() here
     // because we'd rather quitely reset the original mode once overhead mode
     // is disabled later.
     if (orthoEnabled_ == false)
     {
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,6,0)
+      // Only go into orthographic past 1.6 -- before then, the LDB would cause significant issues with platform and GOG display
+#if 1
+      getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+#else // Pending SIM-6402 fixes w.r.t. mouse intersection computation
       getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
       getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-      getCamera()->setCullCallback(s_SetNearFarCallback.get());
+      getCamera()->setCullCallback(overheadNearFarCallback_);
       osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
       mapNode->getTerrainEngine()->getOrCreateStateSet()->
-          setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
-          osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
+        setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
+        osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+#endif
+#endif
     }
 
     // disable elevation rendering on the terrain surface
@@ -1394,18 +1397,21 @@ void View::enableOverheadMode(bool enableOverhead)
   else
   {
     // quitely revert to the perspective camera if necessary
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,6,0)
     if (orthoEnabled_ == false)
     {
       const osg::Viewport* vp = getCamera()->getViewport();
-      double aspectRatio = vp ? vp->aspectRatio() : 1.5;
+      const double aspectRatio = vp ? vp->aspectRatio() : 1.5;
       getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+#if 0 // Pending SIM-6402 fixes w.r.t. mouse intersection computation
       getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
-      getCamera()->removeCullCallback(s_SetNearFarCallback.get());
+      getCamera()->removeCullCallback(overheadNearFarCallback_);
       osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
-      mapNode->getTerrainEngine()->getOrCreateStateSet()->
-          removeAttribute(osg::StateAttribute::DEPTH);
+      mapNode->getTerrainEngine()->getOrCreateStateSet()->removeAttribute(osg::StateAttribute::DEPTH);
+#endif
     }
-    
+#endif
+
     // remove elevation rendering override.
     cameraState->removeDefine("OE_TERRAIN_RENDER_ELEVATION");
   }

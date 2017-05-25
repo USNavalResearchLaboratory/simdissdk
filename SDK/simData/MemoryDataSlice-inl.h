@@ -116,16 +116,17 @@ int limitByPoints(std::deque<T*> &updates, uint32_t limitPoints)
 }
 
 template<typename T>
-void flush(std::deque<T*> &updates, bool keepStatic)
+int flush(std::deque<T*> &updates, bool keepStatic)
 {
   // don't flush static entities
   if (keepStatic && updates.size() == 1 && (**updates.begin()).time() == -1.0)
-    return;
+    return 1;
 
   for (typename std::deque<T*>::iterator j = updates.begin(); j != updates.end(); ++j)
     delete *j;
 
   updates.clear();
+  return 0;
 }
 
 } // namespace MemorySliceHelper
@@ -232,7 +233,8 @@ MemoryDataSlice<T>::~MemoryDataSlice()
 template<typename T>
 void MemoryDataSlice<T>::flush(bool keepStatic)
 {
-  MemorySliceHelper::flush(updates_, keepStatic);
+  if (MemorySliceHelper::flush(updates_, keepStatic) == 0)
+    current_ = NULL;
   dirty_ = true;
 }
 

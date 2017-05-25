@@ -182,10 +182,10 @@ static const std::string ANTENNA_FILE_PATTERNS =
   "All Files (*)\n";
 
 /** SIMDIS GOG Overlay Format patterns, separated by commas */
-static const std::string ALL_GOG_FILE_PATTERNS = "*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf";
+static const std::string ALL_GOG_FILE_PATTERNS = "*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf,*.asc";
 /** Dialog-oriented user-friendly list of SIMDIS GOG Overlay Format files */
 static const std::string GOG_FILE_PATTERNS =
-  "All Supported GOG Formats (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf)\n"
+  "All Supported GOG Formats (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf,*.asc)\n"
   "GOG Files (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz)\n"
   "Misc GOG (*.gog)\nxygeo (*.ll,*.lla)\nxygeo and crossplot (*.xy,*.xyz)\n"
   "Relative xygeo and crossplot (*.rxy,*.rxyz)\n"
@@ -193,6 +193,7 @@ static const std::string GOG_FILE_PATTERNS =
   "KML Files (*.kml,*.kmz)\n"
   "LATR GEO Files (*.lgf)\n"
   "GCCS OVLY Files (*.ovl)\n"
+  "JDS ASC Files (*.asc)\n"
   "All Files (*)";
 
 /** Dialog-oriented user-friendly list of SIMDIS absolute GOG Overlay Format files */
