@@ -70,5 +70,54 @@ double getRcvdPowerBlake(double rngMeters,
   return (oneWay == false) ? (rcvPower + (4. * ppfdB)) : (rcvPower + (2. * ppfdB));
 }
 
+FrequencyDesignationUsEcm toUsEcm(double freqMhz)
+{
+  // As defined in https://en.wikipedia.org/wiki/Radio_spectrum
+
+  if (freqMhz < 0.0)
+    return FREQ_ECM_OUT_OF_BOUNDS;
+
+  if (freqMhz < 250.0)
+    return FREQ_ECM_A;
+
+  if (freqMhz < 500.0)
+    return FREQ_ECM_B;
+
+  if (freqMhz < 1000.0)
+    return FREQ_ECM_C;
+
+  if (freqMhz < 2000.0)
+    return FREQ_ECM_D;
+
+  if (freqMhz < 3000.0)
+    return FREQ_ECM_E;
+
+  if (freqMhz < 4000.0)
+    return FREQ_ECM_F;
+
+  if (freqMhz < 6000.0)
+    return FREQ_ECM_G;
+
+  if (freqMhz < 8000.0)
+    return FREQ_ECM_H;
+
+  if (freqMhz < 10000.0)
+    return FREQ_ECM_I;
+
+  if (freqMhz < 20000.0)
+    return FREQ_ECM_J;
+
+  if (freqMhz < 40000.0)
+    return FREQ_ECM_K;
+
+  if (freqMhz < 60000.0)
+    return FREQ_ECM_L;
+
+  if (freqMhz < 100000.0)
+    return FREQ_ECM_M;
+
+  return FREQ_ECM_OUT_OF_BOUNDS;
+}
+
 }
 

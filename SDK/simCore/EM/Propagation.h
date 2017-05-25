@@ -69,6 +69,33 @@ namespace simCore
           double ppfdB,
           double systemLossdB,
           bool oneWay=false);
+
+  /// As defined in https://en.wikipedia.org/wiki/Radio_spectrum
+  enum FrequencyDesignationUsEcm
+  {
+    FREQ_ECM_OUT_OF_BOUNDS,
+    FREQ_ECM_A,
+    FREQ_ECM_B,
+    FREQ_ECM_C,
+    FREQ_ECM_D,
+    FREQ_ECM_E,
+    FREQ_ECM_F,
+    FREQ_ECM_G,
+    FREQ_ECM_H,
+    FREQ_ECM_I,
+    FREQ_ECM_J,
+    FREQ_ECM_K,
+    FREQ_ECM_L,
+    FREQ_ECM_M
+  };
+
+  /**
+   * Returns the US ECM frequency band for the given frequency
+   * @param freqMhz Transmitter frequency (MHz)
+   * @return The frequency band.
+   */
+  SDKCORE_EXPORT FrequencyDesignationUsEcm toUsEcm(double freqMhz);
+
 } // namespace simCore
 
 #endif  /* SIMCORE_EM_PROPAGATION_H */
