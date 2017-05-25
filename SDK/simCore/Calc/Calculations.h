@@ -327,6 +327,15 @@ namespace simCore
   SDKCORE_EXPORT double calculateEarthRadius(const double latitude);
 
   /**
+  * @brief Clamps a point in ECEF space to the surface of the WGS84 ellipsoid.
+  *
+  * Find the point on the WGS84 geodetic surface whose geodetic surface normal
+  * points towards the input ECEF point. In other words, project the input point 
+  * up or down on to the surface of the WGS84 ellipsoid.
+  */
+  SDKCORE_EXPORT Vec3 clampEcefPointToGeodeticSurface(const Vec3& ecef);
+
+  /**
   * @brief Calculates the horizon distance for either geometric, optical or radar
   *
   * Calculates the horizon distance for either geometric, optical or radar.

@@ -838,6 +838,79 @@ double simCore::calculateEarthRadius(const double latitude)
   return Re;
 }
 
+// Algorithm: 3D Engine Design for Virtual Globes; Cozzi/Ring; pp. 31.
+// https://goo.gl/veDftl
+Vec3 simCore::clampEcefPointToGeodeticSurface(const Vec3& p)
+{    
+    const Vec3 radiiSquared(
+        simCore::WGS_A2,
+        simCore::WGS_A2,
+        simCore::WGS_B2);
+
+    const Vec3 oneOverRadiiSquared(
+        1.0/simCore::WGS_A2,
+        1.0/simCore::WGS_A2,
+        1.0/simCore::WGS_B2);
+
+    const Vec3 radiiToTheFourth(
+        simCore::WGS_A2*simCore::WGS_A2,
+        simCore::WGS_A2*simCore::WGS_A2,
+        simCore::WGS_A2*simCore::WGS_B2);
+
+    double x2 = p.x() * p.x();
+    double y2 = p.y() * p.y();
+    double z2 = p.z() * p.z();
+
+    double beta = 1.0 / sqrt(
+        x2 * oneOverRadiiSquared.x() +
+        y2 * oneOverRadiiSquared.y() +
+        z2 * oneOverRadiiSquared.z() );
+
+    double n = v3Length(Vec3(
+        beta * p.x() * oneOverRadiiSquared.x(),
+        beta * p.y() * oneOverRadiiSquared.y(),
+        beta * p.z() * oneOverRadiiSquared.z()));
+
+    double alpha = (1.0 - beta) * (v3Length(p) / n);
+
+    double da = 0.0;
+    double db = 0.0;
+    double dc = 0.0;
+    double s = 0.0;
+    double dSdA = 1.0;
+
+    do {
+        alpha -= (s/dSdA);
+
+        da = 1.0 + (alpha * oneOverRadiiSquared.x());
+        db = 1.0 + (alpha * oneOverRadiiSquared.y());
+        dc = 1.0 + (alpha * oneOverRadiiSquared.z());
+
+        double da2 = da*da;
+        double db2 = db*db;
+        double dc2 = dc*dc;
+
+        double da3 = da*da*da;
+        double db3 = db*db*db;
+        double dc3 = dc*dc*dc;
+
+        s = x2 / (radiiSquared.x() * da2) +
+            y2 / (radiiSquared.y() * db2) +
+            z2 / (radiiSquared.z() * dc2) - 1.0;
+
+        dSdA = -2.0 * (
+            x2 / radiiToTheFourth.x() * da3 +
+            y2 / radiiToTheFourth.y() * db3 +
+            z2 / radiiToTheFourth.z() * dc3);
+    }
+    while (fabs(s) > 1e-10);
+
+    return Vec3(
+        p.x() / da,
+        p.y() / db,
+        p.z() / dc);
+}
+
 /**
 * Calculates the horizon distance for either geometric, optical or radar.
 * Equations derived from a perfect sphere using Pythagorean Theorem
