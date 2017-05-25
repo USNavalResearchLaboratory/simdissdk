@@ -21,6 +21,7 @@
  */
 #include "simNotify/Notify.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Calculations.h"
 #include "simVis/Locator.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
@@ -756,10 +757,9 @@ bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* 
   // visitor is NULL, then we do overhead mode calculations for bounding area.
   if (simVis::OverheadMode::isActive(nv) || (overheadModeHint_ && !nv))
   {
-    osg::Vec3d trans = matrix.getTrans();
-    trans.normalize();
-    trans *= simVis::OverheadMode::getClampingRadius(trans.z());
-    matrix.setTrans(trans);
+      simCore::Vec3 p( matrix(3,0), matrix(3,1), matrix(3,2) );
+      p = simCore::clampEcefPointToGeodeticSurface(p);
+      matrix.setTrans(p.x(), p.y(), p.z());
   }
 
   out.preMult(matrix);
