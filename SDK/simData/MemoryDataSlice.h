@@ -497,6 +497,9 @@ public:
   */
   virtual void insert(LobGroupUpdate *data);
 
+  /// remove all data in the slice
+  virtual void flush(bool keepStatic = true);
+
   /**
   * Set the maximum number of data points times for current data slice, recalculates the current data slice if changed
   * matches the value in the LobGroupPrefs
