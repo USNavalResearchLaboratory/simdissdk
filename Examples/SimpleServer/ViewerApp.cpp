@@ -30,6 +30,7 @@
 #include "simVis/Compass.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Platform.h"
+#include "simVis/Popup.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Scenario.h"
@@ -191,6 +192,8 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   // Set a decent number of threads for paging terrain
   mainView->getDatabasePager()->setUpThreads(6, 4);
   mainView->addEventHandler(new simVis::ToggleOverheadMode(mainView, 'O', 'C'));
+
+  mainView->addEventHandler(new simVis::PopupHandler(sceneManager_));
 
   // Add it to the view manager:
   viewManager_->addView(mainView);
