@@ -939,6 +939,7 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
   osgEarth::DPLineSegmentIntersector* lsi = new osgEarth::DPLineSegmentIntersector(beg, end);
   osgUtil::IntersectionVisitor iv(lsi);
   iv.setTraversalMask(typeMask);
+  iv.setReferenceEyePoint(osg::Vec3d(0,0,0)*view->getCamera()->getInverseViewMatrix());
   simVis::OverheadMode::prepareVisitor(view, &iv);
   cam->accept(iv);
 
