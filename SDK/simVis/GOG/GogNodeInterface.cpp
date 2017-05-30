@@ -183,6 +183,13 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
       setFillColor(osgEarth::Symbology::Color(parent.value("fillcolor")));
     setFilledState(isFilled);
   }
+  else
+  {
+    if (parent.hasValue("fillcolor"))
+    {
+      SIM_WARN << "The GOG keyword " << key << " does not support fillcolor.\n";
+    }
+  }
 
   // altitude offset
   if (parent.hasValue("3d offsetalt"))
