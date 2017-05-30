@@ -757,9 +757,9 @@ bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* 
   // visitor is NULL, then we do overhead mode calculations for bounding area.
   if (simVis::OverheadMode::isActive(nv) || (overheadModeHint_ && !nv))
   {
-      simCore::Vec3 p( matrix(3,0), matrix(3,1), matrix(3,2) );
-      p = simCore::clampEcefPointToGeodeticSurface(p);
-      matrix.setTrans(p.x(), p.y(), p.z());
+    simCore::Vec3 p( matrix(3,0), matrix(3,1), matrix(3,2) );
+    p = simCore::clampEcefPointToGeodeticSurface(p);
+    matrix.setTrans(p.x(), p.y(), p.z());
   }
 
   out.preMult(matrix);

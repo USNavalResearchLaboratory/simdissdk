@@ -330,8 +330,10 @@ namespace simCore
   * @brief Clamps a point in ECEF space to the surface of the WGS84 ellipsoid.
   *
   * Find the point on the WGS84 geodetic surface whose geodetic surface normal
-  * points towards the input ECEF point. In other words, project the input point 
-  * up or down on to the surface of the WGS84 ellipsoid.
+  * points towards the input ECEF point. In other words, project the input point
+  * up or down onto the surface of the WGS84 ellipsoid.
+  * @param ecef ECEF coordinate in meters
+  * @return Surface-clamped ECEF value in meters, clamped to WGS84 ellipsoid.
   */
   SDKCORE_EXPORT Vec3 clampEcefPointToGeodeticSurface(const Vec3& ecef);
 
@@ -489,47 +491,47 @@ namespace simCore
   SDKCORE_EXPORT void calculateGeodeticMidPoint(const Vec3& llaBgnPos, const Vec3& llaEndPos, bool highResolution, simCore::Vec3& midpoint, bool* wrapsDateline=NULL);
 
   /**
-  * @brief Calculates flight path angles from an ENU geodetic velocity vector
-  *
-  * Calculates flight path angles from an ENU geodetic velocity vector
-  * @param[in ] velVec East, North, and Up based geodetic velocity vector
-  * @param[out] fpa Calculated flight path angles (heading, pitch, roll=0)
-  */
+   * @brief Calculates flight path angles from an ENU geodetic velocity vector
+   *
+   * Calculates flight path angles from an ENU geodetic velocity vector
+   * @param[in ] velVec East, North, and Up based geodetic velocity vector
+   * @param[out] fpa Calculated flight path angles (heading, pitch, roll=0)
+   */
   SDKCORE_EXPORT void calculateFlightPathAngles(const Vec3 &velVec, Vec3 &fpa);
 
   /**
-  * @brief Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
-  *
-  * Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
-  * @param[in ] speed Speed (m/sec)
-  * @param[in ] heading (rad) heading (relative to North)
-  * @param[in ] pitch (rad) pitch (relative to Horizon)
-  * @param[out] velVec Calculated East, North, and Up based geodetic velocity vector
-  */
+   * @brief Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
+   *
+   * Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
+   * @param[in ] speed Speed (m/sec)
+   * @param[in ] heading (rad) heading (relative to North)
+   * @param[in ] pitch (rad) pitch (relative to Horizon)
+   * @param[out] velVec Calculated East, North, and Up based geodetic velocity vector
+   */
   SDKCORE_EXPORT void calculateVelocity(const double speed, const double heading, const double pitch, Vec3 &velVec);
 
- /**
- * Calculates the angle of attack, side slip, and total angle of attack from a ENU
- * geodetic velocity vector and a set of geodetic Euler angles (yaw, pitch, roll)
- * @param enuVel East, North, and Up geodetic velocity vector for the vehicle
- * @param ypr Yaw, pitch, roll based geodetic Euler angles in radians
- * @param useRoll Boolean, true: aerodynamic version, false: rocketry version (Air Ballistic Axis) that does not use roll
- * @param aoa Vertical angle of attack for vehicle in radians; measure of difference between velocity and pointing direction
- * @param ss Side slip angle for vehicle in radians; measure of difference between velocity and pointing direction
- * @param totalAoA Total angle of attack for vehicle in radians
- */
+  /**
+   * Calculates the angle of attack, side slip, and total angle of attack from a ENU
+   * geodetic velocity vector and a set of geodetic Euler angles (yaw, pitch, roll)
+   * @param enuVel East, North, and Up geodetic velocity vector for the vehicle
+   * @param ypr Yaw, pitch, roll based geodetic Euler angles in radians
+   * @param useRoll Boolean, true: aerodynamic version, false: rocketry version (Air Ballistic Axis) that does not use roll
+   * @param aoa Vertical angle of attack for vehicle in radians; measure of difference between velocity and pointing direction
+   * @param ss Side slip angle for vehicle in radians; measure of difference between velocity and pointing direction
+   * @param totalAoA Total angle of attack for vehicle in radians
+   */
   SDKCORE_EXPORT void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoA);
 
 
- /**
- * Returns the distance between a line segment and a point. The calculations are done in COORD_SYS_XEAST so the results are only approximate.
- * The code is taken from SIMDIS 9 code SimVisBeam::GetClosestPoint and generalized for WGS-84.
- * @param startLla Start point of the line segment in (rad, rad, m) in WGS-84
- * @param endLla End point of the line segment in (rad, rad, m) in WGS-84
- * @param toLla The point for the distance calculation in (rad, rad, m) in WGS-84
- * @param closestLla The point on the line segment closest to the toLla point
- * @return The distance, in meters, between a line segment and the toLla point.
- */
+  /**
+   * Returns the distance between a line segment and a point. The calculations are done in COORD_SYS_XEAST so the results are only approximate.
+   * The code is taken from SIMDIS 9 code SimVisBeam::GetClosestPoint and generalized for WGS-84.
+   * @param startLla Start point of the line segment in (rad, rad, m) in WGS-84
+   * @param endLla End point of the line segment in (rad, rad, m) in WGS-84
+   * @param toLla The point for the distance calculation in (rad, rad, m) in WGS-84
+   * @param closestLla The point on the line segment closest to the toLla point
+   * @return The distance, in meters, between a line segment and the toLla point.
+   */
   SDKCORE_EXPORT double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLla, const simCore::Vec3& toLla, simCore::Vec3& closestLla);
 
   /**

@@ -841,74 +841,78 @@ double simCore::calculateEarthRadius(const double latitude)
 // Algorithm: 3D Engine Design for Virtual Globes; Cozzi/Ring; pp. 31.
 // https://goo.gl/veDftl
 Vec3 simCore::clampEcefPointToGeodeticSurface(const Vec3& p)
-{    
-    const Vec3 radiiSquared(
-        simCore::WGS_A2,
-        simCore::WGS_A2,
-        simCore::WGS_B2);
+{
+  const Vec3 radiiSquared(simCore::WGS_A2, simCore::WGS_A2, simCore::WGS_B2);
+  const Vec3 oneOverRadiiSquared(1.0 / simCore::WGS_A2, 1.0 / simCore::WGS_A2, 1.0 / simCore::WGS_B2);
+  const Vec3 radiiToTheFourth(simCore::WGS_A2 * simCore::WGS_A2, simCore::WGS_A2 * simCore::WGS_A2, simCore::WGS_A2 * simCore::WGS_B2);
 
-    const Vec3 oneOverRadiiSquared(
-        1.0/simCore::WGS_A2,
-        1.0/simCore::WGS_A2,
-        1.0/simCore::WGS_B2);
+  const double x2 = p.x() * p.x();
+  const double y2 = p.y() * p.y();
+  const double z2 = p.z() * p.z();
 
-    const Vec3 radiiToTheFourth(
-        simCore::WGS_A2*simCore::WGS_A2,
-        simCore::WGS_A2*simCore::WGS_A2,
-        simCore::WGS_A2*simCore::WGS_B2);
+  const double sqrtOfSquares = sqrt(
+    x2 * oneOverRadiiSquared.x() +
+    y2 * oneOverRadiiSquared.y() +
+    z2 * oneOverRadiiSquared.z() );
+  // Avoid divide by zero
+  assert(sqrtOfSquares != 0.0);
+  if (sqrtOfSquares == 0.0)
+    return p;
+  const double beta = 1.0 / sqrtOfSquares;
 
-    double x2 = p.x() * p.x();
-    double y2 = p.y() * p.y();
-    double z2 = p.z() * p.z();
+  const double n = v3Length(Vec3(
+    beta * p.x() * oneOverRadiiSquared.x(),
+    beta * p.y() * oneOverRadiiSquared.y(),
+    beta * p.z() * oneOverRadiiSquared.z()));
 
-    double beta = 1.0 / sqrt(
-        x2 * oneOverRadiiSquared.x() +
-        y2 * oneOverRadiiSquared.y() +
-        z2 * oneOverRadiiSquared.z() );
+  double alpha = (1.0 - beta) * (v3Length(p) / n);
 
-    double n = v3Length(Vec3(
-        beta * p.x() * oneOverRadiiSquared.x(),
-        beta * p.y() * oneOverRadiiSquared.y(),
-        beta * p.z() * oneOverRadiiSquared.z()));
+  double da = 0.0;
+  double db = 0.0;
+  double dc = 0.0;
+  double s = 0.0;
+  double dSdA = 1.0;
 
-    double alpha = (1.0 - beta) * (v3Length(p) / n);
+  do {
+    // Avoid divide-by-zero
+    assert(dSdA != 0.0);
+    if (dSdA == 0.0)
+      break;
+    alpha -= (s / dSdA);
 
-    double da = 0.0;
-    double db = 0.0;
-    double dc = 0.0;
-    double s = 0.0;
-    double dSdA = 1.0;
+    da = 1.0 + (alpha * oneOverRadiiSquared.x());
+    db = 1.0 + (alpha * oneOverRadiiSquared.y());
+    dc = 1.0 + (alpha * oneOverRadiiSquared.z());
 
-    do {
-        alpha -= (s/dSdA);
+    // Avoid divide-by-zero
+    assert(da != 0.0 && db != 0.0 && dc != 0.0);
+    if (da == 0.0 || db == 0.0 || dc == 0.0)
+      break;
 
-        da = 1.0 + (alpha * oneOverRadiiSquared.x());
-        db = 1.0 + (alpha * oneOverRadiiSquared.y());
-        dc = 1.0 + (alpha * oneOverRadiiSquared.z());
+    const double da2 = da * da;
+    const double db2 = db * db;
+    const double dc2 = dc * dc;
 
-        double da2 = da*da;
-        double db2 = db*db;
-        double dc2 = dc*dc;
+    const double da3 = da * da * da;
+    const double db3 = db * db * db;
+    const double dc3 = dc * dc * dc;
 
-        double da3 = da*da*da;
-        double db3 = db*db*db;
-        double dc3 = dc*dc*dc;
+    s = x2 / (radiiSquared.x() * da2) +
+      y2 / (radiiSquared.y() * db2) +
+      z2 / (radiiSquared.z() * dc2) - 1.0;
 
-        s = x2 / (radiiSquared.x() * da2) +
-            y2 / (radiiSquared.y() * db2) +
-            z2 / (radiiSquared.z() * dc2) - 1.0;
+    dSdA = -2.0 * (
+      x2 / radiiToTheFourth.x() * da3 +
+      y2 / radiiToTheFourth.y() * db3 +
+      z2 / radiiToTheFourth.z() * dc3);
+  }
+  while (fabs(s) > 1e-10);
 
-        dSdA = -2.0 * (
-            x2 / radiiToTheFourth.x() * da3 +
-            y2 / radiiToTheFourth.y() * db3 +
-            z2 / radiiToTheFourth.z() * dc3);
-    }
-    while (fabs(s) > 1e-10);
-
-    return Vec3(
-        p.x() / da,
-        p.y() / db,
-        p.z() / dc);
+  // Avoid divide-by-zero
+  assert(da != 0.0 && db != 0.0 && dc != 0.0);
+  if (da == 0.0 || db == 0.0 || dc == 0.0)
+    return p;
+  return Vec3(p.x() / da, p.y() / db, p.z() / dc);
 }
 
 /**
