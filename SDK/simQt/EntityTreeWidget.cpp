@@ -404,4 +404,3 @@ void EntityTreeWidget::sendNumFilteredItems_()
 }
 
 }
-

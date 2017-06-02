@@ -70,23 +70,28 @@ public:
   EntityTreeModel(QObject *parent, simData::DataStore* dataStore);
   virtual ~EntityTreeModel();
 
-  ///@return number of columns needed to hold data
+  /// Return number of columns needed to hold data
   virtual int columnCount(const QModelIndex &parent) const;
-  ///@return data for given item
+  /// Return data for given item
   virtual QVariant data(const QModelIndex &index, int role) const;
-  ///@return the header data for given section
+  /// Return the header data for given section
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  ///@return the index for the given row and column
+  /// Return the index for the given row and column
   virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
-  ///@return the index for the given id
+  /// Return the index for the given id
   virtual QModelIndex index(uint64_t id) const;
-  ///@return the index of the parent of the item given by index
+  /// Return the index of the parent of the item given by index
   virtual QModelIndex parent(const QModelIndex &index) const;
-  ///@return the number of rows in the data
+  /// Return the number of rows in the data
   virtual int rowCount(const QModelIndex &parent) const;
-  ///@return the unique id for the given index; return 0 on error
+
+  /// Return the unique id for the given index; return 0 on error
   virtual uint64_t uniqueId(const QModelIndex &index) const;
-  ///@return the dataStore
+
+  /** Returns whether we use an entity icon or type abbreviation for the entity type column */
+  virtual bool useEntityIcons() const;
+
+  /// Return the dataStore
   simData::DataStore* dataStore() const;
 
 public slots:
@@ -98,6 +103,10 @@ public slots:
   virtual void toggleTreeView(bool useTree);
   /** Updates the contents of the frame */
   virtual void forceRefresh();
+
+  /** Turns on or off entity icons */
+  virtual void setUseEntityIcons(bool useIcons);
+
   /** Changes out the data store pointers, unregistering and re-registering observers */
   void setDataStore(simData::DataStore* dataStore);
 
@@ -129,12 +138,24 @@ private:
   bool treeView_;   ///< true = tree view; false = list view
   simData::DataStore* dataStore_;
   simData::DataStore::ListenerPtr listener_;
+
   /**
-    * Immediately adding an entity can cause flashing if the tree view has category filtering.
-    * Delay the adding of the entity to give some time for the data source to set the category
-    * data.
-    */
+   * Immediately adding an entity can cause flashing if the tree view has category filtering.
+   * Delay the adding of the entity to give some time for the data source to set the category
+   * data.
+   */
   std::vector<simData::ObjectId> delayedAdds_;
+
+  /** Icons for entity types */
+  QIcon platformIcon_;
+  QIcon beamIcon_;
+  QIcon gateIcon_;
+  QIcon lobIcon_;
+  QIcon laserIcon_;
+  QIcon projectorIcon_;
+
+  /// If true, entity icons are used instead of entity letters
+  bool useEntityIcons_;
 };
 
 } // namespace

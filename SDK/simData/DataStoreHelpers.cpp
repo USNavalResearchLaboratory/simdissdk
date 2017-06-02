@@ -120,7 +120,6 @@ std::string DataStoreHelpers::typeFromId(ObjectId objectId, const simData::DataS
 {
   if (dataStore == NULL)
     return "";
-  simData::DataStore::Transaction transaction;
   return typeToString(dataStore->objectType(objectId));
 }
 

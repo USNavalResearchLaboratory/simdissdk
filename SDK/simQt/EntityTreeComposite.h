@@ -62,7 +62,8 @@ signals:
 /** Buttons can be added to the row with the filter text field to support features like Range Tool with its extra buttons. */
 class SDKQT_EXPORT EntityTreeComposite : public QWidget
 {
-  Q_OBJECT
+  Q_OBJECT;
+  Q_PROPERTY(bool useEntityIcons READ useEntityIcons WRITE setUseEntityIcons);
 
 public:
   /** Constructor needs the parent widget */
@@ -109,6 +110,11 @@ public:
    * @param settings Filters add data to the setting using a global unique key
    */
   void getFilterSettings(QMap<QString, QVariant>& settings) const;
+
+  /** Returns true if icons are shown instead of text for the entity tree list Entity Type column */
+  bool useEntityIcons() const;
+  /** Shows icons instead of text for the entity tree list Entity Type column */
+  void setUseEntityIcons(bool showIcons);
 
 public slots:
   /** If true expand the tree on double click */

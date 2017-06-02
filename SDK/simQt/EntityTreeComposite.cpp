@@ -315,5 +315,14 @@ void EntityTreeComposite::copySelection_()
   QApplication::clipboard()->setText(clipboardText);
 }
 
+bool EntityTreeComposite::useEntityIcons() const
+{
+  return model_->useEntityIcons();
 }
 
+void EntityTreeComposite::setUseEntityIcons(bool showIcons)
+{
+  model_->setUseEntityIcons(showIcons);
+}
+
+}

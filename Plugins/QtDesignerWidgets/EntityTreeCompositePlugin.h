@@ -56,12 +56,12 @@ class QtDesignerDisplayTree : public simQt::AbstractEntityTreeModel
   Q_OBJECT
 
 public:
-  explicit QtDesignerDisplayTree(QObject* parent) : simQt::AbstractEntityTreeModel(parent) {};
-  virtual ~QtDesignerDisplayTree() {};
+  explicit QtDesignerDisplayTree(QObject* parent) : simQt::AbstractEntityTreeModel(parent), useEntityIcons_(true) {}
+  virtual ~QtDesignerDisplayTree() {}
 
 
   /** Remove an entity from the tree via its ID */
-  virtual void removeTreeItem(uint64_t id) {};
+  virtual void removeTreeItem(uint64_t id) {}
 
   virtual int columnCount(const QModelIndex &parent) const { return 3; }
   virtual QVariant data(const QModelIndex &index, int role) const { return ""; }
@@ -71,16 +71,23 @@ public:
   virtual uint64_t uniqueId(const QModelIndex &index) const { return 0; }
   virtual QModelIndex parent(const QModelIndex &index) const { return QModelIndex(); }
   virtual int rowCount(const QModelIndex &parent) const { return 0; }
+  virtual bool useEntityIcons() const { return useEntityIcons_; }
 
 public slots:
   /** Swaps the view to the hierarchy tree */
-  virtual void setToTreeView() {};
+  virtual void setToTreeView() {}
   /** Swaps the view to a non-hierarchical list */
-  virtual void setToListView() {};
+  virtual void setToListView() {}
   /** Swaps between tree and list view based on a Boolean */
-  virtual void toggleTreeView(bool useTree) {};
+  virtual void toggleTreeView(bool useTree) {}
   /** Updates the contents of the frame */
-  virtual void forceRefresh() {};
+  virtual void forceRefresh() {}
+
+  /** Turns on or off entity icons */
+  virtual void setUseEntityIcons(bool useIcons) { useEntityIcons_ = useIcons; }
+
+private:
+  bool useEntityIcons_;
 };
 
 #endif // ENTITY_TREE_COMPOSITE_PLUGIN_H

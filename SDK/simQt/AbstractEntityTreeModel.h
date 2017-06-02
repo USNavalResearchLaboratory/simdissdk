@@ -56,6 +56,9 @@ namespace simQt {
     /** Return the entity's ID for a given index */
     virtual uint64_t uniqueId(const QModelIndex &index) const = 0;
 
+    /** Returns whether we use an entity icon or type abbreviation for the entity type column */
+    virtual bool useEntityIcons() const = 0;
+
   public slots:
     /** Swaps the view to the hierarchy tree */
     virtual void setToTreeView() = 0;
@@ -65,6 +68,9 @@ namespace simQt {
     virtual void toggleTreeView(bool useTree) = 0;
     /** Updates the contents of the frame */
     virtual void forceRefresh() = 0;
+
+    /** Turns on or off entity icons */
+    virtual void setUseEntityIcons(bool useIcons) = 0;
   };
 
 }
