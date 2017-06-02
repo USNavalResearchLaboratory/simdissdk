@@ -53,10 +53,13 @@ static const QString ILLEGAL_FILENAME_CHARS = "\\/:*?\"<>|";
 /** Regex matcher for illegal filename characters */
 static const QRegExp ILLEGAL_REGEXP(QString("[%1]").arg(QRegExp::escape(ILLEGAL_FILENAME_CHARS)));
 
+/** Coordinated Universal Time (UTC) Post Fix for time string */
+static const QString UTC_POSTFIX = "UTC";
+
 PersistentFileLogger::PersistentFileLogger(const QString& prefix, QObject* parent)
   : QObject(parent),
     prefix_(sanitizeFilename_(prefix)),
-    startTime_(QDateTime::currentDateTime()),
+    startTime_(QDateTime::currentDateTime().toUTC()),
     file_(NULL),
     stream_(NULL),
     openAttempted_(false)
@@ -202,7 +205,7 @@ QString PersistentFileLogger::expectedFileName_() const
 #else
   unsigned int pid = static_cast<unsigned int>(getpid());
 #endif
-  const QString dateTimeString = startTime_.toString(DATETIME_STRING_FORMAT);
+  const QString dateTimeString = startTime_.toString(DATETIME_STRING_FORMAT) + UTC_POSTFIX;
   const QString pidString = QString::number(pid);
 
   // Try to get a unique name.  This should only matter if we make the same file multiple times
