@@ -442,6 +442,9 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
         return lobIcon_;
       case simData::DataStore::PROJECTOR:
         return projectorIcon_;
+      case simData::DataStore::NONE:
+      case simData::DataStore::ALL:
+        break;
       }
     }
     break;

@@ -150,8 +150,8 @@ private:
   QIcon platformIcon_;
   QIcon beamIcon_;
   QIcon gateIcon_;
-  QIcon lobIcon_;
   QIcon laserIcon_;
+  QIcon lobIcon_;
   QIcon projectorIcon_;
 
   /// If true, entity icons are used instead of entity letters
