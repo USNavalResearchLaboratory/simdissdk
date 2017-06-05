@@ -96,7 +96,6 @@ private:
 /////////////////////////////////////////////////////////////////
 
 const QString ConsoleDataModel::DEFAULT_TIME_FORMAT = "M/d/yy h:mm:ss.zzz";
-static const QString UTC_POSTFIX = " UTC";
 static const int DEFAULT_MAX_LINES_SIZE = 1000;
 static const int PROCESS_PENDING_TIMEOUT = 250; // milliseconds between processing of pending data
 
@@ -133,9 +132,11 @@ ConsoleDataModel::~ConsoleDataModel()
 
 QString ConsoleDataModel::dateTimeString(double timeSince1970)
 {
+  const QString UTC_POSTFIX = " UTC";
+
   // Get the timestamp and convert it to UTC
   QDateTime date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(timeSince1970 * 1000)).toUTC();
-  return date.toString(DEFAULT_TIME_FORMAT + UTC_POSTFIX);
+  return date.toString(DEFAULT_TIME_FORMAT) + UTC_POSTFIX;
 }
 
 QVariant ConsoleDataModel::data(const QModelIndex& idx, int role) const
@@ -155,7 +156,7 @@ QVariant ConsoleDataModel::data(const QModelIndex& idx, int role) const
     case COLUMN_TIME:
     {
       QDateTime date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(line->timeStamp() * 1000)).toUTC();
-      return date.toString(timeFormatString_ + UTC_POSTFIX);
+      return date.toString(timeFormatString_);
     }
     case COLUMN_SEVERITY:
       return QString::fromStdString(simNotify::severityToString(line->severity()));
