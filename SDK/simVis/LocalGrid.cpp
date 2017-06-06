@@ -661,30 +661,33 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
       osg::ref_ptr<osgText::Text> label = NULL;
       if (displayTime)
       {
-        double radiusS = spacingS * static_cast<double>(i+1);
-        if (prefs.speedring().usefixedtime())
+        double radiusS = spacingS * static_cast<double>(i + 1);
+        const simData::ElapsedTimeFormat timeFormat = prefs.speedring().timeformat();
+        assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
+        std::stringstream buf;
+
+        // show HH:MM:SS.SS
+        if (timeFormat == simData::ELAPSED_HOURS)
         {
-          // show HH:MM:SS.SS
-          size_t hh = static_cast<size_t>(radiusS / simCore::SECPERHOUR);
-          size_t mm = static_cast<size_t>((radiusS - (simCore::SECPERHOUR * hh)) / simCore::SECPERMIN);
-          double ss = radiusS - (hh * simCore::SECPERHOUR) - (mm * simCore::SECPERMIN);
-          std::stringstream buf;
-          buf << std::fixed << hh << ':' << mm << ':' << std::setprecision(2) << ss;
-          std::string str = buf.str();
-          label = createTextPrototype_(prefs, str);
+          simCore::HoursTimeFormatter formatter;
+          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
         }
+
+        // show MM:SS.SS
+        else if (timeFormat == simData::ELAPSED_MINUTES)
+        {
+          simCore::MinutesTimeFormatter formatter;
+          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
+        }
+
+        // show SS.SS
         else
         {
-          // convert time in seconds to time in desired units
-          const simData::ElapsedTimeFormat timeFormat = prefs.speedring().timeformat();
-          assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
-          if (timeFormat == simData::ELAPSED_MINUTES)
-            label = createTextPrototype_(prefs, radiusS / simCore::SECPERMIN, "min", prefs.gridlabelprecision());
-          else if (timeFormat == simData::ELAPSED_HOURS)
-            label = createTextPrototype_(prefs, radiusS / simCore::SECPERHOUR, "hrs", prefs.gridlabelprecision());
-          else
-            label = createTextPrototype_(prefs, radiusS, "s", prefs.gridlabelprecision());
+          simCore::SecondsTimeFormatter formatter;
+          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
         }
+        std::string str = buf.str();
+        label = createTextPrototype_(prefs, str);
       }
       else
       {
