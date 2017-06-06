@@ -78,8 +78,20 @@ public:
   * @param id  the data store entity id
   * @param tagStack  the protobuf message field numbers that identify the pref
   * @param type  the entity type of the pref field, which is not necessarily the same as the entity's type, e.g. CommonPrefs use ALL
+  * @param enforce If true, then turn on enforcing, preventing rules from changing the value.  If false, disables the enforcement,
+  *   allowing preference rules to work with the value again.
   */
-  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type) = 0;
+  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type, bool enforce=true) = 0;
+
+  /**
+   * Returns true if the preference value is set to enforcing.  Enforced prefs cannot be changed by Preference Rules.  For
+   * more details, see enforcePrefValue().
+   * @param id  the data store entity id
+   * @param tagStack  the protobuf message field numbers that identify the pref
+   * @param type  the entity type of the pref field, which is not necessarily the same as the entity's type, e.g. CommonPrefs use ALL
+   * @return True if the value is marked for enforcement, false otherwise
+   */
+  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type) const = 0;
 
   /**
   * Load the rules in the specified pref rule files.
