@@ -181,6 +181,8 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
   {
     if (parent.hasValue("fillcolor"))
       setFillColor(osgEarth::Symbology::Color(parent.value("fillcolor")));
+    else if (parent.hasValue("linecolor"))
+      setFillColor(osgEarth::Symbology::Color(parent.value("linecolor")));  // Default to the line color if the fill color is not set
     setFilledState(isFilled);
   }
   else

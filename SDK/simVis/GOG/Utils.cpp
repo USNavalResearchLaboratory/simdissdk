@@ -299,10 +299,7 @@ void ModifierState::apply(Config& conf)
   if (lineColor_.isSet()) conf.set("linecolor", *lineColor_);
   if (lineWidth_.isSet()) conf.set("linewidth", *lineWidth_);
   if (lineStyle_.isSet()) conf.set("linestyle", *lineStyle_);
-  if (fillColor_.isSet())
-    conf.set("fillcolor", *fillColor_);
-  else
-    conf.set("fillcolor", *lineColor_);  // SIMDIS 9 defaults to the line color if the fill color is not set
+  if (fillColor_.isSet()) conf.set("fillcolor", *fillColor_);
   if (pointSize_.isSet()) conf.set("pointsize", *pointSize_);
   if (altitudeMode_.isSet()) conf.set("altitudemode", *altitudeMode_);
   if (altitudeUnits_.isSet()) conf.set("altitudeunits", *altitudeUnits_);
