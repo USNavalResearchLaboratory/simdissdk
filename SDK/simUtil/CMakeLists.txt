@@ -21,6 +21,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}ExampleResources.h
     ${UTIL_INC}GogManager.h
     ${UTIL_INC}HudManager.h
+    ${UTIL_INC}IdMapper.h
     ${UTIL_INC}LayerFactory.h
     ${UTIL_INC}LineGraphic.h
     ${UTIL_INC}MouseDispatcher.h
@@ -49,6 +50,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ExampleResources.cpp
     ${UTIL_SRC}GogManager.cpp
     ${UTIL_SRC}HudManager.cpp
+    ${UTIL_SRC}IdMapper.cpp
     ${UTIL_SRC}LayerFactory.cpp
     ${UTIL_SRC}LineGraphic.cpp
     ${UTIL_SRC}MouseDispatcher.cpp

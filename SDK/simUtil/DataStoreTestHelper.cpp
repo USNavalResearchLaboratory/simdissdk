@@ -51,10 +51,11 @@ simData::DataStore* DataStoreTestHelper::dataStore()
   return dataStore_;
 }
 
-uint64_t DataStoreTestHelper::addPlatform()
+uint64_t DataStoreTestHelper::addPlatform(uint64_t originalId)
 {
   simData::DataStore::Transaction t;
   simData::PlatformProperties *p = dataStore_->addPlatform(&t);
+  p->set_originalid(originalId);
   t.commit();
   simData::PlatformPrefs *pp = dataStore_->mutable_platformPrefs(p->id(), &t);
   std::ostringstream platName;
@@ -65,11 +66,12 @@ uint64_t DataStoreTestHelper::addPlatform()
   return p->id();
 }
 
-uint64_t DataStoreTestHelper::addBeam(uint64_t hostId)
+uint64_t DataStoreTestHelper::addBeam(uint64_t hostId, uint64_t originalId)
 {
   simData::DataStore::Transaction t;
   simData::BeamProperties* beamProps = dataStore_->addBeam(&t);
   beamProps->set_hostid(hostId);
+  beamProps->set_originalid(originalId);
   t.commit();
   simData::BeamPrefs* beamPrefs = dataStore_->mutable_beamPrefs(beamProps->id(), &t);
   std::ostringstream beamName;
@@ -79,11 +81,12 @@ uint64_t DataStoreTestHelper::addBeam(uint64_t hostId)
   return beamProps->id();
 }
 
-uint64_t DataStoreTestHelper::addGate(uint64_t hostId)
+uint64_t DataStoreTestHelper::addGate(uint64_t hostId, uint64_t originalId)
 {
   simData::DataStore::Transaction t;
   simData::GateProperties* gateProps = dataStore_->addGate(&t);
   gateProps->set_hostid(hostId);
+  gateProps->set_originalid(originalId);
   t.commit();
   simData::GatePrefs* gatePrefs = dataStore_->mutable_gatePrefs(gateProps->id(), &t);
   std::ostringstream gateName;
@@ -93,11 +96,12 @@ uint64_t DataStoreTestHelper::addGate(uint64_t hostId)
   return gateProps->id();
 }
 
-uint64_t DataStoreTestHelper::addLaser(uint64_t hostId)
+uint64_t DataStoreTestHelper::addLaser(uint64_t hostId, uint64_t originalId)
 {
   simData::DataStore::Transaction t;
   simData::LaserProperties* laserProps = dataStore_->addLaser(&t);
   laserProps->set_hostid(hostId);
+  laserProps->set_originalid(originalId);
   t.commit();
   simData::LaserPrefs* laserPrefs = dataStore_->mutable_laserPrefs(laserProps->id(), &t);
   std::ostringstream laserName;
@@ -107,11 +111,12 @@ uint64_t DataStoreTestHelper::addLaser(uint64_t hostId)
   return laserProps->id();
 }
 
-uint64_t DataStoreTestHelper::addLOB(uint64_t hostId)
+uint64_t DataStoreTestHelper::addLOB(uint64_t hostId, uint64_t originalId)
 {
   simData::DataStore::Transaction t;
   simData::LobGroupProperties* lobProps = dataStore_->addLobGroup(&t);
   lobProps->set_hostid(hostId);
+  lobProps->set_originalid(originalId);
   t.commit();
   simData::LobGroupPrefs* lobPrefs = dataStore_->mutable_lobGroupPrefs(lobProps->id(), &t);
   std::ostringstream lobName;
@@ -121,11 +126,12 @@ uint64_t DataStoreTestHelper::addLOB(uint64_t hostId)
   return lobProps->id();
 }
 
-uint64_t DataStoreTestHelper::addProjector(uint64_t hostId)
+uint64_t DataStoreTestHelper::addProjector(uint64_t hostId, uint64_t originalId)
 {
   simData::DataStore::Transaction t;
   simData::ProjectorProperties* projProps = dataStore_->addProjector(&t);
   projProps->set_hostid(hostId);
+  projProps->set_originalid(originalId);
   t.commit();
   simData::ProjectorPrefs* projPrefs = dataStore_->mutable_projectorPrefs(projProps->id(), &t);
   std::ostringstream projName;
