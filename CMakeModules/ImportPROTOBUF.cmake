@@ -3,8 +3,10 @@
 # First try to check PROTOBUF_DIR from PublicDefaults.cmake / CMake Cache
 if(PROTOBUF_DIR)
     # Configure the protobuf variables for find_package(Protobuf) to work
-    find_library(PROTOBUF_LIBRARY NAMES protobuf libprotobuf PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
-    find_library(PROTOBUF_LIBRARY_DEBUG NAMES protobuf_d libprotobuf_d protobuf libprotobuf PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
+    find_library(PROTOBUF_LIBRARY NAMES protobuf-2.6 libprotobuf-2.6 protobuf libprotobuf PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
+    find_library(PROTOBUF_LIBRARY_DEBUG
+        NAMES protobuf-2.6_d libprotobuf-2.6_d protobuf-2.6 libprotobuf-2.6 protobuf_d libprotobuf_d protobuf libprotobuf
+        PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
     find_program(PROTOBUF_PROTOC_EXECUTABLE NAMES protoc PATHS "${PROTOBUF_DIR}/bin" NO_DEFAULT_PATH)
     find_path(PROTOBUF_INCLUDE_DIR NAME google/protobuf/stubs/common.h PATHS "${PROTOBUF_DIR}/include" NO_DEFAULT_PATH)
 
@@ -43,6 +45,22 @@ set_target_properties(PROTOBUF PROPERTIES
 if(UNIX)
     set_target_properties(PROTOBUF PROPERTIES INTERFACE_LINK_LIBRARIES "-pthread")
 endif()
+
+# Detect if the library is a DLL by looking for its DLL
+if(WIN32)
+    string(REGEX REPLACE "(.*)\\.lib$" "\\1.dll" LOCATION_RELEASE "${PROTOBUF_LIBRARY}")
+    string(REGEX REPLACE "/lib(|64)/" "/bin/" LOCATION_RELEASE "${LOCATION_RELEASE}")
+    if(EXISTS "${LOCATION_RELEASE}")
+        set_target_properties(PROTOBUF PROPERTIES INTERFACE_COMPILE_DEFINITIONS "PROTOBUF_USE_DLLS")
+        # Need to set correct imported locations
+        vsi_set_imported_locations_from_implibs(PROTOBUF)
+        if(INSTALL_THIRDPARTY_LIBRARIES)
+            vsi_install_target(PROTOBUF THIRDPARTY)
+        endif()
+    endif()
+endif()
+
+
 # Save the executable name as a separate variable used in VSI_PROTOBUF_GENERATE_TARGET_NAME
 set(PROTOBUF_PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
 
