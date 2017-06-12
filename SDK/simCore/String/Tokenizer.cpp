@@ -141,11 +141,42 @@ size_t simCore::getFirstCharPosAfterString(const std::string &str, size_t start,
     return str.find_first_of(simCore::STR_WHITE_SPACE_CHARS, start);
   }
 
-  const size_t pos = str.find(termString, start);
+  size_t pos = str.find(termString, start);
   if (pos == std::string::npos)
   {
     // not found
     return std::string::npos;
+  }
+
+  // single quotes can be escaped with a leading back slash
+  if ((termString == "\"") && (pos > 0))
+  {
+    // Need to search until an escaped quote is found
+    while (str[pos - 1] == '\\')
+    {
+      // Need to count the number of preceding back slashes
+      // If old number of preceding back slashes then the quote is escaped
+      // If even number of preceding back slashes then the quote is NOT escaped.
+      size_t counterPos = pos - 1;
+      unsigned int counter = 1;
+      while ((counterPos > 0) && (str[counterPos - 1] == '\\'))
+      {
+        ++counter;
+        --counterPos;
+      }
+
+      // if even number of preceding back slashes then the quote is NOT escaped, so kick out
+      if ((counter % 2) == 0)
+        break;
+
+      // look for the next possible quote
+      pos = str.find(termString, pos+1);
+      if (pos == std::string::npos)
+      {
+        // not found
+        return std::string::npos;
+      }
+    }
   }
 
   const size_t endOfStr = pos + termString.length();

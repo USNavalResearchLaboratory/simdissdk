@@ -191,6 +191,87 @@ namespace
     rv += SDK_ASSERT(tokens.size() == 6);
     rv += SDK_ASSERT(tokens[2] == "\"Simdis_ScreenText\"");
     rv += SDK_ASSERT(tokens[3] == "\"\"");
+
+    // Test escaped quotes used in ASI files
+    str = "This \"is \\\" a\" test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 3);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "\"is \\\" a\"");
+    rv += SDK_ASSERT(tokens[2] == "test");
+
+    str = "This \"is \\\" \\\" a\" test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 3);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "\"is \\\" \\\" a\"");
+    rv += SDK_ASSERT(tokens[2] == "test");
+
+    str = "\\\"This is a test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "\\\"This");
+    rv += SDK_ASSERT(tokens[1] == "is");
+    rv += SDK_ASSERT(tokens[2] == "a");
+    rv += SDK_ASSERT(tokens[3] == "test");
+
+    str = "This is \\\" a test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 5);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "is");
+    rv += SDK_ASSERT(tokens[2] == "\\\"");
+    rv += SDK_ASSERT(tokens[3] == "a");
+    rv += SDK_ASSERT(tokens[4] == "test");
+
+    str = "This is a test\\\"";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "is");
+    rv += SDK_ASSERT(tokens[2] == "a");
+    rv += SDK_ASSERT(tokens[3] == "test\\\"");
+
+    // Test escaping the escape
+    str = "This \"is \\\\\" a\" test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "\"is \\\\\"");
+    rv += SDK_ASSERT(tokens[2] == "a\"");
+    rv += SDK_ASSERT(tokens[3] == "test");
+
+    str = "This \"is \\\\\\\" a\" test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 3);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "\"is \\\\\\\" a\"");
+    rv += SDK_ASSERT(tokens[2] == "test");
+
+    str = "This \"is \\\\\\\\\" a\" test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "\"is \\\\\\\\\"");
+    rv += SDK_ASSERT(tokens[2] == "a\"");
+    rv += SDK_ASSERT(tokens[3] == "test");
+
+    str = "\\\\\"This is a test";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "\\\\\"This");
+    rv += SDK_ASSERT(tokens[1] == "is");
+    rv += SDK_ASSERT(tokens[2] == "a");
+    rv += SDK_ASSERT(tokens[3] == "test");
+
+    str = "This is a test\\\\\"";
+    simCore::quoteTokenizer(tokens, str);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "This");
+    rv += SDK_ASSERT(tokens[1] == "is");
+    rv += SDK_ASSERT(tokens[2] == "a");
+    rv += SDK_ASSERT(tokens[3] == "test\\\\\"");
+
     return rv;
   }
 
