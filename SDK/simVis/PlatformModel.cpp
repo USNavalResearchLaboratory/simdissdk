@@ -263,13 +263,13 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     modelStateSet->setRenderBinDetails(BIN_PLATFORM_MODEL, BIN_TRAVERSAL_ORDER_SIMSDK);
   }
 
-  // default lighting:
-  simVis::setLighting(modelStateSet, (!isImageModel_ && prefs.lighted()) ? osg::StateAttribute::ON : osg::StateAttribute::OFF);
-
   // re-apply the parent group.
   offsetXform_->addChild(model_);
   alphaVolumeGroup_->addChild(model_);
   dynamicXform_->setSizingNode(model_);
+
+  // default lighting:
+  simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted()) ? osg::StateAttribute::ON : osg::StateAttribute::OFF);
 
   return true;
 }
@@ -668,8 +668,7 @@ void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs)
   // Turn lighting on if lighting is enabled, but force it off if lighting is off.  This
   // prevents models from turning lighting on when we don't want it on.  Models can then
   // feasibly override this with the PROTECTED|ON state.
-  osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
-  simVis::setLighting(modelStateSet, (!isImageModel_ && prefs.lighted())
+  simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
     ? osg::StateAttribute::ON
     : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
 }
