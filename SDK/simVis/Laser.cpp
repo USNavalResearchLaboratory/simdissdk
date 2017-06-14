@@ -124,6 +124,14 @@ LabelContentCallback* LaserNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string LaserNode::hookText() const
+{
+  if (hasLastUpdate_)
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string LaserNode::legendText() const
 {
   if (hasLastUpdate_)

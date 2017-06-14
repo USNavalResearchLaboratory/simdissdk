@@ -150,6 +150,9 @@ class PlatformTspiFilterManager;
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the hook text based on the label content callback, update and preference
+    virtual std::string hookText() const;
+
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 

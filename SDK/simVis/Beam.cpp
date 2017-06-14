@@ -250,6 +250,14 @@ LabelContentCallback* BeamNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string BeamNode::hookText() const
+{
+  if (hasLastPrefs_ && hasLastUpdate_)
+    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string BeamNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)

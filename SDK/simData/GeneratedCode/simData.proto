@@ -392,12 +392,14 @@ message LabelPrefs {
     optional string labelCode = 29 [default = ""];
   };
 
-  /// Bit field of flags to display
+  /// Display contents of the label
   optional DisplayFields displayFields = 11;
-  /// Bit field of legend display fields
+  /// Display contents of the legend
   optional DisplayFields legendDisplayFields = 22;
-  /// Bit field of display fields for the mouse-over popup
+  /// Display contents of the mouse-over/hover text popup
   optional DisplayFields hoverDisplayFields = 23;
+  /// Display contents of the hook window
+  optional DisplayFields hookDisplayFields = 36;
 
   /// Toggle height above terrain for LLA altitude
   optional bool applyHeightAboveTerrain = 12 [default = false];

@@ -318,6 +318,14 @@ LabelContentCallback* GateNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string GateNode::hookText() const
+{
+  if (hasLastPrefs_ && hasLastUpdate_)
+    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string GateNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)

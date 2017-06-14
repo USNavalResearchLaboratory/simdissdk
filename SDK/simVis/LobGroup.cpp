@@ -268,6 +268,14 @@ LabelContentCallback* LobGroupNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string LobGroupNode::hookText() const
+{
+  if (hasLastUpdate_ && lastPrefsValid_)
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string LobGroupNode::legendText() const
 {
   if (hasLastUpdate_ && lastPrefsValid_)

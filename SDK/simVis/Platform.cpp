@@ -621,6 +621,16 @@ std::string PlatformNode::popupText() const
   return "";
 }
 
+std::string PlatformNode::hookText() const
+{
+  if (lastPrefsValid_ && valid_ && lastUpdate_.has_time())
+  {
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+  }
+
+  return "";
+}
+
 std::string PlatformNode::legendText() const
 {
   if (lastPrefsValid_ && valid_ && lastUpdate_.has_time())

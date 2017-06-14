@@ -246,6 +246,14 @@ LabelContentCallback* ProjectorNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string ProjectorNode::hookText() const
+{
+  if (hasLastUpdate_)
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string ProjectorNode::legendText() const
 {
   if (hasLastUpdate_)
