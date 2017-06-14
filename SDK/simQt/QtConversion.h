@@ -72,7 +72,12 @@ namespace simQt {
   */
   SDKQT_EXPORT QString formatTooltip(const QString& title, const QString& desc = "");
 
-
+  /**
+  * Convert any text that may contain a UTF-8 or ANSI encoded degree symbol into a QString
+  * @param text  String that may contain a degree symbol
+  * @return Valid QString that properly renders degree symbol
+  */
+  SDKQT_EXPORT QString translateDegreeSymbol(const std::string& text);
 }
 #endif
 

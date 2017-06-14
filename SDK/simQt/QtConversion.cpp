@@ -53,5 +53,15 @@ namespace simQt {
     const QString formatBlock("<strong>%1</strong><div style=\"margin-left: 1em; margin-right: 1em;\"><p>%2</p></div>");
     return formatBlock.arg(title, desc);
   }
+
+  QString translateDegreeSymbol(const std::string& text)
+  {
+    // Check for UTF-8 encoded degree symbol, if found use fromStdString
+    if (text.find("\xC2\xB0") != std::string::npos)
+      return QString::fromStdString(text);
+
+    // May have ANSI encoded degree symbol or no degree symbol can use fromLatin1
+    return QString::fromLatin1(text.c_str());
+  }
 }
 
