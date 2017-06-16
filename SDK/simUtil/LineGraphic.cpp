@@ -92,8 +92,22 @@ void LineGraphic::set(const simUtil::Position* origin, const simUtil::Position* 
   // Update the positions
   if (origin != NULL && destination != NULL && origin->isValid() && destination->isValid())
   {
-    simCore::Coordinate coord1(simCore::COORD_SYS_LLA, origin->lla());
-    simCore::Coordinate coord2(simCore::COORD_SYS_LLA, destination->lla());
+    set(origin->lla(), destination->lla(), labelString);
+  }
+  else
+  {
+    // Turn off the node
+    animatedLine_->setNodeMask(simVis::DISPLAY_MASK_NONE);
+    label_->setNodeMask(simVis::DISPLAY_MASK_NONE);
+  }
+}
+
+void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& destinationLLA, const std::string& labelString)
+{
+  if (originLLA != destinationLLA && originLLA != NULL && destinationLLA != NULL)
+  {
+    simCore::Coordinate coord1(simCore::COORD_SYS_LLA, originLLA);
+    simCore::Coordinate coord2(simCore::COORD_SYS_LLA, destinationLLA);
     animatedLine_->setEndPoints(coord1, coord2);
     // Turn on the node
     animatedLine_->setNodeMask(GRAPHIC_MASK_RULERLINE);
@@ -108,8 +122,8 @@ void LineGraphic::set(const simUtil::Position* origin, const simUtil::Position* 
       // Figure out the label position
       double labelLat = 0;
       double labelLon = 0;
-      osgEarth::GeoMath::midpoint(origin->lla().lat(), origin->lla().lon(),
-        destination->lla().lat(), destination->lla().lon(), labelLat, labelLon);
+      osgEarth::GeoMath::midpoint(originLLA.lat(), originLLA.lon(),
+        destinationLLA.lat(), destinationLLA.lon(), labelLat, labelLon);
       label_->setPosition(osgEarth::GeoPoint(wgs84Srs_, labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG));
       label_->setText(labelString);
       label_->setNodeMask(GRAPHIC_MASK_RULERLINE);

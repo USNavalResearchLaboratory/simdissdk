@@ -61,6 +61,14 @@ public:
   void set(const Position* origin, const Position* destination, const std::string& labelString);
 
   /**
+  * Sets the origin and destination position and updates the label text.
+  * @param origin LLA of the line graphic's origin.
+  * @param destination LLA of the line graphic's destination.
+  * @param labelString Text string to set to the label.
+  */
+  void set(const simCore::Vec3& originLLA, const simCore::Vec3& destinationLLA, const std::string& labelString);
+
+  /**
   * Sets the width of the line.
   * @param lineWidth Width to which to set the line.
   */
