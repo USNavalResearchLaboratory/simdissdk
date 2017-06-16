@@ -104,7 +104,7 @@ void LineGraphic::set(const simUtil::Position* origin, const simUtil::Position* 
 
 void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& destinationLLA, const std::string& labelString)
 {
-  if (originLLA != destinationLLA && originLLA != NULL && destinationLLA != NULL)
+  if (originLLA != destinationLLA)
   {
     simCore::Coordinate coord1(simCore::COORD_SYS_LLA, originLLA);
     simCore::Coordinate coord2(simCore::COORD_SYS_LLA, destinationLLA);
