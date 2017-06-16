@@ -172,7 +172,7 @@ void discoverTimestampedLayers(App& app, osgEarth::Map* map)
       // Convert to seconds post epoch
       osgEarth::TimeStamp timestamp = dt.asTimeStamp();
 
-      // Compute the ealiest and latest times
+      // Compute the earliest and latest times
       if (timestamp < app.firstTime_)
         app.firstTime_ = timestamp;
 
@@ -189,7 +189,7 @@ void discoverTimestampedLayers(App& app, osgEarth::Map* map)
     }
   }
 
-  // Buffer the start and end times a little to accomodate the time slider.
+  // Buffer the start and end times a little to accommodate the time slider.
   if (app.layers_.size() >= 2)
   {
     App::LayerTable::const_iterator begin = app.layers_.begin();
