@@ -490,6 +490,14 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
       return tr("Original ID");
 
     break;
+
+  case SORT_BY_ENTITY_ROLE:
+    if (index.column() == 1)
+    {
+      // Use ints to force entity types into desired order whether they're currently being displayed as icons or text
+      return static_cast<int>(dataStore_->objectType(item->id()));
+    }
+    break;
   }
 
   return QVariant();

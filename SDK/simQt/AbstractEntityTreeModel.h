@@ -28,6 +28,11 @@
 
 namespace simQt {
 
+  enum EntityTreeModelRoles
+  {
+    SORT_BY_ENTITY_ROLE = Qt::UserRole
+  };
+
   /** An item in the AbstractEntityTreeModel, would be platform, beam, etc */
   class AbstractEntityTreeItem
   {

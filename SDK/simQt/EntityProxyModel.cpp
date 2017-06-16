@@ -130,6 +130,13 @@ namespace simQt {
       uint64_t rightId = sourceModel()->data(right).toULongLong();
       return leftId < rightId;
     }
+    // Sorting based on entity type
+    else if (left.column() == 1)
+    {
+      int leftSortVal = sourceModel()->data(left, SORT_BY_ENTITY_ROLE).toInt();
+      int rightSortVal = sourceModel()->data(right, SORT_BY_ENTITY_ROLE).toInt();
+      return leftSortVal < rightSortVal;
+    }
 
     // default sort method used for other columns
     return QSortFilterProxyModel::lessThan(left, right);
