@@ -85,9 +85,10 @@ public:
    *   longitude.  If set greater than rightLon, then calculation crosses antimeridian (dateline).
    * @param rightLon Maximum longitude (east) of the area of interest, in radians
    * @param transitionSec Duration of the viewpoint transition in seconds
+   * @param distanceFactor Multiplier for view distance
    * @return 0 on success, non-zero on error (including no view set)
    */
-  int centerOn(double lowerLat, double upperLat, double leftLon, double rightLon, double transitionSec=0.0);
+  int centerOn(double lowerLat, double upperLat, double leftLon, double rightLon, double transitionSec=0.0, double distanceFactor=1.0);
 
   /**
    * Changes eye position to center on the area described, returns 0 on success.  The view specified

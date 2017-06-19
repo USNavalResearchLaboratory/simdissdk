@@ -68,7 +68,7 @@ void RecenterEyeOnArea::setRangeClamp(double clampAbove, double clampBelow)
   maxEyeDistance_ = clampBelow;
 }
 
-int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon, double rightLon, double transitionSec)
+int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon, double rightLon, double transitionSec, double distanceFactor)
 {
   // Put the observer_ptr into a ref_ptr so the memory doesn't go away
   osg::ref_ptr<simVis::View> view;
@@ -78,7 +78,7 @@ int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon
   // Get the center point of the positions
   simCore::Vec3 centerLla;
   simCore::calculateGeodeticMidPoint(simCore::Vec3(lowerLat, leftLon, 0.0), simCore::Vec3(upperLat, rightLon, 0.0), false, centerLla);
-  const double distance = distance_(lowerLat, upperLat, leftLon, rightLon);
+  const double distance = distance_(lowerLat, upperLat, leftLon, rightLon) * distanceFactor;
 
   // update the eye position's focal point
   simVis::Viewpoint eyePos = view->getViewpoint();
