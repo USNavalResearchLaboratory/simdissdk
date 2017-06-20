@@ -96,6 +96,14 @@ namespace simCore
    */
   SDKCORE_EXPORT FrequencyDesignationUsEcm toUsEcm(double freqMhz);
 
+  /**
+   * Converts a given ECM frequency band to its minimum and maximum frequencies
+   * @param[in] usEcm The frequency band
+   * @param[out] minFreqMhz Minimum transmitter frequency (MHz)
+   * @param[out] maxFreqMhz Maximum transmitter frequency (MHz)
+   */
+  SDKCORE_EXPORT void getFreqMhzRange(FrequencyDesignationUsEcm usEcm, double* minFreqMhz, double* maxFreqMhz);
+
 } // namespace simCore
 
 #endif  /* SIMCORE_EM_PROPAGATION_H */

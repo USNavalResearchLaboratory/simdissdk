@@ -119,5 +119,79 @@ FrequencyDesignationUsEcm toUsEcm(double freqMhz)
   return FREQ_ECM_OUT_OF_BOUNDS;
 }
 
+void getFreqMhzRange(FrequencyDesignationUsEcm usEcm, double* minFreqMhz, double* maxFreqMhz)
+{
+  double minFreq = 0.0;
+  double maxFreq = 0.0;
+
+  switch (usEcm)
+  {
+    case FREQ_ECM_A:
+      minFreq = 0.0;
+      maxFreq = 250;
+      break;
+    case FREQ_ECM_B:
+      minFreq = 250;
+      maxFreq = 500;
+      break;
+    case FREQ_ECM_C:
+      minFreq = 500;
+      maxFreq = 1000;
+      break;
+    case FREQ_ECM_D:
+      minFreq = 1000;
+      maxFreq = 2000;
+      break;
+    case FREQ_ECM_E:
+      minFreq = 2000;
+      maxFreq = 3000;
+      break;
+    case FREQ_ECM_F:
+      minFreq = 3000;
+      maxFreq = 4000;
+      break;
+    case FREQ_ECM_G:
+      minFreq = 4000;
+      maxFreq = 6000;
+      break;
+    case FREQ_ECM_H:
+      minFreq = 6000;
+      maxFreq = 8000;
+      break;
+    case FREQ_ECM_I:
+      minFreq = 8000;
+      maxFreq = 10000;
+      break;
+    case FREQ_ECM_J:
+      minFreq = 10000;
+      maxFreq = 20000;
+      break;
+    case FREQ_ECM_K:
+      minFreq = 20000;
+      maxFreq = 40000;
+      break;
+    case FREQ_ECM_L:
+      minFreq = 40000;
+      maxFreq = 60000;
+      break;
+    case FREQ_ECM_M:
+      minFreq = 60000;
+      maxFreq = 100000;
+      break;
+    case FREQ_ECM_OUT_OF_BOUNDS:
+      break;
+    default:
+      assert(0); // New band added to enum, but not here
+      break;
+  }
+
+  if (minFreqMhz != NULL)
+    *minFreqMhz = minFreq;
+  if (maxFreqMhz != NULL)
+    *maxFreqMhz = maxFreq;
+
+  return;
+}
+
 }
 
