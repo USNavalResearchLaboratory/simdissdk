@@ -180,6 +180,7 @@ set(SIMQT_PROJECT_FILES
 )
 
 # Fix the library for static or shared
+set(STATIC_OR_SHARED STATIC)
 if(SIMQT_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
