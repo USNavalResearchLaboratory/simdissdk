@@ -71,22 +71,22 @@ namespace simCore
           bool oneWay=false);
 
   /// As defined in https://en.wikipedia.org/wiki/Radio_spectrum
-  enum FrequencyDesignationUsEcm
+  enum FrequencyBandUsEcm
   {
-    FREQ_ECM_OUT_OF_BOUNDS,
-    FREQ_ECM_A,
-    FREQ_ECM_B,
-    FREQ_ECM_C,
-    FREQ_ECM_D,
-    FREQ_ECM_E,
-    FREQ_ECM_F,
-    FREQ_ECM_G,
-    FREQ_ECM_H,
-    FREQ_ECM_I,
-    FREQ_ECM_J,
-    FREQ_ECM_K,
-    FREQ_ECM_L,
-    FREQ_ECM_M
+    USECM_FREQ_OUT_OF_BOUNDS,
+    USECM_FREQ_A,
+    USECM_FREQ_B,
+    USECM_FREQ_C,
+    USECM_FREQ_D,
+    USECM_FREQ_E,
+    USECM_FREQ_F,
+    USECM_FREQ_G,
+    USECM_FREQ_H,
+    USECM_FREQ_I,
+    USECM_FREQ_J,
+    USECM_FREQ_K,
+    USECM_FREQ_L,
+    USECM_FREQ_M
   };
 
   /**
@@ -94,7 +94,7 @@ namespace simCore
    * @param freqMhz Transmitter frequency (MHz)
    * @return The frequency band.
    */
-  SDKCORE_EXPORT FrequencyDesignationUsEcm toUsEcm(double freqMhz);
+  SDKCORE_EXPORT FrequencyBandUsEcm toUsEcm(double freqMhz);
 
   /**
    * Converts a given ECM frequency band to its minimum and maximum frequencies
@@ -102,7 +102,43 @@ namespace simCore
    * @param[out] minFreqMhz Minimum transmitter frequency (MHz)
    * @param[out] maxFreqMhz Maximum transmitter frequency (MHz)
    */
-  SDKCORE_EXPORT void getFreqMhzRange(FrequencyDesignationUsEcm usEcm, double* minFreqMhz, double* maxFreqMhz);
+  SDKCORE_EXPORT void getFreqMhzRange(FrequencyBandUsEcm usEcm, double* minFreqMhz, double* maxFreqMhz);
+
+  /// As defined in https://en.wikipedia.org/wiki/Radio_spectrum
+  enum FrequencyBandIEEE
+  {
+    IEEE_FREQ_OUT_OF_BOUNDS,
+    IEEE_FREQ_HF,
+    IEEE_FREQ_VHF,
+    IEEE_FREQ_UHF,
+    IEEE_FREQ_L,
+    IEEE_FREQ_S,
+    IEEE_FREQ_C,
+    IEEE_FREQ_X,
+    IEEE_FREQ_KU,
+    IEEE_FREQ_K,
+    IEEE_FREQ_KA,
+    IEEE_FREQ_V,
+    IEEE_FREQ_W,
+    IEEE_FREQ_G,
+    IEEE_FREQ_MM // Note: the mm (millimeter) band encompasses part of KA (30GHz) through G (300GHz)
+  };
+
+  /**
+   * Returns the IEEE ECM frequency band for the given frequency
+   * @param freqMhz Transmitter frequency (MHz)
+   * @param useMM Will return IEEE_FREQ_MM if freqMhz is in the millimeter band, rather than the band in KA-G
+   * @return The frequency band.
+   */
+  SDKCORE_EXPORT FrequencyBandIEEE toIeeeBand(double freqMhz, bool useMM = false);
+
+  /**
+   * Converts a given IEEE frequency band to its minimum and maximum frequencies
+   * @param[in] ieeeBand The frequency band
+   * @param[out] minFreqMhz Minimum transmitter frequency (MHz)
+   * @param[out] maxFreqMhz Maximum transmitter frequency (MHz)
+   */
+  SDKCORE_EXPORT void getFreqMhzRange(FrequencyBandIEEE ieeeBand, double* minFreqMhz, double* maxFreqMhz);
 
 } // namespace simCore
 
