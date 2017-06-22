@@ -1644,7 +1644,7 @@ bool simCore::laserInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3&
       tmp.toD3(endPoint);
 
       // Check if the point is in the gate
-      if (!positionInGate(gateHostLLA, endPoint, gAzimuthRad, gElevRad, gWidthRad, gHeightRad, gMinRangeM, gMaxRangeM, earthModel, cc))
+      if (!positionInGate(gateHostLLA, Vec3(endPoint), gAzimuthRad, gElevRad, gWidthRad, gHeightRad, gMinRangeM, gMaxRangeM, earthModel, cc))
         return false;
     }
 

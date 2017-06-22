@@ -268,7 +268,7 @@ void Profile::adjustSpherical_(osg::Vec3& v, const double *lla, const simCore::V
 {
   double pos[3] = { v[0], v[1], v[2] };
   simCore::Vec3 sphereXYZ;
-  simCore::tangentPlane2Sphere(lla, pos, sphereXYZ, tpSphereXYZ);
+  simCore::tangentPlane2Sphere(Vec3(lla), Vec3(pos), sphereXYZ, tpSphereXYZ);
   double alt = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
   v.z() = v.z() - (alt - v.z()) + refCoord_.z();
 }

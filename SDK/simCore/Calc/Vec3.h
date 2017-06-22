@@ -48,7 +48,7 @@ namespace simCore
     * @param[in] v Vector elements
     * @pre valid input pointer, if not valid internal elements are set to zero
     */
-    Vec3(const double v[3])
+    explicit Vec3(const double v[3])
     {
       if (v == NULL)
       {
