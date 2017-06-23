@@ -38,14 +38,7 @@ namespace simCore
   * @param oneWay calculates the one way power (dB) at an isotropic antenna
   * @return Free space received power (dB).
   */
-  SDKCORE_EXPORT double getRcvdPowerFreeSpace(double rngMeters,
-          double freqMhz,
-          double powerWatts,
-          double xmtGaindB,
-          double rcvGaindB,
-          double rcsSqm,
-          double systemLossdB,
-          bool oneWay=false);
+  SDKCORE_EXPORT double getRcvdPowerFreeSpace(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double systemLossdB, bool oneWay=false);
 
   /**
   * This function returns the received power (dB) at the antenna using the received signal power calculation from Blake's equation 1.18 (p 12) Radar Range-Performance Analysis (1986) Lamont V. Blake, ISBN 0-89006-224-2
@@ -60,15 +53,18 @@ namespace simCore
   * @param oneWay calculates the one way power (dB) at an isotropic antenna
   * @return Received power at radar antenna (dB).
   */
-  SDKCORE_EXPORT double getRcvdPowerBlake(double rngMeters,
-          double freqMhz,
-          double powerWatts,
-          double xmtGaindB,
-          double rcvGaindB,
-          double rcsSqm,
-          double ppfdB,
-          double systemLossdB,
-          bool oneWay=false);
+  SDKCORE_EXPORT double getRcvdPowerBlake(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double ppfdB, double systemLossdB, bool oneWay=false);
+
+  /**
+  * This function returns the free space detection range (km) for an ESM receiver as well as an optional free space path loss (dB)
+  * @param xmtGaindB Xmt antenna gain (dB)
+  * @param xmtFreqMhz Transmitter frequency (MHz)
+  * @param xmtrPwrWatts Transmitter peak power (Watts)
+  * @param rcvrSensDbm Receiver sensitivity (dBm)
+  * @param fsLossDb Optional free space path loss calculation (dB)
+  * @return Free space detection range for an ESM receiver (km).
+  */
+  SDKCORE_EXPORT double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb);
 
   /// As defined in https://en.wikipedia.org/wiki/Radio_spectrum
   enum FrequencyBandUsEcm

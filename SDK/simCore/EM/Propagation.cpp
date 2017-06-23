@@ -27,14 +27,7 @@
 namespace simCore
 {
 
-double getRcvdPowerFreeSpace(double rngMeters,
-        double freqMhz,
-        double powerWatts,
-        double xmtGaindB,
-        double rcvGaindB,
-        double rcsSqm,
-        double systemLossdB,
-        bool oneWay)
+double getRcvdPowerFreeSpace(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double systemLossdB, bool oneWay)
 {
   // Free Space Radar range equation
   double rcvPower = simCore::SMALL_DB_VAL;
@@ -52,15 +45,7 @@ double getRcvdPowerFreeSpace(double rngMeters,
   return rcvPower;
 }
 
-double getRcvdPowerBlake(double rngMeters,
-        double freqMhz,
-        double powerWatts,
-        double xmtGaindB,
-        double rcvGaindB,
-        double rcsSqm,
-        double ppfdB,
-        double systemLossdB,
-        bool oneWay)
+double getRcvdPowerBlake(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double ppfdB, double systemLossdB, bool oneWay)
 {
   double rcvPower = getRcvdPowerFreeSpace(rngMeters, freqMhz, powerWatts, xmtGaindB, rcvGaindB, rcsSqm, systemLossdB, oneWay);
   // Received signal power calculation from Blake's equation 1.18 (p 12)
@@ -68,6 +53,24 @@ double getRcvdPowerBlake(double rngMeters,
   // Lamont V. Blake, ISBN 0-89006-224-2
   // Use free space value, then apply propagation factor
   return (oneWay == false) ? (rcvPower + (4. * ppfdB)) : (rcvPower + (2. * ppfdB));
+}
+
+double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb)
+{
+  // Compute transmitter power in dB, function requires power in kilowatts
+  const double xmtPwrDb = 10. * log10((xmtrPwrWatts * 1e-3) / (xmtFreqMhz * xmtFreqMhz));
+
+  // Free-space range equation (km) for an ESM receiver, derived from Kerr (1951, Eq 2-15)
+  // also found in "Specification for Radar Free-Space Detection Range and Free-Space Intercept Range Calculations", C; P. Hatton (p. 7, Eq 13)
+  const double esmRngKm = pow(10., ((xmtPwrDb + xmtGaindB - rcvrSensDbm + 27.5517) / 20.));
+
+  // One-way free space loss equation from "Electronic Warfare and Radar Systems Handbook", NAWCWPNS TP 8347, Rev 2 April 1999, p 4-3.1
+  // 32.45 is the K1 term in the one way free-space loss equation when the range units are in km and freq in MHz
+  if (fsLossDb)
+    *fsLossDb = 20. * log10(xmtFreqMhz * esmRngKm) + 32.45;
+
+  // Free-space detection range (km) for an ESM receiver
+  return esmRngKm;
 }
 
 FrequencyBandUsEcm toUsEcm(double freqMhz)

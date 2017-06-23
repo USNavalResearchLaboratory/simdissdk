@@ -406,6 +406,52 @@ int testOneWayRcvdPowerFreeSpace()
   return 1;
 }
 
+int testOneWayFreeSpaceRangeLoss()
+{
+  try
+  {
+    double esmRngKm;
+    double fsLossDb;
+    int err = 0;
+    std::cout << "  testOneWayFreeSpaceRangeLoss..." << std::endl;
+
+    // test inputs and outputs from Table 4-2, "Specification for Radar Free-Space Detection Range and Free-Space Intercept Range Calculations"
+    // Test 1
+    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(5, 100, 100, -10, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 0.4, 0.25));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 65, 0.05));
+    // Test 2
+    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(50, 100, 10000000, -10, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 23855.3, 0.25));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 160, 0.05));
+    // Test 3
+    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(-5, 20000, 10000000, -150, &fsLossDb);
+    // The reported value in the table has rounding errors, use a tolerance of 2 km
+    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 2121068.8, 2.0));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 245, 0.05));
+    // Test 4
+    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(50, 20000, 10000000, -150, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 1192765322.5, 0.25));
+    // The reported value in the table has significant rounding errors
+    //err += SDK_ASSERT(simCore::areEqual(esmRngKm, 1.193e9, 0.25));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 300, 0.05));
+    // Test 5
+    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(35, 5500, 1000000, -90, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 243905.9, 0.25));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 215, 0.05));
+
+    return err;
+  }
+  catch (std::exception const & ex)
+  {
+    std::cerr << "\n< EXC > The following exception was raised:\n\t " << ex.what() << std::endl;
+  }
+  catch (...)
+  {
+    std::cerr << "\n< EXC > An unexpected exception was raised!\n" << std::endl;
+  }
+  return 1;
+}
 
 int EMTest(int argc, char* argv[])
 {
@@ -414,6 +460,7 @@ int EMTest(int argc, char* argv[])
   rv += rcsTest(argc, argv);
   rv += testTwoWayRcvdPowerFreeSpace();
   rv += testOneWayRcvdPowerFreeSpace();
+  rv += testOneWayFreeSpaceRangeLoss();
 
   std::cout << "EMTests " << ((rv == 0) ? "Passed" : "Failed") << std::endl;
 
