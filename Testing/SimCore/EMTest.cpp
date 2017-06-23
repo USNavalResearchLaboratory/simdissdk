@@ -410,35 +410,35 @@ int testOneWayFreeSpaceRangeLoss()
 {
   try
   {
-    double esmRngKm;
+    double esmRngM;
     double fsLossDb;
     int err = 0;
     std::cout << "  testOneWayFreeSpaceRangeLoss..." << std::endl;
 
     // test inputs and outputs from Table 4-2, "Specification for Radar Free-Space Detection Range and Free-Space Intercept Range Calculations"
     // Test 1
-    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(5, 100, 100, -10, &fsLossDb);
-    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 0.4, 0.25));
+    esmRngM = simCore::getOneWayFreeSpaceRangeAndLoss(5.0, 100.0, 100.0, -10.0, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngM, 400.0, 250.0));
     err += SDK_ASSERT(simCore::areEqual(fsLossDb, 65, 0.05));
     // Test 2
-    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(50, 100, 10000000, -10, &fsLossDb);
-    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 23855.3, 0.25));
-    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 160, 0.05));
+    esmRngM = simCore::getOneWayFreeSpaceRangeAndLoss(50.0, 100.0, 10000000.0, -10, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngM, 23855300.0, 250.0));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 160.0, 0.05));
     // Test 3
-    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(-5, 20000, 10000000, -150, &fsLossDb);
+    esmRngM = simCore::getOneWayFreeSpaceRangeAndLoss(-5.0, 20000.0, 10000000.0, -150.0, &fsLossDb);
     // The reported value in the table has rounding errors, use a tolerance of 2 km
-    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 2121068.8, 2.0));
-    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 245, 0.05));
+    err += SDK_ASSERT(simCore::areEqual(esmRngM, 2121068800.0, 2000.0));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 245.0, 0.05));
     // Test 4
-    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(50, 20000, 10000000, -150, &fsLossDb);
-    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 1192765322.5, 0.25));
+    esmRngM = simCore::getOneWayFreeSpaceRangeAndLoss(50.0, 20000.0, 10000000.0, -150.0, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngM, 1192765322500.0, 2500));
     // The reported value in the table has significant rounding errors
-    //err += SDK_ASSERT(simCore::areEqual(esmRngKm, 1.193e9, 0.25));
-    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 300, 0.05));
+    // err += SDK_ASSERT(simCore::areEqual(esmRngKm, 1.193e9, 0.25));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 300.0, 0.05));
     // Test 5
-    esmRngKm = simCore::getOneWayFreeSpaceRangeAndLoss(35, 5500, 1000000, -90, &fsLossDb);
-    err += SDK_ASSERT(simCore::areEqual(esmRngKm, 243905.9, 0.25));
-    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 215, 0.05));
+    esmRngM = simCore::getOneWayFreeSpaceRangeAndLoss(35.0, 5500.0, 1000000.0, -90.0, &fsLossDb);
+    err += SDK_ASSERT(simCore::areEqual(esmRngM, 243905900.0, 250.0));
+    err += SDK_ASSERT(simCore::areEqual(fsLossDb, 215.0, 0.05));
 
     return err;
   }

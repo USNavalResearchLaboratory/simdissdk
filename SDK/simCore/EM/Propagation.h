@@ -62,7 +62,7 @@ namespace simCore
   * @param xmtrPwrWatts Transmitter peak power (Watts)
   * @param rcvrSensDbm Receiver sensitivity (dBm)
   * @param fsLossDb Optional free space path loss calculation (dB)
-  * @return Free space detection range for an ESM receiver (km).
+  * @return Free space detection range for an ESM receiver (m).
   */
   SDKCORE_EXPORT double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb);
 

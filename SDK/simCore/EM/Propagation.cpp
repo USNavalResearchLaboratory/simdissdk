@@ -69,8 +69,8 @@ double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, doubl
   if (fsLossDb)
     *fsLossDb = 20. * log10(xmtFreqMhz * esmRngKm) + 32.45;
 
-  // Free-space detection range (km) for an ESM receiver
-  return esmRngKm;
+  // Free-space detection range (m) for an ESM receiver
+  return esmRngKm * 1000.0;
 }
 
 FrequencyBandUsEcm toUsEcm(double freqMhz)
