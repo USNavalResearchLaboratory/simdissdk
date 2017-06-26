@@ -1007,6 +1007,10 @@ void DockWidget::show()
 
 void DockWidget::loadSettings_()
 {
+  // nothing to do if ignoring settings
+  if (extraFeatures_.testFlag(DockWidgetIgnoreSettings))
+    return;
+
   // Load any splitters positions or column widths
   if (settings_)
     settings_->loadWidget(widget());
@@ -1049,8 +1053,8 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
     return;
   }
 
-  // Give main window first opportunity to restore the position
-  if (!mainWindow_->restoreDockWidget(this))
+  // If ignoring settings, bypass main window. Otherwise give main window first opportunity to restore the position
+  if (extraFeatures_.testFlag(DockWidgetIgnoreSettings) || !mainWindow_->restoreDockWidget(this))
   {
     const bool globalNoDocking = (disableAllDocking_ != NULL && disableAllDocking_->value());
     // Restoration failed; new window.  Respect the features() flag to pop up or dock.
@@ -1078,6 +1082,10 @@ void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
 
 void DockWidget::saveSettings_()
 {
+  // nothing to do if ignoring settings
+  if (extraFeatures_.testFlag(DockWidgetIgnoreSettings))
+    return;
+
   settingsSaved_ = true;
 
   // Save any splitters positions or column widths

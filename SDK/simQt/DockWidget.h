@@ -96,7 +96,10 @@ public:
     DockNoTitleStylingHint = 0x0020,
 
     /** Escape closes the GUI */
-    DockWidgetCloseOnEscapeKey = 0x0040
+    DockWidgetCloseOnEscapeKey = 0x0040,
+
+    /** Ignore any settings, don't load or save to settings */
+    DockWidgetIgnoreSettings = 0x0080
   };
   /** Create a flags enumeration */
   Q_DECLARE_FLAGS(ExtraFeatures, ExtraDockFlagHint);
