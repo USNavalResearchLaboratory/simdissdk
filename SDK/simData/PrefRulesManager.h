@@ -162,6 +162,23 @@ public:
   virtual int applyRules(uint64_t id) = 0;
 };
 
+/** Null object implementation for PrefRulesManager */
+class NullPrefRulesManager : public simData::PrefRulesManager
+{
+  virtual int appendRuleFile(const std::string& ) { return 1; }
+  virtual int loadRuleFiles(const std::vector<std::string>& , bool ) { return 1; }
+  virtual int removeAllRules() { return 1; }
+  virtual std::string serializeRules(const std::vector<simData::PrefRule*>& rules) { return ""; }
+  virtual int deserializeRules(std::istream& rules) { return 1; }
+  virtual int addSerializedRule(std::vector<simData::PrefRule*>& rules, const std::string& serializedRule, int fileFormatVersion){ return 1; }
+  virtual void listRules(std::vector<simData::PrefRule*>& prefRules) { }
+  virtual int removeRule(simData::PrefRule* prefRule) { return 1; }
+  virtual int applyRules(bool force) { return 1; }
+  virtual int applyRules(uint64_t id) { return 1; }
+  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type, bool enforce) { }
+  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type) const { return false; }
+};
+
 }
 
 #endif /* SIMDATA_PREFRULESMANAGER_H */
