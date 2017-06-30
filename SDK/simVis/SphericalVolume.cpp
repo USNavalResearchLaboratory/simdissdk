@@ -275,24 +275,16 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   faceArray->reserve(reserveSizeFace + reserveSizeCone);
   vertexMetaData->reserve(reserveSizeFace + reserveSizeCone);
 
+  // first calculate vertices for the far face, then if hasNear, the near face
   for (unsigned int i = 0; i < loop; i++)
   {
-    float r;
-    float normalDir;
-    if (i == 0)
-    {
-      // far face first
-      r = farRange;
-      normalDir = 1.0f;
-    }
-    else
-    {
-      // near face second
-      r = nearRange;
-      normalDir = -1.0f;
-    }
+    const float r = (i == 0) ? farRange : nearRange;
+    const float normalDir = (i == 0) ? 1.0f : -1.0f;
 
-    // populate our vertex array and other arrays for face geometry
+    // populate vertex array and other arrays for face geometry
+    // if you are looking from the gate origin, 1st gate vertex is at bottom left corner, then vertices go up to top left corner
+    // then, starting at bottom again for next x, and going up to top.
+    // iterate from x min (left) to xmax (right)
     for (unsigned int x = 0; x < numPointsX; ++x)
     {
       const float angleX_rad = osg::DegreesToRadians(x_start + spacingX * x);
@@ -333,8 +325,11 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     if (hasNear)
       numElements *= 2;
     outline->reserveElements(numElements);
-    for (unsigned int z = 0; z < numPointsZ; z += numPointsZ - 1)
+
+    // horizontals of the gate face outline
+    for (unsigned int z = 0; z < numPointsZ; z += (numPointsZ - 1)) // iterate twice, first for the bottom, 2nd for the top
     {
+      // iterate across the gate horizontals (x) from left to right (if you look from gate origin)
       for (unsigned int x = 0; x < numPointsX - 1; ++x)
       {
         outline->push_back(farFaceOffset + x*numPointsZ + z);
@@ -347,16 +342,19 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
       }
     }
 
-    for (unsigned int x = 0; x<numPointsX; x += numPointsX - 1)
+    // verticals of the gate face outline
+    for (unsigned int x = 0; x < numPointsX; x += (numPointsX - 1)) // iterate twice, first for the left, 2nd for the right (if you look from gate origin)
     {
-      for (unsigned int z = 0; z<numPointsZ - 1; ++z)
+      // this is the index offset for the bottom of either face at the current x
+      const unsigned int xOffset = x * numPointsZ;
+      for (unsigned int z = 0; z < numPointsZ - 1; ++z)
       {
-        outline->push_back(farFaceOffset + x*numPointsZ + z);
-        outline->push_back(farFaceOffset + x*numPointsZ + (z + 1));
+        outline->push_back(farFaceOffset + xOffset + z);
+        outline->push_back(farFaceOffset + xOffset + (z + 1));
         if (hasNear)
         {
-          outline->push_back(nearFaceOffset + x*numPointsZ + z);
-          outline->push_back(nearFaceOffset + x*numPointsZ + (z + 1));
+          outline->push_back(nearFaceOffset + xOffset + z);
+          outline->push_back(nearFaceOffset + xOffset + (z + 1));
         }
       }
     }
@@ -365,39 +363,43 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     outlineGeom->addPrimitiveSet(outline);
   }
 
-  // if we are drawing the face (not just the outline) add primitives that use the vertex array to the geometry
+  // if we are drawing the face (not just the outline) add primitives that index into the vertex array
   if (drawFaces)
   {
-    osg::ref_ptr<osg::DrawElementsUShort> faces = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
-    const unsigned int numElements = loop * 4 * (numPointsX - 1) * (numPointsZ - 1);
-    faces->reserveElements(numElements);
-    // primitive set for the face:
-    for (unsigned int i = 0; i < loop; i++)
+    // draw vertical triangle strip(s) for each (x, x+1) pair
+    for (unsigned int x = 0; x < numPointsX - 1; ++x)
     {
-      for (unsigned int x = 0; x < numPointsX - 1; ++x)
+      osg::ref_ptr<osg::DrawElementsUShort> farFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
+      osg::ref_ptr<osg::DrawElementsUShort> nearFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
+      const unsigned int numElements = 2 * numPointsZ;
+      farFaceStrip->reserveElements(numElements);
+      if (hasNear)
+        nearFaceStrip->reserveElements(numElements);
+
+      // these are index offsets for the bottom of either face at the current x
+      const unsigned int leftX = x * numPointsZ;
+      const unsigned int rightX = (x + 1) * numPointsZ;
+
+      for (unsigned int z = 0; z < numPointsZ; ++z)
       {
-        for (unsigned int z = 0; z < numPointsZ - 1; ++z)
+        farFaceStrip->push_back(farFaceOffset + leftX + z);
+        farFaceStrip->push_back(farFaceOffset + rightX + z);
+        if (hasNear)
         {
-          if (i == 0) // far
-          {
-            faces->push_back(farFaceOffset + x*numPointsZ + z);
-            faces->push_back(farFaceOffset + x*numPointsZ + z + 1);
-            faces->push_back(farFaceOffset + (x + 1)*numPointsZ + z);
-            faces->push_back(farFaceOffset + (x + 1)*numPointsZ + z + 1);
-          }
-          else // near
-          {
-            faces->push_back(nearFaceOffset + x*numPointsZ + z);
-            faces->push_back(nearFaceOffset + (x + 1)*numPointsZ + z);
-            faces->push_back(nearFaceOffset + x*numPointsZ + z + 1);
-            faces->push_back(nearFaceOffset + (x + 1)*numPointsZ + z + 1);
-          }
+          nearFaceStrip->push_back(nearFaceOffset + leftX + z);
+          nearFaceStrip->push_back(nearFaceOffset + rightX + z);
         }
       }
+
+      // if assert fails, check that numElements calculation matches the iterations used in this block
+      assert(farFaceStrip->size() == numElements);
+      faceGeom->addPrimitiveSet(farFaceStrip);
+      if (hasNear)
+      {
+        assert(nearFaceStrip->size() == numElements);
+        faceGeom->addPrimitiveSet(nearFaceStrip);
+      }
     }
-    // if assert fails, check that numElements calculation matches the iterations used in this block
-    assert(faces->size() == numElements);
-    faceGeom->addPrimitiveSet(faces);
   }
 
   // if the near face range is <= 0, then we draw the walls but not that face
