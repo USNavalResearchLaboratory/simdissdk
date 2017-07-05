@@ -63,6 +63,8 @@ public:
   /// Destructor
   virtual ~MousePositionManipulator();
 
+  /** Mouse button released, returns non-zero on handled */
+  virtual int release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
   /** Mouse being moved, returns non-zero on handled */
   virtual int move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
   /** Mouse being dragged, returns non-zero on handled */
