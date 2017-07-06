@@ -23,8 +23,10 @@
 #define SIMQT_SEGMENTED_SPIN_BOX_H
 
 #include <QSpinBox>
+#include "simCore/Common/Export.h"
+#include "simCore/Time/TimeClass.h"
 
-namespace simCore { class TimeStamp; }
+class QTimer;
 
 namespace simQt {
 
@@ -36,6 +38,8 @@ class SegmentedTexts;
  */
 class SDKQT_EXPORT SegmentedSpinBox : public QSpinBox
 {
+  Q_OBJECT;
+
 public:
   /// constructor
   SegmentedSpinBox(QWidget* parent=NULL);
@@ -56,6 +60,11 @@ public:
   virtual bool colorCode() const;
   /// set the "change font color on error" setting
   virtual void setColorCode(bool value);
+
+  ///@return time to wait between user editing time and applying new timestamp
+  int applyInterval();
+  /// set time to wait between user editing time and applying new timestamp
+  void setApplyInterval(int milliseconds);
 
   /// Set Segmented Line
   void setLine(SegmentedTexts* line);
@@ -81,7 +90,13 @@ protected:
   /// Perform updates now that user has stopped input
   virtual void focusOutEvent(QFocusEvent* e);
 
+private slots:
+  /// Applies timestamp entered by user
+  void applyTimestamp_();
+
 private:
+  /// Queue an application of a new timestamp in applyInterval_ seconds.  Used to prevent updates before user is finished inputting edits
+  void queueApplyTimestamp_() const;
   /// The text to display in the spin box
   SegmentedTexts* completeLine_;
   /// The time at the start of input focus
@@ -94,6 +109,12 @@ private:
   simCore::TimeStamp timeStamp_;
   /// The timeStamp_ in a string format to check for changes
   QString timeString_;
+  /// Timer to manage applying new timestamp on user edit after appropriate interval
+  QTimer* timer_;
+  /// Amount of time in milliseconds to wait between user editing time and applying new timestamp.  Default is one second.  Interval < 0 disables automatic updates from edits
+  int applyInterval_;
+  /// Tracks whether current time has changed since spinbox got focus.  Prevents resetting timestamp if set before losing focus
+  bool setSinceFocus_;
 };
 
 }

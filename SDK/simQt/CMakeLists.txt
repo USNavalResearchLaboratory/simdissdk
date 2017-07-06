@@ -48,6 +48,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}MruList.h
     ${SIMQT_INC}PersistentFileLogger.h
     ${SIMQT_INC}SearchLineEdit.h
+    ${SIMQT_INC}SegmentedSpinBox.h
     ${SIMQT_INC}SegmentedTexts.h
     ${SIMQT_INC}SettingsItemDelegate.h
     ${SIMQT_INC}SettingsModel.h
@@ -71,7 +72,6 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}QtConversion.h
     ${SIMQT_INC}ResourceInitializer.h
     ${SIMQT_INC}ScopedSignalBlocker.h
-    ${SIMQT_INC}SegmentedSpinBox.h
     ${SIMQT_INC}Settings.h
     ${SIMQT_INC}SettingsGroup.h
     ${SIMQT_INC}StartupLayoutManager.h
@@ -125,8 +125,8 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}QtConversion.cpp
     ${SIMQT_SRC}ResourceInitializer.cpp
     ${SIMQT_SRC}SearchLineEdit.cpp
-    ${SIMQT_SRC}SegmentedTexts.cpp
     ${SIMQT_SRC}SegmentedSpinBox.cpp
+    ${SIMQT_SRC}SegmentedTexts.cpp
     ${SIMQT_SRC}Settings.cpp
     ${SIMQT_SRC}SettingsGroup.cpp
     ${SIMQT_SRC}SettingsItemDelegate.cpp
