@@ -754,6 +754,7 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
 
   if (newUpdate != NULL)
   {
+    // changes to coverage gates require rebuild (instead of in-place updates)
     const simData::GatePrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
     if (activePrefs->gatedrawmode() == simData::GatePrefs::COVERAGE &&
       (PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, azimuth)  ||

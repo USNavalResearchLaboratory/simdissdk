@@ -1120,15 +1120,17 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
     {
       const float t = (m.anglex_ - oldMinAngle) / oldAngle;
       const float ax = newMinAngle + t*newAngle;
-      const float sinx = sin(ax), cosx = cos(ax), sinz = sin(m.anglez_), cosz = cos(m.anglez_);
-
+      const float sinx = sin(ax);
+      const float cosx = cos(ax);
+      const float sinz = sin(m.anglez_);
+      const float cosz = cos(m.anglez_);
       const float range =
         m.usage_ == USAGE_NEAR ? meta->nearRange_ :
         m.usage_ == USAGE_FAR  ? meta->farRange_  :
         (*verts)[i].length();
 
       m.anglex_ = ax;
-      m.unit_.set(sinx, cosx*cosz, sinz);
+      m.unit_.set(sinx*cosz, cosx*cosz, sinz);
       m.unit_.normalize();
       (*verts)[i] = meta->dirQ_ * m.unit_ * range;
 
@@ -1168,14 +1170,17 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
     {
       const float t = (m.anglez_ - oldMinAngle) / oldAngle;
       const float az = newMinAngle + t*newAngle;
-      const float sinx = sin(m.anglex_), cosx = cos(m.anglex_), sinz = sin(az), cosz = cos(az);
+      const float sinx = sin(m.anglex_);
+      const float cosx = cos(m.anglex_);
+      const float sinz = sin(az);
+      const float cosz = cos(az);
       const float range =
         m.usage_ == USAGE_NEAR ? meta->nearRange_ :
         m.usage_ == USAGE_FAR  ? meta->farRange_  :
         (*verts)[i].length();
 
       m.anglez_ = az;
-      m.unit_.set(sinx, cosx*cosz, sinz);
+      m.unit_.set(sinx*cosz, cosx*cosz, sinz);
       m.unit_.normalize();
       (*verts)[i] = meta->dirQ_ * m.unit_ * range;
 
