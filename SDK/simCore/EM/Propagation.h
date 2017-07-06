@@ -56,7 +56,7 @@ namespace simCore
   SDKCORE_EXPORT double getRcvdPowerBlake(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double ppfdB, double systemLossdB, bool oneWay=false);
 
   /**
-  * This function returns the free space detection range (km) for an ESM receiver as well as an optional free space path loss (dB)
+  * This function returns the free space detection range (m) for an ESM receiver as well as an optional free space path loss (dB)
   * @param xmtGaindB Xmt antenna gain (dB)
   * @param xmtFreqMhz Transmitter frequency (MHz)
   * @param xmtrPwrWatts Transmitter peak power (Watts)
