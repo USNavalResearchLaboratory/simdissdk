@@ -224,7 +224,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
       osg::StateAttribute::ON);
   }
 
-  const float hfov_deg = d.hfov_deg_ < 0.01f ? 0.01f : (d.hfov_deg_ > 360.0f ? 360.0f : d.hfov_deg_);
+  const float hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01f, 360.0f);
   const unsigned int numPointsX = d.capRes_ + 1;
   float x_start = -0.5f * hfov_deg;
   const float spacingX = hfov_deg / (numPointsX - 1);
@@ -234,7 +234,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     x_start += d.azimOffset_deg_;
   }
 
-  float vfov_deg = d.vfov_deg_ < 0.01f ? 0.01f : (d.vfov_deg_ > 180.0f ? 180.0f : d.vfov_deg_);
+  float vfov_deg = osg::clampBetween(d.vfov_deg_, 0.01f, 180.0f);
   float z_start = -0.5f * vfov_deg;
   float z_end = 0.5f * vfov_deg;
   // in sphere-seg mode, bake the elev offsets into the model, and clamp to [-90,90]
@@ -258,17 +258,12 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   unsigned int reserveSizeCone = 0;
   if (drawCone)
   {
-    // bottom
-    reserveSizeCone += (numPointsX - 1) * (1 + d.wallRes_) * 2;
-    // right
-    if (hfov_deg < 360.0f)
-      reserveSizeCone += (numPointsZ - 1) * (1 + d.wallRes_) * 2;
-    // top
+    // bottom & top faces are only drawn if vfov_deg < 180
     if (vfov_deg < 180.0f)
-      reserveSizeCone += (numPointsX - 1) * (1 + d.wallRes_) * 2;
-    // left
+      reserveSizeCone += (numPointsX - 1) * (1 + d.wallRes_) * 2 * 2;
+    // right & left faces only drawn if hfov_deg < 360
     if (hfov_deg < 360.0f)
-      reserveSizeCone += (numPointsZ - 1) * (1 + d.wallRes_) * 2;
+      reserveSizeCone += (numPointsZ - 1) * (1 + d.wallRes_) * 2 * 2;
   }
   vertexArray->reserve(reserveSizeFace + reserveSizeCone);
   normalArray->reserve(reserveSizeFace + reserveSizeCone);
@@ -416,43 +411,46 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     const unsigned int numElements = (1 + d.wallRes_) * 2;
 
     // bottom:
-    // store LR corners for later use in outline (these are indices to points that are added immediately below)
-    farIndexLR = vertexArray->size();
-    nearIndexLR = farIndexLR + 2 * d.wallRes_;
-    // draw the bottom wall outline and face, drawn as triangle strips from the near face to the far face;
-    // iterate x across the face from right to left, (looking from near face to far face)
-    for (unsigned int x = numPointsX - 1; x > 0; --x)
+    if (vfov_deg < 180.0f)
     {
-      // starting index for near and far face vertices for right edge of strip starting at x
-      const unsigned int offsetStart = x * numPointsZ;
-
-      osg::ref_ptr<osg::DrawElementsUShort> strip = drawFaces ? new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements) : NULL;
-      // iterate out from the near face to the far face, in tesselated steps
-      for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
+      // store LR corners for later use in outline (these are indices to points that are added immediately below)
+      farIndexLR = vertexArray->size();
+      nearIndexLR = farIndexLR + 2 * d.wallRes_;
+      // draw the bottom wall outline and face, drawn as triangle strips from the near face to the far face;
+      // iterate x across the face from right to left, (looking from near face to far face)
+      for (unsigned int x = numPointsX - 1; x > 0; --x)
       {
-        const float w = tessStep * q;
-        for (unsigned int i = 0; i < 2; ++i)
+        // starting index for near and far face vertices for right edge of strip starting at x
+        const unsigned int offsetStart = x * numPointsZ;
+
+        osg::ref_ptr<osg::DrawElementsUShort> strip = drawFaces ? new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements) : NULL;
+        // iterate out from the near face to the far face, in tesselated steps
+        for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
         {
-          // i=0 is right edge of strip, i=1 is left edge of strip
-          const unsigned int off = offsetStart - (i * numPointsZ);
-          const unsigned int foff = farFaceOffset + off;
-          const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
-          const SVMeta& metafoff = (*vertexMetaData)[foff];
-          const osg::Vec3& unit = metafoff.unit_;
-          const osg::Vec3 vert = nf + unit * coneLen * w;
-          vertexArray->push_back(vert);
-          // normal should be the unit vector rotated 90deg around x axis
-          normalArray->push_back(osg::Vec3(unit.x(), unit.z(), -unit.y()));
-          faceArray->push_back(FACE_CONE);
-          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          const float w = tessStep * q;
+          for (unsigned int i = 0; i < 2; ++i)
+          {
+            // i=0 is right edge of strip, i=1 is left edge of strip
+            const unsigned int off = offsetStart - (i * numPointsZ);
+            const unsigned int foff = farFaceOffset + off;
+            const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
+            const SVMeta& metafoff = (*vertexMetaData)[foff];
+            const osg::Vec3& unit = metafoff.unit_;
+            const osg::Vec3 vert = nf + unit * coneLen * w;
+            vertexArray->push_back(vert);
+            // normal should be the unit vector rotated 90deg around x axis
+            normalArray->push_back(osg::Vec3(unit.x(), unit.z(), -unit.y()));
+            faceArray->push_back(FACE_CONE);
+            vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
 
-          if (drawFaces)
-            strip->setElement(2 * q + i, vertexArray->size() - 1);
+            if (drawFaces)
+              strip->setElement(2 * q + i, vertexArray->size() - 1);
+          }
         }
-      }
-      if (drawFaces)
-      {
-        faceGeom->addPrimitiveSet(strip);
+        if (drawFaces)
+        {
+          faceGeom->addPrimitiveSet(strip);
+        }
       }
     }
 
@@ -1110,6 +1108,9 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
     return;
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
+  // clamp to match createPyramid_
+  oldAngle = osg::clampBetween(oldAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_TWOPI));
+  newAngle = osg::clampBetween(newAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_TWOPI));
   const float oldMinAngle = -oldAngle*0.5f;
   const float newMinAngle = -newAngle*0.5f;
   for (unsigned int i = 0; i < verts->size(); ++i)
@@ -1160,6 +1161,9 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
     return;
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
+  // clamp to match createPyramid_
+  oldAngle = osg::clampBetween(oldAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_PI));
+  newAngle = osg::clampBetween(newAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_PI));
   const float oldMinAngle = -oldAngle*0.5f;
   const float newMinAngle = -newAngle*0.5f;
   for (unsigned int i = 0; i < verts->size(); ++i)
