@@ -70,7 +70,7 @@ namespace simQt {
   * @param desc  Description of the tooltip
   * @return Formatted rich-text tooltip
   */
-  SDKQT_EXPORT QString formatTooltip(const QString& title, const QString& desc = "");
+  SDKQT_EXPORT QString formatTooltip(const QString& title, const QString& desc);
 
   /**
   * Convert any text that may contain a UTF-8 or ANSI encoded degree symbol into a QString
