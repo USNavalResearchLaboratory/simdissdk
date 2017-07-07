@@ -361,37 +361,43 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   // if we are drawing the face (not just the outline) add primitives that index into the vertex array
   if (drawFaces)
   {
-    // draw vertical triangle strip(s) for each (x, x+1) pair
+    const unsigned int numElements = 2 * numPointsZ;
+
+    // draw far face with vertical triangle strip(s) for each (x, x+1) pair
     for (unsigned int x = 0; x < numPointsX - 1; ++x)
     {
-      osg::ref_ptr<osg::DrawElementsUShort> farFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
-      osg::ref_ptr<osg::DrawElementsUShort> nearFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
-      const unsigned int numElements = 2 * numPointsZ;
-      farFaceStrip->reserveElements(numElements);
-      if (hasNear)
-        nearFaceStrip->reserveElements(numElements);
+      osg::ref_ptr<osg::DrawElementsUShort> farFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements);
 
-      // these are index offsets for the bottom of either face at the current x
+      // these are index offsets for the bottom of the face at the current x
       const unsigned int leftX = x * numPointsZ;
       const unsigned int rightX = (x + 1) * numPointsZ;
-
       for (unsigned int z = 0; z < numPointsZ; ++z)
       {
-        farFaceStrip->push_back(farFaceOffset + leftX + z);
-        farFaceStrip->push_back(farFaceOffset + rightX + z);
-        if (hasNear)
-        {
-          nearFaceStrip->push_back(nearFaceOffset + leftX + z);
-          nearFaceStrip->push_back(nearFaceOffset + rightX + z);
-        }
+        const unsigned int elementIndex = 2 * z;
+        farFaceStrip->setElement(elementIndex, farFaceOffset + rightX + z);
+        farFaceStrip->setElement(elementIndex + 1, farFaceOffset + leftX + z);
       }
-
-      // if assert fails, check that numElements calculation matches the iterations used in this block
-      assert(farFaceStrip->size() == numElements);
       faceGeom->addPrimitiveSet(farFaceStrip);
-      if (hasNear)
+    }
+
+    // drawing the near face separately to mitigate near/far artifacts
+    if (hasNear)
+    {
+      // draw vertical triangle strip(s) for each (x, x+1) pair
+      for (unsigned int x = 0; x < numPointsX - 1; ++x)
       {
-        assert(nearFaceStrip->size() == numElements);
+        osg::ref_ptr<osg::DrawElementsUShort> nearFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements);
+
+        // these are index offsets for the bottom of the face at the current x
+        const unsigned int leftX = x * numPointsZ;
+        const unsigned int rightX = (x + 1) * numPointsZ;
+
+        for (unsigned int z = 0; z < numPointsZ; ++z)
+        {
+          const unsigned int elementIndex = 2 * z;
+          nearFaceStrip->setElement(elementIndex, nearFaceOffset + leftX + z);
+          nearFaceStrip->setElement(elementIndex + 1, nearFaceOffset + rightX + z);
+        }
         faceGeom->addPrimitiveSet(nearFaceStrip);
       }
     }
