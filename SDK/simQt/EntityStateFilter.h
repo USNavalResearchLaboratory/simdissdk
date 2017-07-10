@@ -36,6 +36,9 @@ namespace simQt {
     Q_OBJECT;
   public:
 
+    /// Type of filtering
+    enum State { ACTIVE, INACTIVE, BOTH };
+
     /**
     * Constructor
     * @param dataStore reference to the data store
@@ -67,6 +70,12 @@ namespace simQt {
     /** @copydoc EntityFilter::setFilterSettings() */
     virtual void setFilterSettings(const QMap<QString, QVariant>& settings);
 
+    /** Set the state filter to the given state */
+    void setStateFilter(State state);
+
+    /** Returns the current state filter */
+    State stateFilter() const;
+
   signals:
     /**
      * Emitted when state is changed to update the widget
@@ -80,9 +89,6 @@ namespace simQt {
 
   private:
     class TimeObserver;
-
-    /// Type of filtering
-    enum State { ACTIVE, INACTIVE, BOTH};
 
     /// Updates the filtering when time changes
     void newTime_();

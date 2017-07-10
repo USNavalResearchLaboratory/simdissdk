@@ -28,17 +28,20 @@
 #include <QAbstractItemView>
 #include "simCore/Common/Common.h"
 #include "simData/DataStore.h"
+#include "EntityStateFilter.h"
 #include "simQt/Settings.h"
 
 class QCloseEvent;
 class QModelIndex;
 class Ui_EntityLineEdit;
 
+namespace simCore { class Clock; }
+
 namespace simQt {
 
-class EntityTreeModel;
-class EntityTreeComposite;
 class EntityProxyModel;
+class EntityTreeComposite;
+class EntityTreeModel;
 
 /** A dialog for displaying the EntityTreeComposite that is configured for single select */
 class SDKQT_EXPORT EntityDialog : public QDialog
@@ -46,11 +49,16 @@ class SDKQT_EXPORT EntityDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type);
+  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock);
   virtual ~EntityDialog();
 
   /** Set the entity via Unique ID */
   void setItemSelected(uint64_t id);
+
+  /** Set the state filter to the given state */
+  void setStateFilter(EntityStateFilter::State state);
+  /** Returns the current state filter */
+  EntityStateFilter::State stateFilter() const;
 
 protected:
   /** Override the QDialog close event to emit the closedGui signal */
@@ -69,6 +77,7 @@ private slots:
 private:
   simQt::EntityTreeModel* entityTreeModel_;
   simQt::EntityTreeComposite* tree_;  ///< It may be a EntityTreeComposite, but will be hard-coded into List view
+  simQt::EntityStateFilter* entityStateFilter_;
 };
 
 /** A class for displaying a QLineEdit with a QCompleter for specifying an entity by name */
@@ -93,7 +102,7 @@ public:
   /** Returns the name of the currently selected Entity; returns "" if none */
   QString selectedName() const;
   /** The model that holds all the entity information filtered by type */
-  void setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type = simData::DataStore::ALL);
+  void setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type = simData::DataStore::ALL, simCore::Clock* clock = NULL);
 
   // Options for customizing the widget
 
@@ -111,6 +120,11 @@ public:
   QString placeholderText() const;
   /** Place holder text in the line edit */
   void setPlaceholderText(const QString& text);
+
+  /** Set the state filter to the given state */
+  void setStateFilter(EntityStateFilter::State state);
+  /** Returns the current state filter */
+  EntityStateFilter::State stateFilter() const;
 
 public slots:
   /** Sets the Unique ID for the entity to display in the QEditLine */
@@ -147,6 +161,9 @@ private:
   bool needToVerify_; ///< True means the user typed in a name so it must be verified
   simData::DataStore::ObjectType type_; ///< Limits the entity types to display
   simQt::EntityProxyModel* proxy_;  ///< Allow filtering by entity type
+  simCore::Clock* clock_;  ///< Allow filtering by active/inactive
+  simQt::EntityStateFilter* entityStateFilter_; ///< Filtering based on entity state
+  EntityStateFilter::State state_; ///< Current state of filtering
 };
 
 }

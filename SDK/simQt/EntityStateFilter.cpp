@@ -115,12 +115,28 @@ void EntityStateFilter::setFilterSettings(const QMap<QString, QVariant>& setting
   QMap<QString, QVariant>::const_iterator it = settings.find("EntityStateFilter");
   if (it != settings.end())
   {
-    // If no GUI, update internally, otherwise update GUI
-    if (receivers(SIGNAL(entityStateChanged(int))) == 0)
-      entityStateChanged_(it.value().toInt());
-    else
+    // If GUI is displayed update GUI which will call entityStateChanged_, otherwise directly call entityStateChanged_
+    const bool hasGui = (receivers(SIGNAL(entityStateChanged(int))) != 0);
+    if (hasGui)
       emit entityStateChanged(it.value().toInt());
+    else
+      entityStateChanged_(it.value().toInt());
   }
+}
+
+void EntityStateFilter::setStateFilter(State state)
+{
+  // If GUI is displayed update GUI which will call entityStateChanged_, otherwise directly call entityStateChanged_
+  const bool hasGui = (receivers(SIGNAL(entityStateChanged(int))) != 0);
+  if (hasGui)
+    emit entityStateChanged(state);
+  else
+    entityStateChanged_(state);
+}
+
+EntityStateFilter::State EntityStateFilter::stateFilter() const
+{
+  return state_;
 }
 
 void EntityStateFilter::entityStateChanged_(int state)
