@@ -59,7 +59,7 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
     rv->setProviders(categoryFilter_->getDataStore());
     rv->setFilter(*categoryFilter_);
     // connect to the signal so we can update the filter based on GUI changes
-    connect(rv, SIGNAL(categoryFilterChanged(const simData::CategoryFilter&)), this, SLOT(categoryFilterChanged_(const simData::CategoryFilter&)));
+    connect(rv, SIGNAL(categoryFilterChanged(const simData::CategoryFilter&)), this, SLOT(setCategoryFilter(const simData::CategoryFilter&)));
     connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), rv, SLOT(setFilter(simData::CategoryFilter)));
     return rv;
   }
@@ -92,12 +92,6 @@ void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& cate
   // the GUI has changed the filter, now emit the signal (users will want to know)
   emit filterUpdated();
 }
-
-void EntityCategoryFilter::categoryFilterChanged_(const simData::CategoryFilter& categoryFilter)
-{
-  setCategoryFilter(categoryFilter);
-}
-
 
 }
 

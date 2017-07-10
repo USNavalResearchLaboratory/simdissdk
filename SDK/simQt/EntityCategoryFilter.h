@@ -76,8 +76,9 @@ namespace simQt {
     /** @copydoc EntityFilter::setFilterSettings() */
     virtual void setFilterSettings(const QMap<QString, QVariant>& settings);
 
+  public slots:
     /**
-    * Set a new CategoryFilter for this filter. Emits the entityTypesChanged_ signal
+    * Set a new CategoryFilter for this filter. Emits the filterUpdated() signal
     * @param categoryFilter New filter to install
     */
     void setCategoryFilter(const simData::CategoryFilter& categoryFilter);
@@ -88,10 +89,6 @@ namespace simQt {
      * @param categoryFilter The filter
      */
     void categoryFilterChanged(const simData::CategoryFilter& categoryFilter);
-
-  private slots:
-    /** Manages updating the categoryFilter_ based on the GUI widget updates, passes a CategoryFilter object */
-    void categoryFilterChanged_(const simData::CategoryFilter& categoryFilter);
 
   private:
     /// holds the current category filter
