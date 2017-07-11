@@ -1242,7 +1242,7 @@ int SettingsModel::removeObserver(const QString& name, ObserverPtr observer)
   if (range.first != range.second)
     assert(node == NULL); // likely pending observer did not get removed when setting node was created
   bool foundPending = false;
-  for (PendingMap::const_iterator iter = range.first; iter != range.second; ++iter)
+  for (PendingMap::iterator iter = range.first; iter != range.second; ++iter)
   {
     // remove the observer from the pending multimap
     if (iter->second == observer)
