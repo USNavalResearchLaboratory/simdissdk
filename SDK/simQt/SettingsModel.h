@@ -182,6 +182,8 @@ private:
   QModelIndex findKey_(const QString& relativeKey, const QModelIndex& fromParent = QModelIndex()) const;
   /// Adds a given key string (separated by slashes) to the root node
   QModelIndex addKeyToTree_(const QString& key);
+  /// If an observer is pending for the specified name add it to the specified tree node
+  void addPendingObserver_(const QString& name, TreeNode* node);
   /// Reloads model from a specific QSettings
   void reloadModel_(QSettings& settings);
   /// Returns all the leaf nodes names under node
@@ -203,8 +205,12 @@ private:
   QList<UserEditCommand*> undoStack_;
   /// Stack of all re-doable actions
   QList<UserEditCommand*> redoStack_;
-  ///< Global observers; if any entry changes do a callback
+  /// Global observers; if any entry changes do a callback
   QList<ObserverPtr> observers_;
+  /// Define container for pending observers
+  typedef std::multimap<QString, ObserverPtr> PendingMap;
+  /// Pending observers for settings not yet initialized
+  PendingMap pendingObservers_;
   /// The filename from the setting provided in the constructor
   QString filename_;
   /// The format from the setting provided in the constructor

@@ -629,9 +629,21 @@ QModelIndex SettingsModel::addKeyToTree_(const QString& key)
   beginInsertRows(parentIndex, newRow, newRow);
   fromNode->appendChild(child);
   endInsertRows();
+  // add pending observer, if it exists, to the leaf node
+  addPendingObserver_(key, child);
   return createIndex(child->row(), 0, child);
 }
 
+void SettingsModel::addPendingObserver_(const QString& name, TreeNode* node)
+{
+  // check if there are any pending observers for this setting
+  const auto range = pendingObservers_.equal_range(name);
+  for (PendingMap::const_iterator iter = range.first; iter != range.second; ++iter)
+  {
+    node->addObserver(iter->second);
+  }
+  pendingObservers_.erase(name);
+}
 
 void SettingsModel::reloadModel()
 {
@@ -668,6 +680,8 @@ void SettingsModel::initModelData_(QSettings& settings, SettingsModel::TreeNode*
   {
     TreeNode* node = new TreeNode(noIcon_, key, settings.value(key), parent, forceToPrivate);
     parent->appendChild(node);
+    // add pending observer, if it exists, to leaf nodes
+    addPendingObserver_(key, node);
   }
 
   // Close out the group
@@ -988,6 +1002,7 @@ void SettingsModel::clear()
   rootData << HEADER_NAME << HEADER_VALUE;
   rootNode_ = new TreeNode(noIcon_, rootData);
   observers_.clear();
+  pendingObservers_.clear();
   emit endResetModel();
 }
 
@@ -1205,8 +1220,11 @@ int SettingsModel::addObserver(const QString& name, ObserverPtr observer)
 {
   TreeNode* node = getNode_(name);
   if (node == NULL)
-    return 1;  // Did not find it so error out
-
+  {
+    // did not find setting, so queue up observer
+    pendingObservers_.insert(std::make_pair(name, observer));
+    return 0;
+  }
   if (observer == NULL)
     return 0;
 
@@ -1216,9 +1234,28 @@ int SettingsModel::addObserver(const QString& name, ObserverPtr observer)
 
 int SettingsModel::removeObserver(const QString& name, ObserverPtr observer)
 {
+  // find the node for this setting
   TreeNode* node = getNode_(name);
+
+  // first remove any pending observers for this setting
+  const auto range = pendingObservers_.equal_range(name);
+  if (range.first != range.second)
+    assert(node == NULL); // likely pending observer did not get removed when setting node was created
+  bool foundPending = false;
+  for (PendingMap::const_iterator iter = range.first; iter != range.second; ++iter)
+  {
+    // remove the observer from the pending multimap
+    if (iter->second == observer)
+    {
+      pendingObservers_.erase(iter);
+      foundPending = true;
+      break;
+    }
+  }
+
+  // if node is NULL, return failure if observer was not in pending list
   if (node == NULL)
-    return 1;  // Did not find it so error out
+    return foundPending ? 0 : 1;
 
   if (observer == NULL)
     return 0;
