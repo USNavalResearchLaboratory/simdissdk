@@ -754,6 +754,11 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
 
   if (newUpdate != NULL)
   {
+    // changing a gate minrange to/from 0.0 requires a rebuild due to simplified shape
+    if (PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, minrange) &&
+      (newUpdate->minrange() == 0.0 || lastUpdateApplied_.minrange() == 0.0))
+      return true;
+
     // changes to coverage gates require rebuild (instead of in-place updates)
     const simData::GatePrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
     if (activePrefs->gatedrawmode() == simData::GatePrefs::COVERAGE &&
