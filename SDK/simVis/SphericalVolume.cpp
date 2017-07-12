@@ -140,10 +140,13 @@ namespace
 
 void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Vec3& direction)
 {
+  // we always add a solid/face geometry, even if we add no primitives b/c we are drawing outline only; and faceGeom must be the first geometry in the geode
+  osg::Geometry* faceGeom = new osg::Geometry();
+  geode.addDrawable(faceGeom);
+
   if (d.drawMode_ == SVData::DRAW_MODE_NONE || d.capRes_ == 0)
   {
     // early out; at present, geode must have a non-NULL geometry, even if empty
-    geode.addDrawable(new osg::Geometry());
     return;
   }
 
@@ -163,66 +166,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   metaContainer->nearRange_ = nearRange;
   metaContainer->farRange_ = farRange;
   std::vector<SVMeta>* vertexMetaData = &metaContainer->vertMeta_;
-
-
-  const bool drawFaces = (d.drawMode_ != SVData::DRAW_MODE_OUTLINE);
-  // we always have a solid/face geometry, even if we add no primitives b/c we are drawing outline only
-  osg::Geometry* faceGeom = new osg::Geometry();
-  geode.addDrawable(faceGeom);
-  faceGeom->setUseVertexBufferObjects(true);
-  faceGeom->setUseDisplayList(false);
-  faceGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
-
-  osg::Vec4Array* colorArray = new osg::Vec4Array(1);
-  faceGeom->setColorArray(colorArray);
-  faceGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
-  (*colorArray)[0] = d.color_;
-
-  faceGeom->setVertexArray(vertexArray);
-
-  faceGeom->setUserData(metaContainer);
-
-  faceGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
-  faceGeom->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  faceGeom->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
-
-  faceGeom->setNormalArray(normalArray);
-  faceGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
-
-
-  osg::Geometry* outlineGeom = NULL;
-  const bool drawOutlines = (SVData::DRAW_MODE_OUTLINE & d.drawMode_) == SVData::DRAW_MODE_OUTLINE;
-  if (drawOutlines)
-  {
-    outlineGeom = new osg::Geometry();
-    geode.addDrawable(outlineGeom);
-    outlineGeom->setUseVertexBufferObjects(true);
-    outlineGeom->setUseDisplayList(false);
-    outlineGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
-    outlineGeom->setCullingActive(false);
-
-    osg::Vec4Array* outlineColor = new osg::Vec4Array(1);
-    (*outlineColor)[0] = d.color_;
-    (*outlineColor)[0][3] = 1.0f; // no transparency in the outline
-    outlineGeom->setColorArray(outlineColor);
-    outlineGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
-
-    outlineGeom->setVertexArray(vertexArray);
-
-    outlineGeom->setUserData(metaContainer);
-
-    outlineGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
-    outlineGeom->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-    outlineGeom->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
-
-    outlineGeom->setNormalArray(normalArray);
-    outlineGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
-
-    // configure a state set
-    outlineGeom->getOrCreateStateSet()->setAttributeAndModes(
-      new osg::LineWidth(d.outlineWidth_),
-      osg::StateAttribute::ON);
-  }
 
   const float hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01f, 360.0f);
   const unsigned int numPointsX = d.capRes_ + 1;
@@ -253,22 +196,33 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   const unsigned int loop = hasNear ? 2 : 1;
 
   // Calculate the number of vertices for performance hotspot fix in push_back()
-  // vertices will be added in this order: far face, near face (if drawn), cone bottom, then cone right (if drawn), cone top (if drawn), cone left (if drawn)
-  const unsigned int reserveSizeFace = loop * numPointsX * numPointsZ;
+  // vertices will be added in this order: gate origin, far face, near face (if drawn), cone bottom, then cone right (if drawn), cone top (if drawn), cone left (if drawn)
+  const unsigned int reserveSizeFace = 1 + (loop * numPointsX * numPointsZ);
   unsigned int reserveSizeCone = 0;
-  if (drawCone)
+  const bool drawFaces = (d.drawMode_ != SVData::DRAW_MODE_OUTLINE);
+  if (drawFaces && drawCone)
   {
     // bottom & top faces are only drawn if vfov_deg < 180
-    if (vfov_deg < 180.0f)
+    if (vfov_deg < 180.0f) // 2 faces * (2 * (numPointsX - 1) * (1 + d.wallRes_)) vertices/face
       reserveSizeCone += (numPointsX - 1) * (1 + d.wallRes_) * 2 * 2;
     // right & left faces only drawn if hfov_deg < 360
-    if (hfov_deg < 360.0f)
+    if (hfov_deg < 360.0f) // 2 faces * (2 * (numPointsZ - 1) * (1 + d.wallRes_)) vertices/face
       reserveSizeCone += (numPointsZ - 1) * (1 + d.wallRes_) * 2 * 2;
   }
   vertexArray->reserve(reserveSizeFace + reserveSizeCone);
   normalArray->reserve(reserveSizeFace + reserveSizeCone);
   faceArray->reserve(reserveSizeFace + reserveSizeCone);
   vertexMetaData->reserve(reserveSizeFace + reserveSizeCone);
+
+  // add a vertex at gate origin, to support outline drawing to origin when minrange is 0
+  // only need this point if drawing outline (with or without fillpattern) and there is no near face b/c minrange is zero.
+  // but adding it in every case to make code simpler
+  {
+    vertexArray->push_back(osg::Vec3());
+    normalArray->push_back(osg::Vec3());
+    faceArray->push_back(FACE_NEAR);
+    vertexMetaData->push_back(SVMeta(USAGE_NEAR, 0.f, 0.f, osg::Vec3(), 0.0f));
+  }
 
   // first calculate vertices for the far face, then if hasNear, the near face
   for (unsigned int i = 0; i < loop; i++)
@@ -305,68 +259,137 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   // if either assert fails, vertex counts in face no longer match expected/reserved count; vector reserve calls must be updated to match changes to face vertex generation
   assert(vertexArray->size() == reserveSizeFace);
   assert(vertexMetaData->size() == reserveSizeFace);
-  const unsigned short farFaceOffset = 0;
-  const unsigned short nearFaceOffset = hasNear ? numPointsX * numPointsZ : 0;
-  if (hasNear)
-  {
-    // if assert fails, algorithm for face vertex generation has changed, and nearFaceOffset must be updated to match
-    assert(nearFaceOffset == vertexArray->size() / 2);
-  }
+
+  const unsigned short farFaceOffset = 1;
+  const unsigned short nearFaceOffset = hasNear ? farFaceOffset + (numPointsX * numPointsZ) : 0;
+
   // render geometry for the face outlines
+  const bool drawOutlines = (SVData::DRAW_MODE_OUTLINE & d.drawMode_) == SVData::DRAW_MODE_OUTLINE;
   if (drawOutlines)
   {
-    osg::ref_ptr<osg::DrawElementsUShort> outline = new osg::DrawElementsUShort(GL_LINES);
-    unsigned int numElements = (4 * (numPointsX - 1)) + (4 * (numPointsZ - 1));
-    if (hasNear)
-      numElements *= 2;
-    outline->reserveElements(numElements);
+    osg::Geometry* outlineGeom = new osg::Geometry();
+    geode.addDrawable(outlineGeom);
+    outlineGeom->setUseVertexBufferObjects(true);
+    outlineGeom->setUseDisplayList(false);
+    outlineGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
+    outlineGeom->setCullingActive(false);
+
+    osg::Vec4Array* outlineColor = new osg::Vec4Array(1);
+    (*outlineColor)[0] = d.color_;
+    (*outlineColor)[0][3] = 1.0f; // no transparency in the outline
+    outlineGeom->setColorArray(outlineColor);
+    outlineGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    outlineGeom->setVertexArray(vertexArray);
+
+    outlineGeom->setUserData(metaContainer);
+
+    outlineGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
+    outlineGeom->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
+    outlineGeom->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
+
+    outlineGeom->setNormalArray(normalArray);
+    outlineGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
+
+    // configure a state set
+    outlineGeom->getOrCreateStateSet()->setAttributeAndModes(
+      new osg::LineWidth(d.outlineWidth_),
+      osg::StateAttribute::ON);
 
     // horizontals of the gate face outline
     for (unsigned int z = 0; z < numPointsZ; z += (numPointsZ - 1)) // iterate twice, first for the bottom, 2nd for the top
     {
-      // iterate across the gate horizontals (x) from left to right (if you look from gate origin)
-      for (unsigned int x = 0; x < numPointsX - 1; ++x)
+      // if we are drawing near and far faces, bottom and top outlines are each line loops, if not, far face outlines are each line strips
+      osg::ref_ptr<osg::DrawElementsUShort> outline;
+      if (hasNear)
       {
-        outline->push_back(farFaceOffset + x*numPointsZ + z);
-        outline->push_back(farFaceOffset + (x + 1)*numPointsZ + z);
-        if (hasNear)
-        {
-          outline->push_back(nearFaceOffset + x*numPointsZ + z);
-          outline->push_back(nearFaceOffset + (x + 1)*numPointsZ + z);
-        }
+        // outline is a loop connecting near and far face
+        outline = new osg::DrawElementsUShort(GL_LINE_LOOP, 2 * numPointsX);
       }
+      else if (drawCone)
+      {
+        // outline is loop connecting gate origin and far face
+        outline = new osg::DrawElementsUShort(GL_LINE_LOOP, numPointsX + 1);
+      }
+      else
+      {
+        // outline is the far face
+        outline = new osg::DrawElementsUShort(GL_LINE_STRIP, numPointsX);
+      }
+
+      // iterate across the gate horizontals (x) from left to right (if you look from gate origin)
+      for (unsigned int x = 0; x < numPointsX; ++x)
+      {
+        outline->setElement(x, farFaceOffset + x*numPointsZ + z);
+        if (hasNear)
+          outline->setElement((2 * numPointsX) - x - 1, nearFaceOffset + x*numPointsZ + z);
+      }
+      if (drawCone && !hasNear)
+      {
+        // there is no near face, add index to origin/zero point
+        outline->setElement(numPointsX, 0);
+      }
+      outlineGeom->addPrimitiveSet(outline);
     }
 
     // verticals of the gate face outline
     for (unsigned int x = 0; x < numPointsX; x += (numPointsX - 1)) // iterate twice, first for the left, 2nd for the right (if you look from gate origin)
     {
+      osg::ref_ptr<osg::DrawElementsUShort> farOutline = new osg::DrawElementsUShort(GL_LINE_STRIP, numPointsZ);
+      osg::ref_ptr<osg::DrawElementsUShort> nearOutline = (hasNear) ? new osg::DrawElementsUShort(GL_LINE_STRIP, numPointsZ) : NULL;
+
       // this is the index offset for the bottom of either face at the current x
       const unsigned int xOffset = x * numPointsZ;
-      for (unsigned int z = 0; z < numPointsZ - 1; ++z)
+      for (unsigned int z = 0; z < numPointsZ; ++z)
       {
-        outline->push_back(farFaceOffset + xOffset + z);
-        outline->push_back(farFaceOffset + xOffset + (z + 1));
+        farOutline->setElement(z, farFaceOffset + xOffset + z);
         if (hasNear)
-        {
-          outline->push_back(nearFaceOffset + xOffset + z);
-          outline->push_back(nearFaceOffset + xOffset + (z + 1));
-        }
+          nearOutline->setElement(z, nearFaceOffset + xOffset + z);
+      }
+      // assertion fail indicates that algorithm for outline generation has changed, check that reserve matches actual usage
+      assert(farOutline->size() == numPointsZ);
+      outlineGeom->addPrimitiveSet(farOutline);
+      if (hasNear)
+      {
+        assert(nearOutline->size() == numPointsZ);
+        outlineGeom->addPrimitiveSet(nearOutline);
       }
     }
-    // if assert fails, check that numElements calculation matches the iterations used in this block
-    assert(outline->size() == numElements);
-    outlineGeom->addPrimitiveSet(outline);
   }
 
+
+  if (!drawFaces) // if drawing outline-only, we're done
+    return;
+
+  // set up the face geometry
+  faceGeom->setUseVertexBufferObjects(true);
+  faceGeom->setUseDisplayList(false);
+  faceGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
+
+  osg::Vec4Array* colorArray = new osg::Vec4Array(1);
+  faceGeom->setColorArray(colorArray);
+  faceGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
+  (*colorArray)[0] = d.color_;
+
+  faceGeom->setVertexArray(vertexArray);
+
+  faceGeom->setUserData(metaContainer);
+
+  faceGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
+  faceGeom->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
+  faceGeom->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
+
+  faceGeom->setNormalArray(normalArray);
+  faceGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
+
   // if we are drawing the face (not just the outline) add primitives that index into the vertex array
-  if (drawFaces)
   {
-    const unsigned int numElements = 2 * numPointsZ;
+    const unsigned int numFaceElements = 2 * numPointsZ;
 
     // draw far face with vertical triangle strip(s) for each (x, x+1) pair
     for (unsigned int x = 0; x < numPointsX - 1; ++x)
     {
-      osg::ref_ptr<osg::DrawElementsUShort> farFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements);
+      osg::ref_ptr<osg::DrawElementsUShort> farFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numFaceElements);
 
       // these are index offsets for the bottom of the face at the current x
       const unsigned int leftX = x * numPointsZ;
@@ -380,13 +403,13 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
       faceGeom->addPrimitiveSet(farFaceStrip);
     }
 
-    // drawing the near face separately to mitigate near/far artifacts
+    // the near face is drawn separately to mitigate near/far face artifacts
     if (hasNear)
     {
       // draw vertical triangle strip(s) for each (x, x+1) pair
       for (unsigned int x = 0; x < numPointsX - 1; ++x)
       {
-        osg::ref_ptr<osg::DrawElementsUShort> nearFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements);
+        osg::ref_ptr<osg::DrawElementsUShort> nearFaceStrip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numFaceElements);
 
         // these are index offsets for the bottom of the face at the current x
         const unsigned int leftX = x * numPointsZ;
@@ -403,215 +426,168 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     }
   }
 
-  // if the near face range is <= 0, then we draw the walls but not that face
-  if (drawCone)
+
+  if (!drawCone) // if not drawing the walls of the pyramid shape, we're done
+    return;
+
+  // if the near face range is <= 0 (hasNear = false), then there is no near face, walls go to gate origin
+  // build vertex sets for the walls. we have to duplicate verts in order to get unique normals, unfortunately.
+
+  const float tessStep = 1.0f / d.wallRes_;
+  const float coneLen = farRange - nearRange;
+  const unsigned int numWallElements = (1 + d.wallRes_) * 2;
+
+  // bottom:
+  if (vfov_deg < 180.0f)
   {
-    // build vertex sets for the walls. we have to duplicate verts in order to get
-    // unique normals, unfortunately.
-    unsigned short
-      farIndexLL=0, farIndexUL=0, farIndexLR=0, farIndexUR=0,
-      nearIndexLL=0, nearIndexUL=0, nearIndexLR=0, nearIndexUR=0;
-
-    const float tessStep = 1.0f / d.wallRes_;
-    const float coneLen = farRange - nearRange;
-    const unsigned int numElements = (1 + d.wallRes_) * 2;
-
-    // bottom:
-    if (vfov_deg < 180.0f)
+    // draw the bottom wall outline and face, drawn as triangle strips from the near face to the far face;
+    // iterate x across the face from right to left, (looking from near face to far face)
+    for (unsigned int x = numPointsX - 1; x > 0; --x)
     {
-      // store LR corners for later use in outline (these are indices to points that are added immediately below)
-      farIndexLR = vertexArray->size();
-      nearIndexLR = farIndexLR + 2 * d.wallRes_;
-      // draw the bottom wall outline and face, drawn as triangle strips from the near face to the far face;
-      // iterate x across the face from right to left, (looking from near face to far face)
-      for (unsigned int x = numPointsX - 1; x > 0; --x)
+      // starting index for near and far face vertices for right edge of strip starting at x
+      const unsigned int offsetStart = x * numPointsZ;
+
+      osg::ref_ptr<osg::DrawElementsUShort> strip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numWallElements);
+      // iterate out from the near face to the far face, in tesselated steps
+      for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
       {
-        // starting index for near and far face vertices for right edge of strip starting at x
-        const unsigned int offsetStart = x * numPointsZ;
-
-        osg::ref_ptr<osg::DrawElementsUShort> strip = drawFaces ? new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements) : NULL;
-        // iterate out from the near face to the far face, in tesselated steps
-        for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
+        const float w = tessStep * q;
+        for (unsigned int i = 0; i < 2; ++i)
         {
-          const float w = tessStep * q;
-          for (unsigned int i = 0; i < 2; ++i)
-          {
-            // i=0 is right edge of strip, i=1 is left edge of strip
-            const unsigned int off = offsetStart - (i * numPointsZ);
-            const unsigned int foff = farFaceOffset + off;
-            const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
-            const SVMeta& metafoff = (*vertexMetaData)[foff];
-            const osg::Vec3& unit = metafoff.unit_;
-            const osg::Vec3 vert = nf + unit * coneLen * w;
-            vertexArray->push_back(vert);
-            // normal should be the unit vector rotated 90deg around x axis
-            normalArray->push_back(osg::Vec3(unit.x(), unit.z(), -unit.y()));
-            faceArray->push_back(FACE_CONE);
-            vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          // i=0 is right edge of strip, i=1 is left edge of strip
+          const unsigned int off = offsetStart - (i * numPointsZ);
+          const unsigned int foff = farFaceOffset + off;
+          const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
+          const SVMeta& metafoff = (*vertexMetaData)[foff];
+          const osg::Vec3& unit = metafoff.unit_;
+          const osg::Vec3 vert = nf + unit * coneLen * w;
+          vertexArray->push_back(vert);
+          // normal should be the unit vector rotated 90deg around x axis
+          normalArray->push_back(osg::Vec3(unit.x(), unit.z(), -unit.y()));
+          faceArray->push_back(FACE_CONE);
+          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
 
-            if (drawFaces)
-              strip->setElement(2 * q + i, vertexArray->size() - 1);
-          }
-        }
-        if (drawFaces)
-        {
-          faceGeom->addPrimitiveSet(strip);
+          strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
+      faceGeom->addPrimitiveSet(strip);
     }
+  }
 
-    // right:
-    if (hfov_deg < 360.0f)
+  // right:
+  if (hfov_deg < 360.0f)
+  {
+    // draw the right wall outline and face, drawn as triangle strips from the near face to the far face;
+    // iterate z across the face from top to bottom, (looking from near face to far face)
+    for (unsigned int z = numPointsZ - 1; z > 0; --z)
     {
-      // store UR corners for use in outline
-      farIndexUR = vertexArray->size();
-      nearIndexUR = farIndexUR + 2 * d.wallRes_;
+      // starting index for near and far face vertices for the top edge of the strip starting at z
+      const unsigned int offsetStart = numPointsZ * (numPointsX - 1) + z;
 
-      // draw the right wall outline and face, drawn as triangle strips from the near face to the far face;
-      // iterate z across the face from top to bottom, (looking from near face to far face)
-      for (unsigned int z = numPointsZ - 1; z > 0; --z)
+      osg::ref_ptr<osg::DrawElementsUShort> strip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numWallElements);
+
+      // iterate out from the near face to the far face, in tesselated steps
+      for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
       {
-        // starting index for near and far face vertices for the top edge of the strip starting at z
-        const unsigned int offsetStart = numPointsZ * (numPointsX - 1) + z;
-
-        osg::ref_ptr<osg::DrawElementsUShort> strip = drawFaces ? new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements) : NULL;
-
-        // iterate out from the near face to the far face, in tesselated steps
-        for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
+        const float w = tessStep * q;
+        for (unsigned int i = 0; i < 2; ++i)
         {
-          const float w = tessStep * q;
-          for (unsigned int i = 0; i < 2; ++i)
-          {
-            // i=0 is top edge of strip, i=1 is bottom edge of strip
-            const unsigned int off = offsetStart - i;
-            const unsigned int foff = farFaceOffset + off;
-            const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
-            const SVMeta& metafoff = (*vertexMetaData)[foff];
-            const osg::Vec3& unit = metafoff.unit_;
-            const osg::Vec3 vert = nf + unit * coneLen * w;
-            vertexArray->push_back(vert);
-            // normal should be the unit vector rotated 90deg around z axis
-            normalArray->push_back(osg::Vec3(unit.y(), -unit.x(), unit.z()));
-            faceArray->push_back(FACE_CONE);
-            vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          // i=0 is top edge of strip, i=1 is bottom edge of strip
+          const unsigned int off = offsetStart - i;
+          const unsigned int foff = farFaceOffset + off;
+          const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
+          const SVMeta& metafoff = (*vertexMetaData)[foff];
+          const osg::Vec3& unit = metafoff.unit_;
+          const osg::Vec3 vert = nf + unit * coneLen * w;
+          vertexArray->push_back(vert);
+          // normal should be the unit vector rotated 90deg around z axis
+          normalArray->push_back(osg::Vec3(unit.y(), -unit.x(), unit.z()));
+          faceArray->push_back(FACE_CONE);
+          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
 
-            if (drawFaces)
-              strip->setElement(2 * q + i, vertexArray->size() - 1);
-          }
-        }
-        if (drawFaces)
-        {
-          faceGeom->addPrimitiveSet(strip);
+          strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
+      faceGeom->addPrimitiveSet(strip);
     }
+  }
 
-    // top:
-    if (vfov_deg < 180.0f)
+  // top:
+  if (vfov_deg < 180.0f)
+  {
+    // draw the top wall outline and face, drawn as triangle strips from the near face to the far face;
+    // iterate x across the face from left to right, (looking from near face to far face)
+    for (unsigned int x = 0; x < numPointsX - 1; ++x)
     {
-      // store UL corners for use in outline
-      farIndexUL = vertexArray->size();
-      nearIndexUL = farIndexUL + 2 * d.wallRes_;
-      // draw the top wall outline and face, drawn as triangle strips from the near face to the far face;
-      // iterate x across the face from left to right, (looking from near face to far face)
-      for (unsigned int x = 0; x < numPointsX - 1; ++x)
+      // starting index for near and far face vertices for left edge of the strip starting at x
+      const unsigned int offsetStart = (x * numPointsZ) + (numPointsZ - 1);
+
+      osg::ref_ptr<osg::DrawElementsUShort> strip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numWallElements);
+
+      // iterate out from the near face to the far face, in tesselated steps
+      for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
       {
-        // starting index for near and far face vertices for left edge of the strip starting at x
-        const unsigned int offsetStart = (x * numPointsZ) + (numPointsZ - 1);
-
-        osg::ref_ptr<osg::DrawElementsUShort> strip = drawFaces ? new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements) : NULL;
-
-        // iterate out from the near face to the far face, in tesselated steps
-        for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
+        const float w = tessStep * q;
+        for (unsigned int i = 0; i < 2; ++i)
         {
-          const float w = tessStep * q;
-          for (unsigned int i = 0; i < 2; ++i)
-          {
-            // i=0 is left edge of strip, i=1 is right edge of strip
-            const unsigned int off = offsetStart + (i * numPointsZ);
+          // i=0 is left edge of strip, i=1 is right edge of strip
+          const unsigned int off = offsetStart + (i * numPointsZ);
 
-            const unsigned int foff = farFaceOffset + off;
-            const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
-            const SVMeta& metafoff = (*vertexMetaData)[foff];
-            const osg::Vec3& unit = metafoff.unit_;
-            const osg::Vec3 vert = nf + unit * coneLen * w;
-            vertexArray->push_back(vert);
-            // normal should be the unit vector rotated -90deg around x axis
-            normalArray->push_back(osg::Vec3(unit.x(), -unit.z(), unit.y()));
-            faceArray->push_back(FACE_CONE);
-            vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          const unsigned int foff = farFaceOffset + off;
+          const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
+          const SVMeta& metafoff = (*vertexMetaData)[foff];
+          const osg::Vec3& unit = metafoff.unit_;
+          const osg::Vec3 vert = nf + unit * coneLen * w;
+          vertexArray->push_back(vert);
+          // normal should be the unit vector rotated -90deg around x axis
+          normalArray->push_back(osg::Vec3(unit.x(), -unit.z(), unit.y()));
+          faceArray->push_back(FACE_CONE);
+          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
 
-            if (drawFaces)
-              strip->setElement(2 * q + i, vertexArray->size() - 1);
-          }
-        }
-        if (drawFaces)
-        {
-          faceGeom->addPrimitiveSet(strip);
+          strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
+      faceGeom->addPrimitiveSet(strip);
     }
+  }
 
-    // left:
-    if (hfov_deg < 360.0f)
+  // left:
+  if (hfov_deg < 360.0f)
+  {
+    // draw the left wall outline and face, drawn as triangle strips from the near face to the far face;
+    // iterate z across the face from bottom to top, (looking from near face to far face)
+    for (unsigned int z = 0; z < numPointsZ - 1; ++z)
     {
-      // store LL corners for use in outline
-      farIndexLL = vertexArray->size();
-      nearIndexLL = farIndexLL + 2 * d.wallRes_;
-      // draw the left wall outline and face, drawn as triangle strips from the near face to the far face;
-      // iterate z across the face from bottom to top, (looking from near face to far face)
-      for (unsigned int z = 0; z < numPointsZ - 1; ++z)
+      osg::ref_ptr<osg::DrawElementsUShort> strip = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numWallElements);
+
+      // iterate out from the near face to the far face, in tesselated steps
+      for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
       {
-        osg::ref_ptr<osg::DrawElementsUShort> strip = drawFaces ? new osg::DrawElementsUShort(GL_TRIANGLE_STRIP, numElements) : NULL;
-
-        // iterate out from the near face to the far face, in tesselated steps
-        for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
+        const float w = tessStep * q;
+        for (unsigned int i = 0; i < 2; ++i)
         {
-          const float w = tessStep * q;
-          for (unsigned int i = 0; i < 2; ++i)
-          {
-            // i=0 is bottom edge of strip, i=1 is top edge of strip
-            const unsigned int off = z + i;
-            const unsigned int foff = farFaceOffset + off;
-            const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
-            const SVMeta& metafoff = (*vertexMetaData)[foff];
-            const osg::Vec3& unit = metafoff.unit_;
-            const osg::Vec3 vert = nf + unit * coneLen * w;
-            vertexArray->push_back(vert);
-            // normal should be the unit vector rotated -90deg around z axis
-            normalArray->push_back(osg::Vec3(-unit.y(), unit.x(), unit.z()));
-            faceArray->push_back(FACE_CONE);
-            vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          // i=0 is bottom edge of strip, i=1 is top edge of strip
+          const unsigned int off = z + i;
+          const unsigned int foff = farFaceOffset + off;
+          const osg::Vec3 nf = hasNear ? (*vertexArray)[nearFaceOffset + off] : osg::Vec3();
+          const SVMeta& metafoff = (*vertexMetaData)[foff];
+          const osg::Vec3& unit = metafoff.unit_;
+          const osg::Vec3 vert = nf + unit * coneLen * w;
+          vertexArray->push_back(vert);
+          // normal should be the unit vector rotated -90deg around z axis
+          normalArray->push_back(osg::Vec3(-unit.y(), unit.x(), unit.z()));
+          faceArray->push_back(FACE_CONE);
+          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
 
-            if (drawFaces)
-              strip->setElement(2 * q + i, vertexArray->size() - 1);
-          }
-        }
-        if (drawFaces)
-        {
-          faceGeom->addPrimitiveSet(strip);
+          strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
+      faceGeom->addPrimitiveSet(strip);
     }
 
     // if either assert fails, vertex counts in cone no longer match expected/reserved count; vector reserve calls must be updated to match changes to cone vertex generation
     assert(vertexArray->size() == reserveSizeFace + reserveSizeCone);
     assert(vertexMetaData->size() == reserveSizeFace + reserveSizeCone);
-
-    // next, render geometry for the wall outlines
-    if (drawOutlines)
-    {
-      osg::ref_ptr<osg::DrawElementsUShort> outline = new osg::DrawElementsUShort(GL_LINES, 8);
-      outline->setElement(0, nearIndexLL);
-      outline->setElement(1, farIndexLL);
-      outline->setElement(2, nearIndexUL);
-      outline->setElement(3, farIndexUL);
-      outline->setElement(4, nearIndexLR);
-      outline->setElement(5, farIndexLR);
-      outline->setElement(6, nearIndexUR);
-      outline->setElement(7, farIndexUR);
-      outlineGeom->addPrimitiveSet(outline);
-    }
   }
 }
 
@@ -1030,6 +1006,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 }
 
+// this method only applies to the pyramid shape
 void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
 {
   nearRange = simCore::sdkMax(1.0f, nearRange);
@@ -1063,6 +1040,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
   geom->dirtyBound();
 }
 
+// this method only applies to the pyramid shape
 void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
 {
   farRange = simCore::sdkMax(1.0f, farRange);
