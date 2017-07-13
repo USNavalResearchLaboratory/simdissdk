@@ -22,6 +22,7 @@
 #ifndef SIMQT_ENTITY_TYPE_FILTERWIDGET_H
 #define SIMQT_ENTITY_TYPE_FILTERWIDGET_H
 
+#include <set>
 #include <QWidget>
 #include "simData/DataStore.h"
 
@@ -54,6 +55,9 @@ namespace simQt {
     * @param types bitmask of all the entity types to set as selected
     */
     void setSelections(unsigned int types);
+
+    /** Alternative signature to setSelections that uses a set */
+    void setSelections(const std::set<simData::DataStore::ObjectType>& types);
 
   signals:
     /** Emits a bit mask of the new entity types selected, sent out whenever the GUI is changed */
