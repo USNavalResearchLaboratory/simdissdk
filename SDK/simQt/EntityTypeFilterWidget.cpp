@@ -88,6 +88,25 @@ unsigned int EntityTypeFilterWidget::getSelections() const
   return rv;
 }
 
+std::set<simData::DataStore::ObjectType> EntityTypeFilterWidget::getSelectionsSet() const
+{
+  std::set<simData::DataStore::ObjectType> rv;
+  if (ui_->platformCheckable->isChecked())
+    rv.insert(simData::DataStore::PLATFORM);
+  if (ui_->beamCheckable->isChecked())
+    rv.insert(simData::DataStore::BEAM);
+  if (ui_->gateCheckable->isChecked())
+    rv.insert(simData::DataStore::GATE);
+  if (ui_->laserCheckable->isChecked())
+    rv.insert(simData::DataStore::LASER);
+  if (ui_->lobCheckable->isChecked())
+    rv.insert(simData::DataStore::LOB_GROUP);
+  if (ui_->projectorCheckable->isChecked())
+    rv.insert(simData::DataStore::PROJECTOR);
+  return rv;
+}
+
+
 void EntityTypeFilterWidget::setSelections(unsigned int types)
 {
   ui_->platformCheckable->setChecked(simData::DataStore::PLATFORM & types);

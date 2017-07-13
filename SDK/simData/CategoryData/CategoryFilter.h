@@ -92,11 +92,11 @@ public:
 
   /** Constructor
    * @param dataStore The datastore for the category data
-   * @param autoUpdate  If true the Category Filter automatically updates and there is no need to call buildPrefRulesCategoryFilter
-   *                    which can be very slow.  If false the Category Filter maintains its original behavior which requires the owner
-   *                    to call buildPrefRulesCategoryFilter for every change.
+   * @param autoUpdate  If true the Category Filter automatically updates and there is no need to call buildPrefRulesCategoryFilter()
+   *    which can be very slow.  If false the Category Filter maintains its original behavior which requires the owner
+   *    to call buildPrefRulesCategoryFilter for every change.
    */
-  CategoryFilter(simData::DataStore* dataStore, bool autoUpdate = false);
+  explicit CategoryFilter(simData::DataStore* dataStore, bool autoUpdate = false);
 
   /** Copy Constructor */
   CategoryFilter(const CategoryFilter& other);

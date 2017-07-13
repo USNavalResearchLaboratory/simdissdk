@@ -44,10 +44,13 @@ namespace simQt {
     virtual ~EntityTypeFilterWidget();
 
     /**
-    * Return a bit mask of currently selected entity types
-    * @return unsigned int
-    */
+     * Return a bit mask of currently selected entity types
+     * @return unsigned int mask of simData::DataStore::ObjectType
+     */
     unsigned int getSelections() const;
+
+    /** Retrieve the currently selected entity types in a std::set. */
+    std::set<simData::DataStore::ObjectType> getSelectionsSet() const;
 
   public slots:
     /**
