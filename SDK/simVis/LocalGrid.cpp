@@ -117,6 +117,7 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
   stateSet->setAttributeAndModes(new osg::Point(1.5f), 1);
+  stateSet->setRenderBinDetails(BIN_LOCAL_GRID, BIN_GLOBAL_SIMSDK);
 
   this->addChild(geode);
 };
