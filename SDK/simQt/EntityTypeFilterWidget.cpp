@@ -109,6 +109,11 @@ std::set<simData::DataStore::ObjectType> EntityTypeFilterWidget::getSelectionsSe
 
 void EntityTypeFilterWidget::setSelections(unsigned int types)
 {
+  if (getSelections() == types)
+    return;
+
+  // Note that because we tie into clicked(), calling setChecekd() will not emit
+  // a signal.  We will emit a signal at the end.
   ui_->platformCheckable->setChecked(simData::DataStore::PLATFORM & types);
   ui_->beamCheckable->setChecked(simData::DataStore::BEAM & types);
   ui_->gateCheckable->setChecked(simData::DataStore::GATE & types);
@@ -116,6 +121,9 @@ void EntityTypeFilterWidget::setSelections(unsigned int types)
   ui_->lobCheckable->setChecked(simData::DataStore::LOB_GROUP & types);
   ui_->projectorCheckable->setChecked(simData::DataStore::PROJECTOR & types);
   ui_->allCheckable->setChecked(types == simData::DataStore::ALL);
+
+  // Emit a signal that the values have changed
+  emit entityTypesChanged(getSelections());
 }
 
 void EntityTypeFilterWidget::setSelections(const std::set<simData::DataStore::ObjectType>& types)
@@ -138,7 +146,7 @@ void EntityTypeFilterWidget::toggleAllTypes_(bool activateAllTypes)
 {
   simData::DataStore::ObjectType type = activateAllTypes ? simData::DataStore::ALL : simData::DataStore::NONE;
   setSelections(type);
-  emit(entityTypesChanged(type));
+  // emit is handled in setSelections()
 }
 
 }

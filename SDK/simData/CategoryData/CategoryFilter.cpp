@@ -473,7 +473,7 @@ bool CategoryFilter::matchData(const CurrentCategoryValues& curCategoryData) con
 bool CategoryFilter::matchRegExpFilter_(const CurrentCategoryValues& curCategoryData) const
 {
   // no failure if no regular expressions
-  if (categoryRegExp_.empty())
+  if (categoryRegExp_.empty() || dataStore_ == NULL)
     return true;
   CurrentCategoryValues::const_iterator curCategoryDataIter;
   // first, check the reg exp, since this is likely to be more comprehensive
@@ -502,6 +502,8 @@ bool CategoryFilter::matchRegExpFilter_(const CurrentCategoryValues& curCategory
 
 std::string CategoryFilter::serialize(bool simplify) const
 {
+  if (dataStore_ == NULL)
+    return " ";
   simData::CategoryNameManager& catNameMgr = dataStore_->categoryNameManager();
   std::string rv;
 
@@ -580,6 +582,9 @@ std::string CategoryFilter::serialize(bool simplify) const
 ///@return false on fail
 bool CategoryFilter::deserialize(const std::string &checksString)
 {
+  if (dataStore_ == NULL)
+    return false;
+
   categoryCheck_.clear();
 
   // Empty string means no values, meaning clear vector; valid state
