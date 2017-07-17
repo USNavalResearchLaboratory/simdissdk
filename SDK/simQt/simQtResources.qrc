@@ -1,11 +1,13 @@
 <RCC>
   <qresource prefix="simQt">
     <file>images/Collapse.png</file>
+    <file>images/Copy.png</file>
     <file>images/Expand.png</file>
     <file>images/Building Corporation.png</file>
     <file>images/Tree View.png</file>
     <file>images/Close.png</file>
     <file>images/Filter.png</file>
+    <file>images/Find.png</file>
     <file>images/Folder.png</file>
     <file>images/Globe.png</file>
     <file>images/Image.png</file>

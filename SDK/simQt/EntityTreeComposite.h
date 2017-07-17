@@ -115,6 +115,8 @@ public:
   bool useEntityIcons() const;
   /** Shows icons instead of text for the entity tree list Entity Type column */
   void setUseEntityIcons(bool showIcons);
+  /** Sets the ability to use the context menu center action, which is disabled by default */
+  void setUseCenterAction(bool use);
 
 public slots:
   /** If true expand the tree on double click */
@@ -136,6 +138,8 @@ signals:
   void itemsSelected(QList<uint64_t> ids);
   /** The unique ID of the entity just double clicked */
   void itemDoubleClicked(uint64_t id);
+  /** Fired when the Center On Entity context menu action is triggered */
+  void centerOnEntityRequested(uint64_t id);
   /**
    * A filter setting was changed
    * @param settings Filters get data from the setting using a global unique key
@@ -156,16 +160,28 @@ private slots:
   /** Update the label displaying number of items after filter is applied */
   void setNumFilteredItemsLabel_(int numFilteredItems, int numTotalItems);
   /** The user has changed what, if any, entities are selected; use to enable the copy action */
-  void onItemsChanged_(QList<uint64_t> ids);
+  void onItemsChanged_(const QList<uint64_t>& ids);
   /** Called when the user want to copy the selected entity names to the clipboard */
   void copySelection_();
+  /** Called when a user clicks the center action from the context menu */
+  void centerOnSelection_();
+  /** Toggle the tree/list view and update related UI component and action states */
+  void setTreeView_(bool useTreeView);
 
 private:
+  /** Update Collapse All and Expand All action enabled states */
+  void updateActionEnables_();
+
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
   AbstractEntityTreeModel* model_;
   QDialog* filterDialog_;
   QAction* copyAction_;
+  QAction* centerAction_;
+  QAction* toggleTreeViewAction_;
+  QAction* collapseAllAction_;
+  QAction* expandAllAction_;
+  bool useCenterAction_;
 };
 
 }

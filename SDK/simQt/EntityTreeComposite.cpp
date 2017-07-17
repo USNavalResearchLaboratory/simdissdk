@@ -21,7 +21,7 @@
  */
 #include <QDialog>
 #include <QGroupBox>
-#include <QPushButton>
+#include <QToolButton>
 #include <QVBoxLayout>
 #include <QKeyEvent>
 #include <QClipboard>
@@ -51,7 +51,8 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   composite_(NULL),
   entityTreeWidget_(NULL),
   model_(NULL),
-  filterDialog_(NULL)
+  filterDialog_(NULL),
+  useCenterAction_(false)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -65,26 +66,54 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   connect(entityTreeWidget_, SIGNAL(itemDoubleClicked(uint64_t)), this, SIGNAL(itemDoubleClicked(uint64_t))); // Echo out the signal
   connect(entityTreeWidget_, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>)), this, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>))); // Echo out the signal
 
-  connect(composite_->pushButton, SIGNAL(toggled(bool)), entityTreeWidget_, SLOT(toggleTreeView(bool)));
+  // handle right-context menu (any actions will appear there)
+  // Create a new QAction for copying data from the clipboard
+  copyAction_ = new QAction(tr("&Copy"), composite_->treeView);
+  copyAction_->setIcon(QIcon(":simQt/images/Copy.png"));
+  copyAction_->setShortcut(QKeySequence::Copy);
+  copyAction_->setShortcutContext(Qt::WidgetShortcut);
+  copyAction_->setEnabled(false); // Should only be enabled when selections made
+  connect(copyAction_, SIGNAL(triggered()), this, SLOT(copySelection_()));
+  composite_->treeView->addAction(copyAction_);
+
+  // Right click center action
+  // NOTE: Use of this action must be enabled by the caller with setUseCenterAction()
+  centerAction_ = new QAction(tr("Center On Entity"), composite_->treeView);
+  centerAction_->setIcon(QIcon(":simQt/images/Find.png"));
+  centerAction_->setEnabled(false); // Should only be enabled when selections made
+  connect(centerAction_, SIGNAL(triggered()), this, SLOT(centerOnSelection_()));
+  composite_->treeView->addAction(centerAction_);
+
+  // Add separator
+  QAction* sep = new QAction(this);
+  sep->setSeparator(true);
+  composite_->treeView->addAction(sep);
+
+  // Switch tree mode action
+  toggleTreeViewAction_ = new QAction("Tree View", composite_->treeView);
+  toggleTreeViewAction_->setIcon(QIcon(":simQt/images/Tree View.png"));
+  toggleTreeViewAction_->setCheckable(true);
+  toggleTreeViewAction_->setChecked(entityTreeWidget_->isTreeView());
+  toggleTreeViewAction_->setToolTip(simQt::formatTooltip(tr("Toggle Tree View"), tr("Toggles the display of entity types between a tree and a list view.")));
+  toggleTreeViewAction_->setEnabled(false); // Disabled until entities are added
+  connect(toggleTreeViewAction_, SIGNAL(triggered(bool)), this, SLOT(setTreeView_(bool)));
+  composite_->treeView->addAction(toggleTreeViewAction_);
+
+  // Collapse All and Expand All actions
+  collapseAllAction_ = composite_->actionCollapse_All;
+  collapseAllAction_->setEnabled(false); // Disabled until entities are added
+  composite_->treeView->addAction(collapseAllAction_);
+  expandAllAction_ = composite_->actionExpand_All;
+  expandAllAction_->setEnabled(false); // Disabled until entities are added
+  composite_->treeView->addAction(expandAllAction_);
+
+  composite_->pushButton->setDefaultAction(toggleTreeViewAction_);
   connect(composite_->lineEdit, SIGNAL(changed(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)), this, SLOT(textFilterChanged_(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)));
   connect(composite_->filterButton, SIGNAL(clicked()), this, SLOT(showFilters_()));
   connect(entityTreeWidget_, SIGNAL(numFilteredItemsChanged(int, int)), this, SLOT(setNumFilteredItemsLabel_(int, int)));
 
-  // handle right-context menu (any actions will appear there)
-  composite_->treeView->addAction(composite_->actionCollapse_All);
-  composite_->treeView->addAction(composite_->actionExpand_All);
-
-  // Create a new QAction for copying data from the clipboard
-  copyAction_ = new QAction(tr("&Copy"), composite_->treeView);
-  copyAction_->setEnabled(false); // Should only be enabled when selections made
-  copyAction_->setShortcut(QKeySequence::Copy);
-  copyAction_->setShortcutContext(Qt::WidgetShortcut);
-  connect(copyAction_, SIGNAL(triggered()), this, SLOT(copySelection_()));
-  composite_->treeView->addAction(copyAction_);
-
   // Set tooltips
-  composite_->pushButton->setToolTip(simQt::formatTooltip(tr("Filter View"),
-  tr("Toggles the display of entity types between a tree and a list view.")));
+  composite_->pushButton->setToolTip(toggleTreeViewAction_->toolTip());
   composite_->filterButton->setToolTip(simQt::formatTooltip(tr("Entity Filter"),
   tr("Opens the Entity Filter dialog.<p>Used for filtering the display of entities shown in the Entity List.")));
   // Note: tool tip applied to magnifying glass icon (label); the lineEdit already has a comment in the text field
@@ -123,7 +152,7 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
   entityTreeWidget_->setModel(model_);
   // If the tree is pre-loaded, enable the tree/list button
   if (model_->rowCount() != 0)
-    composite_->pushButton->setEnabled(true);
+    toggleTreeViewAction_->setEnabled(true);
   connect((QObject*)model, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
 }
 
@@ -214,10 +243,11 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
 {
   entityTreeWidget_->setSettings(settings);
 
-  // make sure the composite's treeview/listview pushbutton state matches widget treeview/listview state, suppress signal since the widget will have already done the toggle
+  // make sure the composite's treeview/listview pushbutton state matches widget treeview/listview
+  // state, suppress signal since the widget will have already done the toggle
   bool treeView = entityTreeWidget_->isTreeView();
-  simQt::ScopedSignalBlocker blockSignals(*composite_->pushButton);
-  composite_->pushButton->setChecked(treeView);
+  simQt::ScopedSignalBlocker blockSignals(*toggleTreeViewAction_);
+  setTreeView_(treeView);
 }
 
 void EntityTreeComposite::initializeSettings(SettingsPtr settings)
@@ -233,7 +263,8 @@ void EntityTreeComposite::textFilterChanged_(QString filter, Qt::CaseSensitivity
 
 void EntityTreeComposite::rowsInserted_(const QModelIndex & parent, int start, int end)
 {
-  composite_->pushButton->setEnabled(true);
+  toggleTreeViewAction_->setEnabled(true);
+  updateActionEnables_();
 }
 
 void EntityTreeComposite::showFilters_()
@@ -290,9 +321,21 @@ bool EntityTreeComposite::expandsOnDoubleClick() const
   return composite_->treeView->expandsOnDoubleClick();
 }
 
-void EntityTreeComposite::onItemsChanged_(QList<uint64_t> ids)
+void EntityTreeComposite::setUseCenterAction(bool use)
 {
-  copyAction_->setEnabled(!ids.isEmpty());
+  if (use == useCenterAction_)
+    return;
+  useCenterAction_ = use;
+  if (!selectedItems().isEmpty())
+    centerAction_->setEnabled(use); // Only enable if there's items in the tree
+}
+
+void EntityTreeComposite::onItemsChanged_(const QList<uint64_t>& ids)
+{
+  bool empty = ids.isEmpty();
+  copyAction_->setEnabled(!empty);
+  if (useCenterAction_)
+    centerAction_->setEnabled(!empty);
 }
 
 void EntityTreeComposite::copySelection_()
@@ -313,6 +356,28 @@ void EntityTreeComposite::copySelection_()
   }
 
   QApplication::clipboard()->setText(clipboardText);
+}
+
+void EntityTreeComposite::centerOnSelection_()
+{
+  if (!selectedItems().empty())
+    emit centerOnEntityRequested(selectedItems().first());
+}
+
+void EntityTreeComposite::setTreeView_(bool useTreeView)
+{
+  // Toggle the tree view
+  entityTreeWidget_->toggleTreeView(useTreeView);
+  // Update related UI components
+  toggleTreeViewAction_->setChecked(useTreeView);
+  updateActionEnables_();
+}
+
+void EntityTreeComposite::updateActionEnables_()
+{
+  bool enableIt = entityTreeWidget_->isTreeView() && model_->rowCount() > 0;
+  collapseAllAction_->setEnabled(enableIt);
+  expandAllAction_->setEnabled(enableIt);
 }
 
 bool EntityTreeComposite::useEntityIcons() const

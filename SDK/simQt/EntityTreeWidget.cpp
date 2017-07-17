@@ -21,9 +21,10 @@
  */
 
 #include <cassert>
+#include <QSortFilterProxyModel>
 #include <QTreeWidget>
 #include <QTimer>
-#include <qsortfilterproxymodel.h>
+#include "simNotify/Notify.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityTreeWidget.h"
