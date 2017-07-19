@@ -612,8 +612,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   const double ringSpanZ = 0.5 * osg::DegreesToRadians(d.vfov_deg_) / numRings;
 
   const bool hasNear = d.nearRange_ > 0.0 && d.drawCone_;
-  unsigned short nearOffset = 0;
-  unsigned short farOffset = 0;
+
 
   const double nearRange = d.nearRange_ * d.scale_;
   const double farRange = d.farRange_  * d.scale_;
@@ -659,18 +658,21 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   dirQ.makeRotate(osg::Vec3(0.0f, 1.0f, 0.0f), direction);
   metaContainer->dirQ_ = dirQ;
 
-  unsigned int vptr = 0;
-  farOffset = 0;
-  nearOffset = farOffset + vertsPerFace;
+  // vertices for far face start at beginning of vertex array
+  const unsigned short farOffset = 0;
+  // vertices for near face start immediately after the far face vertices
+  const unsigned short nearOffset = farOffset + vertsPerFace;
 
-  // first point in each face is the center point.
+  // near and far faces are built with triangle strip radial slices using two vertices per concentric ring
+  unsigned int vptr = 0;
+  // first point in each strip  is the center point.
   (*v)[vptr] = dirQ * osg::Vec3(0.0f, farRange, 0.0f);
   (*n)[vptr] = dirQ * osg::Vec3(0.0f, 1.0f, 0.0f);
   (*f)[vptr] = FACE_FAR;
   (*m)[vptr] = SVMeta(USAGE_FAR, 0.0f, 0.0f, osg::Vec3(0.0f, 1.0f, 0.0f), 1.0f);
-
   if (hasNear)
   {
+    // first point in strip is the center point.
     (*v)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, nearRange, 0.0f);
     (*n)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, -1.0f, 0.0f);
     (*f)[vptr + vertsPerFace] = FACE_NEAR;
@@ -698,14 +700,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     farWedge->reserveElements(elsPerSlice);
     farWedge->push_back(farOffset); // start with the center point
 
-    osg::ref_ptr<osg::DrawElementsUShort> nearWedge = NULL;
-    if (hasNear)
-    {
-      nearWedge = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
-      nearWedge->reserveElements(elsPerSlice);
-      nearWedge->push_back(nearOffset); // start with the center point
-    }
-
     for (unsigned int ring = 0; ring < numRings; ++ring)
     {
       const double rx = ringSpanX * (ring + 1) * unit.x();
@@ -713,7 +707,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       osg::Vec3 rawUnitVec(sin(rx), cos(rx), sin(rz));
       rawUnitVec.normalize();
       const osg::Vec3 unitVec = dirQ * rawUnitVec;
-
       const osg::Vec3 farVec = unitVec * farRange;
 
       (*v)[vptr] = farVec;
@@ -721,44 +714,63 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       (*f)[vptr] = FACE_FAR;
       (*m)[vptr].set(USAGE_FAR, rx, rz, rawUnitVec, 1.0f);
 
-      // add the new point to the slice's geometry:
-      farWedge->push_back((slice + 1 < numSlices) ? vptr + numRings : farOffset + 1 + ring);
+      // add the new point to the slice's far face geometry:
+      // vptr + numRings is the corresponding vertex in the next slice; can't use that when we get to last slice.
+      const unsigned int correspondingVertexInNextSlice = (slice + 1 < numSlices) ? (vptr + numRings) : (farOffset + 1 + ring);
+      farWedge->push_back(correspondingVertexInNextSlice);
       farWedge->push_back(vptr);
 
-      // do the same for the near face.
       if (hasNear)
       {
         const osg::Vec3 nearVec = unitVec * nearRange;
-
-        (*v)[vptr+vertsPerFace] = nearVec;
-        (*n)[vptr+vertsPerFace] = -unitVec;
-        (*f)[vptr+vertsPerFace] = FACE_NEAR;
-        (*m)[vptr+vertsPerFace].set(USAGE_NEAR, rx, rz, rawUnitVec, 0.0f);
-
-        nearWedge->push_back(vptr + vertsPerFace);
-        nearWedge->push_back(slice+1 < numSlices ? (vptr+vertsPerFace)+numRings : nearOffset+1+ring);
+        (*v)[vptr + vertsPerFace] = nearVec;
+        (*n)[vptr + vertsPerFace] = -unitVec;
+        (*f)[vptr + vertsPerFace] = FACE_NEAR;
+        (*m)[vptr + vertsPerFace].set(USAGE_NEAR, rx, rz, rawUnitVec, 0.0f);
       }
 
       vptr++;
     }
-
-    // add each face to the geometry
+    // add face to the geometry
     // if assert fails, check that elsPerSlice still represents the number of vertices that are added
-    assert(farWedge.get()->size() == elsPerSlice);
+    assert(farWedge->size() == elsPerSlice);
     geom->addPrimitiveSet(farWedge);
-    if (nearWedge)
+  }
+
+  // the near face geometry is created separately to mitigate near/far face artifacts
+  if (hasNear)
+  {
+    // vptr has until now only counted far face vertices; we need it to count near face vertices too
+    assert(vptr == nearOffset);
+    vptr++; // increment one for near face center vertex
+
+    // loop over the slices and build the near geometry using vertex array indices
+    for (unsigned int slice = 0; slice < numSlices; ++slice)
+    {
+      osg::ref_ptr<osg::DrawElementsUShort> nearWedge = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
+      nearWedge->reserveElements(elsPerSlice);
+      nearWedge->push_back(nearOffset); // start with the center point
+
+      for (unsigned int ring = 0; ring < numRings; ++ring)
+      {
+        nearWedge->push_back(vptr);
+        // vptr + numRings is the corresponding vertex in the next slice; can't use that when we get to last slice.
+        const unsigned int correspondingVertexInNextSlice = (slice + 1 < numSlices) ? (vptr + numRings) : (nearOffset + 1 + ring);
+        nearWedge->push_back(correspondingVertexInNextSlice);
+        vptr++;
+      }
+      // add each face to the geometry
+      // if assert fails, check that elsPerSlice still represents the number of vertices that are added
+      assert(nearWedge->size() == elsPerSlice);
       geom->addPrimitiveSet(nearWedge);
+    }
   }
 
   if (d.drawCone_)
   {
     // next, build the walls. we need two additional outer rings with out-facing normals.
-    // yes this can be computed while we are building the faces but that is an optimization
-    // for later.
-    if (hasNear)
-      vptr += vertsPerFace;
-
-    int wallOffset = vptr;
+    // yes this can be computed while we are building the faces but that is an optimization for later.
+    const int wallOffset = vptr;
     bool evenSlice = true;
 
     // iterate for triangle strip slices that start at tip of cone and extend to far end(base) of cone

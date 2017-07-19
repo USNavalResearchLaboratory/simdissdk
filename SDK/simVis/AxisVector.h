@@ -56,7 +56,7 @@ public:
 
   /** Set width of the lines for the axes */
   void setLineWidth(float lineWidth);
-  /** Retrieve width of th elines for the axes */
+  /** Retrieve width of the lines for the axes */
   float lineWidth() const;
 
   /** Change the axis colors */

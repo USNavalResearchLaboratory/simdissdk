@@ -137,6 +137,7 @@ void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f&
     rot.makeRotate(osg::X_AXIS, vec);
   }
   rot.postMultTranslate(pos);
+  rot.preMultScale(axisLengths_);
   setMatrix(rot);
 }
 
