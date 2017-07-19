@@ -64,8 +64,8 @@ public:
     double   hamsl_m_;
     /** Height above ellipsoid, in meters */
     double   hae_m_;
-    /** Dot product: originUpWorld times the normalized ray between sample/origin world coordinate */
-    double   dot_;
+    /** Elevation from LOS origin to sample point */
+    double   elev_rad_;
     /** Flags whether sample is visible */
     bool     visible_;
     /** Map data point */

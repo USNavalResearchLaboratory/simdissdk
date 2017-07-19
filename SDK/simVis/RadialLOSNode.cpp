@@ -39,7 +39,9 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode) :
 GeoPositionNode(mapNode),
 visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
 obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
-samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f)
+samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
+callbackHook_(new TerrainCallbackHook(this)),
+active_(false)
 {
   geode_ = new osg::Geode();
 
@@ -58,6 +60,13 @@ samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f)
 
 void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
 {
+  osgEarth::MapNode* oldMap = getMapNode();
+  if (mapNode == oldMap)
+    return;
+
+  oldMap->getTerrain()->removeTerrainCallback(callbackHook_);
+  mapNode->getTerrain()->addTerrainCallback(callbackHook_);
+
   GeoPositionNode::setMapNode(mapNode);
 
   // re-apply the position
@@ -105,6 +114,35 @@ void RadialLOSNode::setDataModel(const RadialLOS& los)
   }
 }
 
+void RadialLOSNode::setMaxRange(const Distance& value)
+{
+  los_.setMaxRange(value);
+  los_.compute(getMapNode(), coord_);
+}
+
+void RadialLOSNode::setCentralAzimuth(const Angle& value)
+{
+  los_.setCentralAzimuth(value);
+  los_.compute(getMapNode(), coord_);
+}
+
+void RadialLOSNode::setFieldOfView(const Angle& value)
+{
+  los_.setFieldOfView(value);
+  los_.compute(getMapNode(), coord_);
+}
+
+void RadialLOSNode::setRangeResolution(const Distance& value)
+{
+  los_.setRangeResolution(value);
+  los_.compute(getMapNode(), coord_);
+}
+
+void RadialLOSNode::setAzimuthalResolution(const Angle& value)
+{
+  los_.setAzimuthalResolution(value);
+  los_.compute(getMapNode(), coord_);
+}
 
 void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
                                osg::Node*                 patch)
@@ -148,6 +186,15 @@ void RadialLOSNode::setSamplePointColor(const osg::Vec4& value)
   }
 }
 
+void RadialLOSNode::setActive(bool active)
+{
+  if (active != active_)
+  {
+    active_ = active;
+    refreshGeometry_();
+  }
+}
+
 void RadialLOSNode::refreshGeometry_()
 {
   this->dirtyBound();
@@ -173,8 +220,8 @@ void RadialLOSNode::refreshGeometry_()
   const RadialLOS::RadialVector& radials = los_.getRadials();
   unsigned int samplesPerRadial = los_.getNumSamplesPerRadial();
 
-  // remove all geometry for an empty set.
-  if (radials.size() == 0 || samplesPerRadial == 0)
+  // remove all geometry for an empty set or inactive node.
+  if (radials.size() == 0 || samplesPerRadial == 0 || !active_)
   {
     geode_->removeDrawables(0, geode_->getNumDrawables());
     return;

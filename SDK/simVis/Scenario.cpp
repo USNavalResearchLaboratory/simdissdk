@@ -286,6 +286,35 @@ private:
 
 // -----------------------------------------------------------------------
 
+class ScenarioManager::ScenarioLosCreator : public LosCreator
+{
+public:
+  ScenarioLosCreator()
+  {
+  }
+
+  virtual ~ScenarioLosCreator()
+  {
+  }
+
+  void setMapNode(osgEarth::MapNode* map)
+  {
+    map_ = map;
+  }
+
+  virtual RadialLOSNode* newLosNode()
+  {
+    if (map_.valid())
+      return new RadialLOSNode(map_.get());
+    return NULL;
+  }
+
+private:
+  osg::observer_ptr<osgEarth::MapNode> map_;
+};
+
+// -----------------------------------------------------------------------
+
 ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan)
   : locatorFactory_(factory),
     platformTspiFilterManager_(new PlatformTspiFilterManager()),
@@ -295,7 +324,8 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
     entityGraph_(new SimpleEntityGraph),
     projectorManager_(projMan),
     labelContentManager_(new NullLabelContentManager()),
-    rfManager_(new simRF::NullRFPropagationManager())
+    rfManager_(new simRF::NullRFPropagationManager()),
+    losCreator_(new ScenarioLosCreator())
 {
   root_->setName("root");
   root_->addChild(entityGraph_->node());
@@ -343,6 +373,8 @@ ScenarioManager::~ScenarioManager()
   platformTspiFilterManager_ = NULL;
   delete lobSurfaceClamping_;
   lobSurfaceClamping_ = NULL;
+  delete losCreator_;
+  losCreator_ = NULL;
 }
 
 void ScenarioManager::bind(simData::DataStore* dataStore)
@@ -409,6 +441,7 @@ void ScenarioManager::flush(simData::ObjectId flushedId)
 void ScenarioManager::clearEntities(simData::DataStore* dataStore)
 {
   SAFETRYBEGIN;
+
   if (dataStore)
   {
     // remove all data associated with a particular datastore.
@@ -489,13 +522,15 @@ void ScenarioManager::setEntityGraphStrategy(AbstractEntityGraph* strategy)
     entityGraph_->addOrUpdate(i->second);
 }
 
-void ScenarioManager::setMapNode(const osgEarth::MapNode* map)
+void ScenarioManager::setMapNode(osgEarth::MapNode* map)
 {
   SAFETRYBEGIN;
   mapNode_ = map;
 
+  losCreator_->setMapNode(mapNode_.get());
   surfaceClamping_->setMapNode(mapNode_.get());
   lobSurfaceClamping_->setMapNode(mapNode_.get());
+
   if (map)
   {
     // update all the entity locators with the new SRS.
@@ -523,6 +558,8 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
     node,
     dataStore.platformUpdateSlice(node->getId()),
     &dataStore);
+
+  node->setLosCreator(losCreator_);
 
   notifyToolsOfAdd_(node);
 

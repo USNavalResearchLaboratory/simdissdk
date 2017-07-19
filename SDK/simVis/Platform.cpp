@@ -20,6 +20,7 @@
  *
  */
 #include <limits>
+#include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
 #include "simVis/AnimatedLine.h"
@@ -47,6 +48,15 @@ static const simVis::Color INERTIAL_AXIS_Z_COLOR = simVis::Color::Blue;
 static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0, 0.5, 0.0, 1.0); // Orange from SIMDIS 9
 static const simVis::Color MOON_VECTOR_COLOR = simVis::Color::White;
 static const simVis::Color SUN_VECTOR_COLOR = simVis::Color::Yellow;
+
+// Distance in meters that a platform drawing optical or radio horizon must move laterally before the horizon is recalculated
+static const double HORIZON_RANGE_STEP = 100;
+// Distance in meters that a platform drawing optical or radio horizon must move vertically before the horizon is recalculated
+static const double HORIZON_ALT_STEP = 10;
+
+// Colors to use when drawing optical or radio horizon
+static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0, 1, 0, 0.6); // Translucent green
+static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1, 0, 0, 0.6); // Translucent red
 
 // this is used as a sentinel value for an platform that does not (currently) have a valid position
 static const simData::PlatformUpdate NULL_PLATFORM_UPDATE = simData::PlatformUpdate();
@@ -128,6 +138,9 @@ velocityAxisVector_(NULL),
 ephemerisVector_(NULL),
 model_(NULL),
 contentCallback_(new NullEntityCallback()),
+losCreator_(NULL),
+opticalLosNode_(NULL),
+radioLosNode_(NULL),
 frontOffset_(0.0),
 valid_(false),
 lastPrefsValid_(false),
@@ -221,6 +234,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     updateOrRemoveVelocityVector_(prefsDraw, prefs);
     updateOrRemoveEphemerisVector_(prefsDraw, prefs);
     updateOrRemoveCircleHighlight_(prefsDraw, prefs);
+    updateOrRemoveHorizons_(prefs);
   }
 
   setRcsPrefs_(prefs);
@@ -334,6 +348,11 @@ void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
   if (localGrid_)
   {
     localGrid_->notifyHostLocatorChange();
+  }
+
+  if (lastPrefsValid_)
+  {
+    updateOrRemoveHorizons_(lastPrefs_);
   }
 }
 
@@ -749,6 +768,103 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
     scaledInertialTransform_->removeChild(areaHighlight_);
     areaHighlight_ = NULL;
   }
+}
+
+void PlatformNode::updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs)
+{
+  updateOrRemoveHorizon_(simCore::OPTICAL_HORIZON, prefs);
+  updateOrRemoveHorizon_(simCore::RADAR_HORIZON, prefs);
+}
+
+void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs)
+{
+  RadialLOSNode* los = NULL;
+  bool drawHorizon = false;
+  switch (horizonType)
+  {
+  case simCore::OPTICAL_HORIZON:
+    // Create and add node if we haven't already
+    if (!opticalLosNode_ && losCreator_)
+    {
+      opticalLosNode_ = losCreator_->newLosNode();
+      opticalLosNode_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
+      addChild(opticalLosNode_);
+    }
+    los = opticalLosNode_;
+    drawHorizon = prefs.drawopticlos();
+    break;
+  case simCore::RADAR_HORIZON:
+    // Create and add node if we haven't already
+    if (!radioLosNode_ && losCreator_)
+    {
+      radioLosNode_ = losCreator_->newLosNode();
+      radioLosNode_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
+      addChild(radioLosNode_);
+    }
+    los = radioLosNode_;
+    drawHorizon = prefs.drawrflos();
+    break;
+  case simCore::GEOMETRIC_HORIZON:
+    // Horizon calculations are only allowed for optical or radar
+    assert(0);
+    break;
+  }
+
+  if (!los)
+  {
+    // Do not assert.  Null los nodes are valid
+    return;
+  }
+
+  if (!prefs.commonprefs().datadraw() || !prefs.commonprefs().draw() || !drawHorizon) // Remove horizon if it's currently visible
+  {
+    los->setActive(false);
+    return;
+  }
+
+  double rangeDist = 0;
+  double altDist = 0;
+
+  simCore::Coordinate platCoord = getLocator()->getCoordinate();
+  simCore::Coordinate platLlaCoord;
+  simCore::CoordinateConverter converter;
+  converter.convert(platCoord, platLlaCoord, simCore::COORD_SYS_LLA);
+
+  // Draw/update horizon
+  simCore::Coordinate losCoord = los->getCoordinate();
+
+  if (losCoord.coordinateSystem() != simCore::COORD_SYS_NONE) // losNode is not guaranteed to have a valid coord
+  {
+    simCore::Coordinate losLlaCoord;
+    converter.convert(losCoord, losLlaCoord, simCore::COORD_SYS_LLA);
+
+    rangeDist = simCore::calculateGroundDist(losLlaCoord.position(), platLlaCoord.position(), simCore::WGS_84, NULL);
+    altDist = fabs(losLlaCoord.alt() - platLlaCoord.alt());
+  }
+  else
+  {
+    // Always trigger a redraw if the losNode doesn't have a valid coordinate
+    rangeDist = HORIZON_RANGE_STEP + 1;
+  }
+
+  // Don't update if horizon is already active and platform is within acceptable range of last horizon center
+  if (HORIZON_ALT_STEP > altDist && HORIZON_RANGE_STEP > rangeDist && los->getActive())
+    return;
+
+  // Deactivate temporarily to prevent unnecessary calculations while updating los fields
+  los->setActive(false);
+
+  los->setCoordinate(getLocator()->getCoordinate());
+
+  los->setMaxRange(Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
+  los->setAzimuthalResolution(Angle(5, osgEarth::Units::DEGREES));
+
+  los->setActive(true);
+}
+
+void PlatformNode::setLosCreator(LosCreator* losCreator)
+{
+  losCreator_ = losCreator;
 }
 
 }

@@ -72,6 +72,26 @@ namespace simVis
      */
     const RadialLOS& getDataModel() const { return los_; }
 
+    /**@name Data Model Accessors
+     * @note Setting a new data model will override values set by these functions
+     * @{
+     */
+    void setMaxRange(const Distance& value);
+    const Distance& getMaxRange() const { return los_.getMaxRange(); }
+
+    void setCentralAzimuth(const Angle& value);
+    const Angle& getCentralAzimuth() const { return los_.getCentralAzimuth(); }
+
+    void setFieldOfView(const Angle& value);
+    const Angle& getFieldOfView() const { return los_.getFieldOfView(); }
+
+    void setRangeResolution(const Distance& value);
+    const Distance& getRangeResolution() const { return los_.getRangeResolution(); }
+
+    void setAzimuthalResolution(const Angle& value);
+    const Angle& getAzimuthalResolution() const { return los_.getAzimuthalResolution(); }
+    ///@}
+
     /**
      * Sets the "visible" color
      * param[in ] color for visible areas (rgba, [0..1])
@@ -105,6 +125,12 @@ namespace simVis
      */
     const osg::Vec4& getSamplePointColor() const { return samplePointColor_; }
 
+    /** Set the node active or inactive.  Inactive node will not draw LOS or perform LOS calculations */
+    void setActive(bool);
+
+    /** Returns active state of node */
+    bool getActive() const { return active_; }
+
 
   public: // GeoPositionNode
 
@@ -135,6 +161,18 @@ namespace simVis
       osg::Node*                 patch);
 
   private:
+
+    // callback hook.
+    struct TerrainCallbackHook : public osgEarth::TerrainCallback
+    {
+      osg::observer_ptr<RadialLOSNode> node_;
+      TerrainCallbackHook(RadialLOSNode* node) : node_(node) {}
+      void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext&)
+      {
+        if (node_.valid()) node_->onTileAdded_(key, tile);
+      }
+    };
+
     RadialLOS           los_;
     simCore::Coordinate coord_;
     osg::Geode*         geode_;
@@ -143,22 +181,13 @@ namespace simVis
     osg::Vec4           samplePointColor_;
     osgEarth::GeoCircle bound_;
     osgEarth::optional<RadialLOS> losPrevious_;
+    osg::ref_ptr<TerrainCallbackHook> callbackHook_;
+    bool                active_;
 
     void refreshGeometry_();
 
     // called by the terrain callback when a new tile enters the graph
     void onTileAdded_(const osgEarth::TileKey& key, osg::Node* tile);
-
-    // callback hook.
-    struct TerrainCallbackHook : public osgEarth::TerrainCallback
-    {
-      osg::observer_ptr<RadialLOSNode> node_;
-      TerrainCallbackHook(RadialLOSNode* node): node_(node) {}
-      void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext&)
-      {
-        if (node_.valid()) node_->onTileAdded_(key, tile);
-      }
-    };
   };
 
 } // namespace simVis
