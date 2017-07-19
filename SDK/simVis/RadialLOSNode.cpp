@@ -40,9 +40,10 @@ GeoPositionNode(mapNode),
 visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
 obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
 samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
-callbackHook_(new TerrainCallbackHook(this)),
 active_(false)
 {
+  callbackHook_ = new TerrainCallbackHook(this);
+
   geode_ = new osg::Geode();
 
   osg::StateSet* stateSet = geode_->getOrCreateStateSet();
@@ -54,7 +55,7 @@ active_(false)
   getPositionAttitudeTransform()->addChild(drapeable);
   drapeable->addChild(geode_);
 
-  mapNode->getTerrain()->addTerrainCallback(new TerrainCallbackHook(this));
+  mapNode->getTerrain()->addTerrainCallback(callbackHook_);
 }
 
 
