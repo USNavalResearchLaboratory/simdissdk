@@ -1086,6 +1086,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
   geom->dirtyBound();
 }
 
+// SDK-55: this does not appear to correctly update normals
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
   osg::Geometry* geom = SVFactory::solidGeometry_(xform);
@@ -1139,6 +1140,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
   geom->dirtyBound();
 }
 
+// SDK-55: this does not appear to correctly update normals
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
   osg::Geometry*  geom = SVFactory::solidGeometry_(xform);

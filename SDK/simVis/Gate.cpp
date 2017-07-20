@@ -91,6 +91,18 @@ namespace
     sv.elevOffset_deg_ = simCore::RAD2DEG * update->elevation();
     sv.hfov_deg_ = simCore::RAD2DEG * update->width();
     sv.vfov_deg_ = simCore::RAD2DEG * update->height();
+
+    // scale capRes based on fov
+    const float maxFov = simCore::sdkMax(sv.hfov_deg_, sv.vfov_deg_);
+    // 1 tesselation per 5 degrees of gate fov
+    // clamped at the bottom to ensure good visuals for common smaller gate sizes
+    // clamped at the top to prevent perf hit for large gates
+    const float capRes = osg::clampBetween((maxFov / 5.f), 5.f, 24.f);
+    sv.capRes_ = static_cast<unsigned int>(0.5f + capRes);
+
+    // gate walls don't need much tesselation, so reduce processing/memory load
+    sv.wallRes_ = 3;
+
     sv.nearRange_ = update->minrange();
     sv.farRange_ = update->maxrange();
 
