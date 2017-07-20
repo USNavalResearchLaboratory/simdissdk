@@ -76,22 +76,20 @@ public:
   * not be updated by normal processing. Only components with authority to override the pref value enforcement will do so.
   * This is useful for cases where a pref update from one source should be flagged to take priority over updates from other sources.
   * @param id  the data store entity id
-  * @param tagStack  the protobuf message field numbers that identify the pref
-  * @param type  the entity type of the pref field, which is not necessarily the same as the entity's type, e.g. CommonPrefs use ALL
+  * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
   * @param enforce If true, then turn on enforcing, preventing rules from changing the value.  If false, disables the enforcement,
   *   allowing preference rules to work with the value again.
   */
-  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type, bool enforce=true) = 0;
+  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, bool enforce=true) = 0;
 
   /**
    * Returns true if the preference value is set to enforcing.  Enforced prefs cannot be changed by Preference Rules.  For
    * more details, see enforcePrefValue().
    * @param id  the data store entity id
-   * @param tagStack  the protobuf message field numbers that identify the pref
-   * @param type  the entity type of the pref field, which is not necessarily the same as the entity's type, e.g. CommonPrefs use ALL
+   * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
    * @return True if the value is marked for enforcement, false otherwise
    */
-  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type) const = 0;
+  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const = 0;
 
   /**
   * Load the rules in the specified pref rule files.
@@ -175,8 +173,8 @@ class NullPrefRulesManager : public simData::PrefRulesManager
   virtual int removeRule(simData::PrefRule* prefRule) { return 1; }
   virtual int applyRules(bool force) { return 1; }
   virtual int applyRules(uint64_t id) { return 1; }
-  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type, bool enforce) { }
-  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack, simData::DataStore::ObjectType type) const { return false; }
+  virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, bool enforce) { }
+  virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const { return false; }
 };
 
 }
