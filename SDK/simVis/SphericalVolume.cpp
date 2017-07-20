@@ -46,7 +46,10 @@ using namespace simVis;
 #define USAGE_NONE     0x00
 #define USAGE_NEAR     0x01
 #define USAGE_FAR      0x02
-#define USAGE_CENTROID 0x04
+#define USAGE_TOP      0x04
+#define USAGE_BOTTOM   0x08
+#define USAGE_LEFT     0x10
+#define USAGE_RIGHT    0x20
 
 #define FACE_NONE     0
 #define FACE_NEAR     1
@@ -465,7 +468,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           // normal should be the unit vector rotated 90deg around x axis
           normalArray->push_back(osg::Vec3(unit.x(), unit.z(), -unit.y()));
           faceArray->push_back(FACE_CONE);
-          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          vertexMetaData->push_back(SVMeta(USAGE_BOTTOM, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
@@ -503,7 +506,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           // normal should be the unit vector rotated 90deg around z axis
           normalArray->push_back(osg::Vec3(unit.y(), -unit.x(), unit.z()));
           faceArray->push_back(FACE_CONE);
-          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          vertexMetaData->push_back(SVMeta(USAGE_RIGHT, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
@@ -542,7 +545,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           // normal should be the unit vector rotated -90deg around x axis
           normalArray->push_back(osg::Vec3(unit.x(), -unit.z(), unit.y()));
           faceArray->push_back(FACE_CONE);
-          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          vertexMetaData->push_back(SVMeta(USAGE_TOP, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
@@ -577,7 +580,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           // normal should be the unit vector rotated -90deg around z axis
           normalArray->push_back(osg::Vec3(-unit.y(), unit.x(), unit.z()));
           faceArray->push_back(FACE_CONE);
-          vertexMetaData->push_back(SVMeta(USAGE_NONE, metafoff.anglex_, metafoff.anglez_, unit, w));
+          vertexMetaData->push_back(SVMeta(USAGE_LEFT, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
@@ -1043,9 +1046,8 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
   const float range = meta->farRange_ - meta->nearRange_;
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
-    const osg::Vec3& unit = m[i].unit_;
-    const float      farRatio = m[i].ratio_;
-    (*verts)[i] = m[i].unit_*(meta->nearRange_ + range*farRatio);
+    const float farRatio = m[i].ratio_;
+    (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
 
   verts->dirty();
@@ -1077,16 +1079,14 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
   const float range = meta->farRange_ - meta->nearRange_;
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
-    const osg::Vec3& unit = m[i].unit_;
-    const float      farRatio = m[i].ratio_;
-    (*verts)[i] = m[i].unit_*(meta->nearRange_ + range*farRatio);
+    const float farRatio = m[i].ratio_;
+    (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
 
   verts->dirty();
   geom->dirtyBound();
 }
 
-// SDK-55: this does not appear to correctly update normals
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
   osg::Geometry* geom = SVFactory::solidGeometry_(xform);
@@ -1096,13 +1096,14 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
     return;
 
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(verts);
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(meta);
-  if (verts == NULL || meta == NULL)
+  osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
+  if (verts == NULL || meta == NULL || normals == NULL)
+  {
+    // Assertion failure means internal consistency error, or caller has inconsistent input
+    assert(0);
     return;
+  }
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
   // clamp to match createPyramid_
@@ -1130,17 +1131,38 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
       m.anglex_ = ax;
       m.unit_.set(sinx*cosz, cosx*cosz, sinz);
       m.unit_.normalize();
-      (*verts)[i] = meta->dirQ_ * m.unit_ * range;
+      const osg::Vec3 unitRot = meta->dirQ_ * m.unit_;
+      (*verts)[i] = unitRot * range;
 
-      // wrong for sides.. // (*normals)[i] = m.usage_ == USAGE_NEAR ? -m.unit_*range : m.unit_*range;
+      switch (m.usage_)
+      {
+      case USAGE_NEAR:
+        (*normals)[i] = (unitRot * -1);
+        break;
+      case USAGE_FAR:
+        (*normals)[i] = unitRot;
+        break;
+      case USAGE_BOTTOM:
+        (*normals)[i] = (osg::Vec3(unitRot.x(), unitRot.z(), -unitRot.y()));
+        break;
+      case USAGE_TOP:
+        (*normals)[i] = (osg::Vec3(unitRot.x(), -unitRot.z(), unitRot.y()));
+        break;
+      case USAGE_RIGHT:
+        (*normals)[i] = (osg::Vec3(unitRot.y(), -unitRot.x(), unitRot.z()));
+        break;
+      case USAGE_LEFT:
+        (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
+        break;
+      }
     }
   }
 
   verts->dirty();
+  normals->dirty();
   geom->dirtyBound();
 }
 
-// SDK-55: this does not appear to correctly update normals
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
   osg::Geometry*  geom = SVFactory::solidGeometry_(xform);
@@ -1150,13 +1172,14 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
     return;
 
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(verts);
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(meta);
-  if (verts == NULL || meta == NULL)
+  osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
+  if (verts == NULL || meta == NULL || normals == NULL)
+  {
+    // Assertion failure means internal consistency error, or caller has inconsistent input
+    assert(0);
     return;
+  }
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
   // clamp to match createPyramid_
@@ -1184,13 +1207,35 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
       m.anglez_ = az;
       m.unit_.set(sinx*cosz, cosx*cosz, sinz);
       m.unit_.normalize();
-      (*verts)[i] = meta->dirQ_ * m.unit_ * range;
+      const osg::Vec3 unitRot = meta->dirQ_ * m.unit_;
+      (*verts)[i] = unitRot * range;
 
-      // wrong for sides.. // (*normals)[i] = m.usage_ == USAGE_NEAR ? -m.unit_*range : m.unit_*range;
+      switch (m.usage_)
+      {
+      case USAGE_NEAR:
+        (*normals)[i] = (unitRot * -1);
+        break;
+      case USAGE_FAR:
+        (*normals)[i] = unitRot;
+        break;
+      case USAGE_BOTTOM:
+        (*normals)[i] = (osg::Vec3(unitRot.x(), unitRot.z(), -unitRot.y()));
+        break;
+      case USAGE_TOP:
+        (*normals)[i] = (osg::Vec3(unitRot.x(), -unitRot.z(), unitRot.y()));
+        break;
+      case USAGE_RIGHT:
+        (*normals)[i] = (osg::Vec3(unitRot.y(), -unitRot.x(), unitRot.z()));
+        break;
+      case USAGE_LEFT:
+        (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
+        break;
+      }
     }
   }
 
   verts->dirty();
+  normals->dirty();
   geom->dirtyBound();
 }
 
