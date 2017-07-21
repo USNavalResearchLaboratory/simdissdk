@@ -185,7 +185,6 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
   osg::StateSet* stateSet = this->getOrCreateStateSet();
-  beamPulse_ = new simVis::BeamPulse(stateSet);
   stateSet->setRenderBinDetails(BIN_BEAM, BIN_GLOBAL_SIMSDK);
 
   // depth-writing is disabled for the beams by default.
@@ -304,14 +303,19 @@ void BeamNode::applyPrefs(const simData::BeamPrefs& prefs, bool force)
     hasLastPrefs_ = true;
   }
 
-  beamPulse_->setEnabled(prefs.animate());
-  // Only need to set other fields if animating is on
+  // manage beam pulse animation, creating it when necessary
   if (prefs.animate())
   {
+    if (beamPulse_ == NULL)
+      beamPulse_ = new simVis::BeamPulse(getOrCreateStateSet());
+
+    beamPulse_->setEnabled(true);
     beamPulse_->setLength(static_cast<float>(prefs.pulselength()));
     beamPulse_->setRate(static_cast<float>(prefs.pulserate()));
     beamPulse_->setStipplePattern(prefs.pulsestipple());
   }
+  else if (beamPulse_ != NULL)
+    beamPulse_->setEnabled(false);
 }
 
 void BeamNode::setHostMissileOffset(double hostMissileOffset)
