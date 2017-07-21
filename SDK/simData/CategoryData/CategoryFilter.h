@@ -104,6 +104,9 @@ public:
   /** Destructor */
   virtual ~CategoryFilter();
 
+  /** Assignment operator */
+  CategoryFilter& operator=(const CategoryFilter& other);
+
   /**
   * build the category filter based on what is in the data store. Will add default No Value and Unlisted entries for all categories
   */

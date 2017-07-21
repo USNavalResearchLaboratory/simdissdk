@@ -124,6 +124,31 @@ CategoryFilter::~CategoryFilter()
     dataStore_->categoryNameManager().removeListener(listenerPtr_);
 }
 
+CategoryFilter& CategoryFilter::operator=(const CategoryFilter& other)
+{
+  if (&other == this)
+    return *this;
+
+  if ((dataStore_ != NULL) && (listenerPtr_ != NULL))
+    dataStore_->categoryNameManager().removeListener(listenerPtr_);
+
+  dataStore_ = other.dataStore_;
+  regExpFactory_ = other.regExpFactory_;
+  autoUpdate_ = other.autoUpdate_;
+  categoryCheck_ = other.categoryCheck_;
+  categoryRegExp_ = other.categoryRegExp_;
+
+  if (dataStore_ != NULL && autoUpdate_)
+  {
+    // re-add observers/listeners
+    if (listenerPtr_ == NULL)
+      listenerPtr_.reset(new CategoryFilterListener(this));
+    dataStore_->categoryNameManager().addListener(listenerPtr_);
+  }
+
+  return *this;
+}
+
 void CategoryFilter::addCategoryName_(int nameIndex)
 {
   // prevent duplicates
