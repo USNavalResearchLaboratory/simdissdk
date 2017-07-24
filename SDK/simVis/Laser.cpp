@@ -238,6 +238,10 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
   if (localGrid_ && getNodeMask() != DISPLAY_MASK_NONE)
     localGrid_->notifyHostLocatorChange();
 
+  // Whether updateSlice changed or not, label content may have changed, and for active beams we need to update
+  if (isActive())
+    updateLabel_(lastPrefs_);
+
   return updateApplied;
 }
 

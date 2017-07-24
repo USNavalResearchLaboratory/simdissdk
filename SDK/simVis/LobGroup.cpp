@@ -600,33 +600,39 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
     }
   }
 
-  if (!updateSlice->hasChanged() && !force && !lobChangedToActive)
-    return false;
-
-  if (current)
+  const bool applyUpdate = updateSlice->hasChanged() || force || lobChangedToActive;
+  if (applyUpdate)
   {
-    // lobGroup gets a pref update immediately after creation; after that, lastPrefsValid_ should always be true
-    assert(lastPrefsValid_);
-    updateCache_(*current, lastPrefs_);
-    lastUpdate_ = *current;
-    hasLastUpdate_ = true;
 
-    // update the visibility
-    const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
-    const bool drawn = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
-    setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
+    if (current)
+    {
+      // lobGroup gets a pref update immediately after creation; after that, lastPrefsValid_ should always be true
+      assert(lastPrefsValid_);
+      updateCache_(*current, lastPrefs_);
+      lastUpdate_ = *current;
+      hasLastUpdate_ = true;
 
-    // if this lobgroup is drawn, tell its local grid to update
-    assert(localGrid_);
-    if (getNodeMask() != DISPLAY_MASK_NONE)
-      localGrid_->notifyHostLocatorChange();
+      // update the visibility
+      const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
+      const bool drawn = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
+      setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
+
+      // if this lobgroup is drawn, tell its local grid to update
+      assert(localGrid_);
+      if (getNodeMask() != DISPLAY_MASK_NONE)
+        localGrid_->notifyHostLocatorChange();
+    }
+    else
+    {
+      setNodeMask(DISPLAY_MASK_NONE);
+      hasLastUpdate_ = false;
+    }
   }
-  else
-  {
-    setNodeMask(DISPLAY_MASK_NONE);
-    hasLastUpdate_ = false;
-  }
-  return true;
+  // Whether updateSlice changed or not, label content may have changed, and for active beams we need to update
+  if (isActive())
+    updateLabel_(lastPrefs_);
+
+  return applyUpdate;
 }
 
 void LobGroupNode::flush()
