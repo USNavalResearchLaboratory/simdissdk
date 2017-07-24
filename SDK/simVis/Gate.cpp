@@ -144,6 +144,8 @@ GateCentroid::GateCentroid(const simData::GateUpdate& update)
     centroid->setElement(i, i);
   geom->addPrimitiveSet(centroid);
 
+  geom->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+
   osg::Geode* geodeSolid = new osg::Geode();
   geodeSolid->addDrawable(geom);
   addChild(geodeSolid);
@@ -625,6 +627,11 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
     gateMatrixTransform_ = createNode(&lastProps_, activePrefs, activeUpdate);
     gateMatrixTransform_->setNodeMask(DISPLAY_MASK_GATE);
 
+    osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateMatrixTransform_);
+    if (outlineGeometry != NULL)
+    {
+      outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+    }
     if (gateLocatorNode_->getNumChildren() > 0)
       gateLocatorNode_->replaceChild(gateLocatorNode_->getChild(0), gateMatrixTransform_);
     else

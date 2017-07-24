@@ -157,15 +157,14 @@ public:
   static void updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
   /// tweak the verts to update the vertical angle
   static void updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
-
+  /// Retrieves the 'outline' geometry, or NULL if there is no such geometry
+  static osg::Geometry* outlineGeometry(osg::MatrixTransform* xform);
 private:
   static void createPyramid_(osg::Geode& geode, const SVData &data, const osg::Vec3& dir);
   static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& dir);
 
   /** Retrieves the 'solid' geometry */
   static osg::Geometry* solidGeometry_(osg::MatrixTransform* xform);
-  /** Retrieves the 'outline' geometry */
-  static osg::Geometry* outlineGeometry_(osg::MatrixTransform* xform);
 };
 
 }

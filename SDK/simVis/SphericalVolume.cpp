@@ -998,7 +998,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 
   // if we have an (optional) outline geometry, update its color, remove transparency
-  geom = SVFactory::outlineGeometry_(xform);
+  geom = SVFactory::outlineGeometry(xform);
   if (geom == NULL)
     return;
   colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
@@ -1250,7 +1250,7 @@ osg::Geometry* SVFactory::solidGeometry_(osg::MatrixTransform* xform)
 }
 
 // if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
-osg::Geometry* SVFactory::outlineGeometry_(osg::MatrixTransform* xform)
+osg::Geometry* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
 {
   if (xform == NULL || xform->getNumChildren() == 0)
     return NULL;
