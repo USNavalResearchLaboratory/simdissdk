@@ -27,9 +27,9 @@
 #include "simNotify/Notify.h"
 #include "simCore/Time/Utils.h"
 #include "simCore/Calc/Math.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/ConsoleChannel.h"
 #include "simQt/ConsoleDataModel.h"
-#include "simQt/QtConversion.h"
 
 namespace simQt {
 

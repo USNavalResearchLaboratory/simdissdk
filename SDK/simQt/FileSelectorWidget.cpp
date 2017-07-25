@@ -22,7 +22,7 @@
 #include <cassert>
 #include <QLabel>
 #include "simCore/String/FilePatterns.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/FileDialog.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/FileSelectorWidget.h"

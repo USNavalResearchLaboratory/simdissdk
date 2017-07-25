@@ -30,7 +30,7 @@
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Utils.h"
 #include "simQt/TimeFormatContainer.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/TimeWidget.h"
 
 namespace simQt {

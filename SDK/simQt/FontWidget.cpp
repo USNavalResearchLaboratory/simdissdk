@@ -29,7 +29,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include "simNotify/Notify.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/ColorWidget.h"
 #include "ui_FontWidget.h"
 #include "FontWidget.h"

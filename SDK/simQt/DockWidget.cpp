@@ -39,7 +39,7 @@
 #include "simNotify/Notify.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/BoundSettings.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/DockWidget.h"
 
 namespace simQt {

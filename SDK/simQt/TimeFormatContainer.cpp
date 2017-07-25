@@ -22,10 +22,10 @@
 #include <QAction>
 #include <QDateTimeEdit>
 #include "simQt/ScopedSignalBlocker.h"
-#include "simQt/TimeFormatContainer.h"
 #include "simQt/SegmentedSpinBox.h"
 #include "simQt/SegmentedTexts.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
+#include "simQt/TimeFormatContainer.h"
 
 namespace simQt {
 
