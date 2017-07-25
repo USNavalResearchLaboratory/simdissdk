@@ -214,7 +214,10 @@ include(CMakeModules/ImportTR1SharedPtr.cmake)
 
 # subprojects
 add_subdirectory(SDK)
-add_subdirectory(Examples)
+option(BUILD_SDK_EXAMPLES "Build SIMDIS SDK Example Applications" ON)
+if(BUILD_SDK_EXAMPLES)
+    add_subdirectory(Examples)
+endif()
 add_subdirectory(Plugins)
 if(ENABLE_UNIT_TESTING)
     add_subdirectory(Testing)
