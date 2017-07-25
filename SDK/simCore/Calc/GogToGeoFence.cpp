@@ -70,7 +70,8 @@ int GogToGeoFence::parse(std::istream& is)
     const std::string keyword = simCore::lowerCase(tokens[0]); // Make the keyword lowercase
 
     // We can safely ignore lines beginning with these keywords
-    if (keyword == "annotation" ||
+    if (keyword == "altitudeunits" ||
+        keyword == "annotation" ||
         keyword == "comment" ||
         keyword == "depthbuffer" ||
         keyword == "extrude" ||
@@ -81,6 +82,7 @@ int GogToGeoFence::parse(std::istream& is)
         keyword == "linestyle" ||
         keyword == "linewidth" ||
         keyword == "outline" ||
+        keyword == "rangeunits" ||
         keyword == "ref" ||
         keyword == "referencepoint" ||
         keyword == "tessellate" ||
