@@ -331,6 +331,7 @@ void simExamples::configureSearchPaths()
       "equipment",
       "imageIcons",
       std::string("imageIcons") + PATH_SEP + "NTDS",
+      std::string("imageIcons") + PATH_SEP + "NTDS" + PATH_SEP + "jreap",
       std::string("imageIcons") + PATH_SEP + "NTDS" + PATH_SEP + "large",
       std::string("imageIcons") + PATH_SEP + "NTDS" + PATH_SEP + "small",
       std::string("imageIcons") + PATH_SEP + "SCORE",
