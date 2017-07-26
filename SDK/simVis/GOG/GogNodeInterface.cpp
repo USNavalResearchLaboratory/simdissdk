@@ -1043,6 +1043,55 @@ void GogNodeInterface::serializeKeyword_(std::ostream& gogOutputStream) const
 
 ///////////////////////////////////////////////////////////////////
 
+AnnotationNodeInterface::AnnotationNodeInterface(osgEarth::Annotation::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData)
+  : GogNodeInterface(annotationNode, metaData),
+  annotationNode_(annotationNode)
+{
+  if (annotationNode_.valid())
+    style_ = annotationNode_->getStyle();
+
+  initializeFillColor_();
+  initializeLineColor_();
+}
+
+AnnotationNodeInterface::~AnnotationNodeInterface()
+{
+}
+
+int AnnotationNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
+{
+  if (!annotationNode_.valid())
+    return 1;
+
+  // Convert ecef position to lla
+  simCore::CoordinateConverter cc;
+  osg::Vec3f ecefPos = annotationNode_->getBound().center();
+  const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()));
+  simCore::Coordinate llaCoord;
+  cc.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
+
+  // Convert lat and lon from radians to degrees, swap lat and lon to match osg system
+  simCore::Vec3 llaPos = llaCoord.position();
+  position = osg::Vec3d(llaPos.lon() * simCore::RAD2DEG, llaPos.lat() * simCore::RAD2DEG, llaPos.alt());
+  return 0;
+}
+
+void AnnotationNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
+{
+  // No-op.  AnnotationNodeInterface is a "best attempt" when loading an unrecognized osg node.  Can't serialize generically
+}
+
+void AnnotationNodeInterface::setStyle_(const osgEarth::Symbology::Style& style)
+{
+  if (&style != &style_)
+    style_ = style;
+  if (annotationNode_.valid())
+    annotationNode_->setStyle(style);
+}
+
+
+///////////////////////////////////////////////////////////////////
+
 FeatureNodeInterface::FeatureNodeInterface(osgEarth::Annotation::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(featureNode, metaData),
   featureNode_(featureNode),
