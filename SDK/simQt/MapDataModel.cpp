@@ -685,25 +685,25 @@ public:
   : dataModel_(parent)
   {}
 
-  /** Visible Changed */
-  virtual void onVisibleChanged(osgEarth::TerrainLayer *layer)
+  /** Inherited from VisibleLayerCallback */
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
   {
     emit dataModel_.imageLayerVisibleChanged(static_cast<osgEarth::ImageLayer*>(layer));
   }
 
-  /** Opacity Changed */
+  /** Inherited from ImageLayerCallback */
   virtual void onOpacityChanged(osgEarth::ImageLayer *layer)
   {
     emit dataModel_.imageLayerOpacityChanged(layer);
   }
 
-  /** Visible Range Changed */
+  /** Inherited from VisibleLayerCallback */
   virtual void onVisibleRangeChanged(osgEarth::ImageLayer *layer)
   {
     emit dataModel_.imageLayerVisibleRangeChanged(layer);
   }
 
-  /** Color Filters Changed */
+  /** Inherited from VisibleLayerCallback */
   virtual void onColorFiltersChanged(osgEarth::ImageLayer *layer)
   {
     emit dataModel_.imageLayerColorFilterChanged(layer);
@@ -722,8 +722,8 @@ public:
   : dataModel_(parent)
   {}
 
-  /** Visible Changed */
-  virtual void onVisibleChanged(osgEarth::TerrainLayer *layer)
+  /** Inherited from VisibleLayerCallback */
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
   {
     emit dataModel_.elevationLayerVisibleChanged(static_cast<osgEarth::ElevationLayer*>(layer));
   }
@@ -741,13 +741,13 @@ public:
   : dataModel_(parent)
   {}
 
-  /** Visible Changed */
-  virtual void onVisibleChanged(osgEarth::ModelLayer *layer)
+  /** Inherited from VisibleLayerCallback */
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
   {
-    emit dataModel_.modelLayerVisibleChanged(layer);
+    emit dataModel_.modelLayerVisibleChanged(static_cast<osgEarth::ModelLayer*>(layer));
   }
 
-  /** Opacity Changed*/
+  /** Inherited from ModelLayerCallback */
   virtual void onOpacityChanged(osgEarth::ModelLayer *layer)
   {
     emit dataModel_.modelLayerOpacityChanged(layer);
