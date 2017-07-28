@@ -181,6 +181,10 @@ void TrackHistoryNode::checkColorHistoryChange_(const simData::DataTable& table,
 
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase_);
 
+  // there might be no current data after a flush, if a color command is added before any new update data
+  if (updateSlice == NULL || updateSlice->current() == NULL)
+    return;
+
   // if this row is not in the span of our slice, don't bother to reset
   if (row.time() > updateSlice->current()->time() || row.time() < updateSlice->firstTime())
     return;
