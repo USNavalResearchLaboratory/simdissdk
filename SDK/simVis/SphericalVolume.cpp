@@ -707,7 +707,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     {
       const double rx = ringSpanX * (ring + 1) * unit.x();
       const double rz = ringSpanZ * (ring + 1) * unit.z();
-      osg::Vec3 rawUnitVec(sin(rx), cos(rx), sin(rz));
+      osg::Vec3 rawUnitVec(sin(rx)*cos(rz), cos(rx)*cos(rz), sin(rz));
       rawUnitVec.normalize();
       const osg::Vec3 unitVec = dirQ * rawUnitVec;
       const osg::Vec3 farVec = unitVec * farRange;
@@ -809,7 +809,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
         // these are the offset factors for the actual face size:
         rx[i] = ringSpanX * numRings * unit[i].x();
         rz[i] = ringSpanZ * numRings * unit[i].z();
-        rawUnitVec[i].set(sin(rx[i]), cos(rx[i]), sin(rz[i]));
+        rawUnitVec[i].set(sin(rx[i])*cos(rz[i]), cos(rx[i])*cos(rz[i]), sin(rz[i]));
         rawUnitVec[i].normalize();
         unitVec[i] = dirQ * rawUnitVec[i];
 
