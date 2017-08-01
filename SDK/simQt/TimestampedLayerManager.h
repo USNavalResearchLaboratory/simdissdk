@@ -22,9 +22,9 @@
 #ifndef SIMQT_TIMESTAMPEDLAYERMANAGER_H
 #define SIMQT_TIMESTAMPEDLAYERMANAGER_H
 
-#include <memory>
 #include <QObject>
 #include "osgEarth/MapNodeObserver"
+#include "simCore/Common/Memory.h"
 #include "simCore/Time/TimeClass.h"
 
 namespace simCore { class Clock; }

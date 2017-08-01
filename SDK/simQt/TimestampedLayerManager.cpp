@@ -222,7 +222,7 @@ void TimestampedLayerManager::addLayerWithTime_(osgEarth::ImageLayer* newLayer)
 {
   if (!newLayer)
     return;
-  osgEarth::Config& conf = newLayer->getConfig();
+  const osgEarth::Config& conf = newLayer->getConfig();
   std::string iso8601 = conf.value("time");
   // Fall back to "times" if possible
   if (iso8601.empty())
