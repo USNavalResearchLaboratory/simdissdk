@@ -78,6 +78,7 @@
 #include "simQt/TimeButtons.h"
 #include "simQt/TimeFormatContainer.h"
 #include "simQt/TimeSliderClockBinding.h"
+#include "simQt/TimestampedLayerManager.h"
 #include "simQt/TimeWidget.h"
 #include "simQt/TimeWidgetClockBinding.h"
 #include "simQt/UnitContext.h"

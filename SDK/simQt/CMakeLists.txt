@@ -37,6 +37,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}TimeButtons.h
     ${SIMQT_INC}TimeFormatContainer.h
     ${SIMQT_INC}TimeSliderClockBinding.h
+    ${SIMQT_INC}TimestampedLayerManager.h
     ${SIMQT_INC}TimeWidget.h
     ${SIMQT_INC}UnitContext.h
 )
@@ -135,6 +136,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}TimeButtons.cpp
     ${SIMQT_SRC}TimeFormatContainer.cpp
     ${SIMQT_SRC}TimeSliderClockBinding.cpp
+    ${SIMQT_SRC}TimestampedLayerManager.cpp
     ${SIMQT_SRC}TimeWidget.cpp
     ${SIMQT_SRC}UnitsComboBox.cpp
     ${SIMQT_SRC}UnitContext.cpp
