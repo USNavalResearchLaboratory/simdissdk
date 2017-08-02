@@ -602,20 +602,17 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   geom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
   // the number of angular slices into which to tessellate the ellipsoid.
-  const unsigned int numSlices = osg::clampBetween(d.coneRes_, static_cast<unsigned int>(4), static_cast<unsigned int>(40));
-  const double sliceAngle_rad = 2.0 * M_PI / numSlices;
-
-  // ellipse parameters:
-  const double h = 1.0;
-  const double w = 1.0 * (d.hfov_deg_ / d.vfov_deg_);
+  const unsigned int numSlices = osg::clampBetween(d.coneRes_, 4u, 40u);
+  const double sliceAngle_rad = M_TWOPI / numSlices;
 
   // the number of concentric rings forming the facade
-  const unsigned int numRings = osg::clampBetween(d.capRes_, static_cast<unsigned int>(1), static_cast<unsigned int>(10));
-  const double ringSpanX = 0.5 * osg::DegreesToRadians(d.hfov_deg_) / numRings;
-  const double ringSpanZ = 0.5 * osg::DegreesToRadians(d.vfov_deg_) / numRings;
+  const unsigned int numRings = osg::clampBetween(d.capRes_, 1u, 10u);
+  const float hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01f, 180.0f);
+  const float vfov_deg = osg::clampBetween(d.vfov_deg_, 0.01f, 180.0f);
+  const double ringSpanX = 0.5 * osg::DegreesToRadians(hfov_deg) / numRings;
+  const double ringSpanZ = 0.5 * osg::DegreesToRadians(vfov_deg) / numRings;
 
   const bool hasNear = d.nearRange_ > 0.0 && d.drawCone_;
-
 
   const double nearRange = d.nearRange_ * d.scale_;
   const double farRange = d.farRange_  * d.scale_;
@@ -690,13 +687,9 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   {
     // starting and ending angles of the slice.
     // (the PI_2 offset ensures a vertex on the top.)
-    const double t = simCore::angFixPI(M_PI_2 + sliceAngle_rad * slice);
-    const double x = w * cos(t);
-    const double z = h * sin(t);
-
-    // calculate the local point on the "unit" face ellipse:
-    osg::Vec3 unit = osg::Vec3(x, 0.0f, z);
-    unit.normalize();
+    const double phi = simCore::angFixPI(M_PI_2 + sliceAngle_rad * slice);
+    const double xRingScale = ringSpanX * cos(phi);
+    const double zRingScale = ringSpanZ * sin(phi);
 
     // a triangle strip for the slice. each always starts as the center point.
     osg::ref_ptr<osg::DrawElementsUShort> farWedge = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
@@ -705,8 +698,8 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
     for (unsigned int ring = 0; ring < numRings; ++ring)
     {
-      const double rx = ringSpanX * (ring + 1) * unit.x();
-      const double rz = ringSpanZ * (ring + 1) * unit.z();
+      const double rx = (ring + 1) * xRingScale;
+      const double rz = (ring + 1) * zRingScale;
       osg::Vec3 rawUnitVec(sin(rx)*cos(rz), cos(rx)*cos(rz), sin(rz));
       rawUnitVec.normalize();
       const osg::Vec3 unitVec = dirQ * rawUnitVec;
@@ -798,17 +791,11 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       for (unsigned int i = 0; i < 2; ++i)
       {
         // starting and ending angles of the slice, in order to set winding correctly
-        const double t = (i == 0) ? simCore::angFixPI(sliceAngle + sliceAngle_rad) : simCore::angFixPI(sliceAngle);
-        const float x = static_cast<float>(w * cos(t));
-        const float z = static_cast<float>(h * sin(t));
-
-        // the unit face vector will form the vertex normal:
-        unit[i].set(x, 0, z);
-        unit[i].normalize();
+        const double phi = (i == 0) ? simCore::angFixPI(sliceAngle + sliceAngle_rad) : simCore::angFixPI(sliceAngle);
 
         // these are the offset factors for the actual face size:
-        rx[i] = ringSpanX * numRings * unit[i].x();
-        rz[i] = ringSpanZ * numRings * unit[i].z();
+        rx[i] = ringSpanX * numRings * cos(phi);
+        rz[i] = ringSpanZ * numRings * sin(phi);
         rawUnitVec[i].set(sin(rx[i])*cos(rz[i]), cos(rx[i])*cos(rz[i]), sin(rz[i]));
         rawUnitVec[i].normalize();
         unitVec[i] = dirQ * rawUnitVec[i];
@@ -828,10 +815,16 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
       {
         const float w = tessStep * q;
+        // this appears to be duplicating vertices that are shared between slices, could be optimized to reuse vertices from prev or next slice.
         for (unsigned int i = 0; i < 2; ++i)
         {
           (*v)[vptr] = nearVec[i] + (lengthVec[i] * w);
-          (*n)[vptr] = unit[i]; // TODO: SDK-55 this is the unit vector from beam axis to radius, which will not be normal to the cone surface (we are not drawing a cylinder)
+          // normal vector is the vector difference between the vertex position vector and the position vector defined by the vertex position vector length along the y axis
+          // this should approximate a right triangle with vertices at beam origin, vertex position, and on the y-axis, with hypotenuse down the y axis.
+          const double y = (*v)[vptr].length();
+          osg::Vec3 normal((*v)[vptr].x(), (*v)[vptr].y() - y, (*v)[vptr].z());
+          normal.normalize();
+          (*n)[vptr] = normal;
           (*f)[vptr] = FACE_CONE;
           if (w == 0.0f)
             (*m)[vptr].set(USAGE_NEAR, rx[i], rz[i], rawUnitVec[i], w);
@@ -868,7 +861,7 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
 {
   osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
 
-  if (d.shape_ == SVData::SHAPE_PYRAMID || d.hfov_deg_ > 90.0 || d.vfov_deg_ > 90.0)
+  if (d.shape_ == SVData::SHAPE_PYRAMID || d.hfov_deg_ > 180.0 || d.vfov_deg_ > 180.0)
   {
     // pyramid always adds a solid geometry, can also add an outline geometry
     createPyramid_(*geodeSolid, d, dir);
