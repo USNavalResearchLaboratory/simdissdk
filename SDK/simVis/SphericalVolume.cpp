@@ -43,7 +43,7 @@ using namespace simVis;
 
 #define TESS_SPACING_DEG 1.0f
 
-#define USAGE_NONE     0x00
+#define USAGE_CONE     0x00
 #define USAGE_NEAR     0x01
 #define USAGE_FAR      0x02
 #define USAGE_TOP      0x04
@@ -607,7 +607,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
   // the number of concentric rings forming the facade
   const unsigned int numRings = osg::clampBetween(d.capRes_, 1u, 10u);
-  const float hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01f, 180.0f);
+  const float hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01f, 360.0f);
   const float vfov_deg = osg::clampBetween(d.vfov_deg_, 0.01f, 180.0f);
   const double ringSpanX = 0.5 * osg::DegreesToRadians(hfov_deg) / numRings;
   const double ringSpanZ = 0.5 * osg::DegreesToRadians(vfov_deg) / numRings;
@@ -826,13 +826,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
           normal.normalize();
           (*n)[vptr] = normal;
           (*f)[vptr] = FACE_CONE;
-          if (w == 0.0f)
-            (*m)[vptr].set(USAGE_NEAR, rx[i], rz[i], rawUnitVec[i], w);
-          else if (w == 1.0f)
-            (*m)[vptr].set(USAGE_FAR, rx[i], rz[i], rawUnitVec[i], w);
-          else
-            (*m)[vptr].set(USAGE_NONE, rx[i], rz[i], rawUnitVec[i], w);
-
+          (*m)[vptr].set(USAGE_CONE, rx[i], rz[i], rawUnitVec[i], w);
           side->addElement(vptr);
           vptr++;
         }
@@ -861,7 +855,7 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
 {
   osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
 
-  if (d.shape_ == SVData::SHAPE_PYRAMID || d.hfov_deg_ > 180.0 || d.vfov_deg_ > 180.0)
+  if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
     // pyramid always adds a solid geometry, can also add an outline geometry
     createPyramid_(*geodeSolid, d, dir);
@@ -1014,7 +1008,6 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 }
 
-// this method only applies to the pyramid shape
 void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
 {
   nearRange = simCore::sdkMax(1.0f, nearRange);
@@ -1047,7 +1040,6 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
   geom->dirtyBound();
 }
 
-// this method only applies to the pyramid shape
 void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
 {
   farRange = simCore::sdkMax(1.0f, farRange);
@@ -1099,7 +1091,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
   }
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
-  // clamp to match createPyramid_
+  // clamp to M_TWOPI, to match clamping in pyramid and cone
   oldAngle = osg::clampBetween(oldAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_TWOPI));
   newAngle = osg::clampBetween(newAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_TWOPI));
   const float oldMinAngle = -oldAngle*0.5f;
@@ -1147,6 +1139,13 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
       case USAGE_LEFT:
         (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
         break;
+      case USAGE_CONE:
+      {
+        osg::Vec3 normal((*verts)[i].x(), (*verts)[i].y() - range, (*verts)[i].z());
+        normal.normalize();
+        (*normals)[i] = normal;
+        break;
+      }
       }
     }
   }
@@ -1175,7 +1174,7 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
   }
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
-  // clamp to match createPyramid_
+  // clamp to M_PI, to match clamping in pyramid and cone
   oldAngle = osg::clampBetween(oldAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_PI));
   newAngle = osg::clampBetween(newAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_PI));
   const float oldMinAngle = -oldAngle*0.5f;
@@ -1223,6 +1222,13 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
       case USAGE_LEFT:
         (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
         break;
+      case USAGE_CONE:
+      {
+        osg::Vec3 normal((*verts)[i].x(), (*verts)[i].y() - range, (*verts)[i].z());
+        normal.normalize();
+        (*normals)[i] = normal;
+        break;
+      }
       }
     }
   }

@@ -110,20 +110,18 @@ namespace
     else
     {
       return
-        PB_FIELD_CHANGED(a, b, polarity)        ||
-        PB_FIELD_CHANGED(a, b, colorscale)      ||
-        PB_FIELD_CHANGED(a, b, detail)          ||
-        PB_FIELD_CHANGED(a, b, gain)            ||
-        PB_FIELD_CHANGED(a, b, frequency)       ||
-        PB_FIELD_CHANGED(a, b, power)           ||
-        PB_FIELD_CHANGED(a, b, fieldofview)     ||
-        PB_FIELD_CHANGED(a, b, sensitivity)     ||
-        PB_FIELD_CHANGED(a, b, rendercone)      ||
-        PB_FIELD_CHANGED(a, b, coneresolution)  ||
-        PB_FIELD_CHANGED(a, b, capresolution)   ||
-        PB_FIELD_CHANGED(a, b, beamdrawmode)    ||
-        PB_FIELD_CHANGED(a, b, horizontalwidth) ||  // Force re-build on change since one bad value can break all subsequent re-scales
-        PB_FIELD_CHANGED(a, b, verticalwidth);      // Force re-build on change since one bad value can break all subsequent re-scales
+        PB_FIELD_CHANGED(a, b, polarity) ||
+        PB_FIELD_CHANGED(a, b, colorscale) ||
+        PB_FIELD_CHANGED(a, b, detail) ||
+        PB_FIELD_CHANGED(a, b, gain) ||
+        PB_FIELD_CHANGED(a, b, frequency) ||
+        PB_FIELD_CHANGED(a, b, power) ||
+        PB_FIELD_CHANGED(a, b, fieldofview) ||
+        PB_FIELD_CHANGED(a, b, sensitivity) ||
+        PB_FIELD_CHANGED(a, b, rendercone) ||
+        PB_FIELD_CHANGED(a, b, coneresolution) ||
+        PB_FIELD_CHANGED(a, b, capresolution) ||
+        PB_FIELD_CHANGED(a, b, beamdrawmode);
     }
   }
 }
@@ -728,39 +726,40 @@ const simData::BeamUpdate* BeamNode::getLastUpdateFromDS() const
 /// update prefs that can be updated without rebuilding the whole beam.
 void BeamNode::performInPlacePrefChanges_(const simData::BeamPrefs* a, const simData::BeamPrefs* b, osg::MatrixTransform* node)
 {
+  if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
   {
-    if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
+    // Check for transition between color and override color, then check for color change
+    if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
     {
-      // Check for transition between color and override color, then check for color change
-      if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
-      {
-        SVFactory::updateColor(node, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
-      }
-    }
-    else
-    {
-      // Check for transition between color and override color, then check for color change
-      if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
-      {
-        SVFactory::updateColor(node, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
-      }
-    }
-    if (PB_FIELD_CHANGED(a, b, shaded))
-    {
-      SVFactory::updateLighting(node, b->shaded());
-    }
-    if (PB_FIELD_CHANGED(a, b, blended))
-    {
-      SVFactory::updateBlending(node, b->blended());
-      // only write to the depth buffer if it's NOT blended.
-      depthAttr_->setWriteMask(!b->blended());
-      getOrCreateStateSet()->setRenderBinDetails((b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+      SVFactory::updateColor(node, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
     }
   }
+  else
+  {
+    // Check for transition between color and override color, then check for color change
+    if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
+    {
+      SVFactory::updateColor(node, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
+    }
+  }
+  if (PB_FIELD_CHANGED(a, b, shaded))
+  {
+    SVFactory::updateLighting(node, b->shaded());
+  }
+  if (PB_FIELD_CHANGED(a, b, blended))
+  {
+    SVFactory::updateBlending(node, b->blended());
+    // only write to the depth buffer if it's NOT blended.
+    depthAttr_->setWriteMask(!b->blended());
+    getOrCreateStateSet()->setRenderBinDetails((b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+  }
+
+  if (PB_FIELD_CHANGED(a, b, verticalwidth))
+    SVFactory::updateVertAngle(node, a->verticalwidth(), b->verticalwidth());
+  if (PB_FIELD_CHANGED(a, b, horizontalwidth))
+    SVFactory::updateHorizAngle(node, a->horizontalwidth(), b->horizontalwidth());
   if (PB_FIELD_CHANGED(a, b, beamscale))
-  {
     setBeamScale_(node, b->beamscale());
-  }
 }
 
 void BeamNode::performInPlaceUpdates_(const simData::BeamUpdate* a, const simData::BeamUpdate* b, osg::MatrixTransform* node)
