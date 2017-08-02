@@ -92,7 +92,8 @@ void EntityFilterLineEdit::contextMenuEvent(QContextMenuEvent *event)
 
 void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression)
 {
-  setText(filter);
+  if (text() != filter)
+    setText(filter);
   caseSensitive_ = caseSensitive;
   expression_ = expression;
 }
