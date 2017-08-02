@@ -94,8 +94,11 @@ void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity 
 {
   if (text() != filter)
     setText(filter);
-  caseSensitive_ = caseSensitive;
-  expression_ = expression;
+  if (!regexOnly_)
+  {
+    caseSensitive_ = caseSensitive;
+    expression_ = expression;
+  }
 }
 
 void EntityFilterLineEdit::textFilterChanged()
@@ -105,12 +108,14 @@ void EntityFilterLineEdit::textFilterChanged()
 
 void EntityFilterLineEdit::caseSensitive()
 {
-  if (caseSensitive_ == Qt::CaseSensitive)
-    caseSensitive_ =  Qt::CaseInsensitive;
-  else
-    caseSensitive_ = Qt::CaseSensitive;
-
-  emit(changed(text(), caseSensitive_, expression_));
+  if (!regexOnly_)
+  {
+    if (caseSensitive_ == Qt::CaseSensitive)
+      caseSensitive_ =  Qt::CaseInsensitive;
+    else
+      caseSensitive_ = Qt::CaseSensitive;
+    emit(changed(text(), caseSensitive_, expression_));
+  }
 }
 
 void EntityFilterLineEdit::regularExpression()
@@ -121,14 +126,20 @@ void EntityFilterLineEdit::regularExpression()
 
 void EntityFilterLineEdit::wildcard()
 {
-  expression_= QRegExp::Wildcard;
-  emit(changed(text(), caseSensitive_, expression_));
+  if (!regexOnly_)
+  {
+    expression_= QRegExp::Wildcard;
+    emit(changed(text(), caseSensitive_, expression_));
+  }
 }
 
 void EntityFilterLineEdit::fixedString()
 {
-  expression_= QRegExp::FixedString;
-  emit(changed(text(), caseSensitive_, expression_));
+  if (!regexOnly_)
+  {
+    expression_= QRegExp::FixedString;
+    emit(changed(text(), caseSensitive_, expression_));
+  }
 }
 
 void EntityFilterLineEdit::setRegexOnly(bool regexOnly)
