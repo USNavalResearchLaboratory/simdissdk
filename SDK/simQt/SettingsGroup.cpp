@@ -20,8 +20,7 @@
  *
  */
 #include <cassert>
-
-#include "SettingsGroup.h"
+#include "simQt/SettingsGroup.h"
 
 namespace simQt {
 
