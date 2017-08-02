@@ -42,6 +42,9 @@ public:
   /// Set options
   void configure(const QString& filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
 
+  /// Regex-only will set to case insensitive and regex, hiding other options.  Turning off will unhide them.
+  void setRegexOnly(bool regexOnly);
+
 signals:
   /// Let the outside know that a filter option has changed.
   void changed(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
@@ -71,6 +74,9 @@ protected:
   QAction* fixedAction_; ///< connect GUI to data
   QList<QAction*> standardClickMenu_; ///< standard right-click options
   QMenu* rightMouseClickMenu_; ///< our context menu
+
+  /// Flags that we're in regex-only mode, hiding other options
+  bool regexOnly_;
 };
 
 }

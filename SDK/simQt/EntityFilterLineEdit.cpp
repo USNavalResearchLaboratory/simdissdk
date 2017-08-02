@@ -29,7 +29,8 @@ namespace simQt {
 EntityFilterLineEdit::EntityFilterLineEdit(QWidget  *parent)
   : QLineEdit(parent),
     caseSensitive_(Qt::CaseSensitive),
-    expression_(QRegExp::RegExp)
+    expression_(QRegExp::RegExp),
+    regexOnly_(false)
 {
   connect(this, SIGNAL(textChanged(QString)), this, SLOT(textFilterChanged()));
 
@@ -129,5 +130,33 @@ void EntityFilterLineEdit::fixedString()
   emit(changed(text(), caseSensitive_, expression_));
 }
 
+void EntityFilterLineEdit::setRegexOnly(bool regexOnly)
+{
+  if (regexOnly == regexOnly_)
+    return;
+  regexOnly_ = regexOnly;
+
+  // Need to set enabled flag to disable hotkeys, and visible flag to make sure it doesn't show
+
+  caseSensitiveAction_->setEnabled(!regexOnly);
+  caseSensitiveAction_->setVisible(!regexOnly);
+
+  regularAction_->setEnabled(!regexOnly);
+  regularAction_->setVisible(!regexOnly);
+
+  wildcardAction_->setEnabled(!regexOnly);
+  wildcardAction_->setVisible(!regexOnly);
+
+  fixedAction_->setEnabled(!regexOnly);
+  fixedAction_->setVisible(!regexOnly);
+
+  // If we're going into regex mode, then we need to update values and emit a signal
+  if (regexOnly && (caseSensitive_ != Qt::CaseInsensitive || expression_ != QRegExp::RegExp))
+  {
+    caseSensitive_ = Qt::CaseInsensitive;
+    expression_ = QRegExp::RegExp;
+    emit changed(text(), caseSensitive_, expression_);
+  }
 }
 
+}
