@@ -519,4 +519,54 @@ void BoundStringListSetting::updateValue_(const QVariant& newValue)
   }
 }
 
+/////////////////////////////////////////////////////////////////////////
+
+BoundVariantMapSetting::BoundVariantMapSetting(QObject* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData)
+  : BoundSetting(parent, settings, variableName)
+{
+  value_ = settings_.value(variableName_, metaData, settingsObserver_).toMap();
+}
+
+BoundVariantMapSetting::BoundVariantMapSetting(QObject* parent, simQt::Settings& settings, const QString& variableName)
+  : BoundSetting(parent, settings, variableName)
+{
+  value_ = settings_.value(variableName_, settingsObserver_).toMap();
+}
+
+/** Returns the current value of the variable */
+QMap<QString, QVariant> BoundVariantMapSetting::value() const
+{
+  return value_;
+}
+
+void BoundVariantMapSetting::setValue(const QMap<QString, QVariant>& v)
+{
+  if (v != value_)
+  {
+    settings_.setValue(variableName_, v);
+  }
+  // Assertion failure means observer is not correctly firing
+  assert(v == value_);
+}
+
+void BoundVariantMapSetting::mergeValues(const QMap<QString, QVariant>& v)
+{
+  const auto keys = v.keys();
+  QMap<QString, QVariant> newValues = value_;
+  for (QMap<QString, QVariant>::const_iterator vIter = v.begin(); vIter != v.end(); ++vIter)
+    newValues[vIter.key()] = vIter.value();
+
+  // Setting the Settings value will trigger updateValue_, which will detect changes and emit
+  settings_.setValue(variableName_, newValues);
+}
+
+void BoundVariantMapSetting::updateValue_(const QVariant& newValue)
+{
+  if (newValue.toMap() != value_)
+  {
+    value_ = newValue.toMap();
+    emit(valueChanged(value_));
+  }
+}
+
 }
