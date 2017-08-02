@@ -767,7 +767,9 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     // next, build the walls. we need two additional outer rings with out-facing normals.
     // yes this can be computed while we are building the faces but that is an optimization for later.
     const int wallOffset = vptr;
-    bool evenSlice = true;
+
+    // ensure that cone is aligned to cap, since cap is drawn normally, but cone is drawn in alternating strips from bottom.
+    bool evenSlice = ((numSlices % 2) == 0);
 
     // iterate for triangle strip slices that start at tip of cone and extend to far end(base) of cone
     for (unsigned int slice = 0; slice < numSlices; ++slice)
@@ -776,7 +778,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       double rx[2], rz[2];
 
       // start at bottom of cone and alternately build strips on either side ascending, to manage draw order
-      // this approach fixes obvious artifacts when beam is viewed from above (SDK-54) but may display artifacts when cone is viewed from side or from below,
+      // this approach fixes obvious artifacts when beam is viewed from above, but may display artifacts when cone is viewed from side or from below,
       // or more obviously if roll offset is applied
       double sliceAngle;
       if (evenSlice)
