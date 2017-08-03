@@ -423,7 +423,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
 
   if (!updateSlice->hasChanged() && !force && !forceUpdateFromDataStore_)
   {
-    // Even if the platform has not changed, the label can still change
+    // Even if the platform has not changed, the label can still change - entity name could change as a result of category data, for example.
     updateLabel_(lastPrefs_);
     return false;
   }
@@ -585,6 +585,7 @@ const std::string PlatformNode::getEntityName(EntityNode::NameType nameType, boo
 
 void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
 {
+  // unclear what the logic for checking has_time() is - possibly excluding !valid_ uninitialized platform, but including !valid_ expired platform
   if (model_ && lastUpdate_.has_time())
   {
     std::string label = getEntityName(EntityNode::DISPLAY_NAME, true);
@@ -622,8 +623,10 @@ LabelContentCallback* PlatformNode::labelContentCallback() const
 
 std::string PlatformNode::popupText() const
 {
-  if (lastPrefsValid_ && valid_ && lastUpdate_.has_time())
+  if (lastPrefsValid_ && valid_)
   {
+    // a valid_ platform should never have an update that does not have a time
+    assert(lastUpdate_.has_time());
     std::string prefix;
     /// if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
     if (!lastPrefs_.commonprefs().alias().empty())
@@ -642,8 +645,10 @@ std::string PlatformNode::popupText() const
 
 std::string PlatformNode::hookText() const
 {
-  if (lastPrefsValid_ && valid_ && lastUpdate_.has_time())
+  if (lastPrefsValid_ && valid_)
   {
+    // a valid_ platform should never have an update that does not have a time
+    assert(lastUpdate_.has_time());
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
   }
 
@@ -652,8 +657,10 @@ std::string PlatformNode::hookText() const
 
 std::string PlatformNode::legendText() const
 {
-  if (lastPrefsValid_ && valid_ && lastUpdate_.has_time())
+  if (lastPrefsValid_ && valid_)
   {
+    // a valid_ platform should never have an update that does not have a time
+    assert(lastUpdate_.has_time());
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   }
 
