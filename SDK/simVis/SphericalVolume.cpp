@@ -824,7 +824,15 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
           // normal vector is the vector difference between the vertex position vector and the position vector defined by the vertex position vector length along the y axis
           // this should approximate a right triangle with vertices at beam origin, vertex position, and on the y-axis, with hypotenuse down the y axis.
           const double y = (*v)[vptr].length();
-          osg::Vec3 normal((*v)[vptr].x(), (*v)[vptr].y() - y, (*v)[vptr].z());
+          osg::Vec3 normal;
+          if (y != 0.)
+            normal.set((*v)[vptr].x(), (*v)[vptr].y() - y, (*v)[vptr].z());
+          else
+          {
+            // at the origin, set something usable
+            normal.set(rx[i], 0.f, rz[i]);
+          }
+
           normal.normalize();
           (*n)[vptr] = normal;
           (*f)[vptr] = FACE_CONE;
