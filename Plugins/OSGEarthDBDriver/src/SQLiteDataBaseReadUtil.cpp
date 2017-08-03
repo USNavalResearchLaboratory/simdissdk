@@ -374,8 +374,8 @@ QsErrorType SQLiteDataBaseReadUtil::TsGetSetFromListOfSetsTable(sqlite3* sqlite3
 #else
     if (timeSpecified)
     {
-      std::cerr << "Time stamped DB files are not supported" << std::endl;
-      otherReturnValue = QS_IS_TS_NOT_FOUND;
+      // TODO support timestamps from db files
+      otherReturnValue = QS_IS_OK;
     }
     else
     {
