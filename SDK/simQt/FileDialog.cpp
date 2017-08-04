@@ -28,11 +28,12 @@ namespace simQt
 {
 
 // On Linux, avoid the native dialog due to event loop problems with FOX in SIMDIS 10
-#ifndef WIN32
+//#ifndef WIN32
+// SPR-1348 Due an important demo with the JaarDs plugin disable all native dialog
 static const QFileDialog::Option BASE_OPTIONS = QFileDialog::DontUseNativeDialog;
-#else
-static const QFileDialog::Option BASE_OPTIONS = static_cast<QFileDialog::Option>(0x0);
-#endif
+//#else
+//static const QFileDialog::Option BASE_OPTIONS = static_cast<QFileDialog::Option>(0x0);
+//#endif
 
 QString FileDialog::getRegistryDir(const QString& registryDir)
 {
