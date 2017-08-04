@@ -772,7 +772,7 @@ namespace simVis
 
       /// add our geometry to 'geode'
       void createGeometry(
-        osg::Vec3    originVec,
+        const osg::Vec3&    originVec,
         osg::Vec3    startVec,
         osg::Vec3    endVec,
         double       angle,
