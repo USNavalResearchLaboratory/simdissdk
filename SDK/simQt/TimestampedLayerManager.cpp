@@ -227,6 +227,13 @@ void TimestampedLayerManager::addLayerWithTime_(osgEarth::ImageLayer* newLayer)
   // Fall back to "times" if possible
   if (iso8601.empty())
     iso8601 = conf.value("times");
+  /*
+   * Some image layer file types can have time values (e.g. db files).  Config values can't be
+   * changed at time of file read, so time is set as a user value of the tile source in these cases.
+   * Config values take precedence of user values.
+   */
+  if (iso8601.empty())
+    newLayer->getTileSource()->getUserValue("time", iso8601);
   // If layer has no time, nothing to do with it
   if (iso8601.empty())
     return;

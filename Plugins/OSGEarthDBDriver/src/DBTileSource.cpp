@@ -21,12 +21,14 @@
  */
 
 #include "simCore/Calc/Math.h"
+#include "osg/ValueObject"
 #include "osgEarth/Registry"
 #include "osgEarth/FileUtils"
 #include "osgEarth/Cube"
 #include "osgEarth/HeightFieldUtils"
 #include "osgEarth/ImageUtils"
 #include "osgEarth/ImageToHeightFieldConverter"
+#include "osgEarth/DateTime"
 #include "osgDB/FileNameUtils"
 #include "osgDB/ObjectWrapper"
 #include "osgDB/WriteFile"
@@ -132,7 +134,8 @@ DBTileSource::DBTileSource(const TileSourceOptions& options)
     pixelLength_(128),
     shallowLevel_(0),
     deepLevel_(32),
-    timeSpecified_(false)
+    timeSpecified_(false),
+    timeStamp_(simCore::INFINITE_TIME_STAMP)
 {
   if (!options_.url().isSet() || options_.url()->empty())
   {
@@ -187,55 +190,60 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
         db_ = NULL;
         return Status::Error(Stringify() << "Failed to read metadata for " << pathname_);
       }
-      else
+      // Set up as a unified cube:
+      Profile* profile = new osgEarth::UnifiedCubeProfile();
+      // DB are expected to be wgs84, which Cube defaults to
+      setProfile(profile);
+
+      // Lat/long extents (for debugging)
+      GeoExtent llex[6];
+
+      // Tell the engine how deep the data actually goes:
+      for (unsigned int f = 0; f < 6; ++f)
       {
-        // Set up as a unified cube:
-        Profile* profile = new osgEarth::UnifiedCubeProfile();
-        // DB are expected to be wgs84, which Cube defaults to
-        setProfile(profile);
-
-        // Lat/long extents (for debugging)
-        GeoExtent llex[6];
-
-        // Tell the engine how deep the data actually goes:
-        for (unsigned int f = 0; f < 6; ++f)
+        if (extents_[f].minX < extents_[f].maxX && extents_[f].minY < extents_[f].maxY)
         {
-          if (extents_[f].minX < extents_[f].maxX && extents_[f].minY < extents_[f].maxY)
-          {
-            const double x0 = extents_[f].minX / gQsDMaxLength;
-            const double x1 = extents_[f].maxX / gQsDMaxLength;
-            const double y0 = extents_[f].minY / gQsDMaxLength;
-            const double y1 = extents_[f].maxY / gQsDMaxLength;
+          const double x0 = extents_[f].minX / gQsDMaxLength;
+          const double x1 = extents_[f].maxX / gQsDMaxLength;
+          const double y0 = extents_[f].minY / gQsDMaxLength;
+          const double y1 = extents_[f].maxY / gQsDMaxLength;
 
-            GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
+          GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
 
-            // Transform to lat/long for the debugging msgs
-            cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
+          // Transform to lat/long for the debugging msgs
+          cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
 
-            getDataExtents().push_back(DataExtent(cubeEx, shallowLevel_, deepLevel_));
-          }
+          getDataExtents().push_back(DataExtent(cubeEx, shallowLevel_, deepLevel_));
         }
-
-        OE_INFO << LC
-          << "Table: " << options_.url()->full() << std::endl
-          << "  Raster format = " << rasterFormat_ << std::endl
-          << "  Tile size     = " << pixelLength_  << std::endl
-          << "  Shallow level = " << shallowLevel_ << std::endl
-          << "  Deep level    = " << deepLevel_    << std::endl
-          << "  QS Extents    = " << std::endl
-          << "    0: " << extents_[0].minX << "," << extents_[0].minY << "," << extents_[0].maxX << "," << extents_[0].maxY << "(" << (llex[0].isValid() ? llex[0].toString() : "empty") << ")\n"
-          << "    1: " << extents_[1].minX << "," << extents_[1].minY << "," << extents_[1].maxX << "," << extents_[1].maxY << "(" << (llex[1].isValid() ? llex[1].toString() : "empty") << ")\n"
-          << "    2: " << extents_[2].minX << "," << extents_[2].minY << "," << extents_[2].maxX << "," << extents_[2].maxY << "(" << (llex[2].isValid() ? llex[2].toString() : "empty") << ")\n"
-          << "    3: " << extents_[3].minX << "," << extents_[3].minY << "," << extents_[3].maxX << "," << extents_[3].maxY << "(" << (llex[3].isValid() ? llex[3].toString() : "empty") << ")\n"
-          << "    4: " << extents_[4].minX << "," << extents_[4].minY << "," << extents_[4].maxX << "," << extents_[4].maxY << "(" << (llex[4].isValid() ? llex[4].toString() : "empty") << ")\n"
-          << "    5: " << extents_[5].minX << "," << extents_[5].minY << "," << extents_[5].maxX << "," << extents_[5].maxY << "(" << (llex[5].isValid() ? llex[5].toString() : "empty") << ")\n";
-
-        // Line up the native format readers:
-        pngReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/png");
-        jpgReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/jpeg");
-        tifReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/tiff");
-        rgbReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/x-rgb");
       }
+
+      // Set time value of image if a time was found in the db
+      if (timeStamp_ != simCore::INFINITE_TIME_STAMP)
+      {
+        DateTime osgTime(timeStamp_.secondsSinceRefYear(1970));
+        // Set time as a user value since config is not editable from here
+        setUserValue("time", osgTime.asISO8601());
+      }
+
+      OE_INFO << LC
+        << "Table: " << options_.url()->full() << std::endl
+        << "  Raster format = " << rasterFormat_ << std::endl
+        << "  Tile size     = " << pixelLength_  << std::endl
+        << "  Shallow level = " << shallowLevel_ << std::endl
+        << "  Deep level    = " << deepLevel_    << std::endl
+        << "  QS Extents    = " << std::endl
+        << "    0: " << extents_[0].minX << "," << extents_[0].minY << "," << extents_[0].maxX << "," << extents_[0].maxY << "(" << (llex[0].isValid() ? llex[0].toString() : "empty") << ")\n"
+        << "    1: " << extents_[1].minX << "," << extents_[1].minY << "," << extents_[1].maxX << "," << extents_[1].maxY << "(" << (llex[1].isValid() ? llex[1].toString() : "empty") << ")\n"
+        << "    2: " << extents_[2].minX << "," << extents_[2].minY << "," << extents_[2].maxX << "," << extents_[2].maxY << "(" << (llex[2].isValid() ? llex[2].toString() : "empty") << ")\n"
+        << "    3: " << extents_[3].minX << "," << extents_[3].minY << "," << extents_[3].maxX << "," << extents_[3].maxY << "(" << (llex[3].isValid() ? llex[3].toString() : "empty") << ")\n"
+        << "    4: " << extents_[4].minX << "," << extents_[4].minY << "," << extents_[4].maxX << "," << extents_[4].maxY << "(" << (llex[4].isValid() ? llex[4].toString() : "empty") << ")\n"
+        << "    5: " << extents_[5].minX << "," << extents_[5].minY << "," << extents_[5].maxX << "," << extents_[5].maxY << "(" << (llex[5].isValid() ? llex[5].toString() : "empty") << ")\n";
+
+      // Line up the native format readers:
+      pngReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/png");
+      jpgReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/jpeg");
+      tifReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/tiff");
+      rgbReader_ = osgDB::Registry::instance()->getReaderWriterForMimeType("image/x-rgb");
     }
   }
 

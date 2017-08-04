@@ -374,13 +374,19 @@ QsErrorType SQLiteDataBaseReadUtil::TsGetSetFromListOfSetsTable(sqlite3* sqlite3
 #else
     if (timeSpecified)
     {
-      // TODO support timestamps from db files
-      otherReturnValue = QS_IS_OK;
+      const uint8_t* buffer = (const uint8_t*)sqlite3_column_blob(stmt, tsInsertSetIdTimeValue_ - 1);
+      int refYear = 0;
+      int secs = 0;
+      int frac = 0;
+
+      // read TimeStamp data members from buffer
+      beread(buffer, &refYear);
+      beread(buffer + sizeof(refYear), &(secs));
+      beread(buffer + sizeof(refYear) + sizeof(secs), &(frac));
+      simCore::Seconds secsSinceRefYear(secs, frac);
+      timeStamp.setTime(refYear, secsSinceRefYear);
     }
-    else
-    {
-      otherReturnValue = QS_IS_OK;
-    }
+    otherReturnValue = QS_IS_OK;
 #endif
   }
   else if (returnValue == SQLITE_BUSY)
