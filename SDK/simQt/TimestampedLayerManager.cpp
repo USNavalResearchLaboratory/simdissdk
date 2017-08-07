@@ -20,6 +20,7 @@
 *
 */
 
+#include "osg/ValueObject"
 #include "osgEarth/Map"
 #include "osgEarth/ImageLayer"
 #include "simCore/Time/Clock.h"
