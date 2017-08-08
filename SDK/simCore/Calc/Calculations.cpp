@@ -1506,7 +1506,7 @@ void simCore::calculateFlightPathAngles(const Vec3 &velVec, Vec3 &fpa)
 /// Calculates an ENU geodetic velocity vector from speed, heading and pitch (flight path angles)
 void simCore::calculateVelocity(const double speed, const double heading, const double pitch, Vec3 &velVec)
 {
-  double cPitch = cos(pitch);
+  const double cPitch = cos(pitch);
   velVec.setY(speed * cos(heading) * cPitch);
   velVec.setX(speed * sin(heading) * cPitch);
   velVec.setZ(speed * sin(pitch));
