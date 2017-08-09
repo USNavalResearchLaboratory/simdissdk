@@ -29,6 +29,7 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     UnitsTest.cpp
     UnitsFormatter.cpp
     GogToGeoFenceTest.cpp
+    CalculateLibTest.cpp
 )
 
 add_executable(SimCoreTests ${SimCoreTestFiles})
@@ -63,6 +64,7 @@ add_test(NAME AngleTest COMMAND SimCoreTests AngleTest)
 add_test(NAME CoreUnitsTest COMMAND SimCoreTests UnitsTest)
 add_test(NAME CoreUnitsFormatter COMMAND SimCoreTests UnitsFormatter)
 add_test(NAME GogToGeoFenceTest COMMAND SimCoreTests GogToGeoFenceTest)
+#add_test(NAME CalculateLibTest COMMAND SimCoreTests CalculateLibTest)
 
 # Try to locate the correct file for the RCS test...
 set(FILE_LOCATIONS

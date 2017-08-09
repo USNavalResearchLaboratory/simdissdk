@@ -19,7 +19,7 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/CalcRelAbs.h"
+#include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
 
@@ -72,11 +72,11 @@ static bool almostEqual(double value1, double value2, double epsilon=1e-4)
 //  almostEqual(compositeAngle, result[2]);
 //}
 
-static int testCalculateRelAzEl(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateRelAzEl(double *fromLla, double *fromOri, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateRelAzEl +++++++++++++ ";
 
-  if (earth == ePerfectSphere)
+  if (earth == PERFECT_SPHERE)
   {
     cerr<<"calculation not valid for Earth Model"<<endl;
     return 1;
@@ -86,7 +86,7 @@ static int testCalculateRelAzEl(double *from, double *to, EEarthModelCalculation
   double elev;
   double compositeAngle;
 
-  calculateRelAzEl(from, to, &azim, &elev, &compositeAngle, earth, &coordConvert);
+  calculateRelAzEl(Vec3(fromLla), Vec3(fromOri), Vec3(to), &azim, &elev, &compositeAngle, earth, &coordConvert);
 
   if (almostEqual(azim, result[0]) &&
       almostEqual(elev, result[1]) &&
@@ -98,7 +98,7 @@ static int testCalculateRelAzEl(double *from, double *to, EEarthModelCalculation
   return 1;
 }
 
-static int testCalculateAbsAzEl(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateAbsAzEl(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateAbsAzEl +++++++++++++ ";
 
@@ -106,7 +106,7 @@ static int testCalculateAbsAzEl(double *from, double *to, EEarthModelCalculation
   double elev;
   double compositeAngle;
 
-  calculateAbsAzEl(Vec3(from[0], from[1], from[2]), to, &azim, &elev, &compositeAngle, earth, &coordConvert);
+  calculateAbsAzEl(Vec3(from[0], from[1], from[2]), Vec3(to), &azim, &elev, &compositeAngle, earth, &coordConvert);
 
   if (almostEqual(azim, result[0]) &&
       almostEqual(elev, result[1]) &&
@@ -118,11 +118,11 @@ static int testCalculateAbsAzEl(double *from, double *to, EEarthModelCalculation
   return 1;
 }
 
-static int testCalculateSlant(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateSlant(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateSlant +++++++++++++++ ";
 
-  const double slant = calculateSlant(Vec3(from[0], from[1], from[2]), to, earth, &coordConvert);
+  const double slant = calculateSlant(Vec3(from[0], from[1], from[2]), Vec3(to), earth, &coordConvert);
   if (almostEqual(slant, result[0]))
   {
     cerr << "successful"<<endl;
@@ -131,17 +131,17 @@ static int testCalculateSlant(double *from, double *to, EEarthModelCalculations 
   return 1;
 }
 
-static int testCalculateGroundDist(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateGroundDist(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateGroundDist ++++++++++ ";
 
-  if (earth == ePerfectSphere)
+  if (earth == PERFECT_SPHERE)
   {
     cerr<<"calculation not valid for Earth Model"<<endl;
     return 1;
   }
 
-  const double groundDist = calculateGroundDist(from, to, earth, &coordConvert);
+  const double groundDist = calculateGroundDist(Vec3(from), Vec3(to), earth, &coordConvert);
   if (almostEqual(groundDist, result[0]))
   {
     cerr << "successful"<<endl;
@@ -150,11 +150,11 @@ static int testCalculateGroundDist(double *from, double *to, EEarthModelCalculat
   return 1;
 }
 
-static int testCalculateAltitude(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateAltitude(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateAltitude ++++++++++++ ";
 
-  if (earth == ePerfectSphere)
+  if (earth == PERFECT_SPHERE)
   {
     cerr << "calculation not valid for Earth Model" << endl;
     return 1;
@@ -170,7 +170,7 @@ static int testCalculateAltitude(double *from, double *to, EEarthModelCalculatio
   return 1;
 }
 
-static int testCalculateDRCRDownValue(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateDRCRDownValue(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateDRCRDownValue +++++++ ";
 
@@ -178,7 +178,7 @@ static int testCalculateDRCRDownValue(double *from, double *to, EEarthModelCalcu
   double crossRng;
   double downValue;
 
-  calculateDRCRDownValue(from, to, earth, &coordConvert, &downRng, &crossRng, &downValue);
+  calculateDRCRDownValue(Vec3(from), from[3], Vec3(to), earth, &coordConvert, &downRng, &crossRng, &downValue);
 
   if (almostEqual(downRng, result[0]) &&
      almostEqual(crossRng, result[1]) &&
@@ -190,14 +190,14 @@ static int testCalculateDRCRDownValue(double *from, double *to, EEarthModelCalcu
   return 1;
 }
 
-static int testCalculateGeodesicDRCR(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateGeodesicDRCR(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateGeodesicDRCR ++++++++ ";
 
   double downRng;
   double crossRng;
 
-  calculateGeodesicDRCR(from, to, &downRng, &crossRng);
+  calculateGeodesicDRCR(Vec3(from), from[3], Vec3(to), &downRng, &crossRng);
 
   if (almostEqual(downRng, result[0]) &&
       almostEqual(crossRng, result[1]))
@@ -208,7 +208,7 @@ static int testCalculateGeodesicDRCR(double *from, double *to, EEarthModelCalcul
   return 1;
 }
 
-static int testCalculateTotalVelocity(double *from, double *to, double deltaTime, EEarthModelCalculations earth, double *result)
+static int testCalculateTotalVelocity(double *from, double *to, double deltaTime, EarthModelCalculations earth, double *result)
 {
   return 0; //Ned, broken
 /*
@@ -228,17 +228,17 @@ static int testCalculateTotalVelocity(double *from, double *to, double deltaTime
 */
 }
 
-static int testCalculateClosingVelocity(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateClosingVelocity(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateClosingVelocity +++++ ";
 
-  if (earth == ePerfectSphere)
+  if (earth == PERFECT_SPHERE)
   {
     cerr << "calculation not valid for Earth Model" << endl;
     return 1;
   }
 
-  const double velocity = calculateClosingVelocity(from, to, earth, &coordConvert, &from[6], &to[6]);
+  const double velocity = calculateClosingVelocity(Vec3(from), Vec3(to), earth, &coordConvert, Vec3(&from[6]), Vec3(&to[6]));
 
   if (almostEqual(velocity, result[0]))
   {
@@ -248,17 +248,17 @@ static int testCalculateClosingVelocity(double *from, double *to, EEarthModelCal
   return 1;
 }
 
-static int testCalculateVelocityDelta(double *from, double *to, EEarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+static int testCalculateVelocityDelta(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
 {
   cerr << "calculateVelocityDelta +++++++ ";
 
-  if (earth == ePerfectSphere)
+  if (earth == PERFECT_SPHERE)
   {
     cerr<<"calculation not valid for Earth Model"<<endl;
     return 1;
   }
 
-  const double velocity = calculateVelocityDelta(from, to, earth, &coordConvert, &from[6], &to[6]);
+  const double velocity = calculateVelocityDelta(Vec3(from), Vec3(to), earth, &coordConvert, Vec3(&from[6]), Vec3(&to[6]));
   if (almostEqual(velocity, result[0]))
   {
     cerr << "successful"<<endl;
@@ -333,7 +333,7 @@ int CalculateLibTest(int argc, char* argv[])
   double to[10];
   double time;
   double result[3];
-  EEarthModelCalculations earth = ePerfectSphere;
+  EarthModelCalculations earth = PERFECT_SPHERE;
 
   string test;
   while (fd >> test)
@@ -341,34 +341,34 @@ int CalculateLibTest(int argc, char* argv[])
     // set coordinate system / reference frame
     if (test.compare(simCore::sdkMax((int)test.length()-17, 0), test.length()-1, "TangentPlaneWGS84") == 0)
     {
-      if (earth != eTangentPlaneWGS84)
+      if (earth != TANGENT_PLANE_WGS_84)
       {
-         cerr << "Earth Model: TangentPlaneWGS84"<<endl;
-         earth = eTangentPlaneWGS84;
+        cerr << "Earth Model: TangentPlaneWGS84"<<endl;
+        earth = TANGENT_PLANE_WGS_84;
       }
     }
     else if (test.compare(simCore::sdkMax((int)test.length()-5, 0), test.length()-1, "WGS84") == 0)
     {
-      if (earth != eWGS84)
+      if (earth != WGS_84)
       {
         cerr << "Earth Model: WGS84"<<endl;
-        earth = eWGS84;
+        earth = WGS_84;
       }
     }
     else if (test.compare(simCore::sdkMax((int)test.length()-9, 0), test.length()-1, "FlatEarth") == 0)
     {
-      if (earth != eFlatEarth)
+      if (earth != FLAT_EARTH)
       {
         cerr << "Earth Model: FlatEarth"<<endl;
-        earth = eFlatEarth;
+        earth = FLAT_EARTH;
       }
     }
     else if (test.compare(simCore::sdkMax((int)test.length()-13, 0), test.length()-1, "PerfectSphere") == 0)
     {
-      if (earth != ePerfectSphere)
+      if (earth != PERFECT_SPHERE)
       {
         cerr << "Earth Model: PerfectSphere"<<endl;
-        earth = ePerfectSphere;
+        earth = PERFECT_SPHERE;
       }
     }
     else
@@ -378,7 +378,7 @@ int CalculateLibTest(int argc, char* argv[])
       rv++;
     }
 
-    cerr<<"  ";
+    cerr <<"  ";
 
     // get and set Reference Origin
     fd >> refOrigin[0] >> refOrigin[1] >> refOrigin[2];
@@ -403,7 +403,7 @@ int CalculateLibTest(int argc, char* argv[])
       fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
       fd >> to[0] >> to[1] >> to[2];
       fd >> result[0] >> result[1] >> result[2];
-      rv += testCalculateRelAzEl(from, to, earth, coordConvert, result);
+      rv += testCalculateRelAzEl(from, from+3, to, earth, coordConvert, result);
     }
     else if (test.compare(0, 8, "Altitude")==0)
     {
@@ -460,15 +460,6 @@ int CalculateLibTest(int argc, char* argv[])
       rv++;
     }
   } //while( fd >> test )
-
-  return rv;
-}
-
-int main(int argc, char **argv)
-{
-  int rv = CalculateLibTest(argc, argv);
-  if (rv)
-    cerr << "Test failed" << std::endl;
 
   return rv;
 }
