@@ -41,7 +41,6 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}UnitContext.h
 )
 set(SIMQT_HEADERS
-    ${SIMQT_HEADERS_TO_MOC}
     ${SIMQT_INC}ConsoleChannel.h
     ${SIMQT_INC}FileDialog.h
     ${SIMQT_INC}FileUtilities.h
@@ -91,6 +90,10 @@ if(TARGET SIMDIS_SDKVis)
         ${SIMQT_INC}QtConversion.h
     )
 endif()
+
+list(APPEND SIMQT_HEADERS
+    ${SIMQT_HEADERS_TO_MOC}
+)
 
 
 source_group(Headers FILES ${SIMQT_HEADERS})

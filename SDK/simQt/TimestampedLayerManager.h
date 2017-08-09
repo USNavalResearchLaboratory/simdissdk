@@ -57,13 +57,15 @@ public:
 
   /**
    * Indicates whether given layer is one of the timed layers being maintained by this object
+   * If timing is not active, this method will return false for all layers
    * @param layer Layer to check for
    * @return True if layer is being maintained as a timed layer, false else
    */
   bool layerIsTimed(const osgEarth::ImageLayer* layer) const;
 
   /**
-   * Returns the layer that has time value closest after the current time
+   * Returns the layer that has time value closest after the current time.
+   * If timing is not active, the current timed layer will always be null.
    * @return The layer that has time value closest after the current time
    */
   const osgEarth::ImageLayer* currentTimedLayer() const;
@@ -74,6 +76,10 @@ public:
    * @param mapNode New map node to get image layers from
    */
   void setMapNode(osgEarth::MapNode* mapNode);
+
+  /// Set the active state of timed layer processing.  When moving from active to inactive, original visibility of timed layers is restored
+  void setTimingActive(bool active);
+  bool timingActive() const;
 
 signals:
   /**
@@ -105,6 +111,11 @@ private:
    */
   void setTime_(const simCore::TimeStamp& stamp);
 
+  /// Restore the original visibility of all layers tracked by the manager
+  void restoreOriginalVisibility_();
+  /// Set all timed layers but the current (if there is one) invisible
+  void useTimedVisibility_();
+
   /** Inner class to act as an osgEarth::MapNodeObserver for this class */
   class MapChangeObserver;
   /** Class to listen to the map for new image layers and add them to the manager if needed */
@@ -123,6 +134,7 @@ private:
   simCore::TimeStamp currTime_;
   osg::ref_ptr<osg::Node> mapChangeObserver_;
   osg::ref_ptr<osg::Group> attachPoint_;
+  bool timingActive_;
 };
 
 }

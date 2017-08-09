@@ -145,7 +145,8 @@ TimestampedLayerManager::TimestampedLayerManager(simCore::Clock& clock, osg::Gro
   : QObject(parent),
     currentLayer_(NULL),
     clock_(clock),
-    currTime_(clock_.currentTime())
+    currTime_(clock_.currentTime()),
+    timingActive_(true)
 {
   mapListener_ = new MapListener(*this);
   clockListener_.reset(new ClockListener(*this));
@@ -167,11 +168,16 @@ TimestampedLayerManager::~TimestampedLayerManager()
   osgEarth::MapNode* mapNode = dynamic_cast<MapChangeObserver*>(mapChangeObserver_.get())->getMapNode();
   if (mapNode && mapNode->getMap())
     mapNode->getMap()->removeMapCallback(mapListener_);
+  restoreOriginalVisibility_();
 }
 
 void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
 {
+  // If inactive, keep track of time so that it's accurate on reactivate
   currTime_ = stamp;
+  if (!timingActive_)
+    return;
+
   osgEarth::ImageLayer* oldLayer = NULL;
 
   auto i = layers_.upper_bound(currTime_);
@@ -209,13 +215,12 @@ void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
 
 bool TimestampedLayerManager::layerIsTimed(const osgEarth::ImageLayer* layer) const
 {
-  // If layer is in the originalVisibility_ map, it's timed
-  return (originalVisibility_.find(layer) != originalVisibility_.end());
+  // Any layer we're keeping track of is timed if timing is active
+  return (timingActive_ && originalVisibility_.find(layer) != originalVisibility_.end());
 }
 
 const osgEarth::ImageLayer* TimestampedLayerManager::currentTimedLayer() const
 {
-  // Any layer being tracked is always considered current
   return currentLayer_.get();
 }
 
@@ -243,7 +248,9 @@ void TimestampedLayerManager::addLayerWithTime_(osgEarth::ImageLayer* newLayer)
   simCore::TimeStamp simTime = simCore::TimeStamp(1970, osgTime.asTimeStamp());
   layers_[simTime] = newLayer;
   originalVisibility_[newLayer] = newLayer->getVisible();
-  newLayer->setVisible(false);
+  if (timingActive_)
+    newLayer->setVisible(false);
+  setTime_(currTime_);
 }
 
 void TimestampedLayerManager::setMapNode(osgEarth::MapNode* mapNode)
@@ -255,23 +262,12 @@ void TimestampedLayerManager::setMapNode(osgEarth::MapNode* mapNode)
 
 void TimestampedLayerManager::setMapNode_(osgEarth::MapNode* mapNode)
 {
-  osgEarth::Map* prevMap = NULL;
   MapChangeObserver* castObserver = dynamic_cast<MapChangeObserver*>(mapChangeObserver_.get());
   if (castObserver && castObserver->getMapNode() && castObserver->getMapNode()->getMap())
-    prevMap = castObserver->getMapNode()->getMap();
-
-  prevMap->removeMapCallback(mapListener_);
+    castObserver->getMapNode()->getMap()->removeMapCallback(mapListener_);
 
   // Attempt to restore visibility settings to current image layers before clearing them for the new map
-  for (auto iter = layers_.begin(); iter != layers_.end(); iter++)
-  {
-    if (iter->second.valid())
-    {
-      auto originVisIter = originalVisibility_.find(iter->second.get());
-      if (originVisIter != originalVisibility_.end())
-        iter->second->setVisible(originVisIter->second);
-    }
-  }
+  restoreOriginalVisibility_();
 
   layers_.clear();
   originalVisibility_.clear();
@@ -290,6 +286,55 @@ void TimestampedLayerManager::setMapNode_(osgEarth::MapNode* mapNode)
       if (i->valid())
         newLayer = dynamic_cast<osgEarth::ImageLayer*>(i->get());
       addLayerWithTime_(newLayer);
+    }
+  }
+
+  setTime_(currTime_);
+}
+
+void TimestampedLayerManager::setTimingActive(bool active)
+{
+  if (active == timingActive_)
+    return;
+  timingActive_ = active;
+
+  if (timingActive_)
+    useTimedVisibility_();
+  else
+    restoreOriginalVisibility_();
+}
+
+bool TimestampedLayerManager::timingActive() const
+{
+  return timingActive_;
+}
+
+void TimestampedLayerManager::restoreOriginalVisibility_()
+{
+  for (auto iter = layers_.begin(); iter != layers_.end(); iter++)
+  {
+    if (iter->second.valid())
+    {
+      auto originVisIter = originalVisibility_.find(iter->second.get());
+      // Don't restore original visibility to current layer, since user may have changed it since it became current
+      if (originVisIter != originalVisibility_.end() && iter->second != currentLayer_)
+        iter->second->setVisible(originVisIter->second);
+    }
+  }
+
+  // No concept of a current layer if layers aren't being treated as timed
+  currentLayer_ = NULL;
+}
+
+void TimestampedLayerManager::useTimedVisibility_()
+{
+  // Set all layers invisible as a base, then let setTime handle which (if any) should be visible
+  for (auto iter = layers_.begin(); iter != layers_.end(); iter++)
+  {
+    if (iter->second.valid())
+    {
+      originalVisibility_[iter->second.get()] = iter->second->getVisible();
+      iter->second->setVisible(false);
     }
   }
 
