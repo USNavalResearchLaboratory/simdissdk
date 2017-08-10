@@ -1253,6 +1253,13 @@ simCore::Vec3 toRadians(simCore::Vec3 lla)
   lla.setLon(lla.lon() * simCore::DEG2RAD);
   return lla;
 }
+simCore::Vec3 yprToRadians(simCore::Vec3 ypr)
+{
+  ypr.setYaw(ypr.yaw() * simCore::DEG2RAD);
+  ypr.setPitch(ypr.pitch() * simCore::DEG2RAD);
+  ypr.setRoll(ypr.roll() * simCore::DEG2RAD);
+  return ypr;
+}
 
 int testMidPointLowRes()
 {
@@ -1392,6 +1399,69 @@ int testRandom()
   return rv;
 }
 
+
+int testTaos_intercept()
+{
+  int rv = 0;
+
+  simCore::EarthModelCalculations model = simCore::WGS_84;
+  simCore::CoordinateConverter coordConv;
+  coordConv.setReferenceOriginDegrees(0.1, 0.1, 10.0);
+
+  simCore::Vec3 fromLla, toLla, fromOriLla, toOriLla;
+  double az, el, cmp, aa, s, v;
+
+  // from data\TestData\UpdateData\Taos_intercept.asi
+  // time 30.5
+  fromLla = simCore::Vec3(0.09999997, 0.100033, 13.45353708);
+  fromOriLla = simCore::Vec3(90.00175867, 74.71705511, 0.00205688);
+  toLla = simCore::Vec3(0., 0.1365198, 28064.53543379);
+  toOriLla = simCore::Vec3(270., - 57.28952036, 0.0000025);
+  simCore::calculateRelAzEl(toRadians(fromLla), yprToRadians(fromOriLla), toRadians(toLla), &az, &el, &cmp, model, &coordConv);
+  rv += SDK_ASSERT(simCore::areEqual(az * simCore::RAD2DEG, 21.550 , 1e-03));
+  rv += SDK_ASSERT(simCore::areEqual(el * simCore::RAD2DEG, 6.520, 1e-03));
+  aa = simCore::calculateAspectAngle(toRadians(fromLla), toRadians(toLla), yprToRadians(toOriLla));
+  rv += SDK_ASSERT(simCore::areEqual(aa * simCore::RAD2DEG, 32.011, 1e-03));
+  s = simCore::calculateSlant(toRadians(fromLla), toRadians(toLla), model, &coordConv);
+  rv += SDK_ASSERT(simCore::areEqual(s, 30434.2302335016, 1.5e-02));
+  v = simCore::calculateClosingVelocity(toRadians(fromLla), toRadians(toLla), model, &coordConv, simCore::Vec3(14.90399335, - 0.00071756, 54.54880707), simCore::Vec3(-783.3883867, 0., - 1219.77459698));
+  rv += SDK_ASSERT(simCore::areEqual(-v, -1281.5041259559, 2.5e-03));
+
+  // time 37.0
+  fromLla = simCore::Vec3(0.0999999, 0.1076603, 2568.066505);
+  fromOriLla = simCore::Vec3(89.99832735, 70.82268784, -0.00172971);
+  toLla = simCore::Vec3(0., 0.09115336, 19973.65088355);
+  toOriLla = simCore::Vec3(270., - 58.55615129, 0.0000025);
+  simCore::calculateRelAzEl(toRadians(fromLla), yprToRadians(fromOriLla), toRadians(toLla), &az, &el, &cmp, model, &coordConv);
+  rv += SDK_ASSERT(simCore::areEqual(az * simCore::RAD2DEG, 35.028, 1.5e-03));
+  rv += SDK_ASSERT(simCore::areEqual(el * simCore::RAD2DEG, 21.096, 1e-03));
+  aa = simCore::calculateAspectAngle(toRadians(fromLla), toRadians(toLla), yprToRadians(toOriLla));
+  rv += SDK_ASSERT(simCore::areEqual(aa * simCore::RAD2DEG, 47.854, 1e-03));
+  s = simCore::calculateSlant(toRadians(fromLla), toRadians(toLla), model, &coordConv);
+  rv += SDK_ASSERT(simCore::areEqual(s, 20713.402648426403, 1.5e-02));
+  v = simCore::calculateClosingVelocity(toRadians(fromLla), toRadians(toLla), model, &coordConv, simCore::Vec3(248.37812524, 0.00020858, 714.14911139), simCore::Vec3(-774.22680037, 0., - 1266.18988254));
+  rv += SDK_ASSERT(simCore::areEqual(-v, -1573.5390923747, 2.5e-03));
+
+  // time 41.5
+  fromLla = simCore::Vec3(0.11110779, 0.12372155, 5993.1720121);
+  fromOriLla = simCore::Vec3(24.85137373, 33.97610179, -9.4387819);
+  toLla = simCore::Vec3(0., 0.06027507, 14242.53942117);
+  toOriLla = simCore::Vec3(270., - 59.39726959, 0.0000025);
+  simCore::calculateRelAzEl(toRadians(fromLla), yprToRadians(fromOriLla), toRadians(toLla), &az, &el, &cmp, model, &coordConv);
+  rv += SDK_ASSERT(simCore::areEqual(az * simCore::RAD2DEG, 170.567, 1.5e-03));
+  rv += SDK_ASSERT(simCore::areEqual(el * simCore::RAD2DEG, 63.874, 1e-03));
+  aa = simCore::calculateAspectAngle(toRadians(fromLla), toRadians(toLla), yprToRadians(toOriLla));
+  rv += SDK_ASSERT(simCore::areEqual(aa * simCore::RAD2DEG, 77.636, 1e-03));
+  s = simCore::calculateSlant(toRadians(fromLla), toRadians(toLla), model, &coordConv);
+  rv += SDK_ASSERT(simCore::areEqual(s, 16416.8749333886, 1.5e-02));
+  v = simCore::calculateClosingVelocity(toRadians(fromLla), toRadians(toLla), model, &coordConv, simCore::Vec3(467.50701324, 597.67212996, 760.2732746), simCore::Vec3(-754.68396112, 0., - 1275.98640469)); 
+  rv += SDK_ASSERT(simCore::areEqual(-v, -48.8624863969, 2.5e-03));
+
+  return rv;
+}
+
+
+
 }
 
 int CalculationTest(int argc, char* argv[])
@@ -1416,6 +1486,7 @@ int CalculationTest(int argc, char* argv[])
   rv += testMidPointLowRes();
   rv += testMidPointHighRes();
   rv += testRandom();
+  rv += testTaos_intercept();
 
   return rv;
 }
