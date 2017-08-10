@@ -38,25 +38,12 @@ static bool almostEqual(double value1, double value2, double epsilon=1e-4)
 {
   if (!areEqual(value1, value2, epsilon))
   {
-    cerr << "FAILURE" <<endl;
+    cerr << "FAILURE" << endl;
     cerr << setprecision(16) << "    " << value1 << " != " << value2 << " delta: " << value1 - value2 << endl;
     return false;
   }
   return true;
 }
-
-//----------------------------------------------------------------------------
-//void testCalcCPRFromNEDVelVector(double *nedVel, double *result)
-//{
-//  cerr << "Testing calcCPRFromENUVelVector ++++++++++++++++++++++++++\n";
-//
-//  double cpr[3];
-//
-//  calcCPRFromENUVelVector(nedVel, cpr);
-//  almostEqual(cpr[0], result[0]);
-//  almostEqual(cpr[1], result[1]);
-//  almostEqual(cpr[2], result[2]);
-//}
 
 //void testCalculateRelAng(double *fromcpr, double *dirvect, double *result)
 //{
@@ -239,7 +226,6 @@ static int testCalculateClosingVelocity(double *from, double *to, EarthModelCalc
   }
 
   const double velocity = calculateClosingVelocity(Vec3(from), Vec3(to), earth, &coordConvert, Vec3(&from[6]), Vec3(&to[6]));
-
   if (almostEqual(velocity, result[0]))
   {
     cerr << "successful"<<endl;
@@ -267,6 +253,69 @@ static int testCalculateVelocityDelta(double *from, double *to, EarthModelCalcul
   return 1;
 }
 
+//===========================================================================
+static int testCalculateAspectAngle(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+{
+  cerr << "calculateAspectAngle +++++++++++++ ";
+
+  if (earth == PERFECT_SPHERE)
+  {
+    cerr<<"calculation not valid for Earth Model"<<endl;
+    return 1;
+  }
+
+  const double aspectAngle = simCore::calculateAspectAngle(simCore::Vec3(from), simCore::Vec3(to), simCore::Vec3(&to[3]));
+  if(almostEqual(aspectAngle, result[0], 0.001))
+  {
+    cerr << "successful"<<endl;
+    return 0;
+  }
+  return 1;
+}
+
+//===========================================================================
+static int testPositionInGate(double *from, double *to, double *gate, EarthModelCalculations earth, CoordinateConverter coordConvert, double* result)
+{
+  cerr << "positionInGate +++++++++++++ ";
+
+  if (earth == PERFECT_SPHERE)
+  {
+    cerr << "calculation not valid for Earth Model" << endl;
+    return 1;
+  }
+
+  const int inGate = simCore::positionInGate(simCore::Vec3(from), simCore::Vec3(to), gate[0], gate[1], gate[2], gate[3], gate[4], gate[5], earth, coordConvert) ? 1 : 0;
+  if(inGate == static_cast<int>(result[0]))
+  {
+    cerr << "successful\n";
+    return 0;
+  }
+  cerr << "failed\n";
+  return 1;
+}
+
+//===========================================================================
+static int testLaserInGate(double *from, double *to, double *gate, double *laser, EarthModelCalculations earth, CoordinateConverter coordConvert, double* result)
+{
+  cerr << "laserInGate +++++++++++++ ";
+
+  if (earth == PERFECT_SPHERE)
+  {
+    cerr << "calculation not valid for Earth Model" << endl;
+    return 1;
+  }
+
+  const int inGate = simCore::laserInGate(simCore::Vec3(from), simCore::Vec3(to), gate[0], gate[1], gate[2], gate[3], gate[4], gate[5], laser[0], laser[1], laser[2], earth, coordConvert) ? 1 : 0;
+  if(inGate == static_cast<int>(result[0]))
+  {
+    cerr << "successful\n";
+    return 0;
+  }
+  cerr << "failed\n";
+  return 1;
+}
+
+//===========================================================================
 static void printInstructions()
 {
   static bool seenInstructions = false;
@@ -297,6 +346,7 @@ static void printInstructions()
 //| Slant               | from[3] to[3]        | 1                     |
 //| AbsAzEl             | from[3] to[3]        | 3 [Az, El, Composite] |
 //| RelAzEl             | from[6] to[3]        | 3 [Az, El, Composite] |
+//| AspectAngle         | from[3] to[6]        | 1                     |
 //| Altitude            | from[3] to[3]        | 1                     |
 //| GroundDist          | from[3] to[3]        | 1                     |
 //| GeodesicDRCR        | from[6] to[3]        | 2 [DR, CR]            |
@@ -305,6 +355,8 @@ static void printInstructions()
 //| DRCRDownValue       | from[6] to[3]        | 3 [DR, CR, DownValue] |
 //| ClosingVelocity     | from[9] to[9]        | 1                     |
 //| LinearInterpolation | from[10] to[10] time | 3 [Velocity Vector]   |
+//| PositionInGate      | from[3] to[3] gate[6]| 1                     |
+//| LaserInGate         | from[3] to[3] gate[6] laser[3] | 1           |
 //
 //
 /////////////////////////////////////////////////////////////////////////////
@@ -378,7 +430,7 @@ int CalculateLibTest(int argc, char* argv[])
       rv++;
     }
 
-    cerr <<"  ";
+    cerr << "  ";
 
     // get and set Reference Origin
     fd >> refOrigin[0] >> refOrigin[1] >> refOrigin[2];
@@ -404,6 +456,13 @@ int CalculateLibTest(int argc, char* argv[])
       fd >> to[0] >> to[1] >> to[2];
       fd >> result[0] >> result[1] >> result[2];
       rv += testCalculateRelAzEl(from, from+3, to, earth, coordConvert, result);
+    }
+    else if (test.compare(0,11,"AspectAngle")==0)
+    {
+      fd >> from[0] >> from[1] >> from[2];
+      fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5];
+      fd >> result[0];
+      rv += testCalculateAspectAngle(from, to, earth, coordConvert, result);
     }
     else if (test.compare(0, 8, "Altitude")==0)
     {
@@ -452,6 +511,26 @@ int CalculateLibTest(int argc, char* argv[])
       fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
       fd >> result[0];
       rv += testCalculateClosingVelocity(from, to, earth, coordConvert, result);
+    }
+    else if (test.compare(0,14,"PositionInGate")==0)
+    {
+      double gate[6];
+      fd >> from[0] >> from[1] >> from[2];
+      fd >> to[0] >> to[1] >> to[2];
+      fd >> gate[0] >> gate[1] >> gate[2] >> gate[3] >> gate[4] >> gate[5];
+      fd >> result[0];
+      rv += testPositionInGate(from, to, gate, earth, coordConvert, result);
+    }
+    else if (test.compare(0,11,"LaserInGate")==0)
+    {
+      double gate[6];
+      double laser[3];
+      fd >> from[0] >> from[1] >> from[2];
+      fd >> to[0] >> to[1] >> to[2];
+      fd >> gate[0] >> gate[1] >> gate[2] >> gate[3] >> gate[4] >> gate[5];
+      fd >> laser[0] >> laser[1] >> laser[2];
+      fd >> result[0];
+      rv += testLaserInGate(from, to, gate, laser, earth, coordConvert, result);
     }
     else
     {

@@ -64,7 +64,7 @@ add_test(NAME AngleTest COMMAND SimCoreTests AngleTest)
 add_test(NAME CoreUnitsTest COMMAND SimCoreTests UnitsTest)
 add_test(NAME CoreUnitsFormatter COMMAND SimCoreTests UnitsFormatter)
 add_test(NAME GogToGeoFenceTest COMMAND SimCoreTests GogToGeoFenceTest)
-#add_test(NAME CalculateLibTest COMMAND SimCoreTests CalculateLibTest)
+add_test(NAME CalculateLibTest COMMAND SimCoreTests CalculateLibTest ${SimCore_UnitTests_SOURCE_DIR}/CalculateInput.txt)
 
 # Try to locate the correct file for the RCS test...
 set(FILE_LOCATIONS
