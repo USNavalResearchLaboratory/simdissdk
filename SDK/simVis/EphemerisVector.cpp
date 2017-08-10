@@ -95,7 +95,7 @@ EphemerisVector::EphemerisVector(const simVis::Color& moonColor, const simVis::C
   moonGeode_->setName("Moon");
   addChild(moonGeode_.get());
   sunGeode_ = createGeode_(sunVertices_, sunColor);
-  moonGeode_->setName("Sun");
+  sunGeode_->setName("Sun");
   addChild(sunGeode_.get());
 
   // Add a callback to redraw ephemeris vectors when time passes in scenario
