@@ -1440,7 +1440,7 @@ int testTaos_intercept()
   s = simCore::calculateSlant(toRadians(fromLla), toRadians(toLla), model, &coordConv);
   rv += SDK_ASSERT(simCore::areEqual(s, 20713.402648426403, 1.5e-02));
   v = simCore::calculateClosingVelocity(toRadians(fromLla), toRadians(toLla), model, &coordConv, simCore::Vec3(248.37812524, 0.00020858, 714.14911139), simCore::Vec3(-774.22680037, 0., - 1266.18988254));
-  rv += SDK_ASSERT(simCore::areEqual(-v, -1573.5390923747, 2.5e-03));
+  rv += SDK_ASSERT(simCore::areEqual(-v, -1573.5390923747, 3e-03));
 
   // time 41.5
   fromLla = simCore::Vec3(0.11110779, 0.12372155, 5993.1720121);
@@ -1455,7 +1455,7 @@ int testTaos_intercept()
   s = simCore::calculateSlant(toRadians(fromLla), toRadians(toLla), model, &coordConv);
   rv += SDK_ASSERT(simCore::areEqual(s, 16416.8749333886, 1.5e-02));
   v = simCore::calculateClosingVelocity(toRadians(fromLla), toRadians(toLla), model, &coordConv, simCore::Vec3(467.50701324, 597.67212996, 760.2732746), simCore::Vec3(-754.68396112, 0., - 1275.98640469)); 
-  rv += SDK_ASSERT(simCore::areEqual(-v, -48.8624863969, 2.5e-03));
+  rv += SDK_ASSERT(simCore::areEqual(-v, -48.8624863969, 3e-03));
 
   return rv;
 }
