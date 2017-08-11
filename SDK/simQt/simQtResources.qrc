@@ -32,5 +32,12 @@
     <file>images/Maximize.png</file>
     <file>images/Restore.png</file>
     <file>images/Undock.png</file>
+    <file>images/Data Blue Filter.png</file>
+    <file>images/Data Green Filter.png</file>
+    <file>images/Data Purple Filter.png</file>
+    <file>images/Data Red Filter.png</file>
+    <file>images/Data Inactive Filter.png</file>
+    <file>images/Save.png</file>
+    <file>images/Clean Up.png</file>
   </qresource>
 </RCC>

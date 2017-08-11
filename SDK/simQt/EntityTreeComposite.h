@@ -32,6 +32,7 @@
 
 class QCloseEvent;
 class QModelIndex;
+class QToolButton;
 class QTreeView;
 class Ui_EntityTreeComposite;
 
@@ -118,6 +119,38 @@ public:
   /** Sets the ability to use the context menu center action, which is disabled by default */
   void setUseCenterAction(bool use);
 
+  /** Struct to store information about an Entity Tab Filter Configuration */
+  struct FilterConfiguration
+  {
+    QString button;                        ///< Name of the button associated with this configuration
+    QString description;                   ///< User-supplied description of the configuration
+    QMap<QString, QVariant> configuration; ///< Map of all filter configuration settings
+
+    FilterConfiguration(const QString& inButton, const QString& inDescription, QMap<QString, QVariant> inConfiguration)
+      : button(inButton),
+      description(inDescription),
+      configuration(inConfiguration)
+    {}
+
+    // Default constructor
+    FilterConfiguration()
+      : description(tr("No Custom Filter Configuration Saved"))
+    {}
+  };
+
+  /**
+  * Update button configuration locally. Will not emit signal.
+  * @param buttonName the name of the button to update
+  * @param desc the user-supplied description to put in the tool tip
+  * @param configuration the filter settings configuration to store in the button
+  */
+  void saveConfigToButton(const QString& buttonName, const QString& desc, const QMap<QString, QVariant>& configuration);
+  /**
+  * Clear button configuration locally. Will not emit signal.
+  * @param buttonName the name of the button to be cleared
+  */
+  void clearConfigFromButton(const QString& buttonName);
+
 public slots:
   /** If true expand the tree on double click */
   void setExpandsOnDoubleClick(bool value);
@@ -145,6 +178,10 @@ signals:
    * @param settings Filters get data from the setting using a global unique key
    */
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
+  /** Fired when one of the configuration buttons is updated with a new configuration */
+  void configurationButtonUpdated(const QString& buttonName, const QString& desc, const QMap<QString, QVariant>& configuration);
+  /** Fired when one of the configuration buttons is cleared */
+  void configurationButtonCleared(const QString& buttonName);
 
 protected slots:
   /** Receive notice of a change in the filter */
@@ -167,10 +204,41 @@ private slots:
   void centerOnSelection_();
   /** Toggle the tree/list view and update related UI component and action states */
   void setTreeView_(bool useTreeView);
+  /** Load a filter configuration stored by the button that triggers this slot */
+  void loadConfig_();
+  /** Save a filter configuration to the button that triggers this slot */
+  void saveConfig_();
+  /** Clear the filter configuration stored by the button that triggers this slot */
+  void clearConfig_();
 
 private:
   /** Update Collapse All and Expand All action enabled states */
   void updateActionEnables_();
+  /**
+  * Set up a QToolButton to be used as a Filter Configuration button
+  * @param button pointer to QToolButton to set up
+  * @param iconName name of the icon to use for this button when a configuration is stored in it, e.g. ":simQt/images/Blue Data Filter.png"
+  */
+  void initFilterConfigurationButton_(QToolButton* button, const QString& iconName);
+  /**
+  * Update a filter configuration button's tool tip and icon,
+  * and update its entry in our map with the updated configuration.
+  * If the caller is responding to a button update that occurred in another
+  * EntityTreeComposite instance, fireSignal should be set to false.
+  * @param button pointer to the button that updated
+  * @param desc the user-supplied description to put in the tool tip
+  * @param configuration the updated filter settings configuration to store with the button
+  * @param fireSignal If true, fires the cofigurationButtonUpdated() signal
+  */
+  void updateButton_(QToolButton* button, const QString& desc, const QMap<QString, QVariant>& configuration, bool fireSignal = true);
+  /**
+  * Reset a filter configuration button's tool tip and icon, and remove from our
+  * internal map. If the caller is responding to a button clear has occurred in
+  * another EntityTreeComposite instance, fireSignal should be set to false.
+  * @param button pointer to QToolButton to reset
+  * @param fireSignal If true, fires the cofigurationButtonCleared() signal
+  */
+  void resetButton_(QToolButton* button, bool fireSignal = true);
 
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
@@ -182,6 +250,8 @@ private:
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
   bool useCenterAction_;
+  std::map<QToolButton*, FilterConfiguration> buttonsToFilterConfigs_;
+  std::map<QString, QString> buttonNamesToIconNames_;
 };
 
 }

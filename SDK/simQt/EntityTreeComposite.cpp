@@ -21,6 +21,7 @@
  */
 #include <QDialog>
 #include <QGroupBox>
+#include <QInputDialog>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QKeyEvent>
@@ -35,6 +36,10 @@
 #include "ui_EntityTreeComposite.h"
 
 namespace simQt {
+
+const QString DEFAULT_FILTER_CONFIG_TOOLTIP = simQt::formatTooltip(QObject::tr("No Filter Configuration Saved"), "");
+const QString CLEAR_CONFIG_ACTION_TEXT = QObject::tr("Clear Stored Configuration");
+const QString INACTIVE_ICON_NAME = ":simQt/images/Data Inactive Filter.png";
 
 FilterDialog::FilterDialog(QWidget* parent)
   :QDialog(parent)
@@ -112,6 +117,12 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   connect(composite_->filterButton, SIGNAL(clicked()), this, SLOT(showFilters_()));
   connect(entityTreeWidget_, SIGNAL(numFilteredItemsChanged(int, int)), this, SLOT(setNumFilteredItemsLabel_(int, int)));
 
+  // Set up filter configuration buttons
+  initFilterConfigurationButton_(composite_->filterConfigButton1, ":simQt/images/Data Blue Filter.png");
+  initFilterConfigurationButton_(composite_->filterConfigButton2, ":simQt/images/Data Green Filter.png");
+  initFilterConfigurationButton_(composite_->filterConfigButton3, ":simQt/images/Data Purple Filter.png");
+  initFilterConfigurationButton_(composite_->filterConfigButton4, ":simQt/images/Data Red Filter.png");
+
   // Set tooltips
   composite_->pushButton->setToolTip(toggleTreeViewAction_->toolTip());
   composite_->filterButton->setToolTip(simQt::formatTooltip(tr("Entity Filter"),
@@ -119,6 +130,193 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   // Note: tool tip applied to magnifying glass icon (label); the lineEdit already has a comment in the text field
   composite_->label->setToolTip(simQt::formatTooltip(tr("Name Filter"),
   tr("Performs filtering based on entity names.<p>Right click in the text field to modify filtering options.")));
+}
+
+void EntityTreeComposite::initFilterConfigurationButton_(QToolButton* button, const QString& iconName)
+{
+  connect(button, SIGNAL(clicked()), this, SLOT(loadConfig_()));
+  // Disable the menu indicator turned on by adding actions below
+  button->setStyleSheet("QToolButton::menu-indicator { image: none; }");
+
+  // Set initial icon
+  button->setIcon(QIcon(INACTIVE_ICON_NAME));
+
+  // Context menu actions
+  QAction* saveConfig = new QAction(tr("Save Current Configuration..."), button);
+  saveConfig->setIcon(QIcon(":simQt/images/Save.png"));
+  connect(saveConfig, SIGNAL(triggered()), this, SLOT(saveConfig_()));
+
+  QAction* clearConfig = new QAction(CLEAR_CONFIG_ACTION_TEXT, button);
+  clearConfig->setIcon(QIcon(":simQt/images/Clean Up.png"));
+  clearConfig->setEnabled(false); // Enabled when a config is saved
+  connect(clearConfig, SIGNAL(triggered()), this, SLOT(clearConfig_()));
+
+  // Add actions to button's context menu
+  button->setContextMenuPolicy(Qt::ActionsContextMenu);
+  button->addAction(saveConfig);
+  button->addAction(clearConfig);
+
+  // Set default tool tip
+  button->setToolTip(DEFAULT_FILTER_CONFIG_TOOLTIP);
+
+  // Set active (colored) icon for this button
+  buttonNamesToIconNames_[button->objectName()] = iconName;
+}
+
+void EntityTreeComposite::loadConfig_()
+{
+  QToolButton* button = qobject_cast<QToolButton*>(sender());
+  if (button == NULL)
+  {
+    assert(0); // Sender should be a QToolButton
+    return;
+  }
+
+  // Find configuration stored by this button
+  FilterConfiguration fc = buttonsToFilterConfigs_[button];
+
+  // If the returned configuration is empty, then there's no configuration to load
+  if (fc.configuration.isEmpty())
+    return;
+
+  // Apply filter configuration to the widget, which sends a call
+  // out to the other Entity Filters and updates them to match
+  entityTreeWidget_->setFilterSettings(fc.configuration);
+}
+
+void EntityTreeComposite::saveConfig_()
+{
+  // Cast to sender's parent because we want the QToolButton, not the QAction
+  QToolButton* button = qobject_cast<QToolButton*>(sender()->parent());
+  if (button == NULL)
+  {
+    assert(0); // Sender should be a QToolButton, possibly the QAction sender()'s parentage has changed?
+    return;
+  }
+
+  // Show the previous filter configuration's description as the placeholder text, if it exists
+  QString placeHolderText = tr("Custom Filter Configuration");
+  FilterConfiguration fc = buttonsToFilterConfigs_[button];
+  if (!fc.configuration.isEmpty())
+    placeHolderText = fc.description;
+
+  // Get description from user
+  bool okay;
+  QString desc = QInputDialog::getText(this, tr("Save Filter Configuration"), tr("Enter a description to save with this filter configuration:"), QLineEdit::Normal, placeHolderText, &okay);
+
+  // If user clicked cancel, don't do anything further
+  if (!okay)
+    return;
+
+  // Get current filter settings to save
+  QMap<QString, QVariant> configuration;
+  getFilterSettings(configuration);
+
+  // Need to emit that the button has been updated
+  updateButton_(button, desc, configuration);
+}
+
+void EntityTreeComposite::saveConfigToButton(const QString& buttonName, const QString& desc, const QMap<QString, QVariant>& configuration)
+{
+  // Find the button
+  QToolButton* button = findChild<QToolButton*>(buttonName);
+
+  if (button == NULL)
+  {
+    assert(0); // Didn't find the button
+    return;
+  }
+
+  // This method is called when a button update occurs
+  // in another instance of EntityTreeComposite, so
+  // don't emit that the button has been updated
+  updateButton_(button, desc, configuration, false);
+}
+
+void EntityTreeComposite::updateButton_(QToolButton* button, const QString& desc, const QMap<QString, QVariant>& configuration, bool fireSignal)
+{
+  // Check if we're overwriting a stored configuration
+  FilterConfiguration fc = buttonsToFilterConfigs_[button];
+  if (fc.configuration.isEmpty())
+  {
+    Q_FOREACH(QAction* action, button->actions())
+    {
+      // Need to enable the clear action if we're saving to a
+      // button without a configuration saved to it already
+      if (action->text() == CLEAR_CONFIG_ACTION_TEXT)
+        action->setEnabled(true);
+    }
+  }
+
+  // Store FilterConfiguration internally
+  QString buttonName = button->objectName();
+  fc.button = buttonName;
+  fc.description = desc;
+  fc.configuration = configuration;
+  buttonsToFilterConfigs_[button] = fc;
+
+  // Set the button's tool tip
+  button->setToolTip(simQt::formatTooltip(tr("Filter Configuration Saved"), fc.description));
+
+  // Update the button's icon to the active (colored) icon
+  QString iconName = buttonNamesToIconNames_[buttonName];
+  button->setIcon(QIcon(iconName));
+
+  if (fireSignal)
+    emit configurationButtonUpdated(buttonName, desc, configuration);
+}
+
+void EntityTreeComposite::clearConfig_()
+{
+  // Cast to sender's parent because we want the QToolButton, not the QAction
+  QToolButton* button = qobject_cast<QToolButton*>(sender()->parent());
+  if (button == NULL)
+  {
+    assert(0); // Sender should be a QToolButton, possibly the QAction sender()'s parentage has changed?
+    return;
+  }
+
+  // Need to emit that we've cleared the button
+  resetButton_(button);
+}
+
+void EntityTreeComposite::clearConfigFromButton(const QString& buttonName)
+{
+  // Find the button
+  QToolButton* button = findChild<QToolButton*>(buttonName);
+
+  if (button == NULL)
+  {
+    assert(0); // Didn't find the button
+    return;
+  }
+
+  // This method is called when a button clear occurs
+  // in another instance of EntityTreeComposite, so
+  // don't emit that the button has been clear
+  resetButton_(button, false);
+}
+
+void EntityTreeComposite::resetButton_(QToolButton* button, bool fireSignal)
+{
+  // Clear saved configuration for this button
+  buttonsToFilterConfigs_.erase(button);
+
+  // Reset default tool tip
+  button->setToolTip(DEFAULT_FILTER_CONFIG_TOOLTIP);
+
+  // Update the button's icon to the inactive
+  button->setIcon(QIcon(INACTIVE_ICON_NAME));
+
+  // Disable the clear action
+  Q_FOREACH(QAction* action, button->actions())
+  {
+    if (action->text() == CLEAR_CONFIG_ACTION_TEXT)
+      action->setEnabled(false);
+  }
+
+  if (fireSignal)
+    emit configurationButtonCleared(button->objectName());
 }
 
 EntityTreeComposite::~EntityTreeComposite()
