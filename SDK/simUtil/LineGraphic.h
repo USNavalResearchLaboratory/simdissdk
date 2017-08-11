@@ -69,6 +69,13 @@ public:
   void set(const simCore::Vec3& originLLA, const simCore::Vec3& destinationLLA, const std::string& labelString);
 
   /**
+   * Hides or reveals both the animatedLine and the label.
+   * Calling this on a LineGraphic with equal endpoints is undefined.
+   * @param draw If true, the line and label will be displayed
+   */
+  void setDraw(bool draw);
+
+  /**
   * Sets the width of the line.
   * @param lineWidth Width to which to set the line.
   */

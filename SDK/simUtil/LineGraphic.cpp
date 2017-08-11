@@ -142,6 +142,12 @@ void LineGraphic::setLineWidth(float lineWidth)
   animatedLine_->setLineWidth(lineWidth);
 }
 
+void LineGraphic::setDraw(bool draw)
+{
+  animatedLine_->setNodeMask(draw ? GRAPHIC_MASK_RULERLINE : simVis::DISPLAY_MASK_NONE);
+  label_->setNodeMask(draw ? GRAPHIC_MASK_RULERLINE : simVis::DISPLAY_MASK_NONE);
+}
+
 void LineGraphic::setStipplePattern(unsigned short stipple)
 {
   animatedLine_->setStipple1(stipple);
