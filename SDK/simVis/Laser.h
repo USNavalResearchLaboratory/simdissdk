@@ -183,6 +183,7 @@ namespace simVis
     osg::ref_ptr<osg::Geode>  node_;           ///< the node that contains the actual laser geometry
     osg::observer_ptr<const EntityNode> host_; ///< the platform that hosts this laser
     osg::ref_ptr<LocalGridNode> localGrid_;    ///< the localgrid node for this laser
+    bool hasLastPrefs_;                        ///< Whether lastPrefs_ has been set by prefs we received
 
     void updateLabel_(const simData::LaserPrefs& prefs);
     osg::ref_ptr<EntityLabelNode> label_;

@@ -204,6 +204,7 @@ private:
   osg::ref_ptr<EntityLabelNode> label_;
   osg::ref_ptr<LabelContentCallback> contentCallback_;
   bool                         hasLastUpdate_;
+  bool                         hasLastPrefs_;
 
   osg::ref_ptr<osg::Texture2D> texture_;
   // Projector video interface for transferring video image.

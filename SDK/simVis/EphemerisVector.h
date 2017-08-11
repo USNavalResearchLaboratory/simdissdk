@@ -93,6 +93,7 @@ private:
 
   /// Last clock time when we rebuilt the line; detect time drift to rebuild line for entites that don't move
   simCore::TimeStamp lastUpdateTime_;
+  bool hasLastPrefs_; ///< Whether lastPrefs_ has been set by prefs we received
 };
 
 } // namespace simVis

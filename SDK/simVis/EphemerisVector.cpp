@@ -84,7 +84,8 @@ EphemerisVector::EphemerisVector(const simVis::Color& moonColor, const simVis::C
   : Group(),
     coordConvert_(new simCore::CoordinateConverter),
     ephemeris_(new osgEarth::Util::Ephemeris),
-    lastUpdateTime_(simCore::INFINITE_TIME_STAMP)
+    lastUpdateTime_(simCore::INFINITE_TIME_STAMP),
+    hasLastPrefs_(false)
 {
   setName("EphemerisVector");
   setNodeMask(DISPLAY_MASK_NONE);
@@ -218,13 +219,15 @@ void EphemerisVector::setPrefs(const simData::PlatformPrefs& prefs)
   else
   {
     // Rebuild the vector if one of the scaling factors changes, or draw flags change
-    if (VectorScaling::fieldsChanged(lastPrefs_, prefs) ||
+    if (!hasLastPrefs_ ||
+      VectorScaling::fieldsChanged(lastPrefs_, prefs) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, drawmoonvec) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, drawsunvec))
       rebuild_(prefs);
     setNodeMask(DISPLAY_MASK_EPHEMERIS);
   }
   lastPrefs_ = prefs;
+  hasLastPrefs_ = true;
 }
 
 void EphemerisVector::update(const simData::PlatformUpdate& platformUpdate)

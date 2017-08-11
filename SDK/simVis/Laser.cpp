@@ -38,6 +38,7 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
     node_(NULL),
     host_(host),
     localGrid_(NULL),
+    hasLastPrefs_(false),
     label_(NULL),
     contentCallback_(new NullEntityCallback())
 {
@@ -126,7 +127,7 @@ LabelContentCallback* LaserNode::labelContentCallback() const
 
 std::string LaserNode::hookText() const
 {
-  if (hasLastUpdate_)
+  if (hasLastUpdate_ && hasLastPrefs_)
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
 
   return "";
@@ -134,7 +135,7 @@ std::string LaserNode::hookText() const
 
 std::string LaserNode::legendText() const
 {
-  if (hasLastUpdate_)
+  if (hasLastUpdate_ && hasLastPrefs_)
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
 
   return "";
@@ -149,6 +150,7 @@ void LaserNode::setPrefs(const simData::LaserPrefs& prefs)
   refresh_(NULL, &prefs);
   updateLabel_(prefs);
   lastPrefs_ = prefs;
+  hasLastPrefs_ = true;
 }
 
 bool LaserNode::isActive() const
@@ -174,6 +176,10 @@ bool LaserNode::getHostId(simData::ObjectId& out_hostId) const
 
 const std::string LaserNode::getEntityName(EntityNode::NameType nameType, bool allowBlankAlias) const
 {
+  // lastPrefs_ will have no meaningful default if never set
+  if (!hasLastPrefs_)
+    return "";
+
   switch (nameType)
   {
   case EntityNode::REAL_NAME:
@@ -282,7 +288,7 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   }
 
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
-  bool force = !hasLastUpdate_ || node_ == NULL ||
+  bool force = !hasLastUpdate_ || !hasLastPrefs_ || node_ == NULL ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, datadraw));
 
   // if new geometry is required, build it
