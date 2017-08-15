@@ -265,7 +265,7 @@ std::string ProjectorNode::legendText() const
 
 void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
 {
-  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, rasterfile))
+  if (PB_FIELD_CHANGED(&lastPrefs_, &prefs, rasterfile))
   {
     loadRequestedFile_(prefs.rasterfile());
   }
