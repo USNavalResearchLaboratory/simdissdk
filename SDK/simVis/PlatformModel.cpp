@@ -268,9 +268,6 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
   alphaVolumeGroup_->addChild(model_);
   dynamicXform_->setSizingNode(model_);
 
-  // default lighting:
-  simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted()) ? osg::StateAttribute::ON : osg::StateAttribute::OFF);
-
   return true;
 }
 
@@ -656,12 +653,12 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
   stateSet->setAttributeAndModes(new osg::PolygonMode(face, mode), osg::StateAttribute::ON);
 }
 
-void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs)
+void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, bool force)
 {
   if (!model_.valid())
     return;
 
-  if (lastPrefsValid_ &&
+  if (!force && lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, lighted))
     return;
 
@@ -755,7 +752,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateStippling_(prefs);
   updateCulling_(prefs);
   updatePolygonMode_(prefs);
-  updateLighting_(prefs);
+  updateLighting_(prefs, modelChanged);
   updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
 
