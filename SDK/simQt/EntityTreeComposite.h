@@ -201,7 +201,7 @@ private slots:
   void clearConfig_();
 
 private:
-  /** What for settings changes related to the buttons */
+  /** Watch for settings changes related to the buttons */
   class Observer;
 
   /** Update Collapse All and Expand All action enabled states */
@@ -250,7 +250,7 @@ private:
 
 }
 
-/** Decelerations to make QVariant and QSettings work */
+/** Declarations to make QVariant and QSettings work */
 Q_DECLARE_METATYPE(simQt::EntityTreeComposite::FilterConfiguration);
 QDataStream &operator<<(QDataStream& out, const simQt::EntityTreeComposite::FilterConfiguration& myObj);
 QDataStream &operator>>(QDataStream& in, simQt::EntityTreeComposite::FilterConfiguration& myObj);
