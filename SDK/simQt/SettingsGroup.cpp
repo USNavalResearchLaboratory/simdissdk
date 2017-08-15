@@ -37,10 +37,17 @@ public:
   // Strip the prefix off the name and redo the callback
   virtual void onSettingChange(const QString& name, const QVariant& value)
   {
-    assert(name.startsWith(prefix_));
-    QString newName = name;
-    newName.replace(0, prefix_.length(), "");
-    myObserver_->onSettingChange(newName, value);
+    if (name.startsWith(prefix_))
+    {
+      QString newName = name;
+      newName.replace(0, prefix_.length(), "");
+      myObserver_->onSettingChange(newName, value);
+    }
+    else
+    {
+      // The caller passed in a global name, so need to return a global name
+      myObserver_->onSettingChange("/" + name, value);
+    }
   }
   Settings::ObserverPtr unwrappedObserver() const
   {

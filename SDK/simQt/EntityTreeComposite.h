@@ -119,37 +119,30 @@ public:
   /** Sets the ability to use the context menu center action, which is disabled by default */
   void setUseCenterAction(bool use);
 
-  /** Struct to store information about an Entity Tab Filter Configuration */
-  struct FilterConfiguration
+  /** Class to store information about an Entity Tab Filter Configuration */
+  class FilterConfiguration
   {
-    QString button;                        ///< Name of the button associated with this configuration
-    QString description;                   ///< User-supplied description of the configuration
-    QMap<QString, QVariant> configuration; ///< Map of all filter configuration settings
+  public:
+    FilterConfiguration();
+    virtual ~FilterConfiguration();
 
-    FilterConfiguration(const QString& inButton, const QString& inDescription, QMap<QString, QVariant> inConfiguration)
-      : button(inButton),
-      description(inDescription),
-      configuration(inConfiguration)
-    {}
+    FilterConfiguration(const FilterConfiguration& rhs);
+    FilterConfiguration(const QString& buttonName, const QString& description, const QMap<QString, QVariant>& configuration);
 
-    // Default constructor
-    FilterConfiguration()
-      : description(tr("No Custom Filter Configuration Saved"))
-    {}
+    QString buttonName() const;
+    void setButtonName(const QString& buttonName);
+
+    QString description() const;
+    void setDescription(const QString& description);
+
+    QMap<QString, QVariant> configuration() const;
+    void setConfiguration(const QMap<QString, QVariant>& configuration);
+
+  private:
+    QString buttonName_;                    ///< Name of the button associated with this configuration
+    QString description_;                   ///< User-supplied description of the configuration
+    QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
-
-  /**
-  * Update button configuration locally. Will not emit signal.
-  * @param buttonName the name of the button to update
-  * @param desc the user-supplied description to put in the tool tip
-  * @param configuration the filter settings configuration to store in the button
-  */
-  void saveConfigToButton(const QString& buttonName, const QString& desc, const QMap<QString, QVariant>& configuration);
-  /**
-  * Clear button configuration locally. Will not emit signal.
-  * @param buttonName the name of the button to be cleared
-  */
-  void clearConfigFromButton(const QString& buttonName);
 
 public slots:
   /** If true expand the tree on double click */
@@ -178,10 +171,6 @@ signals:
    * @param settings Filters get data from the setting using a global unique key
    */
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
-  /** Fired when one of the configuration buttons is updated with a new configuration */
-  void configurationButtonUpdated(const QString& buttonName, const QString& desc, const QMap<QString, QVariant>& configuration);
-  /** Fired when one of the configuration buttons is cleared */
-  void configurationButtonCleared(const QString& buttonName);
 
 protected slots:
   /** Receive notice of a change in the filter */
@@ -212,6 +201,9 @@ private slots:
   void clearConfig_();
 
 private:
+  /** What for settings changes related to the buttons */
+  class Observer;
+
   /** Update Collapse All and Expand All action enabled states */
   void updateActionEnables_();
   /**
@@ -228,17 +220,17 @@ private:
   * @param button pointer to the button that updated
   * @param desc the user-supplied description to put in the tool tip
   * @param configuration the updated filter settings configuration to store with the button
-  * @param fireSignal If true, fires the cofigurationButtonUpdated() signal
+  * @param save If true, save to settings
   */
-  void updateButton_(QToolButton* button, const QString& desc, const QMap<QString, QVariant>& configuration, bool fireSignal = true);
+  void updateButton_(QToolButton* button, const QString& desc, const QMap<QString, QVariant>& configuration, bool save = true);
   /**
   * Reset a filter configuration button's tool tip and icon, and remove from our
   * internal map. If the caller is responding to a button clear has occurred in
   * another EntityTreeComposite instance, fireSignal should be set to false.
   * @param button pointer to QToolButton to reset
-  * @param fireSignal If true, fires the cofigurationButtonCleared() signal
+  * @param save If true, save to settings
   */
-  void resetButton_(QToolButton* button, bool fireSignal = true);
+  void resetButton_(QToolButton* button, bool save = true);
 
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
@@ -252,8 +244,17 @@ private:
   bool useCenterAction_;
   std::map<QToolButton*, FilterConfiguration> buttonsToFilterConfigs_;
   std::map<QString, QString> buttonNamesToIconNames_;
+  SettingsPtr settings_;
+  simQt::Settings::ObserverPtr observer_;
 };
 
 }
+
+/** Decelerations to make QVariant and QSettings work */
+Q_DECLARE_METATYPE(simQt::EntityTreeComposite::FilterConfiguration);
+QDataStream &operator<<(QDataStream& out, const simQt::EntityTreeComposite::FilterConfiguration& myObj);
+QDataStream &operator>>(QDataStream& in, simQt::EntityTreeComposite::FilterConfiguration& myObj);
+
+
 
 #endif /* SIMQT_ENTITY_TREE_COMPOSITE_H */

@@ -26,6 +26,7 @@
 #include <QFileIconProvider>
 #include <QApplication>
 #include "simNotify/Notify.h"
+#include "simQt/EntityTreeComposite.h"
 #include "simQt/WidgetSettings.h"
 #include "simQt/SettingsModel.h"
 
@@ -516,6 +517,7 @@ SettingsModel::SettingsModel(QObject* parent, QSettings& settings)
 {
   // Register meta data types so MetaData can go into a QSettings
   qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
+  qRegisterMetaTypeStreamOperators<simQt::EntityTreeComposite::FilterConfiguration>("FilterConfiguration");
 
   // Note that QFileIconProvider requires QApplication and will crash with QCoreApplication
   bool hasGuiApp = (qobject_cast<QApplication*>(QCoreApplication::instance()) != NULL);
