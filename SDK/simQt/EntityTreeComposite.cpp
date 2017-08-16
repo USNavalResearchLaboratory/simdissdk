@@ -24,7 +24,7 @@
 #include <QInputDialog>
 #include <QToolButton>
 #include <QVBoxLayout>
-#include <QKeyEvent>
+#include <QSignalMapper>
 #include <QClipboard>
 #include "simQt/QtConversion.h"
 #include "simQt/ScopedSignalBlocker.h"
@@ -40,7 +40,6 @@ namespace simQt {
 
 const QString DEFAULT_FILTER_CONFIG_TOOLTIP = simQt::formatTooltip(QObject::tr("No Filter Configuration Saved"), "");
 const QString CLEAR_CONFIG_ACTION_TEXT = QObject::tr("Clear Stored Configuration");
-const QString INACTIVE_ICON_NAME = ":simQt/images/Data Inactive Filter.png";
 const QString SETTING_NAME_FILTER = "/FilterSettings/";
 
 
@@ -54,6 +53,100 @@ void FilterDialog::closeEvent(QCloseEvent* ev)
   emit(closedGui());
 }
 
+
+//-----------------------------------------------------------------------------------
+
+/** Manages a single group of filter configurations associated with a tool button */
+class EntityTreeComposite::ButtonActions
+{
+public:
+  ButtonActions(QToolButton& button, const QIcon& icon)
+    : loadAction_(new QAction(icon, tr("Load"), &button)),
+      saveAction_(new QAction(QIcon(":simQt/images/Save.png"), tr("Save..."), &button)),
+      clearAction_(new QAction(QIcon(":simQt/images/Delete.png"), tr("Clear"), &button)),
+      button_(button)
+  {
+    // No tooltip needed for clear because it's never a standalone button via setDefaultButton()
+    saveAction_->setToolTip(simQt::formatTooltip(tr("Save"), tr("Saves the current filter configuration to a button.")));
+    setLoadTextAndTooltips_("");
+
+    // We start without a filter configuration, so default mode is "save"
+    button_.setDefaultAction(saveAction_);
+    button_.addAction(loadAction_);
+    button_.addAction(saveAction_);
+    button_.addAction(clearAction_);
+  }
+
+  QAction* loadAction() const
+  {
+    return loadAction_;
+  }
+
+  QAction* saveAction() const
+  {
+    return saveAction_;
+  }
+
+  QAction* clearAction() const
+  {
+    return clearAction_;
+  }
+
+  const FilterConfiguration& filterConfiguration() const
+  {
+    return filterConfig_;
+  }
+
+  QString description() const
+  {
+    return filterConfig_.description();
+  }
+
+  QString settingsKey() const
+  {
+    return SETTING_NAME_FILTER + button_.objectName();
+  }
+
+  void setFilterConfiguration(const FilterConfiguration& filter)
+  {
+    setLoadTextAndTooltips_(filter.description());
+    if (filter.description().isEmpty())
+    {
+      loadAction_->setEnabled(false);
+      clearAction_->setEnabled(false);
+      button_.setDefaultAction(saveAction_);
+    }
+    else
+    {
+      loadAction_->setEnabled(true);
+      clearAction_->setEnabled(true);
+      button_.setDefaultAction(loadAction_);
+    }
+    filterConfig_ = filter;
+  }
+
+private:
+  QAction* loadAction_;
+  QAction* saveAction_;
+  QAction* clearAction_;
+  QToolButton& button_;
+  FilterConfiguration filterConfig_;
+
+  /** Sets the text and tooltip on the "Load" button */
+  void setLoadTextAndTooltips_(const QString& filterName)
+  {
+    if (filterName.isEmpty())
+    {
+      loadAction_->setText(tr("Load"));
+      loadAction_->setToolTip(simQt::formatTooltip(tr("Load"), tr("Loads the saved filter configuration.")));
+    }
+    else
+    {
+      loadAction_->setText(tr("Load %1").arg(filterName));
+      loadAction_->setToolTip(simQt::formatTooltip(tr("Load"), tr("Loads the saved filter configuration: %1").arg(filterName)));
+    }
+  }
+};
 
 //-----------------------------------------------------------------------------------
 
@@ -72,34 +165,29 @@ public:
 
   virtual void onSettingChange(const QString& name, const QVariant& value)
   {
-    // Convert the name into a button
-    QToolButton* button = NULL;
-    if (name == (SETTING_NAME_FILTER + parent_.composite_->filterConfigButton1->objectName()))
-      button = parent_.composite_->filterConfigButton1;
-    else if (name == (SETTING_NAME_FILTER + parent_.composite_->filterConfigButton2->objectName()))
-      button = parent_.composite_->filterConfigButton2;
-    else if (name == (SETTING_NAME_FILTER + parent_.composite_->filterConfigButton3->objectName()))
-      button = parent_.composite_->filterConfigButton3;
-    else if (name == (SETTING_NAME_FILTER + parent_.composite_->filterConfigButton4->objectName()))
-      button = parent_.composite_->filterConfigButton4;
-
-    // Buttons were added and this routine was not updated
-    assert(button != NULL);
-
-    if (button != NULL)
+    ButtonActions* actions = NULL;
+    for (size_t index = 0; index < parent_.buttonActions_.size(); ++index)
     {
-      auto filter = qvariant_cast<FilterConfiguration>(value);
-      parent_.updateButton_(button, filter.description(), filter.configuration(), false);
+      if (parent_.buttonActions_[index]->settingsKey() == name)
+      {
+        actions = parent_.buttonActions_[index];
+
+        // Set the filter
+        auto filter = qvariant_cast<FilterConfiguration>(value);
+        actions->setFilterConfiguration(filter);
+        return;
+      }
     }
+
+    // Settings are being changed, but we don't have buttonActions_ for them
+    assert(0);
   }
 
 private:
   EntityTreeComposite& parent_;
 };
 
-
 //-----------------------------------------------------------------------------------
-
 
 EntityTreeComposite::EntityTreeComposite(QWidget* parent)
 : QWidget(parent),
@@ -176,198 +264,23 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   tr("Performs filtering based on entity names.<p>Right click in the text field to modify filtering options.")));
 
   // Default to off until a settings is passed in
-  composite_->filterConfigButton1->setVisible(false);
-  composite_->filterConfigButton2->setVisible(false);
-  composite_->filterConfigButton3->setVisible(false);
-  composite_->filterConfigButton4->setVisible(false);
+  composite_->filterConfigWidget->setVisible(false);
 }
 
 EntityTreeComposite::~EntityTreeComposite()
 {
-  if ((settings_ != NULL) && (observer_ != NULL))
+  if (settings_)
   {
-    settings_->removeObserver(SETTING_NAME_FILTER + composite_->filterConfigButton1->objectName(), observer_);
-    settings_->removeObserver(SETTING_NAME_FILTER + composite_->filterConfigButton2->objectName(), observer_);
-    settings_->removeObserver(SETTING_NAME_FILTER + composite_->filterConfigButton3->objectName(), observer_);
-    settings_->removeObserver(SETTING_NAME_FILTER + composite_->filterConfigButton4->objectName(), observer_);
+    for (auto i = buttonActions_.begin(); i != buttonActions_.end(); ++i)
+      settings_->removeObserver((*i)->settingsKey(), observer_);
   }
 
   closeFilters_(); // clean up filter dialog
+  qDeleteAll(buttonActions_);
+  buttonActions_.clear();
   delete composite_;
   delete entityTreeWidget_;
   // we don't own model_ so don't delete it
-}
-
-void EntityTreeComposite::initFilterConfigurationButton_(QToolButton* button, const QString& iconName)
-{
-  button->setVisible(true);
-
-  connect(button, SIGNAL(clicked()), this, SLOT(loadConfig_()));
-  // Disable the menu indicator turned on by adding actions below
-  button->setStyleSheet("QToolButton::menu-indicator { image: none; }");
-
-  // Set initial icon
-  button->setIcon(QIcon(INACTIVE_ICON_NAME));
-
-  // Context menu actions
-  QAction* saveConfig = new QAction(tr("Save Current Configuration..."), button);
-  saveConfig->setIcon(QIcon(":simQt/images/Save.png"));
-  connect(saveConfig, SIGNAL(triggered()), this, SLOT(saveConfig_()));
-
-  QAction* clearConfig = new QAction(CLEAR_CONFIG_ACTION_TEXT, button);
-  clearConfig->setIcon(QIcon(":simQt/images/Clean Up.png"));
-  clearConfig->setEnabled(false); // Enabled when a config is saved
-  connect(clearConfig, SIGNAL(triggered()), this, SLOT(clearConfig_()));
-
-  // Add actions to button's context menu
-  button->setContextMenuPolicy(Qt::ActionsContextMenu);
-  button->addAction(saveConfig);
-  button->addAction(clearConfig);
-
-  // Set default tool tip
-  button->setToolTip(DEFAULT_FILTER_CONFIG_TOOLTIP);
-
-  // Set active (colored) icon for this button
-  buttonNamesToIconNames_[button->objectName()] = iconName;
-
-  QString name = SETTING_NAME_FILTER + button->objectName();
-  QVariant defaultValue;
-  defaultValue.setValue(FilterConfiguration());
-  Settings::MetaData metaData(Settings::VARIANT_MAP, defaultValue, "", Settings::PRIVATE);
-  auto filter = qvariant_cast<FilterConfiguration>(settings_->value(name, metaData, observer_));
-  if (!filter.description().isEmpty())
-    updateButton_(button, filter.description(), filter.configuration(), false);
-}
-
-void EntityTreeComposite::loadConfig_()
-{
-  QToolButton* button = qobject_cast<QToolButton*>(sender());
-  if (button == NULL)
-  {
-    assert(0); // Sender should be a QToolButton
-    return;
-  }
-
-  // Find configuration stored by this button
-  FilterConfiguration fc = buttonsToFilterConfigs_[button];
-
-  // Apply filter configuration to the widget, which sends a call
-  // out to the other Entity Filters and updates them to match
-  entityTreeWidget_->setFilterSettings(fc.configuration());
-}
-
-void EntityTreeComposite::saveConfig_()
-{
-  // Cast to sender's parent because we want the QToolButton, not the QAction
-  QToolButton* button = qobject_cast<QToolButton*>(sender()->parent());
-  if (button == NULL)
-  {
-    assert(0); // Sender should be a QToolButton, possibly the QAction sender()'s parentage has changed?
-    return;
-  }
-
-  // Show the previous filter configuration's description as the placeholder text, if it exists
-  FilterConfiguration fc = buttonsToFilterConfigs_[button];
-
-  // Get description from user
-  bool okay;
-  QString desc = QInputDialog::getText(this, tr("Save Filter Configuration"), tr("Enter a description to save with this filter configuration:"), QLineEdit::Normal, fc.description(), &okay);
-
-  // If user clicked cancel or did not enter in a description, don't do anything further
-  if ((!okay) || desc.isEmpty())
-    return;
-
-  // Get current filter settings to save
-  QMap<QString, QVariant> configuration;
-  getFilterSettings(configuration);
-
-  // Need to emit that the button has been updated
-  updateButton_(button, desc, configuration);
-}
-
-void EntityTreeComposite::updateButton_(QToolButton* button, const QString& desc, const QMap<QString, QVariant>& configuration, bool save)
-{
-  if (desc.isEmpty())
-  {
-    resetButton_(button, save);
-    return;
-  }
-
-  // Check if we're overwriting a stored configuration
-  FilterConfiguration fc = buttonsToFilterConfigs_[button];
-  if (fc.configuration().isEmpty())
-  {
-    Q_FOREACH(QAction* action, button->actions())
-    {
-      // Need to enable the clear action if we're saving to a
-      // button without a configuration saved to it already
-      if (action->text() == CLEAR_CONFIG_ACTION_TEXT)
-        action->setEnabled(true);
-    }
-  }
-
-  // Store FilterConfiguration internally
-  QString buttonName = button->objectName();
-  fc.setButtonName(buttonName);
-  fc.setDescription(desc);
-  fc.setConfiguration(configuration);
-  buttonsToFilterConfigs_[button] = fc;
-
-  // Set the button's tool tip
-  button->setToolTip(simQt::formatTooltip(tr("Filter Configuration Saved"), fc.description()));
-
-  // Update the button's icon to the active (colored) icon
-  QString iconName = buttonNamesToIconNames_[buttonName];
-  button->setIcon(QIcon(iconName));
-
-  if ((settings_ != NULL) && save)
-  {
-    QVariant value;
-    value.setValue(FilterConfiguration(buttonName, desc, configuration));
-    QString name = SETTING_NAME_FILTER + buttonName;
-    settings_->setValue(name, value, observer_);
-  }
-}
-
-void EntityTreeComposite::clearConfig_()
-{
-  // Cast to sender's parent because we want the QToolButton, not the QAction
-  QToolButton* button = qobject_cast<QToolButton*>(sender()->parent());
-  if (button == NULL)
-  {
-    assert(0); // Sender should be a QToolButton, possibly the QAction sender()'s parentage has changed?
-    return;
-  }
-
-  // Need to emit that we've cleared the button
-  resetButton_(button);
-}
-
-void EntityTreeComposite::resetButton_(QToolButton* button, bool save)
-{
-  // Clear saved configuration for this button
-  buttonsToFilterConfigs_.erase(button);
-
-  // Reset default tool tip
-  button->setToolTip(DEFAULT_FILTER_CONFIG_TOOLTIP);
-
-  // Update the button's icon to the inactive
-  button->setIcon(QIcon(INACTIVE_ICON_NAME));
-
-  // Disable the clear action
-  Q_FOREACH(QAction* action, button->actions())
-  {
-    if (action->text() == CLEAR_CONFIG_ACTION_TEXT)
-      action->setEnabled(false);
-  }
-
-  if ((settings_ != NULL) && save)
-  {
-    QVariant value;
-    value.setValue(FilterConfiguration(button->objectName(), "", QMap<QString, QVariant>()));
-    QString name = SETTING_NAME_FILTER + button->objectName();
-    settings_->setValue(name, value, observer_);
-  }
 }
 
 void EntityTreeComposite::addEntityFilter(EntityFilter* entityFilter)
@@ -480,15 +393,49 @@ void EntityTreeComposite::setListTreeButtonDisplayed(bool value)
   composite_->pushButton->setVisible(value);
 }
 
+QIcon EntityTreeComposite::configIconForIndex_(int index) const
+{
+  switch (index)
+  {
+  case 0:
+    return QIcon(":simQt/images/Data Blue Filter.png");
+  case 1:
+    return QIcon(":simQt/images/Data Green Filter.png");
+  case 2:
+    return QIcon(":simQt/images/Data Purple Filter.png");
+  default:
+    break;
+  }
+  return QIcon(":simQt/images/Data Red Filter.png");
+}
+
+QToolButton* EntityTreeComposite::configButtonForIndex_(int index) const
+{
+  switch (index)
+  {
+  case 0:
+    return composite_->f1Button;
+  case 1:
+    return composite_->f2Button;
+  case 2:
+    return composite_->f3Button;
+  default:
+    break;
+  }
+  return composite_->f4Button;
+}
+
 void EntityTreeComposite::setSettings(SettingsPtr settings)
 {
   entityTreeWidget_->setSettings(settings);
 
   // make sure the composite's treeview/listview pushbutton state matches widget treeview/listview
   // state, suppress signal since the widget will have already done the toggle
-  bool treeView = entityTreeWidget_->isTreeView();
-  simQt::ScopedSignalBlocker blockSignals(*toggleTreeViewAction_);
-  setTreeView_(treeView);
+  {
+    bool treeView = entityTreeWidget_->isTreeView();
+    simQt::ScopedSignalBlocker blockSignals(*toggleTreeViewAction_);
+    setTreeView_(treeView);
+  }
 
   // Can only set the setting once
   assert(settings_ == NULL);
@@ -501,11 +448,87 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
   if (observer_ == NULL)
     observer_.reset(new Observer(*this));
 
-  // Set up filter configuration buttons
-  initFilterConfigurationButton_(composite_->filterConfigButton1, ":simQt/images/Data Blue Filter.png");
-  initFilterConfigurationButton_(composite_->filterConfigButton2, ":simQt/images/Data Green Filter.png");
-  initFilterConfigurationButton_(composite_->filterConfigButton3, ":simQt/images/Data Purple Filter.png");
-  initFilterConfigurationButton_(composite_->filterConfigButton4, ":simQt/images/Data Red Filter.png");
+  // Filter configuration buttons use signal mappers to convey index
+  QSignalMapper* loadMapper = new QSignalMapper(this);
+  connect(loadMapper, SIGNAL(mapped(int)), this, SLOT(loadFilterConfig_(int)));
+  QSignalMapper* saveMapper = new QSignalMapper(this);
+  connect(saveMapper, SIGNAL(mapped(int)), this, SLOT(saveFilterConfig_(int)));
+  QSignalMapper* clearMapper = new QSignalMapper(this);
+  connect(clearMapper, SIGNAL(mapped(int)), this, SLOT(clearFilterConfig_(int)));
+  for (int k = 0; k < 4; ++k)
+  {
+    QToolButton* button = configButtonForIndex_(k);
+    // Failure here can cause indexing issues
+    assert(button);
+    if (!button)
+      break;
+    ButtonActions* actions = new ButtonActions(*button, configIconForIndex_(k));
+
+    // Configure all signals to our signal mappers
+    loadMapper->setMapping(actions->loadAction(), k);
+    connect(actions->loadAction(), SIGNAL(triggered()), loadMapper, SLOT(map()));
+    saveMapper->setMapping(actions->saveAction(), k);
+    connect(actions->saveAction(), SIGNAL(triggered()), saveMapper, SLOT(map()));
+    clearMapper->setMapping(actions->clearAction(), k);
+    connect(actions->clearAction(), SIGNAL(triggered()), clearMapper, SLOT(map()));
+
+    // Initialize the button with the filter data from settings
+    QVariant defaultValue;
+    defaultValue.setValue(FilterConfiguration());
+    Settings::MetaData metaData(Settings::VARIANT_MAP, defaultValue, "", Settings::PRIVATE);
+    auto filter = qvariant_cast<FilterConfiguration>(settings_->value(actions->settingsKey(), metaData, observer_));
+    actions->setFilterConfiguration(filter);
+
+    // Save the action for later
+    buttonActions_.push_back(actions);
+  }
+
+  // Show buttons
+  composite_->filterConfigWidget->setVisible(true);
+}
+
+void EntityTreeComposite::loadFilterConfig_(int index)
+{
+  entityTreeWidget_->setFilterSettings(buttonActions_[index]->filterConfiguration().configuration());
+}
+
+void EntityTreeComposite::saveFilterConfig_(int index)
+{
+  ButtonActions* action = buttonActions_[index];
+  bool okay = false;
+  const QString desc = QInputDialog::getText(this, tr("Save Filter Configuration"),
+    tr("Enter a description to save with this filter configuration:"),
+    QLineEdit::Normal, action->description(), &okay,
+    Qt::WindowCloseButtonHint | Qt::WindowTitleHint | Qt::Dialog );
+
+  // If user clicked cancel or did not enter in a description, don't do anything further
+  if ((!okay) || desc.isEmpty())
+    return;
+  // Get current filter settings to save
+  QMap<QString, QVariant> variantMap;
+  getFilterSettings(variantMap);
+  FilterConfiguration newConfig(desc, variantMap);
+  action->setFilterConfiguration(newConfig);
+  // Save the value also to settings
+  if (settings_ != NULL)
+  {
+    QVariant value;
+    value.setValue(action->filterConfiguration());
+    settings_->setValue(action->settingsKey(), value, observer_);
+  }
+}
+
+void EntityTreeComposite::clearFilterConfig_(int index)
+{
+  ButtonActions* action = buttonActions_[index];
+  FilterConfiguration emptyConfig;
+  action->setFilterConfiguration(emptyConfig);
+  if (settings_ != NULL)
+  {
+    QVariant value;
+    value.setValue(action->filterConfiguration());
+    settings_->setValue(action->settingsKey(), value, observer_);
+  }
 }
 
 void EntityTreeComposite::initializeSettings(SettingsPtr settings)
@@ -536,7 +559,7 @@ void EntityTreeComposite::showFilters_()
   filterDialog_ = new FilterDialog(this);
   QList<QWidget*> filterWidgets = entityTreeWidget_->filterWidgets(filterDialog_);
   filterDialog_->setMinimumWidth(200);
-  filterDialog_->setWindowTitle("Entity Filters");
+  filterDialog_->setWindowTitle(tr("Entity Filters"));
   filterDialog_->setWindowFlags(filterDialog_->windowFlags() ^ Qt::WindowContextHelpButtonHint);
   QVBoxLayout* layout = new QVBoxLayout(filterDialog_);
   layout->setContentsMargins(2, 2, 2, 2);
@@ -648,6 +671,7 @@ void EntityTreeComposite::setUseEntityIcons(bool showIcons)
   model_->setUseEntityIcons(showIcons);
 }
 
+//---------------------------------------------------------------------------------------------
 
 EntityTreeComposite::FilterConfiguration::FilterConfiguration()
 {
@@ -663,21 +687,10 @@ EntityTreeComposite::FilterConfiguration::FilterConfiguration(const FilterConfig
   configuration_ = rhs.configuration_;
 }
 
-EntityTreeComposite::FilterConfiguration::FilterConfiguration(const QString& buttonName, const QString& description, const QMap<QString, QVariant>& configuration)
-  : buttonName_(buttonName),
-    description_(description),
+EntityTreeComposite::FilterConfiguration::FilterConfiguration(const QString& description, const QMap<QString, QVariant>& configuration)
+  : description_(description),
     configuration_(configuration)
 {
-}
-
-QString EntityTreeComposite::FilterConfiguration::buttonName() const
-{
-  return buttonName_;
-}
-
-void EntityTreeComposite::FilterConfiguration::setButtonName(const QString& buttonName)
-{
-  buttonName_ = buttonName;
 }
 
 QString EntityTreeComposite::FilterConfiguration::description() const
@@ -702,12 +715,10 @@ void EntityTreeComposite::FilterConfiguration::setConfiguration(const QMap<QStri
 
 }
 
-
 //---------------------------------------------------------------------------------------------
 
 QDataStream &operator<<(QDataStream& out, const simQt::EntityTreeComposite::FilterConfiguration& myObj)
 {
-  // Not saving name to settings since the key is the name
   out << myObj.description() << myObj.configuration();
   return out;
 }

@@ -6,6 +6,7 @@
     <file>images/Building Corporation.png</file>
     <file>images/Tree View.png</file>
     <file>images/Close.png</file>
+    <file>images/Delete.png</file>
     <file>images/Filter.png</file>
     <file>images/Find.png</file>
     <file>images/Folder.png</file>
@@ -36,7 +37,6 @@
     <file>images/Data Green Filter.png</file>
     <file>images/Data Purple Filter.png</file>
     <file>images/Data Red Filter.png</file>
-    <file>images/Data Inactive Filter.png</file>
     <file>images/Save.png</file>
     <file>images/Clean Up.png</file>
   </qresource>

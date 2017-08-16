@@ -59,8 +59,11 @@ signals:
   void closedGui();
 };
 
-/** Composite of entity view, filter, and entity model, provides connectivity between all participants */
-/** Buttons can be added to the row with the filter text field to support features like Range Tool with its extra buttons. */
+
+/**
+ * Composite of entity view, filter, and entity model, provides connectivity between all participants.
+ * Buttons can be added to the row with the filter text field to support features like Range Tool with its extra buttons.
+ */
 class SDKQT_EXPORT EntityTreeComposite : public QWidget
 {
   Q_OBJECT;
@@ -127,10 +130,7 @@ public:
     virtual ~FilterConfiguration();
 
     FilterConfiguration(const FilterConfiguration& rhs);
-    FilterConfiguration(const QString& buttonName, const QString& description, const QMap<QString, QVariant>& configuration);
-
-    QString buttonName() const;
-    void setButtonName(const QString& buttonName);
+    FilterConfiguration(const QString& description, const QMap<QString, QVariant>& configuration);
 
     QString description() const;
     void setDescription(const QString& description);
@@ -139,7 +139,6 @@ public:
     void setConfiguration(const QMap<QString, QVariant>& configuration);
 
   private:
-    QString buttonName_;                    ///< Name of the button associated with this configuration
     QString description_;                   ///< User-supplied description of the configuration
     QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
@@ -193,12 +192,13 @@ private slots:
   void centerOnSelection_();
   /** Toggle the tree/list view and update related UI component and action states */
   void setTreeView_(bool useTreeView);
-  /** Load a filter configuration stored by the button that triggers this slot */
-  void loadConfig_();
-  /** Save a filter configuration to the button that triggers this slot */
-  void saveConfig_();
-  /** Clear the filter configuration stored by the button that triggers this slot */
-  void clearConfig_();
+
+  /** Loads the filter configuration indicated by the index provided */
+  void loadFilterConfig_(int index);
+  /** Saves over the filter configuration indicated by the index provided */
+  void saveFilterConfig_(int index);
+  /** Clears the filter configuration indicated by the index provided */
+  void clearFilterConfig_(int index);
 
 private:
   /** Watch for settings changes related to the buttons */
@@ -206,31 +206,10 @@ private:
 
   /** Update Collapse All and Expand All action enabled states */
   void updateActionEnables_();
-  /**
-  * Set up a QToolButton to be used as a Filter Configuration button
-  * @param button pointer to QToolButton to set up
-  * @param iconName name of the icon to use for this button when a configuration is stored in it, e.g. ":simQt/images/Blue Data Filter.png"
-  */
-  void initFilterConfigurationButton_(QToolButton* button, const QString& iconName);
-  /**
-  * Update a filter configuration button's tool tip and icon,
-  * and update its entry in our map with the updated configuration.
-  * If the caller is responding to a button update that occurred in another
-  * EntityTreeComposite instance, fireSignal should be set to false.
-  * @param button pointer to the button that updated
-  * @param desc the user-supplied description to put in the tool tip
-  * @param configuration the updated filter settings configuration to store with the button
-  * @param save If true, save to settings
-  */
-  void updateButton_(QToolButton* button, const QString& desc, const QMap<QString, QVariant>& configuration, bool save = true);
-  /**
-  * Reset a filter configuration button's tool tip and icon, and remove from our
-  * internal map. If the caller is responding to a button clear has occurred in
-  * another EntityTreeComposite instance, fireSignal should be set to false.
-  * @param button pointer to QToolButton to reset
-  * @param save If true, save to settings
-  */
-  void resetButton_(QToolButton* button, bool save = true);
+  /** Retrieves the QToolButton associated with the filter configuration index */
+  QToolButton* configButtonForIndex_(int index) const;
+  /** Retrieves the QIcon associated with the filter configuration index */
+  QIcon configIconForIndex_(int index) const;
 
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
@@ -242,10 +221,12 @@ private:
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
   bool useCenterAction_;
-  std::map<QToolButton*, FilterConfiguration> buttonsToFilterConfigs_;
-  std::map<QString, QString> buttonNamesToIconNames_;
+
   SettingsPtr settings_;
   simQt::Settings::ObserverPtr observer_;
+
+  class ButtonActions;
+  std::vector<ButtonActions*> buttonActions_;
 };
 
 }
