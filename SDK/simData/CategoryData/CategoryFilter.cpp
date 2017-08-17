@@ -130,8 +130,10 @@ CategoryFilter& CategoryFilter::operator=(const CategoryFilter& other)
     return *this;
 
   if ((dataStore_ != NULL) && (listenerPtr_ != NULL))
+  {
     dataStore_->categoryNameManager().removeListener(listenerPtr_);
-
+    listenerPtr_.reset();
+  }
   dataStore_ = other.dataStore_;
   regExpFactory_ = other.regExpFactory_;
   autoUpdate_ = other.autoUpdate_;
@@ -141,8 +143,8 @@ CategoryFilter& CategoryFilter::operator=(const CategoryFilter& other)
   if (dataStore_ != NULL && autoUpdate_)
   {
     // re-add observers/listeners
-    if (listenerPtr_ == NULL)
-      listenerPtr_.reset(new CategoryFilterListener(this));
+    assert(listenerPtr_ == NULL);
+    listenerPtr_.reset(new CategoryFilterListener(this));
     dataStore_->categoryNameManager().addListener(listenerPtr_);
   }
 
