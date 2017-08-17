@@ -37,7 +37,7 @@ QFileDialog::Options getFileDialogDefaultOptions()
   // e.g. ones that use certain types of COM from SIMDIS Plug-ins, that may need to force Native Dialogs off.
   if (!getenv("SDK_NATIVE_FILE_DIALOG") || (strcmp(getenv("SDK_NATIVE_FILE_DIALOG"), "1") == 0))
     return 0;
-#endif;
+#endif
   // On Linux, always avoid the native dialog due to event loop problems with FOX in SIMDIS 10
   return QFileDialog::DontUseNativeDialog;
 }
