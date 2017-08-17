@@ -21,7 +21,7 @@
  */
 #include <QMetaType>
 #include "ui_EntityTypeFilter.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/EntityTypeFilterWidget.h"
 
 namespace simQt {

@@ -29,7 +29,6 @@
 #include <osg/Vec4f>
 #include <QColor>
 #include "simCore/Common/Export.h"
-#include "simQt/QtFormatting.h"
 
 namespace simQt {
 

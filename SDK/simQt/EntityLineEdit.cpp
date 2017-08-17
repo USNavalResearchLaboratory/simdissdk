@@ -25,7 +25,7 @@
 
 #include "simData/DataStoreHelpers.h"
 #include "simCore/Time/Clock.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/EntityStateFilter.h"

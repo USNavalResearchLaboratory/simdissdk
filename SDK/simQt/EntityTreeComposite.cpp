@@ -26,7 +26,7 @@
 #include <QVBoxLayout>
 #include <QSignalMapper>
 #include <QClipboard>
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/EntityTreeWidget.h"
