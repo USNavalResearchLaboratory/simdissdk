@@ -178,16 +178,18 @@ public:
 
   /**
   * Serialize the category filter into a SIMDIS 9 compatible string
-  * @param simplify If true return " " if all category values are checked
+  * @param simplify if true, return " " if all category values are checked
   * @return string  the serialized category filter
   */
   std::string serialize(bool simplify = true) const;
 
   /**
   * De-serialize a category filter string from a SIMDIS 9 compatible string
+  * @param checksString serialization of the category filter
+  * @param skipEmptyCategories if true, optimize filter by skipping unchecked categories
   * @return true on success, false if there is any problem
   */
-  bool deserialize(const std::string &checksString);
+  bool deserialize(const std::string &checksString, bool skipEmptyCategories = true);
 
   /** Set the factory for creating RegExpFilter objects. Caller retains ownership of memory */
   void setRegExpFilterFactory(RegExpFilterFactoryPtr factory);

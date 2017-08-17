@@ -529,6 +529,7 @@ std::string CategoryFilter::serialize(bool simplify) const
 {
   if (dataStore_ == NULL)
     return " ";
+
   simData::CategoryNameManager& catNameMgr = dataStore_->categoryNameManager();
   std::string rv;
 
@@ -605,7 +606,7 @@ std::string CategoryFilter::serialize(bool simplify) const
 }
 
 ///@return false on fail
-bool CategoryFilter::deserialize(const std::string &checksString)
+bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmptyCategories)
 {
   if (dataStore_ == NULL)
     return false;
@@ -667,8 +668,9 @@ bool CategoryFilter::deserialize(const std::string &checksString)
 
     const char checkString = tmpString[(int(tmpString.size()) - 2)];
     const bool categoryChecked = (checkString == '1');
-    // skip empty categories
-    if (!categoryChecked)
+
+    // skip unchecked categories if optimizing
+    if (skipEmptyCategories && !categoryChecked)
       continue;
 
     const int categoryName = categoryManager.addCategoryName(categoryNameString);
