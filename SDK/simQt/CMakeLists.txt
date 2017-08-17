@@ -257,6 +257,9 @@ if(SIMQT_SHARED)
 else()
     target_compile_definitions(SIMDIS_SDKQt PUBLIC SIMDIS_SDKQt_LIB_EXPORT_STATIC)
 endif()
+if(TARGET SIMDIS_SDKData)
+    target_compile_definitions(SIMDIS_SDKQt PRIVATE HAVE_SIMDATA)
+endif()
 
 # If simQt is a DLL, avoid linking in "heavy" dependencies if possible
 if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
