@@ -253,6 +253,11 @@ namespace simVis
     bool showTrack_(const simData::PlatformPrefs& prefs) const;
 
     /**
+    * Mark the platform as not valid; receipt of a valid datastore update will make the platform valid again
+    */
+    void setInvalid_();
+
+    /**
     * Indicates if the track history should show based on the expireMode flag.
     * @param prefs current pref values to determine the expireMode
     * @return true if expireMode is set to true and scenario time is > last platform history point

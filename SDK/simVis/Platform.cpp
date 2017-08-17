@@ -439,13 +439,11 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     PlatformTspiFilterManager::FilterResponse modified = platformTspiFilterManager_.filter(current, lastPrefs_, lastProps_);
     if (modified == PlatformTspiFilterManager::POINT_DROPPED)
     {
-      valid_ = false;
-      setNodeMask(simVis::DISPLAY_MASK_NONE);
-      lastUpdate_ = NULL_PLATFORM_UPDATE;
+      setInvalid_();
       if (velocityAxisVector_)
-        velocityAxisVector_->update(lastUpdate_);
+        velocityAxisVector_->update(NULL_PLATFORM_UPDATE);
       if (ephemerisVector_)
-        ephemerisVector_->update(lastUpdate_);
+        ephemerisVector_->update(NULL_PLATFORM_UPDATE);
       return true;
     }
     valid_ = true;
@@ -467,9 +465,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   else
   {
     // a NULL update means the platform should be disabled
-    valid_ = false;
-    setNodeMask(simVis::DISPLAY_MASK_NONE);
-    lastUpdate_ = NULL_PLATFORM_UPDATE;
+    setInvalid_();
   }
 
   // remove or create track history
@@ -504,6 +500,13 @@ bool PlatformNode::isActive_(const simData::PlatformPrefs& prefs) const
 {
   // the valid_ flag indicates that the platform node has data at current scenario time, but this can be manually overridden by the datadraw flag
   return valid_ && lastPrefs_.commonprefs().datadraw();
+}
+
+void PlatformNode::setInvalid_(void)
+{
+  valid_ = false;
+  lastUpdate_ = NULL_PLATFORM_UPDATE;
+  setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
 bool PlatformNode::showTrack_(const simData::PlatformPrefs& prefs) const
@@ -541,13 +544,13 @@ void PlatformNode::updateClockMode(const simCore::Clock* clock)
 
 void PlatformNode::flush()
 {
-  lastUpdate_ = NULL_PLATFORM_UPDATE;
+  setInvalid_();
   if (track_.valid())
     track_->reset();
   if (velocityAxisVector_)
-    velocityAxisVector_->update(lastUpdate_);
+    velocityAxisVector_->update(NULL_PLATFORM_UPDATE);
   if (ephemerisVector_)
-    ephemerisVector_->update(lastUpdate_);
+    ephemerisVector_->update(NULL_PLATFORM_UPDATE);
 }
 
 double PlatformNode::range() const
@@ -585,8 +588,7 @@ const std::string PlatformNode::getEntityName(EntityNode::NameType nameType, boo
 
 void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
 {
-  // unclear what the logic for checking has_time() is - possibly excluding !valid_ uninitialized platform, but including !valid_ expired platform
-  if (model_ && lastUpdate_.has_time())
+  if (model_ && valid_)
   {
     std::string label = getEntityName(EntityNode::DISPLAY_NAME, true);
     if (prefs.commonprefs().labelprefs().namelength() > 0)
