@@ -673,6 +673,8 @@ void EntityTreeComposite::setUseEntityIcons(bool showIcons)
 
 //---------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------
+
 EntityTreeComposite::FilterConfiguration::FilterConfiguration()
 {
 }

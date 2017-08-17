@@ -240,6 +240,9 @@ void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore:
 
 void EntityLineEdit::setStateFilter(EntityStateFilter::State state)
 {
+  if (state_ == state)
+    return;
+
   state_ = state;
 
   if (entityStateFilter_ != NULL)
@@ -247,6 +250,8 @@ void EntityLineEdit::setStateFilter(EntityStateFilter::State state)
 
   if (entityDialog_ != NULL)
     entityDialog_->setStateFilter(state_);
+
+  emit stateFilterChanged(state_);
 }
 
 EntityStateFilter::State EntityLineEdit::stateFilter() const
@@ -403,6 +408,44 @@ bool EntityLineEdit::eventFilter(QObject* obj, QEvent* evt)
     }
   }
   return false;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+
+BoundEntityLineEdit::BoundEntityLineEdit(EntityLineEdit* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData)
+  : BoundIntegerSetting(parent, settings, variableName, metaData)
+{
+  qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
+
+  parent->setStateFilter(static_cast<EntityStateFilter::State>(value()));
+  connect(parent, SIGNAL(stateFilterChanged(simQt::EntityStateFilter::State)), this, SLOT(setStateFromLineEdit_(simQt::EntityStateFilter::State)));
+  connect(this, SIGNAL(valueChanged(int)), this, SLOT(setStateFromSettings_(int)));
+}
+
+BoundEntityLineEdit::~BoundEntityLineEdit()
+{
+}
+
+void BoundEntityLineEdit::setStateFromLineEdit_(EntityStateFilter::State state)
+{
+  setValue(static_cast<int>(state));
+}
+
+void BoundEntityLineEdit::setStateFromSettings_(int state)
+{
+  static_cast<EntityLineEdit*>(parent())->setStateFilter(static_cast<EntityStateFilter::State>(state));
+}
+
+simQt::Settings::MetaData BoundEntityLineEdit::metaData()
+{
+  QMap<int, QString> state;
+  state.insert(0, "Active");
+  state.insert(1, "Inactive");
+  state.insert(2, "Both");
+
+  return simQt::Settings::MetaData(simQt::Settings::MetaData::makeEnumeration(
+    0, state, "Entities to display in various controls.", simQt::Settings::DEFAULT));
 }
 
 }

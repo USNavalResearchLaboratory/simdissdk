@@ -28,6 +28,7 @@
 #include <QAbstractItemView>
 #include "simCore/Common/Common.h"
 #include "simData/DataStore.h"
+#include "simQt/BoundSettings.h"
 #include "EntityStateFilter.h"
 #include "simQt/Settings.h"
 
@@ -121,12 +122,12 @@ public:
   /** Place holder text in the line edit */
   void setPlaceholderText(const QString& text);
 
-  /** Set the state filter to the given state */
-  void setStateFilter(EntityStateFilter::State state);
   /** Returns the current state filter */
   EntityStateFilter::State stateFilter() const;
 
 public slots:
+  /** Set the state filter to the given state */
+  void setStateFilter(simQt::EntityStateFilter::State state);
   /** Sets the Unique ID for the entity to display in the QEditLine */
   int setSelected(uint64_t id);
   /** Closes the entity dialog */
@@ -135,6 +136,8 @@ public slots:
 signals:
   /** Signal emitted when the user selects an entity */
   void itemSelected(uint64_t id);
+  /** Signal emitted when state filter changes */
+  void stateFilterChanged(simQt::EntityStateFilter::State state);
 
 protected:
   /** Re-implement eventFilter() to allow a double click to display the dialog */
@@ -164,6 +167,24 @@ private:
   simCore::Clock* clock_;  ///< Allow filtering by active/inactive
   simQt::EntityStateFilter* entityStateFilter_; ///< Filtering based on entity state
   EntityStateFilter::State state_; ///< Current state of filtering
+};
+
+/** Helper class to bind a EntityLineEdit object to Settings*/
+class SDKQT_EXPORT BoundEntityLineEdit : public BoundIntegerSetting
+{
+  Q_OBJECT
+
+public:
+  /** Constructor, will set the value of parent */
+  BoundEntityLineEdit(EntityLineEdit* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData);
+  virtual ~BoundEntityLineEdit();
+
+  /** Returns standard meta data for entity active/inactive state */
+  static simQt::Settings::MetaData BoundEntityLineEdit::metaData();
+
+private slots:
+  void setStateFromLineEdit_(simQt::EntityStateFilter::State state);
+  void setStateFromSettings_(int state);
 };
 
 }
