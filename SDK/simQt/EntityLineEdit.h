@@ -180,7 +180,7 @@ public:
   virtual ~BoundEntityLineEdit();
 
   /** Returns standard meta data for entity active/inactive state */
-  static simQt::Settings::MetaData BoundEntityLineEdit::metaData();
+  static simQt::Settings::MetaData metaData();
 
 private slots:
   void setStateFromLineEdit_(simQt::EntityStateFilter::State state);
