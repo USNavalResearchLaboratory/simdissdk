@@ -1225,7 +1225,7 @@ message LobGroupPrefs {
   /// the maximum number of seconds of history data to display
   optional double maxDataSeconds = 8 [default = 5.0];
   /// the maximum number of data points to display
-  optional uint32 maxDataPoints = 9 [default = 1800];
+  optional uint32 maxDataPoints = 9 [default = 10];
   /// Clamp to ground if true, otherwise no clamping
   optional bool lobUseClampAlt = 10 [default = false];
 
