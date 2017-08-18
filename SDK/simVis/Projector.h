@@ -161,9 +161,9 @@ public: // EntityNode interface
   virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force = false);
 
   /**
-  * Flushes all the entity's data point visualization.  No meaning for Projectors
+  * Flushes all the entity's data point visualization.
   */
-  virtual void flush() {}
+  virtual void flush();
 
   /**
   * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.

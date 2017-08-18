@@ -603,7 +603,6 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
   const bool applyUpdate = updateSlice->hasChanged() || force || lobChangedToActive;
   if (applyUpdate)
   {
-
     if (current)
     {
       // lobGroup gets a pref update immediately after creation; after that, lastPrefsValid_ should always be true
@@ -638,6 +637,8 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
 void LobGroupNode::flush()
 {
   lineCache_->clearCache(this);
+  setNodeMask(DISPLAY_MASK_NONE);
+  hasLastUpdate_ = false;
 }
 
 double LobGroupNode::range() const

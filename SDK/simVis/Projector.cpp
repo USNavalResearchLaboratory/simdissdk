@@ -524,9 +524,7 @@ bool ProjectorNode::updateFromDataStore(const simData::DataSliceBase* updateSlic
     else if (projectorChangedToInactive || hostChangedToInactive)
     {
       // If host not active or update doesn't exist, turn projector off
-      projectorActive_->set(false);
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -535,6 +533,13 @@ bool ProjectorNode::updateFromDataStore(const simData::DataSliceBase* updateSlic
   updateLabel_(lastPrefs_);
 
   return updateApplied;
+}
+
+void ProjectorNode::flush()
+{
+  projectorActive_->set(false);
+  setNodeMask(DISPLAY_MASK_NONE);
+  hasLastUpdate_ = false;
 }
 
 double ProjectorNode::range() const

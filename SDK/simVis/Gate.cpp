@@ -463,8 +463,7 @@ bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     else if (gateChangedToInactive || hostChangedToInactive)
     {
       // avoid applying a null update over and over - only apply the null update on the transition
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -478,6 +477,12 @@ bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     updateLabel_(lastPrefsApplied_);
 
   return updateApplied;
+}
+
+void GateNode::flush()
+{
+  hasLastUpdate_ = false;
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double GateNode::range() const

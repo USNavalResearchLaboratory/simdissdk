@@ -419,8 +419,7 @@ bool BeamNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     else if (beamChangedToInactive || hostChangedToInactive)
     {
       // avoid applying a null update over and over - only apply the null update on the transition
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -434,6 +433,12 @@ bool BeamNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     updateLabel_(lastPrefsApplied_);
 
   return updateApplied;
+}
+
+void BeamNode::flush()
+{
+  hasLastUpdate_ = false;
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double BeamNode::range() const

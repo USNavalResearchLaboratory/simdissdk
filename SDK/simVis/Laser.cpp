@@ -234,8 +234,7 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
     else if (laserChangedToInactive || hostChangedToInactive)
     {
       // avoid applying a null update over and over - only apply the null update on the transition
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -249,6 +248,12 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
     updateLabel_(lastPrefs_);
 
   return updateApplied;
+}
+
+void LaserNode::flush()
+{
+  hasLastUpdate_ = false;
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double LaserNode::range() const
