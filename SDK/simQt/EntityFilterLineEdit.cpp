@@ -21,16 +21,17 @@
  */
 #include <QMenu>
 #include <QContextMenuEvent>
-
+#include <QRegularExpression>
 #include "simQt/EntityFilterLineEdit.h"
 
 namespace simQt {
 
-EntityFilterLineEdit::EntityFilterLineEdit(QWidget  *parent)
+EntityFilterLineEdit::EntityFilterLineEdit(QWidget *parent)
   : QLineEdit(parent),
     caseSensitive_(Qt::CaseSensitive),
     expression_(QRegExp::RegExp),
-    regexOnly_(false)
+    regexOnly_(false),
+    valid_(true)
 {
   connect(this, SIGNAL(textChanged(QString)), this, SLOT(textFilterChanged()));
 
@@ -101,8 +102,42 @@ void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity 
   }
 }
 
+bool EntityFilterLineEdit::isValid() const
+{
+  return valid_;
+}
+
+void EntityFilterLineEdit::revalidate_()
+{
+  // Determine whether currently valid
+  bool newValid = true;
+  if (expression_ == QRegExp::RegExp)
+  {
+    const QRegularExpression re(text());
+    newValid = re.isValid();
+  }
+
+  // Change validity
+  if (newValid != valid_)
+  {
+    valid_ = newValid;
+    emit isValidChanged(valid_);
+
+    // Update palette
+    if (!valid_)
+    {
+      QPalette pal;
+      pal.setColor(QPalette::Text, QColor(145,0,0,255));
+      setPalette(pal);
+    }
+    else
+      setPalette(QPalette());
+  }
+}
+
 void EntityFilterLineEdit::textFilterChanged()
 {
+  revalidate_();
   emit(changed(text(), caseSensitive_, expression_));
 }
 
@@ -114,30 +149,37 @@ void EntityFilterLineEdit::caseSensitive()
       caseSensitive_ =  Qt::CaseInsensitive;
     else
       caseSensitive_ = Qt::CaseSensitive;
+    // Validity cannot change on this, don't revalidate
     emit(changed(text(), caseSensitive_, expression_));
   }
 }
 
 void EntityFilterLineEdit::regularExpression()
 {
-  expression_= QRegExp::RegExp;
-  emit(changed(text(), caseSensitive_, expression_));
+  if (expression_ != QRegExp::RegExp)
+  {
+    expression_= QRegExp::RegExp;
+    revalidate_();
+    emit(changed(text(), caseSensitive_, expression_));
+  }
 }
 
 void EntityFilterLineEdit::wildcard()
 {
-  if (!regexOnly_)
+  if (!regexOnly_ && expression_ != QRegExp::Wildcard)
   {
-    expression_= QRegExp::Wildcard;
+    expression_ = QRegExp::Wildcard;
+    revalidate_();
     emit(changed(text(), caseSensitive_, expression_));
   }
 }
 
 void EntityFilterLineEdit::fixedString()
 {
-  if (!regexOnly_)
+  if (!regexOnly_ && expression_ != QRegExp::FixedString)
   {
-    expression_= QRegExp::FixedString;
+    expression_ = QRegExp::FixedString;
+    revalidate_();
     emit(changed(text(), caseSensitive_, expression_));
   }
 }
@@ -167,6 +209,7 @@ void EntityFilterLineEdit::setRegexOnly(bool regexOnly)
   {
     caseSensitive_ = Qt::CaseInsensitive;
     expression_ = QRegExp::RegExp;
+    revalidate_();
     emit changed(text(), caseSensitive_, expression_);
   }
 }
