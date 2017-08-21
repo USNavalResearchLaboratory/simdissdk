@@ -22,6 +22,7 @@
 #include <cstdlib>
 
 #include "osgEarth/Registry"
+#include "osgEarth/Capabilities"
 #include "osgEarth/ImageLayer"
 #include "osgEarthDrivers/cache_filesystem/FileSystemCache"
 #include "osgEarthDrivers/mbtiles/MBTilesOptions"
@@ -35,6 +36,7 @@
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
+#include "simUtil/NullSkyModel.h"
 #include "simUtil/ExampleResources.h"
 
 
@@ -466,11 +468,17 @@ void simExamples::addDefaultSkyNode(simVis::Viewer* viewer)
 
 void simExamples::addDefaultSkyNode(simVis::SceneManager* sceneMan)
 {
-  osgEarth::Drivers::SimpleSky::SimpleSkyOptions skyOptions;
-  skyOptions.atmosphericLighting() = false;
-  skyOptions.ambient() = 0.5f;
-  skyOptions.exposure() = 2.0f;
-  sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(osgEarth::ConfigOptions(skyOptions), sceneMan->getMapNode()));
+  // Only install simple sky if the osgEarth capabilities permit it
+  if (osgEarth::Registry::capabilities().getGLSLVersionInt() >= 330)
+  {
+    osgEarth::Drivers::SimpleSky::SimpleSkyOptions skyOptions;
+    skyOptions.atmosphericLighting() = false;
+    skyOptions.ambient() = 0.5f;
+    skyOptions.exposure() = 2.0f;
+    sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(osgEarth::ConfigOptions(skyOptions), sceneMan->getMapNode()));
+  }
+  else
+    sceneMan->setSkyNode(new simUtil::NullSkyModel);
 }
 
 ////////////////////////////////////////////////
