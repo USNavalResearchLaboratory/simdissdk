@@ -527,9 +527,9 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
 
   double azimuth;
   double elevation;
-  simCore::CoordinateConverter converter;
-  simCore::calculateAbsAzEl(sourceLla, targetLla, &azimuth, &elevation, NULL, simCore::TANGENT_PLANE_WGS_84, &converter);
-  double range = simCore::calculateSlant(sourceLla, targetLla, simCore::TANGENT_PLANE_WGS_84, &converter);
+  // let the simCore::Calculations implementation do coordinate conversions; it guarantees that only one initialization occurs for both these calculations.
+  simCore::calculateAbsAzEl(sourceLla, targetLla, &azimuth, &elevation, NULL, simCore::TANGENT_PLANE_WGS_84, NULL);
+  const double range = simCore::calculateSlant(sourceLla, targetLla, simCore::TANGENT_PLANE_WGS_84, NULL);
   targetBeamUpdate.set_azimuth(azimuth);
   targetBeamUpdate.set_elevation(elevation);
   targetBeamUpdate.set_range(range);

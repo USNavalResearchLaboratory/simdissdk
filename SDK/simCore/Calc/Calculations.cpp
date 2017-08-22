@@ -35,6 +35,20 @@
 
 using namespace simCore;
 
+namespace
+{
+  // note that this returns const simCore::CoordinateConverter& - we can guarantee that the static cc will be present;
+  // if the caller provides a suitably initialized coordConv, then we just give it back.
+  const simCore::CoordinateConverter& initConverter(const CoordinateConverter* coordConv, const simCore::Vec3& refLla)
+  {
+    static CoordinateConverter cc;
+    if (coordConv && coordConv->hasReferenceOrigin() && coordConv->referenceOrigin() == refLla)
+      return *coordConv;
+    cc.setReferenceOrigin(refLla);
+    return cc;
+  }
+}
+
 //------------------------------------------------------------------------
 
 /**
@@ -50,23 +64,22 @@ void simCore::calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, cons
     return;
   }
 
-  Vec3 ENUDelta;
   Coordinate toPos;
   if (model == TANGENT_PLANE_WGS_84 || model == WGS_84)
   {
-    // create a tangent plane referenced to the from_ platform
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
-    ENUDelta = toPos.position();
+    calculateRelAng(toPos.position(), fromOriLla, azim, elev, cmp);
   }
-  else if (model == FLAT_EARTH && coordConv)
+  else if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
-    Coordinate cvTo(COORD_SYS_LLA, fromLla);
+    const Coordinate cvTo(COORD_SYS_LLA, fromLla);
     Coordinate fromPos;
     coordConv->convert(cvTo, fromPos, COORD_SYS_ENU);
     coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
+    Vec3 ENUDelta;
     v3Subtract(toPos.position(), fromPos.position(), ENUDelta);
+    calculateRelAng(ENUDelta, fromOriLla, azim, elev, cmp);
   }
   else
   {
@@ -79,8 +92,6 @@ void simCore::calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, cons
 
     return;
   }
-
-  calculateRelAng(ENUDelta, fromOriLla, azim, elev, cmp);
 }
 
 /**
@@ -102,12 +113,11 @@ void simCore::calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double *a
   if (model == WGS_84 || model == TANGENT_PLANE_WGS_84)
   {
     //create a tangent plane referenced to the fromLla platform
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
     ENUDelta = toPos.position();
   }
-  else if (model == FLAT_EARTH && coordConv)
+  else if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
     Coordinate fromPos;
     coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
@@ -165,8 +175,7 @@ double simCore::calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const Ear
 
   case TANGENT_PLANE_WGS_84:
     {
-      CoordinateConverter cc;
-      cc.setReferenceOrigin(fromLla);
+      const CoordinateConverter& cc = initConverter(coordConv, fromLla);
       cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
       cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
     }
@@ -174,7 +183,7 @@ double simCore::calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const Ear
 
   case FLAT_EARTH:
     {
-      if (!coordConv)
+      if (!coordConv || !coordConv->hasReferenceOrigin())
       {
         SIM_WARN << "Could not calculate \"slant range\", CoordinateConverter not set for FLAT_EARTH: " << __LINE__ << std::endl;
         assert(false);
@@ -220,8 +229,7 @@ double simCore::calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, cons
   {
     Coordinate fromPos;
     Coordinate toPos;
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
 
@@ -234,7 +242,7 @@ double simCore::calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, cons
     Coordinate fromPos;
     Coordinate toPos;
 
-    if (model == FLAT_EARTH)
+    if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
     {
       coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
       coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
@@ -269,33 +277,19 @@ double simCore::calculateAltitude(const Vec3 &fromLla, const Vec3 &toLla, const 
 
   if (model == TANGENT_PLANE_WGS_84)
   {
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
-
     Coordinate fromPos;
     Coordinate toPos;
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
     return toPos.z() - fromPos.z();
   }
-
-  if (coordConv)
+  if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
     Coordinate fromPos;
     Coordinate toPos;
-
-    if (model == FLAT_EARTH)
-    {
-      coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
-      coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    }
-    else
-    {
-      SIM_WARN << "Could not calculate altitude: " << __LINE__ << std::endl;
-      assert(false);
-      return 0;
-    }
-
+    coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
+    coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
     return toPos.z() - fromPos.z();
   }
   else
@@ -320,13 +314,15 @@ void simCore::calculateDRCRDownValue(const Vec3 &fromLla, const double &yaw, con
     return;
   }
 
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
+
   // get the slant distance from "fromLla" to "toLla"
-  const double slantDistance = calculateSlant(fromLla, toLla, model, coordConv);
+  const double slantDistance = calculateSlant(fromLla, toLla, model, &cc);
 
   // get the true azimuth and elevation from "fromLla" to "toLla"
   double trueAzimuth = 0;
   double trueElevation = 0;
-  calculateAbsAzEl(fromLla, toLla, &trueAzimuth, &trueElevation, NULL, model, coordConv);
+  calculateAbsAzEl(fromLla, toLla, &trueAzimuth, &trueElevation, NULL, model, &cc);
 
   // get the down value
   if (downValue)
@@ -353,9 +349,10 @@ double simCore::calculateClosingVelocity(const Vec3 &fromLla, const Vec3 &toLla,
   Coordinate toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, Vec3(0., 0., 0.), fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, Vec3(0., 0., 0.), toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
   // determine correct object locations based on coordinate system
-  if (convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     // create a unit position vector
     Vec3 unitPosVec;
@@ -384,9 +381,10 @@ double simCore::calculateVelocityDelta(const Vec3 &fromLla, const Vec3 &toLla, c
   Coordinate toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, Vec3(0., 0., 0.), fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, Vec3(0., 0., 0.), toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
   // determine correct object locations based on coordinate system
-  if (convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     return v3Distance(fromPos.velocity(), toPos.velocity());
   }
@@ -402,15 +400,16 @@ double simCore::calculateRangeRate(const Vec3 &fromLla, const Vec3 &fromOriLla, 
   Coordinate toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, fromOriLla, fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, toOriLla, toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
-  if (!convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (!convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     SIM_ERROR << "calculateRangeRate, unable to perform calculation: " << __LINE__ << std::endl;
     return 0;
   }
 
   double bearing = 0;
-  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, coordConv);
+  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, &cc);
   return v3Length(fromVel) * cos(fromOriLla[0] - bearing) - (v3Length(toVel) * cos(toOriLla[0] - bearing));
 }
 
@@ -421,17 +420,18 @@ double simCore::calculateBearingRate(const Vec3 &fromLla, const Vec3 &fromOriLla
   Coordinate   toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, fromOriLla, fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, toOriLla, toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
-  if (!convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (!convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     SIM_ERROR << "calculateBearingRate, unable to perform calculation: " << __LINE__ << std::endl;
     return 0;
   }
 
   double bearing = 0;
-  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, coordConv);
+  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, &cc);
 
-  const double range = calculateGroundDist(fromLla, toLla, model, coordConv);
+  const double range = calculateGroundDist(fromLla, toLla, model, &cc);
   const double tspd  = v3Length(toVel);
   const double ospd  = v3Length(fromVel);
 
@@ -989,7 +989,7 @@ bool simCore::convertLocations(const Coordinate &fromState, const Coordinate &to
 
   case FLAT_EARTH:
     {
-      if (!coordConv)
+      if (!coordConv || !coordConv->hasReferenceOrigin())
       {
         SIM_WARN << "Could not convert location, CoordinateConverter not set for FLAT_EARTH: " << __LINE__ << std::endl;
         assert(false);

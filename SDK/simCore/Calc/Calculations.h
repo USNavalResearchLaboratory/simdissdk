@@ -47,7 +47,7 @@ namespace simCore
   * @param[out] elev Elevation value from one entity to another along the from's line of sight
   * @param[out] cmp Composite value from one entity to another along the from's line of sight; composite is sometimes known as the bore sight angle
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @pre one of the azim, elev and cmp params must be valid and coordConv must be valid if model is flat earth or tangent plane
   */
   SDKCORE_EXPORT void calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, double* azim, double* elev, double* cmp, const EarthModelCalculations model, const CoordinateConverter* coordConv);
@@ -63,7 +63,7 @@ namespace simCore
   * @param[out] elev Elevation value from one entity to another
   * @param[out] cmp Composite value from one entity to another
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @pre one of the azim, elev and cmp params must be valid and coordConv must be valid if model is flat earth or tangent plane
   */
   SDKCORE_EXPORT void calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double* azim, double* elev, double* cmp, const EarthModelCalculations model, const CoordinateConverter* coordConv);
@@ -76,7 +76,7 @@ namespace simCore
   * @param[in ] fromLla Location in space consisting of latitude, longitude, altitude that is the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @return Slant distance between two objects in meters, with a 0 return indicating an error (or equality of points)
   * @pre coordConv must be valid if model is flat earth or tangent plane
   */
@@ -91,7 +91,7 @@ namespace simCore
   * @param[in ] fromLla Location in space consisting of latitude, longitude, altitude that is the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @return Ground distance between two objects in meters, with a 0 return indicating an error (or equality of points)
   * @pre coordConv must be valid if model is flat earth or tangent plane
   */
@@ -105,7 +105,7 @@ namespace simCore
   * @param[in ] fromLla Location in space consisting of latitude, longitude, altitude that is the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @return Altitude difference between two objects in meters, with a 0 return indicating an error (or equality of points); if toLla is higher than fromLla, this value should be positive
   * @pre coordConv must be valid if model is flat earth or tangent plane
   */
@@ -120,7 +120,7 @@ namespace simCore
   * @param[in ] yaw Yaw (heading) pointing angle for the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity, to which the angles are calculated
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[out] downRng Range along the x-axis normal to the to entity, where the x-axis is aligned with the yaw of the from entity
   * @param[out] crossRng Distance measured along a line whose direction is either 90deg CW (positive) or 90deg CCW (neg) to the projection of from's yaw into a horizontal plane
   * @param[out] downValue Shortest distance between a plane tangent to the earth at from's position and altitude and the to entity
@@ -151,7 +151,7 @@ namespace simCore
   * @param[in ] fromLla Vector of latitude, longitude, and altitude that describes current position for the 'from' entity
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Closing velocity in m/s based on input values.
@@ -168,7 +168,7 @@ namespace simCore
   * @param[in ] fromLla Vector of latitude, longitude, and altitude that describes current position for the 'from' entity
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Velocity Delta in m/s based on input values.
@@ -185,7 +185,7 @@ namespace simCore
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] toOriLla Vector of yaw, pitch, roll that describes current pointing angles for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Range rate in m/sec
@@ -202,7 +202,7 @@ namespace simCore
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] toOriLla Vector of yaw, pitch, roll that describes current pointing angles for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Bearing rate in rad/sec
@@ -360,7 +360,7 @@ namespace simCore
   * @param[in ] fromState Location of the 'from' entity in geodetic (LLA)
   * @param[in ] toState Location of the 'to' entity in geodetic (LLA)
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[out] fromPos Converted location in specified frame
   * @param[out] toPos Converted location in specified frame
   * @return true on success, false on failure.
@@ -547,7 +547,7 @@ namespace simCore
    * @param minRangeM Gate minimum range in meters
    * @param maxRangeM Gate maximum range in meters
    * @param earthModel Earth model for calculations
-   * @param cc If coordinateSystem is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set.
+   * @param cc If coordinateSystem is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set. Optional for WGS84 models
    * @return true if given lla position does fall within gate, false otherwise
    */
   SDKCORE_EXPORT bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& positionLLA,
@@ -570,7 +570,7 @@ namespace simCore
    * @param laserElRad Laser elevation in radians from laserHostLLA
    * @param laserRngM Laser range in meters from laserHostLLA
    * @param earthModel Coordinate system to perform the calculation in
-   * @param cc If earthModel is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set
+   * @param cc If earthModel is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set. Optional for WGS84 models
    * @param numPoints number of points to test for presence within the gate
    * @return true if given lla position does fall within gate, false otherwise
    */

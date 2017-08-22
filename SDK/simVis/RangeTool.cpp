@@ -590,9 +590,6 @@ namespace
 void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, ScenarioManager* scenario)
 {
   State state;
-
-  // initialize coordinate system and converter.
-  // TODO: support other values (flat projections)
   state.earthModel_ = simCore::WGS_84;
 
   int rv = state.populateEntityState(*scenario, obj0, state.beginEntity_);
@@ -610,7 +607,10 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, Scenar
     return;
   }
 
-  Locator* loc0 = obj0->getLocator();
+  // initialize coordinate system and converter to optimize repeated conversions and support other values (flat projections)
+  state.coordConv_.setReferenceOrigin(state.beginEntity_.lla_);
+
+  const Locator* loc0 = obj0->getLocator();
   loc0->getLocalTangentPlaneToWorldMatrix(state.local2world_);
   state.world2local_.invert(state.local2world_);
 
