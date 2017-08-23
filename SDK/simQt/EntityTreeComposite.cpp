@@ -38,8 +38,6 @@
 
 namespace simQt {
 
-const QString DEFAULT_FILTER_CONFIG_TOOLTIP = simQt::formatTooltip(QObject::tr("No Filter Configuration Saved"), "");
-const QString CLEAR_CONFIG_ACTION_TEXT = QObject::tr("Clear Stored Configuration");
 const QString SETTING_NAME_FILTER = "/FilterSettings/";
 
 
@@ -489,7 +487,7 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
 
 void EntityTreeComposite::loadFilterConfig_(int index)
 {
-  entityTreeWidget_->setFilterSettings(buttonActions_[index]->filterConfiguration().configuration());
+  setFilterSettings(buttonActions_[index]->filterConfiguration().configuration());
 }
 
 void EntityTreeComposite::saveFilterConfig_(int index)
