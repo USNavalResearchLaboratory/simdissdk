@@ -218,7 +218,7 @@ namespace simVis
       osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m);
 
       ///@return lla values for the given position relative to the local frame
-      simCore::Vec3 local2lla(const osg::Vec3& local);
+      simCore::Vec3 local2lla(const osg::Vec3d& local);
 
       /**
       * Fills in a entity state based on the given scenario and entity node

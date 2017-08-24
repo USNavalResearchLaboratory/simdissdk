@@ -134,7 +134,6 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   simCore::Coordinate ecef;
   ecef.setCoordinateSystem(simCore::COORD_SYS_ECEF);
   ecef.setPosition(lastUpdate_.x(), lastUpdate_.y(), lastUpdate_.z());
-  ecef.setOrientation(lastUpdate_.psi(), lastUpdate_.theta(), lastUpdate_.phi());
   ecef.setVelocity(lastUpdate_.vx(), lastUpdate_.vy(), lastUpdate_.vz());
   simCore::Coordinate lla;
   simCore::CoordinateConverter::convertEcefToGeodetic(ecef, lla);

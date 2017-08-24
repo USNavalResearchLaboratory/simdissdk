@@ -286,10 +286,7 @@ int PlatformPosition::pullFromDataStore_(simCore::Vec3& outLla) const
   // Pull out and convert position
   simCore::Vec3 ecefV3;
   current->position(ecefV3);
-  simCore::Coordinate ecef(simCore::COORD_SYS_ECEF, ecefV3);
-  simCore::Coordinate lla;
-  simCore::CoordinateConverter::convertEcefToGeodetic(ecef, lla);
-  outLla = lla.position();
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefV3, outLla);
   return 0;
 }
 

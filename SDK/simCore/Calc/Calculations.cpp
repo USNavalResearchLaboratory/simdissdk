@@ -1264,23 +1264,23 @@ bool simCore::calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, c
   // Calculates velocity vector based on dp/dt and derives orientation from velocity.
   // velocity vector calculated in switch, used to determine flight path angles
   Vec3 velVec;
-  Coordinate lla1; // currPos in LLA
-  lla1.setCoordinateSystem(simCore::COORD_SYS_NONE);
   Coordinate lla2; // prevPos in LLA
   lla2.setCoordinateSystem(simCore::COORD_SYS_NONE);
 
   switch (sysIn)
   {
   case COORD_SYS_LLA:
-    lla1 = simCore::Coordinate(simCore::COORD_SYS_LLA, currPos);
     lla2 = simCore::Coordinate(simCore::COORD_SYS_LLA, prevPos);
     calculateVelFromGeodeticPos(currPos, prevPos, deltaTime, velVec);
     break;
 
   case COORD_SYS_ECEF:
-    CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, currPos), lla1);
-    CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, prevPos), lla2);
-    calculateVelFromGeodeticPos(lla1.position(), lla2.position(), deltaTime, velVec);
+    {
+      simCore::Vec3 posLla1;
+      simCore::CoordinateConverter::convertEcefToGeodeticPos(currPos, posLla1);
+      CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, prevPos), lla2);
+      calculateVelFromGeodeticPos(posLla1, lla2.position(), deltaTime, velVec);
+    }
     break;
 
   case COORD_SYS_XEAST:

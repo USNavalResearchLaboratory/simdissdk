@@ -539,15 +539,13 @@ bool simVis::convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::
 {
   if (srs && input.coordinateSystem() == simCore::COORD_SYS_ECEF)
   {
-    simCore::CoordinateConverter conv;
-    simCore::Coordinate lla;
-    conv.convertEcefToGeodetic(input, lla);
-
+    simCore::Vec3 llaPos;
+    simCore::CoordinateConverter::convertEcefToGeodeticPos(input.position(), llaPos);
     output.set(
       srs->getGeographicSRS(),
-      osg::RadiansToDegrees(lla.lon()),
-      osg::RadiansToDegrees(lla.lat()),
-      lla.alt(),
+      osg::RadiansToDegrees(llaPos.lon()),
+      osg::RadiansToDegrees(llaPos.lat()),
+      llaPos.alt(),
       osgEarth::ALTMODE_ABSOLUTE);
 
     return true;

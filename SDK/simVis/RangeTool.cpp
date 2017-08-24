@@ -997,19 +997,17 @@ simCore::Vec3 RangeTool::State::midPoint(const simCore::Vec3& lla0, const simCor
 
 osg::Vec3 RangeTool::State::lla2local(double lat, double lon, double alt)
 {
-  simCore::Coordinate lla(simCore::COORD_SYS_LLA, simCore::Vec3(lat, lon, alt));
-  simCore::Coordinate ecef;
-  simCore::CoordinateConverter::convertGeodeticToEcef(lla, ecef);
-  return convertToOSG(ecef.position()) * world2local_;
+  simCore::Vec3 ecefPos;
+  simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
+  return simCore2osg(ecefPos) * world2local_;
 }
 
-simCore::Vec3 RangeTool::State::local2lla(const osg::Vec3& local)
+simCore::Vec3 RangeTool::State::local2lla(const osg::Vec3d& local)
 {
-  osg::Vec3d world = local * local2world_;
-  simCore::Coordinate ecef(simCore::COORD_SYS_ECEF, convertToSim(world));
-  simCore::Coordinate lla;
-  simCore::CoordinateConverter::convertEcefToGeodetic(ecef, lla);
-  return lla.position();
+  const osg::Vec3d world = local * local2world_;
+  simCore::Vec3 llaPos;
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(osg2simCore(world), llaPos);
+  return llaPos;
 }
 
 int RangeTool::State::populateEntityState(const ScenarioManager& scenario, const simVis::EntityNode* node, EntityState& state)
@@ -1073,55 +1071,49 @@ osg::Vec3d RangeTool::State::coord(RangeTool::State::Coord which)
     {
     case COORD_OBJ_0:
       {
-        simCore::Coordinate temp;
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, beginEntity_.lla_), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(beginEntity_.lla_, ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_OBJ_1:
       {
-        simCore::Coordinate temp;
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, endEntity_.lla_), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(endEntity_.lla_, ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_OBJ_0_0HAE:
       {
-        simCore::Coordinate temp;
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(beginEntity_.lla_.x(), beginEntity_.lla_.y(), 0.0)), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(beginEntity_.lla_.x(), beginEntity_.lla_.y(), 0.0), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_OBJ_1_0HAE:
       {
-        simCore::Coordinate temp;
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(endEntity_.lla_.x(), endEntity_.lla_.y(), 0.0)), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(endEntity_.lla_.x(), endEntity_.lla_.y(), 0.0), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_OBJ_1_AT_OBJ_0_ALT:
       {
-        simCore::Coordinate temp;
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(endEntity_.lla_.x(), endEntity_.lla_.y(), beginEntity_.lla_.z())), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(endEntity_.lla_.x(), endEntity_.lla_.y(), beginEntity_.lla_.z()), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_OBJ_0_AT_OBJ_1_ALT:
       {
-        simCore::Coordinate temp;
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(beginEntity_.lla_.x(), beginEntity_.lla_.y(), endEntity_.lla_.z())), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(beginEntity_.lla_.x(), beginEntity_.lla_.y(), endEntity_.lla_.z()), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
@@ -1184,63 +1176,57 @@ osg::Vec3d RangeTool::State::coord(RangeTool::State::Coord which)
 
     case COORD_BEAM_0:
       {
-        simCore::Coordinate temp;
-        osg::Vec3d point = coord(COORD_BEAM_LLA_0);
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, osg2simCore(point)), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        const osg::Vec3d& point = coord(COORD_BEAM_LLA_0);
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(osg2simCore(point), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_BEAM_1:
       {
-        simCore::Coordinate temp;
-        osg::Vec3d point = coord(COORD_BEAM_LLA_1);
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, osg2simCore(point)), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        const osg::Vec3d& point = coord(COORD_BEAM_LLA_1);
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(osg2simCore(point), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_BEAM_0_0HAE:
       {
-        simCore::Coordinate temp;
-        osg::Vec3d point = coord(COORD_BEAM_LLA_0);
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(point.x(), point.y(), 0.0)), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        const osg::Vec3d& point = coord(COORD_BEAM_LLA_0);
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(point.x(), point.y(), 0.0), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_BEAM_1_0HAE:
       {
-        simCore::Coordinate temp;
-        osg::Vec3d point = coord(COORD_BEAM_LLA_1);
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(point.x(), point.y(), 0.0)), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        const osg::Vec3d& point = coord(COORD_BEAM_LLA_1);
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(point.x(), point.y(), 0.0), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_BEAM_1_AT_BEAM_0_ALT:
       {
-        simCore::Coordinate temp;
-        simCore::Vec3 from = osg2simCore(coord(State::COORD_BEAM_LLA_0));
-        simCore::Vec3 to = osg2simCore(coord(State::COORD_BEAM_LLA_1));
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(to.x(), to.y(), from.z())), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        const simCore::Vec3& from = osg2simCore(coord(State::COORD_BEAM_LLA_0));
+        const simCore::Vec3& to = osg2simCore(coord(State::COORD_BEAM_LLA_1));
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(to.x(), to.y(), from.z()), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
 
     case COORD_BEAM_0_AT_BEAM_1_ALT:
       {
-        simCore::Coordinate temp;
-        simCore::Vec3 from = osg2simCore(coord(State::COORD_BEAM_LLA_0));
-        simCore::Vec3 to = osg2simCore(coord(State::COORD_BEAM_LLA_1));
-        simCore::CoordinateConverter::convertGeodeticToEcef(
-          simCore::Coordinate(simCore::COORD_SYS_LLA, simCore::Vec3(from.x(), from.y(), to.z())), temp);
-        coord_[which] = osg::Vec3d(temp.x(), temp.y(), temp.z()) * world2local_;
+        simCore::Vec3 ecefPos;
+        const simCore::Vec3& from = osg2simCore(coord(State::COORD_BEAM_LLA_0));
+        const simCore::Vec3& to = osg2simCore(coord(State::COORD_BEAM_LLA_1));
+        simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(from.x(), from.y(), to.z()), ecefPos);
+        coord_[which] = simCore2osg(ecefPos) * world2local_;
       }
       break;
     }
