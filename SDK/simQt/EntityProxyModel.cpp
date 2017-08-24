@@ -64,6 +64,32 @@ namespace simQt {
     }
   }
 
+  QVariant EntityProxyModel::data(const QModelIndex & index, int role) const
+  {
+    // Let the model handle the data call as normal
+    QVariant rv = QSortFilterProxyModel::data(index, role);
+
+    QModelIndex sourceIndex = mapToSource(index);
+    QModelIndex showIndex = model_->index(alwaysShow_);
+
+    // If the index in question is the always shown index,
+    // handle the special cases for Qt::FontRole and Qt::ToolTipRole
+    if (sourceIndex != showIndex)
+      return rv;
+
+    if (role == Qt::FontRole)
+    {
+      QFont font;
+      font.setItalic(true);
+      return font;
+    }
+
+    else if (role == Qt::ToolTipRole)
+      return rv.toString().append(tr("\n\nThis entity was manually selected but does not pass current filter settings."));
+
+    return rv;
+  }
+
   void EntityProxyModel::addEntityFilter(EntityFilter* entityFilter)
   {
     connect(entityFilter, SIGNAL(filterUpdated()), this, SLOT(filterUpdated_()));
@@ -94,6 +120,10 @@ namespace simQt {
   void EntityProxyModel::setAlwaysShow(simData::ObjectId id)
   {
     if ((alwaysShow_ == id) || (model_ == NULL))
+      return;
+
+    // If item passes the filters, no need to set it to always show
+    if (checkFilters_(id))
       return;
 
     alwaysShow_ = id;

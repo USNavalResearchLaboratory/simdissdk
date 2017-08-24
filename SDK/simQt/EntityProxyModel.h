@@ -47,6 +47,7 @@ public:
 
   /// QAbstractItemModel interface
   virtual void setSourceModel(QAbstractItemModel *sourceModel);
+  virtual QVariant data(const QModelIndex & index, int role) const;
 
   /** Adds an entity filter to the proxy model.  NOTE: the proxy model takes ownership of the memory */
   void addEntityFilter(EntityFilter* entityFilter);
