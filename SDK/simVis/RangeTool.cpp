@@ -62,11 +62,11 @@ const int DEPTH_BUFFER_MIN_BIAS = 5000;
 namespace
 {
   // convenience func to return an osg ENU vector calculated from the input ypr/orientation
-  osg::Vec3 calcYprVector(const simCore::Vec3& ypr)
+  osg::Vec3d calcYprVector(const simCore::Vec3& ypr)
   {
     simCore::Vec3 enuVector;
     simCore::calculateVelocity(1.0, ypr.yaw(), ypr.pitch(), enuVector);
-    return osg::Vec3(enuVector.x(), enuVector.y(), enuVector.z());
+    return osg::Vec3d(enuVector.x(), enuVector.y(), enuVector.z());
   }
 }
 
@@ -809,7 +809,7 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, osg::Primitiv
 
 //----------------------------------------------------------------------------
 
-void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg::Vec3 startVec, osg::Vec3 endVec, double angle, osg::Geode* geode, RangeTool::State& state)
+void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg::Vec3d startVec, osg::Vec3d endVec, double angle, osg::Geode* geode, RangeTool::State& state)
 {
   osg::Geometry*  arcEndVecGeom = NULL;
   osg::Geometry*  startVecGeom  = NULL;
@@ -1681,7 +1681,7 @@ RangeTool::TrueAzimuthPieSliceGraphic::TrueAzimuthPieSliceGraphic()
 void RangeTool::TrueAzimuthPieSliceGraphic::render(osg::Geode* geode, State& state)
 {
   TrueAzimuthMeasurement m;
-  osg::Vec3 endVec;
+  osg::Vec3d endVec;
 
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
   {
@@ -1695,7 +1695,7 @@ void RangeTool::TrueAzimuthPieSliceGraphic::render(osg::Geode* geode, State& sta
     if (state.endEntity_.node_->type() != simData::DataStore::PLATFORM)
       ori = state.endEntity_.ypr_;
 
-    endVec = osg::Vec3(sin(ori.x())*cos(ori.y()), cos(ori.x())*cos(ori.y()), 0.0);
+    endVec = osg::Vec3d(sin(ori.x())*cos(ori.y()), cos(ori.x())*cos(ori.y()), 0.0);
   }
   createGeometry(state.coord(State::COORD_OBJ_0), osg::Y_AXIS, endVec, m.value(state), geode, state);
 }
@@ -1712,8 +1712,8 @@ void RangeTool::TrueElevationPieSliceGraphic::render(osg::Geode* geode, State& s
 {
   TrueElevationMeasurement m;
 
-  osg::Vec3 startVec;
-  osg::Vec3 endVec;
+  osg::Vec3d startVec;
+  osg::Vec3d endVec;
 
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
   {
@@ -1729,7 +1729,7 @@ void RangeTool::TrueElevationPieSliceGraphic::render(osg::Geode* geode, State& s
       ori = state.endEntity_.ypr_;
 
     startVec = calcYprVector(ori);
-    endVec = osg::Vec3(startVec.x(), startVec.y(), 0.0);
+    endVec = osg::Vec3d(startVec.x(), startVec.y(), 0.0);
   }
 
   createGeometry(state.coord(State::COORD_OBJ_0), startVec, endVec, m.value(state), geode, state);
@@ -1746,7 +1746,7 @@ RangeTool::TrueCompositeAnglePieSliceGraphic::TrueCompositeAnglePieSliceGraphic(
 void RangeTool::TrueCompositeAnglePieSliceGraphic::render(osg::Geode* geode, State& state)
 {
   TrueCompositeAngleMeasurement m;
-  osg::Vec3 endVec;
+  osg::Vec3d endVec;
 
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
   {
@@ -1774,11 +1774,11 @@ RangeTool::RelOriAzimuthPieSliceGraphic::RelOriAzimuthPieSliceGraphic()
 void RangeTool::RelOriAzimuthPieSliceGraphic::render(osg::Geode* geode, State& state)
 {
   const simCore::Vec3& startOri = state.beginEntity_.ypr_;
-  const osg::Vec3& startVecENU = calcYprVector(startOri);
+  const osg::Vec3d& startVecENU = calcYprVector(startOri);
   RelOriAzimuthMeasurement m;
   const double relOriAzim = m.value(state);
   const simCore::Vec3& rotatedOri = simCore::rotateEulerAngle(startOri, simCore::Vec3(relOriAzim, 0., 0.));
-  const osg::Vec3& endVecENU = calcYprVector(rotatedOri);
+  const osg::Vec3d& endVecENU = calcYprVector(rotatedOri);
   createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, relOriAzim, geode, state);
 }
 
@@ -1792,7 +1792,7 @@ RangeTool::RelOriElevationPieSliceGraphic::RelOriElevationPieSliceGraphic()
 
 void RangeTool::RelOriElevationPieSliceGraphic::render(osg::Geode* geode, State& state)
 {
-  osg::Vec3 startVecENU;
+  osg::Vec3d startVecENU;
   // The RelOriAzimuthPieSliceGraphic endVec is used as the startVec for this graphic
   {
     RelOriAzimuthMeasurement m;
@@ -1811,7 +1811,7 @@ void RangeTool::RelOriElevationPieSliceGraphic::render(osg::Geode* geode, State&
   else
   {
     // calc the endVec from the RAE endpoint's orientation
-    const osg::Vec3& endVecENU = calcYprVector(state.endEntity_.ypr_);
+    const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_.ypr_);
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, relOriElev, geode, state);
   }
 }
@@ -1827,7 +1827,7 @@ RangeTool::RelOriCompositeAnglePieSliceGraphic::RelOriCompositeAnglePieSliceGrap
 void RangeTool::RelOriCompositeAnglePieSliceGraphic::render(osg::Geode* geode, State& state)
 {
   RelOriCompositeAngleMeasurement m;
-  const osg::Vec3& startVecENU = calcYprVector(state.beginEntity_.ypr_);
+  const osg::Vec3d& startVecENU = calcYprVector(state.beginEntity_.ypr_);
 
   if ((state.beginEntity_.node_->type() == simData::DataStore::PLATFORM) &&
     (state.endEntity_.node_->type() == simData::DataStore::PLATFORM))
@@ -1836,7 +1836,7 @@ void RangeTool::RelOriCompositeAnglePieSliceGraphic::render(osg::Geode* geode, S
   }
   else
   {
-    const osg::Vec3& endVecENU = calcYprVector(state.endEntity_.ypr_);
+    const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_.ypr_);
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, m.value(state), geode, state);
   }
 }
@@ -1851,9 +1851,9 @@ RangeTool::RelAspectAnglePieSliceGraphic::RelAspectAnglePieSliceGraphic()
 
 void RangeTool::RelAspectAnglePieSliceGraphic::render(osg::Geode* geode, State& state)
 {
-  double angle = simCore::calculateAspectAngle(state.beginEntity_.lla_, state.endEntity_.lla_, state.endEntity_.ypr_);
-  const osg::Vec3& endVecENU = calcYprVector(state.endEntity_.ypr_);
-  const osg::Vec3 startVec = state.coord(State::COORD_OBJ_0) - state.coord(State::COORD_OBJ_1);
+  const double angle = simCore::calculateAspectAngle(state.beginEntity_.lla_, state.endEntity_.lla_, state.endEntity_.ypr_);
+  const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_.ypr_);
+  const osg::Vec3d startVec = state.coord(State::COORD_OBJ_0) - state.coord(State::COORD_OBJ_1);
   createGeometry(state.coord(State::COORD_OBJ_1), startVec, endVecENU, angle, geode, state);
 }
 
@@ -1875,8 +1875,8 @@ void RangeTool::RelVelAzimuthPieSliceGraphic::render(osg::Geode* geode, State& s
   const simCore::Vec3& vel = state.beginEntity_.vel_;
   simCore::calculateFlightPathAngles(vel, fpa);
   const simCore::Vec3& rotatedOri = simCore::rotateEulerAngle(fpa, simCore::Vec3(relVelAzim, 0., 0.));
-  const osg::Vec3& endVecENU = calcYprVector(rotatedOri);
-  const osg::Vec3 startVecENU(vel.x(), vel.y(), vel.z());
+  const osg::Vec3d& endVecENU = calcYprVector(rotatedOri);
+  const osg::Vec3d startVecENU(vel.x(), vel.y(), vel.z());
   createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, relVelAzim, geode, state);
 }
 
@@ -1895,7 +1895,7 @@ void RangeTool::RelVelElevationPieSliceGraphic::render(osg::Geode* geode, State&
     return;
 
   // The RelVelAzimuthPieSliceGraphic endVec is used as the startVec for the graphic.
-  osg::Vec3 startVecENU;
+  osg::Vec3d startVecENU;
   {
     RelVelAzimuthMeasurement m;
     const double relVelAzim = m.value(state);
@@ -1914,7 +1914,7 @@ void RangeTool::RelVelElevationPieSliceGraphic::render(osg::Geode* geode, State&
   else
   {
     // calc the endVec from the RAE endpoint's orientation
-    const osg::Vec3& endVecENU = calcYprVector(state.endEntity_.ypr_);
+    const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_.ypr_);
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, relVelElev, geode, state);
   }
 }
@@ -1934,7 +1934,7 @@ void RangeTool::RelVelCompositeAnglePieSliceGraphic::render(osg::Geode* geode, S
     return;
 
   const simCore::Vec3& vel = state.beginEntity_.vel_;
-  const osg::Vec3 startVecENU(vel.x(), vel.y(), vel.z());
+  const osg::Vec3d startVecENU(vel.x(), vel.y(), vel.z());
   RelVelCompositeAngleMeasurement m;
   const double relVelComposite = m.value(state);
   if (state.endEntity_.node_->type() == simData::DataStore::PLATFORM)
@@ -1944,7 +1944,7 @@ void RangeTool::RelVelCompositeAnglePieSliceGraphic::render(osg::Geode* geode, S
   else
   {
     // calc the endVec from the RAE endpoint's orientation
-    const osg::Vec3& endVecENU = calcYprVector(state.endEntity_.ypr_);
+    const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_.ypr_);
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, relVelComposite, geode, state);
   }
 }
