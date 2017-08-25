@@ -10,5 +10,8 @@ void simvis_track_fragment(inout vec4 color)
 {
   // use the alpha channel to enable/disable override.
   if (simvis_track_enable)
-    color = mix(color, simvis_track_overridecolor, simvis_track_overridecolor.a);
+  {
+    color.rgb = simvis_track_overridecolor.rgb;
+    color.a *= simvis_track_overridecolor.a;
+  }
 }
