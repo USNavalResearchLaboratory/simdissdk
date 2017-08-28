@@ -50,7 +50,7 @@ class SDKQT_EXPORT EntityDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock);
+  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock, SettingsPtr settings);
   virtual ~EntityDialog();
 
   /** Set the entity via Unique ID */
@@ -125,6 +125,9 @@ public:
   /** Returns the current state filter */
   EntityStateFilter::State stateFilter() const;
 
+  /** Pass in the global settings reference */
+  void setSettings(SettingsPtr settings);
+
 public slots:
   /** Set the state filter to the given state */
   void setStateFilter(simQt::EntityStateFilter::State state);
@@ -167,6 +170,7 @@ private:
   simCore::Clock* clock_;  ///< Allow filtering by active/inactive
   simQt::EntityStateFilter* entityStateFilter_; ///< Filtering based on entity state
   EntityStateFilter::State state_; ///< Current state of filtering
+  SettingsPtr settings_; ///< Pointer to global settings
 };
 
 /** Helper class to bind a EntityLineEdit object to Settings*/

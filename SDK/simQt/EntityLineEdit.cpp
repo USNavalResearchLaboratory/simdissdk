@@ -45,7 +45,7 @@ namespace {
   static const QString INVALID_ENTITY = "QLineEdit:enabled { color: red }";
 }
 
-EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock)
+EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock, SettingsPtr settings)
   : QDialog(parent),
     entityTreeModel_(entityTreeModel),
     entityStateFilter_(NULL)
@@ -59,6 +59,8 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   tree_->setExpandsOnDoubleClick(true);
   tree_->setSelectionMode(QAbstractItemView::SingleSelection);
   tree_->setListTreeButtonDisplayed(false);  // The Entity Line Composite does not support the tree view
+  if (settings)
+    tree_->setSettings(settings);
 
   if (clock != NULL)
   {
@@ -167,7 +169,8 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   type_(type),
   clock_(NULL),
   entityStateFilter_(NULL),
-  state_(EntityStateFilter::BOTH)
+  state_(EntityStateFilter::BOTH),
+  settings_(NULL)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -316,6 +319,11 @@ int EntityLineEdit::setSelected(uint64_t id)
   return 0;
 }
 
+void EntityLineEdit::setSettings(SettingsPtr settings)
+{
+  settings_ = settings;
+}
+
 void EntityLineEdit::showEntityDialog_()
 {
   if (entityTreeModel_ == NULL)
@@ -323,7 +331,7 @@ void EntityLineEdit::showEntityDialog_()
 
   if (entityDialog_ == NULL)
   {
-    entityDialog_ = new EntityDialog(this, entityTreeModel_, type_, clock_);
+    entityDialog_ = new EntityDialog(this, entityTreeModel_, type_, clock_, settings_);
     entityDialog_->setStateFilter(state_);
 
     connect(entityDialog_, SIGNAL(itemSelected(uint64_t)), this, SLOT(setSelected(uint64_t)));
