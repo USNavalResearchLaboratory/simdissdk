@@ -1,2 +1,0 @@
-# simdissdk
-SIMDIS SDK
