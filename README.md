@@ -8,13 +8,13 @@ object position/state data, update object position/state data as time
 changes, and render 3D representations of objects within a 3D scene.
 Secondary modules provide utilities for parsing SIMDIS data files, performing
 coordinate system conversions, object state vector computations, and data
-metric calculations.  
+metric calculations.
 
 The intent of the SIMDIS SDK is to provide a C++ framework to be used by
 third party developers to incorporate functionality similar to that provided
 by the SIMDIS 3D Visualization and Analysis Toolkit within their own
-applications.  The SIMDIS SDK serves as the basis for development of the next
-major SIMDIS release, SIMDIS 10.
+applications.  The SIMDIS SDK serves as the basis for development of each
+new major SIMDIS release.
 
 The SIMDIS SDK was developed by the Visualization Systems Integration branch
 of the Tactical Electronic Warfare Division at the U.S. Naval Research
@@ -35,8 +35,8 @@ systems/compilers, third party dependencies, and installation instructions.
 Usage
 =====
 The SIMDIS SDK source distribution comes with a number of example programs as
-well as an sample data set.  The example which illustrates the most common
-usage of the SIMDIS SDK is Platform Symbology example.  Detailed tutorials
+well as a sample data set.  The example which illustrates the most common
+usage of the SIMDIS SDK is the Platform Symbology example.  Detailed tutorials
 describing SIMDIS SDK use will be added at a later date.
 
 HTML based API documentation for the SIMDIS SDK source code can be found in
