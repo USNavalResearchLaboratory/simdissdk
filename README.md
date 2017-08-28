@@ -6,7 +6,7 @@ position and state change with time, that are placed relative to a geographic
 map.  The primary modules provided by the SDK supply functionality to manage
 object position/state data, update object position/state data as time
 changes, and render 3D representations of objects within a 3D scene.
-Secondary modules provide utilities for parsing SIMDIS data files, performing
+Secondary modules provide utilities for parsing [SIMDIS] data files, performing
 coordinate system conversions, object state vector computations, and data
 metric calculations.
 
@@ -28,7 +28,7 @@ Installation
 The SIMDIS SDK is provided as a package containing C++ source code for use
 with Windows and Linux operating systems.  Precompiled binaries for use with
 Microsoft Visual Studio have also been provided for your convenience.  See
-the file INSTALL.md for detailed information about supported
+the file [INSTALL.md](INSTALL.md) for detailed information about supported
 systems/compilers, third party dependencies, and installation instructions.
 
 
@@ -40,16 +40,20 @@ usage of the SIMDIS SDK is the Platform Symbology example.  Detailed tutorials
 describing SIMDIS SDK use will be added at a later date.
 
 HTML based API documentation for the SIMDIS SDK source code can be found in
-the 'Doc' subdirectory.  This documentation describes the different software
+the `Doc` subdirectory.  This documentation describes the different software
 components provided by the SDK.
 
 The SIMDIS SDK provides support for loading all 3D model formats supported by
-OpenSceneGraph (OpenFlight, 3D Studio, Wavefront OBJ, etc), loading the
+[OpenSceneGraph] (OpenFlight, 3D Studio, Wavefront OBJ, etc), loading the
 SIMDIS .db Terrain and Imagery files, and streaming terrain and imagery data
-from the ReadyMap server product developed by Pelican Ventures, Inc
-(http://www.pelicanmapping.com/).
+from the ReadyMap server product developed by [Pelican Mapping] using [osgEarth].
 
 The 3D models provided with the SIMDIS SDK sample data package have all been
 converted to the native OpenScenegraph .ive binary file format, which embeds
 the 3D model's geometry data and associated texture files within a single,
 easy to distribute file.
+
+  [OpenSceneGraph]: <https://github.com/OpenSceneGraph/OpenSceneGraph>
+  [osgEarth]: <https://github.com/gwaldron/osgearth>
+  [SIMDIS]: <https://simdis.nrl.navy.mil>
+  [Pelican Mapping]: <http://www.pelicanmapping.com>
