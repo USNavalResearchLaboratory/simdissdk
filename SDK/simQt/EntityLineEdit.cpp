@@ -170,7 +170,7 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   clock_(NULL),
   entityStateFilter_(NULL),
   state_(EntityStateFilter::BOTH),
-  settings_(std::shared_ptr<simQt::Settings>())
+  settings_(SettingsPtr())
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
