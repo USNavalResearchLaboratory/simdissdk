@@ -31,6 +31,7 @@
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
 
 #include "simNotify/Notify.h"
+#include "simCore/Time/ClockImpl.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 #include "simVis/Registry.h"
@@ -527,4 +528,20 @@ void simExamples::SkyNodeTimeUpdater::setHoursOffset(double hours)
 double simExamples::SkyNodeTimeUpdater::hoursOffset() const
 {
   return hoursOffset_;
+}
+
+////////////////////////////////////////////////
+
+simExamples::IdleClockCallback::IdleClockCallback(simCore::ClockImpl& clock, simData::DataStore& dataStore)
+  : clock_(clock),
+    dataStore_(dataStore)
+{
+}
+
+void simExamples::IdleClockCallback::operator()(osg::Node* node, osg::NodeVisitor* nv)
+{
+  clock_.idle();
+  const double nowTime = clock_.currentTime().secondsSinceRefYear(dataStore_.referenceYear());
+  dataStore_.update(nowTime);
+  traverse(node, nv);
 }
