@@ -171,7 +171,7 @@ void ViewerApp::init_(osg::ArgumentParser& args)
 
   mainView->addEventHandler(new simVis::PopupHandler(sceneManager_));
 
-  // Add it to the view manager:
+  // Add it to the view manager
   viewManager_->addView(mainView);
 
   // Create the SuperHUD

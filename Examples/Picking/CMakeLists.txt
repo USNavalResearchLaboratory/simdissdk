@@ -1,0 +1,17 @@
+if(NOT TARGET SIMDIS_SDKUtil)
+    return()
+endif()
+
+project(EXAMPLE_PICKING)
+
+set(PROJECT_FILES
+    ExamplePicking.cpp
+)
+
+add_executable(example_picking ${PROJECT_FILES})
+target_link_libraries(example_picking PRIVATE SIMDIS_SDKVis SIMDIS_SDKUtil)
+set_target_properties(example_picking PROPERTIES
+    FOLDER "Examples"
+    PROJECT_LABEL "Example - Picking"
+)
+vsi_install_target(example_picking SDK_Examples)

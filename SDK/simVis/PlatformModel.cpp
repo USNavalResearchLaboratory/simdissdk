@@ -32,6 +32,7 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/AutoScale"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "osgEarthAnnotation/AnnotationUtils"
 
 #include "simVis/Constants.h"
@@ -152,6 +153,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
 
   // Set up the brightness factor for the entity, attaching close to the model
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
+
+  // Tag the platform at the lowest unique level feasible
+  osgEarth::Registry::objectIndex()->tagNode(offsetXform_, offsetXform_);
 
   // When alpha volume is on, we turn on this node
   alphaVolumeGroup_ = new osg::Group;
