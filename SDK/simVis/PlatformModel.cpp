@@ -226,8 +226,6 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     return true;
   }
 
-  SIM_DEBUG << LC << prefs.commonprefs().name() << " : icon => " << prefs.icon() << std::endl;
-
   // if there's an existing model, save its parent group.
   if (model_.valid())
   {
