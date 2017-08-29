@@ -670,27 +670,24 @@ void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, boo
     : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
 }
 
-void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs)
+void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs, bool force)
 {
   if (!overrideColor_.valid())
     return;
 
-  if (lastPrefsValid_ &&
+  if (!force && lastPrefsValid_ &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
     return;
 
   // using an override color?
-  if (prefs.commonprefs().useoverridecolor())
-  {
-    // Apply the color modulation
-    overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
-  }
+  overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
+  if (!prefs.commonprefs().useoverridecolor())
+    overrideColor_->setCombineMode(OverrideColor::OFF);
+  else if (isImageModel_)
+    overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
   else
-  {
-    // White applies a 1,1,1,1 multiplicatively, so identity color
-    overrideColor_->setColor(simVis::Color::White);
-  }
+    overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
 }
 
 void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
@@ -753,7 +750,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateCulling_(prefs);
   updatePolygonMode_(prefs);
   updateLighting_(prefs, modelChanged);
-  updateOverrideColor_(prefs);
+  updateOverrideColor_(prefs, modelChanged);
   updateAlphaVolume_(prefs);
 
   // Note that the brightness calculation is low cost and we do not check PB_FIELD_CHANGED on it

@@ -33,15 +33,10 @@ namespace simVis
 namespace
 {
   const std::string OVERRIDECOLOR_UNIFORM = "simvis_overridecolor_color";
-  const std::string USE_OVERRIDECOLOR_UNIFORM = "simvis_use_overridecolor";
+  const std::string OVERRIDECOLOR_COMBINEMODE_UNIFORM = "simvis_overridecolor_combinemode";
 }
 
 OverrideColor::OverrideColor(osg::StateSet* stateset)
-  :
-    active_(false),
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-    color_(simVis::Color::White)
-#endif
 {
   stateset_ = stateset;
   OverrideColor::setDefaultValues_(stateset_.get());
@@ -61,56 +56,26 @@ void OverrideColor::installShaderProgram(osg::StateSet* intoStateSet)
 
 void OverrideColor::setColor(const simVis::Color& color)
 {
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  color_ = color;
-#endif
-
   osg::ref_ptr<osg::StateSet> stateset;
   if (stateset_.lock(stateset))
-  {
-    if (color == simVis::Color::White)
-    {
-      if (active_)
-      {
-        stateset
-          ->getOrCreateUniform(USE_OVERRIDECOLOR_UNIFORM, osg::Uniform::BOOL)
-          ->set(false);
-        active_ = false;
-      }
+    stateset->getOrCreateUniform(OVERRIDECOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)->set(color);
+}
 
-      return;
-    }
-
-    if (!active_)
-    {
-      stateset
-        ->getOrCreateUniform(USE_OVERRIDECOLOR_UNIFORM, osg::Uniform::BOOL)
-        ->set(true);
-      active_ = true;
-    }
-
-    // Pass the color to the shader
-    stateset
-      ->getOrCreateUniform(OVERRIDECOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)
-      ->set(color);
-  }
+void OverrideColor::setCombineMode(CombineMode combineMode)
+{
+  osg::ref_ptr<osg::StateSet> stateset;
+  if (stateset_.lock(stateset))
+    stateset->getOrCreateUniform(OVERRIDECOLOR_COMBINEMODE_UNIFORM, osg::Uniform::INT)->set(combineMode);
 }
 
 void OverrideColor::setDefaultValues_(osg::StateSet* stateSet)
 {
   stateSet
-    ->getOrCreateUniform(USE_OVERRIDECOLOR_UNIFORM, osg::Uniform::BOOL)
-    ->set(false);
+    ->getOrCreateUniform(OVERRIDECOLOR_COMBINEMODE_UNIFORM, osg::Uniform::INT)
+    ->set(OFF);
   stateSet
     ->getOrCreateUniform(OVERRIDECOLOR_UNIFORM, osg::Uniform::FLOAT_VEC4)
     ->set(simVis::Color::White);
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-const simVis::Color& OverrideColor::getColor() const
-{
-  return color_;
-}
-#endif
 
 }

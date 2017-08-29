@@ -5,10 +5,18 @@
 #pragma vp_order 2.0
 
 uniform vec4 simvis_overridecolor_color;
-uniform bool simvis_use_overridecolor;
+// Combine mode: 0 == off; 1 == multiply; 2 == replace
+uniform int simvis_overridecolor_combinemode;
 
 void simvis_overridecolor_frag(inout vec4 color)
 {
-  if (simvis_use_overridecolor)
+  if (simvis_overridecolor_combinemode == 1)
+  {
     color *= simvis_overridecolor_color;
+  }
+  else if (simvis_overridecolor_combinemode == 2)
+  {
+    color.rgb = simvis_overridecolor_color.rgb;
+    color.a *= simvis_overridecolor_color.a;
+  }
 }

@@ -38,15 +38,34 @@ namespace simVis
 class SDKVIS_EXPORT OverrideColor : public osg::Referenced
 {
 public:
+  /// Enumeration of how the color for override color gets used
+  enum CombineMode
+  {
+    /// Do not use override color
+    OFF,
+    /// Multiply the override color against incoming color; good for shaded items and 2D images
+    MULTIPLY_COLOR,
+    /// Replace the incoming color with the override color; good for flat items
+    REPLACE_COLOR
+  };
+
   /**
    * Declares uniform variables for using and setting the override color
    */
   explicit OverrideColor(osg::StateSet* stateset);
 
   /**
-   * Sets the override color via uniform variables.
+   * Sets the override color via uniform variables.  Application of the color depends on
+   * the combine mode.
    */
   void setColor(const simVis::Color& color);
+
+  /**
+   * Sets the combine mode to use for override color.  Classic SIMDIS always used a
+   * MULTIPLY_COLOR combination that merges the override color with the incoming color.
+   * The REPLACE_COLOR mode respects alpha blending but replaces the source color completely.
+   */
+  void setCombineMode(CombineMode combineMode);
 
   /**
    * Before using this class a call to installShaderProgram is required.  This
@@ -54,16 +73,6 @@ public:
    * controlling the shader.
    */
   static void installShaderProgram(osg::StateSet* intoStateSet);
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-   * Gets the override color.
-   * @deprecated Color may not be stored in future versions of SIMDIS SDK.  If still
-   *   required in the future, this may be replaced with a more expensive call into
-   *   the shader uniform value, returning a copy of the color instead of a reference.
-   */
-  const simVis::Color& getColor() const;
-#endif
 
 protected:
   /// osg::Referenced-derived
@@ -74,11 +83,6 @@ private:
   static void setDefaultValues_(osg::StateSet* stateSet);
 
   osg::observer_ptr<osg::StateSet> stateset_;
-  bool active_;
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  simVis::Color color_;
-#endif
 };
 
 } // namespace simVis
