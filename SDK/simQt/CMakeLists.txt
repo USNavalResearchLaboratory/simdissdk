@@ -81,6 +81,7 @@ endif()
 if(TARGET SIMDIS_SDKVis)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
+        ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityTreeModel.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
@@ -170,6 +171,7 @@ endif()
 if(TARGET SIMDIS_SDKVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
+        ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityTreeModel.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}QtConversion.cpp

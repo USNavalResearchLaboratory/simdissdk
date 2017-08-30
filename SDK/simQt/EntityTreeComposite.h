@@ -39,6 +39,7 @@ class Ui_EntityTreeComposite;
 namespace simQt {
 
 class EntityFilter;
+class EntityNameFilter;
 class EntityTreeWidget;
 class AbstractEntityTreeModel;
 
@@ -172,8 +173,6 @@ signals:
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
 
 protected slots:
-  /** Receive notice of a change in the filter */
-  void textFilterChanged_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax syntax);
   /** Receive notice of an inserted row */
   void rowsInserted_(const QModelIndex & parent, int start, int end);
   /** Receive notice to show filters */
@@ -214,6 +213,7 @@ private:
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
   AbstractEntityTreeModel* model_;
+  EntityNameFilter* nameFilter_;
   QDialog* filterDialog_;
   QAction* copyAction_;
   QAction* centerAction_;

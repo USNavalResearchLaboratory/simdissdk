@@ -41,6 +41,7 @@
 #include "simQt/EntityCategoryFilter.h"
 #include "simQt/EntityFilter.h"
 #include "simQt/EntityFilterLineEdit.h"
+#include "simQt/EntityNameFilter.h"
 #include "simQt/EntityLineEdit.h"
 #include "simQt/EntityProxyModel.h"
 #include "simQt/EntityStateFilter.h"

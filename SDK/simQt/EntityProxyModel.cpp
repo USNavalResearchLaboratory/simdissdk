@@ -147,8 +147,8 @@ namespace simQt {
     if (alwaysShow_ == id)
       return true;
 
-    // check the first column for the regexp filter, and then use the entity id for the other filters
-    return (sourceModel()->data(index0).toString().contains(filterRegExp()) && checkFilters_(id));
+    // check against all filters
+    return checkFilters_(id);
   }
 
   bool EntityProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
