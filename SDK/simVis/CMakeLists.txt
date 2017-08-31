@@ -19,6 +19,8 @@ set(SHADER_FILES
     GlowHighlight.frag.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
+    Picker.vert.glsl
+    Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
     Projector.vert.glsl
     Projector.frag.glsl
@@ -72,6 +74,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ObjectSelectionHandler.h
     ${VIS_INC}OverheadMode.h
     ${VIS_INC}OverrideColor.h
+    ${VIS_INC}Picker.h
     ${VIS_INC}PlanetariumViewTool.h
     ${VIS_INC}Platform.h
     ${VIS_INC}PlatformAzimElevViewTool.h
@@ -187,6 +190,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Locator.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
+    ${VIS_SRC}Picker.cpp
     ${VIS_SRC}PlanetariumViewTool.cpp
     ${VIS_SRC}Platform.cpp
     ${VIS_SRC}PlatformAzimElevViewTool.cpp

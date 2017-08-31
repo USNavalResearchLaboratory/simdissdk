@@ -60,35 +60,6 @@ namespace
   /** Default map background color, when no terrain/imagery loaded; note: cannot currently be changed in osgEarth at runtime */
   static const osg::Vec4f MAP_COLOR(0.01f, 0.01f, 0.01f, 1.f); // off-black
 
-#if 0
-  struct ClipToHorizon : public osg::NodeCallback
-  {
-    osgEarth::Horizon            horizon_;
-    osg::ref_ptr<osg::ClipPlane> clipPlane_;
-
-    ClipToHorizon(const osgEarth::SpatialReference* srs,
-                  osg::ClipPlane*                   clipPlane)
-    {
-      horizon_.setEllipsoid(*srs->getEllipsoid());
-      clipPlane_ = clipPlane;
-    }
-
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
-    {
-      osg::Plane horizonPlane;
-      horizon_.setEye(nv->getEyePoint());
-      horizon_.getPlane(horizonPlane);
-      clipPlane_->setClipPlane(horizonPlane);
-    }
-
-    /** Return the proper library name */
-    virtual const char* libraryName() const { return "simUtil"; }
-
-    /** Return the class name */
-    virtual const char* className() const { return "ClipToHorizon"; }
-  };
-#endif
-
 }
 
 SceneManager::SceneManager()

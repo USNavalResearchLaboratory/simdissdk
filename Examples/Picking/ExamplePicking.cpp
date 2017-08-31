@@ -26,10 +26,9 @@
  * Demonstrate how to use the picker with the SIMDIS SDK.
  */
 #include <cstdlib>
-#include "osg/BlendFunc"
 #include "osgEarth/NodeUtils"
-#include "osgEarthUtil/RTTPicker"
 #include "osgEarth/Registry"
+#include "osgEarth/ObjectIndex"
 #include "simNotify/Notify.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Common/Version.h"
@@ -39,6 +38,7 @@
 #include "simData/MemoryDataStore.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/EarthManipulator.h"
+#include "simVis/Picker.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
@@ -60,48 +60,18 @@ static const double LAT = 35.0;       // Scenario origin degrees
 static const double LON = -87.0;      // Scenario origin degrees
 static const int NUM_PLATFORMS = 100; // Number of platforms to generate
 
-osg::ref_ptr<ui::LabelControl> g_PickLabel;
-osg::ref_ptr<osg::Uniform> g_HighlightIdUniform;
-osg::ref_ptr<osg::Uniform> g_HighlightEnabledUniform;
-osg::ref_ptr<simVis::View> mainRttView_;
-osg::ref_ptr<simVis::View> insetRttView_;
 static const std::string NO_PICK = "-";  // Text to show when nothing is picked
 
-/** Vertex shader that assigns an output variable if the vertex is part of the selected object */
-const char* HIGHLIGHT_VERTEX_SHADER =
-  "#version " GLSL_VERSION_STR "\n"
-  // Object ID provided via uniform that should be highlighted
-  "uniform uint sdk_objectid_to_highlight; \n"
-  // Uniform for enabling and disabling highlighting
-  "uniform bool sdk_highlight_enabled; \n"
-  // osgEarth-provided Object ID of the current vertex
-  "uint oe_index_objectid;      // Stage global containing object id \n"
-  // Output to fragment shader to mark an object selected
-  "flat out int sdk_isselected; \n"
-  // Assigns sdk_isselected based on input values
-  "void checkForHighlight(inout vec4 vertex) \n"
-  "{ \n"
-  "  sdk_isselected = sdk_highlight_enabled && (sdk_objectid_to_highlight > 0u && sdk_objectid_to_highlight == oe_index_objectid) ? 1 : 0; \n"
-  "} \n";
-
-/** Fragment shader that applies a glow to the output color if object is selected */
-const char* HIGHLIGHT_FRAGMENT_SHADER =
-  "#version " GLSL_VERSION_STR "\n"
-  // Input from the vertex shader
-  "flat in int sdk_isselected; \n"
-  // OSG built-in for frame time
-  "uniform float osg_FrameTime; \n"
-  "void highlightFragment(inout vec4 color) \n"
-  "{ \n"
-  "  if (sdk_isselected == 1) {\n"
-  // Borrow code fromGlowHighlight.frag.glsl and modified to fit mouse operation a bit better
-  "    float glowPct = sin(osg_FrameTime * 12.0); \n"
-  "    color.rgb += 0.2 + 0.2 * glowPct; \n"
-  //  Make the glow slightly blue-ish
-  "    color *= vec4(0.7, 0.7, 1.0, 1.0); \n"
-  "  } \n"
-  "} \n";
-
+/** Data structure that contains variables used throughout the application */
+struct Application
+{
+  osg::ref_ptr<ui::LabelControl> pickLabel;
+  osg::ref_ptr<simVis::View> mainView;
+  osg::ref_ptr<simVis::View> mainRttView;
+  osg::ref_ptr<simVis::View> insetView;
+  osg::ref_ptr<simVis::View> insetRttView;
+  osg::ref_ptr<simVis::Picker> picker;
+};
 
 /** Prints help text */
 int usage(char** argv)
@@ -118,12 +88,14 @@ double randomBetween(double min, double max)
   return min + (max - min) * static_cast<double>(rand()) / RAND_MAX;
 }
 
-/** Handles hotkey changes */
-struct MenuHandler : public osgGA::GUIEventHandler
+/** Handles presses for the menu, and also handles mouse click events */
+class MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(simCore::Clock& clock, simVis::View* mainView)
+public:
+  MenuHandler(simCore::Clock& clock, Application& app)
     : clock_(clock),
-      mainView_(mainView)
+      app_(app),
+      blockMouseUntilRelease_(false)
   {
     //nop
   }
@@ -131,49 +103,131 @@ struct MenuHandler : public osgGA::GUIEventHandler
   /// callback to process user input
   bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
   {
+    // Handle key presses
     if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
+      return handleKeyPress(ea.getKey());
+    // Handle mouse presses
+    if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
     {
-      switch (ea.getKey())
+      simVis::View* asView = dynamic_cast<simVis::View*>(&aa);
+      if (asView)
       {
-      case 'p':
-        if (clock_.isPlaying())
-          clock_.stop();
-        else
-          clock_.playForward();
-        return true;
-      case 'h':
-      {
-        bool oldState = true;
-        g_HighlightEnabledUniform->get(oldState);
-        g_HighlightEnabledUniform->set(!oldState);
-        return true;
+        blockMouseUntilRelease_ = handleMouseClick(asView);
+        return blockMouseUntilRelease_;
       }
-      case '1':
-        mainRttView_->setVisible(!mainRttView_->isVisible());
+    }
+
+    // Ignore mouse motion, double click, and pushes, until we get a release
+    if (blockMouseUntilRelease_)
+    {
+      // Eat push, drag, move, and double click
+      if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH ||
+        ea.getEventType() == osgGA::GUIEventAdapter::DRAG ||
+        ea.getEventType() == osgGA::GUIEventAdapter::MOVE ||
+        ea.getEventType() == osgGA::GUIEventAdapter::DOUBLECLICK)
         return true;
-      case '2':
-        insetRttView_->setVisible(!insetRttView_->isVisible());
-        return true;
-      }
+      // On release, stop blocking mouse
+      if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE)
+        blockMouseUntilRelease_ = false;
+    }
+    return false;
+  }
+
+  /** End user hit a key on their keyboard */
+  bool handleKeyPress(int key) const
+  {
+    switch (key)
+    {
+    case 'p': // Toggle clock playing
+      if (clock_.isPlaying())
+        clock_.stop();
+      else
+        clock_.playForward();
+      return true;
+
+    case 'h': // Toggle highlighting
+      app_.picker->setHighlightEnabled(!app_.picker->isHighlightEnabled());
+      return true;
+
+    case 'v': // Swap Viewpoints
+    {
+      // Fix overhead first
+      const bool mainOverhead = app_.mainView->isOverheadEnabled();
+      app_.mainView->enableOverheadMode(app_.insetView->isOverheadEnabled());
+      app_.insetView->enableOverheadMode(mainOverhead);
+
+      // Swap viewpoints next
+      const simVis::Viewpoint mainViewpoint = app_.mainView->getViewpoint();
+      app_.mainView->setViewpoint(app_.insetView->getViewpoint());
+      app_.insetView->setViewpoint(mainViewpoint);
+      return true;
+    }
+
+    case '1': // Toggle RTT MainView visibility
+      app_.mainRttView->setVisible(!app_.mainRttView->isVisible());
+      return true;
+    case '2': // Toggle RTT Inset visibility
+      app_.insetRttView->setVisible(!app_.insetRttView->isVisible());
+      return true;
     }
 
     return false;
   }
 
-protected: // data
+  /** End user clicked on a view */
+  bool handleMouseClick(simVis::View* view) const
+  {
+    // Recenter the view on the clicked platform, if there is a platform
+    simVis::EntityNode* entity = app_.picker->pickedEntity();
+    if (entity)
+    {
+      view->tetherCamera(entity);
+      return true;
+    }
+
+    // Try to find an annotation node child and change its attributes
+    osgEarth::Annotation::AnnotationNode* anno =
+      osgEarth::findTopMostNodeOfType<osgEarth::Annotation::AnnotationNode>(app_.picker->pickedNode());
+    if (!anno)
+      return false;
+
+    auto style = anno->getStyle();
+    auto lineSymbol = style.getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+    // Change some line aspects to indicate we picked correctly
+    lineSymbol->stroke()->color() = randomColor();
+    lineSymbol->stroke()->width() = randomBetween(1.0, 7.0);
+    anno->setStyle(style);
+    return true;
+  }
+
+  /** Returns a random color, used by the click-on-GOG */
+  simVis::Color randomColor() const
+  {
+    return simVis::Color(randomBetween(0.0, 1.0), randomBetween(0.0, 1.0), randomBetween(0.0, 1.0), 1.f);
+  }
+
+private: // data
   simCore::Clock& clock_;
-  osg::ref_ptr<simVis::View> mainView_;
+  Application& app_;
+  bool blockMouseUntilRelease_;
 };
 
-/** Responds to callbacks from the RTT picker */
-struct UpdateLabelPickCallback : public osgEarth::Util::RTTPicker::Callback
+/** When the picker selects new items, this callback is triggered */
+class UpdateLabelPickCallback : public simVis::Picker::Callback
 {
-  void onHit(osgEarth::ObjectID id)
+public:
+  UpdateLabelPickCallback(ui::LabelControl* label)
+    : label_(label)
   {
-    osg::Node* node = osgEarth::Registry::objectIndex()->get<osg::Node>(id);
+  }
+
+  /** Update the label when new items are picked */
+  virtual void pickChanged(unsigned int pickedId, osg::Referenced* picked)
+  {
+    osg::Node* node = dynamic_cast<osg::Node*>(picked);
     simVis::EntityNode* entity = osgEarth::findFirstParentOfType<simVis::EntityNode>(node);
     if (entity)
-      g_PickLabel->setText(entity->getEntityName(simVis::EntityNode::REAL_NAME));
+      label_->setText(entity->getEntityName(simVis::EntityNode::REAL_NAME));
     else if (node)
     {
       // Since we know we're tagging GOGs, pull out the user values we encoded before
@@ -185,46 +239,41 @@ struct UpdateLabelPickCallback : public osgEarth::Util::RTTPicker::Callback
       // Create a label to display information about the GOG
       std::stringstream newLabel;
       newLabel << node->getName() << " / " << objectType << " index " << gogIndex;
-      g_PickLabel->setText(newLabel.str());
+      label_->setText(newLabel.str());
     }
     else
-      onMiss();
-    g_HighlightIdUniform->set(id);
+    {
+      label_->setText(NO_PICK);
+    }
   }
 
-  void onMiss()
-  {
-    g_PickLabel->setText(NO_PICK);
-    g_HighlightIdUniform->set(0u);
-  }
-
-  // pick whenever the mouse moves.
-  bool accept(const osgGA::GUIEventAdapter& ea, const osgGA::GUIActionAdapter& aa)
-  {
-    return true;
-  }
+private:
+  ui::LabelControl* label_;
 };
 
 /** Creates an overlay that will show information to the user. */
-ui::Control* createUi()
+ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel)
 {
   // vbox is returned to caller, memory owned by caller
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.6);
   vbox->addControl(new ui::LabelControl("Picking Example", 20, osg::Vec4f(1, 1, 0, 1)));
-  vbox->addControl(new ui::LabelControl("p: Pause playback", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("h: Toggle highlighting", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("p: Pause playback", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("v: Swap viewpoints", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("2: Toggle RTT 2 display", 14, osgEarth::Color::White));
 
   ui::Grid* grid = vbox->addControl(new ui::Grid);
   grid->setControl(0, 0, new ui::LabelControl("Picked:", 14, osgEarth::Color::White));
-  g_PickLabel = grid->setControl(1, 0, new ui::LabelControl(NO_PICK, 14, osgEarth::Color::White));
+  pickLabel = grid->setControl(1, 0, new ui::LabelControl(NO_PICK, 14, osgEarth::Color::Lime));
 
   // Move it down just a bit
   vbox->setPosition(10, 10);
+  // Don't absorb events
+  vbox->setAbsorbEvents(false);
 
   return vbox;
 }
@@ -379,71 +428,6 @@ void addGog(osg::Group* parentNode, osgEarth::MapNode* mapNode)
   }
 }
 
-/** Installs the highlight shader */
-void installHighlighter(osg::StateSet* stateSet, int attrLocation)
-{
-  // This shader program will highlight the selected object.
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
-  vp->setFunction("checkForHighlight", HIGHLIGHT_VERTEX_SHADER, osgEarth::ShaderComp::LOCATION_VERTEX_CLIP);
-  vp->setFunction("highlightFragment", HIGHLIGHT_FRAGMENT_SHADER, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
-
-  // Since we're accessing object IDs, we need to load the indexing shader as well
-  osgEarth::Registry::objectIndex()->loadShaders(vp);
-
-  // A uniform that will tell the shader which object to highlight:
-  g_HighlightIdUniform = new osg::Uniform("sdk_objectid_to_highlight", 0u);
-  stateSet->addUniform(g_HighlightIdUniform);
-  g_HighlightEnabledUniform = new osg::Uniform("sdk_highlight_enabled", true);
-  stateSet->addUniform(g_HighlightEnabledUniform);
-}
-
-/** Configures a window that lets you see what the RTT camera sees. (borrowed from osgearth_pick example) */
-void setupRTTView(osgViewer::View* view, osg::Texture* rttTex)
-{
-  view->setCameraManipulator(0L);
-  view->getCamera()->setName("osgearth_pick RTT view");
-  view->getCamera()->setViewport(0, 0, 256, 256);
-  view->getCamera()->setClearColor(osg::Vec4(1, 1, 1, 1));
-  view->getCamera()->setProjectionMatrixAsOrtho2D(-.5, .5, -.5, .5);
-  view->getCamera()->setViewMatrixAsLookAt(osg::Vec3d(0, -1, 0), osg::Vec3d(0, 0, 0), osg::Vec3d(0, 0, 1));
-  view->getCamera()->setProjectionResizePolicy(osg::Camera::FIXED);
-
-  osg::Vec3Array* v = new osg::Vec3Array(6);
-  (*v)[0].set(-.5, 0, -.5); (*v)[1].set(.5, 0, -.5); (*v)[2].set(.5, 0, .5); (*v)[3].set((*v)[2]); (*v)[4].set(-.5, 0, .5); (*v)[5].set((*v)[0]);
-
-  osg::Vec2Array* t = new osg::Vec2Array(6);
-  (*t)[0].set(0, 0); (*t)[1].set(1, 0); (*t)[2].set(1, 1); (*t)[3].set((*t)[2]); (*t)[4].set(0, 1); (*t)[5].set((*t)[0]);
-
-  osg::Geometry* g = new osg::Geometry();
-  g->setUseVertexBufferObjects(true);
-  g->setUseDisplayList(false);
-  g->setVertexArray(v);
-  g->setTexCoordArray(0, t);
-  g->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLES, 0, 6));
-
-  osg::Geode* geode = new osg::Geode();
-  geode->addDrawable(g);
-
-  osg::StateSet* stateSet = geode->getOrCreateStateSet();
-  stateSet->setDataVariance(osg::Object::DYNAMIC);
-
-  stateSet->setTextureAttributeAndModes(0, rttTex, 1);
-  rttTex->setUnRefImageDataAfterApply(false);
-  rttTex->setResizeNonPowerOfTwoHint(false);
-
-  stateSet->setMode(GL_LIGHTING, 0);
-  stateSet->setMode(GL_CULL_FACE, 0);
-  stateSet->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ZERO), 1);
-
-  const char* fs =
-    "#version " GLSL_VERSION_STR "\n"
-    "void swap(inout vec4 c) { c.rgba = c==vec4(0)? vec4(1) : vec4(vec3((c.r+c.g+c.b+c.a)/4.0),1); }\n";
-  osgEarth::Registry::shaderGenerator().run(geode);
-  osgEarth::VirtualProgram::getOrCreate(geode->getOrCreateStateSet())->setFunction("swap", fs, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
-
-  view->setSceneData(geode);
-}
-
 
 int main(int argc, char** argv)
 {
@@ -472,20 +456,21 @@ int main(int argc, char** argv)
   logDb->install(viewMan);
 
   // Create view and connect them to our scene.
-  osg::ref_ptr<simVis::View> mainView = new simVis::View();
-  mainView->setSceneManager(sceneMan);
-  mainView->setUpViewInWindow(50, 50, 800, 600);
+  Application app;
+  app.mainView = new simVis::View();
+  app.mainView->setSceneManager(sceneMan);
+  app.mainView->setUpViewInWindow(50, 50, 800, 600);
 
   // Add it to the view manager
-  viewMan->addView(mainView);
+  viewMan->addView(app.mainView);
 
   // Create an inset view
-  osg::ref_ptr<simVis::View> inset = new simVis::View;
-  inset->setName("Inset");
-  inset->setExtentsAsRatio(0.67f, 0.67f, 0.33f, 0.33f);
-  inset->setSceneManager(sceneMan);
-  inset->applyManipulatorSettings(*mainView);
-  mainView->addInset(inset); // auto-added to viewMan
+  app.insetView = new simVis::View;
+  app.insetView->setName("Inset");
+  app.insetView->setExtentsAsRatio(0.67f, 0.67f, 0.33f, 0.33f);
+  app.insetView->setSceneManager(sceneMan);
+  app.insetView->applyManipulatorSettings(*app.mainView);
+  app.mainView->addInset(app.insetView); // auto-added to viewMan
 
   // Create several platforms
   simData::MemoryDataStore dataStore;
@@ -520,15 +505,13 @@ int main(int argc, char** argv)
   clock.setEndTime(simCore::TimeStamp(dataStore.referenceYear(), 600.0));
   clock.playForward();
 
-  mainView->addOverlayControl(createUi());
-  mainView->getEventHandlers();
-  mainView->addEventHandler(new MenuHandler(clock, mainView));
-  mainView->addEventHandler(new simVis::ToggleOverheadMode(mainView, 'O', 'C'));
-  mainView->installDebugHandlers();
-
-  // Add a highlighter as mouse picks items
-  installHighlighter(scenarioManager->getOrCreateStateSet(),
-    osgEarth::Registry::objectIndex()->getObjectIDAttribLocation());
+  // Add various event handlers
+  app.mainView->installDebugHandlers();
+  app.mainView->addOverlayControl(createUi(app.pickLabel));
+  app.mainView->addEventHandler(new simVis::ToggleOverheadMode(app.mainView, 'O', 'C'));
+  app.mainView->addEventHandler(new MenuHandler(clock, app));
+  app.insetView->addEventHandler(new simVis::ToggleOverheadMode(app.insetView, 'O', 'C'));
+  app.insetView->addEventHandler(new MenuHandler(clock, app));
 
   // Set the initial viewpoints
   simVis::Viewpoint viewpoint;
@@ -536,41 +519,37 @@ int main(int argc, char** argv)
   viewpoint.heading()->set(0.0, osgEarth::Units::DEGREES);
   viewpoint.pitch()->set(-89.0, osgEarth::Units::DEGREES);
   viewpoint.range()->set(2500, osgEarth::Units::METERS);
-  mainView->setViewpoint(viewpoint);
+  app.mainView->setViewpoint(viewpoint);
 
   // Configure the inset to be tethered in cockpit mode
   viewpoint.pitch()->set(-15.0, osgEarth::Units::DEGREES);
   viewpoint.range()->set(15, osgEarth::Units::METERS);
-  inset->setViewpoint(viewpoint);
-  // Tether to platform ID #1
-  inset->tetherCamera(scenarioManager->find(1));
-#if 0
+  app.insetView->setViewpoint(viewpoint);
   // Turn on cockpit mode for the inset
-  inset->enableCockpitMode(scenarioManager->find(1));
-  inset->getEarthManipulator()->setHeadingLocked(true);
-  inset->getEarthManipulator()->setPitchLocked(false);
-#endif
+  app.insetView->enableCockpitMode(scenarioManager->find(1));
+  app.insetView->getEarthManipulator()->setHeadingLocked(true);
+  app.insetView->getEarthManipulator()->setPitchLocked(false);
+
+  // TODO: Detect GLSL version and print a warning to end user that picking won't
+  // work if the GLSL doesn't support the picking shader.
 
   // Add the picker
-  osg::ref_ptr<osgEarth::Util::RTTPicker> picker = new osgEarth::Util::RTTPicker();
-  mainView->addEventHandler(picker);
-  inset->addEventHandler(picker);
-  picker->addChild(scenarioManager);
-  // Install a callback that controls the picker and listens for hits.
-  picker->setDefaultCallback(new UpdateLabelPickCallback());
+  app.picker = new simVis::Picker(viewMan, scenarioManager, 256);
+  app.picker->installHighlightShader();
+  app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel));
 
   // Make a view that lets us see what the picker sees for Main View
-  mainRttView_ = new simVis::View();
-  mainRttView_->setExtentsAsRatio(0.67f, 0.f, 0.33f, 0.335f);
-  mainView->addInset(mainRttView_);
-  setupRTTView(mainRttView_, picker->getOrCreateTexture(mainView));
+  app.mainRttView = new simVis::View();
+  app.mainRttView->setExtentsAsRatio(0.67f, 0.f, 0.33f, 0.335f);
+  app.mainView->addInset(app.mainRttView);
+  app.picker->setUpViewWithDebugTexture(app.mainRttView, app.mainView);
 
   // Make a view that lets us see what the picker sees for Inset View
-  insetRttView_ = new simVis::View();
-  insetRttView_->setExtentsAsRatio(0.67f, 0.335f, 0.33f, 0.335f);
-  mainView->addInset(insetRttView_);
-  setupRTTView(insetRttView_, picker->getOrCreateTexture(inset));
+  app.insetRttView = new simVis::View();
+  app.insetRttView->setExtentsAsRatio(0.67f, 0.335f, 0.33f, 0.335f);
+  app.mainView->addInset(app.insetRttView);
+  app.picker->setUpViewWithDebugTexture(app.insetRttView, app.insetView);
 
   // Run until the user quits by hitting ESC.
-  viewMan->run();
+  return viewMan->run();
 }

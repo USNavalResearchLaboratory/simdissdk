@@ -35,6 +35,8 @@ Shaders::Shaders()
   add(glowHighlightFragment(), "@GlowHighlight.frag.glsl@");
   add(overheadModeVertex(), "@OverheadMode.vert.glsl@");
   add(overrideColorFragment(), "@OverrideColor.frag.glsl@");
+  add(pickerVertex(), "@Picker.vert.glsl@");
+  add(pickerFragment(), "@Picker.frag.glsl@");
   add(platformAzimElevWarpVertex(), "@PlatformAzimElevViewTool.vert.glsl@");
   add(projectorManagerVertex(), "@Projector.vert.glsl@");
   add(projectorManagerFragment(), "@Projector.frag.glsl@");
@@ -158,6 +160,16 @@ std::string Shaders::setClipVertex() const
 std::string Shaders::flashingFragment() const
 {
   return "Flashing.frag.glsl";
+}
+
+std::string Shaders::pickerVertex() const
+{
+  return "Picker.vert.glsl";
+}
+
+std::string Shaders::pickerFragment() const
+{
+  return "Picker.frag.glsl";
 }
 
 }
