@@ -1,9 +1,15 @@
 project(SIMDIS_SDK)
 
+# Configure various version fields
+set(SIMDIS_SDK_MAJOR_VERSION 1)
+set(SIMDIS_SDK_MINOR_VERSION 6)
+set(SIMDIS_SDK_REVISION_VERSION 0)
+set(SIMDIS_SDK_VERSION_STRING ${SIMDIS_SDK_MAJOR_VERSION}.${SIMDIS_SDK_MINOR_VERSION}.${SIMDIS_SDK_REVISION_VERSION} CACHE INTERNAL "SIMDIS SDK Version String" FORCE)
+
 # Define a macro that helps with auto-installation of DLLs/SOs for AutoInstall-enabled builds.
 # This macro is used in the simCore, simData, simVis, and simUtil CMake files.
 macro(PostBuildInstallSharedObjects TARGET)
-    # VS and non-VS handle Release and Debug configurations differently, so need to handle accordingly  
+    # VS and non-VS handle Release and Debug configurations differently, so need to handle accordingly
     set(SHARED_LIBRARY_OUPUT_LOC ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_LIBRARY_DIR})
     if(MSVC)
         # Windows copies the DLLs into the runtime directory

@@ -12,7 +12,7 @@ set(CORE_COMMON_HEADERS
     ${CORE_COMMON_INC}Memory.h
     ${CORE_COMMON_INC}Time.h
     ${CORE_COMMON_INC}SDKAssert.h
-    ${CORE_COMMON_INC}Version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/simCore/Common/Version.h
 )
 set(CORE_COMMON_SRC Common/)
 set(CORE_COMMON_SOURCES
@@ -175,6 +175,9 @@ set(CORE_PROJECT_FILES
     ${CORE_ALL_HEADER}
 )
 
+# Create the Version.h file
+configure_file(${CORE_COMMON_INC}Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/simCore/Common/Version.h @ONLY)
+
 # Fix the library for static or shared
 set(STATIC_OR_SHARED STATIC)
 if(SIMCORE_SHARED)
@@ -188,6 +191,7 @@ set_target_properties(SIMDIS_SDKCore PROPERTIES
 )
 target_include_directories(SIMDIS_SDKCore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(SIMDIS_SDKCore PUBLIC SIMDIS_SDKNotify)
