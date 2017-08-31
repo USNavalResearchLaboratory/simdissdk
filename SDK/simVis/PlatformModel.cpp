@@ -686,10 +686,8 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
   overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
   if (!prefs.commonprefs().useoverridecolor())
     overrideColor_->setCombineMode(OverrideColor::OFF);
-  else if (isImageModel_)
-    overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
   else
-    overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
+    overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 }
 
 void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
