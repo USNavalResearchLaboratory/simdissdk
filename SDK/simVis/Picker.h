@@ -26,6 +26,7 @@
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
 #include "osg/Referenced"
+#include "osgEarthUtil/RTTPicker"
 #include "simVis/ViewManager.h"
 
 namespace osg {
@@ -39,6 +40,7 @@ namespace simVis {
 class ScenarioManager;
 class ViewManager;
 class EntityNode;
+class PlatformNode;
 
 /** Facade to RTTPicker that ties in View Manager and other components. */
 class SDKVIS_EXPORT Picker : public osg::Referenced
@@ -68,6 +70,8 @@ public:
   osg::Node* pickedNode() const;
   /** Attempts to convert picked() into a simVis::EntityNode. */
   simVis::EntityNode* pickedEntity() const;
+  /** Attempts to locate the simVis::PlatformNode associated with the pick. */
+  simVis::PlatformNode* pickedPlatform() const;
 
   /** Installs the highlighting shader.  Without this, the highlighting will not apply to graphics. */
   void installHighlightShader();

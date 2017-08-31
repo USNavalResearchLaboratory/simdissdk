@@ -44,6 +44,7 @@
 #include "simVis/ViewManagerLogDbAdapter.h"
 #include "simVis/SceneManager.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Popup.h"
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simUtil/ExampleResources.h"
@@ -458,11 +459,18 @@ int main(int argc, char** argv)
   // Create view and connect them to our scene.
   Application app;
   app.mainView = new simVis::View();
+  app.mainView->setName("Main View");
   app.mainView->setSceneManager(sceneMan);
   app.mainView->setUpViewInWindow(50, 50, 800, 600);
 
   // Add it to the view manager
   viewMan->addView(app.mainView);
+
+  // Create a "Super HUD" that shows on top of the main view
+  osg::ref_ptr<simVis::View> superHud = new simVis::View;
+  superHud->setName("SuperHUD");
+  superHud->setUpViewAsHUD(app.mainView);
+  viewMan->addView(superHud);
 
   // Create an inset view
   app.insetView = new simVis::View;
@@ -549,6 +557,15 @@ int main(int argc, char** argv)
   app.insetRttView->setExtentsAsRatio(0.67f, 0.335f, 0.33f, 0.335f);
   app.mainView->addInset(app.insetRttView);
   app.picker->setUpViewWithDebugTexture(app.insetRttView, app.insetView);
+
+  // Add a popup handler to demonstrate its use of the picker
+  simVis::PopupHandler* popupHandler = new simVis::PopupHandler(app.picker, superHud);
+  popupHandler->setShowInCorner(true);
+  popupHandler->setBackColor(osgEarth::Color(0.f, 0.f, 0.f, 0.8f));
+  popupHandler->setBorderColor(osgEarth::Color::Green);
+  popupHandler->setTitleColor(osgEarth::Color::Lime);
+  popupHandler->setLimitVisibility(false);
+  superHud->addEventHandler(popupHandler);
 
   // Run until the user quits by hitting ESC.
   return viewMan->run();

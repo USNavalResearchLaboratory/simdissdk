@@ -32,6 +32,7 @@
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/Platform.h"
 #include "simVis/Shaders.h"
 #include "simVis/Picker.h"
 
@@ -173,6 +174,12 @@ osg::Node* Picker::pickedNode() const
 simVis::EntityNode* Picker::pickedEntity() const
 {
   return osgEarth::findFirstParentOfType<simVis::EntityNode>(pickedNode());
+}
+
+simVis::PlatformNode* Picker::pickedPlatform() const
+{
+  // TODO: Test this against beams and gates and attached GOGs.  Might be better to return pickedEntity()
+  return osgEarth::findFirstParentOfType<simVis::PlatformNode>(pickedNode());
 }
 
 void Picker::setPickedId(unsigned int id)
