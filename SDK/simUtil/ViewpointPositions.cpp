@@ -53,9 +53,10 @@ simCore::Vec3 ViewpointPositions::centerLla(const osgEarth::Viewpoint& vp)
   }
 
   // We're not tethered, but also do not have a focal point.  There is no valid center position that
-  // can be obtained from the Viewpoint.  This is likely an operator error, with an invalid viewpoint
-  // being passed in.  We'll cleanly return on release, but in debug, assert and track down cause.
-  assert(0);
+  // can be obtained from the Viewpoint.  This can happen when adding a simVis::View that does not have
+  // the expected scene data.  This might be operator error, but it also might occur if using a
+  // simVis::View as a debug view for an RTT picker.
+
   // Else: return 0,0,0
   return simCore::Vec3();
 }
@@ -68,8 +69,9 @@ simCore::Vec3 ViewpointPositions::eyeLla(const simVis::View& view)
   const osgEarth::Util::EarthManipulator* manip = dynamic_cast<const osgEarth::Util::EarthManipulator*>(view.getCameraManipulator());
   if (manip == NULL)
   {
-    // Assertion failure means we don't have an Earth Manipulator
-    assert(0);
+    // Failure means we don't have an Earth Manipulator.  This might happen if there is
+    // a simVis::View that is used as an inset that displays something besides the scene.
+    // This could happen with debug RTT textures.
     return simCore::Vec3();
   }
   const simVis::Viewpoint viewVp = view.getViewpoint();

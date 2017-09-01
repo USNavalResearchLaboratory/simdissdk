@@ -56,6 +56,14 @@ private:
 
 
 // --------------------------------------------------------------------------
+PlatformPopupManipulator::PlatformPopupManipulator(simVis::Picker& picker, simVis::View& view)
+ : popupHandler_(new simVis::PopupHandler(&picker, &view))
+{
+  drawView_ = &view;
+  frameTimer_ = new FrameTimer(this);
+  drawView_->addEventHandler(frameTimer_);
+}
+
 PlatformPopupManipulator::PlatformPopupManipulator(simVis::SceneManager& scene, simVis::View& view)
  : popupHandler_(new simVis::PopupHandler(&scene, &view))
 {

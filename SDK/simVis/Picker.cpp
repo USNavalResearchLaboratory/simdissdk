@@ -243,13 +243,6 @@ void Picker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::View* 
   if (!rttTex)
     return;
 
-  const unsigned int numSlaves = fromView->getNumSlaves();
-  for (unsigned int k = 0; k < numSlaves; ++k)
-  {
-    osg::Camera* rttCamera = fromView->getSlave(k)._camera;
-    rttCamera->setPreDrawCallback(fromView->getCamera()->getPreDrawCallback());
-  }
-
   intoView->setCameraManipulator(0L);
   intoView->getCamera()->setName("RTT view");
   intoView->getCamera()->setViewport(0, 0, 256, 256);
