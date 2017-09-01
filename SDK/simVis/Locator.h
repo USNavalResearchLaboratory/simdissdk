@@ -406,6 +406,11 @@ private: // data
 
   double timestamp_;
   double eciRefTime_;
+  // cache frequently used LLA position and orientation
+  mutable simCore::Vec3 llaPositionCache_;
+  mutable osgEarth::Revision llaPositionCacheRevision_;
+  mutable simCore::Vec3 llaOrientationCache_;
+  mutable osgEarth::Revision llaOrientationCacheRevision_;
 };
 
 

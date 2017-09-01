@@ -390,14 +390,29 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
 {
   if (!out_position)
     return false;
+
+  // use the cached lla position if it is valid
+  if (coordsys == simCore::COORD_SYS_LLA && inSyncWith(llaPositionCacheRevision_))
+  {
+    *out_position = llaPositionCache_;
+    return true;
+  }
+
   osg::Matrix m;
   if (!getLocatorMatrix(m))
     return false;
 
   const osg::Vec3d& v = m.getTrans();
   out_position->set(v.x(), v.y(), v.z());
-
-  if (coordsys != simCore::COORD_SYS_ECEF)
+  // Fall through to return if ECEF
+  if (coordsys == simCore::COORD_SYS_LLA)
+  {
+    // calculate and cache the lla position to avoid repeated expensive recalculation
+    simCore::CoordinateConverter::convertEcefToGeodeticPos(*out_position, llaPositionCache_);
+    *out_position = llaPositionCache_;
+    sync(llaPositionCacheRevision_);
+  }
+  else if (coordsys != simCore::COORD_SYS_ECEF)
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, getElapsedEciTime());
     simCore::Coordinate out;
@@ -412,6 +427,15 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
 {
   if ((!out_position) || (!out_orientation))
     return false;
+
+  // use the cached lla position & orientation if they are valid
+  if (coordsys == simCore::COORD_SYS_LLA && inSyncWith(llaPositionCacheRevision_) && inSyncWith(llaOrientationCacheRevision_))
+  {
+    *out_position = llaPositionCache_;
+    *out_orientation = llaOrientationCache_;
+    return true;
+  }
+
   osg::Matrix m;
   if (!getLocatorMatrix(m))
     return false;
@@ -420,8 +444,21 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
   out_position->set(v.x(), v.y(), v.z());
 
   enuRotMatrixToEcefEuler(m, *out_orientation);
-
-  if (coordsys != simCore::COORD_SYS_ECEF)
+  // Fall through to return if ECEF
+  if (coordsys == simCore::COORD_SYS_LLA)
+  {
+    // calculate and cache the lla position and orientation to avoid repeated expensive recalculation
+    const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation);
+    simCore::Coordinate out;
+    simCore::CoordinateConverter::convertEcefToGeodetic(in, out);
+    llaPositionCache_ = out.position();
+    llaOrientationCache_ = out.orientation();
+    sync(llaPositionCacheRevision_);
+    sync(llaOrientationCacheRevision_);
+    *out_position = llaPositionCache_;
+    *out_orientation = llaOrientationCache_;
+  }
+  else if (coordsys != simCore::COORD_SYS_ECEF)
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation, getElapsedEciTime());
     simCore::Coordinate out;
