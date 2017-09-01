@@ -38,6 +38,11 @@ class SDKVIS_EXPORT EarthManipulator : public osgEarth::Util::EarthManipulator
 public:
   EarthManipulator();
 
+  /** Get the current fov */
+  double fovY() const;
+  /** Set the current fov */
+  void setFovY(double fovy);
+
   /** Locks the heading.  When locked, the user cannot change the heading/azimuth of the camera. */
   void setHeadingLocked(bool lockHeading);
   /** Locks the pitch.  When locked, the user cannot change the pitch/elevation of the camera. */

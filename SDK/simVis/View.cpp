@@ -1086,6 +1086,11 @@ double View::fovY() const
 
 void View::setFovY(double fovy)
 {
+  // always update the earth manipulator first
+  simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
+  if (manip)
+    manip->setFovY(fovy);
+
   if (fovy == fovy_)
     return;
   fovy_ = fovy;
@@ -1355,6 +1360,12 @@ void View::enableOverheadMode(bool enableOverhead)
 {
   if (enableOverhead == overheadEnabled_)
     return;
+
+  // need to verify that the earth manipulator has the correct fov, 
+  // which may not be initialized properly if overhead mode is set too soon
+  simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
+  if (manip)
+    manip->setFovY(fovy_);
 
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();
   if (enableOverhead)

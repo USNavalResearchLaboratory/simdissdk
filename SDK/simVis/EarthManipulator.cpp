@@ -34,6 +34,18 @@ EarthManipulator::EarthManipulator()
 {
 }
 
+double EarthManipulator::fovY() const
+{
+  return _vfov;
+}
+
+void EarthManipulator::setFovY(double fovy)
+{
+  if (_vfov == fovy)
+    return;
+  _vfov = fovy;
+}
+
 void EarthManipulator::setHeadingLocked(bool lockHeading)
 {
   lockHeading_ = lockHeading;
