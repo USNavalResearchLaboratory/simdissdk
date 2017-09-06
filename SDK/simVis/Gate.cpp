@@ -752,17 +752,22 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
   baseLocator_->setLocalOffsets(
     simCore::Vec3(0, 0, 0),
     simCore::Vec3(azimuth, elevation, roll),
-    activeUpdate->time());
+    activeUpdate->time(), false);
 
   // set grid locator offset to gate centroid position
   centroidPositionOffsetLocator_->setLocalOffsets(
     simCore::Vec3(0.0, activeUpdate->centroid(), 0.0),
-    simCore::Vec3());
+    simCore::Vec3(),
+    activeUpdate->time(), false);
 
   // apply the local orientation
   centroidLocatorNode_->getLocator()->setLocalOffsets(
     simCore::Vec3(0, 0, 0),
-    simCore::Vec3(azimuth, elevation, roll));
+    simCore::Vec3(azimuth, elevation, roll),
+    activeUpdate->time(), false);
+
+  // baseLocator_ is parent to centroidPositionOffsetLocator_ and centroidLocatorNode_, its notification will include them
+  baseLocator_->endUpdate();
 
   dirtyBound();
 }

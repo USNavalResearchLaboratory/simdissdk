@@ -531,8 +531,9 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
         lobAngles = simCore::rotateEulerAngle(llaCoord.orientation(), lobAngles);
       }
       // Use position only, otherwise rendering will be adversely affected
-      getLocator()->setCoordinate(platformCoordPosOnly, time);
-      getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles);
+      getLocator()->setCoordinate(platformCoordPosOnly, time, false);
+      getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles, time, false);
+      getLocator()->endUpdate();
     }
   }
 }

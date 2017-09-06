@@ -715,10 +715,13 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
     // if assert fails, check that constructor creates this locator for non-relative beams
     assert(positionOffsetLocator_ != NULL);
     // apply the positional offset.
-    positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3());
+    positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
 
     // apply the local orientation.
-    getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset);
+    getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time(), false);
+
+    // since positionOffsetLocator_ is parent, its notification will include getLocator()
+    positionOffsetLocator_->endUpdate();
   }
   dirtyBound();
 }
