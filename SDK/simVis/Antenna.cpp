@@ -314,7 +314,7 @@ void AntennaNode::render_()
   antGeom->setDataVariance(osg::Object::DYNAMIC);
   antGeom->setUseVertexBufferObjects(true);
 
-  osg::Geode* geode = new osg::Geode();
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
   geode->addDrawable(antGeom);
 
   osg::Vec3Array* verts = new osg::Vec3Array();

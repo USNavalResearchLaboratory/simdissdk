@@ -124,11 +124,8 @@ public:
   }
 
 private:
-  QAction* loadAction_;
-  QAction* saveAction_;
-  QAction* clearAction_;
-  QToolButton& button_;
-  FilterConfiguration filterConfig_;
+  /** Declared but not defined to keep cppCheck warning free */
+  ButtonActions(const ButtonActions& rhs);
 
   /** Sets the text and tooltip on the "Load" button */
   void setLoadTextAndTooltips_(const QString& filterName)
@@ -144,6 +141,12 @@ private:
       loadAction_->setToolTip(simQt::formatTooltip(tr("Load"), tr("Loads the saved filter configuration: %1").arg(filterName)));
     }
   }
+
+  QAction* loadAction_;
+  QAction* saveAction_;
+  QAction* clearAction_;
+  QToolButton& button_;
+  FilterConfiguration filterConfig_;
 };
 
 //-----------------------------------------------------------------------------------

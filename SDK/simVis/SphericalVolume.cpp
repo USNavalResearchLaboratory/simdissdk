@@ -774,7 +774,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     // iterate for triangle strip slices that start at tip of cone and extend to far end(base) of cone
     for (unsigned int slice = 0; slice < numSlices; ++slice)
     {
-      osg::Vec3 unit[2], rawUnitVec[2], unitVec[2], nearVec[2], lengthVec[2];
+      osg::Vec3 rawUnitVec[2], unitVec[2], nearVec[2], lengthVec[2];
       double rx[2], rz[2];
 
       // start at bottom of cone and alternately build strips on either side ascending, to manage draw order

@@ -42,7 +42,7 @@ namespace simVis {
 class PickerCallback : public osgEarth::Util::RTTPicker::Callback
 {
 public:
-  PickerCallback(Picker& picker)
+  explicit PickerCallback(Picker& picker)
     : picker_(picker)
   {
   }
@@ -72,7 +72,7 @@ private:
 class ViewsWatcher : public simVis::ViewManager::Callback
 {
 public:
-  ViewsWatcher(osgEarth::Util::RTTPicker* picker)
+  explicit ViewsWatcher(osgEarth::Util::RTTPicker* picker)
     : picker_(picker)
   {
   }

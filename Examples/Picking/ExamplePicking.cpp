@@ -217,7 +217,7 @@ private: // data
 class UpdateLabelPickCallback : public simVis::Picker::Callback
 {
 public:
-  UpdateLabelPickCallback(ui::LabelControl* label)
+  explicit UpdateLabelPickCallback(ui::LabelControl* label)
     : label_(label)
   {
   }
