@@ -43,7 +43,7 @@ int numDecimals(int value)
   if (value == 0)
     return 1; // '0'
   // log10 will return [0.0,1.0) for [1,10].  static_cast to int and add 1 to round up.  Account for negative symbol
-  return 1 + static_cast<int>(log10(std::abs(value))) + (value < 0 ? 1 : 0);
+  return 1 + static_cast<int>(log10(static_cast<double>(std::abs(value)))) + (value < 0 ? 1 : 0);
 }
 
 int testVersion()
