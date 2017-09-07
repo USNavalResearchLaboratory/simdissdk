@@ -1,4 +1,4 @@
-if(NOT QT_FOUND OR NOT TARGET SIMDIS_SDKQt)
+if(NOT QT_FOUND OR NOT TARGET simQt)
     return()
 endif()
 
@@ -19,7 +19,7 @@ VSI_QT_WRAP_CPP(MY_WIDGETS_MOC
 vsi_qt_wrap_ui(MY_UI Console.ui)
 
 add_executable(example_ConsoleDataModel ${PROJECT_FILES} ${MY_WIDGETS_MOC} ${MY_UI})
-target_link_libraries(example_ConsoleDataModel PRIVATE SIMDIS_SDKQt SIMDIS_SDKCore)
+target_link_libraries(example_ConsoleDataModel PRIVATE simQt simCore)
 target_include_directories(example_ConsoleDataModel PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_ConsoleDataModel PROPERTIES
     FOLDER "Examples"

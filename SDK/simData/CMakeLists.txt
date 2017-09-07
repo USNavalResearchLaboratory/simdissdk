@@ -145,34 +145,35 @@ if(SIMDATA_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
 
-add_library(SIMDIS_SDKData ${STATIC_OR_SHARED} ${DATA_PROJECT_FILES})
-set_target_properties(SIMDIS_SDKData PROPERTIES
+add_library(simData ${STATIC_OR_SHARED} ${DATA_PROJECT_FILES})
+set_target_properties(simData PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Data"
+    OUTPUT_NAME SIMDIS_SDKData
 )
 # Need binary path for generated CMake files
-target_include_directories(SIMDIS_SDKData PUBLIC
+target_include_directories(simData PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(SIMDIS_SDKData PUBLIC PROTOBUF SIMDIS_SDKCore SIMDIS_SDKNotify)
-add_dependencies(SIMDIS_SDKData simData_protobuf_generation)
+target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify)
+add_dependencies(simData simData_protobuf_generation)
 if(SIMDATA_SHARED)
-    target_compile_definitions(SIMDIS_SDKData PRIVATE SIMDIS_SDKData_LIB_EXPORT_SHARED)
+    target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
 else()
-    target_compile_definitions(SIMDIS_SDKData PUBLIC SIMDIS_SDKData_LIB_EXPORT_STATIC)
+    target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
 endif()
 
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(SIMDIS_SDKData PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(SIMDIS_SDKData SDK_Library)
+    set_target_properties(simData PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
+    vsi_install_target(simData SDK_Library)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMDATA_SHARED)
-    PostBuildInstallSdkSharedObjects(SIMDIS_SDKData)
+    PostBuildInstallSdkSharedObjects(simData)
 endif()
 
 if(INSTALL_HEADERS)

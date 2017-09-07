@@ -3,12 +3,12 @@
 # Creates targets for the SIMDIS SDK package and all of its dependencies.
 # Depending on 3rd party libraries, SDK target names will include:
 #
-#  - SIMDIS_SDKNotify
-#  - SIMDIS_SDKCore
-#  - SIMDIS_SDKData
-#  - SIMDIS_SDKVis
-#  - SIMDIS_SDKUtil
-#  - SIMDIS_SDKQt
+#  - simNotify
+#  - simCore
+#  - simData
+#  - simVis
+#  - simUtil
+#  - simQt
 #
 
 # Configured list of all 3rd party library dependencies at SDK configure time

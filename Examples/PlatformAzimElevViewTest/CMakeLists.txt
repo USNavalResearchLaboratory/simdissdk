@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKUtil)
+if(NOT TARGET simUtil)
     return()
 endif()
 
@@ -9,7 +9,7 @@ set(PROJECT_FILES
 )
 
 add_executable(example_platform_azim_elev_view ${PROJECT_FILES})
-target_link_libraries(example_platform_azim_elev_view PRIVATE SIMDIS_SDKVis SIMDIS_SDKUtil)
+target_link_libraries(example_platform_azim_elev_view PRIVATE simVis simUtil)
 set_target_properties(example_platform_azim_elev_view PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Platform AzimElev View"

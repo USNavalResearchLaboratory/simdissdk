@@ -8,7 +8,7 @@ endif()
 project(SimData_DataStorePerformanceTest)
 
 add_executable(DataStorePerformanceTest DataStorePerformanceTest.cpp)
-target_link_libraries(DataStorePerformanceTest PRIVATE SIMDIS_SDKData SIMDIS_SDKUtil)
+target_link_libraries(DataStorePerformanceTest PRIVATE simData simUtil)
 set_target_properties(DataStorePerformanceTest PROPERTIES
     FOLDER "Performance Tests"
     PROJECT_LABEL "Performance Tests - DataStore"

@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKData OR NOT OSG_FOUND OR NOT OSGEARTH_FOUND)
+if(NOT TARGET simData OR NOT OSG_FOUND OR NOT OSGEARTH_FOUND)
     message(STATUS "Skipping simVis because of missing dependencies.")
     return()
 endif()
@@ -353,35 +353,36 @@ if(SIMVIS_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
 
-add_library(SIMDIS_SDKVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
-set_target_properties(SIMDIS_SDKVis PROPERTIES
+add_library(simVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
+set_target_properties(simVis PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Vis"
+    OUTPUT_NAME SIMDIS_SDKVis
 )
-target_include_directories(SIMDIS_SDKVis PUBLIC
+target_include_directories(simVis PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(SIMDIS_SDKVis PUBLIC SIMDIS_SDKData SIMDIS_SDKCore SIMDIS_SDKNotify
+target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} ${OSGEARTH_ALL_LIBDEPENDENCIES})
 if(SIMVIS_SHARED)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE SIMDIS_SDKVis_LIB_EXPORT_SHARED)
+    target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
-    target_compile_definitions(SIMDIS_SDKVis PUBLIC SIMDIS_SDKVis_LIB_EXPORT_STATIC)
+    target_compile_definitions(simVis PUBLIC simVis_LIB_EXPORT_STATIC)
 endif()
 
 
 # FFP in LightDiffuse and LightAmbient requires linking to OpenGL
 find_package(OpenGL)
 if(OPENGL_FOUND)
-    target_link_libraries(SIMDIS_SDKVis PRIVATE ${OPENGL_LIBRARIES})
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE SIMVIS_GL_FIXED_FUNCTION_AVAILABLE)
+    target_link_libraries(simVis PRIVATE ${OPENGL_LIBRARIES})
+    target_compile_definitions(simVis PRIVATE SIMVIS_GL_FIXED_FUNCTION_AVAILABLE)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(SIMDIS_SDKVis PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(SIMDIS_SDKVis SDK_Library)
+    set_target_properties(simVis PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
+    vsi_install_target(simVis SDK_Library)
 endif()
 
 if(INSTALL_SIMDIS_SDK_SHADERS)
@@ -395,7 +396,7 @@ if(INSTALL_SIMDIS_SDK_SHADERS)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMVIS_SHARED)
-    PostBuildInstallSdkSharedObjects(SIMDIS_SDKVis)
+    PostBuildInstallSdkSharedObjects(simVis)
 endif()
 
 # Setup header file installation
