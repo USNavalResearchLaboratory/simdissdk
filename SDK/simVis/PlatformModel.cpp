@@ -106,7 +106,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
     isImageModel_(false),
     autoRotate_(false),
     lastPrefsValid_(false),
-    brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT))
+    brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
+    objectIndexTag_(0)
 {
   osg::Group* labelRoot = new osg::Group();
   labelRoot->setName("labelRoot");
@@ -155,7 +156,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
 
   // Tag the platform at the lowest unique level feasible
-  osgEarth::Registry::objectIndex()->tagNode(offsetXform_, offsetXform_);
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(offsetXform_, offsetXform_);
 
   // When alpha volume is on, we turn on this node
   alphaVolumeGroup_ = new osg::Group;
@@ -168,6 +169,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
 
 PlatformModelNode::~PlatformModelNode()
 {
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 }
 
 bool PlatformModelNode::isImageModel() const
@@ -178,6 +180,11 @@ bool PlatformModelNode::isImageModel() const
 osg::Node* PlatformModelNode::offsetNode() const
 {
   return offsetXform_;
+}
+
+unsigned int PlatformModelNode::objectIndexTag() const
+{
+  return objectIndexTag_;
 }
 
 bool PlatformModelNode::addScaledChild(osg::Node* node)
