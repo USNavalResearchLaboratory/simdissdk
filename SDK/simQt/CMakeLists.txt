@@ -223,8 +223,8 @@ add_library(simQt ${STATIC_OR_SHARED} ${SIMQT_PROJECT_FILES})
 set_target_properties(simQt PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Qt"
-    OUTPUT_NAME SIMDIS_SDKQt
 )
+ApplySDKVersion(simQt)
 target_include_directories(simQt
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>

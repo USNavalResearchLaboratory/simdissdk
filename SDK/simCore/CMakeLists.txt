@@ -188,8 +188,8 @@ add_library(simCore ${STATIC_OR_SHARED} ${CORE_PROJECT_FILES})
 set_target_properties(simCore PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Core"
-    OUTPUT_NAME SIMDIS_SDKCore
 )
+ApplySDKVersion(simCore)
 target_include_directories(simCore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>

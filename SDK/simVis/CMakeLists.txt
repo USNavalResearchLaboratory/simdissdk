@@ -357,8 +357,8 @@ add_library(simVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
 set_target_properties(simVis PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Vis"
-    OUTPUT_NAME SIMDIS_SDKVis
 )
+ApplySDKVersion(simVis)
 target_include_directories(simVis PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>

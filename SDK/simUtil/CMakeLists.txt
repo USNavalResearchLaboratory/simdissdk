@@ -118,8 +118,8 @@ add_library(simUtil ${STATIC_OR_SHARED} ${UTIL_PROJECT_FILES})
 set_target_properties(simUtil PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Util"
-    OUTPUT_NAME SIMDIS_SDKUtil
 )
+ApplySDKVersion(simUtil)
 target_include_directories(simUtil PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:include>

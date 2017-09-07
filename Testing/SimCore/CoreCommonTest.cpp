@@ -20,6 +20,7 @@
  *
  */
 #include <cstdio>
+#include <cmath>
 #include <stdexcept>
 #include "simCore.h"
 
@@ -36,18 +37,29 @@ int testFailure()
   return rv;
 }
 
+// Helper function to return number of decimals (characters) for a given integer
+int numDecimals(int value)
+{
+  if (value == 0)
+    return 1; // '0'
+  // log10 will return [0.0,1.0) for [1,10].  static_cast to int and add 1 to round up.  Account for negative symbol
+  return 1 + static_cast<int>(log10(fabs(value))) + (value < 0 ? 1 : 0);
+}
+
 int testVersion()
 {
   int rv = 0;
   rv += SDK_ASSERT(simCore::majorVersion() == simCore::SDKVERSION_MAJOR);
   rv += SDK_ASSERT(simCore::minorVersion() == simCore::SDKVERSION_MINOR);
   rv += SDK_ASSERT(simCore::revisionVersion() == simCore::SDKVERSION_REVISION);
-  rv += SDK_ASSERT(simCore::buildNumber() == simCore::SDKVERSION_BUILDNUMBER);
+  rv += SDK_ASSERT(simCore::soVersion() == simCore::SDKVERSION_SOVERSION);
   // Form the build string in a different manner from the typical code to ensure it matches expectations
   // Uses C - stdio on purpose to provide different formatting path to validate answer
   char versionString[256];
-  // sprintf returns number of characters printed, should be >= 5 due to formatting string
-  rv += SDK_ASSERT(5 <= sprintf(versionString, "%d.%d.%d", simCore::majorVersion(), simCore::minorVersion(), simCore::revisionVersion()));
+  // 2 places for decimal, then use log10 to determine number of digits for each value
+  const int expectedRv = 2 + numDecimals(simCore::majorVersion()) + numDecimals(simCore::minorVersion()) + numDecimals(simCore::revisionVersion());
+  // sprintf returns number of characters printed
+  rv += SDK_ASSERT(expectedRv == sprintf(versionString, "%d.%d.%d", simCore::majorVersion(), simCore::minorVersion(), simCore::revisionVersion()));
   rv += SDK_ASSERT(simCore::versionString() == versionString);
   return rv;
 }
@@ -94,4 +106,3 @@ int CoreCommonTest(int argc, char* arv[])
   rv += SDK_ASSERT(testException() == 0);
   return rv;
 }
-

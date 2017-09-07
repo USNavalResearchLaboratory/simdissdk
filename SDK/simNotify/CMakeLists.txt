@@ -37,8 +37,8 @@ add_library(simNotify ${STATIC_OR_SHARED} ${NOTIFY_PROJECT_FILES})
 set_target_properties(simNotify PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Notify"
-    OUTPUT_NAME SIMDIS_SDKNotify
 )
+ApplySDKVersion(simNotify)
 target_include_directories(simNotify PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:include>

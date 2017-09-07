@@ -149,8 +149,8 @@ add_library(simData ${STATIC_OR_SHARED} ${DATA_PROJECT_FILES})
 set_target_properties(simData PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Data"
-    OUTPUT_NAME SIMDIS_SDKData
 )
+ApplySDKVersion(simData)
 # Need binary path for generated CMake files
 target_include_directories(simData PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
