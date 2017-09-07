@@ -29,6 +29,7 @@
 #include "simVis/AxisVector.h"
 #include "simVis/BathymetryGenerator.h"
 #include "simVis/Beam.h"
+#include "simVis/BeamPulse.h"
 #include "simVis/ClassificationBanner.h"
 #include "simVis/ClockOptions.h"
 #include "simVis/Compass.h"
@@ -141,4 +142,3 @@
 #include "simVis/ViewManagerLogDbAdapter.h"
 
 #endif /* SIMDISSDK_SIMVIS_H */
-

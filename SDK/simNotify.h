@@ -29,4 +29,3 @@
 #include "simNotify/StandardNotifyHandlers.h"
 
 #endif /* SIMDISSDK_SIMNOTIFY_H */
-
