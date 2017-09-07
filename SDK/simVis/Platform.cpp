@@ -544,6 +544,10 @@ void PlatformNode::updateClockMode(const simCore::Clock* clock)
 
 void PlatformNode::flush()
 {
+  // static platforms don't get flushed
+  if (lastUpdateTime_ == -1.0)
+    return;
+
   setInvalid_();
   if (track_.valid())
     track_->reset();

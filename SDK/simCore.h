@@ -38,8 +38,8 @@
 #include "simCore/Calc/MultiFrameCoordinate.h"
 #include "simCore/Calc/NumericalAnalysis.h"
 #include "simCore/Calc/Random.h"
-#include "simCore/Calc/Units.h"
 #include "simCore/Calc/UnitContext.h"
+#include "simCore/Calc/Units.h"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Calc/VerticalDatum.h"
 #include "simCore/Calc/WorldMagneticModel.h"
@@ -83,4 +83,3 @@
 #include "simCore/Time/Utils.h"
 
 #endif /* SIMDISSDK_SIMCORE_H */
-
