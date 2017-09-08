@@ -42,12 +42,50 @@ class ViewManager;
 class EntityNode;
 class PlatformNode;
 
-/** Facade to RTTPicker that ties in View Manager and other components. */
+/** Highlight shader for making selected entities glow. */
+class SDKVIS_EXPORT PickerHighlightShader : public osg::Referenced
+{
+public:
+  /** Declares uniform variables for using and setting the highlight values. */
+  PickerHighlightShader(osg::StateSet* stateset);
+
+  /** Installs the highlighting shader.  Without this, the highlighting will not apply to graphics. */
+  static void installShaderProgram(osg::StateSet* intoStateSet, bool defaultEnabled);
+  /** Installs the highlighting shader (non-static version).  Applies to stateset supplied at construction. */
+  void installShaderProgram(bool defaultEnabled);
+
+  /** Returns true if the shader is current enabled on the stateset */
+  bool isEnabled() const;
+
+  /** Turns on the highlighting feature.  Only functional if shader installed with installHighlightShader(). */
+  void setEnabled(bool enabled);
+  /** Changes the Tag ID that is currently enabled.  Corresponds to the ID from osgEarth::Registry::objectIndex. */
+  void setId(unsigned int tagId);
+
+protected:
+  /** osg::Referenced-derivced, so protected destructor. */
+  virtual ~PickerHighlightShader();
+
+private:
+  osg::observer_ptr<osg::StateSet> stateset_;
+};
+
+/** Abstract base class for pickers in SIMDIS SDK */
 class SDKVIS_EXPORT Picker : public osg::Referenced
 {
 public:
-  /** Constructs a new picker and associates with all views in the view manager. */
-  Picker(simVis::ViewManager* viewManager, simVis::ScenarioManager* scenarioManager, int cameraSize);
+  /** Retrieves the ID of the picked entity, as per osgEarth Registry's object index. 0 when none. */
+  unsigned int pickedId() const;
+
+  /** Object that corresponds to the picked ID. */
+  virtual osg::Referenced* picked() const;
+
+  /** Attempts to convert picked() into an osg::Node. */
+  osg::Node* pickedNode() const;
+  /** Attempts to convert picked() into a simVis::EntityNode. */
+  simVis::EntityNode* pickedEntity() const;
+  /** Attempts to locate the simVis::PlatformNode associated with picked(). */
+  simVis::PlatformNode* pickedPlatform() const;
 
   /** Callback that indicates when the picked object is changed. */
   class Callback : public osg::Referenced
@@ -55,30 +93,82 @@ public:
   public:
     /** Picked object has changed. */
     virtual void pickChanged(unsigned int pickedId, osg::Referenced* picked) = 0;
+
   protected:
     virtual ~Callback() {}
   };
 
+  /** Adds a callback that will trigger when the selected object changes. */
+  void addCallback(Callback* callback);
+  /** Removes a previously added callback. */
+  void removeCallback(Callback* callback);
+
+protected:
+  /** This is intended to be an abstract class, so protected.  Accepts stateset for ID uniform. */
+  Picker(osg::StateSet* stateSet);
+  /** Derived from osg::Referenced */
+  virtual ~Picker();
+
+  /** Fires off all pick callbacks. */
+  void setPicked_(unsigned int pickedId, osg::Referenced* picked);
+
+private:
+  /** Last osgEarth::ObjectId that was picked. */
+  unsigned int pickedId_;
+  /** osg::Referenced from the Registry's object index that corresponds to pickedId_. */
+  osg::observer_ptr<osg::Referenced> picked_;
+  /** Allows us to change the picked ID on the scenario manager */
+  osg::ref_ptr<PickerHighlightShader> shaderValues_;
+
+  /** List of all callbacks registered. */
+  std::vector<osg::ref_ptr<Callback> > callbacks_;
+};
+
+/** Picker that uses an intersection test to pick at most once per frame */
+class SDKVIS_EXPORT IntersectPicker : public Picker
+{
+public:
+  IntersectPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* scenarioManager);
+
+protected:
+  /** Derived from osg::Referenced, protect destructor */
+  virtual ~IntersectPicker();
+
+private:
+  /** Performs the actual intersection pick. */
+  void pickThisFrame_();
+
+  class IntersectEventHandler;
+
+  /** View that the mouse was last over from a MOVE/DRAG */
+  osg::observer_ptr<simVis::View> lastMouseView_;
+  /** Mouse X coordinate in OSG coordinates */
+  double mx_;
+  /** Mouse Y coordinate in OSG coordinates */
+  double my_;
+  /** Flags whether the pick has already occurred for this frame */
+  bool pickedThisFrame_;
+
+  /** Callback that is used to add the picker to SDK views. */
+  osg::ref_ptr<AddEventHandlerToViews> addHandlerToViews_;
+  /** Event handler for Intersection picking */
+  osg::ref_ptr<osgGA::GUIEventHandler> guiEventHandler_;
+
+  /** Retain a pointer to the view manager to clean up callbacks. */
+  osg::observer_ptr<simVis::ViewManager> viewManager_;
+  /** Pointer to the scenario manager */
+  osg::observer_ptr<simVis::ScenarioManager> scenario_;
+};
+
+/** Facade to RTTPicker that ties in View Manager and other components. */
+class SDKVIS_EXPORT RTTPicker : public Picker
+{
+public:
+  /** Constructs a new picker and associates with all views in the view manager. */
+  RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* scenarioManager, int cameraSize);
+
   /** Sets the picked ID.  Note that this may be overridden on next mouse movement. */
   void setPickedId(unsigned int id);
-
-  /** Retrieves the ID of the picked entity, as per osgEarth Registry's object index. 0 when none. */
-  unsigned int pickedId() const;
-  /** Object that corresponds to the picked ID. */
-  osg::Referenced* picked() const;
-  /** Attempts to convert picked() into an osg::Node. */
-  osg::Node* pickedNode() const;
-  /** Attempts to convert picked() into a simVis::EntityNode. */
-  simVis::EntityNode* pickedEntity() const;
-  /** Attempts to locate the simVis::PlatformNode associated with the pick. */
-  simVis::PlatformNode* pickedPlatform() const;
-
-  /** Installs the highlighting shader.  Without this, the highlighting will not apply to graphics. */
-  void installHighlightShader();
-  /** Turns on the highlighting feature.  Only functional if shader installed with installHighlightShader(). */
-  void setHighlightEnabled(bool enabled);
-  /** Returns true if the highlight is enabled.  Only functional if shader installed with installHighlightShader(). */
-  bool isHighlightEnabled() const;
 
   /** Creates a texture representing the RTT display for the given view.  Use this for debugging purposes. */
   osg::Texture2D* getOrCreateTexture(simVis::View* fromView);
@@ -88,32 +178,11 @@ public:
   /** Retrieve the underlying RTT Picker. */
   osgEarth::Util::RTTPicker* rttPicker() const;
 
-  /** Adds a callback that will trigger when the selected object changes. */
-  void addCallback(Callback* callback);
-  /** Removes a previously added callback. */
-  void removeCallback(Callback* callback);
-
 protected:
   /** osg::Referenced-derived, so protect destructor */
-  virtual ~Picker();
+  virtual ~RTTPicker();
 
 private:
-  /** Fires off all pick callbacks. */
-  void firePickChanged_(unsigned int pickedId, osg::Referenced* picked);
-
-  /** Last osgEarth::ObjectId that was picked. */
-  unsigned int pickedId_;
-  /** osg::Referenced from the Registry's object index that corresponds to pickedId_. */
-  osg::observer_ptr<osg::Referenced> picked_;
-
-  /** List of all callbacks registered. */
-  std::vector<osg::ref_ptr<Callback> > callbacks_;
-
-  /** Contains pickedId_ for the highlighting shader. */
-  osg::ref_ptr<osg::Uniform> highlightIdUniform_;
-  /** Flags whether the highlighting shader should run. */
-  osg::ref_ptr<osg::Uniform> highlightEnabledUniform_;
-
   /** Underlying render-to-texture picker. */
   osg::ref_ptr<osgEarth::Util::RTTPicker> rttPicker_;
   /** Callback that is used to add the picker to SDK views. */
@@ -121,8 +190,6 @@ private:
 
   /** Retain a pointer to the view manager to clean up callbacks. */
   osg::observer_ptr<simVis::ViewManager> viewManager_;
-  /** Scenario Manager is the root of items that can be picked in the scene. */
-  osg::observer_ptr<osg::Node> scenarioManager_;
 };
 
 }

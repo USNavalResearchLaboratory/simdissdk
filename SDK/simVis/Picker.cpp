@@ -38,34 +38,225 @@
 
 namespace simVis {
 
-/** RTTPicker callback that will transmit the picked ID to the parent Picker instance */
-class PickerCallback : public osgEarth::Util::RTTPicker::Callback
+static const std::string SDK_PICK_HIGHLIGHT_OBJECTID = "sdk_pick_highlight_objectid";
+static const std::string SDK_PICK_HIGHLIGHT_ENABLED = "sdk_pick_highlight_enabled";
+
+/////////////////////////////////////////////////////////////////
+
+PickerHighlightShader::PickerHighlightShader(osg::StateSet* stateset)
+  : stateset_(stateset)
+{
+}
+
+PickerHighlightShader::~PickerHighlightShader()
+{
+}
+
+void PickerHighlightShader::installShaderProgram(osg::StateSet* intoStateSet, bool defaultEnabled)
+{
+  if (!intoStateSet)
+    return;
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
+
+  // Load the vertex and fragment shaders
+  Shaders package;
+  package.load(vp, package.pickerVertex());
+  package.load(vp, package.pickerFragment());
+
+  // Since we're accessing object IDs, we need to load the indexing shader as well
+  osgEarth::Registry::objectIndex()->loadShaders(vp);
+
+  // A uniform that will tell the shader which object to highlight
+  intoStateSet->getOrCreateUniform(SDK_PICK_HIGHLIGHT_OBJECTID, osg::Uniform::UNSIGNED_INT)->set(0u);
+  intoStateSet->getOrCreateUniform(SDK_PICK_HIGHLIGHT_ENABLED, osg::Uniform::BOOL)->set(defaultEnabled);
+}
+
+void PickerHighlightShader::installShaderProgram(bool defaultEnabled)
+{
+  osg::ref_ptr<osg::StateSet> stateset;
+  if (stateset_.lock(stateset))
+    PickerHighlightShader::installShaderProgram(stateset, defaultEnabled);
+}
+
+bool PickerHighlightShader::isEnabled() const
+{
+  osg::ref_ptr<osg::StateSet> stateset;
+  if (stateset_.lock(stateset))
+  {
+    bool isEnabled = false;
+    osg::Uniform* enabledUniform = stateset->getUniform(SDK_PICK_HIGHLIGHT_ENABLED);
+    // Note that get() returns true if it succeeds
+    return enabledUniform && enabledUniform->get(isEnabled) && isEnabled;
+  }
+  return false;
+}
+
+void PickerHighlightShader::setEnabled(bool enabled)
+{
+  osg::ref_ptr<osg::StateSet> stateset;
+  if (stateset_.lock(stateset))
+    stateset->getOrCreateUniform(SDK_PICK_HIGHLIGHT_ENABLED, osg::Uniform::BOOL)->set(enabled);
+}
+
+void PickerHighlightShader::setId(unsigned int tagId)
+{
+  osg::ref_ptr<osg::StateSet> stateset;
+  if (stateset_.lock(stateset))
+    stateset->getOrCreateUniform(SDK_PICK_HIGHLIGHT_OBJECTID, osg::Uniform::UNSIGNED_INT)->set(tagId);
+}
+
+/////////////////////////////////////////////////////////////////
+
+Picker::Picker(osg::StateSet* stateSet)
+  : pickedId_(0),
+    shaderValues_(new PickerHighlightShader(stateSet))
+{
+}
+
+Picker::~Picker()
+{
+}
+
+void Picker::addCallback(Callback* callback)
+{
+  callbacks_.push_back(callback);
+}
+
+void Picker::removeCallback(Callback* callback)
+{
+  callbacks_.erase(std::remove(callbacks_.begin(), callbacks_.end(), callback), callbacks_.end());
+}
+
+void Picker::setPicked_(unsigned int pickedId, osg::Referenced* picked)
+{
+  if (pickedId == pickedId_ && picked_ == picked)
+    return;
+  shaderValues_->setId(pickedId);
+  pickedId_ = pickedId;
+  picked_ = picked;
+  for (auto i = callbacks_.begin(); i != callbacks_.end(); ++i)
+    (*i)->pickChanged(pickedId, picked);
+}
+
+unsigned int Picker::pickedId() const
+{
+  return pickedId_;
+}
+
+osg::Referenced* Picker::picked() const
+{
+  return picked_.get();
+}
+
+osg::Node* Picker::pickedNode() const
+{
+  return dynamic_cast<osg::Node*>(picked());
+}
+
+simVis::EntityNode* Picker::pickedEntity() const
+{
+  return osgEarth::findFirstParentOfType<simVis::EntityNode>(pickedNode());
+}
+
+simVis::PlatformNode* Picker::pickedPlatform() const
+{
+  return osgEarth::findFirstParentOfType<simVis::PlatformNode>(pickedNode());
+}
+
+/////////////////////////////////////////////////////////////////
+
+class IntersectPicker::IntersectEventHandler : public osgGA::GUIEventHandler
 {
 public:
-  explicit PickerCallback(Picker& picker)
-    : picker_(picker)
+  IntersectEventHandler(IntersectPicker& picker)
+    : picker_(picker),
+      repickNeeded_(false)
   {
   }
 
-  void onHit(osgEarth::ObjectID id)
+  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
   {
-    picker_.setPickedId(id);
-  }
+    switch (ea.getEventType())
+    {
+    case osgGA::GUIEventAdapter::MOVE:
+    case osgGA::GUIEventAdapter::DRAG:
+      picker_.lastMouseView_ = dynamic_cast<simVis::View*>(aa.asView());
+      picker_.mx_ = ea.getX();
+      picker_.my_ = ea.getY();
+      repickNeeded_ = true;
+      break;
 
-  void onMiss()
-  {
-    picker_.setPickedId(0);
-  }
+    case osgGA::GUIEventAdapter::FRAME:
+      picker_.pickedThisFrame_ = false;
+      // If the mouse moved, we need to re-pick to capture movement
+      if (repickNeeded_)
+      {
+        repickNeeded_ = false;
+        picker_.pickThisFrame_();
+      }
+      break;
 
-  bool accept(const osgGA::GUIEventAdapter& ea, const osgGA::GUIActionAdapter& aa)
-  {
-    // Always pick, on every event
-    return true;
+    default:
+      // Most events: do nothing
+      break;
+    }
+    // Never intercept an event
+    return false;
   }
 
 private:
-  Picker& picker_;
+  IntersectPicker& picker_;
+  bool repickNeeded_;
 };
+
+/////////////////////////////////////////////////////////////////
+
+IntersectPicker::IntersectPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* scenarioManager)
+  : Picker(scenarioManager->getOrCreateStateSet()),
+    mx_(0.0),
+    my_(0.0),
+    pickedThisFrame_(false),
+    viewManager_(viewManager),
+    scenario_(scenarioManager)
+{
+  guiEventHandler_ = new IntersectEventHandler(*this);
+  addHandlerToViews_ = new AddEventHandlerToViews(guiEventHandler_);
+  if (viewManager_.valid())
+  {
+    addHandlerToViews_->addToViews(*viewManager_);
+    viewManager_->addCallback(addHandlerToViews_);
+  }
+}
+
+IntersectPicker::~IntersectPicker()
+{
+  if (viewManager_.valid())
+  {
+    addHandlerToViews_->removeFromViews(*viewManager_);
+    viewManager_->removeCallback(addHandlerToViews_);
+  }
+}
+
+void IntersectPicker::pickThisFrame_()
+{
+  pickedThisFrame_ = true;
+  unsigned int ignoreMask = simVis::DISPLAY_MASK_LABEL | simVis::DISPLAY_MASK_TRACK_HISTORY | simVis::DISPLAY_MASK_LOCAL_GRID;
+  simVis::EntityNode* pickedEntity = NULL;
+  if (lastMouseView_.valid())
+    pickedEntity = scenario_->find(lastMouseView_.get(), mx_, my_, ~ignoreMask);
+  if (pickedEntity == NULL)
+  {
+    setPicked_(0, NULL);
+    return;
+  }
+
+  // Find a child of the node that has a tag
+  simVis::PlatformNode* platform = dynamic_cast<simVis::PlatformNode*>(pickedEntity);
+  if (platform)
+    setPicked_(platform->getModel()->objectIndexTag(), pickedEntity);
+  else
+    setPicked_(0, pickedEntity);
+}
 
 /////////////////////////////////////////////////////////////////
 
@@ -118,15 +309,43 @@ private:
 
 /////////////////////////////////////////////////////////////////
 
-Picker::Picker(simVis::ViewManager* viewManager, simVis::ScenarioManager* scenarioManager, int cameraSize)
-  : pickedId_(0),
-    highlightIdUniform_(new osg::Uniform("sdk_pick_highlight_objectid", 0u)),
-    highlightEnabledUniform_(new osg::Uniform("sdk_pick_highlight_enabled", true)),
-    rttPicker_(new osgEarth::Util::RTTPicker(cameraSize)),
-    viewManager_(viewManager),
-    scenarioManager_(scenarioManager)
+/** RTTPicker callback that will transmit the picked ID to the parent Picker instance */
+class PickerCallback : public osgEarth::Util::RTTPicker::Callback
 {
-  rttPicker_->addChild(scenarioManager_.get());
+public:
+  explicit PickerCallback(RTTPicker& picker)
+    : picker_(picker)
+  {
+  }
+
+  void onHit(osgEarth::ObjectID id)
+  {
+    picker_.setPickedId(id);
+  }
+
+  void onMiss()
+  {
+    picker_.setPickedId(0);
+  }
+
+  bool accept(const osgGA::GUIEventAdapter& ea, const osgGA::GUIActionAdapter& aa)
+  {
+    // Always pick, on every event
+    return true;
+  }
+
+private:
+  RTTPicker& picker_;
+};
+
+/////////////////////////////////////////////////////////////////
+
+RTTPicker::RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* scenarioManager, int cameraSize)
+  : Picker(scenarioManager->getOrCreateStateSet()),
+    rttPicker_(new osgEarth::Util::RTTPicker(cameraSize)),
+    viewManager_(viewManager)
+{
+  rttPicker_->addChild(scenarioManager);
   if (viewManager)
   {
     ViewsWatcher* viewManagerCallback = new ViewsWatcher(rttPicker_);
@@ -149,93 +368,28 @@ Picker::Picker(simVis::ViewManager* viewManager, simVis::ScenarioManager* scenar
 #endif
 }
 
-Picker::~Picker()
+RTTPicker::~RTTPicker()
 {
+  // Reset RTT Picker's callback to avoid possible invalid-memory situation if RTT Picker outlives us
+  rttPicker_->setDefaultCallback(NULL);
   osg::ref_ptr<simVis::ViewManager> viewManager;
   if (viewManager_.lock(viewManager))
     viewManager->removeCallback(viewManagerCallback_);
 }
 
-unsigned int Picker::pickedId() const
+void RTTPicker::setPickedId(unsigned int id)
 {
-  return pickedId_;
-}
-
-osg::Referenced* Picker::picked() const
-{
-  return picked_.get();
-}
-
-osg::Node* Picker::pickedNode() const
-{
-  return dynamic_cast<osg::Node*>(picked_.get());
-}
-
-simVis::EntityNode* Picker::pickedEntity() const
-{
-  return osgEarth::findFirstParentOfType<simVis::EntityNode>(pickedNode());
-}
-
-simVis::PlatformNode* Picker::pickedPlatform() const
-{
-  // TODO: Test this against beams and gates and attached GOGs.  Might be better to return pickedEntity()
-  return osgEarth::findFirstParentOfType<simVis::PlatformNode>(pickedNode());
-}
-
-void Picker::setPickedId(unsigned int id)
-{
-  if (pickedId_ == id)
-    return;
-  // Update internal state
-  pickedId_ = id;
-  if (pickedId_ == 0)
-    picked_ = NULL;
-  else
-    picked_ = osgEarth::Registry::objectIndex()->get<osg::Referenced>(id);
-  highlightIdUniform_->set(pickedId_);
-
   // Tell listeners
-  firePickChanged_(pickedId_, picked_.get());
+  osg::Referenced* ref = osgEarth::Registry::objectIndex()->get<osg::Referenced>(id);
+  setPicked_(id, ref);
 }
 
-void Picker::installHighlightShader()
-{
-  if (!scenarioManager_.valid())
-    return;
-  osg::StateSet* stateSet = scenarioManager_->getOrCreateStateSet();
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
-
-  // Load the vertex and fragment shaders
-  Shaders package;
-  package.load(vp, package.pickerVertex());
-  package.load(vp, package.pickerFragment());
-
-  // Since we're accessing object IDs, we need to load the indexing shader as well
-  osgEarth::Registry::objectIndex()->loadShaders(vp);
-
-  // A uniform that will tell the shader which object to highlight
-  stateSet->addUniform(highlightIdUniform_);
-  stateSet->addUniform(highlightEnabledUniform_);
-}
-
-void Picker::setHighlightEnabled(bool enabled)
-{
-  highlightEnabledUniform_->set(enabled);
-}
-
-bool Picker::isHighlightEnabled() const
-{
-  bool isEnabled = false;
-  // Ensure get() succeeds and returns that the uniform is enabled.
-  return highlightEnabledUniform_->get(isEnabled) && isEnabled;
-}
-
-osg::Texture2D* Picker::getOrCreateTexture(simVis::View* fromView)
+osg::Texture2D* RTTPicker::getOrCreateTexture(simVis::View* fromView)
 {
   return rttPicker_->getOrCreateTexture(fromView);
 }
 
-void Picker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::View* fromView)
+void RTTPicker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::View* fromView)
 {
   if (!intoView || !fromView)
     return;
@@ -287,25 +441,9 @@ void Picker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::View* 
   intoView->setSceneData(geode);
 }
 
-osgEarth::Util::RTTPicker* Picker::rttPicker() const
+osgEarth::Util::RTTPicker* RTTPicker::rttPicker() const
 {
   return rttPicker_;
-}
-
-void Picker::addCallback(Callback* callback)
-{
-  callbacks_.push_back(callback);
-}
-
-void Picker::removeCallback(Callback* callback)
-{
-  callbacks_.erase(std::remove(callbacks_.begin(), callbacks_.end(), callback), callbacks_.end());
-}
-
-void Picker::firePickChanged_(unsigned int pickedId, osg::Referenced* picked)
-{
-  for (auto i = callbacks_.begin(); i != callbacks_.end(); ++i)
-    (*i)->pickChanged(pickedId, picked);
 }
 
 }

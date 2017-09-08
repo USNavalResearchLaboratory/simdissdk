@@ -72,12 +72,16 @@ struct Application
   osg::ref_ptr<simVis::View> insetView;
   osg::ref_ptr<simVis::View> insetRttView;
   osg::ref_ptr<simVis::Picker> picker;
+  osg::ref_ptr<simVis::PickerHighlightShader> highlightShader;
 };
 
 /** Prints help text */
 int usage(char** argv)
 {
-  SIM_NOTICE << argv[0] << "\n"
+  SIM_NOTICE << argv[0] << " [--rtt|--intersect]\n"
+    << "\n"
+    << "  --rtt         Enable render-to-texture picking\n"
+    << "  --intersect   Enable intersection picking\n"
     << std::endl;
 
   return 0;
@@ -147,7 +151,7 @@ public:
       return true;
 
     case 'h': // Toggle highlighting
-      app_.picker->setHighlightEnabled(!app_.picker->isHighlightEnabled());
+      app_.highlightShader->setEnabled(!app_.highlightShader->isEnabled());
       return true;
 
     case 'v': // Swap Viewpoints
@@ -165,11 +169,19 @@ public:
     }
 
     case '1': // Toggle RTT MainView visibility
-      app_.mainRttView->setVisible(!app_.mainRttView->isVisible());
-      return true;
+      if (app_.mainRttView.valid())
+      {
+        app_.mainRttView->setVisible(!app_.mainRttView->isVisible());
+        return true;
+      }
+      break;
     case '2': // Toggle RTT Inset visibility
-      app_.insetRttView->setVisible(!app_.insetRttView->isVisible());
-      return true;
+      if (app_.insetRttView.valid())
+      {
+        app_.insetRttView->setVisible(!app_.insetRttView->isVisible());
+        return true;
+      }
+      break;
     }
 
     return false;
@@ -253,7 +265,7 @@ private:
 };
 
 /** Creates an overlay that will show information to the user. */
-ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel)
+ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel, bool rttEnabled)
 {
   // vbox is returned to caller, memory owned by caller
   ui::VBox* vbox = new ui::VBox();
@@ -264,8 +276,11 @@ ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel)
   vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("p: Pause playback", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("v: Swap viewpoints", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("2: Toggle RTT 2 display", 14, osgEarth::Color::White));
+  if (rttEnabled)
+  {
+    vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, osgEarth::Color::White));
+    vbox->addControl(new ui::LabelControl("2: Toggle RTT 2 display", 14, osgEarth::Color::White));
+  }
 
   ui::Grid* grid = vbox->addControl(new ui::Grid);
   grid->setControl(0, 0, new ui::LabelControl("Picked:", 14, osgEarth::Color::White));
@@ -439,6 +454,13 @@ int main(int argc, char** argv)
   if (arguments.read("--help"))
     return usage(argv);
 
+  // Determine RTT or intersect mode
+  bool useRtt = true; // default to RTT mode
+  if (arguments.read("--rtt"))
+    useRtt = true;
+  else if (arguments.read("--intersect"))
+    useRtt = false;
+
   // First we need a map.
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
 
@@ -515,7 +537,7 @@ int main(int argc, char** argv)
 
   // Add various event handlers
   app.mainView->installDebugHandlers();
-  app.mainView->addOverlayControl(createUi(app.pickLabel));
+  app.mainView->addOverlayControl(createUi(app.pickLabel, useRtt));
   app.mainView->addEventHandler(new simVis::ToggleOverheadMode(app.mainView, 'O', 'C'));
   app.mainView->addEventHandler(new MenuHandler(clock, app));
   app.insetView->addEventHandler(new simVis::ToggleOverheadMode(app.insetView, 'O', 'C'));
@@ -541,22 +563,34 @@ int main(int argc, char** argv)
   // TODO: Detect GLSL version and print a warning to end user that picking won't
   // work if the GLSL doesn't support the picking shader.
 
-  // Add the picker
-  app.picker = new simVis::Picker(viewMan, scenarioManager, 256);
-  app.picker->installHighlightShader();
+  // Enable highlighting for the picker
+  app.highlightShader = new simVis::PickerHighlightShader(scenarioManager->getOrCreateStateSet());
+  simVis::PickerHighlightShader::installShaderProgram(scenarioManager->getOrCreateStateSet(), true);
+
+  // Add the picker itself
+  if (!useRtt)
+    app.picker = new simVis::IntersectPicker(viewMan, scenarioManager);
+  else
+  {
+    // Create the RTT picker
+    simVis::RTTPicker* rttPicker = new simVis::RTTPicker(viewMan, scenarioManager, 256);
+    app.picker = rttPicker;
+
+    // Make a view that lets us see what the picker sees for Main View
+    app.mainRttView = new simVis::View();
+    app.mainRttView->setExtentsAsRatio(0.67f, 0.f, 0.33f, 0.335f);
+    app.mainView->addInset(app.mainRttView);
+    rttPicker->setUpViewWithDebugTexture(app.mainRttView, app.mainView);
+
+    // Make a view that lets us see what the picker sees for Inset View
+    app.insetRttView = new simVis::View();
+    app.insetRttView->setExtentsAsRatio(0.67f, 0.335f, 0.33f, 0.335f);
+    app.mainView->addInset(app.insetRttView);
+    rttPicker->setUpViewWithDebugTexture(app.insetRttView, app.insetView);
+  }
+
+  // When a new item is picked, update the label
   app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel));
-
-  // Make a view that lets us see what the picker sees for Main View
-  app.mainRttView = new simVis::View();
-  app.mainRttView->setExtentsAsRatio(0.67f, 0.f, 0.33f, 0.335f);
-  app.mainView->addInset(app.mainRttView);
-  app.picker->setUpViewWithDebugTexture(app.mainRttView, app.mainView);
-
-  // Make a view that lets us see what the picker sees for Inset View
-  app.insetRttView = new simVis::View();
-  app.insetRttView->setExtentsAsRatio(0.67f, 0.335f, 0.33f, 0.335f);
-  app.mainView->addInset(app.insetRttView);
-  app.picker->setUpViewWithDebugTexture(app.insetRttView, app.insetView);
 
   // Add a popup handler to demonstrate its use of the picker
   simVis::PopupHandler* popupHandler = new simVis::PopupHandler(app.picker, superHud);

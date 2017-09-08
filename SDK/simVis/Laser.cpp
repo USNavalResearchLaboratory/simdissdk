@@ -22,8 +22,8 @@
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 
-#include "osgEarth/GeoData"
 #include "osg/LineWidth"
+#include "osgEarth/GeoData"
 
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"

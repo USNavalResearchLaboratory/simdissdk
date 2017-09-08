@@ -19,8 +19,8 @@
  * disclose, or release this software.
  *
  */
-#include <osg/LineWidth>
-#include <osgEarth/GeoData>
+#include "osg/LineWidth"
+#include "osgEarth/GeoData"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"

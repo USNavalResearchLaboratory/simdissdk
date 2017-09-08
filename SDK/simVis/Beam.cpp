@@ -19,17 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Notify"
-#include "osg/CullFace"
-#include "osg/Geode"
-#include "osg/PolygonOffset"
-#include "osg/Point"
-#include "osg/LineWidth"
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
-#include "osgEarthSymbology/Symbol"
-#include "osgEarthAnnotation/AnnotationUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
