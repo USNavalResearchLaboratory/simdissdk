@@ -240,10 +240,11 @@ IntersectPicker::~IntersectPicker()
 void IntersectPicker::pickThisFrame_()
 {
   pickedThisFrame_ = true;
-  unsigned int ignoreMask = simVis::DISPLAY_MASK_LABEL | simVis::DISPLAY_MASK_TRACK_HISTORY | simVis::DISPLAY_MASK_LOCAL_GRID;
+  // Intersect picker should only pick on Platforms and Platform Models
+  unsigned int acceptMask = simVis::DISPLAY_MASK_PLATFORM | simVis::DISPLAY_MASK_PLATFORM_MODEL;
   simVis::EntityNode* pickedEntity = NULL;
   if (lastMouseView_.valid())
-    pickedEntity = scenario_->find(lastMouseView_.get(), mx_, my_, ~ignoreMask);
+    pickedEntity = scenario_->find(lastMouseView_.get(), mx_, my_, acceptMask);
   if (pickedEntity == NULL)
   {
     setPicked_(0, NULL);
