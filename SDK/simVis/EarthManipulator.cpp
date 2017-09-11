@@ -20,6 +20,7 @@
  *
  */
 #include "simVis/View.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
 
 namespace simVis
@@ -36,14 +37,24 @@ EarthManipulator::EarthManipulator()
 
 double EarthManipulator::fovY() const
 {
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
+  return _lastKnownVFOV;
+#else
   return _vfov;
+#endif
 }
 
 void EarthManipulator::setFovY(double fovy)
 {
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
+  if (_lastKnownVFOV == fovy)
+    return;
+  _lastKnownVFOV = fovy;
+#else
   if (_vfov == fovy)
     return;
   _vfov = fovy;
+#endif
 }
 
 void EarthManipulator::setHeadingLocked(bool lockHeading)
