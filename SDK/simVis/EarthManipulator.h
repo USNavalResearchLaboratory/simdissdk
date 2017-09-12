@@ -69,6 +69,9 @@ public:
   /** Return the class name */
   virtual const char* className() const { return "EarthManipulator"; }
 
+  /** Attach a node to the manipulator. Need to override so we maintain the original FOV value */
+  virtual void setNode(osg::Node* node);
+
 private:
   bool lockHeading_;
   bool lockPitch_;

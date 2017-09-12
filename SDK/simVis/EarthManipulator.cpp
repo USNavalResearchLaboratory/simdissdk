@@ -143,4 +143,12 @@ void EarthManipulator::handleMovementAction(const ActionType& type, double dx, d
   osgEarth::Util::EarthManipulator::handleMovementAction(type, dx, dy, view);
 }
 
+void EarthManipulator::setNode(osg::Node* node)
+{
+  double tmpFov = fovY();
+  osgEarth::Util::EarthManipulator::setNode(node);
+  // the EarthManipulator resets its FOV to the default in setNode(), so make sure it gets updated properly
+  setFovY(tmpFov);
+}
+
 }
