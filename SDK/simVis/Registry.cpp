@@ -520,10 +520,10 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
 
   // Set up an LOD for performance's sake that eliminates the object from drawing if eye is too far
   osg::LOD* lod = new osg::LOD;
-  // Some models like MP2 could change size over time, so give a default radius and don't accept 0.0
-  const float radius = simCore::sdkMax(result->getBound().radius(), 32.f); // meters
-  // LOD scale of 5000 times radius was based on visibility tests with a 2k pixel screen maximized
-  lod->addChild(result, 0.f, radius * 5000.f); // Minimum value: 160km (5000 * 32) before phase out
+  // Use a pixel-size LOD.  Range LOD scales relative to eye distance, but models that get distorted
+  // significantly in only 2 dimensions will have significant LOD issues with that approach.
+  lod->setRangeMode(osg::LOD::PIXEL_SIZE_ON_SCREEN);
+  lod->addChild(result, 2.f, std::numeric_limits<float>::max());
   result = lod;
 
   // Save the is-image flag
