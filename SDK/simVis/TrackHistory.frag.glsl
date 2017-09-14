@@ -8,7 +8,7 @@ uniform bool simvis_track_enable;
 
 void simvis_track_fragment(inout vec4 color)
 {
-  // use the alpha channel to enable/disable override.
+  // use the uniform to enable/disable override.
   if (simvis_track_enable)
   {
     color.rgb = simvis_track_overridecolor.rgb;
