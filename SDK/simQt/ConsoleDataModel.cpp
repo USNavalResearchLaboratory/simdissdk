@@ -27,6 +27,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Time/Utils.h"
 #include "simCore/Calc/Math.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/ConsoleChannel.h"
 #include "simQt/ConsoleDataModel.h"
 
@@ -132,8 +133,11 @@ ConsoleDataModel::~ConsoleDataModel()
 
 QString ConsoleDataModel::dateTimeString(double timeSince1970)
 {
-  QDateTime date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(timeSince1970 * 1000));
-  return date.toString(DEFAULT_TIME_FORMAT);
+  const QString UTC_POSTFIX = " UTC";
+
+  // Get the timestamp and convert it to UTC
+  QDateTime date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(timeSince1970 * 1000)).toUTC();
+  return date.toString(DEFAULT_TIME_FORMAT) + UTC_POSTFIX;
 }
 
 QVariant ConsoleDataModel::data(const QModelIndex& idx, int role) const
@@ -152,7 +156,7 @@ QVariant ConsoleDataModel::data(const QModelIndex& idx, int role) const
     {
     case COLUMN_TIME:
     {
-      QDateTime date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(line->timeStamp() * 1000));
+      QDateTime date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(line->timeStamp() * 1000)).toUTC();
       return date.toString(timeFormatString_);
     }
     case COLUMN_SEVERITY:
@@ -199,6 +203,27 @@ QVariant ConsoleDataModel::headerData(int section, Qt::Orientation orientation, 
       return "Text";
     }
   }
+
+  // Set the tooltip of the header
+  if (orientation == Qt::Horizontal && role == Qt::ToolTipRole)
+  {
+    switch (section)
+    {
+    case COLUMN_TIME:
+      return simQt::formatTooltip(tr("Time"),
+        tr("Time column is in Coordinated Universal Time (UTC)."));
+    case COLUMN_SEVERITY:
+      return simQt::formatTooltip(tr("Severity"),
+        tr("Displays the severity of the console log entries."));;
+    case COLUMN_CATEGORY:
+      return simQt::formatTooltip(tr("Category"),
+        tr("Displays the category of the console log entries."));;
+    case COLUMN_TEXT:
+      return simQt::formatTooltip(tr("Text"),
+        tr("Displays the details of the console log entries."));;
+    }
+  }
+
   return QAbstractItemModel::headerData(section, orientation, role);
 }
 

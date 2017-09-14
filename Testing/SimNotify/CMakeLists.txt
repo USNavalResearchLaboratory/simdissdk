@@ -13,7 +13,7 @@ create_test_sourcelist(SimNotifyTestFiles SimNotifyTests.cpp
 )
 
 add_executable(SimNotifyTests ${SimNotifyTestFiles} NotifySupport.h NotifySupport.cpp)
-target_link_libraries(SimNotifyTests PRIVATE SIMDIS_SDKNotify SIMDIS_SDKCore)
+target_link_libraries(SimNotifyTests PRIVATE simNotify simCore)
 set_target_properties(SimNotifyTests PROPERTIES
     FOLDER "Unit Tests"
     PROJECT_LABEL "Unit Tests - SimNotify"

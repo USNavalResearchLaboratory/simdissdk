@@ -35,10 +35,11 @@
 #ifdef _MSC_VER // [
 #pragma warning(push)
 // Disable C4244: "conversion from __int64 to int, possible loss of data"
+// Disable C4251: "identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'"
 // Disable C4267: "conversion from size_t to int, possible loss of data"
 // Disable C4275: non-DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
 // Disable C4996: "'std::_Copy_impl': Function call with parameters that may be unsafe"
-#pragma warning(disable : 4244 4267 4275 4996)
+#pragma warning(disable : 4244 4251 4267 4275 4996)
 #endif // _MSC_VER ]
 
 #include "simData.pb.h"

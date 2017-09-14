@@ -429,43 +429,65 @@ int testDeleteEntity(simData::DataStore& ds)
 
 int testFilterSerialize()
 {
-  const std::string testData[][2] = {
-      // All values on simplifies to empty string
-      {"Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)", " "},
-      // All values on simplifies to empty
-      {"a(1)~Unlisted Value(1)~No Value(1)~Something(1)", " "},
-      // All values at default values simplifies to empty
-      {"a(1)~Unlisted Value(0)", " "},
-      // Hand-edit case: 0 in category, non-zero values
-      {"a(0)~SomeValue(1)~SomeOtherValue(1)~UnsetValue(0)", " "},
-      {"a(0)~SomeValue(1)~SomeOtherValue(1)", " "},
-      // Identity case: input matches output
-      {"a(1)~Unlisted Value(1)", "a(1)~Unlisted Value(1)"},
-      {"a(1)~Something(1)", "a(1)~Something(1)"},
-      // Unlisted value is on, but there's a state without unlisted value
-      {"a(1)~Unlisted Value(1)~Unknown(0)~Surface Ship(1)", "a(1)~Unlisted Value(1)~Unknown(0)"},
-      // Unlisted value is on, but there's a state without unlisted value (with lots of cropping)
-      {"a(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(0)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)", "a(1)~Unlisted Value(1)~No Value(1)~Surface Ship(0)"},
-      // All values simplifies to empty string, with 2 categories
-      {"Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Unlisted Value(1)", "a(1)~Unlisted Value(1)"},
-      {"Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Unlisted Value(0)", " "},
-      // One of the two categories isn't fully empty
-      {"Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Something(1)", "a(1)~Something(1)"},
-      // Empty string identity inputs
-      {"", " "},
-      {" ", " "},
-      {"  ", " "}
-  };
+  // map of input strings to expected optimized output strings
+  std::map<std::string, std::string> inputToOptimizedOutput;
+
+  // All values on simplifies to empty string
+  inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)"] = " ";
+  // All values on simplifies to empty
+  inputToOptimizedOutput["a(1)~Unlisted Value(1)~No Value(1)~Something(1)"] = " ";
+  // All values at default values simplifies to empty
+  inputToOptimizedOutput["a(1)~Unlisted Value(0)"] = " ";
+  // Hand-edit case: 0 in category, non-zero values. Note that this should simplify to empty, since unchecked categories are skipped when deserializing, as they will be ignored in match()
+  // See SIM-5259 for more information
+  inputToOptimizedOutput["a(0)~SomeValue(1)~SomeOtherValue(1)~UnsetValue(0)"] = " ";
+  inputToOptimizedOutput["a(0)~SomeValue(1)~SomeOtherValue(1)"] = " ";
+  // Identity case: input matches output
+  inputToOptimizedOutput["a(1)~Unlisted Value(1)"] = "a(1)~Unlisted Value(1)";
+  inputToOptimizedOutput["a(1)~Something(1)"] = "a(1)~Something(1)";
+  // Unlisted value is on, but there's a state without unlisted value
+  inputToOptimizedOutput["a(1)~Unlisted Value(1)~Unknown(0)~Surface Ship(1)"] = "a(1)~Unlisted Value(1)~Unknown(0)";
+  // Unlisted value is on, but there's a state without unlisted value (with lots of cropping)
+  inputToOptimizedOutput["a(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(0)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)"] = "a(1)~Unlisted Value(1)~No Value(1)~Surface Ship(0)";
+  // All values simplifies to empty string, with 2 categories
+  inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Unlisted Value(1)"] = "a(1)~Unlisted Value(1)";
+  inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Unlisted Value(0)"] = " ";
+  // One of the two categories isn't fully empty
+  inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Something(1)"] = "a(1)~Something(1)";
+
+  // Empty string identity inputs
+  std::map<std::string, std::string> emptyStrings;
+  emptyStrings[""] = " ";
+  emptyStrings[" "] = " ";
+  emptyStrings["  "] = " ";
 
   simData::MemoryDataStore ds;
   simData::CategoryFilter filter(&ds);
   int rv = 0;
 
-  for (size_t i = 0; i < sizeof(testData) / sizeof(testData[0][0]) / 2; ++i)
+  // test optimized serialization and deserialization, which is used for category filters in pref rules
+  for (auto iter = inputToOptimizedOutput.begin(); iter != inputToOptimizedOutput.end(); ++iter)
   {
-    std::cout << "Running serialize test " << i << std::endl;
-    rv += SDK_ASSERT(filter.deserialize(testData[i][0]));
-    rv += SDK_ASSERT(filter.serialize() == testData[i][1]);
+    rv += SDK_ASSERT(filter.deserialize(iter->first));
+    rv += SDK_ASSERT(filter.serialize() == iter->second);
+  }
+  for (auto iter = emptyStrings.begin(); iter != emptyStrings.end(); ++iter)
+  {
+    rv += SDK_ASSERT(filter.deserialize(iter->first));
+    rv += SDK_ASSERT(filter.serialize() == iter->second);
+  }
+
+  // test out deserializing with the skip flag set to false, which should preserve the full state when serializing out again, so output should match input
+  for (auto iter = inputToOptimizedOutput.begin(); iter != inputToOptimizedOutput.end(); ++iter)
+  {
+    rv += SDK_ASSERT(filter.deserialize(iter->first, false));
+      rv += SDK_ASSERT(filter.serialize(false) == iter->first);
+  }
+  // empty strings still all convert to the standard empty serialization
+  for (auto iter = emptyStrings.begin(); iter != emptyStrings.end(); ++iter)
+  {
+    rv += SDK_ASSERT(filter.deserialize(iter->first, false));
+    rv += SDK_ASSERT(filter.serialize(false) == iter->second);
   }
 
   return rv;

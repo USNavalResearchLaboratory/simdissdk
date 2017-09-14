@@ -96,6 +96,9 @@ namespace simVis
     /** Retrieves the offsetXform node */
     osg::Node* offsetNode() const;
 
+    /** Retrieves the platform's tag ID in the registry object index, for picking. */
+    unsigned int objectIndexTag() const;
+
   public: // PlatformAttachment interface
 
     /** Sets the properties for the platform */
@@ -138,6 +141,7 @@ namespace simVis
     osg::ref_ptr<OverrideColor>        overrideColor_;
     osg::ref_ptr<osg::Uniform>         brightnessUniform_;
     osg::ref_ptr<osg::Group>           alphaVolumeGroup_;
+    unsigned int                       objectIndexTag_;
 
     /// May changes the model based on prefs and returns true if the model was changed
     bool updateModel_(const simData::PlatformPrefs& prefs);
@@ -161,10 +165,10 @@ namespace simVis
     void updateCulling_(const simData::PlatformPrefs& prefs);
     /// Updates the polygon mode based on prefs
     void updatePolygonMode_(const simData::PlatformPrefs& prefs);
-    /// Updates the lighting based on prefs
-    void updateLighting_(const simData::PlatformPrefs& prefs);
-    /// Updates the override color based on prefs
-    void updateOverrideColor_(const simData::PlatformPrefs& prefs);
+    /// Updates the lighting based on prefs or if force is set to true when the model has changed
+    void updateLighting_(const simData::PlatformPrefs& prefs, bool force);
+    /// Updates the override color based on prefs or if force is set to true when the model has changed
+    void updateOverrideColor_(const simData::PlatformPrefs& prefs, bool force);
     /// Updates the alpha volume based on prefs
     void updateAlphaVolume_(const simData::PlatformPrefs& prefs);
   };

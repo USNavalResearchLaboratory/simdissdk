@@ -25,9 +25,9 @@
 #include <QLineEdit>
 #include <QEvent>
 #include <QKeyEvent>
+#include <QTimer>
 
-#include "simCore/Time/TimeClass.h"
-
+#include "simCore/Calc/Math.h"
 #include "simQt/SegmentedTexts.h"
 #include "simQt/SegmentedSpinBox.h"
 
@@ -86,7 +86,10 @@ private:
     : QSpinBox(parent),
       completeLine_(NULL),
       colorCode_(true),
-      segmentedEventFilter_(NULL)
+      segmentedEventFilter_(NULL),
+      timer_(new QTimer(this)),
+      applyInterval_(1000),
+      setSinceFocus_(false)
   {
     setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed));
     // the method sizeHint is suppose to calculate the correct default minimum width, but something is not right.
@@ -96,12 +99,16 @@ private:
     setRange(MIN_VALUE_FOR_CALCULATING_SIZE, 9999);
 
     setContextMenuPolicy(Qt::CustomContextMenu);
+
+    timer_->setSingleShot(true);
+    connect(timer_, SIGNAL(timeout()), this, SLOT(applyTimestamp_()));
   }
 
   SegmentedSpinBox::~SegmentedSpinBox()
   {
     delete completeLine_;
     delete segmentedEventFilter_;
+    delete timer_;
   }
 
   simCore::TimeStamp SegmentedSpinBox::timeStamp() const
@@ -235,21 +242,59 @@ private:
     return QSpinBox::event(e);
   }
 
-  void SegmentedSpinBox::focusOutEvent(QFocusEvent* e)
+  void SegmentedSpinBox::applyTimestamp_()
   {
-    // Range Limit the value, since the user can type in a value out of range
-    completeLine_->setTimeStamp(completeLine_->clampTime(completeLine_->timeStamp()));
+    // If apply was queued and something else triggers an apply first, don't bother applying again
+    timer_->stop();
+    setSinceFocus_ = true;
+
+    simCore::TimeStamp currentTime = completeLine_->timeStamp();
+    simCore::TimeStamp clampedTime = completeLine_->clampTime(currentTime);
+    if (currentTime != clampedTime)
+    {
+      // Range Limit the value, since the user can type in a value out of range
+      completeLine_->setTimeStamp(clampedTime);
+    }
+
+    int cursorPosition = lineEdit()->cursorPosition();
     lineEdit()->setText(completeLine_->text());
+    lineEdit()->setCursorPosition(simCore::sdkMin(cursorPosition, lineEdit()->text().length()));
 
     if (initialTime_ != completeLine_->timeStamp())
       completeLine_->valueChanged();
+  }
 
+  void SegmentedSpinBox::queueApplyTimestamp_() const
+  {
+    // If apply already queued to happen sooner than we would queue it now, do nothing
+    if (timer_->isActive() && timer_->remainingTime() < applyInterval_)
+      return;
+
+    if (applyInterval_ >= 0)
+      timer_->start(applyInterval_);
+  }
+
+  int SegmentedSpinBox::applyInterval()
+  {
+    return applyInterval_;
+  }
+
+  void SegmentedSpinBox::setApplyInterval(int milliseconds)
+  {
+    applyInterval_ = milliseconds;
+  }
+
+  void SegmentedSpinBox::focusOutEvent(QFocusEvent* e)
+  {
+    if (!setSinceFocus_)
+      applyTimestamp_();
     QSpinBox::focusOutEvent(e);
   }
 
   void SegmentedSpinBox::focusInEvent(QFocusEvent* e)
   {
     initialTime_ = completeLine_->timeStamp();
+    setSinceFocus_ = false;
     QSpinBox::focusInEvent(e);
   }
 
@@ -323,6 +368,7 @@ private:
     {
       lineEdit()->setStyleSheet("");
       completeLine_->setText(text);
+      queueApplyTimestamp_();
     }
     else if (state == QValidator::Intermediate)
     {
@@ -331,6 +377,7 @@ private:
       else
         lineEdit()->setStyleSheet("");
       completeLine_->setText(text);
+      timer_->stop();
     }
     else
     {
@@ -338,6 +385,7 @@ private:
         lineEdit()->setStyleSheet("QLineEdit {color: red }");
       else
         lineEdit()->setStyleSheet("");
+      timer_->stop();
     }
 
     return QValidator::Acceptable;

@@ -95,7 +95,7 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
   }
 
   osg::Matrix ecefMatrix;
-  osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat() * simCore::RAD2DEG, lla.lon() * simCore::RAD2DEG, lla.alt(), ecefMatrix);
+  osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), lla.alt(), ecefMatrix);
 
   return matrixCalculate_(ecefMatrix);
 }

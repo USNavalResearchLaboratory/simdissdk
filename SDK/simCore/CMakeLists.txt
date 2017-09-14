@@ -12,7 +12,7 @@ set(CORE_COMMON_HEADERS
     ${CORE_COMMON_INC}Memory.h
     ${CORE_COMMON_INC}Time.h
     ${CORE_COMMON_INC}SDKAssert.h
-    ${CORE_COMMON_INC}Version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/simCore/Common/Version.h
 )
 set(CORE_COMMON_SRC Common/)
 set(CORE_COMMON_SOURCES
@@ -175,38 +175,43 @@ set(CORE_PROJECT_FILES
     ${CORE_ALL_HEADER}
 )
 
+# Create the Version.h file
+configure_file(${CORE_COMMON_INC}Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/simCore/Common/Version.h @ONLY)
+
 # Fix the library for static or shared
 set(STATIC_OR_SHARED STATIC)
 if(SIMCORE_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
 
-add_library(SIMDIS_SDKCore ${STATIC_OR_SHARED} ${CORE_PROJECT_FILES})
-set_target_properties(SIMDIS_SDKCore PROPERTIES
+add_library(simCore ${STATIC_OR_SHARED} ${CORE_PROJECT_FILES})
+set_target_properties(simCore PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Core"
 )
-target_include_directories(SIMDIS_SDKCore PUBLIC
+ApplySDKVersion(simCore)
+target_include_directories(simCore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(SIMDIS_SDKCore PUBLIC SIMDIS_SDKNotify)
+target_link_libraries(simCore PUBLIC simNotify)
 if(SIMCORE_SHARED)
-    target_compile_definitions(SIMDIS_SDKCore PRIVATE SIMDIS_SDKCore_LIB_EXPORT_SHARED)
+    target_compile_definitions(simCore PRIVATE simCore_LIB_EXPORT_SHARED)
 else()
-    target_compile_definitions(SIMDIS_SDKCore PUBLIC SIMDIS_SDKCore_LIB_EXPORT_STATIC)
+    target_compile_definitions(simCore PUBLIC simCore_LIB_EXPORT_STATIC)
 endif()
 if(SDK_TIMESPEC)
-    target_compile_definitions(SIMDIS_SDKCore PUBLIC DEFINED_TIMESPEC_T)
+    target_compile_definitions(simCore PUBLIC DEFINED_TIMESPEC_T)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(SIMDIS_SDKCore PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(SIMDIS_SDKCore SDK_Library)
+    set_target_properties(simCore PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
+    vsi_install_target(simCore SDK_Library)
 endif(INSTALL_SIMDIS_SDK_LIBRARIES)
 
 if(AUTOINSTALL_LIBS AND SIMCORE_SHARED)
-    PostBuildInstallSdkSharedObjects(SIMDIS_SDKCore)
+    PostBuildInstallSdkSharedObjects(simCore)
 endif(AUTOINSTALL_LIBS AND SIMCORE_SHARED)
 
 if(INSTALL_HEADERS)

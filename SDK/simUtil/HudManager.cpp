@@ -840,9 +840,9 @@ void HudImage::update_()
   // Assign the screen coordinates
   (*verts)[0].set(initialX, initialY, 0);
   (*verts)[1].set(initialX + initialWidth, initialY, 0);
-  (*verts)[2].set(initialX + initialWidth, initialY + initialHeight, 0);
-  (*verts)[3].set(initialX, initialY + initialHeight, 0);
-  geometry->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, 4));
+  (*verts)[2].set(initialX, initialY + initialHeight, 0);
+  (*verts)[3].set(initialX + initialWidth, initialY + initialHeight, 0);
+  geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
   // Set up the color
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(1);
@@ -854,8 +854,8 @@ void HudImage::update_()
   osg::ref_ptr<osg::Vec2Array> texCoords = new osg::Vec2Array(4);
   (*texCoords)[0].set(0, 0);
   (*texCoords)[1].set(1, 0);
-  (*texCoords)[2].set(1, 1);
-  (*texCoords)[3].set(0, 1);
+  (*texCoords)[2].set(0, 1);
+  (*texCoords)[3].set(1, 1);
   geometry->setTexCoordArray(0, texCoords);
 
   // Set up the Texture2D

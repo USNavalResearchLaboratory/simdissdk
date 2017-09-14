@@ -163,6 +163,34 @@ public:
   virtual std::string watchName(const EyePosition& eyePos) const = 0;
 };
 
+/** Null object implementation for EyePositionManager */
+class NullEyePositionManager : public simVis::EyePositionManager
+{
+public:
+  virtual void reset() {}
+  virtual void addCallback(EyePositionCallbackPtr cb) { }
+  virtual void removeCallback(EyePositionCallbackPtr cb) { }
+  virtual void createEyePosition(const std::string &viewString) { }
+  virtual int applyEyePosition(const std::string &viewString, simVis::View *viewport) { return 1; }
+  virtual int loadFile(const std::string& fileName) { return 1; }
+  virtual int loadFile(std::istream& is) { return 1; }
+  virtual int saveFile(const std::string& fileName) { return 1; }
+  virtual int saveFile(std::ostream& os, bool includeEyePositions) { return 1; }
+  virtual std::string eyePositionString(simVis::View *viewport) { return ""; }
+  virtual std::string insetString(simVis::View *viewport) { return ""; }
+  virtual void cycleEyeView(simVis::View *viewport, bool forwardCycle) { }
+  // Treated as an opaque pointer by consumers
+  virtual simVis::EyePosition* eyePositionByName(const std::string &eyePositionName) { return NULL; }
+  virtual void applyEyePositionToPort(simVis::EyePosition *eyePosition, simVis::View *viewport) { }
+  virtual void removeEyePosition(simVis::EyePosition *eyePosition) { }
+  virtual void removeEyePosition(const std::string& name) { }
+  virtual void renameEyePosition(simVis::EyePosition* eyePosition, const std::string& newName) { }
+  virtual void moveToEyePosition(simVis::EyePosition *eyePosition, simVis::View *viewport, double duration) { }
+  virtual void getEyePositions(std::vector<simVis::EyePosition*>& eyePositions) const { }
+  virtual std::string tetherName(const simVis::EyePosition& eyePos) const { return ""; }
+  virtual std::string watchName(const simVis::EyePosition& eyePos) const { return ""; }
+};
+
 } // simVis
 
 #endif /* SIMVIS_EYE_POSITION_MANAGER_H */

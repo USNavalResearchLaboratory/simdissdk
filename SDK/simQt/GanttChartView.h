@@ -109,6 +109,21 @@ public:
   /** Set time to draw current time indicator at */
   void setCurrentTime(double newTime);
 
+  /** Value to use as start time if bounds are not calculated to fit contents */
+  double customStart() const;
+  /** Set value to use as start time if bounds are not calculated to fit contents */
+  void setCustomStart(double newStart);
+
+  /** Value to use as end time if bounds are not calculated to fit contents */
+  double customEnd() const;
+  /** Set value to use as end time if bounds are not calculated to fit contents */
+  void setCustomEnd(double newEnd);
+
+  /** True if using custom start and end times as bounds, false if bounds are calculated to fit contents */
+  bool usingCustomBounds() const;
+  /** Set true to use custom start and end times as bounds, false to calculate bounds to fit contents */
+  void setUseCustomBounds(bool useCustomBounds);
+
 signals:
   /** Emits value in time of x-coordinate clicked */
   void timeValueAtPositionClicked(double timeValue);
@@ -151,6 +166,13 @@ private:
   /** Check to see if the chart is empty */
   bool isEmpty_() const;
 
+  /** Draws a single item in the gantt chart */
+  void drawItem_(int itemLayer, double layerHeight, int indexInLayer, const QModelIndex& parent, QPainter& painter) const;
+  /** Draws an arrow indicating an item completely out of bounds before valid range of gantt chart */
+  void drawArrowLeft_(int itemLayer, double layerHeight, const QColor& color, QPainter& painter) const;
+  /** Draws an arrow indicating an item completely out of bounds after valid range of gantt chart */
+  void drawArrowRight_(int itemLayer, double layerHeight, const QColor& color, QPainter& painter) const;
+
   /// difference between first and last endpoint
   double range_;
   /// first endpoint
@@ -179,6 +201,12 @@ private:
   bool collapseLevels_;
   /// Position of vertical line indicating the current time
   double currentTime_;
+  /// Value to use as start time if explicitly set bounds are used
+  double customStart_;
+  /// Value to use as end time if explicitly set bounds are used
+  double customEnd_;
+  /// Whether bounds should be calculated to fit entries or set explicitly.  False to calculate from entries, true to use explicit bounds
+  bool useCustomBounds_;
 };
 
 }

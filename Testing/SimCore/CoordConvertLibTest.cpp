@@ -265,18 +265,18 @@ int testGtp()
   double llaSpeed = sqrt(simCore::square(dLlaVel[0]) + simCore::square(dLlaVel[1]) + simCore::square(dLlaVel[2]));
   double dLlaAcc[] = {2.343, -1.438, 0.003};
   double llaAccMag = sqrt(simCore::square(dLlaAcc[0]) + simCore::square(dLlaAcc[1]) + simCore::square(dLlaAcc[2]));
-  simCore::Coordinate llaPos(simCore::COORD_SYS_LLA, dLlaPos);
-  llaPos.setVelocity(dLlaVel);
-  llaPos.setAcceleration(dLlaAcc);
+  simCore::Coordinate llaPos(simCore::COORD_SYS_LLA, simCore::Vec3(dLlaPos));
+  llaPos.setVelocity(simCore::Vec3(dLlaVel));
+  llaPos.setAcceleration(simCore::Vec3(dLlaAcc));
 
   double dGtpPos[] = {6487.4, -58.7639, 0.0};
   double dGtpVel[] = {10, 5, 0};
   double gtpSpeed = sqrt(simCore::square(dGtpVel[0]) + simCore::square(dGtpVel[1]) + simCore::square(dGtpVel[2]));
   double dGtpAcc[] = {1.438, -2.343, 0.005};
   double gtpAccMag = sqrt(simCore::square(dGtpAcc[0]) + simCore::square(dGtpAcc[1]) + simCore::square(dGtpAcc[2]));
-  simCore::Coordinate gtpPos(simCore::COORD_SYS_GTP, dGtpPos);
-  gtpPos.setVelocity(dGtpVel);
-  gtpPos.setAcceleration(dGtpAcc);
+  simCore::Coordinate gtpPos(simCore::COORD_SYS_GTP, simCore::Vec3(dGtpPos));
+  gtpPos.setVelocity(simCore::Vec3(dGtpVel));
+  gtpPos.setAcceleration(simCore::Vec3(dGtpAcc));
 
   // Make sure the speeds and acceleration magnitude are the same to start off with
   rv += SDK_ASSERT(simCore::areEqual(gtpSpeed, llaSpeed, 0.001));
@@ -297,8 +297,8 @@ int testGtp()
   cc.convert(gtpPos, gtpFromGtp, simCore::COORD_SYS_GTP);
   rv += SDK_ASSERT(gtpFromGtp.coordinateSystem() == simCore::COORD_SYS_GTP);
   rv += SDK_ASSERT(almostEqualPos(gtpFromGtp, gtpPos, 0.1));
-  rv += SDK_ASSERT(almostEqual(gtpFromGtp.velocity(), dGtpVel, 0.001, 0.001));
-  rv += SDK_ASSERT(almostEqual(gtpFromGtp.acceleration(), dGtpAcc, 0.001, 0.001));
+  rv += SDK_ASSERT(almostEqual(gtpFromGtp.velocity(), simCore::Vec3(dGtpVel), 0.001, 0.001));
+  rv += SDK_ASSERT(almostEqual(gtpFromGtp.acceleration(), simCore::Vec3(dGtpAcc), 0.001, 0.001));
 
   simCore::Coordinate llaFromGtp;
   cc.convert(gtpPos, llaFromGtp, simCore::COORD_SYS_LLA);
@@ -313,8 +313,8 @@ int testGtp()
   cc.convert(llaPos, llaFromLla, simCore::COORD_SYS_LLA);
   rv += SDK_ASSERT(llaFromLla.coordinateSystem() == simCore::COORD_SYS_LLA);
   rv += SDK_ASSERT(almostEqualPos(llaFromLla, llaPos, 0.001));
-  rv += SDK_ASSERT(almostEqual(llaFromLla.velocity(), dLlaVel, 0.001, 0.001));
-  rv += SDK_ASSERT(almostEqual(llaFromLla.acceleration(), dLlaAcc, 0.001, 0.001));
+  rv += SDK_ASSERT(almostEqual(llaFromLla.velocity(), simCore::Vec3(dLlaVel), 0.001, 0.001));
+  rv += SDK_ASSERT(almostEqual(llaFromLla.acceleration(), simCore::Vec3(dLlaAcc), 0.001, 0.001));
 
   std::cout << std::endl << "GTP test case: ";
   std::cout << (rv==0 ? "PASSED" : "FAILED") << std::endl;
@@ -330,46 +330,46 @@ int testCC()
   const double elapsedEciTime = 17893481.467999998 - 1.69576726;
 
   const double dLlaPos[] = {-2.95192266 * simCore::DEG2RAD, 4.50036968 * simCore::DEG2RAD, 995807.83470784};
-  simCore::Coordinate llaPos(simCore::COORD_SYS_LLA, dLlaPos, elapsedEciTime);
+  simCore::Coordinate llaPos(simCore::COORD_SYS_LLA, simCore::Vec3(dLlaPos), elapsedEciTime);
   llaPos.setOrientation(355.92127 * simCore::DEG2RAD, -1.63579 * simCore::DEG2RAD, 0. * simCore::DEG2RAD);
   llaPos.setVelocity(-523.79150391, 7345.51757813, -210.30409241);
 
   const double dEcefPos[] = {7341511.73022153, 577837.16567499, -377547.31600009};
-  simCore::Coordinate ecefPos(simCore::COORD_SYS_ECEF, dEcefPos, elapsedEciTime);
+  simCore::Coordinate ecefPos(simCore::COORD_SYS_ECEF, simCore::Vec3(dEcefPos), elapsedEciTime);
   ecefPos.setOrientation(292.30864247 * simCore::DEG2RAD, -85.71737838 * simCore::DEG2RAD, 72.02839783 * simCore::DEG2RAD);
   ecefPos.setVelocity(208.83509767, -508.9744036, 7346.6010372);
 
   // Position: NGA GoldData 6.3, WGS84, rectangular line 460, geodetic line 461
   // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
   double dLlaPos3[] = {44.0 * simCore::DEG2RAD, 0.0 * simCore::DEG2RAD, 100.0};
-  const simCore::Coordinate llaPos3(simCore::COORD_SYS_LLA, dLlaPos3);
+  const simCore::Coordinate llaPos3(simCore::COORD_SYS_LLA, simCore::Vec3(dLlaPos3));
 
   // Position: NGA GoldData 6.3, WGS84, rectangular line 460, geodetic line 461
   double dEcefPos3[] = {4595548.289592, 0.0, 4408161.078281};
-  const simCore::Coordinate ecefPos3(simCore::COORD_SYS_ECEF, dEcefPos3);
+  const simCore::Coordinate ecefPos3(simCore::COORD_SYS_ECEF, simCore::Vec3(dEcefPos3));
 
   double dXeastPos[] = {0., 0., 995807.83470784};
-  simCore::Coordinate xEastPos(simCore::COORD_SYS_XEAST, dXeastPos, elapsedEciTime);
+  simCore::Coordinate xEastPos(simCore::COORD_SYS_XEAST, simCore::Vec3(dXeastPos), elapsedEciTime);
   xEastPos.setOrientation(355.92127 * simCore::DEG2RAD, -1.63579 * simCore::DEG2RAD, 0. * simCore::DEG2RAD);
   xEastPos.setVelocity(-523.79150391, 7345.51757813, -210.30409241);
 
   const double dEciPos[] = {-3137060.76019948, -6662622.61139202, -377547.31600009};
-  simCore::Coordinate eciPos(simCore::COORD_SYS_ECI, dEciPos, elapsedEciTime);
+  simCore::Coordinate eciPos(simCore::COORD_SYS_ECI, simCore::Vec3(dEciPos), elapsedEciTime);
   eciPos.setOrientation(3.0123530924664998, -1.4960504789088027, 1.2571326970698389);
   eciPos.setVelocity(-59.71753316, -157.85427509, 7346.6010372);
 
   double dEnuPos[] = {0., 0., 995807.83470784};
-  simCore::Coordinate enuPos(simCore::COORD_SYS_ENU, dEnuPos, elapsedEciTime);
+  simCore::Coordinate enuPos(simCore::COORD_SYS_ENU, simCore::Vec3(dEnuPos), elapsedEciTime);
   enuPos.setOrientation(355.92127 * simCore::DEG2RAD, -1.63579 * simCore::DEG2RAD, 0. * simCore::DEG2RAD);
   enuPos.setVelocity(-523.79150391, 7345.51757813, -210.30409241);
 
   double dNedPos[] = {0., 0., -995807.83470784};
-  simCore::Coordinate nedPos(simCore::COORD_SYS_NED, dNedPos, elapsedEciTime);
+  simCore::Coordinate nedPos(simCore::COORD_SYS_NED, simCore::Vec3(dNedPos), elapsedEciTime);
   nedPos.setOrientation(355.92127 * simCore::DEG2RAD, -1.63579 * simCore::DEG2RAD, 0. * simCore::DEG2RAD);
   nedPos.setVelocity(7345.51757813, -523.79150391, 210.30409241);
 
   double dNwuPos[] = {0., 0., 995807.83470784};
-  simCore::Coordinate nwuPos(simCore::COORD_SYS_NWU, dNwuPos, elapsedEciTime);
+  simCore::Coordinate nwuPos(simCore::COORD_SYS_NWU, simCore::Vec3(dNwuPos), elapsedEciTime);
   nwuPos.setOrientation(355.92127 * simCore::DEG2RAD, -1.63579 * simCore::DEG2RAD, 0. * simCore::DEG2RAD);
   nwuPos.setVelocity(7345.51757813, 523.79150391, -210.30409241);
 
@@ -634,7 +634,7 @@ int testCC()
   // this eci position is 20 seconds of earth rotation different than dEcefPos
   llaPos.setElapsedEciTime(-20.0);
   const double dEciPosNegElapsed[] = { 7342346.6532643940, 567129.52516404376, -377547.31600008655 };
-  simCore::Coordinate eciPosNegElapsed(simCore::COORD_SYS_ECI, dEciPosNegElapsed, -20.0);
+  simCore::Coordinate eciPosNegElapsed(simCore::COORD_SYS_ECI, simCore::Vec3(dEciPosNegElapsed), -20.0);
   eciPosNegElapsed.setOrientation(5.1002898201157798, -1.4960504789036126, 1.2571326969871650);
   eciPosNegElapsed.setVelocity(166.73683784194071, 26.133940306514194, 7346.6010372092842);
   cc.convert(llaPos, eciFromLla, simCore::COORD_SYS_ECI);
@@ -656,10 +656,10 @@ int testExternalDataECI()
   const double elapsedEciTime = 2.54571904E+01;
 
   const double dLlaPos[] = {2.20829071E+01 * simCore::DEG2RAD, -1.59794751E+02 * simCore::DEG2RAD, 1.41305717E+04 * ft2m};
-  simCore::Coordinate llaPos(simCore::COORD_SYS_LLA, dLlaPos, elapsedEciTime);
+  simCore::Coordinate llaPos(simCore::COORD_SYS_LLA, simCore::Vec3(dLlaPos), elapsedEciTime);
 
   const double dEciPos[] = {-1.82057147E+07 * ft2m, -6.73869347E+06 * ft2m, 7.82329851E+06 * ft2m};
-  simCore::Coordinate eciPos(simCore::COORD_SYS_ECI, dEciPos, elapsedEciTime);
+  simCore::Coordinate eciPos(simCore::COORD_SYS_ECI, simCore::Vec3(dEciPos), elapsedEciTime);
 
   simCore::Coordinate eciFromLla;
   cc.convert(llaPos, eciFromLla, simCore::COORD_SYS_ECI);
@@ -935,16 +935,16 @@ int CoordConvertLibTest(int _argc_, char *_argv_[])
       std::cout << "outputEul: " << outputEul[0] << " " << outputEul[1] << " " << outputEul[2] << std::endl;
       // position check
       if (temp->CheckPosition_)
-        rv += checkValues(temp->UniqueID_, "position", outputPosition, temp->CorrectOutputPosition_, 1e-3);
+        rv += checkValues(temp->UniqueID_, "position", simCore::Vec3(outputPosition), temp->CorrectOutputPosition_, 1e-3);
       // orientation check
       if (temp->CheckEul_)
-        rv += checkValues(temp->UniqueID_, "orientation", outputEul, temp->CorrectOutputEul_, 1e-4);
+        rv += checkValues(temp->UniqueID_, "orientation", simCore::Vec3(outputEul), temp->CorrectOutputEul_, 1e-4);
       // velocity check
       if (temp->CheckVelocity_)
-        rv += checkValues(temp->UniqueID_, "velocity", outputVelocity, temp->CorrectOutputVelocity_, 1e-4);
+        rv += checkValues(temp->UniqueID_, "velocity", simCore::Vec3(outputVelocity), temp->CorrectOutputVelocity_, 1e-4);
       // acceleration check
       if (temp->CheckAcc_)
-        rv += checkValues(temp->UniqueID_, "acceleration", outputAcc, temp->CorrectOutputAcc_, 1e-4);
+        rv += checkValues(temp->UniqueID_, "acceleration", simCore::Vec3(outputAcc), temp->CorrectOutputAcc_, 1e-4);
     }
     delete *testCaseIterator;
   }

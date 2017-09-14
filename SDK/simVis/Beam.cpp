@@ -19,17 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Notify"
-#include "osg/CullFace"
-#include "osg/Geode"
-#include "osg/PolygonOffset"
-#include "osg/Point"
-#include "osg/LineWidth"
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
-#include "osgEarthSymbology/Symbol"
-#include "osgEarthAnnotation/AnnotationUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
@@ -43,12 +35,14 @@
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
+#include "simVis/BeamPulse.h"
 #include "simVis/Beam.h"
 
 // --------------------------------------------------------------------------
 
 namespace
 {
+
   osg::MatrixTransform* createBeamSV(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
   {
       simVis::SVData sv;
@@ -108,20 +102,18 @@ namespace
     else
     {
       return
-        PB_FIELD_CHANGED(a, b, polarity)        ||
-        PB_FIELD_CHANGED(a, b, colorscale)      ||
-        PB_FIELD_CHANGED(a, b, detail)          ||
-        PB_FIELD_CHANGED(a, b, gain)            ||
-        PB_FIELD_CHANGED(a, b, frequency)       ||
-        PB_FIELD_CHANGED(a, b, power)           ||
-        PB_FIELD_CHANGED(a, b, fieldofview)     ||
-        PB_FIELD_CHANGED(a, b, sensitivity)     ||
-        PB_FIELD_CHANGED(a, b, rendercone)      ||
-        PB_FIELD_CHANGED(a, b, coneresolution)  ||
-        PB_FIELD_CHANGED(a, b, capresolution)   ||
-        PB_FIELD_CHANGED(a, b, beamdrawmode)    ||
-        PB_FIELD_CHANGED(a, b, horizontalwidth) ||  // Force re-build on change since one bad value can break all subsequent re-scales
-        PB_FIELD_CHANGED(a, b, verticalwidth);      // Force re-build on change since one bad value can break all subsequent re-scales
+        PB_FIELD_CHANGED(a, b, polarity) ||
+        PB_FIELD_CHANGED(a, b, colorscale) ||
+        PB_FIELD_CHANGED(a, b, detail) ||
+        PB_FIELD_CHANGED(a, b, gain) ||
+        PB_FIELD_CHANGED(a, b, frequency) ||
+        PB_FIELD_CHANGED(a, b, power) ||
+        PB_FIELD_CHANGED(a, b, fieldofview) ||
+        PB_FIELD_CHANGED(a, b, sensitivity) ||
+        PB_FIELD_CHANGED(a, b, rendercone) ||
+        PB_FIELD_CHANGED(a, b, coneresolution) ||
+        PB_FIELD_CHANGED(a, b, capresolution) ||
+        PB_FIELD_CHANGED(a, b, beamdrawmode);
     }
   }
 }
@@ -247,6 +239,14 @@ LabelContentCallback* BeamNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string BeamNode::hookText() const
+{
+  if (hasLastPrefs_ && hasLastUpdate_)
+    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string BeamNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
@@ -292,6 +292,20 @@ void BeamNode::applyPrefs(const simData::BeamPrefs& prefs, bool force)
     lastPrefsApplied_ = accumulated;
     hasLastPrefs_ = true;
   }
+
+  // manage beam pulse animation, creating it when necessary
+  if (prefs.animate())
+  {
+    if (beamPulse_ == NULL)
+      beamPulse_ = new simVis::BeamPulse(getOrCreateStateSet());
+
+    beamPulse_->setEnabled(true);
+    beamPulse_->setLength(static_cast<float>(prefs.pulselength()));
+    beamPulse_->setRate(static_cast<float>(prefs.pulserate()));
+    beamPulse_->setStipplePattern(prefs.pulsestipple());
+  }
+  else if (beamPulse_ != NULL)
+    beamPulse_->setEnabled(false);
 }
 
 void BeamNode::setHostMissileOffset(double hostMissileOffset)
@@ -397,8 +411,7 @@ bool BeamNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     else if (beamChangedToInactive || hostChangedToInactive)
     {
       // avoid applying a null update over and over - only apply the null update on the transition
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -407,7 +420,17 @@ bool BeamNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
   if (localGrid_ && getNodeMask() != DISPLAY_MASK_NONE)
     localGrid_->notifyHostLocatorChange();
 
+  // Whether updateSlice changed or not, label content may have changed, and for active beams we need to update
+  if (isActive())
+    updateLabel_(lastPrefsApplied_);
+
   return updateApplied;
+}
+
+void BeamNode::flush()
+{
+  hasLastUpdate_ = false;
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double BeamNode::range() const
@@ -496,9 +519,9 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
 
   double azimuth;
   double elevation;
-  simCore::CoordinateConverter converter;
-  simCore::calculateAbsAzEl(sourceLla, targetLla, &azimuth, &elevation, NULL, simCore::TANGENT_PLANE_WGS_84, &converter);
-  double range = simCore::calculateSlant(sourceLla, targetLla, simCore::TANGENT_PLANE_WGS_84, &converter);
+  // let the simCore::Calculations implementation do coordinate conversions; it guarantees that only one initialization occurs for both these calculations.
+  simCore::calculateAbsAzEl(sourceLla, targetLla, &azimuth, &elevation, NULL, simCore::TANGENT_PLANE_WGS_84, NULL);
+  const double range = simCore::calculateSlant(sourceLla, targetLla, simCore::TANGENT_PLANE_WGS_84, NULL);
   targetBeamUpdate.set_azimuth(azimuth);
   targetBeamUpdate.set_elevation(elevation);
   targetBeamUpdate.set_range(range);
@@ -684,10 +707,13 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
     // if assert fails, check that constructor creates this locator for non-relative beams
     assert(positionOffsetLocator_ != NULL);
     // apply the positional offset.
-    positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3());
+    positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
 
     // apply the local orientation.
-    getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset);
+    getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time(), false);
+
+    // since positionOffsetLocator_ is parent, its notification will include getLocator()
+    positionOffsetLocator_->endUpdate();
   }
   dirtyBound();
 }
@@ -700,40 +726,40 @@ const simData::BeamUpdate* BeamNode::getLastUpdateFromDS() const
 /// update prefs that can be updated without rebuilding the whole beam.
 void BeamNode::performInPlacePrefChanges_(const simData::BeamPrefs* a, const simData::BeamPrefs* b, osg::MatrixTransform* node)
 {
+  if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
   {
-    if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
+    // Check for transition between color and override color, then check for color change
+    if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
     {
-      // Check for transition between color and override color, then check for color change
-      if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
-      {
-        SVFactory::updateColor(node, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
-      }
+      SVFactory::updateColor(node, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
     }
-    else
+  }
+  else
+  {
+    // Check for transition between color and override color, then check for color change
+    if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
     {
-      // Check for transition between color and override color, then check for color change
-      if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
-      {
-        SVFactory::updateColor(node, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
-      }
+      SVFactory::updateColor(node, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
     }
-    if (PB_FIELD_CHANGED(a, b, shaded))
-    {
-      SVFactory::updateLighting(node, b->shaded());
-    }
-    if (PB_FIELD_CHANGED(a, b, blended))
-    {
-      SVFactory::updateBlending(node, b->blended());
-      // only write to the depth buffer if it's NOT blended.
-      depthAttr_->setWriteMask(!b->blended());
-      getOrCreateStateSet()->setRenderBinDetails((b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
-    }
+  }
+  if (PB_FIELD_CHANGED(a, b, shaded))
+  {
+    SVFactory::updateLighting(node, b->shaded());
+  }
+  if (PB_FIELD_CHANGED(a, b, blended))
+  {
+    SVFactory::updateBlending(node, b->blended());
+    // only write to the depth buffer if it's NOT blended.
+    depthAttr_->setWriteMask(!b->blended());
+    getOrCreateStateSet()->setRenderBinDetails((b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
   }
 
+  if (PB_FIELD_CHANGED(a, b, verticalwidth))
+    SVFactory::updateVertAngle(node, a->verticalwidth(), b->verticalwidth());
+  if (PB_FIELD_CHANGED(a, b, horizontalwidth))
+    SVFactory::updateHorizAngle(node, a->horizontalwidth(), b->horizontalwidth());
   if (PB_FIELD_CHANGED(a, b, beamscale))
-  {
     setBeamScale_(node, b->beamscale());
-  }
 }
 
 void BeamNode::performInPlaceUpdates_(const simData::BeamUpdate* a, const simData::BeamUpdate* b, osg::MatrixTransform* node)

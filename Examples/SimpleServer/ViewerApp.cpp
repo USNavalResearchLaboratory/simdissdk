@@ -30,6 +30,7 @@
 #include "simVis/Compass.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Platform.h"
+#include "simVis/Popup.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Scenario.h"
@@ -67,30 +68,6 @@ static const std::string HELP_TEXT =
   "w : Toggle compass\n"
   "z : Toggle cockpit mode (if centered)\n"
   ;
-
-//////////////////////////////////////////////////////////////////
-
-class IdleClock : public osg::NodeCallback
-{
-public:
-  IdleClock(simCore::ClockImpl& clock, simData::DataStore& dataStore)
-    : clock_(clock),
-      dataStore_(dataStore)
-  {
-  }
-
-  void operator()(osg::Node* node, osg::NodeVisitor* nv)
-  {
-    clock_.idle();
-    const double nowTime = clock_.currentTime().secondsSinceRefYear(dataStore_.referenceYear());
-    dataStore_.update(nowTime);
-    traverse(node, nv);
-  }
-
-private:
-  simCore::ClockImpl& clock_;
-  simData::DataStore& dataStore_;
-};
 
 //////////////////////////////////////////////////////////////////
 
@@ -192,7 +169,9 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   mainView->getDatabasePager()->setUpThreads(6, 4);
   mainView->addEventHandler(new simVis::ToggleOverheadMode(mainView, 'O', 'C'));
 
-  // Add it to the view manager:
+  mainView->addEventHandler(new simVis::PopupHandler(sceneManager_));
+
+  // Add it to the view manager
   viewManager_->addView(mainView);
 
   // Create the SuperHUD
@@ -252,7 +231,7 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   clock_->registerTimeCallback(simCore::Clock::TimeObserverPtr(new simExamples::SkyNodeTimeUpdater(sceneManager_)));
 
   // Update the clock on an event callback
-  sceneManager_->addUpdateCallback(new IdleClock(*clock_, *dataStore_));
+  sceneManager_->addUpdateCallback(new simExamples::IdleClockCallback(*clock_, *dataStore_));
 
   // Tie in our keyboard shortcuts
   sceneManager_->addEventCallback(new Shortcuts(*this));

@@ -20,6 +20,7 @@
  *
  */
 #include <limits>
+#include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
 #include "simVis/AnimatedLine.h"
@@ -47,6 +48,15 @@ static const simVis::Color INERTIAL_AXIS_Z_COLOR = simVis::Color::Blue;
 static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0, 0.5, 0.0, 1.0); // Orange from SIMDIS 9
 static const simVis::Color MOON_VECTOR_COLOR = simVis::Color::White;
 static const simVis::Color SUN_VECTOR_COLOR = simVis::Color::Yellow;
+
+// Distance in meters that a platform drawing optical or radio horizon must move laterally before the horizon is recalculated
+static const double HORIZON_RANGE_STEP = 100;
+// Distance in meters that a platform drawing optical or radio horizon must move vertically before the horizon is recalculated
+static const double HORIZON_ALT_STEP = 10;
+
+// Colors to use when drawing optical or radio horizon
+static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0, 1, 0, 0.6); // Translucent green
+static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1, 0, 0, 0.6); // Translucent red
 
 // this is used as a sentinel value for an platform that does not (currently) have a valid position
 static const simData::PlatformUpdate NULL_PLATFORM_UPDATE = simData::PlatformUpdate();
@@ -128,6 +138,9 @@ velocityAxisVector_(NULL),
 ephemerisVector_(NULL),
 model_(NULL),
 contentCallback_(new NullEntityCallback()),
+losCreator_(NULL),
+opticalLosNode_(NULL),
+radioLosNode_(NULL),
 frontOffset_(0.0),
 valid_(false),
 lastPrefsValid_(false),
@@ -221,6 +234,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     updateOrRemoveVelocityVector_(prefsDraw, prefs);
     updateOrRemoveEphemerisVector_(prefsDraw, prefs);
     updateOrRemoveCircleHighlight_(prefsDraw, prefs);
+    updateOrRemoveHorizons_(prefs);
   }
 
   setRcsPrefs_(prefs);
@@ -335,6 +349,11 @@ void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
   {
     localGrid_->notifyHostLocatorChange();
   }
+
+  if (lastPrefsValid_)
+  {
+    updateOrRemoveHorizons_(lastPrefs_);
+  }
 }
 
 bool PlatformNode::isActive() const
@@ -404,7 +423,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
 
   if (!updateSlice->hasChanged() && !force && !forceUpdateFromDataStore_)
   {
-    // Even if the platform has not changed, the label can still change
+    // Even if the platform has not changed, the label can still change - entity name could change as a result of category data, for example.
     updateLabel_(lastPrefs_);
     return false;
   }
@@ -420,13 +439,11 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     PlatformTspiFilterManager::FilterResponse modified = platformTspiFilterManager_.filter(current, lastPrefs_, lastProps_);
     if (modified == PlatformTspiFilterManager::POINT_DROPPED)
     {
-      valid_ = false;
-      setNodeMask(simVis::DISPLAY_MASK_NONE);
-      lastUpdate_ = NULL_PLATFORM_UPDATE;
+      setInvalid_();
       if (velocityAxisVector_)
-        velocityAxisVector_->update(lastUpdate_);
+        velocityAxisVector_->update(NULL_PLATFORM_UPDATE);
       if (ephemerisVector_)
-        ephemerisVector_->update(lastUpdate_);
+        ephemerisVector_->update(NULL_PLATFORM_UPDATE);
       return true;
     }
     valid_ = true;
@@ -448,9 +465,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   else
   {
     // a NULL update means the platform should be disabled
-    valid_ = false;
-    setNodeMask(simVis::DISPLAY_MASK_NONE);
-    lastUpdate_ = NULL_PLATFORM_UPDATE;
+    setInvalid_();
   }
 
   // remove or create track history
@@ -485,6 +500,13 @@ bool PlatformNode::isActive_(const simData::PlatformPrefs& prefs) const
 {
   // the valid_ flag indicates that the platform node has data at current scenario time, but this can be manually overridden by the datadraw flag
   return valid_ && lastPrefs_.commonprefs().datadraw();
+}
+
+void PlatformNode::setInvalid_(void)
+{
+  valid_ = false;
+  lastUpdate_ = NULL_PLATFORM_UPDATE;
+  setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
 bool PlatformNode::showTrack_(const simData::PlatformPrefs& prefs) const
@@ -522,13 +544,17 @@ void PlatformNode::updateClockMode(const simCore::Clock* clock)
 
 void PlatformNode::flush()
 {
-  lastUpdate_ = NULL_PLATFORM_UPDATE;
+  // static platforms don't get flushed
+  if (lastUpdateTime_ == -1.0)
+    return;
+
+  setInvalid_();
   if (track_.valid())
     track_->reset();
   if (velocityAxisVector_)
-    velocityAxisVector_->update(lastUpdate_);
+    velocityAxisVector_->update(NULL_PLATFORM_UPDATE);
   if (ephemerisVector_)
-    ephemerisVector_->update(lastUpdate_);
+    ephemerisVector_->update(NULL_PLATFORM_UPDATE);
 }
 
 double PlatformNode::range() const
@@ -566,7 +592,7 @@ const std::string PlatformNode::getEntityName(EntityNode::NameType nameType, boo
 
 void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
 {
-  if (model_ && lastUpdate_.has_time())
+  if (model_ && valid_)
   {
     std::string label = getEntityName(EntityNode::DISPLAY_NAME, true);
     if (prefs.commonprefs().labelprefs().namelength() > 0)
@@ -605,6 +631,8 @@ std::string PlatformNode::popupText() const
 {
   if (lastPrefsValid_ && valid_)
   {
+    // a valid_ platform should never have an update that does not have a time
+    assert(lastUpdate_.has_time());
     std::string prefix;
     /// if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
     if (!lastPrefs_.commonprefs().alias().empty())
@@ -621,10 +649,24 @@ std::string PlatformNode::popupText() const
   return "";
 }
 
+std::string PlatformNode::hookText() const
+{
+  if (lastPrefsValid_ && valid_)
+  {
+    // a valid_ platform should never have an update that does not have a time
+    assert(lastUpdate_.has_time());
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+  }
+
+  return "";
+}
+
 std::string PlatformNode::legendText() const
 {
   if (lastPrefsValid_ && valid_)
   {
+    // a valid_ platform should never have an update that does not have a time
+    assert(lastUpdate_.has_time());
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   }
 
@@ -739,6 +781,103 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
     scaledInertialTransform_->removeChild(areaHighlight_);
     areaHighlight_ = NULL;
   }
+}
+
+void PlatformNode::updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs)
+{
+  updateOrRemoveHorizon_(simCore::OPTICAL_HORIZON, prefs);
+  updateOrRemoveHorizon_(simCore::RADAR_HORIZON, prefs);
+}
+
+void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs)
+{
+  RadialLOSNode* los = NULL;
+  bool drawHorizon = false;
+  switch (horizonType)
+  {
+  case simCore::OPTICAL_HORIZON:
+    // Create and add node if we haven't already
+    if (!opticalLosNode_ && losCreator_)
+    {
+      opticalLosNode_ = losCreator_->newLosNode();
+      opticalLosNode_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
+      addChild(opticalLosNode_);
+    }
+    los = opticalLosNode_;
+    drawHorizon = prefs.drawopticlos();
+    break;
+  case simCore::RADAR_HORIZON:
+    // Create and add node if we haven't already
+    if (!radioLosNode_ && losCreator_)
+    {
+      radioLosNode_ = losCreator_->newLosNode();
+      radioLosNode_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
+      addChild(radioLosNode_);
+    }
+    los = radioLosNode_;
+    drawHorizon = prefs.drawrflos();
+    break;
+  case simCore::GEOMETRIC_HORIZON:
+    // Horizon calculations are only allowed for optical or radar
+    assert(0);
+    break;
+  }
+
+  if (!los)
+  {
+    // Do not assert.  Null los nodes are valid
+    return;
+  }
+
+  if (!prefs.commonprefs().datadraw() || !prefs.commonprefs().draw() || !drawHorizon) // Remove horizon if it's currently visible
+  {
+    los->setActive(false);
+    return;
+  }
+
+  double rangeDist = 0;
+  double altDist = 0;
+
+  simCore::Coordinate platCoord = getLocator()->getCoordinate();
+  simCore::Coordinate platLlaCoord;
+  simCore::CoordinateConverter converter;
+  converter.convert(platCoord, platLlaCoord, simCore::COORD_SYS_LLA);
+
+  // Draw/update horizon
+  simCore::Coordinate losCoord = los->getCoordinate();
+
+  if (losCoord.coordinateSystem() != simCore::COORD_SYS_NONE) // losNode is not guaranteed to have a valid coord
+  {
+    simCore::Coordinate losLlaCoord;
+    converter.convert(losCoord, losLlaCoord, simCore::COORD_SYS_LLA);
+
+    rangeDist = simCore::calculateGroundDist(losLlaCoord.position(), platLlaCoord.position(), simCore::WGS_84, NULL);
+    altDist = fabs(losLlaCoord.alt() - platLlaCoord.alt());
+  }
+  else
+  {
+    // Always trigger a redraw if the losNode doesn't have a valid coordinate
+    rangeDist = HORIZON_RANGE_STEP + 1;
+  }
+
+  // Don't update if horizon is already active and platform is within acceptable range of last horizon center
+  if (HORIZON_ALT_STEP > altDist && HORIZON_RANGE_STEP > rangeDist && los->getActive())
+    return;
+
+  // Deactivate temporarily to prevent unnecessary calculations while updating los fields
+  los->setActive(false);
+
+  los->setCoordinate(getLocator()->getCoordinate());
+
+  los->setMaxRange(Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
+  los->setAzimuthalResolution(Angle(5, osgEarth::Units::DEGREES));
+
+  los->setActive(true);
+}
+
+void PlatformNode::setLosCreator(LosCreator* losCreator)
+{
+  losCreator_ = losCreator;
 }
 
 }

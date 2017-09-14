@@ -324,6 +324,7 @@ int main(int argc, char **argv)
     simCore::Vec3(simCore::DEG2RAD * RLOS_LAT, simCore::DEG2RAD * RLOS_LON, RLOS_ALT)));
   app.los->setVisibleColor(osg::Vec4(1, 1, 1, 0.6));
   app.los->setObstructedColor(osg::Vec4(1, 0, 0, 0.6));
+  app.los->setActive(true);
   app.apply();
 
   // Add it to the scene:

@@ -124,6 +124,9 @@ namespace simVis
     */
     virtual const std::string getEntityName(NameType nameType, bool allowBlankAlias = false) const = 0;
 
+    /// Returns the hook text based on the label content callback, update and preference
+    virtual std::string hookText() const = 0;
+
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const = 0;
 

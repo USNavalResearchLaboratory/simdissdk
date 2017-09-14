@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKQt)
+if(NOT TARGET simQt)
     return()
 endif()
 
@@ -20,7 +20,7 @@ VSI_QT_WRAP_CPP(Q_UNITS_HEADERS_MOC
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(example_QtUnitsWidgetTest ${GUI_SOURCES} ${Q_UNITS_FORMS_HEADERS} ${Q_UNITS_HEADERS_MOC})
-target_link_libraries(example_QtUnitsWidgetTest PRIVATE SIMDIS_SDKQt)
+target_link_libraries(example_QtUnitsWidgetTest PRIVATE simQt)
 target_include_directories(example_QtUnitsWidgetTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_QtUnitsWidgetTest PROPERTIES
     FOLDER "Examples"

@@ -22,8 +22,8 @@
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 
-#include "osgEarth/GeoData"
 #include "osg/LineWidth"
+#include "osgEarth/GeoData"
 
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
@@ -38,6 +38,7 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
     node_(NULL),
     host_(host),
     localGrid_(NULL),
+    hasLastPrefs_(false),
     label_(NULL),
     contentCallback_(new NullEntityCallback())
 {
@@ -124,9 +125,17 @@ LabelContentCallback* LaserNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string LaserNode::hookText() const
+{
+  if (hasLastUpdate_ && hasLastPrefs_)
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string LaserNode::legendText() const
 {
-  if (hasLastUpdate_)
+  if (hasLastUpdate_ && hasLastPrefs_)
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
 
   return "";
@@ -141,6 +150,7 @@ void LaserNode::setPrefs(const simData::LaserPrefs& prefs)
   refresh_(NULL, &prefs);
   updateLabel_(prefs);
   lastPrefs_ = prefs;
+  hasLastPrefs_ = true;
 }
 
 bool LaserNode::isActive() const
@@ -166,6 +176,10 @@ bool LaserNode::getHostId(simData::ObjectId& out_hostId) const
 
 const std::string LaserNode::getEntityName(EntityNode::NameType nameType, bool allowBlankAlias) const
 {
+  // lastPrefs_ will have no meaningful default if never set
+  if (!hasLastPrefs_)
+    return "";
+
   switch (nameType)
   {
   case EntityNode::REAL_NAME:
@@ -220,8 +234,7 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
     else if (laserChangedToInactive || hostChangedToInactive)
     {
       // avoid applying a null update over and over - only apply the null update on the transition
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -230,7 +243,17 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
   if (localGrid_ && getNodeMask() != DISPLAY_MASK_NONE)
     localGrid_->notifyHostLocatorChange();
 
+  // Whether updateSlice changed or not, label content may have changed, and for active beams we need to update
+  if (isActive())
+    updateLabel_(lastPrefs_);
+
   return updateApplied;
+}
+
+void LaserNode::flush()
+{
+  hasLastUpdate_ = false;
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double LaserNode::range() const
@@ -270,7 +293,7 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   }
 
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
-  bool force = !hasLastUpdate_ || node_ == NULL ||
+  bool force = !hasLastUpdate_ || !hasLastPrefs_ || node_ == NULL ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, datadraw));
 
   // if new geometry is required, build it
@@ -349,9 +372,11 @@ void LaserNode::updateLocator_(const simData::LaserUpdate* newUpdate, const simD
       assert(laserXYZOffsetLocator_ != NULL);
 
       // laser xyz offsets are relative to host platform orientation;
-      laserXYZOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time());
+      laserXYZOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
       // laser orientation is not-relative to host platform orientation;
-      getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time());
+      getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time(), false);
+      // laserXYZOffsetLocator_ is parent to getLocator, its update will update both
+      laserXYZOffsetLocator_->endUpdate();
     }
     else
     {

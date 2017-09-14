@@ -1,11 +1,11 @@
-if(NOT TARGET SIMDIS_SDKUtil)
+if(NOT TARGET simUtil)
     return()
 endif()
 
 project(EXAMPLE_LOAD_LAYER)
 
 add_executable(example_load_layer LoadLayer.cpp)
-target_link_libraries(example_load_layer PRIVATE SIMDIS_SDKVis SIMDIS_SDKUtil OSGDB OSGEARTH)
+target_link_libraries(example_load_layer PRIVATE simVis simUtil OSGDB OSGEARTH)
 set_target_properties(example_load_layer PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Load Terrain Layers"

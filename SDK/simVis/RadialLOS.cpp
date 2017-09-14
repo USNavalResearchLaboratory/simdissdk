@@ -21,6 +21,7 @@
  */
 #include "simVis/RadialLOS.h"
 #include "simVis/Utils.h"
+#include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
@@ -47,7 +48,7 @@ RadialLOS::Sample::Sample(double range_m, const osgEarth::GeoPoint& point, doubl
     range_m_(range_m),
     hamsl_m_(hamsl_m),
     hae_m_(hae_m),
-    dot_(dot),
+    elev_rad_(dot),
     visible_(visible),
     point_(point)
 {
@@ -59,7 +60,7 @@ RadialLOS::Sample::Sample(const Sample& rhs)
     range_m_(rhs.range_m_),
     hamsl_m_(rhs.hamsl_m_),
     hae_m_(rhs.hae_m_),
-    dot_(rhs.dot_),
+    elev_rad_(rhs.elev_rad_),
     visible_(rhs.visible_),
     point_(rhs.point_)
 {
@@ -205,10 +206,8 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
     radials_.push_back(Radial(azim_rad));
     Radial& radial = radials_.back();
 
-    // track the dot product of the look vector to determine
-    // LOS visibility.
-    double maxDotProduct = -1.1;
-
+    // Track the highest elevation along this azimuth to check for visibility
+    double maxElev = -2 * M_PI;
     // step through the distance range:
     bool rangeDone = false;
     for (double range_m = range_res_m; !rangeDone; range_m += range_res_m)
@@ -237,18 +236,25 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
         mapPoint.z() = hae;
         mapPoint.toWorld(sampleWorld);
 
-        osg::Vec3d ray = sampleWorld - originWorld;
-        ray.normalize();
-        double dot = originUpWorld * ray;
+        simCore::Coordinate destCoord;
+        convertGeoPointToCoord(mapPoint, destCoord, mapNode);
+
+        simCore::CoordinateConverter cc;
+        simCore::Coordinate originLlaCoord;
+        cc.convert(originCoord, originLlaCoord, simCore::COORD_SYS_LLA);
+        cc.setReferenceOrigin(originLlaCoord.lat(), originLlaCoord.lon(), originLlaCoord.alt());
+
+        double elev;
+        simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), NULL, &elev, NULL, simCore::FLAT_EARTH, &cc);
 
         bool visible = false;
-        if (aboveGround && dot > maxDotProduct)
+        if (elev >= maxElev)
         {
-          maxDotProduct = dot;
+          maxElev = elev;
           visible = true;
         }
 
-        radial.samples_.push_back(Sample(range_m, mapPoint, hamsl, hae, dot, visible));
+        radial.samples_.push_back(Sample(range_m, mapPoint, hamsl, hae, elev, visible));
       }
       else
       {
@@ -308,27 +314,35 @@ bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& ex
       osg::Vec3d originUpWorld = osg::Vec3d(0, 0, 1) * local2world;
       originUpWorld.normalize();
 
-      double maxDotProduct = -1.1;
+      double maxElev = -2 * M_PI;
       for (unsigned int sampleIndex = 0; sampleIndex < radial.samples_.size(); ++sampleIndex)
       {
         Sample& sample = radial.samples_[sampleIndex];
 
-        // recalculate the dot product (vector deviation) for all the new samples only.
+        // recalculate the elevation for all the new samples only.
         if (sampleIndex >= firstNewSampleIndex)
         {
+          // see if the point is unobstructed.
           sample.point_.z() = sample.hae_m_;
-          osg::Vec3d sampleWorld;
-          sample.point_.toWorld(sampleWorld);
 
-          osg::Vec3d ray = sampleWorld - originWorld;
-          ray.normalize();
-          sample.dot_ = originUpWorld * ray;
+          simCore::Coordinate destCoord;
+          convertGeoPointToCoord(sample.point_, destCoord, mapNode);
+          simCore::Coordinate originCoord;
+          convertGeoPointToCoord(originMap_, originCoord, mapNode);
+
+          simCore::CoordinateConverter cc;
+          simCore::Coordinate originLlaCoord;
+          cc.convert(originCoord, originLlaCoord, simCore::COORD_SYS_LLA);
+          cc.setReferenceOrigin(originLlaCoord.lat(), originLlaCoord.lon(), originLlaCoord.alt());
+
+          double elev;
+          simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), NULL, &elev, NULL, simCore::FLAT_EARTH, &cc);
+          sample.elev_rad_ = elev;
         }
 
-        // recalculate the visibility flag.
-        if (aboveGround && sample.dot_ > maxDotProduct)
+        if (sample.elev_rad_ >= maxElev)
         {
-          maxDotProduct = sample.dot_;
+          maxElev = sample.elev_rad_;
           sample.visible_ = true;
         }
         else

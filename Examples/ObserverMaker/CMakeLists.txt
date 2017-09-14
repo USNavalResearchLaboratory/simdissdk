@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKVis)
+if(NOT TARGET simVis)
     return()
 endif()
 
@@ -9,7 +9,7 @@ set(PROJECT_FILES
 )
 
 add_executable(example_observermaker ${PROJECT_FILES})
-target_link_libraries(example_observermaker PRIVATE SIMDIS_SDKVis)
+target_link_libraries(example_observermaker PRIVATE simVis)
 set_target_properties(example_observermaker PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Observer Maker"

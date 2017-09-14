@@ -33,8 +33,14 @@
 const double ICON_MARGIN = 5;
 
 /// Amount to change box color by when drawing borders
-const double LIGHT_FACTOR = 300;
-const double DARK_FACTOR = 400;
+const double LIGHT_FACTOR = 200;
+const double DARK_FACTOR = 150;
+
+/**
+* Amount of buffer space to put above and below out-of-bounds arrows to prevent them from touching.
+* Note that each arrow adds a margin independently, meaning the total space between two arrows is twice this value
+*/
+const int ARROW_MARGIN = 3;
 
 namespace simQt
 {
@@ -54,7 +60,10 @@ GanttChartView::GanttChartView(QWidget* parent)
     endTimeColumn_(2),
     endTimeRole_(Qt::DisplayRole),
     collapseLevels_(false),
-    currentTime_(-std::numeric_limits<double>::max())
+    currentTime_(-std::numeric_limits<double>::max()),
+    customStart_(0),
+    customEnd_(0),
+    useCustomBounds_(false)
 {
 }
 
@@ -82,7 +91,7 @@ QModelIndex GanttChartView::indexAt(const QPoint &point) const
   int itemNum = 0;
   int layer = 0;
 
-  for (int parent = 0; parent < numLayers; parent++)
+  for (int parent = 0; parent < model()->rowCount(rootIndex()); parent++)
   {
     QModelIndex layerIndex = model()->index(parent, 0, rootIndex());
 
@@ -106,11 +115,8 @@ QModelIndex GanttChartView::indexAt(const QPoint &point) const
       // Handle cases where the beginning is after the end
       if (begin > end)
       {
-        double temp = begin;
-        begin = end;
-        end = temp;
+        std::swap(begin, end);
       }
-
       QRect rect(((begin - firstBegin_) * (scale_ * zoom_)) - horizontalScrollBar()->value(), itemHeight * layer, (end - begin) * (scale_ * zoom_), itemHeight);
       if (rect.contains(point))
       {
@@ -331,6 +337,9 @@ bool GanttChartView::viewportEvent(QEvent *event)
 
 void GanttChartView::paintEvent(QPaintEvent* event)
 {
+  if (!model())
+    return;
+
   updateGeometries_();
 
   QPainter painter(viewport());
@@ -345,14 +354,11 @@ void GanttChartView::paintEvent(QPaintEvent* event)
   // If spacingPixels <= 1, the reference lines are drawn on every pixel of the viewport.  This defeats the purpose.
   if (drawReferenceLines_ && spacingPixels > 1)
   {
-    for (double x = 0; x < viewport()->width(); x += spacingPixels)
+    for (double x = 0; x < range_ * (scale_ * zoom_); x += spacingPixels)
     {
       painter.drawLine(x, 0, x, viewport()->height() - 1);
     }
   }
-
-  if (!model())
-    return;
 
   int numLayers = 0;
   if (collapseLevels_)
@@ -403,25 +409,22 @@ void GanttChartView::paintEvent(QPaintEvent* event)
         std::swap(begin, end);
       }
 
-      painter.fillRect((begin - firstBegin_) * (scale_ * zoom_), itemHeight * layer, (end - begin) * (scale_ * zoom_), itemHeight, color);
+      // If the end of the item is before the beginning of the chart or the beginning of the item is after the end of the chart, the entire item is out of bounds and requires special processing
+      if (end >= firstBegin_ && begin <= (firstBegin_ + range_))
+        drawItem_(layer, itemHeight, itemInLayer, parentIndex, painter);
 
-      // Draw a border to give depth
-      painter.setPen(color.lighter(LIGHT_FACTOR));
-      painter.drawLine((begin - firstBegin_) * (scale_ * zoom_), itemHeight * layer, (begin - firstBegin_) * (scale_ * zoom_), itemHeight * (layer + 1));
-      painter.drawLine((begin - firstBegin_) * (scale_ * zoom_), itemHeight * layer, (end - firstBegin_) * (scale_ * zoom_), itemHeight * layer);
+      // Entire item is after end of chart.  Draw an arrow at the end of the chart pointing towards it
+      else if (begin > (firstBegin_ + range_))
+        drawArrowRight_(layer, itemHeight, color, painter);
 
-      painter.setPen(color.darker(DARK_FACTOR));
-      painter.drawLine((end - firstBegin_) * (scale_ * zoom_), itemHeight * layer, (end - firstBegin_) * (scale_ * zoom_), itemHeight * (layer + 1));
-      painter.drawLine((begin - firstBegin_) * (scale_ * zoom_), itemHeight * (layer + 1), (end - firstBegin_) * (scale_ * zoom_), itemHeight * (layer + 1));
-
-      // Draw the icon to the right of the item
-      double centerY = ((itemHeight * layer) + itemHeight / 2);
-
-      icon.paint(&painter, QRect((end - firstBegin_) * (scale_ * zoom_) + ICON_MARGIN, centerY - (iconSize_ / 2), iconSize_, iconSize_));
+      // Entire item is before beginning of chart.  Draw an arrow at the beginning of the chart pointing towards it
+      else
+        drawArrowLeft_(layer, itemHeight, color, painter);
     }
   }
 
   double currTimeLineX = (currentTime_ - firstBegin_) * (scale_ * zoom_);
+  painter.setPen(QColor(Qt::black));
   painter.drawLine(currTimeLineX, 0, currTimeLineX, viewport()->height() - 1);
 }
 
@@ -555,28 +558,36 @@ void GanttChartView::updateEndpoints_()
   if (model())
     numLayers = model()->rowCount(rootIndex());
 
-  // Determine the bound of start and end points
-  for (int layer = 0; layer < numLayers; layer++)
+  if (!useCustomBounds_)
   {
-    QModelIndex layerIndex = model()->index(layer, 0, rootIndex());
-
-    for (int itemInLayer = 0; itemInLayer < model()->rowCount(layerIndex); itemInLayer++)
+    // Determine the bound of start and end points
+    for (int layer = 0; layer < numLayers; layer++)
     {
-      QModelIndex beginIndex = model()->index(itemInLayer, 1, layerIndex);
-      double begin = model()->data(beginIndex, Qt::DisplayRole).toDouble(0);
+      QModelIndex layerIndex = model()->index(layer, 0, rootIndex());
 
-      QModelIndex endIndex = model()->index(itemInLayer, 2, layerIndex);
-      double end = model()->data(endIndex, Qt::DisplayRole).toDouble(0);
-
-      // Handle cases where the beginning is after the end
-      if (begin > end)
+      for (int itemInLayer = 0; itemInLayer < model()->rowCount(layerIndex); itemInLayer++)
       {
-        std::swap(begin, end);
-      }
+        QModelIndex beginIndex = model()->index(itemInLayer, 1, layerIndex);
+        double begin = model()->data(beginIndex, Qt::DisplayRole).toDouble(0);
 
-      firstBegin_ = (firstBegin_ > begin) ? begin : firstBegin_;
-      lastEnd = (lastEnd < end) ? end : lastEnd;
+        QModelIndex endIndex = model()->index(itemInLayer, 2, layerIndex);
+        double end = model()->data(endIndex, Qt::DisplayRole).toDouble(0);
+
+        // Handle cases where the beginning is after the end
+        if (begin > end)
+        {
+          std::swap(begin, end);
+        }
+
+        firstBegin_ = (firstBegin_ > begin) ? begin : firstBegin_;
+        lastEnd = (lastEnd < end) ? end : lastEnd;
+      }
     }
+  }
+  else
+  {
+    firstBegin_ = customStart_;
+    lastEnd = customEnd_;
   }
 
   range_ = lastEnd - firstBegin_;
@@ -602,6 +613,92 @@ bool GanttChartView::isEmpty_() const
   }
 
   return false;
+}
+
+double GanttChartView::customStart() const
+{
+  return customStart_;
+}
+
+void GanttChartView::setCustomStart(double newStart)
+{
+  customStart_ = newStart;
+  viewport()->update();
+}
+
+double GanttChartView::customEnd() const
+{
+  return customEnd_;
+}
+
+void GanttChartView::setCustomEnd(double newEnd)
+{
+  customEnd_ = newEnd;
+  viewport()->update();
+}
+
+bool GanttChartView::usingCustomBounds() const
+{
+  return useCustomBounds_;
+}
+
+void GanttChartView::setUseCustomBounds(bool useCustom)
+{
+  useCustomBounds_ = useCustom;
+  viewport()->update();
+}
+
+void GanttChartView::drawItem_(int itemLayer, double layerHeight, int indexInLayer, const QModelIndex& parent, QPainter& painter) const
+{
+  QModelIndex itemIndex = model()->index(indexInLayer, 0, parent);
+  QColor color = model()->data(itemIndex, Qt::ForegroundRole).value<QColor>();
+  QIcon icon = model()->data(itemIndex, Qt::DecorationRole).value<QIcon>();
+
+  QModelIndex beginIndex = model()->index(indexInLayer, beginTimeColumn_, parent);
+  double begin = model()->data(beginIndex, beginTimeRole_).toDouble(0);
+
+  QModelIndex endIndex = model()->index(indexInLayer, endTimeColumn_, parent);
+  double end = model()->data(endIndex, endTimeRole_).toDouble(0);
+
+  painter.fillRect((begin - firstBegin_) * (scale_ * zoom_), layerHeight * itemLayer, (end - begin) * (scale_ * zoom_), layerHeight, color);
+
+  // Draw a border to give depth
+  painter.setPen(color.lighter(LIGHT_FACTOR));
+  painter.drawLine((begin - firstBegin_) * (scale_ * zoom_), layerHeight * itemLayer, (begin - firstBegin_) * (scale_ * zoom_), layerHeight * (itemLayer + 1));
+  painter.drawLine((begin - firstBegin_) * (scale_ * zoom_), layerHeight * itemLayer, (end - firstBegin_) * (scale_ * zoom_), layerHeight * itemLayer);
+
+  painter.setPen(color.darker(DARK_FACTOR));
+  painter.drawLine((end - firstBegin_) * (scale_ * zoom_), layerHeight * itemLayer, (end - firstBegin_) * (scale_ * zoom_), layerHeight * (itemLayer + 1));
+  painter.drawLine((begin - firstBegin_) * (scale_ * zoom_), layerHeight * (itemLayer + 1), (end - firstBegin_) * (scale_ * zoom_), layerHeight * (itemLayer + 1));
+
+  // Draw the icon to the right of the item
+  double centerY = ((layerHeight * itemLayer) + layerHeight / 2);
+
+  icon.paint(&painter, QRect((end - firstBegin_) * (scale_ * zoom_) + ICON_MARGIN, centerY - (iconSize_ / 2), iconSize_, iconSize_));
+}
+
+void GanttChartView::drawArrowLeft_(int itemLayer, double layerHeight, const QColor& color, QPainter& painter) const
+{
+  int midY = layerHeight * (itemLayer + 0.5);
+  QPoint arrowTip(0, midY);
+  painter.setPen(color.darker(DARK_FACTOR));
+  // Make the arrow as long as the row is tall
+  painter.drawLine(arrowTip, QPoint(layerHeight, midY));
+  // Make the arrowhead fill the row vertically and extend half the length of the arrow horizontally
+  painter.drawLine(arrowTip, QPoint((layerHeight / 2), (layerHeight * itemLayer) + ARROW_MARGIN));
+  painter.drawLine(arrowTip, QPoint((layerHeight / 2), (layerHeight * (itemLayer + 1)) - ARROW_MARGIN));
+}
+
+void GanttChartView::drawArrowRight_(int itemLayer, double layerHeight, const QColor& color, QPainter& painter) const
+{
+  int midY = layerHeight * (itemLayer + 0.5);
+  QPoint arrowTip(range_ * (scale_ * zoom_), midY);
+  painter.setPen(color.darker(DARK_FACTOR));
+  // Make the arrow as long as the row is tall
+  painter.drawLine(arrowTip, QPoint((range_ * (scale_ * zoom_)) - layerHeight, midY));
+  // Make the arrowhead fill the row vertically and extend half the length of the arrow horizontally
+  painter.drawLine(arrowTip, QPoint((range_ * (scale_ * zoom_)) - (layerHeight / 2), (layerHeight * itemLayer) + ARROW_MARGIN));
+  painter.drawLine(arrowTip, QPoint((range_ * (scale_ * zoom_)) - (layerHeight / 2), (layerHeight * (itemLayer + 1)) - ARROW_MARGIN));
 }
 
 }

@@ -92,17 +92,20 @@ public:
 
   /** Constructor
    * @param dataStore The datastore for the category data
-   * @param autoUpdate  If true the Category Filter automatically updates and there is no need to call buildPrefRulesCategoryFilter
-   *                    which can be very slow.  If false the Category Filter maintains its original behavior which requires the owner
-   *                    to call buildPrefRulesCategoryFilter for every change.
+   * @param autoUpdate  If true the Category Filter automatically updates and there is no need to call buildPrefRulesCategoryFilter()
+   *    which can be very slow.  If false the Category Filter maintains its original behavior which requires the owner
+   *    to call buildPrefRulesCategoryFilter for every change.
    */
-  CategoryFilter(simData::DataStore* dataStore, bool autoUpdate = false);
+  explicit CategoryFilter(simData::DataStore* dataStore, bool autoUpdate = false);
 
   /** Copy Constructor */
   CategoryFilter(const CategoryFilter& other);
 
   /** Destructor */
   virtual ~CategoryFilter();
+
+  /** Assignment operator */
+  CategoryFilter& operator=(const CategoryFilter& other);
 
   /**
   * build the category filter based on what is in the data store. Will add default No Value and Unlisted entries for all categories
@@ -175,16 +178,18 @@ public:
 
   /**
   * Serialize the category filter into a SIMDIS 9 compatible string
-  * @param simplify If true return " " if all category values are checked
+  * @param simplify if true, return " " if all category values are checked
   * @return string  the serialized category filter
   */
   std::string serialize(bool simplify = true) const;
 
   /**
   * De-serialize a category filter string from a SIMDIS 9 compatible string
+  * @param checksString serialization of the category filter
+  * @param skipEmptyCategories if true, optimize filter by skipping unchecked categories
   * @return true on success, false if there is any problem
   */
-  bool deserialize(const std::string &checksString);
+  bool deserialize(const std::string &checksString, bool skipEmptyCategories = true);
 
   /** Set the factory for creating RegExpFilter objects. Caller retains ownership of memory */
   void setRegExpFilterFactory(RegExpFilterFactoryPtr factory);

@@ -28,17 +28,21 @@
 #include <QAbstractItemView>
 #include "simCore/Common/Common.h"
 #include "simData/DataStore.h"
+#include "simQt/BoundSettings.h"
+#include "EntityStateFilter.h"
 #include "simQt/Settings.h"
 
 class QCloseEvent;
 class QModelIndex;
 class Ui_EntityLineEdit;
 
+namespace simCore { class Clock; }
+
 namespace simQt {
 
-class EntityTreeModel;
-class EntityTreeComposite;
 class EntityProxyModel;
+class EntityTreeComposite;
+class EntityTreeModel;
 
 /** A dialog for displaying the EntityTreeComposite that is configured for single select */
 class SDKQT_EXPORT EntityDialog : public QDialog
@@ -46,11 +50,16 @@ class SDKQT_EXPORT EntityDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type);
+  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock, SettingsPtr settings);
   virtual ~EntityDialog();
 
   /** Set the entity via Unique ID */
   void setItemSelected(uint64_t id);
+
+  /** Set the state filter to the given state */
+  void setStateFilter(EntityStateFilter::State state);
+  /** Returns the current state filter */
+  EntityStateFilter::State stateFilter() const;
 
 protected:
   /** Override the QDialog close event to emit the closedGui signal */
@@ -69,6 +78,7 @@ private slots:
 private:
   simQt::EntityTreeModel* entityTreeModel_;
   simQt::EntityTreeComposite* tree_;  ///< It may be a EntityTreeComposite, but will be hard-coded into List view
+  simQt::EntityStateFilter* entityStateFilter_;
 };
 
 /** A class for displaying a QLineEdit with a QCompleter for specifying an entity by name */
@@ -93,7 +103,7 @@ public:
   /** Returns the name of the currently selected Entity; returns "" if none */
   QString selectedName() const;
   /** The model that holds all the entity information filtered by type */
-  void setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type = simData::DataStore::ALL);
+  void setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type = simData::DataStore::ALL, simCore::Clock* clock = NULL);
 
   // Options for customizing the widget
 
@@ -112,7 +122,15 @@ public:
   /** Place holder text in the line edit */
   void setPlaceholderText(const QString& text);
 
+  /** Returns the current state filter */
+  EntityStateFilter::State stateFilter() const;
+
+  /** Pass in the global settings reference */
+  void setSettings(SettingsPtr settings);
+
 public slots:
+  /** Set the state filter to the given state */
+  void setStateFilter(simQt::EntityStateFilter::State state);
   /** Sets the Unique ID for the entity to display in the QEditLine */
   int setSelected(uint64_t id);
   /** Closes the entity dialog */
@@ -121,6 +139,8 @@ public slots:
 signals:
   /** Signal emitted when the user selects an entity */
   void itemSelected(uint64_t id);
+  /** Signal emitted when state filter changes */
+  void stateFilterChanged(simQt::EntityStateFilter::State state);
 
 protected:
   /** Re-implement eventFilter() to allow a double click to display the dialog */
@@ -147,6 +167,28 @@ private:
   bool needToVerify_; ///< True means the user typed in a name so it must be verified
   simData::DataStore::ObjectType type_; ///< Limits the entity types to display
   simQt::EntityProxyModel* proxy_;  ///< Allow filtering by entity type
+  simCore::Clock* clock_;  ///< Allow filtering by active/inactive
+  simQt::EntityStateFilter* entityStateFilter_; ///< Filtering based on entity state
+  EntityStateFilter::State state_; ///< Current state of filtering
+  SettingsPtr settings_; ///< Pointer to global settings
+};
+
+/** Helper class to bind a EntityLineEdit object to Settings*/
+class SDKQT_EXPORT BoundEntityLineEdit : public BoundIntegerSetting
+{
+  Q_OBJECT
+
+public:
+  /** Constructor, will set the value of parent */
+  BoundEntityLineEdit(EntityLineEdit* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData);
+  virtual ~BoundEntityLineEdit();
+
+  /** Returns standard meta data for entity active/inactive state */
+  static simQt::Settings::MetaData metaData();
+
+private slots:
+  void setStateFromLineEdit_(simQt::EntityStateFilter::State state);
+  void setStateFromSettings_(int state);
 };
 
 }

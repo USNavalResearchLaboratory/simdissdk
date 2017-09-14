@@ -213,6 +213,12 @@ int MousePositionManipulator::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUI
   return 0;
 }
 
+int MousePositionManipulator::release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  // treat the release same as a move, which simply grabs the last lla. Need to call here in case move() is not called before the next press/release
+  return move(ea, aa);
+}
+
 int MousePositionManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
   lastView_ = static_cast<osgViewer::View*>(aa.asView());

@@ -70,10 +70,11 @@ public:
   int addReplaceable(TextReplacer::Replaceable* r);
 
   /**
-  * Delete a replaceable from this registry
+  * Delete a replaceable from this registry.  Deletes replaceable on success.
   * @param r Pointer to the replaceable to be deleted from registry
+  * @return 0 on success; r will be deleted.  Non-zero on error (not found); r will not be deleted.
   */
-  void deleteReplaceable(TextReplacer::Replaceable* r);
+  int deleteReplaceable(TextReplacer::Replaceable* r);
 
 private:
   std::vector<TextReplacer::Replaceable*> replaceables_;   /// vector of registered replaceables

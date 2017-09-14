@@ -40,6 +40,12 @@ public:
   /** Name of the fragment shader for area highlight */
   std::string areaHighlightFragment() const;
 
+  /** Vertex shader for beam pulses */
+  std::string beamPulseVertex() const;
+
+  /** Fragment shader for beam pulses */
+  std::string beamPulseFragment() const;
+
   /** Name of vertex shader for bathymetry generator */
   std::string bathymetryGeneratorVertex() const;
 
@@ -54,6 +60,11 @@ public:
 
   /** Name of Platform Azimuth/Elevation warping shader */
   std::string platformAzimElevWarpVertex() const;
+
+  /** Name of vertex shader for picker */
+  std::string pickerVertex() const;
+  /** Name of fragment shader for picker */
+  std::string pickerFragment() const;
 
   /** Name of vertex shader for projector manager */
   std::string projectorManagerVertex() const;
@@ -82,6 +93,9 @@ public:
   std::string trackHistoryVertex() const;
   /** Name of fragment shader for track history (track override color) */
   std::string trackHistoryFragment() const;
+
+  /** Name of fragment shader for flashing LOB Group */
+  std::string flashingFragment() const;
 };
 
 }

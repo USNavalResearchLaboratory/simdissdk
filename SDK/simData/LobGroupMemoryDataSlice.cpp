@@ -101,6 +101,15 @@ void LobGroupMemoryDataSlice::update(double time)
   }
 }
 
+void LobGroupMemoryDataSlice::flush(bool keepStatic)
+{
+  if (MemorySliceHelper::flush(updates_, keepStatic) == 0)
+  {
+    delete current_;
+    current_ = NULL;
+  }
+  dirty_ = true;
+}
 
 void LobGroupMemoryDataSlice::insert(LobGroupUpdate *data)
 {

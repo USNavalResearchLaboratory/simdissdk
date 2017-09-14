@@ -25,6 +25,7 @@
 #include "simUtil/HudManager.h"
 #include "simVis/Platform.h"
 #include "simVis/Popup.h"
+#include "simVis/Picker.h"
 #include "simVis/View.h"
 #include "simVis/Registry.h"
 #include "simVis/PlatformModel.h"
@@ -130,24 +131,36 @@ T* findNodeInPath(const osg::NodePath& path)
 
 PopupHandler::PopupHandler(SceneManager* scene, View* view)
   : scenario_(scene ? scene->getScenario() : NULL),
-    view_(view),
-    lastMX_(0.0f),
-    lastMY_(0.0f),
-    mouseDirty_(false),
-    enabled_(true),
-    showInCorner_(false),
-    limitVisibility_(true),
-    borderWidth_(DEFAULT_BORDER_WIDTH),
-    borderColor_(DEFAULT_BORDER_COLOR),
-    backColor_(DEFAULT_BACK_COLOR),
-    titleColor_(DEFAULT_TITLE_COLOR),
-    contentColor_(DEFAULT_CONTENT_COLOR),
-    titleFontSize_(DEFAULT_TITLE_SIZE),
-    contentFontSize_(DEFAULT_CONTENT_SIZE),
-    padding_(DEFAULT_PADDING),
-    childSpacing_(DEFAULT_SPACING),
-    duration_(5)
+    view_(view)
 {
+  init_();
+}
+
+PopupHandler::PopupHandler(Picker* picker, View* view)
+  : picker_(picker),
+    view_(view)
+{
+  init_();
+}
+
+void PopupHandler::init_()
+{
+  lastMX_ = 0.0f;
+  lastMY_ = 0.0f;
+  mouseDirty_ = false;
+  enabled_ = true;
+  showInCorner_ = false;
+  limitVisibility_ = true;
+  borderWidth_ = DEFAULT_BORDER_WIDTH;
+  borderColor_ = DEFAULT_BORDER_COLOR;
+  backColor_ = DEFAULT_BACK_COLOR;
+  titleColor_ = DEFAULT_TITLE_COLOR;
+  contentColor_ = DEFAULT_CONTENT_COLOR;
+  titleFontSize_ = DEFAULT_TITLE_SIZE;
+  contentFontSize_ = DEFAULT_CONTENT_SIZE;
+  padding_ = DEFAULT_PADDING;
+  childSpacing_ = DEFAULT_SPACING;
+  duration_ = 5;
 }
 
 PopupHandler::~PopupHandler()
@@ -257,6 +270,7 @@ bool PopupHandler::handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdap
   if (!enabled_)
     return false;
 
+  // This only fires for the view associated with addEventHandler()
   if (ea.getEventType() == ea.MOVE)
   {
     lastMX_ = ea.getX();
@@ -267,6 +281,15 @@ bool PopupHandler::handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdap
 
   if (ea.getEventType() == ea.FRAME)
   {
+    // If you're using this with insets, you may need to artificially trigger
+    // handle() calls on MOVE events in other insets to get the mouse to time out.
+
+    // In the case of not limiting visibility, and if we're using the RTT picker code
+    // (which has better performance), AND if we're showing in the corner (don't need
+    // mouse coords), then always dirty the mouse.  This helps SDK examples.
+    if (!limitVisibility_ && showInCorner_ && picker_.valid())
+      mouseDirty_ = true;
+
     osg::observer_ptr<View> currentView = static_cast<View*>(aa.asView());
     updatePopupFromView(currentView.get());
   }
@@ -293,106 +316,112 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
 
   mouseDirty_ = false;
 
-  // get a safe handler on the observer
-  osg::ref_ptr<ScenarioManager> scenarioSafe = scenario_.get();
-  if (!scenarioSafe.valid())
-    return;
-
   // get the interface to this particular view if view is not valid
   if (!view_.valid())
     view_ = currentView;
 
-  // intersect the scenario graph, looking for PlatformModelNodes, need to also traverse PlatformNode to get to PlatformModelNode
-  PlatformNode* platform = scenarioSafe->find<PlatformNode>(currentView, lastMX_, lastMY_, PlatformNode::getMask() | PlatformModelNode::getMask());
-
-  if (platform)
+  // get a safe handler on the observer
+  osg::ref_ptr<PlatformNode> platform;
+  osg::ref_ptr<Picker> picker;
+  if (picker_.lock(picker))
+    platform = picker_->pickedPlatform();
+  else
   {
-    if (!currentPlatform_.valid())
+    osg::ref_ptr<ScenarioManager> scenarioSafe;
+    // intersect the scenario graph, looking for PlatformModelNodes, need to also traverse PlatformNode to get to PlatformModelNode
+    if (scenario_.lock(scenarioSafe))
+      platform = scenarioSafe->find<PlatformNode>(currentView, lastMX_, lastMY_, PlatformNode::getMask() | PlatformModelNode::getMask());
+  }
+
+  if (!platform)
+  {
+    clear();
+    return;
+  }
+
+  if (!currentPlatform_.valid())
+  {
+    // if there is no current platform, assign one.
+    currentPlatform_ = platform;
+    platformLocatorRev_.reset();
+  }
+
+  else if (currentPlatform_.valid() && platform != currentPlatform_.get())
+  {
+    // if there is an active platform, but the new platform is different,
+    // remove the old pop up.
+    if (popup_.valid())
     {
-      // if there is no current platform, assign one.
-      currentPlatform_ = platform;
-      platformLocatorRev_.reset();
+      view_->removeOverlayControl(popup_);
+    }
+    popup_ = NULL;
+    currentPlatform_ = platform;
+    platformLocatorRev_.reset();
+  }
+
+  if (currentPlatform_.valid())
+  {
+    // if we have an active platform, reposition the pop up, creating it if it does
+    // not already exist.
+    if (!popup_.valid())
+    {
+      popup_ = new PlatformPopup();
+      applySettings_();
+      popup_->setTitle(currentPlatform_->getEntityName(EntityNode::DISPLAY_NAME, true));
+      view_->addOverlayControl(popup_);
+      showStartTime_ = simCore::getSystemTime();
     }
 
-    else if (currentPlatform_.valid() && platform != currentPlatform_.get())
+    Locator* locator = currentPlatform_->getLocator();
+    if (!locator->inSyncWith(platformLocatorRev_))
     {
-      // if there is an active platform, but the new platform is different,
-      // remove the old pop up.
-      if (popup_.valid())
+      if (contentCallback_.valid())
       {
-        view_->removeOverlayControl(popup_);
-      }
-      popup_ = NULL;
-      currentPlatform_ = platform;
-      platformLocatorRev_.reset();
-    }
-
-    if (currentPlatform_.valid())
-    {
-      // if we have an active platform, reposition the pop up, creating it if it does
-      // not already exist.
-      if (!popup_.valid())
-      {
-        popup_ = new PlatformPopup();
-        applySettings_();
-        popup_->setTitle(currentPlatform_->getEntityName(EntityNode::DISPLAY_NAME, true));
-        view_->addOverlayControl(popup_);
-        showStartTime_ = simCore::getSystemTime();
-      }
-
-      Locator* locator = currentPlatform_->getLocator();
-      if (!locator->inSyncWith(platformLocatorRev_))
-      {
-        if (contentCallback_.valid())
-        {
-          popup_->setContent(contentCallback_->createString(currentPlatform_.get()));
-        }
-        else
-        {
-          popup_->setContent(currentPlatform_->popupText());
-        }
-
-        locator->sync(platformLocatorRev_);
-      }
-
-      // if using main view, then show popup on lower right, otherwise use mouse position
-      if (showInCorner_)
-      {
-        popup_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_RIGHT);
-        popup_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_BOTTOM);
-        popup_->setX(0.0f);
-        popup_->setY(0.0f);
-        popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_BOTTOM, 10.0f);
-        popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_RIGHT, 10.0f);
+        popup_->setContent(contentCallback_->createString(currentPlatform_.get()));
       }
       else
       {
-        // Calculate size of popup
-        osg::Vec2f popupSize;
-        osgEarth::Util::Controls::ControlContext cx;
-        popup_->calcSize(cx, popupSize);
-        const osg::Viewport* viewport = view_->getCamera()->getViewport();
-        // Constants measured in pixels with the origin at the top left
-        const float buffer = 20.f;
-        // Farthest right the popup can go
-        const float maxX = viewport->width() - buffer - popupSize[0];
-        // Farthest down the popup can go
-        const float maxY = viewport->height() - buffer - popupSize[1];
-        // Left edge of the popup if it is not too close to the left side of the screen
-        const float x = (lastMX_ > buffer) ? lastMX_ : buffer;
-        // Bottom of the popup if it is not too close to the bottom of the screen
-        const float y = (viewport->height() - lastMY_ > buffer) ? viewport->height() - lastMY_ : buffer;
-        popup_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_LEFT);
-        popup_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_TOP);
-        popup_->setX((x < maxX) ? x : maxX);
-        popup_->setY((y < maxY) ? y : maxY);
-        popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_BOTTOM, 0.0f);
-        popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_RIGHT, 0.0f);
+        popup_->setContent(currentPlatform_->popupText());
       }
+
+      locator->sync(platformLocatorRev_);
+    }
+
+    // if using main view, then show popup on lower right, otherwise use mouse position
+    if (showInCorner_)
+    {
+      popup_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_RIGHT);
+      popup_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_BOTTOM);
+      popup_->setX(0.0f);
+      popup_->setY(0.0f);
+      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_BOTTOM, 10.0f);
+      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_RIGHT, 10.0f);
+    }
+    else
+    {
+      // Calculate size of popup
+      osg::Vec2f popupSize;
+      osgEarth::Util::Controls::ControlContext cx;
+      popup_->calcSize(cx, popupSize);
+      const osg::Viewport* viewport = view_->getCamera()->getViewport();
+      // Constants measured in pixels with the origin at the top left
+      const float buffer = 20.f;
+      // Farthest right the popup can go
+      const float maxX = viewport->width() - buffer - popupSize[0];
+      // Farthest down the popup can go
+      const float maxY = viewport->height() - buffer - popupSize[1];
+      // Left edge of the popup if it is not too close to the left side of the screen
+      const float x = (lastMX_ > buffer) ? lastMX_ : buffer;
+      // Bottom of the popup if it is not too close to the bottom of the screen
+      const float y = (viewport->height() - lastMY_ > buffer) ? viewport->height() - lastMY_ : buffer;
+      popup_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_LEFT);
+      popup_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_TOP);
+      popup_->setX((x < maxX) ? x : maxX);
+      popup_->setY((y < maxY) ? y : maxY);
+      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_BOTTOM, 0.0f);
+      popup_->setMargin(osgEarth::Util::Controls::Control::SIDE_RIGHT, 0.0f);
     }
   }
-  else
-    clear();
 }
 
 void PopupHandler::applySettings_()

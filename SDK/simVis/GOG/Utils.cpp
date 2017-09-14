@@ -299,10 +299,7 @@ void ModifierState::apply(Config& conf)
   if (lineColor_.isSet()) conf.set("linecolor", *lineColor_);
   if (lineWidth_.isSet()) conf.set("linewidth", *lineWidth_);
   if (lineStyle_.isSet()) conf.set("linestyle", *lineStyle_);
-  if (fillColor_.isSet())
-    conf.set("fillcolor", *fillColor_);
-  else
-    conf.set("fillcolor", *lineColor_);  // SIMDIS 9 defaults to the line color if the fill color is not set
+  if (fillColor_.isSet()) conf.set("fillcolor", *fillColor_);
   if (pointSize_.isSet()) conf.set("pointsize", *pointSize_);
   if (altitudeMode_.isSet()) conf.set("altitudemode", *altitudeMode_);
   if (altitudeUnits_.isSet()) conf.set("altitudeunits", *altitudeUnits_);
@@ -385,9 +382,6 @@ ParserData::ParserData(const Config& conf, const GOGContext& context, GogShape s
       srs_ = SpatialReference::create("wgs84");
     }
   }
-
-  // parse altitude mode:
-  parseAltitudeMode(conf);
 
   // parse any locator components (for GOG attachments):
   parseOffsetsAndTracking(conf);
@@ -483,23 +477,6 @@ void ParserData::parseOffsetsAndTracking(const Config& conf)
     conf.value<float>("scalex", 1.0f),
     conf.value<float>("scaley", 1.0f),
     conf.value<float>("scalez", 1.0f));
-}
-
-void ParserData::parseAltitudeMode(const Config& parent)
-{
-  // Set up ground-clamping.
-  if (simCore::caseCompare(parent.value("altitudemode"), "relativetoground") == 0)
-  {
-    altmode_ = ALTMODE_RELATIVE;
-  }
-  else if (simCore::caseCompare(parent.value("altitudemode"), "clamptoground") == 0)
-  {
-    altmode_ = ALTMODE_RELATIVE;
-  }
-  else // if ( parent.value("altitudemode") == "absolute" )
-  {
-    altmode_ = ALTMODE_ABSOLUTE;
-  }
 }
 
 /**
@@ -680,15 +657,15 @@ GeoPoint ParserData::getMapPosition() const
 {
   if (refPointLLA_.isSet())
   {
-    return GeoPoint(srs_.get(), *refPointLLA_, altmode_);
+    return GeoPoint(srs_.get(), *refPointLLA_, ALTMODE_ABSOLUTE);
   }
   else if (centerLLA_.isSet())
   {
-    return GeoPoint(srs_.get(), *centerLLA_, altmode_);
+    return GeoPoint(srs_.get(), *centerLLA_, ALTMODE_ABSOLUTE);
   }
   else if (geom_.valid() && geomIsLLA_)
   {
-    return GeoPoint(srs_.get(), geom_->getBounds().center(), altmode_);
+    return GeoPoint(srs_.get(), geom_->getBounds().center(), ALTMODE_ABSOLUTE);
   }
   else if (context_.refPoint_.isSet())
   {

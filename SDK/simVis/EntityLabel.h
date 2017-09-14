@@ -54,6 +54,7 @@ private:
   osg::ref_ptr<osg::Group> root_;
   osg::ref_ptr<osgEarth::Annotation::LabelNode> label_;  ///< The actual label
   simData::CommonPrefs lastCommonPrefs_;  ///< The last preferences to check for changes
+  bool hasLastPrefs_; ///< Whether lastCommonPrefs_ has been set by prefs we received
   std::string lastText_; ///< The last text to check for change
 };
 

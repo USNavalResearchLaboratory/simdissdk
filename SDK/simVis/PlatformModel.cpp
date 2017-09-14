@@ -32,6 +32,7 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/AutoScale"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "osgEarthAnnotation/AnnotationUtils"
 
 #include "simVis/Constants.h"
@@ -105,7 +106,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
     isImageModel_(false),
     autoRotate_(false),
     lastPrefsValid_(false),
-    brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT))
+    brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
+    objectIndexTag_(0)
 {
   osg::Group* labelRoot = new osg::Group();
   labelRoot->setName("labelRoot");
@@ -153,6 +155,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   // Set up the brightness factor for the entity, attaching close to the model
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
 
+  // Tag the platform at the lowest unique level feasible
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(offsetXform_, offsetXform_);
+
   // When alpha volume is on, we turn on this node
   alphaVolumeGroup_ = new osg::Group;
   alphaVolumeGroup_->setName("Alpha Volume Group");
@@ -164,6 +169,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
 
 PlatformModelNode::~PlatformModelNode()
 {
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 }
 
 bool PlatformModelNode::isImageModel() const
@@ -174,6 +180,11 @@ bool PlatformModelNode::isImageModel() const
 osg::Node* PlatformModelNode::offsetNode() const
 {
   return offsetXform_;
+}
+
+unsigned int PlatformModelNode::objectIndexTag() const
+{
+  return objectIndexTag_;
 }
 
 bool PlatformModelNode::addScaledChild(osg::Node* node)
@@ -222,8 +233,6 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     return true;
   }
 
-  SIM_DEBUG << LC << prefs.commonprefs().name() << " : icon => " << prefs.icon() << std::endl;
-
   // if there's an existing model, save its parent group.
   if (model_.valid())
   {
@@ -262,9 +271,6 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
   {
     modelStateSet->setRenderBinDetails(BIN_PLATFORM_MODEL, BIN_TRAVERSAL_ORDER_SIMSDK);
   }
-
-  // default lighting:
-  simVis::setLighting(modelStateSet, (!isImageModel_ && prefs.lighted()) ? osg::StateAttribute::ON : osg::StateAttribute::OFF);
 
   // re-apply the parent group.
   offsetXform_->addChild(model_);
@@ -656,45 +662,39 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
   stateSet->setAttributeAndModes(new osg::PolygonMode(face, mode), osg::StateAttribute::ON);
 }
 
-void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs)
+void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, bool force)
 {
   if (!model_.valid())
     return;
 
-  if (lastPrefsValid_ &&
+  if (!force && lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, lighted))
     return;
 
   // Turn lighting on if lighting is enabled, but force it off if lighting is off.  This
   // prevents models from turning lighting on when we don't want it on.  Models can then
   // feasibly override this with the PROTECTED|ON state.
-  osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
-  simVis::setLighting(modelStateSet, (!isImageModel_ && prefs.lighted())
+  simVis::setLighting(offsetXform_->getOrCreateStateSet(), (!isImageModel_ && prefs.lighted())
     ? osg::StateAttribute::ON
     : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
 }
 
-void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs)
+void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs, bool force)
 {
   if (!overrideColor_.valid())
     return;
 
-  if (lastPrefsValid_ &&
+  if (!force && lastPrefsValid_ &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
     return;
 
   // using an override color?
-  if (prefs.commonprefs().useoverridecolor())
-  {
-    // Apply the color modulation
-    overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
-  }
+  overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
+  if (!prefs.commonprefs().useoverridecolor())
+    overrideColor_->setCombineMode(OverrideColor::OFF);
   else
-  {
-    // White applies a 1,1,1,1 multiplicatively, so identity color
-    overrideColor_->setColor(simVis::Color::White);
-  }
+    overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 }
 
 void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
@@ -756,8 +756,8 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateStippling_(prefs);
   updateCulling_(prefs);
   updatePolygonMode_(prefs);
-  updateLighting_(prefs);
-  updateOverrideColor_(prefs);
+  updateLighting_(prefs, modelChanged);
+  updateOverrideColor_(prefs, modelChanged);
   updateAlphaVolume_(prefs);
 
   // Note that the brightness calculation is low cost and we do not check PB_FIELD_CHANGED on it

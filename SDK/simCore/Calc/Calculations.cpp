@@ -35,6 +35,20 @@
 
 using namespace simCore;
 
+namespace
+{
+  // note that this returns const simCore::CoordinateConverter& - we can guarantee that the static cc will be present;
+  // if the caller provides a suitably initialized coordConv, then we just give it back.
+  const simCore::CoordinateConverter& initConverter(const CoordinateConverter* coordConv, const simCore::Vec3& refLla)
+  {
+    static CoordinateConverter cc;
+    if (coordConv && coordConv->hasReferenceOrigin() && coordConv->referenceOrigin() == refLla)
+      return *coordConv;
+    cc.setReferenceOrigin(refLla);
+    return cc;
+  }
+}
+
 //------------------------------------------------------------------------
 
 /**
@@ -50,23 +64,22 @@ void simCore::calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, cons
     return;
   }
 
-  Vec3 ENUDelta;
   Coordinate toPos;
   if (model == TANGENT_PLANE_WGS_84 || model == WGS_84)
   {
-    // create a tangent plane referenced to the from_ platform
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
-    ENUDelta = toPos.position();
+    calculateRelAng(toPos.position(), fromOriLla, azim, elev, cmp);
   }
-  else if (model == FLAT_EARTH && coordConv)
+  else if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
-    Coordinate cvTo(COORD_SYS_LLA, fromLla);
+    const Coordinate cvTo(COORD_SYS_LLA, fromLla);
     Coordinate fromPos;
     coordConv->convert(cvTo, fromPos, COORD_SYS_ENU);
     coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
+    Vec3 ENUDelta;
     v3Subtract(toPos.position(), fromPos.position(), ENUDelta);
+    calculateRelAng(ENUDelta, fromOriLla, azim, elev, cmp);
   }
   else
   {
@@ -79,8 +92,6 @@ void simCore::calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, cons
 
     return;
   }
-
-  calculateRelAng(ENUDelta, fromOriLla, azim, elev, cmp);
 }
 
 /**
@@ -102,12 +113,11 @@ void simCore::calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double *a
   if (model == WGS_84 || model == TANGENT_PLANE_WGS_84)
   {
     //create a tangent plane referenced to the fromLla platform
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
     ENUDelta = toPos.position();
   }
-  else if (model == FLAT_EARTH && coordConv)
+  else if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
     Coordinate fromPos;
     coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
@@ -165,8 +175,7 @@ double simCore::calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const Ear
 
   case TANGENT_PLANE_WGS_84:
     {
-      CoordinateConverter cc;
-      cc.setReferenceOrigin(fromLla);
+      const CoordinateConverter& cc = initConverter(coordConv, fromLla);
       cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
       cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
     }
@@ -174,7 +183,7 @@ double simCore::calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const Ear
 
   case FLAT_EARTH:
     {
-      if (!coordConv)
+      if (!coordConv || !coordConv->hasReferenceOrigin())
       {
         SIM_WARN << "Could not calculate \"slant range\", CoordinateConverter not set for FLAT_EARTH: " << __LINE__ << std::endl;
         assert(false);
@@ -220,8 +229,7 @@ double simCore::calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, cons
   {
     Coordinate fromPos;
     Coordinate toPos;
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
 
@@ -234,7 +242,7 @@ double simCore::calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, cons
     Coordinate fromPos;
     Coordinate toPos;
 
-    if (model == FLAT_EARTH)
+    if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
     {
       coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
       coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
@@ -269,33 +277,19 @@ double simCore::calculateAltitude(const Vec3 &fromLla, const Vec3 &toLla, const 
 
   if (model == TANGENT_PLANE_WGS_84)
   {
-    CoordinateConverter cc;
-    cc.setReferenceOrigin(fromLla);
-
     Coordinate fromPos;
     Coordinate toPos;
+    const CoordinateConverter& cc = initConverter(coordConv, fromLla);
     cc.convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_XEAST);
     cc.convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_XEAST);
     return toPos.z() - fromPos.z();
   }
-
-  if (coordConv)
+  if (model == FLAT_EARTH && coordConv && coordConv->hasReferenceOrigin())
   {
     Coordinate fromPos;
     Coordinate toPos;
-
-    if (model == FLAT_EARTH)
-    {
-      coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
-      coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
-    }
-    else
-    {
-      SIM_WARN << "Could not calculate altitude: " << __LINE__ << std::endl;
-      assert(false);
-      return 0;
-    }
-
+    coordConv->convert(Coordinate(COORD_SYS_LLA, fromLla), fromPos, COORD_SYS_ENU);
+    coordConv->convert(Coordinate(COORD_SYS_LLA, toLla), toPos, COORD_SYS_ENU);
     return toPos.z() - fromPos.z();
   }
   else
@@ -320,13 +314,15 @@ void simCore::calculateDRCRDownValue(const Vec3 &fromLla, const double &yaw, con
     return;
   }
 
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
+
   // get the slant distance from "fromLla" to "toLla"
-  const double slantDistance = calculateSlant(fromLla, toLla, model, coordConv);
+  const double slantDistance = calculateSlant(fromLla, toLla, model, &cc);
 
   // get the true azimuth and elevation from "fromLla" to "toLla"
   double trueAzimuth = 0;
   double trueElevation = 0;
-  calculateAbsAzEl(fromLla, toLla, &trueAzimuth, &trueElevation, NULL, model, coordConv);
+  calculateAbsAzEl(fromLla, toLla, &trueAzimuth, &trueElevation, NULL, model, &cc);
 
   // get the down value
   if (downValue)
@@ -353,9 +349,10 @@ double simCore::calculateClosingVelocity(const Vec3 &fromLla, const Vec3 &toLla,
   Coordinate toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, Vec3(0., 0., 0.), fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, Vec3(0., 0., 0.), toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
   // determine correct object locations based on coordinate system
-  if (convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     // create a unit position vector
     Vec3 unitPosVec;
@@ -384,9 +381,10 @@ double simCore::calculateVelocityDelta(const Vec3 &fromLla, const Vec3 &toLla, c
   Coordinate toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, Vec3(0., 0., 0.), fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, Vec3(0., 0., 0.), toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
   // determine correct object locations based on coordinate system
-  if (convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     return v3Distance(fromPos.velocity(), toPos.velocity());
   }
@@ -402,15 +400,16 @@ double simCore::calculateRangeRate(const Vec3 &fromLla, const Vec3 &fromOriLla, 
   Coordinate toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, fromOriLla, fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, toOriLla, toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
-  if (!convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (!convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     SIM_ERROR << "calculateRangeRate, unable to perform calculation: " << __LINE__ << std::endl;
     return 0;
   }
 
   double bearing = 0;
-  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, coordConv);
+  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, &cc);
   return v3Length(fromVel) * cos(fromOriLla[0] - bearing) - (v3Length(toVel) * cos(toOriLla[0] - bearing));
 }
 
@@ -421,17 +420,18 @@ double simCore::calculateBearingRate(const Vec3 &fromLla, const Vec3 &fromOriLla
   Coordinate   toPos;
   Coordinate fromState(COORD_SYS_LLA, fromLla, fromOriLla, fromVel);
   Coordinate   toState(COORD_SYS_LLA, toLla, toOriLla, toVel);
+  const CoordinateConverter& cc = initConverter(coordConv, fromLla);
 
-  if (!convertLocations(fromState, toState, model, coordConv, fromPos, toPos))
+  if (!convertLocations(fromState, toState, model, &cc, fromPos, toPos))
   {
     SIM_ERROR << "calculateBearingRate, unable to perform calculation: " << __LINE__ << std::endl;
     return 0;
   }
 
   double bearing = 0;
-  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, coordConv);
+  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, &cc);
 
-  const double range = calculateGroundDist(fromLla, toLla, model, coordConv);
+  const double range = calculateGroundDist(fromLla, toLla, model, &cc);
   const double tspd  = v3Length(toVel);
   const double ospd  = v3Length(fromVel);
 
@@ -838,6 +838,83 @@ double simCore::calculateEarthRadius(const double latitude)
   return Re;
 }
 
+// Algorithm: 3D Engine Design for Virtual Globes; Cozzi/Ring; pp. 31.
+// https://goo.gl/veDftl
+Vec3 simCore::clampEcefPointToGeodeticSurface(const Vec3& p)
+{
+  const Vec3 radiiSquared(simCore::WGS_A2, simCore::WGS_A2, simCore::WGS_B2);
+  const Vec3 oneOverRadiiSquared(1.0 / simCore::WGS_A2, 1.0 / simCore::WGS_A2, 1.0 / simCore::WGS_B2);
+  const Vec3 radiiToTheFourth(simCore::WGS_A2 * simCore::WGS_A2, simCore::WGS_A2 * simCore::WGS_A2, simCore::WGS_A2 * simCore::WGS_B2);
+
+  const double x2 = p.x() * p.x();
+  const double y2 = p.y() * p.y();
+  const double z2 = p.z() * p.z();
+
+  const double sqrtOfSquares = sqrt(
+    x2 * oneOverRadiiSquared.x() +
+    y2 * oneOverRadiiSquared.y() +
+    z2 * oneOverRadiiSquared.z() );
+  // Avoid divide by zero
+  assert(sqrtOfSquares != 0.0);
+  if (sqrtOfSquares == 0.0)
+    return p;
+  const double beta = 1.0 / sqrtOfSquares;
+
+  const double n = v3Length(Vec3(
+    beta * p.x() * oneOverRadiiSquared.x(),
+    beta * p.y() * oneOverRadiiSquared.y(),
+    beta * p.z() * oneOverRadiiSquared.z()));
+
+  double alpha = (1.0 - beta) * (v3Length(p) / n);
+
+  double da = 0.0;
+  double db = 0.0;
+  double dc = 0.0;
+  double s = 0.0;
+  double dSdA = 1.0;
+
+  do {
+    // Avoid divide-by-zero
+    assert(dSdA != 0.0);
+    if (dSdA == 0.0)
+      break;
+    alpha -= (s / dSdA);
+
+    da = 1.0 + (alpha * oneOverRadiiSquared.x());
+    db = 1.0 + (alpha * oneOverRadiiSquared.y());
+    dc = 1.0 + (alpha * oneOverRadiiSquared.z());
+
+    // Avoid divide-by-zero
+    assert(da != 0.0 && db != 0.0 && dc != 0.0);
+    if (da == 0.0 || db == 0.0 || dc == 0.0)
+      break;
+
+    const double da2 = da * da;
+    const double db2 = db * db;
+    const double dc2 = dc * dc;
+
+    const double da3 = da * da * da;
+    const double db3 = db * db * db;
+    const double dc3 = dc * dc * dc;
+
+    s = x2 / (radiiSquared.x() * da2) +
+      y2 / (radiiSquared.y() * db2) +
+      z2 / (radiiSquared.z() * dc2) - 1.0;
+
+    dSdA = -2.0 * (
+      x2 / radiiToTheFourth.x() * da3 +
+      y2 / radiiToTheFourth.y() * db3 +
+      z2 / radiiToTheFourth.z() * dc3);
+  }
+  while (fabs(s) > 1e-10);
+
+  // Avoid divide-by-zero
+  assert(da != 0.0 && db != 0.0 && dc != 0.0);
+  if (da == 0.0 || db == 0.0 || dc == 0.0)
+    return p;
+  return Vec3(p.x() / da, p.y() / db, p.z() / dc);
+}
+
 /**
 * Calculates the horizon distance for either geometric, optical or radar.
 * Equations derived from a perfect sphere using Pythagorean Theorem
@@ -912,7 +989,7 @@ bool simCore::convertLocations(const Coordinate &fromState, const Coordinate &to
 
   case FLAT_EARTH:
     {
-      if (!coordConv)
+      if (!coordConv || !coordConv->hasReferenceOrigin())
       {
         SIM_WARN << "Could not convert location, CoordinateConverter not set for FLAT_EARTH: " << __LINE__ << std::endl;
         assert(false);
@@ -1187,23 +1264,23 @@ bool simCore::calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, c
   // Calculates velocity vector based on dp/dt and derives orientation from velocity.
   // velocity vector calculated in switch, used to determine flight path angles
   Vec3 velVec;
-  Coordinate lla1; // currPos in LLA
-  lla1.setCoordinateSystem(simCore::COORD_SYS_NONE);
   Coordinate lla2; // prevPos in LLA
   lla2.setCoordinateSystem(simCore::COORD_SYS_NONE);
 
   switch (sysIn)
   {
   case COORD_SYS_LLA:
-    lla1 = simCore::Coordinate(simCore::COORD_SYS_LLA, currPos);
     lla2 = simCore::Coordinate(simCore::COORD_SYS_LLA, prevPos);
     calculateVelFromGeodeticPos(currPos, prevPos, deltaTime, velVec);
     break;
 
   case COORD_SYS_ECEF:
-    CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, currPos), lla1);
-    CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, prevPos), lla2);
-    calculateVelFromGeodeticPos(lla1.position(), lla2.position(), deltaTime, velVec);
+    {
+      simCore::Vec3 posLla1;
+      simCore::CoordinateConverter::convertEcefToGeodeticPos(currPos, posLla1);
+      CoordinateConverter::convertEcefToGeodetic(Coordinate(COORD_SYS_ECEF, prevPos), lla2);
+      calculateVelFromGeodeticPos(posLla1, lla2.position(), deltaTime, velVec);
+    }
     break;
 
   case COORD_SYS_XEAST:
@@ -1429,7 +1506,7 @@ void simCore::calculateFlightPathAngles(const Vec3 &velVec, Vec3 &fpa)
 /// Calculates an ENU geodetic velocity vector from speed, heading and pitch (flight path angles)
 void simCore::calculateVelocity(const double speed, const double heading, const double pitch, Vec3 &velVec)
 {
-  double cPitch = cos(pitch);
+  const double cPitch = cos(pitch);
   velVec.setY(speed * cos(heading) * cPitch);
   velVec.setX(speed * sin(heading) * cPitch);
   velVec.setZ(speed * sin(pitch));
@@ -1567,7 +1644,7 @@ bool simCore::laserInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3&
       tmp.toD3(endPoint);
 
       // Check if the point is in the gate
-      if (!positionInGate(gateHostLLA, endPoint, gAzimuthRad, gElevRad, gWidthRad, gHeightRad, gMinRangeM, gMaxRangeM, earthModel, cc))
+      if (!positionInGate(gateHostLLA, Vec3(endPoint), gAzimuthRad, gElevRad, gWidthRad, gHeightRad, gMinRangeM, gMaxRangeM, earthModel, cc))
         return false;
     }
 

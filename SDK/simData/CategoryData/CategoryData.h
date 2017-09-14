@@ -155,7 +155,8 @@ public: // types
     bool hasPrevious() const {return impl_->hasPrevious();}
 
   private:
-    std::tr1::shared_ptr<IteratorImpl> impl_;
+    // this class owns the iteratorImpl passed to it during construction
+    std::unique_ptr<IteratorImpl> impl_;
   };
 
 public:
@@ -188,7 +189,7 @@ public:
 
 protected:
   /// used by the iterator implementation
-  virtual IteratorImpl* iterator_() const = 0;
+  virtual std::unique_ptr<IteratorImpl> iterator_() const = 0;
 };
 } // namespace
 

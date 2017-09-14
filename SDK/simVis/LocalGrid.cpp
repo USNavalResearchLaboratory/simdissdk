@@ -117,6 +117,7 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
   stateSet->setAttributeAndModes(new osg::Point(1.5f), 1);
+  stateSet->setRenderBinDetails(BIN_LOCAL_GRID, BIN_GLOBAL_SIMSDK);
 
   this->addChild(geode);
 };
@@ -226,12 +227,12 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
 void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
 {
   osg::ref_ptr<simVis::Locator> locator = this->getLocator();
-
+  // suppress notification, leave that to endUpdate below
   locator->setComponentsToInherit(
     simVis::Locator::COMP_POSITION                    |
     (prefs.followyaw()   ? simVis::Locator::COMP_HEADING : 0) |
     (prefs.followpitch() ? simVis::Locator::COMP_PITCH   : 0) |
-    (prefs.followroll()  ? simVis::Locator::COMP_ROLL    : 0));
+    (prefs.followroll()  ? simVis::Locator::COMP_ROLL    : 0), false);
 
   // positional offset:
   simCore::Vec3 posOffset;
@@ -249,13 +250,14 @@ void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
   simCore::Vec3 oriOffset;
   if (prefs.has_gridorientationoffset())
   {
-    simData::BodyOrientation ori = prefs.gridorientationoffset();
+    const simData::BodyOrientation& ori = prefs.gridorientationoffset();
     oriOffset.set(ori.yaw(), ori.pitch(), ori.roll());
   }
 
-  locator->setLocalOffsets(
-    posOffset,
-    oriOffset);
+  // Suppress single notify on setLocalOffsets...
+  locator->setLocalOffsets(posOffset, oriOffset, locator->getParentLocator()->getTime(), false);
+  // ...instead send explicit notify for it and setComponentsToInherit above
+  locator->endUpdate();
 }
 
 // Notification that host locator changed
@@ -556,16 +558,19 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   double speedMS = 10.0f; // m/s; this default should never be needed, should be overridden by DefaultDataStoreValues
   if (prefs.speedring().useplatformspeed())
   {
-    if (simCore::areEqual(hostSpeedMS_, 0.0))
-      return;
-
     speedMS = hostSpeedMS_;
   }
-  else if (prefs.speedring().speedtouse())
+  else if (prefs.speedring().has_speedtouse())
   {
     // using speedToUse, convert to m/s
     const Units prefSpeedUnits = simVis::convertUnitsToOsgEarth(prefs.speedring().speedunits());
     speedMS = prefSpeedUnits.convertTo(osgEarth::Units::METERS_PER_SECOND, prefs.speedring().speedtouse());
+  }
+
+  if (simCore::areEqual(speedMS, 0.0))
+  {
+    // do not display anything if speed is zero
+    return;
   }
 
   // determine the time radius for the speed rings display
@@ -591,7 +596,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   if (timeRadiusSeconds <= 0.0)
     return;
 
-  double sizeM = timeRadiusSeconds * speedMS;
+  const double sizeM = timeRadiusSeconds * speedMS;
 
   // if sizeM exceeds this number there is an excessive UI responsiveness penalty
   if (sizeM > MAX_RING_SIZE_M)
@@ -658,30 +663,33 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
       osg::ref_ptr<osgText::Text> label = NULL;
       if (displayTime)
       {
-        double radiusS = spacingS * static_cast<double>(i+1);
-        if (prefs.speedring().usefixedtime())
+        double radiusS = spacingS * static_cast<double>(i + 1);
+        const simData::ElapsedTimeFormat timeFormat = prefs.speedring().timeformat();
+        assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
+        std::stringstream buf;
+
+        // show HH:MM:SS.SS
+        if (timeFormat == simData::ELAPSED_HOURS)
         {
-          // show HH:MM:SS.SS
-          size_t hh = static_cast<size_t>(radiusS / simCore::SECPERHOUR);
-          size_t mm = static_cast<size_t>((radiusS - (simCore::SECPERHOUR * hh)) / simCore::SECPERMIN);
-          double ss = radiusS - (hh * simCore::SECPERHOUR) - (mm * simCore::SECPERMIN);
-          std::stringstream buf;
-          buf << std::fixed << hh << ':' << mm << ':' << std::setprecision(2) << ss;
-          std::string str = buf.str();
-          label = createTextPrototype_(prefs, str);
+          simCore::HoursTimeFormatter formatter;
+          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
         }
+
+        // show MM:SS.SS
+        else if (timeFormat == simData::ELAPSED_MINUTES)
+        {
+          simCore::MinutesTimeFormatter formatter;
+          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
+        }
+
+        // show SS.SS
         else
         {
-          // convert time in seconds to time in desired units
-          const simData::ElapsedTimeFormat timeFormat = prefs.speedring().timeformat();
-          assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
-          if (timeFormat == simData::ELAPSED_MINUTES)
-            label = createTextPrototype_(prefs, radiusS / simCore::SECPERMIN, "min", prefs.gridlabelprecision());
-          else if (timeFormat == simData::ELAPSED_HOURS)
-            label = createTextPrototype_(prefs, radiusS / simCore::SECPERHOUR, "hrs", prefs.gridlabelprecision());
-          else
-            label = createTextPrototype_(prefs, radiusS, "s", prefs.gridlabelprecision());
+          simCore::SecondsTimeFormatter formatter;
+          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
         }
+        std::string str = buf.str();
+        label = createTextPrototype_(prefs, str);
       }
       else
       {

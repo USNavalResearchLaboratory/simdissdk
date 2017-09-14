@@ -1,4 +1,4 @@
-if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET SIMDIS_SDKUtil)
+if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET simUtil)
     return()
 endif()
 
@@ -12,7 +12,7 @@ set(PROJECT_FILES
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
 add_executable(example_viewmanager_qt ${PROJECT_FILES})
-target_link_libraries(example_viewmanager_qt PRIVATE SIMDIS_SDKVis SIMDIS_SDKUtil OSGEARTH_QT)
+target_link_libraries(example_viewmanager_qt PRIVATE simVis simUtil OSGEARTH_QT)
 set_target_properties(example_viewmanager_qt PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - View Manager Qt"

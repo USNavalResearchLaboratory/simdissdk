@@ -24,15 +24,16 @@
 #include <QAbstractProxyModel>
 
 #include "simData/DataStoreHelpers.h"
-#include "simQt/QtConversion.h"
+#include "simCore/Time/Clock.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/ResourceInitializer.h"
+#include "simQt/EntityStateFilter.h"
 #include "simQt/EntityTreeWidget.h"
 #include "simQt/EntityTreeModel.h"
 #include "simQt/EntityTreeComposite.h"
 #include "simQt/EntityTypeFilter.h"
 #include "simQt/EntityCategoryFilter.h"
-#include "simQt/EntityFilterLineEdit.h"
 #include "simQt/EntityProxyModel.h"
 #include "simQt/EntityLineEdit.h"
 #include "ui_EntityLineEdit.h"
@@ -44,9 +45,10 @@ namespace {
   static const QString INVALID_ENTITY = "QLineEdit:enabled { color: red }";
 }
 
-EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type)
+EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock, SettingsPtr settings)
   : QDialog(parent),
-    entityTreeModel_(entityTreeModel)
+    entityTreeModel_(entityTreeModel),
+    entityStateFilter_(NULL)
 {
   setWindowTitle("Select Entity");
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -57,6 +59,14 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   tree_->setExpandsOnDoubleClick(true);
   tree_->setSelectionMode(QAbstractItemView::SingleSelection);
   tree_->setListTreeButtonDisplayed(false);  // The Entity Line Composite does not support the tree view
+  if (settings)
+    tree_->setSettings(settings);
+
+  if (clock != NULL)
+  {
+    entityStateFilter_ = new simQt::EntityStateFilter(*entityTreeModel_->dataStore(), *clock, true);
+    tree_->addEntityFilter(entityStateFilter_);
+  }
 
   tree_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::DataStore::ALL));
   tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), true));
@@ -87,6 +97,22 @@ void EntityDialog::setItemSelected(uint64_t id)
     tree_->setSelected(id, true);
     tree_->scrollTo(id);
   }
+}
+
+void EntityDialog::setStateFilter(EntityStateFilter::State state)
+{
+  if (entityStateFilter_ != NULL)
+  {
+    entityStateFilter_->setStateFilter(state);
+  }
+}
+
+EntityStateFilter::State EntityDialog::stateFilter() const
+{
+  if (entityStateFilter_ != NULL)
+    return entityStateFilter_->stateFilter();
+
+  return EntityStateFilter::BOTH;
 }
 
 void EntityDialog::setSelected_(QList<uint64_t> ids)
@@ -140,7 +166,11 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   entityDialog_(NULL),
   uniqueId_(0),
   needToVerify_(false),
-  type_(type)
+  type_(type),
+  clock_(NULL),
+  entityStateFilter_(NULL),
+  state_(EntityStateFilter::BOTH),
+  settings_(SettingsPtr())
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -165,9 +195,10 @@ EntityLineEdit::~EntityLineEdit()
   delete composite_;
 }
 
-void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type)
+void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type, simCore::Clock* clock)
 {
   type_ = type;
+  clock_ = clock;
 
   if (model != NULL)
   {
@@ -175,6 +206,11 @@ void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore:
     entityTreeModel_->setToListView();
 
     proxy_ = new EntityProxyModel(this);
+    if (clock != NULL)
+    {
+      entityStateFilter_ = new simQt::EntityStateFilter(*entityTreeModel_->dataStore(), *clock_);
+      proxy_->addEntityFilter(entityStateFilter_);  // proxy takes ownership of entityStateFilter_
+    }
     proxy_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::DataStore::ALL));
     proxy_->setSourceModel(entityTreeModel_);
 
@@ -203,6 +239,27 @@ void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore:
     dataListenerPtr_.reset();
     entityTreeModel_ = NULL;
   }
+}
+
+void EntityLineEdit::setStateFilter(EntityStateFilter::State state)
+{
+  if (state_ == state)
+    return;
+
+  state_ = state;
+
+  if (entityStateFilter_ != NULL)
+    entityStateFilter_->setStateFilter(state_);
+
+  if (entityDialog_ != NULL)
+    entityDialog_->setStateFilter(state_);
+
+  emit stateFilterChanged(state_);
+}
+
+EntityStateFilter::State EntityLineEdit::stateFilter() const
+{
+  return state_;
 }
 
 void EntityLineEdit::wasActived_(const QModelIndex & index)
@@ -262,6 +319,11 @@ int EntityLineEdit::setSelected(uint64_t id)
   return 0;
 }
 
+void EntityLineEdit::setSettings(SettingsPtr settings)
+{
+  settings_ = settings;
+}
+
 void EntityLineEdit::showEntityDialog_()
 {
   if (entityTreeModel_ == NULL)
@@ -269,7 +331,8 @@ void EntityLineEdit::showEntityDialog_()
 
   if (entityDialog_ == NULL)
   {
-    entityDialog_ = new EntityDialog(this, entityTreeModel_, type_);
+    entityDialog_ = new EntityDialog(this, entityTreeModel_, type_, clock_, settings_);
+    entityDialog_->setStateFilter(state_);
 
     connect(entityDialog_, SIGNAL(itemSelected(uint64_t)), this, SLOT(setSelected(uint64_t)));
     connect(entityDialog_, SIGNAL(closedGui()), this, SLOT(closeEntityDialog()));
@@ -353,6 +416,44 @@ bool EntityLineEdit::eventFilter(QObject* obj, QEvent* evt)
     }
   }
   return false;
+}
+
+
+//----------------------------------------------------------------------------------------------------------------
+
+BoundEntityLineEdit::BoundEntityLineEdit(EntityLineEdit* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData)
+  : BoundIntegerSetting(parent, settings, variableName, metaData)
+{
+  qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
+
+  parent->setStateFilter(static_cast<EntityStateFilter::State>(value()));
+  connect(parent, SIGNAL(stateFilterChanged(simQt::EntityStateFilter::State)), this, SLOT(setStateFromLineEdit_(simQt::EntityStateFilter::State)));
+  connect(this, SIGNAL(valueChanged(int)), this, SLOT(setStateFromSettings_(int)));
+}
+
+BoundEntityLineEdit::~BoundEntityLineEdit()
+{
+}
+
+void BoundEntityLineEdit::setStateFromLineEdit_(EntityStateFilter::State state)
+{
+  setValue(static_cast<int>(state));
+}
+
+void BoundEntityLineEdit::setStateFromSettings_(int state)
+{
+  static_cast<EntityLineEdit*>(parent())->setStateFilter(static_cast<EntityStateFilter::State>(state));
+}
+
+simQt::Settings::MetaData BoundEntityLineEdit::metaData()
+{
+  QMap<int, QString> state;
+  state.insert(0, "Active");
+  state.insert(1, "Inactive");
+  state.insert(2, "Both");
+
+  return simQt::Settings::MetaData(simQt::Settings::MetaData::makeEnumeration(
+    0, state, "Entities to display in various controls.", simQt::Settings::DEFAULT));
 }
 
 }

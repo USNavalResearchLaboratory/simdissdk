@@ -50,49 +50,55 @@ public:
   /**
   * Add a platform,
   * Uses the id to construct a name of 'platform<id>'
+  * @param originalId Original ID to use for entity
   * @return uint64_t  the id for the entity
   */
-  uint64_t addPlatform();
+  uint64_t addPlatform(uint64_t originalId = 0);
 
   /**
   * Add a beam
   * Uses the id to construct a name of 'beam<id>_<hostId>'
   * @param hostId platform host
+  * @param originalId Original ID to use for entity
   * @return uint64_t  the id for the entity
   */
-  uint64_t addBeam(uint64_t hostId);
+  uint64_t addBeam(uint64_t hostId, uint64_t originalId = 0);
 
   /**
   * Add a gate
   * Uses the id to construct a name of 'gate<id>_<hostId>'
   * @param hostId beam host
+  * @param originalId Original ID to use for entity
   * @return uint64_t  the id for the entity
   */
-  uint64_t addGate(uint64_t hostId);
+  uint64_t addGate(uint64_t hostId, uint64_t originalId = 0);
 
   /**
   * Add a laser
   * Uses the id to construct a name of 'laser<id>_<hostId>'
   * @param hostId platform host
+  * @param originalId Original ID to use for entity
   * @return uint64_t  the id for the entity
   */
-  uint64_t addLaser(uint64_t hostId);
+  uint64_t addLaser(uint64_t hostId, uint64_t originalId = 0);
 
   /**
   * Add a LOB
   * Uses the id to construct a name of 'lob<id>_<hostId>'
   * @param hostId platform host
+  * @param originalId Original ID to use for entity
   * @return uint64_t  the id for the entity
   */
-  uint64_t addLOB(uint64_t hostId);
+  uint64_t addLOB(uint64_t hostId, uint64_t originalId = 0);
 
   /**
   * Add a projector
   * Uses the id to construct a name of 'projector<id>_<hostId>'
   * @param hostId platform host
+  * @param originalId Original ID to use for entity
   * @return uint64_t  the id for the entity
   */
-  uint64_t addProjector(uint64_t hostId);
+  uint64_t addProjector(uint64_t hostId, uint64_t originalId = 0);
 
   /**
   * Update platform prefs as with object specified, does a merge with prefs passed in

@@ -355,7 +355,7 @@ protected: // methods
   void initializeLineColor_();
 
   /** Helper method to update the altitude component of a local geometry node's local offset */
-  void setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters) const;
+  void setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters);
 
   /**
   * Begin batched updates to the Style, subsequent sets will not apply the style to the GOG
@@ -418,6 +418,24 @@ private:
 /// Shared ptr wrapper for the GogNodeInterface object
 typedef std::tr1::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
 
+/**
+ * Implementation of GogNodeInterface for AnnotationNodes, which are a base class of all GOG node types.
+ * Used when less generic GogNodeInterface can't be found for a given osg node
+ */
+class SDKVIS_EXPORT AnnotationNodeInterface : public GogNodeInterface
+{
+public:
+  AnnotationNodeInterface(osgEarth::Annotation::AnnotationNode* annotationNode, const simVis::GOG::GogMetaData& metaData);
+  virtual ~AnnotationNodeInterface();
+  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
+
+protected:
+  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
+  virtual void setStyle_(const osgEarth::Symbology::Style& style);
+
+private:
+  osg::observer_ptr<osgEarth::Annotation::AnnotationNode> annotationNode_;
+};
 
 /**
 * Implementation of GogNodeInterface for FeatureNodes, which represent absolute line type Overlays

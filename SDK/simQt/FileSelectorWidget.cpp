@@ -22,7 +22,7 @@
 #include <cassert>
 #include <QLabel>
 #include "simCore/String/FilePatterns.h"
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/FileDialog.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/FileSelectorWidget.h"
@@ -250,6 +250,8 @@ QString FileSelectorWidget::filterOptions2QString_(FileSelectorWidget::FilterOpt
     return QString::fromStdString(simCore::SIMDIS_VIEW_FILE_PATTERNS);
   case FileSelectorWidget::SIMDIS_BOOKMARK_FILE_PATTERNS:
     return QString::fromStdString(simCore::SIMDIS_BOOKMARK_FILE_PATTERNS);
+  case FileSelectorWidget::SIMDIS_BOOKMARK_SAVE_FILE_PATTERNS:
+    return QString::fromStdString(simCore::SIMDIS_BOOKMARK_SAVE_FILE_PATTERNS);
   case FileSelectorWidget::SIMDIS_IMAGERY_CONFIG_FILE_PATTERNS:
     return QString::fromStdString(simCore::SIMDIS_IMAGERY_CONFIG_FILE_PATTERNS);
   case FileSelectorWidget::SIMDIS_RASTER_DB_FILE_PATTERNS:

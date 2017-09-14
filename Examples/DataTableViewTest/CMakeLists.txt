@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKQt OR NOT TARGET SIMDIS_SDKData OR NOT TARGET SIMDIS_SDKUtil)
+if(NOT TARGET simQt OR NOT TARGET simData OR NOT TARGET simUtil)
     return()
 endif()
 
@@ -19,7 +19,7 @@ VSI_QT_WRAP_UI(Q_DTV_FORMS
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(example_QtDataTableViewTest ${APP_SOURCES} ${Q_DTV_MOC} ${Q_DTV_FORMS})
-target_link_libraries(example_QtDataTableViewTest PRIVATE SIMDIS_SDKQt SIMDIS_SDKData SIMDIS_SDKUtil)
+target_link_libraries(example_QtDataTableViewTest PRIVATE simQt simData simUtil)
 target_include_directories(example_QtDataTableViewTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_QtDataTableViewTest PROPERTIES
     FOLDER "Examples"

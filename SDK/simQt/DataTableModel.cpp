@@ -155,6 +155,10 @@ QVariant DataTableModel::data(const QModelIndex &index, int role) const
     if (cell.next()->time() != time)
       return Qt::AlignLeft;
 
+    // Strings should be left align
+    if (col->variableType() == simData::VT_STRING)
+      return Qt::AlignLeft;
+
     // everything else is right aligned
     return Qt::AlignRight;
   }

@@ -34,6 +34,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LocalGrid.h"
 #include "simVis/LabelContentManager.h"
+#include "simVis/BeamPulse.h"
 
 namespace simVis
 {
@@ -59,6 +60,13 @@ namespace simVis
       Locator*                       locator = NULL,
       const simVis::EntityNode*      host = NULL,
       int                            referenceYear = 1970);
+
+    /**
+    * The installshaderProgram is required prior to using this class.
+    * This will initialize shader once in the scenario
+    * @param intoStateSet State set of the scenario
+    */
+    static void installShaderProgram(osg::StateSet* intoStateSet);
 
     /**
     * Access the properties object currently representing this beam.
@@ -192,6 +200,9 @@ namespace simVis
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the hook text based on the label content callback, update and preference
+    virtual std::string hookText() const;
+
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 
@@ -204,12 +215,12 @@ namespace simVis
     virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force=false);
 
     /**
-    * Flushes all the entity's data point visualization.  No meaning for Beams
+    * Flushes all the entity's data point visualization.
     */
-    virtual void flush() {}
+    virtual void flush();
 
     /**
-    * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
+    * Returns a range value (meters) used for visualization.
     */
     virtual double range() const;
 
@@ -314,6 +325,7 @@ namespace simVis
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;
+    osg::ref_ptr<BeamPulse> beamPulse_;
   };
 
 } //namespace simVis

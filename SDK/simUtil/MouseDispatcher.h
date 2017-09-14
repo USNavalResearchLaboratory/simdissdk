@@ -28,11 +28,12 @@
 #include "simCore/Common/Common.h"
 #include "simUtil/MouseManipulator.h"
 
-namespace simVis { class ViewManager; }
+namespace simVis {
+  class ViewManager;
+  class AddEventHandlerToViews;
+}
 
 namespace simUtil {
-
-class AddEventHandlerToViews;
 
 /**
  * Responsible for delegating mouse functionality in serial amongst several registered
@@ -69,7 +70,7 @@ private:
   osg::ref_ptr<EventHandler> eventHandler_;
 
   /** Instance of the observer of views added/deleted */
-  osg::ref_ptr<AddEventHandlerToViews> viewObserver_;
+  osg::ref_ptr<simVis::AddEventHandlerToViews> viewObserver_;
 };
 
 }

@@ -159,15 +159,18 @@ struct AppData
 {
   osg::ref_ptr<ui::HSliderControl> timeSlider_;
   osg::ref_ptr<ui::CheckBoxControl> playCheck_;
+  osg::ref_ptr<ui::CheckBoxControl> overheadMode_;
   simData::DataStore *ds_;
+  simVis::View* view_;
   double startTime_;
   double endTime_;
   double lastTime_;
   bool playing_;
 
-  explicit AppData(simData::DataStore *ds)
+  explicit AppData(simData::DataStore *ds, simVis::View* view)
   : timeSlider_(NULL),
     ds_(ds),
+    view_(view),
     startTime_(0.0),
     endTime_(0.0),
     lastTime_(0.0),
@@ -184,6 +187,7 @@ struct AppData
   void applyToggles()
   {
     playing_ = playCheck_->getValue();
+    view_->enableOverheadMode(overheadMode_->getValue());
   }
 
   void advance(double dt)
@@ -718,6 +722,10 @@ ui::Control* createUI(AppData& app)
   grid->setControl(c, r, new ui::LabelControl("Playing:"));
   app.playCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
+  ++r;
+  grid->setControl(c, r, new ui::LabelControl("Overhead:"));
+  app.overheadMode_ = grid->setControl(c + 1, r, new ui::CheckBoxControl(false, applyUI.get()));
+
   return top;
 }
 
@@ -750,7 +758,7 @@ int main(int argc, char **argv)
 
   // read the ASI data into the datastore.
   simData::MemoryDataStore dataStore;
-  AppData app(&dataStore);
+  AppData app(&dataStore, viewer->getMainView());
   osg::ArgumentParser args(&argc, argv);
   readASI(args, app);
   viewer->getSceneManager()->getScenario()->bind(&dataStore);

@@ -33,31 +33,32 @@ if( SIMNOTIFY_SHARED )
     set( STATIC_OR_SHARED SHARED )
 endif()
 
-add_library(SIMDIS_SDKNotify ${STATIC_OR_SHARED} ${NOTIFY_PROJECT_FILES})
-set_target_properties(SIMDIS_SDKNotify PROPERTIES
+add_library(simNotify ${STATIC_OR_SHARED} ${NOTIFY_PROJECT_FILES})
+set_target_properties(simNotify PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Notify"
 )
-target_include_directories(SIMDIS_SDKNotify PUBLIC
+ApplySDKVersion(simNotify)
+target_include_directories(simNotify PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:include>
 )
 if(SIMNOTIFY_SHARED)
-    target_compile_definitions(SIMDIS_SDKNotify PRIVATE SIMDIS_SDKNotify_LIB_EXPORT_SHARED)
+    target_compile_definitions(simNotify PRIVATE simNotify_LIB_EXPORT_SHARED)
 else()
-    target_compile_definitions(SIMDIS_SDKNotify PUBLIC SIMDIS_SDKNotify_LIB_EXPORT_STATIC)
+    target_compile_definitions(simNotify PUBLIC simNotify_LIB_EXPORT_STATIC)
 endif()
 if(NOT HAS_TR1SHAREDPTR)
-    target_compile_definitions(SIMDIS_SDKNotify PUBLIC SIMDIS_SDKCore_NOSHAREDPTR)
+    target_compile_definitions(simNotify PUBLIC SIMDIS_SDKCore_NOSHAREDPTR)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(SIMDIS_SDKNotify PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(SIMDIS_SDKNotify SDK_Library)
+    set_target_properties(simNotify PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
+    vsi_install_target(simNotify SDK_Library)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMNOTIFY_SHARED)
-    PostBuildInstallSdkSharedObjects( SIMDIS_SDKNotify )
+    PostBuildInstallSdkSharedObjects( simNotify )
 endif()
 
 # Setup header file installation

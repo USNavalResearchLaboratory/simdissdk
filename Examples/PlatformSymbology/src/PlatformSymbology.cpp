@@ -100,7 +100,7 @@ static const std::string s_help =
   " n : label: toggle text outline color\n"
   " o : label: change text size\n"
   " r : label: change text backdrop type\n"
-  " s : label: change text backdrop implementation\n"
+  " t : label: change text backdrop implementation\n"
   "\n"
   " 6 : beam: toggle lighting\n"
   " 7 : beam: toggle alpha blending\n"
@@ -593,6 +593,10 @@ struct MenuHandler : public osgGA::GUIEventHandler
       break;
 
       case 's':
+        // s is standard osg frame rate statistics display
+        handled = false;
+        break;
+      case 't':
       {
         simData::DataStore::Transaction xaction;
         simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);

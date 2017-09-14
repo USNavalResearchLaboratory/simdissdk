@@ -124,6 +124,33 @@ CategoryFilter::~CategoryFilter()
     dataStore_->categoryNameManager().removeListener(listenerPtr_);
 }
 
+CategoryFilter& CategoryFilter::operator=(const CategoryFilter& other)
+{
+  if (&other == this)
+    return *this;
+
+  if ((dataStore_ != NULL) && (listenerPtr_ != NULL))
+  {
+    dataStore_->categoryNameManager().removeListener(listenerPtr_);
+    listenerPtr_.reset();
+  }
+  dataStore_ = other.dataStore_;
+  regExpFactory_ = other.regExpFactory_;
+  autoUpdate_ = other.autoUpdate_;
+  categoryCheck_ = other.categoryCheck_;
+  categoryRegExp_ = other.categoryRegExp_;
+
+  if (dataStore_ != NULL && autoUpdate_)
+  {
+    // re-add observers/listeners
+    assert(listenerPtr_ == NULL);
+    listenerPtr_.reset(new CategoryFilterListener(this));
+    dataStore_->categoryNameManager().addListener(listenerPtr_);
+  }
+
+  return *this;
+}
+
 void CategoryFilter::addCategoryName_(int nameIndex)
 {
   // prevent duplicates
@@ -473,7 +500,7 @@ bool CategoryFilter::matchData(const CurrentCategoryValues& curCategoryData) con
 bool CategoryFilter::matchRegExpFilter_(const CurrentCategoryValues& curCategoryData) const
 {
   // no failure if no regular expressions
-  if (categoryRegExp_.empty())
+  if (categoryRegExp_.empty() || dataStore_ == NULL)
     return true;
   CurrentCategoryValues::const_iterator curCategoryDataIter;
   // first, check the reg exp, since this is likely to be more comprehensive
@@ -502,6 +529,9 @@ bool CategoryFilter::matchRegExpFilter_(const CurrentCategoryValues& curCategory
 
 std::string CategoryFilter::serialize(bool simplify) const
 {
+  if (dataStore_ == NULL)
+    return " ";
+
   simData::CategoryNameManager& catNameMgr = dataStore_->categoryNameManager();
   std::string rv;
 
@@ -578,8 +608,11 @@ std::string CategoryFilter::serialize(bool simplify) const
 }
 
 ///@return false on fail
-bool CategoryFilter::deserialize(const std::string &checksString)
+bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmptyCategories)
 {
+  if (dataStore_ == NULL)
+    return false;
+
   categoryCheck_.clear();
 
   // Empty string means no values, meaning clear vector; valid state
@@ -637,8 +670,9 @@ bool CategoryFilter::deserialize(const std::string &checksString)
 
     const char checkString = tmpString[(int(tmpString.size()) - 2)];
     const bool categoryChecked = (checkString == '1');
-    // skip empty categories
-    if (!categoryChecked)
+
+    // skip unchecked categories if optimizing
+    if (skipEmptyCategories && !categoryChecked)
       continue;
 
     const int categoryName = categoryManager.addCategoryName(categoryNameString);

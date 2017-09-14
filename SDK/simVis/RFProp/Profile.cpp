@@ -268,7 +268,7 @@ void Profile::adjustSpherical_(osg::Vec3& v, const double *lla, const simCore::V
 {
   double pos[3] = { v[0], v[1], v[2] };
   simCore::Vec3 sphereXYZ;
-  simCore::tangentPlane2Sphere(lla, pos, sphereXYZ, tpSphereXYZ);
+  simCore::tangentPlane2Sphere(Vec3(lla), Vec3(pos), sphereXYZ, tpSphereXYZ);
   double alt = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
   v.z() = v.z() - (alt - v.z()) + refCoord_.z();
 }
@@ -417,8 +417,8 @@ void Profile::init2DHoriz_()
       adjustSpherical_(v1, lla, &tpSphereXYZ);
     }
 
-    verts_->push_back(v0);
     verts_->push_back(v1);
+    verts_->push_back(v0);
 
     heightIndex = osg::clampBetween(heightIndex, 0u, data_->getNumHeights() - 1);
     const double value = data_->getValueByIndex(heightIndex, i);
@@ -433,13 +433,37 @@ void Profile::init2DHoriz_()
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
+
+  // GL_CULL_FACE is OFF because 2D Horizontal is a strip and not a 3D object
   geometry->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
   const unsigned int count = verts_->size() - startIndex;
 
-  geometry->addPrimitiveSet(new osg::DrawArrays(GL_QUAD_STRIP, startIndex, count));
+  geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, startIndex, count));
 
   geode_->addDrawable(geometry);
+}
+
+// Used to tesselate the 2D Vertical with triangle strip
+const void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry)
+{
+  for (unsigned int h = 0; h < numHeights - 1; ++h)
+  {
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    idx->reserve(2 * numRanges);
+
+    // Create row strips
+    for (unsigned int r = 0; r < numRanges; ++r)
+    {
+      const unsigned int indexBottom = startIndex + (r * numHeights) + h;
+      const unsigned int indexTop = indexBottom + 1;
+
+      idx->push_back(indexBottom);
+      idx->push_back(indexTop);
+    }
+    // Add individual row primitive set
+    geometry->addPrimitiveSet(idx);
+  }
 }
 
 void Profile::init2DVert_()
@@ -484,89 +508,6 @@ void Profile::init2DVert_()
     }
   }
 
-  // Now build the indices that will actually be rendered
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_QUADS);
-  idx->reserve((numRanges - 1) * (numHeights - 1) * 4);
-
-  for (unsigned int r = 0; r < numRanges - 1; r++)
-  {
-    const unsigned int nextRange = r + 1;
-    float valueR = 0.0f;
-    float valueL = 0.0f;
-    unsigned int endIndex = 0;
-    bool optimizedQuad = false;
-
-    // build the graphic for this range cell, from bottom to top
-    for (unsigned int h = 0; h < numHeights; ++h)
-    {
-      const unsigned int indexR = startIndex + (nextRange * numHeights) + h;
-      const unsigned int indexL = startIndex + (r * numHeights) + h;
-      const float newValueR = values_->at(indexR);
-      const float newValueL = values_->at(indexL);
-
-      // we always use bottom verts
-      if (h != 0)
-      {
-        // if there is a value change between bottom and top of cell, this cell must be rendered as its own quad
-        // if there is no change in the cell, defer ending the quad, set optimizedQuad flag
-        if (newValueR == valueR && newValueL == valueL)
-        {
-          optimizedQuad = true;
-          idx->setElement(endIndex, indexL);
-          idx->setElement(endIndex + 1, indexR);
-          // if we're at last height iteration, continue will bring us to the end
-          continue;
-        }
-
-        // there is a transition in this cell, end this quad
-        // if we were optimizing the previous quad, we need to end that quad
-        if (optimizedQuad)
-        {
-          // accept the already provisionally completed quad from last iteration, by not continuing to defer
-          optimizedQuad = false;
-          // start a new quad for this cell - top indices from previous quad become the bottom indices of new quad
-          // new lr
-          idx->push_back(idx->getElement(endIndex + 1));
-          // new ll
-          idx->push_back(idx->getElement(endIndex));
-
-          endIndex = idx->getNumIndices();
-
-          // end the quad
-          // ul
-          idx->push_back(indexL);
-          // ur
-          idx->push_back(indexR);
-        }
-        else
-        {
-          // there is a transition in this cell, end the quad
-          idx->setElement(endIndex, indexL);
-          idx->setElement(endIndex + 1, indexR);
-        }
-      }
-
-      const bool lastIteration = (h == (numHeights - 1));
-      if (!lastIteration)
-      {
-        // start a new quad
-        // new lr
-        idx->push_back(indexR);
-        valueR = newValueR;
-        // new ll
-        idx->push_back(indexL);
-        valueL = newValueL;
-
-        endIndex = idx->getNumIndices();
-        // pre-set this quad's top indices (to be overwritten (using setElement) next iteration)
-        // ul
-        idx->push_back(indexL);
-        // ur
-        idx->push_back(indexR);
-      }
-    }
-  }
-
   osg::Geometry* geometry = new osg::Geometry();
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
@@ -577,7 +518,9 @@ void Profile::init2DVert_()
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
   geometry->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
-  geometry->addPrimitiveSet(idx);
+  // Call to tesselate the 2D Vertical
+  tesselate2DVert_(numRanges, numHeights, startIndex, values_, geometry);
+
   geode_->addDrawable(geometry);
 }
 
@@ -645,9 +588,6 @@ void Profile::init3D_()
 
   const unsigned int startIndex = verts_->size();
 
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_QUADS);
-  idx->reserve(24 * numVerts);
-
   const double dt0 = -halfBeamWidth_ + M_PI_2;
   const double dt1 = halfBeamWidth_ + M_PI_2;
 
@@ -687,6 +627,8 @@ void Profile::init3D_()
     }
   }
 
+  osg::Geometry* geometry = new osg::Geometry();
+
   //Now build the indices that will actually be rendered
   for (unsigned int r = 0; r < numRanges - 1; r++)
   {
@@ -704,24 +646,35 @@ void Profile::init3D_()
       const unsigned int v6 = v5 + 1; // back UR
       const unsigned int v7 = v6 + 1; // back UL
 
-      // Front
-      idx->push_back(v0); idx->push_back(v2); idx->push_back(v3); idx->push_back(v1);
-      // Back
-      idx->push_back(v5); idx->push_back(v7); idx->push_back(v6); idx->push_back(v4);
+      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+      idx->reserve(14);
 
-      // Top
-      idx->push_back(v2); idx->push_back(v6); idx->push_back(v7); idx->push_back(v3);
-      // Bottom
-      idx->push_back(v1); idx->push_back(v5); idx->push_back(v4); idx->push_back(v0);
+      // Wrap the voxel with a triangle strip
+      // Back Bottom
+      idx->push_back(v5); idx->push_back(v4);
 
-      // Left
-      idx->push_back(v1); idx->push_back(v3); idx->push_back(v7); idx->push_back(v5);
-      // Right
-      idx->push_back(v4); idx->push_back(v6); idx->push_back(v2); idx->push_back(v0);
+      // Back to top
+      idx->push_back(v6); idx->push_back(v7);
+
+      // Top to left
+      idx->push_back(v3); idx->push_back(v5);
+
+      // Left to bottom
+      idx->push_back(v1); idx->push_back(v4);
+
+      // Bottom to right
+      idx->push_back(v0); idx->push_back(v6);
+
+      // Right to top
+      idx->push_back(v2); idx->push_back(v3);
+
+      // Top to front
+      idx->push_back(v0); idx->push_back(v1);
+
+      geometry->addPrimitiveSet(idx);
     }
   }
 
-  osg::Geometry* geometry = new osg::Geometry();
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_);
   geometry->setUseVertexBufferObjects(true);
@@ -730,8 +683,6 @@ void Profile::init3D_()
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
-
-  geometry->addPrimitiveSet(idx);
   geode_->addDrawable(geometry);
 }
 
@@ -810,127 +761,164 @@ void Profile::init3DTexture_()
   verts_->push_back(osg::Vec3(0, 0, maxSampledHeight));  // 1
   tcoords->push_back(osg::Vec2(0, maxT));
 
-  // Now the right two verts of the pie slice
-  verts_->push_back(osg::Vec3(maxRange * cosTheta0, maxRange * sinTheta0, minSampledHeight)); // 2
-  tcoords->push_back(osg::Vec2(1.0, minT));
+  int lt = 0; // Left side top of cap
+  int lb = 0; // Left side bottom of cap
+  int rt = 0; // Right side top of cap
+  int rb = 0; // Right side bottom of cap
+  std::vector<std::pair<int, int> > topVerts; // Top side vertex pairs
+  std::vector<std::pair<int, int> > botVerts; // Bottom side vertex pairs
 
-  verts_->push_back(osg::Vec3(maxRange * cosTheta0, maxRange * sinTheta0, maxSampledHeight)); // 3
-  tcoords->push_back(osg::Vec2(1.0, maxT));
+  // Calculate length of step for tessellation
+  const double pieLength = simCore::sdkMin(maxRange, simVis::MAX_SEGMENT_LENGTH);
+  const unsigned int numSegs = simCore::sdkMax(simVis::MIN_NUM_SEGMENTS, simCore::sdkMin(simVis::MAX_NUM_SEGMENTS, static_cast<unsigned int>(maxRange / pieLength)));
+  const double maxRangeStep = maxRange / numSegs;
+  double texStep = 1.0 / numSegs;
 
-  // Now the left two verts of the pie slice
-  verts_->push_back(osg::Vec3(maxRange * cosTheta1, maxRange * sinTheta1, minSampledHeight)); // 4
-  tcoords->push_back(osg::Vec2(1.0, minT));
+  int vertCount = 2; // Current vertex count, to keep track
 
-  verts_->push_back(osg::Vec3(maxRange * cosTheta1, maxRange * sinTheta1, maxSampledHeight)); // 5
-  tcoords->push_back(osg::Vec2(1.0, maxT));
+  { // Right side (drawn in opposite order of left side, required to make triangles face out the correct way)
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    // Add first two vertices
+    idx->addElement(1);
+    idx->addElement(0);
 
-#if 0
-
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-  // Right side
-  idx->addElement(0);  idx->addElement(4); idx->addElement(5); idx->addElement(0); idx->addElement(5); idx->addElement(1);
-
-  // Left side
-  idx->addElement(2);  idx->addElement(0); idx->addElement(1);  idx->addElement(2); idx->addElement(1); idx->addElement(3);
-
-  // Top side
-  idx->addElement(1);  idx->addElement(5); idx->addElement(3);
-
-  // Bottom side
-  idx->addElement(0);  idx->addElement(2); idx->addElement(4);
-
-  // Cap
-  idx->addElement(5); idx->addElement(4); idx->addElement(2); idx->addElement(5); idx->addElement(2);  idx->addElement(3);
-
-
-  osg::Geometry* geometry = new osg::Geometry();
-  geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_);
-  geometry->setUseVertexBufferObjects(true);
-  geometry->setColorArray(colors_);
-  geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-
-  geometry->setTexCoordArray(0, tcoords);
-  geometry->addPrimitiveSet(idx);
-  geode_->addDrawable(geometry);
-#else
-
-  // Add a drawable for each of the sides of the faces.
-  // Left side
-  {
-    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-    idx->addElement(0);  idx->addElement(5); idx->addElement(4); idx->addElement(0); idx->addElement(1); idx->addElement(5);
-    osg::Geometry* geometry = new osg::Geometry();
-    geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
-    geometry->setUseVertexBufferObjects(true);
-    geometry->setTexCoordArray(0, tcoords);
-    geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
-  }
-
-  // Right side
-  {
-    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-    idx->addElement(0);  idx->addElement(2); idx->addElement(3);  idx->addElement(0); idx->addElement(3); idx->addElement(1);
-    osg::Geometry* geometry = new osg::Geometry();
-    geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
-    geometry->setUseVertexBufferObjects(true);
-    geometry->setTexCoordArray(0, tcoords);
-    geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
-  }
-
-  // Top side
-  {
-    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-    idx->addElement(1);  idx->addElement(3); idx->addElement(5);
-    osg::Geometry* geometry = new osg::Geometry();
-    geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
-    geometry->setUseVertexBufferObjects(true);
-    geometry->setTexCoordArray(0, tcoords);
-    geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
-  }
-
-  // Bottom side
-  {
-    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-    idx->addElement(0);  idx->addElement(4); idx->addElement(2);
-    osg::Geometry* geometry = new osg::Geometry();
-    geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
-    geometry->setUseVertexBufferObjects(true);
-    geometry->setTexCoordArray(0, tcoords);
-    geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
-  }
-
-  // Cap
-  {
-    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
-    idx->addElement(5); idx->addElement(2); idx->addElement(4); idx->addElement(5); idx->addElement(3);  idx->addElement(2);
-    osg::Geometry* geometry = new osg::Geometry();
-    geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
-    geometry->setUseVertexBufferObjects(true);
-    geometry->setTexCoordArray(0, tcoords);
-    geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
-  }
-#endif
-
-    // Only create the texture if it doesn't already exist, otherwise you can just reuse it
-    if (texture_ == NULL)
+    // Add triangles, alternating between top and bottom vertices
+    for (unsigned int i = 0; i < numSegs; ++i)
     {
-      texture_ = new osg::Texture2D(createImage_());
-      texture_->setResizeNonPowerOfTwoHint(false);
-      texture_->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-      texture_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+      double thisStep = maxRangeStep * (i + 1);
+      double thisTexStep = texStep * (i + 1);
+
+      // Top vertex
+      verts_->push_back(osg::Vec3(thisStep * cosTheta0, thisStep * sinTheta0, maxSampledHeight)); // 3
+      tcoords->push_back(osg::Vec2(thisTexStep, maxT));
+      idx->addElement(vertCount);
+      topVerts.push_back(std::pair<int, int>(vertCount, 0));
+      ++vertCount;
+
+      // Bottom vertex
+      verts_->push_back(osg::Vec3(thisStep * cosTheta0, thisStep * sinTheta0, minSampledHeight)); // 2
+      tcoords->push_back(osg::Vec2(thisTexStep, minT));
+      idx->addElement(vertCount);
+      botVerts.push_back(std::pair<int, int>(vertCount, 0));
+      ++vertCount;
     }
-    geode_->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture_);
+
+    // Create and add drawable to scene
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+
+    // Save right end vertices for cap
+    rb = vertCount - 1; // Right bottom
+    rt = vertCount - 2; // Right top
+  }
+
+  { // Left side (drawn in opposite order of right side, required to make triangles face out the correct way)
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    // Add first two vertices
+    idx->addElement(0);
+    idx->addElement(1);
+
+    // Add triangles, alternating between top and bottom vertices
+    for (unsigned int i = 0; i < numSegs; ++i)
+    {
+      double thisStep = maxRangeStep * (i + 1);
+      double thisTexStep = texStep * (i + 1);
+      verts_->push_back(osg::Vec3(thisStep * cosTheta1, thisStep * sinTheta1, minSampledHeight)); // 2
+      tcoords->push_back(osg::Vec2(thisTexStep, minT));
+      idx->addElement(vertCount);
+      botVerts[i].second = vertCount;
+      ++vertCount;
+
+      verts_->push_back(osg::Vec3(thisStep * cosTheta1, thisStep * sinTheta1, maxSampledHeight)); // 3
+      tcoords->push_back(osg::Vec2(thisTexStep, maxT));
+      idx->addElement(vertCount);
+      topVerts[i].second = vertCount;
+      ++vertCount;
+    }
+
+    // Create and add drawable to scene
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+
+    // Save left end vertices for cap
+    lb = vertCount - 2; // Left bottom
+    lt = vertCount - 1; // Left top
+  }
+
+  { // Top side (drawn in opposite order of bottom side, required to make triangles face out the correct way)
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    // Add the first triangle
+    idx->addElement(1); idx->addElement(topVerts[0].first); idx->addElement(topVerts[0].second);
+    // Add the rest
+    for (unsigned int i = 1; i < numSegs; ++i)
+    {
+      idx->addElement(topVerts[i].first);
+      idx->addElement(topVerts[i].second);
+    }
+
+    // Create and add drawable to scene
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+  }
+
+  { // Bottom side (drawn in opposite order of top side, required to make triangles face out the correct way)
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    // Add the first triangle
+    idx->addElement(0); idx->addElement(botVerts[0].second); idx->addElement(botVerts[0].first);
+    // Add the rest
+    for (unsigned int i = 1; i < numSegs; ++i)
+    {
+      idx->addElement(botVerts[i].second);
+      idx->addElement(botVerts[i].first);
+    }
+
+    // Create and add drawable to scene
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+  }
+
+  { // Cap (end of the shape, the pie "crust")
+    osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    idx->addElement(lb);  idx->addElement(lt); idx->addElement(rb);  idx->addElement(rt);
+    // Create and add drawable to scene
+    osg::Geometry* geometry = new osg::Geometry();
+    geometry->setDataVariance(osg::Object::DYNAMIC);
+    geometry->setVertexArray(verts_);
+    geometry->setUseVertexBufferObjects(true);
+    geometry->setTexCoordArray(0, tcoords);
+    geometry->addPrimitiveSet(idx);
+    geode_->addDrawable(geometry);
+  }
+
+  // Only create the texture if it doesn't already exist, otherwise you can just reuse it
+  if (texture_ == NULL)
+  {
+    texture_ = new osg::Texture2D(createImage_());
+    texture_->setResizeNonPowerOfTwoHint(false);
+    texture_->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    texture_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+  }
+  geode_->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture_);
 }
 
 void Profile::init3DPoints_()
@@ -1041,8 +1029,7 @@ osg::Image* Profile::createImage_()
   }
   return image;
 }
-
-void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::DrawElementsUInt* idx)
+const void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry)
 {
   assert(data_.valid() && data_->getActiveProvider() != NULL);
   const double minRange = data_->getMinRange();
@@ -1189,21 +1176,31 @@ void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, u
   values_->push_back(value);
   values_->push_back(value);
 
-  // Bottom
-  idx->push_back(i0); idx->push_back(i1); idx->push_back(i2); idx->push_back(i3);
-  // Top
-  idx->push_back(i4); idx->push_back(i7); idx->push_back(i6); idx->push_back(i5);
+  // Create a triangle strip set to wrap the voxel
+  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
 
-  // Front
-  idx->push_back(i0); idx->push_back(i4); idx->push_back(i5); idx->push_back(i1);
-  // Back
-  idx->push_back(i2); idx->push_back(i6); idx->push_back(i7); idx->push_back(i3);
+  // Back Bottom
+  idx->push_back(i3); idx->push_back(i2);
 
-  // Right
-  idx->push_back(i3); idx->push_back(i7); idx->push_back(i4); idx->push_back(i0);
-  // Left
-  idx->push_back(i1); idx->push_back(i5); idx->push_back(i6); idx->push_back(i2);
+  // Back to top
+  idx->push_back(i7); idx->push_back(i6);
 
+  // Top to left
+  idx->push_back(i5); idx->push_back(i2);
+
+  // Left to bottom
+  idx->push_back(i1); idx->push_back(i3);
+
+  // Bottom to right
+  idx->push_back(i0); idx->push_back(i7);
+
+  // Right to top
+  idx->push_back(i4); idx->push_back(i5);
+
+  // Top to front
+  idx->push_back(i0); idx->push_back(i1);
+
+  geometry->addPrimitiveSet(idx);
 }
 
 void Profile::initRAE_()
@@ -1215,9 +1212,8 @@ void Profile::initRAE_()
 
   const double rangeStep = data_->getRangeStep();
 
-  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_QUADS);
-
   simCore::Vec3 tpSphereXYZ;
+  osg::Geometry* geometry = new osg::Geometry();
   const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };
   const double sinElevAngle = sin(elevAngle_);
   simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
@@ -1232,10 +1228,9 @@ void Profile::initRAE_()
       assert(0);
       return;
     }
-    buildVoxel_(lla, &tpSphereXYZ, heightIndex, i, idx);
+    buildVoxel_(lla, &tpSphereXYZ, heightIndex, i, geometry);
   }
 
-  osg::Geometry* geometry = new osg::Geometry();
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_);
@@ -1243,8 +1238,6 @@ void Profile::initRAE_()
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
-
-  geometry->addPrimitiveSet(idx);
 
   geode_->addDrawable(geometry);
 }

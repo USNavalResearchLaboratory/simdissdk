@@ -35,7 +35,8 @@ namespace simVis
 static const float ALPHA_THRESHOLD = 0.05f;
 
 EntityLabelNode::EntityLabelNode(osg::Group* root)
-  : root_(root)
+  : root_(root),
+    hasLastPrefs_(false)
 {
   // Note that labels are not flattened (by default) in overhead mode
 
@@ -106,6 +107,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
 
     // Preferences that change how the text is displayed and not the content of the text
     const bool labelStylePrefsChanged =
+      !hasLastPrefs_ ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, color) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, offsetx) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, offsety) ||
@@ -168,6 +170,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
   }
 
   lastCommonPrefs_ = commonPrefs;
+  hasLastPrefs_ = true;
   lastText_ = text;
 }
 

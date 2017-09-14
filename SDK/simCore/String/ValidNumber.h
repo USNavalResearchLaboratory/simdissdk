@@ -49,6 +49,15 @@ namespace simCore
    */
   SDKCORE_EXPORT bool stringIsIntegerNumber(const std::string& str, bool isUnsigned=false, bool ignoreWhitespace=true, bool permitPlusToken=true);
 
+  /**
+   * Returns true when the passed-in string token is a token that can be interpreted as True.
+   * Valid true values include (case insensitive) "true", "1", "yes", "on".  All other values
+   * including the empty string are considered false.
+   * @param[in ] str Potential boolean token
+   * @return True if the string can be interpreted as a True token; false otherwise.
+   */
+  SDKCORE_EXPORT bool stringIsTrueToken(const std::string& str);
+
   ///@{
   /**
    * Determines if the incoming string is a valid number and then performs the conversion.
@@ -70,6 +79,24 @@ namespace simCore
   SDKCORE_EXPORT bool isValidNumber(const std::string& token, float& val, bool permitPlusToken=true);
   ///@}
 
+  ///@{
+  /**
+   * Determines if the incoming string is a valid hexadecimal number and then performs the conversion.
+   * Hexadecimal values will succeed.  Strings support but do not require a leading 0x (or 0X).  String
+   * is case insensitive.  Values outside the valid range of the data type will fail.
+   * @param[in ] token String to validate
+   * @param[out] val Converted number, set to 0 if conversion fails
+   * @param[in ] require0xPrefix If true, the conversion will fail if the token does not start with "0x".
+   *   The 0x prefix is case insensitive.
+   * @return true if valid, false if not
+   */
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint32_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint16_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, uint8_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int32_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int16_t& val, bool require0xPrefix=false);
+  SDKCORE_EXPORT bool isValidHexNumber(const std::string& token, int8_t& val, bool require0xPrefix=false);
+  ///@}
 }
 
 #endif /* SIMCORE_STRING_VALIDNUMBER_H */

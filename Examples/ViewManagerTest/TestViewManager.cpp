@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     else
       firstView = mainView;
 
-    // Add it to the view manager:
+    // Add it to the view manager
     viewMan->addView(mainView);
   }
 

@@ -47,7 +47,7 @@ namespace simCore
   * @param[out] elev Elevation value from one entity to another along the from's line of sight
   * @param[out] cmp Composite value from one entity to another along the from's line of sight; composite is sometimes known as the bore sight angle
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @pre one of the azim, elev and cmp params must be valid and coordConv must be valid if model is flat earth or tangent plane
   */
   SDKCORE_EXPORT void calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, double* azim, double* elev, double* cmp, const EarthModelCalculations model, const CoordinateConverter* coordConv);
@@ -63,7 +63,7 @@ namespace simCore
   * @param[out] elev Elevation value from one entity to another
   * @param[out] cmp Composite value from one entity to another
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @pre one of the azim, elev and cmp params must be valid and coordConv must be valid if model is flat earth or tangent plane
   */
   SDKCORE_EXPORT void calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double* azim, double* elev, double* cmp, const EarthModelCalculations model, const CoordinateConverter* coordConv);
@@ -76,7 +76,7 @@ namespace simCore
   * @param[in ] fromLla Location in space consisting of latitude, longitude, altitude that is the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @return Slant distance between two objects in meters, with a 0 return indicating an error (or equality of points)
   * @pre coordConv must be valid if model is flat earth or tangent plane
   */
@@ -91,7 +91,7 @@ namespace simCore
   * @param[in ] fromLla Location in space consisting of latitude, longitude, altitude that is the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @return Ground distance between two objects in meters, with a 0 return indicating an error (or equality of points)
   * @pre coordConv must be valid if model is flat earth or tangent plane
   */
@@ -105,7 +105,7 @@ namespace simCore
   * @param[in ] fromLla Location in space consisting of latitude, longitude, altitude that is the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @return Altitude difference between two objects in meters, with a 0 return indicating an error (or equality of points); if toLla is higher than fromLla, this value should be positive
   * @pre coordConv must be valid if model is flat earth or tangent plane
   */
@@ -120,7 +120,7 @@ namespace simCore
   * @param[in ] yaw Yaw (heading) pointing angle for the 'from' entity
   * @param[in ] toLla Location in space consisting of latitude, longitude, altitude that is the 'to' entity, to which the angles are calculated
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[out] downRng Range along the x-axis normal to the to entity, where the x-axis is aligned with the yaw of the from entity
   * @param[out] crossRng Distance measured along a line whose direction is either 90deg CW (positive) or 90deg CCW (neg) to the projection of from's yaw into a horizontal plane
   * @param[out] downValue Shortest distance between a plane tangent to the earth at from's position and altitude and the to entity
@@ -151,7 +151,7 @@ namespace simCore
   * @param[in ] fromLla Vector of latitude, longitude, and altitude that describes current position for the 'from' entity
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Closing velocity in m/s based on input values.
@@ -168,7 +168,7 @@ namespace simCore
   * @param[in ] fromLla Vector of latitude, longitude, and altitude that describes current position for the 'from' entity
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Velocity Delta in m/s based on input values.
@@ -185,7 +185,7 @@ namespace simCore
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] toOriLla Vector of yaw, pitch, roll that describes current pointing angles for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Range rate in m/sec
@@ -202,7 +202,7 @@ namespace simCore
   * @param[in ] toLla Vector of latitude, longitude, and altitude that describes current position for the 'to' entity
   * @param[in ] toOriLla Vector of yaw, pitch, roll that describes current pointing angles for the 'to' entity
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[in ] fromVel Velocity X/Y/Z for the from entity in m/s in an LLA frame
   * @param[in ] toVel Velocity X/Y/Z for the to entity in m/s in an LLA frame
   * @return Bearing rate in rad/sec
@@ -327,6 +327,17 @@ namespace simCore
   SDKCORE_EXPORT double calculateEarthRadius(const double latitude);
 
   /**
+  * @brief Clamps a point in ECEF space to the surface of the WGS84 ellipsoid.
+  *
+  * Find the point on the WGS84 geodetic surface whose geodetic surface normal
+  * points towards the input ECEF point. In other words, project the input point
+  * up or down onto the surface of the WGS84 ellipsoid.
+  * @param ecef ECEF coordinate in meters
+  * @return Surface-clamped ECEF value in meters, clamped to WGS84 ellipsoid.
+  */
+  SDKCORE_EXPORT Vec3 clampEcefPointToGeodeticSurface(const Vec3& ecef);
+
+  /**
   * @brief Calculates the horizon distance for either geometric, optical or radar
   *
   * Calculates the horizon distance for either geometric, optical or radar.
@@ -349,7 +360,7 @@ namespace simCore
   * @param[in ] fromState Location of the 'from' entity in geodetic (LLA)
   * @param[in ] toState Location of the 'to' entity in geodetic (LLA)
   * @param[in ] model Earth model to perform the calculation in
-  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set
+  * @param[in ] coordConv If model is flat earth, then this must point to an initialized CoordinateConverter structure with a reference origin set. Optional for WGS84 models
   * @param[out] fromPos Converted location in specified frame
   * @param[out] toPos Converted location in specified frame
   * @return true on success, false on failure.
@@ -480,47 +491,47 @@ namespace simCore
   SDKCORE_EXPORT void calculateGeodeticMidPoint(const Vec3& llaBgnPos, const Vec3& llaEndPos, bool highResolution, simCore::Vec3& midpoint, bool* wrapsDateline=NULL);
 
   /**
-  * @brief Calculates flight path angles from an ENU geodetic velocity vector
-  *
-  * Calculates flight path angles from an ENU geodetic velocity vector
-  * @param[in ] velVec East, North, and Up based geodetic velocity vector
-  * @param[out] fpa Calculated flight path angles (heading, pitch, roll=0)
-  */
+   * @brief Calculates flight path angles from an ENU geodetic velocity vector
+   *
+   * Calculates flight path angles from an ENU geodetic velocity vector
+   * @param[in ] velVec East, North, and Up based geodetic velocity vector
+   * @param[out] fpa Calculated flight path angles (heading, pitch, roll=0)
+   */
   SDKCORE_EXPORT void calculateFlightPathAngles(const Vec3 &velVec, Vec3 &fpa);
 
   /**
-  * @brief Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
-  *
-  * Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
-  * @param[in ] speed Speed (m/sec)
-  * @param[in ] heading (rad) heading (relative to North)
-  * @param[in ] pitch (rad) pitch (relative to Horizon)
-  * @param[out] velVec Calculated East, North, and Up based geodetic velocity vector
-  */
+   * @brief Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
+   *
+   * Calculates an ENU based geodetic velocity vector from speed, heading and pitch (flight path angles)
+   * @param[in ] speed Speed (m/sec)
+   * @param[in ] heading (rad) heading (relative to North)
+   * @param[in ] pitch (rad) pitch (relative to Horizon)
+   * @param[out] velVec Calculated East, North, and Up based geodetic velocity vector
+   */
   SDKCORE_EXPORT void calculateVelocity(const double speed, const double heading, const double pitch, Vec3 &velVec);
 
- /**
- * Calculates the angle of attack, side slip, and total angle of attack from a ENU
- * geodetic velocity vector and a set of geodetic Euler angles (yaw, pitch, roll)
- * @param enuVel East, North, and Up geodetic velocity vector for the vehicle
- * @param ypr Yaw, pitch, roll based geodetic Euler angles in radians
- * @param useRoll Boolean, true: aerodynamic version, false: rocketry version (Air Ballistic Axis) that does not use roll
- * @param aoa Vertical angle of attack for vehicle in radians; measure of difference between velocity and pointing direction
- * @param ss Side slip angle for vehicle in radians; measure of difference between velocity and pointing direction
- * @param totalAoA Total angle of attack for vehicle in radians
- */
+  /**
+   * Calculates the angle of attack, side slip, and total angle of attack from a ENU
+   * geodetic velocity vector and a set of geodetic Euler angles (yaw, pitch, roll)
+   * @param enuVel East, North, and Up geodetic velocity vector for the vehicle
+   * @param ypr Yaw, pitch, roll based geodetic Euler angles in radians
+   * @param useRoll Boolean, true: aerodynamic version, false: rocketry version (Air Ballistic Axis) that does not use roll
+   * @param aoa Vertical angle of attack for vehicle in radians; measure of difference between velocity and pointing direction
+   * @param ss Side slip angle for vehicle in radians; measure of difference between velocity and pointing direction
+   * @param totalAoA Total angle of attack for vehicle in radians
+   */
   SDKCORE_EXPORT void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoA);
 
 
- /**
- * Returns the distance between a line segment and a point. The calculations are done in COORD_SYS_XEAST so the results are only approximate.
- * The code is taken from SIMDIS 9 code SimVisBeam::GetClosestPoint and generalized for WGS-84.
- * @param startLla Start point of the line segment in (rad, rad, m) in WGS-84
- * @param endLla End point of the line segment in (rad, rad, m) in WGS-84
- * @param toLla The point for the distance calculation in (rad, rad, m) in WGS-84
- * @param closestLla The point on the line segment closest to the toLla point
- * @return The distance, in meters, between a line segment and the toLla point.
- */
+  /**
+   * Returns the distance between a line segment and a point. The calculations are done in COORD_SYS_XEAST so the results are only approximate.
+   * The code is taken from SIMDIS 9 code SimVisBeam::GetClosestPoint and generalized for WGS-84.
+   * @param startLla Start point of the line segment in (rad, rad, m) in WGS-84
+   * @param endLla End point of the line segment in (rad, rad, m) in WGS-84
+   * @param toLla The point for the distance calculation in (rad, rad, m) in WGS-84
+   * @param closestLla The point on the line segment closest to the toLla point
+   * @return The distance, in meters, between a line segment and the toLla point.
+   */
   SDKCORE_EXPORT double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLla, const simCore::Vec3& toLla, simCore::Vec3& closestLla);
 
   /**
@@ -536,7 +547,7 @@ namespace simCore
    * @param minRangeM Gate minimum range in meters
    * @param maxRangeM Gate maximum range in meters
    * @param earthModel Earth model for calculations
-   * @param cc If coordinateSystem is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set.
+   * @param cc If coordinateSystem is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set. Optional for WGS84 models
    * @return true if given lla position does fall within gate, false otherwise
    */
   SDKCORE_EXPORT bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& positionLLA,
@@ -559,7 +570,7 @@ namespace simCore
    * @param laserElRad Laser elevation in radians from laserHostLLA
    * @param laserRngM Laser range in meters from laserHostLLA
    * @param earthModel Coordinate system to perform the calculation in
-   * @param cc If earthModel is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set
+   * @param cc If earthModel is flat earth or tangent plane, then this must point to an initialized CoordConvert structure with a reference origin set. Optional for WGS84 models
    * @param numPoints number of points to test for presence within the gate
    * @return true if given lla position does fall within gate, false otherwise
    */

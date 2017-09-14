@@ -19,7 +19,7 @@
  * disclose, or release this software.
  *
  */
-#include "simQt/QtConversion.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/TimeButtons.h"
 #include "ui_TimeButtons.h"

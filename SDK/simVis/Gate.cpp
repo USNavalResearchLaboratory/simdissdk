@@ -91,6 +91,18 @@ namespace
     sv.elevOffset_deg_ = simCore::RAD2DEG * update->elevation();
     sv.hfov_deg_ = simCore::RAD2DEG * update->width();
     sv.vfov_deg_ = simCore::RAD2DEG * update->height();
+
+    // scale capRes based on fov
+    const float maxFov = simCore::sdkMax(sv.hfov_deg_, sv.vfov_deg_);
+    // 1 tesselation per 5 degrees of gate fov
+    // clamped at the bottom to ensure good visuals for common smaller gate sizes
+    // clamped at the top to prevent perf hit for large gates
+    const float capRes = osg::clampBetween((maxFov / 5.f), 5.f, 24.f);
+    sv.capRes_ = static_cast<unsigned int>(0.5f + capRes);
+
+    // gate walls don't need much tesselation, so reduce processing/memory load
+    sv.wallRes_ = 3;
+
     sv.nearRange_ = update->minrange();
     sv.farRange_ = update->maxrange();
 
@@ -131,6 +143,8 @@ GateCentroid::GateCentroid(const simData::GateUpdate& update)
   for (unsigned int i = 0; i < 6; ++i)
     centroid->setElement(i, i);
   geom->addPrimitiveSet(centroid);
+
+  geom->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 
   osg::Geode* geodeSolid = new osg::Geode();
   geodeSolid->addDrawable(geom);
@@ -318,6 +332,14 @@ LabelContentCallback* GateNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string GateNode::hookText() const
+{
+  if (hasLastPrefs_ && hasLastUpdate_)
+    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string GateNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
@@ -441,8 +463,7 @@ bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     else if (gateChangedToInactive || hostChangedToInactive)
     {
       // avoid applying a null update over and over - only apply the null update on the transition
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -451,7 +472,17 @@ bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
   if (localGrid_ && getNodeMask() != DISPLAY_MASK_NONE)
     localGrid_->notifyHostLocatorChange();
 
+  // Whether updateSlice changed or not, label content may have changed, and for active gates we need to update
+  if (isActive())
+    updateLabel_(lastPrefsApplied_);
+
   return updateApplied;
+}
+
+void GateNode::flush()
+{
+  hasLastUpdate_ = false;
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double GateNode::range() const
@@ -601,6 +632,11 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
     gateMatrixTransform_ = createNode(&lastProps_, activePrefs, activeUpdate);
     gateMatrixTransform_->setNodeMask(DISPLAY_MASK_GATE);
 
+    osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateMatrixTransform_);
+    if (outlineGeometry != NULL)
+    {
+      outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+    }
     if (gateLocatorNode_->getNumChildren() > 0)
       gateLocatorNode_->replaceChild(gateLocatorNode_->getChild(0), gateMatrixTransform_);
     else
@@ -716,17 +752,22 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
   baseLocator_->setLocalOffsets(
     simCore::Vec3(0, 0, 0),
     simCore::Vec3(azimuth, elevation, roll),
-    activeUpdate->time());
+    activeUpdate->time(), false);
 
   // set grid locator offset to gate centroid position
   centroidPositionOffsetLocator_->setLocalOffsets(
     simCore::Vec3(0.0, activeUpdate->centroid(), 0.0),
-    simCore::Vec3());
+    simCore::Vec3(),
+    activeUpdate->time(), false);
 
   // apply the local orientation
   centroidLocatorNode_->getLocator()->setLocalOffsets(
     simCore::Vec3(0, 0, 0),
-    simCore::Vec3(azimuth, elevation, roll));
+    simCore::Vec3(azimuth, elevation, roll),
+    activeUpdate->time(), false);
+
+  // baseLocator_ is parent to centroidPositionOffsetLocator_ and centroidLocatorNode_, its notification will include them
+  baseLocator_->endUpdate();
 
   dirtyBound();
 }
@@ -746,6 +787,12 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
 
   if (newUpdate != NULL)
   {
+    // changing a gate minrange to/from 0.0 requires a rebuild due to simplified shape
+    if (PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, minrange) &&
+      (newUpdate->minrange() == 0.0 || lastUpdateApplied_.minrange() == 0.0))
+      return true;
+
+    // changes to coverage gates require rebuild (instead of in-place updates)
     const simData::GatePrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
     if (activePrefs->gatedrawmode() == simData::GatePrefs::COVERAGE &&
       (PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, azimuth)  ||

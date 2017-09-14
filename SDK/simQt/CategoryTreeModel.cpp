@@ -72,11 +72,11 @@ private:
 //----------------------------------------------------------------------------
 CategoryTreeItem::CategoryTreeItem(const QString& text, const QString& sortText, int categoryIndex, CategoryTreeItem *parent)
   : text_(text),
-    sortText_(sortText),
-    categoryIndex_(categoryIndex),
-    parentItem_(parent),
-    state_(Qt::Checked),
-    numCheckedChildren_(0)
+  sortText_(sortText),
+  categoryIndex_(categoryIndex),
+  parentItem_(parent),
+  state_(Qt::Checked),
+  numCheckedChildren_(0)
 {
 }
 
@@ -209,9 +209,15 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
   QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
   CategoryTreeItem *item = static_cast<CategoryTreeItem*>(index.internalPointer());
 
+  // include items that pass the filter
   if (item->text().contains(filter_, Qt::CaseInsensitive))
     return true;
 
+  // include items whose parent passes the filter, but not if parent is root "All Categories" item
+  if (item->parent() != NULL && item->parent()->text() != ALL_CATEGORIES && item->parent()->text().contains(filter_, Qt::CaseInsensitive))
+    return true;
+
+  // include items with any children that pass the filter
   for (int ii = 0; ii < item->childCount(); ++ii)
   {
     if (item->child(ii)->text().contains(filter_, Qt::CaseInsensitive))
@@ -225,9 +231,9 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
 
 CategoryTreeModel::CategoryTreeModel(QObject *parent, simData::DataStore* dataStore, simData::CategoryFilter* categoryFilter)
   : QAbstractItemModel(parent),
-    rootItem_(NULL),
-    dataStore_(NULL),
-    categoryFilter_(NULL)
+  rootItem_(NULL),
+  dataStore_(NULL),
+  categoryFilter_(NULL)
 {
   // create observers/listeners
   listenerPtr_ = simData::CategoryNameManager::ListenerPtr(new CategoryFilterListener(this));
@@ -524,7 +530,7 @@ void CategoryTreeModel::buildTree_()
   beginResetModel();
   delete rootItem_;
   rootItem_ = new CategoryTreeItem("Root", "Root", 0, NULL);
-  allCategoriesItem_ = new CategoryTreeItem(ALL_CATEGORIES, ALL_CATEGORIES , - 1, rootItem_);
+  allCategoriesItem_ = new CategoryTreeItem(ALL_CATEGORIES, ALL_CATEGORIES, -1, rootItem_);
   rootItem_->appendChild(allCategoriesItem_);
 
   if (categoryFilter_ != NULL)
@@ -570,14 +576,16 @@ QString CategoryTreeModel::valueSortName_(const QString& value) const
   */
 void CategoryTreeModel::setFilter(const simData::CategoryFilter& categoryFilter)
 {
-  bool globalAnyChecked = false;
-
   // set all category values to true
   categoryFilter_->updateAll(true);
   setState_(allCategoriesItem_, Qt::Checked);
 
   // now update all found values to those in the passed in filter
   const simData::CategoryFilter::CategoryCheck& categoryCheck = categoryFilter.getCategoryFilter();
+
+  // if there are no items in the category filter, then assume all are checked, since there is no change
+  bool globalAnyChecked = categoryCheck.empty();
+
   for (simData::CategoryFilter::CategoryCheck::const_iterator iter = categoryCheck.begin(); iter != categoryCheck.end(); ++iter)
   {
     bool localAnyChecked = false;

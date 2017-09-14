@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKUtil)
+if(NOT TARGET simUtil)
     return()
 endif()
 
@@ -9,7 +9,7 @@ set(PROJECT_FILES
 )
 
 add_executable(example_antennapattern ${PROJECT_FILES})
-target_link_libraries(example_antennapattern PRIVATE SIMDIS_SDKVis SIMDIS_SDKUtil)
+target_link_libraries(example_antennapattern PRIVATE simVis simUtil)
 set_target_properties(example_antennapattern PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Antenna Pattern"

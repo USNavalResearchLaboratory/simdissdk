@@ -19,7 +19,7 @@
  * disclose, or release this software.
  *
  */
-
+#include <cassert>
 #include "simCore/String/Format.h"
 #include "simData/DataStoreHelpers.h"
 
@@ -120,7 +120,6 @@ std::string DataStoreHelpers::typeFromId(ObjectId objectId, const simData::DataS
 {
   if (dataStore == NULL)
     return "";
-  simData::DataStore::Transaction transaction;
   return typeToString(dataStore->objectType(objectId));
 }
 
@@ -299,6 +298,235 @@ int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataSto
   }
 
   return 1;
+}
+
+simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, const std::string& tableName, simData::DataStore* dataStore)
+{
+  if ((dataStore->objectType(objectId) == simData::DataStore::NONE) || tableName.empty() || (dataStore == NULL))
+    return NULL;
+
+  simData::DataTableManager& tableManager = dataStore->dataTableManager();
+  simData::DataTable* table = NULL;
+
+  table = tableManager.findTable(objectId, tableName);
+
+  // if failed to find the table, create the table.
+  if (table == NULL)
+  {
+    simData::TableStatus status = tableManager.addDataTable(objectId, tableName, &table);
+    if (status.isError())
+      return NULL;
+  }
+
+  return table;
+}
+
+
+int DataStoreHelpers::getOrCreateColumn(simData::DataTable* table, const std::string& columnName, VariableType storageType, UnitType unitType, simData::DataStore* dataStore, simData::TableColumnId& id)
+{
+  if ((table == NULL) || columnName.empty() || (dataStore == NULL))
+    return 1;
+
+  simData::TableColumn* column = table->column(columnName);
+  if (column)
+  {
+    id = column->columnId();
+    return 0;
+  }
+
+  // if failed to find the column, create the column
+  simData::TableColumn* newColumn = NULL;
+  if (table->addColumn(columnName, storageType, unitType, &newColumn).isError())
+    return 1;
+
+  id = newColumn->columnId();
+  return 0;
+}
+
+namespace {
+
+  /** Helper method to determine if a platform is active */
+  bool isPlatformActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
+  {
+    if (dataStore.dataLimiting())
+    {
+      simData::DataStore::Transaction txn;
+      const simData::CommonPrefs* prefs = dataStore.commonPrefs(objectId, &txn);
+      if (prefs != NULL)
+      {
+        return prefs->datadraw();
+      }
+
+      return true;
+    }
+
+    const simData::PlatformUpdateSlice* slice = dataStore.platformUpdateSlice(objectId);
+    if (slice == NULL)
+      return false;
+
+    // static platforms are always active
+    if (slice->firstTime() == -1.0)
+      return true;
+
+    if ((slice->firstTime() > atTime) || (slice->lastTime() < atTime))
+      return false;
+
+    return true;
+  }
+
+  /** Helper method to determine if a beam is active */
+  bool isBeamActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
+  {
+    // Host must be active
+    simData::DataStore::Transaction propertyTrans;
+    const simData::BeamProperties* beamProperty = dataStore.beamProperties(objectId, &propertyTrans);
+    if (!isPlatformActive(dataStore, beamProperty->hostid(), atTime))
+      return false;
+
+    const simData::BeamCommandSlice* slice = dataStore.beamCommandSlice(objectId);
+    if (slice == NULL)
+      return false;
+
+    // Check the draw state
+    bool rv = false;
+    simData::BeamCommandSlice::Iterator iter = slice->upper_bound(atTime);
+    while (iter.hasPrevious())
+    {
+      const simData::BeamCommand* command = iter.previous();
+      if (command->has_time() && command->updateprefs().commonprefs().has_datadraw())
+      {
+        rv = command->updateprefs().commonprefs().datadraw();
+        break;
+      }
+    }
+
+    // If false can return now
+    if (!rv)
+      return false;
+
+    // Active depends on Beam Type
+    if (beamProperty->type() != simData::BeamProperties::TARGET)
+      return rv;
+
+    // Verify that the target beam has a target and that the target is active
+    iter = slice->upper_bound(atTime);
+    while (iter.hasPrevious())
+    {
+      const simData::BeamCommand* command = iter.previous();
+      if (command->has_time() && command->updateprefs().has_targetid())
+      {
+        // Verify that the target platform exists
+        return isPlatformActive(dataStore, command->updateprefs().targetid(), atTime);
+      }
+    }
+
+    // no previous target command exists
+    return false;
+  }
+
+  /** Helper method to determine if a gate is active */
+  bool isGateActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
+  {
+    // Host must be active
+    simData::DataStore::Transaction propertyTrans;
+    const simData::GateProperties* gateProperty = dataStore.gateProperties(objectId, &propertyTrans);
+    if (!isBeamActive(dataStore, gateProperty->hostid(), atTime))
+      return false;
+
+    const simData::GateCommandSlice* slice = dataStore.gateCommandSlice(objectId);
+    if (slice == NULL)
+      return false;
+
+    // Check the draw state
+    simData::GateCommandSlice::Iterator iter = slice->upper_bound(atTime);
+    while (iter.hasPrevious())
+    {
+      const simData::GateCommand* command = iter.previous();
+      if (command->has_time() && command->updateprefs().commonprefs().has_datadraw())
+      {
+        return command->updateprefs().commonprefs().datadraw();
+      }
+    }
+
+    // no previous data draw command exists
+    return false;
+  }
+
+  /** Helper method to determine if a laser is active */
+  bool isLaserActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
+  {
+    // Host must be active
+    simData::DataStore::Transaction propertyTrans;
+    const simData::LaserProperties* laserProperty = dataStore.laserProperties(objectId, &propertyTrans);
+    if (!isPlatformActive(dataStore, laserProperty->hostid(), atTime))
+      return false;
+
+    const simData::LaserCommandSlice* slice = dataStore.laserCommandSlice(objectId);
+    if (slice == NULL)
+      return false;
+
+    // Check the draw state
+    simData::LaserCommandSlice::Iterator iter = slice->upper_bound(atTime);
+    while (iter.hasPrevious())
+    {
+      const simData::LaserCommand* command = iter.previous();
+      if (command->has_time() && command->updateprefs().commonprefs().has_datadraw())
+      {
+        return command->updateprefs().commonprefs().datadraw();
+      }
+    }
+
+    // no previous data draw command exists
+    return false;
+  }
+
+  /** Helper method to determine if a LOB Group is active */
+  bool isLobGroupActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
+  {
+    // Host must be active
+    simData::DataStore::Transaction propertyTrans;
+    const simData::LobGroupProperties* lobProperty = dataStore.lobGroupProperties(objectId, &propertyTrans);
+    if (!isPlatformActive(dataStore, lobProperty->hostid(), atTime))
+      return false;
+
+    // LOB do NOT have datadraw command; LOBs are always on
+    return true;
+  }
+}
+
+bool DataStoreHelpers::isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
+{
+  const simData::DataStore::ObjectType type = dataStore.objectType(objectId);
+  switch (type)
+  {
+  case simData::DataStore::PLATFORM:
+    return isPlatformActive(dataStore, objectId, atTime);
+
+  case simData::DataStore::BEAM:
+    return isBeamActive(dataStore, objectId, atTime);
+
+  case simData::DataStore::GATE:
+    return isGateActive(dataStore, objectId, atTime);
+
+  case simData::DataStore::LASER:
+    return isLaserActive(dataStore, objectId, atTime);
+
+  case simData::DataStore::LOB_GROUP:
+    return isLobGroupActive(dataStore, objectId, atTime);
+
+  case simData::DataStore::PROJECTOR:
+    return true;
+
+  case simData::DataStore::NONE:
+    // Entity does not exist
+    break;
+
+  default:
+    // The switch statement needs to be updated
+    assert(false);
+    break;
+  }
+  return false;
 }
 
 }

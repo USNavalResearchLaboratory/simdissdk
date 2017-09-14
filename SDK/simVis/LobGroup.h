@@ -60,6 +60,13 @@ public:
                simData::DataStore&                ds);
 
   /**
+    * Installs the global LOB shader program and initializes the default uniform variables
+    * for the shader into the StateSet provided.  This is required in the scene graph somewhere
+    * at or above the LOBs in order for blinking to work.
+    */
+  static void installShaderProgram(osg::StateSet* intoStateSet);
+
+  /**
   * Apply new preferences, replacing any existing prefs
   *
   * @param prefs New preferences to apply
@@ -93,6 +100,9 @@ public: // EntityNode interface
   * @return    actual/alias entity name string
   */
   virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
+
+  /// Returns the hook text based on the label content callback, update and preference
+  virtual std::string hookText() const;
 
   /// Returns the legend text based on the label content callback, update and preference
   virtual std::string legendText() const;
@@ -211,6 +221,8 @@ private: // data
   osg::ref_ptr<LabelContentCallback> contentCallback_;
   /// observer for when the internal draw style data table is added/removed
   simData::DataTableManager::ManagerObserverPtr internalTableObserver_;
+  /// Cache state to optimize call
+  bool lastFlashingState_;
 };
 
 }

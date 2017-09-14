@@ -160,6 +160,7 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
     host_(host),
     contentCallback_(new NullEntityCallback()),
     hasLastUpdate_(false),
+    hasLastPrefs_(false),
     projectorTextureImpl_(new ProjectorTextureImpl())
 {
   init_();
@@ -246,9 +247,17 @@ LabelContentCallback* ProjectorNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+std::string ProjectorNode::hookText() const
+{
+  if (hasLastUpdate_ && hasLastPrefs_)
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
+}
+
 std::string ProjectorNode::legendText() const
 {
-  if (hasLastUpdate_)
+  if (hasLastUpdate_ && hasLastPrefs_)
     return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
 
   return "";
@@ -261,7 +270,7 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     loadRequestedFile_(prefs.rasterfile());
   }
 
-  if (PB_FIELD_CHANGED(&lastPrefs_, &prefs, showfrustum))
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, showfrustum))
   {
     if (prefs.showfrustum())
       graphics_->setNodeMask(DISPLAY_MASK_PROJECTOR);
@@ -269,8 +278,8 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
       graphics_->setNodeMask(DISPLAY_MASK_NONE);
   }
 
-  if ((PB_FIELD_CHANGED(&lastPrefs_.commonprefs(), &prefs.commonprefs(), draw) ||
-    (PB_FIELD_CHANGED(&lastPrefs_.commonprefs(), &prefs.commonprefs(), datadraw))))
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_.commonprefs(), &prefs.commonprefs(), draw) ||
+    (PB_FIELD_CHANGED(&lastPrefs_.commonprefs(), &prefs.commonprefs(), datadraw)))
   {
     if (prefs.commonprefs().draw() && prefs.commonprefs().datadraw() && host_.valid() && host_->isActive())
     {
@@ -284,13 +293,14 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     }
   }
 
-  if (PB_FIELD_CHANGED(&lastPrefs_, &prefs, projectoralpha))
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, projectoralpha))
   {
     projectorAlpha_->set(prefs.projectoralpha());
   }
 
   updateLabel_(prefs);
   lastPrefs_ = prefs;
+  hasLastPrefs_ = true;
 }
 
 bool ProjectorNode::readVideoFile_(const std::string& filename)
@@ -429,7 +439,7 @@ void ProjectorNode::refresh()
 
 bool ProjectorNode::isActive() const
 {
-  return hasLastUpdate_ && lastPrefs_.commonprefs().datadraw();
+  return hasLastUpdate_ && hasLastPrefs_ && lastPrefs_.commonprefs().datadraw();
 }
 
 bool ProjectorNode::isVisible() const
@@ -452,6 +462,9 @@ bool ProjectorNode::getHostId(simData::ObjectId& out_hostId) const
 
 const std::string ProjectorNode::getEntityName(EntityNode::NameType nameType, bool allowBlankAlias) const
 {
+  if (!hasLastPrefs_)
+    return "";
+
   switch (nameType)
   {
   case EntityNode::REAL_NAME:
@@ -511,9 +524,7 @@ bool ProjectorNode::updateFromDataStore(const simData::DataSliceBase* updateSlic
     else if (projectorChangedToInactive || hostChangedToInactive)
     {
       // If host not active or update doesn't exist, turn projector off
-      projectorActive_->set(false);
-      setNodeMask(DISPLAY_MASK_NONE);
-      hasLastUpdate_ = false;
+      flush();
       updateApplied = true;
     }
   }
@@ -522,6 +533,13 @@ bool ProjectorNode::updateFromDataStore(const simData::DataSliceBase* updateSlic
   updateLabel_(lastPrefs_);
 
   return updateApplied;
+}
+
+void ProjectorNode::flush()
+{
+  projectorActive_->set(false);
+  setNodeMask(DISPLAY_MASK_NONE);
+  hasLastUpdate_ = false;
 }
 
 double ProjectorNode::range() const

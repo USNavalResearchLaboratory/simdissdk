@@ -22,6 +22,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/View.h"
 #include "simUtil/RecenterEyeOnArea.h"
 
@@ -67,7 +68,7 @@ void RecenterEyeOnArea::setRangeClamp(double clampAbove, double clampBelow)
   maxEyeDistance_ = clampBelow;
 }
 
-int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon, double rightLon, double transitionSec)
+int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon, double rightLon, double transitionSec, double distanceFactor)
 {
   // Put the observer_ptr into a ref_ptr so the memory doesn't go away
   osg::ref_ptr<simVis::View> view;
@@ -77,7 +78,7 @@ int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon
   // Get the center point of the positions
   simCore::Vec3 centerLla;
   simCore::calculateGeodeticMidPoint(simCore::Vec3(lowerLat, leftLon, 0.0), simCore::Vec3(upperLat, rightLon, 0.0), false, centerLla);
-  const double distance = distance_(lowerLat, upperLat, leftLon, rightLon);
+  const double distance = distance_(lowerLat, upperLat, leftLon, rightLon) * distanceFactor;
 
   // update the eye position's focal point
   simVis::Viewpoint eyePos = view->getViewpoint();
@@ -111,14 +112,25 @@ int RecenterEyeOnArea::centerOn(const osgEarth::GeoExtent& extent, double transi
   if (!view_.valid() || extent.isInvalid())
     return 1;
 
-  // Create halfway point along the longitude and send that to centerOn()
-  // as left and right longitudes to account for date line crosses
-  double halfway = 0.5 * (extent.west() + extent.east());
-  if (extent.east() - extent.west() > 180.0)
-    halfway += 180.0;
-
+#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
+  // osgEarth 1.6 and earlier gave faulty results on extents that crossed the dateline.
+  // West is ALWAYS < east. So if it's greater than 180, we're presuming
+  // that it's wrapping around the short side across dateline
+  // Example Input: Blue Marble; W=-180 E=+180, width=360; Need: centerLon=0
+  // Example Input: RRAT Dateline; W=-176 E=+178, width=354; Need: centerLon=-179
+  // This code accounts for that problem.
+  const double extentWidth = extent.width();
+  double west = extent.west();
+  double east = extent.east();
+  // Presume that any extent between 180 and 360 is crossing dateline
+  if (extentWidth < 360.0 && extentWidth > 180.0)
+    std::swap(east, west);
   return centerOn(simCore::DEG2RAD * extent.south(), simCore::DEG2RAD * extent.north(),
-    simCore::DEG2RAD * halfway, simCore::DEG2RAD * halfway, transitionSec);
+    simCore::DEG2RAD * west, simCore::DEG2RAD * east, transitionSec);
+#else
+  return centerOn(simCore::DEG2RAD * extent.south(), simCore::DEG2RAD * extent.north(),
+    simCore::DEG2RAD * extent.west(), simCore::DEG2RAD * extent.east(), transitionSec);
+#endif
 }
 
 int RecenterEyeOnArea::makeGeoExtent_(const osgEarth::DataExtentList& extents, osgEarth::GeoExtent& geoExtent) const

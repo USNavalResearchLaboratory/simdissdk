@@ -24,6 +24,7 @@
 #include "osg/LineWidth"
 #include "osg/MatrixTransform"
 #include "osg/PolygonStipple"
+#include "osg/Depth"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -47,7 +48,13 @@ RCSNode::RCSNode() :
   scale_(1.0f),
   hasLastPrefs_(false)
 {
-  //nop
+  auto* stateSet = getOrCreateStateSet();
+  // Note that traversal order is needed to avoid issues with color blending when 2D and 3D both active
+  stateSet->setRenderBinDetails(simVis::BIN_RCS, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
+  // Turn off depth reads
+  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS));
+  // Lighting never affects RCS
+  simVis::setLighting(stateSet, osg::StateAttribute::OFF);
 }
 
 RCSNode::~RCSNode()

@@ -339,6 +339,36 @@ private:
   QStringList value_;
 };
 
+/** Bound Setting implementation for QMap<QString, QVariant>, using QVariant::toMap(). */
+class SDKQT_EXPORT BoundVariantMapSetting : public BoundSetting
+{
+  Q_OBJECT;
+public:
+  /** Instantiates a new bound variant map setting with metadata */
+  BoundVariantMapSetting(QObject* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData);
+  /** Instantiates a new bound variant map setting without metadata */
+  BoundVariantMapSetting(QObject* parent, simQt::Settings& settings, const QString& variableName);
+
+  /** Current data value */
+  QMap<QString, QVariant> value() const;
+
+public slots:
+  /** Change the data value in Settings (and the cache); might emit valueChanged() */
+  void setValue(const QMap<QString, QVariant>& v);
+  /** Add entries in 'v' to current value.  Does not remove values. */
+  void mergeValues(const QMap<QString, QVariant>& v);
+
+signals:
+  /** Emitted when the settings value changes. */
+  void valueChanged(const QMap<QString, QVariant>& value);
+
+private:
+  /** Called by observer to update the value */
+  virtual void updateValue_(const QVariant& newValue);
+  /** Cache of the settings value */
+  QMap<QString, QVariant> value_;
+};
+
 }
 
 #endif /* SIMQT_BOUNDSETTINGS_H */

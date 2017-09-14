@@ -100,13 +100,18 @@ static const std::string SIMDIS10_VIEW_FILE_PATTERNS =
   "SIMDIS View Files (*.svml)\n"
   "All Files (*)";
 
-/** Dialog-oriented user-friendly list of SIMDIS Bookmark format patterns */
+/** Dialog-oriented user-friendly list of supported SIMDIS Bookmark format patterns to open*/
 static const std::string SIMDIS_BOOKMARK_FILE_PATTERNS =
-  "All Supported Bookmark Formats (*.toc,*.log,*.htm,*.html, *.csv)\n"
+  "All Supported Bookmark Formats (*.toc, *.log, *.htm, *.html, *.csv)\n"
   "Media Player Bookmarks (*.toc)\n"
   "SCORE Event Log (*.log)\n"
   "NetMeeting Chat Log (*.htm,*.html)\n"
   "Chat Surfer Log (*.csv)\n"
+  "All Files (*)";
+
+/** Dialog-oriented user-friendly list of supported SIMDIS Bookmark format patterns to save/export */
+static const std::string SIMDIS_BOOKMARK_SAVE_FILE_PATTERNS =
+  "Media Player Bookmarks (*.toc)\n"
   "All Files (*)";
 
 /** Dialog-oriented user-friendly list of SIMDIS 9 Terrain Configuration File patterns */
@@ -182,20 +187,18 @@ static const std::string ANTENNA_FILE_PATTERNS =
   "All Files (*)\n";
 
 /** SIMDIS GOG Overlay Format patterns, separated by commas */
-static const std::string ALL_GOG_FILE_PATTERNS = "*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.000,*.ddf,*.kml,*.kmz,*.lgf";
+static const std::string ALL_GOG_FILE_PATTERNS = "*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf,*.asc";
 /** Dialog-oriented user-friendly list of SIMDIS GOG Overlay Format files */
 static const std::string GOG_FILE_PATTERNS =
-  "All Supported GOG Formats (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.000,*.ddf,*.kml,*.kmz,*.lgf)\n"
+  "All Supported GOG Formats (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf,*.asc)\n"
   "GOG Files (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz)\n"
   "Misc GOG (*.gog)\nxygeo (*.ll,*.lla)\nxygeo and crossplot (*.xy,*.xyz)\n"
   "Relative xygeo and crossplot (*.rxy,*.rxyz)\n"
-  "Tsunami Overlays (*.ovr)\n"
   "ESRI Shape Files (*.shp)\n"
-  "ENC Files (*.000)\n"
-  "SDTS Files (*.ddf)\n"
   "KML Files (*.kml,*.kmz)\n"
   "LATR GEO Files (*.lgf)\n"
   "GCCS OVLY Files (*.ovl)\n"
+  "JDS ASC Files (*.asc)\n"
   "All Files (*)";
 
 /** Dialog-oriented user-friendly list of SIMDIS absolute GOG Overlay Format files */

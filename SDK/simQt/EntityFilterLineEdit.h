@@ -32,19 +32,28 @@ namespace simQt {
 /// Adds a right mouse click menu to a QLineEdit for selecting filtering options.
 class SDKQT_EXPORT EntityFilterLineEdit : public QLineEdit
 {
-  Q_OBJECT
+  Q_OBJECT;
+  Q_PROPERTY(bool isValid READ isValid NOTIFY isValidChanged);
 
 public:
   /// Constructor takes the parent widget
-  EntityFilterLineEdit(QWidget  *parent = 0);
+  explicit EntityFilterLineEdit(QWidget *parent = 0);
   virtual ~EntityFilterLineEdit();
 
   /// Set options
   void configure(const QString& filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
 
+  /// Regex-only will set to case insensitive and regex, hiding other options.  Turning off will unhide them.
+  void setRegexOnly(bool regexOnly);
+
+  /// Flags whether the current text is valid
+  bool isValid() const;
+
 signals:
   /// Let the outside know that a filter option has changed.
   void changed(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
+  /// Indicates that the validity changed
+  void isValidChanged(bool isValid);
 
 public slots:
   /// The text for the filtering was changed by the user
@@ -58,9 +67,13 @@ public slots:
   /// The user wants a fixed string filter
   void fixedString();
 
+private slots:
+  /// A setting has changed; revalidate the text display
+  void revalidate_();
+
 protected:
   /// Displays the right mouse click menu
-  virtual void contextMenuEvent(QContextMenuEvent * event);
+  virtual void contextMenuEvent(QContextMenuEvent* event);
 
   Qt::CaseSensitivity caseSensitive_; ///< current case sensitivity
   QRegExp::PatternSyntax expression_; ///< how the pattern is interpreted
@@ -71,6 +84,12 @@ protected:
   QAction* fixedAction_; ///< connect GUI to data
   QList<QAction*> standardClickMenu_; ///< standard right-click options
   QMenu* rightMouseClickMenu_; ///< our context menu
+
+  /// Flags that we're in regex-only mode, hiding other options
+  bool regexOnly_;
+
+  /// Flags whether the currently displayed regex is valid
+  bool valid_;
 };
 
 }

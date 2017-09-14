@@ -36,6 +36,7 @@
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/RFProp/RFPropagationManager.h"
+#include "simVis/RadialLOSNode.h"
 
 
 namespace simCore { class Clock; }
@@ -417,7 +418,7 @@ namespace simVis
     /**
      * Sets map information
      */
-    void setMapNode(const osgEarth::MapNode* map);
+    void setMapNode(osgEarth::MapNode* map);
 
   protected:
     /// osg::Referenced-derived
@@ -425,6 +426,7 @@ namespace simVis
 
   protected:
     class SurfaceClamping;
+    class ScenarioLosCreator;
 
     /** Generates locators for entities */
     LocatorFactory*              locatorFactory_;
@@ -442,7 +444,7 @@ namespace simVis
     std::map<std::string, osg::observer_ptr<osg::Group> > customAttachPoints_;
 
     /** Observer to the current map */
-    osg::observer_ptr<const osgEarth::MapNode> mapNode_;
+    osg::observer_ptr<osgEarth::MapNode> mapNode_;
     /** Responsible for managing Projector entities */
     ProjectorManager*         projectorManager_;
     /** Responsible for linking a data store to this instance */
@@ -451,6 +453,8 @@ namespace simVis
     osg::ref_ptr<LabelContentManager> labelContentManager_;
     /** Manages RF Propagation data */
     simRF::RFPropagationManagerPtr rfManager_;
+    /** Responsible for creation of LOS nodes as needed by platforms */
+    ScenarioLosCreator* losCreator_;
 
     /** Association between the EntityNode, the data store, and the entity's update slice */
     class EntityRecord : public osgEarth::Util::GeoObject

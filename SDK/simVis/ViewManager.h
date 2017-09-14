@@ -204,6 +204,32 @@ private:
   bool firstFrame_;
 };
 
+/**
+ * Given a GUI Event Handler, will add the event handler to every new inset and
+ * remove it from every removed inset, when the callback is activated
+ */
+class SDKVIS_EXPORT AddEventHandlerToViews : public simVis::ViewManager::Callback
+{
+public:
+  /** Constructor; accepts a GUI Event Handler to add to views in the View Manager. */
+  explicit AddEventHandlerToViews(osgGA::GUIEventHandler* guiEventHandler);
+
+  /** Adds the handler to existing views in the view manager. */
+  void addToViews(const simVis::ViewManager& viewManager);
+  /** Removes the handler from all views in the view manager. */
+  void removeFromViews(const simVis::ViewManager& viewManager);
+
+  /** Add or remove the event handler (override from Callback) */
+  virtual void operator()(simVis::View* inset, const EventType& e);
+
+protected:
+  /** Derived from osg::Referenced */
+  virtual ~AddEventHandlerToViews();
+
+private:
+  osg::ref_ptr<osgGA::GUIEventHandler> guiEventHandler_;
+};
+
 }
 
 #endif /* SIMVIS_VIEW_MANAGER_H */

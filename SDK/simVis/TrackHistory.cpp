@@ -45,7 +45,7 @@ namespace simVis
 namespace
 {
   static const std::string SIMVIS_TRACK_FLATMODE = "simvis_track_flatmode";
-  static const std::string SIMVIS_TRACK_FALTRADIUS = "simvis_track_flatradius";
+  static const std::string SIMVIS_TRACK_FLATRADIUS = "simvis_track_flatradius";
   static const std::string SIMVIS_TRACK_ENABLE = "simvis_track_enable";
   static const std::string SIMVIS_TRACK_OVERRIDE_COLOR = "simvis_track_overridecolor";
 }
@@ -180,6 +180,10 @@ void TrackHistoryNode::checkColorHistoryChange_(const simData::DataTable& table,
     return;
 
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase_);
+
+  // there might be no current data after a flush, if a color command is added before any new update data
+  if (updateSlice == NULL || updateSlice->current() == NULL)
+    return;
 
   // if this row is not in the span of our slice, don't bother to reset
   if (row.time() > updateSlice->current()->time() || row.time() < updateSlice->firstTime())
@@ -475,7 +479,7 @@ void TrackHistoryNode::installShaderProgram(osg::StateSet* intoStateSet)
   simVis::Shaders package;
   package.load(vp, package.trackHistoryVertex());
   intoStateSet->getOrCreateUniform(SIMVIS_TRACK_FLATMODE, osg::Uniform::BOOL)->set(false);
-  intoStateSet->getOrCreateUniform(SIMVIS_TRACK_FALTRADIUS, osg::Uniform::FLOAT)->set(6371000.f);
+  intoStateSet->getOrCreateUniform(SIMVIS_TRACK_FLATRADIUS, osg::Uniform::FLOAT)->set(6371000.f);
 
   package.load(vp, package.trackHistoryFragment());
   intoStateSet->getOrCreateUniform(SIMVIS_TRACK_ENABLE, osg::Uniform::BOOL)->set(false);
@@ -510,9 +514,10 @@ void TrackHistoryNode::setOverrideColor_(const osgEarth::Symbology::Color& color
       return;  // Does not exist and not needed so return;
 
     osg::StateSet* stateset = this->getOrCreateStateSet();
-    overrideColorUniform_ = stateset->getOrCreateUniform(SIMVIS_TRACK_OVERRIDE_COLOR, osg::Uniform::FLOAT_VEC4);
-    stateset->getOrCreateUniform(SIMVIS_TRACK_ENABLE, osg::Uniform::BOOL)->set(true);
+    enableOverrideColorUniform_ = stateset->getOrCreateUniform(SIMVIS_TRACK_ENABLE, osg::Uniform::BOOL);
+    enableOverrideColorUniform_->set(true);
     lastOverrideColor_ = color;
+    overrideColorUniform_ = stateset->getOrCreateUniform(SIMVIS_TRACK_OVERRIDE_COLOR, osg::Uniform::FLOAT_VEC4);
     overrideColorUniform_->set(color);
     return;
   }
@@ -521,6 +526,7 @@ void TrackHistoryNode::setOverrideColor_(const osgEarth::Symbology::Color& color
   {
     lastOverrideColor_ = color;
     overrideColorUniform_->set(color);
+    enableOverrideColorUniform_->set(true);
   }
 
 }
@@ -591,14 +597,16 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
   }
   else if (prefs.multitrackcolor())
   {
-    // Make the override color transparent so the multi-color are visible.
-    const static osgEarth::Symbology::Color blank(0, 0, 0, 0);
-    setOverrideColor_(blank);
+    // Set lastOverrideColor so re-enabling an override will trigger the logic at the end of setOverrideColor_
+    lastOverrideColor_ = (0, 0, 0, 0);
+    // Can only disable the override after one has been created
+    if (enableOverrideColorUniform_.valid())
+      enableOverrideColorUniform_->set(false);
   }
   else
   {
-    // If Multiple Color is off, use Platform Color is off, and use Override Color is off SIMDIS displays a white line
-    setOverrideColor_(osgEarth::Symbology::Color::White);
+    // If Multiple Color is off, and both overrides are off, SIMDIS displays a line matching the default color
+    setOverrideColor_(defaultColor_);
   }
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, linewidth))

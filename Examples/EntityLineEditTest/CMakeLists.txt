@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKData OR NOT TARGET SIMDIS_SDKQt)
+if(NOT TARGET simData OR NOT TARGET simQt)
     return()
 endif()
 
@@ -19,7 +19,7 @@ VSI_QT_WRAP_UI(Q_EVT_FORMS
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(example_QtEntityLineEditTest ${APP_SOURCES} ${Q_EVT_MOC} ${Q_EVT_FORMS})
-target_link_libraries(example_QtEntityLineEditTest PRIVATE SIMDIS_SDKQt SIMDIS_SDKData SIMDIS_SDKVis)
+target_link_libraries(example_QtEntityLineEditTest PRIVATE simQt simData simVis)
 target_include_directories(example_QtEntityLineEditTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_QtEntityLineEditTest PROPERTIES
     FOLDER "Examples"

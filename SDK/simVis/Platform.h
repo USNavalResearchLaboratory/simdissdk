@@ -36,13 +36,26 @@
 #include "simVis/LabelContentManager.h"
 #include "simVis/PlatformInertialTransform.h"
 #include "simVis/VelocityVector.h"
+#include "simVis/RadialLOSNode.h"
 
 #include <osg/ref_ptr>
 
 namespace simVis
 {
 
-class PlatformTspiFilterManager;
+  class PlatformTspiFilterManager;
+
+  /**
+  * Interface for an object that will create LOS nodes as they're needed.
+  * Allows all platforms to have the option to show LOS without wasting resources on nodes for ones that don't
+  */
+  class LosCreator
+  {
+  public:
+    virtual ~LosCreator() {}
+    /// Creates a new RadialLOSNode which is owned by the caller
+    virtual RadialLOSNode* newLosNode() = 0;
+  };
 
   /**
   * Node that represents the platform model and all its attachments.
@@ -124,6 +137,9 @@ class PlatformTspiFilterManager;
     /// Returns the pop up text based on the label content callback, update and preference
     std::string popupText() const;
 
+    /// Set the creator for the LOS nodes
+    void setLosCreator(LosCreator* losCreator);
+
   public: // EntityNode interface
 
     /**
@@ -149,6 +165,9 @@ class PlatformTspiFilterManager;
     * @return    actual/alias entity name string
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
+
+    /// Returns the hook text based on the label content callback, update and preference
+    virtual std::string hookText() const;
 
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
@@ -234,6 +253,11 @@ class PlatformTspiFilterManager;
     bool showTrack_(const simData::PlatformPrefs& prefs) const;
 
     /**
+    * Mark the platform as not valid; receipt of a valid datastore update will make the platform valid again
+    */
+    void setInvalid_();
+
+    /**
     * Indicates if the track history should show based on the expireMode flag.
     * @param prefs current pref values to determine the expireMode
     * @return true if expireMode is set to true and scenario time is > last platform history point
@@ -249,6 +273,8 @@ class PlatformTspiFilterManager;
     void updateOrRemoveVelocityVector_(bool prefsDraw, const simData::PlatformPrefs& prefs);
     void updateOrRemoveEphemerisVector_(bool prefsDraw, const simData::PlatformPrefs& prefs);
     void updateOrRemoveCircleHighlight_(bool prefsDraw, const simData::PlatformPrefs& prefs);
+    void updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs);
+    void updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType , const simData::PlatformPrefs& prefs);
 
     const simData::DataStore&       ds_;
     PlatformTspiFilterManager&      platformTspiFilterManager_;
@@ -273,6 +299,9 @@ class PlatformTspiFilterManager;
     osg::ref_ptr<EphemerisVector>   ephemerisVector_;
     osg::ref_ptr<PlatformModelNode> model_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
+    LosCreator*                     losCreator_; // Not owned
+    RadialLOSNode*                  opticalLosNode_;
+    RadialLOSNode*                  radioLosNode_;
     osg::BoundingBox                unscaledModelBounds_;
     osg::BoundingBox                scaledModelBounds_;
     double                          frontOffset_;

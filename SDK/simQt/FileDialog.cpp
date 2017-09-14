@@ -27,12 +27,22 @@
 namespace simQt
 {
 
-// On Linux, avoid the native dialog due to event loop problems with FOX in SIMDIS 10
-#ifndef WIN32
-static const QFileDialog::Option BASE_OPTIONS = QFileDialog::DontUseNativeDialog;
-#else
-static const QFileDialog::Option BASE_OPTIONS = static_cast<QFileDialog::Option>(0x0);
+namespace {
+
+/** Retrieves the default options for every file dialog.  Used to override native dialogs. */
+QFileDialog::Options getFileDialogDefaultOptions()
+{
+#ifdef WIN32
+  // If not defined, or if it's defined as "1", then use the native dialog.  There are some applications,
+  // e.g. ones that use certain types of COM from SIMDIS Plug-ins, that may need to force Native Dialogs off.
+  if (!getenv("SDK_NATIVE_FILE_DIALOG") || (strcmp(getenv("SDK_NATIVE_FILE_DIALOG"), "1") == 0))
+    return 0;
 #endif
+  // On Linux, always avoid the native dialog due to event loop problems with FOX in SIMDIS 10
+  return QFileDialog::DontUseNativeDialog;
+}
+} // anon namespace
+
 
 QString FileDialog::getRegistryDir(const QString& registryDir)
 {
@@ -71,7 +81,7 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
 {
   QString directory = FileDialog::getRegistryDir(registryDir);
   QString file = QFileDialog::getSaveFileName(owner, caption, directory,
-    FileDialog::foxToQtFilter(filter), selectedFilter, options | BASE_OPTIONS);
+    FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
   if (!file.isEmpty() && !registryDir.isEmpty())
   {
     FileDialog::setRegistryDir(registryDir, file, true);
@@ -84,7 +94,7 @@ QString FileDialog::loadFile(QWidget* owner, const QString& caption, const QStri
 {
   QString directory = FileDialog::getRegistryDir(registryDir);
   QString file = QFileDialog::getOpenFileName(owner, caption, directory,
-    FileDialog::foxToQtFilter(filter), selectedFilter, options | BASE_OPTIONS);
+    FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
   if (!file.isEmpty() && !registryDir.isEmpty())
   {
     FileDialog::setRegistryDir(registryDir, file, true);
@@ -97,7 +107,7 @@ QStringList FileDialog::loadFiles(QWidget* owner, const QString& caption, const 
 {
   QString directory = FileDialog::getRegistryDir(registryDir);
   QStringList files = QFileDialog::getOpenFileNames(owner, caption, directory,
-    FileDialog::foxToQtFilter(filter), selectedFilter, options | BASE_OPTIONS);
+    FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
   if (!files.isEmpty() && !registryDir.isEmpty())
   {
     FileDialog::setRegistryDir(registryDir, files.first(), true);
@@ -109,7 +119,7 @@ QString FileDialog::findDirectory(QWidget* owner, const QString& caption, const 
    QFileDialog::Options options)
 {
   QString priorDirectory = FileDialog::getRegistryDir(registryDir);
-  QString directory = QFileDialog::getExistingDirectory(owner, caption, priorDirectory, options | BASE_OPTIONS);
+  QString directory = QFileDialog::getExistingDirectory(owner, caption, priorDirectory, options | getFileDialogDefaultOptions());
   if (!directory.isEmpty() && !registryDir.isEmpty())
   {
     FileDialog::setRegistryDir(registryDir, directory, true);

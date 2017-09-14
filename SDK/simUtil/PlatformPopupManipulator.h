@@ -39,10 +39,21 @@ class SDKUTIL_EXPORT PlatformPopupManipulator : public MouseManipulatorAdapter
 {
 public:
   /**
-  * Constructs a new simVis::PopupHandler and registers an event handler with the supplied view
-  * @param scene Scene manager under which this object operates
-  * @param view where the popup should be displayed
-  */
+   * Constructs a new simVis::PopupHandler and registers an event handler with the supplied view.
+   * Uses a render-to-texture picker to determine the popup contents to show.
+   * @param picker Render to texture picker class for platforms under mouse.
+   * @param view Where the popup should be displayed
+   */
+  PlatformPopupManipulator(simVis::Picker& picker, simVis::View& view);
+
+  /**
+   * Constructs a new simVis::PopupHandler and registers an event handler with the supplied view.
+   * Uses in-memory intersection code to determine popup contents to show, which is suboptimal in
+   * large scenes or in scenes with lots of shader activity.  This method may be removed in a
+   * future version of the SIMDIS SDK.
+   * @param scene Scene manager under which this object operates, used for intersection operation
+   * @param view Where the popup should be displayed
+   */
   PlatformPopupManipulator(simVis::SceneManager& scene, simVis::View& view);
   virtual ~PlatformPopupManipulator();
 

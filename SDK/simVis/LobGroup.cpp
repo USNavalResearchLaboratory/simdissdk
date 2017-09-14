@@ -19,8 +19,8 @@
  * disclose, or release this software.
  *
  */
-#include <osg/LineWidth>
-#include <osgEarth/GeoData>
+#include "osg/LineWidth"
+#include "osgEarth/GeoData"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
@@ -28,12 +28,16 @@
 #include "simVis/AnimatedLine.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Shaders.h"
 #include "simVis/LobGroup.h"
 
 #define LC "[simVis::LobGroup] "
 
 namespace
 {
+
+/// Uniform shader variable for flashing the LOB
+static const std::string SIMVIS_FLASHING_ENABLE = "simvis_flashing_enable";
 
 /** Determines whether the new prefs will require new geometry */
 bool prefsRequiresRebuild(const simData::LobGroupPrefs* a, const simData::LobGroupPrefs* b)
@@ -182,7 +186,8 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props,
     drawStyleTableId_(0),
     lineCache_(new Cache),
     label_(NULL),
-    contentCallback_(new NullEntityCallback())
+    contentCallback_(new NullEntityCallback()),
+    lastFlashingState_(false)
 {
   setName("LobGroup");
   localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
@@ -219,6 +224,14 @@ LobGroupNode::~LobGroupNode()
   lineCache_ = NULL;
 }
 
+void LobGroupNode::installShaderProgram(osg::StateSet* intoStateSet)
+{
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
+  simVis::Shaders package;
+  package.load(vp, package.flashingFragment());
+  intoStateSet->getOrCreateUniform(SIMVIS_FLASHING_ENABLE, osg::Uniform::BOOL)->set(false);
+}
+
 void LobGroupNode::updateLabel_(const simData::LobGroupPrefs& prefs)
 {
   if (hasLastUpdate_)
@@ -253,6 +266,14 @@ void LobGroupNode::setLabelContentCallback(LabelContentCallback* cb)
 LabelContentCallback* LobGroupNode::labelContentCallback() const
 {
   return contentCallback_.get();
+}
+
+std::string LobGroupNode::hookText() const
+{
+  if (hasLastUpdate_ && lastPrefsValid_)
+    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+
+  return "";
 }
 
 std::string LobGroupNode::legendText() const
@@ -510,8 +531,9 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
         lobAngles = simCore::rotateEulerAngle(llaCoord.orientation(), lobAngles);
       }
       // Use position only, otherwise rendering will be adversely affected
-      getLocator()->setCoordinate(platformCoordPosOnly, time);
-      getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles);
+      getLocator()->setCoordinate(platformCoordPosOnly, time, false);
+      getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles, time, false);
+      getLocator()->endUpdate();
     }
   }
 }
@@ -563,38 +585,61 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
   const simData::LobGroupUpdate* current = updateSlice->current();
   const bool lobChangedToActive = (current != NULL && !hasLastUpdate_);
 
-  if (!updateSlice->hasChanged() && !force && !lobChangedToActive)
-    return false;
-
-  if (current)
+  // Do any necessary flashing
+  simData::DataTable* table = NULL;
+  table = ds_.dataTableManager().getTable(drawStyleTableId_);
+  if (table != NULL)
   {
-    // lobGroup gets a pref update immediately after creation; after that, lastPrefsValid_ should always be true
-    assert(lastPrefsValid_);
-    updateCache_(*current, lastPrefs_);
-    lastUpdate_ = *current;
-    hasLastUpdate_ = true;
-
-    // update the visibility
-    const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
-    const bool drawn = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
-    setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
-
-    // if this lobgroup is drawn, tell its local grid to update
-    assert(localGrid_);
-    if (getNodeMask() != DISPLAY_MASK_NONE)
-      localGrid_->notifyHostLocatorChange();
+    bool flashing = false;
+    uint8_t state;
+    if (getColumnValue_(simData::INTERNAL_LOB_FLASH_COLUMN, *table, ds_.updateTime(), state) == 0)
+      flashing = (state != 0);
+    if (flashing != lastFlashingState_)
+    {
+      getOrCreateStateSet()->getOrCreateUniform(SIMVIS_FLASHING_ENABLE, osg::Uniform::BOOL)->set(flashing);
+      lastFlashingState_ = flashing;
+    }
   }
-  else
+
+  const bool applyUpdate = updateSlice->hasChanged() || force || lobChangedToActive;
+  if (applyUpdate)
   {
-    setNodeMask(DISPLAY_MASK_NONE);
-    hasLastUpdate_ = false;
+    if (current)
+    {
+      // lobGroup gets a pref update immediately after creation; after that, lastPrefsValid_ should always be true
+      assert(lastPrefsValid_);
+      updateCache_(*current, lastPrefs_);
+      lastUpdate_ = *current;
+      hasLastUpdate_ = true;
+
+      // update the visibility
+      const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
+      const bool drawn = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
+      setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
+
+      // if this lobgroup is drawn, tell its local grid to update
+      assert(localGrid_);
+      if (getNodeMask() != DISPLAY_MASK_NONE)
+        localGrid_->notifyHostLocatorChange();
+    }
+    else
+    {
+      setNodeMask(DISPLAY_MASK_NONE);
+      hasLastUpdate_ = false;
+    }
   }
-  return true;
+  // Whether updateSlice changed or not, label content may have changed, and for active beams we need to update
+  if (isActive())
+    updateLabel_(lastPrefs_);
+
+  return applyUpdate;
 }
 
 void LobGroupNode::flush()
 {
   lineCache_->clearCache(this);
+  setNodeMask(DISPLAY_MASK_NONE);
+  hasLastUpdate_ = false;
 }
 
 double LobGroupNode::range() const

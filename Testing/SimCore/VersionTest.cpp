@@ -37,8 +37,8 @@ int VersionTest(int argc, char* argv[])
   {
     rv += 1;
     std::cerr << "VersionTest failed.  Compiled against version "
-      << simCore::SDKVERSION_MAJOR << "." << simCore::SDKVERSION_MINOR << "." << simCore::SDKVERSION_REVISION << "." << simCore::SDKVERSION_BUILDNUMBER
-      << " but linked against version " << simCore::versionString() << "." << simCore::buildNumber() << std::endl << std::endl;
+      << simCore::SDKVERSION_MAJOR << "." << simCore::SDKVERSION_MINOR << "." << simCore::SDKVERSION_REVISION << "." << simCore::SDKVERSION_SOVERSION
+      << " but linked against version " << simCore::versionString() << "." << simCore::soVersion() << std::endl << std::endl;
   }
   return rv;
 }

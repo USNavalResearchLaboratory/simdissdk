@@ -56,7 +56,7 @@ static const QRegExp ILLEGAL_REGEXP(QString("[%1]").arg(QRegExp::escape(ILLEGAL_
 PersistentFileLogger::PersistentFileLogger(const QString& prefix, QObject* parent)
   : QObject(parent),
     prefix_(sanitizeFilename_(prefix)),
-    startTime_(QDateTime::currentDateTime()),
+    startTime_(QDateTime::currentDateTime().toUTC()),
     file_(NULL),
     stream_(NULL),
     openAttempted_(false)

@@ -51,10 +51,10 @@ int revisionVersion()
   return SDKVERSION_REVISION;
 }
 
-/** Retrieves the SDKVERSION_BUILDNUMBER in the compiled library */
-int buildNumber()
+/** Retrieves the SDKVERSION_SOVERSION in the compiled library */
+int soVersion()
 {
-  return SDKVERSION_BUILDNUMBER;
+  return SDKVERSION_SOVERSION;
 }
 
 }

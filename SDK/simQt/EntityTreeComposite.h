@@ -32,12 +32,14 @@
 
 class QCloseEvent;
 class QModelIndex;
+class QToolButton;
 class QTreeView;
 class Ui_EntityTreeComposite;
 
 namespace simQt {
 
 class EntityFilter;
+class EntityNameFilter;
 class EntityTreeWidget;
 class AbstractEntityTreeModel;
 
@@ -58,11 +60,15 @@ signals:
   void closedGui();
 };
 
-/** Composite of entity view, filter, and entity model, provides connectivity between all participants */
-/** Buttons can be added to the row with the filter text field to support features like Range Tool with its extra buttons. */
+
+/**
+ * Composite of entity view, filter, and entity model, provides connectivity between all participants.
+ * Buttons can be added to the row with the filter text field to support features like Range Tool with its extra buttons.
+ */
 class SDKQT_EXPORT EntityTreeComposite : public QWidget
 {
-  Q_OBJECT
+  Q_OBJECT;
+  Q_PROPERTY(bool useEntityIcons READ useEntityIcons WRITE setUseEntityIcons);
 
 public:
   /** Constructor needs the parent widget */
@@ -110,6 +116,34 @@ public:
    */
   void getFilterSettings(QMap<QString, QVariant>& settings) const;
 
+  /** Returns true if icons are shown instead of text for the entity tree list Entity Type column */
+  bool useEntityIcons() const;
+  /** Shows icons instead of text for the entity tree list Entity Type column */
+  void setUseEntityIcons(bool showIcons);
+  /** Sets the ability to use the context menu center action, which is disabled by default */
+  void setUseCenterAction(bool use);
+
+  /** Class to store information about an Entity Tab Filter Configuration */
+  class FilterConfiguration
+  {
+  public:
+    FilterConfiguration();
+    virtual ~FilterConfiguration();
+
+    FilterConfiguration(const FilterConfiguration& rhs);
+    FilterConfiguration(const QString& description, const QMap<QString, QVariant>& configuration);
+
+    QString description() const;
+    void setDescription(const QString& description);
+
+    QMap<QString, QVariant> configuration() const;
+    void setConfiguration(const QMap<QString, QVariant>& configuration);
+
+  private:
+    QString description_;                   ///< User-supplied description of the configuration
+    QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
+  };
+
 public slots:
   /** If true expand the tree on double click */
   void setExpandsOnDoubleClick(bool value);
@@ -130,6 +164,8 @@ signals:
   void itemsSelected(QList<uint64_t> ids);
   /** The unique ID of the entity just double clicked */
   void itemDoubleClicked(uint64_t id);
+  /** Fired when the Center On Entity context menu action is triggered */
+  void centerOnEntityRequested(uint64_t id);
   /**
    * A filter setting was changed
    * @param settings Filters get data from the setting using a global unique key
@@ -137,8 +173,6 @@ signals:
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
 
 protected slots:
-  /** Receive notice of a change in the filter */
-  void textFilterChanged_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax syntax);
   /** Receive notice of an inserted row */
   void rowsInserted_(const QModelIndex & parent, int start, int end);
   /** Receive notice to show filters */
@@ -150,18 +184,58 @@ private slots:
   /** Update the label displaying number of items after filter is applied */
   void setNumFilteredItemsLabel_(int numFilteredItems, int numTotalItems);
   /** The user has changed what, if any, entities are selected; use to enable the copy action */
-  void onItemsChanged_(QList<uint64_t> ids);
+  void onItemsChanged_(const QList<uint64_t>& ids);
   /** Called when the user want to copy the selected entity names to the clipboard */
   void copySelection_();
+  /** Called when a user clicks the center action from the context menu */
+  void centerOnSelection_();
+  /** Toggle the tree/list view and update related UI component and action states */
+  void setTreeView_(bool useTreeView);
+
+  /** Loads the filter configuration indicated by the index provided */
+  void loadFilterConfig_(int index);
+  /** Saves over the filter configuration indicated by the index provided */
+  void saveFilterConfig_(int index);
+  /** Clears the filter configuration indicated by the index provided */
+  void clearFilterConfig_(int index);
 
 private:
+  /** Watch for settings changes related to the buttons */
+  class Observer;
+
+  /** Update Collapse All and Expand All action enabled states */
+  void updateActionEnables_();
+  /** Retrieves the QToolButton associated with the filter configuration index */
+  QToolButton* configButtonForIndex_(int index) const;
+  /** Retrieves the QIcon associated with the filter configuration index */
+  QIcon configIconForIndex_(int index) const;
+
   Ui_EntityTreeComposite* composite_;
   EntityTreeWidget* entityTreeWidget_;
   AbstractEntityTreeModel* model_;
+  EntityNameFilter* nameFilter_;
   QDialog* filterDialog_;
   QAction* copyAction_;
+  QAction* centerAction_;
+  QAction* toggleTreeViewAction_;
+  QAction* collapseAllAction_;
+  QAction* expandAllAction_;
+  bool useCenterAction_;
+
+  SettingsPtr settings_;
+  simQt::Settings::ObserverPtr observer_;
+
+  class ButtonActions;
+  std::vector<ButtonActions*> buttonActions_;
 };
 
 }
+
+/** Declarations to make QVariant and QSettings work */
+Q_DECLARE_METATYPE(simQt::EntityTreeComposite::FilterConfiguration);
+QDataStream &operator<<(QDataStream& out, const simQt::EntityTreeComposite::FilterConfiguration& myObj);
+QDataStream &operator>>(QDataStream& in, simQt::EntityTreeComposite::FilterConfiguration& myObj);
+
+
 
 #endif /* SIMQT_ENTITY_TREE_COMPOSITE_H */

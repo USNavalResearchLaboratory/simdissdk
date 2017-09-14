@@ -24,12 +24,15 @@
 
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
+#include "osgEarth/MapNode"
+#include "osgEarth/TerrainEngineNode"
 #include "osgEarthUtil/Sky"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simNotify/Notify.h"
 
+#include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/View.h"
 #include "simVis/NavigationModes.h"
@@ -117,6 +120,29 @@ public:
   virtual const char* className() const { return "BorderNode"; }
 
   simVis::View::BorderProperties props_;
+};
+
+/// Cull callback that sets the N/F planes on an orthographic camera.
+struct SetNearFarCallback : public osg::NodeCallback
+{
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  {
+    traverse(node, nv);
+    osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+    if (cv)
+    {
+      osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
+      double eyeR = eye.length();
+      const double earthR = simCore::EARTH_RADIUS;
+      double eyeAlt = std::max(0.0, eyeR - earthR);
+      const double gsoAlt = 35786000.0; // Geosynchronous orbit altitude (GS)
+      double L, R, B, T, N, F;
+      cv->getCurrentCamera()->getProjectionMatrixAsOrtho(L, R, B, T, N, F);
+      N = eyeAlt - gsoAlt;
+      F = eyeR;
+      cv->getCurrentCamera()->setProjectionMatrixAsOrtho(L, R, B, T, N, F);
+    }
+  }
 };
 
 } // namespace
@@ -494,7 +520,8 @@ View::View()
    lighting_(true),
    fovy_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
-   useOverheadClamping_(true)
+   useOverheadClamping_(true),
+   overheadNearFarCallback_(new SetNearFarCallback)
 {
   // start out displaying all things.
   setDisplayMask(simVis::DISPLAY_MASK_ALL);
@@ -1059,6 +1086,11 @@ double View::fovY() const
 
 void View::setFovY(double fovy)
 {
+  // always update the earth manipulator first
+  simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
+  if (manip)
+    manip->setFovY(fovy);
+
   if (fovy == fovy_)
     return;
   fovy_ = fovy;
@@ -1329,12 +1361,15 @@ void View::enableOverheadMode(bool enableOverhead)
   if (enableOverhead == overheadEnabled_)
     return;
 
+  // need to verify that the earth manipulator has the correct fov, 
+  // which may not be initialized properly if overhead mode is set too soon
+  simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
+  if (manip)
+    manip->setFovY(fovy_);
+
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();
   if (enableOverhead)
   {
-    // Force off the elevation rendering
-    cameraState->setDefine("OE_TERRAIN_RENDER_ELEVATION", osg::StateAttribute::OVERRIDE | osg::StateAttribute::OFF);
-
     // Disable watch mode if needed
     if (isWatchEnabled())
     {
@@ -1345,22 +1380,61 @@ void View::enableOverheadMode(bool enableOverhead)
     vp.heading()->set(0.0, Units::DEGREES);
     vp.pitch()->set(-90.0, Units::DEGREES);
     this->setViewpoint(vp);
+
+    // Set an orthographic camera. We don't call enableOrthographic() here
+    // because we'd rather quitely reset the original mode once overhead mode
+    // is disabled later.
+    if (orthoEnabled_ == false)
+    {
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,6,0)
+      // Only go into orthographic past 1.6 -- before then, the LDB would cause significant issues with platform and GOG display
+      getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
+      getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+      getCamera()->setCullCallback(overheadNearFarCallback_);
+      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
+      if (mapNode)
+        mapNode->getTerrainEngine()->getOrCreateStateSet()->
+          setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
+          osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+#endif
+    }
+
+    // disable elevation rendering on the terrain surface
+    cameraState->setDefine("OE_TERRAIN_RENDER_ELEVATION", osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
   }
   else
+  {
+    // quitely revert to the perspective camera if necessary
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,6,0)
+    if (orthoEnabled_ == false)
+    {
+      const osg::Viewport* vp = getCamera()->getViewport();
+      const double aspectRatio = vp ? vp->aspectRatio() : 1.5;
+      getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+      getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
+      getCamera()->removeCullCallback(overheadNearFarCallback_);
+      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
+      if (mapNode)
+        mapNode->getTerrainEngine()->getOrCreateStateSet()->removeAttribute(osg::StateAttribute::DEPTH);
+    }
+#endif
+
+    // remove elevation rendering override.
     cameraState->removeDefine("OE_TERRAIN_RENDER_ELEVATION");
+  }
 
   // Toggle the overhead clamping features on/off
   OverheadMode::setEnabled(enableOverhead && useOverheadClamping(), this);
 
   overheadEnabled_ = enableOverhead;
 
-  // Turn on side frustum culling for normal mode, and off for overhead mode.
-  // Note that this does come with a performance hit, but solves the problem
+  // Turn on near frustum culling for normal mode, and off for overhead mode.
+  // Note that this does come with a slight performance hit, but solves the problem
   // where entities outside the frustum SHOULD be drawn but are not in overhead.
   if (!overheadEnabled_)
-    getCamera()->setCullingMode(getCamera()->getCullingMode() | osg::CullSettings::VIEW_FRUSTUM_SIDES_CULLING);
+    getCamera()->setCullingMode(getCamera()->getCullingMode() | osg::CullSettings::NEAR_PLANE_CULLING);
   else
-    getCamera()->setCullingMode(getCamera()->getCullingMode() & (~osg::CullSettings::VIEW_FRUSTUM_SIDES_CULLING));
+    getCamera()->setCullingMode(getCamera()->getCullingMode() & (~osg::CullSettings::NEAR_PLANE_CULLING));
 
   // Fix navigation mode
   setNavigationMode(currentMode_);
@@ -1638,7 +1712,7 @@ void View::enableOrthographic(bool whether)
   {
     // Switch to an Ortho camera. The actual values here don't matter because the EarthManipulator
     // will take control of them in order to track the last-known YFOV.
-    getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0);
+    getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
   }
   else
   {

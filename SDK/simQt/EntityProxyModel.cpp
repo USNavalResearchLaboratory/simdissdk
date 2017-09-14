@@ -64,6 +64,32 @@ namespace simQt {
     }
   }
 
+  QVariant EntityProxyModel::data(const QModelIndex & index, int role) const
+  {
+    // Let the model handle the data call as normal
+    QVariant rv = QSortFilterProxyModel::data(index, role);
+
+    QModelIndex sourceIndex = mapToSource(index);
+    QModelIndex showIndex = model_->index(alwaysShow_);
+
+    // If the index in question is the always shown index,
+    // handle the special cases for Qt::FontRole and Qt::ToolTipRole
+    if (sourceIndex != showIndex)
+      return rv;
+
+    if (role == Qt::FontRole)
+    {
+      QFont font;
+      font.setItalic(true);
+      return font;
+    }
+
+    else if (role == Qt::ToolTipRole)
+      return rv.toString().append(tr("\n\nThis entity was manually selected but does not pass current filter settings."));
+
+    return rv;
+  }
+
   void EntityProxyModel::addEntityFilter(EntityFilter* entityFilter)
   {
     connect(entityFilter, SIGNAL(filterUpdated()), this, SLOT(filterUpdated_()));
@@ -96,6 +122,10 @@ namespace simQt {
     if ((alwaysShow_ == id) || (model_ == NULL))
       return;
 
+    // If item passes the filters, no need to set it to always show
+    if (checkFilters_(id))
+      return;
+
     alwaysShow_ = id;
     invalidate();
   }
@@ -117,8 +147,8 @@ namespace simQt {
     if (alwaysShow_ == id)
       return true;
 
-    // check the first column for the regexp filter, and then use the entity id for the other filters
-    return (sourceModel()->data(index0).toString().contains(filterRegExp()) && checkFilters_(id));
+    // check against all filters
+    return checkFilters_(id);
   }
 
   bool EntityProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
@@ -129,6 +159,13 @@ namespace simQt {
       uint64_t leftId = sourceModel()->data(left).toULongLong();
       uint64_t rightId = sourceModel()->data(right).toULongLong();
       return leftId < rightId;
+    }
+    // Sorting based on entity type
+    else if (left.column() == 1)
+    {
+      int leftSortVal = sourceModel()->data(left, SORT_BY_ENTITY_ROLE).toInt();
+      int rightSortVal = sourceModel()->data(right, SORT_BY_ENTITY_ROLE).toInt();
+      return leftSortVal < rightSortVal;
     }
 
     // default sort method used for other columns

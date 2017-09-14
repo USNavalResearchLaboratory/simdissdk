@@ -139,7 +139,14 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
   : AbstractEntityTreeModel(parent),
     rootItem_(NULL),
     treeView_(false),
-    dataStore_(NULL)
+    dataStore_(NULL),
+    platformIcon_(":/simQt/images/platform.png"),
+    beamIcon_(":/simQt/images/beam.png"),
+    gateIcon_(":/simQt/images/gate.png"),
+    laserIcon_(":/simQt/images/laser.png"),
+    lobIcon_(":/simQt/images/lob.png"),
+    projectorIcon_(":/simQt/images/projector.png"),
+    useEntityIcons_(true)
 {
   // create observers/listeners
   listener_ = simData::DataStore::ListenerPtr(new TreeListener(this));
@@ -395,23 +402,54 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
   if (!index.isValid())
     return QVariant();
 
-  if (role == Qt::DisplayRole)
+  EntityTreeItem *item = static_cast<EntityTreeItem*>(index.internalPointer());
+  if (item == NULL)
+    return QVariant();
+
+  switch (role)
   {
-    EntityTreeItem *item = static_cast<EntityTreeItem*>(index.internalPointer());
+  case Qt::DisplayRole:
     if (index.column() == 0)
       return QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(item->id(), dataStore_));
     if (index.column() == 1)
+    {
+      if (useEntityIcons_)
+        return QVariant();
       return QString::fromStdString(simData::DataStoreHelpers::typeFromId(item->id(), dataStore_));
+    }
     if (index.column() == 2)
       return QString("%1").arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
 
+    // Invalid index encountered
     assert(0);
-    return QVariant();
-  }
+    break;
 
-  if (role == Qt::TextColorRole)
-  {
-    EntityTreeItem *item = static_cast<EntityTreeItem*>(index.internalPointer());
+  case Qt::DecorationRole:
+    // Only show icon if icons are enabled
+    if (useEntityIcons_ && index.column() == 1)
+    {
+      switch (dataStore_->objectType(item->id()))
+      {
+      case simData::DataStore::PLATFORM:
+        return platformIcon_;
+      case simData::DataStore::BEAM:
+        return beamIcon_;
+      case simData::DataStore::GATE:
+        return gateIcon_;
+      case simData::DataStore::LASER:
+        return laserIcon_;
+      case simData::DataStore::LOB_GROUP:
+        return lobIcon_;
+      case simData::DataStore::PROJECTOR:
+        return projectorIcon_;
+      case simData::DataStore::NONE:
+      case simData::DataStore::ALL:
+        break;
+      }
+    }
+    break;
+
+  case Qt::TextColorRole:
     if (index.column() == 0)
     {
       // If the user asked for alias, but it is empty use gray color for the displayed name
@@ -420,56 +458,46 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
       if (prefs && prefs->usealias() && prefs->alias().empty())
         return QColor(Qt::gray);
     }
+    break;
 
-    return QVariant();
-  }
-
-  if (role == Qt::ToolTipRole)
-  {
-    EntityTreeItem *item = static_cast<EntityTreeItem*>(index.internalPointer());
+  case Qt::ToolTipRole:
     if (index.column() == 0)
     {
-      QString toolTip;
-      toolTip = "Name: ";
-      toolTip += QString::fromStdString(simData::DataStoreHelpers::nameFromId(item->id(), dataStore_));
-      toolTip += "\n";
-      toolTip += "Alias: ";
-      toolTip += QString::fromStdString(simData::DataStoreHelpers::aliasFromId(item->id(), dataStore_));
-      toolTip += "\n";
-      toolTip += "Type: ";
-      toolTip += QString::fromStdString(simData::DataStoreHelpers::fullTypeFromId(item->id(), dataStore_));
-      toolTip += "\n";
-      toolTip += "Original ID: ";
-      toolTip += QString("%1").arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
+      QString toolTip = tr("Name: %1\nAlias: %2\nType: %3\nOriginal ID: %4")
+        .arg(QString::fromStdString(simData::DataStoreHelpers::nameFromId(item->id(), dataStore_)))
+        .arg(QString::fromStdString(simData::DataStoreHelpers::aliasFromId(item->id(), dataStore_)))
+        .arg(QString::fromStdString(simData::DataStoreHelpers::fullTypeFromId(item->id(), dataStore_)))
+        .arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
 
       simData::DataStore::Transaction transaction;
       const simData::PlatformPrefs* prefs = dataStore_->platformPrefs(item->id(), &transaction);
-      if (prefs != NULL)
-      {
-        toolTip += "\n";
-        toolTip += "Model: ";
-        std::string model = simVis::Registry::instance()->findModelFile(prefs->icon());
-        if (model.empty())
-        {
-          model = "Model \"" + simCore::toNativeSeparators(prefs->icon()) + "\" not found";
-        }
-        else
-        {
-          model = simCore::toNativeSeparators(model);
-        }
-        toolTip += QString::fromStdString(model);
-      }
+      if (prefs == NULL)
+        return toolTip;
 
-      return toolTip;
+      const std::string model = simVis::Registry::instance()->findModelFile(prefs->icon());
+      QString modelTip;
+      if (model.empty())
+        modelTip = tr("Model: Model \"%1\" not found").arg(QString::fromStdString(simCore::toNativeSeparators(prefs->icon())));
+      else
+        modelTip = tr("Model: %1").arg(QString::fromStdString(simCore::toNativeSeparators(model)));
+      return tr("%1\n%2").arg(toolTip, modelTip);
     }
 
     if (index.column() == 1)
       return QString::fromStdString(simData::DataStoreHelpers::fullTypeFromId(item->id(), dataStore_));
 
     if (index.column() == 2)
-      return "Original ID";
+      return tr("Original ID");
 
-    return QVariant();
+    break;
+
+  case SORT_BY_ENTITY_ROLE:
+    if (index.column() == 1)
+    {
+      // Use ints to force entity types into desired order whether they're currently being displayed as icons or text
+      return static_cast<int>(dataStore_->objectType(item->id()));
+    }
+    break;
   }
 
   return QVariant();
@@ -617,6 +645,20 @@ void EntityTreeModel::buildTree_(simData::DataStore::ObjectType type, const simD
 
     itemsById_[newItem->id()] = newItem;
   }
+}
+
+void EntityTreeModel::setUseEntityIcons(bool useIcons)
+{
+  if (useEntityIcons_ != useIcons)
+  {
+    useEntityIcons_ = useIcons;
+    forceRefresh();
+  }
+}
+
+bool EntityTreeModel::useEntityIcons() const
+{
+  return useEntityIcons_;
 }
 
 }

@@ -115,6 +115,8 @@ private:
   typedef std::pair<SubTable*, TableColumn*> TableToColumn;
   /// Maps the table ID to subtable and column pointer
   std::map<TableColumnId, TableToColumn> columns_;
+  /// Maps column name to column pointer
+  std::map<std::string, TableColumn*> columnsByName_;
 
   /// Each table stores columns with monotonically increasing ID values
   TableColumnId nextId_;

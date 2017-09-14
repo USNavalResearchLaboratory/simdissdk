@@ -104,6 +104,7 @@ namespace simVis
     BIN_TERRAIN             = 0,  // terrain renders in bin 0.
     BIN_GOG_FLAT            = 1,  // terrain-clamped GOG
     BIN_ANIMATEDLINE_FLAT   = 1,  // animated lines clamped to terrain
+    BIN_RCS                 = 1,  // RCS is drawn at the same time as GOG
     BIN_POST_TERRAIN        = 10, // marker ending terrain-clamped items
     BIN_RFPROPAGATION       = 10, // rfprop objects need to be up high since depth buffer is turned off
     BIN_AZIM_ELEV_TOOL      = 11, // Platform Azim/Elev tool rings and text drawn under entities
@@ -128,7 +129,6 @@ namespace simVis
     BIN_PROJECTOR           = 15,
     BIN_ROCKETBURN          = 15,
     BIN_CYLINDER            = 15,
-    BIN_RCS                 = 20, // If shown, RCS will draw on other transparent items
     BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
 
     BIN_DEPTH_WRITER        = 98, // Locks in depth values prior to SilverLining / Triton, to prevent stacking problems with transparency

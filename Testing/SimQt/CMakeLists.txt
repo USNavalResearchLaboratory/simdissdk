@@ -1,7 +1,7 @@
 # IMPORTANT: if you are getting linker errors, make sure that 
 # "SIMDIS_SDK_LIB_EXPORT_SHARED" is not in your test's Preprocessor Definitions
 
-if(NOT ENABLE_UNIT_TESTING OR NOT TARGET SIMDIS_SDKQt)
+if(NOT ENABLE_UNIT_TESTING OR NOT TARGET simQt)
     return()
 endif()
 
@@ -17,7 +17,7 @@ create_test_sourcelist(SimQtTestFiles SimQtTests.cpp
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(SimQtTests ${SimQtTestFiles})
-target_link_libraries(SimQtTests PRIVATE SIMDIS_SDKQt SIMDIS_SDKCore)
+target_link_libraries(SimQtTests PRIVATE simQt simCore)
 target_include_directories(SimQtTests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(SimQtTests PROPERTIES
     FOLDER "Unit Tests"

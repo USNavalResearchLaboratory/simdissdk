@@ -33,6 +33,7 @@
 #include "osgDB/Registry"
 #include "osgViewer/ViewerEventHandlers"
 
+#include "osgEarth/Capabilities"
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
 #include "simVis/osgEarthVersion.h"
@@ -133,6 +134,7 @@ namespace
 bool simVis::useRexEngine()
 {
   osgEarth::Registry* reg = osgEarth::Registry::instance();
+
   // first use the default name
   std::string engineName = reg->getDefaultTerrainEngineDriverName();
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
@@ -141,6 +143,15 @@ bool simVis::useRexEngine()
   if (reg->overrideTerrainEngineDriverName().isSet())
     engineName = reg->overrideTerrainEngineDriverName().value();
 #endif
+
+  // If we cannot support REX due to GLSL version, then fall back to MP automatically
+  if (reg->capabilities().getGLSLVersionInt() < 330)
+  {
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+    reg->overrideTerrainEngineDriverName() = "mp";
+#endif
+    return false;
+  }
 
   return simCore::caseCompare(engineName, "rex") == 0;
 }
@@ -528,15 +539,13 @@ bool simVis::convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::
 {
   if (srs && input.coordinateSystem() == simCore::COORD_SYS_ECEF)
   {
-    simCore::CoordinateConverter conv;
-    simCore::Coordinate lla;
-    conv.convertEcefToGeodetic(input, lla);
-
+    simCore::Vec3 llaPos;
+    simCore::CoordinateConverter::convertEcefToGeodeticPos(input.position(), llaPos);
     output.set(
       srs->getGeographicSRS(),
-      osg::RadiansToDegrees(lla.lon()),
-      osg::RadiansToDegrees(lla.lat()),
-      lla.alt(),
+      osg::RadiansToDegrees(llaPos.lon()),
+      osg::RadiansToDegrees(llaPos.lat()),
+      llaPos.alt(),
       osgEarth::ALTMODE_ABSOLUTE);
 
     return true;
@@ -864,7 +873,6 @@ int StatsTimer::stop()
     return 1;
 
   // Save the current tick, and calculate new cumulative delta
-  const osg::Timer* timer = osg::Timer::instance();
   lastStopTickMs_ = osg::Timer::instance()->tick();
   cumulativeMs_ += (lastStopTickMs_ - startTickMs_);
 

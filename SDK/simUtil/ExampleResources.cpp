@@ -22,6 +22,7 @@
 #include <cstdlib>
 
 #include "osgEarth/Registry"
+#include "osgEarth/Capabilities"
 #include "osgEarth/ImageLayer"
 #include "osgEarthDrivers/cache_filesystem/FileSystemCache"
 #include "osgEarthDrivers/mbtiles/MBTilesOptions"
@@ -30,11 +31,13 @@
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
 
 #include "simNotify/Notify.h"
+#include "simCore/Time/ClockImpl.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
+#include "simUtil/NullSkyModel.h"
 #include "simUtil/ExampleResources.h"
 
 
@@ -331,6 +334,7 @@ void simExamples::configureSearchPaths()
       "equipment",
       "imageIcons",
       std::string("imageIcons") + PATH_SEP + "NTDS",
+      std::string("imageIcons") + PATH_SEP + "NTDS" + PATH_SEP + "jreap",
       std::string("imageIcons") + PATH_SEP + "NTDS" + PATH_SEP + "large",
       std::string("imageIcons") + PATH_SEP + "NTDS" + PATH_SEP + "small",
       std::string("imageIcons") + PATH_SEP + "SCORE",
@@ -465,11 +469,17 @@ void simExamples::addDefaultSkyNode(simVis::Viewer* viewer)
 
 void simExamples::addDefaultSkyNode(simVis::SceneManager* sceneMan)
 {
-  osgEarth::Drivers::SimpleSky::SimpleSkyOptions skyOptions;
-  skyOptions.atmosphericLighting() = false;
-  skyOptions.ambient() = 0.5f;
-  skyOptions.exposure() = 2.0f;
-  sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(osgEarth::ConfigOptions(skyOptions), sceneMan->getMapNode()));
+  // Only install simple sky if the osgEarth capabilities permit it
+  if (osgEarth::Registry::capabilities().getGLSLVersionInt() >= 330)
+  {
+    osgEarth::Drivers::SimpleSky::SimpleSkyOptions skyOptions;
+    skyOptions.atmosphericLighting() = false;
+    skyOptions.ambient() = 0.5f;
+    skyOptions.exposure() = 2.0f;
+    sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(osgEarth::ConfigOptions(skyOptions), sceneMan->getMapNode()));
+  }
+  else
+    sceneMan->setSkyNode(new simUtil::NullSkyModel);
 }
 
 ////////////////////////////////////////////////
@@ -518,4 +528,20 @@ void simExamples::SkyNodeTimeUpdater::setHoursOffset(double hours)
 double simExamples::SkyNodeTimeUpdater::hoursOffset() const
 {
   return hoursOffset_;
+}
+
+////////////////////////////////////////////////
+
+simExamples::IdleClockCallback::IdleClockCallback(simCore::ClockImpl& clock, simData::DataStore& dataStore)
+  : clock_(clock),
+    dataStore_(dataStore)
+{
+}
+
+void simExamples::IdleClockCallback::operator()(osg::Node* node, osg::NodeVisitor* nv)
+{
+  clock_.idle();
+  const double nowTime = clock_.currentTime().secondsSinceRefYear(dataStore_.referenceYear());
+  dataStore_.update(nowTime);
+  traverse(node, nv);
 }

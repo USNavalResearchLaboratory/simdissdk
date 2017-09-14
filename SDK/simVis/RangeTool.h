@@ -181,6 +181,7 @@ namespace simVis
         COORD_BEAM_0_AT_BEAM_1_ALT,  ///< The "to" beam at the "from" object altitude, in local coordinates
         COORD_BEAM_1_AT_BEAM_0_ALT,  ///< The "from" beam at the "to" object altitude, in local coordinates
       };
+
       /**
        * Calculates and caches the requested values
        * @param coord the type value to calculate and cache
@@ -217,7 +218,7 @@ namespace simVis
       osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m);
 
       ///@return lla values for the given position relative to the local frame
-      simCore::Vec3 local2lla(const osg::Vec3& local);
+      simCore::Vec3 local2lla(const osg::Vec3d& local);
 
       /**
       * Fills in a entity state based on the given scenario and entity node
@@ -461,6 +462,14 @@ namespace simVis
     class SDKVIS_EXPORT Calculation : public osg::Referenced, public osgEarth::DirtyNotifier
     {
     public:
+      /** Define the type of angle */
+      enum AngleType
+      {
+        AZIMUTH = 0,       ///< azimuth angle of the calculated objects
+        ELEVATION,         ///< elevation angle of the calculated objects
+        COMPOSITE          ///< composite of the azimuth and elevation angles
+      };
+
       /// constructor with the name of the measurement
       Calculation(const std::string& name);
 
@@ -505,6 +514,11 @@ namespace simVis
       /// const version
       const TextOptions& textOptions() const { return textOptions_; }
 
+      /// set the angle type
+      void setAngleType(AngleType type);
+      /// get the angle type
+      AngleType angleType() const { return angleType_; }
+
       /// set the most recently calculated value
       void setLastValue(double value);
 
@@ -512,7 +526,7 @@ namespace simVis
       * Returns the last calculated value.
       * @return Calculated value
       */
-      double lastValue() const;
+      double lastValue() const { return lastValue_; }
 
       /**
       * Returns the last calculated value converted to the specified units.
@@ -524,7 +538,7 @@ namespace simVis
       * Returns true if the call to lastValue will return a valid value
       * @return True if the call to lastValue will return a valid value
       */
-      bool valid() const;
+      bool valid() const { return valid_; }
 
       /**
       * Sets the state of the lastValue method
@@ -544,9 +558,10 @@ namespace simVis
       osgEarth::optional<osgEarth::Units> labelUnits_; ///< units to display
       unsigned int                labelPrecision_; ///< number of decimal points to display
       TextOptions                 textOptions_; ///< control label appearance
+      AngleType                   angleType_; ///< store angle type, used when setting color
       bool                        visible_; ///< enable draw
       bool                        valid_; ///< True if the lastValue_ holds a valid value.
-      double                      lastValue_;  ///< The last calculate value
+      double                      lastValue_;  ///< The last calculated value
     };
 
     /// vector of Calculation pointers
@@ -757,9 +772,9 @@ namespace simVis
 
       /// add our geometry to 'geode'
       void createGeometry(
-        osg::Vec3    originVec,
-        osg::Vec3    startVec,
-        osg::Vec3    endVec,
+        const osg::Vec3&    originVec,
+        osg::Vec3d    startVec,
+        osg::Vec3d    endVec,
         double       angle,
         osg::Geode*  geode,
         State&       state);

@@ -166,6 +166,9 @@ namespace simVis
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the hook text based on the label content callback, update and preference
+    virtual std::string hookText() const;
+
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 
@@ -178,12 +181,12 @@ namespace simVis
     virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force=false);
 
     /**
-    * Flushes all the entity's data point visualization.  No meaning for Gates
+    * Flushes all the entity's data point visualization.
     */
-    virtual void flush() {}
+    virtual void flush();
 
     /**
-    * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
+    * Returns a range value (meters) used for visualization.
     */
     virtual double range() const;
 

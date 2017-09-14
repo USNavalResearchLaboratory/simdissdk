@@ -93,7 +93,8 @@ static const std::string INTERNAL_LOB_COLOR1_COLUMN = "Color1";
 static const std::string INTERNAL_LOB_COLOR2_COLUMN = "Color2";
 /// LOB line width column name
 static const std::string INTERNAL_LOB_LINEWIDTH_COLUMN = "LineWidth";
-
+/// LOB line flash column name
+static const std::string INTERNAL_LOB_FLASH_COLUMN = "Flash";
 
 /**
  * Provides routines to create, delete, find, and generally manage groups of data tables.

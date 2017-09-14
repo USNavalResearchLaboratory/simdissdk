@@ -37,8 +37,9 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "simNotify/Notify.h"
-#include "simQt/BoundSettings.h"
 #include "simQt/SearchLineEdit.h"
+#include "simQt/BoundSettings.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/DockWidget.h"
 
 namespace simQt {
@@ -52,7 +53,9 @@ static const simQt::Settings::MetaData DOCKABLE_METADATA = simQt::Settings::Meta
   true, QObject::tr("Toggles whether the window can be docked into the main window or not"),
   simQt::Settings::PRIVATE);
 
+/// Setting that can be used for disabling all docking all at once
 const QString DockWidget::DISABLE_DOCKING_SETTING = "Windows/Disable All Docking";
+/// Metadata for DISABLE_DOCKING_SETTING
 const simQt::Settings::MetaData DockWidget::DISABLE_DOCKING_METADATA = simQt::Settings::MetaData::makeBoolean(
   false, QObject::tr("Disables docking on all windows. Overrides individual windows' dockable state"),
   simQt::Settings::ADVANCED);
@@ -60,7 +63,11 @@ const simQt::Settings::MetaData DockWidget::DISABLE_DOCKING_METADATA = simQt::Se
 /** Index value for the search widget if it exists */
 static const int SEARCH_LAYOUT_INDEX = 2;
 /** Default docking flags enables all buttons, but not search */
-static const DockWidget::ExtraFeatures DEFAULT_EXTRA_FEATURES(DockWidget::DockMaximizeAndRestoreHint | DockWidget::DockUndockAndRedockHint);
+static const DockWidget::ExtraFeatures DEFAULT_EXTRA_FEATURES(
+  DockWidget::DockMaximizeAndRestoreHint |
+  DockWidget::DockUndockAndRedockHint |
+  DockWidget::DockWidgetCloseOnEscapeKey
+);
 
 /**
  * Helper that, given an input icon with transparency, will use that icon as a mask to
@@ -157,38 +164,66 @@ private:
 
 ///////////////////////////////////////////////////////////////
 
-DockWidget::DockWidget(QWidget* parent)
-  : QDockWidget(parent),
+/** Intercept double clicks on the title bar icon.  Closes window on double click */
+class DockWidget::DoubleClickIcon : public QLabel
+{
+public:
+  DoubleClickIcon(DockWidget& dockWidget, QWidget* parent = NULL, Qt::WindowFlags flags = 0)
+    : QLabel(parent, flags),
+    dockWidget_(dockWidget)
+  {
+  }
+
+protected:
+  /** Overridden from QLabel */
+  virtual void mouseDoubleClickEvent(QMouseEvent* evt)
+  {
+    // If upper left corner is double clicked, close window
+    dockWidget_.closeWindow_();
+    evt->accept();
+  }
+
+private:
+  DockWidget& dockWidget_;
+};
+
+///////////////////////////////////////////////////////////////
+
+DockWidget::DockWidget(QWidget* parent, Qt::WindowFlags flags)
+  : QDockWidget(parent, flags),
     globalSettings_(NULL),
-    mainWindow_(NULL),
-    isDockable_(NULL),
-    disableDocking_(NULL),
-    respectDisableDockingSetting_(true),
-    escapeClosesWidget_(true),
-    searchLineEdit_(NULL),
-    titleBarWidgetCount_(0),
-    extraFeatures_(DEFAULT_EXTRA_FEATURES),
-    settingsSaved_(true),   // since there is no settings_ set to true to prevent false assert
-    haveFocus_(false)
+    mainWindow_(dynamic_cast<QMainWindow*>(parent))
 {
   init_();
 }
 
-DockWidget::DockWidget(const QString& title, simQt::Settings* settings, QMainWindow* parent)
-  : QDockWidget(title, parent),
-    settings_(new simQt::SettingsGroup(settings, title)),
-    globalSettings_(settings),
-    mainWindow_(parent),
-    isDockable_(NULL),
-    disableDocking_(NULL),
-    respectDisableDockingSetting_(true),
-    escapeClosesWidget_(true),
-    searchLineEdit_(NULL),
-    titleBarWidgetCount_(0),
-    extraFeatures_(DEFAULT_EXTRA_FEATURES),
-    settingsSaved_(false),
-    haveFocus_(false)
+DockWidget::DockWidget(const QString& title, QWidget* parent, Qt::WindowFlags flags)
+  : QDockWidget(title, parent, flags),
+    globalSettings_(NULL),
+    mainWindow_(dynamic_cast<QMainWindow*>(parent))
 {
+  setObjectName(title);
+  init_();
+}
+
+DockWidget::DockWidget(const QString& title, simQt::Settings* settings, QMainWindow* parent, Qt::WindowFlags flags)
+  : QDockWidget(title, parent, flags),
+    globalSettings_(settings),
+    mainWindow_(parent)
+{
+  if (settings)
+    settings_.reset(new simQt::SettingsGroup(settings, title));
+  setObjectName(title);
+  init_();
+}
+
+DockWidget::DockWidget(const QString& title, simQt::Settings* settings, QWidget* parent, Qt::WindowFlags flags)
+  : QDockWidget(title, parent, flags),
+    globalSettings_(settings),
+    mainWindow_(dynamic_cast<QMainWindow*>(parent))
+{
+  if (settings)
+    settings_.reset(new simQt::SettingsGroup(settings, title));
   setObjectName(title);
   init_();
 }
@@ -202,10 +237,6 @@ DockWidget::~DockWidget()
   // Disconnect is required to avoid focus change from triggering updates to color
   disconnect(QApplication::instance(), SIGNAL(focusChanged(QWidget*, QWidget*)), this, SLOT(changeTitleColorsFromFocusChange_(QWidget*, QWidget*)));
 
-  delete isDockable_;
-  isDockable_ = NULL;
-  delete disableDocking_;
-  disableDocking_ = NULL;
   delete noTitleBar_;
   noTitleBar_ = NULL;
   delete titleBar_;
@@ -214,6 +245,14 @@ DockWidget::~DockWidget()
 
 void DockWidget::init_()
 {
+  searchLineEdit_ = NULL;
+  titleBarWidgetCount_ = 0;
+  extraFeatures_ = DEFAULT_EXTRA_FEATURES;
+  settingsSaved_ = (settings_ == NULL);  // Prevent false asserts when the simQt::Settings is not provided in construction
+  haveFocus_ = false;
+  isDockable_ = true;
+  disableAllDocking_ = NULL;
+
   createStylesheets_();
 
   // Several circumstances require a fix to the tab icon
@@ -221,32 +260,14 @@ void DockWidget::init_()
   connect(this, SIGNAL(topLevelChanged(bool)), this, SLOT(fixTabIcon_()));
   connect(this, SIGNAL(topLevelChanged(bool)), this, SLOT(verifyDockState_(bool)));
 
-  // Create a bound boolean setting, and whenever it changes, update our internal state
-  if (settings_ != NULL)
-  {
-    isDockable_ = new simQt::BoundBooleanSetting(this, *settings_, path_() + DOCKABLE_SETTING, DOCKABLE_METADATA);
-    connect(isDockable_, SIGNAL(valueChanged(bool)), this, SLOT(setDockable(bool)));
-
-    disableDocking_ = new simQt::BoundBooleanSetting(this, *globalSettings_, DockWidget::DISABLE_DOCKING_SETTING,
-      DockWidget::DISABLE_DOCKING_METADATA);
-    connect(disableDocking_, SIGNAL(valueChanged(bool)), this, SLOT(setDisableDocking_(bool)));
-
-    setAllowedAreas((isDockable_->value() && !disableDocking_->value()) ? Qt::AllDockWidgetAreas : Qt::NoDockWidgetArea);
-  }
-  setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+  setAllowedAreas(Qt::AllDockWidgetAreas);
 
   // Can-be-docked
   dockableAction_ = new QAction(tr("Dockable"), this);
-  dockableAction_->setToolTip(tr("Window may be docked to main window"));
-  // Bind to the setting.  If setting is invalid, then hide the action by default (does nothing)
-  if (isDockable_ != NULL)
-  {
-    isDockable_->bindTo(dockableAction_);
-    if (disableDocking_ != NULL)
-      dockableAction_->setEnabled(!disableDocking_->value());
-  }
-  else
-    dockableAction_->setVisible(false);
+  dockableAction_->setCheckable(true);
+  dockableAction_->setChecked(isDockable_);
+  dockableAction_->setToolTip(formatTooltip(tr("Dockable"), tr("Window may be docked to main window")));
+  connect(dockableAction_, SIGNAL(toggled(bool)), this, SLOT(setDockable(bool)));
 
   // Separator
   QAction* sep = new QAction(this);
@@ -254,31 +275,31 @@ void DockWidget::init_()
 
   // Maximize
   maximizeAction_ = new QAction(tr("Maximize"), this);
-  maximizeAction_->setToolTip(tr("Maximize"));
+  maximizeAction_->setToolTip(formatTooltip(tr("Maximize"), tr("Expand window to maximum size")));
   maximizeAction_->setIcon(QIcon(":/simQt/images/Maximize.png"));
   connect(maximizeAction_, SIGNAL(triggered()), this, SLOT(maximize_()));
 
   // Restore
   restoreAction_ = new QAction(tr("Restore"), this);
-  restoreAction_->setToolTip(tr("Restore"));
+  restoreAction_->setToolTip(formatTooltip(tr("Restore"), tr("Restore window to original size")));
   restoreAction_->setIcon(QIcon(":/simQt/images/Restore.png"));
   connect(restoreAction_, SIGNAL(triggered()), this, SLOT(restore_()));
 
   // Dock
   dockAction_ = new QAction(tr("Dock"), this);
-  dockAction_->setToolTip(tr("Dock"));
+  dockAction_->setToolTip(formatTooltip(tr("Dock"), tr("Dock the window to the main window")));
   dockAction_->setIcon(QIcon(":/simQt/images/Dock.png"));
   connect(dockAction_, SIGNAL(triggered()), this, SLOT(dock_()));
 
   // Undock
   undockAction_ = new QAction(tr("Undock"), this);
-  undockAction_->setToolTip(tr("Undock"));
+  undockAction_->setToolTip(formatTooltip(tr("Undock"), tr("Undock the window from the main window")));
   undockAction_->setIcon(QIcon(":/simQt/images/Undock.png"));
   connect(undockAction_, SIGNAL(triggered()), this, SLOT(undock_()));
 
   // Close
   closeAction_ = new QAction(tr("Close"), this);
-  closeAction_->setToolTip(tr("Close"));
+  closeAction_->setToolTip(formatTooltip(tr("Close"), tr("Close the window")));
   closeAction_->setIcon(QIcon(":/simQt/images/Close.png"));
   connect(closeAction_, SIGNAL(triggered()), this, SLOT(closeWindow_()));
   closeAction_->setShortcuts(QKeySequence::Close);
@@ -299,9 +320,6 @@ void DockWidget::init_()
 
   // Turn on the title bar
   setTitleBarWidget(titleBar_);
-  // When the is-dockable changes, we need to update the enabled states
-  if (isDockable_ != NULL)
-    connect(isDockable_, SIGNAL(valueChanged(bool)), this, SLOT(updateTitleBar_()));
   // When floating changes, update the title bar
   connect(this, SIGNAL(topLevelChanged(bool)), this, SLOT(updateTitleBar_()));
   // Start with a known good state
@@ -363,7 +381,7 @@ QWidget* DockWidget::createTitleBar_()
   titleBar->setFrameShape(QFrame::StyledPanel);
 
   // Create the icon holders
-  titleBarIcon_ = new QLabel();
+  titleBarIcon_ = new DoubleClickIcon(*this);
   titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(16, 16)));
   titleBarIcon_->setScaledContents(true);
   titleBarIcon_->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
@@ -425,6 +443,15 @@ void DockWidget::moveEvent(QMoveEvent* evt)
   updateTitleBar_();
 }
 
+void DockWidget::setMainWindow(QMainWindow* mainWindow)
+{
+  if (mainWindow != mainWindow_)
+  {
+    mainWindow_ = mainWindow;
+    updateTitleBar_();
+  }
+}
+
 void DockWidget::updateTitleBar_()
 {
   const bool floating = isFloating();
@@ -436,6 +463,7 @@ void DockWidget::updateTitleBar_()
   const bool canRestore = extraFeatures().testFlag(DockRestoreHint);
   const bool canUndock = canFloat && extraFeatures().testFlag(DockUndockHint);
   const bool canRedock = extraFeatures().testFlag(DockRedockHint);
+  const bool globalCanDock = !(disableAllDocking_ && disableAllDocking_->value());
 
   // Maximize.  Docked: Visible if can-float;  Undocked: Visible when not maximized
   maximizeAction_->setVisible(canFloat && !maximized && canMaximize);
@@ -450,14 +478,17 @@ void DockWidget::updateTitleBar_()
   undockButton_->setVisible(undockAction_->isVisible());
 
   // Dock.  Docked: Hidden;  Undocked: Visible
-  //        Enabled only if Can-Dock is true
-  dockAction_->setVisible(floating && canRedock);
+  //        Enabled only if Can-Dock is true AND there is a main window specified
+  dockAction_->setVisible(floating && canRedock && globalCanDock);
   dockButton_->setVisible(dockAction_->isVisible());
-  dockAction_->setEnabled(isDockable_ != NULL && isDockable_->value()); // automatically transfers to button
+  dockAction_->setEnabled(isDockable_ && mainWindow_);
 
   // Closeable
   closeAction_->setVisible(canClose);
   closeButton_->setVisible(closeAction_->isVisible());
+
+  // Dockable
+  dockableAction_->setVisible(canFloat);
 
   // Make sure the pixmap and text are correct
   titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(16, 16)));
@@ -518,7 +549,10 @@ void DockWidget::restore_()
 void DockWidget::dock_()
 {
   // Don't re-dock if it's already docked, OR if the user wants this to be undockable
-  if (!isFloating() || !isDockable_->value())
+  if (!isFloating() || !isDockable_)
+    return;
+  // If the global flag is available and set to disallow, then return
+  if (disableAllDocking_ && disableAllDocking_->value())
     return;
   setFloating(false);
 
@@ -553,8 +587,8 @@ void DockWidget::closeWindow_()
 
 void DockWidget::fixTabIcon_()
 {
-  // Break out early if we're floating
-  if (isFloating())
+  // Break out early if we're floating, or if there's no main window
+  if (isFloating() || !mainWindow_)
     return;
 
   // Return early if this dock widget is not tabified
@@ -640,17 +674,41 @@ void DockWidget::closeEvent(QCloseEvent* event)
 
 void DockWidget::setWidget(QWidget* widget)
 {
+  // Deal with settings -- restore the is-dockable setting
+  if (!objectName().isEmpty())
+  {
+    if (!settings_)
+    {
+      QSettings settings;
+      setDockable(settings.value(path_() + DOCKABLE_SETTING, true).toBool());
+    }
+    else
+    {
+      setDockable(settings_->value(path_() + DOCKABLE_SETTING, DOCKABLE_METADATA).toBool());
+    }
+  }
+
   QDockWidget::setWidget(widget);
   if (widget == NULL)
     return;
-  widget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   setWindowIcon(widget->windowIcon());
-
-  // Call load settings here, since the DockWidget is just a frame around the widget
-  loadSettings_();
 
   // Save the geometry now so that we have some valid value at initialization
   normalGeometry_ = geometry();
+
+  // Call load settings here, since the DockWidget is just a frame around the widget.
+  // We call here because settings don't make much sense until there's an underlying widget inside.
+  if (settings_)
+  {
+    // loadSettings_ will pull out the last geometry as needed, and restore floating state
+    loadSettings_();
+  }
+  else
+  {
+    normalGeometry_ = geometry();
+    restoreFloating_(QByteArray());
+  }
+
   // Schedule a fix to the tabs, if it starts up tabified
   if (!isFloating())
     QTimer::singleShot(0, this, SLOT(fixTabIcon_()));
@@ -658,19 +716,23 @@ void DockWidget::setWidget(QWidget* widget)
 
 bool DockWidget::isDockable() const
 {
-  return isDockable_ != NULL && isDockable_->value();
+  return isDockable_;
 }
 
 void DockWidget::setDockable(bool dockable)
 {
-  if (isDockable_ == NULL)
-    return;
-  // Update settings and QMenu's QAction
-  isDockable_->setValue(dockable);
+  // Note: Intentionally not doing early-out here because value may match but
+  // we may need to do work, since changing disable-all-docking can eventually
+  // call this method.
 
-  // only update actual docking state if override allows it
-  if (respectDisableDockingSetting_ && disableDocking_ != NULL && disableDocking_->value())
-    return;
+  // Override the dockability flag with the global if needed
+  const bool globalDockDisable = (disableAllDocking_ != NULL && disableAllDocking_->value());
+  if (globalDockDisable)
+    dockable = false;
+
+  // Update settings and QMenu's QAction
+  bool emitIt = (dockable != isDockable_);
+  isDockable_ = dockable;
 
   // only set dockable if we can be dockable
   if (dockable)
@@ -682,28 +744,12 @@ void DockWidget::setDockable(bool dockable)
       setFloating(true);
     setAllowedAreas(Qt::NoDockWidgetArea);
   }
-}
 
-void DockWidget::setDisableDocking_(bool disable)
-{
-  // do nothing if we should not respect the disableDocking_ setting
-  if (!respectDisableDockingSetting_)
-    return;
-  if (dockableAction_ != NULL)
-    dockableAction_->setEnabled(!disable);
-  if (disable)
-  {
-    // make sure we float in case we are currently docked
-    if (!isFloating())
-      setFloating(true);
-    setAllowedAreas(Qt::NoDockWidgetArea);
-    return;
-  }
-
-  if (isDockable_ == NULL)
-    return;
-  // update to whatever the isDockable_ state is
-  setDockable(isDockable_->value());
+  updateTitleBar_();
+  if (dockableAction_->isChecked() != dockable)
+    dockableAction_->setChecked(dockable);
+  if (emitIt)
+    emit isDockableChanged(isDockable_);
 }
 
 void DockWidget::verifyDockState_(bool floating)
@@ -715,12 +761,15 @@ void DockWidget::verifyDockState_(bool floating)
 
 bool DockWidget::escapeClosesWidget() const
 {
-  return escapeClosesWidget_;
+  return extraFeatures().testFlag(DockWidgetCloseOnEscapeKey);
 }
 
 void DockWidget::setEscapeClosesWidget(bool escapeCloses)
 {
-  escapeClosesWidget_ = escapeCloses;
+  if (escapeCloses)
+    extraFeatures_ |= DockWidgetCloseOnEscapeKey;
+  else
+    extraFeatures_ &= (~DockWidgetCloseOnEscapeKey);
 }
 
 QTabBar* DockWidget::findTabWithTitle_(const QList<QTabBar*>& fromBars, const QString& title, int& index) const
@@ -736,57 +785,6 @@ QTabBar* DockWidget::findTabWithTitle_(const QList<QTabBar*>& fromBars, const QS
     }
   }
   return NULL;
-}
-
-QString DockWidget::path_() const
-{
-  return simQt::WINDOWS_SETTINGS + objectName() + "/";
-}
-
-void DockWidget::loadSettings_()
-{
-  if (isDockable_ == NULL || settings_ == NULL)
-    return;
-
-  // Load any splitters positions or column widths
-  settings_->loadWidget(DockWidget::widget());
-
-  // Refresh the 'is dockable' settings
-  setDockable(isDockable_->value());
-
-  // make the call to Settings::value() to define the correct MetaData at startup
-  const QVariant widgetGeometry = settings_->value(path_() + DOCK_WIDGET_GEOMETRY, simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
-
-  // Restore the widget from the main window
-  if (mainWindow_ != NULL)
-  {
-    // Give main window first opportunity to restore the position
-    if (!mainWindow_->restoreDockWidget(this))
-    {
-      // Restoration failed; new window.  Respect the features() flag to pop up or dock.
-      if (features().testFlag(DockWidgetFloatable))
-      {
-        setFloating(true);
-        restoreGeometry(widgetGeometry.toByteArray());
-      }
-      else
-      {
-        // Need to dock into a place, because floatable is disabled
-        mainWindow_->addDockWidget(Qt::RightDockWidgetArea, this);
-      }
-    }
-  }
-}
-
-void DockWidget::saveSettings_()
-{
-  settingsSaved_ = true;
-
-  if (settings_ == NULL)
-    return;
-  // Save any splitters positions or column widths
-  settings_->saveWidget(DockWidget::widget());
-  settings_->setValue(path_() + DOCK_WIDGET_GEOMETRY, saveGeometry(), simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
 }
 
 QAction* DockWidget::isDockableAction() const
@@ -825,12 +823,12 @@ void DockWidget::setSearchEnabled(bool enable)
   }
 
   searchLineEdit_ = new simQt::SearchLineEdit(this);
-  searchLineEdit_->setObjectName("dockWidgetSearch");
+  searchLineEdit_->setObjectName("DockWidgetSearch");
   searchLineEdit_->setToolTip(tr("Search"));
   // Ensure horizontal policy is preferred
-  searchLineEdit_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+  searchLineEdit_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
   // Without setting a fixed height, the title bar expands a bit.  Choose any tool button for height
-  searchLineEdit_->setFixedHeight(restoreButton_->height());
+  searchLineEdit_->setFixedHeight(restoreButton_->height() + 3); // 3 from experimentation does not cut off descenders
   // Without auto-fill, style sheets for search background color sometimes don't work
   searchLineEdit_->setAutoFillBackground(true);
 
@@ -841,11 +839,6 @@ void DockWidget::setSearchEnabled(bool enable)
 simQt::SearchLineEdit* DockWidget::searchLineEdit() const
 {
   return searchLineEdit_;
-}
-
-void DockWidget::setRespectDisableDockingSetting_(bool respectDisableDockingSetting)
-{
-  respectDisableDockingSetting_ = respectDisableDockingSetting;
 }
 
 int DockWidget::insertTitleBarWidget(int beforeIndex, QWidget* widget)
@@ -969,7 +962,7 @@ bool DockWidget::isChildWidget_(const QWidget* widget) const
 
 void DockWidget::keyPressEvent(QKeyEvent *e)
 {
-  if (escapeClosesWidget_)
+  if (escapeClosesWidget())
   {
     // Calls close() if Escape is pressed.
     if (!e->modifiers() && e->key() == Qt::Key_Escape)
@@ -992,12 +985,138 @@ void DockWidget::showEvent(QShowEvent* evt)
 {
   QDockWidget::showEvent(evt);
 
+  // Queue a raise() to occur AFTER the actual show() finishes, to make window pop up
+  QTimer::singleShot(0, this, SLOT(raise()));
+
   // Do nothing if dock title styling is turned off
   if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
     return;
-  // Both set focus and activate the window to get focus in
-  setFocus();  // Covers highlighting when docked
+  setFocus();
   activateWindow();  // Covers highlighting when floating
+}
+
+void DockWidget::show()
+{
+  // The following may or may not call showEvent() based on current state
+  QDockWidget::show();
+  // Only set focus if our title bar widget is used
+  if (extraFeatures_.testFlag(DockNoTitleStylingHint) || titleBarWidget() == noTitleBar_)
+    return;
+  setFocus();
+}
+
+void DockWidget::loadSettings_()
+{
+  // nothing to do if ignoring settings
+  if (extraFeatures_.testFlag(DockWidgetIgnoreSettings))
+    return;
+
+  // Load any splitters positions or column widths
+  if (settings_)
+    settings_->loadWidget(widget());
+
+  // Pull out the default geometry
+  QVariant widgetGeometry;
+  if (settings_)
+    widgetGeometry = settings_->value(path_() + DOCK_WIDGET_GEOMETRY, simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
+  else
+  {
+    QSettings settings;
+    widgetGeometry = settings.value(path_() + DOCK_WIDGET_GEOMETRY);
+  }
+
+  // Initialize the bound setting for disable-all-docking
+  if (globalSettings_)
+  {
+    disableAllDocking_ = new simQt::BoundBooleanSetting(this, *globalSettings_, DockWidget::DISABLE_DOCKING_SETTING,
+      DockWidget::DISABLE_DOCKING_METADATA);
+    connect(disableAllDocking_, SIGNAL(valueChanged(bool)), this, SLOT(setGlobalNotDockableFlag_(bool)));
+    setGlobalNotDockableFlag_(disableAllDocking_->value());
+  }
+
+  normalGeometry_ = geometry();
+  restoreFloating_(widgetGeometry.toByteArray());
+}
+
+void DockWidget::restoreFloating_(const QByteArray& geometryBytes)
+{
+  // Restore the widget from the main window
+  if (mainWindow_ == NULL)
+  {
+    // Must be floatable, because we can't dock without it
+    assert(features().testFlag(DockWidgetFloatable));
+    if (features().testFlag(DockWidgetFloatable))
+    {
+      setFloating(true);
+      restoreGeometry(geometryBytes);
+    }
+    return;
+  }
+
+  // If ignoring settings, bypass main window. Otherwise give main window first opportunity to restore the position
+  if (extraFeatures_.testFlag(DockWidgetIgnoreSettings) || !mainWindow_->restoreDockWidget(this))
+  {
+    const bool globalNoDocking = (disableAllDocking_ != NULL && disableAllDocking_->value());
+    // Restoration failed; new window.  Respect the features() flag to pop up or dock.
+    if (features().testFlag(DockWidgetFloatable) || globalNoDocking)
+    {
+      setFloating(true);
+      restoreGeometry(geometryBytes);
+    }
+    else
+    {
+      // Need to dock into a place, because floatable is disabled
+      mainWindow_->addDockWidget(Qt::RightDockWidgetArea, this);
+    }
+  }
+  else
+  {
+#ifndef WIN32
+    // On some versions of Gnome, this flag gets set and causes problems where
+    // the dock widget, when undocked, will always be in front of other modal
+    // always-on-top windows like the file dialog
+    setWindowFlags(windowFlags() & ~(Qt::X11BypassWindowManagerHint));
+#endif
+  }
+}
+
+void DockWidget::saveSettings_()
+{
+  // nothing to do if ignoring settings
+  if (extraFeatures_.testFlag(DockWidgetIgnoreSettings))
+    return;
+
+  settingsSaved_ = true;
+
+  // Save any splitters positions or column widths
+  if (settings_)
+  {
+    settings_->saveWidget(QDockWidget::widget());
+    settings_->setValue(path_() + DOCKABLE_SETTING, dockableAction_->isChecked(), DOCKABLE_METADATA);
+    settings_->setValue(path_() + DOCK_WIDGET_GEOMETRY, saveGeometry(), simQt::Settings::MetaData(simQt::Settings::SIZE, QVariant(), "", simQt::Settings::PRIVATE));
+  }
+  else
+  {
+    // Save geometry since we can't save the widget (no settings_ pointer)
+    QSettings settings;
+    settings.setValue(path_() + DOCK_WIDGET_GEOMETRY, saveGeometry());
+  }
+}
+
+QString DockWidget::path_() const
+{
+  const QString combined = simQt::WINDOWS_SETTINGS + objectName();
+  if (settings_)
+    return combined + "/";
+  // Handle the "no simQt::Settings" case
+  return QString("Private/%1/%2/").arg(windowTitle(), combined);
+}
+
+void DockWidget::setGlobalNotDockableFlag_(bool disallowDocking)
+{
+  if (dockableAction_)
+    dockableAction_->setEnabled(!disallowDocking);
+  setDockable(isDockable_ && !disallowDocking);
 }
 
 }

@@ -164,9 +164,10 @@ void OverheadMode::setEnabled(bool enable, simVis::View* view)
     osg::StateSet* ss = viewCam->getOrCreateStateSet();
     osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(ss);
     simVis::Shaders package;
-    package.replace("$EARTH_RADIUS_MAJOR", simCore::buildString("", simCore::WGS_A, 0, 1));
-    package.replace("$EARTH_RADIUS_MINOR", simCore::buildString("", simCore::WGS_B, 0, 10));
     package.load(vp, package.overheadModeVertex());
+
+    ss->setDefine("SIMVIS_WGS_A", simCore::buildString("", simCore::WGS_A, 0, 1));
+    ss->setDefine("SIMVIS_WGS_B", simCore::buildString("", simCore::WGS_B, 0, 10));
 
     // Uncomment the following line to help with debugging
     //vp->setFunction("simVis_flatten_FS_debug", s_overheadModeDebugFS, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
@@ -238,7 +239,7 @@ bool OverheadMode::isActive(osg::NodeVisitor* nv)
   return value;
 }
 
-void OverheadMode::prepareVisitor(simVis::View* view, osg::NodeVisitor* nv)
+void OverheadMode::prepareVisitor(const simVis::View* view, osg::NodeVisitor* nv)
 {
   if (nv && view && view->isOverheadEnabled())
   {

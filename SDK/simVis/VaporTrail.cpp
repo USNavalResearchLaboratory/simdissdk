@@ -379,20 +379,20 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
   geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   colors->push_back(simVis::Color::White);
 
-  // add one quad
-  texcoords->push_back(osg::Vec2(0, 0));
-  verts->push_back(osg::Vec3(-initialRadius, 0, -initialRadius));
-
+  // add an instance of vapor trail
   texcoords->push_back(osg::Vec2(1, 0));
   verts->push_back(osg::Vec3(initialRadius, 0, -initialRadius));
 
   texcoords->push_back(osg::Vec2(1, 1));
   verts->push_back(osg::Vec3(initialRadius, 0, initialRadius));
 
+  texcoords->push_back(osg::Vec2(0, 0));
+  verts->push_back(osg::Vec3(-initialRadius, 0, -initialRadius));
+
   texcoords->push_back(osg::Vec2(0, 1));
   verts->push_back(osg::Vec3(-initialRadius, 0, initialRadius));
 
-  geom->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, verts->size()));
+  geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, verts->size()));
 
   textureBillboard->addDrawable(geom);
 
