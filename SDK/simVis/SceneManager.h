@@ -185,7 +185,7 @@ namespace simVis
 
   protected:
     /// osg::Referenced-derived
-    virtual ~SceneManager() {}
+    virtual ~SceneManager();
 
     /// Override and protect addChild().  Most children should be going to the scenario.
     virtual bool addChild(osg::Node *child);
