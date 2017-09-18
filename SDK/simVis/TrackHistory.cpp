@@ -567,9 +567,9 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
     }
   }
 
-  // store the trackcolor as the default track history color
-  if (prefs.has_trackcolor())
+  if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackcolor))
   {
+    // store the trackcolor as the default track history color
     osg::Vec4f newColor = simVis::Color(prefs.trackcolor(), simVis::Color::RGBA);
     if (defaultColor_ != newColor)
     {
