@@ -305,9 +305,9 @@ static const std::string ALL_DATA_FILE_PATTERNS = ALL_SIMDIS_FILE_PATTERNS +
   ALL_WVS_FILE_PATTERNS + std::string(",") +
   simCore::ALL_SIMDIS_MODEL_FILE_PATTERNS;
 
-/** GDAL files for osgEarth GDAL driver image layers */
+/** GDAL files for osgEarth GDAL driver image and elevation layers */
 static const std::string GDAL_IMAGE_LAYER_FILE_PATTERNS =
-  "GDAL Files (*.tif,*.jpeg,*.png,*.img,*.sid,*.jp2)\n"
+  "GDAL Files (*.tif,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil,*.hgt)\n"
   "All Files (*)";
 
 /** MBTiles files for osgEarth MBTiles driver image layers */
@@ -317,18 +317,18 @@ static const std::string MBTILES_IMAGE_LAYER_FILE_PATTERNS =
 
 /** Pattern for GDAL, DB, MBTiles files -- image file layer pattern */
 static const std::string FILEBASED_IMAGE_LAYER_FILE_PATTERNS =
-  "All Layer Files (*.mbtiles,*.db,*.tif,*.jpeg,*.img,*.sid,*.jp2)\n"
+  "All Layer Files (*.mbtiles,*.db,*.tif,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil)\n"
   "MBTiles Files (*.mbtiles)\n"
   "DB Files (*.db)\n"
-  "GDAL Files (*.tif,*.jpeg,*.img,*.sid,*.jp2,*.bil)\n"
+  "GDAL Files (*.tif,*.jpeg,*.png,*.img,*.sid,*.jp2,*.bil)\n"
   "All Files (*)";
 
 /** Pattern for GDAL, DB, MBTiles files -- elevation file layer pattern */
 static const std::string FILEBASED_ELEVATION_LAYER_FILE_PATTERNS =
-  "All Layer Files (*.mbtiles,*.db,*.tif,*.sid,*.jp2,*.bil,*.dt0,*.dt1,*.dt2)\n"
+  "All Layer Files (*.mbtiles,*.db,*.tif,*.sid,*.jp2,*.bil,*.hgt,*.dt0,*.dt1,*.dt2)\n"
   "MBTiles Files (*.mbtiles)\n"
   "DB Files (*.db)\n"
-  "GDAL Files (*.tif,*.sid,*.jp2,*.bil)\n"
+  "GDAL Files (*.tif,*.sid,*.jp2,*.bil,*.hgt)\n"
   "DTED Elevation Files (*.dt0,*.dt1,*.dt2)\n"
   "All Files (*)";
 
