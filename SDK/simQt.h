@@ -73,6 +73,7 @@
 #include "simQt/SettingsModel.h"
 #include "simQt/SettingsProxyModel.h"
 #include "simQt/SliderTimeWidgetBinding.h"
+#include "simQt/SplashScreen.h"
 #include "simQt/StartupLayoutManager.h"
 #include "simQt/StartupLayoutTask.h"
 #include "simQt/StdStreamConsoleChannel.h"
