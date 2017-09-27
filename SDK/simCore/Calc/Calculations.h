@@ -455,6 +455,16 @@ namespace simCore
   SDKCORE_EXPORT void calculateGeodeticOriFromRelOri(const Vec3 &hostYpr, const Vec3 &relYpr, Vec3 &ypr);
 
   /**
+  * Calculates a geodetic position from the given offset position and orientation vectors
+  *
+  * @param[in ] llaBgnPos LLA(rad/rad/meters) of the origin from which the offset will be calculated
+  * @param[in ] bodyOriOffset Body orientation offset (Y, P, R) in radians
+  * @param[in ] bodyPosOffset Body offset position (X, Y, Z) in meters
+  * @param[out] offsetLla (rad/rad/meters) LLA position of offset
+  */
+  SDKCORE_EXPORT void calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::Vec3& bodyOriOffset, const simCore::Vec3& bodyPosOffset, simCore::Vec3& offsetLla);
+
+  /**
   * @brief Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position
   *
   * Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position

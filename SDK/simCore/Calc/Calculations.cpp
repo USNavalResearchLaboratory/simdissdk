@@ -1395,23 +1395,17 @@ void simCore::calculateGeodeticOriFromRelOri(const Vec3 &hostYpr, const Vec3 &re
   d3DCMtoEuler(yprDcm, ypr);
 }
 
-/// Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position
-void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, const double el, const double rng, Vec3 &llaEndPos)
+/// Calculates a geodetic position from the given offset position and orientation vectors
+void simCore::calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::Vec3& bodyOriOffset, const simCore::Vec3& bodyPosOffset, simCore::Vec3& offsetLla)
 {
-  if (simCore::areEqual(rng, 0.))
-  {
-    llaEndPos = llaBgnPos;
-    return;
-  }
-
   // create DCM based on specified orientation (NED frame)
   double dcm[3][3];
-  simCore::d3EulertoDCM(simCore::Vec3(az, el, 0), dcm);
+  simCore::d3EulertoDCM(bodyOriOffset, dcm);
 
-  // create unit vector along body axis (NED frame)
-  // then rotate body vector to align with local level frame
+  // create unit vector along body axis (NED frame), then rotate body vector to align with local level frame
+  // SIMDIS FLU body coordinates changed to a FRD system in order to align to the NED frame
   Vec3 geoVec;
-  d3MTv3Mult(dcm, simCore::Vec3(rng, 0, 0), geoVec);
+  d3MTv3Mult(dcm, simCore::Vec3(bodyPosOffset[0], -bodyPosOffset[1], -bodyPosOffset[2]), geoVec);
 
   // calculate Local To Earth rotation matrix at begin lat, lon position
   // (orientation is translated to geocentric Eulers based on the transformation from a local
@@ -1430,7 +1424,19 @@ void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, 
   // compute offset, then convert geocentric back to geodetic
   simCore::Vec3 offsetGeo;
   simCore::v3Add(originGeo, geoOffVec, offsetGeo);
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(offsetGeo, llaEndPos);
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(offsetGeo, offsetLla);
+}
+
+/// Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position
+void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, const double el, const double rng, Vec3 &llaEndPos)
+{
+  if (simCore::areEqual(rng, 0.))
+  {
+    llaEndPos = llaBgnPos;
+    return;
+  }
+
+  calculateGeodeticOffsetPos(llaBgnPos, simCore::Vec3(az, el, 0), simCore::Vec3(rng, 0, 0), llaEndPos);
 }
 
 /// Calculates the middle position between two points on the globe, moving from west to east.
