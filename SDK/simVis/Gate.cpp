@@ -114,7 +114,7 @@ namespace
     sv.drawAsSphereSegment_ = prefs->gatedrawmode() == simData::GatePrefs_DrawMode_COVERAGE;
 
     // use a Y-forward directional vector to correspond with the gate's locator.
-    osg::MatrixTransform* node = simVis::SVFactory::createNode(sv, osg::Vec3(0.0f, 1.0f, 0.0f));
+    osg::MatrixTransform* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
     return node;
   }
 }
@@ -561,14 +561,15 @@ int GateNode::calculateTargetGate_(const simData::GateUpdate& update, simData::G
 
   if (!host_.valid())
   {
-    // we should not receive updates for a target gate when host beam is not valid; if assert fails check MemoryDataStore processing
+    // we should not receive updates for a target gate when host is not valid; if assert fails check MemoryDataStore processing
     assert(0);
+    return 1;
   }
   const BeamNode* beam = dynamic_cast<const BeamNode*>(host_.get());
   if (beam == NULL)
   {
-    // we should not receive updates for a target gate when host beam is not valid; if assert fails check MemoryDataStore processing
-    assert(0);
+    // target gate require a host beam; host is not a beam, so exit.
+    return 1;
   }
 
   assert(beam->getProperties().type() == simData::BeamProperties_BeamType_TARGET);

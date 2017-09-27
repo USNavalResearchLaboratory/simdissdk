@@ -85,7 +85,7 @@ namespace
       sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs_DrawType_COVERAGE;
 
       // use a "Y-forward" direction vector because the Beam is drawn in ENU LTP space.
-      return simVis::SVFactory::createNode(sv, osg::Vec3(0, 1, 0));
+      return simVis::SVFactory::createNode(sv, osg::Y_AXIS);
   }
 
   /// check for changes that require us to rebuild the entire beam.
