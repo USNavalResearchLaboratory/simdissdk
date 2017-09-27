@@ -98,7 +98,7 @@ int main(int argc, char **argv)
   SdkQThreadExample::MyMainWindow win(viewMan, dataStore);
   osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
   win.setGeometry(100, 100, 1024, 800);
-  win.setCentralWidget(viewWidget);
+  win.setGlWidget(viewWidget);
 
   win.statusBar()->showMessage(QString("Congratulations! You've embedded the SDK Viewer in a Qt Widget."));
 
