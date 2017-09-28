@@ -201,12 +201,10 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
       setFillColor(osgEarth::Symbology::Color(parent.value("linecolor")));  // Default to the line color if the fill color is not set
     setFilledState(isFilled);
   }
-  else
+  // only points and annotation do not support the fillcolor keyword
+  else if ((gogShape == GOG_POINTS || gogShape == GOG_ANNOTATION) && parent.hasValue("fillcolor"))
   {
-    if (parent.hasValue("fillcolor"))
-    {
-      SIM_WARN << "The GOG keyword " << key << " does not support fillcolor.\n";
-    }
+    SIM_WARN << "The GOG keyword " << key << " does not support fillcolor.\n";
   }
 
   // altitude offset
