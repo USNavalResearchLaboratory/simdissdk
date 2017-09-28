@@ -209,6 +209,9 @@ public slots:
   /** Retrieves the currently set docking flags (additional features to features()) */
   void setExtraFeatures(ExtraFeatures features);
 
+  /** Set the point size of the title bar text, which also increases the window icon size proportionately */
+  void setTitleBarTextSize(int pointSize);
+
 signals:
   /** Emitted after the dock widget is closed. */
   void closedGui();
@@ -224,6 +227,10 @@ protected slots:
   void restore_();
   /** Undocks the window */
   void undock_();
+  /** Update title bar text */
+  void updateTitleBarText_();
+  /** Update title bar icon */
+  void updateTitleBarIcon_();
   /** Need to verify that our docked state is consistent with our allowed areas */
   void verifyDockState_(bool floating);
 
@@ -239,10 +246,6 @@ protected:
   /** Override show event to focus the window */
   virtual void showEvent(QShowEvent* evt);
 
-  /** Update title bar text */
-  void updateTitleBarText_();
-  /** Update title bar icon */
-  void updateTitleBarIcon_();
   /** Restores the dock widget, placing it in a good position if restoration fails; uses mainWindow_ */
   void restoreFloating_(const QByteArray& geometryBytes);
 
@@ -256,6 +259,8 @@ protected:
   simQt::SettingsGroupPtr settings_;
   /** Handle to the global settings */
   simQt::Settings* globalSettings_;
+  /** Point size of the title bar text */
+  int titleBarPointSize_;
 
   /** Actions for title bar functionality */
   QAction* dockableAction_;

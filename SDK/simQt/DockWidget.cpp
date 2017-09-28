@@ -245,6 +245,8 @@ DockWidget::~DockWidget()
 
 void DockWidget::init_()
 {
+  // default title bar text size to application text size
+  titleBarPointSize_ = QApplication::font().pointSize();
   searchLineEdit_ = NULL;
   titleBarWidgetCount_ = 0;
   extraFeatures_ = DEFAULT_EXTRA_FEATURES;
@@ -338,6 +340,8 @@ void DockWidget::init_()
 
   connect(this, SIGNAL(featuresChanged(QDockWidget::DockWidgetFeatures)), this, SLOT(updateTitleBar_()));
   connect(QApplication::instance(), SIGNAL(focusChanged(QWidget*, QWidget*)), this, SLOT(changeTitleColorsFromFocusChange_(QWidget*, QWidget*)));
+  connect(this, SIGNAL(windowTitleChanged(QString)), this, SLOT(updateTitleBarText_()));
+  connect(this, SIGNAL(windowIconChanged(QIcon)), this, SLOT(updateTitleBarIcon_()));
 
   // Set a consistent focus
   updateTitleBarColors_(false);
@@ -386,7 +390,7 @@ QWidget* DockWidget::createTitleBar_()
   titleBarIcon_->setScaledContents(true);
   titleBarIcon_->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 
-  // Set the titlebar's caption
+  // Set the title bar's caption
   titleBarTitle_ = new QLabel();
   titleBarTitle_->setObjectName("titleBarTitle");
   titleBarTitle_->setText(windowTitle());
@@ -491,7 +495,7 @@ void DockWidget::updateTitleBar_()
   dockableAction_->setVisible(canFloat);
 
   // Make sure the pixmap and text are correct
-  titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(16, 16)));
+  updateTitleBarIcon_();
   titleBarTitle_->setText(windowTitle());
 
   // Need to make sure icons are right colors too
@@ -655,7 +659,9 @@ void DockWidget::updateTitleBarText_()
 
 void DockWidget::updateTitleBarIcon_()
 {
-  titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(16, 16)));
+  // make the window icon twice as large as the text point size
+  int newPointSize = titleBarPointSize_ * 2;
+  titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(newPointSize, newPointSize)));
 }
 
 void DockWidget::setVisible(bool fl)
@@ -912,6 +918,17 @@ void DockWidget::setExtraFeatures(DockWidget::ExtraFeatures features)
 
   // Other style hints are handled in the updateTitleBar_() method
   updateTitleBar_();
+}
+
+void DockWidget::setTitleBarTextSize(int pointSize)
+{
+  if (titleBarPointSize_ == pointSize)
+    return;
+  titleBarPointSize_ = pointSize;
+  QFont titleFont = titleBarTitle_->font();
+  titleFont.setPointSize(titleBarPointSize_);
+  titleBarTitle_->setFont(titleFont);
+  updateTitleBarIcon_();
 }
 
 void DockWidget::updateTitleBarColors_(bool haveFocus)
