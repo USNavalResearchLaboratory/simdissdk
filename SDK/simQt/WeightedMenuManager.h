@@ -118,6 +118,9 @@ protected:
   QList<int> widgetWeights_(QWidget* widget) const;
   /** Like WeightedMenuManager::setMenuWeights_() but for Widgets with layouts */
   void setWidgetWeights_(QWidget* widget, QList<int> weights) const;
+
+  /** Utility method to return the string without mnemonic */
+  QString withoutMnemonic_(const QString& decorated) const;
 };
 
 

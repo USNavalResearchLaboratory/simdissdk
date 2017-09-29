@@ -129,7 +129,7 @@ QMenu* WeightedMenuManager::findMenu_(QWidget* parent, const QString& title) con
     }
 
     // Return the menu if it matches
-    if (menuTitle == title)
+    if (withoutMnemonic_(menuTitle) == title)
       return topMenu;
   }
   return NULL;
@@ -140,7 +140,7 @@ QMenu* WeightedMenuManager::findOrCreateMenu_(QWidget* parent, int weight, const
 {
   // Ensure the hierarchical notation from previous SIMDIS 10 iterations is not used here
   assert(!title.contains('\\'));
-  QMenu* found = findMenu_(parent, title);
+  QMenu* found = findMenu_(parent, withoutMnemonic_(title));
   if (found)
     return found;
 
@@ -423,6 +423,16 @@ void WeightedMenuManager::setWidgetWeights_(QWidget* widget, QList<int> weights)
   widget->setProperty(WEIGHTS_PROPERTY, QVariant::fromValue(weights));
 }
 
+QString WeightedMenuManager::withoutMnemonic_(const QString& text) const
+{
+  if (!text.contains("&"))
+    return text;
+  // This method does not correctly handle double ampersand
+  assert(!text.contains("&&"));
+  QString updated = text;
+  return updated.replace("&", "");
+}
+
 
 //----------------------------------------------------------------------------------------------------
 
@@ -433,4 +443,3 @@ PopupMenuManager::PopupMenuManager(QMenu& menu, bool debugMenuWeights)
 }
 
 }
-
