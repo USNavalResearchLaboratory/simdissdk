@@ -97,11 +97,12 @@ std::string expandEnv(const std::string& val)
     std::string firstPart = "";
     if (start > 0)
       firstPart = value.substr(0, start);
-    std::string middlePart = value.substr(start + 2, end - start - 2);
-    std::string endPart = value.substr(end + 1);
+    const std::string middlePart = value.substr(start + 2, end - start - 2);
+    const std::string endPart = value.substr(end + 1);
     rv = firstPart;
-    if (getenv(middlePart.c_str()) != NULL)
-      rv += getenv(middlePart.c_str());
+    const std::string envVar = simCore::getEnvVar(middlePart);
+    if (!envVar.empty())
+      rv += envVar;
     else // Retain the environment variable part, as per review 546
       rv += "$(" + middlePart + ")";
     rv += endPart;
@@ -134,6 +135,14 @@ std::string toNativeSeparators(const std::string& path)
     fixedDirection = StringUtils::substitute(fixedDirection, GOOD_SLASH + GOOD_SLASH, GOOD_SLASH);
   } while (noDuplicates != fixedDirection);
   return noDuplicates;
+}
+
+std::string getEnvVar(const std::string &env)
+{
+  const char *cenv = getenv(env.c_str());
+  if (!cenv)
+    return "";
+  return StringUtils::trimRight(cenv, "\r");
 }
 
 } // namespace simCore
