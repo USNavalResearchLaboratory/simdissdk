@@ -362,8 +362,7 @@ RTTPicker::RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* 
   rttPicker_->setDefaultCallback(new PickerCallback(*this));
 
   // Set up the picker to ignore various features of SIMDIS that aren't pickable
-  // TODO: Pending osgEarth pull request integration
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0) && 0
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
   unsigned int ignoreMask = simVis::DISPLAY_MASK_LABEL | simVis::DISPLAY_MASK_TRACK_HISTORY | simVis::DISPLAY_MASK_LOCAL_GRID;
   rttPicker_->setCullMask(~ignoreMask);
 #endif
