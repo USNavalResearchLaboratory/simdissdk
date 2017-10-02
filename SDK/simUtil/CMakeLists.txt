@@ -13,6 +13,7 @@ set(SHADER_FILES
 set(UTIL_INC)
 set(UTIL_SRC)
 set(UTIL_HEADERS
+    ${UTIL_SRC}DynamicSelectionPicker.h
     ${UTIL_INC}Capabilities.h
     ${UTIL_INC}DataStoreTestHelper.h
     ${UTIL_INC}DatumConvert.h
@@ -43,6 +44,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}ViewpointPositions.h
 )
 set(UTIL_SOURCES
+    ${UTIL_SRC}DynamicSelectionPicker.cpp
     ${UTIL_SRC}Capabilities.cpp
     ${UTIL_SRC}DataStoreTestHelper.cpp
     ${UTIL_SRC}DatumConvert.cpp

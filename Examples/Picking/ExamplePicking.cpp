@@ -48,7 +48,7 @@
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simUtil/ExampleResources.h"
-
+#include "simUtil/DynamicSelectionPicker.h"
 
 namespace ui = osgEarth::Util::Controls;
 
@@ -78,10 +78,11 @@ struct Application
 /** Prints help text */
 int usage(char** argv)
 {
-  SIM_NOTICE << argv[0] << " [--rtt|--intersect]\n"
+  SIM_NOTICE << argv[0] << " [--rtt|--intersect|--dynamic]\n"
     << "\n"
     << "  --rtt         Enable render-to-texture picking\n"
     << "  --intersect   Enable intersection picking\n"
+    << "  --dynamic     Enable dynamic selection algorithm picking\n"
     << std::endl;
 
   return 0;
@@ -454,12 +455,16 @@ int main(int argc, char** argv)
   if (arguments.read("--help"))
     return usage(argv);
 
-  // Determine RTT or intersect mode
-  bool useRtt = true; // default to RTT mode
+  // Determine pick mode; the default is dynamic
+  enum PickType {
+    PickRtt,
+    PickIntersect,
+    PickDynamic
+  } pickType = PickDynamic;
   if (arguments.read("--rtt"))
-    useRtt = true;
+    pickType = PickRtt;
   else if (arguments.read("--intersect"))
-    useRtt = false;
+    pickType = PickIntersect;
 
   // First we need a map.
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
@@ -537,7 +542,7 @@ int main(int argc, char** argv)
 
   // Add various event handlers
   app.mainView->installDebugHandlers();
-  app.mainView->addOverlayControl(createUi(app.pickLabel, useRtt));
+  app.mainView->addOverlayControl(createUi(app.pickLabel, (pickType == PickRtt)));
   app.mainView->addEventHandler(new simVis::ToggleOverheadMode(app.mainView, 'O', 'C'));
   app.mainView->addEventHandler(new MenuHandler(clock, app));
   app.insetView->addEventHandler(new simVis::ToggleOverheadMode(app.insetView, 'O', 'C'));
@@ -568,9 +573,11 @@ int main(int argc, char** argv)
   simVis::PickerHighlightShader::installShaderProgram(scenarioManager->getOrCreateStateSet(), true);
 
   // Add the picker itself
-  if (!useRtt)
+  if (pickType == PickIntersect)
     app.picker = new simVis::IntersectPicker(viewMan, scenarioManager);
-  else
+  else if (pickType == PickDynamic)
+    app.picker = new simUtil::DynamicSelectionPicker(viewMan, scenarioManager);
+  else // pickType == PickRtt
   {
     // Create the RTT picker
     simVis::RTTPicker* rttPicker = new simVis::RTTPicker(viewMan, scenarioManager, 256);
