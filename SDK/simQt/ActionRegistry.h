@@ -49,6 +49,8 @@ public:
 
   /** Retrieve the action pointer. */
   QAction* action() const;
+  /** Retrieves a pointer to owning registry */
+  simQt::ActionRegistry* actionRegistry() const;
 
   /** Retrieve a list of all key sequences associated with this action */
   QList<QKeySequence> hotkeys() const;
