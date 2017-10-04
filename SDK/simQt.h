@@ -83,6 +83,7 @@
 #include "simQt/TimestampedLayerManager.h"
 #include "simQt/TimeWidget.h"
 #include "simQt/TimeWidgetClockBinding.h"
+#include "simQt/Toast.h"
 #include "simQt/UnitContext.h"
 #include "simQt/UnitsComboBox.h"
 #include "simQt/ViewManagerDataModel.h"

@@ -39,6 +39,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}TimeFormatContainer.h
     ${SIMQT_INC}TimeSliderClockBinding.h
     ${SIMQT_INC}TimeWidget.h
+    ${SIMQT_INC}Toast.h
     ${SIMQT_INC}UnitContext.h
 )
 set(SIMQT_HEADERS
@@ -143,6 +144,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}TimeFormatContainer.cpp
     ${SIMQT_SRC}TimeSliderClockBinding.cpp
     ${SIMQT_SRC}TimeWidget.cpp
+    ${SIMQT_SRC}Toast.cpp
     ${SIMQT_SRC}UnitsComboBox.cpp
     ${SIMQT_SRC}UnitContext.cpp
     ${SIMQT_SRC}WeightedMenuManager.cpp
@@ -203,7 +205,7 @@ set(SIMQT_RESOURCES
 source_group(Qt FILES ${SIMQT_FORMS} ${SIMQT_RESOURCES})
 
 # Wrap files into generated versions
-VSI_INCLUDE_QT_USE_FILE()
+VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 VSI_QT_WRAP_CPP(Q_HEADERS ${SIMQT_HEADERS_TO_MOC})
 VSI_QT_WRAP_UI(Q_FORMS ${SIMQT_FORMS})
 VSI_QT_ADD_RESOURCES(Q_RESOURCES ${SIMQT_RESOURCES})
@@ -284,7 +286,7 @@ else()
 endif()
 
 
-VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)
+VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets OpenGL)
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     set_target_properties(simQt PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
