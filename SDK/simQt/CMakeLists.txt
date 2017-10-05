@@ -85,6 +85,7 @@ if(TARGET simVis)
         ${SIMQT_INC}CenterEntity.h
         ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityTreeModel.h
+        ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
@@ -177,6 +178,7 @@ if(TARGET simVis)
         ${SIMQT_SRC}CenterEntity.cpp
         ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityTreeModel.cpp
+        ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}QtConversion.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
