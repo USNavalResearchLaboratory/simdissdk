@@ -311,6 +311,8 @@ namespace simVis
     bool                            lastPrefsValid_;
     /// force next update from data store to be processed, even if !slice->hasChanged()
     bool                            forceUpdateFromDataStore_;
+    /// queue up the invalidate to apply on the next data store update
+    bool                            queuedInvalidate_;
   };
 
 } // namespace simVis

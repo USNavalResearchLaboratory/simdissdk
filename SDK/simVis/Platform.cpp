@@ -144,7 +144,8 @@ radioLosNode_(NULL),
 frontOffset_(0.0),
 valid_(false),
 lastPrefsValid_(false),
-forceUpdateFromDataStore_(false)
+forceUpdateFromDataStore_(false),
+queuedInvalidate_(false)
 {
   PlatformModelNode* node = new PlatformModelNode(new Locator(locator));
   this->addChild(node);
@@ -374,6 +375,13 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase);
   assert(updateSlice);
 
+  // apply the queued invalidate first, so the state can then be further arbitrated by any new data points
+  if (queuedInvalidate_)
+  {
+    setInvalid_();
+    queuedInvalidate_ = false;
+  }
+
   // in file mode, a platform is not valid until time reaches its first datapoint time.
   // standard interfaces will return NULL or a sentinel value to indicate that the platform does not have a valid position.
   // but there are cases where it is useful to know the position the platform will have when it becomes valid.
@@ -387,7 +395,6 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   // ensure that locator position is set in cases where time has been jumped to an early time or to a late time.
   //
   // this should only matter in file mode.
-
   if (!updateSlice->current() && (updateSlice->hasChanged() || updateSlice->isDirty()))
   {
     const double firstTime = updateSlice->firstTime();
@@ -502,7 +509,7 @@ bool PlatformNode::isActive_(const simData::PlatformPrefs& prefs) const
   return valid_ && lastPrefs_.commonprefs().datadraw();
 }
 
-void PlatformNode::setInvalid_(void)
+void PlatformNode::setInvalid_()
 {
   valid_ = false;
   lastUpdate_ = NULL_PLATFORM_UPDATE;
@@ -547,8 +554,8 @@ void PlatformNode::flush()
   // static platforms don't get flushed
   if (lastUpdateTime_ == -1.0)
     return;
-
-  setInvalid_();
+  // queue up the invalidate to apply on the next data store update. SIMDIS-2805
+  queuedInvalidate_ = true;
   if (track_.valid())
     track_->reset();
   if (velocityAxisVector_)
