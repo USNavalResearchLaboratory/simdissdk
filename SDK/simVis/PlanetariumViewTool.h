@@ -114,7 +114,7 @@ public: // ScenarioTool
   void onEntityRemove(ScenarioManager* scenario, EntityNode* entity);
 
   /** @see ScenarioTool::onUpdate() */
-  void onUpdate(ScenarioManager* scenario, double timestamp, const EntityVector& updates);
+  void onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
 
 public: // Tool
 

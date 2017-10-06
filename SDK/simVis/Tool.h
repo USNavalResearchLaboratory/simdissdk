@@ -22,11 +22,12 @@
 #ifndef SIMVIS_TOOL_H
 #define SIMVIS_TOOL_H
 
-#include "simCore/Common/Common.h"
+#include <vector>
 #include "osg/Node"
 #include "osgEarth/Revisioning"
-#include <vector>
+#include "simCore/Common/Common.h"
 
+namespace simCore { class TimeStamp; }
 namespace simVis
 {
   class ScenarioManager;
@@ -73,7 +74,7 @@ namespace simVis
     virtual void onEntityRemove(ScenarioManager* scenario, EntityNode* entity) { }
 
     /// called when scenario time changes
-    virtual void onUpdate(ScenarioManager* scenario, double timestamp, const std::vector<osg::ref_ptr<EntityNode> >& updates) { }
+    virtual void onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const std::vector<osg::ref_ptr<EntityNode> >& updates) { }
   };
 
   /** Vector of ScenarioTool ref_ptr */

@@ -1080,6 +1080,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
 
   // next, update all the scenario tools
   bool needsRedraw = false;
+  const simCore::TimeStamp updateTimeStamp(ds->referenceYear(), ds->updateTime());
 
   for (ScenarioToolVector::const_iterator i = scenarioTools_.begin(); i != scenarioTools_.end(); ++i)
   {
@@ -1087,7 +1088,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     ScenarioTool* tool = i->get();
     if (updates.size() > 0 || tool->isDirty())
     {
-      tool->onUpdate(this, ds->updateTime(), updates);
+      tool->onUpdate(this, updateTimeStamp, updates);
       needsRedraw = true;
     }
     SAFETRYEND("updating scenario tools");
