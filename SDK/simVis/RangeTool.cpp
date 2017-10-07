@@ -489,6 +489,11 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   state_.magneticDatumConvert_ = new simCore::MagneticDatumConvert();
 }
 
+RangeTool::Association::~Association()
+{
+  delete state_.magneticDatumConvert_;
+}
+
 void RangeTool::Association::add(Calculation* calc)
 {
   calculations_.push_back(calc);

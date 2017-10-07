@@ -661,7 +661,7 @@ namespace simVis
 
     protected:
       /// osg::Referenced-derived
-      virtual ~Association() {}
+      virtual ~Association();
 
     private:
       // regenerates scene geometry
