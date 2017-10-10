@@ -227,6 +227,11 @@ private:
 
   class ButtonActions;
   std::vector<ButtonActions*> buttonActions_;
+
+  /// Whether or not to use the entity icons, vs the names
+  bool useEntityIcons_;
+  /// If true, a call to setUseEntityIcons() was explicitly made by caller
+  bool useEntityIconsSet_;
 };
 
 }

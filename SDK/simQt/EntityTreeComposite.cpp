@@ -197,7 +197,9 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   model_(NULL),
   nameFilter_(NULL),
   filterDialog_(NULL),
-  useCenterAction_(false)
+  useCenterAction_(false),
+  useEntityIcons_(true),
+  useEntityIconsSet_(false)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -310,13 +312,17 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
   // Must pass in a valid model
   assert(model != NULL);
 
+  // SDK-120: If useEntityIcons_ is set, then apply it to the model
   model_ = model;
+  if (useEntityIconsSet_ && model_)
+    model_->setUseEntityIcons(useEntityIcons_);
+
   nameFilter_->setModel(model_);
   entityTreeWidget_->setModel(model_);
   // If the tree is pre-loaded, enable the tree/list button
   if (model_->rowCount() != 0)
     toggleTreeViewAction_->setEnabled(true);
-  connect((QObject*)model, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
+  connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
 }
 
 /** Sets/clears the selected ID in the entity list */
@@ -651,19 +657,24 @@ void EntityTreeComposite::setTreeView_(bool useTreeView)
 
 void EntityTreeComposite::updateActionEnables_()
 {
-  bool enableIt = entityTreeWidget_->isTreeView() && model_->rowCount() > 0;
+  bool enableIt = entityTreeWidget_->isTreeView() && model_ && model_->rowCount() > 0;
   collapseAllAction_->setEnabled(enableIt);
   expandAllAction_->setEnabled(enableIt);
 }
 
 bool EntityTreeComposite::useEntityIcons() const
 {
+  if (!model_)
+    return useEntityIcons_;
   return model_->useEntityIcons();
 }
 
 void EntityTreeComposite::setUseEntityIcons(bool showIcons)
 {
-  model_->setUseEntityIcons(showIcons);
+  useEntityIconsSet_ = true;
+  useEntityIcons_ = showIcons;
+  if (model_)
+    model_->setUseEntityIcons(showIcons);
 }
 
 //---------------------------------------------------------------------------------------------
