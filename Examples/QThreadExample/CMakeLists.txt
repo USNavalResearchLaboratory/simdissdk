@@ -1,4 +1,4 @@
-if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET SIMDIS_SDKUtil)
+if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET simUtil)
     return()
 endif()
 
@@ -30,8 +30,8 @@ vsi_qt_wrap_ui(MY_UI QThreadExample.ui)
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
 add_executable(example_qthread ${PROJECT_FILES} ${MY_WIDGETS_MOC} ${MY_UI})
-target_link_libraries(example_qthread PRIVATE SIMDIS_SDKCore SIMDIS_SDKData SIMDIS_SDKVis
-    SIMDIS_SDKUtil OSGEARTH_QT)
+target_link_libraries(example_qthread PRIVATE simCore simData simVis
+    simUtil OSGEARTH_QT)
 target_include_directories(example_qthread PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qthread PROPERTIES
     FOLDER "Examples"

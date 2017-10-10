@@ -26,20 +26,20 @@
 #include <QVBoxLayout>
 #include <QSignalMapper>
 #include <QClipboard>
-#include "simQt/QtFormatting.h"
-#include "simQt/ScopedSignalBlocker.h"
-#include "simQt/ResourceInitializer.h"
-#include "simQt/EntityTreeWidget.h"
-#include "simQt/EntityFilterLineEdit.h"
-#include "simQt/EntityTreeComposite.h"
-#include "simQt/SettingsGroup.h"
 #include "simQt/AbstractEntityTreeModel.h"
+#include "simQt/EntityFilterLineEdit.h"
+#include "simQt/EntityNameFilter.h"
+#include "simQt/EntityTreeComposite.h"
+#include "simQt/EntityTreeWidget.h"
+#include "simQt/QtFormatting.h"
+#include "simQt/ResourceInitializer.h"
+#include "simQt/ScopedSignalBlocker.h"
+#include "simQt/SettingsGroup.h"
 #include "ui_EntityTreeComposite.h"
 
 namespace simQt {
 
 const QString SETTING_NAME_FILTER = "/FilterSettings/";
-
 
 FilterDialog::FilterDialog(QWidget* parent)
   :QDialog(parent)
@@ -124,11 +124,8 @@ public:
   }
 
 private:
-  QAction* loadAction_;
-  QAction* saveAction_;
-  QAction* clearAction_;
-  QToolButton& button_;
-  FilterConfiguration filterConfig_;
+  /** Declared but not defined to keep cppCheck warning free */
+  ButtonActions(const ButtonActions& rhs);
 
   /** Sets the text and tooltip on the "Load" button */
   void setLoadTextAndTooltips_(const QString& filterName)
@@ -144,6 +141,12 @@ private:
       loadAction_->setToolTip(simQt::formatTooltip(tr("Load"), tr("Loads the saved filter configuration: %1").arg(filterName)));
     }
   }
+
+  QAction* loadAction_;
+  QAction* saveAction_;
+  QAction* clearAction_;
+  QToolButton& button_;
+  FilterConfiguration filterConfig_;
 };
 
 //-----------------------------------------------------------------------------------
@@ -192,8 +195,11 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   composite_(NULL),
   entityTreeWidget_(NULL),
   model_(NULL),
+  nameFilter_(NULL),
   filterDialog_(NULL),
-  useCenterAction_(false)
+  useCenterAction_(false),
+  useEntityIcons_(true),
+  useEntityIconsSet_(false)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -206,6 +212,11 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   connect(entityTreeWidget_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SIGNAL(itemsSelected(QList<uint64_t>)));  // Echo out the signal
   connect(entityTreeWidget_, SIGNAL(itemDoubleClicked(uint64_t)), this, SIGNAL(itemDoubleClicked(uint64_t))); // Echo out the signal
   connect(entityTreeWidget_, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>)), this, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>))); // Echo out the signal
+
+  // model is null at startup. Will be updated in the name filter in the call to setModel()
+  nameFilter_ = new EntityNameFilter(NULL);
+  nameFilter_->bindToWidget(composite_->lineEdit);
+  addEntityFilter(nameFilter_);
 
   // handle right-context menu (any actions will appear there)
   // Create a new QAction for copying data from the clipboard
@@ -249,7 +260,7 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   composite_->treeView->addAction(expandAllAction_);
 
   composite_->pushButton->setDefaultAction(toggleTreeViewAction_);
-  connect(composite_->lineEdit, SIGNAL(changed(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)), this, SLOT(textFilterChanged_(QString, Qt::CaseSensitivity, QRegExp::PatternSyntax)));
+
   connect(composite_->filterButton, SIGNAL(clicked()), this, SLOT(showFilters_()));
   connect(entityTreeWidget_, SIGNAL(numFilteredItemsChanged(int, int)), this, SLOT(setNumFilteredItemsLabel_(int, int)));
 
@@ -278,6 +289,7 @@ EntityTreeComposite::~EntityTreeComposite()
   buttonActions_.clear();
   delete composite_;
   delete entityTreeWidget_;
+  // entityTreeWidget_ owns nameFilter_, so don't delete it
   // we don't own model_ so don't delete it
 }
 
@@ -300,12 +312,17 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
   // Must pass in a valid model
   assert(model != NULL);
 
+  // SDK-120: If useEntityIcons_ is set, then apply it to the model
   model_ = model;
+  if (useEntityIconsSet_ && model_)
+    model_->setUseEntityIcons(useEntityIcons_);
+
+  nameFilter_->setModel(model_);
   entityTreeWidget_->setModel(model_);
   // If the tree is pre-loaded, enable the tree/list button
   if (model_->rowCount() != 0)
     toggleTreeViewAction_->setEnabled(true);
-  connect((QObject*)model, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
+  connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
 }
 
 /** Sets/clears the selected ID in the entity list */
@@ -351,20 +368,12 @@ void EntityTreeComposite::setAlwaysShow(simData::ObjectId id)
 
 void EntityTreeComposite::getFilterSettings(QMap<QString, QVariant>& settings) const
 {
-  settings.insert("RegExp", entityTreeWidget_->regExp());
   entityTreeWidget_->getFilterSettings(settings);
 }
 
 void EntityTreeComposite::setFilterSettings(const QMap<QString, QVariant>& settings)
 {
   simQt::ScopedSignalBlocker blockSignals(*this);
-  QMap<QString, QVariant>::const_iterator it = settings.find("RegExp");
-  if (it != settings.end())
-  {
-    QRegExp regExp = it.value().toRegExp();
-    // Update the GUI and signals will take care of the rest
-    composite_->lineEdit->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
-  }
   entityTreeWidget_->setFilterSettings(settings);
 }
 
@@ -487,7 +496,7 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
 
 void EntityTreeComposite::loadFilterConfig_(int index)
 {
-  setFilterSettings(buttonActions_[index]->filterConfiguration().configuration());
+  entityTreeWidget_->setFilterSettings(buttonActions_[index]->filterConfiguration().configuration());
 }
 
 void EntityTreeComposite::saveFilterConfig_(int index)
@@ -532,12 +541,6 @@ void EntityTreeComposite::clearFilterConfig_(int index)
 void EntityTreeComposite::initializeSettings(SettingsPtr settings)
 {
   EntityTreeWidget::initializeSettings(settings);
-}
-
-void EntityTreeComposite::textFilterChanged_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax syntax)
-{
-  QRegExp regExp(filter, caseSensitive, syntax);
-  entityTreeWidget_->setRegExp(regExp);
 }
 
 void EntityTreeComposite::rowsInserted_(const QModelIndex & parent, int start, int end)
@@ -654,19 +657,24 @@ void EntityTreeComposite::setTreeView_(bool useTreeView)
 
 void EntityTreeComposite::updateActionEnables_()
 {
-  bool enableIt = entityTreeWidget_->isTreeView() && model_->rowCount() > 0;
+  bool enableIt = entityTreeWidget_->isTreeView() && model_ && model_->rowCount() > 0;
   collapseAllAction_->setEnabled(enableIt);
   expandAllAction_->setEnabled(enableIt);
 }
 
 bool EntityTreeComposite::useEntityIcons() const
 {
+  if (!model_)
+    return useEntityIcons_;
   return model_->useEntityIcons();
 }
 
 void EntityTreeComposite::setUseEntityIcons(bool showIcons)
 {
-  model_->setUseEntityIcons(showIcons);
+  useEntityIconsSet_ = true;
+  useEntityIcons_ = showIcons;
+  if (model_)
+    model_->setUseEntityIcons(showIcons);
 }
 
 //---------------------------------------------------------------------------------------------

@@ -20,6 +20,7 @@
  *
  */
 #include "simVis/View.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
 
 namespace simVis
@@ -32,6 +33,28 @@ EarthManipulator::EarthManipulator()
     lockHeading_(false),
     lockPitch_(false)
 {
+}
+
+double EarthManipulator::fovY() const
+{
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
+  return _lastKnownVFOV;
+#else
+  return _vfov;
+#endif
+}
+
+void EarthManipulator::setFovY(double fovy)
+{
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
+  if (_lastKnownVFOV == fovy)
+    return;
+  _lastKnownVFOV = fovy;
+#else
+  if (_vfov == fovy)
+    return;
+  _vfov = fovy;
+#endif
 }
 
 void EarthManipulator::setHeadingLocked(bool lockHeading)
@@ -118,6 +141,14 @@ void EarthManipulator::handleMovementAction(const ActionType& type, double dx, d
 
   // Fall back to base class implementation
   osgEarth::Util::EarthManipulator::handleMovementAction(type, dx, dy, view);
+}
+
+void EarthManipulator::setNode(osg::Node* node)
+{
+  double tmpFov = fovY();
+  osgEarth::Util::EarthManipulator::setNode(node);
+  // the EarthManipulator resets its FOV to the default in setNode(), so make sure it gets updated properly
+  setFovY(tmpFov);
 }
 
 }

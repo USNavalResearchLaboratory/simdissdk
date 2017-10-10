@@ -78,6 +78,11 @@ QString Action::description() const
   return description_;
 }
 
+simQt::ActionRegistry* Action::actionRegistry() const
+{
+  return registry_;
+}
+
 QAction* Action::action() const
 {
   return action_;

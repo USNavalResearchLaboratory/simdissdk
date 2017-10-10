@@ -28,6 +28,8 @@
 #include <QStatusBar>
 #include <QTimer>
 #include <QSignalMapper>
+#include <QGLWidget>
+#include <QWindow>
 
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
@@ -40,6 +42,7 @@ class MyMainWindow : public QMainWindow
 
 public:
   explicit MyMainWindow(simVis::ViewManager* viewMan)
+    : glWindow_(NULL)
   {
     viewMan_ = viewMan;
 
@@ -59,10 +62,17 @@ public:
       mainView->addEventHandler(statsHandler_);
   }
 
+  void setGlWidget(QGLWidget* glWidget)
+  {
+    setCentralWidget(glWidget);
+    glWindow_ = glWidget->windowHandle();
+  }
+
   void paintEvent(QPaintEvent* e)
   {
     // refresh all the views.
-    viewMan_->frame();
+    if (glWindow_ && glWindow_->isExposed())
+      viewMan_->frame();
     timer_.start();
   }
 
@@ -87,6 +97,7 @@ protected:
   QTimer                              timer_;
   osg::ref_ptr<simVis::ViewManager>   viewMan_;
   osg::ref_ptr<simUtil::StatsHandler> statsHandler_;
+  QWindow*                            glWindow_;
 };
 
 #endif /* EXAMPLES_QT_MYMAINWINDOW_H */

@@ -19,7 +19,9 @@
  * disclose, or release this software.
  *
  */
-
+#include <QGLWidget>
+#include <QWindow>
+#include "simVis/View.h"
 #include "Reader.h"
 #include "Gui.h"
 #include "MyMainWindow.h"
@@ -54,10 +56,16 @@ MyMainWindow::~MyMainWindow()
   delete reader_;
 }
 
+void MyMainWindow::setGlWidget(QGLWidget* glWidget)
+{
+  setCentralWidget(glWidget);
+  glWindow_ = glWidget->windowHandle();
+}
+
 void MyMainWindow::paintEvent(QPaintEvent* e)
 {
   // refresh all the views.
-  if (isVisible())
+  if (glWindow_ && glWindow_->isExposed())
     viewManager_->frame();
   redrawTimer_.start();
 

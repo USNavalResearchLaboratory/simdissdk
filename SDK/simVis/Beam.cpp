@@ -19,17 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Notify"
-#include "osg/CullFace"
-#include "osg/Geode"
-#include "osg/PolygonOffset"
-#include "osg/Point"
-#include "osg/LineWidth"
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
-#include "osgEarthSymbology/Symbol"
-#include "osgEarthAnnotation/AnnotationUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
@@ -93,7 +85,7 @@ namespace
       sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs_DrawType_COVERAGE;
 
       // use a "Y-forward" direction vector because the Beam is drawn in ENU LTP space.
-      return simVis::SVFactory::createNode(sv, osg::Vec3(0, 1, 0));
+      return simVis::SVFactory::createNode(sv, osg::Y_AXIS);
   }
 
   /// check for changes that require us to rebuild the entire beam.
@@ -715,10 +707,13 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
     // if assert fails, check that constructor creates this locator for non-relative beams
     assert(positionOffsetLocator_ != NULL);
     // apply the positional offset.
-    positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3());
+    positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
 
     // apply the local orientation.
-    getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset);
+    getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time(), false);
+
+    // since positionOffsetLocator_ is parent, its notification will include getLocator()
+    positionOffsetLocator_->endUpdate();
   }
   dirtyBound();
 }

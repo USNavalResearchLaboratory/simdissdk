@@ -66,11 +66,6 @@ public:
   /** Gets a list of all the selected IDs in the entity list */
   QList<uint64_t> selectedItems() const;
 
-  /** Set RegExp pattern, case sensitivity, matching scheme, etc. for the entity names */
-  void setRegExp(const QRegExp& regExp);
-  /** Return the RegExp pattern, case sensitivity, matching scheme, etc. for the entity names */
-  QRegExp regExp() const;
-
   /** Pass in global settings reference */
   void setSettings(SettingsPtr settings);
   /** Initialize all settings for this widget; The method is static because it is called in the extension start-up before the dialog is created */

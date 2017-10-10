@@ -71,30 +71,6 @@ static const std::string HELP_TEXT =
 
 //////////////////////////////////////////////////////////////////
 
-class IdleClock : public osg::NodeCallback
-{
-public:
-  IdleClock(simCore::ClockImpl& clock, simData::DataStore& dataStore)
-    : clock_(clock),
-      dataStore_(dataStore)
-  {
-  }
-
-  void operator()(osg::Node* node, osg::NodeVisitor* nv)
-  {
-    clock_.idle();
-    const double nowTime = clock_.currentTime().secondsSinceRefYear(dataStore_.referenceYear());
-    dataStore_.update(nowTime);
-    traverse(node, nv);
-  }
-
-private:
-  simCore::ClockImpl& clock_;
-  simData::DataStore& dataStore_;
-};
-
-//////////////////////////////////////////////////////////////////
-
 /** Handles various shortcuts from OSG and activates features in the Viewer App */
 class Shortcuts : public osgGA::GUIEventHandler
 {
@@ -195,7 +171,7 @@ void ViewerApp::init_(osg::ArgumentParser& args)
 
   mainView->addEventHandler(new simVis::PopupHandler(sceneManager_));
 
-  // Add it to the view manager:
+  // Add it to the view manager
   viewManager_->addView(mainView);
 
   // Create the SuperHUD
@@ -255,7 +231,7 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   clock_->registerTimeCallback(simCore::Clock::TimeObserverPtr(new simExamples::SkyNodeTimeUpdater(sceneManager_)));
 
   // Update the clock on an event callback
-  sceneManager_->addUpdateCallback(new IdleClock(*clock_, *dataStore_));
+  sceneManager_->addUpdateCallback(new simExamples::IdleClockCallback(*clock_, *dataStore_));
 
   // Tie in our keyboard shortcuts
   sceneManager_->addEventCallback(new Shortcuts(*this));

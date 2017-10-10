@@ -63,4 +63,3 @@
 #include "simData/UpdateComp.h"
 
 #endif /* SIMDISSDK_SIMDATA_H */
-

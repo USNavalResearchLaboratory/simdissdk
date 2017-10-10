@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKVis OR NOT TARGET SIMDIS_SDKData)
+if(NOT TARGET simVis OR NOT TARGET simData)
     message(STATUS "Skipping simUtil because of missing dependencies.")
     return()
 endif()
@@ -13,6 +13,8 @@ set(SHADER_FILES
 set(UTIL_INC)
 set(UTIL_SRC)
 set(UTIL_HEADERS
+    ${UTIL_SRC}DynamicSelectionPicker.h
+    ${UTIL_INC}Capabilities.h
     ${UTIL_INC}DataStoreTestHelper.h
     ${UTIL_INC}DatumConvert.h
     ${UTIL_INC}DbConfigurationFile.h
@@ -42,6 +44,8 @@ set(UTIL_HEADERS
     ${UTIL_INC}ViewpointPositions.h
 )
 set(UTIL_SOURCES
+    ${UTIL_SRC}DynamicSelectionPicker.cpp
+    ${UTIL_SRC}Capabilities.cpp
     ${UTIL_SRC}DataStoreTestHelper.cpp
     ${UTIL_SRC}DatumConvert.cpp
     ${UTIL_SRC}DbConfigurationFile.cpp
@@ -114,33 +118,34 @@ if(SIMUTIL_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
 
-add_library(SIMDIS_SDKUtil ${STATIC_OR_SHARED} ${UTIL_PROJECT_FILES})
-set_target_properties(SIMDIS_SDKUtil PROPERTIES
+add_library(simUtil ${STATIC_OR_SHARED} ${UTIL_PROJECT_FILES})
+set_target_properties(simUtil PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Util"
 )
-target_include_directories(SIMDIS_SDKUtil PUBLIC
+ApplySDKVersion(simUtil)
+target_include_directories(simUtil PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(SIMDIS_SDKUtil PUBLIC SIMDIS_SDKVis SIMDIS_SDKData SIMDIS_SDKCore)
+target_link_libraries(simUtil PUBLIC simVis simData simCore)
 if(SIMUTIL_SHARED)
-    target_compile_definitions(SIMDIS_SDKUtil PRIVATE SIMDIS_SDKUtil_LIB_EXPORT_SHARED)
+    target_compile_definitions(simUtil PRIVATE simUtil_LIB_EXPORT_SHARED)
 else()
-    target_compile_definitions(SIMDIS_SDKUtil PUBLIC SIMDIS_SDKUtil_LIB_EXPORT_STATIC)
+    target_compile_definitions(simUtil PUBLIC simUtil_LIB_EXPORT_STATIC)
 endif()
 
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(SIMDIS_SDKUtil PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(SIMDIS_SDKUtil SDK_Library)
+    set_target_properties(simUtil PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
+    vsi_install_target(simUtil SDK_Library)
 endif()
 
 if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)
-    target_link_libraries(SIMDIS_SDKUtil PRIVATE OSGEARTH_TRITON)
+    target_link_libraries(simUtil PRIVATE OSGEARTH_TRITON)
 endif()
 if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_SILVERLINING)
-    target_link_libraries(SIMDIS_SDKUtil PRIVATE OSGEARTH_SILVERLINING)
+    target_link_libraries(simUtil PRIVATE OSGEARTH_SILVERLINING)
 endif()
 
 if(INSTALL_SIMDIS_SDK_SHADERS)
@@ -154,7 +159,7 @@ if(INSTALL_SIMDIS_SDK_SHADERS)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMUTIL_SHARED)
-    PostBuildInstallSdkSharedObjects(SIMDIS_SDKUtil)
+    PostBuildInstallSdkSharedObjects(simUtil)
 endif()
 
 if(INSTALL_HEADERS)

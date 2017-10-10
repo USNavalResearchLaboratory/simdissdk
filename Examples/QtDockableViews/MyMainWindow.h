@@ -25,9 +25,12 @@
 #define QTDOCKABLEVIEWS_MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QPointer>
 #include <osg/ref_ptr>
 
 class QTimer;
+class QWindow;
+class QGLWidget;
 namespace simVis
 {
   class SceneManager;
@@ -46,8 +49,12 @@ class MyMainWindow : public QMainWindow
 public:
   explicit MyMainWindow(int framerate);
   virtual ~MyMainWindow();
-  void paintEvent(QPaintEvent* e);
+
+  void setGlWidget(QGLWidget* glWidget);
   simVis::ViewManager* getViewManager();
+
+protected:
+  virtual void paintEvent(QPaintEvent* e);
 
 private slots:
   void createViewDialog_();
@@ -62,6 +69,7 @@ private:
   QTimer*                             timer_;
   osg::ref_ptr<simVis::ViewManager>   viewMan_;
   osg::ref_ptr<simVis::SceneManager>  sceneMan_;
+  QPointer<QWindow>                   lastCreatedGlWindow_;
 };
 
 #endif

@@ -196,7 +196,7 @@ void PlatformAzimElevViewTool::onEntityRemove(ScenarioManager* scenario, EntityN
 }
 
 
-void PlatformAzimElevViewTool::onUpdate(ScenarioManager* scenario, double timestamp, const EntityVector& updates)
+void PlatformAzimElevViewTool::onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
   fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());

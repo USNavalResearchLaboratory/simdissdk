@@ -23,6 +23,7 @@
 #define SIMDIS_UTIL_EXAMPLE_RESOURCES_H
 
 #include "osg/observer_ptr"
+#include "osg/NodeCallback"
 #include "osgEarthUtil/Controls"
 #include "simCore/Common/Export.h"
 #include "simCore/Time/Clock.h"
@@ -69,6 +70,8 @@
 #define EXAMPLE_ROCKET_BURN_TEXTURE       "p.rgb"
 
 namespace osgEarth { class Map; }
+namespace simCore { class ClockImpl; }
+namespace simData { class DataStore; }
 namespace simVis
 {
   class SceneManager;
@@ -157,6 +160,31 @@ namespace simExamples
     osg::observer_ptr<simVis::SceneManager> sceneManager_;
     simCore::TimeStamp lastTime_;
     double hoursOffset_;
+  };
+
+
+  /**
+   * Callback that will idle() a simCore::ClockImpl, then update the associated DataStore.
+   * This is intended to be associated with a single node update callback, such as:
+   * <code>
+   *   scenarioManager_->addUpdateCallback(new simExamples::IdleClock(clock, dataStore));
+   * </code>
+   *
+   * This will link the DataStore update time to the clock time.  Changing the clock time
+   * will trigger a DataStore update on the next update callback.
+   */
+  class SDKUTIL_EXPORT IdleClockCallback : public osg::NodeCallback
+  {
+  public:
+    /** Provides a clock to idle, and a DataStore to update when clock time changes. */
+    IdleClockCallback(simCore::ClockImpl& clock, simData::DataStore& dataStore);
+
+    /** Overrides NodeCallback::operator() to service the callback */
+    virtual void operator()(osg::Node* node, osg::NodeVisitor* nv);
+
+  private:
+    simCore::ClockImpl& clock_;
+    simData::DataStore& dataStore_;
   };
 
 } // end namespace simExamples

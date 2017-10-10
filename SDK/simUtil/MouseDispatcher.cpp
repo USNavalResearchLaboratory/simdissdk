@@ -123,52 +123,10 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////
 
-/**
- * Given a GUI Event Handler, will add the event handler to every new inset and
- * remove it from every removed inset, when the callback is activated
- */
-class AddEventHandlerToViews : public simVis::ViewManager::Callback
-{
-public:
-  /** Constructor */
-  explicit AddEventHandlerToViews(osgGA::GUIEventHandler* guiEventHandler)
-    : guiEventHandler_(guiEventHandler)
-  {
-  }
-
-  /** Add or remove the event handler */
-  virtual void operator()(simVis::View* inset, const EventType& e)
-  {
-    if (guiEventHandler_ != NULL)
-    {
-      switch (e)
-      {
-      case VIEW_ADDED:
-        inset->addEventHandler(guiEventHandler_.get());
-        break;
-      case VIEW_REMOVED:
-        inset->removeEventHandler(guiEventHandler_.get());
-        break;
-      }
-    }
-  }
-
-protected:
-  /** Derived from osg::Referenced */
-  virtual ~AddEventHandlerToViews()
-  {
-  }
-
-private:
-  osg::observer_ptr<osgGA::GUIEventHandler> guiEventHandler_;
-};
-
-///////////////////////////////////////////////////////////////////////////
-
 MouseDispatcher::MouseDispatcher()
 {
   eventHandler_ = new EventHandler(*this);
-  viewObserver_ = new AddEventHandlerToViews(eventHandler_);
+  viewObserver_ = new simVis::AddEventHandlerToViews(eventHandler_);
 }
 
 MouseDispatcher::~MouseDispatcher()
@@ -188,11 +146,7 @@ void MouseDispatcher::setViewManager(simVis::ViewManager* viewManager)
   if (viewManager_ != NULL)
   {
     viewManager_->removeCallback(viewObserver_);
-    // Remove the event handler from each view
-    std::vector<simVis::View*> views;
-    viewManager_->getViews(views);
-    for (std::vector<simVis::View*>::const_iterator i = views.begin(); i != views.end(); ++i)
-      (*i)->removeEventHandler(eventHandler_);
+    viewObserver_->removeFromViews(*viewManager_);
   }
   viewManager_ = viewManager;
 
@@ -200,11 +154,7 @@ void MouseDispatcher::setViewManager(simVis::ViewManager* viewManager)
   if (viewManager_ != NULL)
   {
     viewManager_->addCallback(viewObserver_);
-    // Add the event handler to each view
-    std::vector<simVis::View*> views;
-    viewManager_->getViews(views);
-    for (std::vector<simVis::View*>::const_iterator i = views.begin(); i != views.end(); ++i)
-      (*i)->addEventHandler(eventHandler_);
+    viewObserver_->addToViews(*viewManager_);
   }
 }
 

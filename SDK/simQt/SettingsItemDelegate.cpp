@@ -31,6 +31,7 @@
 #include <QFileDialog>
 #include <limits.h>
 #include "simNotify/Notify.h"
+#include "simCore/String/Utils.h"
 #include "simQt/ColorButton.h"
 #include "simQt/DirectorySelectorWidget.h"
 #include "simQt/FileSelectorWidget.h"
@@ -557,11 +558,8 @@ QWidget* SettingsFontSelectorDelegate::createEditor(QWidget* parent, const QStyl
   FontWidget* fontSelector = new FontWidget(parent);
 
   // search for font in the SIMDIS_FONTPATH directory
-  std::string fontDir;
-  const char* tempString = getenv("SIMDIS_FONTPATH");
-  if (tempString) // only pass directory if we found one, otherwise it will be empty string
-     fontDir = tempString;
-  else
+  const std::string fontDir = simCore::getEnvVar("SIMDIS_FONTPATH");
+  if (fontDir.empty())
   {
     SIM_ERROR << "Could not set font directory.  Check that the environment variable SIMDIS_FONTPATH has been set\n";
   }

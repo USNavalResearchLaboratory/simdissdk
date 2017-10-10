@@ -19,17 +19,6 @@ install(FILES SDKFooter.html
     COMPONENT Documentation
 )
 
-# Pull out version variables for SDK configuration
-file(STRINGS ../SDK/simCore/Common/Version.h
-    MAJOR_MINOR_CODE
-    REGEX "^ *static const int SDKVERSION_M..OR.*; *$"
-)
-string(REGEX REPLACE
-    ".*MAJOR = ([0-9]+).*MINOR = ([0-9]+).*" "\\1.\\2"
-    SDK_VERSION_MAJOR_MINOR
-    "${MAJOR_MINOR_CODE}"
-)
-
 # Generate the Doxyfile for use in the build
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in

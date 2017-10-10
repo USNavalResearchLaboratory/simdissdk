@@ -19,8 +19,8 @@
  * disclose, or release this software.
  *
  */
-#include <osg/LineWidth>
-#include <osgEarth/GeoData>
+#include "osg/LineWidth"
+#include "osgEarth/GeoData"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
@@ -531,8 +531,9 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
         lobAngles = simCore::rotateEulerAngle(llaCoord.orientation(), lobAngles);
       }
       // Use position only, otherwise rendering will be adversely affected
-      getLocator()->setCoordinate(platformCoordPosOnly, time);
-      getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles);
+      getLocator()->setCoordinate(platformCoordPosOnly, time, false);
+      getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles, time, false);
+      getLocator()->endUpdate();
     }
   }
 }

@@ -32,6 +32,7 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/AutoScale"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "osgEarthAnnotation/AnnotationUtils"
 
 #include "simVis/Constants.h"
@@ -105,7 +106,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
     isImageModel_(false),
     autoRotate_(false),
     lastPrefsValid_(false),
-    brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT))
+    brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
+    objectIndexTag_(0)
 {
   osg::Group* labelRoot = new osg::Group();
   labelRoot->setName("labelRoot");
@@ -153,6 +155,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   // Set up the brightness factor for the entity, attaching close to the model
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
 
+  // Tag the platform at the lowest unique level feasible
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(offsetXform_, offsetXform_);
+
   // When alpha volume is on, we turn on this node
   alphaVolumeGroup_ = new osg::Group;
   alphaVolumeGroup_->setName("Alpha Volume Group");
@@ -164,6 +169,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
 
 PlatformModelNode::~PlatformModelNode()
 {
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 }
 
 bool PlatformModelNode::isImageModel() const
@@ -174,6 +180,11 @@ bool PlatformModelNode::isImageModel() const
 osg::Node* PlatformModelNode::offsetNode() const
 {
   return offsetXform_;
+}
+
+unsigned int PlatformModelNode::objectIndexTag() const
+{
+  return objectIndexTag_;
 }
 
 bool PlatformModelNode::addScaledChild(osg::Node* node)
@@ -221,8 +232,6 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     model_ = NULL;
     return true;
   }
-
-  SIM_DEBUG << LC << prefs.commonprefs().name() << " : icon => " << prefs.icon() << std::endl;
 
   // if there's an existing model, save its parent group.
   if (model_.valid())
@@ -684,10 +693,8 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
   overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
   if (!prefs.commonprefs().useoverridecolor())
     overrideColor_->setCombineMode(OverrideColor::OFF);
-  else if (isImageModel_)
-    overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
   else
-    overrideColor_->setCombineMode(OverrideColor::REPLACE_COLOR);
+    overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 }
 
 void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)

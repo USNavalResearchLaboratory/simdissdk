@@ -32,12 +32,14 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}SettingsModel.h
     ${SIMQT_INC}SettingsProxyModel.h
     ${SIMQT_INC}SliderTimeWidgetBinding.h
+    ${SIMQT_INC}SplashScreen.h
     ${SIMQT_INC}StartupLayoutTask.h
     ${SIMQT_INC}StdStreamConsoleChannel.h
     ${SIMQT_INC}TimeButtons.h
     ${SIMQT_INC}TimeFormatContainer.h
     ${SIMQT_INC}TimeSliderClockBinding.h
     ${SIMQT_INC}TimeWidget.h
+    ${SIMQT_INC}Toast.h
     ${SIMQT_INC}UnitContext.h
 )
 set(SIMQT_HEADERS
@@ -57,7 +59,7 @@ set(SIMQT_HEADERS
 )
 
 # Parts of simQt depend on simData
-if(TARGET SIMDIS_SDKData)
+if(TARGET simData)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CategoryFilterWidget.h
         ${SIMQT_INC}CategoryTreeModel.h
@@ -78,10 +80,12 @@ if(TARGET SIMDIS_SDKData)
 endif()
 
 # Parts of simQt depend on simVis
-if(TARGET SIMDIS_SDKVis)
+if(TARGET simVis)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
+        ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityTreeModel.h
+        ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
@@ -133,6 +137,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}SettingsModel.cpp
     ${SIMQT_SRC}SettingsProxyModel.cpp
     ${SIMQT_SRC}SliderTimeWidgetBinding.cpp
+    ${SIMQT_SRC}SplashScreen.cpp
     ${SIMQT_SRC}StartupLayoutManager.cpp
     ${SIMQT_SRC}StartupLayoutTask.cpp
     ${SIMQT_SRC}StdStreamConsoleChannel.cpp
@@ -140,6 +145,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}TimeFormatContainer.cpp
     ${SIMQT_SRC}TimeSliderClockBinding.cpp
     ${SIMQT_SRC}TimeWidget.cpp
+    ${SIMQT_SRC}Toast.cpp
     ${SIMQT_SRC}UnitsComboBox.cpp
     ${SIMQT_SRC}UnitContext.cpp
     ${SIMQT_SRC}WeightedMenuManager.cpp
@@ -147,7 +153,7 @@ set(SIMQT_SOURCES
 )
 
 # Parts of simQt depend on simData
-if(TARGET SIMDIS_SDKData)
+if(TARGET simData)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CategoryFilterWidget.cpp
         ${SIMQT_SRC}CategoryTreeModel.cpp
@@ -167,10 +173,12 @@ if(TARGET SIMDIS_SDKData)
 endif()
 
 # Parts of simQt depend on simVis
-if(TARGET SIMDIS_SDKVis)
+if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
+        ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityTreeModel.cpp
+        ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}QtConversion.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
@@ -217,77 +225,78 @@ if(SIMQT_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
 
-add_library(SIMDIS_SDKQt ${STATIC_OR_SHARED} ${SIMQT_PROJECT_FILES})
-set_target_properties(SIMDIS_SDKQt PROPERTIES
+add_library(simQt ${STATIC_OR_SHARED} ${SIMQT_PROJECT_FILES})
+set_target_properties(simQt PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Qt"
 )
-target_include_directories(SIMDIS_SDKQt
+ApplySDKVersion(simQt)
+target_include_directories(simQt
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
-if(TARGET SIMDIS_SDKData)
-    target_include_directories(SIMDIS_SDKQt PUBLIC
+if(TARGET simData)
+    target_include_directories(simQt PUBLIC
         $<BUILD_INTERFACE:${PROTOBUF_LIBRARY_INCLUDE_PATH}>
     )
 endif()
-if(TARGET SIMDIS_SDKVis)
-    target_include_directories(SIMDIS_SDKQt PUBLIC
+if(TARGET simVis)
+    target_include_directories(simQt PUBLIC
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
         $<BUILD_INTERFACE:${OSGEARTH_LIBRARY_INCLUDE_PATH}>
     )
 endif()
 
-target_link_libraries(SIMDIS_SDKQt PUBLIC SIMDIS_SDKCore SIMDIS_SDKNotify)
+target_link_libraries(simQt PUBLIC simCore simNotify)
 # Parts of simQt depend on simData's protobuf generated code
-if(TARGET SIMDIS_SDKData)
-    add_dependencies(SIMDIS_SDKQt simData_protobuf_generation)
+if(TARGET simData)
+    add_dependencies(simQt simData_protobuf_generation)
 endif()
 
 if(UNIX)
     # UNIX libs that link against simQt need to specify X11 lib on command line
-    target_link_libraries(SIMDIS_SDKQt PUBLIC X11)
+    target_link_libraries(simQt PUBLIC X11)
 endif()
 
 if(SIMQT_SHARED)
-    target_compile_definitions(SIMDIS_SDKQt PRIVATE SIMDIS_SDKQt_LIB_EXPORT_SHARED)
+    target_compile_definitions(simQt PRIVATE simQt_LIB_EXPORT_SHARED)
 else()
-    target_compile_definitions(SIMDIS_SDKQt PUBLIC SIMDIS_SDKQt_LIB_EXPORT_STATIC)
+    target_compile_definitions(simQt PUBLIC simQt_LIB_EXPORT_STATIC)
 endif()
-if(TARGET SIMDIS_SDKData)
-    target_compile_definitions(SIMDIS_SDKQt PRIVATE HAVE_SIMDATA)
+if(TARGET simData)
+    target_compile_definitions(simQt PRIVATE HAVE_SIMDATA)
 endif()
 
 # If simQt is a DLL, avoid linking in "heavy" dependencies if possible
 if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
-    if(TARGET SIMDIS_SDKData)
-        target_link_libraries(SIMDIS_SDKQt PUBLIC SIMDIS_SDKData)
+    if(TARGET simData)
+        target_link_libraries(simQt PUBLIC simData)
     endif()
-    if(TARGET SIMDIS_SDKVis)
-        target_link_libraries(SIMDIS_SDKQt PRIVATE SIMDIS_SDKVis)
+    if(TARGET simVis)
+        target_link_libraries(simQt PRIVATE simVis)
     endif()
 else()
-    if(TARGET SIMDIS_SDKData)
-        target_include_directories(SIMDIS_SDKQt PUBLIC $<BUILD_INTERFACE:${SIMDIS_SDK_BINARY_DIR}/simData>)
+    if(TARGET simData)
+        target_include_directories(simQt PUBLIC $<BUILD_INTERFACE:${SIMDIS_SDK_BINARY_DIR}/simData>)
     endif()
-    if(TARGET SIMDIS_SDKVis)
-        target_include_directories(SIMDIS_SDKQt PRIVATE ${SIMDIS_SDK_BINARY_DIR}/simVis/include)
+    if(TARGET simVis)
+        target_include_directories(simQt PRIVATE ${SIMDIS_SDK_BINARY_DIR}/simVis/include)
     endif()
 endif()
 
 
-VSI_QT_USE_MODULES(SIMDIS_SDKQt LINK_PUBLIC Widgets)
+VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(SIMDIS_SDKQt PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(SIMDIS_SDKQt SDK_Library)
+    set_target_properties(simQt PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
+    vsi_install_target(simQt SDK_Library)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMQT_SHARED)
-    PostBuildInstallSdkSharedObjects(SIMDIS_SDKQt)
+    PostBuildInstallSdkSharedObjects(simQt)
 endif()
 
 if(INSTALL_HEADERS)

@@ -83,7 +83,10 @@ int main(int argc, char** argv)
     driverOptions.url() = token;
 
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-    map->addLayer(new osgEarth::ElevationLayer(token, driverOptions));
+    if (isElevation)
+      map->addLayer(new osgEarth::ElevationLayer(token, driverOptions));
+    else
+      map->addLayer(new osgEarth::ImageLayer(token, driverOptions));
 #else
     if (isElevation)
       map->addElevationLayer(new osgEarth::ElevationLayer(token, driverOptions));

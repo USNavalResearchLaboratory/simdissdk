@@ -56,12 +56,12 @@ struct FrameRateAction : public QAction
     int interval = 0;
     if (frameRateHz != 0)
     {
-      setText(QString("%1 Hertz").arg(frameRateHz));
+      setText(tr("%1 Hertz").arg(frameRateHz));
       interval = 1000 / frameRateHz;
     }
     else
     {
-      setText("Unlimited");
+      setText(tr("Unlimited"));
     }
 
     signalMapper.setMapping(this, interval);
@@ -74,7 +74,7 @@ struct FrameRateAction : public QAction
 // custom action for File->Exit menu :)
 struct ExitAction : public QAction
 {
-  explicit ExitAction(QMainWindow* win) : QAction(QString("Exit"), NULL), win_(win)
+  explicit ExitAction(QMainWindow* win) : QAction(tr("Exit"), NULL), win_(win)
   {
     connect(this, SIGNAL(triggered()), win_, SLOT(close()));
   }
@@ -124,28 +124,27 @@ int main(int argc, char **argv)
 
   MyMainWindow win(viewMan);
   osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
-  win.setCentralWidget(viewWidget);
+  win.setGlWidget(viewWidget);
   win.setGeometry(100, 100, 1024, 800);
 
   QSignalMapper mapper(&app);
   QObject::connect(&mapper, SIGNAL(mapped(int)), &win, SLOT(setTimerInterval(int)));
 
-  win.statusBar()->showMessage(
-    QString("Congratulations! You've embedded the SDK Viewer in a Qt Widget."));
+  win.statusBar()->showMessage(QObject::tr("Congratulations! You've embedded the SDK Viewer in a Qt Widget."));
 
-  QMenu* bar = win.menuBar()->addMenu(QString("File"));
+  QMenu* bar = win.menuBar()->addMenu(QObject::tr("File"));
   ExitAction* action = new ExitAction(&win);
   action->setShortcut(QKeySequence("Alt+Q"));
   bar->addAction(action);
 
-  bar = win.menuBar()->addMenu(QString("Frame Rate"));
+  bar = win.menuBar()->addMenu(QObject::tr("Frame Rate"));
 
-  QAction* toggleFrameRateAction = new QAction("Show Frame Rate", &win);
+  QAction* toggleFrameRateAction = new QAction(QObject::tr("Show Frame Rate"), &win);
   toggleFrameRateAction->setShortcut(QKeySequence("Alt+F"));
   toggleFrameRateAction->setCheckable(true);
   bar->addAction(toggleFrameRateAction);
   QObject::connect(toggleFrameRateAction, SIGNAL(toggled(bool)), &win, SLOT(toggleFrameRate(bool)));
-  bar->addSeparator()->setText("Rates");
+  bar->addSeparator()->setText(QObject::tr("Rates"));
 
   QActionGroup* actionGroup = new QActionGroup(&win);
   actionGroup->addAction(new FrameRateAction(&win, mapper, 1));

@@ -283,7 +283,7 @@ int main(int argc, char** argv)
   mainView->setSceneManager(sceneMan.get());
   mainView->setUpViewInWindow(100, 100, 640, 480);
 
-  // Add it to the view manager:
+  // Add it to the view manager
   viewMan->addView(mainView);
 
   // Set up the application data

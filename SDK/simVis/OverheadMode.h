@@ -84,7 +84,7 @@ public:
    * below automatically does this for cull visitors, but for other types we have to
    * do it manually by calling this method. (For an intersection visitor, for example)
    */
-  static void prepareVisitor(View* view, osg::NodeVisitor* nv);
+  static void prepareVisitor(const View* view, osg::NodeVisitor* nv);
 
 public:
   /**

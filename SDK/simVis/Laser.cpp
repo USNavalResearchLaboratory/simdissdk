@@ -22,8 +22,8 @@
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 
-#include "osgEarth/GeoData"
 #include "osg/LineWidth"
+#include "osgEarth/GeoData"
 
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
@@ -372,9 +372,11 @@ void LaserNode::updateLocator_(const simData::LaserUpdate* newUpdate, const simD
       assert(laserXYZOffsetLocator_ != NULL);
 
       // laser xyz offsets are relative to host platform orientation;
-      laserXYZOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time());
+      laserXYZOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
       // laser orientation is not-relative to host platform orientation;
-      getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time());
+      getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time(), false);
+      // laserXYZOffsetLocator_ is parent to getLocator, its update will update both
+      laserXYZOffsetLocator_->endUpdate();
     }
     else
     {

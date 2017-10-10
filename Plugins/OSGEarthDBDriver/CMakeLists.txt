@@ -34,7 +34,7 @@ target_link_libraries(osgdb_osgearth_db
         SQLITE3
         OSG OSGDB OPENTHREADS
         OSGEARTH
-        SIMDIS_SDKCore
+        simCore
 )
 target_compile_definitions(osgdb_osgearth_db PRIVATE USE_SIMDIS_SDK)
 if(SDK_BIG_ENDIAN)

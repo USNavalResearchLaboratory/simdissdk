@@ -210,20 +210,18 @@ simVis::Registry::Registry()
   modelExtensions_.push_back("jpg");
 
   // initialize the default NOTIFY level from the environment variable
-  const char* val = getenv("SIM_NOTIFY_LEVEL");
-  if (val)
+  const std::string val = simCore::getEnvVar("SIM_NOTIFY_LEVEL");
+  if (!val.empty())
   {
     simNotify::setNotifyLevel(simNotify::stringToSeverity(val));
   }
 
   memoryChecking_ = false;
-  if (getenv("SIM_MEMORY_CHECKING"))
+  const std::string memoryCheckingEnv = simCore::getEnvVar("SIM_MEMORY_CHECKING");
+  if (simCore::caseCompare(memoryCheckingEnv, "On") == 0)
   {
-    if (simCore::caseCompare(getenv("SIM_MEMORY_CHECKING"), "On") == 0)
-    {
-      SIM_INFO << "SIM_MEMORY_CHECKING enabled"  << std::endl;
-      memoryChecking_ = true;
-    }
+    SIM_INFO << "SIM_MEMORY_CHECKING enabled"  << std::endl;
+    memoryChecking_ = true;
   }
 
   // by default, articulated models aren't shared so that you can
@@ -520,10 +518,10 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
 
   // Set up an LOD for performance's sake that eliminates the object from drawing if eye is too far
   osg::LOD* lod = new osg::LOD;
-  // Some models like MP2 could change size over time, so give a default radius and don't accept 0.0
-  const float radius = simCore::sdkMax(result->getBound().radius(), 32.f); // meters
-  // LOD scale of 5000 times radius was based on visibility tests with a 2k pixel screen maximized
-  lod->addChild(result, 0.f, radius * 5000.f); // Minimum value: 160km (5000 * 32) before phase out
+  // Use a pixel-size LOD.  Range LOD scales relative to eye distance, but models that get distorted
+  // significantly in only 2 dimensions will have significant LOD issues with that approach.
+  lod->setRangeMode(osg::LOD::PIXEL_SIZE_ON_SCREEN);
+  lod->addChild(result, 2.f, std::numeric_limits<float>::max());
   result = lod;
 
   // Save the is-image flag
@@ -615,15 +613,14 @@ std::string simVis::Registry::findFontFile(const std::string& name) const
     osgDB::FilePathList filePaths;
 
     // search for font in the SIMDIS_FONTPATH directory, falling back on SIMDIS_SDK_FILE_PATH (/fonts)
-    const char* tempString = getenv("SIMDIS_FONTPATH");
-    if (tempString)
+    std::string tempString = simCore::getEnvVar("SIMDIS_FONTPATH");
+    if (!tempString.empty())
       filePaths.push_back(tempString);
-    tempString = getenv("SIMDIS_SDK_FILE_PATH");
-    if (tempString)
+    tempString = simCore::getEnvVar("SIMDIS_SDK_FILE_PATH");
+    if (!tempString.empty())
     {
-      std::string sdkFilePath = tempString;
-      filePaths.push_back(sdkFilePath);
-      filePaths.push_back(sdkFilePath + "/fonts");
+      filePaths.push_back(tempString);
+      filePaths.push_back(tempString + "/fonts");
     }
 
     // Search the disk

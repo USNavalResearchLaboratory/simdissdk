@@ -23,77 +23,60 @@ writeHeader()
   echo " * disclose, or release this software." >> $1
   echo " *" >> $1
   echo " */" >> $1
+  echo "#ifndef SIMDISSDK_${2}_H" >> $1
+  echo "#define SIMDISSDK_${2}_H" >> $1
+  echo "" >> $1
+}
+
+addIncludes()
+{
+  sort -f $1.inc >> $1
+  rm -f $1.inc
+}
+
+writeFooter()
+{
+  echo "" >> $1
+  echo "#endif /* SIMDISSDK_${2}_H */" >> $1
 }
 
 # simVis
-writeHeader simVis.h
-echo "#ifndef SIMDISSDK_SIMVIS_H" >> simVis.h
-echo "#define SIMDISSDK_SIMVIS_H" >> simVis.h
-echo "" >> simVis.h
+writeHeader simVis.h SIMVIS
+echo "#include \"simVis/Shaders.h\"" >> simVis.h.inc
+echo "#include \"simVis/osgEarthVersion.h\"" >> simVis.h.inc
+find simVis -name '*.h' | grep -v "simVis/Shaders.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simVis.h.inc
+addIncludes simVis.h
+writeFooter simVis.h SIMVIS
 
-find simVis -name '*.h' | sort -f | grep -v "simVis/Shaders.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simVis.h
-
-echo "" >> simVis.h
-echo "#endif /* SIMDISSDK_SIMVIS_H */" >> simVis.h
-echo "" >> simVis.h
 
 # simUtil
-writeHeader simUtil.h
-echo "#ifndef SIMDISSDK_SIMUTIL_H" >> simUtil.h
-echo "#define SIMDISSDK_SIMUTIL_H" >> simUtil.h
-echo "" >> simUtil.h
-
-find simUtil -name '*.h' | sort -f | sed 's/^/#include "/' | sed 's/$/"/' >> simUtil.h
-
-echo "" >> simUtil.h
-echo "#endif /* SIMDISSDK_SIMUTIL_H */" >> simUtil.h
-echo "" >> simUtil.h
+writeHeader simUtil.h SIMUTIL
+find simUtil -name '*.h' | sort -f | sed 's/^/#include "/' | sed 's/$/"/' >> simUtil.h.inc
+addIncludes simUtil.h
+writeFooter simUtil.h SIMUTIL
 
 # simCore
-writeHeader simCore.h
-echo "#ifndef SIMDISSDK_SIMCORE_H" >> simCore.h
-echo "#define SIMDISSDK_SIMCORE_H" >> simCore.h
-echo "" >> simCore.h
-
-find simCore -name '*.h' | sort -f | grep -v "inttypes.h" | grep -v "stdint.h" | grep -v "HighPerformanceGraphics.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simCore.h
-
-echo "" >> simCore.h
-echo "#endif /* SIMDISSDK_SIMCORE_H */" >> simCore.h
-echo "" >> simCore.h
+writeHeader simCore.h SIMCORE
+echo "#include \"simCore/Common/Version.h\"" >> simCore.h.inc
+find simCore -name '*.h' | sort -f | grep -v "inttypes.h" | grep -v "stdint.h" | grep -v "HighPerformanceGraphics.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simCore.h.inc
+addIncludes simCore.h
+writeFooter simCore.h SIMCORE
 
 # simNotify
-writeHeader simNotify.h
-echo "#ifndef SIMDISSDK_SIMNOTIFY_H" >> simNotify.h
-echo "#define SIMDISSDK_SIMNOTIFY_H" >> simNotify.h
-echo "" >> simNotify.h
-
-find simNotify -name '*.h' | sort -f | sed 's/^/#include "/' | sed 's/$/"/' >> simNotify.h
-
-echo "" >> simNotify.h
-echo "#endif /* SIMDISSDK_SIMNOTIFY_H */" >> simNotify.h
-echo "" >> simNotify.h
+writeHeader simNotify.h SIMNOTIFY
+find simNotify -name '*.h' | sort -f | sed 's/^/#include "/' | sed 's/$/"/' >> simNotify.h.inc
+addIncludes simNotify.h
+writeFooter simNotify.h SIMNOTIFY
 
 # simData
-writeHeader simData.h
-echo "#ifndef SIMDISSDK_SIMDATA_H" >> simData.h
-echo "#define SIMDISSDK_SIMDATA_H" >> simData.h
-echo "" >> simData.h
-
-find simData -name '*.h' | sort -f | grep -v "simData.pb.h" | grep -v "\-inl.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simData.h
-
-echo "" >> simData.h
-echo "#endif /* SIMDISSDK_SIMDATA_H */" >> simData.h
-echo "" >> simData.h
+writeHeader simData.h SIMDATA
+find simData -name '*.h' | sort -f | grep -v "simData.pb.h" | grep -v "\-inl.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simData.h.inc
+addIncludes simData.h
+writeFooter simData.h SIMDATA
 
 # simQt
-writeHeader simQt.h
-echo "#ifndef SIMDISSDK_SIMQT_H" >> simQt.h
-echo "#define SIMDISSDK_SIMQT_H" >> simQt.h
-echo "" >> simQt.h
-
-find simQt -name '*.h' | sort -f | sed 's/^/#include "/' | sed 's/$/"/' >> simQt.h
-
-echo "" >> simQt.h
-echo "#endif /* SIMDISSDK_SIMQT_H */" >> simQt.h
-echo "" >> simQt.h
+writeHeader simQt.h SIMQT
+find simQt -name '*.h' | sort -f | sed 's/^/#include "/' | sed 's/$/"/' >> simQt.h.inc
+addIncludes simQt.h
+writeFooter simQt.h SIMQT
 

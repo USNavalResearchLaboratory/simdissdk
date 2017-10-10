@@ -31,6 +31,8 @@
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
 
 #include "simNotify/Notify.h"
+#include "simCore/String/Utils.h"
+#include "simCore/Time/ClockImpl.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 #include "simVis/Registry.h"
@@ -320,13 +322,10 @@ void simExamples::configureSearchPaths()
     pathList.push_back(modelPath + PATH_SEP + folders[k]);
 
   // Add SIMDIS_DIR variables
-  std::string SIMDIS_DIR;
-  if (getenv("SIMDIS_DIR") != 0)
+  const std::string SIMDIS_DIR = simCore::getEnvVar("SIMDIS_DIR");
+  if (!SIMDIS_DIR.empty())
   {
-    SIMDIS_DIR = getenv("SIMDIS_DIR");
-    std::string dataDir = SIMDIS_DIR;
-    dataDir += PATH_SEP;
-    dataDir += "data";
+    const std::string dataDir = SIMDIS_DIR + PATH_SEP + "data";
     const std::string simdisDirModelFolders[] = {
       "aircraft",
       "decoy",
@@ -376,9 +375,9 @@ void simExamples::configureSearchPaths()
   pathList.push_back(basePath + PATH_SEP + "textures");
 
   // Add the user dir to the end of the path lists to be searched last
-  if (getenv("SIMDIS_USER_DIR") != 0)
+  const std::string simdisUserDir = simCore::getEnvVar("SIMDIS_USER_DIR");
+  if (!simdisUserDir.empty())
   {
-    std::string simdisUserDir = getenv("SIMDIS_USER_DIR");
     modelPathList.push_back(simdisUserDir);
     pathList.push_back(simdisUserDir);
   }
@@ -401,8 +400,8 @@ void simExamples::configureSearchPaths()
 
 std::string simExamples::getSampleDataPath()
 {
-  const char *env = getenv(EXAMPLE_FILE_PATH_VAR);
-  if (env == NULL || env[0] == '\0')
+  const std::string env = simCore::getEnvVar(EXAMPLE_FILE_PATH_VAR);
+  if (env.empty())
   {
     SIM_WARN << "The " << EXAMPLE_FILE_PATH_VAR << " environment variable has not been set. " <<
       "Searching for data in " << EXAMPLE_DEFAULT_DATA_PATH << ".\n";
@@ -410,24 +409,24 @@ std::string simExamples::getSampleDataPath()
   }
   else
   {
-    return std::string(env);
+    return env;
   }
 }
 
 std::string simExamples::getTritonResourcesPath()
 {
   // Defaults to ${SIMDIS_DIR}/data/Triton/
-  std::string SIMDIS_DIR;
-  if (getenv("SIMDIS_DIR") != 0)
+  const std::string SIMDIS_DIR = simCore::getEnvVar("SIMDIS_DIR");
+  if (!SIMDIS_DIR.empty())
   {
-    SIMDIS_DIR = getenv("SIMDIS_DIR");
-    std::string dir = SIMDIS_DIR + "/data/Triton";
+    const std::string dir = SIMDIS_DIR + "/data/Triton";
     if (osgDB::fileExists(dir))
       return dir;
   }
-  if (getenv("TRITON_PATH") != 0)
+  const std::string TRITON_PATH = simCore::getEnvVar("TRITON_PATH");
+  if (!TRITON_PATH.empty())
   {
-    return std::string(getenv("TRITON_PATH")) + "/Resources";
+    return TRITON_PATH + "/Resources"; // note upper case r
   }
   return "";
 }
@@ -435,17 +434,17 @@ std::string simExamples::getTritonResourcesPath()
 std::string simExamples::getSilverLiningResourcesPath()
 {
   // Defaults to ${SIMDIS_DIR}/data/SilverLining/
-  std::string SIMDIS_DIR;
-  if (getenv("SIMDIS_DIR") != 0)
+  const std::string SIMDIS_DIR = simCore::getEnvVar("SIMDIS_DIR");
+  if (!SIMDIS_DIR.empty())
   {
-    SIMDIS_DIR = getenv("SIMDIS_DIR");
-    std::string dir = SIMDIS_DIR + "/data/SilverLining";
+    const std::string dir = SIMDIS_DIR + "/data/SilverLining";
     if (osgDB::fileExists(dir))
       return dir;
   }
-  if (getenv("SILVERLINING_PATH") != 0)
+  const std::string SILVERLINING_PATH = simCore::getEnvVar("SILVERLINING_PATH");
+  if (!SILVERLINING_PATH.empty())
   {
-    return std::string(getenv("SILVERLINING_PATH")) + "/resources";
+    return SILVERLINING_PATH + "/resources"; // note lower case r
   }
   return "";
 }
@@ -527,4 +526,20 @@ void simExamples::SkyNodeTimeUpdater::setHoursOffset(double hours)
 double simExamples::SkyNodeTimeUpdater::hoursOffset() const
 {
   return hoursOffset_;
+}
+
+////////////////////////////////////////////////
+
+simExamples::IdleClockCallback::IdleClockCallback(simCore::ClockImpl& clock, simData::DataStore& dataStore)
+  : clock_(clock),
+    dataStore_(dataStore)
+{
+}
+
+void simExamples::IdleClockCallback::operator()(osg::Node* node, osg::NodeVisitor* nv)
+{
+  clock_.idle();
+  const double nowTime = clock_.currentTime().secondsSinceRefYear(dataStore_.referenceYear());
+  dataStore_.update(nowTime);
+  traverse(node, nv);
 }

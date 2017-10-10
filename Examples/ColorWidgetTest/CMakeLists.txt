@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKQt)
+if(NOT TARGET simQt)
     return()
 endif()
 
@@ -22,7 +22,7 @@ VSI_QT_WRAP_CPP(Q_COLOR_HEADERS_MOC
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(example_QtColorWidget ${GUI_SOURCES} ${Q_COLOR_HEADERS_MOC} ${Q_COLOR_FORMS_HEADERS})
-target_link_libraries(example_QtColorWidget PRIVATE SIMDIS_SDKQt)
+target_link_libraries(example_QtColorWidget PRIVATE simQt)
 target_include_directories(example_QtColorWidget PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_QtColorWidget PROPERTIES
     FOLDER "Examples"

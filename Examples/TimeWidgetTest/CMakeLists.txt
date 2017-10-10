@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKQt)
+if(NOT TARGET simQt)
     return()
 endif()
 
@@ -20,7 +20,7 @@ VSI_QT_WRAP_CPP(Q_TIMEWIDGET_MOC
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(example_QtTimeWidget ${APP_SOURCES} ${Q_TIMEWIDGET_MOC} ${Q_TIMEWIDGET_FORMS})
-target_link_libraries(example_QtTimeWidget PRIVATE SIMDIS_SDKQt SIMDIS_SDKCore)
+target_link_libraries(example_QtTimeWidget PRIVATE simQt simCore)
 target_include_directories(example_QtTimeWidget PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_QtTimeWidget PROPERTIES
     FOLDER "Examples"

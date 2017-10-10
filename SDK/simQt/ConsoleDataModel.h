@@ -242,6 +242,36 @@ private:
 };
 #endif
 
+/** Console Data Model filter that rejects strings that contain the given text */
+class SDKQT_EXPORT SimpleConsoleTextFilter : public ConsoleDataModel::EntryFilter
+{
+public:
+  SimpleConsoleTextFilter();
+
+  /**
+   * Adds a filter to the list of strings to ignore.  If incoming text contains the filter
+   * provided, then it will not be added to the console.
+   */
+  void addFilter(const QString& filter);
+
+  /** Adds common Qt and PNG + Qt filters */
+  void addCommonQtPngFilters();
+  /** Adds osgEarth filters */
+  void addCommonOsgEarthFilters();
+
+  /** If true, then in debug mode acceptEntry() will still show the message, just with a DEBUG_INFO priority. */
+  void setShowInDebugMode(bool showInDebug);
+
+  /** Rejects messages with the substrings added in addFilter() */
+  virtual bool acceptEntry(ConsoleDataModel::ConsoleEntry& entry) const;
+
+private:
+  std::vector<QString> filters_;
+#ifdef DEBUG
+  bool showInDebugMode_;
+#endif
+};
+
 }
 
 Q_DECLARE_METATYPE(simNotify::NotifySeverity);

@@ -233,25 +233,6 @@ QList<uint64_t> EntityTreeWidget::selectedItems() const
   return selectionList_;
 }
 
-void EntityTreeWidget::setRegExp(const QRegExp& regExp)
-{
-  // Changing the filter clears out the "Always Show" value
-  proxyModel_->setAlwaysShow(0);
-  if (regExp != proxyModel_->filterRegExp())
-  {
-    proxyModel_->setFilterRegExp(regExp);
-    delaySend_();
-    QMap<QString, QVariant> settings;
-    settings.insert("RegExp", regExp);
-    emit filterSettingsChanged(settings);
-  }
-}
-
-QRegExp EntityTreeWidget::regExp() const
-{
-  return proxyModel_->filterRegExp();
-}
-
 void EntityTreeWidget::setSettings(SettingsPtr settings)
 {
   settings_ = settings;

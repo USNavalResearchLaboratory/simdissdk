@@ -38,10 +38,8 @@
 #include "simVis/Tool.h"
 #include "simVis/Utils.h"
 
-namespace simRF
-{
-  class RFPropagationFacade;
-}
+namespace simCore { class MagneticDatumConvert; }
+namespace simRF { class RFPropagationFacade; }
 
 namespace simVis
 {
@@ -62,6 +60,8 @@ namespace simVis
   /// Default effective Earth radius scalar for RF horizon measurement
   const double DEFAULT_RF_RADIUS = 4. / 3.;
 
+  /// Number of enumerations in State::Coord
+  const size_t COORD_CACHE_SIZE = 16;
   /**
   * RangeTool is a subsystem for drawing range measurements.
   *
@@ -220,6 +220,9 @@ namespace simVis
       ///@return lla values for the given position relative to the local frame
       simCore::Vec3 local2lla(const osg::Vec3d& local);
 
+      ///@return the local/ENU vector produced by rotating the start->end vector by specified az, rotated in the ltp
+      osg::Vec3d rotateEndVec(double az);
+
       /**
       * Fills in a entity state based on the given scenario and entity node
       * @param scenario The scenario for getting the host platform of node
@@ -228,6 +231,11 @@ namespace simVis
       * @return zero on success and non-zero on failure
       */
       int populateEntityState(const simVis::ScenarioManager& scenario, const simVis::EntityNode* node, EntityState& state);
+
+      /**
+      * Resets the coord cache to initial state
+      */
+      void resetCoordCache();
 
       /**@name internal state (TODO: make private)
        *@{
@@ -238,7 +246,9 @@ namespace simVis
       EntityState                      endEntity_;
       simCore::EarthModelCalculations  earthModel_;
       simCore::CoordinateConverter     coordConv_;
-      osgEarth::optional<osg::Vec3d>   coord_[16];  // 16 equals the number of enumerations in State::Coord
+      osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
+      simCore::MagneticDatumConvert* magneticDatumConvert_; // converter for magnetic azimuth measurements
+      simCore::TimeStamp timeStamp_; // the timeStamp of the last update
       ///@}
     };
 
@@ -621,8 +631,9 @@ namespace simVis
       /**
       * Updates the range tool based on a new time stamp
       * (Called internally)
+      * @return true if update processed normally, false if scenario is null or association was not valid
       */
-      bool update(ScenarioManager* scenario, double timestamp);
+      bool update(ScenarioManager* scenario, const simCore::TimeStamp& timestamp);
 
       /**
       * Sets dirty flag and clears labels_ cache to force text color update
@@ -646,17 +657,19 @@ namespace simVis
       osgEarth::Revision                 obj1LocatorRev_;        // tracks whether entity 1 is up to date with scenario data
       osgEarth::Revision                 obj2LocatorRev_;        // tracks whether entity 2 is up to date with scenario data
       CalculationVector                  calculations_;          // calculations to render
+      State                              state_;                 // the calc state for this assoc
 
     protected:
       /// osg::Referenced-derived
-      virtual ~Association() {}
+      virtual ~Association();
 
     private:
       // regenerates scene geometry
       void refresh_(
         EntityNode*      obj1,
         EntityNode*      obj2,
-        ScenarioManager* scenario);
+        const ScenarioManager& scenario,
+        const simCore::TimeStamp& timeStamp);
     };
 
     /// vector of Association pointers
@@ -688,10 +701,9 @@ namespace simVis
     const AssociationVector& getAssociations() const { return associations_; }
 
     /**
-     * Range Tool updates do not require a time value, nor a vector
-     * convenience method to update without time.
+     * Range Tool updates require a full timestamp, but do not use/require EntityVector.
      */
-    void update(ScenarioManager* scenario) { onUpdate(scenario, 0.0, EntityVector()); }
+    void update(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp) { onUpdate(scenario, timeStamp, EntityVector()); }
 
     /**
     * Gets the node representing the range tool's graphics.
@@ -705,7 +717,7 @@ namespace simVis
     /**
     * Updates the range tool based on a new time stamp
     */
-    void onUpdate(ScenarioManager* scenario, double timestamp, const EntityVector& updates);
+    void onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
 
   public:
     /// @copydoc osgEarth::setDirty()
@@ -728,7 +740,6 @@ namespace simVis
     AssociationVector                  associations_;         // all active associations
     osg::ref_ptr<RefreshGroup>         root_;                 // scene graph container
     osg::observer_ptr<ScenarioManager> lastScenario_;         // saves a scenario pointer
-
     void setupDefaultOptions();
 
   public: // Helper Graphics classes
@@ -1075,6 +1086,16 @@ namespace simVis
       virtual ~TrueCompositeAnglePieSliceGraphic() {}
     };
 
+    struct SDKVIS_EXPORT MagneticAzimuthPieSliceGraphic : public PieSliceGraphic
+    {
+    public:
+      MagneticAzimuthPieSliceGraphic();
+      void render(osg::Geode* geode, State& state);
+    protected:
+      /// osg::Referenced-derived
+      virtual ~MagneticAzimuthPieSliceGraphic() {}
+    };
+
     /// Graphics
     struct SDKVIS_EXPORT RelOriAzimuthPieSliceGraphic : public PieSliceGraphic
     {
@@ -1336,6 +1357,18 @@ namespace simVis
     public:
       /// osg::Referenced-derived
       virtual ~TrueCompositeAngleMeasurement() {}
+    };
+
+    class SDKVIS_EXPORT MagneticAzimuthMeasurement : public Measurement
+    {
+    public:
+      MagneticAzimuthMeasurement();
+      virtual double value(State& state) const;
+      virtual bool willAccept(const simVis::RangeTool::State& state) const;
+
+    public:
+      /// osg::Referenced-derived
+      virtual ~MagneticAzimuthMeasurement() {}
     };
 
     // Orientation-relative angles

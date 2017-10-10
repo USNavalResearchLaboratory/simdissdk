@@ -42,6 +42,7 @@
 #include "simQt/EntityFilter.h"
 #include "simQt/EntityFilterLineEdit.h"
 #include "simQt/EntityLineEdit.h"
+#include "simQt/EntityNameFilter.h"
 #include "simQt/EntityProxyModel.h"
 #include "simQt/EntityStateFilter.h"
 #include "simQt/EntityTreeComposite.h"
@@ -72,6 +73,7 @@
 #include "simQt/SettingsModel.h"
 #include "simQt/SettingsProxyModel.h"
 #include "simQt/SliderTimeWidgetBinding.h"
+#include "simQt/SplashScreen.h"
 #include "simQt/StartupLayoutManager.h"
 #include "simQt/StartupLayoutTask.h"
 #include "simQt/StdStreamConsoleChannel.h"
@@ -81,6 +83,7 @@
 #include "simQt/TimestampedLayerManager.h"
 #include "simQt/TimeWidget.h"
 #include "simQt/TimeWidgetClockBinding.h"
+#include "simQt/Toast.h"
 #include "simQt/UnitContext.h"
 #include "simQt/UnitsComboBox.h"
 #include "simQt/ViewManagerDataModel.h"
@@ -88,4 +91,3 @@
 #include "simQt/WidgetSettings.h"
 
 #endif /* SIMDISSDK_SIMQT_H */
-

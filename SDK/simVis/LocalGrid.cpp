@@ -227,12 +227,12 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
 void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
 {
   osg::ref_ptr<simVis::Locator> locator = this->getLocator();
-
+  // suppress notification, leave that to endUpdate below
   locator->setComponentsToInherit(
     simVis::Locator::COMP_POSITION                    |
     (prefs.followyaw()   ? simVis::Locator::COMP_HEADING : 0) |
     (prefs.followpitch() ? simVis::Locator::COMP_PITCH   : 0) |
-    (prefs.followroll()  ? simVis::Locator::COMP_ROLL    : 0));
+    (prefs.followroll()  ? simVis::Locator::COMP_ROLL    : 0), false);
 
   // positional offset:
   simCore::Vec3 posOffset;
@@ -250,13 +250,14 @@ void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
   simCore::Vec3 oriOffset;
   if (prefs.has_gridorientationoffset())
   {
-    simData::BodyOrientation ori = prefs.gridorientationoffset();
+    const simData::BodyOrientation& ori = prefs.gridorientationoffset();
     oriOffset.set(ori.yaw(), ori.pitch(), ori.roll());
   }
 
-  locator->setLocalOffsets(
-    posOffset,
-    oriOffset);
+  // Suppress single notify on setLocalOffsets...
+  locator->setLocalOffsets(posOffset, oriOffset, locator->getParentLocator()->getTime(), false);
+  // ...instead send explicit notify for it and setComponentsToInherit above
+  locator->endUpdate();
 }
 
 // Notification that host locator changed

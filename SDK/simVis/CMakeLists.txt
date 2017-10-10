@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKData OR NOT OSG_FOUND OR NOT OSGEARTH_FOUND)
+if(NOT TARGET simData OR NOT OSG_FOUND OR NOT OSGEARTH_FOUND)
     message(STATUS "Skipping simVis because of missing dependencies.")
     return()
 endif()
@@ -19,6 +19,8 @@ set(SHADER_FILES
     GlowHighlight.frag.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
+    Picker.vert.glsl
+    Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
     Projector.vert.glsl
     Projector.frag.glsl
@@ -72,6 +74,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ObjectSelectionHandler.h
     ${VIS_INC}OverheadMode.h
     ${VIS_INC}OverrideColor.h
+    ${VIS_INC}Picker.h
     ${VIS_INC}PlanetariumViewTool.h
     ${VIS_INC}Platform.h
     ${VIS_INC}PlatformAzimElevViewTool.h
@@ -187,6 +190,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Locator.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
+    ${VIS_SRC}Picker.cpp
     ${VIS_SRC}PlanetariumViewTool.cpp
     ${VIS_SRC}Platform.cpp
     ${VIS_SRC}PlatformAzimElevViewTool.cpp
@@ -279,26 +283,34 @@ if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
     set(HAVE_SILVERLINING_NODEKIT 1)
 endif()
 include(CheckOSGEarthMethodExists)
-# Newer than 1.6.0 release removes tileSize() from TileSource
-check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
-if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
+# Newer than 1.7.0 release adds clear() to Profiler
+check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
+if(HAVE_OSGEARTH_PROFILER_CLEAR)
     set(SDK_OSGEARTH_DEVEL 1)
-    # Next anticipated version is 1.7.0
+    # Next anticipated version is 1.8.0
     set(SDK_OSGEARTH_VERSION_MAJOR 1)
-    set(SDK_OSGEARTH_VERSION_MINOR 7)
+    set(SDK_OSGEARTH_VERSION_MINOR 8)
     set(SDK_OSGEARTH_VERSION_PATCH 0)
 else()
-    # Version 1.6.0 changed Map's setName to setMapName
-    check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-    if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+    # Newer than 1.6.0 release removes tileSize() from TileSource
+    check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
+    if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
         set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 6)
+        set(SDK_OSGEARTH_VERSION_MINOR 7)
         set(SDK_OSGEARTH_VERSION_PATCH 0)
     else()
-        # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
-        set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 5)
-        set(SDK_OSGEARTH_VERSION_PATCH 0)
+        # Version 1.6.0 changed Map's setName to setMapName
+        check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
+        if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+            set(SDK_OSGEARTH_VERSION_MAJOR 1)
+            set(SDK_OSGEARTH_VERSION_MINOR 6)
+            set(SDK_OSGEARTH_VERSION_PATCH 0)
+        else()
+            # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
+            set(SDK_OSGEARTH_VERSION_MAJOR 1)
+            set(SDK_OSGEARTH_VERSION_MINOR 5)
+            set(SDK_OSGEARTH_VERSION_PATCH 0)
+        endif()
     endif()
 endif()
 
@@ -349,35 +361,36 @@ if(SIMVIS_SHARED)
     set(STATIC_OR_SHARED SHARED)
 endif()
 
-add_library(SIMDIS_SDKVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
-set_target_properties(SIMDIS_SDKVis PROPERTIES
+add_library(simVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
+set_target_properties(simVis PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "SIMDIS SDK - Vis"
 )
-target_include_directories(SIMDIS_SDKVis PUBLIC
+ApplySDKVersion(simVis)
+target_include_directories(simVis PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(SIMDIS_SDKVis PUBLIC SIMDIS_SDKData SIMDIS_SDKCore SIMDIS_SDKNotify
+target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} ${OSGEARTH_ALL_LIBDEPENDENCIES})
 if(SIMVIS_SHARED)
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE SIMDIS_SDKVis_LIB_EXPORT_SHARED)
+    target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
-    target_compile_definitions(SIMDIS_SDKVis PUBLIC SIMDIS_SDKVis_LIB_EXPORT_STATIC)
+    target_compile_definitions(simVis PUBLIC simVis_LIB_EXPORT_STATIC)
 endif()
 
 
 # FFP in LightDiffuse and LightAmbient requires linking to OpenGL
 find_package(OpenGL)
 if(OPENGL_FOUND)
-    target_link_libraries(SIMDIS_SDKVis PRIVATE ${OPENGL_LIBRARIES})
-    target_compile_definitions(SIMDIS_SDKVis PRIVATE SIMVIS_GL_FIXED_FUNCTION_AVAILABLE)
+    target_link_libraries(simVis PRIVATE ${OPENGL_LIBRARIES})
+    target_compile_definitions(simVis PRIVATE SIMVIS_GL_FIXED_FUNCTION_AVAILABLE)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(SIMDIS_SDKVis PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(SIMDIS_SDKVis SDK_Library)
+    set_target_properties(simVis PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
+    vsi_install_target(simVis SDK_Library)
 endif()
 
 if(INSTALL_SIMDIS_SDK_SHADERS)
@@ -391,7 +404,7 @@ if(INSTALL_SIMDIS_SDK_SHADERS)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMVIS_SHARED)
-    PostBuildInstallSdkSharedObjects(SIMDIS_SDKVis)
+    PostBuildInstallSdkSharedObjects(simVis)
 endif()
 
 # Setup header file installation

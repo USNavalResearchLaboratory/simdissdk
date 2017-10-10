@@ -61,6 +61,11 @@ public:
   /** Name of Platform Azimuth/Elevation warping shader */
   std::string platformAzimElevWarpVertex() const;
 
+  /** Name of vertex shader for picker */
+  std::string pickerVertex() const;
+  /** Name of fragment shader for picker */
+  std::string pickerFragment() const;
+
   /** Name of vertex shader for projector manager */
   std::string projectorManagerVertex() const;
   /** Name of fragment shader for projector manager */

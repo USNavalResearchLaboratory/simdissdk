@@ -607,37 +607,28 @@ BeamNode* ScenarioManager::addBeam(const simData::BeamProperties& props, simData
 GateNode* ScenarioManager::addGate(const simData::GateProperties& props, simData::DataStore& dataStore)
 {
   SAFETRYBEGIN;
-  // attempt to anchor the gate to its host platform:
-  EntityNode* beamHost = NULL;
-  EntityNode* platformHost = NULL;
+  // attempt to anchor the gate to its host beam or platform:
+  EntityNode* host = NULL;
   if (props.has_hostid())
-  {
-    beamHost = find(props.hostid());
-    if (beamHost)
-    {
-      simData::BeamProperties beamProps;
-      simData::DataStore::Transaction xaction;
-      const simData::BeamProperties *liveProps = dataStore.beamProperties(props.hostid(), &xaction);
-      if (liveProps)
-        beamProps = *liveProps;
-      xaction.release(&liveProps);
+    host = find(props.hostid());
 
-      if (beamProps.has_hostid())
-        platformHost = find(beamProps.hostid());
-    }
+  if ((props.type() == simData::GateProperties_GateType_TARGET) && (dynamic_cast<BeamNode*>(host) == NULL))
+  {
+    // simVis gate will not update this gate - it will look just like an invisible zombie
+    SIM_WARN << "ScenarioManager::addGate: a target gate requires a Beam host; gate will be ignored." << std::endl;
   }
 
-  Locator* locator = beamHost ? beamHost->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
 
-  GateNode* node = new GateNode(props, locator, beamHost, dataStore.referenceYear());
+  GateNode* node = new GateNode(props, locator, host, dataStore.referenceYear());
 
   entities_[ node->getId() ] = new EntityRecord(
     node,
     dataStore.gateUpdateSlice(node->getId()),
     &dataStore);
 
-  if (platformHost)
-    hosterTable_.insert(std::make_pair(beamHost->getId(), node->getId()));
+  if (host)
+    hosterTable_.insert(std::make_pair(host->getId(), node->getId()));
 
   notifyToolsOfAdd_(node);
 
@@ -1089,6 +1080,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
 
   // next, update all the scenario tools
   bool needsRedraw = false;
+  const simCore::TimeStamp updateTimeStamp(ds->referenceYear(), ds->updateTime());
 
   for (ScenarioToolVector::const_iterator i = scenarioTools_.begin(); i != scenarioTools_.end(); ++i)
   {
@@ -1096,7 +1088,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     ScenarioTool* tool = i->get();
     if (updates.size() > 0 || tool->isDirty())
     {
-      tool->onUpdate(this, ds->updateTime(), updates);
+      tool->onUpdate(this, updateTimeStamp, updates);
       needsRedraw = true;
     }
     SAFETRYEND("updating scenario tools");

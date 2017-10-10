@@ -42,6 +42,7 @@ namespace simVis
   class SceneManager;
   class ScenarioManager;
   class View;
+  class Picker;
 
   /**
   * A platform mouse-over pop up control. Using the PopupHandler, you can
@@ -108,11 +109,25 @@ namespace simVis
   {
   public:
     /**
-    * Constructs a new pop up manager and attaches it to a scene manager.
-    * @param scene Scene under which this object operates
-    * @param view View on which to show the popup
-    */
-    PopupHandler(SceneManager* scene, View* view = NULL);
+     * Constructs a new popup manager, using the Picker instance supplied.  If using
+     * an RTT picker, this is more efficient than using the Scene Manager intersection.
+     * @param picker Render-to-texture picker instance that provides item under mouse
+     * @param view View on which to show the popup
+     */
+    PopupHandler(Picker* picker, View* view);
+
+    /**
+     * Constructs a new pop up manager and attaches it to a scene manager, using the
+     * Scenario Manager's find<>() intersection method for picking.
+     *
+     * This constructor uses a less efficient method for picking.  Consider using the
+     * constructor that uses the simVis::Picker.  This constructor may be removed in
+     * a future version of the SIMDIS SDK.
+     *
+     * @param scene Scene under which this object operates
+     * @param view View on which to show the popup
+     */
+    explicit PopupHandler(SceneManager* scene, View* view = NULL);
 
     /// set whether pop-ups are enabled (or not)
     void enable(bool v = true);
@@ -178,8 +193,12 @@ namespace simVis
     /** Syncs the popup to our internal settings */
     void applySettings_();
 
+    /** Initializes variables to default. */
+    void init_();
+
   private:
     osg::observer_ptr<ScenarioManager> scenario_;             ///< ref to the scenario for finding platforms
+    osg::observer_ptr<Picker>          picker_;               ///< Picker class that finds platforms
     osg::ref_ptr<PlatformNode>         currentPlatform_;      ///< keep track of current platform
     osg::ref_ptr<PlatformPopup>        popup_;                ///< the popup display
     osg::ref_ptr<PopupContentCallback> contentCallback_;      ///< callback for filling in platform's data in popup

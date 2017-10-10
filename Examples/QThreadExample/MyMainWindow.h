@@ -22,17 +22,15 @@
 #ifndef SDK_QTHREAD_EXAMPLE_MYMAINWINDOW_H
 #define SDK_QTHREAD_EXAMPLE_MYMAINWINDOW_H
 
-#include <QApplication>
 #include <QMainWindow>
-#include <QMenuBar>
-#include <QStatusBar>
 #include <QTimer>
-#include <QSignalMapper>
 
-#include "simData/DataStore.h"
 #include "simVis/ViewManager.h"
-#include "simVis/View.h"
 #include "simUtil/StatsHandler.h"
+
+class QWindow;
+class QGLWidget;
+namespace simData { class DataStore; }
 
 namespace SdkQThreadExample
 {
@@ -49,6 +47,9 @@ public:
   MyMainWindow(simVis::ViewManager* viewMan, simData::DataStore& dataStore);
   virtual ~MyMainWindow();
 
+  /** Set the GL widget, also setting central content. */
+  void setGlWidget(QGLWidget* glWidget);
+
   /** Redraw the view and update the user interface */
   void paintEvent(QPaintEvent* e);
 
@@ -63,6 +64,7 @@ protected:
   osg::ref_ptr<simUtil::StatsHandler> _statsHandler;
   SdkQThreadExample::Reader* reader_;
   SdkQThreadExample::Gui* generatorDialog_;
+  QWindow* glWindow_;
 };
 
 }

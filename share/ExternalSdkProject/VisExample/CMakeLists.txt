@@ -1,9 +1,9 @@
-# Gracefully fail if the SIMDIS_SDKUtil target does not exist
-if(NOT TARGET SIMDIS_SDKUtil)
+# Gracefully fail if the simUtil target does not exist
+if(NOT TARGET simUtil)
     return()
 endif()
 
 # Create a new executable that does some work with simVis
 add_executable(VisExample VisExample.cpp)
-# Note that SIMDIS_SDKUtil automatically pulls in the SIMDIS_SDKVis dependency
-target_link_libraries(VisExample PRIVATE SIMDIS_SDKUtil)
+# Note that simUtil automatically pulls in the simVis dependency
+target_link_libraries(VisExample PRIVATE simUtil)

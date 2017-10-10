@@ -38,6 +38,11 @@ class SDKVIS_EXPORT EarthManipulator : public osgEarth::Util::EarthManipulator
 public:
   EarthManipulator();
 
+  /** Get the current fov */
+  double fovY() const;
+  /** Set the current fov */
+  void setFovY(double fovy);
+
   /** Locks the heading.  When locked, the user cannot change the heading/azimuth of the camera. */
   void setHeadingLocked(bool lockHeading);
   /** Locks the pitch.  When locked, the user cannot change the pitch/elevation of the camera. */
@@ -63,6 +68,9 @@ public:
 
   /** Return the class name */
   virtual const char* className() const { return "EarthManipulator"; }
+
+  /** Attach a node to the manipulator. Need to override so we maintain the original FOV value */
+  virtual void setNode(osg::Node* node);
 
 private:
   bool lockHeading_;

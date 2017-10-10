@@ -33,10 +33,10 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
 )
 
 add_executable(SimCoreTests ${SimCoreTestFiles})
-target_link_libraries(SimCoreTests PRIVATE SIMDIS_SDKCore)
+target_link_libraries(SimCoreTests PRIVATE simCore)
 # If simUtil is built, then add it as a dependency for UnitsFormatter test and add a -D define
-if(TARGET SIMDIS_SDKUtil)
-    target_link_libraries(SimCoreTests PRIVATE SIMDIS_SDKUtil)
+if(TARGET simUtil)
+    target_link_libraries(SimCoreTests PRIVATE simUtil)
     target_compile_definitions(SimCoreTests PRIVATE HAVE_SIMUTIL)
 endif()
 set_target_properties(SimCoreTests PROPERTIES

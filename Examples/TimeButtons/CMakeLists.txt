@@ -1,4 +1,4 @@
-if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET SIMDIS_SDKQt OR NOT TARGET SIMDIS_SDKUtil)
+if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET simQt OR NOT TARGET simUtil)
     return()
 endif()
 
@@ -16,8 +16,8 @@ VSI_QT_WRAP_CPP(Q_TIMEBUTTONS_MOC
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
 add_executable(example_QtTimeButtons ${APP_SOURCES} ${Q_TIMEBUTTONS_MOC} ${Q_TIMEBUTTONS_FORMS})
-target_link_libraries(example_QtTimeButtons PRIVATE OSGEARTH_QT SIMDIS_SDKQt SIMDIS_SDKCore
-    SIMDIS_SDKVis SIMDIS_SDKUtil)
+target_link_libraries(example_QtTimeButtons PRIVATE OSGEARTH_QT simQt simCore
+    simVis simUtil)
 target_include_directories(example_QtTimeButtons PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_QtTimeButtons PROPERTIES
     FOLDER "Examples"

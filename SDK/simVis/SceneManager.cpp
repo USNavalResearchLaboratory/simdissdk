@@ -35,6 +35,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ModelLayer"
+#include "osgEarth/ObjectIndex"
 #include "osgEarth/ScreenSpaceLayout"
 #include "osgEarthDrivers/engine_rex/RexTerrainEngineOptions"
 #include "osgEarthDrivers/engine_mp/MPTerrainEngineOptions"
@@ -60,41 +61,22 @@ namespace
   /** Default map background color, when no terrain/imagery loaded; note: cannot currently be changed in osgEarth at runtime */
   static const osg::Vec4f MAP_COLOR(0.01f, 0.01f, 0.01f, 1.f); // off-black
 
-#if 0
-  struct ClipToHorizon : public osg::NodeCallback
-  {
-    osgEarth::Horizon            horizon_;
-    osg::ref_ptr<osg::ClipPlane> clipPlane_;
-
-    ClipToHorizon(const osgEarth::SpatialReference* srs,
-                  osg::ClipPlane*                   clipPlane)
-    {
-      horizon_.setEllipsoid(*srs->getEllipsoid());
-      clipPlane_ = clipPlane;
-    }
-
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
-    {
-      osg::Plane horizonPlane;
-      horizon_.setEye(nv->getEyePoint());
-      horizon_.getPlane(horizonPlane);
-      clipPlane_->setClipPlane(horizonPlane);
-    }
-
-    /** Return the proper library name */
-    virtual const char* libraryName() const { return "simUtil"; }
-
-    /** Return the class name */
-    virtual const char* className() const { return "ClipToHorizon"; }
-  };
-#endif
-
+  /** setUserData() tag for the scenario's object ID */
+  static const std::string SCENARIO_OBJECT_ID = "scenid";
 }
 
 SceneManager::SceneManager()
   : hasEngineDriverProblem_(false)
 {
   init_();
+}
+
+SceneManager::~SceneManager()
+{
+  osgEarth::ObjectID id = 0;
+  // Remove the object index for scenario on destruction to avoid ref_ptr in object index
+  if (getUserValue(SCENARIO_OBJECT_ID, id))
+    osgEarth::Registry::objectIndex()->remove(id);
 }
 
 void SceneManager::detectTerrainEngineDriverProblems_()
@@ -246,6 +228,9 @@ void SceneManager::init_()
 
   // Run the shader generator on this stateset
   osgEarth::Registry::shaderGenerator().run(this);
+
+  // Tag the scenario to prevent false-positives on hover picker
+  setUserValue(SCENARIO_OBJECT_ID, osgEarth::Registry::objectIndex()->tagNode(scenarioManager_, scenarioManager_));
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API

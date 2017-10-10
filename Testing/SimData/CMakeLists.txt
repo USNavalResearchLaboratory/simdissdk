@@ -1,7 +1,7 @@
 # IMPORTANT: if you are getting linker errors, make sure that 
 # "SIMDIS_SDK_LIB_EXPORT_SHARED" is not in your test's Preprocessor Definitions
 
-if(NOT ENABLE_UNIT_TESTING OR NOT TARGET SIMDIS_SDKData OR NOT TARGET SIMDIS_SDKUtil)
+if(NOT ENABLE_UNIT_TESTING OR NOT TARGET simData OR NOT TARGET simUtil)
     return()
 endif()
 
@@ -23,7 +23,7 @@ create_test_sourcelist(SimDataTestFiles SimDataTests.cpp
 )
 
 add_executable(SimDataTests ${SimDataTestFiles})
-target_link_libraries(SimDataTests PRIVATE SIMDIS_SDKData SIMDIS_SDKUtil)
+target_link_libraries(SimDataTests PRIVATE simData simUtil)
 set_target_properties(SimDataTests PROPERTIES
     FOLDER "Unit Tests"
     PROJECT_LABEL "Unit Tests - SimData"

@@ -239,7 +239,7 @@ bool OverheadMode::isActive(osg::NodeVisitor* nv)
   return value;
 }
 
-void OverheadMode::prepareVisitor(simVis::View* view, osg::NodeVisitor* nv)
+void OverheadMode::prepareVisitor(const simVis::View* view, osg::NodeVisitor* nv)
 {
   if (nv && view && view->isOverheadEnabled())
   {

@@ -24,49 +24,49 @@
 
 #if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__) || defined( __BCPLUSPLUS__)  || defined( __MWERKS__)
   // Notify
-  # if defined( SIMDIS_SDKNotify_LIB_EXPORT_STATIC )
+  # if defined( simNotify_LIB_EXPORT_STATIC )
   #  define SDKNOTIFY_EXPORT
-  # elif defined( SIMDIS_SDKNotify_LIB_EXPORT_SHARED )
+  # elif defined( simNotify_LIB_EXPORT_SHARED )
   #  define SDKNOTIFY_EXPORT __declspec(dllexport)
   # else
   #  define SDKNOTIFY_EXPORT __declspec(dllimport)
   # endif
   // Core
-  # if defined( SIMDIS_SDKCore_LIB_EXPORT_STATIC )
+  # if defined( simCore_LIB_EXPORT_STATIC )
   #  define SDKCORE_EXPORT
-  # elif defined( SIMDIS_SDKCore_LIB_EXPORT_SHARED )
+  # elif defined( simCore_LIB_EXPORT_SHARED )
   #  define SDKCORE_EXPORT __declspec(dllexport)
   # else
   #  define SDKCORE_EXPORT __declspec(dllimport)
   # endif
   // Data
-  # if defined( SIMDIS_SDKData_LIB_EXPORT_STATIC )
+  # if defined( simData_LIB_EXPORT_STATIC )
   #  define SDKDATA_EXPORT
-  # elif defined( SIMDIS_SDKData_LIB_EXPORT_SHARED )
+  # elif defined( simData_LIB_EXPORT_SHARED )
   #  define SDKDATA_EXPORT __declspec(dllexport)
   # else
   #  define SDKDATA_EXPORT __declspec(dllimport)
   # endif
   // Vis
-  # if defined( SIMDIS_SDKVis_LIB_EXPORT_STATIC )
+  # if defined( simVis_LIB_EXPORT_STATIC )
   #  define SDKVIS_EXPORT
-  # elif defined( SIMDIS_SDKVis_LIB_EXPORT_SHARED )
+  # elif defined( simVis_LIB_EXPORT_SHARED )
   #  define SDKVIS_EXPORT __declspec(dllexport)
   # else
   #  define SDKVIS_EXPORT __declspec(dllimport)
   # endif
   // Util
-  # if defined( SIMDIS_SDKUtil_LIB_EXPORT_STATIC )
+  # if defined( simUtil_LIB_EXPORT_STATIC )
   #  define SDKUTIL_EXPORT
-  # elif defined( SIMDIS_SDKUtil_LIB_EXPORT_SHARED )
+  # elif defined( simUtil_LIB_EXPORT_SHARED )
   #  define SDKUTIL_EXPORT __declspec(dllexport)
   # else
   #  define SDKUTIL_EXPORT __declspec(dllimport)
   # endif
   // Qt
-  # if defined( SIMDIS_SDKQt_LIB_EXPORT_STATIC )
+  # if defined( simQt_LIB_EXPORT_STATIC )
   #  define SDKQT_EXPORT
-  # elif defined( SIMDIS_SDKQt_LIB_EXPORT_SHARED )
+  # elif defined( simQt_LIB_EXPORT_SHARED )
   #  define SDKQT_EXPORT __declspec(dllexport)
   # else
   #  define SDKQT_EXPORT __declspec(dllimport)

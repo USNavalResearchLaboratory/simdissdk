@@ -1,4 +1,4 @@
-if(NOT TARGET SIMDIS_SDKQt)
+if(NOT TARGET simQt)
     return()
 endif()
 
@@ -16,7 +16,7 @@ VSI_QT_WRAP_CPP(Q_AIM_MOC
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(example_QtActionItemModel ${APP_SOURCES} ${Q_AIM_MOC})
-target_link_libraries(example_QtActionItemModel PRIVATE SIMDIS_SDKQt)
+target_link_libraries(example_QtActionItemModel PRIVATE simQt)
 target_include_directories(example_QtActionItemModel PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_QtActionItemModel PROPERTIES
     FOLDER "Examples"

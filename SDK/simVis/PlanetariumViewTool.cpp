@@ -20,6 +20,7 @@
  *
  */
 #include "simCore/Calc/Angle.h"
+#include "simCore/Time/TimeClass.h"
 #include "simNotify/Notify.h"
 #include "simVis/PlanetariumViewTool.h"
 #include "simVis/Scenario.h"
@@ -165,7 +166,7 @@ void PlanetariumViewTool::onInstall(ScenarioManager* scenario)
   // initial pull of active target platforms
   EntityVector entities;
   scenario->getAllEntities(entities);
-  onUpdate(scenario, 0.0, entities);
+  onUpdate(scenario, simCore::MIN_TIME_STAMP, entities);
 
   // collect the entity list from the scenario
   family_.reset();
@@ -220,9 +221,7 @@ void PlanetariumViewTool::onEntityRemove(ScenarioManager* scenario, EntityNode* 
 }
 
 
-void PlanetariumViewTool::onUpdate(ScenarioManager*    scenario,
-                              double              timestamp,
-                              const EntityVector& updates)
+void PlanetariumViewTool::onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
   fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());

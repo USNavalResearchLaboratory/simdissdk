@@ -120,10 +120,11 @@ ViewManager::AddView::operator()(osg::Object* obj)
 //........................................................................
 namespace simVis
 {
-ViewManager::RemoveView::RemoveView(ViewManager* viewman, View* view) :
-osg::Operation("ViewManager::RemoveView", false),
-view_(view),
-viewman_(viewman)
+
+ViewManager::RemoveView::RemoveView(ViewManager* viewman, View* view)
+  : osg::Operation("ViewManager::RemoveView", false),
+    view_(view),
+    viewman_(viewman)
 {
     //nop
 }
@@ -137,9 +138,51 @@ void ViewManager::RemoveView::operator()(osg::Object* obj)
   }
 }
 
-
 //........................................................................
 
+AddEventHandlerToViews::AddEventHandlerToViews(osgGA::GUIEventHandler* guiEventHandler)
+  : guiEventHandler_(guiEventHandler)
+{
+}
+
+void AddEventHandlerToViews::addToViews(const simVis::ViewManager& viewManager)
+{
+  std::vector<simVis::View*> views;
+  viewManager.getViews(views);
+  for (std::vector<simVis::View*>::const_iterator i = views.begin(); i != views.end(); ++i)
+    (*i)->addEventHandler(guiEventHandler_);
+}
+
+void AddEventHandlerToViews::removeFromViews(const simVis::ViewManager& viewManager)
+{
+  std::vector<simVis::View*> views;
+  viewManager.getViews(views);
+  for (std::vector<simVis::View*>::const_iterator i = views.begin(); i != views.end(); ++i)
+    (*i)->removeEventHandler(guiEventHandler_);
+}
+
+
+void AddEventHandlerToViews::operator()(simVis::View* inset, const EventType& e)
+{
+  if (guiEventHandler_ != NULL)
+  {
+    switch (e)
+    {
+    case VIEW_ADDED:
+      inset->addEventHandler(guiEventHandler_);
+      break;
+    case VIEW_REMOVED:
+      inset->removeEventHandler(guiEventHandler_);
+      break;
+    }
+  }
+}
+
+AddEventHandlerToViews::~AddEventHandlerToViews()
+{
+}
+
+//........................................................................
 
 ViewManager::ViewManager()
   : fatalRenderFlag_(false),

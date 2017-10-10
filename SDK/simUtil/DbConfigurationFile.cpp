@@ -257,13 +257,11 @@ int DbConfigurationFile::resolveFilePath(std::string& fileName)
   // still no success, see if the file is in SIMDIS_TERRAIN dir
   else
   {
-    const char* sdTerrainDir = NULL;
-    sdTerrainDir = getenv("SIMDIS_TERRAIN");
-    if (sdTerrainDir != NULL)
+    const std::string sdTerrainDir = simCore::getEnvVar("SIMDIS_TERRAIN");
+    if (!sdTerrainDir.empty())
     {
-      std::string filePath = sdTerrainDir;
-      filePath = simCore::backslashToFrontslash(filePath);
-      std::string tempFileName = filePath + "/" + fileName;
+      const std::string filePath = simCore::backslashToFrontslash(sdTerrainDir);
+      const std::string tempFileName = filePath + "/" + fileName;
       if (osgDB::fileExists(tempFileName))
       {
         fileName = tempFileName;

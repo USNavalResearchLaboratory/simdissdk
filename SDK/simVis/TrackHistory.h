@@ -232,6 +232,8 @@ namespace simVis
     double                 timeDirectionSign_;  // -1 = REVERSE, 1 = FORWARD
 
     osg::ref_ptr<osg::Uniform>    overrideColorUniform_;
+    /// Used by the fragment shader to determine whether or not to apply the overrideColorUniform
+    osg::ref_ptr<osg::Uniform>    enableOverrideColorUniform_;
     simVis::Color                 lastOverrideColor_;
     osg::ref_ptr<osg::Uniform>    flatModeUniform_;
     osg::ref_ptr<osg::Group>      chunkGroup_;
