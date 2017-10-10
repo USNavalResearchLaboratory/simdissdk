@@ -146,13 +146,17 @@ void RadialLOSNode::setAzimuthalResolution(const Angle& value)
 }
 
 void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
-                               osg::Node*                 patch)
+                                    osg::Node*                 patch)
 {
-  if (getMapNode() && bound_.intersects(extent.getBoundingGeoCircle()))
+  if (getMapNode())
   {
-    if (los_.update(getMapNode(), extent, patch))
+    osgEarth::GeoCircle circle = extent.computeBoundingGeoCircle();
+    if (bound_.intersects(circle))
     {
-      refreshGeometry_();
+      if (los_.update(getMapNode(), extent, patch))
+      {
+        refreshGeometry_();
+      }
     }
   }
 }
