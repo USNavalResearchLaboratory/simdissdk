@@ -116,7 +116,7 @@ int testTime1(const simData::CategoryDataSlice &cdslice)
   simData::CategoryDataSlice::Iterator c1 = cdslice.current();
   rv += SDK_ASSERT(!c1.hasPrevious());
   rv += SDK_ASSERT(c1.hasNext());
-  std::tr1::shared_ptr<simData::CategoryDataPair> nextCat = c1.next();
+  std::shared_ptr<simData::CategoryDataPair> nextCat = c1.next();
   rv += SDK_ASSERT(nextCat->name() == "key1");
   rv += SDK_ASSERT(nextCat->value() == "value1");
 
@@ -146,7 +146,7 @@ int testTime2(const simData::CategoryDataSlice &cdslice)
   simData::CategoryDataSlice::Iterator c1 = cdslice.current();
   rv += SDK_ASSERT(!c1.hasPrevious());
   rv += SDK_ASSERT(c1.hasNext());
-  std::tr1::shared_ptr<simData::CategoryDataPair> nextCat = c1.next();
+  std::shared_ptr<simData::CategoryDataPair> nextCat = c1.next();
   rv += SDK_ASSERT(nextCat->name() == "key1");
   rv += SDK_ASSERT(nextCat->value() == "value3"); // value changed
 
@@ -170,7 +170,7 @@ int testTime3(const simData::CategoryDataSlice &cdslice)
   simData::CategoryDataSlice::Iterator c1 = cdslice.current();
   rv += SDK_ASSERT(!c1.hasPrevious());
   rv += SDK_ASSERT(c1.hasNext());
-  std::tr1::shared_ptr<simData::CategoryDataPair> nextCat = c1.next();
+  std::shared_ptr<simData::CategoryDataPair> nextCat = c1.next();
   rv += SDK_ASSERT(nextCat->name() == "key1");
   rv += SDK_ASSERT(nextCat->value() == "value4"); // value changed
 

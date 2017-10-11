@@ -124,7 +124,7 @@ private:
   class ClockListener;
 
   osg::ref_ptr<MapListener> mapListener_;
-  std::tr1::shared_ptr<ClockListener> clockListener_;
+  std::shared_ptr<ClockListener> clockListener_;
   std::map<simCore::TimeStamp, osg::observer_ptr<osgEarth::ImageLayer> > layers_;
   /** NOTE: Keys are unowned, naked pointers.  Do not dereference. */
   std::map<const osgEarth::ImageLayer*, bool> originalVisibility_;

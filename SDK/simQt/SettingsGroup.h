@@ -106,7 +106,7 @@ private:
   QList<ObserverPtr> globalObservers_; ///< Keep track of the wrapped global observers
 };
 
-typedef std::tr1::shared_ptr<SettingsGroup> SettingsGroupPtr;
+typedef std::shared_ptr<SettingsGroup> SettingsGroupPtr;
 }
 
 #endif

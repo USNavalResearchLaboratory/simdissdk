@@ -62,7 +62,7 @@ namespace simCore
   };
 
   /// Shared pointer of a FileSearch
-  typedef std::tr1::shared_ptr<FileSearch> FileSearchPtr;
+  typedef std::shared_ptr<FileSearch> FileSearchPtr;
 
   /// A class that does no searching (Null Object implementation)
   class NoSearchFileSearch : public FileSearch

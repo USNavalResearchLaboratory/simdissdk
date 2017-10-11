@@ -88,7 +88,7 @@ public:
     virtual ~GogNodeListener() {}
     virtual void drawChanged(const GogNodeInterface* nodeChanged) = 0;
   };
-  typedef std::tr1::shared_ptr<GogNodeListener> GogNodeListenerPtr;
+  typedef std::shared_ptr<GogNodeListener> GogNodeListenerPtr;
 
   /**
   * Constructor
@@ -416,7 +416,7 @@ private:
 };
 
 /// Shared ptr wrapper for the GogNodeInterface object
-typedef std::tr1::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
+typedef std::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
 
 /**
  * Implementation of GogNodeInterface for AnnotationNodes, which are a base class of all GOG node types.

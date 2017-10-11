@@ -88,7 +88,7 @@ public:
     ///@}
   };
   /// Smart pointer to hold transactions
-  typedef std::tr1::shared_ptr<AddRowTransaction> AddRowTransactionPtr;
+  typedef std::shared_ptr<AddRowTransaction> AddRowTransactionPtr;
 
   /** Defines an interface to notify when splits occur */
   class SplitObserver
@@ -100,7 +100,7 @@ public:
     virtual void notifySplit(SubTable* originalTable, SubTable* newTable, const std::vector<TableColumnId>& splitColumns) = 0;
   };
   /// Smart pointer to hold split observers
-  typedef std::tr1::shared_ptr<SplitObserver> SplitObserverPtr;
+  typedef std::shared_ptr<SplitObserver> SplitObserverPtr;
 
   /**
    * Creates a transaction to add a row to the subtable.  A single subtable should only

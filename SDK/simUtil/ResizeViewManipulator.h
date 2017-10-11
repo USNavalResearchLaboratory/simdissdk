@@ -82,7 +82,7 @@ public:
   };
 
   /// Shared pointer for Listener
-  typedef std::tr1::shared_ptr<Listener> ListenerPtr;
+  typedef std::shared_ptr<Listener> ListenerPtr;
 
   /// Adds a new Listener for notifications
   void addListener(ListenerPtr listener);

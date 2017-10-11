@@ -103,7 +103,7 @@ public:
   };
 
   /// Shared pointer for an EyePositionCallback
-  typedef std::tr1::shared_ptr<EyePositionCallback> EyePositionCallbackPtr;
+  typedef std::shared_ptr<EyePositionCallback> EyePositionCallbackPtr;
 
   /// Adds a callback that is notified on eye position changes
   virtual void addCallback(EyePositionCallbackPtr cb) = 0;

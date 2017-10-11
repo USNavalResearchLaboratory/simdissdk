@@ -53,7 +53,7 @@ struct RadarParameters
 };
 
 /** Shared pointer of a RadarParameters */
-typedef std::tr1::shared_ptr<struct RadarParameters> RadarParametersPtr;
+typedef std::shared_ptr<struct RadarParameters> RadarParametersPtr;
 
 }
 

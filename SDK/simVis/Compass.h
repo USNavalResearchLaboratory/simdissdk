@@ -75,7 +75,7 @@ namespace simVis
   };
 
   /// Shared pointer to a CompassUpdateListener
-  typedef std::tr1::shared_ptr<CompassUpdateListener> CompassUpdateListenerPtr;
+  typedef std::shared_ptr<CompassUpdateListener> CompassUpdateListenerPtr;
 
   /**
   * Creates a Compass which can be displayed as a HUD control in a single view.  The

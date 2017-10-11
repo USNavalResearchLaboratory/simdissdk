@@ -60,7 +60,7 @@ public:
 
   /// Managed pointer to be used when holding a pointer to a Observer object.
   /// Memory for the Listener object is deleted automatically when the last managed pointer is released.
-  typedef std::tr1::shared_ptr<Listener> ListenerPtr;
+  typedef std::shared_ptr<Listener> ListenerPtr;
 
   CategoryNameManager();
 

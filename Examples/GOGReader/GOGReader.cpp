@@ -52,7 +52,7 @@ using namespace osgEarth::Util;
 using namespace osgEarth::Util::Controls;
 using namespace osgEarth::Annotation;
 
-typedef std::tr1::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
+typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
 
 /// create a platform and add it to 'dataStore'

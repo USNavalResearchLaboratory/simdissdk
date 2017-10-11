@@ -72,7 +72,7 @@ public:
     virtual bool acceptEntry(ConsoleEntry& entry) const = 0;
   };
   /** Typedef a smart pointer onto EntryFilter class. */
-  typedef std::tr1::shared_ptr<EntryFilter> EntryFilterPtr;
+  typedef std::shared_ptr<EntryFilter> EntryFilterPtr;
 
   /** Severity of the row, in conjunction with data() (regardless of column) */
   static const int SEVERITY_ROLE = Qt::UserRole + 1;
@@ -110,7 +110,7 @@ public:
   virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
 
   /** Define a shared pointer to a console channel */
-  typedef std::tr1::shared_ptr<ConsoleChannel> ConsoleChannelPtr;
+  typedef std::shared_ptr<ConsoleChannel> ConsoleChannelPtr;
   /** Registers a channel with the data model, returning a handle to add text */
   ConsoleChannelPtr registerChannel(const QString& name);
 

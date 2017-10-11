@@ -39,7 +39,7 @@ namespace simUtil {
 typedef std::vector<simVis::GOG::GogNodeInterfacePtr> OverlayNodeVector;
 
 /// Shared ptr wrapper for the GogNodeInterface
-typedef std::tr1::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
+typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 
 
 /** Interface for the object representing a GOG file loaded by the GogManager */
@@ -66,7 +66,7 @@ public:
   };
 
   /** Shared pointer to GOG Object Observer */
-  typedef std::tr1::shared_ptr<GogObjectObserver> GogObjectObserverPtr;
+  typedef std::shared_ptr<GogObjectObserver> GogObjectObserverPtr;
 
   virtual ~GogObject() {}
 
@@ -187,7 +187,7 @@ private:
   std::vector<GogObjectObserverPtr> observers_;  ///< vector of all observers
 };
 /// Shared ptr wrapper for the GogObject
-typedef std::tr1::shared_ptr<GogObject> GogObjectPtr;
+typedef std::shared_ptr<GogObject> GogObjectPtr;
 
 /** Interface for loading GOG files into a visualization */
 class GogManager
@@ -209,7 +209,7 @@ public:
   };
 
   /** Shared pointer to GOG Change Observer */
-  typedef std::tr1::shared_ptr<GogChangeObserver> GogChangeObserverPtr;
+  typedef std::shared_ptr<GogChangeObserver> GogChangeObserverPtr;
 
   virtual ~GogManager() {}
 

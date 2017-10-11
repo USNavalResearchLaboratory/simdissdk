@@ -190,7 +190,7 @@ namespace simNotify
   * shared pointer. The simCore notify system holds all references to
   * NotifyHandler objects with NotifyHandlePtr.
   */
-  typedef std::tr1::shared_ptr<NotifyHandler> NotifyHandlerPtr;
+  typedef std::shared_ptr<NotifyHandler> NotifyHandlerPtr;
 
 }
 

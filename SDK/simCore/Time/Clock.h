@@ -172,9 +172,9 @@ public:
   };
 
   /// Observer reference object
-  typedef std::tr1::shared_ptr<TimeObserver> TimeObserverPtr;
+  typedef std::shared_ptr<TimeObserver> TimeObserverPtr;
   /// ModeChangeObserver reference object
-  typedef std::tr1::shared_ptr<ModeChangeObserver> ModeChangeObserverPtr;
+  typedef std::shared_ptr<ModeChangeObserver> ModeChangeObserverPtr;
 
   /**@name callback management
    *@{

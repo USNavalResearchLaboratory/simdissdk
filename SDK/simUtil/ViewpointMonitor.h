@@ -245,7 +245,7 @@ public:
   };
 
   /** Observers are stored as smart pointers to ease memory management */
-  typedef std::tr1::shared_ptr<Observer> ObserverPtr;
+  typedef std::shared_ptr<Observer> ObserverPtr;
 
   /** Adapter to the Observer interface to make deriving limited methods easier for developers only interested in a few fields. */
   class ObserverAdapter : public Observer

@@ -63,7 +63,7 @@ public:
   virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) = 0;
 
 };
-typedef std::tr1::shared_ptr<MouseManipulator> MouseManipulatorPtr;
+typedef std::shared_ptr<MouseManipulator> MouseManipulatorPtr;
 
 
 /**

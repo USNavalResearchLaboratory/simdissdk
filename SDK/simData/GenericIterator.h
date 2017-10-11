@@ -115,7 +115,7 @@ public:
   }
 protected:
   /** Implementation for the iterator, used to implement the actual functionality */
-  typename std::tr1::shared_ptr<GenericIteratorImpl<ValueType> > impl_;
+  typename std::shared_ptr<GenericIteratorImpl<ValueType> > impl_;
 };
 
 }

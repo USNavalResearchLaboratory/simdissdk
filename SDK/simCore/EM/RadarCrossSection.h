@@ -97,7 +97,7 @@ namespace simCore
   };
 
   /// Shared pointer of a Radar Cross Section
-  typedef std::tr1::shared_ptr<RadarCrossSection> RadarCrossSectionPtr;
+  typedef std::shared_ptr<RadarCrossSection> RadarCrossSectionPtr;
 
   /** RCS data keyed on host body azimuth (rad) */
   typedef std::map<float, float> AZIM_RCS_MAP;

@@ -28,7 +28,7 @@
 
 namespace simRF
 {
-typedef std::tr1::shared_ptr<std::vector<float> > PODVectorPtr;
+typedef std::shared_ptr<std::vector<float> > PODVectorPtr;
 
 /**
  * PODProfileDataProvider provides 1D loss data (in dB) indexed by probability of detection (POD).

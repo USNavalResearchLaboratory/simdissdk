@@ -155,7 +155,7 @@ public: // types
     }
 
   private:
-    std::tr1::shared_ptr<TransactionImpl> transaction_; /// underlying implementation
+    std::shared_ptr<TransactionImpl> transaction_; /// underlying implementation
   };
 
   /// similar to Observer, but provides more info to the listener
@@ -223,7 +223,7 @@ public: // types
 
   /// Managed pointer to be used when holding a pointer to a Listener object.
   /// Memory for the Listener object is deleted automatically when the last managed pointer is released.
-  typedef std::tr1::shared_ptr<Listener> ListenerPtr;
+  typedef std::shared_ptr<Listener> ListenerPtr;
 
   /// Observer for scenario events
   class ScenarioListener
@@ -248,7 +248,7 @@ public: // types
 
   /// Managed pointer to be used when holding a pointer to a ScenarioListener object.
   /// Memory for the ScenarioListener object is deleted automatically when the last managed pointer is released.
-  typedef std::tr1::shared_ptr<ScenarioListener> ScenarioListenerPtr;
+  typedef std::shared_ptr<ScenarioListener> ScenarioListenerPtr;
 
   /// List of listeners
   typedef std::vector<ListenerPtr> ListenerList;

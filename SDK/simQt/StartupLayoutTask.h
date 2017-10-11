@@ -73,7 +73,7 @@ signals:
 private:
   QWidget* widget_;
 };
-typedef std::tr1::shared_ptr<StartupLayoutTask> StartupLayoutTaskPtr;
+typedef std::shared_ptr<StartupLayoutTask> StartupLayoutTaskPtr;
 
 }
 

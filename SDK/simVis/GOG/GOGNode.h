@@ -72,7 +72,7 @@ namespace simVis { namespace GOG
     /** reference coordinate for relative objects */
     osgEarth::optional<osgEarth::GeoPoint> refPoint_;
     /** Error reporting */
-    std::tr1::shared_ptr<ErrorHandler> errorHandler_;
+    std::shared_ptr<ErrorHandler> errorHandler_;
   };
 
 

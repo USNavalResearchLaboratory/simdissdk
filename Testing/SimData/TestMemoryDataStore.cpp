@@ -1064,7 +1064,7 @@ bool hasKeyValue(simData::CategoryDataSlice::Iterator cIter, const std::string& 
   while (cIter.hasNext())
   {
 
-    std::tr1::shared_ptr<simData::CategoryDataPair> nextCat = cIter.next();
+    std::shared_ptr<simData::CategoryDataPair> nextCat = cIter.next();
     if (nextCat->name() == key)
     {
       number++;

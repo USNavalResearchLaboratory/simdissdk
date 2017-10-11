@@ -81,7 +81,7 @@ private:
 };
 
 /// Shared pointer to a TextReplacer
-typedef std::tr1::shared_ptr<TextReplacer> TextReplacerPtr;
+typedef std::shared_ptr<TextReplacer> TextReplacerPtr;
 
 } // namespace simCore
 

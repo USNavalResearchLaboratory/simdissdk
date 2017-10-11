@@ -102,7 +102,7 @@ namespace simVis { namespace GOG
      * Changes the error output handler to use when parsing GOG data.
      * @param errorHandler Error handler to use when parsing GOG data
      */
-    void setErrorHandler(std::tr1::shared_ptr<ErrorHandler> errorHandler);
+    void setErrorHandler(std::shared_ptr<ErrorHandler> errorHandler);
 
     /**
      * Sets a style that will override style information found in the GOG input.

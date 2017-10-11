@@ -217,7 +217,7 @@ public:
   virtual ~TimeFormatterRegistry();
 
   /** Typedef the TimeFormatter abstract interface to a shared pointer */
-  typedef std::tr1::shared_ptr<TimeFormatter> TimeFormatterPtr;
+  typedef std::shared_ptr<TimeFormatter> TimeFormatterPtr;
 
   /**
    * Registers a custom formatter with this registry.  Custom formatters are given priority over

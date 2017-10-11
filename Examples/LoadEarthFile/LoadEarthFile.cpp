@@ -220,7 +220,7 @@ private:
   LatLonElevationListener* latLonElevListener_;
   bool showLatLonElevation_;
   simUtil::MouseDispatcher* mouseDispatcher_;
-  std::tr1::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
+  std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
 };
 
 
@@ -290,7 +290,7 @@ int main(int argc, char** argv)
 
   // label for elevation readout
   osg::ref_ptr<LabelControl> elevationLabel = new LabelControl("", 14, osg::Vec4f(.8, .8, .8, 1));
-  std::tr1::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher;
+  std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher;
   mouseDispatcher.reset(new simUtil::MouseDispatcher);
 
   // Handles hotkeys from user
