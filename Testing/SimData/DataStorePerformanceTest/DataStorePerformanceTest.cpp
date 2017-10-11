@@ -25,6 +25,7 @@
 #include "simData/MemoryDataStore.h"
 #include "simData/LinearInterpolator.h"
 #include "simData/DataTable.h"
+#include "simData/CategoryData/CategoryFilter.h"
 #include "simCore/Time/Utils.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Common/SDKAssert.h"
@@ -562,7 +563,8 @@ struct TopLevelOptions
     interpolate(true),
     dataLimiting(false),
     playforward(true),
-    addListener(true)
+    addListener(true),
+    testCD(false)
   {
   }
 
@@ -573,6 +575,7 @@ struct TopLevelOptions
   bool dataLimiting;  // True = data limiting
   bool playforward;  // True = move time forwards, False = move time backwards
   bool addListener;  // True = count the number of callbacks
+  bool testCD;       // True = testing will include testing of CategoryData
 };
 
 /// Initializes the DataStore and creates all the entities
@@ -667,15 +670,22 @@ double fileMode(simData::DataStore& ds, simUtil::DataStoreTestHelper& helper, To
     offset = -options.numberOfSeconds*options.frameRate;
   }
 
-  double startTime = simCore::systemTimeToSecsBgnYr();
+  const double startTime = simCore::systemTimeToSecsBgnYr();
   for (int ii = 0; ii < options.numberOfSeconds*options.frameRate; ii++)
   {
     // Add the 0.0001 so we never get an exact hit
     const double time = 0.0001 + direction*static_cast<double>(ii+offset)/static_cast<double>(options.frameRate);
     ds.update(time);
+    if (options.testCD && entities.platforms->initialId() > 0)
+    {
+      simData::CategoryFilter::CurrentCategoryValues curVals;
+      simData::CategoryFilter::getCurrentCategoryValues(ds, entities.platforms->initialId(), curVals);
+      simData::CategoryFilter::CurrentCategoryValues curVals2;
+      simData::CategoryFilter::getCurrentCategoryValues(ds, entities.platforms->lastId(), curVals2);
+    }
   }
 
-  double endTime = simCore::systemTimeToSecsBgnYr();
+  const double endTime = simCore::systemTimeToSecsBgnYr();
   return endTime-startTime;
 }
 
@@ -744,6 +754,14 @@ double liveMode(simData::DataStore& ds, simUtil::DataStoreTestHelper& helper, To
         else
           time = 0.0001 + static_cast<double>(ii) + static_cast<double>(jj)/static_cast<double>(maxRate);
         ds.update(time);
+
+        if (options.testCD && entities.platforms->initialId() > 0 && time > 0.0)
+        {
+          simData::CategoryFilter::CurrentCategoryValues curVals;
+          simData::CategoryFilter::getCurrentCategoryValues(ds, entities.platforms->initialId(), curVals);
+          simData::CategoryFilter::CurrentCategoryValues curVals2;
+          simData::CategoryFilter::getCurrentCategoryValues(ds, entities.platforms->lastId(), curVals2);
+        }
       }
     }
   }
@@ -797,28 +815,49 @@ void writeExampleConfigurationFile()
 
 void usage()
 {
-    std::cerr << "DataStorePerformanceTest InputConfigfile | --help | --WriteExampleConfigFile" << std::endl;
+    std::cerr << "DataStorePerformanceTest InputConfigfile | --help | --testCD | --WriteExampleConfigFile" << std::endl;
     std::cerr << "  InputConfigFile specifies the parameters for the performance test" << std::endl;
+    std::cerr << "  --testCD include testing of CategoryData" << std::endl;
     std::cerr << "  --WriteExampleConfigFile writes out an example configuration file to DataStorePerformanceTest.conf" << std::endl;
     std::cerr << "  --help display this text" << std::endl;
 }
 /// Look for the configuration file name on the command line
-int parseCommandLine(int argc, char** argv, std::string& fileName)
+int parseCommandLine(int argc, char** argv, std::string& fileName, TopLevelOptions& options)
 {
-  if (argc != 2)
+  if (argc < 2 || argc > 3)
   {
     usage();
     return -1;
   }
 
-  std::string inputValue = std::string(argv[1]);
   fileName = "";
+
+  std::string inputValue = std::string(argv[1]);
   if (inputValue == "--help")
+  {
     usage();
-  else if (inputValue == "--WriteExampleConfigFile")
+    return 0;
+  }
+  if (inputValue == "--WriteExampleConfigFile")
+  {
     writeExampleConfigurationFile();
-  else
-    fileName = inputValue;
+    return 0;
+  }
+
+  for (int i = 1; i < argc; i++)
+  {
+    std::string inputValue = std::string(argv[i]);
+    if (inputValue == "--testCD")
+      options.testCD = true;
+    else
+      fileName = inputValue;
+  }
+
+  if (fileName.empty())
+  {
+    usage();
+    return -1;
+  }
 
   return 0;
 }
@@ -1054,8 +1093,8 @@ int main(int argc, char *argv[])
 
   // Need to get configuration file name
   std::string fileName;
-
-  if (parseCommandLine(argc, argv, fileName) != 0)
+  TopLevelOptions options;
+  if (parseCommandLine(argc, argv, fileName, options) != 0)
     return -1;
 
   if (fileName.empty())
@@ -1064,7 +1103,6 @@ int main(int argc, char *argv[])
   simData::MemoryDataStore ds;
   simUtil::DataStoreTestHelper helper(&ds);
 
-  TopLevelOptions options;
   Entities entities(helper);
   CallbackCounters counters;
 
