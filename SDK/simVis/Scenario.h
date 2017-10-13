@@ -362,6 +362,11 @@ namespace simVis
     void getTools(std::vector<ScenarioTool*>& tools) const;
 
     /**
+    * Removes all scenario tools from the manager
+    */
+    void removeAllTools_();
+
+    /**
     * Accesses the DataStore adapter bound to this scenario.
     */
     const ScenarioDataStoreAdapter& getDataStoreAdapter() const { return dataStoreAdapter_; }

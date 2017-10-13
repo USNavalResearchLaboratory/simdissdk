@@ -102,19 +102,19 @@ public:
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
-  void onInstall(ScenarioManager* scenario);
+  virtual void onInstall(const ScenarioManager& scenario);
 
   /** @see ScenarioTool::onUninstall() */
-  void onUninstall(ScenarioManager* scenario);
+  virtual void onUninstall(const ScenarioManager& scenario);
 
   /** @see ScenarioTool::onEntityAdd() */
-  void onEntityAdd(ScenarioManager* scenario, EntityNode* entity);
+  virtual void onEntityAdd(const ScenarioManager& scenario, EntityNode* entity);
 
   /** @see ScenarioTool::onEntityRemove() */
-  void onEntityRemove(ScenarioManager* scenario, EntityNode* entity);
+  virtual void onEntityRemove(const ScenarioManager& scenario, EntityNode* entity);
 
   /** @see ScenarioTool::onUpdate() */
-  void onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
+  virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
 
 public: // Tool
 
@@ -142,7 +142,7 @@ private:
   simData::GatePrefs              gatePrefs_;
   bool                            displayTargetVectors_;
 
-  osg::observer_ptr<ScenarioManager> scenario_;
+  osg::observer_ptr<const ScenarioManager> scenario_;
 
   osg::ref_ptr<TargetDelegation> targets_;
   osg::ref_ptr<HorizonGeoFence>  fence_;

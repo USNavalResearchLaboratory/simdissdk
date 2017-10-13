@@ -56,7 +56,7 @@ public:
    * @param[in ] scenario Scenario in which to search
    * @param[in ] hostId   ID of host at which to start searching
    */
-  void add(ScenarioManager* scenario, const simData::ObjectId& hostId);
+  void add(const ScenarioManager& scenario, const simData::ObjectId& hostId);
 
   /**
    * Adds an entity to the family if and only if it is hosted by one of the

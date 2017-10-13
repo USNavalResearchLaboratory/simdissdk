@@ -633,7 +633,7 @@ namespace simVis
       * (Called internally)
       * @return true if update processed normally, false if scenario is null or association was not valid
       */
-      bool update(ScenarioManager* scenario, const simCore::TimeStamp& timestamp);
+      bool update(const ScenarioManager& scenario, const simCore::TimeStamp& timestamp);
 
       /**
       * Sets dirty flag and clears labels_ cache to force text color update
@@ -679,8 +679,6 @@ namespace simVis
     /** Constructs a new range tool. */
     RangeTool();
 
-    explicit RangeTool(ScenarioManager* scenario);
-
     /**
     * Adds a new association to the range tool.
     * @param obj1 first object in the new association to add
@@ -703,7 +701,7 @@ namespace simVis
     /**
      * Range Tool updates require a full timestamp, but do not use/require EntityVector.
      */
-    void update(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp) { onUpdate(scenario, timeStamp, EntityVector()); }
+    void update(const ScenarioManager* scenario, const simCore::TimeStamp& timeStamp);
 
     /**
     * Gets the node representing the range tool's graphics.
@@ -714,10 +712,16 @@ namespace simVis
 
   public: // ScenarioTool interface
 
+    /** @see ScenarioTool::onInstall() */
+    virtual void onInstall(const ScenarioManager& scenario);
+
+    /** @see ScenarioTool::onUninstall() */
+    virtual void onUninstall(const ScenarioManager& scenario);
+
     /**
     * Updates the range tool based on a new time stamp
     */
-    void onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
+    virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
 
   public:
     /// @copydoc osgEarth::setDirty()
@@ -739,8 +743,7 @@ namespace simVis
   private:
     AssociationVector                  associations_;         // all active associations
     osg::ref_ptr<RefreshGroup>         root_;                 // scene graph container
-    osg::observer_ptr<ScenarioManager> lastScenario_;         // saves a scenario pointer
-    void setupDefaultOptions();
+    osg::observer_ptr<const ScenarioManager> lastScenario_;   // saves a scenario pointer
 
   public: // Helper Graphics classes
     /// a stippled line between two points

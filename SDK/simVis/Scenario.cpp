@@ -375,6 +375,10 @@ ScenarioManager::~ScenarioManager()
   lobSurfaceClamping_ = NULL;
   delete losCreator_;
   losCreator_ = NULL;
+  // if assert fails, check that whoever adds a tool also removes the tool
+  assert(scenarioTools_.empty());
+  // guarantee that ScenarioTools receive OnUninstall() calls
+  removeAllTools_();
 }
 
 void ScenarioManager::bind(simData::DataStore* dataStore)
@@ -1009,7 +1013,7 @@ void ScenarioManager::addTool(ScenarioTool* tool)
     }
 
     scenarioTools_.push_back(tool);
-    tool->onInstall(this);
+    tool->onInstall(*this);
     root_->addChild(tool->getNode());
   }
   SAFETRYEND("installing scenario tool");
@@ -1023,7 +1027,7 @@ void ScenarioManager::removeTool(ScenarioTool* tool)
   {
     ScenarioTool* tool = i->get();
     root_->removeChild(tool->getNode());
-    tool->onUninstall(this);
+    tool->onUninstall(*this);
     scenarioTools_.erase(i);
   }
   SAFETRYEND("removing scenario tool");
@@ -1040,7 +1044,7 @@ void ScenarioManager::notifyToolsOfAdd_(EntityNode* node)
 {
   for (ScenarioToolVector::iterator i = scenarioTools_.begin(); i != scenarioTools_.end(); ++i)
   {
-    i->get()->onEntityAdd(this, node);
+    i->get()->onEntityAdd(*this, node);
   }
 }
 
@@ -1048,7 +1052,7 @@ void ScenarioManager::notifyToolsOfRemove_(EntityNode* node)
 {
   for (ScenarioToolVector::iterator i = scenarioTools_.begin(); i != scenarioTools_.end(); ++i)
   {
-    i->get()->onEntityRemove(this, node);
+    i->get()->onEntityRemove(*this, node);
   }
 }
 
@@ -1101,6 +1105,16 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     ViewVisitor<RequestRedraw> visitor;
     this->accept(visitor);
     SAFETRYEND("requesting redraw on scenario");
+  }
+}
+
+void ScenarioManager::removeAllTools_()
+{
+  std::vector<ScenarioTool*> scenarioTools;
+  getTools(scenarioTools);
+  for (std::vector<ScenarioTool*>::const_iterator i = scenarioTools.begin(); i != scenarioTools.end(); ++i)
+  {
+    removeTool(*i);
   }
 }
 

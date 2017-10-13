@@ -97,35 +97,47 @@ void RangeTool::RefreshGroup::scheduleRefresh()
 }
 
 //------------------------------------------------------------------------
-/// deprecated constructor, still here for backwards compatibility
-RangeTool::RangeTool(ScenarioManager* scenario)
-  : ScenarioTool(),
-    lastScenario_(scenario)
-{
-  root_ = new RefreshGroup(this);
-  root_->setName("Range Tool Root Node");
-
-  // set the render bin order so that the tools will draw after the terrain.
-  root_->getOrCreateStateSet()->setRenderBinDetails(BIN_RANGE_TOOL, BIN_GLOBAL_SIMSDK);
-
-  setupDefaultOptions();
-}
 
 RangeTool::RangeTool()
-  : ScenarioTool()
+{
+}
+
+void RangeTool::onInstall(const ScenarioManager& scenario)
 {
   root_ = new RefreshGroup(this);
   root_->setName("Range Tool Root Node");
 
   // set the render bin order so that the tools will draw after the terrain.
   root_->getOrCreateStateSet()->setRenderBinDetails(BIN_RANGE_TOOL, BIN_GLOBAL_SIMSDK);
-
-  setupDefaultOptions();
 }
 
-void RangeTool::setupDefaultOptions()
+void RangeTool::onUninstall(const ScenarioManager& scenario)
 {
-  //nop
+  // remove all range tool state related to scenario
+  associations_.clear();
+  // scenario has already removed us from the scenegraph
+  root_ = NULL;
+  lastScenario_ = NULL;
+}
+
+void RangeTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
+{
+  lastScenario_ = &scenario;
+
+  for (AssociationVector::iterator i = associations_.begin(); i != associations_.end(); ++i)
+  {
+    (*i)->update(scenario, timeStamp);
+  }
+
+  resetDirty();
+}
+
+void RangeTool::update(const ScenarioManager* scenario, const simCore::TimeStamp& timeStamp)
+{
+  if (!scenario)
+    scenario = lastScenario_.get();
+  if (scenario)
+    onUpdate(*scenario, timeStamp, EntityVector());
 }
 
 RangeTool::Association* RangeTool::add(simData::ObjectId obj1, simData::ObjectId obj2)
@@ -147,21 +159,6 @@ void RangeTool::remove(Association* assoc)
     associations_.erase(i);
     setDirty();
   }
-}
-
-void RangeTool::onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
-{
-  if (scenario)
-    lastScenario_ = scenario;
-  else if (lastScenario_.valid())
-    scenario = lastScenario_.get();
-
-  for (AssociationVector::iterator i = associations_.begin(); i != associations_.end(); ++i)
-  {
-    (*i)->update(scenario, timeStamp);
-  }
-
-  resetDirty();
 }
 
 void RangeTool::setDirty()
@@ -511,22 +508,17 @@ void RangeTool::Association::remove(Calculation* calc)
   }
 }
 
-bool RangeTool::Association::update(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp)
+bool RangeTool::Association::update(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp)
 {
-  if (!scenario)
-    return false;
-
   // verify that both objects still exist in the scenario:
   osg::ref_ptr<EntityNode> obj1 = obj1_obs_.get();
   if (!obj1.valid())
   {
-    if (scenario)
-      obj1 = scenario->find(id1_);
-
+    obj1 = scenario.find(id1_);
     if (!obj1.valid())
     {
       osg::ref_ptr<EntityNode> obj2 = obj2_obs_.get();
-      refresh_(obj1, obj2, *scenario, timeStamp);
+      refresh_(obj1, obj2, scenario, timeStamp);
       return false;
     }
 
@@ -536,12 +528,10 @@ bool RangeTool::Association::update(ScenarioManager* scenario, const simCore::Ti
   osg::ref_ptr<EntityNode> obj2 = obj2_obs_.get();
   if (!obj2.valid())
   {
-    if (scenario)
-      obj2 = scenario->find(id2_);
-
+    obj2 = scenario.find(id2_);
     if (!obj2.valid())
     {
-      refresh_(obj1, obj2, *scenario, timeStamp);
+      refresh_(obj1, obj2, scenario, timeStamp);
       return false;
     }
 
@@ -556,7 +546,7 @@ bool RangeTool::Association::update(ScenarioManager* scenario, const simCore::Ti
   else if ((!obj1->isVisible() || !obj2->isVisible() || !visible_) && xform_->getNodeMask() != 0)
   {
     // This refresh will cause the last calculated values to become invalid, which is good thing
-    refresh_(obj1.get(), obj2.get(), *scenario, timeStamp);
+    refresh_(obj1.get(), obj2.get(), scenario, timeStamp);
     xform_->setNodeMask(0);
   }
 
@@ -565,7 +555,7 @@ bool RangeTool::Association::update(ScenarioManager* scenario, const simCore::Ti
       obj1->getLocator()->outOfSyncWith(obj1LocatorRev_) ||
       obj2->getLocator()->outOfSyncWith(obj2LocatorRev_))
   {
-    refresh_(obj1.get(), obj2.get(), *scenario, timeStamp);
+    refresh_(obj1.get(), obj2.get(), scenario, timeStamp);
 
     obj1->getLocator()->sync(obj1LocatorRev_);
     obj2->getLocator()->sync(obj2LocatorRev_);
