@@ -101,7 +101,7 @@ namespace simVis
     * @param timeStamp the update time.
     * @param updates the changes to the scenario's entities for the given update time
     */
-    virtual void onUpdate(const ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const std::vector<osg::ref_ptr<EntityNode> >& updates) { }
+    virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const std::vector<osg::ref_ptr<EntityNode> >& updates) { }
   };
 
   /** Vector of ScenarioTool ref_ptr */

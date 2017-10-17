@@ -107,6 +107,7 @@ void RangeTool::onInstall(const ScenarioManager& scenario)
   root_ = new RefreshGroup(this);
   root_->setName("Range Tool Root Node");
 
+  lastScenario_ = &scenario;
   // set the render bin order so that the tools will draw after the terrain.
   root_->getOrCreateStateSet()->setRenderBinDetails(BIN_RANGE_TOOL, BIN_GLOBAL_SIMSDK);
 }

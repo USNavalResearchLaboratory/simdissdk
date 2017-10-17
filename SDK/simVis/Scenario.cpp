@@ -1092,7 +1092,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
     ScenarioTool* tool = i->get();
     if (updates.size() > 0 || tool->isDirty())
     {
-      tool->onUpdate(this, updateTimeStamp, updates);
+      tool->onUpdate(*this, updateTimeStamp, updates);
       needsRedraw = true;
     }
     SAFETRYEND("updating scenario tools");
