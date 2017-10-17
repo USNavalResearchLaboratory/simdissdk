@@ -484,12 +484,6 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
 
   // create a state, and a magnetic datum convert for any measurements we might want to make
   state_.earthModel_ = simCore::WGS_84;
-  state_.magneticDatumConvert_ = new simCore::MagneticDatumConvert();
-}
-
-RangeTool::Association::~Association()
-{
-  delete state_.magneticDatumConvert_;
 }
 
 void RangeTool::Association::add(Calculation* calc)
@@ -641,6 +635,8 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
     if (!calc->visible())
       continue;
 
+    Measurement* calcMeasurement = calc->labelMeasurement();
+
     const GraphicVector& graphics = calc->graphics();
 
     for (GraphicVector::const_iterator g = graphics.begin(); g != graphics.end(); ++g)
@@ -648,6 +644,16 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       Graphic* graphic = g->get();
 
       graphic->resetDirty();
+
+      // pie slice graphics include special support for measurement
+      if (graphic->graphicType() == Graphic::PIE_SLICE && calcMeasurement)
+      {
+        PieSliceGraphic* psg = dynamic_cast<PieSliceGraphic*>(graphic);
+        if (psg)
+          psg->setMeasuredValue(calcMeasurement->value(state_));
+        else
+          assert(0);
+      }
 
       graphic->render(geode_, state_);
 
@@ -668,7 +674,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       }
     }
 
-    if (calc->labelMeasurement())
+    if (calcMeasurement)
     {
       Graphic* posGraphic = calc->labelGraphic();
       if (posGraphic)
@@ -1708,7 +1714,6 @@ RangeTool::TrueAzimuthPieSliceGraphic::TrueAzimuthPieSliceGraphic()
 
 void RangeTool::TrueAzimuthPieSliceGraphic::render(osg::Geode* geode, State& state)
 {
-  TrueAzimuthMeasurement m;
   osg::Vec3d endVec;
 
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
@@ -1725,7 +1730,7 @@ void RangeTool::TrueAzimuthPieSliceGraphic::render(osg::Geode* geode, State& sta
 
     endVec = osg::Vec3d(sin(ori.x())*cos(ori.y()), cos(ori.x())*cos(ori.y()), 0.0);
   }
-  createGeometry(state.coord(State::COORD_OBJ_0), osg::Y_AXIS, endVec, m.value(state), geode, state);
+  createGeometry(state.coord(State::COORD_OBJ_0), osg::Y_AXIS, endVec, measuredValue_, geode, state);
 }
 
 //----------------------------------------------------------------------------
@@ -1738,8 +1743,6 @@ RangeTool::TrueElevationPieSliceGraphic::TrueElevationPieSliceGraphic()
 
 void RangeTool::TrueElevationPieSliceGraphic::render(osg::Geode* geode, State& state)
 {
-  TrueElevationMeasurement m;
-
   osg::Vec3d startVec;
   osg::Vec3d endVec;
 
@@ -1760,7 +1763,7 @@ void RangeTool::TrueElevationPieSliceGraphic::render(osg::Geode* geode, State& s
     endVec = osg::Vec3d(startVec.x(), startVec.y(), 0.0);
   }
 
-  createGeometry(state.coord(State::COORD_OBJ_0), startVec, endVec, m.value(state), geode, state);
+  createGeometry(state.coord(State::COORD_OBJ_0), startVec, endVec, measuredValue_, geode, state);
 }
 
 //----------------------------------------------------------------------------
@@ -1773,7 +1776,6 @@ RangeTool::TrueCompositeAnglePieSliceGraphic::TrueCompositeAnglePieSliceGraphic(
 
 void RangeTool::TrueCompositeAnglePieSliceGraphic::render(osg::Geode* geode, State& state)
 {
-  TrueCompositeAngleMeasurement m;
   osg::Vec3d endVec;
 
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
@@ -1790,7 +1792,7 @@ void RangeTool::TrueCompositeAnglePieSliceGraphic::render(osg::Geode* geode, Sta
     endVec = calcYprVector(ori);
   }
 
-  createGeometry(state.coord(State::COORD_OBJ_0), osg::Y_AXIS, endVec, m.value(state), geode, state);
+  createGeometry(state.coord(State::COORD_OBJ_0), osg::Y_AXIS, endVec, measuredValue_, geode, state);
 }
 
 //----------------------------------------------------------------------------
@@ -1803,8 +1805,7 @@ void RangeTool::MagneticAzimuthPieSliceGraphic::render(osg::Geode* geode, State&
 {
   osg::Vec3d startVecENU;
   osg::Vec3d endVecENU;
-  MagneticAzimuthMeasurement m;
-  const double magAz = m.value(state);
+  const double magAz = measuredValue_;
 
   if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
   {
@@ -1864,8 +1865,8 @@ void RangeTool::RelOriElevationPieSliceGraphic::render(osg::Geode* geode, State&
     startVecENU = calcYprVector(rotatedOri);
   }
 
-  RelOriElevationMeasurement m;
-  const double relOriElev = m.value(state);
+
+  const double relOriElev = measuredValue_;
   if ((state.beginEntity_.node_->type() == simData::DataStore::PLATFORM) &&
       (state.endEntity_.node_->type() == simData::DataStore::PLATFORM))
   {
@@ -1889,18 +1890,17 @@ RangeTool::RelOriCompositeAnglePieSliceGraphic::RelOriCompositeAnglePieSliceGrap
 
 void RangeTool::RelOriCompositeAnglePieSliceGraphic::render(osg::Geode* geode, State& state)
 {
-  RelOriCompositeAngleMeasurement m;
   const osg::Vec3d& startVecENU = calcYprVector(state.beginEntity_.ypr_);
 
   if ((state.beginEntity_.node_->type() == simData::DataStore::PLATFORM) &&
     (state.endEntity_.node_->type() == simData::DataStore::PLATFORM))
   {
-    createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), m.value(state), geode, state);
+    createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), measuredValue_, geode, state);
   }
   else
   {
     const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_.ypr_);
-    createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, m.value(state), geode, state);
+    createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, endVecENU, measuredValue_, geode, state);
   }
 }
 
@@ -1914,7 +1914,7 @@ RangeTool::RelAspectAnglePieSliceGraphic::RelAspectAnglePieSliceGraphic()
 
 void RangeTool::RelAspectAnglePieSliceGraphic::render(osg::Geode* geode, State& state)
 {
-  const double angle = simCore::calculateAspectAngle(state.beginEntity_.lla_, state.endEntity_.lla_, state.endEntity_.ypr_);
+  const double angle = measuredValue_;
   const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_.ypr_);
   const osg::Vec3d startVec = state.coord(State::COORD_OBJ_0) - state.coord(State::COORD_OBJ_1);
   createGeometry(state.coord(State::COORD_OBJ_1), startVec, endVecENU, angle, geode, state);
@@ -1932,8 +1932,7 @@ void RangeTool::RelVelAzimuthPieSliceGraphic::render(osg::Geode* geode, State& s
   if (state.beginEntity_.vel_ == simCore::Vec3())
     return;
 
-  RelVelAzimuthMeasurement m;
-  const double relVelAzim = m.value(state);
+  const double relVelAzim = measuredValue_;
   simCore::Vec3 fpa;
   const simCore::Vec3& vel = state.beginEntity_.vel_;
   simCore::calculateFlightPathAngles(vel, fpa);
@@ -1968,8 +1967,7 @@ void RangeTool::RelVelElevationPieSliceGraphic::render(osg::Geode* geode, State&
     startVecENU = calcYprVector(rotatedOri);
   }
 
-  RelVelElevationMeasurement m;
-  const double relVelElev = m.value(state);
+  const double relVelElev = measuredValue_;
   if (state.endEntity_.node_->type() == simData::DataStore::PLATFORM)
   {
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), relVelElev, geode, state);
@@ -1998,8 +1996,7 @@ void RangeTool::RelVelCompositeAnglePieSliceGraphic::render(osg::Geode* geode, S
 
   const simCore::Vec3& vel = state.beginEntity_.vel_;
   const osg::Vec3d startVecENU(vel.x(), vel.y(), vel.z());
-  RelVelCompositeAngleMeasurement m;
-  const double relVelComposite = m.value(state);
+  const double relVelComposite = measuredValue_;
   if (state.endEntity_.node_->type() == simData::DataStore::PLATFORM)
   {
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), relVelComposite, geode, state);
@@ -2260,8 +2257,9 @@ bool RangeTool::TrueCompositeAngleMeasurement::willAccept(const simVis::RangeToo
 
 //----------------------------------------------------------------------------
 
-RangeTool::MagneticAzimuthMeasurement::MagneticAzimuthMeasurement()
-  : Measurement("Mag Azim", "Az(M)", osgEarth::Units::RADIANS)
+RangeTool::MagneticAzimuthMeasurement::MagneticAzimuthMeasurement(std::shared_ptr<simCore::DatumConvert> datumConvert)
+  : Measurement("Mag Azim", "Az(M)", osgEarth::Units::RADIANS),
+  datumConvert_(datumConvert)
 {
 }
 
@@ -2269,7 +2267,7 @@ double RangeTool::MagneticAzimuthMeasurement::value(State& state) const
 {
   double az;
   calculateTrueAngles_(state, &az, NULL, NULL);
-  az = state.magneticDatumConvert_->convertMagneticDatum(state.beginEntity_.lla_, state.timeStamp_, az, simCore::COORD_SYS_LLA, simCore::MAGVAR_TRUE, simCore::MAGVAR_WMM, 0.0);
+  az = datumConvert_->convertMagneticDatum(state.beginEntity_.lla_, state.timeStamp_, az, simCore::COORD_SYS_LLA, simCore::MAGVAR_TRUE, simCore::MAGVAR_WMM, 0.0);
   return az;
 }
 

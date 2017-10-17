@@ -22,6 +22,7 @@
 #ifndef SIMVIS_RANGETOOL_H
 #define SIMVIS_RANGETOOL_H
 
+#include <memory>
 #include <sstream>
 
 #include "osg/Group"
@@ -38,7 +39,7 @@
 #include "simVis/Tool.h"
 #include "simVis/Utils.h"
 
-namespace simCore { class MagneticDatumConvert; }
+namespace simCore { class DatumConvert; }
 namespace simRF { class RFPropagationFacade; }
 
 namespace simVis
@@ -247,7 +248,6 @@ namespace simVis
       simCore::EarthModelCalculations  earthModel_;
       simCore::CoordinateConverter     coordConv_;
       osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
-      simCore::MagneticDatumConvert* magneticDatumConvert_; // converter for magnetic azimuth measurements
       simCore::TimeStamp timeStamp_; // the timeStamp of the last update
       ///@}
     };
@@ -661,7 +661,7 @@ namespace simVis
 
     protected:
       /// osg::Referenced-derived
-      virtual ~Association();
+      virtual ~Association() {}
 
     private:
       // regenerates scene geometry
@@ -777,6 +777,12 @@ namespace simVis
     /// a filled in arc
     class SDKVIS_EXPORT PieSliceGraphic : public Graphic
     {
+    public:
+      virtual osg::Vec3 labelPos(State& state);
+
+      /// PieSliceGraphics cache their measured value here
+      virtual void setMeasuredValue(double value) { measuredValue_ = value; }
+
     protected:
       /// constructor with name of the measurement type
       PieSliceGraphic(const std::string& typeName)
@@ -793,12 +799,11 @@ namespace simVis
         osg::Geode*  geode,
         State&       state);
 
-      virtual osg::Vec3 labelPos(State& state);
-
       /// osg::Referenced-derived
       virtual ~PieSliceGraphic() {}
 
       osgEarth::optional<osg::Vec3> labelPos_; ///< label position
+      double measuredValue_;                  ///< value of calc's measurement
     };
 
   public: // Built-in Graphics
@@ -1365,13 +1370,15 @@ namespace simVis
     class SDKVIS_EXPORT MagneticAzimuthMeasurement : public Measurement
     {
     public:
-      MagneticAzimuthMeasurement();
+      explicit MagneticAzimuthMeasurement(std::shared_ptr<simCore::DatumConvert> datumConvert);
       virtual double value(State& state) const;
       virtual bool willAccept(const simVis::RangeTool::State& state) const;
 
     public:
       /// osg::Referenced-derived
       virtual ~MagneticAzimuthMeasurement() {}
+    private:
+      std::shared_ptr<const simCore::DatumConvert> datumConvert_;
     };
 
     // Orientation-relative angles
