@@ -22,12 +22,12 @@
 #ifndef SIMDATA_DATATABLE_H
 #define SIMDATA_DATATABLE_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <deque>
 #include <utility>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simData/DataStore.h"
 #include "simData/TableStatus.h"
 

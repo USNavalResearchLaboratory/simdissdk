@@ -22,13 +22,14 @@
 #ifndef SIMUTIL_VIEWPOINTMONITOR_H
 #define SIMUTIL_VIEWPOINTMONITOR_H
 
-#include <vector>
 #include <map>
+#include <memory>
+#include <vector>
+
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
 #include "osgEarthUtil/EarthManipulator"
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/Calc/Vec3.h"
 
 namespace simVis {

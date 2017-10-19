@@ -21,9 +21,8 @@
 */
 #ifndef SIMUTIL_MOUSEMANIPULATOR_H
 #define SIMUTIL_MOUSEMANIPULATOR_H
-
+#include <memory>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 
 namespace osgGA {
   class GUIEventAdapter;

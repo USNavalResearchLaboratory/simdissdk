@@ -23,9 +23,9 @@
 #ifndef SIMCORE_FILE_SEARCH_H
 #define SIMCORE_FILE_SEARCH_H
 
+#include <memory>
 #include <string>
 #include <fstream>
-#include "simCore/Common/Memory.h"
 
 namespace simCore
 {

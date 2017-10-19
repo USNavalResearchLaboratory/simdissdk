@@ -22,8 +22,8 @@
 #ifndef SIMVIS_RFPROP_POD_PROFILE_DATA_PROVIDER_H
 #define SIMVIS_RFPROP_POD_PROFILE_DATA_PROVIDER_H
 
+#include <memory>
 #include <vector>
-#include "simCore/Common/Memory.h"
 #include "simVis/RFProp/FunctionalProfileDataProvider.h"
 
 namespace simRF

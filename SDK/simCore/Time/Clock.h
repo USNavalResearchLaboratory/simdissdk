@@ -22,7 +22,7 @@
 #ifndef SIMCORE_TIME_CLOCK_H
 #define SIMCORE_TIME_CLOCK_H
 
-#include "simCore/Common/Memory.h"
+#include <memory>
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
 

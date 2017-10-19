@@ -23,10 +23,10 @@
 #define SIMVIS_GOG_PARSER_H
 
 #include <map>
+#include <memory>
 #include <string>
 #include <iostream>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GOGRegistry.h"

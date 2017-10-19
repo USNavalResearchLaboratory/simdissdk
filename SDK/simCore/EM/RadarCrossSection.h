@@ -24,9 +24,9 @@
 
 #include <ostream>
 #include <map>
+#include <memory>
 #include <vector>
 #include <string>
-#include "simCore/Common/Memory.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Random.h"
 #include "simCore/EM/Constants.h"

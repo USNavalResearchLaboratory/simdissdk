@@ -22,7 +22,7 @@
 #ifndef SIMVIS_RFPROP_RADAR_PARAMETERS_H
 #define SIMVIS_RFPROP_RADAR_PARAMETERS_H
 
-#include "simCore/Common/Memory.h"
+#include <memory>
 
 namespace simRF
 {

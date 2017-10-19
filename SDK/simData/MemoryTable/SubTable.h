@@ -23,9 +23,9 @@
 #define SIMDATA_MEMORYTABLE_SUBTABLE_H
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <utility>
-#include "simCore/Common/Memory.h"
 #include "simData/GenericIterator.h"
 #include "simData/DataTable.h"
 #include "simData/MemoryTable/TimeContainer.h"

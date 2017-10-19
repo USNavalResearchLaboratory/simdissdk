@@ -23,11 +23,11 @@
 #define SIMDATA_DATASTORE_H
 
 #include <cassert>
+#include <memory>
 #include <vector>
 
 #include "simData/DataSlice.h"
 #include "simData/Interpolator.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/Common/Export.h"
 
 // forward declare

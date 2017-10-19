@@ -22,11 +22,10 @@
 #ifndef SIMVIS_COMPASS_H
 #define SIMVIS_COMPASS_H
 
-#include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
-
+#include <memory>
 #include <osg/ref_ptr>
 #include <osg/observer_ptr>
+#include "simCore/Common/Export.h"
 
 namespace osgEarth{
 namespace Util{

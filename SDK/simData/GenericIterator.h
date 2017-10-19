@@ -22,7 +22,7 @@
 #ifndef SIMDATA_GENERICITERATOR_H
 #define SIMDATA_GENERICITERATOR_H
 
-#include "simCore/Common/Memory.h"
+#include <memory>
 
 namespace simData
 {

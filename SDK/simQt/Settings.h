@@ -22,13 +22,13 @@
 #ifndef SIMQT_SETTINGS_H
 #define SIMQT_SETTINGS_H
 
+#include <memory>
 #include <QMap>
 #include <QSettings>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
 
-#include "simCore/Common/Memory.h"
 #include "simCore/Common/Common.h"
 
 namespace simQt {

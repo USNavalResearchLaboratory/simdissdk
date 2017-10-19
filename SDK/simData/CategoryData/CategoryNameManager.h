@@ -23,8 +23,8 @@
 #define SIMDATA_CATEGORY_NAME_MANAGER_H
 
 #include <map>
+#include <memory>
 #include <vector>
-#include "simCore/Common/Memory.h"
 #include "simData/CategoryData/CategoryData.h"
 
 namespace simData {

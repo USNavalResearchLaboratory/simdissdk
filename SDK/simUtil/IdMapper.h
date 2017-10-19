@@ -22,11 +22,12 @@
 #ifndef SIMUTIL_IDMAPPER_H
 #define SIMUTIL_IDMAPPER_H
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <map>
+
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 
 namespace simData { class DataStore; }
 

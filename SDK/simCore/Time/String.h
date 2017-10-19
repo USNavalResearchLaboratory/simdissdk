@@ -23,16 +23,15 @@
 #define SIMCORE_TIME_STRING_H
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <string>
 #include <iostream>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/Time/Constants.h"
 
 namespace simCore
 {
-
 class TimeStamp;
 class Seconds;
 

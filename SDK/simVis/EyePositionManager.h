@@ -22,9 +22,9 @@
 #ifndef SIMVIS_EYE_POSITION_MANAGER_H
 #define SIMVIS_EYE_POSITION_MANAGER_H
 
+#include <memory>
 #include <string>
 #include "osgEarthUtil/EarthManipulator"
-#include "simCore/Common/Memory.h"
 #include "simVis/View.h"
 
 namespace simVis {

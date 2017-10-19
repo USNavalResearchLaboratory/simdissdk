@@ -24,7 +24,6 @@
 
 #include <osg/ref_ptr>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/String/TextReplacer.h"
 
 namespace simUtil {

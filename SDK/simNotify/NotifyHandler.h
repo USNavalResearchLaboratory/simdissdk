@@ -23,12 +23,12 @@
 #define SIMNOTIFY_NOTIFYHANDLER_H
 
 #include <ios>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
 
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simNotify/NotifySeverity.h"
 
 namespace simNotify

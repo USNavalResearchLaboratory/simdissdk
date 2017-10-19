@@ -22,13 +22,13 @@
 #ifndef SIMQT_CONSOLEDATAMODEL_H
 #define SIMQT_CONSOLEDATAMODEL_H
 
+#include <memory>
 #include <QSortFilterProxyModel>
 #include <QList>
 #include <QMap>
 #include <QMetaType>
 #include "simNotify/NotifySeverity.h"
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 
 class QTimer;
 

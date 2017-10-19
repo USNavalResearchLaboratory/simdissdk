@@ -22,13 +22,13 @@
 #ifndef SIMVIS_GOG_GOGNODE_H
 #define SIMVIS_GOG_GOGNODE_H
 
-#include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
-#include "simCore/Calc/Vec3.h"
+#include <map>
+#include <memory>
 #include "osgEarth/GeoData"
 #include "osgEarthSymbology/Style"
 #include "osg/Group"
-
+#include "simCore/Common/Common.h"
+#include "simCore/Calc/Vec3.h"
 
 namespace simVis { namespace GOG
 {

@@ -22,10 +22,10 @@
 #ifndef SIMDATA_CATEGORY_DATA_H
 #define SIMDATA_CATEGORY_DATA_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simData/DataTypes.h"
 
 namespace simData {

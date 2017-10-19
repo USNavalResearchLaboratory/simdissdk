@@ -22,12 +22,12 @@
 #ifndef SIMQT_CONSOLECHANNEL_H
 #define SIMQT_CONSOLECHANNEL_H
 
+#include <memory>
 #include <QString>
 #include <QMutex>
 #include "simNotify/NotifyHandler.h"
 #include "simNotify/NotifySeverity.h"
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 
 namespace simQt {
 
