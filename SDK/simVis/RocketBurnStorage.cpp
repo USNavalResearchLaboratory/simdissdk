@@ -96,7 +96,7 @@ public:
   }
 
   /** Removes the burns from storage when the entity is removed from data store */
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     storage_.removeBurnsForPlatform_(removedId);
   }

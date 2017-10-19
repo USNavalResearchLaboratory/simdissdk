@@ -20,7 +20,7 @@
  *
  */
 #include <QString>
-
+#include "simData/DataStore.h"
 #include "simData/DataStoreHelpers.h"
 #include "simQt/CategoryTreeModel.h"
 

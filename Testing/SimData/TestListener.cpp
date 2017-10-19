@@ -79,12 +79,12 @@ public:
     return rv;
   }
 
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
     ++add_;
   }
 
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     ++remove_;
   }
@@ -99,7 +99,7 @@ public:
     ++time_;
   }
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::DataStore::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
     ++category_;
   }
@@ -149,14 +149,14 @@ public:
   {
   }
 
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
     if ((listener_ != NULL) && (type_ == AddEntity))
       source->addListener(listener_);
     listener_.reset();
   }
 
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     if ((listener_ != NULL) && (type_ == RemoveEntity))
       source->addListener(listener_);
@@ -177,7 +177,7 @@ public:
     listener_.reset();
   }
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::DataStore::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
     if ((listener_ != NULL) && (type_ == CategoryDataChange))
       source->addListener(listener_);
@@ -220,7 +220,7 @@ public:
   {
   }
 
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
     if ((listener_ != NULL) && (type_ == AddEntity))
     {
@@ -229,7 +229,7 @@ public:
     }
   }
 
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     if ((listener_ != NULL) && (type_ == RemoveEntity))
     {
@@ -256,7 +256,7 @@ public:
     }
   }
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::DataStore::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
     if ((listener_ != NULL) && (type_ == CategoryDataChange))
     {

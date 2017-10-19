@@ -30,7 +30,6 @@
 #include "osgEarth/CullingUtils"
 #include "osgEarthUtil/Controls"
 #include "osgEarthUtil/SpatialData"
-#include "simData/DataStore.h"
 #include "simVis/Tool.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
@@ -40,6 +39,7 @@
 
 
 namespace simCore { class Clock; }
+namespace simData { class DataStore; }
 namespace simVis
 {
   class BeamNode;

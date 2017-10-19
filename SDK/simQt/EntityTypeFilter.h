@@ -22,13 +22,15 @@
 #ifndef SIMQT_ENTITY_TYPE_FILTER_H
 #define SIMQT_ENTITY_TYPE_FILTER_H
 
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simQt/EntityFilter.h"
+
+namespace simData { class DataStore; }
 
 namespace simQt {
 
   /**
-  * Class to implement a filter based on entity type.  Define the simData::DataStore::ObjectTypes that pass the filter,
+  * Class to implement a filter based on entity type.  Define the simData::ObjectTypes that pass the filter,
   * either using the methods or passing in a bit mask of types.  This filter can also be updated using on the widget provided.
   */
   class SDKQT_EXPORT EntityTypeFilter : public EntityFilter
@@ -43,7 +45,7 @@ namespace simQt {
     * @param dataStore  reference to the data store
     * @param showWidget  flag to indicate if a widget should be created
     */
-    EntityTypeFilter(const simData::DataStore& dataStore, unsigned int types = simData::DataStore::ALL, bool showWidget = false);
+    EntityTypeFilter(const simData::DataStore& dataStore, unsigned int types = simData::ALL, bool showWidget = false);
 
     /** Destructor */
     virtual ~EntityTypeFilter();
@@ -72,13 +74,13 @@ namespace simQt {
     * Enable an entity type to pass the filter. Emits the filterUpdated signal
     * @param type The type to enable
     */
-    void enableEntityType(simData::DataStore::ObjectType type);
+    void enableEntityType(simData::ObjectType type);
 
     /**
     * Disable an entity type to no longer pass the filter.  Emits the filterUpdated signal
     * @param type The type to disable
     */
-    void disableEntityType(simData::DataStore::ObjectType type);
+    void disableEntityType(simData::ObjectType type);
 
   signals:
     /**
@@ -88,7 +90,7 @@ namespace simQt {
     void entityTypesChanged(unsigned int types);
 
   private slots:
-    /** Manages updating the filterTypes_ based on the GUI widget updates, passes a bit mask of simData::DataStore::ObjectType */
+    /** Manages updating the filterTypes_ based on the GUI widget updates, passes a bit mask of simData::ObjectType */
     void entityTypesChanged_(unsigned int types);
 
   private:

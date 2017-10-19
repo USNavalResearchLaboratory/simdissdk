@@ -127,13 +127,13 @@ public: // methods
    * @{
    */
   /// Retrieve a list of IDs for objects of 'type'
-  virtual void idList(IdList *ids, ObjectType type = ALL) const {dataStore_->idList(ids, type);}
+  virtual void idList(IdList *ids, simData::ObjectType type = simData::ALL) const {dataStore_->idList(ids, type);}
 
   /// Retrieve a list of IDs for objects of 'type' with the given name
-  virtual void idListByName(const std::string& name, IdList* ids, ObjectType type = ALL) const {dataStore_->idListByName(name, ids, type);}
+  virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const {dataStore_->idListByName(name, ids, type);}
 
   /// Retrieve a list of IDs for objects with the given original id
-  virtual void idListByOriginalId(IdList *ids, uint64_t originalId, ObjectType type = ALL) const {dataStore_->idListByOriginalId(ids, originalId, type);}
+  virtual void idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type = simData::ALL) const {dataStore_->idListByOriginalId(ids, originalId, type);}
 
   /// Retrieve a list of IDs for all beams associated with a platform
   virtual void beamIdListForHost(ObjectId hostid, IdList *ids) const {dataStore_->beamIdListForHost(hostid, ids);}
@@ -151,7 +151,7 @@ public: // methods
   virtual void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const {dataStore_->lobGroupIdListForHost(hostid, ids);}
 
   /// Retrieves the ObjectType for a particular ID
-  virtual ObjectType objectType(ObjectId id) const {return dataStore_->objectType(id);}
+  virtual simData::ObjectType objectType(ObjectId id) const {return dataStore_->objectType(id);}
 
   /// Retrieves the host entity ID for a particular ID (i.e. a beam, given a gate ID; a platform, given a LOB ID)
   virtual ObjectId entityHostId(ObjectId childId) const {return dataStore_->entityHostId(childId);}

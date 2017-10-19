@@ -26,6 +26,7 @@
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Time/Clock.h"
+#include "simData/DataStore.h"
 #include "simData/DataTypes.h"
 #include "simUtil/PlatformSimulator.h"
 

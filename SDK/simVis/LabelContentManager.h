@@ -25,7 +25,8 @@
 
 #include <osg/Referenced>
 #include <osg/ref_ptr>
-#include "simData/DataStore.h"
+#include "simData/DataTypes.h"
+#include "simData/ObjectId.h"
 
 namespace simVis
 {

@@ -27,7 +27,7 @@
 #include "osgEarthUtil/ObjectLocator"
 #include "simCore/Common/Export.h"
 #include "simCore/Time/TimeClass.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
 #include "simVis/RFProp/Profile.h"

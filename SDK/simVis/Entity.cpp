@@ -87,7 +87,7 @@ void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 
 /////////////////////////////////////////////////////////////////////////////////
 
-EntityNode::EntityNode(simData::DataStore::ObjectType type, Locator* locator)
+EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
   : type_(type)
 {
   setNodeMask(0);  // Draw is off until a valid update is received

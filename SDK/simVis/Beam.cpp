@@ -123,7 +123,7 @@ namespace simVis
 {
 
 BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
-  : EntityNode(simData::DataStore::BEAM),
+  : EntityNode(simData::BEAM),
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     visible_(false),

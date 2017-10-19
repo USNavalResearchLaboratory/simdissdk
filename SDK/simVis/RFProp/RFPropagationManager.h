@@ -23,7 +23,7 @@
 #define SIMVIS_RFPROPAGATIONMANAGER_H
 
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 
 namespace simRF
 {

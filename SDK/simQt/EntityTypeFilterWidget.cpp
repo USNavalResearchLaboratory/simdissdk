@@ -70,39 +70,39 @@ EntityTypeFilterWidget::~EntityTypeFilterWidget()
 unsigned int EntityTypeFilterWidget::getSelections() const
 {
   // query all our Checkables to determine which ones are selected
-  unsigned int rv = simData::DataStore::NONE;
+  unsigned int rv = simData::NONE;
   if (ui_->platformCheckable->isChecked())
-    rv |= simData::DataStore::PLATFORM;
+    rv |= simData::PLATFORM;
   if (ui_->beamCheckable->isChecked())
-    rv |= simData::DataStore::BEAM;
+    rv |= simData::BEAM;
   if (ui_->gateCheckable->isChecked())
-    rv |= simData::DataStore::GATE;
+    rv |= simData::GATE;
   if (ui_->laserCheckable->isChecked())
-    rv |= simData::DataStore::LASER;
+    rv |= simData::LASER;
   if (ui_->lobCheckable->isChecked())
-    rv |= simData::DataStore::LOB_GROUP;
+    rv |= simData::LOB_GROUP;
   if (ui_->projectorCheckable->isChecked())
-    rv |= simData::DataStore::PROJECTOR;
+    rv |= simData::PROJECTOR;
   // update the all button state, based on components' state
-  ui_->allCheckable->setChecked(rv == simData::DataStore::ALL);
+  ui_->allCheckable->setChecked(rv == simData::ALL);
   return rv;
 }
 
-std::set<simData::DataStore::ObjectType> EntityTypeFilterWidget::getSelectionsSet() const
+std::set<simData::ObjectType> EntityTypeFilterWidget::getSelectionsSet() const
 {
-  std::set<simData::DataStore::ObjectType> rv;
+  std::set<simData::ObjectType> rv;
   if (ui_->platformCheckable->isChecked())
-    rv.insert(simData::DataStore::PLATFORM);
+    rv.insert(simData::PLATFORM);
   if (ui_->beamCheckable->isChecked())
-    rv.insert(simData::DataStore::BEAM);
+    rv.insert(simData::BEAM);
   if (ui_->gateCheckable->isChecked())
-    rv.insert(simData::DataStore::GATE);
+    rv.insert(simData::GATE);
   if (ui_->laserCheckable->isChecked())
-    rv.insert(simData::DataStore::LASER);
+    rv.insert(simData::LASER);
   if (ui_->lobCheckable->isChecked())
-    rv.insert(simData::DataStore::LOB_GROUP);
+    rv.insert(simData::LOB_GROUP);
   if (ui_->projectorCheckable->isChecked())
-    rv.insert(simData::DataStore::PROJECTOR);
+    rv.insert(simData::PROJECTOR);
   return rv;
 }
 
@@ -114,22 +114,22 @@ void EntityTypeFilterWidget::setSelections(unsigned int types)
 
   // Note that because we tie into clicked(), calling setChecekd() will not emit
   // a signal.  We will emit a signal at the end.
-  ui_->platformCheckable->setChecked(simData::DataStore::PLATFORM & types);
-  ui_->beamCheckable->setChecked(simData::DataStore::BEAM & types);
-  ui_->gateCheckable->setChecked(simData::DataStore::GATE & types);
-  ui_->laserCheckable->setChecked(simData::DataStore::LASER & types);
-  ui_->lobCheckable->setChecked(simData::DataStore::LOB_GROUP & types);
-  ui_->projectorCheckable->setChecked(simData::DataStore::PROJECTOR & types);
-  ui_->allCheckable->setChecked(types == simData::DataStore::ALL);
+  ui_->platformCheckable->setChecked(simData::PLATFORM & types);
+  ui_->beamCheckable->setChecked(simData::BEAM & types);
+  ui_->gateCheckable->setChecked(simData::GATE & types);
+  ui_->laserCheckable->setChecked(simData::LASER & types);
+  ui_->lobCheckable->setChecked(simData::LOB_GROUP & types);
+  ui_->projectorCheckable->setChecked(simData::PROJECTOR & types);
+  ui_->allCheckable->setChecked(types == simData::ALL);
 
   // Emit a signal that the values have changed
   emit entityTypesChanged(getSelections());
 }
 
-void EntityTypeFilterWidget::setSelections(const std::set<simData::DataStore::ObjectType>& types)
+void EntityTypeFilterWidget::setSelections(const std::set<simData::ObjectType>& types)
 {
-  unsigned int selections = simData::DataStore::NONE;
-  for (std::set<simData::DataStore::ObjectType>::const_iterator typeIter = types.begin(); typeIter != types.end(); ++typeIter)
+  unsigned int selections = simData::NONE;
+  for (std::set<simData::ObjectType>::const_iterator typeIter = types.begin(); typeIter != types.end(); ++typeIter)
   {
     selections |= (*typeIter);
   }
@@ -144,7 +144,7 @@ void EntityTypeFilterWidget::entityTypeClicked_()
 
 void EntityTypeFilterWidget::toggleAllTypes_(bool activateAllTypes)
 {
-  simData::DataStore::ObjectType type = activateAllTypes ? simData::DataStore::ALL : simData::DataStore::NONE;
+  simData::ObjectType type = activateAllTypes ? simData::ALL : simData::NONE;
   setSelections(type);
   // emit is handled in setSelections()
 }

@@ -21,6 +21,7 @@
  */
 
 #include <QComboBox>
+#include "simData/DataStore.h"
 #include "simData/DataStoreHelpers.h"
 #include "simQt/EntityStateFilter.h"
 

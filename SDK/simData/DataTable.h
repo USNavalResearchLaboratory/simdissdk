@@ -28,7 +28,8 @@
 #include <deque>
 #include <utility>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
+#include "simData/GenericIterator.h"
+#include "simData/ObjectId.h"
 #include "simData/TableStatus.h"
 
 namespace simData {

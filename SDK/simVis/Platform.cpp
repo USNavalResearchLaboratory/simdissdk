@@ -123,7 +123,7 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
                            PlatformTspiFilterManager& manager,
                            osg::Group* trackParent,
                            Locator* locator, int referenceYear) :
-EntityNode(simData::DataStore::PLATFORM, locator),
+EntityNode(simData::PLATFORM, locator),
 ds_(dataStore),
 platformTspiFilterManager_(manager),
 lastUpdateTime_(-std::numeric_limits<float>::max()),

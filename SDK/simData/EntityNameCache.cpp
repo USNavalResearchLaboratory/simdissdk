@@ -19,12 +19,12 @@
  * disclose, or release this software.
  *
  */
-
+#include <cassert>
 #include "simData/EntityNameCache.h"
 
 namespace simData {
 
-EntityNameEntry::EntityNameEntry(simData::ObjectId id, simData::DataStore::ObjectType type)
+EntityNameEntry::EntityNameEntry(simData::ObjectId id, simData::ObjectType type)
   : id_(id),
     type_(type)
 {
@@ -39,7 +39,7 @@ simData::ObjectId EntityNameEntry::id() const
   return id_;
 }
 
-simData::DataStore::ObjectType EntityNameEntry::type() const
+simData::ObjectType EntityNameEntry::type() const
 {
   return type_;
 }
@@ -56,7 +56,7 @@ EntityNameCache::~EntityNameCache()
     delete iter->second;
 }
 
-void EntityNameCache::getEntries(const std::string& name, simData::DataStore::ObjectType type, std::vector<const EntityNameEntry*>& entries) const
+void EntityNameCache::getEntries(const std::string& name, simData::ObjectType type, std::vector<const EntityNameEntry*>& entries) const
 {
   const std::pair<EntityMap::const_iterator, EntityMap::const_iterator> range = entries_.equal_range(name);
   for (EntityMap::const_iterator iter = range.first; iter != range.second; ++iter)
@@ -66,12 +66,12 @@ void EntityNameCache::getEntries(const std::string& name, simData::DataStore::Ob
   }
 }
 
-void EntityNameCache::addEntity(const std::string& name, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+void EntityNameCache::addEntity(const std::string& name, simData::ObjectId newId, simData::ObjectType ot)
 {
   entries_.insert(std::pair<std::string, EntityNameEntry*>(name, new EntityNameEntry(newId, ot)));
 }
 
-void EntityNameCache::removeEntity(const std::string& name, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+void EntityNameCache::removeEntity(const std::string& name, simData::ObjectId removedId, simData::ObjectType ot)
 {
   const std::pair<EntityMap::iterator, EntityMap::iterator> range = entries_.equal_range(name);
   for (EntityMap::iterator iter = range.first; iter != range.second; ++iter)

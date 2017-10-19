@@ -499,7 +499,7 @@ public:
   explicit CDListener(unsigned int& cdChangeCounter) : cdChangeCounter_(cdChangeCounter)
   {}
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::DataStore::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
     ++cdChangeCounter_;
   }

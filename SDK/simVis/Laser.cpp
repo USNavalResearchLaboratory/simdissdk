@@ -33,7 +33,7 @@
 namespace simVis
 {
 LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
-  : EntityNode(simData::DataStore::LASER),
+  : EntityNode(simData::LASER),
     hasLastUpdate_(false),
     node_(NULL),
     host_(host),

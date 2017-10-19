@@ -20,6 +20,7 @@
  *
  */
 
+#include "simData/DataStore.h"
 #include "simQt/EntityTypeFilterWidget.h"
 #include "simQt/EntityTypeFilter.h"
 
@@ -39,7 +40,7 @@ namespace simQt {
 
   bool EntityTypeFilter::acceptEntity(simData::ObjectId id) const
   {
-    simData::DataStore::ObjectType type = dataStore_.objectType(id);
+    simData::ObjectType type = dataStore_.objectType(id);
     return filterTypes_ & type;
   }
 
@@ -75,14 +76,14 @@ namespace simQt {
     }
   }
 
-  void EntityTypeFilter::enableEntityType(simData::DataStore::ObjectType type)
+  void EntityTypeFilter::enableEntityType(simData::ObjectType type)
   {
     filterTypes_ |= type;
     // we changed the filter, emit the signal
     emit(filterUpdated());
   }
 
-  void EntityTypeFilter::disableEntityType(simData::DataStore::ObjectType type)
+  void EntityTypeFilter::disableEntityType(simData::ObjectType type)
   {
     filterTypes_ =  filterTypes_ & (filterTypes_ ^ type);
     // we changed the filter, emit the signal

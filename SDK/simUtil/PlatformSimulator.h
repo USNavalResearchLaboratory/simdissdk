@@ -24,11 +24,12 @@
 
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Math.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simData/DataTypes.h"
 #include "osgGA/GUIEventHandler"
 #include <deque>
 
+namespace simData { class DataStore; }
 namespace simVis
 {
   class SceneManager;

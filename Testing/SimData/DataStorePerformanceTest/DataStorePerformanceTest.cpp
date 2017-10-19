@@ -72,13 +72,13 @@ public:
   }
 
   /// new entity has been added, with the given id and type
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
     counters_->add++;
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     counters_->remove++;
   }
@@ -96,7 +96,7 @@ public:
   }
 
   /// something has changed in the entity category data
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::DataStore::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
     counters_->category++;
   }

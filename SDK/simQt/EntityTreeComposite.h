@@ -27,7 +27,7 @@
 #include <QLayout>
 #include <QAbstractItemView>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simQt/Settings.h"
 
 class QCloseEvent;

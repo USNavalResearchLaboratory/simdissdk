@@ -40,13 +40,13 @@ public:
   }
 
   /// new entity has been added, with the given id and type
-  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
     parent_->addEntity_(newId);
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     parent_->removeEntity_(removedId);
   }
@@ -58,7 +58,7 @@ public:
   }
 
   /// something has changed in the entity category data
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::DataStore::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
     parent_->emitEntityDataChanged_(changedId);
   }
@@ -201,8 +201,8 @@ void EntityTreeModel::commitDelayedEntities_()
 {
   for (std::vector<simData::ObjectId>::const_iterator it = delayedAdds_.begin(); it != delayedAdds_.end(); ++it)
   {
-    simData::DataStore::ObjectType entityType = dataStore_->objectType(*it);
-    if (simData::DataStore::NONE)
+    simData::ObjectType entityType = dataStore_->objectType(*it);
+    if (simData::NONE)
     {
       // the entity should have been removed from the vector
       assert(false);
@@ -211,12 +211,12 @@ void EntityTreeModel::commitDelayedEntities_()
 
     // Pick out the host's id (0 for platforms)
     uint64_t hostId = 0;
-    if (entityType != simData::DataStore::PLATFORM)
+    if (entityType != simData::PLATFORM)
       hostId = dataStore_->entityHostId(*it);
 
     // Only add the item if it's a platform, or if it has a valid host
-    assert(!((hostId == 0) && (entityType != simData::DataStore::PLATFORM)));
-    if ((hostId > 0 || entityType == simData::DataStore::PLATFORM))
+    assert(!((hostId == 0) && (entityType != simData::PLATFORM)));
+    if ((hostId > 0 || entityType == simData::PLATFORM))
     {
       addTreeItem_(*it, entityType, hostId);
     }
@@ -279,8 +279,8 @@ void EntityTreeModel::forceRefresh()
 
     // Get platform objects from DataStore
     simData::DataStore::IdList platformList;
-    dataStore_->idList(&platformList, simData::DataStore::PLATFORM);
-    buildTree_(simData::DataStore::PLATFORM, dataStore_, platformList, NULL);
+    dataStore_->idList(&platformList, simData::PLATFORM);
+    buildTree_(simData::PLATFORM, dataStore_, platformList, NULL);
     endResetModel();
   }
 }
@@ -294,7 +294,7 @@ EntityTreeItem* EntityTreeModel::findItem_(uint64_t entityId) const
   return NULL;
 }
 
-void EntityTreeModel::addTreeItem_(uint64_t id, simData::DataStore::ObjectType type, uint64_t parentId)
+void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64_t parentId)
 {
   EntityTreeItem* found = findItem_(id);
   // adding a duplicate
@@ -430,20 +430,20 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     {
       switch (dataStore_->objectType(item->id()))
       {
-      case simData::DataStore::PLATFORM:
+      case simData::PLATFORM:
         return platformIcon_;
-      case simData::DataStore::BEAM:
+      case simData::BEAM:
         return beamIcon_;
-      case simData::DataStore::GATE:
+      case simData::GATE:
         return gateIcon_;
-      case simData::DataStore::LASER:
+      case simData::LASER:
         return laserIcon_;
-      case simData::DataStore::LOB_GROUP:
+      case simData::LOB_GROUP:
         return lobIcon_;
-      case simData::DataStore::PROJECTOR:
+      case simData::PROJECTOR:
         return projectorIcon_;
-      case simData::DataStore::NONE:
-      case simData::DataStore::ALL:
+      case simData::NONE:
+      case simData::ALL:
         break;
       }
     }
@@ -598,7 +598,7 @@ int EntityTreeModel::rowCount(const QModelIndex &parent) const
   return parentItem->childCount();
 }
 
-void EntityTreeModel::buildTree_(simData::DataStore::ObjectType type, const simData::DataStore* dataStore,
+void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataStore* dataStore,
                                  const simData::DataStore::IdList& idList, EntityTreeItem *parent)
 {
   for (simData::DataStore::IdList::const_iterator iter = idList.begin(); iter != idList.end(); ++iter)
@@ -609,32 +609,32 @@ void EntityTreeModel::buildTree_(simData::DataStore::ObjectType type, const simD
     else
       newItem = new EntityTreeItem(*iter, rootItem_);
 
-    if (type == simData::DataStore::PLATFORM)
+    if (type == simData::PLATFORM)
     {
       // for platforms, find all child beams, lasers, lobs, and projectors
       simData::DataStore::IdList idList;
       dataStore->beamIdListForHost(*iter, &idList);
-      buildTree_(simData::DataStore::BEAM, dataStore, idList, newItem);
+      buildTree_(simData::BEAM, dataStore, idList, newItem);
       idList.clear();
       dataStore->laserIdListForHost(*iter, &idList);
-      buildTree_(simData::DataStore::LASER, dataStore, idList, newItem);
+      buildTree_(simData::LASER, dataStore, idList, newItem);
       idList.clear();
       dataStore->lobGroupIdListForHost(*iter, &idList);
-      buildTree_(simData::DataStore::LOB_GROUP, dataStore, idList, newItem);
+      buildTree_(simData::LOB_GROUP, dataStore, idList, newItem);
       idList.clear();
       dataStore->projectorIdListForHost(*iter, &idList);
-      buildTree_(simData::DataStore::PROJECTOR, dataStore, idList, newItem);
+      buildTree_(simData::PROJECTOR, dataStore, idList, newItem);
     }
-    else if (type == simData::DataStore::BEAM)
+    else if (type == simData::BEAM)
     {
       // for beams, find all child gates
       simData::DataStore::IdList idList;
       dataStore->gateIdListForHost(*iter, &idList);
-      buildTree_(simData::DataStore::GATE, dataStore, idList, newItem);
+      buildTree_(simData::GATE, dataStore, idList, newItem);
       // and all projectors
       idList.clear();
       dataStore->projectorIdListForHost(*iter, &idList);
-      buildTree_(simData::DataStore::PROJECTOR, dataStore, idList, newItem);
+      buildTree_(simData::PROJECTOR, dataStore, idList, newItem);
     }
 
     // now add to tree appropriately

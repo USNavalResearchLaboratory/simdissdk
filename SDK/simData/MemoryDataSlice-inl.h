@@ -23,7 +23,7 @@
 #define SIMDATA_MEMORYDATASLICE_INL_H
 
 #include <limits>
-
+#include "simData/DataStore.h"
 #include "simData/MessageVisitor/Message.h"
 #include "simData/MessageVisitor/MessageVisitor.h"
 #include "simData/MessageVisitor/protobuf.h"

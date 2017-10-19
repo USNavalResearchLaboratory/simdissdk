@@ -22,9 +22,11 @@
 #ifndef SIMQT_ENTITY_STATE_FILTER_H
 #define SIMQT_ENTITY_STATE_FILTER_H
 
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simCore/Time/Clock.h"
 #include "simQt/EntityFilter.h"
+
+namespace simData { class CategoryFilter; class DataStore; }
 
 namespace simQt {
 

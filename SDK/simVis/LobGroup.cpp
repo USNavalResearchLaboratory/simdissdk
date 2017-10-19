@@ -175,7 +175,7 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props,
                            EntityNode* host,
                            CoordSurfaceClamping* surfaceClamping,
                            simData::DataStore &ds)
-  : EntityNode(simData::DataStore::LOB_GROUP, new Locator(host->getLocator(), Locator::COMP_POSITION)),
+  : EntityNode(simData::LOB_GROUP, new Locator(host->getLocator(), Locator::COMP_POSITION)),
     lastProps_(props),
     hasLastUpdate_(false),
     lastPrefsValid_(false),

@@ -24,7 +24,6 @@
 
 #include <QWidget>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 
 class QLineEdit;
@@ -33,7 +32,7 @@ class QTreeView;
 class QTreeWidgetItem;
 class QModelIndex;
 
-namespace simData { class CategoryFilter; }
+namespace simData { class CategoryFilter; class DataStore; }
 
 namespace simQt {
 

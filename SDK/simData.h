@@ -57,6 +57,7 @@
 #include "simData/MessageVisitor/MessageVisitor.h"
 #include "simData/MessageVisitor/protobuf.h"
 #include "simData/NearestNeighborInterpolator.h"
+#include "simData/ObjectId.h"
 #include "simData/PrefRulesManager.h"
 #include "simData/TableCellTranslator.h"
 #include "simData/TableStatus.h"

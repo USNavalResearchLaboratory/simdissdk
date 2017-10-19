@@ -22,14 +22,13 @@
 #ifndef SIMVIS_ENTITY_FAMILY_H
 #define SIMVIS_ENTITY_FAMILY_H
 
-#include "simData/DataStore.h"
+#include <set>
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
-#include <set>
+#include "simData/ObjectId.h"
 
 namespace simVis
 {
-
 class EntityNode;
 class ScenarioManager;
 

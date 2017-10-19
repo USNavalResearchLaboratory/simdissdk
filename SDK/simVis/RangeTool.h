@@ -33,7 +33,7 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simVis/Scenario.h"
 #include "simVis/Platform.h"
 #include "simVis/Tool.h"
@@ -428,19 +428,19 @@ namespace simVis
       virtual ~Measurement() {}
 
       /// Returns true if the type is a beam, gate, laser or lob group
-      bool isRaeObject_(simData::DataStore::ObjectType type) const;
+      bool isRaeObject_(simData::ObjectType type) const;
       /// Returns true if both types are either platform, beam, gate, laser or lob group
-      bool isEntityToEntity_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isEntityToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if both types are platforms
-      bool isPlatformToPlatform_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isPlatformToPlatform_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if one type is a beam and the other is a non-beam
-      bool isBeamToNonBeamAssociation_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isBeamToNonBeamAssociation_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if the fromType is a beam and the toType is a valid entity
-      bool isBeamToEntity_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isBeamToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if the nodes are valid for a angle calculation
-      bool isAngle_(simData::DataStore::ObjectType fromType, simData::ObjectId fromHostId, simData::DataStore::ObjectType toType, simData::ObjectId toHostId) const;
+      bool isAngle_(simData::ObjectType fromType, simData::ObjectId fromHostId, simData::ObjectType toType, simData::ObjectId toHostId) const;
       /// Returns true if the nodes are valid for velocity angle calculation
-      bool isVelocityAngle_(simData::DataStore::ObjectType fromType, simData::ObjectId fromHostId, simData::DataStore::ObjectType toType, simData::ObjectId toHostId) const;
+      bool isVelocityAngle_(simData::ObjectType fromType, simData::ObjectId fromHostId, simData::ObjectType toType, simData::ObjectId toHostId) const;
       /// Returns the composite angle (rad) for the given angles (rad) for entities on the SAME platform
       double getCompositeAngle_(double bgnAz, double bgnEl, double endAz, double endEl) const;
       /// Returns the true angles (rad) for the given state

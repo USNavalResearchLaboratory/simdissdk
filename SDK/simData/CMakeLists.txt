@@ -28,6 +28,7 @@ set(DATA_HEADERS
     ${DATA_INC}MemoryDataSlice-inl.h
     ${DATA_INC}MemoryGenericDataSlice.h
     ${DATA_INC}NearestNeighborInterpolator.h
+    ${DATA_INC}ObjectId.h
     ${DATA_INC}PrefRulesManager.h
     ${DATA_INC}TableCellTranslator.h
     ${DATA_INC}TableStatus.h

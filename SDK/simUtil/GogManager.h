@@ -27,7 +27,6 @@
 #include <osg/Vec3d>
 #include <osg/Vec4f>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
 #include "simVis/GOG/GogNodeInterface.h"
 
 namespace osg { class Vec4f; }
