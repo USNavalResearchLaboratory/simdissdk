@@ -127,6 +127,16 @@ std::string toNativeSeparators(const std::string& path)
   const std::string GOOD_SLASH = "/";
 #endif
   std::string fixedDirection = StringUtils::substitute(path, BAD_SLASH, GOOD_SLASH);
+
+  // Duplicate slashes at the start indicate a UNC path so the duplication should NOT be removed
+  std::string prefix;
+  if (fixedDirection.substr(0, 2 * GOOD_SLASH.size()) == GOOD_SLASH + GOOD_SLASH)
+  {
+    prefix = GOOD_SLASH + GOOD_SLASH;
+    fixedDirection = fixedDirection.substr(2 * GOOD_SLASH.size());
+  }
+
+  // Now remove duplicates from the rest of the path
   std::string noDuplicates;
   do
   {
@@ -134,7 +144,9 @@ std::string toNativeSeparators(const std::string& path)
     // Iteratively replace all instances of double slash with single slash
     fixedDirection = StringUtils::substitute(fixedDirection, GOOD_SLASH + GOOD_SLASH, GOOD_SLASH);
   } while (noDuplicates != fixedDirection);
-  return noDuplicates;
+
+  // Add prefix, if any
+  return prefix + noDuplicates;
 }
 
 std::string getEnvVar(const std::string &env)

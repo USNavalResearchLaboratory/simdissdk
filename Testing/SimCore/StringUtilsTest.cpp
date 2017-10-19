@@ -268,6 +268,13 @@ int testToNativeSeparators()
   rv += SDK_ASSERT(simCore::toNativeSeparators("c:\\/test\\\\file") == "c:\\test\\file");
   rv += SDK_ASSERT(simCore::toNativeSeparators("c:\\/test\\\\\\file") == "c:\\test\\file");
   rv += SDK_ASSERT(simCore::toNativeSeparators("c:\\/test\\\\\\\\file") == "c:\\test\\file");
+  // UNC addresses should work
+  rv += SDK_ASSERT(simCore::toNativeSeparators("\\\\test") == "\\\\test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("\\\\test\\test") == "\\\\test\\test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("\\\\test\\\\test") == "\\\\test\\test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("//test") == "\\\\test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("//test/test") == "\\\\test\\test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("//test//test") == "\\\\test\\test");
 #else
   rv += SDK_ASSERT(simCore::toNativeSeparators("./test/file") == "./test/file");
   rv += SDK_ASSERT(simCore::toNativeSeparators("./test\\file") == "./test/file");
@@ -287,6 +294,13 @@ int testToNativeSeparators()
   rv += SDK_ASSERT(simCore::toNativeSeparators("c:\\/test\\\\file") == "c:/test/file");
   rv += SDK_ASSERT(simCore::toNativeSeparators("c:\\/test\\\\\\file") == "c:/test/file");
   rv += SDK_ASSERT(simCore::toNativeSeparators("c:\\/test\\\\\\\\file") == "c:/test/file");
+  // UNC addresses should work
+  rv += SDK_ASSERT(simCore::toNativeSeparators("\\\\test") == "//test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("\\\\test\\test") == "//test/test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("\\\\test\\\\test") == "//test/test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("//test") == "//test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("//test/test") == "//test/test");
+  rv += SDK_ASSERT(simCore::toNativeSeparators("//test//test") == "//test/test");
 #endif
   // URLs should not get mangled in any way
   rv += SDK_ASSERT(simCore::toNativeSeparators("https://simdis.nrl.navy.mil/jira") == "https://simdis.nrl.navy.mil/jira");
