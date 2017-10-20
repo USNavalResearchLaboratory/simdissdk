@@ -1107,7 +1107,6 @@ FeatureNodeInterface::FeatureNodeInterface(osgEarth::Annotation::FeatureNode* fe
   {
     originalAltitude_.push_back((*geometry)[i].z());
   }
-
 }
 
 int FeatureNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
@@ -1317,7 +1316,11 @@ void FeatureNodeInterface::setStyle_(const osgEarth::Symbology::Style& style)
   if (&style != &style_)
     style_ = style;
   if (!deferringStyleUpdates_() && featureNode_.valid())
+  {
     featureNode_->setStyle(style_);
+    featureNode_->getFeature()->style() = style_;
+    featureNode_->dirty();
+  }
 }
 
 
