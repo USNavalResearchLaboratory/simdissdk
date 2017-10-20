@@ -576,6 +576,10 @@ QString CategoryTreeModel::valueSortName_(const QString& value) const
   */
 void CategoryTreeModel::setFilter(const simData::CategoryFilter& categoryFilter)
 {
+  // Only update with a different filter
+  if (&categoryFilter == categoryFilter_)
+    return;
+
   // set all category values to true
   categoryFilter_->updateAll(true);
   setState_(allCategoriesItem_, Qt::Checked);
