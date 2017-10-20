@@ -314,6 +314,13 @@ public:
   */
   virtual void setTextOutline(bool draw, const osg::Vec4f& outlineColor);
 
+
+  /**
+  * Get the shape's original load format, which is defined in the meta data
+  * @return load format enum
+  */
+  simVis::GOG::LoadFormat loadFormat() const;
+
   /**
   * Get the shape type of this Overlay, which is defined in the meta data
   * @return shape type enum

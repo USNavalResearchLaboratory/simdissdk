@@ -292,6 +292,11 @@ osg::Node* GogNodeInterface::osgNode() const
   return osgNode_.get();
 }
 
+simVis::GOG::LoadFormat GogNodeInterface::loadFormat() const
+{
+  return metaData_.loadFormat;
+}
+
 simVis::GOG::GogShape GogNodeInterface::shape() const
 {
   return metaData_.shape;

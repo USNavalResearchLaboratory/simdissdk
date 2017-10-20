@@ -110,6 +110,13 @@ namespace simVis { namespace GOG
     GOG_LATLONALTBOX
   };
 
+  /** Describes the original load format of the shape */
+  enum LoadFormat
+  {
+    FORMAT_GOG = 0,
+    FORMAT_KML
+  };
+
   /**
   * Struct that defines meta data for a GOG. The string is metadata that captures attributes of the GOG
   * that may be lost when translated to an osg::Node, specifically things like the shape type
@@ -123,6 +130,7 @@ namespace simVis { namespace GOG
   public:
     std::string             metadata; ///< attributes of the GOG
     GogShape                shape; ///< identifying the exact shape type of the GOG
+    LoadFormat              loadFormat; ///< indicate the original load format of the GOG
   public:
     GogMetaData();
     bool                    isSetExplicitly(GogSerializableField field) const; ///< determines if a field is explicitly set
