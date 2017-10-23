@@ -314,6 +314,8 @@ public:
   */
   virtual void setTextOutline(bool draw, const osg::Vec4f& outlineColor);
 
+  /** Set backface culling based on shape state */
+  void applyBackfaceCulling();
 
   /**
   * Get the shape's original load format, which is defined in the meta data
