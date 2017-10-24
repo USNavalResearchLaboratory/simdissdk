@@ -1094,7 +1094,7 @@ void Parser::printError_(size_t lineNumber, const std::string& errorText) const
     context_.errorHandler_->printError(lineNumber, errorText);
 }
 
-void Parser::setErrorHandler(std::tr1::shared_ptr<ErrorHandler> errorHandler)
+void Parser::setErrorHandler(std::shared_ptr<ErrorHandler> errorHandler)
 {
   if (!errorHandler)
     context_.errorHandler_.reset(new NotifyErrorHandler);

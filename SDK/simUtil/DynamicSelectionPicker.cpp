@@ -42,7 +42,7 @@ public:
     switch (ea.getEventType())
     {
     case osgGA::GUIEventAdapter::MOVE:
-      // Only pick on mouse move
+    case osgGA::GUIEventAdapter::DRAG:
       picker_.lastMouseView_ = dynamic_cast<simVis::View*>(aa.asView());
       picker_.mouseXy_.set(ea.getX(), ea.getY());
       repickNeeded_ = true;

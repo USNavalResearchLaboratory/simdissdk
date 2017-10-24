@@ -22,9 +22,11 @@
 #ifndef SIMQT_ENTITY_STATE_FILTER_H
 #define SIMQT_ENTITY_STATE_FILTER_H
 
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simCore/Time/Clock.h"
 #include "simQt/EntityFilter.h"
+
+namespace simData { class CategoryFilter; class DataStore; }
 
 namespace simQt {
 
@@ -97,7 +99,7 @@ namespace simQt {
     simCore::Clock& clock_; ///< reference to the clock
     bool showWidget_; ///< indicates whether this filter should produce a widget or not
     State state_;  ///< Type of entities to filter out
-    std::tr1::shared_ptr<TimeObserver> clockAdapter_;  ///< Used to monitor for time changes
+    std::shared_ptr<TimeObserver> clockAdapter_;  ///< Used to monitor for time changes
   };
 }
 

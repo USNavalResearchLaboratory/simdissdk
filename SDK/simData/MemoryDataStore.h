@@ -121,13 +121,13 @@ public:
    * @{
    */
   /// Retrieve a list of IDs for objects of 'type'
-  virtual void idList(IdList *ids, ObjectType type = ALL) const;
+  virtual void idList(IdList *ids, simData::ObjectType type = simData::ALL) const;
 
   /// Retrieve a list of IDs for objects of 'type' with the given name
-  virtual void idListByName(const std::string& name, IdList* ids, ObjectType type = ALL) const;
+  virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const;
 
   /// Retrieve a list of IDs for objects with the given original id
-  virtual void idListByOriginalId(IdList *ids, uint64_t originalId, ObjectType type = ALL) const;
+  virtual void idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type = simData::ALL) const;
 
   /// Retrieve a list of IDs for all beams associated with a platform
   virtual void beamIdListForHost(ObjectId hostid, IdList *ids) const;
@@ -145,7 +145,7 @@ public:
   virtual void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const;
 
   ///Retrieves the ObjectType for a particular ID
-  virtual ObjectType objectType(ObjectId id) const;
+  virtual simData::ObjectType objectType(ObjectId id) const;
 
   /// Retrieves the host entity ID for a particular ID (i.e. a beam, given a gate ID; a platform, given a LOB ID)
   virtual ObjectId entityHostId(ObjectId childId) const;
@@ -590,7 +590,7 @@ private:
   /// Updates all the LobGroups
   void updateLobGroups_(double time);
   /// Flushes an entity's updates, commands, category and generic data
-  void flushEntity_(ObjectId id, ObjectType type, FlushType flushType);
+  void flushEntity_(ObjectId id, simData::ObjectType type, FlushType flushType);
   /// Flushes an entity's data tables
   void flushDataTables_(ObjectId id);
 

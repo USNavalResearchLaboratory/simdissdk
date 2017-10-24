@@ -19,15 +19,16 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/RadialLOSNode.h"
-#include "simVis/Utils.h"
-#include "simVis/Constants.h"
-#include "simNotify/Notify.h"
-#include "osgEarth/DrapeableNode"
-#include "osgEarth/Terrain"
+#include <cassert>
 #include "osg/Depth"
 #include "osg/Point"
-#include <cassert>
+#include "osgEarth/DrapeableNode"
+#include "osgEarth/Terrain"
+#include "simNotify/Notify.h"
+#include "simVis/Constants.h"
+#include "simVis/osgEarthVersion.h"
+#include "simVis/Utils.h"
+#include "simVis/RadialLOSNode.h"
 
 #define LC "[RadialLOSNode] "
 
@@ -150,7 +151,11 @@ void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
 {
   if (getMapNode())
   {
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
     osgEarth::GeoCircle circle = extent.computeBoundingGeoCircle();
+#else
+    const osgEarth::GeoCircle& circle = extent.getBoundingGeoCircle();
+#endif
     if (bound_.intersects(circle))
     {
       if (los_.update(getMapNode(), extent, patch))

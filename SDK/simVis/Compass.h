@@ -22,11 +22,10 @@
 #ifndef SIMVIS_COMPASS_H
 #define SIMVIS_COMPASS_H
 
-#include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
-
+#include <memory>
 #include <osg/ref_ptr>
 #include <osg/observer_ptr>
+#include "simCore/Common/Export.h"
 
 namespace osgEarth{
 namespace Util{
@@ -75,7 +74,7 @@ namespace simVis
   };
 
   /// Shared pointer to a CompassUpdateListener
-  typedef std::tr1::shared_ptr<CompassUpdateListener> CompassUpdateListenerPtr;
+  typedef std::shared_ptr<CompassUpdateListener> CompassUpdateListenerPtr;
 
   /**
   * Creates a Compass which can be displayed as a HUD control in a single view.  The

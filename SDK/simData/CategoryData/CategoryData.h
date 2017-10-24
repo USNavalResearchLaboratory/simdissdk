@@ -22,10 +22,10 @@
 #ifndef SIMDATA_CATEGORY_DATA_H
 #define SIMDATA_CATEGORY_DATA_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simData/DataTypes.h"
 
 namespace simData {
@@ -72,13 +72,13 @@ protected: // types
   public:
     virtual ~IteratorImpl() {}
     /** Retrieves next item and increments iterator to next element */
-    virtual std::tr1::shared_ptr<CategoryDataPair> next() = 0;
+    virtual std::shared_ptr<CategoryDataPair> next() = 0;
     /** Retrieves next item and does not increment iterator to next element */
-    virtual std::tr1::shared_ptr<CategoryDataPair> peekNext() const = 0;
+    virtual std::shared_ptr<CategoryDataPair> peekNext() const = 0;
     /** Retrieves previous item and increments iterator to next element */
-    virtual std::tr1::shared_ptr<CategoryDataPair> previous() = 0;
+    virtual std::shared_ptr<CategoryDataPair> previous() = 0;
     /** Retrieves previous item and does not increment iterator to next element */
-    virtual std::tr1::shared_ptr<CategoryDataPair> peekPrevious() const = 0;
+    virtual std::shared_ptr<CategoryDataPair> peekPrevious() const = 0;
 
     /** Resets the iterator to the front of the data structure */
     virtual void toFront() = 0;
@@ -136,13 +136,13 @@ public: // types
     virtual ~Iterator() {}
 
     /** Retrieves next item and increments iterator to next element */
-    const std::tr1::shared_ptr<CategoryDataPair> next() {return impl_->next();}
+    const std::shared_ptr<CategoryDataPair> next() {return impl_->next();}
     /** Retrieves next item and does not increment iterator to next element */
-    const std::tr1::shared_ptr<CategoryDataPair> peekNext() const {return impl_->peekNext();}
+    const std::shared_ptr<CategoryDataPair> peekNext() const {return impl_->peekNext();}
     /** Retrieves previous item and increments iterator to next element */
-    const std::tr1::shared_ptr<CategoryDataPair> previous() {return impl_->previous();}
+    const std::shared_ptr<CategoryDataPair> previous() {return impl_->previous();}
     /** Retrieves previous item and does not increment iterator to next element */
-    const std::tr1::shared_ptr<CategoryDataPair> peekPrevious() const {return impl_->peekPrevious();}
+    const std::shared_ptr<CategoryDataPair> peekPrevious() const {return impl_->peekPrevious();}
 
     /** Resets the iterator to the front of the data structure */
     void toFront() {impl_->toFront();}

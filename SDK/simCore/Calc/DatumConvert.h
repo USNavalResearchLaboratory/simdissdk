@@ -83,6 +83,8 @@ public:
   /** Initializes the WMM */
   MagneticDatumConvert();
   virtual ~MagneticDatumConvert();
+  // assignment operator must not assign wmm
+  MagneticDatumConvert& operator= (const MagneticDatumConvert& other);
 
   /// Converts Magnetic Datum
   virtual double convertMagneticDatum(const Vec3& lla, const TimeStamp& timeStamp, double bearingRad,

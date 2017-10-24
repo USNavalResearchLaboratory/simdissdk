@@ -22,11 +22,12 @@
 #ifndef SIMVIS_ENTITY_NODE_H
 #define SIMVIS_ENTITY_NODE_H
 
+#include <vector>
 #include "osg/observer_ptr"
 #include "osgEarth/MapNode"
+#include "simData/DataSlice.h"
+#include "simData/ObjectId.h"
 #include "simVis/Locator.h"
-#include "simData/DataStore.h"
-#include <vector>
 
 namespace osgEarth {
   class Map;
@@ -86,7 +87,7 @@ namespace simVis
     * @param type Type of entity node to alleviate the need for dynamic casting
     * @param locator Locator that will position this node
     */
-    EntityNode(simData::DataStore::ObjectType type, Locator* locator = NULL);
+    EntityNode(simData::ObjectType type, Locator* locator = NULL);
 
   public:
     /** Enumerates different name types for the label */
@@ -99,7 +100,7 @@ namespace simVis
     /**
     * Returns the type of entity
     */
-    simData::DataStore::ObjectType type() const { return type_; }
+    simData::ObjectType type() const { return type_; }
 
     /**
     * Whether the entity is active within the scenario at the current time.
@@ -250,7 +251,7 @@ namespace simVis
     virtual ~EntityNode();
 
   private:
-    simData::DataStore::ObjectType type_;
+    simData::ObjectType type_;
     osg::ref_ptr<Locator> locator_;
   };
 

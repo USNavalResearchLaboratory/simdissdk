@@ -84,7 +84,7 @@ static const std::string s_help =
 static osg::ref_ptr<Control>      s_helpControl;
 static osg::ref_ptr<LabelControl> s_nowViewing;
 static osg::NodeList s_attachments;
-typedef std::tr1::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
+typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
 
 static Control* createHelp()

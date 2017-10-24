@@ -23,7 +23,6 @@
 #define SIMDATA_DATASLICE_H
 
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simData/DataTypes.h"
 #include "simData/GenericIterator.h"
 

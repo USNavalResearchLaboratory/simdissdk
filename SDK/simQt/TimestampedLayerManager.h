@@ -22,9 +22,9 @@
 #ifndef SIMQT_TIMESTAMPEDLAYERMANAGER_H
 #define SIMQT_TIMESTAMPEDLAYERMANAGER_H
 
+#include <memory>
 #include <QObject>
 #include "osgEarth/MapNodeObserver"
-#include "simCore/Common/Memory.h"
 #include "simCore/Time/TimeClass.h"
 
 namespace simCore { class Clock; }
@@ -124,7 +124,7 @@ private:
   class ClockListener;
 
   osg::ref_ptr<MapListener> mapListener_;
-  std::tr1::shared_ptr<ClockListener> clockListener_;
+  std::shared_ptr<ClockListener> clockListener_;
   std::map<simCore::TimeStamp, osg::observer_ptr<osgEarth::ImageLayer> > layers_;
   /** NOTE: Keys are unowned, naked pointers.  Do not dereference. */
   std::map<const osgEarth::ImageLayer*, bool> originalVisibility_;

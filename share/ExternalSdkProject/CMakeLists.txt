@@ -8,6 +8,8 @@ endif()
 # Create a new project
 project(ExternalSDKExamples)
 
+# Configure flags for GCC -- this is a noop for non-GCC compilers
+include(CMakeModules/EnableGccNewCxxFeatures.cmake)
 # Use an external script to load the SIMDIS SDK targets
 include(CMakeModules/ImportSIMDIS_SDK.cmake)
 

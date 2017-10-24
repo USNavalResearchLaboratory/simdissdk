@@ -22,9 +22,9 @@
 #ifndef SIMQT_STARTUP_LAYOUT_TASK_H
 #define SIMQT_STARTUP_LAYOUT_TASK_H
 
+#include <memory>
 #include <QObject>
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 
 class QWidget;
 
@@ -73,7 +73,7 @@ signals:
 private:
   QWidget* widget_;
 };
-typedef std::tr1::shared_ptr<StartupLayoutTask> StartupLayoutTaskPtr;
+typedef std::shared_ptr<StartupLayoutTask> StartupLayoutTaskPtr;
 
 }
 

@@ -88,7 +88,7 @@ public:
     virtual ~GogNodeListener() {}
     virtual void drawChanged(const GogNodeInterface* nodeChanged) = 0;
   };
-  typedef std::tr1::shared_ptr<GogNodeListener> GogNodeListenerPtr;
+  typedef std::shared_ptr<GogNodeListener> GogNodeListenerPtr;
 
   /**
   * Constructor
@@ -314,6 +314,15 @@ public:
   */
   virtual void setTextOutline(bool draw, const osg::Vec4f& outlineColor);
 
+  /** Set backface culling based on shape state */
+  void applyBackfaceCulling();
+
+  /**
+  * Get the shape's original load format, which is defined in the meta data
+  * @return load format enum
+  */
+  simVis::GOG::LoadFormat loadFormat() const;
+
   /**
   * Get the shape type of this Overlay, which is defined in the meta data
   * @return shape type enum
@@ -416,7 +425,7 @@ private:
 };
 
 /// Shared ptr wrapper for the GogNodeInterface object
-typedef std::tr1::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
+typedef std::shared_ptr<GogNodeInterface> GogNodeInterfacePtr;
 
 /**
  * Implementation of GogNodeInterface for AnnotationNodes, which are a base class of all GOG node types.

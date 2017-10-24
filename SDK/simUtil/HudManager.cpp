@@ -543,10 +543,11 @@ HudColumnText* HudManager::createColumnText(const std::string& text, double x, d
 }
 
 HudImage* HudManager::createImage(osg::Image* image, double x, double y, double w, double h,
-                                  bool percentageX, bool percentageY, bool percentageW, bool percentageH)
+                                  bool percentageX, bool percentageY, bool percentageW, bool percentageH,
+                                  Alignment hAlign, Alignment vAlign)
 {
   HudImage* hudImage = new HudImage(windowWidth_, windowHeight_);
-  hudImage->update(image, x, y, w, h, percentageX, percentageY, percentageW, percentageH);
+  hudImage->update(image, x, y, w, h, percentageX, percentageY, percentageW, percentageH, hAlign, vAlign);
   imageVector_.push_back(hudImage);
   group_->addChild(hudImage);
   return hudImage;
@@ -837,6 +838,36 @@ void HudImage::update_()
   osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(4);
   geometry->setVertexArray(verts);
 
+  // update x values based on alignment
+  switch (hAlign_)
+  {
+  case ALIGN_LEFT:
+    break;
+  case ALIGN_RIGHT:
+    initialX -= initialWidth;
+    break;
+  case ALIGN_CENTER_X:
+    initialX -= (initialWidth / 2);
+    break;
+  default:
+    break;
+  }
+
+  // update y values based on alignment
+  switch (vAlign_)
+  {
+  case ALIGN_BOTTOM:
+    break;
+  case ALIGN_TOP:
+    initialY -= initialHeight;
+    break;
+  case ALIGN_CENTER_Y:
+    initialY -= (initialHeight / 2);
+    break;
+  default:
+    break;
+  }
+
   // Assign the screen coordinates
   (*verts)[0].set(initialX, initialY, 0);
   (*verts)[1].set(initialX + initialWidth, initialY, 0);
@@ -874,7 +905,8 @@ void HudImage::update_()
 }
 
 void HudImage::update(osg::Image* image, double x, double y, double w, double h,
-                      bool percentageX, bool percentageY, bool percentageW, bool percentageH)
+                      bool percentageX, bool percentageY, bool percentageW, bool percentageH,
+                      Alignment hAlign, Alignment vAlign)
 {
   image_ = image;
   x_ = x;
@@ -885,6 +917,8 @@ void HudImage::update(osg::Image* image, double x, double y, double w, double h,
   percentageY_ = percentageY;
   percentageWidth_ = percentageW;
   percentageHeight_ = percentageH;
+  hAlign_ = hAlign;
+  vAlign_ = vAlign;
 
   update_();
 }
@@ -950,6 +984,13 @@ bool HudImage::isPercentageWidth() const
 bool HudImage::isPercentageHeight() const
 {
   return percentageHeight_;
+}
+
+void HudImage::setAlignment(Alignment hAlign, Alignment vAlign)
+{
+  hAlign_ = hAlign;
+  vAlign_ = vAlign;
+  update_();
 }
 
 void HudImage::setPosition(double x, double y, bool percentageX, bool percentageY)

@@ -50,7 +50,7 @@ class SDKQT_EXPORT EntityDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock, SettingsPtr settings);
+  EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::ObjectType type, simCore::Clock* clock, SettingsPtr settings);
   virtual ~EntityDialog();
 
   /** Set the entity via Unique ID */
@@ -95,7 +95,7 @@ class SDKQT_EXPORT EntityLineEdit : public QWidget
 
 public:
   /** Constructor */
-  EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel = NULL, simData::DataStore::ObjectType type = simData::DataStore::ALL);
+  EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel = NULL, simData::ObjectType type = simData::ALL);
   virtual ~EntityLineEdit();
 
   /** Returns the Unique ID of the currently selected Entity; returns zero if none */
@@ -103,7 +103,7 @@ public:
   /** Returns the name of the currently selected Entity; returns "" if none */
   QString selectedName() const;
   /** The model that holds all the entity information filtered by type */
-  void setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type = simData::DataStore::ALL, simCore::Clock* clock = NULL);
+  void setModel(simQt::EntityTreeModel* model, simData::ObjectType type = simData::ALL, simCore::Clock* clock = NULL);
 
   // Options for customizing the widget
 
@@ -165,7 +165,7 @@ private:
   EntityDialog* entityDialog_;  ///< The Entity Tree Composite Dialog
   uint64_t uniqueId_;  ///< The Unique ID of the entity, can be zero if current name is not valid
   bool needToVerify_; ///< True means the user typed in a name so it must be verified
-  simData::DataStore::ObjectType type_; ///< Limits the entity types to display
+  simData::ObjectType type_; ///< Limits the entity types to display
   simQt::EntityProxyModel* proxy_;  ///< Allow filtering by entity type
   simCore::Clock* clock_;  ///< Allow filtering by active/inactive
   simQt::EntityStateFilter* entityStateFilter_; ///< Filtering based on entity state

@@ -182,7 +182,7 @@ void GateCentroid::updateCentroid_(osg::Vec3Array* verts, const simData::GateUpd
 
 
 GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear) :
-EntityNode(simData::DataStore::GATE),
+EntityNode(simData::GATE),
 hasLastUpdate_(false),
 hasLastPrefs_(false),
 visible_(false), // gets set on first refresh

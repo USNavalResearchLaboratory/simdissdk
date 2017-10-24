@@ -82,14 +82,14 @@ bool EntityFamily::dismiss(EntityNode* entity)
 
 // Finds all the entities in the scenario "related" to the host,
 // searching recursively.
-void EntityFamily::add(ScenarioManager* scenario, const simData::ObjectId& hostId)
+void EntityFamily::add(const ScenarioManager& scenario, const simData::ObjectId& hostId)
 {
   entityIds_.insert(hostId);
   std::set<simData::ObjectId> hostees;
-  scenario->getObjectsHostedBy(hostId, hostees);
+  scenario.getObjectsHostedBy(hostId, hostees);
   for (std::set<simData::ObjectId>::iterator i = hostees.begin(); i != hostees.end(); ++i)
   {
-    EntityNode* entity = scenario->find(*i);
+    EntityNode* entity = scenario.find(*i);
     if (entity)
     {
       entities_.insert(entity);

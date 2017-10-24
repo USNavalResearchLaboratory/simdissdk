@@ -196,7 +196,7 @@ namespace
     void onValueChanged(Control* control, bool value)
     {
       simData::DataStore::IdList ids;
-      dataStore_->idList(&ids, simData::DataStore::PLATFORM);
+      dataStore_->idList(&ids, simData::PLATFORM);
 
       for (simData::DataStore::IdList::const_iterator i = ids.begin(); i != ids.end(); ++i)
       {
@@ -218,7 +218,7 @@ namespace
     void onValueChanged(Control* control, bool value)
     {
       simData::DataStore::IdList ids;
-      dataStore_->idList(&ids, simData::DataStore::PLATFORM);
+      dataStore_->idList(&ids, simData::PLATFORM);
 
       for (simData::DataStore::IdList::const_iterator i = ids.begin(); i != ids.end(); ++i)
       {
@@ -245,9 +245,9 @@ namespace
     NewPlatformListener(Container* container, simVis::View* view, PlatformListData* data)
       : container_(container), view_(view), data_(data) { }
 
-    void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+    void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::ObjectType ot)
     {
-      if (ot != simData::DataStore::PLATFORM)
+      if (ot != simData::PLATFORM)
         return;
 
       simData::DataStore::Transaction xaction;
@@ -295,7 +295,7 @@ namespace
 
     void onPrefsChange(simData::DataStore &ds, simData::ObjectId id)
     {
-      if (ds.objectType(id) == simData::DataStore::PLATFORM)
+      if (ds.objectType(id) == simData::PLATFORM)
         listener_->notifyPrefsChange(ds, id);
     }
     ControlPrefsListener* listener_;
@@ -372,9 +372,9 @@ namespace
       simData::DataStore* dataStore)
       : container_(container), view_(view), data_(data), antennaPattern_(antennaPattern), dataStore_(dataStore) { }
 
-    void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::DataStore::ObjectType ot)
+    void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::ObjectType ot)
     {
-      if (ot != simData::DataStore::BEAM)
+      if (ot != simData::BEAM)
         return;
 
       simData::ObjectId hostId = 0;

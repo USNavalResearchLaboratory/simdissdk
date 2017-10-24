@@ -23,16 +23,15 @@
 #define SIMCORE_TIME_STRING_H
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <string>
 #include <iostream>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/Time/Constants.h"
 
 namespace simCore
 {
-
 class TimeStamp;
 class Seconds;
 
@@ -217,7 +216,7 @@ public:
   virtual ~TimeFormatterRegistry();
 
   /** Typedef the TimeFormatter abstract interface to a shared pointer */
-  typedef std::tr1::shared_ptr<TimeFormatter> TimeFormatterPtr;
+  typedef std::shared_ptr<TimeFormatter> TimeFormatterPtr;
 
   /**
    * Registers a custom formatter with this registry.  Custom formatters are given priority over

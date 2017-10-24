@@ -26,7 +26,6 @@
 #include <map>
 #include <deque>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
 #include "simData/CategoryData/CategoryData.h"
 
 namespace simData {

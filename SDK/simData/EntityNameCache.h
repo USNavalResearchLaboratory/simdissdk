@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 
 namespace simData {
 
@@ -36,17 +36,17 @@ class SDKDATA_EXPORT EntityNameEntry
 {
 public:
   /** Constructs a new EntityNameCache for the given ID and type */
-  EntityNameEntry(simData::ObjectId id, simData::DataStore::ObjectType type);
+  EntityNameEntry(simData::ObjectId id, simData::ObjectType type);
   virtual ~EntityNameEntry();
 
   /// Returns the unique id of the entity
   simData::ObjectId id() const;
   /// Returns the type of the entity
-  simData::DataStore::ObjectType type() const;
+  simData::ObjectType type() const;
 
 private:
   simData::ObjectId id_;
-  simData::DataStore::ObjectType type_;
+  simData::ObjectType type_;
 };
 
 /// Manages a multimap keyed on entity name
@@ -57,13 +57,13 @@ public:
   virtual ~EntityNameCache();
 
   /// Adds the given entity to the multimap
-  void addEntity(const std::string& name, simData::ObjectId newId, simData::DataStore::ObjectType ot);
+  void addEntity(const std::string& name, simData::ObjectId newId, simData::ObjectType ot);
   /// Removes the given entity from the multimap
-  void removeEntity(const std::string& name, simData::ObjectId removedId, simData::DataStore::ObjectType ot);
+  void removeEntity(const std::string& name, simData::ObjectId removedId, simData::ObjectType ot);
   /// Changes the name of the given entity
   void nameChange(const std::string& newName, const std::string& oldName, simData::ObjectId changeId);
   /// Returns a vector of EntityNameEntry for the given name and given type
-  void getEntries(const std::string& name, simData::DataStore::ObjectType type, std::vector<const EntityNameEntry*>& entries) const;
+  void getEntries(const std::string& name, simData::ObjectType type, std::vector<const EntityNameEntry*>& entries) const;
 
 private:
   typedef std::multimap<std::string, EntityNameEntry*> EntityMap;  /// Keyed off entity name

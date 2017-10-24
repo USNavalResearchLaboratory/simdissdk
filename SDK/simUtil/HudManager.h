@@ -37,7 +37,7 @@ namespace simUtil {
 
 class HudManager;
 
-/// Alignment for the overlay text
+/// Alignment for the overlay text and image
 enum Alignment
 {
   ALIGN_LEFT,
@@ -372,11 +372,14 @@ public:
    * @param percentageY True means Y is percentage value; false means Y is pixel value
    * @param percentageW True means Width is percentage value; false means Width is pixel value
    * @param percentageH True means Height is percentage value; false means Height is pixel value
+   * @param hAlign Horizontal alignment
+   * @param vAlign Vertical alignment
    */
   void update(osg::Image* image, double x=0.0, double y=0.0,
         double w=10.0, double h=10.0,
         bool percentageX=true, bool percentageY=true,
-        bool percentageW=true, bool percentageH=true);
+        bool percentageW=true, bool percentageH=true,
+        Alignment hAlign=ALIGN_LEFT, Alignment vAlign=ALIGN_BOTTOM);
 
   // Functions to set/get smaller parts
 
@@ -402,6 +405,8 @@ public:
   /// Returns the percentage;  true means Height is percentage value; false means Height is pixel value
   bool isPercentageHeight() const;
 
+  /// Set the image alignment, referenced from the starting position
+  void setAlignment(Alignment hAlign, Alignment vAlign);
   /// Sets the image position
   void setPosition(double x, double y, bool percentageX, bool percentageY);
   /// Sets the image size
@@ -440,6 +445,8 @@ private:
   bool percentageWidth_;   ///< True means width is percentage value; false means width is pixel value
   bool percentageHeight_;  ///< True means height is percentage value; false means height is pixel value
   osg::Vec4f color_; ///< Modulation color applied to image
+  Alignment hAlign_; ///< Horizontal alignment
+  Alignment vAlign_; ///< Vertical alignment
 };
 
 
@@ -517,10 +524,13 @@ public:
    * @param percentageY True means Y is percentage value; false means Y is pixel value
    * @param percentageW True means Width is percentage value; false means Width is pixel value
    * @param percentageH True means Height is percentage value; false means Height is pixel value
+   * @param hAlign Horizontal alignment
+   * @param vAlign Vertical alignment
    * @return Always returns a new HudImage, which acts as a handle to the displayed HUD item
    */
   HudImage* createImage(osg::Image* image, double x=0.0, double y=0.0, double w=10.0, double h=10.0,
-    bool percentageX=true, bool percentageY=true, bool percentageW=true, bool percentageH=true);
+    bool percentageX=true, bool percentageY=true, bool percentageW=true, bool percentageH=true,
+    Alignment hAlign=ALIGN_LEFT, Alignment vAlign=ALIGN_BOTTOM);
 
   /// Removes the specified text
   void removeText(HudText* hudText);

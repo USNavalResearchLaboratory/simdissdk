@@ -45,7 +45,7 @@ namespace {
   static const QString INVALID_ENTITY = "QLineEdit:enabled { color: red }";
 }
 
-EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock, SettingsPtr settings)
+EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::ObjectType type, simCore::Clock* clock, SettingsPtr settings)
   : QDialog(parent),
     entityTreeModel_(entityTreeModel),
     entityStateFilter_(NULL)
@@ -68,7 +68,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
     tree_->addEntityFilter(entityStateFilter_);
   }
 
-  tree_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::DataStore::ALL));
+  tree_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::ALL));
   tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), true));
 
   connect(tree_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(setSelected_(QList<uint64_t>)));
@@ -137,7 +137,7 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     if (parent_->uniqueId_ == removedId)
     {
@@ -159,7 +159,7 @@ protected:
 
 //--------------------------------------------------------------------------------------------------
 
-EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type)
+EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::ObjectType type)
 : QWidget(parent),
   composite_(NULL),
   entityTreeModel_(NULL), // set below with the setModel call
@@ -195,7 +195,7 @@ EntityLineEdit::~EntityLineEdit()
   delete composite_;
 }
 
-void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type, simCore::Clock* clock)
+void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::ObjectType type, simCore::Clock* clock)
 {
   type_ = type;
   clock_ = clock;
@@ -211,7 +211,7 @@ void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore:
       entityStateFilter_ = new simQt::EntityStateFilter(*entityTreeModel_->dataStore(), *clock_);
       proxy_->addEntityFilter(entityStateFilter_);  // proxy takes ownership of entityStateFilter_
     }
-    proxy_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::DataStore::ALL));
+    proxy_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::ALL));
     proxy_->setSourceModel(entityTreeModel_);
 
     QCompleter* completer = new QCompleter(proxy_, this);

@@ -360,16 +360,16 @@ public:
   }
 
   /** Retrieves next item and increments iterator to next element */
-  virtual std::tr1::shared_ptr<CategoryDataPair> next()
+  virtual std::shared_ptr<CategoryDataPair> next()
   {
     if (!hasNext())
     {
       assert(false);
-      return std::tr1::shared_ptr<CategoryDataPair>();
+      return std::shared_ptr<CategoryDataPair>();
     }
 
     // create the data pair
-    std::tr1::shared_ptr<CategoryDataPair> ret = makePair_(current_);
+    std::shared_ptr<CategoryDataPair> ret = makePair_(current_);
 
     // go to the next absolute category (which might not be valid for this slice time)
     ++current_;
@@ -381,24 +381,24 @@ public:
   }
 
   /** Retrieves next item and does not increment iterator to next element */
-  virtual std::tr1::shared_ptr<CategoryDataPair> peekNext() const
+  virtual std::shared_ptr<CategoryDataPair> peekNext() const
   {
     if (!hasNext())
     {
       assert(false);
-      return std::tr1::shared_ptr<CategoryDataPair>();
+      return std::shared_ptr<CategoryDataPair>();
     }
 
     return makePair_(current_);
   }
 
   /** Retrieves previous item and decrements iterator to prev element */
-  virtual std::tr1::shared_ptr<CategoryDataPair> previous()
+  virtual std::shared_ptr<CategoryDataPair> previous()
   {
     if (!hasPrevious())
     {
       assert(false);
-      return std::tr1::shared_ptr<CategoryDataPair>();
+      return std::shared_ptr<CategoryDataPair>();
     }
 
     // go to previous category (which might not be valid for this slice time)
@@ -411,12 +411,12 @@ public:
   }
 
   /** Retrieves previous item and does not decrement iterator to prev element */
-  virtual std::tr1::shared_ptr<CategoryDataPair> peekPrevious() const
+  virtual std::shared_ptr<CategoryDataPair> peekPrevious() const
   {
     if (!hasPrevious())
     {
       assert(false);
-      return std::tr1::shared_ptr<CategoryDataPair>();
+      return std::shared_ptr<CategoryDataPair>();
     }
 
     // like previous, but do not change current_
@@ -466,7 +466,7 @@ public:
   }
 
 private: // methods
-  std::tr1::shared_ptr<CategoryDataPair> makePair_(EntityData::const_iterator iter) const
+  std::shared_ptr<CategoryDataPair> makePair_(EntityData::const_iterator iter) const
   {
     int catInt = CategoryNameManager::NO_CATEGORY_NAME;
     int valInt = CategoryNameManager::NO_CATEGORY_VALUE;
@@ -482,7 +482,7 @@ private: // methods
       }
     }
 
-    return std::tr1::shared_ptr<CategoryDataPair>(new MemoryCategoryDataPair(catInt, valInt, *parent_.categoryNameManager_));
+    return std::shared_ptr<CategoryDataPair>(new MemoryCategoryDataPair(catInt, valInt, *parent_.categoryNameManager_));
   }
 
 private: // methods

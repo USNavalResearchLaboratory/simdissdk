@@ -155,7 +155,7 @@ void ProjectorTextureImpl::setTexture(osg::Texture2D *texture)
 //-------------------------------------------------------------------
 
 ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::Locator* hostLocator, const simVis::EntityNode* host)
-  : EntityNode(simData::DataStore::PROJECTOR, new simVis::Locator(hostLocator)),
+  : EntityNode(simData::PROJECTOR, new simVis::Locator(hostLocator)),
     lastProps_(props),
     host_(host),
     contentCallback_(new NullEntityCallback()),

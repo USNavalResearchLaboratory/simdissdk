@@ -273,7 +273,7 @@ void CategoryFilter::getCurrentCategoryValues(simData::DataStore& dataStore, uin
   while (iter.hasNext())
   {
     // iterate through the data slice category data pairs
-    std::tr1::shared_ptr<simData::CategoryDataPair> dataPair = iter.next();
+    std::shared_ptr<simData::CategoryDataPair> dataPair = iter.next();
     int nameInt = dataPair->nameInt();
     int valueInt = dataPair->valueInt();
     CurrentCategoryValues::iterator curValsIter = curVals.find(nameInt);

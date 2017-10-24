@@ -529,7 +529,7 @@ int main(int argc, char **argv)
   viewer->addEventHandler(createSimulation(*simMgr, obj1, obj2));
 
   // Set up the range tool.
-  osg::ref_ptr<simVis::RangeTool> rangeTool = new simVis::RangeTool(scene->getScenario());
+  osg::ref_ptr<simVis::RangeTool> rangeTool = new simVis::RangeTool();
   s_association = rangeTool->add(obj1, obj2);
   createLineCalculations(s_lineCalcs);
   createAngleCalculations(s_angleCalcs);

@@ -26,9 +26,10 @@
 #include <QSortFilterProxyModel>
 
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"
+
+namespace simData { class DataStore; }
 
 namespace simQt {
 

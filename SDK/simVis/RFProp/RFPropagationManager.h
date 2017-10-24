@@ -23,7 +23,7 @@
 #define SIMVIS_RFPROPAGATIONMANAGER_H
 
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 
 namespace simRF
 {
@@ -50,7 +50,7 @@ public:
   virtual RFPropagationFacade* getOrCreateRFPropagation(simData::ObjectId beamId) = 0;
 };
 
-typedef std::tr1::shared_ptr<simRF::RFPropagationManager> RFPropagationManagerPtr;
+typedef std::shared_ptr<simRF::RFPropagationManager> RFPropagationManagerPtr;
 
 /** Null object implementation for RFPropManager */
 class NullRFPropagationManager : public RFPropagationManager

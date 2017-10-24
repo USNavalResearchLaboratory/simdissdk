@@ -22,7 +22,7 @@
 #ifndef SIMCORE_TIME_CLOCK_H
 #define SIMCORE_TIME_CLOCK_H
 
-#include "simCore/Common/Memory.h"
+#include <memory>
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
 
@@ -172,9 +172,9 @@ public:
   };
 
   /// Observer reference object
-  typedef std::tr1::shared_ptr<TimeObserver> TimeObserverPtr;
+  typedef std::shared_ptr<TimeObserver> TimeObserverPtr;
   /// ModeChangeObserver reference object
-  typedef std::tr1::shared_ptr<ModeChangeObserver> ModeChangeObserverPtr;
+  typedef std::shared_ptr<ModeChangeObserver> ModeChangeObserverPtr;
 
   /**@name callback management
    *@{

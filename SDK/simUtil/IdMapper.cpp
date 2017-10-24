@@ -35,7 +35,7 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     mapper_.removeLocalId_(removedId);
   }
@@ -133,11 +133,11 @@ uint64_t DataStoreIdMapper::resolve_(const EntityIdData& fromIdData)
 {
   // Get the entity type -- either platform or all-but-platforms
   const bool isPlatform = (fromIdData.id == fromIdData.hostPlatformId);
-  simData::DataStore::ObjectType entityTypeFilter = simData::DataStore::ALL;
+  simData::ObjectType entityTypeFilter = simData::ALL;
   if (isPlatform)
-    entityTypeFilter = simData::DataStore::PLATFORM;
+    entityTypeFilter = simData::PLATFORM;
   else
-    entityTypeFilter = static_cast<simData::DataStore::ObjectType>(entityTypeFilter ^ simData::DataStore::PLATFORM);
+    entityTypeFilter = static_cast<simData::ObjectType>(entityTypeFilter ^ simData::PLATFORM);
 
   // Find original IDs matching this list
   simData::DataStore::IdList ids;

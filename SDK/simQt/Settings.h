@@ -22,13 +22,13 @@
 #ifndef SIMQT_SETTINGS_H
 #define SIMQT_SETTINGS_H
 
+#include <memory>
 #include <QMap>
 #include <QSettings>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
 
-#include "simCore/Common/Memory.h"
 #include "simCore/Common/Common.h"
 
 namespace simQt {
@@ -152,7 +152,7 @@ public:
   };
 
   /// Shared pointer for Observer
-  typedef std::tr1::shared_ptr<Observer> ObserverPtr;
+  typedef std::shared_ptr<Observer> ObserverPtr;
 
   virtual ~Settings() {}
 
@@ -235,7 +235,7 @@ public:
   virtual Memento* createMemento() const = 0;
 };
 
-typedef std::tr1::shared_ptr<Settings> SettingsPtr;
+typedef std::shared_ptr<Settings> SettingsPtr;
 }
 
 Q_DECLARE_METATYPE(simQt::Settings::MetaData);

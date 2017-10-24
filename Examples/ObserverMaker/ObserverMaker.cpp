@@ -43,9 +43,9 @@ using namespace simData;
 class BasicAdd : public simData::DataStore::DefaultListener
 {
 public:
-  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::DataStore::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
   {
-    if (ot != simData::DataStore::PLATFORM)
+    if (ot != simData::PLATFORM)
       return;
 
     DataStore::Transaction transaction;
@@ -68,9 +68,9 @@ public:
   {
   }
 
-  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::DataStore::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
   {
-    if (ot != simData::DataStore::PLATFORM)
+    if (ot != simData::PLATFORM)
       return;
 
     DataStore::Transaction transaction;
@@ -100,9 +100,9 @@ public: // types
     {
     }
 
-    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::DataStore::ObjectType ot)
+    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
     {
-      if (ot == simData::DataStore::PLATFORM)
+      if (ot == simData::PLATFORM)
         sceneManager_->addPlatform(id, source);
     }
 
@@ -119,9 +119,9 @@ public: // types
     {
     }
 
-    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::DataStore::ObjectType ot)
+    void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
     {
-      if (ot == simData::DataStore::PLATFORM)
+      if (ot == simData::PLATFORM)
         sceneManager_->addPlatformAsChild(id, source, arg_);
     }
 
@@ -163,7 +163,7 @@ struct PlatformPrefListener : public simData::DataStore::DefaultListener
 {
   void onPrefsChange(DataStore *source, simData::ObjectId id)
   {
-    if (source->objectType(id) != simData::DataStore::PLATFORM)
+    if (source->objectType(id) != simData::PLATFORM)
       return;
 
     DataStore::Transaction transaction;

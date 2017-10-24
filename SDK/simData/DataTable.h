@@ -22,13 +22,14 @@
 #ifndef SIMDATA_DATATABLE_H
 #define SIMDATA_DATATABLE_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <deque>
 #include <utility>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
-#include "simData/DataStore.h"
+#include "simData/GenericIterator.h"
+#include "simData/ObjectId.h"
 #include "simData/TableStatus.h"
 
 namespace simData {
@@ -193,7 +194,7 @@ public:
   };
 
   /** Smart pointer to hold table manager observers */
-  typedef std::tr1::shared_ptr<ManagerObserver> ManagerObserverPtr;
+  typedef std::shared_ptr<ManagerObserver> ManagerObserverPtr;
 
   /**@name Observers
    * @{
@@ -256,7 +257,7 @@ public:
   }
 };
 /** Shared pointer for a DelayedFlushedContainer */
-typedef std::tr1::shared_ptr<DelayedFlushContainer> DelayedFlushContainerPtr;
+typedef std::shared_ptr<DelayedFlushContainer> DelayedFlushContainerPtr;
 
 /**
  * Composite implementation of the delayed flush container holds a deque of
@@ -459,7 +460,7 @@ public:
   };
 
   /** Smart pointer to hold table observers */
-  typedef std::tr1::shared_ptr<TableObserver> TableObserverPtr;
+  typedef std::shared_ptr<TableObserver> TableObserverPtr;
 
   /**@name Observers
    * @{
@@ -531,7 +532,7 @@ public:
   };
 
   /// Smart pointer handling of Iterator Data
-  typedef std::tr1::shared_ptr<IteratorData> IteratorDataPtr;
+  typedef std::shared_ptr<IteratorData> IteratorDataPtr;
   /// TimeContainer::IteratorImpl is defined by TimeContainer implementations
   typedef GenericIteratorImpl<IteratorDataPtr> IteratorImpl;
   /// TimeContainer::Iterator lets users iterate over time/index values in-order

@@ -28,7 +28,7 @@
 #include "osgEarthSymbology/Style"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simVis/Types.h"
 
 namespace osg { class Group; }
@@ -38,7 +38,7 @@ namespace osgEarth {
     class LabelNode;
   }
 }
-
+namespace simData { class DataStore; }
 namespace simVis { class AnimatedLineNode; }
 
 namespace simUtil {

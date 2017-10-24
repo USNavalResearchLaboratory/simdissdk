@@ -25,7 +25,7 @@
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simQt/EntityFilter.h"
 
-namespace simData { class CategoryFilter; }
+namespace simData { class CategoryFilter; class DataStore; }
 
 namespace simQt {
 

@@ -26,7 +26,7 @@
 #include <QList>
 #include <QSortFilterProxyModel>
 #include "simCore/Common/Export.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simQt/AbstractEntityTreeModel.h"
 
 namespace simQt {

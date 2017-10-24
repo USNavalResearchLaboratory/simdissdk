@@ -21,6 +21,7 @@
  */
 #include <cassert>
 #include "simCore/String/Format.h"
+#include "simData/DataStore.h"
 #include "simData/DataStoreHelpers.h"
 
 namespace simData {
@@ -62,54 +63,54 @@ std::string DataStoreHelpers::nameOrAliasFromId(const ObjectId& objectId, const 
   return prefs->name();
 }
 
-simData::DataStore::ObjectType DataStoreHelpers::typeFromChar(char entityTypeChar)
+simData::ObjectType DataStoreHelpers::typeFromChar(char entityTypeChar)
 {
   switch (entityTypeChar)
   {
   case 'P':
-  case 'p': return simData::DataStore::PLATFORM;
+  case 'p': return simData::PLATFORM;
 
   case 'B':
-  case 'b': return simData::DataStore::BEAM;
+  case 'b': return simData::BEAM;
 
   case 'G':
-  case 'g': return simData::DataStore::GATE;
+  case 'g': return simData::GATE;
 
   case 'L':
-  case 'l': return simData::DataStore::LASER;
+  case 'l': return simData::LASER;
 
   case 'D':
-  case 'd': return simData::DataStore::LOB_GROUP;
+  case 'd': return simData::LOB_GROUP;
 
   case 'R':
-  case 'r': return simData::DataStore::PROJECTOR;
+  case 'r': return simData::PROJECTOR;
 
-  case simData::DataStore::ALL:
-  case simData::DataStore::NONE:
-    return simData::DataStore::NONE;
+  case simData::ALL:
+  case simData::NONE:
+    return simData::NONE;
   }
 
-  return simData::DataStore::NONE;
+  return simData::NONE;
 }
 
-std::string DataStoreHelpers::typeToString(simData::DataStore::ObjectType entityType)
+std::string DataStoreHelpers::typeToString(simData::ObjectType entityType)
 {
   switch (entityType)
   {
-  case simData::DataStore::PLATFORM:
+  case simData::PLATFORM:
     return "P";
-  case simData::DataStore::BEAM:
+  case simData::BEAM:
     return "B";
-  case simData::DataStore::GATE:
+  case simData::GATE:
     return "G";
-  case simData::DataStore::LASER:
+  case simData::LASER:
     return "L";
-  case simData::DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
     return "D";
-  case simData::DataStore::PROJECTOR:
+  case simData::PROJECTOR:
     return "R";
-  case simData::DataStore::ALL:
-  case simData::DataStore::NONE:
+  case simData::ALL:
+  case simData::NONE:
     return "";
   }
   assert(0);
@@ -123,24 +124,24 @@ std::string DataStoreHelpers::typeFromId(ObjectId objectId, const simData::DataS
   return typeToString(dataStore->objectType(objectId));
 }
 
-std::string DataStoreHelpers::fullTypeToString(simData::DataStore::ObjectType entityType)
+std::string DataStoreHelpers::fullTypeToString(simData::ObjectType entityType)
 {
   switch (entityType)
   {
-  case simData::DataStore::PLATFORM:
+  case simData::PLATFORM:
     return "Platform";
-  case simData::DataStore::BEAM:
+  case simData::BEAM:
     return "Beam";
-  case simData::DataStore::GATE:
+  case simData::GATE:
     return "Gate";
-  case simData::DataStore::LASER:
+  case simData::LASER:
     return "Laser";
-  case simData::DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
     return "LOB";
-  case simData::DataStore::PROJECTOR:
+  case simData::PROJECTOR:
     return "Projector";
-  case simData::DataStore::ALL:
-  case simData::DataStore::NONE:
+  case simData::ALL:
+  case simData::NONE:
     return "";
   }
   assert(0);
@@ -159,48 +160,48 @@ uint64_t DataStoreHelpers::originalIdFromId(ObjectId objectId, const simData::Da
 {
   if (dataStore == NULL)
     return 0;
-  simData::DataStore::ObjectType objType = dataStore->objectType(objectId);
+  simData::ObjectType objType = dataStore->objectType(objectId);
   simData::DataStore::Transaction transaction;
   switch (objType)
   {
-  case simData::DataStore::PLATFORM:
+  case simData::PLATFORM:
   {
     const simData::PlatformProperties* props = dataStore->platformProperties(objectId, &transaction);
     assert(props);
     return props->originalid();
   }
-  case simData::DataStore::BEAM:
+  case simData::BEAM:
   {
     const simData::BeamProperties* props = dataStore->beamProperties(objectId, &transaction);
     assert(props);
     return props->originalid();
   }
-  case simData::DataStore::GATE:
+  case simData::GATE:
   {
     const simData::GateProperties* props = dataStore->gateProperties(objectId, &transaction);
     assert(props);
     return props->originalid();
   }
-  case simData::DataStore::LASER:
+  case simData::LASER:
   {
     const simData::LaserProperties* props = dataStore->laserProperties(objectId, &transaction);
     assert(props);
     return props->originalid();
   }
-  case simData::DataStore::PROJECTOR:
+  case simData::PROJECTOR:
   {
     const simData::ProjectorProperties* props = dataStore->projectorProperties(objectId, &transaction);
     assert(props);
     return props->originalid();
   }
-  case simData::DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
   {
     const simData::LobGroupProperties* props = dataStore->lobGroupProperties(objectId, &transaction);
     assert(props);
     return props->originalid();
   }
-  case simData::DataStore::NONE:
-  case simData::DataStore::ALL:
+  case simData::NONE:
+  case simData::ALL:
     break;
   }
 
@@ -223,10 +224,10 @@ ObjectId DataStoreHelpers::getPlatformHostId(ObjectId objectId, const simData::D
   if (dataStore == NULL)
     return 0;
 
-  while (dataStore->objectType(objectId) != simData::DataStore::PLATFORM)
+  while (dataStore->objectType(objectId) != simData::PLATFORM)
   {
     // Return an error code if an invalid entity id is encountered
-    if (dataStore->objectType(objectId) == simData::DataStore::NONE)
+    if (dataStore->objectType(objectId) == simData::NONE)
       return 0;
     objectId = dataStore->entityHostId(objectId);
   }
@@ -242,25 +243,25 @@ std::string DataStoreHelpers::description(const simData::DataStore* dataStore)
   return dataStore->scenarioProperties(&transaction)->description();
 }
 
-google::protobuf::Message* DataStoreHelpers::makeMessage(simData::DataStore::ObjectType entityType)
+google::protobuf::Message* DataStoreHelpers::makeMessage(simData::ObjectType entityType)
 {
   switch (entityType)
   {
-  case simData::DataStore::NONE:
+  case simData::NONE:
     break; // should not see this case
-  case simData::DataStore::ALL: // All is used for common prefs
+  case simData::ALL: // All is used for common prefs
     return new simData::CommonPrefs();
-  case simData::DataStore::PLATFORM:
+  case simData::PLATFORM:
     return new simData::PlatformPrefs();
-  case simData::DataStore::BEAM:
+  case simData::BEAM:
     return new simData::BeamPrefs();
-  case simData::DataStore::GATE:
+  case simData::GATE:
     return new simData::GatePrefs();
-  case simData::DataStore::LASER:
+  case simData::LASER:
     return new simData::LaserPrefs();
-  case simData::DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
     return new simData::LobGroupPrefs();
-  case simData::DataStore::PROJECTOR:
+  case simData::PROJECTOR:
     return new simData::ProjectorPrefs();
   }
 
@@ -302,7 +303,7 @@ int DataStoreHelpers::addMediaFile(const std::string& fileName, simData::DataSto
 
 simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, const std::string& tableName, simData::DataStore* dataStore)
 {
-  if ((dataStore->objectType(objectId) == simData::DataStore::NONE) || tableName.empty() || (dataStore == NULL))
+  if ((dataStore->objectType(objectId) == simData::NONE) || tableName.empty() || (dataStore == NULL))
     return NULL;
 
   simData::DataTableManager& tableManager = dataStore->dataTableManager();
@@ -496,28 +497,28 @@ namespace {
 
 bool DataStoreHelpers::isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
 {
-  const simData::DataStore::ObjectType type = dataStore.objectType(objectId);
+  const simData::ObjectType type = dataStore.objectType(objectId);
   switch (type)
   {
-  case simData::DataStore::PLATFORM:
+  case simData::PLATFORM:
     return isPlatformActive(dataStore, objectId, atTime);
 
-  case simData::DataStore::BEAM:
+  case simData::BEAM:
     return isBeamActive(dataStore, objectId, atTime);
 
-  case simData::DataStore::GATE:
+  case simData::GATE:
     return isGateActive(dataStore, objectId, atTime);
 
-  case simData::DataStore::LASER:
+  case simData::LASER:
     return isLaserActive(dataStore, objectId, atTime);
 
-  case simData::DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
     return isLobGroupActive(dataStore, objectId, atTime);
 
-  case simData::DataStore::PROJECTOR:
+  case simData::PROJECTOR:
     return true;
 
-  case simData::DataStore::NONE:
+  case simData::NONE:
     // Entity does not exist
     break;
 

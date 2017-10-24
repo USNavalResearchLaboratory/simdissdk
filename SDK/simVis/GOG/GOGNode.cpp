@@ -33,6 +33,7 @@ GogFollowData::GogFollowData()
 GogMetaData::GogMetaData()
  : metadata(""),
    shape(GOG_UNKNOWN),
+   loadFormat(FORMAT_GOG),
    setFields_(0),
    allowingSetExplicitly_(true)
 {

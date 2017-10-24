@@ -22,12 +22,6 @@
 #ifndef SIMCORE_COMMON_MEMORY_H
 #define SIMCORE_COMMON_MEMORY_H
 
-#ifdef SIMDIS_SDKCore_NOSHAREDPTR
-// Boost provides shared_ptr
-#include <tr1/memory>
-#else
-// tr1 supported natively
 #include <memory>
-#endif
 
 #endif /* SIMCORE_COMMON_MEMORY_H */

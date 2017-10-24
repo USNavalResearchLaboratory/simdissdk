@@ -50,6 +50,10 @@ namespace simVis
 
   /**
   * Interface for a tool that you can attach to the ScenarioManager.
+  * A ScenarioTool is intended to add Scenario-related visualizations to the scenegraph;
+  * ScenarioManager will add/remove the ScenarioTool's getNode() to the scenegraph on install/uninstall
+  * A ScenarioTool should not expect to do anything unless installed onto a scenario;
+  * A ScenarioTool receives its updates from the ScenarioManager; an uninstalled ScenarioTool will not receive updates.
   */
   class /* SDKVIS_EXPORT */ ScenarioTool : public Tool
   {
@@ -61,20 +65,43 @@ namespace simVis
 
   public:
 
-    /// called when this tool is installed onto the scenario.
-    virtual void onInstall(ScenarioManager* scenario) { }
+    /**
+    * Called when this tool is installed onto the scenario.
+    * Tool should initialize scenario-related data and prepare for updates.
+    * Tool's root node will be added to the scenegraph immediately after this call.
+    * @param scenario the scenarioManager that is installing this tool
+    */
+    virtual void onInstall(const ScenarioManager& scenario) { }
 
-    /// called when this tool is removed from the scenario.
-    virtual void onUninstall(ScenarioManager* scenario) { }
+    /**
+    * Called when this tool is removed from the scenario.
+    * Tool should clear anything related to the scenario, prepare for deletion or installation of another scenario.
+    * Tool's root node has already been removed from the scenegraph before this call
+    * @param scenario the scenarioManager that is uninstalling this tool
+    */
+    virtual void onUninstall(const ScenarioManager& scenario) { }
 
-    /// called when a new entity is added
-    virtual void onEntityAdd(ScenarioManager* scenario, EntityNode* entity) { }
+    /**
+    * Called when a new entity is added.
+    * @param scenario the scenarioManager that is managing this tool
+    * @param entity the entity that has been added to the scenario
+    */
+    virtual void onEntityAdd(const ScenarioManager& scenario, EntityNode* entity) { }
 
-    /// called when a new entity is removed
-    virtual void onEntityRemove(ScenarioManager* scenario, EntityNode* entity) { }
+    /**
+    * Called when an entity is removed.
+    * @param scenario the scenarioManager that is managing this tool
+    * @param entity the entity that has been removed from the scenario
+    */
+    virtual void onEntityRemove(const ScenarioManager& scenario, EntityNode* entity) { }
 
-    /// called when scenario time changes
-    virtual void onUpdate(ScenarioManager* scenario, const simCore::TimeStamp& timeStamp, const std::vector<osg::ref_ptr<EntityNode> >& updates) { }
+    /**
+    * Called when scenario time changes.
+    * @param scenario the scenarioManager that is managing this tool.
+    * @param timeStamp the update time.
+    * @param updates the changes to the scenario's entities for the given update time
+    */
+    virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const std::vector<osg::ref_ptr<EntityNode> >& updates) { }
   };
 
   /** Vector of ScenarioTool ref_ptr */
