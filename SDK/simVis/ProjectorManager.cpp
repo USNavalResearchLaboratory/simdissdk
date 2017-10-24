@@ -139,7 +139,16 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 
     projectors_.push_back(proj);
 
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+    ProjectorLayer* layer = new ProjectorLayer(proj->getId());
+    layer->setName("SIMSDK Projector");
+    osg::StateSet* projStateSet = layer->getOrCreateStateSet();
+    projectorLayers_.push_back(layer);
+
+    mapNode_->getMap()->addLayer(layer);
+#else
     osg::StateSet* projStateSet = new osg::StateSet();
+#endif
 
     // shader code to render the projectors
     osgEarth::VirtualProgram* vp = VirtualProgram::getOrCreate(projStateSet);
@@ -161,14 +170,6 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
     projStateSet->addUniform(proj->texProjDirUniform_.get());
     projStateSet->addUniform(proj->texProjPosUniform_.get());
 
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-    ProjectorLayer* layer = new ProjectorLayer(proj->getId());
-    layer->setName("SIMSDK Projector");
-    layer->setStateSet(projStateSet);
-    projectorLayers_.push_back(layer);
-
-    mapNode_->getMap()->addLayer(layer);
-#endif
     return;
   }
 
