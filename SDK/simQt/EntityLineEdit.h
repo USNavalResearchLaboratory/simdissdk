@@ -135,6 +135,8 @@ public slots:
   int setSelected(uint64_t id);
   /** Closes the entity dialog */
   void closeEntityDialog();
+  /** The given id is in use by something else and should be considered not available, clear by setting to 0 */
+  void setUnavailable(uint64_t id);
 
 signals:
   /** Signal emitted when the user selects an entity */
@@ -159,11 +161,15 @@ private slots:
 private:
   class DataStoreListener;
 
+  void setTextStyle_(bool valid);
+
   Ui_EntityLineEdit* composite_; ///< The actual user interface
   simQt::EntityTreeModel* entityTreeModel_;  ///< Will not be set in QtDesigner so always NULL check
   simData::DataStore::ListenerPtr dataListenerPtr_; ///< Will not be set in QtDesigner so always NULL check
   EntityDialog* entityDialog_;  ///< The Entity Tree Composite Dialog
   uint64_t uniqueId_;  ///< The Unique ID of the entity, can be zero if current name is not valid
+  uint64_t unavailableId_;  ///< The unique ID of an unavailable entity ID, set to zero to clear
+  bool valid_; ///< True if the text field has a valid entity or is empty or is currently under edit
   bool needToVerify_; ///< True means the user typed in a name so it must be verified
   simData::ObjectType type_; ///< Limits the entity types to display
   simQt::EntityProxyModel* proxy_;  ///< Allow filtering by entity type
