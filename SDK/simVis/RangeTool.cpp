@@ -182,7 +182,8 @@ RangeTool::GraphicOptions::GraphicOptions()
     pieRadiusPercent_(0.30f),
     pieRadiusValue_(100.0f),
     pieRadiusUnits_(osgEarth::Units::METERS),
-    useDepthTest_(true)
+    useDepthTest_(true),
+    showGraphics_(true)
 {
   //nop
 }
@@ -200,7 +201,8 @@ RangeTool::TextOptions::TextOptions()
     scaleFontSize_(0.0f),
     xOffset_(0),
     yOffset_(0),
-    color_(.5, .5, .5, 1)     // gray
+    color_(.5, .5, .5, 1),     // gray
+    showText_(true)
 {
   //nop
 }
@@ -645,6 +647,9 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       graphic->resetDirty();
 
+      if (!graphic->graphicOptions().showGraphics_)
+        continue;
+
       // pie slice graphics include special support for measurement
       if (graphic->graphicType() == Graphic::PIE_SLICE && calcMeasurement)
       {
@@ -744,6 +749,9 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
         << units.getAbbr();
     }
 
+    if (!textOptions.showText_)
+      continue;
+
     osgText::Text* text = NULL;
     if (labelCount >= labels_->getNumDrawables())
     {
@@ -774,6 +782,8 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
     labelCount++;
 
+    pos.x() = pos.x() + textOptions.xOffset_;
+    pos.y() = pos.y() + textOptions.yOffset_;
     text->setPosition(pos);
     text->setText(buf.str());
   }

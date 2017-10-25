@@ -96,6 +96,7 @@ namespace simVis
       osgEarth::Units pieRadiusUnits_;
 
       bool           useDepthTest_;
+      bool           showGraphics_;
       ///@}
     };
 
@@ -127,6 +128,7 @@ namespace simVis
       float        scaleFontSize_;
       unsigned int xOffset_, yOffset_;
       osg::Vec4f   color_;
+      bool         showText_;
       ///@}
     };
 
