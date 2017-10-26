@@ -22,6 +22,7 @@
 #ifndef SIMDISSDK_SIMUTIL_H
 #define SIMDISSDK_SIMUTIL_H
 
+#include "simUtil/BoxGraphic.h"
 #include "simUtil/Capabilities.h"
 #include "simUtil/DataStoreTestHelper.h"
 #include "simUtil/DatumConvert.h"
