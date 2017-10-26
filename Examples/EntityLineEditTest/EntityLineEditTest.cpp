@@ -111,7 +111,7 @@ MainWindow::MainWindow(QWidget *parent, simData::DataStore* dataStore) : QDialog
 
   entityTreeModel_ = new simQt::EntityTreeModel(NULL, dataStore_);
   entityTreeModel_->setToListView();
-  mainWindowGui_->entityLine->setModel(entityTreeModel_, simData::DataStore::PLATFORM);
+  mainWindowGui_->entityLine->setModel(entityTreeModel_, simData::PLATFORM);
   connect(mainWindowGui_->entityLine, SIGNAL(itemSelected(uint64_t)), this, SLOT(itemSelected_(uint64_t)));
 }
 
@@ -121,7 +121,7 @@ void MainWindow::itemSelected_(uint64_t id)
 
 MainWindow::~MainWindow()
 {
-  mainWindowGui_->entityLine->setModel(NULL, simData::DataStore::PLATFORM);
+  mainWindowGui_->entityLine->setModel(NULL, simData::PLATFORM);
   delete mainWindowGui_;
   delete entityTreeModel_;
 }

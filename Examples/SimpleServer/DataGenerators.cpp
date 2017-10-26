@@ -21,6 +21,7 @@
 */
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
+#include "simData/DataStore.h"
 #include "simVis/AnimatedLine.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
@@ -457,24 +458,24 @@ void ToggleDrawState::generate_(double scenarioTime)
 #else
   switch (dataStore_.objectType(id_))
   {
-  case simData::DataStore::NONE:
+  case simData::NONE:
     break;
-  case simData::DataStore::PLATFORM:
+  case simData::PLATFORM:
     ADD_DRAW_COMMAND(PlatformCommand, addPlatformCommand, set_datadraw, show_);
     break;
-  case simData::DataStore::BEAM:
+  case simData::BEAM:
     ADD_DRAW_COMMAND(BeamCommand, addBeamCommand, set_datadraw, show_);
     break;
-  case simData::DataStore::GATE:
+  case simData::GATE:
     ADD_DRAW_COMMAND(GateCommand, addGateCommand, set_datadraw, show_);
     break;
-  case simData::DataStore::LASER:
+  case simData::LASER:
     ADD_DRAW_COMMAND(LaserCommand, addLaserCommand, set_datadraw, show_);
     break;
-  case simData::DataStore::PROJECTOR:
+  case simData::PROJECTOR:
     ADD_DRAW_COMMAND(ProjectorCommand, addProjectorCommand, set_datadraw, show_);
     break;
-  case simData::DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
     ADD_DRAW_COMMAND(LobGroupCommand, addLobGroupCommand, set_datadraw, show_);
     break;
   default:
@@ -515,24 +516,24 @@ void CycleColor::generate_(double scenarioTime)
 #else
   switch (dataStore_.objectType(id_))
   {
-  case simData::DataStore::NONE:
+  case simData::NONE:
     break;
-  case simData::DataStore::PLATFORM:
+  case simData::PLATFORM:
     ADD_DRAW_COMMAND(PlatformCommand, addPlatformCommand, set_color, color);
     break;
-  case simData::DataStore::BEAM:
+  case simData::BEAM:
     ADD_DRAW_COMMAND(BeamCommand, addBeamCommand, set_color, color);
     break;
-  case simData::DataStore::GATE:
+  case simData::GATE:
     ADD_DRAW_COMMAND(GateCommand, addGateCommand, set_color, color);
     break;
-  case simData::DataStore::LASER:
+  case simData::LASER:
     ADD_DRAW_COMMAND(LaserCommand, addLaserCommand, set_color, color);
     break;
-  case simData::DataStore::PROJECTOR:
+  case simData::PROJECTOR:
     ADD_DRAW_COMMAND(ProjectorCommand, addProjectorCommand, set_color, color);
     break;
-  case simData::DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
     ADD_DRAW_COMMAND(LobGroupCommand, addLobGroupCommand, set_color, color);
     break;
   default:

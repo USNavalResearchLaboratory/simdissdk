@@ -25,11 +25,11 @@
 #include <QDialog>
 
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simData/CategoryData/CategoryFilter.h"
 
+namespace simData { class DataStore; }
 class Ui_MainWindow;
-
 
 class MainWindow : public QDialog
 {

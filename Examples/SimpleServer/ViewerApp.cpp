@@ -290,7 +290,7 @@ void ViewerApp::toggleDynamicScale()
   bool seenFirst = false;
   bool toggleOn = true;
   simData::DataStore::IdList list;
-  dataStore_->idList(&list, simData::DataStore::PLATFORM);
+  dataStore_->idList(&list, simData::PLATFORM);
   simData::DataStore::Transaction t;
   simData::PlatformPrefs* prefs;
 
@@ -314,7 +314,7 @@ void ViewerApp::toggleLabels()
   bool seenFirst = false;
   bool toggleOn = true;
   simData::DataStore::IdList list;
-  dataStore_->idList(&list, simData::DataStore::PLATFORM);
+  dataStore_->idList(&list, simData::PLATFORM);
   simData::DataStore::Transaction t;
   simData::CommonPrefs* prefs;
 
@@ -347,7 +347,7 @@ void ViewerApp::centerNext()
 
   // Pull the data store's platform list so we can find the next ID in the list
   simData::DataStore::IdList list;
-  dataStore_->idList(&list, simData::DataStore::PLATFORM);
+  dataStore_->idList(&list, simData::PLATFORM);
   if (list.empty())
     return;
 

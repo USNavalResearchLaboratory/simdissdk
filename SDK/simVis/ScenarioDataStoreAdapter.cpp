@@ -48,15 +48,15 @@ public:
   {
     switch (ot)
     {
-    case simData::DataStore::PLATFORM: addPlatform_(*source, newId); break;
-    case simData::DataStore::BEAM: addBeam_(*source, newId); break;
-    case simData::DataStore::GATE: addGate_(*source, newId); break;
-    case simData::DataStore::PROJECTOR: addProjector_(*source, newId); break;
-    case simData::DataStore::LASER: addLaser_(*source, newId); break;
-    case simData::DataStore::LOB_GROUP: addLobGroup_(*source, newId); break;
+    case simData::PLATFORM: addPlatform_(*source, newId); break;
+    case simData::BEAM: addBeam_(*source, newId); break;
+    case simData::GATE: addGate_(*source, newId); break;
+    case simData::PROJECTOR: addProjector_(*source, newId); break;
+    case simData::LASER: addLaser_(*source, newId); break;
+    case simData::LOB_GROUP: addLobGroup_(*source, newId); break;
 
-    case simData::DataStore::ALL: // shouldn't see these
-    case simData::DataStore::NONE:
+    case simData::ALL: // shouldn't see these
+    case simData::NONE:
       assert(false);
     }
   }
@@ -72,15 +72,15 @@ public:
   {
     switch (source->objectType(id))
     {
-    case simData::DataStore::PLATFORM: changePlatformPrefs_(*source, id); break;
-    case simData::DataStore::BEAM: changeBeamPrefs_(*source, id); break;
-    case simData::DataStore::GATE: changeGatePrefs_(*source, id); break;
-    case simData::DataStore::PROJECTOR: changeProjectorPrefs_(*source, id); break;
-    case simData::DataStore::LASER: changeLaserPrefs_(*source, id); break;
-    case simData::DataStore::LOB_GROUP: changeLobGroupPrefs_(*source, id); break;
+    case simData::PLATFORM: changePlatformPrefs_(*source, id); break;
+    case simData::BEAM: changeBeamPrefs_(*source, id); break;
+    case simData::GATE: changeGatePrefs_(*source, id); break;
+    case simData::PROJECTOR: changeProjectorPrefs_(*source, id); break;
+    case simData::LASER: changeLaserPrefs_(*source, id); break;
+    case simData::LOB_GROUP: changeLobGroupPrefs_(*source, id); break;
 
-    case simData::DataStore::ALL: // shouldn't see these
-    case simData::DataStore::NONE:
+    case simData::ALL: // shouldn't see these
+    case simData::NONE:
       assert(false);
     }
   }
