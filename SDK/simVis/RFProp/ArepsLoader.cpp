@@ -408,6 +408,9 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
     beamHandler_->setRadarParams(radarParameters);
   }
 
+  // string caches for missing data/calcs notifications
+  std::string missingData;
+  std::string missingCalcs;
 
   // PODProfileDataProvider depends on the loss provider
   const simRF::ProfileDataProvider* lossProvider = profile.getDataProvider()->getProvider(ProfileDataProvider::THRESHOLDTYPE_LOSS);
@@ -415,6 +418,11 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
   {
     osg::ref_ptr<PODProfileDataProvider> podProvider = new PODProfileDataProvider(lossProvider, beamHandler_->getPODLossThreshold());
     profile.addProvider(podProvider);
+  }
+  else if (!lossProvider)
+  {
+    missingData = "loss";
+    missingCalcs = "loss, POD";
   }
 
   // create providers that depend on the PPF provider
@@ -426,8 +434,26 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
     osg::ref_ptr<TwoWayPowerDataProvider> twoWayPowerDataProvider = new TwoWayPowerDataProvider(ppfProvider, beamHandler_->radarParams());
     profile.addProvider(twoWayPowerDataProvider);
 
-    //SNRDataProvider depends on TwoWayPowerDataProvider
+    // SNRDataProvider depends on TwoWayPowerDataProvider
     profile.addProvider(new SNRDataProvider(twoWayPowerDataProvider, beamHandler_->radarParams()));
+  }
+  else if (!ppfProvider)
+  {
+    missingData += missingData.empty() ? "PPF" : ", PPF";
+    missingCalcs += missingCalcs.empty() ? "PPF, one-way power, two-way power, SNR" : ", PPF, one-way power, two-way power, SNR";
+  }
+
+  // determine if CNR data is available
+  if (profile.getDataProvider()->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_CNR) == NULL)
+  {
+    missingData += missingData.empty() ? "CNR" : ", CNR";
+    missingCalcs += missingCalcs.empty() ? "CNR" : ", CNR";
+  }
+
+  if (!missingData.empty())
+  {
+    SIM_WARN << "File: " << arepsFile << " is missing AREPS data types: " << missingData << std::endl;
+    SIM_WARN << "The following RF calcs will be unavailable: " << missingCalcs << std::endl;
   }
 
   profile.setBearing(bearingAngleRad);
