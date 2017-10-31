@@ -309,6 +309,19 @@ int EntityLineEdit::setSelected(uint64_t id)
   if (entityTreeModel_ == NULL || id == uniqueId_)
     return 1;
 
+  // Allow zero to clear out the line Edit
+  if (id == 0)
+  {
+    composite_->lineEdit->setText("");
+    uniqueId_ = id;
+    needToVerify_ = true;
+    setTextStyle_(false);
+    if (entityDialog_ != NULL)
+      entityDialog_->setItemSelected(uniqueId_);
+    emit itemSelected(uniqueId_);
+    return 0;
+  }
+
   QModelIndex index = entityTreeModel_->index(id);
   if (!index.isValid())
     return 1;
