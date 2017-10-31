@@ -83,6 +83,26 @@ void setDefaultPODVector(simRF::PODVectorPtr podLossThresholds)
     podLossThresholds->insert(podLossThresholds->end(), pod, &pod[10]);
   }
 }
+
+std::string bearingWarningMsg(const std::string& dataType)
+{
+  return "No " + dataType + " data found for beam at requested bearing";
+}
+
+std::string dataWarningMsg(const std::string& dataType)
+{
+  return "No " + dataType + " data found for beam";
+}
+
+std::string rangeWarningMsg(const std::string& dataType)
+{
+  return dataType + " range request outside of propagation data limits";
+}
+
+std::string heightWarningMsg(const std::string& dataType)
+{
+  return dataType + " height request outside of propagation data limits";
+}
 }
 
 namespace simRF
@@ -496,7 +516,7 @@ double RFPropagationFacade::getPOD(double azimRad, double gndRngMeters, double h
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << "No profile found for beam at requested bearing" << std::endl;
+    SIM_WARN << bearingWarningMsg("POD") << std::endl;
     return 0.0;
   }
 
@@ -505,15 +525,15 @@ double RFPropagationFacade::getPOD(double azimRad, double gndRngMeters, double h
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_POD));
   if (!provider)
   {
-    SIM_WARN << "No POD data provider found for beam at requested bearing" << std::endl;
+    SIM_WARN << dataWarningMsg("POD") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    SIM_WARN << "POD Request outside of profile range limits" << std::endl;
+    SIM_WARN << rangeWarningMsg("POD") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
-    SIM_WARN << "POD Request outside of profile height limits" << std::endl;
+    SIM_WARN << heightWarningMsg("POD") << std::endl;
   }
   else
   {
@@ -527,7 +547,7 @@ double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double 
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << "No profile found for beam at requested bearing" << std::endl;
+    SIM_WARN << bearingWarningMsg("loss") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
 
@@ -536,15 +556,15 @@ double RFPropagationFacade::getLoss(double azimRad, double gndRngMeters, double 
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS));
   if (!provider)
   {
-    SIM_WARN << "No Loss data provider found for beam at requested bearing" << std::endl;
+    SIM_WARN << dataWarningMsg("loss") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    SIM_WARN << "Loss Request outside of profile range limits" << std::endl;
+    SIM_WARN << rangeWarningMsg("Loss") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
-    SIM_WARN << "Loss Request outside of profile height limits" << std::endl;
+    SIM_WARN << heightWarningMsg("Loss") << std::endl;
   }
   else
   {
@@ -559,7 +579,7 @@ double RFPropagationFacade::getPPF(double azimRad, double gndRngMeters, double h
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << "No profile found for beam at requested bearing" << std::endl;
+    SIM_WARN << bearingWarningMsg("PPF") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
 
@@ -568,15 +588,15 @@ double RFPropagationFacade::getPPF(double azimRad, double gndRngMeters, double h
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR));
   if (!provider)
   {
-    SIM_WARN << "No PPF data provider found for beam at requested bearing" << std::endl;
+    SIM_WARN << dataWarningMsg("PPF") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    SIM_WARN << "PPF Request outside of profile range limits" << std::endl;
+    SIM_WARN << rangeWarningMsg("PPF") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
-    SIM_WARN << "PPF Request outside of profile height limits" << std::endl;
+    SIM_WARN << heightWarningMsg("PPF") << std::endl;
   }
   else
   {
@@ -591,7 +611,7 @@ double RFPropagationFacade::getSNR(double azimRad, double slantRngMeters, double
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << "No profile found for beam at requested bearing" << std::endl;
+    SIM_WARN << bearingWarningMsg("SNR") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
 
@@ -599,15 +619,15 @@ double RFPropagationFacade::getSNR(double azimRad, double slantRngMeters, double
   (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_SNR));
   if (!provider)
   {
-    SIM_WARN << "No SNR data provider found for beam at requested bearing" << std::endl;
+    SIM_WARN << dataWarningMsg("SNR") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    SIM_WARN << "SNR Request outside of profile range limits" << std::endl;
+    SIM_WARN << rangeWarningMsg("SNR") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
-    SIM_WARN << "SNR Request outside of profile height limits" << std::endl;
+    SIM_WARN << heightWarningMsg("SNR") << std::endl;
   }
   else
   {
@@ -624,7 +644,7 @@ double RFPropagationFacade::getCNR(double azimRad, double gndRngMeters) const
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << "No profile found for beam at requested bearing" << std::endl;
+    SIM_WARN << bearingWarningMsg("CNR") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
 
@@ -633,11 +653,11 @@ double RFPropagationFacade::getCNR(double azimRad, double gndRngMeters) const
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_CNR));
   if (!provider)
   {
-    SIM_WARN << "No CNR data provider found for beam at requested bearing" << std::endl;
+    SIM_WARN << dataWarningMsg("CNR") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    SIM_WARN << "CNR Request outside of profile range limits" << std::endl;
+    SIM_WARN << rangeWarningMsg("CNR") << std::endl;
   }
   else
   {
@@ -652,7 +672,7 @@ double RFPropagationFacade::getOneWayPower(double azimRad, double slantRngMeters
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << "No profile found for beam at requested bearing" << std::endl;
+    SIM_WARN << bearingWarningMsg("one-way power") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
 
@@ -660,15 +680,15 @@ double RFPropagationFacade::getOneWayPower(double azimRad, double slantRngMeters
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_ONEWAYPOWER));
   if (!provider)
   {
-    SIM_WARN << "No One-Way Power data provider found for beam at requested bearing" << std::endl;
+    SIM_WARN << dataWarningMsg("one-way power") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    SIM_WARN << "One-Way Power Request outside of profile range limits" << std::endl;
+    SIM_WARN << rangeWarningMsg("One-way power") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
-    SIM_WARN << "One-Way Power Request outside of profile height limits" << std::endl;
+    SIM_WARN << heightWarningMsg("One-way power") << std::endl;
   }
   else
   {
@@ -685,7 +705,7 @@ double RFPropagationFacade::getReceivedPower(double azimRad, double slantRngMete
   const simRF::CompositeProfileProvider* cProvider = getProfileProvider(azimRad);
   if (!cProvider)
   {
-    SIM_WARN << "No profile found for beam at requested bearing" << std::endl;
+    SIM_WARN << bearingWarningMsg("received power") << std::endl;
     return simCore::SMALL_DB_VAL;
   }
 
@@ -693,15 +713,15 @@ double RFPropagationFacade::getReceivedPower(double azimRad, double slantRngMete
     (cProvider->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_RECEIVEDPOWER));
   if (!provider)
   {
-    SIM_WARN << "No Received Power data provider found for beam at requested bearing" << std::endl;
+    SIM_WARN << dataWarningMsg("received power") << std::endl;
   }
   else if (gndRngMeters < provider->getMinRange() || gndRngMeters > provider->getMaxRange())
   {
-    SIM_WARN << "Received Power Request outside of profile range limits" << std::endl;
+    SIM_WARN << rangeWarningMsg("Received power") << std::endl;
   }
   else if (hgtMeters < provider->getMinHeight() || hgtMeters > provider->getMaxHeight())
   {
-    SIM_WARN << "Received Power Request outside of profile height limits" << std::endl;
+    SIM_WARN << heightWarningMsg("Received power") << std::endl;
   }
   else
   {
