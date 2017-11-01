@@ -274,6 +274,11 @@ const simCore::Vec3& PlatformPosition::lla() const
   return lla_;
 }
 
+simData::ObjectId PlatformPosition::platformId() const
+{
+  return platformId_;
+}
+
 int PlatformPosition::pullFromDataStore_(simCore::Vec3& outLla) const
 {
   // Get the current item out of the slice

@@ -210,6 +210,12 @@ public:
   virtual bool operator==(const Position& other) const;
   virtual bool operator!=(const Position& other) const;
 
+  /**
+   * Returns the Unique ID of the platform
+   * @return The Unique ID of the platform
+   */
+  simData::ObjectId platformId() const;
+
 protected:
   /** Reference-derived */
   virtual ~PlatformPosition();
