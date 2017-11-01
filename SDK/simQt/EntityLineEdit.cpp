@@ -378,6 +378,20 @@ void EntityLineEdit::editingFinished_()
   if (entityTreeModel_ == NULL)
     return;
 
+  // Clearing out the line Edit is a special case
+  if (composite_->lineEdit->text().isEmpty())
+  {
+    bool doEmit = (uniqueId_ != 0);
+    uniqueId_ = 0;
+    needToVerify_ = true;
+    setTextStyle_(false);
+    if (entityDialog_ != NULL)
+      entityDialog_->setItemSelected(uniqueId_);
+    if (doEmit)
+      emit itemSelected(uniqueId_);
+    return;
+  }
+
   if (needToVerify_)
   {
     needToVerify_ = false;
