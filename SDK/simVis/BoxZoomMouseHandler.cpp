@@ -146,7 +146,9 @@ bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
 
     return false;
   }
-  break;
+    break;
+  default:
+    break;
   }
   return false;
 }
