@@ -44,6 +44,8 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}BathymetryGenerator.h
     ${VIS_INC}Beam.h
     ${VIS_INC}BeamPulse.h
+    ${VIS_INC}BoxGraphic.h
+    ${VIS_INC}BoxZoomMouseHandler.h
     ${VIS_INC}ClassificationBanner.h
     ${VIS_INC}ClockOptions.h
     ${VIS_INC}Compass.h
@@ -167,6 +169,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}BathymetryGenerator.cpp
     ${VIS_SRC}Beam.cpp
     ${VIS_SRC}BeamPulse.cpp
+    ${VIS_SRC}BoxGraphic.cpp
+    ${VIS_SRC}BoxZoomMouseHandler.cpp
     ${VIS_SRC}ClassificationBanner.cpp
     ${VIS_SRC}ClockOptions.cpp
     ${VIS_SRC}Compass.cpp

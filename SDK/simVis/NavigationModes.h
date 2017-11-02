@@ -23,10 +23,12 @@
 #define SIMVIS_UI_NAVIGATION_MODES 1
 
 #include "simCore/Common/Common.h"
-#include "osgEarthUtil/EarthManipulator"
+#include "simVis/BoxZoomMouseHandler.h"
 
 namespace simVis
 {
+class View;
+
   /**
   * A NavigationMode is used to alter the way the mouse interacts with the
   * SIMDIS globe.  It inherits from the EarthManipulator Settings class;
@@ -329,6 +331,34 @@ namespace simVis
     /// osg::Referenced-derived
     virtual ~GisNavigationMode() {}
   };
+
+  /**
+  * BoxZoomNavigationMode provides a support nav mode for a box zoom functionality, but
+  * does not implement any box zooming functionality here<p>
+  * The mappings are:
+  * <ul>
+  * <li>Left mouse button: no effect, assumes the actual box zooming is handled elsewhere</li>
+  * <li>Middle mouse button: continuous rotate</li>
+  * <li>Right mouse button: globe spin</li>
+  * <li>Scroll wheel: fixed rotate</li>
+  * <li>Arrow keys: fixed rotate</li>
+  * </ul>
+  */
+  class SDKVIS_EXPORT BoxZoomNavigationMode : public NavigationMode
+  {
+  public:
+    /** Initialize the box zoom navigation mode.*/
+    BoxZoomNavigationMode(View* view);
+
+  protected:
+    /// osg::Referenced-derived
+    virtual ~BoxZoomNavigationMode();
+
+  private:
+    osg::observer_ptr<View> view_;
+    osg::ref_ptr<BoxZoomMouseHandler> mouse_;
+  };
+
 }
 
 #endif // SIMVIS_UI_NAVIGATION_MODES
