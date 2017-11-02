@@ -137,4 +137,4 @@ private:
 
 }
 
-#endif /* SIMUTIL_BOXGRAPHIC_H */
+#endif /* SIMVIS_BOXGRAPHIC_H */
