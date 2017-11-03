@@ -78,6 +78,11 @@ void ColorButton::setColor(const QColor& value)
   update();
 }
 
+void ColorButton::mouseDoubleClickEvent(QMouseEvent* evt)
+{
+  QPushButton::mouseDoubleClickEvent(evt);
+  emit doubleClicked(evt);
+}
 
 void ColorButton::paintColoredSquare(QPainter* painter, const QRect& rect, const QColor& color, bool showAlpha)
 {

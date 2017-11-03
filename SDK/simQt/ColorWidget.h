@@ -28,8 +28,11 @@
 #include "simCore/Common/Export.h"
 
 class Ui_ColorWidget;
+class QLabel;
 
 namespace simQt {
+
+class ColorButton;
 
 /**
  * ColorWidget is a widget that shows a color square and a text label.  Pressing the color
@@ -96,6 +99,11 @@ private slots:
 protected:
   /** Override change event to know when we're disabled */
   virtual void changeEvent(QEvent* event);
+
+  /** Retrieve the pointer to the color button */
+  simQt::ColorButton* colorButton_() const;
+  /** Retrieve the pointer to the color label */
+  QLabel* colorLabel_() const;
 
 private:
   /** set up the color button based on enabled state */
