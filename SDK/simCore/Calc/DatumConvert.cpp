@@ -35,13 +35,6 @@ MagneticDatumConvert::~MagneticDatumConvert()
   wmm_ = NULL;
 }
 
-
-MagneticDatumConvert& MagneticDatumConvert::operator= (const MagneticDatumConvert& other)
-{
-  // do not copy wmm - if there are multiple MagneticDatumConvert, there must be multiple wmm
-  return *this;
-}
-
 double MagneticDatumConvert::convertMagneticDatum(const Vec3& lla, const TimeStamp& timeStamp, double bearingRad,
   CoordinateSystem coordSystem, MagneticVariance inputDatum, MagneticVariance outputDatum,
   double userOffset) const
