@@ -386,6 +386,7 @@ QWidget* DockWidget::createTitleBar_()
 
   // Create the icon holders
   titleBarIcon_ = new DoubleClickIcon(*this);
+  titleBarIcon_->setObjectName("titleBarIcon");
   titleBarIcon_->setPixmap(windowIcon().pixmap(QSize(16, 16)));
   titleBarIcon_->setScaledContents(true);
   titleBarIcon_->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
