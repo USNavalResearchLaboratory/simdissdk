@@ -126,7 +126,8 @@ namespace simVis
       std::string  font_;
       float        fontSize_;
       float        scaleFontSize_;
-      unsigned int xOffset_, yOffset_;
+      float        xOffset_;
+      float        yOffset_;
       osg::Vec4f   color_;
       bool         showText_;
       ///@}

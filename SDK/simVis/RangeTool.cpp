@@ -199,8 +199,8 @@ RangeTool::TextOptions::TextOptions()
     font_("arial.ttf"),
     fontSize_(24.0f),
     scaleFontSize_(0.0f),
-    xOffset_(0),
-    yOffset_(0),
+    xOffset_(0.0f),
+    yOffset_(0.0f),
     color_(.5, .5, .5, 1),     // gray
     showText_(true)
 {
