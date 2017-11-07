@@ -32,7 +32,7 @@ class TimeStamp;
 /// Enumeration of magnetic variance datum type constants
 enum MagneticVariance
 {
-  MAGVAR_TRUE,    /**< No variance, True Heading */
+  MAGVAR_TRUE=1,  /**< No variance, True Heading */
   MAGVAR_WMM,     /**< World Magnetic Model (WMM) */
   MAGVAR_USER     /**< User Defined Magnetic Variance Offset */
 };

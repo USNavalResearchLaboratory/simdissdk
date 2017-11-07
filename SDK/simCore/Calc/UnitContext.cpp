@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/DatumConvert.h"
 #include "simCore/Calc/UnitContext.h"
 
 namespace simCore {
