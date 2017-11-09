@@ -337,19 +337,13 @@ TrackHistoryNode* PlatformNode::getTrackHistory()
 void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 {
   // static platforms by convention have elapsedEciTime 0
-  simCore::Coordinate coord(
+  const simCore::Coordinate coord(
         simCore::COORD_SYS_ECEF,
         simCore::Vec3(u.x(), u.y(), u.z()),
         simCore::Vec3(u.psi(), u.theta(), u.phi()),
         simCore::Vec3(u.vx(), u.vy(), u.vz()));
 
   getLocator()->setCoordinate(coord, u.time(), lastProps_.coordinateframe().ecireferencetime());
-
-  // if locator has changed and localGrid is displayed, update it
-  if (localGrid_)
-  {
-    localGrid_->notifyHostLocatorChange();
-  }
 
   if (lastPrefsValid_)
   {

@@ -30,6 +30,7 @@
 #include "simCore/String/Format.h"
 #include "simCore/String/ValidNumber.h"
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/Parser.h"

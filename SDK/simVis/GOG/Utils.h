@@ -25,7 +25,6 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simVis/GOG/GOGNode.h"
-#include "simVis/Locator.h"
 #include "osgEarth/Config"
 #include "osgEarth/GeoData"
 #include "osgEarth/Units"

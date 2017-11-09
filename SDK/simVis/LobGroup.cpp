@@ -616,11 +616,6 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
       const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
       const bool drawn = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
       setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
-
-      // if this lobgroup is drawn, tell its local grid to update
-      assert(localGrid_);
-      if (getNodeMask() != DISPLAY_MASK_NONE)
-        localGrid_->notifyHostLocatorChange();
     }
     else
     {

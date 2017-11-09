@@ -67,16 +67,14 @@ namespace simVis
      */
     const simData::LocalGridPrefs& getPrefs() const { return lastPrefs_; }
 
-    /**
-     * Notifies grid display when host platform locator changes
-     */
-    void notifyHostLocatorChange();
-
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
 
     /** Return the class name */
     virtual const char* className() const { return "LocalGridNode"; }
+
+  public: // LocatorNode interface
+    virtual void syncWithLocator(); //override
 
   protected: // methods
 

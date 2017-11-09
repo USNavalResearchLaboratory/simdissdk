@@ -157,15 +157,18 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
     forceRebuild_ = true;
   }
 
-  // do not process other prefs if we are not drawing the grid
   if (!prefs.drawgrid())
   {
     setNodeMask(DISPLAY_MASK_NONE);
+    // do not process other prefs changes if we are not drawing the grid; we need to detect those changes (below) when grid is enabled
+    lastPrefs_.set_drawgrid(false);
   }
   else
   {
+    setNodeMask(DISPLAY_MASK_LOCAL_GRID);
+
     // always rebuild everything first time through, otherwise, only if there is a prefs change
-    bool rebuildRequired =
+    const bool rebuildRequired =
       forceRebuild_ ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, gridtype)  ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, gridcolor) ||
@@ -200,8 +203,9 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
       rebuild_(prefs);
     }
 
-    bool locatorChangeRequired =
+    const bool locatorChangeRequired =
       forceRebuild_ ||
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, drawgrid) ||    // if draw was toggled on, force a locator sync
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, followyaw)             ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, followpitch)           ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, followroll)            ||
@@ -213,13 +217,14 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
       PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, gridorientationoffset, pitch) ||
       PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, gridorientationoffset, roll);
 
+    // sync our prefs state before updating locator
+    lastPrefs_ = prefs;
+
     if (locatorChangeRequired)
     {
       configureLocator_(prefs);
     }
 
-    setNodeMask(DISPLAY_MASK_LOCAL_GRID);
-    lastPrefs_    = prefs;
     forceRebuild_ = false;
   }
 }
@@ -260,15 +265,16 @@ void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
   locator->endUpdate();
 }
 
-// Notification that host locator changed
-void LocalGridNode::notifyHostLocatorChange()
+void LocalGridNode::syncWithLocator()
 {
   // if not drawing, we don't need to update this
   if (!host_.valid() || getNodeMask() != DISPLAY_MASK_LOCAL_GRID)
     return;
 
-  if ((lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_RINGS) &&
-      (lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_LINE))
+  // call the base class to update the matrix.
+  LocatorNode::syncWithLocator();
+
+  if ((lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_RINGS) && (lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_LINE))
     return;
 
   if (calcSpeedParams_(lastPrefs_))
@@ -313,7 +319,6 @@ bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
   }
   return rebuild;
 }
-
 
 // creates a prototype Text template for the grid labels.
 osgText::Text* LocalGridNode::createTextPrototype_(const simData::LocalGridPrefs& prefs, double value, const std::string& units, int precision) const

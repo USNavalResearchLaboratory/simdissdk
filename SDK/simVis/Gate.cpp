@@ -468,10 +468,6 @@ bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     }
   }
 
-  // if gate is visible, tell its localgrid to update
-  if (localGrid_ && getNodeMask() != DISPLAY_MASK_NONE)
-    localGrid_->notifyHostLocatorChange();
-
   // Whether updateSlice changed or not, label content may have changed, and for active gates we need to update
   if (isActive())
     updateLabel_(lastPrefsApplied_);
