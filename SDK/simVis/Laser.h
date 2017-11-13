@@ -26,12 +26,13 @@
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/LocalGrid.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 
 namespace simVis
 {
+  class LocalGridNode;
+
   /// Scene graph node that renders a Laser
   class SDKVIS_EXPORT LaserNode : public EntityNode
   {

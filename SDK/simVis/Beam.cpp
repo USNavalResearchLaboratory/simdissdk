@@ -636,7 +636,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   updateLocator_(newUpdate, newPrefs, force);
 
   // update the local grid prefs, if beam is being drawn
-  if (visible_ && newPrefs)
+  if (visible_ && (force || newPrefs))
   {
     // localgrid created in constructor. if assert fails, check for changes.
     assert(localGrid_ != NULL);

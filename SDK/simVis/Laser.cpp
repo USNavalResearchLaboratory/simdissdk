@@ -25,6 +25,7 @@
 #include "osg/LineWidth"
 #include "osgEarth/GeoData"
 
+#include "simVis/LocalGrid.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Laser.h"
@@ -289,7 +290,7 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   }
 
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
-  bool force = !hasLastUpdate_ || !hasLastPrefs_ || node_ == NULL ||
+  const bool force = !hasLastUpdate_ || !hasLastPrefs_ || node_ == NULL ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, datadraw));
 
   // if new geometry is required, build it
@@ -327,7 +328,7 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   updateLocator_(newUpdate, newPrefs, force);
 
   // update the local grid prefs, if laser is being drawn
-  if (newPrefs && visible_)
+  if (visible_ && (force || newPrefs))
   {
     assert(localGrid_ != NULL);
     localGrid_->setPrefs(activePrefs->commonprefs().localgrid(), force);

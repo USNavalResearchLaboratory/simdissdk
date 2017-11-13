@@ -689,7 +689,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   updateLocator_(newUpdate, newPrefs, force);
 
   // update the local grid prefs, if gate is being drawn
-  if (newPrefs && visible_)
+  if (visible_ && (force || newPrefs))
   {
     // localgrid created in constructor. if assert fails, check for changes.
     assert(localGrid_ != NULL);

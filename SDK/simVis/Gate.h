@@ -22,14 +22,16 @@
 #ifndef SIMVIS_GATE_H
 #define SIMVIS_GATE_H
 
-#include "osg/Geometry"
+#include "osg/MatrixTransform"
 #include "osg/Depth"
+#include "osg/ref_ptr"
+#include "osg/observer_ptr"
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 #include "simVis/EntityLabel.h"
-#include "simVis/LocalGrid.h"
 #include "simVis/LabelContentManager.h"
+#include "simVis/LocalGrid.h"
 
 namespace simVis
 {
