@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Depth"
 #include "osg/Geometry"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"

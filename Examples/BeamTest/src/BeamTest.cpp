@@ -35,6 +35,7 @@
 
 #include "simVis/Platform.h"
 #include "simVis/Beam.h"
+#include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
 #include "simData/MemoryDataStore.h"

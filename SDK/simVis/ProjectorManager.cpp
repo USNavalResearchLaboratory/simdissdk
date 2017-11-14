@@ -24,6 +24,8 @@
 #include "osgEarth/StringUtils"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/VirtualProgram"
+#include "simVis/EntityLabel.h"
+#include "simVis/LabelContentManager.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/Shaders.h"
 #include "simVis/ProjectorManager.h"

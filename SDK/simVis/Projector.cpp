@@ -19,16 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/Projector.h"
-#include "simVis/Platform.h"
-#include "simVis/SphericalVolume.h"
-#include "simVis/ClockOptions.h"
-#include "simVis/Utils.h"
-#include "simVis/Registry.h"
-#include "simNotify/Notify.h"
-#include "simCore/Calc/Angle.h"
-#include "simCore/Calc/CoordinateConverter.h"
-#include "simCore/String/Format.h"
 #include "osg/Notify"
 #include "osg/CullFace"
 #include "osg/Geode"
@@ -39,6 +29,19 @@
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgDB/ReadFile"
+
+#include "simNotify/Notify.h"
+
+#include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/String/Format.h"
+
+#include "simVis/Platform.h"
+#include "simVis/SphericalVolume.h"
+#include "simVis/ClockOptions.h"
+#include "simVis/Utils.h"
+#include "simVis/Registry.h"
+#include "simVis/Projector.h"
 
 using namespace simVis;
 using namespace osgEarth::Symbology;

@@ -24,9 +24,9 @@
 
 #include <vector>
 #include <string>
+#include "osg/ref_ptr"
 #include "osgEarthUtil/ObjectLocator"
 #include "simCore/Common/Export.h"
-#include "simCore/Time/TimeClass.h"
 #include "simData/ObjectId.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
@@ -35,9 +35,8 @@
 #include "simVis/RFProp/PODProfileDataProvider.h"
 #include "simVis/RFProp/RadarParameters.h"
 
-namespace osgEarth {
-  class Map;
-}
+namespace osgEarth { class Map; }
+namespace simCore { class TimeStamp; }
 
 namespace simRF
 {

@@ -27,15 +27,15 @@
 #include "simCore/Common/Common.h"
 #include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"
+#include "simData/DataTypes.h"
 #include "simVis/Locator.h"
-#include "simVis/OverrideColor.h"
-#include "simVis/RCS.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/DynamicScaleTransform.h"
 
 namespace simVis
 {
-  class PlatformModelNode;
+  class EntityLabelNode;
+  class DynamicScaleTransform;
+  class OverrideColor;
+  class RCSNode;
 
   /**
   * Scene graph node that represents the platform model and all its attachments.

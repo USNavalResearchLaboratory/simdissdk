@@ -22,13 +22,16 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simData/MemoryDataStore.h"
-#include "simUtil/ExampleResources.h"
 #include "simVis/Platform.h"
 #include "simVis/RocketBurnStorage.h"
 #include "simVis/VaporTrailStorage.h"
 #include "simVis/Registry.h"
 #include "simVis/Scenario.h"
+#include "simVis/Utils.h"
 #include "simVis/Viewer.h"
+
+#include "simUtil/ExampleResources.h"
+#include "simUtil/PlatformSimulator.h"
 
 namespace
 {

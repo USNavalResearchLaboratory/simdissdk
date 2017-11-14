@@ -22,6 +22,7 @@
 #ifndef SIMVIS_RFPROPAGATIONMANAGER_H
 #define SIMVIS_RFPROPAGATIONMANAGER_H
 
+#include <memory>
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"
 

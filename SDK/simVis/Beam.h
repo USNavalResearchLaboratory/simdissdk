@@ -33,10 +33,10 @@
 #include "simVis/Entity.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
-#include "simVis/LocalGrid.h"
 
 namespace simVis
 {
+  class LocalGridNode;
   class ScenarioManager;
 
   /**
@@ -242,7 +242,6 @@ namespace simVis
     void applyDataStoreUpdate_(const simData::BeamUpdate& update, bool force=false);
 
   private: // methods
-
     /// update the geometry based on changes in update or preferences.
     void apply_(
       const simData::BeamUpdate*     update,

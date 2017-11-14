@@ -33,6 +33,7 @@
 #include "simVis/View.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
 #include "simVis/Shaders.h"
 #include "simVis/Picker.h"
 

@@ -29,6 +29,7 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
+#include "osg/Depth"
 #include "osgGA/GUIActionAdapter"
 #include "osgDB/FileUtils"
 #include "osgEarthUtil/Controls"

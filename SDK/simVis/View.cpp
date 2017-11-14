@@ -21,7 +21,7 @@
  */
 #include <algorithm>
 #include <cassert>
-
+#include "osg/Depth"
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/MapNode"
@@ -34,12 +34,13 @@
 
 #include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
-#include "simVis/View.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Utils.h"
+#include "simVis/View.h"
 
 namespace
 {

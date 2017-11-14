@@ -26,9 +26,12 @@
 #include "simNotify/Notify.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/AnimatedLine.h"
-#include "simVis/Utils.h"
+#include "simVis/EntityLabel.h"
+#include "simVis/LabelContentManager.h"
+#include "simVis/LocalGrid.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Shaders.h"
+#include "simVis/Utils.h"
 #include "simVis/LobGroup.h"
 
 #define LC "[simVis::LobGroup] "

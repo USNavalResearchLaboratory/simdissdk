@@ -23,6 +23,7 @@
 #include "osgEarthUtil/ObjectLocator"
 #include "simCore/Calc/Angle.h"
 #include "simCore/EM/AntennaPattern.h"
+#include "simCore/Time/TimeClass.h"
 #include "simNotify/Notify.h"
 #include "simVis/Constants.h"
 #include "simVis/RFProp/ArepsLoader.h"

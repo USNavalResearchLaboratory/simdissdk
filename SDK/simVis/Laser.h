@@ -23,14 +23,16 @@
 #define SIMVIS_LASER_H
 
 #include "osg/Geometry"
+#include "osg/ref_ptr"
+#include "osg/observer_ptr"
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
 
 namespace simVis
 {
+  class EntityLabelNode;
+  class LabelContentCallback;
   class LocalGridNode;
 
   /// Scene graph node that renders a Laser

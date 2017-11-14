@@ -49,7 +49,6 @@ using namespace osgEarth::Symbology;
 
 namespace simVis
 {
-
 // --------------------------------------------------------------------------
 namespace
 {

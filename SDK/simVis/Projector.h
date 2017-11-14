@@ -31,7 +31,6 @@ namespace osg { class Texture2D; }
 
 namespace simVis
 {
-
 /** Projector video interface on the MediaPlayer2 side */
 class ProjectorTexture : public osg::Referenced
 {
@@ -197,6 +196,9 @@ protected:
   virtual ~ProjectorNode() {}
 
 private:
+  /** Copy constructor, not implemented or available. */
+  ProjectorNode(const ProjectorNode&);
+
   simData::ProjectorProperties lastProps_;
   simData::ProjectorPrefs      lastPrefs_;
   simData::ProjectorUpdate     lastUpdate_;

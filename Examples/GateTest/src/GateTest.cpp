@@ -33,8 +33,11 @@
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
 
-#include "simVis/Platform.h"
+#include "simVis/EntityLabel.h"
 #include "simVis/Gate.h"
+#include "simVis/LabelContentManager.h"
+#include "simVis/Platform.h"
+#include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
 #include "simData/MemoryDataStore.h"

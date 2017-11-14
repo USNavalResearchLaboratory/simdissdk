@@ -28,7 +28,7 @@
 
 #include "simVis/Antenna.h"
 #include "simVis/Constants.h"
-#include "simVis/EntityLabel.h"
+#include "simVis/LocalGrid.h"
 #include "simVis/Types.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/Utils.h"

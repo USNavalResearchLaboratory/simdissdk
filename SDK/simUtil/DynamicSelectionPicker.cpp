@@ -22,6 +22,7 @@
 #include "simVis/Scenario.h"
 #include "simVis/View.h"
 #include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
 #include "simUtil/ScreenCoordinateCalculator.h"
 #include "simUtil/DynamicSelectionPicker.h"
 

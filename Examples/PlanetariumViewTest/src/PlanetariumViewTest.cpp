@@ -35,6 +35,7 @@
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Locator.h"
+#include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
 #include "simUtil/ExampleResources.h"

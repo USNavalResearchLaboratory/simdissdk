@@ -35,6 +35,7 @@
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/Platform.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/Utils.h"
 #include "simUtil/DbConfigurationFile.h"
 #include "simUtil/PlatformSimulator.h"
 #include "simUtil/ExampleResources.h"

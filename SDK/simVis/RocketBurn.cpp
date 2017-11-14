@@ -26,6 +26,9 @@
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
 #include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/Types.h"
+#include "simVis/Utils.h"
 #include "simVis/RocketBurn.h"
 
 namespace simVis

@@ -34,6 +34,7 @@
 #endif
 #include "osgEarthDrivers/ocean_simple/SimpleOceanOptions"
 #include "simVis/BathymetryGenerator.h"
+#include "simVis/Constants.h"
 #include "simVis/SceneManager.h"
 #include "simUtil/ExampleResources.h"
 #include "InstallOcean.h"

@@ -25,16 +25,15 @@
 #include "simData/DataTable.h"
 #include "simVis/Entity.h"
 #include "simVis/Constants.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
 
 namespace simCore { class CoordinateConverter; }
 
 namespace simVis
 {
-
 class AnimatedLineNode;
+class EntityLabelNode;
+class LabelContentCallback;
+class LocalGridNode;
 
 /**
  * Scene graph node that renders a group of "Lines of Bearing" (LOB)

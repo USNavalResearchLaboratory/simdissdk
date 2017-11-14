@@ -29,12 +29,13 @@
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
-#include "simVis/LocalGrid.h"
 
 namespace simVis
 {
+  class EntityLabelNode;
+  class LabelContentCallback;
+  class LocalGridNode;
+
   /// Scene graph node representing a Gate centroid
   class SDKVIS_EXPORT GateCentroid : public osg::MatrixTransform
   {

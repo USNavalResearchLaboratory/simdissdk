@@ -25,6 +25,8 @@
 #include "osg/LineWidth"
 #include "osgEarth/GeoData"
 
+#include "simVis/EntityLabel.h"
+#include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"

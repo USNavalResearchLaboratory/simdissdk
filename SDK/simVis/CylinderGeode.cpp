@@ -26,6 +26,9 @@
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 #include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/Types.h"
+#include "simVis/Utils.h"
 #include "simVis/CylinderGeode.h"
 
 namespace simVis

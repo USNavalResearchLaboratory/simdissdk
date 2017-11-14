@@ -22,6 +22,7 @@
 #ifndef SIMVIS_SCENE_MANAGER_H
 #define SIMVIS_SCENE_MANAGER_H
 
+#include "osg/ref_ptr"
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
 #include "simVis/Scenario.h"
@@ -36,6 +37,8 @@ namespace osgEarth {  namespace Drivers { namespace RexTerrainEngine { class Rex
 
 namespace simVis
 {
+  class ProjectorManager;
+
   /**
    * @anchor SceneManagerLayout
    * The top-level content node for a scene. There is one scene per managed view.
@@ -191,6 +194,9 @@ namespace simVis
     virtual bool addChild(osg::Node *child);
 
   private:
+    /** Copy constructor, not implemented or available. */
+    SceneManager(const SceneManager&);
+
     /** Returns true if the sky node is SilverLining. */
     bool isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const;
 

@@ -26,17 +26,14 @@
 #include <string>
 #include <map>
 #include "osg/Group"
+#include "osg/ref_ptr"
 #include "osg/View"
 #include "osgEarth/CullingUtils"
-#include "osgEarthUtil/Controls"
 #include "osgEarthUtil/SpatialData"
+#include "simVis/Entity.h"
 #include "simVis/Tool.h"
-#include "simVis/ProjectorManager.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
-#include "simVis/LabelContentManager.h"
 #include "simVis/RFProp/RFPropagationManager.h"
-#include "simVis/RadialLOSNode.h"
-
 
 namespace simCore { class Clock; }
 namespace simData { class DataStore; }
@@ -46,7 +43,9 @@ namespace simVis
   class CoordSurfaceClamping;
   class GateNode;
   class PlatformNode;
+  class ProjectorManager;
   class ProjectorNode;
+  class LabelContentManager;
   class LaserNode;
   class LobGroupNode;
   class PlatformTspiFilterManager;
@@ -514,6 +513,10 @@ namespace simVis
     void notifyToolsOfRemove_(EntityNode* node);
     /// fires entity update callbacks
     void fireEntityUpdateCallbacks_(EntityNode* node);
+
+  private:
+    /// Copy constructor, not implemented or available.
+    ScenarioManager(const ScenarioManager&);
   };
 
 } // namespace simVis

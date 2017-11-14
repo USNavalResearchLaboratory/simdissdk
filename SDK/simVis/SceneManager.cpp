@@ -44,6 +44,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/ProjectorManager.h"
 #include "simVis/Registry.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
