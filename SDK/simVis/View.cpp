@@ -126,12 +126,27 @@ public:
 /// Cull callback that sets the N/F planes on an orthographic camera.
 struct SetNearFarCallback : public osg::NodeCallback
 {
+
+  SetNearFarCallback()
+  {
+    // create a state set to turn off depth buffer when in overhead mode
+    depthState_ = new osg::StateSet();
+    depthState_->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
+      osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+  }
+
   virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
   {
-    traverse(node, nv);
     osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+
+    // apply depth attribute when in overhead mode
+    if (cv)
+      cv->pushStateSet(depthState_.get());
+
+    traverse(node, nv);
     if (cv)
     {
+      cv->popStateSet();
       osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
       double eyeR = eye.length();
       const double earthR = simCore::EARTH_RADIUS;
@@ -144,6 +159,8 @@ struct SetNearFarCallback : public osg::NodeCallback
       cv->getCurrentCamera()->setProjectionMatrixAsOrtho(L, R, B, T, N, F);
     }
   }
+private:
+  osg::ref_ptr<osg::StateSet> depthState_;
 };
 
 } // namespace
@@ -1394,11 +1411,6 @@ void View::enableOverheadMode(bool enableOverhead)
       getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
       getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
       getCamera()->setCullCallback(overheadNearFarCallback_);
-      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
-      if (mapNode)
-        mapNode->getTerrainEngine()->getOrCreateStateSet()->
-          setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
-          osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 #endif
     }
 
@@ -1416,9 +1428,6 @@ void View::enableOverheadMode(bool enableOverhead)
       getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
       getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
       getCamera()->removeCullCallback(overheadNearFarCallback_);
-      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
-      if (mapNode)
-        mapNode->getTerrainEngine()->getOrCreateStateSet()->removeAttribute(osg::StateAttribute::DEPTH);
     }
 #endif
 
