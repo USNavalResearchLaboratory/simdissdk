@@ -286,20 +286,20 @@ bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
 {
   if (!prefs.speedring().useplatformspeed() && !prefs.speedring().usefixedtime())
     return false;
+  const Locator* hostLocator = host_->getLocator();
+  if (!hostLocator)
+    return false;
   const PlatformNode* hostPlatform = dynamic_cast<const PlatformNode*>(host_.get());
-  if (hostPlatform == NULL)
+  // if host is a platform, use its locator. if not, use host locator's parent locator.
+  const Locator* hostPlatformLocator = (hostPlatform) ? hostLocator : hostLocator->getParentLocator();
+  if (!hostPlatformLocator)
     return false;
-  const simData::PlatformUpdate* hostPlatUpdate = hostPlatform->update();
-  if (hostPlatUpdate == NULL)
-    return false;
-
+ 
   bool rebuild = false;
   // force rebuild if speed rings are displayed, using platform speed, and host velocity changed
-  if (prefs.speedring().useplatformspeed() && hostPlatUpdate->has_velocity())
+  if (prefs.speedring().useplatformspeed())
   {
-    simCore::Vec3 velocity;
-    hostPlatUpdate->velocity(velocity);
-    double speedMS = simCore::v3Length(velocity);
+    const double speedMS = simCore::v3Length(hostPlatformLocator->getCoordinate().velocity());
     if (!simCore::areEqual(hostSpeedMS_, speedMS, 0.01))
     {
       hostSpeedMS_ = speedMS;
@@ -310,7 +310,7 @@ bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
   // if we are displaying speed rings with fixed time, rebuild the display when host locator time changes
   if (prefs.speedring().usefixedtime())
   {
-    double timeS = hostPlatUpdate->time();
+    const double timeS = hostPlatformLocator->getTime();
     if (!simCore::areEqual(hostTimeS_, timeS))
     {
       hostTimeS_ = timeS;
