@@ -33,7 +33,7 @@ namespace simUtil
  * hooking algorithm (AHA), identified in U.S. Patent 5,757,358.  This algorithm was developed
  * in a Navy research laboratory and was patented, but can be used without restriction.
  *
- * This algorithm improve selection ability by allowing the mouse to select if it is close to
+ * This algorithm improves selection ability by allowing the mouse to select if it is close to
  * an item, dynamically adjusting the pickable range of the item relative to items around it.
  * This improves accuracy when the display is cluttered or when a target is obscured.
  *
