@@ -24,6 +24,8 @@
 #include "osgEarth/Horizon"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
+#include "simVis/Antenna.h"
+#include "simVis/BeamPulse.h"
 #include "simVis/Constants.h"
 #include "simVis/Types.h"
 #include "simVis/SphericalVolume.h"
@@ -197,6 +199,8 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
 }
+
+BeamNode::~BeamNode() {}
 
 void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
 {

@@ -25,12 +25,10 @@
 #include "osg/MatrixTransform"
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
-
-// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build
-#include "simVis/Antenna.h"
-#include "simVis/BeamPulse.h"
+#include "simCore/EM/Constants.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
+// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
@@ -39,6 +37,8 @@ namespace osg { class Depth; }
 
 namespace simVis
 {
+  class AntennaNode;
+  class BeamPulse;
   class ScenarioManager;
 
   /**
@@ -221,8 +221,8 @@ namespace simVis
     static unsigned int getMask() { return simVis::DISPLAY_MASK_BEAM; }
 
   protected:
-    /// osg::Referenced-derived
-    virtual ~BeamNode() {}
+    /// osg::Referenced-derived; destructor body needs to be in the .cpp
+    virtual ~BeamNode();
 
     /**
     * Apply the specified DS update
@@ -233,6 +233,8 @@ namespace simVis
     void applyDataStoreUpdate_(const simData::BeamUpdate& update, bool force=false);
 
   private: // methods
+    /** Copy constructor, not implemented or available. */
+    BeamNode(const BeamNode&);
 
     /// update the geometry based on changes in update or preferences.
     void apply_(

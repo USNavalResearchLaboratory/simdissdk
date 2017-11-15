@@ -21,12 +21,12 @@
 */
 #include "osg/AlphaFunc"
 #include "osg/Depth"
+#include "osg/Group"
 #include "simVis/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
-
-#include "EntityLabel.h"
+#include "simVis/EntityLabel.h"
 
 namespace simVis
 {

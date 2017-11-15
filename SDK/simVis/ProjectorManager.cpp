@@ -34,9 +34,8 @@
 
 #define LC "simVis::ProjectorManager "
 
-using namespace simVis;
-using namespace osgEarth;
-
+namespace simVis
+{
 /// Projector texture unit for shader and projector state sets
 static const int PROJECTOR_TEXTURE_UNIT = 5;
 
@@ -59,7 +58,9 @@ ProjectorManager::ProjectorManager()
   setCullingActive(false);
 }
 
-void ProjectorManager::setMapNode(MapNode* mapNode)
+ProjectorManager::~ProjectorManager() {}
+
+void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
 {
   if (mapNode != mapNode_.get())
   {
@@ -154,7 +155,7 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 #endif
 
     // shader code to render the projectors
-    osgEarth::VirtualProgram* vp = VirtualProgram::getOrCreate(projStateSet);
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(projStateSet);
     simVis::Shaders package;
     package.load(vp, package.projectorManagerVertex());
     package.load(vp, package.projectorManagerFragment());
@@ -224,7 +225,7 @@ void ProjectorManager::unregisterProjector(ProjectorNode* proj)
       {
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         // Remove it from the map:
-        osg::ref_ptr<MapNode> mapNode;
+        osg::ref_ptr<osgEarth::MapNode> mapNode;
         if (mapNode_.lock(mapNode))
           mapNode->getMap()->removeLayer(layer);
 #endif
@@ -256,7 +257,7 @@ void ProjectorManager::clear()
   if (simVis::useRexEngine())
   {
     // Remove it from the map:
-    osg::ref_ptr<MapNode> mapNode;
+    osg::ref_ptr<osgEarth::MapNode> mapNode;
     if (mapNode_.lock(mapNode))
     {
       for (ProjectorLayerVector::const_iterator i = projectorLayers_.begin(); i != projectorLayers_.end(); ++i)
@@ -285,4 +286,6 @@ void ProjectorManager::traverse(osg::NodeVisitor& nv)
   {
     osg::Group::traverse(nv);
   }
+}
+
 }

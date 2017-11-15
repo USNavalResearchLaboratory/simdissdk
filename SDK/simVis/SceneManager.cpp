@@ -45,7 +45,6 @@
 #include "simCore/String/Utils.h"
 #include "simVis/Constants.h"
 #include "simVis/osgEarthVersion.h"
-#include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/Registry.h"
 #include "simVis/Shaders.h"

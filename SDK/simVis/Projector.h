@@ -24,14 +24,14 @@
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
 
 namespace osg { class Texture2D; }
 
 namespace simVis
 {
+  class EntityLabelNode;
+  class LabelContentCallback;
+
 /** Projector video interface on the MediaPlayer2 side */
 class ProjectorTexture : public osg::Referenced
 {
@@ -190,8 +190,8 @@ public:
   virtual void traverse(osg::NodeVisitor& nv);
 
 protected:
-  /// osg::Referenced-derived
-  virtual ~ProjectorNode() {}
+  /// osg::Referenced-derived; destructor body needs to be in the .cpp
+  virtual ~ProjectorNode();
 
 private:
   /** Copy constructor, not implemented or available. */

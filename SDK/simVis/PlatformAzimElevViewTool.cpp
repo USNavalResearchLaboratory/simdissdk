@@ -33,7 +33,6 @@
 #include "simVis/Shaders.h"
 #include "simVis/Platform.h"
 #include "simVis/Beam.h"
-#include "simVis/BeamPulse.h"
 #include "simVis/Gate.h"
 #include "simVis/PlatformAzimElevViewTool.h"
 #define OVERRIDE_TAG "PlatformAzimElevViewTool"

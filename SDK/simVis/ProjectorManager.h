@@ -76,11 +76,10 @@ public: // osg::Node
   virtual const char* className() const { return "ProjectorManager"; }
 
 protected:
-  /// osg::Referenced-derived
-  virtual ~ProjectorManager() {}
+  /// osg::Referenced-derived; destructor body needs to be in the .cpp
+  virtual ~ProjectorManager();
 
 private:
-
   /**
   * Initialize projector manager
   */
@@ -90,8 +89,7 @@ private:
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
 
   /// Vector for holding projector nodes created by the scenario
-  typedef std::vector< osg::ref_ptr<ProjectorNode> > Projectors;
-  Projectors projectors_;
+  std::vector< osg::ref_ptr<ProjectorNode> > projectors_;
 
   /// Map for associating projector node Ids to projector state sets
   typedef std::map<simData::ObjectId, osg::ref_ptr<osg::Group> > GroupMap;

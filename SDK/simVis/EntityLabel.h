@@ -23,15 +23,16 @@
 #define SIMVIS_ENTITY_LABEL_H
 
 #include <string>
-#include "osg/Group"
+#include "osg/Referenced"
 #include "osg/ref_ptr"
+// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build
 #include "osgEarthAnnotation/LabelNode"
 #include "simData/DataTypes.h"
 
+namespace osg { class Group; }
 namespace simVis
 {
-
-/// Class for managing the labels
+/// Class for managing the labels; using osg::Referenced purely for smart pointer, as this class is not added to the scenegraph
 class SDKVIS_EXPORT EntityLabelNode : public osg::Referenced
 {
 public:

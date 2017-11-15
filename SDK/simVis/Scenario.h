@@ -509,8 +509,6 @@ namespace simVis
     void notifyToolsOfAdd_(EntityNode* node);
     /// informs the scenario tools of an entity removal
     void notifyToolsOfRemove_(EntityNode* node);
-    /// fires entity update callbacks
-    void fireEntityUpdateCallbacks_(EntityNode* node);
 
   private:
     /// Copy constructor, not implemented or available.

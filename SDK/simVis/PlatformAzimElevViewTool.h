@@ -51,7 +51,7 @@ public:
    * Constructs a new az/el view tool.
    * @param[in ] host View will center on this host.
    */
-  PlatformAzimElevViewTool(EntityNode* host);
+  explicit PlatformAzimElevViewTool(EntityNode* host);
 
   /**
    * Maximum range of the plot.

@@ -21,6 +21,7 @@
  */
 #include "osg/LineWidth"
 #include "osgEarth/GeoData"
+#include "osgEarth/Horizon"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"

@@ -29,11 +29,14 @@
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgDB/ReadFile"
+#include "osgEarth/Horizon"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/String/Format.h"
+#include "simVis/EntityLabel.h"
+#include "simVis/LabelContentManager.h"
 #include "simVis/Platform.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/ClockOptions.h"
@@ -166,6 +169,8 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
 {
   init_();
 }
+
+ProjectorNode::~ProjectorNode() {}
 
 void ProjectorNode::init_()
 {

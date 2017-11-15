@@ -21,6 +21,7 @@
  */
 #include "osg/Depth"
 #include "osg/Geode"
+#include "osgEarth/Horizon"
 #include "simCore/Calc/Angle.h"
 #include "simData/DataTypes.h"
 #include "simNotify/Notify.h"

@@ -22,6 +22,7 @@
 #include "osg/Geometry"
 #include "osg/LineWidth"
 #include "osgEarth/GeoData"
+#include "osgEarth/Horizon"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"

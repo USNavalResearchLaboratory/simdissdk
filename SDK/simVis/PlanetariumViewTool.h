@@ -19,8 +19,8 @@
  * disclose, or release this software.
  *
  */
-#ifndef SIMVIS_PLANETERIUM_VIEW_TOOL_H
-#define SIMVIS_PLANETERIUM_VIEW_TOOL_H
+#ifndef SIMVIS_PLANETARIUM_VIEW_TOOL_H
+#define SIMVIS_PLANETARIUM_VIEW_TOOL_H
 
 #include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
@@ -51,7 +51,7 @@ public:
    * Constructs a new dome/sensor viewing tool.
    * @param[in ] host View will center on this host.
    */
-  PlanetariumViewTool(PlatformNode* host);
+  explicit PlanetariumViewTool(PlatformNode* host);
 
   /**
    * Range of the sensor intersection dome from the host
