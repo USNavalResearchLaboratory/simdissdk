@@ -24,6 +24,7 @@
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
+// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 
@@ -90,9 +91,6 @@ public:
 
   /// get preferences
   const simData::ProjectorPrefs& getPrefs() const { return lastPrefs_; }
-
-  /// set the image being projected
-  void setImageURL(const std::string& imageURL);
 
   /// get field of view in degrees
   double getVFOV() const;

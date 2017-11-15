@@ -28,9 +28,6 @@
 #include "simVis/Entity.h"
 #include "simCore/EM/RadarCrossSection.h"
 
-// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build, so these includes are unavoidable
-#include "simVis/LocalGrid.h"
-
 namespace simData { class DataStore; }
 namespace simVis
 {
@@ -38,6 +35,7 @@ namespace simVis
   class AxisVector;
   class EphemerisVector;
   class LabelContentCallback;
+  class LocalGridNode;
   class PlatformInertialTransform;
   class PlatformModelNode;
   class PlatformTspiFilterManager;

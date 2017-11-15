@@ -145,7 +145,7 @@ namespace simVis
      * @param[in ] dataStore Datastore to unbind.
      * @param[in ] clearAll  Whether to remove all entities that originated from this DataStore (default=false)
      */
-    void unbind(simData::DataStore* dataStore, bool clearAll =false);
+    void unbind(simData::DataStore* dataStore, bool clearAll = false);
 
     /**
      * Sets the manager for label content for all entity types
@@ -343,7 +343,7 @@ namespace simVis
      * the scene graph
      * @param[in ] id Entity ID
      */
-    void removeEntity(uint64_t id);
+    void removeEntity(simData::ObjectId id);
 
     /**
     * Adds a new scenario tool to the manager
@@ -409,9 +409,7 @@ namespace simVis
     * @param[in ] ds    DataStore driving the update
     * @param[in ] force Force an update even if the data store says nothing has changed
     */
-    void update(
-      simData::DataStore* ds,
-      bool                force =false);
+    void update(simData::DataStore* ds, bool force = false);
 
     /**
     * Notify all entities of a change in a Clock Mode.

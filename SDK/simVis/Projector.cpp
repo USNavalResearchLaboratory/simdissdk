@@ -31,11 +31,9 @@
 #include "osgDB/ReadFile"
 
 #include "simNotify/Notify.h"
-
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/String/Format.h"
-
 #include "simVis/Platform.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/ClockOptions.h"
@@ -396,9 +394,9 @@ double ProjectorNode::getVFOV() const
   return DEFAULT_PROJECTOR_FOV_IN_DEG;
 }
 
-void ProjectorNode::getMatrices_(osg::Matrix& projection, osg::Matrix& locatorMat, osg::Matrix& modelView)
+void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView)
 {
-  double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
+  const double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
   projection.makePerspective(getVFOV(), ar, 1.0, 1e7);
   getLocator()->getLocatorMatrix(locatorMat);
   modelView.invert(locatorMat);
@@ -406,7 +404,7 @@ void ProjectorNode::getMatrices_(osg::Matrix& projection, osg::Matrix& locatorMa
 
 void ProjectorNode::refresh()
 {
-  osg::Matrix projectionMat, locatorMat, modelMat;
+  osg::Matrixd projectionMat, locatorMat, modelMat;
   getMatrices_(projectionMat, locatorMat, modelMat);
 
   // The model matrix coordinate system of the projector is a normal tangent plane,

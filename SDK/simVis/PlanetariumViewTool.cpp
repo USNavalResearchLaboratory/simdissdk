@@ -19,6 +19,11 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Depth"
+#include "osg/Geode"
+#include "osg/CullFace"
+#include "osg/LineWidth"
+#include "osgEarthAnnotation/AnnotationUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
 #include "simNotify/Notify.h"
@@ -28,12 +33,6 @@
 #include "simVis/Platform.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
-
-#include "osg/Depth"
-#include "osg/Geode"
-#include "osg/CullFace"
-#include "osg/LineWidth"
-#include "osgEarthAnnotation/AnnotationUtils"
 
 #define OVERRIDE_TAG "PlanetariumViewTool"
 

@@ -22,6 +22,7 @@
 #include "osg/AutoTransform"
 #include "osg/ComputeBoundsVisitor"
 #include "osg/CullFace"
+#include "osg/Depth"
 #include "osg/Geode"
 #include "osg/LOD"
 #include "osg/PolygonMode"

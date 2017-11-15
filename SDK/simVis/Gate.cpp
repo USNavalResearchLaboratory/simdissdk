@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Depth"
 #include "osg/Geode"
 #include "simCore/Calc/Angle.h"
 #include "simData/DataTypes.h"

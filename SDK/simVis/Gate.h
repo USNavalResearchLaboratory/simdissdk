@@ -23,13 +23,12 @@
 #define SIMVIS_GATE_H
 
 #include "osg/MatrixTransform"
-#include "osg/Depth"
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-
+namespace osg { class Depth; }
 namespace simVis
 {
   class EntityLabelNode;

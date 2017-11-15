@@ -23,12 +23,9 @@
 #define SIMVIS_ENTITY_LABEL_H
 
 #include <string>
-
 #include "osg/Group"
-#include "osg/Depth"
 #include "osg/ref_ptr"
 #include "osgEarthAnnotation/LabelNode"
-
 #include "simData/DataTypes.h"
 
 namespace simVis

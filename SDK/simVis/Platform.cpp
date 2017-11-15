@@ -29,7 +29,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/EphemerisVector.h"
 #include "simVis/LabelContentManager.h"
-#include "simVis/Platform.h"
+#include "simVis/LocalGrid.h"
 #include "simVis/PlatformInertialTransform.h"
 #include "simVis/PlatformFilter.h"
 #include "simVis/PlatformModel.h"
@@ -38,6 +38,7 @@
 #include "simVis/TrackHistory.h"
 #include "simVis/Utils.h"
 #include "simVis/VelocityVector.h"
+#include "simVis/Platform.h"
 
 #define LC "[PlatformNode] "
 

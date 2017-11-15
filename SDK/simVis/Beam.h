@@ -23,20 +23,22 @@
 #define SIMVIS_BEAM_H
 
 #include "osg/MatrixTransform"
-#include "osg/Depth"
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
 
+// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build
 #include "simVis/Antenna.h"
 #include "simVis/BeamPulse.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
+#include "simVis/LocalGrid.h"
+
+namespace osg { class Depth; }
 
 namespace simVis
 {
-  class LocalGridNode;
   class ScenarioManager;
 
   /**
@@ -53,19 +55,8 @@ namespace simVis
     * @param host This beam's host entity
     * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    BeamNode(
-      const ScenarioManager* scenario,
-      const simData::BeamProperties& props,
-      Locator*                       locator = NULL,
-      const simVis::EntityNode*      host = NULL,
-      int                            referenceYear = 1970);
-
-    /**
-    * The installshaderProgram is required prior to using this class.
-    * This will initialize shader once in the scenario
-    * @param intoStateSet State set of the scenario
-    */
-    static void installShaderProgram(osg::StateSet* intoStateSet);
+    BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* locator = NULL,
+      const simVis::EntityNode* host = NULL, int referenceYear = 1970);
 
     /**
     * Access the properties object currently representing this beam.
@@ -242,6 +233,7 @@ namespace simVis
     void applyDataStoreUpdate_(const simData::BeamUpdate& update, bool force=false);
 
   private: // methods
+
     /// update the geometry based on changes in update or preferences.
     void apply_(
       const simData::BeamUpdate*     update,

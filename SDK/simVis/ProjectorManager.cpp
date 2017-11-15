@@ -27,9 +27,10 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/Projector.h"
 #include "simVis/Shaders.h"
-#include "simVis/ProjectorManager.h"
 #include "simVis/Utils.h"
+#include "simVis/ProjectorManager.h"
 
 #define LC "simVis::ProjectorManager "
 

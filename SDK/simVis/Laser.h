@@ -22,12 +22,12 @@
 #ifndef SIMVIS_LASER_H
 #define SIMVIS_LASER_H
 
-#include "osg/Geometry"
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
+namespace osg { class Geode; }
 
 namespace simVis
 {

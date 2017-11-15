@@ -35,6 +35,7 @@ namespace osgEarth { class SpatialReference; }
 
 namespace simData
 {
+  class DataStore;
   class PlatformPrefs;
   class TrackPrefs;
   class DataSliceBase;

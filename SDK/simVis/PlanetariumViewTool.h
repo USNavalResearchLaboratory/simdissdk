@@ -22,14 +22,12 @@
 #ifndef SIMVIS_PLANETERIUM_VIEW_TOOL_H
 #define SIMVIS_PLANETERIUM_VIEW_TOOL_H
 
+#include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
 #include "simVis/Entity.h"
 #include "simVis/EntityFamily.h"
 #include "simVis/Tool.h"
 #include "simVis/TargetDelegation.h"
-
-#include <osg/ref_ptr>
-#include <osg/observer_ptr>
 
 namespace osg {
   class Geode;
@@ -38,7 +36,6 @@ namespace osg {
 
 namespace simVis
 {
-
 class PlatformNode;
 class ScenarioManager;
 

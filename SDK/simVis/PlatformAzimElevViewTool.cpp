@@ -19,23 +19,23 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Depth"
 #include "osg/LineWidth"
 #include "osgText/Text"
-
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
 #include "osgEarth/AutoScale"
 
 #include "simCore/Calc/Angle.h"
-#include "simVis/PlatformAzimElevViewTool.h"
 #include "simVis/Scenario.h"
 #include "simVis/Utils.h"
 #include "simVis/Shaders.h"
 #include "simVis/Platform.h"
 #include "simVis/Beam.h"
+#include "simVis/BeamPulse.h"
 #include "simVis/Gate.h"
-
+#include "simVis/PlatformAzimElevViewTool.h"
 #define OVERRIDE_TAG "PlatformAzimElevViewTool"
 
 //#define DEBUG_LABELS
@@ -190,7 +190,7 @@ void PlatformAzimElevViewTool::onUpdate(const ScenarioManager& scenario, const s
   // check any entity updates for positional changes
   for (EntityVector::const_iterator i = updates.begin(); i != updates.end(); ++i)
   {
-    PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
+    const PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
     if (!platform || platform == host_.get())
       continue;
     if (platform->isActive())
@@ -213,9 +213,7 @@ void PlatformAzimElevViewTool::applyOverrides_()
 
 void PlatformAzimElevViewTool::applyOverrides_(bool enable)
 {
-  for (EntityFamily::EntityObserverSet::iterator i = family_.members().begin();
-      i != family_.members().end();
-      ++i)
+  for (EntityFamily::EntityObserverSet::iterator i = family_.members().begin(); i != family_.members().end(); ++i)
   {
     if (i->valid())
     {

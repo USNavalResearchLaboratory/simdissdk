@@ -22,13 +22,14 @@
 #ifndef SIMVIS_PROJECTOR_MANAGER_H
 #define SIMVIS_PROJECTOR_MANAGER_H
 
-#include "simCore/Common/Common.h"
-#include "simVis/Projector.h"
 #include "osgEarth/MapNode"
 #include "osgEarth/MapNodeObserver"
+#include "simCore/Common/Common.h"
+#include "simData/ObjectId.h"
 
 namespace simVis
 {
+class ProjectorNode;
 
 /** Responsible for managing projectors in the scene */
 class ProjectorManager : public osg::Group, public osgEarth::MapNodeObserver

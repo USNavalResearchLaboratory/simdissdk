@@ -22,20 +22,15 @@
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
-
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
-
-#include "simVis/Antenna.h"
 #include "simVis/Constants.h"
-#include "simVis/LocalGrid.h"
 #include "simVis/Types.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
-#include "simVis/BeamPulse.h"
 #include "simVis/Beam.h"
 
 // --------------------------------------------------------------------------

@@ -19,12 +19,11 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/Math.h"
-#include "simNotify/Notify.h"
-
+#include "osg/Geometry"
 #include "osg/LineWidth"
 #include "osgEarth/GeoData"
-
+#include "simCore/Calc/Math.h"
+#include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"

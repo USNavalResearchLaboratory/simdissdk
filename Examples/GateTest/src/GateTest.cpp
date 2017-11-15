@@ -36,6 +36,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/Gate.h"
 #include "simVis/LabelContentManager.h"
+#include "simVis/LocalGrid.h"
 #include "simVis/Platform.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
