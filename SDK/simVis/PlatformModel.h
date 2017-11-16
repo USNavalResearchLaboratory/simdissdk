@@ -155,6 +155,8 @@ namespace simVis
     bool updateDynamicScale_(const simData::PlatformPrefs& prefs, bool force);
     /// Updates the icon rotation based on pref or if force is set to true when the model has changed
     void updateImageIconRotation_(const simData::PlatformPrefs& prefs, bool force);
+    /// Updates the depth buffer when the nodepthicons has changed or if force is set to true when the model has changed
+    void updateImageDepth_(const simData::PlatformPrefs& prefs, bool force) const;
     /// Updates the RCS based on pref
     void updateRCS_(const simData::PlatformPrefs& prefs);
     /// Updates the bounds

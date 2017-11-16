@@ -435,6 +435,23 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs,
   return true;
 }
 
+void PlatformModelNode::updateImageDepth_(const simData::PlatformPrefs& prefs, bool force) const
+{
+  if (!offsetXform_.valid())
+    return;
+
+  if (force || PB_FIELD_CHANGED(&prefs, &lastPrefs_, nodepthicons))
+  {
+    osg::StateSet* state = offsetXform_->getOrCreateStateSet();
+    state->removeAttribute(osg::StateAttribute::DEPTH);
+    if (!isImageModel_)
+      return;
+    // image models need to always pass depth test if nodepthicons is set to true
+    osg::Depth::Function depthFunc = (prefs.nodepthicons() && isImageModel_) ? osg::Depth::ALWAYS : osg::Depth::LESS;
+    state->setAttributeAndModes(new osg::Depth(depthFunc, 0, 1, true), osg::StateAttribute::ON);
+  }
+}
+
 void PlatformModelNode::updateImageIconRotation_(const simData::PlatformPrefs& prefs, bool force)
 {
   // If neither icon or rotateicons changed, then nothing to do here.
@@ -702,7 +719,7 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
 
 void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
 {
-  if (lastPrefsValid_ && !PB_FIELD_CHANGED(&lastPrefs_, &prefs, alphavolume))
+  if (isImageModel_ || (lastPrefsValid_ && !PB_FIELD_CHANGED(&lastPrefs_, &prefs, alphavolume)))
     return;
 
   if (prefs.alphavolume())
@@ -725,8 +742,11 @@ void PlatformModelNode::setProperties(const simData::PlatformProperties& props)
 
 void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
 {
-  // If a new model is loaded than force a scale update
+  // If a new model is loaded then force a scale update
   const bool modelChanged = updateModel_(prefs);
+
+  // check for updates to the nodepthicon pref
+  updateImageDepth_(prefs, modelChanged);
 
   // Preference rules that set a high Z offset (say 4000) on image icons could be problematic; warn about them.
   // Only really care about image icons, since they have no Z depth and the offset Z moves them closer to

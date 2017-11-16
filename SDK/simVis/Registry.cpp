@@ -486,9 +486,6 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
       osg::StateSet* stateSet = result->getOrCreateStateSet();
       // As per SIMSDK-157, blending needs to be on to avoid jaggies
       stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
-
-      // and we need to explicitly turn on depth writes
-      stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON);
     }
   }
   else // is model
