@@ -128,7 +128,8 @@ namespace
 namespace simVis
 {
 
-GateCentroid::GateCentroid(const simData::GateUpdate& update)
+GateCentroid::GateCentroid(simVis::Locator* locator, const simData::GateUpdate& update) :
+  LocatorNode(locator)
 {
   osg::Geometry* geom = new osg::Geometry();
   geom->setUseVertexBufferObjects(true);
@@ -235,7 +236,7 @@ contentCallback_(new NullEntityCallback())
     centroidPositionOffsetLocator_ = new Locator(baseLocator_, Locator::COMP_ALL);
 
     // inherit the gate centroid and the platform orientation, without beam orientation offsets, then adds back (as local offsets) the gate orientation
-    centroidLocator = new ResolvedPositionOrientationLocator(
+    centroidLocator_ = new ResolvedPositionOrientationLocator(
       centroidPositionOffsetLocator_, Locator::COMP_ALL);
   }
   else
@@ -252,7 +253,7 @@ contentCallback_(new NullEntityCallback())
     centroidPositionOffsetLocator_ = new Locator(baseLocator_, Locator::COMP_ALL);
 
     // this locator starts with the resolved centroid position, with identity orientation, then adds back (as local offsets) the gate orientation
-    centroidLocator = new ResolvedPositionLocator(
+    centroidLocator_ = new ResolvedPositionLocator(
       centroidPositionOffsetLocator_, Locator::COMP_ALL);
   }
 
@@ -262,13 +263,9 @@ contentCallback_(new NullEntityCallback())
   this->addChild(gateLocatorNode_);
 
   // the gate's locator represents the position and orientation of the gate centroid
-  setLocator(centroidLocator);
+  setLocator(centroidLocator_);
 
-  centroidLocatorNode_ = new LocatorNode(centroidLocator);
-  centroidLocatorNode_->setName("GateCentroid");
-  this->addChild(centroidLocatorNode_);
-
-  localGrid_ = new LocalGridNode(centroidLocatorNode_->getLocator(), host, referenceYear);
+  localGrid_ = new LocalGridNode(centroidLocator_, host, referenceYear);
   this->addChild(localGrid_);
 
   // set up a state set.
@@ -611,6 +608,8 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   {
     visible_ = false;
     setNodeMask(DISPLAY_MASK_NONE);
+    removeChild(centroid_);
+    centroid_ = NULL;
     return;
   }
 
@@ -659,16 +658,16 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
       (activePrefs->drawcentroid() ||
       activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID))
   {
-    centroid_ = new GateCentroid(*activeUpdate);
+    centroid_ = new GateCentroid(centroidLocator_, *activeUpdate);
     centroid_->setNodeMask(DISPLAY_MASK_GATE);
-    centroidLocatorNode_->addChild(centroid_);
+    addChild(centroid_);
   }
   else if (centroid_)
   {
     if (!activePrefs->drawcentroid() &&
       activePrefs->fillpattern() != simData::GatePrefs_FillPattern_CENTROID)
     {
-      centroidLocatorNode_->removeChild(centroid_);
+      removeChild(centroid_);
       centroid_ = NULL;
     }
     else if (force ||
@@ -762,7 +761,7 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
     activeUpdate->time(), false);
 
   // apply the local orientation
-  centroidLocatorNode_->getLocator()->setLocalOffsets(
+  centroidLocator_->setLocalOffsets(
     simCore::Vec3(0, 0, 0),
     simCore::Vec3(azimuth, elevation, roll),
     activeUpdate->time(), false);

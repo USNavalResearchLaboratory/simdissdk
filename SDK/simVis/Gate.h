@@ -28,6 +28,8 @@
 
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
+#include "simVis/Locator.h"
+
 namespace osg { class Depth; }
 namespace simVis
 {
@@ -36,13 +38,13 @@ namespace simVis
   class LocalGridNode;
 
   /// Scene graph node representing a Gate centroid
-  class SDKVIS_EXPORT GateCentroid : public osg::MatrixTransform
+  class SDKVIS_EXPORT GateCentroid : public simVis::LocatorNode
   {
   public:
     /** Constructor */
-    GateCentroid(const simData::GateUpdate& update);
+    GateCentroid(simVis::Locator* locator, const simData::GateUpdate& update);
 
-    /** perform in in-place update to an existing centroid */
+    /** Perform an in-place update to an existing centroid */
     void update(const simData::GateUpdate& update);
 
     /** Return the proper library name */
@@ -284,10 +286,10 @@ namespace simVis
     osg::ref_ptr<LocatorNode>  gateLocatorNode_;
 
     /**
-     * Locator node that represents the centroid of the gate
-     * this supports the drawing of the centroid
+     * Locator that represents the centroid of the gate
+     * this supports drawing the centroid and the localgrid
      */
-    osg::ref_ptr<LocatorNode>  centroidLocatorNode_;
+    osg::ref_ptr<Locator>  centroidLocator_;
 
     bool                    visible_;
 
