@@ -33,7 +33,6 @@
 #include "osgGA/GUIActionAdapter"
 #include "osgDB/FileUtils"
 #include "osgEarthUtil/Controls"
-#include "osgEarthUtil/ObjectLocator"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/LUT/LUT2.h"
 #include "simCore/Calc/Angle.h"
@@ -45,6 +44,7 @@
 #include "simNotify/Notify.h"
 #include "simVis/Viewer.h"
 #include "simVis/Utils.h"
+#include "simVis/Locator.h"
 #include "simVis/RFProp/ArepsLoader.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/LUTProfileDataProvider.h"
@@ -883,8 +883,11 @@ int main(int argc, char** argv)
   row++;
 
 
-  osg::ref_ptr<osgEarth::Util::ObjectLocatorNode> rfLocator = new ObjectLocatorNode(viewer->getSceneManager()->getMap());
-  rfLocator->getLocator()->setPosition(osg::Vec3d(lon, lat, alt));
+  osg::ref_ptr<simVis::LocatorNode> rfLocator = new simVis::LocatorNode(
+      new simVis::Locator(viewer->getSceneManager()->getMap()->getSRS()));
+  rfLocator->getLocator()->setCoordinate(simCore::Coordinate(
+      simCore::COORD_SYS_LLA,
+      simCore::Vec3(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt)));
   rfLocator->addChild(profileManager);
   profileManager->setRefCoord(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt);
   root->addChild(rfLocator);

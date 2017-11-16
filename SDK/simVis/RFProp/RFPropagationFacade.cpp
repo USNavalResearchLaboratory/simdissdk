@@ -20,7 +20,6 @@
  *
  */
 #include "osg/Depth"
-#include "osgEarthUtil/ObjectLocator"
 #include "simCore/Calc/Angle.h"
 #include "simCore/EM/AntennaPattern.h"
 #include "simCore/Time/TimeClass.h"
@@ -36,6 +35,7 @@
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/GradientColorProvider.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
+#include "osgEarth/Map"
 
 namespace
 {
@@ -119,7 +119,9 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
 {
   // create locator
   if (map)
-    locator_ = new osgEarth::Util::ObjectLocatorNode(map);
+  {
+    locator_ = new simVis::LocatorNode( new simVis::Locator(map->getSRS()) );
+  }
   // add locator to the parent node
   if (locator_.valid() && parent_.valid())
     parent_->addChild(locator_);
@@ -854,8 +856,9 @@ void RFPropagationFacade::setPosition(double latRad, double lonRad)
   // locator takes lon/lat/alt, in degrees
   if (locator_)
   {
-    locator_->getLocator()->setPosition(
-      osg::Vec3d(lonRad * simCore::RAD2DEG, latRad * simCore::RAD2DEG, antennaHeight()));
+    locator_->getLocator()->setCoordinate(simCore::Coordinate(
+        simCore::COORD_SYS_LLA,
+        simCore::Vec3(latRad, lonRad, antennaHeight())));
   }
 }
 
