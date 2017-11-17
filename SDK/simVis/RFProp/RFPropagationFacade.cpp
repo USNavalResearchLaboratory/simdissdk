@@ -20,6 +20,7 @@
  *
  */
 #include "osg/Depth"
+#include "osgEarth/Map"
 #include "simCore/Calc/Angle.h"
 #include "simCore/EM/AntennaPattern.h"
 #include "simCore/Time/TimeClass.h"
@@ -35,7 +36,6 @@
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/GradientColorProvider.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
-#include "osgEarth/Map"
 
 namespace
 {

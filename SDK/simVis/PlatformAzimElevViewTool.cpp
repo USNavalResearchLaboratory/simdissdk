@@ -25,7 +25,6 @@
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
-#include "osgEarth/AutoScale"
 
 #include "simCore/Calc/Angle.h"
 #include "simVis/Scenario.h"

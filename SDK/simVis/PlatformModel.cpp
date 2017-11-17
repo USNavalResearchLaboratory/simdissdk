@@ -31,7 +31,6 @@
 #include "osg/CullStack"
 #include "osg/Viewport"
 #include "osgDB/ReadFile"
-#include "osgEarth/AutoScale"
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
 #include "osgEarthAnnotation/AnnotationUtils"

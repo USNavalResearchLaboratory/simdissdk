@@ -48,7 +48,6 @@
 #include "osgUtil/IntersectionVisitor"
 #include "osgUtil/LineSegmentIntersector"
 
-#include "osgEarth/AutoScale"
 #include "osgEarth/GeoData"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
