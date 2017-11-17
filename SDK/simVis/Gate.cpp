@@ -25,7 +25,6 @@
 #include "simCore/Calc/Angle.h"
 #include "simData/DataTypes.h"
 #include "simNotify/Notify.h"
-
 #include "simVis/Beam.h"
 #include "simVis/Constants.h"
 #include "simVis/EntityLabel.h"
@@ -37,96 +36,155 @@
 #include "simVis/OverheadMode.h"
 #include "simVis/Gate.h"
 
-// --------------------------------------------------------------------------
-
-namespace
+namespace simVis
 {
-  osg::MatrixTransform* createNode(
-    const simData::GateProperties* props,
-    const simData::GatePrefs*      prefs,
-    const simData::GateUpdate*     update)
+
+GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs, const simData::GateUpdate* update) :
+  LocatorNode(locator)
+{
+  gateSV_ = createNode_(prefs, update);
+  setNodeMask(DISPLAY_MASK_GATE);
+  addChild(gateSV_);
+
+  const bool isOpaque = prefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
+                        prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID;
+
+  // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
+  gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
+
+  osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_);
+  if (outlineGeometry != NULL)
+    outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+}
+
+/// prefs that can be applied without rebuilding the whole gate
+void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a,
+                                          const simData::GatePrefs* b)
+{
+  if (b->commonprefs().useoverridecolor())
   {
-    simVis::SVData sv;
-
-    // gate defaults first:
-    sv.color_.set(1, 0, 0, 0.5);
-    sv.shape_    = simVis::SVData::SHAPE_PYRAMID;
-
-    // both update and prefs are required; if assert fails, check calling code
-    assert(update);
-    assert(prefs);
-
-    sv.lightingEnabled_ = prefs->gatelighting();
-    sv.blendingEnabled_ = true;
-
-    switch (prefs->fillpattern())
+    // Check for transition between color and override color than check for color change
+    if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
     {
-    case simData::GatePrefs_FillPattern_STIPPLE:
-      sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_STIPPLE | simVis::SVData::DRAW_MODE_OUTLINE :  simVis::SVData::DRAW_MODE_STIPPLE;
-      break;
-    case simData::GatePrefs_FillPattern_SOLID:
-      sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE : simVis::SVData::DRAW_MODE_SOLID;
-      sv.blendingEnabled_ = false;
-      break;
-    case simData::GatePrefs_FillPattern_ALPHA:
-      sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE : simVis::SVData::DRAW_MODE_SOLID;
-      break;
-    case simData::GatePrefs_FillPattern_WIRE:
-      sv.drawMode_ = simVis::SVData::DRAW_MODE_OUTLINE;
-      sv.blendingEnabled_ = false;
-      break;
-    case simData::GatePrefs_FillPattern_CENTROID:
-      sv.drawMode_ = simVis::SVData::DRAW_MODE_NONE;
-      break;
+      SVFactory::updateColor(gateSV_, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
     }
+  }
+  else
+  {
+    // Check for transition between color and override color than check for color change
+    if (a->commonprefs().useoverridecolor() || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
+    {
+      SVFactory::updateColor(gateSV_, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
+    }
+  }
 
-    if (prefs->commonprefs().useoverridecolor())
-      sv.color_ = simVis::Color(prefs->commonprefs().overridecolor(), simVis::Color::RGBA);
-    else
-      sv.color_ = simVis::Color(prefs->commonprefs().color(), simVis::Color::RGBA);
-
-    assert(update->has_azimuth() &&
-           update->has_elevation() &&
-           update->has_width() &&
-           update->has_height() &&
-           update->has_minrange() &&
-           update->has_maxrange());
-    sv.azimOffset_deg_ = simCore::RAD2DEG * update->azimuth();
-    sv.elevOffset_deg_ = simCore::RAD2DEG * update->elevation();
-    sv.hfov_deg_ = simCore::RAD2DEG * update->width();
-    sv.vfov_deg_ = simCore::RAD2DEG * update->height();
-
-    // scale capRes based on fov
-    const float maxFov = simCore::sdkMax(sv.hfov_deg_, sv.vfov_deg_);
-    // 1 tesselation per 5 degrees of gate fov
-    // clamped at the bottom to ensure good visuals for common smaller gate sizes
-    // clamped at the top to prevent perf hit for large gates
-    const float capRes = osg::clampBetween((maxFov / 5.f), 5.f, 24.f);
-    sv.capRes_ = static_cast<unsigned int>(0.5f + capRes);
-
-    // gate walls don't need much tesselation, so reduce processing/memory load
-    sv.wallRes_ = 3;
-
-    sv.nearRange_ = update->minrange();
-    sv.farRange_ = update->maxrange();
-
-    // draw near face and sides/walls of gate when the gate has thickness
-    sv.drawCone_ = update->minrange() < update->maxrange();
-
-    // coverage gates are sphere segments (absolute start/end degrees instead of
-    // elevation and span)
-    sv.drawAsSphereSegment_ = prefs->gatedrawmode() == simData::GatePrefs_DrawMode_COVERAGE;
-
-    // use a Y-forward directional vector to correspond with the gate's locator.
-    osg::MatrixTransform* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
-    return node;
+  if (PB_FIELD_CHANGED(a, b, gatelighting))
+  {
+    SVFactory::updateLighting(gateSV_, b->gatelighting());
   }
 }
 
-// --------------------------------------------------------------------------
-
-namespace simVis
+/// updates that can be updated without rebuilding the whole gate
+void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a,
+                                     const simData::GateUpdate* b)
 {
+  if (PB_FIELD_CHANGED(a, b, minrange))
+  {
+    SVFactory::updateNearRange(gateSV_, b->minrange());
+  }
+  if (PB_FIELD_CHANGED(a, b, maxrange))
+  {
+    SVFactory::updateFarRange(gateSV_, b->maxrange());
+  }
+  if (PB_FIELD_CHANGED(a, b, width) && PB_BOTH_HAVE_FIELD(a, b, width))
+  {
+    SVFactory::updateHorizAngle(gateSV_, a->width(), b->width());
+  }
+  if (PB_FIELD_CHANGED(a, b, height) && PB_BOTH_HAVE_FIELD(a, b, height))
+  {
+    SVFactory::updateVertAngle(gateSV_, a->height(), b->height());
+  }
+}
+
+osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs,const simData::GateUpdate* update)
+{
+  simVis::SVData sv;
+
+  // gate defaults first:
+  sv.color_.set(1, 0, 0, 0.5);
+  sv.shape_    = simVis::SVData::SHAPE_PYRAMID;
+
+  // both update and prefs are required; if assert fails, check calling code
+  assert(update);
+  assert(prefs);
+
+  sv.lightingEnabled_ = prefs->gatelighting();
+  sv.blendingEnabled_ = true;
+
+  switch (prefs->fillpattern())
+  {
+  case simData::GatePrefs_FillPattern_STIPPLE:
+    sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_STIPPLE | simVis::SVData::DRAW_MODE_OUTLINE :  simVis::SVData::DRAW_MODE_STIPPLE;
+    break;
+  case simData::GatePrefs_FillPattern_SOLID:
+    sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE : simVis::SVData::DRAW_MODE_SOLID;
+    sv.blendingEnabled_ = false;
+    break;
+  case simData::GatePrefs_FillPattern_ALPHA:
+    sv.drawMode_ = (prefs->drawoutline()) ? simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_OUTLINE : simVis::SVData::DRAW_MODE_SOLID;
+    break;
+  case simData::GatePrefs_FillPattern_WIRE:
+    sv.drawMode_ = simVis::SVData::DRAW_MODE_OUTLINE;
+    sv.blendingEnabled_ = false;
+    break;
+  case simData::GatePrefs_FillPattern_CENTROID:
+    sv.drawMode_ = simVis::SVData::DRAW_MODE_NONE;
+    break;
+  }
+
+  if (prefs->commonprefs().useoverridecolor())
+    sv.color_ = simVis::Color(prefs->commonprefs().overridecolor(), simVis::Color::RGBA);
+  else
+    sv.color_ = simVis::Color(prefs->commonprefs().color(), simVis::Color::RGBA);
+
+  assert(update->has_azimuth() &&
+         update->has_elevation() &&
+         update->has_width() &&
+         update->has_height() &&
+         update->has_minrange() &&
+         update->has_maxrange());
+  sv.azimOffset_deg_ = simCore::RAD2DEG * update->azimuth();
+  sv.elevOffset_deg_ = simCore::RAD2DEG * update->elevation();
+  sv.hfov_deg_ = simCore::RAD2DEG * update->width();
+  sv.vfov_deg_ = simCore::RAD2DEG * update->height();
+
+  // scale capRes based on fov
+  const float maxFov = simCore::sdkMax(sv.hfov_deg_, sv.vfov_deg_);
+  // 1 tesselation per 5 degrees of gate fov
+  // clamped at the bottom to ensure good visuals for common smaller gate sizes
+  // clamped at the top to prevent perf hit for large gates
+  const float capRes = osg::clampBetween((maxFov / 5.f), 5.f, 24.f);
+  sv.capRes_ = static_cast<unsigned int>(0.5f + capRes);
+
+  // gate walls don't need much tesselation, so reduce processing/memory load
+  sv.wallRes_ = 3;
+
+  sv.nearRange_ = update->minrange();
+  sv.farRange_ = update->maxrange();
+
+  // draw near face and sides/walls of gate when the gate has thickness
+  sv.drawCone_ = update->minrange() < update->maxrange();
+
+  // coverage gates are sphere segments (absolute start/end degrees instead of
+  // elevation and span)
+  sv.drawAsSphereSegment_ = prefs->gatedrawmode() == simData::GatePrefs_DrawMode_COVERAGE;
+
+  // use a Y-forward directional vector to correspond with the gate's locator.
+  osg::MatrixTransform* node = simVis::SVFactory::createNode(sv, osg::Y_AXIS);
+  return node;
+}
+
+// --------------------------------------------------------------------------
 
 GateCentroid::GateCentroid(simVis::Locator* locator, const simData::GateUpdate& update) :
   LocatorNode(locator)
@@ -185,17 +243,12 @@ void GateCentroid::updateCentroid_(osg::Vec3Array* verts, const simData::GateUpd
 
 // --------------------------------------------------------------------------
 
-
 GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear) :
 EntityNode(simData::GATE),
 hasLastUpdate_(false),
 hasLastPrefs_(false),
 visible_(false), // gets set on first refresh
-gateMatrixTransform_(NULL),
-centroid_(NULL),
 host_(host),
-localGrid_(NULL),
-label_(NULL),
 contentCallback_(new NullEntityCallback())
 {
   lastProps_ = props;
@@ -218,14 +271,12 @@ contentCallback_(new NullEntityCallback())
   //  so that centroid can be correctly drawn when the gate visual is coverage gate
 
   // inherit from beam's locator, including its position offset, but stripping out all orientation
-  Locator* gateVolumeLocator = NULL;
-  Locator* centroidLocator = NULL;
 
   // if the properties call for a body-relative beam, reconfigure locators to include platform orientation
   if (props.has_type() && props.type() == simData::GateProperties_GateType_BODY_RELATIVE)
   {
     // for body beam, inherit from beam's locator, including its position offset, but stripping out only beam orientation offset (keeping platform orientation).
-    gateVolumeLocator = new ResolvedPositionOrientationLocator(
+    gateVolumeLocator_ = new ResolvedPositionOrientationLocator(
       hostLocator, Locator::COMP_ALL);
 
     // for body beam, inherit from beam's locator, including its position offset, but stripping out only beam orientation offset (keeping platform orientation).
@@ -242,7 +293,7 @@ contentCallback_(new NullEntityCallback())
   else
   {
     // inherit from beam's locator, including its position offset, but stripping out all orientation
-    gateVolumeLocator = new ResolvedPositionLocator(
+    gateVolumeLocator_ = new ResolvedPositionLocator(
       hostLocator, Locator::COMP_ALL);
 
     // inherit from beam's locator, including its position offset, but stripping out all orientation
@@ -256,11 +307,6 @@ contentCallback_(new NullEntityCallback())
     centroidLocator_ = new ResolvedPositionLocator(
       centroidPositionOffsetLocator_, Locator::COMP_ALL);
   }
-
-  // create a locatorNode to parent the gate volume visual
-  gateLocatorNode_ = new LocatorNode(gateVolumeLocator);
-  gateLocatorNode_->setName("Gate");
-  this->addChild(gateLocatorNode_);
 
   // the gate's locator represents the position and orientation of the gate centroid
   setLocator(centroidLocator_);
@@ -359,7 +405,6 @@ void GateNode::setPrefs(const simData::GatePrefs& prefs)
   lastPrefsFromDS_ = prefs;
 }
 
-
 void GateNode::applyPrefs_(const simData::GatePrefs& prefs, bool force)
 {
   if (prefsOverrides_.size() == 0)
@@ -372,7 +417,7 @@ void GateNode::applyPrefs_(const simData::GatePrefs& prefs, bool force)
   {
     // merge in the overrides.
     simData::GatePrefs accumulated(prefs);
-    for (PrefsOverrides::iterator i = prefsOverrides_.begin(); i != prefsOverrides_.end(); ++i)
+    for (std::map<std::string, simData::GatePrefs>::iterator i = prefsOverrides_.begin(); i != prefsOverrides_.end(); ++i)
     {
       accumulated.MergeFrom(i->second);
     }
@@ -382,24 +427,20 @@ void GateNode::applyPrefs_(const simData::GatePrefs& prefs, bool force)
   }
 }
 
-
 bool GateNode::isActive() const
 {
   return hasLastUpdate_ && hasLastPrefs_ && lastPrefsApplied_.commonprefs().datadraw();
 }
 
-
 bool GateNode::isVisible() const
 {
-  return getNodeMask() != DISPLAY_MASK_NONE && (gateMatrixTransform_ != NULL) && gateMatrixTransform_->getNodeMask() != DISPLAY_MASK_NONE;
+  return (getNodeMask() != DISPLAY_MASK_NONE);
 }
-
 
 simData::ObjectId GateNode::getId() const
 {
   return lastProps_.id();
 }
-
 
 bool GateNode::getHostId(simData::ObjectId& out_hostId) const
 {
@@ -540,7 +581,7 @@ void GateNode::applyUpdateOverrides_(bool force)
   {
     // add any overrides to the new update and apply the accumulated result.
     simData::GateUpdate accumulated(lastUpdateFromDS_);
-    for (UpdateOverrides::iterator i = updateOverrides_.begin(); i != updateOverrides_.end(); ++i)
+    for (std::map<std::string, simData::GateUpdate>::iterator i = updateOverrides_.begin(); i != updateOverrides_.end(); ++i)
     {
       accumulated.MergeFrom(i->second);
     }
@@ -610,47 +651,46 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
     setNodeMask(DISPLAY_MASK_NONE);
     removeChild(centroid_);
     centroid_ = NULL;
+    removeChild(gateVolume_);
+    gateVolume_ = NULL;
     return;
   }
 
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
-  force = force || !hasLastUpdate_ || !hasLastPrefs_ || gateMatrixTransform_ == NULL ||
+  force = force || !hasLastUpdate_ || !hasLastPrefs_ || gateVolume_ == NULL ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, commonprefs, datadraw));
 
   // do we need to redraw gate volume visual?
   const bool refreshRequiresNewNode = force || changeRequiresRebuild_(newUpdate, newPrefs);
   if (refreshRequiresNewNode)
   {
-    // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
     const bool isOpaque = activePrefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
-                          activePrefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID;
-    getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
+                          activePrefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
+                          activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID;
 
-    // blending is off for solid or outline-only, so depth writing is on, otherwise off
+    // blending is off for opaque graphics, so depth writing is on, otherwise off
     depthAttr_->setWriteMask(isOpaque);
 
-    gateMatrixTransform_ = createNode(&lastProps_, activePrefs, activeUpdate);
-    gateMatrixTransform_->setNodeMask(DISPLAY_MASK_GATE);
-
-    osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateMatrixTransform_);
-    if (outlineGeometry != NULL)
+    if (gateVolume_)
     {
-      outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+      removeChild(gateVolume_);
+      gateVolume_ = NULL;
     }
-    if (gateLocatorNode_->getNumChildren() > 0)
-      gateLocatorNode_->replaceChild(gateLocatorNode_->getChild(0), gateMatrixTransform_);
-    else
-      gateLocatorNode_->addChild(gateMatrixTransform_);
 
+    if (activePrefs->fillpattern() != simData::GatePrefs_FillPattern_CENTROID)
+    {
+      gateVolume_ = new GateVolume(gateVolumeLocator_, activePrefs, activeUpdate);
+      addChild(gateVolume_);
+    }
     dirtyBound();
   }
-  else
+  else if (gateVolume_)
   {
     if (newPrefs)
-      performInPlacePrefChanges_(&lastPrefsApplied_, newPrefs, gateMatrixTransform_);
+      gateVolume_->performInPlacePrefChanges(&lastPrefsApplied_, newPrefs);
 
     if (newUpdate)
-      performInPlaceUpdates_(&lastUpdateApplied_, newUpdate, gateMatrixTransform_);
+      gateVolume_->performInPlaceUpdates(&lastUpdateApplied_, newUpdate);
   }
 
   // process changes that affect centroid visual
@@ -734,7 +774,7 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
   if (activePrefs->gatedrawmode() == simData::GatePrefs::COVERAGE)
   {
     // apply the local gate orientation
-    gateLocatorNode_->getLocator()->setLocalOffsets(
+    gateVolumeLocator_->setLocalOffsets(
       simCore::Vec3(0, 0, 0),
       simCore::Vec3(activePrefs->gateazimuthoffset(), activePrefs->gateelevationoffset(), activePrefs->gaterolloffset()),
       activeUpdate->time());
@@ -742,7 +782,7 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
   else
   {
     // not a coverage gate, so apply the local orientation
-    gateLocatorNode_->getLocator()->setLocalOffsets(
+    gateVolumeLocator_->setLocalOffsets(
       simCore::Vec3(0, 0, 0),
       simCore::Vec3(azimuth, elevation, roll),
       activeUpdate->time());
@@ -806,58 +846,6 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
   return false;
 }
 
-/// prefs that can be applied without rebuilding the whole gate
-void GateNode::performInPlacePrefChanges_(const simData::GatePrefs* a,
-                                          const simData::GatePrefs* b,
-                                          osg::MatrixTransform* node)
-{
-  if (b->commonprefs().useoverridecolor())
-  {
-    // Check for transition between color and override color than check for color change
-    if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
-    {
-      SVFactory::updateColor(node, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
-    }
-  }
-  else
-  {
-    // Check for transition between color and override color than check for color change
-    if (a->commonprefs().useoverridecolor() || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
-    {
-      SVFactory::updateColor(node, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
-    }
-  }
-
-  if (PB_FIELD_CHANGED(a, b, gatelighting))
-  {
-    SVFactory::updateLighting(node, b->gatelighting());
-  }
-}
-
-/// updates that can be updated without rebuilding the whole gate
-void GateNode::performInPlaceUpdates_(const simData::GateUpdate* a,
-                                     const simData::GateUpdate* b,
-                                     osg::MatrixTransform*      node)
-{
-  if (PB_FIELD_CHANGED(a, b, minrange))
-  {
-    SVFactory::updateNearRange(node, b->minrange());
-  }
-  if (PB_FIELD_CHANGED(a, b, maxrange))
-  {
-    SVFactory::updateFarRange(node, b->maxrange());
-  }
-  if (PB_FIELD_CHANGED(a, b, width) && PB_BOTH_HAVE_FIELD(a, b, width))
-  {
-    SVFactory::updateHorizAngle(node, a->width(), b->width());
-  }
-  if (PB_FIELD_CHANGED(a, b, height) && PB_BOTH_HAVE_FIELD(a, b, height))
-  {
-    SVFactory::updateVertAngle(node, a->height(), b->height());
-  }
-}
-
-
 void GateNode::setPrefsOverride(const std::string& id, const simData::GatePrefs& prefs)
 {
   prefsOverrides_[id] = prefs;
@@ -867,10 +855,9 @@ void GateNode::setPrefsOverride(const std::string& id, const simData::GatePrefs&
     applyPrefs_(lastPrefsFromDS_);
 }
 
-
 void GateNode::removePrefsOverride(const std::string& id)
 {
-  PrefsOverrides::iterator i = prefsOverrides_.find(id);
+  std::map<std::string, simData::GatePrefs>::iterator i = prefsOverrides_.find(id);
   if (i != prefsOverrides_.end())
   {
     prefsOverrides_.erase(i);
@@ -881,7 +868,6 @@ void GateNode::removePrefsOverride(const std::string& id)
   }
 }
 
-
 void GateNode::setUpdateOverride(const std::string& id, const simData::GateUpdate& update)
 {
   updateOverrides_[id] = update;
@@ -891,10 +877,9 @@ void GateNode::setUpdateOverride(const std::string& id, const simData::GateUpdat
     applyUpdateOverrides_();
 }
 
-
 void GateNode::removeUpdateOverride(const std::string& id)
 {
-  UpdateOverrides::iterator i = updateOverrides_.find(id);
+  std::map<std::string, simData::GateUpdate>::iterator i = updateOverrides_.find(id);
   if (i != updateOverrides_.end())
   {
     updateOverrides_.erase(i);
