@@ -25,9 +25,9 @@
 #include <vector>
 #include <string>
 #include "osg/ref_ptr"
-#include "osgEarthUtil/ObjectLocator"
 #include "simCore/Common/Export.h"
 #include "simData/ObjectId.h"
+#include "simVis/Locator.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
 #include "simVis/RFProp/Profile.h"
@@ -503,7 +503,7 @@ private:
   osg::ref_ptr<simRF::ProfileManager> profileManager_;
 
   /// locator node to which display is attached, and which attaches display to scene graph
-  osg::ref_ptr<osgEarth::Util::ObjectLocatorNode> locator_;
+  osg::ref_ptr<simVis::LocatorNode> locator_;
 
   /// parent node in the scene graph of our locator
   osg::observer_ptr<osg::Group> parent_;
