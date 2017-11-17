@@ -183,6 +183,19 @@ public:
         return true;
       }
       break;
+
+    case 'd':
+      if (app_.insetView)
+      {
+        if (app_.insetRttView)
+        {
+          app_.mainView->removeInset(app_.insetRttView);
+          app_.insetRttView = NULL;
+        }
+        app_.mainView->removeInset(app_.insetView);
+        app_.insetView = NULL;
+      }
+      break;
     }
 
     return false;

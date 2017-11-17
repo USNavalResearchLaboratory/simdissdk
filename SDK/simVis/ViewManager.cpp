@@ -133,6 +133,16 @@ void ViewManager::RemoveView::operator()(osg::Object* obj)
 {
   if (viewman_.valid() && view_.valid())
   {
+    // Removing the camera's children on the view prevents OSG from running
+    // a releaseGLObjects() traversal on the deleted View's scene graph. This is
+    // important since we are sharing the graph with the host and don't want
+    // textures, etc. to be released.
+    //
+    // (Note: OSG would normally detect a situation where more than one camera was
+    // sharing a common graph, but it only checks the root node. Since each of
+    // our simVis::View objects has a unique root node this doesn't work. -gw)
+    view_->getCamera()->removeChildren(0, view_->getCamera()->getNumChildren());
+
     viewman_->viewer_->removeView(view_.get());
     viewman_->fireCallbacks(view_.get(), Callback::VIEW_REMOVED);
   }
