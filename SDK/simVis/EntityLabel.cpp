@@ -21,7 +21,7 @@
 */
 #include "osg/AlphaFunc"
 #include "osg/Depth"
-#include "osg/Group"
+#include "osgEarthAnnotation/LabelNode"
 #include "simVis/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
@@ -30,29 +30,36 @@
 
 namespace simVis
 {
-
 /** Reject pixels with an alpha equal or less than this value.  Useful for blending text correctly against SilverLining. */
 static const float ALPHA_THRESHOLD = 0.05f;
 
-EntityLabelNode::EntityLabelNode(osg::Group* root)
-  : root_(root),
-    hasLastPrefs_(false)
+EntityLabelNode::EntityLabelNode()
+  : LocatorNode(),
+  hasLastPrefs_(false)
 {
-  // Note that labels are not flattened (by default) in overhead mode
+}
 
-  // Set various states in order to make rendering text look better against SilverLining
-  osg::StateSet* stateSet = root_->getOrCreateStateSet();
-
-  // Always write to the depth buffer, overriding the osgEarth internal settings
-  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-  // Set the alpha function to reject pixels of ALPHA_THRESHOLD or less, fixing SilverLining issues
-  stateSet->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, ALPHA_THRESHOLD));
-  // Turn on the alpha test so that the <=ALPHA_THRESHOLD rejection happens
-  stateSet->setMode(GL_ALPHA_TEST, osg::StateAttribute::ON);
+EntityLabelNode::EntityLabelNode(simVis::Locator* locator)
+  : LocatorNode(locator),
+  hasLastPrefs_(false)
+{
 }
 
 EntityLabelNode::~EntityLabelNode()
 {
+}
+
+void EntityLabelNode::syncWithLocator()
+{
+  // whether to draw the label at all - only valid when hasLastPrefs_ is true
+  const bool draw = lastCommonPrefs_.draw() && lastCommonPrefs_.labelprefs().draw();
+
+  // if not drawing, we don't need to update this
+  if (!label_.valid() || (hasLastPrefs_ && !draw))
+    return;
+
+  // call the base class to update the matrix.
+  LocatorNode::syncWithLocator();
 }
 
 /// Update the label with the given preferences and text
@@ -67,6 +74,10 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
   // Only make the label when need it
   if (!draw && !label_.valid())
     return;
+
+  // if user toggled draw on, ensure that locator is up-to-date
+  if (draw && !(lastCommonPrefs_.draw() && lastCommonPrefs_.labelprefs().draw()))
+    syncWithLocator();
 
   bool forceStyle = false;
 
@@ -83,10 +94,24 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
     label_->setHorizonCulling(false);
     label_->setOcclusionCulling(false);
 
+
+    // Note that labels are not flattened (by default) in overhead mode
+
+    // Set various states in order to make rendering text look better against SilverLining
+    osg::StateSet* stateSet = label_->getOrCreateStateSet();
+
+    // Always write to the depth buffer, overriding the osgEarth internal settings
+    stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+    // Set the alpha function to reject pixels of ALPHA_THRESHOLD or less, fixing SilverLining issues
+    stateSet->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, ALPHA_THRESHOLD));
+    // Turn on the alpha test so that the <=ALPHA_THRESHOLD rejection happens
+    stateSet->setMode(GL_ALPHA_TEST, osg::StateAttribute::ON);
+
+
     // Note: no need to clamp the label's geo transform in overhead mode, since the Locator
     // will take care of that for us. -gw
 
-    root_->addChild(label_.get());
+    addChild(label_.get());
     forceStyle = true;
   }
 
@@ -172,11 +197,6 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
   lastCommonPrefs_ = commonPrefs;
   hasLastPrefs_ = true;
   lastText_ = text;
-}
-
-void EntityLabelNode::addCullCallback(osg::Callback* callback)
-{
-  root_->addCullCallback(callback);
 }
 
 }

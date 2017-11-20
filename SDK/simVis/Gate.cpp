@@ -106,7 +106,7 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a,
   }
 }
 
-osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs,const simData::GateUpdate* update)
+osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update)
 {
   simVis::SVData sv;
 
@@ -326,9 +326,8 @@ contentCallback_(new NullEntityCallback())
   depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
   stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
-  osg::Group* labelRoot = new LocatorNode(new Locator(getLocator(), Locator::COMP_POSITION));
-  label_ = new EntityLabelNode(labelRoot);
-  this->addChild(labelRoot);
+  label_ = new EntityLabelNode(getLocator());
+  this->addChild(label_);
 
   // horizon culling:
   this->addCullCallback( new osgEarth::HorizonCullCallback() );

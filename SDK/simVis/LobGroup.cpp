@@ -197,9 +197,8 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props,
   localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
   addChild(localGrid_);
 
-  osg::Group* labelRoot = new LocatorNode(new Locator(getLocator(), Locator::COMP_POSITION));
-  label_ = new EntityLabelNode(labelRoot);
-  this->addChild(labelRoot);
+  label_ = new EntityLabelNode(getLocator());
+  this->addChild(label_);
 
   // horizon culling:
   this->addCullCallback( new osgEarth::HorizonCullCallback() );

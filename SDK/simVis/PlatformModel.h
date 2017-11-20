@@ -23,7 +23,6 @@
 #define SIMVIS_PLATFORM_MODEL_H
 
 #include "osgEarth/Utils"
-#include "osgEarthAnnotation/LabelNode"
 #include "simCore/Common/Common.h"
 #include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"

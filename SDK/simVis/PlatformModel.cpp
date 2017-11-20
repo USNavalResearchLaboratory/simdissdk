@@ -111,9 +111,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
     brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
     objectIndexTag_(0)
 {
-  osg::Group* labelRoot = new osg::Group();
-  labelRoot->setName("labelRoot");
-  label_ = new EntityLabelNode(labelRoot);
+  label_ = new EntityLabelNode();
 
   setName("PlatformModel");
   setNodeMask(getMask());
@@ -149,7 +147,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   dynamicXform_->setName("dynamicXform");
 
   // Configure children graph
-  addChild(labelRoot);
+  addChild(label_);
   addChild(dynamicXform_);
   dynamicXform_->addChild(imageIconXform_);
   imageIconXform_->addChild(offsetXform_);

@@ -205,10 +205,8 @@ void ProjectorNode::init_()
 
   projectorTextureImpl_->setTexture(texture_);
 
-  // Set label root
-  osg::Group* labelRoot = new LocatorNode(new Locator(getLocator(), Locator::COMP_POSITION));
-  label_ = new EntityLabelNode(labelRoot);
-  this->addChild(labelRoot);
+  label_ = new EntityLabelNode(getLocator());
+  addChild(label_);
 
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
