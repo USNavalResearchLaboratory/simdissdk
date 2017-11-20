@@ -333,12 +333,24 @@ public:
 
   bool accept(const osgGA::GUIEventAdapter& ea, const osgGA::GUIActionAdapter& aa)
   {
-    // Always pick, on every event
-    return true;
+    switch (ea.getEventType())
+    {
+    case osgGA::GUIEventAdapter::FRAME:
+      if (underCursor_.valid() && underCursor_.get() == dynamic_cast<const simVis::View*>(&aa))
+        return true;
+      break;
+    case osgGA::GUIEventAdapter::MOVE:
+    case osgGA::GUIEventAdapter::DRAG:
+    case osgGA::GUIEventAdapter::PUSH:
+      underCursor_ = dynamic_cast<const simVis::View*>(&aa);
+      break;
+    }
+    return false;
   }
 
 private:
   RTTPicker& picker_;
+  osg::observer_ptr<const simVis::View> underCursor_;
 };
 
 /////////////////////////////////////////////////////////////////
