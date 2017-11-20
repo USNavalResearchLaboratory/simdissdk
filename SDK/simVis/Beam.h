@@ -32,6 +32,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
+#include "simVis/Locator.h"
 
 namespace osg { class Depth; }
 
@@ -40,6 +41,38 @@ namespace simVis
   class AntennaNode;
   class BeamPulse;
   class ScenarioManager;
+
+  /// Scene graph node representing the Beam volume
+  class SDKVIS_EXPORT BeamVolume : public simVis::LocatorNode
+  {
+  public:
+    /** Constructor */
+    BeamVolume(simVis::Locator* locator, const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
+
+    /** Perform an in-place update to an existing volume */
+    void performInPlaceUpdates(const simData::BeamUpdate* a,
+      const simData::BeamUpdate* b);
+
+    /** Perform an in-place update to an existing volume */
+    void performInPlacePrefChanges(const simData::BeamPrefs* a,
+      const simData::BeamPrefs* b);
+
+    /** Return the proper library name */
+    virtual const char* libraryName() const { return "simVis"; }
+
+    /** Return the class name */
+    virtual const char* className() const { return "BeamVolume"; }
+
+  private:
+    /// build the osg volume
+    osg::MatrixTransform* createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
+
+    /// apply the beam scale pref to the specified node
+    void setBeamScale_(double beamScale);
+
+    osg::ref_ptr<osg::MatrixTransform> beamSV_;
+  };
+
 
   /**
    * Renders a beam.
@@ -247,20 +280,6 @@ namespace simVis
       const simData::BeamPrefs*      prefs,
       bool                           force);
 
-    /// update things that don't require a geometry rebuild
-    void performInPlacePrefChanges_(
-      const simData::BeamPrefs* a,
-      const simData::BeamPrefs* b,
-      osg::MatrixTransform*     node);
-
-    void performInPlaceUpdates_(
-      const simData::BeamUpdate* a,
-      const simData::BeamUpdate* b,
-      osg::MatrixTransform*      node);
-
-    /// apply the beam scale pref to the specified node
-    void setBeamScale_(osg::MatrixTransform* node, double beamScale);
-
     /**
     * Adjusts the passed in position vector with offsets to make the origin of the beam at
     * the front of the host platform.
@@ -281,6 +300,19 @@ namespace simVis
     */
     int calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate);
 
+    /**
+    * Update the beam label with the specified beam preferences
+    * @param prefs the beam preferences to update
+    */
+    void updateLabel_(const simData::BeamPrefs& prefs);
+
+    /**
+    * Apply the specified prefs, adding any overrides, then apply result to beam
+    * @param prefs the beam preferences to update with overrides then apply
+    * @param force tell the apply code to regenerate the visual
+    */
+    void applyPrefs_(const simData::BeamPrefs& prefs, bool force = false);
+
   private: // data
     simData::BeamProperties lastProps_;
 
@@ -291,29 +323,23 @@ namespace simVis
     simData::BeamUpdate     lastUpdateApplied_;
     bool                    hasLastUpdate_;
     bool                    hasLastPrefs_;
-    osg::ref_ptr<LocatorNode>    locatorNode_;
     bool                    visible_;
-    osg::ref_ptr<osg::MatrixTransform>   node_;
-    osg::observer_ptr<const EntityNode> host_;
-    osg::observer_ptr<const EntityNode> target_;
+
+    osg::ref_ptr<BeamVolume>  beamVolume_;
     osg::ref_ptr<LocalGridNode> localGrid_;
     osg::ref_ptr<AntennaNode> antenna_;
+    osg::observer_ptr<const EntityNode> host_;
+    osg::observer_ptr<const EntityNode> target_;
 
     double hostMissileOffset_;
     // extra locator used only for non-BeamType_BODY_RELATIVE beams
     osg::ref_ptr<Locator>   positionOffsetLocator_;
 
-    void applyPrefs(const simData::BeamPrefs& prefs, bool force =false);
+    std::map<std::string, simData::BeamPrefs> prefsOverrides_;
 
-    typedef std::map<std::string, simData::BeamPrefs> PrefsOverrides;
-    PrefsOverrides prefsOverrides_;
-
-    typedef std::map<std::string, simData::BeamUpdate> UpdateOverrides;
-    UpdateOverrides updateOverrides_;
+    std::map<std::string, simData::BeamUpdate> updateOverrides_;
 
     osg::Depth*             depthAttr_;
-
-    void updateLabel_(const simData::BeamPrefs& prefs);
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;

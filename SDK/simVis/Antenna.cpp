@@ -79,9 +79,15 @@ namespace {
 }
 namespace simVis
 {
+// AntennaNode hierarchy:
+//  this (LocatorNode) - responsible for beam position and orientation
+//    antenna_ (MatrixTransform) - responsible for antenna visual scaling
+//      Geode - contains the antenna geometry
+//        Geometry - contains the antenna primitives
 
-AntennaNode::AntennaNode(const osg::Quat& rot)
-  : antennaPattern_(NULL),
+AntennaNode::AntennaNode(simVis::Locator* locator, const osg::Quat& rot)
+  : LocatorNode(locator),
+    antennaPattern_(NULL),
     loadedOK_(false),
     beamRange_(1.0f),
     beamScale_(1.0f),
@@ -91,6 +97,8 @@ AntennaNode::AntennaNode(const osg::Quat& rot)
     max_(-HUGE_VAL)
 {
   colorUtils_ = new ColorUtils(0.3);
+  antenna_ = new osg::MatrixTransform();
+  addChild(antenna_);
 }
 
 AntennaNode::~AntennaNode()
@@ -98,6 +106,17 @@ AntennaNode::~AntennaNode()
   delete colorUtils_;
   delete antennaPattern_;
 }
+
+void AntennaNode::syncWithLocator()
+{
+  // if not drawing, we don't need to update this
+  if (!loadedOK_ || !lastPrefs_.isSet() || !lastPrefs_->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
+    return;
+
+  // call the base class to update the matrix.
+  LocatorNode::syncWithLocator();
+}
+
 
 // antennaPattern's scale is a product of update range (in m) and pref beamScale (no units, 1.0 default)
 void AntennaNode::setRange(float range)
@@ -163,7 +182,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
     // load the new pattern file
     delete(antennaPattern_);
     // Frequency must be > 0, if <= 0 use default value
-    double freq = prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY;
+    const double freq = prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY;
     antennaPattern_ = simCore::loadPatternFile(patternFile_, freq);
     loadedOK_ = (antennaPattern_ != NULL);
   }
@@ -187,7 +206,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
 
   if (!drawAntennaPattern)
   {
-    removeChildren(0, getNumChildren());
+    antenna_->removeChildren(0, getNumChildren());
   }
   else if (requiresRedraw)
   {
@@ -199,6 +218,10 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
     setNodeMask(simVis::DISPLAY_MASK_BEAM);
     updateLighting_(prefs.shaded());
     updateBlending_(prefs.blended());
+
+    // ensure that locator is synced with beam parent
+    syncWithLocator();
+
     return true;
   }
   else
@@ -263,7 +286,7 @@ float AntennaNode::PatternGain(float azim, float elev, simCore::PolarityType pol
 float AntennaNode::ComputeRadius_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
 {
   // values returned from PatternGain are in dB
-  float gain = PatternGain(azim, elev, polarity);
+  const float gain = PatternGain(azim, elev, polarity);
   float radius;
 
   if (gain < simCore::SMALL_DB_COMPARE)
@@ -287,10 +310,10 @@ float AntennaNode::ComputeRadius_(float azim, float elev, simCore::PolarityType 
 void AntennaNode::applyScale_()
 {
   const float newScale = beamRange_ * beamScale_;
-  setMatrix(osg::Matrixf::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
+  antenna_->setMatrix(osg::Matrixf::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
   if (newScale != 1.0f)
   {
-    getOrCreateStateSet()->setMode(GL_RESCALE_NORMAL, 1);
+    antenna_->getOrCreateStateSet()->setMode(GL_RESCALE_NORMAL, 1);
   }
 }
 
@@ -298,7 +321,7 @@ void AntennaNode::drawAxes_(const osg::Vec3f& pos, const osg::Vec3f& vec)
 {
   AxisVector* axes = new AxisVector();
   axes->setPositionOrientation(pos, vec);
-  addChild(axes);
+  antenna_->addChild(axes);
 }
 
 void AntennaNode::render_()
@@ -308,14 +331,11 @@ void AntennaNode::render_()
   // lastPrefs_ must be valid before a pattern can be rendered; if assert fails, check for changes in setPrefs
   assert(lastPrefs_.isSet());
 
-  removeChildren(0, getNumChildren());
+  antenna_->removeChildren(0, getNumChildren());
 
-  osg::Geometry* antGeom = new osg::Geometry();
+  osg::ref_ptr<osg::Geometry> antGeom = new osg::Geometry();
   antGeom->setDataVariance(osg::Object::DYNAMIC);
   antGeom->setUseVertexBufferObjects(true);
-
-  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-  geode->addDrawable(antGeom);
 
   osg::Vec3Array* verts = new osg::Vec3Array();
   antGeom->setVertexArray(verts);
@@ -619,9 +639,12 @@ void AntennaNode::render_()
     }
   } // end of (hRange < T_PI)
 
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+  geode->addDrawable(antGeom);
+
   // optimize the geode:
   osgEarth::Symbology::MeshConsolidator::run(*geode);
-  addChild(geode);
+  antenna_->addChild(geode);
   applyScale_();
 }
 }

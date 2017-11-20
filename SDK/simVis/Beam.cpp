@@ -27,11 +27,11 @@
 #include "simVis/Antenna.h"
 #include "simVis/BeamPulse.h"
 #include "simVis/Constants.h"
+#include "simVis/OverheadMode.h"
 #include "simVis/Types.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
-#include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
 #include "simVis/Beam.h"
 
@@ -39,52 +39,6 @@
 
 namespace
 {
-
-  osg::MatrixTransform* createBeamSV(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
-  {
-      simVis::SVData sv;
-
-      // defaults:
-      sv.color_.set(1, 1, 0, 0.5);
-      sv.shape_ = simVis::SVData::SHAPE_CONE;
-
-      if (update.has_range())
-      {
-        sv.farRange_ = update.range();
-      }
-
-      if (prefs.has_horizontalwidth())
-        sv.hfov_deg_ = osg::RadiansToDegrees(prefs.horizontalwidth());
-      if (prefs.has_verticalwidth())
-        sv.vfov_deg_ = osg::RadiansToDegrees(prefs.verticalwidth());
-
-      if (prefs.commonprefs().useoverridecolor())
-        sv.color_ = simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA);
-      else
-        sv.color_ = simVis::Color(prefs.commonprefs().color(), simVis::Color::RGBA);
-
-      sv.blendingEnabled_ = prefs.blended();
-      sv.lightingEnabled_ = prefs.shaded();
-
-      sv.shape_ = prefs.rendercone() ? simVis::SVData::SHAPE_CONE : simVis::SVData::SHAPE_PYRAMID;
-
-      // if drawing as a pyramid, coneRes_ is not used, but wallRes_ is used
-      sv.coneRes_ = prefs.coneresolution();
-      sv.wallRes_ = sv.coneRes_;
-      sv.capRes_ = prefs.capresolution();
-
-      sv.drawMode_ =
-          prefs.beamdrawmode() == simData::BeamPrefs::WIRE ? simVis::SVData::DRAW_MODE_WIRE :
-          prefs.beamdrawmode() == simData::BeamPrefs::SOLID ? simVis::SVData::DRAW_MODE_SOLID :
-          (simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_WIRE);
-
-      // only the cap is drawn in coverage draw type
-      sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs_DrawType_COVERAGE;
-
-      // use a "Y-forward" direction vector because the Beam is drawn in ENU LTP space.
-      return simVis::SVFactory::createNode(sv, osg::Y_AXIS);
-  }
-
   /// check for changes that require us to rebuild the entire beam.
   bool changeRequiresRebuild(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
   {
@@ -116,34 +70,132 @@ namespace
 }
 
 // --------------------------------------------------------------------------
+
 namespace simVis
 {
+BeamVolume::BeamVolume(simVis::Locator* locator, const simData::BeamPrefs& prefs, const simData::BeamUpdate& update) :
+  LocatorNode(locator)
+{
+  beamSV_ = createBeamSV_(prefs, update);
+  addChild(beamSV_);
+  setBeamScale_(prefs.beamscale());
+}
+
+osg::MatrixTransform* BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
+{
+  simVis::SVData sv;
+
+  // defaults:
+  sv.color_.set(1, 1, 0, 0.5);
+  sv.shape_ = simVis::SVData::SHAPE_CONE;
+
+  if (update.has_range())
+  {
+    sv.farRange_ = update.range();
+  }
+
+  if (prefs.has_horizontalwidth())
+    sv.hfov_deg_ = osg::RadiansToDegrees(prefs.horizontalwidth());
+  if (prefs.has_verticalwidth())
+    sv.vfov_deg_ = osg::RadiansToDegrees(prefs.verticalwidth());
+
+  if (prefs.commonprefs().useoverridecolor())
+    sv.color_ = simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA);
+  else
+    sv.color_ = simVis::Color(prefs.commonprefs().color(), simVis::Color::RGBA);
+
+  sv.blendingEnabled_ = prefs.blended();
+  sv.lightingEnabled_ = prefs.shaded();
+
+  sv.shape_ = prefs.rendercone() ? simVis::SVData::SHAPE_CONE : simVis::SVData::SHAPE_PYRAMID;
+
+  // if drawing as a pyramid, coneRes_ is not used, but wallRes_ is used
+  sv.coneRes_ = prefs.coneresolution();
+  sv.wallRes_ = sv.coneRes_;
+  sv.capRes_ = prefs.capresolution();
+
+  sv.drawMode_ =
+    prefs.beamdrawmode() == simData::BeamPrefs::WIRE ? simVis::SVData::DRAW_MODE_WIRE :
+    prefs.beamdrawmode() == simData::BeamPrefs::SOLID ? simVis::SVData::DRAW_MODE_SOLID :
+    (simVis::SVData::DRAW_MODE_SOLID | simVis::SVData::DRAW_MODE_WIRE);
+
+  // only the cap is drawn in coverage draw type
+  sv.drawCone_ = prefs.drawtype() != simData::BeamPrefs_DrawType_COVERAGE;
+
+  // use a "Y-forward" direction vector because the Beam is drawn in ENU LTP space.
+  return simVis::SVFactory::createNode(sv, osg::Y_AXIS);
+}
+
+void BeamVolume::setBeamScale_(double beamScale)
+{
+  osg::Matrix m = beamSV_->getMatrix();
+  const osg::Vec3d currentScale = m.getScale();
+  if (currentScale.x() > 0.0)
+  {
+    const double s = beamScale / currentScale.x();   // undo the old, apply the new.
+    m.preMultScale(osg::Vec3d(s, s, s));
+    beamSV_->setMatrix(m);
+  }
+}
+
+/// update prefs that can be updated without rebuilding the whole beam.
+void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
+{
+  if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
+  {
+    // Check for transition between color and override color, then check for color change
+    if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
+    {
+      SVFactory::updateColor(beamSV_, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
+    }
+  }
+  else
+  {
+    // Check for transition between color and override color, then check for color change
+    if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
+    {
+      SVFactory::updateColor(beamSV_, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
+    }
+  }
+  if (PB_FIELD_CHANGED(a, b, shaded))
+    SVFactory::updateLighting(beamSV_, b->shaded());
+  if (PB_FIELD_CHANGED(a, b, verticalwidth))
+    SVFactory::updateVertAngle(beamSV_, a->verticalwidth(), b->verticalwidth());
+  if (PB_FIELD_CHANGED(a, b, horizontalwidth))
+    SVFactory::updateHorizAngle(beamSV_, a->horizontalwidth(), b->horizontalwidth());
+  if (PB_FIELD_CHANGED(a, b, beamscale))
+    setBeamScale_(b->beamscale());
+}
+
+void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
+{
+  if (PB_FIELD_CHANGED(a, b, range))
+  {
+    SVFactory::updateFarRange(beamSV_, b->range());
+  }
+}
+
+// --------------------------------------------------------------------------
 
 BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
   : EntityNode(simData::BEAM),
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     visible_(false),
-    node_(NULL),
     host_(host),
-    localGrid_(NULL),
-    antenna_(NULL),
     hostMissileOffset_(0.0),
-    label_(NULL),
     contentCallback_(new NullEntityCallback()),
     scenario_(scenario)
 {
   lastProps_ = props;
   Locator* finalLocator = NULL;
-
   // if the properties call for a body-relative beam, configure that:
   if (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE)
   {
     positionOffsetLocator_ = NULL;
     // in the BeamType_BODY_RELATIVE case, only a single locator is needed to handle both position and orientation offsets,
     // b/c position and orientation offsets are both relative to platform orientation.
-    finalLocator = new ResolvedPositionOrientationLocator(
-      hostLocator, Locator::COMP_ALL);
+    finalLocator = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
   }
   else
   {
@@ -157,14 +209,10 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
 
     // The second locator will Resolve the offset to a new position, from where we can
     // then apply an orientation offset that is not relative to host platform orientation
-    finalLocator = new ResolvedPositionLocator(
-      positionOffsetLocator_, Locator::COMP_ALL);
+    finalLocator = new ResolvedPositionLocator(positionOffsetLocator_, Locator::COMP_ALL);
   }
 
   setLocator(finalLocator);
-  locatorNode_ = new LocatorNode(finalLocator);
-  locatorNode_->setName("Beam");
-  addChild(locatorNode_);
   setName("BeamNode");
 
   // set up a state set.
@@ -178,7 +226,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
   stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
-  antenna_ = new simVis::AntennaNode(osg::Quat(M_PI_2, osg::Vec3(0, 0, 1)));
+  antenna_ = new simVis::AntennaNode(getLocator(), osg::Quat(M_PI_2, osg::Vec3(0, 0, 1)));
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
@@ -265,12 +313,12 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
     target_ = NULL;
   }
 
-  applyPrefs(prefs);
+  applyPrefs_(prefs);
   updateLabel_(prefs);
   lastPrefsFromDS_ = prefs;
 }
 
-void BeamNode::applyPrefs(const simData::BeamPrefs& prefs, bool force)
+void BeamNode::applyPrefs_(const simData::BeamPrefs& prefs, bool force)
 {
   if (prefsOverrides_.size() == 0)
   {
@@ -282,7 +330,7 @@ void BeamNode::applyPrefs(const simData::BeamPrefs& prefs, bool force)
   {
     // merge in the overrides.
     simData::BeamPrefs accumulated(prefs);
-    for (PrefsOverrides::iterator i = prefsOverrides_.begin(); i != prefsOverrides_.end(); ++i)
+    for (std::map<std::string, simData::BeamPrefs>::iterator i = prefsOverrides_.begin(); i != prefsOverrides_.end(); ++i)
     {
       accumulated.MergeFrom(i->second);
     }
@@ -311,7 +359,7 @@ void BeamNode::setHostMissileOffset(double hostMissileOffset)
   if (hostMissileOffset_ != hostMissileOffset)
   {
     hostMissileOffset_ = hostMissileOffset;
-    node_ = NULL; // will force a complete refresh
+    beamVolume_ = NULL; // will force a complete refresh
     apply_(NULL, NULL);
   }
 }
@@ -325,7 +373,7 @@ bool BeamNode::isActive() const
 
 bool BeamNode::isVisible() const
 {
-  return getNodeMask() != DISPLAY_MASK_NONE && (node_ != NULL) && node_->getNodeMask() != DISPLAY_MASK_NONE;
+  return getNodeMask() != DISPLAY_MASK_NONE;
 }
 
 simData::ObjectId BeamNode::getId() const
@@ -472,7 +520,7 @@ void BeamNode::applyUpdateOverrides_(bool force)
   else
   {
     simData::BeamUpdate accumulated(lastUpdateFromDS_);
-    for (UpdateOverrides::iterator i = updateOverrides_.begin(); i != updateOverrides_.end(); ++i)
+    for (std::map<std::string, simData::BeamUpdate>::const_iterator i = updateOverrides_.begin(); i != updateOverrides_.end(); ++i)
     {
       accumulated.MergeFrom(i->second);
     }
@@ -548,8 +596,17 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   }
 
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
-  force = force || !hasLastUpdate_ || !hasLastPrefs_ || node_ == NULL ||
+  force = force || !hasLastUpdate_ || !hasLastPrefs_ ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, commonprefs, datadraw));
+
+
+  // all activePrefs must be applied during this creation
+  if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
+  {
+    depthAttr_->setWriteMask(!activePrefs->blended());
+    getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+  }
+
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
@@ -564,21 +621,16 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     if (force || (newUpdate && PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, range)))
       antenna_->setRange(static_cast<float>(simCore::sdkMax(1.0, activeUpdate->range())));
 
-    // all activePrefs must be applied during this creation
-    if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
-    {
-      depthAttr_->setWriteMask(!activePrefs->blended());
-      getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
-
-    }
-
     if (refreshRequiresNewNode)
     {
-      node_ = antenna_;
-      if (locatorNode_->getNumChildren() > 0)
-        locatorNode_->replaceChild(locatorNode_->getChild(0), node_);
-      else
-        locatorNode_->addChild(node_);
+      // remove any old (non-antenna) beam volume
+      if (beamVolume_)
+      {
+        removeChild(beamVolume_);
+        beamVolume_ = NULL;
+      }
+      addChild(antenna_);
+      dirtyBound();
     }
   }
   else
@@ -593,19 +645,20 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       changeRequiresRebuild(&lastPrefsApplied_, newPrefs);
 
     // if new geometry is required, build it:
-    if (refreshRequiresNewNode)
+    if (!beamVolume_ || refreshRequiresNewNode)
     {
-      node_ = createBeamSV(*activePrefs, *activeUpdate);
-      node_->setNodeMask(DISPLAY_MASK_BEAM);
-      // all activePrefs must be applied during this creation - most activePrefs already are applied in createBeamSV
-      depthAttr_->setWriteMask(!activePrefs->blended());
-      getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
-      setBeamScale_(node_, activePrefs->beamscale());
+      // do not NULL antenna, it needs to persist to provide gain calcs
+      removeChild(antenna_);
 
-      if (locatorNode_->getNumChildren() > 0)
-        locatorNode_->replaceChild(locatorNode_->getChild(0), node_);
-      else
-        locatorNode_->addChild(node_);
+      if (beamVolume_)
+      {
+        removeChild(beamVolume_);
+        beamVolume_ = NULL;
+      }
+
+      beamVolume_ = new BeamVolume(getLocator(), *activePrefs, *activeUpdate);
+      addChild(beamVolume_);
+      dirtyBound();
     }
     else
     {
@@ -613,13 +666,13 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       {
         // !hasLastPrefs_ should force execution of refreshRequiresNewNode branch; if assert fails examine refreshRequiresNewNode assignment logic
         assert(hasLastPrefs_);
-        performInPlacePrefChanges_(&lastPrefsApplied_, newPrefs, node_);
+        beamVolume_->performInPlacePrefChanges(&lastPrefsApplied_, newPrefs);
       }
       if (newUpdate)
       {
         // !hasLastUpdate should force execution of refreshRequiresNewNode branch; if assert fails examine refreshRequiresNewNode assignment logic
         assert(hasLastUpdate_);
-        performInPlaceUpdates_(&lastUpdateApplied_, newUpdate, node_);
+        beamVolume_->performInPlaceUpdates(&lastUpdateApplied_, newUpdate);
       }
     }
   }
@@ -641,7 +694,6 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     localGrid_->setPrefs(activePrefs->commonprefs().localgrid(), force);
   }
 }
-
 
 void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simData::BeamPrefs* newPrefs, bool force)
 {
@@ -717,78 +769,19 @@ const simData::BeamUpdate* BeamNode::getLastUpdateFromDS() const
   return hasLastUpdate_ ? &lastUpdateFromDS_ : NULL;
 }
 
-/// update prefs that can be updated without rebuilding the whole beam.
-void BeamNode::performInPlacePrefChanges_(const simData::BeamPrefs* a, const simData::BeamPrefs* b, osg::MatrixTransform* node)
-{
-  if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
-  {
-    // Check for transition between color and override color, then check for color change
-    if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
-    {
-      SVFactory::updateColor(node, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
-    }
-  }
-  else
-  {
-    // Check for transition between color and override color, then check for color change
-    if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
-    {
-      SVFactory::updateColor(node, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
-    }
-  }
-  if (PB_FIELD_CHANGED(a, b, shaded))
-  {
-    SVFactory::updateLighting(node, b->shaded());
-  }
-  if (PB_FIELD_CHANGED(a, b, blended))
-  {
-    SVFactory::updateBlending(node, b->blended());
-    // only write to the depth buffer if it's NOT blended.
-    depthAttr_->setWriteMask(!b->blended());
-    getOrCreateStateSet()->setRenderBinDetails((b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
-  }
-
-  if (PB_FIELD_CHANGED(a, b, verticalwidth))
-    SVFactory::updateVertAngle(node, a->verticalwidth(), b->verticalwidth());
-  if (PB_FIELD_CHANGED(a, b, horizontalwidth))
-    SVFactory::updateHorizAngle(node, a->horizontalwidth(), b->horizontalwidth());
-  if (PB_FIELD_CHANGED(a, b, beamscale))
-    setBeamScale_(node, b->beamscale());
-}
-
-void BeamNode::performInPlaceUpdates_(const simData::BeamUpdate* a, const simData::BeamUpdate* b, osg::MatrixTransform* node)
-{
-  if (PB_FIELD_CHANGED(a, b, range))
-  {
-    SVFactory::updateFarRange(node, b->range());
-  }
-}
-
-void BeamNode::setBeamScale_(osg::MatrixTransform* node, double beamScale)
-{
-  osg::Matrix m = node->getMatrix();
-  const osg::Vec3d currentScale = m.getScale();
-  if (currentScale.x() > 0.0)
-  {
-    const double s = beamScale / currentScale.x();   // undo the old, apply the new.
-    m.preMultScale(osg::Vec3d(s, s, s));
-    node->setMatrix(m);
-  }
-}
-
 void BeamNode::setPrefsOverride(const std::string& id, const simData::BeamPrefs& prefs)
 {
   prefsOverrides_[id] = prefs;
-  applyPrefs(lastPrefsFromDS_);
+  applyPrefs_(lastPrefsFromDS_);
 }
 
 void BeamNode::removePrefsOverride(const std::string& id)
 {
-  PrefsOverrides::iterator i = prefsOverrides_.find(id);
+  std::map<std::string, simData::BeamPrefs>::iterator i = prefsOverrides_.find(id);
   if (i != prefsOverrides_.end())
   {
     prefsOverrides_.erase(i);
-    applyPrefs(lastPrefsFromDS_, true);
+    applyPrefs_(lastPrefsFromDS_, true);
   }
 }
 
@@ -802,7 +795,7 @@ void BeamNode::setUpdateOverride(const std::string& id, const simData::BeamUpdat
 
 void BeamNode::removeUpdateOverride(const std::string& id)
 {
-  UpdateOverrides::iterator i = updateOverrides_.find(id);
+  std::map<std::string, simData::BeamUpdate>::iterator i = updateOverrides_.find(id);
   if (i != updateOverrides_.end())
   {
     updateOverrides_.erase(i);
@@ -816,7 +809,7 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
   // Get start position
   simCore::Vec3 startPosition;
   simCore::Vec3 ori;
-  if (!locatorNode_->getLocator()->getLocatorPositionOrientation(&startPosition, &ori, simCore::COORD_SYS_LLA))
+  if (!getLocator()->getLocatorPositionOrientation(&startPosition, &ori, simCore::COORD_SYS_LLA))
   {
     closestLla = simCore::Vec3();
     return 0;
