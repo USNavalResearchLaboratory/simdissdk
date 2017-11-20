@@ -41,6 +41,7 @@ namespace simVis {
 
 static const std::string SDK_PICK_HIGHLIGHT_OBJECTID = "sdk_pick_highlight_objectid";
 static const std::string SDK_PICK_HIGHLIGHT_ENABLED = "sdk_pick_highlight_enabled";
+static const unsigned int DEFAULT_PICK_MASK = simVis::DISPLAY_MASK_PLATFORM | simVis::DISPLAY_MASK_PLATFORM_MODEL;
 
 /////////////////////////////////////////////////////////////////
 
@@ -242,7 +243,7 @@ void IntersectPicker::pickThisFrame_()
 {
   pickedThisFrame_ = true;
   // Intersect picker should only pick on Platforms and Platform Models
-  unsigned int acceptMask = simVis::DISPLAY_MASK_PLATFORM | simVis::DISPLAY_MASK_PLATFORM_MODEL;
+  unsigned int acceptMask = DEFAULT_PICK_MASK;
   simVis::EntityNode* pickedEntity = NULL;
   if (lastMouseView_.valid())
     pickedEntity = scenario_->find(lastMouseView_.get(), mx_, my_, acceptMask);
@@ -364,8 +365,7 @@ RTTPicker::RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* 
 
   // Set up the picker to ignore various features of SIMDIS that aren't pickable
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
-  unsigned int ignoreMask = simVis::DISPLAY_MASK_LABEL | simVis::DISPLAY_MASK_TRACK_HISTORY | simVis::DISPLAY_MASK_LOCAL_GRID;
-  rttPicker_->setCullMask(~ignoreMask);
+  rttPicker_->setCullMask(DEFAULT_PICK_MASK);
 #endif
 }
 

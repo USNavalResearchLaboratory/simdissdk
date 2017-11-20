@@ -38,13 +38,14 @@
 #include "simData/MemoryDataStore.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/EarthManipulator.h"
-#include "simVis/Picker.h"
-#include "simVis/ViewManager.h"
-#include "simVis/View.h"
-#include "simVis/ViewManagerLogDbAdapter.h"
-#include "simVis/SceneManager.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Picker.h"
 #include "simVis/Popup.h"
+#include "simVis/SceneManager.h"
+#include "simVis/View.h"
+#include "simVis/ViewManager.h"
+#include "simVis/ViewManagerLogDbAdapter.h"
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simUtil/ExampleResources.h"
@@ -196,6 +197,11 @@ public:
         app_.insetView = NULL;
       }
       break;
+
+    case 't':
+      if (app_.insetView)
+        app_.insetView->setVisible(!app_.insetView->isVisible());
+      break;
     }
 
     return false;
@@ -290,6 +296,8 @@ ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel, bool rttEnabled
   vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("p: Pause playback", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("v: Swap viewpoints", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("d: Delete inset", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("t: Toggle inset", 14, osgEarth::Color::White));
   if (rttEnabled)
   {
     vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, osgEarth::Color::White));
@@ -594,6 +602,12 @@ int main(int argc, char** argv)
   {
     // Create the RTT picker
     simVis::RTTPicker* rttPicker = new simVis::RTTPicker(viewMan, scenarioManager, 256);
+
+    // Add GOG to the pickable mask
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
+    osgEarth::Util::RTTPicker* osgEarthPicker = rttPicker->rttPicker();
+    osgEarthPicker->setCullMask(osgEarthPicker->getCullMask() | simVis::DISPLAY_MASK_GOG);
+#endif
     app.picker = rttPicker;
 
     // Make a view that lets us see what the picker sees for Main View
