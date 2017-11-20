@@ -482,7 +482,8 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   xform_->addChild(geode_);
   xform_->addChild(labelsContainer);
   xform_->setName("Range Tool Association");
-  OverheadMode::enableGeometryFlattening(true, xform_);
+  // enable flattening on the graphics, but not on the label node
+  OverheadMode::enableGeometryFlattening(true, geode_);
 
   // create a state, and a magnetic datum convert for any measurements we might want to make
   state_.earthModel_ = simCore::WGS_84;

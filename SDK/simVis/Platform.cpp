@@ -30,6 +30,7 @@
 #include "simVis/EphemerisVector.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
+#include "simVis/OverheadMode.h"
 #include "simVis/PlatformInertialTransform.h"
 #include "simVis/PlatformFilter.h"
 #include "simVis/PlatformModel.h"
@@ -169,6 +170,9 @@ queuedInvalidate_(false)
 
   scaledInertialTransform_->setLocator(getLocator());
   model_->addScaledChild(scaledInertialTransform_);
+
+  // flatten in overhead mode.
+ // simVis::OverheadMode::enableGeometryFlattening(false, model_);
 }
 
 PlatformNode::~PlatformNode()
