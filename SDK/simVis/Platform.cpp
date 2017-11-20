@@ -172,7 +172,7 @@ queuedInvalidate_(false)
   model_->addScaledChild(scaledInertialTransform_);
 
   // flatten in overhead mode.
- // simVis::OverheadMode::enableGeometryFlattening(false, model_);
+  simVis::OverheadMode::enableGeometryFlattening(false, model_);
 }
 
 PlatformNode::~PlatformNode()
