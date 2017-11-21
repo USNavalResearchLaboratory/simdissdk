@@ -344,6 +344,10 @@ public:
     case osgGA::GUIEventAdapter::PUSH:
       underCursor_ = dynamic_cast<const simVis::View*>(&aa);
       break;
+
+    default:
+      // Do nothing for most events
+      break;
     }
     return false;
   }
