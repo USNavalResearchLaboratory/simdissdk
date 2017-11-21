@@ -22,6 +22,7 @@
 #include "osgEarth/Terrain"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simVis/Locator.h"
 #include "simVis/Utils.h"
 #include "simVis/Entity.h"
 

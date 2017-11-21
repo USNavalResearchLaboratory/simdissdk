@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osgDB/ReadFile"
 #include "simCore/Calc/Interpolation.h"
 #include "simNotify/Notify.h"
 #include "simData/LimitData.h"

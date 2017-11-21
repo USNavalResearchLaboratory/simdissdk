@@ -35,7 +35,7 @@ namespace osg {
 
 namespace simVis
 {
-
+class LocatorNode;
 class ScenarioManager;
 class HorizonGeoFence;
 class TargetDelegation;
@@ -108,7 +108,7 @@ public: // ScenarioTool
 public: // Tool
 
   // returns the node to display in the scenario graph
-  osg::Node* getNode() const { return root_.get(); }
+  osg::Node* getNode() const;
 
 public: // internal
 

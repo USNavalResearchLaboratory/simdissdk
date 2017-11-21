@@ -23,22 +23,23 @@
 #define SIMVIS_ENTITY_NODE_H
 
 #include <vector>
+#include "osg/Group"
 #include "osg/observer_ptr"
-#include "osgEarth/MapNode"
-#include "simData/DataSlice.h"
 #include "simData/ObjectId.h"
-#include "simVis/Locator.h"
 
-namespace osgEarth {
-  class Map;
-}
+namespace osgEarth { class MapNode; }
 
 namespace simCore {
   class Clock;
+  class Coordinate;
 }
+
+namespace simData { class DataSliceBase; }
 
 namespace simVis
 {
+  class Locator;
+
   /**
    * Pure interface class for a node that you can call EntityNode::attach with
    * and that will communicate tracking components
@@ -251,6 +252,9 @@ namespace simVis
     virtual ~EntityNode();
 
   private:
+    /** Copy constructor, not implemented or available. */
+    EntityNode(const EntityNode&);
+
     simData::ObjectType type_;
     osg::ref_ptr<Locator> locator_;
   };

@@ -107,8 +107,8 @@ public:
 private:
   /** recalculates the VPW matrix if needed (if dirty); returns 0 on success */
   int recalculateVPW_();
-  /* Convert an ecef coordinate matrix to a screen coordinate */
-  ScreenCoordinate matrixCalculate_(const osg::Matrix& coordinateMatrix) const;
+  /* Convert an ecef coordinate to a screen coordinate */
+  ScreenCoordinate matrixCalculate_(const osg::Vec3d& ecefCoordinate) const;
 
   /// Combined View matrix * projection matrix * window matrix
   osg::Matrix viewProjectionWindow_;

@@ -24,6 +24,7 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
+#include "simData/DataSlice.h"
 #include "simVis/AreaHighlight.h"
 #include "simVis/AxisVector.h"
 #include "simVis/EntityLabel.h"

@@ -83,6 +83,11 @@ PlatformAzimElevViewTool::PlatformAzimElevViewTool(EntityNode* host) :
   fence_ = new HorizonGeoFence();
 }
 
+osg::Node* PlatformAzimElevViewTool::getNode() const
+{
+  return root_.get();
+}
+
 void PlatformAzimElevViewTool::setRange(double range)
 {
   if (range != range_)

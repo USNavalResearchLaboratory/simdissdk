@@ -27,12 +27,13 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
 #include "simNotify/Notify.h"
-#include "simVis/PlanetariumViewTool.h"
-#include "simVis/Scenario.h"
-#include "simVis/Utils.h"
-#include "simVis/Platform.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
+#include "simVis/Locator.h"
+#include "simVis/Platform.h"
+#include "simVis/Scenario.h"
+#include "simVis/Utils.h"
+#include "simVis/PlanetariumViewTool.h"
 
 #define OVERRIDE_TAG "PlanetariumViewTool"
 
@@ -73,6 +74,11 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   // build the geometry for a target node
   targetGeode_ = new osg::Geode();
   scaleTargetGeode_(targetGeode_, range_);
+}
+
+osg::Node* PlanetariumViewTool::getNode() const
+{
+  return root_.get();
 }
 
 void PlanetariumViewTool::setRange(double range)

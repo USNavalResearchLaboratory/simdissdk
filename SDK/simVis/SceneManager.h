@@ -23,17 +23,21 @@
 #define SIMVIS_SCENE_MANAGER_H
 
 #include "osg/ref_ptr"
+#include "osg/Group"
+#include "osgEarth/DrapeableNode"
+#include "osgEarth/MapNode"
+#include "osgEarthUtil/Sky"
+#include "osgEarthUtil/Ocean"
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
 #include "simVis/Scenario.h"
 #include "simVis/Types.h"
-#include "osg/Group"
-#include "osgEarth/DrapeableNode"
-#include "osgEarthUtil/Sky"
-#include "osgEarthUtil/Ocean"
 
-namespace osgEarth {  namespace Drivers { namespace MPTerrainEngine { class MPTerrainEngineOptions; } } }
-namespace osgEarth {  namespace Drivers { namespace RexTerrainEngine { class RexTerrainEngineOptions; } } }
+namespace osgEarth { namespace Drivers
+{
+  namespace MPTerrainEngine { class MPTerrainEngineOptions; }
+  namespace RexTerrainEngine { class RexTerrainEngineOptions; }
+}}
 
 namespace simVis
 {

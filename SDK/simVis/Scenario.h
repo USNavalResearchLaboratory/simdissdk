@@ -42,6 +42,7 @@ namespace simVis
   class BeamNode;
   class CoordSurfaceClamping;
   class GateNode;
+  class LocatorFactory;
   class PlatformNode;
   class ProjectorManager;
   class ProjectorNode;

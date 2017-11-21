@@ -23,10 +23,11 @@
 #define SIMVIS_PLATFORM_NODE_H
 
 #include "osg/ref_ptr"
-
+#include "simCore/Calc/CoordinateSystem.h"
+#include "simCore/EM/RadarCrossSection.h"
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simCore/EM/RadarCrossSection.h"
 
 namespace simData { class DataStore; }
 namespace simVis

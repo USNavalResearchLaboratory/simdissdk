@@ -83,7 +83,7 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
   {
     return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
   }
-  return matrixCalculate_(locatorMatrix);
+  return matrixCalculate_(locatorMatrix.getTrans());
 }
 
 ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
@@ -93,11 +93,11 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
   {
     return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
   }
-
+  // this could be simplified to a coord conversion
   osg::Matrix ecefMatrix;
   osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), lla.alt(), ecefMatrix);
 
-  return matrixCalculate_(ecefMatrix);
+  return matrixCalculate_(ecefMatrix.getTrans());
 }
 
 int ScreenCoordinateCalculator::recalculateVPW_()
@@ -117,10 +117,10 @@ int ScreenCoordinateCalculator::recalculateVPW_()
   return 0;
 }
 
-ScreenCoordinate ScreenCoordinateCalculator::matrixCalculate_(const osg::Matrix& coordinateMatrix) const
+ScreenCoordinate ScreenCoordinateCalculator::matrixCalculate_(const osg::Vec3d& ecefCoordinate) const
 {
   // Calculate the info for the coordinate
-  const osg::Vec3 coordinate = osg::Vec3(0, 0, 0) * coordinateMatrix * viewProjectionWindow_;
+  const osg::Vec3 coordinate = ecefCoordinate * viewProjectionWindow_;
   bool isInside = false;
   if (view_.valid() && view_->getCamera() && view_->getCamera()->getViewport())
   {

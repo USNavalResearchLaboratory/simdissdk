@@ -22,6 +22,7 @@
 #ifndef SIMVIS_PROJECTOR_H
 #define SIMVIS_PROJECTOR_H
 
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 
