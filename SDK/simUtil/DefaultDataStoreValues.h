@@ -24,6 +24,7 @@
 
 namespace simData {
   class DataStore;
+  class LaserPrefs;
   class PlatformPrefs;
   class ScenarioProperties;
 }
@@ -31,9 +32,9 @@ namespace simData {
 namespace simUtil {
 
 /**
-* Class that provides support for DataStore by defining the default values for the different pref types, as well as a convenience
-* method to set the default pref values in the DataStore
-*/
+ * Class that provides support for DataStore by defining the default values for the different pref types, as well as a convenience
+ * method to set the default pref values in the DataStore
+ */
 class SDKUTIL_EXPORT DefaultEntityPrefs
 {
 public:
@@ -42,9 +43,10 @@ public:
 
   /** Set the default values for platform preferences */
   static void initializeDefaultPlatformPrefs(simData::PlatformPrefs& prefs);
+  /** Set the default values for laser preferences */
+  static void initializeDefaultLaserPrefs(simData::LaserPrefs& prefs);
 };
 
 }
 
-#endif
-
+#endif /* SIMUTIL_DEFAULTDATASTOREVALUES_H */
