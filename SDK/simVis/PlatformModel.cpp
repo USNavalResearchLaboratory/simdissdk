@@ -378,13 +378,7 @@ bool PlatformModelNode::updateScale_(const simData::PlatformPrefs& prefs, bool f
   // Check for ScaleXYZ first
   if (prefs.has_scalexyz())
   {
-    if ((prefs.scalexyz().x() > 0.0) && (prefs.scalexyz().y() > 0.0) && (prefs.scalexyz().z() > 0.0))
-    {
-      return updateScaleXyz_(prefs, force);
-    }
-
-    // if ScaleXYZ just turned off than force the other scaling
-    force =  force || PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz);
+    return updateScaleXyz_(prefs, force);
   }
 
   // Clear out the override scaling at this point so latent values don't take over
@@ -399,14 +393,8 @@ bool PlatformModelNode::updateScaleXyz_(const simData::PlatformPrefs& prefs, boo
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz)))
     return false;
 
-  if ((prefs.scalexyz().x() <= 0.0) || (prefs.scalexyz().y() <= 0.0) || (prefs.scalexyz().z() <= 0.0))
-    return false;
-
- 
-
   // update the static scaling using the scaleXYZ pref
   dynamicXform_->setOverrideScale(osg::Vec3d(prefs.scalexyz().y(), prefs.scalexyz().x(), prefs.scalexyz().z()));
-
   return true;
 }
 
