@@ -315,9 +315,14 @@ void WeightedMenuManager::setStatusBar(QWidget* statusBar)
 
 void WeightedMenuManager::insertToolBarAction(int weight, const simQt::Action* action)
 {
+  insertToolBarAction(weight, action->action());
+}
+
+void WeightedMenuManager::insertToolBarAction(int weight, QAction* action)
+{
   if (toolBar_ == NULL)
     return;
-  WeightedMenuManager::insertBefore_(toolBar_, weight, action->action());
+  WeightedMenuManager::insertBefore_(toolBar_, weight, action);
 }
 
 void WeightedMenuManager::insertToolBarSeparator(int weight)

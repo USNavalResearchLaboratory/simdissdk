@@ -27,10 +27,11 @@
 #include <QMetaType>
 #include "simCore/Common/Common.h"
 
-class QWidget;
-class QString;
-class QMenu;
 class QAction;
+class QMenu;
+class QString;
+class QToolBar;
+class QWidget;
 
 namespace simQt {
 
@@ -64,6 +65,8 @@ public:
 
   /// Adds a toolbar action to the simMainWindow
   void insertToolBarAction(int weight, const simQt::Action* action);
+  /// Adds a toolbar action to the simMainWindow
+  void insertToolBarAction(int weight, QAction* action);
   /// Adds a toolbar separator to the simMainWindow
   void insertToolBarSeparator(int weight);
   /// Adds a status bar action to the simMainWindow
@@ -99,6 +102,8 @@ protected:
   void insertBefore_(QWidget* widget, int weight, QAction* action) const;
   /** Inserts a menu into a QMenu or a QMenuBar, using the weight as a guideline for insertion */
   void insertBefore_(QWidget* menuOrBar, int weight, QMenu* menu) const;
+  /** Inserts an action into a widget using the weight as a guideline for insertion */
+  void insertBefore_(QToolBar* toolBar, int weight, QWidget* widget) const;
 
   /** Inserts a separator into a QMenu or QToolBar, before the given action; does not change weights */
   void insertSeparator_(QWidget* menuOrToolBar, QAction* beforeAction) const;
