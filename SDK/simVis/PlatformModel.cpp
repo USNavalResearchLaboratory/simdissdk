@@ -535,10 +535,9 @@ void PlatformModelNode::updateStippling_(const simData::PlatformPrefs& prefs)
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, polygonstipple))
     return;
 
-  if (!model_.valid())
+  if (!offsetXform_.valid())
     return;
-  osg::observer_ptr<osg::Geode> geom = static_cast<osg::Geode*>(model_.get());
-  osg::observer_ptr<osg::StateSet> stateSet = geom->getStateSet();
+  osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getStateSet();
 
   if (!prefs.usepolygonstipple())
   {
@@ -627,10 +626,9 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, drawmode))
     return;
 
-  if (!model_.valid())
+  if (!offsetXform_.valid())
     return;
-  osg::observer_ptr<osg::Geode> geom = static_cast<osg::Geode*>(model_.get());
-  osg::observer_ptr<osg::StateSet> stateSet = geom->getStateSet();
+  osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getStateSet();
 
   // Have default values for face/mode
   osg::PolygonMode::Face face = osg::PolygonMode::FRONT_AND_BACK;
@@ -683,7 +681,7 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
 
 void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, bool force)
 {
-  if (!model_.valid())
+  if (!offsetXform_.valid())
     return;
 
   if (!force && lastPrefsValid_ &&
