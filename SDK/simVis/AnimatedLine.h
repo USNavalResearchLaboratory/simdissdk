@@ -29,10 +29,11 @@
 #include "osgEarth/Revisioning"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
-#include "simVis/Locator.h"
 
 namespace simVis
 {
+  class Locator;
+
   /**
    * An animated line in local space. The line is defined by two endpoints, either Coordinates or Locators. Coordinates are simple fixed positions
    * while Locators are movable positions. The animated line automatically updates to the Locator's new position if it moves.

@@ -25,10 +25,10 @@
 #include "osg/observer_ptr"
 #include "osg/Transform"
 #include "simCore/Common/Common.h"
-#include "simVis/Locator.h"
 
 namespace simVis
 {
+  struct LocatorCallback;
 
 /**
  * Transform that reverses the orientation transform of a Platform.  Useful as a child

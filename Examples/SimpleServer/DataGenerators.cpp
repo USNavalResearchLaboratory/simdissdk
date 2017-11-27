@@ -23,6 +23,7 @@
 #include "simCore/Calc/Calculations.h"
 #include "simData/DataStore.h"
 #include "simVis/AnimatedLine.h"
+#include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
 #include "simUtil/ExampleResources.h"

@@ -20,6 +20,7 @@
 *
 */
 #include "simNotify/Notify.h"
+#include "simVis/Locator.h"
 #include "simVis/Utils.h"
 #include "simVis/PlatformInertialTransform.h"
 

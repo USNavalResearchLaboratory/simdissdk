@@ -31,9 +31,10 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
 #include "simNotify/Notify.h"
-#include "simVis/Utils.h"
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Utils.h"
 #include "simVis/AnimatedLine.h"
 
 #define LC "[AnimatedLine] "

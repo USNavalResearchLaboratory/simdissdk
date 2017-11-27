@@ -21,6 +21,7 @@
  */
 #include <map>
 #include "simNotify/Notify.h"
+#include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
 #include "simVis/VaporTrailStorage.h"

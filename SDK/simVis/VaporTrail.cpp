@@ -26,6 +26,7 @@
 
 #include "simCore/Calc/Interpolation.h"
 #include "simData/LimitData.h"
+#include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Platform.h"
 #include "simVis/Registry.h"
