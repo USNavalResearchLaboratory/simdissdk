@@ -488,11 +488,8 @@ int testFormatter()
   // Tests WMM and Vertical Datum
   rv += SDK_ASSERT(0 == testAzimuths(&formatter, simCore::DEG_SYM_NONE, &provider));
 
-  // TODO: Loading Vertical Datum is failing on Linux due to memory corruption in osgEarth
-#ifdef WIN32
-  bool haveVd = (dc->preloadVerticalDatum() == 0);
+  const bool haveVd = (dc->preloadVerticalDatum() == 0);
   rv += SDK_ASSERT(0 == testAltitudes(&formatter, &provider, haveVd));
-#endif
 #endif
   return rv;
 }
