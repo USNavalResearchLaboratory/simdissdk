@@ -609,30 +609,6 @@ QString ConsoleDataModel::LineEntry::text() const
   return text_;
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-////////////////////////////////////////////////////////////////////////
-SeverityFilterProxy::SeverityFilterProxy(QObject* parent)
-  : QSortFilterProxyModel(parent),
-    minSeverity_(simNotify::NOTIFY_INFO)
-{
-}
-
-void SeverityFilterProxy::setMinimumSeverity(int severity)
-{
-  minSeverity_ = static_cast<simNotify::NotifySeverity>(severity);
-  invalidate();
-}
-
-bool SeverityFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
-{
-  QModelIndex idx = sourceModel()->index(sourceRow, ConsoleDataModel::COLUMN_SEVERITY, sourceParent);
-  if (!idx.isValid())
-    return false;
-  QVariant data = sourceModel()->data(idx, ConsoleDataModel::SEVERITY_ROLE);
-  return data.isValid() && data.toInt() <= minSeverity_;
-}
-#endif
-
 /////////////////////////////////////////////////////////////////
 
 SimpleConsoleTextFilter::SimpleConsoleTextFilter()

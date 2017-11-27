@@ -226,22 +226,6 @@ private:
   QTimer* pendingTimer_;
 };
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-/** @deprecated Use ConsoleDataModel::setMinimumSeverity instead. Performs filtering based on severity */
-class SDKQT_EXPORT SeverityFilterProxy : public QSortFilterProxyModel
-{
-  Q_OBJECT;
-public:
-  SeverityFilterProxy(QObject* parent);
-public slots:
-  void setMinimumSeverity(int severity);
-protected:
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
-private:
-  simNotify::NotifySeverity minSeverity_;
-};
-#endif
-
 /** Console Data Model filter that rejects strings that contain the given text */
 class SDKQT_EXPORT SimpleConsoleTextFilter : public ConsoleDataModel::EntryFilter
 {
