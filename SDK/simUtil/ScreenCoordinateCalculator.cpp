@@ -26,9 +26,10 @@
 namespace simUtil
 {
 
-ScreenCoordinate::ScreenCoordinate(const osg::Vec3& position, bool outOfViewport)
+ScreenCoordinate::ScreenCoordinate(const osg::Vec3& position, bool outOfViewport, bool overHorizon)
   : position_(position),
-    isOffScreen_(outOfViewport)
+    isOffScreen_(outOfViewport),
+    isOverHorizon_(overHorizon)
 {
 }
 
@@ -52,11 +53,22 @@ bool ScreenCoordinate::isOffScreen() const
   return isOffScreen_;
 }
 
+bool ScreenCoordinate::isOverHorizon() const
+{
+  return isOverHorizon_;
+}
+
 ////////////////////////////////////////////////////////////////////////
 
 ScreenCoordinateCalculator::ScreenCoordinateCalculator()
   : dirtyMatrix_(true)
 {
+  // 11km is rough depth of Mariana Trench; decrease radius to help horizon culling work underwater
+  osg::EllipsoidModel em;
+  // See also: Scenario.cpp.  We need a horizon here to detect behind-earth coordinates
+  em.setRadiusEquator(em.getRadiusEquator() - 11000.0);
+  em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
+  horizon_ = new osgEarth::Horizon(em);
 }
 
 ScreenCoordinateCalculator::~ScreenCoordinateCalculator()
@@ -74,15 +86,18 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
   // Refresh the VPW if needed, returning invalid coordinate if needed
   if (recalculateVPW_() != 0)
   {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
+    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true, true);
   }
 
   // Check for invalid locator
   osg::Matrix locatorMatrix;
+
+  // Check entity active flag
   if (!entity.isActive() || !entity.getLocator() || !entity.getLocator()->getLocatorMatrix(locatorMatrix))
   {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
+    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true, true);
   }
+
   return matrixCalculate_(locatorMatrix.getTrans());
 }
 
@@ -91,8 +106,9 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
   // Refresh the VPW if needed, returning invalid coordinate if needed
   if (recalculateVPW_() != 0)
   {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
+    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true, true);
   }
+
   // this could be simplified to a coord conversion
   osg::Matrix ecefMatrix;
   osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), lla.alt(), ecefMatrix);
@@ -112,6 +128,7 @@ int ScreenCoordinateCalculator::recalculateVPW_()
   // Combine the matrices
   const osg::Camera* camera = view_->getCamera();
   const osg::Viewport* viewport = camera->getViewport();
+  horizon_->setEye(osg::Vec3d(0, 0, 0) * osg::Matrix::inverse(camera->getViewMatrix()));
   viewProjectionWindow_ = camera->getViewMatrix() * camera->getProjectionMatrix() * viewport->computeWindowMatrix();
   dirtyMatrix_ = false;
   return 0;
@@ -128,7 +145,10 @@ ScreenCoordinate ScreenCoordinateCalculator::matrixCalculate_(const osg::Vec3d& 
     isInside = (coordinate.x() >= vp->x() && coordinate.x() <= (vp->x() + vp->width())) &&
       (coordinate.y() >= vp->y() && coordinate.y() <= (vp->y() + vp->height()));
   }
-  return ScreenCoordinate(coordinate, !isInside);
+
+  // Check horizon culling
+  const bool overHorizon = !horizon_->isVisible(ecefCoordinate);
+  return ScreenCoordinate(coordinate, !isInside, overHorizon);
 }
 
 }

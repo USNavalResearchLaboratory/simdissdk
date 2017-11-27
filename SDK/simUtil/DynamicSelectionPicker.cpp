@@ -124,10 +124,8 @@ void DynamicSelectionPicker::pickThisFrame_()
     // Calculate the position on the platform
     const simUtil::ScreenCoordinate pos = calc.calculate(*plat);
     // Ignore objects that are off screen or behind the camera
-    if (pos.isBehindCamera() || pos.isOffScreen())
+    if (pos.isBehindCamera() || pos.isOffScreen() || pos.isOverHorizon())
       continue;
-
-    // NOTE: No horizon checks are done here.  It might be worthwhile to do a horizon cull
 
     // Choose the closest object
     const double rangeSquared = (mouseXy_ - pos.position()).length2();
