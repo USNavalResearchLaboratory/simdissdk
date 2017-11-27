@@ -118,7 +118,7 @@ void DynamicSelectionPicker::pickThisFrame_()
   {
     // Hit every platform node -- skip if not a platform
     simVis::PlatformNode* plat = dynamic_cast<simVis::PlatformNode*>((*i).get());
-    if (!plat || !plat->isActive())
+    if (!plat || !plat->isActive() || !plat->isVisible())
       continue;
 
     // Calculate the position on the platform
