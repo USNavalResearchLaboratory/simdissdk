@@ -111,6 +111,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
     brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
     objectIndexTag_(0)
 {
+  // EntityLabelNode for platformModel is a special case - a locatorNode with no locator; it gets its location from parent, the platformmodelnode (which is a locatorNode).
   label_ = new EntityLabelNode();
 
   setName("PlatformModel");

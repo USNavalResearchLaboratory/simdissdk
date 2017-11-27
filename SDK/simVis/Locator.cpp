@@ -720,7 +720,7 @@ LocatorNode::LocatorNode()
   : locatorCallback_(NULL),
     overheadModeHint_(false)
 {
-  //nop
+  // LocatorNode is valid without any locator; it functions as a group.
 }
 
 LocatorNode::LocatorNode(Locator* locator)
@@ -784,9 +784,13 @@ void LocatorNode::syncWithLocator()
   }
 }
 
-
 bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* nv) const
 {
+  if (!locator_.valid())
+  {
+    // locatorNode with no locator has the position of its parent
+    return true;
+  }
   osg::Matrix matrix = getMatrix();
 
   // It is possible that nv is NULL if calling computeBound(), which can happen during intersection
@@ -798,9 +802,7 @@ bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* 
     p = simCore::clampEcefPointToGeodeticSurface(p);
     matrix.setTrans(p.x(), p.y(), p.z());
   }
-
   out.preMult(matrix);
-
   return true;
 }
 
