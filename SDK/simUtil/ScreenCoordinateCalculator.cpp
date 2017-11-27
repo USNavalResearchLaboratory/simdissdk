@@ -20,6 +20,7 @@
  *
  */
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/View.h"
 #include "simUtil/ScreenCoordinateCalculator.h"
 
@@ -60,6 +61,13 @@ bool ScreenCoordinate::isOverHorizon() const
 
 ////////////////////////////////////////////////////////////////////////
 
+namespace {
+
+/** Screen coordinate that is off screen and behind the eye. */
+static const ScreenCoordinate INVALID_COORDINATE(osg::Vec3(-1, -1, 0), true, true);
+
+}
+
 ScreenCoordinateCalculator::ScreenCoordinateCalculator()
   : dirtyMatrix_(true)
 {
@@ -85,19 +93,29 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
 {
   // Refresh the VPW if needed, returning invalid coordinate if needed
   if (recalculateVPW_() != 0)
-  {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true, true);
-  }
-
-  // Check for invalid locator
-  osg::Matrix locatorMatrix;
+    return INVALID_COORDINATE;
 
   // Check entity active flag
-  if (!entity.isActive() || !entity.getLocator() || !entity.getLocator()->getLocatorMatrix(locatorMatrix))
+  const simVis::Locator* locator = entity.getLocator();
+  if (!entity.isActive() || !locator)
+    return INVALID_COORDINATE;
+
+  // Overhead mode: Get the LLA position, clamp to 0, then convert to ECEF
+  if (view_.valid() && view_->isOverheadEnabled())
   {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true, true);
+    simCore::Vec3 lla;
+    if (!locator->getLocatorPosition(&lla, simCore::COORD_SYS_LLA))
+      return INVALID_COORDINATE;
+    lla.setAlt(0.0);
+    simCore::Vec3 ecefOut;
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
+    return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
   }
 
+  // Non-overhead mode: Get the locator matrix and pull out the XYZ translate transform
+  osg::Matrix locatorMatrix;
+  if (!locator->getLocatorMatrix(locatorMatrix))
+    return INVALID_COORDINATE;
   return matrixCalculate_(locatorMatrix.getTrans());
 }
 
@@ -105,13 +123,14 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
 {
   // Refresh the VPW if needed, returning invalid coordinate if needed
   if (recalculateVPW_() != 0)
-  {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true, true);
-  }
+    return INVALID_COORDINATE;
 
   // this could be simplified to a coord conversion
+  double alt = lla.alt();
+  if (view_.valid() && view_->isOverheadEnabled())
+    alt = 0.0;
   osg::Matrix ecefMatrix;
-  osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), lla.alt(), ecefMatrix);
+  osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), alt, ecefMatrix);
 
   return matrixCalculate_(ecefMatrix.getTrans());
 }
