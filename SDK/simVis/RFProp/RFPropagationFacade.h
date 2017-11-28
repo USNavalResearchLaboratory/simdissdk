@@ -27,7 +27,6 @@
 #include "osg/ref_ptr"
 #include "simCore/Common/Export.h"
 #include "simData/ObjectId.h"
-#include "simVis/Locator.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
 #include "simVis/RFProp/Profile.h"
@@ -37,6 +36,7 @@
 
 namespace osgEarth { class Map; }
 namespace simCore { class TimeStamp; }
+namespace simVis { class LocatorNode; }
 
 namespace simRF
 {

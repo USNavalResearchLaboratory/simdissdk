@@ -30,6 +30,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
+#include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"

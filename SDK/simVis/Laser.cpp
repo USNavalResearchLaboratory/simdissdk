@@ -28,6 +28,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
+#include "simVis/Locator.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Laser.h"
@@ -90,6 +91,8 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
 }
+
+LaserNode::~LaserNode() {}
 
 void LaserNode::updateLabel_(const simData::LaserPrefs& prefs)
 {

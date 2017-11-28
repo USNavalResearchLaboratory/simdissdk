@@ -25,7 +25,7 @@
 #include <string>
 #include "osg/ref_ptr"
 #include "simData/DataTypes.h"
-#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 
 namespace osgEarth { namespace Annotation { class LabelNode; } }
 namespace simVis

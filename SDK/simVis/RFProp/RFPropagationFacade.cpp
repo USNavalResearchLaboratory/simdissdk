@@ -26,6 +26,8 @@
 #include "simCore/Time/TimeClass.h"
 #include "simNotify/Notify.h"
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/RFProp/ArepsLoader.h"
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"

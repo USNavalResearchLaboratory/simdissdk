@@ -19,23 +19,19 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Geode"
+#include "osg/Geometry"
+#include "osg/Point"
+
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
 
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
-
-#include "osgEarthSymbology/Color"
-
-#include "osg/Geode"
-#include "osg/Geometry"
-#include "osg/Point"
-
 #include "simVis/VelocityVector.h"
-
-using namespace osgEarth::Symbology;
 
 namespace simVis
 {

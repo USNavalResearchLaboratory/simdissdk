@@ -27,6 +27,7 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/String/Format.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/View.h"
 #include "simVis/Scenario.h"
 #include "simVis/Shaders.h"

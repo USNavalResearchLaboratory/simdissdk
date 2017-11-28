@@ -81,6 +81,7 @@
 #include "simVis/LobGroup.h"
 #include "simVis/LocalGrid.h"
 #include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/ObjectSelectionHandler.h"
 #include "simVis/osgEarthVersion.h"

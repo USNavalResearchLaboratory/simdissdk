@@ -27,7 +27,7 @@
 #include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"
 #include "simData/DataTypes.h"
-#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 
 namespace simVis
 {

@@ -38,6 +38,7 @@
 #include "simVis/Constants.h"
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/EntityLabel.h"
+#include "simVis/Locator.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"

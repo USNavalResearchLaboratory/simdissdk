@@ -31,6 +31,7 @@
 #include "simVis/EphemerisVector.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
+#include "simVis/Locator.h"
 #include "simVis/PlatformInertialTransform.h"
 #include "simVis/PlatformFilter.h"
 #include "simVis/PlatformModel.h"

@@ -37,6 +37,7 @@
 #include "simCore/Time/TimeClass.h"
 
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"

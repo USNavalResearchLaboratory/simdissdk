@@ -31,6 +31,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/LUTProfileDataProvider.h"
 #include "simVis/RFProp/LUT1ProfileDataProvider.h"

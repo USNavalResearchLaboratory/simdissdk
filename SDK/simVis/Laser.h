@@ -159,8 +159,8 @@ namespace simVis
     virtual const char* className() const { return "LaserNode"; }
 
   protected:
-    /// osg::Referenced-derived
-    virtual ~LaserNode() {}
+    /// osg::Referenced-derived; destructor body needs to be in the .cpp
+    virtual ~LaserNode();
 
   private: // methods
     void refresh_(const simData::LaserUpdate* update, const simData::LaserPrefs* prefs);
