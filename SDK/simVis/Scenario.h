@@ -25,16 +25,18 @@
 #include <limits>
 #include <string>
 #include <map>
+#include <set>
 #include "osg/Group"
 #include "osg/ref_ptr"
 #include "osg/View"
 #include "osgEarth/CullingUtils"
+#include "osgEarth/Revisioning"
 #include "osgEarthUtil/SpatialData"
-#include "simVis/Entity.h"
-#include "simVis/Tool.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
+#include "simVis/Types.h"
 #include "simVis/RFProp/RFPropagationManager.h"
 
+namespace osgEarth { class MapNode; }
 namespace simCore { class Clock; }
 namespace simData { class DataStore; }
 namespace simVis
@@ -50,6 +52,7 @@ namespace simVis
   class LaserNode;
   class LobGroupNode;
   class PlatformTspiFilterManager;
+  class ScenarioTool;
 
   /** Settings to configure the scenario manager for large numbers of entities */
   class ScenarioDisplayHints

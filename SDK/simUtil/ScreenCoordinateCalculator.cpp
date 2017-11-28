@@ -21,6 +21,7 @@
  */
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simVis/Entity.h"
 #include "simVis/View.h"
 #include "simUtil/ScreenCoordinateCalculator.h"
 

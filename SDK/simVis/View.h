@@ -22,20 +22,17 @@
 #ifndef SIMVIS_MANAGED_VIEW_H
 #define SIMVIS_MANAGED_VIEW_H
 
-#include "simVis/Entity.h"
-#include "simVis/SceneManager.h"
-#include "simVis/Types.h"
-
 #include "osgViewer/View"
 #include "osg/Camera"
 #include "osgEarthUtil/Controls"
 #include "osgEarthUtil/EarthManipulator"
 #include "osgEarth/Viewpoint"
+#include "simVis/SceneManager.h"
 #include "simVis/ViewManager.h"
 
 namespace simVis
 {
-
+class EntityNode;
 class FocusManager;
 class ViewManager;
 class EarthManipulator;

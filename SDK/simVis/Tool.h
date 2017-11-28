@@ -22,10 +22,10 @@
 #ifndef SIMVIS_TOOL_H
 #define SIMVIS_TOOL_H
 
-#include <vector>
 #include "osg/Node"
 #include "osgEarth/Revisioning"
 #include "simCore/Common/Common.h"
+#include "simVis/Types.h"
 
 namespace simCore { class TimeStamp; }
 namespace simVis
@@ -71,7 +71,7 @@ namespace simVis
     * Tool's root node will be added to the scenegraph immediately after this call.
     * @param scenario the scenarioManager that is installing this tool
     */
-    virtual void onInstall(const ScenarioManager& scenario) { }
+    virtual void onInstall(const ScenarioManager& scenario) = 0;
 
     /**
     * Called when this tool is removed from the scenario.
@@ -79,7 +79,7 @@ namespace simVis
     * Tool's root node has already been removed from the scenegraph before this call
     * @param scenario the scenarioManager that is uninstalling this tool
     */
-    virtual void onUninstall(const ScenarioManager& scenario) { }
+    virtual void onUninstall(const ScenarioManager& scenario) = 0;
 
     /**
     * Called when a new entity is added.
@@ -101,11 +101,8 @@ namespace simVis
     * @param timeStamp the update time.
     * @param updates the changes to the scenario's entities for the given update time
     */
-    virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const std::vector<osg::ref_ptr<EntityNode> >& updates) { }
+    virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates) { }
   };
-
-  /** Vector of ScenarioTool ref_ptr */
-  typedef std::vector< osg::ref_ptr<ScenarioTool> > ScenarioToolVector;
 
 } // namespace simVis
 

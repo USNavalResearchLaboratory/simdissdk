@@ -24,10 +24,10 @@
 
 #include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
-#include "simVis/Entity.h"
 #include "simVis/EntityFamily.h"
-#include "simVis/Tool.h"
 #include "simVis/TargetDelegation.h"
+#include "simVis/Tool.h"
+#include "simVis/Types.h"
 
 namespace osg {
   class Geode;

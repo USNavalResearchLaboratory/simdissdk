@@ -34,6 +34,7 @@
 
 #include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
+#include "simVis/Entity.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"

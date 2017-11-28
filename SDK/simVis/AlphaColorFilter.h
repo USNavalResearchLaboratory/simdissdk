@@ -22,10 +22,11 @@
 #ifndef SIMVIS_ALPHA_COLOR_FILTER_H
 #define SIMVIS_ALPHA_COLOR_FILTER_H
 
-#include "simVis/Entity.h"
 #include <osgEarthUtil/Common>
 #include <osgEarth/ColorFilter>
-#include <osg/Uniform>
+#include "simCore/Common/Export.h"
+
+namespace osg { class Uniform; }
 
 namespace simVis
 {

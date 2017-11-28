@@ -22,6 +22,7 @@
 #include <cassert>
 #include <algorithm>
 #include "simCore/Calc/Angle.h"
+#include "simVis/Entity.h"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simVis/EarthManipulator.h"

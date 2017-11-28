@@ -23,6 +23,7 @@
 #include "simCore/Time/Clock.h"
 #include "simCore/String/TextReplacer.h"
 #include "simVis/EarthManipulator.h"
+#include "simVis/Entity.h"
 #include "simVis/Viewer.h"
 #include "simVis/View.h"
 #include "simUtil/Replaceables.h"

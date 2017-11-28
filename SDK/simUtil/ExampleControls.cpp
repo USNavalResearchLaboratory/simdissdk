@@ -27,6 +27,7 @@
 
 #include "simCore/Calc/MathConstants.h"
 #include "simNotify/Notify.h"
+#include "simVis/Entity.h"
 #include "simUtil/ExampleControls.h"
 
 using namespace osgEarth;

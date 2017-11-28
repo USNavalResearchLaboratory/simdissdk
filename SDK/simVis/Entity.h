@@ -259,11 +259,6 @@ namespace simVis
     osg::ref_ptr<Locator> locator_;
   };
 
-  /** Vector of EntityNode ref_ptr */
-  typedef std::vector< osg::ref_ptr<EntityNode> >      EntityVector;
-  /** Vector of EntityNode observer_ptr */
-  typedef std::vector< osg::observer_ptr<EntityNode> > EntityObserverVector;
-
 } // namespace simVis
 
 #endif // SIMVIS_PLATFORM_NODE_H
