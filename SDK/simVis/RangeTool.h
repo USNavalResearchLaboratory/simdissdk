@@ -661,6 +661,7 @@ namespace simVis
       osgEarth::Revision                 obj2LocatorRev_;        // tracks whether entity 2 is up to date with scenario data
       CalculationVector                  calculations_;          // calculations to render
       State                              state_;                 // the calc state for this assoc
+      osg::ref_ptr<Graphic>              labelPos_;              // Use the mid-point of the slant line for the text
 
     protected:
       /// osg::Referenced-derived

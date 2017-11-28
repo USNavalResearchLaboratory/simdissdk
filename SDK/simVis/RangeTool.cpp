@@ -487,6 +487,8 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
 
   // create a state, and a magnetic datum convert for any measurements we might want to make
   state_.earthModel_ = simCore::WGS_84;
+
+  labelPos_ = new SlantLineGraphic;
 }
 
 void RangeTool::Association::add(Calculation* calc)
@@ -627,6 +629,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   typedef std::pair<CalculationVector, TextOptions> LabelSetup;
   typedef std::map<osg::Vec3, LabelSetup, CloseEnoughCompare> Labels;
   Labels labels;
+  osg::Vec3 labelPos = labelPos_->labelPos(state_);
 
   for (CalculationVector::const_iterator c = calculations_.begin(); c != calculations_.end(); ++c)
   {
@@ -693,7 +696,6 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       if (posGraphic)
       {
-        osg::Vec3 labelPos = posGraphic->labelPos(state_);
         CalculationVector& calcs = labels[labelPos].first;
         calcs.push_back(calc);
         if (calcs.size() == 1)
