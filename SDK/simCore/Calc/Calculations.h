@@ -329,9 +329,7 @@ namespace simCore
   /**
   * @brief Clamps a point in ECEF space to the surface of the WGS84 ellipsoid.
   *
-  * Find the point on the WGS84 geodetic surface whose geodetic surface normal
-  * points towards the input ECEF point. In other words, project the input point
-  * up or down onto the surface of the WGS84 ellipsoid.
+  * Computes a point referenced to WGS84 whose value is on the geodetic surface.
   * @param ecef ECEF coordinate in meters
   * @return Surface-clamped ECEF value in meters, clamped to WGS84 ellipsoid.
   */
