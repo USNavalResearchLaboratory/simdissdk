@@ -22,8 +22,10 @@
 #include "osg/ComputeBoundsVisitor"
 #include "osgUtil/CullVisitor"
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
 #include "simVis/Constants.h"
 #include "simVis/Utils.h"
+#include "simVis/View.h"
 #include "simVis/DynamicScaleTransform.h"
 
 #define LC "[DynamicScaleTransform] "
@@ -300,8 +302,33 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
     newScale.set(staticScalar_, staticScalar_, staticScalar_);
   else
   {
+    double range = nv.getEyePoint().length();
+    // in ortho mode, need to adjust the range based on the current camera extents, rather than the camera range
+    osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(&nv);
+    if (cv)
+    {
+      const osg::Camera* camera = cv->getCurrentCamera();
+      if (camera)
+      {
+        // need the view to get the current FOV
+        const simVis::View* view = dynamic_cast<const simVis::View*>(camera->getView());
+        if (view)
+        {
+          const osg::Matrix& proj = camera->getProjectionMatrix();
+          if (!osg::equivalent(proj(3, 3), 0.0)) // ortho mode
+          {
+            double L, R, B, T, N, F;
+            camera->getProjectionMatrixAsOrtho(L, R, B, T, N, F);
+            const double height = T - B;
+            double tanFOV = tan(simCore::DEG2RAD * view->fovY() * 0.5);
+            if (tanFOV != 0.0)
+              range = (height * 0.5) / tanFOV;
+          }
+        }
+      }
+    }
     // Compute the dynamic scale based on the distance from the eye
-    newScale = computeDynamicScale_(nv.getEyePoint().length());
+    newScale = computeDynamicScale_(range);
   }
 
   // Dirty the bounding sphere and return the size
