@@ -203,7 +203,7 @@ RangeTool::TextOptions::TextOptions()
     xOffset_(0.0f),
     yOffset_(0.0f),
     color_(.5, .5, .5, 1),     // gray
-    showText_(true)
+    showText_(ALL)
 {
   //nop
 }
@@ -697,6 +697,8 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       if (posGraphic)
       {
+        if (calc->textOptions().showText_ == TextOptions::ALL)
+          labelPos = posGraphic->labelPos(state_);
         CalculationVector& calcs = labels[labelPos].first;
         calcs.push_back(calc);
         if (calcs.size() == 1)
@@ -753,7 +755,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
         << units.getAbbr();
     }
 
-    if (!textOptions.showText_)
+    if (textOptions.showText_ == TextOptions::NONE)
       continue;
 
     osgText::Text* text = NULL;
