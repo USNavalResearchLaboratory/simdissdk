@@ -739,8 +739,8 @@ void PlatformNode::updateOrRemoveVelocityVector_(bool prefsDraw, const simData::
       velocityAxisVector_ = new VelocityVector(getLocator(), VELOCITY_VECTOR_COLOR);
       addChild(velocityAxisVector_);
       // force rebuild
-      velocityAxisVector_->setPrefs(prefs.drawvelocityvec(), prefs, true);
       velocityAxisVector_->update(lastUpdate_);
+      velocityAxisVector_->setPrefs(prefs.drawvelocityvec(), prefs, true);
     }
   }
   else if (velocityAxisVector_.valid()) // remove if present

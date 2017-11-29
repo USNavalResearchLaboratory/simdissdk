@@ -51,7 +51,7 @@ VelocityVector::~VelocityVector()
 {
 }
 
-void VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
+int VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
 {
   // clean the graph so we can rebuild it.
   this->removeChildren(0, this->getNumChildren());
@@ -60,7 +60,7 @@ void VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
   if (!lastUpdate_.has_time())
   {
     setNodeMask(DISPLAY_MASK_NONE);
-    return;
+    return 1;
   }
 
   osg::ref_ptr<osg::Geode> geode = new osg::Geode();
@@ -72,6 +72,7 @@ void VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
 
   setNodeMask(DISPLAY_MASK_PLATFORM);
   this->addChild(geode);
+  return 0;
 };
 
 void VelocityVector::setPrefs(bool draw, const simData::PlatformPrefs& prefs, bool force)
@@ -100,9 +101,18 @@ void VelocityVector::setPrefs(bool draw, const simData::PlatformPrefs& prefs, bo
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, velvectimeunits);
 
     if (rebuildRequired)
-      rebuild_(prefs);
+    {
+      if (rebuild_(prefs) == 0)
+      {
+        // this is guaranteed by rebuild_
+        assert(getNodeMask() == DISPLAY_MASK_PLATFORM);
+        // force sync with our locator
+        syncWithLocator();
+      }
+    }
+    else
+      setNodeMask(draw ? DISPLAY_MASK_PLATFORM : DISPLAY_MASK_NONE);
 
-    setNodeMask(draw ? DISPLAY_MASK_PLATFORM : DISPLAY_MASK_NONE);
     forceRebuild_ = false;
   }
   lastPrefs_ = prefs;

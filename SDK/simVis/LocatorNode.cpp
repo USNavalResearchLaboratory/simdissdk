@@ -85,7 +85,7 @@ void LocatorNode::setLocator(Locator* locator)
 
 void LocatorNode::syncWithLocator()
 {
-  if (locator_.valid() && locator_->outOfSyncWith(matrixRevision_))
+  if (getNodeMask() != 0 && locator_.valid() && locator_->outOfSyncWith(matrixRevision_))
   {
     osg::Matrix matrix;
 
@@ -99,6 +99,8 @@ void LocatorNode::syncWithLocator()
 
 bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* nv) const
 {
+  if (getNodeMask() == 0)
+    return false;
   if (!locator_.valid())
   {
     // locatorNode with no locator has the position of its parent

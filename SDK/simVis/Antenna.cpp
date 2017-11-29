@@ -99,6 +99,7 @@ AntennaNode::AntennaNode(simVis::Locator* locator, const osg::Quat& rot)
   colorUtils_ = new ColorUtils(0.3);
   antenna_ = new osg::MatrixTransform();
   addChild(antenna_);
+  setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
 AntennaNode::~AntennaNode()
@@ -106,17 +107,6 @@ AntennaNode::~AntennaNode()
   delete colorUtils_;
   delete antennaPattern_;
 }
-
-void AntennaNode::syncWithLocator()
-{
-  // if not drawing, we don't need to update this
-  if (!loadedOK_ || !lastPrefs_.isSet() || !lastPrefs_->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
-    return;
-
-  // call the base class to update the matrix.
-  LocatorNode::syncWithLocator();
-}
-
 
 // antennaPattern's scale is a product of update range (in m) and pref beamScale (no units, 1.0 default)
 void AntennaNode::setRange(float range)
@@ -207,6 +197,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   if (!drawAntennaPattern)
   {
     antenna_->removeChildren(0, getNumChildren());
+    setNodeMask(simVis::DISPLAY_MASK_NONE);
   }
   else if (requiresRedraw)
   {
@@ -228,6 +219,8 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   {
     // this is a guard on the use of oldPrefs; if assert fails, check that !lastPrefs_.isSet() forces requiresRebuild to true
     assert(lastPrefs_.isSet());
+    // a change in draw state should be handled in two if blocks above
+    assert(getNodeMask() == simVis::DISPLAY_MASK_BEAM);
     if (PB_FIELD_CHANGED(oldPrefs, newPrefs, shaded))
       updateLighting_(prefs.shaded());
     if (PB_FIELD_CHANGED(oldPrefs, newPrefs, blended))

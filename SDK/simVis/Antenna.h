@@ -78,9 +78,6 @@ namespace simVis
     /** Return the class name */
     virtual const char* className() const { return "AntennaNode"; }
 
-  public: // LocatorNode interface
-    virtual void syncWithLocator(); //override
-
   protected:
     /// osg::Referenced-derived
     virtual ~AntennaNode();

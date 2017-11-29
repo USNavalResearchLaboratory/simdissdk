@@ -47,9 +47,6 @@ public:
   /** Return the class name */
   virtual const char* className() const { return "EntityLabelNode"; }
 
-public: // LocatorNode interface
-  virtual void syncWithLocator(); //override
-
 protected:
   virtual ~EntityLabelNode();
 

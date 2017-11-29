@@ -69,8 +69,11 @@ protected: // methods
   virtual ~VelocityVector();
 
 private: // methods
-  /// recreate the geometry
-  void rebuild_(const simData::PlatformPrefs& prefs);
+  /**
+  * Recreate the geometry
+  * @return 0 if geometry was recreated, non-zero if no velocity vector created
+  */
+  int rebuild_(const simData::PlatformPrefs& prefs);
 
   /// create the velocity vector line
   void createVelocityVector_(const simData::PlatformPrefs& prefs, osg::Geode* geode) const;

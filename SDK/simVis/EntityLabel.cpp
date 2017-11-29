@@ -37,50 +37,39 @@ EntityLabelNode::EntityLabelNode()
   : LocatorNode(),
   hasLastPrefs_(false)
 {
+  // entity labels are off until prefs turn them on
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 EntityLabelNode::EntityLabelNode(simVis::Locator* locator)
   : LocatorNode(locator),
   hasLastPrefs_(false)
 {
+  // entity labels are off until prefs turn them on
+  setNodeMask(DISPLAY_MASK_NONE);
 }
 
 EntityLabelNode::~EntityLabelNode()
 {
 }
 
-void EntityLabelNode::syncWithLocator()
-{
-  // whether to draw the label at all - only valid when hasLastPrefs_ is true
-  const bool draw = lastCommonPrefs_.draw() && lastCommonPrefs_.labelprefs().draw();
-
-  // if not drawing, we don't need to update this
-  if (!label_.valid() || (hasLastPrefs_ && !draw))
-    return;
-
-  // call the base class to update the matrix.
-  LocatorNode::syncWithLocator();
-}
-
 /// Update the label with the given preferences and text
 void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std::string& text, float zOffset)
 {
-  const simData::LabelPrefs& lastLabelPrefs = lastCommonPrefs_.labelprefs();
   const simData::LabelPrefs& labelPrefs = commonPrefs.labelprefs();
 
   // whether to draw the label at all:
   const bool draw = commonPrefs.draw() && labelPrefs.draw();
 
-  // Only make the label when need it
+  // Only make the label when needed
   if (!draw && !label_.valid())
+  {
+    // entity labels are off until prefs turn them on
+    assert(getNodeMask() == DISPLAY_MASK_NONE);
     return;
-
-  // if user toggled draw on, ensure that locator is up-to-date
-  if (draw && !(lastCommonPrefs_.draw() && lastCommonPrefs_.labelprefs().draw()))
-    syncWithLocator();
+  }
 
   bool forceStyle = false;
-
   if (!label_.valid())
   {
     // create a label node for the first time
@@ -121,7 +110,11 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
     // check for an update:
     const bool textChanged = (text != lastText_);
 
-    label_->setNodeMask(draw ? DISPLAY_MASK_LABEL : 0);
+    setNodeMask(draw ? DISPLAY_MASK_LABEL : DISPLAY_MASK_NONE);
+    label_->setNodeMask(draw ? DISPLAY_MASK_LABEL : DISPLAY_MASK_NONE);
+    // if label was just enabled with this prefs change, force our locator node to sync with its locator
+    if (draw && (!hasLastPrefs_ || !lastCommonPrefs_.draw() || !lastCommonPrefs_.labelprefs().draw()))
+      syncWithLocator();
 
     // For priority pref, 0 is least likely to show, higher values more likely to show, negative values are always shown
     // FLT_MAX means always show to osgEarth
@@ -131,6 +124,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       label_->setPriority(actualPriority);
 
     // Preferences that change how the text is displayed and not the content of the text
+    const simData::LabelPrefs& lastLabelPrefs = lastCommonPrefs_.labelprefs();
     const bool labelStylePrefsChanged =
       !hasLastPrefs_ ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, color) ||
@@ -143,6 +137,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, backdroptype) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, alignment) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, backdropimplementation);
+
     if (textChanged)
     {
       // update the text label.
