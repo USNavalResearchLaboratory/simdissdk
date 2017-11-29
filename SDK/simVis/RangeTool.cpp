@@ -47,6 +47,7 @@
 #include "simVis/Beam.h"
 #include "simVis/Antenna.h"
 #include "simVis/LobGroup.h"
+#include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 #include "simVis/RFProp/RFPropagationManager.h"

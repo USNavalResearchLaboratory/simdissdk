@@ -22,24 +22,26 @@
 #ifndef SIMVIS_BEAM_H
 #define SIMVIS_BEAM_H
 
-#include "osg/MatrixTransform"
-#include "osg/ref_ptr"
 #include "osg/observer_ptr"
 #include "simCore/EM/Constants.h"
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 
-namespace osg { class Depth; }
+namespace osg {
+  class Depth;
+  class MatrixTransform;
+}
 
 namespace simVis
 {
   class AntennaNode;
   class BeamPulse;
+  class EntityLabelNode;
+  class LabelContentCallback;
+  class LocalGridNode;
+  class Locator;
   class ScenarioManager;
 
   /// Scene graph node representing the Beam volume

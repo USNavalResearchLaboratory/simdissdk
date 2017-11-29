@@ -27,12 +27,13 @@
 #include "osgEarth/Registry"
 
 #include "simCore/Calc/Angle.h"
-#include "simVis/Scenario.h"
-#include "simVis/Utils.h"
-#include "simVis/Shaders.h"
-#include "simVis/Platform.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
+#include "simVis/Locator.h"
+#include "simVis/Platform.h"
+#include "simVis/Shaders.h"
+#include "simVis/Scenario.h"
+#include "simVis/Utils.h"
 #include "simVis/PlatformAzimElevViewTool.h"
 #define OVERRIDE_TAG "PlatformAzimElevViewTool"
 

@@ -30,6 +30,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
+#include "simVis/Locator.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/SphericalVolume.h"
@@ -341,6 +342,9 @@ contentCallback_(new NullEntityCallback())
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
 }
+
+GateNode::~GateNode()
+{}
 
 void GateNode::updateLabel_(const simData::GatePrefs& prefs)
 {

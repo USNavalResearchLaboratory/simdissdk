@@ -22,11 +22,11 @@
 #ifndef SIMVIS_GATE_H
 #define SIMVIS_GATE_H
 
-#include "osg/ref_ptr"
 #include "osg/observer_ptr"
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 
 namespace osg { class Depth; }
 namespace simVis
@@ -34,6 +34,7 @@ namespace simVis
   class EntityLabelNode;
   class LabelContentCallback;
   class LocalGridNode;
+  class Locator;
 
   /// Scene graph node representing the Gate volume
   class SDKVIS_EXPORT GateVolume : public simVis::LocatorNode
@@ -45,7 +46,6 @@ namespace simVis
     /** Perform an in-place update to an existing volume */
     void performInPlaceUpdates(const simData::GateUpdate* a,
                                 const simData::GateUpdate* b);
-
 
     /** Perform an in-place update to an existing volume */
     void performInPlacePrefChanges(const simData::GatePrefs* a,
@@ -232,8 +232,8 @@ namespace simVis
     const simData::GateUpdate* getLastUpdateFromDS() const;
 
   protected:
-    /// osg::Referenced-derived
-    virtual ~GateNode() {}
+    /// osg::Referenced-derived; destructor body needs to be in the .cpp
+    virtual ~GateNode();
 
   private:
     /// determine if new update/new prefs can be handled with in-place-update (without complete rebuild)
