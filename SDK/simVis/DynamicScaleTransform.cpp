@@ -276,6 +276,38 @@ void DynamicScaleTransform::clearOverrideScale()
   }
 }
 
+double DynamicScaleTransform::getSimulatedOrthoRange_(osgUtil::CullVisitor* cv) const
+{
+  // Check for NULL, such as invalid dynamic_cast<>
+  if (!cv)
+    return 0.0;
+
+  // Need camera to get matrix
+  const osg::Camera* camera = cv->getCurrentCamera();
+  if (!camera)
+    return 0.0;
+
+  // Need the view to get the current FOV
+  const simVis::View* view = dynamic_cast<const simVis::View*>(camera->getView());
+  if (!view)
+    return 0.0;
+
+  // If the projection matrix is in perspective and not ortho, return 0
+  const osg::Matrix& proj = camera->getProjectionMatrix();
+  if (osg::equivalent(proj(3, 3), 0.0)) // not ortho mode (perspective mode)
+    return 0.0;
+
+  // Pull out the projection matrix
+  double L, R, B, T, N, F;
+  camera->getProjectionMatrixAsOrtho(L, R, B, T, N, F);
+  const double height = T - B;
+  const double tanFOV = tan(simCore::DEG2RAD * view->fovY() * 0.5);
+  // Avoid divide-by-zero
+  if (tanFOV == 0.0)
+    return 0.0;
+  return (height * 0.5) / tanFOV;
+}
+
 void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
 {
   // Optimize away if not visible, don't accept on children
@@ -294,6 +326,30 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
   if (iconScaleFactor_ == INVALID_SCALE_FACTOR)
     recomputeBounds();
 
+  // Calculate a scalar for the cull visitor for ortho mode.  This is needed because platforms
+  // in ortho appear closer than they are to the eye because ortho is not in perspective mode.
+  // So in Ortho, you specify the left/right/top/bottom extents.  The eye range doesn't really
+  // matter -- an object two meters away is as big as an object two hundred kilometers away because
+  // of the projection.  In effect, in ortho mode the actual eye range along the eye vector has no
+  // impact on display.  But osg::LODNode isn't smart enough to account for this.  So we do the
+  // calculations here, by calculating the 'apparent' range (eye distance as if we were in
+  // perspective), then calculating the actual range, and changing the LOD scalar based on the
+  // ratio between the two.
+  osgUtil::CullVisitor* cullVisitor = dynamic_cast<osgUtil::CullVisitor*>(&nv);
+  // Note that ortho range will change per inset, but not necessarily per platform.
+  const double orthoRange = getSimulatedOrthoRange_(cullVisitor);
+  const double rangeToEye = nv.getEyePoint().length();
+
+  bool resetLodScale = false;
+  double oldLodScale = 0.0;
+  // Rescale the LOD
+  if (rangeToEye != 0.0 && orthoRange != 0.0 && cullVisitor)
+  {
+    oldLodScale = cullVisitor->getLODScale();
+    resetLodScale  = true;
+    cullVisitor->setLODScale(oldLodScale * orthoRange / rangeToEye);
+  }
+
   // Figure out the scaling: either override, dynamic, or static
   osg::Vec3f newScale;
   if (hasOverrideScale())
@@ -302,31 +358,7 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
     newScale.set(staticScalar_, staticScalar_, staticScalar_);
   else
   {
-    double range = nv.getEyePoint().length();
-    // in ortho mode, need to adjust the range based on the current camera extents, rather than the camera range
-    osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(&nv);
-    if (cv)
-    {
-      const osg::Camera* camera = cv->getCurrentCamera();
-      if (camera)
-      {
-        // need the view to get the current FOV
-        const simVis::View* view = dynamic_cast<const simVis::View*>(camera->getView());
-        if (view)
-        {
-          const osg::Matrix& proj = camera->getProjectionMatrix();
-          if (!osg::equivalent(proj(3, 3), 0.0)) // ortho mode
-          {
-            double L, R, B, T, N, F;
-            camera->getProjectionMatrixAsOrtho(L, R, B, T, N, F);
-            const double height = T - B;
-            double tanFOV = tan(simCore::DEG2RAD * view->fovY() * 0.5);
-            if (tanFOV != 0.0)
-              range = (height * 0.5) / tanFOV;
-          }
-        }
-      }
-    }
+    const double range = (orthoRange == 0.0 ? rangeToEye : orthoRange);
     // Compute the dynamic scale based on the distance from the eye
     newScale = computeDynamicScale_(range);
   }
@@ -338,6 +370,10 @@ void DynamicScaleTransform::accept(osg::NodeVisitor& nv)
     dirtyBound();
   }
   Transform::accept(nv);
+
+  // Reset the LOD scale back to what it used to be
+  if (cullVisitor && resetLodScale)
+    cullVisitor->setLODScale(oldLodScale);
 }
 
 void DynamicScaleTransform::recalculate_(double range)
