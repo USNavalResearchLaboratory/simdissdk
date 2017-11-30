@@ -32,6 +32,7 @@ namespace simCore
   // Character constants for degree symbol
   static const std::string STR_DEGREE_SYMBOL_ASCII = "\xB0";      ///< ASCII degree symbol value
   static const std::string STR_DEGREE_SYMBOL_UNICODE = "\u00B0";  ///< Unicode degree symbol value
+  static const std::string STR_DEGREE_SYMBOL_UTF8 = "\xC2\xB0";   ///< UTF-8 degree symbol value
 
 } // namespace simCore
 
