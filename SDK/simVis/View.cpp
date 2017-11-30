@@ -1382,7 +1382,7 @@ void View::enableOverheadMode(bool enableOverhead)
   if (enableOverhead == overheadEnabled_)
     return;
 
-  // need to verify that the earth manipulator has the correct fov, 
+  // need to verify that the earth manipulator has the correct fov,
   // which may not be initialized properly if overhead mode is set too soon
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
