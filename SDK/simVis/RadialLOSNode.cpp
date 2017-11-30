@@ -154,7 +154,7 @@ void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
     osgEarth::GeoCircle circle = extent.computeBoundingGeoCircle();
 #else
-    const osgEarth::GeoCircle& circle = extent.getBoundingGeoCircle();
+    const osgEarth::GeoCircle& circle = extent.computeBoundingGeoCircle();// getBoundingGeoCircle();
 #endif
     if (bound_.intersects(circle))
     {

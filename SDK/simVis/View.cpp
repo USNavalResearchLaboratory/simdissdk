@@ -1365,7 +1365,7 @@ void View::setNavigationMode(const NavMode& mode)
   else if (mode == NAVMODE_GIS)
     manip->applySettings(new GisNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_BOXZOOM)
-    manip->applySettings(new BoxZoomNavigationMode(this));
+    manip->applySettings(new BoxZoomNavigationMode(this, overheadEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);
