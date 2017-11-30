@@ -348,7 +348,7 @@ class View;
   {
   public:
     /** Initialize the box zoom navigation mode.*/
-    BoxZoomNavigationMode(View* view);
+    BoxZoomNavigationMode(View* view, bool enableOverhead);
 
   protected:
     /// osg::Referenced-derived

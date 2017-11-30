@@ -55,7 +55,7 @@ private:
   /** Calculates an LLA GeoPoint based on the screen x and y coordinates provided. If the resulting GeoPoint is valid, it gets added to the provided points vector */
   void calculateGeoPointFromScreenXY_(double x, double y, simVis::View& view, osgEarth::SpatialReference* srs, std::vector<osgEarth::GeoPoint>& points) const;
   /** Set the zoom area to the current zoom view, based on the provided extents */
-  void setZoom_(double originX, double originY, double width, double height) const;
+  void setZoom_(double originX, double originY, double widthPixels, double heightPixels) const;
 
   /// view where zooming occurs
   osg::observer_ptr<simVis::View> zoomView_;
