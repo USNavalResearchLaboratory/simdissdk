@@ -758,7 +758,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
     if (textOptions.showText_ == TextOptions::NONE)
       continue;
 
-    osgText::Text* text = NULL;
+    simVis::Text* text = NULL;
     if (labelCount >= labels_->getNumDrawables())
     {
       text = new simVis::Text();
@@ -770,6 +770,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       text->setColor(textOptions.color_);
       text->setBackdropType(text->DROP_SHADOW_BOTTOM_RIGHT);
       text->setBackdropColor(textOptions.outlineColor_);
+      text->setScreenOffset(textOptions.xOffset_, textOptions.yOffset_);
       switch (textOptions.outlineType_)
       {
       case TextOptions::OUTLINE_NONE: text->setBackdropOffset(simVis::outlineThickness(simData::TO_NONE));
@@ -784,12 +785,10 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       labels_->addDrawable(text);
     }
     else
-      text = static_cast<osgText::Text*>(labels_->getDrawable(labelCount));
+      text = static_cast<simVis::Text*>(labels_->getDrawable(labelCount));
 
     labelCount++;
 
-    pos.x() = pos.x() + textOptions.xOffset_;
-    pos.y() = pos.y() + textOptions.yOffset_;
     text->setPosition(pos);
     text->setText(buf.str());
   }
