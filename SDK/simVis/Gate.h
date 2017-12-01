@@ -235,6 +235,9 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** Retrieve the object index tag for gates. */
+    virtual unsigned int objectIndexTag() const;
+
     /**
     * Get the traversal mask for this node type.
     * @return a traversal mask
@@ -353,6 +356,8 @@ namespace simVis
     void updateLabel_(const simData::GatePrefs& prefs);
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
+
+    unsigned int objectIndexTag_;
   };
 
 } // namespace simVis

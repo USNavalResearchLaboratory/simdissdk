@@ -678,4 +678,10 @@ void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoor
   coordConverter_->convert(endLla, endpointCoord, simCore::COORD_SYS_XEAST);
 }
 
+unsigned int LobGroupNode::objectIndexTag() const
+{
+  // Not supported for LOB groups
+  return 0;
+}
+
 } // namespace simVis

@@ -195,6 +195,9 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** Retrieve the object index tag for platforms. */
+    virtual unsigned int objectIndexTag() const;
+
     /**
     * Gets the traversal mask for this node type
     */

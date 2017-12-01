@@ -36,6 +36,7 @@
 // --------------------------------------------------------------------------
 namespace simVis
 {
+
 LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
   : EntityNode(simData::LASER),
     hasLastUpdate_(false),
@@ -429,5 +430,11 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   geode->addDrawable(g);
   return geode;
 }
+
+unsigned int LaserNode::objectIndexTag() const
+{
+  // Not supported for lasers
+  return 0;
 }
 
+}

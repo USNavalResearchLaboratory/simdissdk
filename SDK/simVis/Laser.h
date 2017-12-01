@@ -140,6 +140,9 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** This entity type is, at this time, unpickable. */
+    virtual unsigned int objectIndexTag() const;
+
     /**
      * Gets a pointer to the last data store update, or NULL if
      * none have been applied.

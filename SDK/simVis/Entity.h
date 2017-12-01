@@ -132,6 +132,9 @@ namespace simVis
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const = 0;
 
+    /** Object index tag, from osgEarth::Registry::objectIndex()->tagNode(); 0 if none. */
+    virtual unsigned int objectIndexTag() const = 0;
+
     /**
      * Attaches a tracking child to this entity. The child will track
      * the entity's locator according to the Locator properties.

@@ -249,6 +249,9 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** This entity type is, at this time, unpickable. */
+    virtual unsigned int objectIndexTag() const;
+
     /**
     * Get the traversal mask for this node type
     * @return a traversal mask

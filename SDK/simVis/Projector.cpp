@@ -558,3 +558,9 @@ void ProjectorNode::traverse(osg::NodeVisitor& nv)
 {
   EntityNode::traverse(nv);
 }
+
+unsigned int ProjectorNode::objectIndexTag() const
+{
+  // Not supported for projectors
+  return 0;
+}

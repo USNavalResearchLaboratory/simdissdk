@@ -37,7 +37,9 @@ namespace simUtil
  * an item, dynamically adjusting the pickable range of the item relative to items around it.
  * This improves accuracy when the display is cluttered or when a target is obscured.
  *
- * This picker only support selection of platforms at this time.
+ * This picker supports picking of only platforms and gates at this time.  The gate picking is
+ * based off gate locator, which is at the centroid node.  Gate picking is disabled by default.
+ * Use the setPickMask() method to change this behavior.
  */
 class SDKUTIL_EXPORT DynamicSelectionPicker : public simVis::Picker
 {
@@ -50,6 +52,9 @@ public:
    */
   void setRange(double pixelsFromCenter);
 
+  /** Changes the pick mask.  Use this to pick only on certain entity types. */
+  void setPickMask(osg::Node::NodeMask pickMask);
+
 protected:
   /** Derived from osg::Referenced, protect destructor */
   virtual ~DynamicSelectionPicker();
@@ -57,6 +62,8 @@ protected:
 private:
   /** Performs the actual intersection pick. */
   void pickThisFrame_();
+  /** Returns true if the entity type is pickable. */
+  bool isPickable_(const simVis::EntityNode* entityNode) const;
 
   class RepickEventHandler;
 
@@ -77,6 +84,8 @@ private:
 
   /** Minimum valid range */
   double minimumValidRange_;
+  /** Picking mask */
+  osg::Node::NodeMask pickMask_;
 };
 
 }

@@ -79,8 +79,10 @@ DynamicSelectionPicker::DynamicSelectionPicker(simVis::ViewManager* viewManager,
   : Picker(scenarioManager->getOrCreateStateSet()),
     viewManager_(viewManager),
     scenario_(scenarioManager),
-    minimumValidRange_(100.0) // pixels
+    minimumValidRange_(100.0), // pixels
+    pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL)
 {
+  // By default, only platforms are picked.  Gates are feasibly pickable though.
   guiEventHandler_ = new RepickEventHandler(*this);
   addHandlerToViews_ = new simVis::AddEventHandlerToViews(guiEventHandler_);
   if (viewManager_.valid())
@@ -111,18 +113,16 @@ void DynamicSelectionPicker::pickThisFrame_()
 
   // We square the range to avoid sqrt() in a tight loop
   double closestRangePx = osg::square(minimumValidRange_);
-  simVis::PlatformNode* closest = NULL;
+  simVis::EntityNode* closest = NULL;
 
   // Loop through all entities
   for (auto i = allEntities.begin(); i != allEntities.end(); ++i)
   {
-    // Hit every platform node -- skip if not a platform
-    simVis::PlatformNode* plat = dynamic_cast<simVis::PlatformNode*>((*i).get());
-    if (!plat || !plat->isActive() || !plat->isVisible())
+    if (!isPickable_(*i))
       continue;
 
     // Calculate the position on the platform
-    const simUtil::ScreenCoordinate pos = calc.calculate(*plat);
+    const simUtil::ScreenCoordinate pos = calc.calculate(*(*i).get());
     // Ignore objects that are off screen or behind the camera
     if (pos.isBehindCamera() || pos.isOffScreen() || pos.isOverHorizon())
       continue;
@@ -132,20 +132,38 @@ void DynamicSelectionPicker::pickThisFrame_()
     if (rangeSquared < closestRangePx)
     {
       closestRangePx = rangeSquared;
-      closest = plat;
+      closest = *i;
     }
   }
 
   // Pick the platform
   if (closest)
-    setPicked_(closest->getModel()->objectIndexTag(), closest);
+    setPicked_(closest->objectIndexTag(), closest);
   else
     setPicked_(0, closest);
+}
+
+bool DynamicSelectionPicker::isPickable_(const simVis::EntityNode* entityNode) const
+{
+  // Avoid NULL and things that don't match the mask
+  if (entityNode == NULL || (entityNode->getNodeMask() & pickMask_) == 0)
+    return false;
+  // Only pick entities with object index tags
+  if (entityNode->objectIndexTag() == 0)
+    return false;
+
+  // Do not pick inactive or invisible entities
+  return entityNode->isActive() && entityNode->isVisible();
 }
 
 void DynamicSelectionPicker::setRange(double pixelsFromCenter)
 {
   minimumValidRange_ = pixelsFromCenter;
+}
+
+void DynamicSelectionPicker::setPickMask(osg::Node::NodeMask pickMask)
+{
+  pickMask_ = pickMask;
 }
 
 }

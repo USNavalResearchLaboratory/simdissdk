@@ -838,4 +838,10 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
   return distanceToBeam;
 }
 
+unsigned int BeamNode::objectIndexTag() const
+{
+  // Not supported for beams
+  return 0;
+}
+
 }

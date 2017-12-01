@@ -22,6 +22,8 @@
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
+#include "osgEarth/Registry"
 #include "simCore/Calc/Angle.h"
 #include "simData/DataTypes.h"
 #include "simNotify/Notify.h"
@@ -261,7 +263,8 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
     hasLastPrefs_(false),
     visible_(false), // gets set on first refresh
     host_(host),
-    contentCallback_(new NullEntityCallback())
+    contentCallback_(new NullEntityCallback()),
+    objectIndexTag_(0)
 {
   lastProps_ = props;
   setName("GateNode");
@@ -353,6 +356,8 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   // Create the centroid
   centroid_ = new GateCentroid(centroidLocator_);
   addChild(centroid_);
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
@@ -360,6 +365,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
 
 GateNode::~GateNode()
 {
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 }
 
 void GateNode::updateLabel_(const simData::GatePrefs& prefs)
@@ -901,6 +907,11 @@ void GateNode::removeUpdateOverride(const std::string& id)
     if (hasLastUpdate_)
       applyUpdateOverrides_(true);
   }
+}
+
+unsigned int GateNode::objectIndexTag() const
+{
+  return objectIndexTag_;
 }
 
 }

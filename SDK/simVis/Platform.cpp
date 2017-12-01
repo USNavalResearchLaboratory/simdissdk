@@ -890,4 +890,11 @@ void PlatformNode::setLosCreator(LosCreator* losCreator)
   losCreator_ = losCreator;
 }
 
+unsigned int PlatformNode::objectIndexTag() const
+{
+  if (model_)
+    return model_->objectIndexTag();
+  return 0;
+}
+
 }
