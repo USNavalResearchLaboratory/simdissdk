@@ -65,8 +65,7 @@ GateVolume::~GateVolume()
 }
 
 /// prefs that can be applied without rebuilding the whole gate
-void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a,
-                                          const simData::GatePrefs* b)
+void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a, const simData::GatePrefs* b)
 {
   if (b->commonprefs().useoverridecolor())
   {
@@ -92,8 +91,7 @@ void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a,
 }
 
 /// updates that can be updated without rebuilding the whole gate
-void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a,
-                                     const simData::GateUpdate* b)
+void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simData::GateUpdate* b)
 {
   if (PB_FIELD_CHANGED(a, b, minrange))
   {
@@ -196,7 +194,7 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
 GateCentroid::GateCentroid(simVis::Locator* locator)
   : LocatorNode(locator)
 {
-  setNodeMask(DISPLAY_MASK_GATE);
+  setActive(false);
   geom_ = new osg::Geometry();
   geom_->setUseVertexBufferObjects(true);
 
@@ -224,8 +222,15 @@ GateCentroid::~GateCentroid()
 {
 }
 
+void GateCentroid::setActive(bool active)
+{
+  // the centroid's nodemask controls locatorNode activation/deactivation
+  setNodeMask(active ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
+}
+
 void GateCentroid::setVisible(bool visible)
 {
+  // setting the geometry node mask can turn the draw off without turning off the centroid/locator node
   geom_->setNodeMask(visible ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
 }
 
@@ -353,7 +358,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
-  // Create the centroid
+  // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
   centroid_ = new GateCentroid(centroidLocator_);
   addChild(centroid_);
   // Add a tag for picking
@@ -674,13 +679,14 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   {
     visible_ = false;
     setNodeMask(DISPLAY_MASK_NONE);
+    centroid_->setActive(false);
     removeChild(gateVolume_);
     gateVolume_ = NULL;
     return;
   }
 
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
-  force = force || !hasLastUpdate_ || !hasLastPrefs_ || gateVolume_ == NULL ||
+  force = force || !hasLastUpdate_ || !hasLastPrefs_ ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, commonprefs, datadraw));
 
   // do we need to redraw gate volume visual?
@@ -716,29 +722,23 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
       gateVolume_->performInPlaceUpdates(&lastUpdateApplied_, newUpdate);
   }
 
-  // process changes that affect centroid visual
-  if (centroid_)
-  {
-    // Fix the draw flag on the centroid
-    if (!activePrefs->drawcentroid() &&
-      activePrefs->fillpattern() != simData::GatePrefs_FillPattern_CENTROID)
-    {
-      centroid_->setVisible(false);
-    }
-    else
-      centroid_->setVisible(true);
+  // Fix the draw flag on the centroid - note that the logic here means that: if in fillpattern centroid, drawcentroid pref toggle does not hide it
+  const bool drawCentroid = activePrefs->drawcentroid() || activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID;
+  centroid_->setVisible(drawCentroid);
 
-    // Only update the centroid position on changes
-    if (force ||
-      (newUpdate && (
+  // centroid must be kept up-to-date, even if it is not shown, due to gate tethering/picking dependency on centroid
+  // update the centroid for changes in size; locator takes care of centroid positioning
+  if (force ||
+    (newUpdate && (
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, minrange) ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, maxrange) ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, width) ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, height))))
-    {
-      // activeUpdate is always valid, and points to the new update if there is a new update, or the previous update otherwise
-      centroid_->update(*activeUpdate);
-    }
+  {
+    // make sure to activate the centroid locatorNode in case datadraw just turned on; updateLocator_ below will guarantee that locator node is sync'd to its locator
+    centroid_->setActive(true);
+    // activeUpdate is always valid, and points to the new update if there is a new update, or the previous update otherwise
+    centroid_->update(*activeUpdate);
   }
 
   // GateOnOffCmd turns datadraw pref on and off

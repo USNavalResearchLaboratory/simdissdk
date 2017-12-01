@@ -80,6 +80,8 @@ namespace simVis
     void update(const simData::GateUpdate& update);
     /** Clears the geometry from the centroid; use this instead of setting node mask, to avoid center-on-entity issues. */
     void setVisible(bool visible);
+    /** Deactivate the centroid when the gate is not active, activate whenever the gate is active */
+    void setActive(bool active);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
