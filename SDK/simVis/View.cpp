@@ -35,6 +35,7 @@
 #include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
+#include "simVis/Gate.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
@@ -1870,14 +1871,19 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
   EntityNode* entityNode = dynamic_cast<EntityNode*>(node);
   if (entityNode)
   {
-    PlatformModelNode* model = entityNode->findAttachment<PlatformModelNode>();
-    if (model)
-      node = model;
+    // Entity nodes typically have proxies (children) that we center on.
+    osg::Node* proxyNode = entityNode->findAttachment<PlatformModelNode>();
+    // Fall back to Gate centroids
+    if (!proxyNode)
+      proxyNode = entityNode->findAttachment<GateCentroid>();
+
+    if (proxyNode)
+      node = proxyNode;
   }
   else if (node)
   {
-    // Should only be passing in entity nodes or Platform Model nodes
-    assert(dynamic_cast<PlatformModelNode*>(node) != 0);
+    // Should only be passing in entity nodes or Platform Model nodes or Gate centroids
+    assert(dynamic_cast<PlatformModelNode*>(node) || dynamic_cast<GateCentroid*>(node));
   }
   return node;
 }
@@ -1889,12 +1895,11 @@ simVis::EntityNode* View::getEntityNode(osg::Node* node) const
   if (watcherNode)
     return watcherNode;
 
-  // Maybe it's really a PlatformModelNode, which is the child of an EntityNode
-  simVis::PlatformModelNode* modelNode = dynamic_cast<simVis::PlatformModelNode*>(node);
-  if (modelNode)
+  // Maybe it's really a Platform Model or Centroid node, which is the child of an EntityNode
+  if (node)
   {
-    simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(modelNode->getParent(0));
-    // An EntityNode must be the direct parent of the PlatformModelNode
+    simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(node->getParent(0));
+    // If assert triggers, there's some weird unexpected hierarchy; investigate and resolve weirdness
     assert(entityNode != NULL);
     return entityNode;
   }

@@ -53,11 +53,17 @@ namespace simVis
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
-
     /** Return the class name */
     virtual const char* className() const { return "GateVolume"; }
 
+  protected:
+    /** Protected destructor due to deriving from osg::Referenced. */
+    virtual ~GateVolume();
+
   private:
+    // Not implemented
+    GateVolume(const GateVolume&);
+
     osg::MatrixTransform* createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update);
 
     osg::ref_ptr<osg::MatrixTransform> gateSV_;
@@ -68,20 +74,31 @@ namespace simVis
   {
   public:
     /** Constructor */
-    GateCentroid(simVis::Locator* locator, const simData::GateUpdate& update);
+    explicit GateCentroid(simVis::Locator* locator);
 
     /** Perform an in-place update to an existing centroid */
     void update(const simData::GateUpdate& update);
+    /** Clears the geometry from the centroid; use this instead of setting node mask, to avoid center-on-entity issues. */
+    void setVisible(bool visible);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
-
     /** Return the class name */
     virtual const char* className() const { return "GateCentroid"; }
 
+  protected:
+    /** Protected destructor due to deriving from osg::Referenced. */
+    virtual ~GateCentroid();
+
   private:
-    // calculate centroid verts from update
+    // Not implemented
+    GateCentroid(const GateCentroid&);
+
+    /// calculate centroid verts from update
     void updateCentroid_(osg::Vec3Array* verts, const simData::GateUpdate& update);
+
+    /// Holds the vertices for geometry
+    osg::ref_ptr<osg::Geometry> geom_;
   };
 
   /// Scene graph node representing a Gate
@@ -95,7 +112,7 @@ namespace simVis
     * @param host This gate's host platform
     * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    GateNode(
+    explicit GateNode(
       const simData::GateProperties& props,
       Locator*                       locator = NULL,
       const simVis::EntityNode*      host = NULL,
@@ -158,7 +175,6 @@ namespace simVis
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
-
     /** Return the class name */
     virtual const char* className() const { return "GateNode"; }
 
@@ -236,6 +252,9 @@ namespace simVis
     virtual ~GateNode();
 
   private:
+    // Not implemented
+    GateNode(const GateNode&);
+
     /// determine if new update/new prefs can be handled with in-place-update (without complete rebuild)
     bool changeRequiresRebuild_(
       const simData::GateUpdate* newUpdate,

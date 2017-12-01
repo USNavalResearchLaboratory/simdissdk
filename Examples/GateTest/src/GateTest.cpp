@@ -105,6 +105,7 @@ struct AppData
   simData::ObjectId    hostId_;
   simData::ObjectId    gateId_;
   osg::ref_ptr<simVis::View> view_;
+  osg::ref_ptr<simVis::ScenarioManager> scenario_;
   double               t_;
 
   AppData()
@@ -302,6 +303,10 @@ ui::Control* createUI(AppData& app)
   grid->setControl(c, r, new ui::LabelControl("Global Gate Toggle"));
   app.globalToggle_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI));
 
+  // Add some hotkey support text
+  top->addControl(new ui::LabelControl("C: Center on Platform", 16.f));
+  top->addControl(new ui::LabelControl("G: Center on Gate", 16.f));
+
   return top;
 }
 
@@ -395,6 +400,37 @@ simData::ObjectId addGate(simData::DataStore& ds,
   return gateId;
 }
 
+/** Handles keypresses */
+class KeyHandler : public osgGA::GUIEventHandler
+{
+public:
+  KeyHandler(const AppData& app)
+    : app_(app)
+  {
+  }
+
+  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  {
+    if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
+    {
+      switch (ea.getKey())
+      {
+      case osgGA::GUIEventAdapter::KEY_C:  // Center on host
+        app_.view_->tetherCamera(app_.scenario_->find(app_.hostId_));
+        break;
+      case osgGA::GUIEventAdapter::KEY_G:  // Center on gate
+        app_.view_->tetherCamera(app_.scenario_->find(app_.gateId_));
+        break;
+      }
+    }
+
+    return false;
+  }
+
+private:
+  const AppData& app_;
+};
+
 //----------------------------------------------------------------------------
 
 int usage(char** argv)
@@ -407,7 +443,7 @@ int usage(char** argv)
 
 int main(int argc, char** argv)
 {
-  /// usage?
+  /// usage
   if (simExamples::hasArg("--help", argc, argv))
     return usage(argv);
 
@@ -437,8 +473,9 @@ int main(int argc, char** argv)
 
   /// Set up the application data
   AppData app;
-  app.ds_     = &dataStore;
-  app.view_   = viewer->getMainView();
+  app.ds_ = &dataStore;
+  app.view_ = viewer->getMainView();
+  app.scenario_ = scene->getScenario();
 
   /// add in the platform and beam
   app.hostId_ = addPlatform(dataStore, argc, argv);
@@ -452,6 +489,8 @@ int main(int argc, char** argv)
 
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createUI(app));
+  /// adds a hotkey handler for centering on entities
+  viewer->addEventHandler(new KeyHandler(app));
   app.apply();
 
   /// add some stock OSG handlers

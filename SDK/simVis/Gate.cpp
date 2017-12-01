@@ -40,8 +40,8 @@
 namespace simVis
 {
 
-GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs, const simData::GateUpdate* update) :
-  LocatorNode(locator)
+GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs, const simData::GateUpdate* update)
+  : LocatorNode(locator)
 {
   gateSV_ = createNode_(prefs, update);
   setNodeMask(DISPLAY_MASK_GATE);
@@ -56,6 +56,10 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_);
   if (outlineGeometry != NULL)
     outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+}
+
+GateVolume::~GateVolume()
+{
 }
 
 /// prefs that can be applied without rebuilding the whole gate
@@ -187,41 +191,48 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
 
 // --------------------------------------------------------------------------
 
-GateCentroid::GateCentroid(simVis::Locator* locator, const simData::GateUpdate& update) :
-  LocatorNode(locator)
+GateCentroid::GateCentroid(simVis::Locator* locator)
+  : LocatorNode(locator)
 {
-  osg::Geometry* geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
+  setNodeMask(DISPLAY_MASK_GATE);
+  geom_ = new osg::Geometry();
+  geom_->setUseVertexBufferObjects(true);
 
   osg::Vec4Array* c = new osg::Vec4Array(1);
   (*c)[0] = osg::Vec4f(1.0f, 1.0f, 1.0f, 1.0f); // always white
-  geom->setColorArray(c);
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
+  geom_->setColorArray(c);
+  geom_->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   osg::Vec3Array* v = new osg::Vec3Array(6);
-  geom->setVertexArray(v);
-
-  updateCentroid_(v, update);
+  geom_->setVertexArray(v);
 
   osg::DrawElementsUShort* centroid = new osg::DrawElementsUShort(GL_LINES, 6);
   for (unsigned int i = 0; i < 6; ++i)
     centroid->setElement(i, i);
-  geom->addPrimitiveSet(centroid);
+  geom_->addPrimitiveSet(centroid);
 
-  geom->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+  geom_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 
   osg::Geode* geodeSolid = new osg::Geode();
-  geodeSolid->addDrawable(geom);
+  geodeSolid->addDrawable(geom_);
   addChild(geodeSolid);
+}
+
+GateCentroid::~GateCentroid()
+{
+}
+
+void GateCentroid::setVisible(bool visible)
+{
+  geom_->setNodeMask(visible ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
 }
 
 // perform an in-place update to an existing centroid
 void GateCentroid::update(const simData::GateUpdate& update)
 {
-  osg::Geometry*  geom = static_cast<osg::Geode*>(getChild(0))->getDrawable(0)->asGeometry();
-  osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
+  osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom_->getVertexArray());
   updateCentroid_(verts, update);
-  geom->dirtyBound();
+  geom_->dirtyBound();
 }
 
 // calculate centroid verts from update
@@ -244,13 +255,13 @@ void GateCentroid::updateCentroid_(osg::Vec3Array* verts, const simData::GateUpd
 
 // --------------------------------------------------------------------------
 
-GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear) :
-EntityNode(simData::GATE),
-hasLastUpdate_(false),
-hasLastPrefs_(false),
-visible_(false), // gets set on first refresh
-host_(host),
-contentCallback_(new NullEntityCallback())
+GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
+  : EntityNode(simData::GATE),
+    hasLastUpdate_(false),
+    hasLastPrefs_(false),
+    visible_(false), // gets set on first refresh
+    host_(host),
+    contentCallback_(new NullEntityCallback())
 {
   lastProps_ = props;
   setName("GateNode");
@@ -313,13 +324,13 @@ contentCallback_(new NullEntityCallback())
   setLocator(centroidLocator_);
 
   localGrid_ = new LocalGridNode(centroidLocator_, host, referenceYear);
-  this->addChild(localGrid_);
+  addChild(localGrid_);
 
   // set up a state set.
   // carefully set the rendering order for gates. We want to render them
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
-  osg::StateSet* stateSet = this->getOrCreateStateSet();
+  osg::StateSet* stateSet = getOrCreateStateSet();
   stateSet->setRenderBinDetails(BIN_GATE, BIN_GLOBAL_SIMSDK); //"RenderBin");
 
   // depth-writing is disabled for the gates.
@@ -328,10 +339,10 @@ contentCallback_(new NullEntityCallback())
   stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
   label_ = new EntityLabelNode(getLocator());
-  this->addChild(label_);
+  addChild(label_);
 
   // horizon culling:
-  this->addCullCallback( new osgEarth::HorizonCullCallback() );
+  addCullCallback( new osgEarth::HorizonCullCallback() );
 
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
@@ -339,12 +350,17 @@ contentCallback_(new NullEntityCallback())
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
+  // Create the centroid
+  centroid_ = new GateCentroid(centroidLocator_);
+  addChild(centroid_);
+
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
 }
 
 GateNode::~GateNode()
-{}
+{
+}
 
 void GateNode::updateLabel_(const simData::GatePrefs& prefs)
 {
@@ -652,8 +668,6 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   {
     visible_ = false;
     setNodeMask(DISPLAY_MASK_NONE);
-    removeChild(centroid_);
-    centroid_ = NULL;
     removeChild(gateVolume_);
     gateVolume_ = NULL;
     return;
@@ -697,23 +711,19 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   }
 
   // process changes that affect centroid visual
-  if (!centroid_ &&
-      (activePrefs->drawcentroid() ||
-      activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID))
+  if (centroid_)
   {
-    centroid_ = new GateCentroid(centroidLocator_, *activeUpdate);
-    centroid_->setNodeMask(DISPLAY_MASK_GATE);
-    addChild(centroid_);
-  }
-  else if (centroid_)
-  {
+    // Fix the draw flag on the centroid
     if (!activePrefs->drawcentroid() &&
       activePrefs->fillpattern() != simData::GatePrefs_FillPattern_CENTROID)
     {
-      removeChild(centroid_);
-      centroid_ = NULL;
+      centroid_->setVisible(false);
     }
-    else if (force ||
+    else
+      centroid_->setVisible(true);
+
+    // Only update the centroid position on changes
+    if (force ||
       (newUpdate && (
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, minrange) ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, maxrange) ||
@@ -892,5 +902,5 @@ void GateNode::removeUpdateOverride(const std::string& id)
       applyUpdateOverrides_(true);
   }
 }
-}
 
+}
