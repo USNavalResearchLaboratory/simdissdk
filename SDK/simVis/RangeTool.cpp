@@ -737,7 +737,12 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       Calculation* calc = c->get();
 
       if (c != calcs.begin())
-        buf << ", ";
+      {
+        if (textOptions.showText_ == TextOptions::ALL)
+          buf << ", ";
+        else
+          buf << "\n";
+      }
 
       Measurement* m = calc->labelMeasurement();
       const osgEarth::Units& units =
@@ -751,8 +756,10 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       buf
         << m->typeAbbr() << ": "
-        << m->formatter()->stringValue(value, calc) << " "
-        << units.getAbbr();
+        << m->formatter()->stringValue(value, calc);
+      if (units != osgEarth::Units::DEGREES)
+        buf << " ";
+      buf << units.getAbbr();
     }
 
     if (textOptions.showText_ == TextOptions::NONE)
