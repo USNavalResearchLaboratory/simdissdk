@@ -530,11 +530,11 @@ int main(int argc, char **argv)
 
   // Set up the range tool.
   osg::ref_ptr<simVis::RangeTool> rangeTool = new simVis::RangeTool();
+  // need to add tool to scenario before creating any associations
+  scene->getScenario()->addTool(rangeTool);
   s_association = rangeTool->add(obj1, obj2);
   createLineCalculations(s_lineCalcs);
   createAngleCalculations(s_angleCalcs);
-
-  scene->getScenario()->addTool(rangeTool);
 
   /// Tether camera to platform
   osg::observer_ptr<simVis::EntityNode> obj1Node = scene->getScenario()->find(obj1);
