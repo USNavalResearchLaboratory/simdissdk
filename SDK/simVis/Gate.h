@@ -327,8 +327,6 @@ namespace simVis
      */
     osg::ref_ptr<Locator>  centroidLocator_;
 
-    bool                    visible_;
-
     /// container for the gate volume geometry
     osg::ref_ptr<GateVolume>   gateVolume_;
 

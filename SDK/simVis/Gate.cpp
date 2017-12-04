@@ -266,11 +266,11 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   : EntityNode(simData::GATE),
     hasLastUpdate_(false),
     hasLastPrefs_(false),
-    visible_(false), // gets set on first refresh
     host_(host),
     contentCallback_(new NullEntityCallback()),
     objectIndexTag_(0)
 {
+  setNodeMask(DISPLAY_MASK_NONE);
   lastProps_ = props;
   setName("GateNode");
 
@@ -352,15 +352,20 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   // horizon culling:
   addCullCallback( new osgEarth::HorizonCullCallback() );
 
+  // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
+  centroid_ = new GateCentroid(centroidLocator_);
+  addChild(centroid_);
+
+  // centroid provides a persistent locatornode to parent our label node
+  label_ = new EntityLabelNode();
+  centroid_->addChild(label_);
+
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
   callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
-  // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
-  centroid_ = new GateCentroid(centroidLocator_);
-  addChild(centroid_);
   // Add a tag for picking
   objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
 
@@ -521,15 +526,6 @@ bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     {
       // apply the new update
       applyDataStoreUpdate_(*current, force);
-
-      // draw the gate if hasLastUpdate_(valid update) and visible_ (prefs)
-      if (visible_)
-        setNodeMask(DISPLAY_MASK_GATE);
-      else
-      {
-        // if commands/prefs have turned the gate off, DISPLAY_MASK_NONE will already be set
-        assert(getNodeMask() == DISPLAY_MASK_NONE);
-      }
       updateApplied = true;
     }
     else if (gateChangedToInactive || hostChangedToInactive)
@@ -551,6 +547,9 @@ void GateNode::flush()
 {
   hasLastUpdate_ = false;
   setNodeMask(DISPLAY_MASK_NONE);
+  centroid_->setActive(false);
+  removeChild(gateVolume_);
+  gateVolume_ = NULL;
 }
 
 double GateNode::range() const
@@ -663,7 +662,10 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
 {
   // gate can't do anything until it has both prefs and an update
   if ((!newUpdate && !hasLastUpdate_) || (!newPrefs && !hasLastPrefs_))
+  {
+    setNodeMask(DISPLAY_MASK_NONE);
     return;
+  }
 
   // if we don't have new prefs, we will use the previous prefs
   const simData::GatePrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
@@ -677,7 +679,6 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   // if datadraw is off, we do not need to do any processing
   if (activePrefs->commonprefs().datadraw() == false)
   {
-    visible_ = false;
     setNodeMask(DISPLAY_MASK_NONE);
     centroid_->setActive(false);
     removeChild(gateVolume_);
@@ -744,14 +745,14 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   // GateOnOffCmd turns datadraw pref on and off
   // we exit early at top if datadraw is off; if assert fails, check for changes to the early exit
   assert(activePrefs->commonprefs().datadraw());
-  visible_ = activePrefs->commonprefs().draw();
-  setNodeMask(visible_ ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
+  const bool visible = activePrefs->commonprefs().draw();
+  setNodeMask(visible ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
 
   // is a locator update required?
   updateLocator_(newUpdate, newPrefs, force);
 
   // update the local grid prefs, if gate is being drawn
-  if (visible_ && (force || newPrefs))
+  if (visible && (force || newPrefs))
   {
     // localgrid created in constructor. if assert fails, check for changes.
     assert(localGrid_ != NULL);
