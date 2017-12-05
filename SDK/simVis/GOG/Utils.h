@@ -134,6 +134,9 @@ namespace simVis { namespace GOG
        * has completed.
        */
       static void configureStyleForClipping(osgEarth::Symbology::Style& style);
+
+      /** Converts an annotation string to a displayable string, de-encoding newlines and underscores */
+      static std::string decodeAnnotation(const std::string& anno);
   };
 
   /**
