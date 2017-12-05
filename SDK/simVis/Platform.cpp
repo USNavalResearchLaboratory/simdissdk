@@ -806,6 +806,12 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   switch (horizonType)
   {
   case simCore::OPTICAL_HORIZON:
+    if (!prefs.drawopticlos())
+    {
+      if (opticalLosNode_)
+        opticalLosNode_->setActive(false);
+      return;
+    }
     // Create and add node if we haven't already
     if (!opticalLosNode_ && losCreator_)
     {
@@ -817,6 +823,12 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     drawHorizon = prefs.drawopticlos();
     break;
   case simCore::RADAR_HORIZON:
+    if (!prefs.drawrflos())
+    {
+      if (radioLosNode_)
+        radioLosNode_->setActive(false);
+      return;
+    }
     // Create and add node if we haven't already
     if (!radioLosNode_ && losCreator_)
     {
