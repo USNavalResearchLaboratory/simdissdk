@@ -775,7 +775,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       text->setFont(simVis::Registry::instance()->getOrCreateFont(textOptions.font_));
       text->setCharacterSize(textOptions.fontSize_);
       text->setColor(textOptions.color_);
-      text->setBackdropType(text->DROP_SHADOW_BOTTOM_RIGHT);
+      text->setBackdropType(text->OUTLINE);
       text->setBackdropColor(textOptions.outlineColor_);
       text->setScreenOffset(textOptions.xOffset_, textOptions.yOffset_);
       switch (textOptions.outlineType_)
