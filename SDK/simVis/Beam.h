@@ -45,11 +45,11 @@ namespace simVis
   class ScenarioManager;
 
   /// Scene graph node representing the Beam volume
-  class SDKVIS_EXPORT BeamVolume : public simVis::LocatorNode
+  class SDKVIS_EXPORT BeamVolume : public osg::Group
   {
   public:
     /** Constructor */
-    BeamVolume(simVis::Locator* locator, const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
+    BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
 
     /** Perform an in-place update to an existing volume */
     void performInPlaceUpdates(const simData::BeamUpdate* a,
@@ -274,6 +274,13 @@ namespace simVis
     /** Copy constructor, not implemented or available. */
     BeamNode(const BeamNode&);
 
+    /**
+    * Activate/Deactivate this beam, to be applied when a transition in state of isActive() occurs.
+    * note that a beam can be active (datadraw) without being drawn
+    * @param active if true, beam will be activated; if false beam will be deactivated
+    */
+    void setActive_(bool active);
+
     /// update the geometry based on changes in update or preferences.
     void apply_(
       const simData::BeamUpdate*     update,
@@ -328,7 +335,6 @@ namespace simVis
     simData::BeamUpdate     lastUpdateApplied_;
     bool                    hasLastUpdate_;
     bool                    hasLastPrefs_;
-    bool                    visible_;
 
     osg::ref_ptr<BeamVolume>  beamVolume_;
     osg::ref_ptr<LocalGridNode> localGrid_;
@@ -337,6 +343,9 @@ namespace simVis
     osg::observer_ptr<const EntityNode> target_;
 
     double hostMissileOffset_;
+    // the locator node that parents our volume/antenna geometry and label
+    osg::ref_ptr<LocatorNode>  beamLocatorNode_;
+
     // extra locator used only for non-BeamType_BODY_RELATIVE beams
     osg::ref_ptr<Locator>   positionOffsetLocator_;
 

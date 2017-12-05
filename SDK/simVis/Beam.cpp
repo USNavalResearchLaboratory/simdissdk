@@ -77,8 +77,7 @@ namespace
 
 namespace simVis
 {
-BeamVolume::BeamVolume(simVis::Locator* locator, const simData::BeamPrefs& prefs, const simData::BeamUpdate& update) :
-  LocatorNode(locator)
+BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
 {
   beamSV_ = createBeamSV_(prefs, update);
   addChild(beamSV_);
@@ -185,7 +184,6 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   : EntityNode(simData::BEAM),
     hasLastUpdate_(false),
     hasLastPrefs_(false),
-    visible_(false),
     host_(host),
     hostMissileOffset_(0.0),
     contentCallback_(new NullEntityCallback()),
@@ -230,13 +228,19 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
   stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
-  antenna_ = new simVis::AntennaNode(getLocator(), osg::Quat(M_PI_2, osg::Vec3(0, 0, 1)));
-
-  localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
+  localGrid_ = new LocalGridNode(finalLocator, host, referenceYear);
   addChild(localGrid_);
 
-  label_ = new EntityLabelNode(getLocator());
-  this->addChild(label_);
+  // create the locator node that will parent our geometry and label
+  beamLocatorNode_ = new LocatorNode(finalLocator);
+  beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
+  addChild(beamLocatorNode_);
+
+  // will be parented to the beamLocatorNode_ when shown
+  antenna_ = new simVis::AntennaNode(osg::Quat(M_PI_2, osg::Vec3d(0., 0., 1.)));
+
+  label_ = new EntityLabelNode();
+  beamLocatorNode_->addChild(label_);
 
   // horizon culling:
   this->addCullCallback( new osgEarth::HorizonCullCallback() );
@@ -363,8 +367,27 @@ void BeamNode::setHostMissileOffset(double hostMissileOffset)
   if (hostMissileOffset_ != hostMissileOffset)
   {
     hostMissileOffset_ = hostMissileOffset;
-    beamVolume_ = NULL; // will force a complete refresh
-    apply_(NULL, NULL);
+    // force a complete refresh
+    apply_(NULL, NULL, true);
+  }
+}
+
+void BeamNode::setActive_(bool active)
+{
+  // beam can be active (datadraw) without being drawn
+  if (active)
+  {
+    // activate the locator node
+    beamLocatorNode_->setNodeMask(DISPLAY_MASK_BEAM);
+  }
+  else
+  {
+    setNodeMask(DISPLAY_MASK_NONE);
+    // deactivate the locator node
+    beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
+    beamLocatorNode_->removeChild(antenna_);
+    beamLocatorNode_->removeChild(beamVolume_);
+    beamVolume_ = NULL;
   }
 }
 
@@ -447,15 +470,6 @@ bool BeamNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
     if (current && (force || host_->isActive()))
     {
       applyDataStoreUpdate_(*current, force);
-
-      // draw the beam if hasLastUpdate_(valid update) and visible_ (prefs)
-      if (visible_)
-        setNodeMask(DISPLAY_MASK_BEAM);
-      else
-      {
-        // if commands/prefs have turned the beam off, DISPLAY_MASK_NONE will already be set
-        assert(getNodeMask() == DISPLAY_MASK_NONE);
-      }
       updateApplied = true;
     }
     else if (beamChangedToInactive || hostChangedToInactive)
@@ -476,7 +490,7 @@ bool BeamNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
 void BeamNode::flush()
 {
   hasLastUpdate_ = false;
-  setNodeMask(DISPLAY_MASK_NONE);
+  setActive_(false);
 }
 
 double BeamNode::range() const
@@ -584,7 +598,10 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 {
   // beam can't do anything until it has both prefs and an update
   if ((!newUpdate && !hasLastUpdate_) || (!newPrefs && !hasLastPrefs_))
+  {
+    setNodeMask(DISPLAY_MASK_NONE);
     return;
+  }
 
   // if we don't have new prefs, we will use the previous prefs
   const simData::BeamPrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
@@ -594,8 +611,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   // if datadraw is off, we do not need to do any processing
   if (activePrefs->commonprefs().datadraw() == false)
   {
-    visible_ = false;
-    setNodeMask(DISPLAY_MASK_NONE);
+    setActive_(false);
     return;
   }
 
@@ -603,6 +619,9 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   force = force || !hasLastUpdate_ || !hasLastPrefs_ ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, commonprefs, datadraw));
 
+  // activate the locatorNode
+  if (force)
+    setActive_(true);
 
   // all activePrefs must be applied during this creation
   if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
@@ -610,7 +629,6 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     depthAttr_->setWriteMask(!activePrefs->blended());
     getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
   }
-
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
@@ -630,10 +648,10 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       // remove any old (non-antenna) beam volume
       if (beamVolume_)
       {
-        removeChild(beamVolume_);
+        beamLocatorNode_->removeChild(beamVolume_);
         beamVolume_ = NULL;
       }
-      addChild(antenna_);
+      beamLocatorNode_->addChild(antenna_);
       dirtyBound();
     }
   }
@@ -652,16 +670,16 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     if (!beamVolume_ || refreshRequiresNewNode)
     {
       // do not NULL antenna, it needs to persist to provide gain calcs
-      removeChild(antenna_);
+      beamLocatorNode_->removeChild(antenna_);
 
       if (beamVolume_)
       {
-        removeChild(beamVolume_);
+        beamLocatorNode_->removeChild(beamVolume_);
         beamVolume_ = NULL;
       }
 
-      beamVolume_ = new BeamVolume(getLocator(), *activePrefs, *activeUpdate);
-      addChild(beamVolume_);
+      beamVolume_ = new BeamVolume(*activePrefs, *activeUpdate);
+      beamLocatorNode_->addChild(beamVolume_);
       dirtyBound();
     }
     else
@@ -684,14 +702,14 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   // BeamOnOffCmd turns active pref on and off
   // we exit early at top if datadraw is off; if assert fails, check for changes to the early exit
   assert(activePrefs->commonprefs().datadraw());
-  visible_ = activePrefs->commonprefs().draw();
-  setNodeMask(visible_ ? DISPLAY_MASK_BEAM : DISPLAY_MASK_NONE);
+  const bool visible = activePrefs->commonprefs().draw();
+  setNodeMask(visible ? DISPLAY_MASK_BEAM : DISPLAY_MASK_NONE);
 
   // update locator if required (even if draw off, since gates that are drawn may depend on the locator)
   updateLocator_(newUpdate, newPrefs, force);
 
   // update the local grid prefs, if beam is being drawn
-  if (visible_ && (force || newPrefs))
+  if (visible && (force || newPrefs))
   {
     // localgrid created in constructor. if assert fails, check for changes.
     assert(localGrid_ != NULL);

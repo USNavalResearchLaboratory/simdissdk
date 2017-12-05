@@ -28,7 +28,6 @@
 #include "simCore/Common/Common.h"
 #include "simCore/EM/Constants.h"
 #include "simData/DataTypes.h"
-#include "simVis/LocatorNode.h"
 
 namespace simCore
 {
@@ -42,14 +41,14 @@ namespace simVis
   /**
    * Represents an antenna pattern.
    */
-  class SDKVIS_EXPORT AntennaNode : public simVis::LocatorNode
+  class SDKVIS_EXPORT AntennaNode : public osg::MatrixTransform
   {
   public:
     /**
      * Constructs an antenna node
      * @param[in ] rot   Rotation (optional)
      */
-    explicit AntennaNode(simVis::Locator* locator, const osg::Quat& rot = osg::Quat());
+    explicit AntennaNode(const osg::Quat& rot = osg::Quat());
 
     /**
      * Whether the antenna pattern loaded OK.
@@ -114,7 +113,6 @@ namespace simVis
     osg::Quat                rot_;
     float                    min_;
     float                    max_;
-    osg::ref_ptr<osg::MatrixTransform> antenna_;
     osgEarth::optional<simData::BeamPrefs>      lastPrefs_;
 
     ColorUtils*      colorUtils_;
