@@ -140,6 +140,9 @@ RotatePanNavigationMode::RotatePanNavigationMode(bool enableOverhead, bool watch
     NavigationMode::IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // both left-double-click and ctrl-left-click center the camera on the mouse pointer
@@ -208,6 +211,9 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
     IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // both left-double-click and ctrl-left-click center the camera on the mouse pointer
@@ -268,6 +274,9 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
     IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // both left-double-click and ctrl-left-click center the camera on the mouse pointer
@@ -327,6 +336,9 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
     IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // left-click, right-click, left-double-click and ctrl-left-click center the camera on the mouse pointer
