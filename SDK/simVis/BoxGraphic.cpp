@@ -143,7 +143,9 @@ void BoxGraphic::setColor(const osg::Vec4& color)
   (*colorArray)[0] = color;
   geometry_->setColorArray(colorArray);
   geometry_->setColorBinding(osg::Geometry::BIND_OVERALL);
-  colorArray->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+  osg::VertexBufferObject* vbo = colorArray->getVertexBufferObject();
+  if (vbo)
+    vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
 }
 
 void BoxGraphic::create_()
@@ -158,7 +160,9 @@ void BoxGraphic::create_()
   primset_ = new osg::DrawArrays(GL_LINE_LOOP, 0, 4);
 
   geometry_->setVertexArray(verts_);
-  verts_->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+  osg::VertexBufferObject* vbo = verts_->getVertexBufferObject();
+  if (vbo)
+    vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
   geometry_->addPrimitiveSet(primset_);
 
   setGeometry(x_, y_, width_, height_);
