@@ -253,6 +253,26 @@ namespace simVis
     virtual unsigned int objectIndexTag() const;
 
     /**
+    * Gets the world position for this beam's origin. This is a convenience
+    * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+    /**
+    * Gets the world position & orientation for this beam's origin. This is a convenience
+    * function that extracts the Position information and rotation from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+      simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+    /**
     * Get the traversal mask for this node type
     * @return a traversal mask
     */

@@ -797,6 +797,23 @@ void MemoryCategoryDataSlice::allInts(std::vector<std::pair<int, int> > &nameVal
   }
 }
 
+void MemoryCategoryDataSlice::allInts(std::map<int, int> &nameValueIntMap) const
+{
+  // much like allStrings()
+  //for each category
+  for (EntityData::const_iterator i = data_.begin(); i != data_.end(); ++i)
+  {
+    // look for value beyond current time
+    TimeValueIterator j = i->second.data.upper_bound(lastUpdateTime_);
+    if (j == i->second.data.begin())
+      continue;
+
+    --j;
+
+    nameValueIntMap[i->first] = j->value;
+  }
+}
+
 void MemoryCategoryDataSlice::setCategoryNameManager(CategoryNameManager* categoryNameManager)
 {
   assert(categoryNameManager);

@@ -201,9 +201,7 @@ public:
   * Gets a positioning matrix that combines aggregate position, local orientation, and
   * offset position.
   */
-  bool getLocatorMatrix(
-    osg::Matrixd& output_mat,
-    unsigned int components = COMP_ALL) const;
+  bool getLocatorMatrix(osg::Matrixd& output_mat, unsigned int components = COMP_ALL) const;
 
   /**
   * Gets the world position reflected by this Locator. This is just a convenience
@@ -211,11 +209,10 @@ public:
   * locator matrix.
   *
   * @param[out] out_position If not NULL, resulting position stored here
-  * @param[in ] coordsys Requested coord sys of the output position
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  bool getLocatorPosition(
-    simCore::Vec3*                   out_position,
+  bool getLocatorPosition(simCore::Vec3* out_position,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
   /**
@@ -225,12 +222,10 @@ public:
   *
   * @param[out] out_position If not NULL, resulting position stored here
   * @param[out] out_orientation If not NULL, resulting orientation stored here
-  * @param[in ] coordsys Requested coord sys of the output position
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  bool getLocatorPositionOrientation(
-    simCore::Vec3*                   out_position,
-    simCore::Vec3*                   out_orientation,
+  bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
   /**

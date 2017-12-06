@@ -346,9 +346,6 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
   stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
-  label_ = new EntityLabelNode(getLocator());
-  addChild(label_);
-
   // horizon culling:
   addCullCallback( new osgEarth::HorizonCullCallback() );
 
@@ -555,6 +552,20 @@ void GateNode::flush()
 double GateNode::range() const
 {
   return (hasLastUpdate_ ? lastUpdateFromDS_.centroid() : 0.0);
+}
+
+int GateNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return centroid_->getPosition(out_position, coordsys);
+}
+
+int GateNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return centroid_->getPositionOrientation(out_position, out_orientation, coordsys);
 }
 
 const simData::GateUpdate* GateNode::getLastUpdateFromDS() const

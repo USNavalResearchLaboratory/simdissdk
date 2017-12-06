@@ -215,13 +215,17 @@ void AnimatedLineNode::initializeGeometry_()
     geom->setDataVariance(osg::Object::DYNAMIC);
     geom->setUseVertexBufferObjects(true);
     geom->setVertexArray(verts_.get());
-    verts_->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+    osg::VertexBufferObject* vbo = verts_->getVertexBufferObject();
+    if (vbo)
+      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     geom->addPrimitiveSet(primset_.get());
     colors1_ = new osg::Vec4Array(1);
     (*colors1_)[0] = color1_;
     geom->setColorArray(colors1_.get());
     geom->setColorBinding(osg::Geometry::BIND_OVERALL);
-    colors1_->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+    vbo = colors1_->getVertexBufferObject();
+    if (vbo)
+      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     osg::StateSet* stateSet = geom->getOrCreateStateSet();
     stateSet->setAttributeAndModes(stippleAttr1_.get(), 1);
     stateSet->setAttributeAndModes(lineWidth_.get(), 1);
@@ -240,7 +244,9 @@ void AnimatedLineNode::initializeGeometry_()
     (*colors2_)[0] = color2_;
     geom->setColorArray(colors2_.get());
     geom->setColorBinding(osg::Geometry::BIND_OVERALL);
-    colors2_->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+    osg::VertexBufferObject* vbo = colors2_->getVertexBufferObject();
+    if (vbo)
+      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     geom->getOrCreateStateSet()->setAttributeAndModes(stippleAttr2_.get(), 1);
     geom->getOrCreateStateSet()->setAttributeAndModes(lineWidth_.get(), 1);
     geom->getOrCreateStateSet()->setDataVariance(osg::Object::DYNAMIC);

@@ -185,6 +185,7 @@ public:
   virtual void allNameInts(std::vector<int> &nameIntVec) const = 0;
   virtual void allValueInts(std::vector<int> &valueIntVec) const = 0;
   virtual void allInts(std::vector<std::pair<int, int> > &nameValueIntVec) const = 0;
+  virtual void allInts(std::map<int, int> &nameValueIntMap) const = 0;
   ///@}
 
 protected:
