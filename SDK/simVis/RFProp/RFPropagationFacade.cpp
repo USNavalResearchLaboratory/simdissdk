@@ -133,7 +133,7 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   initializeDefaultColors_();
   colorProvider_ = new CompositeColorProvider();
 
-  profileManager_->setColorProvider(colorProvider_);
+  profileManager_->setColorProvider(colorProvider_.get());
 
   // set the default threshold type
   setThresholdType(simRF::ProfileDataProvider::THRESHOLDTYPE_POD);
@@ -771,7 +771,7 @@ int RFPropagationFacade::loadArepsFiles(const simCore::TimeStamp& time, const st
     {
       setAntennaHeight(arepsLoader.getAntennaHeight());
     }
-    setSlotData(profile);
+    setSlotData(profile.get());
   }
 
   // store filenames to support getInputFiles()
@@ -848,7 +848,7 @@ unsigned int RFPropagationFacade::numProfiles() const
 
 const simRF::Profile* RFPropagationFacade::getProfile(unsigned int index) const
 {
-  return (profileList_.size() > index) ? profileList_.at(index) : NULL;
+  return (profileList_.size() > index) ? profileList_.at(index).get() : NULL;
 }
 
 void RFPropagationFacade::setPosition(double latRad, double lonRad)

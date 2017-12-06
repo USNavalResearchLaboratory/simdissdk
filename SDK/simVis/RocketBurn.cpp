@@ -48,7 +48,7 @@ RocketBurn::RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture)
 
   // Add to the platform
   if (hostPlatform.getModel() != NULL)
-    hostPlatform.getModel()->addScaledChild(transform_);
+    hostPlatform.getModel()->addScaledChild(transform_.get());
 }
 
 RocketBurn::~RocketBurn()
@@ -95,15 +95,15 @@ void RocketBurn::rebuild_()
   {
     osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
     osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array; // vertexes to draw
-    geometry->setVertexArray(verts);
+    geometry->setVertexArray(verts.get());
 
     // map (x,y) pixel coordinate to (s,t) texture coordinate
     osg::ref_ptr<osg::Vec2Array> texcoords = new osg::Vec2Array;
-    geometry->setTexCoordArray(textureUnit, texcoords);
+    geometry->setTexCoordArray(textureUnit, texcoords.get());
 
     // colors
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
-    geometry->setColorArray(colors);
+    geometry->setColorArray(colors.get());
     geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     simVis::Color currentColor(currentShape_.color);
@@ -131,7 +131,7 @@ void RocketBurn::rebuild_()
     geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_STRIP, 0, verts->size()));
 
     // load the geometry into the geode
-    geode_->addDrawable(geometry, osg::Vec3(0, -currentLength, 0));
+    geode_->addDrawable(geometry.get(), osg::Vec3(0, -currentLength, 0));
 
     // A heuristic algorithm for dividing up the rocket burn.
     currentLength = currentLength + radiusCurrent * ROCKETBURN_SCALE_FACTOR;
@@ -141,7 +141,7 @@ void RocketBurn::rebuild_()
   // Generate shaders for the texturing to work (avoid doing more than once)
   if (!shaderGeneratorRun_)
   {
-    osgEarth::Registry::shaderGenerator().run(transform_);
+    osgEarth::Registry::shaderGenerator().run(transform_.get());
     shaderGeneratorRun_ = true;
   }
 }

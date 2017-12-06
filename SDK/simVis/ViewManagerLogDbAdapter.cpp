@@ -98,7 +98,7 @@ void ViewManagerLogDbAdapter::install(simVis::ViewManager* viewManager)
     (*i)->getCamera()->setNearFarRatio(LDB_NEAR_FAR_RATIO);
   }
   // Remember the manager
-  viewManager->addCallback(installCallback_);
+  viewManager->addCallback(installCallback_.get());
   viewManagers_.push_back(viewManager);
 }
 
@@ -110,7 +110,7 @@ void ViewManagerLogDbAdapter::uninstall(simVis::ViewManager* viewManager)
     return;
 
   // Remove it from lists first to avoid callbacks
-  viewManager->removeCallback(installCallback_);
+  viewManager->removeCallback(installCallback_.get());
   viewManagers_.erase(vmlIter);
 
   // Retrieve the views and uninstall on each

@@ -179,7 +179,7 @@ void PopupHandler::clear()
     currentPlatform_ = NULL;
     if (popup_.valid() && (view_.valid()))
     {
-      view_->removeOverlayControl(popup_);
+      view_->removeOverlayControl(popup_.get());
     }
     popup_ = NULL;
     platformLocatorRev_.reset();
@@ -352,7 +352,7 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
     // remove the old pop up.
     if (popup_.valid())
     {
-      view_->removeOverlayControl(popup_);
+      view_->removeOverlayControl(popup_.get());
     }
     popup_ = NULL;
     currentPlatform_ = platform;
@@ -368,7 +368,7 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
       popup_ = new PlatformPopup();
       applySettings_();
       popup_->setTitle(currentPlatform_->getEntityName(EntityNode::DISPLAY_NAME, true));
-      view_->addOverlayControl(popup_);
+      view_->addOverlayControl(popup_.get());
       showStartTime_ = simCore::getSystemTime();
     }
 

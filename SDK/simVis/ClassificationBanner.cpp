@@ -70,8 +70,8 @@ void ClassificationBanner::addToView(simVis::View* managedView)
   updateClassLabel_(); // update before adding
   if (managedView) // only add if we have main view
   {
-    managedView->addOverlayControl(classLabelUpper_);
-    managedView->addOverlayControl(classLabelLower_);
+    managedView->addOverlayControl(classLabelUpper_.get());
+    managedView->addOverlayControl(classLabelLower_.get());
   }
 }
 
@@ -79,8 +79,8 @@ void ClassificationBanner::removeFromView(simVis::View* managedView)
 {
   if (managedView) // only remove if we have main view
   {
-    managedView->removeOverlayControl(classLabelUpper_);
-    managedView->removeOverlayControl(classLabelLower_);
+    managedView->removeOverlayControl(classLabelUpper_.get());
+    managedView->removeOverlayControl(classLabelLower_.get());
   }
 }
 

@@ -97,12 +97,12 @@ namespace simVis
 
   EntityNode* ScenarioManager::EntityRecord::getEntityNode() const
   { // Convenience method for us
-    return node_;
+    return node_.get();
   }
 
   osg::Node* ScenarioManager::EntityRecord::getNode() const
   { // GeoObject interface
-    return node_;
+    return node_.get();
   }
 
   bool ScenarioManager::EntityRecord::getLocation(osg::Vec3d& output) const
@@ -145,7 +145,7 @@ namespace simVis
 
   osg::Group* ScenarioManager::SimpleEntityGraph::node() const
   {
-    return group_;
+    return group_.get();
   }
 
   int ScenarioManager::SimpleEntityGraph::addOrUpdate(EntityRecord* record)
@@ -205,7 +205,7 @@ namespace simVis
 
   osg::Group* ScenarioManager::GeoGraphEntityGraph::node() const
   {
-    return group_;
+    return group_.get();
   }
 
   int ScenarioManager::GeoGraphEntityGraph::addOrUpdate(EntityRecord* record)
@@ -526,7 +526,7 @@ namespace simVis
 
     // Add each entity to the graph
     for (EntityRepo::const_iterator i = entities_.begin(); i != entities_.end(); ++i)
-      entityGraph_->addOrUpdate(i->second);
+      entityGraph_->addOrUpdate(i->second.get());
   }
 
   void ScenarioManager::setMapNode(osgEarth::MapNode* map)
@@ -1036,7 +1036,7 @@ namespace simVis
     SAFETRYEND("removing scenario tool");
   }
 
-  void ScenarioManager::getTools(std::vector<ScenarioTool*>& tools) const
+  void ScenarioManager::getTools(std::vector< osg::ref_ptr<ScenarioTool> >& tools) const
   {
     SAFETRYBEGIN;
     std::copy(scenarioTools_.begin(), scenarioTools_.end(), std::back_inserter(tools));
@@ -1113,11 +1113,11 @@ namespace simVis
 
   void ScenarioManager::removeAllTools_()
   {
-    std::vector<ScenarioTool*> scenarioTools;
+    std::vector< osg::ref_ptr<ScenarioTool> > scenarioTools;
     getTools(scenarioTools);
-    for (std::vector<ScenarioTool*>::const_iterator i = scenarioTools.begin(); i != scenarioTools.end(); ++i)
+    for (std::vector< osg::ref_ptr<ScenarioTool> >::const_iterator i = scenarioTools.begin(); i != scenarioTools.end(); ++i)
     {
-      removeTool(*i);
+      removeTool(i->get());
     }
   }
 

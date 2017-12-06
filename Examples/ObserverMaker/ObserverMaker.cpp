@@ -122,7 +122,7 @@ public: // types
     void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
     {
       if (ot == simData::PLATFORM)
-        sceneManager_->addPlatformAsChild(id, source, arg_);
+        sceneManager_->addPlatformAsChild(id, source, arg_.get());
     }
 
   private:

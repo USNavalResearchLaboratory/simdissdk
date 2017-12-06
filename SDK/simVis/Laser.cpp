@@ -58,7 +58,7 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
     // the combination of these two locators gives us that.
 
     laserXYZOffsetLocator_ = new Locator(hostLocator, Locator::COMP_ALL);
-    locator = new ResolvedPositionLocator(laserXYZOffsetLocator_, Locator::COMP_ALL);
+    locator = new ResolvedPositionLocator(laserXYZOffsetLocator_.get(), Locator::COMP_ALL);
   }
   else
   {
@@ -315,7 +315,7 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
     node_->setNodeMask(DISPLAY_MASK_LASER);
 
     if (locatorNode_->getNumChildren() > 0)
-      locatorNode_->replaceChild(locatorNode_->getChild(0), node_);
+      locatorNode_->replaceChild(locatorNode_->getChild(0), node_.get());
     else
       locatorNode_->addChild(node_);
 

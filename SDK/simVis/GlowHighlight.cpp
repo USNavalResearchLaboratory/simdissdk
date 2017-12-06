@@ -84,7 +84,7 @@ void GlowHighlight::createShader_()
   osg::ref_ptr<osg::StateSet> stateset;
   if (stateSet_.lock(stateset))
   {
-    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateset);
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateset.get());
     simVis::Shaders package;
     package.load(vp, package.glowHighlightFragment());
 

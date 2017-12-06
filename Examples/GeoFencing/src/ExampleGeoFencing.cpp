@@ -113,11 +113,11 @@ namespace
     geom->open();
 
     // make and style a feature:
-    osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(geom, mapnode->getMap()->getSRS());
+    osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(geom.get(), mapnode->getMap()->getSRS());
     styleAnnotation(feature->style().mutable_value(), valid);
     feature->geoInterp() = osgEarth::GEOINTERP_GREAT_CIRCLE;
 
-    return new osgEarth::Annotation::FeatureNode(mapnode, feature);
+    return new osgEarth::Annotation::FeatureNode(mapnode, feature.get());
   }
 
   /// creates all the fences
@@ -238,11 +238,11 @@ int main(int argc, char **argv)
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
 
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Application data:
   AppData app;

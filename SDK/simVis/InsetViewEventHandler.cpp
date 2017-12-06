@@ -54,13 +54,13 @@ namespace
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
     geom->setUseVertexBufferObjects(true);
 
-    geom->setVertexArray(verts);
-    geom->setColorArray(colors);
+    geom->setVertexArray(verts.get());
+    geom->setColorArray(colors.get());
     geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 4));
     geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineStipple(6, 0x5555), 1);
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-    geode->addDrawable(geom);
+    geode->addDrawable(geom.get());
     simVis::setLighting(geode->getOrCreateStateSet(),
         osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 

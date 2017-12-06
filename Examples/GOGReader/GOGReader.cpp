@@ -108,17 +108,17 @@ simVis::PlatformNode* setupSimulation(
   sim->setSimulateRoll(true);
 
   /// Install frame update handler that will update track positions over time.
-  simMgr.addSimulator(sim);
+  simMgr.addSimulator(sim.get());
   simMgr.simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events
   osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(&simMgr, 0.0, 120.0);
-  viewer->addEventHandler(simHandler);
+  viewer->addEventHandler(simHandler.get());
 
   /// Tether camera to platform
   osg::ref_ptr<simVis::PlatformNode> platformNode = viewer->getSceneManager()->getScenario()->find<simVis::PlatformNode>(platformId);
 
-  return platformNode;
+  return platformNode.get();
 }
 
 int main(int argc, char** argv)
@@ -139,13 +139,13 @@ int main(int argc, char** argv)
 
   // start up a SIMDIS viewer->
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(ap);
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->installDebugHandlers();
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // add sky node
   if (ap.read("--sky"))
-    simExamples::addDefaultSkyNode(viewer);
+    simExamples::addDefaultSkyNode(viewer.get());
 
   bool mark = ap.read("--mark");
 
@@ -229,7 +229,7 @@ int main(int argc, char** argv)
   // mouse coords readout
   osg::ref_ptr<LabelControl> readout = new LabelControl("");
   ControlCanvas::getOrCreate(viewer->getMainView())->addControl(readout.get());
-  viewer->getMainView()->addEventHandler(new MouseCoordsTool(scene->getMapNode(), readout));
+  viewer->getMainView()->addEventHandler(new MouseCoordsTool(scene->getMapNode(), readout.get()));
 
   if (mark && go.isValid())
   {
@@ -250,7 +250,7 @@ int main(int argc, char** argv)
 
   /// simulate it so we have something to attach GOGs to
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer);
+  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer.get());
 
   viewer->addEventHandler(new simVis::ToggleOverheadMode(viewer->getMainView(), 'O', 'C'));
 

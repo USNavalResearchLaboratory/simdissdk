@@ -392,7 +392,7 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
     dropVerts_ = new osg::Vec3Array(2);
     (*dropVerts_)[0].set(0, 0, 0);
     (*dropVerts_)[1].set(0, 0, 0);  // Will be updated in updateAltModePositionAndAppearance_
-    dropVertsDrawable_->setVertexArray(dropVerts_);
+    dropVertsDrawable_->setVertexArray(dropVerts_.get());
 
     osg::Vec4Array* colors = new osg::Vec4Array(1);
     (*colors)[0].set(1, 1, 1, 1);

@@ -116,35 +116,35 @@ Control* createUI(AppData* app)
   unsigned row=0, col=0;
 
   row++;
-  app->draw2D = g->setControl(col, row, new CheckBoxControl(true, applyUI));
+  app->draw2D = g->setControl(col, row, new CheckBoxControl(true, applyUI.get()));
   g->setControl(col+1, row, new LabelControl("Draw 2D RCS"));
 
   row++;
-  app->draw3D = g->setControl(col, row, new CheckBoxControl(true, applyUI));
+  app->draw3D = g->setControl(col, row, new CheckBoxControl(true, applyUI.get()));
   g->setControl(col+1, row, new LabelControl("Draw 3D RCS"));
 
   row++;
   g->setControl(col, row, new LabelControl("Polarity"));
-  app->polarity = g->setControl(col+1, row, new HSliderControl(0.0, 9.0, 0.0, applyUI));
+  app->polarity = g->setControl(col+1, row, new HSliderControl(0.0, 9.0, 0.0, applyUI.get()));
   app->polarity->setHorizFill(true, 250.0);
   app->polarityLabel = g->setControl(col+2, row, new LabelControl());
 
   row++;
   g->setControl(col, row, new LabelControl("Frequency"));
-  app->frequency = g->setControl(col+1, row, new HSliderControl(0.0, 10000.0, 7000.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->frequency));
+  app->frequency = g->setControl(col+1, row, new HSliderControl(0.0, 10000.0, 7000.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->frequency.get()));
   app->frequency->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Elevation"));
-  app->elevation = g->setControl(col+1, row, new HSliderControl(0.0, 90.0, 45.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->elevation));
+  app->elevation = g->setControl(col+1, row, new HSliderControl(0.0, 90.0, 45.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->elevation.get()));
   app->elevation->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Detail angle"));
-  app->detail = g->setControl(col+1, row, new HSliderControl(1.0, 15.0, 5.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->detail));
+  app->detail = g->setControl(col+1, row, new HSliderControl(1.0, 15.0, 5.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->detail.get()));
   app->detail->setHorizFill(true, 250.0);
 
   return vbox;
@@ -189,11 +189,11 @@ void simulate(simData::ObjectId id, simData::DataStore& ds, simVis::Viewer* view
   sim->addWaypoint(simUtil::Waypoint(0.5,  0.5, 20000, 30.0));
 
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simman = new simUtil::PlatformSimulatorManager(&ds);
-  simman->addSimulator(sim);
+  simman->addSimulator(sim.get());
   simman->simulate(0.0, 30.0, 30.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman, 0.0, 30.0);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman.get(), 0.0, 30.0);
+  viewer->addEventHandler(simHandler.get());
 }
 
 //----------------------------------------------------------------------------
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   AppData app;
 
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
   addPlatform(&app);
 
   // make the sim
-  simulate(app.platformId, app.ds, viewer);
+  simulate(app.platformId, app.ds, viewer.get());
 
   // zoom the camera
   viewer->getMainView()->tetherCamera(scene->getScenario()->find(app.platformId));

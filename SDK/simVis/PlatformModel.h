@@ -84,7 +84,7 @@ namespace simVis
     static unsigned int getMask() { return TRAVERSAL_MASK; }
 
     /** Retrieves the node for the entity's label */
-    EntityLabelNode* label() const { return label_; }
+    EntityLabelNode* label() const { return label_.get(); }
 
     /** Sets the RCS data */
     void setRcsData(simCore::RadarCrossSectionPtr rcsData);

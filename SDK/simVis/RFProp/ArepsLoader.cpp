@@ -418,7 +418,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
   if (beamHandler_ != NULL && lossProvider)
   {
     osg::ref_ptr<PODProfileDataProvider> podProvider = new PODProfileDataProvider(lossProvider, beamHandler_->getPODLossThreshold());
-    profile.addProvider(podProvider);
+    profile.addProvider(podProvider.get());
   }
   else if (!lossProvider)
   {
@@ -433,10 +433,10 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
     profile.addProvider(new OneWayPowerDataProvider(ppfProvider, beamHandler_->radarParams()));
 
     osg::ref_ptr<TwoWayPowerDataProvider> twoWayPowerDataProvider = new TwoWayPowerDataProvider(ppfProvider, beamHandler_->radarParams());
-    profile.addProvider(twoWayPowerDataProvider);
+    profile.addProvider(twoWayPowerDataProvider.get());
 
     // SNRDataProvider depends on TwoWayPowerDataProvider
-    profile.addProvider(new SNRDataProvider(twoWayPowerDataProvider, beamHandler_->radarParams()));
+    profile.addProvider(new SNRDataProvider(twoWayPowerDataProvider.get(), beamHandler_->radarParams()));
   }
   else if (!ppfProvider)
   {

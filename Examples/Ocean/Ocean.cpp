@@ -614,8 +614,8 @@ namespace
       s_SlSettings->lensFlare()->set(true);
 
       // Configure clouds with the SilverLining callback settings
-      s_SlSettings->addValue(s_CloudManager);
-      return new SilverLining::SilverLiningNode(scene->getMapNode()->getMapSRS(), skyOptions, s_SlSettings);
+      s_SlSettings->addValue(s_CloudManager.get());
+      return new SilverLining::SilverLiningNode(scene->getMapNode()->getMapSRS(), skyOptions, s_SlSettings.get());
 #else
       return SkyNode::create(ConfigOptions(skyOptions), scene->getMapNode());
 #endif /* HAVE_SILVERLINING_NODEKIT */
@@ -642,7 +642,7 @@ namespace
       triton.maxAltitude() = 30000.0f;
       triton.renderBinNumber() = simVis::BIN_OCEAN;
 #ifdef HAVE_TRITON_NODEKIT
-      return new Triton::TritonNode(mapNode, triton, s_TritonSettings);
+      return new Triton::TritonNode(mapNode, triton, s_TritonSettings.get());
 #else
       return OceanNode::create(triton, scene->getMapNode());
 #endif
@@ -743,7 +743,7 @@ int main(int argc, char** argv)
 
   // start up a SIMDIS viewer
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // the data store houses the entity data model:
@@ -754,7 +754,7 @@ int main(int argc, char** argv)
   s_shipId = createShip(dataStore);
 
   // add a sky to the scene.
-  osg::ref_ptr<SkyNode> sky = makeSky(scene, useSilverLining, sluser, sllicense, slpath);
+  osg::ref_ptr<SkyNode> sky = makeSky(scene.get(), useSilverLining, sluser, sllicense, slpath);
   sky->attach(viewer->getMainView());
   sky->setDateTime(osgEarth::Util::DateTime(2014, 4, 22, 16.5));
   sky->setMinimumAmbient(osg::Vec4f(0.5f, 0.5f, 0.5f, 1.f));
@@ -780,11 +780,11 @@ int main(int argc, char** argv)
   viewer->getMainView()->setFocalOffsets(80.0, -10.0, 2000.0);
 
   // install an on-screen menu
-  Control* menu = createMenu(ocean, sky, useTriton, useSilverLining);
+  Control* menu = createMenu(ocean.get(), sky.get(), useTriton, useSilverLining);
   viewer->getMainView()->addOverlayControl(menu);
 
   // install the handler for the demo keys in the notify() above
-  viewer->addEventHandler(new MenuHandler(viewer, scene, menu));
+  viewer->addEventHandler(new MenuHandler(viewer.get(), scene.get(), menu));
 
   viewer->installDebugHandlers();
   viewer->run();

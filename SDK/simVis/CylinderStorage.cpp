@@ -170,7 +170,7 @@ void CylinderStorage::update(double time)
   {
     // Get the data appropriate for time
     const Update& data = allData_[i->first].dataForTime(time);
-    simVis::CylinderGeode* rb = i->second;
+    simVis::CylinderGeode* rb = i->second.get();
     rb->update(data.shapeData);
     // Update position only if rb data is valid (otherwise update has turned rb off)
     if (data.shapeData.length != 0)

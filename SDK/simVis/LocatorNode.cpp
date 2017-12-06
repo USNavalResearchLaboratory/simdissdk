@@ -64,13 +64,13 @@ LocatorNode::LocatorNode(Locator* locator, osg::Node* child)
 LocatorNode::~LocatorNode()
 {
   if (locator_.valid() && locatorCallback_.valid())
-    locator_->removeCallback(locatorCallback_);
+    locator_->removeCallback(locatorCallback_.get());
 }
 
 void LocatorNode::setLocator(Locator* locator)
 {
   if (locator_.valid() && locatorCallback_.valid())
-    locator_->removeCallback(locatorCallback_);
+    locator_->removeCallback(locatorCallback_.get());
 
   locator_ = locator;
   matrixRevision_.reset();
@@ -78,7 +78,7 @@ void LocatorNode::setLocator(Locator* locator)
   if (locator)
   {
     locatorCallback_ = new SyncLocatorCallback<LocatorNode>(this);
-    locator->addCallback(locatorCallback_);
+    locator->addCallback(locatorCallback_.get());
     syncWithLocator();
   }
 }

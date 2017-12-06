@@ -98,10 +98,10 @@ int main(int argc, char** argv)
   // start up a SIMDIS viewer.
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
 
-  viewer->setMap(map);
+  viewer->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   viewer->installDebugHandlers();
   viewer->run();

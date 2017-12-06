@@ -99,7 +99,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     if (loadedModel.valid())
     {
       // Find the MapNode
-      mapNode = osgEarth::MapNode::findMapNode(loadedModel);
+      mapNode = osgEarth::MapNode::findMapNode(loadedModel.get());
     }
     SAFETRYEND((std::string("osgEarth processing of file ") + configFile));
   }
@@ -114,7 +114,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
       // Set up a map node with the supplied options
       osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
       simVis::SceneManager::initializeTerrainOptions(options);
-      mapNode = new osgEarth::MapNode(map, options);
+      mapNode = new osgEarth::MapNode(map.get(), options);
     }
 
     else
@@ -122,7 +122,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
       // Set up a map node with the supplied options
       osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions options;
       simVis::SceneManager::initializeTerrainOptions(options);
-      mapNode = new osgEarth::MapNode(map, options);
+      mapNode = new osgEarth::MapNode(map.get(), options);
     }
 
     SAFETRYEND((std::string("legacy SIMDIS 9 .txt processing of file ") + configFile));

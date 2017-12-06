@@ -172,7 +172,7 @@ private:
       simVis::View::Insets insets;
       viewer_->getMainView()->getInsets(insets);
       for (unsigned i = 0; i < insets.size(); ++i)
-        viewer_->getMainView()->removeInset(insets[i]);
+        viewer_->getMainView()->removeInset(insets[i].get());
 
       SIM_NOTICE << LC << "Removed all insets." << std::endl;
       rv = true;
@@ -338,7 +338,7 @@ simData::ObjectId createPlatform(simData::DataStore& dataStore, simUtil::Platfor
   osg::ref_ptr<simUtil::PlatformSimulator> sim1 = new simUtil::PlatformSimulator(id);
   sim1->addWaypoint(startPos);
   sim1->addWaypoint(endPos);
-  simMgr.addSimulator(sim1);
+  simMgr.addSimulator(sim1.get());
 
   return id;
 }
@@ -355,7 +355,7 @@ int main(int argc, char** argv)
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // create a sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Demonstrate the view-drawing service.  This is used to create new inset views with the
   // mouse.
@@ -401,7 +401,7 @@ int main(int argc, char** argv)
   simData::ObjectId obj3 = createPlatform(dataStore, *simMgr, "Medium High 100km", EXAMPLE_MISSILE_ICON, obj3Start, obj3End, 0);
 
   simMgr->simulate(START_TIME, END_TIME, 60.0);
-  viewer->addEventHandler(new simVis::SimulatorEventHandler(simMgr, START_TIME, END_TIME));
+  viewer->addEventHandler(new simVis::SimulatorEventHandler(simMgr.get(), START_TIME, END_TIME));
 
   // start centered on a platform in overhead mode
   osg::observer_ptr<simVis::EntityNode> obj1Node = viewer->getSceneManager()->getScenario()->find(obj1);
@@ -411,12 +411,12 @@ int main(int argc, char** argv)
   mainView->enableOverheadMode(true);
 
   // Install a handler to respond to the demo keys in this sample.
-  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer, insetHandler, statusLabel, dataStore, obj2);
+  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer.get(), insetHandler.get(), statusLabel, dataStore, obj2);
   viewer->getMainView()->getCamera()->addEventCallback(mouseHandler);
 
   // Demonstrate the view callback. This notifies us whenever new inset views are created or
   // removed or get focus.
-  viewer->addCallback(new ViewReportCallback(mouseHandler));
+  viewer->addCallback(new ViewReportCallback(mouseHandler.get()));
 
   /// hovering the mouse over the platform should trigger a popup
   viewer->addEventHandler(new simVis::PopupHandler(viewer->getSceneManager()));

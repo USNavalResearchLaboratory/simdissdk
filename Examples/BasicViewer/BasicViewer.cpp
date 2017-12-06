@@ -115,7 +115,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
           simVis::View::Insets insets;
           viewer_->getMainView()->getInsets(insets);
           for (unsigned i = 0; i < insets.size(); ++i)
-            viewer_->getMainView()->removeInset(insets[i]);
+            viewer_->getMainView()->removeInset(insets[i].get());
 
           SIM_NOTICE << LC << "Removed all insets.." << std::endl;
           handled = true;
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
   viewer->setMap(simExamples::createDefaultExampleMap());
 
   // create a sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Demonstrate the view callback. This notifies us whenever new inset views are created or
   // removed or get focus.
@@ -250,7 +250,7 @@ int main(int argc, char** argv)
   viewer->getMainView()->addEventHandler(insetHandler);
 
   // Install a handler to respond to the demo keys in this sample.
-  viewer->getMainView()->getCamera()->addEventCallback(new MenuHandler(viewer, insetHandler));
+  viewer->getMainView()->getCamera()->addEventCallback(new MenuHandler(viewer.get(), insetHandler.get()));
 
   // set an initial viewpoint
   viewer->getMainView()->lookAt(45, 0, 0, 0, -89, 12e6);
@@ -267,7 +267,7 @@ int main(int argc, char** argv)
   osg::ref_ptr<simVis::Compass> compass = new simVis::Compass("compass.png");
   compass->setDrawView(viewer->getMainView());
   // create an adapter to let compass display heading for current focused view
-  simVis::CompassFocusManagerAdapter adapter(viewer->getMainView()->getFocusManager(), compass);
+  simVis::CompassFocusManagerAdapter adapter(viewer->getMainView()->getFocusManager(), compass.get());
 
   // show the help menu
   //viewer->getMainView()->addOverlayControl(createHelp());

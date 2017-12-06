@@ -131,7 +131,7 @@ void InstallOcean::install(simVis::SceneManager& scene)
   }
 
   if (oceanNode.valid())
-    scene.setOceanNode(oceanNode);
+    scene.setOceanNode(oceanNode.get());
 }
 
 }

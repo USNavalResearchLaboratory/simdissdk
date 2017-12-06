@@ -218,7 +218,7 @@ struct AppData
   void tether()
   {
     view_->tetherCamera(NULL);
-    view_->tetherCamera(platformModel_);
+    view_->tetherCamera(platformModel_.get());
     view_->setFocalOffsets(45, -45, 2e4);
   }
 private:
@@ -325,55 +325,55 @@ ui::Control* createUI(AppData& app)
   grid->setChildSpacing(5.0f);
 
   grid->setControl(c, r, new ui::LabelControl("Mode"));
-  app.modeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.modes_.size(), 1, applyUI));
+  app.modeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.modes_.size(), 1, applyUI.get()));
   app.modeLabel_  = grid->setControl(c+2, r, new ui::LabelControl());
   app.modeSlider_->setHorizFill(true, 250);
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Size"));
-  app.sizeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1, 10, 2, applyUI));
+  app.sizeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1, 10, 2, applyUI.get()));
   app.sizeSlider_->setHorizFill(true, 250);
   app.sizeLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Flat mode"));
-  app.flatModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI));
+  app.flatModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Alt mode"));
-  app.altModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI));
+  app.altModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Generate TrackColor Commands"));
-  app.generateColorCommandsCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI));
+  app.generateColorCommandsCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Use Platform Color"));
-  app.platformColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI));
+  app.platformColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Use Multi-color"));
-  app.multiColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI));
+  app.multiColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Color"));
-  app.colorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size(), 0, applyUI));
+  app.colorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size(), 0, applyUI.get()));
   app.colorSlider_->setHorizFill(true, 250);
   app.colorLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Override color"));
-  app.overrideColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI));
+  app.overrideColorCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl(""));
-  app.overrideColorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size(), 0, applyUI));
+  app.overrideColorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size(), 0, applyUI.get()));
   app.overrideColorSlider_->setHorizFill(true, 250);
   app.overrideColorLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Max Points"));
-  app.maxLengthSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(-1, 512, INIT_NUM_POINTS, applyUI));
+  app.maxLengthSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(-1, 512, INIT_NUM_POINTS, applyUI.get()));
   app.maxLengthSlider_->setHorizFill(true, 250);
   app.maxLengthLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
 
@@ -381,14 +381,14 @@ ui::Control* createUI(AppData& app)
   grid->setControl(c, r, new ui::LabelControl("Transport:"));
   osg::ref_ptr<ui::HBox> buttons = grid->setControl(c+1, r, new ui::HBox());
   buttons->setChildSpacing(10.0f);
-  app.rewind2_ = buttons->addControl(new ui::ButtonControl("<<", applyUI));
-  app.rewind1_ = buttons->addControl(new ui::ButtonControl("<", applyUI));
-  app.ff1_     = buttons->addControl(new ui::ButtonControl(">", applyUI));
-  app.ff2_     = buttons->addControl(new ui::ButtonControl(">>", applyUI));
+  app.rewind2_ = buttons->addControl(new ui::ButtonControl("<<", applyUI.get()));
+  app.rewind1_ = buttons->addControl(new ui::ButtonControl("<", applyUI.get()));
+  app.ff1_     = buttons->addControl(new ui::ButtonControl(">", applyUI.get()));
+  app.ff2_     = buttons->addControl(new ui::ButtonControl(">>", applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Reverse mode:"));
-  app.reverseModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI));
+  app.reverseModeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Time:"));
@@ -396,11 +396,11 @@ ui::Control* createUI(AppData& app)
   app.timeSlider_->setHorizFill(true, 250);
 
   r++;
-  app.tether_ = grid->setControl(c+1, r, new ui::ButtonControl("Reset Tether", applyUI));
+  app.tether_ = grid->setControl(c+1, r, new ui::ButtonControl("Reset Tether", applyUI.get()));
 
   r++;
   ui::HBox* toggleBox = grid->setControl(c+1, r, new ui::HBox());
-  app.globalToggle_ = toggleBox->addControl(new ui::CheckBoxControl(true, applyUI));
+  app.globalToggle_ = toggleBox->addControl(new ui::CheckBoxControl(true, applyUI.get()));
   toggleBox->addControl(new ui::LabelControl("Global track display toggle"));
 
   return top;
@@ -449,12 +449,12 @@ int main(int argc, char **argv)
 
   /// Simdis viewer to display the scene
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   /// data source which will provide positions for the platform
   /// based on the simulation time.
@@ -474,7 +474,7 @@ int main(int argc, char **argv)
 
   /// Install frame update handler that will update track positions over time.
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  simMgr->addSimulator(sim);
+  simMgr->addSimulator(sim.get());
   simMgr->simulate(SIM_START, SIM_END, SIM_HZ);
 
   /// Attach the simulation updater to OSG timer events
@@ -485,7 +485,7 @@ int main(int argc, char **argv)
   /// Tether camera to platform
   app.view_          = viewer->getMainView();
   app.platformModel_ = scene->getScenario()->find<simVis::PlatformNode>(platformId);
-  app.view_->tetherCamera(app.platformModel_);
+  app.view_->tetherCamera(app.platformModel_.get());
 
   /// set the camera to look at the platform
   viewer->getMainView()->setFocalOffsets(45, -45, 2e6);

@@ -55,7 +55,7 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
   gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
 
-  osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_);
+  osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
   if (outlineGeometry != NULL)
     outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 }
@@ -72,7 +72,7 @@ void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a, const si
     // Check for transition between color and override color than check for color change
     if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
     {
-      SVFactory::updateColor(gateSV_, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
+      SVFactory::updateColor(gateSV_.get(), simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
     }
   }
   else
@@ -80,13 +80,13 @@ void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a, const si
     // Check for transition between color and override color than check for color change
     if (a->commonprefs().useoverridecolor() || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
     {
-      SVFactory::updateColor(gateSV_, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
+      SVFactory::updateColor(gateSV_.get(), simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
     }
   }
 
   if (PB_FIELD_CHANGED(a, b, gatelighting))
   {
-    SVFactory::updateLighting(gateSV_, b->gatelighting());
+    SVFactory::updateLighting(gateSV_.get(), b->gatelighting());
   }
 }
 
@@ -95,19 +95,19 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simDa
 {
   if (PB_FIELD_CHANGED(a, b, minrange))
   {
-    SVFactory::updateNearRange(gateSV_, b->minrange());
+    SVFactory::updateNearRange(gateSV_.get(), b->minrange());
   }
   if (PB_FIELD_CHANGED(a, b, maxrange))
   {
-    SVFactory::updateFarRange(gateSV_, b->maxrange());
+    SVFactory::updateFarRange(gateSV_.get(), b->maxrange());
   }
   if (PB_FIELD_CHANGED(a, b, width) && PB_BOTH_HAVE_FIELD(a, b, width))
   {
-    SVFactory::updateHorizAngle(gateSV_, a->width(), b->width());
+    SVFactory::updateHorizAngle(gateSV_.get(), a->width(), b->width());
   }
   if (PB_FIELD_CHANGED(a, b, height) && PB_BOTH_HAVE_FIELD(a, b, height))
   {
-    SVFactory::updateVertAngle(gateSV_, a->height(), b->height());
+    SVFactory::updateVertAngle(gateSV_.get(), a->height(), b->height());
   }
 }
 
@@ -304,11 +304,11 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
       hostLocator, Locator::COMP_ALL);
 
     // this locator sets the centroid position offset from the platform, using the gate orientation offsets
-    centroidPositionOffsetLocator_ = new Locator(baseLocator_, Locator::COMP_ALL);
+    centroidPositionOffsetLocator_ = new Locator(baseLocator_.get(), Locator::COMP_ALL);
 
     // inherit the gate centroid and the platform orientation, without beam orientation offsets, then adds back (as local offsets) the gate orientation
     centroidLocator_ = new ResolvedPositionOrientationLocator(
-      centroidPositionOffsetLocator_, Locator::COMP_ALL);
+      centroidPositionOffsetLocator_.get(), Locator::COMP_ALL);
   }
   else
   {
@@ -321,17 +321,17 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
       hostLocator, Locator::COMP_ALL);
 
     // this locator sets the centroid position offset from the platform, using the gate orientation offsets
-    centroidPositionOffsetLocator_ = new Locator(baseLocator_, Locator::COMP_ALL);
+    centroidPositionOffsetLocator_ = new Locator(baseLocator_.get(), Locator::COMP_ALL);
 
     // this locator starts with the resolved centroid position, with identity orientation, then adds back (as local offsets) the gate orientation
     centroidLocator_ = new ResolvedPositionLocator(
-      centroidPositionOffsetLocator_, Locator::COMP_ALL);
+      centroidPositionOffsetLocator_.get(), Locator::COMP_ALL);
   }
 
   // the gate's locator represents the position and orientation of the gate centroid
-  setLocator(centroidLocator_);
+  setLocator(centroidLocator_.get());
 
-  localGrid_ = new LocalGridNode(centroidLocator_, host, referenceYear);
+  localGrid_ = new LocalGridNode(centroidLocator_.get(), host, referenceYear);
   addChild(localGrid_);
 
   // set up a state set.
@@ -353,7 +353,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   addCullCallback( new osgEarth::HorizonCullCallback() );
 
   // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
-  centroid_ = new GateCentroid(centroidLocator_);
+  centroid_ = new GateCentroid(centroidLocator_.get());
   addChild(centroid_);
 
   // centroid provides a persistent locatornode to parent our label node
@@ -709,7 +709,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
 
     if (activePrefs->fillpattern() != simData::GatePrefs_FillPattern_CENTROID)
     {
-      gateVolume_ = new GateVolume(gateVolumeLocator_, activePrefs, activeUpdate);
+      gateVolume_ = new GateVolume(gateVolumeLocator_.get(), activePrefs, activeUpdate);
       addChild(gateVolume_);
     }
     dirtyBound();

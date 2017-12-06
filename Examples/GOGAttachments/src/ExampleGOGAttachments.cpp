@@ -201,21 +201,21 @@ simVis::PlatformNode* setupSimulation(
   sim->setSimulateRoll(true);
 
   /// Install frame update handler that will update track positions over time.
-  simMgr.addSimulator(sim);
+  simMgr.addSimulator(sim.get());
   simMgr.simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events
   osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(&simMgr, 0.0, 120.0);
-  viewer->addEventHandler(simHandler);
+  viewer->addEventHandler(simHandler.get());
 
   /// Tether camera to platform
   osg::ref_ptr<simVis::PlatformNode> platformNode = viewer->getSceneManager()->getScenario()->find<simVis::PlatformNode>(platformId);
-  viewer->getMainView()->tetherCamera(platformNode);
+  viewer->getMainView()->tetherCamera(platformNode.get());
 
   /// set the camera to look at the platform
   viewer->getMainView()->setFocalOffsets(0, -30, 10000);
 
-  return platformNode;
+  return platformNode.get();
 }
 
 //----------------------------------------------------------------------------
@@ -486,7 +486,7 @@ int main(int argc, char **argv)
 
   /// Simdis viewer to display the scene
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add a sky to the scene.
@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 
   /// simulate it so we have something to attach GOGs to
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer);
+  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer.get());
 
   /// If there's a gog file on the cmd line, use that; otherwise build some examples.
   if (argc > 1)
@@ -537,7 +537,7 @@ int main(int argc, char **argv)
   else
   {
     /// make some example GOGs.
-    setupGOGAttachments(platform);
+    setupGOGAttachments(platform.get());
 
     /// attach the GOGs to the platform. You can set a custom LocatorComponents enum
     /// to designate how the GOGs should track the platform.

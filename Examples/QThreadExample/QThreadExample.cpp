@@ -62,14 +62,14 @@ int main(int argc, char **argv)
   // a Map and a Scene Manager:
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan);
+  simExamples::addDefaultSkyNode(sceneMan.get());
 
   // A view to embed in our widget:
   osg::ref_ptr<simVis::View> view = new simVis::View();
-  view->setSceneManager(sceneMan);
+  view->setSceneManager(sceneMan.get());
   view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
   // Note that no debug handlers are installed, because we cycle through frame rate in menu
 
@@ -78,11 +78,11 @@ int main(int argc, char **argv)
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
-  logDb->install(viewMan);
+  logDb->install(viewMan.get());
 
   // Add a new "top-level" view. A top-level view can have inset views, and
   // also has a HUD stack for overlay text and graphics.
-  viewMan->addView(view);
+  viewMan->addView(view.get());
 
   // Add a dataStore for the platform
   simData::MemoryDataStore dataStore;
@@ -95,8 +95,8 @@ int main(int argc, char **argv)
 
   QApplication app(argc, argv);
 
-  SdkQThreadExample::MyMainWindow win(viewMan, dataStore);
-  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
+  SdkQThreadExample::MyMainWindow win(viewMan.get(), dataStore);
+  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
   win.setGeometry(100, 100, 1024, 800);
   win.setGlWidget(viewWidget);
 

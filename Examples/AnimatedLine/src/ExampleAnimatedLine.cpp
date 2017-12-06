@@ -140,11 +140,11 @@ void simulate(simData::ObjectId id, simData::DataStore& ds, simVis::Viewer* view
   sim->addWaypoint(simUtil::Waypoint(0.5,  0.5, 20000, 30.0));
 
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simman = new simUtil::PlatformSimulatorManager(&ds);
-  simman->addSimulator(sim);
+  simman->addSimulator(sim.get());
   simman->simulate(0.0, 30.0, 30.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman, 0.0, 30.0);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman.get(), 0.0, 30.0);
+  viewer->addEventHandler(simHandler.get());
 }
 
 //----------------------------------------------------------------------------
@@ -206,14 +206,14 @@ void addAnimatedLines(simVis::EntityNode* node1, simVis::EntityNode* node2, osg:
       simCore::Vec3(),
       simCore::Vec3(0, 22.5*simCore::DEG2RAD, 0));
 
-    osg::ref_ptr<simVis::Locator> lob2 = new simVis::Locator(lob);
+    osg::ref_ptr<simVis::Locator> lob2 = new simVis::Locator(lob.get());
 
     lob2->setLocalOffsets(
       simCore::Vec3(100000, 0, 0),
       simCore::Vec3());
 
     osg::ref_ptr<simVis::AnimatedLineNode> line = new simVis::AnimatedLineNode();
-    line->setEndPoints(node2->getLocator(), lob2);
+    line->setEndPoints(node2->getLocator(), lob2.get());
     line->setStipple1(0xF0F0);
     line->setStipple2(0x0F00);
     line->setColor1(osg::Vec4(0, 1, 0, 1));
@@ -293,14 +293,14 @@ int main(int argc, char **argv)
 
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // Set up the data:
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // create a sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   simData::MemoryDataStore dataStore;
   scene->getScenario()->bind(&dataStore);
@@ -312,7 +312,7 @@ int main(int argc, char **argv)
   simData::ObjectId surf2 = addPlatform(dataStore, "Surface 2", -0.75, -0.6, 0.0, true);
 
   // put platform 2 in motion
-  simulate(platform2, dataStore, viewer);
+  simulate(platform2, dataStore, viewer.get());
 
   // Look up the platform models:
   osg::observer_ptr<simVis::EntityNode> node1 = scene->getScenario()->find(platform1);

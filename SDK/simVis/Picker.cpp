@@ -77,7 +77,7 @@ void PickerHighlightShader::installShaderProgram(bool defaultEnabled)
 {
   osg::ref_ptr<osg::StateSet> stateset;
   if (stateset_.lock(stateset))
-    PickerHighlightShader::installShaderProgram(stateset, defaultEnabled);
+    PickerHighlightShader::installShaderProgram(stateset.get(), defaultEnabled);
 }
 
 bool PickerHighlightShader::isEnabled() const
@@ -222,11 +222,11 @@ IntersectPicker::IntersectPicker(simVis::ViewManager* viewManager, simVis::Scena
     scenario_(scenarioManager)
 {
   guiEventHandler_ = new IntersectEventHandler(*this);
-  addHandlerToViews_ = new AddEventHandlerToViews(guiEventHandler_);
+  addHandlerToViews_ = new AddEventHandlerToViews(guiEventHandler_.get());
   if (viewManager_.valid())
   {
     addHandlerToViews_->addToViews(*viewManager_);
-    viewManager_->addCallback(addHandlerToViews_);
+    viewManager_->addCallback(addHandlerToViews_.get());
   }
 }
 
@@ -235,7 +235,7 @@ IntersectPicker::~IntersectPicker()
   if (viewManager_.valid())
   {
     addHandlerToViews_->removeFromViews(*viewManager_);
-    viewManager_->removeCallback(addHandlerToViews_);
+    viewManager_->removeCallback(addHandlerToViews_.get());
   }
 }
 
@@ -367,7 +367,7 @@ RTTPicker::RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* 
   rttPicker_->addChild(scenarioManager);
   if (viewManager)
   {
-    ViewsWatcher* viewManagerCallback = new ViewsWatcher(rttPicker_);
+    ViewsWatcher* viewManagerCallback = new ViewsWatcher(rttPicker_.get());
     viewManager->addCallback(viewManagerCallback);
 
     std::vector<simVis::View*> views;
@@ -391,13 +391,13 @@ RTTPicker::~RTTPicker()
   rttPicker_->setDefaultCallback(NULL);
   osg::ref_ptr<simVis::ViewManager> viewManager;
   if (viewManager_.lock(viewManager))
-    viewManager->removeCallback(viewManagerCallback_);
+    viewManager->removeCallback(viewManagerCallback_.get());
 }
 
 void RTTPicker::setPickedId(unsigned int id)
 {
   // Tell listeners
-  osg::Referenced* ref = osgEarth::Registry::objectIndex()->get<osg::Referenced>(id);
+  osg::Referenced* ref = osgEarth::Registry::objectIndex()->get<osg::Referenced>(id).get();
   setPicked_(id, ref);
 }
 
@@ -460,7 +460,7 @@ void RTTPicker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::Vie
 
 osgEarth::Util::RTTPicker* RTTPicker::rttPicker() const
 {
-  return rttPicker_;
+  return rttPicker_.get();
 }
 
 }

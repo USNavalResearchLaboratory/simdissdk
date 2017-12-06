@@ -186,7 +186,7 @@ namespace simVis
 
       // calculate the GeoPoint from the screen coords
       std::vector<osgEarth::GeoPoint> points;
-      calculateGeoPointFromScreenXY_(originX, originY, *zoomView_, srs, points);
+      calculateGeoPointFromScreenXY_(originX, originY, *zoomView_, srs.get(), points);
       if (points.empty())
         return;
       simVis::Viewpoint vp = zoomView_->getViewpoint();
@@ -200,10 +200,10 @@ namespace simVis
 
   // calculate the 4 corner GeoPoints from the screen coords
   std::vector<osgEarth::GeoPoint> points;
-  calculateGeoPointFromScreenXY_(originX, originY, *zoomView_, srs, points);
-  calculateGeoPointFromScreenXY_(originX + widthPixels, originY, *zoomView_, srs, points);
-  calculateGeoPointFromScreenXY_(originX + widthPixels, originY + heightPixels, *zoomView_, srs, points);
-  calculateGeoPointFromScreenXY_(originX, originY + heightPixels, *zoomView_, srs, points);
+  calculateGeoPointFromScreenXY_(originX, originY, *zoomView_, srs.get(), points);
+  calculateGeoPointFromScreenXY_(originX + widthPixels, originY, *zoomView_, srs.get(), points);
+  calculateGeoPointFromScreenXY_(originX + widthPixels, originY + heightPixels, *zoomView_, srs.get(), points);
+  calculateGeoPointFromScreenXY_(originX, originY + heightPixels, *zoomView_, srs.get(), points);
 
   // not enough points found for a reasonable zoom
   if (points.size() < 2)
