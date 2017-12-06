@@ -132,7 +132,7 @@ int LocatorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Ve
   out_position->set(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z());
   simVis::Math::enuRotMatrixToEcefEuler(m, *out_orientation);
 
-  if (coordsys != simCore::COORD_SYS_ECEF)
+  if (coordsys == simCore::COORD_SYS_ECEF)
     return 0;
   if (coordsys == simCore::COORD_SYS_LLA)
   {
