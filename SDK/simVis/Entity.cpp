@@ -115,6 +115,24 @@ void EntityNode::setLocator(simVis::Locator* locator)
     locator_->dirty();
 }
 
+int EntityNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
+{
+  if (!locator_.valid())
+    return 1;
+  if (locator_->getLocatorPosition(out_position, coordsys))
+    return 0;
+  return 2;
+}
+
+int EntityNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, simCore::CoordinateSystem coordsys) const
+{
+  if (!locator_.valid())
+    return 1;
+  if (locator_->getLocatorPositionOrientation(out_position, out_orientation, coordsys))
+    return 0;
+  return 2;
+}
+
 void EntityNode::attach(osg::Node* node, unsigned int comp)
 {
   if (comp == Locator::COMP_NONE)

@@ -155,9 +155,9 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   root_->addChild(targets_.get());
 
   // sets horizon geofence to host position, which does not work correctly
-  osg::Vec3d ecef;
-  root_->getWorldPosition(ecef);
-  fence_->setLocation(ecef);
+  simCore::Vec3 ecef;
+  root_->getPosition(&ecef);
+  fence_->setLocation(osg::Vec3d(ecef.x(), ecef.y(), ecef.z()));
 
   // initial pull of active target platforms
   EntityVector entities;

@@ -23,6 +23,7 @@
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/LocatorNode.h"
+#include "simVis/Utils.h"
 
 #define LC "[LocatorNode] "
 
@@ -81,6 +82,78 @@ void LocatorNode::setLocator(Locator* locator)
     locator->addCallback(locatorCallback_);
     syncWithLocator();
   }
+}
+
+int LocatorNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
+{
+  if (!out_position)
+    return 1;
+  if (getNodeMask() == 0 || !locator_.valid())
+  {
+    // this locatorNode is not active, and does not have a valid position
+    return 2;
+  }
+
+  const osg::Vec3d& locatorNodeEcef = getMatrix().getTrans();
+  if (coordsys == simCore::COORD_SYS_LLA)
+  {
+    simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z()), *out_position);
+    return 0;
+  }
+
+  out_position->set(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z());
+
+  if (coordsys == simCore::COORD_SYS_ECEF)
+    return 0;
+  if (coordsys == simCore::COORD_SYS_ECI)
+  {
+    const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, locator_->getElapsedEciTime());
+    simCore::Coordinate out;
+    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
+    *out_position = out.position();
+    return 0;
+  }
+  // unsupported coordsys
+  return 3;
+}
+
+int LocatorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, simCore::CoordinateSystem coordsys) const
+{
+  if (!out_position || !out_orientation)
+    return 1;
+  if (getNodeMask() == 0 || !locator_.valid())
+  {
+    // this locatorNode is not active, and does not have a valid position
+    return 2;
+  }
+
+  const osg::Matrixd& m = getMatrix();
+  const osg::Vec3d& locatorNodeEcef = m.getTrans();
+  out_position->set(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z());
+  simVis::Math::enuRotMatrixToEcefEuler(m, *out_orientation);
+
+  if (coordsys != simCore::COORD_SYS_ECEF)
+    return 0;
+  if (coordsys == simCore::COORD_SYS_LLA)
+  {
+    const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation);
+    simCore::Coordinate out;
+    simCore::CoordinateConverter::convertEcefToGeodetic(in, out);
+    *out_position = out.position();
+    *out_orientation = out.orientation();
+    return 0;
+  }
+  if (coordsys == simCore::COORD_SYS_ECI)
+  {
+    const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation, getLocator()->getElapsedEciTime());
+    simCore::Coordinate out;
+    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
+    *out_position = out.position();
+    *out_orientation = out.orientation();
+    return 0;
+  }
+  // unsupported coordsys
+  return 3;
 }
 
 void LocatorNode::syncWithLocator()

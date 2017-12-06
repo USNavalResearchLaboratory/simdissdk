@@ -25,6 +25,7 @@
 #include <vector>
 #include "osg/Group"
 #include "osg/observer_ptr"
+#include "simCore/Calc/Coordinate.h"
 #include "simData/ObjectId.h"
 
 namespace osgEarth { class MapNode; }
@@ -134,6 +135,30 @@ namespace simVis
 
     /** Object index tag, from osgEarth::Registry::objectIndex()->tagNode(); 0 if none. */
     virtual unsigned int objectIndexTag() const = 0;
+
+    /**
+    * Gets the world position for this Entity. This is a convenience
+    * function that extracts the Position information (not rotation) from the
+    * Entity's underlying locator or locatorNode.
+    *
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+    /**
+    * Gets the world position reflected by this Locator. This is a convenience
+    * function that extracts the Position information and rotation from the
+    * locatorNode matrix.
+    *
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+      simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
 
     /**
      * Attaches a tracking child to this entity. The child will track

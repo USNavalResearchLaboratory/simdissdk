@@ -56,11 +56,17 @@
 #include "simVis/PlatformModel.h"
 #include "simVis/Utils.h"
 
-using namespace simVis;
-
-
 namespace
 {
+  // NED/ENU swapping matrix:
+  // http://www.ecsutton.ece.ufl.edu/ens/handouts/quaternions.pdf
+  static const double NED_ENU[3][3] =
+  {
+    { 0.0, 1.0,  0.0 },
+    { 1.0, 0.0,  0.0 },
+    { 0.0, 0.0, -1.0 }
+  };
+
   static const osg::Matrixd NWU_ENU(
     0.0, 1.0, 0.0, 0.0,
     -1.0, 0.0, 0.0, 0.0,
@@ -130,6 +136,9 @@ namespace
   // Unscaled line length in meters for Platform line Vectors
   const int BASE_LINE_LENGTH = 50;
 }
+
+namespace simVis
+{
 
 bool simVis::useRexEngine()
 {
@@ -389,24 +398,17 @@ osg::Quat Math::eulerRadToQuat(double h, double p, double r)
   // semantics for HPR, as detailed below.
 
   // +H is a "right turn", a right-handed rotation about the -Z axis:
-  osg::Quat azim_q;
-  if (!osg::equivalent(h, 0.0))
-    azim_q = osg::Quat(h, osg::Vec3d(0, 0, -1));
+  const osg::Quat azim_q = (!osg::equivalent(h, 0.0)) ? osg::Quat(h, osg::Vec3d(0, 0, -1)) : osg::Quat();
 
   // +P is "nose up"; a right-handed rotation about the +X axis:
-  osg::Quat pitch_q;
-  if (!osg::equivalent(p, 0.0))
-    pitch_q = osg::Quat(p, osg::Vec3d(1, 0, 0));
+  const osg::Quat pitch_q = (!osg::equivalent(p, 0.0)) ? osg::Quat(p, osg::Vec3d(1, 0, 0)) : osg::Quat();
 
   // +R is "right wing down", a right-handed rotation about the +Y axis:
-  osg::Quat roll_q;
-  if (!osg::equivalent(r, 0.0))
-    roll_q = osg::Quat(r, osg::Vec3d(0, 1, 0));
+  const osg::Quat roll_q = (!osg::equivalent(r, 0.0)) ? osg::Quat(r, osg::Vec3d(0, 1, 0)) : osg::Quat();
 
   // combine them in the reverse of the desired rotation order:
   // azim-pitch-roll
   return roll_q * pitch_q * azim_q;
-
 
 #endif // USE_SIMCORE_CALC_MATH
 }
@@ -450,6 +452,51 @@ osg::Vec3d Math::quatToEulerRad(const osg::Quat& quat)
   return osg::Vec3d(h, p, r);
 
 #endif // USE_SIMCORE_CALC_MATH
+}
+
+
+
+/**
+* Converts a SIMDIS ECEF orientation (psi/theta/phi) into an OSG
+* ENU rotation matrix. The SIMDIS d3EulertoQ() method results in a
+* NED orientation frame. We want ENU so we have to fix the conversion.
+*/
+void Math::ecefEulerToEnuRotMatrix(const simCore::Vec3& in, osg::Matrix& out)
+{
+  // first convert the ECEF orientation to a 3x3 matrix:
+  double ned_dcm[3][3];
+  simCore::d3EulertoDCM(in, ned_dcm);
+  double enu_dcm[3][3];
+  simCore::d3MMmult(NED_ENU, ned_dcm, enu_dcm);
+
+  // poke the values into the OSG matrix:
+  out.set(
+    enu_dcm[0][0], enu_dcm[0][1], enu_dcm[0][2], 0.0,
+    enu_dcm[1][0], enu_dcm[1][1], enu_dcm[1][2], 0.0,
+    enu_dcm[2][0], enu_dcm[2][1], enu_dcm[2][2], 0.0,
+    0.0, 0.0, 0.0, 1.0);
+}
+
+/**
+* Converts an ENU (OSG style) rotation matrix into SIMDIS
+* (NED frame) global Euler angles -- this is the inverse of
+* the method ecefEulerToEnuRotMatrix().
+*/
+void Math::enuRotMatrixToEcefEuler(const osg::Matrix& in, simCore::Vec3& out)
+{
+  // direction cosine matrix in ENU frame
+  double enu_dcm[3][3] = {
+    { in(0,0), in(0,1), in(0,2) },
+    { in(1,0), in(1,1), in(1,2) },
+    { in(2,0), in(2,1), in(2,2) }
+  };
+
+  // convert DCM to NED frame:
+  double ned_dcm[3][3];
+  simCore::d3MMmult(NED_ENU, enu_dcm, ned_dcm);
+
+  // and into Euler angles.
+  simCore::d3DCMtoEuler(ned_dcm, out);
 }
 
 void Math::clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, osg::Vec3d& max_hpr_deg)
@@ -984,4 +1031,6 @@ ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string&
   : statsTimer_(mainView, key, StatsTimer::RECORD_PER_STOP)
 {
   statsTimer_.start();
+}
+
 }

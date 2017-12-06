@@ -373,7 +373,6 @@ namespace simVis
     *
     * @param hpr_deg Orientation angles
     * @return        Quaternion
-    * @deprecated    Use simCore::d3EulertoQ instead.
     */
     static osg::Quat eulerDegToQuat(double h, double p, double r);
     static osg::Quat eulerDegToQuat(const osg::Vec3d& hpr) { return eulerDegToQuat(hpr[0], hpr[1], hpr[2]); }
@@ -387,11 +386,28 @@ namespace simVis
     * @{
     * @param quat Quaternion
     * @return     Euler angles (HPR, degrees)
-    * @deprecated Use simCore::d3QtoEuler instead.
     */
     static osg::Vec3d quatToEulerRad(const osg::Quat& quat);
     static osg::Vec3d quatToEulerDeg(const osg::Quat& quat);
     ///@}
+
+    /**
+    * Converts a SIMDIS ECEF orientation (psi/theta/phi) into an OSG
+    * ENU rotation matrix. The SIMDIS d3EulertoQ() method results in a
+    * NED orientation frame. We want ENU so we have to fix the conversion.
+    * @param in SIMDIS ECEF orientation (psi/theta/phi)
+    * @param out OSG ENU rotation matrix
+    */
+    static void ecefEulerToEnuRotMatrix(const simCore::Vec3& in, osg::Matrix& out);
+
+    /**
+    * Converts an ENU (OSG style) rotation matrix into SIMDIS
+    * (NED frame) global Euler angles -- this is the inverse of
+    * the method ecefEulerToEnuRotMatrix().
+    * @param in OSG ENU rotation matrix
+    * @param out SIMDIS (NED frame) global Euler angles
+    */
+    static void enuRotMatrixToEcefEuler(const osg::Matrix& in, simCore::Vec3& out);
 
     /**
     * Clamp the orientation of a matrix to the specified Euler angles.

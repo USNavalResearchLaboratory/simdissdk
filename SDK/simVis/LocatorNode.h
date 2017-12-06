@@ -22,6 +22,7 @@
 #ifndef SIMVIS_LOCATORNODE_H
 #define SIMVIS_LOCATORNODE_H
 
+#include "simCore/Calc/Coordinate.h"
 #include "osg/MatrixTransform"
 #include "osgEarth/Revisioning"
 
@@ -52,12 +53,6 @@ public:
   /// locator that is driving this locator node (tail const)
   const Locator* getLocator() const { return locator_.get(); }
 
-  /// convenience function to extract the current world coordinates
-  void getWorldPosition(osg::Vec3d& out_ecef) const
-  {
-    out_ecef = getMatrix().getTrans();
-  }
-
   /// set the Locator for this LocatorNode, recalculates the transform matrix
   void setLocator(Locator *locator);
 
@@ -65,6 +60,30 @@ public:
   void setOverheadModeHint(bool overheadMode);
   /// Retrieves a previously set overhead mode hint, used for bounds computation in intersection visitors
   bool overheadModeHint() const;
+
+  /**
+  * Gets the world position for this LocatorNode. This is a convenience
+  * function that extracts the Position information (not rotation) from the
+  * locatorNode matrix.
+  *
+  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+  * @return 0 if the output parameter is populated successfully, nonzero on failure
+  */
+  int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+  /**
+  * Gets the world position reflected by this Locator. This is a convenience
+  * function that extracts the Position information and rotation from the
+  * locatorNode matrix.
+  *
+  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+  * @return 0 if the output parameter is populated successfully, nonzero on failure
+  */
+  int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+    simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
 
 public:
   /// Synchronizes the transform matrix with the locator

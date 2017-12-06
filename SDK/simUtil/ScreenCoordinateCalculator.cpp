@@ -97,27 +97,25 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
     return INVALID_COORDINATE;
 
   // Check entity active flag
-  const simVis::Locator* locator = entity.getLocator();
-  if (!entity.isActive() || !locator)
+  if (!entity.isActive())
     return INVALID_COORDINATE;
 
-  // Overhead mode: Get the LLA position, clamp to 0, then convert to ECEF
-  if (view_.valid() && view_->isOverheadEnabled())
+  if (!view_.valid() || !view_->isOverheadEnabled())
   {
-    simCore::Vec3 lla;
-    if (!locator->getLocatorPosition(&lla, simCore::COORD_SYS_LLA))
+    simCore::Vec3 locatorNodeEcef;
+    if (0 != entity.getPosition(&locatorNodeEcef, simCore::COORD_SYS_ECEF))
       return INVALID_COORDINATE;
-    lla.setAlt(0.0);
-    simCore::Vec3 ecefOut;
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
-    return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
+    return matrixCalculate_(osg::Vec3d(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z()));
   }
 
-  // Non-overhead mode: Get the locator matrix and pull out the XYZ translate transform
-  osg::Matrix locatorMatrix;
-  if (!locator->getLocatorMatrix(locatorMatrix))
+  // Overhead mode: Get the LLA position, clamp to 0, then convert to ECEF
+  simCore::Vec3 lla;
+  if (0 != entity.getPosition(&lla, simCore::COORD_SYS_LLA))
     return INVALID_COORDINATE;
-  return matrixCalculate_(locatorMatrix.getTrans());
+  lla.setAlt(0.0);
+  simCore::Vec3 ecefOut;
+  simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
+  return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
 }
 
 ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)

@@ -504,6 +504,20 @@ double BeamNode::range() const
   return lastUpdateFromDS_.range();
 }
 
+int BeamNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return beamLocatorNode_->getPosition(out_position, coordsys);
+}
+
+int BeamNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return beamLocatorNode_->getPositionOrientation(out_position, out_orientation, coordsys);
+}
+
 // This method applies the datastore update to the beam, and
 // provides a wrapper around the calculation of the target beam update so that it is treated as if it were a datastore update
 void BeamNode::applyDataStoreUpdate_(const simData::BeamUpdate& update, bool force)
