@@ -78,11 +78,14 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
   if (it != settings.end())
   {
     std::string filter = it.value().toString().toStdString();
-    categoryFilter_->deserialize(filter, false);
-    if (receivers(SIGNAL(categoryFilterChanged(simData::CategoryFilter))) != 0)
-      emit categoryFilterChanged(*categoryFilter_);
-    // Intentionally no else because CategoryFilterWidget does not send out a signal so send it out here
-    emit filterUpdated();
+    if (filter != categoryFilter_->serialize(false))
+    {
+      categoryFilter_->deserialize(filter, false);
+      if (receivers(SIGNAL(categoryFilterChanged(simData::CategoryFilter))) != 0)
+        emit categoryFilterChanged(*categoryFilter_);
+      // Intentionally no else because CategoryFilterWidget does not send out a signal so send it out here
+      emit filterUpdated();
+    }
   }
 }
 

@@ -70,14 +70,18 @@ void EntityNameFilter::setFilterSettings(const QMap<QString, QVariant>& settings
   QMap<QString, QVariant>::const_iterator it = settings.find(REGEXP_SETTING);
   if (it != settings.end())
   {
-    *regExp_ = it.value().toRegExp();
-    // Update the GUI if it's valid
-    if (widget_ != NULL)
+    const auto& regExp = it.value().toRegExp();
+    if (*regExp_ != regExp)
     {
-      ScopedSignalBlocker block(*widget_);
-      widget_->configure(regExp_->pattern(), regExp_->caseSensitivity(), regExp_->patternSyntax());
+      *regExp_ = regExp;
+      // Update the GUI if it's valid
+      if (widget_ != NULL)
+      {
+        ScopedSignalBlocker block(*widget_);
+        widget_->configure(regExp_->pattern(), regExp_->caseSensitivity(), regExp_->patternSyntax());
+      }
+      emit filterUpdated();
     }
-    emit filterUpdated();
   }
 }
 

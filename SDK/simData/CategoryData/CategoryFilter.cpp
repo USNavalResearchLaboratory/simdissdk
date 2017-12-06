@@ -269,26 +269,7 @@ void CategoryFilter::getCurrentCategoryValues(simData::DataStore& dataStore, uin
   if (!slice)
     return;
 
-  simData::CategoryDataSlice::Iterator iter = slice->current();
-  while (iter.hasNext())
-  {
-    // iterate through the data slice category data pairs
-    std::shared_ptr<simData::CategoryDataPair> dataPair = iter.next();
-    int nameInt = dataPair->nameInt();
-    int valueInt = dataPair->valueInt();
-    CurrentCategoryValues::iterator curValsIter = curVals.find(nameInt);
-    if (curValsIter == curVals.end())
-    {
-      // add new name entry if it doesn't exist
-      curVals[nameInt] =  valueInt;
-      curValsIter = curVals.find(nameInt);
-    }
-    else
-    {
-      assert(0); // shouldn't happen, current data slice should only have a single category name/value pair
-      return;
-    }
-  }
+  slice->allInts(curVals);
 }
 
 const CategoryFilter::CategoryCheck& CategoryFilter::getCategoryFilter() const
