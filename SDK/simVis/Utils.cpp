@@ -140,7 +140,7 @@ namespace
 namespace simVis
 {
 
-bool simVis::useRexEngine()
+bool useRexEngine()
 {
   osgEarth::Registry* reg = osgEarth::Registry::instance();
 
@@ -165,7 +165,7 @@ bool simVis::useRexEngine()
   return simCore::caseCompare(engineName, "rex") == 0;
 }
 
-void simVis::setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value)
+void setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value)
 {
   if (stateset)
   {
@@ -180,7 +180,7 @@ void simVis::setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeVal
   }
 }
 
-void simVis::setLightingToInherit(osg::StateSet* stateset)
+void setLightingToInherit(osg::StateSet* stateset)
 {
   // (There's no method yet to query the name, so we just need to use the
   // internal name directly. At some point I will add a method to osgEarth
@@ -198,7 +198,7 @@ void simVis::setLightingToInherit(osg::StateSet* stateset)
   }
 }
 
-void simVis::convertNWUtoENU(osg::Node* node)
+void convertNWUtoENU(osg::Node* node)
 {
   if (node)
   {
@@ -208,7 +208,7 @@ void simVis::convertNWUtoENU(osg::Node* node)
 }
 
 
-bool simVis::isImageFile(const std::string& location)
+bool isImageFile(const std::string& location)
 {
   std::string ext = osgDB::getLowerCaseFileExtension(location);
   if (!ext.empty())
@@ -235,15 +235,15 @@ bool simVis::isImageFile(const std::string& location)
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
-std::string simVis::findFontFile(const std::string& fontFile)
+std::string findFontFile(const std::string& fontFile)
 {
-  // Note that simVis::findFontFile() is deprecated and only provided for
+  // Note that findFontFile() is deprecated and only provided for
   // compatibility reasons.  It may be removed in a future release.
-  return simVis::Registry::instance()->findFontFile(fontFile);
+  return Registry::instance()->findFontFile(fontFile);
 }
 #endif
 
-osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::DistanceUnits& input)
+osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
 {
     return
         input == simData::UNITS_CENTIMETERS    ? osgEarth::Units::CENTIMETERS :
@@ -262,7 +262,7 @@ osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::DistanceUnits& inp
         osgEarth::Units(); // invalid
 }
 
-osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::SpeedUnits& input)
+osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input)
 {
     return
         input == simData::UNITS_METERS_PER_SECOND     ? osgEarth::Units::METERS_PER_SECOND :
@@ -276,7 +276,7 @@ osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::SpeedUnits& input)
         osgEarth::Units(); // invalid
 }
 
-float simVis::outlineThickness(simData::TextOutline outline)
+float outlineThickness(simData::TextOutline outline)
 {
   switch (outline)
   {
@@ -290,7 +290,7 @@ float simVis::outlineThickness(simData::TextOutline outline)
   return 0;
 }
 
-float simVis::osgFontSize(float simFontSize)
+float osgFontSize(float simFontSize)
 {
   // At lower font sizes (11 or less), we want to make the font a bit
   // crisper and more readable, so we force the return value to be the
@@ -310,7 +310,7 @@ float simVis::osgFontSize(float simFontSize)
   return simFontSize * 1.33;
 }
 
-float simVis::simdisFontSize(float osgFontSize)
+float simdisFontSize(float osgFontSize)
 {
   float roundedSize = simCore::rint(osgFontSize);
   if (roundedSize <= 7.0)
@@ -325,7 +325,7 @@ float simVis::simdisFontSize(float osgFontSize)
   return osgFontSize / 1.33;
 }
 
-osgText::Text::BackdropType simVis::backdropType(simData::BackdropType type)
+osgText::Text::BackdropType backdropType(simData::BackdropType type)
 {
   switch (type)
   {
@@ -355,7 +355,7 @@ osgText::Text::BackdropType simVis::backdropType(simData::BackdropType type)
   return osgText::Text::NONE;
 }
 
-osgText::Text::BackdropImplementation simVis::backdropImplementation(simData::BackdropImplementation implementation)
+osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropImplementation implementation)
 {
   switch (implementation)
   {
@@ -582,7 +582,7 @@ const osg::Vec4f& ColorUtils::GainThresholdColor(int gain)
   return gainThresholdColorMap_[-100];
 }
 
-bool simVis::convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::GeoPoint& output, const osgEarth::SpatialReference* srs)
+bool convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::GeoPoint& output, const osgEarth::SpatialReference* srs)
 {
   if (srs && input.coordinateSystem() == simCore::COORD_SYS_ECEF)
   {
@@ -613,7 +613,7 @@ bool simVis::convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::
   return false;
 }
 
-bool simVis::convertGeoPointToCoord(const osgEarth::GeoPoint& input, simCore::Coordinate& out_coord, osgEarth::MapNode* mapNode)
+bool convertGeoPointToCoord(const osgEarth::GeoPoint& input, simCore::Coordinate& out_coord, osgEarth::MapNode* mapNode)
 {
   // can't convert a relative-Z point without the mapNode.
   if (input.altitudeMode() == osgEarth::ALTMODE_RELATIVE && !mapNode)
@@ -638,7 +638,7 @@ bool simVis::convertGeoPointToCoord(const osgEarth::GeoPoint& input, simCore::Co
 }
 
 
-osg::Image* simVis::makeBrokenImage(int size)
+osg::Image* makeBrokenImage(int size)
 {
   osg::Image* image = new osg::Image();
 
@@ -655,7 +655,7 @@ osg::Image* simVis::makeBrokenImage(int size)
   return image;
 }
 
-osg::Matrix simVis::computeLocalToWorld(const osg::Node* node)
+osg::Matrix computeLocalToWorld(const osg::Node* node)
 {
   osg::Matrix m;
   if (node)
@@ -677,11 +677,11 @@ osg::Matrix simVis::computeLocalToWorld(const osg::Node* node)
   return m;
 }
 
-simCore::Vec3 simVis::computeNodeGeodeticPosition(const osg::Node* node)
+simCore::Vec3 computeNodeGeodeticPosition(const osg::Node* node)
 {
   if (node == NULL)
     return simCore::Vec3();
-  const osg::Vec3d& ecefPos = simVis::computeLocalToWorld(node).getTrans();
+  const osg::Vec3d& ecefPos = computeLocalToWorld(node).getTrans();
   simCore::Vec3 llaPos;
   simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos);
   return llaPos;
@@ -707,7 +707,7 @@ float VectorScaling::boundingBoxMaxDimension(const osg::BoundingBoxf& bbox)
   return osg::maximum(dims.x(), osg::maximum(dims.y(), dims.z()));
 }
 
-float VectorScaling::lineLength(const simVis::PlatformModelNode* node, float axisScale)
+float VectorScaling::lineLength(const PlatformModelNode* node, float axisScale)
 {
   float adjustedLength = BASE_LINE_LENGTH;
   if (node)
@@ -732,7 +732,7 @@ void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& st
 
 
 #if 0
-osg::Geometry* simVis::createEllipsoid(double major, double minor, int segments, const osg::Vec4& color)
+osg::Geometry* createEllipsoid(double major, double minor, int segments, const osg::Vec4& color)
 {
   osg::EllipsoidModel em(major, minor);
 
@@ -856,9 +856,9 @@ void SequenceTimeUpdater::operator()(osg::Node* node, osg::NodeVisitor* nv)
 
 StatsTimer::StatsTimer(osgViewer::View* mainView, const std::string& key, RecordFrequency recordFrequency)
   : mainView_(mainView),
-    beginKey_(simVis::StatsTimer::beginName(key)),
-    endKey_(simVis::StatsTimer::endName(key)),
-    timeTakenKey_(simVis::StatsTimer::timeTakenName(key)),
+    beginKey_(StatsTimer::beginName(key)),
+    endKey_(StatsTimer::endName(key)),
+    timeTakenKey_(StatsTimer::timeTakenName(key)),
     recordFrequency_(recordFrequency),
     cumulativeMs_(0),
     firstStartTickMs_(0),
