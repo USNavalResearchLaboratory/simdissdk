@@ -21,7 +21,6 @@
  */
 #include "osg/Geometry"
 #include "osg/LineWidth"
-#include "osgEarth/GeoData"
 #include "osgEarth/Horizon"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
@@ -33,7 +32,6 @@
 #include "simVis/OverheadMode.h"
 #include "simVis/Laser.h"
 
-// --------------------------------------------------------------------------
 namespace simVis
 {
 
@@ -69,16 +67,18 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
   }
 
   setLocator(locator);
+  setNodeMask(DISPLAY_MASK_NONE);
   locatorNode_ = new LocatorNode(locator);
   locatorNode_->setName("Laser");
+  locatorNode_->setNodeMask(DISPLAY_MASK_NONE);
   addChild(locatorNode_);
   setName("LaserNode");
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
 
-  label_ = new EntityLabelNode(getLocator());
-  this->addChild(label_);
+  label_ = new EntityLabelNode();
+  locatorNode_->addChild(label_);
 
   // horizon culling:
   this->addCullCallback( new osgEarth::HorizonCullCallback() );
@@ -149,7 +149,6 @@ std::string LaserNode::legendText() const
 
 void LaserNode::setPrefs(const simData::LaserPrefs& prefs)
 {
-
   // validate localgrid prefs changes that might provide user notifications
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
@@ -226,15 +225,6 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
       refresh_(current, NULL);
       lastUpdate_ = *current;
       hasLastUpdate_ = true;
-
-      // draw the laser if hasLastUpdate_(valid update) and visible_ (prefs)
-      if (visible_)
-        setNodeMask(DISPLAY_MASK_LASER);
-      else
-      {
-        // if commands/prefs have turned the laser off, DISPLAY_MASK_NONE will already be set
-        assert(getNodeMask() == DISPLAY_MASK_NONE);
-      }
       updateApplied = true;
     }
     else if (laserChangedToInactive || hostChangedToInactive)
@@ -256,6 +246,7 @@ void LaserNode::flush()
 {
   hasLastUpdate_ = false;
   setNodeMask(DISPLAY_MASK_NONE);
+  locatorNode_->setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double LaserNode::range() const
@@ -269,6 +260,20 @@ double LaserNode::range() const
 const simData::LaserUpdate* LaserNode::getLastUpdateFromDS() const
 {
   return hasLastUpdate_ ? &lastUpdate_ : NULL;
+}
+
+int LaserNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return locatorNode_->getPosition(out_position, coordsys);
+}
+
+int LaserNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return locatorNode_->getPositionOrientation(out_position, out_orientation, coordsys);
 }
 
 void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::LaserPrefs* newPrefs)
@@ -289,8 +294,9 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   // if datadraw is off, we do not need to do any processing
   if (activePrefs->commonprefs().datadraw() == false)
   {
-    visible_ = false;
     setNodeMask(DISPLAY_MASK_NONE);
+    // deactivate the locatorNode
+    locatorNode_->setNodeMask(DISPLAY_MASK_NONE);
     return;
   }
 
@@ -300,46 +306,53 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
 
   // if new geometry is required, build it
   const bool refreshRequiresNewNode = force ||
-    (newPrefs &&
-    (PB_FIELD_CHANGED(&lastPrefs_, newPrefs, maxrange) ||
-    PB_FIELD_CHANGED(&lastPrefs_, newPrefs, laserwidth) ||
-    PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, color) ||
-    PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, useoverridecolor) ||
-    PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, overridecolor)));
-      // TODO: compare labelprefs
+    (newPrefs && PB_FIELD_CHANGED(&lastPrefs_, newPrefs, maxrange));
 
   if (refreshRequiresNewNode)
   {
+    osg::ref_ptr<osg::Node> oldNode = node_;
     node_ = createGeometry_(*activePrefs);
     node_->setCullingActive(false);
     node_->setNodeMask(DISPLAY_MASK_LASER);
 
-    if (locatorNode_->getNumChildren() > 0)
-      locatorNode_->replaceChild(locatorNode_->getChild(0), node_);
+    if (oldNode.valid())
+      locatorNode_->replaceChild(oldNode, node_);
     else
       locatorNode_->addChild(node_);
-
+    // activate the locatorNode
+    locatorNode_->setNodeMask(DISPLAY_MASK_LASER);
     dirtyBound();
+  }
+  else
+  {
+    // Laser color & width changes do not require rebuilding geometry
+    const bool requiresUpdate = newPrefs &&
+      (PB_FIELD_CHANGED(&lastPrefs_, newPrefs, laserwidth) ||
+        PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, color) ||
+        PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, useoverridecolor) ||
+        PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, overridecolor));
+
+    if (requiresUpdate)
+      updateLaser_(*newPrefs);
   }
 
   // update the visibility:
   // LaserOn turns datadraw pref on and off
   // we exit early (just above) if datadraw is off; if assert fails, check for changes to the early exit
   assert(activePrefs->commonprefs().datadraw());
-  visible_ = activePrefs->commonprefs().draw();
-  setNodeMask(visible_ ? DISPLAY_MASK_LASER : DISPLAY_MASK_NONE);
+  const bool visible = activePrefs->commonprefs().draw();
+  setNodeMask(visible ? DISPLAY_MASK_LASER : DISPLAY_MASK_NONE);
 
   // update our locator, if required
   updateLocator_(newUpdate, newPrefs, force);
 
   // update the local grid prefs, if laser is being drawn
-  if (visible_ && (force || newPrefs))
+  if (visible && (force || newPrefs))
   {
     assert(localGrid_ != NULL);
     localGrid_->setPrefs(activePrefs->commonprefs().localgrid(), force);
   }
 }
-
 
 void LaserNode::updateLocator_(const simData::LaserUpdate* newUpdate, const simData::LaserPrefs* newPrefs, bool force)
 {
@@ -429,6 +442,36 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   osg::Geode* geode = new osg::Geode();
   geode->addDrawable(g);
   return geode;
+}
+
+void LaserNode::updateLaser_(const simData::LaserPrefs &prefs)
+{
+  if (node_ == NULL || node_->getNumChildren() == 0)
+    return;
+  osg::Geometry* geom = node_->getDrawable(0)->asGeometry();
+  if (!geom)
+    return;
+  osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
+  if (colors)
+  {
+    const size_t colorsSize = colors->size();
+    // laser geometry uses BIND_OVERALL, and color array is fixed at size 1
+    assert(colorsSize == 1);
+    if (colorsSize == 1)
+    {
+      const osg::Vec4f& color = simVis::ColorUtils::RgbaToVec4(
+        prefs.commonprefs().useoverridecolor() ? prefs.commonprefs().overridecolor() : prefs.commonprefs().color());
+
+      if ((*colors)[0] != color)
+      {
+        (*colors)[0] = color;
+        colors->dirty();
+      }
+    }
+  }
+
+  // update the laser width
+  geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(prefs.laserwidth()), 1);
 }
 
 unsigned int LaserNode::objectIndexTag() const
