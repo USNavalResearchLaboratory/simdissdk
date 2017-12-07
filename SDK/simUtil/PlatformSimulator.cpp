@@ -352,13 +352,13 @@ void CircumnavigationPlatformSimulation::init_(simVis::View* mainView)
   simMan_ = new simUtil::PlatformSimulatorManager(dataStore_);
   createPlatform_();
   simMan_->simulate(0, 120, 60);
-  mainView->addEventHandler(new simVis::SimulatorEventHandler(simMan_, 0, 120, true));
+  mainView->addEventHandler(new simVis::SimulatorEventHandler(simMan_.get(), 0, 120, true));
   platformNode_ = sceneManager_->getScenario()->find<simVis::PlatformNode>(platformId_);
 }
 
 simUtil::PlatformSimulatorManager* CircumnavigationPlatformSimulation::simulationManager() const
 {
-  return simMan_;
+  return simMan_.get();
 }
 
 simData::DataStore* CircumnavigationPlatformSimulation::dataStore() const
@@ -403,5 +403,5 @@ void CircumnavigationPlatformSimulation::createPlatform_()
   sim->addWaypoint(simUtil::Waypoint(0, 0, 15000, 30.0));
   sim->addWaypoint(simUtil::Waypoint(0, 90, 15000, 30.0));
   sim->addWaypoint(simUtil::Waypoint(0, 180, 15000, 30.0));
-  simMan_->addSimulator(sim);
+  simMan_->addSimulator(sim.get());
 }

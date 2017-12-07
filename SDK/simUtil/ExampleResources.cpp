@@ -452,7 +452,7 @@ std::string simExamples::getSilverLiningResourcesPath()
 void simExamples::addDefaultSkyNode(simVis::Viewer* viewer)
 {
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
-  simExamples::addDefaultSkyNode(scene);
+  simExamples::addDefaultSkyNode(scene.get());
   // Refresh scene manager on sky node change to force correct reattachment of manipulators
   std::vector<simVis::View*> views;
   viewer->getViews(views);
@@ -461,7 +461,7 @@ void simExamples::addDefaultSkyNode(simVis::Viewer* viewer)
   {
     // Only reset the scene manager if it matches what is currently in the viewer. We aren't trying to change the scene manager, just attach the sky node
     if ((*iter)->getSceneManager() == scene)
-      (*iter)->setSceneManager(scene);
+      (*iter)->setSceneManager(scene.get());
   }
 }
 

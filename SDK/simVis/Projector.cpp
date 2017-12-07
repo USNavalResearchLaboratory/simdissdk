@@ -204,7 +204,7 @@ void ProjectorNode::init_()
   texture_->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
   texture_->setResizeNonPowerOfTwoHint(false);
 
-  projectorTextureImpl_->setTexture(texture_);
+  projectorTextureImpl_->setTexture(texture_.get());
 
   label_ = new EntityLabelNode(getLocator());
   addChild(label_);
@@ -317,7 +317,7 @@ bool ProjectorNode::readVideoFile_(const std::string& filename)
   if (clock != NULL)
   {
     osg::ref_ptr<simVis::ClockOptions> options = new simVis::ClockOptions(clock);
-    options->setPluginData("ProjectorTextureProvider", projectorTextureImpl_);
+    options->setPluginData("ProjectorTextureProvider", projectorTextureImpl_.get());
     options->setObjectCacheHint(osgDB::Options::CACHE_NONE);
     result = osgDB::readNodeFile(filename, options.get());
   }
@@ -381,7 +381,7 @@ void ProjectorNode::setImage(osg::Image* image)
 
 osg::Texture2D* ProjectorNode::getTexture() const
 {
-  return texture_;
+  return texture_.get();
 }
 
 double ProjectorNode::getVFOV() const

@@ -296,7 +296,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
       case '1' : // cycle line calculations
         if (s_lineCalcIndex >= 0)
-          s_association->remove(s_lineCalcs[s_lineCalcIndex]);
+          s_association->remove(s_lineCalcs[s_lineCalcIndex].get());
 
         s_lineCalcIndex++;
         if (s_lineCalcIndex >= (int)s_lineCalcs.size())
@@ -305,7 +305,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         if (s_lineCalcIndex >= 0)
         {
           s_lineCalcLabel->setText("Currently viewing: " + s_lineCalcs[s_lineCalcIndex]->name());
-          s_association->add(s_lineCalcs[s_lineCalcIndex]);
+          s_association->add(s_lineCalcs[s_lineCalcIndex].get());
         }
         else
           s_lineCalcLabel->setText("Currently viewing: none");
@@ -313,7 +313,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
       case '2' : // cycle angle calculations
         if (s_angleCalcIndex >= 0)
-          s_association->remove(s_angleCalcs[s_angleCalcIndex]);
+          s_association->remove(s_angleCalcs[s_angleCalcIndex].get());
 
         s_angleCalcIndex++;
         if (s_angleCalcIndex >= (int)s_angleCalcs.size())
@@ -322,7 +322,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         if (s_angleCalcIndex >= 0)
         {
           s_angleCalcLabel->setText("Currently viewing: " + s_angleCalcs[s_angleCalcIndex]->name());
-          s_association->add(s_angleCalcs[s_angleCalcIndex]);
+          s_association->add(s_angleCalcs[s_angleCalcIndex].get());
         }
         else
           s_angleCalcLabel->setText("Currently viewing: none");
@@ -426,12 +426,12 @@ simVis::SimulatorEventHandler* createSimulation(simUtil::PlatformSimulatorManage
   sim1->addWaypoint(simUtil::Waypoint(38.8, -77.0, 40000, 200.0)); // DC
   sim1->setSimulateRoll(true);
   sim1->setSimulatePitch(true);
-  simMgr.addSimulator(sim1);
+  simMgr.addSimulator(sim1.get());
 
   osg::ref_ptr<simUtil::PlatformSimulator> sim2 = new simUtil::PlatformSimulator(obj2);
   sim2->addWaypoint(simUtil::Waypoint(51.0, 0.0, 20000, 200.0));
   sim2->addWaypoint(simUtil::Waypoint(38.0, -76.0, 20000, 200.0));
-  simMgr.addSimulator(sim2);
+  simMgr.addSimulator(sim2.get());
 
   // Run the simulations:
   simMgr.simulate(0.0, 120.0, 60.0);
@@ -479,7 +479,7 @@ int main(int argc, char **argv)
 
   /// Simdis viewer to display the scene
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   /// data source which will provide positions for the platform
@@ -531,7 +531,7 @@ int main(int argc, char **argv)
   // Set up the range tool.
   osg::ref_ptr<simVis::RangeTool> rangeTool = new simVis::RangeTool();
   // need to add tool to scenario before creating any associations
-  scene->getScenario()->addTool(rangeTool);
+  scene->getScenario()->addTool(rangeTool.get());
   s_association = rangeTool->add(obj1, obj2);
   createLineCalculations(s_lineCalcs);
   createAngleCalculations(s_angleCalcs);
@@ -545,10 +545,10 @@ int main(int argc, char **argv)
   mainView->setFocalOffsets(0, -45, 5e5);
 
   /// handle keypress events
-  viewer->addEventHandler(new MenuHandler(viewer, scene->getScenario(), obj1Node.get()));
+  viewer->addEventHandler(new MenuHandler(viewer.get(), scene->getScenario(), obj1Node.get()));
 
   /// hovering the mouse over the platform should trigger a popup
-  viewer->addEventHandler(new simVis::PopupHandler(scene));
+  viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
 
   /// show the instructions overlay
   mainView->addOverlayControl(createHelp());

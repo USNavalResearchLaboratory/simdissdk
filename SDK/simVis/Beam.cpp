@@ -149,7 +149,7 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
     // Check for transition between color and override color, then check for color change
     if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor) || PB_SUBFIELD_CHANGED(a, b, commonprefs, overridecolor))
     {
-      SVFactory::updateColor(beamSV_, simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
+      SVFactory::updateColor(beamSV_.get(), simVis::Color(b->commonprefs().overridecolor(), simVis::Color::RGBA));
     }
   }
   else
@@ -157,15 +157,15 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
     // Check for transition between color and override color, then check for color change
     if ((a->commonprefs().has_useoverridecolor() && a->commonprefs().useoverridecolor()) || PB_SUBFIELD_CHANGED(a, b, commonprefs, color))
     {
-      SVFactory::updateColor(beamSV_, simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
+      SVFactory::updateColor(beamSV_.get(), simVis::Color(b->commonprefs().color(), simVis::Color::RGBA));
     }
   }
   if (PB_FIELD_CHANGED(a, b, shaded))
-    SVFactory::updateLighting(beamSV_, b->shaded());
+    SVFactory::updateLighting(beamSV_.get(), b->shaded());
   if (PB_FIELD_CHANGED(a, b, verticalwidth))
-    SVFactory::updateVertAngle(beamSV_, a->verticalwidth(), b->verticalwidth());
+    SVFactory::updateVertAngle(beamSV_.get(), a->verticalwidth(), b->verticalwidth());
   if (PB_FIELD_CHANGED(a, b, horizontalwidth))
-    SVFactory::updateHorizAngle(beamSV_, a->horizontalwidth(), b->horizontalwidth());
+    SVFactory::updateHorizAngle(beamSV_.get(), a->horizontalwidth(), b->horizontalwidth());
   if (PB_FIELD_CHANGED(a, b, beamscale))
     setBeamScale_(b->beamscale());
 }
@@ -174,7 +174,7 @@ void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simDa
 {
   if (PB_FIELD_CHANGED(a, b, range))
   {
-    SVFactory::updateFarRange(beamSV_, b->range());
+    SVFactory::updateFarRange(beamSV_.get(), b->range());
   }
 }
 
@@ -211,7 +211,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
 
     // The second locator will Resolve the offset to a new position, from where we can
     // then apply an orientation offset that is not relative to host platform orientation
-    finalLocator = new ResolvedPositionLocator(positionOffsetLocator_, Locator::COMP_ALL);
+    finalLocator = new ResolvedPositionLocator(positionOffsetLocator_.get(), Locator::COMP_ALL);
   }
 
   setLocator(finalLocator);

@@ -392,7 +392,7 @@ struct ColorProviderSelectHandler : public ControlEventHandler
     //Enable this mode
     control->setForeColor(osg::Vec4f(0, 1, 0, 1));
 
-    pm_->setColorProvider(cp_);
+    pm_->setColorProvider(cp_.get());
     // Update the gradient to whatever the state of the checkbox is
     simRF::GradientColorProvider* gradient = dynamic_cast<simRF::GradientColorProvider*>(cp_.get());
     if (gradient)
@@ -587,7 +587,7 @@ int main(int argc, char** argv)
   viewer->setMap(simExamples::createDefaultExampleMap());
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   osg::ref_ptr<osg::Group> root = new osg::Group();
   osg::ref_ptr<simRF::ProfileManager> profileManager = new simRF::ProfileManager();
@@ -665,12 +665,12 @@ int main(int argc, char** argv)
       // loss data provided must be populated prior to assigning to profile
       osg::ref_ptr<simRF::CompositeProfileProvider> cProvider = new simRF::CompositeProfileProvider();
       cProvider->addProvider(new simRF::LUTProfileDataProvider(loss, simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS, 1.0 / simRF::AREPS_SCALE_FACTOR));
-      osg::ref_ptr<simRF::Profile> profile = new simRF::Profile(cProvider);
+      osg::ref_ptr<simRF::Profile> profile = new simRF::Profile(cProvider.get());
       profile->setHalfBeamWidth(beamWidth / 2.0);
       profile->setBearing(bearingStep * i);
       profile->setDisplayThickness(maxHeight);
       profile->setTerrainHeights(terrain);
-      profileManager->addProfile(profile);
+      profileManager->addProfile(profile.get());
     }
   }
   else
@@ -693,7 +693,7 @@ int main(int argc, char** argv)
 
       // successfully loaded the file, created the profile, and populated the profile with data
       assert(profile);
-      profileManager->addProfile(profile);
+      profileManager->addProfile(profile.get());
 
       if (firstFile)
       {
@@ -722,21 +722,21 @@ int main(int argc, char** argv)
   //Add a history slider that goes from 0 to 360 degrees
   s_controlGrid->setControl(0, row, new LabelControl("History"));
   osg::ref_ptr<HSliderControl> historySlider = createSlider(0, 360, osg::RadiansToDegrees(profileManager->getHistory()));
-  historySlider->addEventHandler(new HistoryHandler(profileManager));
+  historySlider->addEventHandler(new HistoryHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, historySlider.get());
   row++;
 
   //Add a checkbox to determine whether the AGL height is used or not
   s_controlGrid->setControl(0, row, new LabelControl("AGL"));
   osg::ref_ptr<CheckBoxControl> aglCheckbox = new CheckBoxControl(profileManager->getAGL());
-  aglCheckbox->addEventHandler(new AGLHandler(profileManager));
+  aglCheckbox->addEventHandler(new AGLHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, aglCheckbox.get());
   row++;
 
   //Add a bearing slider
   s_controlGrid->setControl(0, row, new LabelControl("Bearing"));
   osg::ref_ptr<HSliderControl> bearingSlider = createSlider(0, 360, osg::RadiansToDegrees(profileManager->getBearing()));
-  bearingSlider->addEventHandler(new BearingHandler(profileManager));
+  bearingSlider->addEventHandler(new BearingHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, bearingSlider.get());
   row++;
 
@@ -745,62 +745,62 @@ int main(int argc, char** argv)
   osg::ref_ptr<CheckBoxControl> autoBearingCheckbox = new CheckBoxControl(s_autoBearing);
   autoBearingCheckbox->addEventHandler(new AutoBearingEnabledHandler());
   s_controlGrid->setControl(1, row, autoBearingCheckbox.get());
-  viewer->addEventHandler(new AutoBearingHandler(profileManager));
+  viewer->addEventHandler(new AutoBearingHandler(profileManager.get()));
   row++;
 
   //Add a checkbox to control whether the profiles are spherical earth or not
   s_controlGrid->setControl(0, row, new LabelControl("Spherical Earth"));
   osg::ref_ptr<CheckBoxControl> sphericalEarthCheckbox = new CheckBoxControl(true);
-  sphericalEarthCheckbox->addEventHandler(new SphericalEarthHandler(profileManager));
+  sphericalEarthCheckbox->addEventHandler(new SphericalEarthHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, sphericalEarthCheckbox.get());
   row++;
 
   //Add a height slider
   s_controlGrid->setControl(0, row, new LabelControl("Height"));
   osg::ref_ptr<HSliderControl> heightSlider = createSlider(minHeight, maxHeight, profileManager->getHeight());
-  heightSlider->addEventHandler(new HeightHandler(profileManager));
+  heightSlider->addEventHandler(new HeightHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, heightSlider.get());
   row++;
 
   //Add a thickness slider; used for 3D
   s_controlGrid->setControl(0, row, new LabelControl("Thickness"));
   osg::ref_ptr<HSliderControl> thicknessSlider = createSlider(0, maxHeight - minHeight, profileManager->getDisplayThickness());
-  thicknessSlider->addEventHandler(new ThicknessHandler(profileManager));
+  thicknessSlider->addEventHandler(new ThicknessHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, thicknessSlider.get());
   row++;
 
   //Add a elevation angle slider
   s_controlGrid->setControl(0, row, new LabelControl("Elev Angle"));
   osg::ref_ptr<HSliderControl> elevAngleSlider = createSlider(0, 90, osg::RadiansToDegrees(profileManager->getElevAngle()));
-  elevAngleSlider->addEventHandler(new ElevAngleHandler(profileManager));
+  elevAngleSlider->addEventHandler(new ElevAngleHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, elevAngleSlider.get());
   row++;
 
   //Add an alpha slider
   s_controlGrid->setControl(0, row, new LabelControl("Alpha"));
   osg::ref_ptr<HSliderControl> alphaSlider = createSlider(0.0, 1.0, s_alphaValue);
-  alphaSlider->addEventHandler(new AlphaHandler(profileManager));
+  alphaSlider->addEventHandler(new AlphaHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, alphaSlider.get());
   row++;
 
   //Add some mode selectors
   s_controlGrid->setControl(0, row, new LabelControl("Draw Mode"));
-  s_controlGrid->setControl(1, row, createModeSelect("2D Horz", true, simRF::Profile::DRAWMODE_2D_HORIZONTAL, profileManager));
-  s_controlGrid->setControl(2, row, createModeSelect("2D Vert", false, simRF::Profile::DRAWMODE_2D_VERTICAL, profileManager));
-  s_controlGrid->setControl(3, row, createModeSelect("Tee", false, simRF::Profile::DRAWMODE_2D_TEE, profileManager));
-  s_controlGrid->setControl(4, row, createModeSelect("3D", false, simRF::Profile::DRAWMODE_3D, profileManager));
+  s_controlGrid->setControl(1, row, createModeSelect("2D Horz", true, simRF::Profile::DRAWMODE_2D_HORIZONTAL, profileManager.get()));
+  s_controlGrid->setControl(2, row, createModeSelect("2D Vert", false, simRF::Profile::DRAWMODE_2D_VERTICAL, profileManager.get()));
+  s_controlGrid->setControl(3, row, createModeSelect("Tee", false, simRF::Profile::DRAWMODE_2D_TEE, profileManager.get()));
+  s_controlGrid->setControl(4, row, createModeSelect("3D", false, simRF::Profile::DRAWMODE_3D, profileManager.get()));
   row++;
-  s_controlGrid->setControl(1, row, createModeSelect("3D Texture", false, simRF::Profile::DRAWMODE_3D_TEXTURE, profileManager));
-  s_controlGrid->setControl(2, row, createModeSelect("3D Points", false, simRF::Profile::DRAWMODE_3D_POINTS, profileManager));
-  s_controlGrid->setControl(3, row, createModeSelect("RAE", false, simRF::Profile::DRAWMODE_RAE, profileManager));
+  s_controlGrid->setControl(1, row, createModeSelect("3D Texture", false, simRF::Profile::DRAWMODE_3D_TEXTURE, profileManager.get()));
+  s_controlGrid->setControl(2, row, createModeSelect("3D Points", false, simRF::Profile::DRAWMODE_3D_POINTS, profileManager.get()));
+  s_controlGrid->setControl(3, row, createModeSelect("RAE", false, simRF::Profile::DRAWMODE_RAE, profileManager.get()));
 
   row++;
 
   s_controlGrid->setControl(0, row, new LabelControl("Color Scheme"));
 
   osg::ref_ptr<simRF::ThresholdColorProvider> thresholdColorProvider = new simRF::ThresholdColorProvider(osg::Vec4f(1, 0, 0, 1), osg::Vec4f(0, 1, 0, 1), (maxFSL - minFSL) / 2.0);
-  profileManager->setColorProvider(thresholdColorProvider);
-  s_controlGrid->setControl(1, row, createColorProviderSelect("Threshold", true, thresholdColorProvider, profileManager));
+  profileManager->setColorProvider(thresholdColorProvider.get());
+  s_controlGrid->setControl(1, row, createColorProviderSelect("Threshold", true, thresholdColorProvider.get(), profileManager.get()));
 
   // Gradient 1 is based on POD from AREPS
   {
@@ -817,7 +817,7 @@ int main(int argc, char** argv)
   podColors[300. * 0.9] = simVis::Color::Gray;
   osg::ref_ptr<simRF::GradientColorProvider> colorProvider = new simRF::GradientColorProvider();
   colorProvider->setColorMap(podColors);
-  s_controlGrid->setControl(2, row, createColorProviderSelect("Grad1", false, colorProvider, profileManager));
+  s_controlGrid->setControl(2, row, createColorProviderSelect("Grad1", false, colorProvider.get(), profileManager.get()));
   }
 
   // Gradient 2 is based on Loss from AREPS
@@ -837,7 +837,7 @@ int main(int argc, char** argv)
   lossColors[160.] = simVis::Color::Purple; // > 160 -> purple
   simRF::GradientColorProvider* colorProvider = new simRF::GradientColorProvider();
   colorProvider->setColorMap(lossColors);
-  s_controlGrid->setControl(3, row, createColorProviderSelect("Grad2", false, colorProvider, profileManager));
+  s_controlGrid->setControl(3, row, createColorProviderSelect("Grad2", false, colorProvider, profileManager.get()));
   }
 
   // Gradient 3 is based on a heat scale from blue to red
@@ -850,7 +850,7 @@ int main(int argc, char** argv)
   heatColors[300 * 0.8] = simVis::Color::Blue;
   simRF::GradientColorProvider* colorProvider = new simRF::GradientColorProvider();
   colorProvider->setColorMap(heatColors);
-  s_controlGrid->setControl(4, row, createColorProviderSelect("Grad3", false, colorProvider, profileManager));
+  s_controlGrid->setControl(4, row, createColorProviderSelect("Grad3", false, colorProvider, profileManager.get()));
   }
 
   row++;
@@ -858,28 +858,28 @@ int main(int argc, char** argv)
   //Setup the threshold slider
   s_controlGrid->setControl(0, row, new LabelControl("Threshold"));
   osg::ref_ptr<HSliderControl> threshSlider = createSlider(minFSL, maxFSL, 130.0);
-  threshSlider->addEventHandler(new ThresholdHandler(thresholdColorProvider, profileManager));
+  threshSlider->addEventHandler(new ThresholdHandler(thresholdColorProvider.get(), profileManager.get()));
   thresholdColorProvider->setThreshold(130.0);
   s_controlGrid->setControl(1, row, threshSlider.get());
 
   row++;
 
   s_controlGrid->setControl(0, row, new LabelControl("Threshold mode"));
-  s_controlGrid->setControl(1, row, createThresholdModeSelect("Above & Below", true, thresholdColorProvider, simRF::ColorProvider::COLORMODE_ABOVE_AND_BELOW, profileManager));
-  s_controlGrid->setControl(2, row, createThresholdModeSelect("Above", false, thresholdColorProvider, simRF::ColorProvider::COLORMODE_ABOVE, profileManager));
-  s_controlGrid->setControl(3, row, createThresholdModeSelect("Below", false, thresholdColorProvider, simRF::ColorProvider::COLORMODE_BELOW, profileManager));
+  s_controlGrid->setControl(1, row, createThresholdModeSelect("Above & Below", true, thresholdColorProvider.get(), simRF::ColorProvider::COLORMODE_ABOVE_AND_BELOW, profileManager.get()));
+  s_controlGrid->setControl(2, row, createThresholdModeSelect("Above", false, thresholdColorProvider.get(), simRF::ColorProvider::COLORMODE_ABOVE, profileManager.get()));
+  s_controlGrid->setControl(3, row, createThresholdModeSelect("Below", false, thresholdColorProvider.get(), simRF::ColorProvider::COLORMODE_BELOW, profileManager.get()));
 
   row++;
 
   s_controlGrid->setControl(0, row, new LabelControl("Discrete Gradient"));
   s_DiscreteGradientCheck = new CheckBoxControl(true);
-  s_DiscreteGradientCheck->addEventHandler(new DiscreteHandler(profileManager));
+  s_DiscreteGradientCheck->addEventHandler(new DiscreteHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, s_DiscreteGradientCheck.get());
   row++;
 
   s_controlGrid->setControl(0, row, new LabelControl("Depth Test"));
   osg::ref_ptr<CheckBoxControl> depthTestCheck = new CheckBoxControl(false);
-  depthTestCheck->addEventHandler(new DepthTestHandler(profileManager));
+  depthTestCheck->addEventHandler(new DepthTestHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, depthTestCheck.get());
   row++;
 
@@ -889,9 +889,9 @@ int main(int argc, char** argv)
   rfLocator->getLocator()->setCoordinate(simCore::Coordinate(
       simCore::COORD_SYS_LLA,
       simCore::Vec3(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt)));
-  rfLocator->addChild(profileManager);
+  rfLocator->addChild(profileManager.get());
   profileManager->setRefCoord(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt);
-  root->addChild(rfLocator);
+  root->addChild(rfLocator.get());
   profileManager->setDisplay(true);
 
 

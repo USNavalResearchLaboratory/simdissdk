@@ -69,18 +69,18 @@ MainWindow::MainWindow()
 
   // anchor point for the scene graph
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan);
+  simExamples::addDefaultSkyNode(sceneMan.get());
 
   // view of the world
   osg::ref_ptr<simVis::View> view = new simVis::View();
-  view->setSceneManager(sceneMan);
+  view->setSceneManager(sceneMan.get());
   view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   viewMan_ = new simVis::ViewManager(); // Note that the log depth buffer is not installed
-  viewMan_->addView(view);
+  viewMan_->addView(view.get());
 
   // data source which will provide positions for the platform
   // based on the simulation time.
@@ -90,7 +90,7 @@ MainWindow::MainWindow()
   sceneMan->getScenario()->bind(dataStore_);
 
   // wrap the view in a Qt widget
-  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
+  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
   setCentralWidget(viewWidget);
 
   // clock will manage simulation time

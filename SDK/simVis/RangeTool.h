@@ -432,7 +432,7 @@ namespace simVis
       * Returns the formatter for the measurement
       * @return The formatter for the measurement
       */
-      ValueFormatter* formatter() const { return formatter_; }
+      ValueFormatter* formatter() const { return formatter_.get(); }
 
     protected:
       /// osg::Referenced-derived

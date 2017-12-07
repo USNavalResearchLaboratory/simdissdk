@@ -56,7 +56,7 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
     // the combination of these two locators gives us that.
 
     laserXYZOffsetLocator_ = new Locator(hostLocator, Locator::COMP_ALL);
-    locator = new ResolvedPositionLocator(laserXYZOffsetLocator_, Locator::COMP_ALL);
+    locator = new ResolvedPositionLocator(laserXYZOffsetLocator_.get(), Locator::COMP_ALL);
   }
   else
   {

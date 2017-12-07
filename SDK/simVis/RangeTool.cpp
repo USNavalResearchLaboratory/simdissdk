@@ -519,7 +519,7 @@ bool RangeTool::Association::update(const ScenarioManager& scenario, const simCo
     if (!obj1.valid())
     {
       osg::ref_ptr<EntityNode> obj2 = obj2_obs_.get();
-      refresh_(obj1, obj2, scenario, timeStamp);
+      refresh_(obj1.get(), obj2.get(), scenario, timeStamp);
       return false;
     }
 
@@ -532,7 +532,7 @@ bool RangeTool::Association::update(const ScenarioManager& scenario, const simCo
     obj2 = scenario.find(id2_);
     if (!obj2.valid())
     {
-      refresh_(obj1, obj2, scenario, timeStamp);
+      refresh_(obj1.get(), obj2.get(), scenario, timeStamp);
       return false;
     }
 
@@ -692,7 +692,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       if (!posGraphic && graphics.size() > 0)
       {
-        posGraphic = graphics[0];
+        posGraphic = graphics[0].get();
       }
 
       if (posGraphic)

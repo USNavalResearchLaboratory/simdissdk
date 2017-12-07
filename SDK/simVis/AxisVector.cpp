@@ -69,8 +69,8 @@ AxisVector::~AxisVector()
 void AxisVector::init_()
 {
   osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-  createAxisVectors_(geode);
-  addChild(geode);
+  createAxisVectors_(geode.get());
+  addChild(geode.get());
 }
 
 void AxisVector::setAxisLengths(osg::Vec3f axisLengths, bool force)
@@ -147,9 +147,9 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
-  geom->setVertexArray(vertices);
+  geom->setVertexArray(vertices.get());
 
-  geom->setColorArray(colors_);
+  geom->setColorArray(colors_.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
 
   // Keep track of location in the primitive set array

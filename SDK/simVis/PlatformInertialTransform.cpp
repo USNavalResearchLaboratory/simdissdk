@@ -38,7 +38,7 @@ PlatformInertialTransform::PlatformInertialTransform(const PlatformInertialTrans
   : Transform(rhs, copyop),
     rotation_(rhs.rotation_),
     locator_(rhs.locator_),
-    callback_(static_cast<LocatorCallback*>(copyop(rhs.callback_)))
+    callback_(static_cast<LocatorCallback*>(copyop(rhs.callback_.get())))
 {
 }
 
@@ -66,11 +66,11 @@ void PlatformInertialTransform::setLocator(simVis::Locator* locator)
   if (locator_ == locator)
     return;
   if (locator_.valid())
-    locator_->removeCallback(callback_);
+    locator_->removeCallback(callback_.get());
   locator_ = locator;
   if (locator_.valid())
   {
-    locator_->addCallback(callback_);
+    locator_->addCallback(callback_.get());
     syncWithLocator();
   }
 }

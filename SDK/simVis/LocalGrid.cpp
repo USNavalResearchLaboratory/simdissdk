@@ -91,28 +91,28 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
   switch (prefs.gridtype())
   {
   case simData::LocalGridPrefs_Type_CARTESIAN:
-    createCartesian_(prefs, geode);
+    createCartesian_(prefs, geode.get());
     break;
 
   case simData::LocalGridPrefs_Type_POLAR:
-    createRangeRings_(prefs, geode, true);
+    createRangeRings_(prefs, geode.get(), true);
     break;
 
   case simData::LocalGridPrefs_Type_RANGE_RINGS:
-    createRangeRings_(prefs, geode, false);
+    createRangeRings_(prefs, geode.get(), false);
     break;
 
   case simData::LocalGridPrefs_Type_SPEED_RINGS:
-    createSpeedRings_(prefs, geode, false);
+    createSpeedRings_(prefs, geode.get(), false);
     break;
 
   case simData::LocalGridPrefs_Type_SPEED_LINE:
-    createSpeedRings_(prefs, geode, true);
+    createSpeedRings_(prefs, geode.get(), true);
     break;
   }
 
   // shader needed to draw text properly
-  osgEarth::Registry::shaderGenerator().run(geode);
+  osgEarth::Registry::shaderGenerator().run(geode.get());
 
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
@@ -361,13 +361,13 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
 
   osg::ref_ptr<osg::Vec3Array> vertSub = new osg::Vec3Array();
   osg::ref_ptr<osg::Vec3Array> vertDiv = new osg::Vec3Array();
-  geomSub->setVertexArray(vertSub);
-  geomDiv->setVertexArray(vertDiv);
+  geomSub->setVertexArray(vertSub.get());
+  geomDiv->setVertexArray(vertDiv.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArraySub = new osg::Vec4Array();
   osg::ref_ptr<osg::Vec4Array> colorArrayDiv = new osg::Vec4Array();
-  geomSub->setColorArray(colorArraySub);
-  geomDiv->setColorArray(colorArrayDiv);
+  geomSub->setColorArray(colorArraySub.get());
+  geomDiv->setColorArray(colorArrayDiv.get());
 
   geomSub->setColorBinding(osg::Geometry::BIND_OVERALL);
   geomDiv->setColorBinding(osg::Geometry::BIND_OVERALL);
@@ -478,10 +478,10 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
-  geom->setVertexArray(vertexArray);
+  geom->setVertexArray(vertexArray.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // rings:
@@ -630,10 +630,10 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
-  geom->setVertexArray(vertexArray);
+  geom->setVertexArray(vertexArray.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // rings or speed line:

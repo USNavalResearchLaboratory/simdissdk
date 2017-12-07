@@ -281,7 +281,7 @@ int main(int argc, char** argv)
 
   // start up a SIMDIS viewer
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // the data store houses the entity data model:
@@ -323,7 +323,7 @@ int main(int argc, char** argv)
   // apply the reticle overlay.
   simUtil::HudManager hudManager(viewer->getMainView());
   if (reticle.valid())
-    hudManager.createImage(reticle, 0, 0, 100, 100);
+    hudManager.createImage(reticle.get(), 0, 0, 100, 100);
 
   g_eyeLat = SUB_LAT;
   g_eyeLon = SUB_LON;

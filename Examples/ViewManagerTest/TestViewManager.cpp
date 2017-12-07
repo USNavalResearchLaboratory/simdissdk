@@ -72,17 +72,17 @@ int main(int argc, char** argv)
 
   // A scene manager that all our views will share.
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan);
+  simExamples::addDefaultSkyNode(sceneMan.get());
 
   // We need a view manager. This handles all of our Views.
   osg::ref_ptr<simVis::ViewManager> viewMan = new simVis::ViewManager(arguments);
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
-  logDb->install(viewMan);
+  logDb->install(viewMan.get());
 
   // Create views and connect them to our scene.
   osg::ref_ptr<simVis::View> firstView;
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
       firstView = mainView;
 
     // Add it to the view manager
-    viewMan->addView(mainView);
+    viewMan->addView(mainView.get());
   }
 
   // run until the user quits by hitting ESC.

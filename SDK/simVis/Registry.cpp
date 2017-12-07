@@ -191,11 +191,11 @@ simVis::Registry::Registry()
   // Configure the osgDB::Registry with our own read file callback
   readFileCallback_ = new ReadFileCallback();
   osgDB::Registry* osgDbRegistry = osgDB::Registry::instance();
-  osgDbRegistry->setReadFileCallback(readFileCallback_);
+  osgDbRegistry->setReadFileCallback(readFileCallback_.get());
 
   // Configure the osgDB::Registry with our own file finder callback
   osg::ref_ptr<FindFileCallback> findFileCallback = new FindFileCallback(*this, osgDbRegistry->getFindFileCallback());
-  osgDbRegistry->setFindFileCallback(findFileCallback);
+  osgDbRegistry->setFindFileCallback(findFileCallback.get());
 
   // models may be specified without extension, use this list to attempt to resolve.
   // these should be reconciled with list in simVis::isImageFile (Utils.cpp)
@@ -499,7 +499,7 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
     // Need to apply a sequence time fix for osg::Sequence to deal with decreasing simulation times
     if (result)
     {
-      AddUpdateCallbackToSequence fixSequenceTimeUpdates(sequenceTimeUpdater_);
+      AddUpdateCallbackToSequence fixSequenceTimeUpdates(sequenceTimeUpdater_.get());
       result->accept(fixSequenceTimeUpdates);
 
       // Set all render bins for the loaded model to Inherited.  This allows us to later on put
@@ -554,7 +554,7 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
 {
   FontCache::const_iterator it = fontCache_.find(name);
   if (it != fontCache_.end())
-    return it->second;
+    return it->second.get();
 
   // Check SIMDIS location first
   std::string filename = this->findFontFile(name);
@@ -569,16 +569,16 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
   if (!font.valid())
   {
     if (fontCache_.find(DEFAULT_FONT) != fontCache_.end())
-      return fontCache_.find(DEFAULT_FONT)->second;
+      return fontCache_.find(DEFAULT_FONT)->second.get();
 
     SIM_ERROR << "Could not find any fonts.  Check the value for the environment variable SIMDIS_FONTPATH\n";
-    return fontCache_.find(CANT_FIND_FONT)->second;
+    return fontCache_.find(CANT_FIND_FONT)->second.get();
   }
 
   font->setGlyphImageMargin(2);
-  fontCache_[name] = font;
+  fontCache_[name] = font.get();
 
-  return font;
+  return font.get();
 }
 
 std::string simVis::Registry::findFontFile(const std::string& name) const

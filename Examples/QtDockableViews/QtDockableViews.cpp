@@ -92,10 +92,10 @@ MyMainWindow::MyMainWindow(int framerate)
 
   // A scene manager that all our views will share.
   sceneMan_ = new simVis::SceneManager();
-  sceneMan_->setMap(map);
+  sceneMan_->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan_);
+  simExamples::addDefaultSkyNode(sceneMan_.get());
 
   // create our first widget, seems to be required on startup
   createViewDockable_();
@@ -143,7 +143,7 @@ void MyMainWindow::createViewDialog_()
 
   // now create a dock widget for each inset
   QDialog* dialog = new QDialog(this);
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
+  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
   lastCreatedGlWindow_ = viewWidget->windowHandle();
   viewWidget->setMinimumSize(2, 2);
   dialog->setWindowTitle(viewName);
@@ -160,7 +160,7 @@ void MyMainWindow::createViewDockable_()
 
   // now create a dock widget for each inset
   QDockWidget* dockable = new QDockWidget(this);
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
+  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
   lastCreatedGlWindow_ = viewWidget->windowHandle();
   viewWidget->setMinimumSize(2, 2);
   dockable->setWidget(viewWidget);
@@ -177,7 +177,7 @@ void MyMainWindow::createMainView_()
 
   // Make a Qt Widget to hold our view, and add that widget to the
   // main window.
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview);
+  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview.get());
   lastCreatedGlWindow_ = viewWidget->windowHandle();
   viewWidget->setMinimumSize(2, 2);
   viewWidget->resize(100, 100);

@@ -334,7 +334,7 @@ int main(int argc, char **argv)
 
   /// Simdis viewer to display the scene
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
@@ -358,15 +358,15 @@ int main(int argc, char **argv)
   /// add in platforms and their respective projectors
   platformId_0 = addPlatform(dataStore);
   osg::ref_ptr<simVis::EntityNode> vehicle_0 = scenario->find(platformId_0);
-  projectorId_0 = addProjector(scenario, vehicle_0->getId(), dataStore, imageURL, false);
+  projectorId_0 = addProjector(scenario.get(), vehicle_0->getId(), dataStore, imageURL, false);
 
   platformId_1 = addPlatform(dataStore);
   osg::ref_ptr<simVis::EntityNode> vehicle_1 = scenario->find(platformId_1);
-  projectorId_1 = addProjector(scenario, vehicle_1->getId(), dataStore, imageURL, true);
+  projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true);
 
   /// connect them and add some additional settings
-  configurePrefs(platformId_0, 2.0, scenario);
-  configurePrefs(platformId_1, 1.0, scenario);
+  configurePrefs(platformId_0, 2.0, scenario.get());
+  configurePrefs(platformId_1, 1.0, scenario.get());
 
   /// simulator will compute time-based updates for the platforms
   osg::ref_ptr<simUtil::PlatformSimulator> sim_0 = new simUtil::PlatformSimulator(platformId_0);
@@ -386,17 +386,17 @@ int main(int argc, char **argv)
 
   /// Install frame update handler that will update track positions over time.
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  simMgr->addSimulator(sim_0);
-  simMgr->addSimulator(sim_1);
+  simMgr->addSimulator(sim_0.get());
+  simMgr->addSimulator(sim_1.get());
   simMgr->simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simMgr, 0.0, 120.0);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simMgr.get(), 0.0, 120.0);
+  viewer->addEventHandler(simHandler.get());
 
   /// Tether camera to the first platform
   osg::ref_ptr<simVis::PlatformNode> platformNode = scene->getScenario()->find<simVis::PlatformNode>(platformId_0);
-  viewer->getMainView()->tetherCamera(platformNode);
+  viewer->getMainView()->tetherCamera(platformNode.get());
 
   /// set the camera to look at the platform
   viewer->getMainView()->setFocalOffsets(0, -45, 5e5);
@@ -405,7 +405,7 @@ int main(int argc, char **argv)
   viewer->addEventHandler(new MenuHandler(dataStore, *viewer->getView(0), projectorId_0, imageURL));
 
   /// hovering the mouse over the platform should trigger a popup
-  viewer->addEventHandler(new simVis::PopupHandler(scene));
+  viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
 
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());

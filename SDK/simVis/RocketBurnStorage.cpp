@@ -170,7 +170,7 @@ void RocketBurnStorage::update(double time)
   {
     // get the data appropriate for time
     const Update& data = allData_[i->first].dataForTime(time);
-    simVis::RocketBurn* rb = i->second;
+    simVis::RocketBurn* rb = i->second.get();
     rb->update(data.shapeData);
     // update position only if rb data is valid (otherwise update has turned rb off)
     if (data.shapeData.length != 0)

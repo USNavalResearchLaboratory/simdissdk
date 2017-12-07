@@ -119,10 +119,10 @@ int main(int argc, char** argv)
 
   // A scene manager that all our views will share.
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan);
+  simExamples::addDefaultSkyNode(sceneMan.get());
 
   // OK, time to set up the Qt Application and windows.
   QApplication qapp(argc, argv);
@@ -142,12 +142,12 @@ int main(int argc, char** argv)
 
     // Make a Qt Widget to hold our view, and add that widget to the
     // main window.
-    QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview);
+    QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview.get());
     center->layout()->addWidget(viewWidget);
 
     // attach the scene manager and add it to the view manager.
     mainview->setSceneManager(sceneMan.get());
-    win.getViewManager()->addView(mainview);
+    win.getViewManager()->addView(mainview.get());
 
     // Each top-level view needs an Inset controller so the user can draw
     // and interact with inset views.
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
     inset->setExtents(simVis::View::Extents(0.2, 0.2, 0.5, 0.5, true));
     inset->setSceneManager(sceneMan.get());
     inset->applyManipulatorSettings(*mainview);
-    mainview->addInset(inset);
+    mainview->addInset(inset.get());
   }
 
   // fire up the GUI.

@@ -332,7 +332,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
         // there is no near face, add index to origin/zero point
         outline->setElement(numPointsX, 0);
       }
-      outlineGeom->addPrimitiveSet(outline);
+      outlineGeom->addPrimitiveSet(outline.get());
     }
 
     // verticals of the gate face outline
@@ -351,11 +351,11 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
       }
       // assertion fail indicates that algorithm for outline generation has changed, check that reserve matches actual usage
       assert(farOutline->size() == numPointsZ);
-      outlineGeom->addPrimitiveSet(farOutline);
+      outlineGeom->addPrimitiveSet(farOutline.get());
       if (hasNear)
       {
         assert(nearOutline->size() == numPointsZ);
-        outlineGeom->addPrimitiveSet(nearOutline);
+        outlineGeom->addPrimitiveSet(nearOutline.get());
       }
     }
   }
@@ -403,7 +403,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
         farFaceStrip->setElement(elementIndex, farFaceOffset + rightX + z);
         farFaceStrip->setElement(elementIndex + 1, farFaceOffset + leftX + z);
       }
-      faceGeom->addPrimitiveSet(farFaceStrip);
+      faceGeom->addPrimitiveSet(farFaceStrip.get());
     }
 
     // the near face is drawn separately to mitigate near/far face artifacts
@@ -424,7 +424,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           nearFaceStrip->setElement(elementIndex, nearFaceOffset + leftX + z);
           nearFaceStrip->setElement(elementIndex + 1, nearFaceOffset + rightX + z);
         }
-        faceGeom->addPrimitiveSet(nearFaceStrip);
+        faceGeom->addPrimitiveSet(nearFaceStrip.get());
       }
     }
   }
@@ -473,7 +473,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
   }
 
@@ -511,7 +511,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
   }
 
@@ -550,7 +550,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
   }
 
@@ -585,7 +585,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
 
     // if either assert fails, vertex counts in cone no longer match expected/reserved count; vector reserve calls must be updated to match changes to cone vertex generation
@@ -730,7 +730,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     // add face to the geometry
     // if assert fails, check that elsPerSlice still represents the number of vertices that are added
     assert(farWedge->size() == elsPerSlice);
-    geom->addPrimitiveSet(farWedge);
+    geom->addPrimitiveSet(farWedge.get());
   }
 
   // the near face geometry is created separately to mitigate near/far face artifacts
@@ -758,7 +758,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       // add each face to the geometry
       // if assert fails, check that elsPerSlice still represents the number of vertices that are added
       assert(nearWedge->size() == elsPerSlice);
-      geom->addPrimitiveSet(nearWedge);
+      geom->addPrimitiveSet(nearWedge.get());
     }
   }
 
@@ -841,7 +841,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
           vptr++;
         }
       }
-      geom->addPrimitiveSet(side);
+      geom->addPrimitiveSet(side.get());
     }
 
     // asserting that we used all the vertices we expected to

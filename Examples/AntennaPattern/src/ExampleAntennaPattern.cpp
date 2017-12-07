@@ -181,85 +181,85 @@ Control* createUI(AppData* app)
   unsigned row=0, col=0;
 
   g->setControl(col, row, new LabelControl("Algorithm"));
-  app->algorithm = g->setControl(col+1, row, new HSliderControl(0, app->algs.size(), 0, applyUI));
+  app->algorithm = g->setControl(col+1, row, new HSliderControl(0, app->algs.size(), 0, applyUI.get()));
   app->algorithmLabel = g->setControl(col+2, row, new LabelControl());
   app->algorithm->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Polarity"));
-  app->polarity = g->setControl(col+1, row, new HSliderControl(0.0, 9.0, 0.0, applyUI));
+  app->polarity = g->setControl(col + 1, row, new HSliderControl(0.0, 9.0, 0.0, applyUI.get()));
   app->polarity->setHorizFill(true, 250.0);
   app->polarityLabel = g->setControl(col+2, row, new LabelControl());
 
   row++;
   g->setControl(col, row, new LabelControl("Sensitivity"));
-  app->sensitivity = g->setControl(col+1, row, new HSliderControl(-100.0, 0.0, -50.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->sensitivity));
+  app->sensitivity = g->setControl(col+1, row, new HSliderControl(-100.0, 0.0, -50.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->sensitivity.get()));
   app->sensitivity->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Frequency"));
-  app->frequency = g->setControl(col+1, row, new HSliderControl(0.0, 10000.0, 7000.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->frequency));
+  app->frequency = g->setControl(col+1, row, new HSliderControl(0.0, 10000.0, 7000.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->frequency.get()));
   app->frequency->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Gain"));
-  app->gain = g->setControl(col+1, row, new HSliderControl(0.0, 100.0, 20.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->gain));
+  app->gain = g->setControl(col+1, row, new HSliderControl(0.0, 100.0, 20.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->gain.get()));
   app->gain->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Power"));
-  app->power = g->setControl(col+1, row, new HSliderControl(0.0, 20000.0, 2000.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->power));
+  app->power = g->setControl(col+1, row, new HSliderControl(0.0, 20000.0, 2000.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->power.get()));
   app->power->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Beam Width"));
-  app->width = g->setControl(col+1, row, new HSliderControl(1.0, 45.0, 3.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->width));
+  app->width = g->setControl(col+1, row, new HSliderControl(1.0, 45.0, 3.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->width.get()));
   app->width->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Beam Height"));
-  app->height = g->setControl(col+1, row, new HSliderControl(1.0, 45.0, 3.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->height));
+  app->height = g->setControl(col+1, row, new HSliderControl(1.0, 45.0, 3.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->height.get()));
   app->height->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Scale"));
-  app->scale = g->setControl(col+1, row, new HSliderControl(1.0, 1000.0, 1.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->scale));
+  app->scale = g->setControl(col+1, row, new HSliderControl(1.0, 1000.0, 1.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->scale.get()));
   app->scale->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Field of view"));
-  app->fov = g->setControl(col+1, row, new HSliderControl(1.0, 360.0, 85.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->fov));
+  app->fov = g->setControl(col+1, row, new HSliderControl(1.0, 360.0, 85.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->fov.get()));
   app->fov->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Detail angle"));
-  app->detail = g->setControl(col+1, row, new HSliderControl(1.0, 15.0, 5.0, applyUI));
-  g->setControl(col+2, row, new LabelControl(app->detail));
+  app->detail = g->setControl(col+1, row, new HSliderControl(1.0, 15.0, 5.0, applyUI.get()));
+  g->setControl(col+2, row, new LabelControl(app->detail.get()));
   app->detail->setHorizFill(true, 250.0);
 
   row++;
   g->setControl(col, row, new LabelControl("Weighting"));
-  app->weighting = g->setControl(col+1, row, new CheckBoxControl(true, applyUI));
+  app->weighting = g->setControl(col+1, row, new CheckBoxControl(true, applyUI.get()));
 
   row++;
   g->setControl(col, row, new LabelControl("Color Scale"));
-  app->colorscale = g->setControl(col+1, row, new CheckBoxControl(true, applyUI));
+  app->colorscale = g->setControl(col+1, row, new CheckBoxControl(true, applyUI.get()));
 
   row++;
   g->setControl(col, row, new LabelControl("Blending"));
-  app->blending = g->setControl(col+1, row, new CheckBoxControl(true, applyUI));
+  app->blending = g->setControl(col+1, row, new CheckBoxControl(true, applyUI.get()));
 
   row++;
   g->setControl(col, row, new LabelControl("Lighting"));
-  app->lighting = g->setControl(col+1, row, new CheckBoxControl(false, applyUI));
+  app->lighting = g->setControl(col+1, row, new CheckBoxControl(false, applyUI.get()));
 
   return vbox;
 }
@@ -313,11 +313,11 @@ void simulate(simData::ObjectId id, simData::DataStore& ds, simVis::Viewer* view
   sim->addWaypoint(simUtil::Waypoint(0.5,  0.5, 20000, 30.0));
 
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simman = new simUtil::PlatformSimulatorManager(&ds);
-  simman->addSimulator(sim);
+  simman->addSimulator(sim.get());
   simman->simulate(0.0, 30.0, 30.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman, 0.0, 30.0);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman.get(), 0.0, 30.0);
+  viewer->addEventHandler(simHandler.get());
 }
 
 //----------------------------------------------------------------------------
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
   // Install the map:
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
 
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
   if (scene->getSkyNode())
@@ -348,7 +348,7 @@ int main(int argc, char **argv)
   addPlatformAndBeam(&app, 0, 0, 10000);
 
   // make the sim
-  simulate(app.platformId, app.ds, viewer);
+  simulate(app.platformId, app.ds, viewer.get());
 
   // zoom the camera
   viewer->getMainView()->tetherCamera(scene->getScenario()->find(app.platformId));

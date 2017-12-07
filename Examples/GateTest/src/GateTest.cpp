@@ -250,58 +250,58 @@ ui::Control* createUI(AppData& app)
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Draw Mode"));
-  app.modeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.modes_.size(), 0, applyUI));
+  app.modeSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.modes_.size(), 0, applyUI.get()));
   app.modeSlider_->setHorizFill(true, 250);
   app.modeLabel_  = grid->setControl(c+2, r, new ui::LabelControl());
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Fill Pattern"));
-  app.fillPatternSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.fillPatterns_.size(), 0, applyUI));
+  app.fillPatternSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.fillPatterns_.size(), 0, applyUI.get()));
   app.fillPatternSlider_->setHorizFill(true, 250);
   app.fillPatternLabel_ = grid->setControl(c+2, r, new ui::LabelControl());
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Min Range"));
-  app.rangeMinSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0.0, 2500.0, 100.0, applyUI));
-  app.rangeMinLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.rangeMinSlider_));
+  app.rangeMinSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0.0, 2500.0, 100.0, applyUI.get()));
+  app.rangeMinLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.rangeMinSlider_.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Max Range"));
-  app.rangeMaxSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0.0, 2500.0, 350.0, applyUI));
-  app.rangeMaxLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.rangeMaxSlider_));
+  app.rangeMaxSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0.0, 2500.0, 350.0, applyUI.get()));
+  app.rangeMaxLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.rangeMaxSlider_.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Horiz. Size"));
-  app.horizSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1.0, 400.0, 45.0, applyUI));
-  app.horizLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.horizSlider_));
+  app.horizSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1.0, 400.0, 45.0, applyUI.get()));
+  app.horizLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.horizSlider_.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Vert. Size"));
-  app.vertSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1.0, 200.0, 45.0, applyUI));
-  app.vertLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.vertSlider_));
+  app.vertSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(1.0, 200.0, 45.0, applyUI.get()));
+  app.vertLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.vertSlider_.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Azimuth"));
-  app.azimuthSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(-180.0, 180.0, 0.0, applyUI));
-  app.azimuthLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.azimuthSlider_));
+  app.azimuthSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(-180.0, 180.0, 0.0, applyUI.get()));
+  app.azimuthLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.azimuthSlider_.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Elevation"));
-  app.elevSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(-90, 90.0, 0.0, applyUI));
-  app.elevLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.elevSlider_));
+  app.elevSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(-90, 90.0, 0.0, applyUI.get()));
+  app.elevLabel_  = grid->setControl(c+2, r, new ui::LabelControl(app.elevSlider_.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Color"));
-  app.colorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size()-1, 0, applyUI));
+  app.colorSlider_ = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors_.size()-1, 0, applyUI.get()));
   app.colorLabel_  = grid->setControl(c+2, r, new ui::LabelControl());
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Lighted"));
-  app.lightedCheck_ = grid->setControl(c + 1, r, new ui::CheckBoxControl(false, applyUI));
+  app.lightedCheck_ = grid->setControl(c + 1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Global Gate Toggle"));
-  app.globalToggle_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI));
+  app.globalToggle_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
 
   // Add some hotkey support text
   top->addControl(new ui::LabelControl("C: Center on Platform", 16.f));
@@ -456,12 +456,12 @@ int main(int argc, char** argv)
 
   /// Simdis viewer to display the scene
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // disable lighting on the map node.
   simVis::setLighting(scene->getMapNode()->getOrCreateStateSet(), 0);

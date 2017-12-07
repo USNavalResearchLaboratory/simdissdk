@@ -64,14 +64,14 @@ int VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
   }
 
   osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-  createVelocityVector_(prefs, geode);
+  createVelocityVector_(prefs, geode.get());
 
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
   stateSet->setAttributeAndModes(new osg::Point(1.5f), 1);
 
   setNodeMask(DISPLAY_MASK_PLATFORM);
-  this->addChild(geode);
+  this->addChild(geode.get());
   return 0;
 };
 
@@ -131,10 +131,10 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
-  geom->setVertexArray(vertices);
+  geom->setVertexArray(vertices.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
 
   simCore::Coordinate ecef;

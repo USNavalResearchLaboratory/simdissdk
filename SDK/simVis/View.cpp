@@ -64,14 +64,14 @@ public:
     geom->setDataVariance(osg::Object::DYNAMIC);
 
     osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(10);
-    geom->setVertexArray(verts);
+    geom->setVertexArray(verts.get());
 
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
-    geom->setColorArray(colors);
+    geom->setColorArray(colors.get());
     geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 10));
-    this->addDrawable(geom);
+    this->addDrawable(geom.get());
 
     simVis::setLighting(geom->getOrCreateStateSet(),
         osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
@@ -237,11 +237,11 @@ void FocusManager::setViewManager(simVis::ViewManager* viewman)
 
   if (viewman_.valid())
   {
-    viewman_->removeCallback(viewManagerCB_);
+    viewman_->removeCallback(viewManagerCB_.get());
     viewManagerCB_ = NULL;
 
     for (std::map< simVis::View*, osg::ref_ptr<InsetChange> >::const_iterator it = insets_.begin(); it != insets_.end(); ++it)
-      it->first->removeCallback(it->second);
+      it->first->removeCallback(it->second.get());
   }
 
   insets_.clear();
@@ -252,7 +252,7 @@ void FocusManager::setViewManager(simVis::ViewManager* viewman)
     return;
 
   viewManagerCB_ = new InsetAddDelete(*this);
-  viewman_->addCallback(viewManagerCB_);
+  viewman_->addCallback(viewManagerCB_.get());
 
   std::vector<simVis::View*> views;
   viewman_->getViews(views);
@@ -559,7 +559,7 @@ View::View()
   manip->getSettings()->setTerrainAvoidanceEnabled(false);
   manip->getSettings()->setArcViewpointTransitions(false);
   manip->getSettings()->setMinMaxPitch(-89, 60.0);
-  manip->setTetherCallback(tetherCallback_);
+  manip->setTetherCallback(tetherCallback_.get());
   setCameraManipulator(manip);
 
   setNavigationMode(NAVMODE_ROTATEPAN);
@@ -858,7 +858,7 @@ unsigned int View::getInsets(View::Insets& output) const
 
 FocusManager* View::getFocusManager() const
 {
-  return focusMan_;
+  return focusMan_.get();
 }
 
 unsigned int View::getNumInsets() const
@@ -868,23 +868,27 @@ unsigned int View::getNumInsets() const
 
 int View::getIndexOfInset(simVis::View* view) const
 {
-  InsetViews::const_iterator iter = std::find(insets_.begin(), insets_.end(), static_cast<osgViewer::View*>(view));
-  if (iter == insets_.end())
-    return -1;
-  return iter - insets_.begin();
+  for (InsetViews::const_iterator iter = insets_.begin(); iter != insets_.end(); ++iter)
+  {
+    if (iter->get() == view)
+    {
+      return iter - insets_.begin();
+    }
+  }
+  return -1;
 }
 
 simVis::View* View::getInset(unsigned int index) const
 {
-  return index < getNumInsets() ? insets_[index] : NULL;
+  return index < getNumInsets() ? insets_[index].get() : NULL;
 }
 
 simVis::View* View::getInsetByName(const std::string& name) const
 {
   for (InsetViews::const_iterator i = insets_.begin(); i != insets_.end(); ++i)
   {
-    if ((*i)->getName() == name)
-      return *i;
+    if (i->get()->getName() == name)
+      return i->get();
   }
   return NULL;
 }
@@ -1071,7 +1075,7 @@ void View::setSceneManager(simVis::SceneManager* node)
     Viewpoint vp = getViewpoint();
     newManip->applySettings(oldManip->getSettings());
     newManip->setTetherNode(oldTetherNode);
-    newManip->setTetherCallback(tetherCallback_);
+    newManip->setTetherCallback(tetherCallback_.get());
     newManip->setHeadingLocked(oldManip->isHeadingLocked());
     newManip->setPitchLocked(oldManip->isPitchLocked());
     this->setCameraManipulator(newManip);
@@ -1158,7 +1162,7 @@ void View::tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double dur
     {
       osg::ref_ptr<osg::Node> oldTether;
       vp.getNode(oldTether);
-      simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(oldTether);
+      simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(oldTether.get());
       newVp.focalPoint()->set(osgEarth::SpatialReference::create("wgs84"),
         osg::Vec3d(lla.lon() * simCore::RAD2DEG, lla.lat() * simCore::RAD2DEG, lla.alt()),
         osgEarth::ALTMODE_ABSOLUTE);
@@ -1306,7 +1310,7 @@ simVis::Viewpoint View::getViewpoint() const
       {
         osg::ref_ptr<osg::Node> tether;
         manipViewpoint.getNode(tether);
-        vp.setNode(tether);
+        vp.setNode(tether.get());
       }
       else
       {
@@ -1832,7 +1836,7 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
 
   // Apply the new viewport:
   osg::ref_ptr<osg::Viewport> newViewport = new osg::Viewport(nx, ny, nw, nh);
-  camera->setViewport(newViewport);
+  camera->setViewport(newViewport.get());
 
   // Apply the new projection matrix:
   const osg::Matrix& proj = camera->getProjectionMatrix();

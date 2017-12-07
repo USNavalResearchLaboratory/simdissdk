@@ -73,7 +73,7 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
 
   // build the geometry for a target node
   targetGeode_ = new osg::Geode();
-  scaleTargetGeode_(targetGeode_, range_);
+  scaleTargetGeode_(targetGeode_.get(), range_);
 }
 
 osg::Node* PlanetariumViewTool::getNode() const
@@ -94,7 +94,7 @@ void PlanetariumViewTool::setRange(double range)
     updateDome_();
 
     // rescale the one geode that is reused for all target delegates
-    scaleTargetGeode_(targetGeode_, range_);
+    scaleTargetGeode_(targetGeode_.get(), range_);
 
     // recreate our target delegates
     if (scenario_.valid() && targets_.valid())

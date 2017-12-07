@@ -84,11 +84,11 @@ DynamicSelectionPicker::DynamicSelectionPicker(simVis::ViewManager* viewManager,
 {
   // By default, only platforms are picked.  Gates are feasibly pickable though.
   guiEventHandler_ = new RepickEventHandler(*this);
-  addHandlerToViews_ = new simVis::AddEventHandlerToViews(guiEventHandler_);
+  addHandlerToViews_ = new simVis::AddEventHandlerToViews(guiEventHandler_.get());
   if (viewManager_.valid())
   {
     addHandlerToViews_->addToViews(*viewManager_);
-    viewManager_->addCallback(addHandlerToViews_);
+    viewManager_->addCallback(addHandlerToViews_.get());
   }
 }
 
@@ -97,7 +97,7 @@ DynamicSelectionPicker::~DynamicSelectionPicker()
   if (viewManager_.valid())
   {
     addHandlerToViews_->removeFromViews(*viewManager_);
-    viewManager_->removeCallback(addHandlerToViews_);
+    viewManager_->removeCallback(addHandlerToViews_.get());
   }
 }
 
@@ -118,7 +118,7 @@ void DynamicSelectionPicker::pickThisFrame_()
   // Loop through all entities
   for (auto i = allEntities.begin(); i != allEntities.end(); ++i)
   {
-    if (!isPickable_(*i))
+    if (!isPickable_(i->get()))
       continue;
 
     // Calculate the position on the platform
@@ -132,7 +132,7 @@ void DynamicSelectionPicker::pickThisFrame_()
     if (rangeSquared < closestRangePx)
     {
       closestRangePx = rangeSquared;
-      closest = *i;
+      closest = i->get();
     }
   }
 

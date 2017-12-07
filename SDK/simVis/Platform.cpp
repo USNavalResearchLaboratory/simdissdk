@@ -170,7 +170,7 @@ queuedInvalidate_(false)
   addChild(localGrid_);
 
   scaledInertialTransform_->setLocator(getLocator());
-  model_->addScaledChild(scaledInertialTransform_);
+  model_->addScaledChild(scaledInertialTransform_.get());
 }
 
 PlatformNode::~PlatformNode()
@@ -335,12 +335,12 @@ void PlatformNode::updateHostBounds_(double scale)
 
 PlatformModelNode* PlatformNode::getModel()
 {
-  return model_;
+  return model_.get();
 }
 
 TrackHistoryNode* PlatformNode::getTrackHistory()
 {
-  return track_;
+  return track_.get();
 }
 
 void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
@@ -695,12 +695,12 @@ void PlatformNode::updateOrRemoveBodyAxis_(bool prefsDraw, const simData::Platfo
       bodyAxisVector_->addUpdateCallback(new SetAxisLengthCallback(this, true));
       // Set a node mask so we don't mouse-over a wide region
       bodyAxisVector_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
-      model_->addScaledChild(bodyAxisVector_);
+      model_->addScaledChild(bodyAxisVector_.get());
     }
   }
   else if (bodyAxisVector_.valid()) // remove if present
   {
-    model_->removeScaledChild(bodyAxisVector_);
+    model_->removeScaledChild(bodyAxisVector_.get());
     bodyAxisVector_ = NULL;
   }
 }
@@ -760,7 +760,7 @@ void PlatformNode::updateOrRemoveEphemerisVector_(bool prefsDraw, const simData:
     else
     {
       ephemerisVector_ = new EphemerisVector(MOON_VECTOR_COLOR, SUN_VECTOR_COLOR);
-      ephemerisVector_->setModelNode(model_);
+      ephemerisVector_->setModelNode(model_.get());
       scaledInertialTransform_->addChild(ephemerisVector_);
       // force rebuild
       ephemerisVector_->setPrefs(prefs);

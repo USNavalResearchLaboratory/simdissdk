@@ -125,8 +125,8 @@ private:
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
     geom->setUseVertexBufferObjects(true);
 
-    geom->setVertexArray(verts);
-    geom->setColorArray(colors_);
+    geom->setVertexArray(verts.get());
+    geom->setColorArray(colors_.get());
     geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
     geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 8));
 
@@ -206,7 +206,7 @@ int ResizeViewManipulator::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
   anchorMousePosition_ = mousePosition;
 
   // Tell the rubber band to highlight this view in bold
-  rubberBand_->attach(view);
+  rubberBand_->attach(view.get());
   rubberBand_->setBold(true);
   rubberBand_->highlightCorner(dragPoint_);
   return 1;
@@ -257,7 +257,7 @@ int ResizeViewManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActi
   osg::Vec2d mouseXY = osg::Vec2d(ea.getX(), ea.getY());
   setDragPoint_(calculateDragPoint_(*underMouse, mouseXY));
   rubberBand_->highlightCorner(dragPoint_);
-  rubberBand_->attach(underMouse);
+  rubberBand_->attach(underMouse.get());
   return 0;
 }
 

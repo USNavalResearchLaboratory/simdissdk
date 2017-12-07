@@ -293,19 +293,19 @@ SilverLiningSettingsAdapter::SilverLiningSettingsAdapter()
     sleetRate_(new SilverLiningSleetRate),
     wind_(new SilverLiningWind)
 {
-  addValue(conditionPreset_);
-  addValue(lensFlare_);
-  addValue(gamma_);
-  addValue(infrared_);
-  addValue(skyModel_);
-  addValue(visibility_);
-  addValue(turbidity_);
-  addValue(lightPollution_);
+  addValue(conditionPreset_.get());
+  addValue(lensFlare_.get());
+  addValue(gamma_.get());
+  addValue(infrared_.get());
+  addValue(skyModel_.get());
+  addValue(visibility_.get());
+  addValue(turbidity_.get());
+  addValue(lightPollution_.get());
   // Snow rate should come first since it can reset conditions on wet/dry change
-  addValue(snowRate_);
-  addValue(rainRate_);
-  addValue(sleetRate_);
-  addValue(wind_);
+  addValue(snowRate_.get());
+  addValue(rainRate_.get());
+  addValue(sleetRate_.get());
+  addValue(wind_.get());
 }
 
 SilverLiningSettingsAdapter::~SilverLiningSettingsAdapter()
@@ -314,62 +314,62 @@ SilverLiningSettingsAdapter::~SilverLiningSettingsAdapter()
 
 SilverLiningConditionPreset* SilverLiningSettingsAdapter::conditionPreset() const
 {
-  return conditionPreset_;
+  return conditionPreset_.get();
 }
 
 SilverLiningLensFlare* SilverLiningSettingsAdapter::lensFlare() const
 {
-  return lensFlare_;
+  return lensFlare_.get();
 }
 
 SilverLiningGamma* SilverLiningSettingsAdapter::gamma() const
 {
-  return gamma_;
+  return gamma_.get();
 }
 
 SilverLiningInfrared* SilverLiningSettingsAdapter::infrared() const
 {
-  return infrared_;
+  return infrared_.get();
 }
 
 SilverLiningSkyModel* SilverLiningSettingsAdapter::skyModel() const
 {
-  return skyModel_;
+  return skyModel_.get();
 }
 
 SilverLiningVisibility* SilverLiningSettingsAdapter::visibility() const
 {
-  return visibility_;
+  return visibility_.get();
 }
 
 SilverLiningTurbidity* SilverLiningSettingsAdapter::turbidity() const
 {
-  return turbidity_;
+  return turbidity_.get();
 }
 
 SilverLiningLightPollution* SilverLiningSettingsAdapter::lightPollution() const
 {
-  return lightPollution_;
+  return lightPollution_.get();
 }
 
 SilverLiningRainRate* SilverLiningSettingsAdapter::rainRate() const
 {
-  return rainRate_;
+  return rainRate_.get();
 }
 
 SilverLiningSleetRate* SilverLiningSettingsAdapter::sleetRate() const
 {
-  return sleetRate_;
+  return sleetRate_.get();
 }
 
 SilverLiningSnowRate* SilverLiningSettingsAdapter::snowRate() const
 {
-  return snowRate_;
+  return snowRate_.get();
 }
 
 SilverLiningWind* SilverLiningSettingsAdapter::wind() const
 {
-  return wind_;
+  return wind_.get();
 }
 
 /////////////////////////////////////////////////////////

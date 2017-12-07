@@ -136,7 +136,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   // but uses the imageIconXform for the actual testing.
   HorizonCullCallback* hcc = new HorizonCullCallback();
   hcc->setCullByCenterPointOnly(true);
-  hcc->setProxyNode(imageIconXform_);
+  hcc->setProxyNode(imageIconXform_.get());
   hcc->setName("HorizonCullCallback");
   addCullCallback(hcc);
 
@@ -158,7 +158,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
 
   // Tag the platform at the lowest unique level feasible
-  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(offsetXform_, offsetXform_);
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(offsetXform_.get(), offsetXform_.get());
 
   // When alpha volume is on, we turn on this node
   alphaVolumeGroup_ = new osg::Group;
@@ -181,7 +181,7 @@ bool PlatformModelNode::isImageModel() const
 
 osg::Node* PlatformModelNode::offsetNode() const
 {
-  return offsetXform_;
+  return offsetXform_.get();
 }
 
 unsigned int PlatformModelNode::objectIndexTag() const
@@ -275,9 +275,9 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
   }
 
   // re-apply the parent group.
-  offsetXform_->addChild(model_);
-  alphaVolumeGroup_->addChild(model_);
-  dynamicXform_->setSizingNode(model_);
+  offsetXform_->addChild(model_.get());
+  alphaVolumeGroup_->addChild(model_.get());
+  dynamicXform_->setSizingNode(model_.get());
 
   return true;
 }

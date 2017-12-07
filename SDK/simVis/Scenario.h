@@ -362,7 +362,7 @@ namespace simVis
     /**
      * Retrieve a list of all tools
      */
-    void getTools(std::vector<ScenarioTool*>& tools) const;
+    void getTools(std::vector< osg::ref_ptr<ScenarioTool> >& tools) const;
 
     /**
     * Removes all scenario tools from the manager

@@ -104,7 +104,7 @@ void IncrementalCompileSettings::setIncrementalEnabled_(bool enabled)
 {
   if (!viewer_.valid())
     return;
-  viewer_->setIncrementalCompileOperation(enabled ? ico_ : NULL);
+  viewer_->setIncrementalCompileOperation(enabled ? ico_.get() : NULL);
 
   // Iterate through all views and grab their database pagers
   osgViewer::ViewerBase::Views views;
@@ -118,7 +118,7 @@ void IncrementalCompileSettings::setIncrementalEnabled_(bool enabled)
   // Apply the ICO to each database pager we found (likely only one shared amongst views)
   for (std::set<osgDB::DatabasePager*>::const_iterator i = pagers.begin(); i != pagers.end(); ++i)
   {
-    (*i)->setIncrementalCompileOperation(enabled ? ico_ : NULL);
+    (*i)->setIncrementalCompileOperation(enabled ? ico_.get() : NULL);
   }
 }
 

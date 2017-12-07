@@ -56,7 +56,7 @@ active_(false)
   getPositionAttitudeTransform()->addChild(drapeable);
   drapeable->addChild(geode_);
 
-  mapNode->getTerrain()->addTerrainCallback(callbackHook_);
+  mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 }
 
 
@@ -66,8 +66,8 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
   if (mapNode == oldMap)
     return;
 
-  oldMap->getTerrain()->removeTerrainCallback(callbackHook_);
-  mapNode->getTerrain()->addTerrainCallback(callbackHook_);
+  oldMap->getTerrain()->removeTerrainCallback(callbackHook_.get());
+  mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 
   GeoPositionNode::setMapNode(mapNode);
 

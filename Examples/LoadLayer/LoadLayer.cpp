@@ -82,9 +82,9 @@ void addImageLayer(osgEarth::Map* map)
   osgEarth::CachePolicy cachePolicy;
   osg::ref_ptr<osgEarth::ImageLayer> imageLayer = simUtil::LayerFactory::newImageLayer("ImageLayer", imageDriver, map->getProfile(), &cachePolicy);
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-  map->addLayer(imageLayer);
+  map->addLayer(imageLayer.get());
 #else
-  map->addImageLayer(imageLayer);
+  map->addImageLayer(imageLayer.get());
 #endif
   if (!imageLayer->getStatus().isOK())
     std::cerr << "Image layer could not be created.\n";
@@ -97,9 +97,9 @@ void addElevationLayer(osgEarth::Map* map)
   osgEarth::CachePolicy cachePolicy;
   osg::ref_ptr<osgEarth::ElevationLayer> elevationLayer = simUtil::LayerFactory::newElevationLayer("ElevationLayer", elevationDriver, &cachePolicy);
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-  map->addLayer(elevationLayer);
+  map->addLayer(elevationLayer.get());
 #else
-  map->addElevationLayer(elevationLayer);
+  map->addElevationLayer(elevationLayer.get());
 #endif
   if (!elevationLayer->getStatus().isOK())
     std::cerr << "Elevation layer could not be created.\n";
@@ -122,7 +122,7 @@ void loadTerrainFile(const std::string& terrainFile, simVis::Viewer*    viewer)
     return; // error
   }
   if (newMap)
-    viewer->setMapNode(newMap);
+    viewer->setMapNode(newMap.get());
   else
     std::cerr << "Failed to load terrain file : " << validated << "\n";
 }
@@ -139,17 +139,17 @@ void removeAllLayers(osgEarth::Map* map)
   map->getLayers(imageLayers);
   for (osgEarth::ImageLayerVector::const_iterator iter = imageLayers.begin(); iter != imageLayers.end(); ++iter)
   {
-    map->removeLayer(*iter);
+    map->removeLayer(iter->get());
   }
   map->getLayers(elevationLayers);
   for (osgEarth::ElevationLayerVector::const_iterator iter = elevationLayers.begin(); iter != elevationLayers.end(); ++iter)
   {
-    map->removeLayer(*iter);
+    map->removeLayer(iter->get());
   }
   map->getLayers(modelLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = modelLayers.begin(); iter != modelLayers.end(); ++iter)
   {
-    map->removeLayer(*iter);
+    map->removeLayer(iter->get());
   }
 #else
   map->getImageLayers(imageLayers);
@@ -272,7 +272,7 @@ void addSimulation(simVis::ScenarioManager* scenario, simVis::View* mainView)
   sim->addWaypoint(simUtil::Waypoint(22.074, -159.563445, 1, 30.0));
   sim->addWaypoint(simUtil::Waypoint(22.073, -159.563445, 1, 30.0));
 
-  simMan->addSimulator(sim);
+  simMan->addSimulator(sim.get());
   platform = scenario->find<simVis::PlatformNode>(platformId);
 
   simMan->simulate(0,120, 60);
@@ -303,16 +303,16 @@ int main(int argc, char** argv)
   simVis::View* mainView = viewer->getMainView();
 
   // Handles hotkeys from user
-  mainView->addEventHandler(new MenuHandler(viewer));
+  mainView->addEventHandler(new MenuHandler(viewer.get()));
 
   if (!terrainFile.empty())
   {
-    loadTerrainFile(terrainFile, viewer);
+    loadTerrainFile(terrainFile, viewer.get());
   }
   else
   {
     osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
-    viewer->setMap(map);
+    viewer->setMap(map.get());
   }
 
   // now store off the image and elevation layers
@@ -353,7 +353,7 @@ int main(int argc, char** argv)
     std::cerr << "Failed to find an elevation layer in supplied configuration.\n";
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Add a platform over Kauai
   addSimulation(viewer->getSceneManager()->getScenario(), mainView);

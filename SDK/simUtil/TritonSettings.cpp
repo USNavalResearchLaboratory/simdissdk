@@ -190,14 +190,14 @@ TritonSettingsAdapter::TritonSettingsAdapter()
     enableGodRays_(new TritonEnableGodRays),
     godRaysFade_(new TritonGodRaysFade)
 {
-  addValue(choppiness_);
-  addValue(quality_);
-  addValue(seaState_);
-  addValue(sunIntensity_);
-  addValue(enableSpray_);
-  addValue(enableWireframe_);
-  addValue(enableGodRays_);
-  addValue(godRaysFade_);
+  addValue(choppiness_.get());
+  addValue(quality_.get());
+  addValue(seaState_.get());
+  addValue(sunIntensity_.get());
+  addValue(enableSpray_.get());
+  addValue(enableWireframe_.get());
+  addValue(enableGodRays_.get());
+  addValue(godRaysFade_.get());
 }
 
 TritonSettingsAdapter::~TritonSettingsAdapter()
@@ -206,42 +206,42 @@ TritonSettingsAdapter::~TritonSettingsAdapter()
 
 TritonChoppiness* TritonSettingsAdapter::choppiness() const
 {
-  return choppiness_;
+  return choppiness_.get();
 }
 
 TritonQuality* TritonSettingsAdapter::quality() const
 {
-  return quality_;
+  return quality_.get();
 }
 
 TritonSeaState* TritonSettingsAdapter::seaState() const
 {
-  return seaState_;
+  return seaState_.get();
 }
 
 TritonSunIntensity* TritonSettingsAdapter::sunIntensity() const
 {
-  return sunIntensity_;
+  return sunIntensity_.get();
 }
 
 TritonEnableSpray* TritonSettingsAdapter::enableSpray() const
 {
-  return enableSpray_;
+  return enableSpray_.get();
 }
 
 TritonEnableWireframe* TritonSettingsAdapter::enableWireframe() const
 {
-  return enableWireframe_;
+  return enableWireframe_.get();
 }
 
 TritonEnableGodRays* TritonSettingsAdapter::enableGodRays() const
 {
-  return enableGodRays_;
+  return enableGodRays_.get();
 }
 
 TritonGodRaysFade* TritonSettingsAdapter::godRaysFade() const
 {
-  return godRaysFade_;
+  return godRaysFade_.get();
 }
 
 /////////////////////////////////////////////////////////

@@ -286,14 +286,14 @@ int main(int argc, char **argv)
 
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // Set up the data:
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // create a sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   simData::MemoryDataStore dataStore;
   scene->getScenario()->bind(&dataStore);
@@ -309,11 +309,11 @@ int main(int argc, char **argv)
   dataStore.update(0);
 
   // zoom the camera
-  viewer->getMainView()->tetherCamera(node1);
+  viewer->getMainView()->tetherCamera(node1.get());
   viewer->getMainView()->setFocalOffsets(135, -8, 30);
 
   // Set up the tank to manipulate the articulations
-  TankNode tank(node1);
+  TankNode tank(node1.get());
 
   // Set up a grid for animation controls
   osg::ref_ptr<Grid> grid = new Grid;
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
   gun->addEventHandler(new SetLabelValue(grid->setControl(2, 1, new LabelControl("0.0"))));
 
   // Add grid to the main view
-  viewer->getMainView()->addOverlayControl(grid);
+  viewer->getMainView()->addOverlayControl(grid.get());
 
   // add some stock OSG handlers and go
   viewer->installDebugHandlers();

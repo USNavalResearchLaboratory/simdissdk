@@ -416,7 +416,7 @@ void ProfileManager::updateVisibility_()
 
 ColorProvider* ProfileManager::getColorProvider() const
 {
-  return colorProvider_;
+  return colorProvider_.get();
 }
 
 void ProfileManager::setColorProvider(ColorProvider* colorProvider)

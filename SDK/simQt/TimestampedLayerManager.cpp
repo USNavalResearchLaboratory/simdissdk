@@ -167,7 +167,7 @@ TimestampedLayerManager::~TimestampedLayerManager()
   clockListener_.reset();
   osgEarth::MapNode* mapNode = dynamic_cast<MapChangeObserver*>(mapChangeObserver_.get())->getMapNode();
   if (mapNode && mapNode->getMap())
-    mapNode->getMap()->removeMapCallback(mapListener_);
+    mapNode->getMap()->removeMapCallback(mapListener_.get());
   restoreOriginalVisibility_();
 }
 
@@ -264,7 +264,7 @@ void TimestampedLayerManager::setMapNode_(osgEarth::MapNode* mapNode)
 {
   MapChangeObserver* castObserver = dynamic_cast<MapChangeObserver*>(mapChangeObserver_.get());
   if (castObserver && castObserver->getMapNode() && castObserver->getMapNode()->getMap())
-    castObserver->getMapNode()->getMap()->removeMapCallback(mapListener_);
+    castObserver->getMapNode()->getMap()->removeMapCallback(mapListener_.get());
 
   // Attempt to restore visibility settings to current image layers before clearing them for the new map
   restoreOriginalVisibility_();
@@ -275,7 +275,7 @@ void TimestampedLayerManager::setMapNode_(osgEarth::MapNode* mapNode)
   if (mapNode && mapNode->getMap())
   {
     osgEarth::Map* map = mapNode->getMap();
-    map->addMapCallback(mapListener_);
+    map->addMapCallback(mapListener_.get());
 
     // Rebuild the layers_ map by going through all layers in the map to find all image layers with time
     osgEarth::LayerVector vec;

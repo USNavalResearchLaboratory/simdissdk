@@ -126,7 +126,7 @@ void ViewManagerDataModel::bindTo(simVis::ViewManager* viewManager)
 
   // Assign view manager and hook into callbacks
   viewManager_ = viewManager;
-  viewManager_->addCallback(viewManagerCB_);
+  viewManager_->addCallback(viewManagerCB_.get());
 
   // Fill out the top level views
   std::vector<simVis::View*> viewsVec;
@@ -139,7 +139,7 @@ void ViewManagerDataModel::bindTo(simVis::ViewManager* viewManager)
       topLevelViews_.push_back(ViewObserverPtr(*i));
     if ((*i)->type() != simVis::View::VIEW_SUPERHUD)
       userViews_.push_back(ViewObserverPtr(*i));
-    (*i)->addCallback(viewParamCB_);
+    (*i)->addCallback(viewParamCB_.get());
   }
 
   // Complete the reset
@@ -154,11 +154,11 @@ void ViewManagerDataModel::unbind()
   topLevelViews_.clear();
   userViews_.clear();
 
-  viewManager_->removeCallback(viewManagerCB_);
+  viewManager_->removeCallback(viewManagerCB_.get());
   // If old view manager is non-NULL, remove callback
-  viewManager_->removeCallback(viewManagerCB_);
+  viewManager_->removeCallback(viewManagerCB_.get());
   for (unsigned int k = 0; k < viewManager_->getNumViews(); ++k)
-    viewManager_->getView(k)->removeCallback(viewParamCB_);
+    viewManager_->getView(k)->removeCallback(viewParamCB_.get());
 
   viewManager_ = NULL;
   endResetModel();
@@ -374,7 +374,7 @@ QModelIndex ViewManagerDataModel::createIndex_(simVis::View* view) const
 void ViewManagerDataModel::notifyViewAdded_(simVis::View* view)
 {
   // Add a callback for the new view
-  view->addCallback(viewParamCB_);
+  view->addCallback(viewParamCB_.get());
 
   // Update the flat mode back-end w/o sending any gui notifications
   if (isHierarchical() && view->type() != simVis::View::VIEW_SUPERHUD)

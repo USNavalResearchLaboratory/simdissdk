@@ -843,7 +843,7 @@ void SequenceTimeUpdater::operator()(osg::Node* node, osg::NodeVisitor* nv)
 
   // Copy the frame stamp and update it to a strictly increasing time
   osg::ref_ptr<const osg::FrameStamp> oldFs = nv->getFrameStamp();
-  nv->setFrameStamp(modifiedStamp_);
+  nv->setFrameStamp(modifiedStamp_.get());
 
   // Visit the Sequence itself
   traverse(node, nv);
