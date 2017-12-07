@@ -58,9 +58,7 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
     CategoryFilterWidget* rv = new CategoryFilterWidget(newWidgetParent);
     rv->setProviders(categoryFilter_->getDataStore());
     rv->setFilter(*categoryFilter_);
-    // connect to the signal so we can update the filter based on GUI changes
-    connect(rv, SIGNAL(categoryFilterChanged(const simData::CategoryFilter&)), this, SLOT(setCategoryFilter(const simData::CategoryFilter&)));
-    connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), rv, SLOT(setFilter(simData::CategoryFilter)));
+    bindToWidget(rv);
     return rv;
   }
   return NULL;
@@ -81,18 +79,37 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
     if (filter != categoryFilter_->serialize(false))
     {
       categoryFilter_->deserialize(filter, false);
-      if (receivers(SIGNAL(categoryFilterChanged(simData::CategoryFilter))) != 0)
-        emit categoryFilterChanged(*categoryFilter_);
-      // Intentionally no else because CategoryFilterWidget does not send out a signal so send it out here
+      // send out signal to alert any guis bound to this filter
+      emit categoryFilterChanged(*categoryFilter_);
+      // send out general filter update signal
       emit filterUpdated();
     }
   }
 }
 
+void EntityCategoryFilter::bindToWidget(CategoryFilterWidget* widget) const
+{
+  // connect to the signals/slots between the gui and the filter so changes to one will update the other
+  connect(widget, SIGNAL(categoryFilterChanged(const simData::CategoryFilter&)), this, SLOT(setCategoryFilterFromGui_(const simData::CategoryFilter&)));
+  connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), widget, SLOT(setFilter(simData::CategoryFilter)));
+}
+
 void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& categoryFilter)
 {
+  if (categoryFilter_->getCategoryFilter() == categoryFilter.getCategoryFilter())
+    return;
+
   *categoryFilter_ = categoryFilter;
-  // the GUI has changed the filter, now emit the signal (users will want to know)
+  // send out signal to alert any guis bound to this filter
+  emit categoryFilterChanged(*categoryFilter_);
+  // send out general filter update signal
+  emit filterUpdated();
+}
+
+void EntityCategoryFilter::setCategoryFilterFromGui_(const simData::CategoryFilter& categoryFilter)
+{
+  *categoryFilter_ = categoryFilter;
+  // the GUI has changed the filter, send out general filter update signal
   emit filterUpdated();
 }
 

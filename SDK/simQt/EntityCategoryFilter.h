@@ -29,6 +29,8 @@ namespace simData { class CategoryFilter; class DataStore; }
 
 namespace simQt {
 
+  class CategoryFilterWidget;
+
   /**
   * Class to implement a filter based on entity category data, using the simQt::CategoryFilter.
   * This filter can also be updated using the widget provided.
@@ -76,9 +78,15 @@ namespace simQt {
     /** @copydoc EntityFilter::setFilterSettings() */
     virtual void setFilterSettings(const QMap<QString, QVariant>& settings);
 
+    /**
+    * Bind this filter to a CategoryFilterWidget so that changes to either update the other
+    * @param widget to be bound
+    */
+    void bindToWidget(CategoryFilterWidget* widget) const;
+
   public slots:
     /**
-    * Set a new CategoryFilter for this filter. Emits the filterUpdated() signal
+    * Set a new CategoryFilter for this filter. Emits the general filterUpdated() and more specific categoryFilterChanged() signals
     * @param categoryFilter New filter to install
     */
     void setCategoryFilter(const simData::CategoryFilter& categoryFilter);
@@ -89,6 +97,13 @@ namespace simQt {
      * @param categoryFilter The filter
      */
     void categoryFilterChanged(const simData::CategoryFilter& categoryFilter);
+
+  private slots:
+    /**
+    * Set a new CategoryFilter for this filter. Emits only the general filterUpdated().
+    * @param categoryFilter New filter to install
+    */
+    void setCategoryFilterFromGui_(const simData::CategoryFilter& categoryFilter);
 
   private:
     /// holds the current category filter
