@@ -573,7 +573,7 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
   assert(lastPrefsApplied_.targetid() > 0);
 
   // update our target reference, for new target, or after a prefs change in target ids occur
-  if ((target_ == NULL || !target_.valid()))
+  if (target_ == NULL || !target_.valid())
   {
     if (scenario_.valid())
     {
@@ -585,11 +585,20 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
       return 1;
   }
 
-  // calculate target beam RAE, using host and target locators
+  // calculate target beam RAE
+
+  // determine the beam origin position
   simCore::Vec3 sourceLla;
-  getLocator()->getLocatorPosition(&sourceLla, simCore::COORD_SYS_LLA);
+  if (0 != getPosition(&sourceLla, simCore::COORD_SYS_LLA))
+  {
+    // if target beam is just turning on (processing this update will turn beam on), then
+    // the locatorNode is not activated and has not been synced, and cannot provide valid info.
+    // in this case, access position via a locator
+    getLocator()->getLocatorPosition(&sourceLla, simCore::COORD_SYS_LLA);
+  }
+
   simCore::Vec3 targetLla;
-  target_->getLocator()->getLocatorPosition(&targetLla, simCore::COORD_SYS_LLA);
+  target_->getPosition(&targetLla, simCore::COORD_SYS_LLA);
 
   double azimuth;
   double elevation;
@@ -789,7 +798,7 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
     // if assert fails, check that constructor creates this locator for non-relative beams
     assert(positionOffsetLocator_ != NULL);
     // apply the positional offset.
-    positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
+      positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
 
     // apply the local orientation.
     getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time(), false);
@@ -845,10 +854,10 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
   // Get start position
   simCore::Vec3 startPosition;
   simCore::Vec3 ori;
-  if (!getLocator()->getLocatorPositionOrientation(&startPosition, &ori, simCore::COORD_SYS_LLA))
+  if (0 != getPositionOrientation(&startPosition, &ori, simCore::COORD_SYS_LLA))
   {
     closestLla = simCore::Vec3();
-    return 0;
+    return 0.;
   }
 
   simCore::Vec3 endPosition;
@@ -863,7 +872,7 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
   const double offset = sqrt(simCore::square(x) + simCore::square(y));
 
   if (offset > distanceToBeam)
-    distanceToBeam = 0;
+    distanceToBeam = 0.;
   else
     distanceToBeam -= offset;
 

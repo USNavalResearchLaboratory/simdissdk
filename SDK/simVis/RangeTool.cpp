@@ -1081,12 +1081,12 @@ int RangeTool::State::populateEntityState(const ScenarioManager& scenario, const
   if (!node->isActive())
     return 1;
 
-  if (!node->getLocator()->getLocatorPositionOrientation(&state.lla_, &state.ypr_, simCore::COORD_SYS_LLA))
+  if (0 != node->getPositionOrientation(&state.lla_, &state.ypr_, simCore::COORD_SYS_LLA))
     return 1;
 
   if (state.node_->type() == simData::PLATFORM)
   {
-    // Platforms need velocity which is not available from getLocatorPositionOrientation, so add it in
+    // Platforms need velocity which is not available from getPositionOrientation, so add it in
     const simVis::PlatformNode* platform = dynamic_cast<const simVis::PlatformNode*>(node);
     if (platform == NULL)
       return 1;
