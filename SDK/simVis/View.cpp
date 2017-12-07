@@ -876,10 +876,6 @@ int View::getIndexOfInset(simVis::View* view) const
     }
   }
   return -1;
-  //InsetViews::const_iterator iter = std::find(insets_.begin(), insets_.end(), static_cast<osgViewer::View*>(view));
-  //if (iter == insets_.end())
-  //  return -1;
-  //return iter - insets_.begin();
 }
 
 simVis::View* View::getInset(unsigned int index) const
