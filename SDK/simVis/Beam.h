@@ -366,14 +366,15 @@ namespace simVis
     // the locator node that parents our volume/antenna geometry and label
     osg::ref_ptr<LocatorNode>  beamLocatorNode_;
 
-    // extra locator used only for non-BeamType_BODY_RELATIVE beams
-    osg::ref_ptr<Locator>   positionOffsetLocator_;
+    // this locator models the platform pos and ori possibly modified by beam position offsets
+    osg::ref_ptr<Locator>   beamOriginLocator_;
+
+    // this locator models beam orientation offsets and beam data updates
+    osg::ref_ptr<Locator>   beamOrientationLocator_;
 
     std::map<std::string, simData::BeamPrefs> prefsOverrides_;
-
     std::map<std::string, simData::BeamUpdate> updateOverrides_;
-
-    osg::Depth*             depthAttr_;
+    osg::Depth* depthAttr_;
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;

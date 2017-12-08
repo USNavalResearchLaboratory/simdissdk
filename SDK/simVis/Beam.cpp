@@ -190,31 +190,28 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
     scenario_(scenario)
 {
   lastProps_ = props;
-  Locator* finalLocator = NULL;
+
+  // inherit the host platform's pos and ori, and add a body-local position offset.
+  beamOriginLocator_ = new Locator(hostLocator, Locator::COMP_ALL);
+
   // if the properties call for a body-relative beam, configure that:
   if (props.has_type() && props.type() == simData::BeamProperties_BeamType_BODY_RELATIVE)
   {
-    positionOffsetLocator_ = NULL;
-    // in the BeamType_BODY_RELATIVE case, only a single locator is needed to handle both position and orientation offsets,
-    // b/c position and orientation offsets are both relative to platform orientation.
-    finalLocator = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
+    // in the BeamType_BODY_RELATIVE case, beam data is relative to platform orientation;
+    // the ResolvedPositionOrientationLocator maintains the host platform pos and ori
+    //  orientation data + offsets applied to this locator -will- be relative to host platform orientation
+    beamOrientationLocator_ = new ResolvedPositionOrientationLocator(beamOriginLocator_, Locator::COMP_ALL);
   }
   else
   {
     // for non-relative beams, we need to apply position offsets that are relative to platform orientation.
     // after having established the position offset,
     // we need to apply an orientation that is not relative to platform orientation : we need to filter out platform orientation.
-    // the combination of these two locators gives us that.
-
-    // First locator will inherit the host's pos and ori, and allow us to add a body-local positional offset.
-    positionOffsetLocator_ = new Locator(hostLocator, Locator::COMP_ALL);
-
-    // The second locator will Resolve the offset to a new position, from where we can
-    // then apply an orientation offset that is not relative to host platform orientation
-    finalLocator = new ResolvedPositionLocator(positionOffsetLocator_.get(), Locator::COMP_ALL);
+    // the ResolvedPositionLocator gives us that.
+    // orientation data + offsets applied to this locator -will-not- be relative to host platform orientation
+    beamOrientationLocator_ = new ResolvedPositionLocator(beamOriginLocator_, Locator::COMP_ALL);
   }
-
-  setLocator(finalLocator);
+  setLocator(beamOrientationLocator_);
   setName("BeamNode");
 
   // set up a state set.
@@ -228,11 +225,11 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
   stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
-  localGrid_ = new LocalGridNode(finalLocator, host, referenceYear);
+  localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
 
   // create the locator node that will parent our geometry and label
-  beamLocatorNode_ = new LocatorNode(finalLocator);
+  beamLocatorNode_ = new LocatorNode(getLocator());
   beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
   addChild(beamLocatorNode_);
 
@@ -634,7 +631,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   // if datadraw is off, we do not need to do any processing
   if (activePrefs->commonprefs().datadraw() == false)
   {
-    setActive_(false);
+    flush();
     return;
   }
 
@@ -742,70 +739,68 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 
 void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simData::BeamPrefs* newPrefs, bool force)
 {
-  const bool locatorUpdateRequired = force ||
-    (newUpdate && (
-    PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, azimuth) ||
-    PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, elevation))) ||
-    (newPrefs && (
+  const bool oriOffsetsChanged = force || (newPrefs && (
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, useoffsetbeam) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, azimuthoffset) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, elevationoffset) ||
-    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, rolloffset) ||
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, rolloffset)));
+
+  const bool posOffsetsChanged = force || (newPrefs && (
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, useoffsetbeam) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, useoffseticon) ||
     PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, beampositionoffset, x) ||
     PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, beampositionoffset, y) ||
     PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, beampositionoffset, z)));
 
-  if (!locatorUpdateRequired)
+  const bool beamDataOriChanged = force || (newUpdate && (
+    PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, azimuth) ||
+    PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, elevation)));
+
+  if (!oriOffsetsChanged && !posOffsetsChanged && !beamDataOriChanged)
     return;
 
   // if we don't have new prefs, we will use the previous prefs
-  const simData::BeamPrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;
+  const simData::BeamPrefs& activePrefs = newPrefs ? *newPrefs : lastPrefsApplied_;
   // if we don't have new update, we will use the previous update
-  const simData::BeamUpdate* activeUpdate = newUpdate ? newUpdate : &lastUpdateApplied_;
+  const simData::BeamUpdate& activeUpdate = newUpdate ? *newUpdate : lastUpdateApplied_;
 
-  // calculate the position and orientation offset
-  simCore::Vec3 posOffset;
-  simCore::Vec3 oriOffset;
-
-  // The 3 types of offsets (platform, beam, and platform-icon offset) are additive
-  // if platform position offsets are set/enabled, they are already set in the platform locator;
-  // if they are enabled for the platform, they are enabled for everything that derives from the platform locator,
-  // and cannot be disabled.
-
-  // explicit beam position and orientation offsets
-  if (activePrefs->useoffsetbeam())
+  // process explicit beam orientation offsets
+  if (posOffsetsChanged)
   {
-    simData::Position pos = activePrefs->beampositionoffset();
-    // x/y order change and minus sign are needed to match the behavior of SIMDIS 9
-    posOffset.set(-pos.y(), pos.x(), pos.z());
-    oriOffset.set(activeUpdate->azimuth() + activePrefs->azimuthoffset(), activeUpdate->elevation() + activePrefs->elevationoffset(), activePrefs->rolloffset());
+    // The 3 types of offsets (platform, beam, and platform-icon offset) are additive.
+    // If platform position offsets are set/enabled, they are already set in the platform locator;
+    // if they are enabled for the platform, they are enabled for everything that derives from the platform locator,
+    // and cannot be disabled.
+    simCore::Vec3 posOffset;
+    if (activePrefs.useoffsetbeam())
+    {
+      const simData::Position& pos = activePrefs.beampositionoffset();
+      // x/y order change and minus sign are needed to match the behavior of SIMDIS 9
+      posOffset.set(-pos.y(), pos.x(), pos.z());
+    }
+    // automatic positional offset (placed at the front of the host platform).
+    if (activePrefs.useoffseticon())
+      applyPlatformIconOffset_(posOffset);
+
+    // defer locator callback/syncing; a locator update will be forced below
+    beamOriginLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate.time(), false);
   }
-  else
-    oriOffset.set(activeUpdate->azimuth(), activeUpdate->elevation(), 0.0);
 
-  // automatic positional offset (placed at the front of the host platform).
-  if (activePrefs->useoffseticon())
-    applyPlatformIconOffset_(posOffset);
-
-  if (lastProps_.type() == simData::BeamProperties_BeamType_BODY_RELATIVE)
+  // process explicit beam orientation offsets or beam data updates
+  if (oriOffsetsChanged || beamDataOriChanged)
   {
-    // apply the local orientation.
-    getLocator()->setLocalOffsets(posOffset, oriOffset);
-  }
-  else
-  {
-    // if assert fails, check that constructor creates this locator for non-relative beams
-    assert(positionOffsetLocator_ != NULL);
-    // apply the positional offset.
-      positionOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
+    // ori offset should only be applied if useoffsetbeam is set
+    // beam orientation offsets are simply added to beam az/el data; they are not processed as a separate modeling transformation
+    const simCore::Vec3 beamOrientation = (activePrefs.useoffsetbeam()) ?
+      simCore::Vec3(activeUpdate.azimuth() + activePrefs.azimuthoffset(), activeUpdate.elevation() + activePrefs.elevationoffset(), activePrefs.rolloffset())
+      : simCore::Vec3(activeUpdate.azimuth(), activeUpdate.elevation(), 0.0);
 
-    // apply the local orientation.
-    getLocator()->setLocalOffsets(simCore::Vec3(), oriOffset, activeUpdate->time(), false);
-
-    // since positionOffsetLocator_ is parent, its notification will include getLocator()
-    positionOffsetLocator_->endUpdate();
+    // defer locator callback/syncing; a locator update will be forced below
+    beamOrientationLocator_->setLocalOffsets(simCore::Vec3(), beamOrientation, activeUpdate.time(), false);
   }
+
+  // something changed, and locators must be sync'd - since beamOriginLocator_ is parent, its notification will update all children
+  beamOriginLocator_->endUpdate();
   dirtyBound();
 }
 

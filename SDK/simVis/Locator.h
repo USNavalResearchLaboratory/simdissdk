@@ -408,14 +408,16 @@ private: // data
   mutable osgEarth::Revision llaOrientationCacheRevision_;
 };
 
-
 /**
-* ResolvedPositionOrientationLocator is a locator that generates a position-with-orientation from its parents,
+* ResolvedPositionOrientationLocator is a locator that generates a position-with-(base)-orientation from its parents,
 * based on the specified inheritance components, but which is treated thereafter (for subsequent inheritance) as a base coordinate position.
+*
+* Base coordinate orientation information is not stripped away as in COMP_RESOLVED_POSITION; it is maintained and available for inheritance.
+* But all orientation offsets are stripped away - only the orientation set in the base coordinate (as set by setCoordinate()) is maintained.
+*
 * Though it can apply its own offsets and be used like a normal locator, its primary function is to provide this resolved coordinate to inheriting locators.
 * Subsequent locators that inherit the resolving locator get the same "resolved position with orientation" regardless of the orientation components they inherit.
 * The inherited position matrix will represent a local tangent plane at the final position.
-* Base orientation information is not stripped away as in COMP_RESOLVED_POSITION; it is maintained and available for inheritance.
 */
 class SDKVIS_EXPORT ResolvedPositionOrientationLocator : public Locator
 {
