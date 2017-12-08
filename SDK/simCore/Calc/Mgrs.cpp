@@ -622,7 +622,7 @@ double Mgrs::hypot_(double x, double y)
 double Mgrs::taupf_(double tau)
 {
   const double tau1 = hypot_(1., tau);
-  const double eaTanhE = WGS_E * atanh(WGS_E * (tau / tau1));
+  const double eaTanhE = WGS_E * atanh_(WGS_E * (tau / tau1));
   const double sig = sinh(eaTanhE);
   return hypot_(1., sig) * tau - sig * tau1;
 }
