@@ -204,7 +204,7 @@ RangeTool::TextOptions::TextOptions()
     yOffset_(0.0f),
     color_(.5, .5, .5, 1),     // gray
     showText_(FULL),
-    textLocation_(ALL)
+    textLocation_(PAIRING_LINE)
 {
   //nop
 }
@@ -763,7 +763,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       buf << units.getAbbr();
       if ((units == osgEarth::Units::DEGREES) && (textOptions.showText_ == TextOptions::VALUES_ONLY))
       {
-        // If an angle was True of Magnetic add it to the back of the value if Values Only
+        // If an angle was True or Magnetic add it to the back of the value if Values Only
         if (m->typeAbbr().find("(T)") != std::string::npos)
           buf << "T";
         else if (m->typeAbbr().find("(M)") != std::string::npos)

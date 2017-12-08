@@ -115,7 +115,7 @@ namespace simVis
         OUTLINE_THICK
       };
 
-      /// Defines what to show
+      /// Defines what text to show
       enum ShowText
       {
         NONE,  ///< Show no text
@@ -123,7 +123,7 @@ namespace simVis
         VALUES_ONLY ////< Show only the value and units
       };
 
-      /// Defines where to show
+      /// Defines where to show the text
       enum TextLocation
       {
         PAIRING_LINE,  ///< Show all text on the pairing line between the entities
