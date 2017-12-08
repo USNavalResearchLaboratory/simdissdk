@@ -115,10 +115,17 @@ namespace simVis
         OUTLINE_THICK
       };
 
-      /// Defines if and where to show text
+      /// Defines what to show
       enum ShowText
       {
         NONE,  ///< Show no text
+        FULL,  ///< Show description with value and units
+        VALUES_ONLY ////< Show only the value and units
+      };
+
+      /// Defines where to show
+      enum TextLocation
+      {
         PAIRING_LINE,  ///< Show all text on the pairing line between the entities
         ALL ///< Show all text at their default location
       };
@@ -138,6 +145,7 @@ namespace simVis
       float        yOffset_;
       osg::Vec4f   color_;
       ShowText     showText_;
+      TextLocation textLocation_;
       ///@}
     };
 

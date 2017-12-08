@@ -203,7 +203,8 @@ RangeTool::TextOptions::TextOptions()
     xOffset_(0.0f),
     yOffset_(0.0f),
     color_(.5, .5, .5, 1),     // gray
-    showText_(ALL)
+    showText_(FULL),
+    textLocation_(ALL)
 {
   //nop
 }
@@ -697,7 +698,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       if (posGraphic)
       {
-        if (calc->textOptions().showText_ == TextOptions::ALL)
+        if (calc->textOptions().textLocation_ == TextOptions::ALL)
           labelPos = posGraphic->labelPos(state_);
         CalculationVector& calcs = labels[labelPos].first;
         calcs.push_back(calc);
@@ -738,7 +739,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       if (c != calcs.begin())
       {
-        if (textOptions.showText_ == TextOptions::ALL)
+        if (textOptions.textLocation_ == TextOptions::ALL)
           buf << ", ";
         else
           buf << "\n";
@@ -754,12 +755,20 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       calc->setLastValue(value);
       value = m->units().convertTo(units, value);
 
-      buf
-        << m->typeAbbr() << ": "
-        << m->formatter()->stringValue(value, calc);
+      if (textOptions.showText_ == TextOptions::FULL)
+        buf << m->typeAbbr() << ": ";
+      buf << m->formatter()->stringValue(value, calc);
       if (units != osgEarth::Units::DEGREES)
         buf << " ";
       buf << units.getAbbr();
+      if ((units == osgEarth::Units::DEGREES) && (textOptions.showText_ == TextOptions::VALUES_ONLY))
+      {
+        // If an angle was True of Magnetic add it to the back of the value if Values Only
+        if (m->typeAbbr().find("(T)") != std::string::npos)
+          buf << "T";
+        else if (m->typeAbbr().find("(M)") != std::string::npos)
+          buf << "M";
+      }
     }
 
     if (textOptions.showText_ == TextOptions::NONE)
