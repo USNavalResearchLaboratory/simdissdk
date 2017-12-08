@@ -122,7 +122,11 @@ void PlatformSimulator::updatePlatform(double time, simData::PlatformUpdate *upd
     p1.normalize();
 
     // spherical interpolation:
-    double theta = acos(p0 * p1); // * = dot product
+    double dotProd = p0 * p1;
+    double theta = 0.;
+    // limit theta to range of acos, since rounding errors may produce a value > 1 or < -1
+    if (abs(dotProd) <= 1.0)
+      theta = acos(dotProd); // * = dot product
     osg::Vec3d slerp;
     // Avoid divide by zero
     if (!simCore::areEqual(sin(theta), 0.))

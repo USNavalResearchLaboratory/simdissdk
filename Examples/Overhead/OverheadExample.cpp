@@ -29,6 +29,7 @@
 #include "osgEarthUtil/Controls"
 
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
 #include "simCore/Common/Version.h"
 #include "simData/MemoryDataStore.h"
 #include "simVis/InsetViewEventHandler.h"
@@ -37,6 +38,9 @@
 #include "simVis/Popup.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
+#include "simUtil/DbConfigurationFile.h"
+#include "simUtil/MouseDispatcher.h"
+#include "simUtil/MousePositionManipulator.h"
 #include "simUtil/PlatformSimulator.h"
 #include "simUtil/ExampleResources.h"
 
@@ -49,7 +53,7 @@ namespace ui = osgEarth::Util::Controls;
 static const double START_TIME = 0.0;
 static const double END_TIME = 200.0;
 
-static std::string s_title = "Overhead Example";
+static std::string s_title = " \n \nOverhead Example";
 static std::string s_help =
   "o : toggle overhead mode in focused view \n"
   "i : toggles the mode for creating a new inset\n"
@@ -59,6 +63,17 @@ static std::string s_help =
   "n : toggle labels for all platforms\n"
   "d : toggle dynamic scale for all platforms\n";
 
+
+void loadEarthFile(const std::string& earthFile, simVis::Viewer& viewer)
+{
+  // Load the map -- note use of readEarthFile() to configure default options (vs osgDB::readNodeFile() directly)
+  osg::ref_ptr<osg::Node> loadedModel = simUtil::DbConfigurationFile::readEarthFile(earthFile);
+
+  // Find the MapNode and replace it.
+  osg::ref_ptr<osgEarth::MapNode> mapNode = osgEarth::MapNode::findMapNode(loadedModel.get());
+  if (mapNode.valid())
+    viewer.setMapNode(mapNode.get());
+}
 
 //----------------------------------------------------------------------------
 // Demonstrates the use of the simVis::ViewManager::ViewCallback to respond to
@@ -89,22 +104,56 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// A mouse position listener to update the elevation label with the current lat/lon/elevation value under the mouse
+class LatLonElevListener : public simUtil::MousePositionManipulator::Listener
+{
+public:
+  LatLonElevListener()
+    : lastLat_(0.),
+      lastLon_(0.),
+      lastElev_(0.)
+  {
+  }
+
+  double lat() const { return lastLat_;  }
+  double lon() const { return lastLon_; }
+  double elev() const { return lastElev_; }
+
+  virtual void mouseOverLatLon(double lat, double lon, double elev)
+  {
+    lastLat_ = lat;
+    lastLon_ = lon;
+    lastElev_ = elev;
+  }
+
+private:
+  double lastLat_;
+  double lastLon_;
+  double lastElev_;
+};
 
 // An event handler to assist in testing the Inset functionality.
 struct MouseAndMenuHandler : public osgGA::GUIEventHandler
 {
-  MouseAndMenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* handler, ui::LabelControl* status, simData::DataStore& dataStore, simData::ObjectId centeredPlat)
+  MouseAndMenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* handler,
+    simUtil::MouseDispatcher* mouseDispatcher, ui::LabelControl* status, simData::DataStore& dataStore,
+    simData::ObjectId centeredPlat, bool showElevation)
   : viewer_(viewer),
     handler_(handler),
+    mouseDispatcher_(mouseDispatcher),
     statusLabel_(status),
     dataStore_(dataStore),
     centeredPlat_(centeredPlat),
+    showElevation_(showElevation),
     removeAllRequested_(false),
     insertViewPortMode_(false),
     dynamicScaleOn_(true),
     labelsOn_(true),
     border_(0)
   {
+    mouseDispatcher_->setViewManager(NULL);
+    latLonElevListener_.reset(new LatLonElevListener());
+    setUpMouseManip_(viewer_);
     updateStatusAndLabel_();
   }
 
@@ -257,7 +306,7 @@ private:
 
     // get camera distance
     std::ostringstream os;
-    os << std::setprecision(2) << "Camera Distance: " << focusedView->getViewpoint().range().value().getValue() << " m";
+    os << std::fixed << std::setprecision(2) << "Camera Distance: " << focusedView->getViewpoint().range().value().getValue() << " m";
     text += os.str() + " \n";
 
     // get centered plat name
@@ -279,6 +328,12 @@ private:
     text += "Focused View: " + focusedView->getName() + " ";
     text += focusedView->isOverheadEnabled() ? "OVERHEAD" : "PERSPECTIVE";
     text += "\n";
+
+    std::ostringstream mouseOs;
+    mouseOs << "Mouse lat:" << latLonElevListener_->lat() << ", lon:" << latLonElevListener_->lon();
+    if (showElevation_)
+      mouseOs << ", elev:" << latLonElevListener_->elev();
+    text += mouseOs.str() + "\n";
 
     statusLabel_->setText(text);
   }
@@ -304,12 +359,26 @@ private:
     return 0;
   }
 
+  void setUpMouseManip_(simVis::Viewer* viewer)
+  {
+    if (viewer == NULL || viewer->getSceneManager() == NULL || !mouseDispatcher_)
+      return;
+    mouseManip_.reset(new simUtil::MousePositionManipulator(viewer->getSceneManager()->getMapNode(), viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks")));
+    mouseManip_->setTerrainResolution(0.0001);
+    mouseDispatcher_->setViewManager(viewer);
+    mouseDispatcher_->addManipulator(0, mouseManip_);
+    mouseManip_->addListener(latLonElevListener_.get(), showElevation_);
+  }
 
   osg::ref_ptr<simVis::Viewer> viewer_;
   osg::observer_ptr<simVis::InsetViewEventHandler> handler_;
   osg::observer_ptr<ui::LabelControl> statusLabel_;
+  std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher_;
+  std::shared_ptr<LatLonElevListener> latLonElevListener_;
+  std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
   simData::DataStore& dataStore_;
   simData::ObjectId centeredPlat_;
+  bool showElevation_;
   bool removeAllRequested_;
   bool insertViewPortMode_;
   bool dynamicScaleOn_;
@@ -346,12 +415,46 @@ simData::ObjectId createPlatform(simData::DataStore& dataStore, simUtil::Platfor
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
-  osg::ArgumentParser arguments(&argc, argv);
   simExamples::configureSearchPaths();
 
+  std::string earthFile;
+  int numPlats = 3;
+  bool showElevation = false;
+  for (int index = 0; index < argc; index++)
+  {
+    std::string arg = argv[index];
+    if (arg == "--showElevation")
+      showElevation = true;
+    if (arg == "--help")
+    {
+      std::cerr << "Usage:\n"
+        " --earthFile <file> : specify earth file to load, generates default if not specified. Use relative or absolute path\n"
+        " --numPlats <value> : number of platforms to generate, uses default of 3\n"
+        " --showElevation : show elevation in mouse cursor position readout\n";
+      return 0;
+    }
+    int nextIndex = index + 1;
+    if (nextIndex >= argc)
+      break;
+    if (arg == "--earthFile")
+    {
+      earthFile = argv[nextIndex];
+      index++;
+    }
+    if (arg == "--numPlats")
+    {
+      numPlats = atoi(argv[nextIndex]);
+      index++;
+    }
+  }
+
   // initialize a SIMDIS viewer and load a planet.
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(arguments);
-  viewer->setMap(simExamples::createDefaultExampleMap());
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
+
+  if (earthFile.empty())
+    viewer->setMap(simExamples::createDefaultExampleMap());
+  else
+    loadEarthFile(earthFile, *viewer);
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // create a sky node
@@ -387,31 +490,57 @@ int main(int argc, char** argv)
 
   /// bind dataStore to the scenario manager
   viewer->getSceneManager()->getScenario()->bind(&dataStore);
-
-  // Create platforms
-  osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  simUtil::Waypoint obj1Start(70., 145., 400000., 100.);
-  simUtil::Waypoint obj1End(70., 145., 400000., 100.);
-  simData::ObjectId obj1 = createPlatform(dataStore, *simMgr, "SuperHigh 400km", EXAMPLE_AIRPLANE_ICON, obj1Start, obj1End, 0);
-  simUtil::Waypoint obj2Start(70., 145., 0., 100.);
-  simUtil::Waypoint obj2End(70., 145., 0., 100.);
-  simData::ObjectId obj2 = createPlatform(dataStore, *simMgr, "Ground 0m", EXAMPLE_TANK_ICON, obj2Start, obj2End, 30);
-  simUtil::Waypoint obj3Start(69.8, 145., 100000., 100.);
-  simUtil::Waypoint obj3End(69.8, 145., 100000., 100.);
-  simData::ObjectId obj3 = createPlatform(dataStore, *simMgr, "Medium High 100km", EXAMPLE_MISSILE_ICON, obj3Start, obj3End, 0);
-
-  simMgr->simulate(START_TIME, END_TIME, 60.0);
-  viewer->addEventHandler(new simVis::SimulatorEventHandler(simMgr.get(), START_TIME, END_TIME));
-
-  // start centered on a platform in overhead mode
-  osg::observer_ptr<simVis::EntityNode> obj1Node = viewer->getSceneManager()->getScenario()->find(obj1);
   simVis::View* mainView = viewer->getMainView();
-  mainView->tetherCamera(obj1Node.get());
-  mainView->setFocalOffsets(0, -90, 5000);
+  simData::ObjectId centeredPlat = 0;
+  // Create platforms
+  if (numPlats > 0)
+  {
+    osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
+    simUtil::Waypoint obj1Start(70., 145., 0., 100.);
+    simUtil::Waypoint obj1End(70., 145., 0., 100.);
+    simData::ObjectId obj1 = createPlatform(dataStore, *simMgr, "SuperHigh 400km", EXAMPLE_AIRPLANE_ICON, obj1Start, obj1End, 0);
+    centeredPlat = obj1;
+    if (numPlats > 1)
+    {
+      simUtil::Waypoint obj2Start(70., 145., 0., 100.);
+      simUtil::Waypoint obj2End(70., 145., 0., 100.);
+      simData::ObjectId obj2 = createPlatform(dataStore, *simMgr, "Ground 0m", EXAMPLE_TANK_ICON, obj2Start, obj2End, 30);
+    }
+    if (numPlats > 2)
+    {
+      simUtil::Waypoint obj3Start(69.8, 145., 100000., 100.);
+      simUtil::Waypoint obj3End(69.8, 145., 100000., 100.);
+      simData::ObjectId obj3 = createPlatform(dataStore, *simMgr, "Medium High 100km", EXAMPLE_MISSILE_ICON, obj3Start, obj3End, 0);
+    }
+    if (numPlats > 3)
+    {
+      for (int i = 3; i < numPlats; ++i)
+      {
+        double lat = simCore::angFix90(i * 0.001 + 10.);
+        double lon = simCore::angFix180(i * 0.001 + 5.);
+        std::ostringstream os;
+        os << "Plat" << i+1;
+        simUtil::Waypoint objStart(lat, lon, 0., 100.);
+        simUtil::Waypoint objEnd(lat, lon, 0., 100.);
+        createPlatform(dataStore, *simMgr, os.str(), EXAMPLE_SHIP_ICON, objStart, objEnd, 0);
+      }
+    }
+
+    simMgr->simulate(START_TIME, END_TIME, 60.0);
+    viewer->addEventHandler(new simVis::SimulatorEventHandler(simMgr.get(), START_TIME, END_TIME));
+
+    // start centered on a platform in overhead mode
+    osg::observer_ptr<simVis::EntityNode> obj1Node = viewer->getSceneManager()->getScenario()->find(obj1);
+    mainView->tetherCamera(obj1Node.get());
+    mainView->setFocalOffsets(0, -90, 5000);
+  }
   mainView->enableOverheadMode(true);
 
+  std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher;
+  mouseDispatcher.reset(new simUtil::MouseDispatcher);
+
   // Install a handler to respond to the demo keys in this sample.
-  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer.get(), insetHandler.get(), statusLabel, dataStore, obj2);
+  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer.get(), insetHandler.get(), mouseDispatcher.get(), statusLabel, dataStore, centeredPlat, showElevation);
   viewer->getMainView()->getCamera()->addEventCallback(mouseHandler);
 
   // Demonstrate the view callback. This notifies us whenever new inset views are created or
