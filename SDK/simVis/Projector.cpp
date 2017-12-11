@@ -45,26 +45,11 @@
 #include "simVis/Registry.h"
 #include "simVis/Projector.h"
 
-using namespace simVis;
-using namespace osgEarth::Symbology;
-
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
 
 namespace
 {
-  // simple hook to update the frustum graphics when the locator changes
-  struct LocatorChanged : public simVis::LocatorCallback
-  {
-    explicit LocatorChanged(ProjectorNode* node): node_(node) {}
-    osg::observer_ptr<ProjectorNode> node_;
-    void operator()(const class Locator* locator)
-    {
-      if (node_.valid())
-        node_->refresh();
-    }
-  };
-
   // draws the geometry of the projection frustum.
   // (NOTE: some of this code is borrowed from OSG's osgthirdpersonview example)
   void makeFrustum(const osg::Matrixd& proj, const osg::Matrixd& mv, osg::MatrixTransform* mt)
@@ -138,7 +123,8 @@ namespace
 
 };
 
-//-------------------------------------------------------------------
+namespace simVis
+{
 
 ProjectorTextureImpl::ProjectorTextureImpl()
 {
@@ -160,7 +146,7 @@ void ProjectorTextureImpl::setTexture(osg::Texture2D *texture)
 //-------------------------------------------------------------------
 
 ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::Locator* hostLocator, const simVis::EntityNode* host)
-  : EntityNode(simData::PROJECTOR, new simVis::Locator(hostLocator)),
+  : EntityNode(simData::PROJECTOR, hostLocator),
     lastProps_(props),
     host_(host),
     contentCallback_(new NullEntityCallback()),
@@ -171,12 +157,16 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
   init_();
 }
 
-ProjectorNode::~ProjectorNode() {}
+ProjectorNode::~ProjectorNode()
+{
+  getLocator()->removeCallback(locatorCallback_);
+}
 
 void ProjectorNode::init_()
 {
   // listen for locator changes so we can update the matrices
-  getLocator()->addCallback(new LocatorChanged(this));
+  locatorCallback_ = new simVis::SyncLocatorCallback<ProjectorNode>(this);
+  getLocator()->addCallback(locatorCallback_);
 
   // Set this node to be active
   setNodeMask(DISPLAY_MASK_PROJECTOR);
@@ -290,6 +280,10 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     {
       projectorActive_->set(true);
       setNodeMask(DISPLAY_MASK_PROJECTOR);
+    }
+    else if (!prefs.commonprefs().datadraw())
+    {
+      flush();
     }
     else
     {
@@ -406,8 +400,10 @@ void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locator
   modelView.invert(locatorMat);
 }
 
-void ProjectorNode::refresh()
+void ProjectorNode::syncWithLocator()
 {
+  if (!isActive())
+    return;
   osg::Matrixd projectionMat, locatorMat, modelMat;
   getMatrices_(projectionMat, locatorMat, modelMat);
 
@@ -415,21 +411,20 @@ void ProjectorNode::refresh()
   // which means the projector will point straight down by default (since the view vector
   // is -Z in view space). We want the projector to point along the entity vector, so
   // we create a view matrix that rotates the view to point along the +Y axis.
-  osg::Matrix viewMat;
-  viewMat.makeRotate(-osg::PI_2, osg::Vec3d(1,0,0));
+  const osg::Matrix& viewMat = osg::Matrix::rotate(-osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0));
 
   // flip the image if it's upside down
-  double flip = texture_->getImage()->getOrigin() == osg::Image::TOP_LEFT? -1.0 : 1.0;
+  const double flip = texture_->getImage()->getOrigin() == osg::Image::TOP_LEFT ? -1.0 : 1.0;
 
   // construct the model view matrix:
-  osg::Matrix modelViewMat = modelMat * viewMat;
+  const osg::Matrix& modelViewMat = modelMat * viewMat;
 
   // the coordinate generator for our projected texture:
-  osg::Matrix texGenMat =
+  const osg::Matrix& texGenMat =
     modelViewMat *
     projectionMat *
-    osg::Matrix::translate(1, flip, 1) *        // bias
-    osg::Matrix::scale(0.5, 0.5*flip, 0.5);     // scale
+    osg::Matrix::translate(1, flip, 1.0) *        // bias
+    osg::Matrix::scale(0.5, 0.5 * flip, 0.5);     // scale
   texGenMatUniform_->set(texGenMat);
 
   // the texture projector's position and directional vector in world space:
@@ -524,7 +519,7 @@ bool ProjectorNode::updateFromDataStore(const simData::DataSliceBase* updateSlic
       updateApplied = true;
 
       // Update matrices
-      refresh();
+      syncWithLocator();
     }
     else if (projectorChangedToInactive || hostChangedToInactive)
     {
@@ -563,4 +558,6 @@ unsigned int ProjectorNode::objectIndexTag() const
 {
   // Not supported for projectors
   return 0;
+}
+
 }

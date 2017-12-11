@@ -32,6 +32,7 @@ namespace simVis
 {
   class EntityLabelNode;
   class LabelContentCallback;
+  struct LocatorCallback;
 
 /** Projector video interface on the MediaPlayer2 side */
 class ProjectorTexture : public osg::Referenced
@@ -188,7 +189,7 @@ public:
   * Updates the projection uniforms. This called automatically when the locator moves; you
   * do not need to call it directly.
   */
-  void refresh();
+  void syncWithLocator();
 
   /** Traverse the node during visitor pattern */
   virtual void traverse(osg::NodeVisitor& nv);
@@ -205,6 +206,7 @@ private:
   simData::ProjectorPrefs      lastPrefs_;
   simData::ProjectorUpdate     lastUpdate_;
   osg::observer_ptr<const EntityNode> host_;
+  osg::ref_ptr<LocatorCallback> locatorCallback_;
   osg::ref_ptr<EntityLabelNode> label_;
   osg::ref_ptr<LabelContentCallback> contentCallback_;
   bool                         hasLastUpdate_;
