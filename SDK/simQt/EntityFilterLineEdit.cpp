@@ -68,6 +68,7 @@ EntityFilterLineEdit::EntityFilterLineEdit(QWidget *parent)
   rightMouseClickMenu_->addSeparator();
   standardClickMenu_ = createStandardContextMenu()->actions();   // Add the standard stuff to the end
   rightMouseClickMenu_->addActions(standardClickMenu_);
+  rightMouseClickMenu_->setStyleSheet("QMenu::item:selected { background: palette(highlight); }");
 }
 
 EntityFilterLineEdit::~EntityFilterLineEdit()
