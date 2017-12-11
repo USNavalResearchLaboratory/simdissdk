@@ -296,36 +296,30 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   if (props.has_type() && props.type() == simData::GateProperties_GateType_BODY_RELATIVE)
   {
     // for body beam, inherit from beam's locator, including its position offset, but stripping out only beam orientation offset (keeping platform orientation).
-    gateVolumeLocator_ = new ResolvedPositionOrientationLocator(
-      hostLocator, Locator::COMP_ALL);
+    gateVolumeLocator_ = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
 
     // for body beam, inherit from beam's locator, including its position offset, but stripping out only beam orientation offset (keeping platform orientation).
-    baseLocator_ = new ResolvedPositionOrientationLocator(
-      hostLocator, Locator::COMP_ALL);
+    baseLocator_ = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
 
     // this locator sets the centroid position offset from the platform, using the gate orientation offsets
     centroidPositionOffsetLocator_ = new Locator(baseLocator_.get(), Locator::COMP_ALL);
 
-    // inherit the gate centroid and the platform orientation, without beam orientation offsets, then adds back (as local offsets) the gate orientation
-    centroidLocator_ = new ResolvedPositionOrientationLocator(
-      centroidPositionOffsetLocator_.get(), Locator::COMP_ALL);
+    // inherit the gate centroid and the platform orientation, without gate orientation offsets, then add back (as local offsets) the gate orientation
+    centroidLocator_ = new ResolvedPositionOrientationLocator(centroidPositionOffsetLocator_.get(), Locator::COMP_ALL);
   }
   else
   {
     // inherit from beam's locator, including its position offset, but stripping out all orientation
-    gateVolumeLocator_ = new ResolvedPositionLocator(
-      hostLocator, Locator::COMP_ALL);
+    gateVolumeLocator_ = new ResolvedPositionLocator(hostLocator, Locator::COMP_ALL);
 
     // inherit from beam's locator, including its position offset, but stripping out all orientation
-    baseLocator_ = new ResolvedPositionLocator(
-      hostLocator, Locator::COMP_ALL);
+    baseLocator_ = new ResolvedPositionLocator(hostLocator, Locator::COMP_ALL);
 
     // this locator sets the centroid position offset from the platform, using the gate orientation offsets
     centroidPositionOffsetLocator_ = new Locator(baseLocator_.get(), Locator::COMP_ALL);
 
     // this locator starts with the resolved centroid position, with identity orientation, then adds back (as local offsets) the gate orientation
-    centroidLocator_ = new ResolvedPositionLocator(
-      centroidPositionOffsetLocator_.get(), Locator::COMP_ALL);
+    centroidLocator_ = new ResolvedPositionLocator(centroidPositionOffsetLocator_.get(), Locator::COMP_ALL);
   }
 
   // the gate's locator represents the position and orientation of the gate centroid
@@ -690,10 +684,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   // if datadraw is off, we do not need to do any processing
   if (activePrefs->commonprefs().datadraw() == false)
   {
-    setNodeMask(DISPLAY_MASK_NONE);
-    centroid_->setActive(false);
-    removeChild(gateVolume_);
-    gateVolume_ = NULL;
+    flush();
     return;
   }
 
