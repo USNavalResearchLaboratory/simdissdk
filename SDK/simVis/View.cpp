@@ -541,7 +541,8 @@ View::View()
    fovy_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
    useOverheadClamping_(true),
-   overheadNearFarCallback_(new SetNearFarCallback)
+   overheadNearFarCallback_(new SetNearFarCallback),
+   updateCameraNodeVisitor_(NULL)
 {
   // start out displaying all things.
   setDisplayMask(simVis::DISPLAY_MASK_ALL);
@@ -1393,6 +1394,16 @@ void View::enableOverheadMode(bool enableOverhead)
   if (manip)
     manip->setFovY(fovy_);
 
+  // if this is the first time enabling overhead mode, install the node camera-update
+  // node visitor in the earth manipulator to facilitate tethering. This NodeVisitor
+  // does not actually do anything except convey the "overhead mode enabled" flag
+  // to the LocatorNode::computeLocalToWorldMatrix() method.
+  if (updateCameraNodeVisitor_.valid() == false)
+  {
+    updateCameraNodeVisitor_ = new osg::NodeVisitor();
+    manip->setUpdateCameraNodeVisitor(updateCameraNodeVisitor_.get());
+  }
+
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();
   if (enableOverhead)
   {
@@ -1467,6 +1478,9 @@ void View::enableOverheadMode(bool enableOverhead)
     // For the main view
     getFocusManager()->reFocus();
   }
+
+  // Update the EarthManipulator's camera update node visitor with the new state.
+  simVis::OverheadMode::prepareVisitor(this, updateCameraNodeVisitor_.get());
 }
 
 bool View::isOverheadEnabled() const
