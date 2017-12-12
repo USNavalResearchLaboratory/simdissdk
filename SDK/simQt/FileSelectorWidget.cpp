@@ -39,7 +39,8 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
     browserTitle_(tr("Load Data File")),
     flags_(FileSelectorWidget::FileLoad),
     filterOption_(FileSelectorWidget::SIMDIS_ASI_FILE_PATTERNS),
-    customFileFilter_(tr("All Files (*)"))
+    customFileFilter_(tr("All Files (*)")),
+    iconBeforeText_(false)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -61,6 +62,37 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
 FileSelectorWidget::~FileSelectorWidget()
 {
   delete ui_;
+}
+
+
+bool FileSelectorWidget::iconBeforeText() const
+{
+  return iconBeforeText_;
+}
+
+void FileSelectorWidget::setIconBeforeText(bool alignLeft)
+{
+  if (iconBeforeText_ == alignLeft)
+    return;
+  iconBeforeText_ = alignLeft;
+  QPushButton* fileButton = ui_->fileButton;
+  ui_->horizontalLayout->removeWidget(fileButton);
+  if (labelWidget_ != NULL)
+    ui_->horizontalLayout->removeWidget(labelWidget_);
+
+  if (alignLeft)
+  {
+    ui_->horizontalLayout->insertWidget(0, fileButton);
+    if (labelWidget_ != NULL)
+      ui_->horizontalLayout->addWidget(labelWidget_);
+  }
+  else
+  {
+    if (labelWidget_ != NULL)
+      ui_->horizontalLayout->insertWidget(0, labelWidget_);
+    ui_->horizontalLayout->addWidget(fileButton);
+  }
+
 }
 
 void FileSelectorWidget::setRegistryKey(const QString &regKey)
@@ -91,7 +123,10 @@ void FileSelectorWidget::setIncludeLabel(bool value)
     {
       labelWidget_ = new QLabel(label_);
     }
-    ui_->horizontalLayout->insertWidget(0, labelWidget_);
+    if (iconBeforeText_)
+      ui_->horizontalLayout->addWidget(labelWidget_);
+    else
+      ui_->horizontalLayout->insertWidget(0, labelWidget_);
   }
   else
   {

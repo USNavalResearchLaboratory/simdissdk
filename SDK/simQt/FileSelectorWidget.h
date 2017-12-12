@@ -61,6 +61,8 @@ class SDKQT_EXPORT FileSelectorWidget : public QWidget
   Q_PROPERTY(QString registryKey READ registryKey WRITE setRegistryKey);
   /** Sets/gets the default path in Qt Designer */
   Q_PROPERTY(QString defaultPath READ defaultPath WRITE setDefaultPath);
+  /** Sets/gets the iconBeforeText in Qt Designer */
+  Q_PROPERTY(bool iconBeforeText READ iconBeforeText WRITE setIconBeforeText);
 
 public:
   /** Constructor */
@@ -130,6 +132,11 @@ public:
    * explicit default.  May contain environment variables.
    */
   QString defaultPath() const;
+
+  /** If true, order of widget items is icon first: fileButton, fileText, label */
+  void setIconBeforeText(bool iconBeforeText);
+  /** If true, order of widget items is icon first: fileButton, fileText, label  */
+  bool iconBeforeText() const;
 
   /** If True, include a label to the left */
   void setIncludeLabel(bool value);
@@ -204,6 +211,8 @@ private:
   FileSelectorWidget::FilterOptions filterOption_;
   /** Custom filter to use if filterOption_ is set to CUSTOM_USERDEFINED_FILTER */
   QString customFileFilter_;
+  /** Indicates if icon is placed before the text widgets */
+  bool iconBeforeText_;
 
   /** Re-implement eventFilter() */
   virtual bool eventFilter(QObject* obj, QEvent* evt);
