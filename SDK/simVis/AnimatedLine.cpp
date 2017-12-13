@@ -78,7 +78,7 @@ namespace
     assert(n >= 0);
     if (n > 16.0)
       n = fmod(n, 16.0);
-    unsigned short result = static_cast<unsigned short>(simCore::rint(n));
+    const unsigned short result = static_cast<unsigned short>(simCore::rint(n));
     return (result == 16) ? 0 : result;
   }
 }
@@ -89,9 +89,9 @@ AnimatedLineNode::AnimatedLineNode(float lineWidth, bool depthBufferTest) :
 stipple1_(0xFF00),
 stipple2_(0x00FF),
 shiftsPerSecond_(10.0),
-color1_(osg::Vec4(0, 0, 1, 1)),    // blue
-color2_(osg::Vec4(1, 1, 0, 1)),    // yellow
-colorOverride_(osg::Vec4(0, 0, 0, 0)),    // no color
+color1_(osg::Vec4(0.f, 0.f, 1.f, 1.f)),    // blue
+color2_(osg::Vec4(1.f, 1.f, 0.f, 1.f)),    // yellow
+colorOverride_(osg::Vec4()),    // no color
 useOverrideColor_(false),
 coordinateConverter_(new simCore::CoordinateConverter),
 timeLastShift_(0.0),
@@ -170,7 +170,7 @@ void AnimatedLineNode::setColorOverride(const osg::Vec4& value)
 
 void AnimatedLineNode::clearColorOverride()
 {
-  colorOverride_ = osg::Vec4(0, 0, 0, 0);    // no color,  .changed() will be true
+  colorOverride_ = osg::Vec4();    // no color,  .changed() will be true
   useOverrideColor_ = false;
 }
 
@@ -292,17 +292,20 @@ void AnimatedLineNode::traverse(osg::NodeVisitor& nv)
 
 void AnimatedLineNode::update_(double t)
 {
+  const bool firstLocatorValid = firstLocator_.valid();
+  const bool secondLocatorValid = secondLocator_.valid();
+
   // case 1: Locator => Locator.
-  if (firstLocator_.valid() && secondLocator_.valid())
+  if (firstLocatorValid && secondLocatorValid)
   {
     if (firstLocator_->outOfSyncWith(firstLocatorRevision_) ||
         secondLocator_->outOfSyncWith(secondLocatorRevision_))
     {
       // Pull out the 2 ECEF coordinates, set up local matrix
-      simCore::Coordinate ecef1 = firstLocator_->getCoordinate();
+      const simCore::Coordinate& ecef1 = firstLocator_->getCoordinate();
       firstLocator_->sync(firstLocatorRevision_);
       this->setMatrix(osg::Matrix::translate(ecef1.x(), ecef1.y(), ecef1.z()));
-      simCore::Coordinate ecef2 = secondLocator_->getCoordinate();
+      const simCore::Coordinate& ecef2 = secondLocator_->getCoordinate();
       secondLocator_->sync(secondLocatorRevision_);
 
       // Perform the bendy
@@ -311,14 +314,14 @@ void AnimatedLineNode::update_(double t)
   }
 
   // case 2: Locator => Coordinate.
-  else if (firstLocator_.valid() && !secondLocator_.valid())
+  else if (firstLocatorValid && !secondLocatorValid)
   {
-    bool locatorMoved = firstLocator_->outOfSyncWith(firstLocatorRevision_);
-    simCore::MultiFrameCoordinate coord1(firstLocator_->getCoordinate());
-    const simCore::Coordinate& ecef1 = coord1.ecefCoordinate();
+    const bool locatorMoved = firstLocator_->outOfSyncWith(firstLocatorRevision_);
+    const simCore::MultiFrameCoordinate coord1(firstLocator_->getCoordinate());
     if (locatorMoved)
     {
       // Need to update the local matrix
+      const simCore::Coordinate& ecef1 = coord1.ecefCoordinate();
       this->setMatrix(osg::Matrix::translate(ecef1.x(), ecef1.y(), ecef1.z()));
 
       // Update the coordinate reference origin.  Note that we could optimize this by
@@ -344,9 +347,9 @@ void AnimatedLineNode::update_(double t)
   }
 
   // case 3: Coordinate => Coordinate.
-  else if (!firstLocator_.valid() && !secondLocator_.valid())
+  else if (!firstLocatorValid && !secondLocatorValid)
   {
-    bool anchorChanged = firstCoord_.changed();
+    const bool anchorChanged = firstCoord_.changed();
     if (anchorChanged)
     {
       // Reset the matrix
@@ -402,12 +405,12 @@ void AnimatedLineNode::update_(double t)
   }
 
   // animate the line:
-  double dt        = t - timeLastShift_;
-  double numShifts = dt * fabs(shiftsPerSecond_);
+  const double dt        = t - timeLastShift_;
+  const double numShifts = dt * fabs(shiftsPerSecond_);
 
   if (numShifts >= 1.0)
   {
-    unsigned short bits = shortRound(numShifts);
+    const unsigned short bits = shortRound(numShifts);
     if (shiftsPerSecond_ > 0.0)
     {
       ror(stipple1_, bits);
@@ -448,7 +451,7 @@ bool AnimatedLineNode::doesLineIntersectEarth_(const simCore::MultiFrameCoordina
   // Shrink the sphere to bottom of ocean if the lla1 is underground
   if (lla1.alt() < 0)
     earthRadius -= OCEAN_DEPTH_TEST_OFFSET; // Depth of the Mariana Trench in meters (matches SIMDIS 9 behavior)
-  osg::BoundingSphere earthSphere(osg::Vec3(0,0,0), earthRadius);
+  osg::BoundingSphere earthSphere(osg::Vec3(), earthRadius);
 
   // Get ECEF coordinates and make a line
   const simCore::Coordinate& ecef1 = coord1.ecefCoordinate();
@@ -525,7 +528,7 @@ void AnimatedLineNode::drawSlantLine_(const simCore::MultiFrameCoordinate& start
   for (unsigned int k = 0; k <= numSegs; ++k)
   {
     // Add in the subdivided line point
-    const float percentOfFull = (float)(numSegs-k) / (float)numSegs; // From 1 to 0
+    const double percentOfFull = static_cast<double>((numSegs-k)) / numSegs; // From 1 to 0
     verts_->push_back(lastPoint * percentOfFull);
   }
 
@@ -572,10 +575,10 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
 
     // Convert back to ECEF and add the vertex
     const simCore::Coordinate& outEcef = coord2.ecefCoordinate();
-    verts_->push_back(osg::Vec3d(outEcef.x(), outEcef.y(), outEcef.z()) - zeroPoint);
+    verts_->push_back(osg::Vec3f(outEcef.x(), outEcef.y(), outEcef.z()) - zeroPoint);
 
     // Finish up
-    verts_->push_back(osg::Vec3f(0, 0, 0));
+    verts_->push_back(osg::Vec3f());
     verts_->dirty();
     primset_->setCount(2);
     primset_->dirty();
@@ -607,16 +610,16 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
     double lat = 0.0;
     double lon = 0.0;
     simCore::sodanoDirect(lla1.lat(), lla1.lon(), lla1.alt(), distance * percentOfFull, azimuth, &lat, &lon);
-    double alt = lla1.alt() + percentOfFull * (lla2.alt() - lla1.alt());
+    const double alt = lla1.alt() + percentOfFull * (lla2.alt() - lla1.alt());
 
     // Convert back to ECEF and add the vertex
     simCore::Vec3 ecefPos;
     simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
-    verts_->push_back(osg::Vec3d(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
+    verts_->push_back(osg::Vec3f(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
   }
 
   // Finish up
-  verts_->push_back(osg::Vec3f(0, 0, 0));
+  verts_->push_back(osg::Vec3f());
   verts_->dirty();
   primset_->setCount(numSegs+1);
   primset_->dirty();
