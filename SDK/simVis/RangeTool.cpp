@@ -1190,16 +1190,22 @@ osg::Vec3d RangeTool::State::coord(RangeTool::State::Coord which)
     break;
   case COORD_VEL_AZIM_DR:
     {
-      double downRng=0;
+      // measurement is not meaningful when vel is zero
+      if (simCore::v3AreEqual(beginEntity_.vel_, simCore::Vec3()))
+      {
+        coord_[which] = osg::Vec3d();
+        break;
+      }
+      double downRng = 0.0;
       simCore::Vec3 fpa;
       simCore::calculateFlightPathAngles(beginEntity_.vel_, fpa);
       simCore::calculateDRCRDownValue(beginEntity_.lla_, fpa[0],
-			              endEntity_.lla_,
-			              earthModel_,
-			              &coordConv_,
-			              &downRng,
-			              NULL,
-			              NULL);
+        endEntity_.lla_,
+        earthModel_,
+        &coordConv_,
+        &downRng,
+        NULL,
+        NULL);
       coord_[which] = osg::Vec3d(downRng*sin(fpa[0]), downRng*cos(fpa[0]), 0.0);
     }
     break;
@@ -1959,13 +1965,13 @@ RangeTool::RelVelAzimuthPieSliceGraphic::RelVelAzimuthPieSliceGraphic()
 
 void RangeTool::RelVelAzimuthPieSliceGraphic::render(osg::Geode* geode, State& state)
 {
+  const simCore::Vec3& vel = state.beginEntity_.vel_;
   // relvel measurement is not meaningful when vel is zero
-  if (state.beginEntity_.vel_ == simCore::Vec3())
+  if (simCore::v3AreEqual(vel, simCore::Vec3()))
     return;
 
   const double relVelAzim = measuredValue_;
   simCore::Vec3 fpa;
-  const simCore::Vec3& vel = state.beginEntity_.vel_;
   simCore::calculateFlightPathAngles(vel, fpa);
   const simCore::Vec3& rotatedOri = simCore::rotateEulerAngle(fpa, simCore::Vec3(relVelAzim, 0., 0.));
   const osg::Vec3d& endVecENU = calcYprVector(rotatedOri);
@@ -2399,8 +2405,16 @@ bool RangeTool::RelOriCompositeAngleMeasurement::willAccept(const simVis::RangeT
 
 void RangeTool::RelVelMeasurement::getAngles(double* az, double* el, double* cmp, State& state) const
 {
+  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  if (simCore::v3AreEqual(vel, simCore::Vec3()))
+  {
+    *az = 0.;
+    *el = 0.;
+    *cmp = 0.;
+    return;
+  }
   simCore::Vec3 fpaVec;
-  simCore::calculateFlightPathAngles(state.beginEntity_.vel_, fpaVec);
+  simCore::calculateFlightPathAngles(vel, fpaVec);
 
   bool raeEndEntity = isRaeObject_(state.endEntity_.node_->type());
   if (raeEndEntity && (state.beginEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_))
@@ -2528,9 +2542,13 @@ RangeTool::VelAzimDownRangeMeasurement::VelAzimDownRangeMeasurement()
 
 double RangeTool::VelAzimDownRangeMeasurement::value(State& state) const
 {
+  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  if (simCore::v3AreEqual(vel, simCore::Vec3()))
+    return 0.0;
+
   double downRng=0;
   simCore::Vec3 fpa;
-  simCore::calculateFlightPathAngles(state.beginEntity_.vel_, fpa);
+  simCore::calculateFlightPathAngles(vel, fpa);
   simCore::calculateDRCRDownValue(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, state.earthModel_, &state.coordConv_, &downRng, NULL, NULL);
   return downRng;
 }
@@ -2548,9 +2566,13 @@ RangeTool::VelAzimCrossRangeMeasurement::VelAzimCrossRangeMeasurement()
 
 double RangeTool::VelAzimCrossRangeMeasurement::value(State& state) const
 {
+  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  if (simCore::v3AreEqual(vel, simCore::Vec3()))
+    return 0.0;
+
   double crossRng=0;
   simCore::Vec3 fpa;
-  simCore::calculateFlightPathAngles(state.beginEntity_.vel_, fpa);
+  simCore::calculateFlightPathAngles(vel, fpa);
   simCore::calculateDRCRDownValue(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, state.earthModel_, &state.coordConv_, NULL, &crossRng, NULL);
   return crossRng;
 }
@@ -2568,9 +2590,13 @@ RangeTool::VelAzimGeoDownRangeMeasurement::VelAzimGeoDownRangeMeasurement()
 
 double RangeTool::VelAzimGeoDownRangeMeasurement::value(State& state) const
 {
+  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  if (simCore::v3AreEqual(vel, simCore::Vec3()))
+    return 0.0;
+
   double downRng=0;
   simCore::Vec3 fpa;
-  simCore::calculateFlightPathAngles(state.beginEntity_.vel_, fpa);
+  simCore::calculateFlightPathAngles(vel, fpa);
   simCore::calculateGeodesicDRCR(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, &downRng, NULL);
   return downRng;
 }
@@ -2588,9 +2614,13 @@ RangeTool::VelAzimGeoCrossRangeMeasurement::VelAzimGeoCrossRangeMeasurement()
 
 double RangeTool::VelAzimGeoCrossRangeMeasurement::value(State& state) const
 {
+  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  if (simCore::v3AreEqual(vel, simCore::Vec3()))
+    return 0.0;
+
   double crossRng=0;
   simCore::Vec3 fpa;
-  simCore::calculateFlightPathAngles(state.beginEntity_.vel_, fpa);
+  simCore::calculateFlightPathAngles(vel, fpa);
   simCore::calculateGeodesicDRCR(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, NULL, &crossRng);
   return crossRng;
 }
