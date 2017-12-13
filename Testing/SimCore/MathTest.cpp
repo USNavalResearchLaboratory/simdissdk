@@ -489,6 +489,54 @@ int testIsFinite()
   return rv;
 }
 
+int testSciValue(double value, double mantissa, int exponent)
+{
+  int rvExp = 0;
+  const double rvMant = simCore::toScientific(value, &rvExp);
+  if (rvExp != exponent)
+    return 1;
+  return simCore::areEqual(rvMant, mantissa) ? 0 : 2;
+}
+
+int testToScientific()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(0 == testSciValue(1000.0, 1.0, 3));
+  rv += SDK_ASSERT(0 == testSciValue(100.0, 1.0, 2));
+  rv += SDK_ASSERT(0 == testSciValue(99.99, 9.999, 1));
+  rv += SDK_ASSERT(0 == testSciValue(10.0, 1.0, 1));
+  rv += SDK_ASSERT(0 == testSciValue(1.0, 1.0, 0));
+  rv += SDK_ASSERT(0 == testSciValue(0.1, 1.0, -1));
+  rv += SDK_ASSERT(0 == testSciValue(0.01, 1.0, -2));
+  rv += SDK_ASSERT(0 == testSciValue(0.001, 1.0, -3));
+
+  rv += SDK_ASSERT(0 == testSciValue(80.0, 8.0, 1));
+  rv += SDK_ASSERT(0 == testSciValue(8.0, 8.0, 0));
+  rv += SDK_ASSERT(0 == testSciValue(0.8, 8.0, -1));
+  rv += SDK_ASSERT(0 == testSciValue(0.08, 8.0, -2));
+  rv += SDK_ASSERT(0 == testSciValue(0.008, 8.0, -3));
+
+  rv += SDK_ASSERT(0 == testSciValue(-1000.0, -1.0, 3));
+  rv += SDK_ASSERT(0 == testSciValue(-100.0, -1.0, 2));
+  rv += SDK_ASSERT(0 == testSciValue(-99.99, -9.999, 1));
+  rv += SDK_ASSERT(0 == testSciValue(-10.0, -1.0, 1));
+  rv += SDK_ASSERT(0 == testSciValue(-1.0, -1.0, 0));
+  rv += SDK_ASSERT(0 == testSciValue(-0.1, -1.0, -1));
+  rv += SDK_ASSERT(0 == testSciValue(-0.01, -1.0, -2));
+  rv += SDK_ASSERT(0 == testSciValue(-0.001, -1.0, -3));
+
+  rv += SDK_ASSERT(0 == testSciValue(-80.0, -8.0, 1));
+  rv += SDK_ASSERT(0 == testSciValue(-8.0, -8.0, 0));
+  rv += SDK_ASSERT(0 == testSciValue(-0.8, -8.0, -1));
+  rv += SDK_ASSERT(0 == testSciValue(-0.08, -8.0, -2));
+  rv += SDK_ASSERT(0 == testSciValue(-0.008, -8.0, -3));
+
+  rv += SDK_ASSERT(0 == testSciValue(-1.0, -1.0, 0));
+  rv += SDK_ASSERT(0 == testSciValue(0.0, 0.0, 0));
+  return rv;
+}
+
 }
 
 int MathTest(int argc, char* argv[])
@@ -506,6 +554,7 @@ int MathTest(int argc, char* argv[])
   rv += runD3MMTmult();
   rv += runD3DCMtoFromEuler();
   rv += runV3SphtoRec();
+  rv += testToScientific();
 
   return rv;
 }
