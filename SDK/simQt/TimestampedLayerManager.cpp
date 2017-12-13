@@ -40,23 +40,29 @@ public:
   }
 
   // Check for time values in config, add to watched layers if any are found
-  virtual void onImageLayerAdded(osgEarth::ImageLayer *layer, unsigned int index)
+  virtual void onLayerAdded(osgEarth::Layer *layer, unsigned int index)
   {
-    parent_.addLayerWithTime_(layer);
+    osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
+    if (imageLayer == NULL)
+      return;
+    parent_.addLayerWithTime_(imageLayer);
     parent_.setTime_(parent_.currTime_);
   }
 
-  virtual void onImageLayerRemoved(osgEarth::ImageLayer *layer, unsigned int index)
+  virtual void onLayerRemoved(osgEarth::Layer *layer, unsigned int index)
   {
-    if (!parent_.layerIsTimed(layer))
+    osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
+    if (imageLayer == NULL)
+      return;
+    if (!parent_.layerIsTimed(imageLayer))
       return;
 
-    parent_.originalVisibility_.erase(layer);
+    parent_.originalVisibility_.erase(imageLayer);
 
     // Since layers are value of layers_ map, not key, need to iterate manually to find the removed layer
     for (auto iter = parent_.layers_.begin(); iter != parent_.layers_.end(); iter++)
     {
-      if (iter->second == layer)
+      if (iter->second == imageLayer)
       {
         parent_.layers_.erase(iter);
         // Only one entry per layer
@@ -66,7 +72,7 @@ public:
     }
 
     // Current layer won't change unless layer being removed was current layer
-    if (parent_.currentLayer_ != layer)
+    if (parent_.currentLayer_ != imageLayer)
       return;
     // Reset current time to refresh current layer
     parent_.setTime_(parent_.currTime_);

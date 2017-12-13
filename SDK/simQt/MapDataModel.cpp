@@ -543,76 +543,95 @@ public:
   {
   }
 
-  /** Image Layer Added */
-  virtual void onImageLayerAdded(osgEarth::ImageLayer *layer, unsigned int index)
+  /* Layer Added */
+  virtual void onLayerAdded(osgEarth::Layer* layer, unsigned int index)
   {
-    MapReindexer reindex(dataModel_.map());
-    unsigned int newIndex = reindex.layerTypeIndex(layer);
-    // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
-    assert(newIndex != MapReindexer::INVALID_INDEX);
-    if (newIndex != MapReindexer::INVALID_INDEX)
-      dataModel_.addImageLayer_(layer, newIndex);
+    osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
+    if (imageLayer)
+    {
+      MapReindexer reindex(dataModel_.map());
+      unsigned int newIndex = reindex.layerTypeIndex(imageLayer);
+      // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
+      assert(newIndex != MapReindexer::INVALID_INDEX);
+      if (newIndex != MapReindexer::INVALID_INDEX)
+        dataModel_.addImageLayer_(imageLayer, newIndex);
+      return;
+    }
+    osgEarth::ElevationLayer* elevationLayer = dynamic_cast<osgEarth::ElevationLayer*>(layer);
+    if (elevationLayer)
+    {
+      MapReindexer reindex(dataModel_.map());
+      unsigned int newIndex = reindex.layerTypeIndex(elevationLayer);
+      // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
+      assert(newIndex != MapReindexer::INVALID_INDEX);
+      if (newIndex != MapReindexer::INVALID_INDEX)
+        dataModel_.addElevationLayer_(elevationLayer, newIndex);
+      return;
+    }
+
+    osgEarth::ModelLayer* modelLayer = dynamic_cast<osgEarth::ModelLayer*>(layer);
+    if (modelLayer)
+    {
+      MapReindexer reindex(dataModel_.map());
+      unsigned int newIndex = reindex.layerTypeIndex(modelLayer);
+      // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
+      assert(newIndex != MapReindexer::INVALID_INDEX);
+      if (newIndex != MapReindexer::INVALID_INDEX)
+        dataModel_.addModelLayer_(modelLayer, newIndex);
+      return;
+    }
   }
 
-  /** Image Layer Removed */
-  virtual void onImageLayerRemoved(osgEarth::ImageLayer *layer, unsigned int index)
+  virtual void onLayerMoved(osgEarth::Layer* layer, unsigned int oldIndex, unsigned int newIndex)
   {
-    dataModel_.imageCallbacks_.remove(layer);
-    removeLayer_(dataModel_.imageGroup_(), layer);
+    osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
+    if (imageLayer)
+    {
+      moveLayer_(dataModel_.imageGroup_(), layer, newIndex < oldIndex);
+      return;
+    }
+
+    osgEarth::ElevationLayer* elevationLayer = dynamic_cast<osgEarth::ElevationLayer*>(layer);
+    if (elevationLayer)
+    {
+      moveLayer_(dataModel_.elevationGroup_(), layer, newIndex < oldIndex);
+      return;
+    }
+
+    osgEarth::ModelLayer* modelLayer = dynamic_cast<osgEarth::ModelLayer*>(layer);
+    if (modelLayer)
+    {
+      moveLayer_(dataModel_.modelGroup_(), layer, newIndex < oldIndex);
+      return;
+    }
   }
 
-  /** Image Layer Moved */
-  virtual void onImageLayerMoved(osgEarth::ImageLayer *layer, unsigned int oldIndex, unsigned int newIndex)
+  /** Layer Removed */
+  virtual void onLayerRemoved(osgEarth::Layer* layer, unsigned int index)
   {
-    moveLayer_(dataModel_.imageGroup_(), layer, newIndex < oldIndex);
-  }
+    osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
+    if (imageLayer)
+    {
+      dataModel_.imageCallbacks_.remove(imageLayer);
+      removeLayer_(dataModel_.imageGroup_(), imageLayer);
+      return;
+    }
 
-  /** Elevation Layer Added */
-  virtual void onElevationLayerAdded(osgEarth::ElevationLayer *layer, unsigned int index)
-  {
-    MapReindexer reindex(dataModel_.map());
-    unsigned int newIndex = reindex.layerTypeIndex(layer);
-    // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
-    assert(newIndex != MapReindexer::INVALID_INDEX);
-    if (newIndex != MapReindexer::INVALID_INDEX)
-      dataModel_.addElevationLayer_(layer, newIndex);
-  }
+    osgEarth::ElevationLayer* elevationLayer = dynamic_cast<osgEarth::ElevationLayer*>(layer);
+    if (elevationLayer)
+    {
+      dataModel_.elevationCallbacks_.remove(elevationLayer);
+      removeLayer_(dataModel_.elevationGroup_(), elevationLayer);
+      return;
+    }
 
-  /** Elevation Layer Removed */
-  virtual void onElevationLayerRemoved(osgEarth::ElevationLayer *layer, unsigned int index)
-  {
-    dataModel_.elevationCallbacks_.remove(layer);
-    removeLayer_(dataModel_.elevationGroup_(), layer);
-  }
-
-  /** Elevation Layer Moved */
-  virtual void onElevationLayerMoved(osgEarth::ElevationLayer *layer, unsigned int oldIndex, unsigned int newIndex)
-  {
-    moveLayer_(dataModel_.elevationGroup_(), layer, newIndex < oldIndex);
-  }
-
-  /** Model Layer Added */
-  virtual void onModelLayerAdded(osgEarth::ModelLayer *layer, unsigned int index)
-  {
-    MapReindexer reindex(dataModel_.map());
-    unsigned int newIndex = reindex.layerTypeIndex(layer);
-    // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
-    assert(newIndex != MapReindexer::INVALID_INDEX);
-    if (newIndex != MapReindexer::INVALID_INDEX)
-      dataModel_.addModelLayer_(layer, newIndex);
-  }
-
-  /** Model Layer Removed */
-  virtual void onModelLayerRemoved(osgEarth::ModelLayer *layer)
-  {
-    dataModel_.modelCallbacks_.remove(layer);
-    removeLayer_(dataModel_.modelGroup_(), layer);
-  }
-
-  /** Model Layer Moved */
-  virtual void onModelLayerMoved(osgEarth::ModelLayer *layer, unsigned int oldIndex, unsigned int newIndex)
-  {
-    moveLayer_(dataModel_.modelGroup_(), layer, newIndex < oldIndex);
+    osgEarth::ModelLayer* modelLayer = dynamic_cast<osgEarth::ModelLayer*>(layer);
+    if (modelLayer)
+    {
+      dataModel_.modelCallbacks_.remove(modelLayer);
+      removeLayer_(dataModel_.modelGroup_(), modelLayer);
+      return;
+    }
   }
 
 private:
@@ -821,6 +840,7 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
   }
   // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
   assert(imageCallbacks_.size() == static_cast<int>(imageLayers.size()));
+
   imageCallbacks_.clear();
 
   // need to remove all elevation callbacks
