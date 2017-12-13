@@ -158,6 +158,21 @@ public:
    * @return 0 on success, non-zero on error
    */
   virtual int applyRules(uint64_t id) = 0;
+
+  /**
+   * Sets the Enable Rules state.  If the state is true all rules are processed.
+   * If the state is false rules are not processed when entities are added or
+   * when entities are changed. Rules are still processing when initiated
+   * by Pref Tool GUI or via Plug-in API.
+   * @param[in] state the Enable Rules state
+   */
+  virtual void setRulesEnabled(bool state) = 0;
+
+  /**
+   * Returns the Enable Rules state
+   * @return the Enable Rules state
+   */
+  virtual bool rulesEnabled() const = 0;
 };
 
 /** Null object implementation for PrefRulesManager */
@@ -175,6 +190,8 @@ class NullPrefRulesManager : public simData::PrefRulesManager
   virtual int applyRules(uint64_t id) { return 1; }
   virtual void enforcePrefValue(simData::ObjectId id, const std::deque<int>& tagStack, bool enforce) { }
   virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const { return false; }
+  virtual void setRulesEnabled(bool state) { }
+  virtual bool rulesEnabled() const { return true; }
 };
 
 }
