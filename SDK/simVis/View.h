@@ -724,6 +724,9 @@ private: // data
   bool useOverheadClamping_;
   /// Points to a callback that is used for enforcing the near clipping plane when in overhead+ortho
   osg::ref_ptr<osg::NodeCallback> overheadNearFarCallback_;
+
+  /// NodeVisitor that holds the overhead mode indicator for the EarthManipulator
+  osg::ref_ptr<osg::NodeVisitor> updateCameraNodeVisitor_;
 };
 
 class FocusManager;
