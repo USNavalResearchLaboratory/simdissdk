@@ -26,6 +26,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}IdMapper.h
     ${UTIL_INC}LayerFactory.h
     ${UTIL_INC}LineGraphic.h
+    ${UTIL_INC}MapScale.h
     ${UTIL_INC}MouseDispatcher.h
     ${UTIL_INC}MouseManipulator.h
     ${UTIL_INC}MousePositionManipulator.h
@@ -57,6 +58,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}IdMapper.cpp
     ${UTIL_SRC}LayerFactory.cpp
     ${UTIL_SRC}LineGraphic.cpp
+    ${UTIL_SRC}MapScale.cpp
     ${UTIL_SRC}MouseDispatcher.cpp
     ${UTIL_SRC}MouseManipulator.cpp
     ${UTIL_SRC}MousePositionManipulator.cpp
