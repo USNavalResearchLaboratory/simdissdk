@@ -36,12 +36,12 @@ using namespace simVis;
 
 //----------------------------------------------------------------------------
 
-RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode) :
-GeoPositionNode(mapNode),
-visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
-obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
-samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
-active_(false)
+RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
+  : GeoPositionNode(mapNode),
+    visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
+    obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
+    samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
+    active_(false)
 {
   callbackHook_ = new TerrainCallbackHook(this);
 
@@ -52,13 +52,19 @@ active_(false)
   simVis::setLighting(stateSet, 0);
   stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
 
-  osgEarth::DrapeableNode* drapeable = new osgEarth::DrapeableNode();
-  getPositionAttitudeTransform()->addChild(drapeable);
-  drapeable->addChild(geode_);
+  drapeable_ = new osgEarth::DrapeableNode();
+  getPositionAttitudeTransform()->addChild(drapeable_);
+  drapeable_->addChild(geode_);
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
+  drapeable_->setMapNode(mapNode);
+#endif
 
   mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 }
 
+RadialLOSNode::~RadialLOSNode()
+{
+}
 
 void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
 {
@@ -70,6 +76,9 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
   mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 
   GeoPositionNode::setMapNode(mapNode);
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
+  drapeable_->setMapNode(mapNode);
+#endif
 
   // re-apply the position
   setCoordinate(coord_);

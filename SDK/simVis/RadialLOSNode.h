@@ -31,166 +31,169 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 
+namespace osgEarth { class DrapeableNode; }
 
 namespace simVis
 {
+
+/**
+ * Radial line-of-sight node renders an LOS display corresponding to
+ * the data in a RadialLOS structure.
+ */
+class SDKVIS_EXPORT RadialLOSNode : public osgEarth::Annotation::GeoPositionNode
+{
+public:
   /**
-   * Radial line-of-sight node renders an LOS display corresponding to
-   * the data in a RadialLOS structure.
+   * Constructs a new LOS node.
+   * @param[in ] mapNode MapNode to which to attach this object
    */
-  class SDKVIS_EXPORT RadialLOSNode : public osgEarth::Annotation::GeoPositionNode
+  RadialLOSNode(osgEarth::MapNode* mapNode);
+
+  /**
+   * Sets the center position of this object.
+   * @param[in ] coord Origin of the LOS display
+   */
+  virtual bool setCoordinate(const simCore::Coordinate& coord);
+
+  /**
+   * Gets the center/origin coordinate.
+   */
+  const simCore::Coordinate& getCoordinate() const { return coord_; }
+
+  /**
+   * Sets the data model to visualize.
+   * @param[in ] los LOS data model
+   */
+  void setDataModel(const RadialLOS& los);
+
+  /**
+   * Gets the data model this node is visualizing
+   * @return Radial LOS data model
+   */
+  const RadialLOS& getDataModel() const { return los_; }
+
+  /**@name Data Model Accessors
+   * @note Setting a new data model will override values set by these functions
+   * @{
+   */
+  void setMaxRange(const Distance& value);
+  const Distance& getMaxRange() const { return los_.getMaxRange(); }
+
+  void setCentralAzimuth(const Angle& value);
+  const Angle& getCentralAzimuth() const { return los_.getCentralAzimuth(); }
+
+  void setFieldOfView(const Angle& value);
+  const Angle& getFieldOfView() const { return los_.getFieldOfView(); }
+
+  void setRangeResolution(const Distance& value);
+  const Distance& getRangeResolution() const { return los_.getRangeResolution(); }
+
+  void setAzimuthalResolution(const Angle& value);
+  const Angle& getAzimuthalResolution() const { return los_.getAzimuthalResolution(); }
+  ///@}
+
+  /**
+   * Sets the "visible" color
+   * param[in ] color for visible areas (rgba, [0..1])
+   */
+  void setVisibleColor(const osg::Vec4& color);
+
+  /**
+   * Gets the "visible" color
+   */
+  const osg::Vec4& getVisibleColor() const { return visibleColor_; }
+
+  /**
+   * Sets the "obstructed" color
+   * @param[in ] color for obstructed areas (rgba, [0..1])
+   */
+  void setObstructedColor(const osg::Vec4& color);
+
+  /**
+   * Gets the "obstructed" color
+   */
+  const osg::Vec4& getObstructedColor() const { return obstructedColor_; }
+
+  /**
+   * Sets the sample point color
+   * @param[in ] color for the sample points (rgba, [0..1])
+   */
+  void setSamplePointColor(const osg::Vec4& color);
+
+  /**
+   * Gets the sample point color
+   */
+  const osg::Vec4& getSamplePointColor() const { return samplePointColor_; }
+
+  /** Set the node active or inactive.  Inactive node will not draw LOS or perform LOS calculations */
+  void setActive(bool);
+
+  /** Returns active state of node */
+  bool getActive() const { return active_; }
+
+
+public: // GeoPositionNode
+
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simVis"; }
+
+  /** Return the class name */
+  virtual const char* className() const { return "RadialLOSNode"; }
+
+public: // TerrainCallback
+
+  /** Adjusts height of node based on new tiles */
+  void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext& context);
+
+public: // MapNodeObserver
+
+  /** Sets the map node, used for positioning */
+  virtual void setMapNode(osgEarth::MapNode* mapNode);
+
+protected:
+  /** dtor */
+  virtual ~RadialLOSNode();
+
+public:
+  /** internal, updates the model of the LOS node */
+  virtual void updateDataModel(
+    const osgEarth::GeoExtent& extent,
+    osg::Node*                 patch);
+
+private:
+  /** Not implemented */
+  RadialLOSNode(const RadialLOSNode& rhs);
+
+  // callback hook.
+  struct TerrainCallbackHook : public osgEarth::TerrainCallback
   {
-  public:
-    /**
-     * Constructs a new LOS node.
-     * @param[in ] mapNode MapNode to which to attach this object
-     */
-    RadialLOSNode(osgEarth::MapNode* mapNode);
-
-  public:
-
-    /**
-     * Sets the center position of this object.
-     * @param[in ] coord Origin of the LOS display
-     */
-    virtual bool setCoordinate(const simCore::Coordinate& coord);
-
-    /**
-     * Gets the center/origin coordinate.
-     */
-    const simCore::Coordinate& getCoordinate() const { return coord_; }
-
-    /**
-     * Sets the data model to visualize.
-     * @param[in ] los LOS data model
-     */
-    void setDataModel(const RadialLOS& los);
-
-    /**
-     * Gets the data model this node is visualizing
-     * @return Radial LOS data model
-     */
-    const RadialLOS& getDataModel() const { return los_; }
-
-    /**@name Data Model Accessors
-     * @note Setting a new data model will override values set by these functions
-     * @{
-     */
-    void setMaxRange(const Distance& value);
-    const Distance& getMaxRange() const { return los_.getMaxRange(); }
-
-    void setCentralAzimuth(const Angle& value);
-    const Angle& getCentralAzimuth() const { return los_.getCentralAzimuth(); }
-
-    void setFieldOfView(const Angle& value);
-    const Angle& getFieldOfView() const { return los_.getFieldOfView(); }
-
-    void setRangeResolution(const Distance& value);
-    const Distance& getRangeResolution() const { return los_.getRangeResolution(); }
-
-    void setAzimuthalResolution(const Angle& value);
-    const Angle& getAzimuthalResolution() const { return los_.getAzimuthalResolution(); }
-    ///@}
-
-    /**
-     * Sets the "visible" color
-     * param[in ] color for visible areas (rgba, [0..1])
-     */
-    void setVisibleColor(const osg::Vec4& color);
-
-    /**
-     * Gets the "visible" color
-     */
-    const osg::Vec4& getVisibleColor() const { return visibleColor_; }
-
-    /**
-     * Sets the "obstructed" color
-     * @param[in ] color for obstructed areas (rgba, [0..1])
-     */
-    void setObstructedColor(const osg::Vec4& color);
-
-    /**
-     * Gets the "obstructed" color
-     */
-    const osg::Vec4& getObstructedColor() const { return obstructedColor_; }
-
-    /**
-     * Sets the sample point color
-     * @param[in ] color for the sample points (rgba, [0..1])
-     */
-    void setSamplePointColor(const osg::Vec4& color);
-
-    /**
-     * Gets the sample point color
-     */
-    const osg::Vec4& getSamplePointColor() const { return samplePointColor_; }
-
-    /** Set the node active or inactive.  Inactive node will not draw LOS or perform LOS calculations */
-    void setActive(bool);
-
-    /** Returns active state of node */
-    bool getActive() const { return active_; }
-
-
-  public: // GeoPositionNode
-
-    /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
-
-    /** Return the class name */
-    virtual const char* className() const { return "RadialLOSNode"; }
-
-  public: // TerrainCallback
-
-    /** Adjusts height of node based on new tiles */
-    void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext& context);
-
-  public: // MapNodeObserver
-
-    /** Sets the map node, used for positioning */
-    virtual void setMapNode(osgEarth::MapNode* mapNode);
-
-  protected:
-    /** dtor */
-    virtual ~RadialLOSNode() { }
-
-  public:
-    /** internal, updates the model of the LOS node */
-    virtual void updateDataModel(
-      const osgEarth::GeoExtent& extent,
-      osg::Node*                 patch);
-
-  private:
-
-    // callback hook.
-    struct TerrainCallbackHook : public osgEarth::TerrainCallback
+    osg::observer_ptr<RadialLOSNode> node_;
+    TerrainCallbackHook(RadialLOSNode* node) : node_(node) {}
+    void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext&)
     {
-      osg::observer_ptr<RadialLOSNode> node_;
-      TerrainCallbackHook(RadialLOSNode* node) : node_(node) {}
-      void onTileAdded(const osgEarth::TileKey& key, osg::Node* tile, osgEarth::TerrainCallbackContext&)
-      {
-        if (node_.valid()) node_->onTileAdded_(key, tile);
-      }
-    };
-
-    RadialLOS           los_;
-    simCore::Coordinate coord_;
-    osg::Geode*         geode_;
-    osg::Vec4           visibleColor_;
-    osg::Vec4           obstructedColor_;
-    osg::Vec4           samplePointColor_;
-    osgEarth::GeoCircle bound_;
-    osgEarth::optional<RadialLOS> losPrevious_;
-    osg::ref_ptr<TerrainCallbackHook> callbackHook_;
-    bool                active_;
-
-    void refreshGeometry_();
-
-    // called by the terrain callback when a new tile enters the graph
-    void onTileAdded_(const osgEarth::TileKey& key, osg::Node* tile);
+      if (node_.valid()) node_->onTileAdded_(key, tile);
+    }
   };
 
-} // namespace simVis
+  RadialLOS los_;
+  simCore::Coordinate coord_;
+  osg::ref_ptr<osg::Geode> geode_;
+  osg::ref_ptr<osgEarth::DrapeableNode> drapeable_;
+  osg::Vec4 visibleColor_;
+  osg::Vec4 obstructedColor_;
+  osg::Vec4 samplePointColor_;
+  osgEarth::GeoCircle bound_;
+  osgEarth::optional<RadialLOS> losPrevious_;
+  osg::ref_ptr<TerrainCallbackHook> callbackHook_;
+  bool active_;
 
+  /** Rebuilds the geometry if needed when parameters change. */
+  void refreshGeometry_();
+
+  // called by the terrain callback when a new tile enters the graph
+  void onTileAdded_(const osgEarth::TileKey& key, osg::Node* tile);
+};
+
+} // namespace simVis
 
 #endif // SIMVIS_RADIAL_LOS_NODE_H
