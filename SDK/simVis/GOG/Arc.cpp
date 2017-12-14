@@ -27,6 +27,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"
 #include "simVis/GOG/Arc.h"
 #include "simVis/GOG/ErrorHandler.h"

@@ -419,7 +419,7 @@ simData::ObjectId createPlatform(simData::DataStore& dataStore)
 
 //----------------------------------------------------------------------------
 
-simVis::SimulatorEventHandler* createSimulation(simUtil::PlatformSimulatorManager& simMgr, simData::ObjectId obj1, simData::ObjectId obj2)
+simUtil::SimulatorEventHandler* createSimulation(simUtil::PlatformSimulatorManager& simMgr, simData::ObjectId obj1, simData::ObjectId obj2)
 {
   osg::ref_ptr<simUtil::PlatformSimulator> sim1 = new simUtil::PlatformSimulator(obj1);
   sim1->addWaypoint(simUtil::Waypoint(51.5,   0.5, 40000, 200.0)); // London
@@ -436,7 +436,7 @@ simVis::SimulatorEventHandler* createSimulation(simUtil::PlatformSimulatorManage
   // Run the simulations:
   simMgr.simulate(0.0, 120.0, 60.0);
 
-  return new simVis::SimulatorEventHandler(&simMgr, 0.0, 120.0);
+  return new simUtil::SimulatorEventHandler(&simMgr, 0.0, 120.0);
 }
 
 //----------------------------------------------------------------------------

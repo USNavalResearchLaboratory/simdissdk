@@ -22,6 +22,7 @@
 #include "osg/AlphaFunc"
 #include "osg/Depth"
 #include "osgEarthAnnotation/LabelNode"
+#include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"

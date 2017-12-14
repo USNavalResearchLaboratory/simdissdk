@@ -127,7 +127,7 @@ void simulatePlatform(simData::ObjectId id, simData::DataStore& ds, simVis::View
   simman->addSimulator(sim.get());
   simman->simulate(0.0, 30.0, 30.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman.get(), 0.0, 30.0);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simman.get(), 0.0, 30.0);
   viewer->addEventHandler(simHandler.get());
 }
 

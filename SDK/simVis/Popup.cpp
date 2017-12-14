@@ -22,7 +22,6 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Constants.h"
 #include "simCore/Time/Utils.h"
-#include "simUtil/HudManager.h"
 #include "simVis/Platform.h"
 #include "simVis/Popup.h"
 #include "simVis/Picker.h"
@@ -90,7 +89,7 @@ PlatformPopup::PlatformPopup()
   this->setChildSpacing(DEFAULT_SPACING);
   this->setAbsorbEvents(false);
 
-  this->getOrCreateStateSet()->setRenderBinDetails(simUtil::HUD_TOP_LEVEL, "RenderBin");
+  this->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
 }
 
 void PlatformPopup::setTitle(const std::string& value)

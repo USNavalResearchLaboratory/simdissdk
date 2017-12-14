@@ -140,8 +140,8 @@ struct MouseAndMenuHandler : public osgGA::GUIEventHandler
     simData::ObjectId centeredPlat, bool showElevation)
   : viewer_(viewer),
     handler_(handler),
-    mouseDispatcher_(mouseDispatcher),
     statusLabel_(status),
+    mouseDispatcher_(mouseDispatcher),
     dataStore_(dataStore),
     centeredPlat_(centeredPlat),
     showElevation_(showElevation),
@@ -527,7 +527,7 @@ int main(int argc, char** argv)
     }
 
     simMgr->simulate(START_TIME, END_TIME, 60.0);
-    viewer->addEventHandler(new simVis::SimulatorEventHandler(simMgr.get(), START_TIME, END_TIME));
+    viewer->addEventHandler(new simUtil::SimulatorEventHandler(simMgr.get(), START_TIME, END_TIME));
 
     // start centered on a platform in overhead mode
     osg::observer_ptr<simVis::EntityNode> obj1Node = viewer->getSceneManager()->getScenario()->find(obj1);

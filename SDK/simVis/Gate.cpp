@@ -25,6 +25,7 @@
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/Registry"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simData/DataTypes.h"
 #include "simNotify/Notify.h"
 #include "simVis/Beam.h"

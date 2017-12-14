@@ -51,7 +51,7 @@ public:
   BoxGraphic(const BoxGraphic& rhs);
 
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  virtual const char* libraryName() const { return "simVis"; }
 
   /** Return the class name */
   virtual const char* className() const { return "BoxGraphic"; }

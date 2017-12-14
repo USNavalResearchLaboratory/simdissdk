@@ -205,7 +205,7 @@ simVis::PlatformNode* setupSimulation(
   simMgr.simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(&simMgr, 0.0, 120.0);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(&simMgr, 0.0, 120.0);
   viewer->addEventHandler(simHandler.get());
 
   /// Tether camera to platform

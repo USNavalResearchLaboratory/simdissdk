@@ -62,7 +62,7 @@ struct App
 {
   osg::ref_ptr<simVis::View>                  view_;
   osg::ref_ptr<simVis::ScenarioManager>       scenario_;
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler_;
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
 };
 
 namespace
@@ -329,7 +329,7 @@ int main(int argc, char** argv)
 
   SIM_NOTICE << "...done!" << std::endl;
 
-  app.simHandler_ = new simVis::SimulatorEventHandler(simman.get(), 0, duration, true);
+  app.simHandler_ = new simUtil::SimulatorEventHandler(simman.get(), 0, duration, true);
   viewer->addEventHandler(app.simHandler_.get());
 
   // popup handler:

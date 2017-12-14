@@ -28,7 +28,6 @@
 #include "simCore/Time/Clock.h"
 #include "simData/DataStore.h"
 #include "simData/DataTypes.h"
-#include "simUtil/PlatformSimulator.h"
 
 #include "osg/NodeCallback"
 #include "osg/Geometry"
@@ -254,107 +253,6 @@ namespace simVis
 
   /// Converts from protobuf label backdrop implementation to OSG backdrop implementation
   SDKVIS_EXPORT osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropImplementation implementation);
-
-#if 0
-  /**
-  * Builds an ellipsoid geometry.
-  */
-  SDKVIS_EXPORT osg::Geometry* createEllipsoid(
-    double major,
-    double minor,
-    int    segments,
-    const  osg::Vec4& color);
-#endif
-
-  /// Update a platform simulator using the OSG frame timer.
-  struct SimulatorEventHandler : public osgGA::GUIEventHandler
-  {
-  public:
-    /// Constructs a new SimulatorEventHandler
-    SimulatorEventHandler(simUtil::PlatformSimulatorManager *simMgr, double startTime, double endTime, bool loop = true)
-      : simMgr_(simMgr), startTime_(startTime), endTime_(endTime),
-      currentTime_(startTime),
-      lastEventTime_(-1.0),
-      loop_(loop),
-      playing_(true)
-    {
-      //nop
-    }
-
-    /// handle an event
-    bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
-    {
-      // handle FRAME events
-      if (ea.getEventType() == ea.FRAME)
-      {
-        double t = ea.getTime();
-
-        if (lastEventTime_ < 0.0)
-          lastEventTime_ = t;
-
-        if (playing_)
-        {
-          double delta = t - lastEventTime_;
-
-          if (simMgr_->getDataStore()->getBoundClock() &&
-              simMgr_->getDataStore()->getBoundClock()->timeDirection() == simCore::REVERSE)
-          {
-              currentTime_ -= delta;
-          }
-          else
-          {
-              currentTime_ += delta;
-          }
-
-          double simTime = loop_ ? fmod(currentTime_, (endTime_-startTime_)) : currentTime_;
-
-          simMgr_->play(simTime);
-        }
-
-        lastEventTime_ = t;
-      }
-
-      // PLAY/PAUSE
-      else if (ea.getEventType() == ea.KEYDOWN)
-      {
-        if (ea.getKey() == '.')
-        {
-          playing_ = !playing_;
-        }
-      }
-
-      return false;
-    }
-
-    /// Changes the current time
-    void setTime(double t)
-    {
-      currentTime_ = simCore::sdkMax(t, startTime_);
-      lastEventTime_ = -1.0;
-    }
-
-    /// Retrieves the current time
-    double getTime() const
-    {
-      return currentTime_;
-    }
-
-    /** Return the proper library name */
-    virtual const char* libraryName() const { return "simVis"; }
-
-    /** Return the class name */
-    virtual const char* className() const { return "SimulatorEventHandler"; }
-
-  protected:
-    /// osg::Referenced-derived
-    virtual ~SimulatorEventHandler() {}
-
-  private:
-    osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr_;
-    double startTime_, endTime_, currentTime_, lastEventTime_;
-    bool loop_;
-    bool playing_;
-  };
 
   /// Math helper functions
   struct SDKVIS_EXPORT Math

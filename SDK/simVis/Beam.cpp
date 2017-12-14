@@ -24,6 +24,7 @@
 #include "osgEarth/Horizon"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
+#include "simCore/Calc/Math.h"
 #include "simVis/Antenna.h"
 #include "simVis/BeamPulse.h"
 #include "simVis/Constants.h"

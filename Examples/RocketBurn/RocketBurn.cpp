@@ -214,7 +214,7 @@ int main(int argc, char **argv)
   simMgr->simulate(0.0, endTime, 60.0);
 
   // Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simMgr.get(), 0.0, endTime);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simMgr.get(), 0.0, endTime);
   viewer->addEventHandler(simHandler.get());
 
   // Tether camera to platform

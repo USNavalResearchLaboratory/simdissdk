@@ -97,7 +97,7 @@ struct AppData
   osg::ref_ptr<simVis::View> view_;
   osg::ref_ptr<osg::Node>    platformModel_;
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler_;
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
 
   AppData(simData::DataStore* ds, simData::ObjectId hostId)
    : modeSlider_(NULL),
@@ -479,7 +479,7 @@ int main(int argc, char **argv)
 
   /// Attach the simulation updater to OSG timer events
   AppData app(&dataStore, platformId);
-  app.simHandler_ = new simVis::SimulatorEventHandler(simMgr.get(), SIM_START, SIM_END);
+  app.simHandler_ = new simUtil::SimulatorEventHandler(simMgr.get(), SIM_START, SIM_END);
   viewer->addEventHandler(app.simHandler_.get());
 
   /// Tether camera to platform

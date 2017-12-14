@@ -276,7 +276,7 @@ void addSimulation(simVis::ScenarioManager* scenario, simVis::View* mainView)
   platform = scenario->find<simVis::PlatformNode>(platformId);
 
   simMan->simulate(0,120, 60);
-  mainView->addEventHandler(new simVis::SimulatorEventHandler(simMan, 0, 120, true));
+  mainView->addEventHandler(new simUtil::SimulatorEventHandler(simMan, 0, 120, true));
 }
 
 }

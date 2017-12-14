@@ -356,7 +356,7 @@ void CircumnavigationPlatformSimulation::init_(simVis::View* mainView)
   simMan_ = new simUtil::PlatformSimulatorManager(dataStore_);
   createPlatform_();
   simMan_->simulate(0, 120, 60);
-  mainView->addEventHandler(new simVis::SimulatorEventHandler(simMan_.get(), 0, 120, true));
+  mainView->addEventHandler(new simUtil::SimulatorEventHandler(simMan_.get(), 0, 120, true));
   platformNode_ = sceneManager_->getScenario()->find<simVis::PlatformNode>(platformId_);
 }
 
@@ -408,4 +408,75 @@ void CircumnavigationPlatformSimulation::createPlatform_()
   sim->addWaypoint(simUtil::Waypoint(0, 90, 15000, 30.0));
   sim->addWaypoint(simUtil::Waypoint(0, 180, 15000, 30.0));
   simMan_->addSimulator(sim.get());
+}
+
+//---------------------------------------------------------------------------
+SimulatorEventHandler::SimulatorEventHandler(simUtil::PlatformSimulatorManager *simMgr, double startTime, double endTime, bool loop)
+ : simMgr_(simMgr),
+   startTime_(startTime),
+   endTime_(endTime),
+   currentTime_(startTime),
+   lastEventTime_(-1.0),
+   loop_(loop),
+   playing_(true)
+{
+  //nop
+}
+
+SimulatorEventHandler::~SimulatorEventHandler()
+{
+}
+
+bool SimulatorEventHandler::handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
+{
+  // handle FRAME events
+  if (ea.getEventType() == ea.FRAME)
+  {
+    double t = ea.getTime();
+
+    if (lastEventTime_ < 0.0)
+      lastEventTime_ = t;
+
+    if (playing_)
+    {
+      double delta = t - lastEventTime_;
+
+      if (simMgr_->getDataStore()->getBoundClock() &&
+          simMgr_->getDataStore()->getBoundClock()->timeDirection() == simCore::REVERSE)
+      {
+          currentTime_ -= delta;
+      }
+      else
+      {
+          currentTime_ += delta;
+      }
+
+      double simTime = loop_ ? fmod(currentTime_, (endTime_-startTime_)) : currentTime_;
+      simMgr_->play(simTime);
+    }
+
+    lastEventTime_ = t;
+  }
+
+  // PLAY/PAUSE
+  else if (ea.getEventType() == ea.KEYDOWN)
+  {
+    if (ea.getKey() == '.')
+    {
+      playing_ = !playing_;
+    }
+  }
+
+  return false;
+}
+
+void SimulatorEventHandler::setTime(double t)
+{
+  currentTime_ = simCore::sdkMax(t, startTime_);
+  lastEventTime_ = -1.0;
+}
+
+double SimulatorEventHandler::getTime() const
+{
+  return currentTime_;
 }

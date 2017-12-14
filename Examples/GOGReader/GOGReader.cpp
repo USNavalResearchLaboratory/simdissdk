@@ -25,27 +25,26 @@
  *
  * Demonstrates the loading and display of SIMDIS .gog format vector overlay data.
  */
-#include "simData/MemoryDataStore.h"
-#include "simVis/GOG/GOG.h"
-#include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Parser.h"
 
-/// include definitions for objects of interest
-#include "simVis/Platform.h"
-#include "simVis/PlatformModel.h"
-#include "simVis/Locator.h"
-
-#include "simVis/Viewer.h"
-#include "simVis/OverheadMode.h"
+#include "osgEarthAnnotation/PlaceNode"
+#include "osgEarthAnnotation/LabelNode"
+#include "osgEarthUtil/MouseCoordsTool"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simData/MemoryDataStore.h"
+#include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/Locator.h"
+#include "simVis/OverheadMode.h"
+#include "simVis/Viewer.h"
+#include "simVis/GOG/GOG.h"
+#include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/Parser.h"
 #include "simUtil/ExampleResources.h"
-#include "osgEarthAnnotation/PlaceNode"
-#include "osgEarthAnnotation/LabelNode"
-#include "osgEarthUtil/MouseCoordsTool"
+#include "simUtil/PlatformSimulator.h"
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
@@ -112,7 +111,7 @@ simVis::PlatformNode* setupSimulation(
   simMgr.simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(&simMgr, 0.0, 120.0);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(&simMgr, 0.0, 120.0);
   viewer->addEventHandler(simHandler.get());
 
   /// Tether camera to platform

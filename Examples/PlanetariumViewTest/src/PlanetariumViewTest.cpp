@@ -264,7 +264,7 @@ void simulate(simData::ObjectId hostId, std::vector<simData::ObjectId>& targetId
 
   simman->simulate(0.0, 30.0, 5.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman.get(), 0.0, 30.0, true);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simman.get(), 0.0, 30.0, true);
   viewer->addEventHandler(simHandler.get());
 
   SIM_NOTICE << LC << "...simulation complete." << std::endl;

@@ -22,6 +22,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osg/Depth"
+#include "simCore/Calc/Math.h"
 #include "simCore/String/Format.h"
 #include "simVis/Constants.h"
 #include "simVis/Types.h"

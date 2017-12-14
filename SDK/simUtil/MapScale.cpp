@@ -23,6 +23,7 @@
 #include "osg/ShadeModel"
 #include "osgEarth/TerrainEngineNode"
 #include "simCore/Calc/Calculations.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
 #include "simVis/Registry.h"
 #include "simVis/Text.h"
