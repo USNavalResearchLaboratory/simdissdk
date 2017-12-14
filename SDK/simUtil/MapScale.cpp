@@ -45,7 +45,7 @@ public:
   }
 
   // Override from Callback
-  virtual void operator()(simVis::View* view, const EventType& evt) override
+  virtual void operator()(simVis::View* view, const EventType& evt)
   {
     if (evt == VIEW_FOCUSED)
     {
