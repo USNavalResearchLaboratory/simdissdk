@@ -32,7 +32,7 @@ namespace simUtil {
 class DynamicSelectionPicker::RepickEventHandler : public osgGA::GUIEventHandler
 {
 public:
-  RepickEventHandler(DynamicSelectionPicker& picker)
+  explicit RepickEventHandler(DynamicSelectionPicker& picker)
     : picker_(picker),
       repickNeeded_(false)
   {

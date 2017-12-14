@@ -170,7 +170,7 @@ simVis::PlatformNode* Picker::pickedPlatform() const
 class IntersectPicker::IntersectEventHandler : public osgGA::GUIEventHandler
 {
 public:
-  IntersectEventHandler(IntersectPicker& picker)
+  explicit IntersectEventHandler(IntersectPicker& picker)
     : picker_(picker),
       repickNeeded_(false)
   {

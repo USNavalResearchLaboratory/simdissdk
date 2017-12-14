@@ -80,7 +80,7 @@ void loadEarthFile(const std::string& earthFile, simVis::Viewer& viewer)
 // view events.
 struct ViewReportCallback : public simVis::ViewManager::Callback
 {
-  ViewReportCallback(osg::Callback* cb)
+  explicit ViewReportCallback(osg::Callback* cb)
     : cb_(cb)
   {}
 

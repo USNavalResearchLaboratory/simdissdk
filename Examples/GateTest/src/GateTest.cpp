@@ -404,7 +404,7 @@ simData::ObjectId addGate(simData::DataStore& ds,
 class KeyHandler : public osgGA::GUIEventHandler
 {
 public:
-  KeyHandler(const AppData& app)
+  explicit KeyHandler(const AppData& app)
     : app_(app)
   {
   }
