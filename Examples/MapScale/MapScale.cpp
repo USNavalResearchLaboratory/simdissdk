@@ -198,7 +198,7 @@ static ui::Control* createHelp(simUtil::MapScale* mapScale)
     new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0))));
   widget->setFontSize(CONTROL_FONT_SIZE);
   widget = grid->setControl(2, row, new ui::ButtonControl("Imperial", new UnitsHandler(mapScale,
-    new simUtil::MapScaleTwoUnitsProvider(simCore::Units::YARDS, simCore::Units::MILES, 16934.0))));
+    new simUtil::MapScaleTwoUnitsProvider(simCore::Units::YARDS, simCore::Units::MILES, 16093.4))));
   widget->setFontSize(CONTROL_FONT_SIZE);
   widget = grid->setControl(3, row, new ui::ButtonControl("Nautical", new UnitsHandler(mapScale,
     new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::NAUTICAL_MILES, 18520.0))));
