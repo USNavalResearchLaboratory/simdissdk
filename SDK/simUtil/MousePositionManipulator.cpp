@@ -78,7 +78,6 @@ private:
 
 MousePositionManipulator::MousePositionManipulator(osgEarth::MapNode* mapNode, osg::Group* scene)
   : mapNode_(mapNode),
-    lastView_(NULL),
     lastMouseX_(0.0f),
     lastMouseY_(0.0f),
     terrainResolution_(0.00001),
@@ -144,7 +143,7 @@ osgEarth::GeoPoint MousePositionManipulator::getLLA_(float mx, float my, bool qu
 {
   osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
   osgEarth::GeoPoint lonLatAlt(srs.get(), INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, osgEarth::ALTMODE_ABSOLUTE);
-  if (lastView_ == NULL)
+  if (!lastView_.valid())
     return lonLatAlt;
 
   // do not display an elevation unless it is valid
