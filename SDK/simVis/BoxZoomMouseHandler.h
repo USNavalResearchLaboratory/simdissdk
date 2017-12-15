@@ -24,11 +24,11 @@
 
 #include "osg/ref_ptr"
 #include "osgGA/GUIEventHandler"
+#include "osgEarthUtil/EarthManipulator"
 #include "simCore/Common/Common.h"
 #include "simVis/BoxGraphic.h"
 
-namespace osgEarth
-{
+namespace osgEarth {
   class GeoPoint;
   class MapNode;
   class SpatialReference;
@@ -36,13 +36,14 @@ namespace osgEarth
 
 namespace simVis
 {
+
 class View;
 
 /** Uses mouse events to draw a simple box graphic for selecting a zoom area, and zooms in on the selected extents within a view */
 class SDKVIS_EXPORT BoxZoomMouseHandler : public osgGA::GUIEventHandler
 {
 public:
-  explicit BoxZoomMouseHandler(osgEarth::MapNode* mapNode);
+  BoxZoomMouseHandler(osgEarth::MapNode* mapNode, const osgEarth::Util::EarthManipulator::ActionOptions& opts);
 
   /** Handle mouse events to apply selecting zoom area on click and drag, then applying zoom area to view on mouse release */
   virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
@@ -67,6 +68,11 @@ private:
   double originY_;
   /// box graphics for highlighting zoom area selection
   osg::ref_ptr<BoxGraphic> box_;
+
+  /// OPTION_GOTO_RANGE_FACTOR value from the options
+  double goToRangeFactor_;
+  /// OPTION_DURATION from the options
+  double durationSec_;
 };
 
 }

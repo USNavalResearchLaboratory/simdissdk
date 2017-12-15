@@ -382,7 +382,6 @@ GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
   // Middle mouse
   if (canRotate)
   {
-    EarthManipulator::ActionOptions freeAxis;
     bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
   }
 
@@ -455,9 +454,12 @@ GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
 
 BoxZoomNavigationMode::BoxZoomNavigationMode(View* view, bool enableOverhead)
   : view_(view),
-  mouse_(NULL)
+    mouse_(NULL)
 {
-  mouse_ = new BoxZoomMouseHandler(view->getSceneManager()->getMapNode());
+  EarthManipulator::ActionOptions boxZoomOpts;
+  boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
+  boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
+  mouse_ = new BoxZoomMouseHandler(view->getSceneManager()->getMapNode(), boxZoomOpts);
   view_->addEventHandler(mouse_);
 
   // right mouse (or shift left mouse) => globe spin
