@@ -152,6 +152,9 @@ QMenu* WeightedMenuManager::findOrCreateMenu_(QWidget* parent, int weight, const
   // Put in a reasonable object name for debugging and introspection purposes
   rv->setObjectName(QString("Menu_%1_w%2_0x%3").arg(title).arg(weight).arg(reinterpret_cast<qulonglong>(rv), 0, 16));
 
+  // Show tooltips on menu items
+  rv->setToolTipsVisible(true);
+
   // Insert the menu into the right place
   insertBefore_(parent, weight, rv);
   return rv;
