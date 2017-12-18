@@ -664,7 +664,10 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     if (force || (newUpdate && PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, range)))
       antenna_->setRange(static_cast<float>(simCore::sdkMax(1.0, activeUpdate->range())));
 
-    if (refreshRequiresNewNode)
+    // force && refreshRequiresNewNode - antenna was just redrawn and needs to be added as child
+    // !force && refreshRequiresNewNode - antenna was just redrawn and needs to be added as child (prefs change)
+    // force && !refreshRequiresNewNode - antenna was not redrawn, but needs to be added as child (just became active)
+    if (force || refreshRequiresNewNode)
     {
       // remove any old (non-antenna) beam volume
       if (beamVolume_)
