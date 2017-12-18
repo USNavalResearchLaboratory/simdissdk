@@ -378,8 +378,6 @@ namespace simVis
     lobSurfaceClamping_ = NULL;
     delete losCreator_;
     losCreator_ = NULL;
-    // if assert fails, check that whoever adds a tool also removes the tool
-    assert(scenarioTools_.empty());
     // guarantee that ScenarioTools receive OnUninstall() calls
     removeAllTools_();
   }
