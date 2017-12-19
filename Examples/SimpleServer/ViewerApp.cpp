@@ -151,33 +151,33 @@ void ViewerApp::init_(osg::ArgumentParser& args)
 
   // A scene manager that all our views will share.
   sceneManager_ = new simVis::SceneManager();
-  sceneManager_->setMap(map);
+  sceneManager_->setMap(map.get());
 
   // We need a view manager. This handles all of our Views.
   viewManager_ = new simVis::ViewManager(args);
 
   // Set up the logarithmic depth buffer for all views
   logDb_ = new simVis::ViewManagerLogDbAdapter;
-  logDb_->install(viewManager_);
+  logDb_->install(viewManager_.get());
 
   // Create views and connect them to our scene.
   osg::ref_ptr<simVis::View> mainView = new simVis::View();
-  mainView->setSceneManager(sceneManager_);
+  mainView->setSceneManager(sceneManager_.get());
   mainView->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
   mainView->setUpViewInWindow(100, 100, 1024, 768);
   // Set a decent number of threads for paging terrain
   mainView->getDatabasePager()->setUpThreads(6, 4);
-  mainView->addEventHandler(new simVis::ToggleOverheadMode(mainView, 'O', 'C'));
+  mainView->addEventHandler(new simVis::ToggleOverheadMode(mainView.get(), 'O', 'C'));
 
-  mainView->addEventHandler(new simVis::PopupHandler(sceneManager_));
+  mainView->addEventHandler(new simVis::PopupHandler(sceneManager_.get()));
 
   // Add it to the view manager
-  viewManager_->addView(mainView);
+  viewManager_->addView(mainView.get());
 
   // Create the SuperHUD
   superHud_ = new simVis::View;
-  superHud_->setUpViewAsHUD(mainView);
-  viewManager_->addView(superHud_);
+  superHud_->setUpViewAsHUD(mainView.get());
+  viewManager_->addView(superHud_.get());
 
   // Create a default data store, then wrap it with a proxy
   simData::MemoryDataStore* dataStoreImpl = new simData::MemoryDataStore();
@@ -216,8 +216,8 @@ void ViewerApp::init_(osg::ArgumentParser& args)
 
   // Create the compass and have it use the main view
   compass_ = new simVis::Compass("compass.png");
-  compass_->setDrawView(mainView);
-  compass_->setActiveView(mainView);
+  compass_->setDrawView(mainView.get());
+  compass_->setActiveView(mainView.get());
 
   // Install an ocean
   InstallOcean installOcean;
@@ -226,9 +226,9 @@ void ViewerApp::init_(osg::ArgumentParser& args)
 
   // Install a sky node
   if (!args.read("--nosky"))
-    simExamples::addDefaultSkyNode(sceneManager_);
+    simExamples::addDefaultSkyNode(sceneManager_.get());
   // Update the scene manager with clock time
-  clock_->registerTimeCallback(simCore::Clock::TimeObserverPtr(new simExamples::SkyNodeTimeUpdater(sceneManager_)));
+  clock_->registerTimeCallback(simCore::Clock::TimeObserverPtr(new simExamples::SkyNodeTimeUpdater(sceneManager_.get())));
 
   // Update the clock on an event callback
   sceneManager_->addUpdateCallback(new simExamples::IdleClockCallback(*clock_, *dataStore_));
@@ -246,15 +246,15 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   timeVariable_ = new simUtil::TimeVariable(*clock_);
   timeVariable_->setFormat(simCore::TIMEFORMAT_ORDINAL);
   textReplacer_->addReplaceable(timeVariable_);
-  textReplacer_->addReplaceable(new simUtil::AzimuthVariable(mainView));
-  textReplacer_->addReplaceable(new simUtil::ElevationVariable(mainView));
-  textReplacer_->addReplaceable(new simUtil::LatitudeVariable(mainView, 6));
-  textReplacer_->addReplaceable(new simUtil::LongitudeVariable(mainView, 6));
-  textReplacer_->addReplaceable(new simUtil::AltitudeVariable(mainView));
-  textReplacer_->addReplaceable(new simUtil::CenteredVariable(mainView));
+  textReplacer_->addReplaceable(new simUtil::AzimuthVariable(mainView.get()));
+  textReplacer_->addReplaceable(new simUtil::ElevationVariable(mainView.get()));
+  textReplacer_->addReplaceable(new simUtil::LatitudeVariable(mainView.get(), 6));
+  textReplacer_->addReplaceable(new simUtil::LongitudeVariable(mainView.get(), 6));
+  textReplacer_->addReplaceable(new simUtil::AltitudeVariable(mainView.get()));
+  textReplacer_->addReplaceable(new simUtil::CenteredVariable(mainView.get()));
 
   // Create status text
-  cornerStatus_ = new simUtil::StatusText(superHud_, textReplacer_, simUtil::StatusText::LEFT_BOTTOM);
+  cornerStatus_ = new simUtil::StatusText(superHud_.get(), textReplacer_, simUtil::StatusText::LEFT_BOTTOM);
   cornerStatus_->setStatusSpec(
     "Time:\t%TIME% \n"
     "Azimuth:\t%AZ% \n"
@@ -290,7 +290,7 @@ void ViewerApp::toggleDynamicScale()
   bool seenFirst = false;
   bool toggleOn = true;
   simData::DataStore::IdList list;
-  dataStore_->idList(&list, simData::DataStore::PLATFORM);
+  dataStore_->idList(&list, simData::PLATFORM);
   simData::DataStore::Transaction t;
   simData::PlatformPrefs* prefs;
 
@@ -314,7 +314,7 @@ void ViewerApp::toggleLabels()
   bool seenFirst = false;
   bool toggleOn = true;
   simData::DataStore::IdList list;
-  dataStore_->idList(&list, simData::DataStore::PLATFORM);
+  dataStore_->idList(&list, simData::PLATFORM);
   simData::DataStore::Transaction t;
   simData::CommonPrefs* prefs;
 
@@ -347,7 +347,7 @@ void ViewerApp::centerNext()
 
   // Pull the data store's platform list so we can find the next ID in the list
   simData::DataStore::IdList list;
-  dataStore_->idList(&list, simData::DataStore::PLATFORM);
+  dataStore_->idList(&list, simData::PLATFORM);
   if (list.empty())
     return;
 
@@ -396,9 +396,9 @@ void ViewerApp::toggleCompass()
 void ViewerApp::toggleLogDb()
 {
   if (logDb_->isInstalled())
-    logDb_->uninstall(viewManager_);
+    logDb_->uninstall(viewManager_.get());
   else
-    logDb_->install(viewManager_);
+    logDb_->install(viewManager_.get());
 }
 
 void ViewerApp::cycleTimeFormat()
@@ -426,7 +426,7 @@ int ViewerApp::loadGog_(const std::string& filename)
   // Set up a search path that looks in SIMDIS_SDK-Data
   osg::ref_ptr<osgDB::Options> opts = new osgDB::Options();
   opts->setDatabasePath(simExamples::getSampleDataPath() + "/gog");
-  std::string found = osgDB::findDataFile(filename, opts);
+  std::string found = osgDB::findDataFile(filename, opts.get());
   if (found.empty())
     return 1;
 

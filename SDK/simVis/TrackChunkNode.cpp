@@ -172,7 +172,9 @@ void TrackChunkNode::allocate_()
   center_->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
   center_->setUseVertexBufferObjects(true);
   center_->setDataVariance(osg::Object::DYNAMIC);
-  centerVerts_->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+  osg::VertexBufferObject* vbo = centerVerts_->getVertexBufferObject();
+  if (vbo)
+    vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
 
   if (mode_ == simData::TrackPrefs_Mode_POINT)
     centerPSet_->setMode(GL_POINTS);
@@ -192,7 +194,9 @@ void TrackChunkNode::allocate_()
     drop_->setUseDisplayList(false);
     drop_->setUseVertexBufferObjects(true);
     drop_->setDataVariance(osg::Object::DYNAMIC);
-    dropVerts_->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+    vbo = dropVerts_->getVertexBufferObject();
+    if (vbo)
+      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     geode_->addDrawable(drop_);
   }
   else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
@@ -209,7 +213,9 @@ void TrackChunkNode::allocate_()
     ribbon_->setUseDisplayList(false);
     ribbon_->setUseVertexBufferObjects(true);
     ribbon_->setDataVariance(osg::Object::DYNAMIC);
-    ribbonVerts_->getVertexBufferObject()->setUsage(GL_DYNAMIC_DRAW_ARB);
+    vbo = ribbonVerts_->getVertexBufferObject();
+    if (vbo)
+      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     geode_->addDrawable(ribbon_);
   }
   // start with just the center line/points:

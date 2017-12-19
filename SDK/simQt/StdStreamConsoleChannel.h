@@ -24,7 +24,6 @@
 
 #include <QObject>
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 
 class QString;
 

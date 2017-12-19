@@ -23,10 +23,10 @@
 #define SIMVIS_GOG_PARSER_H
 
 #include <map>
+#include <memory>
 #include <string>
 #include <iostream>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GOGRegistry.h"
@@ -102,7 +102,7 @@ namespace simVis { namespace GOG
      * Changes the error output handler to use when parsing GOG data.
      * @param errorHandler Error handler to use when parsing GOG data
      */
-    void setErrorHandler(std::tr1::shared_ptr<ErrorHandler> errorHandler);
+    void setErrorHandler(std::shared_ptr<ErrorHandler> errorHandler);
 
     /**
      * Sets a style that will override style information found in the GOG input.

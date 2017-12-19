@@ -56,12 +56,12 @@ struct FrameRateAction : public QAction
     int interval = 0;
     if (frameRateHz != 0)
     {
-      setText(QString("%1 Hertz").arg(frameRateHz));
+      setText(tr("%1 Hertz").arg(frameRateHz));
       interval = 1000 / frameRateHz;
     }
     else
     {
-      setText("Unlimited");
+      setText(tr("Unlimited"));
     }
 
     signalMapper.setMapping(this, interval);
@@ -74,7 +74,7 @@ struct FrameRateAction : public QAction
 // custom action for File->Exit menu :)
 struct ExitAction : public QAction
 {
-  explicit ExitAction(QMainWindow* win) : QAction(QString("Exit"), NULL), win_(win)
+  explicit ExitAction(QMainWindow* win) : QAction(tr("Exit"), NULL), win_(win)
   {
     connect(this, SIGNAL(triggered()), win_, SLOT(close()));
   }
@@ -92,14 +92,14 @@ int main(int argc, char **argv)
   // a Map and a Scene Manager:
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan);
+  simExamples::addDefaultSkyNode(sceneMan.get());
 
   // A view to embed in our widget:
   osg::ref_ptr<simVis::View> view = new simVis::View();
-  view->setSceneManager(sceneMan);
+  view->setSceneManager(sceneMan.get());
   view->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
   // Note that no debug handlers are installed, because we cycle through frame rate in menu
 
@@ -108,11 +108,11 @@ int main(int argc, char **argv)
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
-  logDb->install(viewMan);
+  logDb->install(viewMan.get());
 
   // Add a new "top-level" view. A top-level view can have inset views, and
   // also has a HUD stack for overlay text and graphics.
-  viewMan->addView(view);
+  viewMan->addView(view.get());
 
 
 #ifdef Q_WS_X11
@@ -122,30 +122,29 @@ int main(int argc, char **argv)
 
   QApplication app(argc, argv);
 
-  MyMainWindow win(viewMan);
-  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
-  win.setCentralWidget(viewWidget);
+  MyMainWindow win(viewMan.get());
+  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
+  win.setGlWidget(viewWidget);
   win.setGeometry(100, 100, 1024, 800);
 
   QSignalMapper mapper(&app);
   QObject::connect(&mapper, SIGNAL(mapped(int)), &win, SLOT(setTimerInterval(int)));
 
-  win.statusBar()->showMessage(
-    QString("Congratulations! You've embedded the SDK Viewer in a Qt Widget."));
+  win.statusBar()->showMessage(QObject::tr("Congratulations! You've embedded the SDK Viewer in a Qt Widget."));
 
-  QMenu* bar = win.menuBar()->addMenu(QString("File"));
+  QMenu* bar = win.menuBar()->addMenu(QObject::tr("File"));
   ExitAction* action = new ExitAction(&win);
   action->setShortcut(QKeySequence("Alt+Q"));
   bar->addAction(action);
 
-  bar = win.menuBar()->addMenu(QString("Frame Rate"));
+  bar = win.menuBar()->addMenu(QObject::tr("Frame Rate"));
 
-  QAction* toggleFrameRateAction = new QAction("Show Frame Rate", &win);
+  QAction* toggleFrameRateAction = new QAction(QObject::tr("Show Frame Rate"), &win);
   toggleFrameRateAction->setShortcut(QKeySequence("Alt+F"));
   toggleFrameRateAction->setCheckable(true);
   bar->addAction(toggleFrameRateAction);
   QObject::connect(toggleFrameRateAction, SIGNAL(toggled(bool)), &win, SLOT(toggleFrameRate(bool)));
-  bar->addSeparator()->setText("Rates");
+  bar->addSeparator()->setText(QObject::tr("Rates"));
 
   QActionGroup* actionGroup = new QActionGroup(&win);
   actionGroup->addAction(new FrameRateAction(&win, mapper, 1));

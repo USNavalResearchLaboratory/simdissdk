@@ -636,7 +636,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         }
         else
         {
-          view_->tetherCamera(tetherNode_);
+          view_->tetherCamera(tetherNode_.get());
           s_action->setText(Stringify() << "Tether ON");
         }
 
@@ -888,12 +888,12 @@ int main(int argc, char **argv)
 
   /// Simdis viewer to display the scene
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   /// data source which will provide positions for the platform
   /// based on the simulation time.
@@ -950,20 +950,20 @@ int main(int argc, char **argv)
   sim2->addWaypoint(simUtil::Waypoint(38.8, -77.0, 29990, 200.0)); // DC
   sim2->setSimulateRoll(true);
   sim2->setSimulatePitch(false);
-  simMgr->addSimulator(sim2);
+  simMgr->addSimulator(sim2.get());
 #endif
 
   /// Start the simulation
-  simMgr->addSimulator(sim);
+  simMgr->addSimulator(sim.get());
   simMgr->simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simMgr, 0.0, 120.0);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simMgr.get(), 0.0, 120.0);
+  viewer->addEventHandler(simHandler.get());
 
   /// Tether camera to platform
   osg::ref_ptr<simVis::PlatformNode> platformNode = scene->getScenario()->find<simVis::PlatformNode>(platformId);
-  viewer->getMainView()->tetherCamera(platformNode);
+  viewer->getMainView()->tetherCamera(platformNode.get());
 
   /// set the camera to look at the platform
   viewer->getMainView()->setFocalOffsets(0, -45, 4e5);
@@ -980,9 +980,9 @@ int main(int argc, char **argv)
       laserId));
 
   /// hovering the mouse over the platform should trigger a popup
-  osg::ref_ptr<simVis::PopupHandler> popupHandler = new simVis::PopupHandler(scene);
+  osg::ref_ptr<simVis::PopupHandler> popupHandler = new simVis::PopupHandler(scene.get());
   popupHandler->setContentCallback(new MyPopupCallback(map->getProfile()->getSRS()));
-  viewer->addEventHandler(popupHandler);
+  viewer->addEventHandler(popupHandler.get());
 
   /// show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());

@@ -21,14 +21,20 @@
  */
 #include "osg/LineWidth"
 #include "osgEarth/GeoData"
+#include "osgEarth/Horizon"
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
-#include "simNotify/Notify.h"
+#include "simCore/Calc/Math.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/AnimatedLine.h"
-#include "simVis/Utils.h"
+#include "simVis/EntityLabel.h"
+#include "simVis/LabelContentManager.h"
+#include "simVis/LocalGrid.h"
+#include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Shaders.h"
+#include "simVis/Utils.h"
 #include "simVis/LobGroup.h"
 
 #define LC "[simVis::LobGroup] "
@@ -171,31 +177,27 @@ protected:
   LineCache entries_;
 };
 
-LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props,
-                           EntityNode* host,
-                           CoordSurfaceClamping* surfaceClamping,
-                           simData::DataStore &ds)
-  : EntityNode(simData::DataStore::LOB_GROUP, new Locator(host->getLocator(), Locator::COMP_POSITION)),
-    lastProps_(props),
-    hasLastUpdate_(false),
-    lastPrefsValid_(false),
-    surfaceClamping_(surfaceClamping),
-    coordConverter_(new simCore::CoordinateConverter()),
-    ds_(ds),
-    hostId_(host->getId()),
-    drawStyleTableId_(0),
-    lineCache_(new Cache),
-    label_(NULL),
-    contentCallback_(new NullEntityCallback()),
-    lastFlashingState_(false)
+LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode* host, CoordSurfaceClamping* surfaceClamping, simData::DataStore &ds)
+  : EntityNode(simData::LOB_GROUP, new Locator(host->getLocator()->getSRS())), // lobgroup locator is independent of host locator
+  lastProps_(props),
+  hasLastUpdate_(false),
+  lastPrefsValid_(false),
+  surfaceClamping_(surfaceClamping),
+  coordConverter_(new simCore::CoordinateConverter()),
+  ds_(ds),
+  hostId_(host->getId()),
+  drawStyleTableId_(0),
+  lineCache_(new Cache),
+  label_(NULL),
+  contentCallback_(new NullEntityCallback()),
+  lastFlashingState_(false)
 {
   setName("LobGroup");
   localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
   addChild(localGrid_);
 
-  osg::Group* labelRoot = new LocatorNode(new Locator(getLocator(), Locator::COMP_POSITION));
-  label_ = new EntityLabelNode(labelRoot);
-  this->addChild(labelRoot);
+  label_ = new EntityLabelNode(getLocator());
+  this->addChild(label_);
 
   // horizon culling:
   this->addCullCallback( new osgEarth::HorizonCullCallback() );
@@ -461,11 +463,8 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
       platformUpdate = &interpolatedPlatformUpdate;
     }
 
-    // construct the starting coordinate
-    const simCore::Coordinate platformCoordPosOnly(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate->x(), platformUpdate->y(), platformUpdate->z()));
-    // create a copy to use for clamping, if needed
-    simCore::Coordinate clampedPlatformCoord(platformCoordPosOnly);
-
+    // construct the starting coordinate, we may clamp this
+    simCore::Coordinate platformCoordPosOnly(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate->x(), platformUpdate->y(), platformUpdate->z()));
     simCore::Coordinate llaCoord;
     if (lastProps_.azelrelativetohostori())
     {
@@ -478,10 +477,14 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
     // calculate the clamped host platform coord only once, for all lines at this same time
     if (prefs.lobuseclampalt())
     {
-      applyPlatformCoordClamping_(clampedPlatformCoord);
+      // we provide only ecef
+      assert(platformCoordPosOnly.coordinateSystem() == simCore::COORD_SYS_ECEF);
+      applyPlatformCoordClamping_(platformCoordPosOnly);
+      // and are returned only ecef
+      assert(platformCoordPosOnly.coordinateSystem() == simCore::COORD_SYS_ECEF);
     }
 
-    // processs endpoints for all lines at same time; all share same host platform position just calc'd
+    // process endpoints for all lines at same time; all share same host platform position just calc'd
     for (; index < update.datapoints_size() && update.datapoints(index).time() == time; ++index)
     {
       // calculate end point based on update point RAE
@@ -513,7 +516,7 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
       setLineDrawStyle_(time, *line, prefs);
 
       // set coordinates
-      line->setEndPoints(clampedPlatformCoord, endCoord);
+      line->setEndPoints(platformCoordPosOnly, endCoord);
 
       // insert into cache
       lineCache_->addLineAtTime(time, line);
@@ -530,10 +533,12 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
         // Offset the host orientation angles via the LOB relative orientation for body-relative mode
         lobAngles = simCore::rotateEulerAngle(llaCoord.orientation(), lobAngles);
       }
-      // Use position only, otherwise rendering will be adversely affected
-      getLocator()->setCoordinate(platformCoordPosOnly, time, false);
+
+      // suppress locator notification until we're done with locator updates
       getLocator()->setLocalOffsets(simCore::Vec3(), lobAngles, time, false);
-      getLocator()->endUpdate();
+      // Use position only, otherwise rendering will be adversely affected; locator notification is true now
+      // note that if lob is clamped, localgrid will also be clamped
+      getLocator()->setCoordinate(platformCoordPosOnly, time);
     }
   }
 }
@@ -616,11 +621,6 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
       const bool drawnLOBs = hasLastUpdate_ && (lastUpdate_.datapoints_size() > 0);
       const bool drawn = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
       setNodeMask((drawnLOBs && drawn) ? DISPLAY_MASK_LOB_GROUP : DISPLAY_MASK_NONE);
-
-      // if this lobgroup is drawn, tell its local grid to update
-      assert(localGrid_);
-      if (getNodeMask() != DISPLAY_MASK_NONE)
-        localGrid_->notifyHostLocatorChange();
     }
     else
     {
@@ -659,12 +659,21 @@ void LobGroupNode::applyPlatformCoordClamping_(simCore::Coordinate& platformCoor
   if (!surfaceClamping_)
     return;
 
-  surfaceClamping_->clampCoordToMapSurface(platformCoord);
+  // we are only provided ecef coords
+  assert(platformCoord.coordinateSystem() == simCore::COORD_SYS_ECEF);
 
-  // platform position is always our coordinate converter reference origin, in LLA
+  // convert to lla first, this is the native coord system for clamping
   simCore::Coordinate platLla;
   simCore::CoordinateConverter::convertEcefToGeodetic(platformCoord, platLla);
+
+  // clamp in ecef means: convert to lla, clamp, convert back to ecef; clamp in lla involves no coord conversion
+  surfaceClamping_->clampCoordToMapSurface(platLla);
+
+  // platform position is always our coordinate converter reference origin, in LLA (required for applyEndpointCoordClamping_)
   coordConverter_->setReferenceOrigin(platLla.position());
+
+  // now convert to ecef since that is what the caller requires
+  simCore::CoordinateConverter::convertGeodeticToEcef(platLla, platformCoord);
 }
 
 void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoord)
@@ -677,6 +686,12 @@ void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoor
   coordConverter_->convert(endpointCoord, endLla, simCore::COORD_SYS_LLA);
   surfaceClamping_->clampCoordToMapSurface(endLla);
   coordConverter_->convert(endLla, endpointCoord, simCore::COORD_SYS_XEAST);
+}
+
+unsigned int LobGroupNode::objectIndexTag() const
+{
+  // Not supported for LOB groups
+  return 0;
 }
 
 } // namespace simVis

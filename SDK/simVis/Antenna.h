@@ -23,6 +23,7 @@
 #define SIMVIS_ANTENNA_H
 
 #include "osg/MatrixTransform"
+#include "osg/ref_ptr"
 #include "osgEarth/Config"
 #include "simCore/Common/Common.h"
 #include "simCore/EM/Constants.h"
@@ -47,7 +48,7 @@ namespace simVis
      * Constructs an antenna node
      * @param[in ] rot   Rotation (optional)
      */
-    AntennaNode(const osg::Quat& rot = osg::Quat());
+    explicit AntennaNode(const osg::Quat& rot = osg::Quat());
 
     /**
      * Whether the antenna pattern loaded OK.
@@ -112,7 +113,6 @@ namespace simVis
     osg::Quat                rot_;
     float                    min_;
     float                    max_;
-
     osgEarth::optional<simData::BeamPrefs>      lastPrefs_;
 
     ColorUtils*      colorUtils_;

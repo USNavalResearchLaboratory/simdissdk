@@ -56,11 +56,17 @@
 #include "simVis/PlatformModel.h"
 #include "simVis/Utils.h"
 
-using namespace simVis;
-
-
 namespace
 {
+  // NED/ENU swapping matrix:
+  // http://www.ecsutton.ece.ufl.edu/ens/handouts/quaternions.pdf
+  static const double NED_ENU[3][3] =
+  {
+    { 0.0, 1.0,  0.0 },
+    { 1.0, 0.0,  0.0 },
+    { 0.0, 0.0, -1.0 }
+  };
+
   static const osg::Matrixd NWU_ENU(
     0.0, 1.0, 0.0, 0.0,
     -1.0, 0.0, 0.0, 0.0,
@@ -131,7 +137,10 @@ namespace
   const int BASE_LINE_LENGTH = 50;
 }
 
-bool simVis::useRexEngine()
+namespace simVis
+{
+
+bool useRexEngine()
 {
   osgEarth::Registry* reg = osgEarth::Registry::instance();
 
@@ -156,7 +165,7 @@ bool simVis::useRexEngine()
   return simCore::caseCompare(engineName, "rex") == 0;
 }
 
-void simVis::setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value)
+void setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value)
 {
   if (stateset)
   {
@@ -171,7 +180,7 @@ void simVis::setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeVal
   }
 }
 
-void simVis::setLightingToInherit(osg::StateSet* stateset)
+void setLightingToInherit(osg::StateSet* stateset)
 {
   // (There's no method yet to query the name, so we just need to use the
   // internal name directly. At some point I will add a method to osgEarth
@@ -189,7 +198,7 @@ void simVis::setLightingToInherit(osg::StateSet* stateset)
   }
 }
 
-void simVis::convertNWUtoENU(osg::Node* node)
+void convertNWUtoENU(osg::Node* node)
 {
   if (node)
   {
@@ -199,7 +208,7 @@ void simVis::convertNWUtoENU(osg::Node* node)
 }
 
 
-bool simVis::isImageFile(const std::string& location)
+bool isImageFile(const std::string& location)
 {
   std::string ext = osgDB::getLowerCaseFileExtension(location);
   if (!ext.empty())
@@ -226,15 +235,15 @@ bool simVis::isImageFile(const std::string& location)
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
-std::string simVis::findFontFile(const std::string& fontFile)
+std::string findFontFile(const std::string& fontFile)
 {
-  // Note that simVis::findFontFile() is deprecated and only provided for
+  // Note that findFontFile() is deprecated and only provided for
   // compatibility reasons.  It may be removed in a future release.
-  return simVis::Registry::instance()->findFontFile(fontFile);
+  return Registry::instance()->findFontFile(fontFile);
 }
 #endif
 
-osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::DistanceUnits& input)
+osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
 {
     return
         input == simData::UNITS_CENTIMETERS    ? osgEarth::Units::CENTIMETERS :
@@ -253,7 +262,7 @@ osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::DistanceUnits& inp
         osgEarth::Units(); // invalid
 }
 
-osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::SpeedUnits& input)
+osgEarth::Units convertUnitsToOsgEarth(const simData::SpeedUnits& input)
 {
     return
         input == simData::UNITS_METERS_PER_SECOND     ? osgEarth::Units::METERS_PER_SECOND :
@@ -267,7 +276,7 @@ osgEarth::Units simVis::convertUnitsToOsgEarth(const simData::SpeedUnits& input)
         osgEarth::Units(); // invalid
 }
 
-float simVis::outlineThickness(simData::TextOutline outline)
+float outlineThickness(simData::TextOutline outline)
 {
   switch (outline)
   {
@@ -281,7 +290,7 @@ float simVis::outlineThickness(simData::TextOutline outline)
   return 0;
 }
 
-float simVis::osgFontSize(float simFontSize)
+float osgFontSize(float simFontSize)
 {
   // At lower font sizes (11 or less), we want to make the font a bit
   // crisper and more readable, so we force the return value to be the
@@ -301,7 +310,7 @@ float simVis::osgFontSize(float simFontSize)
   return simFontSize * 1.33;
 }
 
-float simVis::simdisFontSize(float osgFontSize)
+float simdisFontSize(float osgFontSize)
 {
   float roundedSize = simCore::rint(osgFontSize);
   if (roundedSize <= 7.0)
@@ -316,7 +325,7 @@ float simVis::simdisFontSize(float osgFontSize)
   return osgFontSize / 1.33;
 }
 
-osgText::Text::BackdropType simVis::backdropType(simData::BackdropType type)
+osgText::Text::BackdropType backdropType(simData::BackdropType type)
 {
   switch (type)
   {
@@ -346,7 +355,7 @@ osgText::Text::BackdropType simVis::backdropType(simData::BackdropType type)
   return osgText::Text::NONE;
 }
 
-osgText::Text::BackdropImplementation simVis::backdropImplementation(simData::BackdropImplementation implementation)
+osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropImplementation implementation)
 {
   switch (implementation)
   {
@@ -389,24 +398,17 @@ osg::Quat Math::eulerRadToQuat(double h, double p, double r)
   // semantics for HPR, as detailed below.
 
   // +H is a "right turn", a right-handed rotation about the -Z axis:
-  osg::Quat azim_q;
-  if (!osg::equivalent(h, 0.0))
-    azim_q = osg::Quat(h, osg::Vec3d(0, 0, -1));
+  const osg::Quat azim_q = (!osg::equivalent(h, 0.0)) ? osg::Quat(h, osg::Vec3d(0, 0, -1)) : osg::Quat();
 
   // +P is "nose up"; a right-handed rotation about the +X axis:
-  osg::Quat pitch_q;
-  if (!osg::equivalent(p, 0.0))
-    pitch_q = osg::Quat(p, osg::Vec3d(1, 0, 0));
+  const osg::Quat pitch_q = (!osg::equivalent(p, 0.0)) ? osg::Quat(p, osg::Vec3d(1, 0, 0)) : osg::Quat();
 
   // +R is "right wing down", a right-handed rotation about the +Y axis:
-  osg::Quat roll_q;
-  if (!osg::equivalent(r, 0.0))
-    roll_q = osg::Quat(r, osg::Vec3d(0, 1, 0));
+  const osg::Quat roll_q = (!osg::equivalent(r, 0.0)) ? osg::Quat(r, osg::Vec3d(0, 1, 0)) : osg::Quat();
 
   // combine them in the reverse of the desired rotation order:
   // azim-pitch-roll
   return roll_q * pitch_q * azim_q;
-
 
 #endif // USE_SIMCORE_CALC_MATH
 }
@@ -450,6 +452,51 @@ osg::Vec3d Math::quatToEulerRad(const osg::Quat& quat)
   return osg::Vec3d(h, p, r);
 
 #endif // USE_SIMCORE_CALC_MATH
+}
+
+
+
+/**
+* Converts a SIMDIS ECEF orientation (psi/theta/phi) into an OSG
+* ENU rotation matrix. The SIMDIS d3EulertoQ() method results in a
+* NED orientation frame. We want ENU so we have to fix the conversion.
+*/
+void Math::ecefEulerToEnuRotMatrix(const simCore::Vec3& in, osg::Matrix& out)
+{
+  // first convert the ECEF orientation to a 3x3 matrix:
+  double ned_dcm[3][3];
+  simCore::d3EulertoDCM(in, ned_dcm);
+  double enu_dcm[3][3];
+  simCore::d3MMmult(NED_ENU, ned_dcm, enu_dcm);
+
+  // poke the values into the OSG matrix:
+  out.set(
+    enu_dcm[0][0], enu_dcm[0][1], enu_dcm[0][2], 0.0,
+    enu_dcm[1][0], enu_dcm[1][1], enu_dcm[1][2], 0.0,
+    enu_dcm[2][0], enu_dcm[2][1], enu_dcm[2][2], 0.0,
+    0.0, 0.0, 0.0, 1.0);
+}
+
+/**
+* Converts an ENU (OSG style) rotation matrix into SIMDIS
+* (NED frame) global Euler angles -- this is the inverse of
+* the method ecefEulerToEnuRotMatrix().
+*/
+void Math::enuRotMatrixToEcefEuler(const osg::Matrix& in, simCore::Vec3& out)
+{
+  // direction cosine matrix in ENU frame
+  double enu_dcm[3][3] = {
+    { in(0,0), in(0,1), in(0,2) },
+    { in(1,0), in(1,1), in(1,2) },
+    { in(2,0), in(2,1), in(2,2) }
+  };
+
+  // convert DCM to NED frame:
+  double ned_dcm[3][3];
+  simCore::d3MMmult(NED_ENU, enu_dcm, ned_dcm);
+
+  // and into Euler angles.
+  simCore::d3DCMtoEuler(ned_dcm, out);
 }
 
 void Math::clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, osg::Vec3d& max_hpr_deg)
@@ -535,7 +582,7 @@ const osg::Vec4f& ColorUtils::GainThresholdColor(int gain)
   return gainThresholdColorMap_[-100];
 }
 
-bool simVis::convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::GeoPoint& output, const osgEarth::SpatialReference* srs)
+bool convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::GeoPoint& output, const osgEarth::SpatialReference* srs)
 {
   if (srs && input.coordinateSystem() == simCore::COORD_SYS_ECEF)
   {
@@ -566,7 +613,7 @@ bool simVis::convertCoordToGeoPoint(const simCore::Coordinate& input, osgEarth::
   return false;
 }
 
-bool simVis::convertGeoPointToCoord(const osgEarth::GeoPoint& input, simCore::Coordinate& out_coord, osgEarth::MapNode* mapNode)
+bool convertGeoPointToCoord(const osgEarth::GeoPoint& input, simCore::Coordinate& out_coord, osgEarth::MapNode* mapNode)
 {
   // can't convert a relative-Z point without the mapNode.
   if (input.altitudeMode() == osgEarth::ALTMODE_RELATIVE && !mapNode)
@@ -591,7 +638,7 @@ bool simVis::convertGeoPointToCoord(const osgEarth::GeoPoint& input, simCore::Co
 }
 
 
-osg::Image* simVis::makeBrokenImage(int size)
+osg::Image* makeBrokenImage(int size)
 {
   osg::Image* image = new osg::Image();
 
@@ -608,7 +655,7 @@ osg::Image* simVis::makeBrokenImage(int size)
   return image;
 }
 
-osg::Matrix simVis::computeLocalToWorld(const osg::Node* node)
+osg::Matrix computeLocalToWorld(const osg::Node* node)
 {
   osg::Matrix m;
   if (node)
@@ -630,11 +677,11 @@ osg::Matrix simVis::computeLocalToWorld(const osg::Node* node)
   return m;
 }
 
-simCore::Vec3 simVis::computeNodeGeodeticPosition(const osg::Node* node)
+simCore::Vec3 computeNodeGeodeticPosition(const osg::Node* node)
 {
   if (node == NULL)
     return simCore::Vec3();
-  const osg::Vec3d& ecefPos = simVis::computeLocalToWorld(node).getTrans();
+  const osg::Vec3d& ecefPos = computeLocalToWorld(node).getTrans();
   simCore::Vec3 llaPos;
   simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos);
   return llaPos;
@@ -660,7 +707,7 @@ float VectorScaling::boundingBoxMaxDimension(const osg::BoundingBoxf& bbox)
   return osg::maximum(dims.x(), osg::maximum(dims.y(), dims.z()));
 }
 
-float VectorScaling::lineLength(const simVis::PlatformModelNode* node, float axisScale)
+float VectorScaling::lineLength(const PlatformModelNode* node, float axisScale)
 {
   float adjustedLength = BASE_LINE_LENGTH;
   if (node)
@@ -685,7 +732,7 @@ void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& st
 
 
 #if 0
-osg::Geometry* simVis::createEllipsoid(double major, double minor, int segments, const osg::Vec4& color)
+osg::Geometry* createEllipsoid(double major, double minor, int segments, const osg::Vec4& color)
 {
   osg::EllipsoidModel em(major, minor);
 
@@ -796,7 +843,7 @@ void SequenceTimeUpdater::operator()(osg::Node* node, osg::NodeVisitor* nv)
 
   // Copy the frame stamp and update it to a strictly increasing time
   osg::ref_ptr<const osg::FrameStamp> oldFs = nv->getFrameStamp();
-  nv->setFrameStamp(modifiedStamp_);
+  nv->setFrameStamp(modifiedStamp_.get());
 
   // Visit the Sequence itself
   traverse(node, nv);
@@ -809,9 +856,9 @@ void SequenceTimeUpdater::operator()(osg::Node* node, osg::NodeVisitor* nv)
 
 StatsTimer::StatsTimer(osgViewer::View* mainView, const std::string& key, RecordFrequency recordFrequency)
   : mainView_(mainView),
-    beginKey_(simVis::StatsTimer::beginName(key)),
-    endKey_(simVis::StatsTimer::endName(key)),
-    timeTakenKey_(simVis::StatsTimer::timeTakenName(key)),
+    beginKey_(StatsTimer::beginName(key)),
+    endKey_(StatsTimer::endName(key)),
+    timeTakenKey_(StatsTimer::timeTakenName(key)),
     recordFrequency_(recordFrequency),
     cumulativeMs_(0),
     firstStartTickMs_(0),
@@ -984,4 +1031,6 @@ ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string&
   : statsTimer_(mainView, key, StatsTimer::RECORD_PER_STOP)
 {
   statsTimer_.start();
+}
+
 }

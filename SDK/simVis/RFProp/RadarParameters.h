@@ -22,7 +22,7 @@
 #ifndef SIMVIS_RFPROP_RADAR_PARAMETERS_H
 #define SIMVIS_RFPROP_RADAR_PARAMETERS_H
 
-#include "simCore/Common/Memory.h"
+#include <memory>
 
 namespace simRF
 {
@@ -53,7 +53,7 @@ struct RadarParameters
 };
 
 /** Shared pointer of a RadarParameters */
-typedef std::tr1::shared_ptr<struct RadarParameters> RadarParametersPtr;
+typedef std::shared_ptr<struct RadarParameters> RadarParametersPtr;
 
 }
 

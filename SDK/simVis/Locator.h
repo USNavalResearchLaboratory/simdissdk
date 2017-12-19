@@ -201,9 +201,7 @@ public:
   * Gets a positioning matrix that combines aggregate position, local orientation, and
   * offset position.
   */
-  bool getLocatorMatrix(
-    osg::Matrixd& output_mat,
-    unsigned int components = COMP_ALL) const;
+  bool getLocatorMatrix(osg::Matrixd& output_mat, unsigned int components = COMP_ALL) const;
 
   /**
   * Gets the world position reflected by this Locator. This is just a convenience
@@ -211,11 +209,10 @@ public:
   * locator matrix.
   *
   * @param[out] out_position If not NULL, resulting position stored here
-  * @param[in ] coordsys Requested coord sys of the output position
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  bool getLocatorPosition(
-    simCore::Vec3*                   out_position,
+  bool getLocatorPosition(simCore::Vec3* out_position,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
   /**
@@ -225,12 +222,10 @@ public:
   *
   * @param[out] out_position If not NULL, resulting position stored here
   * @param[out] out_orientation If not NULL, resulting orientation stored here
-  * @param[in ] coordsys Requested coord sys of the output position
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  bool getLocatorPositionOrientation(
-    simCore::Vec3*                   out_position,
-    simCore::Vec3*                   out_orientation,
+  bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
   /**
@@ -413,14 +408,16 @@ private: // data
   mutable osgEarth::Revision llaOrientationCacheRevision_;
 };
 
-
 /**
-* ResolvedPositionOrientationLocator is a locator that generates a position-with-orientation from its parents,
+* ResolvedPositionOrientationLocator is a locator that generates a position-with-(base)-orientation from its parents,
 * based on the specified inheritance components, but which is treated thereafter (for subsequent inheritance) as a base coordinate position.
+*
+* Base coordinate orientation information is not stripped away as in COMP_RESOLVED_POSITION; it is maintained and available for inheritance.
+* But all orientation offsets are stripped away - only the orientation set in the base coordinate (as set by setCoordinate()) is maintained.
+*
 * Though it can apply its own offsets and be used like a normal locator, its primary function is to provide this resolved coordinate to inheriting locators.
 * Subsequent locators that inherit the resolving locator get the same "resolved position with orientation" regardless of the orientation components they inherit.
 * The inherited position matrix will represent a local tangent plane at the final position.
-* Base orientation information is not stripped away as in COMP_RESOLVED_POSITION; it is maintained and available for inheritance.
 */
 class SDKVIS_EXPORT ResolvedPositionOrientationLocator : public Locator
 {
@@ -464,90 +461,6 @@ public:
 
   /// create a new locator
   virtual Locator* createLocator() const = 0;
-};
-
-//----------------------------------------------------------------------------
-/// Track the transform of a parent LocatorNode with a Locator
-class SDKVIS_EXPORT LocatorNode : public osg::MatrixTransform
-{
-public:
-  /// Provides OSG features for the LocatorNode
-  META_Node(simVis, LocatorNode);
-
-  /// Default constructor
-  LocatorNode();
-  /// Creates a LocatorNode using the locator provided as the position
-  LocatorNode(Locator* locator);
-  /// Creates a LocatorNode using the locator provided as the position, adding the child provided to this
-  LocatorNode(Locator* locator, osg::Node* child);
-  /// OSG copy constructor implementation
-  LocatorNode(const LocatorNode &rhs, const osg::CopyOp& = osg::CopyOp::SHALLOW_COPY);
-
-  /// locator that is driving this locator node
-  Locator* getLocator()       { return locator_.get(); }
-  /// locator that is driving this locator node (tail const)
-  const Locator* getLocator() const { return locator_.get(); }
-
-  /// convenience function to extract the current world coordinates
-  void getWorldPosition(osg::Vec3d& out_ecef) const
-  {
-    out_ecef = getMatrix().getTrans();
-  }
-
-  /// set the Locator for this LocatorNode, recalculates the transform matrix
-  void setLocator(Locator *locator);
-
-  /// Turns on or off a flag to hint to use Overhead Mode for bounds computation when NodeVisitor is NULL
-  void setOverheadModeHint(bool overheadMode);
-  /// Retrieves a previously set overhead mode hint, used for bounds computation in intersection visitors
-  bool overheadModeHint() const;
-
-public:
-  /// Synchronizes the transform matrix with the locator
-  virtual void syncWithLocator();
-
-public: // osg::MatrixTransform
-  /// override to support Overhead Mode
-  virtual bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const;
-
-protected:
-  /// osg::Referenced-derived
-  virtual ~LocatorNode();
-
-private: // data
-  osg::ref_ptr<Locator> locator_;
-  osgEarth::Revision    matrixRevision_;
-  osg::ref_ptr<LocatorCallback> locatorCallback_;
-
-  /// Sometimes bounds are computed without a node visitor and we need to know if in overhead mode; this flag caches that.
-  bool overheadModeHint_;
-};
-
-//----------------------------------------------------------------------------
-/**
- * Changes the Overhead Mode hint on all LocatorNodes in the scene.
- * This is primarily useful for intersection tests with entities in the scenario when using overhead
- * mode.  This will turn on the overhead mode hint on LocatorNodes so that their bounds computation
- * will return the correct bounds for Overhead mode processing for hit detection.  This should be
- * turned on prior to intersection detection and turned back off after intersection detection done.
- */
-class SDKVIS_EXPORT SetOverheadModeHintVisitor : public osg::NodeVisitor
-{
-public:
-  /** Initializes the visitor with the value to set the hint to */
-  SetOverheadModeHintVisitor(bool hint, TraversalMode tm=osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN);
-
-  /** Changes the value of the hint */
-  void setOverheadModeHint(bool hint);
-
-  /** Applies to matrices.  Locator nodes are matrix transforms */
-  virtual void apply(osg::MatrixTransform& mx);
-
-private:
-  /** No copy constructor implemented */
-  SetOverheadModeHintVisitor(const SetOverheadModeHintVisitor&);
-
-  bool hint_;
 };
 
 }

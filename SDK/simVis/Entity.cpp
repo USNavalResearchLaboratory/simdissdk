@@ -22,6 +22,8 @@
 #include "osgEarth/Terrain"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/Utils.h"
 #include "simVis/Entity.h"
 
@@ -87,7 +89,7 @@ void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 
 /////////////////////////////////////////////////////////////////////////////////
 
-EntityNode::EntityNode(simData::DataStore::ObjectType type, Locator* locator)
+EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
   : type_(type)
 {
   setNodeMask(0);  // Draw is off until a valid update is received
@@ -111,6 +113,24 @@ void EntityNode::setLocator(simVis::Locator* locator)
   locator_ = locator;
   if (locator_)
     locator_->dirty();
+}
+
+int EntityNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
+{
+  if (!locator_.valid())
+    return 1;
+  if (locator_->getLocatorPosition(out_position, coordsys))
+    return 0;
+  return 2;
+}
+
+int EntityNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, simCore::CoordinateSystem coordsys) const
+{
+  if (!locator_.valid())
+    return 1;
+  if (locator_->getLocatorPositionOrientation(out_position, out_orientation, coordsys))
+    return 0;
+  return 2;
 }
 
 void EntityNode::attach(osg::Node* node, unsigned int comp)

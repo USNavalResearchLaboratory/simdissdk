@@ -1098,6 +1098,115 @@ int testGetClosestPoint()
   return rv;
 }
 
+int testCalculateGeodeticOffsetPos()
+{
+  int rv = 0;
+
+  // test comparison values are from 9/27/2017 execution
+
+  simCore::Vec3 originLLA(simCore::DEG2RAD*22, simCore::DEG2RAD*-160, 9);
+  simCore::Vec3 offsetLLA;
+
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(0, 0, 0), simCore::Vec3(10, 0, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839740119, -2.7925268032, 9.0006338218)));
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(0, 0, 0), simCore::Vec3(0, 10, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839724357, -2.7925284934, 9.0006337678)));
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(0, 0, 0), simCore::Vec3(0, 0, 10), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839724357, -2.7925268032, 19.0006259140)));
+
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(simCore::DEG2RAD*45, 0, 0), simCore::Vec3(10, 0, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839735502, -2.7925256080, 9.0006337967)));
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(0, simCore::DEG2RAD*45, 0), simCore::Vec3(10, 0, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839735502, -2.7925268032, 16.0716976793)));
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(0, 0, simCore::DEG2RAD*45), simCore::Vec3(10, 0, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839740119, -2.7925268032, 9.0006338218)));
+
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(simCore::DEG2RAD*45, 0, 0), simCore::Vec3(0, 10, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839735502, -2.7925279983, 9.0006337967)));
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(0, simCore::DEG2RAD*45, 0), simCore::Vec3(0, 10, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839724357, -2.7925284934, 9.0006337678)));
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(0, 0, simCore::DEG2RAD*45), simCore::Vec3(0, 10, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839724357, -2.7925279983, 16.0716976495)));
+
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(simCore::DEG2RAD*77, simCore::DEG2RAD*-5, simCore::DEG2RAD*60), simCore::Vec3(10, 0, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839727889, -2.7925251626, 8.1290762862)));
+  simCore::calculateGeodeticOffsetPos(originLLA, simCore::Vec3(simCore::DEG2RAD*77, simCore::DEG2RAD*-5, 0), simCore::Vec3(0, 10, 0), offsetLLA);
+  rv += SDK_ASSERT(areLlaEqual(offsetLLA, simCore::Vec3(0.3839739715, -2.7925271834, 9.0006338200)));
+
+  return rv;
+}
+
+int testCalculateGeodeticEndPoint()
+{
+  int rv = 0;
+
+  // test comparison values are from 9/27/2017 execution
+
+  simCore::Vec3 originLLA(simCore::DEG2RAD*22, simCore::DEG2RAD*-160, 9);
+  simCore::Vec3 endPtLLA;
+
+  simCore::calculateGeodeticEndPoint(originLLA, 0, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839740119, -2.7925268032, 9.0006338218)));
+  simCore::calculateGeodeticEndPoint(originLLA, 0, 0, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.5402134989, -2.7925268032, 78305.0330870207)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 45*simCore::DEG2RAD, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839735502, -2.7925256080, 9.0006337967)));
+  simCore::calculateGeodeticEndPoint(originLLA, 45*simCore::DEG2RAD, 45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.4535335040, -2.7143754139, 742384.0044007823)));
+  simCore::calculateGeodeticEndPoint(originLLA, 45*simCore::DEG2RAD, -45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.4704367810, -2.6942941087, -663075.6404297417)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 90*simCore::DEG2RAD, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839724357, -2.7925251130, 9.0006337678)));
+  simCore::calculateGeodeticEndPoint(originLLA, 90*simCore::DEG2RAD, 45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3819674117, -2.6853470850, 742298.1740604648)));
+  simCore::calculateGeodeticEndPoint(originLLA, 90*simCore::DEG2RAD, -45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3808529921, -2.6589189645, -663207.0165526336)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 135*simCore::DEG2RAD, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839713211, -2.7925256080, 9.0006337846)));
+  simCore::calculateGeodeticEndPoint(originLLA, 135*simCore::DEG2RAD, 45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3123658956, -2.7186903787, 742394.3779521575)));
+  simCore::calculateGeodeticEndPoint(originLLA, 135*simCore::DEG2RAD, -45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.2943057462, -2.7010093780, -663055.5087756803)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 180*simCore::DEG2RAD, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839708595, -2.7925268032, 9.0006338041)));
+  simCore::calculateGeodeticEndPoint(originLLA, 180*simCore::DEG2RAD, 45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.2839999972, -2.7925268032, 742487.5565864388)));
+  simCore::calculateGeodeticEndPoint(originLLA, 180*simCore::DEG2RAD, -45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.2591349749, -2.7925268032, -662909.8589776233)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 225*simCore::DEG2RAD, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839713211, -2.7925279983, 9.0006337846)));
+  simCore::calculateGeodeticEndPoint(originLLA, 225*simCore::DEG2RAD, 45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3123658956, -2.8663632277, 742394.3779521566)));
+  simCore::calculateGeodeticEndPoint(originLLA, 225*simCore::DEG2RAD, -45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.2943057462, -2.8840442284, -663055.5087756803)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 270*simCore::DEG2RAD, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839724357, -2.7925284934, 9.0006337678)));
+  simCore::calculateGeodeticEndPoint(originLLA, 270*simCore::DEG2RAD, 45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3819674117, -2.8997065214, 742298.1740604648)));
+  simCore::calculateGeodeticEndPoint(originLLA, 270*simCore::DEG2RAD, -45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3808529921, -2.9261346419, -663207.0165526336)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 315*simCore::DEG2RAD, 0, 10, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839735502, -2.7925279983, 9.0006337967)));
+  simCore::calculateGeodeticEndPoint(originLLA, 315*simCore::DEG2RAD, 45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.4535335040, -2.8706781925, 742384.0044007823)));
+  simCore::calculateGeodeticEndPoint(originLLA, 315*simCore::DEG2RAD, -45*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.4704367810, -2.8907594977, -663075.6404297426)));
+
+  simCore::calculateGeodeticEndPoint(originLLA, 0, 90*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839724354, -2.7925268032, 1000009.0000245674)));
+  simCore::calculateGeodeticEndPoint(originLLA, 0, -90*simCore::DEG2RAD, 1000000, endPtLLA);
+  rv += SDK_ASSERT(areLlaEqual(endPtLLA, simCore::Vec3(0.3839724375, -2.7925268032, -999990.9956273828)));
+
+  return rv;
+}
+
 int testCalculateVelOriFromPos(const simCore::Vec3& llaStart, const simCore::Vec3& llaEnd, simCore::CoordinateSystem inputSystem, simCore::CoordinateSystem outputSystem)
 {
   // Figure out the truth values for velocity and FPA based on LLA start/end
@@ -1482,6 +1591,8 @@ int CalculationTest(int argc, char* argv[])
   rv += testCalculateGeodeticOriFromRelOri();
   rv += testRotateEulerAngle();
   rv += testGetClosestPoint();
+  rv += testCalculateGeodeticOffsetPos();
+  rv += testCalculateGeodeticEndPoint();
   rv += testCalculateVelOriFromPos();
   rv += testMidPointLowRes();
   rv += testMidPointHighRes();

@@ -176,10 +176,10 @@ osg::Node* createNode(float s)
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   geom->setUseVertexBufferObjects(true);
-  geom->setVertexArray(verts);
-  geom->setColorArray(colors);
+  geom->setVertexArray(verts.get());
+  geom->setColorArray(colors.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-  geom->addPrimitiveSet(da);
+  geom->addPrimitiveSet(da.get());
 
   osg::ref_ptr<osg::StateSet> ss = geom->getOrCreateStateSet();
   simVis::setLighting(ss.get(), 0);
@@ -200,34 +200,34 @@ osg::Node* createNode(float s)
 void setup(App& app)
 {
   app.root = new simVis::Locator(app.mapSRS);
-  app.rootNode = new simVis::LocatorNode(app.root, createNode(SCALE));
+  app.rootNode = new simVis::LocatorNode(app.root.get(), createNode(SCALE));
   app.rootNode->addChild(new LabelNode("root"));
-  app.graph->addChild(app.rootNode);
+  app.graph->addChild(app.rootNode.get());
 
-  app.posOffset = new simVis::Locator(app.root);
-  app.posOffsetNode = new simVis::LocatorNode(app.posOffset, createNode(SCALE));
+  app.posOffset = new simVis::Locator(app.root.get());
+  app.posOffsetNode = new simVis::LocatorNode(app.posOffset.get(), createNode(SCALE));
   app.posOffsetNode->addChild(new LabelNode("posOffset"));
-  app.graph->addChild(app.posOffsetNode);
+  app.graph->addChild(app.posOffsetNode.get());
 
-  app.oriOffset = new simVis::Locator(app.root);
-  app.oriOffsetNode = new simVis::LocatorNode(app.oriOffset, createNode(SCALE));
+  app.oriOffset = new simVis::Locator(app.root.get());
+  app.oriOffsetNode = new simVis::LocatorNode(app.oriOffset.get(), createNode(SCALE));
   app.oriOffsetNode->addChild(new LabelNode("oriOffset"));
-  app.graph->addChild(app.oriOffsetNode);
+  app.graph->addChild(app.oriOffsetNode.get());
 
-  app.posOriOffset = new simVis::Locator(app.root);
-  app.posOriOffsetNode = new simVis::LocatorNode(app.posOriOffset, createNode(SCALE));
+  app.posOriOffset = new simVis::Locator(app.root.get());
+  app.posOriOffsetNode = new simVis::LocatorNode(app.posOriOffset.get(), createNode(SCALE));
   app.posOriOffsetNode->addChild(new LabelNode("posOriOffset"));
-  app.graph->addChild(app.posOriOffsetNode);
+  app.graph->addChild(app.posOriOffsetNode.get());
 
-  app.resolvedOriOffset = new simVis::ResolvedPositionLocator(app.oriOffset, simVis::Locator::COMP_ALL);
-  app.resolvedOriOffsetNode = new simVis::LocatorNode(app.resolvedOriOffset, createNode(SCALE));
+  app.resolvedOriOffset = new simVis::ResolvedPositionLocator(app.oriOffset.get(), simVis::Locator::COMP_ALL);
+  app.resolvedOriOffsetNode = new simVis::LocatorNode(app.resolvedOriOffset.get(), createNode(SCALE));
   app.resolvedOriOffsetNode->addChild(new LabelNode("resolvedOriOffset"));
-  app.graph->addChild(app.resolvedOriOffsetNode);
+  app.graph->addChild(app.resolvedOriOffsetNode.get());
 
-  app.resolvedPosOriOffset = new simVis::ResolvedPositionLocator(app.posOriOffset, simVis::Locator::COMP_ALL);
-  app.resolvedPosOriOffsetNode = new simVis::LocatorNode(app.resolvedPosOriOffset, createNode(SCALE));
+  app.resolvedPosOriOffset = new simVis::ResolvedPositionLocator(app.posOriOffset.get(), simVis::Locator::COMP_ALL);
+  app.resolvedPosOriOffsetNode = new simVis::LocatorNode(app.resolvedPosOriOffset.get(), createNode(SCALE));
   app.resolvedPosOriOffsetNode->addChild(new LabelNode("resolvedPosOriOffset"));
-  app.graph->addChild(app.resolvedPosOriOffsetNode);
+  app.graph->addChild(app.resolvedPosOriOffsetNode.get());
 }
 
 
@@ -265,8 +265,8 @@ void addSlider(App& app, Grid* g, const std::string& text, osg::ref_ptr<HSliderC
   LabelControl* resetButton = g->setControl(2, r, new LabelControl("0"));
   resetButton->setBackColor(osg::Vec4(.4, .4, .4, 1));
   resetButton->setActiveColor(osg::Vec4(0, 1, 0, 1));
-  resetButton->addEventHandler(new ResetValue(app, slider, sset));
-  g->setControl(3, r, new LabelControl(slider));
+  resetButton->addEventHandler(new ResetValue(app, slider.get(), sset));
+  g->setControl(3, r, new LabelControl(slider.get()));
 }
 
 Control* createUI(App& app)
@@ -275,34 +275,34 @@ Control* createUI(App& app)
   g->setAbsorbEvents(true);
   g->setChildSpacing(5);
 
-  addCheck(app, g, "Root", app.rootCheck, true);
-  addCheck(app, g, "Pos Offset", app.posOffsetCheck, false);
-  addCheck(app, g, "Ori Offset", app.oriOffsetCheck, false);
-  addCheck(app, g, "Pos/Ori Offset", app.posOriOffsetCheck, false);
-  addCheck(app, g, "Ori Offset (resolved)", app.resolvedOriOffsetCheck, false);
-  addCheck(app, g, "Pos/Ori Offset (resolved)", app.resolvedPosOriOffsetCheck, false);
+  addCheck(app, g.get(), "Root", app.rootCheck, true);
+  addCheck(app, g.get(), "Pos Offset", app.posOffsetCheck, false);
+  addCheck(app, g.get(), "Ori Offset", app.oriOffsetCheck, false);
+  addCheck(app, g.get(), "Pos/Ori Offset", app.posOriOffsetCheck, false);
+  addCheck(app, g.get(), "Ori Offset (resolved)", app.resolvedOriOffsetCheck, false);
+  addCheck(app, g.get(), "Pos/Ori Offset (resolved)", app.resolvedPosOriOffsetCheck, false);
 
-  addSlider(app, g, "Lat",  app.lat, -90, 0, 90);
-  addSlider(app, g, "Long", app.lon, -180, 0, 180);
-  addSlider(app, g, "Altitude", app.alt, 0, 0, 500000);
-  addSlider(app, g, "Yaw",  app.yaw, -180, 0, 180);
-  addSlider(app, g, "Pitch", app.pitch, -90, 0, 90);
-  addSlider(app, g, "Roll", app.roll, -180, 0, 180);
-  addSlider(app, g, "X Offset", app.xOffset, -500000, 0, 500000);
-  addSlider(app, g, "Y Offset", app.yOffset, -500000, 0, 500000);
-  addSlider(app, g, "Z Offset", app.zOffset, -500000, 0, 500000);
-  addSlider(app, g, "Yaw Offset", app.yawOffset, -180, 0, 180);
-  addSlider(app, g, "Pitch Offset", app.pitchOffset, -90, 0, 90);
-  addSlider(app, g, "Roll Offset", app.rollOffset, -180, 0, 180);
-  addSlider(app, g, "X Offset (rsv)", app.xOffset2, -500000, 0, 500000);
-  addSlider(app, g, "Y Offset (rsv)", app.yOffset2, -500000, 0, 500000);
-  addSlider(app, g, "Z Offset (rsv)", app.zOffset2, -500000, 0, 500000);
-  addSlider(app, g, "Yaw Offset (rsv)", app.yawOffset2, -180, 0, 180);
-  addSlider(app, g, "Pitch Offset (rsv)", app.pitchOffset2, -90, 0, 90);
-  addSlider(app, g, "Roll Offset (rsv)", app.rollOffset2, -180, 0, 180);
+  addSlider(app, g.get(), "Lat",  app.lat, -90, 0, 90);
+  addSlider(app, g.get(), "Long", app.lon, -180, 0, 180);
+  addSlider(app, g.get(), "Altitude", app.alt, 0, 0, 500000);
+  addSlider(app, g.get(), "Yaw",  app.yaw, -180, 0, 180);
+  addSlider(app, g.get(), "Pitch", app.pitch, -90, 0, 90);
+  addSlider(app, g.get(), "Roll", app.roll, -180, 0, 180);
+  addSlider(app, g.get(), "X Offset", app.xOffset, -500000, 0, 500000);
+  addSlider(app, g.get(), "Y Offset", app.yOffset, -500000, 0, 500000);
+  addSlider(app, g.get(), "Z Offset", app.zOffset, -500000, 0, 500000);
+  addSlider(app, g.get(), "Yaw Offset", app.yawOffset, -180, 0, 180);
+  addSlider(app, g.get(), "Pitch Offset", app.pitchOffset, -90, 0, 90);
+  addSlider(app, g.get(), "Roll Offset", app.rollOffset, -180, 0, 180);
+  addSlider(app, g.get(), "X Offset (rsv)", app.xOffset2, -500000, 0, 500000);
+  addSlider(app, g.get(), "Y Offset (rsv)", app.yOffset2, -500000, 0, 500000);
+  addSlider(app, g.get(), "Z Offset (rsv)", app.zOffset2, -500000, 0, 500000);
+  addSlider(app, g.get(), "Yaw Offset (rsv)", app.yawOffset2, -180, 0, 180);
+  addSlider(app, g.get(), "Pitch Offset (rsv)", app.pitchOffset2, -90, 0, 90);
+  addSlider(app, g.get(), "Roll Offset (rsv)", app.rollOffset2, -180, 0, 180);
 
-  s_helpControl = g;
-  return g;
+  s_helpControl = g.get();
+  return g.release();
 }
 
 //----------------------------------------------------------------------------
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
   viewer->installDebugHandlers();
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   App app;
   app.mapSRS = viewer->getSceneManager()->getMap()->getSRS();

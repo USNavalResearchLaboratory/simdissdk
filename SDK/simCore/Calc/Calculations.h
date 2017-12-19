@@ -329,9 +329,7 @@ namespace simCore
   /**
   * @brief Clamps a point in ECEF space to the surface of the WGS84 ellipsoid.
   *
-  * Find the point on the WGS84 geodetic surface whose geodetic surface normal
-  * points towards the input ECEF point. In other words, project the input point
-  * up or down onto the surface of the WGS84 ellipsoid.
+  * Computes a point referenced to WGS84 whose value is on the geodetic surface.
   * @param ecef ECEF coordinate in meters
   * @return Surface-clamped ECEF value in meters, clamped to WGS84 ellipsoid.
   */
@@ -453,6 +451,16 @@ namespace simCore
   * @param[out] ypr Geodetic Euler orientation (rad/rad/rad)
   */
   SDKCORE_EXPORT void calculateGeodeticOriFromRelOri(const Vec3 &hostYpr, const Vec3 &relYpr, Vec3 &ypr);
+
+  /**
+  * Calculates a geodetic position from the given offset position and orientation vectors
+  *
+  * @param[in ] llaBgnPos LLA(rad/rad/meters) of the origin from which the offset will be calculated
+  * @param[in ] bodyOriOffset Body orientation offset (Y, P, R) in radians
+  * @param[in ] bodyPosOffset Body offset position (X, Y, Z) in meters
+  * @param[out] offsetLla (rad/rad/meters) LLA position of offset
+  */
+  SDKCORE_EXPORT void calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::Vec3& bodyOriOffset, const simCore::Vec3& bodyPosOffset, simCore::Vec3& offsetLla);
 
   /**
   * @brief Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position

@@ -22,14 +22,13 @@
 #ifndef SIMVIS_ENTITY_FAMILY_H
 #define SIMVIS_ENTITY_FAMILY_H
 
-#include "simData/DataStore.h"
+#include <set>
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
-#include <set>
+#include "simData/ObjectId.h"
 
 namespace simVis
 {
-
 class EntityNode;
 class ScenarioManager;
 
@@ -56,7 +55,7 @@ public:
    * @param[in ] scenario Scenario in which to search
    * @param[in ] hostId   ID of host at which to start searching
    */
-  void add(ScenarioManager* scenario, const simData::ObjectId& hostId);
+  void add(const ScenarioManager& scenario, const simData::ObjectId& hostId);
 
   /**
    * Adds an entity to the family if and only if it is hosted by one of the

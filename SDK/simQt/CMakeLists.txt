@@ -32,12 +32,14 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}SettingsModel.h
     ${SIMQT_INC}SettingsProxyModel.h
     ${SIMQT_INC}SliderTimeWidgetBinding.h
+    ${SIMQT_INC}SplashScreen.h
     ${SIMQT_INC}StartupLayoutTask.h
     ${SIMQT_INC}StdStreamConsoleChannel.h
     ${SIMQT_INC}TimeButtons.h
     ${SIMQT_INC}TimeFormatContainer.h
     ${SIMQT_INC}TimeSliderClockBinding.h
     ${SIMQT_INC}TimeWidget.h
+    ${SIMQT_INC}Toast.h
     ${SIMQT_INC}UnitContext.h
 )
 set(SIMQT_HEADERS
@@ -83,6 +85,7 @@ if(TARGET simVis)
         ${SIMQT_INC}CenterEntity.h
         ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityTreeModel.h
+        ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
@@ -134,6 +137,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}SettingsModel.cpp
     ${SIMQT_SRC}SettingsProxyModel.cpp
     ${SIMQT_SRC}SliderTimeWidgetBinding.cpp
+    ${SIMQT_SRC}SplashScreen.cpp
     ${SIMQT_SRC}StartupLayoutManager.cpp
     ${SIMQT_SRC}StartupLayoutTask.cpp
     ${SIMQT_SRC}StdStreamConsoleChannel.cpp
@@ -141,6 +145,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}TimeFormatContainer.cpp
     ${SIMQT_SRC}TimeSliderClockBinding.cpp
     ${SIMQT_SRC}TimeWidget.cpp
+    ${SIMQT_SRC}Toast.cpp
     ${SIMQT_SRC}UnitsComboBox.cpp
     ${SIMQT_SRC}UnitContext.cpp
     ${SIMQT_SRC}WeightedMenuManager.cpp
@@ -173,6 +178,7 @@ if(TARGET simVis)
         ${SIMQT_SRC}CenterEntity.cpp
         ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityTreeModel.cpp
+        ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}QtConversion.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp

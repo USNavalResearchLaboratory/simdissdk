@@ -22,13 +22,13 @@
 #ifndef SIMVIS_RFPROP_POD_PROFILE_DATA_PROVIDER_H
 #define SIMVIS_RFPROP_POD_PROFILE_DATA_PROVIDER_H
 
+#include <memory>
 #include <vector>
-#include "simCore/Common/Memory.h"
 #include "simVis/RFProp/FunctionalProfileDataProvider.h"
 
 namespace simRF
 {
-typedef std::tr1::shared_ptr<std::vector<float> > PODVectorPtr;
+typedef std::shared_ptr<std::vector<float> > PODVectorPtr;
 
 /**
  * PODProfileDataProvider provides 1D loss data (in dB) indexed by probability of detection (POD).

@@ -19,11 +19,18 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/NavigationModes.h"
-#include "osgGA/GUIEventAdapter"
 
-using namespace simVis;
+#include "osgGA/GUIEventAdapter"
+#include "osgEarthUtil/EarthManipulator"
+
+#include "simVis/BoxZoomMouseHandler.h"
+#include "simVis/EarthManipulator.h"
+#include "simVis/View.h"
+#include "simVis/NavigationModes.h"
+
 using namespace osgEarth::Util;
+
+namespace simVis {
 
 /** Degrees for minimum pitch (-90 looks straight down) */
 static const double MINIMUM_PITCH = -90.0;
@@ -52,7 +59,7 @@ NavigationMode::RotateOptions::RotateOptions()
   : EarthManipulator::ActionOptions()
 {
   this->add(EarthManipulator::OPTION_CONTINUOUS, true);
-  this->add(EarthManipulator::OPTION_SCALE_X,  30.0);
+  this->add(EarthManipulator::OPTION_SCALE_X, 30.0);
   this->add(EarthManipulator::OPTION_SCALE_Y, -16.0);
 }
 
@@ -95,10 +102,10 @@ RotatePanNavigationMode::RotatePanNavigationMode(bool enableOverhead, bool watch
     setMinMaxPitch(-90, -90);
 
     // arrow keys => fixed pan
-    bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_Left, 0);
+    bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
     bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
-    bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_Up, 0);
-    bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_Down, 0);
+    bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
+    bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
   }
   else
   {
@@ -133,6 +140,9 @@ RotatePanNavigationMode::RotatePanNavigationMode(bool enableOverhead, bool watch
     NavigationMode::IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // both left-double-click and ctrl-left-click center the camera on the mouse pointer
@@ -160,10 +170,10 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
     setMinMaxPitch(-90, -90);
 
     // arrow keys => fixed pan
-    bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_Left, 0);
+    bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
     bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
-    bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_Up, 0);
-    bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_Down, 0);
+    bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
+    bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
   }
   else
   {
@@ -201,6 +211,9 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
     IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // both left-double-click and ctrl-left-click center the camera on the mouse pointer
@@ -222,10 +235,10 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
     setMinMaxPitch(-90, -90);
 
     // arrow keys => fixed pan
-    bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_Left, 0);
+    bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
     bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
-    bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_Up, 0);
-    bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_Down, 0);
+    bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
+    bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
   }
   else
   {
@@ -261,6 +274,9 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
     IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // both left-double-click and ctrl-left-click center the camera on the mouse pointer
@@ -282,10 +298,10 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
     setMinMaxPitch(-90, -90);
 
     // arrow keys => fixed pan
-    bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_Left, 0);
+    bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
     bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
-    bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_Up, 0);
-    bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_Down, 0);
+    bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
+    bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
   }
   else
   {
@@ -320,6 +336,9 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
     IncrementalFixedZoomOptions incFixedZoomOpt;
     bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
     bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    // bind horizontal scrolling as well, since Qt converts the alt + vertical scroll into a horizontal scroll (and still retains the ALT modifier)
+    bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_RIGHT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
+    bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_LEFT, osgGA::GUIEventAdapter::MODKEY_ALT, incFixedZoomOpt);
   }
 
   // left-click, right-click, left-double-click and ctrl-left-click center the camera on the mouse pointer
@@ -363,7 +382,6 @@ GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
   // Middle mouse
   if (canRotate)
   {
-    EarthManipulator::ActionOptions freeAxis;
     bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
   }
 
@@ -378,19 +396,19 @@ GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
   }
 
   // arrow keys => fixed pan
-  bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_Left, 0);
+  bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
   bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
-  bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_Up, 0);
-  bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_Down, 0);
+  bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
+  bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
 
   // alt + arrow keys = move slower
   EarthManipulator::ActionOptions panSlower;
   panSlower.add(EarthManipulator::OPTION_SCALE_X, 0.5);
   panSlower.add(EarthManipulator::OPTION_SCALE_Y, 0.5);
-  bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_Left, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
+  bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_Left, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
   bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_Right, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
-  bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_Up, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
-  bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_Down, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
+  bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_Up, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
+  bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_Down, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
 
   // shift + arrow = rotate around
   if (canRotate)
@@ -402,24 +420,24 @@ GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
   }
 
   // WASD map to arrow keys
-  bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_A, 0);
+  bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_A, 0);
   bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_D, 0);
-  bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_W, 0);
-  bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_S, 0);
+  bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_W, 0);
+  bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_S, 0);
 
   // WASD pans slower with alt
-  bindKey(EarthManipulator::ACTION_PAN_LEFT,  osgGA::GUIEventAdapter::KEY_A, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
+  bindKey(EarthManipulator::ACTION_PAN_LEFT, osgGA::GUIEventAdapter::KEY_A, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
   bindKey(EarthManipulator::ACTION_PAN_RIGHT, osgGA::GUIEventAdapter::KEY_D, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
-  bindKey(EarthManipulator::ACTION_PAN_UP,    osgGA::GUIEventAdapter::KEY_W, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
-  bindKey(EarthManipulator::ACTION_PAN_DOWN,  osgGA::GUIEventAdapter::KEY_S, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
+  bindKey(EarthManipulator::ACTION_PAN_UP, osgGA::GUIEventAdapter::KEY_W, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
+  bindKey(EarthManipulator::ACTION_PAN_DOWN, osgGA::GUIEventAdapter::KEY_S, osgGA::GUIEventAdapter::MODKEY_ALT, panSlower);
 
   // shift + WASD = rotate around
   if (canRotate)
   {
-    bindKey(EarthManipulator::ACTION_ROTATE_LEFT,  osgGA::GUIEventAdapter::KEY_A, osgGA::GUIEventAdapter::MODKEY_SHIFT);
+    bindKey(EarthManipulator::ACTION_ROTATE_LEFT, osgGA::GUIEventAdapter::KEY_A, osgGA::GUIEventAdapter::MODKEY_SHIFT);
     bindKey(EarthManipulator::ACTION_ROTATE_RIGHT, osgGA::GUIEventAdapter::KEY_D, osgGA::GUIEventAdapter::MODKEY_SHIFT);
-    bindKey(EarthManipulator::ACTION_ROTATE_UP,    osgGA::GUIEventAdapter::KEY_W, osgGA::GUIEventAdapter::MODKEY_SHIFT);
-    bindKey(EarthManipulator::ACTION_ROTATE_DOWN,  osgGA::GUIEventAdapter::KEY_S, osgGA::GUIEventAdapter::MODKEY_SHIFT);
+    bindKey(EarthManipulator::ACTION_ROTATE_UP, osgGA::GUIEventAdapter::KEY_W, osgGA::GUIEventAdapter::MODKEY_SHIFT);
+    bindKey(EarthManipulator::ACTION_ROTATE_DOWN, osgGA::GUIEventAdapter::KEY_S, osgGA::GUIEventAdapter::MODKEY_SHIFT);
   }
 
   // Set min/max bounds
@@ -432,4 +450,53 @@ GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
   setArcViewpointTransitions(true);
   setThrowingEnabled(true);
   setLockAzimuthWhilePanning(false);
+}
+
+BoxZoomNavigationMode::BoxZoomNavigationMode(View* view, bool enableOverhead)
+  : view_(view),
+    mouse_(NULL)
+{
+  EarthManipulator::ActionOptions boxZoomOpts;
+  boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
+  boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
+  mouse_ = new BoxZoomMouseHandler(view->getSceneManager()->getMapNode(), boxZoomOpts);
+  view_->addEventHandler(mouse_);
+
+  // right mouse (or shift left mouse) => globe spin
+  bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+
+  setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
+
+  // scroll wheel => fixed zoom
+  NavigationMode::FixedZoomOptions fixedZoomOpt;
+  bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, 0, fixedZoomOpt);
+  bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, 0, fixedZoomOpt);
+
+  if (enableOverhead)
+  {
+    // middle mouse => continuous zoom
+    ContinuousZoomOptions continuousZoomOpts;
+    bindMouse(EarthManipulator::ACTION_ZOOM, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON, 0, continuousZoomOpts);
+  }
+  else
+  {
+    // arrow keys => fixed rotate
+    bindKey(EarthManipulator::ACTION_ROTATE_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
+    bindKey(EarthManipulator::ACTION_ROTATE_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
+    bindKey(EarthManipulator::ACTION_ROTATE_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
+    bindKey(EarthManipulator::ACTION_ROTATE_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
+
+    // middle mouse => continuous rotate
+    bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON, 0, RotateOptions());
+  }
+
+  setSingleAxisRotation(true);
+}
+
+BoxZoomNavigationMode::~BoxZoomNavigationMode()
+{
+  if (view_.valid())
+    view_->removeEventHandler(mouse_);
+}
+
 }

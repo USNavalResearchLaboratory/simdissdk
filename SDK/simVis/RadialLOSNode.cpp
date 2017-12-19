@@ -19,15 +19,16 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/RadialLOSNode.h"
-#include "simVis/Utils.h"
-#include "simVis/Constants.h"
-#include "simNotify/Notify.h"
-#include "osgEarth/DrapeableNode"
-#include "osgEarth/Terrain"
+#include <cassert>
 #include "osg/Depth"
 #include "osg/Point"
-#include <cassert>
+#include "osgEarth/DrapeableNode"
+#include "osgEarth/Terrain"
+#include "simNotify/Notify.h"
+#include "simVis/Constants.h"
+#include "simVis/osgEarthVersion.h"
+#include "simVis/Utils.h"
+#include "simVis/RadialLOSNode.h"
 
 #define LC "[RadialLOSNode] "
 
@@ -35,12 +36,12 @@ using namespace simVis;
 
 //----------------------------------------------------------------------------
 
-RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode) :
-GeoPositionNode(mapNode),
-visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
-obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
-samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
-active_(false)
+RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
+  : GeoPositionNode(mapNode),
+    visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
+    obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
+    samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
+    active_(false)
 {
   callbackHook_ = new TerrainCallbackHook(this);
 
@@ -51,13 +52,19 @@ active_(false)
   simVis::setLighting(stateSet, 0);
   stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
 
-  osgEarth::DrapeableNode* drapeable = new osgEarth::DrapeableNode();
-  getPositionAttitudeTransform()->addChild(drapeable);
-  drapeable->addChild(geode_);
+  drapeable_ = new osgEarth::DrapeableNode();
+  getPositionAttitudeTransform()->addChild(drapeable_);
+  drapeable_->addChild(geode_);
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
+  drapeable_->setMapNode(mapNode);
+#endif
 
-  mapNode->getTerrain()->addTerrainCallback(callbackHook_);
+  mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 }
 
+RadialLOSNode::~RadialLOSNode()
+{
+}
 
 void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
 {
@@ -65,10 +72,13 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
   if (mapNode == oldMap)
     return;
 
-  oldMap->getTerrain()->removeTerrainCallback(callbackHook_);
-  mapNode->getTerrain()->addTerrainCallback(callbackHook_);
+  oldMap->getTerrain()->removeTerrainCallback(callbackHook_.get());
+  mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 
   GeoPositionNode::setMapNode(mapNode);
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
+  drapeable_->setMapNode(mapNode);
+#endif
 
   // re-apply the position
   setCoordinate(coord_);
@@ -146,13 +156,21 @@ void RadialLOSNode::setAzimuthalResolution(const Angle& value)
 }
 
 void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
-                               osg::Node*                 patch)
+                                    osg::Node*                 patch)
 {
-  if (getMapNode() && bound_.intersects(extent.getBoundingGeoCircle()))
+  if (getMapNode())
   {
-    if (los_.update(getMapNode(), extent, patch))
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
+    osgEarth::GeoCircle circle = extent.computeBoundingGeoCircle();
+#else
+    const osgEarth::GeoCircle& circle = extent.getBoundingGeoCircle();
+#endif
+    if (bound_.intersects(circle))
     {
-      refreshGeometry_();
+      if (los_.update(getMapNode(), extent, patch))
+      {
+        refreshGeometry_();
+      }
     }
   }
 }

@@ -22,14 +22,12 @@
 #ifndef SIMVIS_PLATFORM_AZ_EL_VIEW_TOOL_H
 #define SIMVIS_PLATFORM_AZ_EL_VIEW_TOOL_H
 
+#include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
-#include "simVis/Entity.h"
 #include "simVis/EntityFamily.h"
-#include "simVis/Tool.h"
 #include "simVis/TargetDelegation.h"
-
-#include <osg/ref_ptr>
-#include <osg/observer_ptr>
+#include "simVis/Tool.h"
+#include "simVis/Types.h"
 
 namespace osg {
   class Geode;
@@ -37,7 +35,7 @@ namespace osg {
 
 namespace simVis
 {
-
+class LocatorNode;
 class ScenarioManager;
 class HorizonGeoFence;
 class TargetDelegation;
@@ -53,7 +51,7 @@ public:
    * Constructs a new az/el view tool.
    * @param[in ] host View will center on this host.
    */
-  PlatformAzimElevViewTool(EntityNode* host);
+  explicit PlatformAzimElevViewTool(EntityNode* host);
 
   /**
    * Maximum range of the plot.
@@ -93,24 +91,24 @@ public:
 public: // ScenarioTool
 
   /** @see ScenarioTool::onInstall() */
-  void onInstall(ScenarioManager* scenario);
+  virtual void onInstall(const ScenarioManager& scenario);
 
   /** @see ScenarioTool::onUninstall() */
-  void onUninstall(ScenarioManager* scenario);
+  virtual void onUninstall(const ScenarioManager& scenario);
 
   /** @see ScenarioTool::onEntityAdd() */
-  void onEntityAdd(ScenarioManager* scenario, EntityNode* entity);
+  virtual void onEntityAdd(const ScenarioManager& scenario, EntityNode* entity);
 
   /** @see ScenarioTool::onEntityRemove() */
-  void onEntityRemove(ScenarioManager* scenario, EntityNode* entity);
+  virtual void onEntityRemove(const ScenarioManager& scenario, EntityNode* entity);
 
   /** @see ScenarioTool::onUpdate() */
-  void onUpdate(ScenarioManager* scenario, double timestamp, const EntityVector& updates);
+  virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
 
 public: // Tool
 
   // returns the node to display in the scenario graph
-  osg::Node* getNode() const { return root_.get(); }
+  osg::Node* getNode() const;
 
 public: // internal
 

@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osgDB/ReadFile"
 #include "simCore/Calc/Interpolation.h"
 #include "simNotify/Notify.h"
 #include "simData/LimitData.h"
@@ -96,7 +97,7 @@ public:
   }
 
   /** Removes the burns from storage when the entity is removed from data store */
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     storage_.removeBurnsForPlatform_(removedId);
   }
@@ -169,7 +170,7 @@ void RocketBurnStorage::update(double time)
   {
     // get the data appropriate for time
     const Update& data = allData_[i->first].dataForTime(time);
-    simVis::RocketBurn* rb = i->second;
+    simVis::RocketBurn* rb = i->second.get();
     rb->update(data.shapeData);
     // update position only if rb data is valid (otherwise update has turned rb off)
     if (data.shapeData.length != 0)

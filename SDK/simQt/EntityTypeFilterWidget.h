@@ -24,7 +24,7 @@
 
 #include <set>
 #include <QWidget>
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 
 class Ui_EntityTypeFilter;
 
@@ -38,19 +38,19 @@ namespace simQt {
    Q_OBJECT;
   public:
     /** Constructor */
-    EntityTypeFilterWidget(QWidget* parent = NULL, unsigned int types = simData::DataStore::ALL);
+    EntityTypeFilterWidget(QWidget* parent = NULL, unsigned int types = simData::ALL);
 
     /** Destructor */
     virtual ~EntityTypeFilterWidget();
 
     /**
      * Return a bit mask of currently selected entity types
-     * @return unsigned int mask of simData::DataStore::ObjectType
+     * @return unsigned int mask of simData::ObjectType
      */
     unsigned int getSelections() const;
 
     /** Retrieve the currently selected entity types in a std::set. */
-    std::set<simData::DataStore::ObjectType> getSelectionsSet() const;
+    std::set<simData::ObjectType> getSelectionsSet() const;
 
   public slots:
     /**
@@ -60,7 +60,7 @@ namespace simQt {
     void setSelections(unsigned int types);
 
     /** Alternative signature to setSelections that uses a set */
-    void setSelections(const std::set<simData::DataStore::ObjectType>& types);
+    void setSelections(const std::set<simData::ObjectType>& types);
 
   signals:
     /** Emits a bit mask of the new entity types selected, sent out whenever the GUI is changed */

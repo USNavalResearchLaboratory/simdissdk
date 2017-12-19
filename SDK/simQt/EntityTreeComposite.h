@@ -27,7 +27,7 @@
 #include <QLayout>
 #include <QAbstractItemView>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simQt/Settings.h"
 
 class QCloseEvent;
@@ -227,6 +227,11 @@ private:
 
   class ButtonActions;
   std::vector<ButtonActions*> buttonActions_;
+
+  /// Whether or not to use the entity icons, vs the names
+  bool useEntityIcons_;
+  /// If true, a call to setUseEntityIcons() was explicitly made by caller
+  bool useEntityIconsSet_;
 };
 
 }

@@ -332,7 +332,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
         // there is no near face, add index to origin/zero point
         outline->setElement(numPointsX, 0);
       }
-      outlineGeom->addPrimitiveSet(outline);
+      outlineGeom->addPrimitiveSet(outline.get());
     }
 
     // verticals of the gate face outline
@@ -351,11 +351,11 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
       }
       // assertion fail indicates that algorithm for outline generation has changed, check that reserve matches actual usage
       assert(farOutline->size() == numPointsZ);
-      outlineGeom->addPrimitiveSet(farOutline);
+      outlineGeom->addPrimitiveSet(farOutline.get());
       if (hasNear)
       {
         assert(nearOutline->size() == numPointsZ);
-        outlineGeom->addPrimitiveSet(nearOutline);
+        outlineGeom->addPrimitiveSet(nearOutline.get());
       }
     }
   }
@@ -403,7 +403,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
         farFaceStrip->setElement(elementIndex, farFaceOffset + rightX + z);
         farFaceStrip->setElement(elementIndex + 1, farFaceOffset + leftX + z);
       }
-      faceGeom->addPrimitiveSet(farFaceStrip);
+      faceGeom->addPrimitiveSet(farFaceStrip.get());
     }
 
     // the near face is drawn separately to mitigate near/far face artifacts
@@ -424,7 +424,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           nearFaceStrip->setElement(elementIndex, nearFaceOffset + leftX + z);
           nearFaceStrip->setElement(elementIndex + 1, nearFaceOffset + rightX + z);
         }
-        faceGeom->addPrimitiveSet(nearFaceStrip);
+        faceGeom->addPrimitiveSet(nearFaceStrip.get());
       }
     }
   }
@@ -473,7 +473,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
   }
 
@@ -511,7 +511,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
   }
 
@@ -550,7 +550,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
   }
 
@@ -585,7 +585,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           strip->setElement(2 * q + i, vertexArray->size() - 1);
         }
       }
-      faceGeom->addPrimitiveSet(strip);
+      faceGeom->addPrimitiveSet(strip.get());
     }
 
     // if either assert fails, vertex counts in cone no longer match expected/reserved count; vector reserve calls must be updated to match changes to cone vertex generation
@@ -730,7 +730,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     // add face to the geometry
     // if assert fails, check that elsPerSlice still represents the number of vertices that are added
     assert(farWedge->size() == elsPerSlice);
-    geom->addPrimitiveSet(farWedge);
+    geom->addPrimitiveSet(farWedge.get());
   }
 
   // the near face geometry is created separately to mitigate near/far face artifacts
@@ -758,7 +758,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       // add each face to the geometry
       // if assert fails, check that elsPerSlice still represents the number of vertices that are added
       assert(nearWedge->size() == elsPerSlice);
-      geom->addPrimitiveSet(nearWedge);
+      geom->addPrimitiveSet(nearWedge.get());
     }
   }
 
@@ -841,7 +841,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
           vptr++;
         }
       }
-      geom->addPrimitiveSet(side);
+      geom->addPrimitiveSet(side.get());
     }
 
     // asserting that we used all the vertices we expected to
@@ -923,10 +923,11 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
 
 void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
 {
-  osg::Drawable* geom = SVFactory::solidGeometry_(xform);
+  // only the solid geometry can be stippled
+  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
-  if (geom == NULL)
+  if (geom == NULL || geom->empty())
     return;
   osg::StateSet* stateSet = geom->getOrCreateStateSet();
 
@@ -944,10 +945,10 @@ void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
 void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
 {
   // lighting is only applied to the solid geometry
-  osg::Drawable* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
-  if (geom == NULL)
+  if (geom == NULL || geom->empty())
     return;
 
   osg::StateSet* stateSet = geom->getOrCreateStateSet();
@@ -959,10 +960,10 @@ void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
 void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
 {
   // blending is only applied to the solid geometry
-  osg::Drawable* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
-  if (geom == NULL)
+  if (geom == NULL || geom->empty())
     return;
 
   osg::StateSet* stateSet = geom->getOrCreateStateSet();
@@ -1022,11 +1023,13 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
 {
   nearRange = simCore::sdkMax(1.0f, nearRange);
 
-  osg::Geometry*  geom = SVFactory::solidGeometry_(xform);
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(geom);
-  if (geom == NULL)
+  osg::Geometry* geom = SVFactory::validGeometry_(xform);
+  if (geom == NULL || geom->empty())
+  {
+    // Assertion failure means internal consistency error, or caller has inconsistent input
+    assert(0);
     return;
+  }
 
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1054,11 +1057,13 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
 {
   farRange = simCore::sdkMax(1.0f, farRange);
 
-  osg::Geometry*  geom = SVFactory::solidGeometry_(xform);
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(geom);
-  if (geom == NULL)
+  osg::Geometry* geom = SVFactory::validGeometry_(xform);
+  if (geom == NULL || geom->empty())
+  {
+    // Assertion failure means internal consistency error, or caller has inconsistent input
+    assert(0);
     return;
+  }
 
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   // Assertion failure means internal consistency error, or caller has inconsistent input
@@ -1084,11 +1089,13 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
 
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(geom);
-  if (geom == NULL)
+  osg::Geometry* geom = SVFactory::validGeometry_(xform);
+  if (geom == NULL || geom->empty())
+  {
+    // Assertion failure means internal consistency error, or caller has inconsistent input
+    assert(0);
     return;
+  }
 
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
@@ -1167,12 +1174,13 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
 
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
-  osg::Geometry*  geom = SVFactory::solidGeometry_(xform);
-  // Assertion failure means internal consistency error, or caller has inconsistent input
-  assert(geom);
-  if (geom == NULL)
+  osg::Geometry* geom = SVFactory::validGeometry_(xform);
+  if (geom == NULL || geom->empty())
+  {
+    // Assertion failure means internal consistency error, or caller has inconsistent input
+    assert(0);
     return;
-
+  }
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
@@ -1269,3 +1277,27 @@ osg::Geometry* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
   return geode->getDrawable(1)->asGeometry();
 }
 
+// if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
+osg::Geometry* SVFactory::validGeometry_(osg::MatrixTransform* xform)
+{
+  if (xform == NULL || xform->getNumChildren() == 0)
+    return NULL;
+  osg::Geode* geode = xform->getChild(0)->asGeode();
+  if (geode == NULL || geode->getNumDrawables() == 0)
+    return NULL;
+
+  // a SphericalGeometry geode can have up to two geometries, but the first may be empty in some cases (pyramid in outline-only fill mode)
+  osg::Geometry* geom = geode->getDrawable(0)->asGeometry();
+  if (geom->empty() && geode->getNumDrawables() > 1)
+    geom = geode->getDrawable(1)->asGeometry();
+
+  if (!geom->empty())
+  {
+    // if a geometry is non-empty, it must have vertex array, user data and normal arrays
+    assert(geom->getVertexArray());
+    assert(geom->getUserData());
+    assert(geom->getNormalArray());
+    return geom;
+  }
+  return NULL;
+}

@@ -28,8 +28,10 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
+#include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/Parser.h"
@@ -233,6 +235,12 @@ void Utils::configureStyleForClipping(Style& style)
   style.getOrCreate<RenderSymbol>()->order()->setLiteral(BIN_GOG_FLAT);
   style.getOrCreate<RenderSymbol>()->renderBin() = BIN_GLOBAL_SIMSDK;
   style.getOrCreate<RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
+}
+
+std::string Utils::decodeAnnotation(const std::string& anno)
+{
+  const std::string r1 = simCore::StringUtils::substitute(anno, "_", " ");
+  return simCore::StringUtils::substitute(r1, "\\n", "\n");
 }
 
 UnitsState::UnitsState()

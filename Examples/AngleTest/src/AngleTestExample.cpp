@@ -128,8 +128,8 @@ static Control* createHelp()
   lon->setSize(300, 35);
   lon->addEventHandler(new SetUpdate());
 
-  s_helpControl = g;
-  return g;
+  s_helpControl = g.get();
+  return g.release();
 }
 
 //----------------------------------------------------------------------------
@@ -148,9 +148,9 @@ int main(int argc, char **argv)
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
-  viewer->setMap(map);
+  viewer->setMap(map.get());
 
   /// data source which will provide positions for the platform
   /// based on the simulation time.

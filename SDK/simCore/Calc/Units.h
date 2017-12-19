@@ -29,7 +29,7 @@
 
 // Units code can cause strange behavior on newer versions of g++.  Mark
 // the static member values as hidden to avoid the symbol lookup problems.
-#if defined(__GNUC__) && defined(SIMDIS_SDKCore_LIB_EXPORT_STATIC)
+#if defined(__GNUC__) && defined(simCore_LIB_EXPORT_STATIC)
 #define ATTRIB_HIDDEN __attribute((visibility("hidden")))
 #else
 #define ATTRIB_HIDDEN

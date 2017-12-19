@@ -24,11 +24,9 @@
 
 #include <vector>
 #include <string>
-#include "osgEarthUtil/ObjectLocator"
+#include "osg/ref_ptr"
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
-#include "simCore/Time/TimeClass.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
 #include "simVis/RFProp/Profile.h"
@@ -36,9 +34,9 @@
 #include "simVis/RFProp/PODProfileDataProvider.h"
 #include "simVis/RFProp/RadarParameters.h"
 
-namespace osgEarth {
-  class Map;
-}
+namespace osgEarth { class Map; }
+namespace simCore { class TimeStamp; }
+namespace simVis { class LocatorNode; }
 
 namespace simRF
 {
@@ -505,7 +503,7 @@ private:
   osg::ref_ptr<simRF::ProfileManager> profileManager_;
 
   /// locator node to which display is attached, and which attaches display to scene graph
-  osg::ref_ptr<osgEarth::Util::ObjectLocatorNode> locator_;
+  osg::ref_ptr<simVis::LocatorNode> locator_;
 
   /// parent node in the scene graph of our locator
   osg::observer_ptr<osg::Group> parent_;

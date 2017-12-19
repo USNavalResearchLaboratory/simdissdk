@@ -458,7 +458,7 @@ private:
 // from the epoch date  of the model,  computing data for a date that
 // exceeds  the life of the model  may produce  inaccurate results.
 // Therefore,  when a date is entered that exceeds five years from the
-// epoch date, an exception is rasied.
+// epoch date, an exception is raised.
 
 // // // // // // // // // // // // // // // // // // // // // // //
 

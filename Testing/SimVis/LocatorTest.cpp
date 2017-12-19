@@ -164,10 +164,10 @@ int LocatorTest(int argc, char* argv[])
   // Create a SRS on WGS84
   osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
   // Allocate a Locator for testing
-  osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(srs);
+  osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(srs.get());
 
   // Run tests
-  rv += testGetLocatorPositionOrientation(loc);
+  rv += testGetLocatorPositionOrientation(loc.get());
 
   return rv;
 }

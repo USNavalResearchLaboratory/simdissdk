@@ -100,7 +100,7 @@ void PlatformPopupManipulator::setShowInCorner(bool showInCorner)
 
 simVis::PopupHandler* PlatformPopupManipulator::popupHandler() const
 {
-  return popupHandler_;
+  return popupHandler_.get();
 }
 
 int PlatformPopupManipulator::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)

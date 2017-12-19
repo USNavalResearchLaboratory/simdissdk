@@ -97,11 +97,12 @@ std::string expandEnv(const std::string& val)
     std::string firstPart = "";
     if (start > 0)
       firstPart = value.substr(0, start);
-    std::string middlePart = value.substr(start + 2, end - start - 2);
-    std::string endPart = value.substr(end + 1);
+    const std::string middlePart = value.substr(start + 2, end - start - 2);
+    const std::string endPart = value.substr(end + 1);
     rv = firstPart;
-    if (getenv(middlePart.c_str()) != NULL)
-      rv += getenv(middlePart.c_str());
+    const std::string envVar = simCore::getEnvVar(middlePart);
+    if (!envVar.empty())
+      rv += envVar;
     else // Retain the environment variable part, as per review 546
       rv += "$(" + middlePart + ")";
     rv += endPart;
@@ -126,6 +127,16 @@ std::string toNativeSeparators(const std::string& path)
   const std::string GOOD_SLASH = "/";
 #endif
   std::string fixedDirection = StringUtils::substitute(path, BAD_SLASH, GOOD_SLASH);
+
+  // Duplicate slashes at the start indicate a UNC path so the duplication should NOT be removed
+  std::string prefix;
+  if (fixedDirection.substr(0, 2 * GOOD_SLASH.size()) == GOOD_SLASH + GOOD_SLASH)
+  {
+    prefix = GOOD_SLASH + GOOD_SLASH;
+    fixedDirection = fixedDirection.substr(2 * GOOD_SLASH.size());
+  }
+
+  // Now remove duplicates from the rest of the path
   std::string noDuplicates;
   do
   {
@@ -133,7 +144,17 @@ std::string toNativeSeparators(const std::string& path)
     // Iteratively replace all instances of double slash with single slash
     fixedDirection = StringUtils::substitute(fixedDirection, GOOD_SLASH + GOOD_SLASH, GOOD_SLASH);
   } while (noDuplicates != fixedDirection);
-  return noDuplicates;
+
+  // Add prefix, if any
+  return prefix + noDuplicates;
+}
+
+std::string getEnvVar(const std::string &env)
+{
+  const char *cenv = getenv(env.c_str());
+  if (!cenv)
+    return "";
+  return StringUtils::trimRight(cenv, "\r");
 }
 
 } // namespace simCore

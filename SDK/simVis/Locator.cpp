@@ -21,89 +21,13 @@
  */
 #include "simNotify/Notify.h"
 #include "simCore/Calc/CoordinateConverter.h"
-#include "simCore/Calc/Calculations.h"
-#include "simVis/Locator.h"
 #include "simVis/Utils.h"
-#include "simVis/OverheadMode.h"
+#include "simVis/Locator.h"
 
 #define LC "[Locator] "
 
-using namespace simVis;
-using namespace osgEarth;
-
-//--------------------------------------------------------------------------
-
-namespace
+namespace simVis
 {
-  /**
-   * Converts a SIMDIS ECEF orientation (psi/theta/phi) into an OSG
-   * ENU rotation matrix. The SIMDIS d3EulertoQ() method results in a
-   * NED orientation frame. We want ENU so we have to fix the conversion.
-   */
-  void ecefEulerToEnuRotMatrix(const simCore::Vec3& in, osg::Matrix& out)
-  {
-    // first convert the ECEF orientation to a 3x3 matrix:
-    double ned_dcm[3][3];
-    simCore::d3EulertoDCM(in, ned_dcm);
-
-    // NED/ENU swapping matrix:
-    // http://www.ecsutton.ece.ufl.edu/ens/handouts/quaternions.pdf
-    const double ned2enu[3][3] =
-    {
-      { 0.0, 1.0,  0.0 },
-      { 1.0, 0.0,  0.0 },
-      { 0.0, 0.0, -1.0 }
-    };
-
-    double enu_dcm[3][3];
-    simCore::d3MMmult(ned2enu, ned_dcm, enu_dcm);
-
-    // poke the values into the OSG matrix:
-    out.set(
-      enu_dcm[0][0], enu_dcm[0][1], enu_dcm[0][2], 0.0,
-      enu_dcm[1][0], enu_dcm[1][1], enu_dcm[1][2], 0.0,
-      enu_dcm[2][0], enu_dcm[2][1], enu_dcm[2][2], 0.0,
-                0.0,           0.0,           0.0, 1.0);
-  }
-
-  /**
-   * Converts an ENU (OSG style) rotation matrix into SIMDIS
-   * (NED frame) global Euler angles -- this is the inverse of
-   * the method ecefEulerToEnuRotMatrix().
-   */
-  void enuRotMatrixToEcefEuler(const osg::Matrix& in, simCore::Vec3& out)
-  {
-      // direction cosine matrix in ENU frame
-      double enu_dcm[3][3] = {
-          { in(0,0), in(0,1), in(0,2) },
-          { in(1,0), in(1,1), in(1,2) },
-          { in(2,0), in(2,1), in(2,2) }
-      };
-
-      // enu-ned swapper
-      const double swapEnuNed[3][3] = {
-          { 0.0, 1.0,  0.0 },
-          { 1.0, 0.0,  0.0 },
-          { 0.0, 0.0, -1.0 }
-      };
-
-      // convert DCM to NED frame:
-      double ned_dcm[3][3];
-      simCore::d3MMmult(swapEnuNed, enu_dcm, ned_dcm);
-
-      // and into Euler angles.
-      simCore::d3DCMtoEuler(ned_dcm, out);
-  }
-
-  void localEulerToRotMatrix(const simCore::Vec3& in_enu_rh, osg::Matrix& out)
-  {
-    // Convert the ENU/RightHanded rotations to a rotation matrix.
-    osg::Quat oq = Math::eulerRadToQuat(in_enu_rh.yaw(), in_enu_rh.pitch(), in_enu_rh.roll());
-    out.makeRotate(oq);
-  }
-}
-
-//--------------------------------------------------------------------------
 
 Locator::Locator(const osgEarth::SpatialReference* mapSRS) :
   mapSRS_(mapSRS),
@@ -385,7 +309,6 @@ bool Locator::inherits_(unsigned int mask) const
   return (componentsToInherit_ & mask) != COMP_NONE;
 }
 
-
 bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::CoordinateSystem& coordsys) const
 {
   if (!out_position)
@@ -401,26 +324,29 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
   osg::Matrix m;
   if (!getLocatorMatrix(m))
     return false;
-
   const osg::Vec3d& v = m.getTrans();
   out_position->set(v.x(), v.y(), v.z());
-  // Fall through to return if ECEF
+
+  if (coordsys == simCore::COORD_SYS_ECEF)
+    return true;
   if (coordsys == simCore::COORD_SYS_LLA)
   {
     // calculate and cache the lla position to avoid repeated expensive recalculation
     simCore::CoordinateConverter::convertEcefToGeodeticPos(*out_position, llaPositionCache_);
     *out_position = llaPositionCache_;
     sync(llaPositionCacheRevision_);
+    return true;
   }
-  else if (coordsys != simCore::COORD_SYS_ECEF)
+  if (coordsys == simCore::COORD_SYS_ECI)
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, getElapsedEciTime());
     simCore::Coordinate out;
-    simCore::CoordinateConverter conv;
-    conv.convert(in, out, coordsys);
+    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
     *out_position = out.position();
+    return true;
   }
-  return true;
+  // unsupported coordsys
+  return false;
 }
 
 bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, const simCore::CoordinateSystem& coordsys) const
@@ -442,9 +368,10 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
 
   const osg::Vec3d& v = m.getTrans();
   out_position->set(v.x(), v.y(), v.z());
+  simVis::Math::enuRotMatrixToEcefEuler(m, *out_orientation);
 
-  enuRotMatrixToEcefEuler(m, *out_orientation);
-  // Fall through to return if ECEF
+  if (coordsys == simCore::COORD_SYS_ECEF)
+    return true;
   if (coordsys == simCore::COORD_SYS_LLA)
   {
     // calculate and cache the lla position and orientation to avoid repeated expensive recalculation
@@ -457,17 +384,19 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
     sync(llaOrientationCacheRevision_);
     *out_position = llaPositionCache_;
     *out_orientation = llaOrientationCache_;
+    return true;
   }
-  else if (coordsys != simCore::COORD_SYS_ECEF)
+  if (coordsys == simCore::COORD_SYS_ECI)
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation, getElapsedEciTime());
     simCore::Coordinate out;
-    simCore::CoordinateConverter conv;
-    conv.convert(in, out, coordsys);
+    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
     *out_position = out.position();
     *out_orientation = out.orientation();
+    return true;
   }
-  return true;
+  // unsupported coordsys
+  return false;
 }
 
 void Locator::applyOffsets_(osg::Matrixd& output, unsigned int comps) const
@@ -573,7 +502,7 @@ bool Locator::getOrientation_(osg::Matrixd& rot, unsigned int comps) const
     if ((comps & COMP_ORIENTATION) == COMP_ORIENTATION)
     {
       // easy, use all orientation components
-      ecefEulerToEnuRotMatrix(ecefCoord_.orientation(), rot);
+      simVis::Math::ecefEulerToEnuRotMatrix(ecefCoord_.orientation(), rot);
       return true;
     }
     else
@@ -594,7 +523,7 @@ bool Locator::getOrientation_(osg::Matrixd& rot, unsigned int comps) const
 
       simCore::Coordinate ecef;
       conv.convert(lla, ecef, simCore::COORD_SYS_ECEF);
-      ecefEulerToEnuRotMatrix(ecef.orientation(), rot);
+      simVis::Math::ecefEulerToEnuRotMatrix(ecef.orientation(), rot);
       return true;
     }
   }
@@ -713,128 +642,4 @@ bool ResolvedPositionLocator::getOrientation_(osg::Matrixd& ori, unsigned int co
 {
   return false;
 }
-
-//---------------------------------------------------------------------------
-
-LocatorNode::LocatorNode()
-  : locatorCallback_(NULL),
-    overheadModeHint_(false)
-{
-  //nop
-}
-
-LocatorNode::LocatorNode(Locator* locator)
-  : locatorCallback_(NULL),
-    overheadModeHint_(false)
-{
-  setLocator(locator);
-}
-
-LocatorNode::LocatorNode(const LocatorNode& rhs, const osg::CopyOp& op)
-  : osg::MatrixTransform(rhs, op),
-    matrixRevision_(rhs.matrixRevision_),
-    locatorCallback_(NULL),
-    overheadModeHint_(rhs.overheadModeHint_)
-{
-  setLocator(locator_.get()); // to update the trav count
-}
-
-LocatorNode::LocatorNode(Locator* locator, osg::Node* child)
-  : locatorCallback_(NULL),
-    overheadModeHint_(false)
-{
-  setLocator(locator);
-  if (child)
-    this->addChild(child);
-}
-
-LocatorNode::~LocatorNode()
-{
-  if (locator_.valid() && locatorCallback_.valid())
-    locator_->removeCallback(locatorCallback_);
-}
-
-void LocatorNode::setLocator(Locator* locator)
-{
-  if (locator_.valid() && locatorCallback_.valid())
-    locator_->removeCallback(locatorCallback_);
-
-  locator_ = locator;
-  matrixRevision_.reset();
-
-  if (locator)
-  {
-    locatorCallback_ = new SyncLocatorCallback<LocatorNode>(this);
-    locator->addCallback(locatorCallback_);
-    syncWithLocator();
-  }
-}
-
-void LocatorNode::syncWithLocator()
-{
-  if (locator_.valid() && locator_->outOfSyncWith(matrixRevision_))
-  {
-    osg::Matrix matrix;
-
-    if (locator_->getLocatorMatrix(matrix) )
-    {
-      this->setMatrix(matrix);
-      locator_->sync(matrixRevision_);
-    }
-  }
-}
-
-
-bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* nv) const
-{
-  osg::Matrix matrix = getMatrix();
-
-  // It is possible that nv is NULL if calling computeBound(), which can happen during intersection
-  // visitor processing.  To address this, the overheadModeHint_ can be set.  If set and the Node
-  // visitor is NULL, then we do overhead mode calculations for bounding area.
-  if (simVis::OverheadMode::isActive(nv) || (overheadModeHint_ && !nv))
-  {
-    simCore::Vec3 p( matrix(3,0), matrix(3,1), matrix(3,2) );
-    p = simCore::clampEcefPointToGeodeticSurface(p);
-    matrix.setTrans(p.x(), p.y(), p.z());
-  }
-
-  out.preMult(matrix);
-
-  return true;
-}
-
-void LocatorNode::setOverheadModeHint(bool overheadMode)
-{
-  if (overheadMode != overheadModeHint_)
-  {
-    overheadModeHint_ = overheadMode;
-    dirtyBound();
-  }
-}
-
-bool LocatorNode::overheadModeHint() const
-{
-  return overheadModeHint_;
-}
-
-//---------------------------------------------------------------------------
-
-SetOverheadModeHintVisitor::SetOverheadModeHintVisitor(bool hint, TraversalMode tm)
-  : NodeVisitor(tm),
-    hint_(hint)
-{
-}
-
-void SetOverheadModeHintVisitor::setOverheadModeHint(bool hint)
-{
-  hint_ = hint;
-}
-
-void SetOverheadModeHintVisitor::apply(osg::MatrixTransform& mx)
-{
-  simVis::LocatorNode* locatorNode = dynamic_cast<simVis::LocatorNode*>(&mx);
-  if (locatorNode)
-    locatorNode->setOverheadModeHint(hint_);
-  traverse(mx);
 }

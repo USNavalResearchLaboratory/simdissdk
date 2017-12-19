@@ -209,9 +209,6 @@ set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
 include(CMakeModules/ImportSQLITE3.cmake)
 
 
-# --- shared_ptr --------------------------------
-include(CMakeModules/ImportTR1SharedPtr.cmake)
-
 # subprojects
 add_subdirectory(SDK)
 option(BUILD_SDK_EXAMPLES "Build SIMDIS SDK Example Applications" ON)

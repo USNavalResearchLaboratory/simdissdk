@@ -79,6 +79,10 @@ namespace {
 }
 namespace simVis
 {
+// AntennaNode hierarchy:
+//  this (MatrixTransform) - responsible for antenna visual scaling
+//      Geode - contains the antenna geometry
+//        Geometry - contains the antenna primitives
 
 AntennaNode::AntennaNode(const osg::Quat& rot)
   : antennaPattern_(NULL),
@@ -91,6 +95,7 @@ AntennaNode::AntennaNode(const osg::Quat& rot)
     max_(-HUGE_VAL)
 {
   colorUtils_ = new ColorUtils(0.3);
+  setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
 AntennaNode::~AntennaNode()
@@ -163,7 +168,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
     // load the new pattern file
     delete(antennaPattern_);
     // Frequency must be > 0, if <= 0 use default value
-    double freq = prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY;
+    const double freq = prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY;
     antennaPattern_ = simCore::loadPatternFile(patternFile_, freq);
     loadedOK_ = (antennaPattern_ != NULL);
   }
@@ -188,6 +193,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   if (!drawAntennaPattern)
   {
     removeChildren(0, getNumChildren());
+    setNodeMask(simVis::DISPLAY_MASK_NONE);
   }
   else if (requiresRedraw)
   {
@@ -205,6 +211,8 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
   {
     // this is a guard on the use of oldPrefs; if assert fails, check that !lastPrefs_.isSet() forces requiresRebuild to true
     assert(lastPrefs_.isSet());
+    // a change in draw state should be handled in two if blocks above
+    assert(getNodeMask() == simVis::DISPLAY_MASK_BEAM);
     if (PB_FIELD_CHANGED(oldPrefs, newPrefs, shaded))
       updateLighting_(prefs.shaded());
     if (PB_FIELD_CHANGED(oldPrefs, newPrefs, blended))
@@ -263,7 +271,7 @@ float AntennaNode::PatternGain(float azim, float elev, simCore::PolarityType pol
 float AntennaNode::ComputeRadius_(float azim, float elev, simCore::PolarityType polarity, osg::Vec3f &p) const
 {
   // values returned from PatternGain are in dB
-  float gain = PatternGain(azim, elev, polarity);
+  const float gain = PatternGain(azim, elev, polarity);
   float radius;
 
   if (gain < simCore::SMALL_DB_COMPARE)
@@ -310,12 +318,9 @@ void AntennaNode::render_()
 
   removeChildren(0, getNumChildren());
 
-  osg::Geometry* antGeom = new osg::Geometry();
+  osg::ref_ptr<osg::Geometry> antGeom = new osg::Geometry();
   antGeom->setDataVariance(osg::Object::DYNAMIC);
   antGeom->setUseVertexBufferObjects(true);
-
-  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-  geode->addDrawable(antGeom);
 
   osg::Vec3Array* verts = new osg::Vec3Array();
   antGeom->setVertexArray(verts);
@@ -618,6 +623,9 @@ void AntennaNode::render_()
       antGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, lastCount, verts->size() - lastCount));
     }
   } // end of (hRange < T_PI)
+
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+  geode->addDrawable(antGeom);
 
   // optimize the geode:
   osgEarth::Symbology::MeshConsolidator::run(*geode);

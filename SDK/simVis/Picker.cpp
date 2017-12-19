@@ -33,6 +33,7 @@
 #include "simVis/View.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
 #include "simVis/Shaders.h"
 #include "simVis/Picker.h"
 
@@ -40,6 +41,7 @@ namespace simVis {
 
 static const std::string SDK_PICK_HIGHLIGHT_OBJECTID = "sdk_pick_highlight_objectid";
 static const std::string SDK_PICK_HIGHLIGHT_ENABLED = "sdk_pick_highlight_enabled";
+static const unsigned int DEFAULT_PICK_MASK = simVis::DISPLAY_MASK_PLATFORM | simVis::DISPLAY_MASK_PLATFORM_MODEL;
 
 /////////////////////////////////////////////////////////////////
 
@@ -75,7 +77,7 @@ void PickerHighlightShader::installShaderProgram(bool defaultEnabled)
 {
   osg::ref_ptr<osg::StateSet> stateset;
   if (stateset_.lock(stateset))
-    PickerHighlightShader::installShaderProgram(stateset, defaultEnabled);
+    PickerHighlightShader::installShaderProgram(stateset.get(), defaultEnabled);
 }
 
 bool PickerHighlightShader::isEnabled() const
@@ -168,7 +170,7 @@ simVis::PlatformNode* Picker::pickedPlatform() const
 class IntersectPicker::IntersectEventHandler : public osgGA::GUIEventHandler
 {
 public:
-  IntersectEventHandler(IntersectPicker& picker)
+  explicit IntersectEventHandler(IntersectPicker& picker)
     : picker_(picker),
       repickNeeded_(false)
   {
@@ -220,11 +222,11 @@ IntersectPicker::IntersectPicker(simVis::ViewManager* viewManager, simVis::Scena
     scenario_(scenarioManager)
 {
   guiEventHandler_ = new IntersectEventHandler(*this);
-  addHandlerToViews_ = new AddEventHandlerToViews(guiEventHandler_);
+  addHandlerToViews_ = new AddEventHandlerToViews(guiEventHandler_.get());
   if (viewManager_.valid())
   {
     addHandlerToViews_->addToViews(*viewManager_);
-    viewManager_->addCallback(addHandlerToViews_);
+    viewManager_->addCallback(addHandlerToViews_.get());
   }
 }
 
@@ -233,7 +235,7 @@ IntersectPicker::~IntersectPicker()
   if (viewManager_.valid())
   {
     addHandlerToViews_->removeFromViews(*viewManager_);
-    viewManager_->removeCallback(addHandlerToViews_);
+    viewManager_->removeCallback(addHandlerToViews_.get());
   }
 }
 
@@ -241,7 +243,7 @@ void IntersectPicker::pickThisFrame_()
 {
   pickedThisFrame_ = true;
   // Intersect picker should only pick on Platforms and Platform Models
-  unsigned int acceptMask = simVis::DISPLAY_MASK_PLATFORM | simVis::DISPLAY_MASK_PLATFORM_MODEL;
+  unsigned int acceptMask = DEFAULT_PICK_MASK;
   simVis::EntityNode* pickedEntity = NULL;
   if (lastMouseView_.valid())
     pickedEntity = scenario_->find(lastMouseView_.get(), mx_, my_, acceptMask);
@@ -331,12 +333,28 @@ public:
 
   bool accept(const osgGA::GUIEventAdapter& ea, const osgGA::GUIActionAdapter& aa)
   {
-    // Always pick, on every event
-    return true;
+    switch (ea.getEventType())
+    {
+    case osgGA::GUIEventAdapter::FRAME:
+      if (underCursor_.valid() && underCursor_.get() == dynamic_cast<const simVis::View*>(&aa))
+        return true;
+      break;
+    case osgGA::GUIEventAdapter::MOVE:
+    case osgGA::GUIEventAdapter::DRAG:
+    case osgGA::GUIEventAdapter::PUSH:
+      underCursor_ = dynamic_cast<const simVis::View*>(&aa);
+      break;
+
+    default:
+      // Do nothing for most events
+      break;
+    }
+    return false;
   }
 
 private:
   RTTPicker& picker_;
+  osg::observer_ptr<const simVis::View> underCursor_;
 };
 
 /////////////////////////////////////////////////////////////////
@@ -349,7 +367,7 @@ RTTPicker::RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* 
   rttPicker_->addChild(scenarioManager);
   if (viewManager)
   {
-    ViewsWatcher* viewManagerCallback = new ViewsWatcher(rttPicker_);
+    ViewsWatcher* viewManagerCallback = new ViewsWatcher(rttPicker_.get());
     viewManager->addCallback(viewManagerCallback);
 
     std::vector<simVis::View*> views;
@@ -362,10 +380,8 @@ RTTPicker::RTTPicker(simVis::ViewManager* viewManager, simVis::ScenarioManager* 
   rttPicker_->setDefaultCallback(new PickerCallback(*this));
 
   // Set up the picker to ignore various features of SIMDIS that aren't pickable
-  // TODO: Pending osgEarth pull request integration
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0) && 0
-  unsigned int ignoreMask = simVis::DISPLAY_MASK_LABEL | simVis::DISPLAY_MASK_TRACK_HISTORY | simVis::DISPLAY_MASK_LOCAL_GRID;
-  rttPicker_->setCullMask(~ignoreMask);
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
+  rttPicker_->setCullMask(DEFAULT_PICK_MASK);
 #endif
 }
 
@@ -375,13 +391,13 @@ RTTPicker::~RTTPicker()
   rttPicker_->setDefaultCallback(NULL);
   osg::ref_ptr<simVis::ViewManager> viewManager;
   if (viewManager_.lock(viewManager))
-    viewManager->removeCallback(viewManagerCallback_);
+    viewManager->removeCallback(viewManagerCallback_.get());
 }
 
 void RTTPicker::setPickedId(unsigned int id)
 {
   // Tell listeners
-  osg::Referenced* ref = osgEarth::Registry::objectIndex()->get<osg::Referenced>(id);
+  osg::Referenced* ref = osgEarth::Registry::objectIndex()->get<osg::Referenced>(id).get();
   setPicked_(id, ref);
 }
 
@@ -444,7 +460,7 @@ void RTTPicker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::Vie
 
 osgEarth::Util::RTTPicker* RTTPicker::rttPicker() const
 {
-  return rttPicker_;
+  return rttPicker_.get();
 }
 
 }

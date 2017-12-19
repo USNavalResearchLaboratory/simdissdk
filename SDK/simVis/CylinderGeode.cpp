@@ -26,6 +26,9 @@
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 #include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/Types.h"
+#include "simVis/Utils.h"
 #include "simVis/CylinderGeode.h"
 
 namespace simVis
@@ -41,7 +44,7 @@ CylinderGeode::CylinderGeode(PlatformNode &hostPlatform)
 
   // Add to the platform
   if (hostPlatform.getModel() != NULL)
-    hostPlatform.getModel()->addScaledChild(transform_);
+    hostPlatform.getModel()->addScaledChild(transform_.get());
 }
 
 CylinderGeode::~CylinderGeode()
@@ -78,10 +81,10 @@ void CylinderGeode::rebuild_()
   osg::ref_ptr<osg::Geometry> wallGeom = new osg::Geometry;
   // Create and bind vertex array
   osg::ref_ptr<osg::Vec3Array> wallVerts = new osg::Vec3Array;
-  wallGeom->setVertexArray(wallVerts);
+  wallGeom->setVertexArray(wallVerts.get());
   // Create and bind color array
   osg::ref_ptr<osg::Vec4Array> wallColors = new osg::Vec4Array;
-  wallGeom->setColorArray(wallColors);
+  wallGeom->setColorArray(wallColors.get());
   wallGeom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // Push in the center point of each circle

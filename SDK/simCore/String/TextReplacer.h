@@ -22,9 +22,9 @@
 #ifndef SIMCORE_STRING_TEXT_REPLACER_H
 #define SIMCORE_STRING_TEXT_REPLACER_H
 
+#include <memory>
 #include <vector>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 
 namespace simCore
 {
@@ -81,7 +81,7 @@ private:
 };
 
 /// Shared pointer to a TextReplacer
-typedef std::tr1::shared_ptr<TextReplacer> TextReplacerPtr;
+typedef std::shared_ptr<TextReplacer> TextReplacerPtr;
 
 } // namespace simCore
 

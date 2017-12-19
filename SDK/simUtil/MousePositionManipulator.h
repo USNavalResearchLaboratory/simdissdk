@@ -126,7 +126,7 @@ private:
   osgEarth::TerrainEngineNode* terrainEngineNode_;
 
   /// Last view from mouse movement
-  osgViewer::View* lastView_;
+  osg::observer_ptr<osgViewer::View> lastView_;
   /// Last mouse x from mouse movement
   float lastMouseX_;
   /// Last mouse y from mouse movement

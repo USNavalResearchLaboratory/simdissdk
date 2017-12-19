@@ -32,20 +32,15 @@ namespace simCore {
  * @brief Methods for conversion from MGRS/UTM/UPS to geodetic coordinates.
  *
  * Note: Several functions have been repurposed from software provided by the
- *       White Sands Missile Range (WSMR) and from the GEOTRANS library.
+ *       White Sands Missile Range (WSMR), GEOTRANS library and GeographicLib.
  *       Source code for GEOTRANS can be found here: http://earth-info.nga.mil/GandG/geotrans/
  *       GEOTRANS license can be found here: http://earth-info.nga.mil/GandG/geotrans/docs/MSP_GeoTrans_Terms_of_Use.pdf
+ *       Source code for GeographicLib can be found here: https://sourceforge.net/projects/geographiclib/
+ *       GeographicLib license can be found here: https://geographiclib.sourceforge.io/html/LICENSE.txt
  */
 class SDKCORE_EXPORT Mgrs
 {
 public:
-
-  /// Enumeration for parameter passed to and from the UTM/UPS conversion methods.
-  enum Hemisphere
-  {
-    UPS_SOUTH,
-    UPS_NORTH
-  };
 
   /**
   * Converts an MGRS coordinate to geodetic coordinates.
@@ -82,14 +77,14 @@ public:
   * @param[in ] gzdLetters GZD of the UPS coordinate, minus the zone (should always be 3 characters)
   * @param[in ] mgrsEasting Easting portion of MGRS coordinate position within grid
   * @param[in ] mgrsNorthing Northing portion of MGRS coordinate position within grid
-  * @param[out] hemisphere Hemisphere (north/south) of the coordinate
+  * @param[out] northPole Pole which is the center of UPS projection (true means north, false means south)
   * @param[out] utmEasting Easting portion of resulting UTM coordinate
   * @param[out] utmNorthing Northing portion of resulting UTM coordinate
   * @param[out] err Optional pointer to error string
   * @return 0 if conversion is successful, non-zero otherwise
   */
   static int convertMgrstoUtm(int zone, const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
-    Hemisphere& hemisphere, double& utmEasting, double& utmNorthing, std::string* err = NULL);
+    bool& northPole, double& utmEasting, double& utmNorthing, std::string* err = NULL);
 
   /**
   * Converts a UTM coordinate to geodetic coordinates.
@@ -98,7 +93,7 @@ public:
   * expected to provide valid easting and northing values.
   *
   * @param[in ] zone UTM zone, should be in the range of 1-60
-  * @param[in ] hemisphere Hemisphere (north/south) of the coordinate
+  * @param[in ] northPole Pole which is the center of UPS projection (true means north, false means south)
   * @param[in ] easting Easting portion of position within grid
   * @param[in ] northing Northing portion of position within grid
   * @param[out] lat Latitude of resulting conversion in radians
@@ -106,7 +101,7 @@ public:
   * @param[out] err Optional pointer to error string
   * @return 0 if conversion is successful, non-zero otherwise
   */
-  static int convertUtmToGeodetic(int zone, Hemisphere hemisphere, double easting, double northing, double& lat, double& lon, std::string* err = NULL);
+  static int convertUtmToGeodetic(int zone, bool northPole, double easting, double northing, double& lat, double& lon, std::string* err = NULL);
 
   /**
   * Converts an MGRS coordinate to UPS coordinates.
@@ -116,30 +111,29 @@ public:
   * @param[in ] gzdLetters GZD of the MGRS coordinate
   * @param[in ] mgrsEasting Easting portion of position within MGRS grid
   * @param[in ] mgrsNorthing Northing portion of position within MGRS grid
-  * @param[out] hemisphere Hemisphere for UPS coordinate: UPS_SOUTH or UPS_NORTH
+  * @param[out] northPole Pole which is the center of UPS projection (true means north, false means south)
   * @param[out] upsEasting Easting portion of position within UPS grid
   * @param[out] upsNorthing Northing portion of position within UPS grid
   * @param[out] err Optional pointer to error string
   * @return 0 if conversion is successful, non-zero otherwise
   */
   static int convertMgrsToUps(const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
-    Hemisphere& hemisphere, double& upsEasting, double& upsNorthing, std::string* err = NULL);
+    bool& northPole, double& upsEasting, double& upsNorthing, std::string* err = NULL);
 
   /**
   * Converts a UPS coordinate to geodetic coordinates.
   * Note that this method should only be used for grid coordinates that would convert to latitudes
-  * greater than 80 degrees south or 84 degrees north, as per the UTM standard. Coordinates closer to
-  * the equator may have relatively significant errors in latitude.
+  * greater than 80 degrees south or 84 degrees north, as per the UTM standard.
   *
-  * @param[in ] hemisphere Hemisphere for UPS coordinate: UPS_SOUTH or UPS_NORTH
-  * @param[in ] easting Easting portion of position within grid
-  * @param[in ] northing Northing portion of position within grid
+  * @param[in ] northPole Pole which is the center of UPS projection (true means north, false means south)
+  * @param[in ] easting False easting portion of position within grid
+  * @param[in ] northing False northing portion of position within grid
   * @param[out] lat Latitude of resulting conversion in radians
   * @param[out] lon Longitude of resulting conversion in radians
   * @param[out] err Optional pointer to error string
   * @return 0 if conversion is successful, non-zero otherwise
   */
-  static int convertUpsToGeodetic(Hemisphere hemisphere, double easting, double northing, double& lat, double& lon, std::string* err = NULL);
+  static int convertUpsToGeodetic(bool northPole, double easting, double northing, double& lat, double& lon, std::string* err = NULL);
 
 private:
 
@@ -189,6 +183,15 @@ private:
 
   /// Computes the hyperbolic arctangent of the given input.
   static double atanh_(double x);
+
+  /// The hypotenuse function avoiding underflow and overflow.
+  static double hypot_(double x, double y);
+ 
+  /// Computes tan chi in terms of tan phi.
+  static double taupf_(double tau);
+
+  /// Computes tan phi in terms of tan chi.
+  static double tauf_(double taup);
 };
 
 } // Namespace simCore

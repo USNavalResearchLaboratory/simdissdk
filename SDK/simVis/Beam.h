@@ -22,23 +22,59 @@
 #ifndef SIMVIS_BEAM_H
 #define SIMVIS_BEAM_H
 
-#include "osg/Geometry"
-#include "osg/Depth"
-#include "osg/ref_ptr"
 #include "osg/observer_ptr"
-#include "osgEarthAnnotation/LabelNode"
-
-#include "simVis/Antenna.h"
+#include "simCore/EM/Constants.h"
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/LabelContentManager.h"
-#include "simVis/BeamPulse.h"
+#include "simVis/LocatorNode.h"
+
+namespace osg {
+  class Depth;
+  class MatrixTransform;
+}
 
 namespace simVis
 {
+  class AntennaNode;
+  class BeamPulse;
+  class EntityLabelNode;
+  class LabelContentCallback;
+  class LocalGridNode;
+  class Locator;
   class ScenarioManager;
+
+  /// Scene graph node representing the Beam volume
+  class SDKVIS_EXPORT BeamVolume : public osg::Group
+  {
+  public:
+    /** Constructor */
+    BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
+
+    /** Perform an in-place update to an existing volume */
+    void performInPlaceUpdates(const simData::BeamUpdate* a,
+      const simData::BeamUpdate* b);
+
+    /** Perform an in-place update to an existing volume */
+    void performInPlacePrefChanges(const simData::BeamPrefs* a,
+      const simData::BeamPrefs* b);
+
+    /** Return the proper library name */
+    virtual const char* libraryName() const { return "simVis"; }
+
+    /** Return the class name */
+    virtual const char* className() const { return "BeamVolume"; }
+
+  private:
+    /// build the osg volume
+    osg::MatrixTransform* createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update);
+
+    /// apply the beam scale pref to the specified node
+    void setBeamScale_(double beamScale);
+
+    osg::ref_ptr<osg::MatrixTransform> beamSV_;
+  };
+
 
   /**
    * Renders a beam.
@@ -54,19 +90,8 @@ namespace simVis
     * @param host This beam's host entity
     * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    BeamNode(
-      const ScenarioManager* scenario,
-      const simData::BeamProperties& props,
-      Locator*                       locator = NULL,
-      const simVis::EntityNode*      host = NULL,
-      int                            referenceYear = 1970);
-
-    /**
-    * The installshaderProgram is required prior to using this class.
-    * This will initialize shader once in the scenario
-    * @param intoStateSet State set of the scenario
-    */
-    static void installShaderProgram(osg::StateSet* intoStateSet);
+    BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* locator = NULL,
+      const simVis::EntityNode* host = NULL, int referenceYear = 1970);
 
     /**
     * Access the properties object currently representing this beam.
@@ -224,6 +249,29 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** This entity type is, at this time, unpickable. */
+    virtual unsigned int objectIndexTag() const;
+
+    /**
+    * Gets the world position for this beam's origin. This is a convenience
+    * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+    /**
+    * Gets the world position & orientation for this beam's origin. This is a convenience
+    * function that extracts the Position information and rotation from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+      simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
     /**
     * Get the traversal mask for this node type
     * @return a traversal mask
@@ -231,8 +279,8 @@ namespace simVis
     static unsigned int getMask() { return simVis::DISPLAY_MASK_BEAM; }
 
   protected:
-    /// osg::Referenced-derived
-    virtual ~BeamNode() {}
+    /// osg::Referenced-derived; destructor body needs to be in the .cpp
+    virtual ~BeamNode();
 
     /**
     * Apply the specified DS update
@@ -243,6 +291,15 @@ namespace simVis
     void applyDataStoreUpdate_(const simData::BeamUpdate& update, bool force=false);
 
   private: // methods
+    /** Copy constructor, not implemented or available. */
+    BeamNode(const BeamNode&);
+
+    /**
+    * Activate/Deactivate this beam, to be applied when a transition in state of isActive() occurs.
+    * note that a beam can be active (datadraw) without being drawn
+    * @param active if true, beam will be activated; if false beam will be deactivated
+    */
+    void setActive_(bool active);
 
     /// update the geometry based on changes in update or preferences.
     void apply_(
@@ -254,20 +311,6 @@ namespace simVis
       const simData::BeamUpdate*     update,
       const simData::BeamPrefs*      prefs,
       bool                           force);
-
-    /// update things that don't require a geometry rebuild
-    void performInPlacePrefChanges_(
-      const simData::BeamPrefs* a,
-      const simData::BeamPrefs* b,
-      osg::MatrixTransform*     node);
-
-    void performInPlaceUpdates_(
-      const simData::BeamUpdate* a,
-      const simData::BeamUpdate* b,
-      osg::MatrixTransform*      node);
-
-    /// apply the beam scale pref to the specified node
-    void setBeamScale_(osg::MatrixTransform* node, double beamScale);
 
     /**
     * Adjusts the passed in position vector with offsets to make the origin of the beam at
@@ -289,6 +332,19 @@ namespace simVis
     */
     int calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate);
 
+    /**
+    * Update the beam label with the specified beam preferences
+    * @param prefs the beam preferences to update
+    */
+    void updateLabel_(const simData::BeamPrefs& prefs);
+
+    /**
+    * Apply the specified prefs, adding any overrides, then apply result to beam
+    * @param prefs the beam preferences to update with overrides then apply
+    * @param force tell the apply code to regenerate the visual
+    */
+    void applyPrefs_(const simData::BeamPrefs& prefs, bool force = false);
+
   private: // data
     simData::BeamProperties lastProps_;
 
@@ -299,29 +355,26 @@ namespace simVis
     simData::BeamUpdate     lastUpdateApplied_;
     bool                    hasLastUpdate_;
     bool                    hasLastPrefs_;
-    osg::ref_ptr<LocatorNode>    locatorNode_;
-    bool                    visible_;
-    osg::ref_ptr<osg::MatrixTransform>   node_;
-    osg::observer_ptr<const EntityNode> host_;
-    osg::observer_ptr<const EntityNode> target_;
+
+    osg::ref_ptr<BeamVolume>  beamVolume_;
     osg::ref_ptr<LocalGridNode> localGrid_;
     osg::ref_ptr<AntennaNode> antenna_;
+    osg::observer_ptr<const EntityNode> host_;
+    osg::observer_ptr<const EntityNode> target_;
 
     double hostMissileOffset_;
-    // extra locator used only for non-BeamType_BODY_RELATIVE beams
-    osg::ref_ptr<Locator>   positionOffsetLocator_;
+    // the locator node that parents our volume/antenna geometry and label
+    osg::ref_ptr<LocatorNode>  beamLocatorNode_;
 
-    void applyPrefs(const simData::BeamPrefs& prefs, bool force =false);
+    // this locator models the platform pos and ori possibly modified by beam position offsets
+    osg::ref_ptr<Locator>   beamOriginLocator_;
 
-    typedef std::map<std::string, simData::BeamPrefs> PrefsOverrides;
-    PrefsOverrides prefsOverrides_;
+    // this locator models beam orientation offsets and beam data updates
+    osg::ref_ptr<Locator>   beamOrientationLocator_;
 
-    typedef std::map<std::string, simData::BeamUpdate> UpdateOverrides;
-    UpdateOverrides updateOverrides_;
-
-    osg::Depth*             depthAttr_;
-
-    void updateLabel_(const simData::BeamPrefs& prefs);
+    std::map<std::string, simData::BeamPrefs> prefsOverrides_;
+    std::map<std::string, simData::BeamUpdate> updateOverrides_;
+    osg::Depth* depthAttr_;
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;

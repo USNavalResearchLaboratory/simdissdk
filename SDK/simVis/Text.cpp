@@ -56,6 +56,8 @@ void simVis::Text::computePositions(unsigned int contextID) const
   case RIGHT_BOTTOM_BASE_LINE:  _offset.set(_textBB.xMax(),-_characterHeight*(1.0 + _lineSpacing)*(_lineCount-1),0.0f); break;
   }
 
+  _offset.set(_offset.x() - x_, _offset.y() - y_, _offset.z());
+
   AutoTransformCache& atc = _autoTransformCache[contextID];
   osg::Matrix& matrix = atc._matrix;
 
@@ -204,4 +206,10 @@ void simVis::Text::computePositions(unsigned int contextID) const
   _normal.normalize();
 
   const_cast<Text*>(this)->dirtyBound();
+}
+
+void Text::setScreenOffset(float x, float y)
+{
+  x_ = x;
+  y_ = y;
 }

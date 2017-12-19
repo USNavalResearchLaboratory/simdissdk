@@ -38,8 +38,8 @@ namespace simVis
   class SDKVIS_EXPORT Text : public osgText::Text
   {
   public:
-    Text() : osgText::Text() { }
-    Text(const Text& text,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY) : osgText::Text(text, copyop) { }
+    Text() : osgText::Text(), x_(0.0f), y_(0.0f) { }
+    Text(const Text& text, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY) : osgText::Text(text, copyop), x_(0.0f), y_(0.0f) { }
 
     virtual osg::Object* cloneType() const { return new Text(); }
     virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new Text(*this,copyop); }
@@ -47,11 +47,22 @@ namespace simVis
     virtual const char* className() const { return "Text"; }
     virtual const char* libraryName() const { return "simVis"; }
 
+    /**
+     * Adds an offset, in screen coordinates, to text
+     * @param x Adds to the x coordinate, positive values moves the text to the right
+     * @param x Adds to the y coordinate, positive values moves the text up
+     */
+    void setScreenOffset(float x, float y);
+
   public: // osgText::Text
     virtual void computePositions(unsigned int contextID) const;
 
   protected:
-      virtual ~Text() { }
+    virtual ~Text() { }
+
+  private:
+    float x_;
+    float y_;
   };
 
 } // namespace simVis

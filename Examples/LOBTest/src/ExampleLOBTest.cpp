@@ -36,6 +36,7 @@
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Locator.h"
+#include "simVis/Utils.h"
 
 /// some basic components (mouse hover popups, scenario, utilities, camera controls)
 #include "simVis/Viewer.h"
@@ -123,11 +124,11 @@ void simulatePlatform(simData::ObjectId id, simData::DataStore& ds, simVis::View
   sim->addWaypoint(simUtil::Waypoint(21.5, -157.5, 20000, 30.0));
 
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simman = new simUtil::PlatformSimulatorManager(&ds);
-  simman->addSimulator(sim);
+  simman->addSimulator(sim.get());
   simman->simulate(0.0, 30.0, 30.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman, 0.0, 30.0);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simman.get(), 0.0, 30.0);
+  viewer->addEventHandler(simHandler.get());
 }
 
 //----------------------------------------------------------------------------
@@ -193,7 +194,7 @@ int main(int argc, char **argv)
 
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // Set up the data:
@@ -202,12 +203,12 @@ int main(int argc, char **argv)
   scene->getScenario()->bind(&dataStore);
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   simData::ObjectId platform2 = addPlatform(dataStore);
 
   // put platform 2 in motion
-  simulatePlatform(platform2, dataStore, viewer);
+  simulatePlatform(platform2, dataStore, viewer.get());
 
   // make some lobs
   simData::ObjectId lobID = addLobGroup(platform2, dataStore);

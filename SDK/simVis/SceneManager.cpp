@@ -43,7 +43,9 @@
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
+#include "simVis/Constants.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/ProjectorManager.h"
 #include "simVis/Registry.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
@@ -73,10 +75,6 @@ SceneManager::SceneManager()
 
 SceneManager::~SceneManager()
 {
-  osgEarth::ObjectID id = 0;
-  // Remove the object index for scenario on destruction to avoid ref_ptr in object index
-  if (getUserValue(SCENARIO_OBJECT_ID, id))
-    osgEarth::Registry::objectIndex()->remove(id);
 }
 
 void SceneManager::detectTerrainEngineDriverProblems_()
@@ -134,9 +132,12 @@ void SceneManager::init_()
   // Turn on cull face by default.  Back side faces will not be visible.
   getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::ON);
 
+  // Set a default Object ID uniform for the Object Index for the ObjectIndex picking highlight
+  getOrCreateStateSet()->addUniform(new osg::Uniform(osgEarth::Registry::objectIndex()->getObjectIDUniformName().c_str(), 0u));
+
   // a container group so we always have a manipulator attach point:
   mapContainer_ = new osg::Group();
-  addChild(mapContainer_);
+  addChild(mapContainer_.get());
   globeColor_ = new osg::Uniform("oe_terrain_color", MAP_COLOR);
   mapContainer_->getOrCreateStateSet()->addUniform(globeColor_, osg::StateAttribute::OVERRIDE);
 
@@ -228,9 +229,6 @@ void SceneManager::init_()
 
   // Run the shader generator on this stateset
   osgEarth::Registry::shaderGenerator().run(this);
-
-  // Tag the scenario to prevent false-positives on hover picker
-  setUserValue(SCENARIO_OBJECT_ID, osgEarth::Registry::objectIndex()->tagNode(scenarioManager_, scenarioManager_));
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
@@ -278,7 +276,7 @@ void SceneManager::setSkyNode(osgEarth::Util::SkyNode* skyNode)
   }
 
   // Turn on or off the second depth rendering based on whether we're running SilverLining or have an ocean
-  setDepthWriterNodeMask((oceanNode_ != NULL) || isSilverLining_(skyNode_)  ? ~0 : 0);
+  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 bool SceneManager::isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const
@@ -323,7 +321,7 @@ void SceneManager::setOceanNode(osgEarth::Util::OceanNode* oceanNode)
   }
 
   // Fix the depth writer mask
-  setDepthWriterNodeMask((oceanNode_ != NULL) || isSilverLining_(skyNode_)  ? ~0 : 0);
+  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 void SceneManager::removeOceanNode()
@@ -335,7 +333,7 @@ void SceneManager::removeOceanNode()
   }
 
   // Fix the depth writer mask
-  setDepthWriterNodeMask((oceanNode_ != NULL) || isSilverLining_(skyNode_)  ? ~0 : 0);
+  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 void SceneManager::setScenarioDraping(bool value)
@@ -352,7 +350,7 @@ void SceneManager::setMapNode(osgEarth::MapNode* mapNode)
 
   if (oldMapNode != mapNode)
   {
-    osg::Group* parent = mapContainer_;
+    osg::Group* parent = mapContainer_.get();
     if (oldMapNode)
     {
       parent = oldMapNode->getParent(0);
@@ -364,7 +362,7 @@ void SceneManager::setMapNode(osgEarth::MapNode* mapNode)
     if (mapNode_.valid())
     {
       parent->addChild(mapNode_.get());
-      scenarioManager_->setMapNode(mapNode_);
+      scenarioManager_->setMapNode(mapNode_.get());
 
       // By default, the lighting on the terrain is enabled.  This can be changed
       // after calling setMapNode() by calling something like:
@@ -425,8 +423,8 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
 #endif
   for (osgEarth::ImageLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
   {
-    std::string layerHash = getLayerHash_(*iter);
-    loadedLayerHash[layerHash] = *iter;
+    std::string layerHash = getLayerHash_(iter->get());
+    loadedLayerHash[layerHash] = iter->get();
   }
 
   // now figure out which layers we need to add
@@ -438,16 +436,16 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
 #endif
   for (osgEarth::ImageLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
   {
-    std::string layerHash = getLayerHash_(*iter);
+    std::string layerHash = getLayerHash_(iter->get());
     std::map<std::string, osgEarth::ImageLayer*>::iterator loadedLayerIter = loadedLayerHash.find(layerHash);
 
     if (loadedLayerIter == loadedLayerHash.end())
     {
       if ((*iter)->getTileSource() != NULL && (*iter)->getTileSource()->isOK())
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-        currentMap->addLayer(*iter);
+        currentMap->addLayer(iter->get());
 #else
-        currentMap->addImageLayer(*iter);
+        currentMap->addImageLayer(iter->get());
 #endif
       else
       {
@@ -486,8 +484,8 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
 #endif
   for (osgEarth::ElevationLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
   {
-    std::string layerHash = getLayerHash_(*iter);
-    loadedLayerHash[layerHash] = *iter;
+    std::string layerHash = getLayerHash_(iter->get());
+    loadedLayerHash[layerHash] = iter->get();
   }
 
   // now figure out which layers we need to add
@@ -499,14 +497,14 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
 #endif
   for (osgEarth::ElevationLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
   {
-    std::string layerHash = getLayerHash_(*iter);
+    std::string layerHash = getLayerHash_(iter->get());
     if (loadedLayerHash.find(layerHash) == loadedLayerHash.end())
     {
-      if ((*iter)->getTileSource() != NULL && (*iter)->getTileSource()->isOK())
+      if ((*iter)->getTileSource() != NULL && iter->get()->getTileSource()->isOK())
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-        currentMap->addLayer(*iter);
+        currentMap->addLayer(iter->get());
 #else
-        currentMap->addElevationLayer(*iter);
+        currentMap->addElevationLayer(iter.get());
 #endif
       else
       {
@@ -535,11 +533,11 @@ void SceneManager::updateModelLayers_(const osgEarth::Map& newMap, osgEarth::Map
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   currentMap->getLayers(currentLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
-    currentMap->removeLayer(*iter);
+    currentMap->removeLayer(iter->get());
 #else
   currentMap->getModelLayers(currentLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
-    currentMap->removeModelLayer(*iter);
+    currentMap->removeModelLayer(iter->get());
 #endif
 
   // now add the new model layers
@@ -547,11 +545,11 @@ void SceneManager::updateModelLayers_(const osgEarth::Map& newMap, osgEarth::Map
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   newMap.getLayers(newLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
-    currentMap->addLayer(*iter);
+    currentMap->addLayer(iter->get());
 #else
   newMap.getModelLayers(newLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
-    currentMap->addModelLayer(*iter);
+    currentMap->addModelLayer(iter->get());
 #endif
 }
 
@@ -592,7 +590,7 @@ osg::Node* SceneManager::getManipulatorAttachPoint() const
 {
   return
     mapNode_.valid() ? mapNode_->getTerrainEngine() :
-    mapContainer_;
+    mapContainer_.get();
 }
 
 Locator* SceneManager::createLocator() const

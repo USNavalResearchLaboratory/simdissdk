@@ -22,6 +22,7 @@
 #ifndef SIMVIS_RANGETOOL_H
 #define SIMVIS_RANGETOOL_H
 
+#include <memory>
 #include <sstream>
 
 #include "osg/Group"
@@ -32,16 +33,14 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simVis/Scenario.h"
 #include "simVis/Platform.h"
 #include "simVis/Tool.h"
 #include "simVis/Utils.h"
 
-namespace simRF
-{
-  class RFPropagationFacade;
-}
+namespace simCore { class DatumConvert; }
+namespace simRF { class RFPropagationFacade; }
 
 namespace simVis
 {
@@ -62,6 +61,8 @@ namespace simVis
   /// Default effective Earth radius scalar for RF horizon measurement
   const double DEFAULT_RF_RADIUS = 4. / 3.;
 
+  /// Number of enumerations in State::Coord
+  const size_t COORD_CACHE_SIZE = 16;
   /**
   * RangeTool is a subsystem for drawing range measurements.
   *
@@ -95,6 +96,7 @@ namespace simVis
       osgEarth::Units pieRadiusUnits_;
 
       bool           useDepthTest_;
+      bool           showGraphics_;
       ///@}
     };
 
@@ -113,6 +115,21 @@ namespace simVis
         OUTLINE_THICK
       };
 
+      /// Defines what text to show
+      enum ShowText
+      {
+        NONE,  ///< Show no text
+        FULL,  ///< Show description with value and units
+        VALUES_ONLY ////< Show only the value and units
+      };
+
+      /// Defines where to show the text
+      enum TextLocation
+      {
+        PAIRING_LINE,  ///< Show all text on the pairing line between the entities
+        ALL ///< Show all text at their default location
+      };
+
       /**@name text settings
        *@{
        */
@@ -124,8 +141,11 @@ namespace simVis
       std::string  font_;
       float        fontSize_;
       float        scaleFontSize_;
-      unsigned int xOffset_, yOffset_;
+      float        xOffset_;
+      float        yOffset_;
       osg::Vec4f   color_;
+      ShowText     showText_;
+      TextLocation textLocation_;
       ///@}
     };
 
@@ -220,6 +240,9 @@ namespace simVis
       ///@return lla values for the given position relative to the local frame
       simCore::Vec3 local2lla(const osg::Vec3d& local);
 
+      ///@return the local/ENU vector produced by rotating the start->end vector by specified az, rotated in the ltp
+      osg::Vec3d rotateEndVec(double az);
+
       /**
       * Fills in a entity state based on the given scenario and entity node
       * @param scenario The scenario for getting the host platform of node
@@ -228,6 +251,11 @@ namespace simVis
       * @return zero on success and non-zero on failure
       */
       int populateEntityState(const simVis::ScenarioManager& scenario, const simVis::EntityNode* node, EntityState& state);
+
+      /**
+      * Resets the coord cache to initial state
+      */
+      void resetCoordCache();
 
       /**@name internal state (TODO: make private)
        *@{
@@ -238,7 +266,8 @@ namespace simVis
       EntityState                      endEntity_;
       simCore::EarthModelCalculations  earthModel_;
       simCore::CoordinateConverter     coordConv_;
-      osgEarth::optional<osg::Vec3d>   coord_[16];  // 16 equals the number of enumerations in State::Coord
+      osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
+      simCore::TimeStamp timeStamp_; // the timeStamp of the last update
       ///@}
     };
 
@@ -411,26 +440,26 @@ namespace simVis
       * Returns the formatter for the measurement
       * @return The formatter for the measurement
       */
-      ValueFormatter* formatter() const { return formatter_; }
+      ValueFormatter* formatter() const { return formatter_.get(); }
 
     protected:
       /// osg::Referenced-derived
       virtual ~Measurement() {}
 
       /// Returns true if the type is a beam, gate, laser or lob group
-      bool isRaeObject_(simData::DataStore::ObjectType type) const;
+      bool isRaeObject_(simData::ObjectType type) const;
       /// Returns true if both types are either platform, beam, gate, laser or lob group
-      bool isEntityToEntity_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isEntityToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if both types are platforms
-      bool isPlatformToPlatform_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isPlatformToPlatform_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if one type is a beam and the other is a non-beam
-      bool isBeamToNonBeamAssociation_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isBeamToNonBeamAssociation_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if the fromType is a beam and the toType is a valid entity
-      bool isBeamToEntity_(simData::DataStore::ObjectType fromType, simData::DataStore::ObjectType toType) const;
+      bool isBeamToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if the nodes are valid for a angle calculation
-      bool isAngle_(simData::DataStore::ObjectType fromType, simData::ObjectId fromHostId, simData::DataStore::ObjectType toType, simData::ObjectId toHostId) const;
+      bool isAngle_(simData::ObjectType fromType, simData::ObjectId fromHostId, simData::ObjectType toType, simData::ObjectId toHostId) const;
       /// Returns true if the nodes are valid for velocity angle calculation
-      bool isVelocityAngle_(simData::DataStore::ObjectType fromType, simData::ObjectId fromHostId, simData::DataStore::ObjectType toType, simData::ObjectId toHostId) const;
+      bool isVelocityAngle_(simData::ObjectType fromType, simData::ObjectId fromHostId, simData::ObjectType toType, simData::ObjectId toHostId) const;
       /// Returns the composite angle (rad) for the given angles (rad) for entities on the SAME platform
       double getCompositeAngle_(double bgnAz, double bgnEl, double endAz, double endEl) const;
       /// Returns the true angles (rad) for the given state
@@ -621,8 +650,9 @@ namespace simVis
       /**
       * Updates the range tool based on a new time stamp
       * (Called internally)
+      * @return true if update processed normally, false if scenario is null or association was not valid
       */
-      bool update(ScenarioManager* scenario, double timestamp);
+      bool update(const ScenarioManager& scenario, const simCore::TimeStamp& timestamp);
 
       /**
       * Sets dirty flag and clears labels_ cache to force text color update
@@ -646,6 +676,8 @@ namespace simVis
       osgEarth::Revision                 obj1LocatorRev_;        // tracks whether entity 1 is up to date with scenario data
       osgEarth::Revision                 obj2LocatorRev_;        // tracks whether entity 2 is up to date with scenario data
       CalculationVector                  calculations_;          // calculations to render
+      State                              state_;                 // the calc state for this assoc
+      osg::ref_ptr<Graphic>              labelPos_;              // Use the mid-point of the slant line for the text
 
     protected:
       /// osg::Referenced-derived
@@ -656,7 +688,8 @@ namespace simVis
       void refresh_(
         EntityNode*      obj1,
         EntityNode*      obj2,
-        ScenarioManager* scenario);
+        const ScenarioManager& scenario,
+        const simCore::TimeStamp& timeStamp);
     };
 
     /// vector of Association pointers
@@ -665,8 +698,6 @@ namespace simVis
   public:
     /** Constructs a new range tool. */
     RangeTool();
-
-    explicit RangeTool(ScenarioManager* scenario);
 
     /**
     * Adds a new association to the range tool.
@@ -688,10 +719,9 @@ namespace simVis
     const AssociationVector& getAssociations() const { return associations_; }
 
     /**
-     * Range Tool updates do not require a time value, nor a vector
-     * convenience method to update without time.
+     * Range Tool updates require a full timestamp, but do not use/require EntityVector.
      */
-    void update(ScenarioManager* scenario) { onUpdate(scenario, 0.0, EntityVector()); }
+    void update(const ScenarioManager* scenario, const simCore::TimeStamp& timeStamp);
 
     /**
     * Gets the node representing the range tool's graphics.
@@ -702,10 +732,16 @@ namespace simVis
 
   public: // ScenarioTool interface
 
+    /** @see ScenarioTool::onInstall() */
+    virtual void onInstall(const ScenarioManager& scenario);
+
+    /** @see ScenarioTool::onUninstall() */
+    virtual void onUninstall(const ScenarioManager& scenario);
+
     /**
     * Updates the range tool based on a new time stamp
     */
-    void onUpdate(ScenarioManager* scenario, double timestamp, const EntityVector& updates);
+    virtual void onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates);
 
   public:
     /// @copydoc osgEarth::setDirty()
@@ -727,9 +763,7 @@ namespace simVis
   private:
     AssociationVector                  associations_;         // all active associations
     osg::ref_ptr<RefreshGroup>         root_;                 // scene graph container
-    osg::observer_ptr<ScenarioManager> lastScenario_;         // saves a scenario pointer
-
-    void setupDefaultOptions();
+    osg::observer_ptr<const ScenarioManager> lastScenario_;   // saves a scenario pointer
 
   public: // Helper Graphics classes
     /// a stippled line between two points
@@ -763,6 +797,12 @@ namespace simVis
     /// a filled in arc
     class SDKVIS_EXPORT PieSliceGraphic : public Graphic
     {
+    public:
+      virtual osg::Vec3 labelPos(State& state);
+
+      /// PieSliceGraphics cache their measured value here
+      virtual void setMeasuredValue(double value) { measuredValue_ = value; }
+
     protected:
       /// constructor with name of the measurement type
       PieSliceGraphic(const std::string& typeName)
@@ -779,12 +819,11 @@ namespace simVis
         osg::Geode*  geode,
         State&       state);
 
-      virtual osg::Vec3 labelPos(State& state);
-
       /// osg::Referenced-derived
       virtual ~PieSliceGraphic() {}
 
       osgEarth::optional<osg::Vec3> labelPos_; ///< label position
+      double measuredValue_;                  ///< value of calc's measurement
     };
 
   public: // Built-in Graphics
@@ -1075,6 +1114,16 @@ namespace simVis
       virtual ~TrueCompositeAnglePieSliceGraphic() {}
     };
 
+    struct SDKVIS_EXPORT MagneticAzimuthPieSliceGraphic : public PieSliceGraphic
+    {
+    public:
+      MagneticAzimuthPieSliceGraphic();
+      void render(osg::Geode* geode, State& state);
+    protected:
+      /// osg::Referenced-derived
+      virtual ~MagneticAzimuthPieSliceGraphic() {}
+    };
+
     /// Graphics
     struct SDKVIS_EXPORT RelOriAzimuthPieSliceGraphic : public PieSliceGraphic
     {
@@ -1336,6 +1385,20 @@ namespace simVis
     public:
       /// osg::Referenced-derived
       virtual ~TrueCompositeAngleMeasurement() {}
+    };
+
+    class SDKVIS_EXPORT MagneticAzimuthMeasurement : public Measurement
+    {
+    public:
+      explicit MagneticAzimuthMeasurement(std::shared_ptr<simCore::DatumConvert> datumConvert);
+      virtual double value(State& state) const;
+      virtual bool willAccept(const simVis::RangeTool::State& state) const;
+
+    public:
+      /// osg::Referenced-derived
+      virtual ~MagneticAzimuthMeasurement() {}
+    private:
+      std::shared_ptr<const simCore::DatumConvert> datumConvert_;
     };
 
     // Orientation-relative angles

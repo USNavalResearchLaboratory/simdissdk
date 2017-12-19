@@ -755,7 +755,7 @@ void MemoryDataStore::updateLobGroups_(double time)
   }
 }
 
-void MemoryDataStore::flushEntity_(ObjectId flushId, ObjectType type, FlushType flushType)
+void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, FlushType flushType)
 {
   bool recursive = (flushType == RECURSIVE);
   bool keepTspiStatic = !(flushType == NON_RECURSIVE_TSPI_STATIC);
@@ -768,19 +768,19 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, ObjectType type, FlushType 
     {
       beamIdListForHost(flushId, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, BEAM, flushType);
+        flushEntity_(*iter, simData::BEAM, flushType);
       ids.clear();
       laserIdListForHost(flushId, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, LASER, flushType);
+        flushEntity_(*iter, simData::LASER, flushType);
       ids.clear();
       lobGroupIdListForHost(flushId, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, LOB_GROUP, flushType);
+        flushEntity_(*iter, simData::LOB_GROUP, flushType);
       ids.clear();
       projectorIdListForHost(flushId, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, PROJECTOR, flushType);
+        flushEntity_(*iter, simData::PROJECTOR, flushType);
     }
     break;
   case BEAM:
@@ -789,7 +789,7 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, ObjectType type, FlushType 
     {
       gateIdListForHost(flushId, &ids);
       for (IdList::const_iterator iter = ids.begin(); iter != ids.end(); ++iter)
-        flushEntity_(*iter, GATE, flushType);
+        flushEntity_(*iter, simData::GATE, flushType);
     }
     break;
   case GATE:
@@ -878,7 +878,7 @@ void MemoryDataStore::update(double time)
     if (i->second->update(time))
     {
       // send notification
-      const ObjectType ot = objectType(i->first);
+      const simData::ObjectType ot = objectType(i->first);
 
       for (ListenerList::const_iterator j = localCopy.begin(); j != localCopy.end(); ++j)
       {
@@ -944,14 +944,14 @@ void MemoryDataStore::flush(ObjectId flushId, FlushType flushType)
 {
   hasChanged_ = true;
 
-  ObjectType objType = ALL;
+  simData::ObjectType objType = simData::ALL;
   if (flushId > 0)
     objType = objectType(flushId);
 
   if (objType == ALL)
   {
     for (Platforms::const_iterator iter = platforms_.begin(); iter != platforms_.end(); ++iter)
-      flushEntity_(iter->first, PLATFORM, RECURSIVE);
+      flushEntity_(iter->first, simData::PLATFORM, RECURSIVE);
     flushDataTables_(0);
     GenericDataMap::const_iterator it = genericData_.find(0);
     if (it != genericData_.end())
@@ -1017,7 +1017,7 @@ void MemoryDataStore::applyDataLimiting_(ObjectId id)
 }
 
 ///Retrieve a list of IDs for objects contained by the DataStore
-void MemoryDataStore::idList(IdList *ids, ObjectType type) const
+void MemoryDataStore::idList(IdList *ids, simData::ObjectType type) const
 {
   if (type & PLATFORM)
   {
@@ -1069,7 +1069,7 @@ void MemoryDataStore::idList(IdList *ids, ObjectType type) const
 }
 
 /// Retrieve a list of IDs for objects of 'type' with the given name
-void MemoryDataStore::idListByName(const std::string& name, IdList* ids, ObjectType type) const
+void MemoryDataStore::idListByName(const std::string& name, IdList* ids, simData::ObjectType type) const
 {
   // If null someone is call this routine before entityNameCache_ is made in the constructor
   assert(entityNameCache_ != NULL);
@@ -1103,7 +1103,7 @@ namespace
 }
 
 /// Retrieve a list of IDs for objects with the given original id
-void MemoryDataStore::idListByOriginalId(IdList *ids, uint64_t originalId, ObjectType type) const
+void MemoryDataStore::idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type) const
 {
   // Retrieve entities with matching original ID
   if (type & PLATFORM)
@@ -1196,43 +1196,43 @@ void MemoryDataStore::lobGroupIdListForHost(ObjectId hostid, IdList *ids) const
 }
 
 ///Retrieves the ObjectType for a particular ID
-DataStore::ObjectType MemoryDataStore::objectType(ObjectId id) const
+simData::ObjectType MemoryDataStore::objectType(ObjectId id) const
 {
   if (platforms_.find(id) != platforms_.end())
-    return DataStore::PLATFORM;
+    return simData::PLATFORM;
   if (beams_.find(id) != beams_.end())
-    return DataStore::BEAM;
+    return simData::BEAM;
   if (gates_.find(id) != gates_.end())
-    return DataStore::GATE;
+    return simData::GATE;
   if (lasers_.find(id) != lasers_.end())
-    return DataStore::LASER;
+    return simData::LASER;
   if (projectors_.find(id) != projectors_.end())
-    return DataStore::PROJECTOR;
+    return simData::PROJECTOR;
   if (lobGroups_.find(id) != lobGroups_.end())
-    return DataStore::LOB_GROUP;
-  return DataStore::NONE;
+    return simData::LOB_GROUP;
+  return simData::NONE;
 }
 
 ///Retrieves the host ID for an entity; returns 0 for platforms, or for not found
 ObjectId MemoryDataStore::entityHostId(ObjectId childId) const
 {
-  DataStore::ObjectType objType = objectType(childId);
+  simData::ObjectType objType = objectType(childId);
   Transaction t;
   switch (objType)
   {
-  case DataStore::PLATFORM:
-  case DataStore::NONE:
-  case DataStore::ALL:
+  case simData::PLATFORM:
+  case simData::NONE:
+  case simData::ALL:
     break;
-  case DataStore::BEAM:
+  case simData::BEAM:
     return beamProperties(childId, &t)->hostid();
-  case DataStore::GATE:
+  case simData::GATE:
     return gateProperties(childId, &t)->hostid();
-  case DataStore::LASER:
+  case simData::LASER:
     return laserProperties(childId, &t)->hostid();
-  case DataStore::PROJECTOR:
+  case simData::PROJECTOR:
     return projectorProperties(childId, &t)->hostid();
-  case DataStore::LOB_GROUP:
+  case simData::LOB_GROUP:
     return lobGroupProperties(childId, &t)->hostid();
   }
   return 0;
@@ -1267,7 +1267,7 @@ PlatformProperties* MemoryDataStore::addPlatform(Transaction *transaction)
                               PlatformProperties,
                               NewEntryTransactionImpl<PlatformEntry, PlatformPrefs>,
                               ListenerList>(id, &platforms_, this, transaction, &listeners_, &defaultPlatformPrefs_);
-  entityNameCache_->addEntity(defaultPlatformPrefs_.commonprefs().name(), id, simData::DataStore::PLATFORM);
+  entityNameCache_->addEntity(defaultPlatformPrefs_.commonprefs().name(), id, simData::PLATFORM);
   return rv;
 }
 
@@ -1283,7 +1283,7 @@ BeamProperties* MemoryDataStore::addBeam(Transaction *transaction)
                           BeamProperties,
                           NewEntryTransactionImpl<BeamEntry, BeamPrefs>,
                           ListenerList>(id, &beams_, this, transaction, &listeners_, &defaultBeamPrefs_);
-  entityNameCache_->addEntity(defaultBeamPrefs_.commonprefs().name(), id, simData::DataStore::BEAM);
+  entityNameCache_->addEntity(defaultBeamPrefs_.commonprefs().name(), id, simData::BEAM);
   return rv;
 }
 
@@ -1299,7 +1299,7 @@ GateProperties* MemoryDataStore::addGate(Transaction *transaction)
                           GateProperties,
                           NewEntryTransactionImpl<GateEntry, GatePrefs>,
                           ListenerList>(id, &gates_, this, transaction, &listeners_, &defaultGatePrefs_);
-  entityNameCache_->addEntity(defaultGatePrefs_.commonprefs().name(), id, simData::DataStore::GATE);
+  entityNameCache_->addEntity(defaultGatePrefs_.commonprefs().name(), id, simData::GATE);
   return rv;
 }
 
@@ -1315,7 +1315,7 @@ LaserProperties* MemoryDataStore::addLaser(Transaction *transaction)
                             LaserProperties,
                             NewEntryTransactionImpl<LaserEntry, LaserPrefs>,
                             ListenerList>(id, &lasers_, this, transaction, &listeners_, &defaultLaserPrefs_);
-  entityNameCache_->addEntity(defaultLaserPrefs_.commonprefs().name(), id, simData::DataStore::LASER);
+  entityNameCache_->addEntity(defaultLaserPrefs_.commonprefs().name(), id, simData::LASER);
   return rv;
 }
 
@@ -1331,7 +1331,7 @@ ProjectorProperties* MemoryDataStore::addProjector(Transaction *transaction)
                                 ProjectorProperties,
                                 NewEntryTransactionImpl<ProjectorEntry, ProjectorPrefs>,
                                 ListenerList>(id, &projectors_, this, transaction, &listeners_, &defaultProjectorPrefs_);
-  entityNameCache_->addEntity(defaultProjectorPrefs_.commonprefs().name(), id, simData::DataStore::PROJECTOR);
+  entityNameCache_->addEntity(defaultProjectorPrefs_.commonprefs().name(), id, simData::PROJECTOR);
   return rv;
 }
 
@@ -1347,13 +1347,13 @@ LobGroupProperties* MemoryDataStore::addLobGroup(Transaction *transaction)
                               LobGroupProperties,
                               NewEntryTransactionImpl<LobGroupEntry, LobGroupPrefs>,
                               ListenerList>(id, &lobGroups_, this, transaction, &listeners_, &defaultLobGroupPrefs_);
-  entityNameCache_->addEntity(defaultLobGroupPrefs_.commonprefs().name(), id, simData::DataStore::LOB_GROUP);
+  entityNameCache_->addEntity(defaultLobGroupPrefs_.commonprefs().name(), id, simData::LOB_GROUP);
   return rv;
 }
 
 void MemoryDataStore::removeEntity(ObjectId id)
 {
-  const ObjectType ot = objectType(id);
+  const simData::ObjectType ot = objectType(id);
   if (ot == NONE)
     return; // entity with given id not found
 
@@ -2084,7 +2084,7 @@ int MemoryDataStore::modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<
 {
   switch (objectType(id))
   {
-  case PLATFORM:
+  case simData::PLATFORM:
   {
     PlatformEntry *entry = getEntry<PlatformEntry, Platforms>(id, &platforms_);
     if (entry == NULL)
@@ -2391,7 +2391,7 @@ void MemoryDataStore::NewEntryTransactionImpl<T, P>::release()
 
       // Raise notifications for new entry
       const ObjectId id = entry_->properties()->id();
-      const ObjectType ot = store_->objectType(id);
+      const simData::ObjectType ot = store_->objectType(id);
       // Need to handle recursion so make a local copy
       ListenerList localCopy = *listeners_;
       store_->justRemoved_.clear();

@@ -148,91 +148,91 @@ int upsToLla()
   double lon;
 
   // Test the north and south poles
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 2000000.0, 2000000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 2000000.0, 2000000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -90.0 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, 0.0 *simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 2000000.0, 2000000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 2000000.0, 2000000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, 90.0 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, 0.0 * simCore::DEG2RAD));
 
   // Test some points just past the UTM limits
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 900000, 1900000, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 900000, 1900000, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -80.0752462 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, -95.1944289 * simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 2000000.0, 1000000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 2000000.0, 1000000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -81.0106632645 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, 180.0 * simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 2000000.0, 3000000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 2000000.0, 3000000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -81.0106632645 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, 0.0 * simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 2786184.0, 2786184.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 2786184.0, 2786184.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -80.01 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, 45.0 * simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 2550000.0, 2150000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 2550000.0, 2150000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -84.8684706 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, 74.7448813 * simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 1950000, 1950000, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 1950000, 1950000, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -89.3631098 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, -135.0 * simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_SOUTH, 1000000.0, 2000000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(false, 1000000.0, 2000000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, -81.0106632645 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, -90.0 * simCore::DEG2RAD));
 
   // Same as previous point but in north hemisphere. Should be the same latitude but positive, and the
   // longitude should be rotated by 180 degrees
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 2550000.0, 2150000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 2550000.0, 2150000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, 84.8684706 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, (180.0 - 74.7448813) * simCore::DEG2RAD));
 
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 1860000.0, 1870000.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 1860000.0, 1870000.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, 88.2793246 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, -47.1210964 * simCore::DEG2RAD));
 
   // Just outside the UTM range, but still well within UPS
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 1403500.0, 1703500.0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 1403500.0, 1703500.0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
   rv += SDK_ASSERT(simCore::areAnglesEqual(lat, 84.0054010 * simCore::DEG2RAD));
   rv += SDK_ASSERT(simCore::areAnglesEqual(lon, -63.5695812 * simCore::DEG2RAD));
 
   // Values outside the range of UPS
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 4000001, 0, lat, lon, &err) != 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 4000001, 0, lat, lon, &err) != 0);
   rv += SDK_ASSERT(!err.empty());
   err.clear();
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 0, 4000001, lat, lon, &err) != 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 0, 4000001, lat, lon, &err) != 0);
   rv += SDK_ASSERT(!err.empty());
   err.clear();
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, -1, 2000000, lat, lon, &err) != 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, -1, 2000000, lat, lon, &err) != 0);
   rv += SDK_ASSERT(!err.empty());
   err.clear();
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 2000000, -1, lat, lon, &err) != 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 2000000, -1, lat, lon, &err) != 0);
   rv += SDK_ASSERT(!err.empty());
   err.clear();
   // Test the four corners of the UPS range.
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 0, 0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 0, 0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 4000000, 0, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 4000000, 0, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 0, 4000000, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 0, 4000000, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
-  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(simCore::Mgrs::UPS_NORTH, 4000000, 4000000, lat, lon, &err) == 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertUpsToGeodetic(true, 4000000, 4000000, lat, lon, &err) == 0);
   rv += SDK_ASSERT(err.empty());
 
   return rv;

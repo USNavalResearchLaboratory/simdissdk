@@ -25,34 +25,33 @@
  *
  * Demonstrates the loading and display of SIMDIS .gog format vector overlay data.
  */
-#include "simData/MemoryDataStore.h"
-#include "simVis/GOG/GOG.h"
-#include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Parser.h"
 
-/// include definitions for objects of interest
-#include "simVis/Platform.h"
-#include "simVis/PlatformModel.h"
-#include "simVis/Locator.h"
-
-#include "simVis/Viewer.h"
-#include "simVis/OverheadMode.h"
+#include "osgEarthAnnotation/PlaceNode"
+#include "osgEarthAnnotation/LabelNode"
+#include "osgEarthUtil/MouseCoordsTool"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simData/MemoryDataStore.h"
+#include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/Locator.h"
+#include "simVis/OverheadMode.h"
+#include "simVis/Viewer.h"
+#include "simVis/GOG/GOG.h"
+#include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/Parser.h"
 #include "simUtil/ExampleResources.h"
-#include "osgEarthAnnotation/PlaceNode"
-#include "osgEarthAnnotation/LabelNode"
-#include "osgEarthUtil/MouseCoordsTool"
+#include "simUtil/PlatformSimulator.h"
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
 using namespace osgEarth::Util::Controls;
 using namespace osgEarth::Annotation;
 
-typedef std::tr1::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
+typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
 
 /// create a platform and add it to 'dataStore'
@@ -108,17 +107,17 @@ simVis::PlatformNode* setupSimulation(
   sim->setSimulateRoll(true);
 
   /// Install frame update handler that will update track positions over time.
-  simMgr.addSimulator(sim);
+  simMgr.addSimulator(sim.get());
   simMgr.simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(&simMgr, 0.0, 120.0);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(&simMgr, 0.0, 120.0);
+  viewer->addEventHandler(simHandler.get());
 
   /// Tether camera to platform
   osg::ref_ptr<simVis::PlatformNode> platformNode = viewer->getSceneManager()->getScenario()->find<simVis::PlatformNode>(platformId);
 
-  return platformNode;
+  return platformNode.get();
 }
 
 int main(int argc, char** argv)
@@ -139,13 +138,13 @@ int main(int argc, char** argv)
 
   // start up a SIMDIS viewer->
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(ap);
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->installDebugHandlers();
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // add sky node
   if (ap.read("--sky"))
-    simExamples::addDefaultSkyNode(viewer);
+    simExamples::addDefaultSkyNode(viewer.get());
 
   bool mark = ap.read("--mark");
 
@@ -229,7 +228,7 @@ int main(int argc, char** argv)
   // mouse coords readout
   osg::ref_ptr<LabelControl> readout = new LabelControl("");
   ControlCanvas::getOrCreate(viewer->getMainView())->addControl(readout.get());
-  viewer->getMainView()->addEventHandler(new MouseCoordsTool(scene->getMapNode(), readout));
+  viewer->getMainView()->addEventHandler(new MouseCoordsTool(scene->getMapNode(), readout.get()));
 
   if (mark && go.isValid())
   {
@@ -250,7 +249,7 @@ int main(int argc, char** argv)
 
   /// simulate it so we have something to attach GOGs to
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer);
+  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer.get());
 
   viewer->addEventHandler(new simVis::ToggleOverheadMode(viewer->getMainView(), 'O', 'C'));
 

@@ -124,7 +124,7 @@ void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& desti
       double labelLon = 0;
       osgEarth::GeoMath::midpoint(originLLA.lat(), originLLA.lon(),
         destinationLLA.lat(), destinationLLA.lon(), labelLat, labelLon);
-      label_->setPosition(osgEarth::GeoPoint(wgs84Srs_, labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG));
+      label_->setPosition(osgEarth::GeoPoint(wgs84Srs_.get(), labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG));
       label_->setText(labelString);
       label_->setNodeMask(GRAPHIC_MASK_RULERLINE);
     }
@@ -178,12 +178,12 @@ void LineGraphic::setFontSize(float fontSize)
 
 simVis::AnimatedLineNode* LineGraphic::animatedLine() const
 {
-  return animatedLine_;
+  return animatedLine_.get();
 }
 
 osgEarth::Annotation::LabelNode* LineGraphic::label() const
 {
-  return label_;
+  return label_.get();
 }
 
 ////////////////////////////////////////////////////////////
@@ -272,6 +272,11 @@ const simCore::Vec3& PlatformPosition::lla() const
 {
   pullFromDataStore_(lla_);
   return lla_;
+}
+
+simData::ObjectId PlatformPosition::platformId() const
+{
+  return platformId_;
 }
 
 int PlatformPosition::pullFromDataStore_(simCore::Vec3& outLla) const

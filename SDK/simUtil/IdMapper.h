@@ -22,11 +22,12 @@
 #ifndef SIMUTIL_IDMAPPER_H
 #define SIMUTIL_IDMAPPER_H
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <map>
+
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 
 namespace simData { class DataStore; }
 
@@ -107,7 +108,7 @@ private:
   /** Listens for events like entity removal to clear out IDs */
   class DataStoreListener;
   /** Listens for events like entity removal to clear out IDs */
-  std::tr1::shared_ptr<DataStoreListener> dataStoreListener_;
+  std::shared_ptr<DataStoreListener> dataStoreListener_;
 
   /** Maps a SERVER ID to a LOCAL ID */
   std::map<uint64_t, uint64_t> resolvedIds_;

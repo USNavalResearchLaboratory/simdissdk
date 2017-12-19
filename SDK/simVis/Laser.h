@@ -22,16 +22,19 @@
 #ifndef SIMVIS_LASER_H
 #define SIMVIS_LASER_H
 
-#include "osg/Geometry"
-
+#include "osg/ref_ptr"
+#include "osg/observer_ptr"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
+
+namespace osg { class Geode; }
 
 namespace simVis
 {
+  class EntityLabelNode;
+  class LabelContentCallback;
+  class LocalGridNode;
+
   /// Scene graph node that renders a Laser
   class SDKVIS_EXPORT LaserNode : public EntityNode
   {
@@ -137,11 +140,34 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** This entity type is, at this time, unpickable. */
+    virtual unsigned int objectIndexTag() const;
+
     /**
      * Gets a pointer to the last data store update, or NULL if
      * none have been applied.
      */
     const simData::LaserUpdate* getLastUpdateFromDS() const;
+
+    /**
+    * Gets the world position for this laser's origin. This is a convenience
+    * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+    /**
+    * Gets the world position & orientation for this laser. This is a convenience
+    * function that extracts the Position information and rotation from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+      simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
 
     /**
     * Get the traversal mask for this node type
@@ -156,11 +182,14 @@ namespace simVis
     virtual const char* className() const { return "LaserNode"; }
 
   protected:
-    /// osg::Referenced-derived
-    virtual ~LaserNode() {}
+    /// osg::Referenced-derived; destructor body needs to be in the .cpp
+    virtual ~LaserNode();
 
   private: // methods
     void refresh_(const simData::LaserUpdate* update, const simData::LaserPrefs* prefs);
+
+    // apply prefs changes (color, linewidth) that do not require rebuilding the geometry
+    void updateLaser_(const simData::LaserPrefs &prefs);
 
     /**
     * Updates the locator if required, based on specified arguments
@@ -179,7 +208,6 @@ namespace simVis
     bool                      hasLastUpdate_;  ///< is there anything in lastUpdate_
     osg::ref_ptr<LocatorNode> locatorNode_;    ///< the parent node for all laser-related graphics
     osg::ref_ptr<Locator>     laserXYZOffsetLocator_; ///< extra locator used only for non-relative lasers
-    bool                      visible_;        ///< whether the prefs indicate that this laser should be drawn
     osg::ref_ptr<osg::Geode>  node_;           ///< the node that contains the actual laser geometry
     osg::observer_ptr<const EntityNode> host_; ///< the platform that hosts this laser
     osg::ref_ptr<LocalGridNode> localGrid_;    ///< the localgrid node for this laser

@@ -45,6 +45,7 @@
 #include <QMainWindow>
 #include <QResizeEvent>
 #include <QToolBar>
+#include <QWindow>
 
 #include "MyMainWindow.h"
 
@@ -65,9 +66,9 @@ MyMainWindow::MyMainWindow(int framerate)
 {
   // create toolbar
   QToolBar* toolbar = new QToolBar(this);
-  QAction* dialogAction = new QAction("New Dialog", this);
-  QAction* dockableAction = new QAction("New Dockable", this);
-  QAction* mainViewAction = new QAction("New Main View Pane", this);
+  QAction* dialogAction = new QAction(tr("New Dialog"), this);
+  QAction* dockableAction = new QAction(tr("New Dockable"), this);
+  QAction* mainViewAction = new QAction(tr("New Main View Pane"), this);
   toolbar->addAction(dialogAction);
   toolbar->addAction(dockableAction);
   toolbar->addAction(mainViewAction);
@@ -91,10 +92,10 @@ MyMainWindow::MyMainWindow(int framerate)
 
   // A scene manager that all our views will share.
   sceneMan_ = new simVis::SceneManager();
-  sceneMan_->setMap(map);
+  sceneMan_->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan_);
+  simExamples::addDefaultSkyNode(sceneMan_.get());
 
   // create our first widget, seems to be required on startup
   createViewDockable_();
@@ -120,8 +121,13 @@ MyMainWindow::~MyMainWindow()
 
 void MyMainWindow::paintEvent(QPaintEvent* e)
 {
-  // refresh all the views.
-  viewMan_->frame();
+  // refresh all the views -- only repaint if the last created GL window was exposed (or got deleted).
+  // This repaints on NULL because it the flag (in this app) can only be NULL if user closed an open
+  // window, and other windows that are still open are almost certainly still exposed.  We do check
+  // for isExposed() on the last created window, under the presumption that once it is exposed, we
+  // can safely draw on all windows.
+  if (!lastCreatedGlWindow_ || lastCreatedGlWindow_->isExposed())
+    viewMan_->frame();
   timer_->start();
 }
 
@@ -132,12 +138,14 @@ simVis::ViewManager* MyMainWindow::getViewManager()
 
 void MyMainWindow::createViewDialog_()
 {
-  QString viewName = QString("Dialog View %1").arg(viewCounter_++);
+  QString viewName = tr("Dialog View %1").arg(viewCounter_++);
   osg::ref_ptr<simVis::View> view = createView_(viewName);
 
   // now create a dock widget for each inset
   QDialog* dialog = new QDialog(this);
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
+  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
+  lastCreatedGlWindow_ = viewWidget->windowHandle();
+  viewWidget->setMinimumSize(2, 2);
   dialog->setWindowTitle(viewName);
   dialog->setLayout(new QHBoxLayout());
   dialog->layout()->addWidget(viewWidget);
@@ -147,12 +155,14 @@ void MyMainWindow::createViewDialog_()
 
 void MyMainWindow::createViewDockable_()
 {
-  QString viewName = QString("Dockable View %1").arg(viewCounter_++);
+  QString viewName = tr("Dockable View %1").arg(viewCounter_++);
   osg::ref_ptr<simVis::View> view = createView_(viewName);
 
   // now create a dock widget for each inset
   QDockWidget* dockable = new QDockWidget(this);
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view);
+  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
+  lastCreatedGlWindow_ = viewWidget->windowHandle();
+  viewWidget->setMinimumSize(2, 2);
   dockable->setWidget(viewWidget);
   dockable->setWindowTitle(viewName);
   dockable->resize(100, 100);
@@ -162,12 +172,14 @@ void MyMainWindow::createViewDockable_()
 void MyMainWindow::createMainView_()
 {
   // Make a main view, hook it up, and add it to the view manager.
-  QString viewName = QString("Main View %1").arg(viewCounter_++);
+  QString viewName = tr("Main View %1").arg(viewCounter_++);
   osg::ref_ptr<simVis::View> mainview = createView_(viewName);
 
   // Make a Qt Widget to hold our view, and add that widget to the
   // main window.
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview);
+  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview.get());
+  lastCreatedGlWindow_ = viewWidget->windowHandle();
+  viewWidget->setMinimumSize(2, 2);
   viewWidget->resize(100, 100);
   centralWidget()->layout()->addWidget(viewWidget);
 }

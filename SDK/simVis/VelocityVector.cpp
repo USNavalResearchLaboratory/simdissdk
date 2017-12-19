@@ -19,23 +19,19 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Geode"
+#include "osg/Geometry"
+#include "osg/Point"
+
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
 
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
-
-#include "osgEarthSymbology/Color"
-
-#include "osg/Geode"
-#include "osg/Geometry"
-#include "osg/Point"
-
 #include "simVis/VelocityVector.h"
-
-using namespace osgEarth::Symbology;
 
 namespace simVis
 {
@@ -55,7 +51,7 @@ VelocityVector::~VelocityVector()
 {
 }
 
-void VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
+int VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
 {
   // clean the graph so we can rebuild it.
   this->removeChildren(0, this->getNumChildren());
@@ -64,18 +60,19 @@ void VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
   if (!lastUpdate_.has_time())
   {
     setNodeMask(DISPLAY_MASK_NONE);
-    return;
+    return 1;
   }
 
   osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-  createVelocityVector_(prefs, geode);
+  createVelocityVector_(prefs, geode.get());
 
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
   stateSet->setAttributeAndModes(new osg::Point(1.5f), 1);
 
   setNodeMask(DISPLAY_MASK_PLATFORM);
-  this->addChild(geode);
+  this->addChild(geode.get());
+  return 0;
 };
 
 void VelocityVector::setPrefs(bool draw, const simData::PlatformPrefs& prefs, bool force)
@@ -104,9 +101,18 @@ void VelocityVector::setPrefs(bool draw, const simData::PlatformPrefs& prefs, bo
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, velvectimeunits);
 
     if (rebuildRequired)
-      rebuild_(prefs);
+    {
+      if (rebuild_(prefs) == 0)
+      {
+        // this is guaranteed by rebuild_
+        assert(getNodeMask() == DISPLAY_MASK_PLATFORM);
+        // force sync with our locator
+        syncWithLocator();
+      }
+    }
+    else
+      setNodeMask(draw ? DISPLAY_MASK_PLATFORM : DISPLAY_MASK_NONE);
 
-    setNodeMask(draw ? DISPLAY_MASK_PLATFORM : DISPLAY_MASK_NONE);
     forceRebuild_ = false;
   }
   lastPrefs_ = prefs;
@@ -125,10 +131,10 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
-  geom->setVertexArray(vertices);
+  geom->setVertexArray(vertices.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
 
   simCore::Coordinate ecef;

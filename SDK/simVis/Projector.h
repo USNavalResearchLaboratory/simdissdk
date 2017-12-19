@@ -22,15 +22,17 @@
 #ifndef SIMVIS_PROJECTOR_H
 #define SIMVIS_PROJECTOR_H
 
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
 
 namespace osg { class Texture2D; }
 
 namespace simVis
 {
+  class EntityLabelNode;
+  class LabelContentCallback;
+  struct LocatorCallback;
 
 /** Projector video interface on the MediaPlayer2 side */
 class ProjectorTexture : public osg::Referenced
@@ -91,9 +93,6 @@ public:
 
   /// get preferences
   const simData::ProjectorPrefs& getPrefs() const { return lastPrefs_; }
-
-  /// set the image being projected
-  void setImageURL(const std::string& imageURL);
 
   /// get field of view in degrees
   double getVFOV() const;
@@ -170,6 +169,9 @@ public: // EntityNode interface
   */
   virtual double range() const;
 
+  /** This entity type is, at this time, unpickable. */
+  virtual unsigned int objectIndexTag() const;
+
   /**
   * Get the traversal mask for this node type
   * @return a traversal mask
@@ -187,20 +189,24 @@ public:
   * Updates the projection uniforms. This called automatically when the locator moves; you
   * do not need to call it directly.
   */
-  void refresh();
+  void syncWithLocator();
 
   /** Traverse the node during visitor pattern */
   virtual void traverse(osg::NodeVisitor& nv);
 
 protected:
-  /// osg::Referenced-derived
-  virtual ~ProjectorNode() {}
+  /// osg::Referenced-derived; destructor body needs to be in the .cpp
+  virtual ~ProjectorNode();
 
 private:
+  /** Copy constructor, not implemented or available. */
+  ProjectorNode(const ProjectorNode&);
+
   simData::ProjectorProperties lastProps_;
   simData::ProjectorPrefs      lastPrefs_;
   simData::ProjectorUpdate     lastUpdate_;
   osg::observer_ptr<const EntityNode> host_;
+  osg::ref_ptr<LocatorCallback> locatorCallback_;
   osg::ref_ptr<EntityLabelNode> label_;
   osg::ref_ptr<LabelContentCallback> contentCallback_;
   bool                         hasLastUpdate_;

@@ -127,7 +127,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
           simVis::View::Insets insets;
           viewer_->getMainView()->getInsets(insets);
           for (unsigned i = 0; i < insets.size(); ++i)
-            viewer_->getMainView()->removeInset(insets[i]);
+            viewer_->getMainView()->removeInset(insets[i].get());
 
           SIM_NOTICE << LC << "Removed all insets.." << std::endl;
           handled = true;
@@ -225,7 +225,7 @@ int main(int argc, char** argv)
   viewer->setMap(simExamples::createDefaultExampleMap());
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Demonstrate the view callback. This notifies us whenever new inset views are created or
   // removed or get focus.
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
   mainView->addEventHandler(insetHandler);
 
   // Install a handler to respond to the demo keys in this sample.
-  mainView->getCamera()->addEventCallback(new MenuHandler(viewer, insetHandler));
+  mainView->getCamera()->addEventCallback(new MenuHandler(viewer.get(), insetHandler.get()));
 
   // set an initial viewpoint
   mainView->lookAt(45, 0, 0, 0, -89, 12e6);

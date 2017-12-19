@@ -21,6 +21,7 @@
  */
 #include <map>
 #include "simNotify/Notify.h"
+#include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/Scenario.h"
 #include "simVis/VaporTrailStorage.h"
@@ -39,7 +40,7 @@ public:
   }
 
   /** Removes the vaporTrails from storage when the entity is removed from data store */
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     storage_.removeVaporTrailsForPlatform_(removedId);
   }

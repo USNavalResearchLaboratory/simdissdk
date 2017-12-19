@@ -119,10 +119,10 @@ private:
 
   // Setup the tree
   void setupModelData_(EntityTreeItem *parent, simData::DataStore* dataStore);
-  void buildTree_(simData::DataStore::ObjectType type, const simData::DataStore* dataStore,
+  void buildTree_(simData::ObjectType type, const simData::DataStore* dataStore,
     const simData::DataStore::IdList& idList, EntityTreeItem *parent);
   EntityTreeItem* findItem_(uint64_t entityId) const;
-  void addTreeItem_(uint64_t id, simData::DataStore::ObjectType type, uint64_t parentId);
+  void addTreeItem_(uint64_t id, simData::ObjectType type, uint64_t parentId);
 
   /// Removes the entity specified by the id
   void removeEntity_(uint64_t id);

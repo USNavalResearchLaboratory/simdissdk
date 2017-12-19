@@ -22,22 +22,25 @@
 #ifndef SIMVIS_ENTITY_NODE_H
 #define SIMVIS_ENTITY_NODE_H
 
-#include "osg/observer_ptr"
-#include "osgEarth/MapNode"
-#include "simVis/Locator.h"
-#include "simData/DataStore.h"
 #include <vector>
+#include "osg/Group"
+#include "osg/observer_ptr"
+#include "simCore/Calc/Coordinate.h"
+#include "simData/ObjectId.h"
 
-namespace osgEarth {
-  class Map;
-}
+namespace osgEarth { class MapNode; }
 
 namespace simCore {
   class Clock;
+  class Coordinate;
 }
+
+namespace simData { class DataSliceBase; }
 
 namespace simVis
 {
+  class Locator;
+
   /**
    * Pure interface class for a node that you can call EntityNode::attach with
    * and that will communicate tracking components
@@ -86,7 +89,7 @@ namespace simVis
     * @param type Type of entity node to alleviate the need for dynamic casting
     * @param locator Locator that will position this node
     */
-    EntityNode(simData::DataStore::ObjectType type, Locator* locator = NULL);
+    EntityNode(simData::ObjectType type, Locator* locator = NULL);
 
   public:
     /** Enumerates different name types for the label */
@@ -99,7 +102,7 @@ namespace simVis
     /**
     * Returns the type of entity
     */
-    simData::DataStore::ObjectType type() const { return type_; }
+    simData::ObjectType type() const { return type_; }
 
     /**
     * Whether the entity is active within the scenario at the current time.
@@ -129,6 +132,33 @@ namespace simVis
 
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const = 0;
+
+    /** Object index tag, from osgEarth::Registry::objectIndex()->tagNode(); 0 if none. */
+    virtual unsigned int objectIndexTag() const = 0;
+
+    /**
+    * Gets the world position for this Entity. This is a convenience
+    * function that extracts the Position information (not rotation) from the
+    * Entity's underlying locator or locatorNode.
+    *
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+    /**
+    * Gets the world position reflected by this Locator. This is a convenience
+    * function that extracts the Position information and rotation from the
+    * locatorNode matrix.
+    *
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+      simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
 
     /**
      * Attaches a tracking child to this entity. The child will track
@@ -250,14 +280,12 @@ namespace simVis
     virtual ~EntityNode();
 
   private:
-    simData::DataStore::ObjectType type_;
+    /** Copy constructor, not implemented or available. */
+    EntityNode(const EntityNode&);
+
+    simData::ObjectType type_;
     osg::ref_ptr<Locator> locator_;
   };
-
-  /** Vector of EntityNode ref_ptr */
-  typedef std::vector< osg::ref_ptr<EntityNode> >      EntityVector;
-  /** Vector of EntityNode observer_ptr */
-  typedef std::vector< osg::observer_ptr<EntityNode> > EntityObserverVector;
 
 } // namespace simVis
 

@@ -297,6 +297,13 @@ SDKCORE_EXPORT bool hasEnv(const std::string& val);
  */
 SDKCORE_EXPORT std::string expandEnv(const std::string& val);
 
+/**
+* Gets an environment variable
+* @param env Environment variable to get
+* @return value of env, with trailing carriage return (\r) chars trimmed, otherwise an empty string if it does not exist
+*/
+SDKCORE_EXPORT std::string getEnvVar(const std::string &env);
+
 } // namespace simCore
 
 #endif /* SIMCORE_STRING_UTILS_H */

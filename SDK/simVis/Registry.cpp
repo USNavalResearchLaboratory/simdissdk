@@ -191,11 +191,11 @@ simVis::Registry::Registry()
   // Configure the osgDB::Registry with our own read file callback
   readFileCallback_ = new ReadFileCallback();
   osgDB::Registry* osgDbRegistry = osgDB::Registry::instance();
-  osgDbRegistry->setReadFileCallback(readFileCallback_);
+  osgDbRegistry->setReadFileCallback(readFileCallback_.get());
 
   // Configure the osgDB::Registry with our own file finder callback
   osg::ref_ptr<FindFileCallback> findFileCallback = new FindFileCallback(*this, osgDbRegistry->getFindFileCallback());
-  osgDbRegistry->setFindFileCallback(findFileCallback);
+  osgDbRegistry->setFindFileCallback(findFileCallback.get());
 
   // models may be specified without extension, use this list to attempt to resolve.
   // these should be reconciled with list in simVis::isImageFile (Utils.cpp)
@@ -210,20 +210,18 @@ simVis::Registry::Registry()
   modelExtensions_.push_back("jpg");
 
   // initialize the default NOTIFY level from the environment variable
-  const char* val = getenv("SIM_NOTIFY_LEVEL");
-  if (val)
+  const std::string val = simCore::getEnvVar("SIM_NOTIFY_LEVEL");
+  if (!val.empty())
   {
     simNotify::setNotifyLevel(simNotify::stringToSeverity(val));
   }
 
   memoryChecking_ = false;
-  if (getenv("SIM_MEMORY_CHECKING"))
+  const std::string memoryCheckingEnv = simCore::getEnvVar("SIM_MEMORY_CHECKING");
+  if (simCore::caseCompare(memoryCheckingEnv, "On") == 0)
   {
-    if (simCore::caseCompare(getenv("SIM_MEMORY_CHECKING"), "On") == 0)
-    {
-      SIM_INFO << "SIM_MEMORY_CHECKING enabled"  << std::endl;
-      memoryChecking_ = true;
-    }
+    SIM_INFO << "SIM_MEMORY_CHECKING enabled"  << std::endl;
+    memoryChecking_ = true;
   }
 
   // by default, articulated models aren't shared so that you can
@@ -488,9 +486,6 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
       osg::StateSet* stateSet = result->getOrCreateStateSet();
       // As per SIMSDK-157, blending needs to be on to avoid jaggies
       stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
-
-      // and we need to explicitly turn on depth writes
-      stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON);
     }
   }
   else // is model
@@ -504,7 +499,7 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
     // Need to apply a sequence time fix for osg::Sequence to deal with decreasing simulation times
     if (result)
     {
-      AddUpdateCallbackToSequence fixSequenceTimeUpdates(sequenceTimeUpdater_);
+      AddUpdateCallbackToSequence fixSequenceTimeUpdates(sequenceTimeUpdater_.get());
       result->accept(fixSequenceTimeUpdates);
 
       // Set all render bins for the loaded model to Inherited.  This allows us to later on put
@@ -559,7 +554,7 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
 {
   FontCache::const_iterator it = fontCache_.find(name);
   if (it != fontCache_.end())
-    return it->second;
+    return it->second.get();
 
   // Check SIMDIS location first
   std::string filename = this->findFontFile(name);
@@ -574,16 +569,16 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
   if (!font.valid())
   {
     if (fontCache_.find(DEFAULT_FONT) != fontCache_.end())
-      return fontCache_.find(DEFAULT_FONT)->second;
+      return fontCache_.find(DEFAULT_FONT)->second.get();
 
     SIM_ERROR << "Could not find any fonts.  Check the value for the environment variable SIMDIS_FONTPATH\n";
-    return fontCache_.find(CANT_FIND_FONT)->second;
+    return fontCache_.find(CANT_FIND_FONT)->second.get();
   }
 
   font->setGlyphImageMargin(2);
-  fontCache_[name] = font;
+  fontCache_[name] = font.get();
 
-  return font;
+  return font.get();
 }
 
 std::string simVis::Registry::findFontFile(const std::string& name) const
@@ -615,15 +610,14 @@ std::string simVis::Registry::findFontFile(const std::string& name) const
     osgDB::FilePathList filePaths;
 
     // search for font in the SIMDIS_FONTPATH directory, falling back on SIMDIS_SDK_FILE_PATH (/fonts)
-    const char* tempString = getenv("SIMDIS_FONTPATH");
-    if (tempString)
+    std::string tempString = simCore::getEnvVar("SIMDIS_FONTPATH");
+    if (!tempString.empty())
       filePaths.push_back(tempString);
-    tempString = getenv("SIMDIS_SDK_FILE_PATH");
-    if (tempString)
+    tempString = simCore::getEnvVar("SIMDIS_SDK_FILE_PATH");
+    if (!tempString.empty())
     {
-      std::string sdkFilePath = tempString;
-      filePaths.push_back(sdkFilePath);
-      filePaths.push_back(sdkFilePath + "/fonts");
+      filePaths.push_back(tempString);
+      filePaths.push_back(tempString + "/fonts");
     }
 
     // Search the disk

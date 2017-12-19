@@ -609,27 +609,93 @@ QString ConsoleDataModel::LineEntry::text() const
   return text_;
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-////////////////////////////////////////////////////////////////////////
-SeverityFilterProxy::SeverityFilterProxy(QObject* parent)
-  : QSortFilterProxyModel(parent),
-    minSeverity_(simNotify::NOTIFY_INFO)
-{
-}
+/////////////////////////////////////////////////////////////////
 
-void SeverityFilterProxy::setMinimumSeverity(int severity)
-{
-  minSeverity_ = static_cast<simNotify::NotifySeverity>(severity);
-  invalidate();
-}
-
-bool SeverityFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
-{
-  QModelIndex idx = sourceModel()->index(sourceRow, ConsoleDataModel::COLUMN_SEVERITY, sourceParent);
-  if (!idx.isValid())
-    return false;
-  QVariant data = sourceModel()->data(idx, ConsoleDataModel::SEVERITY_ROLE);
-  return data.isValid() && data.toInt() <= minSeverity_;
-}
+SimpleConsoleTextFilter::SimpleConsoleTextFilter()
+#ifdef DEBUG
+  : showInDebugMode_(true)
 #endif
+{
+}
+
+void SimpleConsoleTextFilter::addFilter(const QString& filter)
+{
+  filters_.push_back(filter);
+}
+
+void SimpleConsoleTextFilter::setShowInDebugMode(bool showInDebug)
+{
+#ifdef DEBUG
+  showInDebugMode_ = showInDebug;
+#endif
+}
+
+void SimpleConsoleTextFilter::addCommonQtPngFilters()
+{
+  // Matches error messages from SIM-4260, like:
+  // QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined
+  filters_.push_back("swapBuffers() called with non-exposed window, behavior is undefined");
+
+  // Matches error messages from SIM-4433, like:
+  // QWindowsWindow::setGeometryDp: Attempt to set a size (283x177) violating the constraints(283x295 - 524287x524287) on window QWidgetWindow/'Super FormWindow'
+  filters_.push_back("QWindowsWindow::setGeometryDp: Attempt to set a size (");
+
+  // Matches error messages from Intel 4600 on start-up from SIM-4703, like:
+  // Warning: detected OpenGL error 'invalid enumerant' at After Renderer::compile
+  // Warning: detected OpenGL error 'invalid enumerant' at after RenderBin::draw(..)
+  filters_.push_back("Warning: detected OpenGL error 'invalid enumerant' at ");
+
+  // Matches error messages from MSVC 2015 with Qt 5.5 which uses PNG 1.6, like:
+  // "libpng warning: iCCP: known incorrect sRGB profile"
+  filters_.push_back("libpng warning: iCCP: known incorrect sRGB profile");
+
+  // Matches PNG 1.6 from GDAL:
+  // "PNG lib warning : Interlace handling should be turned on when using png_read_image"
+  filters_.push_back("Interlace handling should be turned on when using png_read_image");
+
+  // Matches error messages from Qt about untested version of Windows:
+  // "libpng warning: iCCP: known incorrect sRGB profile"
+#ifdef WIN32
+  filters_.push_back("Qt: Untested Windows version ");
+#endif
+
+  // Errors displayed in Red Hat at start up
+#ifndef WIN32
+  filters_.push_back("QXcbConnection: XCB error: 8 (BadMatch),");
+#endif
+}
+
+void SimpleConsoleTextFilter::addCommonOsgEarthFilters()
+{
+  // osgEarth warnings from MGRS grid that we can't do anything about, like:
+  // "[osgEarth]* [MGRSGraticule] Empty SQID geom at 10W DE"
+  filters_.push_back("[osgEarth]* [MGRSGraticule] Empty SQID geom at ");
+  // "[osgEarth]  SQID100kmCell SW=6.30464349477,0 NE=7.20284692297,0.904282609865, SRS=WGS 84"
+  filters_.push_back("[osgEarth]  SQID100kmCell SW=");
+}
+
+bool SimpleConsoleTextFilter::acceptEntry(ConsoleDataModel::ConsoleEntry& entry) const
+{
+  // Hide several messages in release mode.  If debug mode, let them through with different priority
+  for (std::vector<QString>::const_iterator i = filters_.begin(); i != filters_.end(); ++i)
+  {
+    // String matching, case-sensitive
+    if (entry.text.contains((*i)))
+    {
+#ifdef DEBUG
+      // Drop message, if showInDebugMode_ is off
+      if (!showInDebugMode_)
+        return false;
+      // In debug mode, lower severity and change the channel
+      entry.severity = simNotify::NOTIFY_DEBUG_INFO;
+      entry.channel = "Ignored Errors";
+#else
+      // In release mode, drop them entirely
+      return false;
+#endif
+    }
+  }
+  return true;
+}
+
 }

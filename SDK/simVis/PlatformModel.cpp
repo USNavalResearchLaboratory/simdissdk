@@ -22,6 +22,7 @@
 #include "osg/AutoTransform"
 #include "osg/ComputeBoundsVisitor"
 #include "osg/CullFace"
+#include "osg/Depth"
 #include "osg/Geode"
 #include "osg/LOD"
 #include "osg/PolygonMode"
@@ -30,13 +31,15 @@
 #include "osg/CullStack"
 #include "osg/Viewport"
 #include "osgDB/ReadFile"
-#include "osgEarth/AutoScale"
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
 #include "osgEarthAnnotation/AnnotationUtils"
 
 #include "simVis/Constants.h"
+#include "simVis/DynamicScaleTransform.h"
 #include "simVis/EntityLabel.h"
+#include "simVis/Locator.h"
+#include "simVis/OverrideColor.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/RCS.h"
@@ -109,9 +112,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
     brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
     objectIndexTag_(0)
 {
-  osg::Group* labelRoot = new osg::Group();
-  labelRoot->setName("labelRoot");
-  label_ = new EntityLabelNode(labelRoot);
+  // EntityLabelNode for platformModel is a special case - a locatorNode with no locator; it gets its location from parent, the platformmodelnode (which is a locatorNode).
+  label_ = new EntityLabelNode();
 
   setName("PlatformModel");
   setNodeMask(getMask());
@@ -134,7 +136,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   // but uses the imageIconXform for the actual testing.
   HorizonCullCallback* hcc = new HorizonCullCallback();
   hcc->setCullByCenterPointOnly(true);
-  hcc->setProxyNode(imageIconXform_);
+  hcc->setProxyNode(imageIconXform_.get());
   hcc->setName("HorizonCullCallback");
   addCullCallback(hcc);
 
@@ -147,7 +149,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   dynamicXform_->setName("dynamicXform");
 
   // Configure children graph
-  addChild(labelRoot);
+  addChild(label_);
   addChild(dynamicXform_);
   dynamicXform_->addChild(imageIconXform_);
   imageIconXform_->addChild(offsetXform_);
@@ -156,7 +158,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
 
   // Tag the platform at the lowest unique level feasible
-  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(offsetXform_, offsetXform_);
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(offsetXform_.get(), offsetXform_.get());
 
   // When alpha volume is on, we turn on this node
   alphaVolumeGroup_ = new osg::Group;
@@ -179,7 +181,7 @@ bool PlatformModelNode::isImageModel() const
 
 osg::Node* PlatformModelNode::offsetNode() const
 {
-  return offsetXform_;
+  return offsetXform_.get();
 }
 
 unsigned int PlatformModelNode::objectIndexTag() const
@@ -273,9 +275,9 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
   }
 
   // re-apply the parent group.
-  offsetXform_->addChild(model_);
-  alphaVolumeGroup_->addChild(model_);
-  dynamicXform_->setSizingNode(model_);
+  offsetXform_->addChild(model_.get());
+  alphaVolumeGroup_->addChild(model_.get());
+  dynamicXform_->setSizingNode(model_.get());
 
   return true;
 }
@@ -378,13 +380,7 @@ bool PlatformModelNode::updateScale_(const simData::PlatformPrefs& prefs, bool f
   // Check for ScaleXYZ first
   if (prefs.has_scalexyz())
   {
-    if ((prefs.scalexyz().x() > 0.0) && (prefs.scalexyz().y() > 0.0) && (prefs.scalexyz().z() > 0.0))
-    {
-      return updateScaleXyz_(prefs, force);
-    }
-
-    // if ScaleXYZ just turned off than force the other scaling
-    force =  force || PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz);
+    return updateScaleXyz_(prefs, force);
   }
 
   // Clear out the override scaling at this point so latent values don't take over
@@ -399,12 +395,8 @@ bool PlatformModelNode::updateScaleXyz_(const simData::PlatformPrefs& prefs, boo
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz)))
     return false;
 
-  if ((prefs.scalexyz().x() <= 0.0) || (prefs.scalexyz().y() <= 0.0) || (prefs.scalexyz().z() <= 0.0))
-    return false;
-
   // update the static scaling using the scaleXYZ pref
   dynamicXform_->setOverrideScale(osg::Vec3d(prefs.scalexyz().y(), prefs.scalexyz().x(), prefs.scalexyz().z()));
-
   return true;
 }
 
@@ -430,6 +422,23 @@ bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs,
   }
 
   return true;
+}
+
+void PlatformModelNode::updateImageDepth_(const simData::PlatformPrefs& prefs, bool force) const
+{
+  if (!offsetXform_.valid())
+    return;
+
+  if (force || PB_FIELD_CHANGED(&prefs, &lastPrefs_, nodepthicons))
+  {
+    osg::StateSet* state = offsetXform_->getOrCreateStateSet();
+    state->removeAttribute(osg::StateAttribute::DEPTH);
+    if (!isImageModel_)
+      return;
+    // image models need to always pass depth test if nodepthicons is set to true
+    osg::Depth::Function depthFunc = (prefs.nodepthicons() && isImageModel_) ? osg::Depth::ALWAYS : osg::Depth::LESS;
+    state->setAttributeAndModes(new osg::Depth(depthFunc, 0, 1, true), osg::StateAttribute::ON);
+  }
 }
 
 void PlatformModelNode::updateImageIconRotation_(const simData::PlatformPrefs& prefs, bool force)
@@ -516,10 +525,9 @@ void PlatformModelNode::updateStippling_(const simData::PlatformPrefs& prefs)
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, polygonstipple))
     return;
 
-  if (!model_.valid())
+  if (!offsetXform_.valid())
     return;
-  osg::observer_ptr<osg::Geode> geom = static_cast<osg::Geode*>(model_.get());
-  osg::observer_ptr<osg::StateSet> stateSet = geom->getStateSet();
+  osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getStateSet();
 
   if (!prefs.usepolygonstipple())
   {
@@ -608,10 +616,9 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, drawmode))
     return;
 
-  if (!model_.valid())
+  if (!offsetXform_.valid())
     return;
-  osg::observer_ptr<osg::Geode> geom = static_cast<osg::Geode*>(model_.get());
-  osg::observer_ptr<osg::StateSet> stateSet = geom->getStateSet();
+  osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getStateSet();
 
   // Have default values for face/mode
   osg::PolygonMode::Face face = osg::PolygonMode::FRONT_AND_BACK;
@@ -664,7 +671,7 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
 
 void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, bool force)
 {
-  if (!model_.valid())
+  if (!offsetXform_.valid())
     return;
 
   if (!force && lastPrefsValid_ &&
@@ -699,7 +706,7 @@ void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs
 
 void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
 {
-  if (lastPrefsValid_ && !PB_FIELD_CHANGED(&lastPrefs_, &prefs, alphavolume))
+  if (isImageModel_ || (lastPrefsValid_ && !PB_FIELD_CHANGED(&lastPrefs_, &prefs, alphavolume)))
     return;
 
   if (prefs.alphavolume())
@@ -722,8 +729,11 @@ void PlatformModelNode::setProperties(const simData::PlatformProperties& props)
 
 void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
 {
-  // If a new model is loaded than force a scale update
+  // If a new model is loaded then force a scale update
   const bool modelChanged = updateModel_(prefs);
+
+  // check for updates to the nodepthicon pref
+  updateImageDepth_(prefs, modelChanged);
 
   // Preference rules that set a high Z offset (say 4000) on image icons could be problematic; warn about them.
   // Only really care about image icons, since they have no Z depth and the offset Z moves them closer to

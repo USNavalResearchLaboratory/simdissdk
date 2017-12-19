@@ -39,7 +39,7 @@ GogNodeInterface* TextAnnotation::deserialize(
                             MapNode*                 mapNode)
 {
   // parse:
-  std::string text = conf.value("text");
+  const std::string text = Utils::decodeAnnotation(conf.value("text"));
 
   p.parseGeometry<Geometry>(conf);
   GogNodeInterface* rv = NULL;

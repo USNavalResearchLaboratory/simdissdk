@@ -38,17 +38,18 @@
 #include "simData/MemoryDataStore.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/EarthManipulator.h"
-#include "simVis/Picker.h"
-#include "simVis/ViewManager.h"
-#include "simVis/View.h"
-#include "simVis/ViewManagerLogDbAdapter.h"
-#include "simVis/SceneManager.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Picker.h"
 #include "simVis/Popup.h"
+#include "simVis/SceneManager.h"
+#include "simVis/View.h"
+#include "simVis/ViewManager.h"
+#include "simVis/ViewManagerLogDbAdapter.h"
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simUtil/ExampleResources.h"
-
+#include "simUtil/DynamicSelectionPicker.h"
 
 namespace ui = osgEarth::Util::Controls;
 
@@ -78,10 +79,11 @@ struct Application
 /** Prints help text */
 int usage(char** argv)
 {
-  SIM_NOTICE << argv[0] << " [--rtt|--intersect]\n"
+  SIM_NOTICE << argv[0] << " [--rtt|--intersect|--dynamic]\n"
     << "\n"
     << "  --rtt         Enable render-to-texture picking\n"
     << "  --intersect   Enable intersection picking\n"
+    << "  --dynamic     Enable dynamic selection algorithm picking\n"
     << std::endl;
 
   return 0;
@@ -182,6 +184,24 @@ public:
         return true;
       }
       break;
+
+    case 'd':
+      if (app_.insetView)
+      {
+        if (app_.insetRttView)
+        {
+          app_.mainView->removeInset(app_.insetRttView.get());
+          app_.insetRttView = NULL;
+        }
+        app_.mainView->removeInset(app_.insetView.get());
+        app_.insetView = NULL;
+      }
+      break;
+
+    case 't':
+      if (app_.insetView)
+        app_.insetView->setVisible(!app_.insetView->isVisible());
+      break;
     }
 
     return false;
@@ -276,6 +296,8 @@ ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel, bool rttEnabled
   vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("p: Pause playback", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("v: Swap viewpoints", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("d: Delete inset", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("t: Toggle inset", 14, osgEarth::Color::White));
   if (rttEnabled)
   {
     vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, osgEarth::Color::White));
@@ -454,53 +476,57 @@ int main(int argc, char** argv)
   if (arguments.read("--help"))
     return usage(argv);
 
-  // Determine RTT or intersect mode
-  bool useRtt = true; // default to RTT mode
+  // Determine pick mode; the default is dynamic
+  enum PickType {
+    PickRtt,
+    PickIntersect,
+    PickDynamic
+  } pickType = PickDynamic;
   if (arguments.read("--rtt"))
-    useRtt = true;
+    pickType = PickRtt;
   else if (arguments.read("--intersect"))
-    useRtt = false;
+    pickType = PickIntersect;
 
   // First we need a map.
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
 
   // A scene manager that all our views will share.
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // Add sky node
-  simExamples::addDefaultSkyNode(sceneMan);
+  simExamples::addDefaultSkyNode(sceneMan.get());
 
   // We need a view manager. This handles all of our Views.
   osg::ref_ptr<simVis::ViewManager> viewMan = new simVis::ViewManager(arguments);
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
-  logDb->install(viewMan);
+  logDb->install(viewMan.get());
 
   // Create view and connect them to our scene.
   Application app;
   app.mainView = new simVis::View();
   app.mainView->setName("Main View");
-  app.mainView->setSceneManager(sceneMan);
+  app.mainView->setSceneManager(sceneMan.get());
   app.mainView->setUpViewInWindow(50, 50, 800, 600);
 
   // Add it to the view manager
-  viewMan->addView(app.mainView);
+  viewMan->addView(app.mainView.get());
 
   // Create a "Super HUD" that shows on top of the main view
   osg::ref_ptr<simVis::View> superHud = new simVis::View;
   superHud->setName("SuperHUD");
-  superHud->setUpViewAsHUD(app.mainView);
-  viewMan->addView(superHud);
+  superHud->setUpViewAsHUD(app.mainView.get());
+  viewMan->addView(superHud.get());
 
   // Create an inset view
   app.insetView = new simVis::View;
   app.insetView->setName("Inset");
   app.insetView->setExtentsAsRatio(0.67f, 0.67f, 0.33f, 0.33f);
-  app.insetView->setSceneManager(sceneMan);
+  app.insetView->setSceneManager(sceneMan.get());
   app.insetView->applyManipulatorSettings(*app.mainView);
-  app.mainView->addInset(app.insetView); // auto-added to viewMan
+  app.mainView->addInset(app.insetView.get()); // auto-added to viewMan
 
   // Create several platforms
   simData::MemoryDataStore dataStore;
@@ -537,10 +563,10 @@ int main(int argc, char** argv)
 
   // Add various event handlers
   app.mainView->installDebugHandlers();
-  app.mainView->addOverlayControl(createUi(app.pickLabel, useRtt));
-  app.mainView->addEventHandler(new simVis::ToggleOverheadMode(app.mainView, 'O', 'C'));
+  app.mainView->addOverlayControl(createUi(app.pickLabel, (pickType == PickRtt)));
+  app.mainView->addEventHandler(new simVis::ToggleOverheadMode(app.mainView.get(), 'O', 'C'));
   app.mainView->addEventHandler(new MenuHandler(clock, app));
-  app.insetView->addEventHandler(new simVis::ToggleOverheadMode(app.insetView, 'O', 'C'));
+  app.insetView->addEventHandler(new simVis::ToggleOverheadMode(app.insetView.get(), 'O', 'C'));
   app.insetView->addEventHandler(new MenuHandler(clock, app));
 
   // Set the initial viewpoints
@@ -568,32 +594,40 @@ int main(int argc, char** argv)
   simVis::PickerHighlightShader::installShaderProgram(scenarioManager->getOrCreateStateSet(), true);
 
   // Add the picker itself
-  if (!useRtt)
-    app.picker = new simVis::IntersectPicker(viewMan, scenarioManager);
-  else
+  if (pickType == PickIntersect)
+    app.picker = new simVis::IntersectPicker(viewMan.get(), scenarioManager);
+  else if (pickType == PickDynamic)
+    app.picker = new simUtil::DynamicSelectionPicker(viewMan.get(), scenarioManager);
+  else // pickType == PickRtt
   {
     // Create the RTT picker
-    simVis::RTTPicker* rttPicker = new simVis::RTTPicker(viewMan, scenarioManager, 256);
+    simVis::RTTPicker* rttPicker = new simVis::RTTPicker(viewMan.get(), scenarioManager, 256);
+
+    // Add GOG to the pickable mask
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
+    osgEarth::Util::RTTPicker* osgEarthPicker = rttPicker->rttPicker();
+    osgEarthPicker->setCullMask(osgEarthPicker->getCullMask() | simVis::DISPLAY_MASK_GOG);
+#endif
     app.picker = rttPicker;
 
     // Make a view that lets us see what the picker sees for Main View
     app.mainRttView = new simVis::View();
     app.mainRttView->setExtentsAsRatio(0.67f, 0.f, 0.33f, 0.335f);
-    app.mainView->addInset(app.mainRttView);
-    rttPicker->setUpViewWithDebugTexture(app.mainRttView, app.mainView);
+    app.mainView->addInset(app.mainRttView.get());
+    rttPicker->setUpViewWithDebugTexture(app.mainRttView.get(), app.mainView.get());
 
     // Make a view that lets us see what the picker sees for Inset View
     app.insetRttView = new simVis::View();
     app.insetRttView->setExtentsAsRatio(0.67f, 0.335f, 0.33f, 0.335f);
-    app.mainView->addInset(app.insetRttView);
-    rttPicker->setUpViewWithDebugTexture(app.insetRttView, app.insetView);
+    app.mainView->addInset(app.insetRttView.get());
+    rttPicker->setUpViewWithDebugTexture(app.insetRttView.get(), app.insetView.get());
   }
 
   // When a new item is picked, update the label
-  app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel));
+  app.picker->addCallback(new UpdateLabelPickCallback(app.pickLabel.get()));
 
   // Add a popup handler to demonstrate its use of the picker
-  simVis::PopupHandler* popupHandler = new simVis::PopupHandler(app.picker, superHud);
+  simVis::PopupHandler* popupHandler = new simVis::PopupHandler(app.picker.get(), superHud.get());
   popupHandler->setShowInCorner(true);
   popupHandler->setBackColor(osgEarth::Color(0.f, 0.f, 0.f, 0.8f));
   popupHandler->setBorderColor(osgEarth::Color::Green);

@@ -24,11 +24,12 @@
 
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Math.h"
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 #include "simData/DataTypes.h"
 #include "osgGA/GUIEventHandler"
 #include <deque>
 
+namespace simData { class DataStore; }
 namespace simVis
 {
   class SceneManager;
@@ -192,6 +193,38 @@ namespace simUtil
     simData::DataStore* dataStore_;
     osg::observer_ptr<simVis::PlatformNode> platformNode_;
     simData::ObjectId platformId_;
+  };
+
+  /// Update a platform simulator using the OSG frame timer.
+  class SDKUTIL_EXPORT SimulatorEventHandler : public osgGA::GUIEventHandler
+  {
+  public:
+    /// Constructs a new SimulatorEventHandler
+    SimulatorEventHandler(simUtil::PlatformSimulatorManager *simMgr, double startTime, double endTime, bool loop = true);
+
+    /// handle an event
+    virtual bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa);
+
+    /// Changes the current time
+    void setTime(double t);
+
+    /// Retrieves the current time
+    double getTime() const;
+
+    /** Return the proper library name */
+    virtual const char* libraryName() const { return "simUtil"; }
+    /** Return the class name */
+    virtual const char* className() const { return "SimulatorEventHandler"; }
+
+  protected:
+    /// osg::Referenced-derived
+    virtual ~SimulatorEventHandler();
+
+  private:
+    osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr_;
+    double startTime_, endTime_, currentTime_, lastEventTime_;
+    bool loop_;
+    bool playing_;
   };
 
 } // namespace simUtil

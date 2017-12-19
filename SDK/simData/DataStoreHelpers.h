@@ -24,10 +24,13 @@
 
 #include <string>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
 #include "simData/DataTable.h"
+#include "simData/DataTypes.h"
+#include "simData/ObjectId.h"
 
 namespace simData {
+
+class DataStore;
 
 /** Methods for getting entity information given an entity ID */
 class SDKDATA_EXPORT DataStoreHelpers
@@ -40,13 +43,13 @@ public:
   /// Get the name or alias based on the entity's preference for the given objectId
   static std::string nameOrAliasFromId(const ObjectId& objectId, const simData::DataStore* dataStore, bool allowBlankAlias=false);
   /// Get one character (PBGLD) for the given entity type
-  static std::string typeToString(simData::DataStore::ObjectType entityType);
+  static std::string typeToString(simData::ObjectType entityType);
   /// Get the object type from the given entity type character (PBGLD)
-  static simData::DataStore::ObjectType typeFromChar(char entityTypeChar);
+  static simData::ObjectType typeFromChar(char entityTypeChar);
   /// Get one character (PBGLD) for the type of the entity given by objectId
   static std::string typeFromId(ObjectId objectId, const simData::DataStore* dataStore);
   /// Get a user-friendly name for the given entity type
-  static std::string fullTypeToString(simData::DataStore::ObjectType entityType);
+  static std::string fullTypeToString(simData::ObjectType entityType);
   /// Get the user-friendly type name of the entity given by objectId
   static std::string fullTypeFromId(ObjectId objectId, const simData::DataStore* dataStore);
   /// Get the original id of the entity given by object id
@@ -68,7 +71,7 @@ public:
   static int getOrCreateColumn(simData::DataTable* table, const std::string& columnName, VariableType storageType, UnitType unitType, simData::DataStore* dataStore, simData::TableColumnId& id);
 
   /// create a protobuf message for the prefs of the given entity type
-  static google::protobuf::Message* makeMessage(simData::DataStore::ObjectType entityType);
+  static google::protobuf::Message* makeMessage(simData::ObjectType entityType);
 
   /** Returns true if the entity is active, or false if inactive; e.g. for Super Form-like filtering. */
   static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);

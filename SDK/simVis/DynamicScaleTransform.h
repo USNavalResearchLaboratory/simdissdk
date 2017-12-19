@@ -31,6 +31,7 @@ namespace osg {
   class NodeVisitor;
   class Camera;
 }
+namespace osgUtil { class CullVisitor; }
 
 namespace simVis
 {
@@ -130,6 +131,17 @@ protected:
   virtual ~DynamicScaleTransform();
 
 private:
+  /**
+   * Helper method to calculate the apparent or simulated eye range from earth surface, when
+   * the camera associated with the cull visitor is in an ortho mode.  Returns 0 on error, or
+   * in perspective mode.
+   * @param cv Cull Visitor that contains the current camera.
+   * @return 0 on error or in perspective mode, else the simulated range of ortho mode; that is,
+   *   the eye distance from the surface of the earth that would be required in perspective mode
+   *   to match the same perspective that is apparent in ortho mode.  Units are in view space.
+   */
+  double getSimulatedOrthoRange_(osgUtil::CullVisitor* cv) const;
+
   /// Helper class to recalculate bounds
   class RecalculateScaleVisitor;
 

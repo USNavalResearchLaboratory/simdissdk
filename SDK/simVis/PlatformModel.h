@@ -23,19 +23,18 @@
 #define SIMVIS_PLATFORM_MODEL_H
 
 #include "osgEarth/Utils"
-#include "osgEarthAnnotation/LabelNode"
 #include "simCore/Common/Common.h"
 #include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"
-#include "simVis/Locator.h"
-#include "simVis/OverrideColor.h"
-#include "simVis/RCS.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/DynamicScaleTransform.h"
+#include "simData/DataTypes.h"
+#include "simVis/LocatorNode.h"
 
 namespace simVis
 {
-  class PlatformModelNode;
+  class EntityLabelNode;
+  class DynamicScaleTransform;
+  class OverrideColor;
+  class RCSNode;
 
   /**
   * Scene graph node that represents the platform model and all its attachments.
@@ -85,7 +84,7 @@ namespace simVis
     static unsigned int getMask() { return TRAVERSAL_MASK; }
 
     /** Retrieves the node for the entity's label */
-    EntityLabelNode* label() const { return label_; }
+    EntityLabelNode* label() const { return label_.get(); }
 
     /** Sets the RCS data */
     void setRcsData(simCore::RadarCrossSectionPtr rcsData);
@@ -155,6 +154,8 @@ namespace simVis
     bool updateDynamicScale_(const simData::PlatformPrefs& prefs, bool force);
     /// Updates the icon rotation based on pref or if force is set to true when the model has changed
     void updateImageIconRotation_(const simData::PlatformPrefs& prefs, bool force);
+    /// Updates the depth buffer when the nodepthicons has changed or if force is set to true when the model has changed
+    void updateImageDepth_(const simData::PlatformPrefs& prefs, bool force) const;
     /// Updates the RCS based on pref
     void updateRCS_(const simData::PlatformPrefs& prefs);
     /// Updates the bounds

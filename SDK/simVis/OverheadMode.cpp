@@ -27,6 +27,7 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/String/Format.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/View.h"
 #include "simVis/Scenario.h"
 #include "simVis/Shaders.h"
@@ -241,10 +242,10 @@ bool OverheadMode::isActive(osg::NodeVisitor* nv)
 
 void OverheadMode::prepareVisitor(const simVis::View* view, osg::NodeVisitor* nv)
 {
-  if (nv && view && view->isOverheadEnabled())
+  if (nv && view)
   {
     osg::UserDataContainer* udc = nv->getOrCreateUserDataContainer();
-    udc->setUserValue(OVERHEAD_MODE_TOKEN, true);
+    udc->setUserValue(OVERHEAD_MODE_TOKEN, view->isOverheadEnabled());
   }
 }
 

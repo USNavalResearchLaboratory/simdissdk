@@ -121,8 +121,8 @@ else()
 endif()
 
 set(PROTOBUF_VERSION "2.6.0")
-# Note that OSG 3.4.0 is used against Qt 5.4.1 builds internally
-set(OSG_VERSION "3.4.0")
+# Note that OSG 3.4.1 is used against Qt 5.5.1 builds internally
+set(OSG_VERSION "3.4.1")
 set(SQLITE_VERSION "3.8.11.1")
 set(GDAL_VERSION "2.1.1")
 
@@ -133,9 +133,10 @@ if(ENABLE_QT5)
 endif()
 
 # Fall back to Qt4?
+set(OSGEARTH_VERSION "OSG-${OSG_VERSION}")
 if(IS_DIRECTORY "${Qt5Widgets_DIR}")
-    # Our OSG and osgEarth directories are versioned with Qt- values for 5.x
-    set(OSG_VERSION "3.4.0_Qt-${QT_VERSION}")
+    # Our osgEarth directory is versioned with Qt- values for 5.x
+    set(OSGEARTH_VERSION "OSG-${OSG_VERSION}_Qt-${QT_VERSION}")
 else()
     vsi_configure_qt4()
 endif()
@@ -143,7 +144,7 @@ endif()
 
 # Set all 3rd party variables relative to 3rd directory
 set(OSG_DIR "${THIRDPARTY_LIBRARY_DIR}/OpenSceneGraph/${OSG_VERSION}" CACHE PATH "OpenSceneGraph root directory")
-set(OSGEARTH_DIR "${THIRDPARTY_LIBRARY_DIR}/OSGEarth/OSG-${OSG_VERSION}" CACHE PATH "osgEarth root directory")
+set(OSGEARTH_DIR "${THIRDPARTY_LIBRARY_DIR}/OSGEarth/${OSGEARTH_VERSION}" CACHE PATH "osgEarth root directory")
 set(PROTOBUF_DIR "${THIRDPARTY_LIBRARY_DIR}/protobuf/${PROTOBUF_VERSION}" CACHE PATH "protobuf root directory")
 set(SQLITE3_DIR "${THIRDPARTY_LIBRARY_DIR}/SQLite/${SQLITE_VERSION}" CACHE PATH "SQLite root directory")
 set(SQLITE3_LIB_NAME "sqlite-3.8")

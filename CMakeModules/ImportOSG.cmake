@@ -5,10 +5,9 @@ set(OPENSCENEGRAPH_FOUND FALSE)
 set(LIBRARYNAME OSG)
 
 # OpenThreads is stored under the OpenSceneGraph folder
-set(OSG_VERSION 3.4.0)
-# Adjust for the Qt version.  Note that 4.8 version works across the board for 4.8.x
-set(OSG_SUBDIR ${OSG_VERSION}_Qt-${QT_VERSION})
-set(OSG_DLL_PREFIX osg130-)
+set(OSG_VERSION 3.4.1)
+set(OSG_SUBDIR ${OSG_VERSION})
+set(OSG_DLL_PREFIX osg131-)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
 set(OSG_SHOULD_INSTALL FALSE)
@@ -253,6 +252,7 @@ set(OSG_COMMON_LIBDEPENDENCIES
 )
 set(OSG_ALL_LIBDEPENDENCIES
     OSG OSGDB OSGGA OSGSIM OSGTERRAIN OSGTEXT OSGUTIL OSGVIEWER OSGWIDGET OSGANIMATION OPENTHREADS
+    OSGMANIPULATOR OSGSHADOW
 )
 
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true

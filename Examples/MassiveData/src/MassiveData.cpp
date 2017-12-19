@@ -62,7 +62,7 @@ struct App
 {
   osg::ref_ptr<simVis::View>                  view_;
   osg::ref_ptr<simVis::ScenarioManager>       scenario_;
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler_;
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
 };
 
 namespace
@@ -248,7 +248,7 @@ void simulatePlatform(const simData::ObjectId& id, simUtil::PlatformSimulatorMan
     sim->addWaypoint(simUtil::Waypoint(lat, lon, alt, 200.0));
   }
 
-  simman->addSimulator(sim);
+  simman->addSimulator(sim.get());
 }
 
 //----------------------------------------------------------------------------
@@ -299,12 +299,12 @@ int main(int argc, char** argv)
   app.view_ = viewer->getMainView();
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // configure the scenario manager for large-scale support
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
-  viewer->setMap(map);
+  viewer->setMap(map.get());
 
   // data source that records the platform data.
   simData::LinearInterpolator interpolator;
@@ -323,17 +323,17 @@ int main(int argc, char** argv)
   {
     simData::ObjectId platformId = addPlatform(dataStore);
     configPlatform(platformId, dataStore, i, argc, argv);
-    simulatePlatform(platformId, simman);
+    simulatePlatform(platformId, simman.get());
   }
   simman->simulate(0, duration, hertz);
 
   SIM_NOTICE << "...done!" << std::endl;
 
-  app.simHandler_ = new simVis::SimulatorEventHandler(simman, 0, duration, true);
-  viewer->addEventHandler(app.simHandler_);
+  app.simHandler_ = new simUtil::SimulatorEventHandler(simman.get(), 0, duration, true);
+  viewer->addEventHandler(app.simHandler_.get());
 
   // popup handler:
-  viewer->addEventHandler(new simVis::PopupHandler(scene));
+  viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
 
   // instructions:
   viewer->getMainView()->addOverlayControl(createUI(app, duration));

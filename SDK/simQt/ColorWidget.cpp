@@ -173,4 +173,14 @@ void ColorWidget::changeEvent(QEvent* event)
     setColorButton_();
 }
 
+simQt::ColorButton* ColorWidget::colorButton_() const
+{
+  return ui_->colorButton;
+}
+
+QLabel* ColorWidget::colorLabel_() const
+{
+  return ui_->colorLabel;
+}
+
 }

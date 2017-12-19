@@ -448,6 +448,7 @@ int testColors(const simCore::TextFormatter* fmt, simCore::UnitContextAdapter* u
   return rv;
 }
 
+
 int testFormatter()
 {
   int rv = 0;
@@ -483,15 +484,15 @@ int testFormatter()
   // Add a quick test on datum conversion with simUtil code
 #ifdef HAVE_SIMUTIL
   std::shared_ptr<simUtil::DatumConvert> dc(std::make_shared<simUtil::DatumConvert>());
-  bool haveVd = (dc->preloadVerticalDatum() == 0);
   provider.setDatumConvert(dc);
   // Tests WMM and Vertical Datum
   rv += SDK_ASSERT(0 == testAzimuths(&formatter, simCore::DEG_SYM_NONE, &provider));
+
+  const bool haveVd = (dc->preloadVerticalDatum() == 0);
   rv += SDK_ASSERT(0 == testAltitudes(&formatter, &provider, haveVd));
 #endif
   return rv;
 }
-
 }
 
 int UnitsFormatter(int argc, char* argv[])

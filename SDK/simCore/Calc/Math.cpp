@@ -446,3 +446,25 @@ void simCore::d3QtoEuler(const double q[4], Vec3 &ea)
     ea.setV2(-atan2(dcm10, dcm11));
   }
 }
+
+double simCore::toScientific(double value, int* exp)
+{
+  if (value == 0.0)
+  {
+    if (exp)
+      *exp = 0;
+    return 0.0;
+  }
+
+  // Reduce edge cases by working with absolute value
+  const double absValue = fabs(value);
+  // Determine exponent and mantissa of the absolute value
+  const double numZeros = floor(log10(absValue));
+  const double mantissa = absValue / pow(10.0, numZeros);
+  // Assertion failure means error in logic for scientific notation calculations
+  assert(mantissa >= 1.0 && mantissa < 10.0);
+  // Return mantissa with correct sign, and exponent
+  if (exp)
+    *exp = static_cast<int>(numZeros);
+  return (value < 0) ? -mantissa : mantissa;
+}

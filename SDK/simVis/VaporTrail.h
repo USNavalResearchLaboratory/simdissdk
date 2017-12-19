@@ -27,12 +27,12 @@
 #include "osg/Texture2D"
 #include "osg/Billboard"
 #include "simCore/Common/Export.h"
-#include "simData/DataStore.h"
-#include "simVis/Locator.h"
 #include "simVis/OverrideColor.h"
 
+namespace simData { class DataStore; }
 namespace simVis
 {
+class Locator;
 class PlatformNode;
 
 /**

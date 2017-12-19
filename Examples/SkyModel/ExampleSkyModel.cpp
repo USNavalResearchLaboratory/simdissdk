@@ -191,7 +191,7 @@ private:
   {
     sceneManager->setSkyNode(sky);
     // Calling setSceneManager forces the sky to reattach
-    mainView->setSceneManager(sceneManager);
+    mainView->setSceneManager(sceneManager.get());
     // Assign a date/time to the sky to initialize it
     if (sky)
       sky->setDateTime(osgEarth::Util::DateTime(2014, 4, 22, 16.5));
@@ -242,7 +242,7 @@ Control* createUi(AppData& app)
   grid->setControl(col, row, new LabelControl("Ambient"));
   app.ambient = grid->setControl(col + 1, row, new HSliderControl(0.0, 1.0, INITIAL_AMBIENT, new ApplyAmbient(app)));
   app.ambient->setHorizFill(true, 250.0);
-  grid->setControl(col + 2, row, new LabelControl(app.ambient));
+  grid->setControl(col + 2, row, new LabelControl(app.ambient.get()));
 
   row++;
   grid->setControl(col, row, new LabelControl("Model"));
@@ -269,14 +269,14 @@ int main(int argc, char** argv)
 
   // A scene manager that all our views will share.
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // We need a view manager. This handles all of our Views.
   osg::ref_ptr<simVis::ViewManager> viewMan = new simVis::ViewManager(arguments);
 
   // Set up the logarithmic depth buffer for all views
   osg::ref_ptr<simVis::ViewManagerLogDbAdapter> logDb = new simVis::ViewManagerLogDbAdapter;
-  logDb->install(viewMan);
+  logDb->install(viewMan.get());
 
   // Create views and connect them to our scene.
   osg::ref_ptr<simVis::View> mainView = new simVis::View();
@@ -284,10 +284,10 @@ int main(int argc, char** argv)
   mainView->setUpViewInWindow(100, 100, 640, 480);
 
   // Add it to the view manager
-  viewMan->addView(mainView);
+  viewMan->addView(mainView.get());
 
   // Set up the application data
-  AppData app(sceneMan, mainView);
+  AppData app(sceneMan.get(), mainView.get());
 
   // Read SilverLining command line arguments
   osg::ArgumentParser::Parameter sluserArg(app.slUser);
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
   app.setSkyModel(INITIAL_SKY_MODEL);
 
   // Add an entity flying around
-  osg::ref_ptr<simUtil::CircumnavigationPlatformSimulation> platformSim = new simUtil::CircumnavigationPlatformSimulation(sceneMan, mainView);
+  osg::ref_ptr<simUtil::CircumnavigationPlatformSimulation> platformSim = new simUtil::CircumnavigationPlatformSimulation(sceneMan.get(), mainView.get());
   // Get an offset angle, tethered to the platform
   simVis::Viewpoint vp;
   vp.heading()->set(20, osgEarth::Units::DEGREES);

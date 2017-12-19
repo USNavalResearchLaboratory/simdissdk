@@ -27,10 +27,11 @@
 #include <QMetaType>
 #include "simCore/Common/Common.h"
 
-class QWidget;
-class QString;
-class QMenu;
 class QAction;
+class QMenu;
+class QString;
+class QToolBar;
+class QWidget;
 
 namespace simQt {
 
@@ -48,6 +49,11 @@ public:
   WeightedMenuManager(bool debugMenuWeights);
   virtual ~WeightedMenuManager();
 
+  // Set the menu, tool, and status bars to use; may be NULL
+  void setMenuBar(QWidget* menuBar);
+  void setToolBar(QWidget* toolBar);
+  void setStatusBar(QWidget* statusBar);
+
   /** Gets or creates menuName to underMenu at the given weight location */
   QMenu* getOrCreateMenu(QMenu* underMenu, int weight, const QString& menuName);
   /** Inserts action into underMenu at the given weight location */
@@ -57,17 +63,35 @@ public:
   /** Inserts a separator into underMenu at the given weight location */
   void insertMenuSeparator(QMenu* underMenu, int weight);
 
+  /// Adds a toolbar action to the simMainWindow
+  void insertToolBarAction(int weight, const simQt::Action* action);
+  /// Adds a toolbar action to the simMainWindow
+  void insertToolBarAction(int weight, QAction* action);
+  /// Adds a toolbar separator to the simMainWindow
+  void insertToolBarSeparator(int weight);
+  /// Adds a status bar action to the simMainWindow
+  void insertStatusBarAction(int weight, const simQt::Action* action);
+  /// Adds a status bar widget to the simMainWindow
+  void insertStatusBarWidget(int weight, QWidget* widget);
+
   /**
    * Returns the top level menu or menu bar (QMenu or QMenuBar) that
    * is used as the hierarchical parent of created menu items.  This
    * is the first level for menus.  Derived classes should be returning
    * either a QMenuBar or QMenu, that can be a parent to new QMenu instances.
+   *
+   * NOTE: DEPRECATED.  Please use setMenuBar() instead.
    */
-  virtual QWidget* topLevelMenu() = 0;
+  virtual QWidget* topLevelMenu();
 
 protected:
   /** If true adds debug information to the menu text */
   const bool debugMenuWeights_;
+
+  // Pointers provided for menu, tool, and status bars
+  QWidget* menuBar_;
+  QWidget* toolBar_;
+  QWidget* statusBar_;
 
   /** Returns the named menu under the given widget parent; will not create a menu */
   QMenu* findMenu_(QWidget* parent, const QString& title) const;
@@ -78,6 +102,8 @@ protected:
   void insertBefore_(QWidget* widget, int weight, QAction* action) const;
   /** Inserts a menu into a QMenu or a QMenuBar, using the weight as a guideline for insertion */
   void insertBefore_(QWidget* menuOrBar, int weight, QMenu* menu) const;
+  /** Inserts an action into a widget using the weight as a guideline for insertion */
+  void insertBefore_(QToolBar* toolBar, int weight, QWidget* widget) const;
 
   /** Inserts a separator into a QMenu or QToolBar, before the given action; does not change weights */
   void insertSeparator_(QWidget* menuOrToolBar, QAction* beforeAction) const;
@@ -90,6 +116,16 @@ protected:
   QList<int> menuWeights_(QWidget* menuOrToolbar) const;
   /** Sets the weights for a given menu */
   void setMenuWeights_(QWidget* menuOrToolbar, QList<int> weights) const;
+
+  /** Like WeightedMenuManager::insertBefore_() but for widgets in widgets */
+  void insertWidgetBefore_(QWidget* parentWidget, int weight, QWidget* newWidget);
+  /** Like WeightedMenuManager::menuWeight_() but for Widgets with layouts */
+  QList<int> widgetWeights_(QWidget* widget) const;
+  /** Like WeightedMenuManager::setMenuWeights_() but for Widgets with layouts */
+  void setWidgetWeights_(QWidget* widget, QList<int> weights) const;
+
+  /** Utility method to return the string without mnemonic */
+  QString withoutMnemonic_(const QString& decorated) const;
 };
 
 
@@ -102,13 +138,6 @@ class SDKQT_EXPORT PopupMenuManager : public WeightedMenuManager
 public:
   /** Constructor */
   PopupMenuManager(QMenu& menu, bool debugMenuWeights);
-  virtual ~PopupMenuManager();
-
-  /** Returns the top level menu */
-  virtual QWidget* topLevelMenu();
-
-private:
-  QMenu& menu_;
 };
 
 }

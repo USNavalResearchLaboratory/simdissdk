@@ -67,6 +67,14 @@ public:
    */
   virtual double convertVerticalDatum(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem,
     VerticalDatum inputDatum, VerticalDatum outputDatum, double userOffset) = 0;
+
+protected:
+  DatumConvert() {}
+
+private:
+  /** Not implemented */
+  DatumConvert& operator=(const DatumConvert& other);
+  DatumConvert(const DatumConvert& other);
 };
 
 /** Typedef for a shared pointer to a datum convert instance */
@@ -94,6 +102,10 @@ public:
     VerticalDatum inputDatum, VerticalDatum outputDatum, double userOffset);
 
 private:
+  /** Not implemented */
+  MagneticDatumConvert& operator=(const MagneticDatumConvert& other);
+  MagneticDatumConvert(const MagneticDatumConvert& other);
+
   WorldMagneticModel* wmm_;
 };
 

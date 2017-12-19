@@ -13,6 +13,8 @@ set(SHADER_FILES
 set(UTIL_INC)
 set(UTIL_SRC)
 set(UTIL_HEADERS
+    ${UTIL_SRC}DynamicSelectionPicker.h
+    ${UTIL_INC}Capabilities.h
     ${UTIL_INC}DataStoreTestHelper.h
     ${UTIL_INC}DatumConvert.h
     ${UTIL_INC}DbConfigurationFile.h
@@ -24,6 +26,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}IdMapper.h
     ${UTIL_INC}LayerFactory.h
     ${UTIL_INC}LineGraphic.h
+    ${UTIL_INC}MapScale.h
     ${UTIL_INC}MouseDispatcher.h
     ${UTIL_INC}MouseManipulator.h
     ${UTIL_INC}MousePositionManipulator.h
@@ -42,6 +45,8 @@ set(UTIL_HEADERS
     ${UTIL_INC}ViewpointPositions.h
 )
 set(UTIL_SOURCES
+    ${UTIL_SRC}DynamicSelectionPicker.cpp
+    ${UTIL_SRC}Capabilities.cpp
     ${UTIL_SRC}DataStoreTestHelper.cpp
     ${UTIL_SRC}DatumConvert.cpp
     ${UTIL_SRC}DbConfigurationFile.cpp
@@ -53,6 +58,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}IdMapper.cpp
     ${UTIL_SRC}LayerFactory.cpp
     ${UTIL_SRC}LineGraphic.cpp
+    ${UTIL_SRC}MapScale.cpp
     ${UTIL_SRC}MouseDispatcher.cpp
     ${UTIL_SRC}MouseManipulator.cpp
     ${UTIL_SRC}MousePositionManipulator.cpp

@@ -23,12 +23,14 @@
 #define SIMUTIL_SCREENCOORDINATECALCULATOR_H
 
 #include "osg/observer_ptr"
+#include "osg/ref_ptr"
 #include "osg/Matrix"
 #include "osg/Vec2"
 #include "osg/Vec3"
 #include "simCore/Common/Export.h"
 
 namespace osg { class Viewport; }
+namespace osgEarth { class Horizon; }
 namespace simVis {
   class View;
   class EntityNode;
@@ -57,8 +59,9 @@ public:
    *   behind the near plane (behind viewer), and values less than 1 in front of the viewer.
    * @param outOfViewport Indicates that the coordinate is outside the View used to generate the coordinate.
    *   It is entirely possible for a coordinate to be in front of the camera, but outside the view's viewport.
+   * @param overHorizon Indicates that the coordinate is over the visible horizon and is occluded by the earth.
    */
-  ScreenCoordinate(const osg::Vec3& position, bool outOfViewport);
+  ScreenCoordinate(const osg::Vec3& position, bool outOfViewport, bool overHorizon);
 
   /** X and Y position in pixels of the coordinate */
   osg::Vec2 position() const;
@@ -72,10 +75,13 @@ public:
    * is false, but isBehindCamera() is true.
    */
   bool isOffScreen() const;
+  /** Returns true if the item is over the visible horizon. */
+  bool isOverHorizon() const;
 
 private:
   osg::Vec3 position_;
   bool isOffScreen_;
+  bool isOverHorizon_;
 };
 
 /**
@@ -107,8 +113,8 @@ public:
 private:
   /** recalculates the VPW matrix if needed (if dirty); returns 0 on success */
   int recalculateVPW_();
-  /* Convert an ecef coordinate matrix to a screen coordinate */
-  ScreenCoordinate matrixCalculate_(const osg::Matrix& coordinateMatrix) const;
+  /* Convert an ecef coordinate to a screen coordinate */
+  ScreenCoordinate matrixCalculate_(const osg::Vec3d& ecefCoordinate) const;
 
   /// Combined View matrix * projection matrix * window matrix
   osg::Matrix viewProjectionWindow_;
@@ -116,6 +122,8 @@ private:
   bool dirtyMatrix_;
   /// Pointer to the viewport for the current view
   osg::observer_ptr<const simVis::View> view_;
+  /// Horizon calculator
+  osg::ref_ptr<osgEarth::Horizon> horizon_;
 };
 
 }

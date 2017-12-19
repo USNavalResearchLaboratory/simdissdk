@@ -99,7 +99,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     if (loadedModel.valid())
     {
       // Find the MapNode
-      mapNode = osgEarth::MapNode::findMapNode(loadedModel);
+      mapNode = osgEarth::MapNode::findMapNode(loadedModel.get());
     }
     SAFETRYEND((std::string("osgEarth processing of file ") + configFile));
   }
@@ -114,7 +114,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
       // Set up a map node with the supplied options
       osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
       simVis::SceneManager::initializeTerrainOptions(options);
-      mapNode = new osgEarth::MapNode(map, options);
+      mapNode = new osgEarth::MapNode(map.get(), options);
     }
 
     else
@@ -122,7 +122,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
       // Set up a map node with the supplied options
       osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions options;
       simVis::SceneManager::initializeTerrainOptions(options);
-      mapNode = new osgEarth::MapNode(map, options);
+      mapNode = new osgEarth::MapNode(map.get(), options);
     }
 
     SAFETRYEND((std::string("legacy SIMDIS 9 .txt processing of file ") + configFile));
@@ -257,13 +257,11 @@ int DbConfigurationFile::resolveFilePath(std::string& fileName)
   // still no success, see if the file is in SIMDIS_TERRAIN dir
   else
   {
-    const char* sdTerrainDir = NULL;
-    sdTerrainDir = getenv("SIMDIS_TERRAIN");
-    if (sdTerrainDir != NULL)
+    const std::string sdTerrainDir = simCore::getEnvVar("SIMDIS_TERRAIN");
+    if (!sdTerrainDir.empty())
     {
-      std::string filePath = sdTerrainDir;
-      filePath = simCore::backslashToFrontslash(filePath);
-      std::string tempFileName = filePath + "/" + fileName;
+      const std::string filePath = simCore::backslashToFrontslash(sdTerrainDir);
+      const std::string tempFileName = filePath + "/" + fileName;
       if (osgDB::fileExists(tempFileName))
       {
         fileName = tempFileName;

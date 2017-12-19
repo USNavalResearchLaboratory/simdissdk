@@ -35,9 +35,10 @@
 #include "osgEarthAnnotation/GeoPositionNode"
 #include "osgEarthAnnotation/LocalGeometryNode"
 #include "osgEarthAnnotation/FeatureNode"
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
-#include "simNotify/Notify.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simVis/Constants.h"
@@ -201,12 +202,10 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
       setFillColor(osgEarth::Symbology::Color(parent.value("linecolor")));  // Default to the line color if the fill color is not set
     setFilledState(isFilled);
   }
-  else
+  // only points and annotation do not support the fillcolor keyword
+  else if ((gogShape == GOG_POINTS || gogShape == GOG_ANNOTATION) && parent.hasValue("fillcolor"))
   {
-    if (parent.hasValue("fillcolor"))
-    {
-      SIM_WARN << "The GOG keyword " << key << " does not support fillcolor.\n";
-    }
+    SIM_WARN << "The GOG keyword " << key << " does not support fillcolor.\n";
   }
 
   // altitude offset
@@ -273,14 +272,8 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
     depthTest = (simCore::caseCompare(parent.value("depthbuffer"), "true") == 0);
   setDepthBuffer(depthTest);
 
-  // 3D shapes and extruded shapes get backface culling; otherwise turn it off so we can see both sides.
-  // Note that extruded lines are the only extruded symbol that need backface culling off (because it
-  // extrudes to a filled polygon instead of a 3D shape).
-  const bool isLine = (gogShape == GOG_LINE || gogShape == GOG_LINESEGS);
-  if (is3dShape || (isExtruded && !isLine))
-    style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = true;
-  else
-    style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = false;
+  // apply backface culling here
+  applyBackfaceCulling();
 
   metaData_.allowSetExplicitly(true);
 
@@ -292,6 +285,11 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
 osg::Node* GogNodeInterface::osgNode() const
 {
   return osgNode_.get();
+}
+
+simVis::GOG::LoadFormat GogNodeInterface::loadFormat() const
+{
+  return metaData_.loadFormat;
 }
 
 simVis::GOG::GogShape GogNodeInterface::shape() const
@@ -914,6 +912,22 @@ void GogNodeInterface::fireDrawChanged_() const
   }
 }
 
+void GogNodeInterface::applyBackfaceCulling()
+{
+  // 3D shapes and extruded shapes get backface culling; otherwise turn it off so we can see both sides.
+  // Note that extruded lines are the only extruded symbol that need backface culling off (because it
+  // extrudes to a filled polygon instead of a 3D shape).
+
+  bool is3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_HEMISPHERE ||
+    shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX);
+  const bool isLine = (shape() == GOG_LINE || shape() == GOG_LINESEGS);
+  if (is3dShape || (extruded_ && !isLine))
+    style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = true;
+  else
+    style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = false;
+
+  setStyle_(style_);
+}
 bool GogNodeInterface::getMetaDataFlag_(const std::string& flag, std::string& metaData)
 {
   size_t keywordIndex = metaData.find(flag);
@@ -1109,7 +1123,6 @@ FeatureNodeInterface::FeatureNodeInterface(osgEarth::Annotation::FeatureNode* fe
   {
     originalAltitude_.push_back((*geometry)[i].z());
   }
-
 }
 
 int FeatureNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
@@ -1319,7 +1332,11 @@ void FeatureNodeInterface::setStyle_(const osgEarth::Symbology::Style& style)
   if (&style != &style_)
     style_ = style;
   if (!deferringStyleUpdates_() && featureNode_.valid())
+  {
     featureNode_->setStyle(style_);
+    featureNode_->getFeature()->style() = style_;
+    featureNode_->dirty();
+  }
 }
 
 

@@ -26,7 +26,6 @@
 #include <map>
 #include <deque>
 #include "simCore/Common/Common.h"
-#include "simData/DataStore.h"
 #include "simData/CategoryData/CategoryData.h"
 
 namespace simData {
@@ -86,6 +85,8 @@ public:
   virtual void allNameInts(std::vector<int> &nameIntVec) const;
   virtual void allValueInts(std::vector<int> &valueIntVec) const;
   virtual void allInts(std::vector<std::pair<int, int> > &nameValueIntVec) const;
+  virtual void allInts(std::map<int, int> &nameValueIntMap) const;
+
   ///@}
 
   /// remove all data in the slice, retaining current category data and the static point

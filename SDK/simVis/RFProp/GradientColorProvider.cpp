@@ -171,8 +171,8 @@ void GradientColorProvider::install(osg::StateSet* stateset)
   std::string src = buildShader_();
   vertShader_ = new osg::Shader(osg::Shader::VERTEX, src);
   fragShader_ = new osg::Shader(osg::Shader::FRAGMENT, src);
-  vp->setShader(LOSS_TO_COLOR_VERTEX, vertShader_);
-  vp->setShader(LOSS_TO_COLOR_FRAGMENT, fragShader_);
+  vp->setShader(LOSS_TO_COLOR_VERTEX, vertShader_.get());
+  vp->setShader(LOSS_TO_COLOR_FRAGMENT, fragShader_.get());
 }
 
 void GradientColorProvider::uninstall(osg::StateSet* stateset)

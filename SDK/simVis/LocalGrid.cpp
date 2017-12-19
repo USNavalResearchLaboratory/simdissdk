@@ -37,6 +37,7 @@
 #include "simCore/Time/TimeClass.h"
 
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
@@ -49,7 +50,6 @@ using namespace osgEarth::Symbology;
 
 namespace simVis
 {
-
 // --------------------------------------------------------------------------
 namespace
 {
@@ -91,28 +91,28 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
   switch (prefs.gridtype())
   {
   case simData::LocalGridPrefs_Type_CARTESIAN:
-    createCartesian_(prefs, geode);
+    createCartesian_(prefs, geode.get());
     break;
 
   case simData::LocalGridPrefs_Type_POLAR:
-    createRangeRings_(prefs, geode, true);
+    createRangeRings_(prefs, geode.get(), true);
     break;
 
   case simData::LocalGridPrefs_Type_RANGE_RINGS:
-    createRangeRings_(prefs, geode, false);
+    createRangeRings_(prefs, geode.get(), false);
     break;
 
   case simData::LocalGridPrefs_Type_SPEED_RINGS:
-    createSpeedRings_(prefs, geode, false);
+    createSpeedRings_(prefs, geode.get(), false);
     break;
 
   case simData::LocalGridPrefs_Type_SPEED_LINE:
-    createSpeedRings_(prefs, geode, true);
+    createSpeedRings_(prefs, geode.get(), true);
     break;
   }
 
   // shader needed to draw text properly
-  osgEarth::Registry::shaderGenerator().run(geode);
+  osgEarth::Registry::shaderGenerator().run(geode.get());
 
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
@@ -157,15 +157,18 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
     forceRebuild_ = true;
   }
 
-  // do not process other prefs if we are not drawing the grid
   if (!prefs.drawgrid())
   {
     setNodeMask(DISPLAY_MASK_NONE);
+    // do not process other prefs changes if we are not drawing the grid; we need to detect those changes (below) when grid is enabled
+    lastPrefs_.set_drawgrid(false);
   }
   else
   {
+    setNodeMask(DISPLAY_MASK_LOCAL_GRID);
+
     // always rebuild everything first time through, otherwise, only if there is a prefs change
-    bool rebuildRequired =
+    const bool rebuildRequired =
       forceRebuild_ ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, gridtype)  ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, gridcolor) ||
@@ -200,8 +203,9 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
       rebuild_(prefs);
     }
 
-    bool locatorChangeRequired =
+    const bool locatorChangeRequired =
       forceRebuild_ ||
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, drawgrid) ||    // if draw was toggled on, force a locator sync
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, followyaw)             ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, followpitch)           ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, followroll)            ||
@@ -213,13 +217,14 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
       PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, gridorientationoffset, pitch) ||
       PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, gridorientationoffset, roll);
 
+    // sync our prefs state before updating locator
+    lastPrefs_ = prefs;
+
     if (locatorChangeRequired)
     {
       configureLocator_(prefs);
     }
 
-    setNodeMask(DISPLAY_MASK_LOCAL_GRID);
-    lastPrefs_    = prefs;
     forceRebuild_ = false;
   }
 }
@@ -260,15 +265,16 @@ void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
   locator->endUpdate();
 }
 
-// Notification that host locator changed
-void LocalGridNode::notifyHostLocatorChange()
+void LocalGridNode::syncWithLocator()
 {
   // if not drawing, we don't need to update this
   if (!host_.valid() || getNodeMask() != DISPLAY_MASK_LOCAL_GRID)
     return;
 
-  if ((lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_RINGS) &&
-      (lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_LINE))
+  // call the base class to update the matrix.
+  LocatorNode::syncWithLocator();
+
+  if ((lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_RINGS) && (lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_LINE))
     return;
 
   if (calcSpeedParams_(lastPrefs_))
@@ -280,20 +286,20 @@ bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
 {
   if (!prefs.speedring().useplatformspeed() && !prefs.speedring().usefixedtime())
     return false;
+  const Locator* hostLocator = host_->getLocator();
+  if (!hostLocator)
+    return false;
   const PlatformNode* hostPlatform = dynamic_cast<const PlatformNode*>(host_.get());
-  if (hostPlatform == NULL)
+  // if host is a platform, use its locator. if not, use host locator's parent locator.
+  const Locator* hostPlatformLocator = (hostPlatform) ? hostLocator : hostLocator->getParentLocator();
+  if (!hostPlatformLocator)
     return false;
-  const simData::PlatformUpdate* hostPlatUpdate = hostPlatform->update();
-  if (hostPlatUpdate == NULL)
-    return false;
-
+ 
   bool rebuild = false;
   // force rebuild if speed rings are displayed, using platform speed, and host velocity changed
-  if (prefs.speedring().useplatformspeed() && hostPlatUpdate->has_velocity())
+  if (prefs.speedring().useplatformspeed())
   {
-    simCore::Vec3 velocity;
-    hostPlatUpdate->velocity(velocity);
-    double speedMS = simCore::v3Length(velocity);
+    const double speedMS = simCore::v3Length(hostPlatformLocator->getCoordinate().velocity());
     if (!simCore::areEqual(hostSpeedMS_, speedMS, 0.01))
     {
       hostSpeedMS_ = speedMS;
@@ -304,7 +310,7 @@ bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
   // if we are displaying speed rings with fixed time, rebuild the display when host locator time changes
   if (prefs.speedring().usefixedtime())
   {
-    double timeS = hostPlatUpdate->time();
+    const double timeS = hostPlatformLocator->getTime();
     if (!simCore::areEqual(hostTimeS_, timeS))
     {
       hostTimeS_ = timeS;
@@ -313,7 +319,6 @@ bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
   }
   return rebuild;
 }
-
 
 // creates a prototype Text template for the grid labels.
 osgText::Text* LocalGridNode::createTextPrototype_(const simData::LocalGridPrefs& prefs, double value, const std::string& units, int precision) const
@@ -356,13 +361,13 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
 
   osg::ref_ptr<osg::Vec3Array> vertSub = new osg::Vec3Array();
   osg::ref_ptr<osg::Vec3Array> vertDiv = new osg::Vec3Array();
-  geomSub->setVertexArray(vertSub);
-  geomDiv->setVertexArray(vertDiv);
+  geomSub->setVertexArray(vertSub.get());
+  geomDiv->setVertexArray(vertDiv.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArraySub = new osg::Vec4Array();
   osg::ref_ptr<osg::Vec4Array> colorArrayDiv = new osg::Vec4Array();
-  geomSub->setColorArray(colorArraySub);
-  geomDiv->setColorArray(colorArrayDiv);
+  geomSub->setColorArray(colorArraySub.get());
+  geomDiv->setColorArray(colorArrayDiv.get());
 
   geomSub->setColorBinding(osg::Geometry::BIND_OVERALL);
   geomDiv->setColorBinding(osg::Geometry::BIND_OVERALL);
@@ -473,10 +478,10 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
-  geom->setVertexArray(vertexArray);
+  geom->setVertexArray(vertexArray.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // rings:
@@ -625,10 +630,10 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
-  geom->setVertexArray(vertexArray);
+  geom->setVertexArray(vertexArray.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // rings or speed line:

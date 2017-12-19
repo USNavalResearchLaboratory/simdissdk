@@ -44,6 +44,8 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}BathymetryGenerator.h
     ${VIS_INC}Beam.h
     ${VIS_INC}BeamPulse.h
+    ${VIS_INC}BoxGraphic.h
+    ${VIS_INC}BoxZoomMouseHandler.h
     ${VIS_INC}ClassificationBanner.h
     ${VIS_INC}ClockOptions.h
     ${VIS_INC}Compass.h
@@ -70,6 +72,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}LobGroup.h
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
+    ${VIS_INC}LocatorNode.h
     ${VIS_INC}NavigationModes.h
     ${VIS_INC}ObjectSelectionHandler.h
     ${VIS_INC}OverheadMode.h
@@ -167,6 +170,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}BathymetryGenerator.cpp
     ${VIS_SRC}Beam.cpp
     ${VIS_SRC}BeamPulse.cpp
+    ${VIS_SRC}BoxGraphic.cpp
+    ${VIS_SRC}BoxZoomMouseHandler.cpp
     ${VIS_SRC}ClassificationBanner.cpp
     ${VIS_SRC}ClockOptions.cpp
     ${VIS_SRC}Compass.cpp
@@ -188,6 +193,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}LobGroup.cpp
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
+    ${VIS_SRC}LocatorNode.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
     ${VIS_SRC}Picker.cpp
@@ -283,26 +289,34 @@ if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
     set(HAVE_SILVERLINING_NODEKIT 1)
 endif()
 include(CheckOSGEarthMethodExists)
-# Newer than 1.6.0 release removes tileSize() from TileSource
-check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
-if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
+# Newer than 1.7.0 release adds clear() to Profiler
+check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
+if(HAVE_OSGEARTH_PROFILER_CLEAR)
     set(SDK_OSGEARTH_DEVEL 1)
-    # Next anticipated version is 1.7.0
+    # Next anticipated version is 1.8.0
     set(SDK_OSGEARTH_VERSION_MAJOR 1)
-    set(SDK_OSGEARTH_VERSION_MINOR 7)
+    set(SDK_OSGEARTH_VERSION_MINOR 8)
     set(SDK_OSGEARTH_VERSION_PATCH 0)
 else()
-    # Version 1.6.0 changed Map's setName to setMapName
-    check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-    if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+    # Newer than 1.6.0 release removes tileSize() from TileSource
+    check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
+    if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
         set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 6)
+        set(SDK_OSGEARTH_VERSION_MINOR 7)
         set(SDK_OSGEARTH_VERSION_PATCH 0)
     else()
-        # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
-        set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 5)
-        set(SDK_OSGEARTH_VERSION_PATCH 0)
+        # Version 1.6.0 changed Map's setName to setMapName
+        check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
+        if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+            set(SDK_OSGEARTH_VERSION_MAJOR 1)
+            set(SDK_OSGEARTH_VERSION_MINOR 6)
+            set(SDK_OSGEARTH_VERSION_PATCH 0)
+        else()
+            # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
+            set(SDK_OSGEARTH_VERSION_MAJOR 1)
+            set(SDK_OSGEARTH_VERSION_MINOR 5)
+            set(SDK_OSGEARTH_VERSION_PATCH 0)
+        endif()
     endif()
 endif()
 

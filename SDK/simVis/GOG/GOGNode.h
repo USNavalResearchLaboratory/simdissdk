@@ -22,13 +22,13 @@
 #ifndef SIMVIS_GOG_GOGNODE_H
 #define SIMVIS_GOG_GOGNODE_H
 
-#include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
-#include "simCore/Calc/Vec3.h"
+#include <map>
+#include <memory>
 #include "osgEarth/GeoData"
 #include "osgEarthSymbology/Style"
 #include "osg/Group"
-
+#include "simCore/Common/Common.h"
+#include "simCore/Calc/Vec3.h"
 
 namespace simVis { namespace GOG
 {
@@ -72,7 +72,7 @@ namespace simVis { namespace GOG
     /** reference coordinate for relative objects */
     osgEarth::optional<osgEarth::GeoPoint> refPoint_;
     /** Error reporting */
-    std::tr1::shared_ptr<ErrorHandler> errorHandler_;
+    std::shared_ptr<ErrorHandler> errorHandler_;
   };
 
 
@@ -110,6 +110,13 @@ namespace simVis { namespace GOG
     GOG_LATLONALTBOX
   };
 
+  /** Describes the original load format of the shape */
+  enum LoadFormat
+  {
+    FORMAT_GOG = 0,
+    FORMAT_KML
+  };
+
   /**
   * Struct that defines meta data for a GOG. The string is metadata that captures attributes of the GOG
   * that may be lost when translated to an osg::Node, specifically things like the shape type
@@ -123,6 +130,7 @@ namespace simVis { namespace GOG
   public:
     std::string             metadata; ///< attributes of the GOG
     GogShape                shape; ///< identifying the exact shape type of the GOG
+    LoadFormat              loadFormat; ///< indicate the original load format of the GOG
   public:
     GogMetaData();
     bool                    isSetExplicitly(GogSerializableField field) const; ///< determines if a field is explicitly set

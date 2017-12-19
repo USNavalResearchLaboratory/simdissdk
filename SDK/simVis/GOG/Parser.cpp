@@ -344,16 +344,11 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
         currentMetaData.metadata += line + "\n";
         currentMetaData.shape = GOG_ANNOTATION;
         current.key() = "annotation";
-        std::string r2;
-        if (line.length() > tokens[0].length())
-        {
-          std::string repl = line.substr(tokens[0].length()+1);
-          std::string r1 = replaceIn(repl, "_", " ");
-          r2 = replaceIn(r1, "\\n", "\n");
-        }
-        current.add("text", r2);
+        const std::string textToken = osgEarth::trim(line.substr(tokens[0].length() + 1));
+        // Store the un-decoded text in textToken to avoid problems with trim in osgEarth code. (SIMDIS-2875)
+        current.add("text", textToken);
         // add support to show annotation text in dialog
-        current.add("3d name", r2);
+        current.add("3d name", Utils::decodeAnnotation(textToken));
       }
       else
       {
@@ -1094,7 +1089,7 @@ void Parser::printError_(size_t lineNumber, const std::string& errorText) const
     context_.errorHandler_->printError(lineNumber, errorText);
 }
 
-void Parser::setErrorHandler(std::tr1::shared_ptr<ErrorHandler> errorHandler)
+void Parser::setErrorHandler(std::shared_ptr<ErrorHandler> errorHandler)
 {
   if (!errorHandler)
     context_.errorHandler_.reset(new NotifyErrorHandler);

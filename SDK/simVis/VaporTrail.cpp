@@ -19,12 +19,14 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Depth"
 #include "osg/Geometry"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 
 #include "simCore/Calc/Interpolation.h"
 #include "simData/LimitData.h"
+#include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Platform.h"
 #include "simVis/Registry.h"
@@ -62,7 +64,7 @@ VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPl
 
   for (std::vector< osg::ref_ptr<osg::Texture2D> >::const_iterator it = textures.begin(); it != textures.end(); ++it)
   {
-    textureBillboards_.push_back(createTextureBillboard_(*it));
+    textureBillboards_.push_back(createTextureBillboard_(it->get()));
   }
 
   hostPlatform_->addChild(vaporTrailGroup_);
@@ -71,7 +73,7 @@ VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPl
   locator_ = new Locator(hostPlatform_->getLocator());
   locator_->setLocalOffsets(simCore::Vec3(0.0, -vaporTrailData_.metersBehindCurrentPosition, 0.0), simCore::Vec3());
 
-  OverheadMode::enableGeometryFlattening(true, vaporTrailGroup_);
+  OverheadMode::enableGeometryFlattening(true, vaporTrailGroup_.get());
 }
 
 VaporTrail::~VaporTrail()
@@ -325,9 +327,9 @@ void VaporTrail::addPuff_(const simCore::Vec3& puffPosition, double puffTime)
     osg::ref_ptr<osg::MatrixTransform> puffTransform = new osg::MatrixTransform(pos);
     puffTransform->addChild(textureBillboards_[textureCounter_]);
 
-    puff = new VaporTrailPuff(puffTransform, puffPosition, puffTime);
+    puff = new VaporTrailPuff(puffTransform.get(), puffPosition, puffTime);
     // add it to the group/scenegraph
-    vaporTrailGroup_->addChild(puffTransform);
+    vaporTrailGroup_->addChild(puffTransform.get());
   }
   else
   {
@@ -367,15 +369,15 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array; // vertices to draw
-  geom->setVertexArray(verts);
+  geom->setVertexArray(verts.get());
 
   // map (x,y) pixel coordinate to (s,t) texture coordinate
   osg::ref_ptr<osg::Vec2Array> texcoords = new osg::Vec2Array;
-  geom->setTexCoordArray(textureUnit, texcoords);
+  geom->setTexCoordArray(textureUnit, texcoords.get());
 
   // colors
   osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
-  geom->setColorArray(colors);
+  geom->setColorArray(colors.get());
   geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   colors->push_back(simVis::Color::White);
 
@@ -394,11 +396,11 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
 
   geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, verts->size()));
 
-  textureBillboard->addDrawable(geom);
+  textureBillboard->addDrawable(geom.get());
 
   textureBillboard->setMode(osg::Billboard::POINT_ROT_EYE);
 
-  osgEarth::Registry::shaderGenerator().run(textureBillboard);
+  osgEarth::Registry::shaderGenerator().run(textureBillboard.get());
 
   return textureBillboard.release();
 }

@@ -27,7 +27,7 @@
 #include <QMap>
 #include <QString>
 #include <QVariant>
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
 
 class QWidget;
 

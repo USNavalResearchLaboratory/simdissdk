@@ -44,9 +44,6 @@ public:
   ColorButton(QWidget* parent = NULL);
   virtual ~ColorButton();
 
-  /** override the paint event to draw the gradient blending alpha if necessary */
-  virtual void paintEvent(QPaintEvent* ev);
-
   /** returns the current color selection */
   QColor color() const;
   /** returns whether to show alpha channel */
@@ -68,6 +65,15 @@ public slots:
   /** set whether to show alpha channel or not */
   void setShowAlpha(bool value);
 
+signals:
+  /** Emitted when double clicked */
+  void doubleClicked(QMouseEvent* evt=NULL);
+
+protected:
+  /** Override the paint event to draw the gradient blending alpha if necessary */
+  virtual void paintEvent(QPaintEvent* ev);
+  /** Override the double click event to send a signal */
+  virtual void mouseDoubleClickEvent(QMouseEvent* evt);
 
 private:
  void paintItemBackground_(QPainter* painter) const;

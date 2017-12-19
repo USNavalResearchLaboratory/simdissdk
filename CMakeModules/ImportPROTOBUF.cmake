@@ -3,9 +3,11 @@
 # First try to check PROTOBUF_DIR from PublicDefaults.cmake / CMake Cache
 if(PROTOBUF_DIR)
     # Configure the protobuf variables for find_package(Protobuf) to work
-    find_library(PROTOBUF_LIBRARY NAMES protobuf-2.6 libprotobuf-2.6 protobuf libprotobuf PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
+    find_library(PROTOBUF_LIBRARY
+        NAMES protobuf-2.6 libprotobuf-2.6 protobuf libprotobuf
+        PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
     find_library(PROTOBUF_LIBRARY_DEBUG
-        NAMES protobuf-2.6_d libprotobuf-2.6_d protobuf-2.6 libprotobuf-2.6 protobuf_d libprotobuf_d protobuf libprotobuf
+        NAMES protobuf-2.6_d libprotobuf-2.6_d protobuf_d libprotobuf_d
         PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
     find_program(PROTOBUF_PROTOC_EXECUTABLE NAMES protoc PATHS "${PROTOBUF_DIR}/bin" NO_DEFAULT_PATH)
     find_path(PROTOBUF_INCLUDE_DIR NAME google/protobuf/stubs/common.h PATHS "${PROTOBUF_DIR}/include" NO_DEFAULT_PATH)
@@ -36,11 +38,15 @@ endif()
 add_library(PROTOBUF SHARED IMPORTED)
 set_target_properties(PROTOBUF PROPERTIES
     IMPORTED_LOCATION "${PROTOBUF_LIBRARY}"
-    IMPORTED_LOCATION_DEBUG "${PROTOBUF_LIBRARY_DEBUG}"
     IMPORTED_IMPLIB "${PROTOBUF_LIBRARY}"
-    IMPORTED_IMPLIB_DEBUG "${PROTOBUF_LIBRARY_DEBUG}"
     INTERFACE_INCLUDE_DIRECTORIES "${PROTOBUF_INCLUDE_DIR}"
 )
+if(PROTOBUF_LIBRARY_DEBUG)
+    set_target_properties(PROTOBUF PROPERTIES
+        IMPORTED_LOCATION_DEBUG "${PROTOBUF_LIBRARY_DEBUG}"
+        IMPORTED_IMPLIB_DEBUG "${PROTOBUF_LIBRARY_DEBUG}"
+    )
+endif()
 # On UNIX, protobuf depends on pthreads
 if(UNIX)
     set_target_properties(PROTOBUF PROPERTIES INTERFACE_LINK_LIBRARIES "-pthread")

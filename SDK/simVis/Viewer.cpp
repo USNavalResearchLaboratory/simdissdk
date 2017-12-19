@@ -28,18 +28,24 @@
 /****************************************************************************/
 namespace simVis
 {
+
 Viewer::Viewer()
 {
-  init_();
+  init_(FULLSCREEN, 100, 100, 1024, 768);
 }
 
-Viewer::Viewer(osg::ArgumentParser& parser) :
-simVis::ViewManager(parser)
+Viewer::Viewer(osg::ArgumentParser& parser)
+  : simVis::ViewManager(parser)
 {
-  init_();
+  init_(FULLSCREEN, 100, 100, 1024, 768);
 }
 
-void Viewer::init_()
+Viewer::Viewer(DefaultScreenSize screenSize, int x, int y, int w, int h)
+{
+  init_(screenSize, x, y, w, h);
+}
+
+void Viewer::init_(DefaultScreenSize screenSize, int x, int y, int w, int h)
 {
   // create a scene manager that all the views will share.
   scene_ = new SceneManager();
@@ -51,9 +57,8 @@ void Viewer::init_()
   simVis::View* mainView = new simVis::View();
   addView(mainView);
   mainView->setName("Main View");
-  mainView->setUpViewOnSingleScreen();
-  mainView->setSceneManager(scene_.get());
 
+  // Set up in a window if asked by environment variable
   const char* win = ::getenv("OSG_WINDOW");
   if (win)
   {
@@ -66,6 +71,17 @@ void Viewer::init_()
     if (!iss.fail() && width > 0 && height > 0)
       mainView->setUpViewInWindow(x, y, width, height, 0u);
   }
+
+  // Apply the windowing request as long as OSG_WINDOW did not override
+  if (!mainView->getCamera()->getViewport())
+  {
+    if (screenSize == FULLSCREEN)
+      mainView->setUpViewOnSingleScreen();
+    else // screenSize == WINDOWED
+      mainView->setUpViewInWindow(x, y, w, h, 0u);
+  }
+
+  mainView->setSceneManager(scene_.get());
 
   // by default, the database pager unreferenced image objects once it downloads them
   // the driver. In composite viewer mode we don't want that since we may be

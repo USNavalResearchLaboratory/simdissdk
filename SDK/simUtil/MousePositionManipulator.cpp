@@ -78,7 +78,6 @@ private:
 
 MousePositionManipulator::MousePositionManipulator(osgEarth::MapNode* mapNode, osg::Group* scene)
   : mapNode_(mapNode),
-    lastView_(NULL),
     lastMouseX_(0.0f),
     lastMouseY_(0.0f),
     terrainResolution_(0.00001),
@@ -143,8 +142,8 @@ osgEarth::GeoPoint MousePositionManipulator::getLLA(float mx, float my, bool que
 osgEarth::GeoPoint MousePositionManipulator::getLLA_(float mx, float my, bool queryElevation, bool blocking) const
 {
   osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
-  osgEarth::GeoPoint lonLatAlt(srs, INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, osgEarth::ALTMODE_ABSOLUTE);
-  if (lastView_ == NULL)
+  osgEarth::GeoPoint lonLatAlt(srs.get(), INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, osgEarth::ALTMODE_ABSOLUTE);
+  if (!lastView_.valid())
     return lonLatAlt;
 
   // do not display an elevation unless it is valid
@@ -156,7 +155,7 @@ osgEarth::GeoPoint MousePositionManipulator::getLLA_(float mx, float my, bool qu
     // find the first hit under the mouse:
     osgUtil::LineSegmentIntersector::Intersection first = *(results.begin());
     osg::Vec3d point = first.getWorldIntersectPoint();
-    lonLatAlt.fromWorld(srs, point);
+    lonLatAlt.fromWorld(srs.get(), point);
 
     // Do not query altitude, if the lat and lon were invalid
     if (queryElevation && lonLatAlt.x() != INVALID_POSITION_VALUE && lonLatAlt.y() != INVALID_POSITION_VALUE)
@@ -167,7 +166,7 @@ osgEarth::GeoPoint MousePositionManipulator::getLLA_(float mx, float my, bool qu
   }
 
   // fromWorld returns longitude, latitude, altitude, translate to latitude, longitude, altitude
-  osgEarth::GeoPoint latLonAlt(srs, lonLatAlt.y(), lonLatAlt.x(), elevation, osgEarth::ALTMODE_ABSOLUTE);
+  osgEarth::GeoPoint latLonAlt(srs.get(), lonLatAlt.y(), lonLatAlt.x(), elevation, osgEarth::ALTMODE_ABSOLUTE);
   return latLonAlt;
 }
 

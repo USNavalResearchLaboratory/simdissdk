@@ -28,7 +28,9 @@
  */
 
 #include <cmath>
+#include <sstream>
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateSystem.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
@@ -44,7 +46,7 @@ int Mgrs::convertMgrsToGeodetic(const std::string& mgrs, double& lat, double& lo
   std::string gzdLetters;
   double easting;
   double northing;
-  Hemisphere hemisphere;
+  bool northPole;
 
   if (breakMgrsString(mgrs, zone, gzdLetters, easting, northing, err) != 0)
   {
@@ -55,9 +57,9 @@ int Mgrs::convertMgrsToGeodetic(const std::string& mgrs, double& lat, double& lo
   {
     double upsEasting;
     double upsNorthing;
-    if (convertMgrsToUps(gzdLetters, easting, northing, hemisphere, upsEasting, upsNorthing, err) != 0)
+    if (convertMgrsToUps(gzdLetters, easting, northing, northPole, upsEasting, upsNorthing, err) != 0)
       return 1;
-    if (convertUpsToGeodetic(hemisphere, upsEasting, upsNorthing, lat, lon, err) != 0)
+    if (convertUpsToGeodetic(northPole, upsEasting, upsNorthing, lat, lon, err) != 0)
       return 1;
   }
   // Everything else should be converted through UTM
@@ -65,9 +67,9 @@ int Mgrs::convertMgrsToGeodetic(const std::string& mgrs, double& lat, double& lo
   {
     double utmEasting;
     double utmNorthing;
-    if (convertMgrstoUtm(zone, gzdLetters, easting, northing, hemisphere, utmEasting, utmNorthing, err) != 0)
+    if (convertMgrstoUtm(zone, gzdLetters, easting, northing, northPole, utmEasting, utmNorthing, err) != 0)
       return 1;
-    if (convertUtmToGeodetic(zone, hemisphere, utmEasting, utmNorthing, lat, lon, err) != 0)
+    if (convertUtmToGeodetic(zone, northPole, utmEasting, utmNorthing, lat, lon, err) != 0)
       return 1;
   }
 
@@ -185,7 +187,7 @@ int Mgrs::breakMgrsString(const std::string& mgrs, int& zone, std::string& gzdLe
 }
 
 int Mgrs::convertMgrstoUtm(int zone, const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
-  Hemisphere& hemisphere, double& utmEasting, double& utmNorthing, std::string* err)
+  bool &northPole, double& utmEasting, double& utmNorthing, std::string* err)
 {
   const double ONEHT = 100000.;
   const double TWOMIL = 2000000.;
@@ -284,15 +286,12 @@ int Mgrs::convertMgrstoUtm(int zone, const std::string& gzdLetters, double mgrsE
   utmNorthing = gridNorthing + mgrsNorthing;
 
   // Latitude bands of 'N' and lower are in the southern hemisphere.
-  if (gzdLetters[0] < 'N')
-    hemisphere = UPS_SOUTH;
-  else
-    hemisphere = UPS_NORTH;
+  northPole = !(gzdLetters[0] < 'N');
 
   return 0;
 }
 
-int Mgrs::convertUtmToGeodetic(int zone, Hemisphere hemisphere, double easting, double northing, double& lat, double& lon, std::string* err)
+int Mgrs::convertUtmToGeodetic(int zone, bool northPole, double easting, double northing, double& lat, double& lon, std::string* err)
 {
   // Standard scale factor for UTM
   const double scaleFactor = 0.9996;
@@ -318,7 +317,7 @@ int Mgrs::convertUtmToGeodetic(int zone, Hemisphere hemisphere, double easting, 
   }
 
   // If in the southern hemisphere, subtract the standard false northing value of 10 million that is added to avoid negative values.
-  if (hemisphere == UPS_SOUTH)
+  if (!northPole)
     northing -= 10000000;
 
   const double n1 = WGS_F / (2.0 - WGS_F);
@@ -377,7 +376,7 @@ int Mgrs::convertUtmToGeodetic(int zone, Hemisphere hemisphere, double easting, 
 }
 
 int Mgrs::convertMgrsToUps(const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
-  Hemisphere& hemisphere, double& upsEasting, double& upsNorthing, std::string* err)
+  bool& northPole, double& upsEasting, double& upsNorthing, std::string* err)
 {
   const UPS_Constants UPS_Constant_Table[4] =
   {
@@ -397,13 +396,13 @@ int Mgrs::convertMgrsToUps(const std::string& gzdLetters, double mgrsEasting, do
   int upsIndex;
   if ((gzdLetters[0] == 'Y') || (gzdLetters[0] == 'Z'))
   {
-    hemisphere = UPS_NORTH;
+    northPole = true;
     // The indices for 'Y' and 'Z' are at 2 and 3, so subtract 'Y' - 2 == 'W'
     upsIndex = gzdLetters[0] - 'W';
   }
   else if ((gzdLetters[0] == 'A') || (gzdLetters[0] == 'B'))
   {
-    hemisphere = UPS_SOUTH;
+    northPole = false;
     upsIndex = gzdLetters[0] - 'A';
   }
   else
@@ -473,90 +472,63 @@ int Mgrs::convertMgrsToUps(const std::string& gzdLetters, double mgrsEasting, do
   return 0;
 }
 
-int Mgrs::convertUpsToGeodetic(Hemisphere hemisphere, double easting, double northing, double& lat, double& lon, std::string* err)
+// Equation adapted from GeographicLib version 1.49, PolarStereographic::Reverse()
+// https://geographiclib.sourceforge.io/html/PolarStereographic_8cpp_source.html
+int Mgrs::convertUpsToGeodetic(bool northPole, double falseEasting, double falseNorthing, double& lat, double& lon, std::string* err)
 {
-  // Values defined by UPS standard
-  // See http://earth-info.nga.mil/GandG/publications/NGA_SIG_0012_2_0_0_UTMUPS/NGA.SIG.0012_2.0.0_UTMUPS.pdf
-  // pages 39-41 for more information
-  const double centralMeridian = 0.0;
-  const double falseEasting = 2000000.0;
-  const double falseNorthing = 2000000.0;
-  const double scaleFactor = 0.994;
-  // Values calculated from UPS standard
-  const double k90 = sqrt(1 - WGS_E * WGS_E) * exp(WGS_E * atanh_(WGS_E));
-  const double deltaEasting = 2000000.0;
-  const double deltaNorthing = 2000000.0;
-
-  double minEasting = falseEasting - deltaEasting;
-  double maxEasting = falseEasting + deltaEasting;
-  double minNorthing = falseNorthing - deltaNorthing;
-  double maxNorthing = falseNorthing + deltaNorthing;
-
+  // False position offset for easting and northing values
+  const double falsePosOffset = 2000000.0;
+  // Maximum easting and northing value based on a false value of 2000000.0 and a delta value of 2000000.0
+  const double maxFalseValue = 4000000.0;
   // Check that easting and northing are not out of range.
-  if (easting > maxEasting || easting < minEasting)
+  if (falseEasting > maxFalseValue || falseEasting < 0)
   {
     if (err)
-      *err = "Easting is not within the range of UPS.";
-    return 1;
-  }
-  if (northing > maxNorthing || northing < minNorthing)
-  {
-    if (err)
-      *err = "Northing is not within the range of UPS.";
-    return 1;
-  }
-
-  double northingFromPole = (northing - falseNorthing) / scaleFactor;
-  double eastingFromPole = (easting - falseEasting) / scaleFactor;
-
-  // Special case needed for the pole since longitude is technically undefined, but is set to zero here.
-  if ((northingFromPole == 0.0) && (eastingFromPole == 0.0))
-  {
-    lat = M_PI_2;
-    lon = centralMeridian;
-  }
-  else
-  {
-    if (hemisphere == UPS_SOUTH)
     {
-      northingFromPole *= -1.0;
-      eastingFromPole *= -1.0;
+      std::stringstream eStr;
+      eStr.precision(10);
+      eStr << "Easting (" << falseEasting << ") is not within the range of UPS: [4000000, 0].";
+      *err = eStr.str();
     }
-
-    // See pages 14, 35, and 36 of the link above for more information on these formulas.
-    double rSquared = pow((k90 * eastingFromPole) / (2 * WGS_A), 2.0) + pow((k90 * northingFromPole) / (2 * WGS_A), 2.0);
-    // Chi is the geocentric latitude angle, while phi is the geodetic latitude angle.
-    double cosChi = (2 * sqrt(rSquared)) / (1 + rSquared);
-    double sinChi = (1 - rSquared) / (1 + rSquared);
-    double sinPhi = sinChi;
-    double tempSinPhi = 0;
-    double p = 0;
-    do
-    {
-      p = exp(WGS_E * atanh_(WGS_E * sinPhi));
-      tempSinPhi = sinPhi;
-      sinPhi = ((1 + sinChi) * p*p - (1 - sinChi)) / ((1 + sinChi) * p*p + (1 - sinChi));
-    } while (fabs(sinPhi - tempSinPhi) > 1.0e-15);
-
-    double cosPhi = ((1 + sinPhi) / p + (1 - sinPhi) * p) * cosChi / 2.0;
-
-    double phi = atan2(sinPhi, cosPhi);
-
-    lat = phi;
-    lon = centralMeridian + atan2(eastingFromPole, -northingFromPole);
-
-    // force distorted values to 90, -90 degrees
-    if (lat > M_PI_2)
-      lat = M_PI_2;
-    else if (lat < -M_PI_2)
-      lat = -M_PI_2;
+    return 1;
   }
-  if (hemisphere == UPS_SOUTH)
+  if (falseNorthing > maxFalseValue || falseNorthing < 0)
   {
-    lat *= -1.0;
-    lon *= -1.0;
+    if (err)
+    {
+      std::stringstream eStr;
+      eStr.precision(10);
+      eStr << "Northing (" << falseNorthing << ") is not within the range of UPS: [4000000, 0].";
+      *err = eStr.str();
+    }
+    return 1;
   }
 
+  // Back out the false offset values, algorithm expects easting and northing of points (m) from the
+  // center of projection (true means north, false means south).
+  const double y = falseNorthing - falsePosOffset;
+  const double x = falseEasting - falsePosOffset;
+
+  // Handle special case at the top of the pole where longitude is undefined.
+  // GeographicLib computes a value of M_PI for longitude in this condition,
+  // we will force longitude to zero to match the prior implementation.
+  if (x == 0. && y == 0.)
+  {
+    lat = (northPole ? 1. : -1.) * M_PI_2;
+    lon = 0.;
+    return 0;
+  }
+
+  const double rho = hypot_(x, y);
+  // 7.9130711166184124404360762089019e-8
+  // constant based on 1. / ((2. * 0.994 * WGS_A) / ((1 - WGS_F) * exp(WGS_E * atanh(WGS_E))))
+  // where 0.994 is the UPS central scale factor
+  const double t = rho != 0 ? (rho * 7.9130711166184124404360762089019e-8) : square(std::numeric_limits<double>::epsilon());
+  const double taup = (1. / t - t) / 2.;
+  const double tau = tauf_(taup);
+  const double secphi = hypot_(1., tau);
+  lat = (northPole ? 1. : -1.) * atan2(tau, 1.);
+  lon = atan2(x, (northPole ? -y : y));
   return 0;
 }
 
@@ -634,6 +606,50 @@ int Mgrs::getLatitudeBandMinNorthing_(char bandLetter, double& minNorthing, doub
 double Mgrs::atanh_(double x)
 {
   return (log(1 + x) - log(1 - x)) / 2;
+}
+
+double Mgrs::hypot_(double x, double y)
+{
+  // NOTE: CXX11 has a std::hypot (> vc11 and gcc 4.6)
+  x = fabs(x);
+  y = fabs(y);
+  if (x < y)
+    std::swap(x, y); // Now x >= y >= 0
+  y /= (x ? x : 1);
+  return x * sqrt(1 + y * y);
+}
+
+double Mgrs::taupf_(double tau)
+{
+  const double tau1 = hypot_(1., tau);
+  const double eaTanhE = WGS_E * atanh_(WGS_E * (tau / tau1));
+  const double sig = sinh(eaTanhE);
+  return hypot_(1., sig) * tau - sig * tau1;
+}
+
+double Mgrs::tauf_(double taup)
+{
+  static const int numit = 5;
+  static const double tol = sqrt(std::numeric_limits<double>::epsilon()) / 10.;
+  // To lowest order in e^2, taup = (1 - e^2) * tau = _e2m * tau; so use
+  // tau = taup/_e2m as a starting guess.  (This starting guess is the
+  // geocentric latitude which, to first order in the flattening, is equal
+  // to the conformal latitude.)  Only 1 iteration is needed for |lat| <
+  // 3.35 deg, otherwise 2 iterations are needed.  If, instead, tau = taup
+  // is used the mean number of iterations increases to 1.99 (2 iterations
+  // are needed except near tau = 0).
+  double tau = taup / WGS_ESQC;
+  const double stol = tol * simCore::sdkMax(1., fabs(taup));
+  // min iterations = 1, max iterations = 2; mean = 1.94
+  for (int i = 0; i < numit; ++i)
+  {
+    double taupa = taupf_(tau);
+    double dtau = (taup - taupa) * (1 + WGS_ESQC * (tau*tau)) / (WGS_ESQC * hypot_(1., tau) * hypot_(1., taupa));
+    tau += dtau;
+    if (!(fabs(dtau) >= stol))
+      break;
+  }
+  return tau;
 }
 
 }

@@ -25,31 +25,34 @@
 #include <limits>
 #include <string>
 #include <map>
+#include <set>
 #include "osg/Group"
+#include "osg/ref_ptr"
 #include "osg/View"
 #include "osgEarth/CullingUtils"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Revisioning"
 #include "osgEarthUtil/SpatialData"
-#include "simData/DataStore.h"
-#include "simVis/Tool.h"
-#include "simVis/ProjectorManager.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
-#include "simVis/LabelContentManager.h"
+#include "simVis/Types.h"
 #include "simVis/RFProp/RFPropagationManager.h"
-#include "simVis/RadialLOSNode.h"
 
-
+namespace osgEarth { class MapNode; }
 namespace simCore { class Clock; }
+namespace simData { class DataStore; }
 namespace simVis
 {
   class BeamNode;
   class CoordSurfaceClamping;
   class GateNode;
+  class LocatorFactory;
   class PlatformNode;
+  class ProjectorManager;
   class ProjectorNode;
+  class LabelContentManager;
   class LaserNode;
   class LobGroupNode;
   class PlatformTspiFilterManager;
+  class ScenarioTool;
 
   /** Settings to configure the scenario manager for large numbers of entities */
   class ScenarioDisplayHints
@@ -146,7 +149,7 @@ namespace simVis
      * @param[in ] dataStore Datastore to unbind.
      * @param[in ] clearAll  Whether to remove all entities that originated from this DataStore (default=false)
      */
-    void unbind(simData::DataStore* dataStore, bool clearAll =false);
+    void unbind(simData::DataStore* dataStore, bool clearAll = false);
 
     /**
      * Sets the manager for label content for all entity types
@@ -344,7 +347,7 @@ namespace simVis
      * the scene graph
      * @param[in ] id Entity ID
      */
-    void removeEntity(uint64_t id);
+    void removeEntity(simData::ObjectId id);
 
     /**
     * Adds a new scenario tool to the manager
@@ -359,7 +362,12 @@ namespace simVis
     /**
      * Retrieve a list of all tools
      */
-    void getTools(std::vector<ScenarioTool*>& tools) const;
+    void getTools(std::vector< osg::ref_ptr<ScenarioTool> >& tools) const;
+
+    /**
+    * Removes all scenario tools from the manager
+    */
+    void removeAllTools_();
 
     /**
     * Accesses the DataStore adapter bound to this scenario.
@@ -405,9 +413,7 @@ namespace simVis
     * @param[in ] ds    DataStore driving the update
     * @param[in ] force Force an update even if the data store says nothing has changed
     */
-    void update(
-      simData::DataStore* ds,
-      bool                force =false);
+    void update(simData::DataStore* ds, bool force = false);
 
     /**
     * Notify all entities of a change in a Clock Mode.
@@ -507,8 +513,10 @@ namespace simVis
     void notifyToolsOfAdd_(EntityNode* node);
     /// informs the scenario tools of an entity removal
     void notifyToolsOfRemove_(EntityNode* node);
-    /// fires entity update callbacks
-    void fireEntityUpdateCallbacks_(EntityNode* node);
+
+  private:
+    /// Copy constructor, not implemented or available.
+    ScenarioManager(const ScenarioManager&);
   };
 
 } // namespace simVis

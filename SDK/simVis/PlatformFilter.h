@@ -23,7 +23,8 @@
 #ifndef SIMVIS_MEMORYDATASTORE_PLATFORMFILTER_H
 #define SIMVIS_MEMORYDATASTORE_PLATFORMFILTER_H
 
-#include "simData/DataStore.h"
+#include "simData/DataTypes.h"
+#include "simData/ObjectId.h"
 
 namespace simVis {
 

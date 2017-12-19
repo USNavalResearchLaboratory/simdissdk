@@ -174,19 +174,19 @@ simData::ObjectId createPlatform(simData::DataStore& dataStore)
 
 //----------------------------------------------------------------------------
 
-simVis::SimulatorEventHandler* createSimulation(simUtil::PlatformSimulatorManager& simMgr, simData::ObjectId obj1)
+simUtil::SimulatorEventHandler* createSimulation(simUtil::PlatformSimulatorManager& simMgr, simData::ObjectId obj1)
 {
   osg::ref_ptr<simUtil::PlatformSimulator> sim1 = new simUtil::PlatformSimulator(obj1);
   sim1->addWaypoint(simUtil::Waypoint(51.5,   0.5, 40000, 200.0)); // London
   sim1->addWaypoint(simUtil::Waypoint(38.8, -77.0, 40000, 200.0)); // DC
   sim1->setSimulateRoll(true);
   sim1->setSimulatePitch(true);
-  simMgr.addSimulator(sim1);
+  simMgr.addSimulator(sim1.get());
 
   // Run the simulations:
   simMgr.simulate(0.0, 120.0, 60.0);
 
-  return new simVis::SimulatorEventHandler(&simMgr, 0.0, 120.0);
+  return new simUtil::SimulatorEventHandler(&simMgr, 0.0, 120.0);
 }
 
 //----------------------------------------------------------------------------
@@ -202,11 +202,11 @@ int main(int argc, char **argv)
 
   // SDK viewer to display the scene
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // data source which will provide positions for the platform
   // based on the simulation time.
@@ -251,7 +251,7 @@ int main(int argc, char **argv)
   viewer->addEventHandler(new MenuHandler(dataStore, obj1));
 
   // hovering the mouse over the platform should trigger a popup
-  viewer->addEventHandler(new simVis::PopupHandler(scene));
+  viewer->addEventHandler(new simVis::PopupHandler(scene.get()));
 
   // show the instructions overlay
   viewer->getMainView()->addOverlayControl(createHelp());

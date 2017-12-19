@@ -66,13 +66,13 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     if (conf.hasValue("minoraxis"))
     {
       Distance minorRadius = Distance(0.5 * conf.value<double>("minoraxis", 2000.0), p.units_.rangeUnits_);
-      shape = gf.createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, 0u, tgeom, true);
+      shape = gf.createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, 0u, tgeom.get(), true);
     }
     else
-      shape = gf.createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, 0u, tgeom, true);
+      shape = gf.createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, 0u, tgeom.get(), true);
   }
   else
-    shape = gf.createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, 0u, tgeom, true);
+    shape = gf.createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, 0u, tgeom.get(), true);
 
   osg::ref_ptr<osg::Group> g = new osg::Group();
   float heightValue = height.as(Units::METERS);
@@ -92,12 +92,12 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {
-      sideNode = new LocalGeometryNode(mapNode, shape, style);
+      sideNode = new LocalGeometryNode(mapNode, shape.get(), style);
       sideNode->setPosition(p.getMapPosition());
     }
     else
     {
-      sideNode = new HostedLocalGeometryNode(shape, style);
+      sideNode = new HostedLocalGeometryNode(shape.get(), style);
     }
     sideNode->setLocalOffset(p.getLTPOffset());
     g->addChild(sideNode);
@@ -115,12 +115,12 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {
-      topCapNode = new LocalGeometryNode(mapNode, shape, style);
+      topCapNode = new LocalGeometryNode(mapNode, shape.get(), style);
       topCapNode->setPosition(p.getMapPosition());
     }
     else
     {
-      topCapNode = new HostedLocalGeometryNode(shape, style);
+      topCapNode = new HostedLocalGeometryNode(shape.get(), style);
     }
     // apply a local offset to get the cap node to the correct height
     osg::Vec3d localOffset = p.getLTPOffset();
@@ -142,12 +142,12 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {
-      bottomCapNode = new LocalGeometryNode(mapNode, shape, style);
+      bottomCapNode = new LocalGeometryNode(mapNode, shape.get(), style);
       bottomCapNode->setPosition(p.getMapPosition());
     }
     else
     {
-      bottomCapNode = new HostedLocalGeometryNode(shape, style);
+      bottomCapNode = new HostedLocalGeometryNode(shape.get(), style);
     }
     bottomCapNode->setLocalOffset(p.getLTPOffset());
 
@@ -159,7 +159,7 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
   CylinderNodeInterface* rv = NULL;
   if (sideNode && topCapNode && bottomCapNode)
   {
-    rv = new CylinderNodeInterface(g, sideNode, topCapNode, bottomCapNode, metaData);
+    rv = new CylinderNodeInterface(g.get(), sideNode, topCapNode, bottomCapNode, metaData);
     rv->applyConfigToStyle(conf, p.units_);
   }
   return rv;

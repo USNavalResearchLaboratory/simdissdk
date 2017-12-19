@@ -22,6 +22,7 @@
 
 #include "simVis/Scenario.h"
 #include "simVis/Platform.h"
+#include "simVis/Gate.h"
 #include "simVis/View.h"
 
 #include "simQt/EntityTreeComposite.h"
@@ -59,8 +60,10 @@ void CenterEntity::centerOnEntity(uint64_t id)
 {
   simVis::EntityNode* node = scenarioManager_.find(id);
 
-  // tetherCamera works only with platforms so work up the chain until a platform is found
-  while ((node != NULL) && (dynamic_cast<simVis::PlatformNode*>(node) == NULL))
+  // tetherCamera works only with platforms and gates, so work up the chain until
+  // a platform or gate is found.
+  while ((node != NULL) && (dynamic_cast<simVis::PlatformNode*>(node) == NULL) &&
+     (dynamic_cast<simVis::GateNode*>(node) == NULL))
   {
     uint64_t parentId;
     if (node->getHostId(parentId))

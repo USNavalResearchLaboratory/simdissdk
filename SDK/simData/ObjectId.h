@@ -19,17 +19,30 @@
  * disclose, or release this software.
  *
  */
-#include <memory>
-#include <string>
+#ifndef SIMDATA_OBJECTID_H
+#define SIMDATA_OBJECTID_H
 
-void testFunc()
-{
-  std::tr1::shared_ptr<std::string> x(new std::string);
-  *x = "Hello world";
-  x->clear();
-}
+#include "simCore/Common/Common.h"
 
-int main(int argc, char* argv[])
+namespace simData
 {
-  return 0;
-}
+/// uniquely identify an object
+typedef uint64_t ObjectId;
+
+/// Bitmask representing the types of objects that are assigned ObjectIds
+enum ObjectType
+{
+  NONE      = 0x00,
+  PLATFORM  = 0x01,
+  BEAM      = 0x02,
+  GATE      = 0x04,
+  LASER     = 0x08,
+  PROJECTOR = 0x10,
+  LOB_GROUP = 0x20,
+  ALL = (PLATFORM|BEAM|GATE|LASER|PROJECTOR|LOB_GROUP)
+};
+
+} // End of namespace simData
+
+#endif // SIMDATA_OBJECTID_H
+

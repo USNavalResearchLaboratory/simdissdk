@@ -22,16 +22,25 @@
 #include <limits>
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
-#include "simNotify/Notify.h"
-#include "simVis/AnimatedLine.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/Platform.h"
-#include "simVis/PlatformModel.h"
-#include "simVis/TrackHistory.h"
-#include "simVis/PlatformFilter.h"
-#include "simVis/Registry.h"
-#include "simVis/EntityLabel.h"
 #include "simCore/Calc/Math.h"
+#include "simNotify/Notify.h"
+#include "simData/DataSlice.h"
+#include "simVis/AreaHighlight.h"
+#include "simVis/AxisVector.h"
+#include "simVis/EntityLabel.h"
+#include "simVis/EphemerisVector.h"
+#include "simVis/LabelContentManager.h"
+#include "simVis/LocalGrid.h"
+#include "simVis/Locator.h"
+#include "simVis/PlatformInertialTransform.h"
+#include "simVis/PlatformFilter.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/RadialLOSNode.h"
+#include "simVis/Registry.h"
+#include "simVis/TrackHistory.h"
+#include "simVis/Utils.h"
+#include "simVis/VelocityVector.h"
+#include "simVis/Platform.h"
 
 #define LC "[PlatformNode] "
 
@@ -123,7 +132,7 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
                            PlatformTspiFilterManager& manager,
                            osg::Group* trackParent,
                            Locator* locator, int referenceYear) :
-EntityNode(simData::DataStore::PLATFORM, locator),
+EntityNode(simData::PLATFORM, locator),
 ds_(dataStore),
 platformTspiFilterManager_(manager),
 lastUpdateTime_(-std::numeric_limits<float>::max()),
@@ -144,7 +153,8 @@ radioLosNode_(NULL),
 frontOffset_(0.0),
 valid_(false),
 lastPrefsValid_(false),
-forceUpdateFromDataStore_(false)
+forceUpdateFromDataStore_(false),
+queuedInvalidate_(false)
 {
   PlatformModelNode* node = new PlatformModelNode(new Locator(locator));
   this->addChild(node);
@@ -160,7 +170,7 @@ forceUpdateFromDataStore_(false)
   addChild(localGrid_);
 
   scaledInertialTransform_->setLocator(getLocator());
-  model_->addScaledChild(scaledInertialTransform_);
+  model_->addScaledChild(scaledInertialTransform_.get());
 }
 
 PlatformNode::~PlatformNode()
@@ -325,30 +335,24 @@ void PlatformNode::updateHostBounds_(double scale)
 
 PlatformModelNode* PlatformNode::getModel()
 {
-  return model_;
+  return model_.get();
 }
 
 TrackHistoryNode* PlatformNode::getTrackHistory()
 {
-  return track_;
+  return track_.get();
 }
 
 void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 {
   // static platforms by convention have elapsedEciTime 0
-  simCore::Coordinate coord(
+  const simCore::Coordinate coord(
         simCore::COORD_SYS_ECEF,
         simCore::Vec3(u.x(), u.y(), u.z()),
         simCore::Vec3(u.psi(), u.theta(), u.phi()),
         simCore::Vec3(u.vx(), u.vy(), u.vz()));
 
   getLocator()->setCoordinate(coord, u.time(), lastProps_.coordinateframe().ecireferencetime());
-
-  // if locator has changed and localGrid is displayed, update it
-  if (localGrid_)
-  {
-    localGrid_->notifyHostLocatorChange();
-  }
 
   if (lastPrefsValid_)
   {
@@ -374,6 +378,13 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase);
   assert(updateSlice);
 
+  // apply the queued invalidate first, so the state can then be further arbitrated by any new data points
+  if (queuedInvalidate_)
+  {
+    setInvalid_();
+    queuedInvalidate_ = false;
+  }
+
   // in file mode, a platform is not valid until time reaches its first datapoint time.
   // standard interfaces will return NULL or a sentinel value to indicate that the platform does not have a valid position.
   // but there are cases where it is useful to know the position the platform will have when it becomes valid.
@@ -387,7 +398,6 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   // ensure that locator position is set in cases where time has been jumped to an early time or to a late time.
   //
   // this should only matter in file mode.
-
   if (!updateSlice->current() && (updateSlice->hasChanged() || updateSlice->isDirty()))
   {
     const double firstTime = updateSlice->firstTime();
@@ -502,7 +512,7 @@ bool PlatformNode::isActive_(const simData::PlatformPrefs& prefs) const
   return valid_ && lastPrefs_.commonprefs().datadraw();
 }
 
-void PlatformNode::setInvalid_(void)
+void PlatformNode::setInvalid_()
 {
   valid_ = false;
   lastUpdate_ = NULL_PLATFORM_UPDATE;
@@ -547,8 +557,8 @@ void PlatformNode::flush()
   // static platforms don't get flushed
   if (lastUpdateTime_ == -1.0)
     return;
-
-  setInvalid_();
+  // queue up the invalidate to apply on the next data store update. SIMDIS-2805
+  queuedInvalidate_ = true;
   if (track_.valid())
     track_->reset();
   if (velocityAxisVector_)
@@ -685,12 +695,12 @@ void PlatformNode::updateOrRemoveBodyAxis_(bool prefsDraw, const simData::Platfo
       bodyAxisVector_->addUpdateCallback(new SetAxisLengthCallback(this, true));
       // Set a node mask so we don't mouse-over a wide region
       bodyAxisVector_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
-      model_->addScaledChild(bodyAxisVector_);
+      model_->addScaledChild(bodyAxisVector_.get());
     }
   }
   else if (bodyAxisVector_.valid()) // remove if present
   {
-    model_->removeScaledChild(bodyAxisVector_);
+    model_->removeScaledChild(bodyAxisVector_.get());
     bodyAxisVector_ = NULL;
   }
 }
@@ -729,8 +739,8 @@ void PlatformNode::updateOrRemoveVelocityVector_(bool prefsDraw, const simData::
       velocityAxisVector_ = new VelocityVector(getLocator(), VELOCITY_VECTOR_COLOR);
       addChild(velocityAxisVector_);
       // force rebuild
-      velocityAxisVector_->setPrefs(prefs.drawvelocityvec(), prefs, true);
       velocityAxisVector_->update(lastUpdate_);
+      velocityAxisVector_->setPrefs(prefs.drawvelocityvec(), prefs, true);
     }
   }
   else if (velocityAxisVector_.valid()) // remove if present
@@ -750,7 +760,7 @@ void PlatformNode::updateOrRemoveEphemerisVector_(bool prefsDraw, const simData:
     else
     {
       ephemerisVector_ = new EphemerisVector(MOON_VECTOR_COLOR, SUN_VECTOR_COLOR);
-      ephemerisVector_->setModelNode(model_);
+      ephemerisVector_->setModelNode(model_.get());
       scaledInertialTransform_->addChild(ephemerisVector_);
       // force rebuild
       ephemerisVector_->setPrefs(prefs);
@@ -796,6 +806,12 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   switch (horizonType)
   {
   case simCore::OPTICAL_HORIZON:
+    if (!prefs.drawopticlos())
+    {
+      if (opticalLosNode_)
+        opticalLosNode_->setActive(false);
+      return;
+    }
     // Create and add node if we haven't already
     if (!opticalLosNode_ && losCreator_)
     {
@@ -807,6 +823,12 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     drawHorizon = prefs.drawopticlos();
     break;
   case simCore::RADAR_HORIZON:
+    if (!prefs.drawrflos())
+    {
+      if (radioLosNode_)
+        radioLosNode_->setActive(false);
+      return;
+    }
     // Create and add node if we haven't already
     if (!radioLosNode_ && losCreator_)
     {
@@ -878,6 +900,13 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
 void PlatformNode::setLosCreator(LosCreator* losCreator)
 {
   losCreator_ = losCreator;
+}
+
+unsigned int PlatformNode::objectIndexTag() const
+{
+  if (model_)
+    return model_->objectIndexTag();
+  return 0;
 }
 
 }

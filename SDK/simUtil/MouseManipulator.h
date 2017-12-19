@@ -21,9 +21,8 @@
 */
 #ifndef SIMUTIL_MOUSEMANIPULATOR_H
 #define SIMUTIL_MOUSEMANIPULATOR_H
-
+#include <memory>
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Memory.h"
 
 namespace osgGA {
   class GUIEventAdapter;
@@ -63,7 +62,7 @@ public:
   virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) = 0;
 
 };
-typedef std::tr1::shared_ptr<MouseManipulator> MouseManipulatorPtr;
+typedef std::shared_ptr<MouseManipulator> MouseManipulatorPtr;
 
 
 /**

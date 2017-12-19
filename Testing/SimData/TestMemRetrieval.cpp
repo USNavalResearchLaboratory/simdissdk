@@ -598,10 +598,10 @@ int superformIteration(simData::DataStore* dataStore)
   dataStore->update(0.0);
   // Iterate through platforms
   simData::DataStore::IdList idList;
-  dataStore->idList(&idList, simData::DataStore::PLATFORM);
+  dataStore->idList(&idList, simData::PLATFORM);
   for (simData::DataStore::IdList::const_iterator i = idList.begin(); i != idList.end(); ++i)
   {
-    rv += SDK_ASSERT(dataStore->objectType(*i) == simData::DataStore::PLATFORM);
+    rv += SDK_ASSERT(dataStore->objectType(*i) == simData::PLATFORM);
     const simData::PlatformUpdateSlice* slice = dataStore->platformUpdateSlice(*i);
     rv += SDK_ASSERT(slice != NULL);
     if (slice == NULL)
@@ -755,7 +755,7 @@ int timeNextPreviousCheck(simData::DataStore* dataStore)
   dataStore->update(0.0);
   // Iterate through platforms
   simData::DataStore::IdList idList;
-  dataStore->idList(&idList, simData::DataStore::PLATFORM);
+  dataStore->idList(&idList, simData::PLATFORM);
   rv += SDK_ASSERT(!idList.empty());
   if (idList.empty())
     return rv;
@@ -783,13 +783,13 @@ int getEntityTypeCheck(simData::DataStore* dataStore)
 {
   int rv = 0;
   // Test some wild values
-  rv += SDK_ASSERT(simData::DataStore::NONE == dataStore->objectType(0));
-  rv += SDK_ASSERT(simData::DataStore::NONE == dataStore->objectType(NUM_PLATS + 1));
+  rv += SDK_ASSERT(simData::NONE == dataStore->objectType(0));
+  rv += SDK_ASSERT(simData::NONE == dataStore->objectType(NUM_PLATS + 1));
   // Test inner values
-  rv += SDK_ASSERT(simData::DataStore::PLATFORM == dataStore->objectType(1));
-  rv += SDK_ASSERT(simData::DataStore::PLATFORM == dataStore->objectType(NUM_PLATS));
+  rv += SDK_ASSERT(simData::PLATFORM == dataStore->objectType(1));
+  rv += SDK_ASSERT(simData::PLATFORM == dataStore->objectType(NUM_PLATS));
   assert(NUM_PLATS > 1); // Test fails if condition is not true due to next line
-  rv += SDK_ASSERT(simData::DataStore::PLATFORM == dataStore->objectType(NUM_PLATS / 2));
+  rv += SDK_ASSERT(simData::PLATFORM == dataStore->objectType(NUM_PLATS / 2));
   // TODO: Add beams, gate, projector tests
   return rv;
 }
@@ -801,7 +801,7 @@ int findEntityCheck(simData::DataStore* dataStore)
   simData::DataStore::IdList ids;
   // Start by testing basics of idList()
   ids.clear();
-  dataStore->idList(&ids, simData::DataStore::ALL);
+  dataStore->idList(&ids, simData::ALL);
   rv += SDK_ASSERT(ids.size() == NUM_PLATS);
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), static_cast<uint64_t>(1)) != ids.end());
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), NUM_PLATS) != ids.end());
@@ -809,7 +809,7 @@ int findEntityCheck(simData::DataStore* dataStore)
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), NUM_PLATS+1) == ids.end());
   // Should have same results for platforms
   ids.clear();
-  dataStore->idList(&ids, simData::DataStore::PLATFORM);
+  dataStore->idList(&ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.size() == NUM_PLATS);
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), static_cast<uint64_t>(1)) != ids.end());
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), NUM_PLATS) != ids.end());
@@ -817,24 +817,24 @@ int findEntityCheck(simData::DataStore* dataStore)
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), NUM_PLATS+1) == ids.end());
   // Should have no results for beams
   ids.clear();
-  dataStore->idList(&ids, simData::DataStore::ObjectType(simData::DataStore::BEAM | simData::DataStore::GATE));
+  dataStore->idList(&ids, simData::ObjectType(simData::BEAM | simData::GATE));
   rv += SDK_ASSERT(ids.empty());
   // Find a platform in the middle
   assert(NUM_PLATS > 1); // This test assumes NUM_PLATS > 1
   ids.clear();
   std::string expectedName = expectedValue("platform", NUM_PLATS / 2);
-  dataStore->idListByName(expectedName, &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName(expectedName, &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.size() == 1);
   if (ids.size() == 1)
     rv += SDK_ASSERT(ids[0] == (NUM_PLATS / 2));
   // Search for nonexistent platform
   ids.clear();
-  dataStore->idListByName(expectedValue("platform", NUM_PLATS+1), &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName(expectedValue("platform", NUM_PLATS+1), &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.empty());
 
   // Validate that platform 1 exists; this is important for next part where name changes
   ids.clear();
-  dataStore->idListByName(expectedValue("platform", 1), &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName(expectedValue("platform", 1), &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.size() == 1 && ids[0] == 1);
   // Change a name and do the search over again
   simData::DataStore::Transaction transaction;
@@ -843,15 +843,15 @@ int findEntityCheck(simData::DataStore* dataStore)
   transaction.complete(&prefs);
   // Validate that platform 1 exists; this is important for next part where name changes
   ids.clear();
-  dataStore->idListByName(expectedValue("platform", 1), &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName(expectedValue("platform", 1), &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.empty());
   // Now search for the renamed value
   ids.clear();
-  dataStore->idListByName("Another name", &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName("Another name", &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.size() == 1 && ids[0] == 1);
   // Make sure capitalization counts
   ids.clear();
-  dataStore->idListByName("Another Name", &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName("Another Name", &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.empty());
 
   // Next we'll test that we can get multiple platforms of the same name; start by renaming another plat
@@ -860,11 +860,11 @@ int findEntityCheck(simData::DataStore* dataStore)
   transaction.complete(&prefs);
   // Make sure it took effect on ID 2...
   ids.clear();
-  dataStore->idListByName(expectedValue("Platform ", 2), &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName(expectedValue("Platform ", 2), &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.empty());
   // Now search for renamed value; should have 2 entries!
   ids.clear();
-  dataStore->idListByName("Another name", &ids, simData::DataStore::PLATFORM);
+  dataStore->idListByName("Another name", &ids, simData::PLATFORM);
   rv += SDK_ASSERT(ids.size() == 2);
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), static_cast<uint64_t>(1)) != ids.end());
   rv += SDK_ASSERT(std::find(ids.begin(), ids.end(), static_cast<uint64_t>(2)) != ids.end());

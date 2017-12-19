@@ -80,13 +80,13 @@ void earthFileLoader::loadEarthFile(const std::string& earthFile,
   osg::ref_ptr<osg::Node> loadedModel = simUtil::DbConfigurationFile::readEarthFile(earthFile);
 
   // Find the MapNode and replace it.
-  osg::ref_ptr<osgEarth::MapNode> mapNode = osgEarth::MapNode::findMapNode(loadedModel);
+  osg::ref_ptr<osgEarth::MapNode> mapNode = osgEarth::MapNode::findMapNode(loadedModel.get());
   if (mapNode)
   {
     if (mapOnly)
       viewer->setMap(mapNode->getMap());
     else
-      viewer->setMapNode(mapNode);
+      viewer->setMapNode(mapNode.get());
   }
 }
 
@@ -159,7 +159,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simVis::View::Insets insets;
         viewer_->getMainView()->getInsets(insets);
         for (simVis::View::Insets::const_iterator i = insets.begin(); i != insets.end(); ++i)
-          viewer_->getMainView()->removeInset(*i);
+          viewer_->getMainView()->removeInset(i->get());
         SIM_NOTICE << "Removed all insets..." << std::endl;
         handled = true;
         break;
@@ -220,7 +220,7 @@ private:
   LatLonElevationListener* latLonElevListener_;
   bool showLatLonElevation_;
   simUtil::MouseDispatcher* mouseDispatcher_;
-  std::tr1::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
+  std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
 };
 
 
@@ -269,16 +269,16 @@ int main(int argc, char** argv)
 
   if (!earthFiles.empty())
   {
-    earthFileLoader::loadEarthFile(earthFiles[0], viewer);
+    earthFileLoader::loadEarthFile(earthFiles[0], viewer.get());
   }
   else
   {
     osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
-    viewer->setMap(map);
+    viewer->setMap(map.get());
   }
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Add an entity flying around
   osg::ref_ptr<simUtil::CircumnavigationPlatformSimulation> platformSim = new simUtil::CircumnavigationPlatformSimulation(viewer->getSceneManager(), mainView);
@@ -290,14 +290,14 @@ int main(int argc, char** argv)
 
   // label for elevation readout
   osg::ref_ptr<LabelControl> elevationLabel = new LabelControl("", 14, osg::Vec4f(.8, .8, .8, 1));
-  std::tr1::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher;
+  std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher;
   mouseDispatcher.reset(new simUtil::MouseDispatcher);
 
   // Handles hotkeys from user
-  mainView->addEventHandler(new MenuHandler(viewer, insetHandler, elevationLabel, mouseDispatcher.get()));
+  mainView->addEventHandler(new MenuHandler(viewer.get(), insetHandler.get(), elevationLabel.get(), mouseDispatcher.get()));
 
   // show the help menu
-  viewer->getMainView()->addOverlayControl(createHelp(elevationLabel));
+  viewer->getMainView()->addOverlayControl(createHelp(elevationLabel.get()));
   viewer->installDebugHandlers();
   viewer->run();
 }

@@ -63,14 +63,14 @@ compass_(compass),
 callback_(NULL)
 {
   callback_ = new FocusCallback(this);
-  focusManager_->addCallback(callback_);
+  focusManager_->addCallback(callback_.get());
 }
 
 CompassFocusManagerAdapter::~CompassFocusManagerAdapter()
 {
   if (focusManager_.valid())
   {
-    focusManager_.get()->removeCallback(callback_);
+    focusManager_.get()->removeCallback(callback_.get());
   }
 }
 
@@ -121,7 +121,7 @@ compassUpdateEventHandler_(NULL)
   osg::ref_ptr<osg::Image> image = osgDB::readImageFile(compassFilename);
   if (image)
   {
-    compass_ = new osgEarth::Util::Controls::ImageControl(image);
+    compass_ = new osgEarth::Util::Controls::ImageControl(image.get());
     compass_->setAbsorbEvents(false);
     compass_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_RIGHT);
     compass_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_BOTTOM);
@@ -190,9 +190,9 @@ void Compass::setDrawView(simVis::View* drawView)
   if (compass_ && drawView && !drawView_.valid())
   {
     drawView_ = drawView;
-    drawView->addOverlayControl(compass_);
-    drawView->addOverlayControl(readout_);
-    drawView->addOverlayControl(pointer_);
+    drawView->addOverlayControl(compass_.get());
+    drawView->addOverlayControl(readout_.get());
+    drawView->addOverlayControl(pointer_.get());
 
     // set up the callback for frame updates
     drawView->addEventHandler(compassUpdateEventHandler_);
@@ -208,12 +208,12 @@ void Compass::removeFromView()
 {
   if (compass_ && drawView_.valid())
   {
-    drawView_.get()->removeOverlayControl(compass_);
-    drawView_.get()->removeOverlayControl(readout_);
-    drawView_.get()->removeOverlayControl(pointer_);
+    drawView_.get()->removeOverlayControl(compass_.get());
+    drawView_.get()->removeOverlayControl(readout_.get());
+    drawView_.get()->removeOverlayControl(pointer_.get());
 
     // stop callbacks for frame updates
-    drawView_.get()->removeEventHandler(compassUpdateEventHandler_);
+    drawView_.get()->removeEventHandler(compassUpdateEventHandler_.get());
     drawView_ = NULL;
   }
 }

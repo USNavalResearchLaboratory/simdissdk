@@ -93,7 +93,7 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
     ++remove_;
   }
@@ -202,9 +202,9 @@ void testPlatform_insertStatic()
 class NewLobListener : public simData::DataStore::DefaultListener
 {
 public:
-  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::DataStore::ObjectType ot)
+  void onAddEntity(simData::DataStore *source, simData::ObjectId id, simData::ObjectType ot)
   {
-    if (ot != simData::DataStore::LOB_GROUP)
+    if (ot != simData::LOB_GROUP)
       return;
 
     int rv = 0;
@@ -222,7 +222,7 @@ struct LobPrefListener : public simData::DataStore::DefaultListener
 {
   void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
   {
-    if (source->objectType(id) != simData::DataStore::LOB_GROUP)
+    if (source->objectType(id) != simData::LOB_GROUP)
       return;
 
     simData::DataStore::Transaction transaction;
@@ -305,17 +305,17 @@ void testLobGroup_insert()
 
   // check that lobs are in the data store
   simData::DataStore::IdList idList;
-  ds->idListByName(lobName1, &idList, simData::DataStore::LOB_GROUP);
+  ds->idListByName(lobName1, &idList, simData::LOB_GROUP);
   rv += SDK_ASSERT(idList.size() == 1);
   rv += SDK_ASSERT(idList[0] == lobId1);
 
   idList.clear();
-  ds->idListByName(lobName2, &idList, simData::DataStore::LOB_GROUP);
+  ds->idListByName(lobName2, &idList, simData::LOB_GROUP);
   rv += SDK_ASSERT(idList.size() == 1);
   rv += SDK_ASSERT(idList[0] == lobId2);
 
   idList.clear();
-  ds->idList(&idList, simData::DataStore::LOB_GROUP);
+  ds->idList(&idList, simData::LOB_GROUP);
   rv += SDK_ASSERT(idList.size() == 2);
   int numLobsFound = 0;
   for (size_t tIndex = 0; tIndex < idList.size(); tIndex++)
@@ -1064,7 +1064,7 @@ bool hasKeyValue(simData::CategoryDataSlice::Iterator cIter, const std::string& 
   while (cIter.hasNext())
   {
 
-    std::tr1::shared_ptr<simData::CategoryDataPair> nextCat = cIter.next();
+    std::shared_ptr<simData::CategoryDataPair> nextCat = cIter.next();
     if (nextCat->name() == key)
     {
       number++;
@@ -1169,7 +1169,7 @@ public:
   {
   }
 
-  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::DataStore::ObjectType ot)
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
     ++counter_;
   }

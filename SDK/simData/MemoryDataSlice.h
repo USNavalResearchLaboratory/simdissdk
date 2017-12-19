@@ -29,12 +29,13 @@
 #include "simData/DataTypes.h"
 #include "simData/DataSlice.h"
 #include "simData/DataSliceUpdaters.h"
-#include "simData/DataStore.h"
 #include "simData/Interpolator.h"
+#include "simData/ObjectId.h"
 #include "simData/UpdateComp.h"
 
 namespace simData
 {
+class DataStore;
 
 namespace MemorySliceHelper
 {

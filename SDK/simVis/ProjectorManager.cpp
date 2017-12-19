@@ -24,16 +24,18 @@
 #include "osgEarth/StringUtils"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/VirtualProgram"
+#include "simVis/EntityLabel.h"
+#include "simVis/LabelContentManager.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/Projector.h"
 #include "simVis/Shaders.h"
-#include "simVis/ProjectorManager.h"
 #include "simVis/Utils.h"
+#include "simVis/ProjectorManager.h"
 
 #define LC "simVis::ProjectorManager "
 
-using namespace simVis;
-using namespace osgEarth;
-
+namespace simVis
+{
 /// Projector texture unit for shader and projector state sets
 static const int PROJECTOR_TEXTURE_UNIT = 5;
 
@@ -56,7 +58,9 @@ ProjectorManager::ProjectorManager()
   setCullingActive(false);
 }
 
-void ProjectorManager::setMapNode(MapNode* mapNode)
+ProjectorManager::~ProjectorManager() {}
+
+void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
 {
   if (mapNode != mapNode_.get())
   {
@@ -139,10 +143,19 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 
     projectors_.push_back(proj);
 
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+    ProjectorLayer* layer = new ProjectorLayer(proj->getId());
+    layer->setName("SIMSDK Projector");
+    osg::StateSet* projStateSet = layer->getOrCreateStateSet();
+    projectorLayers_.push_back(layer);
+
+    mapNode_->getMap()->addLayer(layer);
+#else
     osg::StateSet* projStateSet = new osg::StateSet();
+#endif
 
     // shader code to render the projectors
-    osgEarth::VirtualProgram* vp = VirtualProgram::getOrCreate(projStateSet);
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(projStateSet);
     simVis::Shaders package;
     package.load(vp, package.projectorManagerVertex());
     package.load(vp, package.projectorManagerFragment());
@@ -161,14 +174,6 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
     projStateSet->addUniform(proj->texProjDirUniform_.get());
     projStateSet->addUniform(proj->texProjPosUniform_.get());
 
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-    ProjectorLayer* layer = new ProjectorLayer(proj->getId());
-    layer->setName("SIMSDK Projector");
-    layer->setStateSet(projStateSet);
-    projectorLayers_.push_back(layer);
-
-    mapNode_->getMap()->addLayer(layer);
-#endif
     return;
   }
 
@@ -220,7 +225,7 @@ void ProjectorManager::unregisterProjector(ProjectorNode* proj)
       {
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         // Remove it from the map:
-        osg::ref_ptr<MapNode> mapNode;
+        osg::ref_ptr<osgEarth::MapNode> mapNode;
         if (mapNode_.lock(mapNode))
           mapNode->getMap()->removeLayer(layer);
 #endif
@@ -252,7 +257,7 @@ void ProjectorManager::clear()
   if (simVis::useRexEngine())
   {
     // Remove it from the map:
-    osg::ref_ptr<MapNode> mapNode;
+    osg::ref_ptr<osgEarth::MapNode> mapNode;
     if (mapNode_.lock(mapNode))
     {
       for (ProjectorLayerVector::const_iterator i = projectorLayers_.begin(); i != projectorLayers_.end(); ++i)
@@ -281,4 +286,6 @@ void ProjectorManager::traverse(osg::NodeVisitor& nv)
   {
     osg::Group::traverse(nv);
   }
+}
+
 }

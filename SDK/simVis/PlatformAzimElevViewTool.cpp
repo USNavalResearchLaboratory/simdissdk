@@ -19,23 +19,22 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Depth"
 #include "osg/LineWidth"
 #include "osgText/Text"
-
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
-#include "osgEarth/AutoScale"
 
 #include "simCore/Calc/Angle.h"
-#include "simVis/PlatformAzimElevViewTool.h"
-#include "simVis/Scenario.h"
-#include "simVis/Utils.h"
-#include "simVis/Shaders.h"
-#include "simVis/Platform.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
-
+#include "simVis/Locator.h"
+#include "simVis/Platform.h"
+#include "simVis/Shaders.h"
+#include "simVis/Scenario.h"
+#include "simVis/Utils.h"
+#include "simVis/PlatformAzimElevViewTool.h"
 #define OVERRIDE_TAG "PlatformAzimElevViewTool"
 
 //#define DEBUG_LABELS
@@ -51,7 +50,6 @@ namespace
     package.load(vp, package.platformAzimElevWarpVertex());
     return vp;
   }
-
 
   /**
    * Adapter that routes geometry update calls back to our object.
@@ -72,10 +70,9 @@ namespace
 namespace simVis
 {
 PlatformAzimElevViewTool::PlatformAzimElevViewTool(EntityNode* host) :
-ScenarioTool(),
-host_(host),
-range_(20000.0),
-elevLabelAngle_((float)osg::PI_2)
+  host_(host),
+  range_(20000.0),
+  elevLabelAngle_((float)osg::PI_2)
 {
   warpingProgram_ = createWarpingProgram();
   grid_ = createAzElGrid_();
@@ -87,6 +84,10 @@ elevLabelAngle_((float)osg::PI_2)
   fence_ = new HorizonGeoFence();
 }
 
+osg::Node* PlatformAzimElevViewTool::getNode() const
+{
+  return root_.get();
+}
 
 void PlatformAzimElevViewTool::setRange(double range)
 {
@@ -97,7 +98,6 @@ void PlatformAzimElevViewTool::setRange(double range)
     applyOverrides_();
   }
 }
-
 
 void PlatformAzimElevViewTool::setElevLabelAngle(float angle)
 {
@@ -114,13 +114,11 @@ void PlatformAzimElevViewTool::setElevLabelAngle(float angle)
   }
 }
 
-
 void PlatformAzimElevViewTool::setBeamPrefs(const simData::BeamPrefs& prefs)
 {
   beamPrefs_ = prefs;
   applyOverrides_();
 }
-
 
 void PlatformAzimElevViewTool::setGatePrefs(const simData::GatePrefs& prefs)
 {
@@ -128,8 +126,7 @@ void PlatformAzimElevViewTool::setGatePrefs(const simData::GatePrefs& prefs)
   applyOverrides_();
 }
 
-
-void PlatformAzimElevViewTool::onInstall(ScenarioManager* scenario)
+void PlatformAzimElevViewTool::onInstall(const ScenarioManager& scenario)
 {
   // create a node to track the position of the host:
   root_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
@@ -142,9 +139,6 @@ void PlatformAzimElevViewTool::onInstall(ScenarioManager* scenario)
   targets_->addUpdateGeometryCallback(new UpdateGeometryAdapter(this));
   root_->addChild(targets_.get());
 
-  // install it in the scenario:
-  scenario->addChild(root_.get());
-
   // build the scene elements:
   rebuild_();
 
@@ -156,28 +150,26 @@ void PlatformAzimElevViewTool::onInstall(ScenarioManager* scenario)
   applyOverrides_(true);
 }
 
-
-void PlatformAzimElevViewTool::onUninstall(ScenarioManager* scenario)
+void PlatformAzimElevViewTool::onUninstall(const ScenarioManager& scenario)
 {
-  if (root_.valid())
-  {
-    scenario->removeChild(root_.get());
-  }
-
-  root_ = NULL;
-
   // disable all overrides
   applyOverrides_(false);
-}
+  family_.reset();
 
+  if (targets_.valid())
+    targets_->removeChildren(0, targets_->getNumChildren());
+
+  // scenario has already removed us from the scenegraph
+  root_ = NULL;
+  targets_ = NULL;
+}
 
 bool PlatformAzimElevViewTool::isInstalled_() const
 {
-    return root_.valid();
+  return root_.valid();
 }
 
-
-void PlatformAzimElevViewTool::onEntityAdd(ScenarioManager* scenario, EntityNode* entity)
+void PlatformAzimElevViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNode* entity)
 {
   if (family_.invite(entity))
   {
@@ -185,8 +177,7 @@ void PlatformAzimElevViewTool::onEntityAdd(ScenarioManager* scenario, EntityNode
   }
 }
 
-
-void PlatformAzimElevViewTool::onEntityRemove(ScenarioManager* scenario, EntityNode* entity)
+void PlatformAzimElevViewTool::onEntityRemove(const ScenarioManager& scenario, EntityNode* entity)
 {
   simData::ObjectId id = entity->getId();
   if (family_.dismiss(entity))
@@ -195,8 +186,7 @@ void PlatformAzimElevViewTool::onEntityRemove(ScenarioManager* scenario, EntityN
   }
 }
 
-
-void PlatformAzimElevViewTool::onUpdate(ScenarioManager* scenario, double timestamp, const EntityVector& updates)
+void PlatformAzimElevViewTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
   fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());
@@ -204,7 +194,7 @@ void PlatformAzimElevViewTool::onUpdate(ScenarioManager* scenario, double timest
   // check any entity updates for positional changes
   for (EntityVector::const_iterator i = updates.begin(); i != updates.end(); ++i)
   {
-    PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
+    const PlatformNode* platform = dynamic_cast<PlatformNode*>(i->get());
     if (!platform || platform == host_.get())
       continue;
     if (platform->isActive())
@@ -214,25 +204,20 @@ void PlatformAzimElevViewTool::onUpdate(ScenarioManager* scenario, double timest
   }
 }
 
-
 void PlatformAzimElevViewTool::rebuild_()
 {
   grid_->setMatrix(osg::Matrix::scale(range_, range_, range_));
   this->setDirty();
 }
 
-
 void PlatformAzimElevViewTool::applyOverrides_()
 {
-    applyOverrides_(isInstalled_());
+  applyOverrides_(isInstalled_());
 }
-
 
 void PlatformAzimElevViewTool::applyOverrides_(bool enable)
 {
-  for (EntityFamily::EntityObserverSet::iterator i = family_.members().begin();
-      i != family_.members().end();
-      ++i)
+  for (EntityFamily::EntityObserverSet::iterator i = family_.members().begin(); i != family_.members().end(); ++i)
   {
     if (i->valid())
     {
@@ -241,12 +226,10 @@ void PlatformAzimElevViewTool::applyOverrides_(bool enable)
   }
 }
 
-
 void PlatformAzimElevViewTool::applyOverrides_(EntityNode* entity)
 {
-    applyOverrides_(entity, isInstalled_());
+  applyOverrides_(entity, isInstalled_());
 }
-
 
 void PlatformAzimElevViewTool::applyOverrides_(EntityNode* entity, bool enable)
 {
@@ -308,7 +291,6 @@ void PlatformAzimElevViewTool::applyOverrides_(EntityNode* entity, bool enable)
     return;
   }
 }
-
 
 // Builds the geometry for the elevation ring grid.
 osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
@@ -434,7 +416,6 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
   return scaler;
 }
 
-
 osg::Geode* PlatformAzimElevViewTool::buildTargetGeode_()
 {
   float s = 3000.0f;
@@ -486,7 +467,6 @@ namespace
   }
 }
 #endif
-
 
 void PlatformAzimElevViewTool::updateTargetGeometry(osg::MatrixTransform* mt, const osg::Vec3d& ecef)
 {

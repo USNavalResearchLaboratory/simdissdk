@@ -85,7 +85,7 @@ void MainWindow::addSmallAmount_()
 void MainWindow::addMassiveAmount_()
 {
 // Test with smaller number when in DEBUG
-#ifdef DEBUG
+#ifdef _DEBUG
   int size = 100;
 #else
   int size = 20000;

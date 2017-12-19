@@ -4,7 +4,7 @@
 set(LIBRARYNAME OPENTHREADS)
 
 # OpenThreads is stored under the OpenSceneGraph folder
-set(${LIBRARYNAME}_VERSION 3.4.0)
+set(${LIBRARYNAME}_VERSION 3.4.1)
 # Adjust for the Qt version.  Note that 4.8 version works across the board for 4.8.x
 set(${LIBRARYNAME}_VERSION ${${LIBRARYNAME}_VERSION}_Qt-${QT_VERSION})
 # Prefix on the DLL under Windows

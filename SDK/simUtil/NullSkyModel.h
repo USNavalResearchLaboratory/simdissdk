@@ -42,13 +42,13 @@ public:
   /** Returns a sun light (supports after 2.8, when signature on pure virtual was changed */
   virtual osg::Light* getSunLight() const
   {
-    return light_;
+    return light_.get();
   }
 
   /** Return a sun light (supports up to and including 2.8 -- changed post-2.8) */
   virtual osg::Light* getSunLight()
   {
-    return light_;
+    return light_.get();
   }
 
   /** Return the proper library name */

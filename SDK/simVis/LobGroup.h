@@ -25,16 +25,15 @@
 #include "simData/DataTable.h"
 #include "simVis/Entity.h"
 #include "simVis/Constants.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LabelContentManager.h"
 
 namespace simCore { class CoordinateConverter; }
 
 namespace simVis
 {
-
 class AnimatedLineNode;
+class EntityLabelNode;
+class LabelContentCallback;
+class LocalGridNode;
 
 /**
  * Scene graph node that renders a group of "Lines of Bearing" (LOB)
@@ -133,6 +132,9 @@ public: // EntityNode interface
   * Returns a range value used for visualization.  Will return zero for platforms and projectors.
   */
   virtual double range() const;
+
+  /** This entity type is, at this time, unpickable. */
+  virtual unsigned int objectIndexTag() const;
 
   /**
   * Get the traversal mask for this node type

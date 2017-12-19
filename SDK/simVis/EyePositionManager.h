@@ -22,9 +22,9 @@
 #ifndef SIMVIS_EYE_POSITION_MANAGER_H
 #define SIMVIS_EYE_POSITION_MANAGER_H
 
+#include <memory>
 #include <string>
 #include "osgEarthUtil/EarthManipulator"
-#include "simCore/Common/Memory.h"
 #include "simVis/View.h"
 
 namespace simVis {
@@ -103,7 +103,7 @@ public:
   };
 
   /// Shared pointer for an EyePositionCallback
-  typedef std::tr1::shared_ptr<EyePositionCallback> EyePositionCallbackPtr;
+  typedef std::shared_ptr<EyePositionCallback> EyePositionCallbackPtr;
 
   /// Adds a callback that is notified on eye position changes
   virtual void addCallback(EyePositionCallbackPtr cb) = 0;

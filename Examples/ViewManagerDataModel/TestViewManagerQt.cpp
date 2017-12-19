@@ -144,7 +144,7 @@ MainWindow::MainWindow()
 
   // Set up the data model, bind to view manager, and set the model for all 3 views
   simQt::ViewManagerDataModel* dataModel = new simQt::ViewManagerDataModel(this);
-  dataModel->bindTo(viewMan_);
+  dataModel->bindTo(viewMan_.get());
   listView->setModel(dataModel);
   topTreeView_->setModel(dataModel);
   treeView2->setModel(dataModel);
@@ -152,12 +152,12 @@ MainWindow::MainWindow()
   // Create a flat data model
   simQt::ViewManagerDataModel* flatDataModel = new simQt::ViewManagerDataModel(this);
   flatDataModel->setHierarchical(false);
-  flatDataModel->bindTo(viewMan_);
+  flatDataModel->bindTo(viewMan_.get());
   flatListView->setModel(flatDataModel);
 
   // Create a data model with no checks
   simQt::ViewManagerDataModel* noChecksDataModel = new simQt::ViewManagerDataModel(this);
-  noChecksDataModel->bindTo(viewMan_);
+  noChecksDataModel->bindTo(viewMan_.get());
   noChecksDataModel->setUserCheckable(false);
   noChecksTreeView->setModel(noChecksDataModel);
 
@@ -225,7 +225,7 @@ void MainWindow::addView()
     inset->setName(osgEarth::Util::Stringify() << "New " << (++numInsetsCreated_));
     // Copy the Earth Manipulator settings from the parent view
     inset->applyManipulatorSettings(**iter);
-    (*iter)->addInset(inset);
+    (*iter)->addInset(inset.get());
   }
 }
 
@@ -260,10 +260,10 @@ int main(int argc, char** argv)
 
   // A scene manager that all our views will share.
   osg::ref_ptr<simVis::SceneManager> sceneMan = new simVis::SceneManager();
-  sceneMan->setMap(map);
+  sceneMan->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(sceneMan);
+  simExamples::addDefaultSkyNode(sceneMan.get());
 
   // OK, time to set up the Qt Application and windows.
   QApplication qapp(argc, argv);
@@ -280,18 +280,18 @@ int main(int argc, char** argv)
   {
     // Make a view, hook it up, and add it to the view manager.
     osg::ref_ptr<simVis::View> mainview = new simVis::View();
-    win.addMainView(mainview);
+    win.addMainView(mainview.get());
     // Note the artificial scopes below ensure separation of concerns
 
     {
       // Make a Qt Widget to hold our view, and add that widget to the
       // main window.
-      QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview);
+      QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview.get());
       center->layout()->addWidget(viewWidget);
 
       // attach the scene manager and add it to the view manager.
       mainview->setSceneManager(sceneMan.get());
-      win.getViewManager()->addView(mainview);
+      win.getViewManager()->addView(mainview.get());
     }
 
     {
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
       inset->setName(osgEarth::Util::Stringify() << "Inset " << (i+1) << " (1/2)");
       // Copy the earth manipulator settings from the parent
       inset->applyManipulatorSettings(*mainview);
-      mainview->addInset(inset);
+      mainview->addInset(inset.get());
     }
 
     {
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
       inset2->setName(osgEarth::Util::Stringify() << "Inset " << (i+1) << " (2/2)");
       // Copy the earth manipulator settings from the parent
       inset2->applyManipulatorSettings(*mainview);
-      mainview->addInset(inset2);
+      mainview->addInset(inset2.get());
     }
   }
 

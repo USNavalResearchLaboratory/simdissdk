@@ -45,7 +45,7 @@ namespace {
   static const QString INVALID_ENTITY = "QLineEdit:enabled { color: red }";
 }
 
-EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type, simCore::Clock* clock, SettingsPtr settings)
+EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::ObjectType type, simCore::Clock* clock, SettingsPtr settings)
   : QDialog(parent),
     entityTreeModel_(entityTreeModel),
     entityStateFilter_(NULL)
@@ -68,7 +68,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
     tree_->addEntityFilter(entityStateFilter_);
   }
 
-  tree_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::DataStore::ALL));
+  tree_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::ALL));
   tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), true));
 
   connect(tree_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(setSelected_(QList<uint64_t>)));
@@ -137,12 +137,15 @@ public:
   }
 
   /// entity with the given id and type will be removed after all notifications are processed
-  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::DataStore::ObjectType ot)
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
+    if (parent_->unavailableId_ == removedId)
+      parent_->unavailableId_ = 0;
+
     if (parent_->uniqueId_ == removedId)
     {
-      parent_->composite_->lineEdit->setStyleSheet(INVALID_ENTITY);
       parent_->uniqueId_ = 0;
+      parent_->setTextStyle_(false);
     }
   }
 
@@ -159,12 +162,14 @@ protected:
 
 //--------------------------------------------------------------------------------------------------
 
-EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::DataStore::ObjectType type)
+EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::ObjectType type)
 : QWidget(parent),
   composite_(NULL),
   entityTreeModel_(NULL), // set below with the setModel call
   entityDialog_(NULL),
   uniqueId_(0),
+  unavailableId_(0),
+  valid_(true),
   needToVerify_(false),
   type_(type),
   clock_(NULL),
@@ -195,7 +200,7 @@ EntityLineEdit::~EntityLineEdit()
   delete composite_;
 }
 
-void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore::ObjectType type, simCore::Clock* clock)
+void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::ObjectType type, simCore::Clock* clock)
 {
   type_ = type;
   clock_ = clock;
@@ -211,7 +216,7 @@ void EntityLineEdit::setModel(simQt::EntityTreeModel* model, simData::DataStore:
       entityStateFilter_ = new simQt::EntityStateFilter(*entityTreeModel_->dataStore(), *clock_);
       proxy_->addEntityFilter(entityStateFilter_);  // proxy takes ownership of entityStateFilter_
     }
-    proxy_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::DataStore::ALL));
+    proxy_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::ALL));
     proxy_->setSourceModel(entityTreeModel_);
 
     QCompleter* completer = new QCompleter(proxy_, this);
@@ -279,7 +284,7 @@ void EntityLineEdit::wasActived_(const QModelIndex & index)
     return;
   uniqueId_ = newId;
   needToVerify_ = false;
-  composite_->lineEdit->setStyleSheet(VALID_ENTITY);
+  setTextStyle_(true);
   emit itemSelected(uniqueId_);
   if (entityDialog_ != NULL)
     entityDialog_->setItemSelected(uniqueId_);
@@ -304,6 +309,19 @@ int EntityLineEdit::setSelected(uint64_t id)
   if (entityTreeModel_ == NULL || id == uniqueId_)
     return 1;
 
+  // Allow zero to clear out the line Edit
+  if (id == 0)
+  {
+    composite_->lineEdit->setText("");
+    uniqueId_ = id;
+    needToVerify_ = true;
+    setTextStyle_(false);
+    if (entityDialog_ != NULL)
+      entityDialog_->setItemSelected(uniqueId_);
+    emit itemSelected(uniqueId_);
+    return 0;
+  }
+
   QModelIndex index = entityTreeModel_->index(id);
   if (!index.isValid())
     return 1;
@@ -312,7 +330,7 @@ int EntityLineEdit::setSelected(uint64_t id)
   composite_->lineEdit->setText(name);
   uniqueId_ = id;
   needToVerify_ = false;
-  composite_->lineEdit->setStyleSheet(VALID_ENTITY);
+  setTextStyle_(true);
   if (entityDialog_ != NULL)
     entityDialog_->setItemSelected(uniqueId_);
   emit itemSelected(uniqueId_);
@@ -349,31 +367,57 @@ void EntityLineEdit::closeEntityDialog()
   entityDialog_ = NULL;
 }
 
+void EntityLineEdit::setUnavailable(uint64_t id)
+{
+  unavailableId_ = id;
+  setTextStyle_(valid_);
+}
+
 void EntityLineEdit::editingFinished_()
 {
   if (entityTreeModel_ == NULL)
     return;
 
+  // Clearing out the line Edit is a special case
+  if (composite_->lineEdit->text().isEmpty())
+  {
+    bool doEmit = (uniqueId_ != 0);
+    uniqueId_ = 0;
+    needToVerify_ = true;
+    setTextStyle_(false);
+    if (entityDialog_ != NULL)
+      entityDialog_->setItemSelected(uniqueId_);
+    if (doEmit)
+      emit itemSelected(uniqueId_);
+    return;
+  }
+
   if (needToVerify_)
   {
+    needToVerify_ = false;
     uniqueId_ = simData::DataStoreHelpers::idByName(composite_->lineEdit->text().toStdString(), entityTreeModel_->dataStore());
     if ((uniqueId_ == 0) && (!composite_->lineEdit->text().isEmpty()))
-      composite_->lineEdit->setStyleSheet(INVALID_ENTITY);
+      setTextStyle_(false);
     else
     {
-      composite_->lineEdit->setStyleSheet(VALID_ENTITY);
+      setTextStyle_(true);
       if (entityDialog_ != NULL)
         entityDialog_->setItemSelected(uniqueId_);
     }
     emit itemSelected(uniqueId_);
-    needToVerify_ = false;
   }
 }
 
 void EntityLineEdit::textEdited_(const QString & text)
 {
   needToVerify_ = true;
-  composite_->lineEdit->setStyleSheet(VALID_ENTITY);
+  setTextStyle_(true);
+
+  if (uniqueId_ != 0)
+  {
+    uniqueId_ = 0;
+    emit itemSelected(uniqueId_);
+  }
 }
 
 QString EntityLineEdit::tooltip() const
@@ -416,6 +460,21 @@ bool EntityLineEdit::eventFilter(QObject* obj, QEvent* evt)
     }
   }
   return false;
+}
+
+void EntityLineEdit::setTextStyle_(bool valid)
+{
+  // Do not short out, need to test needToVerify_ and unavailableId_ down below
+  valid_ = valid;
+
+  if (needToVerify_)
+    composite_->lineEdit->setStyleSheet(VALID_ENTITY);
+  else if (!valid_)
+    composite_->lineEdit->setStyleSheet(INVALID_ENTITY);
+  else if (uniqueId_ == unavailableId_)
+    composite_->lineEdit->setStyleSheet(INVALID_ENTITY);
+  else
+    composite_->lineEdit->setStyleSheet(VALID_ENTITY);
 }
 
 

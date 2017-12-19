@@ -38,9 +38,10 @@ void simVis_flatten_VS(inout vec4 viewVertex)
     // construct the strength [0..1] at which to apply a latitude
     // adjustment. No adjustment at the poles or equator; maximum
     // adjustment at +/- 45 degrees latitude.
-    const float D45 = 0.785398; // 45 degrees (in radians)
-    float angle = abs(asin(worldVertex.z));
-    float adjustment = 1.0-(abs(angle-D45)/D45);
+    float angle = abs(asin(worldVertex.z)); // pulls out latitude
+    // Scale using a curve fit with sin, such that 0 and 90 degrees latitude
+    // will be adjustment of 0.0, and 45 degrees at 1.0.
+    float adjustment = sin(abs(angle * 2));
 
     // Back to ECEF coordinate frame
     worldVertex.xyz *= EF;

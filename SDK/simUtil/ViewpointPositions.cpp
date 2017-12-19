@@ -41,7 +41,7 @@ simCore::Vec3 ViewpointPositions::centerLla(const osgEarth::Viewpoint& vp)
     osg::ref_ptr<osg::Node> node;
     vp.getNode(node);
     if (node.valid())
-      return simVis::computeNodeGeodeticPosition(node);
+      return simVis::computeNodeGeodeticPosition(node.get());
   }
   // Not tethered, or invalid tether
   simCore::Vec3 llaWorld;

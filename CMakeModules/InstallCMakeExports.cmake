@@ -85,7 +85,9 @@ configure_file(CMakeModules/ImportSIMDIS_SDK.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
     @ONLY
 )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
+        CMakeModules/EnableGccNewCxxFeatures.cmake
     DESTINATION share/ExternalSdkProject/CMakeModules/
     COMPONENT Exports
 )

@@ -22,13 +22,14 @@
 #ifndef SIMUTIL_VIEWPOINTMONITOR_H
 #define SIMUTIL_VIEWPOINTMONITOR_H
 
-#include <vector>
 #include <map>
+#include <memory>
+#include <vector>
+
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
 #include "osgEarthUtil/EarthManipulator"
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 #include "simCore/Calc/Vec3.h"
 
 namespace simVis {
@@ -245,7 +246,7 @@ public:
   };
 
   /** Observers are stored as smart pointers to ease memory management */
-  typedef std::tr1::shared_ptr<Observer> ObserverPtr;
+  typedef std::shared_ptr<Observer> ObserverPtr;
 
   /** Adapter to the Observer interface to make deriving limited methods easier for developers only interested in a few fields. */
   class ObserverAdapter : public Observer

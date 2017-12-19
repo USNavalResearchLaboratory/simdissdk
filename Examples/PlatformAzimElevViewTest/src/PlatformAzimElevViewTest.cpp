@@ -34,6 +34,7 @@
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Locator.h"
+#include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
 #include "simUtil/ExampleResources.h"
@@ -127,12 +128,12 @@ ui::Control* createUI(AppData& app)
   r++;
   grid->setControl(c, r, new ui::LabelControl("Range:"));
   app.rangeSlider = grid->setControl(c+1, r, new ui::HSliderControl(40000, 225000, 150000, new SetRange(app)));
-  grid->setControl(c+2, r, new ui::LabelControl(app.rangeSlider));
+  grid->setControl(c+2, r, new ui::LabelControl(app.rangeSlider.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Label Angle:"));
   app.elevLabelAngle = grid->setControl(c+1, r, new ui::HSliderControl(0.0f, osg::PI*2.0, osg::PI_2, new SetElevLabelAngle(app)));
-  grid->setControl(c+2, r, new ui::LabelControl(app.elevLabelAngle));
+  grid->setControl(c+2, r, new ui::LabelControl(app.elevLabelAngle.get()));
 
   // force a width.
   app.rangeSlider->setHorizFill(true, 200);
@@ -230,7 +231,7 @@ void simulate(
     osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(hostId);
     sim->addWaypoint(simUtil::Waypoint(0.0, -30.0, 0.0, 1000));
     sim->addWaypoint(simUtil::Waypoint(0.0, -35.0, 0.0, 1000));
-    simman->addSimulator(sim);
+    simman->addSimulator(sim.get());
   }
 
   // simulate the targets.
@@ -245,13 +246,13 @@ void simulate(
       double lon = -60 + double(::rand() % 60);
       sim->addWaypoint(simUtil::Waypoint(lat, lon, alt, 100));
     }
-    simman->addSimulator(sim);
+    simman->addSimulator(sim.get());
   }
 
   simman->simulate(0.0, 30.0, 5.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman, 0.0, 30.0, true);
-  viewer->addEventHandler(simHandler);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simman.get(), 0.0, 30.0, true);
+  viewer->addEventHandler(simHandler.get());
 
   SIM_NOTICE << LC << "...simulation complete." << std::endl;
 }
@@ -271,7 +272,7 @@ void simulatePlatform(simData::ObjectId id, simData::DataStore& ds, simVis::View
   simman->addSimulator(sim);
   simman->simulate(0.0, 60.0, 30.0);
 
-  osg::ref_ptr<simVis::SimulatorEventHandler> simHandler = new simVis::SimulatorEventHandler(simman, 0.0, 60.0);
+  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(simman, 0.0, 60.0);
   viewer->addEventHandler(simHandler);
 }
 #endif
@@ -289,11 +290,11 @@ int main(int argc, char **argv)
 
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Set up the data:
   AppData app;
@@ -331,7 +332,7 @@ int main(int argc, char **argv)
     targetIds.push_back(targetId);
   }
 
-  simulate(app.platformId, targetIds, app.dataStore, viewer);
+  simulate(app.platformId, targetIds, app.dataStore, viewer.get());
   app.dataStore.update(0);
 
   // the planetarium view:

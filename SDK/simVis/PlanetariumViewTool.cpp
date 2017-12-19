@@ -19,20 +19,21 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/Angle.h"
-#include "simNotify/Notify.h"
-#include "simVis/PlanetariumViewTool.h"
-#include "simVis/Scenario.h"
-#include "simVis/Utils.h"
-#include "simVis/Platform.h"
-#include "simVis/Beam.h"
-#include "simVis/Gate.h"
-
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/CullFace"
 #include "osg/LineWidth"
 #include "osgEarthAnnotation/AnnotationUtils"
+#include "simCore/Calc/Angle.h"
+#include "simCore/Time/TimeClass.h"
+#include "simNotify/Notify.h"
+#include "simVis/Beam.h"
+#include "simVis/Gate.h"
+#include "simVis/Locator.h"
+#include "simVis/Platform.h"
+#include "simVis/Scenario.h"
+#include "simVis/Utils.h"
+#include "simVis/PlanetariumViewTool.h"
 
 #define OVERRIDE_TAG "PlanetariumViewTool"
 
@@ -60,11 +61,10 @@ namespace
 namespace simVis
 {
 PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
-ScenarioTool(),
-host_(host),
-range_(1000.0),
-domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
-displayTargetVectors_(true)
+  host_(host),
+  range_(1000.0),
+  domeColor_(0.8f, 1.0f, 0.8f, 0.5f), // RGBA
+  displayTargetVectors_(true)
 {
   family_.reset();
 
@@ -73,9 +73,13 @@ displayTargetVectors_(true)
 
   // build the geometry for a target node
   targetGeode_ = new osg::Geode();
-  scaleTargetGeode_(targetGeode_, range_);
+  scaleTargetGeode_(targetGeode_.get(), range_);
 }
 
+osg::Node* PlanetariumViewTool::getNode() const
+{
+  return root_.get();
+}
 
 void PlanetariumViewTool::setRange(double range)
 {
@@ -90,7 +94,7 @@ void PlanetariumViewTool::setRange(double range)
     updateDome_();
 
     // rescale the one geode that is reused for all target delegates
-    scaleTargetGeode_(targetGeode_, range_);
+    scaleTargetGeode_(targetGeode_.get(), range_);
 
     // recreate our target delegates
     if (scenario_.valid() && targets_.valid())
@@ -109,7 +113,6 @@ void PlanetariumViewTool::setRange(double range)
   }
 }
 
-
 void PlanetariumViewTool::setColor(const osg::Vec4f& color)
 {
   if (color != domeColor_)
@@ -125,28 +128,22 @@ void PlanetariumViewTool::setBeamPrefs(const simData::BeamPrefs& prefs)
   applyOverrides_(true);
 }
 
-
 void PlanetariumViewTool::setGatePrefs(const simData::GatePrefs& prefs)
 {
   gatePrefs_ = prefs;
   applyOverrides_(true);
 }
 
-
 void PlanetariumViewTool::setDisplayTargetVectors(bool value)
 {
   displayTargetVectors_ = value;
 }
 
-
-void PlanetariumViewTool::onInstall(ScenarioManager* scenario)
+void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 {
   // create a node to track the position of the host:
   root_ = new LocatorNode(new Locator(host_->getLocator(), Locator::COMP_POSITION));
   root_->setName("Planetarium Tool Root Node");
-
-  // install it in the scenario:
-  scenario->addChild(root_.get());
 
   // build the dome
   updateDome_();
@@ -158,14 +155,14 @@ void PlanetariumViewTool::onInstall(ScenarioManager* scenario)
   root_->addChild(targets_.get());
 
   // sets horizon geofence to host position, which does not work correctly
-  osg::Vec3d ecef;
-  root_->getWorldPosition(ecef);
-  fence_->setLocation(ecef);
+  simCore::Vec3 ecef;
+  root_->getPosition(&ecef);
+  fence_->setLocation(osg::Vec3d(ecef.x(), ecef.y(), ecef.z()));
 
   // initial pull of active target platforms
   EntityVector entities;
-  scenario->getAllEntities(entities);
-  onUpdate(scenario, 0.0, entities);
+  scenario.getAllEntities(entities);
+  onUpdate(scenario, simCore::MIN_TIME_STAMP, entities);
 
   // collect the entity list from the scenario
   family_.reset();
@@ -175,11 +172,10 @@ void PlanetariumViewTool::onInstall(ScenarioManager* scenario)
   applyOverrides_(true);
 
   // cache the scenario pointer
-  scenario_ = scenario;
+  scenario_ = &scenario;
 }
 
-
-void PlanetariumViewTool::onUninstall(ScenarioManager* scenario)
+void PlanetariumViewTool::onUninstall(const ScenarioManager& scenario)
 {
   // disable all overrides
   applyOverrides_(false);
@@ -189,16 +185,14 @@ void PlanetariumViewTool::onUninstall(ScenarioManager* scenario)
     dome_->removeDrawables(0, dome_->getNumDrawables());
   if (targets_.valid())
     targets_->removeChildren(0, targets_->getNumChildren());
-  if (root_.valid())
-    scenario->removeChild(root_.get());
 
+  // scenario has already removed us from the scenegraph
   root_ = NULL;
   targets_ = NULL;
   dome_ = NULL;
 }
 
-
-void PlanetariumViewTool::onEntityAdd(ScenarioManager* scenario, EntityNode* entity)
+void PlanetariumViewTool::onEntityAdd(const ScenarioManager& scenario, EntityNode* entity)
 {
   if (family_.invite(entity))
   {
@@ -206,8 +200,7 @@ void PlanetariumViewTool::onEntityAdd(ScenarioManager* scenario, EntityNode* ent
   }
 }
 
-
-void PlanetariumViewTool::onEntityRemove(ScenarioManager* scenario, EntityNode* entity)
+void PlanetariumViewTool::onEntityRemove(const ScenarioManager& scenario, EntityNode* entity)
 {
   if (family_.dismiss(entity))
   {
@@ -219,10 +212,7 @@ void PlanetariumViewTool::onEntityRemove(ScenarioManager* scenario, EntityNode* 
   }
 }
 
-
-void PlanetariumViewTool::onUpdate(ScenarioManager*    scenario,
-                              double              timestamp,
-                              const EntityVector& updates)
+void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
 {
   // update the fence
   fence_->setLocation(osg::Vec3d(0, 0, 0) * root_->getMatrix());
@@ -239,7 +229,6 @@ void PlanetariumViewTool::onUpdate(ScenarioManager*    scenario,
       targets_->remove(platform);
   }
 }
-
 
 void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
                                           const osg::Vec3d&     ecef)
@@ -272,7 +261,6 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
     osg::Matrix::translate(local_n * range_));
 }
 
-
 void PlanetariumViewTool::updateDome_()
 {
   if (root_.valid())
@@ -297,7 +285,6 @@ void PlanetariumViewTool::updateDome_()
   }
 }
 
-
 void PlanetariumViewTool::applyOverrides_(bool enable)
 {
   for (EntityFamily::EntityObserverSet::iterator i = family_.members().begin();
@@ -308,7 +295,6 @@ void PlanetariumViewTool::applyOverrides_(bool enable)
       applyOverrides_(i->get(), enable);
   }
 }
-
 
 void PlanetariumViewTool::applyOverrides_(EntityNode* entity, bool enable)
 {

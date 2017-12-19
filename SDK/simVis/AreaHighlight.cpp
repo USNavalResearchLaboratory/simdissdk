@@ -22,6 +22,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osg/Depth"
+#include "simCore/Calc/Math.h"
 #include "simCore/String/Format.h"
 #include "simVis/Constants.h"
 #include "simVis/Types.h"
@@ -60,8 +61,8 @@ AreaHighlightNode::AreaHighlightNode()
 
 AreaHighlightNode::AreaHighlightNode(const AreaHighlightNode &rhs, const osg::CopyOp& copyOp)
   : Geode(rhs, copyOp),
-    color_(copyOp(color_)),
-    radius_(copyOp(radius_))
+    color_(copyOp(color_.get())),
+    radius_(copyOp(radius_.get()))
 {
   osg::StateSet* stateSet = getOrCreateStateSet();
   // Add Uniforms
@@ -121,10 +122,10 @@ void AreaHighlightNode::init_()
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
-  geom->setVertexArray(vertexArray);
+  geom->setVertexArray(vertexArray.get());
 
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // Declare color for the center of the circle and the triangles
@@ -159,10 +160,10 @@ void AreaHighlightNode::init_()
   triGeom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> triVertexArray = new osg::Vec3Array();
-  triGeom->setVertexArray(triVertexArray);
+  triGeom->setVertexArray(triVertexArray.get());
 
   osg::ref_ptr<osg::Vec4Array> triColorArray = new osg::Vec4Array();
-  triGeom->setColorArray(triColorArray);
+  triGeom->setColorArray(triColorArray.get());
   triGeom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // Separates the triangles from the circle an infinitesimal amount

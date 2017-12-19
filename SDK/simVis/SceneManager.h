@@ -22,20 +22,27 @@
 #ifndef SIMVIS_SCENE_MANAGER_H
 #define SIMVIS_SCENE_MANAGER_H
 
+#include "osg/ref_ptr"
+#include "osg/Group"
+#include "osgEarth/DrapeableNode"
+#include "osgEarth/MapNode"
+#include "osgEarthUtil/Sky"
+#include "osgEarthUtil/Ocean"
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
 #include "simVis/Scenario.h"
 #include "simVis/Types.h"
-#include "osg/Group"
-#include "osgEarth/DrapeableNode"
-#include "osgEarthUtil/Sky"
-#include "osgEarthUtil/Ocean"
 
-namespace osgEarth {  namespace Drivers { namespace MPTerrainEngine { class MPTerrainEngineOptions; } } }
-namespace osgEarth {  namespace Drivers { namespace RexTerrainEngine { class RexTerrainEngineOptions; } } }
+namespace osgEarth { namespace Drivers
+{
+  namespace MPTerrainEngine { class MPTerrainEngineOptions; }
+  namespace RexTerrainEngine { class RexTerrainEngineOptions; }
+}}
 
 namespace simVis
 {
+  class ProjectorManager;
+
   /**
    * @anchor SceneManagerLayout
    * The top-level content node for a scene. There is one scene per managed view.
@@ -191,6 +198,9 @@ namespace simVis
     virtual bool addChild(osg::Node *child);
 
   private:
+    /** Copy constructor, not implemented or available. */
+    SceneManager(const SceneManager&);
+
     /** Returns true if the sky node is SilverLining. */
     bool isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const;
 

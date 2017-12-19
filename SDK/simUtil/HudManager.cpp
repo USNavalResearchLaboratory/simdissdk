@@ -168,7 +168,7 @@ void HudTextAdapter::update_()
       osgText->setBackdropOffset(backdropOffset_);
       osgText->setBackdropColor(osg::Vec4(0.f, 0.f, 0.f, 1.f));
       osgText->setBackdropImplementation(osgText::Text::DELAYED_DEPTH_WRITES);
-      initializeText_(osgText);
+      initializeText_(osgText.get());
     }
     else
     {
@@ -203,7 +203,7 @@ void HudTextAdapter::update_()
     }
 
     osgText->setText(tokens[ii]);
-    positionText_(ii, osgText);
+    positionText_(ii, osgText.get());
 #if OSG_VERSION_GREATER_OR_EQUAL(3,3,2)
     extent_->add(osgText->getBoundingBox());
 #else
@@ -543,10 +543,11 @@ HudColumnText* HudManager::createColumnText(const std::string& text, double x, d
 }
 
 HudImage* HudManager::createImage(osg::Image* image, double x, double y, double w, double h,
-                                  bool percentageX, bool percentageY, bool percentageW, bool percentageH)
+                                  bool percentageX, bool percentageY, bool percentageW, bool percentageH,
+                                  Alignment hAlign, Alignment vAlign)
 {
   HudImage* hudImage = new HudImage(windowWidth_, windowHeight_);
-  hudImage->update(image, x, y, w, h, percentageX, percentageY, percentageW, percentageH);
+  hudImage->update(image, x, y, w, h, percentageX, percentageY, percentageW, percentageH, hAlign, vAlign);
   imageVector_.push_back(hudImage);
   group_->addChild(hudImage);
   return hudImage;
@@ -835,7 +836,37 @@ void HudImage::update_()
   geometry->setUseDisplayList(false);
   geometry->setDataVariance(osg::Object::DYNAMIC);
   osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(4);
-  geometry->setVertexArray(verts);
+  geometry->setVertexArray(verts.get());
+
+  // update x values based on alignment
+  switch (hAlign_)
+  {
+  case ALIGN_LEFT:
+    break;
+  case ALIGN_RIGHT:
+    initialX -= initialWidth;
+    break;
+  case ALIGN_CENTER_X:
+    initialX -= (initialWidth / 2);
+    break;
+  default:
+    break;
+  }
+
+  // update y values based on alignment
+  switch (vAlign_)
+  {
+  case ALIGN_BOTTOM:
+    break;
+  case ALIGN_TOP:
+    initialY -= initialHeight;
+    break;
+  case ALIGN_CENTER_Y:
+    initialY -= (initialHeight / 2);
+    break;
+  default:
+    break;
+  }
 
   // Assign the screen coordinates
   (*verts)[0].set(initialX, initialY, 0);
@@ -847,7 +878,7 @@ void HudImage::update_()
   // Set up the color
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(1);
   (*colorArray)[0] = color_;
-  geometry->setColorArray(colorArray);
+  geometry->setColorArray(colorArray.get());
   geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   // Map texture coordinates to the corners
@@ -856,7 +887,7 @@ void HudImage::update_()
   (*texCoords)[1].set(1, 0);
   (*texCoords)[2].set(0, 1);
   (*texCoords)[3].set(1, 1);
-  geometry->setTexCoordArray(0, texCoords);
+  geometry->setTexCoordArray(0, texCoords.get());
 
   // Set up the Texture2D
   osg::ref_ptr<osg::Texture2D> tex2d = new osg::Texture2D(image_);
@@ -874,7 +905,8 @@ void HudImage::update_()
 }
 
 void HudImage::update(osg::Image* image, double x, double y, double w, double h,
-                      bool percentageX, bool percentageY, bool percentageW, bool percentageH)
+                      bool percentageX, bool percentageY, bool percentageW, bool percentageH,
+                      Alignment hAlign, Alignment vAlign)
 {
   image_ = image;
   x_ = x;
@@ -885,6 +917,8 @@ void HudImage::update(osg::Image* image, double x, double y, double w, double h,
   percentageY_ = percentageY;
   percentageWidth_ = percentageW;
   percentageHeight_ = percentageH;
+  hAlign_ = hAlign;
+  vAlign_ = vAlign;
 
   update_();
 }
@@ -950,6 +984,13 @@ bool HudImage::isPercentageWidth() const
 bool HudImage::isPercentageHeight() const
 {
   return percentageHeight_;
+}
+
+void HudImage::setAlignment(Alignment hAlign, Alignment vAlign)
+{
+  hAlign_ = hAlign;
+  vAlign_ = vAlign;
+  update_();
 }
 
 void HudImage::setPosition(double x, double y, bool percentageX, bool percentageY)

@@ -22,12 +22,12 @@
 #ifndef SIMQT_CONSOLECHANNEL_H
 #define SIMQT_CONSOLECHANNEL_H
 
+#include <memory>
 #include <QString>
 #include <QMutex>
 #include "simNotify/NotifyHandler.h"
 #include "simNotify/NotifySeverity.h"
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 
 namespace simQt {
 
@@ -50,7 +50,7 @@ public:
   /** Returns the name of the channel */
   virtual const QString& name() const = 0;
 };
-typedef std::tr1::shared_ptr<ConsoleChannel> ConsoleChannelPtr;
+typedef std::shared_ptr<ConsoleChannel> ConsoleChannelPtr;
 
 
 /** simNotify::NotifyHandler that pushes data to a generic ConsoleChannel */

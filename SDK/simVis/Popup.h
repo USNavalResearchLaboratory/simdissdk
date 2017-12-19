@@ -28,6 +28,7 @@
 */
 #include "simCore/Common/Common.h"
 #include "simVis/Platform.h"
+#include "simVis/Types.h"
 
 #include "osg/Geometry"
 #include "osg/MatrixTransform"
@@ -199,7 +200,7 @@ namespace simVis
   private:
     osg::observer_ptr<ScenarioManager> scenario_;             ///< ref to the scenario for finding platforms
     osg::observer_ptr<Picker>          picker_;               ///< Picker class that finds platforms
-    osg::ref_ptr<PlatformNode>         currentPlatform_;      ///< keep track of current platform
+    osg::observer_ptr<PlatformNode>    currentPlatform_;      ///< keep track of current platform
     osg::ref_ptr<PlatformPopup>        popup_;                ///< the popup display
     osg::ref_ptr<PopupContentCallback> contentCallback_;      ///< callback for filling in platform's data in popup
     osg::observer_ptr<View>            view_;                 ///< view where popup should draw

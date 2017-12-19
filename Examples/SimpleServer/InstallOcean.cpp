@@ -34,6 +34,7 @@
 #endif
 #include "osgEarthDrivers/ocean_simple/SimpleOceanOptions"
 #include "simVis/BathymetryGenerator.h"
+#include "simVis/Constants.h"
 #include "simVis/SceneManager.h"
 #include "simUtil/ExampleResources.h"
 #include "InstallOcean.h"
@@ -130,7 +131,7 @@ void InstallOcean::install(simVis::SceneManager& scene)
   }
 
   if (oceanNode.valid())
-    scene.setOceanNode(oceanNode);
+    scene.setOceanNode(oceanNode.get());
 }
 
 }

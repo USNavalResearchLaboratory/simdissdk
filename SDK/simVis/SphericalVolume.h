@@ -165,6 +165,8 @@ private:
 
   /** Retrieves the 'solid' geometry */
   static osg::Geometry* solidGeometry_(osg::MatrixTransform* xform);
+  /** Retrieves the first non-empty geometry: the 'solid' geometry, or the outline geometry if the 'solid' geometry is empty */
+  static osg::Geometry* validGeometry_(osg::MatrixTransform* xform);
 };
 
 }

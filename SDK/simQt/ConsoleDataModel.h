@@ -22,13 +22,13 @@
 #ifndef SIMQT_CONSOLEDATAMODEL_H
 #define SIMQT_CONSOLEDATAMODEL_H
 
+#include <memory>
 #include <QSortFilterProxyModel>
 #include <QList>
 #include <QMap>
 #include <QMetaType>
 #include "simNotify/NotifySeverity.h"
 #include "simCore/Common/Export.h"
-#include "simCore/Common/Memory.h"
 
 class QTimer;
 
@@ -72,7 +72,7 @@ public:
     virtual bool acceptEntry(ConsoleEntry& entry) const = 0;
   };
   /** Typedef a smart pointer onto EntryFilter class. */
-  typedef std::tr1::shared_ptr<EntryFilter> EntryFilterPtr;
+  typedef std::shared_ptr<EntryFilter> EntryFilterPtr;
 
   /** Severity of the row, in conjunction with data() (regardless of column) */
   static const int SEVERITY_ROLE = Qt::UserRole + 1;
@@ -110,7 +110,7 @@ public:
   virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
 
   /** Define a shared pointer to a console channel */
-  typedef std::tr1::shared_ptr<ConsoleChannel> ConsoleChannelPtr;
+  typedef std::shared_ptr<ConsoleChannel> ConsoleChannelPtr;
   /** Registers a channel with the data model, returning a handle to add text */
   ConsoleChannelPtr registerChannel(const QString& name);
 
@@ -226,21 +226,35 @@ private:
   QTimer* pendingTimer_;
 };
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-/** @deprecated Use ConsoleDataModel::setMinimumSeverity instead. Performs filtering based on severity */
-class SDKQT_EXPORT SeverityFilterProxy : public QSortFilterProxyModel
+/** Console Data Model filter that rejects strings that contain the given text */
+class SDKQT_EXPORT SimpleConsoleTextFilter : public ConsoleDataModel::EntryFilter
 {
-  Q_OBJECT;
 public:
-  SeverityFilterProxy(QObject* parent);
-public slots:
-  void setMinimumSeverity(int severity);
-protected:
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
+  SimpleConsoleTextFilter();
+
+  /**
+   * Adds a filter to the list of strings to ignore.  If incoming text contains the filter
+   * provided, then it will not be added to the console.
+   */
+  void addFilter(const QString& filter);
+
+  /** Adds common Qt and PNG + Qt filters */
+  void addCommonQtPngFilters();
+  /** Adds osgEarth filters */
+  void addCommonOsgEarthFilters();
+
+  /** If true, then in debug mode acceptEntry() will still show the message, just with a DEBUG_INFO priority. */
+  void setShowInDebugMode(bool showInDebug);
+
+  /** Rejects messages with the substrings added in addFilter() */
+  virtual bool acceptEntry(ConsoleDataModel::ConsoleEntry& entry) const;
+
 private:
-  simNotify::NotifySeverity minSeverity_;
-};
+  std::vector<QString> filters_;
+#ifdef DEBUG
+  bool showInDebugMode_;
 #endif
+};
 
 }
 

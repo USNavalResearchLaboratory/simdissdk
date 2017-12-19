@@ -22,20 +22,17 @@
 #ifndef SIMVIS_MANAGED_VIEW_H
 #define SIMVIS_MANAGED_VIEW_H
 
-#include "simVis/Entity.h"
-#include "simVis/SceneManager.h"
-#include "simVis/Types.h"
-
 #include "osgViewer/View"
 #include "osg/Camera"
 #include "osgEarthUtil/Controls"
 #include "osgEarthUtil/EarthManipulator"
 #include "osgEarth/Viewpoint"
+#include "simVis/SceneManager.h"
 #include "simVis/ViewManager.h"
 
 namespace simVis
 {
-
+class EntityNode;
 class FocusManager;
 class ViewManager;
 class EarthManipulator;
@@ -727,6 +724,9 @@ private: // data
   bool useOverheadClamping_;
   /// Points to a callback that is used for enforcing the near clipping plane when in overhead+ortho
   osg::ref_ptr<osg::NodeCallback> overheadNearFarCallback_;
+
+  /// NodeVisitor that holds the overhead mode indicator for the EarthManipulator
+  osg::ref_ptr<osg::NodeVisitor> updateCameraNodeVisitor_;
 };
 
 class FocusManager;

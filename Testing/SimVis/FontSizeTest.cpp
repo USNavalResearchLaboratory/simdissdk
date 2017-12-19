@@ -21,6 +21,7 @@
  */
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
+#include "simCore/Calc/Math.h"
 #include "simVis/Utils.h"
 
 namespace

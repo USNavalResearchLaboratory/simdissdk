@@ -21,7 +21,7 @@
  */
 #include <algorithm>
 #include <cassert>
-
+#include "osg/Depth"
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/MapNode"
@@ -34,12 +34,15 @@
 
 #include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
-#include "simVis/View.h"
+#include "simVis/Entity.h"
+#include "simVis/Gate.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Utils.h"
+#include "simVis/View.h"
 
 namespace
 {
@@ -61,14 +64,14 @@ public:
     geom->setDataVariance(osg::Object::DYNAMIC);
 
     osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(10);
-    geom->setVertexArray(verts);
+    geom->setVertexArray(verts.get());
 
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
-    geom->setColorArray(colors);
+    geom->setColorArray(colors.get());
     geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 10));
-    this->addDrawable(geom);
+    this->addDrawable(geom.get());
 
     simVis::setLighting(geom->getOrCreateStateSet(),
         osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
@@ -125,12 +128,27 @@ public:
 /// Cull callback that sets the N/F planes on an orthographic camera.
 struct SetNearFarCallback : public osg::NodeCallback
 {
+
+  SetNearFarCallback()
+  {
+    // create a state set to turn off depth buffer when in overhead mode
+    depthState_ = new osg::StateSet();
+    depthState_->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
+      osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+  }
+
   virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
   {
-    traverse(node, nv);
     osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+
+    // apply depth attribute when in overhead mode
+    if (cv)
+      cv->pushStateSet(depthState_.get());
+
+    traverse(node, nv);
     if (cv)
     {
+      cv->popStateSet();
       osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
       double eyeR = eye.length();
       const double earthR = simCore::EARTH_RADIUS;
@@ -143,6 +161,8 @@ struct SetNearFarCallback : public osg::NodeCallback
       cv->getCurrentCamera()->setProjectionMatrixAsOrtho(L, R, B, T, N, F);
     }
   }
+private:
+  osg::ref_ptr<osg::StateSet> depthState_;
 };
 
 } // namespace
@@ -217,11 +237,11 @@ void FocusManager::setViewManager(simVis::ViewManager* viewman)
 
   if (viewman_.valid())
   {
-    viewman_->removeCallback(viewManagerCB_);
+    viewman_->removeCallback(viewManagerCB_.get());
     viewManagerCB_ = NULL;
 
     for (std::map< simVis::View*, osg::ref_ptr<InsetChange> >::const_iterator it = insets_.begin(); it != insets_.end(); ++it)
-      it->first->removeCallback(it->second);
+      it->first->removeCallback(it->second.get());
   }
 
   insets_.clear();
@@ -232,7 +252,7 @@ void FocusManager::setViewManager(simVis::ViewManager* viewman)
     return;
 
   viewManagerCB_ = new InsetAddDelete(*this);
-  viewman_->addCallback(viewManagerCB_);
+  viewman_->addCallback(viewManagerCB_.get());
 
   std::vector<simVis::View*> views;
   viewman_->getViews(views);
@@ -521,7 +541,8 @@ View::View()
    fovy_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
    useOverheadClamping_(true),
-   overheadNearFarCallback_(new SetNearFarCallback)
+   overheadNearFarCallback_(new SetNearFarCallback),
+   updateCameraNodeVisitor_(NULL)
 {
   // start out displaying all things.
   setDisplayMask(simVis::DISPLAY_MASK_ALL);
@@ -539,7 +560,7 @@ View::View()
   manip->getSettings()->setTerrainAvoidanceEnabled(false);
   manip->getSettings()->setArcViewpointTransitions(false);
   manip->getSettings()->setMinMaxPitch(-89, 60.0);
-  manip->setTetherCallback(tetherCallback_);
+  manip->setTetherCallback(tetherCallback_.get());
   setCameraManipulator(manip);
 
   setNavigationMode(NAVMODE_ROTATEPAN);
@@ -838,7 +859,7 @@ unsigned int View::getInsets(View::Insets& output) const
 
 FocusManager* View::getFocusManager() const
 {
-  return focusMan_;
+  return focusMan_.get();
 }
 
 unsigned int View::getNumInsets() const
@@ -848,23 +869,27 @@ unsigned int View::getNumInsets() const
 
 int View::getIndexOfInset(simVis::View* view) const
 {
-  InsetViews::const_iterator iter = std::find(insets_.begin(), insets_.end(), static_cast<osgViewer::View*>(view));
-  if (iter == insets_.end())
-    return -1;
-  return iter - insets_.begin();
+  for (InsetViews::const_iterator iter = insets_.begin(); iter != insets_.end(); ++iter)
+  {
+    if (iter->get() == view)
+    {
+      return iter - insets_.begin();
+    }
+  }
+  return -1;
 }
 
 simVis::View* View::getInset(unsigned int index) const
 {
-  return index < getNumInsets() ? insets_[index] : NULL;
+  return index < getNumInsets() ? insets_[index].get() : NULL;
 }
 
 simVis::View* View::getInsetByName(const std::string& name) const
 {
   for (InsetViews::const_iterator i = insets_.begin(); i != insets_.end(); ++i)
   {
-    if ((*i)->getName() == name)
-      return *i;
+    if (i->get()->getName() == name)
+      return i->get();
   }
   return NULL;
 }
@@ -1051,7 +1076,7 @@ void View::setSceneManager(simVis::SceneManager* node)
     Viewpoint vp = getViewpoint();
     newManip->applySettings(oldManip->getSettings());
     newManip->setTetherNode(oldTetherNode);
-    newManip->setTetherCallback(tetherCallback_);
+    newManip->setTetherCallback(tetherCallback_.get());
     newManip->setHeadingLocked(oldManip->isHeadingLocked());
     newManip->setPitchLocked(oldManip->isPitchLocked());
     this->setCameraManipulator(newManip);
@@ -1138,7 +1163,7 @@ void View::tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double dur
     {
       osg::ref_ptr<osg::Node> oldTether;
       vp.getNode(oldTether);
-      simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(oldTether);
+      simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(oldTether.get());
       newVp.focalPoint()->set(osgEarth::SpatialReference::create("wgs84"),
         osg::Vec3d(lla.lon() * simCore::RAD2DEG, lla.lat() * simCore::RAD2DEG, lla.alt()),
         osgEarth::ALTMODE_ABSOLUTE);
@@ -1286,7 +1311,7 @@ simVis::Viewpoint View::getViewpoint() const
       {
         osg::ref_ptr<osg::Node> tether;
         manipViewpoint.getNode(tether);
-        vp.setNode(tether);
+        vp.setNode(tether.get());
       }
       else
       {
@@ -1345,6 +1370,8 @@ void View::setNavigationMode(const NavMode& mode)
     manip->applySettings(new CenterViewNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_GIS)
     manip->applySettings(new GisNavigationMode(overheadEnabled_, watchEnabled_));
+  else if (mode == NAVMODE_BOXZOOM)
+    manip->applySettings(new BoxZoomNavigationMode(this, overheadEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);
@@ -1361,11 +1388,23 @@ void View::enableOverheadMode(bool enableOverhead)
   if (enableOverhead == overheadEnabled_)
     return;
 
-  // need to verify that the earth manipulator has the correct fov, 
+  // need to verify that the earth manipulator has the correct fov,
   // which may not be initialized properly if overhead mode is set too soon
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
     manip->setFovY(fovy_);
+
+  // if this is the first time enabling overhead mode, install the node camera-update
+  // node visitor in the earth manipulator to facilitate tethering. This NodeVisitor
+  // does not actually do anything except convey the "overhead mode enabled" flag
+  // to the LocatorNode::computeLocalToWorldMatrix() method.
+  if (updateCameraNodeVisitor_.valid() == false)
+  {
+    updateCameraNodeVisitor_ = new osg::NodeVisitor();
+#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
+    manip->setUpdateCameraNodeVisitor(updateCameraNodeVisitor_.get());
+#endif
+  }
 
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();
   if (enableOverhead)
@@ -1391,11 +1430,6 @@ void View::enableOverheadMode(bool enableOverhead)
       getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
       getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
       getCamera()->setCullCallback(overheadNearFarCallback_);
-      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
-      if (mapNode)
-        mapNode->getTerrainEngine()->getOrCreateStateSet()->
-          setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
-          osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 #endif
     }
 
@@ -1413,9 +1447,6 @@ void View::enableOverheadMode(bool enableOverhead)
       getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
       getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
       getCamera()->removeCullCallback(overheadNearFarCallback_);
-      osgEarth::MapNode* mapNode = osgEarth::MapNode::get(getCamera());
-      if (mapNode)
-        mapNode->getTerrainEngine()->getOrCreateStateSet()->removeAttribute(osg::StateAttribute::DEPTH);
     }
 #endif
 
@@ -1449,6 +1480,9 @@ void View::enableOverheadMode(bool enableOverhead)
     // For the main view
     getFocusManager()->reFocus();
   }
+
+  // Update the EarthManipulator's camera update node visitor with the new state.
+  simVis::OverheadMode::prepareVisitor(this, updateCameraNodeVisitor_.get());
 }
 
 bool View::isOverheadEnabled() const
@@ -1818,7 +1852,7 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
 
   // Apply the new viewport:
   osg::ref_ptr<osg::Viewport> newViewport = new osg::Viewport(nx, ny, nw, nh);
-  camera->setViewport(newViewport);
+  camera->setViewport(newViewport.get());
 
   // Apply the new projection matrix:
   const osg::Matrix& proj = camera->getProjectionMatrix();
@@ -1857,14 +1891,19 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
   EntityNode* entityNode = dynamic_cast<EntityNode*>(node);
   if (entityNode)
   {
-    PlatformModelNode* model = entityNode->findAttachment<PlatformModelNode>();
-    if (model)
-      node = model;
+    // Entity nodes typically have proxies (children) that we center on.
+    osg::Node* proxyNode = entityNode->findAttachment<PlatformModelNode>();
+    // Fall back to Gate centroids
+    if (!proxyNode)
+      proxyNode = entityNode->findAttachment<GateCentroid>();
+
+    if (proxyNode)
+      node = proxyNode;
   }
   else if (node)
   {
-    // Should only be passing in entity nodes or Platform Model nodes
-    assert(dynamic_cast<PlatformModelNode*>(node) != 0);
+    // Should only be passing in entity nodes or Platform Model nodes or Gate centroids
+    assert(dynamic_cast<PlatformModelNode*>(node) || dynamic_cast<GateCentroid*>(node));
   }
   return node;
 }
@@ -1876,12 +1915,11 @@ simVis::EntityNode* View::getEntityNode(osg::Node* node) const
   if (watcherNode)
     return watcherNode;
 
-  // Maybe it's really a PlatformModelNode, which is the child of an EntityNode
-  simVis::PlatformModelNode* modelNode = dynamic_cast<simVis::PlatformModelNode*>(node);
-  if (modelNode)
+  // Maybe it's really a Platform Model or Centroid node, which is the child of an EntityNode
+  if (node)
   {
-    simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(modelNode->getParent(0));
-    // An EntityNode must be the direct parent of the PlatformModelNode
+    simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(node->getParent(0));
+    // If assert triggers, there's some weird unexpected hierarchy; investigate and resolve weirdness
     assert(entityNode != NULL);
     return entityNode;
   }

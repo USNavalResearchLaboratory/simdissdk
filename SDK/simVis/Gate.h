@@ -22,38 +22,86 @@
 #ifndef SIMVIS_GATE_H
 #define SIMVIS_GATE_H
 
-#include "osg/Geometry"
-#include "osg/Depth"
-
+#include "osg/observer_ptr"
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simVis/EntityLabel.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/LabelContentManager.h"
+#include "simVis/LocatorNode.h"
 
+namespace osg { class Depth; }
 namespace simVis
 {
-  /// Scene graph node representing a Gate centroid
-  class SDKVIS_EXPORT GateCentroid : public osg::MatrixTransform
+  class EntityLabelNode;
+  class LabelContentCallback;
+  class LocalGridNode;
+  class Locator;
+
+  /// Scene graph node representing the Gate volume
+  class SDKVIS_EXPORT GateVolume : public simVis::LocatorNode
   {
   public:
     /** Constructor */
-    GateCentroid(const simData::GateUpdate& update);
+    GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs, const simData::GateUpdate* update);
 
-    /** perform in in-place update to an existing centroid */
-    void update(const simData::GateUpdate& update);
+    /** Perform an in-place update to an existing volume */
+    void performInPlaceUpdates(const simData::GateUpdate* a,
+                                const simData::GateUpdate* b);
+
+    /** Perform an in-place update to an existing volume */
+    void performInPlacePrefChanges(const simData::GatePrefs* a,
+                                    const simData::GatePrefs* b);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
+    /** Return the class name */
+    virtual const char* className() const { return "GateVolume"; }
 
+  protected:
+    /** Protected destructor due to deriving from osg::Referenced. */
+    virtual ~GateVolume();
+
+  private:
+    // Not implemented
+    GateVolume(const GateVolume&);
+
+    osg::MatrixTransform* createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update);
+
+    osg::ref_ptr<osg::MatrixTransform> gateSV_;
+  };
+
+  /// Scene graph node representing a Gate centroid
+  class SDKVIS_EXPORT GateCentroid : public simVis::LocatorNode
+  {
+  public:
+    /** Constructor */
+    explicit GateCentroid(simVis::Locator* locator);
+
+    /** Perform an in-place update to an existing centroid */
+    void update(const simData::GateUpdate& update);
+    /** Clears the geometry from the centroid; use this instead of setting node mask, to avoid center-on-entity issues. */
+    void setVisible(bool visible);
+    /** Deactivate the centroid when the gate is not active, activate whenever the gate is active */
+    void setActive(bool active);
+
+    /** Return the proper library name */
+    virtual const char* libraryName() const { return "simVis"; }
     /** Return the class name */
     virtual const char* className() const { return "GateCentroid"; }
 
-  private:
-    // calculate centroid verts from update
-    void updateCentroid_(osg::Vec3Array* verts, const simData::GateUpdate& update);
-  };
+  protected:
+    /** Protected destructor due to deriving from osg::Referenced. */
+    virtual ~GateCentroid();
 
+  private:
+    // Not implemented
+    GateCentroid(const GateCentroid&);
+
+    /// calculate centroid verts from update
+    void updateCentroid_(osg::Vec3Array* verts, const simData::GateUpdate& update);
+
+    /// Holds the vertices for geometry
+    osg::ref_ptr<osg::Geometry> geom_;
+  };
 
   /// Scene graph node representing a Gate
   class SDKVIS_EXPORT GateNode : public EntityNode
@@ -66,7 +114,7 @@ namespace simVis
     * @param host This gate's host platform
     * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    GateNode(
+    explicit GateNode(
       const simData::GateProperties& props,
       Locator*                       locator = NULL,
       const simVis::EntityNode*      host = NULL,
@@ -129,7 +177,6 @@ namespace simVis
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
-
     /** Return the class name */
     virtual const char* className() const { return "GateNode"; }
 
@@ -190,6 +237,29 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** Retrieve the object index tag for gates. */
+    virtual unsigned int objectIndexTag() const;
+
+    /**
+    * Gets the world position for this gate's centroid. This is a convenience
+    * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+    /**
+    * Gets the world position & orientation for this gate's centroid. This is a convenience
+    * function that extracts the Position information and rotation from the underlying locatorNode matrix.
+    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+    * @return 0 if the output parameter is populated successfully, nonzero on failure
+    */
+    virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+      simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
     /**
     * Get the traversal mask for this node type.
     * @return a traversal mask
@@ -203,10 +273,13 @@ namespace simVis
     const simData::GateUpdate* getLastUpdateFromDS() const;
 
   protected:
-    /// osg::Referenced-derived
-    virtual ~GateNode() {}
+    /// osg::Referenced-derived; destructor body needs to be in the .cpp
+    virtual ~GateNode();
 
   private:
+    // Not implemented
+    GateNode(const GateNode&);
+
     /// determine if new update/new prefs can be handled with in-place-update (without complete rebuild)
     bool changeRequiresRebuild_(
       const simData::GateUpdate* newUpdate,
@@ -223,7 +296,6 @@ namespace simVis
       const simData::GatePrefs*  prefs,
       bool                       force);
 
-
     /// apply the specified prefs, adding any overrides
     void applyPrefs_(
       const simData::GatePrefs& prefs,
@@ -235,7 +307,7 @@ namespace simVis
     * @param update gate update to populate with calculated RAE
     * @param force tell the apply code to regenerate the visual
     */
-    void applyDataStoreUpdate_(const simData::GateUpdate& update, bool force=false);
+    void applyDataStoreUpdate_(const simData::GateUpdate& update, bool force = false);
 
     /**
     * Apply overrides (if any) to the internally cached DS update, then apply result to gate
@@ -250,18 +322,6 @@ namespace simVis
     * @return 0 if successful, non-zero if calculation could not be completed
     */
     int calculateTargetGate_(const simData::GateUpdate& update, simData::GateUpdate& targetGateUpdate);
-
-    /// update the gate visual for prefs changes that don't require rebuild of gate
-    void performInPlacePrefChanges_(
-      const simData::GatePrefs* a,
-      const simData::GatePrefs* b,
-      osg::MatrixTransform*     node);
-
-    /// update the gate visual for update changes that don't require rebuild of gate
-    void performInPlaceUpdates_(
-      const simData::GateUpdate* a,
-      const simData::GateUpdate* b,
-      osg::MatrixTransform*      node);
 
   private:
     simData::GateProperties lastProps_;
@@ -279,18 +339,16 @@ namespace simVis
      * Locator that represents the "origin" of the gate, typically a position on the host platform, stripped of orientation
      * this supports the drawing of the gate volume, with special processing for the Coverage draw type
      */
-    osg::ref_ptr<LocatorNode>  gateLocatorNode_;
+    osg::ref_ptr<Locator>  gateVolumeLocator_;
 
     /**
-     * Locator node that represents the centroid of the gate
-     * this supports the drawing of the centroid
+     * Locator that represents the centroid of the gate
+     * this supports drawing the centroid and the localgrid
      */
-    osg::ref_ptr<LocatorNode>  centroidLocatorNode_;
-
-    bool                    visible_;
+    osg::ref_ptr<Locator>  centroidLocator_;
 
     /// container for the gate volume geometry
-    osg::ref_ptr<osg::MatrixTransform>   gateMatrixTransform_;
+    osg::ref_ptr<GateVolume>   gateVolume_;
 
     /// container for the centroid geometry
     osg::ref_ptr<GateCentroid>   centroid_;
@@ -311,15 +369,15 @@ namespace simVis
      */
     osg::ref_ptr<Locator>   centroidPositionOffsetLocator_;
 
-    typedef std::map<std::string, simData::GatePrefs> PrefsOverrides;
-    PrefsOverrides prefsOverrides_;
+    std::map<std::string, simData::GatePrefs> prefsOverrides_;
 
-    typedef std::map<std::string, simData::GateUpdate> UpdateOverrides;
-    UpdateOverrides updateOverrides_;
+    std::map<std::string, simData::GateUpdate> updateOverrides_;
 
     void updateLabel_(const simData::GatePrefs& prefs);
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
+
+    unsigned int objectIndexTag_;
   };
 
 } // namespace simVis

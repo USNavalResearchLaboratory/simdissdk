@@ -45,6 +45,27 @@ void DefaultEntityPrefs::initializeDefaultPlatformPrefs(simData::PlatformPrefs& 
   hoverFields->set_zalt(true);
   hoverFields->set_yaw(true);
   hoverFields->set_speed(true);
+
+  // Default hook window content
+  simData::LabelPrefs_DisplayFields* hookFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hookdisplayfields();
+  hookFields->set_xlat(true);
+  hookFields->set_ylon(true);
+  hookFields->set_zalt(true);
+  hookFields->set_genericdata(true);
+  hookFields->set_categorydata(true);
+  hookFields->set_yaw(true);
+  hookFields->set_pitch(true);
+  hookFields->set_roll(true);
+  hookFields->set_displayvx(true);
+  hookFields->set_displayvy(true);
+  hookFields->set_displayvz(true);
+  hookFields->set_speed(true);
+}
+
+void DefaultEntityPrefs::initializeDefaultLaserPrefs(simData::LaserPrefs& prefs)
+{
+  // Lasers default to red, not yellow (colors are 0xRRGGBBAA in protobuf)
+  prefs.mutable_commonprefs()->set_color(0xff0000ff);
 }
 
 }

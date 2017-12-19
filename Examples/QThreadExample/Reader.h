@@ -25,7 +25,9 @@
 
 #include <QObject>
 
-#include "simData/DataStore.h"
+#include "simData/ObjectId.h"
+
+namespace simData { class DataStore; }
 
 namespace SdkQThreadExample
 {

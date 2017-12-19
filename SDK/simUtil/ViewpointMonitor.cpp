@@ -22,6 +22,7 @@
 #include <cassert>
 #include <algorithm>
 #include "simCore/Calc/Angle.h"
+#include "simVis/Entity.h"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simVis/EarthManipulator.h"
@@ -280,7 +281,7 @@ ViewpointMonitor::ViewpointMonitor(simVis::View* mainView)
   if (viewManager != NULL)
   {
     // Add an observer so we know when views are added or removed
-    viewManager->addCallback(viewManagerObserver_);
+    viewManager->addCallback(viewManagerObserver_.get());
 
     // Loop through all views
     std::vector<simVis::View*> views;
@@ -305,8 +306,8 @@ ViewpointMonitor::~ViewpointMonitor()
   if (mainView_.valid())
   {
     if (mainView_->getViewManager())
-      mainView_->getViewManager()->removeCallback(viewManagerObserver_);
-    mainView_->removeEventHandler(redrawHandler_);
+      mainView_->getViewManager()->removeCallback(viewManagerObserver_.get());
+    mainView_->removeEventHandler(redrawHandler_.get());
   }
 
   // Delete all the eye states

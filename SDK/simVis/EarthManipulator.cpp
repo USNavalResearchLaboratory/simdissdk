@@ -19,8 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/View.h"
+#include "simVis/Entity.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/View.h"
 #include "simVis/EarthManipulator.h"
 
 namespace simVis

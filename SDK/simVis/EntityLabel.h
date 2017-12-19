@@ -23,35 +23,37 @@
 #define SIMVIS_ENTITY_LABEL_H
 
 #include <string>
-
-#include "osg/Group"
-#include "osg/Depth"
 #include "osg/ref_ptr"
-#include "osgEarthAnnotation/LabelNode"
-
 #include "simData/DataTypes.h"
+#include "simVis/LocatorNode.h"
 
+namespace osgEarth { namespace Annotation { class LabelNode; } }
 namespace simVis
 {
-
 /// Class for managing the labels
-class SDKVIS_EXPORT EntityLabelNode : public osg::Referenced
+class SDKVIS_EXPORT EntityLabelNode : public LocatorNode
 {
 public:
-  /// Constructor
-  explicit EntityLabelNode(osg::Group* root);
+  /// Constructors
+  EntityLabelNode();
+  explicit EntityLabelNode(simVis::Locator* locator);
 
   /// Update the label with the given preferences and text
   void update(const simData::CommonPrefs& commonPrefs, const std::string& text, float zOffset=0.f);
 
-  /// @see osg::Node::addCullCallback()
-  void addCullCallback(osg::Callback* callback);
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simVis"; }
+
+  /** Return the class name */
+  virtual const char* className() const { return "EntityLabelNode"; }
 
 protected:
   virtual ~EntityLabelNode();
 
 private:
-  osg::ref_ptr<osg::Group> root_;
+  /** Copy constructor, not implemented or available. */
+  EntityLabelNode(const EntityLabelNode&);
+
   osg::ref_ptr<osgEarth::Annotation::LabelNode> label_;  ///< The actual label
   simData::CommonPrefs lastCommonPrefs_;  ///< The last preferences to check for changes
   bool hasLastPrefs_; ///< Whether lastCommonPrefs_ has been set by prefs we received

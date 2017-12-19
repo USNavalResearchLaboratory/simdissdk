@@ -121,7 +121,7 @@ namespace
     void runPointToPointLOS(const osgEarth::GeoPoint& p)
     {
       simCore::Coordinate coord;
-      if (simVis::convertGeoPointToCoord(p, coord, mapNode))
+      if (simVis::convertGeoPointToCoord(p, coord, mapNode.get()))
       {
         const simVis::RadialLOS& data = los->getDataModel();
         bool visible;
@@ -177,39 +177,39 @@ namespace
 
     row++;
     g->setControl(col, row, new LabelControl("Altitude MSL"));
-    app->altitude = g->setControl(col+1, row, new HSliderControl(0.0, 1000.0, INIT_ALT, applyUI));
-    g->setControl(col+2, row, new LabelControl(app->altitude));
+    app->altitude = g->setControl(col+1, row, new HSliderControl(0.0, 1000.0, INIT_ALT, applyUI.get()));
+    g->setControl(col+2, row, new LabelControl(app->altitude.get()));
     g->setControl(col+3, row, new LabelControl("m"));
     app->altitude->setHorizFill(true, 250.0);
 
     row++;
     g->setControl(col, row, new LabelControl("Central azimuth"));
-    app->azim_center = g->setControl(col+1, row, new HSliderControl(-180.0, 180.0, INIT_AZIM, applyUI));
-    g->setControl(col+2, row, new LabelControl(app->azim_center));
+    app->azim_center = g->setControl(col+1, row, new HSliderControl(-180.0, 180.0, INIT_AZIM, applyUI.get()));
+    g->setControl(col+2, row, new LabelControl(app->azim_center.get()));
     g->setControl(col+3, row, new LabelControl("deg"));
 
     row++;
     g->setControl(col, row, new LabelControl("Field of view"));
-    app->fov = g->setControl(col+1, row, new HSliderControl(10.0, 360.0, INIT_FOV, applyUI));
-    g->setControl(col+2, row, new LabelControl(app->fov));
+    app->fov = g->setControl(col+1, row, new HSliderControl(10.0, 360.0, INIT_FOV, applyUI.get()));
+    g->setControl(col+2, row, new LabelControl(app->fov.get()));
     g->setControl(col+3, row, new LabelControl("deg"));
 
     row++;
     g->setControl(col, row, new LabelControl("Azimuth resolution"));
-    app->azim_res = g->setControl(col+1, row, new HSliderControl(1.0, 40.0, INIT_AZIM_RES, applyUI));
-    g->setControl(col+2, row, new LabelControl(app->azim_res));
+    app->azim_res = g->setControl(col+1, row, new HSliderControl(1.0, 40.0, INIT_AZIM_RES, applyUI.get()));
+    g->setControl(col+2, row, new LabelControl(app->azim_res.get()));
     g->setControl(col+3, row, new LabelControl("deg"));
 
     row++;
     g->setControl(col, row, new LabelControl("Max range"));
-    app->range_max = g->setControl(col+1, row, new HSliderControl(1.0, 50.0, INIT_RANGE_MAX, applyUI));
-    g->setControl(col+2, row, new LabelControl(app->range_max));
+    app->range_max = g->setControl(col+1, row, new HSliderControl(1.0, 50.0, INIT_RANGE_MAX, applyUI.get()));
+    g->setControl(col+2, row, new LabelControl(app->range_max.get()));
     g->setControl(col+3, row, new LabelControl("km"));
 
     row++;
     g->setControl(col, row, new LabelControl("Range resolution"));
-    app->range_res = g->setControl(col+1, row, new HSliderControl(0.5, 5.0, INIT_RANGE_RES, applyUI));
-    g->setControl(col+2, row, new LabelControl(app->range_res));
+    app->range_res = g->setControl(col+1, row, new HSliderControl(0.5, 5.0, INIT_RANGE_RES, applyUI.get()));
+    g->setControl(col+2, row, new LabelControl(app->range_res.get()));
     g->setControl(col+3, row, new LabelControl("km"));
 
     vbox->addControl(new LabelControl("Drag the crosshairs to test point-to-point LOS."));
@@ -265,13 +265,13 @@ namespace
     alt->technique() = osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_DRAPE;
 
     osg::ref_ptr<osgEarth::Annotation::LocalGeometryNode> node =
-        new osgEarth::Annotation::LocalGeometryNode(mapNode, m, style);
+        new osgEarth::Annotation::LocalGeometryNode(mapNode, m.get(), style);
 
     node->setPosition(GeoPoint(mapNode->getMapSRS(), RLOS_LON, RLOS_LAT));
 
     // create a dragger to move the crosshairs around:
     // Note that editor is returned to caller, and owned by caller
-    osgEarth::Annotation::GeoPositionNodeEditor* editor = new osgEarth::Annotation::GeoPositionNodeEditor(node);
+    osgEarth::Annotation::GeoPositionNodeEditor* editor = new osgEarth::Annotation::GeoPositionNodeEditor(node.get());
     editor->getPositionDragger()->setColor(osg::Vec4f(1, 1, 1, 1));
     editor->getPositionDragger()->setPickColor(osg::Vec4f(0, 1, 1, 1));
     editor->addChild(node);
@@ -283,8 +283,8 @@ namespace
     p2pLine->push_back(osg::Vec3d(RLOS_LON, RLOS_LAT, RLOS_ALT));
     p2pLine->push_back(osg::Vec3d(RLOS_LON, RLOS_LAT, RLOS_ALT));
     style.getOrCreate<osgEarth::AltitudeSymbol>()->technique() == osgEarth::AltitudeSymbol::TECHNIQUE_DRAPE;
-    osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(p2pLine, mapNode->getMapSRS(), style);
-    app->p2pFeature = new osgEarth::Annotation::FeatureNode(mapNode, feature);
+    osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(p2pLine.get(), mapNode->getMapSRS(), style);
+    app->p2pFeature = new osgEarth::Annotation::FeatureNode(mapNode, feature.get());
     app->p2pFeature->setNodeMask(0);
 
     editor->addChild(app->p2pFeature);
@@ -303,11 +303,11 @@ int main(int argc, char **argv)
   osg::ref_ptr<osgEarth::Map> map = simExamples::createRemoteWorldMap();
 
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(map);
+  viewer->setMap(map.get());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   // Application data:
   AppData app;
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
   // Initialize the LOS:
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
   app.mapNode = scene->getMapNode();
-  app.los = new simVis::RadialLOSNode(app.mapNode);
+  app.los = new simVis::RadialLOSNode(app.mapNode.get());
   app.los->setCoordinate(simCore::Coordinate(
     simCore::COORD_SYS_LLA,
     simCore::Vec3(simCore::DEG2RAD * RLOS_LAT, simCore::DEG2RAD * RLOS_LON, RLOS_ALT)));

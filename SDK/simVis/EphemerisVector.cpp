@@ -129,7 +129,7 @@ osg::Geode* EphemerisVector::createGeode_(osg::observer_ptr<osg::Vec3Array>& ver
 
   // Use a single color for the line
   osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray);
+  geom->setColorArray(colorArray.get());
   geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   colorArray->push_back(color);
 

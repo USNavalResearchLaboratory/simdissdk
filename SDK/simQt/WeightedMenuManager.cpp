@@ -64,12 +64,21 @@ namespace simQt {
 static const char* WEIGHTS_PROPERTY = "weights";
 
 WeightedMenuManager::WeightedMenuManager(bool debugMenuWeights)
-  : debugMenuWeights_(debugMenuWeights)
+  : debugMenuWeights_(debugMenuWeights),
+    menuBar_(NULL),
+    toolBar_(NULL),
+    statusBar_(NULL)
 {
 }
 
 WeightedMenuManager::~WeightedMenuManager()
 {
+}
+
+QWidget* WeightedMenuManager::topLevelMenu()
+{
+  // Note that this may be overridden by some classes
+  return menuBar_;
 }
 
 QMenu* WeightedMenuManager::getOrCreateMenu(QMenu* underMenu, int weight, const QString& menuName)
@@ -120,7 +129,7 @@ QMenu* WeightedMenuManager::findMenu_(QWidget* parent, const QString& title) con
     }
 
     // Return the menu if it matches
-    if (menuTitle == title)
+    if (withoutMnemonic_(menuTitle) == title)
       return topMenu;
   }
   return NULL;
@@ -131,7 +140,7 @@ QMenu* WeightedMenuManager::findOrCreateMenu_(QWidget* parent, int weight, const
 {
   // Ensure the hierarchical notation from previous SIMDIS 10 iterations is not used here
   assert(!title.contains('\\'));
-  QMenu* found = findMenu_(parent, title);
+  QMenu* found = findMenu_(parent, withoutMnemonic_(title));
   if (found)
     return found;
 
@@ -142,6 +151,9 @@ QMenu* WeightedMenuManager::findOrCreateMenu_(QWidget* parent, int weight, const
 
   // Put in a reasonable object name for debugging and introspection purposes
   rv->setObjectName(QString("Menu_%1_w%2_0x%3").arg(title).arg(weight).arg(reinterpret_cast<qulonglong>(rv), 0, 16));
+
+  // Show tooltips on menu items
+  rv->setToolTipsVisible(true);
 
   // Insert the menu into the right place
   insertBefore_(parent, weight, rv);
@@ -289,23 +301,153 @@ void WeightedMenuManager::setMenuWeights_(QWidget* menuOrToolbar, QList<int> wei
   menuOrToolbar->setProperty(WEIGHTS_PROPERTY, QVariant::fromValue(weights));
 }
 
+void WeightedMenuManager::setMenuBar(QWidget* menuBar)
+{
+  menuBar_ = menuBar;
+}
+
+void WeightedMenuManager::setToolBar(QWidget* toolBar)
+{
+  toolBar_ = toolBar;
+}
+
+void WeightedMenuManager::setStatusBar(QWidget* statusBar)
+{
+  statusBar_ = statusBar;
+}
+
+void WeightedMenuManager::insertToolBarAction(int weight, const simQt::Action* action)
+{
+  insertToolBarAction(weight, action->action());
+}
+
+void WeightedMenuManager::insertToolBarAction(int weight, QAction* action)
+{
+  if (toolBar_ == NULL)
+    return;
+  WeightedMenuManager::insertBefore_(toolBar_, weight, action);
+}
+
+void WeightedMenuManager::insertToolBarSeparator(int weight)
+{
+  if (toolBar_ == NULL)
+    return;
+  QAction* separator = NULL;
+  WeightedMenuManager::insertBefore_(toolBar_, weight, separator);
+}
+
+void WeightedMenuManager::insertWidgetBefore_(QWidget* parentWidget, int weight, QWidget* newWidget)
+{
+  if (parentWidget == NULL || newWidget == NULL)
+    return;
+  // Pull out the layout, because that's really what we're working with
+  QBoxLayout* layout = qobject_cast<QBoxLayout*>(parentWidget->layout());
+  if (layout == NULL)
+    return;
+
+  // Figure out the insert-before based on the weights
+  QList<int> weights = widgetWeights_(parentWidget);
+  const QList<int>::iterator insertBefore = qUpperBound(weights.begin(), weights.end(), weight);
+  const int indexOfInsertion = std::distance(weights.begin(), insertBefore);
+
+  // Insert the widget before other widgets
+  layout->insertWidget(indexOfInsertion, newWidget);
+
+  // Add the new weight to the previous text
+  if (debugMenuWeights_)
+    newWidget->setToolTip(QString("%1 %2").arg(weight).arg(newWidget->toolTip()));
+
+  // Update the weights
+  weights.insert(insertBefore, weight);
+  setWidgetWeights_(parentWidget, weights);
+}
+
+void WeightedMenuManager::insertStatusBarWidget(int weight, QWidget* widget)
+{
+  if (statusBar_ == NULL)
+    return;
+  insertWidgetBefore_(statusBar_, weight, widget);
+}
+
+void WeightedMenuManager::insertStatusBarAction(int weight, const simQt::Action* action)
+{
+  if (statusBar_ == NULL)
+    return;
+  // Set up a new QToolButton
+  QToolButton* newButton = new QToolButton(statusBar_);
+  newButton->setAutoRaise(true);
+  newButton->setDefaultAction(action->action());
+  insertStatusBarWidget(weight, newButton);
+  // Note that the setDefaultAction trumps the setToolTip() in insertWidgetBefore_(), so
+  // we have to set it again here if we want to debug the weights.
+  if (debugMenuWeights_)
+    action->action()->setToolTip(QString("%1 %2").arg(weight).arg(action->action()->toolTip()));
+}
+
+QList<int> WeightedMenuManager::widgetWeights_(QWidget* widget) const
+{
+  if (widget == NULL)
+    return QList<int>();
+  const QBoxLayout* layout = qobject_cast<QBoxLayout*>(widget->layout());
+  if (layout == NULL)
+    return QList<int>();
+
+  // We store the weights are stored in a named property in the QWidget
+  QList<int> rv = widget->property(WEIGHTS_PROPERTY).value<QList<int> >();
+
+  // Make sure the number of weights match the number of children, else we have a problem!
+  const int numChildren = layout->count();
+  // Special case: widget with uninitialized weights
+  if (numChildren != 0 && rv.size() == 0)
+  {
+    // Default entries are spaced by 100 (e.g. 100, 200, 300)
+    for (int k = 0; k < numChildren; ++k)
+    {
+      rv.push_back((k + 1) * 100);
+
+      // If debugging weights, prepend the weight value
+      if (debugMenuWeights_)
+      {
+        QWidget* childWidget = layout->itemAt(k)->widget();
+        if (childWidget)
+          childWidget->setToolTip(QString("%1 %2").arg((k + 1) * 100).arg(childWidget->toolTip()));
+      }
+    }
+
+    setWidgetWeights_(widget, rv);
+    assert(rv == widgetWeights_(widget));
+  }
+
+  // At this point, the number of children really needs to be matching the widget weights,
+  // and if they don't that means we got a child added without a weight, which means the
+  // weights are totally out of whack.  This shouldn't happen.
+  assert(numChildren == rv.size());
+
+  return rv;
+}
+
+void WeightedMenuManager::setWidgetWeights_(QWidget* widget, QList<int> weights) const
+{
+  widget->setProperty(WEIGHTS_PROPERTY, QVariant::fromValue(weights));
+}
+
+QString WeightedMenuManager::withoutMnemonic_(const QString& text) const
+{
+  if (!text.contains("&"))
+    return text;
+  // This method does not correctly handle double ampersand
+  assert(!text.contains("&&"));
+  QString updated = text;
+  return updated.replace("&", "");
+}
+
 
 //----------------------------------------------------------------------------------------------------
 
 PopupMenuManager::PopupMenuManager(QMenu& menu, bool debugMenuWeights)
-  : WeightedMenuManager(debugMenuWeights),
-    menu_(menu)
+  : WeightedMenuManager(debugMenuWeights)
 {
-}
-
-PopupMenuManager::~PopupMenuManager()
-{
-}
-
-QWidget* PopupMenuManager::topLevelMenu()
-{
-  return &menu_;
+  setMenuBar(&menu);
 }
 
 }
-

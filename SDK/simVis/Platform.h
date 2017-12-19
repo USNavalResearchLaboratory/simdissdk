@@ -22,28 +22,27 @@
 #ifndef SIMVIS_PLATFORM_NODE_H
 #define SIMVIS_PLATFORM_NODE_H
 
+#include "osg/ref_ptr"
+#include "simCore/Calc/CoordinateSystem.h"
+#include "simCore/EM/RadarCrossSection.h"
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
-#include "simCore/EM/RadarCrossSection.h"
 
-// osg::ref_ptr does not play nicely with forward declarations in the SDK DLL build, so these includes are unavoidable
-#include "simVis/AxisVector.h"
-#include "simVis/EphemerisVector.h"
-#include "simVis/PlatformModel.h"
-#include "simVis/LocalGrid.h"
-#include "simVis/AreaHighlight.h"
-#include "simVis/TrackHistory.h"
-#include "simVis/LabelContentManager.h"
-#include "simVis/PlatformInertialTransform.h"
-#include "simVis/VelocityVector.h"
-#include "simVis/RadialLOSNode.h"
-
-#include <osg/ref_ptr>
-
+namespace simData { class DataStore; }
 namespace simVis
 {
-
+  class AreaHighlightNode;
+  class AxisVector;
+  class EphemerisVector;
+  class LabelContentCallback;
+  class LocalGridNode;
+  class PlatformInertialTransform;
+  class PlatformModelNode;
   class PlatformTspiFilterManager;
+  class RadialLOSNode;
+  class TrackHistoryNode;
+  class VelocityVector;
 
   /**
   * Interface for an object that will create LOS nodes as they're needed.
@@ -196,6 +195,9 @@ namespace simVis
     */
     virtual double range() const;
 
+    /** Retrieve the object index tag for platforms. */
+    virtual unsigned int objectIndexTag() const;
+
     /**
     * Gets the traversal mask for this node type
     */
@@ -238,6 +240,9 @@ namespace simVis
     virtual ~PlatformNode();
 
   private:
+    /** Copy constructor, not implemented or available. */
+    PlatformNode(const PlatformNode&);
+
     /**
     * Indicates if the platform is currently active in the scenario, which is determined by if it has current data and if dataDrarw is set to on
     * @param prefs current pref values to determine the dataDraw state
@@ -311,6 +316,8 @@ namespace simVis
     bool                            lastPrefsValid_;
     /// force next update from data store to be processed, even if !slice->hasChanged()
     bool                            forceUpdateFromDataStore_;
+    /// queue up the invalidate to apply on the next data store update
+    bool                            queuedInvalidate_;
   };
 
 } // namespace simVis

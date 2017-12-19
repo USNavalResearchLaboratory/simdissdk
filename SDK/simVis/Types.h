@@ -22,15 +22,20 @@
 #ifndef SIMVIS_TYPES_H
 #define SIMVIS_TYPES_H
 
-#include "simCore/Common/Common.h"
+#include <vector>
+#include "osg/ref_ptr"
 #include "osgEarth/Units"
 #include "osgEarthSymbology/Color"
+#include "simCore/Common/Common.h"
 
 namespace simVis
 {
+  class EntityNode;
+  class ScenarioTool;
+
   /**
    * @file simVis/Types.h
-   * A couple helpful aliases
+   * Helpful aliases and typedefs
    */
 
   /** Bring osgEarth::Units into the simVis namespace */
@@ -41,6 +46,12 @@ namespace simVis
   typedef osgEarth::Distance         Distance;
   /** Bring osgEarth::Symbology::Color into the simVis namespace */
   typedef osgEarth::Symbology::Color Color;
+
+  /** Vector of EntityNode ref_ptr */
+  typedef std::vector< osg::ref_ptr<EntityNode> > EntityVector;
+
+  /** Vector of ScenarioTool ref_ptr */
+  typedef std::vector< osg::ref_ptr<ScenarioTool> > ScenarioToolVector;
 
   /** State attribute type for simVis::LightAmbient -- should not conflict with other Type values */
   static const osg::StateAttribute::Type LIGHT_AMBIENT = static_cast<osg::StateAttribute::Type>(1001);

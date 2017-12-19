@@ -45,7 +45,7 @@ namespace simVis
   * view manager. It is appropriate for simple one-window applications.
   *
   * If you have a multi-window application, or are embedding views in a
-  * windowing framework (like QT) you should NOT use this class; you
+  * windowing framework (like Qt) you should NOT use this class; you
   * should instead create your own ViewManager and manage the View setup
   * externally. Refer to the example "ExampleQt.cpp" to see how.
   */
@@ -61,7 +61,18 @@ namespace simVis
     * Constructs a new viewer and attempts to configure it based on command-line arguments.
     * @param arguments Command-line arguments from which to initialize
     */
-    Viewer(osg::ArgumentParser& arguments);
+    explicit Viewer(osg::ArgumentParser& arguments);
+
+    /** Enumeration of different window configurations to apply to main view on start-up. */
+    enum DefaultScreenSize {
+      /// Start in full-screen mode
+      FULLSCREEN,
+      /// Start in a window
+      WINDOWED
+    };
+
+    /** Constructs a new viewer with a given starting screen size.  In fullscreen, params are ignored. */
+    Viewer(DefaultScreenSize screenSize, int x, int y, int w, int h);
 
     /**
     * The viewer's main view (created by default)
@@ -166,7 +177,8 @@ namespace simVis
     osg::ref_ptr<SceneManager> scene_;
     osg::ref_ptr<ViewManagerLogDbAdapter> logDb_;
 
-    void init_();
+    /** Initializes the scene and main view.  Ignores x/y/w/h if screen size is fullscreen */
+    void init_(DefaultScreenSize screenSize, int x, int y, int w, int h);
   };
 }
 

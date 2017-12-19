@@ -838,81 +838,20 @@ double simCore::calculateEarthRadius(const double latitude)
   return Re;
 }
 
-// Algorithm: 3D Engine Design for Virtual Globes; Cozzi/Ring; pp. 31.
-// https://goo.gl/veDftl
 Vec3 simCore::clampEcefPointToGeodeticSurface(const Vec3& p)
 {
-  const Vec3 radiiSquared(simCore::WGS_A2, simCore::WGS_A2, simCore::WGS_B2);
-  const Vec3 oneOverRadiiSquared(1.0 / simCore::WGS_A2, 1.0 / simCore::WGS_A2, 1.0 / simCore::WGS_B2);
-  const Vec3 radiiToTheFourth(simCore::WGS_A2 * simCore::WGS_A2, simCore::WGS_A2 * simCore::WGS_A2, simCore::WGS_A2 * simCore::WGS_B2);
-
-  const double x2 = p.x() * p.x();
-  const double y2 = p.y() * p.y();
-  const double z2 = p.z() * p.z();
-
-  const double sqrtOfSquares = sqrt(
-    x2 * oneOverRadiiSquared.x() +
-    y2 * oneOverRadiiSquared.y() +
-    z2 * oneOverRadiiSquared.z() );
-  // Avoid divide by zero
-  assert(sqrtOfSquares != 0.0);
-  if (sqrtOfSquares == 0.0)
+  Vec3 lla;
+  CoordinateConverter::convertEcefToGeodeticPos(p, lla);
+  // If we are near the surface, we are done
+  // Value of 5 mm is based on a 4.4e-3 precision resolution comment
+  // in a SDK ECEF to LLA CoordConvertLibTest unit test
+  if (areEqual(lla.alt(), 0.0, 5.0e-3))
     return p;
-  const double beta = 1.0 / sqrtOfSquares;
-
-  const double n = v3Length(Vec3(
-    beta * p.x() * oneOverRadiiSquared.x(),
-    beta * p.y() * oneOverRadiiSquared.y(),
-    beta * p.z() * oneOverRadiiSquared.z()));
-
-  double alpha = (1.0 - beta) * (v3Length(p) / n);
-
-  double da = 0.0;
-  double db = 0.0;
-  double dc = 0.0;
-  double s = 0.0;
-  double dSdA = 1.0;
-
-  do {
-    // Avoid divide-by-zero
-    assert(dSdA != 0.0);
-    if (dSdA == 0.0)
-      break;
-    alpha -= (s / dSdA);
-
-    da = 1.0 + (alpha * oneOverRadiiSquared.x());
-    db = 1.0 + (alpha * oneOverRadiiSquared.y());
-    dc = 1.0 + (alpha * oneOverRadiiSquared.z());
-
-    // Avoid divide-by-zero
-    assert(da != 0.0 && db != 0.0 && dc != 0.0);
-    if (da == 0.0 || db == 0.0 || dc == 0.0)
-      break;
-
-    const double da2 = da * da;
-    const double db2 = db * db;
-    const double dc2 = dc * dc;
-
-    const double da3 = da * da * da;
-    const double db3 = db * db * db;
-    const double dc3 = dc * dc * dc;
-
-    s = x2 / (radiiSquared.x() * da2) +
-      y2 / (radiiSquared.y() * db2) +
-      z2 / (radiiSquared.z() * dc2) - 1.0;
-
-    dSdA = -2.0 * (
-      x2 / radiiToTheFourth.x() * da3 +
-      y2 / radiiToTheFourth.y() * db3 +
-      z2 / radiiToTheFourth.z() * dc3);
-  }
-  while (fabs(s) > 1e-10);
-
-  // Avoid divide-by-zero
-  assert(da != 0.0 && db != 0.0 && dc != 0.0);
-  if (da == 0.0 || db == 0.0 || dc == 0.0)
-    return p;
-  return Vec3(p.x() / da, p.y() / db, p.z() / dc);
+  // Otherwise, clamp to surface and convert back to ECEF
+  lla.setAlt(0.0);
+  Vec3 ecef;
+  CoordinateConverter::convertGeodeticPosToEcef(lla, ecef);
+  return ecef;
 }
 
 /**
@@ -1395,23 +1334,17 @@ void simCore::calculateGeodeticOriFromRelOri(const Vec3 &hostYpr, const Vec3 &re
   d3DCMtoEuler(yprDcm, ypr);
 }
 
-/// Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position
-void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, const double el, const double rng, Vec3 &llaEndPos)
+/// Calculates a geodetic position from the given offset position and orientation vectors
+void simCore::calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::Vec3& bodyOriOffset, const simCore::Vec3& bodyPosOffset, simCore::Vec3& offsetLla)
 {
-  if (simCore::areEqual(rng, 0.))
-  {
-    llaEndPos = llaBgnPos;
-    return;
-  }
-
   // create DCM based on specified orientation (NED frame)
   double dcm[3][3];
-  simCore::d3EulertoDCM(simCore::Vec3(az, el, 0), dcm);
+  simCore::d3EulertoDCM(bodyOriOffset, dcm);
 
-  // create unit vector along body axis (NED frame)
-  // then rotate body vector to align with local level frame
+  // create unit vector along body axis (NED frame), then rotate body vector to align with local level frame
+  // SIMDIS FLU body coordinates changed to a FRD system in order to align to the NED frame
   Vec3 geoVec;
-  d3MTv3Mult(dcm, simCore::Vec3(rng, 0, 0), geoVec);
+  d3MTv3Mult(dcm, simCore::Vec3(bodyPosOffset[0], -bodyPosOffset[1], -bodyPosOffset[2]), geoVec);
 
   // calculate Local To Earth rotation matrix at begin lat, lon position
   // (orientation is translated to geocentric Eulers based on the transformation from a local
@@ -1430,7 +1363,19 @@ void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, 
   // compute offset, then convert geocentric back to geodetic
   simCore::Vec3 offsetGeo;
   simCore::v3Add(originGeo, geoOffVec, offsetGeo);
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(offsetGeo, llaEndPos);
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(offsetGeo, offsetLla);
+}
+
+/// Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position
+void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, const double el, const double rng, Vec3 &llaEndPos)
+{
+  if (simCore::areEqual(rng, 0.))
+  {
+    llaEndPos = llaBgnPos;
+    return;
+  }
+
+  calculateGeodeticOffsetPos(llaBgnPos, simCore::Vec3(az, el, 0), simCore::Vec3(rng, 0, 0), llaEndPos);
 }
 
 /// Calculates the middle position between two points on the globe, moving from west to east.

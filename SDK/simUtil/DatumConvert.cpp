@@ -123,7 +123,7 @@ double DatumConvert::convertVerticalDatum(const simCore::Vec3& lla, const simCor
     // Convert the meters value to the MSL value
     double altitude = osgEarth::Units::METERS.convertTo(msl->getUnits(), wgs84Altitude);
     // Save the transformed coordinate to wgs84Altitude
-    if (osgEarth::VerticalDatum::transform(msl, NULL, lla.lat() * simCore::RAD2DEG, lla.lon() * simCore::RAD2DEG, altitude))
+    if (osgEarth::VerticalDatum::transform(msl.get(), NULL, lla.lat() * simCore::RAD2DEG, lla.lon() * simCore::RAD2DEG, altitude))
     {
       wgs84Altitude = altitude;
     }
@@ -136,7 +136,7 @@ double DatumConvert::convertVerticalDatum(const simCore::Vec3& lla, const simCor
   else if (outputDatum == simCore::VERTDATUM_MSL && msl.valid())
   {
     // Convert the wgs84 altitude (meters) to MSL (MSL units)
-    if (osgEarth::VerticalDatum::transform(NULL, msl, lla.lat() * simCore::RAD2DEG, lla.lon() * simCore::RAD2DEG, outputAltitude))
+    if (osgEarth::VerticalDatum::transform(NULL, msl.get(), lla.lat() * simCore::RAD2DEG, lla.lon() * simCore::RAD2DEG, outputAltitude))
     {
       // Convert back from MSL units to meters
       outputAltitude = msl->getUnits().convertTo(osgEarth::Units::METERS, outputAltitude);

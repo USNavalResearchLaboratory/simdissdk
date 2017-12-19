@@ -20,15 +20,18 @@
  *
  */
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simVis/Entity.h"
 #include "simVis/View.h"
 #include "simUtil/ScreenCoordinateCalculator.h"
 
 namespace simUtil
 {
 
-ScreenCoordinate::ScreenCoordinate(const osg::Vec3& position, bool outOfViewport)
+ScreenCoordinate::ScreenCoordinate(const osg::Vec3& position, bool outOfViewport, bool overHorizon)
   : position_(position),
-    isOffScreen_(outOfViewport)
+    isOffScreen_(outOfViewport),
+    isOverHorizon_(overHorizon)
 {
 }
 
@@ -52,11 +55,29 @@ bool ScreenCoordinate::isOffScreen() const
   return isOffScreen_;
 }
 
+bool ScreenCoordinate::isOverHorizon() const
+{
+  return isOverHorizon_;
+}
+
 ////////////////////////////////////////////////////////////////////////
+
+namespace {
+
+/** Screen coordinate that is off screen and behind the eye. */
+static const ScreenCoordinate INVALID_COORDINATE(osg::Vec3(-1, -1, 0), true, true);
+
+}
 
 ScreenCoordinateCalculator::ScreenCoordinateCalculator()
   : dirtyMatrix_(true)
 {
+  // 11km is rough depth of Mariana Trench; decrease radius to help horizon culling work underwater
+  osg::EllipsoidModel em;
+  // See also: Scenario.cpp.  We need a horizon here to detect behind-earth coordinates
+  em.setRadiusEquator(em.getRadiusEquator() - 11000.0);
+  em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
+  horizon_ = new osgEarth::Horizon(em);
 }
 
 ScreenCoordinateCalculator::~ScreenCoordinateCalculator()
@@ -73,31 +94,44 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
 {
   // Refresh the VPW if needed, returning invalid coordinate if needed
   if (recalculateVPW_() != 0)
+    return INVALID_COORDINATE;
+
+  // Check entity active flag
+  if (!entity.isActive())
+    return INVALID_COORDINATE;
+
+  if (!view_.valid() || !view_->isOverheadEnabled())
   {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
+    simCore::Vec3 locatorNodeEcef;
+    if (0 != entity.getPosition(&locatorNodeEcef, simCore::COORD_SYS_ECEF))
+      return INVALID_COORDINATE;
+    return matrixCalculate_(osg::Vec3d(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z()));
   }
 
-  // Check for invalid locator
-  osg::Matrix locatorMatrix;
-  if (!entity.isActive() || !entity.getLocator() || !entity.getLocator()->getLocatorMatrix(locatorMatrix))
-  {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
-  }
-  return matrixCalculate_(locatorMatrix);
+  // Overhead mode: Get the LLA position, clamp to 0, then convert to ECEF
+  simCore::Vec3 lla;
+  if (0 != entity.getPosition(&lla, simCore::COORD_SYS_LLA))
+    return INVALID_COORDINATE;
+  lla.setAlt(0.0);
+  simCore::Vec3 ecefOut;
+  simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
+  return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
 }
 
 ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
 {
   // Refresh the VPW if needed, returning invalid coordinate if needed
   if (recalculateVPW_() != 0)
-  {
-    return ScreenCoordinate(osg::Vec3(-1, -1, 0), true);
-  }
+    return INVALID_COORDINATE;
 
+  // this could be simplified to a coord conversion
+  double alt = lla.alt();
+  if (view_.valid() && view_->isOverheadEnabled())
+    alt = 0.0;
   osg::Matrix ecefMatrix;
-  osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), lla.alt(), ecefMatrix);
+  osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), alt, ecefMatrix);
 
-  return matrixCalculate_(ecefMatrix);
+  return matrixCalculate_(ecefMatrix.getTrans());
 }
 
 int ScreenCoordinateCalculator::recalculateVPW_()
@@ -112,15 +146,16 @@ int ScreenCoordinateCalculator::recalculateVPW_()
   // Combine the matrices
   const osg::Camera* camera = view_->getCamera();
   const osg::Viewport* viewport = camera->getViewport();
+  horizon_->setEye(osg::Vec3d(0, 0, 0) * osg::Matrix::inverse(camera->getViewMatrix()));
   viewProjectionWindow_ = camera->getViewMatrix() * camera->getProjectionMatrix() * viewport->computeWindowMatrix();
   dirtyMatrix_ = false;
   return 0;
 }
 
-ScreenCoordinate ScreenCoordinateCalculator::matrixCalculate_(const osg::Matrix& coordinateMatrix) const
+ScreenCoordinate ScreenCoordinateCalculator::matrixCalculate_(const osg::Vec3d& ecefCoordinate) const
 {
   // Calculate the info for the coordinate
-  const osg::Vec3 coordinate = osg::Vec3(0, 0, 0) * coordinateMatrix * viewProjectionWindow_;
+  const osg::Vec3 coordinate = ecefCoordinate * viewProjectionWindow_;
   bool isInside = false;
   if (view_.valid() && view_->getCamera() && view_->getCamera()->getViewport())
   {
@@ -128,7 +163,10 @@ ScreenCoordinate ScreenCoordinateCalculator::matrixCalculate_(const osg::Matrix&
     isInside = (coordinate.x() >= vp->x() && coordinate.x() <= (vp->x() + vp->width())) &&
       (coordinate.y() >= vp->y() && coordinate.y() <= (vp->y() + vp->height()));
   }
-  return ScreenCoordinate(coordinate, !isInside);
+
+  // Check horizon culling
+  const bool overHorizon = !horizon_->isVisible(ecefCoordinate);
+  return ScreenCoordinate(coordinate, !isInside, overHorizon);
 }
 
 }

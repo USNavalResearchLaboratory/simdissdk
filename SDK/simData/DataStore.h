@@ -23,20 +23,19 @@
 #define SIMDATA_DATASTORE_H
 
 #include <cassert>
+#include <memory>
 #include <vector>
 
 #include "simData/DataSlice.h"
+#include "simData/ObjectId.h"
 #include "simData/Interpolator.h"
-#include "simCore/Common/Memory.h"
-#include "simCore/Common/Export.h"
+#include "simCore/Common/Common.h"
 
 // forward declare
 namespace simCore { class Clock; }
 
 namespace simData
 {
-/// uniquely identify an object
-typedef uint64_t ObjectId;
 class CategoryDataSlice;
 class CategoryNameManager;
 class GenericDataSlice;
@@ -90,18 +89,20 @@ protected:
   class TransactionImpl;
 
 public: // types
-  /// Bitmask representing the types of objects that are assigned IDs
-  enum ObjectType
-  {
-    NONE      = 0x00,
-    PLATFORM  = 0x01,
-    BEAM      = 0x02,
-    GATE      = 0x04,
-    LASER     = 0x08,
-    PROJECTOR = 0x10,
-    LOB_GROUP = 0x20,
-    ALL = (PLATFORM|BEAM|GATE|LASER|PROJECTOR|LOB_GROUP)
-  };
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  /** @deprecated enum, no longer used in the SDK, and may be removed in a future release. */
+
+  typedef simData::ObjectType ObjectType;
+
+  static const simData::ObjectType NONE = simData::NONE;
+  static const simData::ObjectType PLATFORM = simData::PLATFORM;
+  static const simData::ObjectType BEAM = simData::BEAM;
+  static const simData::ObjectType GATE = simData::GATE;
+  static const simData::ObjectType LASER = simData::LASER;
+  static const simData::ObjectType PROJECTOR = simData::PROJECTOR;
+  static const simData::ObjectType LOB_GROUP = simData::LOB_GROUP;
+  static const simData::ObjectType ALL = simData::ALL;
+#endif
 
   /** DataStore transaction handle
    *
@@ -155,7 +156,7 @@ public: // types
     }
 
   private:
-    std::tr1::shared_ptr<TransactionImpl> transaction_; /// underlying implementation
+    std::shared_ptr<TransactionImpl> transaction_; /// underlying implementation
   };
 
   /// similar to Observer, but provides more info to the listener
@@ -165,10 +166,10 @@ public: // types
     virtual ~Listener() {}
 
     /// new entity has been added, with the given id and type
-    virtual void onAddEntity(DataStore *source, ObjectId newId, ObjectType ot) = 0;
+    virtual void onAddEntity(DataStore *source, ObjectId newId, simData::ObjectType ot) = 0;
 
     /// entity with the given id and type will be removed after all notifications are processed
-    virtual void onRemoveEntity(DataStore *source, ObjectId removedId, ObjectType ot) = 0;
+    virtual void onRemoveEntity(DataStore *source, ObjectId removedId, simData::ObjectType ot) = 0;
 
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) = 0;
@@ -177,7 +178,7 @@ public: // types
     virtual void onTimeChange(DataStore *source) = 0;
 
     /// something has changed in the entity category data
-    virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, ObjectType ot) = 0;
+    virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) = 0;
 
     /// entity name has changed
     virtual void onNameChange(DataStore *source, ObjectId changeId) = 0;
@@ -197,10 +198,10 @@ public: // types
     virtual ~DefaultListener() {}
 
     /// new entity has been added, with the given id and type
-    virtual void onAddEntity(DataStore *source, ObjectId newId, ObjectType ot) {}
+    virtual void onAddEntity(DataStore *source, ObjectId newId, simData::ObjectType ot) {}
 
     /// entity with the given id and type will be removed after all notifications are processed
-    virtual void onRemoveEntity(DataStore *source, ObjectId removedId, ObjectType ot) {}
+    virtual void onRemoveEntity(DataStore *source, ObjectId removedId, simData::ObjectType ot) {}
 
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) {}
@@ -209,7 +210,7 @@ public: // types
     virtual void onTimeChange(DataStore *source) {}
 
     /// something has changed in the entity category data
-    virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, ObjectType ot) {}
+    virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) {}
 
     /// entity name has changed
     virtual void onNameChange(DataStore *source, ObjectId changeId) {}
@@ -223,7 +224,7 @@ public: // types
 
   /// Managed pointer to be used when holding a pointer to a Listener object.
   /// Memory for the Listener object is deleted automatically when the last managed pointer is released.
-  typedef std::tr1::shared_ptr<Listener> ListenerPtr;
+  typedef std::shared_ptr<Listener> ListenerPtr;
 
   /// Observer for scenario events
   class ScenarioListener
@@ -248,7 +249,7 @@ public: // types
 
   /// Managed pointer to be used when holding a pointer to a ScenarioListener object.
   /// Memory for the ScenarioListener object is deleted automatically when the last managed pointer is released.
-  typedef std::tr1::shared_ptr<ScenarioListener> ScenarioListenerPtr;
+  typedef std::shared_ptr<ScenarioListener> ScenarioListenerPtr;
 
   /// List of listeners
   typedef std::vector<ListenerPtr> ListenerList;
@@ -332,13 +333,13 @@ public: // methods
    * @{
    */
   /// Retrieve a list of IDs for objects of 'type'
-  virtual void idList(IdList *ids, ObjectType type = ALL) const = 0;
+  virtual void idList(IdList *ids, simData::ObjectType type = simData::ALL) const = 0;
 
   /// Retrieve a list of IDs for objects of 'type' with the given name
-  virtual void idListByName(const std::string& name, IdList* ids, ObjectType type = ALL) const = 0;
+  virtual void idListByName(const std::string& name, IdList* ids, simData::ObjectType type = simData::ALL) const = 0;
 
   /// Retrieve a list of IDs for objects with the given original id
-  virtual void idListByOriginalId(IdList *ids, uint64_t originalId, ObjectType type = ALL) const = 0;
+  virtual void idListByOriginalId(IdList *ids, uint64_t originalId, simData::ObjectType type = simData::ALL) const = 0;
 
   /// Retrieve a list of IDs for all beams associated with a platform
   virtual void beamIdListForHost(ObjectId hostid, IdList *ids) const = 0;
@@ -356,7 +357,7 @@ public: // methods
   virtual void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const = 0;
 
   /// Retrieves the ObjectType for a particular ID
-  virtual ObjectType objectType(ObjectId id) const = 0;
+  virtual simData::ObjectType objectType(ObjectId id) const = 0;
 
   /// Retrieves the host entity ID for a particular ID (i.e. a beam, given a gate ID; a platform, given a LOB ID)
   virtual ObjectId entityHostId(ObjectId childId) const = 0;

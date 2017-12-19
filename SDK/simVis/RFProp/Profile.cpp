@@ -67,12 +67,12 @@ void Profile::addProvider(ProfileDataProvider* provider)
 
 const CompositeProfileProvider* Profile::getDataProvider() const
 {
-  return data_;
+  return data_.get();
 }
 
 CompositeProfileProvider* Profile::getDataProvider_()
 {
-  return data_;
+  return data_.get();
 }
 
 void Profile::setDataProvider(CompositeProfileProvider* dataProvider)
@@ -429,8 +429,8 @@ void Profile::init2DHoriz_()
   osg::Geometry* geometry = new osg::Geometry();
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_);
-  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
+  geometry->setVertexArray(verts_.get());
+  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
@@ -511,9 +511,9 @@ void Profile::init2DVert_()
   osg::Geometry* geometry = new osg::Geometry();
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_);
+  geometry->setVertexArray(verts_.get());
 
-  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
+  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
   geometry->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
@@ -676,10 +676,10 @@ void Profile::init3D_()
   }
 
   geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_);
+  geometry->setVertexArray(verts_.get());
   geometry->setUseVertexBufferObjects(true);
 
-  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
+  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
@@ -806,7 +806,7 @@ void Profile::init3DTexture_()
     // Create and add drawable to scene
     osg::Geometry* geometry = new osg::Geometry();
     geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
+    geometry->setVertexArray(verts_.get());
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
@@ -844,7 +844,7 @@ void Profile::init3DTexture_()
     // Create and add drawable to scene
     osg::Geometry* geometry = new osg::Geometry();
     geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
+    geometry->setVertexArray(verts_.get());
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
@@ -869,7 +869,7 @@ void Profile::init3DTexture_()
     // Create and add drawable to scene
     osg::Geometry* geometry = new osg::Geometry();
     geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
+    geometry->setVertexArray(verts_.get());
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
@@ -890,7 +890,7 @@ void Profile::init3DTexture_()
     // Create and add drawable to scene
     osg::Geometry* geometry = new osg::Geometry();
     geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
+    geometry->setVertexArray(verts_.get());
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
@@ -903,7 +903,7 @@ void Profile::init3DTexture_()
     // Create and add drawable to scene
     osg::Geometry* geometry = new osg::Geometry();
     geometry->setDataVariance(osg::Object::DYNAMIC);
-    geometry->setVertexArray(verts_);
+    geometry->setVertexArray(verts_.get());
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
@@ -997,10 +997,10 @@ void Profile::init3DPoints_()
 
   osg::Geometry* geometry = new osg::Geometry();
   geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_);
+  geometry->setVertexArray(verts_.get());
   geometry->setUseVertexBufferObjects(true);
 
-  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
+  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
@@ -1233,9 +1233,9 @@ void Profile::initRAE_()
 
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_);
+  geometry->setVertexArray(verts_.get());
 
-  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_);
+  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
   geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
   geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 

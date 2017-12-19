@@ -83,7 +83,10 @@ int main(int argc, char** argv)
     driverOptions.url() = token;
 
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-    map->addLayer(new osgEarth::ElevationLayer(token, driverOptions));
+    if (isElevation)
+      map->addLayer(new osgEarth::ElevationLayer(token, driverOptions));
+    else
+      map->addLayer(new osgEarth::ImageLayer(token, driverOptions));
 #else
     if (isElevation)
       map->addElevationLayer(new osgEarth::ElevationLayer(token, driverOptions));
@@ -95,10 +98,10 @@ int main(int argc, char** argv)
   // start up a SIMDIS viewer.
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
 
-  viewer->setMap(map);
+  viewer->setMap(map.get());
 
   // add sky node
-  simExamples::addDefaultSkyNode(viewer);
+  simExamples::addDefaultSkyNode(viewer.get());
 
   viewer->installDebugHandlers();
   viewer->run();
