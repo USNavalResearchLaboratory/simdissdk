@@ -123,7 +123,7 @@ private:
   // Reference pointers
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
   osg::NodePath mapNodePath_;
-  osgEarth::TerrainEngineNode* terrainEngineNode_;
+  osg::observer_ptr<osgEarth::TerrainEngineNode> terrainEngineNode_;
 
   /// Last view from mouse movement
   osg::observer_ptr<osgViewer::View> lastView_;
