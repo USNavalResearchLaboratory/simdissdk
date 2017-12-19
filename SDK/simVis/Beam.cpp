@@ -771,10 +771,8 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
   // process explicit beam orientation offsets
   if (posOffsetsChanged)
   {
-    // The 3 types of offsets (platform, beam, and platform-icon offset) are additive.
-    // If platform position offsets are set/enabled, they are already set in the platform locator;
-    // if they are enabled for the platform, they are enabled for everything that derives from the platform locator,
-    // and cannot be disabled.
+    // beampositionoffset and useoffseticon are additive.
+    // (Platform position offsets are applied only to model, they do not affect beam position.)
     simCore::Vec3 posOffset;
     if (activePrefs.useoffsetbeam())
     {
