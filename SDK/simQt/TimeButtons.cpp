@@ -95,14 +95,14 @@ ButtonActions::ButtonActions(QWidget *parent)
   stepIncrease_->setShortcut(QKeySequence(Qt::Key_Equal));
   realTime_->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_R));
   // set tooltips
-  stepDecrease_->setToolTip(formatTooltip(tr("Decrease Rate"), tr("Slows down the rate of playback.")));
-  stepBack_->setToolTip(formatTooltip(tr("Step Back"), tr("Moves the scenario time backward one time step.")));
-  playReverse_->setToolTip(formatTooltip(tr("Play Backward"), tr("Plays the scenario backward.")));
-  stop_->setToolTip(formatTooltip(tr("Stop"), tr("Stops the scenario playback.")));
-  play_->setToolTip(formatTooltip(tr("Play"), tr("Plays the scenario forward.")));
-  stepForward_->setToolTip(formatTooltip(tr("Step Forward"), tr("Moves the scenario time forward one time step.")));
-  stepIncrease_->setToolTip(formatTooltip(tr("Increase Rate"), tr("Speeds up the rate of playback.")));
-  realTime_->setToolTip(formatTooltip(tr("Real Time"), tr("Sets the scenario playback to real time.")));
+  stepDecrease_->setToolTip(formatTooltip(tr("Decrease Rate"), tr("Slow down the rate of playback.")));
+  stepBack_->setToolTip(formatTooltip(tr("Step Back"), tr("Move the scenario one time-step backward.")));
+  playReverse_->setToolTip(formatTooltip(tr("Play Backward"), tr("Play the scenario backward.")));
+  stop_->setToolTip(formatTooltip(tr("Stop"), tr("Stop the scenario playback.")));
+  play_->setToolTip(formatTooltip(tr("Play"), tr("Play the scenario forward.")));
+  stepForward_->setToolTip(formatTooltip(tr("Step Forward"), tr("Move the scenario one time-step forward.")));
+  stepIncrease_->setToolTip(formatTooltip(tr("Increase Rate"), tr("Speed up the rate of playback.")));
+  realTime_->setToolTip(formatTooltip(tr("Real Time"), tr("Set the scenario playback to real time.")));
   // connect all the buttons to our slots
   connect(stepDecrease_, SIGNAL(triggered()), this, SLOT(clockStepDecrease_()));
   connect(stepBack_, SIGNAL(triggered()), this, SLOT(clockStepBack_()));
