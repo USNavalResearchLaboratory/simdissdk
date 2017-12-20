@@ -61,6 +61,20 @@ public:
   /** Frame event, returns non-zero on handled */
   virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) = 0;
 
+  /**
+   * Called by the MouseDispatcher when the mouse manipulator is activated.  This is useful
+   * for mutually exclusive mouse manipulators only.  Only one mutually exclusive mouse
+   * manipulator is active at a time for receiving events.  Override this method to know
+   * when the dispatcher activates this mouse manipulator.  Note that mutually exclusive
+   * mouse manipulators must be explicitly activated and start in a deactivated state.
+   */
+  virtual void activate() = 0;
+  /**
+   * Called by the MouseDispatcher when the mouse manipulator is deactivated.  This is
+   * useful for mutually exclusive mouse manipulators only.  Override this method to know
+   * when the dispatcher deactivates this mouse manipulator.
+   */
+  virtual void deactivate() = 0;
 };
 typedef std::shared_ptr<MouseManipulator> MouseManipulatorPtr;
 
@@ -88,6 +102,10 @@ public:
   virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) { return 0; }
   /** Frame event, returns non-zero on handled */
   virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) { return 0; }
+
+  // From MouseManipulator
+  virtual void activate() {}
+  virtual void deactivate() {}
 };
 
 
@@ -114,6 +132,10 @@ public:
   virtual int scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
   /** Frame event, returns non-zero on handled */
   virtual int frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+
+  // From MouseManipulator
+  virtual void activate();
+  virtual void deactivate();
 
   /** Retrieves the real subject of the Proxy */
   MouseManipulatorPtr subject() const;

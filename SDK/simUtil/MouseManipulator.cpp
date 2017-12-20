@@ -81,6 +81,18 @@ int MouseManipulatorProxy::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
   return manipulator_->frame(ea, aa);
 }
 
+void MouseManipulatorProxy::activate()
+{
+  if (manipulator_)
+    manipulator_->activate();
+}
+
+void MouseManipulatorProxy::deactivate()
+{
+  if (manipulator_)
+    manipulator_->deactivate();
+}
+
 MouseManipulatorPtr MouseManipulatorProxy::subject() const
 {
   return manipulator_;
