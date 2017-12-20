@@ -575,14 +575,14 @@ int freewheelTest()
   // check that begin and end time are not changed by passed in values
   rv += SDK_ASSERT(clock.startTime() < simCore::TimeStamp(1970, 25.0));
   rv += SDK_ASSERT(clock.endTime() > simCore::TimeStamp(1970, 25.0));
-  clock.setEndTime(simCore::TimeStamp(3055, 25.0));
-  rv += SDK_ASSERT(clock.endTime() > simCore::TimeStamp(3055, 25.0));
+  clock.setEndTime(simCore::TimeStamp(2035, 25.0));
+  rv += SDK_ASSERT(clock.endTime() > simCore::TimeStamp(2035, 25.0));
 
   // move forward in time with simulation, past the specified end time
-  clock.setTime(simCore::TimeStamp(3055, 26.0));
-  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(3055, 26.0));
-  clock.setTime(simCore::TimeStamp(3055, 36.0));
-  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(3055, 36.0));
+  clock.setTime(simCore::TimeStamp(2035, 26.0));
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2035, 26.0));
+  clock.setTime(simCore::TimeStamp(2035, 36.0));
+  rv += SDK_ASSERT(clock.currentTime() == simCore::TimeStamp(2035, 36.0));
 
   // move backwards in time with simulation, prior to specified start time
   clock.setStartTime(simCore::TimeStamp(2012, 44.0));

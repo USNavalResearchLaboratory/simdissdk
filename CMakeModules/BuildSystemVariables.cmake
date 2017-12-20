@@ -3,14 +3,14 @@
 # BUILD_SYSTEM_ARCH {x86|amd64}
 # BUILD_TARGET_ARCH {x86|amd64}
 # BUILD_SYSTEM_OS {nt|linux}
-# BUILD_COMPILER {vc-9.0|vc-10.0|vc-11.0|vc-12.0|gcc-4.1|gcc-4.4}
+# BUILD_COMPILER {vc-10.0|vc-11.0|vc-12.0|vc-14.0|gcc-4.4}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
 # BUILD_COMPILER_VERSION 
 # BUILD_COMPILER_MAJOR_VERSION
 # BUILD_COMPILER_MINOR_VERSION
 # BUILD_SYSTEM_LIB_SUFFIX
 # BUILD_TYPE {32|64}
-# BUILD_PLATFORM {win32|win64|linux32|linux64}
+# BUILD_PLATFORM {win32|win64|linux64}
 
 # CMAKE_SYSTEM_PROCESSOR is set to the PROCESSOR_ARCHITECTURE value (eg x86 or AMD64) for Windows and uname -p result or UNIX/Linux
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} BUILD_SYSTEM_ARCH)
@@ -18,9 +18,7 @@ if(BUILD_SYSTEM_ARCH STREQUAL "x86_64")
     set(BUILD_SYSTEM_ARCH "amd64")
 elseif(BUILD_SYSTEM_ARCH MATCHES "i?86")
     set(BUILD_SYSTEM_ARCH "x86")
-elseif(BUILD_SYSTEM_ARCH STREQUAL "sparc")
-    set(BUILD_SYSTEM_ARCH "sparc")
-endif(BUILD_SYSTEM_ARCH STREQUAL "x86_64")
+endif()
 
 
 # Assign 32 or 64
@@ -28,20 +26,20 @@ if(WIN32)
     if(CMAKE_CL_64)
         set(BUILD_TYPE "64")
         set(BUILD_SYSTEM_ARCH "amd64")
-    else(CMAKE_CL_64)
+    else()
         set(BUILD_TYPE "32")
         set(BUILD_SYSTEM_ARCH "x86")
-    endif(CMAKE_CL_64)
+    endif()
 elseif(UNIX)
     if(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND COMPILE_32_ON_64)
         set(BUILD_TYPE "32")
-    else(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND COMPILE_32_ON_64)
+    else()
         if(BUILD_SYSTEM_ARCH STREQUAL "x86")
             set(BUILD_TYPE "32")
-        else(BUILD_SYSTEM_ARCH STREQUAL "x86")
+        else()
             set(BUILD_TYPE "64")
-        endif(BUILD_SYSTEM_ARCH STREQUAL "x86")
-    endif(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND COMPILE_32_ON_64)
+        endif()
+    endif()
 endif(WIN32)
 
 
@@ -50,14 +48,9 @@ if(WIN32)
     set(BUILD_SYSTEM_NAME win)
     set(BUILD_SYSTEM_OS nt)
 elseif(UNIX)
-    # CMAKE_SYSTEM_NAME contains value provided by 'uname -s'
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        set(BUILD_SYSTEM_NAME linux)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
-        set(BUILD_SYSTEM_NAME solaris)
-    endif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(BUILD_SYSTEM_NAME linux)
     set(BUILD_SYSTEM_OS ${BUILD_SYSTEM_NAME})
-endif(WIN32)
+endif()
 
 set(BUILD_PLATFORM "${BUILD_SYSTEM_NAME}${BUILD_TYPE}")
 
@@ -82,14 +75,14 @@ if(MSVC)
 elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
     # Intel compiler will use latest gcc build version for third party libraries
     set(BUILD_COMPILER_NAME gcc)
-    set(BUILD_COMPILER_VERSION "4.1")
-else(MSVC)
+    set(BUILD_COMPILER_VERSION "4.4")
+else()
     # Get compiler name and version (gcc and gcc-compatible compilers)
     exec_program(${CMAKE_C_COMPILER} ARGS --version OUTPUT_VARIABLE BUILD_COMPILER_VERSION)
     string(REGEX REPLACE "([A-Za-z0-9])[ ].*" "\\1" BUILD_COMPILER_NAME ${BUILD_COMPILER_VERSION})
     string(REGEX REPLACE ".*([0-9]\\.[0-9]\\.[0-9]).*" "\\1" BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
     set(BUILD_COMPILER_NAME gcc)
-endif(MSVC)
+endif()
 
 # Extract major and minor version numbers
 string(REGEX REPLACE "([0-9]+)\\.[0-9]+(\\.[0-9]+)?" "\\1" BUILD_COMPILER_MAJOR_VERSION ${BUILD_COMPILER_VERSION})
@@ -100,39 +93,12 @@ string(REGEX REPLACE "[0-9]+\\.([0-9]+)(\\.[0-9]+)?" "\\1" BUILD_COMPILER_MINOR_
 if(WIN32)
     set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
     set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${BUILD_COMPILER}")
-else(WIN32)
-    # Solaris uses 3.4.6
-    if(BUILD_COMPILER_MAJOR_VERSION EQUAL 3)
-        set(BUILD_COMPILER_VERSION "3.4")
-    elseif(BUILD_COMPILER_MAJOR_VERSION EQUAL 4)
-
-        # Default to 4.1 unless we have good info otherwise
-        set(BUILD_COMPILER_VERSION "4.1")
-
-        # Detect g++ 4.4 preference over 4.1
-        if(NOT BUILD_COMPILER_MINOR_VERSION EQUAL 1)
-            set(DEFAULT_USE_GCC44 OFF)
-            # Do a quick check on files to see if we should default on
-            if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rd/linux64_gcc-4.4)
-                if(VERBOSE)
-                    message(STATUS "g++ 4.4 detected")
-                endif(VERBOSE)
-                set(DEFAULT_USE_GCC44 ON)
-            endif()
-
-            # Add an option to search for the 4.4 libraries
-            option(COMPILE_GCC_4_4 "Enable g++ 4.4 3rd party libraries." ${DEFAULT_USE_GCC44})
-            if(COMPILE_GCC_4_4)
-                set(BUILD_COMPILER_VERSION "4.4")
-            endif(COMPILE_GCC_4_4)
-        endif(NOT BUILD_COMPILER_MINOR_VERSION EQUAL 1)
-
-    else(BUILD_COMPILER_MAJOR_VERSION EQUAL 3)
-        message(FATAL_ERROR "Unsupported compiler version ${BUILD_COMPILER_NAME} ${BUILD_COMPILER_VERSION}")
-    endif(BUILD_COMPILER_MAJOR_VERSION EQUAL 3)
+else()
+    # Default to 4.4 unless we have good info otherwise
+    set(BUILD_COMPILER_VERSION "4.4")
     set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
     set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${BUILD_COMPILER}")
-endif(WIN32)
+endif()
 
 # Trying library search based on compiler major and minor version...
 set(BUILD_SYSTEM_LIB_SUFFIX_MAJOR_MINOR "${BUILD_PLATFORM}_${BUILD_COMPILER_NAME}-${BUILD_COMPILER_MAJOR_VERSION}\\.${BUILD_COMPILER_MINOR_VERSION}.*")
