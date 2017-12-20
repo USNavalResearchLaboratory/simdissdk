@@ -228,9 +228,9 @@ int MouseDispatcher::deactivateExclusive(MouseManipulatorPtr manipulator)
   if (exclusiveProxy_->subject() != manipulator)
     return 1;
 
-  exclusiveProxy_->setSubject(NULL);
+  exclusiveProxy_->setSubject(MouseManipulatorPtr());
   manipulator->deactivate();
-  fireActiveExclusiveManipulatorChanged_(NULL, manipulator);
+  fireActiveExclusiveManipulatorChanged_(MouseManipulatorPtr(), manipulator);
   return 0;
 }
 

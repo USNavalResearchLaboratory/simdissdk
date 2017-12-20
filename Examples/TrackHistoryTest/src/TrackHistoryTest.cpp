@@ -226,7 +226,7 @@ private:
   void generateColorCommand_(int colorIndex)
   {
     simData::DataTable* table = ds_->dataTableManager().findTable(hostId_, simData::INTERNAL_TRACK_HISTORY_TABLE);
-    simData::TableColumnId colId;
+    simData::TableColumnId colId = 0;
     bool foundColumn = false;
     if (table == NULL)
     {
