@@ -189,6 +189,8 @@ namespace simVis
 
     // internal - override
     Locator* createLocator() const;
+    // internal - override
+    CachingLocator* createCachingLocator() const;
 
   protected:
     /// osg::Referenced-derived

@@ -600,6 +600,13 @@ Locator* SceneManager::createLocator() const
     NULL;
 }
 
+CachingLocator* SceneManager::createCachingLocator() const
+{
+  return
+    mapNode_.valid() ? new CachingLocator(mapNode_->getMap()->getProfile()->getSRS()) :
+    NULL;
+}
+
 osg::Group* SceneManager::getOrCreateAttachPoint(const std::string& name) const
 {
   // Assertion failure means this method was called before init_()

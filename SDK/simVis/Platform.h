@@ -296,7 +296,7 @@ namespace simVis
     /// track history points
     osg::ref_ptr<TrackHistoryNode>  track_;
     osg::ref_ptr<LocalGridNode>     localGrid_;
-    osg::ref_ptr<AreaHighlightNode>     areaHighlight_;
+    osg::ref_ptr<AreaHighlightNode> areaHighlight_;
     osg::ref_ptr<AxisVector>        bodyAxisVector_;
     osg::ref_ptr<AxisVector>        inertialAxisVector_;
     osg::ref_ptr<PlatformInertialTransform> scaledInertialTransform_;

@@ -556,7 +556,7 @@ namespace simVis
   {
     SAFETRYBEGIN;
     // create the OSG node representing this entity
-    PlatformNode* node = new PlatformNode(props, dataStore, *platformTspiFilterManager_, this, locatorFactory_->createLocator(), dataStore.referenceYear());
+    PlatformNode* node = new PlatformNode(props, dataStore, *platformTspiFilterManager_, this, locatorFactory_->createCachingLocator(), dataStore.referenceYear());
 
     // put it in the vis database.
     entities_[node->getId()] = new EntityRecord(

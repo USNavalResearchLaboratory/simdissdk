@@ -178,7 +178,7 @@ protected:
 };
 
 LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode* host, CoordSurfaceClamping* surfaceClamping, simData::DataStore &ds)
-  : EntityNode(simData::LOB_GROUP, new Locator(host->getLocator()->getSRS())), // lobgroup locator is independent of host locator
+  : EntityNode(simData::LOB_GROUP, new CachingLocator(host->getLocator()->getSRS())), // lobgroup locator is independent of host locator
   lastProps_(props),
   hasLastUpdate_(false),
   lastPrefsValid_(false),

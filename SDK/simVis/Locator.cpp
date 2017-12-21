@@ -314,32 +314,24 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
   if (!out_position)
     return false;
 
-  // use the cached lla position if it is valid
-  if (coordsys == simCore::COORD_SYS_LLA && inSyncWith(llaPositionCacheRevision_))
-  {
-    *out_position = llaPositionCache_;
-    return true;
-  }
-
   osg::Matrix m;
   if (!getLocatorMatrix(m))
     return false;
-  const osg::Vec3d& v = m.getTrans();
-  out_position->set(v.x(), v.y(), v.z());
+  const osg::Vec3d& ecefPos = m.getTrans();
 
   if (coordsys == simCore::COORD_SYS_ECEF)
+  {
+    out_position->set(ecefPos.x(), ecefPos.y(), ecefPos.z());
     return true;
+  }
   if (coordsys == simCore::COORD_SYS_LLA)
   {
-    // calculate and cache the lla position to avoid repeated expensive recalculation
-    simCore::CoordinateConverter::convertEcefToGeodeticPos(*out_position, llaPositionCache_);
-    *out_position = llaPositionCache_;
-    sync(llaPositionCacheRevision_);
+    simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), *out_position);
     return true;
   }
   if (coordsys == simCore::COORD_SYS_ECI)
   {
-    const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, getElapsedEciTime());
+    const simCore::Coordinate in(simCore::COORD_SYS_ECEF, simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), getElapsedEciTime());
     simCore::Coordinate out;
     simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
     *out_position = out.position();
@@ -354,14 +346,6 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
   if ((!out_position) || (!out_orientation))
     return false;
 
-  // use the cached lla position & orientation if they are valid
-  if (coordsys == simCore::COORD_SYS_LLA && inSyncWith(llaPositionCacheRevision_) && inSyncWith(llaOrientationCacheRevision_))
-  {
-    *out_position = llaPositionCache_;
-    *out_orientation = llaOrientationCache_;
-    return true;
-  }
-
   osg::Matrix m;
   if (!getLocatorMatrix(m))
     return false;
@@ -374,16 +358,11 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
     return true;
   if (coordsys == simCore::COORD_SYS_LLA)
   {
-    // calculate and cache the lla position and orientation to avoid repeated expensive recalculation
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation);
     simCore::Coordinate out;
     simCore::CoordinateConverter::convertEcefToGeodetic(in, out);
-    llaPositionCache_ = out.position();
-    llaOrientationCache_ = out.orientation();
-    sync(llaPositionCacheRevision_);
-    sync(llaOrientationCacheRevision_);
-    *out_position = llaPositionCache_;
-    *out_orientation = llaOrientationCache_;
+    *out_position = out.position();
+    *out_orientation = out.orientation();
     return true;
   }
   if (coordsys == simCore::COORD_SYS_ECI)
@@ -594,6 +573,67 @@ void Locator::notifyListeners_()
       children_.erase(i++);
     }
   }
+}
+
+//---------------------------------------------------------------------------
+
+CachingLocator::CachingLocator(const osgEarth::SpatialReference* mapSRS)
+  : Locator(mapSRS)
+{}
+
+CachingLocator::CachingLocator(Locator* parentLoc, unsigned int inheritMask)
+  : Locator(parentLoc, inheritMask)
+{}
+
+bool CachingLocator::getLocatorPosition(simCore::Vec3* out_position, const simCore::CoordinateSystem& coordsys) const
+{
+  if (!out_position)
+    return false;
+
+  if (coordsys != simCore::COORD_SYS_LLA)
+    return Locator::getLocatorPosition(out_position, coordsys);
+
+  // use the cached lla position if it is valid
+  assert(coordsys == simCore::COORD_SYS_LLA);
+  if (inSyncWith(llaPositionCacheRevision_))
+  {
+    *out_position = llaPositionCache_;
+    return true;
+  }
+  if (Locator::getLocatorPosition(out_position, coordsys))
+  {
+    llaPositionCache_ = *out_position;
+    sync(llaPositionCacheRevision_);
+    return true;
+  }
+  return false;
+}
+
+bool CachingLocator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, const simCore::CoordinateSystem& coordsys) const
+{
+  if ((!out_position) || (!out_orientation))
+    return false;
+
+  if (coordsys != simCore::COORD_SYS_LLA)
+    return Locator::getLocatorPositionOrientation(out_position, out_orientation, coordsys);
+
+  // use the cached lla position & orientation if they are valid
+  assert(coordsys == simCore::COORD_SYS_LLA);
+  if (inSyncWith(llaPositionCacheRevision_) && inSyncWith(llaOrientationCacheRevision_))
+  {
+    *out_position = llaPositionCache_;
+    *out_orientation = llaOrientationCache_;
+    return true;
+  }
+  if (Locator::getLocatorPositionOrientation(out_position, out_orientation, coordsys))
+  {
+    llaPositionCache_ = *out_position;
+    llaOrientationCache_ = *out_orientation;
+    sync(llaPositionCacheRevision_);
+    sync(llaOrientationCacheRevision_);
+    return true;
+  }
+  return false;
 }
 
 //---------------------------------------------------------------------------
