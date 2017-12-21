@@ -106,8 +106,8 @@ RotatePanNavigationMode::~RotatePanNavigationMode()
 
 void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watchMode)
 {
-  // Add Box Zoom capability, which is done with an external event handler
   view_ = view;
+  // left mouse + alt => box zoom (done with an external event handler)
   if (!watchMode && view_.valid())
   {
     EarthManipulator::ActionOptions boxZoomOpts;
@@ -405,11 +405,11 @@ GisNavigationMode::~GisNavigationMode()
 
 void GisNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watchMode)
 {
+  view_ = view;
   const bool canRotate = !watchMode && !enableOverhead;
   const bool canZoom = !watchMode;
 
-  // Add Box Zoom capability, which is done with an external event handler
-  view_ = view;
+  // left mouse + alt => box zoom (done with an external event handler)
   if (canZoom && view_.valid())
   {
     EarthManipulator::ActionOptions boxZoomOpts;
