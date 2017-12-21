@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <utility>
 #include "osgGA/GUIEventHandler"
+#include "simNotify/Notify.h"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simUtil/MouseDispatcher.h"
@@ -205,7 +206,10 @@ int MouseDispatcher::activateExclusive(MouseManipulatorPtr manipulator)
 
   // Return an error if this manipulator is not in our list of exclusive ones.
   if (manipulator != NULL && allExclusive_.find(manipulator) == allExclusive_.end())
+  {
+    SIM_WARN << "MouseDispatcher::activateExclusive(): Please register exclusive mouse mode before calling this method.\n";
     return 1;
+  }
 
   // Deactivate the old one
   if (oldSubject != NULL)
