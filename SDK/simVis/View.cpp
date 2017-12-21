@@ -1361,7 +1361,7 @@ void View::setNavigationMode(const NavMode& mode)
   const bool terrainAvoidance = manip->getSettings()->getTerrainAvoidanceEnabled();
 
   if (mode == NAVMODE_ROTATEPAN)
-    manip->applySettings(new RotatePanNavigationMode(overheadEnabled_, watchEnabled_));
+    manip->applySettings(new RotatePanNavigationMode(this, overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_GLOBESPIN)
     manip->applySettings(new GlobeSpinNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_ZOOM)
@@ -1369,7 +1369,7 @@ void View::setNavigationMode(const NavMode& mode)
   else if (mode == NAVMODE_CENTERVIEW)
     manip->applySettings(new CenterViewNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_GIS)
-    manip->applySettings(new GisNavigationMode(overheadEnabled_, watchEnabled_));
+    manip->applySettings(new GisNavigationMode(this, overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_BOXZOOM)
     manip->applySettings(new BoxZoomNavigationMode(this, overheadEnabled_));
 

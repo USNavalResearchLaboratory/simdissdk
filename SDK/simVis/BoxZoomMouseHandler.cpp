@@ -251,6 +251,8 @@ void BoxZoomMouseHandler::setZoom_(double originX, double originY, double widthP
         newRange = 1.0;
       vp.range()->set(newRange, osgEarth::Units::METERS);
     }
+    // Break tether
+    vp.setNode(NULL);
     zoomView_->setViewpoint(vp, durationSec_);
     return;
   }
