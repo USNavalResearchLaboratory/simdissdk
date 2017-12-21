@@ -30,10 +30,12 @@
 namespace simVis
 {
 
-BoxZoomMouseHandler::BoxZoomMouseHandler(osgEarth::MapNode* mapNode, const osgEarth::Util::EarthManipulator::ActionOptions& opts)
-  : mapNode_(mapNode),
-    goToRangeFactor_(1.0),
-    durationSec_(1.0)
+BoxZoomMouseHandler::BoxZoomMouseHandler(const osgEarth::Util::EarthManipulator::ActionOptions& opts)
+  : goToRangeFactor_(1.0),
+    durationSec_(1.0),
+    buttonMask_(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON),
+    modKeyMask_(0),
+    cancelDragKey_(osgGA::GUIEventAdapter::KEY_Escape)
 {
   for (auto i = opts.begin(); i != opts.end(); ++i)
   {
@@ -51,23 +53,36 @@ BoxZoomMouseHandler::BoxZoomMouseHandler(osgEarth::MapNode* mapNode, const osgEa
 
 BoxZoomMouseHandler::~BoxZoomMouseHandler()
 {
+  // Just in case, remove any remnants of the box
+  stopDrag_();
 }
 
 bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
+  // Several mouse events are intercepted when we are actively dragging.
+  const bool currentlyDragging = box_.valid();
+  // Assertion failure means a loss of sync internally and needs fixing
+  assert(currentlyDragging == zoomView_.valid());
+
   switch (ea.getEventType())
   {
   case osgGA::GUIEventAdapter::PUSH:
   {
+    // Ignore all button presses after we start out first drag
+    if (currentlyDragging)
+      return true;
     // only handle left mouse click, and only if there is a current focused view
-    if (ea.getButtonMask() != osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+    if (ea.getButtonMask() != osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON || ea.getModKeyMask() != modKeyMask_)
       return false;
-
+    // Shouldn't happen, but make sure we don't leave the box laying around in an old view
     if (box_.valid() && zoomView_.valid())
       zoomView_->getOrCreateHUD()->removeChild(box_);
 
     simVis::View* view = dynamic_cast<simVis::View*>(aa.asView());
     if (view == NULL)
+      return false;
+    // Don't do anything if we don't have a map node, because the zoom won't be able to work
+    if (!mapNodeForView_(*view))
       return false;
 
     zoomView_ = view;
@@ -83,12 +98,13 @@ bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
 
     return true;
   }
+
   case osgGA::GUIEventAdapter::DRAG:
   {
-    if (ea.getButtonMask() != osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON || !box_.valid())
-      return 0;
-    double curX = ea.getX();
-    double curY = ea.getY();
+    // Do not care about drag unless we are dragging
+    if (!currentlyDragging)
+      return false;
+    // Button mask and mod keys don't matter; they get locked in at click
 
     // may need to update the origin for a view that has a host
     double startX = originX_;
@@ -110,7 +126,7 @@ bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
         // There's a view that defines its extents as ratio of host, but has no host.
         // This can happen while creating a view, but should not happen by the time box zooming occurs.
         assert(0);
-        return 0;
+        return true;
       }
       viewX = hostView->getExtents().width_ * viewX + hostView->getExtents().x_;
       viewY = hostView->getExtents().height_ * viewY + hostView->getExtents().y_;
@@ -129,41 +145,64 @@ bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
     viewWidth -= 3 * padding;
     viewHeight -= 3 * padding;
 
-    if (curX < viewX)
-      curX = viewX;
-    if (curX > viewX + viewWidth)
-      curX = viewX + viewWidth;
-    if (curY < viewY)
-      curY = viewY;
-    if (curY > viewY + viewHeight)
-      curY = viewY + viewHeight;
+    // Clamp the current X values
+    const double curX = osg::clampBetween(static_cast<double>(ea.getX()), viewX, viewX + viewWidth);
+    const double curY = osg::clampBetween(static_cast<double>(ea.getY()), viewY, viewY + viewHeight);
 
     // now calculate the new width and height and update the box geometry
-    double width = curX - originX_;
-    double height = curY - originY_;
-
+    const double width = curX - originX_;
+    const double height = curY - originY_;
     box_->setGeometry(startX, startY, width, height);
 
     return true;
   }
+
   case osgGA::GUIEventAdapter::RELEASE:
-  {
-    if (!box_.valid() || !zoomView_.valid())
+    // Only care if we are dragging
+    if (!currentlyDragging)
       return false;
+    if (!box_.valid() || !zoomView_.valid())
+    {
+      // Need to reset values here to satisfy post-conditions of both being NULL when not dragging
+      box_ = NULL;
+      zoomView_ = NULL;
+      return false;
+    }
 
     setZoom_(originX_, originY_, box_->width(), box_->height());
 
     // done drawing the box, remove it
-    zoomView_->getOrCreateHUD()->removeChild(box_);
-    zoomView_ = NULL;
-    box_ = NULL;
-
+    stopDrag_();
     return true;
-  }
+
+  case osgGA::GUIEventAdapter::SCROLL:
+    // Do not let scroll go through if we are dragging
+    if (currentlyDragging)
+      return true;
+    break;
+
+  case osgGA::GUIEventAdapter::KEYDOWN:
+    // Only intercept the cancel-drag key
+    if (currentlyDragging && ea.getKey() == cancelDragKey_)
+    {
+      stopDrag_();
+      return true;
+    }
+    break;
+
   default:
     break;
   }
   return false;
+}
+
+void BoxZoomMouseHandler::stopDrag_()
+{
+  // Remove the box
+  if (zoomView_.valid() && box_.valid())
+    zoomView_->getOrCreateHUD()->removeChild(box_);
+  box_ = NULL;
+  zoomView_ = NULL;
 }
 
 void BoxZoomMouseHandler::calculateGeoPointFromScreenXY_(double x, double y, simVis::View& view, osgEarth::SpatialReference* srs, std::vector<osgEarth::GeoPoint>& points) const
@@ -175,7 +214,7 @@ void BoxZoomMouseHandler::calculateGeoPointFromScreenXY_(double x, double y, sim
   osgEarth::GeoPoint lonLatAlt(srs, 0, 0, 0, osgEarth::ALTMODE_ABSOLUTE);
   osgUtil::LineSegmentIntersector::Intersections results;
   osg::NodePath mapNodePath;
-  mapNodePath.push_back(mapNode_.get());
+  mapNodePath.push_back(mapNodeForView_(*zoomView_));
   if (view.computeIntersections(*ea.get(), mapNodePath, results))
   {
     // find the first hit under the mouse:
@@ -188,7 +227,7 @@ void BoxZoomMouseHandler::calculateGeoPointFromScreenXY_(double x, double y, sim
 
 void BoxZoomMouseHandler::setZoom_(double originX, double originY, double widthPixels, double heightPixels) const
 {
-  if (!zoomView_.valid() || !mapNode_.valid())
+  if (!zoomView_.valid() || !mapNodeForView_(*zoomView_))
     return;
 
   // if box is too small, treat as a single click and center on new position
@@ -241,6 +280,29 @@ void BoxZoomMouseHandler::setZoom_(double originX, double originY, double widthP
   if (vp.range().value().getValue() < 0.)
     vp.range()->set(1.0, osgEarth::Units::METERS);
   zoomView_->setViewpoint(vp, durationSec_);
+}
+
+void BoxZoomMouseHandler::setButtonMask(int buttonMask)
+{
+  buttonMask_ = buttonMask;
+}
+
+void BoxZoomMouseHandler::setModKeyMask(int modKeyMask)
+{
+  modKeyMask_ = modKeyMask;
+}
+
+void BoxZoomMouseHandler::setCancelDragKey(int key)
+{
+  cancelDragKey_ = key;
+}
+
+osgEarth::MapNode* BoxZoomMouseHandler::mapNodeForView_(const simVis::View& view) const
+{
+  simVis::SceneManager* sceneManager = view.getSceneManager();
+  if (sceneManager)
+    return sceneManager->getMapNode();
+  return NULL;
 }
 
 }

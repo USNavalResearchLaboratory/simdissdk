@@ -459,7 +459,7 @@ BoxZoomNavigationMode::BoxZoomNavigationMode(View* view, bool enableOverhead)
   EarthManipulator::ActionOptions boxZoomOpts;
   boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
   boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
-  mouse_ = new BoxZoomMouseHandler(view->getSceneManager()->getMapNode(), boxZoomOpts);
+  mouse_ = new BoxZoomMouseHandler(boxZoomOpts);
   view_->addEventHandler(mouse_);
 
   // right mouse (or shift left mouse) => globe spin
