@@ -30,10 +30,63 @@
 
 namespace simVis
 {
+
+/** Event handler for adding insets using the mouse. */
+class SDKVIS_EXPORT CreateInsetEventHandler : public osgGA::GUIEventHandler
+{
+public:
+  /**
+  * Constructs a new event handler and attaches it to the specified data object.
+  * @param[in ] host View for which to process inset events. This must be
+  *    a "top-level" view and not an inset itself.
+  */
+  explicit CreateInsetEventHandler(simVis::View* host);
+
+  /** Gets the view for which this handler is processing inset events. */
+  simVis::View* getView();
+
+  /**
+  * Sets the mode for allowing/not allowing for the creation of a inset.
+  * @param add True mean allow for the adding of an inset
+  */
+  void setEnabled(bool enabled);
+
+  /** Returns true when Add-Insert mode is active. */
+  bool isEnabled() const;
+
+  // osgGA::GUIEventHandler
+
+  /** Manages dragging for creating insets using the mouse */
+  virtual bool handle(const osgGA::GUIEventAdapter& evnt, osgGA::GUIActionAdapter& view);
+
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simVis"; }
+  /** Return the class name */
+  virtual const char* className() const { return "CreateInsetEventHandler"; }
+
+protected:
+  virtual ~CreateInsetEventHandler();
+
+private:
+  bool enabled_;  ///< Allows the user the option of creating an inset
+  bool newInsetActionInProgress_;  ///< The user is currently creating an inset
+  int newInsetX0_;
+  int newInsetY0_;
+
+  osg::observer_ptr<simVis::View> host_;
+  osg::ref_ptr<osgGA::GUIEventAdapter> mouseDownEvent_;
+  osg::observer_ptr<osg::MatrixTransform> rubberBand_;
+
+  void beginNewInsetAction_(int mx, int my);
+  void updateNewInsetAction_(int mx, int my);
+  void completeNewInsetAction_(int mx, int my);
+  void cancelNewInsetAction_();
+};
+
 /**
-* Event handler that lets the user manage multiple viewports in the main viewer
-* using the mouse or keyboard.
-*/
+ * Event handler that detects mouse movement and actions then sets the focus on
+ * inset views as appropriate.
+ */
 class SDKVIS_EXPORT InsetViewEventHandler : public osgGA::GUIEventHandler
 {
 public:
@@ -51,7 +104,7 @@ public:
   * @param[in ] host View for which to process inset events. This must be
   *    a "top-level" view and not an inset itself.
   */
-  InsetViewEventHandler(simVis::View* host);
+  explicit InsetViewEventHandler(simVis::View* host);
 
   /** Gets the view for which this handler is processing inset events. */
   simVis::View* getView();
@@ -68,14 +121,17 @@ public:
   */
   int getFocusActions() const;
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
+  * @deprecated
   * Sets the mode for allowing/not allowing for the creation of a inset.
   * @param add True mean allow for the adding of an inset
   */
-  void setAddInsetMode(bool add);
+  SDK_DEPRECATE(void setAddInsetMode(bool add), "Use simVis::CreateInsetEventHandler instead.");
 
-  /** Returns true when Add-Insert mode is active. */
-  bool isAddInsetMode() const;
+  /** @deprecated  Returns true when Add-Insert mode is active. */
+  SDK_DEPRECATE(bool isAddInsetMode() const, "Use simVis::CreateInsetEventHandler instead.");
+#endif
 
   // osgGA::GUIEventHandler
 
@@ -84,7 +140,6 @@ public:
 
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simVis"; }
-
   /** Return the class name */
   virtual const char* className() const { return "InsetViewEventHandler"; }
 
@@ -92,24 +147,17 @@ protected:
   virtual ~InsetViewEventHandler();
 
 private:
-  bool addInsetMode_;  ///< Allows the user the option of creating an inset
-  bool newInsetActionInProgress_;  ///< The user is currently creating an inset
-  int  newInsetX0_;
-  int  newInsetY0_;
-  int  viewNameGen_;
-  int  focusActionsMask_;
+  int focusActionsMask_;
 
-  osg::observer_ptr<simVis::View>         host_;
-  osg::ref_ptr<osgGA::GUIEventAdapter>    mouseDownEvent_;
-  osg::observer_ptr<osg::MatrixTransform> rubberBand_;
-
+  osg::observer_ptr<simVis::View> host_;
   osg::ref_ptr<osgGA::GUIEventHandler> focusDetector_;
-  osg::ref_ptr<ViewManager::Callback>  viewListener_;
+  osg::ref_ptr<ViewManager::Callback> viewListener_;
 
-  void beginNewInsetAction_(int mx, int my);
-  void updateNewInsetAction_(int mx, int my);
-  void completeNewInsetAction_(int mx, int my);
-  void cancelNewInsetAction_();
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  osg::ref_ptr<CreateInsetEventHandler> createInset_;
+#endif
+
+  /** Adds the listener to any views as required */
   void ensureViewListenerInstalled_();
 };
 

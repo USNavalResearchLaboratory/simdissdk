@@ -106,12 +106,12 @@ struct ViewReportCallback : public simVis::ViewManager::Callback
 // An event handler to assist in testing the Inset functionality.
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* handler)
+  MenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* insetViewHandler, simVis::CreateInsetEventHandler* createHandler)
   : viewer_(viewer),
-    handler_(handler),
-    removeAllRequested_(false),
-    insertViewPortMode_(false),
-    border_(0) { }
+    insetViewHandler_(insetViewHandler),
+    createHandler_(createHandler)
+  {
+  }
 
   bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
   {
@@ -121,75 +121,65 @@ struct MenuHandler : public osgGA::GUIEventHandler
     {
       switch (ea.getKey())
       {
-        case 'r': // REMOVE ALL INSETS.
-        {
-          removeAllRequested_ = true;
-          simVis::View::Insets insets;
-          viewer_->getMainView()->getInsets(insets);
-          for (unsigned i = 0; i < insets.size(); ++i)
-            viewer_->getMainView()->removeInset(insets[i].get());
+      case 'r': // REMOVE ALL INSETS.
+      {
+        simVis::View::Insets insets;
+        viewer_->getMainView()->getInsets(insets);
+        for (unsigned int i = 0; i < insets.size(); ++i)
+          viewer_->getMainView()->removeInset(insets[i].get());
 
-          SIM_NOTICE << LC << "Removed all insets.." << std::endl;
-          handled = true;
+        SIM_NOTICE << LC << "Removed all insets." << std::endl;
+        handled = true;
+      }
+      break;
+
+      case 'h': // TOGGLE BETWEEN HOVER-TO-FOCUS and CLICK-TO-FOCUS
+      {
+        int mask = insetViewHandler_->getFocusActions();
+        bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
+        if (hover)
+        {
+          mask = simVis::InsetViewEventHandler::ACTION_CLICK_SCROLL | simVis::InsetViewEventHandler::ACTION_TAB;
+          SIM_NOTICE << LC << "Switched to click-to-focus mode." << std::endl;
         }
+        else
+        {
+          mask = simVis::InsetViewEventHandler::ACTION_HOVER;
+          SIM_NOTICE << LC << "Switched to hover-to-focus mode." << std::endl;
+        }
+        insetViewHandler_->setFocusActions(mask);
+        handled = true;
+      }
+      break;
+
+      case 'i':
+        createHandler_->setEnabled(!createHandler_->isEnabled());
         break;
 
-        case 'h': // TOGGLE BETWEEN HOVER-TO-FOCUS and CLICK-TO-FOCUS
-        {
-          int mask = handler_->getFocusActions();
-          bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
-          if (hover)
-          {
-            mask = simVis::InsetViewEventHandler::ACTION_CLICK_SCROLL | simVis::InsetViewEventHandler::ACTION_TAB;
-            SIM_NOTICE << LC << "Switched to click-to-focus mode.." << std::endl;
-          }
-          else
-          {
-            mask = simVis::InsetViewEventHandler::ACTION_HOVER;
-            SIM_NOTICE << LC << "Switched to hover-to-focus mode.." << std::endl;
-          }
-          handler_->setFocusActions(mask);
-          handled = true;
-        }
+      case '1': // ACTIVATE PERSPECTIVE NAV MODE
+        viewer_->getMainView()->enableOverheadMode(false);
+        viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
+        handled = true;
         break;
 
-        case 'i':
-        {
-          insertViewPortMode_ = !insertViewPortMode_;
-          handler_->setAddInsetMode(insertViewPortMode_);
-        }
+      case '2': // ACTIVATE OVERHEAD NAV MODE
+        viewer_->getMainView()->enableOverheadMode(true);
+        viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
+        handled = true;
         break;
 
-        case '1': // ACTIVATE PERSPECTIVE NAV MODE
-        {
-          viewer_->getMainView()->enableOverheadMode(false);
-          viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
-          handled = true;
-        }
+      case '3': // ACTIVATE GIS NAV MODE
+        viewer_->setNavigationMode(simVis::NAVMODE_GIS);
+        handled = true;
         break;
 
-        case '2': // ACTIVATE OVERHEAD NAV MODE
-        {
-          viewer_->getMainView()->enableOverheadMode(true);
-          viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
-          handled = true;
-        }
+      case 'v':
+        createInset(1, 1, 50, 40);
         break;
 
-        case '3': // ACTIVATE GIS NAV MODE
-        {
-          viewer_->setNavigationMode(simVis::NAVMODE_GIS);
-          handled = true;
-        }
+      case 'b':
+        createInset(1, 1, 98, 98);
         break;
-
-        case 'v':
-          createInset(1, 1, 50, 40);
-          break;
-
-        case 'b':
-          createInset(1, 1, 98, 98);
-          break;
       }
     }
     return handled;
@@ -208,10 +198,8 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
 private:
   osg::ref_ptr<simVis::Viewer> viewer_;
-  osg::observer_ptr<simVis::InsetViewEventHandler> handler_;
-  bool removeAllRequested_;
-  bool insertViewPortMode_;
-  int border_;
+  osg::observer_ptr<simVis::InsetViewEventHandler> insetViewHandler_;
+  osg::observer_ptr<simVis::CreateInsetEventHandler> createHandler_;
 };
 
 int main(int argc, char** argv)
@@ -231,14 +219,15 @@ int main(int argc, char** argv)
   // removed or get focus.
   viewer->addCallback(new ViewReportCallback());
 
-  // Demonstrate the view-drawing service.  This is used to create new inset views with the
-  // mouse.
+  // Demonstrate the view-drawing service.  This is used to create new inset views with the mouse.
   simVis::View* mainView = viewer->getMainView();
-  osg::ref_ptr<simVis::InsetViewEventHandler> insetHandler = new simVis::InsetViewEventHandler(mainView);
-  mainView->addEventHandler(insetHandler);
+  osg::ref_ptr<simVis::InsetViewEventHandler> insetFocusHandler = new simVis::InsetViewEventHandler(mainView);
+  mainView->addEventHandler(insetFocusHandler);
+  osg::ref_ptr<simVis::CreateInsetEventHandler> createInsetsHandler = new simVis::CreateInsetEventHandler(mainView);
+  mainView->addEventHandler(createInsetsHandler);
 
   // Install a handler to respond to the demo keys in this sample.
-  mainView->getCamera()->addEventCallback(new MenuHandler(viewer.get(), insetHandler.get()));
+  mainView->getCamera()->addEventCallback(new MenuHandler(viewer.get(), insetFocusHandler.get(), createInsetsHandler.get()));
 
   // set an initial viewpoint
   mainView->lookAt(45, 0, 0, 0, -89, 12e6);

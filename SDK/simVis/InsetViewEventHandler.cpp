@@ -19,19 +19,16 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/InsetViewEventHandler.h"
-#include "simVis/Utils.h"
-#include "simVis/EarthManipulator.h"
-#include "simNotify/Notify.h"
 #include "osg/Geometry"
 #include "osg/Geode"
 #include "osg/MatrixTransform"
 #include "osg/Notify"
 #include "osg/LineStipple"
 #include "osgDB/ReadFile"
-
-#define SIM_TEST SIM_DEBUG_FP
-//#define SIM_TEST_SIM_WARN
+#include "simNotify/Notify.h"
+#include "simVis/EarthManipulator.h"
+#include "simVis/Utils.h"
+#include "simVis/InsetViewEventHandler.h"
 
 using namespace simVis;
 
@@ -71,17 +68,6 @@ namespace
     geode->setCullingActive(false);
 
     return xform;
-  }
-
-  /// true if the two events combine to make a mouse click at a
-  /// single location
-  static bool isMouseClick(const osgGA::GUIEventAdapter* downEv, const osgGA::GUIEventAdapter* upEv)
-  {
-    return
-      downEv &&
-      upEv &&
-      osg::absolute(upEv->getX() - downEv->getX()) <= 3.0f &&
-      osg::absolute(upEv->getY() - downEv->getY()) <= 3.0f;
   }
 }
 
@@ -180,20 +166,162 @@ namespace
 //------------------------------------------------------------------------
 
 #undef  LC
-#define LC "[InsetViewEventHandler] "
+#define LC "[CreateInsetEventHandler] "
 
-InsetViewEventHandler::InsetViewEventHandler(simVis::View* host) :
-addInsetMode_(false),
-newInsetActionInProgress_(false),
-viewNameGen_(0),
-focusActionsMask_(ACTION_HOVER),
-host_(host),
-rubberBand_(createRubberBand())
+CreateInsetEventHandler::CreateInsetEventHandler(simVis::View* host)
+  : enabled_(false),
+    newInsetActionInProgress_(false),
+    host_(host),
+    rubberBand_(createRubberBand())
 {
   // add an (invisible) rubber band to the HUD.
   rubberBand_->setNodeMask(0);
   host_->getOrCreateHUD()->addChild(rubberBand_.get());
+}
 
+CreateInsetEventHandler::~CreateInsetEventHandler()
+{
+  // tear everything down
+  if (host_.valid())
+    host_->getOrCreateHUD()->removeChild(rubberBand_.get());
+}
+
+simVis::View* CreateInsetEventHandler::getView()
+{
+  return host_.get();
+}
+
+void CreateInsetEventHandler::setEnabled(bool enabled)
+{
+  if (enabled_ == enabled)
+    return;
+
+  enabled_ = enabled;
+  if (!enabled_)
+    cancelNewInsetAction_();
+}
+
+bool CreateInsetEventHandler::isEnabled() const
+{
+  return enabled_;
+}
+
+bool CreateInsetEventHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (!enabled_)
+    return false;
+
+  bool handled = false;
+
+  // Keep the mouse X and Y position values non-negative and inside the view, even when dragging
+  const int mouseX = static_cast<int>(osg::clampBetween(ea.getX(), ea.getXmin(), ea.getXmax()));
+  const int mouseY = static_cast<int>(osg::clampBetween(ea.getY(), ea.getYmin(), ea.getYmax()));
+
+  osgGA::GUIEventAdapter::EventType e = ea.getEventType();
+
+  // the input mask is such that we might be processing a new inset action:
+  bool active = (ea.getButtonMask() == ea.LEFT_MOUSE_BUTTON);
+
+  // start a new inset action?
+  if (!newInsetActionInProgress_)
+  {
+    if (active && e == ea.PUSH)
+    {
+      beginNewInsetAction_(mouseX, mouseY);
+      aa.requestRedraw();
+      handled = true;
+    }
+  }
+
+  // inset action already in progress:
+  else
+  {
+    if (e == ea.RELEASE)
+    {
+      completeNewInsetAction_(mouseX, mouseY);
+      aa.requestRedraw();
+      handled = true;
+    }
+    else if (e == ea.DRAG)
+    {
+      updateNewInsetAction_(mouseX, mouseY);
+      aa.requestRedraw();
+      handled = true;
+    }
+  }
+
+  return handled;
+}
+
+void CreateInsetEventHandler::beginNewInsetAction_(int mx, int my)
+{
+  newInsetX0_ = mx;
+  newInsetY0_ = my;
+  rubberBand_->setNodeMask(~0);
+  rubberBand_->setMatrix(osg::Matrix::translate(mx, my, 0));
+  newInsetActionInProgress_ = true;
+}
+
+void CreateInsetEventHandler::updateNewInsetAction_(int mx, int my)
+{
+  rubberBand_->setMatrix(
+    osg::Matrix::scale(mx - newInsetX0_, my - newInsetY0_, 1) *
+    osg::Matrix::translate(newInsetX0_, newInsetY0_, 0));
+}
+
+void CreateInsetEventHandler::completeNewInsetAction_(int mx, int my)
+{
+  rubberBand_->setNodeMask(0);
+
+  int x = mx > newInsetX0_ ? newInsetX0_ : mx;
+  int y = my > newInsetY0_ ? newInsetY0_ : my;
+  int w = osg::absolute(mx - newInsetX0_);
+  int h = osg::absolute(my - newInsetY0_);
+
+  simVis::View* inset = new simVis::View();
+  inset->setName(host_->getUniqueInsetName());
+  inset->setSceneManager(getView()->getSceneManager());
+  if (host_.valid())
+    inset->applyManipulatorSettings(*host_);
+
+  const simVis::View::Extents& hostex = host_->getExtents();
+  float xr = ((float)x - hostex.x_) / hostex.width_;
+  float yr = ((float)y - hostex.y_) / hostex.height_;
+  float wr = (float)w / hostex.width_;
+  float hr = (float)h / hostex.height_;
+  inset->setExtentsAsRatio(xr, yr, wr, hr);
+
+  // Copy over some, but not all, reasonable eye position data
+  inset->setViewpoint(host_->getViewpoint(), 0.0);
+  if (host_->isOverheadEnabled())
+    inset->enableOverheadMode(true);
+  if (host_->getCameraTether() != NULL)
+    inset->tetherCamera(host_->getCameraTether());
+
+  // Do add after a complete build
+  host_->addInset(inset);
+  newInsetActionInProgress_ = false;
+}
+
+void CreateInsetEventHandler::cancelNewInsetAction_()
+{
+  rubberBand_->setNodeMask(0);
+  newInsetActionInProgress_ = false;
+}
+
+
+//------------------------------------------------------------------------
+
+#undef  LC
+#define LC "[InsetViewEventHandler] "
+
+InsetViewEventHandler::InsetViewEventHandler(simVis::View* host)
+  : focusActionsMask_(ACTION_HOVER),
+    host_(host)
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  , createInset_(new CreateInsetEventHandler(host))
+#endif
+{
   // this callback will allow this object to listen to view events.
   focusDetector_ = new FocusDetector(host_->getFocusManager(), this);
   host_->addEventHandler(focusDetector_.get());
@@ -204,19 +332,14 @@ rubberBand_(createRubberBand())
   for (simVis::View::Insets::iterator i = insets.begin(); i != insets.end(); ++i)
     (*i)->addEventHandler(focusDetector_.get());
 
-  // listen the ViewManager so we can account for any new insets
-  // that appear.
+  // listen the ViewManager so we can account for any new insets that appear.
   ensureViewListenerInstalled_();
 }
-
 
 InsetViewEventHandler::~InsetViewEventHandler()
 {
   if (host_.valid())
   {
-    // tear everything down
-    host_->getOrCreateHUD()->removeChild(rubberBand_.get());
-
     // uninstall the focus detector from any insets:
     simVis::View::Insets insets;
     host_->getInsets(insets);
@@ -249,17 +372,18 @@ simVis::View* InsetViewEventHandler::getView()
 
 void InsetViewEventHandler::setAddInsetMode(bool add)
 {
-  if (addInsetMode_ == add)
-    return;
-
-  addInsetMode_ = add;
-  if (!addInsetMode_)
-    cancelNewInsetAction_();
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  createInset_->setEnabled(add);
+#endif
 }
 
 bool InsetViewEventHandler::isAddInsetMode() const
 {
-  return addInsetMode_;
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  return createInset_->isEnabled();
+#else
+  return false;
+#endif
 }
 
 void InsetViewEventHandler::setFocusActions(int mask)
@@ -274,108 +398,13 @@ int InsetViewEventHandler::getFocusActions() const
 
 bool InsetViewEventHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (!addInsetMode_)
-    return false;
-
-  bool handled = false;
-
-  // Keep the mouse X and Y position values non-negative and inside the view, even when dragging
-  const int mouseX = static_cast<int>(osg::clampBetween(ea.getX(), ea.getXmin(), ea.getXmax()));
-  const int mouseY = static_cast<int>(osg::clampBetween(ea.getY(), ea.getYmin(), ea.getYmax()));
-
-  osgGA::GUIEventAdapter::EventType e = ea.getEventType();
-
-  // the input mask is such that we might be processing a new inset action:
-  bool active = (ea.getButtonMask() == ea.LEFT_MOUSE_BUTTON);
-
-  // start a new inset action?
-  if (!newInsetActionInProgress_)
-  {
-    if (active && e == ea.PUSH)
-    {
-      beginNewInsetAction_(mouseX, mouseY);
-      aa.requestRedraw();
-      handled = true;
-    }
-  }
-
-  // inset action already in progress:
-  else
-  {
-   if (e == ea.RELEASE)
-    {
-      completeNewInsetAction_(mouseX, mouseY);
-      aa.requestRedraw();
-      handled = true;
-    }
-    else if (e == ea.DRAG)
-    {
-      updateNewInsetAction_(mouseX, mouseY);
-      aa.requestRedraw();
-      handled = true;
-    }
-  }
-
-  if (!handled && e == ea.FRAME)
-  {
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  const bool handled = createInset_->handle(ea, aa);
+#else
+  const bool handled = false;
+#endif
+  if (!handled && ea.getEventType() == ea.FRAME)
     ensureViewListenerInstalled_();
-  }
 
-  return true;
-}
-
-void InsetViewEventHandler::beginNewInsetAction_(int mx, int my)
-{
-  newInsetX0_ = mx;
-  newInsetY0_ = my;
-  rubberBand_->setNodeMask(~0);
-  rubberBand_->setMatrix(osg::Matrix::translate(mx, my, 0));
-  newInsetActionInProgress_ = true;
-}
-
-void InsetViewEventHandler::updateNewInsetAction_(int mx, int my)
-{
-  rubberBand_->setMatrix(
-    osg::Matrix::scale(mx - newInsetX0_, my - newInsetY0_, 1) *
-    osg::Matrix::translate(newInsetX0_, newInsetY0_, 0));
-}
-
-void InsetViewEventHandler::completeNewInsetAction_(int mx, int my)
-{
-  rubberBand_->setNodeMask(0);
-
-  int x = mx > newInsetX0_? newInsetX0_ : mx;
-  int y = my > newInsetY0_? newInsetY0_ : my;
-  int w = osg::absolute(mx - newInsetX0_);
-  int h = osg::absolute(my - newInsetY0_);
-
-  simVis::View* inset = new simVis::View();
-  inset->setName(host_->getUniqueInsetName());
-  inset->setSceneManager(getView()->getSceneManager());
-  if (host_.valid())
-    inset->applyManipulatorSettings(*host_);
-
-  const simVis::View::Extents& hostex = host_->getExtents();
-  float xr = ((float)x - hostex.x_) / hostex.width_;
-  float yr = ((float)y - hostex.y_) / hostex.height_;
-  float wr = (float)w / hostex.width_;
-  float hr = (float)h / hostex.height_;
-  inset->setExtentsAsRatio(xr, yr, wr, hr);
-
-  // Copy over some, but not all, reasonable eye position data
-  inset->setViewpoint(host_->getViewpoint(), 0.0);
-  if (host_->isOverheadEnabled())
-    inset->enableOverheadMode(true);
-  if (host_->getCameraTether() != NULL)
-    inset->tetherCamera(host_->getCameraTether());
-
-  // Do add after a complete build
-  host_->addInset(inset);
-  newInsetActionInProgress_ = false;
-}
-
-void InsetViewEventHandler::cancelNewInsetAction_()
-{
-  rubberBand_->setNodeMask(0);
-  newInsetActionInProgress_ = false;
+  return handled;
 }
