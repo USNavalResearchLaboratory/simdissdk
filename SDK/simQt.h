@@ -62,6 +62,7 @@
 #include "simQt/PersistentFileLogger.h"
 #include "simQt/QtConversion.h"
 #include "simQt/QtFormatting.h"
+#include "simQt/RegExpImpl.h"
 #include "simQt/ResourceInitializer.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/SearchLineEdit.h"

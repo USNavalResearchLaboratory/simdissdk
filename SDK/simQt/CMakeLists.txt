@@ -77,6 +77,10 @@ if(TARGET simData)
         ${SIMQT_INC}EntityTypeFilterWidget.h
         ${SIMQT_INC}TimeWidgetClockBinding.h
     )
+
+    list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}RegExpImpl.h
+    )
 endif()
 
 # Parts of simQt depend on simVis
@@ -168,6 +172,7 @@ if(TARGET simData)
         ${SIMQT_SRC}EntityTreeWidget.cpp
         ${SIMQT_SRC}EntityTypeFilter.cpp
         ${SIMQT_SRC}EntityTypeFilterWidget.cpp
+        ${SIMQT_SRC}RegExpImpl.cpp
         ${SIMQT_SRC}TimeWidgetClockBinding.cpp
     )
 endif()

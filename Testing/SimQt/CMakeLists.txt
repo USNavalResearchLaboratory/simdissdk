@@ -7,11 +7,20 @@ endif()
 
 project(SimQt_UnitTests)
 
-create_test_sourcelist(SimQtTestFiles SimQtTests.cpp
+set(SimQtTestsSourceList
     ActionRegistryTest.cpp
     QColorTest.cpp
     SettingsTest.cpp
     PersistentLoggerTest.cpp
+)
+if(TARGET simData)
+    list(APPEND SimQtTestsSourceList
+        RangeToRegExpTest.cpp
+    )
+endif()
+
+create_test_sourcelist(SimQtTestFiles SimQtTests.cpp
+    ${SimQtTestsSourceList}
 )
 
 VSI_INCLUDE_QT_USE_FILE()
@@ -30,3 +39,6 @@ add_test(NAME ActionRegistryTest COMMAND SimQtTests ActionRegistryTest)
 add_test(NAME QColorTest COMMAND SimQtTests QColorTest)
 add_test(NAME SettingsTest COMMAND SimQtTests SettingsTest)
 add_test(NAME PersistentLoggerTest COMMAND SimQtTests PersistentLoggerTest)
+if(TARGET simData)
+    add_test(NAME RangeToRegExpTest COMMAND SimQtTests RangeToRegExpTest)
+endif()
