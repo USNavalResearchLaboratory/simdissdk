@@ -21,7 +21,9 @@
  */
 #include <limits>
 #include "simCore/Common/SDKAssert.h"
+#include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
+#include "simCore/Time/Utils.h"
 #include "simCore/Calc/Math.h"
 
 namespace
@@ -394,13 +396,6 @@ namespace
       rv += SDK_ASSERT(!simCore::areEqual(result.Double(), 1e-10, 1e-10));
     }
 
-    {
-      simCore::Seconds s1(86400);
-      simCore::Seconds s2(86400);
-      simCore::Seconds result = s1 * s2;
-      rv += SDK_ASSERT(!simCore::areEqual(result.Double(), 7464960000.0));
-    }
-
     return rv;
   }
 
@@ -531,13 +526,19 @@ namespace
     }
 
     {
-      simCore::Seconds result(2147483647000.);
-      rv += SDK_ASSERT(simCore::areEqual(result.Double(), std::numeric_limits<int>::max()));
+      simCore::Seconds result(0, -1500000000);
+      rv += SDK_ASSERT(simCore::areEqual(result.Double(), -1.5));
+    }
+
+    // test going over the limits
+    {
+      simCore::Seconds result(std::numeric_limits<int64_t>::max() * 10.0);
+      rv += SDK_ASSERT(simCore::areEqual(result.Double(), static_cast<double>(std::numeric_limits<int64_t>::max())));
     }
 
     {
-      simCore::Seconds result(-2147483647000.);
-      rv += SDK_ASSERT(simCore::areEqual(result.Double(), std::numeric_limits<int>::min()));
+      simCore::Seconds result(std::numeric_limits<int64_t>::min() * 10.0);
+      rv += SDK_ASSERT(simCore::areEqual(result.Double(), static_cast<double>(std::numeric_limits<int64_t>::min())));
     }
 
     return rv;
@@ -575,6 +576,28 @@ namespace
     rv += SDK_ASSERT(simCore::areEqual(simCore::Seconds(1.993456789).rounded(7).Double(), 1.9934568, 1e-9));
     return rv;
   }
+
+  int testTimeStamp()
+  {
+    int rv = 0;
+
+    // Make sure the constants are consistent
+    rv += SDK_ASSERT(simCore::MIN_TIME_STAMP.referenceYear() == simCore::MIN_TIME_YEAR);
+    rv += SDK_ASSERT(simCore::MAX_TIME_STAMP.referenceYear() == simCore::MAX_TIME_YEAR);
+
+    // Make sure there is microsecond resolution
+    rv += SDK_ASSERT((simCore::MIN_TIME_STAMP + simCore::Seconds(0, 1000)).secondsSinceRefYear().Double() != simCore::MIN_TIME_STAMP.secondsSinceRefYear().Double());
+    rv += SDK_ASSERT((simCore::MAX_TIME_STAMP - simCore::Seconds(0, 1000)).secondsSinceRefYear().Double() != simCore::MAX_TIME_STAMP.secondsSinceRefYear().Double());
+    rv += SDK_ASSERT((simCore::MAX_TIME_STAMP - simCore::Seconds(0, 1000)).secondsSinceRefYear(simCore::MIN_TIME_YEAR).Double() != simCore::MAX_TIME_STAMP.secondsSinceRefYear(simCore::MIN_TIME_YEAR).Double());
+
+    // Handle bogus values
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_STAMP.referenceYear(), std::numeric_limits<double>::max()) == simCore::MAX_TIME_STAMP);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_STAMP.referenceYear(), -std::numeric_limits<double>::max()) == simCore::MIN_TIME_STAMP);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MAX_TIME_STAMP.referenceYear(), std::numeric_limits<double>::max()) == simCore::MAX_TIME_STAMP);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MAX_TIME_STAMP.referenceYear(), -std::numeric_limits<double>::max()) == simCore::MIN_TIME_STAMP);
+
+    return rv;
+  }
 }
 
 int TimeClassTest(int argc, char* argv[])
@@ -587,6 +610,7 @@ int TimeClassTest(int argc, char* argv[])
   rv += testDivisionSeconds();
   rv += testInput();
   rv += testRound();
+  rv += testTimeStamp();
 
   std::cout << "TimeClassTest " << (rv == 0 ? "PASSED" : "FAILED") << std::endl;
 

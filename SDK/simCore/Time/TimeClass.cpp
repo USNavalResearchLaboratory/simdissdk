@@ -38,21 +38,11 @@ using namespace simCore;
 
 void Seconds::fix_()
 {
-  if (fraction_ >= 0)
+  if ((fraction_ >= static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT)) ||
+    (fraction_ <= -static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT)))
   {
-    while (fraction_ >= INPUT_CONV_FACTOR_PREC_LIMIT)
-    {
-      fraction_ -= static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT);
-      seconds_ += 1;
-    }
-  }
-  else
-  {
-    while (fraction_ < 0)
-    {
-      fraction_ += static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT);
-      seconds_ -= 1;
-    }
+    seconds_ += (fraction_ / static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT));
+    fraction_ = fraction_ % static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT);
   }
 }
 
@@ -61,21 +51,21 @@ void Seconds::fix_()
 void Seconds::convert_(double dtime)
 {
   // maximum storage value of class is INT_MAX
-  if (dtime >= std::numeric_limits<int>::max())
+  if (dtime >= std::numeric_limits<int64_t>::max())
   {
-    seconds_ = std::numeric_limits<int>::max();
+    seconds_ = std::numeric_limits<int64_t>::max();
     fraction_ = 0;
     return;
   }
   // minimum storage value of class is INT_MIN
-  if (dtime <= std::numeric_limits<int>::min())
+  if (dtime <= std::numeric_limits<int64_t>::min())
   {
-    seconds_ = std::numeric_limits<int>::min();
+    seconds_ = std::numeric_limits<int64_t>::min();
     fraction_ =  0;
     return;
   }
 
-  seconds_ = static_cast<int>(dtime);
+  seconds_ = static_cast<int64_t>(dtime);
   fraction_ =  (dtime < 0) ?
     static_cast<int>((dtime - seconds_ - INPUT_ROUND_UP_VALUE) * INPUT_CONV_FACTOR_PREC_LIMIT) :
     static_cast<int>((dtime - seconds_ + INPUT_ROUND_UP_VALUE) * INPUT_CONV_FACTOR_PREC_LIMIT);
@@ -149,13 +139,6 @@ Seconds Seconds::operator / (const Seconds& time) const
   return Seconds(Double() / time.Double());
 }
 
-//------------------------------------------------------------------------
-
-std::ostream& Seconds::operator << (std::ostream& out) const
-{
-  out << Double();
-  return out;
-}
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
@@ -172,35 +155,55 @@ TimeStamp::TimeStamp()
 
 TimeStamp::TimeStamp(int refYear, Seconds secondsSinceRefYear)
 {
-  // While this class could conceivably handle times before 1900, this is asserted on
-  // here to avoid common errors where the order of operands is reversed.
-  assert(refYear >= 1900);
   setTime(refYear, secondsSinceRefYear);
-
-  // In an attempt to catch parameter reversal problems, we are also checking the
-  // actual year of the date.  It should generally be between 1900 and 16384.  This is
-  // of course a soft limit, but this code will likely not exist past 16384.
-  assert(referenceYear_ >= 1900 && (referenceYear_ <= 16384));
 }
 
 //------------------------------------------------------------------------
 
 void TimeStamp::fix_()
 {
-  double dSecPerDay = SECPERDAY;
-  double secondsPerYear = dSecPerDay * daysPerYear(referenceYear_);
-  secondsSinceRefYear_.fix_();
-
-  while (secondsSinceRefYear_ >= (Seconds)secondsPerYear)
+  // Test for Infinite time
+  if (referenceYear_ == 16384)
   {
-    secondsSinceRefYear_ -= secondsPerYear;
-    secondsPerYear = dSecPerDay * daysPerYear(++referenceYear_);
+    secondsSinceRefYear_ = ZERO_SECONDS;
+    return;
   }
 
-  while (secondsSinceRefYear_ < ZERO_SECONDS)
+  double secondsPerYear = SECPERDAY * daysPerYear(referenceYear_);
+  const int MAX_FIX = MAX_TIME_YEAR - MIN_TIME_YEAR + 1;
+  int counter = 0;
+
+  while ((secondsSinceRefYear_ >= (Seconds)secondsPerYear) && (counter++ < MAX_FIX))
   {
-    secondsPerYear = dSecPerDay * daysPerYear(--referenceYear_);
+    secondsSinceRefYear_ -= secondsPerYear;
+    secondsPerYear = SECPERDAY * daysPerYear(++referenceYear_);
+  }
+
+  while ((secondsSinceRefYear_ < ZERO_SECONDS) && (counter++ < MAX_FIX))
+  {
+    secondsPerYear = SECPERDAY * daysPerYear(--referenceYear_);
     secondsSinceRefYear_ += secondsPerYear;
+  }
+
+  // Bad data made it in
+  if (counter >= MAX_FIX)
+  {
+    if (secondsSinceRefYear_ < ZERO_SECONDS)
+    {
+      *this = MIN_TIME_STAMP;
+    }
+    else
+    {
+      *this = MAX_TIME_STAMP;
+    }
+  }
+  else if (referenceYear_ < MIN_TIME_YEAR)
+  {
+    *this = MIN_TIME_STAMP;
+  }
+  else if (referenceYear_ > MAX_TIME_YEAR)
+  {
+    *this = MAX_TIME_STAMP;
   }
 }
 
@@ -216,16 +219,14 @@ Seconds TimeStamp::secondsSinceRefYear(int refYear) const
 
 void TimeStamp::setTime(int refYear, Seconds secondsSinceRefYear)
 {
+  // In an attempt to catch parameter reversal problems, we are also checking the
+  // actual year of the date.  It should generally be between 1900 and 16384.  This is
+  // of course a soft limit, but this code will likely not exist past 16384.
+  assert(refYear >= 1900 && (refYear <= 16384));
+
   referenceYear_ = refYear;
   secondsSinceRefYear_ = secondsSinceRefYear;
   fix_();
-}
-
-//------------------------------------------------------------------------
-
-size_t TimeStamp::sizeOf() const
-{
-  return sizeof(referenceYear_) + sizeof(secondsSinceRefYear_.seconds_) + sizeof(secondsSinceRefYear_.fraction_);
 }
 
 //------------------------------------------------------------------------
@@ -244,7 +245,14 @@ TimeStamp& TimeStamp::operator = (const TimeStamp& time)
 
 Seconds TimeStamp::operator - (const TimeStamp& t) const
 {
-  int yearDifference = (referenceYear_ - t.referenceYear_);
+  const int yearDifference = (referenceYear_ - t.referenceYear_);
+  if (std::abs(yearDifference) > (MAX_TIME_STAMP.referenceYear() - MIN_TIME_STAMP.referenceYear()))
+  {
+    // class only tested between years MIN_YEAR and MAX_YEAR
+    assert(false);
+    return Seconds();
+  }
+
   int year = 0;
   Seconds secondsValue;
   double dSecPerDay = SECPERDAY;
