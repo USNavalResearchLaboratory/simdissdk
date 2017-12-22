@@ -1,3 +1,7 @@
+SET(CTEST_CUSTOM_MEMCHECK_IGNORE
+    # This test is crashing in a Qt call (QRegularExpression::match) which can't be fixed from our end
+    RangeToRegExpTest
+)
 # Ignore certain files in coverage reports
 SET(CTEST_CUSTOM_COVERAGE_EXCLUDE
     ${CTEST_CUSTOM_COVERAGE_EXCLUDE}
