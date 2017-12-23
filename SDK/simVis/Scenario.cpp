@@ -114,12 +114,11 @@ namespace simVis
     simCore::Vec3 outPos;
 
     // Retrieve position and error out if needed
-    const bool rv = node_->getLocator()->getLocatorPosition(&outPos, simCore::COORD_SYS_LLA);
-    if (!rv)
+    if (0 != node_->getPosition(&outPos, simCore::COORD_SYS_LLA))
       return false;
     // Convert to a Vec3d for LLA; note osgEarth expects Lon, Lat, Alt (XYZ)
     output = osg::Vec3d(outPos.y() * simCore::RAD2DEG, outPos.x() * simCore::RAD2DEG, outPos.z());
-    return rv;
+    return true;
   }
 
   bool ScenarioManager::EntityRecord::dataStoreMatches(const simData::DataStore* dataStore) const
