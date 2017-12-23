@@ -19,11 +19,12 @@
  * disclose, or release this software.
  *
  */
-
+#include <cassert>
 #include "osgEarthUtil/EarthManipulator"
 #include "osgEarthUtil/ViewFitter"
 #include "simVis/EarthManipulator.h"
 #include "simVis/BoxGraphic.h"
+#include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/BoxZoomMouseHandler.h"
 

@@ -170,8 +170,8 @@ namespace simVis
     virtual int run();
 
   protected:
-
-    virtual ~Viewer() {}
+    /// osg::Referenced-derived; destructor body needs to be in the .cpp
+    virtual ~Viewer();
 
   private:
     osg::ref_ptr<SceneManager> scene_;

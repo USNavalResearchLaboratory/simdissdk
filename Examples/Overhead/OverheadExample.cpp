@@ -36,6 +36,8 @@
 #include "simVis/NavigationModes.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 #include "simUtil/DbConfigurationFile.h"

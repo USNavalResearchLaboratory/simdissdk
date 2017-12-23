@@ -47,6 +47,7 @@
 #include "simVis/osgEarthVersion.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/Registry.h"
+#include "simVis/Scenario.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
 #include "simVis/SceneManager.h"

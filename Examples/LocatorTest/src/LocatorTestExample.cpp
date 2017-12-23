@@ -26,6 +26,13 @@
  * A unit test program that validates the behavior of the Locator subsystem.
  */
 
+#include "osg/LineWidth"
+#include "osgEarth/StringUtils"
+#include "osgEarthSymbology/Style"
+#include "osgEarthUtil/LatLongFormatter"
+#include "osgEarthUtil/MGRSFormatter"
+#include "osgEarthAnnotation/LabelNode"
+
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"
@@ -35,24 +42,16 @@
 /// storage of time/space data for our platform
 #include "simData/MemoryDataStore.h"
 
-/// include definitions for objects of interest
+#include "simVis/Locator.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
-#include "simVis/Locator.h"
-
-#include "simVis/ScenarioDataStoreAdapter.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
 /// paths to models
 #include "simUtil/ExampleResources.h"
-
-#include "osgEarth/StringUtils"
-#include "osgEarthSymbology/Style"
-#include "osgEarthUtil/LatLongFormatter"
-#include "osgEarthUtil/MGRSFormatter"
-#include "osgEarthAnnotation/LabelNode"
-#include "osg/LineWidth"
 
 using namespace osgEarth;
 using namespace osgEarth::Symbology;

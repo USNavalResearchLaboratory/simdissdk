@@ -33,6 +33,8 @@
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simUtil/DefaultDataStoreValues.h"
 #include "simUtil/ExampleResources.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 

@@ -33,6 +33,8 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/Platform.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/Utils.h"
 #include "simUtil/ExampleResources.h"

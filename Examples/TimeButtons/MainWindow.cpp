@@ -29,6 +29,7 @@
 #include "simData/MemoryDataStore.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
+#include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simQt/TimeButtons.h"
 #include "simUtil/ExampleResources.h"

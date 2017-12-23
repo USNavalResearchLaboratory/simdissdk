@@ -27,11 +27,11 @@
  */
 
 #include "osgEarthUtil/Controls"
-
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simVis/Compass.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/NavigationModes.h"

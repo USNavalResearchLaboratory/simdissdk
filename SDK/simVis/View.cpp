@@ -37,10 +37,11 @@
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
 #include "simVis/NavigationModes.h"
+#include "simVis/OverheadMode.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
-#include "simVis/OverheadMode.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 

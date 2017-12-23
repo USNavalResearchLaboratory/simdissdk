@@ -35,6 +35,8 @@
 
 #include "simVis/Platform.h"
 #include "simVis/Beam.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 

@@ -19,17 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/Angle.h"
-#include "simCore/String/Constants.h"
-#include "simCore/Time/Utils.h"
-#include "simVis/Platform.h"
-#include "simVis/Popup.h"
-#include "simVis/Picker.h"
-#include "simVis/View.h"
-#include "simVis/Registry.h"
-#include "simVis/PlatformModel.h"
+#include <sstream>
+#include <iomanip>
 
-#include "osgEarthUtil/Controls"
 #include "osg/Geode"
 #include "osg/NodeCallback"
 #include "osg/NodeVisitor"
@@ -39,9 +31,21 @@
 #include "osgUtil/IntersectionVisitor"
 #include "osgUtil/LineSegmentIntersector"
 #include "osgViewer/View"
+#include "osgEarthUtil/Controls"
 
-#include <sstream>
-#include <iomanip>
+#include "simCore/Calc/Angle.h"
+#include "simCore/String/Constants.h"
+#include "simCore/Time/Utils.h"
+
+#include "simVis/Locator.h"
+#include "simVis/Picker.h"
+#include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/Registry.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
+#include "simVis/View.h"
+#include "simVis/Popup.h"
 
 #define LC "simVis::Popup "
 

@@ -31,6 +31,7 @@
 #include "simVis/Viewer.h"
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/Platform.h"
+#include "simVis/SceneManager.h"
 #include "simUtil/DbConfigurationFile.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/MousePositionManipulator.h"

@@ -26,6 +26,7 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
 #include "simVis/Registry.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Text.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"

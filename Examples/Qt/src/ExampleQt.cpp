@@ -28,6 +28,7 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simUtil/ExampleResources.h"
+#include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
 

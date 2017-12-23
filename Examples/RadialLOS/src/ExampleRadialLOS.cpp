@@ -32,6 +32,8 @@
 #include "simCore/Calc/Angle.h"
 #include "simVis/Viewer.h"
 #include "simVis/RadialLOSNode.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simUtil/ExampleResources.h"
 

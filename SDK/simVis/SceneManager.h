@@ -30,7 +30,6 @@
 #include "osgEarthUtil/Ocean"
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
-#include "simVis/Scenario.h"
 #include "simVis/Types.h"
 
 namespace osgEarth { namespace Drivers
@@ -42,6 +41,8 @@ namespace osgEarth { namespace Drivers
 namespace simVis
 {
   class ProjectorManager;
+  class ScenarioDisplayHints;
+  class ScenarioManager;
 
   /**
    * @anchor SceneManagerLayout

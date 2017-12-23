@@ -25,6 +25,8 @@
 #include "simVis/View.h"
 #include "osgEarthUtil/Controls"
 
+namespace simData { class DataStore; }
+
 /**
 * UI Controls used in the SIMDIS SDK Examples
 */

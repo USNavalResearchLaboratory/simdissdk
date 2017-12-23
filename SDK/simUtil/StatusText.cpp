@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include "simVis/View.h"
 #include "simCore/String/TextReplacer.h"
 #include "simUtil/HudManager.h"

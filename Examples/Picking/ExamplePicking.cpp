@@ -42,6 +42,7 @@
 #include "simVis/OverheadMode.h"
 #include "simVis/Picker.h"
 #include "simVis/Popup.h"
+#include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"

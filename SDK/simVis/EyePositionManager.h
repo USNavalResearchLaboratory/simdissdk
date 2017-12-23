@@ -25,8 +25,10 @@
 #include <memory>
 #include <string>
 #include "osgEarthUtil/EarthManipulator"
+#include "simData/ObjectId.h"
 #include "simVis/View.h"
 
+namespace simData { class DataStore; }
 namespace simVis {
 
 /** Common define for referencing the action of saving an eye position */

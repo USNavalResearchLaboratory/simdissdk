@@ -34,6 +34,8 @@
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simVis/Platform.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/Utils.h"
 

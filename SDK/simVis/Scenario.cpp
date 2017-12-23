@@ -40,6 +40,7 @@
 #include "simVis/Gate.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
+#include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/PlatformFilter.h"
