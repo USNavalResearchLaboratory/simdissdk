@@ -27,6 +27,7 @@
 #define SIMQT_REGEXPIMPL_H
 
 #include <string>
+#include "simCore/Common/Export.h"
 #include "simData/CategoryData/CategoryFilter.h"
 
 class QRegExp;
@@ -37,7 +38,7 @@ namespace simQt {
 /**
 * Class to abstract away the regular expression matching functionality
 */
-class RegExpImpl : public simData::RegExpFilter
+class SDKQT_EXPORT RegExpImpl : public simData::RegExpFilter
 {
 public:
 
@@ -114,7 +115,7 @@ private:
 };
 
 /** Implements a RegExpFilterFactory to create Qt based RegExpFilter objects */
-class RegExpFilterFactoryImpl : public simData::RegExpFilterFactory
+class SDKQT_EXPORT RegExpFilterFactoryImpl : public simData::RegExpFilterFactory
 {
 public:
   RegExpFilterFactoryImpl();
