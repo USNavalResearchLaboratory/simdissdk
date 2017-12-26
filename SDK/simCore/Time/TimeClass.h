@@ -404,8 +404,10 @@ namespace simCore
 
   //------------------------------------------------------------------------
 
+  /** Sentinel value for year that represents an infinite time value. */
+  static const int INFINITE_TIME_YEAR = 16384;
   /** Sentinel value for simCore::TimeStamp that represents an infinite time value. */
-  static const TimeStamp INFINITE_TIME_STAMP(16384, 0.0);
+  static const TimeStamp INFINITE_TIME_STAMP(INFINITE_TIME_YEAR, 0.0);
   /** Sentinel value for minimum year supported by simCore::TimeStamp */
   static const int MIN_TIME_YEAR = 1970;
   /** Sentinel value for simCore::TimeStamp that represents the minimum valid time value. */

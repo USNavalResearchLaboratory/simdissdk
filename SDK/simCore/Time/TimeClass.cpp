@@ -163,7 +163,7 @@ TimeStamp::TimeStamp(int refYear, Seconds secondsSinceRefYear)
 void TimeStamp::fix_()
 {
   // Test for Infinite time
-  if (referenceYear_ == 16384)
+  if (referenceYear_ == INFINITE_TIME_YEAR)
   {
     secondsSinceRefYear_ = ZERO_SECONDS;
     return;
@@ -220,9 +220,9 @@ Seconds TimeStamp::secondsSinceRefYear(int refYear) const
 void TimeStamp::setTime(int refYear, Seconds secondsSinceRefYear)
 {
   // In an attempt to catch parameter reversal problems, we are also checking the
-  // actual year of the date.  It should generally be between 1900 and 16384.  This is
-  // of course a soft limit, but this code will likely not exist past 16384.
-  assert(refYear >= 1900 && (refYear <= 16384));
+  // actual year of the date.  It should generally be between 1900 and INFINITE_TIME_YEAR.  This is
+  // of course a soft limit, but this code will likely not exist past INFINITE_TIME_YEAR.
+  assert(refYear >= 1900 && (refYear <= INFINITE_TIME_YEAR));
 
   referenceYear_ = refYear;
   secondsSinceRefYear_ = secondsSinceRefYear;
@@ -245,6 +245,10 @@ TimeStamp& TimeStamp::operator = (const TimeStamp& time)
 
 Seconds TimeStamp::operator - (const TimeStamp& t) const
 {
+  // If either year presents a infinity return with zero seconds
+  if ((referenceYear_ == INFINITE_TIME_YEAR) || (t.referenceYear_ == INFINITE_TIME_YEAR))
+    return Seconds();
+
   const int yearDifference = (referenceYear_ - t.referenceYear_);
   if (std::abs(yearDifference) > (MAX_TIME_STAMP.referenceYear() - MIN_TIME_STAMP.referenceYear()))
   {
