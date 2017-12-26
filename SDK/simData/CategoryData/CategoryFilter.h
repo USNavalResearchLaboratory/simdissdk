@@ -35,7 +35,7 @@ namespace simData {
 * Class for providing a regular expression filter to apply to category data. Implement this class and provide a factory to
 * the CategoryFilter to support use of regular expression filtering on category data
 */
-class SDKDATA_EXPORT RegExpFilter
+class RegExpFilter
 {
 public:
   /** Destructor */
@@ -58,7 +58,7 @@ public:
 typedef std::shared_ptr<RegExpFilter> RegExpFilterPtr;
 
 /** Factory class for creating RegExpFilter objects */
-class SDKDATA_EXPORT RegExpFilterFactory
+class RegExpFilterFactory
 {
 public:
 
