@@ -72,6 +72,70 @@ std::string RegExpImpl::pattern() const
 }
 
 //------------------------------------------------------------
+void RegExpImpl::setPattern(const std::string& pattern)
+{
+  exp_ = pattern;
+  if (fastRegex_)
+    fastRegex_->setPattern(QString::fromStdString(pattern));
+  if (qRegExp_)
+    qRegExp_->setPattern(QString::fromStdString(pattern));
+}
+
+//------------------------------------------------------------
+RegExpImpl::CaseSensitivity RegExpImpl::caseSensitivity() const
+{
+  return caseSensitivity_;
+}
+
+//------------------------------------------------------------
+void RegExpImpl::setCaseSensitivity(RegExpImpl::CaseSensitivity caseSensitivity)
+{
+  caseSensitivity_ = caseSensitivity;
+  if (fastRegex_)
+  {
+    QFlags<QRegularExpression::PatternOption> newOpts = (caseSensitivity_ == CaseSensitive) ?
+      (fastRegex_->patternOptions() & ~QRegularExpression::CaseInsensitiveOption) : (fastRegex_->patternOptions() | QRegularExpression::CaseInsensitiveOption);
+    fastRegex_->setPatternOptions(newOpts);
+  }
+  if (qRegExp_)
+  {
+    qRegExp_->setCaseSensitivity(qtCaseSensitivity(caseSensitivity));
+  }
+
+}
+
+//------------------------------------------------------------
+RegExpImpl::PatternSyntax RegExpImpl::patternSyntax() const
+{
+  return patternSyntax_;
+}
+
+//------------------------------------------------------------
+void RegExpImpl::setPatternSyntax(RegExpImpl::PatternSyntax patternSyntax)
+{
+  if (patternSyntax_ == patternSyntax)
+    return;
+
+  PatternSyntax oldSyntax = patternSyntax_;
+  patternSyntax_ = patternSyntax;
+
+  // Going from not RegExp to RegExp requires reinitialization
+  if (patternSyntax_ == RegExp)
+  {
+    delete fastRegex_;
+    initializeQRegExp_();
+  }
+  // Going from RegExp to not RegExp requires reinitialization
+  else if (oldSyntax == RegExp)
+  {
+    delete qRegExp_;
+    initializeQRegExp_();
+  }
+  else if (qRegExp_)
+    qRegExp_->setPatternSyntax(qtPatternSyntax(patternSyntax));
+}
+
+//------------------------------------------------------------
 bool RegExpImpl::isValid() const
 {
   if (fastRegex_ != NULL)
@@ -92,12 +156,83 @@ std::string RegExpImpl::errors() const
 }
 
 //------------------------------------------------------------
+Qt::CaseSensitivity RegExpImpl::qtCaseSensitivity(CaseSensitivity simQtCaseSensitivity)
+{
+  switch (simQtCaseSensitivity)
+  {
+  case CaseSensitive :
+    return Qt::CaseSensitive;
+  case CaseInsensitive :
+    return Qt::CaseInsensitive;
+  }
+
+  // To satisfy warnings.  Should never be reached
+  return Qt::CaseSensitive;
+}
+
+//------------------------------------------------------------
+RegExpImpl::CaseSensitivity RegExpImpl::simQtCaseSensitivity(Qt::CaseSensitivity qtCaseSensitivity)
+{
+  switch (qtCaseSensitivity)
+  {
+  case Qt::CaseSensitive :
+    return CaseSensitive;
+  case Qt::CaseInsensitive :
+    return CaseInsensitive;
+  }
+
+  // To satisfy warnings.  Should never be reached
+  return CaseSensitive;
+}
+
+//------------------------------------------------------------
+QRegExp::PatternSyntax RegExpImpl::qtPatternSyntax(PatternSyntax simQtPatternSyntax)
+{
+  switch (simQtPatternSyntax)
+  {
+  case RegExp :
+    return QRegExp::RegExp;
+  case Wildcard :
+    return QRegExp::Wildcard;
+  case FixedString :
+    return QRegExp::FixedString;
+  }
+
+  // To satisfy warnings.  Should never be reached
+  return QRegExp::RegExp;
+}
+
+//------------------------------------------------------------
+RegExpImpl::PatternSyntax RegExpImpl::simQtPatternSyntax(QRegExp::PatternSyntax qtPatternSyntax)
+{
+  switch (qtPatternSyntax)
+  {
+  case QRegExp::RegExp2 :
+    SIM_WARN << "Pattern syntax \"RegExp2\" unsupported for simQt::RegExpImpl.  Defaulting to \"RegExp\"";
+    return RegExp;
+  case QRegExp::W3CXmlSchema11:
+    SIM_WARN << "Pattern syntax \"W3CXmlSchema11\" unsupported for simQt::RegExpImpl.  Defaulting to \"RegExp\"";
+    return RegExp;
+  case QRegExp::RegExp :
+    return RegExp;
+  case QRegExp::WildcardUnix:
+    SIM_WARN << "Pattern syntax \"WildcardUnix\" unsupported for simQt::RegExpImpl.  Defaulting to \"Wildcard\"";
+    return Wildcard;
+  case QRegExp::Wildcard :
+    return Wildcard;
+  case QRegExp::FixedString :
+    return FixedString;
+  }
+
+  // To satisfy warnings.  Should never be reached
+  return RegExp;
+}
+
+//------------------------------------------------------------
 void RegExpImpl::initializeQRegExp_()
 {
   // Store case sensitivity in a Qt construct
-  Qt::CaseSensitivity sense = Qt::CaseInsensitive;
-  if (caseSensitivity_ == CaseSensitive)
-    sense = Qt::CaseSensitive;
+  Qt::CaseSensitivity sense = qtCaseSensitivity(caseSensitivity_);
 
   // Create different classes based on pattern syntax
   switch (patternSyntax_)

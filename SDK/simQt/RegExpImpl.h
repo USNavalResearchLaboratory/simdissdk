@@ -27,6 +27,7 @@
 #define SIMQT_REGEXPIMPL_H
 
 #include <string>
+#include <QRegExp>
 #include "simData/CategoryData/CategoryFilter.h"
 
 class QRegExp;
@@ -87,6 +88,36 @@ public:
   virtual std::string pattern() const;
 
   /**
+  * Sets the regex pattern string
+  * @param[in] pattern new regex pattern string
+  */
+  void setPattern(const std::string& pattern);
+
+  /**
+  * Returns the regex case sensitivity
+  * @return the regex case sensitivity
+  */
+  CaseSensitivity caseSensitivity() const;
+
+  /**
+  * Sets the regex case sensitivity
+  * @param[in] caseSensitivity new case sensitivity
+  */
+  void setCaseSensitivity(CaseSensitivity caseSensitivity);
+
+  /**
+  * Returns the regex pattern syntax
+  * @return the regex pattern syntax
+  */
+  PatternSyntax patternSyntax() const;
+
+  /**
+  * Sets the regex pattern syntax
+  * @param[in] patternSyntax new pattern syntax
+  */
+  void setPatternSyntax(PatternSyntax patternSyntax);
+
+  /**
   * Returns true if the expression passed in defines a valid regular expression
   * @return true if the regular expression is valid, false otherwise
   */
@@ -97,6 +128,16 @@ public:
   * @return string explaining errors with the regular expression, empty string if no errors
   */
   std::string errors() const;
+
+  /** Static function to convert values of the simQt CaseSensitivity enum to values of the Qt CaseSensitivity enum*/
+  static Qt::CaseSensitivity qtCaseSensitivity(CaseSensitivity simQtCaseSensitivity);
+  /** Static function to convert values of the Qt CaseSensitivity enum to values of the simQt CaseSensitivity enum*/
+  static CaseSensitivity simQtCaseSensitivity(Qt::CaseSensitivity qtCaseSensitivity);
+
+  /** Static function to convert values of the simQt PatternSyntax enum to values of the Qt PatternSyntax enum*/
+  static QRegExp::PatternSyntax qtPatternSyntax(PatternSyntax simQtPatternSyntax);
+  /** Static function to convert values of the Qt PatternSyntax enum to values of the simQt PatternSyntax enum*/
+  static PatternSyntax simQtPatternSyntax(QRegExp::PatternSyntax qtPatternSyntax);
 
 private:
 
