@@ -247,14 +247,14 @@ Seconds TimeStamp::operator - (const TimeStamp& t) const
 {
   // If either year presents a infinity return with zero seconds
   if ((referenceYear_ == INFINITE_TIME_YEAR) || (t.referenceYear_ == INFINITE_TIME_YEAR))
-    return Seconds();
+    return ZERO_SECONDS;
 
   const int yearDifference = (referenceYear_ - t.referenceYear_);
   if (std::abs(yearDifference) > (MAX_TIME_STAMP.referenceYear() - MIN_TIME_STAMP.referenceYear()))
   {
     // class only tested between years MIN_YEAR and MAX_YEAR
     assert(false);
-    return Seconds();
+    return ZERO_SECONDS;
   }
 
   int year = 0;
