@@ -51,8 +51,12 @@ simVis::RocketBurnStorage::Update linearInterpolate<simVis::RocketBurnStorage::U
   returnValue.shapeData.radiusFar = simCore::linearInterpolate(prev.shapeData.radiusFar, next.shapeData.radiusFar, mixFactor);
   returnValue.shapeData.radiusNear = simCore::linearInterpolate(prev.shapeData.radiusNear, next.shapeData.radiusNear, mixFactor);
 
-  returnValue.pointingAngle = simCore::linearInterpolate(prev.pointingAngle, next.pointingAngle, mixFactor);
-  returnValue.positionOffset = simCore::linearInterpolate(prev.positionOffset, next.positionOffset, mixFactor);
+  returnValue.pointingAngle.x() = simCore::linearInterpolate(prev.pointingAngle.x(), next.pointingAngle.x(), mixFactor);
+  returnValue.pointingAngle.y() = simCore::linearInterpolate(prev.pointingAngle.y(), next.pointingAngle.y(), mixFactor);
+  returnValue.pointingAngle.z() = simCore::linearInterpolate(prev.pointingAngle.z(), next.pointingAngle.z(), mixFactor);
+  returnValue.positionOffset.x() = simCore::linearInterpolate(prev.positionOffset.x(), next.positionOffset.x(), mixFactor);
+  returnValue.positionOffset.y() = simCore::linearInterpolate(prev.positionOffset.y(), next.positionOffset.y(), mixFactor);
+  returnValue.positionOffset.z() = simCore::linearInterpolate(prev.positionOffset.z(), next.positionOffset.z(), mixFactor);
 
   return returnValue;
 }
@@ -256,12 +260,18 @@ RocketBurnStorage::Update::Update()
 }
 
 /** Constructor specifying all struct values */
-RocketBurnStorage::Update::Update(const simVis::RocketBurn::ShapeData &shape, const simCore::Vec3 &angle, const simCore::Vec3 &position, double duration)
-: shapeData(shape),
-  pointingAngle(angle),
-  positionOffset(position),
-  duration(duration)
+RocketBurnStorage::Update::Update(const simVis::RocketBurn::ShapeData &shape, const simCore::Vec3 &angle, const simCore::Vec3 &position, double updateDuration)
+: shapeData(shape)
 {
+  pointingAngle.x() = angle.x();
+  pointingAngle.y() = angle.y();
+  pointingAngle.z() = angle.z();
+
+  positionOffset.x() = position.x();
+  positionOffset.y() = position.y();
+  positionOffset.z() = position.z();
+
+  duration = static_cast<float>(updateDuration);
 }
 
 } // namespace

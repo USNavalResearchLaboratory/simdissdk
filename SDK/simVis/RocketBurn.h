@@ -42,9 +42,9 @@ public:
   /** Describes the user-defined shape of the rocket burn */
   struct SDKVIS_EXPORT ShapeData
   {
-    double radiusNear; ///< radius (meters) near the host
-    double radiusFar; ///< radius (meters) away from the host
-    double length; ///< distance (meters) from far to near
+    float radiusNear; ///< radius (meters) near the host
+    float radiusFar; ///< radius (meters) away from the host
+    float length; ///< distance (meters) from far to near
 
     osg::Vec4 color; ///< color (RGBA) to use
     bool scaleAlpha; ///< should alpha value be scaled along the length
@@ -68,7 +68,7 @@ public:
   void update(const ShapeData &newShapeData);
 
   /// Changes the pointing angles (radians) and offset position (meters XYZ relative to platform) for the rocket burn
-  void setPositionOrientation(const simCore::Vec3& newPosition, const simCore::Vec3& yprRadians);
+  void setPositionOrientation(const osg::Vec3f& newPosition, const osg::Vec3f& yprRadians);
 
 protected:
   /// osg::Referenced-derived

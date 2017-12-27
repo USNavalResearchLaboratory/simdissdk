@@ -108,14 +108,14 @@ struct SDKVIS_EXPORT RocketBurnStorage::BurnKey
 struct SDKVIS_EXPORT RocketBurnStorage::Update
 {
   simVis::RocketBurn::ShapeData shapeData; ///< shape of the burn (used in visualization)
-  simCore::Vec3 pointingAngle; ///< angle (rad) relative to the host platform
-  simCore::Vec3 positionOffset; ///< position offset (m) from the host platform
-  double duration; ///< duration of the burn update; -1 for infinite duration
+  osg::Vec3f pointingAngle; ///< angle (rad) relative to the host platform
+  osg::Vec3f positionOffset; ///< position offset (m) from the host platform
+  float duration; ///< duration of the burn update; -1 for infinite duration
 
   /// Default constructor
   Update();
   /// Constructor that specifies each value in the struct explicitly
-  Update(const simVis::RocketBurn::ShapeData &shape, const simCore::Vec3 &angle, const simCore::Vec3 &position, double duration);
+  Update(const simVis::RocketBurn::ShapeData &shape, const simCore::Vec3 &angle, const simCore::Vec3 &position, double updateDuration);
 };
 
 }
