@@ -923,7 +923,7 @@ int main(int argc, char **argv)
     rocketBurnShape.scaleAlpha = true;
     rb->update(rocketBurnShape);
     // move to back of host
-    rb->setPositionOrientation(simCore::Vec3(0, -platNode->getActualSize().yMax(), 0), simCore::Vec3());
+    rb->setPositionOrientation(osg::Vec3f(0, -platNode->getActualSize().yMax(), 0), osg::Vec3f());
   }
 
   /// simulator will compute time-based updates for our platform (and any beams it is hosting)
