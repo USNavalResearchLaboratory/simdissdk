@@ -28,7 +28,14 @@
 
 #include <string>
 #include <QRegExp>
+#include "simCore/Common/Common.h"
 #include "simData/CategoryData/CategoryFilter.h"
+
+#ifdef _MSC_VER // [
+#pragma warning(push)
+// Disable C4275: non-DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
+#pragma warning(disable : 4275)
+#endif // _MSC_VER ]
 
 class QRegExp;
 class QRegularExpression;
@@ -38,7 +45,7 @@ namespace simQt {
 /**
 * Class to abstract away the regular expression matching functionality
 */
-class RegExpImpl : public simData::RegExpFilter
+class SDKQT_EXPORT RegExpImpl : public simData::RegExpFilter
 {
 public:
 
@@ -155,7 +162,7 @@ private:
 };
 
 /** Implements a RegExpFilterFactory to create Qt based RegExpFilter objects */
-class RegExpFilterFactoryImpl : public simData::RegExpFilterFactory
+class SDKQT_EXPORT RegExpFilterFactoryImpl : public simData::RegExpFilterFactory
 {
 public:
   RegExpFilterFactoryImpl();
@@ -164,5 +171,9 @@ public:
 };
 
 }
+
+#ifdef _MSC_VER // [
+#pragma warning(pop)
+#endif // _MSC_VER ]
 
 #endif
