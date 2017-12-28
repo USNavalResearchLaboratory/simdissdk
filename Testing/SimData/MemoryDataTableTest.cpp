@@ -937,7 +937,9 @@ int dataLimitingTest()
   ds->setDataLimiting(true);
   simData::DataStore::Transaction t;
   simData::PlatformPrefs* prefs = ds->mutable_platformPrefs(plat1, &t);
-  prefs->mutable_commonprefs()->set_datalimitpoints(2); // start out limiting to 2 points
+  prefs->mutable_commonprefs()->set_datalimitpoints(3); // start out limiting to 3 points
+  // Note that a data limit of 4 points would be equivalent, due to the divide-by-zero-and-round-up
+  // algorithm that is employed in the double buffer time container.
   t.commit();
 
   simData::DataTable* table = NULL;
@@ -1022,7 +1024,7 @@ int dataLimitingTest()
 
   // now change data limiting from so time is more limiting than points
   prefs = ds->mutable_platformPrefs(plat1, &t);
-  prefs->mutable_commonprefs()->set_datalimitpoints(4); // expand point limit to 4
+  prefs->mutable_commonprefs()->set_datalimitpoints(7); // expand point limit to 7
   prefs->mutable_commonprefs()->set_datalimittime(3.0); // set data limit to 3 seconds
   t.commit();
 
