@@ -62,10 +62,6 @@ void TimeFormatContainer::setAction(QAction* action)
   action_ = action;
 }
 
-void TimeFormatContainer::timeChanged()
-{
-  emit(timeChanged(timeStamp()));
-}
 
 //----------------------------------------------------------------------------------------------
 SecondsContainer::SecondsContainer(QWidget* parent)
@@ -75,7 +71,8 @@ SecondsContainer::SecondsContainer(QWidget* parent)
   widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in seconds since beginning of reference year.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
 
   widget_->setLine(new SecondsTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeModified(simCore::TimeStamp)), this, SIGNAL(timeModified(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -147,7 +144,8 @@ MonthContainer::MonthContainer(QWidget* parent)
   widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in Month Day Year format.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
 
   widget_->setLine(new MonthDayYearTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeModified(simCore::TimeStamp)), this, SIGNAL(timeModified(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -219,7 +217,8 @@ OrdinalContainer::OrdinalContainer(QWidget* parent)
   widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in Ordinal format.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
 
   widget_->setLine(new OrdinalTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeModified(simCore::TimeStamp)), this, SIGNAL(timeModified(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -292,7 +291,8 @@ MinutesContainer::MinutesContainer(QWidget* parent)
   widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in minutes since beginning of reference year.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
 
   widget_->setLine(new MinutesTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeModified(simCore::TimeStamp)), this, SIGNAL(timeModified(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -363,7 +363,8 @@ HoursContainer::HoursContainer(QWidget* parent)
   widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in hours since beginning of reference year.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
 
   widget_->setLine(new HoursTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeModified(simCore::TimeStamp)), this, SIGNAL(timeModified(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 

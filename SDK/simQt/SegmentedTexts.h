@@ -197,8 +197,10 @@ public:
   virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
   /// Make sure the value is limited by the time range, if necessary
   virtual simCore::TimeStamp clampTime(const simCore::TimeStamp& value);
-  /// A segment calls valueChanged when the value has changed.
+  /// A segment calls valueChanged when the value has changed via the user.
   virtual void valueChanged() = 0;
+  /// A segment calls valueModified when the value has changed via the user or by setTimeStamp
+  virtual void valueModified() = 0;
   /// Set the number if digits after the decimal point
   virtual void setPrecision(unsigned int digits) = 0;
   /// Returns the number of digits after the decimal point
@@ -235,8 +237,10 @@ public:
   virtual QValidator::State validateText(const QString& text) const;
 
 signals:
-  /// Lets the outside know the user changed the value
+  /// emitted when the time changes via the user
   void timeChanged(const simCore::TimeStamp& time);
+  /// emitted when the time is changed by the user or by setTimeStamp
+  void timeModified(const simCore::TimeStamp& time);
 
 protected:
   /// Returns true if current is within the time range of start to end as dictated by the flags
@@ -270,6 +274,7 @@ public:
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   virtual void valueChanged();
+  virtual void valueModified();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 private:
@@ -288,6 +293,7 @@ public:
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   virtual void valueChanged();
+  virtual void valueModified();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 
@@ -308,6 +314,7 @@ public:
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   virtual void valueChanged();
+  virtual void valueModified();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 
@@ -329,6 +336,7 @@ public:
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   virtual void valueChanged();
+  virtual void valueModified();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 
@@ -352,6 +360,7 @@ public:
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
   virtual void valueChanged();
+  virtual void valueModified();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 

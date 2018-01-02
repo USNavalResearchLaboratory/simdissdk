@@ -612,7 +612,12 @@ namespace simQt {
 
   void SecondsTexts::valueChanged()
   {
-    emit(timeChanged(timeStamp()));
+    emit timeChanged(timeStamp());
+  }
+
+  void SecondsTexts::valueModified()
+  {
+    emit timeModified(timeStamp());
   }
 
   //--------------------------------------------------------------------------
@@ -703,9 +708,13 @@ namespace simQt {
 
   void MinutesTexts::valueChanged()
   {
-    emit(timeChanged(timeStamp()));
+    emit timeChanged(timeStamp());
   }
 
+  void MinutesTexts::valueModified()
+  {
+    emit timeModified(timeStamp());
+  }
 
   //------------------------------------------------------------------------------------------------------------------
 
@@ -808,9 +817,13 @@ namespace simQt {
 
   void HoursTexts::valueChanged()
   {
-    emit(timeChanged(timeStamp()));
+    emit timeChanged(timeStamp());
   }
 
+  void HoursTexts::valueModified()
+  {
+    emit timeModified(timeStamp());
+  }
 
   //------------------------------------------------------------------------------------------------------------------
 
@@ -929,7 +942,12 @@ namespace simQt {
 
   void OrdinalTexts::valueChanged()
   {
-    emit(timeChanged(timeStamp()));
+    emit timeChanged(timeStamp());
+  }
+
+  void OrdinalTexts::valueModified()
+  {
+    emit timeModified(timeStamp());
   }
 
   //--------------------------------------------------------------------------
@@ -1059,7 +1077,12 @@ namespace simQt {
 
   void MonthDayYearTexts::valueChanged()
   {
-    emit(timeChanged(timeStamp()));
+    emit timeChanged(timeStamp());
+  }
+
+  void MonthDayYearTexts::valueModified()
+  {
+    emit timeModified(timeStamp());
   }
 
   QValidator::State MonthDayYearTexts::validateText(const QString& text) const

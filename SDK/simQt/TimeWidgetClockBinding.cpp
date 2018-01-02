@@ -126,7 +126,7 @@ TimeWidgetClockBinding::TimeWidgetClockBinding(simQt::TimeWidget* parent)
   modeObserver_.reset(new ModeObserver(this));
   ReferenceYearCache* cache = new ReferenceYearCache(NULL);
   refYearCache_.reset(cache);
-  connect(timeWidget_, SIGNAL(timeChanged(const simCore::TimeStamp&)),
+  connect(timeWidget_, SIGNAL(timeModified(const simCore::TimeStamp&)),
     this, SLOT(setClockTime_(const simCore::TimeStamp&)));
   connect(cache, SIGNAL(referenceYearChanged(int)), this, SLOT(passRefYearToChildren_()));
   bindClock(NULL);

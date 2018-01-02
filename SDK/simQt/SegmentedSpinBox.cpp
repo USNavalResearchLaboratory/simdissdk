@@ -85,6 +85,7 @@ private:
   SegmentedSpinBox::SegmentedSpinBox(QWidget* parent)
     : QSpinBox(parent),
       completeLine_(NULL),
+      initialTime_(1970, 0),
       colorCode_(true),
       segmentedEventFilter_(NULL),
       timer_(new QTimer(this)),
@@ -246,7 +247,6 @@ private:
   {
     // If apply was queued and something else triggers an apply first, don't bother applying again
     timer_->stop();
-    setSinceFocus_ = true;
 
     simCore::TimeStamp currentTime = completeLine_->timeStamp();
     simCore::TimeStamp clampedTime = completeLine_->clampTime(currentTime);
@@ -261,7 +261,14 @@ private:
     lineEdit()->setCursorPosition(simCore::sdkMin(cursorPosition, lineEdit()->text().length()));
 
     if (initialTime_ != completeLine_->timeStamp())
-      completeLine_->valueChanged();
+    {
+      completeLine_->valueModified();
+      // If we have focus assume the change was user initiated
+      if (setSinceFocus_ == false)
+        completeLine_->valueChanged();
+    }
+
+    setSinceFocus_ = true;
   }
 
   void SegmentedSpinBox::queueApplyTimestamp_() const

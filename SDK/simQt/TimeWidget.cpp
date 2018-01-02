@@ -95,7 +95,8 @@ void TimeWidget::addContainer_(TimeFormatContainer* widget, const QString& slotT
   this->addAction(action);
   widget->setAction(action);
   widget->widget()->setHidden(true);
-  connect(dynamic_cast<QObject*>(widget), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeWasChanged_(const simCore::TimeStamp&)));
+  connect(widget, SIGNAL(timeChanged(simCore::TimeStamp)), this, SLOT(timeWasChanged_(simCore::TimeStamp)));
+  connect(widget, SIGNAL(timeModified(simCore::TimeStamp)), this, SIGNAL(timeModified(simCore::TimeStamp)));
   containers_.push_back(widget);
 }
 
