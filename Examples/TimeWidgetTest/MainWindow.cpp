@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) : QDialog(parent)
   timeWidget_->setTimeRange(2013, simCore::TimeStamp(2013, simCore::Seconds(0)), simCore::TimeStamp(2013, simCore::Seconds(24.0*60.0*60.0)));
   timeWidget_->setTimeStamp(simCore::TimeStamp(2013, simCore::Seconds(12.0*60.0*60.0)));
 
-  connect(timeWidget_, SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged_(const simCore::TimeStamp&)));
+  connect(timeWidget_, SIGNAL(timeEdited(const simCore::TimeStamp&)), this, SLOT(timeChanged_(const simCore::TimeStamp&)));
   connect(mainWindowGui_->precisionSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setPrecision_(int)));
   connect(mainWindowGui_->testButton, SIGNAL(clicked()), this, SLOT(test_()));
 }

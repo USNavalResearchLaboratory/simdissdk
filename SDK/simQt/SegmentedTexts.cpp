@@ -610,14 +610,14 @@ namespace simQt {
     return lastState;
   }
 
+  void SecondsTexts::valueEdited()
+  {
+    emit timeEdited(timeStamp());
+  }
+
   void SecondsTexts::valueChanged()
   {
     emit timeChanged(timeStamp());
-  }
-
-  void SecondsTexts::valueModified()
-  {
-    emit timeModified(timeStamp());
   }
 
   //--------------------------------------------------------------------------
@@ -706,14 +706,14 @@ namespace simQt {
     return lastState;
   }
 
+  void MinutesTexts::valueEdited()
+  {
+    emit timeEdited(timeStamp());
+  }
+
   void MinutesTexts::valueChanged()
   {
     emit timeChanged(timeStamp());
-  }
-
-  void MinutesTexts::valueModified()
-  {
-    emit timeModified(timeStamp());
   }
 
   //------------------------------------------------------------------------------------------------------------------
@@ -815,14 +815,14 @@ namespace simQt {
     return lastState;
   }
 
+  void HoursTexts::valueEdited()
+  {
+    emit timeEdited(timeStamp());
+  }
+
   void HoursTexts::valueChanged()
   {
     emit timeChanged(timeStamp());
-  }
-
-  void HoursTexts::valueModified()
-  {
-    emit timeModified(timeStamp());
   }
 
   //------------------------------------------------------------------------------------------------------------------
@@ -940,14 +940,14 @@ namespace simQt {
     return lastState;
   }
 
+  void OrdinalTexts::valueEdited()
+  {
+    emit timeEdited(timeStamp());
+  }
+
   void OrdinalTexts::valueChanged()
   {
     emit timeChanged(timeStamp());
-  }
-
-  void OrdinalTexts::valueModified()
-  {
-    emit timeModified(timeStamp());
   }
 
   //--------------------------------------------------------------------------
@@ -1075,14 +1075,14 @@ namespace simQt {
     }
   }
 
+  void MonthDayYearTexts::valueEdited()
+  {
+    emit timeEdited(timeStamp());
+  }
+
   void MonthDayYearTexts::valueChanged()
   {
     emit timeChanged(timeStamp());
-  }
-
-  void MonthDayYearTexts::valueModified()
-  {
-    emit timeModified(timeStamp());
   }
 
   QValidator::State MonthDayYearTexts::validateText(const QString& text) const

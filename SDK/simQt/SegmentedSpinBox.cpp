@@ -262,10 +262,10 @@ private:
 
     if (initialTime_ != completeLine_->timeStamp())
     {
-      completeLine_->valueModified();
+      completeLine_->valueChanged();
       // If we have focus assume the change was user initiated
       if (setSinceFocus_ == false)
-        completeLine_->valueChanged();
+        completeLine_->valueEdited();
     }
 
     setSinceFocus_ = true;

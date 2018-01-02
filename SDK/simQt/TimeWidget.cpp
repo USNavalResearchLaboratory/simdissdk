@@ -95,8 +95,8 @@ void TimeWidget::addContainer_(TimeFormatContainer* widget, const QString& slotT
   this->addAction(action);
   widget->setAction(action);
   widget->widget()->setHidden(true);
-  connect(widget, SIGNAL(timeChanged(simCore::TimeStamp)), this, SLOT(timeWasChanged_(simCore::TimeStamp)));
-  connect(widget, SIGNAL(timeModified(simCore::TimeStamp)), this, SIGNAL(timeModified(simCore::TimeStamp)));
+  connect(widget, SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
+  connect(widget, SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
   containers_.push_back(widget);
 }
 
@@ -149,7 +149,7 @@ void TimeWidget::setTimeStamp(const simCore::TimeStamp& value)
     w->setTimeStamp(value);
 
   if (emitSignal)
-    emit timeModified(currentContainer_->timeStamp());
+    emit timeChanged(currentContainer_->timeStamp());
 }
 
 void TimeWidget::setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end)
@@ -238,14 +238,6 @@ void TimeWidget::setPrecision(unsigned int digits)
     w->setPrecision(digits);
   }
   currentContainer_->setTimeStamp(currentTime);
-}
-
-void TimeWidget::timeWasChanged_(const simCore::TimeStamp& time)
-{
-  // emitted when the time changes via the user
-  emit timeChanged(time);
-  // emitted when the time is changed by the user or by setTimeStamp
-  emit timeModified(time);
 }
 
 void TimeWidget::setSeconds_()

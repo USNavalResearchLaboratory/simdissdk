@@ -87,9 +87,9 @@ public:
 
 signals:
   /// Emitted when the time changes via the user
-  void timeChanged(const simCore::TimeStamp& value);
+  void timeEdited(const simCore::TimeStamp& value);
   /// Emitted when the time is changed by the user or by setTimeStamp
-  void timeModified(const simCore::TimeStamp& value);
+  void timeChanged(const simCore::TimeStamp& value);
   /// Tell the outside the user is requesting a context menu
   void customContextMenuRequested(const QPoint& point);
 
