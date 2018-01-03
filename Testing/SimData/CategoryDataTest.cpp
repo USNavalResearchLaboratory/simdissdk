@@ -481,13 +481,252 @@ int testFilterSerialize()
   for (auto iter = inputToOptimizedOutput.begin(); iter != inputToOptimizedOutput.end(); ++iter)
   {
     rv += SDK_ASSERT(filter.deserialize(iter->first, false));
-      rv += SDK_ASSERT(filter.serialize(false) == iter->first);
+    rv += SDK_ASSERT(filter.serialize(false) == iter->first);
   }
   // empty strings still all convert to the standard empty serialization
   for (auto iter = emptyStrings.begin(); iter != emptyStrings.end(); ++iter)
   {
     rv += SDK_ASSERT(filter.deserialize(iter->first, false));
     rv += SDK_ASSERT(filter.serialize(false) == iter->second);
+  }
+
+  return rv;
+}
+
+int testCategoryFilterRules()
+{
+  simData::MemoryDataStore ds;
+  loadCategoryData(ds);
+  simData::CategoryNameManager& nameManager = ds.categoryNameManager();
+  int rv = 0;
+
+  // Rule 1 does not need testing; it describes the separators
+
+  // Test rule 2: Categories not listed will not impact filter results
+  {
+    ds.update(2.0);
+
+    // key1=value3
+    // key2=value2
+    // key3=value1
+
+    // PLATFORM_ID will match both key1.value3 and key3.value1 at this time
+    simData::CategoryFilter filter(&ds);
+    rv += SDK_ASSERT(filter.deserialize("key1(1)~value3(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key1(1)~value3(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key3(1)~value1(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key3(1)~value1(1)");
+
+    // Flipping the bit on category value will break the match
+    rv += SDK_ASSERT(filter.deserialize("key1(1)~value3(0)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    // TODO: Should probably error out on deserialization here
+
+    // This is a rule that will match nothing
+    rv += SDK_ASSERT(filter.deserialize("key3(1)~value1(0)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    // TODO: Should probably error out on deserialization here
+
+    // We've shown that key1 and key3 both independently match, now show they match together.
+    rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(0)~value3(1)`key3(1)~Unlisted Value(0)~value1(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key1(1)~value3(1)`key3(1)~value1(1)");
+  }
+
+  // Test rule 3: empty string matches all entities
+  {
+    simData::CategoryFilter filter(&ds);
+    rv += SDK_ASSERT(filter.deserialize(" "));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+    rv += SDK_ASSERT(filter.deserialize(""));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == " ");
+  }
+
+  // Test rule 4: Unchecked categories don't matter
+  {
+    simData::CategoryFilter filter(&ds);
+
+    // Precondition: key1.value3 is set
+    rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(0)~value3(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    // Precondition: key2.value2 is set
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)~value2(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    // Precondition: key3.value1 is set
+    rv += SDK_ASSERT(filter.deserialize("key3(1)~Unlisted Value(0)~value1(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+
+    // Test first example
+    rv += SDK_ASSERT(filter.deserialize("key3(0)~value1(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+    // Test second example
+    rv += SDK_ASSERT(filter.deserialize("key3(0)~value1(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+    // Test third example
+    rv += SDK_ASSERT(filter.deserialize("key3(0)~Unlisted Value(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+    // Test fourth example
+    rv += SDK_ASSERT(filter.deserialize("key3(0)~value1(0)`key2(1)~value2(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key3(0)~value1(0)`key2(1)~value2(0)~value3(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value3(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key3(0)~value1(0)`key2(1)~value3(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value3(1)");
+  }
+
+  // Test rule 5: unlisted values are unchecked by default
+  {
+    simData::CategoryFilter filter(&ds);
+
+    // Test first example: unspecified values are unchecked by default
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~value3(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value3(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~value3(1)~value2(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)~value3(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)");
+
+    // Test second and third example: Unlisted Value(0) does not add value
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)~value3(0)~value4(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value4(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)~value2(0)~value4(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value4(1)");
+
+    // Test fourth example: Unlisted Value(1) with explicit off value
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~value3(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~value3(0)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~value2(0)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~value2(0)");
+
+    // Test fifth example: Unlisted Value(1) with explicit on value
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~value3(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~value2(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)");
+
+    // Test sixth example: Combining Unlisted Value(1) with an on and an off
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~value2(0)~value3(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~value2(0)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~value2(1)~value3(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~value3(0)");
+  }
+
+  // Test rule 6: No Value
+  {
+    simData::CategoryFilter filter(&ds);
+
+    // Test first example: No Value(0) does not match when there's no value for the category
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~No Value(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // key2 has a value, so we do match
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key4(1)~Unlisted Value(1)~No Value(0)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));  // key4 has no value, so we do not match
+    rv += SDK_ASSERT(filter.serialize(true) == "key4(1)~Unlisted Value(1)");
+
+    // Test simplification with first example
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~No Value(0)~value2(1)~value3(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // match due to explicit (1) on value2
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~value3(0)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~No Value(1)~value2(1)~value3(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // match due to explicit (1) on value2
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)");
+
+    // Test equivalency of second example: No Value(0) does not need to be explicitly mentioned
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // key2 has a value, so we do match
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key4(1)~Unlisted Value(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));  // key4 has no value, so we do not match
+    rv += SDK_ASSERT(filter.serialize(true) == "key4(1)~Unlisted Value(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~value2(1)~value3(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // match due to explicit (1) on value2
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~value3(0)");
+
+    // Test third example: No Value(1) only matches when there's no value for the category
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~No Value(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));  // key2 has a value, so we don't match
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~No Value(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key4(1)~No Value(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // key4 has no value, so we do match
+    rv += SDK_ASSERT(filter.serialize(true) == "key4(1)~No Value(1)");
+
+    // Test simplification with third example
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~No Value(1)~value2(1)~value3(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // match due to explicit (1) on value2
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~No Value(1)~value2(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~No Value(1)~value2(1)~value3(0)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));  // match due to explicit (1) on value2
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)");
+
+    rv += SDK_ASSERT(filter.deserialize("key4(1)~Unlisted Value(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));  // No match due to implicit No Value(0)
+    rv += SDK_ASSERT(filter.serialize(true) == "key4(1)~Unlisted Value(1)");
+  }
+
+  // Test rule 7: AND logic for categories
+  {
+    simData::CategoryFilter filter(&ds);
+
+    // Precondition tests on key2=value2 and key3=value1
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.deserialize("key3(1)~value1(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+
+    // Simple match
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)`key3(1)~value1(1)"));
+    rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)`key3(1)~value1(1)");
+
+    // Break right side
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)`key3(1)~value1(0)~value2(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)`key3(1)~value2(1)");
+
+    // Break left side
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(0)~value1(1)`key3(1)~value1(1)"));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value1(1)`key3(1)~value1(1)");
   }
 
   return rv;
@@ -570,7 +809,7 @@ int testIsDuplicateValue()
     ds.update(10.0);
     rv += SDK_ASSERT(1 == cdChangeCounter);
 
-    // test that update to time 20 does not flag a change in CD - duplicate 
+    // test that update to time 20 does not flag a change in CD - duplicate
     cdChangeCounter = 0;
     ds.update(20.0);
     rv += SDK_ASSERT(0 == cdChangeCounter);
@@ -638,6 +877,7 @@ int CategoryDataTest(int argc, char *argv[])
 
   rv += testFilterSerialize();
   rv += testIsDuplicateValue();
+  rv += testCategoryFilterRules();
 
   return rv;
 }

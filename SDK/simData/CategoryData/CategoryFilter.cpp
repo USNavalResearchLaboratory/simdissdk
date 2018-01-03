@@ -714,33 +714,41 @@ void CategoryFilter::setRegExpFilterFactory(RegExpFilterFactoryPtr factory)
 
 void CategoryFilter::simplifyValues_(CategoryFilter::CategoryCheck& checks) const
 {
+  // Iterate through each category
   for (CategoryCheck::iterator checksIter = checks.begin(); checksIter != checks.end(); ++checksIter)
   {
-    ValuesCheck& values = checksIter->second.second;
+    const ValuesCheck& values = checksIter->second.second;
     // Get the value of the "Unlisted Value" entry
-    ValuesCheck::const_iterator valuesIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
-    if (valuesIter != values.end())
+    ValuesCheck::const_iterator unlistedValueIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
+    // "Unlisted Value" defaults to OFF
+    const bool unlistedValuesCheck = (unlistedValueIter == values.end()) ? false : unlistedValueIter->second;
+
+    // Create a new values vector; we are going to remove items
+    ValuesCheck newValues;
+    for (ValuesCheck::const_iterator valuesIter = values.begin(); valuesIter != values.end(); ++valuesIter)
     {
-      const bool isListed = valuesIter->second;
+      // Only include items that are different than Unlisted (and also include unlisted)
+      // also include "No Value" if it is true (defaults to false)
+      bool saveValue = false;
 
-      // Create a new values vector
-      ValuesCheck newValues;
-      for (valuesIter = values.begin(); valuesIter != values.end(); ++valuesIter)
-      {
-        // Only include items that are different than Unlisted (and also include unlisted)
-        // also include "No Value" if it is true (defaults to false)
-        if ((valuesIter->first == simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE && isListed) ||
-            (valuesIter->first == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME && valuesIter->second) ||
-            valuesIter->second != isListed)
-        {
-          newValues[valuesIter->first] = valuesIter->second;
-        }
-      }
+      // Unlisted Value is only needed if set to true
+      if (valuesIter->first == simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE && unlistedValuesCheck)
+        saveValue = true;
+      // No Value is only needed if set to true
+      else if (valuesIter->first == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
+        saveValue = valuesIter->second;
+      // Other values are only needed if different from "Unlisted Value"
+      else if (valuesIter->second != unlistedValuesCheck)
+        saveValue = true;
 
-      // Replace the contents
-      if (newValues != values)
-        checksIter->second.second = newValues;
+      // Copy to the "newValues" map
+      if (saveValue)
+        newValues[valuesIter->first] = valuesIter->second;
     }
+
+    // Replace the contents
+    if (newValues != values)
+      checksIter->second.second = newValues;
   }
 }
 

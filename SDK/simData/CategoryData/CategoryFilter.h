@@ -43,14 +43,14 @@ public:
 
   /**
   * Returns true if the test string matches anything in the regular expression
-  * @param[in] test: string to test
-  * @return bool: true if test string matches
+  * @param[in] test string to test
+  * @return true if test string matches
   */
   virtual bool match(const std::string& test) const = 0;
 
   /**
   * Returns the regex pattern string
-  * @return std::string: the regex pattern
+  * @return the regex pattern
   */
   virtual std::string pattern() const = 0;
 };
@@ -80,6 +80,57 @@ class DataStore;
  * Setting a simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE for a category indicates whether to accept or reject
  * if an entity has no corresponding value for this category, although some value does exist (i.e. the category value
  * in the entity is not in the category filter at all.
+ *
+ * The simData::CategoryFilter class supports serialization and deserialization to string.  The serialization matches
+ * the following set of rules:
+ *
+ *  1. Categories are separated by the backtick (`) character.  Values inside categories are separated by the tilde
+ *     (~) character.
+ *     - Example: "Color(1)~Blue(0)~Green(0)`Shape(1)~Round(1)~Square(0)" tests the categories Color and
+ *       Shape.  Values under Color that are tested for match are Blue and Green.  Values under Shape that
+ *       are tested are Round and Square.
+ *
+ *  2. Categories not listed in the filter will not impact filter results.
+ *     - Example: "Color(1)~Blue(1)" will not compare the category Shape.
+ *     - Example: "Color(1)~Blue(1)`Shape(1)~Round(1)" will compare the Color and Shape categories, but not the
+ *       (missing and not specified) Size category.
+ *
+ *  3. Empty string (i.e. empty filter) matches all entities.  This is a "specialization" of the more general rule #2.
+ *     - Example: " " matches all entities regardless of category settings.
+ *
+ *  4. Category names that are unchecked (0) do not contribute to the filter, regardless of the check state for values
+ *     under that category.  CategoryFilter::serialize() will omit the entire category.
+ *     - Example: "Color(0)~Blue(0)" matches all entities regardless of category settings.  It is equivalent to " ".
+ *     - Example: "Color(0)~Blue(1)" also matches all entities, and is also equivalent to " ".
+ *     - Example: "Color(0)~Unlisted Value(0)" also matches all entities, and is also equivalent to " ".
+ *     - Example: "Color(0)~Blue(0)`Shape(1)~Round(1)" will only match entities that are Shape=Round.  It will not
+ *       compare the category Color.  This is equivalent to "Shape(1)~Round(1)".
+ *
+ *  5. Unlisted values are unchecked by default.  The special value "Unlisted Value" can be used to change this behavior.
+ *     - Example: "Color(1)~Blue(1)" will match entity with Color=Blue, but will not match entity with Color=Red.
+ *     - Example: "Color(1)~Unlisted Value(0)~Blue(0)" will match no entities and is a useless filter.
+ *     - Example: "Color(1)~Unlisted Value(0)~Green(1)" will match only entities with Color=Green.  It will not match
+ *       entities with Color=Blue, Color=Gray, or entities without a Color.  The simplification is "Color(1)~Green(1)".
+ *     - Example: "Color(1)~Unlisted Value(1)~Blue(0)" will not match entity with Color=Blue, but will match entity
+ *       with Color=Red.
+ *     - Example: "Color(1)~Unlisted Value(1)~Blue(1)" will match all entities and can be simplified to " ".
+ *     - Example: "Color(1)~Unlisted Value(1)~Green(1)~Blue(0)" will match Color=Green and Color=Gray, but will not
+ *       match Color=Blue.  This is equivalent to "Color(1)~Unlisted Value(1)~Blue(0)".
+ *
+ *  6. The reserved term "No Value" will match when a category does not have a value for an entity at a given time.
+ *     It is NOT included as an unlisted value when using the "Unlisted Value" keyword.
+ *     - Example: "Color(1)~Unlisted Value(1)~No Value(0)" will match only entities with a valid Color category value
+ *       at the current time.  The Color value could be set to anything, as long as it is set to something.  This
+ *       is equivalent to "Color(1)~Unlisted Value(1)" because No Value is not included in the Unlisted Values.
+ *     - Example: "Color(1)~Unlisted Value(1)" will match only entities with a valid Color category value at the
+ *       current time.  This is equivalent to the previous example.
+ *     - Example: "Color(1)~No Value(1)" will match entities that have no value for Color, but will not match an
+ *       entity with any valid value in the Color category.
+ *
+ *  7. All listed categories must match for a filter to pass (match).  Categories are compared with Boolean AND.
+ *     - Example: "Color(1)~Green(1)`Shape(1)~Round(1)" will only match entities that have Color=Green AND Shape=Round.
+ *       Blue Round entities will fail the filter.  Green Square entities will also fail the filter.  Green entities
+ *       without a Shape will also fail the filter.
  */
 class SDKDATA_EXPORT CategoryFilter
 {
@@ -155,7 +206,7 @@ public:
 
   /**
   * Update the regExp for the specified category name. This regular expression will be used to match against the value
-  * for this category name. Pass in NULL to remove the entry for the specified category name.
+  * for this category name. Pass in empty string to remove the entry for the specified category name.
   * @param[in] nameInt  int value of the category name
   * @param[in] regExp  regular expression filter to apply to the category value
   */
