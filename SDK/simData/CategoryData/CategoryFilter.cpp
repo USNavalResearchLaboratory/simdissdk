@@ -19,7 +19,9 @@
  * disclose, or release this software.
  *
  */
+#include "simNotify/Notify.h"
 #include "simCore/String/Tokenizer.h"
+#include "simCore/String/Utils.h"
 #include "simData/DataStore.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/CategoryData/CategoryFilter.h"
@@ -597,12 +599,12 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
   categoryCheck_.clear();
 
   // Empty string means no values, meaning clear vector; valid state
-  if (checksString.empty())
+  if (simCore::StringUtils::trim(checksString).empty())
     return true;
 
   // categories are separated by back tick, break out the vector of categories
   std::vector<std::string> catStrVec;
-  simCore::stringTokenizer(catStrVec, checksString, SIM_PREF_RULE_CAT_SEP);
+  simCore::stringTokenizer(catStrVec, checksString, SIM_PREF_RULE_CAT_SEP, true, false);
   if (catStrVec.empty())
     return false; // something wrong
 
@@ -613,6 +615,8 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
   std::string tmpString;
   std::string categoryNameString;
   std::string categoryValueString;
+  std::string checkString;
+  bool hasErrors = false;
 
   for (std::vector<std::string>::const_iterator catStrIter = catStrVec.begin();
     catStrIter != catStrVec.end();
@@ -621,11 +625,14 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     valueStrVec.clear();
 
     // within a category, constraints are separated by tilde
-    simCore::stringTokenizer(valueStrVec, *catStrIter, SIM_PREF_RULE_VAL_SEP);
-    std::string regExpStr;
+    simCore::stringTokenizer(valueStrVec, *catStrIter, SIM_PREF_RULE_VAL_SEP, true, false);
 
+    // Empty category; ignore it
     if (valueStrVec.empty())
+    {
+      SIM_DEBUG << "Invalid category detected in filter.\n";
       continue;
+    }
 
     // NOTE: structure of the category filter serialization is <name>^<regExp>~<val>~<val>`<name>^<regExp>~<val>~<val>...
 
@@ -633,7 +640,8 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     tmpString = valueStrVec[0];
     // make sure to remove the regExp if it exists
     size_t regExpStart = tmpString.find_first_of(SIM_PREF_RULE_REGEXP_SEP);
-    if (regExpStart > 0)
+    std::string regExpStr;
+    if (regExpStart != std::string::npos)
     {
       // store off the regExp string first
       if (regExpStart < tmpString.size())
@@ -643,14 +651,23 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
 
     // minimum size of 4, includes at least 1 char for name and 3 for the '(0)' or '(1)' state
     if (tmpString.size() < 4)
+    {
+      SIM_DEBUG << "Invalid value string in filter: too short.\n";
+      hasErrors = true;
       continue;
+    }
 
-    categoryNameString.assign(tmpString, 0, (int(tmpString.size()) - 3));
-    if (categoryNameString.empty())
-      return false;
+    categoryNameString = tmpString.substr(0, tmpString.size() - 3);
+    checkString = tmpString.substr(tmpString.size() - 3);
 
-    const char checkString = tmpString[(int(tmpString.size()) - 2)];
-    const bool categoryChecked = (checkString == '1');
+    // Enforce "(0)" or "(1)"
+    const bool categoryChecked = (checkString == "(1)");
+    if (!categoryChecked && checkString != "(0)")
+    {
+      SIM_DEBUG << "Invalid check string '" << checkString << "' for category " << categoryNameString << "\n";
+      hasErrors = true;
+      continue;
+    }
 
     // skip unchecked categories if optimizing
     if (skipEmptyCategories && !categoryChecked)
@@ -668,9 +685,7 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     // retrieve the values map
     CategoryCheck::iterator catIter = categoryCheck_.find(categoryName);
     if (catIter == categoryCheck_.end())
-    {
       catIter = categoryCheck_.insert(std::make_pair(categoryName, CategoryValues())).first;
-    }
 
     catIter->second.first = categoryChecked;
     ValuesCheck *const values = &catIter->second.second;
@@ -682,14 +697,25 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     {
       tmpString = *valueStrIter;
 
-      categoryValueString.assign(tmpString, 0, (int(tmpString.size()) - 3));
-      if (categoryValueString.empty())
+      // minimum size of 4, includes at least 1 char for name and 3 for the '(0)' or '(1)' state
+      if (tmpString.size() < 4)
       {
-        return false;
+        SIM_DEBUG << "Invalid value string in category '" << categoryNameString << "' in filter: too short.\n";
+        hasErrors = true;
+        continue;
       }
 
-      const char checkString = tmpString[(int(tmpString.size()) - 2)];
-      const bool checkValue = (checkString == '1');
+      categoryValueString = tmpString.substr(0, tmpString.size() - 3);
+      checkString = tmpString.substr(tmpString.size() - 3);
+
+      // Enforce "(0)" or "(1)"
+      const bool checkValue = (checkString == "(1)");
+      if (!checkValue && checkString != "(0)")
+      {
+        SIM_DEBUG << "Invalid check string '" << checkString << "' for category value " << categoryNameString << "." << categoryValueString << "\n";
+        hasErrors = true;
+        continue;
+      }
 
       // test for 'unlisted value' or 'no value' here, don't add them to the data store
       if (categoryValueString == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME_STR)
@@ -704,7 +730,7 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     }
   }
 
-  return true;
+  return hasErrors;
 }
 
 void CategoryFilter::setRegExpFilterFactory(RegExpFilterFactoryPtr factory)

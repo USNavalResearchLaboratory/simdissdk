@@ -497,7 +497,6 @@ int testCategoryFilterRules()
 {
   simData::MemoryDataStore ds;
   loadCategoryData(ds);
-  simData::CategoryNameManager& nameManager = ds.categoryNameManager();
   int rv = 0;
 
   // Rule 1 does not need testing; it describes the separators
@@ -523,12 +522,10 @@ int testCategoryFilterRules()
     // Flipping the bit on category value will break the match
     rv += SDK_ASSERT(filter.deserialize("key1(1)~value3(0)"));
     rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
-    // TODO: Should probably error out on deserialization here
 
     // This is a rule that will match nothing
     rv += SDK_ASSERT(filter.deserialize("key3(1)~value1(0)"));
     rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
-    // TODO: Should probably error out on deserialization here
 
     // We've shown that key1 and key3 both independently match, now show they match together.
     rv += SDK_ASSERT(filter.deserialize("key1(1)~Unlisted Value(0)~value3(1)`key3(1)~Unlisted Value(0)~value1(1)"));
@@ -861,6 +858,66 @@ int testIsDuplicateValue()
   return rv;
 }
 
+int testDeserializeFailures()
+{
+  simData::MemoryDataStore ds;
+  loadCategoryData(ds);
+  simData::CategoryFilter filter(&ds);
+
+  int rv = 0;
+
+  // Test successful strings
+  rv += SDK_ASSERT(filter.deserialize("TestCategory(1)~TestValue(1)"));
+  rv += SDK_ASSERT(filter.deserialize("TestCategory(1)~TestValue(1)`T2(1)~TV1(1)~TV2(1)"));
+  rv += SDK_ASSERT(filter.deserialize("TestCategory(1)~TestValue(1)`T2(1)~TV1(1)~TV2(1)~T3(1)~TV1(1)"));
+
+  // Start to break strings and test for failures
+
+  // Bad value parens
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue()"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue)"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue1)"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue(1"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue[1]"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue"));
+  // Bad value #
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue(2)"));
+
+  // Short value names with invalid parens
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~Test"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~Tes"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~Te"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~T"));
+
+  // Missing values
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~~"));
+
+  // Bad category parens
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory()~TestValue(1)"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1~TestValue(1)"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory1)~TestValue(1)"));
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory~TestValue(1)"));
+  // Bad category #
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(2)~TestValue(1)"));
+
+  // Bad leading characters
+  rv += SDK_ASSERT(!filter.deserialize("~TestValue(1)"));
+  rv += SDK_ASSERT(!filter.deserialize("`TestValue(1)"));
+  rv += SDK_ASSERT(!filter.deserialize("`TestCategory(1)~TestValue(1)"));
+
+  // Illegal ~
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~~TestValue(1)"));
+
+  // Second category name has no values
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue(1)`T2"));
+
+  // Double backtick, missing a category
+  rv += SDK_ASSERT(!filter.deserialize("TestCategory(1)~TestValue(1)``T2(1)~TV1(1)"));
+
+  return rv;
+}
+
 }
 
 int CategoryDataTest(int argc, char *argv[])
@@ -878,6 +935,7 @@ int CategoryDataTest(int argc, char *argv[])
   rv += testFilterSerialize();
   rv += testIsDuplicateValue();
   rv += testCategoryFilterRules();
+  rv += testDeserializeFailures();
 
   return rv;
 }
