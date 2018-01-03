@@ -730,7 +730,8 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     }
   }
 
-  return hasErrors;
+  // True: success;  False: failure
+  return !hasErrors;
 }
 
 void CategoryFilter::setRegExpFilterFactory(RegExpFilterFactoryPtr factory)
