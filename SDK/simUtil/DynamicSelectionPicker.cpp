@@ -28,6 +28,9 @@
 
 namespace simUtil {
 
+// pixel amount to test if a mouse position has moved enough to initiate a new pick
+static const float MOUSE_MOVEMENT_PICK_THRESHOLD = 10.0;
+
 /** GUI Event Handler that forwards events to the picker */
 class DynamicSelectionPicker::RepickEventHandler : public osgGA::GUIEventHandler
 {
@@ -44,10 +47,21 @@ public:
     {
     case osgGA::GUIEventAdapter::MOVE:
     case osgGA::GUIEventAdapter::DRAG:
+      // on move or drag, update position and indicate a repick is needed
       picker_.lastMouseView_ = dynamic_cast<simVis::View*>(aa.asView());
       picker_.mouseXy_.set(ea.getX(), ea.getY());
       repickNeeded_ = true;
       break;
+
+    case osgGA::GUIEventAdapter::PUSH:
+      // if mouse position has changed, initiated a repick immediately, since push event can occur before move/drag has updated repick state
+      if (fabs(ea.getX() - picker_.mouseXy_.x()) > MOUSE_MOVEMENT_PICK_THRESHOLD ||
+        fabs(ea.getY() - picker_.mouseXy_.y()) > MOUSE_MOVEMENT_PICK_THRESHOLD)
+      {
+        picker_.lastMouseView_ = dynamic_cast<simVis::View*>(aa.asView());
+        picker_.mouseXy_.set(ea.getX(), ea.getY());
+        picker_.pickThisFrame_();
+      }
 
     case osgGA::GUIEventAdapter::FRAME:
       // If the mouse moved, we need to re-pick to capture movement
