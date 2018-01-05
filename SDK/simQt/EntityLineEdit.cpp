@@ -184,6 +184,7 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   composite_->lineEdit->setToolTip(simQt::formatTooltip(tr("Entity Name"), tr("Either type or select an entity name.<p>Select from the popup or from the dialog by clicking the browser button.")));
   composite_->lineEdit->setPlaceholderText("Enter entity name...");
   connect(composite_->toolButton, SIGNAL(clicked()), this, SLOT(showEntityDialog_()));
+  connect(composite_->lineEdit, SIGNAL(returnPressed()), this, SLOT(checkForReapply_()));
   connect(composite_->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
   connect(composite_->lineEdit, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_(const QString&)));
 
@@ -309,6 +310,8 @@ int EntityLineEdit::setSelected(uint64_t id)
   if (entityTreeModel_ == NULL || id == uniqueId_)
     return 1;
 
+  bool doEmit = (uniqueId_ != id);
+
   // Allow zero to clear out the line Edit
   if (id == 0)
   {
@@ -318,7 +321,8 @@ int EntityLineEdit::setSelected(uint64_t id)
     setTextStyle_(false);
     if (entityDialog_ != NULL)
       entityDialog_->setItemSelected(uniqueId_);
-    emit itemSelected(uniqueId_);
+    if (doEmit)
+      emit itemSelected(uniqueId_);
     return 0;
   }
 
@@ -333,7 +337,8 @@ int EntityLineEdit::setSelected(uint64_t id)
   setTextStyle_(true);
   if (entityDialog_ != NULL)
     entityDialog_->setItemSelected(uniqueId_);
-  emit itemSelected(uniqueId_);
+  if (doEmit)
+    emit itemSelected(uniqueId_);
   return 0;
 }
 
@@ -373,6 +378,14 @@ void EntityLineEdit::setUnavailable(uint64_t id)
   setTextStyle_(valid_);
 }
 
+void EntityLineEdit::checkForReapply_()
+{
+  auto oldId = uniqueId_;
+  editingFinished_();
+  if ((oldId == uniqueId_) && (oldId != 0))
+    emit reapplied(uniqueId_);
+}
+
 void EntityLineEdit::editingFinished_()
 {
   if (entityTreeModel_ == NULL)
@@ -395,6 +408,7 @@ void EntityLineEdit::editingFinished_()
   if (needToVerify_)
   {
     needToVerify_ = false;
+    auto oldId = uniqueId_;
     uniqueId_ = simData::DataStoreHelpers::idByName(composite_->lineEdit->text().toStdString(), entityTreeModel_->dataStore());
     if ((uniqueId_ == 0) && (!composite_->lineEdit->text().isEmpty()))
       setTextStyle_(false);
@@ -404,7 +418,8 @@ void EntityLineEdit::editingFinished_()
       if (entityDialog_ != NULL)
         entityDialog_->setItemSelected(uniqueId_);
     }
-    emit itemSelected(uniqueId_);
+    if (oldId != uniqueId_)
+      emit itemSelected(uniqueId_);
   }
 }
 
