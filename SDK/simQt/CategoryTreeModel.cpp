@@ -601,7 +601,13 @@ void CategoryTreeModel::setFilter(const simData::CategoryFilter& categoryFilter)
       localAnyChecked = value->second;
 
     for (int ii = 0; ii < catItem->childCount(); ++ii)
-      catItem->child(ii)->setState(localAnyChecked ? Qt::Checked : Qt::Unchecked);
+    {
+      // "No Value" should not be checked by "Unlisted Value"
+      const int currCatIndex = catItem->child(ii)->categoryIndex();
+      const bool noValItem = (currCatIndex == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME);
+      assert(currCatIndex != simData::CategoryNameManager::NO_CATEGORY_VALUE); // No child in the tree should have category index NO_CATEGORY_VALUE
+      catItem->child(ii)->setState((localAnyChecked && !noValItem) ? Qt::Checked : Qt::Unchecked);
+    }
 
     // Update all values for the name
     for (simData::CategoryFilter::ValuesCheck::const_iterator valIter = iter->second.second.begin(); valIter != iter->second.second.end(); ++valIter)

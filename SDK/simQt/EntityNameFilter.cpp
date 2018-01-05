@@ -126,7 +126,7 @@ void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity 
     changed = true;
   }
   if (changed)
-  emit filterUpdated();
+    emit filterUpdated();
 }
 
 }
