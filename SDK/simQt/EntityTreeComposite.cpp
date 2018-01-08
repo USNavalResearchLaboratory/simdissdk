@@ -583,9 +583,12 @@ void EntityTreeComposite::showFilters_()
 
 void EntityTreeComposite::closeFilters_()
 {
-  // we own all this memory, so we can delete it
-  delete filterDialog_;
-  filterDialog_ = NULL;
+  if (filterDialog_)
+  {
+    filterDialog_->hide();
+    filterDialog_->deleteLater();
+    filterDialog_ = NULL;
+  }
 }
 
 void EntityTreeComposite::setNumFilteredItemsLabel_(int numFilteredItems, int numTotalItems)

@@ -367,9 +367,12 @@ void EntityLineEdit::showEntityDialog_()
 
 void EntityLineEdit::closeEntityDialog()
 {
-  // we own all this memory, so we can delete it
-  delete entityDialog_;
-  entityDialog_ = NULL;
+  if (entityDialog_)
+  {
+    entityDialog_->hide();
+    entityDialog_->deleteLater();
+    entityDialog_ = NULL;
+  }
 }
 
 void EntityLineEdit::setUnavailable(uint64_t id)
