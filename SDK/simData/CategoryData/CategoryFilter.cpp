@@ -844,4 +844,86 @@ void CategoryFilter::simplify_(CategoryFilter::CategoryCheck& checks) const
   simplifyCategories_(checks);
 }
 
+void CategoryFilter::simplify()
+{
+  simplify_(categoryCheck_);
+}
+
+void CategoryFilter::clear()
+{
+  categoryCheck_.clear();
+}
+
+void CategoryFilter::setValue(int nameInt, int valueInt, bool valueChecked)
+{
+  // Avoid setting NO_CATEGORY_VALUE.  In this class, we use NO_CATEGORY_VALUE_AT_TIME instead.
+  // Rather than failing later, we address the problem here.  This prevents a common bug of
+  // trying to set the "No Value" here by using categoryNameMgr.valueToInt("No Value").
+  if (valueInt == CategoryNameManager::NO_CATEGORY_VALUE)
+    valueInt = CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME;
+
+  // Create the category if it does not exist
+  CategoryCheck::iterator catIter = categoryCheck_.find(nameInt);
+  if (catIter == categoryCheck_.end())
+    catIter = categoryCheck_.insert(std::make_pair(nameInt, CategoryValues())).first;
+
+  // By default the category should do something useful
+  auto& categoryChecks = catIter->second;
+  categoryChecks.first = true;
+  categoryChecks.second[valueInt] = valueChecked;
+}
+
+void CategoryFilter::removeName(int nameInt)
+{
+  categoryCheck_.erase(nameInt);
+  categoryRegExp_.erase(nameInt);
+}
+
+int CategoryFilter::removeValue(int nameInt, int valueInt)
+{
+  // Avoid setting NO_CATEGORY_VALUE.  In this class, we use NO_CATEGORY_VALUE_AT_TIME instead.
+  // Rather than failing later, we address the problem here.  This prevents a common bug of
+  // trying to remove the "No Value" here by using categoryNameMgr.valueToInt("No Value").
+  if (valueInt == CategoryNameManager::NO_CATEGORY_VALUE)
+    valueInt = CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME;
+
+  // Find the entry for the category name in all of our categories
+  auto nameIter = categoryCheck_.find(nameInt);
+  if (nameIter != categoryCheck_.end())
+  {
+    // Find the entry for the value of this category name
+    auto& valueMap = nameIter->second.second;
+    auto valueIter = valueMap.find(valueInt);
+    if (valueIter != valueMap.end())
+    {
+      valueMap.erase(valueIter);
+
+      // If the value map is empty, then the category name does not contribute to
+      // the filtering in any way (either in deserialize(true) or deserialize(false).
+      // So we remove the entire key (category) here in that case.
+      if (valueMap.empty())
+        categoryCheck_.erase(nameIter);
+      return 0;
+    }
+  }
+
+  // Did not remove anything
+  return 1;
+}
+
+void CategoryFilter::getNames(std::vector<int>& names) const
+{
+  names.clear();
+  for (auto i = categoryCheck_.begin(); i != categoryCheck_.end(); ++i)
+    names.push_back(i->first);
+}
+
+void CategoryFilter::getValues(int nameInt, ValuesCheck& checks) const
+{
+  checks.clear();
+  auto i = categoryCheck_.find(nameInt);
+  if (i != categoryCheck_.end())
+    checks = i->second.second;
+}
+
 }

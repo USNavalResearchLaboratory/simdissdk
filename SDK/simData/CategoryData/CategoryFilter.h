@@ -242,7 +242,30 @@ public:
   */
   bool deserialize(const std::string &checksString, bool skipEmptyCategories = true);
 
-  /** Set the factory for creating RegExpFilter objects. Caller retains ownership of memory */
+  /** Simplifies the category filter, removing names and values that do not contribute to filtering. */
+  void simplify();
+
+  /** Clears out the filter, removing all checks and resetting to equivalent of " " */
+  void clear();
+
+  /**
+   * Set the check state of a category value, creating the category and value if necessary.
+   * @param[in] nameInt  int value of the category name
+   * @param[in] valueInt  int value of the category value
+   * @param[in] valueChecked  check state for this category value
+   */
+  void setValue(int nameInt, int valueInt, bool valueChecked);
+  /** Removes the entire category name and all values under. */
+  void removeName(int nameInt);
+  /** Removes the value entirely from the filter.  If the name is empty, it is also removed.  Returns 0 on success. */
+  int removeValue(int nameInt, int valueInt);
+
+  /** Retrieves a list of names that are included in this filter. */
+  void getNames(std::vector<int>& names) const;
+  /** Retrieves the values associated with the name. */
+  void getValues(int nameInt, ValuesCheck& checks) const;
+
+  /** Set the factory for creating RegExpFilter objects. */
   void setRegExpFilterFactory(RegExpFilterFactoryPtr factory);
 
 private:

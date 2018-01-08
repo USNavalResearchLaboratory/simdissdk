@@ -918,6 +918,140 @@ int testDeserializeFailures()
   return rv;
 }
 
+bool hasCategoryName(const simData::CategoryFilter& filter, int name)
+{
+  std::vector<int> names;
+  filter.getNames(names);
+  return (std::find(names.begin(), names.end(), name) != names.end());
+}
+
+int testAddRemoveFunctions()
+{
+  simData::MemoryDataStore ds;
+  simData::CategoryNameManager& nameMgr = ds.categoryNameManager();
+  loadCategoryData(ds);
+  ds.update(2.0);
+  simData::CategoryFilter filter(&ds);
+
+  int rv = 0;
+
+  const int KEY2 = nameMgr.nameToInt("key2");
+  const int KEY3 = nameMgr.nameToInt("key3");
+  const int NO_VALUE = simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME;
+  const int VALUE2 = nameMgr.valueToInt("value2");
+  const int VALUE3 = nameMgr.valueToInt("value3");
+
+  // Empty filter, should pass
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+
+  // Validate starting state
+  rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)"));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(0)"));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+
+  // Turn on the filter value
+  filter.clear();
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+  // Enable the key2(1)~value2(1)
+  rv += SDK_ASSERT(!hasCategoryName(filter, KEY2));
+  filter.setValue(KEY2, VALUE2, true);
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)");
+  filter.setValue(KEY2, VALUE2, false);
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(0)");
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+  // Ensure that we can remove an arbitrary invalid value and it correctly fails
+  rv += SDK_ASSERT(0 != filter.removeValue(KEY3, VALUE2));
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(0)");
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+  // Remove the value key2, which will let us match
+  rv += SDK_ASSERT(0 == filter.removeValue(KEY2, VALUE2));
+  rv += SDK_ASSERT(!hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  // Removing same key twice is an error
+  rv += SDK_ASSERT(0 != filter.removeValue(KEY2, VALUE2));
+
+  // Ensure that we can remove a whole category
+  rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)`key3(1)~No Value(1)~value2(1)"));
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY3));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  filter.removeName(KEY3);
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(!hasCategoryName(filter, KEY3));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(1)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)");
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+
+  // Test simplify by adding a simplify-able filter
+  filter.clear();
+  filter.setValue(KEY2, VALUE2, false);
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(0)");
+  filter.simplify();
+  rv += SDK_ASSERT(!hasCategoryName(filter, KEY2));
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(false) == " ");
+
+  // Test getValues()
+  rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)~value3(0)`key3(1)~No Value(1)~value2(1)"));
+  std::map<int, bool> values;
+  filter.getValues(KEY2, values);
+  rv += SDK_ASSERT(values.size() == 2);
+  rv += SDK_ASSERT(values.find(VALUE2) != values.end());
+  rv += SDK_ASSERT(values.find(VALUE3) != values.end());
+  rv += SDK_ASSERT(values[VALUE2]);
+  rv += SDK_ASSERT(!values[VALUE3]);
+  filter.getValues(KEY3, values);
+  rv += SDK_ASSERT(values.size() == 2);
+  rv += SDK_ASSERT(values.find(NO_VALUE) != values.end());
+  rv += SDK_ASSERT(values.find(VALUE2) != values.end());
+  rv += SDK_ASSERT(values.find(VALUE3) == values.end());
+  rv += SDK_ASSERT(values[NO_VALUE]);
+  rv += SDK_ASSERT(values[VALUE2]);
+
+  // Remove a value manually and retest portion
+  rv += SDK_ASSERT(0 == filter.removeValue(KEY3, NO_VALUE));
+  filter.getValues(KEY3, values);
+  rv += SDK_ASSERT(values.size() == 1);
+  rv += SDK_ASSERT(values.find(VALUE2) != values.end());
+  rv += SDK_ASSERT(values[VALUE2]);
+  // Add it back in
+  filter.setValue(KEY3, NO_VALUE, true);
+  filter.getValues(KEY3, values);
+  rv += SDK_ASSERT(values.size() == 2);
+  rv += SDK_ASSERT(values.find(VALUE2) != values.end());
+  rv += SDK_ASSERT(values.find(NO_VALUE) != values.end());
+
+  // Simplify and retest
+  filter.simplify();
+  filter.getValues(KEY2, values);
+  rv += SDK_ASSERT(values.size() == 1);
+  rv += SDK_ASSERT(values.find(VALUE2) != values.end());
+  rv += SDK_ASSERT(values[VALUE2]);
+  filter.getValues(KEY3, values);
+  rv += SDK_ASSERT(values.size() == 2);
+  rv += SDK_ASSERT(values.find(NO_VALUE) != values.end());
+  rv += SDK_ASSERT(values.find(VALUE2) != values.end());
+  rv += SDK_ASSERT(values[NO_VALUE]);
+  rv += SDK_ASSERT(values[VALUE2]);
+
+  return rv;
+}
+
 }
 
 int CategoryDataTest(int argc, char *argv[])
@@ -936,6 +1070,7 @@ int CategoryDataTest(int argc, char *argv[])
   rv += testIsDuplicateValue();
   rv += testCategoryFilterRules();
   rv += testDeserializeFailures();
+  rv += testAddRemoveFunctions();
 
   return rv;
 }
