@@ -26,6 +26,7 @@
 #include <QVBoxLayout>
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/DataStore.h"
+#include "simQt/EntityCategoryFilter.h"
 #include "simQt/QtFormatting.h"
 #include "simQt/CategoryDataBreadcrumbs.h"
 
@@ -816,6 +817,28 @@ void CategoryDataBreadcrumbs::setNoActiveFilterText(const QString& value)
   // Only need to change list text if we're actually showing that item; detect that by using itemDelegate()
   if (listWidget_->itemDelegate() == plainDelegate_ && listWidget_->count() == 1)
     listWidget_->item(0)->setText(noActiveFilterText_);
+}
+
+void CategoryDataBreadcrumbs::bindTo(simQt::EntityCategoryFilter* categoryFilter)
+{
+  if (!categoryFilter)
+    return;
+  // Changes to us will be reflected in the filter
+  connect(this, SIGNAL(filterEdited(simData::CategoryFilter)), categoryFilter, SLOT(setCategoryFilter(simData::CategoryFilter)));
+  // Changes in the filter trigger us to resynchronize.  Note that due to the way the
+  // categoryFilterChanged() signal is emitted, we cannot use it directly.
+  connect(categoryFilter, SIGNAL(filterUpdated()), this, SLOT(synchronizeToSenderFilter_()));
+  // Update our current state to that of the category filter
+  setFilter(categoryFilter->categoryFilter());
+}
+
+void CategoryDataBreadcrumbs::synchronizeToSenderFilter_()
+{
+  simQt::EntityCategoryFilter* from = dynamic_cast<simQt::EntityCategoryFilter*>(sender());
+  // Assertion failure means that this method was called by something that wasn't an entity category
+  // filter, which shouldn't be possible because it's a private slot.
+  assert(from != NULL);
+  setFilter(from->categoryFilter());
 }
 
 }

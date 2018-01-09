@@ -37,6 +37,8 @@ namespace simData {
 
 namespace simQt {
 
+class EntityCategoryFilter;
+
 /**
  * Styled item delegate used by CategoryDataBreadcrumbs that draws a list item using a rounded
  * rectangle and a close button.  When the user clicks on the close button, the delegate will
@@ -181,6 +183,9 @@ public:
   void setMinimumGroupSize(int value);
   void setNoActiveFilterText(const QString& value);
 
+  /** Sets value to that of the EntityCategoryFilter and keeps both widgets in sync. */
+  void bindTo(simQt::EntityCategoryFilter* categoryFilter);
+
 public slots:
   /** Changes the current filter. */
   void setFilter(const simData::CategoryFilter& filter);
@@ -192,6 +197,8 @@ signals:
 private slots:
   /** Responds to the QListWidget item having a close button clicked */
   void removeFilter_(const QModelIndex& index);
+  /** Synchronize the current state to the state in the sender() EntityCategoryFilter */
+  void synchronizeToSenderFilter_();
 
 protected:
   /** Override resize event to recalculate the flow and adjust minimum height */

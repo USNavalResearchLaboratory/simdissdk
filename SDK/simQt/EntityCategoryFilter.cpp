@@ -79,6 +79,7 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
     if (filter != categoryFilter_->serialize(false))
     {
       categoryFilter_->deserialize(filter, false);
+
       // send out signal to alert any guis bound to this filter
       emit categoryFilterChanged(*categoryFilter_);
       // send out general filter update signal
@@ -104,6 +105,11 @@ void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& cate
   emit categoryFilterChanged(*categoryFilter_);
   // send out general filter update signal
   emit filterUpdated();
+}
+
+const simData::CategoryFilter& EntityCategoryFilter::categoryFilter() const
+{
+  return *categoryFilter_;
 }
 
 void EntityCategoryFilter::setCategoryFilterFromGui_(const simData::CategoryFilter& categoryFilter)
