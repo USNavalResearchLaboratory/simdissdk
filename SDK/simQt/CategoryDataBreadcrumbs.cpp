@@ -445,7 +445,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
   if (inclusiveFilter)
   {
     // Only add up to "minimumGroupSize_" filters before we just group up the category
-    if (checks.size() > minimumGroupSize_)
+    if (static_cast<int>(checks.size()) > minimumGroupSize_)
     {
       // Form a list using HTML for each item being filtered
       QString valueText = buildValuesHtmlList_(nameManager, checks, MAX_ITEMS_IN_TOOLTIP);
@@ -498,7 +498,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
     maxChecks += 2; // Need to remove "No Value"
 
   // Create the group item if we exceed the number of checks
-  if (checks.size() > maxChecks)
+  if (static_cast<int>(checks.size()) > maxChecks)
   {
     // Form a list using HTML for each item being filtered, for the tooltip
     QString valueText;
