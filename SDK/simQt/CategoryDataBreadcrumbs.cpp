@@ -273,7 +273,8 @@ CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
   : QWidget(parent),
     filter_(NULL),
     minimumGroupSize_(3),
-    noActiveFilterText_(tr("No active category filter")),
+    hideWhenEmpty_(true),
+    emptyText_(tr("No active category filter")),
     validHints_(false)
 {
   listWidget_ = new QListWidget(this);
@@ -348,7 +349,7 @@ QSize CategoryDataBreadcrumbs::minimumSizeHint() const
     const QRect r2 = listWidget_->visualItemRect(listWidget_->item(listWidget_->count() - 1));
     size.setHeight(r2.bottom() + 1);
   }
-  else
+  else if (!hideWhenEmpty_)
   {
     // Ask for the height/width of an invalid item
     QStyleOptionViewItemV4 opt;
@@ -417,7 +418,7 @@ void CategoryDataBreadcrumbs::addNoValidItemIfEmptyList_()
   // If there are no items in the list, add an item to tell the user
   if (listWidget_->count() == 0)
   {
-    QListWidgetItem* emptyItem = new QListWidgetItem(noActiveFilterText_, listWidget_);
+    QListWidgetItem* emptyItem = new QListWidgetItem(emptyText_, listWidget_);
     emptyItem->setFlags(Qt::ItemIsEnabled);
     listWidget_->setItemDelegate(plainDelegate_);
   }
@@ -730,9 +731,14 @@ int CategoryDataBreadcrumbs::minimumGroupSize() const
   return minimumGroupSize_;
 }
 
-QString CategoryDataBreadcrumbs::noActiveFilterText() const
+bool CategoryDataBreadcrumbs::hideWhenEmpty() const
 {
-  return noActiveFilterText_;
+  return hideWhenEmpty_;
+}
+
+QString CategoryDataBreadcrumbs::emptyText() const
+{
+  return emptyText_;
 }
 
 void CategoryDataBreadcrumbs::setRectangleRadiusX(qreal value)
@@ -859,14 +865,27 @@ void CategoryDataBreadcrumbs::setMinimumGroupSize(int value)
   }
 }
 
-void CategoryDataBreadcrumbs::setNoActiveFilterText(const QString& value)
+void CategoryDataBreadcrumbs::setHideWhenEmpty(bool value)
 {
-  if (noActiveFilterText_ == value)
+  if (hideWhenEmpty_ == value)
     return;
-  noActiveFilterText_ = value;
+  hideWhenEmpty_ = value;
+  // If we're empty, then we'll need to update the geometry
+  if (listWidget_->itemDelegate() == plainDelegate_ && listWidget_->count() == 1)
+  {
+    validHints_ = false;
+    updateGeometry();
+  }
+}
+
+void CategoryDataBreadcrumbs::setEmptyText(const QString& value)
+{
+  if (emptyText_ == value)
+    return;
+  emptyText_ = value;
   // Only need to change list text if we're actually showing that item; detect that by using itemDelegate()
   if (listWidget_->itemDelegate() == plainDelegate_ && listWidget_->count() == 1)
-    listWidget_->item(0)->setText(noActiveFilterText_);
+    listWidget_->item(0)->setText(emptyText_);
 }
 
 void CategoryDataBreadcrumbs::bindTo(simQt::EntityCategoryFilter* categoryFilter)

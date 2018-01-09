@@ -147,7 +147,8 @@ class SDKQT_EXPORT CategoryDataBreadcrumbs : public QWidget
   Q_PROPERTY(QIcon closeIcon READ closeIcon WRITE setCloseIcon);
   Q_PROPERTY(QSize iconSize READ iconSize WRITE setIconSize);
   Q_PROPERTY(int minimumGroupSize READ minimumGroupSize WRITE setMinimumGroupSize);
-  Q_PROPERTY(QString noActiveFilterText READ noActiveFilterText WRITE setNoActiveFilterText);
+  Q_PROPERTY(bool hideWhenEmpty READ hideWhenEmpty WRITE setHideWhenEmpty);
+  Q_PROPERTY(QString emptyText READ emptyText WRITE setEmptyText);
 
 public:
   explicit CategoryDataBreadcrumbs(QWidget* parent=NULL);
@@ -159,8 +160,6 @@ public:
 
   /** Retrieve the current filter.  Note that this is a simplified filter and may not match setFilter()'s values unsimplified. */
   void getFilter(simData::CategoryFilter& filter);
-  /** Clears the current filter. */
-  void clearFilter();
 
   // Property accessors
   qreal rectangleRadiusX() const;
@@ -176,26 +175,47 @@ public:
   QIcon closeIcon() const;
   QSize iconSize() const;
   int minimumGroupSize() const;
-  QString noActiveFilterText() const;
+  bool hideWhenEmpty() const;
+  QString emptyText() const;
+
+  /** Changes the radius on the rounded rectangle in the X coordinate for buttons. */
   void setRectangleRadiusX(qreal value);
+  /** Changes the radius on the rounded rectangle in the Y coordinate for buttons. */
   void setRectangleRadiusY(qreal value);
+  /** Changes the background fill color for the buttons. */
   void setFillColor(const QColor& value);
+  /** Changes the text color for the buttons. */
   void setTextColor(const QColor& value);
+  /** Changes the pen used for drawing the button outline.  Encapsulates the outline color and width. */
   void setOutlinePen(const QPen& value);
+  /** Changes the outline color for the buttons. */
   void setOutlineColor(const QColor& value);
+  /** Changes the outline width for the buttons. */
   void setOutlineWidth(qreal value);
+  /** Changes the margin around each individual button. */
   void setItemMargins(const QMargins& value);
+  /** Changes the padding inside the button, around the text. */
   void setTextPadding(const QMargins& value);
+  /** Changes the padding inside the button, around the close icon. */
   void setIconPadding(const QMargins& value);
+  /** Changes the icon to use for the close button icon. */
   void setCloseIcon(const QIcon& value);
+  /** Changes the desired icon size. */
   void setIconSize(const QSize& value);
-  void setMinimumGroupSize(int value);
-  void setNoActiveFilterText(const QString& value);
 
   /** Sets value to that of the EntityCategoryFilter and keeps both widgets in sync. */
   void bindTo(simQt::EntityCategoryFilter* categoryFilter);
 
 public slots:
+  /** Change the minimum number of items required to form a 'group' for a category name. */
+  void setMinimumGroupSize(int value);
+  /** Change whether the widget shows the empty text when empty, or is hidden. */
+  void setHideWhenEmpty(bool value);
+  /** Change the text shown when empty; only if hide-when-empty is false. */
+  void setEmptyText(const QString& value);
+
+  /** Clears the current filter. */
+  void clearFilter();
   /** Changes the current filter. */
   void setFilter(const simData::CategoryFilter& filter);
 
@@ -240,8 +260,10 @@ private:
 
   /** Minimum number of items in a category before grouping */
   int minimumGroupSize_;
+  /** Hide the widget with a size of 0 when it is empty */
+  bool hideWhenEmpty_;
   /** Text to display when there are no items in the list */
-  QString noActiveFilterText_;
+  QString emptyText_;
 
   // Size hints calculated in minimumSizeHint(); mutable, following style from QLabel
   mutable QSize minimumSizeHint_;
