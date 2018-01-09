@@ -61,6 +61,7 @@ set(SIMQT_HEADERS
 # Parts of simQt depend on simData
 if(TARGET simData)
     list(APPEND SIMQT_HEADERS_TO_MOC
+        ${SIMQT_INC}CategoryDataBreadcrumbs.h
         ${SIMQT_INC}CategoryFilterWidget.h
         ${SIMQT_INC}CategoryTreeModel.h
         ${SIMQT_INC}DataTableComboBox.h
@@ -159,6 +160,7 @@ set(SIMQT_SOURCES
 # Parts of simQt depend on simData
 if(TARGET simData)
     list(APPEND SIMQT_SOURCES
+        ${SIMQT_SRC}CategoryDataBreadcrumbs.cpp
         ${SIMQT_SRC}CategoryFilterWidget.cpp
         ${SIMQT_SRC}CategoryTreeModel.cpp
         ${SIMQT_SRC}DataTableComboBox.cpp

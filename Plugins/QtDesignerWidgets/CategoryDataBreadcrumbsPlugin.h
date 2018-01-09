@@ -19,42 +19,37 @@
  * disclose, or release this software.
  *
  */
-#ifndef EXAMPLES_CATEGORYFILTERTEST_MAINWINDOW_H
-#define EXAMPLES_CATEGORYFILTERTEST_MAINWINDOW_H
+#ifndef CATEGORY_DATA_BREADCRUMBS_PLUGIN_H
+#define CATEGORY_DATA_BREADCRUMBS_PLUGIN_H
 
-#include <QDialog>
-#include "simCore/Common/Common.h"
-#include "simData/ObjectId.h"
+#include <QDesignerCustomWidgetInterface>
 
-namespace simData {
-  class DataStore;
-  class CategoryFilter;
-}
-class Ui_MainWindow;
+namespace simData { class DataStore; }
 
-class MainWindow : public QDialog
+// Wrapper class for the CategoryDataBreadcrumbs to provide QDesignerCustomWidgetInterface
+class CategoryDataBreadcrumbsPlugin : public QObject, public QDesignerCustomWidgetInterface
 {
   Q_OBJECT
+  Q_INTERFACES(QDesignerCustomWidgetInterface)
 
 public:
-  MainWindow(simData::DataStore* dataStore, QWidget *parent);
-  virtual ~MainWindow();
+  explicit CategoryDataBreadcrumbsPlugin(QObject *parent = 0);
+  virtual ~CategoryDataBreadcrumbsPlugin();
 
-private slots:
-  void addSmallAmount_();
-  void addMassiveAmount_();
-  void toggleState_();
-  void categoryFilterChanged_(const simData::CategoryFilter& filter);
+  bool isContainer() const;
+  bool isInitialized() const;
+  QIcon icon() const;
+  QString domXml() const;
+  QString group() const;
+  QString includeFile() const;
+  QString name() const;
+  QString toolTip() const;
+  QString whatsThis() const;
+  QWidget *createWidget(QWidget *parent);
+  void initialize(QDesignerFormEditorInterface *core);
 
-protected:
-  std::string mmsiString_(int mmsi) const;
-  simData::ObjectId addPlatform_(const std::string& name);
-  void addCategoryData_(double time, const std::string& key, const std::string& value);
-
+private:
   simData::DataStore* dataStore_;
-  Ui_MainWindow* ui_;
-  simData::ObjectId platformId_;
-  bool state_;
 };
 
-#endif /* EXAMPLES_CATEGORYFILTERTEST_MAINWINDOW_H */
+#endif // CATEGORY_DATA_BREADCRUMBS_PLUGIN_H

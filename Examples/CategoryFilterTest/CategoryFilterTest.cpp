@@ -22,9 +22,11 @@
 #include <sstream>
 #include <iomanip>
 
+#include "simData/CategoryData/CategoryFilter.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/EntityTreeModel.h"
 #include "simQt/ResourceInitializer.h"
+#include "simQt/CategoryDataBreadcrumbs.h"
 
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
@@ -37,19 +39,27 @@ MainWindow::MainWindow(simData::DataStore* dataStore, QWidget *parent)
 
   simQt::ResourceInitializer::initialize();
 
-  mainWindowGui_ = new Ui_MainWindow();
-  mainWindowGui_->setupUi(this);
+  ui_ = new Ui_MainWindow();
+  ui_->setupUi(this);
 
-  mainWindowGui_->categoryFilterWidget->setProviders(dataStore);
-  connect(mainWindowGui_->smallButton, SIGNAL(clicked()), this, SLOT(addSmallAmount_()));
-  connect(mainWindowGui_->massiveButton, SIGNAL(clicked()), this, SLOT(addMassiveAmount_()));
-  connect(mainWindowGui_->togglePushButton, SIGNAL(clicked()), this, SLOT(toggleState_()));
-  connect(mainWindowGui_->categoryFilterWidget, SIGNAL(categoryFilterChanged(const simData::CategoryFilter&)), this, SLOT(categoryFilterChanged(const simData::CategoryFilter&)));
+  ui_->categoryFilterWidget->setProviders(dataStore);
+  connect(ui_->smallButton, SIGNAL(clicked()), this, SLOT(addSmallAmount_()));
+  connect(ui_->massiveButton, SIGNAL(clicked()), this, SLOT(addMassiveAmount_()));
+  connect(ui_->togglePushButton, SIGNAL(clicked()), this, SLOT(toggleState_()));
+  connect(ui_->categoryFilterWidget, SIGNAL(categoryFilterChanged(simData::CategoryFilter)),
+    this, SLOT(categoryFilterChanged_(simData::CategoryFilter)));
+
+  connect(ui_->categoryFilterWidget, SIGNAL(categoryFilterChanged(simData::CategoryFilter)),
+    ui_->breadcrumbs, SLOT(setFilter(simData::CategoryFilter)));
+  connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
+    ui_->categoryFilterWidget, SLOT(setFilter(simData::CategoryFilter)));
+  connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
+    this, SLOT(categoryFilterChanged_(simData::CategoryFilter)));
 }
 
 MainWindow::~MainWindow()
 {
-  delete mainWindowGui_;
+  delete ui_;
 }
 
 simData::ObjectId MainWindow::addPlatform_(const std::string& name)
@@ -99,12 +109,12 @@ void MainWindow::toggleState_()
 {
   simData::CategoryFilter*filter = new simData::CategoryFilter(dataStore_, true);
   filter->updateAll(state_);
-  mainWindowGui_->categoryFilterWidget->setFilter(*filter);
+  ui_->categoryFilterWidget->setFilter(*filter);
   delete filter;
   state_ = !state_;
 }
 
-void MainWindow::categoryFilterChanged(const simData::CategoryFilter& filter)
+void MainWindow::categoryFilterChanged_(const simData::CategoryFilter& filter)
 {
 }
 
@@ -141,4 +151,3 @@ int main(int argc, char* argv[])
   delete dataStore;
   return rv;
 }
-

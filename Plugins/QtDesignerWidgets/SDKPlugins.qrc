@@ -12,6 +12,7 @@
     <file>images/Search.png</file>
     <file>images/Text_Box.png</file>
     <file>images/Text_Selection.png</file>
+    <file>images/Toaster.png</file>
     <file>images/Window Dock.png</file>
   </qresource>
 </RCC>

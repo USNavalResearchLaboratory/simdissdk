@@ -26,6 +26,7 @@
 #include "simQt/ActionItemModel.h"
 #include "simQt/ActionRegistry.h"
 #include "simQt/BoundSettings.h"
+#include "simQt/CategoryDataBreadcrumbs.h"
 #include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
 #include "simQt/CenterEntity.h"
