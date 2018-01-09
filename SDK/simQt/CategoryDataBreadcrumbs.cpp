@@ -88,8 +88,7 @@ CloseableItemDelegate::Style::Style()
 ////////////////////////////////////////////////////////////////////
 
 CloseableItemDelegate::CloseableItemDelegate(QObject* parent)
-  : QStyledItemDelegate(parent),
-    hovering_(false)
+  : QStyledItemDelegate(parent)
 {
 }
 
@@ -154,11 +153,21 @@ void CloseableItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
     tbOpt.icon = style_.icon;
     tbOpt.iconSize = style_.iconSize;
 
-    // Turn on auto-raise
+    // Turn off state flags that we manage ourselves
     tbOpt.state = inOption.state & ~QStyle::State_HasFocus;
+    tbOpt.state = inOption.state & ~QStyle::State_MouseOver;
+    // Turn on auto-raise
     tbOpt.state |= QStyle::State_AutoRaise;
-    if (hovering_)
-      tbOpt.state |= QStyle::State_Raised;
+    if (index == hoverIndex_)
+    {
+      tbOpt.state |= QStyle::State_MouseOver;
+      // If pressed index is invalid, then we are awaiting a press; show as raised
+      if (!pressedIndex_.isValid())
+        tbOpt.state |= QStyle::State_Raised;
+      // If pressed index matches, then we are awaiting a release; show as sunken
+      else if (pressedIndex_ == index)
+        tbOpt.state |= QStyle::State_Sunken;
+    }
     QApplication::style()->drawComplexControl(QStyle::CC_ToolButton, &tbOpt, painter);
   }
 
@@ -182,28 +191,69 @@ QSize CloseableItemDelegate::sizeHint(const QStyleOptionViewItem& option, const 
   return textSize;
 }
 
+bool CloseableItemDelegate::mousePressEvent_(QMouseEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+  // Determine whether the mouse is inside the close button
+  const QRectF closeRect = QRectF(calcIconRect_(option));
+  const bool insideCloseButton = closeRect.contains(evt->pos());
+
+  if (insideCloseButton)
+    pressedIndex_ = index;
+  else
+    pressedIndex_ = QModelIndex();
+
+  return true;
+}
+
+bool CloseableItemDelegate::mouseReleaseEvent_(QMouseEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+  // Determine whether the mouse is inside the close button
+  const QRectF closeRect = QRectF(calcIconRect_(option));
+  const bool insideCloseButton = closeRect.contains(evt->pos());
+
+  // Detect whether it counts as a click
+  const bool click = (index == pressedIndex_ && index.isValid() && insideCloseButton && evt->button() == Qt::LeftButton);
+  pressedIndex_ = QModelIndex();
+  if (click)
+    emit closeClicked(index);
+
+  return true;
+}
+
+bool CloseableItemDelegate::mouseMoveEvent_(QMouseEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+  // Determine whether the mouse is inside the close button
+  const QRectF closeRect = QRectF(calcIconRect_(option));
+  const bool insideCloseButton = closeRect.contains(evt->pos());
+
+  // Did hover change?  If so, return true and update the hoverIndex_
+  if (insideCloseButton && hoverIndex_ != index)
+  {
+    hoverIndex_ = index;
+    return true;
+  }
+  else if (!insideCloseButton && hoverIndex_.isValid())
+  {
+    hoverIndex_ = QModelIndex();
+    return true;
+  }
+  return false;
+}
+
 bool CloseableItemDelegate::editorEvent(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
 {
-  if (evt->type() == QEvent::MouseMove)
-  {
-    // On mouse movement, set the hovering flag appropriately
-    const QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(evt);
-    const QRectF closeRect = QRectF(calcIconRect_(option));
-    if (hovering_ != closeRect.contains(mouseEvent->pos()))
-    {
-      hovering_ = !hovering_;
-      // Returning true forces a redraw
-      return true;
-    }
-  }
-  else if (evt->type() == QEvent::MouseButtonRelease)
-  {
-    // On release, emit a signal that the close was clicked on this index
-    const QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(evt);
-    const QRectF closeRect = QRectF(calcIconRect_(option));
-    if (closeRect.contains(mouseEvent->pos()))
-      emit closeClicked(index);
-  }
+  // We only care about mouse events
+  QMouseEvent* mouseEvent = dynamic_cast<QMouseEvent*>(evt);
+  if (mouseEvent == NULL)
+    return false;
+
+  // Farm off to helper functions
+  if (mouseEvent->type() == QEvent::MouseButtonPress)
+    return mousePressEvent_(mouseEvent, model, option, index);
+  if (mouseEvent->type() == QEvent::MouseButtonRelease)
+    return mouseReleaseEvent_(mouseEvent, model, option, index);
+  if (mouseEvent->type() == QEvent::MouseMove)
+    return mouseMoveEvent_(mouseEvent, model, option, index);
   return false;
 }
 

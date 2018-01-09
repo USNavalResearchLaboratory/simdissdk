@@ -97,10 +97,19 @@ private:
   /** Calculates the drawn rectangle area for the close icon */
   QRectF calcIconRect_(const QStyleOptionViewItem& option) const;
 
+  /** Called by editorEvent() on mouse press events.  Returns true if update() required. */
+  bool mousePressEvent_(QMouseEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+  /** Called by editorEvent() on mouse release events.  Returns true if update() required. */
+  bool mouseReleaseEvent_(QMouseEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+  /** Called by editorEvent() on mouse move events.  Returns true if update() required. */
+  bool mouseMoveEvent_(QMouseEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+
   /** Drawing style */
   Style style_;
-  /** Is true when the mouse is detected over the Close button */
-  bool hovering_;
+  /** Currently hovered index from last move mouse event. */
+  QModelIndex hoverIndex_;
+  /** Currently pressed index from last press mouse event; cleared on release. */
+  QModelIndex pressedIndex_;
 };
 
 /**
