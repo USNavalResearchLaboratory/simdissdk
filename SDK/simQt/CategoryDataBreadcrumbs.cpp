@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
 #include <QApplication>
 #include <QListWidget>
 #include <QMouseEvent>
@@ -65,11 +66,52 @@ enum
   /// Indicates the current state flag for the value in the category
   ROLE_IS_CHECKED,
   /// Indicates whether the alternate fill color should be used for breadcrumbs
-  ROLE_USE_ALT_FILL_COLOR
+  ROLE_USE_ALT_FILL_COLOR,
+  /// Contains a string that can be used for sorting purposes
+  ROLE_SORT_STRING
 };
 
 /// Maximum number of items in the HTML list; limiting to keep size of tooltip down
 static const size_t MAX_ITEMS_IN_TOOLTIP = 25;
+
+////////////////////////////////////////////////////////////////////
+
+/** Simple sorter on category names for use with std::stable_sort() on a vector. */
+class CategoryNameSorter
+{
+public:
+  explicit CategoryNameSorter(const simData::CategoryNameManager& nameManager)
+    : nameManager_(nameManager)
+  {
+  }
+
+  /** Less-than operator does a straight name compare with the category name manager */
+  bool operator()(int left, int right) const
+  {
+    return nameManager_.nameIntToString(left) < nameManager_.nameIntToString(right);
+  }
+
+private:
+  const simData::CategoryNameManager& nameManager_;
+};
+
+////////////////////////////////////////////////////////////////////
+
+/** Simple custom QListWidgetItem that allows for sorting between items using a sort role */
+class SortedListWidgetItem : public QListWidgetItem
+{
+public:
+  explicit SortedListWidgetItem(const QString& text)
+    : QListWidgetItem(text)
+  {
+  }
+
+  /** Override operator<() to sort based on the unique role, presumably externally set. */
+  virtual bool operator<(const QListWidgetItem& other) const
+  {
+    return data(ROLE_SORT_STRING).toString() < other.data(ROLE_SORT_STRING).toString();
+  }
+};
 
 ////////////////////////////////////////////////////////////////////
 
@@ -404,12 +446,23 @@ void CategoryDataBreadcrumbs::rebuildList_()
   {
     std::vector<int> names;
     filter_->getNames(names);
+
+    // Sort breadcrumbs by category name; must be done here too to allow alternating rows to work
+    if (filter_->getDataStore())
+    {
+      CategoryNameSorter nameSorter(filter_->getDataStore()->categoryNameManager());
+      std::stable_sort(names.begin(), names.end(), nameSorter);
+    }
+
     bool useAltFillColor = false;
     for (auto i = names.begin(); i != names.end(); ++i)
     {
       addNameToList_(*i, useAltFillColor);
       useAltFillColor = !useAltFillColor;
     }
+
+    // Sort the list
+    listWidget_->sortItems();
   }
 
   // Make sure that the "no valid item" notice is shown if needed
@@ -436,22 +489,30 @@ void CategoryDataBreadcrumbs::addNoValidItemIfEmptyList_()
 
 QListWidgetItem* CategoryDataBreadcrumbs::addNameItem_(const QString& categoryName, int nameInt, bool useAltFillColor)
 {
-  QListWidgetItem* newItem = new QListWidgetItem(tr("[%1]").arg(categoryName), listWidget_);
+  QListWidgetItem* newItem = new SortedListWidgetItem(tr("[%1]").arg(categoryName));
   newItem->setData(ROLE_CATEGORY_NAME, categoryName);
   newItem->setData(ROLE_NAME_INT, nameInt);
   newItem->setData(ROLE_IS_CHECKED, true);
   newItem->setData(ROLE_USE_ALT_FILL_COLOR, useAltFillColor);
+  newItem->setData(ROLE_SORT_STRING, categoryName);
+  listWidget_->insertItem(listWidget_->count(), newItem);
   return newItem;
 }
 
 QListWidgetItem* CategoryDataBreadcrumbs::addValueItem_(const QString& text, const QString& name, int nameInt, int valueInt, bool isChecked, bool useAltFillColor)
 {
-  QListWidgetItem* newItem = new QListWidgetItem(text, listWidget_);
+  QListWidgetItem* newItem = new SortedListWidgetItem(text);
   newItem->setData(ROLE_CATEGORY_NAME, name);
   newItem->setData(ROLE_NAME_INT, nameInt);
   newItem->setData(ROLE_VALUE_INT, valueInt);
   newItem->setData(ROLE_IS_CHECKED, isChecked);
   newItem->setData(ROLE_USE_ALT_FILL_COLOR, useAltFillColor);
+  // Show "No Value" (or "Has Value") first always.  Use spaces to separate since in ASCII they're earlier (0x20)
+  if (valueInt == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
+    newItem->setData(ROLE_SORT_STRING, QString("%1    %2").arg(name, text));
+  else
+    newItem->setData(ROLE_SORT_STRING, QString("%1  %2").arg(name, text));
+  listWidget_->insertItem(listWidget_->count(), newItem);
   return newItem;
 }
 
