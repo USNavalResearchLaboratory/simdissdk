@@ -51,6 +51,8 @@ public:
   Qt::CheckState state() const;
   /// Sets the check box state
   void setState(Qt::CheckState value);
+  /// Returns Checked, Unchecked, or PartiallyChecked to indicate whether children are uniformly checked
+  Qt::CheckState childrenState() const;
 
   /**@name Tree management routines
    *@{
