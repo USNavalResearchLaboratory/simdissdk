@@ -63,7 +63,9 @@ enum
   /// Integer value for the value.  May be unset if the item represents a whole category
   ROLE_VALUE_INT,
   /// Indicates the current state flag for the value in the category
-  ROLE_IS_CHECKED
+  ROLE_IS_CHECKED,
+  /// Indicates whether the alternate fill color should be used for breadcrumbs
+  ROLE_USE_ALT_FILL_COLOR
 };
 
 /// Maximum number of items in the HTML list; limiting to keep size of tooltip down
@@ -76,6 +78,7 @@ CloseableItemDelegate::Style::Style()
     rectangleRadiusY(4.0),
     outlinePen(QColor(188, 195, 199, 255), 1.5), // Grayish
     fillColor(QColor(195, 225, 240, 255)), // Light gray with a hint of blue
+    altFillColor(QColor(161, 212, 237, 255)), // Slightly darker blue
     textColor(Qt::black),
     itemMargins(2, 2, 2, 2),
     textPadding(2, 0, 2, 0),
@@ -128,7 +131,8 @@ void CloseableItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
     QPainterPath path;
     path.addRoundedRect(itemRect, style_.rectangleRadiusX, style_.rectangleRadiusY);
     painter->setPen(style_.outlinePen);
-    painter->fillPath(path, style_.fillColor);
+    QColor fillColor = (index.data(ROLE_USE_ALT_FILL_COLOR).toBool() ? style_.altFillColor : style_.fillColor);
+    painter->fillPath(path, fillColor);
     painter->drawPath(path);
   }
 
@@ -400,8 +404,12 @@ void CategoryDataBreadcrumbs::rebuildList_()
   {
     std::vector<int> names;
     filter_->getNames(names);
+    bool useAltFillColor = false;
     for (auto i = names.begin(); i != names.end(); ++i)
-      addNameToList_(*i);
+    {
+      addNameToList_(*i, useAltFillColor);
+      useAltFillColor = !useAltFillColor;
+    }
   }
 
   // Make sure that the "no valid item" notice is shown if needed
@@ -426,22 +434,24 @@ void CategoryDataBreadcrumbs::addNoValidItemIfEmptyList_()
     listWidget_->setItemDelegate(itemDelegate_);
 }
 
-QListWidgetItem* CategoryDataBreadcrumbs::addNameItem_(const QString& categoryName, int nameInt)
+QListWidgetItem* CategoryDataBreadcrumbs::addNameItem_(const QString& categoryName, int nameInt, bool useAltFillColor)
 {
   QListWidgetItem* newItem = new QListWidgetItem(tr("[%1]").arg(categoryName), listWidget_);
   newItem->setData(ROLE_CATEGORY_NAME, categoryName);
   newItem->setData(ROLE_NAME_INT, nameInt);
   newItem->setData(ROLE_IS_CHECKED, true);
+  newItem->setData(ROLE_USE_ALT_FILL_COLOR, useAltFillColor);
   return newItem;
 }
 
-QListWidgetItem* CategoryDataBreadcrumbs::addValueItem_(const QString& text, const QString& name, int nameInt, int valueInt, bool isChecked)
+QListWidgetItem* CategoryDataBreadcrumbs::addValueItem_(const QString& text, const QString& name, int nameInt, int valueInt, bool isChecked, bool useAltFillColor)
 {
   QListWidgetItem* newItem = new QListWidgetItem(text, listWidget_);
   newItem->setData(ROLE_CATEGORY_NAME, name);
   newItem->setData(ROLE_NAME_INT, nameInt);
   newItem->setData(ROLE_VALUE_INT, valueInt);
   newItem->setData(ROLE_IS_CHECKED, isChecked);
+  newItem->setData(ROLE_USE_ALT_FILL_COLOR, useAltFillColor);
   return newItem;
 }
 
@@ -474,7 +484,7 @@ QString CategoryDataBreadcrumbs::buildValuesHtmlList_(const simData::CategoryNam
   return valueText;
 }
 
-void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
+void CategoryDataBreadcrumbs::addNameToList_(int nameIndex, bool useAltFillColor)
 {
   // Break out to avoid NULL problems
   if (filter_ == NULL || filter_->getDataStore() == NULL)
@@ -505,7 +515,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
         .arg(name, valueText);
 
       // Create a group item, then add a tooltip
-      QListWidgetItem* newItem = addNameItem_(name, nameIndex);
+      QListWidgetItem* newItem = addNameItem_(name, nameIndex, useAltFillColor);
       newItem->setToolTip(simQt::formatTooltip(tr("%1 Category").arg(name), tipText));
       return;
     }
@@ -523,7 +533,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
       if (i->first == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
         itemText = tr("No %1").arg(name);  // e.g. "No Affinity"
 
-      QListWidgetItem* newItem = addValueItem_(itemText, name, nameIndex, i->first, i->second);
+      QListWidgetItem* newItem = addValueItem_(itemText, name, nameIndex, i->first, i->second, useAltFillColor);
       newItem->setToolTip(simQt::formatTooltip(tr("%1: %2").arg(name, value),
         tr("Match value '%2' in category '%1'.").arg(name, value)));
     }
@@ -567,7 +577,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
     const QString tipText = tr("Filter a variety of values in the '%1' Category, excluding values:<ul>%2</ul>")
       .arg(name, valueText);
 
-    QListWidgetItem* newItem = addNameItem_(name, nameIndex);
+    QListWidgetItem* newItem = addNameItem_(name, nameIndex, useAltFillColor);
     newItem->setToolTip(simQt::formatTooltip(tr("%1 Category").arg(name), tipText));
     return;
   }
@@ -586,7 +596,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
   }
   else
   {
-    QListWidgetItem* newItem = addValueItem_(tr("Has %1").arg(name), name, nameIndex, simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME, false);
+    QListWidgetItem* newItem = addValueItem_(tr("Has %1").arg(name), name, nameIndex, simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME, false, useAltFillColor);
     newItem->setToolTip(simQt::formatTooltip(tr("%1: Has Value").arg(name),
       tr("Match empty value in category '%1'.").arg(name)));
   }
@@ -599,7 +609,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex)
     assert(!i->second);
 
     const QString value = QString::fromStdString(nameManager.valueIntToString(i->first));
-    QListWidgetItem* newItem = addValueItem_(tr("Not %1").arg(value), name, nameIndex, i->first, i->second);
+    QListWidgetItem* newItem = addValueItem_(tr("Not %1").arg(value), name, nameIndex, i->first, i->second, useAltFillColor);
     newItem->setToolTip(simQt::formatTooltip(tr("Omit %1: %2").arg(name, value),
       tr("Match without value '%2' in category '%1'.").arg(name, value)));
   }
@@ -679,6 +689,11 @@ qreal CategoryDataBreadcrumbs::rectangleRadiusY() const
 QColor CategoryDataBreadcrumbs::fillColor() const
 {
   return itemDelegate_->style().fillColor;
+}
+
+QColor CategoryDataBreadcrumbs::altFillColor() const
+{
+  return itemDelegate_->style().altFillColor;
 }
 
 QColor CategoryDataBreadcrumbs::textColor() const
@@ -765,6 +780,15 @@ void CategoryDataBreadcrumbs::setFillColor(const QColor& value)
     return;
 
   itemDelegate_->style().fillColor = value;
+  update();
+}
+
+void CategoryDataBreadcrumbs::setAltFillColor(const QColor& value)
+{
+  if (value == itemDelegate_->style().altFillColor)
+    return;
+
+  itemDelegate_->style().altFillColor = value;
   update();
 }
 

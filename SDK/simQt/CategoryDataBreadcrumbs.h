@@ -60,6 +60,7 @@ public:
     /// Pen and colors for the rectangle and its outline
     QPen outlinePen;
     QColor fillColor;
+    QColor altFillColor;
     QColor textColor;
 
     /// Margin around the drawn part of the item for consecutively placed items
@@ -139,6 +140,7 @@ class SDKQT_EXPORT CategoryDataBreadcrumbs : public QWidget
   Q_PROPERTY(qreal rectangleRadiusY READ rectangleRadiusY WRITE setRectangleRadiusY);
   Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor);
   Q_PROPERTY(QColor fillColor READ fillColor WRITE setFillColor);
+  Q_PROPERTY(QColor altFillColor READ altFillColor WRITE setAltFillColor);
   Q_PROPERTY(QColor outlineColor READ outlineColor WRITE setOutlineColor);
   Q_PROPERTY(qreal outlineWidth READ outlineWidth WRITE setOutlineWidth);
   Q_PROPERTY(QMargins itemMargins READ itemMargins WRITE setItemMargins);
@@ -165,6 +167,7 @@ public:
   qreal rectangleRadiusX() const;
   qreal rectangleRadiusY() const;
   QColor fillColor() const;
+  QColor altFillColor() const;
   QColor textColor() const;
   QPen outlinePen() const;
   QColor outlineColor() const;
@@ -184,6 +187,8 @@ public:
   void setRectangleRadiusY(qreal value);
   /** Changes the background fill color for the buttons. */
   void setFillColor(const QColor& value);
+  /** Changes the alternate background fill color for the buttons. */
+  void setAltFillColor(const QColor& value);
   /** Changes the text color for the buttons. */
   void setTextColor(const QColor& value);
   /** Changes the pen used for drawing the button outline.  Encapsulates the outline color and width. */
@@ -235,16 +240,16 @@ protected:
 
 private:
   /** Adds items to the breadcrumb list for the given name */
-  void addNameToList_(int nameIndex);
+  void addNameToList_(int nameIndex, bool useAltFillColor);
   /** Clears and redraws the entire list to reflect the state of the filter. */
   void rebuildList_();
   /** If the list is empty, adds the no-valid-item item */
   void addNoValidItemIfEmptyList_();
 
   /** Convenience method to append a list widget item for the given category */
-  QListWidgetItem* addNameItem_(const QString& categoryName, int nameInt);
+  QListWidgetItem* addNameItem_(const QString& categoryName, int nameInt, bool useAltFillColor);
   /** Convenience method to append a list widget item for a specific value in a given category */
-  QListWidgetItem* addValueItem_(const QString& text, const QString& name, int nameInt, int valueInt, bool isChecked);
+  QListWidgetItem* addValueItem_(const QString& text, const QString& name, int nameInt, int valueInt, bool isChecked, bool useAltFillColor);
 
   /** Creates a list for tooltips that uses <li> items for each check in the list */
   QString buildValuesHtmlList_(const simData::CategoryNameManager& nameManager, const std::map<int, bool>& checks, size_t maxItems) const;
