@@ -501,8 +501,6 @@ void EntityLineEdit::setTextStyle_(bool valid)
 BoundEntityLineEdit::BoundEntityLineEdit(EntityLineEdit* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData)
   : BoundIntegerSetting(parent, settings, variableName, metaData)
 {
-  qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
-
   parent->setStateFilter(static_cast<EntityStateFilter::State>(value()));
   connect(parent, SIGNAL(stateFilterChanged(simQt::EntityStateFilter::State)), this, SLOT(setStateFromLineEdit_(simQt::EntityStateFilter::State)));
   connect(this, SIGNAL(valueChanged(int)), this, SLOT(setStateFromSettings_(int)));

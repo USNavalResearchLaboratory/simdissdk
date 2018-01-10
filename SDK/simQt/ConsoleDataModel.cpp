@@ -110,8 +110,6 @@ ConsoleDataModel::ConsoleDataModel(QObject* parent)
     timeFormatString_(DEFAULT_TIME_FORMAT),
     pendingTimer_(new QTimer)
 {
-  // Register the meta type for notify for thread safety in channels
-  qRegisterMetaType<simNotify::NotifySeverity>("simNotify::NotifySeverity");
 
   pendingTimer_->setInterval(PROCESS_PENDING_TIMEOUT);
   pendingTimer_->setSingleShot(true);

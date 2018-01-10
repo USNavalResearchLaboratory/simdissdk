@@ -284,8 +284,6 @@ private:
 ActionRegistry::ActionRegistry(QWidget* mainWindow)
   : mainWindow_(mainWindow)
 {
-  // Register a serialize/deserialize method for a list of key sequences, for QSettings use
-  qRegisterMetaTypeStreamOperators<QList<QKeySequence> >("QList<QKeySequence>");
 }
 
 ActionRegistry::~ActionRegistry()

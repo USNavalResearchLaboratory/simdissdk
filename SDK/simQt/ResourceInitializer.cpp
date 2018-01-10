@@ -20,6 +20,12 @@
  *
  */
 #include <QtCore/qglobal.h>
+#include "simQt/ConsoleDataModel.h"
+#include "simQt/EntityLineEdit.h"
+#ifdef HAVE_SIMDATA
+  #include "simQt/EntityTreeComposite.h"
+#endif
+#include "simQt/SettingsModel.h"
 #include "simQt/ResourceInitializer.h"
 
 /// Local initialization for the simQt library.  Note that this cannot be in a namespace
@@ -36,7 +42,22 @@ void ResourceInitializer::initialize()
   static bool simQtRccInit = false;
   // Try to avoid initializing more than once
   if (!simQtRccInit)
+  {
     qt_Initialize_simQt();
+
+    // Register meta types for use in QSettings
+    qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
+    qRegisterMetaTypeStreamOperators<QList<QKeySequence> >("QList<QKeySequence>");
+#ifdef HAVE_SIMDATA
+    qRegisterMetaTypeStreamOperators<simQt::EntityTreeComposite::FilterConfiguration>("simQt::EntityTreeComposite::FilterConfiguration");
+#endif
+
+    // Register meta type for thread safety in channels
+    qRegisterMetaType<simNotify::NotifySeverity>("simNotify::NotifySeverity");
+
+    // Register meta type for use as an argument in signals/slots
+    qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
+  }
   simQtRccInit = true;
   // If other resource files are added, it might be advantageous to
   // add them in here as well.  Alternatively, different functions
