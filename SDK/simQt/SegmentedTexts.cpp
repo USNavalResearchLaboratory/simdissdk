@@ -40,8 +40,14 @@ namespace simQt {
 
   SegmentedTexts::~SegmentedTexts()
   {
+    clearParts();
+  }
+
+  void SegmentedTexts::clearParts()
+  {
     Q_FOREACH(SegmentedText* part, segments_)
       delete part;
+    segments_.clear();
   }
 
   unsigned int SegmentedTexts::precision() const
@@ -537,12 +543,7 @@ namespace simQt {
   SecondsTexts::SecondsTexts()
     : SegmentedTexts()
   {
-    // almost 70 years
-    seconds_ = new NumberText(this, 0, std::numeric_limits<int>::max(), 10, false, 1.0, false);
-    addPart(seconds_);
-    addPart(new SeparatorText(".", true));
-    fraction_ = createFactionOfSeconds_(precision_);
-    addPart(fraction_);
+    makeSegments_();
   }
 
   SecondsTexts::~SecondsTexts()
@@ -550,23 +551,43 @@ namespace simQt {
     // No need to delete the pointers since they are also in segments_ of SegmentedTexts
   }
 
+  void SecondsTexts::makeSegments_()
+  {
+    clearParts();
+
+    // almost 70 years
+    seconds_ = new NumberText(this, 0, std::numeric_limits<int>::max(), 10, false, 1.0, false);
+    if (precision_ != 0)
+      fraction_ = createFactionOfSeconds_(precision_);
+    else
+      fraction_ = NULL;
+
+    addPart(seconds_);
+    if (fraction_ != NULL)
+    {
+      addPart(new SeparatorText(".", true));
+      addPart(fraction_);
+    }
+  }
+
   void SecondsTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 1 and 6 -- parsing problems with 1, bad precision past 6
-    digits = simCore::sdkMax(1, simCore::sdkMin(6, static_cast<int>(digits)));
+    // Limit between 0 and 6 -- bad precision past 6
+    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
 
     if (digits == precision_)
       return;
 
     precision_ = digits;
-    fraction_ = updateFactionOfSeconds_(precision_);
+    makeSegments_();
   }
 
   simCore::TimeStamp SecondsTexts::timeStamp() const
   {
     double seconds = seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
+    if (fraction_ != NULL)
+      seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
 
     return simCore::TimeStamp(scenarioReferenceYear_, seconds);
   }
@@ -582,15 +603,17 @@ namespace simQt {
     int seconds = static_cast<int>(time);
 
     // fractional part
-    int fraction = static_cast<int>(((time - seconds) * std::pow(10.0, static_cast<double>(precision_))) + 0.5);
-    // Check to see if rounded up to a full second
-    if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
+    if (fraction_ != NULL)
     {
-      ++seconds;
-      fraction = 0;
+      int fraction = static_cast<int>(((time - seconds) * std::pow(10.0, static_cast<double>(precision_))) + 0.5);
+      // Check to see if rounded up to a full second
+      if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
+      {
+        ++seconds;
+        fraction = 0;
+      }
+      fraction_->setValue(fraction);
     }
-    fraction_->setValue(fraction);
-
     seconds_->setValue(seconds);
   }
 
@@ -624,15 +647,7 @@ namespace simQt {
   MinutesTexts::MinutesTexts()
     : SegmentedTexts()
   {
-    // 70 years
-    minutes_ = new NumberText(this, 0, 36792000, 8, false, 60.0, false);  // No leading zeros
-    addPart(minutes_);
-    addPart(new SeparatorText(":", false));
-    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
-    addPart(seconds_);
-    addPart(new SeparatorText(".", true));
-    fraction_ = createFactionOfSeconds_(precision_);
-    addPart(fraction_);
+    makeSegments_();
   }
 
   MinutesTexts::~MinutesTexts()
@@ -640,16 +655,38 @@ namespace simQt {
     // No need to delete the pointers since they are also in segments_ of SegmentedTexts
   }
 
+  void MinutesTexts::makeSegments_()
+  {
+    clearParts();
+
+    // 70 years
+    minutes_ = new NumberText(this, 0, 36792000, 8, false, 60.0, false);  // No leading zeros
+    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
+    if (precision_ != 0)
+      fraction_ = createFactionOfSeconds_(precision_);
+    else
+      fraction_ = NULL;
+
+    addPart(minutes_);
+    addPart(new SeparatorText(":", false));
+    addPart(seconds_);
+    if (fraction_ != NULL)
+    {
+      addPart(new SeparatorText(".", true));
+      addPart(fraction_);
+    }
+  }
+
   void MinutesTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 1 and 6 -- parsing problems with 1, bad precision past 6
-    digits = simCore::sdkMax(1, simCore::sdkMin(6, static_cast<int>(digits)));
+    // Limit between 0 and 6 -- bad precision past 6
+    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
 
     if (digits == precision_)
       return;
 
     precision_ = digits;
-    fraction_ = updateFactionOfSeconds_(precision_);
+    makeSegments_();
   }
 
   simCore::TimeStamp MinutesTexts::timeStamp() const
@@ -658,7 +695,8 @@ namespace simQt {
     seconds *= 60.0;
     seconds += seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
+    if (fraction_ != NULL)
+      seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
 
     return simCore::TimeStamp(scenarioReferenceYear_, seconds);
   }
@@ -672,20 +710,26 @@ namespace simQt {
 
     int minutes = static_cast<int>(time/60.0);
     int seconds = static_cast<int>((time-minutes*60));
-    int fraction = static_cast<int>((time - minutes * 60 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
-    // Check to see if rounded up to a full second
-    if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
+    int fraction = 0;
+    if (precision_ != 0)
     {
-      seconds++;
-      fraction = 0;
-      if (seconds == 60)
+      fraction = static_cast<int>((time - minutes * 60 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
+      // Check to see if rounded up to a full second
+      if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
       {
-        seconds = 0;
-        ++minutes;
+        seconds++;
+        fraction = 0;
+        if (seconds == 60)
+        {
+          seconds = 0;
+          ++minutes;
+        }
       }
+
+      if (fraction_ != NULL)
+        fraction_->setValue(fraction);
     }
 
-    fraction_->setValue(fraction);
     seconds_->setValue(seconds);
     minutes_->setValue(minutes);
   }
@@ -721,18 +765,7 @@ namespace simQt {
   HoursTexts::HoursTexts()
     : SegmentedTexts()
   {
-    // 70 years
-    hours_ = new NumberText(this, 0, 613200, 6, false, 60.0*60.0, false);  // No leading zeros
-    addPart(hours_);
-    addPart(new SeparatorText(":", false));
-    minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
-    addPart(minutes_);
-    addPart(new SeparatorText(":", false));
-    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
-    addPart(seconds_);
-    addPart(new SeparatorText(".", true));
-    fraction_ = createFactionOfSeconds_(precision_);
-    addPart(fraction_);
+    makeSegments_();
   }
 
   HoursTexts::~HoursTexts()
@@ -740,16 +773,42 @@ namespace simQt {
     // No need to delete the pointers since they are also in segments_ of SegmentedTexts
   }
 
+  void HoursTexts::makeSegments_()
+  {
+    clearParts();
+
+    // 70 years
+    hours_ = new NumberText(this, 0, 613200, 6, false, 60.0*60.0, false);  // No leading zeros
+    minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
+    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
+    fraction_ = createFactionOfSeconds_(precision_);
+    if (precision_ != 0)
+      fraction_ = createFactionOfSeconds_(precision_);
+    else
+      fraction_ = NULL;
+
+    addPart(hours_);
+    addPart(new SeparatorText(":", false));
+    addPart(minutes_);
+    addPart(new SeparatorText(":", false));
+    addPart(seconds_);
+    if (fraction_ != NULL)
+    {
+      addPart(new SeparatorText(".", true));
+      addPart(fraction_);
+    }
+  }
+
   void HoursTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 1 and 6 -- parsing problems with 1, bad precision past 6
-    digits = simCore::sdkMax(1, simCore::sdkMin(6, static_cast<int>(digits)));
+    // Limit between 0 and 6 -- bad precision past 6
+    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
 
     if (digits == precision_)
       return;
 
     precision_ = digits;
-    fraction_ = updateFactionOfSeconds_(precision_);
+    makeSegments_();
   }
 
   simCore::TimeStamp HoursTexts::timeStamp() const
@@ -760,7 +819,8 @@ namespace simQt {
     seconds *= 60.0;
     seconds += seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
+    if (fraction_ != NULL)
+      seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
 
     return simCore::TimeStamp(scenarioReferenceYear_, seconds);
   }
@@ -775,20 +835,24 @@ namespace simQt {
     int hours = static_cast<int>(time/3600.0);
     int minutes = static_cast<int>((time-hours*3600.0)/60.0);
     int seconds = static_cast<int>((time-hours*3600.0-minutes*60.0));
-    int fraction = static_cast<int>((time - hours*3600.0 - minutes*60.0 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
-    // Check to see if rounded up to a full second
-    if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
+    int fraction = 0;
+    if (precision_ != 0)
     {
-      seconds++;
-      fraction = 0;
-      if (seconds == 60)
+      fraction = static_cast<int>((time - hours*3600.0 - minutes*60.0 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
+      // Check to see if rounded up to a full second
+      if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
       {
-        seconds = 0;
-        ++minutes;
-        if (minutes == 60)
+        seconds++;
+        fraction = 0;
+        if (seconds == 60)
         {
-          minutes = 0;
-          ++hours;
+          seconds = 0;
+          ++minutes;
+          if (minutes == 60)
+          {
+            minutes = 0;
+            ++hours;
+          }
         }
       }
     }
@@ -796,7 +860,8 @@ namespace simQt {
     hours_->setValue(hours);
     minutes_->setValue(minutes);
     seconds_->setValue(seconds);
-    fraction_->setValue(fraction);
+    if (fraction_ != NULL)
+      fraction_->setValue(fraction);
   }
 
   QValidator::State HoursTexts::validateText(const QString& text) const
@@ -830,26 +895,7 @@ namespace simQt {
   OrdinalTexts::OrdinalTexts()
     : SegmentedTexts()
   {
-    days_ = new NumberText(this, 1, 366, 3, true, 24.0*60.0*60, false);
-    addPart(days_);
-    addPart(new SeparatorText(" ", false));
-    // If the user increments the year the code will add 365*24*60*60 seconds to the current value.
-    // If the time change crosses Feb 29th, the year will change by one but the day of year will also
-    // change by one.   I do not think it is worth fixing.
-    years_= new NumberText(this, 1970, 2046, 4, false, 365.0*24.0*60.0*60.0, false);
-    addPart(years_);
-    addPart(new SeparatorText(" ", false));
-    hours_ = new NumberText(this, 0, 23, 2, true, 60.0*60.0, false);
-    addPart(hours_);
-    addPart(new SeparatorText(":", false));
-    minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
-    addPart(minutes_);
-    addPart(new SeparatorText(":", false));
-    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
-    addPart(seconds_);
-    addPart(new SeparatorText(".", true));
-    fraction_ = createFactionOfSeconds_(precision_);
-    addPart(fraction_);
+    makeSegments_();
   }
 
   OrdinalTexts::~OrdinalTexts()
@@ -857,16 +903,49 @@ namespace simQt {
     // No need to delete the pointers since they are also in segments_ of SegmentedTexts
   }
 
+  void OrdinalTexts::makeSegments_()
+  {
+    clearParts();
+
+    days_ = new NumberText(this, 1, 366, 3, true, 24.0*60.0 * 60, false);
+    // If the user increments the year the code will add 365*24*60*60 seconds to the current value.
+    // If the time change crosses Feb 29th, the year will change by one but the day of year will also
+    // change by one.   I do not think it is worth fixing.
+    years_ = new NumberText(this, 1970, 2046, 4, false, 365.0*24.0*60.0*60.0, false);
+    hours_ = new NumberText(this, 0, 23, 2, true, 60.0*60.0, false);
+    minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
+    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
+    if (precision_ != 0)
+      fraction_ = createFactionOfSeconds_(precision_);
+    else
+      fraction_ = NULL;
+
+    addPart(days_);
+    addPart(new SeparatorText(" ", false));
+    addPart(years_);
+    addPart(new SeparatorText(" ", false));
+    addPart(hours_);
+    addPart(new SeparatorText(":", false));
+    addPart(minutes_);
+    addPart(new SeparatorText(":", false));
+    addPart(seconds_);
+    if (fraction_ != NULL)
+    {
+      addPart(new SeparatorText(".", true));
+      addPart(fraction_);
+    }
+  }
+
   void OrdinalTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 1 and 6 -- parsing problems with 1, bad precision past 6
-    digits = simCore::sdkMax(1, simCore::sdkMin(6, static_cast<int>(digits)));
+    // Limit between 0 and 6 -- bad precision past 6
+    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
 
     if (digits == precision_)
       return;
 
     precision_ = digits;
-    fraction_ = updateFactionOfSeconds_(precision_);
+    makeSegments_();
   }
 
   simCore::TimeStamp OrdinalTexts::timeStamp() const
@@ -878,7 +957,8 @@ namespace simQt {
     seconds *= 60.0;
     seconds += seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
+    if (fraction_ != NULL)
+      seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
 
     return simCore::TimeStamp(years_->value(), seconds);
   }
@@ -894,24 +974,28 @@ namespace simQt {
     int hours = static_cast<int>((time-days*86400)/3600);
     int minutes = static_cast<int>((time-days*86400-hours*3600)/60);
     int seconds = static_cast<int>((time-days*86400-hours*3600-minutes*60));
-    int fraction = static_cast<int>((time - days * 86400 - hours * 3600 - minutes * 60 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
-    // Check to see if rounded up to a full second
-    if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
+    int fraction = 0;
+    if (precision_ != 0)
     {
-      seconds++;
-      fraction = 0;
-      if (seconds == 60)
+      fraction = static_cast<int>((time - days * 86400 - hours * 3600 - minutes * 60 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
+      // Check to see if rounded up to a full second
+      if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
       {
-        seconds = 0;
-        ++minutes;
-        if (minutes == 60)
+        seconds++;
+        fraction = 0;
+        if (seconds == 60)
         {
-          minutes = 0;
-          ++hours;
-          if (hours == 24)
+          seconds = 0;
+          ++minutes;
+          if (minutes == 60)
           {
-            hours = 0;
-            ++days;
+            minutes = 0;
+            ++hours;
+            if (hours == 24)
+            {
+              hours = 0;
+              ++days;
+            }
           }
         }
       }
@@ -921,7 +1005,8 @@ namespace simQt {
     hours_->setValue(hours);
     minutes_->setValue(minutes);
     seconds_->setValue(seconds);
-    fraction_->setValue(fraction);
+    if (fraction_ != NULL)
+      fraction_->setValue(fraction);
   }
 
   QValidator::State OrdinalTexts::validateText(const QString& text) const
@@ -954,35 +1039,7 @@ namespace simQt {
   MonthDayYearTexts::MonthDayYearTexts()
     : SegmentedTexts()
   {
-    month_ = new MonthText(this);
-    addPart(month_);
-    addPart(new SeparatorText(" ", false));
-
-    days_ = new NumberText(this, 1, 31, 2, false, 24.0*60.0*60, false);
-    addPart(days_);
-    addPart(new SeparatorText(" ", false));
-
-    // If the user increments the year the code will add 365*24*60*60 seconds to the current value.
-    // If the time change crosses Feb 29th, the year will change by one but the day of year will also
-    // change by one.   I do not think it is worth fixing.
-    years_= new NumberText(this, 1970, 2046, 4, false, 365.0*24.0*60.0*60.0, false);
-    addPart(years_);
-    addPart(new SeparatorText(" ", false));
-
-    hours_ = new NumberText(this, 0, 23, 2, true, 60.0*60.0, false);
-    addPart(hours_);
-    addPart(new SeparatorText(":", false));
-
-    minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
-    addPart(minutes_);
-    addPart(new SeparatorText(":", false));
-
-    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
-    addPart(seconds_);
-    addPart(new SeparatorText(".", true));
-
-    fraction_ = createFactionOfSeconds_(precision_);
-    addPart(fraction_);
+    makeSegments_();
   }
 
   MonthDayYearTexts::~MonthDayYearTexts()
@@ -990,17 +1047,54 @@ namespace simQt {
     // no need to delete
   }
 
+  void MonthDayYearTexts::makeSegments_()
+  {
+    clearParts();
+
+    month_ = new MonthText(this);
+    days_ = new NumberText(this, 1, 31, 2, false, 24.0*60.0 * 60, false);
+    // If the user increments the year the code will add 365*24*60*60 seconds to the current value.
+    // If the time change crosses Feb 29th, the year will change by one but the day of year will also
+    // change by one.   I do not think it is worth fixing.
+    years_ = new NumberText(this, 1970, 2046, 4, false, 365.0*24.0*60.0*60.0, false);
+    hours_ = new NumberText(this, 0, 23, 2, true, 60.0*60.0, false);
+    minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
+    seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
+    if (precision_ != 0)
+      fraction_ = createFactionOfSeconds_(precision_);
+    else
+      fraction_ = NULL;
+
+    addPart(month_);
+    addPart(new SeparatorText(" ", false));
+    addPart(days_);
+    addPart(new SeparatorText(" ", false));
+    addPart(years_);
+    addPart(new SeparatorText(" ", false));
+    addPart(hours_);
+    addPart(new SeparatorText(":", false));
+    addPart(minutes_);
+    addPart(new SeparatorText(":", false));
+    addPart(seconds_);
+    if (fraction_ != NULL)
+    {
+      addPart(new SeparatorText(".", true));
+      addPart(fraction_);
+    }
+  }
+
   void MonthDayYearTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 1 and 6 -- parsing problems with 1, bad precision past 6
-    digits = simCore::sdkMax(1, simCore::sdkMin(6, static_cast<int>(digits)));
+    // Limit between 0 and 6 -- bad precision past 6
+    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
 
     if (digits == precision_)
       return;
 
     precision_ = digits;
-    fraction_ = updateFactionOfSeconds_(precision_);
-  }\
+    makeSegments_();
+  }
+
   simCore::TimeStamp MonthDayYearTexts::timeStamp() const
   {
     //--- convert month/day/year + hours/min/sec into a timestamp (ref year + seconds)
@@ -1025,8 +1119,9 @@ namespace simQt {
     startOfRefYear.tm_wday = simCore::getWeekDay(yearsSince1900, startOfRefYear.tm_yday);
 
     // calculate the number of seconds into the ref year (add fraction)
-    const double secondsIntoYear = simCore::getTimeStructDifferenceInSeconds(startOfRefYear, displayedTime) +
-                                   static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
+    double secondsIntoYear = simCore::getTimeStructDifferenceInSeconds(startOfRefYear, displayedTime);
+    if (fraction_ != NULL)
+      secondsIntoYear += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
 
     // combine the reference year with the seconds offset to make a TimeStamp
     return simCore::TimeStamp(years_->value(), secondsIntoYear);
@@ -1061,7 +1156,8 @@ namespace simQt {
       // need the day to be 0 to 365
       simCore::getMonthAndDayOfMonth(month, dayInMonth, value.referenceYear() - 1900, dayOfYear - 1);
 
-      fraction_->setValue(static_cast<int>(fractionsOfSecond * std::pow(10.0, static_cast<double>(precision_)) + 0.5));
+      if (fraction_ != NULL)
+        fraction_->setValue(static_cast<int>(fractionsOfSecond * std::pow(10.0, static_cast<double>(precision_)) + 0.5));
       seconds_->setValue(static_cast<int>(sec));
       minutes_->setValue(static_cast<int>(min));
       hours_->setValue(static_cast<int>(hour));

@@ -206,8 +206,11 @@ public:
   /// Returns the number of digits after the decimal point
   unsigned int precision() const;
 
-  /// Adds a line segment
+  /// Adds a line segment; takes ownership of part
   void addPart(SegmentedText* part);
+  /// Clear and delete all line segments
+  void clearParts();
+
   /** Given a character position, the routine returns the Line Segment containing the position.
   * @param[in] pos The current cursor position
   * @return The Line Segment containing the position
@@ -277,7 +280,10 @@ public:
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
+
 private:
+  void makeSegments_();
+
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
 };
@@ -298,6 +304,8 @@ public:
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
@@ -319,6 +327,8 @@ public:
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   NumberText* hours_;  // Displays the hours
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
@@ -341,6 +351,8 @@ public:
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   NumberText* days_;  // Displays the day of year
   NumberText* years_;  // Displays the year
   NumberText* hours_;  // Displays the hours
@@ -365,6 +377,8 @@ public:
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   MonthText* month_; // Displays the month
   NumberText* days_;  // Displays the day of year
   NumberText* years_;  // Displays the year
