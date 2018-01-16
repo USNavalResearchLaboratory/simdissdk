@@ -29,6 +29,7 @@
 #include "simQt/CategoryDataBreadcrumbs.h"
 #include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
+#include "simQt/CategoryTreeModel2.h"
 #include "simQt/CenterEntity.h"
 #include "simQt/ColorButton.h"
 #include "simQt/ColorWidget.h"
