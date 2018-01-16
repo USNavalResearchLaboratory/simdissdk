@@ -21,9 +21,9 @@
  */
 #include <QtCore/qglobal.h>
 #include "simQt/ConsoleDataModel.h"
-#include "simQt/EntityLineEdit.h"
 #ifdef HAVE_SIMDATA
-  #include "simQt/EntityTreeComposite.h"
+#include "simQt/EntityLineEdit.h"
+#include "simQt/EntityTreeComposite.h"
 #endif
 #include "simQt/SettingsModel.h"
 #include "simQt/ResourceInitializer.h"
@@ -56,7 +56,9 @@ void ResourceInitializer::initialize()
     qRegisterMetaType<simNotify::NotifySeverity>("simNotify::NotifySeverity");
 
     // Register meta type for use as an argument in signals/slots
+#ifdef HAVE_SIMDATA
     qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
+#endif
   }
   simQtRccInit = true;
   // If other resource files are added, it might be advantageous to
