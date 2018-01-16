@@ -20,6 +20,8 @@
  *
  */
 #include <QtCore/qglobal.h>
+#include <QKeySequence>
+#include <QList>
 #include "simQt/ConsoleDataModel.h"
 #ifdef HAVE_SIMDATA
 #include "simQt/EntityLineEdit.h"
