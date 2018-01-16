@@ -157,6 +157,8 @@ public:
 
   /** Assignment operator */
   CategoryFilter& operator=(const CategoryFilter& other);
+  /** Assignment with options */
+  CategoryFilter& assign(const CategoryFilter& other, bool copyAutoUpdateFlag);
 
   /**
   * build the category filter based on what is in the data store. Will add default No Value and Unlisted entries for all categories

@@ -128,9 +128,15 @@ CategoryFilter::~CategoryFilter()
 
 CategoryFilter& CategoryFilter::operator=(const CategoryFilter& other)
 {
+  return assign(other, true);
+}
+
+CategoryFilter& CategoryFilter::assign(const CategoryFilter& other, bool copyAutoUpdateFlag)
+{
   if (&other == this)
     return *this;
 
+  // Clear the listener pointer unconditionally
   if ((dataStore_ != NULL) && (listenerPtr_ != NULL))
   {
     dataStore_->categoryNameManager().removeListener(listenerPtr_);
@@ -138,7 +144,8 @@ CategoryFilter& CategoryFilter::operator=(const CategoryFilter& other)
   }
   dataStore_ = other.dataStore_;
   regExpFactory_ = other.regExpFactory_;
-  autoUpdate_ = other.autoUpdate_;
+  if (copyAutoUpdateFlag)
+    autoUpdate_ = other.autoUpdate_;
   categoryCheck_ = other.categoryCheck_;
   categoryRegExp_ = other.categoryRegExp_;
 
