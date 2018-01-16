@@ -19,11 +19,17 @@
 * disclose, or release this software.
 *
 */
+#include <QAbstractItemView>
+#include <QApplication>
 #include <QColor>
 #include <QFont>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QToolTip>
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/DataStore.h"
+#include "simQt/QtFormatting.h"
 #include "simQt/CategoryTreeModel2.h"
 
 namespace simQt {
@@ -891,4 +897,387 @@ void CategoryTreeModel2::addValue_(int nameInt, int valueInt)
   endInsertRows();
 }
 
+/////////////////////////////////////////////////////////////////////////
+
+/** Style options for drawing a toggle switch */
+struct StyleOptionToggleSwitch
+{
+  /** Rectangle to draw the switch in */
+  QRect rect;
+  /** Vertical space between drawn track and the rect */
+  int trackMargin;
+  /** Font to draw text in */
+  QFont font;
+
+  /** State: on (to the right) or off (to the left) */
+  bool value;
+
+  /** Describes On|Off styles */
+  struct StateStyle {
+    /** Brush for painting the track */
+    QBrush track;
+    /** Brush for painting the thumb */
+    QBrush thumb;
+    /** Text to draw in the track */
+    QString text;
+    /** Color of text to draw */
+    QColor textColor;
+  };
+
+  /** Style to use for ON state */
+  StateStyle on;
+  /** Stile to use for OFF state */
+  StateStyle off;
+
+  /** Initialize to default options */
+  StyleOptionToggleSwitch()
+    : trackMargin(0),
+    value(false)
+  {
+    // Teal colored track and thumb
+    on.track = QColor(0, 150, 136);
+    on.thumb = on.track;
+    on.text = QObject::tr("Exclude");
+    on.textColor = Qt::black;
+
+    // Black and grey track and thumb
+    off.track = Qt::black;
+    off.thumb = QColor(200, 200, 200);
+    off.text = QObject::tr("Match");
+    off.textColor = Qt::white;
+  }
+};
+
+/////////////////////////////////////////////////////////////////////////
+
+/** Responsible for internal layout and painting of a Toggle Switch widget */
+class ToggleSwitchPainter
+{
+public:
+  /** Paint the widget using the given options on the painter provided. */
+  virtual void paint(const StyleOptionToggleSwitch& option, QPainter* painter) const;
+  /** Returns a size hint for the toggle switch.  Uses option's rectangle height. */
+  virtual QSize sizeHint(const StyleOptionToggleSwitch& option) const;
+
+private:
+  /** Stores rectangle zones for sub-elements of switch. */
+  struct ChildRects
+  {
+    QRect track;
+    QRect thumb;
+    QRect text;
+  };
+
+  /** Calculates the rectangles for painting for each sub-element of the toggle switch. */
+  void calculateRects_(const StyleOptionToggleSwitch& option, ChildRects& rects) const;
+};
+
+void ToggleSwitchPainter::paint(const StyleOptionToggleSwitch& option, QPainter* painter) const
+{
+  painter->save();
+
+  // Adapted from https://stackoverflow.com/questions/14780517
+
+  // Figure out positions of all subelements
+  ChildRects r;
+  calculateRects_(option, r);
+
+  const StyleOptionToggleSwitch::StateStyle& valueStyle = (option.value ? option.on : option.off);
+
+  // Draw the track
+  painter->setPen(Qt::NoPen);
+  painter->setBrush(valueStyle.track);
+  painter->setOpacity(0.45);
+  painter->setRenderHint(QPainter::Antialiasing, true);
+  const double halfHeight = r.track.height() * 0.5;
+  painter->drawRoundedRect(r.track, halfHeight, halfHeight);
+
+  // Draw the text next
+  painter->setOpacity(1.0);
+  painter->setPen(valueStyle.textColor);
+  painter->setFont(option.font);
+  painter->drawText(r.text, Qt::AlignHCenter | Qt::AlignVCenter, valueStyle.text);
+
+  // Draw thumb on top of all
+  painter->setPen(Qt::NoPen);
+  painter->setBrush(valueStyle.thumb);
+  painter->drawEllipse(r.thumb);
+
+  painter->restore();
+}
+
+QSize ToggleSwitchPainter::sizeHint(const StyleOptionToggleSwitch& option) const
+{
+  // Count in the font text for width
+  int textWidth = 0;
+  QFontMetrics fontMetrics(option.font);
+  if (!option.on.text.isEmpty() || !option.off.text.isEmpty())
+  {
+    const int onWidth = fontMetrics.width(option.on.text);
+    const int offWidth = fontMetrics.width(option.off.text);
+    textWidth = qMax(onWidth, offWidth);
+  }
+
+  // Best width depends on height
+  int height = option.rect.height();
+  if (height == 0)
+    height = fontMetrics.height();
+
+  const int desiredWidth = static_cast<int>(1.5 * option.rect.height()) + textWidth;
+  return QSize(desiredWidth, height);
+}
+
+void ToggleSwitchPainter::calculateRects_(const StyleOptionToggleSwitch& option, ChildRects& rects) const
+{
+  // Track is centered about the rectangle
+  rects.track = QRect(option.rect.adjusted(0, option.trackMargin, 0, -option.trackMargin));
+
+  // Thumb should be 1 pixel shorter than the track on top and bottom
+  rects.thumb = QRect(option.rect.adjusted(0, 1, 0, -1));
+  rects.thumb.setWidth(rects.thumb.height());
+  // Move thumb to the right
+  if (option.value)
+    rects.thumb.translate(rects.track.width() - rects.thumb.height(), 0);
+
+  // Text is inside the rect, excluding the thumb area
+  rects.text = QRect(option.rect);
+  if (option.value)
+    rects.text.setRight(rects.thumb.left());
+  else
+    rects.text.setLeft(rects.thumb.right());
+  // Shift the text closer to center (thumb) to avoid being too close to edge
+  rects.text.translate(option.value ? 1 : -1, 0);
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+/** Expected tree indentation.  Tree takes away parts of delegate for tree painting and we want to undo that. */
+static const int TREE_INDENTATION = 20;
+/** Role to use for editing and displaying the "EXCLUDE" button */
+static const int ROLE_EXCLUDE = simQt::CategoryTreeModel2::ROLE_EXCLUDE;
+
+struct CategoryTreeItemDelegate::ChildRects
+{
+  QRect background;
+  QRect checkbox;
+  QRect branch;
+  QRect text;
+  QRect excludeToggle;
+};
+
+CategoryTreeItemDelegate::CategoryTreeItemDelegate(QObject* parent)
+  : QStyledItemDelegate(parent)
+{
+}
+
+CategoryTreeItemDelegate::~CategoryTreeItemDelegate()
+{
+}
+
+void CategoryTreeItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& inOption, const QModelIndex& index) const
+{
+  // Initialize a new option struct that has data from the QModelIndex
+  QStyleOptionViewItemV4 opt(inOption);
+  initStyleOption(&opt, index);
+
+  // Save the painter then draw based on type of node
+  painter->save();
+  if (!index.parent().isValid())
+    paintCategory_(painter, opt, index);
+  else
+    paintValue_(painter, opt, index);
+  painter->restore();
+}
+
+void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionViewItem& opt, const QModelIndex& index) const
+{
+  const QStyle* style = (opt.widget ? opt.widget->style() : qApp->style());
+
+  // Calculate the rectangles for drawing
+  ChildRects r;
+  calculateRects_(opt, index, r);
+
+  { // Draw a background for the whole row
+    painter->setBrush(opt.backgroundBrush);
+    painter->setPen(Qt::PenStyle::NoPen);
+    painter->drawRect(r.background);
+  }
+
+  { // Draw the expand/collapse icon on left side
+    QStyleOptionViewItemV4 branchOpt(opt);
+    branchOpt.rect = r.branch;
+    branchOpt.state &= ~QStyle::StateFlag::State_MouseOver;
+    style->drawPrimitive(QStyle::PE_IndicatorBranch, &branchOpt, painter);
+  }
+
+  { // Draw the text for the category
+    opt.rect = r.text;
+    style->drawControl(QStyle::CE_ItemViewItem, &opt, painter);
+  }
+
+  { // Draw the toggle switch for changing EXCLUDE and INCLUDE
+    StyleOptionToggleSwitch switchOpt;
+    ToggleSwitchPainter switchPainter;
+    switchOpt.rect = r.excludeToggle;
+    switchOpt.value = index.data(ROLE_EXCLUDE).toBool();
+    switchPainter.paint(switchOpt, painter);
+  }
+}
+
+void CategoryTreeItemDelegate::paintValue_(QPainter* painter, QStyleOptionViewItem& opt, const QModelIndex& index) const
+{
+  const QStyle* style = (opt.widget ? opt.widget->style() : qApp->style());
+  const bool isChecked = (index.data(Qt::CheckStateRole).toInt() == Qt::Checked);
+
+  // Calculate the rectangles for drawing
+  ChildRects r;
+  calculateRects_(opt, index, r);
+  opt.rect = r.text;
+
+  // Draw a checked checkbox on left side of item if the item is checked
+  if (isChecked)
+  {
+    // Move it to left side of widget
+    QStyleOption checkOpt(opt);
+    checkOpt.rect = r.checkbox;
+    // Check the button, then draw
+    checkOpt.state |= QStyle::StateFlag::State_On;
+    style->drawPrimitive(QStyle::PE_IndicatorCheckBox, &checkOpt, painter);
+
+    // Checked category values also show up bold
+    opt.font.setBold(true);
+  }
+
+  // Category values that are hovered are shown as underlined in link color (blue usually)
+  if (opt.state.testFlag(QStyle::State_MouseOver))
+  {
+    opt.font.setUnderline(true);
+    opt.palette.setBrush(QPalette::Text, opt.palette.color(QPalette::Link));
+  }
+
+  // Turn off the check indicator unconditionally, then draw the item
+  opt.features &= ~QStyleOptionViewItem::HasCheckIndicator;
+  style->drawControl(QStyle::CE_ItemViewItem, &opt, painter);
+}
+
+bool CategoryTreeItemDelegate::editorEvent(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+  if (index.isValid() && !index.parent().isValid())
+    return categoryEvent_(evt, model, option, index);
+  return valueEvent_(evt, model, option, index);
+}
+
+bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+  if (evt->type() == QEvent::MouseButtonPress)
+  {
+    const auto hitPos = hit_(static_cast<QMouseEvent*>(evt)->pos(), option, index);
+    if (hitPos == SE_EXCLUDE_TOGGLE)
+    {
+      QVariant oldState = index.data(ROLE_EXCLUDE);
+      model->setData(index, !oldState.toBool(), ROLE_EXCLUDE);
+      return true;
+    }
+    else if (hitPos == SE_BRANCH)
+      emit expandClicked(index);
+  }
+  else if (evt->type() == QEvent::MouseButtonDblClick)
+  {
+    // Ignore double click on the toggle button, so that it doesn't cause expand/contract
+    if (hit_(static_cast<QMouseEvent*>(evt)->pos(), option, index) == SE_EXCLUDE_TOGGLE)
+      return true;
+  }
+  return false;
+}
+
+bool CategoryTreeItemDelegate::valueEvent_(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+  if (evt->type() != QEvent::MouseButtonPress)
+    return false;
+  const QMouseEvent* me = static_cast<const QMouseEvent*>(evt);
+  if (me->button() != Qt::LeftButton)
+    return false;
+
+  hit_(static_cast<QMouseEvent*>(evt)->pos(), option, index);
+  // Should have a check state; if not, that's weird, return out
+  QVariant checkState = index.data(Qt::CheckStateRole);
+  if (!checkState.isValid())
+    return false;
+  // Invert the state and send it as an updated check
+  Qt::CheckState newState = (checkState.toInt() == Qt::Checked) ? Qt::Unchecked : Qt::Checked;
+  model->setData(index, newState, Qt::CheckStateRole);
+  return true;
+}
+
+void CategoryTreeItemDelegate::calculateRects_(const QStyleOptionViewItem& option, const QModelIndex& index, ChildRects& rects) const
+{
+  rects.background = option.rect;
+
+  const bool isValue = index.isValid() && index.parent().isValid();
+  if (isValue)
+  {
+    rects.background.setLeft(0);
+    rects.checkbox = rects.background;
+    rects.checkbox.setRight(TREE_INDENTATION);
+
+    // Text takes up everything to the right of the checkbox
+    rects.text = rects.background.adjusted(TREE_INDENTATION, 0, 0, 0);
+  }
+  else
+  {
+    // Branch is the > or v indicator for expanding
+    rects.branch = rects.background;
+    rects.branch.setRight(rects.branch.left() + rects.branch.height());
+
+    // Calculate the width given the rectangle of height, for the toggle switch
+    rects.excludeToggle = rects.background.adjusted(0, 1, -1, -1);
+    ToggleSwitchPainter switchPainter;
+    StyleOptionToggleSwitch switchOpt;
+    switchOpt.rect = rects.excludeToggle;
+    const QSize toggleSize = switchPainter.sizeHint(switchOpt);
+    // Set the left side appropriately
+    rects.excludeToggle.setLeft(rects.excludeToggle.right() - toggleSize.width());
+
+    // Text takes up everything to the right of the branch button until the exclude toggle
+    rects.text = rects.background;
+    rects.text.setLeft(rects.branch.right());
+    rects.text.setRight(rects.excludeToggle.left());
+  }
+}
+
+CategoryTreeItemDelegate::SubElement CategoryTreeItemDelegate::hit_(const QPoint& pos, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+  // Calculate the various rectangles
+  ChildRects r;
+  calculateRects_(option, index, r);
+
+  if (r.excludeToggle.isValid() && r.excludeToggle.contains(pos))
+    return SE_EXCLUDE_TOGGLE;
+  if (r.checkbox.isValid() && r.checkbox.contains(pos))
+    return SE_CHECKBOX;
+  if (r.branch.isValid() && r.branch.contains(pos))
+    return SE_BRANCH;
+  if (r.text.isValid() && r.text.contains(pos))
+    return SE_TEXT;
+  // Background encompasses all, so if we're not here we're in NONE
+  if (r.background.isValid() && r.background.contains(pos))
+    return SE_BACKGROUND;
+  return SE_NONE;
+}
+
+bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* view, const QStyleOptionViewItem& option, const QModelIndex& index)
+{
+  if (evt->type() == QEvent::ToolTip)
+  {
+    // Special tooltip for the EXCLUDE filter
+    if (hit_(evt->pos(), option, index) == SE_EXCLUDE_TOGGLE)
+    {
+      QToolTip::showText(evt->globalPos(), simQt::formatTooltip(tr("Exclude"),
+        tr("When on, Exclude mode will omit all entities that match your selected values.<p>When off, the filter will match all entities that have one of your checked category values.")),
+        view);
+      return true;
+    }
+  }
+  return QStyledItemDelegate::helpEvent(evt, view, option, index);
+}
 }

@@ -26,6 +26,7 @@
 #include <memory>
 #include <vector>
 #include <QAbstractItemModel>
+#include <QStyledItemDelegate>
 #include "simCore/Common/Common.h"
 
 class QFont;
@@ -139,6 +140,65 @@ private:
 
   /** Font used for the Category Name tree items */
   QFont* categoryFont_;
+};
+
+/**
+ * Item delegate that provides custom styling for a QTreeView with a CategoryTreeModel2.  This
+ * delegate is required in order to get "Unlisted Value" editing working properly with
+ * CategoryTreeModel2.  The Unlisted Value editing is shown as an EXCLUDE flag on the category
+ * itself, using a toggle switch to draw the on/off state.  Clicking on the toggle will change
+ * the value in the tree model and therefore in the filter.
+ *
+ * Because the item delegate does not have direct access to the QTreeView on which it is
+ * placed, it cannot correctly deal with clicking on expand/collapse icons.  Please listen
+ * for the expandClicked() signal when using this class in order to deal with expanding
+ * and collapsing trees.
+ */
+class SDKQT_EXPORT CategoryTreeItemDelegate : public QStyledItemDelegate
+{
+  Q_OBJECT;
+public:
+  explicit CategoryTreeItemDelegate(QObject* parent = NULL);
+  virtual ~CategoryTreeItemDelegate();
+
+  /** Overrides from QStyledItemDelegate */
+  virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+  virtual bool editorEvent(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+
+  /** Overrides from QAbstractItemDelegate */
+  virtual bool helpEvent(QHelpEvent* evt, QAbstractItemView* view, const QStyleOptionViewItem& option, const QModelIndex& index);
+
+signals:
+  /** User clicked on the custom expand button and index needs to be expanded/collapsed. */
+  void expandClicked(const QModelIndex& index);
+
+private:
+  /** Handles paint() for category name items */
+  void paintCategory_(QPainter* painter, QStyleOptionViewItem& option, const QModelIndex& index) const;
+  /** Handles paint() for value items */
+  void paintValue_(QPainter* painter, QStyleOptionViewItem& option, const QModelIndex& index) const;
+
+  /** Handles editorEvent() for category name items */
+  bool categoryEvent_(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+  /** Handles editorEvent() for value items. */
+  bool valueEvent_(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index);
+
+  /** Sub-elements vary depending on the type of index to draw. */
+  enum SubElement
+  {
+    SE_NONE = 0,
+    SE_BACKGROUND,
+    SE_CHECKBOX,
+    SE_BRANCH,
+    SE_TEXT,
+    SE_EXCLUDE_TOGGLE
+  };
+  /** Contains the rectangles for all sub-elements for an index. */
+  struct ChildRects;
+  /** Calculate the drawn rectangle areas for each sub-element of a given index. */
+  void calculateRects_(const QStyleOptionViewItem& option, const QModelIndex& index, ChildRects& rects) const;
+  /** Determine which sub-element, if any, was hit in a mouse click.  See QMouseEvent::pos(). */
+  SubElement hit_(const QPoint& pos, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 };
 
 }
