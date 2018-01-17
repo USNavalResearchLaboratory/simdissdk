@@ -330,6 +330,7 @@ bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, 
   const int count = childCount();
   for (int k = 0; k < count; ++k)
     updateFilter_(*static_cast<ValueItem*>(child(k)), filter);
+  filter.simplify(nameInt_);
   return true;
 }
 
@@ -534,7 +535,19 @@ bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, sim
     if (filterValue == unlistedValue)
       filter.removeValue(nameInt_, valueInt_);
     else
+    {
+      // If the filter was previously empty and we're setting a value, we need to
+      // make sure that the "No Value" check is correctly set in some cases.
+      if (!filterValue && unlistedValue)
+      {
+        simData::CategoryFilter::ValuesCheck checks;
+        filter.getValues(nameInt_, checks);
+        if (checks.empty())
+          filter.setValue(nameInt_, simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME, true);
+      }
+
       filter.setValue(nameInt_, valueInt_, filterValue);
+    }
   }
 
   // Ensure UNLISTED VALUE is set correctly.
@@ -542,6 +555,8 @@ bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, sim
     filter.setValue(nameInt_, simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE, true);
   else
     filter.removeValue(nameInt_, simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
+  // Make sure the filter is simplified
+  filter.simplify(nameInt_);
 
   filterChanged = true;
   return true;

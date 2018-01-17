@@ -750,94 +750,92 @@ void CategoryFilter::simplifyValues_(CategoryFilter::CategoryCheck& checks) cons
 {
   // Iterate through each category
   for (CategoryCheck::iterator checksIter = checks.begin(); checksIter != checks.end(); ++checksIter)
+    simplifyValues_(checksIter->second.second);
+}
+
+void CategoryFilter::simplifyValues_(CategoryFilter::ValuesCheck& values) const
+{
+  // Get the value of the "Unlisted Value" entry
+  ValuesCheck::const_iterator unlistedValueIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
+  // "Unlisted Value" defaults to OFF
+  const bool unlistedValuesCheck = (unlistedValueIter == values.end()) ? false : unlistedValueIter->second;
+
+  // Create a new values vector; we are going to remove items
+  ValuesCheck newValues;
+  for (ValuesCheck::const_iterator valuesIter = values.begin(); valuesIter != values.end(); ++valuesIter)
   {
-    const ValuesCheck& values = checksIter->second.second;
-    // Get the value of the "Unlisted Value" entry
-    ValuesCheck::const_iterator unlistedValueIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
-    // "Unlisted Value" defaults to OFF
-    const bool unlistedValuesCheck = (unlistedValueIter == values.end()) ? false : unlistedValueIter->second;
+    // Only include items that are different than Unlisted (and also include unlisted)
+    // also include "No Value" if it is true (defaults to false)
+    bool saveValue = false;
 
-    // Create a new values vector; we are going to remove items
-    ValuesCheck newValues;
-    for (ValuesCheck::const_iterator valuesIter = values.begin(); valuesIter != values.end(); ++valuesIter)
-    {
-      // Only include items that are different than Unlisted (and also include unlisted)
-      // also include "No Value" if it is true (defaults to false)
-      bool saveValue = false;
+    // Unlisted Value is only needed if set to true
+    if (valuesIter->first == simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE && unlistedValuesCheck)
+      saveValue = true;
+    // No Value is only needed if set to true
+    else if (valuesIter->first == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
+      saveValue = valuesIter->second;
+    // Other values are only needed if different from "Unlisted Value"
+    else if (valuesIter->second != unlistedValuesCheck)
+      saveValue = true;
 
-      // Unlisted Value is only needed if set to true
-      if (valuesIter->first == simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE && unlistedValuesCheck)
-        saveValue = true;
-      // No Value is only needed if set to true
-      else if (valuesIter->first == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
-        saveValue = valuesIter->second;
-      // Other values are only needed if different from "Unlisted Value"
-      else if (valuesIter->second != unlistedValuesCheck)
-        saveValue = true;
-
-      // Copy to the "newValues" map
-      if (saveValue)
-        newValues[valuesIter->first] = valuesIter->second;
-    }
-
-    // Replace the contents
-    if (newValues != values)
-      checksIter->second.second = newValues;
+    // Copy to the "newValues" map
+    if (saveValue)
+      newValues[valuesIter->first] = valuesIter->second;
   }
+
+  // Replace the contents
+  if (newValues != values)
+    values = newValues;
+}
+
+bool CategoryFilter::doesCategoryAffectFilter_(int nameInt, const CategoryFilter::CategoryValues& nameBoolAndChecks) const
+{
+  // Precondition: values under this category are already simplified
+
+  // if a reg exp exists for this category name, keep it, no matter if it has other values
+  if (categoryRegExp_.find(nameInt) != categoryRegExp_.end())
+    return true;
+
+  // No checks are on, skip this category
+  if (nameBoolAndChecks.first == false)
+    return false;
+
+  const ValuesCheck& values = nameBoolAndChecks.second;
+
+  // Get the value of the "Unlisted Value" entry
+  ValuesCheck::const_iterator unlistedIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
+  const bool unlistedValue = (unlistedIter != values.end()) ? unlistedIter->second : false;
+
+  // if "Unlisted Value" is not set, and something else is
+  if (!unlistedValue && !values.empty())
+    return true;
+
+  // Get the value of the "No Value" entry
+  ValuesCheck::const_iterator novalueIter = values.find(simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME);
+  const bool novalueValue = (novalueIter != values.end()) ? novalueIter->second : false;
+
+  // if "No Value" is not set, and something else is
+  if (!novalueValue && !values.empty())
+    return true;
+
+  // Investigate each value
+  for (ValuesCheck::const_iterator valuesIter = values.begin(); valuesIter != values.end(); ++valuesIter)
+  {
+    // If any single value is off, then the category name does affect filtering, return true
+    if (valuesIter->second == false)
+      return true;
+  }
+  return false;
 }
 
 void CategoryFilter::simplifyCategories_(CategoryFilter::CategoryCheck& checks) const
 {
+  // Precondition: values under this category are already simplified
   CategoryCheck newChecks;
   for (CategoryCheck::const_iterator checksIter = checks.begin(); checksIter != checks.end(); ++checksIter)
   {
-    // if a reg exp exists for this category name, keep it, no matter if it has other values
-    if (categoryRegExp_.find(checksIter->first) != categoryRegExp_.end())
-    {
+    if (doesCategoryAffectFilter_(checksIter->first, checksIter->second))
       newChecks[checksIter->first] = checksIter->second;
-      continue;
-    }
-
-    // No checks are on, skip this category
-    if (checksIter->second.first == false)
-      continue;
-
-    const ValuesCheck& values = checksIter->second.second;
-
-    // Get the value of the "Unlisted Value" entry
-    ValuesCheck::const_iterator unlistedIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
-    const bool unlistedValue = (unlistedIter != values.end()) ? unlistedIter->second : false;
-
-    // if "Unlisted Value" is not set, and something else is
-    if (!unlistedValue && !values.empty())
-    {
-      // need this check
-      newChecks[checksIter->first] = checksIter->second;
-      continue;
-    }
-
-    // Get the value of the "No Value" entry
-    ValuesCheck::const_iterator novalueIter = values.find(simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME);
-    const bool novalueValue = (novalueIter != values.end()) ? novalueIter->second : false;
-
-    // if "No Value" is not set, and something else is
-    if (!novalueValue && !values.empty())
-    {
-      // need this check
-      newChecks[checksIter->first] = checksIter->second;
-      continue;
-    }
-
-    // Investigate each value
-    for (ValuesCheck::const_iterator valuesIter = values.begin(); valuesIter != values.end(); ++valuesIter)
-    {
-      // If any single value is off, add the item to the new checks system and break out
-      if (valuesIter->second == false)
-      {
-        newChecks[checksIter->first] = checksIter->second;
-        break;
-      }
-    }
   }
 
   // Assign the value if there's been any changes
@@ -849,6 +847,25 @@ void CategoryFilter::simplify_(CategoryFilter::CategoryCheck& checks) const
 {
   simplifyValues_(checks);
   simplifyCategories_(checks);
+}
+
+void CategoryFilter::simplify(int categoryName)
+{
+  auto i = categoryCheck_.find(categoryName);
+  if (i == categoryCheck_.end())
+    return;
+
+  // First simplify the check values
+  simplifyValues_(i->second.second);
+
+  // Then remove the category if it doesn't add value
+  if (!doesCategoryAffectFilter_(categoryName, i->second))
+  {
+    categoryCheck_.erase(i);
+    // Assertion failure means we get out of sync with the regex, and implies a failure
+    // in the method doesCategoryAffectFilter_().
+    assert(categoryRegExp_.find(categoryName) == categoryRegExp_.end());
+  }
 }
 
 void CategoryFilter::simplify()

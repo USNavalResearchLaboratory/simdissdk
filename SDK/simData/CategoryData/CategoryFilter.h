@@ -246,6 +246,8 @@ public:
 
   /** Simplifies the category filter, removing names and values that do not contribute to filtering. */
   void simplify();
+  /** Simplifies a single category filter, removing values that do not contribute to filtering, possibly removing the whole name. */
+  void simplify(int categoryName);
 
   /** Clears out the filter, removing all checks and resetting to equivalent of " " */
   void clear();
@@ -285,8 +287,10 @@ private:
   bool matchRegExpFilter_(const CurrentCategoryValues& curCategoryData) const;
   /** Reduces the categoryCheck_ to the smallest state possible. */
   void simplify_(CategoryCheck& checks) const;
-  /** Remove all entries with the same value as Unlisted Value. */
+  /** Remove all entries with the same value as Unlisted Value.  Hits all categories, but does not remove categories. */
   void simplifyValues_(CategoryFilter::CategoryCheck& checks) const;
+  /** Simplifies the single category for the values passed in.  Does not remove category. */
+  void simplifyValues_(CategoryFilter::ValuesCheck& values) const;
   /** If all values are on, including the top level item, drop the item from the map. */
   void simplifyCategories_(CategoryFilter::CategoryCheck& checks) const;
   /** Add the passed in category name plus the values of "Unlisted Value" and "No Value" */
@@ -295,6 +299,9 @@ private:
   void addCategoryValue_(int nameIndex, int valueIndex);
   /** Clear all data */
   void clear_();
+
+  /** True if category affects filter; Precondition: category is simplified */
+  bool doesCategoryAffectFilter_(int nameInt, const CategoryFilter::CategoryValues& values) const;
 
   simData::DataStore* dataStore_; ///< reference to the data store
   RegExpFilterFactoryPtr regExpFactory_; ///< factory for creating RegExpFilter objects
