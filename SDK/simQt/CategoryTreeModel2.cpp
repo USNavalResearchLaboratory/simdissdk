@@ -734,6 +734,10 @@ bool CategoryTreeModel2::setData(const QModelIndex& index, const QVariant& value
 
 void CategoryTreeModel2::setFilter(const simData::CategoryFilter& filter)
 {
+  // Check the data store; if it's set in filter and different from ours, update
+  if (filter.getDataStore() && filter.getDataStore() != dataStore_)
+    setDataStore(filter.getDataStore());
+
   // Avoid no-op
   simData::CategoryFilter simplified(filter);
   simplified.simplify();
@@ -826,6 +830,10 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
       category->setFont(categoryFont_);
       categories_.push_back(category);
       categoryIntToItem_[*i] = category;
+
+      // Create an item for "NO VALUE" since it won't be in the list of values we receive
+      ValueItem* noValueItem = new ValueItem(nameManager, *i, simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME);
+      category->addChild(noValueItem);
 
       // Save all the category values
       std::vector<int> valueInts;
@@ -1343,6 +1351,7 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(treeModel_, SIGNAL(filterEdited(simData::CategoryFilter)), this, SIGNAL(filterEdited(simData::CategoryFilter)));
   connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToModel_(QModelIndex, int, int)));
   connect(proxy_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToProxy_(QModelIndex, int, int)));
+  connect(proxy_, SIGNAL(modelReset()), treeView_, SLOT(expandAll()));
   connect(search, SIGNAL(textChanged(QString)), this, SLOT(expandAfterFilterEdited_(QString)));
   connect(search, SIGNAL(textChanged(QString)), proxy_, SLOT(setFilterText(QString)));
   connect(itemDelegate, SIGNAL(expandClicked(QModelIndex)), this, SLOT(toggleExpanded_(QModelIndex)));

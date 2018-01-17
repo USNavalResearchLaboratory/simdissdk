@@ -15,10 +15,17 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="simQt::CategoryDataBreadcrumbs" name="breadcrumbs"/>
+    <widget class="simQt::CategoryDataBreadcrumbs" name="breadcrumbs" native="true"/>
    </item>
    <item>
-    <widget class="simQt::CategoryFilterWidget" name="categoryFilterWidget"/>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="simQt::CategoryFilterWidget" name="categoryFilterWidget" native="true"/>
+     </item>
+     <item>
+      <widget class="simQt::CategoryFilterWidget2" name="categoryFilterWidget2" native="true"/>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="Line" name="line">
@@ -64,6 +71,12 @@
    <class>simQt::CategoryFilterWidget</class>
    <extends>QWidget</extends>
    <header>simQt/CategoryFilterWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>simQt::CategoryFilterWidget2</class>
+   <extends>QWidget</extends>
+   <header>simQt/CategoryTreeModel2.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -55,6 +55,17 @@ MainWindow::MainWindow(simData::DataStore* dataStore, QWidget *parent)
     ui_->categoryFilterWidget, SLOT(setFilter(simData::CategoryFilter)));
   connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
     this, SLOT(categoryFilterChanged_(simData::CategoryFilter)));
+
+  // Configure the new Category Filter Widget
+  ui_->categoryFilterWidget2->setDataStore(dataStore);
+  connect(ui_->categoryFilterWidget, SIGNAL(categoryFilterChanged(simData::CategoryFilter)),
+    ui_->categoryFilterWidget2, SLOT(setFilter(simData::CategoryFilter)));
+  connect(ui_->categoryFilterWidget2, SIGNAL(filterEdited(simData::CategoryFilter)),
+    ui_->breadcrumbs, SLOT(setFilter(simData::CategoryFilter)));
+  connect(ui_->categoryFilterWidget2, SIGNAL(filterEdited(simData::CategoryFilter)),
+    ui_->categoryFilterWidget, SLOT(setFilter(simData::CategoryFilter)));
+  connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
+    ui_->categoryFilterWidget2, SLOT(setFilter(simData::CategoryFilter)));
 }
 
 MainWindow::~MainWindow()
