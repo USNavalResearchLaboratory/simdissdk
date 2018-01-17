@@ -30,12 +30,15 @@
 #include "simCore/Common/Common.h"
 
 class QFont;
+class QTreeView;
 namespace simData {
   class CategoryFilter;
   class DataStore;
 }
 
 namespace simQt {
+
+class CategoryProxyModel;
 
 /**
 * Container class that keeps track of a set of pointers.  The container is indexed to
@@ -84,6 +87,8 @@ public:
 
   /** Changes the data store, updating what categories and values are shown. */
   void setDataStore(simData::DataStore* dataStore);
+  /** Retrieves the category filter.  Only call this if the Data Store has been set. */
+  const simData::CategoryFilter& categoryFilter() const;
 
   /** Enumeration of user roles supported by data() */
   enum {
@@ -199,6 +204,55 @@ private:
   void calculateRects_(const QStyleOptionViewItem& option, const QModelIndex& index, ChildRects& rects) const;
   /** Determine which sub-element, if any, was hit in a mouse click.  See QMouseEvent::pos(). */
   SubElement hit_(const QPoint& pos, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+};
+
+/**
+ * Widget that includes a QTreeView with a Category Tree Model and a Search Filter
+ * widget that will display a given category filter.  This is an easy-to-use wrapper
+ * around the CategoryTreeModel2 class that provides a view widget and search field.
+ */
+class SDKQT_EXPORT CategoryFilterWidget2 : public QWidget
+{
+  Q_OBJECT;
+public:
+  explicit CategoryFilterWidget2(QWidget* parent = 0);
+  virtual ~CategoryFilterWidget2();
+
+  /** Sets the data store, updating the category tree based on changes to that data store. */
+  void setDataStore(simData::DataStore* dataStore);
+  /** Retrieves the category filter.  Only call this if the Data Store has been set. */
+  const simData::CategoryFilter& categoryFilter() const;
+
+public slots:
+  /** Changes the model state to match the values in the filter. */
+  void setFilter(const simData::CategoryFilter& filter);
+
+signals:
+  /** The internal filter has changed, possibly from user editing or programmatically. */
+  void filterChanged(const simData::CategoryFilter& filter);
+  /** The internal filter has changed from user editing. */
+  void filterEdited(const simData::CategoryFilter& filter);
+
+private slots:
+  /** Expand the given index from the model if filtering */
+  void expandDueToModel_(const QModelIndex& parentIndex, int to, int from);
+  /** Expand the given index from the proxy if filtering */
+  void expandDueToProxy_(const QModelIndex& parentIndex, int to, int from);
+  /** Conditionally expand tree after filter edited. */
+  void expandAfterFilterEdited_(const QString& filterText);
+
+  /** Called by delegate to expand an item */
+  void toggleExpanded_(const QModelIndex& proxyIndex);
+
+private:
+  /** The tree */
+  QTreeView* treeView_;
+  /** Hold the category data */
+  simQt::CategoryTreeModel2* treeModel_;
+  /** Provides sorting and filtering */
+  simQt::CategoryProxyModel* proxy_;
+  /** If true the category values are filtered; used to conditionally expand tree. */
+  bool activeFiltering_;
 };
 
 }

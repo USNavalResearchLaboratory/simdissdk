@@ -20,16 +20,21 @@
 *
 */
 #include <QAbstractItemView>
+#include <QAction>
 #include <QApplication>
 #include <QColor>
 #include <QFont>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QToolTip>
+#include <QTreeView>
+#include <QVBoxLayout>
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/DataStore.h"
 #include "simQt/QtFormatting.h"
+#include "simQt/CategoryTreeModel.h"
+#include "simQt/SearchLineEdit.h"
 #include "simQt/CategoryTreeModel2.h"
 
 namespace simQt {
@@ -777,6 +782,13 @@ void CategoryTreeModel2::setFilter(const simData::CategoryFilter& filter)
   emit filterChanged(*filter_);
 }
 
+const simData::CategoryFilter& CategoryTreeModel2::categoryFilter() const
+{
+  // Precondition of this method is that data store was set; filter must be non-NULL
+  assert(filter_);
+  return *filter_;
+}
+
 void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
 {
   if (dataStore_ == dataStore)
@@ -1280,4 +1292,141 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
   }
   return QStyledItemDelegate::helpEvent(evt, view, option, index);
 }
+
+/////////////////////////////////////////////////////////////////////////
+
+CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
+  : QWidget(parent),
+  activeFiltering_(false)
+{
+  setWindowTitle("Category Data Filter");
+  setObjectName("CategoryFilterWidget2");
+
+  treeModel_ = new simQt::CategoryTreeModel2(this);
+  proxy_ = new simQt::CategoryProxyModel();
+  proxy_->setSourceModel(treeModel_);
+  proxy_->setSortRole(simQt::CategoryTreeModel2::ROLE_SORT_STRING);
+  proxy_->sort(0);
+
+  treeView_ = new QTreeView(this);
+  treeView_->setObjectName("CategoryFilterTree");
+  treeView_->setFocusPolicy(Qt::NoFocus);
+  treeView_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  treeView_->setIndentation(0);
+  treeView_->setAllColumnsShowFocus(true);
+  treeView_->setHeaderHidden(true);
+  treeView_->setModel(proxy_);
+
+  simQt::CategoryTreeItemDelegate* itemDelegate = new simQt::CategoryTreeItemDelegate(this);
+  treeView_->setItemDelegate(itemDelegate);
+
+  QAction* collapseAction = new QAction(tr("Collapse Values"), this);
+  connect(collapseAction, SIGNAL(triggered()), treeView_, SLOT(collapseAll()));
+  collapseAction->setIcon(QIcon(":/simQt/images/Collapse.png"));
+  QAction* expandAction = new QAction(tr("Expand Values"), this);
+  connect(expandAction, SIGNAL(triggered()), treeView_, SLOT(expandAll()));
+  expandAction->setIcon(QIcon(":/simQt/images/Expand.png"));
+  treeView_->setContextMenuPolicy(Qt::ActionsContextMenu);
+  treeView_->addAction(collapseAction);
+  treeView_->addAction(expandAction);
+
+  simQt::SearchLineEdit* search = new simQt::SearchLineEdit(this);
+  search->setPlaceholderText(tr("Search Category Data"));
+
+  QVBoxLayout *layout = new QVBoxLayout(this);
+  layout->setObjectName("CategoryFilterWidgetVBox");
+  layout->setMargin(0);
+  layout->addWidget(search);
+  layout->addWidget(treeView_);
+
+  connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), this, SIGNAL(filterChanged(simData::CategoryFilter)));
+  connect(treeModel_, SIGNAL(filterEdited(simData::CategoryFilter)), this, SIGNAL(filterEdited(simData::CategoryFilter)));
+  connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToModel_(QModelIndex, int, int)));
+  connect(proxy_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToProxy_(QModelIndex, int, int)));
+  connect(search, SIGNAL(textChanged(QString)), this, SLOT(expandAfterFilterEdited_(QString)));
+  connect(search, SIGNAL(textChanged(QString)), proxy_, SLOT(setFilterText(QString)));
+  connect(itemDelegate, SIGNAL(expandClicked(QModelIndex)), this, SLOT(toggleExpanded_(QModelIndex)));
+}
+
+CategoryFilterWidget2::~CategoryFilterWidget2()
+{
+}
+
+void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
+{
+  treeModel_->setDataStore(dataStore);
+  treeView_->expandAll();
+}
+
+const simData::CategoryFilter& CategoryFilterWidget2::categoryFilter() const
+{
+  return treeModel_->categoryFilter();
+}
+
+void CategoryFilterWidget2::setFilter(const simData::CategoryFilter& categoryFilter)
+{
+  treeModel_->setFilter(categoryFilter);
+}
+
+void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
+{
+  if (filterText.isEmpty())
+  {
+    // Just removed the last character of a search so expand all to make everything visible
+    if (activeFiltering_)
+      treeView_->expandAll();
+
+    activeFiltering_ = false;
+  }
+  else
+  {
+    // Just started a search so expand all to make everything visible
+    if (!activeFiltering_)
+      treeView_->expandAll();
+
+    activeFiltering_ = true;
+  }
+}
+
+void CategoryFilterWidget2::expandDueToModel_(const QModelIndex& parentIndex, int to, int from)
+{
+  if (!activeFiltering_)
+    return;
+
+  bool isCategory = !parentIndex.isValid();
+  if (isCategory)
+    return;
+
+  if (!treeView_->isExpanded(parentIndex))
+    proxy_->resetFilter();
+}
+
+void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, int to, int from)
+{
+  bool isCategory = !parentIndex.isValid();
+  if (isCategory)
+  {
+    // The category names are the "to" to "from" and they just showed up, so expand them
+    for (int ii = to; ii <= from; ++ii)
+    {
+      QModelIndex catIndex = proxy_->index(ii, 0, parentIndex);
+      treeView_->expand(catIndex);
+    }
+  }
+  else
+  {
+    if (activeFiltering_)
+    {
+      // Adding a category value; make sure it is visible by expanding its parent
+      if (!treeView_->isExpanded(parentIndex))
+        treeView_->expand(parentIndex);
+    }
+  }
+}
+
+void CategoryFilterWidget2::toggleExpanded_(const QModelIndex& proxyIndex)
+{
+  treeView_->setExpanded(proxyIndex, !treeView_->isExpanded(proxyIndex));
+}
+
 }

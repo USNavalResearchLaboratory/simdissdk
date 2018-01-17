@@ -89,6 +89,9 @@ public:
   CategoryProxyModel(QObject *parent = 0);
   virtual ~CategoryProxyModel();
 
+  /** Override setSourceModel() to detect the "All Items" model type */
+  virtual void setSourceModel(QAbstractItemModel* sourceModel);
+
 public slots:
   /// string to filter against
   void setFilterText(const QString& filter);
@@ -100,7 +103,10 @@ protected:
   virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
 
 private:
-  QString filter_; ///< string to filter against
+  /// string to filter against
+  QString filter_;
+  /// Set true when "All Categories" is the root item (i.e. using CategoryTreeModel, not CategoryTreeModel2)
+  bool hasAllCategories_;
 };
 
 
@@ -111,7 +117,7 @@ class SDKQT_EXPORT CategoryTreeModel : public QAbstractItemModel
 
 public:
   /// constructor
-  CategoryTreeModel(QObject *parent = NULL, simData::DataStore* dataStore = NULL, simData::CategoryFilter* categoryFilter = NULL);
+  explicit CategoryTreeModel(QObject *parent = NULL, simData::DataStore* dataStore = NULL, simData::CategoryFilter* categoryFilter = NULL);
   virtual ~CategoryTreeModel();
 
   /**
