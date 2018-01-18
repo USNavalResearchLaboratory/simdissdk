@@ -41,6 +41,8 @@ namespace simQt {
 
 /** Lighter than lightGray, matches QPalette::Midlight */
 static const QColor MIDLIGHT_BG_COLOR(227, 227, 227);
+/** Breadcrumb's default fill color, used here for background brush on filter items that contribute to filter. */
+static const QColor CONTRIBUTING_BG_COLOR(195, 225, 240); // Light gray with a hint of blue
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -153,6 +155,9 @@ public:
   virtual int nameInt() const;
   virtual bool isUnlistedValueChecked() const;
 
+  /** Recalculates the "contributes to filter" flag, returning true if it changes (like setData()) */
+  bool recalcContributionTo(const simData::CategoryFilter& filter);
+
   /** Changes the font to use. */
   void setFont(QFont* font);
   /** Sets the state of the GUI to match the state of the filter. Returns 0 if nothing changed. */
@@ -170,6 +175,8 @@ private:
   int nameInt_;
   /** Cache the state of the UNLISTED VALUE.  When TRUE, we're in EXCLUDE mode */
   bool unlistedValue_;
+  /** Set to true if this category contributes to the filter. */
+  bool contributesToFilter_;
   /** Font to use for FontRole (not owned) */
   QFont* font_;
 };
@@ -268,6 +275,7 @@ CategoryTreeModel2::CategoryItem::CategoryItem(const simData::CategoryNameManage
   : categoryName_(QString::fromStdString(nameManager.nameIntToString(nameInt))),
     nameInt_(nameInt),
     unlistedValue_(false),
+    contributesToFilter_(false),
     font_(NULL)
 {
 }
@@ -298,6 +306,8 @@ QVariant CategoryTreeModel2::CategoryItem::data(int role) const
   case ROLE_EXCLUDE:
     return unlistedValue_;
   case Qt::BackgroundColorRole:
+    if (contributesToFilter_)
+      return CONTRIBUTING_BG_COLOR;
     return MIDLIGHT_BG_COLOR;
   case Qt::FontRole:
     if (font_)
@@ -331,6 +341,19 @@ bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, 
   for (int k = 0; k < count; ++k)
     updateFilter_(*static_cast<ValueItem*>(child(k)), filter);
   filter.simplify(nameInt_);
+
+  // Update the flag for contributing to the filter
+  recalcContributionTo(filter);
+  return true;
+}
+
+bool CategoryTreeModel2::CategoryItem::recalcContributionTo(const simData::CategoryFilter& filter)
+{
+  const auto& catValues = filter.getCategoryFilter();
+  const bool newValue = (catValues.find(nameInt_) != catValues.end());
+  if (newValue == contributesToFilter_)
+    return false;
+  contributesToFilter_ = newValue;
   return true;
 }
 
@@ -381,6 +404,11 @@ int CategoryTreeModel2::CategoryItem::updateTo(const simData::CategoryFilter& fi
     if (0 != updateValueItem_(*static_cast<ValueItem*>(child(k)), checks))
       hasChange = true;
   }
+
+  // Update the flag for contributing to the filter
+  if (recalcContributionTo(filter))
+    hasChange = true;
+
   return hasChange ? 1 : 0;
 }
 
@@ -557,6 +585,10 @@ bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, sim
     filter.removeValue(nameInt_, simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
   // Make sure the filter is simplified
   filter.simplify(nameInt_);
+
+  // Update the parent too, which fixes the GUI for whether it contributes
+  CategoryItem* parentTree = dynamic_cast<CategoryItem*>(parent());
+  parentTree->recalcContributionTo(filter);
 
   filterChanged = true;
   return true;
@@ -737,9 +769,15 @@ bool CategoryTreeModel2::setData(const QModelIndex& index, const QVariant& value
   {
     // Update the GUI
     emit dataChanged(index, index);
+
     // Alert users who are listening
     if (wasEdited)
     {
+      // Parent index, if it exists, is a category and might have updated its color data()
+      const QModelIndex parentIndex = index.parent();
+      if (parentIndex.isValid())
+        emit dataChanged(parentIndex, parentIndex);
+
       emit filterChanged(*filter_);
       emit filterEdited(*filter_);
     }
