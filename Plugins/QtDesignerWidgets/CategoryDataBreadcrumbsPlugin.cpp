@@ -64,7 +64,7 @@ QWidget *CategoryDataBreadcrumbsPlugin::createWidget(QWidget *parent)
   // Platform Type: Unlisted values on; ignore Ship and Submarine
   const int platformTypeName = nameManager.addCategoryName("Platform Type");
   filter.setValue(platformTypeName, nameManager.addCategoryValue(platformTypeName, "Submarine"), false);
-  filter.setValue(platformTypeName, nameManager.addCategoryValue(platformTypeName, "Ship"), false);
+  filter.setValue(platformTypeName, nameManager.addCategoryValue(platformTypeName, "Surface Ship"), false);
   filter.setValue(platformTypeName, simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE, true);
   rv->setFilter(filter);
 

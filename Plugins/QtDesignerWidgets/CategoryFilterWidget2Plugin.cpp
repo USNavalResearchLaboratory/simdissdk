@@ -22,22 +22,21 @@
 #include <QtCore/QtPlugin>
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/MemoryDataStore.h"
-#include "simQt/CategoryFilterWidget.h"
+#include "simQt/CategoryTreeModel2.h"
 #include "CategoryFilterWidget2Plugin.h"
-#include "CategoryFilterWidgetPlugin.h"
 
-CategoryFilterWidgetPlugin::CategoryFilterWidgetPlugin(QObject *parent)
+CategoryFilterWidget2Plugin::CategoryFilterWidget2Plugin(QObject *parent)
   : QObject(parent),
     dataStore_(NULL)
 {
 }
 
-CategoryFilterWidgetPlugin::~CategoryFilterWidgetPlugin()
+CategoryFilterWidget2Plugin::~CategoryFilterWidget2Plugin()
 {
   delete dataStore_;
 }
 
-void CategoryFilterWidgetPlugin::initialize(QDesignerFormEditorInterface *)
+void CategoryFilterWidget2Plugin::initialize(QDesignerFormEditorInterface *)
 {
   if (dataStore_)
     return;
@@ -45,18 +44,17 @@ void CategoryFilterWidgetPlugin::initialize(QDesignerFormEditorInterface *)
   CategoryFilterWidget2Plugin::createDefaultCategories(*dataStore_);
 }
 
-bool CategoryFilterWidgetPlugin::isInitialized() const
+bool CategoryFilterWidget2Plugin::isInitialized() const
 {
   return dataStore_ != NULL;
 }
 
-QWidget *CategoryFilterWidgetPlugin::createWidget(QWidget *parent)
+QWidget *CategoryFilterWidget2Plugin::createWidget(QWidget *parent)
 {
-  simQt::CategoryFilterWidget* rv = new simQt::CategoryFilterWidget(parent);
-
+  simQt::CategoryFilterWidget2* rv = new simQt::CategoryFilterWidget2(parent);
   // Create the data store, adding default categories
   initialize(NULL);
-  rv->setProviders(dataStore_);
+  rv->setDataStore(dataStore_);
 
   // Create a filter for user to see
   simData::CategoryNameManager& nameManager = dataStore_->categoryNameManager();
@@ -75,46 +73,70 @@ QWidget *CategoryFilterWidgetPlugin::createWidget(QWidget *parent)
   return rv;
 }
 
-QString CategoryFilterWidgetPlugin::name() const
+QString CategoryFilterWidget2Plugin::name() const
 {
-  return "simQt::CategoryFilterWidget";
+  return "simQt::CategoryFilterWidget2";
 }
 
-QString CategoryFilterWidgetPlugin::group() const
+QString CategoryFilterWidget2Plugin::group() const
 {
   return "simQt";
 }
 
-QIcon CategoryFilterWidgetPlugin::icon() const
+QIcon CategoryFilterWidget2Plugin::icon() const
 {
   return QIcon(":/SDKPlugins/images/Categorize.png");
 }
 
-QString CategoryFilterWidgetPlugin::toolTip() const
+QString CategoryFilterWidget2Plugin::toolTip() const
 {
   return "Filter entities by category";
 }
 
-QString CategoryFilterWidgetPlugin::whatsThis() const
+QString CategoryFilterWidget2Plugin::whatsThis() const
 {
   return toolTip();
 }
 
-bool CategoryFilterWidgetPlugin::isContainer() const
+bool CategoryFilterWidget2Plugin::isContainer() const
 {
   return false;
 }
 
-QString CategoryFilterWidgetPlugin::domXml() const
+QString CategoryFilterWidget2Plugin::domXml() const
 {
   return
-    "<ui language=\"c++\" displayname=\"Category Filter Widget\">"
-    "<widget class=\"simQt::CategoryFilterWidget\" name=\"categoryFilterWidget\">\n"
+    "<ui language=\"c++\" displayname=\"Category Filter Widget 2\">"
+    "<widget class=\"simQt::CategoryFilterWidget2\" name=\"categoryFilterWidget\">\n"
     "</widget>\n"
     "</ui>";
 }
 
-QString CategoryFilterWidgetPlugin::includeFile() const
+QString CategoryFilterWidget2Plugin::includeFile() const
 {
-  return "simQt/CategoryFilterWidget.h";
+  return "simQt/CategoryTreeModel2.h";
+}
+
+void CategoryFilterWidget2Plugin::createDefaultCategories(simData::DataStore& dataStore)
+{
+  // Add some useful category names for display purposes
+  simData::CategoryNameManager& nameManager = dataStore.categoryNameManager();
+  const int affinity = nameManager.addCategoryName("Affinity");
+  nameManager.addCategoryValue(affinity, "Friendly");
+  nameManager.addCategoryValue(affinity, "Hostile");
+  nameManager.addCategoryValue(affinity, "Neutral");
+  const int platformType = nameManager.addCategoryName("Platform Type");
+  nameManager.addCategoryValue(platformType, "Unknown");
+  nameManager.addCategoryValue(platformType, "Surface Ship");
+  nameManager.addCategoryValue(platformType, "Submarine");
+  nameManager.addCategoryValue(platformType, "Aircraft");
+  nameManager.addCategoryValue(platformType, "Satellite");
+  nameManager.addCategoryValue(platformType, "Helicopter");
+  nameManager.addCategoryValue(platformType, "Missile");
+  nameManager.addCategoryValue(platformType, "Decoy");
+  nameManager.addCategoryValue(platformType, "Buoy");
+  nameManager.addCategoryValue(platformType, "Reference Site");
+  nameManager.addCategoryValue(platformType, "Land Site");
+  nameManager.addCategoryValue(platformType, "Torpedo");
+  nameManager.addCategoryValue(platformType, "Contact");
 }

@@ -558,7 +558,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex, bool useAltFillColor
   filter_->getValues(nameIndex, checks);
 
   // Is unlisted values present?  If so, then it should be set to "true", and all other items
-  // are "omit ___".  If not, then all items are "include ___".  This function is essentially
+  // are "exclude ___".  If not, then all items are "include ___".  This function is essentially
   // split into two parts -- inclusive filters and exclusive filters.  The first half covers
   // the inclusive cases and the second half covers the exclusive cases.
   simData::CategoryFilter::ValuesCheck::iterator unlistedIter = checks.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
@@ -671,7 +671,7 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex, bool useAltFillColor
 
     const QString value = QString::fromStdString(nameManager.valueIntToString(i->first));
     QListWidgetItem* newItem = addValueItem_(tr("Not %1").arg(value), name, nameIndex, i->first, i->second, useAltFillColor);
-    newItem->setToolTip(simQt::formatTooltip(tr("Omit %1: %2").arg(name, value),
+    newItem->setToolTip(simQt::formatTooltip(tr("Exclude %1: %2").arg(name, value),
       tr("Match without value '%2' in category '%1'.").arg(name, value)));
   }
 }

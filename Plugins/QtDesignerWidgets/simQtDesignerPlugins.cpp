@@ -24,6 +24,7 @@
 #include "ColorWidgetPlugin.h"
 #include "CategoryDataBreadcrumbsPlugin.h"
 #include "CategoryFilterWidgetPlugin.h"
+#include "CategoryFilterWidget2Plugin.h"
 #include "DataTableComboBoxPlugin.h"
 #include "DirectorySelectorWidgetPlugin.h"
 #include "DockWidgetPlugin.h"
@@ -44,6 +45,7 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   // Add all plug-in widgets here
   widgetFactories_.append(new CategoryDataBreadcrumbsPlugin(this));
   widgetFactories_.append(new CategoryFilterWidgetPlugin(this));
+  widgetFactories_.append(new CategoryFilterWidget2Plugin(this));
   widgetFactories_.append(new ColorButtonPlugin(this));
   widgetFactories_.append(new ColorWidgetPlugin(this));
   widgetFactories_.append(new DataTableComboBoxPlugin(this));

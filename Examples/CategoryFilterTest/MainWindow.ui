@@ -76,7 +76,6 @@
    <class>simQt::CategoryFilterWidget2</class>
    <extends>QWidget</extends>
    <header>simQt/CategoryTreeModel2.h</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
