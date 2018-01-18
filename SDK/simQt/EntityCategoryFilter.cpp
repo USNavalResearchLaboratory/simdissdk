@@ -21,21 +21,22 @@
  */
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simQt/CategoryFilterWidget.h"
+#include "simQt/CategoryTreeModel2.h"
 #include "simQt/EntityCategoryFilter.h"
 
 namespace simQt {
 
-EntityCategoryFilter::EntityCategoryFilter(simData::DataStore* dataStore, bool showWidget)
+EntityCategoryFilter::EntityCategoryFilter(simData::DataStore* dataStore, WidgetType widgetType)
   : EntityFilter(),
     categoryFilter_(new simData::CategoryFilter(dataStore, true)),
-    showWidget_(showWidget)
+    widgetType_(widgetType)
 {
 }
 
-EntityCategoryFilter::EntityCategoryFilter(const simData::CategoryFilter& categoryFilter, bool showWidget)
+EntityCategoryFilter::EntityCategoryFilter(const simData::CategoryFilter& categoryFilter, WidgetType widgetType)
   : EntityFilter(),
     categoryFilter_(new simData::CategoryFilter(categoryFilter)),
-    showWidget_(showWidget)
+    widgetType_(widgetType)
 {
 }
 
@@ -53,7 +54,19 @@ bool EntityCategoryFilter::acceptEntity(simData::ObjectId id) const
 QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
 {
   // only generate the widget if we are set to show a widget
-  if (showWidget_)
+  switch (widgetType_)
+  {
+  case NO_WIDGET:
+    break;
+  case SHOW_WIDGET:
+  {
+    CategoryFilterWidget2* rv = new CategoryFilterWidget2(newWidgetParent);
+    rv->setDataStore(categoryFilter_->getDataStore());
+    rv->setFilter(*categoryFilter_);
+    bindToWidget(rv);
+    return rv;
+  }
+  case SHOW_LEGACY_WIDGET:
   {
     CategoryFilterWidget* rv = new CategoryFilterWidget(newWidgetParent);
     rv->setProviders(categoryFilter_->getDataStore());
@@ -61,6 +74,8 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
     bindToWidget(rv);
     return rv;
   }
+  }
+
   return NULL;
 }
 
@@ -86,6 +101,16 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
       emit filterUpdated();
     }
   }
+}
+
+void EntityCategoryFilter::bindToWidget(CategoryFilterWidget2* widget) const
+{
+  // Whenever the filter updates in the GUI, update our internal filter,
+  // which then in turn emits filterUpdated().
+  connect(widget, SIGNAL(filterEdited(simData::CategoryFilter)), this, SLOT(setCategoryFilterFromGui_(simData::CategoryFilter)));
+
+  // When internal filter gets changed, make the widget reflect those values.
+  connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), widget, SLOT(setFilter(simData::CategoryFilter)));
 }
 
 void EntityCategoryFilter::bindToWidget(CategoryFilterWidget* widget) const

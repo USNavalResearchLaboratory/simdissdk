@@ -50,7 +50,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
     entityTreeModel_(entityTreeModel),
     entityStateFilter_(NULL)
 {
-  setWindowTitle("Select Entity");
+  setWindowTitle(tr("Select Entity"));
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
   setObjectName("SelectEntity");
 
@@ -69,7 +69,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   }
 
   tree_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::ALL));
-  tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), true));
+  tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), simQt::EntityCategoryFilter::SHOW_WIDGET));
 
   connect(tree_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(setSelected_(QList<uint64_t>)));
   connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept())); // Have double click auto close the dialog
@@ -182,7 +182,7 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   composite_ = new Ui_EntityLineEdit();
   composite_->setupUi(this);
   composite_->lineEdit->setToolTip(simQt::formatTooltip(tr("Entity Name"), tr("Either type or select an entity name.<p>Select from the popup or from the dialog by clicking the browser button.")));
-  composite_->lineEdit->setPlaceholderText("Enter entity name...");
+  composite_->lineEdit->setPlaceholderText(tr("Enter entity name..."));
   connect(composite_->toolButton, SIGNAL(clicked()), this, SLOT(showEntityDialog_()));
   connect(composite_->lineEdit, SIGNAL(returnPressed()), this, SLOT(checkForReapply_()));
   connect(composite_->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
@@ -523,9 +523,9 @@ void BoundEntityLineEdit::setStateFromSettings_(int state)
 simQt::Settings::MetaData BoundEntityLineEdit::metaData()
 {
   QMap<int, QString> state;
-  state.insert(0, "Active");
-  state.insert(1, "Inactive");
-  state.insert(2, "Both");
+  state.insert(0, tr("Active"));
+  state.insert(1, tr("Inactive"));
+  state.insert(2, tr("Both"));
 
   return simQt::Settings::MetaData(simQt::Settings::MetaData::makeEnumeration(
     0, state, "Entities to display in various controls.", simQt::Settings::DEFAULT));
