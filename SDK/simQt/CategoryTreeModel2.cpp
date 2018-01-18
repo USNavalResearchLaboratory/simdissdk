@@ -1134,14 +1134,14 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
 
   { // Draw a background for the whole row
     painter->setBrush(opt.backgroundBrush);
-    painter->setPen(Qt::PenStyle::NoPen);
+    painter->setPen(Qt::NoPen);
     painter->drawRect(r.background);
   }
 
   { // Draw the expand/collapse icon on left side
     QStyleOptionViewItemV4 branchOpt(opt);
     branchOpt.rect = r.branch;
-    branchOpt.state &= ~QStyle::StateFlag::State_MouseOver;
+    branchOpt.state &= ~QStyle::State_MouseOver;
     style->drawPrimitive(QStyle::PE_IndicatorBranch, &branchOpt, painter);
   }
 
@@ -1176,7 +1176,7 @@ void CategoryTreeItemDelegate::paintValue_(QPainter* painter, QStyleOptionViewIt
     QStyleOption checkOpt(opt);
     checkOpt.rect = r.checkbox;
     // Check the button, then draw
-    checkOpt.state |= QStyle::StateFlag::State_On;
+    checkOpt.state |= QStyle::State_On;
     style->drawPrimitive(QStyle::PE_IndicatorCheckBox, &checkOpt, painter);
 
     // Checked category values also show up bold
