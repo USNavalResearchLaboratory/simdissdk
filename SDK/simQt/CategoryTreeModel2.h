@@ -204,6 +204,11 @@ private:
   void calculateRects_(const QStyleOptionViewItem& option, const QModelIndex& index, ChildRects& rects) const;
   /** Determine which sub-element, if any, was hit in a mouse click.  See QMouseEvent::pos(). */
   SubElement hit_(const QPoint& pos, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+
+  /** Keeps track of the QModelIndex being clicked. */
+  QModelIndex clickedIndex_;
+  /** Sub-element being clicked */
+  SubElement clickedElement_;
 };
 
 /**

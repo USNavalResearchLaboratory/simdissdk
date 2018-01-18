@@ -1242,43 +1242,102 @@ bool CategoryTreeItemDelegate::editorEvent(QEvent* evt, QAbstractItemModel* mode
 
 bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
 {
-  if (evt->type() == QEvent::MouseButtonPress)
+  // Cast may not be valid, depends on evt->type()
+  const QMouseEvent* me = static_cast<const QMouseEvent*>(evt);
+
+  switch (evt->type())
   {
-    const auto hitPos = hit_(static_cast<QMouseEvent*>(evt)->pos(), option, index);
-    if (hitPos == SE_EXCLUDE_TOGGLE)
+  case QEvent::MouseButtonPress:
+    // Only care about left presses.  All other presses are ignored.
+    if (me->button() != Qt::LeftButton)
     {
-      QVariant oldState = index.data(ROLE_EXCLUDE);
-      model->setData(index, !oldState.toBool(), ROLE_EXCLUDE);
+      clickedIndex_ = QModelIndex();
+      return false;
+    }
+
+    clickedElement_ = hit_(me->pos(), option, index);
+    // Eat the branch press and don't do anything on release
+    if (clickedElement_ == SE_BRANCH)
+    {
+      clickedIndex_ = QModelIndex();
+      emit expandClicked(index);
       return true;
     }
-    else if (hitPos == SE_BRANCH)
-      emit expandClicked(index);
-  }
-  else if (evt->type() == QEvent::MouseButtonDblClick)
+    clickedIndex_ = index;
+    break;
+
+  case QEvent::MouseButtonRelease:
   {
-    // Ignore double click on the toggle button, so that it doesn't cause expand/contract
-    if (hit_(static_cast<QMouseEvent*>(evt)->pos(), option, index) == SE_EXCLUDE_TOGGLE)
-      return true;
+    // Clicking on toggle should save the index to detect release on the toggle
+    const auto newHit = hit_(me->pos(), option, index);
+    // Must match button, index, and element clicked
+    if (me->button() == Qt::LeftButton && clickedIndex_ == index && newHit == clickedElement_)
+    {
+      // Toggle button should, well, toggle
+      if (clickedElement_ == SE_EXCLUDE_TOGGLE)
+      {
+        QVariant oldState = index.data(ROLE_EXCLUDE);
+        model->setData(index, !oldState.toBool(), ROLE_EXCLUDE);
+        clickedIndex_ = QModelIndex();
+        return true;
+      }
+    }
+    clickedIndex_ = QModelIndex();
+    break;
   }
+
+  case QEvent::MouseButtonDblClick:
+    clickedIndex_ = QModelIndex();
+    clickedElement_ = hit_(me->pos(), option, index);
+    // Ignore double click on the toggle button and branch button, so that it doesn't cause expand/contract
+    if (clickedElement_ == SE_EXCLUDE_TOGGLE || clickedElement_ == SE_BRANCH)
+      return true;
+    break;
+
+  default: // Many potential events not handled
+    break;
+  }
+
   return false;
 }
 
 bool CategoryTreeItemDelegate::valueEvent_(QEvent* evt, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index)
 {
-  if (evt->type() != QEvent::MouseButtonPress)
+  if (evt->type() != QEvent::MouseButtonPress && evt->type() != QEvent::MouseButtonRelease)
     return false;
+  // At this stage it's either a press or a release
   const QMouseEvent* me = static_cast<const QMouseEvent*>(evt);
-  if (me->button() != Qt::LeftButton)
-    return false;
+  const bool isPress = (evt->type() == QEvent::MouseButtonPress);
+  const bool isRelease = !isPress;
 
-  hit_(static_cast<QMouseEvent*>(evt)->pos(), option, index);
+  // Determine whether we care about the event
+  bool usefulEvent = true;
+  if (me->button() != Qt::LeftButton)
+    usefulEvent = false;
+  else if (isRelease && clickedIndex_ != index)
+    usefulEvent = false;
   // Should have a check state; if not, that's weird, return out
   QVariant checkState = index.data(Qt::CheckStateRole);
   if (!checkState.isValid())
+    usefulEvent = false;
+
+  // Clear out the model index before returning
+  if (!usefulEvent)
+  {
+    clickedIndex_ = QModelIndex();
     return false;
-  // Invert the state and send it as an updated check
-  Qt::CheckState newState = (checkState.toInt() == Qt::Checked) ? Qt::Unchecked : Qt::Checked;
-  model->setData(index, newState, Qt::CheckStateRole);
+  }
+
+  // If it's a press, save the index for later.  Note we don't use clickedElement_
+  if (isPress)
+    clickedIndex_ = index;
+  else
+  {
+    // Invert the state and send it as an updated check
+    Qt::CheckState newState = (checkState.toInt() == Qt::Checked) ? Qt::Unchecked : Qt::Checked;
+    model->setData(index, newState, Qt::CheckStateRole);
+    clickedIndex_ = QModelIndex();
+  }
   return true;
 }
 
