@@ -381,6 +381,10 @@ int CategoryTreeModel2::CategoryItem::updateTo(const simData::CategoryFilter& fi
         hasChange = true;
       }
     }
+
+    // Fix filter on/off
+    if (recalcContributionTo(filter))
+      hasChange = true;
     return hasChange ? 1 : 0;
   }
 
@@ -826,7 +830,6 @@ void CategoryTreeModel2::setFilter(const simData::CategoryFilter& filter)
       lastChangeRow = k;
     }
   }
-
   // This shouldn't happen because we checked the simplified filters.  If this
   // assert triggers, then we have a change in filter (detected above) but the
   // GUI didn't actually change.  Maybe filter compare failed, or updateTo()
@@ -1440,13 +1443,22 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   simQt::CategoryTreeItemDelegate* itemDelegate = new simQt::CategoryTreeItemDelegate(this);
   treeView_->setItemDelegate(itemDelegate);
 
+  QAction* resetAction = new QAction(tr("Reset"), this);
+  connect(resetAction, SIGNAL(triggered()), this, SLOT(resetFilter_()));
+  QAction* separator1 = new QAction(this);
+  separator1->setSeparator(true);
+
   QAction* collapseAction = new QAction(tr("Collapse Values"), this);
   connect(collapseAction, SIGNAL(triggered()), treeView_, SLOT(collapseAll()));
   collapseAction->setIcon(QIcon(":/simQt/images/Collapse.png"));
+
   QAction* expandAction = new QAction(tr("Expand Values"), this);
   connect(expandAction, SIGNAL(triggered()), treeView_, SLOT(expandAll()));
   expandAction->setIcon(QIcon(":/simQt/images/Expand.png"));
+
   treeView_->setContextMenuPolicy(Qt::ActionsContextMenu);
+  treeView_->addAction(resetAction);
+  treeView_->addAction(separator1);
   treeView_->addAction(collapseAction);
   treeView_->addAction(expandAction);
 
@@ -1548,6 +1560,17 @@ void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, in
 void CategoryFilterWidget2::toggleExpanded_(const QModelIndex& proxyIndex)
 {
   treeView_->setExpanded(proxyIndex, !treeView_->isExpanded(proxyIndex));
+}
+
+void CategoryFilterWidget2::resetFilter_()
+{
+  // Create a new empty filter using same data store
+  const simData::CategoryFilter newFilter(treeModel_->categoryFilter().getDataStore());
+  treeModel_->setFilter(newFilter);
+
+  // Tree would have sent out a changed signal, but not an edited signal (because we are
+  // doing this programmatically).  That's OK, but we need to send out an edited signal.
+  emit filterEdited(treeModel_->categoryFilter());
 }
 
 }

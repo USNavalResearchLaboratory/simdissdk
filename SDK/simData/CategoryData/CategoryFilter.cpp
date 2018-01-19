@@ -876,6 +876,7 @@ void CategoryFilter::simplify()
 void CategoryFilter::clear()
 {
   categoryCheck_.clear();
+  categoryRegExp_.clear();
 }
 
 void CategoryFilter::setValue(int nameInt, int valueInt, bool valueChecked)

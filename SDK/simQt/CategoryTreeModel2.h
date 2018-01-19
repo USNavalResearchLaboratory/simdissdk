@@ -249,6 +249,9 @@ private slots:
   /** Called by delegate to expand an item */
   void toggleExpanded_(const QModelIndex& proxyIndex);
 
+  /** Reset the active filter, clearing all values */
+  void resetFilter_();
+
 private:
   /** The tree */
   QTreeView* treeView_;
