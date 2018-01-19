@@ -56,7 +56,7 @@ EntityFilterLineEdit::EntityFilterLineEdit(QWidget *parent)
   fixedAction_ = new QAction(tr("&Fixed String"), this);
   connect(fixedAction_, SIGNAL(triggered()), this, SLOT(fixedString()));
   fixedAction_->setCheckable(true);
-  fixedAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_F));
+  fixedAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
   addAction(fixedAction_);
 
   rightMouseClickMenu_ = new QMenu(this);
