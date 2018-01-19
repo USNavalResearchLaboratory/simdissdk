@@ -20,11 +20,13 @@
  *
  */
 #include <cassert>
-#include <QAction>
-#include <QSettings>
-#include <QFileInfo>
 #include <set>
+#include <QAction>
+#include <QFileInfo>
 #include <QSet>
+#include <QSettings>
+#include <QTimer>
+#include "simQt/QtFormatting.h"
 #include "simQt/ActionRegistry.h"
 
 Q_DECLARE_METATYPE(QList<QKeySequence>);
@@ -55,6 +57,75 @@ QDataStream &operator>>(QDataStream &in, QList<QKeySequence> &keys)
 
 
 namespace simQt {
+
+static const char* ORIGINAL_TOOL_TIP_PROPERTY = "OrigTip";
+
+ToolTipUpdater::ToolTipUpdater(QObject* parent)
+  : QObject(parent)
+{
+  timer_ = new QTimer(this);
+  timer_->setInterval(0);
+  timer_->setSingleShot(true);
+  connect(timer_, SIGNAL(timeout()), this, SLOT(updateToolTips_()));
+}
+
+void ToolTipUpdater::addPending(simQt::Action* action)
+{
+  if (action == NULL)
+    return;
+
+  pendingActions_.push_back(action);
+  // Start a single shot timer. This allows updating all pending
+  // actions at once, once Qt gets control of the event loop.
+  timer_->start();
+}
+
+void ToolTipUpdater::updateToolTips_()
+{
+  for (auto it = pendingActions_.begin(); it != pendingActions_.end(); ++it)
+  {
+    QAction* action = (*it)->action();
+    QString tt = action->property(ORIGINAL_TOOL_TIP_PROPERTY).toString(); // Get the original tool tip from the property
+    if (tt.isEmpty())
+    {
+      // No original tool tip. Set it if there's a tool tip, continue otherwise
+      const QString currentToolTip = action->toolTip();
+      if (currentToolTip.isEmpty())
+        continue;
+
+      action->setProperty(ORIGINAL_TOOL_TIP_PROPERTY, currentToolTip);
+      tt = currentToolTip;
+    }
+
+    QString hkStr = action->shortcut().toString();
+    int found = tt.indexOf(HOT_KEY_TAG);
+    if (found != -1)
+    {
+      // This is a tool tip made with a hot key tag telling us where to insert the hot key text
+      if (!hkStr.isEmpty())
+        hkStr = QString(" (%1)").arg(hkStr); // Format hot key text if hot key exists
+      tt.replace(found, HOT_KEY_TAG.size(), hkStr); // Replace the hot key tag with the hot key text (or empty string)
+    }
+    else if (!hkStr.isEmpty())
+    {
+      // This is some other kind of tool tip, so just append hot key to the end
+      tt.append(QString("\n\nHot Key: %1").arg(hkStr));
+    }
+
+    // Set the tool tip
+    action->setToolTip(tt);
+  }
+
+  pendingActions_.clear();
+}
+
+void ToolTipUpdater::removeAction(const simQt::Action* action)
+{
+  // Action has been removed. Remove from our list of pending actions, if we're tracking it.
+  pendingActions_.erase(std::remove(pendingActions_.begin(), pendingActions_.end(), action), pendingActions_.end());
+}
+
+////////////////////////////////////////////////
 
 Action::Action(ActionRegistry* registry, const QString& group, const QString& description, QAction* action)
   : registry_(registry),
@@ -282,8 +353,11 @@ private:
 ////////////////////////////////////////////////
 
 ActionRegistry::ActionRegistry(QWidget* mainWindow)
-  : mainWindow_(mainWindow)
+  : mainWindow_(mainWindow),
+  toolTipUpdater_(new ToolTipUpdater)
 {
+  connect(this, SIGNAL(hotKeysChanged(simQt::Action*)), toolTipUpdater_, SLOT(addPending(simQt::Action*)));
+  connect(this, SIGNAL(actionRemoved(const simQt::Action*)), toolTipUpdater_, SLOT(removeAction(const simQt::Action*)));
 }
 
 ActionRegistry::~ActionRegistry()
@@ -292,6 +366,9 @@ ActionRegistry::~ActionRegistry()
     delete action;
   Q_FOREACH(UnknownAction* action, unknownActions_)
     delete action;
+
+  delete toolTipUpdater_;
+  toolTipUpdater_ = NULL;
 }
 
 Action* ActionRegistry::registerAction(const QString &group, const QString &description, QAction *action)
