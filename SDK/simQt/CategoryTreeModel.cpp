@@ -75,7 +75,7 @@ CategoryTreeItem::CategoryTreeItem(const QString& text, const QString& sortText,
   sortText_(sortText),
   categoryIndex_(categoryIndex),
   parentItem_(parent),
-  state_(Qt::Checked),
+  state_(Qt::Unchecked),
   numCheckedChildren_(0)
 {
 }
@@ -155,14 +155,19 @@ void CategoryTreeItem::updateNumCheckedChildren_(Qt::CheckState value)
 void CategoryTreeItem::appendChild(CategoryTreeItem *item)
 {
   childItems_.append(item);
-  updateNumCheckedChildren_(item->state());
+  // Only should updateNumCheckedChildren_() when we're checked.  Unchecked does nothing
+  if (item->state() == Qt::Checked)
+    updateNumCheckedChildren_(Qt::Checked);
 }
 
 void CategoryTreeItem::removeChild(CategoryTreeItem *item)
 {
+  const bool wasChecked = (item->state() == Qt::Checked);
   childItems_.removeOne(item);
   delete item;
-  updateNumCheckedChildren_(Qt::Unchecked);
+  // Only decrement if this one was previously checked
+  if (wasChecked)
+    updateNumCheckedChildren_(Qt::Unchecked);
 }
 
 CategoryTreeItem* CategoryTreeItem::child(int row)
@@ -396,8 +401,9 @@ void CategoryTreeModel::addCategoryValue_(int nameIndex, int valueIndex, bool re
     if (valIter != iter->second.second.end())
     {
       QString value = QString::fromStdString(dataStore_->categoryNameManager().valueIntToString(valIter->first));
+
       CategoryTreeItem* catValItem = new CategoryTreeItem(value, valueSortName_(value), valIter->first, categoryName);
-      catValItem->setState(iter->second.first ? Qt::Checked : Qt::Unchecked);
+      catValItem->setState(valIter->second ? Qt::Checked : Qt::Unchecked);
       beginInsertRows(createIndex(categoryName->row(), 0, categoryName), categoryName->childCount(), categoryName->childCount());
       categoryName->appendChild(catValItem);
       endInsertRows();

@@ -190,8 +190,9 @@ void CategoryFilter::addCategoryValue_(int nameIndex, int valueIndex)
   if (valuesCheck.find(valueIndex) != valuesCheck.end())
     return;
 
-  // The initial value should match the parent's current value
-  valuesCheck[valueIndex] = it->second.first;
+  // The initial value should match the parent's Unlisted Value state
+  auto i = valuesCheck.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
+  valuesCheck[valueIndex] = (i != valuesCheck.end() && i->second);
 }
 
 void CategoryFilter::clear_()
