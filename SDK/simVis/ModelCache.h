@@ -24,8 +24,8 @@
 
 #include <map>
 #include <string>
-#include "osg/ref_ptr"
 #include "osg/observer_ptr"
+#include "osg/ref_ptr"
 #include "simCore/Common/Export.h"
 
 namespace osg { class Node; }
