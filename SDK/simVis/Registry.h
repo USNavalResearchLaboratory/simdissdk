@@ -22,26 +22,28 @@
 #ifndef SIMVIS_REGISTRY_H
 #define SIMVIS_REGISTRY_H
 
-#include "simCore/Common/Common.h"
-#include "simCore/Common/FileSearch.h"
+#include <list>
 #include "OpenThreads/ReentrantMutex"
-#include "osgText/Text"
-#include "osgDB/FileUtils"
-#include "osgEarth/ThreadingUtils"
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
-#include <list>
+#include "osgDB/FileUtils"
+#include "osgEarth/ThreadingUtils"
+#include "simCore/Common/Common.h"
+#include "simCore/Common/FileSearch.h"
 
 namespace osg { class FrameStamp; }
+namespace osgText { class Font; }
 namespace simCore { class Clock; }
 
 namespace simVis
 {
 
 /** Bring osgDB::FilePathList into the simVis namespace for convenience */
-typedef osgDB::FilePathList    FilePathList;
+typedef osgDB::FilePathList FilePathList;
 /** A list of strings */
 typedef std::list<std::string> FileExtensionList;
+/** Model cache for loading models */
+class ModelCache;
 
 // Handles time updates on osg::Sequence
 class SequenceTimeUpdater;
@@ -152,7 +154,7 @@ public:
   void setShareArticulatedIconModels(bool value);
 
   /** Retrieves the flag for whether to share articulated models or not */
-  bool getShareArticulatedIconModels() const { return shareArticulatedModels_; }
+  bool getShareArticulatedIconModels() const;
 
   /** Set a clock for time-dependent icons */
   void setClock(simCore::Clock* clock);
@@ -193,15 +195,7 @@ private:
 
   FilePathList modelPaths_;
   FileExtensionList modelExtensions_;
-
-  // The actual icons using the actual file name as the key
-  struct ModelCacheEntry {
-    osg::ref_ptr<osg::Node> node_;
-    bool                    isArticulated_;
-    bool                    isImage_;
-  };
-  typedef std::map<std::string, ModelCacheEntry> ModelCache;
-  mutable ModelCache modelCache_;
+  ModelCache* modelCache_;
 
   // A mapping between the supplied file name and the actual file name
   typedef std::map<std::string, std::string> FilenameCache;
@@ -221,16 +215,8 @@ private:
   // If true it means abort icon loads to speed up the program
   bool memoryChecking_;
 
-  // If false, return a separate model instance for any model with articulations
-  bool shareArticulatedModels_;
-
   Registry();
 
-  // If true, the node contains one or more DOFTransforms, MultiSwitches or Sequences
-  // and is therefore capable of articulation.
-  bool isArticulated_(osg::Node* node) const;
-
-  simCore::Clock* clock_;
   simCore::FileSearchPtr fileSearch_;
   mutable OpenThreads::ReentrantMutex fileSearchMutex_;
 

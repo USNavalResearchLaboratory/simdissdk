@@ -73,6 +73,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
     ${VIS_INC}LocatorNode.h
+    ${VIS_INC}ModelCache.h
     ${VIS_INC}NavigationModes.h
     ${VIS_INC}ObjectSelectionHandler.h
     ${VIS_INC}OverheadMode.h
@@ -194,6 +195,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
     ${VIS_SRC}LocatorNode.cpp
+    ${VIS_SRC}ModelCache.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
     ${VIS_SRC}Picker.cpp
