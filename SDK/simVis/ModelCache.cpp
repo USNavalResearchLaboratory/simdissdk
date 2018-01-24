@@ -24,6 +24,7 @@
 #include "osg/Node"
 #include "osg/NodeVisitor"
 #include "osg/Sequence"
+#include "osg/ValueObject"
 #include "osgSim/DOFTransform"
 #include "osgSim/MultiSwitch"
 #include "osgUtil/Optimizer"
