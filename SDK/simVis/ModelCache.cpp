@@ -163,6 +163,10 @@ public:
   ModelCacheLoader(const ModelCacheLoader& copy, const osg::CopyOp& copyOp)
     : ReaderWriter(copy, copyOp)
   {
+    // Create a box model as a placeholder for invalid model
+    osg::Geode* geode = new osg::Geode();
+    geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
+    boxNode_ = geode;
   }
 
   /** Called by OSG when a filename is requested to be read into a node. */
@@ -178,6 +182,12 @@ public:
     if (tmpName.empty() && (!mcOpts || !mcOpts->boxWhenNotFound))
       return ReadResult::FILE_NOT_HANDLED;
     return readNode_(tmpName, mcOpts);
+  }
+
+  /** Sets the box node to use for invalid models */
+  void setBoxNode(osg::Node* boxNode)
+  {
+    boxNode_ = boxNode;
   }
 
 private:
@@ -199,10 +209,8 @@ private:
     {
       if (!options || !options->boxWhenNotFound)
         return ReadResult::FILE_NOT_HANDLED;
-      // Create a box model as a placeholder for invalid model
-      osg::Geode* geode = new osg::Geode();
-      geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
-      result = geode;
+      // Use box node for a placeholder for invalid model
+      result = boxNode_;
       isImage = false;
     }
 
@@ -321,6 +329,7 @@ private:
     return result;
   }
 
+  osg::ref_ptr<osg::Node> boxNode_;
 };
 
 REGISTER_OSGPLUGIN(simvis_modelcache, ModelCacheLoader)
@@ -496,6 +505,18 @@ ModelCache::ModelCache()
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
+
+  // Create a box model as a placeholder for invalid model
+  osg::Geode* geode = new osg::Geode();
+  geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
+  boxNode_ = geode;
+
+  // Share the box model with the loader, to reduce number of geometry in the scene and increase reuse
+  ModelCacheLoader* cacheRw = dynamic_cast<ModelCacheLoader*>(osgDB::Registry::instance()->getReaderWriterForExtension(MODEL_LOADER_EXT));
+  // Assertion failure means we're going to never be able to read/write model files.  Check REGISTER_OSGPLUGIN
+  assert(cacheRw);
+  if (cacheRw)
+    cacheRw->setBoxNode(boxNode_);
 }
 
 ModelCache::~ModelCache()
@@ -631,6 +652,11 @@ bool ModelCache::isArticulated(osg::Node* node)
 osg::Node* ModelCache::asyncLoaderNode() const
 {
   return asyncLoader_.get();
+}
+
+osg::Node* ModelCache::boxNode() const
+{
+  return boxNode_.get();
 }
 
 ////////////////////////////////////////////////////////////////////////////

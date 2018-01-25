@@ -124,7 +124,6 @@ private:
   osg::observer_ptr<PlatformNode> platform_;
 };
 
-
 //----------------------------------------------------------------------------
 
 PlatformNode::PlatformNode(const simData::PlatformProperties& props,

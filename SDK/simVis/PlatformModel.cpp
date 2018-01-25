@@ -35,18 +35,19 @@
 #include "osgEarth/ObjectIndex"
 #include "osgEarthAnnotation/AnnotationUtils"
 
+#include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
+#include "simCore/String/Format.h"
+#include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/EntityLabel.h"
+#include "simVis/ModelCache.h"
 #include "simVis/Locator.h"
 #include "simVis/OverrideColor.h"
+#include "simVis/RCS.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
-#include "simVis/RCS.h"
-#include "simCore/EM/RadarCrossSection.h"
-#include "simNotify/Notify.h"
-#include "simCore/String/Format.h"
-#include "simCore/Calc/Angle.h"
 #include "simVis/PlatformModel.h"
 
 #define LC "[PlatformModel] "
@@ -226,60 +227,64 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, icon))
     return false;
 
-  // if the new properties say "no model", remove any existing model.
-  if (prefs.icon().empty() && model_.valid())
+  if (prefs.icon().empty())
+    setModel_(NULL, false);
+  else
   {
-    offsetXform_->removeChild(model_);
-    alphaVolumeGroup_->removeChild(model_);
-    model_ = NULL;
-    return true;
-  }
+    const simVis::Registry* registry = simVis::Registry::instance();
+    simVis::ModelCache* modelCache = registry->modelCache();
 
-  // if there's an existing model, save its parent group.
+    // Load the icon from registry's model cache
+    bool isImage = false;
+    osg::ref_ptr<osg::Node> node = registry->getOrCreateIconModel(prefs.icon(), &isImage);
+    // If we were not able to load the icon/model, create a box to use as a placeholder.
+    if (!node.valid())
+    {
+      if (!registry->isMemoryCheck())
+      {
+        SIM_WARN << "Failed to find icon model: " << prefs.icon() << "" << std::endl;
+      }
+
+      // Use the unit cube
+      node = modelCache->boxNode();
+    }
+    setModel_(node.get(), isImage);
+  }
+  return true;
+}
+
+void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
+{
+  if (model_ == newModel && isImageModel_ == isImage)
+    return;
+
+  isImageModel_ = isImage;
+
+  // Remove any existing model
   if (model_.valid())
   {
     offsetXform_->removeChild(model_);
     alphaVolumeGroup_->removeChild(model_);
+    model_ = NULL;
+    dynamicXform_->setSizingNode(NULL);
   }
 
-  std::string newModelURI = prefs.icon();
+  // if the new properties say "no model", we're done
+  model_ = newModel;
+  if (newModel == NULL)
+    return;
 
-  // don't bother to create model if the icon name is empty, to support 3D Landmarks with no icons
-  if (newModelURI.empty())
-    return true;
-
-  model_ = simVis::Registry::instance()->getOrCreateIconModel(newModelURI, &isImageModel_);
-  // If we were not able to load the icon/model, create a box to use as a placeholder.
-  if (!model_.valid())
-  {
-    if (!simVis::Registry::instance()->isMemoryCheck())
-    {
-      SIM_WARN << "Failed to find icon model: " << newModelURI << "" << std::endl;
-    }
-
-    // Use the unit cube
-    osg::Geode* geode = new osg::Geode();
-    osg::StateSet* stateset = new osg::StateSet();
-    geode->setStateSet(stateset);
-    geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
-    model_ = geode;
-  }
-
-  // render order:
+  // set render order
   osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
   if (isImageModel_)
-    modelStateSet->setRenderBinDetails(BIN_PLATFORM_IMAGE, simVis::BIN_GLOBAL_SIMSDK);
-  else // does 0 work?
-  {
-    modelStateSet->setRenderBinDetails(BIN_PLATFORM_MODEL, BIN_TRAVERSAL_ORDER_SIMSDK);
-  }
+    modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_GLOBAL_SIMSDK);
+  else
+    modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
 
-  // re-apply the parent group.
+  // re-add to the parent groups
   offsetXform_->addChild(model_.get());
   alphaVolumeGroup_->addChild(model_.get());
   dynamicXform_->setSizingNode(model_.get());
-
-  return true;
 }
 
 void PlatformModelNode::setRotateToScreen(bool value)
@@ -686,12 +691,12 @@ void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, boo
     : (osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE));
 }
 
-void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs, bool force)
+void PlatformModelNode::updateOverrideColor_(const simData::PlatformPrefs& prefs)
 {
   if (!overrideColor_.valid())
     return;
 
-  if (!force && lastPrefsValid_ &&
+  if (lastPrefsValid_ &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
       !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor))
     return;
@@ -767,7 +772,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateCulling_(prefs);
   updatePolygonMode_(prefs);
   updateLighting_(prefs, modelChanged);
-  updateOverrideColor_(prefs, modelChanged);
+  updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
 
   // Note that the brightness calculation is low cost and we do not check PB_FIELD_CHANGED on it

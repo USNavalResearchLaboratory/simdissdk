@@ -171,10 +171,13 @@ namespace simVis
     void updatePolygonMode_(const simData::PlatformPrefs& prefs);
     /// Updates the lighting based on prefs or if force is set to true when the model has changed
     void updateLighting_(const simData::PlatformPrefs& prefs, bool force);
-    /// Updates the override color based on prefs or if force is set to true when the model has changed
-    void updateOverrideColor_(const simData::PlatformPrefs& prefs, bool force);
+    /// Updates the override color based on prefs
+    void updateOverrideColor_(const simData::PlatformPrefs& prefs);
     /// Updates the alpha volume based on prefs
     void updateAlphaVolume_(const simData::PlatformPrefs& prefs);
+
+    /// Changes the model to the given node
+    void setModel_(osg::Node* newModel, bool isImage);
   };
 
 } // namespace simVis

@@ -45,6 +45,9 @@ public:
   ModelCache();
   virtual ~ModelCache();
 
+  /** Retrieves a pointer to a generic box icon used for blank models */
+  osg::Node* boxNode() const;
+
   /**
    * Whether models loaded by getOrCreateIconModel() that contain articulated parts
    * should be shared. Default=FALSE so that each instance can be articulated
@@ -147,6 +150,8 @@ private:
   /// Maps string name to cache entry
   std::map<std::string, Entry> cache_;
 
+  /// Node that is used for when platforms do not exist as a placeholder object
+  osg::ref_ptr<osg::Node> boxNode_;
   /// Holds onto the asynchronous loading node
   osg::ref_ptr<LoaderNode> asyncLoader_;
 };
