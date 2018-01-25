@@ -204,16 +204,16 @@ namespace simVis
     static unsigned int getMask() { return simVis::DISPLAY_MASK_PLATFORM; }
 
     /**
-    * Gets the actual bounds of the platform model
+    * Gets the actual bounds of the platform model.  See PlatformModelNode::getUnscaledIconBounds().
     * @return A bounding box in object space
     */
-    const osg::BoundingBox& getActualSize() const { return unscaledModelBounds_; }
+    const osg::BoundingBox& getActualSize() const;
 
     /**
-    * Gets the bounds of the platform model as displayed (possibly scaled)
+    * Gets the bounds of the platform model as displayed (possibly scaled).  See PlatformModelNode::getScaledIconBounds().
     * @return A bounding box in object space
     */
-    const osg::BoundingBox& getVisualSize() const { return scaledModelBounds_; }
+    const osg::BoundingBox& getVisualSize() const;
 
     /**
     * Gets offset to the front of the scaled platform model
@@ -307,8 +307,6 @@ namespace simVis
     LosCreator*                     losCreator_; // Not owned
     RadialLOSNode*                  opticalLosNode_;
     RadialLOSNode*                  radioLosNode_;
-    osg::BoundingBox                unscaledModelBounds_;
-    osg::BoundingBox                scaledModelBounds_;
     double                          frontOffset_;
     /// flag indicating if the platform node has valid data for the current scenario time
     bool                            valid_;
