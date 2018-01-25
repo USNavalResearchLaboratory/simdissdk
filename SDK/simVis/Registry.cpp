@@ -365,6 +365,11 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
   return modelCache_->getOrCreateIconModel(uri, pIsImage);
 }
 
+simVis::ModelCache* simVis::Registry::modelCache() const
+{
+  return modelCache_;
+}
+
 osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
 {
   FontCache::const_iterator it = fontCache_.find(name);

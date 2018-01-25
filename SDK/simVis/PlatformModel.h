@@ -117,9 +117,12 @@ namespace simVis
     /** Return the class name */
     virtual const char* className() const { return "PlatformModelNode"; }
 
-  private:
+  protected:
     virtual ~PlatformModelNode();
+
+  private:
     PlatformModelNode(const PlatformModelNode& rhs); // not implemented
+    PlatformModelNode& operator=(const PlatformModelNode& rhs); // not implemented
 
     simData::PlatformProperties        lastProps_;
     simData::PlatformPrefs             lastPrefs_;

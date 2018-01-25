@@ -113,6 +113,9 @@ public:
   */
   osg::Node* getOrCreateIconModel(const std::string& name, bool* pIsImage = NULL) const;
 
+  /** Retrieve a pointer to the model cache. */
+  ModelCache* modelCache() const;
+
   /**
   * Searches for the named font, using the data search path list and the extensions list.
   * This method is thread safe
@@ -190,6 +193,14 @@ protected:
   virtual ~Registry();
 
 private:
+  /** Constructor for the registry is private.  Use instance() to access. */
+  Registry();
+
+  /** Hide copy constructor */
+  Registry(const Registry& rhs);
+  /** Hide copy operator */
+  Registry& operator=(const Registry& rhs);
+
   /// use the fileSearch_ to find the specified file. Returns the passed in filename if fileSearch_ is not set. This method is thread safe
   std::string findFile_(const std::string& filename, simCore::FileSearch::SearchFileType fileType) const;
 
@@ -214,8 +225,6 @@ private:
 
   // If true it means abort icon loads to speed up the program
   bool memoryChecking_;
-
-  Registry();
 
   simCore::FileSearchPtr fileSearch_;
   mutable OpenThreads::ReentrantMutex fileSearchMutex_;

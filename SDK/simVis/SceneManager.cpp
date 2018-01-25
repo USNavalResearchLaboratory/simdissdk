@@ -44,6 +44,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simVis/Constants.h"
+#include "simVis/ModelCache.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/Registry.h"
@@ -156,6 +157,10 @@ void SceneManager::init_()
   // updates scenario objects
   scenarioManager_ = new ScenarioManager(this, projectorManager_.get());
   drapeableNode_->addChild(scenarioManager_.get());
+
+  // Add the Model Cache's asynchronous loader node.  This is needed for asynchronous loading, which
+  // requires access to the database pager mechanisms of OSG that are available during the cull traversal.
+  addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
 
   // SilverLining requires a write to the depth buffer to avoid having clouds overwrite objects
   // in the scene.  Therefore everything needs to write to depth buffer.  However, some things
