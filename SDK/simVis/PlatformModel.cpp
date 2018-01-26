@@ -271,20 +271,28 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
 
   // if the new properties say "no model", we're done
   model_ = newModel;
-  if (newModel == NULL)
-    return;
+  if (newModel != NULL)
+  {
+    // set render order
+    osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
+    if (isImageModel_)
+      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_GLOBAL_SIMSDK);
+    else
+      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
 
-  // set render order
-  osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
-  if (isImageModel_)
-    modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_GLOBAL_SIMSDK);
-  else
-    modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
+    // re-add to the parent groups
+    offsetXform_->addChild(model_.get());
+    alphaVolumeGroup_->addChild(model_.get());
+    dynamicXform_->setSizingNode(model_.get());
+  }
 
-  // re-add to the parent groups
-  offsetXform_->addChild(model_.get());
-  alphaVolumeGroup_->addChild(model_.get());
-  dynamicXform_->setSizingNode(model_.get());
+  // Update various prefs that affect the model state and the bounding box.  If the lastPrefs_ is not
+  // valid, then this code will just get called again in setPrefs(), so it's safe to call here.
+  updateImageDepth_(lastPrefs_, true);
+  warnOnInvalidOffsets_(lastPrefs_, true);
+  updateImageIconRotation_(lastPrefs_, true);
+  updateLighting_(lastPrefs_, true);
+  updateBounds_();
 }
 
 void PlatformModelNode::setRotateToScreen(bool value)
@@ -378,25 +386,26 @@ void PlatformModelNode::updateBounds_()
   {
     offsetXform_->addChild(*iter);
   }
+
+  // Alert any listeners of bounds changes
+  fireCallbacks_(Callback::BOUNDS_CHANGED);
 }
 
-bool PlatformModelNode::updateScale_(const simData::PlatformPrefs& prefs, bool force)
+bool PlatformModelNode::updateScale_(const simData::PlatformPrefs& prefs)
 {
   // Check for ScaleXYZ first
   if (prefs.has_scalexyz())
-  {
-    return updateScaleXyz_(prefs, force);
-  }
+    return updateScaleXyz_(prefs);
 
   // Clear out the override scaling at this point so latent values don't take over
   dynamicXform_->clearOverrideScale();
-  return updateDynamicScale_(prefs, force);
+  return updateDynamicScale_(prefs);
 }
 
-bool PlatformModelNode::updateScaleXyz_(const simData::PlatformPrefs& prefs, bool force)
+bool PlatformModelNode::updateScaleXyz_(const simData::PlatformPrefs& prefs)
 {
   // By default scalexyz is NULL. It is used to override the scale preference which is defaulted to 1. When uninitialized, it should not override the scale pref.
-  if (!prefs.has_scalexyz() || (lastPrefsValid_ && !force &&
+  if (!prefs.has_scalexyz() || (lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz)))
     return false;
 
@@ -405,9 +414,9 @@ bool PlatformModelNode::updateScaleXyz_(const simData::PlatformPrefs& prefs, boo
   return true;
 }
 
-bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs, bool force)
+bool PlatformModelNode::updateDynamicScale_(const simData::PlatformPrefs& prefs)
 {
-  if (lastPrefsValid_ && !force &&
+  if (lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, scale) &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, dynamicscale) &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, dynamicscalescalar) &&
@@ -734,12 +743,43 @@ void PlatformModelNode::setProperties(const simData::PlatformProperties& props)
 
 void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
 {
-  // If a new model is loaded then force a scale update
+  // If a new model is detected, start loading it.
   const bool modelChanged = updateModel_(prefs);
 
   // check for updates to the nodepthicon pref
-  updateImageDepth_(prefs, modelChanged);
+  updateImageDepth_(prefs, false);
 
+  // Only warn on the invalid offsets if the model didn't change.  If the model DID change,
+  // then the changing of the model already deals with the print out.  There are parts of the
+  // prefs data structure that can impact this printout so it needs to be both here and
+  // in the code that changes the model icon.
+  if (!modelChanged)
+    warnOnInvalidOffsets_(prefs, false);
+
+  bool needsBoundsUpdate = updateScale_(prefs);
+  updateImageIconRotation_(prefs, false);
+  updateRCS_(prefs);
+  needsBoundsUpdate = updateOffsets_(prefs) || needsBoundsUpdate;
+  updateStippling_(prefs);
+  updateCulling_(prefs);
+  updatePolygonMode_(prefs);
+  updateLighting_(prefs, false);
+  updateOverrideColor_(prefs);
+  updateAlphaVolume_(prefs);
+
+  // Note that the brightness calculation is low cost and we do not check PB_FIELD_CHANGED on it
+  const float brightnessMagnitude = prefs.brightness() * BRIGHTNESS_TO_AMBIENT;
+  brightnessUniform_->set(osg::Vec4f(brightnessMagnitude, brightnessMagnitude, brightnessMagnitude, 1.f));
+
+  if (needsBoundsUpdate)
+    updateBounds_();
+
+  lastPrefs_ = prefs;
+  lastPrefsValid_ = true;
+}
+
+void PlatformModelNode::warnOnInvalidOffsets_(const simData::PlatformPrefs& prefs, bool modelChanged) const
+{
   // Preference rules that set a high Z offset (say 4000) on image icons could be problematic; warn about them.
   // Only really care about image icons, since they have no Z depth and the offset Z moves them closer to
   // camera in a way that scales with dynamic scale and regular scale
@@ -748,6 +788,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
     const bool zOffsetChanged = PB_SUBFIELD_CHANGED(&prefs, &lastPrefs_, platpositionoffset, z);
     const bool scaleChanged = PB_FIELD_CHANGED(&prefs, &lastPrefs_, scale);
     const bool dynamicScaleChanged = PB_FIELD_CHANGED(&prefs, &lastPrefs_, dynamicscale);
+
     // Only warn when we get changes to the fields that might cause the warning, to avoid spamming
     if (zOffsetChanged || modelChanged || scaleChanged || dynamicScaleChanged)
     {
@@ -763,25 +804,23 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
       SIM_WARN << "Platform [" << name << "]: Scaling image icon with large Z offset, image may disappear.  Validate Z offset.\n";
     }
   }
-
-  bool needsBoundsUpdate = updateScale_(prefs, modelChanged) || modelChanged;
-  updateImageIconRotation_(prefs, modelChanged);
-  updateRCS_(prefs);
-  needsBoundsUpdate = updateOffsets_(prefs) || needsBoundsUpdate;
-  updateStippling_(prefs);
-  updateCulling_(prefs);
-  updatePolygonMode_(prefs);
-  updateLighting_(prefs, modelChanged);
-  updateOverrideColor_(prefs);
-  updateAlphaVolume_(prefs);
-
-  // Note that the brightness calculation is low cost and we do not check PB_FIELD_CHANGED on it
-  const float brightnessMagnitude = prefs.brightness() * BRIGHTNESS_TO_AMBIENT;
-  brightnessUniform_->set(osg::Vec4f(brightnessMagnitude, brightnessMagnitude, brightnessMagnitude, 1.f));
-
-  if (needsBoundsUpdate)
-    updateBounds_();
-
-  lastPrefs_ = prefs;
-  lastPrefsValid_ = true;
 }
+
+void PlatformModelNode::addCallback(Callback* value)
+{
+  if (value)
+    callbacks_.push_back(value);
+}
+
+void PlatformModelNode::removeCallback(Callback* value)
+{
+  if (value)
+    callbacks_.erase(std::remove(callbacks_.begin(), callbacks_.end(), value), callbacks_.end());
+}
+
+void PlatformModelNode::fireCallbacks_(Callback::EventType eventType)
+{
+  for (auto i = callbacks_.begin(); i != callbacks_.end(); ++i)
+    i->get()->operator()(this, eventType);
+}
+

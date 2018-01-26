@@ -126,6 +126,31 @@ private:
 
 //----------------------------------------------------------------------------
 
+/** Calls PlatformNode::updateHostBounds() when model node gets a bounds update. */
+class BoundsUpdater : public simVis::PlatformModelNode::Callback
+{
+public:
+  explicit BoundsUpdater(PlatformNode* platform)
+    : platform_(platform)
+  {
+  }
+
+  virtual void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType)
+  {
+    if (eventType == Callback::BOUNDS_CHANGED)
+    {
+      osg::ref_ptr<PlatformNode> refPlat;
+      if (platform_.lock(refPlat))
+        refPlat->updateHostBounds();
+    }
+  }
+
+private:
+  osg::observer_ptr<PlatformNode> platform_;
+};
+
+//----------------------------------------------------------------------------
+
 PlatformNode::PlatformNode(const simData::PlatformProperties& props,
                            const simData::DataStore& dataStore,
                            PlatformTspiFilterManager& manager,
@@ -155,9 +180,9 @@ lastPrefsValid_(false),
 forceUpdateFromDataStore_(false),
 queuedInvalidate_(false)
 {
-  PlatformModelNode* node = new PlatformModelNode(new Locator(locator));
-  this->addChild(node);
-  model_ = node;
+  model_ = new PlatformModelNode(new Locator(locator));
+  addChild(model_);
+  model_->addCallback(new BoundsUpdater(this));
 
   this->setProperties(props);
 
@@ -284,7 +309,6 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   // check for a prefs change that would require re-computing the bounds of the model
   // if the properties of the model have changed, adjust the host bounding box to match
   if (!lastPrefsValid_ ||
-      PB_FIELD_CHANGED((&lastPrefs_), (&prefs), icon) ||
       PB_FIELD_CHANGED((&lastPrefs_), (&prefs), scale) ||
       PB_FIELD_CHANGED((&lastPrefs_), (&prefs), dynamicscale) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz) ||
@@ -327,6 +351,13 @@ void PlatformNode::updateHostBounds_(double scale)
   frontOffset_ = unscaledBounds.yMax() * scale;
   if (track_.valid())
     track_->setHostBounds(osg::Vec2(unscaledBounds.xMin() * scale, unscaledBounds.xMax() * scale));
+}
+
+void PlatformNode::updateHostBounds()
+{
+  // It does not matter here whether lastPrefs is valid or not.  The bounds of the
+  // child definitely updated, and we just need to fix the track values and front offset
+  updateHostBounds_(lastPrefs_.scale());
 }
 
 PlatformModelNode* PlatformNode::getModel()
