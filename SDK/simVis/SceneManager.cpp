@@ -160,7 +160,10 @@ void SceneManager::init_()
 
   // Add the Model Cache's asynchronous loader node.  This is needed for asynchronous loading, which
   // requires access to the database pager mechanisms of OSG that are available during the cull traversal.
-  addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
+  const char* noAsyncLoad = ::getenv("SIMVIS_NO_ASYNC_LOAD");
+  // Allow end user to force synchronous load
+  if (!noAsyncLoad || strncmp(noAsyncLoad, "0", 1) == 0)
+    addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
 
   // SilverLining requires a write to the depth buffer to avoid having clouds overwrite objects
   // in the scene.  Therefore everything needs to write to depth buffer.  However, some things

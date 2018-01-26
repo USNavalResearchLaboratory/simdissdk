@@ -357,6 +357,12 @@ public:
   {
   }
 
+  /** Returns true if configured properly (i.e. attached to scene), false otherwise */
+  bool isConfigured() const
+  {
+    return getNumParents() > 0;
+  }
+
   /** Change the cache pointer.  This is useful because the Loader Node might outlive the ModelCache. */
   void setCache(simVis::ModelCache* cache)
   {
@@ -580,8 +586,19 @@ void ModelCache::saveToCache_(const std::string& uri, osg::Node* node, bool isAr
 
 void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
 {
-  // Save the callback in a ref_ptr for memory
+  // Save the callback in a ref_ptr for memory management
   osg::ref_ptr<ModelReadyCallback> refCallback = callback;
+
+  // Check that the async loader is going to work.  If it's not configured, then load synchronously.
+  if (!asyncLoader_->isConfigured())
+  {
+    // Not configured: synchronous load
+    bool isImage = false;
+    osg::ref_ptr<osg::Node> node = getOrCreateIconModel(uri, &isImage);
+    if (refCallback.valid())
+      refCallback->loadFinished(node, isImage, uri);
+    return;
+  }
 
   // first check the cache
   const auto cacheIter = cache_.find(uri);

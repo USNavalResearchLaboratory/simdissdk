@@ -69,6 +69,25 @@ static const osg::Vec4f DEFAULT_AMBIENT(
   1.f
   );
 
+/** Callback to ModelCache that calls setModel_() when the model is ready. */
+class PlatformModelNode::SetModelCallback : public simVis::ModelCache::ModelReadyCallback
+{
+public:
+  explicit SetModelCallback(PlatformModelNode* platform)
+    : platform_(platform)
+  {
+  }
+  virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& uri)
+  {
+    osg::ref_ptr<PlatformModelNode> refPlatform;
+    if (platform_.lock(refPlatform))
+      refPlatform->setModel_(model.get(), isImage);
+  }
+
+private:
+  osg::observer_ptr<PlatformModelNode> platform_;
+};
+
 /* OSG Scene Graph Layout of This Class
  *
  *       /= labelRoot => label_              /= rcs_         /= alphaVolumeGroup_ => model_
@@ -227,28 +246,15 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, icon))
     return false;
 
-  if (prefs.icon().empty())
+  const simVis::Registry* registry = simVis::Registry::instance();
+  if (prefs.icon().empty() || registry->isMemoryCheck())
     setModel_(NULL, false);
   else
   {
-    const simVis::Registry* registry = simVis::Registry::instance();
-    simVis::ModelCache* modelCache = registry->modelCache();
-
-    // Load the icon from registry's model cache
-    bool isImage = false;
-    osg::ref_ptr<osg::Node> node = registry->getOrCreateIconModel(prefs.icon(), &isImage);
-    // If we were not able to load the icon/model, create a box to use as a placeholder.
-    if (!node.valid())
-    {
-      if (!registry->isMemoryCheck())
-      {
-        SIM_WARN << "Failed to find icon model: " << prefs.icon() << "" << std::endl;
-      }
-
-      // Use the unit cube
-      node = modelCache->boxNode();
-    }
-    setModel_(node.get(), isImage);
+    // Find the fully qualified URI
+    const std::string uri = registry->findModelFile(prefs.icon());
+    // Perform an asynchronous load on the model
+    registry->modelCache()->asyncLoad(uri, new SetModelCallback(this));
   }
   return true;
 }

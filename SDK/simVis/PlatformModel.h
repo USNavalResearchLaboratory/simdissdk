@@ -149,6 +149,9 @@ private:
   PlatformModelNode(const PlatformModelNode& rhs); // not implemented
   PlatformModelNode& operator=(const PlatformModelNode& rhs); // not implemented
 
+  /// Callback to the Model Cache that will set our platform model on asynchronous load
+  class SetModelCallback;
+
   simData::PlatformProperties        lastProps_;
   simData::PlatformPrefs             lastPrefs_;
   simData::LabelPrefs                lastLabelPrefs_;
