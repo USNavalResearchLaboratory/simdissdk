@@ -94,13 +94,24 @@ void EntityFilterLineEdit::contextMenuEvent(QContextMenuEvent *event)
 
 void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression)
 {
-  if (text() != filter)
+  bool revalidate = (text() != filter);
+
+  if (revalidate)
     setText(filter);
+
   if (!regexOnly_)
   {
+    // Do not overwrite a pending request for a revalidate
+    if (revalidate == false)
+      revalidate = ((caseSensitive_ != caseSensitive) || (expression_ != expression));
+
+    // No cost in updating the member variable, so just do it
     caseSensitive_ = caseSensitive;
     expression_ = expression;
   }
+
+  if (revalidate)
+    revalidate_();
 }
 
 bool EntityFilterLineEdit::isValid() const
