@@ -651,9 +651,6 @@ void SimpleConsoleTextFilter::addCommonQtPngFilters()
   // "PNG lib warning : Interlace handling should be turned on when using png_read_image"
   filters_.push_back("Interlace handling should be turned on when using png_read_image");
 
-  // Matches error messages about invalid expression; not need since expression turns red if invalid
-  filters_.push_back("QRegularExpressionPrivate::doMatch(): called on an invalid QRegularExpression object");
-
   // Matches error messages from Qt about untested version of Windows:
   // "libpng warning: iCCP: known incorrect sRGB profile"
 #ifdef WIN32

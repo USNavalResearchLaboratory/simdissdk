@@ -272,21 +272,21 @@ bool RegExpImpl::matchQt_(const std::string& test) const
   case RegExp:
     if (exp_ == ".*")
       return true;
-    if (fastRegex_)
+    if (fastRegex_ && fastRegex_->isValid())
       return fastRegex_->match(QString::fromStdString(test)).hasMatch();
     break;
 
   case FixedString:
     // Failure means problem in initializeQRegExp_()
     assert(qRegExp_);
-    if (qRegExp_)
+    if (qRegExp_ && qRegExp_->isValid())
       return qRegExp_->indexIn(QString::fromStdString(test)) >= 0;
     break;
 
   case Wildcard:
     // Failure means problem in initializeQRegExp_()
     assert(qRegExp_);
-    if (qRegExp_)
+    if (qRegExp_ && qRegExp_->isValid())
       return qRegExp_->exactMatch(QString::fromStdString(test));
     break;
   }
