@@ -187,6 +187,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   alphaVolumeGroup_->setNodeMask(0); // off by default
   // Draw the backface
   alphaVolumeGroup_->getOrCreateStateSet()->setAttributeAndModes(new osg::CullFace(osg::CullFace::FRONT), osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
+
+  // Set an initial model.  Without this, visitors expecting a node may fail early.
+  setModel_(simVis::Registry::instance()->modelCache()->boxNode(), false);
 }
 
 PlatformModelNode::~PlatformModelNode()
