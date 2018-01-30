@@ -181,22 +181,18 @@ int testCalculateGeodesicDRCR(double *from, double *to, simCore::EarthModelCalcu
 
 int testCalculateTotalVelocity(double *from, double *to, double deltaTime, simCore::EarthModelCalculations earth, double *result)
 {
-  return 0; //Ned, broken
-  /*
-    std::cerr << "calculateTotalVelocity +++++++ ";
+  std::cerr << "calculateTotalVelocity +++++++ ";
 
-    double velVec[3];
-
-    CalcVelocityFromLLA(from, to, deltaTime, &velVec[0]);
-    if(almostEqual(velVec[0], result[0]) &&
+  simCore::Vec3 velVec;
+  simCore::calculateVelFromGeodeticPos(simCore::Vec3(from), simCore::Vec3(to), deltaTime, velVec);
+  if (almostEqual(velVec[0], result[0]) &&
     almostEqual(velVec[1], result[1]) &&
     almostEqual(velVec[2], result[2]))
-    {
-    std::cerr << "successful"<<endl;
+  {
+    std::cerr << "successful" << std::endl;
     return 0;
-    }
-    return 1;
-    */
+  }
+  return 1;
 }
 
 int testCalculateClosingVelocity(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
