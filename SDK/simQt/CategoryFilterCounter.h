@@ -45,9 +45,9 @@ struct CategoryCountResults
 };
 
 /**
- * Algorithm that will count the number of objects from a given ID list are impacted by a given
- * filter.  This is intended to give a runtime count of the number of entities that will be
- * impacting by checking an object in a category tree widget.
+ * Algorithm that will count the number of objects from a given ID list that are impacted by a
+ * given filter.  This is intended to give a runtime count of the number of entities that will
+ * be impacted by clicking a category value line in a category tree widget.
  *
  * Note that this algorithm is O(m * n), scaling both on the number of entities (m) and the
  * total number of category values (n).
