@@ -23,10 +23,11 @@
 *
 *
 */
+#include <cassert>
 #include <QRegExp>
 #include <QRegularExpression>
 #include "simNotify/Notify.h"
-#include "RegExpImpl.h"
+#include "simQt/RegExpImpl.h"
 
 namespace simQt {
 
