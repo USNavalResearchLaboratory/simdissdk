@@ -58,7 +58,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   tree_->setModel(entityTreeModel_);
   tree_->setExpandsOnDoubleClick(true);
   tree_->setSelectionMode(QAbstractItemView::SingleSelection);
-  tree_->setListTreeButtonDisplayed(false);  // The Entity Line Composite does not support the tree view
+  tree_->setTreeViewActionEnabled(false);  // The Entity Line Composite does not support the tree view
   if (settings)
     tree_->setSettings(settings);
 

@@ -198,6 +198,7 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   nameFilter_(NULL),
   filterDialog_(NULL),
   useCenterAction_(false),
+  treeViewUsable_(true),
   useEntityIcons_(true),
   useEntityIconsSet_(false)
 {
@@ -205,7 +206,6 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
 
   composite_ = new Ui_EntityTreeComposite();
   composite_->setupUi(this);
-  composite_->pushButton->setEnabled(false);
   composite_->filterButton->hide(); // start out hidden until filters are added
   entityTreeWidget_ = new EntityTreeWidget(composite_->treeView);
   connect(entityTreeWidget_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(onItemsChanged_(QList<uint64_t>)));
@@ -259,13 +259,10 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   expandAllAction_->setEnabled(false); // Disabled until entities are added
   composite_->treeView->addAction(expandAllAction_);
 
-  composite_->pushButton->setDefaultAction(toggleTreeViewAction_);
-
   connect(composite_->filterButton, SIGNAL(clicked()), this, SLOT(showFilters_()));
   connect(entityTreeWidget_, SIGNAL(numFilteredItemsChanged(int, int)), this, SLOT(setNumFilteredItemsLabel_(int, int)));
 
   // Set tooltips
-  composite_->pushButton->setToolTip(toggleTreeViewAction_->toolTip());
   composite_->filterButton->setToolTip(simQt::formatTooltip(tr("Entity Filter"),
   tr("Opens the Entity Filter dialog.<p>Used for filtering the display of entities shown in the Entity List.")));
   // Note: tool tip applied to magnifying glass icon (label); the lineEdit already has a comment in the text field
@@ -320,7 +317,7 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
   nameFilter_->setModel(model_);
   entityTreeWidget_->setModel(model_);
   // If the tree is pre-loaded, enable the tree/list button
-  if (model_->rowCount() != 0)
+  if (treeViewUsable_ && model_->rowCount() != 0)
     toggleTreeViewAction_->setEnabled(true);
   connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
 }
@@ -395,9 +392,12 @@ void EntityTreeComposite::addButton(QWidget* button)
   composite_->horizontalLayout->addWidget(button);
 }
 
-void EntityTreeComposite::setListTreeButtonDisplayed(bool value)
+void EntityTreeComposite::setTreeViewActionEnabled(bool value)
 {
-  composite_->pushButton->setVisible(value);
+  treeViewUsable_ = value;
+  // Disable the action if needed
+  if (!value)
+    toggleTreeViewAction_->setEnabled(false);
 }
 
 QIcon EntityTreeComposite::configIconForIndex_(int index) const
@@ -545,7 +545,8 @@ void EntityTreeComposite::initializeSettings(SettingsPtr settings)
 
 void EntityTreeComposite::rowsInserted_(const QModelIndex & parent, int start, int end)
 {
-  toggleTreeViewAction_->setEnabled(true);
+  if (treeViewUsable_)
+    toggleTreeViewAction_->setEnabled(true);
   updateActionEnables_();
 }
 
