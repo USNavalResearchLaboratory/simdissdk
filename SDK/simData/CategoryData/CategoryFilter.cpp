@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include "simNotify/Notify.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
@@ -87,17 +88,17 @@ CategoryFilter::CategoryFilter(simData::DataStore* dataStore, bool autoUpdate)
   : dataStore_(dataStore),
     autoUpdate_(autoUpdate)
 {
-  // Does nothing without a datastore
-  assert(dataStore != NULL);
-  if (dataStore_ == NULL)
-    return;
-
   if (autoUpdate_)
   {
+    // Does nothing without a datastore
+    assert(dataStore != NULL);
+    if (dataStore_ == NULL)
+      return;
+
     buildCategoryFilter_(true, true, true, true);
 
     // create observers/listeners
-    listenerPtr_ = simData::CategoryNameManager::ListenerPtr(new CategoryFilterListener(this));
+    listenerPtr_.reset(new CategoryFilterListener(this));
     dataStore_->categoryNameManager().addListener(listenerPtr_);
   }
 }
@@ -109,13 +110,10 @@ CategoryFilter::CategoryFilter(const CategoryFilter& other)
     categoryCheck_(other.categoryCheck_),
     categoryRegExp_(other.categoryRegExp_)
 {
-  if (dataStore_ == NULL)
-    return;
-
-  if (autoUpdate_)
+  if (autoUpdate_ && dataStore_)
   {
     // create observers/listeners
-    listenerPtr_ = simData::CategoryNameManager::ListenerPtr(new CategoryFilterListener(this));
+    listenerPtr_.reset(new CategoryFilterListener(this));
     dataStore_->categoryNameManager().addListener(listenerPtr_);
   }
 }
@@ -272,7 +270,7 @@ void CategoryFilter::buildCategoryFilter_(bool addNoValue, bool noValue, bool ad
   }
 }
 
-void CategoryFilter::getCurrentCategoryValues(simData::DataStore& dataStore, uint64_t entityId, CurrentCategoryValues& curVals)
+void CategoryFilter::getCurrentCategoryValues(const simData::DataStore& dataStore, uint64_t entityId, CurrentCategoryValues& curVals)
 {
   // get the current values from the data store
   const simData::CategoryDataSlice* slice = dataStore.categoryDataSlice(entityId);

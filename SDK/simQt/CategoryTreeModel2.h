@@ -28,6 +28,8 @@
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
 #include "simCore/Common/Common.h"
+#include "simData/CategoryData/CategoryFilter.h"
+#include "simData/ObjectId.h"
 
 class QFont;
 class QTreeView;
@@ -38,7 +40,9 @@ namespace simData {
 
 namespace simQt {
 
+class AsyncCategoryCounter;
 class CategoryProxyModel;
+struct CategoryCountResults;
 
 /**
 * Container class that keeps track of a set of pointers.  The container is indexed to
@@ -109,12 +113,16 @@ public:
 public slots:
   /** Changes the model state to match the values in the filter. */
   void setFilter(const simData::CategoryFilter& filter);
+  /** Given results of a category count, updates the text for each category. */
+  void processCategoryCounts(const simQt::CategoryCountResults& results);
 
 signals:
   /** The internal filter has changed, possibly from user editing or programmatically. */
   void filterChanged(const simData::CategoryFilter& filter);
   /** The internal filter has changed from user editing. */
   void filterEdited(const simData::CategoryFilter& filter);
+  /** Called when the match/exclude button changes.  Only emitted if filterChanged() is not emitted. */
+  void excludeEdited(int nameInt = 0, bool excludeMode = true);
 
 private:
   class CategoryItem;
@@ -219,6 +227,8 @@ private:
 class SDKQT_EXPORT CategoryFilterWidget2 : public QWidget
 {
   Q_OBJECT;
+  Q_PROPERTY(bool showEntityCount READ showEntityCount WRITE setShowEntityCount);
+
 public:
   explicit CategoryFilterWidget2(QWidget* parent = 0);
   virtual ~CategoryFilterWidget2();
@@ -228,9 +238,16 @@ public:
   /** Retrieves the category filter.  Only call this if the Data Store has been set. */
   const simData::CategoryFilter& categoryFilter() const;
 
+  /** Returns true if the entity count should be shown next to values. */
+  bool showEntityCount() const;
+  /** Changes whether entity count is shown next to category values. */
+  void setShowEntityCount(bool show);
+
 public slots:
   /** Changes the model state to match the values in the filter. */
   void setFilter(const simData::CategoryFilter& filter);
+  /** Updates the (#) count next to category values with the given category value counts. */
+  void processCategoryCounts(const simQt::CategoryCountResults& results);
 
 signals:
   /** The internal filter has changed, possibly from user editing or programmatically. */
@@ -261,6 +278,10 @@ private:
   simQt::CategoryProxyModel* proxy_;
   /** If true the category values are filtered; used to conditionally expand tree. */
   bool activeFiltering_;
+  /** If true the category values show a (#) count after them. */
+  bool showEntityCount_;
+  /** Counter object that provides values for entity counting. */
+  AsyncCategoryCounter* counter_;
 };
 
 }

@@ -21,6 +21,7 @@
  */
 #include <QtCore/QtPlugin>
 #include "simData/CategoryData/CategoryFilter.h"
+#include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/CategoryDataBreadcrumbs.h"
 #include "CategoryDataBreadcrumbsPlugin.h"

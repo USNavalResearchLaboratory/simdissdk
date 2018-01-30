@@ -33,6 +33,7 @@
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/DataStore.h"
 #include "simQt/QtFormatting.h"
+#include "simQt/CategoryFilterCounter.h"
 #include "simQt/CategoryTreeModel.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/CategoryTreeModel2.h"
@@ -163,6 +164,9 @@ public:
   /** Sets the state of the GUI to match the state of the filter. Returns 0 if nothing changed. */
   int updateTo(const simData::CategoryFilter& filter);
 
+  /** Sets the ID counts for each value under this category name tree, returning true if there is a change. */
+  bool updateCounts(const std::map<int, size_t>& valueToCountMap) const;
+
 private:
   /** Changes the filter to match the check state of the Value Item. */
   void updateFilter_(const ValueItem& valueItem, simData::CategoryFilter& filter) const;
@@ -205,6 +209,11 @@ public:
   void setChecked(bool value);
   /** Returns true if the GUI state is such that this item is checked. */
   bool isChecked() const;
+
+  /** Sets the number of entities that match this value.  Use -1 to reset. */
+  void setNumMatches(int numMatches);
+  /** Returns number of matches */
+  int numMatches() const;
 
 private:
   int nameInt_;
@@ -470,12 +479,43 @@ int CategoryTreeModel2::CategoryItem::updateValueItem_(ValueItem& valueItem, con
   return 1;
 }
 
+bool CategoryTreeModel2::CategoryItem::updateCounts(const std::map<int, size_t>& valueToCountMap) const
+{
+  const int numValues = childCount();
+  bool haveChange = false;
+  for (int k = 0; k < numValues; ++k)
+  {
+    ValueItem* valueItem = dynamic_cast<ValueItem*>(child(k));
+    // All children should be ValueItems
+    assert(valueItem);
+    if (!valueItem)
+      continue;
+
+    // It's entirely possible (through async methods) that the incoming value count map is not
+    // up to date.  This can occur if a count starts and more categories get added before the
+    // count finishes, and is common.
+    auto i = valueToCountMap.find(valueItem->valueInt());
+    int nextMatch = -1;
+    if (i != valueToCountMap.end())
+      nextMatch = static_cast<int>(i->second);
+
+    // Set the number of matches and record a change
+    if (valueItem->numMatches() != nextMatch)
+    {
+      valueItem->setNumMatches(nextMatch);
+      haveChange = true;
+    }
+  }
+
+  return haveChange;
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 CategoryTreeModel2::ValueItem::ValueItem(const simData::CategoryNameManager& nameManager, int nameInt, int valueInt)
   : nameInt_(nameInt),
     valueInt_(valueInt),
-    numMatches_(0),
+    numMatches_(-1),
     checked_(Qt::Unchecked),
     inclusiveText_(QString::fromStdString(nameManager.valueIntToString(valueInt)))
 {
@@ -511,11 +551,19 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
   {
   case Qt::DisplayRole:
   case Qt::EditRole:
+  {
+    QString returnString;
     if (!isUnlistedValueChecked())
-      return inclusiveText_;
-    if (valueInt_ == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
-      return tr("Has Value");
-    return tr("Not %1").arg(inclusiveText_);
+      returnString = inclusiveText_;
+    else if (valueInt_ == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
+      returnString = tr("Has Value");
+    else
+      returnString = tr("Not %1").arg(inclusiveText_);
+    // Append the numeric count if specified
+    if (numMatches_ >= 0)
+      returnString = tr("%1 (%2)").arg(returnString).arg(numMatches_);
+    return returnString;
+  }
 
   case Qt::CheckStateRole:
     return checked_;
@@ -608,6 +656,16 @@ bool CategoryTreeModel2::ValueItem::isChecked() const
   return checked_ == Qt::Checked;
 }
 
+void CategoryTreeModel2::ValueItem::setNumMatches(int matches)
+{
+  numMatches_ = matches;
+}
+
+int CategoryTreeModel2::ValueItem::numMatches() const
+{
+  return numMatches_;
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 /// Monitors for category data changes, calling methods in CategoryTreeModel2.
@@ -657,7 +715,7 @@ private:
 CategoryTreeModel2::CategoryTreeModel2(QObject* parent)
   : QAbstractItemModel(parent),
     dataStore_(NULL),
-    filter_(NULL),
+    filter_(new simData::CategoryFilter(NULL)),
     categoryFont_(new QFont)
 {
   listener_.reset(new CategoryFilterListener(*this));
@@ -784,6 +842,12 @@ bool CategoryTreeModel2::setData(const QModelIndex& index, const QVariant& value
 
       emit filterChanged(*filter_);
       emit filterEdited(*filter_);
+    }
+    else
+    {
+      // Should only happen in cases where EXCLUDE got changed, but no filter was edited
+      assert(!index.parent().isValid());
+      emit excludeEdited(item->nameInt(), item->isUnlistedValueChecked());
     }
   }
   return rv;
@@ -971,6 +1035,41 @@ void CategoryTreeModel2::addValue_(int nameInt, int valueInt)
   beginInsertRows(nameIndex, nameItem->childCount(), nameItem->childCount());
   nameItem->addChild(valueItem);
   endInsertRows();
+}
+
+void CategoryTreeModel2::processCategoryCounts(const simQt::CategoryCountResults& results)
+{
+  const int numCategories = categories_.size();
+  int firstRowChanged = -1;
+  int lastRowChanged = -1;
+  const auto& allCats = results.allCategories;
+  for (int k = 0; k < numCategories; ++k)
+  {
+    CategoryItem* categoryItem = categories_[k];
+    const int nameInt = categoryItem->nameInt();
+
+    // Might have a category added between when we fired off the call and when it finished
+    const auto entry = allCats.find(nameInt);
+    bool haveChange = false;
+
+    // Updates the text for the category and its child values
+    if (entry == allCats.end())
+      haveChange = categoryItem->updateCounts(std::map<int, size_t>());
+    else
+      haveChange = categoryItem->updateCounts(entry->second);
+
+    // Record the row for data changed
+    if (haveChange)
+    {
+      if (firstRowChanged == -1)
+        firstRowChanged = k;
+      lastRowChanged = k;
+    }
+  }
+
+  // Emit data changed
+  if (firstRowChanged != -1)
+    emit dataChanged(index(firstRowChanged, 0), index(lastRowChanged, 0));
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -1420,7 +1519,9 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
 
 CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   : QWidget(parent),
-  activeFiltering_(false)
+    activeFiltering_(false),
+    showEntityCount_(false),
+    counter_(NULL)
 {
   setWindowTitle("Category Data Filter");
   setObjectName("CategoryFilterWidget2");
@@ -1479,6 +1580,9 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(search, SIGNAL(textChanged(QString)), this, SLOT(expandAfterFilterEdited_(QString)));
   connect(search, SIGNAL(textChanged(QString)), proxy_, SLOT(setFilterText(QString)));
   connect(itemDelegate, SIGNAL(expandClicked(QModelIndex)), this, SLOT(toggleExpanded_(QModelIndex)));
+
+  // Entity filtering is on by default
+  setShowEntityCount(true);
 }
 
 CategoryFilterWidget2::~CategoryFilterWidget2()
@@ -1488,6 +1592,7 @@ CategoryFilterWidget2::~CategoryFilterWidget2()
 void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
 {
   treeModel_->setDataStore(dataStore);
+  counter_->setFilter(categoryFilter());
   treeView_->expandAll();
 }
 
@@ -1499,6 +1604,41 @@ const simData::CategoryFilter& CategoryFilterWidget2::categoryFilter() const
 void CategoryFilterWidget2::setFilter(const simData::CategoryFilter& categoryFilter)
 {
   treeModel_->setFilter(categoryFilter);
+}
+
+void CategoryFilterWidget2::processCategoryCounts(const simQt::CategoryCountResults& results)
+{
+  treeModel_->processCategoryCounts(results);
+}
+
+bool CategoryFilterWidget2::showEntityCount() const
+{
+  return showEntityCount_;
+}
+
+void CategoryFilterWidget2::setShowEntityCount(bool fl)
+{
+  if (fl == showEntityCount_)
+    return;
+
+  showEntityCount_ = fl;
+  // Clear out the old counter
+  delete counter_;
+  counter_ = NULL;
+
+  // Create a new counter and configure it
+  if (showEntityCount_)
+  {
+    counter_ = new simQt::AsyncCategoryCounter(this);
+    connect(counter_, SIGNAL(resultsReady(simQt::CategoryCountResults)), this, SLOT(processCategoryCounts(simQt::CategoryCountResults)));
+    connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), counter_, SLOT(setFilter(simData::CategoryFilter)));
+    connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), counter_, SLOT(asyncCountEntities()));
+    counter_->setFilter(categoryFilter());
+  }
+  else
+  {
+    treeModel_->processCategoryCounts(simQt::CategoryCountResults());
+  }
 }
 
 void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)

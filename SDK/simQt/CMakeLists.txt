@@ -62,6 +62,7 @@ set(SIMQT_HEADERS
 if(TARGET simData)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CategoryDataBreadcrumbs.h
+        ${SIMQT_INC}CategoryFilterCounter.h
         ${SIMQT_INC}CategoryFilterWidget.h
         ${SIMQT_INC}CategoryTreeModel.h
         ${SIMQT_INC}CategoryTreeModel2.h
@@ -162,6 +163,7 @@ set(SIMQT_SOURCES
 if(TARGET simData)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CategoryDataBreadcrumbs.cpp
+        ${SIMQT_SRC}CategoryFilterCounter.cpp
         ${SIMQT_SRC}CategoryFilterWidget.cpp
         ${SIMQT_SRC}CategoryTreeModel.cpp
         ${SIMQT_SRC}CategoryTreeModel2.cpp

@@ -26,8 +26,8 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <vector>
 #include "simCore/Common/Common.h"
-#include "simData/CategoryData/CategoryNameManager.h"
 
 namespace simData {
 
@@ -171,7 +171,7 @@ public:
   * @param[in] entityId  entity for whom to retrieve the current category values
   * @param[out] curVals  map to fill out with category name/value int pairs
   */
-  static void getCurrentCategoryValues(simData::DataStore& dataStore, uint64_t entityId, CurrentCategoryValues& curVals);
+  static void getCurrentCategoryValues(const simData::DataStore& dataStore, uint64_t entityId, CurrentCategoryValues& curVals);
 
   /**
   * Get a reference to the current CategoryCheck structure, which is (re)built internally by the call to buildCategoryFilter
@@ -308,7 +308,7 @@ private:
   bool autoUpdate_; ///< If true the Category Filter automatically updates and there is no need to call buildPrefRulesCategoryFilter
   CategoryCheck categoryCheck_; ///< category filter structure
   CategoryRegExp categoryRegExp_; ///< category reg exp filter structure
-  simData::CategoryNameManager::ListenerPtr listenerPtr_;
+  std::shared_ptr<CategoryFilterListener> listenerPtr_;
 };
 
 }
