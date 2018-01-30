@@ -242,6 +242,11 @@ LabelContentCallback* ProjectorNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
+{
+  return hasLastUpdate_ ? &lastUpdate_ : NULL;
+}
+
 std::string ProjectorNode::hookText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)

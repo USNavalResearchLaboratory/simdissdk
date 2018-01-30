@@ -112,6 +112,12 @@ public:
   /// Returns current content callback
   LabelContentCallback* labelContentCallback() const;
 
+  /**
+   * Gets a pointer to the last data store update, or NULL if
+   * none have been applied.
+   */
+  const simData::ProjectorUpdate* getLastUpdateFromDS() const;
+
 public: // EntityNode interface
   /**
   * Whether the entity is active within the scenario at the current time.
