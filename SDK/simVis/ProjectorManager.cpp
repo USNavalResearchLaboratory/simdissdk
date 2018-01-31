@@ -53,17 +53,47 @@ simData::ObjectId ProjectorManager::ProjectorLayer::id() const
   return id_;
 }
 
+/**
+ * A class to listen to the map for new layers being added
+ */
+class ProjectorManager::MapListener : public osgEarth::MapCallback
+{
+public:
+  explicit MapListener(ProjectorManager& manager)
+    : manager_(manager)
+  {}
+
+  virtual void onLayerAdded(osgEarth::Layer *layer, unsigned int index)
+  {
+    // Can't reorder layers in the middle of an insert, so queue it instead
+    manager_.needReorderProjectorLayers_ = true;
+  }
+
+private:
+  ProjectorManager& manager_;
+};
+
 ProjectorManager::ProjectorManager()
+  : needReorderProjectorLayers_(false)
 {
   setCullingActive(false);
+  mapListener_ = new MapListener(*this);
 }
 
-ProjectorManager::~ProjectorManager() {}
+ProjectorManager::~ProjectorManager()
+{
+  if (mapNode_.valid())
+    mapNode_->getMap()->removeMapCallback(mapListener_);
+}
 
 void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
 {
   if (mapNode != mapNode_.get())
   {
+    // Remove listener from old map
+    if (mapNode_.valid() && mapNode_->getMap())
+      mapNode_->getMap()->removeMapCallback(mapListener_);
+
     mapNode_ = mapNode;
 
     // reinitialize the projection system
@@ -75,7 +105,10 @@ void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
       {
         // Get existing layers in the new map
         osgEarth::LayerVector currentLayers;
-        mapNode_->getMap()->getLayers(currentLayers);
+        osgEarth::Map* map = mapNode_->getMap();
+        if (!map)
+          return;
+        map->getLayers(currentLayers);
 
         for (ProjectorLayerVector::const_iterator piter = projectorLayers_.begin(); piter != projectorLayers_.end(); ++piter)
         {
@@ -93,8 +126,9 @@ void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
 
           // If not found, add this layer to the map
           if (!found)
-            mapNode_->getMap()->addLayer(piter->get());
+            map->addLayer(piter->get());
         }
+        map->addMapCallback(mapListener_);
       }
 #endif
     }
@@ -285,6 +319,30 @@ void ProjectorManager::traverse(osg::NodeVisitor& nv)
   if (nv.getVisitorType() == osg::NodeVisitor::CULL_VISITOR)
   {
     osg::Group::traverse(nv);
+  }
+
+  if (needReorderProjectorLayers_)
+    reorderProjectorLayers_();
+}
+
+void ProjectorManager::reorderProjectorLayers_()
+{
+  needReorderProjectorLayers_ = false;
+
+  if (!mapNode_.valid())
+    return;
+  osgEarth::Map* map = mapNode_->getMap();
+  if (!map)
+    return;
+
+  // Force all projector layers to be at the bottom of the layer stack
+  unsigned int numLayers = map->getNumLayers();
+  for (auto iter = projectorLayers_.begin(); iter != projectorLayers_.end(); ++iter)
+  {
+    unsigned int projIndex = map->getIndexOfLayer(*iter);
+    // Check that the projector layer is in the map
+    if (projIndex < numLayers)
+      map->moveLayer(*iter, numLayers - 1);
   }
 }
 

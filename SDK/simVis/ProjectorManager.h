@@ -85,6 +85,9 @@ private:
   */
   void initialize_();
 
+  /// Move projector layers to the bottom of the layer stack to ensure visibility
+  void reorderProjectorLayers_();
+
   /// Current osgEarth MapNode
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
 
@@ -110,6 +113,13 @@ private:
   /// Vector of projectorLayers that have been added to the mapNode
   typedef std::vector<osg::ref_ptr<ProjectorLayer> > ProjectorLayerVector;
   ProjectorLayerVector projectorLayers_;
+
+  /// A listener to detect new image layers and force projectors to be visible over them
+  class MapListener;
+  osg::ref_ptr<MapListener> mapListener_;
+
+  /// A flag to mark when projector layers need to be moved to ensure visibility
+  bool needReorderProjectorLayers_;
 };
 };
 
