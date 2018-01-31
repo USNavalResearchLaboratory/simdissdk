@@ -90,7 +90,7 @@ private:
       segmentedEventFilter_(NULL),
       timer_(new QTimer(this)),
       applyInterval_(1000),
-      setSinceFocus_(false)
+      setSinceFocus_(true)
   {
     setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed));
     // the method sizeHint is suppose to calculate the correct default minimum width, but something is not right.
