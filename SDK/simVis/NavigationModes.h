@@ -350,33 +350,6 @@ class View;
     osg::ref_ptr<BoxZoomMouseHandler> boxZoom_;
   };
 
-  /**
-  * BoxZoomNavigationMode provides a support nav mode for a box zoom functionality, but
-  * does not implement any box zooming functionality here<p>
-  * The mappings are:
-  * <ul>
-  * <li>Left mouse button: no effect, assumes the actual box zooming is handled elsewhere</li>
-  * <li>Middle mouse button: continuous rotate</li>
-  * <li>Right mouse button: globe spin</li>
-  * <li>Scroll wheel: fixed rotate</li>
-  * <li>Arrow keys: fixed rotate</li>
-  * </ul>
-  */
-  class SDKVIS_EXPORT BoxZoomNavigationMode : public NavigationMode
-  {
-  public:
-    /** Initialize the box zoom navigation mode.*/
-    BoxZoomNavigationMode(View* view, bool enableOverhead);
-
-  protected:
-    /// osg::Referenced-derived
-    virtual ~BoxZoomNavigationMode();
-
-  private:
-    osg::observer_ptr<View> view_;
-    osg::ref_ptr<BoxZoomMouseHandler> mouse_;
-  };
-
 }
 
 #endif // SIMVIS_UI_NAVIGATION_MODES

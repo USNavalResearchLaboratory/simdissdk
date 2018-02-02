@@ -1371,8 +1371,6 @@ void View::setNavigationMode(const NavMode& mode)
     manip->applySettings(new CenterViewNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_GIS)
     manip->applySettings(new GisNavigationMode(this, overheadEnabled_, watchEnabled_));
-  else if (mode == NAVMODE_BOXZOOM)
-    manip->applySettings(new BoxZoomNavigationMode(this, overheadEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);

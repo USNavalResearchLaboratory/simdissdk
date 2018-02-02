@@ -210,18 +210,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
         handled = true;
         break;
 
-      case '%': // center box zoom
-        view_->setNavigationMode(simVis::NAVMODE_CENTERBOXZOOM);
-        s_action->setText("Switched to NAVMODE_CENTERBOXZOOM");
-        handled = true;
-        break;
-
-      case '^': // box zoom
-        view_->setNavigationMode(simVis::NAVMODE_BOXZOOM);
-        s_action->setText("Switched to NAVMODE_BOXZOOM");
-        handled = true;
-        break;
-
       case '1': // cycle through the local grid types
       {
         simData::DataStore::Transaction xaction;
