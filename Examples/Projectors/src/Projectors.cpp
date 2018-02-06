@@ -396,7 +396,7 @@ int main(int argc, char **argv)
   /// connect them and add some additional settings
   configurePrefs(platformId_0, 2.0, scenario.get());
   configurePrefs(platformId_1, 1.0, scenario.get());
-  configurePrefs(platformId_2, 20.0, scenario.get());
+  configurePrefs(platformId_2, 12.0, scenario.get());
 
   /// simulator will compute time-based updates for the platforms
   osg::ref_ptr<simUtil::PlatformSimulator> sim_0 = new simUtil::PlatformSimulator(platformId_0);
@@ -404,8 +404,8 @@ int main(int argc, char **argv)
   osg::ref_ptr<simUtil::PlatformSimulator> sim_2 = new simUtil::PlatformSimulator(platformId_2);
 
   /// create some waypoints (lat, lon, alt, duration)
-  sim_0->addWaypoint(simUtil::Waypoint(0.0, 0.0, 265000, 400000000));
-  sim_0->addWaypoint(simUtil::Waypoint(60.0, 0.0, 265000, 400000000));
+  sim_0->addWaypoint(simUtil::Waypoint(0.0, 0.0, 265000, 40.0));
+  sim_0->addWaypoint(simUtil::Waypoint(60.0, 0.0, 265000, 40.0));
   sim_0->setSimulateRoll(false);
   sim_0->setSimulatePitch(true);
 
@@ -416,8 +416,8 @@ int main(int argc, char **argv)
   sim_1->setSimulatePitch(false);
 
   /// flies just ahead of platform 1 so it can get projected upon
-  sim_2->addWaypoint(simUtil::Waypoint(1.0, 0.0, 225000, 400000000));
-  sim_2->addWaypoint(simUtil::Waypoint(61.0, 0.0, 225000, 400000000));
+  sim_2->addWaypoint(simUtil::Waypoint(1.0, 0.0, 225000, 40.0));
+  sim_2->addWaypoint(simUtil::Waypoint(61.0, 0.0, 225000, 40.0));
 
   /// Install frame update handler that will update track positions over time.
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
