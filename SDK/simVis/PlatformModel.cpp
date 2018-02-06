@@ -91,7 +91,7 @@ private:
 /* OSG Scene Graph Layout of This Class
  *
  *       /= labelRoot => label_              /= rcs_         /= alphaVolumeGroup_ => model_
- * this => dynamicXform_ => imageIconXform_ <=> offsetXform_ => model_
+ * this => dynamicXform_ => imageIconXform_ <=> imageAlignmentXform_ => offsetXform_ => model_
  *                                           \= other scaled children
  *
  * model_ is the representative for the 3D model or 2D image, and may be set to NULL at times.
@@ -101,6 +101,12 @@ private:
  * correctly in the scene.  For example, a 90 degree yaw orientation can be used to fix models
  * that point the wrong way.  The offsets only apply to the model and not any
  * of its attachments.
+ *
+ * The imageAlignmentXform_ handles implementing a standard alignment option to 2D image icons, referenced from
+ * the position. It simply applies offsets to represent right/center/left and top/center/bottom alignments
+ * to the model. The alignment offsets apply on top of other offset and rotation adjustments, so if the rotation of
+ * the image icon is set to follow yaw, the image icon will apply alignment with respect to yaw.
+ * The offsets only apply to the model and not any of its attachments.
  *
  * The rcs_ is the radar cross section, which might be a 2D or 3D segment.  It is colored on
  * its own based on RCS data file settings.  It's important that override color not apply
@@ -145,6 +151,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   // Apply the override color shader to the container
   overrideColor_ = new simVis::OverrideColor(offsetXform_->getOrCreateStateSet());
 
+  imageAlignmentXform_ = new osg::MatrixTransform();
+  imageAlignmentXform_->setName("imageAlignmentXform");
+
   // Set up the transform responsible for rotating the 2-D image icons
   imageIconXform_ = new PixelAutoTransform();
   imageIconXform_->setAutoScaleToScreen(false);
@@ -172,7 +181,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   addChild(label_);
   addChild(dynamicXform_);
   dynamicXform_->addChild(imageIconXform_);
-  imageIconXform_->addChild(offsetXform_);
+  imageIconXform_->addChild(imageAlignmentXform_);
+  imageAlignmentXform_->addChild(offsetXform_);
 
   // Set up the brightness factor for the entity, attaching close to the model
   offsetXform_->getOrCreateStateSet()->addUniform(brightnessUniform_, osg::StateAttribute::ON);
@@ -295,12 +305,25 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
     dynamicXform_->setSizingNode(model_.get());
   }
 
+  // for image models, cache the original size
+  if (isImage)
+  {
+    osg::ComputeBoundsVisitor cb;
+    cb.setTraversalMask(cb.getTraversalMask() | ~simVis::DISPLAY_MASK_LABEL);
+    offsetXform_->accept(cb);
+    const osg::BoundingBox& bounds = cb.getBoundingBox();
+    imageOriginalSize_.x() = bounds.xMax() - bounds.xMin();
+    imageOriginalSize_.y() = bounds.yMax() - bounds.yMin();
+  }
+
   // Update various prefs that affect the model state and the bounding box.  If the lastPrefs_ is not
   // valid, then this code will just get called again in setPrefs(), so it's safe to call here.
   updateImageDepth_(lastPrefs_, true);
   warnOnInvalidOffsets_(lastPrefs_, true);
   updateImageIconRotation_(lastPrefs_, true);
   updateLighting_(lastPrefs_, true);
+  updateOffsets_(lastPrefs_);
+  updateImageAlignment_(lastPrefs_, true);
   updateBounds_();
 }
 
@@ -318,6 +341,63 @@ void PlatformModelNode::setRotateToScreen(bool value)
     imageIconXform_->setRotation(osg::Quat());
   }
   imageIconXform_->dirty();
+}
+
+bool PlatformModelNode::updateImageAlignment_(const simData::PlatformPrefs& prefs, bool force)
+{
+  if (!imageAlignmentXform_.valid())
+    return false;
+
+  if (!force && lastPrefsValid_ &&
+    !PB_FIELD_CHANGED(&lastPrefs_, &prefs, iconalignment))
+    return false;
+
+  float xOffset = 0.f;
+  float yOffset = 0.f;
+
+  if (isImageModel_)
+  {
+    const float width = imageOriginalSize_.x();
+    const float height = imageOriginalSize_.y();
+
+    switch (prefs.iconalignment())
+    {
+    case simData::ALIGN_LEFT_TOP:
+      xOffset = width / 2.f;
+      yOffset = -height / 2.f;
+      break;
+    case simData::ALIGN_LEFT_CENTER:
+      xOffset = width / 2.f;
+      break;
+    case simData::ALIGN_LEFT_BOTTOM:
+      xOffset = width / 2.f;
+      yOffset = height / 2.f;
+      break;
+    case simData::ALIGN_CENTER_TOP:
+      yOffset = -height / 2.f;
+      break;
+    case simData::ALIGN_CENTER_CENTER:
+      break;
+    case simData::ALIGN_CENTER_BOTTOM:
+      yOffset = height / 2.f;
+      break;
+    case simData::ALIGN_RIGHT_TOP:
+      xOffset = -width / 2.f;
+      yOffset = -height / 2.f;
+      break;
+    case simData::ALIGN_RIGHT_CENTER:
+      xOffset = -width / 2.f;
+      break;
+    case simData::ALIGN_RIGHT_BOTTOM:
+      xOffset = -width / 2.f;
+      yOffset = height / 2.f;
+      break;
+    }
+  }
+  osg::Matrix alignmentMatrix;
+  alignmentMatrix.makeTranslate(osg::Vec3(xOffset, yOffset, 0.f));
+  imageAlignmentXform_->setMatrix(alignmentMatrix);
+  return true;
 }
 
 bool PlatformModelNode::updateOffsets_(const simData::PlatformPrefs& prefs)
@@ -377,7 +457,8 @@ void PlatformModelNode::updateBounds_()
   // Compute bounds, but exclude the label:
   osg::ComputeBoundsVisitor cb;
   cb.setTraversalMask(cb.getTraversalMask() |~ simVis::DISPLAY_MASK_LABEL);
-  offsetXform_->accept(cb);
+  // compute bounds based on the imageAlignmentXform_, which is the parent of the offsetXform_. Note it has no children other than the offsetXform_.
+  imageAlignmentXform_->accept(cb);
   unscaledBounds_ = cb.getBoundingBox();
 
   // Now get the scaled bounds
@@ -769,6 +850,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateImageIconRotation_(prefs, false);
   updateRCS_(prefs);
   needsBoundsUpdate = updateOffsets_(prefs) || needsBoundsUpdate;
+  needsBoundsUpdate = updateImageAlignment_(prefs, false) || needsBoundsUpdate;
   updateStippling_(prefs);
   updateCulling_(prefs);
   updatePolygonMode_(prefs);
