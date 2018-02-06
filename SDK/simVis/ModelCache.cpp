@@ -519,7 +519,7 @@ ModelCache::ModelCache()
   // Assertion failure means we're going to never be able to read/write model files.  Check REGISTER_OSGPLUGIN
   assert(cacheRw);
   if (cacheRw)
-    cacheRw->setBoxNode(boxNode_);
+    cacheRw->setBoxNode(boxNode_.get());
 }
 
 ModelCache::~ModelCache()
@@ -705,9 +705,9 @@ void ReplaceChildReadyCallback::loadFinished(const osg::ref_ptr<osg::Node>& mode
 
   // Replace the requested entry
   if (childIndex_ < parent->getNumChildren())
-    parent->replaceChild(parent->getChild(childIndex_), newModel);
+    parent->replaceChild(parent->getChild(childIndex_), newModel.get());
   else
-    parent->addChild(newModel);
+    parent->addChild(newModel.get());
 }
 
 }

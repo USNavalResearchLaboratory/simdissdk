@@ -159,7 +159,7 @@ struct AsyncSetter : public ControlEventHandler
     osg::ElapsedTime timer;
     simVis::Registry* reg = simVis::Registry::instance();
     simVis::ModelCache* cache = reg->modelCache();
-    cache->asyncLoad(reg->findModelFile(filename_), new RoundTripAsyncTimer(app_.roundTripAsync, app_.asyncNode));
+    cache->asyncLoad(reg->findModelFile(filename_), new RoundTripAsyncTimer(app_.roundTripAsync.get(), app_.asyncNode.get()));
 
     // Report the elapsed time for loading completion
     std::stringstream ss;
