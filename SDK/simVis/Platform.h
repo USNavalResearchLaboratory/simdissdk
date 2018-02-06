@@ -45,6 +45,7 @@ class PlatformTspiFilterManager;
 class RadialLOSNode;
 class TrackHistoryNode;
 class VelocityVector;
+class ProjectorNode;
 
 /**
 * Interface for an object that will create LOS nodes as they're needed.
@@ -140,6 +141,12 @@ public:
 
   /// Set the creator for the LOS nodes
   void setLosCreator(LosCreator* losCreator);
+
+  /// Accept textures from a projector.
+  void acceptProjector(ProjectorNode* projector);
+
+  /// Stop accepting textures from a projector.
+  void removeProjector(ProjectorNode* projector);
 
 public: // EntityNode interface
 

@@ -40,6 +40,7 @@
 #include "simVis/LocalGrid.h"
 #include "simVis/Platform.h"
 #include "simVis/TrackHistory.h"
+#include "simVis/Projector.h"
 
 /// some basic components (mouse hover popups, scenario, utilities, camera controls)
 #include "simVis/Popup.h"
@@ -75,6 +76,8 @@ static const std::string s_viewPlatformOne =
 " 1 : reset view on platform 1 (Constant FOV)";
 static const std::string s_viewPlatformTwo =
 " 2 : reset view on platform 2 (Varying FOV)";
+static const std::string s_viewPlatformThree =
+" 3 : reset view on platform 3";
 
 /// keep a handle, for toggling
 static osg::ref_ptr<Control> s_helpControl;
@@ -90,6 +93,7 @@ static Control* createHelp()
   vbox->addControl(new LabelControl(s_interpolate, 14, osg::Vec4f(.8, .8, .8, 1)));
   vbox->addControl(new LabelControl(s_viewPlatformOne, 14, osg::Vec4f(.8, .8, .8, 1)));
   vbox->addControl(new LabelControl(s_viewPlatformTwo, 14, osg::Vec4f(.8, .8, .8, 1)));
+  vbox->addControl(new LabelControl(s_viewPlatformThree, 14, osg::Vec4f(.8, .8, .8, 1)));
   s_helpControl = vbox;
   return vbox;
 }
@@ -99,6 +103,7 @@ simData::ObjectId platformId_0;
 simData::ObjectId projectorId_0;
 simData::ObjectId platformId_1;
 simData::ObjectId projectorId_1;
+simData::ObjectId platformId_2;
 
 //----------------------------------------------------------------------------
 /// event handler for keyboard commands to alter symbology at runtime
@@ -154,6 +159,16 @@ struct MenuHandler : public osgGA::GUIEventHandler
     return true;
   }
 
+  bool tetherView(simData::ObjectId tetherId)
+  {
+    simVis::PlatformNode* plat = view_.getSceneManager()->getScenario()->find<simVis::PlatformNode>(tetherId);
+    if (!plat)
+      return false;
+    view_.tetherCamera(plat);
+    counter_ = 0;
+    return true;
+  }
+
   /// callback to process user input
   bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
   {
@@ -202,6 +217,9 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
       case '2':
         handled = tetherView(platformId_1, projectorId_1);
+        break;
+      case '3':
+        handled = tetherView(platformId_2);
         break;
       case 'i':
         toggleInterpolate();
@@ -366,18 +384,29 @@ int main(int argc, char **argv)
   osg::ref_ptr<simVis::EntityNode> vehicle_1 = scenario->find(platformId_1);
   projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true);
 
+  /// platform to use as a target to test projecting on to an entity
+  platformId_2 = addPlatform(dataStore);
+  osg::ref_ptr<simVis::PlatformNode> vehicle_2 = scenario->find<simVis::PlatformNode>(platformId_2);
+  osg::ref_ptr<simVis::ProjectorNode> projector_0 = scenario->find<simVis::ProjectorNode>(projectorId_0);
+  if (vehicle_2.valid() && projector_0.valid())
+  {
+      vehicle_2->acceptProjector(projector_0.get());
+  }
+
   /// connect them and add some additional settings
   configurePrefs(platformId_0, 2.0, scenario.get());
   configurePrefs(platformId_1, 1.0, scenario.get());
+  configurePrefs(platformId_2, 20.0, scenario.get());
 
   /// simulator will compute time-based updates for the platforms
   osg::ref_ptr<simUtil::PlatformSimulator> sim_0 = new simUtil::PlatformSimulator(platformId_0);
   osg::ref_ptr<simUtil::PlatformSimulator> sim_1 = new simUtil::PlatformSimulator(platformId_1);
+  osg::ref_ptr<simUtil::PlatformSimulator> sim_2 = new simUtil::PlatformSimulator(platformId_2);
 
   /// create some waypoints (lat, lon, alt, duration)
-  sim_0->addWaypoint(simUtil::Waypoint(0.0, 0.0, 265000, 40.0));
-  sim_0->addWaypoint(simUtil::Waypoint(60.0, 0.0, 265000, 40.0));
-  sim_0->setSimulateRoll(true);
+  sim_0->addWaypoint(simUtil::Waypoint(0.0, 0.0, 265000, 400000000));
+  sim_0->addWaypoint(simUtil::Waypoint(60.0, 0.0, 265000, 400000000));
+  sim_0->setSimulateRoll(false);
   sim_0->setSimulatePitch(true);
 
   sim_1->addWaypoint(simUtil::Waypoint(0.0, -90.0, 200, 20.0));
@@ -386,10 +415,15 @@ int main(int argc, char **argv)
   sim_1->setSimulateRoll(false);
   sim_1->setSimulatePitch(false);
 
+  /// flies just ahead of platform 1 so it can get projected upon
+  sim_2->addWaypoint(simUtil::Waypoint(1.0, 0.0, 225000, 400000000));
+  sim_2->addWaypoint(simUtil::Waypoint(61.0, 0.0, 225000, 400000000));
+
   /// Install frame update handler that will update track positions over time.
   osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
   simMgr->addSimulator(sim_0.get());
   simMgr->addSimulator(sim_1.get());
+  simMgr->addSimulator(sim_2.get());
   simMgr->simulate(0.0, 120.0, 60.0);
 
   /// Attach the simulation updater to OSG timer events

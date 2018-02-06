@@ -83,7 +83,12 @@ ProjectorManager::ProjectorManager()
 ProjectorManager::~ProjectorManager()
 {
   if (mapNode_.valid())
-    mapNode_->getMap()->removeMapCallback(mapListener_);
+    mapNode_->getMap()->removeMapCallback(mapListener_.get());
+}
+
+const int ProjectorManager::getTextureImageUnit()
+{
+    return PROJECTOR_TEXTURE_UNIT;
 }
 
 void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
@@ -92,7 +97,7 @@ void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
   {
     // Remove listener from old map
     if (mapNode_.valid() && mapNode_->getMap())
-      mapNode_->getMap()->removeMapCallback(mapListener_);
+      mapNode_->getMap()->removeMapCallback(mapListener_.get());
 
     mapNode_ = mapNode;
 
@@ -128,7 +133,7 @@ void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
           if (!found)
             map->addLayer(piter->get());
         }
-        map->addMapCallback(mapListener_);
+        map->addMapCallback(mapListener_.get());
       }
 #endif
     }
@@ -339,10 +344,10 @@ void ProjectorManager::reorderProjectorLayers_()
   unsigned int numLayers = map->getNumLayers();
   for (auto iter = projectorLayers_.begin(); iter != projectorLayers_.end(); ++iter)
   {
-    unsigned int projIndex = map->getIndexOfLayer(*iter);
+    unsigned int projIndex = map->getIndexOfLayer(iter->get());
     // Check that the projector layer is in the map
     if (projIndex < numLayers)
-      map->moveLayer(*iter, numLayers - 1);
+      map->moveLayer(iter->get(), numLayers - 1);
   }
 }
 

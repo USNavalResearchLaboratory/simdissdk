@@ -178,6 +178,12 @@ public: // EntityNode interface
   /** This entity type is, at this time, unpickable. */
   virtual unsigned int objectIndexTag() const;
 
+  /** Configure a state set to accept the texture projected by this projector */
+  void addProjectionToStateSet(osg::StateSet* stateSet);
+
+  /** Remove the attributes added by addProjectionToStateSet */
+  void removeProjectionFromStateSet(osg::StateSet* stateSet);
+
   /**
   * Get the traversal mask for this node type
   * @return a traversal mask
