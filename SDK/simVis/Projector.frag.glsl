@@ -18,11 +18,11 @@ vec3 vp_Normal;
 // for a projector texturing a platform or other model:
 void sim_proj_frag(inout vec4 color)
 {
-    if (projectorActive && simProjTexCoord.q > 0)
-    {
-        vec4 textureColor = textureProj(simProjSampler, simProjTexCoord);
-        color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a * projectorAlpha);
-    }
+  if (projectorActive && simProjTexCoord.q > 0)
+  {
+    vec4 textureColor = textureProj(simProjSampler, simProjTexCoord);
+    color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a * projectorAlpha);
+  }
 }
 
 #else

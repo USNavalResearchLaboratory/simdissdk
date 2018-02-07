@@ -77,7 +77,7 @@ static const std::string s_viewPlatformOne =
 static const std::string s_viewPlatformTwo =
 " 2 : reset view on platform 2 (Varying FOV)";
 static const std::string s_viewPlatformThree =
-" 3 : reset view on platform 3";
+" 3 : reset view on platform 3 (Platform projection target)";
 
 /// keep a handle, for toggling
 static osg::ref_ptr<Control> s_helpControl;
@@ -384,13 +384,13 @@ int main(int argc, char **argv)
   osg::ref_ptr<simVis::EntityNode> vehicle_1 = scenario->find(platformId_1);
   projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true);
 
-  /// platform to use as a target to test projecting on to an entity
+  /// platform to use as a target to test projecting on to a platform
   platformId_2 = addPlatform(dataStore);
   osg::ref_ptr<simVis::PlatformNode> vehicle_2 = scenario->find<simVis::PlatformNode>(platformId_2);
   osg::ref_ptr<simVis::ProjectorNode> projector_0 = scenario->find<simVis::ProjectorNode>(projectorId_0);
   if (vehicle_2.valid() && projector_0.valid())
   {
-      vehicle_2->acceptProjector(projector_0.get());
+    vehicle_2->acceptProjector(projector_0.get());
   }
 
   /// connect them and add some additional settings
