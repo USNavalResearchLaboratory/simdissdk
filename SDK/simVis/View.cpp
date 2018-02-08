@@ -26,6 +26,7 @@
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
+#include "osgEarth/Version"
 #include "osgEarthUtil/Sky"
 
 #include "simCore/Calc/Angle.h"
@@ -607,7 +608,7 @@ View::~View()
   if (manip)
   {
     manip->setTetherCallback(0L);
-    manip->setTetherNode(0L);
+    manip->clearViewpoint();
   }
   // if we have insets, remove them.
   insets_.clear();
@@ -1068,7 +1069,9 @@ void View::setSceneManager(simVis::SceneManager* node)
   simVis::EarthManipulator* oldManip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (oldManip)
   {
-    osg::Node* oldTetherNode = oldManip->getTetherNode();
+    Viewpoint oldVP = oldManip->getViewpoint();
+    osg::ref_ptr<osg::Node> oldTetherNode;
+    oldVP.getNode(oldTetherNode);
     oldManip->setTetherCallback(0L);
     simVis::EarthManipulator* newManip = new simVis::EarthManipulator();
 
@@ -1076,7 +1079,11 @@ void View::setSceneManager(simVis::SceneManager* node)
     // some cases we want to save the old viewpoint, and restore it afterwards.
     Viewpoint vp = getViewpoint();
     newManip->applySettings(oldManip->getSettings());
-    newManip->setTetherNode(oldTetherNode);
+    if (oldTetherNode.valid())
+    {
+      vp.setNode(oldTetherNode.get());
+      newManip->setViewpoint(vp);
+    }
     newManip->setTetherCallback(tetherCallback_.get());
     newManip->setHeadingLocked(oldManip->isHeadingLocked());
     newManip->setPitchLocked(oldManip->isPitchLocked());
@@ -1556,10 +1563,12 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
         simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
         if (manip && manip->isTethering())
         {
+          osg::ref_ptr<osg::Node> tetherNode;
+          manip->getViewpoint().getNode(tetherNode);
           simVis::Viewpoint untether;
           untether.setNode(NULL);
           // Set a focal point to force a clear-out of the node; this will get updated to a better place in updateWatchView_()
-          simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(manip->getTetherNode());
+          simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(tetherNode.get());
           untether.focalPoint()->set(osgEarth::SpatialReference::create("wgs84"),
             osg::Vec3d(lla.lon() * simCore::RAD2DEG, lla.lat() * simCore::RAD2DEG, lla.alt()),
             osgEarth::ALTMODE_ABSOLUTE);
