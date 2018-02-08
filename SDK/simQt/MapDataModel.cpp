@@ -85,6 +85,29 @@ void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ModelLayerVector& mod
 #endif
 }
 
+void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers)
+{
+  if (map == NULL)
+    return;
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+  osgEarth::VisibleLayerVector allLayers;
+  map->getLayers(allLayers);
+  // pass along only layers that are not image, elevation, or model
+  for (auto iter = allLayers.begin(); iter != allLayers.end(); ++iter)
+  {
+    const osgEarth::VisibleLayer* layer = (*iter).get();
+    if (dynamic_cast<const osgEarth::ImageLayer*>(layer) != NULL)
+      continue;
+    if (dynamic_cast<const osgEarth::ElevationLayer*>(layer) != NULL)
+      continue;
+    if (dynamic_cast<const osgEarth::ModelLayer*>(layer) != NULL)
+      continue;
+    otherLayers.push_back(*iter);
+  }
+
+#endif
+}
+
 unsigned int MapReindexer::layerTypeIndex(osgEarth::ImageLayer* layer) const
 {
   // Must have a valid map
@@ -93,8 +116,7 @@ unsigned int MapReindexer::layerTypeIndex(osgEarth::ImageLayer* layer) const
     return INVALID_INDEX;
   osgEarth::ImageLayerVector layers;
   MapReindexer::getLayers(map_.get(), layers);
-  const unsigned int rv = indexOf(layers, layer);
-  return rv;
+  return indexOf(layers, layer);
 }
 
 unsigned int MapReindexer::layerTypeIndex(osgEarth::ElevationLayer* layer) const
@@ -105,8 +127,7 @@ unsigned int MapReindexer::layerTypeIndex(osgEarth::ElevationLayer* layer) const
     return INVALID_INDEX;
   osgEarth::ElevationLayerVector layers;
   MapReindexer::getLayers(map_.get(), layers);
-  const unsigned int rv = indexOf(layers, layer);
-  return rv;
+  return indexOf(layers, layer);
 }
 
 unsigned int MapReindexer::layerTypeIndex(osgEarth::ModelLayer* layer) const
@@ -117,8 +138,18 @@ unsigned int MapReindexer::layerTypeIndex(osgEarth::ModelLayer* layer) const
     return INVALID_INDEX;
   osgEarth::ModelLayerVector layers;
   MapReindexer::getLayers(map_.get(), layers);
-  const unsigned int rv = indexOf(layers, layer);
-  return rv;
+  return indexOf(layers, layer);
+}
+
+unsigned int MapReindexer::otherLayerTypeIndex(osgEarth::VisibleLayer* layer) const
+{
+  // Must have a valid map
+  assert(map_.valid());
+  if (!map_.valid())
+    return INVALID_INDEX;
+  osgEarth::VisibleLayerVector layers;
+  MapReindexer::getOtherLayers(map_.get(), layers);
+  return indexOf(layers, layer);
 }
 
 //----------------------------------------------------------------------------
@@ -356,6 +387,7 @@ MapItem::MapItem(MapDataModel::Item *parent)
   insertChild(new GroupItem(QObject::tr("Image"), this), 0);
   insertChild(new GroupItem(QObject::tr("Elevation"), this), 1);
   insertChild(new GroupItem(QObject::tr("Model"), this), 2);
+  insertChild(new GroupItem(QObject::tr("Other"), this), 3);
 }
 
 //----------------------------------------------------------------------------
@@ -530,6 +562,44 @@ private:
   osgEarth::ModelLayer *layer_;
 };
 
+/// Other layer
+class OtherLayerItem : public LayerItem
+{
+public:
+  /** Constructor */
+  OtherLayerItem(Item *parent, osgEarth::VisibleLayer *layer)
+    : LayerItem(parent),
+    layer_(layer)
+  {
+  }
+
+  virtual QString name() const
+  {
+    return QString::fromStdString(layer_->getName());
+  }
+
+  /** @copydoc  MapDataModel::Item::color */
+  virtual QVariant color() const
+  {
+    if (!layer_->getStatus().isOK())
+      return QColor(Qt::gray);
+    return QVariant();
+  }
+
+  virtual MapDataModel::MapChildren layerTypeRole() const
+  {
+    return MapDataModel::CHILD_OTHER;
+  }
+
+  virtual QVariant layerPtr() const
+  {
+    return QVariant::fromValue<void*>(layer_);
+  }
+
+private:
+  osgEarth::VisibleLayer *layer_;
+};
+
 //----------------------------------------------------------------------------
 /**
 * Class for listening to the osgEarth::Map callbacks
@@ -580,6 +650,18 @@ public:
         dataModel_.addModelLayer_(modelLayer, newIndex);
       return;
     }
+
+    osgEarth::VisibleLayer* otherLayer = dynamic_cast<osgEarth::VisibleLayer*>(layer);
+    if (otherLayer)
+    {
+      MapReindexer reindex(dataModel_.map());
+      unsigned int newIndex = reindex.otherLayerTypeIndex(otherLayer);
+      // Means we got a layer that wasn't found in the vector. osgEarth or MapReindexer error.
+      assert(newIndex != MapReindexer::INVALID_INDEX);
+      if (newIndex != MapReindexer::INVALID_INDEX)
+        dataModel_.addOtherLayer_(otherLayer, newIndex);
+      return;
+    }
   }
 
   virtual void onLayerMoved(osgEarth::Layer* layer, unsigned int oldIndex, unsigned int newIndex)
@@ -602,6 +684,13 @@ public:
     if (modelLayer)
     {
       moveLayer_(dataModel_.modelGroup_(), layer, newIndex < oldIndex);
+      return;
+    }
+
+    osgEarth::VisibleLayer* otherLayer = dynamic_cast<osgEarth::VisibleLayer*>(layer);
+    if (otherLayer)
+    {
+      moveLayer_(dataModel_.otherGroup_(), layer, newIndex < oldIndex);
       return;
     }
   }
@@ -630,6 +719,14 @@ public:
     {
       dataModel_.modelCallbacks_.remove(modelLayer);
       removeLayer_(dataModel_.modelGroup_(), modelLayer);
+      return;
+    }
+
+    osgEarth::VisibleLayer* visibleLayer = dynamic_cast<osgEarth::VisibleLayer*>(layer);
+    if (visibleLayer)
+    {
+      dataModel_.otherCallbacks_.remove(visibleLayer);
+      removeLayer_(dataModel_.otherGroup_(), visibleLayer);
       return;
     }
   }
@@ -776,6 +873,31 @@ private:
   MapDataModel& dataModel_;
 };
 
+/** Watch for other layer changes */
+class MapDataModel::OtherLayerListener : public osgEarth::VisibleLayerCallback
+{
+public:
+  /** Constructor */
+  explicit OtherLayerListener(MapDataModel& parent)
+    : dataModel_(parent)
+  {}
+
+  /** Inherited from VisibleLayerCallback */
+  virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
+  {
+    emit dataModel_.otherLayerVisibleChanged(layer);
+  }
+
+  /** Inherited from VisibleLayerCallback */
+  virtual void onOpacityChanged(osgEarth::VisibleLayer *layer)
+  {
+    emit dataModel_.otherLayerOpacityChanged(layer);
+  }
+
+private:
+  MapDataModel& dataModel_;
+};
+
 //----------------------------------------------------------------------------
 MapDataModel::MapDataModel(QObject* parent)
   : QAbstractItemModel(parent),
@@ -812,6 +934,7 @@ void MapDataModel::bindTo(osgEarth::Map* map)
   removeAllItems_(imageGroup_());
   removeAllItems_(elevationGroup_());
   removeAllItems_(modelGroup_());
+  removeAllItems_(otherGroup_());
   map_ = map;
   fillModel_(map);
   endResetModel();
@@ -867,6 +990,18 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
   assert(modelCallbacks_.size() == static_cast<int>(modelLayers.size()));
   modelCallbacks_.clear();
 
+  // need to remove all callbacks for other layers
+  osgEarth::VisibleLayerVector otherLayers;
+  MapReindexer::getOtherLayers(map, otherLayers);
+  for (osgEarth::VisibleLayerVector::const_iterator iter = otherLayers.begin(); iter != otherLayers.end(); ++iter)
+  {
+    if (otherCallbacks_.contains(iter->get()))
+      iter->get()->removeCallback(otherCallbacks_.find(iter->get())->get());
+  }
+  // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
+  assert(otherCallbacks_.size() == static_cast<int>(otherLayers.size()));
+  otherCallbacks_.clear();
+
   // Remove the map callback itself
   map->removeMapCallback(mapListener_.get());
 }
@@ -909,6 +1044,17 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
     modelCallbacks_[iter->get()] = cb.get();
     (*iter)->addCallback(cb.get());
   }
+
+  osgEarth::VisibleLayerVector otherLayers;
+  MapReindexer::getOtherLayers(map, otherLayers);
+  // need to reverse iterate, because we are inserting at row 0
+  for (osgEarth::VisibleLayerVector::const_reverse_iterator iter = otherLayers.rbegin(); iter != otherLayers.rend(); ++iter)
+  {
+    otherGroup_()->insertChild(new OtherLayerItem(otherGroup_(), iter->get()), 0);
+    osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new OtherLayerListener(*this);
+    otherCallbacks_[iter->get()] = cb.get();
+    (*iter)->addCallback(cb.get());
+  }
 }
 
 void MapDataModel::removeAllItems_(Item *group)
@@ -937,9 +1083,14 @@ MapDataModel::Item* MapDataModel::modelGroup_() const
   return rootItem_->childAt(2);
 }
 
+MapDataModel::Item* MapDataModel::otherGroup_() const
+{
+  return rootItem_->childAt(3);
+}
+
 void MapDataModel::addImageLayer_(osgEarth::ImageLayer *layer, unsigned int index)
 {
-  QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(imageGroup_()), 0, imageGroup_());
+  const QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(imageGroup_()), 0, imageGroup_());
   beginInsertRows(parentIndex, index, index);
   insertRow(index, parentIndex);
   imageGroup_()->insertChild(new ImageLayerItem(imageGroup_(), layer), index);
@@ -953,7 +1104,7 @@ void MapDataModel::addImageLayer_(osgEarth::ImageLayer *layer, unsigned int inde
 
 void MapDataModel::addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned int index)
 {
-  QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(elevationGroup_()), 0, elevationGroup_());
+  const QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(elevationGroup_()), 0, elevationGroup_());
   beginInsertRows(parentIndex, index, index);
   insertRow(index, parentIndex);
   elevationGroup_()->insertChild(new ElevationLayerItem(elevationGroup_(), layer), index);
@@ -967,7 +1118,7 @@ void MapDataModel::addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned 
 
 void MapDataModel::addModelLayer_(osgEarth::ModelLayer *layer, unsigned int index)
 {
-  QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(modelGroup_()), 0, modelGroup_());
+  const QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(modelGroup_()), 0, modelGroup_());
   beginInsertRows(parentIndex, index, index);
   insertRow(index, parentIndex);
   modelGroup_()->insertChild(new ModelLayerItem(modelGroup_(), layer), index);
@@ -977,6 +1128,20 @@ void MapDataModel::addModelLayer_(osgEarth::ModelLayer *layer, unsigned int inde
   modelCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
   emit modelLayerAdded(layer);
+}
+
+void MapDataModel::addOtherLayer_(osgEarth::VisibleLayer *layer, unsigned int index)
+{
+  const QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(otherGroup_()), 0, otherGroup_());
+  beginInsertRows(parentIndex, index, index);
+  insertRow(index, parentIndex);
+  otherGroup_()->insertChild(new OtherLayerItem(otherGroup_(), layer), index);
+  endInsertRows();
+
+  osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new OtherLayerListener(*this);
+  otherCallbacks_[layer] = cb.get();
+  layer->addCallback(cb.get());
+  emit otherLayerAdded(layer);
 }
 
 MapDataModel::Item* MapDataModel::itemAt_(const QModelIndex &index) const
@@ -1082,6 +1247,9 @@ QVariant MapDataModel::data(const QModelIndex &index, int role) const
       case CHILD_MODEL:
         return modelIcon_;
 
+      case CHILD_OTHER:
+        return otherIcon_;
+
       default:
         return QVariant();
       }
@@ -1152,6 +1320,8 @@ QModelIndex MapDataModel::layerIndex(const osgEarth::Layer* layer) const
     group = static_cast<GroupItem*>(elevationGroup_());
   else if (dynamic_cast<const osgEarth::ModelLayer*>(layer))
     group = static_cast<GroupItem*>(modelGroup_());
+  else if (dynamic_cast<const osgEarth::VisibleLayer*>(layer))
+    group = static_cast<GroupItem*>(otherGroup_());
 
   // Might be a new layer type we don't handle
   assert(group && group->parent());

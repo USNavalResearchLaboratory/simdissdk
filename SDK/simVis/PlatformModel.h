@@ -23,12 +23,12 @@
 #define SIMVIS_PLATFORM_MODEL_H
 
 #include "osg/Vec2f"
-#include "osgEarth/Utils"
 #include "simCore/Common/Common.h"
 #include "simCore/EM/RadarCrossSection.h"
 #include "simVis/Constants.h"
 #include "simData/DataTypes.h"
 #include "simVis/LocatorNode.h"
+#include "simVis/BillboardAutoTransform.h"
 
 namespace simVis
 {
@@ -165,7 +165,7 @@ private:
   osg::ref_ptr<RCSNode>              rcs_;
   osg::ref_ptr<EntityLabelNode>      label_;
   osg::ref_ptr<simVis::DynamicScaleTransform> dynamicXform_;
-  osg::ref_ptr<osgEarth::PixelAutoTransform> imageIconXform_;
+  osg::ref_ptr<simVis::BillboardAutoTransform> imageIconXform_;
   osg::ref_ptr<osg::MatrixTransform> offsetXform_;
   osg::ref_ptr<osg::MatrixTransform> imageAlignmentXform_;
   osg::Vec2f                         imageOriginalSize_;

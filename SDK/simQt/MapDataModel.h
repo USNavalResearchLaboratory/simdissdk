@@ -61,6 +61,8 @@ public:
   static void getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers);
   /** Retrieves the map model layers using a consistent interface */
   static void getLayers(osgEarth::Map* map, osgEarth::ModelLayerVector& modelLayers);
+  /** Retrieves all other map layers that aren't explicitly of type ImageLayer, ElevationLayer, or ModelLayer */
+  static void getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers);
 
   /** Sentinel value return for invalid index (layer not found) */
   static const unsigned int INVALID_INDEX;
@@ -71,6 +73,8 @@ public:
   unsigned int layerTypeIndex(osgEarth::ElevationLayer* layer) const;
   /** Returns the layer index relative to other layers in getLayers(ModelVector&) */
   unsigned int layerTypeIndex(osgEarth::ModelLayer* layer) const;
+  /** Returns the layer index relative to other layers in getOtherLayers(VisibleLayerVector&) */
+  unsigned int otherLayerTypeIndex(osgEarth::VisibleLayer* layer) const;
 
 private:
   osg::observer_ptr<osgEarth::Map> map_;
@@ -104,24 +108,25 @@ public:
   ///@return the index for the given row and column
   virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
   ///@return the index of the parent of the item given by index
-  virtual QModelIndex parent(const QModelIndex &child) const;
+  virtual QModelIndex parent(const QModelIndex& child) const;
   ///@return the number of rows in the data
-  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+  virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
   ///@return number of columns needed to hold data
-  virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+  virtual int columnCount(const QModelIndex& parent = QModelIndex()) const;
   ///@return data for given item
-  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
   ///@return the header data for given section
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
   ///@return the flags on the given item
   virtual Qt::ItemFlags flags(const QModelIndex& index) const;
 
-  /// Map is the top level node; it has 3 children: Image, Elevation, and Model
+  /// Map is the top level node; it has 4 children: Image, Elevation, Model, and Other
   enum MapChildren
   {
     CHILD_IMAGE = 0,
     CHILD_ELEVATION,
     CHILD_MODEL,
+    CHILD_OTHER,
     CHILD_NONE
   };
 
@@ -159,13 +164,19 @@ signals:
   void modelLayerOpacityChanged(osgEarth::ModelLayer* layer);
   /** Qt signal as described by the signal name */
   void modelLayerAdded(osgEarth::ModelLayer* layer);
+  /** Qt signal as described by the signal name */
+  void otherLayerVisibleChanged(osgEarth::VisibleLayer* layer);
+  /** Qt signal as described by the signal name */
+  void otherLayerOpacityChanged(osgEarth::VisibleLayer* layer);
+  /** Qt signal as described by the signal name */
+  void otherLayerAdded(osgEarth::VisibleLayer* layer);
 
 private: // methods
   /**
    * create all the layer items for the current map state
    * (must be called from within begin/end reset model)
    */
-  void fillModel_(osgEarth::Map *map);
+  void fillModel_(osgEarth::Map* map);
 
   /** Removes all callbacks associated with the given map. */
   void removeAllCallbacks_(osgEarth::Map* map);
@@ -174,14 +185,16 @@ private: // methods
    * remove all the items in a group
    * (must be called from within begin/end reset model)
    */
-  void removeAllItems_(Item *group);
+  void removeAllItems_(Item* group);
 
   /** add an image layer */
-  void addImageLayer_(osgEarth::ImageLayer *layer, unsigned int index);
+  void addImageLayer_(osgEarth::ImageLayer* layer, unsigned int index);
   /** add an elevation layer */
-  void addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned int index);
+  void addElevationLayer_(osgEarth::ElevationLayer* layer, unsigned int index);
   /** add a model layer */
-  void addModelLayer_(osgEarth::ModelLayer *layer, unsigned int index);
+  void addModelLayer_(osgEarth::ModelLayer* layer, unsigned int index);
+  /** add a layer other than image, elevation, or model */
+  void addOtherLayer_(osgEarth::VisibleLayer* layer, unsigned int index);
 
   /** return the Item for the given index (NULL if it can't be represented) */
   Item* itemAt_(const QModelIndex &index) const;
@@ -192,6 +205,8 @@ private: // methods
   Item* elevationGroup_() const;
   /** return the Item for the model group */
   Item* modelGroup_() const;
+  /** return the Item for the other group */
+  Item* otherGroup_() const;
 
   /** Retrieves the QVariant for LAYER_MAP_INDEX_ROLE for a layer.  Gives a global index on layer. */
   QVariant layerMapIndex_(osgEarth::Layer* layer) const;
@@ -200,6 +215,7 @@ private: // methods
   class ImageLayerListener;
   class ElevationLayerListener;
   class ModelLayerListener;
+  class OtherLayerListener;
 
   /** holds the invisible root item */
   Item* rootItem_;
@@ -210,11 +226,14 @@ private: // methods
   QIcon elevationIcon_;
   /** Icon for model layer */
   QIcon modelIcon_;
+  /** Icon for other layer */
+  QIcon otherIcon_;
 
   /** Maps of terrain layer callbacks */
   QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::ImageLayerCallback> > imageCallbacks_;
   QMap<osgEarth::ElevationLayer*, osg::ref_ptr<osgEarth::ElevationLayerCallback> > elevationCallbacks_;
   QMap<osgEarth::ModelLayer*, osg::ref_ptr<osgEarth::ModelLayerCallback> > modelCallbacks_;
+  QMap<osgEarth::VisibleLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > otherCallbacks_;
 
   /** Weak pointer back to the map */
   osg::observer_ptr<osgEarth::Map> map_;
