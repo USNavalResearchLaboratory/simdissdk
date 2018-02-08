@@ -26,6 +26,7 @@
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
+#include "osgEarth/Version"
 #include "osgEarthUtil/Sky"
 
 #include "simCore/Calc/Angle.h"
@@ -1562,7 +1563,12 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
         simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
         if (manip && manip->isTethering())
         {
+#if OSGEARTH_VERSION_GREATER_OR_EQUAL(2,9,0)
           osg::ref_ptr<osg::Node> tetherNode = manip->getViewpoint().getNode();
+#else
+          osg::ref_ptr<osg::Node> tetherNode;
+          manip->getViewpoint().getNode(tetherNode);
+#endif
           simVis::Viewpoint untether;
           untether.setNode(NULL);
           // Set a focal point to force a clear-out of the node; this will get updated to a better place in updateWatchView_()
