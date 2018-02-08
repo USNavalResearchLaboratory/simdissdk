@@ -22,6 +22,7 @@
 #ifndef SIMVIS_PLATFORM_MODEL_H
 #define SIMVIS_PLATFORM_MODEL_H
 
+#include "osg/Vec2f"
 #include "osgEarth/Utils"
 #include "simCore/Common/Common.h"
 #include "simCore/EM/RadarCrossSection.h"
@@ -166,6 +167,8 @@ private:
   osg::ref_ptr<simVis::DynamicScaleTransform> dynamicXform_;
   osg::ref_ptr<osgEarth::PixelAutoTransform> imageIconXform_;
   osg::ref_ptr<osg::MatrixTransform> offsetXform_;
+  osg::ref_ptr<osg::MatrixTransform> imageAlignmentXform_;
+  osg::Vec2f                         imageOriginalSize_;
   bool                               autoRotate_;
   bool                               lastPrefsValid_;
   osg::ref_ptr<OverrideColor>        overrideColor_;
@@ -191,6 +194,8 @@ private:
   bool updateScaleXyz_(const simData::PlatformPrefs& prefs);
   /// Updates the dynamic scale based on pref; returns true when dynamic scale changes
   bool updateDynamicScale_(const simData::PlatformPrefs& prefs);
+  /// Updates the 2D image alignment offsets; returns true if the alignment offset changed
+  bool updateImageAlignment_(const simData::PlatformPrefs& prefs, bool force);
   /// Updates the icon rotation based on pref or if force is set to true when the model has changed
   void updateImageIconRotation_(const simData::PlatformPrefs& prefs, bool force);
   /// Updates the depth buffer when the nodepthicons has changed or if force is set to true when the model has changed
