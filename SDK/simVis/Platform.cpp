@@ -41,6 +41,8 @@
 #include "simVis/Utils.h"
 #include "simVis/VelocityVector.h"
 #include "simVis/Platform.h"
+#include "simVis/Projector.h"
+#include "simVis/Shaders.h"
 
 #define LC "[PlatformNode] "
 
@@ -932,6 +934,19 @@ void PlatformNode::setLosCreator(LosCreator* losCreator)
 unsigned int PlatformNode::objectIndexTag() const
 {
   return model_->objectIndexTag();
+}
+
+void PlatformNode::acceptProjector(ProjectorNode* proj)
+{
+  osg::StateSet* stateSet = this->getOrCreateStateSet();
+  proj->addProjectionToStateSet(stateSet);
+}
+
+void PlatformNode::removeProjector(ProjectorNode* proj)
+{
+  osg::StateSet* stateSet = this->getStateSet();
+  if (stateSet)
+    proj->removeProjectionFromStateSet(stateSet);
 }
 
 }

@@ -56,6 +56,9 @@ public:
   */
   void clear();
 
+  /** Texture image unit used by projectors */
+  static const int getTextureImageUnit();
+
 public: // MapNodeObserver
 
   /** Gets the map node */

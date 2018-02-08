@@ -201,7 +201,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
     // in the BeamType_BODY_RELATIVE case, beam data is relative to platform orientation;
     // the ResolvedPositionOrientationLocator maintains the host platform pos and ori
     //  orientation data + offsets applied to this locator -will- be relative to host platform orientation
-    beamOrientationLocator_ = new ResolvedPositionOrientationLocator(beamOriginLocator_, Locator::COMP_ALL);
+    beamOrientationLocator_ = new ResolvedPositionOrientationLocator(beamOriginLocator_.get(), Locator::COMP_ALL);
   }
   else
   {
@@ -210,9 +210,9 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
     // we need to apply an orientation that is not relative to platform orientation : we need to filter out platform orientation.
     // the ResolvedPositionLocator gives us that.
     // orientation data + offsets applied to this locator -will-not- be relative to host platform orientation
-    beamOrientationLocator_ = new ResolvedPositionLocator(beamOriginLocator_, Locator::COMP_ALL);
+    beamOrientationLocator_ = new ResolvedPositionLocator(beamOriginLocator_.get(), Locator::COMP_ALL);
   }
-  setLocator(beamOrientationLocator_);
+  setLocator(beamOrientationLocator_.get());
   setName("BeamNode");
 
   // set up a state set.

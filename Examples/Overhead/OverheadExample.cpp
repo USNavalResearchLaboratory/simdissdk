@@ -127,7 +127,7 @@ struct MouseAndMenuHandler : public osgGA::GUIEventHandler
   {
     mouseDispatcher_->setViewManager(NULL);
     latLonElevListener_.reset(new LatLonElevListener());
-    setUpMouseManip_(viewer_);
+    setUpMouseManip_(viewer_.get());
     updateStatusAndLabel_();
   }
 
