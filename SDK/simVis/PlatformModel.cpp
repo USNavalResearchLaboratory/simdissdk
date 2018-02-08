@@ -155,9 +155,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   imageAlignmentXform_->setName("imageAlignmentXform");
 
   // Set up the transform responsible for rotating the 2-D image icons
-  imageIconXform_ = new PixelAutoTransform();
+  imageIconXform_ = new BillboardAutoTransform();
   imageIconXform_->setAutoScaleToScreen(false);
-  imageIconXform_->setAutoRotateMode(PixelAutoTransform::NO_ROTATION);
+  imageIconXform_->setAutoRotateMode(BillboardAutoTransform::NO_ROTATION);
   imageIconXform_->setName("imageIconXform");
   imageIconXform_->dirty();
 
