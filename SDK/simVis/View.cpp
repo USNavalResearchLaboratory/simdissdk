@@ -540,7 +540,7 @@ View::View()
    borderProps_(simVis::Color::White,  2),
    extents_(0, 0, 200, 100, false),
    lighting_(true),
-   fovy_(DEFAULT_VFOV),
+   fovyDeg_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
    useOverheadClamping_(true),
    overheadNearFarCallback_(new SetNearFarCallback),
@@ -701,7 +701,7 @@ bool View::setUpViewAsInset_(simVis::View* host)
     }
 
     // if the user hasn't created a camera for this view, do so now.
-    fovy_ = host->fovY();
+    fovyDeg_ = host->fovY();
     osg::Camera* camera = this->getCamera();
     if (!camera)
     {
@@ -1114,19 +1114,23 @@ void View::setLighting(bool value)
 
 double View::fovY() const
 {
-  return fovy_;
+  return fovyDeg_;
 }
 
-void View::setFovY(double fovy)
+void View::setFovY(double fovyDeg)
 {
+  // do a simple check on invalid values, since EarthManipulator doesn't protect against invalid values
+  if (fovyDeg <= 0.0 || fovyDeg >= 360.0)
+    return;
+
   // always update the earth manipulator first
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovy);
+    manip->setFovY(fovyDeg);
 
-  if (fovy == fovy_)
+  if (fovyDeg == fovyDeg_)
     return;
-  fovy_ = fovy;
+  fovyDeg_ = fovyDeg;
   refreshExtents();
 }
 
@@ -1398,7 +1402,7 @@ void View::enableOverheadMode(bool enableOverhead)
   // which may not be initialized properly if overhead mode is set too soon
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovy_);
+    manip->setFovY(fovyDeg_);
 
   // if this is the first time enabling overhead mode, install the node camera-update
   // node visitor in the earth manipulator to facilitate tethering. This NodeVisitor

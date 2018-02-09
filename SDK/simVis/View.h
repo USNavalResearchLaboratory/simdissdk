@@ -487,7 +487,7 @@ public:
   bool getLighting() const;
 
   /** Changes the Field of View (Y) for the view, in degrees */
-  void setFovY(double fovy);
+  void setFovY(double fovyDeg);
 
   /** Returns the Field of View (Y) for the view, in degrees */
   double fovY() const;
@@ -712,7 +712,7 @@ private: // data
   bool lighting_;
 
   /** Field of View (Y) for the view; Degrees */
-  double fovy_;
+  double fovyDeg_;
 
   ViewType viewType_;
 
