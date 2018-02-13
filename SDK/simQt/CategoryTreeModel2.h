@@ -97,7 +97,8 @@ public:
   /** Enumeration of user roles supported by data() */
   enum {
     ROLE_SORT_STRING = Qt::UserRole,
-    ROLE_EXCLUDE
+    ROLE_EXCLUDE,
+    ROLE_CATEGORY_NAME
   };
 
   // QAbstractItemModel overrides

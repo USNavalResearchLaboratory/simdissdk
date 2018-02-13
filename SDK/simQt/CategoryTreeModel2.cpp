@@ -122,6 +122,8 @@ public:
   /** Returns true if the GUI changed; sets filterChanged if filter edited. */
   virtual bool setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged) = 0;
 
+  /** Retrieves the category name this tree item is associated with */
+  virtual QString categoryName() const = 0;
   /** Returns the category name integer value for this item or its parent */
   virtual int nameInt() const = 0;
   /** Returns true if the UNLISTED VALUE item is checked (i.e. if we are in EXCLUDE mode) */
@@ -153,6 +155,7 @@ public:
   virtual Qt::ItemFlags flags() const;
   virtual QVariant data(int role) const;
   virtual bool setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged);
+  virtual QString categoryName() const;
   virtual int nameInt() const;
   virtual bool isUnlistedValueChecked() const;
 
@@ -197,6 +200,7 @@ public:
   virtual Qt::ItemFlags flags() const;
   virtual QVariant data(int role) const;
   virtual bool setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged);
+  virtual QString categoryName() const;
   virtual int nameInt() const;
   virtual bool isUnlistedValueChecked() const;
 
@@ -212,10 +216,13 @@ public:
 
   /** Sets the number of entities that match this value.  Use -1 to reset. */
   void setNumMatches(int numMatches);
-  /** Returns number of matches */
+  /** Returns number entities that match this particular value in the given filter. */
   int numMatches() const;
 
 private:
+  /** setData() that handles Qt::CheckStateRole.  Returns true if GUI state changes, and sets filterChanged if filter changes. */
+  bool setCheckStateData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged);
+
   int nameInt_;
   int valueInt_;
   int numMatches_;
@@ -299,6 +306,11 @@ int CategoryTreeModel2::CategoryItem::nameInt() const
   return nameInt_;
 }
 
+QString CategoryTreeModel2::CategoryItem::categoryName() const
+{
+  return categoryName_;
+}
+
 Qt::ItemFlags CategoryTreeModel2::CategoryItem::flags() const
 {
   return Qt::ItemIsEnabled;
@@ -311,6 +323,7 @@ QVariant CategoryTreeModel2::CategoryItem::data(int role) const
   case Qt::DisplayRole:
   case Qt::EditRole:
   case ROLE_SORT_STRING:
+  case ROLE_CATEGORY_NAME:
     return categoryName_;
   case ROLE_EXCLUDE:
     return unlistedValue_;
@@ -535,6 +548,15 @@ int CategoryTreeModel2::ValueItem::nameInt() const
   return nameInt_;
 }
 
+QString CategoryTreeModel2::ValueItem::categoryName() const
+{
+  // Assertion failure means we have orphan value items
+  assert(parent());
+  if (!parent())
+    return "";
+  return parent()->data(ROLE_CATEGORY_NAME).toString();
+}
+
 int CategoryTreeModel2::ValueItem::valueInt() const
 {
   return valueInt_;
@@ -576,6 +598,9 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
   case ROLE_EXCLUDE:
     return isUnlistedValueChecked();
 
+  case ROLE_CATEGORY_NAME:
+    return categoryName();
+
   default:
     break;
   }
@@ -585,9 +610,16 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
 bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
 {
   filterChanged = false;
+
   // Only editing supported on values is check/uncheck
-  if (role != Qt::CheckStateRole)
-    return false;
+  if (role == Qt::CheckStateRole)
+    return setCheckStateData_(value, filter, filterChanged);
+  return false;
+}
+
+bool CategoryTreeModel2::ValueItem::setCheckStateData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
+{
+  filterChanged = false;
 
   // If the edit sets us to same state, then return early
   const Qt::CheckState newChecked = static_cast<Qt::CheckState>(value.toInt());
@@ -1228,8 +1260,6 @@ void ToggleSwitchPainter::calculateRects_(const StyleOptionToggleSwitch& option,
 
 /** Expected tree indentation.  Tree takes away parts of delegate for tree painting and we want to undo that. */
 static const int TREE_INDENTATION = 20;
-/** Role to use for editing and displaying the "EXCLUDE" button */
-static const int ROLE_EXCLUDE = simQt::CategoryTreeModel2::ROLE_EXCLUDE;
 
 struct CategoryTreeItemDelegate::ChildRects
 {
@@ -1294,7 +1324,7 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
     StyleOptionToggleSwitch switchOpt;
     ToggleSwitchPainter switchPainter;
     switchOpt.rect = r.excludeToggle;
-    switchOpt.value = index.data(ROLE_EXCLUDE).toBool();
+    switchOpt.value = index.data(CategoryTreeModel2::ROLE_EXCLUDE).toBool();
     switchPainter.paint(switchOpt, painter);
   }
 }
@@ -1378,8 +1408,8 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
       // Toggle button should, well, toggle
       if (clickedElement_ == SE_EXCLUDE_TOGGLE)
       {
-        QVariant oldState = index.data(ROLE_EXCLUDE);
-        model->setData(index, !oldState.toBool(), ROLE_EXCLUDE);
+        QVariant oldState = index.data(CategoryTreeModel2::ROLE_EXCLUDE);
+        model->setData(index, !oldState.toBool(), CategoryTreeModel2::ROLE_EXCLUDE);
         clickedIndex_ = QModelIndex();
         return true;
       }

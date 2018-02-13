@@ -118,7 +118,7 @@ void MainWindow::addMassiveAmount_()
 
 void MainWindow::toggleState_()
 {
-  simData::CategoryFilter*filter = new simData::CategoryFilter(dataStore_, true);
+  simData::CategoryFilter* filter = new simData::CategoryFilter(dataStore_, true);
   filter->updateAll(state_);
   ui_->categoryFilterWidget->setFilter(*filter);
   delete filter;

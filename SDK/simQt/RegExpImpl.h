@@ -73,7 +73,7 @@ public:
   };
 
   /** Constructor */
-  RegExpImpl(const std::string& exp, CaseSensitivity caseSense = CaseInsensitive, PatternSyntax patternSyntax = RegExp);
+  explicit RegExpImpl(const std::string& exp, CaseSensitivity caseSense = CaseInsensitive, PatternSyntax patternSyntax = RegExp);
 
   /** Copy Constructor */
   RegExpImpl(const RegExpImpl& other);
