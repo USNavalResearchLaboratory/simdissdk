@@ -142,6 +142,12 @@ void LineGraphic::setLineWidth(float lineWidth)
   animatedLine_->setLineWidth(lineWidth);
 }
 
+bool LineGraphic::isDrawn() const
+{
+  // Currently label and line cannot have different NodeMasks. This method will need updating if that changes
+  return animatedLine_->getNodeMask() != 0;
+}
+
 void LineGraphic::setDraw(bool draw)
 {
   animatedLine_->setNodeMask(draw ? GRAPHIC_MASK_RULERLINE : simVis::DISPLAY_MASK_NONE);

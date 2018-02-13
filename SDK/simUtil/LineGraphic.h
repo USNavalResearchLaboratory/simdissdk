@@ -68,6 +68,9 @@ public:
   */
   void set(const simCore::Vec3& originLLA, const simCore::Vec3& destinationLLA, const std::string& labelString);
 
+  /** Returns true if the line and label are currently displaying. False otherwise */
+  bool isDrawn() const;
+
   /**
    * Hides or reveals both the animatedLine and the label.
    * Calling this on a LineGraphic with equal endpoints is undefined.
