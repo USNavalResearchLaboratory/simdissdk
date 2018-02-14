@@ -514,12 +514,31 @@ std::string CategoryFilter::serialize(bool simplify) const
 
   // Make a copy of the category checks
   CategoryCheck categoryCheckCopy = categoryCheck_;
+  CategoryRegExp categoryRegExpCopy = categoryRegExp_;
   if (simplify)
   {
+    simplifyRegExp_(categoryRegExpCopy);
     simplify_(categoryCheckCopy);
 
-    if (categoryCheckCopy.empty())
+    if (categoryCheckCopy.empty() && categoryRegExpCopy.empty())
       return " "; // SIMDIS 9 expects this if no category filter
+  }
+
+  // Because the writing loop iterates on Category Check Copy and not on RegExp, we have a potential
+  // problem where there's a RegExp but not a Category Check.  This is a certainty when we have RegExp
+  // with simplification.  There are two solutions.  Either iterate category checks, then detect the
+  // set_difference in the two map keys, or populate category checks with dummy maps.  Here we
+  // populate the category checks copy with a dummy empty map.
+  for (auto regIter = categoryRegExpCopy.begin(); regIter != categoryRegExpCopy.end(); ++regIter)
+  {
+    // Skip this regexp if it's not valid
+    if (regIter->second == NULL || regIter->second->pattern().empty())
+      continue;
+
+    auto catIter = categoryCheckCopy.find(regIter->first);
+    // Always mark the value as enabled (true) to avoid ignoring the RegExp on parse
+    if (catIter == categoryCheckCopy.end())
+      categoryCheckCopy[regIter->first] = CategoryFilter::CategoryValues(true, CategoryFilter::ValuesCheck());
   }
 
   for (CategoryCheck::const_iterator categoryIter = categoryCheckCopy.begin();
@@ -530,8 +549,8 @@ std::string CategoryFilter::serialize(bool simplify) const
     const ValuesCheck& values = categoryIter->second.second;
     std::string regExp;
 
-    CategoryRegExp::const_iterator regExpIter = categoryRegExp_.find(categoryName);
-    if (regExpIter != categoryRegExp_.end())
+    CategoryRegExp::const_iterator regExpIter = categoryRegExpCopy.find(categoryName);
+    if (regExpIter != categoryRegExpCopy.end())
       regExp = regExpIter->second->pattern();
 
     if ((values.empty() && regExp.empty()) || (categoryName == simData::CategoryNameManager::NO_CATEGORY_NAME))
@@ -591,6 +610,7 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     return false;
 
   categoryCheck_.clear();
+  categoryRegExp_.clear();
 
   // Empty string means no values, meaning clear vector; valid state
   if (simCore::StringUtils::trim(checksString).empty())
@@ -839,15 +859,49 @@ void CategoryFilter::simplifyCategories_(CategoryFilter::CategoryCheck& checks) 
     checks = newChecks;
 }
 
+void CategoryFilter::simplifyRegExp_(CategoryFilter::CategoryRegExp& regExps) const
+{
+  for (auto i = regExps.begin(); i != regExps.end(); /* no increment */)
+  {
+    if (i->second == NULL || i->second->pattern().empty())
+      regExps.erase(i++);
+    else
+      ++i;
+  }
+}
+
 void CategoryFilter::simplify_(CategoryFilter::CategoryCheck& checks) const
 {
+  // Remove all categories that have a non-empty regular expression
+  for (auto i = categoryRegExp_.begin(); i != categoryRegExp_.end(); ++i)
+  {
+    if (i->second != NULL && !i->second->pattern().empty())
+      checks.erase(i->first);
+  }
   simplifyValues_(checks);
   simplifyCategories_(checks);
 }
 
 void CategoryFilter::simplify(int categoryName)
 {
+  // Search in checks -- we'll need this iterator soon
   auto i = categoryCheck_.find(categoryName);
+
+  // Remove the entire category if there's a valid regex associated
+  auto refIter = categoryRegExp_.find(categoryName);
+  if (refIter != categoryRegExp_.end())
+  {
+    // Clean up categoryRegExp_ first
+    if (refIter->second == NULL || refIter->second->pattern().empty())
+      categoryRegExp_.erase(refIter);
+    else if (i != categoryCheck_.end())
+    {
+      categoryCheck_.erase(i);
+      i = categoryCheck_.end();
+    }
+  }
+
+  // Exit now if there is no checks state for category
   if (i == categoryCheck_.end())
     return;
 
@@ -866,6 +920,7 @@ void CategoryFilter::simplify(int categoryName)
 
 void CategoryFilter::simplify()
 {
+  simplifyRegExp_(categoryRegExp_);
   simplify_(categoryCheck_);
 }
 

@@ -1240,6 +1240,111 @@ int testSimplify()
   return rv;
 }
 
+int testRegExpSimplify()
+{
+  simData::MemoryDataStore ds;
+  simData::CategoryNameManager& nameMgr = ds.categoryNameManager();
+  loadCategoryData(ds);
+  ds.update(2.0);
+  simData::CategoryFilter filter(&ds);
+
+  int rv = 0;
+
+  const int KEY2 = nameMgr.nameToInt("key2");
+  const int KEY3 = nameMgr.nameToInt("key3");
+  simQt::RegExpFilterFactoryImpl reFactory;
+
+  // Empty filter, should pass
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  // Demonstrate that we match on PLATFORM_ID with key2=value2
+  rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  // Demonstrate that we do not match on PLATFORM_ID with key2!=value2
+  rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(0)", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+
+  // Demonstrate that the RegExp works ("e2" matches the end of "value2")
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e2", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e2");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e2");
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e1", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e1");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e1");
+
+  // Repeat with a different regex pattern
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^^e2", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^^e2");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^^e2");
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^^value2", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^^value2");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^^value2");
+
+  // Test with 0 for the key.  Note that deserialize automatically simplifies away (0) categories
+  rv += SDK_ASSERT(filter.deserialize("key2(0)^e2", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.deserialize("key3(0)^e2", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == " ");
+
+  // Make sure it simplifies away the checks when regex is present, even if that checks matches
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e3~value2(1)~value1(0)", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e3~value2(1)~value1(0)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e3");
+
+  // Test simplify(int)
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e3~value2(1)~value1(0)`key3(1)^e3~value2(0)~value1(1)", reFactory));
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e3~value2(1)~value1(0)`key3(1)^e3~value2(0)~value1(1)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e3`key3(1)^e3");
+  // Simplify KEY2
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e3~value2(1)~value1(0)`key3(1)^e3~value2(0)~value1(1)", reFactory));
+  filter.simplify(KEY2);
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e3`key3(1)^e3~value2(0)~value1(1)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e3`key3(1)^e3");
+  // Then simplify KEY3
+  filter.simplify(KEY3);
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e3`key3(1)^e3");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e3`key3(1)^e3");
+  // Then reset and only simplify KEY3
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e3~value2(1)~value1(0)`key3(1)^e3~value2(0)~value1(1)", reFactory));
+  filter.simplify(KEY3);
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e3~value2(1)~value1(0)`key3(1)^e3");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e3`key3(1)^e3");
+
+  // Then reset and test simplify()
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e3~value2(1)~value1(0)`key3(1)^e3~value2(0)~value1(1)", reFactory));
+  filter.simplify();
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)^e3`key3(1)^e3");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e3`key3(1)^e3");
+
+  // Test "No Value"
+  rv += SDK_ASSERT(filter.deserialize("NoKey(1)~Unlisted Value(1)~No Value(0)", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.deserialize("NoKey(1)~Unlisted Value(1)~No Value(1)", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  // Should not match explicit "No Value" string.  It really has no value, it's an empty string
+  rv += SDK_ASSERT(filter.deserialize("NoKey(1)^alue", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  // Demonstrate that it's not a fluke and it doesn't match the provided dummy string
+  rv += SDK_ASSERT(filter.deserialize("NoKey(1)^dummystring", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  // Demonstrate that it DOES match when empty string is specified in the regex (^$)
+  rv += SDK_ASSERT(filter.deserialize("NoKey(1)^^$", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  // Demonstrate that empty-string regex does not match things that DO have a key
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^^$", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+
+  return rv;
+}
+
 }
 
 int CategoryDataTest(int argc, char *argv[])
@@ -1260,6 +1365,7 @@ int CategoryDataTest(int argc, char *argv[])
   rv += testDeserializeFailures();
   rv += testAddRemoveFunctions();
   rv += testSimplify();
+  rv += testRegExpSimplify();
 
   return rv;
 }

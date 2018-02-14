@@ -128,6 +128,29 @@ class DataStore;
  *     - Example: "Color(1)~Green(1)`Shape(1)~Round(1)" will only match entities that have Color=Green AND Shape=Round.
  *       Blue Round entities will fail the filter.  Green Square entities will also fail the filter.  Green entities
  *       without a Shape will also fail the filter.
+ *
+ *  8. Regular expressions are preceded by a caret, and if present must be in the string before any category checks.
+ *     - Example: "Color(1)^Red" will match entities with a valid Color category that includes the case sensitive text
+ *       "Red".  For example, it will match Color=Red and Color=DarkRed, but will not match Color=Lightred or Color=Blue.
+ *     - Example: "Color(1)^^Red" will match entities with a valid Color category that starts with the case sensitive
+ *       text "Red".  It will match Color=Red and Color=Reddish, but not Color=DarkRed.
+ *     - Example: "Color(1)^Red~Red(0)" will match entities with a valid Color category that includes the case sensitive
+ *       text "Red".  The category checks value "Red(0)" is dropped because a regular expression is present, so although it
+ *       explicitly attempts to omit the value "Red", Color=Red will pass this filter due to having a regular expression.
+ *
+ * Category filters also support regular expression matching for values.  Because C++11 is not supported across all SDK
+ * supported platforms, regular expression matching is handled externally through the virtual interface simData::RegExpFilter.
+ * Write your own simData::RegExpFilterFactory to allow simData::CategoryFilter to use regular expressions.  A default
+ * implementation using QRegularExpression is provided in simQt/RegExpImpl.h in simQt::RegExpFilterFactoryImpl for
+ * applications that can use a Qt dependency.
+ *
+ * Regular expressions applied to categories override the "check state" values for that category.  That means a simplified
+ * rule string has either a regular expression for a key or a series of checks for the key, and never both.  A regular
+ * expression must be removed before any explicit category value check states will apply.
+ *
+ * When a regular expression is applied, the category passes if the text string of the value matches against the regular
+ * expression.  When the category does not exist for an entity, a true empty string is supplied for matching, and not
+ * the special string "No Value".  To match the concept of "No Value", you can use the regular expression "^$".
  */
 class SDKDATA_EXPORT CategoryFilter
 {
@@ -172,13 +195,15 @@ public:
 
   /**
   * Get a reference to the current CategoryCheck structure, which is (re)built internally by the call to buildCategoryFilter
-  * @return CategoryCheck&  reference to the CategoryCheck structure
+  * @return Reference to the CategoryCheck structure that describes which category filter values are checked or
+  *   unchecked.  Note that this data structure is ignored when there is a regular expression set.
   */
   const CategoryCheck& getCategoryFilter() const;
 
   /**
-  * Get reference to this CategoryFilter's data store
-  * @return DataStore*
+  * Get pointer to this CategoryFilter's data store.
+  * @return Data store associated with the filter.  Data stores are required for filters to support matching and to
+  *    be able to get access to a category name manager for int-to-string dereferencing.
   */
   simData::DataStore* getDataStore() const;
 
@@ -257,13 +282,15 @@ public:
   void clear();
 
   /**
-   * Set the check state of a category value, creating the category and value if necessary.
+   * Set the check state of a category value, creating the category and value if necessary.  Note that if a regular
+   * expression is set, the valueChecked state is irrelevant until the regular expression is removed, because
+   * regular expression testing of category values supersedes integer-value based testing.
    * @param[in] nameInt  int value of the category name
    * @param[in] valueInt  int value of the category value
    * @param[in] valueChecked  check state for this category value
    */
   void setValue(int nameInt, int valueInt, bool valueChecked);
-  /** Removes the entire category name and all values under. */
+  /** Removes the entire category name and all values under, as well any associated regular expression. */
   void removeName(int nameInt);
   /** Removes the value entirely from the filter.  If the name is empty, it is also removed.  Returns 0 on success. */
   int removeValue(int nameInt, int valueInt);
@@ -286,6 +313,8 @@ private:
   void buildCategoryFilter_(bool addNoValue, bool noValue, bool addUnlisted, bool unlisted);
   /** Returns true if all RegExpFilters match. Returns false if anything fails to match */
   bool matchRegExpFilter_(const CurrentCategoryValues& curCategoryData) const;
+  /** Removes invalid or empty regular expressions. */
+  void simplifyRegExp_(CategoryRegExp& regExps) const;
   /** Reduces the categoryCheck_ to the smallest state possible. */
   void simplify_(CategoryCheck& checks) const;
   /** Remove all entries with the same value as Unlisted Value.  Hits all categories, but does not remove categories. */
