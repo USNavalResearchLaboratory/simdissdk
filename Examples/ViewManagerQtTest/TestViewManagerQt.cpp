@@ -42,6 +42,7 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <QLayout>
+#include <QTimer>
 
 #ifdef Q_WS_X11
 #include <X11/Xlib.h>

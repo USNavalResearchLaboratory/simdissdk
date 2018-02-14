@@ -44,6 +44,7 @@
 #include <QLayout>
 #include <QMainWindow>
 #include <QResizeEvent>
+#include <QTimer>
 #include <QToolBar>
 #include <QWindow>
 
