@@ -102,6 +102,12 @@ if(TARGET simVis)
     )
 endif()
 
+if (OSG_FOUND)
+    list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}ViewWidget.h
+    )
+endif()
+
 list(APPEND SIMQT_HEADERS
     ${SIMQT_HEADERS_TO_MOC}
 )
@@ -197,6 +203,12 @@ if(TARGET simVis)
     )
 endif()
 
+if(OSG_FOUND)
+    list(APPEND SIMQT_SOURCES
+        ${SIMQT_SRC}ViewWidget.cpp
+    )
+endif()
+
 source_group(Sources FILES ${SIMQT_SOURCES})
 
 # .ui files
@@ -261,7 +273,12 @@ if(TARGET simVis)
     )
 endif()
 
+# Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
+if(TARGET OSGQT)
+    target_link_libraries(simQt PUBLIC OSGQT)
+endif()
+
 # Parts of simQt depend on simData's protobuf generated code
 if(TARGET simData)
     add_dependencies(simQt simData_protobuf_generation)
@@ -298,8 +315,11 @@ else()
     endif()
 endif()
 
-
-VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)
+if(TARGET OSGQT)
+    VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets OpenGL)
+else()
+    VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)
+endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     set_target_properties(simQt PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")

@@ -21,7 +21,6 @@
  */
 #include <QDialog>
 #include <osgGA/GUIEventHandler>
-#include "osgEarthQt/ViewWidget"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Time/ClockImpl.h"
@@ -32,6 +31,7 @@
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simQt/TimeButtons.h"
+#include "simQt/ViewWidget.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 #include "MainWindow.h"
@@ -91,7 +91,7 @@ MainWindow::MainWindow()
   sceneMan->getScenario()->bind(dataStore_);
 
   // wrap the view in a Qt widget
-  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
+  simQt::ViewWidget* viewWidget = new simQt::ViewWidget(view.get());
   setCentralWidget(viewWidget);
 
   // clock will manage simulation time

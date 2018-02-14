@@ -31,14 +31,13 @@
 #include "simCore/Time/Clock.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simQt/ViewWidget.h"
 #include "simUtil/DefaultDataStoreValues.h"
 #include "simUtil/ExampleResources.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
-
-#include "osgEarthQt/ViewWidget"
 
 #include <QApplication>
 #include <QMainWindow>
@@ -98,7 +97,7 @@ int main(int argc, char **argv)
   QApplication app(argc, argv);
 
   SdkQThreadExample::MyMainWindow win(viewMan.get(), dataStore);
-  osgEarth::QtGui::ViewWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
+  simQt::ViewWidget* viewWidget = new simQt::ViewWidget(view.get());
   win.setGeometry(100, 100, 1024, 800);
   win.setGlWidget(viewWidget);
 

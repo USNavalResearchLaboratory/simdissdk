@@ -1,4 +1,4 @@
-if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET simUtil)
+if(NOT TARGET simUtil OR NOT TARGET simQt)
     return()
 endif()
 
@@ -31,7 +31,7 @@ VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
 add_executable(example_qthread ${PROJECT_FILES} ${MY_WIDGETS_MOC} ${MY_UI})
 target_link_libraries(example_qthread PRIVATE simCore simData simVis
-    simUtil OSGEARTH_QT)
+    simUtil simQt)
 target_include_directories(example_qthread PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qthread PROPERTIES
     FOLDER "Examples"
