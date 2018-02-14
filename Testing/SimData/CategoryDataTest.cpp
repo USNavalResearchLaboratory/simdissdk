@@ -1335,9 +1335,16 @@ int testRegExpSimplify()
   // Demonstrate that it's not a fluke and it doesn't match the provided dummy string
   rv += SDK_ASSERT(filter.deserialize("NoKey(1)^dummystring", reFactory));
   rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+
+  // In Valgrind on Linux there is a persistent crash in QRegularExpression when testing the
+  // regex "^$" against the string "", using Qt 5.5.1.  This crash does not occur on Windows,
+  // and does not occur in Linux outside of Valgrind.
+#ifdef WIN32
   // Demonstrate that it DOES match when empty string is specified in the regex (^$)
   rv += SDK_ASSERT(filter.deserialize("NoKey(1)^^$", reFactory));
   rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+#endif
+
   // Demonstrate that empty-string regex does not match things that DO have a key
   rv += SDK_ASSERT(filter.deserialize("key2(1)^^$", reFactory));
   rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
