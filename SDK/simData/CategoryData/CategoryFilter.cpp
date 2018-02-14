@@ -105,7 +105,6 @@ CategoryFilter::CategoryFilter(simData::DataStore* dataStore, bool autoUpdate)
 
 CategoryFilter::CategoryFilter(const CategoryFilter& other)
   : dataStore_(other.dataStore_),
-    regExpFactory_(other.regExpFactory_),
     autoUpdate_(other.autoUpdate_),
     categoryCheck_(other.categoryCheck_),
     categoryRegExp_(other.categoryRegExp_)
@@ -141,7 +140,6 @@ CategoryFilter& CategoryFilter::assign(const CategoryFilter& other, bool copyAut
     listenerPtr_.reset();
   }
   dataStore_ = other.dataStore_;
-  regExpFactory_ = other.regExpFactory_;
   if (copyAutoUpdateFlag)
     autoUpdate_ = other.autoUpdate_;
   categoryCheck_ = other.categoryCheck_;
@@ -348,31 +346,21 @@ void CategoryFilter::updateCategoryFilterValue(int nameInt, int valueInt, bool v
   }
 }
 
-void CategoryFilter::updateCategoryFilterRegExp(int nameInt, const std::string& regExp)
+void CategoryFilter::setCategoryRegExp(int nameInt, const simData::RegExpFilterPtr& regExp)
 {
-  // nothing to do if no reg exp factory
-  if (!regExpFactory_)
-    return;
-
   CategoryRegExp::iterator nameIter = categoryRegExp_.find(nameInt);
-
-  // if an invalid ptr was returned, reg exp was invalid
-  simData::RegExpFilterPtr regExpObject = regExpFactory_->createRegExpFilter(regExp);
-
-  if (!regExpObject)
-    return;
 
   // new entry, add to the map if this is a non-empty string
   if (nameIter == categoryRegExp_.end())
   {
-    if (!regExp.empty())
-      categoryRegExp_[nameInt] = regExpObject;
+    if (regExp != NULL && !regExp->pattern().empty())
+      categoryRegExp_[nameInt] = regExp;
     return;
   }
 
   // update the expression if non-empty, remove if empty
-  if (!regExp.empty())
-    nameIter->second = regExpObject;
+  if (regExp != NULL && !regExp->pattern().empty())
+    nameIter->second = regExp;
   else
     categoryRegExp_.erase(nameIter);
 }
@@ -597,7 +585,7 @@ std::string CategoryFilter::serialize(bool simplify) const
 }
 
 ///@return false on fail
-bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmptyCategories)
+bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmptyCategories, RegExpFilterFactory* regExpFactory)
 {
   if (dataStore_ == NULL)
     return false;
@@ -684,8 +672,17 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
     // process regular expression if it exists
     if (!regExpStr.empty())
     {
+      // Assertion failure means caller is deserializing a regular expression without a factory to create them
+      assert(regExpFactory);
       // add the reg exp
-      updateCategoryFilterRegExp(categoryName, regExpStr);
+      if (regExpFactory)
+        setCategoryRegExp(categoryName, regExpFactory->createRegExpFilter(regExpStr));
+      else
+      {
+        SIM_DEBUG << "Unable to create regular expression for category '" << categoryNameString << "'\n";
+        hasErrors = true;
+        continue;
+      }
     }
 
     // retrieve the values map
@@ -740,9 +737,9 @@ bool CategoryFilter::deserialize(const std::string &checksString, bool skipEmpty
   return !hasErrors;
 }
 
-void CategoryFilter::setRegExpFilterFactory(RegExpFilterFactoryPtr factory)
+bool CategoryFilter::deserialize(const std::string &checksString, RegExpFilterFactory& regExpFactory)
 {
-  regExpFactory_ = factory;
+  return deserialize(checksString, true, &regExpFactory);
 }
 
 void CategoryFilter::simplifyValues_(CategoryFilter::CategoryCheck& checks) const

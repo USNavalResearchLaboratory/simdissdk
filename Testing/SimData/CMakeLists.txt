@@ -1,4 +1,4 @@
-# IMPORTANT: if you are getting linker errors, make sure that 
+# IMPORTANT: if you are getting linker errors, make sure that
 # "SIMDIS_SDK_LIB_EXPORT_SHARED" is not in your test's Preprocessor Definitions
 
 if(NOT ENABLE_UNIT_TESTING OR NOT TARGET simData OR NOT TARGET simUtil)
@@ -7,8 +7,7 @@ endif()
 
 project(SimData_UnitTests)
 
-create_test_sourcelist(SimDataTestFiles SimDataTests.cpp
-    CategoryDataTest.cpp
+set(TEST_FILENAMES
     TestDataLimiting.cpp
     TestInterpolation.cpp
     TestMemoryDataStore.cpp
@@ -22,6 +21,13 @@ create_test_sourcelist(SimDataTestFiles SimDataTests.cpp
     TestListener.cpp
 )
 
+# simQt is used in CategoryDataTest for its Regular Expression implementation
+if(TARGET simQt)
+    list(APPEND TEST_FILENAMES CategoryDataTest.cpp)
+endif()
+
+create_test_sourcelist(SimDataTestFiles SimDataTests.cpp ${TEST_FILENAMES})
+
 add_executable(SimDataTests ${SimDataTestFiles})
 target_link_libraries(SimDataTests PRIVATE simData simUtil)
 set_target_properties(SimDataTests PROPERTIES
@@ -29,7 +35,12 @@ set_target_properties(SimDataTests PROPERTIES
     PROJECT_LABEL "Unit Tests - SimData"
 )
 
-add_test(NAME simData_TestCategoryData COMMAND SimDataTests CategoryDataTest)
+# simQt is used in CategoryDataTest for its Regular Expression implementation
+if(TARGET simQt)
+    target_link_libraries(SimDataTests PRIVATE simQt)
+    add_test(NAME simData_TestCategoryData COMMAND SimDataTests CategoryDataTest)
+endif()
+
 add_test(NAME simData_TestDataLimiting COMMAND SimDataTests TestDataLimiting)
 add_test(NAME simData_TestInterpolation COMMAND SimDataTests TestInterpolation)
 add_test(NAME simData_TestMemoryDataStore COMMAND SimDataTests TestMemoryDataStore)

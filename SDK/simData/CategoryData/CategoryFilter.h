@@ -54,7 +54,6 @@ public:
   */
   virtual std::string pattern() const = 0;
 };
-
 typedef std::shared_ptr<RegExpFilter> RegExpFilterPtr;
 
 /** Factory class for creating RegExpFilter objects */
@@ -66,8 +65,6 @@ public:
   /** create a new RegExpFilter object based on the specified expression. */
   virtual RegExpFilterPtr createRegExpFilter(const std::string& expression) = 0;
 };
-
-typedef std::shared_ptr<RegExpFilterFactory> RegExpFilterFactoryPtr;
 
 class DataStore;
 
@@ -207,12 +204,14 @@ public:
   void updateCategoryFilterValue(int nameInt, int valueInt, bool valueChecked);
 
   /**
-  * Update the regExp for the specified category name. This regular expression will be used to match against the value
-  * for this category name. Pass in empty string to remove the entry for the specified category name.
+  * Set the regExp for the specified category name. This regular expression will be used to match against the value
+  * for this category name. Pass in NULL or a RegExp with empty string to remove the entry for the specified category
+  * name.  Note that when a regular expression is set for a category, the regular expression supersedes
+  * any category checkmarks for that category name.
   * @param[in] nameInt  int value of the category name
   * @param[in] regExp  regular expression filter to apply to the category value
   */
-  void updateCategoryFilterRegExp(int nameInt, const std::string& regExp);
+  void setCategoryRegExp(int nameInt, const simData::RegExpFilterPtr& regExp);
 
   /**
   * Check if the category data of the specified entity matches the current category filter. This is a convenience method
@@ -240,9 +239,14 @@ public:
   * De-serialize a category filter string from a SIMDIS 9 compatible string
   * @param checksString serialization of the category filter
   * @param skipEmptyCategories if true, optimize filter by skipping unchecked categories
+  * @param regExpFactory Factory to use for generating regular expressions in the checks string.  If
+  *   NULL, then filters with regular expressions will not be parsed properly.
   * @return true on success, false if there is any problem
   */
-  bool deserialize(const std::string &checksString, bool skipEmptyCategories = true);
+  bool deserialize(const std::string &checksString, bool skipEmptyCategories, RegExpFilterFactory* regExpFactory);
+
+  /** Overloaded version of deserialize() that requires a factory for regular expressions, and skips empty categories. */
+  bool deserialize(const std::string &checksString, RegExpFilterFactory& regExpFactory);
 
   /** Simplifies the category filter, removing names and values that do not contribute to filtering. */
   void simplify();
@@ -268,9 +272,6 @@ public:
   void getNames(std::vector<int>& names) const;
   /** Retrieves the values associated with the name. */
   void getValues(int nameInt, ValuesCheck& checks) const;
-
-  /** Set the factory for creating RegExpFilter objects. */
-  void setRegExpFilterFactory(RegExpFilterFactoryPtr factory);
 
 private:
   class CategoryFilterListener;
@@ -304,7 +305,6 @@ private:
   bool doesCategoryAffectFilter_(int nameInt, const CategoryFilter::CategoryValues& values) const;
 
   simData::DataStore* dataStore_; ///< reference to the data store
-  RegExpFilterFactoryPtr regExpFactory_; ///< factory for creating RegExpFilter objects
   bool autoUpdate_; ///< If true the Category Filter automatically updates and there is no need to call buildPrefRulesCategoryFilter
   CategoryCheck categoryCheck_; ///< category filter structure
   CategoryRegExp categoryRegExp_; ///< category reg exp filter structure

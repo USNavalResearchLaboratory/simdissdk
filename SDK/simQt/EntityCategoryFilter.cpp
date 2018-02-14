@@ -22,6 +22,7 @@
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel2.h"
+#include "simQt/RegExpImpl.h"
 #include "simQt/EntityCategoryFilter.h"
 
 namespace simQt {
@@ -93,7 +94,8 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
     std::string filter = it.value().toString().toStdString();
     if (filter != categoryFilter_->serialize(false))
     {
-      categoryFilter_->deserialize(filter, false);
+      simQt::RegExpFilterFactoryImpl reFactory;
+      categoryFilter_->deserialize(filter, false, &reFactory);
 
       // send out signal to alert any guis bound to this filter
       emit categoryFilterChanged(*categoryFilter_);
