@@ -31,6 +31,7 @@
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/ObjectId.h"
 
+class QAction;
 class QFont;
 class QTreeView;
 namespace simData {
@@ -98,7 +99,8 @@ public:
   enum {
     ROLE_SORT_STRING = Qt::UserRole,
     ROLE_EXCLUDE,
-    ROLE_CATEGORY_NAME
+    ROLE_CATEGORY_NAME,
+    ROLE_REGEXP_STRING
   };
 
   // QAbstractItemModel overrides
@@ -266,9 +268,15 @@ private slots:
 
   /** Called by delegate to expand an item */
   void toggleExpanded_(const QModelIndex& proxyIndex);
+  /** Right click occurred on the QTreeView, point relative to QTreeView */
+  void showContextMenu_(const QPoint& point);
 
   /** Reset the active filter, clearing all values */
   void resetFilter_();
+  /** Sets the regular expression on the item saved from showContextMenu_ */
+  void setRegularExpression_();
+  /** Clears the regular expression on the item saved from showContextMenu_ */
+  void clearRegularExpression_();
 
 private:
   /** The tree */
@@ -283,6 +291,10 @@ private:
   bool showEntityCount_;
   /** Counter object that provides values for entity counting. */
   AsyncCategoryCounter* counter_;
+  /** Action used for setting regular expressions */
+  QAction* setRegExpAction_;
+  /** Action used for clearing regular expressions */
+  QAction* clearRegExpAction_;
 };
 
 }

@@ -24,6 +24,8 @@
 #include <QApplication>
 #include <QColor>
 #include <QFont>
+#include <QInputDialog>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QToolTip>
@@ -35,6 +37,7 @@
 #include "simQt/QtFormatting.h"
 #include "simQt/CategoryFilterCounter.h"
 #include "simQt/CategoryTreeModel.h"
+#include "simQt/RegExpImpl.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/CategoryTreeModel2.h"
 
@@ -128,6 +131,8 @@ public:
   virtual int nameInt() const = 0;
   /** Returns true if the UNLISTED VALUE item is checked (i.e. if we are in EXCLUDE mode) */
   virtual bool isUnlistedValueChecked() const = 0;
+  /** Returns true if the tree item's category is influenced by a regular expression */
+  virtual bool isRegExpApplied() const = 0;
 
   ///@{ Composite Tree Management Methods
   TreeItem* parent() const;
@@ -158,6 +163,7 @@ public:
   virtual QString categoryName() const;
   virtual int nameInt() const;
   virtual bool isUnlistedValueChecked() const;
+  virtual bool isRegExpApplied() const;
 
   /** Recalculates the "contributes to filter" flag, returning true if it changes (like setData()) */
   bool recalcContributionTo(const simData::CategoryFilter& filter);
@@ -171,10 +177,18 @@ public:
   bool updateCounts(const std::map<int, size_t>& valueToCountMap) const;
 
 private:
+  /** Checks and unchecks children based on whether they match the filter, returning true if any checks change. */
+  bool setChildChecks_(const simData::RegExpFilter* reFilter);
+
   /** Changes the filter to match the check state of the Value Item. */
   void updateFilter_(const ValueItem& valueItem, simData::CategoryFilter& filter) const;
   /** Change the value item to match the state of the checks structure (filter).  Returns 0 on no change. */
   int updateValueItem_(ValueItem& valueItem, const simData::CategoryFilter::ValuesCheck& checks) const;
+
+  /** setData() variant that handles the ROLE_EXCLUDE role */
+  bool setExcludeData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged);
+  /** setData() variant that handles ROLE_REGEXP_STRING role */
+  bool setRegExpStringData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged);
 
   /** String representation of NAME. */
   QString categoryName_;
@@ -182,6 +196,8 @@ private:
   int nameInt_;
   /** Cache the state of the UNLISTED VALUE.  When TRUE, we're in EXCLUDE mode */
   bool unlistedValue_;
+  /** Category's Regular Expression string value */
+  QString regExpString_;
   /** Set to true if this category contributes to the filter. */
   bool contributesToFilter_;
   /** Font to use for FontRole (not owned) */
@@ -203,9 +219,13 @@ public:
   virtual QString categoryName() const;
   virtual int nameInt() const;
   virtual bool isUnlistedValueChecked() const;
+  virtual bool isRegExpApplied() const;
 
   /** Returns the value integer for this item */
   int valueInt() const;
+  /** Returns the value string for this item; for NO_CATEGORY_VALUE_AT_TIME, empty string is returned. */
+  QString valueString() const;
+
   /**
   * Changes the GUI state of whether this item is checked.  This does not match 1-for-1
   * with the filter state, and does not directly update any CategoryFilter instance.
@@ -227,7 +247,7 @@ private:
   int valueInt_;
   int numMatches_;
   Qt::CheckState checked_;
-  QString inclusiveText_;
+  QString valueString_;
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -301,6 +321,11 @@ bool CategoryTreeModel2::CategoryItem::isUnlistedValueChecked() const
   return unlistedValue_;
 }
 
+bool CategoryTreeModel2::CategoryItem::isRegExpApplied() const
+{
+  return !regExpString_.isEmpty();
+}
+
 int CategoryTreeModel2::CategoryItem::nameInt() const
 {
   return nameInt_;
@@ -327,6 +352,8 @@ QVariant CategoryTreeModel2::CategoryItem::data(int role) const
     return categoryName_;
   case ROLE_EXCLUDE:
     return unlistedValue_;
+  case ROLE_REGEXP_STRING:
+    return regExpString_;
   case Qt::BackgroundColorRole:
     if (contributesToFilter_)
       return CONTRIBUTING_BG_COLOR;
@@ -343,8 +370,18 @@ QVariant CategoryTreeModel2::CategoryItem::data(int role) const
 
 bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
 {
+  if (role == ROLE_EXCLUDE)
+    return setExcludeData_(value, filter, filterChanged);
+  else if (role == ROLE_REGEXP_STRING)
+    return setRegExpStringData_(value, filter, filterChanged);
   filterChanged = false;
-  if (role != ROLE_EXCLUDE || value.toBool() == unlistedValue_)
+  return false;
+}
+
+bool CategoryTreeModel2::CategoryItem::setExcludeData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
+{
+  filterChanged = false;
+  if (value.toBool() == unlistedValue_)
     return false;
 
   // Update the value
@@ -369,6 +406,34 @@ bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, 
   return true;
 }
 
+bool CategoryTreeModel2::CategoryItem::setRegExpStringData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
+{
+  // Check for easy no-op
+  filterChanged = false;
+  if (value.toString() == regExpString_)
+    return false;
+
+  // Update the value
+  regExpString_ = value.toString();
+  filterChanged = true;
+
+  // Create/set the regular expression
+  simData::RegExpFilterPtr newRegExpObject;
+  if (!regExpString_.isEmpty())
+  {
+    // The factory could/should be passed in for maximum flexibility
+    simQt::RegExpFilterFactoryImpl reFactory;
+    newRegExpObject = reFactory.createRegExpFilter(regExpString_.toStdString());
+  }
+
+  // Set the RegExp, simplify, and update the internal state
+  filter.setCategoryRegExp(nameInt_, newRegExpObject);
+  filter.simplify(nameInt_);
+  recalcContributionTo(filter);
+  setChildChecks_(newRegExpObject.get());
+  return true;
+}
+
 bool CategoryTreeModel2::CategoryItem::recalcContributionTo(const simData::CategoryFilter& filter)
 {
   // First check the regular expression.  If there's a regexp, then this category definitely contributes
@@ -384,15 +449,49 @@ void CategoryTreeModel2::CategoryItem::setFont(QFont* font)
   font_ = font;
 }
 
+bool CategoryTreeModel2::CategoryItem::setChildChecks_(const simData::RegExpFilter* reFilter)
+{
+  bool hasChange = false;
+  const int count = childCount();
+  for (int k = 0; k < count; ++k)
+  {
+    // Test the EditRole, which is used because it omits the # count (e.g. "Friendly (1)")
+    ValueItem* valueItem = static_cast<ValueItem*>(child(k));
+    const bool matches = reFilter != NULL && reFilter->match(valueItem->valueString().toStdString());
+    if (matches != valueItem->isChecked())
+    {
+      valueItem->setChecked(matches);
+      hasChange = true;
+    }
+  }
+  return hasChange;
+}
+
 int CategoryTreeModel2::CategoryItem::updateTo(const simData::CategoryFilter& filter)
 {
+  // Update the category if it has a RegExp
+  const QString oldRegExp = regExpString_;
+  const auto* regExpObject = filter.getRegExp(nameInt_);
+  regExpString_ = (regExpObject != NULL ? QString::fromStdString(filter.getRegExpPattern(nameInt_)) : "");
+  // If the RegExp string is different, we definitely have some sort of change
+  bool hasChange = (regExpString_ != oldRegExp);
+
+  // Case 1: Regular Expression is not empty.  Check and uncheck values as needed
+  if (!regExpString_.isEmpty())
+  {
+    // Synchronize the checks of the children
+    if (setChildChecks_(regExpObject))
+      hasChange = true;
+    return hasChange ? 1 : 0;
+  }
+
+  // No RegExp -- pull out the category checks
   simData::CategoryFilter::ValuesCheck checks;
   filter.getValues(nameInt_, checks);
 
-  // Case 1: Filter doesn't have this category.  Uncheck all children
+  // Case 2: Filter doesn't have this category.  Uncheck all children
   if (checks.empty())
   {
-    bool hasChange = false;
     const int count = childCount();
     for (int k = 0; k < count; ++k)
     {
@@ -410,7 +509,7 @@ int CategoryTreeModel2::CategoryItem::updateTo(const simData::CategoryFilter& fi
     return hasChange ? 1 : 0;
   }
 
-  // Case 2: We are in the filter, so our unlistedValueBool matters
+  // Case 3: We are in the filter, so our unlistedValueBool matters
   auto i = checks.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
   if (i != checks.end())
   {
@@ -420,7 +519,8 @@ int CategoryTreeModel2::CategoryItem::updateTo(const simData::CategoryFilter& fi
 
   // Detect change in Unlisted Value state
   const bool newUnlistedValue = (i != checks.end() && i->second);
-  bool hasChange = (unlistedValue_ != newUnlistedValue);
+  if (unlistedValue_ != newUnlistedValue)
+    hasChange = true;
   unlistedValue_ = newUnlistedValue;
 
   // Iterate through children and make sure the state matches
@@ -530,7 +630,7 @@ CategoryTreeModel2::ValueItem::ValueItem(const simData::CategoryNameManager& nam
     valueInt_(valueInt),
     numMatches_(-1),
     checked_(Qt::Unchecked),
-    inclusiveText_(QString::fromStdString(nameManager.valueIntToString(valueInt)))
+    valueString_(QString::fromStdString(nameManager.valueIntToString(valueInt)))
 {
 }
 
@@ -541,6 +641,15 @@ bool CategoryTreeModel2::ValueItem::isUnlistedValueChecked() const
   if (!parent())
     return false;
   return parent()->isUnlistedValueChecked();
+}
+
+bool CategoryTreeModel2::ValueItem::isRegExpApplied() const
+{
+  // Assertion failure means we have orphan value items
+  assert(parent());
+  if (!parent())
+    return false;
+  return parent()->isRegExpApplied();
 }
 
 int CategoryTreeModel2::ValueItem::nameInt() const
@@ -562,8 +671,18 @@ int CategoryTreeModel2::ValueItem::valueInt() const
   return valueInt_;
 }
 
+QString CategoryTreeModel2::ValueItem::valueString() const
+{
+  // "No Value" should return empty string here, not user-facing string
+  if (valueInt_ == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
+    return "";
+  return valueString_;
+}
+
 Qt::ItemFlags CategoryTreeModel2::ValueItem::flags() const
 {
+  if (isRegExpApplied())
+    return Qt::NoItemFlags;
   return Qt::ItemIsEnabled | Qt::ItemIsUserCheckable;
 }
 
@@ -576,11 +695,11 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
   {
     QString returnString;
     if (!isUnlistedValueChecked())
-      returnString = inclusiveText_;
+      returnString = valueString_;
     else if (valueInt_ == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
       returnString = tr("Has Value");
     else
-      returnString = tr("Not %1").arg(inclusiveText_);
+      returnString = tr("Not %1").arg(valueString_);
     // Append the numeric count if specified
     if (numMatches_ >= 0)
       returnString = tr("%1 (%2)").arg(returnString).arg(numMatches_);
@@ -601,6 +720,12 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
   case ROLE_CATEGORY_NAME:
     return categoryName();
 
+  case ROLE_REGEXP_STRING:
+    // Parent node holds the RegExp string
+    if (parent())
+      return parent()->data(ROLE_REGEXP_STRING);
+    break;
+
   default:
     break;
   }
@@ -609,11 +734,12 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
 
 bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
 {
-  filterChanged = false;
-
-  // Only editing supported on values is check/uncheck
+  // Internally handle check/uncheck value.  For ROLE_REGEXP, rely on category parent
   if (role == Qt::CheckStateRole)
     return setCheckStateData_(value, filter, filterChanged);
+  else if (role == ROLE_REGEXP_STRING && parent() != NULL)
+    return parent()->setData(value, role, filter, filterChanged);
+  filterChanged = false;
   return false;
 }
 
@@ -1551,7 +1677,8 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   : QWidget(parent),
     activeFiltering_(false),
     showEntityCount_(false),
-    counter_(NULL)
+    counter_(NULL),
+    setRegExpAction_(NULL)
 {
   setWindowTitle("Category Data Filter");
   setObjectName("CategoryFilterWidget2");
@@ -1574,10 +1701,18 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   simQt::CategoryTreeItemDelegate* itemDelegate = new simQt::CategoryTreeItemDelegate(this);
   treeView_->setItemDelegate(itemDelegate);
 
-  QAction* resetAction = new QAction(tr("Reset"), this);
-  connect(resetAction, SIGNAL(triggered()), this, SLOT(resetFilter_()));
+  setRegExpAction_ = new QAction(tr("Set Regular Expression..."), this);
+  connect(setRegExpAction_, SIGNAL(triggered()), this, SLOT(setRegularExpression_()));
+  clearRegExpAction_ = new QAction(tr("Clear Regular Expression"), this);
+  connect(clearRegExpAction_, SIGNAL(triggered()), this, SLOT(clearRegularExpression_()));
+
   QAction* separator1 = new QAction(this);
   separator1->setSeparator(true);
+
+  QAction* resetAction = new QAction(tr("Reset"), this);
+  connect(resetAction, SIGNAL(triggered()), this, SLOT(resetFilter_()));
+  QAction* separator2 = new QAction(this);
+  separator2->setSeparator(true);
 
   QAction* collapseAction = new QAction(tr("Collapse Values"), this);
   connect(collapseAction, SIGNAL(triggered()), treeView_, SLOT(collapseAll()));
@@ -1587,9 +1722,12 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(expandAction, SIGNAL(triggered()), treeView_, SLOT(expandAll()));
   expandAction->setIcon(QIcon(":/simQt/images/Expand.png"));
 
-  treeView_->setContextMenuPolicy(Qt::ActionsContextMenu);
-  treeView_->addAction(resetAction);
+  treeView_->setContextMenuPolicy(Qt::CustomContextMenu);
+  treeView_->addAction(setRegExpAction_);
+  treeView_->addAction(clearRegExpAction_);
   treeView_->addAction(separator1);
+  treeView_->addAction(resetAction);
+  treeView_->addAction(separator2);
   treeView_->addAction(collapseAction);
   treeView_->addAction(expandAction);
 
@@ -1602,6 +1740,7 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   layout->addWidget(search);
   layout->addWidget(treeView_);
 
+  connect(treeView_, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu_(QPoint)));
   connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), this, SIGNAL(filterChanged(simData::CategoryFilter)));
   connect(treeModel_, SIGNAL(filterEdited(simData::CategoryFilter)), this, SIGNAL(filterEdited(simData::CategoryFilter)));
   connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToModel_(QModelIndex, int, int)));
@@ -1741,6 +1880,80 @@ void CategoryFilterWidget2::resetFilter_()
   // Tree would have sent out a changed signal, but not an edited signal (because we are
   // doing this programmatically).  That's OK, but we need to send out an edited signal.
   emit filterEdited(treeModel_->categoryFilter());
+}
+
+void CategoryFilterWidget2::showContextMenu_(const QPoint& point)
+{
+  QMenu contextMenu(this);
+  contextMenu.addActions(treeView_->actions());
+
+  // Mark the Set RegExp action enabled or disabled based on what you clicked on
+  const QModelIndex idx = treeView_->indexAt(point);
+  setRegExpAction_->setProperty("index", idx);
+  setRegExpAction_->setEnabled(idx.isValid());
+  // Mark the Clear RegExp action similarly
+  clearRegExpAction_->setProperty("index", idx);
+  clearRegExpAction_->setEnabled(idx.isValid() && !idx.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString().isEmpty());
+
+  // Show the menu
+  contextMenu.exec(treeView_->mapToGlobal(point));
+
+  // Clear the index property and disable
+  setRegExpAction_->setProperty("index", QVariant());
+  setRegExpAction_->setEnabled(false);
+  clearRegExpAction_->setProperty("index", idx);
+  clearRegExpAction_->setEnabled(false);
+}
+
+void CategoryFilterWidget2::setRegularExpression_()
+{
+  // Make sure we have a sender and can pull out the index.  If not, return
+  QObject* senderObject = sender();
+  if (senderObject == NULL)
+    return;
+  QModelIndex index = senderObject->property("index").toModelIndex();
+  if (!index.isValid())
+    return;
+
+  // Grab category name and old regexp, then ask user for new value
+  const QString oldRegExp = index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString();
+  const QString categoryName = index.data(CategoryTreeModel2::ROLE_CATEGORY_NAME).toString();
+  bool accepted = false;
+
+  // Create an input dialog on the stack so that we can set a What's This tip for more information
+  QInputDialog inputDialog(this);
+  inputDialog.setWhatsThis(tr(
+"Regular expressions can be applied to categories in a filter.  Categories with regular expression filters will match only the values that match the regular expression."
+"<p>This popup changes the regular expression value for the category '%1'."
+"<p>An empty string can be used to clear the regular expression and return to normal matching mode.").arg(categoryName));
+  inputDialog.setInputMode(QInputDialog::TextInput);
+  inputDialog.setTextValue(oldRegExp);
+  inputDialog.setWindowTitle(tr("Set Regular Expression"));
+  inputDialog.setLabelText(tr("Set '%1' value regular expression:").arg(categoryName));
+
+  // Execute the GUI and set the regexp
+  if (inputDialog.exec() == QDialog::Accepted && inputDialog.textValue() != oldRegExp)
+  {
+    // index.model() is const because changes to the model might invalidate indices.  Since we know this
+    // and no longer use the index after this call, it is safe to use const_cast here to use setData().
+    QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
+    model->setData(index, inputDialog.textValue(), CategoryTreeModel2::ROLE_REGEXP_STRING);
+  }
+}
+
+void CategoryFilterWidget2::clearRegularExpression_()
+{
+  // Make sure we have a sender and can pull out the index.  If not, return
+  QObject* senderObject = sender();
+  if (senderObject == NULL)
+    return;
+  QModelIndex index = senderObject->property("index").toModelIndex();
+  if (!index.isValid())
+    return;
+  // index.model() is const because changes to the model might invalidate indices.  Since we know this
+  // and no longer use the index after this call, it is safe to use const_cast here to use setData().
+  QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
+  model->setData(index, QString(""), CategoryTreeModel2::ROLE_REGEXP_STRING);
 }
 
 }
