@@ -918,10 +918,9 @@ void GogNodeInterface::applyBackfaceCulling()
   // Note that extruded lines are the only extruded symbol that need backface culling off (because it
   // extrudes to a filled polygon instead of a 3D shape).
 
-  bool is3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_HEMISPHERE ||
-    shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX);
+  bool isClosed3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX);
   const bool isLine = (shape() == GOG_LINE || shape() == GOG_LINESEGS);
-  if (is3dShape || (extruded_ && !isLine))
+  if (isClosed3dShape || (extruded_ && !isLine))
     style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = true;
   else
     style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = false;
