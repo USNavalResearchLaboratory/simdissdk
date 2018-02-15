@@ -356,6 +356,8 @@ void CategoryTreeModel::addCategoryName_(int nameIndex)
   if (findCategoryName_(nameIndex) != NULL)
     return;
 
+  // New category was added to the category name manager.  Check to see if the category is present
+  // in the current filter (it probably isn't) and make sure we have each of those value checked
   const simData::CategoryFilter::CategoryCheck& categoryCheck = categoryFilter_->getCategoryFilter();
   simData::CategoryFilter::CategoryCheck::const_iterator iter = categoryCheck.find(nameIndex);
   assert(iter != categoryCheck.end());
@@ -390,6 +392,8 @@ void CategoryTreeModel::addCategoryValue_(int nameIndex, int valueIndex, bool re
     return;
   }
 
+  // A new value was added.  Give it a valid checked or not checked state as appropriate based on
+  // the content of the category filter.
   const simData::CategoryFilter::CategoryCheck& categoryCheck = categoryFilter_->getCategoryFilter();
   simData::CategoryFilter::CategoryCheck::const_iterator iter = categoryCheck.find(nameIndex);
   assert(iter != categoryCheck.end());
@@ -639,7 +643,7 @@ void CategoryTreeModel::setFilter(const simData::CategoryFilter& categoryFilter)
   {
     simData::CategoryFilter localSimplified = *categoryFilter_;
     localSimplified.simplify();
-    if (localSimplified.getCategoryFilter() == simplified.getCategoryFilter())
+    if (localSimplified == simplified)
       return;
   }
 

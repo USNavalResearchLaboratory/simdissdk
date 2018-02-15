@@ -156,6 +156,25 @@ CategoryFilter& CategoryFilter::assign(const CategoryFilter& other, bool copyAut
   return *this;
 }
 
+bool CategoryFilter::isEmpty() const
+{
+  return categoryCheck_.empty() && categoryRegExp_.empty();
+}
+
+bool CategoryFilter::operator==(const CategoryFilter& rhs) const
+{
+  // Though data stores must match, the auto-update / listener pointers do not need to match
+  return (dataStore_ == rhs.dataStore_ &&
+    categoryCheck_ == rhs.categoryCheck_ &&
+    categoryRegExp_ == rhs.categoryRegExp_);
+}
+
+bool CategoryFilter::nameContributesToFilter(int nameInt) const
+{
+  return categoryCheck_.find(nameInt) != categoryCheck_.end() ||
+    categoryRegExp_.find(nameInt) != categoryRegExp_.end();
+}
+
 void CategoryFilter::addCategoryName_(int nameIndex)
 {
   // prevent duplicates
@@ -989,9 +1008,16 @@ int CategoryFilter::removeValue(int nameInt, int valueInt)
 
 void CategoryFilter::getNames(std::vector<int>& names) const
 {
-  names.clear();
+  // Combine the names from category checks and category regexp into a set
+  std::set<int> namesSet;
   for (auto i = categoryCheck_.begin(); i != categoryCheck_.end(); ++i)
-    names.push_back(i->first);
+    namesSet.insert(i->first);
+  for (auto i = categoryRegExp_.begin(); i != categoryRegExp_.end(); ++i)
+    namesSet.insert(i->first);
+
+  // Convert set into a vector
+  names.resize(namesSet.size());
+  names.assign(namesSet.begin(), namesSet.end());
 }
 
 void CategoryFilter::getValues(int nameInt, ValuesCheck& checks) const
@@ -1000,6 +1026,20 @@ void CategoryFilter::getValues(int nameInt, ValuesCheck& checks) const
   auto i = categoryCheck_.find(nameInt);
   if (i != categoryCheck_.end())
     checks = i->second.second;
+}
+
+const simData::RegExpFilter* CategoryFilter::getRegExp(int nameInt) const
+{
+  auto i = categoryRegExp_.find(nameInt);
+  return (i == categoryRegExp_.end() ? NULL : i->second.get());
+}
+
+std::string CategoryFilter::getRegExpPattern(int nameInt) const
+{
+  auto i = categoryRegExp_.find(nameInt);
+  if (i == categoryRegExp_.end())
+    return "";
+  return i->second->pattern();
 }
 
 }

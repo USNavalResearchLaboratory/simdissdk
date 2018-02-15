@@ -371,8 +371,8 @@ bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, 
 
 bool CategoryTreeModel2::CategoryItem::recalcContributionTo(const simData::CategoryFilter& filter)
 {
-  const auto& catValues = filter.getCategoryFilter();
-  const bool newValue = (catValues.find(nameInt_) != catValues.end());
+  // First check the regular expression.  If there's a regexp, then this category definitely contributes
+  const bool newValue = filter.nameContributesToFilter(nameInt_);
   if (newValue == contributesToFilter_)
     return false;
   contributesToFilter_ = newValue;
@@ -894,7 +894,7 @@ void CategoryTreeModel2::setFilter(const simData::CategoryFilter& filter)
   // Avoid no-op
   simData::CategoryFilter simplified(filter);
   simplified.simplify();
-  if (filter_ != NULL && simplified.getCategoryFilter() == filter_->getCategoryFilter())
+  if (filter_ != NULL && simplified == *filter_)
     return;
 
   // Do a two step assignment so that we don't automatically get auto-update
@@ -964,7 +964,7 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
   categoryIntToItem_.clear();
 
   // Clear out the internal filter object
-  const bool hadFilter = (filter_ != NULL && !filter_->getCategoryFilter().empty());
+  const bool hadFilter = (filter_ != NULL && !filter_->isEmpty());
   delete filter_;
   filter_ = NULL;
   if (dataStore_)

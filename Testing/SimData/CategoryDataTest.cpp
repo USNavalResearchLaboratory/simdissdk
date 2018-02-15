@@ -1292,6 +1292,7 @@ int testRegExpSimplify()
   rv += SDK_ASSERT(filter.match(PLATFORM_ID));
   rv += SDK_ASSERT(filter.serialize(false) == " ");
   rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.isEmpty()); // Should be empty due to deserialize on key3(0)
 
   // Make sure it simplifies away the checks when regex is present, even if that checks matches
   rv += SDK_ASSERT(filter.deserialize("key2(1)^e3~value2(1)~value1(0)", reFactory));
@@ -1348,6 +1349,40 @@ int testRegExpSimplify()
   // Demonstrate that empty-string regex does not match things that DO have a key
   rv += SDK_ASSERT(filter.deserialize("key2(1)^^$", reFactory));
   rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(!filter.isEmpty());
+  rv += SDK_ASSERT(filter.nameContributesToFilter(KEY2));
+  rv += SDK_ASSERT(!filter.nameContributesToFilter(KEY3));
+
+  // Demonstrate that getNames() returns the correct value with regular expressions
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^e3`key3(1)~value2(0)~value1(1)", reFactory));
+  filter.simplify();
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)^e3`key3(1)~value1(1)");
+  rv += SDK_ASSERT(filter.nameContributesToFilter(KEY2));
+  rv += SDK_ASSERT(filter.nameContributesToFilter(KEY3));
+  std::vector<int> names;
+  filter.getNames(names);
+  rv += SDK_ASSERT(names.size() == 2);
+  rv += SDK_ASSERT(names[0] == KEY2);
+  rv += SDK_ASSERT(names[1] == KEY3);
+  simData::CategoryFilter::ValuesCheck checks;
+  filter.getValues(KEY2, checks);
+  rv += SDK_ASSERT(checks.empty());
+  filter.getValues(KEY3, checks);
+  rv += SDK_ASSERT(checks.size() == 1);
+
+  // Test getRegExp()/getRegExpPattern()
+  rv += SDK_ASSERT(filter.getRegExp(KEY2) != NULL);
+  rv += SDK_ASSERT(filter.getRegExp(KEY2)->pattern() == "e3");
+  rv += SDK_ASSERT(filter.getRegExpPattern(KEY2) == "e3");
+  rv += SDK_ASSERT(filter.getRegExp(KEY3) == NULL);
+  rv += SDK_ASSERT(filter.getRegExpPattern(KEY3).empty());
+  // Test a different pattern
+  rv += SDK_ASSERT(filter.deserialize("key3(1)^^e2$", reFactory));
+  rv += SDK_ASSERT(filter.getRegExp(KEY2) == NULL);
+  rv += SDK_ASSERT(filter.getRegExpPattern(KEY2).empty());
+  rv += SDK_ASSERT(filter.getRegExp(KEY3) != NULL);
+  rv += SDK_ASSERT(filter.getRegExp(KEY3)->pattern() == "^e2$");
+  rv += SDK_ASSERT(filter.getRegExpPattern(KEY3) == "^e2$");
 
   return rv;
 }

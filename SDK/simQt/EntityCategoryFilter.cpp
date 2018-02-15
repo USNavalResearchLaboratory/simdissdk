@@ -124,7 +124,7 @@ void EntityCategoryFilter::bindToWidget(CategoryFilterWidget* widget) const
 
 void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& categoryFilter)
 {
-  if (categoryFilter_->getCategoryFilter() == categoryFilter.getCategoryFilter())
+  if ((*categoryFilter_) == categoryFilter)
     return;
 
   *categoryFilter_ = categoryFilter;

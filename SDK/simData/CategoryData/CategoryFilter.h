@@ -179,6 +179,13 @@ public:
   CategoryFilter& operator=(const CategoryFilter& other);
   /** Assignment with options */
   CategoryFilter& assign(const CategoryFilter& other, bool copyAutoUpdateFlag);
+  /** Comparison operator */
+  bool operator==(const CategoryFilter& rhs) const;
+
+  /** Returns true if the filter is empty (no name/value checks and no regular expressions).  Does not pre-simplify. */
+  bool isEmpty() const;
+  /** Returns true if values in the provided category might contribute to an entity passing or failing a filter. */
+  bool nameContributesToFilter(int nameInt) const;
 
   /**
   * build the category filter based on what is in the data store. Will add default No Value and Unlisted entries for all categories
@@ -295,10 +302,14 @@ public:
   /** Removes the value entirely from the filter.  If the name is empty, it is also removed.  Returns 0 on success. */
   int removeValue(int nameInt, int valueInt);
 
-  /** Retrieves a list of names that are included in this filter. */
+  /** Retrieves a list of names that are included in this filter.  This includes names impacted by regular expression. */
   void getNames(std::vector<int>& names) const;
-  /** Retrieves the values associated with the name. */
+  /** Retrieves the values associated with the name.  This may be empty if a regular expression is applied to the name. */
   void getValues(int nameInt, ValuesCheck& checks) const;
+  /** Retrieves the values regular expression for the given name int.  May be NULL if not set. */
+  const simData::RegExpFilter* getRegExp(int nameInt) const;
+  /** Retrieves the values regular expression string for the given name int.  May be empty string if not set. */
+  std::string getRegExpPattern(int nameInt) const;
 
 private:
   class CategoryFilterListener;
