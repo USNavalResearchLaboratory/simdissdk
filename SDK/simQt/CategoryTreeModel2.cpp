@@ -381,7 +381,8 @@ bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, 
 bool CategoryTreeModel2::CategoryItem::setExcludeData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
 {
   filterChanged = false;
-  if (value.toBool() == unlistedValue_)
+  // If value does not change, or if disabled, then return early
+  if (value.toBool() == unlistedValue_ || !flags().testFlag(Qt::ItemIsEnabled))
     return false;
 
   // Update the value
@@ -747,9 +748,9 @@ bool CategoryTreeModel2::ValueItem::setCheckStateData_(const QVariant& value, si
 {
   filterChanged = false;
 
-  // If the edit sets us to same state, then return early
+  // If the edit sets us to same state, or disabled, then return early
   const Qt::CheckState newChecked = static_cast<Qt::CheckState>(value.toInt());
-  if (newChecked == checked_)
+  if (newChecked == checked_ || !flags().testFlag(Qt::ItemIsEnabled))
     return false;
 
   // Figure out how to translate the GUI state into the filter value
@@ -1187,6 +1188,13 @@ void CategoryTreeModel2::addValue_(int nameInt, int valueInt)
 
   // Create the value item
   ValueItem* valueItem = new ValueItem(dataStore_->categoryNameManager(), nameInt, valueInt);
+  // Value item is unchecked, unless the parent has a regular expression
+  if (nameItem->isRegExpApplied())
+  {
+    auto* reObject = filter_->getRegExp(nameInt);
+    if (reObject)
+      valueItem->setChecked(reObject->match(valueItem->valueString().toStdString()));
+  }
 
   // Get the index for the name (parent), and add this new valueItem into the tree
   const QModelIndex nameIndex = createIndex(categories_.indexOf(static_cast<CategoryItem*>(nameItem)), 0, nameItem);
@@ -1394,6 +1402,7 @@ struct CategoryTreeItemDelegate::ChildRects
   QRect branch;
   QRect text;
   QRect excludeToggle;
+  QRect regExpButton;
 };
 
 CategoryTreeItemDelegate::CategoryTreeItemDelegate(QObject* parent)
@@ -1446,12 +1455,26 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
     style->drawControl(QStyle::CE_ItemViewItem, &opt, painter);
   }
 
+  if (r.excludeToggle.isValid())
   { // Draw the toggle switch for changing EXCLUDE and INCLUDE
     StyleOptionToggleSwitch switchOpt;
     ToggleSwitchPainter switchPainter;
     switchOpt.rect = r.excludeToggle;
     switchOpt.value = index.data(CategoryTreeModel2::ROLE_EXCLUDE).toBool();
     switchPainter.paint(switchOpt, painter);
+  }
+
+  if (r.regExpButton.isValid())
+  { // Draw the RegExp text box
+    QStyleOptionButton buttonOpt;
+    buttonOpt.rect = r.regExpButton;
+    buttonOpt.text = tr("RegExp...");
+    buttonOpt.state = QStyle::State_Enabled;
+    if (clickedElement_ == SE_REGEXP_BUTTON && clickedIndex_ == index)
+      buttonOpt.state |= QStyle::State_Sunken;
+    else
+      buttonOpt.state |= QStyle::State_Raised;
+    style->drawControl(QStyle::CE_PushButton, &buttonOpt, painter);
   }
 }
 
@@ -1480,7 +1503,7 @@ void CategoryTreeItemDelegate::paintValue_(QPainter* painter, QStyleOptionViewIt
   }
 
   // Category values that are hovered are shown as underlined in link color (blue usually)
-  if (opt.state.testFlag(QStyle::State_MouseOver))
+  if (opt.state.testFlag(QStyle::State_MouseOver) && opt.state.testFlag(QStyle::State_Enabled))
   {
     opt.font.setUnderline(true);
     opt.palette.setBrush(QPalette::Text, opt.palette.color(QPalette::Link));
@@ -1522,6 +1545,8 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
       return true;
     }
     clickedIndex_ = index;
+    if (clickedElement_ == SE_REGEXP_BUTTON)
+      return true;
     break;
 
   case QEvent::MouseButtonRelease:
@@ -1535,7 +1560,15 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
       if (clickedElement_ == SE_EXCLUDE_TOGGLE)
       {
         QVariant oldState = index.data(CategoryTreeModel2::ROLE_EXCLUDE);
-        model->setData(index, !oldState.toBool(), CategoryTreeModel2::ROLE_EXCLUDE);
+        if (index.flags().testFlag(Qt::ItemIsEnabled))
+          model->setData(index, !oldState.toBool(), CategoryTreeModel2::ROLE_EXCLUDE);
+        clickedIndex_ = QModelIndex();
+        return true;
+      }
+      else if (clickedElement_ == SE_REGEXP_BUTTON)
+      {
+        // Need to talk to the tree itself to do the input GUI, so pass this off as a signal
+        emit editRegExpClicked(index);
         clickedIndex_ = QModelIndex();
         return true;
       }
@@ -1547,8 +1580,8 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
   case QEvent::MouseButtonDblClick:
     clickedIndex_ = QModelIndex();
     clickedElement_ = hit_(me->pos(), option, index);
-    // Ignore double click on the toggle button and branch button, so that it doesn't cause expand/contract
-    if (clickedElement_ == SE_EXCLUDE_TOGGLE || clickedElement_ == SE_BRANCH)
+    // Ignore double click on the toggle, branch, and RegExp buttons, so that it doesn't cause expand/contract
+    if (clickedElement_ == SE_EXCLUDE_TOGGLE || clickedElement_ == SE_BRANCH || clickedElement_ == SE_REGEXP_BUTTON)
       return true;
     break;
 
@@ -1593,7 +1626,8 @@ bool CategoryTreeItemDelegate::valueEvent_(QEvent* evt, QAbstractItemModel* mode
   {
     // Invert the state and send it as an updated check
     Qt::CheckState newState = (checkState.toInt() == Qt::Checked) ? Qt::Unchecked : Qt::Checked;
-    model->setData(index, newState, Qt::CheckStateRole);
+    if (index.flags().testFlag(Qt::ItemIsEnabled))
+      model->setData(index, newState, Qt::CheckStateRole);
     clickedIndex_ = QModelIndex();
   }
   return true;
@@ -1609,6 +1643,8 @@ void CategoryTreeItemDelegate::calculateRects_(const QStyleOptionViewItem& optio
     rects.background.setLeft(0);
     rects.checkbox = rects.background;
     rects.checkbox.setRight(TREE_INDENTATION);
+    rects.excludeToggle = QRect();
+    rects.regExpButton = QRect();
 
     // Text takes up everything to the right of the checkbox
     rects.text = rects.background.adjusted(TREE_INDENTATION, 0, 0, 0);
@@ -1620,18 +1656,31 @@ void CategoryTreeItemDelegate::calculateRects_(const QStyleOptionViewItem& optio
     rects.branch.setRight(rects.branch.left() + rects.branch.height());
 
     // Calculate the width given the rectangle of height, for the toggle switch
-    rects.excludeToggle = rects.background.adjusted(0, 1, -1, -1);
-    ToggleSwitchPainter switchPainter;
-    StyleOptionToggleSwitch switchOpt;
-    switchOpt.rect = rects.excludeToggle;
-    const QSize toggleSize = switchPainter.sizeHint(switchOpt);
-    // Set the left side appropriately
-    rects.excludeToggle.setLeft(rects.excludeToggle.right() - toggleSize.width());
+    const bool haveRegExp = !index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString().isEmpty();
+    if (haveRegExp)
+    {
+      rects.excludeToggle = QRect();
+      rects.regExpButton = rects.background.adjusted(0, 1, -1, -1);
+      rects.regExpButton.setLeft(rects.regExpButton.right() - 60);
+    }
+    else
+    {
+      rects.excludeToggle = rects.background.adjusted(0, 1, -1, -1);
+      ToggleSwitchPainter switchPainter;
+      StyleOptionToggleSwitch switchOpt;
+      switchOpt.rect = rects.excludeToggle;
+      const QSize toggleSize = switchPainter.sizeHint(switchOpt);
+      // Set the left side appropriately
+      rects.excludeToggle.setLeft(rects.excludeToggle.right() - toggleSize.width());
+    }
 
     // Text takes up everything to the right of the branch button until the exclude toggle
     rects.text = rects.background;
     rects.text.setLeft(rects.branch.right());
-    rects.text.setRight(rects.excludeToggle.left());
+    if (haveRegExp)
+      rects.text.setRight(rects.regExpButton.left());
+    else
+      rects.text.setRight(rects.excludeToggle.left());
   }
 }
 
@@ -1643,6 +1692,8 @@ CategoryTreeItemDelegate::SubElement CategoryTreeItemDelegate::hit_(const QPoint
 
   if (r.excludeToggle.isValid() && r.excludeToggle.contains(pos))
     return SE_EXCLUDE_TOGGLE;
+  if (r.regExpButton.isValid() && r.regExpButton.contains(pos))
+    return SE_REGEXP_BUTTON;
   if (r.checkbox.isValid() && r.checkbox.contains(pos))
     return SE_CHECKBOX;
   if (r.branch.isValid() && r.branch.contains(pos))
@@ -1660,10 +1711,18 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
   if (evt->type() == QEvent::ToolTip)
   {
     // Special tooltip for the EXCLUDE filter
-    if (hit_(evt->pos(), option, index) == SE_EXCLUDE_TOGGLE)
+    const SubElement subElement = hit_(evt->pos(), option, index);
+    if (subElement == SE_EXCLUDE_TOGGLE)
     {
       QToolTip::showText(evt->globalPos(), simQt::formatTooltip(tr("Exclude"),
         tr("When on, Exclude mode will omit all entities that match your selected values.<p>When off, the filter will match all entities that have one of your checked category values.")),
+        view);
+      return true;
+    }
+    else if (subElement == SE_REGEXP_BUTTON)
+    {
+      QToolTip::showText(evt->globalPos(), simQt::formatTooltip(tr("Set Regular Expression"),
+        tr("A regular expression has been set for this category.  Use this button to change the category's regular expression.")),
         view);
       return true;
     }
@@ -1749,6 +1808,7 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(search, SIGNAL(textChanged(QString)), this, SLOT(expandAfterFilterEdited_(QString)));
   connect(search, SIGNAL(textChanged(QString)), proxy_, SLOT(setFilterText(QString)));
   connect(itemDelegate, SIGNAL(expandClicked(QModelIndex)), this, SLOT(toggleExpanded_(QModelIndex)));
+  connect(itemDelegate, SIGNAL(editRegExpClicked(QModelIndex)), this, SLOT(showRegExpEditGui_(QModelIndex)));
 
   // Entity filtering is on by default
   setShowEntityCount(true);
@@ -1912,9 +1972,12 @@ void CategoryFilterWidget2::setRegularExpression_()
   if (senderObject == NULL)
     return;
   QModelIndex index = senderObject->property("index").toModelIndex();
-  if (!index.isValid())
-    return;
+  if (index.isValid())
+    showRegExpEditGui_(index);
+}
 
+void CategoryFilterWidget2::showRegExpEditGui_(const QModelIndex& index)
+{
   // Grab category name and old regexp, then ask user for new value
   const QString oldRegExp = index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString();
   const QString categoryName = index.data(CategoryTreeModel2::ROLE_CATEGORY_NAME).toString();

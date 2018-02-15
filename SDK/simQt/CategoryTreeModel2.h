@@ -187,6 +187,8 @@ public:
 signals:
   /** User clicked on the custom expand button and index needs to be expanded/collapsed. */
   void expandClicked(const QModelIndex& index);
+  /** User clicked on the custom RegExp edit button and index needs a RegExp assigned. */
+  void editRegExpClicked(const QModelIndex& index);
 
 private:
   /** Handles paint() for category name items */
@@ -207,7 +209,8 @@ private:
     SE_CHECKBOX,
     SE_BRANCH,
     SE_TEXT,
-    SE_EXCLUDE_TOGGLE
+    SE_EXCLUDE_TOGGLE,
+    SE_REGEXP_BUTTON
   };
   /** Contains the rectangles for all sub-elements for an index. */
   struct ChildRects;
@@ -251,6 +254,8 @@ public slots:
   void setFilter(const simData::CategoryFilter& filter);
   /** Updates the (#) count next to category values with the given category value counts. */
   void processCategoryCounts(const simQt::CategoryCountResults& results);
+  /** Shows a GUI for editing the regular expression of a given index */
+  void showRegExpEditGui_(const QModelIndex& index);
 
 signals:
   /** The internal filter has changed, possibly from user editing or programmatically. */
