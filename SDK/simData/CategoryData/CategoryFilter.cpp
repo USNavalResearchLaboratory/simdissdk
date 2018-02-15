@@ -408,6 +408,11 @@ bool CategoryFilter::matchData(const CurrentCategoryValues& curCategoryData) con
     checksIter != categoryCheck_.end();
     ++checksIter)
   {
+    // Ignore any category checks that have valid regular expressions
+    auto regIter = categoryRegExp_.find(checksIter->first);
+    if (regIter != categoryRegExp_.end() && regIter->second && !regIter->second->pattern().empty())
+      continue;
+
     const CategoryValues& catValues = checksIter->second;
     // category is unchecked if and only if all children are unchecked
     const bool categoryIsChecked = catValues.first;

@@ -1384,6 +1384,32 @@ int testRegExpSimplify()
   rv += SDK_ASSERT(filter.getRegExp(KEY3)->pattern() == "^e2$");
   rv += SDK_ASSERT(filter.getRegExpPattern(KEY3) == "^e2$");
 
+  // // // // // // // // // // // // // // // // // //
+  // Comprehensively test that regular expressions always supersede category checks
+  rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  // Regex does not match; test explicit check matching
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value3~value2(1)", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value3~value2(0)", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  // Regex does match; test explicit check matching
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value2~value2(1)", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value2~value2(0)", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+
+  // Regex does not match; test Unlisted Value check matching
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value3~Unlisted Value(1)", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value3~Unlisted Value(0)", reFactory));
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  // Regex does match; test Unlisted Value check matching
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value2~Unlisted Value(1)", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(filter.deserialize("key2(1)^value2~Unlisted Value(0)", reFactory));
+  rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+
   return rv;
 }
 
