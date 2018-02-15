@@ -60,6 +60,14 @@ BoxZoomMouseHandler::~BoxZoomMouseHandler()
 
 bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
+  if (ea.getHandled())
+  {
+    // If something else intercepts the release, we should remove the box
+    if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE)
+      stopDrag_();
+    return false;
+  }
+
   // Several mouse events are intercepted when we are actively dragging.
   const bool currentlyDragging = box_.valid();
   // Assertion failure means a loss of sync internally and needs fixing
@@ -72,13 +80,14 @@ bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
     // Ignore all button presses after we start out first drag
     if (currentlyDragging)
       return true;
-    // only handle left mouse click, and only if there is a current focused view
-    if (ea.getButtonMask() != osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON || ea.getModKeyMask() != modKeyMask_)
+    // only handle defined button press, and only if the defined mod key is pressed
+    if (ea.getButtonMask() != buttonMask_ || ea.getModKeyMask() != modKeyMask_)
       return false;
     // Shouldn't happen, but make sure we don't leave the box laying around in an old view
     if (box_.valid() && zoomView_.valid())
       zoomView_->getOrCreateHUD()->removeChild(box_);
 
+    // Only proceed is there is a current focused view
     simVis::View* view = dynamic_cast<simVis::View*>(aa.asView());
     if (view == NULL)
       return false;
