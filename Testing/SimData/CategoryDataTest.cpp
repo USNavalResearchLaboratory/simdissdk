@@ -1339,12 +1339,15 @@ int testRegExpSimplify()
 
   // In Valgrind on Linux there is a persistent crash in QRegularExpression when testing the
   // regex "^$" against the string "", using Qt 5.5.1.  This crash does not occur on Windows,
-  // and does not occur in Linux outside of Valgrind.
+  // and does not occur in Linux outside of Valgrind.  It appears too much matching against
+  // QRegularExpression on Linux in Valgrind causes erroneous behavior.  This is not seen
+  // outside of a Valgrind environment.  Because of this, large sections of this test are
+  // not executed under Linux to avoid Valgrind crashes.
 #ifdef WIN32
+
   // Demonstrate that it DOES match when empty string is specified in the regex (^$)
   rv += SDK_ASSERT(filter.deserialize("NoKey(1)^^$", reFactory));
   rv += SDK_ASSERT(filter.match(PLATFORM_ID));
-#endif
 
   // Demonstrate that empty-string regex does not match things that DO have a key
   rv += SDK_ASSERT(filter.deserialize("key2(1)^^$", reFactory));
@@ -1409,6 +1412,7 @@ int testRegExpSimplify()
   rv += SDK_ASSERT(filter.match(PLATFORM_ID));
   rv += SDK_ASSERT(filter.deserialize("key2(1)^value2~Unlisted Value(0)", reFactory));
   rv += SDK_ASSERT(filter.match(PLATFORM_ID));
+#endif
 
   return rv;
 }
