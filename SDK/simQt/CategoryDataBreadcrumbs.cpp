@@ -554,6 +554,22 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex, bool useAltFillColor
   // Initialize by getting the name manager, name, and current set of checks
   simData::CategoryNameManager& nameManager = filter_->getDataStore()->categoryNameManager();
   const QString name = QString::fromStdString(nameManager.nameIntToString(nameIndex));
+
+  // Regular expressions show up uniquely
+  const std::string regExpPattern = filter_->getRegExpPattern(nameIndex);
+  if (!regExpPattern.empty())
+  {
+    // Form a tooltip
+    const QString tipText = tr("Regular Expression filter on a variety of values in the '%1' Category, matching values with the following expression:<p><code>%2</code>")
+        .arg(name, QString::fromStdString(regExpPattern));
+
+    // Create a group item, then add a tooltip
+    QListWidgetItem* newItem = addNameItem_(name, nameIndex, useAltFillColor);
+    newItem->setText(tr("<%1>").arg(name));
+    newItem->setToolTip(simQt::formatTooltip(tr("%1 Regular Expression").arg(name), tipText));
+    return;
+  }
+
   simData::CategoryFilter::ValuesCheck checks;
   filter_->getValues(nameIndex, checks);
 
