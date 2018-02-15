@@ -1661,7 +1661,7 @@ void CategoryTreeItemDelegate::calculateRects_(const QStyleOptionViewItem& optio
     {
       rects.excludeToggle = QRect();
       rects.regExpButton = rects.background.adjusted(0, 1, -1, -1);
-      rects.regExpButton.setLeft(rects.regExpButton.right() - 60);
+      rects.regExpButton.setLeft(rects.regExpButton.right() - 70);
     }
     else
     {
