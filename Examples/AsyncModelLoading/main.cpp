@@ -306,7 +306,7 @@ Control* createHelp(App& app)
 //----------------------------------------------------------------------------
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(const App& app)
+  explicit MenuHandler(const App& app)
     : app_(app)
   {
   }

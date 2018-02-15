@@ -765,10 +765,6 @@ bool ScenarioManager::setPlatformPrefs(simData::ObjectId id, const simData::Plat
   PlatformNode* platform = find<PlatformNode>(id);
   if (platform)
   {
-    // Copy the original prefs to detect changes; make a pointer for easier use with PB_FIELD_CHANGED
-    const simData::PlatformPrefs lastPrefs = platform->getPrefs();
-    const simData::PlatformPrefs* pLastPrefs = &lastPrefs;
-
     // Note that this may trigger the Beam Nose Fixer indirectly
     platform->setPrefs(prefs);
     return true;

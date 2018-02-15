@@ -127,7 +127,6 @@ void CategoryFilterCounter::filteredIds_(int ignoreNameInt, std::vector<const Id
   // Find all IDs that match the new filter without the name provided
   for (auto idIter = allEntities_.begin(); idIter != allEntities_.end(); ++idIter)
   {
-    const simData::ObjectId& id = idIter->id;
     if (baseFilter.matchData(idIter->categories))
       ids.push_back(&(*idIter));
   }

@@ -710,10 +710,9 @@ namespace simQt {
 
     int minutes = static_cast<int>(time/60.0);
     int seconds = static_cast<int>((time-minutes*60));
-    int fraction = 0;
     if (precision_ != 0)
     {
-      fraction = static_cast<int>((time - minutes * 60 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
+      int fraction = static_cast<int>((time - minutes * 60 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
       // Check to see if rounded up to a full second
       if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
       {

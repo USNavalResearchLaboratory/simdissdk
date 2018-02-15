@@ -41,7 +41,7 @@ static const float BAR_BUFFER_PX = 1.f;
 class SetMapScaleViewCallback : public simVis::FocusManager::Callback
 {
 public:
-  SetMapScaleViewCallback(simUtil::MapScale* mapScale)
+  explicit SetMapScaleViewCallback(simUtil::MapScale* mapScale)
     : mapScale_(mapScale)
   {
   }
@@ -67,7 +67,7 @@ private:
 class MapScale::UpdateCallback : public osg::Callback
 {
 public:
-  UpdateCallback(MapScale* scale)
+  explicit UpdateCallback(MapScale* scale)
     : scale_(scale)
   {
   }

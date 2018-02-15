@@ -358,7 +358,6 @@ osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, b
     return NULL;
 
   // Attempt to locate the filename
-  osg::Node* result = NULL;
   std::string uri = findModelFile(location);
   if (uri.empty())
     return NULL;

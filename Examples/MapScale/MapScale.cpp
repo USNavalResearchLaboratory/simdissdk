@@ -213,7 +213,7 @@ static ui::Control* createHelp(simUtil::MapScale* mapScale)
 // An event handler to assist in testing the Inset functionality.
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(simVis::View* mainView)
+  explicit MenuHandler(simVis::View* mainView)
     : mainView_(mainView)
   {
   }
