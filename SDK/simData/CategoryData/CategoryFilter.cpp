@@ -395,7 +395,7 @@ bool CategoryFilter::match(uint64_t entityId) const
 
 bool CategoryFilter::matchData(const CurrentCategoryValues& curCategoryData) const
 {
-  if (categoryCheck_.empty())
+  if (categoryCheck_.empty() && categoryRegExp_.empty())
     return true;
 
   CurrentCategoryValues::const_iterator curCategoryDataIter;
