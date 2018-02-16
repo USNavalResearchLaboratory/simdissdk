@@ -26,6 +26,7 @@
 #include "simVis/AnimatedLine.h"
 #include "simVis/Antenna.h"
 #include "simVis/AreaHighlight.h"
+#include "simVis/AveragePositionNode.h"
 #include "simVis/AxisVector.h"
 #include "simVis/BathymetryGenerator.h"
 #include "simVis/Beam.h"

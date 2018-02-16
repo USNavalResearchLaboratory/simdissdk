@@ -40,6 +40,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}AnimatedLine.h
     ${VIS_INC}Antenna.h
     ${VIS_INC}AreaHighlight.h
+    ${VIS_INC}AveragePositionNode.h
     ${VIS_INC}AxisVector.h
     ${VIS_INC}BathymetryGenerator.h
     ${VIS_INC}Beam.h
@@ -168,6 +169,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}AnimatedLine.cpp
     ${VIS_SRC}Antenna.cpp
     ${VIS_SRC}AreaHighlight.cpp
+    ${VIS_SRC}AveragePositionNode.cpp
     ${VIS_SRC}AxisVector.cpp
     ${VIS_SRC}BathymetryGenerator.cpp
     ${VIS_SRC}Beam.cpp
