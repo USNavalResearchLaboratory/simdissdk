@@ -183,6 +183,7 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   composite_->setupUi(this);
   composite_->lineEdit->setToolTip(simQt::formatTooltip(tr("Entity Name"), tr("Either type or select an entity name.<p>Select from the popup or from the dialog by clicking the browser button.")));
   composite_->lineEdit->setPlaceholderText(tr("Enter entity name..."));
+  composite_->toolButton->setToolTip(simQt::formatTooltip(tr("Entity Selection"), tr("Display an Entity selection dialog with filtering capabilities.")));
   connect(composite_->toolButton, SIGNAL(clicked()), this, SLOT(showEntityDialog_()));
   connect(composite_->lineEdit, SIGNAL(returnPressed()), this, SLOT(checkForReapply_()));
   connect(composite_->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
