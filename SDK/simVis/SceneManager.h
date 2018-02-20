@@ -25,6 +25,7 @@
 #include "osg/ref_ptr"
 #include "osg/Group"
 #include "osgEarth/DrapeableNode"
+#include "osgEarth/ImageLayer"
 #include "osgEarth/MapNode"
 #include "osgEarthUtil/Sky"
 #include "osgEarthUtil/Ocean"
