@@ -20,7 +20,7 @@
 ****************************************************************************
 *
 */
-
+#include <algorithm>
 #include "osg/BoundingSphere"
 #include "simVis/Entity.h"
 #include "simVis/AveragePositionNode.h"
@@ -60,19 +60,28 @@ AveragePositionNode::~AveragePositionNode()
 
 void AveragePositionNode::addTrackedNode(EntityNode* node)
 {
-  if (node)
-    nodes_.insert(node);
+  if (!node)
+    return;
+
+  if (std::find(nodes_.begin(), nodes_.end(), node) == nodes_.end())
+    nodes_.push_back(node);
 }
 
 void AveragePositionNode::removeTrackedNode(EntityNode* node)
 {
-  if (node)
-    nodes_.erase(node);
+  if (!node)
+    return;
+
+  auto found = std::find(nodes_.begin(), nodes_.end(), node);
+  if (found != nodes_.end())
+    nodes_.erase(found);
 }
 
 bool AveragePositionNode::isTrackingNode(EntityNode* node) const
 {
-  return (nodes_.find(node) != nodes_.end());
+  if (!node)
+    return false;
+  return (std::find(nodes_.begin(), nodes_.end(), node) != nodes_.end());
 }
 
 double AveragePositionNode::boundingSphereRadius() const
@@ -90,20 +99,17 @@ void AveragePositionNode::updateAveragePosition_()
   // Reset bounding sphere
   boundingSphere_.init();
 
+  // Remove invalid nodes
+  nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), osg::observer_ptr<EntityNode>()), nodes_.end());
+
   // Expand bounding sphere by each tracked node's position
-  auto it = nodes_.begin();
-  while (it != nodes_.end())
+  for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
   {
     if (!it->valid())
-    {
-      // Remove invalid nodes
-      nodes_.erase(it++);
       continue;
-    }
     simCore::Vec3 pos;
     if ((*it)->getPosition(&pos) == 0)
       boundingSphere_.expandBy(osg::Vec3d(pos.x(), pos.y(), pos.z()));
-    ++it;
   }
 
   // Translate the matrix to the center of the bounding sphere

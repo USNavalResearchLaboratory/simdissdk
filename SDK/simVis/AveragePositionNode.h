@@ -80,8 +80,8 @@ private:
 
   /** Bounding sphere created by the positions of the tracked EntityNodes. */
   osg::BoundingSphere boundingSphere_;
-  /** Set of EntityNodes being tracked. */
-  std::set<osg::observer_ptr<EntityNode> > nodes_;
+  /** Vector of EntityNodes being tracked. */
+  std::vector<osg::observer_ptr<EntityNode> > nodes_;
 };
 
 }
