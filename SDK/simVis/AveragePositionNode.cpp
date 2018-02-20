@@ -91,11 +91,19 @@ void AveragePositionNode::updateAveragePosition_()
   boundingSphere_.init();
 
   // Expand bounding sphere by each tracked node's position
-  for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
+  auto it = nodes_.begin();
+  while (it != nodes_.end())
   {
+    if (!it->valid())
+    {
+      // Remove invalid nodes
+      nodes_.erase(it++);
+      continue;
+    }
     simCore::Vec3 pos;
     if ((*it)->getPosition(&pos) == 0)
       boundingSphere_.expandBy(osg::Vec3d(pos.x(), pos.y(), pos.z()));
+    ++it;
   }
 
   // Translate the matrix to the center of the bounding sphere
