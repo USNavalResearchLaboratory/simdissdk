@@ -47,6 +47,8 @@ public:
       if (manager_.valid())
         manager_->removeView_(inset);
       break;
+    default:
+      break;
     }
   }
 
