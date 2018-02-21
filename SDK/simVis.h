@@ -33,6 +33,7 @@
 #include "simVis/BeamPulse.h"
 #include "simVis/BoxGraphic.h"
 #include "simVis/BoxZoomMouseHandler.h"
+#include "simVis/CentroidManager.h"
 #include "simVis/ClassificationBanner.h"
 #include "simVis/ClockOptions.h"
 #include "simVis/Compass.h"

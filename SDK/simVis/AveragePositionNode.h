@@ -41,6 +41,12 @@ public:
   AveragePositionNode();
 
   /**
+  * Creates an AveragePositionNode and tracks the given nodes.
+  * @param nodes Vector of EntityNodes to track.
+  */
+  explicit AveragePositionNode(const std::vector<EntityNode*>& nodes);
+
+  /**
   * Add a node to be tracked.
   * @param node EntityNode to track
   */
@@ -74,10 +80,28 @@ protected:
 
 private:
   /** Callback to recalculate the bounding sphere */
-  class RecalcUpdateCallback;
+  class RecalcUpdateCallback : public osg::Callback
+  {
+  public:
+    explicit RecalcUpdateCallback(AveragePositionNode& avgNode)
+      : avgNode_(avgNode)
+    {
+    }
+
+    virtual bool run(osg::Object* object, osg::Object* data)
+    {
+      avgNode_.updateAveragePosition_();
+      return traverse(object, data);
+    }
+
+  private:
+    AveragePositionNode& avgNode_;
+  };
+
   /** Recalculate the bounding sphere and translate to the sphere's center. */
   void updateAveragePosition_();
 
+  osg::ref_ptr<RecalcUpdateCallback> callback_;
   /** Bounding sphere created by the positions of the tracked EntityNodes. */
   osg::BoundingSphere boundingSphere_;
   /** Vector of EntityNodes being tracked. */
