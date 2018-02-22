@@ -46,10 +46,12 @@ public:
   CentroidManager();
 
   /**
-  * Install a view callback on the given ViewManager.
-  * @param vm ViewManager on which to install a callback.
+  * Create a centroid using the given nodes.
+  * @param nodes Vector of EntityNodes about which to center the view
+  * @param view View to tether to the centroid
+  * @return Pointer to created centroid node
   */
-  void initViewCallback(ViewManager& vm);
+  AveragePositionNode* createCentroid(const std::vector<EntityNode*>& nodes, View* view);
 
   /**
   * Create a centroid using the given nodes and center the given view on it.
@@ -78,6 +80,11 @@ private:
     osg::ref_ptr<AveragePositionNode> node;
   };
 
+  /**
+  * Install a view callback on the given ViewManager.
+  * @param vm ViewManager on which to install a callback
+  */
+  void initViewCallback_(ViewManager& vm);
   /** Triggered by a view removal. Removes the view if necessary. */
   void removeView_(View* view);
 

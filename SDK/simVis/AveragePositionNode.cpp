@@ -35,9 +35,9 @@ AveragePositionNode::AveragePositionNode()
 
 AveragePositionNode::AveragePositionNode(const std::vector<EntityNode*>& nodes)
 {
+  callback_ = new RecalcUpdateCallback(*this);
   for (auto it = nodes.begin(); it != nodes.end(); ++it)
     addTrackedNode(*it);
-  callback_ = new RecalcUpdateCallback(*this);
 }
 
 AveragePositionNode::~AveragePositionNode()
@@ -76,6 +76,11 @@ bool AveragePositionNode::isTrackingNode(EntityNode* node) const
   if (!node)
     return false;
   return (std::find(nodes_.begin(), nodes_.end(), node) != nodes_.end());
+}
+
+int AveragePositionNode::getNumTrackedNodes() const
+{
+  return static_cast<int>(nodes_.size());
 }
 
 double AveragePositionNode::boundingSphereRadius() const

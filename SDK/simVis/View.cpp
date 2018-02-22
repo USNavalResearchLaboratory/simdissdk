@@ -34,6 +34,7 @@
 #include "simNotify/Notify.h"
 
 #include "simVis/osgEarthVersion.h"
+#include "simVis/AveragePositionNode.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
@@ -1911,11 +1912,6 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
 
     if (proxyNode)
       node = proxyNode;
-  }
-  else if (node)
-  {
-    // Should only be passing in entity nodes or Platform Model nodes or Gate centroids
-    assert(dynamic_cast<PlatformModelNode*>(node) || dynamic_cast<GateCentroid*>(node));
   }
   return node;
 }

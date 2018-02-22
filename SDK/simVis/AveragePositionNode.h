@@ -63,6 +63,11 @@ public:
   */
   bool isTrackingNode(EntityNode* node) const;
   /**
+  * Retrieve the number of nodes being tracked.
+  * @return Number of nodes tracked
+  */
+  int getNumTrackedNodes() const;
+  /**
   * Retrieve the radius of the node's bounding sphere.
   * @return radius of the node's bounding sphere
   */

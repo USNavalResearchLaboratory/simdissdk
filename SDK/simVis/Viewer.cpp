@@ -51,8 +51,6 @@ void Viewer::init_(DefaultScreenSize screenSize, int x, int y, int w, int h)
 {
   // create a scene manager that all the views will share.
   scene_ = new SceneManager();
-  // allow centroid manager to install a view callback
-  scene_->getCentroidManager()->initViewCallback(*this);
   // Logarithmic depth buffer managing view depth buffer settings
   logDb_ = new ViewManagerLogDbAdapter;
   setLogarithmicDepthBufferEnabled(true);

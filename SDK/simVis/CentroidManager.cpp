@@ -66,16 +66,11 @@ CentroidManager::~CentroidManager()
 {
 }
 
-void CentroidManager::initViewCallback(ViewManager& vm)
-{
-  vm.addCallback(new ViewsWatcher(this));
-}
-
-void CentroidManager::centerViewOn(const std::vector<EntityNode*>& nodes, View* view)
+AveragePositionNode* CentroidManager::createCentroid(const std::vector<EntityNode*>& nodes, View* view)
 {
   // Nothing to do with an empty node vector or a NULL view
   if (!view || nodes.empty())
-    return;
+    return NULL;
 
   CentroidInfo info;
   auto viewIter = centroids_.find(view);
@@ -87,7 +82,7 @@ void CentroidManager::centerViewOn(const std::vector<EntityNode*>& nodes, View* 
     {
       // View is not valid, so remove from the map.
       centroids_.erase(viewIter);
-      return;
+      return NULL;
     }
     else
     {
@@ -103,14 +98,34 @@ void CentroidManager::centerViewOn(const std::vector<EntityNode*>& nodes, View* 
     // Create the centroid and its info
     info.node = new AveragePositionNode(nodes);
     info.viewObs = view->getOrCreateObserverSet();
+
+    // Install a view manager callback if this is the first view
+    if (centroids_.empty())
+      initViewCallback_(*view->getViewManager());
+
     // Add to map
     centroids_[view] = info;
   }
 
   // Add the node as a child to the manager
   addChild(info.node);
-  // Tell the view to tether to the node
-  view->tetherCamera(info.node);
+  return info.node;
+}
+
+void CentroidManager::centerViewOn(const std::vector<EntityNode*>& nodes, View* view)
+{
+  // Nothing to do with an empty node vector or a NULL view
+  if (!view || nodes.empty())
+    return;
+
+  osg::ref_ptr<AveragePositionNode> node = createCentroid(nodes, view);
+  if (node.valid())
+    view->tetherCamera(node);
+}
+
+void CentroidManager::initViewCallback_(ViewManager& vm)
+{
+  vm.addCallback(new ViewsWatcher(this));
 }
 
 void CentroidManager::removeView_(View* view)
