@@ -289,7 +289,7 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
       {
         // if this is a relative shape, and we aren't storing the position in metadata, need to flag the metadata
         if (ignorePositions && relative && currentMetaData.metadata.find(RelativeShapeKeyword) == std::string::npos)
-          currentMetaData.metadata += RelativeShapeKeyword;
+          currentMetaData.metadata += RelativeShapeKeyword + "\n";
 
         metaData.push_back(currentMetaData);
         state.apply(current);
@@ -410,13 +410,22 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     {
       if (tokens.size() >= 3)
       {
-        currentMetaData.metadata += line + "\n";
-        // cache reference origin line and values for repeated use by GOG objects within a start/end block, such as annotations
-        refOriginLine = line;
+        // only add reference point to meta data for shapes that can't serialize geometry from the node
+        if (!ignorePositions)
+        {
+          currentMetaData.metadata += line + "\n";
+          // cache reference origin line and values for repeated use by GOG objects within a start/end block, such as annotations
+          refOriginLine = line;
+        }
+        // indicate this is a shape with a reference point, since it can be extracted from the node's geometry rather than being stored in meta data
+        else if (currentMetaData.metadata.find(ReferencePointKeyword) == std::string::npos)
+            currentMetaData.metadata += ReferencePointKeyword + "\n";
+
         refLat = parseGogGeodeticAngle_(tokens[1]);
         current.set("lat", refLat);
         refLon = parseGogGeodeticAngle_(tokens[2]);
         current.set("lon", refLon);
+
         if (tokens.size() >= 4)
         {
           refAlt = tokens[3];
