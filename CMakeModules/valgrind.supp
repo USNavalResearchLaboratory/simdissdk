@@ -132,6 +132,24 @@
 }
 
 {
+   QRegularExpression::match leaves reachable memory
+   Memcheck:Leak
+   ...
+   fun:*QThreadStorageData*get*
+   ...
+   fun:*QRegularExpression*match*
+   ...
+}
+
+{
+   ADDRESS_IN_RANGE/Invalid read of size 8
+   Memcheck:Value8
+   ...
+   fun:CPLGetSymbol
+   ...
+}
+
+{
    osgEarth CURL Leak ignored
    Memcheck:Leak
    ...
