@@ -28,14 +28,18 @@
 #include "osg/Billboard"
 #include "osg/Geode"
 #include "osg/Geometry"
+#include "osg/Depth"
+#include "osg/AlphaFunc"
 #include "osgDB/FileUtils"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
+#include "osgUtil/RenderBin"
 #include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/Capabilities"
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
+#include "osgEarth/Utils"
 #include "simVis/osgEarthVersion.h"
 
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
@@ -55,6 +59,7 @@
 #include "simVis/Registry.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Utils.h"
+#include "simVis/Constants.h"
 
 namespace
 {
@@ -135,6 +140,67 @@ namespace
 
   // Unscaled line length in meters for Platform line Vectors
   const int BASE_LINE_LENGTH = 50;
+  
+
+  /**
+   * Custom render bin that implements a two-pass technique for 
+   * rendering multiple transparent objects.
+   */
+  class TPARenderBin : public osgUtil::RenderBin
+  {
+  public:
+      TPARenderBin() : osgUtil::RenderBin(SORT_BACK_TO_FRONT)
+      {
+          this->setName(simVis::BIN_TWO_PASS_ALPHA);
+
+          depthOff_ = new osg::Depth(osg::Depth::LEQUAL, 0, 1, false);
+          depthOn_ = new osg::Depth(osg::Depth::LEQUAL, 0, 1, true);
+          colorOff_ = new osg::ColorMask(false, false, false, false);
+          alphaFunc_ = new osg::AlphaFunc(osg::AlphaFunc::GREATER, 0.1f);
+          depthReset_ = new osg::Depth(osg::Depth::LESS, 0, 1, true);
+      }
+
+      TPARenderBin(const TPARenderBin& rhs, const osg::CopyOp& copy)
+          : osgUtil::RenderBin(rhs, copy),
+          depthOff_(rhs.depthOff_),
+          depthOn_(rhs.depthOn_),
+          depthReset_(rhs.depthReset_),
+          alphaFunc_(rhs.alphaFunc_),
+          colorOff_(rhs.colorOff_)
+      {
+          //nop
+      }
+
+      virtual osg::Object* clone(const osg::CopyOp& copyop) const
+      {
+          return new TPARenderBin(*this, copyop);
+      }
+
+      void drawImplementation(osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
+      {
+          // first, disable depth writing and draw all geometry:
+          depthOff_->apply(*ri.getState());
+          osgUtil::RenderBin::drawImplementation(ri, previous);
+
+          // second pass: enable depth writing and render to depth buffer only:
+          depthOn_->apply(*ri.getState());
+          colorOff_->apply(*ri.getState());
+          alphaFunc_->apply(*ri.getState());
+          osgUtil::RenderBin::drawImplementation(ri, previous);
+
+          // re-instate
+          depthReset_->apply(*ri.getState());
+          glColorMask(true, true, true, true);
+      }
+
+      osg::ref_ptr<osg::Depth> depthOff_, depthOn_, depthReset_;
+      osg::ref_ptr<osg::ColorMask> colorOff_;
+      osg::ref_ptr<osg::AlphaFunc> alphaFunc_;
+  };
+
+  /** the actual registration. */
+  extern "C" void osgEarth_BIN_TWO_PASS_ALPHA(void) {}
+  static osgEarth::osgEarthRegisterRenderBinProxy<TPARenderBin> s_regbin(simVis::BIN_TWO_PASS_ALPHA);
 }
 
 namespace simVis

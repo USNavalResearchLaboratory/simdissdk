@@ -123,6 +123,7 @@ namespace simVis
     // correct colorization.  OSG will sort from back to front in the same render
     // bin, so generally anything with equal graphical priority should share the
     // same render bin ID.
+    // RENDER in the BIN_TWO_PASS_ALPHA render bin -gw
     BIN_PLATFORM_IMAGE      = 15,
     BIN_BEAM                = 15,
     BIN_GATE                = 15,
@@ -142,6 +143,8 @@ namespace simVis
 
   /** Almost all SDK items are depth-sorted */
   static const std::string BIN_GLOBAL_SIMSDK = "DepthSortedBin";
+  /** Semi-transparent objects (bin #15) render in a two-pass alpha bin */
+  static const std::string BIN_TWO_PASS_ALPHA = "TwoPassAlphaRenderBin";
   /** Platforms and some HUD elements are placed into a traversal order bin */
   static const std::string BIN_TRAVERSAL_ORDER_SIMSDK = "TraversalOrderBin";
 

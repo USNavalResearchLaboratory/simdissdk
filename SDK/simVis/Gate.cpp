@@ -54,7 +54,10 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
                         prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID;
 
   // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
-  gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
+  //gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
+  gateSV_->getOrCreateStateSet()->setRenderBinDetails(
+      (isOpaque ? BIN_OPAQUE_GATE   : BIN_GATE),
+      (isOpaque ? BIN_GLOBAL_SIMSDK : BIN_TWO_PASS_ALPHA));
 
   osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
   if (outlineGeometry != NULL)
@@ -334,12 +337,13 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
   osg::StateSet* stateSet = getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_GATE, BIN_GLOBAL_SIMSDK); //"RenderBin");
+  //stateSet->setRenderBinDetails(BIN_GATE, BIN_GLOBAL_SIMSDK); //"RenderBin");
+  stateSet->setRenderBinDetails(BIN_GATE, BIN_TWO_PASS_ALPHA); //"RenderBin");
 
   // depth-writing is disabled for the gates.
   // the gates draw before anything else (including the terrain) along with beams.
-  depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
-  stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
+  //depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
+  //stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
   // horizon culling:
   addCullCallback( new osgEarth::HorizonCullCallback() );
@@ -702,7 +706,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
                           activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID;
 
     // blending is off for opaque graphics, so depth writing is on, otherwise off
-    depthAttr_->setWriteMask(isOpaque);
+    //depthAttr_->setWriteMask(isOpaque);
 
     if (gateVolume_)
     {

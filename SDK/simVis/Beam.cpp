@@ -220,11 +220,11 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
   osg::StateSet* stateSet = this->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_BEAM, BIN_GLOBAL_SIMSDK);
+  stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
 
   // depth-writing is disabled for the beams by default.
-  depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
-  stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
+  //depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
+  //stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
@@ -647,8 +647,10 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   // all activePrefs must be applied during this creation
   if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
   {
-    depthAttr_->setWriteMask(!activePrefs->blended());
-    getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+    //depthAttr_->setWriteMask(!activePrefs->blended());    
+    getOrCreateStateSet()->setRenderBinDetails(
+        (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
+        (activePrefs->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
   }
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)

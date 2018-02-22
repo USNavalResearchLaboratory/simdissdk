@@ -285,7 +285,7 @@ void SceneManager::setSkyNode(osgEarth::Util::SkyNode* skyNode)
   }
 
   // Turn on or off the second depth rendering based on whether we're running SilverLining or have an ocean
-  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
+  //setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 bool SceneManager::isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const

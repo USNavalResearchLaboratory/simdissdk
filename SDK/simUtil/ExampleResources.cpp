@@ -29,6 +29,7 @@
 #include "osgEarthDrivers/tms/TMSOptions"
 #include "osgEarthDrivers/gdal/GDALOptions"
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
+#include "osgEarthSilverLining/SilverLiningOptions"
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
@@ -468,6 +469,11 @@ void simExamples::addDefaultSkyNode(simVis::Viewer* viewer)
 
 void simExamples::addDefaultSkyNode(simVis::SceneManager* sceneMan)
 {
+    osgEarth::SilverLining::SilverLiningOptions options;
+    options.drawClouds() = true;
+    sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(options, sceneMan->getMapNode()));
+    return;
+
   // Only install simple sky if the osgEarth capabilities permit it
   if (osgEarth::Registry::capabilities().getGLSLVersionInt() >= 330)
   {
