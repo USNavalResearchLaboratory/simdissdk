@@ -106,7 +106,7 @@ namespace simVis
     BIN_ANIMATEDLINE_FLAT   = 1,  // animated lines clamped to terrain
     BIN_RCS                 = 1,  // RCS is drawn at the same time as GOG
     BIN_POST_TERRAIN        = 10, // marker ending terrain-clamped items
-    BIN_RFPROPAGATION       = 10, // rfprop objects need to be up high since depth buffer is turned off
+    BIN_RFPROPAGATION       = 15, // rfprop objects need to be up high since depth buffer is turned off
     BIN_AZIM_ELEV_TOOL      = 11, // Platform Azim/Elev tool rings and text drawn under entities
     BIN_RANGE_TOOL          = 11,
     BIN_ANIMATEDLINE        = 11,

@@ -67,6 +67,7 @@ public:
   void toggleLogDb();
   void cycleTimeFormat();
   void toggleCockpit();
+  void playPause();
 
 private:
   void init_(osg::ArgumentParser& args);

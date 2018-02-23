@@ -53,7 +53,8 @@ ProfileManager::ProfileManager()
   timeBearingProfiles_[0] = currentProfileMap_;
 
   osg::StateSet* stateset = getOrCreateStateSet();
-  stateset->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_GLOBAL_SIMSDK);
+  //stateset->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_GLOBAL_SIMSDK);
+  stateset->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_TWO_PASS_ALPHA);
 
   // Turn off lighting; we do not set normals in profiles, so lighting will look bad
   simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
@@ -64,8 +65,8 @@ ProfileManager::ProfileManager()
   stateset->setMode(GL_BLEND, osg::StateAttribute::ON);
 
   // Turn off depth test, and also turn off depth writes
-  stateset->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
-  stateset->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
+  //stateset->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+  //stateset->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
 
   // Create a uniform for the textures
   osg::Uniform* textureUniform = new osg::Uniform(osg::Uniform::SAMPLER_2D, "texture");

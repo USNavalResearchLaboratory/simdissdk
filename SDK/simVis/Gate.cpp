@@ -51,7 +51,8 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   addChild(gateSV_);
 
   const bool isOpaque = prefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
-                        prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID;
+                        prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
+                        prefs->fillpattern() == simData::GatePrefs_FillPattern_STIPPLE;
 
   // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
   //gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
@@ -61,7 +62,9 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
 
   osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
   if (outlineGeometry != NULL)
+  {
     outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+  }
 }
 
 GateVolume::~GateVolume()
@@ -336,9 +339,10 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   // carefully set the rendering order for gates. We want to render them
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
-  osg::StateSet* stateSet = getOrCreateStateSet();
+  //osg::StateSet* stateSet = getOrCreateStateSet();
   //stateSet->setRenderBinDetails(BIN_GATE, BIN_GLOBAL_SIMSDK); //"RenderBin");
-  stateSet->setRenderBinDetails(BIN_GATE, BIN_TWO_PASS_ALPHA); //"RenderBin");
+  //stateSet->setRenderBinDetails(BIN_GATE, BIN_TWO_PASS_ALPHA); //"RenderBin");
+  //stateSet->setNestRenderBins(false);
 
   // depth-writing is disabled for the gates.
   // the gates draw before anything else (including the terrain) along with beams.

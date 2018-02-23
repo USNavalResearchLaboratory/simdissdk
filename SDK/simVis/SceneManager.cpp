@@ -174,7 +174,7 @@ void SceneManager::init_()
   depthRenderContainer_->addChild(scenarioManager_);
   // Turn it off by default for performance
   depthRenderContainer_->setNodeMask(0);
-  drapeableNode_->addChild(depthRenderContainer_);
+  //drapeableNode_->addChild(depthRenderContainer_);
 
   // Depth renderer draws scene elements before SilverLining
   osg::StateSet* drcStateSet = depthRenderContainer_->getOrCreateStateSet();
@@ -285,7 +285,7 @@ void SceneManager::setSkyNode(osgEarth::Util::SkyNode* skyNode)
   }
 
   // Turn on or off the second depth rendering based on whether we're running SilverLining or have an ocean
-  //setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
+  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 bool SceneManager::isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const
