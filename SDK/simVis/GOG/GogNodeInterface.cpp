@@ -426,6 +426,8 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   }
   else if (metaData_.isSetExplicitly(GOG_TESSELLATE_SET))
     gogOutputStream << "tessellate false\n";
+
+  // Follow data is not currently serialized out
 }
 
 int GogNodeInterface::getAltitudeMode(AltitudeMode& altMode) const
