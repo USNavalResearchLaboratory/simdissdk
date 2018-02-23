@@ -230,7 +230,7 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
 
   // Right click center action
   // NOTE: Use of this action must be enabled by the caller with setUseCenterAction()
-  centerAction_ = new QAction(tr("Center On Entity"), composite_->treeView);
+  centerAction_ = new QAction(tr("Center On Selection"), composite_->treeView);
   centerAction_->setIcon(QIcon(":simQt/images/Find.png"));
   centerAction_->setEnabled(false); // Should only be enabled when selections made
   connect(centerAction_, SIGNAL(triggered()), this, SLOT(centerOnSelection_()));
@@ -646,8 +646,10 @@ void EntityTreeComposite::copySelection_()
 
 void EntityTreeComposite::centerOnSelection_()
 {
-  if (!selectedItems().empty())
-    emit centerOnEntityRequested(selectedItems().first());
+  if (selectedItems().size() == 1)
+    emit centerOnEntityRequested(selectedItems().front());
+  else if (!selectedItems().empty())
+    emit centerOnSelectionRequested(selectedItems());
 }
 
 void EntityTreeComposite::setTreeView_(bool useTreeView)

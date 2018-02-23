@@ -20,6 +20,7 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     TimeManagerTest.cpp
     TimeStringTest.cpp
     TimeUtilsTest.cpp
+    TimeJulianTest.cpp
     InterpolationTest.cpp
     EMTest.cpp
     ValidNumberTest.cpp
@@ -58,6 +59,7 @@ add_test(NAME CoreInterpolationTest COMMAND SimCoreTests InterpolationTest)
 add_test(NAME CoreValidNumberTest COMMAND SimCoreTests ValidNumberTest)
 add_test(NAME CoreTimeStringTest COMMAND SimCoreTests TimeStringTest)
 add_test(NAME CoreTimeUtilsTest COMMAND SimCoreTests TimeUtilsTest)
+add_test(NAME CoreTimeJulianTest COMMAND SimCoreTests TimeJulianTest)
 add_test(NAME CoreGeoFenceTest COMMAND SimCoreTests GeoFenceTest)
 add_test(NAME MultiFrameCoordTest COMMAND SimCoreTests MultiFrameCoordTest)
 add_test(NAME AngleTest COMMAND SimCoreTests AngleTest)

@@ -164,8 +164,10 @@ signals:
   void itemsSelected(QList<uint64_t> ids);
   /** The unique ID of the entity just double clicked */
   void itemDoubleClicked(uint64_t id);
-  /** Fired when the Center On Entity context menu action is triggered */
+  /** Fired when the Center On Selection context menu action is triggered with a single id */
   void centerOnEntityRequested(uint64_t id);
+  /** Fired when the Center On Selection context menu action is triggered with a list of ids */
+  void centerOnSelectionRequested(const QList<uint64_t>& ids);
   /**
    * A filter setting was changed
    * @param settings Filters get data from the setting using a global unique key

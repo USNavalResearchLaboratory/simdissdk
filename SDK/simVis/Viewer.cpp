@@ -22,6 +22,7 @@
 #include "osg/OperationThread"
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
+#include "simVis/CentroidManager.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 

@@ -43,6 +43,7 @@
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
+#include "simVis/CentroidManager.h"
 #include "simVis/Constants.h"
 #include "simVis/ModelCache.h"
 #include "simVis/osgEarthVersion.h"
@@ -145,6 +146,10 @@ void SceneManager::init_()
 
   // this will assist in z-fighting of overlaid lines, sometimes
   mapContainer_->getOrCreateStateSet()->setAttributeAndModes(new osg::PolygonOffset(1, -1), osg::StateAttribute::ON);
+
+  // handles centroids
+  centroidManager_ = new CentroidManager();
+  addChild(centroidManager_.get());
 
   // handles projected textures/videos
   projectorManager_ = new ProjectorManager();

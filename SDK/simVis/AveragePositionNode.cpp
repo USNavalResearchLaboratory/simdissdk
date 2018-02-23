@@ -20,7 +20,7 @@
 ****************************************************************************
 *
 */
-
+#include <algorithm>
 #include "osg/BoundingSphere"
 #include "simVis/Entity.h"
 #include "simVis/AveragePositionNode.h"
@@ -28,30 +28,16 @@
 namespace simVis
 {
 
-/** Update callback that recalculates the average position on each update cycle */
-class AveragePositionNode::RecalcUpdateCallback : public osg::Callback
-{
-public:
-  explicit RecalcUpdateCallback(AveragePositionNode& avgNode)
-    : avgNode_(avgNode)
-  {
-  }
-
-  virtual bool run(osg::Object* object, osg::Object* data)
-  {
-    avgNode_.updateAveragePosition_();
-    return traverse(object, data);
-  }
-
-private:
-  AveragePositionNode& avgNode_;
-};
-
-///////////////////////////////////////////////////////////////////////
-
 AveragePositionNode::AveragePositionNode()
 {
-  addUpdateCallback(new RecalcUpdateCallback(*this));
+  callback_ = new RecalcUpdateCallback(*this);
+}
+
+AveragePositionNode::AveragePositionNode(const std::vector<EntityNode*>& nodes)
+{
+  callback_ = new RecalcUpdateCallback(*this);
+  for (auto it = nodes.begin(); it != nodes.end(); ++it)
+    addTrackedNode(*it);
 }
 
 AveragePositionNode::~AveragePositionNode()
@@ -60,19 +46,41 @@ AveragePositionNode::~AveragePositionNode()
 
 void AveragePositionNode::addTrackedNode(EntityNode* node)
 {
-  if (node)
-    nodes_.insert(node);
+  if (!node)
+    return;
+
+  // Add update callback if this is the first node
+  if (nodes_.empty())
+    addUpdateCallback(callback_);
+
+  if (std::find(nodes_.begin(), nodes_.end(), node) == nodes_.end())
+    nodes_.push_back(node);
 }
 
 void AveragePositionNode::removeTrackedNode(EntityNode* node)
 {
-  if (node)
-    nodes_.erase(node);
+  if (!node)
+    return;
+
+  auto found = std::find(nodes_.begin(), nodes_.end(), node);
+  if (found != nodes_.end())
+    nodes_.erase(found);
+
+  // Remove the update callback if we're not tracking any nodes
+  if (nodes_.empty())
+    removeUpdateCallback(callback_);
 }
 
 bool AveragePositionNode::isTrackingNode(EntityNode* node) const
 {
-  return (nodes_.find(node) != nodes_.end());
+  if (!node)
+    return false;
+  return (std::find(nodes_.begin(), nodes_.end(), node) != nodes_.end());
+}
+
+int AveragePositionNode::getNumTrackedNodes() const
+{
+  return static_cast<int>(nodes_.size());
 }
 
 double AveragePositionNode::boundingSphereRadius() const
@@ -90,9 +98,14 @@ void AveragePositionNode::updateAveragePosition_()
   // Reset bounding sphere
   boundingSphere_.init();
 
+  // Remove invalid nodes
+  nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), osg::observer_ptr<EntityNode>()), nodes_.end());
+
   // Expand bounding sphere by each tracked node's position
   for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
   {
+    if (!it->valid())
+      continue;
     simCore::Vec3 pos;
     if ((*it)->getPosition(&pos) == 0)
       boundingSphere_.expandBy(osg::Vec3d(pos.x(), pos.y(), pos.z()));

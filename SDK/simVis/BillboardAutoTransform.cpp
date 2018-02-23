@@ -19,8 +19,8 @@
 * disclose, or release this software.
 *
 */
-
 #include "osgUtil/CullVisitor"
+#include "simCore/Calc/Angle.h"
 #include "simCore/Calc/MathConstants.h"
 #include "simVis/BillboardAutoTransform.h"
 
@@ -114,15 +114,9 @@ void BillboardAutoTransform::accept(osg::NodeVisitor& nv)
         osg::Vec3d proj_e = proj_n^u;
 
         double cameraHeading = atan2(proj_e*proj_d, proj_n*proj_d);
-
-        while (cameraHeading < 0.0)
-          cameraHeading += M_2_PI;
-        double objHeading = screenSpaceRotationRadians_;
-        while (objHeading < 0.0)
-          objHeading += M_2_PI;
-        double finalRot = cameraHeading - objHeading;
-        while (finalRot > M_PI)
-          finalRot -= M_2_PI;
+        cameraHeading = simCore::angFix2PI(cameraHeading);
+        double objHeading = simCore::angFix2PI(screenSpaceRotationRadians_);
+        double finalRot = simCore::angFixPI(cameraHeading - objHeading);
 
         osg::Quat toRotation(finalRot, osg::Vec3(0, 0, 1));
 

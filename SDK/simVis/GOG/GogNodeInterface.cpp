@@ -308,10 +308,12 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   // check for keyword flags
   bool serializeGeometry = Utils::canSerializeGeometry_(shape);
   bool relativeShape = getMetaDataFlag_(simVis::GOG::RelativeShapeKeyword, metaData);
+  bool referencePoint = getMetaDataFlag_(simVis::GOG::ReferencePointKeyword, metaData);
 
   // add the metadata
   gogOutputStream << metaData;
 
+  // serialize geometry where it is possible to extract geometry information from the nodes. Otherwise, geometry will have been stored in meta data
   if (serializeGeometry)
   {
     // alt units are meters
@@ -319,7 +321,17 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 
     // if relative, the xy range units are in meters
     if (relativeShape)
+    {
+      // if relative shape has a reference position, serialize it, if possible
+      if (referencePoint)
+      {
+        osg::Vec3d position;
+        // note that in osg position syntax, lat is y, lon is x, alt is z
+        if (getReferencePosition(position) == 0)
+          gogOutputStream << "referencepoint " << position.y() << " " << position.x() << " " << position.z() << "\n";
+      }
       gogOutputStream << "rangeunits meters\n";
+    }
 
     // try to serialize the geometry
     serializeGeometry_(relativeShape, gogOutputStream);
@@ -536,6 +548,11 @@ int GogNodeInterface::getPointSize(int& pointSize) const
     return 1;
   pointSize = static_cast<int>(*(style_.getSymbol<osgEarth::Symbology::PointSymbol>()->size()));
   return 0;
+}
+
+int GogNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  return 1;
 }
 
 int GogNodeInterface::getTessellation(TessellationStyle& style) const
@@ -1413,6 +1430,17 @@ void LocalGeometryNodeInterface::setAltitudeMode(AltitudeMode altMode)
     newPos.alt() = newAltitude;
     localNode_->setPosition(newPos);
   }
+}
+
+int LocalGeometryNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (!localNode_.valid())
+    return 1;
+  const osgEarth::GeoPoint& refPoint = localNode_->getPosition();
+  referencePosition.x() = refPoint.x(); // note this is lon
+  referencePosition.y() = refPoint.y(); // note this is lat
+  referencePosition.z() = altitude_; // always use original altitude, since an altitude offset may have been applied
+  return 0;
 }
 
 void LocalGeometryNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
