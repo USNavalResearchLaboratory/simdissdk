@@ -780,7 +780,6 @@ namespace simQt {
     hours_ = new NumberText(this, 0, 613200, 6, false, 60.0*60.0, false);  // No leading zeros
     minutes_ = new NumberText(this, 0, 59, 2, true, 60.0, false);
     seconds_ = new NumberText(this, 0, 59, 2, true, 1.0, false);
-    fraction_ = createFactionOfSeconds_(precision_);
     if (precision_ != 0)
       fraction_ = createFactionOfSeconds_(precision_);
     else

@@ -1743,7 +1743,7 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   setObjectName("CategoryFilterWidget2");
 
   treeModel_ = new simQt::CategoryTreeModel2(this);
-  proxy_ = new simQt::CategoryProxyModel();
+  proxy_ = new simQt::CategoryProxyModel(this);
   proxy_->setSourceModel(treeModel_);
   proxy_->setSortRole(simQt::CategoryTreeModel2::ROLE_SORT_STRING);
   proxy_->sort(0);
