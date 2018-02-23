@@ -1302,7 +1302,7 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
       if (srs != NULL)
       {
         osg::BoundingSphered boundS;
-        if (feature->getWorldBound(srs->getECEF(), boundS))
+        if (feature->getWorldBound(srs->getGeocentricSRS(), boundS))
         {
           // ensure a minimum of 50m spacing, otherwise approximately 80 posts along major dimension of feature
           tessellationSpacingM = simCore::sdkMax(50.0, simCore::sdkMin(tessellationSpacingM, 0.025 * boundS.radius()));
