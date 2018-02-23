@@ -109,7 +109,7 @@ AveragePositionNode* CentroidManager::createCentroid(const std::vector<EntityNod
 
   // Add the node as a child to the manager
   addChild(info.node);
-  return info.node;
+  return info.node.get();
 }
 
 void CentroidManager::centerViewOn(const std::vector<EntityNode*>& nodes, View* view)
@@ -120,7 +120,7 @@ void CentroidManager::centerViewOn(const std::vector<EntityNode*>& nodes, View* 
 
   osg::ref_ptr<AveragePositionNode> node = createCentroid(nodes, view);
   if (node.valid())
-    view->tetherCamera(node);
+    view->tetherCamera(node.get());
 }
 
 void CentroidManager::initViewCallback_(ViewManager& vm)
