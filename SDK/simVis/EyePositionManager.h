@@ -47,21 +47,22 @@ public:
   /** Position in 3-D space for the eye position. */
   virtual simVis::Viewpoint viewpoint() const = 0;
   /**
-    * Entity name to which the view is tethered on. Either always returns real name or returns real/alias name depending  on the usealias preference
-    * @param respectAliasFlag  true if the alias name is desired when useAlias is set to true in the prefs, false to always return real name.
-    * @param dataStore         pointer to the dataStore, used to lookup the alias name
-    * @return                  real/alias entity name string
-    */
-  virtual std::string tetherName(bool respectAliasFlag, const simData::DataStore& dataStore) const = 0;
+  * Name of the entity(ies) to which the view is tethered. Either always returns real name or returns real/alias name depending on respectAliasFlag.
+  * If tethered to a centroid, return string is a comma delimited list of entity names, e.g. "Plat1,Plat2,Plat3"
+  * @param respectAliasFlag  true if the alias name is desired when useAlias is set to true in the prefs, false to always return real name.
+  * @param dataStore         reference to the dataStore, used to lookup the alias name
+  * @return                  Vector of real/alias entity name strings
+  */
+  virtual std::vector<std::string> tetherNames(bool respectAliasFlag, const simData::DataStore& dataStore) const = 0;
   /**
-    * Entity name to which the view is watching. Either always returns real name or returns real/alias name depending on the usealias preference
-    * @param respectAliasFlag  true if the alias name is desired when useAlias is set to true in the prefs, false to always return real name.
-    * @param dataStore         pointer to the dataStore, used to lookup the alias name
-    * @return                  real/alias entity name string
-    */
+  * Entity name to which the view is watching. Either always returns real name or returns real/alias name depending on respectAliasFlag
+  * @param respectAliasFlag  true if the alias name is desired when useAlias is set to true in the prefs, false to always return real name.
+  * @param dataStore         reference to the dataStore, used to lookup the alias name
+  * @return                  real/alias entity name string
+  */
   virtual std::string watchName(bool respectAliasFlag, const simData::DataStore& dataStore) const = 0;
-  /// retrieves objectId of the platform that the view is tethered on
-  virtual simData::ObjectId tetherId() const = 0;
+  /// retrieves objectId(s) of the entity(ies) that the view is tethered on
+  virtual std::vector<simData::ObjectId> tetherIds() const = 0;
   /// retrieves objectId of the platform tha the view is watching
   virtual simData::ObjectId watchId() const = 0;
   /** Flagged true when the view was in overhead mode. */
@@ -158,8 +159,8 @@ public:
   /// retrieve all the current loaded eye positions
   virtual void getEyePositions(std::vector<EyePosition*>& eyePositions) const = 0;
 
-  /// retrieves real name of the platform that the view is tethered on
-  virtual std::string tetherName(const EyePosition& eyePos) const = 0;
+  /// retrieves real name(s) of the platform(s) that the view is tethered on
+  virtual std::vector<std::string> tetherNames(const EyePosition& eyePos) const = 0;
 
   /// retrieves real name of the platform the view is watching
   virtual std::string watchName(const EyePosition& eyePos) const = 0;
@@ -189,7 +190,7 @@ public:
   virtual void renameEyePosition(simVis::EyePosition* eyePosition, const std::string& newName) { }
   virtual void moveToEyePosition(simVis::EyePosition *eyePosition, simVis::View *viewport, double duration) { }
   virtual void getEyePositions(std::vector<simVis::EyePosition*>& eyePositions) const { }
-  virtual std::string tetherName(const simVis::EyePosition& eyePos) const { return ""; }
+  virtual std::vector<std::string> tetherNames(const simVis::EyePosition& eyePos) const { return std::vector<std::string>(); }
   virtual std::string watchName(const simVis::EyePosition& eyePos) const { return ""; }
 };
 

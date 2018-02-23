@@ -68,6 +68,11 @@ public:
   */
   int getNumTrackedNodes() const;
   /**
+  * Retrieve a list of ids being tracked
+  * @param ids Vector to be filled with ids being tracked
+  */
+  void getTrackedIds(std::vector<uint64_t>& ids) const;
+  /**
   * Retrieve the radius of the node's bounding sphere.
   * @return radius of the node's bounding sphere
   */
