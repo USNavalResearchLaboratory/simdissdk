@@ -181,7 +181,7 @@ void EntityTreeWidget::setSelected(uint64_t id, bool selected, bool signalItemsS
       selectionList_.removeOne(id);
   }
   // Update the selection
-  simQt::ScopedSignalBlocker blockSignals(*view_->selectionModel(), !signalItemsSelected);
+  simQt::ScopedSignalBlocker blockSignals(*view_, !signalItemsSelected);
   view_->selectionModel()->select(index, QItemSelectionModel::Rows | (selected ? QItemSelectionModel::Select : QItemSelectionModel::Deselect));
 }
 
