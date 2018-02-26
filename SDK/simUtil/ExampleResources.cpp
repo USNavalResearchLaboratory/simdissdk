@@ -102,7 +102,7 @@ bool simExamples::readArg(const std::string& pattern, int argc, char** argv, std
   return false;
 }
 
-
+#define USE_REMOTE_MAP_DATA
 Map* simExamples::createDefaultExampleMap()
 {
 #ifdef USE_REMOTE_MAP_DATA

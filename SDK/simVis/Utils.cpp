@@ -61,6 +61,7 @@
 #include "simVis/PlatformModel.h"
 #include "simVis/Utils.h"
 #include "simVis/Constants.h"
+#include "osgEarth/VirtualProgram"
 
 namespace
 {
@@ -141,7 +142,6 @@ namespace
 
   // Unscaled line length in meters for Platform line Vectors
   const int BASE_LINE_LENGTH = 50;
-  
 
   /**
    * Custom render bin that implements a two-pass technique for 
@@ -166,7 +166,8 @@ namespace
           pass2_ = new osg::StateSet();
           pass2_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, true), forceOn);
           pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), forceOn);
-          pass2_->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, 0.1f));
+          pass2_->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, 0.05f), forceOn);
+          pass2_->setMode(GL_ALPHA_TEST, forceOn);
       }
 
       TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy)
@@ -184,8 +185,9 @@ namespace
 
       void drawPass(osg::StateSet* pass, osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
       {
-          ri.getState()->pushStateSet(pass);
-          ri.getState()->apply();
+          ri.getState()->apply(pass);
+          //ri.getState()->pushStateSet(pass);
+          //ri.getState()->apply();
 
           for (RenderLeafList::iterator rlitr = _renderLeafList.begin();
               rlitr != _renderLeafList.end();
@@ -196,12 +198,12 @@ namespace
               previous = rl;
           }
 
-          ri.getState()->popStateSet();
+          //ri.getState()->popStateSet();
       }
 
       void drawImplementation(osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
       {
-          drawPass(pass1_.get(), ri, previous);
+          drawPass(pass1_.get(), ri, previous);          
           drawPass(pass2_.get(), ri, previous);
       }
 

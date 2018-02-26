@@ -149,9 +149,7 @@ namespace simVis
     void setScenarioDraping(bool value);
 
     /**
-    * Set the SkyNode object for the scene.  Will automatically turn on or off
-    * the depth writer node (setDepthWriterNodeMask()) based on whether the Sky
-    * node is detected to be SilverLining.
+    * Set the SkyNode object for the scene.
     * @param skyNode the new sky node
     */
     void setSkyNode(osgEarth::Util::SkyNode* skyNode);
@@ -167,18 +165,6 @@ namespace simVis
 
     /** Changes the underlying globe color for when no image layers are shown */
     void setGlobeColor(const simVis::Color& color);
-
-    /**
-     * Toggles the depth writer, which is a second pass that will render the scene without
-     * color, but with depth enabled.  This is useful for ending with a reasonable depth
-     * buffer, even when transparent objects are in the scene that don't write to the
-     * depth buffer like beams and gates.  By default, this is off for performance unless
-     * setSkyNode() detects that SilverLining is the sky node being used.  If you want
-     * to control this, call this method after your call to setSkyNode().
-     * @param nodeMask Node mask for the second rendering of the scene that forces depth
-     *   writes enabled.
-     */
-    void setDepthWriterNodeMask(osg::Node::NodeMask nodeMask);
 
     /** Returns true if there is an engine driver problem */
     bool hasEngineDriverProblem() const;
@@ -218,8 +204,6 @@ namespace simVis
 
     /** Contains the map node, child of the sky node.  See also @ref SceneManagerLayout */
     osg::ref_ptr<osg::Group> mapContainer_;
-    /** Contains a second reference to scenario manager for rendering depth. */
-    osg::ref_ptr<osg::Group> depthRenderContainer_;
     /** Child of the map container, holds the map.  See also @ref SceneManagerLayout */
     osg::ref_ptr<osgEarth::MapNode> mapNode_;
     /** Contains the scenario entities and tools, child of the sky node.  See also @ref SceneManagerLayout */

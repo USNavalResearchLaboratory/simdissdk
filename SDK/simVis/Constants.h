@@ -106,12 +106,11 @@ namespace simVis
     BIN_ANIMATEDLINE_FLAT   = 1,  // animated lines clamped to terrain
     BIN_RCS                 = 1,  // RCS is drawn at the same time as GOG
     BIN_POST_TERRAIN        = 10, // marker ending terrain-clamped items
-    BIN_RFPROPAGATION       = 15, // rfprop objects need to be up high since depth buffer is turned off
     BIN_AZIM_ELEV_TOOL      = 11, // Platform Azim/Elev tool rings and text drawn under entities
     BIN_RANGE_TOOL          = 11,
     BIN_ANIMATEDLINE        = 11,
-    BIN_AREA_HIGHLIGHT      = 11, // drawn before platforms to avoid platform alpha blend artifacts
 
+    // Opaque platform-related graphics that do not require depth sorting or blending
     BIN_PLATFORM_MODEL      = 13,
     BIN_LOCAL_GRID          = 13,
     BIN_TRACK_HISTORY       = 13,
@@ -119,22 +118,24 @@ namespace simVis
     BIN_OPAQUE_BEAM         = 13,
     BIN_OPAQUE_GATE         = 13,
 
-    // Transparent items are drawn after opaque items to maximize likelihood of
-    // correct colorization.  OSG will sort from back to front in the same render
-    // bin, so generally anything with equal graphical priority should share the
-    // same render bin ID.
-    // RENDER in the BIN_TWO_PASS_ALPHA render bin -gw
+    // Bin #15 is for depth-sorted translucent graphics. Render these in the
+    // BIN_TWO_PASS_ALPHA renderbin. All graphics will draw with depth-writing off,
+    // then draw a second time to populate the depth buffer.
     BIN_PLATFORM_IMAGE      = 15,
     BIN_BEAM                = 15,
     BIN_GATE                = 15,
     BIN_PROJECTOR           = 15,
-    BIN_ROCKETBURN          = 15,
     BIN_CYLINDER            = 15,
+    BIN_RFPROPAGATION       = 15,
+
     BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
 
-    BIN_DEPTH_WRITER        = 98, // Locks in depth values prior to SilverLining / Triton, to prevent stacking problems with transparency
-    BIN_SILVERLINING        = 99, // SilverLining is automatically drawn at RenderBin 99
-    BIN_OCEAN               = 99, // Recommended render bin for Triton and Simple Ocean
+    BIN_OCEAN               = 98, // Ocean draws late because we needs to be able to see through it
+
+    // Following this are graphics that render with depth-writing OFF
+    BIN_SILVERLINING        = 99,  // SilverLining is automatically drawn at RenderBin 99 (no depth writing)
+    BIN_AREA_HIGHLIGHT      = 105, // TODO: re-evaluate, might belong in the TWO_PASS bin
+    BIN_ROCKETBURN          = 106,
 
     BIN_TOP_1               = 110, // use these values for visuals that should be displayed above anything else in the scene
     BIN_TOP_2               = 115,

@@ -295,7 +295,7 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
     // set render order
     osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
     if (isImageModel_)
-      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA);
+      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
     else
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
 
