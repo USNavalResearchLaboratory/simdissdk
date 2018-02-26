@@ -142,8 +142,8 @@
 }
 
 {
-   ADDRESS_IN_RANGE/Invalid read of size 8
-   Memcheck:Value8
+   ADDRESS_IN_RANGE/Conditional jump or move depends on uninitialized value
+   Memcheck:Addr8
    ...
    fun:CPLGetSymbol
    ...

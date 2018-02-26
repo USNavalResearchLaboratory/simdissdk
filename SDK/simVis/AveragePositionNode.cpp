@@ -83,6 +83,12 @@ int AveragePositionNode::getNumTrackedNodes() const
   return static_cast<int>(nodes_.size());
 }
 
+void AveragePositionNode::getTrackedIds(std::vector<uint64_t>& ids) const
+{
+  for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
+    ids.push_back((*it)->getId());
+}
+
 double AveragePositionNode::boundingSphereRadius() const
 {
   if (!boundingSphere_.valid())

@@ -23,7 +23,7 @@ set(TEST_FILENAMES
 
 # simQt is used in CategoryDataTest for its Regular Expression implementation
 if(TARGET simQt)
-    list(APPEND TEST_FILENAMES CategoryDataTest.cpp)
+    list(APPEND TEST_FILENAMES CategoryDataTest.cpp CategoryRegExpTest.cpp)
 endif()
 
 create_test_sourcelist(SimDataTestFiles SimDataTests.cpp ${TEST_FILENAMES})
@@ -39,6 +39,7 @@ set_target_properties(SimDataTests PROPERTIES
 if(TARGET simQt)
     target_link_libraries(SimDataTests PRIVATE simQt)
     add_test(NAME simData_TestCategoryData COMMAND SimDataTests CategoryDataTest)
+    add_test(NAME simData_TestCategoryRegExp COMMAND SimDataTests CategoryRegExpTest)
 endif()
 
 add_test(NAME simData_TestDataLimiting COMMAND SimDataTests TestDataLimiting)
