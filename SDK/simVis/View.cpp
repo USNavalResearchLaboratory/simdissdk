@@ -63,6 +63,7 @@ public:
   BorderNode() : osg::Geode(), props_(simVis::Color::White, 2)
   {
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+    geom->setName("simVis::BorderNode");
     geom->setUseVertexBufferObjects(true);
     geom->setDataVariance(osg::Object::DYNAMIC);
 

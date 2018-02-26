@@ -203,6 +203,7 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
 {
   setActive(false);
   geom_ = new osg::Geometry();
+  geom_->setName("simVis::GateCentroid");
   geom_->setUseVertexBufferObjects(true);
 
   osg::Vec4Array* c = new osg::Vec4Array(1);

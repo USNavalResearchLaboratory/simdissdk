@@ -409,6 +409,7 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(length / segmentLength)));
 
   osg::Geometry* g = new osg::Geometry();
+  g->setName("simVis::LaserNode");
   g->setUseVertexBufferObjects(true);
 
   // make the vert array but don't populate it yet

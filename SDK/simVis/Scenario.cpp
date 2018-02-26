@@ -380,9 +380,6 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, true),
     osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
-  // set a default render bin to propagate down to child nodes
-  stateSet->setRenderBinDetails(BIN_POST_TERRAIN, BIN_GLOBAL_SIMSDK);
-
   setName("simVis::ScenarioManager");
 
   platformTspiFilterManager_->addFilter(surfaceClamping_);

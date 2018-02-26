@@ -128,6 +128,7 @@ void VelocityVector::update(const simData::PlatformUpdate& platformUpdate)
 void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, osg::Geode* geode) const
 {
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setName("simVis::VelocityVector");
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();

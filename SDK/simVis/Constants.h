@@ -129,13 +129,16 @@ namespace simVis
     BIN_RFPROPAGATION       = 15,
 
     BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
-
+    
     BIN_OCEAN               = 98, // Ocean draws late because we needs to be able to see through it
 
     // Following this are graphics that render with depth-writing OFF
     BIN_SILVERLINING        = 99,  // SilverLining is automatically drawn at RenderBin 99 (no depth writing)
     BIN_AREA_HIGHLIGHT      = 105, // TODO: re-evaluate, might belong in the TWO_PASS bin
     BIN_ROCKETBURN          = 106,
+
+    BIN_SCREEN_SPACE_LABEL  = 108, // osgEarth screen-space labels (PlaceNode, LabelNode, etc.)
+
 
     BIN_TOP_1               = 110, // use these values for visuals that should be displayed above anything else in the scene
     BIN_TOP_2               = 115,

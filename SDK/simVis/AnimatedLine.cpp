@@ -212,6 +212,7 @@ void AnimatedLineNode::initializeGeometry_()
   // First geometry:
   {
     osg::Geometry* geom = new osg::Geometry();
+    geom->setName("simVis::AnimatedLine");
     geom->setDataVariance(osg::Object::DYNAMIC);
     geom->setUseVertexBufferObjects(true);
     geom->setVertexArray(verts_.get());
@@ -236,6 +237,7 @@ void AnimatedLineNode::initializeGeometry_()
   // Second geometry:
   {
     osg::Geometry* geom = new osg::Geometry();
+    geom->setName("simVis::AnimatedLine");
     geom->setDataVariance(osg::Object::DYNAMIC);
     geom->setUseVertexBufferObjects(true);
     geom->setVertexArray(verts_.get());

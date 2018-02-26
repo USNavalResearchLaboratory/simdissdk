@@ -119,6 +119,7 @@ osg::Geode* EphemerisVector::createGeode_(osg::observer_ptr<osg::Vec3Array>& ver
 {
   osg::ref_ptr<osg::Geode> geode = new osg::Geode;
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setName("simVis::EphemerisVector");
   geom->setUseVertexBufferObjects(true);
 
   // Configure the vertices array

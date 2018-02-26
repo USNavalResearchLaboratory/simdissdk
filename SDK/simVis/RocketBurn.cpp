@@ -94,6 +94,7 @@ void RocketBurn::rebuild_()
   while (currentLength < currentShape_.length)
   {
     osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
+    geometry->setName("simVis::RocketBurn");
     osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array; // vertexes to draw
     geometry->setVertexArray(verts.get());
 

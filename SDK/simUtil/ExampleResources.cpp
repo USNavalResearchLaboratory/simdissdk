@@ -471,6 +471,8 @@ void simExamples::addDefaultSkyNode(simVis::SceneManager* sceneMan)
 {
     osgEarth::SilverLining::SilverLiningOptions options;
     options.drawClouds() = true;
+    options.cloudsMaxAltitude() = 16000.0;
+
     sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(options, sceneMan->getMapNode()));
     return;
 
