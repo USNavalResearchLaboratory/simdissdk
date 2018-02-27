@@ -66,10 +66,16 @@ CentroidManager::~CentroidManager()
 {
 }
 
-AveragePositionNode* CentroidManager::createCentroid(const std::vector<EntityNode*>& nodes, View* view)
+AveragePositionNode* CentroidManager::createCentroid(const std::vector<EntityNode*>& inNodes, View* view)
 {
   // Nothing to do with an empty node vector or a NULL view
-  if (!view || nodes.empty())
+  if (!view || inNodes.empty())
+    return NULL;
+
+  // Remove NULL nodes
+  std::vector<EntityNode*> nodes(inNodes);
+  nodes.erase(std::remove(nodes.begin(), nodes.end(), static_cast<EntityNode*>(NULL)), nodes.end());
+  if (nodes.empty())
     return NULL;
 
   CentroidInfo info;
