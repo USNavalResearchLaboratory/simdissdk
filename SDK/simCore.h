@@ -38,6 +38,7 @@
 #include "simCore/Calc/MultiFrameCoordinate.h"
 #include "simCore/Calc/NumericalAnalysis.h"
 #include "simCore/Calc/Random.h"
+#include "simCore/Calc/SquareMatrix.h"
 #include "simCore/Calc/UnitContext.h"
 #include "simCore/Calc/Units.h"
 #include "simCore/Calc/Vec3.h"
