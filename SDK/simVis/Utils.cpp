@@ -144,8 +144,10 @@ namespace
   const int BASE_LINE_LENGTH = 50;
 
   /**
-   * Custom render bin that implements a two-pass technique for 
-   * rendering multiple transparent objects.
+   * Custom render bin that implements a two-pass technique for rendering multiple
+   * semi-transparent objects. It draws the entire bin twice: the first time with
+   * depth-buffer writes turned off to enable full translucent blending; the second
+   * time to populate the depth buffer.
    */
   class TwoPassAlphaRenderBin : public osgUtil::RenderBin
   {
@@ -183,28 +185,13 @@ namespace
           return new TwoPassAlphaRenderBin(*this, copyop);
       }
 
-      void drawPass(osg::StateSet* pass, osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
-      {
-          ri.getState()->apply(pass);
-          //ri.getState()->pushStateSet(pass);
-          //ri.getState()->apply();
-
-          for (RenderLeafList::iterator rlitr = _renderLeafList.begin();
-              rlitr != _renderLeafList.end();
-              ++rlitr)
-          {
-              osgUtil::RenderLeaf* rl = *rlitr;
-              rl->render(ri, previous);
-              previous = rl;
-          }
-
-          //ri.getState()->popStateSet();
-      }
-
       void drawImplementation(osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
       {
-          drawPass(pass1_.get(), ri, previous);          
-          drawPass(pass2_.get(), ri, previous);
+          ri.getState()->apply(pass1_.get());
+          osgUtil::RenderBin::drawImplementation(ri, previous);
+
+          ri.getState()->apply(pass2_.get());
+          osgUtil::RenderBin::drawImplementation(ri, previous);
       }
 
       osg::ref_ptr<osg::StateSet> pass1_, pass2_;
