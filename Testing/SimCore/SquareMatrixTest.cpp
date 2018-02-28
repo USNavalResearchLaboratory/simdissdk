@@ -69,15 +69,42 @@ int SquareMatrixTest(int argc, char* argv[])
   rv += SDK_ASSERT(areEqual(m, 1.0, 2.0, 3.0, 4.0));
 
   // Test get
-  double check;
-  rv += SDK_ASSERT(m.get(0, 0, check) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(check, 1.0));
-  rv += SDK_ASSERT(m.get(0, 1, check) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(check, 2.0));
-  rv += SDK_ASSERT(m.get(1, 0, check) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(check, 3.0));
-  rv += SDK_ASSERT(m.get(1, 1, check) == 0);
-  rv += SDK_ASSERT(simCore::areEqual(check, 4.0));
+  rv += SDK_ASSERT(simCore::areEqual(m.get(0, 0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(m.get(0, 1), 2.0));
+  rv += SDK_ASSERT(simCore::areEqual(m.get(1, 0), 3.0));
+  rv += SDK_ASSERT(simCore::areEqual(m.get(1, 1), 4.0));
+
+  // Test row
+  auto row = m.row(0);
+  rv += SDK_ASSERT(row.size() == 2);
+  if (row.size() == 2)
+  {
+    rv += SDK_ASSERT(simCore::areEqual(row[0], 1.0));
+    rv += SDK_ASSERT(simCore::areEqual(row[1], 2.0));
+  }
+  row = m.row(1);
+  rv += SDK_ASSERT(row.size() == 2);
+  if (row.size() == 2)
+  {
+    rv += SDK_ASSERT(simCore::areEqual(row[0], 3.0));
+    rv += SDK_ASSERT(simCore::areEqual(row[1], 4.0));
+  }
+
+  // Test column
+  auto column = m.column(0);
+  rv += SDK_ASSERT(column.size() == 2);
+  if (column.size() == 2)
+  {
+    rv += SDK_ASSERT(simCore::areEqual(column[0], 1.0));
+    rv += SDK_ASSERT(simCore::areEqual(column[1], 3.0));
+  }
+  column = m.column(1);
+  rv += SDK_ASSERT(column.size() == 2);
+  if (column.size() == 2)
+  {
+    rv += SDK_ASSERT(simCore::areEqual(column[0], 2.0));
+    rv += SDK_ASSERT(simCore::areEqual(column[1], 4.0));
+  }
 
   // Test scale
   m.scale(2.0);
@@ -91,17 +118,17 @@ int SquareMatrixTest(int argc, char* argv[])
   m.transpose();
   rv += SDK_ASSERT(areEqual(m, 4.0, 12.0, 8.0, 16.0));
 
-  // Test preMultiply, calculations verified by hand
+  // Test postMultiply, calculations verified by hand
   m = setMatrix(1.0, 2.0, 3.0, 4.0);
   // Test that is possible to declare a SquareMatrix without a size
   simCore::SquareMatrix m2;
   m2 = setMatrix(5.0, 6.0, 7.0, 8.0);
-  m.preMultiply(m2);
+  m.postMultiply(m2);
   rv += SDK_ASSERT(areEqual(m, 19.0, 22.0, 43.0, 50.0));
 
-  // Test multiplyPost, calculations verified by hand
+  // Test preMultiply, calculations verified by hand
   m = setMatrix(1.0, 2.0, 3.0, 4.0);
-  m.postMultiply(m2);
+  m.preMultiply(m2);
   rv += SDK_ASSERT(areEqual(m, 23.0, 34.0, 31.0, 46.0));
 
   return rv;

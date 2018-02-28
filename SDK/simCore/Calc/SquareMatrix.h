@@ -89,10 +89,29 @@ public:
    * Get an individual location in the matrix
    * @param row The row of the location to get
    * @param col The column of the location to get
-   * @param value The value for the given location
-   * @return 0 on success, 1 on failure
+   * @return value on success, NaN if row or col invalid
    */
-  int get(unsigned int row, unsigned int col, double& value) const;
+  double get(unsigned int row, unsigned int col) const;
+
+  /**
+   * Returns the specified row
+   * @param row The row to return
+   * @return The values of the specified row or an empty vector if the specified row is invalid
+   */
+  std::vector<double> row(unsigned int row) const;
+
+  /**
+   * Returns the specified column
+   * @param col The row to return
+   * @return The values of the specified column or an empty vector if the specified column is invalid
+   */
+  std::vector<double> column(unsigned int col) const;
+
+  /**
+   * Returns a pointer to the matrix data
+   * @return A pointer to the matrix data or a NULL pointer if the matrix is invalid
+   */
+  const double* data() const;
 
   /**
    * Multiple the matrix by a scalar
@@ -110,17 +129,19 @@ public:
 
   /**
    * Multiply the given matrix to the right of the current matrix
-   * @param m The matrix to multiply to the current matrix
-   * @return 0 on success, 1 on failure
-   */
-  int preMultiply(const SquareMatrix& m);
-
-  /**
-   * Multiply the given matrix to the left of the current matrix
+   * this = this * m
    * @param m The matrix to multiply to the current matrix
    * @return 0 on success, 1 on failure
    */
   int postMultiply(const SquareMatrix& m);
+
+  /**
+   * Multiply the given matrix to the left of the current matrix
+   * this = m * this
+   * @param m The matrix to multiply to the current matrix
+   * @return 0 on success, 1 on failure
+   */
+  int preMultiply(const SquareMatrix& m);
 
 private:
   /**

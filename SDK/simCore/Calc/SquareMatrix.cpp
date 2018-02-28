@@ -21,6 +21,7 @@
  */
 
 #include <cassert>
+#include <limits>
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/SquareMatrix.h"
 
@@ -112,13 +113,44 @@ int SquareMatrix::set(unsigned int row, unsigned int col, double value)
   return 0;
 }
 
-int SquareMatrix::get(unsigned int row, unsigned int col, double& value) const
+double SquareMatrix::get(unsigned int row, unsigned int col) const
 {
   if ((row >= dimension_) || (col >= dimension_))
-    return 1;
+    return std::numeric_limits<float>::quiet_NaN();
 
-  value = get_(row, col);
-  return 0;
+  return get_(row, col);
+}
+
+std::vector<double> SquareMatrix::row(unsigned int row) const
+{
+  std::vector<double> rv;
+  if (row >= dimension_)
+    return rv;
+
+  for (unsigned int col = 0; col < dimension_; ++col)
+    rv.push_back(get_(row, col));
+
+  return rv;
+}
+
+std::vector<double> SquareMatrix::column(unsigned int col) const
+{
+  std::vector<double> rv;
+  if (col >= dimension_)
+    return rv;
+
+  for (unsigned int row = 0; row < dimension_; ++row)
+    rv.push_back(get_(row, col));
+
+  return rv;
+}
+
+const double* SquareMatrix::data() const
+{
+  if (dimension_ < 2)
+    return NULL;
+
+  return matrix_.data();
 }
 
 int SquareMatrix::scale(double scaleValue)
@@ -149,7 +181,7 @@ int SquareMatrix::add(const SquareMatrix& m)
   return 0;
 }
 
-int SquareMatrix::preMultiply(const SquareMatrix& m)
+int SquareMatrix::postMultiply(const SquareMatrix& m)
 {
   if (dimension_ < 2)
     return 1;
@@ -173,7 +205,7 @@ int SquareMatrix::preMultiply(const SquareMatrix& m)
   return 0;
 }
 
-int SquareMatrix::postMultiply(const SquareMatrix& m)
+int SquareMatrix::preMultiply(const SquareMatrix& m)
 {
   if (dimension_ < 2)
     return 1;
@@ -216,11 +248,7 @@ bool areEqual(const SquareMatrix& m1, const SquareMatrix& m2, double t)
   {
     for (unsigned int col = 0; col < m1.dimension(); ++col)
     {
-      double v1;
-      m1.get(row, col, v1);
-      double v2;
-      m2.get(row, col, v2);
-      if (!simCore::areEqual(v1, v2, t))
+      if (!simCore::areEqual(m1.get(row, col), m2.get(row, col), t))
         return false;
     }
   }
