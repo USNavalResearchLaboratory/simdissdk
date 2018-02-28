@@ -138,6 +138,7 @@ private:
   Settings::ObserverPtr settingsObserver_; ///< observer to listen to settings changes
   bool treeView_; ///< true if the tree view should show as a tree, false shows as a list
   bool pendingSendNumItems_; ///< true if waiting to emit a sendNumFilteredItems_ signal
+  bool emitSelectionChanged_; ///< determines if the widget should emit a selection changed signal. Defaults to true
 
   // Maintain a list (to match return value) and a set (for fast searches) of selections
   QList<uint64_t> selectionList_; ///< Cached version of all selected entities
