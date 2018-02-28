@@ -298,7 +298,7 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
     if (isImageModel_)
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
     else
-      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_GLOBAL_SIMSDK); //, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
+      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
 
     // re-add to the parent groups
     offsetXform_->addChild(model_.get());

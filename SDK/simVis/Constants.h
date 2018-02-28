@@ -101,6 +101,7 @@ namespace simVis
    */
   enum RenderBinNumber
   {
+    // Bin type = BIN_GLOBAL_SIMSDK
     BIN_TERRAIN             = 0,  // terrain renders in bin 0.
     BIN_GOG_FLAT            = 1,  // terrain-clamped GOG
     BIN_ANIMATEDLINE_FLAT   = 1,  // animated lines clamped to terrain
@@ -111,16 +112,25 @@ namespace simVis
     BIN_ANIMATEDLINE        = 11,
 
     // Opaque platform-related graphics that do not require depth sorting or blending
-    BIN_PLATFORM_MODEL      = 13,
+    // Bin type = BIN_GLOBAL_SIMSDK
     BIN_LOCAL_GRID          = 13,
     BIN_TRACK_HISTORY       = 13,
     BIN_LASER               = 13,
     BIN_OPAQUE_BEAM         = 13,
     BIN_OPAQUE_GATE         = 13,
 
+    // Platform models are general opaque but have some translucent parts.
+    // These need to be rendered in traversal order to preserve the alpha
+    // components at the end of the mode graph. Later we should explore 
+    // pre-processing these models to separate the translucent parts for
+    // two-pass alpha rendering.
+    // Bin type = BIN_TRAVERSAL_ORDER_SIMSDK
+    BIN_PLATFORM_MODEL      = 14,
+
     // Bin #15 is for depth-sorted translucent graphics. Render these in the
     // BIN_TWO_PASS_ALPHA renderbin. All graphics will draw with depth-writing off,
     // then draw a second time to populate the depth buffer.
+    // Bin type = BIN_TWO_PASS_ALPHA
     BIN_PLATFORM_IMAGE      = 15,
     BIN_BEAM                = 15,
     BIN_GATE                = 15,
@@ -128,15 +138,15 @@ namespace simVis
     BIN_CYLINDER            = 15,
     BIN_RFPROPAGATION       = 15,
 
+    // Bin type = BIN_GLOBAL_SIMSDK
     BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
-    
     BIN_OCEAN               = 98, // Ocean draws late because we needs to be able to see through it
 
     // Following this are graphics that render with depth-writing OFF
+    // Bin type = BIN_GLOBAL_SIMSDK
     BIN_SILVERLINING        = 99,  // SilverLining is automatically drawn at RenderBin 99 (no depth writing)
     BIN_AREA_HIGHLIGHT      = 105, // TODO: re-evaluate, might belong in the TWO_PASS bin
     BIN_ROCKETBURN          = 106,
-
     BIN_SCREEN_SPACE_LABEL  = 108, // osgEarth screen-space labels (PlaceNode, LabelNode, etc.)
 
 
