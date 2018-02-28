@@ -178,7 +178,7 @@ GogNodeInterface* Parser::createGOG(const std::vector<std::string>& lines, const
   return result;
 }
 
-bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData>& metaData) const
+bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>& metaData) const
 {
   // Set up the modifier state object with default values. The state persists
   // across the parsing of the GOG input, spanning actual objects. (e.g. if the
@@ -192,9 +192,6 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
   std::set<std::string> unhandledStyleKeywords;
   unhandledStyleKeywords.insert("innerradius");
 
-  // some shapes don't store position in the metadata, such as polygon, line, points, linesegs, since
-  // this data can be extracted from the osg::Node directly
-  bool ignorePositions = false;
   // relative shapes will store their metadata differently, and need a metadata flag to indicate they are relative
   bool relative = false;
   // valid commands must occur within a start/end block
@@ -210,6 +207,8 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
   std::string refLat;
   std::string refLon;
   std::string refAlt;
+  // cache the position lines in case they need to be stored to metadata, for annotations
+  std::string positionLines;
   // track line number parsed for error reporting
   size_t lineNumber = 0;
 
@@ -285,23 +284,23 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
         printError_(lineNumber, "end command encountered before recognized GOG shape type keyword");
         continue;
       }
-      if (!current.empty())
-      {
-        // if this is a relative shape, and we aren't storing the position in metadata, need to flag the metadata
-        if (ignorePositions && relative && currentMetaData.metadata.find(RelativeShapeKeyword) == std::string::npos)
-          currentMetaData.metadata += RelativeShapeKeyword + "\n";
 
+      // apply all cached information to metadata when end is reached
+      if (tokens[0] == "end")
+      {
+        updateMetaData_(state, refOriginLine, positionLines, relative, currentMetaData);
         metaData.push_back(currentMetaData);
         state.apply(current);
         output.add(current);
       }
-      ignorePositions = false;
 
       // clear reference origin settings for new block of commands
       refOriginLine.clear();
       refLat.clear();
       refLon.clear();
       refAlt.clear();
+      positionLines.clear();
+      relative = false;
 
       // "start" indicates a valid block, "end" indicates the block of commands are complete and subsequent commands will be invalid
       validStartEndBlock = (tokens[0] == "start");
@@ -321,8 +320,11 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
         // a single start/end block.
         if (current.key() == "annotation")
         {
+          updateMetaData_(state, refOriginLine, positionLines, relative, currentMetaData);
           metaData.push_back(currentMetaData);
           currentMetaData.metadata.clear();
+          positionLines.clear();
+          relative = false;
           currentMetaData.shape = GOG_UNKNOWN;
           currentMetaData.clearSetFields();
           state.apply(current);
@@ -330,9 +332,8 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
           current = Config();
           // if available, recreate reference origin
           // values are needed for subsequent annotation points since meta data was cleared and a new "current" is used
-          if (!refOriginLine.empty() && relative)
+          if (!refOriginLine.empty())
           {
-            currentMetaData.metadata += refOriginLine + "\n";
             current.set("lat", refLat);
             current.set("lon", refLon);
             if (!refAlt.empty())
@@ -363,13 +364,7 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
       tokens[0] == "cylinder"      ||
       tokens[0] == "hemisphere"    ||
       tokens[0] == "sphere"        ||
-      tokens[0] == "ellipsoid"
-      )
-    {
-      currentMetaData.shape = Parser::getShapeFromKeyword(tokens[0]);
-      current.key() = line;
-    }
-    else if (
+      tokens[0] == "ellipsoid"     ||
       tokens[0] == "points"        ||
       tokens[0] == "line"          ||
       tokens[0] == "poly"          ||
@@ -377,7 +372,6 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
       tokens[0] == "linesegs"
       )
     {
-      ignorePositions = true;
       currentMetaData.shape = Parser::getShapeFromKeyword(tokens[0]);
       current.key() = line;
     }
@@ -410,16 +404,9 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     {
       if (tokens.size() >= 3)
       {
-        // only add reference point to meta data for shapes that can't serialize geometry from the node
-        if (!ignorePositions)
-        {
-          currentMetaData.metadata += line + "\n";
-          // cache reference origin line and values for repeated use by GOG objects within a start/end block, such as annotations
-          refOriginLine = line;
-        }
-        // indicate this is a shape with a reference point, since it can be extracted from the node's geometry rather than being stored in meta data
-        else if (currentMetaData.metadata.find(ReferencePointKeyword) == std::string::npos)
-            currentMetaData.metadata += ReferencePointKeyword + "\n";
+
+        // cache reference origin line and values for repeated use by GOG objects within a start/end block, such as annotations
+        refOriginLine = line;
 
         refLat = parseGogGeodeticAngle_(tokens[1]);
         current.set("lat", refLat);
@@ -442,16 +429,9 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     {
       if (tokens.size() >= 3)
       {
-        // need to save xyz for labels
-        if (!ignorePositions)
-          currentMetaData.metadata += line + "\n";
+        // need to cache xyz for annotations
+        positionLines += line + "\n";
         relative = true;
-        // now check to make sure we haven't already captured rangeunits in the metadata, since we don't know what order the GOG data is entered
-        size_t rangeunitsIndex = currentMetaData.metadata.find("rangeunits");
-        if (rangeunitsIndex != std::string::npos)
-        {
-          currentMetaData.metadata.erase(rangeunitsIndex, currentMetaData.metadata.find('\n', rangeunitsIndex) + 1);
-        }
 
         Config point("xy");
         point.set("x", tokens[1]);
@@ -469,9 +449,8 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     {
       if (tokens.size() >= 3)
       {
-        // need to save lla for labels
-        if (!ignorePositions)
-          currentMetaData.metadata += line + "\n";
+        // need to save lla for annotations
+        positionLines += line + "\n";
 
         Config point("ll");
         point.set("lat", parseGogGeodeticAngle_(tokens[1]));
@@ -495,9 +474,8 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
           printError_(lineNumber, "Unable to convert MGRS coordinate to lat/lon");
         else
         {
-          // need to save lla for labels
-          if (!ignorePositions)
-            currentMetaData.metadata += line + "\n";
+          // need to save lla for annotations
+          positionLines += line + "\n";
 
           Config point("ll");
           point.set("lat", simCore::buildString("", lat * simCore::RAD2DEG));
@@ -617,9 +595,6 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     {
       if (tokens.size() >= 2)
       {
-        // don't store altitude units if ignoring positions, since it will be defined by osgEarth
-        if (!ignorePositions)
-          currentMetaData.metadata += line + "\n";
         state.altitudeUnits_ = tokens[1];
       }
       else
@@ -630,16 +605,9 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
     else if (tokens[0] == "rangeunits")
     {
       if (tokens.size() >= 2)
-      {
-        // don't store range units in meta data if relative, since it will be defined by osgEarth
-        if (!relative)
-          currentMetaData.metadata += line + "\n";
         state.rangeUnits_ = tokens[1];
-      }
       else
-      {
         printError_(lineNumber, "rangeunits command requires 1 argument");
-      }
     }
     else if (tokens[0] == "timeunits")
     {
@@ -969,6 +937,41 @@ bool Parser::parse_(std::istream& input, Config& output, std::vector<GogMetaData
   return true;
 }
 
+void Parser::updateMetaData_(const ModifierState& state, const std::string& refOriginLine, const std::string& positionLines, bool relative, GogMetaData& currentMetaData) const
+{
+  // some shapes don't store position in the metadata, such as polygon, line, points, linesegs, since
+  // this data can be extracted from the osg::Node directly
+  bool noGeometryInMetadata = Utils::canSerializeGeometry_(currentMetaData.shape);
+
+  if (noGeometryInMetadata)
+  {
+    if (relative)
+    {
+      // if this is a relative shape, and we aren't storing the geometry in metadata, need to flag the metadata
+      if (currentMetaData.metadata.find(RelativeShapeKeyword) == std::string::npos)
+        currentMetaData.metadata += RelativeShapeKeyword + "\n";
+      // indicate this is a relative shape with a reference point which can be extracted from the node's geometry rather than being stored in meta data
+      if (currentMetaData.metadata.find(ReferencePointKeyword) == std::string::npos)
+        currentMetaData.metadata += ReferencePointKeyword + "\n";
+    }
+  }
+  // add reference point to meta data for relative shapes that store their geometry in metadata
+  else if (!refOriginLine.empty())
+    currentMetaData.metadata += refOriginLine + "\n";
+
+  // store altitude units in metadata for shapes with geometry stored in metadata
+  if (!noGeometryInMetadata && !state.altitudeUnits_.value().empty())
+    currentMetaData.metadata += "altitudeunits " + state.altitudeUnits_.value() + "\n";
+
+  // store range units in meta data for shapes with geometry stored in metadata
+  if (!noGeometryInMetadata && !state.rangeUnits_.value().empty())
+    currentMetaData.metadata += "rangeunits " + state.rangeUnits_.value() + "\n";
+
+  // add position lines to metadata for annotations
+  if (currentMetaData.shape == GOG_ANNOTATION && !positionLines.empty())
+      currentMetaData.metadata += positionLines;
+}
+
 bool Parser::createGOGs_(const Config& conf, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
 {
   // add exception handling prior to passing data to renderer
@@ -1009,7 +1012,7 @@ bool Parser::createGOGs(std::istream& input, const GOGNodeType& nodeType, Overla
   // first, parse from GOG into Config
   Config conf;
   std::vector<GogMetaData> metaData;
-  if (!parse_(input, conf, metaData))
+  if (!parse(input, conf, metaData))
     return false;
 
   // then parse from Config into Annotation.

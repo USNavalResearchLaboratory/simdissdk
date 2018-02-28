@@ -109,7 +109,7 @@ namespace simVis
     * Interface to the centroid manager.
     * @return Pointer to the CentroidManager
     */
-    CentroidManager* getCentroidManager() { return centroidManager_.get(); }
+    CentroidManager* getCentroidManager() const { return centroidManager_.get(); }
 
     /**
     * The scene graph node that renders the sky

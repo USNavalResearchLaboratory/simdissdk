@@ -169,7 +169,25 @@ namespace simVis { namespace GOG
     */
     void addOverwriteColor(const std::string& key, osgEarth::Symbology::Color color);
 
+    /**
+    * Parses an input GOG stream into a Config structure and parallel vector of meta data.
+    * The metadata contains attributes of the GOG shape that may be lost when converting to an osg::Node,
+    * things like the GOG shape type (circle, polygon, etc.) and other information that is not in the node or its
+    * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.
+    * @param[in ] input    GOG input data
+    * @param[out] output   Config structure
+    * @param[out] metaData Meta data about the GOG that needs to be stored with the resulting osg::Node
+    */
+    bool parse(
+      std::istream&              input,
+      osgEarth::Config&          output,
+      std::vector<GogMetaData>&  metaData) const;
+
   private:
+
+    /** Applies all the specified data to the meta data as appropriate  */
+    void updateMetaData_(const ModifierState& state, const std::string& refOriginLine, const std::string& positionLines, bool relative, GogMetaData& currentMetaData) const;
+
     /** Initialize the default GOG colors */
     void initGogColors_();
 
@@ -205,20 +223,6 @@ namespace simVis { namespace GOG
       const std::vector<GogMetaData>& metaData,
       OverlayNodeVector&              output,
       std::vector<GogFollowData>&     followData) const;
-
-    /**
-     * Parses an input GOG stream into a Config structure and parallel vector of meta data.
-     * The metadata contains attributes of the GOG shape that may be lost when converting to an osg::Node,
-     * things like the GOG shape type (circle, polygon, etc.) and other information that is not in the node or its
-     * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.
-     * @param[in ] input    GOG input data
-     * @param[out] output   Config structure
-     * @param[out] metaData Meta data about the GOG that needs to be stored with the resulting osg::Node
-     */
-    bool parse_(
-      std::istream&              input,
-      osgEarth::Config&          output,
-      std::vector<GogMetaData>&  metaData) const;
 
     /**
      * Prints any GOG parsing error to simNotify

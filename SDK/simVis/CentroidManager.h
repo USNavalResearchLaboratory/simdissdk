@@ -46,12 +46,14 @@ public:
   CentroidManager();
 
   /**
-  * Create a centroid using the given nodes.
-  * @param nodes Vector of EntityNodes about which to center the view
+  * Create a centroid using the given nodes. Returns a pointer to the
+  * created centroid. Will return NULL if the given view is invalid or
+  * if nodes is empty or filled with invalid pointers.
+  * @param inNodes Vector of EntityNodes about which to center the view
   * @param view View to tether to the centroid
   * @return Pointer to created centroid node
   */
-  AveragePositionNode* createCentroid(const std::vector<EntityNode*>& nodes, View* view);
+  AveragePositionNode* createCentroid(const std::vector<EntityNode*>& inNodes, View* view);
 
   /**
   * Create a centroid using the given nodes and center the given view on it.

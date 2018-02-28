@@ -23,6 +23,7 @@
 #include <cassert>
 #include <iostream>
 #include "osgEarth/Units"
+#include "osgEarth/Version"
 #include "osgEarthSymbology/Style"
 #include "osgEarthSymbology/Color"
 #include "osgEarthSymbology/TextSymbol"
@@ -426,6 +427,8 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   }
   else if (metaData_.isSetExplicitly(GOG_TESSELLATE_SET))
     gogOutputStream << "tessellate false\n";
+
+  // Follow data is not currently serialized out
 }
 
 int GogNodeInterface::getAltitudeMode(AltitudeMode& altMode) const
@@ -1302,7 +1305,11 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
       if (srs != NULL)
       {
         osg::BoundingSphered boundS;
+#if OSGEARTH_VERSION_LESS_THAN(2,10,0)
         if (feature->getWorldBound(srs->getECEF(), boundS))
+#else
+        if (feature->getWorldBound(srs->getGeocentricSRS(), boundS))
+#endif
         {
           // ensure a minimum of 50m spacing, otherwise approximately 80 posts along major dimension of feature
           tessellationSpacingM = simCore::sdkMax(50.0, simCore::sdkMin(tessellationSpacingM, 0.025 * boundS.radius()));
