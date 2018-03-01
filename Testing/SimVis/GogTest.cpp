@@ -50,14 +50,14 @@ int testParseMetaData()
   int rv = 0;
 
   simVis::GOG::Parser parser;
+  std::vector<simVis::GOG::GogMetaData> metaData;
+  std::stringstream shapes;
+  size_t numGogs = 2;
 
   // test basic shapes that provide no metadata
-  std::stringstream shapes;
   shapes << FILE_VERSION;
   shapes << "start\n line\n lla 26.13568698 55.28931414 5000.\n lla \"26.0 N\" \"55.0 E\" 5000.\n end\n";
   shapes << "start\n poly\n lla 25.2 53.2 10.\n lla 22.3 54.1 10.\n lla 24.1 53.8 10.\nend\n";
-  size_t numGogs = 2;
-  std::vector<simVis::GOG::GogMetaData> metaData;
   if (parseGog(shapes, parser, metaData, rv))
   {
     // make sure all GOGs were created
@@ -68,8 +68,8 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(1).metadata.empty());
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
-
 
   // test basic shapes that provide metadata
   shapes << FILE_VERSION;
@@ -79,7 +79,7 @@ int testParseMetaData()
   if (parseGog(shapes, parser, metaData, rv))
   {
     // make sure all GOGs were created
-    rv += SDK_ASSERT(metaData.size() == numGogs);                                  
+    rv += SDK_ASSERT(metaData.size() == numGogs);
     // make sure the circle added its centerlla to metadata
     rv += SDK_ASSERT(metaData.at(0).metadata.find("centerlla 26 55 5000.") != std::string::npos);
     // make sure the arc added its centerlla to metadata
@@ -90,6 +90,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(1).metadata.find("angleend 45") != std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   // test unattached relative with geometry in metadata
@@ -109,6 +110,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(0).metadata.find(simVis::GOG::RelativeShapeKeyword) == std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   // test unattached relative with geometry in metadata, but shape type is at the end
@@ -128,6 +130,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(0).metadata.find(simVis::GOG::RelativeShapeKeyword) == std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   // test unattached relative with no geometry in metadata
@@ -145,6 +148,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(0).metadata.find(simVis::GOG::RelativeShapeKeyword) != std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   // test unattached relative with no geometry in metadata, but shape type is at the end
@@ -162,6 +166,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(0).metadata.find(simVis::GOG::RelativeShapeKeyword) != std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   // test unattached relative followed by absolute followed by relative, all with no geometry in metadata
@@ -193,6 +198,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(2).metadata.find(simVis::GOG::RelativeShapeKeyword) != std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
 
@@ -212,6 +218,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(1).metadata.find("rangeunits meters") != std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   // test with no geometry in metadata, altitude and range units specified
@@ -230,8 +237,8 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(1).metadata.find("rangeunits") == std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
-
 
   // test basic annotations
   shapes << FILE_VERSION;
@@ -254,6 +261,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(2).metadata.find("referencepoint 22.3 44.3 4.") != std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   // test annotations special case, with multiple annotations defined in a single start/end block
@@ -279,6 +287,7 @@ int testParseMetaData()
     rv += SDK_ASSERT(metaData.at(2).metadata.find("referencepoint 22.3 44.3 4.") != std::string::npos);
   }
   shapes.clear();
+  shapes.str("");
   metaData.clear();
 
   return rv;
@@ -291,10 +300,13 @@ int GogTest(int argc, char* argv[])
   int rv = 0;
 
   // Check the SIMDIS SDK version
-  //simCore::checkVersionThrow();
+  simCore::checkVersionThrow();
 
   // Run tests
-  //rv += testParseMetaData();
+  rv += testParseMetaData();
+
+  // Shut down protobuf lib for valgrind testing
+  google::protobuf::ShutdownProtobufLibrary();
 
   return rv;
 }
