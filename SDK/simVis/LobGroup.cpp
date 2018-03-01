@@ -347,9 +347,8 @@ void LobGroupNode::setLineDrawStyle_(double time, simVis::AnimatedLineNode& line
     setLineValueFromPrefs_(line, defaultValues);
     return;
   }
-  simData::DataTable* table = NULL;
   // use the drawStyleTableId_ if we have it
-  table = ds_.dataTableManager().getTable(drawStyleTableId_);
+  simData::DataTable* table = ds_.dataTableManager().getTable(drawStyleTableId_);
   // no draw style history table, simply use the default values from prefs
   if (table == NULL)
   {
@@ -591,8 +590,7 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
   const bool lobChangedToActive = (current != NULL && !hasLastUpdate_);
 
   // Do any necessary flashing
-  simData::DataTable* table = NULL;
-  table = ds_.dataTableManager().getTable(drawStyleTableId_);
+  simData::DataTable* table = ds_.dataTableManager().getTable(drawStyleTableId_);
   if (table != NULL)
   {
     bool flashing = false;

@@ -224,9 +224,8 @@ osg::Vec4f TrackHistoryNode::historyColorAtTime_(double time)
     return defaultColor_;
 
   // find the table
-  simData::DataTable* table = NULL;
   // use the tableId_ if we have it
-  table = ds_.dataTableManager().getTable(tableId_);
+  simData::DataTable* table = ds_.dataTableManager().getTable(tableId_);
   // no color history table, simply return the default color
   if (table == NULL)
   {

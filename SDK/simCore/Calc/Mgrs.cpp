@@ -526,7 +526,6 @@ int Mgrs::convertUpsToGeodetic(bool northPole, double falseEasting, double false
   const double t = rho != 0 ? (rho * 7.9130711166184124404360762089019e-8) : square(std::numeric_limits<double>::epsilon());
   const double taup = (1. / t - t) / 2.;
   const double tau = tauf_(taup);
-  const double secphi = hypot_(1., tau);
   lat = (northPole ? 1. : -1.) * atan2(tau, 1.);
   lon = atan2(x, (northPole ? -y : y));
   return 0;

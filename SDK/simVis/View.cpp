@@ -34,7 +34,6 @@
 #include "simNotify/Notify.h"
 
 #include "simVis/osgEarthVersion.h"
-#include "simVis/AveragePositionNode.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
