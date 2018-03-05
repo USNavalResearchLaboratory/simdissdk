@@ -21,6 +21,7 @@
  */
 #include "OpenThreads/Mutex"
 #include "OpenThreads/ScopedLock"
+#include "osg/Version"
 #include "osgDB/Callbacks"
 #include "osgDB/FileUtils"
 #include "osgDB/FileNameUtils"
@@ -394,7 +395,12 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
     return fontCache_.find(CANT_FIND_FONT)->second.get();
   }
 
+#if OSG_VERSION_LESS_THAN(3, 5, 8)
+  // Change the glyph image margin to 2 to prevent issues with glyph textures bleeding into
+  // successive glyphs.  This shows up as a vertical line on either side of the glyph.  This
+  // function went away in OSG 3.5.8.
   font->setGlyphImageMargin(2);
+#endif
   fontCache_[name] = font.get();
 
   return font.get();
