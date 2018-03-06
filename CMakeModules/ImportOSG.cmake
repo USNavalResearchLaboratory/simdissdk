@@ -106,7 +106,7 @@ endif()
 
 # Get the DLL prefix for osg.dll, e.g. osg153-
 osg_guess_win32_dll_prefix(OSG_DLL_PREFIX "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}")
-osg_set_imported_locations_from_implibs(${LIBRARYNAME} ${OSG_DLL_PREFIX})
+osg_set_imported_locations_from_implibs(${LIBRARYNAME} "${OSG_DLL_PREFIX}")
 if(OSG_SHOULD_INSTALL)
     vsi_install_target(${LIBRARYNAME} ${${LIBRARYNAME}_INSTALL_COMPONENT})
 endif()
@@ -147,7 +147,7 @@ function(import_osg_library LIBRARYNAME NAME)
             IMPORTED_IMPLIB_DEBUG "${${LIBRARYNAME}_LIBRARY_DEBUG_NAME}"
         )
     endif()
-    osg_set_imported_locations_from_implibs(${LIBRARYNAME} ${OSG_DLL_PREFIX})
+    osg_set_imported_locations_from_implibs(${LIBRARYNAME} "${OSG_DLL_PREFIX}")
     if(OSG_SHOULD_INSTALL)
         vsi_install_target(${LIBRARYNAME} ${OSG_INSTALL_COMPONENT})
     endif()
@@ -240,6 +240,7 @@ set(OSG_COMMON_LIBDEPENDENCIES
 )
 set(OSG_ALL_LIBDEPENDENCIES
     OSG OSGDB OSGGA OSGSIM OSGTERRAIN OSGTEXT OSGUTIL OSGVIEWER OSGWIDGET OSGANIMATION OPENTHREADS
+    OSGMANIPULATOR OSGSHADOW
 )
 
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true

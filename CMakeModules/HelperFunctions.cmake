@@ -196,8 +196,8 @@ endmacro()
 # example, osg.lib might have an associated DLL osg153-osg.dll.  This routine will
 # return the "osg153-" portion of the DLL's filename.  This routine should be reusable
 # for OSG, OpenThreads, and osgQt.
-macro(osg_guess_win32_dll_prefix VAR_DLL_PREFIX LIB_FILENAME)
-    set(${VAR_DLL_PREFIX} "")
+function(osg_guess_win32_dll_prefix VAR_DLL_PREFIX LIB_FILENAME)
+    set(${VAR_DLL_PREFIX} "" PARENT_SCOPE)
     # Linux returns without any checks
     if(NOT WIN32)
         return()
@@ -224,8 +224,9 @@ macro(osg_guess_win32_dll_prefix VAR_DLL_PREFIX LIB_FILENAME)
     string(LENGTH "${_NAME_ONLY}.dll" CHARS_TO_REMOVE)
     math(EXPR CHARS_TO_KEEP "${OUT_FILE_LEN} - ${CHARS_TO_REMOVE}")
     # Save output in VAR_DLL_PREFIX
-    string(SUBSTRING "${_OUT_FILE}" 0 ${CHARS_TO_KEEP} ${VAR_DLL_PREFIX})
-endmacro()
+    string(SUBSTRING "${_OUT_FILE}" 0 ${CHARS_TO_KEEP} _PREFIX)
+    set(${VAR_DLL_PREFIX} "${_PREFIX}" PARENT_SCOPE)
+endfunction()
 
 # Sets the IMPORTED_LOCATION and IMPORTED_LOCATION_DEBUG properties for
 # TARGET based on TARGET's preexisting IMPORTED_IMPLIB and
