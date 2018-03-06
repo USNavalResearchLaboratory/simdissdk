@@ -129,7 +129,7 @@ int LightDiffuse::compare(const StateAttribute& sa) const
 
 void LightDiffuse::apply(osg::State& state) const
 {
-#ifdef SIMVIS_GL_FIXED_FUNCTION_AVAILABLE
+#if defined(SIMVIS_GL_FIXED_FUNCTION_AVAILABLE) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
   if (useLightMaster_)
   {
     // If non-NULL, use the master's values.  Else do nothing.
