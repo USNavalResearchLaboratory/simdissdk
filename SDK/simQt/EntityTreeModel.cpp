@@ -505,17 +505,25 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 
 QVariant EntityTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-  if ((orientation == Qt::Horizontal) && (role == Qt::DisplayRole))
+  if (orientation == Qt::Horizontal)
   {
-    if (section == 0)
-       return "Name";
-    if (section == 1)
-      return "Type";
-    if (section == 2)
-      return "ID";
+    if (role == Qt::DisplayRole)
+    {
+      if (section == 0)
+        return "Name";
+      if (section == 1)
+        return "Type";
+      if (section == 2)
+        return "ID";
 
-    assert(0);
-    return QVariant();
+      assert(0);
+      return QVariant();
+    }
+    // Explain special display cases to the user in the name column's tooltip
+    if (role == Qt::ToolTipRole && section == 0)
+    {
+      return tr("Entities which are set to use their alias but have no alias to use are listed in gray.\n\nEntities which are set to be listed despite not matching the current filter are listed in italics.");
+    }
   }
 
   // Isn't the bar across the top -- fall back to whatever QAIM does
