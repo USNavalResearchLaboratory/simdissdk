@@ -5,10 +5,7 @@ set(LIBRARYNAME OPENTHREADS)
 
 # OpenThreads is stored under the OpenSceneGraph folder
 set(${LIBRARYNAME}_VERSION 3.4.1)
-# Adjust for the Qt version.  Note that 4.8 version works across the board for 4.8.x
-set(${LIBRARYNAME}_VERSION ${${LIBRARYNAME}_VERSION}_Qt-${QT_VERSION})
 # Prefix on the DLL under Windows
-set(${LIBRARYNAME}_DLL_PREFIX ot20-)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Compile options: OPENTHREADS depends on PThreads on UNIX
@@ -75,6 +72,9 @@ endif()
 
 # Set the IMPORTED_LOCATION manually.  On Windows, this is a prefix and different directory
 if(WIN32)
+    # Get the DLL prefix for OpenThreads.dll, e.g. ot21-
+    osg_guess_win32_dll_prefix(${LIBRARYNAME}_DLL_PREFIX "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}")
+
     get_filename_component(BASE_PATH ${${LIBRARYNAME}_LIBRARY_RELEASE_NAME} DIRECTORY)
     get_filename_component(NAME_ONLY ${${LIBRARYNAME}_LIBRARY_RELEASE_NAME} NAME_WE)
     set(DLL_PATH "${BASE_PATH}/../bin/${${LIBRARYNAME}_DLL_PREFIX}${NAME_ONLY}.dll")

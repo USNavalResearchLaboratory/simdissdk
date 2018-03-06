@@ -188,6 +188,45 @@ macro(initialize_ENV envvar)
     endif()
 endmacro()
 
+# osg_guess_win32_dll_prefix(<VAR_DLL_PREFIX> <LIB_FILENAME>)
+#
+# Sets variable <VAR_DLL_PREFIX> to the correct filename prefix for Windows import
+# library <LIB_FILENAME>.  It does this by searching the associated "../bin/" directory
+# for the DLL associated with LIB_FILENAME, based on a file(GLOB...) search.  For
+# example, osg.lib might have an associated DLL osg153-osg.dll.  This routine will
+# return the "osg153-" portion of the DLL's filename.  This routine should be reusable
+# for OSG, OpenThreads, and osgQt.
+macro(osg_guess_win32_dll_prefix VAR_DLL_PREFIX LIB_FILENAME)
+    set(${VAR_DLL_PREFIX} "")
+    # Linux returns without any checks
+    if(NOT WIN32)
+        return()
+    endif()
+    # Filename should exist
+    if(NOT EXISTS "${LIB_FILENAME}")
+        message(WARNING "LIB NAME ${LIB_FILENAME} not found...")
+        return()
+    endif()
+
+    # Find the DLL filename
+    get_filename_component(_BIN_DIR ${LIB_FILENAME} DIRECTORY)
+    get_filename_component(_NAME_ONLY ${LIB_FILENAME} NAME_WE)
+    set(_BIN_DIR "${_BIN_DIR}/../bin/")
+    file(GLOB _OUT_FILE RELATIVE "${_BIN_DIR}" "${_BIN_DIR}/*${_NAME_ONLY}.dll")
+
+    # Error check the output -- break out early if file not found
+    if(NOT _OUT_FILE)
+        message(WARNING "Unable to find DLL file for input LIB ${LIB_FILENAME}")
+        return()
+    endif()
+    # Remove the right "n" characters so that only the prefix remains
+    string(LENGTH "${_OUT_FILE}" OUT_FILE_LEN)
+    string(LENGTH "${_NAME_ONLY}.dll" CHARS_TO_REMOVE)
+    math(EXPR CHARS_TO_KEEP "${OUT_FILE_LEN} - ${CHARS_TO_REMOVE}")
+    # Save output in VAR_DLL_PREFIX
+    string(SUBSTRING "${_OUT_FILE}" 0 ${CHARS_TO_KEEP} ${VAR_DLL_PREFIX})
+endmacro()
+
 # Sets the IMPORTED_LOCATION and IMPORTED_LOCATION_DEBUG properties for
 # TARGET based on TARGET's preexisting IMPORTED_IMPLIB and
 # IMPORTED_IMPLIB_DEBUG properties.  On Linux this will typically be a
