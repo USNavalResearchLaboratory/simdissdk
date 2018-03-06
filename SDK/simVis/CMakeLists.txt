@@ -70,8 +70,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
-    ${VIS_INC}LightAmbient.h
-    ${VIS_INC}LightDiffuse.h
     ${VIS_INC}LobGroup.h
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
@@ -195,8 +193,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
     ${VIS_SRC}Laser.cpp
-    ${VIS_SRC}LightAmbient.cpp
-    ${VIS_SRC}LightDiffuse.cpp
     ${VIS_SRC}LobGroup.cpp
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
@@ -392,14 +388,6 @@ if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simVis PUBLIC simVis_LIB_EXPORT_STATIC)
-endif()
-
-
-# FFP in LightDiffuse and LightAmbient requires linking to OpenGL
-find_package(OpenGL)
-if(OPENGL_FOUND)
-    target_link_libraries(simVis PRIVATE ${OPENGL_LIBRARIES})
-    target_compile_definitions(simVis PRIVATE SIMVIS_GL_FIXED_FUNCTION_AVAILABLE)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
