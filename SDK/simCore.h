@@ -43,7 +43,6 @@
 #include "simCore/Calc/Units.h"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Calc/VerticalDatum.h"
-#include "simCore/Calc/WorldMagneticModel.h"
 #include "simCore/Common/Common.h"
 #include "simCore/Common/Exception.h"
 #include "simCore/Common/Export.h"
