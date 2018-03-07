@@ -25,11 +25,13 @@
 
 #include <QObject>
 
+#include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
 
 namespace simVis {
   class FocusManager;
   class ScenarioManager;
+  class CentroidManager;
 }
 
 namespace simQt {
@@ -56,15 +58,24 @@ public:
   /** Auto configures the double click to center on platform and turns off the tree expansion on double click */
   void bindTo(EntityTreeComposite& tree);
 
+  /**
+   * Sets the centroid manager for centering views
+   * @param centroidManager the centroid manager for centering views
+   */
+  void setCentroidManager(simVis::CentroidManager* centroidManager);
+
   virtual ~CenterEntity();
 
 public slots:
   /** Center the current view port on the given entity Unique ID */
   void centerOnEntity(uint64_t id);
+  /** Center the current view port on the given list of entity unique IDs */
+  void centerOnSelection(const QList<uint64_t>& ids);
 
 private:
-  simVis::FocusManager& focusManager_;
-  simVis::ScenarioManager& scenarioManager_;
+  osg::observer_ptr<simVis::FocusManager> focusManager_;
+  osg::observer_ptr<simVis::ScenarioManager> scenarioManager_;
+  osg::observer_ptr<simVis::CentroidManager> centroidManager_;
 };
 
 }
