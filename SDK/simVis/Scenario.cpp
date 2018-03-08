@@ -46,6 +46,7 @@
 #include "simVis/PlatformFilter.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
@@ -390,12 +391,13 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   platformTspiFilterManager_->addFilter(surfaceClamping_);
 
   // Install shaders used by multiple entities at the scenario level
-  OverrideColor::installShaderProgram(stateSet);
-  TrackHistoryNode::installShaderProgram(stateSet);
+  AlphaTest::installShaderProgram(stateSet);
   BeamPulse::installShaderProgram(stateSet);
   LobGroupNode::installShaderProgram(stateSet);
+  OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);
-  AlphaTest::installShaderProgram(stateSet);
+  PointSize::installShaderProgram(stateSet);
+  TrackHistoryNode::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()

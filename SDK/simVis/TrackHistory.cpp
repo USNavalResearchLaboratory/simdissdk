@@ -22,22 +22,22 @@
 #include <cassert>
 
 #include "osg/LineWidth"
-#include "osg/Point"
-#include "osgEarth/VirtualProgram"
-#include "osgEarth/Registry"
 #include "osgEarth/Capabilities"
 #include "osgEarth/Horizon"
+#include "osgEarth/Registry"
+#include "osgEarth/VirtualProgram"
 
 #include "simNotify/Notify.h"
 #include "simData/DataTable.h"
 #include "simVis/Constants.h"
 #include "simVis/Locator.h"
+#include "simVis/OverheadMode.h"
+#include "simVis/PlatformFilter.h"
+#include "simVis/PointSize.h"
+#include "simVis/Shaders.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
-#include "simVis/PlatformFilter.h"
-#include "simVis/Shaders.h"
 #include "simVis/TrackHistory.h"
-#include "simVis/OverheadMode.h"
 
 namespace simVis
 {
@@ -613,7 +613,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
     double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
     osg::StateSet* stateSet = this->getOrCreateStateSet();
     stateSet->setAttributeAndModes(new osg::LineWidth(lineWidth), osg::StateAttribute::ON);
-    stateSet->setAttributeAndModes(new osg::Point(lineWidth), osg::StateAttribute::ON);
+    PointSize::setValues(stateSet, lineWidth, osg::StateAttribute::ON);
   }
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, tracklength))

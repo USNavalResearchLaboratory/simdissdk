@@ -24,7 +24,6 @@
 #include "osg/Geode"
 #include "osg/ImageStream"
 #include "osg/PolygonOffset"
-#include "osg/Point"
 #include "osg/LineWidth"
 #include "osg/Depth"
 #include "osg/MatrixTransform"

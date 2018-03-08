@@ -69,6 +69,9 @@ public:
   /** Name of fragment shader for picker */
   std::string pickerFragment() const;
 
+  /** Name of vertex shader for point size */
+  std::string pointSizeVertex() const;
+
   /** Name of vertex shader for projector manager */
   std::string projectorManagerVertex() const;
   /** Name of fragment shader for projector manager */

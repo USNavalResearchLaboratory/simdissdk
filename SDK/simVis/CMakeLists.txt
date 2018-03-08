@@ -23,6 +23,7 @@ set(SHADER_FILES
     Picker.vert.glsl
     Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
+    PointSize.vert.glsl
     PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl
@@ -89,6 +90,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}PlatformFilter.h
     ${VIS_INC}PlatformInertialTransform.h
     ${VIS_INC}PlatformModel.h
+    ${VIS_INC}PointSize.h
     ${VIS_INC}PolygonStipple.h
     ${VIS_INC}Popup.h
     ${VIS_INC}Projector.h
@@ -212,6 +214,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}PlatformFilter.cpp
     ${VIS_SRC}PlatformInertialTransform.cpp
     ${VIS_SRC}PlatformModel.cpp
+    ${VIS_SRC}PointSize.cpp
     ${VIS_SRC}PolygonStipple.cpp
     ${VIS_SRC}Popup.cpp
     ${VIS_SRC}Projector.cpp

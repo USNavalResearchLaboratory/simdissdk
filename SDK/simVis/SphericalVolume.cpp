@@ -24,7 +24,6 @@
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/LineWidth"
-#include "osg/Point"
 #include "osg/PolygonMode"
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
@@ -33,6 +32,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"
+#include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/Utils.h"
@@ -852,7 +852,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     if (SVData::DRAW_MODE_POINTS & d.drawMode_)
     {
       geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, wallOffset));
-      geom->getOrCreateStateSet()->setAttributeAndModes(new osg::Point(3.0), 1);
+      PointSize::setValues(geom->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
     }
   }
 
