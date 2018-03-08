@@ -50,6 +50,7 @@ Shaders::Shaders()
   add(trackHistoryVertex(), "@TrackHistory.vert.glsl@");
   add(trackHistoryFragment(), "@TrackHistory.frag.glsl@");
   add(flashingFragment(), "@Flashing.frag.glsl@");
+  add(polygonStippleFragment(), "@PolygonStipple.frag.glsl@");
 }
 
 std::string Shaders::alphaColorFilterFragment() const
@@ -170,6 +171,11 @@ std::string Shaders::pickerVertex() const
 std::string Shaders::pickerFragment() const
 {
   return "Picker.frag.glsl";
+}
+
+std::string Shaders::polygonStippleFragment() const
+{
+  return "PolygonStipple.frag.glsl";
 }
 
 }

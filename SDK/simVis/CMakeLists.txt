@@ -22,6 +22,7 @@ set(SHADER_FILES
     Picker.vert.glsl
     Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
+    PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl
     RF.LossToColor.Default.lib.glsl
@@ -86,6 +87,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}PlatformFilter.h
     ${VIS_INC}PlatformInertialTransform.h
     ${VIS_INC}PlatformModel.h
+    ${VIS_INC}PolygonStipple.h
     ${VIS_INC}Popup.h
     ${VIS_INC}Projector.h
     ${VIS_INC}ProjectorManager.h
@@ -207,6 +209,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}PlatformFilter.cpp
     ${VIS_SRC}PlatformInertialTransform.cpp
     ${VIS_SRC}PlatformModel.cpp
+    ${VIS_SRC}PolygonStipple.cpp
     ${VIS_SRC}Popup.cpp
     ${VIS_SRC}Projector.cpp
     ${VIS_SRC}ProjectorManager.cpp

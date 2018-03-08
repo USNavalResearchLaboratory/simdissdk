@@ -96,6 +96,9 @@ public:
 
   /** Name of fragment shader for flashing LOB Group */
   std::string flashingFragment() const;
+
+  /** Polygon stipple fragment shader */
+  std::string polygonStippleFragment() const;
 };
 
 }

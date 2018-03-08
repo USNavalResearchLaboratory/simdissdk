@@ -26,7 +26,6 @@
 #include "osg/LineWidth"
 #include "osg/Point"
 #include "osg/PolygonMode"
-#include "osg/PolygonStipple"
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
 
@@ -34,6 +33,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"
+#include "simVis/PolygonStipple.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/Utils.h"
 
@@ -929,17 +929,7 @@ void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
   assert(geom);
   if (geom == NULL || geom->empty())
     return;
-  osg::StateSet* stateSet = geom->getOrCreateStateSet();
-
-  if (stippling)
-  {
-    osg::PolygonStipple* ps = new osg::PolygonStipple(gPatternMask1);
-    stateSet->setAttributeAndModes(ps, osg::StateAttribute::ON);
-  }
-  else
-  {
-    stateSet->removeAttribute(osg::StateAttribute::POLYGONSTIPPLE);
-  }
+  simVis::PolygonStipple::setValues(geom->getOrCreateStateSet(), stippling, 0u);
 }
 
 void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)

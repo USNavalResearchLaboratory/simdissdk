@@ -24,7 +24,6 @@
 #include "osg/Geometry"
 #include "osg/LineStipple"
 #include "osg/LineWidth"
-#include "osg/PolygonStipple"
 #include "osgText/Text"
 #include "osgEarth/DepthOffset"
 #include "osgEarth/NodeUtils"
@@ -40,7 +39,6 @@
 #include "simCore/EM/Decibel.h"
 #include "simCore/Time/TimeClass.h"
 
-#include "simVis/Constants.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/Platform.h"
@@ -49,6 +47,7 @@
 #include "simVis/LobGroup.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/PolygonStipple.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 #include "simVis/RFProp/RFPropagationManager.h"
 #include "simVis/Text.h"
@@ -876,7 +875,7 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
     arcEndVecGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     osg::StateSet* ss = arcEndVecGeom->getOrCreateStateSet();
-    ss->setAttributeAndModes(new osg::PolygonStipple(gPatternMask1), 1);
+    simVis::PolygonStipple::setValues(ss, true, 0);
     ss->setAttributeAndModes(new osg::LineStipple(1, options_.lineStipple1_), 1);
 
     geode->addDrawable(arcEndVecGeom);

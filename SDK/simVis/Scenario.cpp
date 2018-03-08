@@ -45,6 +45,7 @@
 #include "simVis/OverrideColor.h"
 #include "simVis/PlatformFilter.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/PolygonStipple.h"
 #include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/RadialLOSNode.h"
@@ -392,6 +393,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   TrackHistoryNode::installShaderProgram(stateSet);
   BeamPulse::installShaderProgram(stateSet);
   LobGroupNode::installShaderProgram(stateSet);
+  PolygonStipple::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()
