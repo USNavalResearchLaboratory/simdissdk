@@ -31,8 +31,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simData/DataStore.h"
 
-#include "simVis/LobGroup.h"
-#include "simVis/Platform.h"
+#include "simVis/AlphaTest.h"
 #include "simVis/Beam.h"
 #include "simVis/BeamPulse.h"
 #include "simVis/DynamicScaleTransform.h"
@@ -40,10 +39,12 @@
 #include "simVis/Gate.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
+#include "simVis/LobGroup.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/PlatformFilter.h"
+#include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/Projector.h"
@@ -394,6 +395,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   BeamPulse::installShaderProgram(stateSet);
   LobGroupNode::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);
+  AlphaTest::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()

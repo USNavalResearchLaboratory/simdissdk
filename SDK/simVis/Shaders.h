@@ -35,6 +35,9 @@ public:
   /** Name of the fragment shader for Alpha Color Filter */
   std::string alphaColorFilterFragment() const;
 
+  /** Name of the fragment shader for the Alpha Test shader */
+  std::string alphaTestFragment() const;
+
   /** Name of the vertex shader for area highlight */
   std::string areaHighlightVertex() const;
   /** Name of the fragment shader for area highlight */

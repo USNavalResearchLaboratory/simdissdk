@@ -10,6 +10,7 @@ set(VIS_SRC)
 
 set(SHADER_FILES
     AlphaColorFilter.frag.glsl
+    AlphaTest.frag.glsl
     AreaHighlight.vert.glsl
     AreaHighlight.frag.glsl
     BathymetryGenerator.vert.glsl
@@ -38,6 +39,7 @@ set(SHADER_FILES
 
 set(VIS_HEADERS_CORE
     ${VIS_INC}AlphaColorFilter.h
+    ${VIS_INC}AlphaTest.h
     ${VIS_INC}AnimatedLine.h
     ${VIS_INC}Antenna.h
     ${VIS_INC}AreaHighlight.h
@@ -167,6 +169,7 @@ set(VIS_HEADERS_GOG
 )
 
 set(VIS_SOURCES_CORE
+    ${VIS_SRC}AlphaTest.cpp
     ${VIS_SRC}AnimatedLine.cpp
     ${VIS_SRC}Antenna.cpp
     ${VIS_SRC}AreaHighlight.cpp

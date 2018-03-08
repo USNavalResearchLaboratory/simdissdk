@@ -19,10 +19,10 @@
 * disclose, or release this software.
 *
 */
-#include "osg/AlphaFunc"
 #include "osg/Depth"
 #include "osgEarthAnnotation/LabelNode"
 #include "simCore/Calc/Math.h"
+#include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
@@ -92,11 +92,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
 
     // Always write to the depth buffer, overriding the osgEarth internal settings
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-    // Set the alpha function to reject pixels of ALPHA_THRESHOLD or less, fixing SilverLining issues
-    stateSet->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, ALPHA_THRESHOLD));
-    // Turn on the alpha test so that the <=ALPHA_THRESHOLD rejection happens
-    stateSet->setMode(GL_ALPHA_TEST, osg::StateAttribute::ON);
-
+    AlphaTest::setValues(stateSet, ALPHA_THRESHOLD, osg::StateAttribute::ON);
 
     // Note: no need to clamp the label's geo transform in overhead mode, since the Locator
     // will take care of that for us. -gw

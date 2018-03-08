@@ -27,6 +27,7 @@ Shaders::Shaders()
 {
   // Assign the fall-back shaders if the files are not found
   add(alphaColorFilterFragment(), "@AlphaColorFilter.frag.glsl@");
+  add(alphaTestFragment(), "@AlphaTest.frag.glsl@");
   add(areaHighlightVertex(), "@AreaHighlight.vert.glsl@");
   add(areaHighlightFragment(), "@AreaHighlight.frag.glsl@");
   add(bathymetryGeneratorVertex(), "@BathymetryGenerator.vert.glsl@");
@@ -56,6 +57,11 @@ Shaders::Shaders()
 std::string Shaders::alphaColorFilterFragment() const
 {
   return "AlphaColorFilter.frag.glsl";
+}
+
+std::string Shaders::alphaTestFragment() const
+{
+  return "AlphaTest.frag.glsl";
 }
 
 std::string Shaders::areaHighlightVertex() const

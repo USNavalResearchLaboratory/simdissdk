@@ -23,7 +23,6 @@
 #include "osg/TextureRectangle"
 #include "osg/Image"
 #include "osg/Depth"
-#include "osg/AlphaFunc"
 #include "osg/LightModel"
 #include "osg/PolygonOffset"
 #include "osg/ClipNode"
@@ -43,6 +42,7 @@
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
+#include "simVis/AlphaTest.h"
 #include "simVis/CentroidManager.h"
 #include "simVis/Constants.h"
 #include "simVis/ModelCache.h"
@@ -192,8 +192,7 @@ void SceneManager::init_()
   drcStateSet->setAttributeAndModes(new osg::ColorMask(false, false, false, false), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
   // Omit any pixels with a low alpha, so things like text glyphs don't cause bad behavior
   static const float ALPHA_THRESHOLD = 0.05f;
-  drcStateSet->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, ALPHA_THRESHOLD), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-  drcStateSet->setMode(GL_ALPHA_TEST, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+  AlphaTest::setValues(drcStateSet, ALPHA_THRESHOLD, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
   // Configure the default terrain options
   if (simVis::useRexEngine())
