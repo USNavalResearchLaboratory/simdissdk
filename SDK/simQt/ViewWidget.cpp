@@ -152,6 +152,8 @@ void ViewWidget::reconfigure_(osgViewer::View* view)
     if (camera->getViewport()->height() != 0)
       camera->setProjectionMatrixAsPerspective(30.0f, camera->getViewport()->width() / camera->getViewport()->height(), 1.0f, 10000.0f);
   }
+  camera->setDrawBuffer(gc_->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
+  camera->setReadBuffer(gc_->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
 }
 
 void ViewWidget::init_(osg::GraphicsContext* gc)
@@ -171,6 +173,8 @@ void ViewWidget::init_(osg::GraphicsContext* gc)
   camera->setViewport(new osg::Viewport(0, 0, gc->getTraits()->width, gc->getTraits()->height));
   if (gc->getTraits()->height != 0)
     camera->setProjectionMatrixAsPerspective(30.0f, gc->getTraits()->width / gc->getTraits()->height, 1.0f, 10000.0f);
+  camera->setDrawBuffer(gc->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
+  camera->setReadBuffer(gc->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
 }
 
 osg::GraphicsContext* ViewWidget::createOrShareGC_(osg::GraphicsContext* gc)
