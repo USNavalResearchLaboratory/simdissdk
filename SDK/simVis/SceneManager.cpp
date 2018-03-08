@@ -123,10 +123,12 @@ void SceneManager::init_()
   material->setShininess(osg::Material::FRONT_AND_BACK, 10.f);
   getOrCreateStateSet()->setAttributeAndModes(material, osg::StateAttribute::ON);
 
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
   // Set a decent ambient intensity
   osg::ref_ptr<osg::LightModel> lightModel = new osg::LightModel;
   lightModel->setAmbientIntensity(osg::Vec4(0.3f, 0.3f, 0.3f, 1.f));
   getOrCreateStateSet()->setAttributeAndModes(lightModel, osg::StateAttribute::ON);
+#endif
 
   // Set up blending to get rid of most jaggies.  Line smoothing is not enabled
   // by default, as it can cause problems when multisampling is enabled.
