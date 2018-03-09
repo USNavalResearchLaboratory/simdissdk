@@ -53,7 +53,7 @@ LineGraphic::LineGraphic(osg::Group* scene, osgEarth::MapNode* mapNode)
   animatedLine_->setColor1(DEFAULT_LINECOLOR);
   animatedLine_->setShiftsPerSecond(0.0);
   // Apply the clip plane on the line
-  animatedLine_->getOrCreateStateSet()->setMode(GL_CLIP_PLANE0, 1);
+  animatedLine_->getOrCreateStateSet()->setMode(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE, 1);
   animatedLine_->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_ANIMATEDLINE, simVis::BIN_GLOBAL_SIMSDK);
 
   // Set up the label node default style

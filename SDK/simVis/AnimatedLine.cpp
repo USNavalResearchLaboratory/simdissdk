@@ -280,7 +280,7 @@ void AnimatedLineNode::fixDepth_(bool isCloseToSurface)
 
     // Remove horizon clip plane.  Because the depth test is on, there is no need to clip against
     // the horizon plane.  Lines can extend past horizon and earth will clip them correctly.
-    stateSet->setMode(GL_CLIP_PLANE0 + simVis::CLIPPLANE_VISIBLE_HORIZON, osg::StateAttribute::OFF);
+    stateSet->setMode(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE, osg::StateAttribute::OFF);
   }
   else
   {
@@ -293,7 +293,7 @@ void AnimatedLineNode::fixDepth_(bool isCloseToSurface)
     // are expected to go above/below ground, or near ground, to avoid Z-fighting issues.  In these
     // cases the lines won't clip against the earth due to depth test off, so we add the horizon
     // clip plane to make sure we don't see them "through" the earth when eye is on other side.
-    stateSet->setMode(GL_CLIP_PLANE0 + simVis::CLIPPLANE_VISIBLE_HORIZON, osg::StateAttribute::ON);
+    stateSet->setMode(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE, osg::StateAttribute::ON);
   }
 }
 
