@@ -35,6 +35,7 @@
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Shaders.h"
+#include "simVis/Utils.h"
 #include "simVis/Picker.h"
 
 namespace simVis {
@@ -445,7 +446,7 @@ void RTTPicker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::Vie
   rttTex->setUnRefImageDataAfterApply(false);
   rttTex->setResizeNonPowerOfTwoHint(false);
 
-  stateSet->setMode(GL_LIGHTING, 0);
+  simVis::setLighting(stateSet, 0);
   stateSet->setMode(GL_CULL_FACE, 0);
   stateSet->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ZERO), 1);
 

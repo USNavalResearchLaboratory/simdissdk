@@ -227,7 +227,10 @@ void AnimatedLineNode::initializeGeometry_()
     if (vbo)
       vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     osg::StateSet* stateSet = geom->getOrCreateStateSet();
+#ifdef OSG_GL1_AVAILABLE
+    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
     stateSet->setAttributeAndModes(stippleAttr1_.get(), 1);
+#endif
     stateSet->setAttributeAndModes(lineWidth_.get(), 1);
     stateSet->setDataVariance(osg::Object::DYNAMIC);
     geode_->addDrawable(geom);
@@ -247,7 +250,10 @@ void AnimatedLineNode::initializeGeometry_()
     osg::VertexBufferObject* vbo = colors2_->getVertexBufferObject();
     if (vbo)
       vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
+#ifdef OSG_GL1_AVAILABLE
+    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
     geom->getOrCreateStateSet()->setAttributeAndModes(stippleAttr2_.get(), 1);
+#endif
     geom->getOrCreateStateSet()->setAttributeAndModes(lineWidth_.get(), 1);
     geom->getOrCreateStateSet()->setDataVariance(osg::Object::DYNAMIC);
     geode_->addDrawable(geom);

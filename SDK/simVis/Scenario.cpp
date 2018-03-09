@@ -371,7 +371,10 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // proper lighting. Note: once we move to using shaders we don't
   // need this anymore
   osg::StateSet* stateSet = getOrCreateStateSet();
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  // GL_RESCALE_NORMAL is deprecated in GL CORE builds
   stateSet->setMode(GL_RESCALE_NORMAL, 1);
+#endif
   // Lighting will be off for all objects under the Scenario,
   // unless explicitly turned on further down the scene graph
   simVis::setLighting(stateSet, osg::StateAttribute::OFF);

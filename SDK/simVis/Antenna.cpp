@@ -296,10 +296,13 @@ void AntennaNode::applyScale_()
 {
   const float newScale = beamRange_ * beamScale_;
   setMatrix(osg::Matrixf::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  // GL_RESCALE_NORMAL is deprecated in GL CORE builds
   if (newScale != 1.0f)
   {
     getOrCreateStateSet()->setMode(GL_RESCALE_NORMAL, 1);
   }
+#endif
 }
 
 void AntennaNode::drawAxes_(const osg::Vec3f& pos, const osg::Vec3f& vec)

@@ -54,7 +54,10 @@ namespace
     geom->setVertexArray(verts.get());
     geom->setColorArray(colors.get());
     geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 4));
+#ifdef OSG_GL1_AVAILABLE
+    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
     geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineStipple(6, 0x5555), 1);
+#endif
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode();
     geode->addDrawable(geom.get());

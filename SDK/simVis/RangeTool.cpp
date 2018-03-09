@@ -839,7 +839,10 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, osg::Primitiv
       geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
       osg::StateSet* ss = geom->getOrCreateStateSet();
+#ifdef OSG_GL1_AVAILABLE
+      // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
       ss->setAttributeAndModes(new osg::LineStipple(1, (i==0) ? options_.lineStipple1_ : options_.lineStipple2_), 1);
+#endif
       if (options_.lineWidth_ != 1.0f)
         ss->setAttributeAndModes(new osg::LineWidth(options_.lineWidth_), 1);
 
@@ -876,7 +879,10 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
 
     osg::StateSet* ss = arcEndVecGeom->getOrCreateStateSet();
     simVis::PolygonStipple::setValues(ss, true, 0);
+#ifdef OSG_GL1_AVAILABLE
+    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
     ss->setAttributeAndModes(new osg::LineStipple(1, options_.lineStipple1_), 1);
+#endif
 
     geode->addDrawable(arcEndVecGeom);
 

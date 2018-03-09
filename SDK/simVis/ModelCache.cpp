@@ -105,6 +105,9 @@ public:
       {
         SIM_WARN << "Unexpected ShadeModel mode: 0x" << std::hex << shadeModel->getMode() << "\n";
       }
+
+      // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
+      ss->removeTextureMode(0, GL_TEXTURE_2D);
 #endif
     }
     traverse(node);
