@@ -28,6 +28,7 @@
 #include "osg/ClipNode"
 #include "osg/ClipPlane"
 #include "osgDB/ReadFile"
+#include "osgEarth/Version"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Horizon"
@@ -38,7 +39,12 @@
 #include "osgEarthDrivers/engine_rex/RexTerrainEngineOptions"
 #include "osgEarthDrivers/engine_mp/MPTerrainEngineOptions"
 #include "osgEarthUtil/LODBlending"
+
+#if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
 #include "osgEarthUtil/HorizonClipPlane"
+#else
+#include "osgEarth/CullingUtils" // for ClipToGeocentricHorizon
+#endif
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
@@ -223,7 +229,18 @@ void SceneManager::init_()
 
   setName("simVis::SceneManager");
   
-#if 0
+#if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
+  // Install a clip node. This will activate and maintain our visible-horizon
+  // clip plane for geometry (or whatever else we want clipped). Then, to activate
+  // clipping on a graph, just enable the GL_CLIP_DISTANCE0+CLIPPLANE_VISIBLE_HORIZON
+  // mode on its stateset; or you can use osgEarth symbology and use
+  // RenderSymbol::clipPlane() = CLIPPLANE_VISIBLE_HORIZON in conjunction with
+  // RenderSymbol::depthTest() = false.
+  osgEarth::Util::HorizonClipPlane* hcp = new osgEarth::Util::HorizonClipPlane();
+  hcp->setClipPlaneNumber(CLIPPLANE_VISIBLE_HORIZON);
+  hcp->installShaders(this->getOrCreateStateSet());
+  this->addCullCallback(hcp);
+#else // osgEarth 2.9 or older, use ClipToGeocentricHorizon object
   // Install a clip node. This will activate and maintain our visible-horizon
   // clip plane for geometry (or whatever else we want clipped). Then, to activate
   // clipping on a graph, just enable the GL_CLIP_PLANE0 mode on its stateset; or
@@ -238,17 +255,6 @@ void SceneManager::init_()
   osgEarth::VirtualProgram* clipVp = osgEarth::VirtualProgram::getOrCreate(this->getOrCreateStateSet());
   simVis::Shaders package;
   package.load(clipVp, package.setClipVertex());
-#else
-  // Install a clip node. This will activate and maintain our visible-horizon
-  // clip plane for geometry (or whatever else we want clipped). Then, to activate
-  // clipping on a graph, just enable the GL_CLIP_DISTANCE0+CLIPPLANE_VISIBLE_HORIZON
-  // mode on its stateset; or you can use osgEarth symbology and use
-  // RenderSymbol::clipPlane() = CLIPPLANE_VISIBLE_HORIZON in conjunction with
-  // RenderSymbol::depthTest() = false.
-  osgEarth::Util::HorizonClipPlane* hcp = new osgEarth::Util::HorizonClipPlane();
-  hcp->setClipPlaneNumber(CLIPPLANE_VISIBLE_HORIZON);
-  hcp->installShaders(this->getOrCreateStateSet());
-  this->addCullCallback(hcp);
 #endif
 
   // Turn off declutter
