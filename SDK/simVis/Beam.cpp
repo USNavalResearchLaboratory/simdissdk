@@ -163,6 +163,8 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
   }
   if (PB_FIELD_CHANGED(a, b, shaded))
     SVFactory::updateLighting(beamSV_.get(), b->shaded());
+  if (PB_FIELD_CHANGED(a, b, blended))
+    SVFactory::updateBlending(beamSV_.get(), b->blended());
   if (PB_FIELD_CHANGED(a, b, verticalwidth))
     SVFactory::updateVertAngle(beamSV_.get(), a->verticalwidth(), b->verticalwidth());
   if (PB_FIELD_CHANGED(a, b, horizontalwidth))
@@ -649,6 +651,9 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   {
     depthAttr_->setWriteMask(!activePrefs->blended());
     getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+    // If beam is drawn as a spherical volume, then the spherical volume also needs to be recreated/updated when blending changes.
+    // If the spherical volume does not need to be recreated, updating will be done by performInPlacePrefChanges().
+    // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.
   }
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
