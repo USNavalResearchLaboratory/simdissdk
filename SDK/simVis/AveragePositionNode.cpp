@@ -110,7 +110,7 @@ void AveragePositionNode::updateAveragePosition_()
   // Expand bounding sphere by each tracked node's position
   for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
   {
-    if (!it->valid())
+    if (!it->valid() || !(*it)->isActive())
       continue;
     simCore::Vec3 pos;
     if ((*it)->getPosition(&pos) == 0)
