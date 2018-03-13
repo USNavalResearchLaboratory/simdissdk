@@ -165,8 +165,8 @@ private: // data
     txn.complete(&prefs);
   }
 
-  bool tracking4_;
   App& app_;
+  bool tracking4_;
 };
 
 //----------------------------------------------------------------------------
