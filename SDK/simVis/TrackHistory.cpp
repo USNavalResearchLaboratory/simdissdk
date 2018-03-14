@@ -102,7 +102,7 @@ private:
 /// constructor.
 TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, const osgEarth::SpatialReference* srs, PlatformTspiFilterManager& platformTspiFilterManager, simData::ObjectId entityId)
   : ds_(ds),
-   supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL()),
+   supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
    chunkSize_(64),  // keep this lowish or your app won't scale.
    totalPoints_(0),
    hasLastDrawTime_(false),
