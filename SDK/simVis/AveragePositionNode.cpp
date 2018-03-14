@@ -98,6 +98,8 @@ double AveragePositionNode::boundingSphereRadius() const
 
 void AveragePositionNode::updateAveragePosition_()
 {
+  bool isExpanded = false;
+
   if (nodes_.empty())
     return;
 
@@ -110,15 +112,21 @@ void AveragePositionNode::updateAveragePosition_()
   // Expand bounding sphere by each tracked node's position
   for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
   {
-    if (!it->valid() || !(*it)->isActive())
+    if (!it->valid() || !(*it)->isVisible())
       continue;
     simCore::Vec3 pos;
     if ((*it)->getPosition(&pos) == 0)
+    {
       boundingSphere_.expandBy(osg::Vec3d(pos.x(), pos.y(), pos.z()));
+      isExpanded = true;
+    }
   }
 
-  // Translate the matrix to the center of the bounding sphere
-  setMatrix(osg::Matrix::translate(boundingSphere_.center()));
+  if (isExpanded)
+  {
+    // Translate the matrix to the center of the bounding sphere
+    setMatrix(osg::Matrix::translate(boundingSphere_.center()));
+  }
 }
 
 }
