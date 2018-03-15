@@ -80,7 +80,10 @@ source_group("Generated Files" FILES ${Q_HEADERS_MOC} ${Q_RESOURCES})
 
 add_library(simQtDesignerWidgets SHARED ${PROJ_SOURCES} ${PROJ_HEADERS}
     ${PROJ_RESOURCES} ${Q_HEADERS_MOC} ${Q_RESOURCES})
-target_link_libraries(simQtDesignerWidgets PRIVATE simQt simVis simData)
+target_link_libraries(simQtDesignerWidgets PRIVATE simQt simData)
+if(TARGET simVis)
+     target_link_libraries(simQtDesignerWidgets PRIVATE simVis)
+endif()
 target_include_directories(simQtDesignerWidgets PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(simQtDesignerWidgets PRIVATE QDESIGNER_EXPORT_WIDGETS)
 set_target_properties(simQtDesignerWidgets PROPERTIES

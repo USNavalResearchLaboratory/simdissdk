@@ -24,7 +24,9 @@
 
 #include "simCore/String/Utils.h"
 #include "simData/DataStoreHelpers.h"
+#ifdef HAVE_SIMVIS
 #include "simVis/Registry.h"
+#endif
 #include "simQt/EntityTreeModel.h"
 
 namespace simQt {
@@ -474,6 +476,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
       if (prefs == NULL)
         return toolTip;
 
+#ifdef HAVE_SIMVIS
       const std::string model = simVis::Registry::instance()->findModelFile(prefs->icon());
       QString modelTip;
       if (model.empty())
@@ -481,6 +484,9 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
       else
         modelTip = tr("Model: %1").arg(QString::fromStdString(simCore::toNativeSeparators(model)));
       return tr("%1\n%2").arg(toolTip, modelTip);
+#else
+      return toolTip;
+#endif
     }
 
     if (index.column() == 1)
