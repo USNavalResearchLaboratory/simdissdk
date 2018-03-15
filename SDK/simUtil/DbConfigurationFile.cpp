@@ -399,6 +399,9 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
           osgEarth::ImageLayer* imageLayer = new osgEarth::ImageLayer(options);
           imageLayer->setOpacity(opacity);
           imageLayer->setVisible(active);
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
+          imageLayer->setEnabled(active);
+#endif
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
           map->addLayer(imageLayer);
 #else
@@ -468,6 +471,9 @@ void DbConfigurationFile::parseCloudLayers_(const std::vector<std::string>& toke
       const osgEarth::ImageLayerOptions options(layerName, layerDriver);
       osgEarth::ImageLayer* imageLayer = new osgEarth::ImageLayer(options);
       imageLayer->setVisible(false);
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
+      imageLayer->setEnabled(false);
+#endif
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
       map->addLayer(imageLayer);
 #else

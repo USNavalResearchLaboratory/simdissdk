@@ -228,7 +228,7 @@ void SceneManager::init_()
 #endif
 
   setName("simVis::SceneManager");
-  
+
 #if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
   // Install a clip node. This will activate and maintain our visible-horizon
   // clip plane for geometry (or whatever else we want clipped). Then, to activate
@@ -590,6 +590,9 @@ void SceneManager::applyImageLayerDisplaySettings_(const osgEarth::ImageLayer& s
 {
   destLayer->setOpacity(sourceLayer.getOpacity());
   destLayer->setVisible(sourceLayer.getVisible());
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
+  destLayer->setEnabled(sourceLayer.getEnabled());
+#endif
 }
 
 std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
