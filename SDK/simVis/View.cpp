@@ -743,6 +743,9 @@ bool View::setUpViewAsInset_(simVis::View* host)
     if (focusManager != NULL)
       focusManager->applyBorderProperties(this);
     bordercamera->addChild(borderNode_.get());
+
+    // Run shader generator to get the border to show up properly
+    osgEarth::Registry::shaderGenerator().run(bordercamera);
   }
   else
   {
