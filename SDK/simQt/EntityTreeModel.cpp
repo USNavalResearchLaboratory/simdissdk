@@ -471,12 +471,12 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
         .arg(QString::fromStdString(simData::DataStoreHelpers::fullTypeFromId(item->id(), dataStore_)))
         .arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
 
+#ifdef HAVE_SIMVIS
       simData::DataStore::Transaction transaction;
       const simData::PlatformPrefs* prefs = dataStore_->platformPrefs(item->id(), &transaction);
       if (prefs == NULL)
         return toolTip;
 
-#ifdef HAVE_SIMVIS
       const std::string model = simVis::Registry::instance()->findModelFile(prefs->icon());
       QString modelTip;
       if (model.empty())
