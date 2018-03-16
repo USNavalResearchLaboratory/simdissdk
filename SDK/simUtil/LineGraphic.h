@@ -79,6 +79,13 @@ public:
   void setDraw(bool draw);
 
   /**
+   * Sets the DisplayMask to be used by the text and line when
+   * they are drawn. Will not change current draw state
+   * @param displayMask Int representing an osg::NodeMask for the graphics
+   */
+  void setDisplayMask(int displayMask);
+
+  /**
   * Sets the width of the line.
   * @param lineWidth Width to which to set the line.
   */
@@ -133,6 +140,7 @@ private:
   osg::ref_ptr<simVis::AnimatedLineNode> animatedLine_;
   osgEarth::Symbology::Style labelStyle_;
   osg::ref_ptr<osgEarth::Annotation::LabelNode> label_;
+  int displayMask_;
 };
 
 /** Base class for a position described in an LLA coordinate. */
