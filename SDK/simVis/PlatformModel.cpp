@@ -260,14 +260,22 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     return false;
 
   const simVis::Registry* registry = simVis::Registry::instance();
-  if (prefs.icon().empty() || registry->isMemoryCheck())
+  if (prefs.icon().empty())
     setModel_(NULL, false);
-  else
+  else if (!registry->isMemoryCheck())
   {
     // Find the fully qualified URI
     const std::string uri = registry->findModelFile(prefs.icon());
     // Perform an asynchronous load on the model
-    registry->modelCache()->asyncLoad(uri, new SetModelCallback(this));
+    if (uri.empty())
+    {
+      SIM_WARN << "Failed to find icon model: " << prefs.icon() << "\n";
+      setModel_(simVis::Registry::instance()->modelCache()->boxNode(), false);
+    }
+    else
+    {
+      registry->modelCache()->asyncLoad(uri, new SetModelCallback(this));
+    }
   }
   return true;
 }
