@@ -28,13 +28,13 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simQt/ViewWidget.h"
 #include "simUtil/ExampleResources.h"
 
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
 #include "simVis/SceneManager.h"
 
-#include "osgEarthQt/ViewWidget"
 #include "osgEarthUtil/Controls"
 
 #include <QAction>
@@ -44,6 +44,7 @@
 #include <QLayout>
 #include <QMainWindow>
 #include <QResizeEvent>
+#include <QTimer>
 #include <QToolBar>
 #include <QWindow>
 
@@ -143,7 +144,7 @@ void MyMainWindow::createViewDialog_()
 
   // now create a dock widget for each inset
   QDialog* dialog = new QDialog(this);
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
+  QWidget* viewWidget = new simQt::ViewWidget(view.get());
   lastCreatedGlWindow_ = viewWidget->windowHandle();
   viewWidget->setMinimumSize(2, 2);
   dialog->setWindowTitle(viewName);
@@ -160,7 +161,7 @@ void MyMainWindow::createViewDockable_()
 
   // now create a dock widget for each inset
   QDockWidget* dockable = new QDockWidget(this);
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(view.get());
+  QWidget* viewWidget = new simQt::ViewWidget(view.get());
   lastCreatedGlWindow_ = viewWidget->windowHandle();
   viewWidget->setMinimumSize(2, 2);
   dockable->setWidget(viewWidget);
@@ -177,7 +178,7 @@ void MyMainWindow::createMainView_()
 
   // Make a Qt Widget to hold our view, and add that widget to the
   // main window.
-  QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview.get());
+  QWidget* viewWidget = new simQt::ViewWidget(mainview.get());
   lastCreatedGlWindow_ = viewWidget->windowHandle();
   viewWidget->setMinimumSize(2, 2);
   viewWidget->resize(100, 100);

@@ -19,8 +19,10 @@
 * disclose, or release this software.
 *
 */
+#include <algorithm>
 #include <utility>
 #include "osgGA/GUIEventHandler"
+#include "simNotify/Notify.h"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simUtil/MouseDispatcher.h"
@@ -124,9 +126,12 @@ private:
 ///////////////////////////////////////////////////////////////////////////
 
 MouseDispatcher::MouseDispatcher()
+  : exclusiveProxy_(new MouseManipulatorProxy)
 {
   eventHandler_ = new EventHandler(*this);
   viewObserver_ = new simVis::AddEventHandlerToViews(eventHandler_.get());
+
+  addManipulator(EXCLUSIVE_MOUSE_WEIGHT, exclusiveProxy_);
 }
 
 MouseDispatcher::~MouseDispatcher()
@@ -166,6 +171,14 @@ void MouseDispatcher::addManipulator(int weight, MouseManipulatorPtr manipulator
   priorityMap_.insert(std::make_pair(weight, manipulator));
 }
 
+void MouseDispatcher::addExclusiveManipulator(MouseManipulatorPtr manipulator)
+{
+  // Don't add NULL and don't repeat
+  if (manipulator == NULL || allExclusive_.find(manipulator) != allExclusive_.end())
+    return;
+  allExclusive_.insert(manipulator);
+}
+
 void MouseDispatcher::removeManipulator(MouseManipulatorPtr manipulator)
 {
   PriorityMap::iterator i = priorityMap_.begin();
@@ -176,6 +189,76 @@ void MouseDispatcher::removeManipulator(MouseManipulatorPtr manipulator)
     else
       ++i;
   }
+
+  // Deactivate it if it's an exclusive manipulator
+  if (manipulator == exclusiveProxy_->subject())
+    deactivateExclusive(manipulator);
+  // Remove it from the list of exclusive manipulators
+  allExclusive_.erase(manipulator);
+}
+
+int MouseDispatcher::activateExclusive(MouseManipulatorPtr manipulator)
+{
+  auto oldSubject = exclusiveProxy_->subject();
+  // Noop if no change
+  if (oldSubject == manipulator)
+    return 0; // not an error; it's still active
+
+  // Return an error if this manipulator is not in our list of exclusive ones.
+  if (manipulator != NULL && allExclusive_.find(manipulator) == allExclusive_.end())
+  {
+    SIM_WARN << "MouseDispatcher::activateExclusive(): Please register exclusive mouse mode before calling this method.\n";
+    return 1;
+  }
+
+  // Deactivate the old one
+  if (oldSubject != NULL)
+    oldSubject->deactivate();
+  exclusiveProxy_->setSubject(manipulator);
+  if (manipulator)
+    manipulator->activate();
+  fireActiveExclusiveManipulatorChanged_(manipulator, oldSubject);
+  return 0;
+}
+
+int MouseDispatcher::deactivateExclusive(MouseManipulatorPtr manipulator)
+{
+  // Avoid deactivate on NULL (meaningless and dev error)
+  if (manipulator == NULL)
+    return 1;
+
+  // Return early if the manipulator is not active.  Perhaps someone
+  // changed activeness and dev didn't notice the alert.
+  if (exclusiveProxy_->subject() != manipulator)
+    return 1;
+
+  exclusiveProxy_->setSubject(MouseManipulatorPtr());
+  manipulator->deactivate();
+  fireActiveExclusiveManipulatorChanged_(MouseManipulatorPtr(), manipulator);
+  return 0;
+}
+
+MouseManipulatorPtr MouseDispatcher::activeExclusiveManipulator() const
+{
+  return exclusiveProxy_->subject();
+}
+
+void MouseDispatcher::fireActiveExclusiveManipulatorChanged_(MouseManipulatorPtr active, MouseManipulatorPtr oldActive)
+{
+  // Create a copy of the vector to avoid a common issue of callback modifying the vector.
+  auto tmpObservers = observers_;
+  for (auto i = tmpObservers.begin(); i != tmpObservers.end(); ++i)
+    (*i)->activeExclusiveManipulatorChanged(active, oldActive);
+}
+
+void MouseDispatcher::addObserver(std::shared_ptr<Observer> observer)
+{
+  observers_.push_back(observer);
+}
+
+void MouseDispatcher::removeObserver(std::shared_ptr<Observer> observer)
+{
+  observers_.erase(std::remove(observers_.begin(), observers_.end(), observer), observers_.end());
 }
 
 }

@@ -7,11 +7,7 @@ if(NOT OSG_FOUND)
 endif()
 
 set(LIBRARYNAME OSGEARTH)
-if(Qt5Widgets_FOUND)
-    set(VSI_OSGEARTH_VERSION OSG-${OSG_VERSION}_Qt-${Qt5Widgets_VERSION_STRING})
-else()
-    set(VSI_OSGEARTH_VERSION OSG-${OSG_VERSION})
-endif()
+set(VSI_OSGEARTH_VERSION OSG-${OSG_VERSION})
 set(SIMDIS_SDK_OSGEARTH_PATH ${THIRD_DIR}/osgEarth-SDK-1.4)
 set(OSGEARTH_INSTALL_COMPONENT ThirdPartyLibs)
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
@@ -118,20 +114,6 @@ import_osgearth_lib("")
 foreach(SUBNAME ${SUBLIBRARY_NAMES})
     import_osgearth_lib(${SUBNAME})
 endforeach()
-# Only try to import osgEarthQt if osgQt was found successfully
-if(OSGQT_FOUND)
-    # osgEarthQt depends on osgQt
-    set(OSGEARTH_QT_LINK_LIBRARIES OSGQT)
-    # osgEarthQt can also be named osgEarthQt5|4; prepopulate the find_library() call
-    if(Qt5Widgets_FOUND)
-        find_library(OSGEARTH_QT_LIBRARY_DEBUG_NAME NAMES osgEarthQt5d osgEarthQtd PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-        find_library(OSGEARTH_QT_LIBRARY_RELEASE_NAME NAMES osgEarthQt5 osgEarthQt PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-    else()
-        find_library(OSGEARTH_QT_LIBRARY_DEBUG_NAME NAMES osgEarthQt4d osgEarthQtd PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-        find_library(OSGEARTH_QT_LIBRARY_RELEASE_NAME NAMES osgEarthQt4 osgEarthQt PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-    endif()
-    import_osgearth_lib(Qt)
-endif()
 
 # Plug-ins are found in lib, unless on Windows
 set(OS_PLUGIN_SUBDIR "lib${LIBDIRSUFFIX}")

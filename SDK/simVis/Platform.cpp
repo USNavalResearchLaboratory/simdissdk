@@ -41,6 +41,8 @@
 #include "simVis/Utils.h"
 #include "simVis/VelocityVector.h"
 #include "simVis/Platform.h"
+#include "simVis/Projector.h"
+#include "simVis/Shaders.h"
 
 #define LC "[PlatformNode] "
 
@@ -124,6 +126,30 @@ private:
   osg::observer_ptr<PlatformNode> platform_;
 };
 
+//----------------------------------------------------------------------------
+
+/** Calls PlatformNode::updateHostBounds() when model node gets a bounds update. */
+class BoundsUpdater : public simVis::PlatformModelNode::Callback
+{
+public:
+  explicit BoundsUpdater(PlatformNode* platform)
+    : platform_(platform)
+  {
+  }
+
+  virtual void operator()(simVis::PlatformModelNode* model, Callback::EventType eventType)
+  {
+    if (eventType == Callback::BOUNDS_CHANGED)
+    {
+      osg::ref_ptr<PlatformNode> refPlat;
+      if (platform_.lock(refPlat))
+        refPlat->updateHostBounds();
+    }
+  }
+
+private:
+  osg::observer_ptr<PlatformNode> platform_;
+};
 
 //----------------------------------------------------------------------------
 
@@ -156,9 +182,9 @@ lastPrefsValid_(false),
 forceUpdateFromDataStore_(false),
 queuedInvalidate_(false)
 {
-  PlatformModelNode* node = new PlatformModelNode(new Locator(locator));
-  this->addChild(node);
-  model_ = node;
+  model_ = new PlatformModelNode(new Locator(locator));
+  addChild(model_);
+  model_->addCallback(new BoundsUpdater(this));
 
   this->setProperties(props);
 
@@ -181,11 +207,7 @@ PlatformNode::~PlatformNode()
 
 void PlatformNode::setProperties(const simData::PlatformProperties& props)
 {
-  if (model_)
-  {
-    model_->setProperties(props);
-  }
-
+  model_->setProperties(props);
   lastProps_ = props;
 }
 
@@ -218,8 +240,7 @@ void PlatformNode::setRcsPrefs_(const simData::PlatformPrefs& prefs)
         SIM_WARN << LC << "Failed to load RCS file \"" << prefs.rcsfile() << "\"" << std::endl;
       }
     }
-    if (model_)
-      model_->setRcsData(rcs_);
+    model_->setRcsData(rcs_);
   }
 }
 
@@ -231,21 +252,18 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_PLATFORM : simVis::DISPLAY_MASK_NONE);
 
   // update our model prefs
-  if (model_ != NULL)
+  if (prefsDraw)
   {
-    if (prefsDraw)
-    {
-      model_->setPrefs(prefs);
-      updateLabel_(prefs);
-    }
-
-    updateOrRemoveBodyAxis_(prefsDraw, prefs);
-    updateOrRemoveInertialAxis_(prefsDraw, prefs);
-    updateOrRemoveVelocityVector_(prefsDraw, prefs);
-    updateOrRemoveEphemerisVector_(prefsDraw, prefs);
-    updateOrRemoveCircleHighlight_(prefsDraw, prefs);
-    updateOrRemoveHorizons_(prefs);
+    model_->setPrefs(prefs);
+    updateLabel_(prefs);
   }
+
+  updateOrRemoveBodyAxis_(prefsDraw, prefs);
+  updateOrRemoveInertialAxis_(prefsDraw, prefs);
+  updateOrRemoveVelocityVector_(prefsDraw, prefs);
+  updateOrRemoveEphemerisVector_(prefsDraw, prefs);
+  updateOrRemoveCircleHighlight_(prefsDraw, prefs);
+  updateOrRemoveHorizons_(prefs);
 
   setRcsPrefs_(prefs);
 
@@ -293,7 +311,6 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   // check for a prefs change that would require re-computing the bounds of the model
   // if the properties of the model have changed, adjust the host bounding box to match
   if (!lastPrefsValid_ ||
-      PB_FIELD_CHANGED((&lastPrefs_), (&prefs), icon) ||
       PB_FIELD_CHANGED((&lastPrefs_), (&prefs), scale) ||
       PB_FIELD_CHANGED((&lastPrefs_), (&prefs), dynamicscale) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz) ||
@@ -319,18 +336,30 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   lastPrefsValid_ = true;
 }
 
+const osg::BoundingBox& PlatformNode::getActualSize() const
+{
+  return model_->getUnscaledIconBounds();
+}
+
+const osg::BoundingBox& PlatformNode::getVisualSize() const
+{
+  return model_->getScaledIconBounds();
+}
+
 // Note: simVis::ScenarioManager notifies beams of changes in platform visual size
 void PlatformNode::updateHostBounds_(double scale)
 {
-  if (model_)
-  {
-    scaledModelBounds_   = model_->getScaledIconBounds();
-    unscaledModelBounds_ = model_->getUnscaledIconBounds();
-    frontOffset_         = unscaledModelBounds_.yMax() * scale;
+  const osg::BoundingBox& unscaledBounds = model_->getUnscaledIconBounds();
+  frontOffset_ = unscaledBounds.yMax() * scale;
+  if (track_.valid())
+    track_->setHostBounds(osg::Vec2(unscaledBounds.xMin() * scale, unscaledBounds.xMax() * scale));
+}
 
-    if (track_.valid())
-      track_->setHostBounds(osg::Vec2(unscaledModelBounds_.xMin() * scale, unscaledModelBounds_.xMax() * scale));
-  }
+void PlatformNode::updateHostBounds()
+{
+  // It does not matter here whether lastPrefs is valid or not.  The bounds of the
+  // child definitely updated, and we just need to fix the track values and front offset
+  updateHostBounds_(lastPrefs_.scale());
 }
 
 PlatformModelNode* PlatformNode::getModel()
@@ -602,26 +631,26 @@ const std::string PlatformNode::getEntityName(EntityNode::NameType nameType, boo
 
 void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
 {
-  if (model_ && valid_)
+  if (!valid_)
+    return;
+
+  std::string label = getEntityName(EntityNode::DISPLAY_NAME, true);
+  if (prefs.commonprefs().labelprefs().namelength() > 0)
+    label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
+
+  std::string text;
+  if (prefs.commonprefs().labelprefs().draw())
+    text = contentCallback_->createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+
+  if (!text.empty())
   {
-    std::string label = getEntityName(EntityNode::DISPLAY_NAME, true);
-    if (prefs.commonprefs().labelprefs().namelength() > 0)
-      label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
-
-    std::string text;
-    if (prefs.commonprefs().labelprefs().draw())
-      text = contentCallback_->createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
-
-    if (!text.empty())
-    {
-      if (!label.empty())
-        label += "\n";
-      label += text;
-    }
-
-    float zOffset = 0.0f;
-    model_->label()->update(prefs.commonprefs(), label, zOffset);
+    if (!label.empty())
+      label += "\n";
+    label += text;
   }
+
+  float zOffset = 0.0f;
+  model_->label()->update(prefs.commonprefs(), label, zOffset);
 }
 
 void PlatformNode::setLabelContentCallback(LabelContentCallback* cb)
@@ -904,9 +933,20 @@ void PlatformNode::setLosCreator(LosCreator* losCreator)
 
 unsigned int PlatformNode::objectIndexTag() const
 {
-  if (model_)
-    return model_->objectIndexTag();
-  return 0;
+  return model_->objectIndexTag();
+}
+
+void PlatformNode::acceptProjector(ProjectorNode* proj)
+{
+  osg::StateSet* stateSet = this->getOrCreateStateSet();
+  proj->addProjectionToStateSet(stateSet);
+}
+
+void PlatformNode::removeProjector(ProjectorNode* proj)
+{
+  osg::StateSet* stateSet = this->getStateSet();
+  if (stateSet)
+    proj->removeProjectionFromStateSet(stateSet);
 }
 
 }

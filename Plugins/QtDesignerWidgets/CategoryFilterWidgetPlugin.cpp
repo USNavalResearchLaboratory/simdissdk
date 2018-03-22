@@ -20,31 +20,58 @@
  *
  */
 #include <QtCore/QtPlugin>
+#include "simData/CategoryData/CategoryFilter.h"
+#include "simData/MemoryDataStore.h"
 #include "simQt/CategoryFilterWidget.h"
+#include "CategoryFilterWidget2Plugin.h"
 #include "CategoryFilterWidgetPlugin.h"
 
 CategoryFilterWidgetPlugin::CategoryFilterWidgetPlugin(QObject *parent)
-  : QObject(parent)
+  : QObject(parent),
+    dataStore_(NULL)
 {
-  initialized = false;
+}
+
+CategoryFilterWidgetPlugin::~CategoryFilterWidgetPlugin()
+{
+  delete dataStore_;
 }
 
 void CategoryFilterWidgetPlugin::initialize(QDesignerFormEditorInterface *)
 {
-  if (initialized)
+  if (dataStore_)
     return;
-
-  initialized = true;
+  dataStore_ = new simData::MemoryDataStore;
+  CategoryFilterWidget2Plugin::createDefaultCategories(*dataStore_);
 }
 
 bool CategoryFilterWidgetPlugin::isInitialized() const
 {
-  return initialized;
+  return dataStore_ != NULL;
 }
 
 QWidget *CategoryFilterWidgetPlugin::createWidget(QWidget *parent)
 {
   simQt::CategoryFilterWidget* rv = new simQt::CategoryFilterWidget(parent);
+
+  // Create the data store, adding default categories
+  initialize(NULL);
+  rv->setProviders(dataStore_);
+
+  // Create a filter for user to see
+  simData::CategoryNameManager& nameManager = dataStore_->categoryNameManager();
+  simData::CategoryFilter filter(dataStore_);
+
+  // Affinity: Friendly entities only
+  const int affinityName = nameManager.addCategoryName("Affinity");
+  filter.setValue(affinityName, nameManager.addCategoryValue(affinityName, "Friendly"), true);
+  // Platform Type: Unlisted values on; ignore Ship and Submarine
+  const int platformTypeName = nameManager.addCategoryName("Platform Type");
+  filter.setValue(platformTypeName, nameManager.addCategoryValue(platformTypeName, "Submarine"), false);
+  filter.setValue(platformTypeName, nameManager.addCategoryValue(platformTypeName, "Surface Ship"), false);
+  filter.setValue(platformTypeName, simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE, true);
+  rv->setFilter(filter);
+
   return rv;
 }
 
@@ -70,7 +97,7 @@ QString CategoryFilterWidgetPlugin::toolTip() const
 
 QString CategoryFilterWidgetPlugin::whatsThis() const
 {
-  return "Filter entities by category";
+  return toolTip();
 }
 
 bool CategoryFilterWidgetPlugin::isContainer() const
@@ -91,5 +118,3 @@ QString CategoryFilterWidgetPlugin::includeFile() const
 {
   return "simQt/CategoryFilterWidget.h";
 }
-
-

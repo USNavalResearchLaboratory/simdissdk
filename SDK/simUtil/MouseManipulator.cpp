@@ -19,9 +19,90 @@
 * disclose, or release this software.
 *
 */
+#include "osgGA/GUIEventHandler"
 #include "MouseManipulator.h"
 
 namespace simUtil {
+
+MouseManipulatorAdapter::MouseManipulatorAdapter(osgGA::GUIEventHandler* handler)
+  : handler_(handler)
+{
+}
+
+MouseManipulatorAdapter::~MouseManipulatorAdapter()
+{
+}
+
+int MouseManipulatorAdapter::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (handler_ == NULL)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (handler_ == NULL)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (handler_ == NULL)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (handler_ == NULL)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (handler_ == NULL)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (handler_ == NULL)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+int MouseManipulatorAdapter::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+{
+  if (handler_ == NULL)
+    return 0;
+  return handler_->handle(ea, aa);
+}
+
+void MouseManipulatorAdapter::activate()
+{
+  // noop
+}
+
+void MouseManipulatorAdapter::deactivate()
+{
+  // noop
+}
+
+osgGA::GUIEventHandler* MouseManipulatorAdapter::handler() const
+{
+  return handler_.get();
+}
+
+void MouseManipulatorAdapter::setHandler(osgGA::GUIEventHandler* handler)
+{
+  handler_ = handler;
+}
+
+/////////////////////////////////////////////////////////////////////
 
 MouseManipulatorProxy::MouseManipulatorProxy()
 {
@@ -79,6 +160,18 @@ int MouseManipulatorProxy::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
   if (manipulator_ == NULL)
     return 0;
   return manipulator_->frame(ea, aa);
+}
+
+void MouseManipulatorProxy::activate()
+{
+  if (manipulator_)
+    manipulator_->activate();
+}
+
+void MouseManipulatorProxy::deactivate()
+{
+  if (manipulator_)
+    manipulator_->deactivate();
 }
 
 MouseManipulatorPtr MouseManipulatorProxy::subject() const

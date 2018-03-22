@@ -24,7 +24,6 @@
 #include "osg/Notify"
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osg/Point"
 #include "osgText/Text"
 
 #include "osgEarth/Registry"
@@ -38,10 +37,11 @@
 
 #include "simVis/Constants.h"
 #include "simVis/Locator.h"
+#include "simVis/Platform.h"
+#include "simVis/PointSize.h"
+#include "simVis/Registry.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
-#include "simVis/Registry.h"
-#include "simVis/Platform.h"
 #include "simVis/LocalGrid.h"
 
 #define LC "[LocalGrid] "
@@ -116,7 +116,7 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
 
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
-  stateSet->setAttributeAndModes(new osg::Point(1.5f), 1);
+  PointSize::setValues(stateSet, 1.5f, osg::StateAttribute::ON);
   stateSet->setRenderBinDetails(BIN_LOCAL_GRID, BIN_GLOBAL_SIMSDK);
 
   this->addChild(geode);

@@ -132,6 +132,24 @@
 }
 
 {
+   QRegularExpression::match leaves reachable memory
+   Memcheck:Leak
+   ...
+   fun:*QThreadStorageData*get*
+   ...
+   fun:*QRegularExpression*match*
+   ...
+}
+
+{
+   ADDRESS_IN_RANGE/Conditional jump or move depends on uninitialized value
+   Memcheck:Addr8
+   ...
+   fun:CPLGetSymbol
+   ...
+}
+
+{
    osgEarth CURL Leak ignored
    Memcheck:Leak
    ...

@@ -130,7 +130,7 @@ struct UnitsHandler : public ui::ControlEventHandler
   explicit UnitsHandler(simUtil::MapScale* mapScale, simUtil::MapScale::UnitsProvider* unitsProvider)
     : mapScale_(mapScale), unitsProvider_(unitsProvider) {}
   virtual void onClick(ui::Control* control) {
-    mapScale_->setUnitsProvider(unitsProvider_);
+    mapScale_->setUnitsProvider(unitsProvider_.get());
   }
   osg::ref_ptr<simUtil::MapScale> mapScale_;
   osg::ref_ptr<simUtil::MapScale::UnitsProvider> unitsProvider_;
@@ -213,7 +213,7 @@ static ui::Control* createHelp(simUtil::MapScale* mapScale)
 // An event handler to assist in testing the Inset functionality.
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(simVis::View* mainView)
+  explicit MenuHandler(simVis::View* mainView)
     : mainView_(mainView)
   {
   }

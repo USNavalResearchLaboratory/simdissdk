@@ -19,15 +19,15 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Texture2D"
-#include "osg/Point"
 #include "osg/MatrixTransform"
-#include "osgEarth/NodeUtils"
+#include "osg/Texture2D"
 #include "osgEarth/ImageUtils"
+#include "osgEarth/NodeUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simVis/Constants.h"
+#include "simVis/PointSize.h"
 #include "simVis/Utils.h"
 #include "simVis/RFProp/Profile.h"
 
@@ -1006,7 +1006,7 @@ void Profile::init3DPoints_()
 
   geometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, verts_->size()));
   geode_->addDrawable(geometry);
-  geode_->getOrCreateStateSet()->setAttributeAndModes(new osg::Point(3.0f), osg::StateAttribute::ON);
+  simVis::PointSize::setValues(geode_->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
 }
 
 osg::Image* Profile::createImage_()

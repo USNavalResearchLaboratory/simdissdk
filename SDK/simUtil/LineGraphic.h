@@ -68,12 +68,22 @@ public:
   */
   void set(const simCore::Vec3& originLLA, const simCore::Vec3& destinationLLA, const std::string& labelString);
 
+  /** Returns true if the line and label are currently displaying. False otherwise */
+  bool isDrawn() const;
+
   /**
    * Hides or reveals both the animatedLine and the label.
    * Calling this on a LineGraphic with equal endpoints is undefined.
    * @param draw If true, the line and label will be displayed
    */
   void setDraw(bool draw);
+
+  /**
+   * Sets the DisplayMask to be used by the text and line when
+   * they are drawn. Will not change current draw state
+   * @param displayMask Int representing an osg::NodeMask for the graphics
+   */
+  void setDisplayMask(int displayMask);
 
   /**
   * Sets the width of the line.
@@ -130,6 +140,7 @@ private:
   osg::ref_ptr<simVis::AnimatedLineNode> animatedLine_;
   osgEarth::Symbology::Style labelStyle_;
   osg::ref_ptr<osgEarth::Annotation::LabelNode> label_;
+  int displayMask_;
 };
 
 /** Base class for a position described in an LLA coordinate. */

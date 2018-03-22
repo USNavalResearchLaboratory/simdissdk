@@ -65,11 +65,10 @@ enum IconRotation {
 
   /**
    * Flat with Yaw -- Orient the icon flat (zero pitch) with respect to the Earth's surface.  Orientation
-   * of the icon will be rotated based on the y aw of the platform it represents.
+   * of the icon will be rotated based on the yaw of the platform it represents.
    */
   IR_3D_YAW = 4;
 };
-
 
 /// Elapsed time formats supported in the SDK.  Elapsed time is a relative measure of time from some epoch.
 enum ElapsedTimeFormat {
@@ -634,6 +633,8 @@ message PlatformPrefs {
   optional IconRotation rotateIcons = 4 [default = IR_2D_YAW];
   /// Turns off the depth buffer for drawing 2D icons; can address flickering with surface icons
   optional bool noDepthIcons = 5 [default = true];
+  /// Sets the horizontal and vertical alignment for 2D image icons
+  optional TextAlignment iconAlignment = 63 [default = ALIGN_CENTER_CENTER];
 
   /// Display options for the track history
   optional TrackPrefs trackPrefs = 6;

@@ -85,12 +85,10 @@ public:
   /// get the number of digits after the decimal point
   virtual unsigned int precision() = 0;
 
-public slots:
-  /// The wrapped widget wants to tell the outside that time has changed
-  void timeChanged();
-
 signals:
-  /// Tell the outside that the time has changed
+  /// Emitted when the time changes via the user
+  void timeEdited(const simCore::TimeStamp& value);
+  /// Emitted when the time is changed by the user or by setTimeStamp
   void timeChanged(const simCore::TimeStamp& value);
   /// Tell the outside the user is requesting a context menu
   void customContextMenuRequested(const QPoint& point);

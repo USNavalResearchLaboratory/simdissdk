@@ -34,6 +34,9 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Angle.h"
 #include "simData/MemoryDataStore.h"
+#include "simVis/Scenario.h"
+#include "simVis/ScenarioDataStoreAdapter.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
 

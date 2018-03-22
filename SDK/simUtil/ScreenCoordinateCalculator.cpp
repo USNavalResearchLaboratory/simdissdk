@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osgEarth/Horizon"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/Entity.h"

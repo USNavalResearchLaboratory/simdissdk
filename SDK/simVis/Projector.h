@@ -112,6 +112,12 @@ public:
   /// Returns current content callback
   LabelContentCallback* labelContentCallback() const;
 
+  /**
+   * Gets a pointer to the last data store update, or NULL if
+   * none have been applied.
+   */
+  const simData::ProjectorUpdate* getLastUpdateFromDS() const;
+
 public: // EntityNode interface
   /**
   * Whether the entity is active within the scenario at the current time.
@@ -171,6 +177,12 @@ public: // EntityNode interface
 
   /** This entity type is, at this time, unpickable. */
   virtual unsigned int objectIndexTag() const;
+
+  /** Configure a state set to accept the texture projected by this projector */
+  void addProjectionToStateSet(osg::StateSet* stateSet);
+
+  /** Remove the attributes added by addProjectionToStateSet */
+  void removeProjectionFromStateSet(osg::StateSet* stateSet);
 
   /**
   * Get the traversal mask for this node type

@@ -46,6 +46,8 @@
 #include "simVis/Utils.h"
 #include "simVis/Locator.h"
 #include "simVis/LocatorNode.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/RFProp/ArepsLoader.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/LUTProfileDataProvider.h"

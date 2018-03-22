@@ -39,6 +39,8 @@
 #include "simVis/PlatformModel.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GogNodeInterface.h"

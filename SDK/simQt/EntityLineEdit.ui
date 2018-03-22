@@ -55,9 +55,6 @@
      </item>
      <item>
       <widget class="QToolButton" name="toolButton">
-       <property name="toolTip">
-        <string>Displays a Entity selection dialog with filtering</string>
-       </property>
        <property name="text">
         <string>...</string>
        </property>

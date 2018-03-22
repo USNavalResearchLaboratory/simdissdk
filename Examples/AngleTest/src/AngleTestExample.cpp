@@ -38,8 +38,9 @@
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Locator.h"
-
+#include "simVis/Scenario.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 

@@ -47,6 +47,10 @@ NavigationMode::NavigationMode()
   getBreakTetherActions().push_back(EarthManipulator::ACTION_EARTH_DRAG);
 }
 
+NavigationMode::~NavigationMode()
+{
+}
+
 NavigationMode::PanOptions::PanOptions()
   : EarthManipulator::ActionOptions()
 {
@@ -89,8 +93,32 @@ NavigationMode::GoToOptions::GoToOptions()
   this->add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
 }
 
-RotatePanNavigationMode::RotatePanNavigationMode(bool enableOverhead, bool watchMode)
+RotatePanNavigationMode::RotatePanNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode)
 {
+  init_(view, enableOverhead, watchMode);
+}
+
+RotatePanNavigationMode::~RotatePanNavigationMode()
+{
+  if (view_.valid() && boxZoom_.valid())
+    view_->removeEventHandler(boxZoom_);
+}
+
+void RotatePanNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watchMode)
+{
+  view_ = view;
+  // left mouse + ctl+shift => box zoom (done with an external event handler)
+  if (!watchMode && view_.valid())
+  {
+    EarthManipulator::ActionOptions boxZoomOpts;
+    boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
+    boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
+    boxZoom_ = new BoxZoomMouseHandler(boxZoomOpts);
+    // can't use alt + click, since that is stolen by some linux systems for window dragging
+    boxZoom_->setModKeyMask(osgGA::GUIEventAdapter::MODKEY_SHIFT | osgGA::GUIEventAdapter::MODKEY_CTRL);
+    view_->addEventHandler(boxZoom_);
+  }
+
   // right mouse (or shift left mouse) => globe spin
   bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
   bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_SHIFT);
@@ -224,6 +252,10 @@ GlobeSpinNavigationMode::GlobeSpinNavigationMode(bool enableOverhead, bool watch
   setSingleAxisRotation(true);
 }
 
+GlobeSpinNavigationMode::~GlobeSpinNavigationMode()
+{
+}
+
 // ==========================================================================
 
 ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
@@ -285,6 +317,10 @@ ZoomNavigationMode::ZoomNavigationMode(bool enableOverhead, bool watchMode)
   bindMouseClick(EarthManipulator::ACTION_GOTO, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON, osgGA::GUIEventAdapter::MODKEY_CTRL, goToOpt);
 
   setSingleAxisRotation(true);
+}
+
+ZoomNavigationMode::~ZoomNavigationMode()
+{
 }
 
 // ==========================================================================
@@ -351,10 +387,39 @@ CenterViewNavigationMode::CenterViewNavigationMode(bool enableOverhead, bool wat
   setSingleAxisRotation(true);
 }
 
-GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
+CenterViewNavigationMode::~CenterViewNavigationMode()
 {
+}
+
+// ==========================================================================
+
+GisNavigationMode::GisNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode)
+{
+  init_(view, enableOverhead, watchMode);
+}
+
+GisNavigationMode::~GisNavigationMode()
+{
+  if (view_.valid() && boxZoom_.valid())
+    view_->removeEventHandler(boxZoom_);
+}
+
+void GisNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watchMode)
+{
+  view_ = view;
   const bool canRotate = !watchMode && !enableOverhead;
   const bool canZoom = !watchMode;
+
+  // left mouse + alt => box zoom (done with an external event handler)
+  if (canZoom && view_.valid())
+  {
+    EarthManipulator::ActionOptions boxZoomOpts;
+    boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
+    boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
+    boxZoom_ = new BoxZoomMouseHandler(boxZoomOpts);
+    boxZoom_->setModKeyMask(osgGA::GUIEventAdapter::MODKEY_ALT);
+    view_->addEventHandler(boxZoom_);
+  }
 
   // Left mouse
   bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
@@ -450,53 +515,6 @@ GisNavigationMode::GisNavigationMode(bool enableOverhead, bool watchMode)
   setArcViewpointTransitions(true);
   setThrowingEnabled(true);
   setLockAzimuthWhilePanning(false);
-}
-
-BoxZoomNavigationMode::BoxZoomNavigationMode(View* view, bool enableOverhead)
-  : view_(view),
-    mouse_(NULL)
-{
-  EarthManipulator::ActionOptions boxZoomOpts;
-  boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
-  boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
-  mouse_ = new BoxZoomMouseHandler(view->getSceneManager()->getMapNode(), boxZoomOpts);
-  view_->addEventHandler(mouse_);
-
-  // right mouse (or shift left mouse) => globe spin
-  bindMouse(EarthManipulator::ACTION_EARTH_DRAG, osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
-
-  setMinMaxPitch(MINIMUM_PITCH, MAXIMUM_PITCH);
-
-  // scroll wheel => fixed zoom
-  NavigationMode::FixedZoomOptions fixedZoomOpt;
-  bindScroll(EarthManipulator::ACTION_ZOOM_OUT, osgGA::GUIEventAdapter::SCROLL_DOWN, 0, fixedZoomOpt);
-  bindScroll(EarthManipulator::ACTION_ZOOM_IN, osgGA::GUIEventAdapter::SCROLL_UP, 0, fixedZoomOpt);
-
-  if (enableOverhead)
-  {
-    // middle mouse => continuous zoom
-    ContinuousZoomOptions continuousZoomOpts;
-    bindMouse(EarthManipulator::ACTION_ZOOM, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON, 0, continuousZoomOpts);
-  }
-  else
-  {
-    // arrow keys => fixed rotate
-    bindKey(EarthManipulator::ACTION_ROTATE_LEFT, osgGA::GUIEventAdapter::KEY_Left, 0);
-    bindKey(EarthManipulator::ACTION_ROTATE_RIGHT, osgGA::GUIEventAdapter::KEY_Right, 0);
-    bindKey(EarthManipulator::ACTION_ROTATE_UP, osgGA::GUIEventAdapter::KEY_Up, 0);
-    bindKey(EarthManipulator::ACTION_ROTATE_DOWN, osgGA::GUIEventAdapter::KEY_Down, 0);
-
-    // middle mouse => continuous rotate
-    bindMouse(EarthManipulator::ACTION_ROTATE, osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON, 0, RotateOptions());
-  }
-
-  setSingleAxisRotation(true);
-}
-
-BoxZoomNavigationMode::~BoxZoomNavigationMode()
-{
-  if (view_.valid())
-    view_->removeEventHandler(mouse_);
 }
 
 }

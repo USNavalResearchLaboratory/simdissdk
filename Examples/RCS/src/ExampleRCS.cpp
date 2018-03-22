@@ -32,14 +32,13 @@
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/CoordinateConverter.h"
 
-/// include definitions for objects of interest
-#include "simVis/Platform.h"
-#include "simVis/PlatformModel.h"
 #include "simVis/Beam.h"
 #include "simVis/Locator.h"
+#include "simVis/Platform.h"
+#include "simVis/PlatformModel.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
-
-/// some basic components (mouse hover popups, scenario, utilities, camera controls)
 #include "simVis/Viewer.h"
 
 /// paths to models

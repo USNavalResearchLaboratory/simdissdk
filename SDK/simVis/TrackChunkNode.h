@@ -170,7 +170,6 @@ namespace simVis
 
     osg::ref_ptr<const osgEarth::SpatialReference> srs_;
     osg::Matrixd                  world2local_;
-    osg::Matrixd                  local2world_;
     simData::TrackPrefs_Mode      mode_;  ///  track draw mode that this chunk will display
   };
 

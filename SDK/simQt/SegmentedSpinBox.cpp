@@ -85,11 +85,12 @@ private:
   SegmentedSpinBox::SegmentedSpinBox(QWidget* parent)
     : QSpinBox(parent),
       completeLine_(NULL),
+      initialTime_(1970, 0),
       colorCode_(true),
       segmentedEventFilter_(NULL),
       timer_(new QTimer(this)),
       applyInterval_(1000),
-      setSinceFocus_(false)
+      setSinceFocus_(true)
   {
     setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed));
     // the method sizeHint is suppose to calculate the correct default minimum width, but something is not right.
@@ -246,7 +247,6 @@ private:
   {
     // If apply was queued and something else triggers an apply first, don't bother applying again
     timer_->stop();
-    setSinceFocus_ = true;
 
     simCore::TimeStamp currentTime = completeLine_->timeStamp();
     simCore::TimeStamp clampedTime = completeLine_->clampTime(currentTime);
@@ -261,7 +261,14 @@ private:
     lineEdit()->setCursorPosition(simCore::sdkMin(cursorPosition, lineEdit()->text().length()));
 
     if (initialTime_ != completeLine_->timeStamp())
+    {
       completeLine_->valueChanged();
+      // If we have focus assume the change was user initiated
+      if (setSinceFocus_ == false)
+        completeLine_->valueEdited();
+    }
+
+    setSinceFocus_ = true;
   }
 
   void SegmentedSpinBox::queueApplyTimestamp_() const

@@ -111,18 +111,15 @@ public slots:
 
 signals:
   /** emitted when the time changes via the user */
-  void timeChanged(const simCore::TimeStamp& time);
+  void timeEdited(const simCore::TimeStamp& time);
   /** emitted when the time is changed by the user or by setTimeStamp */
-  void timeModified(const simCore::TimeStamp& time);
+  void timeChanged(const simCore::TimeStamp& time);
   /** emitted when the time range changes */
   void timeRangeChanged();
 
 protected slots:
   /** User wants to see the right mouse click menu */
   void showRightMouseClickMenu_(const QPoint &pos);
-
-  /** forwards to timeChanged signal */
-  void timeWasChanged_(const simCore::TimeStamp& time);
 
   // Callbacks to switch the time format
   void setSeconds_(); ///< set time format to seconds

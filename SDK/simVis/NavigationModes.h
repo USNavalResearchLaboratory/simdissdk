@@ -151,7 +151,7 @@ class View;
     NavigationMode();
 
     /// osg::Referenced-derived
-    virtual ~NavigationMode() {}
+    virtual ~NavigationMode();
   };
 
   /**
@@ -165,6 +165,7 @@ class View;
   * <li>Left mouse button: rotation in perspective, panning in overhead</li>
   * <li>Middle mouse button: continuous zoom</li>
   * <li>Right mouse button: globe spin</li>
+  * <li>Left mouse button + alt: box zoom</li>
   * <li>Left mouse button + ctrl: center view</li>
   * <li>Left mouse button + shift: globe spin</li>
   * <li>Double-click left mouse button: center view</li>
@@ -178,16 +179,24 @@ class View;
   public:
     /**
     * Initialize the rotate/pan navigation mode.
+    * @param view Inset associated with nav mode, used for box zoom key
     * @param enableOverhead true to create the navigation mode with
     * overhead enabled, false to create with perspective mode
     * @param watchMode if true, no rotate actions will be applied, as
     * rotation is disabled in watchMode
     */
-    RotatePanNavigationMode(bool enableOverhead, bool watchMode);
+    RotatePanNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode);
 
   protected:
     /// osg::Referenced-derived
-    virtual ~RotatePanNavigationMode() {}
+    virtual ~RotatePanNavigationMode();
+
+  private:
+    /** Initializes the bindings given the parameters. */
+    void init_(simVis::View* view, bool enableOverhead, bool watchMode);
+
+    osg::observer_ptr<View> view_;
+    osg::ref_ptr<BoxZoomMouseHandler> boxZoom_;
   };
 
   /**
@@ -223,7 +232,7 @@ class View;
 
   protected:
     /// osg::Referenced-derived
-    virtual ~GlobeSpinNavigationMode() {}
+    virtual ~GlobeSpinNavigationMode();
   };
 
   /**
@@ -258,7 +267,7 @@ class View;
 
   protected:
     /// osg::Referenced-derived
-    virtual ~ZoomNavigationMode() {}
+    virtual ~ZoomNavigationMode();
   };
 
   /**
@@ -293,7 +302,7 @@ class View;
 
   protected:
     /// osg::Referenced-derived
-    virtual ~CenterViewNavigationMode() {}
+    virtual ~CenterViewNavigationMode();
   };
 
   /**
@@ -305,6 +314,7 @@ class View;
   * <ul>
   * <li>Left mouse button: pan</li>
   * <li>Left mouse button + shift: rotation</li>
+  * <li>Left mouse button + alt: box zoom</li>
   * <li>Middle mouse button: rotation</li>
   * <li>Right mouse button: zoom</li>
   * <li>Double-click left mouse button: center and zoom in</li>
@@ -320,43 +330,24 @@ class View;
   public:
     /**
     * Initialize the GIS navigation mode.
+    * @param view Inset associated with nav mode, used for box zoom key
     * @param enableOverhead true to create the navigation mode with
     * overhead enabled, false to create with perspective mode
     * @param watchMode if true, no rotate actions will be applied, as
     * rotation is disabled in watchMode
     */
-    GisNavigationMode(bool enableOverhead, bool watchMode);
+    GisNavigationMode(simVis::View* view, bool enableOverhead, bool watchMode);
 
   protected:
     /// osg::Referenced-derived
-    virtual ~GisNavigationMode() {}
-  };
-
-  /**
-  * BoxZoomNavigationMode provides a support nav mode for a box zoom functionality, but
-  * does not implement any box zooming functionality here<p>
-  * The mappings are:
-  * <ul>
-  * <li>Left mouse button: no effect, assumes the actual box zooming is handled elsewhere</li>
-  * <li>Middle mouse button: continuous rotate</li>
-  * <li>Right mouse button: globe spin</li>
-  * <li>Scroll wheel: fixed rotate</li>
-  * <li>Arrow keys: fixed rotate</li>
-  * </ul>
-  */
-  class SDKVIS_EXPORT BoxZoomNavigationMode : public NavigationMode
-  {
-  public:
-    /** Initialize the box zoom navigation mode.*/
-    BoxZoomNavigationMode(View* view, bool enableOverhead);
-
-  protected:
-    /// osg::Referenced-derived
-    virtual ~BoxZoomNavigationMode();
+    virtual ~GisNavigationMode();
 
   private:
+    /** Initializes the bindings given the parameters. */
+    void init_(simVis::View* view, bool enableOverhead, bool watchMode);
+
     osg::observer_ptr<View> view_;
-    osg::ref_ptr<BoxZoomMouseHandler> mouse_;
+    osg::ref_ptr<BoxZoomMouseHandler> boxZoom_;
   };
 
 }

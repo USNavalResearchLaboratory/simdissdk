@@ -34,8 +34,8 @@
 #include "simVis/SceneManager.h"
 
 #include "simQt/ViewManagerDataModel.h"
+#include "simQt/ViewWidget.h"
 
-#include "osgEarthQt/ViewWidget"
 #include "osgEarthUtil/Controls"
 
 #include <QApplication>
@@ -286,7 +286,7 @@ int main(int argc, char** argv)
     {
       // Make a Qt Widget to hold our view, and add that widget to the
       // main window.
-      QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview.get());
+      QWidget* viewWidget = new simQt::ViewWidget(mainview.get());
       center->layout()->addWidget(viewWidget);
 
       // attach the scene manager and add it to the view manager.

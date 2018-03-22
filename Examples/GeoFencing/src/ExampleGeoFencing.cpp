@@ -28,6 +28,8 @@
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Geometry.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
 

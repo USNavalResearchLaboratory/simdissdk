@@ -7,7 +7,6 @@ set(LIBRARYNAME OSG)
 # OpenThreads is stored under the OpenSceneGraph folder
 set(OSG_VERSION 3.4.1)
 set(OSG_SUBDIR ${OSG_VERSION})
-set(OSG_DLL_PREFIX osg131-)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
 set(OSG_SHOULD_INSTALL FALSE)
@@ -104,7 +103,10 @@ if(${LIBRARYNAME}_LIBRARY_DEBUG_NAME)
         IMPORTED_IMPLIB_DEBUG "${${LIBRARYNAME}_LIBRARY_DEBUG_NAME}"
     )
 endif()
-osg_set_imported_locations_from_implibs(${LIBRARYNAME} ${OSG_DLL_PREFIX})
+
+# Get the DLL prefix for osg.dll, e.g. osg153-
+osg_guess_win32_dll_prefix(OSG_DLL_PREFIX "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}")
+osg_set_imported_locations_from_implibs(${LIBRARYNAME} "${OSG_DLL_PREFIX}")
 if(OSG_SHOULD_INSTALL)
     vsi_install_target(${LIBRARYNAME} ${${LIBRARYNAME}_INSTALL_COMPONENT})
 endif()
@@ -145,7 +147,7 @@ function(import_osg_library LIBRARYNAME NAME)
             IMPORTED_IMPLIB_DEBUG "${${LIBRARYNAME}_LIBRARY_DEBUG_NAME}"
         )
     endif()
-    osg_set_imported_locations_from_implibs(${LIBRARYNAME} ${OSG_DLL_PREFIX})
+    osg_set_imported_locations_from_implibs(${LIBRARYNAME} "${OSG_DLL_PREFIX}")
     if(OSG_SHOULD_INSTALL)
         vsi_install_target(${LIBRARYNAME} ${OSG_INSTALL_COMPONENT})
     endif()
@@ -169,20 +171,6 @@ import_osg_library(OSGUTIL osgUtil)
 import_osg_library(OSGVIEWER osgViewer)
 import_osg_library(OSGVOLUME osgVolume)
 import_osg_library(OSGWIDGET osgWidget)
-
-# Only import osgQt if it exists and has a good version
-if(QT_FOUND AND EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgQt/Version")
-    file(STRINGS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgQt/Version" OSGQT_DEFINE_VERSION_STR
-        REGEX "^# *define[\t ]+OSGQT_QT_VERSION[\t ]+([0-9]+).*")
-    string(REGEX REPLACE "^.*OSGQT_QT_VERSION[\t ]+([0-9]+).*$"
-        "\\1" OSGQT_QT_VERSION "${OSGQT_DEFINE_VERSION_STR}")
-    # Does the version match?
-    if(OSGQT_QT_VERSION EQUAL QT_VERSION_MAJOR)
-        import_osg_library(OSGQT osgQt)
-    else()
-        message(STATUS "Omitting osgQt library (v${OSGQT_QT_VERSION}) due to version mismatch with Qt headers (v${QT_VERSION_MAJOR})")
-    endif()
-endif()
 
 # Plug-ins are found in lib, unless on Windows
 if(WIN32)

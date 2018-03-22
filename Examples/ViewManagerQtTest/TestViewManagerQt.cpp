@@ -28,13 +28,13 @@
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simQt/ViewWidget.h"
 #include "simUtil/ExampleResources.h"
 
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
 #include "simVis/SceneManager.h"
 
-#include "osgEarthQt/ViewWidget"
 #include "osgEarthUtil/Controls"
 
 #include <QApplication>
@@ -42,6 +42,7 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <QLayout>
+#include <QTimer>
 
 #ifdef Q_WS_X11
 #include <X11/Xlib.h>
@@ -142,7 +143,7 @@ int main(int argc, char** argv)
 
     // Make a Qt Widget to hold our view, and add that widget to the
     // main window.
-    QWidget* viewWidget = new osgEarth::QtGui::ViewWidget(mainview.get());
+    QWidget* viewWidget = new simQt::ViewWidget(mainview.get());
     center->layout()->addWidget(viewWidget);
 
     // attach the scene manager and add it to the view manager.

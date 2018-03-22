@@ -75,7 +75,7 @@ CategoryTreeItem::CategoryTreeItem(const QString& text, const QString& sortText,
   sortText_(sortText),
   categoryIndex_(categoryIndex),
   parentItem_(parent),
-  state_(Qt::Checked),
+  state_(Qt::Unchecked),
   numCheckedChildren_(0)
 {
 }
@@ -116,6 +116,22 @@ void CategoryTreeItem::setState(Qt::CheckState value)
     parentItem_->updateNumCheckedChildren_(value);
 }
 
+Qt::CheckState CategoryTreeItem::childrenState() const
+{
+  // This isn't really a good state and there's no good answer if we have no children.  Assert
+  // and the developer can determine if this IS a good state or not, and update appropriately.
+  assert(!childItems_.empty());
+  if (childItems_.empty())
+    return Qt::PartiallyChecked;
+  Qt::CheckState state = childItems_[0]->state();
+  for (int k = 1; k < childItems_.count(); ++k)
+  {
+    if (state != childItems_[k]->state())
+      return Qt::PartiallyChecked;
+  }
+  return state;
+}
+
 void CategoryTreeItem::updateNumCheckedChildren_(Qt::CheckState value)
 {
   // increment if a child has been checked
@@ -139,14 +155,19 @@ void CategoryTreeItem::updateNumCheckedChildren_(Qt::CheckState value)
 void CategoryTreeItem::appendChild(CategoryTreeItem *item)
 {
   childItems_.append(item);
-  updateNumCheckedChildren_(item->state());
+  // Only should updateNumCheckedChildren_() when we're checked.  Unchecked does nothing
+  if (item->state() == Qt::Checked)
+    updateNumCheckedChildren_(Qt::Checked);
 }
 
 void CategoryTreeItem::removeChild(CategoryTreeItem *item)
 {
+  const bool wasChecked = (item->state() == Qt::Checked);
   childItems_.removeOne(item);
   delete item;
-  updateNumCheckedChildren_(Qt::Unchecked);
+  // Only decrement if this one was previously checked
+  if (wasChecked)
+    updateNumCheckedChildren_(Qt::Unchecked);
 }
 
 CategoryTreeItem* CategoryTreeItem::child(int row)
@@ -175,12 +196,23 @@ int CategoryTreeItem::row() const
 //-----------------------------------------------------------------------------------------
 
 CategoryProxyModel::CategoryProxyModel(QObject *parent)
-  : QSortFilterProxyModel(parent)
+  : QSortFilterProxyModel(parent),
+    hasAllCategories_(true)
 {
 }
 
 CategoryProxyModel::~CategoryProxyModel()
 {
+}
+
+void CategoryProxyModel::setSourceModel(QAbstractItemModel* sourceModel)
+{
+  // simQt::CategoryTreeModel has a top level "All Categories" item.  This item affects
+  // some of the way filtering works.  Detect whether we're using a CategoryTreeModel
+  // and change our internal flag appropriately.  Note that another possible choice
+  // is simQt::CategoryTreeModel2, which does not have an All Categories item.
+  hasAllCategories_ = (dynamic_cast<CategoryTreeModel*>(sourceModel) != NULL);
+  QSortFilterProxyModel::setSourceModel(sourceModel);
 }
 
 void CategoryProxyModel::resetFilter()
@@ -203,27 +235,44 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
     return true;
 
   // Always accept top level "All Categories" item
-  if (!sourceParent.isValid())
+  if (hasAllCategories_ && !sourceParent.isValid())
     return true;
 
-  QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
-  CategoryTreeItem *item = static_cast<CategoryTreeItem*>(index.internalPointer());
+  const QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
+  const QString itemText = index.data(Qt::DisplayRole).toString();
 
   // include items that pass the filter
-  if (item->text().contains(filter_, Qt::CaseInsensitive))
+  if (itemText.contains(filter_, Qt::CaseInsensitive))
     return true;
 
   // include items whose parent passes the filter, but not if parent is root "All Categories" item
-  if (item->parent() != NULL && item->parent()->text() != ALL_CATEGORIES && item->parent()->text().contains(filter_, Qt::CaseInsensitive))
-    return true;
-
-  // include items with any children that pass the filter
-  for (int ii = 0; ii < item->childCount(); ++ii)
+  if (sourceParent.isValid())
   {
-    if (item->child(ii)->text().contains(filter_, Qt::CaseInsensitive))
-      return true;
+    const QString parentText = sourceParent.data(Qt::DisplayRole).toString();
+    // We only care about matching "All Categories" for the old model type
+    if (hasAllCategories_)
+    {
+      if (parentText != ALL_CATEGORIES && parentText.contains(filter_, Qt::CaseInsensitive))
+        return true;
+    }
+    else
+    {
+      if (parentText.contains(filter_, Qt::CaseInsensitive))
+        return true;
+    }
   }
 
+  // include items with any children that pass the filter
+  const int numChildren = sourceModel()->rowCount(index);
+  for (int ii = 0; ii < numChildren; ++ii)
+  {
+    const QModelIndex childIndex = sourceModel()->index(ii, 0, index);
+    // Assertion failure means rowCount() was wrong
+    assert(childIndex.isValid());
+    const QString childText = childIndex.data(Qt::DisplayRole).toString();
+    if (childText.contains(filter_, Qt::CaseInsensitive))
+      return true;
+  }
   return false;
 }
 
@@ -307,6 +356,8 @@ void CategoryTreeModel::addCategoryName_(int nameIndex)
   if (findCategoryName_(nameIndex) != NULL)
     return;
 
+  // New category was added to the category name manager.  Check to see if the category is present
+  // in the current filter (it probably isn't) and make sure we have each of those value checked
   const simData::CategoryFilter::CategoryCheck& categoryCheck = categoryFilter_->getCategoryFilter();
   simData::CategoryFilter::CategoryCheck::const_iterator iter = categoryCheck.find(nameIndex);
   assert(iter != categoryCheck.end());
@@ -341,6 +392,8 @@ void CategoryTreeModel::addCategoryValue_(int nameIndex, int valueIndex, bool re
     return;
   }
 
+  // A new value was added.  Give it a valid checked or not checked state as appropriate based on
+  // the content of the category filter.
   const simData::CategoryFilter::CategoryCheck& categoryCheck = categoryFilter_->getCategoryFilter();
   simData::CategoryFilter::CategoryCheck::const_iterator iter = categoryCheck.find(nameIndex);
   assert(iter != categoryCheck.end());
@@ -352,8 +405,9 @@ void CategoryTreeModel::addCategoryValue_(int nameIndex, int valueIndex, bool re
     if (valIter != iter->second.second.end())
     {
       QString value = QString::fromStdString(dataStore_->categoryNameManager().valueIntToString(valIter->first));
+
       CategoryTreeItem* catValItem = new CategoryTreeItem(value, valueSortName_(value), valIter->first, categoryName);
-      catValItem->setState(iter->second.first ? Qt::Checked : Qt::Unchecked);
+      catValItem->setState(valIter->second ? Qt::Checked : Qt::Unchecked);
       beginInsertRows(createIndex(categoryName->row(), 0, categoryName), categoryName->childCount(), categoryName->childCount());
       categoryName->appendChild(catValItem);
       endInsertRows();
@@ -577,53 +631,120 @@ QString CategoryTreeModel::valueSortName_(const QString& value) const
 void CategoryTreeModel::setFilter(const simData::CategoryFilter& categoryFilter)
 {
   // Only update with a different filter
-  if (&categoryFilter == categoryFilter_)
+  if (&categoryFilter == categoryFilter_ || categoryFilter_ == NULL)
     return;
 
-  // set all category values to true
-  categoryFilter_->updateAll(true);
-  setState_(allCategoriesItem_, Qt::Checked);
+  // Simplify the filter.  This will reduce the total number of operations here.
+  simData::CategoryFilter simplified = categoryFilter;
+  simplified.simplify();
 
-  // now update all found values to those in the passed in filter
-  const simData::CategoryFilter::CategoryCheck& categoryCheck = categoryFilter.getCategoryFilter();
-
-  // if there are no items in the category filter, then assume all are checked, since there is no change
-  bool globalAnyChecked = categoryCheck.empty();
-
-  for (simData::CategoryFilter::CategoryCheck::const_iterator iter = categoryCheck.begin(); iter != categoryCheck.end(); ++iter)
+  // Do a quick check on the current filter and make sure it doesn't match incoming filter.
+  // Do it in an artificial scope to prevent temporary filter from lasting long.
   {
-    bool localAnyChecked = false;
-    CategoryTreeItem* catItem = findCategoryName_(iter->first);
-
-    // set everything to unlisted then update with actual values
-    auto value = iter->second.second.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
-    if (value != iter->second.second.end())
-      localAnyChecked = value->second;
-
-    for (int ii = 0; ii < catItem->childCount(); ++ii)
-      catItem->child(ii)->setState(localAnyChecked ? Qt::Checked : Qt::Unchecked);
-
-    // Update all values for the name
-    for (simData::CategoryFilter::ValuesCheck::const_iterator valIter = iter->second.second.begin(); valIter != iter->second.second.end(); ++valIter)
-    {
-      CategoryTreeItem* valItem = findCategoryValue_(catItem, valIter->first);
-      if (valItem != NULL)
-        valItem->setState(valIter->second ? Qt::Checked : Qt::Unchecked);
-      categoryFilter_->updateCategoryFilterValue(iter->first, valIter->first, valIter->second);
-      if (valIter->second)
-      {
-        globalAnyChecked = true;
-        localAnyChecked = true;
-      }
-    }
-
-    if (localAnyChecked == false)
-      catItem->setState(Qt::Unchecked);
+    simData::CategoryFilter localSimplified = *categoryFilter_;
+    localSimplified.simplify();
+    if (localSimplified == simplified)
+      return;
   }
 
-  if (globalAnyChecked == false)
-    allCategoriesItem_->setState(Qt::Unchecked);
 
+  // If the name is in the simplified filter, that means it's got an influence on the filter state.
+  // If it's absent, then it has no influence; GUI should be checked and all values set true,
+  // which is the state we're starting with here.  Therefore, we only need to update the filter
+  // state for items that exist in the category filter.
+  std::vector<int> allNamesVec;
+  simplified.getNames(allNamesVec);
+  // Convert this into a set for faster find()
+  std::set<int> allNamesSet(allNamesVec.begin(), allNamesVec.end());
+
+  // First, update the GUI
+  const int numCategories = allCategoriesItem_->childCount();
+  for (int categoryIndex = 0; categoryIndex < numCategories; ++categoryIndex)
+  {
+    CategoryTreeItem* categoryItem = allCategoriesItem_->child(categoryIndex);
+    // Assertion fail means failure in CategoryTreeItem::child() or childCount()
+    assert(categoryItem);
+    if (!categoryItem)
+      continue;
+
+    // Determine if the name is in the simplified filter.  If it is, then the item needs
+    // to be checked.  If it's not, then the GUI can be fully checked or fully unchecked,
+    // since both states are equivalent; don't change anything in that case.
+    const bool categoryIsInSimplified = (allNamesSet.find(categoryItem->categoryIndex()) != allNamesSet.end());
+    if (!categoryIsInSimplified)
+    {
+      const Qt::CheckState currentState = categoryItem->childrenState();
+      if (currentState == Qt::PartiallyChecked)
+        setState_(categoryItem, Qt::Checked);
+      continue;
+    }
+
+    // Item is in the filter.  It applies in some way.
+    categoryItem->setState(Qt::Checked);
+
+    // Get all the checks for this category.  This is a simplified listing and we need to
+    // rely on "Unlisted Value" to tell us entries.
+    simData::CategoryFilter::ValuesCheck checks;
+    simplified.getValues(categoryItem->categoryIndex(), checks);
+    // Determine whether Unlisted Values are checked or unchecked
+    auto unlistedIter = checks.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
+    // Assertion validates that if "Unlisted Value" is present, that it's set to true (a non-default value)
+    assert(unlistedIter == checks.end() || unlistedIter->second);
+    const bool unlistedValues = (unlistedIter != checks.end());
+
+    // Loop through all children, setting the values correctly
+    const int numValues = categoryItem->childCount();
+    for (int valueIndex = 0; valueIndex < numValues; ++valueIndex)
+    {
+      CategoryTreeItem* valueItem = categoryItem->child(valueIndex);
+      assert(valueItem); // Implies failure in child() or childCount()
+
+      // Find it in the filter
+      const int valueInt = valueItem->categoryIndex();
+      auto simpleIter = checks.find(valueInt);
+      // Is it present? If so use that value
+      if (simpleIter != checks.end())
+        valueItem->setState(simpleIter->second ? Qt::Checked : Qt::Unchecked);
+      else
+      {
+        // Else, use the unlisted value that we detected, unless it's the NO VALUE special case (always off by default)
+        if (valueInt == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
+          valueItem->setState(Qt::Unchecked);
+        else
+          valueItem->setState(unlistedValues ? Qt::Checked : Qt::Unchecked);
+      }
+    }
+  }
+
+  // Next, update the state of the internal filter to match what the GUI shows
+  bool globalCheck = false;
+  for (int categoryIndex = 0; categoryIndex < numCategories; ++categoryIndex)
+  {
+    CategoryTreeItem* categoryItem = allCategoriesItem_->child(categoryIndex);
+    if (!categoryItem)
+      continue;
+    const int nameInt = categoryItem->categoryIndex();
+    categoryFilter_->updateCategoryFilterName(nameInt, categoryItem->state() == Qt::Checked);
+
+    // Keep track of the global flag for check/uncheck on top level
+    if (categoryItem->state() == Qt::Checked)
+      globalCheck = true;
+
+    // Set each child value appropriately
+    const int numValues = categoryItem->childCount();
+    for (int valueIndex = 0; valueIndex < numValues; ++valueIndex)
+    {
+      // Check the item in the filter if the GUI item is checked
+      CategoryTreeItem* valueItem = categoryItem->child(valueIndex);
+      if (valueItem)
+        categoryFilter_->setValue(nameInt, valueItem->categoryIndex(), valueItem->state() == Qt::Checked);
+    }
+  }
+
+  // Synchronize the state on the All Items check
+  allCategoriesItem_->setState(globalCheck ? Qt::Checked : Qt::Unchecked);
+
+  // Emit dataChanged() to update the GUI
   emit dataChanged(createIndex(0, 0), createIndex(allCategoriesItem_->childCount(), 0));
 }
 

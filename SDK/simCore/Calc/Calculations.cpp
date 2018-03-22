@@ -1094,6 +1094,20 @@ void simCore::calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *az
   }
 }
 
+/**
+* Calculates the body relative angles from a set of geodetic Euler angles to a true az/el vector
+*/
+void simCore::calculateRelAngToTrueAzEl(double trueAz, double trueEl, const Vec3& refOri, double* azim, double* elev, double* cmp)
+{
+  // calculates a ENU unit vector from trueAz/trueEl
+  Vec3 tmpUnitVecNED;
+  simCore::calculateBodyUnitX(trueAz, trueEl, tmpUnitVecNED);
+  const Vec3 tmpUnitVecENU(tmpUnitVecNED.y(), tmpUnitVecNED.x(), -tmpUnitVecNED.z());
+
+  // calculates the body-relative angles from refOri to trueAz/trueEl
+  simCore::calculateRelAng(tmpUnitVecENU, refOri, azim, elev, cmp);
+}
+
 /// Computes the X component of the body unit vector
 void simCore::calculateBodyUnitX(const double yaw, const double pitch, Vec3 &vecX)
 {

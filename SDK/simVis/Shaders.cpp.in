@@ -27,17 +27,21 @@ Shaders::Shaders()
 {
   // Assign the fall-back shaders if the files are not found
   add(alphaColorFilterFragment(), "@AlphaColorFilter.frag.glsl@");
+  add(alphaTestFragment(), "@AlphaTest.frag.glsl@");
   add(areaHighlightVertex(), "@AreaHighlight.vert.glsl@");
   add(areaHighlightFragment(), "@AreaHighlight.frag.glsl@");
   add(bathymetryGeneratorVertex(), "@BathymetryGenerator.vert.glsl@");
   add(beamPulseVertex(), "@BeamPulse.vert.glsl@");
   add(beamPulseFragment(), "@BeamPulse.frag.glsl@");
+  add(flashingFragment(), "@Flashing.frag.glsl@");
   add(glowHighlightFragment(), "@GlowHighlight.frag.glsl@");
   add(overheadModeVertex(), "@OverheadMode.vert.glsl@");
   add(overrideColorFragment(), "@OverrideColor.frag.glsl@");
   add(pickerVertex(), "@Picker.vert.glsl@");
   add(pickerFragment(), "@Picker.frag.glsl@");
   add(platformAzimElevWarpVertex(), "@PlatformAzimElevViewTool.vert.glsl@");
+  add(polygonStippleFragment(), "@PolygonStipple.frag.glsl@");
+  add(pointSizeVertex(), "@PointSize.vert.glsl@");
   add(projectorManagerVertex(), "@Projector.vert.glsl@");
   add(projectorManagerFragment(), "@Projector.frag.glsl@");
   add(rfPropVertexBasedVertex(), "@RF.Vertex.vert.glsl@");
@@ -49,12 +53,16 @@ Shaders::Shaders()
   add(setClipVertex(), "@SetClipVertex.vert.glsl@");
   add(trackHistoryVertex(), "@TrackHistory.vert.glsl@");
   add(trackHistoryFragment(), "@TrackHistory.frag.glsl@");
-  add(flashingFragment(), "@Flashing.frag.glsl@");
 }
 
 std::string Shaders::alphaColorFilterFragment() const
 {
   return "AlphaColorFilter.frag.glsl";
+}
+
+std::string Shaders::alphaTestFragment() const
+{
+  return "AlphaTest.frag.glsl";
 }
 
 std::string Shaders::areaHighlightVertex() const
@@ -122,6 +130,11 @@ std::string Shaders::platformAzimElevWarpVertex() const
   return "PlatformAzimElevViewTool.vert.glsl";
 }
 
+std::string Shaders::pointSizeVertex() const
+{
+  return "PointSize.vert.glsl";
+}
+
 std::string Shaders::rfPropVertexBasedVertex() const
 {
   return "RF.Vertex.vert.glsl";
@@ -170,6 +183,11 @@ std::string Shaders::pickerVertex() const
 std::string Shaders::pickerFragment() const
 {
   return "Picker.frag.glsl";
+}
+
+std::string Shaders::polygonStippleFragment() const
+{
+  return "PolygonStipple.frag.glsl";
 }
 
 }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>277</width>
-    <height>69</height>
+    <width>284</width>
+    <height>81</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,7 +32,7 @@
         </sizepolicy>
        </property>
        <property name="minimum">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="maximum">
         <number>6</number>
@@ -58,6 +58,7 @@
    <class>simQt::TimeWidget</class>
    <extends>QWidget</extends>
    <header>simQt/TimeWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

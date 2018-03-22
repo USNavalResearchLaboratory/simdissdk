@@ -34,6 +34,8 @@
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simVis/Platform.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/Utils.h"
 
@@ -226,7 +228,7 @@ private:
   void generateColorCommand_(int colorIndex)
   {
     simData::DataTable* table = ds_->dataTableManager().findTable(hostId_, simData::INTERNAL_TRACK_HISTORY_TABLE);
-    simData::TableColumnId colId;
+    simData::TableColumnId colId = 0;
     bool foundColumn = false;
     if (table == NULL)
     {

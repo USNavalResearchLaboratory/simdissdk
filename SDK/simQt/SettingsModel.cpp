@@ -519,13 +519,6 @@ SettingsModel::SettingsModel(QObject* parent, QSettings& settings)
   : QAbstractItemModel(parent),
     rootNode_(NULL)
 {
-  // Register meta data types so MetaData can go into a QSettings
-  qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
-
-#ifdef HAVE_SIMDATA
-  qRegisterMetaTypeStreamOperators<simQt::EntityTreeComposite::FilterConfiguration>("FilterConfiguration");
-#endif
-
   // Note that QFileIconProvider requires QApplication and will crash with QCoreApplication
   bool hasGuiApp = (qobject_cast<QApplication*>(QCoreApplication::instance()) != NULL);
   if (hasGuiApp)

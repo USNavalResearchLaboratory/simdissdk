@@ -25,12 +25,12 @@
 #include "osg/ref_ptr"
 #include "osg/Group"
 #include "osgEarth/DrapeableNode"
+#include "osgEarth/ImageLayer"
 #include "osgEarth/MapNode"
 #include "osgEarthUtil/Sky"
 #include "osgEarthUtil/Ocean"
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
-#include "simVis/Scenario.h"
 #include "simVis/Types.h"
 
 namespace osgEarth { namespace Drivers
@@ -41,7 +41,10 @@ namespace osgEarth { namespace Drivers
 
 namespace simVis
 {
+  class CentroidManager;
   class ProjectorManager;
+  class ScenarioDisplayHints;
+  class ScenarioManager;
 
   /**
    * @anchor SceneManagerLayout
@@ -55,6 +58,7 @@ namespace simVis
    *       +-mapContainer
    *          +-mapNode
    *       +-scenarioManager
+   *       +-centroidManager
    *       +-projectorManager
    *       +-oceanNode
    * </pre>
@@ -100,6 +104,12 @@ namespace simVis
     * @return Scenario API
     */
     ScenarioManager* getScenario() { return scenarioManager_.get(); }
+
+    /**
+    * Interface to the centroid manager.
+    * @return Pointer to the CentroidManager
+    */
+    CentroidManager* getCentroidManager() const { return centroidManager_.get(); }
 
     /**
     * The scene graph node that renders the sky
@@ -189,6 +199,8 @@ namespace simVis
 
     // internal - override
     Locator* createLocator() const;
+    // internal - override
+    CachingLocator* createCachingLocator() const;
 
   protected:
     /// osg::Referenced-derived
@@ -212,6 +224,8 @@ namespace simVis
     osg::ref_ptr<osgEarth::MapNode> mapNode_;
     /** Contains the scenario entities and tools, child of the sky node.  See also @ref SceneManagerLayout */
     osg::ref_ptr<ScenarioManager> scenarioManager_;
+    /** Contains centroid information for views, child of the sky node. See also @ref SceneManagerLayout */
+    osg::ref_ptr<CentroidManager> centroidManager_;
     /** Contains the scene projectors, child of the sky node.  See also @ref SceneManagerLayout */
     osg::ref_ptr<ProjectorManager> projectorManager_;
     /** Child of the top level root, contains most of the scene because it applies various shading to scene elements.  See also @ref SceneManagerLayout */

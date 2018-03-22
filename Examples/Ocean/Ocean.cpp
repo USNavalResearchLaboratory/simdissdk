@@ -33,22 +33,23 @@
  *
  * NOTE:  An Internet connection is required for this example.
  */
+#include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
-#include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simData/MemoryDataStore.h"
 
+#include "simVis/BathymetryGenerator.h"
+#include "simVis/DBOptions.h"
 #include "simVis/osgEarthVersion.h"
-#include "simVis/Viewer.h"
-#include "simVis/SceneManager.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
-#include "simVis/BathymetryGenerator.h"
-#include "simVis/DBOptions.h"
-#include "simData/MemoryDataStore.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
+#include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
 
 #include "osgEarthDrivers/tms/TMSOptions"

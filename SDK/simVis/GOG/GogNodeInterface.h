@@ -188,13 +188,21 @@ public:
   virtual int getPointSize(int& pointSize) const;
 
   /**
-  * Get the position of the shape on the map, in standard osg format, lon/lat/alt degrees/degrees/meters. Will use the provided
+  * Get the position of the shape on the map, in osgEarth::GeoPoint position format, lon/lat/alt degrees/degrees/meters. Will use the provided
   * referencePosition param as the reference position if it is valid, otherwise will use the node's internal position if it has one.
   * @param position to be filled in
   * @param referencePosition will use this for ref position if it is valid, when applying local offset
   * @return 0 if position was found, non-zero otherwise
   */
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const = 0;
+
+  /**
+  * Get the reference position of the shape on the map, in osgEarth::GeoPoint position format, lon/lat/alt degrees/degrees/meters.
+  * Return 0 if the node has a reference position and it was filled in, non-zero if no reference position exists for the node.
+  * @param referencePosition to be filled in
+  * @return 0 if reference position was found, non-zero otherwise
+  */
+  virtual int getReferencePosition(osg::Vec3d& referencePosition) const;
 
   /**
   * Get the tessellation style of the Overlay, returns false if the Overlay doesn't support tessellation
@@ -484,6 +492,8 @@ public:
   virtual ~LocalGeometryNodeInterface() {}
   virtual int getAltOffset(double& altOffset) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
+  /// override the get reference position
+  virtual int getReferencePosition(osg::Vec3d& referencePosition) const;
   virtual void setAltOffset(double altOffsetMeters);
   /// need to override setAltitudeMode to adjust altitude for clampToGround case
   virtual void setAltitudeMode(AltitudeMode altMode);

@@ -49,6 +49,8 @@
 
 /// some basic components (mouse hover popups, scenario, utilities, camera controls)
 #include "simVis/Popup.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
@@ -205,18 +207,6 @@ struct MenuHandler : public osgGA::GUIEventHandler
       case '$': // center view
         view_->setNavigationMode(simVis::NAVMODE_CENTERVIEW);
         s_action->setText("Switched to NAVMODE_CENTERVIEW");
-        handled = true;
-        break;
-
-      case '%': // center box zoom
-        view_->setNavigationMode(simVis::NAVMODE_CENTERBOXZOOM);
-        s_action->setText("Switched to NAVMODE_CENTERBOXZOOM");
-        handled = true;
-        break;
-
-      case '^': // box zoom
-        view_->setNavigationMode(simVis::NAVMODE_BOXZOOM);
-        s_action->setText("Switched to NAVMODE_BOXZOOM");
         handled = true;
         break;
 
@@ -921,7 +911,7 @@ int main(int argc, char **argv)
     rocketBurnShape.scaleAlpha = true;
     rb->update(rocketBurnShape);
     // move to back of host
-    rb->setPositionOrientation(simCore::Vec3(0, -platNode->getActualSize().yMax(), 0), simCore::Vec3());
+    rb->setPositionOrientation(osg::Vec3f(0, -platNode->getActualSize().yMax(), 0), osg::Vec3f());
   }
 
   /// simulator will compute time-based updates for our platform (and any beams it is hosting)

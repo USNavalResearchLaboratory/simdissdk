@@ -165,13 +165,34 @@ bool useRexEngine()
   return simCore::caseCompare(engineName, "rex") == 0;
 }
 
+bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value)
+{
+  if (!stateset)
+    return false;
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
+  auto* definePair = stateset->getDefinePair(OE_LIGHTING_DEFINE);
+  if (!definePair)
+    return false;
+  out_value = definePair->second;
+  return out_value != osg::StateAttribute::INHERIT;
+#else
+  osg::StateAttribute::GLModeValue value = stateset->getMode(GL_LIGHTING);
+  out_value = stateset->getMode(value);
+  return out_value != osg::StateAttribute::INHERIT;
+#endif
+}
+
+
 void setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value)
 {
   if (stateset)
   {
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     stateset->setDefine(OE_LIGHTING_DEFINE, value);
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
+    // GL_LIGHTING is deprecated in GL CORE builds
     stateset->setMode(GL_LIGHTING, value);
+#endif
 #else
     osg::Uniform* u = osgEarth::Registry::shaderFactory()->createUniformForGLMode(GL_LIGHTING, value);
     u->set((value & osg::StateAttribute::ON) != 0);

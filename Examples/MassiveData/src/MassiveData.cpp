@@ -49,6 +49,8 @@
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
 #include "simVis/Popup.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 
 #include "simUtil/PlatformSimulator.h"

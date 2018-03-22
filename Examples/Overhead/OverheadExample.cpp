@@ -36,6 +36,8 @@
 #include "simVis/NavigationModes.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 #include "simUtil/DbConfigurationFile.h"
@@ -76,34 +78,6 @@ void loadEarthFile(const std::string& earthFile, simVis::Viewer& viewer)
 }
 
 //----------------------------------------------------------------------------
-// Demonstrates the use of the simVis::ViewManager::ViewCallback to respond to
-// view events.
-struct ViewReportCallback : public simVis::ViewManager::Callback
-{
-  explicit ViewReportCallback(osg::Callback* cb)
-    : cb_(cb)
-  {}
-
-  void operator()(simVis::View* view, const EventType& e)
-  {
-    switch (e)
-    {
-      case VIEW_ADDED:
-        view->getCamera()->addEventCallback(cb_.get());
-        SIM_NOTICE << LC << "View '" << view->getName() << "' added" << std::endl;
-        break;
-
-      case VIEW_REMOVED:
-        SIM_NOTICE << LC << "View '" << view->getName() << "' removed" << std::endl;
-        break;
-    }
-  }
-
-private:
-  osg::observer_ptr<osg::Callback> cb_;
-};
-
-//----------------------------------------------------------------------------
 // A mouse position listener to update the elevation label with the current lat/lon/elevation value under the mouse
 class LatLonElevListener : public simUtil::MousePositionManipulator::Listener
 {
@@ -135,7 +109,7 @@ private:
 // An event handler to assist in testing the Inset functionality.
 struct MouseAndMenuHandler : public osgGA::GUIEventHandler
 {
-  MouseAndMenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* handler,
+  MouseAndMenuHandler(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler,
     simUtil::MouseDispatcher* mouseDispatcher, ui::LabelControl* status, simData::DataStore& dataStore,
     simData::ObjectId centeredPlat, bool showElevation)
   : viewer_(viewer),
@@ -153,7 +127,7 @@ struct MouseAndMenuHandler : public osgGA::GUIEventHandler
   {
     mouseDispatcher_->setViewManager(NULL);
     latLonElevListener_.reset(new LatLonElevListener());
-    setUpMouseManip_(viewer_);
+    setUpMouseManip_(viewer_.get());
     updateStatusAndLabel_();
   }
 
@@ -231,7 +205,7 @@ private:
     case 'i': // toggle inset mode
     {
       insertViewPortMode_ = !insertViewPortMode_;
-      handler_->setAddInsetMode(insertViewPortMode_);
+      handler_->setEnabled(insertViewPortMode_);
     }
     break;
 
@@ -371,7 +345,7 @@ private:
   }
 
   osg::ref_ptr<simVis::Viewer> viewer_;
-  osg::observer_ptr<simVis::InsetViewEventHandler> handler_;
+  osg::observer_ptr<simVis::CreateInsetEventHandler> handler_;
   osg::observer_ptr<ui::LabelControl> statusLabel_;
   std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher_;
   std::shared_ptr<LatLonElevListener> latLonElevListener_;
@@ -460,18 +434,20 @@ int main(int argc, char** argv)
   // create a sky node
   simExamples::addDefaultSkyNode(viewer.get());
 
-  // Demonstrate the view-drawing service.  This is used to create new inset views with the
-  // mouse.
-  osg::ref_ptr<simVis::InsetViewEventHandler> insetHandler = new simVis::InsetViewEventHandler(viewer->getMainView());
+  // Demonstrate the view-drawing service.  This is used to create new inset views with the mouse.
+  simVis::View* mainView = viewer->getMainView();
+  osg::ref_ptr<simVis::InsetViewEventHandler> insetHandler = new simVis::InsetViewEventHandler(mainView);
   insetHandler->setFocusActions(simVis::InsetViewEventHandler::ACTION_CLICK_SCROLL | simVis::InsetViewEventHandler::ACTION_TAB);
-  viewer->getMainView()->addEventHandler(insetHandler);
+  mainView->addEventHandler(insetHandler);
+  osg::ref_ptr<simVis::CreateInsetEventHandler> createInsetsHandler = new simVis::CreateInsetEventHandler(mainView);
+  mainView->addEventHandler(createInsetsHandler);
 
-  dynamic_cast<osgEarth::Util::EarthManipulator*>(viewer->getMainView()->getCameraManipulator())
+  dynamic_cast<osgEarth::Util::EarthManipulator*>(mainView->getCameraManipulator())
       ->getSettings()->setTerrainAvoidanceEnabled(false);
 
   simVis::View* hud = new simVis::View();
-  hud->setUpViewAsHUD(viewer->getMainView());
-  viewer->getMainView()->getViewManager()->addView(hud);
+  hud->setUpViewAsHUD(mainView);
+  mainView->getViewManager()->addView(hud);
 
   // add help and status labels
   ui::VBox* vbox = new ui::VBox();
@@ -483,14 +459,13 @@ int main(int argc, char** argv)
   vbox->addControl(statusLabel);
   hud->addOverlayControl(vbox);
 
-  /// data source which will provide positions for the platform
-  /// based on the simulation time.
-  /// (the simulator data store populates itself from a number of waypoints)
+  // data source which will provide positions for the platform
+  // based on the simulation time.
+  // (the simulator data store populates itself from a number of waypoints)
   simData::MemoryDataStore dataStore;
 
-  /// bind dataStore to the scenario manager
+  // bind dataStore to the scenario manager
   viewer->getSceneManager()->getScenario()->bind(&dataStore);
-  simVis::View* mainView = viewer->getMainView();
   simData::ObjectId centeredPlat = 0;
   // Create platforms
   if (numPlats > 0)
@@ -540,20 +515,15 @@ int main(int argc, char** argv)
   mouseDispatcher.reset(new simUtil::MouseDispatcher);
 
   // Install a handler to respond to the demo keys in this sample.
-  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer.get(), insetHandler.get(), mouseDispatcher.get(), statusLabel, dataStore, centeredPlat, showElevation);
-  viewer->getMainView()->getCamera()->addEventCallback(mouseHandler);
+  osg::ref_ptr<MouseAndMenuHandler> mouseHandler = new MouseAndMenuHandler(viewer.get(), createInsetsHandler.get(), mouseDispatcher.get(), statusLabel, dataStore, centeredPlat, showElevation);
+  mainView->getCamera()->addEventCallback(mouseHandler);
 
-  // Demonstrate the view callback. This notifies us whenever new inset views are created or
-  // removed or get focus.
-  viewer->addCallback(new ViewReportCallback(mouseHandler.get()));
-
-  /// hovering the mouse over the platform should trigger a popup
+  // hovering the mouse over the platform should trigger a popup
   viewer->addEventHandler(new simVis::PopupHandler(viewer->getSceneManager()));
 
   // for status and debugging
   viewer->installDebugHandlers();
 
   dataStore.update(9.);
-  viewer->run();
+  return viewer->run();
 }
-

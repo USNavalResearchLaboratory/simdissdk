@@ -85,7 +85,7 @@ MousePositionManipulator::MousePositionManipulator(osgEarth::MapNode* mapNode, o
 {
   assert(mapNode != NULL);
   terrainEngineNode_ = mapNode_->getTerrainEngine();
-  mapNodePath_.push_back(terrainEngineNode_);
+  mapNodePath_.push_back(terrainEngineNode_.get());
   elevationQuery_ = new simVis::ElevationQueryProxy(mapNode_->getMap(), scene);
 
   if (scene_.valid())
@@ -118,7 +118,7 @@ void MousePositionManipulator::setMapNode(osgEarth::MapNode* mapNode)
   }
 
   terrainEngineNode_ = mapNode_->getTerrainEngine();
-  mapNodePath_.push_back(terrainEngineNode_);
+  mapNodePath_.push_back(terrainEngineNode_.get());
   // Note that the elevation query proxy will take care of itself for updating map.
   // Elevation query proxy has a MapNodeObserver and should not be deleted.
 }
@@ -143,7 +143,8 @@ osgEarth::GeoPoint MousePositionManipulator::getLLA_(float mx, float my, bool qu
 {
   osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
   osgEarth::GeoPoint lonLatAlt(srs.get(), INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, INVALID_POSITION_VALUE, osgEarth::ALTMODE_ABSOLUTE);
-  if (!lastView_.valid())
+  // mapNodePath_ has a copy of terrainEngineNode_ so make sure terrainEngineNode_ is valid
+  if (!lastView_.valid() || !terrainEngineNode_.valid())
     return lonLatAlt;
 
   // do not display an elevation unless it is valid

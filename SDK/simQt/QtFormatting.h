@@ -26,6 +26,9 @@
 
 namespace simQt {
 
+/** Tag used to mark location of hot key in tool tip */
+static const QString HOT_KEY_TAG = "<hotkey />";
+
 /**
  * Create a rich text tooltip from a title and description
  * @param title  Title (emboldened) of tooltip
@@ -35,9 +38,9 @@ namespace simQt {
 inline QString formatTooltip(const QString& title, const QString& desc)
 {
   if (desc.isEmpty())
-    return QString("<strong>%1</strong>").arg(title);
-  const QString formatBlock("<strong>%1</strong><div style=\"margin-left: 1em; margin-right: 1em;\"><p>%2</p></div>");
-  return formatBlock.arg(title, desc);
+    return QString("<strong>%1%2</strong>").arg(title, HOT_KEY_TAG);
+  const QString formatBlock("<strong>%1%2</strong><div style=\"margin-left: 1em; margin-right: 1em;\"><p>%3</p></div>");
+  return formatBlock.arg(title, HOT_KEY_TAG, desc);
 }
 
 }

@@ -28,6 +28,7 @@ namespace simQt {
 
 class AbstractEntityTreeModel;
 class EntityFilterLineEdit;
+class RegExpImpl;
 
 /**
 * Class to implement a filter based on entity name using Qt regular expression implementation. This filter can bind to an EntityFilterLineEdit widget.
@@ -84,7 +85,7 @@ private:
   // reference to the entity tree model for looking up entity name
   AbstractEntityTreeModel* model_;
   /// regular expression filter to apply to entity name
-  QRegExp* regExp_;
+  RegExpImpl* regExp_;
   /// widget that generates a reg exp filter
   EntityFilterLineEdit* widget_;
 };

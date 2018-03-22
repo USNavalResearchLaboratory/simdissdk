@@ -570,9 +570,14 @@ void DockWidget::dock_()
   updateTitleBar_();
 }
 
+void DockWidget::undock()
+{
+  undock_();
+}
+
 void DockWidget::undock_()
 {
-  if (isFloating() && !features().testFlag(DockWidgetFloatable))
+  if (isFloating() || !features().testFlag(DockWidgetFloatable))
     return;
 
   // Save the normal geometry state here too, just in case we undock to maximized

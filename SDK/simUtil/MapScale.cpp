@@ -26,6 +26,7 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Units.h"
 #include "simVis/Registry.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Text.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
@@ -40,7 +41,7 @@ static const float BAR_BUFFER_PX = 1.f;
 class SetMapScaleViewCallback : public simVis::FocusManager::Callback
 {
 public:
-  SetMapScaleViewCallback(simUtil::MapScale* mapScale)
+  explicit SetMapScaleViewCallback(simUtil::MapScale* mapScale)
     : mapScale_(mapScale)
   {
   }
@@ -66,7 +67,7 @@ private:
 class MapScale::UpdateCallback : public osg::Callback
 {
 public:
-  UpdateCallback(MapScale* scale)
+  explicit UpdateCallback(MapScale* scale)
     : scale_(scale)
   {
   }

@@ -22,12 +22,13 @@
 #ifndef SIMVIS_MANAGED_VIEW_H
 #define SIMVIS_MANAGED_VIEW_H
 
+#include "osg/observer_ptr"
 #include "osgViewer/View"
 #include "osg/Camera"
 #include "osgEarthUtil/Controls"
 #include "osgEarthUtil/EarthManipulator"
 #include "osgEarth/Viewpoint"
-#include "simVis/SceneManager.h"
+#include "simVis/Types.h"
 #include "simVis/ViewManager.h"
 
 namespace simVis
@@ -36,6 +37,7 @@ class EntityNode;
 class FocusManager;
 class ViewManager;
 class EarthManipulator;
+class SceneManager;
 
 /// Manipulator navigation modes
 enum NavMode
@@ -44,8 +46,6 @@ enum NavMode
   NAVMODE_GLOBESPIN,
   NAVMODE_ZOOM,
   NAVMODE_CENTERVIEW,
-  NAVMODE_CENTERBOXZOOM,
-  NAVMODE_BOXZOOM,
   NAVMODE_GIS
 };
 
@@ -487,7 +487,7 @@ public:
   bool getLighting() const;
 
   /** Changes the Field of View (Y) for the view, in degrees */
-  void setFovY(double fovy);
+  void setFovY(double fovyDeg);
 
   /** Returns the Field of View (Y) for the view, in degrees */
   double fovY() const;
@@ -712,7 +712,7 @@ private: // data
   bool lighting_;
 
   /** Field of View (Y) for the view; Degrees */
-  double fovy_;
+  double fovyDeg_;
 
   ViewType viewType_;
 

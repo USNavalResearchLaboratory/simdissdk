@@ -20,6 +20,7 @@
 *
 */
 
+#include <cassert>
 #include "osg/ValueObject"
 #include "osgEarth/Map"
 #include "osgEarth/ImageLayer"
@@ -27,6 +28,10 @@
 #include "simQt/TimestampedLayerManager.h"
 
 namespace simQt {
+
+const std::string TimestampedLayerManager::DEFAULT_LAYER_TIME_GROUP = "DEFAULT_TIME_GROUP_KEY";
+/// The xml tag used to identify the time group in the .earth file
+static const std::string TIME_GROUP_TAG = "time_group";
 
 /**
 * Class for listening to the osgEarth::Map callbacks
@@ -57,22 +62,47 @@ public:
     if (!parent_.layerIsTimed(imageLayer))
       return;
 
+    std::string timeGroup = parent_.getLayerTimeGroup(imageLayer);
     parent_.originalVisibility_.erase(imageLayer);
 
-    // Since layers are value of layers_ map, not key, need to iterate manually to find the removed layer
-    for (auto iter = parent_.layers_.begin(); iter != parent_.layers_.end(); iter++)
+    // If the layer is timed, it needs to be part of a group.  At the very least, we should get DEFAULT_LAYER_TIME_GROUP here
+    assert(!timeGroup.empty());
+    if (timeGroup.empty())
+      return;
+
+    std::map<std::string, TimeGroup*>& groups = parent_.groups_;
+    auto groupIter = groups.find(timeGroup);
+
+    // If there's at least one timed layer in this group, the group needs to exist
+    assert(groupIter != groups.end());
+    if (groupIter == groups.end())
+      return;
+
+    auto& layers = groupIter->second->layers;
+    bool removedGroup = false;
+
+    // Since layers are value of layers map, not key, need to iterate through the group's layers manually to find the removed layer
+    for (auto layerIter = layers.begin(); layerIter != layers.end(); layerIter++)
     {
-      if (iter->second == imageLayer)
+      if (layerIter->second == imageLayer)
       {
-        parent_.layers_.erase(iter);
+        layers.erase(layerIter);
+        // If that was the last layer in its group, remove the group
+        if (layers.empty())
+        {
+          delete groupIter->second;
+          groups.erase(groupIter);
+          removedGroup = true;
+        }
+
         // Only one entry per layer
         break;
       }
 
     }
 
-    // Current layer won't change unless layer being removed was current layer
-    if (parent_.currentLayer_ != imageLayer)
+    // Don't need to recalculate current layers unless a current layer was removed and there are other layers left in its group
+    if (removedGroup || groupIter->second->currentLayer != imageLayer)
       return;
     // Reset current time to refresh current layer
     parent_.setTime_(parent_.currTime_);
@@ -147,9 +177,18 @@ private:
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+TimestampedLayerManager::TimeGroup::TimeGroup()
+{
+}
+
+TimestampedLayerManager::TimeGroup::~TimeGroup()
+{
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 TimestampedLayerManager::TimestampedLayerManager(simCore::Clock& clock, osg::Group* attachPoint, QObject* parent)
   : QObject(parent),
-    currentLayer_(NULL),
     clock_(clock),
     currTime_(clock_.currentTime()),
     timingActive_(true)
@@ -175,6 +214,8 @@ TimestampedLayerManager::~TimestampedLayerManager()
   if (mapNode && mapNode->getMap())
     mapNode->getMap()->removeMapCallback(mapListener_.get());
   restoreOriginalVisibility_();
+  for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
+    delete groupIter->second;
 }
 
 void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
@@ -186,36 +227,47 @@ void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
 
   osgEarth::ImageLayer* oldLayer = NULL;
 
-  auto i = layers_.upper_bound(currTime_);
-  if (i != layers_.begin())
+  // Update the current layer for each group
+  for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
   {
-    i--;
-    if (currentLayer_ != i->second)
+    auto& layers = groupIter->second->layers;
+    auto& currentLayer = groupIter->second->currentLayer;
+    auto i = layers.upper_bound(currTime_);
+    // If we have a layer to show
+    if (i != layers.begin())
     {
-      if (currentLayer_.valid())
+      i--;
+      if (currentLayer != i->second)
       {
-        originalVisibility_[currentLayer_.get()] = currentLayer_->getVisible();
-        currentLayer_->setVisible(false);
-        oldLayer = currentLayer_.get();
-      }
+        if (currentLayer.valid())
+        {
+          originalVisibility_[currentLayer.get()] = currentLayer->getVisible();
+          currentLayer->setVisible(false);
+          oldLayer = currentLayer.get();
+        }
 
-      currentLayer_ = i->second;
-      emit currentTimedLayerChanged(currentLayer_.get(), oldLayer);
-      if (currentLayer_.valid())
-      {
-        currentLayer_->setVisible(originalVisibility_[currentLayer_.get()]);
+        currentLayer = i->second;
+        emit currentTimedLayerChanged(currentLayer.get(), oldLayer);
+        if (currentLayer.valid())
+        {
+          auto iter = originalVisibility_.find(currentLayer.get());
+          if (iter != originalVisibility_.end())
+            currentLayer->setVisible(iter->second);
+        }
       }
     }
-  }
-  else
-  {
-    if (currentLayer_.valid())
+    // Current time is before first layer starts.  Show none of them.
+    else
     {
-      currentLayer_->setVisible(false);
-      oldLayer = currentLayer_.get();
+      if (currentLayer.valid())
+      {
+        originalVisibility_[currentLayer.get()] = currentLayer->getVisible();
+        currentLayer->setVisible(false);
+        oldLayer = currentLayer.get();
+      }
+      currentLayer = NULL;
+      emit currentTimedLayerChanged(NULL, oldLayer);
     }
-    currentLayer_ = NULL;
-    emit currentTimedLayerChanged(NULL, oldLayer);
   }
 }
 
@@ -225,9 +277,12 @@ bool TimestampedLayerManager::layerIsTimed(const osgEarth::ImageLayer* layer) co
   return (timingActive_ && originalVisibility_.find(layer) != originalVisibility_.end());
 }
 
-const osgEarth::ImageLayer* TimestampedLayerManager::currentTimedLayer() const
+const osgEarth::ImageLayer* TimestampedLayerManager::getCurrentTimedLayer(const std::string& timeGroup) const
 {
-  return currentLayer_.get();
+  auto groupIter = groups_.find(timeGroup);
+  if (groupIter != groups_.end())
+    return groupIter->second->currentLayer.get();
+  return NULL;
 }
 
 void TimestampedLayerManager::addLayerWithTime_(osgEarth::ImageLayer* newLayer)
@@ -252,8 +307,13 @@ void TimestampedLayerManager::addLayerWithTime_(osgEarth::ImageLayer* newLayer)
 
   osgEarth::DateTime osgTime(iso8601);
   simCore::TimeStamp simTime = simCore::TimeStamp(1970, osgTime.asTimeStamp());
-  layers_[simTime] = newLayer;
   originalVisibility_[newLayer] = newLayer->getVisible();
+  std::string groupName = getLayerTimeGroup(newLayer);
+  // If the group doesn't exist yet, create it and put it in the map
+  if (groups_.find(groupName) == groups_.end())
+    groups_[groupName] = new TimeGroup();
+
+  groups_[groupName]->layers[simTime] = newLayer;
   if (timingActive_)
     newLayer->setVisible(false);
   setTime_(currTime_);
@@ -275,9 +335,11 @@ void TimestampedLayerManager::setMapNode_(osgEarth::MapNode* mapNode)
   // Attempt to restore visibility settings to current image layers before clearing them for the new map
   restoreOriginalVisibility_();
 
-  layers_.clear();
+  for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
+    delete groupIter->second;
+  groups_.clear();
+
   originalVisibility_.clear();
-  currentLayer_ = NULL;
   if (mapNode && mapNode->getMap())
   {
     osgEarth::Map* map = mapNode->getMap();
@@ -317,34 +379,50 @@ bool TimestampedLayerManager::timingActive() const
 
 void TimestampedLayerManager::restoreOriginalVisibility_()
 {
-  for (auto iter = layers_.begin(); iter != layers_.end(); iter++)
+  // First iterate through all groups
+  for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
   {
-    if (iter->second.valid())
+    // Then iterate through the layers within the groups
+    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.begin(); layerIter++)
     {
-      auto originVisIter = originalVisibility_.find(iter->second.get());
-      // Don't restore original visibility to current layer, since user may have changed it since it became current
-      if (originVisIter != originalVisibility_.end() && iter->second != currentLayer_)
-        iter->second->setVisible(originVisIter->second);
+      if (layerIter->second.valid() && layerIter->second != groupIter->second->currentLayer)
+      {
+        auto originVisIter = originalVisibility_.find(layerIter->second.get());
+        // Don't restore original visibility to current layer, since user may have changed it since it became current
+        if (originVisIter != originalVisibility_.end())
+          layerIter->second->setVisible(originVisIter->second);
+      }
     }
   }
-
-  // No concept of a current layer if layers aren't being treated as timed
-  currentLayer_ = NULL;
 }
 
 void TimestampedLayerManager::useTimedVisibility_()
 {
   // Set all layers invisible as a base, then let setTime handle which (if any) should be visible
-  for (auto iter = layers_.begin(); iter != layers_.end(); iter++)
+  for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
   {
-    if (iter->second.valid())
+    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.begin(); layerIter++)
     {
-      originalVisibility_[iter->second.get()] = iter->second->getVisible();
-      iter->second->setVisible(false);
+      if (layerIter->second.valid())
+      {
+        originalVisibility_[layerIter->second.get()] = layerIter->second->getVisible();
+        layerIter->second->setVisible(false);
+      }
     }
   }
 
   setTime_(currTime_);
+}
+
+std::string TimestampedLayerManager::getLayerTimeGroup(const osgEarth::ImageLayer* layer)
+{
+  if (!layer || !layerIsTimed(layer))
+    return "";
+  const osgEarth::Config& conf = layer->getConfig();
+  std::string rv = conf.value(TIME_GROUP_TAG);
+  if (rv.empty())
+    rv = DEFAULT_LAYER_TIME_GROUP;
+  return rv;
 }
 
 }

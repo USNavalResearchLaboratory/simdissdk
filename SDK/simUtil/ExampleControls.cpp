@@ -26,8 +26,11 @@
 #include "osgEarth/ScreenSpaceLayout"
 
 #include "simCore/Calc/MathConstants.h"
+#include "simData/DataStore.h"
 #include "simNotify/Notify.h"
 #include "simVis/Entity.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simUtil/ExampleControls.h"
 
 using namespace osgEarth;

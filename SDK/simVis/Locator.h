@@ -80,8 +80,7 @@ public: // data
 /**
  * Generates a positional matrix for an object.
  */
-class SDKVIS_EXPORT Locator : public osg::Referenced,
-  public osgEarth::Revisioned
+class SDKVIS_EXPORT Locator : public osg::Referenced, public osgEarth::Revisioned
 {
 public:
   /**
@@ -212,7 +211,7 @@ public:
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  bool getLocatorPosition(simCore::Vec3* out_position,
+  virtual bool getLocatorPosition(simCore::Vec3* out_position,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
   /**
@@ -225,7 +224,7 @@ public:
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
-  bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+  virtual bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
   /**
@@ -401,12 +400,52 @@ private: // data
 
   double timestamp_;
   double eciRefTime_;
+};
+
+/**
+* CachingLocator is a Locator class that caches lla position and orientation to improve performance for locators that often are requested to provide lla information
+*/
+class SDKVIS_EXPORT CachingLocator : public Locator
+{
+public:
+  /** Constructor; @see Locator(const osgEarth::SpatialReference*) */
+  CachingLocator(const osgEarth::SpatialReference* mapSRS);
+  /** Constructor; @see Locator(Locator*, unsigned int) */
+  CachingLocator(Locator* parentLoc, unsigned int inheritMask = COMP_ALL);
+
+  /**
+  * Gets the world position reflected by this Locator. This is just a convenience
+  * function that extracts the Position information (not rotation) from the
+  * locator matrix.
+  *
+  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+  * @return True if the output parameter is populated successfully
+  */
+  virtual bool getLocatorPosition(simCore::Vec3* out_position,
+    const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
+
+  /**
+  * Gets the world position reflected by this Locator. This is just a convenience
+  * function that extracts the Position information and rotation from the
+  * locator matrix.
+  *
+  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
+  * @return True if the output parameter is populated successfully
+  */
+  virtual bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+    const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
+
+private:
   // cache frequently used LLA position and orientation
   mutable simCore::Vec3 llaPositionCache_;
   mutable osgEarth::Revision llaPositionCacheRevision_;
   mutable simCore::Vec3 llaOrientationCache_;
   mutable osgEarth::Revision llaOrientationCacheRevision_;
 };
+
 
 /**
 * ResolvedPositionOrientationLocator is a locator that generates a position-with-(base)-orientation from its parents,
@@ -461,6 +500,9 @@ public:
 
   /// create a new locator
   virtual Locator* createLocator() const = 0;
+
+  /// create a new locator
+  virtual CachingLocator* createCachingLocator() const = 0;
 };
 
 }

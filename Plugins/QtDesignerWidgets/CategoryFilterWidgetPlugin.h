@@ -23,7 +23,8 @@
 #define CATEGORY_FILTER_WIDGET_PLUGIN_H
 
 #include <QDesignerCustomWidgetInterface>
-#include "simQt/AbstractEntityTreeModel.h"
+
+namespace simData { class DataStore; }
 
 // Wrapper class for the FileSelectorWidget to provide QDesignerCustomWidgetInterface
 class CategoryFilterWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
@@ -33,6 +34,7 @@ class CategoryFilterWidgetPlugin : public QObject, public QDesignerCustomWidgetI
 
 public:
   explicit CategoryFilterWidgetPlugin(QObject *parent = 0);
+  virtual ~CategoryFilterWidgetPlugin();
 
   bool isContainer() const;
   bool isInitialized() const;
@@ -46,8 +48,11 @@ public:
   QWidget *createWidget(QWidget *parent);
   void initialize(QDesignerFormEditorInterface *core);
 
+  /** Creates a set of category names and values for testing/display purposes */
+  static void createDefaultCategories(simData::DataStore& dataStore);
+
 private:
-  bool initialized;
+  simData::DataStore* dataStore_;
 };
 
 #endif // CATEGORY_FILTER_WIDGET_PLUGIN_H

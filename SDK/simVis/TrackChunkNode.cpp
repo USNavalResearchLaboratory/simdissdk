@@ -69,9 +69,8 @@ bool TrackChunkNode::addPoint(const osg::Matrix& matrix, double t, const osg::Ve
   // if this is the first point added, set up the localization matrix.
   if (offset_ == 0 && count_ == 0)
   {
-    local2world_.set(matrix);
     world2local_.invert(matrix);
-    this->setMatrix(local2world_);
+    this->setMatrix(matrix);
   }
 
   // record the timestamp
@@ -89,9 +88,10 @@ bool TrackChunkNode::addPoint(const osg::Matrix& matrix, double t, const osg::Ve
 
 bool TrackChunkNode::getNewestData(osg::Matrix& out_matrix, double& out_time) const
 {
-  if (count_ == 0) return false;
-  osg::Vec3 p = (*centerVerts_)[offset_ + count_ - 1];
-  out_matrix.makeTranslate(p * local2world_);
+  if (count_ == 0)
+    return false;
+  const osg::Vec3& p = (*centerVerts_)[offset_ + count_ - 1];
+  out_matrix.makeTranslate(p * getMatrix());
   out_time = times_[offset_ + count_ - 1];
   return true;
 }
@@ -115,7 +115,7 @@ bool TrackChunkNode::removeOldestPoint()
 /// remove points from the tail; return the number of points removed.
 unsigned int TrackChunkNode::removePointsBefore(double t)
 {
-  unsigned int origOffset = offset_;
+  const unsigned int origOffset = offset_;
   while (count_ > 0 && times_[offset_] < t)
   {
     offset_++;
@@ -223,7 +223,6 @@ void TrackChunkNode::allocate_()
 
   // reset to identity matrices
   world2local_ = osg::Matrixd::identity();
-  local2world_ = world2local_;
 }
 
 /// time of the first point in this chunk
@@ -247,7 +246,7 @@ bool TrackChunkNode::isEmpty_() const
 /// remove all the points in this chunk that occur after the timestamp
 unsigned int TrackChunkNode::removePointsAtAndBeyond_(double t)
 {
-  unsigned int origCount = count_;
+  const unsigned int origCount = count_;
   while (count_ > 0 && times_[offset_+count_-1] >= t)
   {
     count_--;
@@ -264,14 +263,12 @@ unsigned int TrackChunkNode::removePointsAtAndBeyond_(double t)
 /// appends a new local point to each geometry set.
 void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, const osg::Vec2& hostBounds)
 {
-  static const osg::Vec3d s_zero(0.0, 0.0, 0.0);
-
   // calculate the local point.
-  osg::Vec3d world = s_zero * matrix;
-  osg::Vec3  local = world * world2local_;
+  const osg::Vec3d& world = matrix.getTrans();
+  const osg::Vec3f local = world * world2local_;
 
   // insertion index:
-  unsigned int i = offset_ + count_;
+  const unsigned int i = offset_ + count_;
 
   // append to the centerline track (1 vert)
   (*centerVerts_)[i]  = local;
@@ -301,9 +298,9 @@ void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
   {
     // add a new ribbon segment. A ribbon segment has 6 verts. The x value and y value for
     // hostBounds represents the xMin and xMax values of a bounding box respectively.
-    osg::Matrix posMatrix = matrix * world2local_;
-    osg::Vec3f left  = osg::Vec3d(hostBounds.x(), 0.0, 0.0) * posMatrix;
-    osg::Vec3f right = osg::Vec3d(hostBounds.y(), 0.0, 0.0) * posMatrix;
+    const osg::Matrix posMatrix = matrix * world2local_;
+    const osg::Vec3f left  = osg::Vec3d(hostBounds.x(), 0.0, 0.0) * posMatrix;
+    const osg::Vec3f right = osg::Vec3d(hostBounds.y(), 0.0, 0.0) * posMatrix;
 
     const osg::Vec3& leftPrev  = count_ > 0 ? (*ribbonVerts_)[6*i-2] : left;
     const osg::Vec3& rightPrev = count_ > 0 ? (*ribbonVerts_)[6*i-1] : right;

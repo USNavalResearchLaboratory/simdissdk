@@ -1,4 +1,4 @@
-if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET simUtil)
+if(NOT TARGET simUtil OR NOT TARGET simQt)
     return()
 endif()
 
@@ -17,8 +17,7 @@ VSI_QT_WRAP_CPP(MY_WIDGETS_MOC
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
 add_executable(example_qtdockableviews ${PROJECT_FILES} ${MY_WIDGETS_MOC})
-target_link_libraries(example_qtdockableviews PRIVATE simVis simUtil
-    OSGEARTH_QT)
+target_link_libraries(example_qtdockableviews PRIVATE simVis simUtil simQt)
 target_include_directories(example_qtdockableviews PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qtdockableviews PROPERTIES
     FOLDER "Examples"

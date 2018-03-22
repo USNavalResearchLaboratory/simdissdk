@@ -42,7 +42,7 @@ SliderTimeWidgetBinding::SliderTimeWidgetBinding(QSlider* slider, TimeWidget* ti
 
   slider_->setRange(0, MAX_RANGE);
   connect(slider_, SIGNAL(valueChanged(int)), this, SLOT(setTimeWidgetValue_(int)));
-  connect(timeWidget_, SIGNAL(timeModified(simCore::TimeStamp)), this, SLOT(setSliderValue_(simCore::TimeStamp)));
+  connect(timeWidget_, SIGNAL(timeChanged(simCore::TimeStamp)), this, SLOT(setSliderValue_(simCore::TimeStamp)));
   connect(timeWidget_, SIGNAL(timeRangeChanged()), this, SLOT(rescaleSlider_()));
 
   // Initialize the slider to match the time widget

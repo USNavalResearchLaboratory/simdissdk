@@ -667,6 +667,16 @@ void DoubleBufferTimeContainer::limitData(size_t maxPoints, double latestInvalid
   if (empty())
     return;
 
+  // Avoid storing (n*2) items for data limit, by limiting to half the requested size (since
+  // stale buffer still exists and will have older items).
+  if (maxPoints > 0)
+  {
+    // Add 1 to provide a little extra safety, and so that "1" limit doesn't go to "0" limit
+    if (maxPoints != std::numeric_limits<size_t>::max())
+      ++maxPoints;
+    maxPoints /= 2;
+  }
+
   // Break out early if we don't need to limit by points (0 == no limiting)
   if (maxPoints == 0 || times_[BIN_FRESH]->size() < maxPoints)
   {

@@ -29,13 +29,16 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simData/MemoryDataStore.h"
 
 #include "simVis/Viewer.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
-#include "simData/MemoryDataStore.h"
+#include "simVis/Scenario.h"
+#include "simVis/ScenarioDataStoreAdapter.h"
+#include "simVis/SceneManager.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/HudManager.h"
 

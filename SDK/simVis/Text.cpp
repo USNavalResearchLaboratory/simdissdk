@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Version"
 #include "simVis/Text.h"
 
 #define LC "[Text] "
@@ -27,6 +28,7 @@
 
 using namespace simVis;
 
+#if OSG_VERSION_LESS_THAN(3,5,0)
 /**
 * This is code is copied exactly from osgText::Text::computePositions.
 * The change is enclosed in the "SCREEN_COORDS_BUGFIX" define block.
@@ -207,6 +209,7 @@ void simVis::Text::computePositions(unsigned int contextID) const
 
   const_cast<Text*>(this)->dirtyBound();
 }
+#endif
 
 void Text::setScreenOffset(float x, float y)
 {

@@ -29,6 +29,9 @@
 
 namespace simQt {
 
+static const QString USAGE_STR = QObject::tr("<p>To edit, mouse click into a field and then type new value or use the up and down arrows. Move between fields via Tab or Shift+Tab."
+    "<p>Use the right mouse click to toggle color coding.  The text is blue if the time is outside the range of the existing scenario.  The text is red if the format is invalid.");
+
 TimeFormatContainer::TimeFormatContainer(simCore::TimeFormat timeFormat, const QString& name)
   : timeFormat_(timeFormat),
   name_(name),
@@ -62,20 +65,17 @@ void TimeFormatContainer::setAction(QAction* action)
   action_ = action;
 }
 
-void TimeFormatContainer::timeChanged()
-{
-  emit(timeChanged(timeStamp()));
-}
 
 //----------------------------------------------------------------------------------------------
 SecondsContainer::SecondsContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_SECONDS, "Seconds")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in seconds since beginning of reference year.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
+  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in seconds since beginning of reference year.") + USAGE_STR));
 
   widget_->setLine(new SecondsTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -144,10 +144,11 @@ MonthContainer::MonthContainer(QWidget* parent)
     colorCode_(true)
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in Month Day Year format.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
+  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in Month Day Year format.") + USAGE_STR));
 
   widget_->setLine(new MonthDayYearTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -216,10 +217,11 @@ OrdinalContainer::OrdinalContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_ORDINAL, "Ordinal")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in Ordinal format.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
+  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in Ordinal format.") + USAGE_STR));
 
   widget_->setLine(new OrdinalTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -289,10 +291,11 @@ MinutesContainer::MinutesContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_MINUTES, "Minutes")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in minutes since beginning of reference year.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
+  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in minutes since beginning of reference year.") + USAGE_STR));
 
   widget_->setLine(new MinutesTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 
@@ -360,10 +363,11 @@ HoursContainer::HoursContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_HOURS, "Hours")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Sets the time in hours since beginning of reference year.<p>Use the right mouse click to toggle color coding.<p>The text is blue if the time is outside the range of the existing scenario.  The text is red if the time format is invalid.")));
+  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in hours since beginning of reference year.") + USAGE_STR));
 
   widget_->setLine(new HoursTexts());
-  connect(widget_->line(), SIGNAL(timeChanged(const simCore::TimeStamp&)), this, SLOT(timeChanged()));
+  connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
+  connect(widget_->line(), SIGNAL(timeChanged(simCore::TimeStamp)), this, SIGNAL(timeChanged(simCore::TimeStamp)));
   connect(widget_, SIGNAL(customContextMenuRequested(const QPoint &)), this, SIGNAL(customContextMenuRequested(const QPoint &)));
 }
 

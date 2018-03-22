@@ -19,53 +19,37 @@
  * disclose, or release this software.
  *
  */
-#include "simCore/Calc/Calculations.h"
-#include "simCore/Calc/CoordinateConverter.h"
-#include "simCore/Calc/Math.h"
-
 #include <vector>
 #include <string>
 #include <fstream>
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+#include "simCore/Calc/Calculations.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Math.h"
 
-using namespace std;
-using namespace simCore;
+namespace {
 
 //----------------------------------------------------------------------------
-static bool almostEqual(double value1, double value2, double epsilon=1e-4)
+bool almostEqual(double value1, double value2, double epsilon=1e-4)
 {
-  if (!areEqual(value1, value2, epsilon))
+  if (!simCore::areEqual(value1, value2, epsilon))
   {
-    cerr << "FAILURE" << endl;
-    cerr << setprecision(16) << "    " << value1 << " != " << value2 << " delta: " << value1 - value2 << endl;
+    std::cerr << "FAILURE" << std::endl;
+    std::cerr << std::setprecision(16) << "    " << value1 << " != " << value2 << " delta: " << value1 - value2 << std::endl;
     return false;
   }
   return true;
 }
 
-//void testCalculateRelAng(double *fromcpr, double *dirvect, double *result)
-//{
-//  cerr << "Testing calculateRelAng ++++++++++++++++++++++++++\n";
-//
-//  double azim;
-//  double elev;
-//  double compositeAngle;
-//
-//  calculateRelAng(dirvect, fromcpr, &azim, &elev, &compositeAngle);
-//  almostEqual(azim, result[0]);
-//  almostEqual(elev, result[1]);
-//  almostEqual(compositeAngle, result[2]);
-//}
-
-static int testCalculateRelAzEl(double *fromLla, double *fromOri, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateRelAzEl(double *fromLla, double *fromOri, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateRelAzEl +++++++++++++ ";
+  std::cerr << "calculateRelAzEl +++++++++++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr<<"calculation not valid for Earth Model"<<endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
@@ -73,259 +57,255 @@ static int testCalculateRelAzEl(double *fromLla, double *fromOri, double *to, Ea
   double elev;
   double compositeAngle;
 
-  calculateRelAzEl(Vec3(fromLla), Vec3(fromOri), Vec3(to), &azim, &elev, &compositeAngle, earth, &coordConvert);
+  simCore::calculateRelAzEl(simCore::Vec3(fromLla), simCore::Vec3(fromOri), simCore::Vec3(to), &azim, &elev, &compositeAngle, earth, &coordConvert);
 
   if (almostEqual(azim, result[0]) &&
-      almostEqual(elev, result[1]) &&
-      almostEqual(compositeAngle, result[2]))
+    almostEqual(elev, result[1]) &&
+    almostEqual(compositeAngle, result[2]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateAbsAzEl(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateAbsAzEl(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateAbsAzEl +++++++++++++ ";
+  std::cerr << "calculateAbsAzEl +++++++++++++ ";
 
   double azim;
   double elev;
   double compositeAngle;
 
-  calculateAbsAzEl(Vec3(from[0], from[1], from[2]), Vec3(to), &azim, &elev, &compositeAngle, earth, &coordConvert);
+  simCore::calculateAbsAzEl(simCore::Vec3(from[0], from[1], from[2]), simCore::Vec3(to), &azim, &elev, &compositeAngle, earth, &coordConvert);
 
   if (almostEqual(azim, result[0]) &&
-      almostEqual(elev, result[1]) &&
-      almostEqual(compositeAngle, result[2]))
+    almostEqual(elev, result[1]) &&
+    almostEqual(compositeAngle, result[2]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateSlant(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateSlant(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateSlant +++++++++++++++ ";
+  std::cerr << "calculateSlant +++++++++++++++ ";
 
-  const double slant = calculateSlant(Vec3(from[0], from[1], from[2]), Vec3(to), earth, &coordConvert);
+  const double slant = simCore::calculateSlant(simCore::Vec3(from[0], from[1], from[2]), simCore::Vec3(to), earth, &coordConvert);
   if (almostEqual(slant, result[0]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateGroundDist(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateGroundDist(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateGroundDist ++++++++++ ";
+  std::cerr << "calculateGroundDist ++++++++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr<<"calculation not valid for Earth Model"<<endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
-  const double groundDist = calculateGroundDist(Vec3(from), Vec3(to), earth, &coordConvert);
+  const double groundDist = simCore::calculateGroundDist(simCore::Vec3(from), simCore::Vec3(to), earth, &coordConvert);
   if (almostEqual(groundDist, result[0]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateAltitude(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateAltitude(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateAltitude ++++++++++++ ";
+  std::cerr << "calculateAltitude ++++++++++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr << "calculation not valid for Earth Model" << endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
-  const double altitude = calculateAltitude(Vec3(from[0], from[1], from[2]),
-                                            Vec3(to[0], to[1], to[2]), earth, &coordConvert);
+  const double altitude = simCore::calculateAltitude(simCore::Vec3(from[0], from[1], from[2]),
+    simCore::Vec3(to[0], to[1], to[2]), earth, &coordConvert);
   if (almostEqual(altitude, result[0]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateDRCRDownValue(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateDRCRDownValue(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateDRCRDownValue +++++++ ";
+  std::cerr << "calculateDRCRDownValue +++++++ ";
 
   double downRng;
   double crossRng;
   double downValue;
 
-  calculateDRCRDownValue(Vec3(from), from[3], Vec3(to), earth, &coordConvert, &downRng, &crossRng, &downValue);
+  simCore::calculateDRCRDownValue(simCore::Vec3(from), from[3], simCore::Vec3(to), earth, &coordConvert, &downRng, &crossRng, &downValue);
 
   if (almostEqual(downRng, result[0]) &&
-     almostEqual(crossRng, result[1]) &&
-     almostEqual(downValue, result[2]))
+    almostEqual(crossRng, result[1]) &&
+    almostEqual(downValue, result[2]))
   {
-    cerr << "successful" << endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateGeodesicDRCR(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateGeodesicDRCR(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateGeodesicDRCR ++++++++ ";
+  std::cerr << "calculateGeodesicDRCR ++++++++ ";
 
   double downRng;
   double crossRng;
 
-  calculateGeodesicDRCR(Vec3(from), from[3], Vec3(to), &downRng, &crossRng);
+  simCore::calculateGeodesicDRCR(simCore::Vec3(from), from[3], simCore::Vec3(to), &downRng, &crossRng);
 
   if (almostEqual(downRng, result[0]) &&
-      almostEqual(crossRng, result[1]))
+    almostEqual(crossRng, result[1]))
   {
-    cerr << "successful" << endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateTotalVelocity(double *from, double *to, double deltaTime, EarthModelCalculations earth, double *result)
+int testCalculateTotalVelocity(double *from, double *to, double deltaTime, simCore::EarthModelCalculations earth, double *result)
 {
-  return 0; //Ned, broken
-/*
-  cerr << "calculateTotalVelocity +++++++ ";
+  std::cerr << "calculateTotalVelocity +++++++ ";
 
-  double velVec[3];
-
-  CalcVelocityFromLLA(from, to, deltaTime, &velVec[0]);
-  if(almostEqual(velVec[0], result[0]) &&
-     almostEqual(velVec[1], result[1]) &&
-     almostEqual(velVec[2], result[2]))
+  simCore::Vec3 velVec;
+  simCore::calculateVelFromGeodeticPos(simCore::Vec3(from), simCore::Vec3(to), deltaTime, velVec);
+  if (almostEqual(velVec[0], result[0]) &&
+    almostEqual(velVec[1], result[1]) &&
+    almostEqual(velVec[2], result[2]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
-*/
 }
 
-static int testCalculateClosingVelocity(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateClosingVelocity(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateClosingVelocity +++++ ";
+  std::cerr << "calculateClosingVelocity +++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr << "calculation not valid for Earth Model" << endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
-  const double velocity = calculateClosingVelocity(Vec3(from), Vec3(to), earth, &coordConvert, Vec3(&from[6]), Vec3(&to[6]));
+  const double velocity = simCore::calculateClosingVelocity(simCore::Vec3(from), simCore::Vec3(to), earth, &coordConvert, simCore::Vec3(&from[6]), simCore::Vec3(&to[6]));
   if (almostEqual(velocity, result[0]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
-static int testCalculateVelocityDelta(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateVelocityDelta(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateVelocityDelta +++++++ ";
+  std::cerr << "calculateVelocityDelta +++++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr<<"calculation not valid for Earth Model"<<endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
-  const double velocity = calculateVelocityDelta(Vec3(from), Vec3(to), earth, &coordConvert, Vec3(&from[6]), Vec3(&to[6]));
+  const double velocity = simCore::calculateVelocityDelta(simCore::Vec3(from), simCore::Vec3(to), earth, &coordConvert, simCore::Vec3(&from[6]), simCore::Vec3(&to[6]));
   if (almostEqual(velocity, result[0]))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
 //===========================================================================
-static int testCalculateAspectAngle(double *from, double *to, EarthModelCalculations earth, CoordinateConverter coordConvert, double *result)
+int testCalculateAspectAngle(double *from, double *to, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double *result)
 {
-  cerr << "calculateAspectAngle +++++++++++++ ";
+  std::cerr << "calculateAspectAngle +++++++++++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr<<"calculation not valid for Earth Model"<<endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
   const double aspectAngle = simCore::calculateAspectAngle(simCore::Vec3(from), simCore::Vec3(to), simCore::Vec3(&to[3]));
-  if(almostEqual(aspectAngle, result[0], 0.001))
+  if (almostEqual(aspectAngle, result[0], 0.001))
   {
-    cerr << "successful"<<endl;
+    std::cerr << "successful" << std::endl;
     return 0;
   }
   return 1;
 }
 
 //===========================================================================
-static int testPositionInGate(double *from, double *to, double *gate, EarthModelCalculations earth, CoordinateConverter coordConvert, double* result)
+int testPositionInGate(double *from, double *to, double *gate, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double* result)
 {
-  cerr << "positionInGate +++++++++++++ ";
+  std::cerr << "positionInGate +++++++++++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr << "calculation not valid for Earth Model" << endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
   const int inGate = simCore::positionInGate(simCore::Vec3(from), simCore::Vec3(to), gate[0], gate[1], gate[2], gate[3], gate[4], gate[5], earth, coordConvert) ? 1 : 0;
-  if(inGate == static_cast<int>(result[0]))
+  if (inGate == static_cast<int>(result[0]))
   {
-    cerr << "successful\n";
+    std::cerr << "successful\n";
     return 0;
   }
-  cerr << "failed\n";
+  std::cerr << "failed\n";
   return 1;
 }
 
 //===========================================================================
-static int testLaserInGate(double *from, double *to, double *gate, double *laser, EarthModelCalculations earth, CoordinateConverter coordConvert, double* result)
+int testLaserInGate(double *from, double *to, double *gate, double *laser, simCore::EarthModelCalculations earth, simCore::CoordinateConverter coordConvert, double* result)
 {
-  cerr << "laserInGate +++++++++++++ ";
+  std::cerr << "laserInGate +++++++++++++ ";
 
-  if (earth == PERFECT_SPHERE)
+  if (earth == simCore::PERFECT_SPHERE)
   {
-    cerr << "calculation not valid for Earth Model" << endl;
+    std::cerr << "calculation not valid for Earth Model" << std::endl;
     return 1;
   }
 
   const int inGate = simCore::laserInGate(simCore::Vec3(from), simCore::Vec3(to), gate[0], gate[1], gate[2], gate[3], gate[4], gate[5], laser[0], laser[1], laser[2], earth, coordConvert) ? 1 : 0;
-  if(inGate == static_cast<int>(result[0]))
+  if (inGate == static_cast<int>(result[0]))
   {
-    cerr << "successful\n";
+    std::cerr << "successful\n";
     return 0;
   }
-  cerr << "failed\n";
+  std::cerr << "failed\n";
   return 1;
 }
 
 //===========================================================================
-static void printInstructions()
+void printInstructions()
 {
   static bool seenInstructions = false;
   if (!seenInstructions)
   {
     seenInstructions = true;
-    cout << "Input File Format:"<<endl<<endl;
-    cout << "[Calculation][CoordinateSystem] [ReferenceOrigin]"<<endl;
-    cout << "[Arg1] [Arg2] ... [ArgN]"<<endl;
-    cout << "[ExpectedResult1] [ExpectedResult2] ... [ExpectedResultN]"<<endl<<endl;
+    std::cout << "Input File Format:" << std::endl << std::endl;
+    std::cout << "[Calculation][CoordinateSystem] [ReferenceOrigin]" << std::endl;
+    std::cout << "[Arg1] [Arg2] ... [ArgN]" << std::endl;
+    std::cout << "[ExpectedResult1] [ExpectedResult2] ... [ExpectedResultN]" << std::endl << std::endl;
   }
 }
 
@@ -354,192 +334,214 @@ static void printInstructions()
 //| TotalVelocity       | from[9] to[9]        | 3 [Velocity Vector]   |
 //| DRCRDownValue       | from[6] to[3]        | 3 [DR, CR, DownValue] |
 //| ClosingVelocity     | from[9] to[9]        | 1                     |
-//| LinearInterpolation | from[10] to[10] time | 3 [Velocity Vector]   |
 //| PositionInGate      | from[3] to[3] gate[6]| 1                     |
 //| LaserInGate         | from[3] to[3] gate[6] laser[3] | 1           |
 //
 //
 /////////////////////////////////////////////////////////////////////////////
 
+int readNextTest(std::istream& fd, bool& doneReading)
+{
+  std::string test;
+  if (fd >> test)
+    doneReading = false;
+  else
+  {
+    doneReading = true;
+    // Not a failure
+    return 0;
+  }
+
+  int rv = 0;
+  simCore::EarthModelCalculations earth = simCore::PERFECT_SPHERE;
+  // set coordinate system / reference frame
+  if (test.compare(simCore::sdkMax((int)test.length() - 17, 0), test.length() - 1, "TangentPlaneWGS84") == 0)
+  {
+    if (earth != simCore::TANGENT_PLANE_WGS_84)
+    {
+      std::cerr << "Earth Model: TangentPlaneWGS84" << std::endl;
+      earth = simCore::TANGENT_PLANE_WGS_84;
+    }
+  }
+  else if (test.compare(simCore::sdkMax((int)test.length() - 5, 0), test.length() - 1, "WGS84") == 0)
+  {
+    if (earth != simCore::WGS_84)
+    {
+      std::cerr << "Earth Model: WGS84" << std::endl;
+      earth = simCore::WGS_84;
+    }
+  }
+  else if (test.compare(simCore::sdkMax((int)test.length() - 9, 0), test.length() - 1, "FlatEarth") == 0)
+  {
+    if (earth != simCore::FLAT_EARTH)
+    {
+      std::cerr << "Earth Model: FlatEarth" << std::endl;
+      earth = simCore::FLAT_EARTH;
+    }
+  }
+  else if (test.compare(simCore::sdkMax((int)test.length() - 13, 0), test.length() - 1, "PerfectSphere") == 0)
+  {
+    if (earth != simCore::PERFECT_SPHERE)
+    {
+      std::cerr << "Earth Model: PerfectSphere" << std::endl;
+      earth = simCore::PERFECT_SPHERE;
+    }
+  }
+  else
+  {
+    std::cout << "Incorrect input file format:" << " missing valid coordinate system / reference frame" << std::endl;
+    printInstructions();
+    rv++;
+  }
+
+  std::cerr << "  ";
+
+  // get and set Reference Origin
+  double refOrigin[3] = { 0.0 };
+  fd >> refOrigin[0] >> refOrigin[1] >> refOrigin[2];
+  simCore::CoordinateConverter coordConvert;
+  coordConvert.setReferenceOrigin(refOrigin[0], refOrigin[1], refOrigin[2]);
+
+  double from[9] = { 0.0 };
+  double to[9] = { 0.0 };
+  double result[3] = { 0.0 };
+
+  // set to/from and run relevant test
+  if (test.compare(0, 5, "Slant") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
+    fd >> result[0];
+    rv += testCalculateSlant(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 7, "AbsAzEl") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
+    fd >> result[0] >> result[1] >> result[2];
+    rv += testCalculateAbsAzEl(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 7, "RelAzEl") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
+    fd >> to[0] >> to[1] >> to[2];
+    fd >> result[0] >> result[1] >> result[2];
+    rv += testCalculateRelAzEl(from, from + 3, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 11, "AspectAngle") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2];
+    fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5];
+    fd >> result[0];
+    rv += testCalculateAspectAngle(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 8, "Altitude") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
+    fd >> result[0];
+    rv += testCalculateAltitude(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 10, "GroundDist") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
+    fd >> result[0];
+    rv += testCalculateGroundDist(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 12, "GeodesicDRCR") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
+    fd >> to[0] >> to[1] >> to[2];
+    fd >> result[0] >> result[1];
+    rv += testCalculateGeodesicDRCR(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 13, "VelocityDelta") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
+    fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
+    fd >> result[0];
+    rv += testCalculateVelocityDelta(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 13, "TotalVelocity") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
+    fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
+    double time = 0.0;
+    fd >> time;
+    fd >> result[0] >> result[1] >> result[2];
+    rv += testCalculateTotalVelocity(from, to, time, earth, result);
+  }
+  else if (test.compare(0, 13, "DRCRDownValue") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
+    fd >> to[0] >> to[1] >> to[2];
+    fd >> result[0] >> result[1] >> result[2];
+    rv += testCalculateDRCRDownValue(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 15, "ClosingVelocity") == 0)
+  {
+    fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
+    fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
+    fd >> result[0];
+    rv += testCalculateClosingVelocity(from, to, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 14, "PositionInGate") == 0)
+  {
+    double gate[6] = { 0.0 };
+    fd >> from[0] >> from[1] >> from[2];
+    fd >> to[0] >> to[1] >> to[2];
+    fd >> gate[0] >> gate[1] >> gate[2] >> gate[3] >> gate[4] >> gate[5];
+    fd >> result[0];
+    rv += testPositionInGate(from, to, gate, earth, coordConvert, result);
+  }
+  else if (test.compare(0, 11, "LaserInGate") == 0)
+  {
+    double gate[6] = { 0.0 };
+    double laser[3] = { 0.0 };
+    fd >> from[0] >> from[1] >> from[2];
+    fd >> to[0] >> to[1] >> to[2];
+    fd >> gate[0] >> gate[1] >> gate[2] >> gate[3] >> gate[4] >> gate[5];
+    fd >> laser[0] >> laser[1] >> laser[2];
+    fd >> result[0];
+    rv += testLaserInGate(from, to, gate, laser, earth, coordConvert, result);
+  }
+  else
+  {
+    std::cout << "Command not valid: " << test;
+    printInstructions();
+    rv++;
+  }
+  return rv;
+}
+
+int calculateLibTestFile(const std::string& filename)
+{
+  // Read the test data
+  std::ifstream fd(filename.c_str());
+  if (!fd)
+  {
+    std::cout << "Error opening file " << filename << std::endl;
+    return 1;
+  }
+
+  // Loop through each group in the file, reading the next test
+  int rv = 0;
+  bool doneReading = false;
+  while (!doneReading)
+    rv += readNextTest(fd, doneReading);
+
+  return rv;
+}
+
+}
+
 //===========================================================================
 int CalculateLibTest(int argc, char* argv[])
 {
   if (argc < 2)
   {
-    cout << "Usage: " << argv[0] << " [filename]" << endl;
-    return -1;
-  }
-
-  // Read the test data
-  ifstream fd(argv[1]);
-  if (!fd)
-  {
-    cout << "Error opening file " << argv[1] << endl;
+    std::cout << "Usage: " << argv[0] << " [filename]" << std::endl;
     return -1;
   }
 
   int rv = 0;
-
-  double refOrigin[3];
-  double from[10];
-  double to[10];
-  double time;
-  double result[3];
-  EarthModelCalculations earth = PERFECT_SPHERE;
-
-  string test;
-  while (fd >> test)
-  {
-    // set coordinate system / reference frame
-    if (test.compare(simCore::sdkMax((int)test.length()-17, 0), test.length()-1, "TangentPlaneWGS84") == 0)
-    {
-      if (earth != TANGENT_PLANE_WGS_84)
-      {
-        cerr << "Earth Model: TangentPlaneWGS84"<<endl;
-        earth = TANGENT_PLANE_WGS_84;
-      }
-    }
-    else if (test.compare(simCore::sdkMax((int)test.length()-5, 0), test.length()-1, "WGS84") == 0)
-    {
-      if (earth != WGS_84)
-      {
-        cerr << "Earth Model: WGS84"<<endl;
-        earth = WGS_84;
-      }
-    }
-    else if (test.compare(simCore::sdkMax((int)test.length()-9, 0), test.length()-1, "FlatEarth") == 0)
-    {
-      if (earth != FLAT_EARTH)
-      {
-        cerr << "Earth Model: FlatEarth"<<endl;
-        earth = FLAT_EARTH;
-      }
-    }
-    else if (test.compare(simCore::sdkMax((int)test.length()-13, 0), test.length()-1, "PerfectSphere") == 0)
-    {
-      if (earth != PERFECT_SPHERE)
-      {
-        cerr << "Earth Model: PerfectSphere"<<endl;
-        earth = PERFECT_SPHERE;
-      }
-    }
-    else
-    {
-      cout << "Incorrect input file format:"<<" missing valid coordinate system / reference frame"<<endl;
-      printInstructions();
-      rv++;
-    }
-
-    cerr << "  ";
-
-    // get and set Reference Origin
-    fd >> refOrigin[0] >> refOrigin[1] >> refOrigin[2];
-    CoordinateConverter coordConvert;
-    coordConvert.setReferenceOrigin(refOrigin[0], refOrigin[1], refOrigin[2]);
-
-    // set to/from and run relevant test
-    if (test.compare(0, 5, "Slant")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
-      fd >> result[0];
-      rv += testCalculateSlant(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 7, "AbsAzEl")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
-      fd >> result[0] >> result[1] >> result[2];
-      rv += testCalculateAbsAzEl(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 7, "RelAzEl")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
-      fd >> to[0] >> to[1] >> to[2];
-      fd >> result[0] >> result[1] >> result[2];
-      rv += testCalculateRelAzEl(from, from+3, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0,11,"AspectAngle")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2];
-      fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5];
-      fd >> result[0];
-      rv += testCalculateAspectAngle(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 8, "Altitude")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
-      fd >> result[0];
-      rv += testCalculateAltitude(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 10, "GroundDist")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> to[0] >> to[1] >> to[2];
-      fd >> result[0];
-      rv += testCalculateGroundDist(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 12, "GeodesicDRCR")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
-      fd >> to[0] >> to[1] >> to[2];
-      fd >> result[0] >> result[1];
-      rv += testCalculateGeodesicDRCR(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 13, "VelocityDelta")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
-      fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
-      fd >> result[0];
-      rv += testCalculateVelocityDelta(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 13, "TotalVelocity")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
-      fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
-      fd >> time;
-      fd >> result[0] >> result[1] >> result[2];
-      rv += testCalculateTotalVelocity(from, to, time, earth, result);
-    }
-    else if (test.compare(0, 13, "DRCRDownValue")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5];
-      fd >> to[0] >> to[1] >> to[2];
-      fd >> result[0] >> result[1] >> result[2];
-      rv += testCalculateDRCRDownValue(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0, 15, "ClosingVelocity")==0)
-    {
-      fd >> from[0] >> from[1] >> from[2] >> from[3] >> from[4] >> from[5] >> from[6] >> from[7] >> from[8];
-      fd >> to[0] >> to[1] >> to[2] >> to[3] >> to[4] >> to[5] >> to[6] >> to[7] >> to[8];
-      fd >> result[0];
-      rv += testCalculateClosingVelocity(from, to, earth, coordConvert, result);
-    }
-    else if (test.compare(0,14,"PositionInGate")==0)
-    {
-      double gate[6];
-      fd >> from[0] >> from[1] >> from[2];
-      fd >> to[0] >> to[1] >> to[2];
-      fd >> gate[0] >> gate[1] >> gate[2] >> gate[3] >> gate[4] >> gate[5];
-      fd >> result[0];
-      rv += testPositionInGate(from, to, gate, earth, coordConvert, result);
-    }
-    else if (test.compare(0,11,"LaserInGate")==0)
-    {
-      double gate[6];
-      double laser[3];
-      fd >> from[0] >> from[1] >> from[2];
-      fd >> to[0] >> to[1] >> to[2];
-      fd >> gate[0] >> gate[1] >> gate[2] >> gate[3] >> gate[4] >> gate[5];
-      fd >> laser[0] >> laser[1] >> laser[2];
-      fd >> result[0];
-      rv += testLaserInGate(from, to, gate, laser, earth, coordConvert, result);
-    }
-    else
-    {
-      cout << "Command not valid: " << test;
-      printInstructions();
-      rv++;
-    }
-  } //while( fd >> test )
-
+  rv += calculateLibTestFile(argv[1]);
   return rv;
 }
-

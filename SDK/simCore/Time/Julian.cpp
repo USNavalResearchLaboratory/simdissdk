@@ -194,7 +194,7 @@ void simCore::calendarDateFromJulianDate(double jd, double &fyear)
   int year;
   unsigned int month;
   unsigned int monthday;
-  simCore:: calendarDateFromJulianDate(jdInt, year, month, monthday);
+  simCore::calendarDateFromJulianDate(jdInt, year, month, monthday);
 
   // Determine if the input year is a leap year.
   size_t lpYrIndx = (simCore::isLeapYear(year - 1900)) ? 1 : 0;
@@ -223,21 +223,7 @@ double simCore::getDeltaT(double tjd)
 
   // * This function is valid for dates from 1970 through 2050. *
 
-  // References:
-  // Code adapted from USNO SLAC version 1.1.1
-
-  // Notes:
-  // 1. The equation used in this function was obtained by fitting
-  //    a 3rd order polynomial to USNO/EO Delta T determinations
-  //    1969.915-2004.749 and USNO/EO Delta T predictions from the latter
-  //    date until 2051.0.
-  // 2. The polynomial fits the data and predictions with a maximum
-  //    error of 2.0 s (absolute value). The RMS error of the fit is
-  //    0.6 s.  Of course, the errors in the Delta T predicted values
-  //    themselves also grow with time.
-
   // tjd_min is 1970.0; tjd_max is 2050.0
-
   const double tjd_min = 2440586.5;
   const double tjd_max = 2469807.5;
   double delt = -1000.0;
@@ -254,10 +240,20 @@ double simCore::getDeltaT(double tjd)
     double fy;
     simCore::calendarDateFromJulianDate(tjd, fy);
     double t = (fy - 2000.0) / 100.0;
-    delt = ((107.0179459904728 * t - 37.97350626499623) * t
-      + 54.55398907548841) * t  + 63.31538934414660;
+    // degree of the polynomial
+    const int degree = 5;
+    int i = 0;
+
+    // delta T coefficients, based on 2012 values
+    const double coeff[] = { 62.96117620920749, 40.72414272333056, -86.78906680769823, 245.6252926768666, 295.8460515505873, -851.1075983781398 };
+
+    // evaluate a polynomial of degree 'degree' using Horner's rule
+    delt = coeff[degree];
+    for (i = (degree - 1); i >= 0; i--)
+    {
+      delt = delt * t + coeff[i];
+    }
   }
 
   return delt;
 }
-

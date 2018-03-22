@@ -282,24 +282,26 @@ void VaporTrail::addNewPuffs_(double time)
       return;
     }
 
+    const double puffSpacing = vaporTrailData_.numRadiiFromPreviousSmoke * vaporPuffData_.initialRadiusM;
+    if (puffSpacing <= 0.0)
+      return;
+
     const simCore::Vec3& prevPuffPosition = puffs_.back()->position();
     simCore::Vec3 hostOffsetPosition;
     locator_->getLocatorPosition(&hostOffsetPosition);
 
     // distance between host and last puff determines how many puffs are required
     const double distanceSinceLastPuff = simCore::v3Distance(hostOffsetPosition, prevPuffPosition);
-    const double puffSpacing = vaporTrailData_.numRadiiFromPreviousSmoke * vaporPuffData_.initialRadiusM;
-    if (puffSpacing <= 0.0)
-      return;
+
     // adjust the spacing to get evenly spaced puffs from last puff to host offset
-    unsigned int puffsToAdd = static_cast<unsigned int>(0.5 + distanceSinceLastPuff / puffSpacing);
+    const unsigned int puffsToAdd = static_cast<unsigned int>(0.5 + distanceSinceLastPuff / puffSpacing);
 
     // return if nothing to do
     if (puffsToAdd == 0)
       return;
 
     // adjust the amount to add against the point and time limits
-    size_t actualAddAmount = applyDataLimiting_(puffsToAdd, time, prevPuffTime);
+    const size_t actualAddAmount = applyDataLimiting_(puffsToAdd, time, prevPuffTime);
 
     for (size_t i = (puffsToAdd - actualAddAmount + 1); i <= puffsToAdd; ++i)
     {

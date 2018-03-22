@@ -166,14 +166,14 @@ void RocketBurn::update(const ShapeData &newShapeData)
   rebuild_();
 }
 
-void RocketBurn::setPositionOrientation(const simCore::Vec3& newPosition, const simCore::Vec3& yprRadians)
+void RocketBurn::setPositionOrientation(const osg::Vec3f& newPosition, const osg::Vec3f& yprRadians)
 {
   // Convert the ENU/RightHanded rotations to a rotation matrix.
   osg::Matrixd rot;
-  rot.makeRotate(Math::eulerRadToQuat(yprRadians.yaw(), yprRadians.pitch(), yprRadians.roll()));
+  rot.makeRotate(Math::eulerRadToQuat(yprRadians.x(), yprRadians.y(), yprRadians.z()));
 
   // Create a position matrix
-  rot.postMultTranslate(osg::Vec3d(newPosition.x(), newPosition.y(), newPosition.z()));
+  rot.postMultTranslate(newPosition);
 
   // Set the transform to the rotation and the position
   transform_->setMatrix(rot);

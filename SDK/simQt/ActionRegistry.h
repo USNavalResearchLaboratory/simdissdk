@@ -32,10 +32,31 @@
 class QAction;
 class QWidget;
 class QSettings;
+class QTimer;
 
 namespace simQt {
 
+class Action;
 class ActionRegistry;
+
+/** Manages adding and updating hot key descriptions in action tool tips */
+class ToolTipUpdater : public QObject
+{
+  Q_OBJECT
+public:
+  explicit ToolTipUpdater(QObject* parent = NULL);
+public slots:
+  /** Add an action to the list of actions waiting to have their tool tip updated. */
+  void addPending(simQt::Action* action);
+  /** Remove an action from the pending list, if it exists in the list. */
+  void removeAction(const simQt::Action* action);
+private slots:
+  /** Update the tool tips on all pending actions. */
+  void updateToolTips_();
+private:
+  QTimer* timer_;
+  std::vector<simQt::Action*> pendingActions_;
+};
 
 /** Actions can only be instantiated and destroyed by ActionRegistry */
 class SDKQT_EXPORT Action
@@ -177,6 +198,9 @@ private:
 
   /** Private memento implementation */
   class MementoImpl;
+
+  /** Manages updating tool tips when hot keys change */
+  ToolTipUpdater* toolTipUpdater_;
 };
 
 }

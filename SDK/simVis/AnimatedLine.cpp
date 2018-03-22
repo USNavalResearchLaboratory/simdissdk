@@ -227,7 +227,10 @@ void AnimatedLineNode::initializeGeometry_()
     if (vbo)
       vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     osg::StateSet* stateSet = geom->getOrCreateStateSet();
+#ifdef OSG_GL1_AVAILABLE
+    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
     stateSet->setAttributeAndModes(stippleAttr1_.get(), 1);
+#endif
     stateSet->setAttributeAndModes(lineWidth_.get(), 1);
     stateSet->setDataVariance(osg::Object::DYNAMIC);
     geode_->addDrawable(geom);
@@ -247,7 +250,10 @@ void AnimatedLineNode::initializeGeometry_()
     osg::VertexBufferObject* vbo = colors2_->getVertexBufferObject();
     if (vbo)
       vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
+#ifdef OSG_GL1_AVAILABLE
+    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
     geom->getOrCreateStateSet()->setAttributeAndModes(stippleAttr2_.get(), 1);
+#endif
     geom->getOrCreateStateSet()->setAttributeAndModes(lineWidth_.get(), 1);
     geom->getOrCreateStateSet()->setDataVariance(osg::Object::DYNAMIC);
     geode_->addDrawable(geom);
@@ -271,12 +277,23 @@ void AnimatedLineNode::fixDepth_(bool isCloseToSurface)
     // Turn on the depth buffer test and render early
     stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::ON);
     stateSet->setRenderBinDetails(BIN_ANIMATEDLINE, BIN_GLOBAL_SIMSDK);
+
+    // Remove horizon clip plane.  Because the depth test is on, there is no need to clip against
+    // the horizon plane.  Lines can extend past horizon and earth will clip them correctly.
+    stateSet->setMode(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE, osg::StateAttribute::OFF);
   }
   else
   {
     // Turn off the depth buffer test and render late
     stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
     stateSet->setRenderBinDetails(BIN_ANIMATEDLINE_FLAT, BIN_GLOBAL_SIMSDK);
+
+    // Add a horizon clip plane.  This is needed because the depth test is off and we need to make
+    // sure the line does not extend over the horizon.  Note that this mode is useful for lines that
+    // are expected to go above/below ground, or near ground, to avoid Z-fighting issues.  In these
+    // cases the lines won't clip against the earth due to depth test off, so we add the horizon
+    // clip plane to make sure we don't see them "through" the earth when eye is on other side.
+    stateSet->setMode(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE, osg::StateAttribute::ON);
   }
 }
 
@@ -487,10 +504,6 @@ void AnimatedLineNode::drawLine_(const simCore::MultiFrameCoordinate& coord1, co
   // Prevent terrain interference with lines ~1m from the surface
   fixDepth_(simCore::areEqual(coord1.llaCoordinate().alt(), 0.0, 1.0) &&
     simCore::areEqual(coord2.llaCoordinate().alt(), 0.0, 1.0));
-
-  // Turn off the clip plane, preventing cases like TLE Data Scripts demo from clipping
-  // when going off into space to a satellite, when drawing the slant line.
-  getOrCreateStateSet()->setMode(GL_CLIP_PLANE0, drawSlant ? osg::StateAttribute::OFF : osg::StateAttribute::ON);
 }
 
 void AnimatedLineNode::drawSlantLine_(const simCore::MultiFrameCoordinate& startPoint, const simCore::MultiFrameCoordinate& endPoint)

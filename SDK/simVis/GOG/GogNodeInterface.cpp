@@ -23,6 +23,7 @@
 #include <cassert>
 #include <iostream>
 #include "osgEarth/Units"
+#include "osgEarth/Version"
 #include "osgEarthSymbology/Style"
 #include "osgEarthSymbology/Color"
 #include "osgEarthSymbology/TextSymbol"
@@ -308,10 +309,12 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   // check for keyword flags
   bool serializeGeometry = Utils::canSerializeGeometry_(shape);
   bool relativeShape = getMetaDataFlag_(simVis::GOG::RelativeShapeKeyword, metaData);
+  bool referencePoint = getMetaDataFlag_(simVis::GOG::ReferencePointKeyword, metaData);
 
   // add the metadata
   gogOutputStream << metaData;
 
+  // serialize geometry where it is possible to extract geometry information from the nodes. Otherwise, geometry will have been stored in meta data
   if (serializeGeometry)
   {
     // alt units are meters
@@ -319,7 +322,17 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 
     // if relative, the xy range units are in meters
     if (relativeShape)
+    {
+      // if relative shape has a reference position, serialize it, if possible
+      if (referencePoint)
+      {
+        osg::Vec3d position;
+        // note that in osg position syntax, lat is y, lon is x, alt is z
+        if (getReferencePosition(position) == 0)
+          gogOutputStream << "referencepoint " << position.y() << " " << position.x() << " " << position.z() << "\n";
+      }
       gogOutputStream << "rangeunits meters\n";
+    }
 
     // try to serialize the geometry
     serializeGeometry_(relativeShape, gogOutputStream);
@@ -414,6 +427,8 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   }
   else if (metaData_.isSetExplicitly(GOG_TESSELLATE_SET))
     gogOutputStream << "tessellate false\n";
+
+  // Follow data is not currently serialized out
 }
 
 int GogNodeInterface::getAltitudeMode(AltitudeMode& altMode) const
@@ -536,6 +551,11 @@ int GogNodeInterface::getPointSize(int& pointSize) const
     return 1;
   pointSize = static_cast<int>(*(style_.getSymbol<osgEarth::Symbology::PointSymbol>()->size()));
   return 0;
+}
+
+int GogNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  return 1;
 }
 
 int GogNodeInterface::getTessellation(TessellationStyle& style) const
@@ -918,10 +938,9 @@ void GogNodeInterface::applyBackfaceCulling()
   // Note that extruded lines are the only extruded symbol that need backface culling off (because it
   // extrudes to a filled polygon instead of a 3D shape).
 
-  bool is3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_HEMISPHERE ||
-    shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX);
+  bool isClosed3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX);
   const bool isLine = (shape() == GOG_LINE || shape() == GOG_LINESEGS);
-  if (is3dShape || (extruded_ && !isLine))
+  if (isClosed3dShape || (extruded_ && !isLine))
     style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = true;
   else
     style_.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = false;
@@ -1286,7 +1305,11 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
       if (srs != NULL)
       {
         osg::BoundingSphered boundS;
+#if OSGEARTH_VERSION_LESS_THAN(2,10,0)
         if (feature->getWorldBound(srs->getECEF(), boundS))
+#else
+        if (feature->getWorldBound(srs->getGeocentricSRS(), boundS))
+#endif
         {
           // ensure a minimum of 50m spacing, otherwise approximately 80 posts along major dimension of feature
           tessellationSpacingM = simCore::sdkMax(50.0, simCore::sdkMin(tessellationSpacingM, 0.025 * boundS.radius()));
@@ -1414,6 +1437,17 @@ void LocalGeometryNodeInterface::setAltitudeMode(AltitudeMode altMode)
     newPos.alt() = newAltitude;
     localNode_->setPosition(newPos);
   }
+}
+
+int LocalGeometryNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
+{
+  if (!localNode_.valid())
+    return 1;
+  const osgEarth::GeoPoint& refPoint = localNode_->getPosition();
+  referencePosition.x() = refPoint.x(); // note this is lon
+  referencePosition.y() = refPoint.y(); // note this is lat
+  referencePosition.z() = altitude_; // always use original altitude, since an altitude offset may have been applied
+  return 0;
 }
 
 void LocalGeometryNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const

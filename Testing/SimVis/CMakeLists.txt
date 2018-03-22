@@ -6,6 +6,7 @@ project(SimVis_UnitTests)
 
 create_test_sourcelist(SimVisTestFiles SimVisTests.cpp
     FontSizeTest.cpp
+    GogTest.cpp
     LocatorTest.cpp
 )
 
@@ -18,3 +19,4 @@ set_target_properties(SimVisTests PROPERTIES
 
 add_test(NAME LocatorTest COMMAND SimVisTests LocatorTest)
 add_test(NAME FontSizeTest COMMAND SimVisTests FontSizeTest)
+add_test(NAME GogTest COMMAND SimVisTests GogTest)

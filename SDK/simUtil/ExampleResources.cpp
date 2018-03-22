@@ -33,6 +33,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simCore/Time/ClockImpl.h"
+#include "simData/DataStore.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 #include "simVis/Registry.h"

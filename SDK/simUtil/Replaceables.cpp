@@ -22,6 +22,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/Clock.h"
 #include "simCore/String/TextReplacer.h"
+#include "simVis/AveragePositionNode.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Viewer.h"
@@ -317,6 +318,17 @@ std::string CenteredVariable::getText() const
       if (rv.empty())
         rv = " ";
       return rv;
+    }
+    else if (focusedView->getCameraTether() != NULL)
+    {
+      // See if the camera is tethered to a centroid
+      const simVis::AveragePositionNode* centroid = dynamic_cast<simVis::AveragePositionNode*>(focusedView->getCameraTether());
+      if (centroid)
+      {
+        std::stringstream ss;
+        ss << "Centroid of " << centroid->getNumTrackedNodes() << " Entities";
+        return ss.str();
+      }
     }
   }
   return "None";

@@ -24,7 +24,6 @@
 #include "osg/Geode"
 #include "osg/ImageStream"
 #include "osg/PolygonOffset"
-#include "osg/Point"
 #include "osg/LineWidth"
 #include "osg/Depth"
 #include "osg/MatrixTransform"
@@ -44,6 +43,8 @@
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/Projector.h"
+#include "simVis/ProjectorManager.h"
+#include "simVis/Shaders.h"
 
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
@@ -159,14 +160,14 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
 
 ProjectorNode::~ProjectorNode()
 {
-  getLocator()->removeCallback(locatorCallback_);
+  getLocator()->removeCallback(locatorCallback_.get());
 }
 
 void ProjectorNode::init_()
 {
   // listen for locator changes so we can update the matrices
   locatorCallback_ = new simVis::SyncLocatorCallback<ProjectorNode>(this);
-  getLocator()->addCallback(locatorCallback_);
+  getLocator()->addCallback(locatorCallback_.get());
 
   // Set this node to be active
   setNodeMask(DISPLAY_MASK_PROJECTOR);
@@ -240,6 +241,11 @@ void ProjectorNode::setLabelContentCallback(LabelContentCallback* cb)
 LabelContentCallback* ProjectorNode::labelContentCallback() const
 {
   return contentCallback_.get();
+}
+
+const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
+{
+  return hasLastUpdate_ ? &lastUpdate_ : NULL;
 }
 
 std::string ProjectorNode::hookText() const
@@ -411,19 +417,19 @@ void ProjectorNode::syncWithLocator()
   // which means the projector will point straight down by default (since the view vector
   // is -Z in view space). We want the projector to point along the entity vector, so
   // we create a view matrix that rotates the view to point along the +Y axis.
-  const osg::Matrix& viewMat = osg::Matrix::rotate(-osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0));
+  const osg::Matrix viewMat = osg::Matrix::rotate(-osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0));
 
   // flip the image if it's upside down
   const double flip = texture_->getImage()->getOrigin() == osg::Image::TOP_LEFT ? -1.0 : 1.0;
 
   // construct the model view matrix:
-  const osg::Matrix& modelViewMat = modelMat * viewMat;
+  const osg::Matrix modelViewMat = modelMat * viewMat;
 
   // the coordinate generator for our projected texture:
-  const osg::Matrix& texGenMat =
+  const osg::Matrix texGenMat =
     modelViewMat *
     projectionMat *
-    osg::Matrix::translate(1, flip, 1.0) *        // bias
+    osg::Matrix::translate(1.0, flip, 1.0) *        // bias
     osg::Matrix::scale(0.5, 0.5 * flip, 0.5);     // scale
   texGenMatUniform_->set(texGenMat);
 
@@ -558,6 +564,51 @@ unsigned int ProjectorNode::objectIndexTag() const
 {
   // Not supported for projectors
   return 0;
+}
+
+void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
+{
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
+  simVis::Shaders package;
+  package.load(vp, package.projectorManagerVertex());
+  package.load(vp, package.projectorManagerFragment());
+
+  stateSet->setDefine("SIMVIS_PROJECT_ON_PLATFORM");
+
+  // tells the shader where to bind the sampler uniform
+  stateSet->addUniform(new osg::Uniform("simProjSampler", ProjectorManager::getTextureImageUnit()));
+
+  // Set texture from projector into state set
+  stateSet->setTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
+
+  stateSet->addUniform(projectorActive_.get());
+  stateSet->addUniform(projectorAlpha_.get());
+  stateSet->addUniform(texGenMatUniform_.get());
+  stateSet->addUniform(texProjDirUniform_.get());
+  stateSet->addUniform(texProjPosUniform_.get()); 
+}
+
+void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
+{
+  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
+  if (vp)
+  {
+    simVis::Shaders package;
+    package.unload(vp, package.projectorManagerVertex());
+    package.unload(vp, package.projectorManagerFragment());
+  }
+
+  stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
+
+  stateSet->removeUniform("simProjSampler");
+
+  stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
+
+  stateSet->removeUniform(projectorActive_.get());
+  stateSet->removeUniform(projectorAlpha_.get());
+  stateSet->removeUniform(texGenMatUniform_.get());
+  stateSet->removeUniform(texProjDirUniform_.get());
+  stateSet->removeUniform(texProjPosUniform_.get()); 
 }
 
 }

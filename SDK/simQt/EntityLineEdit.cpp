@@ -50,7 +50,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
     entityTreeModel_(entityTreeModel),
     entityStateFilter_(NULL)
 {
-  setWindowTitle("Select Entity");
+  setWindowTitle(tr("Select Entity"));
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
   setObjectName("SelectEntity");
 
@@ -58,7 +58,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   tree_->setModel(entityTreeModel_);
   tree_->setExpandsOnDoubleClick(true);
   tree_->setSelectionMode(QAbstractItemView::SingleSelection);
-  tree_->setListTreeButtonDisplayed(false);  // The Entity Line Composite does not support the tree view
+  tree_->setTreeViewActionEnabled(false);  // The Entity Line Composite does not support the tree view
   if (settings)
     tree_->setSettings(settings);
 
@@ -69,7 +69,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   }
 
   tree_->addEntityFilter(new simQt::EntityTypeFilter(*entityTreeModel_->dataStore(), type, type == simData::ALL));
-  tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), true));
+  tree_->addEntityFilter(new simQt::EntityCategoryFilter(entityTreeModel_->dataStore(), simQt::EntityCategoryFilter::SHOW_WIDGET));
 
   connect(tree_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(setSelected_(QList<uint64_t>)));
   connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept())); // Have double click auto close the dialog
@@ -182,8 +182,10 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   composite_ = new Ui_EntityLineEdit();
   composite_->setupUi(this);
   composite_->lineEdit->setToolTip(simQt::formatTooltip(tr("Entity Name"), tr("Either type or select an entity name.<p>Select from the popup or from the dialog by clicking the browser button.")));
-  composite_->lineEdit->setPlaceholderText("Enter entity name...");
+  composite_->lineEdit->setPlaceholderText(tr("Enter entity name..."));
+  composite_->toolButton->setToolTip(simQt::formatTooltip(tr("Entity Selection"), tr("Display an Entity selection dialog with filtering capabilities.")));
   connect(composite_->toolButton, SIGNAL(clicked()), this, SLOT(showEntityDialog_()));
+  connect(composite_->lineEdit, SIGNAL(returnPressed()), this, SLOT(checkForReapply_()));
   connect(composite_->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
   connect(composite_->lineEdit, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_(const QString&)));
 
@@ -309,6 +311,8 @@ int EntityLineEdit::setSelected(uint64_t id)
   if (entityTreeModel_ == NULL || id == uniqueId_)
     return 1;
 
+  bool doEmit = (uniqueId_ != id);
+
   // Allow zero to clear out the line Edit
   if (id == 0)
   {
@@ -318,7 +322,8 @@ int EntityLineEdit::setSelected(uint64_t id)
     setTextStyle_(false);
     if (entityDialog_ != NULL)
       entityDialog_->setItemSelected(uniqueId_);
-    emit itemSelected(uniqueId_);
+    if (doEmit)
+      emit itemSelected(uniqueId_);
     return 0;
   }
 
@@ -333,7 +338,8 @@ int EntityLineEdit::setSelected(uint64_t id)
   setTextStyle_(true);
   if (entityDialog_ != NULL)
     entityDialog_->setItemSelected(uniqueId_);
-  emit itemSelected(uniqueId_);
+  if (doEmit)
+    emit itemSelected(uniqueId_);
   return 0;
 }
 
@@ -362,15 +368,26 @@ void EntityLineEdit::showEntityDialog_()
 
 void EntityLineEdit::closeEntityDialog()
 {
-  // we own all this memory, so we can delete it
-  delete entityDialog_;
-  entityDialog_ = NULL;
+  if (entityDialog_)
+  {
+    entityDialog_->hide();
+    entityDialog_->deleteLater();
+    entityDialog_ = NULL;
+  }
 }
 
 void EntityLineEdit::setUnavailable(uint64_t id)
 {
   unavailableId_ = id;
   setTextStyle_(valid_);
+}
+
+void EntityLineEdit::checkForReapply_()
+{
+  auto oldId = uniqueId_;
+  editingFinished_();
+  if ((oldId == uniqueId_) && (oldId != 0))
+    emit reapplied(uniqueId_);
 }
 
 void EntityLineEdit::editingFinished_()
@@ -395,6 +412,7 @@ void EntityLineEdit::editingFinished_()
   if (needToVerify_)
   {
     needToVerify_ = false;
+    auto oldId = uniqueId_;
     uniqueId_ = simData::DataStoreHelpers::idByName(composite_->lineEdit->text().toStdString(), entityTreeModel_->dataStore());
     if ((uniqueId_ == 0) && (!composite_->lineEdit->text().isEmpty()))
       setTextStyle_(false);
@@ -404,7 +422,8 @@ void EntityLineEdit::editingFinished_()
       if (entityDialog_ != NULL)
         entityDialog_->setItemSelected(uniqueId_);
     }
-    emit itemSelected(uniqueId_);
+    if (oldId != uniqueId_)
+      emit itemSelected(uniqueId_);
   }
 }
 
@@ -483,8 +502,6 @@ void EntityLineEdit::setTextStyle_(bool valid)
 BoundEntityLineEdit::BoundEntityLineEdit(EntityLineEdit* parent, simQt::Settings& settings, const QString& variableName, const simQt::Settings::MetaData& metaData)
   : BoundIntegerSetting(parent, settings, variableName, metaData)
 {
-  qRegisterMetaType<EntityStateFilter::State>("EntityStateFilter::State");
-
   parent->setStateFilter(static_cast<EntityStateFilter::State>(value()));
   connect(parent, SIGNAL(stateFilterChanged(simQt::EntityStateFilter::State)), this, SLOT(setStateFromLineEdit_(simQt::EntityStateFilter::State)));
   connect(this, SIGNAL(valueChanged(int)), this, SLOT(setStateFromSettings_(int)));
@@ -507,9 +524,9 @@ void BoundEntityLineEdit::setStateFromSettings_(int state)
 simQt::Settings::MetaData BoundEntityLineEdit::metaData()
 {
   QMap<int, QString> state;
-  state.insert(0, "Active");
-  state.insert(1, "Inactive");
-  state.insert(2, "Both");
+  state.insert(0, tr("Active"));
+  state.insert(1, tr("Inactive"));
+  state.insert(2, tr("Both"));
 
   return simQt::Settings::MetaData(simQt::Settings::MetaData::makeEnumeration(
     0, state, "Entities to display in various controls.", simQt::Settings::DEFAULT));

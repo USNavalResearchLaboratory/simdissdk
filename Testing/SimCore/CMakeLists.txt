@@ -16,10 +16,12 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     CalculationTest.cpp
     MathTest.cpp
     MgrsTest.cpp
+    SquareMatrixTest.cpp
     TimeClassTest.cpp
     TimeManagerTest.cpp
     TimeStringTest.cpp
     TimeUtilsTest.cpp
+    TimeJulianTest.cpp
     InterpolationTest.cpp
     EMTest.cpp
     ValidNumberTest.cpp
@@ -52,12 +54,14 @@ add_test(NAME CoordConvertLibTest COMMAND SimCoreTests CoordConvertLibTest)
 add_test(NAME CoreCommonTest COMMAND SimCoreTests CoreCommonTest)
 add_test(NAME CalculationTest COMMAND SimCoreTests CalculationTest)
 add_test(NAME CoreMathTest COMMAND SimCoreTests MathTest)
+add_test(NAME CoreSquareMatrixTest COMMAND SimCoreTests SquareMatrixTest)
 add_test(NAME CoreMgrsTest COMMAND SimCoreTests MgrsTest)
 add_test(NAME CoreTimeClassTest COMMAND SimCoreTests TimeClassTest)
 add_test(NAME CoreInterpolationTest COMMAND SimCoreTests InterpolationTest)
 add_test(NAME CoreValidNumberTest COMMAND SimCoreTests ValidNumberTest)
 add_test(NAME CoreTimeStringTest COMMAND SimCoreTests TimeStringTest)
 add_test(NAME CoreTimeUtilsTest COMMAND SimCoreTests TimeUtilsTest)
+add_test(NAME CoreTimeJulianTest COMMAND SimCoreTests TimeJulianTest)
 add_test(NAME CoreGeoFenceTest COMMAND SimCoreTests GeoFenceTest)
 add_test(NAME MultiFrameCoordTest COMMAND SimCoreTests MultiFrameCoordTest)
 add_test(NAME AngleTest COMMAND SimCoreTests AngleTest)

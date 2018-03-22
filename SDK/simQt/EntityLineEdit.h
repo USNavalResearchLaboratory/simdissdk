@@ -141,6 +141,8 @@ public slots:
 signals:
   /** Signal emitted when the user selects an entity */
   void itemSelected(uint64_t id);
+  /** Signal emitted when the user presses enter on an existing valid entity */
+  void reapplied(uint64_t id);
   /** Signal emitted when state filter changes */
   void stateFilterChanged(simQt::EntityStateFilter::State state);
 
@@ -157,6 +159,8 @@ private slots:
   void editingFinished_();
   /** Called with the user edits the name */
   void textEdited_(const QString & text);
+  /** Emit reapply() if the user pressed enter on an existing valid entity */
+  void checkForReapply_();
 
 private:
   class DataStoreListener;

@@ -27,6 +27,7 @@
 #include "osgEarthUtil/Controls"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
 

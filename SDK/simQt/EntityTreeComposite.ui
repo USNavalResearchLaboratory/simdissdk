@@ -43,29 +43,6 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QToolButton" name="pushButton">
-       <property name="minimumSize">
-        <size>
-         <width>28</width>
-         <height>24</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Toggles between Tree View and List View</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset resource="simQtResources.qrc">
-         <normaloff>:/simQt/images/Tree View.png</normaloff>:/simQt/images/Tree View.png</iconset>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QToolButton" name="filterButton">
        <property name="minimumSize">
         <size>

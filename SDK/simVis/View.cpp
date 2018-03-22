@@ -26,6 +26,7 @@
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
+#include "osgEarth/Version"
 #include "osgEarthUtil/Sky"
 
 #include "simCore/Calc/Angle.h"
@@ -37,10 +38,11 @@
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
 #include "simVis/NavigationModes.h"
+#include "simVis/OverheadMode.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
-#include "simVis/OverheadMode.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 
@@ -538,7 +540,7 @@ View::View()
    borderProps_(simVis::Color::White,  2),
    extents_(0, 0, 200, 100, false),
    lighting_(true),
-   fovy_(DEFAULT_VFOV),
+   fovyDeg_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
    useOverheadClamping_(true),
    overheadNearFarCallback_(new SetNearFarCallback),
@@ -606,7 +608,7 @@ View::~View()
   if (manip)
   {
     manip->setTetherCallback(0L);
-    manip->setTetherNode(0L);
+    manip->clearViewpoint();
   }
   // if we have insets, remove them.
   insets_.clear();
@@ -699,7 +701,7 @@ bool View::setUpViewAsInset_(simVis::View* host)
     }
 
     // if the user hasn't created a camera for this view, do so now.
-    fovy_ = host->fovY();
+    fovyDeg_ = host->fovY();
     osg::Camera* camera = this->getCamera();
     if (!camera)
     {
@@ -741,6 +743,9 @@ bool View::setUpViewAsInset_(simVis::View* host)
     if (focusManager != NULL)
       focusManager->applyBorderProperties(this);
     bordercamera->addChild(borderNode_.get());
+
+    // Run shader generator to get the border to show up properly
+    osgEarth::Registry::shaderGenerator().run(bordercamera);
   }
   else
   {
@@ -1067,7 +1072,9 @@ void View::setSceneManager(simVis::SceneManager* node)
   simVis::EarthManipulator* oldManip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (oldManip)
   {
-    osg::Node* oldTetherNode = oldManip->getTetherNode();
+    Viewpoint oldVP = oldManip->getViewpoint();
+    osg::ref_ptr<osg::Node> oldTetherNode;
+    oldVP.getNode(oldTetherNode);
     oldManip->setTetherCallback(0L);
     simVis::EarthManipulator* newManip = new simVis::EarthManipulator();
 
@@ -1075,7 +1082,11 @@ void View::setSceneManager(simVis::SceneManager* node)
     // some cases we want to save the old viewpoint, and restore it afterwards.
     Viewpoint vp = getViewpoint();
     newManip->applySettings(oldManip->getSettings());
-    newManip->setTetherNode(oldTetherNode);
+    if (oldTetherNode.valid())
+    {
+      vp.setNode(oldTetherNode.get());
+      newManip->setViewpoint(vp);
+    }
     newManip->setTetherCallback(tetherCallback_.get());
     newManip->setHeadingLocked(oldManip->isHeadingLocked());
     newManip->setPitchLocked(oldManip->isPitchLocked());
@@ -1106,19 +1117,23 @@ void View::setLighting(bool value)
 
 double View::fovY() const
 {
-  return fovy_;
+  return fovyDeg_;
 }
 
-void View::setFovY(double fovy)
+void View::setFovY(double fovyDeg)
 {
+  // do a simple check on invalid values, since EarthManipulator doesn't protect against invalid values
+  if (fovyDeg <= 0.0 || fovyDeg >= 360.0)
+    return;
+
   // always update the earth manipulator first
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovy);
+    manip->setFovY(fovyDeg);
 
-  if (fovy == fovy_)
+  if (fovyDeg == fovyDeg_)
     return;
-  fovy_ = fovy;
+  fovyDeg_ = fovyDeg;
   refreshExtents();
 }
 
@@ -1361,7 +1376,7 @@ void View::setNavigationMode(const NavMode& mode)
   const bool terrainAvoidance = manip->getSettings()->getTerrainAvoidanceEnabled();
 
   if (mode == NAVMODE_ROTATEPAN)
-    manip->applySettings(new RotatePanNavigationMode(overheadEnabled_, watchEnabled_));
+    manip->applySettings(new RotatePanNavigationMode(this, overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_GLOBESPIN)
     manip->applySettings(new GlobeSpinNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_ZOOM)
@@ -1369,9 +1384,7 @@ void View::setNavigationMode(const NavMode& mode)
   else if (mode == NAVMODE_CENTERVIEW)
     manip->applySettings(new CenterViewNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_GIS)
-    manip->applySettings(new GisNavigationMode(overheadEnabled_, watchEnabled_));
-  else if (mode == NAVMODE_BOXZOOM)
-    manip->applySettings(new BoxZoomNavigationMode(this, overheadEnabled_));
+    manip->applySettings(new GisNavigationMode(this, overheadEnabled_, watchEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);
@@ -1392,7 +1405,7 @@ void View::enableOverheadMode(bool enableOverhead)
   // which may not be initialized properly if overhead mode is set too soon
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovy_);
+    manip->setFovY(fovyDeg_);
 
   // if this is the first time enabling overhead mode, install the node camera-update
   // node visitor in the earth manipulator to facilitate tethering. This NodeVisitor
@@ -1557,10 +1570,12 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
         simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
         if (manip && manip->isTethering())
         {
+          osg::ref_ptr<osg::Node> tetherNode;
+          manip->getViewpoint().getNode(tetherNode);
           simVis::Viewpoint untether;
           untether.setNode(NULL);
           // Set a focal point to force a clear-out of the node; this will get updated to a better place in updateWatchView_()
-          simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(manip->getTetherNode());
+          simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(tetherNode.get());
           untether.focalPoint()->set(osgEarth::SpatialReference::create("wgs84"),
             osg::Vec3d(lla.lon() * simCore::RAD2DEG, lla.lat() * simCore::RAD2DEG, lla.alt()),
             osgEarth::ALTMODE_ABSOLUTE);
@@ -1900,11 +1915,6 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
     if (proxyNode)
       node = proxyNode;
   }
-  else if (node)
-  {
-    // Should only be passing in entity nodes or Platform Model nodes or Gate centroids
-    assert(dynamic_cast<PlatformModelNode*>(node) || dynamic_cast<GateCentroid*>(node));
-  }
   return node;
 }
 
@@ -1918,6 +1928,7 @@ simVis::EntityNode* View::getEntityNode(osg::Node* node) const
   // Maybe it's really a Platform Model or Centroid node, which is the child of an EntityNode
   if (node)
   {
+    //TESTING: When watching from a centroid, the parent is a simVis::CentroidManager, not an EntityNode
     simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(node->getParent(0));
     // If assert triggers, there's some weird unexpected hierarchy; investigate and resolve weirdness
     assert(entityNode != NULL);

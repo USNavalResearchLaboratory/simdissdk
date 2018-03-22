@@ -7,7 +7,9 @@ project(PLUGIN_SIMQT_DESIGNER_PLUGINS)
 # .h files
 set(PROJ_HEADERS
     simQtDesignerPlugins.h
+    CategoryDataBreadcrumbsPlugin.h
     CategoryFilterWidgetPlugin.h
+    CategoryFilterWidget2Plugin.h
     ColorButtonPlugin.h
     ColorWidgetPlugin.h
     DataTableComboBoxPlugin.h
@@ -28,7 +30,9 @@ source_group(Headers FILES ${PROJ_HEADERS})
 
 # .cpp files
 set(PROJ_SOURCES
+    CategoryDataBreadcrumbsPlugin.cpp
     CategoryFilterWidgetPlugin.cpp
+    CategoryFilterWidget2Plugin.cpp
     ColorButtonPlugin.cpp
     ColorWidgetPlugin.cpp
     DataTableComboBoxPlugin.cpp
@@ -76,7 +80,10 @@ source_group("Generated Files" FILES ${Q_HEADERS_MOC} ${Q_RESOURCES})
 
 add_library(simQtDesignerWidgets SHARED ${PROJ_SOURCES} ${PROJ_HEADERS}
     ${PROJ_RESOURCES} ${Q_HEADERS_MOC} ${Q_RESOURCES})
-target_link_libraries(simQtDesignerWidgets PRIVATE simQt simVis simData)
+target_link_libraries(simQtDesignerWidgets PRIVATE simQt simData)
+if(TARGET simVis)
+     target_link_libraries(simQtDesignerWidgets PRIVATE simVis)
+endif()
 target_include_directories(simQtDesignerWidgets PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(simQtDesignerWidgets PRIVATE QDESIGNER_EXPORT_WIDGETS)
 set_target_properties(simQtDesignerWidgets PROPERTIES

@@ -24,6 +24,7 @@
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
 #include "simQt/ScopedSignalBlocker.h"
+#include "simQt/RegExpImpl.h"
 #include "simQt/EntityNameFilter.h"
 
 namespace simQt {
@@ -36,7 +37,7 @@ static const QString REGEXP_SETTING = "RegExp";
 EntityNameFilter::EntityNameFilter(AbstractEntityTreeModel* model)
   : EntityFilter(),
     model_(model),
-    regExp_(new QRegExp()),
+    regExp_(new RegExpImpl("")),
     widget_(NULL)
 {
 }
@@ -52,7 +53,7 @@ bool EntityNameFilter::acceptEntity(simData::ObjectId id) const
   if (model_ == NULL)
     return false;
   QString name = model_->data(model_->index(id)).toString();
-  return name.contains(*regExp_);
+  return regExp_->match(name.toStdString());;
 }
 
 QWidget* EntityNameFilter::widget(QWidget* newWidgetParent) const
@@ -62,7 +63,9 @@ QWidget* EntityNameFilter::widget(QWidget* newWidgetParent) const
 
 void EntityNameFilter::getFilterSettings(QMap<QString, QVariant>& settings) const
 {
-  settings.insert(REGEXP_SETTING, *regExp_);
+  // Store regex as a QRegExp
+  settings.insert(REGEXP_SETTING, QRegExp(QString::fromStdString(regExp_->pattern()),
+    RegExpImpl::qtCaseSensitivity(regExp_->caseSensitivity()), RegExpImpl::qtPatternSyntax(regExp_->patternSyntax())));
 }
 
 void EntityNameFilter::setFilterSettings(const QMap<QString, QVariant>& settings)
@@ -71,16 +74,17 @@ void EntityNameFilter::setFilterSettings(const QMap<QString, QVariant>& settings
   if (it != settings.end())
   {
     const auto& regExp = it.value().toRegExp();
-    if (*regExp_ != regExp)
+    if (QString::fromStdString(regExp_->pattern()) != regExp.pattern() ||
+      regExp_->patternSyntax() != RegExpImpl::simQtPatternSyntax(regExp.patternSyntax()) ||
+      regExp_->caseSensitivity() != RegExpImpl::simQtCaseSensitivity(regExp.caseSensitivity()))
     {
-      *regExp_ = regExp;
       // Update the GUI if it's valid
       if (widget_ != NULL)
       {
         ScopedSignalBlocker block(*widget_);
-        widget_->configure(regExp_->pattern(), regExp_->caseSensitivity(), regExp_->patternSyntax());
+        widget_->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
       }
-      emit filterUpdated();
+      setRegExp(regExp);
     }
   }
 }
@@ -100,16 +104,29 @@ void EntityNameFilter::setModel(AbstractEntityTreeModel* model)
 
 void EntityNameFilter::setRegExp(const QRegExp& regExp)
 {
-  *regExp_ = regExp;
-  emit filterUpdated();
+  setRegExpAttributes_(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
 }
 
 void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression)
 {
-  regExp_->setPattern(filter);
-  regExp_->setCaseSensitivity(caseSensitive);
-  regExp_->setPatternSyntax(expression);
-  emit filterUpdated();
+  bool changed = false;
+  if (regExp_->pattern() != filter.toStdString())
+  {
+    regExp_->setPattern(filter.toStdString());
+    changed = true;
+  }
+  if (regExp_->caseSensitivity() != RegExpImpl::simQtCaseSensitivity(caseSensitive))
+  {
+    regExp_->setCaseSensitivity(RegExpImpl::simQtCaseSensitivity(caseSensitive));
+    changed = true;
+  }
+  if (regExp_->patternSyntax() != RegExpImpl::simQtPatternSyntax(expression))
+  {
+    regExp_->setPatternSyntax(RegExpImpl::simQtPatternSyntax(expression));
+    changed = true;
+  }
+  if (changed)
+    emit filterUpdated();
 }
 
 }

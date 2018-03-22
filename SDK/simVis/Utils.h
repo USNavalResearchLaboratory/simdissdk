@@ -120,13 +120,7 @@ namespace simVis
   SDKVIS_EXPORT void setLightingToInherit(osg::StateSet* stateset);
 
   /** gets the lighting state if there is one (true if there is, false if not) */
-  inline bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value)
-  {
-    if (!stateset) return false;
-    osg::StateAttribute::GLModeValue value = stateset->getMode(GL_LIGHTING);
-    out_value = stateset->getMode(value);
-    return out_value != osg::StateAttribute::INHERIT;
-  }
+  SDKVIS_EXPORT bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value);
 
   /**
    * Internal update template callback - binds an update callback to the

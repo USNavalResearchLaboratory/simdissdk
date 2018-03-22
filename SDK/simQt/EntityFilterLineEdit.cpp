@@ -56,7 +56,7 @@ EntityFilterLineEdit::EntityFilterLineEdit(QWidget *parent)
   fixedAction_ = new QAction(tr("&Fixed String"), this);
   connect(fixedAction_, SIGNAL(triggered()), this, SLOT(fixedString()));
   fixedAction_->setCheckable(true);
-  fixedAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_F));
+  fixedAction_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
   addAction(fixedAction_);
 
   rightMouseClickMenu_ = new QMenu(this);
@@ -94,13 +94,24 @@ void EntityFilterLineEdit::contextMenuEvent(QContextMenuEvent *event)
 
 void EntityFilterLineEdit::configure(const QString& filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression)
 {
-  if (text() != filter)
+  bool revalidate = (text() != filter);
+
+  if (revalidate)
     setText(filter);
+
   if (!regexOnly_)
   {
+    // Do not overwrite a pending request for a revalidate
+    if (revalidate == false)
+      revalidate = ((caseSensitive_ != caseSensitive) || (expression_ != expression));
+
+    // No cost in updating the member variable, so just do it
     caseSensitive_ = caseSensitive;
     expression_ = expression;
   }
+
+  if (revalidate)
+    revalidate_();
 }
 
 bool EntityFilterLineEdit::isValid() const

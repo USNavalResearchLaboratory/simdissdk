@@ -58,8 +58,6 @@ namespace simCore
    */
   class SDKCORE_EXPORT Seconds
   {
-    friend class TimeStamp;
-
   public:
 
     /// Default constructor
@@ -82,7 +80,7 @@ namespace simCore
     * @param[in ] sec Initial seconds value
     * @param[in ] frac Initial fraction value of seconds in nanoseconds
     */
-    Seconds(int sec, int frac) : seconds_(sec), fraction_(frac) {fix_();}
+    Seconds(int64_t sec, int frac) : seconds_(sec), fraction_(frac) {fix_();}
 
     /// Seconds constructor with seconds and fraction as arguments
     /**
@@ -92,7 +90,7 @@ namespace simCore
     * @param[in ] sec Initial seconds value
     * @param[in ] frac Initial fraction value of seconds
     */
-    Seconds(int sec, double frac) {convert_(frac); seconds_ += sec;}
+    Seconds(int64_t sec, double frac) { convert_(frac); seconds_ += sec; }
 
     /// Copy constructor
     Seconds(const Seconds& time) : seconds_(time.seconds_), fraction_(time.fraction_) {}
@@ -106,7 +104,7 @@ namespace simCore
 
     /// Returns the saved seconds
     /** @return The saved seconds of this time  */
-    int getSeconds() const { return seconds_; }
+    int64_t getSeconds() const { return seconds_; }
 
     /// Returns the floating point value of the saved fraction (nanoseconds)
     /** @return the floating point value of the  saved fraction (nanoseconds) of this time  */
@@ -196,7 +194,7 @@ namespace simCore
     std::ostream& operator <<(std::ostream& out) const;
 
   protected:
-    int seconds_;   /**< Whole second representation  */
+    int64_t seconds_;   /**< Whole second representation  */
     int fraction_;  /**< Fraction of second, nanosecond precision */
 
     /// Converts incoming double time value to seconds and nanoseconds
@@ -232,7 +230,7 @@ namespace simCore
    * @brief Utility class for storing and managing absolute time values
    *
    * simCore::TimeStamp is an absolute (or fixed) time.  It is not relative to anything except the
-   * real-world calendar.
+   * real-world calendar.  The class is designed and tested for values from Jan 1, 1970 to Dec 31, 2200.
    *
    * There are two types of time that SIMDIS deals with: absolute time, and relative time.  They could also
    * be referred to as absolute time and elapsed time, or absolute time and delta time.  The simCore::Seconds
@@ -273,7 +271,7 @@ namespace simCore
     * This creates an instance of the TimeStamp object. When
     * calling the constructor you may provide initial seconds and
     * nanoseconds values.
-    * @param[in ] refYear Initial reference year,  must be >= 1900
+    * @param[in ] refYear Initial reference year,  must be >= 1970
     * @param[in ] secs Initial seconds since beginning of reference year
     */
     TimeStamp(int refYear, Seconds secs);
@@ -289,7 +287,7 @@ namespace simCore
     /// Return the saved seconds, relative to given reference year
     /**
     * Return the saved seconds, relative to given reference year
-    * @param[in ] refYear Reference year to compare; must be >= 1900
+    * @param[in ] refYear Reference year to compare; must be >= 1970
     * @return Seconds since the given reference year
     */
     Seconds secondsSinceRefYear(int refYear) const;
@@ -297,19 +295,10 @@ namespace simCore
     /// Updates TimeStamp with reference year and time as arguments
     /**
     * This updates the TimeStamp object.
-    * @param[in ] refYear Initial reference year,  must be >= 1900
+    * @param[in ] refYear Initial reference year,  must be >= 1970
     * @param[in ] secs Initial seconds since beginning of reference year
     */
     void setTime(int refYear, Seconds secs);
-
-    ///Determine object's data size.
-    /**
-     * Returns the total size, in bytes, required by the data members of
-     * the current object.  Can be used to determine the proper size of
-     * buffers for the pack and unpack methods.
-     * @return an integer representing the size of the TimeStamp's data.
-     */
-    size_t sizeOf() const;
 
     /// Assignment
     /** @param[in ] time TimeStamp class to be assigned  */
@@ -399,7 +388,7 @@ namespace simCore
 
   protected:
 
-    int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1900 */
+    int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1970 */
     Seconds secondsSinceRefYear_;  /**< Number of seconds relative to reference year */
 
     /// Verifies the precision and sign of stored time values
@@ -415,10 +404,18 @@ namespace simCore
 
   //------------------------------------------------------------------------
 
+  /** Sentinel value for year that represents an infinite time value. */
+  static const int INFINITE_TIME_YEAR = 16384;
   /** Sentinel value for simCore::TimeStamp that represents an infinite time value. */
-  static const TimeStamp INFINITE_TIME_STAMP(16384, 0.0);
+  static const TimeStamp INFINITE_TIME_STAMP(INFINITE_TIME_YEAR, 0.0);
+  /** Sentinel value for minimum year supported by simCore::TimeStamp */
+  static const int MIN_TIME_YEAR = 1970;
   /** Sentinel value for simCore::TimeStamp that represents the minimum valid time value. */
-  static const TimeStamp MIN_TIME_STAMP(1970, 0.0);
+  static const TimeStamp MIN_TIME_STAMP(MIN_TIME_YEAR, 0.0);
+  /** Sentinel value for maximum year supported by simCore::TimeStamp */
+  static const int MAX_TIME_YEAR = 2200;
+  /** Sentinel value for simCore::TimeStamp that represents the maximum valid time value while maintaining microsecond resolution. */
+  static const TimeStamp MAX_TIME_STAMP(MAX_TIME_YEAR, Seconds(365 * 24 * 60 * 60 - 1, 999999));
   /** Static value representing zero seconds, shared for performance reasons. */
   static const Seconds ZERO_SECONDS;
 

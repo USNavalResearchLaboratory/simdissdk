@@ -27,11 +27,11 @@
  */
 
 #include "osgEarthUtil/Controls"
-
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simVis/Compass.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/NavigationModes.h"
@@ -94,12 +94,12 @@ struct ViewReportCallback : public simVis::ViewManager::Callback
 // An event handler to assist in testing the Inset functionality.
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* handler)
+  MenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* insetViewHandler, simVis::CreateInsetEventHandler* createHandler)
   : viewer_(viewer),
-    handler_(handler),
-    removeAllRequested_(false),
-    insertViewPortMode_(false),
-    border_(0) { }
+    insetViewHandler_(insetViewHandler),
+    createHandler_(createHandler)
+  {
+  }
 
   bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
   {
@@ -111,64 +111,54 @@ struct MenuHandler : public osgGA::GUIEventHandler
       {
         case 'r': // REMOVE ALL INSETS.
         {
-          removeAllRequested_ = true;
           simVis::View::Insets insets;
           viewer_->getMainView()->getInsets(insets);
-          for (unsigned i = 0; i < insets.size(); ++i)
+          for (unsigned int i = 0; i < insets.size(); ++i)
             viewer_->getMainView()->removeInset(insets[i].get());
 
-          SIM_NOTICE << LC << "Removed all insets.." << std::endl;
+          SIM_NOTICE << LC << "Removed all insets." << std::endl;
           handled = true;
         }
         break;
 
         case 'h': // TOGGLE BETWEEN HOVER-TO-FOCUS and CLICK-TO-FOCUS
         {
-          int mask = handler_->getFocusActions();
+          int mask = insetViewHandler_->getFocusActions();
           bool hover = (mask & simVis::InsetViewEventHandler::ACTION_HOVER) != 0;
           if (hover)
           {
             mask = simVis::InsetViewEventHandler::ACTION_CLICK_SCROLL | simVis::InsetViewEventHandler::ACTION_TAB;
-            SIM_NOTICE << LC << "Switched to click-to-focus mode.." << std::endl;
+            SIM_NOTICE << LC << "Switched to click-to-focus mode." << std::endl;
           }
           else
           {
             mask = simVis::InsetViewEventHandler::ACTION_HOVER;
-            SIM_NOTICE << LC << "Switched to hover-to-focus mode.." << std::endl;
+            SIM_NOTICE << LC << "Switched to hover-to-focus mode." << std::endl;
           }
-          handler_->setFocusActions(mask);
+          insetViewHandler_->setFocusActions(mask);
           handled = true;
         }
         break;
 
         case 'i':
-        {
-          insertViewPortMode_ = !insertViewPortMode_;
-          handler_->setAddInsetMode(insertViewPortMode_);
-        }
-        break;
+          createHandler_->setEnabled(!createHandler_->isEnabled());
+          break;
 
         case '1': // ACTIVATE PERSPECTIVE NAV MODE
-        {
           viewer_->getMainView()->enableOverheadMode(false);
           viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
           handled = true;
-        }
-        break;
+          break;
 
         case '2': // ACTIVATE OVERHEAD NAV MODE
-        {
           viewer_->getMainView()->enableOverheadMode(true);
           viewer_->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
           handled = true;
-        }
         break;
 
         case '3': // ACTIVATE GIS NAV MODE
-        {
           viewer_->setNavigationMode(simVis::NAVMODE_GIS);
           handled = true;
-        }
         break;
 
         case 'l': // SKY LIGHTING
@@ -187,7 +177,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         case 'v': // TOGGLE VISIBILITY of ALL INSETS (for testing)
         {
           simVis::View* main = viewer_->getMainView();
-          for (unsigned i=0; i<main->getNumInsets(); ++i)
+          for (unsigned i = 0; i < main->getNumInsets(); ++i)
           {
              simVis::View* inset = main->getInset(i);
              inset->setVisible(!inset->isVisible());
@@ -198,13 +188,12 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
 
         case 'o':
-            {
-                simVis::View* main = viewer_->getMainView();
-                main->enableOrthographic(!main->isOrthographicEnabled());
-                aa.requestRedraw();
-                handled = true;
-            }
-
+        {
+          simVis::View* main = viewer_->getMainView();
+          main->enableOrthographic(!main->isOrthographicEnabled());
+          aa.requestRedraw();
+          handled = true;
+        }
         break;
       }
     }
@@ -213,18 +202,8 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
 private:
   osg::ref_ptr<simVis::Viewer> viewer_;
-  osg::observer_ptr<simVis::InsetViewEventHandler> handler_;
-  bool removeAllRequested_;
-  bool insertViewPortMode_;
-  int border_;
-};
-
-struct ecb : public osg::NodeCallback
-{
-    void operator()(osg::Node* n, osg::NodeVisitor* nv)
-    {
-        //nop
-    }
+  osg::observer_ptr<simVis::InsetViewEventHandler> insetViewHandler_;
+  osg::observer_ptr<simVis::CreateInsetEventHandler> createHandler_;
 };
 
 int main(int argc, char** argv)
@@ -244,37 +223,39 @@ int main(int argc, char** argv)
   // removed or get focus.
   viewer->addCallback(new ViewReportCallback());
 
-  // Demonstrate the view-drawing service.  This is used to create new inset views with the
-  // mouse.
-  osg::ref_ptr<simVis::InsetViewEventHandler> insetHandler = new simVis::InsetViewEventHandler(viewer->getMainView());
-  viewer->getMainView()->addEventHandler(insetHandler);
+  // Demonstrate the view-drawing service.  This is used to create new inset views with the mouse.
+  simVis::View* mainView = viewer->getMainView();
+  osg::ref_ptr<simVis::InsetViewEventHandler> insetFocusHandler = new simVis::InsetViewEventHandler(mainView);
+  mainView->addEventHandler(insetFocusHandler);
+  osg::ref_ptr<simVis::CreateInsetEventHandler> createInsetsHandler = new simVis::CreateInsetEventHandler(mainView);
+  mainView->addEventHandler(createInsetsHandler);
 
   // Install a handler to respond to the demo keys in this sample.
-  viewer->getMainView()->getCamera()->addEventCallback(new MenuHandler(viewer.get(), insetHandler.get()));
+  mainView->getCamera()->addEventCallback(new MenuHandler(viewer.get(), insetFocusHandler.get(), createInsetsHandler.get()));
 
   // set an initial viewpoint
-  viewer->getMainView()->lookAt(45, 0, 0, 0, -89, 12e6);
+  mainView->lookAt(45, 0, 0, 0, -89, 12e6);
 
-  dynamic_cast<osgEarth::Util::EarthManipulator*>(viewer->getMainView()->getCameraManipulator())
+  dynamic_cast<osgEarth::Util::EarthManipulator*>(mainView->getCameraManipulator())
       ->getSettings()->setTerrainAvoidanceEnabled(false);
 
   simVis::Viewpoint viewPoint("Start",
       -159.87757019550978, 22.525663828229778, 13361.200000000001,
       359.99969592100859, 2.5436404019053387, 81514.399999999994);
-  viewer->getMainView()->setViewpoint(viewPoint);
+  mainView->setViewpoint(viewPoint);
 
   // create a compass image control, add it to the HUD/Overlay
   osg::ref_ptr<simVis::Compass> compass = new simVis::Compass("compass.png");
-  compass->setDrawView(viewer->getMainView());
+  compass->setDrawView(mainView);
   // create an adapter to let compass display heading for current focused view
-  simVis::CompassFocusManagerAdapter adapter(viewer->getMainView()->getFocusManager(), compass.get());
+  simVis::CompassFocusManagerAdapter adapter(mainView->getFocusManager(), compass.get());
 
   // show the help menu
-  //viewer->getMainView()->addOverlayControl(createHelp());
+  //mainView->addOverlayControl(createHelp());
 
   simVis::View* hud = new simVis::View();
-  hud->setUpViewAsHUD(viewer->getMainView());
-  viewer->getMainView()->getViewManager()->addView(hud);
+  hud->setUpViewAsHUD(mainView);
+  mainView->getViewManager()->addView(hud);
   hud->addOverlayControl(createHelp());
 
   // for status and debugging

@@ -1,4 +1,4 @@
-if(NOT QT_FOUND OR NOT OSGEARTH_QT_FOUND OR NOT TARGET simUtil OR NOT TARGET simQt)
+if(NOT TARGET simUtil OR NOT TARGET simQt)
     return()
 endif()
 
@@ -14,8 +14,7 @@ set(PROJECT_FILES
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
 add_executable(example_viewmanager_datamodel_qt ${PROJECT_FILES} ${PROJECT_MOC_FILES})
-target_link_libraries(example_viewmanager_datamodel_qt PRIVATE simVis simUtil
-    simQt OSGEARTH_QT)
+target_link_libraries(example_viewmanager_datamodel_qt PRIVATE simVis simUtil simQt)
 set_target_properties(example_viewmanager_datamodel_qt PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - View Manager Qt Data Model"

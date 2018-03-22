@@ -19,16 +19,17 @@
  * disclose, or release this software.
  *
  */
-#ifndef EXAMPLES_ENTITY_LINE_EDIT_MAINWINDOW_H
-#define EXAMPLES_ENTITY_LINE_EDIT_MAINWINDOW_H
+#ifndef EXAMPLES_CATEGORYFILTERTEST_MAINWINDOW_H
+#define EXAMPLES_CATEGORYFILTERTEST_MAINWINDOW_H
 
 #include <QDialog>
-
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"
-#include "simData/CategoryData/CategoryFilter.h"
 
-namespace simData { class DataStore; }
+namespace simData {
+  class DataStore;
+  class CategoryFilter;
+}
 class Ui_MainWindow;
 
 class MainWindow : public QDialog
@@ -43,7 +44,7 @@ private slots:
   void addSmallAmount_();
   void addMassiveAmount_();
   void toggleState_();
-  void categoryFilterChanged(const simData::CategoryFilter& filter);
+  void categoryFilterChanged_(const simData::CategoryFilter& filter);
 
 protected:
   std::string mmsiString_(int mmsi) const;
@@ -51,9 +52,9 @@ protected:
   void addCategoryData_(double time, const std::string& key, const std::string& value);
 
   simData::DataStore* dataStore_;
-  Ui_MainWindow* mainWindowGui_;
+  Ui_MainWindow* ui_;
   simData::ObjectId platformId_;
   bool state_;
 };
 
-#endif
+#endif /* EXAMPLES_CATEGORYFILTERTEST_MAINWINDOW_H */

@@ -163,6 +163,8 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
   }
   if (PB_FIELD_CHANGED(a, b, shaded))
     SVFactory::updateLighting(beamSV_.get(), b->shaded());
+  if (PB_FIELD_CHANGED(a, b, blended))
+    SVFactory::updateBlending(beamSV_.get(), b->blended());
   if (PB_FIELD_CHANGED(a, b, verticalwidth))
     SVFactory::updateVertAngle(beamSV_.get(), a->verticalwidth(), b->verticalwidth());
   if (PB_FIELD_CHANGED(a, b, horizontalwidth))
@@ -201,7 +203,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
     // in the BeamType_BODY_RELATIVE case, beam data is relative to platform orientation;
     // the ResolvedPositionOrientationLocator maintains the host platform pos and ori
     //  orientation data + offsets applied to this locator -will- be relative to host platform orientation
-    beamOrientationLocator_ = new ResolvedPositionOrientationLocator(beamOriginLocator_, Locator::COMP_ALL);
+    beamOrientationLocator_ = new ResolvedPositionOrientationLocator(beamOriginLocator_.get(), Locator::COMP_ALL);
   }
   else
   {
@@ -210,9 +212,9 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
     // we need to apply an orientation that is not relative to platform orientation : we need to filter out platform orientation.
     // the ResolvedPositionLocator gives us that.
     // orientation data + offsets applied to this locator -will-not- be relative to host platform orientation
-    beamOrientationLocator_ = new ResolvedPositionLocator(beamOriginLocator_, Locator::COMP_ALL);
+    beamOrientationLocator_ = new ResolvedPositionLocator(beamOriginLocator_.get(), Locator::COMP_ALL);
   }
-  setLocator(beamOrientationLocator_);
+  setLocator(beamOrientationLocator_.get());
   setName("BeamNode");
 
   // set up a state set.
@@ -649,6 +651,9 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   {
     depthAttr_->setWriteMask(!activePrefs->blended());
     getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+    // If beam is drawn as a spherical volume, then the spherical volume also needs to be recreated/updated when blending changes.
+    // If the spherical volume does not need to be recreated, updating will be done by performInPlacePrefChanges().
+    // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.
   }
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
@@ -771,10 +776,8 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
   // process explicit beam orientation offsets
   if (posOffsetsChanged)
   {
-    // The 3 types of offsets (platform, beam, and platform-icon offset) are additive.
-    // If platform position offsets are set/enabled, they are already set in the platform locator;
-    // if they are enabled for the platform, they are enabled for everything that derives from the platform locator,
-    // and cannot be disabled.
+    // beampositionoffset and useoffseticon are additive.
+    // (Platform position offsets are applied only to model, they do not affect beam position.)
     simCore::Vec3 posOffset;
     if (activePrefs.useoffsetbeam())
     {

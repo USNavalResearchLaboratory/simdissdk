@@ -61,21 +61,30 @@ set(SIMQT_HEADERS
 # Parts of simQt depend on simData
 if(TARGET simData)
     list(APPEND SIMQT_HEADERS_TO_MOC
+        ${SIMQT_INC}CategoryDataBreadcrumbs.h
+        ${SIMQT_INC}CategoryFilterCounter.h
         ${SIMQT_INC}CategoryFilterWidget.h
         ${SIMQT_INC}CategoryTreeModel.h
+        ${SIMQT_INC}CategoryTreeModel2.h
         ${SIMQT_INC}DataTableComboBox.h
         ${SIMQT_INC}DataTableModel.h
         ${SIMQT_INC}EntityCategoryFilter.h
         ${SIMQT_INC}EntityFilter.h
         ${SIMQT_INC}EntityFilterLineEdit.h
         ${SIMQT_INC}EntityLineEdit.h
+        ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityProxyModel.h
         ${SIMQT_INC}EntityStateFilter.h
         ${SIMQT_INC}EntityTreeComposite.h
+        ${SIMQT_INC}EntityTreeModel.h
         ${SIMQT_INC}EntityTreeWidget.h
         ${SIMQT_INC}EntityTypeFilter.h
         ${SIMQT_INC}EntityTypeFilterWidget.h
         ${SIMQT_INC}TimeWidgetClockBinding.h
+    )
+
+    list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}RegExpImpl.h
     )
 endif()
 
@@ -83,13 +92,15 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
-        ${SIMQT_INC}EntityNameFilter.h
-        ${SIMQT_INC}EntityTreeModel.h
         ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
+        ${SIMQT_INC}ViewWidget.h
     )
+endif()
+
+if(OSG_FOUND)
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}QtConversion.h
     )
@@ -155,19 +166,25 @@ set(SIMQT_SOURCES
 # Parts of simQt depend on simData
 if(TARGET simData)
     list(APPEND SIMQT_SOURCES
+        ${SIMQT_SRC}CategoryDataBreadcrumbs.cpp
+        ${SIMQT_SRC}CategoryFilterCounter.cpp
         ${SIMQT_SRC}CategoryFilterWidget.cpp
         ${SIMQT_SRC}CategoryTreeModel.cpp
+        ${SIMQT_SRC}CategoryTreeModel2.cpp
         ${SIMQT_SRC}DataTableComboBox.cpp
         ${SIMQT_SRC}DataTableModel.cpp
         ${SIMQT_SRC}EntityCategoryFilter.cpp
         ${SIMQT_SRC}EntityFilterLineEdit.cpp
         ${SIMQT_SRC}EntityLineEdit.cpp
+        ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityProxyModel.cpp
         ${SIMQT_SRC}EntityStateFilter.cpp
         ${SIMQT_SRC}EntityTreeComposite.cpp
+        ${SIMQT_SRC}EntityTreeModel.cpp
         ${SIMQT_SRC}EntityTreeWidget.cpp
         ${SIMQT_SRC}EntityTypeFilter.cpp
         ${SIMQT_SRC}EntityTypeFilterWidget.cpp
+        ${SIMQT_SRC}RegExpImpl.cpp
         ${SIMQT_SRC}TimeWidgetClockBinding.cpp
     )
 endif()
@@ -176,13 +193,17 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
-        ${SIMQT_SRC}EntityNameFilter.cpp
-        ${SIMQT_SRC}EntityTreeModel.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
-        ${SIMQT_SRC}QtConversion.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
+        ${SIMQT_SRC}ViewWidget.cpp
+    )
+endif()
+
+if(OSG_FOUND)
+    list(APPEND SIMQT_SOURCES
+        ${SIMQT_SRC}QtConversion.cpp
     )
 endif()
 
@@ -250,7 +271,12 @@ if(TARGET simVis)
     )
 endif()
 
+# Link against OpenGL if OSGQT is found to support simQt::ViewWidget
 target_link_libraries(simQt PUBLIC simCore simNotify)
+if(TARGET OSGQT)
+    target_link_libraries(simQt PUBLIC OSGQT)
+endif()
+
 # Parts of simQt depend on simData's protobuf generated code
 if(TARGET simData)
     add_dependencies(simQt simData_protobuf_generation)
@@ -268,6 +294,9 @@ else()
 endif()
 if(TARGET simData)
     target_compile_definitions(simQt PRIVATE HAVE_SIMDATA)
+endif()
+if(TARGET simVis)
+    target_compile_definitions(simQt PRIVATE HAVE_SIMVIS)
 endif()
 
 # If simQt is a DLL, avoid linking in "heavy" dependencies if possible
@@ -287,8 +316,11 @@ else()
     endif()
 endif()
 
-
-VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)
+if(TARGET OSGQT)
+    VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets OpenGL)
+else()
+    VSI_QT_USE_MODULES(simQt LINK_PUBLIC Widgets)
+endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     set_target_properties(simQt PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")

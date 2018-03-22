@@ -281,6 +281,23 @@ namespace simCore
   SDKCORE_EXPORT void calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double* azim, double* elev, double* cmp);
 
   /**
+  * @brief Calculates the body relative angles from a set of host geodetic Euler angles to true az/el vector
+  *
+  * Calculates the body relative angles from a set of host geodetic Euler angles to a true az/el vector.  This can
+  * be used (for example) to calculate a beam's body az/el given its true az/el and host yaw/pitch/roll.  This
+  * function is related to simCore::rotateEulerAngle(), which can calculate a beam's true az/el given a beam's
+  * body az/el and host yaw/pitch/roll.
+  * @param[in ] trueAz True azimuth component (rad)
+  * @param[in ] trueEl True elevation component (rad)
+  * @param[in ] refOri Reference orientation based on geodetic Euler angles (YPR) to compute relative angles (rad)
+  * @param[out] azim Relative azimuth value (rad)
+  * @param[out] elev Relative elevation value (rad)
+  * @param[out] cmp Relative composite angle (rad)
+  * @pre one of the azim, elev or cmp params must be valid
+  */
+  SDKCORE_EXPORT void calculateRelAngToTrueAzEl(double trueAz, double trueEl, const Vec3& refOri, double* azim, double* elev, double* cmp);
+
+  /**
   * @brief Find the lat/lon of a point 'dist' away along the given angle 'azfwd'
   *
   * This function implements Sodano's direct solution algorithm to determine geodetic

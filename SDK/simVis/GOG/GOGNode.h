@@ -24,6 +24,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include "osgEarth/GeoData"
 #include "osgEarthSymbology/Style"
 #include "osg/Group"
@@ -61,7 +62,10 @@ namespace simVis { namespace GOG
   // surface tessellation size (meters) for ellipsoids, spheres, etc.
   static float GogSurfaceResolution = 5000.0f;
 
+  // Keyword in meta data to indicate the shape is relative, i.e. has xyz positions
   static const std::string RelativeShapeKeyword = "RELATIVE_SHAPE";
+  // Keyword in meta data to indicate the shape has a referencepoint which may be obtained from the node's geometry
+  static const std::string ReferencePointKeyword = "REFERENCE_POINT";
 
   // Forward declare an error handler for the context (see simVis/GOG/ErrorHandler.h"
   class ErrorHandler;

@@ -37,6 +37,8 @@
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Locator.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 
 /// some basic components (mouse hover popups, scenario, utilities, camera controls)
 #include "simVis/Viewer.h"

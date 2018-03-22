@@ -44,6 +44,8 @@
 #include "simVis/PlatformModel.h"
 #include "simVis/Beam.h"
 #include "simVis/Locator.h"
+#include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 
 /// some basic components (mouse hover popups, scenario, utilities, camera controls)
@@ -293,7 +295,7 @@ void addPlatformAndBeam(AppData* app,
     simData::DataStore::Transaction xaction;
     simData::BeamProperties* props = app->ds.addBeam(&xaction);
     props->set_hostid(app->platformId);
-    props->set_type(simData::BeamProperties_BeamType_BODY_RELATIVE);
+    props->set_type(simData::BeamProperties_BeamType_ABSOLUTE_POSITION);
     app->beamId = props->id();
     xaction.complete(&props);
   }

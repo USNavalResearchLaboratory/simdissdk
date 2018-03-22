@@ -135,8 +135,8 @@ endif()
 # Fall back to Qt4?
 set(OSGEARTH_VERSION "OSG-${OSG_VERSION}")
 if(IS_DIRECTORY "${Qt5Widgets_DIR}")
-    # Our osgEarth directory is versioned with Qt- values for 5.x
-    set(OSGEARTH_VERSION "OSG-${OSG_VERSION}_Qt-${QT_VERSION}")
+    # Our osgEarth directory is versioned with the OSG version
+    set(OSGEARTH_VERSION "OSG-${OSG_VERSION}")
 else()
     vsi_configure_qt4()
 endif()

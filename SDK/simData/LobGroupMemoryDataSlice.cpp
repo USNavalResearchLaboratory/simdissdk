@@ -56,7 +56,7 @@ void LobGroupMemoryDataSlice::update(double time)
 
   // find the start of the time window.  startTime is set to the desired time, so that
   // lower_bound returns the desired value, the next time >= than startTime
-  double startTime = time - maxDataSeconds_;
+  double startTime = time - simCore::sdkMax(maxDataSeconds_, 0.0);
   std::deque<LobGroupUpdate*>::const_iterator startTimeIter = std::lower_bound(updates_.begin(), updates_.end(), startTime, UpdateComp<LobGroupUpdate>());
 
   // find the start of the point number window
@@ -72,6 +72,9 @@ void LobGroupMemoryDataSlice::update(double time)
     useIter = startNumIter;
   else
     useIter = startTimeIter;
+  // Assertion failure means that the loop below is going to cause problems.  Assertion trigger means
+  // we picked a start___Iter that is AFTER the current time, which shouldn't be feasible.
+  assert(useIter <= curTimeIter);
 
   // create the new update
   LobGroupUpdate* currentUpdate = new LobGroupUpdate();

@@ -197,15 +197,20 @@ public:
   virtual void setEnforceLimits(bool limitBeforeStart, bool limitAfterEnd);
   /// Make sure the value is limited by the time range, if necessary
   virtual simCore::TimeStamp clampTime(const simCore::TimeStamp& value);
-  /// A segment calls valueChanged when the value has changed.
+  /// A segment calls valueEdited when the value has changed via the user.
+  virtual void valueEdited() = 0;
+  /// A segment calls valueChanged when the value has changed via the user or by setTimeStamp
   virtual void valueChanged() = 0;
   /// Set the number if digits after the decimal point
   virtual void setPrecision(unsigned int digits) = 0;
   /// Returns the number of digits after the decimal point
   unsigned int precision() const;
 
-  /// Adds a line segment
+  /// Adds a line segment; takes ownership of part
   void addPart(SegmentedText* part);
+  /// Clear and delete all line segments
+  void clearParts();
+
   /** Given a character position, the routine returns the Line Segment containing the position.
   * @param[in] pos The current cursor position
   * @return The Line Segment containing the position
@@ -235,7 +240,9 @@ public:
   virtual QValidator::State validateText(const QString& text) const;
 
 signals:
-  /// Lets the outside know the user changed the value
+  /// emitted when the time changes via the user
+  void timeEdited(const simCore::TimeStamp& time);
+  /// emitted when the time is changed by the user or by setTimeStamp
   void timeChanged(const simCore::TimeStamp& time);
 
 protected:
@@ -269,10 +276,14 @@ public:
   virtual ~SecondsTexts();
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
+  virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
+
 private:
+  void makeSegments_();
+
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
 };
@@ -287,11 +298,14 @@ public:
   virtual ~MinutesTexts();
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
+  virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
@@ -307,11 +321,14 @@ public:
 
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
+  virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   NumberText* hours_;  // Displays the hours
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
@@ -328,11 +345,14 @@ public:
 
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
+  virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   NumberText* days_;  // Displays the day of year
   NumberText* years_;  // Displays the year
   NumberText* hours_;  // Displays the hours
@@ -351,11 +371,14 @@ public:
   // from SegmentedTexts
   virtual simCore::TimeStamp timeStamp() const;
   virtual void setTimeStamp(const simCore::TimeStamp& value);
+  virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
 
 private:
+  void makeSegments_();
+
   MonthText* month_; // Displays the month
   NumberText* days_;  // Displays the day of year
   NumberText* years_;  // Displays the year

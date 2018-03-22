@@ -23,15 +23,14 @@
 #include "osg/TextureRectangle"
 #include "osg/Image"
 #include "osg/Depth"
-#include "osg/AlphaFunc"
 #include "osg/LightModel"
 #include "osg/PolygonOffset"
 #include "osg/ClipNode"
 #include "osg/ClipPlane"
 #include "osgDB/ReadFile"
+#include "osgEarth/Version"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/NodeUtils"
-#include "osgEarth/CullingUtils"
 #include "osgEarth/Horizon"
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ModelLayer"
@@ -41,12 +40,22 @@
 #include "osgEarthDrivers/engine_mp/MPTerrainEngineOptions"
 #include "osgEarthUtil/LODBlending"
 
+#if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
+#include "osgEarthUtil/HorizonClipPlane"
+#else
+#include "osgEarth/CullingUtils" // for ClipToGeocentricHorizon
+#endif
+
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
+#include "simVis/AlphaTest.h"
+#include "simVis/CentroidManager.h"
 #include "simVis/Constants.h"
+#include "simVis/ModelCache.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/Registry.h"
+#include "simVis/Scenario.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
 #include "simVis/SceneManager.h"
@@ -120,10 +129,12 @@ void SceneManager::init_()
   material->setShininess(osg::Material::FRONT_AND_BACK, 10.f);
   getOrCreateStateSet()->setAttributeAndModes(material, osg::StateAttribute::ON);
 
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
   // Set a decent ambient intensity
   osg::ref_ptr<osg::LightModel> lightModel = new osg::LightModel;
   lightModel->setAmbientIntensity(osg::Vec4(0.3f, 0.3f, 0.3f, 1.f));
   getOrCreateStateSet()->setAttributeAndModes(lightModel, osg::StateAttribute::ON);
+#endif
 
   // Set up blending to get rid of most jaggies.  Line smoothing is not enabled
   // by default, as it can cause problems when multisampling is enabled.
@@ -144,6 +155,10 @@ void SceneManager::init_()
   // this will assist in z-fighting of overlaid lines, sometimes
   mapContainer_->getOrCreateStateSet()->setAttributeAndModes(new osg::PolygonOffset(1, -1), osg::StateAttribute::ON);
 
+  // handles centroids
+  centroidManager_ = new CentroidManager();
+  addChild(centroidManager_.get());
+
   // handles projected textures/videos
   projectorManager_ = new ProjectorManager();
   addChild(projectorManager_.get());
@@ -155,6 +170,13 @@ void SceneManager::init_()
   // updates scenario objects
   scenarioManager_ = new ScenarioManager(this, projectorManager_.get());
   drapeableNode_->addChild(scenarioManager_.get());
+
+  // Add the Model Cache's asynchronous loader node.  This is needed for asynchronous loading, which
+  // requires access to the database pager mechanisms of OSG that are available during the cull traversal.
+  const char* noAsyncLoad = ::getenv("SIMVIS_NO_ASYNC_LOAD");
+  // Allow end user to force synchronous load
+  if (!noAsyncLoad || strncmp(noAsyncLoad, "0", 1) == 0)
+    addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
 
   // SilverLining requires a write to the depth buffer to avoid having clouds overwrite objects
   // in the scene.  Therefore everything needs to write to depth buffer.  However, some things
@@ -176,8 +198,7 @@ void SceneManager::init_()
   drcStateSet->setAttributeAndModes(new osg::ColorMask(false, false, false, false), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
   // Omit any pixels with a low alpha, so things like text glyphs don't cause bad behavior
   static const float ALPHA_THRESHOLD = 0.05f;
-  drcStateSet->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, ALPHA_THRESHOLD), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-  drcStateSet->setMode(GL_ALPHA_TEST, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+  AlphaTest::setValues(drcStateSet, ALPHA_THRESHOLD, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
   // Configure the default terrain options
   if (simVis::useRexEngine())
@@ -208,6 +229,18 @@ void SceneManager::init_()
 
   setName("simVis::SceneManager");
 
+#if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
+  // Install a clip node. This will activate and maintain our visible-horizon
+  // clip plane for geometry (or whatever else we want clipped). Then, to activate
+  // clipping on a graph, just enable the GL_CLIP_DISTANCE0+CLIPPLANE_VISIBLE_HORIZON
+  // mode on its stateset; or you can use osgEarth symbology and use
+  // RenderSymbol::clipPlane() = CLIPPLANE_VISIBLE_HORIZON in conjunction with
+  // RenderSymbol::depthTest() = false.
+  osgEarth::Util::HorizonClipPlane* hcp = new osgEarth::Util::HorizonClipPlane();
+  hcp->setClipPlaneNumber(CLIPPLANE_VISIBLE_HORIZON);
+  hcp->installShaders(this->getOrCreateStateSet());
+  this->addCullCallback(hcp);
+#else // osgEarth 2.9 or older, use ClipToGeocentricHorizon object
   // Install a clip node. This will activate and maintain our visible-horizon
   // clip plane for geometry (or whatever else we want clipped). Then, to activate
   // clipping on a graph, just enable the GL_CLIP_PLANE0 mode on its stateset; or
@@ -218,11 +251,11 @@ void SceneManager::init_()
   clipNode->addClipPlane(horizonClipPlane);
   clipNode->addCullCallback(new osgEarth::ClipToGeocentricHorizon(getMap()->getSRS(), horizonClipPlane));
   addChild(clipNode);
-
   // Install shader snippet to activate clip planes in the shader
   osgEarth::VirtualProgram* clipVp = osgEarth::VirtualProgram::getOrCreate(this->getOrCreateStateSet());
   simVis::Shaders package;
   package.load(clipVp, package.setClipVertex());
+#endif
 
   // Turn off declutter
   osgEarth::ScreenSpaceLayout::setDeclutteringEnabled(false);
@@ -557,6 +590,9 @@ void SceneManager::applyImageLayerDisplaySettings_(const osgEarth::ImageLayer& s
 {
   destLayer->setOpacity(sourceLayer.getOpacity());
   destLayer->setVisible(sourceLayer.getVisible());
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
+  destLayer->setEnabled(sourceLayer.getEnabled());
+#endif
 }
 
 std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
@@ -597,6 +633,13 @@ Locator* SceneManager::createLocator() const
 {
   return
     mapNode_.valid() ? new Locator(mapNode_->getMap()->getProfile()->getSRS()) :
+    NULL;
+}
+
+CachingLocator* SceneManager::createCachingLocator() const
+{
+  return
+    mapNode_.valid() ? new CachingLocator(mapNode_->getMap()->getProfile()->getSRS()) :
     NULL;
 }
 

@@ -307,9 +307,7 @@ simData::DataTable* DataStoreHelpers::getOrCreateDataTable(ObjectId objectId, co
     return NULL;
 
   simData::DataTableManager& tableManager = dataStore->dataTableManager();
-  simData::DataTable* table = NULL;
-
-  table = tableManager.findTable(objectId, tableName);
+  simData::DataTable* table = tableManager.findTable(objectId, tableName);
 
   // if failed to find the table, create the table.
   if (table == NULL)

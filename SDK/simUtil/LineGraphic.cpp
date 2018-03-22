@@ -45,7 +45,8 @@ static const float DEFAULT_FONTSIZE = 14;
 LineGraphic::LineGraphic(osg::Group* scene, osgEarth::MapNode* mapNode)
   : scene_(scene),
     wgs84Srs_(osgEarth::SpatialReference::create("wgs84")),
-    animatedLine_(new simVis::AnimatedLineNode(DEFAULT_LINEWIDTH, false))
+    animatedLine_(new simVis::AnimatedLineNode(DEFAULT_LINEWIDTH, false)),
+    displayMask_(GRAPHIC_MASK_RULERLINE)
 {
   // Configure default settings of the animated line
   animatedLine_->setStipple1(DEFAULT_STIPPLE);
@@ -53,7 +54,7 @@ LineGraphic::LineGraphic(osg::Group* scene, osgEarth::MapNode* mapNode)
   animatedLine_->setColor1(DEFAULT_LINECOLOR);
   animatedLine_->setShiftsPerSecond(0.0);
   // Apply the clip plane on the line
-  animatedLine_->getOrCreateStateSet()->setMode(GL_CLIP_PLANE0, 1);
+  animatedLine_->getOrCreateStateSet()->setMode(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE, 1);
   animatedLine_->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_ANIMATEDLINE, simVis::BIN_GLOBAL_SIMSDK);
 
   // Set up the label node default style
@@ -110,7 +111,7 @@ void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& desti
     simCore::Coordinate coord2(simCore::COORD_SYS_LLA, destinationLLA);
     animatedLine_->setEndPoints(coord1, coord2);
     // Turn on the node
-    animatedLine_->setNodeMask(GRAPHIC_MASK_RULERLINE);
+    animatedLine_->setNodeMask(displayMask_);
 
     if (labelString.empty())
     {
@@ -126,7 +127,7 @@ void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& desti
         destinationLLA.lat(), destinationLLA.lon(), labelLat, labelLon);
       label_->setPosition(osgEarth::GeoPoint(wgs84Srs_.get(), labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG));
       label_->setText(labelString);
-      label_->setNodeMask(GRAPHIC_MASK_RULERLINE);
+      label_->setNodeMask(displayMask_);
     }
   }
   else
@@ -142,10 +143,26 @@ void LineGraphic::setLineWidth(float lineWidth)
   animatedLine_->setLineWidth(lineWidth);
 }
 
+bool LineGraphic::isDrawn() const
+{
+  // Currently label and line cannot have different NodeMasks. This method will need updating if that changes
+  return animatedLine_->getNodeMask() != 0;
+}
+
 void LineGraphic::setDraw(bool draw)
 {
-  animatedLine_->setNodeMask(draw ? GRAPHIC_MASK_RULERLINE : simVis::DISPLAY_MASK_NONE);
-  label_->setNodeMask(draw ? GRAPHIC_MASK_RULERLINE : simVis::DISPLAY_MASK_NONE);
+  animatedLine_->setNodeMask(draw ? displayMask_ : simVis::DISPLAY_MASK_NONE);
+  label_->setNodeMask(draw ? displayMask_ : simVis::DISPLAY_MASK_NONE);
+}
+
+void LineGraphic::setDisplayMask(int displayMask)
+{
+  if (displayMask == displayMask_)
+    return;
+
+  displayMask_ = displayMask;
+  // Use setDraw to appropriately reset the nodeMasks
+  setDraw(isDrawn());
 }
 
 void LineGraphic::setStipplePattern(unsigned short stipple)

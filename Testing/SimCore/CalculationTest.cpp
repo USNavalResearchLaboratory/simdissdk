@@ -981,61 +981,132 @@ int testRotateEulerAngle()
   const double RAD30 = 30 * simCore::DEG2RAD;
   const double RAD180 = 180 * simCore::DEG2RAD;
 
-  simCore::Vec3 rot;
+  simCore::Vec3 hostYPR;
+  simCore::Vec3 bodyAzEl;
+  simCore::Vec3 trueAzElCalculated;
+  simCore::Vec3 bodyAzElCalculated;
+  double bodyAz = 0.0;
+  double bodyEl = 0.0;
   {
     // Simple rotation left and right, starting from 0,0,0
-    rot = simCore::rotateEulerAngle(simCore::Vec3(0, 0, 0), simCore::Vec3(RAD15, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(0, 0, 0), simCore::Vec3(RAD30, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD30));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(0, 0, 0), simCore::Vec3(-RAD15, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), -RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(0, 0, 0), simCore::Vec3(-RAD30, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), -RAD30));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
+    hostYPR.set(0, 0, 0);
+
+    bodyAzEl.set(RAD15, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(RAD30, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD30));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(-RAD15, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), -RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(-RAD30, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), -RAD30));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
   }
   {
     // Simple rotation left and right, starting from -180,0,0
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD180, 0, 0), simCore::Vec3(RAD15, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD180 + RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD180, 0, 0), simCore::Vec3(RAD30, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD180 + RAD30));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD180, 0, 0), simCore::Vec3(-RAD15, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD180 - RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD180, 0, 0), simCore::Vec3(-RAD30, 0, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD180 - RAD30));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 0));
+    hostYPR.set(RAD180, 0, 0);
+
+    bodyAzEl.set(RAD15, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD180 + RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(RAD30, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD180 + RAD30));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(-RAD15, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD180 - RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(-RAD30, 0, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD180 - RAD30));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 0));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
   }
   {
     // Simple rotation up and down
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD15, 0, 0), simCore::Vec3(0, RAD15, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), RAD15));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD15, 0, 0), simCore::Vec3(0, RAD30, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), RAD30));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD15, 0, 0), simCore::Vec3(0, -RAD15, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), -RAD15));
-    rot = simCore::rotateEulerAngle(simCore::Vec3(RAD15, 0, 0), simCore::Vec3(0, -RAD30, 0));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), RAD15));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), -RAD30));
+    hostYPR.set(RAD15, 0, 0);
+
+    bodyAzEl.set(0, RAD15, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), RAD15));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(0, RAD30, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), RAD30));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(0, -RAD15, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), -RAD15));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
+
+    bodyAzEl.set(0, -RAD30, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), RAD15));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), -RAD30));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
   }
 
   {
     // Complex example from the Doxygen docs
-    const simCore::Vec3 startAngle(15 * simCore::DEG2RAD, 5 * simCore::DEG2RAD, -90 * simCore::DEG2RAD);
-    const simCore::Vec3 rotateBy(0, 15 * simCore::DEG2RAD, 0);
-    rot = simCore::rotateEulerAngle(startAngle, rotateBy);
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.x(), -0.055 * simCore::DEG2RAD, 1e-2));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.y(), 4.82922 * simCore::DEG2RAD, 1e-2));
-    rv += SDK_ASSERT(simCore::areAnglesEqual(rot.z(), -91.2972 * simCore::DEG2RAD, 1e-2));
+    hostYPR.set(15 * simCore::DEG2RAD, 5 * simCore::DEG2RAD, -90 * simCore::DEG2RAD);
+    bodyAzEl.set(0, 15 * simCore::DEG2RAD, 0);
+    trueAzElCalculated = simCore::rotateEulerAngle(hostYPR, bodyAzEl);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.x(), -0.055 * simCore::DEG2RAD, 1e-2));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.y(), 4.82922 * simCore::DEG2RAD, 1e-2));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(trueAzElCalculated.z(), -91.2972 * simCore::DEG2RAD, 1e-2));
+    simCore::calculateRelAngToTrueAzEl(trueAzElCalculated.x(), trueAzElCalculated.y(), hostYPR, &bodyAz, &bodyEl, NULL);
+    bodyAzElCalculated.set(bodyAz, bodyEl, 0.0);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(bodyAzElCalculated, bodyAzEl));
   }
   return rv;
 }

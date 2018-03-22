@@ -189,6 +189,9 @@ public:
   /** Provide a custom show() method that also sets focus.  Note that QWidget::show() is not virtual. */
   void show();
 
+  /** Undocks the dock window */
+  void undock();
+
 public slots:
 
   /**

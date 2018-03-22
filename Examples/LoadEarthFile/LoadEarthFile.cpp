@@ -31,6 +31,7 @@
 #include "simVis/Viewer.h"
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/Platform.h"
+#include "simVis/SceneManager.h"
 #include "simUtil/DbConfigurationFile.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/MousePositionManipulator.h"
@@ -134,7 +135,7 @@ private:
 /// An event handler to assist in testing the InsetViewManager / Load Earth functionality.
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(simVis::Viewer* viewer, simVis::InsetViewEventHandler* handler, LabelControl* elevationLabel, simUtil::MouseDispatcher* mouseDispatcher)
+  MenuHandler(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler, LabelControl* elevationLabel, simUtil::MouseDispatcher* mouseDispatcher)
    : viewer_(viewer),
      handler_(handler),
      latLonElevListener_(NULL),
@@ -143,7 +144,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
     latLonElevListener_ = new LatLonElevationListener(elevationLabel);
     mouseDispatcher_ = mouseDispatcher;
     mouseDispatcher_->setViewManager(NULL);
-    setUpMouseManip_(viewer_);
+    setUpMouseManip_(viewer_.get());
   }
 
   bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -166,7 +167,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
       }
 
       case 'i': // TOGGLE INSERT INSET MODE
-        handler_->setAddInsetMode(!handler_->isAddInsetMode());
+        handler_->setEnabled(!handler_->isEnabled());
         handled = true;
         break;
 
@@ -174,16 +175,16 @@ struct MenuHandler : public osgGA::GUIEventHandler
       case '1':
         mouseManip_->removeListener(latLonElevListener_);
         earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
-        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_, false);
-        setUpMouseManip_(viewer_);
+        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), false);
+        setUpMouseManip_(viewer_.get());
         handled = true;
         break;
 
       case '2': // LOAD EARTH FILE, MAP ONLY
         mouseManip_->removeListener(latLonElevListener_);
         earthFileIndex = (earthFileIndex + 1) % earthFiles.size();
-        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_, true);
-        setUpMouseManip_(viewer_);
+        earthFileLoader::loadEarthFile(earthFiles[earthFileIndex], viewer_.get(), true);
+        setUpMouseManip_(viewer_.get());
         handled = true;
         break;
 
@@ -215,8 +216,8 @@ private:
       mouseManip_->addListener(latLonElevListener_, true);
   }
 
-  simVis::Viewer* viewer_;
-  simVis::InsetViewEventHandler* handler_;
+  osg::observer_ptr<simVis::Viewer> viewer_;
+  osg::observer_ptr<simVis::CreateInsetEventHandler> handler_;
   LatLonElevationListener* latLonElevListener_;
   bool showLatLonElevation_;
   simUtil::MouseDispatcher* mouseDispatcher_;
@@ -266,6 +267,8 @@ int main(int argc, char** argv)
   simVis::View* mainView = viewer->getMainView();
   osg::ref_ptr<simVis::InsetViewEventHandler> insetHandler = new simVis::InsetViewEventHandler(mainView);
   mainView->addEventHandler(insetHandler);
+  osg::ref_ptr<simVis::CreateInsetEventHandler> createInsetsHandler = new simVis::CreateInsetEventHandler(mainView);
+  mainView->addEventHandler(createInsetsHandler);
 
   if (!earthFiles.empty())
   {
@@ -294,10 +297,10 @@ int main(int argc, char** argv)
   mouseDispatcher.reset(new simUtil::MouseDispatcher);
 
   // Handles hotkeys from user
-  mainView->addEventHandler(new MenuHandler(viewer.get(), insetHandler.get(), elevationLabel.get(), mouseDispatcher.get()));
+  mainView->addEventHandler(new MenuHandler(viewer.get(), createInsetsHandler.get(), elevationLabel.get(), mouseDispatcher.get()));
 
   // show the help menu
   viewer->getMainView()->addOverlayControl(createHelp(elevationLabel.get()));
   viewer->installDebugHandlers();
-  viewer->run();
+  return viewer->run();
 }

@@ -45,6 +45,14 @@ public:
   static QString getRegistryDir(const QString& registryDir);
 
   /**
+  * Returns the suggested file dialog default options for the current system. This is useful when users
+  * want to instantiate their own instance of QFileDialog, and the options may be differ depending
+  * on system conditions.
+  * @return file dialog options
+  */
+  static QFileDialog::Options getFileDialogDefaultOptions();
+
+  /**
    * Sets the default value for a registry directory.  This can either overwrite the existing
    * entry, or simply prime the entry if one does not already exist.
    * @param registryDir Registry directory to load/save last directory, such as "SETTINGS/LastDir" or "DirectorySettings/ImportantFiles"

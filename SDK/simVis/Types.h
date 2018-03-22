@@ -53,11 +53,6 @@ namespace simVis
   /** Vector of ScenarioTool ref_ptr */
   typedef std::vector< osg::ref_ptr<ScenarioTool> > ScenarioToolVector;
 
-  /** State attribute type for simVis::LightAmbient -- should not conflict with other Type values */
-  static const osg::StateAttribute::Type LIGHT_AMBIENT = static_cast<osg::StateAttribute::Type>(1001);
-  /** State attribute type for simVis::LightDiffuse -- should not conflict with other Type values */
-  static const osg::StateAttribute::Type LIGHT_DIFFUSE = static_cast<osg::StateAttribute::Type>(1002);
-
 } // namespace simVis
 
 

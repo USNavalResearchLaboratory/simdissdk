@@ -27,6 +27,7 @@
 #include "simVis/VaporTrailStorage.h"
 #include "simVis/Registry.h"
 #include "simVis/Scenario.h"
+#include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
@@ -118,7 +119,7 @@ void addRocketBurnData(simVis::RocketBurnStorage &rocketBurnStorage, simData::Ob
   rocketBurnShape.length = 10;
   rocketBurnShape.scaleAlpha = true;
 
-  updateData.positionOffset = simCore::Vec3(0, -platformLength, 0);
+  updateData.positionOffset = osg::Vec3f(0, -platformLength, 0);
 
   const uint64_t burnId = 0;
 
@@ -132,12 +133,12 @@ void addRocketBurnData(simVis::RocketBurnStorage &rocketBurnStorage, simData::Ob
 
   // time 10 - change color and direction
   rocketBurnShape.color = osg::Vec4(1, 0, 0, 1);
-  updateData.pointingAngle = simCore::Vec3(1.57, 0, 0);
+  updateData.pointingAngle = osg::Vec3f(1.57, 0, 0);
   rocketBurnStorage.addBurnData(platId, burnId, 10, updateData);
 
   // time 15 - change length
   rocketBurnShape.length = 20;
-  updateData.pointingAngle = simCore::Vec3(-1.57, 0, 0);
+  updateData.pointingAngle = osg::Vec3f(-1.57, 0, 0);
   rocketBurnStorage.addBurnData(platId, burnId, 15, updateData);
 }
 

@@ -151,8 +151,8 @@ public slots:
   bool expandsOnDoubleClick() const;
   /** Scrolls the list so that the item is visible */
   void scrollTo(uint64_t id, QAbstractItemView::ScrollHint hint=QAbstractItemView::EnsureVisible);
-  /** Sets the visibility of the button that switches between List view and Tree view */
-  void setListTreeButtonDisplayed(bool value);
+  /** Sets the enabled state of the action that switches between List view and Tree view */
+  void setTreeViewActionEnabled(bool value);
   /**
    * Set filters to the given settings
    * @param settings Filters get data from the setting using a global unique key
@@ -164,8 +164,10 @@ signals:
   void itemsSelected(QList<uint64_t> ids);
   /** The unique ID of the entity just double clicked */
   void itemDoubleClicked(uint64_t id);
-  /** Fired when the Center On Entity context menu action is triggered */
+  /** Fired when the Center On Selection context menu action is triggered with a single id */
   void centerOnEntityRequested(uint64_t id);
+  /** Fired when the Center On Selection context menu action is triggered with a list of ids */
+  void centerOnSelectionRequested(const QList<uint64_t>& ids);
   /**
    * A filter setting was changed
    * @param settings Filters get data from the setting using a global unique key
@@ -221,6 +223,7 @@ private:
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
   bool useCenterAction_;
+  bool treeViewUsable_;
 
   SettingsPtr settings_;
   simQt::Settings::ObserverPtr observer_;
