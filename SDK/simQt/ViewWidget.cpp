@@ -30,6 +30,7 @@
 #include "osgViewer/Viewer"
 #include "osgViewer/ViewerEventHandlers"
 
+#include "simVis/Utils.h"
 #include "simQt/ViewWidget.h"
 
 namespace simQt
@@ -105,7 +106,9 @@ void ViewWidget::createViewer_()
   viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
   viewer->setCameraManipulator(new osgEarth::Util::EarthManipulator());
 
-  viewer->addEventHandler(new osgViewer::StatsHandler());
+  osgViewer::StatsHandler* stats = new osgViewer::StatsHandler;
+  simVis::fixStatsHandlerGl2BlockyText(stats);
+  viewer->addEventHandler(stats);
   viewer->addEventHandler(new osgGA::StateSetManipulator());
   viewer->addEventHandler(new osgViewer::ThreadingHandler());
 

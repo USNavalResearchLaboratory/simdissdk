@@ -396,6 +396,14 @@ osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropIm
   return osgText::Text::POLYGON_OFFSET;
 }
 
+void fixStatsHandlerGl2BlockyText(osgViewer::StatsHandler* statsHandler)
+{
+#if OSG_VERSION_GREATER_OR_EQUAL(3, 4, 1) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
+  if (statsHandler && statsHandler->getCamera())
+    statsHandler->getCamera()->getOrCreateStateSet()->removeAttribute(osg::StateAttribute::PROGRAM);
+#endif
+}
+
 //--------------------------------------------------------------------------
 
 osg::Quat Math::eulerDegToQuat(double h, double p, double r)

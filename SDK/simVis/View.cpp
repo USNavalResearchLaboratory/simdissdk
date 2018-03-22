@@ -1801,6 +1801,7 @@ void View::installBasicDebugHandlers()
   // Allows toggling through statistics pages ('s')
   osgViewer::StatsHandler* stats = new osgViewer::StatsHandler();
   stats->getCamera()->setAllowEventFocus(false);
+  simVis::fixStatsHandlerGl2BlockyText(stats);
   addEventHandler(stats);
 
   // Allows cycling of polygon mode, textures, lighting back face enabling

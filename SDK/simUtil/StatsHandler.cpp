@@ -20,6 +20,7 @@
  *
  */
 #include <limits>
+#include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "simUtil/StatsHandler.h"
 
@@ -37,6 +38,7 @@ StatsHandler::StatsHandler()
 
   // Ignore events and pass them through
   getCamera()->setAllowEventFocus(false);
+  simVis::fixStatsHandlerGl2BlockyText(this);
 }
 
 void StatsHandler::setStatsType(StatsHandler::StatsType statsType, simVis::View* onWhichView)
