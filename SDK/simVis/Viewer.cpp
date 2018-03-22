@@ -24,6 +24,7 @@
 #include "osgViewer/ViewerEventHandlers"
 #include "simVis/CentroidManager.h"
 #include "simVis/SceneManager.h"
+#include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 
 namespace simVis
@@ -207,6 +208,9 @@ void Viewer::installBasicDebugHandlers()
 {
   osgViewer::StatsHandler* stats = new osgViewer::StatsHandler();
   stats->getCamera()->setAllowEventFocus(false);
+  // Fix blocky text in Stats Handler from the shader program issues with text in OSG 3.4.1
+  simVis::fixStatsHandlerGl2BlockyText(stats);
+
   addEventHandler(stats);
   addEventHandler(new osgGA::StateSetManipulator(getMainView()->getCamera()->getOrCreateStateSet()));
 }

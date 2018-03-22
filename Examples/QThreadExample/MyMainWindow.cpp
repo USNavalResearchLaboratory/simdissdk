@@ -21,6 +21,7 @@
  */
 #include <QGLWidget>
 #include <QWindow>
+#include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "Reader.h"
 #include "Gui.h"
@@ -45,9 +46,10 @@ MyMainWindow::MyMainWindow(simVis::ViewManager* viewMan, simData::DataStore& dat
   redrawTimer_.start(20);
 
   _statsHandler = new simUtil::StatsHandler;
+  simVis::fixStatsHandlerGl2BlockyText(_statsHandler.get());
   osg::observer_ptr<simVis::View> mainView = viewManager_->getView(0);
   if (mainView.valid())
-    mainView->addEventHandler(_statsHandler);
+    mainView->addEventHandler(_statsHandler.get());
 }
 
 MyMainWindow::~MyMainWindow()

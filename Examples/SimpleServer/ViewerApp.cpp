@@ -268,6 +268,7 @@ void ViewerApp::init_(osg::ArgumentParser& args)
   osgViewer::StatsHandler* stats = new osgViewer::StatsHandler;
   stats->setKeyEventTogglesOnScreenStats(osgGA::GUIEventAdapter::KEY_S);
   stats->getCamera()->setAllowEventFocus(false);
+  simVis::fixStatsHandlerGl2BlockyText(stats);
   mainView->addEventHandler(stats);
 
   // Load missile GOGs

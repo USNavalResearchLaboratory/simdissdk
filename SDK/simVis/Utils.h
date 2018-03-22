@@ -248,6 +248,16 @@ namespace simVis
   /// Converts from protobuf label backdrop implementation to OSG backdrop implementation
   SDKVIS_EXPORT osgText::Text::BackdropImplementation backdropImplementation(simData::BackdropImplementation implementation);
 
+  /**
+   * The removal of the text shader in GL2 compatible contexts in OSG 3.4.1 has a side effect, at least on
+   * Linux, of causing the StatsViewer text to appear blocky.  This is because the StatsViewer installs a
+   * shader program which does not cover textures for text.  Fastest solution to this problem is to
+   * simply remove the program, since it's not necessary in GL2 compatible contexts and only causes problems.
+   * This is safe to run on non-GL2 systems and is ifdef'd appropriately.
+   * @param statsHandler osgViewer or simUtil StatsHandler for which to remove the program.
+   */
+  SDKVIS_EXPORT void fixStatsHandlerGl2BlockyText(osgViewer::StatsHandler* statsHandler);
+
   /// Math helper functions
   struct SDKVIS_EXPORT Math
   {

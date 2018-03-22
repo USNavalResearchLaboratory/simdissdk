@@ -31,6 +31,7 @@
 #include <QGLWidget>
 #include <QWindow>
 
+#include "simVis/Utils.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
 #include "simUtil/StatsHandler.h"
@@ -57,9 +58,10 @@ public:
     timer_.start(20);
 
     statsHandler_ = new simUtil::StatsHandler;
+    simVis::fixStatsHandlerGl2BlockyText(statsHandler_.get());
     osg::observer_ptr<simVis::View> mainView = viewMan_->getView(0);
     if (mainView.valid())
-      mainView->addEventHandler(statsHandler_);
+      mainView->addEventHandler(statsHandler_.get());
   }
 
   void setGlWidget(QGLWidget* glWidget)
