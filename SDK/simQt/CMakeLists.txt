@@ -219,7 +219,7 @@ set(SIMQT_FORMS
     ${SIMQT_INC}EntityTypeFilter.ui
     ${SIMQT_INC}FileSelectorWidget.ui
     ${SIMQT_INC}FontWidget.ui
-    ${SIMQT_INC}SearchLineEdit.ui
+    ${SIMQT_INC}SearchLineEditQt4.ui
     ${SIMQT_INC}TimeButtons.ui
 )
 set(SIMQT_RESOURCES
