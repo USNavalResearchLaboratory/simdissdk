@@ -284,7 +284,6 @@ void BoxZoomMouseHandler::setZoom_(double originX, double originY, double widthP
   // use osgEarthUtil ViewFitter to create a viewpoint that encompasses the 4 corner points
   osg::Camera* cam = zoomView_->getCamera();
   osgEarth::Util::ViewFitter vf(srs.get(), cam);
-  vf.setBuffer(1.);
 
   osgEarth::Viewpoint vp;
   vf.createViewpoint(points, vp);
