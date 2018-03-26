@@ -1373,6 +1373,8 @@ QString SettingsModel::fileName() const
 
 Settings::Memento* SettingsModel::createMemento() const
 {
+  emit aboutToCreateMemento();
+
   return new MementoImpl(rootNode_);
 }
 

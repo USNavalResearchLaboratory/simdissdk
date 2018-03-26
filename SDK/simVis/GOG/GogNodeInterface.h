@@ -322,6 +322,16 @@ public:
   */
   virtual void setTextOutline(bool draw, const osg::Vec4f& outlineColor);
 
+  /**
+  * Indicates if the shape has a properly formatted AltitudeSymbol or an ExtrusionSymbol based
+  * on the altitude mode combinations applied in the setAltitudeMode method. Will return true
+  * if the AltitudeSymbol and ExtrusionSymbol attributes match a known state, false otherwise.
+  * Note that other combinations are not necessarily wrong, but their behavior is not well defined
+  * and may not display as expected.
+  * @return true if altitude mode is valid, false otherwise
+  */
+  bool hasValidAltitudeMode() const;
+
   /** Set backface culling based on shape state */
   void applyBackfaceCulling();
 

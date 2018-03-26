@@ -136,6 +136,8 @@ public:
 signals:
   /// Indicates that settings are about to be saved to a file
   void aboutToSaveSettingsFile(const QString& path);
+  /// Indicates that a memento is about to be created from the current settings
+  void aboutToCreateMemento() const;
   /// Indicates that a layout setting has been loaded
   void layoutLoaded();
   /// Indicates that a setting has changed

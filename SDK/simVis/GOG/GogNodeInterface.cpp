@@ -572,6 +572,7 @@ int GogNodeInterface::getTextOutline(bool& draw, osg::Vec4f& outlineColor) const
 
 void GogNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  // The altitude mode combinations applied here should match those in the hasValidAltitudeMode() method. Update both methods with changes.
   setExtrude(altMode == ALTITUDE_EXTRUDE);
 
   if (style_.has<osgEarth::Symbology::ExtrusionSymbol>())
@@ -947,6 +948,37 @@ void GogNodeInterface::applyBackfaceCulling()
 
   setStyle_(style_);
 }
+
+bool GogNodeInterface::hasValidAltitudeMode() const
+{
+  // The combinations here match those applied in the setAltitudeMode method, since those are the known valid combinations.
+
+  // check for altitude mode ALTITUDE_EXTRUDE
+  if (style_.has<osgEarth::Symbology::ExtrusionSymbol>())
+    return true;
+
+  // check for an AltitudeSymbol
+  const osgEarth::Symbology::AltitudeSymbol* alt = style_.getSymbol<osgEarth::Symbology::AltitudeSymbol>();
+  if (alt == NULL)
+    return false;
+
+  // check for altitude mode ALTITUDE_NONE
+  if (alt->clamping() == osgEarth::Symbology::AltitudeSymbol::CLAMP_NONE &&
+    alt->technique() == osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_GPU)
+    return true;
+  // check for altitude mode ALTITUDE_GROUND_CLAMPED
+  if (alt->clamping() == osgEarth::Symbology::AltitudeSymbol::CLAMP_TO_TERRAIN &&
+    alt->technique() == osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_SCENE)
+    return true;
+  // check for altitude mode ALTITUDE_GROUND_RELATIVE
+  if (alt->clamping() == osgEarth::Symbology::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN &&
+    alt->technique() == osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_SCENE)
+    return true;
+
+  return false;
+}
+
+
 bool GogNodeInterface::getMetaDataFlag_(const std::string& flag, std::string& metaData)
 {
   size_t keywordIndex = metaData.find(flag);
