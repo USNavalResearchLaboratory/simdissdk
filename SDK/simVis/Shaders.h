@@ -52,6 +52,9 @@ public:
   /** Name of vertex shader for bathymetry generator */
   std::string bathymetryGeneratorVertex() const;
 
+  /** Name of fragment shader for disabling depth writes based on alpha values */
+  std::string disableDepthOnAlphaFragment() const;
+
   /** Name of fragment shader for glowing highlight */
   std::string glowHighlightFragment() const;
 

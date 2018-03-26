@@ -16,6 +16,7 @@ set(SHADER_FILES
     BathymetryGenerator.vert.glsl
     BeamPulse.vert.glsl
     BeamPulse.frag.glsl
+    DisableDepthOnAlpha.frag.glsl
     Flashing.frag.glsl
     GlowHighlight.frag.glsl
     OverrideColor.frag.glsl
@@ -60,6 +61,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
     ${VIS_INC}DBOptions.h
+    ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
     ${VIS_INC}EarthManipulator.h
     ${VIS_INC}ElevationQueryProxy.h
@@ -189,6 +191,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Compass.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
+    ${VIS_INC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
     ${VIS_SRC}ElevationQueryProxy.cpp
