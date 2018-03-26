@@ -157,12 +157,6 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   osg::Vec3d originUpWorld = osg::Vec3d(0, 0, 1) * local2world;
   originUpWorld.normalize();
 
-  // first test the elevation at the origin point to see if it's above ground.
-  double relativeZ = 0.0;
-  bool aboveGround =
-    originMap_.transformZ(osgEarth::ALTMODE_RELATIVE, mapNode->getTerrain(), relativeZ) &&
-    relativeZ >= 0.0;
-
   // convert everything to the proper units:
   double azim_center  = azim_center_.as(Units::RADIANS);
   double fov          = fov_.as(Units::RADIANS);
@@ -274,12 +268,6 @@ bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& ex
 {
   osg::Vec3d originWorld;
   originMap_.toWorld(originWorld);
-
-  // first test the elevation at the origin point to see if it's above ground.
-  double relativeZ = 0.0;
-  bool aboveGround =
-    originMap_.transformZ(osgEarth::ALTMODE_RELATIVE, mapNode->getTerrain(), relativeZ) &&
-    relativeZ >= 0.0;
 
   // NOTE:
   // if any point in the radial falls within the extent, we will have to

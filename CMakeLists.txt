@@ -190,6 +190,7 @@ include(CMakeModules/ImportGDAL.cmake)
 # import the package OSG and its companion OpenThreads
 include(CMakeModules/ImportOPENTHREADS.cmake)
 include(CMakeModules/ImportOSG.cmake)
+include(CMakeModules/ImportOSGQT.cmake)
 
 
 # --- osgEarth -----------------------------

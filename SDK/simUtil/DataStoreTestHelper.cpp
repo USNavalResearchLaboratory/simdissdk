@@ -381,10 +381,10 @@ void DataStoreTestHelper::addDataTable(uint64_t entityId, int numRows, const std
 void DataStoreTestHelper::addDataTableRows_(simData::DataTable* table, int numRows, uint64_t id)
 {
   // now add 4 columns
-  simData::TableColumn* column1;
-  simData::TableColumn* column2;
-  simData::TableColumn* column3;
-  simData::TableColumn* column4;
+  simData::TableColumn* column1 = NULL;
+  simData::TableColumn* column2 = NULL;
+  simData::TableColumn* column3 = NULL;
+  simData::TableColumn* column4 = NULL;
   for (int i = 0; i < 4; i++)
   {
     std::ostringstream os;

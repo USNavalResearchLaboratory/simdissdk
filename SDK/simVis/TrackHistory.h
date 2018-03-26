@@ -214,6 +214,8 @@ namespace simVis
   private: // data
     /// data store for initializing data slice and accessing table manager
     const simData::DataStore& ds_;
+    /// flag indicates if current system supports using shaders
+    bool supportsShaders_;
 
     osg::Vec2                   hostBounds_;
     simData::PlatformPrefs      lastPlatformPrefs_;

@@ -58,7 +58,8 @@ EntityTreeWidget::EntityTreeWidget(QTreeView* view)
     proxyModel_(NULL),
     settings_(SettingsPtr()),
     treeView_(false),
-    pendingSendNumItems_(false)
+    pendingSendNumItems_(false),
+    emitSelectionChanged_(true)
 {
   proxyModel_ = new simQt::EntityProxyModel(this);
   proxyModel_->setDynamicSortFilter(true);
@@ -180,9 +181,13 @@ void EntityTreeWidget::setSelected(uint64_t id, bool selected, bool signalItemsS
     if (selectionSet_.remove(id))
       selectionList_.removeOne(id);
   }
+  // Update our flag to match the signalItemsSelected flag. Do this so that selectionModel()->select()
+  // properly tells the view_ to update graphically, but so that we don't unnecessarily update in selectionChanged_()
+  emitSelectionChanged_ = signalItemsSelected;
   // Update the selection
-  simQt::ScopedSignalBlocker blockSignals(*view_, !signalItemsSelected);
   view_->selectionModel()->select(index, QItemSelectionModel::Rows | (selected ? QItemSelectionModel::Select : QItemSelectionModel::Deselect));
+  // Restore the flag to true, so that single selections work as expected
+  emitSelectionChanged_ = true;
 }
 
 void EntityTreeWidget::setSelected(QList<uint64_t> list, bool selected)
@@ -327,6 +332,11 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
   // Because of blocked signals, we cannot trust that this is called
   // as often as is needed.  As a result, selected/deselected cannot be trusted as the
   // correct delta from one call to the next call.
+
+  // It is possible this is called while selecting multiple ids at once, so
+  // return early if our flag isn't set.
+  if (!emitSelectionChanged_)
+    return;
 
   // Clear out our selection
   selectionList_.clear();

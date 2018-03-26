@@ -24,7 +24,9 @@
 
 #include "simCore/String/Utils.h"
 #include "simData/DataStoreHelpers.h"
+#ifdef HAVE_SIMVIS
 #include "simVis/Registry.h"
+#endif
 #include "simQt/EntityTreeModel.h"
 
 namespace simQt {
@@ -469,6 +471,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
         .arg(QString::fromStdString(simData::DataStoreHelpers::fullTypeFromId(item->id(), dataStore_)))
         .arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
 
+#ifdef HAVE_SIMVIS
       simData::DataStore::Transaction transaction;
       const simData::PlatformPrefs* prefs = dataStore_->platformPrefs(item->id(), &transaction);
       if (prefs == NULL)
@@ -481,6 +484,9 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
       else
         modelTip = tr("Model: %1").arg(QString::fromStdString(simCore::toNativeSeparators(model)));
       return tr("%1\n%2").arg(toolTip, modelTip);
+#else
+      return toolTip;
+#endif
     }
 
     if (index.column() == 1)
@@ -505,17 +511,25 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 
 QVariant EntityTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-  if ((orientation == Qt::Horizontal) && (role == Qt::DisplayRole))
+  if (orientation == Qt::Horizontal)
   {
-    if (section == 0)
-       return "Name";
-    if (section == 1)
-      return "Type";
-    if (section == 2)
-      return "ID";
+    if (role == Qt::DisplayRole)
+    {
+      if (section == 0)
+        return "Name";
+      if (section == 1)
+        return "Type";
+      if (section == 2)
+        return "ID";
 
-    assert(0);
-    return QVariant();
+      assert(0);
+      return QVariant();
+    }
+    // Explain special display cases to the user in the name column's tooltip
+    if (role == Qt::ToolTipRole && section == 0)
+    {
+      return tr("Entities which are set to use their alias but have no alias to use are listed in gray.\n\nEntities which are set to be listed despite not matching the current filter are listed in italics.");
+    }
   }
 
   // Isn't the bar across the top -- fall back to whatever QAIM does

@@ -185,7 +185,6 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
         PB_FIELD_CHANGED(oldPrefs, newPrefs, detail) ||
         PB_FIELD_CHANGED(oldPrefs, newPrefs, sensitivity) ||
         PB_FIELD_CHANGED(oldPrefs, newPrefs, fieldofview) ||
-        PB_FIELD_CHANGED(oldPrefs, newPrefs, elevationoffset) ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, commonprefs, useoverridecolor) ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, commonprefs, overridecolor) ||
         PB_SUBFIELD_CHANGED(oldPrefs, newPrefs, commonprefs, color));
@@ -296,10 +295,13 @@ void AntennaNode::applyScale_()
 {
   const float newScale = beamRange_ * beamScale_;
   setMatrix(osg::Matrixf::scale(newScale, newScale, newScale) * osg::Matrix::rotate(rot_));
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  // GL_RESCALE_NORMAL is deprecated in GL CORE builds
   if (newScale != 1.0f)
   {
     getOrCreateStateSet()->setMode(GL_RESCALE_NORMAL, 1);
   }
+#endif
 }
 
 void AntennaNode::drawAxes_(const osg::Vec3f& pos, const osg::Vec3f& vec)
@@ -351,10 +353,8 @@ void AntennaNode::render_()
     scaleFactor_ = (max_ == min_) ? 1.0f/max_ : 1.0f/(max_ - min_);
   }
 
-  // elevationoffset is in radians, expected limits are [-90,90] (degrees)
-  const double elevationoffset = osg::clampBetween(lastPrefs_->elevationoffset(), -M_PI_2, M_PI_2);
-  const double endelev = simCore::RAD2DEG * (elevationoffset + (vRange * 0.5));
-  const double startelev = simCore::RAD2DEG * (elevationoffset - (vRange * 0.5));
+  const double endelev = simCore::RAD2DEG * vRange * 0.5;
+  const double startelev = simCore::RAD2DEG * vRange * -0.5;
   // pre-calculate the elev points we are using
   std::vector<float> elevPoints;
   bool elevDone = false;
@@ -368,10 +368,8 @@ void AntennaNode::render_()
     elevPoints.push_back(static_cast<float>(simCore::DEG2RAD * elev));
   }
 
-  // azimuthoffset is in radians, expected limits are [0,360) (degrees)
-  const double azimuthoffset = osg::clampBetween(lastPrefs_->azimuthoffset(), 0.0, M_TWOPI);
-  const double endazim = simCore::RAD2DEG * (azimuthoffset + (hRange * 0.5));
-  const double startazim = simCore::RAD2DEG * (azimuthoffset - (hRange * 0.5));
+  const double endazim = simCore::RAD2DEG * hRange * 0.5;
+  const double startazim = simCore::RAD2DEG * hRange * -0.5;
   // pre-calculate the azim points we are using
   std::vector<float> azimPoints;
   bool azimDone = false;

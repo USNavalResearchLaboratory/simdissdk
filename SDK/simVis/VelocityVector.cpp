@@ -21,7 +21,6 @@
  */
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osg/Point"
 
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -68,7 +67,6 @@ int VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
 
   // disable lighting
   osg::StateSet* stateSet = geode->getOrCreateStateSet();
-  stateSet->setAttributeAndModes(new osg::Point(1.5f), 1);
 
   setNodeMask(DISPLAY_MASK_PLATFORM);
   this->addChild(geode.get());

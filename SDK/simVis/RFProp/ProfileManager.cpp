@@ -60,7 +60,7 @@ ProfileManager::ProfileManager()
   simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
   // Use the visible horizon clip plane
-  stateset->setMode(GL_CLIP_PLANE0, osg::StateAttribute::ON);
+  stateset->setMode(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE, osg::StateAttribute::ON);
   // Blending should be enabled
   stateset->setMode(GL_BLEND, osg::StateAttribute::ON);
 

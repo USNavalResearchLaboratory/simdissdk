@@ -25,7 +25,9 @@
 #include "osg/NodeVisitor"
 #include "osg/ProxyNode"
 #include "osg/Sequence"
+#include "osg/ShadeModel"
 #include "osg/ShapeDrawable"
+#include "osg/TexEnv"
 #include "osg/ValueObject"
 #include "osgSim/DOFTransform"
 #include "osgSim/MultiSwitch"
@@ -83,7 +85,31 @@ public:
   {
     osg::StateSet* ss = node.getStateSet();
     if (ss)
+    {
       ss->setRenderBinToInherit();
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+      // GLCORE does not support TexEnv.  Remove unnecessary ones
+      osg::TexEnv* texEnv = dynamic_cast<osg::TexEnv*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXENV));
+      if (texEnv != NULL && texEnv->getMode() == osg::TexEnv::MODULATE)
+        ss->removeTextureAttribute(0, texEnv);
+      else if (texEnv != NULL)
+      {
+        SIM_WARN << "Unexpected TexEnv mode: 0x" << std::hex << texEnv->getMode() << "\n";
+      }
+
+      // GLCORE does not support ShadeModel.  Remove unnecessary ones
+      osg::ShadeModel* shadeModel = dynamic_cast<osg::ShadeModel*>(ss->getAttribute(osg::StateAttribute::SHADEMODEL));
+      if (shadeModel != NULL && shadeModel->getMode() == osg::ShadeModel::SMOOTH)
+        ss->removeAttribute(shadeModel);
+      else if (shadeModel != NULL)
+      {
+        SIM_WARN << "Unexpected ShadeModel mode: 0x" << std::hex << shadeModel->getMode() << "\n";
+      }
+
+      // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
+      ss->removeTextureMode(0, GL_TEXTURE_2D);
+#endif
+    }
     traverse(node);
   }
 };

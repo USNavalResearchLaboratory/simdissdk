@@ -35,6 +35,9 @@ public:
   /** Name of the fragment shader for Alpha Color Filter */
   std::string alphaColorFilterFragment() const;
 
+  /** Name of the fragment shader for the Alpha Test shader */
+  std::string alphaTestFragment() const;
+
   /** Name of the vertex shader for area highlight */
   std::string areaHighlightVertex() const;
   /** Name of the fragment shader for area highlight */
@@ -66,6 +69,9 @@ public:
   /** Name of fragment shader for picker */
   std::string pickerFragment() const;
 
+  /** Name of vertex shader for point size */
+  std::string pointSizeVertex() const;
+
   /** Name of vertex shader for projector manager */
   std::string projectorManagerVertex() const;
   /** Name of fragment shader for projector manager */
@@ -96,6 +102,9 @@ public:
 
   /** Name of fragment shader for flashing LOB Group */
   std::string flashingFragment() const;
+
+  /** Polygon stipple fragment shader */
+  std::string polygonStippleFragment() const;
 };
 
 }

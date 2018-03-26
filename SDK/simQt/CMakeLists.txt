@@ -72,9 +72,11 @@ if(TARGET simData)
         ${SIMQT_INC}EntityFilter.h
         ${SIMQT_INC}EntityFilterLineEdit.h
         ${SIMQT_INC}EntityLineEdit.h
+        ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityProxyModel.h
         ${SIMQT_INC}EntityStateFilter.h
         ${SIMQT_INC}EntityTreeComposite.h
+        ${SIMQT_INC}EntityTreeModel.h
         ${SIMQT_INC}EntityTreeWidget.h
         ${SIMQT_INC}EntityTypeFilter.h
         ${SIMQT_INC}EntityTypeFilterWidget.h
@@ -90,21 +92,17 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
-        ${SIMQT_INC}EntityNameFilter.h
-        ${SIMQT_INC}EntityTreeModel.h
         ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
-    )
-    list(APPEND SIMQT_HEADERS
-        ${SIMQT_INC}QtConversion.h
+        ${SIMQT_INC}ViewWidget.h
     )
 endif()
 
-if (OSG_FOUND)
+if(OSG_FOUND)
     list(APPEND SIMQT_HEADERS
-        ${SIMQT_INC}ViewWidget.h
+        ${SIMQT_INC}QtConversion.h
     )
 endif()
 
@@ -178,9 +176,11 @@ if(TARGET simData)
         ${SIMQT_SRC}EntityCategoryFilter.cpp
         ${SIMQT_SRC}EntityFilterLineEdit.cpp
         ${SIMQT_SRC}EntityLineEdit.cpp
+        ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityProxyModel.cpp
         ${SIMQT_SRC}EntityStateFilter.cpp
         ${SIMQT_SRC}EntityTreeComposite.cpp
+        ${SIMQT_SRC}EntityTreeModel.cpp
         ${SIMQT_SRC}EntityTreeWidget.cpp
         ${SIMQT_SRC}EntityTypeFilter.cpp
         ${SIMQT_SRC}EntityTypeFilterWidget.cpp
@@ -193,19 +193,17 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
-        ${SIMQT_SRC}EntityNameFilter.cpp
-        ${SIMQT_SRC}EntityTreeModel.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
-        ${SIMQT_SRC}QtConversion.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
+        ${SIMQT_SRC}ViewWidget.cpp
     )
 endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_SOURCES
-        ${SIMQT_SRC}ViewWidget.cpp
+        ${SIMQT_SRC}QtConversion.cpp
     )
 endif()
 
@@ -296,6 +294,9 @@ else()
 endif()
 if(TARGET simData)
     target_compile_definitions(simQt PRIVATE HAVE_SIMDATA)
+endif()
+if(TARGET simVis)
+    target_compile_definitions(simQt PRIVATE HAVE_SIMVIS)
 endif()
 
 # If simQt is a DLL, avoid linking in "heavy" dependencies if possible

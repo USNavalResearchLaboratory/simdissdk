@@ -78,8 +78,6 @@
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
-#include "simVis/LightAmbient.h"
-#include "simVis/LightDiffuse.h"
 #include "simVis/LobGroup.h"
 #include "simVis/LocalGrid.h"
 #include "simVis/Locator.h"

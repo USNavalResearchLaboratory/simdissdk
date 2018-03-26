@@ -10,6 +10,7 @@ set(VIS_SRC)
 
 set(SHADER_FILES
     AlphaColorFilter.frag.glsl
+    AlphaTest.frag.glsl
     AreaHighlight.vert.glsl
     AreaHighlight.frag.glsl
     BathymetryGenerator.vert.glsl
@@ -22,6 +23,8 @@ set(SHADER_FILES
     Picker.vert.glsl
     Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
+    PointSize.vert.glsl
+    PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl
     RF.LossToColor.Default.lib.glsl
@@ -37,6 +40,7 @@ set(SHADER_FILES
 
 set(VIS_HEADERS_CORE
     ${VIS_INC}AlphaColorFilter.h
+    ${VIS_INC}AlphaTest.h
     ${VIS_INC}AnimatedLine.h
     ${VIS_INC}Antenna.h
     ${VIS_INC}AreaHighlight.h
@@ -70,8 +74,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
-    ${VIS_INC}LightAmbient.h
-    ${VIS_INC}LightDiffuse.h
     ${VIS_INC}LobGroup.h
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
@@ -88,6 +90,8 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}PlatformFilter.h
     ${VIS_INC}PlatformInertialTransform.h
     ${VIS_INC}PlatformModel.h
+    ${VIS_INC}PointSize.h
+    ${VIS_INC}PolygonStipple.h
     ${VIS_INC}Popup.h
     ${VIS_INC}Projector.h
     ${VIS_INC}ProjectorManager.h
@@ -167,6 +171,7 @@ set(VIS_HEADERS_GOG
 )
 
 set(VIS_SOURCES_CORE
+    ${VIS_SRC}AlphaTest.cpp
     ${VIS_SRC}AnimatedLine.cpp
     ${VIS_SRC}Antenna.cpp
     ${VIS_SRC}AreaHighlight.cpp
@@ -195,8 +200,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
     ${VIS_SRC}Laser.cpp
-    ${VIS_SRC}LightAmbient.cpp
-    ${VIS_SRC}LightDiffuse.cpp
     ${VIS_SRC}LobGroup.cpp
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
@@ -211,6 +214,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}PlatformFilter.cpp
     ${VIS_SRC}PlatformInertialTransform.cpp
     ${VIS_SRC}PlatformModel.cpp
+    ${VIS_SRC}PointSize.cpp
+    ${VIS_SRC}PolygonStipple.cpp
     ${VIS_SRC}Popup.cpp
     ${VIS_SRC}Projector.cpp
     ${VIS_SRC}ProjectorManager.cpp
@@ -392,14 +397,6 @@ if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simVis PUBLIC simVis_LIB_EXPORT_STATIC)
-endif()
-
-
-# FFP in LightDiffuse and LightAmbient requires linking to OpenGL
-find_package(OpenGL)
-if(OPENGL_FOUND)
-    target_link_libraries(simVis PRIVATE ${OPENGL_LIBRARIES})
-    target_compile_definitions(simVis PRIVATE SIMVIS_GL_FIXED_FUNCTION_AVAILABLE)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)

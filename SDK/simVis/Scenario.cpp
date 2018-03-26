@@ -31,8 +31,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simData/DataStore.h"
 
-#include "simVis/LobGroup.h"
-#include "simVis/Platform.h"
+#include "simVis/AlphaTest.h"
 #include "simVis/Beam.h"
 #include "simVis/BeamPulse.h"
 #include "simVis/DynamicScaleTransform.h"
@@ -40,11 +39,15 @@
 #include "simVis/Gate.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
+#include "simVis/LobGroup.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/OverrideColor.h"
 #include "simVis/PlatformFilter.h"
+#include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/PointSize.h"
+#include "simVis/PolygonStipple.h"
 #include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/RadialLOSNode.h"
@@ -368,7 +371,10 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // proper lighting. Note: once we move to using shaders we don't
   // need this anymore
   osg::StateSet* stateSet = getOrCreateStateSet();
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  // GL_RESCALE_NORMAL is deprecated in GL CORE builds
   stateSet->setMode(GL_RESCALE_NORMAL, 1);
+#endif
   // Lighting will be off for all objects under the Scenario,
   // unless explicitly turned on further down the scene graph
   simVis::setLighting(stateSet, osg::StateAttribute::OFF);
@@ -385,10 +391,13 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   platformTspiFilterManager_->addFilter(surfaceClamping_);
 
   // Install shaders used by multiple entities at the scenario level
-  OverrideColor::installShaderProgram(stateSet);
-  TrackHistoryNode::installShaderProgram(stateSet);
+  AlphaTest::installShaderProgram(stateSet);
   BeamPulse::installShaderProgram(stateSet);
   LobGroupNode::installShaderProgram(stateSet);
+  OverrideColor::installShaderProgram(stateSet);
+  PolygonStipple::installShaderProgram(stateSet);
+  PointSize::installShaderProgram(stateSet);
+  TrackHistoryNode::installShaderProgram(stateSet);
 }
 
 ScenarioManager::~ScenarioManager()

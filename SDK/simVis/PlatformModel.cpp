@@ -26,7 +26,6 @@
 #include "osg/Geode"
 #include "osg/LOD"
 #include "osg/PolygonMode"
-#include "osg/PolygonStipple"
 #include "osg/ShapeDrawable"
 #include "osg/CullStack"
 #include "osg/Viewport"
@@ -45,6 +44,7 @@
 #include "simVis/ModelCache.h"
 #include "simVis/Locator.h"
 #include "simVis/OverrideColor.h"
+#include "simVis/PolygonStipple.h"
 #include "simVis/RCS.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
@@ -260,14 +260,22 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     return false;
 
   const simVis::Registry* registry = simVis::Registry::instance();
-  if (prefs.icon().empty() || registry->isMemoryCheck())
+  if (prefs.icon().empty())
     setModel_(NULL, false);
-  else
+  else if (!registry->isMemoryCheck())
   {
     // Find the fully qualified URI
     const std::string uri = registry->findModelFile(prefs.icon());
     // Perform an asynchronous load on the model
-    registry->modelCache()->asyncLoad(uri, new SetModelCallback(this));
+    if (uri.empty())
+    {
+      SIM_WARN << "Failed to find icon model: " << prefs.icon() << "\n";
+      setModel_(simVis::Registry::instance()->modelCache()->boxNode(), false);
+    }
+    else
+    {
+      registry->modelCache()->asyncLoad(uri, new SetModelCallback(this));
+    }
   }
   return true;
 }
@@ -634,50 +642,11 @@ void PlatformModelNode::updateStippling_(const simData::PlatformPrefs& prefs)
     return;
   osg::observer_ptr<osg::StateSet> stateSet = offsetXform_->getStateSet();
 
-  if (!prefs.usepolygonstipple())
-  {
-    stateSet->removeAttribute(osg::StateAttribute::POLYGONSTIPPLE);
-  }
-  else
-  {
-    osg::ref_ptr<osg::PolygonStipple> ps = NULL;
-
-    switch (prefs.polygonstipple())
-    {
-      case 1:
-        ps = new osg::PolygonStipple(gPatternMask1);
-        break;
-      case 2:
-        ps = new osg::PolygonStipple(gPatternMask2);
-        break;
-      case 3:
-        ps = new osg::PolygonStipple(gPatternMask3);
-        break;
-      case 4:
-        ps = new osg::PolygonStipple(gPatternMask4);
-        break;
-      case 5:
-        ps = new osg::PolygonStipple(gPatternMask5);
-        break;
-      case 6:
-        ps = new osg::PolygonStipple(gPatternMask6);
-        break;
-      case 7:
-        ps = new osg::PolygonStipple(gPatternMask7);
-        break;
-      case 8:
-        ps = new osg::PolygonStipple(gPatternMask8);
-        break;
-      case 9:
-        ps = new osg::PolygonStipple(gPatternMask9);
-        break;
-      default:
-        // if assert occurs, an invalid polygon stipple has been specified; SIMDIS defines 9 stipple patterns
-        assert(0);
-        return;
-    }
-    stateSet->setAttributeAndModes(ps, osg::StateAttribute::ON);
-  }
+  // Polygon stipple index in protobuf is off-by-one
+  unsigned int patternIndex = prefs.polygonstipple();
+  if (patternIndex > 0)
+    --patternIndex;
+  simVis::PolygonStipple::setValues(stateSet.get(), prefs.usepolygonstipple(), patternIndex);
 }
 
 void PlatformModelNode::updateCulling_(const simData::PlatformPrefs& prefs)

@@ -1981,7 +1981,6 @@ void CategoryFilterWidget2::showRegExpEditGui_(const QModelIndex& index)
   // Grab category name and old regexp, then ask user for new value
   const QString oldRegExp = index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString();
   const QString categoryName = index.data(CategoryTreeModel2::ROLE_CATEGORY_NAME).toString();
-  bool accepted = false;
 
   // Create an input dialog on the stack so that we can set a What's This tip for more information
   QInputDialog inputDialog(this);

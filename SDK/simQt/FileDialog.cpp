@@ -27,10 +27,8 @@
 namespace simQt
 {
 
-namespace {
-
 /** Retrieves the default options for every file dialog.  Used to override native dialogs. */
-QFileDialog::Options getFileDialogDefaultOptions()
+QFileDialog::Options FileDialog::getFileDialogDefaultOptions()
 {
 #ifdef WIN32
   // If not defined, or if it's defined as "1", then use the native dialog.  There are some applications,
@@ -41,8 +39,6 @@ QFileDialog::Options getFileDialogDefaultOptions()
   // On Linux, always avoid the native dialog due to event loop problems with FOX in SIMDIS 10
   return QFileDialog::DontUseNativeDialog;
 }
-} // anon namespace
-
 
 QString FileDialog::getRegistryDir(const QString& registryDir)
 {

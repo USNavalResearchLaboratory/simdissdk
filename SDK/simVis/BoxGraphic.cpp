@@ -128,11 +128,14 @@ void BoxGraphic::setLineWidth(float lineWidth)
 void BoxGraphic::setStipplePattern(unsigned short stipple)
 {
   stipple_ = stipple;
+#ifdef OSG_GL1_AVAILABLE
   osg::ref_ptr<osg::LineStipple> stippleAttr = new osg::LineStipple();
   stippleAttr->setFactor(2);
   stippleAttr->setPattern(stipple);
   osg::StateSet* stateSet = geometry_->getOrCreateStateSet();
+  // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
   stateSet->setAttributeAndModes(stippleAttr.get(), 1);
+#endif
 }
 
 

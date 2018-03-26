@@ -22,22 +22,22 @@
 #include <cassert>
 
 #include "osg/LineWidth"
-#include "osg/Point"
-#include "osgEarth/VirtualProgram"
-#include "osgEarth/Registry"
 #include "osgEarth/Capabilities"
 #include "osgEarth/Horizon"
+#include "osgEarth/Registry"
+#include "osgEarth/VirtualProgram"
 
 #include "simNotify/Notify.h"
 #include "simData/DataTable.h"
 #include "simVis/Constants.h"
 #include "simVis/Locator.h"
+#include "simVis/OverheadMode.h"
+#include "simVis/PlatformFilter.h"
+#include "simVis/PointSize.h"
+#include "simVis/Shaders.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
-#include "simVis/PlatformFilter.h"
-#include "simVis/Shaders.h"
 #include "simVis/TrackHistory.h"
-#include "simVis/OverheadMode.h"
 
 namespace simVis
 {
@@ -101,7 +101,8 @@ private:
 
 /// constructor.
 TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, const osgEarth::SpatialReference* srs, PlatformTspiFilterManager& platformTspiFilterManager, simData::ObjectId entityId)
- : ds_(ds),
+  : ds_(ds),
+   supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
    chunkSize_(64),  // keep this lowish or your app won't scale.
    totalPoints_(0),
    hasLastDrawTime_(false),
@@ -217,6 +218,10 @@ TrackChunkNode* TrackHistoryNode::getCurrentChunk_()
 
 osg::Vec4f TrackHistoryNode::historyColorAtTime_(double time)
 {
+  // if not using shaders for override color, and there is a visible override color to apply
+  if (!supportsShaders_ && lastOverrideColor_.a() > 0.f)
+    return lastOverrideColor_;
+
   // time may be negative in reverse clock mode, so alway adjust to normal time
   if (time < 0)
     time *= -1;
@@ -224,9 +229,8 @@ osg::Vec4f TrackHistoryNode::historyColorAtTime_(double time)
     return defaultColor_;
 
   // find the table
-  simData::DataTable* table = NULL;
   // use the tableId_ if we have it
-  table = ds_.dataTableManager().getTable(tableId_);
+  simData::DataTable* table = ds_.dataTableManager().getTable(tableId_);
   // no color history table, simply return the default color
   if (table == NULL)
   {
@@ -488,7 +492,7 @@ void TrackHistoryNode::installShaderProgram(osg::StateSet* intoStateSet)
 
 void TrackHistoryNode::updateFlatMode_(bool flatMode)
 {
-  if (!osgEarth::Registry::capabilities().supportsGLSL())
+  if (!supportsShaders_)
     return;
 
   if (!flatModeUniform_.valid())
@@ -505,10 +509,7 @@ void TrackHistoryNode::updateFlatMode_(bool flatMode)
 
 void TrackHistoryNode::setOverrideColor_(const osgEarth::Symbology::Color& color)
 {
-  if (!osgEarth::Registry::capabilities().supportsGLSL())
-    return;
-
-  if (!overrideColorUniform_.valid())
+  if (supportsShaders_ && !overrideColorUniform_.valid())
   {
     if (color.a() == 0)
       return;  // Does not exist and not needed so return;
@@ -525,8 +526,11 @@ void TrackHistoryNode::setOverrideColor_(const osgEarth::Symbology::Color& color
   if (lastOverrideColor_ != color)
   {
     lastOverrideColor_ = color;
-    overrideColorUniform_->set(color);
-    enableOverrideColorUniform_->set(true);
+    if (supportsShaders_)
+    {
+      overrideColorUniform_->set(color);
+      enableOverrideColorUniform_->set(true);
+    }
   }
 
 }
@@ -583,6 +587,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
 
   // track override color has priority
 
+  simVis::Color origOverideColor = lastOverrideColor_;
   // if now using track override color and
   // just started or color changed
   if (prefs.usetrackoverridecolor())
@@ -609,12 +614,15 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
     setOverrideColor_(defaultColor_);
   }
 
+  if (!supportsShaders_ && origOverideColor != lastOverrideColor_)
+    resetRequested = true;
+
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, linewidth))
   {
     double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
     osg::StateSet* stateSet = this->getOrCreateStateSet();
     stateSet->setAttributeAndModes(new osg::LineWidth(lineWidth), osg::StateAttribute::ON);
-    stateSet->setAttributeAndModes(new osg::Point(lineWidth), osg::StateAttribute::ON);
+    PointSize::setValues(stateSet, lineWidth, osg::StateAttribute::ON);
   }
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, tracklength))

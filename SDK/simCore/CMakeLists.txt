@@ -41,6 +41,7 @@ set(CORE_CALC_HEADERS
     ${CORE_CALC_INC}MultiFrameCoordinate.h
     ${CORE_CALC_INC}NumericalAnalysis.h
     ${CORE_CALC_INC}Random.h
+    ${CORE_CALC_INC}SquareMatrix.h
     ${CORE_CALC_INC}Units.h
     ${CORE_CALC_INC}UnitContext.h
     ${CORE_CALC_INC}Vec3.h
@@ -61,6 +62,7 @@ set(CORE_CALC_SOURCES
     ${CORE_CALC_SRC}MultiFrameCoordinate.cpp
     ${CORE_CALC_SRC}NumericalAnalysis.cpp
     ${CORE_CALC_SRC}Random.cpp
+    ${CORE_CALC_SRC}SquareMatrix.cpp
     ${CORE_CALC_SRC}Units.cpp
     ${CORE_CALC_SRC}UnitContext.cpp
 )

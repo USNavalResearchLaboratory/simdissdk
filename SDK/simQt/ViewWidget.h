@@ -41,8 +41,9 @@ namespace simQt
  */
 class SDKQT_EXPORT ViewWidget : public osgQt::GLWidget
 {
-public:
+  Q_OBJECT;
 
+public:
   /**
    * Constructs a new ViewWidget, attaching an existing viewer.
    * @param[in] viewer Viewer to attach to this widget.  The widget will install

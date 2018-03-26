@@ -16,6 +16,7 @@ create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
     CalculationTest.cpp
     MathTest.cpp
     MgrsTest.cpp
+    SquareMatrixTest.cpp
     TimeClassTest.cpp
     TimeManagerTest.cpp
     TimeStringTest.cpp
@@ -53,6 +54,7 @@ add_test(NAME CoordConvertLibTest COMMAND SimCoreTests CoordConvertLibTest)
 add_test(NAME CoreCommonTest COMMAND SimCoreTests CoreCommonTest)
 add_test(NAME CalculationTest COMMAND SimCoreTests CalculationTest)
 add_test(NAME CoreMathTest COMMAND SimCoreTests MathTest)
+add_test(NAME CoreSquareMatrixTest COMMAND SimCoreTests SquareMatrixTest)
 add_test(NAME CoreMgrsTest COMMAND SimCoreTests MgrsTest)
 add_test(NAME CoreTimeClassTest COMMAND SimCoreTests TimeClassTest)
 add_test(NAME CoreInterpolationTest COMMAND SimCoreTests InterpolationTest)

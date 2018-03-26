@@ -23,7 +23,6 @@
 #include "osg/Geometry"
 #include "osg/LineWidth"
 #include "osg/MatrixTransform"
-#include "osg/PolygonStipple"
 #include "osg/Depth"
 
 #include "simNotify/Notify.h"
@@ -33,6 +32,7 @@
 #include "simCore/EM/RadarCrossSection.h"
 
 #include "simVis/Constants.h"
+#include "simVis/PolygonStipple.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/RCS.h"
@@ -373,10 +373,7 @@ osg::Node* RCSRenderer::render3D_()
   osg::Geode* geode = new osg::Geode();
 
   if (!useAlpha_)
-  {
-    geode->getOrCreateStateSet()->setAttributeAndModes(
-      new osg::PolygonStipple(gPatternMask1), osg::StateAttribute::ON);
-  }
+    simVis::PolygonStipple::setValues(geode->getOrCreateStateSet(), true, 0);
 
   if (rcs_)
   {

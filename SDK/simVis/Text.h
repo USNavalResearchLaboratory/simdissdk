@@ -25,9 +25,9 @@
 /**@file
 * Replacement for osgText::Text that fixes a bug in screen-coords character size
 */
-#include "simCore/Common/Common.h"
-
+#include "osg/Version"
 #include "osgText/Text"
+#include "simCore/Common/Common.h"
 
 namespace simVis
 {
@@ -55,7 +55,9 @@ namespace simVis
     void setScreenOffset(float x, float y);
 
   public: // osgText::Text
+#if OSG_VERSION_LESS_THAN(3,5,0)
     virtual void computePositions(unsigned int contextID) const;
+#endif
 
   protected:
     virtual ~Text() { }
@@ -68,4 +70,3 @@ namespace simVis
 } // namespace simVis
 
 #endif // SIMVIS_TEXT_H
-

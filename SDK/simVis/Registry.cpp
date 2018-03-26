@@ -21,6 +21,7 @@
  */
 #include "OpenThreads/Mutex"
 #include "OpenThreads/ScopedLock"
+#include "osg/Version"
 #include "osgDB/Callbacks"
 #include "osgDB/FileUtils"
 #include "osgDB/FileNameUtils"
@@ -206,7 +207,14 @@ simVis::Registry::Registry()
   }
 
   // prime a font when no fonts can be found.  This font will be invisible, but at least the program can limp along.
-  fontCache_[CANT_FIND_FONT] = new osgText::Font();
+  osgText::Font* cantFindFont = new osgText::Font();
+#if OSG_VERSION_GREATER_OR_EQUAL(3, 4, 1) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
+  // Remove the osgText::Font's program to avoid a bug where LDB does not apply due to conflict in programs
+  if (cantFindFont->getStateSet())
+    cantFindFont->getStateSet()->removeAttribute(osg::StateAttribute::PROGRAM);
+#endif
+  fontCache_[CANT_FIND_FONT] = cantFindFont;
+
   // prime a default font which will be returned if the requested font cannot be found
   osgText::Font* defaultFont = getOrCreateFont(DEFAULT_FONT);
   osgEarth::Registry* osgEarthRegistry = osgEarth::Registry::instance();
@@ -383,7 +391,7 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
 
   // Create a new font with a wider image margin, to prevent image artifacts
   // See http://forum.openscenegraph.org/viewtopic.php?t=3156
-  osg::ref_ptr<osgText::Font> font = osgText::readFontFile(filename);
+  osg::ref_ptr<osgText::Font> font = osgText::readRefFontFile(filename);
 
   if (!font.valid())
   {
@@ -394,7 +402,18 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
     return fontCache_.find(CANT_FIND_FONT)->second.get();
   }
 
+#if OSG_VERSION_GREATER_OR_EQUAL(3, 4, 1) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
+  // Remove the osgText::Font's program to avoid a bug where LDB does not apply due to conflict in programs
+  if (font->getStateSet())
+    font->getStateSet()->removeAttribute(osg::StateAttribute::PROGRAM);
+#endif
+
+#if OSG_VERSION_LESS_THAN(3, 5, 8)
+  // Change the glyph image margin to 2 to prevent issues with glyph textures bleeding into
+  // successive glyphs.  This shows up as a vertical line on either side of the glyph.  This
+  // function went away in OSG 3.5.8.
   font->setGlyphImageMargin(2);
+#endif
   fontCache_[name] = font.get();
 
   return font.get();

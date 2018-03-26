@@ -21,12 +21,12 @@
  */
 #include <cassert>
 #include "osg/Depth"
-#include "osg/Point"
 #include "osgEarth/DrapeableNode"
 #include "osgEarth/Terrain"
 #include "simNotify/Notify.h"
 #include "simVis/Constants.h"
 #include "simVis/osgEarthVersion.h"
+#include "simVis/PointSize.h"
 #include "simVis/Utils.h"
 #include "simVis/RadialLOSNode.h"
 
@@ -262,7 +262,7 @@ void RadialLOSNode::refreshGeometry_()
     osg::StateSet* stateSet = new osg::StateSet();
     stateSet->setRenderBinDetails(0, BIN_TRAVERSAL_ORDER_SIMSDK);
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false), osg::StateAttribute::ON);
-    stateSet->setAttributeAndModes(new osg::Point(2.0f), osg::StateAttribute::ON);
+    PointSize::setValues(stateSet, 2.f, osg::StateAttribute::ON);
 
     // set up and pre-allocate the geometry arrays:
     osg::Geometry* geom = new osg::Geometry();

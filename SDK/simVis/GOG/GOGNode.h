@@ -24,6 +24,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include "osgEarth/GeoData"
 #include "osgEarthSymbology/Style"
 #include "osg/Group"

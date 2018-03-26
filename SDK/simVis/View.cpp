@@ -34,7 +34,6 @@
 #include "simNotify/Notify.h"
 
 #include "simVis/osgEarthVersion.h"
-#include "simVis/AveragePositionNode.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
@@ -745,6 +744,9 @@ bool View::setUpViewAsInset_(simVis::View* host)
     if (focusManager != NULL)
       focusManager->applyBorderProperties(this);
     bordercamera->addChild(borderNode_.get());
+
+    // Run shader generator to get the border to show up properly
+    osgEarth::Registry::shaderGenerator().run(bordercamera);
   }
   else
   {
@@ -1800,6 +1802,7 @@ void View::installBasicDebugHandlers()
   // Allows toggling through statistics pages ('s')
   osgViewer::StatsHandler* stats = new osgViewer::StatsHandler();
   stats->getCamera()->setAllowEventFocus(false);
+  simVis::fixStatsHandlerGl2BlockyText(stats);
   addEventHandler(stats);
 
   // Allows cycling of polygon mode, textures, lighting back face enabling
@@ -1927,6 +1930,7 @@ simVis::EntityNode* View::getEntityNode(osg::Node* node) const
   // Maybe it's really a Platform Model or Centroid node, which is the child of an EntityNode
   if (node)
   {
+    //TESTING: When watching from a centroid, the parent is a simVis::CentroidManager, not an EntityNode
     simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(node->getParent(0));
     // If assert triggers, there's some weird unexpected hierarchy; investigate and resolve weirdness
     assert(entityNode != NULL);
