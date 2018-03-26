@@ -82,8 +82,8 @@ private:
   /** Pointer to the scenario manager */
   osg::observer_ptr<simVis::ScenarioManager> scenario_;
 
-  /** Minimum valid range */
-  double minimumValidRange_;
+  /** Maximum valid range */
+  double maximumValidRange_;
   /** Picking mask */
   osg::Node::NodeMask pickMask_;
 };
