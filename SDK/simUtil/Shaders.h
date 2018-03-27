@@ -32,6 +32,8 @@ class Shaders : public osgEarth::ShaderPackage
 public:
   Shaders();
 
+  /** Name of combined shader for map scale flat coloring */
+  std::string mapScale() const;
   /** Name of the vertex shader for terrain toggle effect */
   std::string terrainToggleEffectVertex() const;
   /** Name of the fragment shader for terrain toggle effect */

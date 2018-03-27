@@ -21,6 +21,7 @@
  */
 #include "osg/Callback"
 #include "osg/ShadeModel"
+#include "osgEarth/Capabilities"
 #include "osgEarth/TerrainEngineNode"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Math.h"
@@ -30,6 +31,7 @@
 #include "simVis/Text.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
+#include "simUtil/Shaders.h"
 #include "simUtil/MapScale.h"
 
 namespace simUtil {
@@ -95,7 +97,6 @@ MapScale::MapScale()
     unitsProvider_(new MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0))
 {
   getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
-  getOrCreateStateSet()->setAttributeAndModes(new osg::ShadeModel(osg::ShadeModel::FLAT));
 
   osgText::Font* font = simVis::Registry::instance()->getOrCreateFont("arial.ttf");
 
@@ -105,6 +106,7 @@ MapScale::MapScale()
   unitsText_->setPosition(osg::Vec3f(0.f, 0.f, 0.f));
   unitsText_->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
   unitsText_->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
+  unitsText_->setDataVariance(osg::Object::DYNAMIC);
 
   valueTextPrototype_ = new simVis::Text();
   valueTextPrototype_->setFont(font);
@@ -112,15 +114,30 @@ MapScale::MapScale()
   valueTextPrototype_->setPosition(osg::Vec3f(0.f, 0.f, 0.f));
   valueTextPrototype_->setAlignment(osgText::TextBase::CENTER_TOP);
   valueTextPrototype_->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
+  valueTextPrototype_->setDataVariance(osg::Object::STATIC);
 
+  // Separate all the text into a separate group so the geode shader doesn't apply to it
+  textGroup_ = new osg::Group;
+  textGroup_->addChild(unitsText_);
   geode_ = new osg::Geode;
-  geode_->addDrawable(unitsText_);
+
+  addChild(textGroup_);
   addChild(geode_);
 
   recalculateHeight_();
 
   // Include an update callback that will correctly configure the scale distance
   addUpdateCallback(new UpdateCallback(this));
+
+  // If GLSL 3.3 is supported, use the MapScale shader to get flat coloring
+  if (osgEarth::Registry::capabilities().supportsGLSL(3.3f))
+  {
+    osg::ref_ptr<osgEarth::VirtualProgram> vp = osgEarth::VirtualProgram::getOrCreate(geode_->getOrCreateStateSet());
+    simUtil::Shaders shaderPackage;
+    shaderPackage.load(vp, shaderPackage.mapScale());
+  }
+  else // Fall back to FFP implementation
+    getOrCreateStateSet()->setAttributeAndModes(new osg::ShadeModel(osg::ShadeModel::FLAT));
 }
 
 MapScale::MapScale(const MapScale& rhs, const osg::CopyOp& copyop)
@@ -256,13 +273,13 @@ void MapScale::recalculatePixelDistance_()
   osg::ref_ptr<simVis::View> view;
   if (!view_.lock(view))
   {
-    geode_->setNodeMask(0);
+    setVisible_(false);
     return;
   }
   simVis::SceneManager* sm = view->getSceneManager();
   if (!sm || !sm->getMapNode() || !sm->getMapNode()->getTerrainEngine())
   {
-    geode_->setNodeMask(0);
+    setVisible_(false);
     return;
   }
   osg::NodePath mapNodePath;
@@ -271,7 +288,7 @@ void MapScale::recalculatePixelDistance_()
   const osg::Viewport* viewport = view->getCamera()->getViewport();
   if (!viewport)
   {
-    geode_->setNodeMask(0);
+    setVisible_(false);
     return;
   }
   const int x = viewport->x() + viewport->width() / 2;
@@ -299,7 +316,7 @@ void MapScale::recalculatePixelDistance_()
   }
 
   // Turn off the geode, hiding all graphics
-  geode_->setNodeMask(0);
+  setVisible_(false);
 }
 
 void MapScale::recalculateScale_(double maxDataRangeM)
@@ -343,12 +360,12 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
 {
   if (maxValue == 0.0)
   {
-    geode_->setNodeMask(0);
+    setVisible_(false);
     return;
   }
-  geode_->setNodeMask(~0);
-  // Remove all geode drawables except the units text (child 0)
-  geode_->removeDrawables(1, geode_->getNumDrawables() - 1);
+  setVisible_(true);
+  // Remove all geode drawables, we'll replace them all here
+  geode_->removeDrawables(0, geode_->getNumDrawables());
 
   const double dataIncrement = maxValue / numDivisions;
   const double pixelIncrement = width / numDivisions;
@@ -361,8 +378,8 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
 
   // Create geometry
   osg::Geometry* geom = new osg::Geometry;
-  geom->setDataVariance(osg::Object::STATIC);
-  geom->setUseVertexBufferObjects(true);
+  geom->setDataVariance(osg::Object::DYNAMIC);
+  geode_->setDataVariance(osg::Object::DYNAMIC);
   geom->setVertexArray(verts);
   osg::VertexBufferObject* vbo = verts->getVertexBufferObject();
   if (vbo)
@@ -381,6 +398,9 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
   geom->addPrimitiveSet(primSet);
   geode_->addDrawable(geom);
 
+  // Now update the text.  Remove all text except the unit text (#0)
+  textGroup_->removeChildren(1, textGroup_->getNumChildren() - 1);
+
   // For 0 divisions, you still have 2 positions (left and right)
   size_t vertIndex = 0;
   for (unsigned int k = 0; k <= numDivisions; ++k)
@@ -388,7 +408,7 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
     simVis::Text* valueText = new simVis::Text(*valueTextPrototype_);//, osg::CopyOp::DEEP_COPY_ALL);
     valueText->setPosition(osg::Vec3f(pixelIncrement * k, heightPx_, 0.f));
     valueText->setText(valueToString_(dataIncrement * k, precision));
-    geode_->addDrawable(valueText);
+    textGroup_->addChild(valueText);
 
     // Push back top and bottom vertices and colors
     (*verts)[vertIndex].set(pixelIncrement * k, vertsTop, 0.f);
@@ -399,6 +419,19 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
     (*colors)[vertIndex] = color;
     ++vertIndex;
   }
+
+  // Run the shader generator
+  osgEarth::Registry::shaderGenerator().run(geode_.get());
+}
+
+void MapScale::setVisible_(bool isVisible)
+{
+  // Note that we can't just set the node mask on "this" because that will stop the update
+  // callback from firing off, preventing detection of cases where the map scale needs
+  // to turn back on.
+  const unsigned int nodeMask = (isVisible ? ~0 : 0);
+  geode_->setNodeMask(nodeMask);
+  textGroup_->setNodeMask(nodeMask);
 }
 
 }
