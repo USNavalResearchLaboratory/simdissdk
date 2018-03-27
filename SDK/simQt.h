@@ -59,6 +59,7 @@
 #include "simQt/FileUtilities.h"
 #include "simQt/FontWidget.h"
 #include "simQt/GanttChartView.h"
+#include "simQt/IncrementalCompileSettings.h"
 #include "simQt/MapDataModel.h"
 #include "simQt/MonospaceItemDelegate.h"
 #include "simQt/MruList.h"
@@ -91,6 +92,7 @@
 #include "simQt/UnitContext.h"
 #include "simQt/UnitsComboBox.h"
 #include "simQt/ViewManagerDataModel.h"
+#include "simQt/ViewWidget.h"
 #include "simQt/WeightedMenuManager.h"
 #include "simQt/WidgetSettings.h"
 
