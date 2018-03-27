@@ -1,4 +1,4 @@
-#version 110
+#version 140
 
 #pragma vp_entryPoint simvis_areahighlight_vert
 #pragma vp_location vertex_model

@@ -1,4 +1,4 @@
-#version 110
+#version 140
 
 #pragma vp_entryPoint sim_clip_vert
 #pragma vp_location vertex_view

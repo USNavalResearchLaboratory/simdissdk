@@ -1,4 +1,4 @@
-#version 110
+#version 140
 
 #pragma vp_entryPoint simvis_azel_warp_vertex
 #pragma vp_location vertex_view

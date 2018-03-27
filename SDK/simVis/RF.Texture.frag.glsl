@@ -1,4 +1,4 @@
-#version 130
+#version 140
 
 #pragma vp_location fragment_coloring
 #pragma vp_entryPoint rf_color
