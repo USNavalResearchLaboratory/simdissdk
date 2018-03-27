@@ -197,28 +197,6 @@ void SceneManager::init_()
   if (!noAsyncLoad || strncmp(noAsyncLoad, "0", 1) == 0)
     addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
 
-  // SilverLining requires a write to the depth buffer to avoid having clouds overwrite objects
-  // in the scene.  Therefore everything needs to write to depth buffer.  However, some things
-  // cannot write to the depth buffer without causing graphics artifacts.  To resolve this, we
-  // create a second pass rendering that only writes to the depth buffer and not the color buffer.
-  // That is the point of this depth group.  It only is needed when SilverLining is in use.
-  depthRenderContainer_ = new osg::Group;
-  depthRenderContainer_->addChild(scenarioManager_);
-  // Turn it off by default for performance
-  depthRenderContainer_->setNodeMask(0);
-  drapeableNode_->addChild(depthRenderContainer_);
-
-  // Depth renderer draws scene elements before SilverLining
-  osg::StateSet* drcStateSet = depthRenderContainer_->getOrCreateStateSet();
-  drcStateSet->setRenderBinDetails(BIN_DEPTH_WRITER, BIN_GLOBAL_SIMSDK);
-  // Turn on depth writing and force it for children
-  drcStateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-  // Turn off all color masks so we don't write to the color buffer
-  drcStateSet->setAttributeAndModes(new osg::ColorMask(false, false, false, false), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-  // Omit any pixels with a low alpha, so things like text glyphs don't cause bad behavior
-  static const float ALPHA_THRESHOLD = 0.05f;
-  AlphaTest::setValues(drcStateSet, ALPHA_THRESHOLD, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
   // Configure the default terrain options
   if (simVis::useRexEngine())
   {
