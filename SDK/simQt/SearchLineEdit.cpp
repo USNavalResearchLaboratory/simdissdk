@@ -23,6 +23,7 @@
 #include <cassert>
 #include <QIcon>
 #include <QLabel>
+#include <QProxyStyle>
 #include <QTimer>
 #include <QWidgetAction>
 #include "SearchLineEdit.h"
@@ -41,6 +42,19 @@ namespace simQt
 static const QSize ICON_SIZE = QSize(12, 12);
 /** Buffer around the button for the clear, in pixels */
 static const int ICON_SIZE_BUFFER = 3;
+
+/** Custom ProxyStyle which prevents icons from being colored grey when disabled */
+class NoDisabledStyle : public QProxyStyle
+{
+  public:
+    virtual QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap& pixmap, const QStyleOption* option) const Q_DECL_OVERRIDE
+    {
+      if (iconMode == QIcon::Disabled || !baseStyle())
+        return pixmap;
+
+      return baseStyle()->generatedIconPixmap(iconMode, pixmap, option);
+    }
+};
 
 SearchLineEdit::SearchLineEdit(QWidget* parent)
   : QLineEdit(parent),
@@ -66,7 +80,11 @@ SearchLineEdit::SearchLineEdit(QWidget* parent)
   iconAction_ = new QWidgetAction(this);
   QLabel* iconLabel = new QLabel(this);
   iconLabel->setPixmap(icon.pixmap(ICON_SIZE));
+  // Label needs the custom Style so the icon doesn't turn grey
+  iconLabel->setStyle(new NoDisabledStyle);
   iconAction_->setDefaultWidget(iconLabel);
+  // Need to hide this action from possible ActionsContextMenus
+  iconAction_->setVisible(false);
   addAction(iconAction_, QLineEdit::LeadingPosition);
 
   setClearButtonEnabled(true);
