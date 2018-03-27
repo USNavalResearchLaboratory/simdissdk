@@ -624,36 +624,6 @@ namespace simCore
     int convertXEastToGeodetic_(const Coordinate &tpCoord, Coordinate &llaCoord) const;
 
     /**
-    * @brief Converts a spherical position (range, azimuth & elevation) to an Earth Centered Earth Fixed (ECEF) projection
-    *
-    * @param[in ] raePos spherical position (range, azimuth & elevation)
-    * @param[out] ecefCoord ECEF coordinate
-    * @return 0 on success, !0 on failure
-    * @pre reference origin must be set
-    */
-    int convertRaeToEcef_(const Vec3 &raePos, Coordinate &ecefCoord) const;
-
-    /**
-    * @brief Converts a spherical position (range, azimuth & elevation) to a geodetic projection
-    *
-    * @param[in ] raePos spherical position (range, azimuth & elevation)
-    * @param[out] llaCoord geodetic coordinate
-    * @return 0 on success, !0 on failure
-    * @pre reference origin must be set
-    */
-    int convertRaeToGeodetic_(const Vec3 &raePos, Coordinate &llaCoord) const;
-
-    /**
-    * @brief Converts a spherical position (range, azimuth & elevation) to a X-East tangent plane projection
-    *
-    * @param[in ] raePos spherical position (range, azimuth & elevation)
-    * @param[out] tpCoord X-East tangent plane coordinate
-    * @return 0 on success, !0 on failure
-    * @pre reference origin must be set
-    */
-    int convertRaeToXEast_(const Vec3 &raePos, Coordinate &tpCoord) const;
-
-    /**
     * @brief Converts a X-East tangent plane projection to a translated and rotated tangent plane projection
     *
     * @param[out] tpCoord tangent plane coordinate
