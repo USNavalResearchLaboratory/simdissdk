@@ -56,6 +56,16 @@ namespace simCore
     /// reset all values to default settings
     void clear();
 
+    /**
+    * Sets the coordinate system for the coordinate values,
+    * sets the elapsed time since the ECI frame was defined,
+    * and resets all other values to default settings
+    *
+    * @param[in] system Coordinate system for the coordinate values
+    * @param[in] elapsedEciTime ECI time (sec)
+    */
+    void clear(CoordinateSystem system, double elapsedEciTime);
+
     /// clear the position field
     void clearPosition() { pos_.zero(); }
     /// clear the optional orientation field

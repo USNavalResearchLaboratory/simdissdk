@@ -133,6 +133,20 @@ void Coordinate::clear()
   acc_.zero();
 }
 
+void Coordinate::clear(CoordinateSystem system, double elapsedEciTime)
+{
+  system_ = system;
+  elapsedEciTime_ = elapsedEciTime;
+  hasVel_ = false;
+  hasOri_ = false;
+  hasAcc_ = false;
+
+  pos_.zero();
+  vel_.zero();
+  ori_.zero();
+  acc_.zero();
+}
+
 /// Sets the individual position state components
 void Coordinate::setPosition(double x, double y, double z)
 {
@@ -523,11 +537,6 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     outCoord = inCoord;
     return 0; // done
   }
-
-  // clear any data in outCoord and set its coordinate system and time
-  outCoord.clear();
-  outCoord.setCoordinateSystem(outSystem);
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
 
   switch (inCoord.coordinateSystem())
   {
@@ -928,12 +937,8 @@ int CoordinateConverter::convertGeodeticToFlat_(const Coordinate &llaCoord, Coor
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  flatCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  flatCoord.setCoordinateSystem(system);
-  flatCoord.setElapsedEciTime(llaCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  flatCoord.clear(system, llaCoord.elapsedEciTime());
 
   // Euler angles are the same convention no matter the local system
   if (llaCoord.hasOrientation())
@@ -1059,12 +1064,8 @@ int CoordinateConverter::convertFlatToGeodetic_(const Coordinate &flatCoord, Coo
     return 1;
   }
 
-  // clear any existing data from output coordinate
-  llaCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  llaCoord.setCoordinateSystem(COORD_SYS_LLA);
-  llaCoord.setElapsedEciTime(flatCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  llaCoord.clear(COORD_SYS_LLA, flatCoord.elapsedEciTime());
 
   // Euler angles are the same convention no matter the local system
   if (flatCoord.hasOrientation())
@@ -1252,11 +1253,8 @@ int CoordinateConverter::convertXEastToEcef_(const Coordinate &tpCoord, Coordina
     return 1;
   }
 
-  ecefCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  ecefCoord.setCoordinateSystem(COORD_SYS_ECEF);
-  ecefCoord.setElapsedEciTime(tpCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  ecefCoord.clear(COORD_SYS_ECEF, tpCoord.elapsedEciTime());
 
   Vec3 pos;
   // rotate to geocentric direction
@@ -1323,11 +1321,8 @@ int CoordinateConverter::convertEcefToXEast_(const Coordinate &ecefCoord, Coordi
     return 1;
   }
 
-  tpCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  tpCoord.setCoordinateSystem(COORD_SYS_XEAST);
-  tpCoord.setElapsedEciTime(ecefCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  tpCoord.clear(COORD_SYS_XEAST, ecefCoord.elapsedEciTime());
 
   Vec3 pos;
   // apply translation to tangent plane origin
@@ -1561,12 +1556,8 @@ int CoordinateConverter::swapNedEnu(const Coordinate &inCoord, Coordinate &outCo
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_ENU : COORD_SYS_NED);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_ENU : COORD_SYS_NED, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::swapNedEnu(inCoord.position(), outPos);
@@ -1616,12 +1607,8 @@ int CoordinateConverter::swapNedNwu(const Coordinate &inCoord, Coordinate &outCo
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_NWU : COORD_SYS_NED);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_NWU : COORD_SYS_NED, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::swapNedNwu(inCoord.position(), outPos);
@@ -1671,12 +1658,8 @@ int CoordinateConverter::convertEnuToNwu(const Coordinate &inCoord, Coordinate &
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(COORD_SYS_NWU);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(COORD_SYS_NWU, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::convertEnuToNwu(inCoord.position(), outPos);
@@ -1726,12 +1709,8 @@ int CoordinateConverter::convertNwuToEnu(const Coordinate &inCoord, Coordinate &
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(COORD_SYS_ENU);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(COORD_SYS_ENU, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::convertNwuToEnu(inCoord.position(), outPos);
@@ -1775,12 +1754,8 @@ int CoordinateConverter::convertGeodeticToEcef(const Coordinate &llaCoord, Coord
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  ecefCoord.clear();
-  ecefCoord.setCoordinateSystem(COORD_SYS_ECEF);
-
-  // preserve elapsed ECI time
-  ecefCoord.setElapsedEciTime(llaCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  ecefCoord.clear(COORD_SYS_ECEF, llaCoord.elapsedEciTime());
 
   // convert lat, lon, alt to ECEF geocentric using WGS84 ellipsoidal earth model
   Vec3 ecefPos;
@@ -1889,12 +1864,8 @@ int CoordinateConverter::convertEcefToGeodetic(const Coordinate &ecefCoord, Coor
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  llaCoord.clear();
-  llaCoord.setCoordinateSystem(COORD_SYS_LLA);
-
-  // preserve elapsed ECI time
-  llaCoord.setElapsedEciTime(ecefCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  llaCoord.clear(COORD_SYS_LLA, ecefCoord.elapsedEciTime());
 
   Vec3 llaPos;
   CoordinateConverter::convertEcefToGeodeticPos(ecefCoord.position(), llaPos);
@@ -1993,8 +1964,6 @@ void CoordinateConverter::convertEciEcef_(const Coordinate &inCoord, Coordinate 
   assert(inCoord.coordinateSystem() != outCoord.coordinateSystem());
   assert(&inCoord != &outCoord);
 
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
-
   // if converting to eci to ecef, then rotation is negative
   const double rotationRate = (outCoord.coordinateSystem() == COORD_SYS_ECEF) ? -EARTH_ROTATION_RATE : EARTH_ROTATION_RATE;
   // z axis rotation of omega
@@ -2065,9 +2034,9 @@ int CoordinateConverter::convertEciToEcef(const Coordinate &eciCoord, Coordinate
     return 1;
   }
 
-  // Clear any existing data from the output coordinate
-  ecefCoord.clear();
-  ecefCoord.setCoordinateSystem(COORD_SYS_ECEF);
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  ecefCoord.clear(COORD_SYS_ECEF, eciCoord.elapsedEciTime());
+
   // note that you cannot avoid calc when elapsedEciTime is zero, due to ECI velocity & acceleration having earth rotation components
   convertEciEcef_(eciCoord, ecefCoord);
   return 0;
@@ -2090,9 +2059,9 @@ int CoordinateConverter::convertEcefToEci(const Coordinate &ecefCoord, Coordinat
     return 1;
   }
 
-  // Clear any existing data from the output coordinate
-  eciCoord.clear();
-  eciCoord.setCoordinateSystem(COORD_SYS_ECI);
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  eciCoord.clear(COORD_SYS_ECI, ecefCoord.elapsedEciTime());
+
   // note that you cannot avoid calc when elapsedEciTime is zero, due to ECI velocity & acceleration having earth rotation components
   convertEciEcef_(ecefCoord, eciCoord);
   return 0;
