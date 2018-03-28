@@ -433,11 +433,10 @@ namespace simCore
     * Converts an Earth Centered Earth Fixed (ECEF) coordinate to an Earth Centered Inertial (ECI) coordinate
     * @param[in ] ecefCoord
     * @param[out] eciCoord
-    * @param[in ] elapsedEciTime elapsed time since definition of ECI reference frame (sec)
     * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static int convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord, double elapsedEciTime);
+    static int convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord);
 
     /**
     * @brief Converts a geodetic position to an Earth Centered Earth Fixed (ECEF) position

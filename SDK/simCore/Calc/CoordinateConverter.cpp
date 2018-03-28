@@ -564,7 +564,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         Coordinate ecefCoord;
         if (CoordinateConverter::convertGeodeticToEcef(inCoord, ecefCoord) != 0)
           return 1;
-        return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
+        return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
       }
     default:
       assert(0);
@@ -595,7 +595,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         switch (outSystem)
         {
         case COORD_SYS_ECI:
-          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         case COORD_SYS_XEAST:
         case COORD_SYS_GTP:
           if (convertEcefToXEast_(ecefCoord, outCoord) != 0)
@@ -641,7 +641,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         switch (outSystem)
         {
         case COORD_SYS_ECI:
-          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         case COORD_SYS_XEAST:
         case COORD_SYS_GTP:
           if (convertEcefToXEast_(ecefCoord, outCoord) != 0)
@@ -687,7 +687,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         switch (outSystem)
         {
         case COORD_SYS_ECI:
-          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         case COORD_SYS_XEAST:
         case COORD_SYS_GTP:
           if (convertEcefToXEast_(ecefCoord, outCoord) != 0)
@@ -720,7 +720,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     case COORD_SYS_LLA:
       return CoordinateConverter::convertEcefToGeodetic(inCoord, outCoord);
     case COORD_SYS_ECI:
-      return CoordinateConverter::convertEcefToEci(inCoord, outCoord, inCoord.elapsedEciTime());
+      return CoordinateConverter::convertEcefToEci(inCoord, outCoord);
     case COORD_SYS_XEAST:
     case COORD_SYS_GTP:
       if (convertEcefToXEast_(inCoord, outCoord) != 0)
@@ -755,7 +755,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         case COORD_SYS_ENU:
           return convertEcefToFlat_(ecefCoord, outCoord, outSystem);
         case COORD_SYS_ECI:
-          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         default:
           assert(0);
           return 1;
@@ -811,7 +811,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
           case COORD_SYS_ENU:
             return convertEcefToFlat_(ecefCoord, outCoord, outSystem);
           case COORD_SYS_ECI:
-            return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
+            return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
           default:
             assert(0);
             return 1;
@@ -2044,7 +2044,7 @@ int CoordinateConverter::convertEciToEcef(const Coordinate &eciCoord, Coordinate
 
 /// convert ECEF projection to ECI projection
 ///@pre eciCoord valid, in coord is ECEF, eciCoord does not alias ecefCoord
-int CoordinateConverter::convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord, double elapsedEciTime)
+int CoordinateConverter::convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord)
 {
   // Test for same input/output -- this function cannot handle case of eciCoord == ecefCoord
   if (&eciCoord == &ecefCoord)
