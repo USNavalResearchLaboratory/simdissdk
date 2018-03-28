@@ -851,6 +851,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
       case COORD_SYS_LLA:
         return CoordinateConverter::convertEcefToGeodetic(ecefCoord, outCoord);
       case COORD_SYS_ECEF:
+        outCoord.setCoordinateSystem(outSystem);
         outCoord.setPosition(ecefCoord.position());
         if (ecefCoord.hasVelocity())
         {
