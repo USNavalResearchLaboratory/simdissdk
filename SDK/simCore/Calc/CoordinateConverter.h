@@ -468,9 +468,10 @@ namespace simCore
     * Converts an Earth Centered Earth Fixed (ECEF) position to geodetic
     * @param[in ] ecefPos
     * @param[out] llaPos
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void convertEcefToGeodeticPos(const Vec3 &ecefPos, Vec3 &llaPos);
+    static int convertEcefToGeodeticPos(const Vec3 &ecefPos, Vec3 &llaPos);
 
     /**
     * @brief Converts an Earth Centered Earth Fixed (ECEF) velocity to geodetic

@@ -60,7 +60,7 @@ namespace simCore
   //---WGS-84 constants from NIMA TR8350.2, amendment 1, 3 Jan 2000
   const double WGS_A   = 6378137.0;                 ///< Semi-major axis of the earth (m)
   const double WGS_E   = 0.0818191908426;           ///< Earth eccentricity of ellipsoid
-  const double WGS_ESQ = WGS_E * WGS_E;             ///< Ellipsoid eccentricity squared: E^2
+  const double WGS_ESQ = WGS_E * WGS_E;             ///< Ellipsoid eccentricity squared: E^2, also calculable as (A2-B2)/A2
   const double WGS_F = 1.0/298.257223563;           ///< Earth flattening constant
   const double WGS_B = WGS_A * (1.0 - WGS_F);       ///< (m) Semi-minor axis of the earth: (1.0 - F)*A
   const double WGS_A2 = WGS_A * WGS_A;              ///< (m^2) Semi-major axis squared: A*A

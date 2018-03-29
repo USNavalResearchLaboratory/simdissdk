@@ -29,7 +29,10 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
 
-using namespace simCore;
+namespace simCore
+{
+  // used only in convertEcefToGeodeticPos; e' in Fukushima 1999
+  static const double FUKUSHIMA_eP = sqrt(WGS_ESQC);
 
 //------------------------------------------------------------------------
 Coordinate::Coordinate()
@@ -2069,21 +2072,14 @@ int CoordinateConverter::convertEcefToEci(const Coordinate &ecefCoord, Coordinat
 
 /// convert earth centered, earth fixed projection to geodetic (LLA) projection
 ///@pre llaPos valid, ecefPos does not alias llaPos
-void CoordinateConverter::convertEcefToGeodeticPos(const Vec3 &ecefPos, Vec3 &llaPos)
+int CoordinateConverter::convertEcefToGeodeticPos(const Vec3 &ecefPos, Vec3 &llaPos)
 {
   // Test for same input/output -- this function cannot handle case of ecefPos == llaPos
   if (&ecefPos == &llaPos)
   {
     assert(0);
-    return;
+    return 1;
   }
-  // derived from:
-  // 'An Improved Algorithm for Geocentric to Geodetic Coordinate Conversion',
-  // by Ralph Toms, February 1996  UCRL-JC-123138
-  // Note: Variable names follow the notation used in Toms, Feb 1996
-
-  // indicates location is in polar region
-  bool atPole = false;
 
   if (ecefPos.x() != 0.0)
   {
@@ -2101,73 +2097,73 @@ void CoordinateConverter::convertEcefToGeodeticPos(const Vec3 &ecefPos, Vec3 &ll
     }
     else
     {
-      atPole = true;
+      // at pole or at center of the earth
       llaPos.setLon(0.0);
       if (ecefPos.z() > 0.0)
       { // north pole
         llaPos.setLat(M_PI_2);
+        llaPos.setAlt(ecefPos.z() - WGS_B);
       }
       else if (ecefPos.z() < 0.0)
       { // south pole
         llaPos.setLat(-M_PI_2);
+        llaPos.setAlt(-ecefPos.z() - WGS_B);
       }
       else
       { // center of earth
         llaPos.setLat(M_PI_2);
         llaPos.setAlt(-WGS_B);
-        return; // done
       }
+      return 0;
     }
   }
 
-  // square of distance from Z axis
-  const double W2 = square(ecefPos.x()) + square(ecefPos.y());
+  // derived from Fukushima's fast implementation of Bowring's formula (1999)
+  // Fukushima T., (1999) : Fast transform from geocentric to geodetic coordinates, Journal of Geodesy, Vol. 73, pp. 603-610.
+  // Note: Variable names follow the notation used in Fukushima, 1999
+
   // distance from Z axis
-  const double W = sqrt(W2);
+  const double p = sqrt(square(ecefPos.x()) + square(ecefPos.y()));
+  // p = 0 is a case that must be caught in processing of polar/center-of-earth cases above.
+  assert(p > 0.0);
+
+  // z' in Fukushima
+  const double zP = FUKUSHIMA_eP * ecefPos.z();
+
   // initial estimate of vertical component
-  // 1.0026000 is Ralph Toms' region 1 constant
-  const double T0 = ecefPos.z() * 1.0026000;
-  // initial estimate of horizontal component
-  const double S0 = sqrt(T0 * T0 + W2);
-  // sin(B0), B0 is estimate of Bowring aux variable
-  const double Sin_B0 = T0 / S0;
-  // cos(B0)
-  const double Cos_B0 = W / S0;
-  // cube of sin(B0)
-  const double Sin3_B0 = Sin_B0 * Sin_B0 * Sin_B0;
-  // corrected estimate of vertical component
-  const double T1 = ecefPos.z() + WGS_B * WGS_EP2 * Sin3_B0;
-  // numerator of cos(phi1)
-  const double Sum = W - WGS_A * WGS_ESQ * Cos_B0 * Cos_B0 * Cos_B0;
-  // corrected estimate of horizontal component
-  const double S1 = sqrt(square(T1) + square(Sum));
-  // sin(phi1), phi1 is estimated latitude
-  const double Sin_p1 = T1 / S1;
-  // cos(phi1)
-  const double Cos_p1 = Sum / S1;
-  // Earth radius at location
-  const double Rn = WGS_A / sqrt(1.0 - WGS_ESQ * Sin_p1 * Sin_p1);
+  double T = ecefPos.z() / (FUKUSHIMA_eP * p);
 
-  // cosine of 67.5 degrees
-  const double cos_67_5 = 0.3826834323650897717284599840304;
+  double h;
+  unsigned int iterations = 1;
+  for (unsigned int i = 0; i < iterations; ++i)
+  {
+    const double C = 1.0 / sqrt(1.0 + T * T);
+    const double S = C * T;
+    const double denom = (p - WGS_A * WGS_ESQ * C * C * C);
+    if (denom == 0.0)
+    {
+      assert(0);
+      return 1;
+    }
+    T = (zP + WGS_A * WGS_ESQ * S * S * S) / denom;
 
-  if (Cos_p1 >= cos_67_5)
-  {
-    llaPos.setAlt(W / Cos_p1 - Rn);
-  }
-  else if (Cos_p1 <= -cos_67_5)
-  {
-    llaPos.setAlt(W / -Cos_p1 - Rn);
-  }
-  else
-  {
-    llaPos.setAlt(ecefPos.z() / Sin_p1 + Rn * (WGS_ESQ - 1.0));
+    // divide-by-zero cannot happen below: T can be 0, but if so, p must be > ecefPos.z()
+    assert(T != 0.0 || p > ecefPos.z());
+
+    if (p > ecefPos.z())
+      h = (sqrt(WGS_ESQC + T * T) / FUKUSHIMA_eP) * (p - WGS_A / sqrt(1.0 + T * T));
+    else
+      h = sqrt(WGS_ESQC + T * T) * (ecefPos.z() / T - WGS_B / sqrt(1.0 + T * T));
+
+    // this condition provides 2e-5 accuracy for all GoldData cases; 48000m chosen due to good coverage in GoldData.
+    if (fabs(h) >= 48000.0)
+      iterations = 2;
   }
 
-  if (!atPole)
-  {
-    llaPos.setLat(atan(Sin_p1 / Cos_p1));
-  }
+  const double phi = atan(T / FUKUSHIMA_eP);
+  llaPos.setLat(phi);
+  llaPos.setAlt(h);
+  return 0;
 }
 
 /// convert geodetic projection to earth centered, earth fixed projection
@@ -2269,3 +2265,5 @@ void CoordinateConverter::convertGeodeticOriToEcef(const Vec3 &llaPos, const Vec
   // calculate Euler angles for platform body in ECEF coordinates
   d3DCMtoEuler(BE, ecefOri);
 }
+
+} // namespace simCore
