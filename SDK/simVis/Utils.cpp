@@ -41,6 +41,7 @@
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
 #include "osgEarth/Utils"
+#include "osgEarth/CullingUtils"
 #include "simVis/osgEarthVersion.h"
 
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
@@ -148,6 +149,9 @@ namespace
    * semi-transparent objects. It draws the entire bin twice: the first time with
    * depth-buffer writes turned off to enable full translucent blending; the second
    * time to populate the depth buffer.
+   *
+   * Since the bin needs to manage its own state, we have to manually draw the 
+   * render leaves and skip OSG's default state-tracking RenderBin code.
    */
   class TwoPassAlphaRenderBin : public osgUtil::RenderBin
   {
@@ -155,6 +159,7 @@ namespace
       TwoPassAlphaRenderBin() : osgUtil::RenderBin(SORT_BACK_TO_FRONT)
       {
           this->setName(simVis::BIN_TWO_PASS_ALPHA);
+          this->setStateSet(NULL);
 
           const osg::StateAttribute::GLModeValue forceOn = 
               osg::StateAttribute::ON | 
@@ -169,11 +174,10 @@ namespace
           pass2_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, true), forceOn);
           pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), forceOn);
           pass2_->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, 0.05f), forceOn);
-          pass2_->setMode(GL_ALPHA_TEST, forceOn);
       }
 
-      TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy)
-          : osgUtil::RenderBin(rhs, copy),
+      TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy) :
+          osgUtil::RenderBin(rhs, copy),
           pass1_(rhs.pass1_),
           pass2_(rhs.pass2_)
       {
@@ -185,13 +189,58 @@ namespace
           return new TwoPassAlphaRenderBin(*this, copyop);
       }
 
+      // Draw a render leaf. Apply the state manually so it respects the
+      // render bin's 2-pass state sets.
+      void drawLeaf(osgUtil::RenderLeaf* leaf, osg::RenderInfo& renderInfo)
+      {
+          osg::State& state = *renderInfo.getState();
+
+          // apply matrices if required.
+          state.applyProjectionMatrix(leaf->_projection.get());
+          state.applyModelViewMatrix(leaf->_modelview.get());
+
+          if (leaf->_drawable->getStateSet())
+          {
+              state.pushStateSet(leaf->_drawable->getStateSet());
+              state.apply();
+          }
+
+          if (state.getUseModelViewAndProjectionUniforms())
+              state.applyModelViewAndProjectionUniformsIfRequired();
+
+          leaf->_drawable->draw(renderInfo);
+
+          if (leaf->_dynamic)
+              state.decrementDynamicObjectCount();
+          
+          if (leaf->_drawable->getStateSet())
+              state.popStateSet();
+      }
+
+      // Draw the geometry under a given stateset (render pass).
+      void drawPass(osg::StateSet* pass, osg::RenderInfo& ri)
+      {
+          osg::State& state = *ri.getState();
+
+          state.pushStateSet(pass);
+          state.apply();
+
+          // draw fine grained ordering.
+          for (RenderLeafList::iterator leaf = _renderLeafList.begin(); leaf != _renderLeafList.end(); ++leaf)
+          {
+              drawLeaf(*leaf, ri);
+          }
+
+          state.popStateSet();
+      }
+
+      // Draw the same geometry twice, once for each pass.
+      // We ignore the incoming "previous" leaf since we are handling state changes
+      // manually in this bin.
       void drawImplementation(osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
       {
-          ri.getState()->apply(pass1_.get());
-          osgUtil::RenderBin::drawImplementation(ri, previous);
-
-          ri.getState()->apply(pass2_.get());
-          osgUtil::RenderBin::drawImplementation(ri, previous);
+          drawPass(pass1_.get(), ri);
+          drawPass(pass2_.get(), ri);
       }
 
       osg::ref_ptr<osg::StateSet> pass1_, pass2_;
