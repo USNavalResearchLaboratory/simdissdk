@@ -160,9 +160,10 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   osg::Quat dirQ;
   dirQ.makeRotate(osg::Vec3(0.0f, 1.0f, 0.0f), direction);
 
-  osg::Vec3Array* vertexArray = new osg::Vec3Array();
-  osg::IntArray* faceArray = new osg::IntArray();
-  osg::Vec3Array* normalArray = new osg::Vec3Array();
+  osg::Vec3Array* vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  osg::IntArray* faceArray = new osg::IntArray(osg::Array::BIND_PER_VERTEX);
+  faceArray->setNormalize(false);
+  osg::Vec3Array* normalArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
 
   SVMetaContainer* metaContainer = new SVMetaContainer();
   metaContainer->dirQ_ = dirQ;
@@ -277,22 +278,18 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     outlineGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
     outlineGeom->setCullingActive(false);
 
-    osg::Vec4Array* outlineColor = new osg::Vec4Array(1);
+    osg::Vec4Array* outlineColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*outlineColor)[0] = d.color_;
     (*outlineColor)[0][3] = 1.0f; // no transparency in the outline
     outlineGeom->setColorArray(outlineColor);
-    outlineGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     outlineGeom->setVertexArray(vertexArray);
 
     outlineGeom->setUserData(metaContainer);
 
     outlineGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
-    outlineGeom->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-    outlineGeom->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
     outlineGeom->setNormalArray(normalArray);
-    outlineGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
 
     // configure a state set
     outlineGeom->getOrCreateStateSet()->setAttributeAndModes(
@@ -369,9 +366,8 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   faceGeom->setUseDisplayList(false);
   faceGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
-  osg::Vec4Array* colorArray = new osg::Vec4Array(1);
+  osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   faceGeom->setColorArray(colorArray);
-  faceGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
   (*colorArray)[0] = d.color_;
 
   faceGeom->setVertexArray(vertexArray);
@@ -379,11 +375,8 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   faceGeom->setUserData(metaContainer);
 
   faceGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
-  faceGeom->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  faceGeom->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
   faceGeom->setNormalArray(normalArray);
-  faceGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // if we are drawing the face (not just the outline) add primitives that index into the vertex array
   {
@@ -625,19 +618,17 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     vertsPerFace + vertsOnWall;
 
   // create the vertices
-  osg::Vec3Array* v = new osg::Vec3Array(numVerts);
+  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, numVerts);
   geom->setVertexArray(v);
 
   // and the color array
-  osg::Vec4Array* c = new osg::Vec4Array(1);
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   geom->setColorArray(c);
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   (*c)[0] = d.color_;
 
   // and the normals
-  osg::Vec3Array* n = new osg::Vec3Array(numVerts);
+  osg::Vec3Array* n = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, numVerts);
   geom->setNormalArray(n);
-  geom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // metadata (for fast updates)
   SVMetaContainer* metaContainer = new SVMetaContainer();
@@ -649,9 +640,9 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
   // face identifiers
   osg::IntArray* f = new osg::IntArray(numVerts);
+  f->setBinding(osg::Array::BIND_PER_VERTEX);
+  f->setNormalize(false);
   geom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, f);
-  geom->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  geom->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
   // quaternion that will "point" the volume along our direction vector
   osg::Quat dirQ;
