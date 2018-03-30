@@ -20,7 +20,6 @@
  *
  */
 #include "osg/Math"
-#include "osg/CullFace"
 #include "osg/BlendFunc"
 #include "osg/NodeVisitor"
 #include "osg/MatrixTransform"
@@ -29,9 +28,6 @@
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osg/Multisample"
-#include "osg/AlphaFunc"
-#include "osgDB/FileUtils"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgUtil/RenderBin"
@@ -59,9 +55,10 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
+#include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
-#include "simVis/Registry.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/Registry.h"
 #include "simVis/Utils.h"
 
 namespace
@@ -156,7 +153,9 @@ namespace
   class TwoPassAlphaRenderBin : public osgUtil::RenderBin
   {
   public:
-    TwoPassAlphaRenderBin() : osgUtil::RenderBin(SORT_BACK_TO_FRONT)
+    TwoPassAlphaRenderBin()
+      : osgUtil::RenderBin(SORT_BACK_TO_FRONT),
+        haveInit_(false)
     {
       setName(simVis::BIN_TWO_PASS_ALPHA);
       setStateSet(NULL);
@@ -170,13 +169,13 @@ namespace
       pass2_ = new osg::StateSet();
       pass2_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, true), forceOn);
       pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), forceOn);
-      pass2_->setAttributeAndModes(new osg::AlphaFunc(osg::AlphaFunc::GREATER, 0.05f), forceOn);
     }
 
     TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy)
       : osgUtil::RenderBin(rhs, copy),
         pass1_(rhs.pass1_),
-        pass2_(rhs.pass2_)
+        pass2_(rhs.pass2_),
+        haveInit_(rhs.haveInit_)
     {
       //nop
     }
@@ -236,12 +235,23 @@ namespace
     // manually in this bin.
     void drawImplementation(osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
     {
+      // Initialize the alpha test, which cannot be done in the constructor due to static
+      // initialization conflicts with its use of osgEarth::Registry::capabilities()
+      if (!haveInit_)
+      {
+        haveInit_ = true;
+        simVis::AlphaTest::setValues(pass2_.get(), 0.05f, osg::StateAttribute::ON |
+          osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
+      }
+
       drawPass(pass1_.get(), ri);
       drawPass(pass2_.get(), ri);
     }
 
+  private:
     osg::ref_ptr<osg::StateSet> pass1_;
     osg::ref_ptr<osg::StateSet> pass2_;
+    bool haveInit_;
   };
 
   /** the actual registration. */
