@@ -102,9 +102,8 @@ void RocketBurn::rebuild_()
     geometry->setTexCoordArray(textureUnit, texcoords.get());
 
     // colors
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL);
     geometry->setColorArray(colors.get());
-    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     simVis::Color currentColor(currentShape_.color);
     if (currentShape_.scaleAlpha)

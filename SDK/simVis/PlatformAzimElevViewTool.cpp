@@ -301,10 +301,9 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
 
   osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
 
-  osg::Vec4Array* colors = new osg::Vec4Array(1);
+  osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*colors)[0].set(1, 1, 1, 1);
   geom->setColorArray(colors);
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   osg::Vec3Array* verts = new osg::Vec3Array();
   geom->setVertexArray(verts);
@@ -421,13 +420,13 @@ osg::Geode* PlatformAzimElevViewTool::buildTargetGeode_()
   float s = 3000.0f;
   //float s = 10.0f;
 
-  osg::Vec3Array* v = new osg::Vec3Array(4);
+  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 4);
   (*v)[0].set(-s, -s, 0.0);
   (*v)[1].set(s,  s, 0.0);
   (*v)[2].set(-s,  s, 0.0);
   (*v)[3].set(s, -s, 0.0);
 
-  osg::Vec4Array* c = new osg::Vec4Array(1);
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*c)[0].set(1.0, 1.0, 1.0, 1.0);
 
   osg::PrimitiveSet* prim = new osg::DrawArrays(GL_LINES, 0, 4);
@@ -437,7 +436,6 @@ osg::Geode* PlatformAzimElevViewTool::buildTargetGeode_()
   geom->setUseDisplayList(false);
   geom->setVertexArray(v);
   geom->setColorArray(c);
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   geom->addPrimitiveSet(prim);
 
   osg::StateSet* stateset = geom->getOrCreateStateSet();

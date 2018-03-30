@@ -219,10 +219,9 @@ void AnimatedLineNode::initializeGeometry_()
     if (vbo)
       vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
     geom->addPrimitiveSet(primset_.get());
-    colors1_ = new osg::Vec4Array(1);
+    colors1_ = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*colors1_)[0] = color1_;
     geom->setColorArray(colors1_.get());
-    geom->setColorBinding(osg::Geometry::BIND_OVERALL);
     vbo = colors1_->getVertexBufferObject();
     if (vbo)
       vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
@@ -243,10 +242,9 @@ void AnimatedLineNode::initializeGeometry_()
     geom->setUseVertexBufferObjects(true);
     geom->setVertexArray(verts_.get());
     geom->addPrimitiveSet(primset_.get());
-    colors2_ = new osg::Vec4Array(1);
+    colors2_ = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*colors2_)[0] = color2_;
     geom->setColorArray(colors2_.get());
-    geom->setColorBinding(osg::Geometry::BIND_OVERALL);
     osg::VertexBufferObject* vbo = colors2_->getVertexBufferObject();
     if (vbo)
       vbo->setUsage(GL_DYNAMIC_DRAW_ARB);

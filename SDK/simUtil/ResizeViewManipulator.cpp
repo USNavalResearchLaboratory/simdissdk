@@ -107,7 +107,7 @@ public:
 private:
   void initialize_()
   {
-    osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(8);
+    osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 8);
 
     (*verts)[0].set(0, 1, 0);
     (*verts)[1].set(0.5, 1, 0);
@@ -118,7 +118,7 @@ private:
     (*verts)[6].set(0, 0, 0);
     (*verts)[7].set(0, 0.5, 0);
 
-    colors_ = new osg::Vec4Array(8);
+    colors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, 8);
     for (size_t k = 0; k < 8; ++k)
       (*colors_)[k] = BAND_NORMAL_COLOR;
 
@@ -127,7 +127,6 @@ private:
 
     geom->setVertexArray(verts.get());
     geom->setColorArray(colors_.get());
-    geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
     geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 8));
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode();

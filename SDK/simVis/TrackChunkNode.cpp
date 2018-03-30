@@ -162,14 +162,13 @@ void TrackChunkNode::allocate_()
   this->addChild(geode_);
 
   // center line:
-  centerVerts_  = new osg::Vec3Array(maxSize_);
-  centerColors_ = new osg::Vec4Array(maxSize_);
+  centerVerts_  = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, maxSize_);
+  centerColors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, maxSize_);
   centerPSet_   = new osg::DrawArrays(GL_POINTS, 0, 0);
   center_ = new osg::Geometry();
   center_->setVertexArray(centerVerts_);
   center_->addPrimitiveSet(centerPSet_);
   center_->setColorArray(centerColors_);
-  center_->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
   center_->setUseVertexBufferObjects(true);
   center_->setDataVariance(osg::Object::DYNAMIC);
   osg::VertexBufferObject* vbo = centerVerts_->getVertexBufferObject();
@@ -183,14 +182,13 @@ void TrackChunkNode::allocate_()
   else if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
   {
     // drop line:
-    dropVerts_  = new osg::Vec3Array(2*maxSize_);
-    dropColors_ = new osg::Vec4Array(2*maxSize_);
+    dropVerts_  = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 2*maxSize_);
+    dropColors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, 2*maxSize_);
     dropPSet_   = new osg::DrawArrays(GL_LINES, 0, 0);
     drop_ = new osg::Geometry();
     drop_->setVertexArray(dropVerts_);
     drop_->addPrimitiveSet(dropPSet_);
     drop_->setColorArray(dropColors_);
-    drop_->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
     drop_->setUseDisplayList(false);
     drop_->setUseVertexBufferObjects(true);
     drop_->setDataVariance(osg::Object::DYNAMIC);
@@ -203,13 +201,12 @@ void TrackChunkNode::allocate_()
   {
     // ribbon:
     ribbon_ = new osg::Geometry();
-    ribbonVerts_  = new osg::Vec3Array(6*maxSize_);
-    ribbonColors_ = new osg::Vec4Array(6*maxSize_);
+    ribbonVerts_  = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 6*maxSize_);
+    ribbonColors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, 6*maxSize_);
     ribbonPSet_   = new osg::DrawArrays(GL_LINES, 0, 0);
     ribbon_->setVertexArray(ribbonVerts_);
     ribbon_->addPrimitiveSet(ribbonPSet_);
     ribbon_->setColorArray(ribbonColors_);
-    ribbon_->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
     ribbon_->setUseDisplayList(false);
     ribbon_->setUseVertexBufferObjects(true);
     ribbon_->setDataVariance(osg::Object::DYNAMIC);

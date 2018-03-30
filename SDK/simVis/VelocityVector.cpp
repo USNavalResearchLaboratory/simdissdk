@@ -131,9 +131,8 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
   geom->setVertexArray(vertices.get());
 
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_PER_PRIMITIVE_SET);
   geom->setColorArray(colorArray.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
 
   simCore::Coordinate ecef;
   ecef.setCoordinateSystem(simCore::COORD_SYS_ECEF);

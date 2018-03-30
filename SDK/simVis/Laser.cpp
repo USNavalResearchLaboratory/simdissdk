@@ -428,11 +428,10 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   g->addPrimitiveSet(primset);
 
   // set the color:
-  osg::Vec4Array* c = new osg::Vec4Array(1);
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*c)[0] = simVis::ColorUtils::RgbaToVec4(
     prefs.commonprefs().useoverridecolor() ? prefs.commonprefs().overridecolor() : prefs.commonprefs().color());
   g->setColorArray(c);
-  g->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   // set up the state.
   osg::StateSet* stateSet = g->getOrCreateStateSet();

@@ -366,13 +366,13 @@ void PlanetariumViewTool::scaleTargetGeode_(osg::Geode* geode, double range) con
   // the graphic used for target delegates is scaled based on range (planetarium radius), this might be a dimension in meters
   // this formula for calculating s is purely trial-and-error, intended to maintain a minimum size at low range, but scale slowly with increasing range.
   const float s = static_cast<float>(20.0 + range / 60.0);
-  osg::Vec3Array* v = new osg::Vec3Array(4);
+  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 4);
   (*v)[0].set(-s, -s, 0.0f);
   (*v)[1].set(s, s, 0.0f);
   (*v)[2].set(-s, s, 0.0f);
   (*v)[3].set(s, -s, 0.0f);
 
-  osg::Vec4Array* c = new osg::Vec4Array(1);
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*c)[0].set(1.0f, 1.0f, 1.0f, 1.0f);
 
   osg::PrimitiveSet* prim = new osg::DrawArrays(GL_LINES, 0, 4);
@@ -382,7 +382,6 @@ void PlanetariumViewTool::scaleTargetGeode_(osg::Geode* geode, double range) con
   geom->setUseDisplayList(false);
   geom->setVertexArray(v);
   geom->setColorArray(c);
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   geom->addPrimitiveSet(prim);
 
   osg::StateSet* stateset = geom->getOrCreateStateSet();
@@ -394,11 +393,11 @@ void PlanetariumViewTool::scaleTargetGeode_(osg::Geode* geode, double range) con
 
 osg::Geode* PlanetariumViewTool::buildVectorGeode_()
 {
-  osg::Vec3Array* v = new osg::Vec3Array(4);
+  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 4);
   (*v)[0].set(0.0f, 0.0f, 0.0f);
   (*v)[1].set(0.0f, 0.0f, 1.0f);
 
-  osg::Vec4Array* c = new osg::Vec4Array(1);
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*c)[0].set(0.0f, 1.0f, 0.0f, 1.0f);
 
   osg::PrimitiveSet* prim = new osg::DrawArrays(GL_LINES, 0, 2);
@@ -408,7 +407,6 @@ osg::Geode* PlanetariumViewTool::buildVectorGeode_()
   geom->setUseDisplayList(false);
   geom->setVertexArray(v);
   geom->setColorArray(c);
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   geom->addPrimitiveSet(prim);
 
   osg::StateSet* stateset = geom->getOrCreateStateSet();

@@ -68,9 +68,8 @@ public:
     osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(10);
     geom->setVertexArray(verts.get());
 
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     geom->setColorArray(colors.get());
-    geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 10));
     this->addDrawable(geom.get());

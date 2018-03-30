@@ -378,9 +378,8 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
   geom->setTexCoordArray(textureUnit, texcoords.get());
 
   // colors
-  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
+  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL);
   geom->setColorArray(colors.get());
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   colors->push_back(simVis::Color::White);
 
   // add an instance of vapor trail

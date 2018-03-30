@@ -42,7 +42,7 @@ const int AXIS_NUM_POINTS_PER_LINE_STRIP = 4;
 AxisVector::AxisVector()
   : MatrixTransform(),
     lineWidth_(new osg::LineWidth(2.f)),
-    colors_(new osg::Vec4Array),
+    colors_(new osg::Vec4Array(osg::Array::BIND_PER_PRIMITIVE_SET)),
     axisLengths_(1.f, 1.f, 1.f)
 {
   setName("AxisVector");
@@ -146,11 +146,10 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   geom->setUseVertexBufferObjects(true);
 
-  osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
+  osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   geom->setVertexArray(vertices.get());
 
   geom->setColorArray(colors_.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
 
   // Keep track of location in the primitive set array
   int primitiveSetStart = 0;

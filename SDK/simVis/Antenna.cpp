@@ -327,13 +327,11 @@ void AntennaNode::render_()
   osg::Vec3Array* verts = new osg::Vec3Array();
   antGeom->setVertexArray(verts);
 
-  osg::Vec3Array* norms = new osg::Vec3Array();
+  osg::Vec3Array* norms = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   antGeom->setNormalArray(norms);
-  antGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
 
-  osg::Vec4Array* colors = new osg::Vec4Array;
+  osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
   antGeom->setColorArray(colors);
-  antGeom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // expected range for vRange is (0, M_PI]
   const double vRange = osg::clampBetween(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_PI);

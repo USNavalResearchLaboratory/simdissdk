@@ -386,9 +386,8 @@ void MapScale::drawBars_(double maxValue, unsigned int numDivisions, float width
     vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
 
   // Create colors
-  osg::Vec4Array* colors = new osg::Vec4Array(numVertices);
+  osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, numVertices);
   geom->setColorArray(colors);
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
   vbo = colors->getVertexBufferObject();
   if (vbo)
     vbo->setUsage(GL_DYNAMIC_DRAW_ARB);

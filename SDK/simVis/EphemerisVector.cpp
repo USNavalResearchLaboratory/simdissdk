@@ -122,16 +122,15 @@ osg::Geode* EphemerisVector::createGeode_(osg::observer_ptr<osg::Vec3Array>& ver
   geom->setUseVertexBufferObjects(true);
 
   // Configure the vertices array
-  vertices = new osg::Vec3Array();
+  vertices = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   for (int k = 0; k < NUM_LINE_VERTICES; ++k)
     vertices->push_back(osg::Vec3(k, 0, 0));
   geom->setVertexArray(vertices.get());
   geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, 0, NUM_LINE_VERTICES));
 
   // Use a single color for the line
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL);
   geom->setColorArray(colorArray.get());
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   colorArray->push_back(color);
 
   // Add the drawable and return the geode

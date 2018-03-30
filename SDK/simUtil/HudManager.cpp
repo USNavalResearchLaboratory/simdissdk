@@ -876,10 +876,9 @@ void HudImage::update_()
   geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
   // Set up the color
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(1);
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*colorArray)[0] = color_;
   geometry->setColorArray(colorArray.get());
-  geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   // Map texture coordinates to the corners
   osg::ref_ptr<osg::Vec2Array> texCoords = new osg::Vec2Array(4);

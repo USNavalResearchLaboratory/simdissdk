@@ -305,8 +305,9 @@ void Profile::init_()
   transform_->removeChildren(0, transform_->getNumChildren());
 
   // Clear out the original values
-  verts_ = new osg::Vec3Array();
-  values_ = new osg::FloatArray();
+  verts_ = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  values_ = new osg::FloatArray(osg::Array::BIND_PER_VERTEX);
+  values_->setNormalize(false);
   geode_ = NULL;
   if (mode_ != DRAWMODE_3D_TEXTURE)
   {
@@ -431,8 +432,6 @@ void Profile::init2DHoriz_()
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_.get());
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-  geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
   // GL_CULL_FACE is OFF because 2D Horizontal is a strip and not a 3D object
   geometry->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
@@ -514,8 +513,6 @@ void Profile::init2DVert_()
   geometry->setVertexArray(verts_.get());
 
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-  geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
   geometry->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
   // Call to tesselate the 2D Vertical
@@ -680,8 +677,6 @@ void Profile::init3D_()
   geometry->setUseVertexBufferObjects(true);
 
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-  geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
   geode_->addDrawable(geometry);
 }
@@ -1001,8 +996,6 @@ void Profile::init3DPoints_()
   geometry->setUseVertexBufferObjects(true);
 
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-  geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
   geometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, verts_->size()));
   geode_->addDrawable(geometry);
@@ -1236,8 +1229,6 @@ void Profile::initRAE_()
   geometry->setVertexArray(verts_.get());
 
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-  geometry->setVertexAttribBinding(osg::Drawable::ATTRIBUTE_6, osg::Geometry::BIND_PER_VERTEX);
-  geometry->setVertexAttribNormalize(osg::Drawable::ATTRIBUTE_6, false);
 
   geode_->addDrawable(geometry);
 }

@@ -73,10 +73,9 @@ namespace
       v = new osg::Vec3Array(9);
       geom->setVertexArray(v);
 
-      osg::Vec4Array* c = new osg::Vec4Array;
+      osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
       c->push_back(osg::Vec4(1., 1., 1., 1.));
       geom->setColorArray(c);
-      geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
       GLubyte idxLines[8] = { 0, 5, 0, 6, 0, 7, 0, 8 };
       GLubyte idxLoops0[4] = { 1, 2, 3, 4 };

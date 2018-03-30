@@ -80,12 +80,11 @@ void CylinderGeode::rebuild_()
   // Set up wall geometry
   osg::ref_ptr<osg::Geometry> wallGeom = new osg::Geometry;
   // Create and bind vertex array
-  osg::ref_ptr<osg::Vec3Array> wallVerts = new osg::Vec3Array;
+  osg::ref_ptr<osg::Vec3Array> wallVerts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   wallGeom->setVertexArray(wallVerts.get());
   // Create and bind color array
-  osg::ref_ptr<osg::Vec4Array> wallColors = new osg::Vec4Array;
+  osg::ref_ptr<osg::Vec4Array> wallColors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
   wallGeom->setColorArray(wallColors.get());
-  wallGeom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // Push in the center point of each circle
   simVis::Color colorNear(currentShape_.colorNear);

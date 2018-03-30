@@ -199,10 +199,9 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   geom_ = new osg::Geometry();
   geom_->setUseVertexBufferObjects(true);
 
-  osg::Vec4Array* c = new osg::Vec4Array(1);
+  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*c)[0] = osg::Vec4f(1.0f, 1.0f, 1.0f, 1.0f); // always white
   geom_->setColorArray(c);
-  geom_->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   osg::Vec3Array* v = new osg::Vec3Array(6);
   geom_->setVertexArray(v);

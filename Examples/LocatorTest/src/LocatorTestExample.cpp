@@ -155,7 +155,7 @@ struct App
 
 osg::Node* createNode(float s)
 {
-  osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array();
+  osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   verts->push_back(osg::Vec3(0, 0, 0));
   verts->push_back(osg::Vec3(s, 0, 0));   // E
   verts->push_back(osg::Vec3(0, 0, 0));
@@ -163,7 +163,7 @@ osg::Node* createNode(float s)
   verts->push_back(osg::Vec3(0, 0, 0));
   verts->push_back(osg::Vec3(0, 0, s));   // U
 
-  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
   colors->push_back(osg::Vec4(1, 0, 0, 1));
   colors->push_back(osg::Vec4(1, 0, 0, 1));  //RED
   colors->push_back(osg::Vec4(0, 1, 0, 1));
@@ -177,7 +177,6 @@ osg::Node* createNode(float s)
   geom->setUseVertexBufferObjects(true);
   geom->setVertexArray(verts.get());
   geom->setColorArray(colors.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
   geom->addPrimitiveSet(da.get());
 
   osg::ref_ptr<osg::StateSet> ss = geom->getOrCreateStateSet();

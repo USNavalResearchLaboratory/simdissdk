@@ -833,10 +833,9 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, osg::Primitiv
       geom->setVertexArray(verts);
       geom->addPrimitiveSet(primSet);
 
-      osg::Vec4Array* colors = new osg::Vec4Array(1);
+      osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
       (*colors)[0] = (i==0) ? options_.lineColor1_ : options_.lineColor2_;
       geom->setColorArray(colors);
-      geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
       osg::StateSet* ss = geom->getOrCreateStateSet();
 #ifdef OSG_GL1_AVAILABLE
@@ -869,13 +868,12 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
     arcEndVecGeom = new osg::Geometry();
     arcEndVecGeom->setUseVertexBufferObjects(true);
 
-    verts = new osg::Vec3Array();
+    verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     arcEndVecGeom->setVertexArray(verts);
 
-    osg::Vec4Array* colors = new osg::Vec4Array(1);
+    osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*colors)[0] = options_.pieColor_;
     arcEndVecGeom->setColorArray(colors);
-    arcEndVecGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     osg::StateSet* ss = arcEndVecGeom->getOrCreateStateSet();
     simVis::PolygonStipple::setValues(ss, true, 0);
@@ -892,7 +890,6 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
     startVecGeom->setUseVertexBufferObjects(true);
     startVecGeom->setVertexArray(verts);
     startVecGeom->setColorArray(colors);
-    startVecGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
     geode->addDrawable(startVecGeom);
   }
 

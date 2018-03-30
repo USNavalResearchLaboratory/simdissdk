@@ -142,10 +142,9 @@ void BoxGraphic::setStipplePattern(unsigned short stipple)
 void BoxGraphic::setColor(const osg::Vec4& color)
 {
   color_ = color;
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(1);
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*colorArray)[0] = color;
   geometry_->setColorArray(colorArray.get());
-  geometry_->setColorBinding(osg::Geometry::BIND_OVERALL);
   osg::VertexBufferObject* vbo = colorArray->getVertexBufferObject();
   if (vbo)
     vbo->setUsage(GL_DYNAMIC_DRAW_ARB);

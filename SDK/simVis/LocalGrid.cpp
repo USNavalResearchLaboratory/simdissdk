@@ -364,13 +364,10 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
   geomSub->setVertexArray(vertSub.get());
   geomDiv->setVertexArray(vertDiv.get());
 
-  osg::ref_ptr<osg::Vec4Array> colorArraySub = new osg::Vec4Array();
-  osg::ref_ptr<osg::Vec4Array> colorArrayDiv = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> colorArraySub = new osg::Vec4Array(osg::Array::BIND_OVERALL);
+  osg::ref_ptr<osg::Vec4Array> colorArrayDiv = new osg::Vec4Array(osg::Array::BIND_OVERALL);
   geomSub->setColorArray(colorArraySub.get());
   geomDiv->setColorArray(colorArrayDiv.get());
-
-  geomSub->setColorBinding(osg::Geometry::BIND_OVERALL);
-  geomDiv->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   const Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   // Note that size is halved; it's provided in diameter, and we need it as radius
@@ -477,12 +474,11 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   geom->setUseVertexBufferObjects(true);
 
-  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
+  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   geom->setVertexArray(vertexArray.get());
 
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
   geom->setColorArray(colorArray.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // rings:
   int primitiveSetStart = 0;
@@ -629,12 +625,11 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   geom->setUseVertexBufferObjects(true);
 
-  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
+  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   geom->setVertexArray(vertexArray.get());
 
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
   geom->setColorArray(colorArray.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // rings or speed line:
   int primitiveSetStart = 0;

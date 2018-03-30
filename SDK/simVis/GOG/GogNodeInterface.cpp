@@ -1916,10 +1916,9 @@ void SphericalNodeInterface::setColor_(const osg::Vec4f& color)
     return;
 
   // set the color array, logic taken from osgEarthAnnotation's AnnotationUtils::createSphere(/hemisphere/ellipsoid)
-  osg::Vec4Array* colorArray = new osg::Vec4Array(1);
+  osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*colorArray)[0] = color;
   geometry->setColorArray(colorArray);
-  geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 }
 
 } }
