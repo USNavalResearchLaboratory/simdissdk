@@ -124,7 +124,7 @@ namespace simVis
 
     // Platform models are general opaque but have some translucent parts.
     // These need to be rendered in traversal order to preserve the alpha
-    // components at the end of the mode graph. Later we should explore 
+    // components at the end of the mode graph. Later we should explore
     // pre-processing these models to separate the translucent parts for
     // two-pass alpha rendering.
     // Bin type = BIN_TRAVERSAL_ORDER_SIMSDK
@@ -148,7 +148,7 @@ namespace simVis
     // Following this are graphics that render with depth-writing OFF
     // Bin type = BIN_GLOBAL_SIMSDK
     BIN_SILVERLINING        = 99,  // SilverLining is automatically drawn at RenderBin 99 (no depth writing)
-    BIN_AREA_HIGHLIGHT      = 105, // TODO: re-evaluate, might belong in the TWO_PASS bin
+    BIN_AREA_HIGHLIGHT      = 105,
     BIN_ROCKETBURN          = 106,
     BIN_SCREEN_SPACE_LABEL  = 108, // osgEarth screen-space labels (PlaceNode, LabelNode, etc.)
 

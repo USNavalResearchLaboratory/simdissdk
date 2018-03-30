@@ -294,7 +294,7 @@ bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
   const Locator* hostPlatformLocator = (hostPlatform) ? hostLocator : hostLocator->getParentLocator();
   if (!hostPlatformLocator)
     return false;
- 
+
   bool rebuild = false;
   // force rebuild if speed rings are displayed, using platform speed, and host velocity changed
   if (prefs.speedring().useplatformspeed())
@@ -625,7 +625,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   const Units prefSizeUnits   = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   const double spacingS = timeRadiusSeconds / osg::maximum(1, numRings);
 
-  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();;
+  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   geom->setName("simVis::LocalGridNode");
   geom->setUseVertexBufferObjects(true);
 

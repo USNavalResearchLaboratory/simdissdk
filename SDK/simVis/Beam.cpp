@@ -644,10 +644,10 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 
   // all activePrefs must be applied during this creation
   if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
-  {   
+  {
     getOrCreateStateSet()->setRenderBinDetails(
-        (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
-        (activePrefs->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
+      (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
+      (activePrefs->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
     // If beam is drawn as a spherical volume, then the spherical volume also needs to be recreated/updated when blending changes.
     // If the spherical volume does not need to be recreated, updating will be done by performInPlacePrefChanges().
     // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.

@@ -29,7 +29,6 @@
 #include "osgEarthDrivers/tms/TMSOptions"
 #include "osgEarthDrivers/gdal/GDALOptions"
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
-#include "osgEarthSilverLining/SilverLiningOptions"
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
@@ -102,7 +101,9 @@ bool simExamples::readArg(const std::string& pattern, int argc, char** argv, std
   return false;
 }
 
-#define USE_REMOTE_MAP_DATA
+// Uncomment to use remote map data
+//#define USE_REMOTE_MAP_DATA
+
 Map* simExamples::createDefaultExampleMap()
 {
 #ifdef USE_REMOTE_MAP_DATA
@@ -469,13 +470,6 @@ void simExamples::addDefaultSkyNode(simVis::Viewer* viewer)
 
 void simExamples::addDefaultSkyNode(simVis::SceneManager* sceneMan)
 {
-    osgEarth::SilverLining::SilverLiningOptions options;
-    options.drawClouds() = true;
-    options.cloudsMaxAltitude() = 16000.0;
-
-    sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(options, sceneMan->getMapNode()));
-    return;
-
   // Only install simple sky if the osgEarth capabilities permit it
   if (osgEarth::Registry::capabilities().getGLSLVersionInt() >= 330)
   {

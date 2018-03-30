@@ -76,16 +76,18 @@ namespace
   /** setUserData() tag for the scenario's object ID */
   static const std::string SCENARIO_OBJECT_ID = "scenid";
 
-  /** Debugging callback that will dump the culling results each frame --
-      useful for debugging render order */
-  struct DebugCallback : public osg::NodeCallback {
-    void operator()(osg::Node* node, osg::NodeVisitor* nv) {
+  /** Debugging callback that will dump the culling results each frame -- useful for debugging render order */
+  struct DebugCallback : public osg::NodeCallback
+  {
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
       traverse(node, nv);
       osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-      if (cv) {
+      if (cv)
+      {
         osgEarth::Config c = osgEarth::CullDebugger().dumpRenderBin(cv->getRenderStage());
         OE_INFO << "FRAME " << cv->getFrameStamp()->getFrameNumber() << "-----------------------------------" << std::endl
-            << c.toJSON(true) << std::endl;
+          << c.toJSON(true) << std::endl;
       }
     }
   };
@@ -98,7 +100,7 @@ SceneManager::SceneManager()
 
   // Uncomment this to activate the rendering debugger that will
   // print the cull results each frame
-  //this->addCullCallback(new DebugCallback());
+  //addCullCallback(new DebugCallback());
 }
 
 SceneManager::~SceneManager()
@@ -258,7 +260,7 @@ void SceneManager::init_()
   osgEarth::ScreenSpaceLayoutOptions screenOptions;
   screenOptions.renderOrder() = BIN_SCREEN_SPACE_LABEL;
   osgEarth::ScreenSpaceLayout::setOptions(screenOptions);
-  
+
   // Turn off declutter
   osgEarth::ScreenSpaceLayout::setDeclutteringEnabled(false);
 

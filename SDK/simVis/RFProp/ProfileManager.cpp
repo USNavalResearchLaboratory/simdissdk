@@ -53,7 +53,6 @@ ProfileManager::ProfileManager()
   timeBearingProfiles_[0] = currentProfileMap_;
 
   osg::StateSet* stateset = getOrCreateStateSet();
-  //stateset->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_GLOBAL_SIMSDK);
   stateset->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_TWO_PASS_ALPHA);
 
   // Turn off lighting; we do not set normals in profiles, so lighting will look bad

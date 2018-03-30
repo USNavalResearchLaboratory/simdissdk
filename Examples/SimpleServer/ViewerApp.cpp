@@ -64,10 +64,10 @@ static const std::string HELP_TEXT =
   "n : Toggle labels\n"
   "o : Cycle time format\n"
   "O : Toggle overhead mode\n"
+  "p : Play/pause\n"
   "s : Cycle OSG statistics\n"
   "w : Toggle compass\n"
   "z : Toggle cockpit mode (if centered)\n"
-  "p : Play/pause\n"
   ;
 
 //////////////////////////////////////////////////////////////////
