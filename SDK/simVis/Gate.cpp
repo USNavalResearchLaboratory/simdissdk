@@ -51,14 +51,20 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   addChild(gateSV_);
 
   const bool isOpaque = prefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
-                        prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID;
+                        prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
+                        prefs->fillpattern() == simData::GatePrefs_FillPattern_STIPPLE;
 
   // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
-  gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
+  //gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
+  gateSV_->getOrCreateStateSet()->setRenderBinDetails(
+      (isOpaque ? BIN_OPAQUE_GATE   : BIN_GATE),
+      (isOpaque ? BIN_GLOBAL_SIMSDK : BIN_TWO_PASS_ALPHA));
 
   osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
   if (outlineGeometry != NULL)
+  {
     outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+  }
 }
 
 GateVolume::~GateVolume()
@@ -197,6 +203,7 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
 {
   setActive(false);
   geom_ = new osg::Geometry();
+  geom_->setName("simVis::GateCentroid");
   geom_->setUseVertexBufferObjects(true);
 
   osg::Vec4Array* c = new osg::Vec4Array(1);
@@ -328,18 +335,6 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
 
   localGrid_ = new LocalGridNode(centroidLocator_.get(), host, referenceYear);
   addChild(localGrid_);
-
-  // set up a state set.
-  // carefully set the rendering order for gates. We want to render them
-  // before everything else (including the terrain) since they are
-  // transparent and potentially self-blending
-  osg::StateSet* stateSet = getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_GATE, BIN_GLOBAL_SIMSDK); //"RenderBin");
-
-  // depth-writing is disabled for the gates.
-  // the gates draw before anything else (including the terrain) along with beams.
-  depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
-  stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
 
   // horizon culling:
   addCullCallback( new osgEarth::HorizonCullCallback() );
@@ -697,13 +692,6 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   const bool refreshRequiresNewNode = force || changeRequiresRebuild_(newUpdate, newPrefs);
   if (refreshRequiresNewNode)
   {
-    const bool isOpaque = activePrefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
-                          activePrefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
-                          activePrefs->fillpattern() == simData::GatePrefs_FillPattern_CENTROID;
-
-    // blending is off for opaque graphics, so depth writing is on, otherwise off
-    depthAttr_->setWriteMask(isOpaque);
-
     if (gateVolume_)
     {
       removeChild(gateVolume_);

@@ -154,6 +154,7 @@ void BoxGraphic::setColor(const osg::Vec4& color)
 void BoxGraphic::create_()
 {
   geometry_ = new osg::Geometry;
+  geometry_->setName("simVis::BoxGraphic");
   geometry_->setUseVertexBufferObjects(true);
   geometry_->setDataVariance(osg::Object::DYNAMIC);
 

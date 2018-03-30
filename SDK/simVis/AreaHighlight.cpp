@@ -22,6 +22,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osg/Depth"
+#include "osg/BlendFunc"
 #include "simCore/Calc/Math.h"
 #include "simCore/String/Format.h"
 #include "simVis/Constants.h"
@@ -119,6 +120,7 @@ void AreaHighlightNode::init_()
   package.load(vp, package.areaHighlightFragment());
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setName("simVis::AreaHighlight");
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
@@ -157,6 +159,7 @@ void AreaHighlightNode::init_()
 
   // Begin triangle creation ------------------------------
   osg::ref_ptr<osg::Geometry> triGeom = new osg::Geometry();
+  triGeom->setName("simVis::AreaHighlight");
   triGeom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> triVertexArray = new osg::Vec3Array();

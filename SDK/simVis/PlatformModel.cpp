@@ -300,10 +300,11 @@ void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
   model_ = newModel;
   if (newModel != NULL)
   {
-    // set render order
+    // set render order.
+    // we set the OVERRIDE flag in case the model has renderbins set inside of it
     osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
     if (isImageModel_)
-      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_GLOBAL_SIMSDK);
+      modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
     else
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
 

@@ -355,7 +355,6 @@ namespace simVis
 
     osg::observer_ptr<const EntityNode> host_;
     osg::ref_ptr<LocalGridNode> localGrid_;
-    osg::Depth*             depthAttr_;
 
     /**
      * Locator that represents the "origin" of the gate, typically a position on the host platform, stripped of orientation

@@ -832,6 +832,7 @@ void HudImage::update_()
 
   // Allocate the geometry and the screen vertices
   osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
+  geometry->setName("simVis::Hud");
   geometry->setUseVertexBufferObjects(true);
   geometry->setUseDisplayList(false);
   geometry->setDataVariance(osg::Object::DYNAMIC);

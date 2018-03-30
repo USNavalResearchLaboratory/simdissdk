@@ -321,6 +321,7 @@ void AntennaNode::render_()
   removeChildren(0, getNumChildren());
 
   osg::ref_ptr<osg::Geometry> antGeom = new osg::Geometry();
+  antGeom->setName("simVis::AntennaNode");
   antGeom->setDataVariance(osg::Object::DYNAMIC);
   antGeom->setUseVertexBufferObjects(true);
 

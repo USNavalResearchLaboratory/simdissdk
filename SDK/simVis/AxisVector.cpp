@@ -144,6 +144,7 @@ void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f&
 void AxisVector::createAxisVectors_(osg::Geode* geode) const
 {
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setName("simVis::AxisVector");
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();

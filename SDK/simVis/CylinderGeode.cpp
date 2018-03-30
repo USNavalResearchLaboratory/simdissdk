@@ -40,7 +40,7 @@ CylinderGeode::CylinderGeode(PlatformNode &hostPlatform)
   // Set up the render bin, and turn off lighting
   osg::StateSet* stateSet = transform_->getOrCreateStateSet();
   simVis::setLighting(stateSet, osg::StateAttribute::OFF);
-  stateSet->setRenderBinDetails(BIN_CYLINDER, BIN_GLOBAL_SIMSDK);
+  stateSet->setRenderBinDetails(BIN_CYLINDER, BIN_TWO_PASS_ALPHA);
 
   // Add to the platform
   if (hostPlatform.getModel() != NULL)
@@ -79,6 +79,7 @@ void CylinderGeode::rebuild_()
 
   // Set up wall geometry
   osg::ref_ptr<osg::Geometry> wallGeom = new osg::Geometry;
+  wallGeom->setName("simVis::CylinderGeode");
   // Create and bind vertex array
   osg::ref_ptr<osg::Vec3Array> wallVerts = new osg::Vec3Array;
   wallGeom->setVertexArray(wallVerts.get());

@@ -292,6 +292,7 @@ osg::Node* RCSRenderer::render2D_()
   if (rcs_)
   {
     osg::Geometry* rcsGeom = new osg::Geometry();
+    rcsGeom->setName("simVis::RCS");
     rcsGeom->setDataVariance(osg::Object::DYNAMIC);
     rcsGeom->setUseVertexBufferObjects(true);
     rcsGeom->getOrCreateStateSet()->setAttribute(new osg::LineWidth(3.0f), osg::StateAttribute::ON);
@@ -377,6 +378,7 @@ osg::Node* RCSRenderer::render3D_()
   if (rcs_)
   {
     osg::Geometry* rcsGeom = new osg::Geometry();
+    rcsGeom->setName("simVis::RCS");
     rcsGeom->setDataVariance(osg::Object::DYNAMIC);
 
     rcsGeom->setUseVertexBufferObjects(true);
