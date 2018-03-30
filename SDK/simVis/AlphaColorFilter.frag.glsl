@@ -1,4 +1,4 @@
-#version 110
+#version 140
 
 #pragma vp_entryPoint $ENTRY_POINT
 #pragma vp_location fragment_coloring

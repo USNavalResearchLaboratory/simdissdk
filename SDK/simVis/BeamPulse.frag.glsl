@@ -1,4 +1,4 @@
-#version 130
+#version 140
 
 // Need GL_EXT_gpu_shader4 for bitwise &
 #extension GL_EXT_gpu_shader4 : enable

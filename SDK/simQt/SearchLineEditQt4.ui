@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SearchLineEdit</class>
- <widget class="QFrame" name="SearchLineEdit">
+ <class>SearchLineEditQt4</class>
+ <widget class="QFrame" name="SearchLineEditQt4">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>222</width>
-    <height>20</height>
+    <height>24</height>
    </rect>
   </property>
   <property name="sizePolicy">

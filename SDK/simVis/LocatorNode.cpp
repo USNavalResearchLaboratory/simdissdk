@@ -109,7 +109,7 @@ int LocatorNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSys
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, locator_->getElapsedEciTime());
     simCore::Coordinate out;
-    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
+    simCore::CoordinateConverter::convertEcefToEci(in, out);
     *out_position = out.position();
     return 0;
   }
@@ -147,7 +147,7 @@ int LocatorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Ve
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation, getLocator()->getElapsedEciTime());
     simCore::Coordinate out;
-    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
+    simCore::CoordinateConverter::convertEcefToEci(in, out);
     *out_position = out.position();
     *out_orientation = out.orientation();
     return 0;

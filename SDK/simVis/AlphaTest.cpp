@@ -51,6 +51,7 @@ void AlphaTest::installShaderProgram(osg::StateSet* intoStateSet)
     osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(intoStateSet);
     simVis::Shaders shaders;
     shaders.load(vp, shaders.alphaTestFragment());
+    intoStateSet->setDefine(USE_ALPHA_TEST_DEFINE, osg::StateAttribute::OFF);
     intoStateSet->getOrCreateUniform(ALPHA_THRESHOLD_UNIFORM, osg::Uniform::FLOAT)->set(0.5f);
   }
 }

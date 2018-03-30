@@ -26,8 +26,14 @@ namespace simUtil {
 Shaders::Shaders()
 {
   // Assign the fall-back shaders if the files are not found
+  add(mapScale(), "@MapScale.glsl@");
   add(terrainToggleEffectVertex(), "@TerrainToggleEffect.frag.glsl@");
   add(terrainToggleEffectFragment(), "@TerrainToggleEffect.vert.glsl@");
+}
+
+std::string Shaders::mapScale() const
+{
+  return "MapScale.glsl";
 }
 
 std::string Shaders::terrainToggleEffectVertex() const

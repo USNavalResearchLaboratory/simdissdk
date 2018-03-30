@@ -133,6 +133,20 @@ void Coordinate::clear()
   acc_.zero();
 }
 
+void Coordinate::clear(CoordinateSystem system, double elapsedEciTime)
+{
+  system_ = system;
+  elapsedEciTime_ = elapsedEciTime;
+  hasVel_ = false;
+  hasOri_ = false;
+  hasAcc_ = false;
+
+  pos_.zero();
+  vel_.zero();
+  ori_.zero();
+  acc_.zero();
+}
+
 /// Sets the individual position state components
 void Coordinate::setPosition(double x, double y, double z)
 {
@@ -524,11 +538,6 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     return 0; // done
   }
 
-  // clear any data in outCoord and set its coordinate system and time
-  outCoord.clear();
-  outCoord.setCoordinateSystem(outSystem);
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
-
   switch (inCoord.coordinateSystem())
   {
   case COORD_SYS_LLA:
@@ -537,32 +546,29 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     case COORD_SYS_NED:
     case COORD_SYS_NWU:
     case COORD_SYS_ENU:
-      if (convertGeodeticToFlat_(inCoord, outCoord, outSystem) != 0)
-        return 1;
-      break;
+      return convertGeodeticToFlat_(inCoord, outCoord, outSystem);
     case COORD_SYS_ECEF:
-      CoordinateConverter::convertGeodeticToEcef(inCoord, outCoord);
-      break;
+      return CoordinateConverter::convertGeodeticToEcef(inCoord, outCoord);
     case COORD_SYS_XEAST:
     case COORD_SYS_GTP:
       if (convertGeodeticToXEast_(inCoord, outCoord) != 0)
         return 1;
       if (outSystem == COORD_SYS_GTP)
       {
+        outCoord.setCoordinateSystem(outSystem);
         applyTPOffsetRotate_(outCoord);
       }
-      break;
+      return 0;
     case COORD_SYS_ECI:
       {
         Coordinate ecefCoord;
-        CoordinateConverter::convertGeodeticToEcef(inCoord, ecefCoord);
-        CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
-        break;
+        if (CoordinateConverter::convertGeodeticToEcef(inCoord, ecefCoord) != 0)
+          return 1;
+        return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
       }
     default:
       assert(0);
       return 1;
-      break;
     }
     break;
 
@@ -571,58 +577,44 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     {
     case COORD_SYS_NWU:
       // x = x, y = -y, z = -z
-      CoordinateConverter::swapNedNwu(inCoord, outCoord);
-      break;
-
+      return CoordinateConverter::swapNedNwu(inCoord, outCoord);
     case COORD_SYS_ENU:
       // x = y, y = x, z = -z
-      CoordinateConverter::swapNedEnu(inCoord, outCoord);
-      break;
-
+      return CoordinateConverter::swapNedEnu(inCoord, outCoord);
     case COORD_SYS_LLA:
-      if (convertFlatToGeodetic_(inCoord, outCoord) != 0)
-        return 1;
-      break;
-
+      return convertFlatToGeodetic_(inCoord, outCoord);
     case COORD_SYS_ECEF:
-      if (convertFlatToEcef_(inCoord, outCoord) != 0)
-        return 1;
-      break;
-
+      return convertFlatToEcef_(inCoord, outCoord);
     case COORD_SYS_ECI:
     case COORD_SYS_XEAST:
     case COORD_SYS_GTP:
       {
         Coordinate ecefCoord;
-
         if (convertFlatToEcef_(inCoord, ecefCoord) != 0)
           return 1;
         switch (outSystem)
         {
         case COORD_SYS_ECI:
-          CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
-          break;
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         case COORD_SYS_XEAST:
         case COORD_SYS_GTP:
           if (convertEcefToXEast_(ecefCoord, outCoord) != 0)
             return 1;
           if (outSystem == COORD_SYS_GTP)
           {
+            outCoord.setCoordinateSystem(outSystem);
             applyTPOffsetRotate_(outCoord);
           }
-          break;
+          return 0;
         default:
           assert(0);
           return 1;
-          break;
         }
         break;
       }
-
     default:
       assert(0);
       return 1;
-      break;
     }
     break;
 
@@ -631,24 +623,14 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     {
     case COORD_SYS_NED:
       // x = x, y = -y, z = -z
-      CoordinateConverter::swapNedNwu(inCoord, outCoord);
-      break;
-
+      return CoordinateConverter::swapNedNwu(inCoord, outCoord);
     case COORD_SYS_ENU:
       // x = y, y = -x, z = z
-      CoordinateConverter::convertNwuToEnu(inCoord, outCoord);
-      break;
-
+      return CoordinateConverter::convertNwuToEnu(inCoord, outCoord);
     case COORD_SYS_LLA:
-      if (convertFlatToGeodetic_(inCoord, outCoord) != 0)
-        return 1;
-      break;
-
+      return convertFlatToGeodetic_(inCoord, outCoord);
     case COORD_SYS_ECEF:
-      if (convertFlatToEcef_(inCoord, outCoord) != 0)
-        return 1;
-      break;
-
+      return convertFlatToEcef_(inCoord, outCoord);
     case COORD_SYS_ECI:
     case COORD_SYS_XEAST:
     case COORD_SYS_GTP:
@@ -659,28 +641,26 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         switch (outSystem)
         {
         case COORD_SYS_ECI:
-          CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
-          break;
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         case COORD_SYS_XEAST:
         case COORD_SYS_GTP:
           if (convertEcefToXEast_(ecefCoord, outCoord) != 0)
             return 1;
           if (outSystem == COORD_SYS_GTP)
           {
+            outCoord.setCoordinateSystem(outSystem);
             applyTPOffsetRotate_(outCoord);
           }
-          break;
+          return 0;
         default:
           assert(0);
           return 1;
-          break;
         }
         break;
       }
     default:
       assert(0);
       return 1;
-      break;
     }
     break;
 
@@ -689,20 +669,14 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     {
     case COORD_SYS_NED:
       // x = y, y = x, z = -z
-      CoordinateConverter::swapNedEnu(inCoord, outCoord);
-      break;
+      return CoordinateConverter::swapNedEnu(inCoord, outCoord);
     case COORD_SYS_NWU:
       // x = y, y = -x, z = z
-      CoordinateConverter::convertEnuToNwu(inCoord, outCoord);
-      break;
+      return CoordinateConverter::convertEnuToNwu(inCoord, outCoord);
     case COORD_SYS_LLA:
-      if (convertFlatToGeodetic_(inCoord, outCoord) != 0)
-        return 1;
-      break;
+      return convertFlatToGeodetic_(inCoord, outCoord);
     case COORD_SYS_ECEF:
-      if (convertFlatToEcef_(inCoord, outCoord) != 0)
-        return 1;
-      break;
+      return convertFlatToEcef_(inCoord, outCoord);
     case COORD_SYS_ECI:
     case COORD_SYS_XEAST:
     case COORD_SYS_GTP:
@@ -713,28 +687,26 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         switch (outSystem)
         {
         case COORD_SYS_ECI:
-          CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
-          break;
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         case COORD_SYS_XEAST:
         case COORD_SYS_GTP:
           if (convertEcefToXEast_(ecefCoord, outCoord) != 0)
             return 1;
           if (outSystem == COORD_SYS_GTP)
           {
+            outCoord.setCoordinateSystem(outSystem);
             applyTPOffsetRotate_(outCoord);
           }
-          break;
+          return 0;
         default:
           assert(0);
           return 1;
-          break;
         }
         break;
       }
     default:
       assert(0);
       return 1;
-      break;
     }
     break;
 
@@ -744,32 +716,24 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     case COORD_SYS_NED:
     case COORD_SYS_NWU:
     case COORD_SYS_ENU:
-      if (convertEcefToFlat_(inCoord, outCoord, outSystem) != 0)
-        return 1;
-      break;
-
+      return convertEcefToFlat_(inCoord, outCoord, outSystem);
     case COORD_SYS_LLA:
-      CoordinateConverter::convertEcefToGeodetic(inCoord, outCoord);
-      break;
-
+      return CoordinateConverter::convertEcefToGeodetic(inCoord, outCoord);
     case COORD_SYS_ECI:
-      CoordinateConverter::convertEcefToEci(inCoord, outCoord, inCoord.elapsedEciTime());
-      break;
-
+      return CoordinateConverter::convertEcefToEci(inCoord, outCoord);
     case COORD_SYS_XEAST:
     case COORD_SYS_GTP:
       if (convertEcefToXEast_(inCoord, outCoord) != 0)
         return 1;
       if (outSystem == COORD_SYS_GTP)
       {
+        outCoord.setCoordinateSystem(outSystem);
         applyTPOffsetRotate_(outCoord);
       }
-      break;
-
+      return 0;
     default:
       assert(0);
       return 1;
-      break;
     }
     break;
 
@@ -789,55 +753,39 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
         case COORD_SYS_NED:
         case COORD_SYS_NWU:
         case COORD_SYS_ENU:
-          if (convertEcefToFlat_(ecefCoord, outCoord, outSystem) != 0)
-            return 1;
-          break;
+          return convertEcefToFlat_(ecefCoord, outCoord, outSystem);
         case COORD_SYS_ECI:
-          CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
-          break;
+          return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
         default:
           assert(0);
           return 1;
-          break;
         }
         break;
       }
-
     case COORD_SYS_LLA:
-      if (convertXEastToGeodetic_(inCoord, outCoord) != 0)
-        return 1;
-      break;
-
+      return convertXEastToGeodetic_(inCoord, outCoord);
     case COORD_SYS_ECEF:
-      if (convertXEastToEcef_(inCoord, outCoord) != 0)
-        return 1;
-      break;
-
+      return convertXEastToEcef_(inCoord, outCoord);
     case COORD_SYS_GTP:
+      outCoord.setCoordinateSystem(outSystem);
       outCoord.setPosition(inCoord.position());
-
       if (inCoord.hasVelocity())
       {
         outCoord.setVelocity(inCoord.velocity());
       }
-
       if (inCoord.hasAcceleration())
       {
         outCoord.setAcceleration(inCoord.acceleration());
       }
-
       if (inCoord.hasOrientation())
       {
         outCoord.setOrientation(inCoord.orientation());
       }
-
       applyTPOffsetRotate_(outCoord);
-      break;
-
+      return 0;
     default:
       assert(0);
       return 1;
-      break;
     }
     break;
 
@@ -845,9 +793,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     {
       Coordinate xeastCoord(inCoord);
       xeastCoord.setCoordinateSystem(COORD_SYS_XEAST);
-
       reverseTPOffsetRotate_(xeastCoord);
-
       switch (outSystem)
       {
       case COORD_SYS_NED:
@@ -863,53 +809,38 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
           case COORD_SYS_NED:
           case COORD_SYS_NWU:
           case COORD_SYS_ENU:
-            if (convertEcefToFlat_(ecefCoord, outCoord, outSystem) != 0)
-              return 1;
-            break;
+            return convertEcefToFlat_(ecefCoord, outCoord, outSystem);
           case COORD_SYS_ECI:
-            CoordinateConverter::convertEcefToEci(ecefCoord, outCoord, inCoord.elapsedEciTime());
-            break;
+            return CoordinateConverter::convertEcefToEci(ecefCoord, outCoord);
           default:
             assert(0);
             return 1;
-            break;
           }
           break;
         }
-
       case COORD_SYS_LLA:
-        if (convertXEastToGeodetic_(xeastCoord, outCoord) != 0)
-          return 1;
-        break;
-
+        return convertXEastToGeodetic_(xeastCoord, outCoord);
       case COORD_SYS_ECEF:
-        if (convertXEastToEcef_(xeastCoord, outCoord) != 0)
-          return 1;
-        break;
-
+        return convertXEastToEcef_(xeastCoord, outCoord);
       case COORD_SYS_XEAST:
+        outCoord.setCoordinateSystem(outSystem);
         outCoord.setPosition(xeastCoord.position());
-
         if (xeastCoord.hasVelocity())
         {
           outCoord.setVelocity(xeastCoord.velocity());
         }
-
         if (xeastCoord.hasAcceleration())
         {
           outCoord.setAcceleration(xeastCoord.acceleration());
         }
-
         if (xeastCoord.hasOrientation())
         {
           outCoord.setOrientation(xeastCoord.orientation());
         }
-        break;
-
+        return 0;
       default:
         assert(0);
         return 1;
-        break;
       }
       break;
     }
@@ -918,54 +849,45 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
     {
       // convert ECI to ECEF, then apply coordinate transformations based on an ECEF system
       Coordinate ecefCoord;
-      CoordinateConverter::convertEciToEcef(inCoord, ecefCoord);
-
+      if (CoordinateConverter::convertEciToEcef(inCoord, ecefCoord) != 0)
+        return 1;
       switch (outSystem)
       {
       case COORD_SYS_NED:
       case COORD_SYS_NWU:
       case COORD_SYS_ENU:
-        if (convertEcefToFlat_(ecefCoord, outCoord, outSystem) != 0)
-          return 1;
-        break;
-
+        return convertEcefToFlat_(ecefCoord, outCoord, outSystem);
       case COORD_SYS_LLA:
-        CoordinateConverter::convertEcefToGeodetic(ecefCoord, outCoord);
-        break;
-
+        return CoordinateConverter::convertEcefToGeodetic(ecefCoord, outCoord);
       case COORD_SYS_ECEF:
+        outCoord.setCoordinateSystem(outSystem);
         outCoord.setPosition(ecefCoord.position());
-
         if (ecefCoord.hasVelocity())
         {
           outCoord.setVelocity(ecefCoord.velocity());
         }
-
         if (ecefCoord.hasAcceleration())
         {
           outCoord.setAcceleration(ecefCoord.acceleration());
         }
-
         if (ecefCoord.hasOrientation())
         {
           outCoord.setOrientation(ecefCoord.orientation());
         }
-        break;
-
+        return 0;
       case COORD_SYS_XEAST:
       case COORD_SYS_GTP:
         if (convertEcefToXEast_(ecefCoord, outCoord) != 0)
           return 1;
         if (outSystem == COORD_SYS_GTP)
         {
+          outCoord.setCoordinateSystem(outSystem);
           applyTPOffsetRotate_(outCoord);
         }
-        break;
-
+        return 0;
       default:
         assert(0);
         return 1;
-        break;
       }
       break;
     }
@@ -973,12 +895,10 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
   default:
     assert(0);
     return 1;
-    break;
   }
-  // Note: Some of the transformations change the coordinate system
-  // This is most true of GTP conversions, that rely on XEast functions
-  // So here, we reset the outgoing coordinate system
-  outCoord.setCoordinateSystem(outSystem);
+
+  // no code path should reach this
+  assert(0);
   return 0;
 }
 
@@ -1017,12 +937,8 @@ int CoordinateConverter::convertGeodeticToFlat_(const Coordinate &llaCoord, Coor
     return 1;
   }
 
-  // clear any existing data from the output coordinate
-  flatCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  flatCoord.setCoordinateSystem(system);
-  flatCoord.setElapsedEciTime(llaCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  flatCoord.clear(system, llaCoord.elapsedEciTime());
 
   // Euler angles are the same convention no matter the local system
   if (llaCoord.hasOrientation())
@@ -1148,12 +1064,8 @@ int CoordinateConverter::convertFlatToGeodetic_(const Coordinate &flatCoord, Coo
     return 1;
   }
 
-  // clear any existing data from output coordinate
-  llaCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  llaCoord.setCoordinateSystem(COORD_SYS_LLA);
-  llaCoord.setElapsedEciTime(flatCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  llaCoord.clear(COORD_SYS_LLA, flatCoord.elapsedEciTime());
 
   // Euler angles are the same convention no matter the local system
   if (flatCoord.hasOrientation())
@@ -1314,8 +1226,7 @@ int CoordinateConverter::convertFlatToEcef_(const Coordinate &flatCoord, Coordin
 
   // convert lat, lon, alt to ECEF geocentric using WGS84 ellipsoidal
   // earth model
-  CoordinateConverter::convertGeodeticToEcef(llaCoord, ecefCoord);
-  return 0;
+  return CoordinateConverter::convertGeodeticToEcef(llaCoord, ecefCoord);
 }
 
 /// convert tangent plane projection to earth centered, earth fixed projection
@@ -1342,11 +1253,8 @@ int CoordinateConverter::convertXEastToEcef_(const Coordinate &tpCoord, Coordina
     return 1;
   }
 
-  ecefCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  ecefCoord.setCoordinateSystem(COORD_SYS_ECEF);
-  ecefCoord.setElapsedEciTime(tpCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  ecefCoord.clear(COORD_SYS_ECEF, tpCoord.elapsedEciTime());
 
   Vec3 pos;
   // rotate to geocentric direction
@@ -1413,11 +1321,8 @@ int CoordinateConverter::convertEcefToXEast_(const Coordinate &ecefCoord, Coordi
     return 1;
   }
 
-  tpCoord.clear();
-
-  // set coordinate system and preserve ECI time
-  tpCoord.setCoordinateSystem(COORD_SYS_XEAST);
-  tpCoord.setElapsedEciTime(ecefCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  tpCoord.clear(COORD_SYS_XEAST, ecefCoord.elapsedEciTime());
 
   Vec3 pos;
   // apply translation to tangent plane origin
@@ -1549,73 +1454,6 @@ int CoordinateConverter::convertXEastToGeodetic_(const Coordinate &tpCoord, Coor
   return 0;
 }
 
-/// convert from rae -> xeast -> ecef
-///@note assert/clear/prop assignments are handled by the conversion functions called
-int CoordinateConverter::convertRaeToEcef_(const Vec3 &raePos, Coordinate &ecefCoord) const
-{
-  // make sure earth radius has been set before flat earth conversion
-  if (!hasReferenceOrigin())
-  {
-    SIM_ERROR << "convertRaeToEcef_, reference origin not set: " << __LINE__ << std::endl;
-    assert(0);
-    return 1;
-  }
-
-  Coordinate tpCoord;
-  if (convertRaeToXEast_(raePos, tpCoord) != 0)
-    return 1;
-  return convertXEastToEcef_(tpCoord, ecefCoord);
-}
-
-/// convert from rae -> xeast -> lla
-///@note assert/clear/prop assignments are handled by the conversion functions called
-int CoordinateConverter::convertRaeToGeodetic_(const Vec3 &raePos, Coordinate &llaCoord) const
-{
-  // make sure earth radius has been set before flat earth conversion
-  if (!hasReferenceOrigin())
-  {
-    SIM_ERROR << "convertRaeToGeodetic_, reference origin not set: " << __LINE__ << std::endl;
-    assert(0);
-    return 1;
-  }
-
-  Coordinate tpCoord;
-  if (convertRaeToXEast_(raePos, tpCoord) != 0)
-    return 1;
-  return convertXEastToGeodetic_(tpCoord, llaCoord);
-}
-
-/// convert from rae -> xeast
-///@note assert/clear/prop assignments are handled by the conversion functions called
-int CoordinateConverter::convertRaeToXEast_(const Vec3 &raePos, Coordinate &tpCoord) const
-{
-  // make sure earth radius has been set before flat earth conversion
-  if (!hasReferenceOrigin())
-  {
-    SIM_ERROR << "convertRaeToXEast_, reference origin not set: " << __LINE__ << std::endl;
-    assert(0);
-    return 1;
-  }
-
-  tpCoord.clear();
-
-  // Set coordinate system
-  tpCoord.setCoordinateSystem(COORD_SYS_XEAST);
-
-  // cosine of elevation
-  const double cosEl = cos(raePos.raeEl());
-
-  // xyz components of X-East coordinate system
-  Vec3 xtpPos;
-  xtpPos.setX(raePos.range() * cosEl * sin(raePos.raeAz()));
-  xtpPos.setY(raePos.range() * cosEl * cos(raePos.raeAz()));
-  xtpPos.setZ(raePos.range() * sin(raePos.raeEl()));
-
-  // Position only conversion, RAE velocity, acceleration and orientations are not supported
-  tpCoord.setPosition(xtpPos);
-  return 0;
-}
-
 // state independent CoordinateConverter members
 //--------------------------------------------------------------------------
 ///@pre system is NED/NWU/ENU
@@ -1703,27 +1541,23 @@ void CoordinateConverter::swapNedEnu(const Vec3 &inVec, Vec3 &outVec)
 
 /// convert coordinates between ENU and NED
 ///@pre outCoord valid, inCoord system is NED or ENU, inCoord does not alias outCoord
-void CoordinateConverter::swapNedEnu(const Coordinate &inCoord, Coordinate &outCoord)
+int CoordinateConverter::swapNedEnu(const Coordinate &inCoord, Coordinate &outCoord)
 {
   // Test for same input/output -- this function cannot handle case of inCoord == outCoord
   if (&inCoord == &outCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   assert((inCoord.coordinateSystem() == COORD_SYS_NED || inCoord.coordinateSystem() == COORD_SYS_ENU));
   if (!(inCoord.coordinateSystem() == COORD_SYS_NED || inCoord.coordinateSystem() == COORD_SYS_ENU))
   {
     SIM_ERROR << "swapNedEnu, invalid coordinate system: " << __LINE__ << std::endl;
-    return;
+    return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_ENU : COORD_SYS_NED);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_ENU : COORD_SYS_NED, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::swapNedEnu(inCoord.position(), outPos);
@@ -1747,6 +1581,7 @@ void CoordinateConverter::swapNedEnu(const Coordinate &inCoord, Coordinate &outC
   {
     outCoord.setOrientation(inCoord.orientation());
   }
+  return 0;
 }
 
 /// convert vector between NED and NWU
@@ -1757,27 +1592,23 @@ void CoordinateConverter::swapNedNwu(const Vec3 &inVec, Vec3 &outVec)
 
 /// convert coordinate between NED and NWU
 ///@pre outCoord valid, in coord is NED/NWU, inCoord does not alias outCoord
-void CoordinateConverter::swapNedNwu(const Coordinate &inCoord, Coordinate &outCoord)
+int CoordinateConverter::swapNedNwu(const Coordinate &inCoord, Coordinate &outCoord)
 {
   // Test for same input/output -- this function cannot handle case of inCoord == outCoord
   if (&inCoord == &outCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   assert((inCoord.coordinateSystem() == COORD_SYS_NED || inCoord.coordinateSystem() == COORD_SYS_NWU));
   if (!(inCoord.coordinateSystem() == COORD_SYS_NED || inCoord.coordinateSystem() == COORD_SYS_NWU))
   {
     SIM_ERROR << "swapNedNwu, invalid coordinate system: " << __LINE__ << std::endl;
-    return;
+    return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_NWU : COORD_SYS_NED);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(inCoord.coordinateSystem() == COORD_SYS_NED ? COORD_SYS_NWU : COORD_SYS_NED, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::swapNedNwu(inCoord.position(), outPos);
@@ -1801,6 +1632,7 @@ void CoordinateConverter::swapNedNwu(const Coordinate &inCoord, Coordinate &outC
   {
     outCoord.setOrientation(inCoord.orientation());
   }
+  return 0;
 }
 
 /// convert vector from ENU to NWU
@@ -1811,27 +1643,23 @@ void CoordinateConverter::convertEnuToNwu(const Vec3 &inVec, Vec3 &outVec)
 
 /// convert coordinate from ENU to NWU
 ///@pre outCoord valid, in coord is ENU, inCoord does not alias outCoord
-void CoordinateConverter::convertEnuToNwu(const Coordinate &inCoord, Coordinate &outCoord)
+int CoordinateConverter::convertEnuToNwu(const Coordinate &inCoord, Coordinate &outCoord)
 {
   // Test for same input/output -- this function cannot handle case of inCoord == outCoord
   if (&inCoord == &outCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   assert(inCoord.coordinateSystem() == COORD_SYS_ENU);
   if (inCoord.coordinateSystem() != COORD_SYS_ENU)
   {
     SIM_ERROR << "convertEnuToNwu, invalid coordinate system: " << __LINE__ << std::endl;
-    return;
+    return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(COORD_SYS_NWU);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(COORD_SYS_NWU, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::convertEnuToNwu(inCoord.position(), outPos);
@@ -1855,6 +1683,7 @@ void CoordinateConverter::convertEnuToNwu(const Coordinate &inCoord, Coordinate 
   {
     outCoord.setOrientation(inCoord.orientation());
   }
+  return 0;
 }
 
 /// convert vector from NWU to ENU
@@ -1865,27 +1694,23 @@ void CoordinateConverter::convertNwuToEnu(const Vec3 &inVec, Vec3 &outVec)
 
 /// convert coordinate from NWU to ENU
 ///@pre outCoord valid, in coord is NWU, inCoord does not alias outCoord
-void CoordinateConverter::convertNwuToEnu(const Coordinate &inCoord, Coordinate &outCoord)
+int CoordinateConverter::convertNwuToEnu(const Coordinate &inCoord, Coordinate &outCoord)
 {
   // Test for same input/output -- this function cannot handle case of inCoord == outCoord
   if (&inCoord == &outCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   assert(inCoord.coordinateSystem() == COORD_SYS_NWU);
   if (inCoord.coordinateSystem() != COORD_SYS_NWU)
   {
     SIM_ERROR << "convertNwuToEnu, invalid coordinate system: " << __LINE__ << std::endl;
-    return;
+    return 1;
   }
 
-  // clear any existing data from the output coordinate
-  outCoord.clear();
-  outCoord.setCoordinateSystem(COORD_SYS_ENU);
-
-  // preserve elapsed ECI time
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  outCoord.clear(COORD_SYS_ENU, inCoord.elapsedEciTime());
 
   Vec3 outPos;
   CoordinateConverter::convertNwuToEnu(inCoord.position(), outPos);
@@ -1909,31 +1734,28 @@ void CoordinateConverter::convertNwuToEnu(const Coordinate &inCoord, Coordinate 
   {
     outCoord.setOrientation(inCoord.orientation());
   }
+  return 0;
 }
 
 /// convert geodetic projection (LLA) to earth centered, earth fixed projection
 ///@pre ecefCoord valid, in coord is LLA, llaCoord does not alias ecefCoord
-void CoordinateConverter::convertGeodeticToEcef(const Coordinate &llaCoord, Coordinate &ecefCoord, LocalLevelFrame localLevelFrame)
+int CoordinateConverter::convertGeodeticToEcef(const Coordinate &llaCoord, Coordinate &ecefCoord, LocalLevelFrame localLevelFrame)
 {
   // Test for same input/output -- this function cannot handle case of llaCoord == ecefCoord
   if (&llaCoord == &ecefCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   if (llaCoord.coordinateSystem() != COORD_SYS_LLA)
   {
     SIM_ERROR << "convertGeodeticToEcef, invalid coordinate system: " << __LINE__ << std::endl;
     assert(0);
-    return;
+    return 1;
   }
 
-  // clear any existing data from the output coordinate
-  ecefCoord.clear();
-  ecefCoord.setCoordinateSystem(COORD_SYS_ECEF);
-
-  // preserve elapsed ECI time
-  ecefCoord.setElapsedEciTime(llaCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  ecefCoord.clear(COORD_SYS_ECEF, llaCoord.elapsedEciTime());
 
   // convert lat, lon, alt to ECEF geocentric using WGS84 ellipsoidal earth model
   Vec3 ecefPos;
@@ -2022,31 +1844,28 @@ void CoordinateConverter::convertGeodeticToEcef(const Coordinate &llaCoord, Coor
       ecefCoord.setAcceleration(ecefAcc);
     }
   }
+  return 0;
 }
 
 /// convert earth centered, earth fixed projection to geodetic projection
-void CoordinateConverter::convertEcefToGeodetic(const Coordinate &ecefCoord, Coordinate &llaCoord, LocalLevelFrame localLevelFrame)
+int CoordinateConverter::convertEcefToGeodetic(const Coordinate &ecefCoord, Coordinate &llaCoord, LocalLevelFrame localLevelFrame)
 {
   // Test for same input/output -- this function cannot handle case of llaCoord == ecefCoord
   if (&llaCoord == &ecefCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   // make sure vector is valid before conversion
   if (ecefCoord.coordinateSystem() != COORD_SYS_ECEF)
   {
     SIM_ERROR << "convertEcefToGeodetic, invalid coordinate system: " << __LINE__ << std::endl;
     assert(0);
-    return;
+    return 1;
   }
 
-  // clear any existing data from the output coordinate
-  llaCoord.clear();
-  llaCoord.setCoordinateSystem(COORD_SYS_LLA);
-
-  // preserve elapsed ECI time
-  llaCoord.setElapsedEciTime(ecefCoord.elapsedEciTime());
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  llaCoord.clear(COORD_SYS_LLA, ecefCoord.elapsedEciTime());
 
   Vec3 llaPos;
   CoordinateConverter::convertEcefToGeodeticPos(ecefCoord.position(), llaPos);
@@ -2134,6 +1953,7 @@ void CoordinateConverter::convertEcefToGeodetic(const Coordinate &ecefCoord, Coo
       }
     }
   }
+  return 0;
 }
 
 // conversion of ECI->ECEF, or ECEF->ECI is just a rotation about z axis. only the direction of rotation differs.
@@ -2143,8 +1963,6 @@ void CoordinateConverter::convertEciEcef_(const Coordinate &inCoord, Coordinate 
   assert(outCoord.coordinateSystem() == COORD_SYS_ECI || outCoord.coordinateSystem() == COORD_SYS_ECEF);
   assert(inCoord.coordinateSystem() != outCoord.coordinateSystem());
   assert(&inCoord != &outCoord);
-
-  outCoord.setElapsedEciTime(inCoord.elapsedEciTime());
 
   // if converting to eci to ecef, then rotation is negative
   const double rotationRate = (outCoord.coordinateSystem() == COORD_SYS_ECEF) ? -EARTH_ROTATION_RATE : EARTH_ROTATION_RATE;
@@ -2200,51 +2018,53 @@ void CoordinateConverter::convertEciEcef_(const Coordinate &inCoord, Coordinate 
 
 /// convert ECI projection to ECEF projection
 ///@pre ecefCoord valid, in coord is ECI, eciCoord does not alias ecefCoord
-void CoordinateConverter::convertEciToEcef(const Coordinate &eciCoord, Coordinate &ecefCoord)
+int CoordinateConverter::convertEciToEcef(const Coordinate &eciCoord, Coordinate &ecefCoord)
 {
   // Test for same input/output -- this function cannot handle case of eciCoord == ecefCoord
   if (&eciCoord == &ecefCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   // check inputs
-  assert(eciCoord.coordinateSystem() == COORD_SYS_ECI);
   if (eciCoord.coordinateSystem() != COORD_SYS_ECI)
   {
+    assert(0);
     SIM_ERROR << "convertEciToEcef, invalid coordinate system: " << __LINE__ << std::endl;
-    return;
+    return 1;
   }
 
-  // Clear any existing data from the output coordinate
-  ecefCoord.clear();
-  ecefCoord.setCoordinateSystem(COORD_SYS_ECEF);
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  ecefCoord.clear(COORD_SYS_ECEF, eciCoord.elapsedEciTime());
+
   // note that you cannot avoid calc when elapsedEciTime is zero, due to ECI velocity & acceleration having earth rotation components
   convertEciEcef_(eciCoord, ecefCoord);
+  return 0;
 }
 
 /// convert ECEF projection to ECI projection
 ///@pre eciCoord valid, in coord is ECEF, eciCoord does not alias ecefCoord
-void CoordinateConverter::convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord, double elapsedEciTime)
+int CoordinateConverter::convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord)
 {
   // Test for same input/output -- this function cannot handle case of eciCoord == ecefCoord
   if (&eciCoord == &ecefCoord)
   {
     assert(0);
-    return;
+    return 1;
   }
   // check inputs
   if (ecefCoord.coordinateSystem() != COORD_SYS_ECEF)
   {
     SIM_ERROR << "convertEcefToEci, invalid coordinate system: " << __LINE__ << std::endl;
-    return;
+    return 1;
   }
 
-  // Clear any existing data from the output coordinate
-  eciCoord.clear();
-  eciCoord.setCoordinateSystem(COORD_SYS_ECI);
+  // set coordinate system and ECI time, clear any other existing data from output coordinate
+  eciCoord.clear(COORD_SYS_ECI, ecefCoord.elapsedEciTime());
+
   // note that you cannot avoid calc when elapsedEciTime is zero, due to ECI velocity & acceleration having earth rotation components
   convertEciEcef_(ecefCoord, eciCoord);
+  return 0;
 }
 
 /// convert earth centered, earth fixed projection to geodetic (LLA) projection

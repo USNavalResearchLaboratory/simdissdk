@@ -1,4 +1,4 @@
-#version 110
+#version 140
 
 #pragma vp_entryPoint simvis_point_size
 #pragma vp_location vertex_model

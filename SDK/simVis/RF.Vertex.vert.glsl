@@ -1,4 +1,4 @@
-#version 130
+#version 140
 
 #pragma vp_location vertex_view
 #pragma vp_entryPoint rf_vertex

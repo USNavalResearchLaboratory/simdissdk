@@ -324,9 +324,10 @@ namespace simCore
     * Swaps input coordinate between NED and ENU systems
     * @param[in ] inCoord coordinate in the form of a NED or ENU system
     * @param[out] outCoord coordinate swapped to the opposite of the input (NED->ENU or ENU->NED)
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void swapNedEnu(const Coordinate &inCoord, Coordinate &outCoord);
+    static int swapNedEnu(const Coordinate &inCoord, Coordinate &outCoord);
 
     /**
     * @brief Swaps input vector between NED and NWU systems
@@ -344,9 +345,10 @@ namespace simCore
     * Swaps input coordinate between NED and NWU systems
     * @param[in ] inCoord coordinate in the form of a NED or NWU system
     * @param[out] outCoord coordinate swapped to the opposite of the input (NED->NWU or NWU->NED)
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void swapNedNwu(const Coordinate &inCoord, Coordinate &outCoord);
+    static int swapNedNwu(const Coordinate &inCoord, Coordinate &outCoord);
 
     /**
     * @brief Converts input ENU vector to a NWU vector
@@ -364,9 +366,10 @@ namespace simCore
     * Converts input ENU coordinate to a NWU vector
     * @param[in ] inCoord coordinate in the form of a ENU system
     * @param[out] outCoord coordinate swapped to a NWU system
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void convertEnuToNwu(const Coordinate &inCoord, Coordinate &outCoord);
+    static int convertEnuToNwu(const Coordinate &inCoord, Coordinate &outCoord);
 
     /**
     * @brief Converts input NWU vector to an ENU vector
@@ -384,9 +387,10 @@ namespace simCore
     * Converts input NWU coordinate to an ENU vector
     * @param[in ] inCoord coordinate in the form of a NWU system
     * @param[out] outCoord coordinate swapped to an ENU system
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void convertNwuToEnu(const Coordinate &inCoord, Coordinate &outCoord);
+    static int convertNwuToEnu(const Coordinate &inCoord, Coordinate &outCoord);
 
     /**
     * @brief Converts a geodetic coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
@@ -395,9 +399,10 @@ namespace simCore
     * @param[in ] llaCoord
     * @param[out] ecefCoord
     * @param[in ] localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void convertGeodeticToEcef(const Coordinate &llaCoord, Coordinate &ecefCoord, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+    static int convertGeodeticToEcef(const Coordinate &llaCoord, Coordinate &ecefCoord, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
 
     /**
     * @brief Converts an Earth Centered Earth Fixed (ECEF) coordinate to a geodetic coordinate
@@ -406,9 +411,10 @@ namespace simCore
     * @param[in ] ecefCoord
     * @param[out] llaCoord
     * @param[in ] localLevelFrame alignment of local geodetic horizon system (NED, ENU, NWU)
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void convertEcefToGeodetic(const Coordinate &ecefCoord, Coordinate &llaCoord, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
+    static int convertEcefToGeodetic(const Coordinate &ecefCoord, Coordinate &llaCoord, LocalLevelFrame localLevelFrame = LOCAL_LEVEL_FRAME_NED);
 
     /**
     * @brief Converts an Earth Centered Inertial (ECI) coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
@@ -416,9 +422,10 @@ namespace simCore
     * Converts an Earth Centered Inertial (ECI) coordinate to an Earth Centered Earth Fixed (ECEF) coordinate
     * @param[in ] eciCoord
     * @param[out] ecefCoord
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void convertEciToEcef(const Coordinate &eciCoord, Coordinate &ecefCoord);
+    static int convertEciToEcef(const Coordinate &eciCoord, Coordinate &ecefCoord);
 
     /**
     * @brief Converts an Earth Centered Earth Fixed (ECEF) coordinate to an Earth Centered Inertial (ECI) coordinate
@@ -426,10 +433,10 @@ namespace simCore
     * Converts an Earth Centered Earth Fixed (ECEF) coordinate to an Earth Centered Inertial (ECI) coordinate
     * @param[in ] ecefCoord
     * @param[out] eciCoord
-    * @param[in ] elapsedEciTime elapsed time since definition of ECI reference frame (sec)
+    * @return 0 on success, !0 on failure
     * @pre out param valid
     */
-    static void convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord, double elapsedEciTime);
+    static int convertEcefToEci(const Coordinate &ecefCoord, Coordinate &eciCoord);
 
     /**
     * @brief Converts a geodetic position to an Earth Centered Earth Fixed (ECEF) position
@@ -622,36 +629,6 @@ namespace simCore
     * @pre tpCoord != llaCoord and reference origin must be set
     */
     int convertXEastToGeodetic_(const Coordinate &tpCoord, Coordinate &llaCoord) const;
-
-    /**
-    * @brief Converts a spherical position (range, azimuth & elevation) to an Earth Centered Earth Fixed (ECEF) projection
-    *
-    * @param[in ] raePos spherical position (range, azimuth & elevation)
-    * @param[out] ecefCoord ECEF coordinate
-    * @return 0 on success, !0 on failure
-    * @pre reference origin must be set
-    */
-    int convertRaeToEcef_(const Vec3 &raePos, Coordinate &ecefCoord) const;
-
-    /**
-    * @brief Converts a spherical position (range, azimuth & elevation) to a geodetic projection
-    *
-    * @param[in ] raePos spherical position (range, azimuth & elevation)
-    * @param[out] llaCoord geodetic coordinate
-    * @return 0 on success, !0 on failure
-    * @pre reference origin must be set
-    */
-    int convertRaeToGeodetic_(const Vec3 &raePos, Coordinate &llaCoord) const;
-
-    /**
-    * @brief Converts a spherical position (range, azimuth & elevation) to a X-East tangent plane projection
-    *
-    * @param[in ] raePos spherical position (range, azimuth & elevation)
-    * @param[out] tpCoord X-East tangent plane coordinate
-    * @return 0 on success, !0 on failure
-    * @pre reference origin must be set
-    */
-    int convertRaeToXEast_(const Vec3 &raePos, Coordinate &tpCoord) const;
 
     /**
     * @brief Converts a X-East tangent plane projection to a translated and rotated tangent plane projection

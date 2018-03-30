@@ -1,4 +1,4 @@
-#version 110
+#version 140
 
 #pragma vp_entryPoint simvis_flashing_fragment
 #pragma vp_location fragment_coloring

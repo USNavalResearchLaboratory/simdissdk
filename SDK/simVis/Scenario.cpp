@@ -34,6 +34,7 @@
 #include "simVis/AlphaTest.h"
 #include "simVis/Beam.h"
 #include "simVis/BeamPulse.h"
+#include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
@@ -393,6 +394,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // Install shaders used by multiple entities at the scenario level
   AlphaTest::installShaderProgram(stateSet);
   BeamPulse::installShaderProgram(stateSet);
+  DisableDepthOnAlpha::installShaderProgram(stateSet);
   LobGroupNode::installShaderProgram(stateSet);
   OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);

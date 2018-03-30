@@ -39,6 +39,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simVis/ClockOptions.h"
+#include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/Utils.h"
 #include "simVis/ModelCache.h"
 
@@ -272,6 +273,9 @@ private:
       osgUtil::Optimizer o;
       o.optimize(result, options->optimizeFlags);
     }
+
+    // Disable depth on all incoming models
+    simVis::DisableDepthOnAlpha::setValues(result->getOrCreateStateSet(), osg::StateAttribute::ON);
 
     // generate shaders.
     if (options->runShaderGenerator)

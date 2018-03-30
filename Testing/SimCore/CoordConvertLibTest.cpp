@@ -757,6 +757,9 @@ int testScaledFlatEarthPole()
 
   // X axis position data from JIRA issue SIMDIS-2285
   const simCore::Coordinate xPos(simCore::COORD_SYS_NWU, simCore::Vec3(5556, 0, 0), simCore::Vec3(0, 0, 0), simCore::Vec3(5.144, 0, 0));
+  ecefPos.setCoordinateSystem(simCore::COORD_SYS_ECEF);
+  llaPos.setCoordinateSystem(simCore::COORD_SYS_LLA);
+  sfePos.setCoordinateSystem(simCore::COORD_SYS_NWU);
 
   // Validate conversion to and from ECEF fails as expected due to degenerate origin at pole
   if (cc.convert(xPos, ecefPos, simCore::COORD_SYS_ECEF) == 0)

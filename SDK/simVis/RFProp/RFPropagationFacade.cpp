@@ -289,7 +289,7 @@ int RFPropagationFacade::setRangeTool(bool option)
 
 int RFPropagationFacade::setAglActive(bool aglActive)
 {
-  if (profileManager_ != NULL)
+  if (profileManager_ == NULL)
     return 1;
   profileManager_->setAGL(aglActive);
   return 0;

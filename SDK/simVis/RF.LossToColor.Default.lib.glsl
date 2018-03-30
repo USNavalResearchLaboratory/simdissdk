@@ -1,4 +1,4 @@
-#version 130
+#version 140
 
 // Fallback implementation of loss-to-color shader
 vec4 lossToColor(in float loss)

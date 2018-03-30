@@ -6,6 +6,7 @@ endif()
 # ----- simUtil --------------------------------------------------------
 
 set(SHADER_FILES
+    MapScale.glsl
     TerrainToggleEffect.vert.glsl
     TerrainToggleEffect.frag.glsl
 )
