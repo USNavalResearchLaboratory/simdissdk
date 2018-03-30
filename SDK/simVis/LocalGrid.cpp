@@ -354,7 +354,9 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
 {
   // create one geometry for divisions, and another for sub-divisions
   osg::ref_ptr<osg::Geometry> geomSub = new osg::Geometry();
+  geomSub->setName("simVis::LocalGridNode");
   osg::ref_ptr<osg::Geometry> geomDiv = new osg::Geometry();
+  geomDiv->setName("simVis::LocalGridNode");
 
   geomSub->setUseVertexBufferObjects(true);
   geomDiv->setUseVertexBufferObjects(true);
@@ -472,6 +474,7 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
   subColor.a() = 1.0;
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setName("simVis::LocalGridNode");
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
@@ -622,7 +625,8 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   const Units prefSizeUnits   = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   const double spacingS = timeRadiusSeconds / osg::maximum(1, numRings);
 
-  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();;
+  geom->setName("simVis::LocalGridNode");
   geom->setUseVertexBufferObjects(true);
 
   osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);

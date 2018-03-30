@@ -349,7 +349,7 @@ simData::ObjectId addPlatform(simData::DataStore& ds,
 
   // place it somewhere.
   {
-    simCore::Vec3 pos(simCore::DEG2RAD*51.0, 0.0, 20.0);
+    simCore::Vec3 pos(simCore::DEG2RAD*51.0, 0.0, 200.0);
 
     simCore::Vec3 ori = simExamples::hasArg("--br", argc, argv) ?
       simCore::Vec3(simCore::DEG2RAD*45.0, simCore::DEG2RAD*45.0, 0.0) :

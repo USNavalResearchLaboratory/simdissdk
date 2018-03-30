@@ -222,11 +222,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
   osg::StateSet* stateSet = this->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_BEAM, BIN_GLOBAL_SIMSDK);
-
-  // depth-writing is disabled for the beams by default.
-  depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
-  stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
+  stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
@@ -648,9 +644,10 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 
   // all activePrefs must be applied during this creation
   if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
-  {
-    depthAttr_->setWriteMask(!activePrefs->blended());
-    getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
+  {   
+    getOrCreateStateSet()->setRenderBinDetails(
+        (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
+        (activePrefs->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
     // If beam is drawn as a spherical volume, then the spherical volume also needs to be recreated/updated when blending changes.
     // If the spherical volume does not need to be recreated, updating will be done by performInPlacePrefChanges().
     // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.

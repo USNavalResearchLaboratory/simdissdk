@@ -67,6 +67,7 @@ static const std::string HELP_TEXT =
   "s : Cycle OSG statistics\n"
   "w : Toggle compass\n"
   "z : Toggle cockpit mode (if centered)\n"
+  "p : Play/pause\n"
   ;
 
 //////////////////////////////////////////////////////////////////
@@ -113,6 +114,9 @@ public:
         return true;
       case osgGA::GUIEventAdapter::KEY_Z:
         app_.toggleCockpit();
+        return true;
+      case osgGA::GUIEventAdapter::KEY_P:
+        app_.playPause();
         return true;
       }
     }
@@ -384,6 +388,14 @@ void ViewerApp::toggleCockpit()
     return;
   }
   view->enableCockpitMode(NULL);
+}
+
+void ViewerApp::playPause()
+{
+  if (clock_->timeScale() == 0.0)
+    clock_->setTimeScale(1.0);
+  else
+    clock_->setTimeScale(0.0);
 }
 
 void ViewerApp::toggleCompass()

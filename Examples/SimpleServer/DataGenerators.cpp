@@ -599,6 +599,8 @@ void MissileLaunchPlatform::create(const std::string& name)
     simData::DataStore::Transaction txn;
     simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(id_, &txn);
     prefs->mutable_commonprefs()->set_name(name);
+    prefs->set_drawcirclehilight(true);
+    prefs->set_circlehilightcolor(0xFF0000FF);
     prefs->set_icon(EXAMPLE_MISSILE_ICON);
     txn.complete(&prefs);
   }

@@ -134,7 +134,7 @@ MapScale::MapScale()
   {
     osg::ref_ptr<osgEarth::VirtualProgram> vp = osgEarth::VirtualProgram::getOrCreate(geode_->getOrCreateStateSet());
     simUtil::Shaders shaderPackage;
-    shaderPackage.load(vp, shaderPackage.mapScale());
+    shaderPackage.load(vp.get(), shaderPackage.mapScale());
   }
   else // Fall back to FFP implementation
     getOrCreateStateSet()->setAttributeAndModes(new osg::ShadeModel(osg::ShadeModel::FLAT));

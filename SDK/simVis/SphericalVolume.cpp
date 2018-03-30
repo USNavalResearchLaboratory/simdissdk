@@ -145,6 +145,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
 {
   // we always add a solid/face geometry, even if we add no primitives b/c we are drawing outline only; and faceGeom must be the first geometry in the geode
   osg::Geometry* faceGeom = new osg::Geometry();
+  faceGeom->setName("simVis::SphericalVolume::pyramid");
   geode.addDrawable(faceGeom);
 
   if (d.drawMode_ == SVData::DRAW_MODE_NONE || d.capRes_ == 0)
@@ -272,6 +273,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   if (drawOutlines)
   {
     osg::Geometry* outlineGeom = new osg::Geometry();
+    outlineGeom->setName("simVis::SphericalVolume");
     geode.addDrawable(outlineGeom);
     outlineGeom->setUseVertexBufferObjects(true);
     outlineGeom->setUseDisplayList(false);
@@ -590,6 +592,7 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
 osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& direction)
 {
   osg::Geometry* geom = new osg::Geometry();
+  geom->setName("simVis::SphericalVolume::cone");
   geom->setUseVertexBufferObjects(true);
   geom->setUseDisplayList(false);
   geom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap

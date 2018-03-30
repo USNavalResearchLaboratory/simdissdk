@@ -374,7 +374,6 @@ namespace simVis
 
     std::map<std::string, simData::BeamPrefs> prefsOverrides_;
     std::map<std::string, simData::BeamUpdate> updateOverrides_;
-    osg::Depth* depthAttr_;
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;
