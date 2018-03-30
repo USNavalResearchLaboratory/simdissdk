@@ -28,6 +28,7 @@
 #include "simVis/GOG/Cylinder.h"
 #include "simVis/GOG/Ellipse.h"
 #include "simVis/GOG/Ellipsoid.h"
+#include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/Hemisphere.h"
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/Line.h"
@@ -104,6 +105,12 @@ GogNodeInterface* GOGRegistry::createGOG(const Config& conf, const GOGNodeType& 
   GogNodeInterface* result = NULL;
   std::string key = toLower(conf.key());
 
+  // don't allow attached GOGs with absolute values
+  if (nodeType == GOGNODE_HOSTED && conf.hasValue(simVis::GOG::AbsoluteKeyword))
+  {
+    SIM_WARN << "Attempting to load attached GOG with absolute points\n";
+    return NULL;
+  }
   DeserializerTable::const_iterator i = deserializers_.find(key);
   if (i != deserializers_.end())
   {

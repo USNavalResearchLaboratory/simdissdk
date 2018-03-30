@@ -33,6 +33,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Mgrs.h"
+#include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/Utils.h"
@@ -449,6 +450,7 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
     {
       if (tokens.size() >= 3)
       {
+        current.set(simVis::GOG::AbsoluteKeyword, 1);
         // need to save lla for annotations
         positionLines += line + "\n";
 
@@ -511,6 +513,7 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
     {
       if (tokens.size() >= 3)
       {
+        current.add(simVis::GOG::AbsoluteKeyword, 1);
         currentMetaData.metadata += line + "\n";
         Config point("centerll");
         point.set("lat", parseGogGeodeticAngle_(tokens[1]));
@@ -1001,6 +1004,7 @@ bool Parser::createGOGs_(const Config& conf, const GOGNodeType& nodeType, const 
     }
     index++;
   }
+
   return true;
   // provide exception notification, if something went awry
   SAFETRYEND("creating GOG");
