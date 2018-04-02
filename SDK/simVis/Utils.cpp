@@ -57,6 +57,7 @@
 #include "simNotify/Notify.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
+#include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
@@ -165,10 +166,12 @@ namespace
       pass1_ = new osg::StateSet();
       pass1_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false), forceOn);
       pass1_->setAttributeAndModes(new osg::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), forceOn);
+      simVis::DisableDepthOnAlpha::setValues(pass1_.get(), osg::StateAttribute::OFF);
 
       pass2_ = new osg::StateSet();
       pass2_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, true), forceOn);
       pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), forceOn);
+      simVis::DisableDepthOnAlpha::setValues(pass2_.get(), osg::StateAttribute::OFF);
     }
 
     TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy)
