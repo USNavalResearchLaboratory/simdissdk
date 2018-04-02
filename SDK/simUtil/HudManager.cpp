@@ -896,12 +896,11 @@ void HudImage::update_()
   tex2d->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
   geometry->getOrCreateStateSet()->setTextureAttributeAndModes(0, tex2d, osg::StateAttribute::ON);
 
-  // Finish up the color settings
-  osg::ref_ptr<osg::TexEnv> texEnv = new osg::TexEnv(osg::TexEnv::MODULATE);
-  geometry->getStateSet()->setTextureAttributeAndModes(0, texEnv, osg::StateAttribute::ON);
-
   // Add to the geode
   addDrawable(geometry);
+
+  // Run shader generator to get texturing parameters correct
+  osgEarth::Registry::shaderGenerator().run(this);
 }
 
 void HudImage::update(osg::Image* image, double x, double y, double w, double h,
