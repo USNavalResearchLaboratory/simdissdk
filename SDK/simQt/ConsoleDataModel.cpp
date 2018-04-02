@@ -212,13 +212,13 @@ QVariant ConsoleDataModel::headerData(int section, Qt::Orientation orientation, 
         tr("Time column is in Coordinated Universal Time (UTC)."));
     case COLUMN_SEVERITY:
       return simQt::formatTooltip(tr("Severity"),
-        tr("Displays the severity of the console log entries."));;
+        tr("Displays the severity of the console log entries."));
     case COLUMN_CATEGORY:
       return simQt::formatTooltip(tr("Category"),
-        tr("Displays the category of the console log entries."));;
+        tr("Displays the category of the console log entries."));
     case COLUMN_TEXT:
       return simQt::formatTooltip(tr("Text"),
-        tr("Displays the details of the console log entries."));;
+        tr("Displays the details of the console log entries."));
     }
   }
 
