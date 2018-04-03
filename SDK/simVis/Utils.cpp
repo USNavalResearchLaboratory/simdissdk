@@ -166,12 +166,10 @@ namespace
       pass1_ = new osg::StateSet();
       pass1_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false), forceOn);
       pass1_->setAttributeAndModes(new osg::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), forceOn);
-      simVis::DisableDepthOnAlpha::setValues(pass1_.get(), osg::StateAttribute::OFF);
 
       pass2_ = new osg::StateSet();
       pass2_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, true), forceOn);
       pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), forceOn);
-      simVis::DisableDepthOnAlpha::setValues(pass2_.get(), osg::StateAttribute::OFF);
     }
 
     TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy)
@@ -188,51 +186,6 @@ namespace
       return new TwoPassAlphaRenderBin(*this, copyop);
     }
 
-    // Draw a render leaf. Apply the state manually so it respects the
-    // render bin's 2-pass state sets.
-    void drawLeaf(osgUtil::RenderLeaf* leaf, osg::RenderInfo& renderInfo)
-    {
-      osg::State& state = *renderInfo.getState();
-
-      // apply matrices if required.
-      state.applyProjectionMatrix(leaf->_projection.get());
-      state.applyModelViewMatrix(leaf->_modelview.get());
-
-      if (leaf->_drawable->getStateSet())
-      {
-        state.pushStateSet(leaf->_drawable->getStateSet());
-        state.apply();
-      }
-
-      if (state.getUseModelViewAndProjectionUniforms())
-        state.applyModelViewAndProjectionUniformsIfRequired();
-
-      leaf->_drawable->draw(renderInfo);
-
-      if (leaf->_dynamic)
-        state.decrementDynamicObjectCount();
-
-      if (leaf->_drawable->getStateSet())
-        state.popStateSet();
-    }
-
-    // Draw the geometry under a given stateset (render pass).
-    void drawPass(osg::StateSet* pass, osg::RenderInfo& ri)
-    {
-      osg::State& state = *ri.getState();
-
-      state.pushStateSet(pass);
-      state.apply();
-
-      // draw fine grained ordering.
-      for (RenderLeafList::iterator leaf = _renderLeafList.begin(); leaf != _renderLeafList.end(); ++leaf)
-      {
-        drawLeaf(*leaf, ri);
-      }
-
-      state.popStateSet();
-    }
-
     // Draw the same geometry twice, once for each pass.
     // We ignore the incoming "previous" leaf since we are handling state changes
     // manually in this bin.
@@ -247,8 +200,15 @@ namespace
           osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
       }
 
-      drawPass(pass1_.get(), ri);
-      drawPass(pass2_.get(), ri);
+      // Render once with the first state set
+      osgUtil::RenderLeaf* originalPrevious = previous;
+      setStateSet(pass1_.get());
+      osgUtil::RenderBin::drawImplementation(ri, previous);
+
+      // Now do the second pass with the new state set
+      previous = originalPrevious;
+      setStateSet(pass2_.get());
+      osgUtil::RenderBin::drawImplementation(ri, previous);
     }
 
   private:

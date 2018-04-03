@@ -57,7 +57,7 @@ void DisableDepthOnAlpha::setValues(osg::StateSet* stateset, int value)
 {
   if (stateset == NULL)
     return;
-  stateset->setDefine("SV_USE_DISABLE_DEPTH_ON_ALPHA", value);
+  stateset->setDefine(USE_DISABLE_DEPTH_DEFINE, value);
 }
 
 }
