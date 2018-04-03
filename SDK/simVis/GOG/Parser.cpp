@@ -954,7 +954,7 @@ void Parser::updateMetaData_(const ModifierState& state, const std::string& refO
       if (currentMetaData.metadata.find(RelativeShapeKeyword) == std::string::npos)
         currentMetaData.metadata += RelativeShapeKeyword + "\n";
       // indicate this is a relative shape with a reference point which can be extracted from the node's geometry rather than being stored in meta data
-      if (!refOriginLine.empty() && currentMetaData.metadata.find(ReferencePointKeyword) == std::string::npos)
+      if (currentMetaData.metadata.find(ReferencePointKeyword) == std::string::npos)
         currentMetaData.metadata += ReferencePointKeyword + "\n";
     }
   }
