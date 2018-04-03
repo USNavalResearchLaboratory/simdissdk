@@ -819,10 +819,10 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
           if (tokens.size() >= 4)
           {
             current.set("roll", tokens[3]);
-            current.set("orient", "cpr");
+            current.set("orient", "cpr"); // c=heading(course), p=pitch, r=roll
           }
           else
-            current.set("orient", "cp");
+            current.set("orient", "cp"); // c=heading(course), p=pitch, r=roll
         }
         else
           current.set("orient", "c");
@@ -835,7 +835,7 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
     else if (startsWith(line, "rotate"))
     {
       currentMetaData.metadata += line + "\n";
-      current.set("3d follow", "cpr");
+      current.set("3d follow", "cpr"); // c=heading(course), p=pitch, r=roll
     }
     else if (
       startsWith(line, "3d name") ||
@@ -954,7 +954,7 @@ void Parser::updateMetaData_(const ModifierState& state, const std::string& refO
       if (currentMetaData.metadata.find(RelativeShapeKeyword) == std::string::npos)
         currentMetaData.metadata += RelativeShapeKeyword + "\n";
       // indicate this is a relative shape with a reference point which can be extracted from the node's geometry rather than being stored in meta data
-      if (currentMetaData.metadata.find(ReferencePointKeyword) == std::string::npos)
+      if (!refOriginLine.empty() && currentMetaData.metadata.find(ReferencePointKeyword) == std::string::npos)
         currentMetaData.metadata += ReferencePointKeyword + "\n";
     }
   }
