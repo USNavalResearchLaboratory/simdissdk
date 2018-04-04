@@ -289,7 +289,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
         track_->update();
       }
       if (track_.valid())
-        track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_PLATFORM : simVis::DISPLAY_MASK_NONE);
+        track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
     }
   }
   else
@@ -570,7 +570,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   updateHostBounds_(prefs.scale());
   track_->update();
   const bool prefsDraw = lastPrefs_.commonprefs().datadraw() && prefs.commonprefs().draw();
-  track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_PLATFORM : simVis::DISPLAY_MASK_NONE);
+  track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
   return true;
 }
 
