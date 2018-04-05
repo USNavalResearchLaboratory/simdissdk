@@ -19,8 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include <climits>
-
 #include "osg/Image"
 #include "osgDB/FileUtils"
 
