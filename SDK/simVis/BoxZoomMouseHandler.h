@@ -37,6 +37,7 @@ namespace osgEarth {
 namespace simVis
 {
 
+class ModKeyHandler;
 class View;
 
 /**
@@ -89,8 +90,8 @@ private:
 
   /// Button mask for activation
   int buttonMask_;
-  /// Modkey mask for activation
-  int modKeyMask_;
+  /// Handles mod key mask
+  ModKeyHandler* modKeys_;
   /// Keyboard key for canceling the drag
   int cancelDragKey_;
 };

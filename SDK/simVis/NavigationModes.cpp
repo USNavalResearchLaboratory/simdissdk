@@ -417,7 +417,8 @@ void GisNavigationMode::init_(simVis::View* view, bool enableOverhead, bool watc
     boxZoomOpts.add(EarthManipulator::OPTION_GOTO_RANGE_FACTOR, 1.0);
     boxZoomOpts.add(EarthManipulator::OPTION_DURATION, 1.0);
     boxZoom_ = new BoxZoomMouseHandler(boxZoomOpts);
-    boxZoom_->setModKeyMask(osgGA::GUIEventAdapter::MODKEY_ALT);
+    // can't use alt + click, since that is stolen by some linux systems for window dragging
+    boxZoom_->setModKeyMask(osgGA::GUIEventAdapter::MODKEY_SHIFT | osgGA::GUIEventAdapter::MODKEY_CTRL);
     view_->addEventHandler(boxZoom_);
   }
 
