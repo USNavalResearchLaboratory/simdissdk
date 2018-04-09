@@ -1451,24 +1451,6 @@ void LocalGeometryNodeInterface::setAltOffset(double altOffsetMeters)
   }
 }
 
-void LocalGeometryNodeInterface::setAltitudeMode(AltitudeMode altMode)
-{
-  // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
-  GogNodeInterface::setAltitudeMode(altMode);
-  // In osgEarth LocalGeometryNode::clamp(), it is always adding the node's altituvalue as the offset.
-  // So this means that both osgEarth::Symbology::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN (relativeToGround)
-  // and osgEarth::Symbology::AltitudeSymbol::CLAMP_TO_TERRAIN (clampToGround) behave the same for our shapes.
-  // By setting the altitude to 0, clamp() then sets the offset to 0, and clampToGround works as intended.
-  // This applys to CylinderNodeInterface and ArcNodeInterface as well, which also wrap a LocalGeometryNode
-  if (localNode_.valid())
-  {
-    double newAltitude = (altMode == ALTITUDE_GROUND_CLAMPED) ? 0.0 : altitude_;
-    osgEarth::GeoPoint newPos = localNode_->getPosition();
-    newPos.alt() = newAltitude;
-    localNode_->setPosition(newPos);
-  }
-}
-
 int LocalGeometryNodeInterface::getReferencePosition(osg::Vec3d& referencePosition) const
 {
   if (!localNode_.valid())
@@ -1670,6 +1652,9 @@ void CylinderNodeInterface::setAltOffset(double altOffsetMeters)
 
 void CylinderNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  // cylinder doesn't support extrusion
+  if (altMode == ALTITUDE_EXTRUDE)
+    return;
   // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
   GogNodeInterface::setAltitudeMode(altMode);
   if (sideNode_.valid())
@@ -1789,21 +1774,6 @@ void ArcNodeInterface::setAltOffset(double altOffsetMeters)
     metaData_.allowSetExplicitly(false);
     setExtrude(extruded_);
     metaData_.allowSetExplicitly(true); // setFields could be incorrectly changed by setExtrude
-  }
-}
-
-void ArcNodeInterface::setAltitudeMode(AltitudeMode altMode)
-{
-  // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
-  GogNodeInterface::setAltitudeMode(altMode);
-  if (shapeNode_.valid())
-  {
-    double newAltitude = (altMode == ALTITUDE_GROUND_CLAMPED) ? 0.0 : altitude_;
-    osgEarth::GeoPoint newPos = shapeNode_->getPosition();
-    newPos.alt() = newAltitude;
-    shapeNode_->setPosition(newPos);
-    if (fillNode_.valid())
-      fillNode_->setPosition(newPos);
   }
 }
 

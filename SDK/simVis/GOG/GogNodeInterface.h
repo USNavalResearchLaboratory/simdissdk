@@ -505,8 +505,6 @@ public:
   /// override the get reference position
   virtual int getReferencePosition(osg::Vec3d& referencePosition) const;
   virtual void setAltOffset(double altOffsetMeters);
-  /// need to override setAltitudeMode to adjust altitude for clampToGround case
-  virtual void setAltitudeMode(AltitudeMode altMode);
 
 protected:
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
@@ -596,8 +594,6 @@ public:
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
   virtual void setAltOffset(double altOffsetMeters);
   virtual void setFilledState(bool state);
-  /// need to override setAltitudeMode to adjust altitude for clampToGround case
-  virtual void setAltitudeMode(AltitudeMode altMode);
 
 protected:
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;

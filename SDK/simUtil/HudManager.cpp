@@ -19,8 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include <climits>
-
 #include "osg/Image"
 #include "osgDB/FileUtils"
 
@@ -152,6 +150,7 @@ void HudTextAdapter::update_()
     if (osgTextVector_.size() <= ii)
     {
       osgText = new osgText::Text();
+      osgText->setDataVariance(osg::Object::DYNAMIC);
       osgTextVector_.push_back(osgText);
       addDrawable(osgText.get());
 

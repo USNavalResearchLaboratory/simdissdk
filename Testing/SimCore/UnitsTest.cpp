@@ -42,6 +42,7 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(reg.units(Units::ANGLE_FAMILY).empty());
   rv += SDK_ASSERT(reg.units(Units::LENGTH_FAMILY).empty());
   rv += SDK_ASSERT(reg.units(Units::SPEED_FAMILY).empty());
+  rv += SDK_ASSERT(reg.units(Units::FREQUENCY_FAMILY).empty());
   rv += SDK_ASSERT(reg.units("Not a real family").empty());
   rv += SDK_ASSERT(!reg.unitsByName("").isValid()); // Units::UNITLESS
   rv += SDK_ASSERT(!reg.unitsByName("meters").isValid());
@@ -126,6 +127,14 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::RADIANS) == speedVec.end());
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::METERS) == speedVec.end());
 
+  const UnitsRegistry::UnitsVector& frequencyVeq = reg.units(Units::FREQUENCY_FAMILY);
+  rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::HERTZ) != frequencyVeq.end());
+  rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::REVOLUTIONS_PER_MINUTE) != frequencyVeq.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::SECONDS) == frequencyVeq.end());
+  rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::RADIANS) == frequencyVeq.end());
+  rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::METERS) == frequencyVeq.end());
+
   return rv;
 }
 
@@ -174,6 +183,9 @@ int testRegistrySearchByName()
   rv += SDK_ASSERT(reg.unitsByName("kilometers per second") == Units::KILOMETERS_PER_SECOND);
   rv += SDK_ASSERT(reg.unitsByName("data miles per hour") == Units::DATA_MILES_PER_HOUR);
   rv += SDK_ASSERT(reg.unitsByName("yards per second") == Units::YARDS_PER_SECOND);
+
+  rv += SDK_ASSERT(reg.unitsByName("revolutions per minute") == Units::REVOLUTIONS_PER_MINUTE);
+  rv += SDK_ASSERT(reg.unitsByName("cycles per second") == Units::HERTZ);
 
   // Search for invalid units
   const Units& inv1 = reg.unitsByName("invalid");
@@ -245,6 +257,9 @@ int testRegistrySearchByAbbrev()
   rv += SDK_ASSERT(reg.unitsByAbbreviation("km/sec") == Units::KILOMETERS_PER_SECOND);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("dm/hr") == Units::DATA_MILES_PER_HOUR);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("yd/sec") == Units::YARDS_PER_SECOND);
+
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("Hz") == Units::HERTZ);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("rpm") == Units::REVOLUTIONS_PER_MINUTE);
 
   // Search for invalid units
   const Units& inv1 = reg.unitsByAbbreviation("inv");
@@ -378,6 +393,16 @@ int testSpeedConvert()
   rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS_PER_SECOND.convertTo(Units::METERS_PER_SECOND, 1.5), 1500.0));
   rv += SDK_ASSERT(simCore::areEqual(Units::DATA_MILES_PER_HOUR.convertTo(Units::METERS_PER_SECOND, 1.5), 0.76196607));
   rv += SDK_ASSERT(simCore::areEqual(Units::YARDS_PER_SECOND.convertTo(Units::METERS_PER_SECOND, 1.5), 1.3716));
+
+  return rv;
+}
+
+int testFrequencyConvert()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::areEqual(Units::REVOLUTIONS_PER_MINUTE.convertTo(Units::HERTZ, 2.5), 150.0));
+  rv += SDK_ASSERT(simCore::areEqual(Units::HERTZ.convertTo(Units::REVOLUTIONS_PER_MINUTE, 600), 10.0));
 
   return rv;
 }
@@ -519,6 +544,7 @@ int UnitsTest(int argc, char* argv[])
   rv += testAngleConvert();
   rv += testLengthConvert();
   rv += testSpeedConvert();
+  rv += testFrequencyConvert();
   rv += testCustomUnitsToExistingFamily();
   rv += testCustomFamily();
 

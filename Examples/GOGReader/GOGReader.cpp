@@ -51,7 +51,6 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/MousePositionManipulator.h"
-#include "simUtil/PlatformSimulator.h"
 
 namespace ui = osgEarth::Util::Controls;
 
@@ -145,16 +144,16 @@ public:
 
     if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
       handled = handleKeyPress_(ea.getKey());
-
+    else if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE)
+      updateStatusAndLabel_();
     // left click and drag moves off of centered platform
-    if (ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON && ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
+    else if (ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON && ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
     {
       centeredGogIndex_ = -1;
       updateStatusAndLabel_();
     }
-
     // changing zoom updates camera distance
-    if ((ea.getButton() == osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON && ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
+    else if ((ea.getButton() == osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON && ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
        || ea.getEventType() == osgGA::GUIEventAdapter::SCROLL)
       updateStatusAndLabel_();
 
@@ -201,6 +200,7 @@ private:
 
       focusedView->setViewpoint(eyePos);
       updateStatusAndLabel_();
+
       return true;
     }
 
@@ -376,36 +376,32 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore, const std::string& 
     xaction.complete(&prefs);
   }
 
+  // now add some data points
+  {
+    // add some orientation values for testing 3d Follow
+    simCore::Coordinate lla(simCore::COORD_SYS_LLA,
+      simCore::Vec3(38.8 * simCore::DEG2RAD, -77.0 * simCore::DEG2RAD, 10.0),
+      simCore::Vec3(45.0, 45.0, 45.0),
+      simCore::Vec3(0.0, 0.0, 0.0));
+
+    simCore::Coordinate ecef;
+    simCore::CoordinateConverter::convertGeodeticToEcef(lla, ecef);
+
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = dataStore.addPlatformUpdate(platformId, &t);
+    u->set_time(1.0);
+    u->set_x(ecef.x());
+    u->set_y(ecef.y());
+    u->set_z(ecef.z());
+    u->set_psi(ecef.psi());
+    u->set_theta(ecef.theta());
+    u->set_phi(ecef.phi());
+    t.complete(&u);
+  }
+
+  dataStore.update(1.0);
+
   return platformId;
-}
-
-simVis::PlatformNode* setupSimulation(
-                simUtil::PlatformSimulatorManager& simMgr,
-                simData::ObjectId                  platformId,
-                simData::DataStore&                dataStore,
-                simVis::Viewer*                    viewer)
-{
-  /// simulator will compute time-based updates for our platform (and any beams it is hosting)
-  osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(platformId);
-
-  /// create some waypoints (lat, lon, alt, duration)
-  sim->addWaypoint(simUtil::Waypoint(38.8, -77.0, 10, 2000.0));
-  sim->addWaypoint(simUtil::Waypoint(38.8, -77.0, 10, 2000.0));
-
-  sim->setSimulateRoll(true);
-
-  /// Install frame update handler that will update track positions over time.
-  simMgr.addSimulator(sim.get());
-  simMgr.simulate(0.0, 120.0, 60.0);
-
-  /// Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(&simMgr, 0.0, 120.0);
-  viewer->addEventHandler(simHandler.get());
-
-  /// Tether camera to platform
-  osg::ref_ptr<simVis::PlatformNode> platformNode = viewer->getSceneManager()->getScenario()->find<simVis::PlatformNode>(platformId);
-
-  return platformNode.get();
 }
 
 int main(int argc, char** argv)
@@ -445,7 +441,6 @@ int main(int argc, char** argv)
 
   std::string iconFile = EXAMPLE_IMAGE_ICON;
 
-
   /// data source which will provide positions for the platform
   /// based on the simulation time.
   simData::MemoryDataStore dataStore;
@@ -453,10 +448,7 @@ int main(int argc, char** argv)
 
   /// add in the platform
   simData::ObjectId platformId = addPlatform(dataStore, iconFile);
-
-  /// simulate it so we have something to attach GOGs to
-  osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer.get());
+  osg::ref_ptr<simVis::PlatformNode> platform = scene->getScenario()->find<simVis::PlatformNode>(platformId);
 
   osg::Group* group = new osg::Group();
 
@@ -585,7 +577,6 @@ int main(int argc, char** argv)
       attach ? platform.get() : NULL);
 
   mainView->getCamera()->addEventCallback(mouseHandler);
-
   viewer->run();
 }
 

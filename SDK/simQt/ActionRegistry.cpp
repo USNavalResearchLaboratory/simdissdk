@@ -522,6 +522,16 @@ int ActionRegistry::removeAction(const QString& desc)
   return 0;
 }
 
+int ActionRegistry::removeUnknownAction(const QString& desc)
+{
+  auto it = unknownActions_.find(desc);
+  if (it == unknownActions_.end())
+    return 1;
+
+  unknownActions_.erase(it);
+  return 0;
+}
+
 Action* ActionRegistry::findAction(const QString& desc) const
 {
   assertActionsByKeyValid_();
