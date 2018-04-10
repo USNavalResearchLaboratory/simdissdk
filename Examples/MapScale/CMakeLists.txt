@@ -8,10 +8,10 @@ set(PROJECT_FILES
     MapScale.cpp
 )
 
-add_executable(example_map_scale ${PROJECT_FILES})
-target_link_libraries(example_map_scale PRIVATE simVis simUtil)
-set_target_properties(example_map_scale PROPERTIES
+add_executable(example_mapscale ${PROJECT_FILES})
+target_link_libraries(example_mapscale PRIVATE simVis simUtil)
+set_target_properties(example_mapscale PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Map Scale"
 )
-vsi_install_target(example_map_scale SDK_Examples)
+vsi_install_target(example_mapscale SDK_Examples)

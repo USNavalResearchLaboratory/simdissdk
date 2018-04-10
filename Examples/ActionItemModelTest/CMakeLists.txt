@@ -15,13 +15,13 @@ VSI_QT_WRAP_CPP(Q_AIM_MOC
 
 VSI_INCLUDE_QT_USE_FILE()
 
-add_executable(example_QtActionItemModel ${APP_SOURCES} ${Q_AIM_MOC})
-target_link_libraries(example_QtActionItemModel PRIVATE simQt)
-target_include_directories(example_QtActionItemModel PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_target_properties(example_QtActionItemModel PROPERTIES
+add_executable(example_qtactionitemmodeltest ${APP_SOURCES} ${Q_AIM_MOC})
+target_link_libraries(example_qtactionitemmodeltest PRIVATE simQt)
+target_include_directories(example_qtactionitemmodeltest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties(example_qtactionitemmodeltest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Qt Action Item Model"
+    PROJECT_LABEL "Example - Qt Action Item Model Test"
 )
-vsi_install_target(example_QtActionItemModel SDK_Examples)
+vsi_install_target(example_qtactionitemmodeltest SDK_Examples)
 
-VSI_QT_USE_MODULES(example_QtActionItemModel LINK_PRIVATE Widgets)
+VSI_QT_USE_MODULES(example_qtactionitemmodeltest LINK_PRIVATE Widgets)

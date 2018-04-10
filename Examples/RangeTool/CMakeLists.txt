@@ -8,10 +8,10 @@ set(PROJECT_FILES
     src/ExampleRangeTool.cpp
 )
 
-add_executable(example_range_tool ${PROJECT_FILES})
-target_link_libraries(example_range_tool PRIVATE simVis simUtil)
-set_target_properties(example_range_tool PROPERTIES
+add_executable(example_rangetool ${PROJECT_FILES})
+target_link_libraries(example_rangetool PRIVATE simVis simUtil)
+set_target_properties(example_rangetool PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Range Tool"
 )
-vsi_install_target(example_range_tool SDK_Examples)
+vsi_install_target(example_rangetool SDK_Examples)

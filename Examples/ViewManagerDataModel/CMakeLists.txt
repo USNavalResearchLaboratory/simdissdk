@@ -13,12 +13,12 @@ set(PROJECT_FILES
 # Initialize Qt variables
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
-add_executable(example_viewmanager_datamodel_qt ${PROJECT_FILES} ${PROJECT_MOC_FILES})
-target_link_libraries(example_viewmanager_datamodel_qt PRIVATE simVis simUtil simQt)
-set_target_properties(example_viewmanager_datamodel_qt PROPERTIES
+add_executable(example_qtviewmanagerdatamodel ${PROJECT_FILES} ${PROJECT_MOC_FILES})
+target_link_libraries(example_qtviewmanagerdatamodel PRIVATE simVis simUtil simQt)
+set_target_properties(example_qtviewmanagerdatamodel PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - View Manager Qt Data Model"
 )
-vsi_install_target(example_viewmanager_datamodel_qt SDK_Examples)
+vsi_install_target(example_qtviewmanagerdatamodel SDK_Examples)
 
-VSI_QT_USE_MODULES(example_viewmanager_datamodel_qt LINK_PRIVATE Widgets OpenGL)
+VSI_QT_USE_MODULES(example_qtviewmanagerdatamodel LINK_PRIVATE Widgets OpenGL)

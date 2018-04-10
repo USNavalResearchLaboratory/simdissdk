@@ -19,13 +19,13 @@ VSI_QT_WRAP_CPP(Q_UNITS_HEADERS_MOC
 
 VSI_INCLUDE_QT_USE_FILE()
 
-add_executable(example_QtUnitsWidgetTest ${GUI_SOURCES} ${Q_UNITS_FORMS_HEADERS} ${Q_UNITS_HEADERS_MOC})
-target_link_libraries(example_QtUnitsWidgetTest PRIVATE simQt)
-target_include_directories(example_QtUnitsWidgetTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_target_properties(example_QtUnitsWidgetTest PROPERTIES
+add_executable(example_qtunitswidgettest ${GUI_SOURCES} ${Q_UNITS_FORMS_HEADERS} ${Q_UNITS_HEADERS_MOC})
+target_link_libraries(example_qtunitswidgettest PRIVATE simQt)
+target_include_directories(example_qtunitswidgettest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties(example_qtunitswidgettest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Qt Units"
+    PROJECT_LABEL "Example - Qt Units Widget Test"
 )
-vsi_install_target(example_QtUnitsWidgetTest SDK_Examples)
+vsi_install_target(example_qtunitswidgettest SDK_Examples)
 
-VSI_QT_USE_MODULES(example_QtUnitsWidgetTest LINK_PRIVATE Widgets)
+VSI_QT_USE_MODULES(example_qtunitswidgettest LINK_PRIVATE Widgets)

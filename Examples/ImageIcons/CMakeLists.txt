@@ -8,10 +8,10 @@ set(PROJECT_FILES
     ImageIcons.cpp
 )
 
-add_executable(example_image_icons ${PROJECT_FILES})
-target_link_libraries(example_image_icons PRIVATE simVis simUtil)
-set_target_properties(example_image_icons PROPERTIES
+add_executable(example_imageicons ${PROJECT_FILES})
+target_link_libraries(example_imageicons PRIVATE simVis simUtil)
+set_target_properties(example_imageicons PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Image Icons"
 )
-vsi_install_target(example_image_icons SDK_Examples)
+vsi_install_target(example_imageicons SDK_Examples)

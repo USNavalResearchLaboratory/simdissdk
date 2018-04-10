@@ -19,13 +19,13 @@ VSI_QT_WRAP_CPP(Q_TIMEWIDGET_MOC
 
 VSI_INCLUDE_QT_USE_FILE()
 
-add_executable(example_QtTimeWidget ${APP_SOURCES} ${Q_TIMEWIDGET_MOC} ${Q_TIMEWIDGET_FORMS})
-target_link_libraries(example_QtTimeWidget PRIVATE simQt simCore)
-target_include_directories(example_QtTimeWidget PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_target_properties(example_QtTimeWidget PROPERTIES
+add_executable(example_qttimewidgettest ${APP_SOURCES} ${Q_TIMEWIDGET_MOC} ${Q_TIMEWIDGET_FORMS})
+target_link_libraries(example_qttimewidgettest PRIVATE simQt simCore)
+target_include_directories(example_qttimewidgettest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties(example_qttimewidgettest PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Qt Time Widget Test"
 )
-vsi_install_target(example_QtTimeWidget SDK_Examples)
+vsi_install_target(example_qttimewidgettest SDK_Examples)
 
-VSI_QT_USE_MODULES(example_QtTimeWidget LINK_PRIVATE Widgets)
+VSI_QT_USE_MODULES(example_qttimewidgettest LINK_PRIVATE Widgets)

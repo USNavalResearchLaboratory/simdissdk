@@ -11,12 +11,12 @@ set(PROJECT_FILES
 # Initialize Qt variables
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
-add_executable(example_viewmanager_qt ${PROJECT_FILES})
-target_link_libraries(example_viewmanager_qt PRIVATE simVis simUtil simQt)
-set_target_properties(example_viewmanager_qt PROPERTIES
+add_executable(example_viewmanagerqttest ${PROJECT_FILES})
+target_link_libraries(example_viewmanagerqttest PRIVATE simVis simUtil simQt)
+set_target_properties(example_viewmanagerqttest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - View Manager Qt"
+    PROJECT_LABEL "Example - View Manager Qt Test"
 )
-vsi_install_target(example_viewmanager_qt SDK_Examples)
+vsi_install_target(example_viewmanagerqttest SDK_Examples)
 
-VSI_QT_USE_MODULES(example_viewmanager_qt LINK_PRIVATE Widgets OpenGL)
+VSI_QT_USE_MODULES(example_viewmanagerqttest LINK_PRIVATE Widgets OpenGL)
