@@ -903,6 +903,7 @@ int main(int argc, char **argv)
     simVis::PlatformNode *platNode = scene->getScenario()->find<simVis::PlatformNode>(platformId);
     osg::Texture2D* rocketBurnTexture = new osg::Texture2D();
     rocketBurnTexture->setImage(osgDB::readImageFile(EXAMPLE_ROCKET_BURN_TEXTURE));
+    simVis::fixTextureForGlCoreProfile(rocketBurnTexture);
     simVis::RocketBurn *rb = new simVis::RocketBurn(*platNode, *rocketBurnTexture);
     simVis::RocketBurn::ShapeData rocketBurnShape;
     rocketBurnShape.radiusFar = 0.001;

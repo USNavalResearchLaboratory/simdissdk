@@ -912,6 +912,7 @@ void Profile::init3DTexture_()
     texture_->setResizeNonPowerOfTwoHint(false);
     texture_->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
     texture_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+    simVis::fixTextureForGlCoreProfile(texture_.get());
   }
   geode_->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture_);
 }

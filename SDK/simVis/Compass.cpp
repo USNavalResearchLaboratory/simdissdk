@@ -25,6 +25,7 @@
 #include "simVis/osgEarthVersion.h"
 #include "simVis/Registry.h"
 #include "simVis/Types.h"
+#include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "simVis/Compass.h"
 
@@ -131,18 +132,7 @@ compassUpdateEventHandler_(NULL)
     texture->setResizeNonPowerOfTwoHint(false);
     texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
     texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-
-    // OSG will fix the internal format, but won't fix the output pixel format
-    if (image->getPixelFormat() == GL_LUMINANCE)
-    {
-      image->setPixelFormat(GL_RED);
-      texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_ONE));
-    }
-    else if (image->getPixelFormat() == GL_LUMINANCE_ALPHA)
-    {
-      image->setPixelFormat(GL_RG);
-      texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_GREEN));
-    }
+    simVis::fixTextureForGlCoreProfile(texture);
     compass_ = new osgEarth::Util::Controls::ImageControl(texture.get());
 #else
     // Fall back to ImageControl(Image) constructor, which fails in GL3 on some textures

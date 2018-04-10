@@ -123,6 +123,14 @@ namespace simVis
   SDKVIS_EXPORT bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value);
 
   /**
+  * Fixes an osg::Texture to be OpenGL core profile compliant.  A texture cannot have a pixel format that
+  * matches GL_LUMINANCE or GL_LUMINANCE_ALPHA in OpenGL core profile.  This method detects that case, fixes
+  * the pixel format, and applies a swizzle to correctly map GL_RED or GL_RG components to visible spectrum.
+  * By necessity, this modifies texture->getImage().
+  */
+  SDKVIS_EXPORT void fixTextureForGlCoreProfile(osg::Texture* texture);
+
+  /**
    * Internal update template callback - binds an update callback to the
    * template-class's "update()" method.
    * @tparam T osg::Node that has a method matching the signature update(const osg::FrameStamp*).

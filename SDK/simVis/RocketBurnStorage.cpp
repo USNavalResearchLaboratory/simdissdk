@@ -26,8 +26,8 @@
 #include "simVis/Platform.h"
 #include "simVis/Registry.h"
 #include "simVis/Scenario.h"
+#include "simVis/Utils.h"
 #include "simVis/RocketBurnStorage.h"
-
 
 namespace simCore {
 
@@ -144,6 +144,7 @@ void RocketBurnStorage::addBurnData(simData::ObjectId platId, uint64_t burnId, d
     {
       const std::string imageFile = simVis::Registry::instance()->findModelFile("p.rgb");
       texture_ = new osg::Texture2D(osgDB::readImageFile(imageFile));
+      simVis::fixTextureForGlCoreProfile(texture_.get());
 
       dataStoreListener_.reset(new DataStoreListener(*this));
       dataStore_.addListener(dataStoreListener_);
