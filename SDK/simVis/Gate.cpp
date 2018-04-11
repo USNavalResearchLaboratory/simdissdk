@@ -74,6 +74,9 @@ GateVolume::~GateVolume()
 /// prefs that can be applied without rebuilding the whole gate
 void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a, const simData::GatePrefs* b)
 {
+  if (a == NULL || b == NULL)
+    return;
+
   if (b->commonprefs().useoverridecolor())
   {
     // Check for transition between color and override color than check for color change
@@ -100,6 +103,9 @@ void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a, const si
 /// updates that can be updated without rebuilding the whole gate
 void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simData::GateUpdate* b)
 {
+  if (a == NULL || b == NULL)
+    return;
+
   if (PB_FIELD_CHANGED(a, b, minrange))
   {
     SVFactory::updateNearRange(gateSV_.get(), b->minrange());

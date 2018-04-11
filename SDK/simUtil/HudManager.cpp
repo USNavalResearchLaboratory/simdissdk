@@ -893,6 +893,7 @@ void HudImage::update_()
   tex2d->setResizeNonPowerOfTwoHint(true);
   tex2d->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
   tex2d->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+  simVis::fixTextureForGlCoreProfile(tex2d.get());
   geometry->getOrCreateStateSet()->setTextureAttributeAndModes(0, tex2d, osg::StateAttribute::ON);
 
   // Add to the geode

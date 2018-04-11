@@ -22,10 +22,12 @@
 #include <osgEarthUtil/Controls>
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
-#include "simVis/View.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/Registry.h"
 #include "simVis/Types.h"
-#include "Compass.h"
+#include "simVis/Utils.h"
+#include "simVis/View.h"
+#include "simVis/Compass.h"
 
 namespace simVis
 {
@@ -119,9 +121,24 @@ pointer_(NULL),
 compassUpdateEventHandler_(NULL)
 {
   osg::ref_ptr<osg::Image> image = osgDB::readImageFile(compassFilename);
-  if (image)
+  if (image.valid())
   {
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0) && defined(OSG_GL3_AVAILABLE)
+    // Use the swizzle ImageControl(Texture) constructor, if available, to avoid GL3
+    // errors with the texture being black due to not supporting GL_LUMINANCE*
+
+    // Create a texture so we can set the swizzle
+    osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D(image.get());
+    texture->setResizeNonPowerOfTwoHint(false);
+    texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+    texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    simVis::fixTextureForGlCoreProfile(texture);
+    compass_ = new osgEarth::Util::Controls::ImageControl(texture.get());
+#else
+    // Fall back to ImageControl(Image) constructor, which fails in GL3 on some textures
     compass_ = new osgEarth::Util::Controls::ImageControl(image.get());
+#endif
+
     compass_->setAbsorbEvents(false);
     compass_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_RIGHT);
     compass_->setVertAlign(osgEarth::Util::Controls::Control::ALIGN_BOTTOM);

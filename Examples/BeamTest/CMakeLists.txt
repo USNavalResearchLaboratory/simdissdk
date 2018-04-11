@@ -8,10 +8,10 @@ set(PROJECT_FILES
     src/BeamTest.cpp
 )
 
-add_executable(example_beam ${PROJECT_FILES})
-target_link_libraries(example_beam PRIVATE simVis simUtil)
-set_target_properties(example_beam PROPERTIES
+add_executable(example_beamtest ${PROJECT_FILES})
+target_link_libraries(example_beamtest PRIVATE simVis simUtil)
+set_target_properties(example_beamtest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Beams"
+    PROJECT_LABEL "Example - Beams Test"
 )
-vsi_install_target(example_beam SDK_Examples)
+vsi_install_target(example_beamtest SDK_Examples)

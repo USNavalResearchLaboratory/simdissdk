@@ -135,6 +135,7 @@ void ProjectorTextureImpl::setImage(osg::Image *image)
   if (texture_.valid())
   {
     texture_->setImage(image);
+    simVis::fixTextureForGlCoreProfile(texture_.get());
   }
 }
 
@@ -376,6 +377,7 @@ void ProjectorNode::setImage(osg::Image* image)
   // Reset video node if one is set.
   imageProvider_ = NULL;
   texture_->setImage(image);
+  simVis::fixTextureForGlCoreProfile(texture_.get());
 }
 
 osg::Texture2D* ProjectorNode::getTexture() const
