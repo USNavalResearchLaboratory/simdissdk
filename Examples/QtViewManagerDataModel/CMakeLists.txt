@@ -17,7 +17,7 @@ add_executable(example_qtviewmanagerdatamodel ${PROJECT_FILES} ${PROJECT_MOC_FIL
 target_link_libraries(example_qtviewmanagerdatamodel PRIVATE simVis simUtil simQt)
 set_target_properties(example_qtviewmanagerdatamodel PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - View Manager Qt Data Model"
+    PROJECT_LABEL "Example - Qt View Manager Data Model"
 )
 vsi_install_target(example_qtviewmanagerdatamodel SDK_Examples)
 

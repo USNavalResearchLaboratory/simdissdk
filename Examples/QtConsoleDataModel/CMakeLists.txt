@@ -23,7 +23,7 @@ target_link_libraries(example_qtconsoledatamodel PRIVATE simQt simCore)
 target_include_directories(example_qtconsoledatamodel PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qtconsoledatamodel PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Console Data Model"
+    PROJECT_LABEL "Example - Qt Console Data Model"
 )
 vsi_install_target(example_qtconsoledatamodel SDK_Examples)
 
