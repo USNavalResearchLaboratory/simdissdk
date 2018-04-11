@@ -717,6 +717,7 @@ simData::ObjectId addBeam(simData::ObjectId hostId, simData::DataStore &dataStor
   beamPrefs->set_azimuthoffset(osg::DegreesToRadians(0.0));
   beamPrefs->set_verticalwidth(osg::DegreesToRadians(30.0));
   beamPrefs->set_horizontalwidth(osg::DegreesToRadians(60.0));
+  beamPrefs->mutable_commonprefs()->set_color(0x7FFF007F); // use a blendable yellow-green
   transaction.complete(&beamPrefs);
 
   return result;

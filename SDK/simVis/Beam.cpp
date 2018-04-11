@@ -643,7 +643,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     setActive_(true);
 
   // all activePrefs must be applied during this creation
-  if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
+  if (force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended)))
   {
     getOrCreateStateSet()->setRenderBinDetails(
       (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
