@@ -24,6 +24,7 @@
 
 #include "osg/ref_ptr"
 #include "osg/MatrixTransform"
+#include "osgEarth/LineDrawable"
 #include "simData/DataTypes.h"
 
 namespace osgEarth { class SpatialReference; }
@@ -153,20 +154,23 @@ namespace simVis
     unsigned int                  maxSize_; /// maximum allowable number of points in chunk
     osg::ref_ptr<osg::Geode>      geode_;
 
-    osg::ref_ptr<osg::Geometry>   center_;
-    osg::Vec3Array*               centerVerts_;
-    osg::Vec4Array*               centerColors_;
-    osg::DrawArrays*              centerPSet_;
+    osg::ref_ptr<osgEarth::LineDrawable> center_;
+    //osg::ref_ptr<osg::Geometry>   center_;
+    //osg::Vec3Array*               centerVerts_;
+    //osg::Vec4Array*               centerColors_;
+    //osg::DrawArrays*              centerPSet_;
 
-    osg::ref_ptr<osg::Geometry>   ribbon_;
-    osg::Vec3Array*               ribbonVerts_;
-    osg::Vec4Array*               ribbonColors_;
-    osg::DrawArrays*              ribbonPSet_;
+    osg::ref_ptr<osgEarth::LineDrawable> ribbon_;
+    //osg::ref_ptr<osg::Geometry>   ribbon_;
+    //osg::Vec3Array*               ribbonVerts_;
+    //osg::Vec4Array*               ribbonColors_;
+    //osg::DrawArrays*              ribbonPSet_;
 
-    osg::ref_ptr<osg::Geometry>   drop_;
-    osg::Vec3Array*               dropVerts_;
-    osg::Vec4Array*               dropColors_;
-    osg::DrawArrays*              dropPSet_;
+    osg::ref_ptr<osgEarth::LineDrawable> drop_;
+    //osg::ref_ptr<osg::Geometry>   drop_;
+    //osg::Vec3Array*               dropVerts_;
+    //osg::Vec4Array*               dropColors_;
+    //osg::DrawArrays*              dropPSet_;
 
     osg::ref_ptr<const osgEarth::SpatialReference> srs_;
     osg::Matrixd                  world2local_;

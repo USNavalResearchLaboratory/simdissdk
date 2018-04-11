@@ -25,6 +25,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
+#include "osgEarth/CullingUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
@@ -400,6 +401,9 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   PolygonStipple::installShaderProgram(stateSet);
   PointSize::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
+
+  // Install a viewport uniform generator
+  addCullCallback(new osgEarth::InstallViewportSizeUniform());
 }
 
 ScenarioManager::~ScenarioManager()
