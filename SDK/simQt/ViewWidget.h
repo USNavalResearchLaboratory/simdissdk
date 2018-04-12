@@ -90,6 +90,9 @@ private:
   /** Get or create graphics context */
   osg::GraphicsContext* createOrShareGC_(osg::GraphicsContext* gc);
 
+  /** Copies values from the Traits into the given format. */
+  void fillFormat_(QGLFormat& format, const osg::GraphicsContext::Traits& fromTraits) const;
+
   osg::observer_ptr<osgViewer::ViewerBase> viewer_;
   osg::ref_ptr<osg::GraphicsContext> gc_;
 
