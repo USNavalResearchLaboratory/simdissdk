@@ -19,25 +19,25 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Math"
-#include "osg/BlendFunc"
-#include "osg/NodeVisitor"
-#include "osg/MatrixTransform"
-#include "osg/PositionAttitudeTransform"
 #include "osg/Billboard"
+#include "osg/BlendFunc"
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/Geometry"
+#include "osg/Math"
+#include "osg/MatrixTransform"
+#include "osg/NodeVisitor"
+#include "osg/PositionAttitudeTransform"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgUtil/RenderBin"
 #include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/Capabilities"
+#include "osgEarth/CullingUtils"
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
 #include "osgEarth/Utils"
-#include "osgEarth/CullingUtils"
 #include "osgEarth/VirtualProgram"
 #include "simVis/osgEarthVersion.h"
 
@@ -51,9 +51,9 @@
 #include "simCore/Calc/Math.h"
 #endif
 
-#include "simCore/String/Format.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/String/Format.h"
 #include "simNotify/Notify.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
@@ -200,10 +200,19 @@ namespace
           osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
       }
 
+      // Create a copy of the state set stack so we can fix the internal stack after first drawImplementation()
+      osg::State* state = ri.getState();
+      osg::State::StateSetStack stateCopy = state->getStateSetStack();
+
       // Render once with the first state set
       osgUtil::RenderLeaf* originalPrevious = previous;
       setStateSet(pass1_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
+
+      // Equalize the states so that drawImplementation()'s second pass starts with known good state stack
+      while (state->getStateSetStackSize() < stateCopy.size())
+        state->pushStateSet(stateCopy[state->getStateSetStackSize()]);
+      stateCopy.clear();
 
       // Now do the second pass with the new state set
       previous = originalPrevious;
