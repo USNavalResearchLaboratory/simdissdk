@@ -1822,8 +1822,10 @@ osg::Camera* View::createHUD_() const
   hud->setClearMask(GL_DEPTH_BUFFER_BIT);
   hud->setAllowEventFocus(true);
   hud->getOrCreateStateSet()->setRenderBinDetails(0, BIN_TRAVERSAL_ORDER_SIMSDK);
-  // Set up a program so that text is not blocky
+#if OSG_VERSION_LESS_OR_EQUAL(3,4,1)
+  // Set up a program so that text is not blocky for older OSG that didn't bake in programs
   hud->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), 0);
+#endif
   hud->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
   return hud;
 }

@@ -64,6 +64,13 @@ ViewWidget::ViewWidget(osgViewer::View* view)
     view_(view)
 {
   init_(NULL);
+
+  if (gc_.valid() && gc_->getTraits())
+  {
+    QGLFormat fmt = format();
+    fillFormat_(fmt, *gc_->getTraits());
+    setFormat(fmt);
+  }
 }
 
 ViewWidget::ViewWidget(osgViewer::View* view, const QGLFormat& format)
@@ -141,6 +148,10 @@ void ViewWidget::reconfigure_(osgViewer::View* view)
     traits->doubleBuffer = true;
     traits->inheritedWindowData = new osgQt::GraphicsWindowQt::WindowData(this);
 
+    QGLFormat fmt = format();
+    fillFormat_(fmt, *gc_->getTraits());
+    setFormat(fmt);
+
     gc_ = new osgQt::GraphicsWindowQt(traits.get());
   }
 
@@ -205,7 +216,24 @@ osg::GraphicsContext* ViewWidget::createOrShareGC_(osg::GraphicsContext* gc)
   traits->sharedContext = gc;
   traits->inheritedWindowData = new osgQt::GraphicsWindowQt::WindowData(this);
 
+  QGLFormat fmt = format();
+  fillFormat_(fmt, *traits);
+  setFormat(fmt);
   return new osgQt::GraphicsWindowQt(traits.get());
+}
+
+void ViewWidget::fillFormat_(QGLFormat& format, const osg::GraphicsContext::Traits& fromTraits) const
+{
+  // Fix the GL Format to match the data in the traits
+  format.setAlphaBufferSize(fromTraits.alpha);
+  format.setStencilBufferSize(fromTraits.stencil);
+  format.setSampleBuffers(fromTraits.sampleBuffers);
+  format.setSamples(fromTraits.samples);
+  format.setProfile(static_cast<QGLFormat::OpenGLContextProfile>(fromTraits.glContextProfileMask));
+  unsigned int major = 0;
+  unsigned int minor = 0;
+  if (fromTraits.getContextVersion(major, minor))
+    format.setVersion(static_cast<int>(major), static_cast<int>(minor));
 }
 
 }

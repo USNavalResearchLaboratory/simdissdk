@@ -1,8 +1,5 @@
 #version 140
 
-// Need GL_EXT_gpu_shader4 for bitwise &
-#extension GL_EXT_gpu_shader4 : enable
-
 #pragma vp_entryPoint simvis_beampulse_frag
 #pragma vp_location fragment_coloring
 #pragma vp_order 3.0
