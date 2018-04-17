@@ -87,6 +87,7 @@ static const std::string s_title = "Symbology Example";
 static const std::string s_help =
   " 0 : camera: toggle tethering to platform\n"
   " 1 : grid: cycle draw type\n"
+  " v : velocity vector: toggle\n"
   "\n"
   " 2 : model: change scale\n"
   " 3 : model: toggle auto-scale\n"
@@ -652,6 +653,17 @@ struct MenuHandler : public osgGA::GUIEventHandler
         unsigned new_color = cycleColorRgba(color);
         prefs->mutable_commonprefs()->set_color(new_color);
         s_action->setText("Changed laser color");
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
+      case 'v': // toggle velocity vector
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawvelocityvec(!prefs->drawvelocityvec());
+        s_action->setText(Stringify() << "Set velocity vector to " << SAYBOOL(prefs->drawvelocityvec()));
         xaction.complete(&prefs);
         handled = true;
       }
