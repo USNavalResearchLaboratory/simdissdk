@@ -24,6 +24,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/Registry"
+#include "osgEarth/LineDrawable"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simData/DataTypes.h"
@@ -60,7 +61,7 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
       (isOpaque ? BIN_OPAQUE_GATE   : BIN_GATE),
       (isOpaque ? BIN_GLOBAL_SIMSDK : BIN_TWO_PASS_ALPHA));
 
-  osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
+  osg::Node* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
   if (outlineGeometry != NULL)
   {
     outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
@@ -208,26 +209,16 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   : LocatorNode(locator)
 {
   setActive(false);
-  geom_ = new osg::Geometry();
+  geom_ = new osgEarth::LineDrawable(GL_LINES);
   geom_->setName("simVis::GateCentroid");
-  geom_->setUseVertexBufferObjects(true);
-
-  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-  (*c)[0] = osg::Vec4f(1.0f, 1.0f, 1.0f, 1.0f); // always white
-  geom_->setColorArray(c);
-
-  osg::Vec3Array* v = new osg::Vec3Array(6);
-  geom_->setVertexArray(v);
-
-  osg::DrawElementsUShort* centroid = new osg::DrawElementsUShort(GL_LINES, 6);
-  for (unsigned int i = 0; i < 6; ++i)
-    centroid->setElement(i, i);
-  geom_->addPrimitiveSet(centroid);
+  geom_->setColor(osg::Vec4(1,1,1,1));
+  geom_->allocate(6);
+  geom_->dirty();
 
   geom_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 
-  osg::Geode* geodeSolid = new osg::Geode();
-  geodeSolid->addDrawable(geom_);
+  osg::Geode* geodeSolid = new osgEarth::LineGroup();
+  geodeSolid->addChild(geom_);
   addChild(geodeSolid);
 }
 
@@ -250,13 +241,11 @@ void GateCentroid::setVisible(bool visible)
 // perform an in-place update to an existing centroid
 void GateCentroid::update(const simData::GateUpdate& update)
 {
-  osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom_->getVertexArray());
-  updateCentroid_(verts, update);
-  geom_->dirtyBound();
+  updateCentroid_(update);
 }
 
 // calculate centroid verts from update
-void GateCentroid::updateCentroid_(osg::Vec3Array* verts, const simData::GateUpdate& update)
+void GateCentroid::updateCentroid_(const simData::GateUpdate& update)
 {
   // scale centroid relative to gate width & height
   const double sinWidth  = (update.width() >= M_PI_2) ? 1.0 : sin(update.width());
@@ -264,13 +253,12 @@ void GateCentroid::updateCentroid_(osg::Vec3Array* verts, const simData::GateUpd
   const double xSize = sinWidth * update.maxrange() / 8.0;
   const double ySize = (update.maxrange() - update.minrange()) / 8.0;
   const double zSize = sinHeight * update.maxrange() / 8.0;
-  (*verts)[0] = (osg::Vec3(-xSize, 0.0f, 0.0f));
-  (*verts)[1] = (osg::Vec3(xSize, 0.0f, 0.0f));
-  (*verts)[2] = (osg::Vec3(0.0f, -ySize, 0.0f));
-  (*verts)[3] = (osg::Vec3(0.0f, ySize, 0.0f));
-  (*verts)[4] = (osg::Vec3(0.0f, 0.0f, -zSize));
-  (*verts)[5] = (osg::Vec3(0.0f, 0.0f, zSize));
-  verts->dirty();
+  geom_->setVertex(0, osg::Vec3(-xSize, 0.0f, 0.0f));
+  geom_->setVertex(1, osg::Vec3(xSize, 0.0f, 0.0f));
+  geom_->setVertex(2, osg::Vec3(0.0f, -ySize, 0.0f));
+  geom_->setVertex(3, osg::Vec3(0.0f, ySize, 0.0f));
+  geom_->setVertex(4, osg::Vec3(0.0f, 0.0f, -zSize));
+  geom_->setVertex(5, osg::Vec3(0.0f, 0.0f, zSize));
 }
 
 // --------------------------------------------------------------------------
