@@ -399,6 +399,22 @@ void simExamples::configureSearchPaths()
   libPaths.push_back("../lib");
   osgDB::setLibraryFilePathList(libPaths);
 #endif
+
+  // Configure OSG to search for the right GL version.  By default, GL3 builds use "1.0" as the version,
+  // which creates a compatibility context at the highest level.  That creates problems with GL core
+  // profile on some drivers and cards that do not support compatibility mode.  As a result, we end up
+  // getting a GL 1.4 context that only support GLSL 1.2.
+#ifdef OSG_GL3_AVAILABLE
+  osg::DisplaySettings* instance = osg::DisplaySettings::instance();
+  if (instance->getGLContextVersion() == "1.0")
+    instance->setGLContextVersion("3.3");
+#ifdef __linux__
+  // To compound the problem, certain MESA drivers on Linux have an additional requirement of setting
+  // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
+  if (getenv("MESA_GL_VERSION_OVERRIDE") == NULL)
+    setenv("MESA_GL_VERSION_OVERRIDE", instance->getGLContextVersion().c_str(), 1);
+#endif
+#endif
 }
 
 std::string simExamples::getSampleDataPath()

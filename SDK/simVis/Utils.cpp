@@ -1119,3 +1119,4 @@ ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string&
 }
 
 }
+
