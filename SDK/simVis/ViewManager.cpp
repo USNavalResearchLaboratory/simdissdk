@@ -19,12 +19,16 @@
  * disclose, or release this software.
  *
  */
+#include <algorithm>
+#include <iterator>
+#include "osg/GLExtensions"
+#include "osgEarth/Registry"
+#include "osgEarth/Capabilities"
 #include "simNotify/Notify.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/Registry.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"
-#include <iterator>
-#include <algorithm>
 
 #define LC "[ViewManager] "
 
@@ -41,6 +45,15 @@ namespace
     void operator()(osg::Object* gc_obj)
     {
       osg::GraphicsContext* gc = static_cast<osg::GraphicsContext*>(gc_obj);
+      
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0)
+      if (osgEarth::Registry::capabilities().isCoreProfile())
+      {
+        gc->getState()->setModeValidity(GL_LIGHTING, false);
+        gc->getState()->setModeValidity(GL_RESCALE_NORMAL, false);
+      }
+#endif
+
       for (unsigned int i = 0; i < viewman_->getNumViews(); ++i)
       {
         viewman_->getView(i)->processResize(gc->getTraits()->width, gc->getTraits()->height);
