@@ -401,9 +401,6 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   PolygonStipple::installShaderProgram(stateSet);
   PointSize::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
-
-  // Install a viewport uniform generator
-  addCullCallback(new osgEarth::InstallViewportSizeUniform());
 }
 
 ScenarioManager::~ScenarioManager()

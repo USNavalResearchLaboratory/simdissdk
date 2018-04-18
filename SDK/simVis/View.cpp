@@ -27,6 +27,7 @@
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/Version"
+#include "osgEarth/CullingUtils"
 #include "osgEarthUtil/Sky"
 
 #include "simCore/Calc/Angle.h"
@@ -599,6 +600,10 @@ View::View()
 
   // Apply the new viewport and new perspective matrix
   getCamera()->setProjectionMatrixAsPerspective(fovY(), extents_.width_ / extents_.height_, 1.f, 10000.f);
+
+  // Install a viewport uniform on each camera, giving all shaders access
+  // to the window size. The osgEarth::LineDrawable construct uses this.
+  getCamera()->addCullCallback(new osgEarth::InstallViewportSizeUniform());
 }
 
 View::~View()
