@@ -29,13 +29,14 @@ namespace simVis
 {
 
 BoxGraphic::BoxGraphic(double x, double y, double width, double height,
-  float lineWidth, unsigned short stipple, const osg::Vec4& color)
+  float lineWidth, unsigned factor, unsigned short stipple, const osg::Vec4& color)
   : osg::Group(),
     x_(x),
     y_(y),
     width_(width),
     height_(height),
     lineWidth_(lineWidth),
+    factor_(factor),
     stipple_(stipple),
     color_(color)
 {
@@ -50,6 +51,8 @@ osg::Group(rhs)
   width_ = rhs.width_;
   height_ = rhs.height_;
   lineWidth_ = rhs.lineWidth_;
+  factor_ = rhs.factor_;
+  stipple_ = rhs.stipple_;
   color_ = rhs.color_;
   create_();
 }
@@ -82,6 +85,11 @@ float BoxGraphic::lineWidth() const
   return lineWidth_;
 }
 
+unsigned BoxGraphic::factor() const
+{
+  return factor_;
+}
+
 unsigned short BoxGraphic::stipple() const
 {
   return stipple_;
@@ -111,6 +119,12 @@ void BoxGraphic::setLineWidth(float lineWidth)
   geom_->setLineWidth(lineWidth);
 }
 
+void BoxGraphic::setStippleFactor(unsigned factor)
+{
+  factor_ = factor;
+  geom_->setStippleFactor(factor);
+}
+
 void BoxGraphic::setStipplePattern(unsigned short stipple)
 {
   stipple_ = stipple;
@@ -135,6 +149,7 @@ void BoxGraphic::create_()
 
   setGeometry(x_, y_, width_, height_);
   setLineWidth(lineWidth_);
+  setStippleFactor(factor_);
   setStipplePattern(stipple_);
   setColor(color_);
 

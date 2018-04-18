@@ -46,7 +46,7 @@ public:
   * @param color line color
   */
   BoxGraphic(double x = 0., double y = 0., double width = 0., double height = 0.,
-    float lineWidth = 2., unsigned short stipple = 0x9999, const osg::Vec4& color = osg::Vec4(1.0, 1.0, 1.0, 1.0));
+    float lineWidth = 2., unsigned int factor = 1, unsigned short stipple = 0x9999, const osg::Vec4& color = osg::Vec4(1.0, 1.0, 1.0, 1.0));
 
   BoxGraphic(const BoxGraphic& rhs);
 
@@ -71,6 +71,8 @@ public:
   /** Get line width, in pixels */
   float lineWidth() const;
 
+  unsigned int factor() const;
+
   /** Get stipple value */
   unsigned short stipple() const;
 
@@ -91,6 +93,12 @@ public:
   * @param lineWidth Width to which to set the line.
   */
   void setLineWidth(float lineWidth);
+
+  /**
+  * Sets the stipple factor.
+  * @param factor Stipple factor for the line.
+  */
+  void setStippleFactor(unsigned int factor);
 
   /**
   * Sets the stipple pattern in OpenGL format.
@@ -122,7 +130,9 @@ private:
   double height_;
   /// line width in pixels
   float lineWidth_;
-  /// stipple value
+  /// stipple factor value
+  unsigned short factor_;
+  /// stipple vpattern alue
   unsigned short stipple_;
   /// color vector, value ranges 0.0-1.0 (R,G,B,A)
   osg::Vec4 color_;

@@ -242,7 +242,7 @@ public:
   TranslateMapScaleHandler(simUtil::MapScale* scale, osg::MatrixTransform* xform)
     : scale_(scale),
       xform_(xform),
-      outline_(new simVis::BoxGraphic(-5, -5, 510, 110, 2.f, 0xf0f0, simVis::Color::Lime)),
+      outline_(new simVis::BoxGraphic(-5, -5, 510, 110, 2.f, 1u, 0xf0f0, simVis::Color::Lime)),
       clicked_(false)
   {
     outline_->setNodeMask(0);
