@@ -87,7 +87,6 @@ static const std::string s_title = "Symbology Example";
 static const std::string s_help =
   " 0 : camera: toggle tethering to platform\n"
   " 1 : grid: cycle draw type\n"
-  " v : velocity vector: toggle\n"
   "\n"
   " 2 : model: change scale\n"
   " 3 : model: toggle auto-scale\n"
@@ -96,6 +95,8 @@ static const std::string s_help =
   " w : model: toggle override color\n"
   " h : model: toggle highlight\n"
   " p : model: cycle highlight color\n"
+  " q : model: toggle axis vector\n"
+  " v : model: toggle velocity vector\n"
   "\n"
   " k : label: toggle text\n"
   " l : label: toggle text color\n"
@@ -664,6 +665,17 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
         prefs->set_drawvelocityvec(!prefs->drawvelocityvec());
         s_action->setText(Stringify() << "Set velocity vector to " << SAYBOOL(prefs->drawvelocityvec()));
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
+      case 'q': // toggle body axis vector
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawbodyaxis(!prefs->drawbodyaxis());
+        s_action->setText(Stringify() << "Set body axis to " << SAYBOOL(prefs->drawbodyaxis()));
         xaction.complete(&prefs);
         handled = true;
       }

@@ -21,6 +21,7 @@
  */
 #include "osg/Geode"
 #include "osg/Geometry"
+#include "osgEarth/LineDrawable"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"
@@ -41,25 +42,19 @@ const int AXIS_NUM_POINTS_PER_LINE_STRIP = 4;
 // --------------------------------------------------------------------------
 AxisVector::AxisVector()
   : MatrixTransform(),
-    lineWidth_(new osg::LineWidth(2.f)),
-    colors_(new osg::Vec4Array(osg::Array::BIND_PER_PRIMITIVE_SET)),
+    lineWidth_(2.f),
     axisLengths_(1.f, 1.f, 1.f)
 {
   setName("AxisVector");
-
-  // Initialize contents of colors array for 3 axes
-  colors_->push_back(simVis::Color::Yellow);
-  colors_->push_back(simVis::Color::Fuchsia);
-  colors_->push_back(simVis::Color::Aqua);
   init_();
 }
 
 AxisVector::AxisVector(const AxisVector &rhs, const osg::CopyOp& copyOp)
   : MatrixTransform(rhs, copyOp),
-    lineWidth_(static_cast<osg::LineWidth*>(copyOp(rhs.lineWidth_.get()))),
-    colors_(static_cast<osg::Vec4Array*>(copyOp(colors_.get()))),
+    lineWidth_(rhs.lineWidth_),
     axisLengths_(rhs.axisLengths_)
 {
+  init_();
 }
 
 AxisVector::~AxisVector()
@@ -68,9 +63,9 @@ AxisVector::~AxisVector()
 
 void AxisVector::init_()
 {
-  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-  createAxisVectors_(geode.get());
-  addChild(geode.get());
+  geode_ = new osgEarth::LineGroup();
+  createAxisVectors_(geode_);
+  addChild(geode_);
 }
 
 void AxisVector::setAxisLengths(osg::Vec3f axisLengths, bool force)
@@ -94,12 +89,15 @@ osg::Vec3f AxisVector::axisLengths() const
 
 void AxisVector::setLineWidth(float lineWidth)
 {
-  lineWidth_->setWidth(lineWidth);
+  lineWidth_ = lineWidth;
+  geode_->getLineDrawable(0)->setLineWidth(lineWidth);
+  geode_->getLineDrawable(1)->setLineWidth(lineWidth);
+  geode_->getLineDrawable(2)->setLineWidth(lineWidth);
 }
 
 float AxisVector::lineWidth() const
 {
-  return lineWidth_->getWidth();
+  return lineWidth_;
 }
 
 void AxisVector::setColors(const simVis::Color& x, const simVis::Color& y, const simVis::Color& z)
@@ -107,25 +105,25 @@ void AxisVector::setColors(const simVis::Color& x, const simVis::Color& y, const
   // Avoid rebuilding unnecessarily
   if (x == xColor() && y == yColor() && z == zColor())
     return;
-  (*colors_)[0] = x;
-  (*colors_)[1] = y;
-  (*colors_)[2] = z;
-  colors_->dirty();
+
+  geode_->getLineDrawable(0)->setColor(x);
+  geode_->getLineDrawable(1)->setColor(y);
+  geode_->getLineDrawable(2)->setColor(z);
 }
 
 simVis::Color AxisVector::xColor() const
 {
-  return (*colors_)[0];
+  return geode_->getLineDrawable(0)->getColor();
 }
 
 simVis::Color AxisVector::yColor() const
 {
-  return (*colors_)[1];
+  return geode_->getLineDrawable(1)->getColor();
 }
 
 simVis::Color AxisVector::zColor() const
 {
-  return (*colors_)[2];
+  return geode_->getLineDrawable(2)->getColor();
 }
 
 void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f& vec)
@@ -143,46 +141,40 @@ void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f&
 
 void AxisVector::createAxisVectors_(osg::Geode* geode) const
 {
-  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-  geom->setName("simVis::AxisVector");
-  geom->setUseVertexBufferObjects(true);
+  osgEarth::LineDrawable* line = 0L;
 
-  osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
-  geom->setVertexArray(vertices.get());
-
-  geom->setColorArray(colors_.get());
-
-  // Keep track of location in the primitive set array
-  int primitiveSetStart = 0;
+  osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
+  vertices->reserve(AXIS_NUM_POINTS_PER_LINE_STRIP);
 
   // draw x axis vector
-  addLineStrip_(*geom, *vertices, primitiveSetStart, osg::Vec3(0, 0, 0), osg::Vec3(1, 0, 0), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  line = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  line->setName("simVis::AxisVector");
+  vertices->clear();
+  VectorScaling::generatePoints(*vertices, osg::Vec3(0, 0, 0), osg::Vec3(1, 0, 0), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  line->setVerts(vertices.get());
+  line->setColor(simVis::Color::Yellow);
+  line->setLineWidth(lineWidth_);
+  geode_->addChild(line);
 
   // draw y axis vector
-  addLineStrip_(*geom, *vertices, primitiveSetStart, osg::Vec3(0, 0, 0), osg::Vec3(0, 1, 0), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  line = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  line->setName("simVis::AxisVector");
+  vertices->clear();
+  VectorScaling::generatePoints(*vertices, osg::Vec3(0, 0, 0), osg::Vec3(0, 1, 0), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  line->setVerts(vertices.get());
+  line->setColor(simVis::Color::Fuchsia);
+  line->setLineWidth(lineWidth_);
+  geode_->addChild(line);
 
   // draw z axis vector
-  addLineStrip_(*geom, *vertices, primitiveSetStart, osg::Vec3(0, 0, 0), osg::Vec3(0, 0, 1), AXIS_NUM_POINTS_PER_LINE_STRIP);
-
-  // set linewidth
-  geom->getOrCreateStateSet()->setAttributeAndModes(lineWidth_.get(), 1);
-
-  // Add the drawable to the geode
-  geode->addDrawable(geom);
-}
-
-
-void AxisVector::addLineStrip_(osg::Geometry& geom, osg::Vec3Array& vertices, int& primitiveSetStart,
-  const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine) const
-{
-  // Avoid divide-by-zero problems
-  if (numPointsPerLine < 2)
-    return;
-
-  // Add line strips for each line
-  VectorScaling::generatePoints(vertices, start, end, numPointsPerLine);
-  geom.addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, primitiveSetStart, numPointsPerLine));
-  primitiveSetStart += numPointsPerLine;
+  line = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  line->setName("simVis::AxisVector");
+  vertices->clear();
+  VectorScaling::generatePoints(*vertices, osg::Vec3(0, 0, 0), osg::Vec3(0, 0, 1), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  line->setVerts(vertices.get());
+  line->setColor(simVis::Color::Aqua);
+  line->setLineWidth(lineWidth_);
+  geode_->addChild(line);
 }
 
 }
