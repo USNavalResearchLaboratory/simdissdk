@@ -367,6 +367,14 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   faceGeom->setUseVertexBufferObjects(true);
   faceGeom->setUseDisplayList(false);
   faceGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
+#if OSG_VERSION_GREATER_THAN(3,4,1)
+  // OSG 3.6.0 is crashing in some rare cases with gates that change the min/max range,
+  // when the vertices are dirtied, if the face geometry was previously culled.  This can
+  // happen in Simple Server when zooming in and out on platform 4, which uses target
+  // gates extensively which change min/max range on nearly every update.  To avoid this
+  // crash, we turn culling active off on the face geometry.
+  faceGeom->setCullingActive(false);
+#endif
 
   osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   faceGeom->setColorArray(colorArray);
@@ -1033,6 +1041,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
     (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
 
+  verts->dirty();
   geom->dirtyBound();
 }
 
@@ -1066,6 +1075,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
     (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
 
+  verts->dirty();
   geom->dirtyBound();
 }
 
