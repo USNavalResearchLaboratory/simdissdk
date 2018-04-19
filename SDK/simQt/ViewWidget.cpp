@@ -23,15 +23,47 @@
 *
 */
 #include <QGLFormat>
+#include <QWindow>
 #include "osg/Camera"
 #include "osg/DisplaySettings"
 #include "osg/GraphicsContext"
 #include "osg/Viewport"
 #include "osgViewer/View"
+#include "osgQt/GraphicsWindowQt"
 #include "simQt/ViewWidget.h"
 
 namespace simQt
 {
+
+/**
+ * Implement a private version of GraphicsWindowQt that avoids the problem identified by
+ * the error message:
+ * QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined
+ */
+class ExposedSwapGraphicsWindowQt : public osgQt::GraphicsWindowQt
+{
+public:
+  /** Constructor that takes a Traits instance */
+  explicit ExposedSwapGraphicsWindowQt(osg::GraphicsContext::Traits* traits, QWidget* parent = NULL, const QGLWidget* shareWidget = NULL, Qt::WindowFlags f = 0)
+    : GraphicsWindowQt(traits, parent, shareWidget, f)
+  {
+  }
+
+  /** Reimplement the swap implementation to avoid swap on non-exposed windows. */
+  virtual void swapBuffersImplementation()
+  {
+    const osgQt::GLWidget* widget = getGLWidget();
+    if (widget && widget->windowHandle())
+    {
+      // Avoid swapping on non-exposed windows
+      if (!widget->windowHandle()->isExposed())
+        return;
+    }
+    GraphicsWindowQt::swapBuffersImplementation();
+  }
+};
+
+////////////////////////////////////////////////////////////////
 
 ViewWidget::ViewWidget(osgViewer::View* view)
   : osgQt::GLWidget()
@@ -105,8 +137,9 @@ osg::GraphicsContext* ViewWidget::createGraphicsContext_()
   // Apply the new format to the GL Widget
   setFormat(fmt);
 
-  // Creates the graphics window Qt, telling it which traits were used to create it
-  return new osgQt::GraphicsWindowQt(traits.get());
+  // Creates the graphics window Qt, telling it which traits were used to create it.  Note
+  // the use of ExposedSwapGraphicsWindowQt to avoid Qt OpenGL swap warning.
+  return new ExposedSwapGraphicsWindowQt(traits.get());
 }
 
 }
