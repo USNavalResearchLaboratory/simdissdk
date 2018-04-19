@@ -829,7 +829,7 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, GLenum mode, 
     for (unsigned int i = 0; i < 2; ++i)
     {
       osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(mode);
-      geom->setVerts(verts);
+      geom->importVertexArray(verts);
       geom->setColor(i==0? options_.lineColor1_ : options_.lineColor2_);
       geom->setStipplePattern(i==0? options_.lineStipple1_ : options_.lineStipple2_);
       geom->setLineWidth(options_.lineWidth_);

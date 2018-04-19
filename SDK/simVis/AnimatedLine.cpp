@@ -645,6 +645,6 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
   // Finish up
   verts->push_back(osg::Vec3f());
 
-  geode_->getLineDrawable(0)->setVerts(verts.get());
-  geode_->getLineDrawable(1)->setVerts(verts.get());
+  geode_->getLineDrawable(0)->importVertexArray(verts.get());
+  geode_->getLineDrawable(1)->importVertexArray(verts.get());
 }

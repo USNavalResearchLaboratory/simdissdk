@@ -214,7 +214,7 @@ void EphemerisVector::rebuildLine_(osgEarth::LineDrawable* geom, const osg::Vec3
   // Generate all the points from center of platform to end of line
   vertices_->clear();
   VectorScaling::generatePoints(*vertices_.get(), osg::Vec3(0, 0, 0), relToPlatform, NUM_LINE_VERTICES);
-  geom->setVerts(vertices_.get());
+  geom->importVertexArray(vertices_.get());
 }
 
 void EphemerisVector::setPrefs(const simData::PlatformPrefs& prefs)
