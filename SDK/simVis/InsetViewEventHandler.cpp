@@ -37,7 +37,8 @@ namespace
   // inset view rectangle
   static osg::MatrixTransform* createRubberBand()
   {
-    osg::Node* box = new simVis::BoxGraphic(0, 0, 1, 1, 1.0f, 6u, 0x5555);
+    simVis::BoxGraphic* box = new simVis::BoxGraphic(0, 0, 1, 1, 1.0f, 0x5555);
+    box->setStippleFactor(6u);
 
     osg::MatrixTransform* xform = new osg::MatrixTransform();
     xform->addChild(box);

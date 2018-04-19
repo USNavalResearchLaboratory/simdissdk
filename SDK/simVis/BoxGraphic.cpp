@@ -29,14 +29,14 @@ namespace simVis
 {
 
 BoxGraphic::BoxGraphic(double x, double y, double width, double height,
-  float lineWidth, unsigned factor, unsigned short stipple, const osg::Vec4& color)
+  float lineWidth, unsigned short stipple, const osg::Vec4& color)
   : osg::Group(),
     x_(x),
     y_(y),
     width_(width),
     height_(height),
     lineWidth_(lineWidth),
-    factor_(factor),
+    factor_(1u),
     stipple_(stipple),
     color_(color)
 {
