@@ -26,17 +26,22 @@
 #ifndef SIMQT_VIEW_WIDGET_H
 #define SIMQT_VIEW_WIDGET_H
 
-#include <QGLFormat>
 #include "osgQt/GraphicsWindowQt"
-#include "osgViewer/ViewerBase"
-#include "osgEarth/Map"
 #include "simCore/Common/Common.h"
+
+namespace osg { class GraphicsContext; }
+namespace osgViewer { class View; }
 
 namespace simQt
 {
 
 /**
- * A wrapper class to encapsulate an osgViewer::View or an osgViewer::Viewer in a Qt widget.
+ * A wrapper class to encapsulate an osgViewer::View (such as the simVis::View Main View) in a Qt widget.
+ *
+ * Improves osgQt::GLWidget by initializing the camera properly and applying GL version requests
+ * to the QGLFormat used for graphics initialization.  To specify graphics configuration options,
+ * set the osg::DisplaySettings::instance() values you want before calling the constructor.
+ *
  * Adapted with permission from deprecated osgEarth::QtGui::ViewerWidget and osgEarth::QtGui::ViewWidget.
  */
 class SDKQT_EXPORT ViewWidget : public osgQt::GLWidget
@@ -45,58 +50,21 @@ class SDKQT_EXPORT ViewWidget : public osgQt::GLWidget
 
 public:
   /**
-   * Constructs a new ViewWidget, attaching an existing viewer.
-   * @param[in] viewer Viewer to attach to this widget.  The widget will install
-   *     a new camera in the viewer.  (NOTE: this widget does not take
-   *     ownership of the Viewer.  You are still responsible for its destruction)
-   */
-  explicit ViewWidget(osgViewer::ViewerBase* viewer);
-
-  /**
-   * Constructs a new ViewWidget, attaching an existing view.
-   * @param[in] view View to attach to this widget.  The widget will install a new camera
-   *     in the View.  (NOTE: this widget does not take ownership of the View.
-   *     You are still responsible for its destruction)
+   * Constructs a new ViewWidget, attaching an existing view.  Uses the osg::DisplaySettings::instance()
+   * to drive the format used for the OpenGL context.
+   * @param[in] view View to attach to this widget.  The widget will install a new camera in the View
+   *   if necessary.  This widget does not take ownership of View.
    */
   explicit ViewWidget(osgViewer::View* view);
-
-  /**
-  * Constructs a new ViewWidget, attaching an existing view, with specific GL Format.
-  * @param[in] view View to attach to this widget.  The widget will install a new camera
-  *     in the View.  (NOTE: this widget does not take ownership of the View.
-  *     You are still responsible for its destruction)
-  * @param[in] format GL format for the graphics context.  Use this parameter to specify
-  *     multisampling, for example.
-  */
-  ViewWidget(osgViewer::View* view, const QGLFormat& format);
 
   /** Destructor */
   virtual ~ViewWidget();
 
-protected:
-  /** Override from QWidget.  If widget has a valid viewer that needs to do next frame, does next frame. */
-  virtual void paintEvent(QPaintEvent* e);
-
 private:
-  /** If wrapping a viewer, populates the incoming collection with the views comprising wrapped viewer */
-  void getViews_(osgViewer::ViewerBase::Views& views) const;
-  /** Creates a simple basic viewer */
-  void createViewer_();
-  /** Reconfigure the given view to use this widget's graphics context.  Creates a new graphics context if none exists */
-  void reconfigure_(osgViewer::View* view);
-
   /** When widget is wrapping a view, initializes that view to use appropriate graphics context */
-  void init_(osg::GraphicsContext* gc);
-  /** Get or create graphics context */
-  osg::GraphicsContext* createOrShareGC_(osg::GraphicsContext* gc);
-
-  /** Copies values from the Traits into the given format. */
-  void fillFormat_(QGLFormat& format, const osg::GraphicsContext::Traits& fromTraits) const;
-
-  osg::observer_ptr<osgViewer::ViewerBase> viewer_;
-  osg::ref_ptr<osg::GraphicsContext> gc_;
-
-  osg::observer_ptr<osgViewer::View> view_;
+  void init_(osgViewer::View* view);
+  /** Create a graphics context to associate with OSG Cameras/Views */
+  osg::GraphicsContext* createGraphicsContext_();
 };
 
 }

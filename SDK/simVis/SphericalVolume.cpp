@@ -1029,7 +1029,6 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
     (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
 
-  verts->dirty();
   geom->dirtyBound();
 }
 
@@ -1063,7 +1062,6 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
     (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
 
-  verts->dirty();
   geom->dirtyBound();
 }
 

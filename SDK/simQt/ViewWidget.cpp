@@ -22,167 +22,79 @@
 *
 *
 */
-
-#include <QWidget>
-
-#include "osgEarthUtil/EarthManipulator"
-#include "osgGA/StateSetManipulator"
-#include "osgViewer/Viewer"
-#include "osgViewer/ViewerEventHandlers"
-
-#include "simVis/Utils.h"
+#include <QGLFormat>
+#include <QWindow>
+#include "osg/Camera"
+#include "osg/DisplaySettings"
+#include "osg/GraphicsContext"
+#include "osg/Viewport"
+#include "osgViewer/View"
+#include "osgQt/GraphicsWindowQt"
 #include "simQt/ViewWidget.h"
 
 namespace simQt
 {
 
-ViewWidget::ViewWidget(osgViewer::ViewerBase* viewer)
-  : viewer_(viewer)
+/**
+ * Implement a private version of GraphicsWindowQt that avoids the problem identified by
+ * the error message:
+ * QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined
+ */
+class ExposedSwapGraphicsWindowQt : public osgQt::GraphicsWindowQt
 {
-  if (!viewer_.valid())
+public:
+  /** Constructor that takes a Traits instance */
+  explicit ExposedSwapGraphicsWindowQt(osg::GraphicsContext::Traits* traits, QWidget* parent = NULL, const QGLWidget* shareWidget = NULL, Qt::WindowFlags f = 0)
+    : GraphicsWindowQt(traits, parent, shareWidget, f)
   {
-    createViewer_();
   }
-  else
-  {
-    // reconfigure all the viewer's views to use a Qt graphics context.
-    osgViewer::ViewerBase::Views views;
-    getViews_(views);
-    for (osgViewer::ViewerBase::Views::iterator v = views.begin(); v != views.end(); ++v)
-    {
-      reconfigure_(*v);
-    }
 
-    // disable event setting on the viewer.
-    viewer->setKeyEventSetsDone(0);
-    viewer->setQuitEventSetsDone(false);
+  /** Reimplement the swap implementation to avoid swap on non-exposed windows. */
+  virtual void swapBuffersImplementation()
+  {
+    const osgQt::GLWidget* widget = getGLWidget();
+    if (widget && widget->windowHandle())
+    {
+      // Avoid swapping on non-exposed windows
+      if (!widget->windowHandle()->isExposed())
+        return;
+    }
+    GraphicsWindowQt::swapBuffersImplementation();
   }
-}
+};
+
+////////////////////////////////////////////////////////////////
 
 ViewWidget::ViewWidget(osgViewer::View* view)
-  : osgQt::GLWidget(),
-    view_(view)
+  : osgQt::GLWidget()
 {
-  init_(NULL);
+  init_(view);
 
-  if (gc_.valid() && gc_->getTraits())
-  {
-    QGLFormat fmt = format();
-    fillFormat_(fmt, *gc_->getTraits());
-    setFormat(fmt);
-  }
-}
-
-ViewWidget::ViewWidget(osgViewer::View* view, const QGLFormat& format)
-  : osgQt::GLWidget(format),
-    view_(view)
-{
-  init_(NULL);
+  // Force a minimum size to prevent divide-by-zero issues w/ matrices in OSG
+  setMinimumSize(QSize(2, 2));
 }
 
 ViewWidget::~ViewWidget()
 {
-  if (viewer_.valid())
-  {
-    viewer_->stopThreading();
-    viewer_ = NULL;
-  }
 }
 
-void ViewWidget::paintEvent(QPaintEvent* e)
+void ViewWidget::init_(osgViewer::View* view)
 {
-  if (viewer_.valid() && (viewer_->getRunFrameScheme() == osgViewer::ViewerBase::CONTINUOUS ||
-                           viewer_->checkNeedToDoFrame()))
-    viewer_->frame();
-}
-
-void ViewWidget::getViews_(osgViewer::ViewerBase::Views& views) const
-{
-  if (!viewer_.valid())
+  if (!view)
     return;
-  osgViewer::ViewerBase::Views temp;
-  viewer_->getViews(temp);
-  views.insert(views.end(), temp.begin(), temp.end());
-}
 
-void ViewWidget::createViewer_()
-{
-  // creates a simple basic viewer.
-  osgViewer::Viewer* viewer = new osgViewer::Viewer();
+  // Create the graphics context
+  osg::GraphicsContext* gc = createGraphicsContext_();
 
-  viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
-  viewer->setCameraManipulator(new osgEarth::Util::EarthManipulator());
-
-  osgViewer::StatsHandler* stats = new osgViewer::StatsHandler;
-  simVis::fixStatsHandlerGl2BlockyText(stats);
-  viewer->addEventHandler(stats);
-  viewer->addEventHandler(new osgGA::StateSetManipulator());
-  viewer->addEventHandler(new osgViewer::ThreadingHandler());
-
-  viewer->setKeyEventSetsDone(0);
-  viewer->setQuitEventSetsDone(false);
-
-  reconfigure_(viewer);
-
-  viewer_ = viewer;
-}
-
-void ViewWidget::reconfigure_(osgViewer::View* view)
-{
-  if (!gc_.valid())
-  {
-    // create the Qt graphics context if necessary; it will be shared across all views.
-    osg::DisplaySettings* ds = osg::DisplaySettings::instance().get();
-    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits(ds);
-
-    traits->readDISPLAY();
-    if (traits->displayNum < 0)
-      traits->displayNum = 0;
-
-    traits->windowName = "ViewWidget";
-    traits->windowDecoration = false;
-    traits->x = x();
-    traits->y = y();
-    traits->width = width();
-    traits->height = height();
-    traits->doubleBuffer = true;
-    traits->inheritedWindowData = new osgQt::GraphicsWindowQt::WindowData(this);
-
-    QGLFormat fmt = format();
-    fillFormat_(fmt, *gc_->getTraits());
-    setFormat(fmt);
-
-    gc_ = new osgQt::GraphicsWindowQt(traits.get());
-  }
-
-  // reconfigure this view's camera to use the Qt GC if necessary.
+  // Create new camera if needed
   osg::Camera* camera = view->getCamera();
-  if (camera->getGraphicsContext() != gc_.get())
-  {
-    camera->setGraphicsContext(gc_.get());
-    if (!camera->getViewport())
-      camera->setViewport(new osg::Viewport(0,0, gc_->getTraits()->width, gc_->getTraits()->height));
-
-    if (camera->getViewport()->height() != 0)
-      camera->setProjectionMatrixAsPerspective(30.0f, camera->getViewport()->width() / camera->getViewport()->height(), 1.0f, 10000.0f);
-  }
-  camera->setDrawBuffer(gc_->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
-  camera->setReadBuffer(gc_->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
-}
-
-void ViewWidget::init_(osg::GraphicsContext* gc)
-{
-  if (!view_.valid())
-    return;
-
-  gc = createOrShareGC_(gc);
-
-  osg::Camera* camera = view_->getCamera();
   if (!camera)
   {
     camera = new osg::Camera();
-    view_->setCamera(camera);
+    view->setCamera(camera);
   }
+
+  // Apply the graphics context, then fix up the matrices and buffer assignments
   camera->setGraphicsContext(gc);
   camera->setViewport(new osg::Viewport(0, 0, gc->getTraits()->width, gc->getTraits()->height));
   if (gc->getTraits()->height != 0)
@@ -191,49 +103,43 @@ void ViewWidget::init_(osg::GraphicsContext* gc)
   camera->setReadBuffer(gc->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
 }
 
-osg::GraphicsContext* ViewWidget::createOrShareGC_(osg::GraphicsContext* gc)
+osg::GraphicsContext* ViewWidget::createGraphicsContext_()
 {
-  if (!gc)
-    gc->createNewContextID();
-
+  // Create traits initialized from the default display settings
   osg::DisplaySettings* ds = osg::DisplaySettings::instance().get();
   osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits(ds);
 
+  // Read the display parameter and fix the display number if needed
   traits->readDISPLAY();
-  if (traits->displayNum<0)
+  if (traits->displayNum < 0)
     traits->displayNum = 0;
 
+  // Fill out some reasonable values that the Traits constructor misses
   traits->windowDecoration = false;
   traits->x = 0;
   traits->y = 0;
   traits->width = 100;
   traits->height = 100;
   traits->doubleBuffer = true;
-  traits->alpha = ds->getMinimumNumAlphaBits();
-  traits->stencil = ds->getMinimumNumStencilBits();
-  traits->sampleBuffers = ds->getMultiSamples();
-  traits->samples = ds->getNumMultiSamples();
-  traits->sharedContext = gc;
+  // Window Data points to the osgQt::GLWidget so GraphicsWindowQt can communicate
   traits->inheritedWindowData = new osgQt::GraphicsWindowQt::WindowData(this);
 
-  QGLFormat fmt = format();
-  fillFormat_(fmt, *traits);
-  setFormat(fmt);
-  return new osgQt::GraphicsWindowQt(traits.get());
-}
+  // Figure out the QGLFormat that will drive the actual display properties
+  QGLFormat fmt = osgQt::GraphicsWindowQt::traits2qglFormat(traits.get());
 
-void ViewWidget::fillFormat_(QGLFormat& format, const osg::GraphicsContext::Traits& fromTraits) const
-{
-  // Fix the GL Format to match the data in the traits
-  format.setAlphaBufferSize(fromTraits.alpha);
-  format.setStencilBufferSize(fromTraits.stencil);
-  format.setSampleBuffers(fromTraits.sampleBuffers);
-  format.setSamples(fromTraits.samples);
-  format.setProfile(static_cast<QGLFormat::OpenGLContextProfile>(fromTraits.glContextProfileMask));
+  // Fix QGLFormat for things missing from osgQt: GL Context profile mask and version
+  fmt.setProfile(static_cast<QGLFormat::OpenGLContextProfile>(traits->glContextProfileMask));
   unsigned int major = 0;
   unsigned int minor = 0;
-  if (fromTraits.getContextVersion(major, minor))
-    format.setVersion(static_cast<int>(major), static_cast<int>(minor));
+  if (traits->getContextVersion(major, minor))
+    fmt.setVersion(static_cast<int>(major), static_cast<int>(minor));
+
+  // Apply the new format to the GL Widget
+  setFormat(fmt);
+
+  // Creates the graphics window Qt, telling it which traits were used to create it.  Note
+  // the use of ExposedSwapGraphicsWindowQt to avoid Qt OpenGL swap warning.
+  return new ExposedSwapGraphicsWindowQt(traits.get());
 }
 
 }
