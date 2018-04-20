@@ -181,6 +181,7 @@ void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simDa
   if (a == NULL || b == NULL)
     return;
 
+  // the update method calls dirtyBound on all beam volume geometries, so no need for that here
   if (PB_FIELD_CHANGED(a, b, range))
   {
     SVFactory::updateFarRange(beamSV_.get(), b->range());

@@ -50,15 +50,20 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   setNodeMask(DISPLAY_MASK_GATE);
   addChild(gateSV_);
 
-  const bool isOpaque = prefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
-                        prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
-                        prefs->fillpattern() == simData::GatePrefs_FillPattern_STIPPLE;
+  // alpha fill pattern should use BIN_GATE & TPA, all other patterns are opaque patterns and use BIN_OPAQUE_GATE
+  // if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
 
-  // alpha or stipple fill pattern should use BIN_GATE, but if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
-  //gateSV_->getOrCreateStateSet()->setRenderBinDetails((isOpaque ? BIN_OPAQUE_GATE : BIN_GATE), BIN_GLOBAL_SIMSDK);
-  gateSV_->getOrCreateStateSet()->setRenderBinDetails(
+  osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(gateSV_.get());
+  if (solidGeometry != NULL)
+  {
+    const bool isOpaque = prefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
+                          prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
+                          prefs->fillpattern() == simData::GatePrefs_FillPattern_STIPPLE;
+
+    solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
       (isOpaque ? BIN_OPAQUE_GATE   : BIN_GATE),
       (isOpaque ? BIN_GLOBAL_SIMSDK : BIN_TWO_PASS_ALPHA));
+  }
 
   osg::Geometry* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
   if (outlineGeometry != NULL)
@@ -106,6 +111,7 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simDa
   if (a == NULL || b == NULL)
     return;
 
+  // each update method calls dirtyBound on all gate volume geometries, so no need for that here
   if (PB_FIELD_CHANGED(a, b, minrange))
   {
     SVFactory::updateNearRange(gateSV_.get(), b->minrange());
@@ -708,6 +714,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
       gateVolume_ = new GateVolume(gateVolumeLocator_.get(), activePrefs, activeUpdate);
       addChild(gateVolume_);
     }
+    // explicit dirtyBound call probably only necessary in the case that the volume is removed and only the centroid is left
     dirtyBound();
   }
   else if (gateVolume_)
@@ -716,7 +723,10 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
       gateVolume_->performInPlacePrefChanges(&lastPrefsApplied_, newPrefs);
 
     if (newUpdate)
+    {
+      // dirtyBound calls are handled in the performInPlaceUpdates call stream, no need to do it here
       gateVolume_->performInPlaceUpdates(&lastUpdateApplied_, newUpdate);
+    }
   }
 
   // Fix the draw flag on the centroid - note that the logic here means that: if in fillpattern centroid, drawcentroid pref toggle does not hide it

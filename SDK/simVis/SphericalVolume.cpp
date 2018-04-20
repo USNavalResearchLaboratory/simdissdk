@@ -278,7 +278,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     outlineGeom->setUseVertexBufferObjects(true);
     outlineGeom->setUseDisplayList(false);
     outlineGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
-    outlineGeom->setCullingActive(false);
 
     osg::Vec4Array* outlineColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*outlineColor)[0] = d.color_;
@@ -367,14 +366,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   faceGeom->setUseVertexBufferObjects(true);
   faceGeom->setUseDisplayList(false);
   faceGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
-#if OSG_VERSION_GREATER_THAN(3,4,1)
-  // OSG 3.6.0 is crashing in some rare cases with gates that change the min/max range,
-  // when the vertices are dirtied, if the face geometry was previously culled.  This can
-  // happen in Simple Server when zooming in and out on platform 4, which uses target
-  // gates extensively which change min/max range on nearly every update.  To avoid this
-  // crash, we turn culling active off on the face geometry.
-  faceGeom->setCullingActive(false);
-#endif
 
   osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   faceGeom->setColorArray(colorArray);
@@ -863,6 +854,11 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   return geom;
 }
 
+
+// A SphericalVolume is a MatrixTransform that parents up to two geodes.
+// The first geode always contains the primary geometry, and possibly a second outline geometry.
+// The second geode (if it exists) contains a wireframe geometry.
+
 osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
   osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
@@ -926,7 +922,7 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
 void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
 {
   // only the solid geometry can be stippled
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL || geom->empty())
@@ -937,7 +933,7 @@ void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
 void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
 {
   // lighting is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL || geom->empty())
@@ -952,7 +948,7 @@ void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
 void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
 {
   // blending is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL || geom->empty())
@@ -966,7 +962,7 @@ void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
 
 void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL)
@@ -1042,7 +1038,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
   }
 
   verts->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
@@ -1076,7 +1072,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
   }
 
   verts->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
@@ -1161,7 +1157,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
 
   verts->dirty();
   normals->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
@@ -1245,10 +1241,10 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
 
   verts->dirty();
   normals->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
-osg::Geometry* SVFactory::solidGeometry_(osg::MatrixTransform* xform)
+osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 {
   if (xform == NULL || xform->getNumChildren() == 0)
     return NULL;
@@ -1293,3 +1289,32 @@ osg::Geometry* SVFactory::validGeometry_(osg::MatrixTransform* xform)
   }
   return NULL;
 }
+
+// dirty bounds for all geometries in the xform
+void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
+{
+  if (xform == NULL || xform->getNumChildren() == 0)
+    return;
+
+  // handle the geometries in the primary geode
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  if (geom && !geom->empty())
+    geom->dirtyBound();
+  geom = SVFactory::outlineGeometry(xform);
+  if (geom && !geom->empty())
+    geom->dirtyBound();
+
+  if (xform->getNumChildren() > 1)
+  {
+    // DRAW_MODE_WIRE paired with another DRAW_MODE_ is the only case of two geodes in the xform
+    osg::Geode* geode = xform->getChild(1)->asGeode();
+    if (geode && geode->getNumDrawables() > 0)
+    {
+      osg::Geometry* geom = geode->getDrawable(0)->asGeometry();
+      if (geom && !geom->empty())
+        geom->dirtyBound();
+    }
+  }
+}
+
+
