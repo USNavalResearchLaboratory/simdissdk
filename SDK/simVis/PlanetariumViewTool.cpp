@@ -40,6 +40,8 @@
 
 #define LC "[PlanetariumView] "
 
+#define NUM_VECTOR_SEGS 25
+
 //-------------------------------------------------------------------
 
 namespace
@@ -260,6 +262,13 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
   vector->setNodeMask(displayTargetVectors_ ? ~0 : 0);
   vector->setVertex(1, s_up * (local_len - range_));
 
+  osg::Vec3 V(s_up * (local_len-range_));
+  for (unsigned i = 1; i < NUM_VECTOR_SEGS; ++i)
+  {
+      double t = (double)i / (double)(NUM_VECTOR_SEGS-1);
+      vector->setVertex(i, V*t);
+  }
+
   // create the target vector and scale it to the dome's surface.
   mt->setMatrix(
     osg::Matrix::rotate(s_up, local_n) *
@@ -372,10 +381,8 @@ void PlanetariumViewTool::scaleTargetGeometry_(double range) const
 
 osg::Node* PlanetariumViewTool::buildVectorGeometry_()
 {
-  osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
-  geom->allocate(2);
-  geom->setVertex(0, osg::Vec3(0.0f, 0.0f, 0.0f));
-  geom->setVertex(1, osg::Vec3(0.0f, 0.0f, 1.0f));
+  osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  geom->allocate(NUM_VECTOR_SEGS);
   geom->setColor(osg::Vec4(1,1,1,1));
   return geom;
 }
