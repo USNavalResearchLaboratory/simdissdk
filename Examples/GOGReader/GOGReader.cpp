@@ -142,19 +142,25 @@ public:
   {
     bool handled = false;
 
+
     if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
       handled = handleKeyPress_(ea.getKey());
+    else if (ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
+    {
+      // panning uncenters from GOG
+      if (ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
+      {
+        centeredGogIndex_ = -1;
+        updateStatusAndLabel_();
+      }
+      // zooming updates camera distance label
+      if (ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON)
+        updateStatusAndLabel_();
+    }
     else if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE)
       updateStatusAndLabel_();
-    // left click and drag moves off of centered platform
-    else if (ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON && ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
-    {
-      centeredGogIndex_ = -1;
-      updateStatusAndLabel_();
-    }
-    // changing zoom updates camera distance
-    else if ((ea.getButton() == osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON && ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
-       || ea.getEventType() == osgGA::GUIEventAdapter::SCROLL)
+    // scroll zooming updates camera distance label
+    else if (ea.getEventType() == osgGA::GUIEventAdapter::SCROLL)
       updateStatusAndLabel_();
 
     return handled;
@@ -421,7 +427,7 @@ int main(int argc, char** argv)
   osg::ArgumentParser ap(&argc, argv);
 
   // start up a SIMDIS viewer
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(ap);
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(simVis::Viewer::WINDOWED, 100, 100, 800, 800);
   viewer->setMap(map.get());
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 

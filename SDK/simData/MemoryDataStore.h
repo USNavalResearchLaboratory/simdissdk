@@ -22,11 +22,8 @@
 #ifndef SIMDATA_MEMORYDATASTORE_H
 #define SIMDATA_MEMORYDATASTORE_H
 
-#include <algorithm>
-#include <limits>
 #include <map>
 #include <string>
-#include <vector>
 #include "simData/MemoryDataEntry.h"
 #include "simData/DataStore.h"
 

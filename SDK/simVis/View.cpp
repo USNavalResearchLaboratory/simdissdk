@@ -541,7 +541,9 @@ View::View()
    borderProps_(simVis::Color::White,  2),
    extents_(0, 0, 200, 100, false),
    lighting_(true),
-   fovyDeg_(DEFAULT_VFOV),
+   fovXEnabled_(false),
+   fovXDeg_(60.0),
+   fovYDeg_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
    useOverheadClamping_(true),
    overheadNearFarCallback_(new SetNearFarCallback),
@@ -706,7 +708,8 @@ bool View::setUpViewAsInset_(simVis::View* host)
     }
 
     // if the user hasn't created a camera for this view, do so now.
-    fovyDeg_ = host->fovY();
+    fovYDeg_ = host->fovY();
+    fovXDeg_ = host->fovX();
     osg::Camera* camera = this->getCamera();
     if (!camera)
     {
@@ -1120,25 +1123,42 @@ void View::setLighting(bool value)
   lighting_ = value;
 }
 
-double View::fovY() const
+double View::fovX() const
 {
-  return fovyDeg_;
+  return fovXDeg_;
 }
 
-void View::setFovY(double fovyDeg)
+void View::setFovX(double fovXDeg)
 {
   // do a simple check on invalid values, since EarthManipulator doesn't protect against invalid values
-  if (fovyDeg <= 0.0 || fovyDeg >= 360.0)
+  if (fovXDeg <= 0.0 || fovXDeg >= 360.0)
+    return;
+
+  if (fovXDeg == fovXDeg_)
+    return;
+  fovXDeg_ = fovXDeg;
+  refreshExtents();
+}
+
+double View::fovY() const
+{
+  return fovYDeg_;
+}
+
+void View::setFovY(double fovYDeg)
+{
+  // do a simple check on invalid values, since EarthManipulator doesn't protect against invalid values
+  if (fovYDeg <= 0.0 || fovYDeg >= 360.0)
     return;
 
   // always update the earth manipulator first
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovyDeg);
+    manip->setFovY(fovYDeg);
 
-  if (fovyDeg == fovyDeg_)
+  if (fovYDeg == fovYDeg_)
     return;
-  fovyDeg_ = fovyDeg;
+  fovYDeg_ = fovYDeg;
   refreshExtents();
 }
 
@@ -1410,7 +1430,7 @@ void View::enableOverheadMode(bool enableOverhead)
   // which may not be initialized properly if overhead mode is set too soon
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovyDeg_);
+    manip->setFovY(fovYDeg_);
 
   // if this is the first time enabling overhead mode, install the node camera-update
   // node visitor in the earth manipulator to facilitate tethering. This NodeVisitor
@@ -1462,7 +1482,21 @@ void View::enableOverheadMode(bool enableOverhead)
     {
       const osg::Viewport* vp = getCamera()->getViewport();
       const double aspectRatio = vp ? vp->aspectRatio() : 1.5;
-      getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+
+      if (!fovXEnabled_)
+      {
+        getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+      }
+      else
+      {
+        double left = 0.0;
+        double right = 0.0;
+        double bottom = 0.0;
+        double top = 0.0;
+        getFrustumBounds_(left, right, bottom, top, 1.0);
+        getCamera()->setProjectionMatrix(osg::Matrixd::frustum(left, right, bottom, top, 1.0, 100.0));
+      }
+
       getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
       getCamera()->removeCullCallback(overheadNearFarCallback_);
     }
@@ -1882,14 +1916,26 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
 
   if (osg::equivalent(proj(3,3), 0.0)) // perspective
   {
-    double oldFovy = DEFAULT_VFOV;
+    double oldFovY = DEFAULT_VFOV;
     double oldAspectRatio = 1;
     double oldNear = DEFAULT_NEAR;
     double oldFar = DEFAULT_FAR;
 
     // Pull out the old values from the projection matrix
-    proj.getPerspective(oldFovy, oldAspectRatio, oldNear, oldFar);
-    camera->setProjectionMatrixAsPerspective(fovY(), newViewport->aspectRatio(), oldNear, oldFar);
+    proj.getPerspective(oldFovY, oldAspectRatio, oldNear, oldFar);
+    if (!fovXEnabled_)
+    {
+      camera->setProjectionMatrixAsPerspective(fovY(), newViewport->aspectRatio(), oldNear, oldFar);
+    }
+    else
+    {
+      double left = 0.0;
+      double right = 0.0;
+      double bottom = 0.0;
+      double top = 0.0;
+      getFrustumBounds_(left, right, bottom, top, oldNear);
+      camera->setProjectionMatrix(osg::Matrixd::frustum(left, right, bottom, top, oldNear, oldFar));
+    }
   }
   else
   {
@@ -1974,6 +2020,30 @@ void View::setUseOverheadClamping(bool clamp)
     return;
   useOverheadClamping_ = clamp;
   OverheadMode::setEnabled(isOverheadEnabled() && useOverheadClamping(), this);
+}
+
+void View::setFovXEnabled(bool fovXEnabled)
+{
+  if (fovXEnabled_ == fovXEnabled)
+    return;
+  fovXEnabled_ = fovXEnabled;
+  refreshExtents();
+}
+
+bool View::isFovXEnabled() const
+{
+  return fovXEnabled_;
+}
+
+void View::getFrustumBounds_(double& left, double& right, double& bottom, double& top, double zNear) const
+{
+  double tanFovX = tan(simCore::DEG2RAD * fovX() * 0.5);
+  double tanFovY = tan(simCore::DEG2RAD * fovY() * 0.5);
+
+  right = tanFovX * zNear;
+  left = -right;
+  top = tanFovY * zNear;
+  bottom = -top;
 }
 
 }

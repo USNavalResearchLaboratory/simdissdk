@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include <climits>
 #include "simCore/Common/SDKAssert.h"
 #include "simData/LinearInterpolator.h"
 #include "simUtil/DataStoreTestHelper.h"

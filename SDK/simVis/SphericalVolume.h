@@ -161,14 +161,17 @@ public:
   static void updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
   /// Retrieves the 'outline' geometry, or NULL if there is no such geometry
   static osgEarth::LineGroup* outlineGeometry(osg::MatrixTransform* xform);
+  /// Retrieves the 'solid' geometry, or NULL if there is no such geometry
+  static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
 private:
   static void createPyramid_(osg::Geode& geode, const SVData &data, const osg::Vec3& dir);
   static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& dir);
 
-  /** Retrieves the 'solid' geometry */
-  static osg::Geometry* solidGeometry_(osg::MatrixTransform* xform);
-  /** Retrieves the first non-empty geometry: the 'solid' geometry, or the outline geometry if the 'solid' geometry is empty */
+  /// Retrieves the first non-empty geometry: the 'solid' geometry, or the outline geometry if the 'solid' geometry is empty
   static osg::Geometry* validGeometry_(osg::MatrixTransform* xform);
+
+  /// Calls dirtyBound() for all geometries in the xform
+  static void dirtyBound_(osg::MatrixTransform* xform);
 };
 
 }

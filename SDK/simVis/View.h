@@ -486,8 +486,22 @@ public:
    */
   bool getLighting() const;
 
+  /** Sets whether horizontal HFOV is being manually set or not. */
+  void setFovXEnabled(bool fovXEnabled);
+  /** Returns true if horizontal HFOV is being manually set; false otherwise. */
+  bool isFovXEnabled() const;
+
+  /**
+   * Changes the Field of View (X) for the view, in degrees.
+   * Visual changes will not occur whenever this method is called and FOV-X enabled is set to false.
+   */
+  void setFovX(double fovXDeg);
+
+  /** Returns the Field of View (X) that was set for the view with setFovX(), in degrees */
+  double fovX() const;
+
   /** Changes the Field of View (Y) for the view, in degrees */
-  void setFovY(double fovyDeg);
+  void setFovY(double fovYDeg);
 
   /** Returns the Field of View (Y) for the view, in degrees */
   double fovY() const;
@@ -649,6 +663,9 @@ private: // methods
   */
   void attachSky_(simVis::SceneManager* sceneMgr);
 
+  /** Retrieve the frustum bounds for the given z-near value */
+  void getFrustumBounds_(double& left, double& right, double& bottom, double& top, double zNear) const;
+
   /**
    * Creates a "HUD" camera for drawing overlays and inset border geometries
    */
@@ -711,8 +728,12 @@ private: // data
   Extents extents_;
   bool lighting_;
 
+  /** If true, then horizontal FOV is being manually set */
+  bool fovXEnabled_;
+  /** Field of View (X) for the view; Degrees */
+  double fovXDeg_;
   /** Field of View (Y) for the view; Degrees */
-  double fovyDeg_;
+  double fovYDeg_;
 
   ViewType viewType_;
 

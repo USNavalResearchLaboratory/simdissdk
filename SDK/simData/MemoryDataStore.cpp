@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <functional>
 #include <float.h>
+#include <limits>
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Time/Clock.h"

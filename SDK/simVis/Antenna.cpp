@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <limits>
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarthSymbology/MeshConsolidator"

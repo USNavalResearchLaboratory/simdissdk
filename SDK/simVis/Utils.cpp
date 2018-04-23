@@ -201,21 +201,17 @@ namespace
       }
 
       // Create a copy of the state set stack so we can fix the internal stack after first drawImplementation()
-      osg::State* state = ri.getState();
-      osg::State::StateSetStack stateCopy = state->getStateSetStack();
+      osgUtil::RenderLeaf* oldPrevious = previous;
 
       // Render once with the first state set
-      osgUtil::RenderLeaf* originalPrevious = previous;
       setStateSet(pass1_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
 
-      // Equalize the states so that drawImplementation()'s second pass starts with known good state stack
-      while (state->getStateSetStackSize() < stateCopy.size())
-        state->pushStateSet(stateCopy[state->getStateSetStackSize()]);
-      stateCopy.clear();
+      // Move state sets back from the current one ("previous") to the starting position ("oldPrevious")
+      osgUtil::StateGraph::moveStateGraph(*ri.getState(), previous->_parent, oldPrevious->_parent);
+      previous = oldPrevious;
 
-      // Now do the second pass with the new state set
-      previous = originalPrevious;
+      // Now do the second pass with the original values
       setStateSet(pass2_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
     }

@@ -22,6 +22,7 @@
 */
 #include <cassert>
 #include <iostream>
+#include <limits>
 #include "osgEarth/Units"
 #include "osgEarth/Version"
 #include "osgEarthSymbology/Style"
