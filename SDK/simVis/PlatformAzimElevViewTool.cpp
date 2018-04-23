@@ -338,8 +338,6 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
     ring->dirty();
     geomGroup->addChild(ring);
   }
-  // if assert fails, algorithm has changed, check for incorrect iteration
-  assert(verts->size() == (numAzPts * numElevRings));
 
   // 36 azimuth ticks (one every 10 degrees):
   osgEarth::LineDrawable* ticks = new osgEarth::LineDrawable(GL_LINES);
@@ -356,9 +354,6 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
   }
   ticks->dirty();
   geomGroup->addChild(ticks);
-
-  // if assert fails, algorithm has changed, check for incorrect iteration
-  assert(verts->size() == (numAzPts * numElevRings) + (numTicks * 2));
 
   // N indicator
   osgText::Text* text = new osgText::Text();
