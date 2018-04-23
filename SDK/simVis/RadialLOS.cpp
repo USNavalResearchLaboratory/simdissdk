@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <limits>
 #include "simVis/RadialLOS.h"
 #include "simVis/Utils.h"
 #include "simCore/Calc/Calculations.h"

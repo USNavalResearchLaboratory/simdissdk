@@ -20,7 +20,6 @@
  *
  */
 #include <algorithm>
-#include <limits>
 #include "simData/CategoryData/CategoryNameManager.h"
 
 namespace simData

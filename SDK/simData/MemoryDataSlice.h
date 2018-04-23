@@ -22,9 +22,6 @@
 #ifndef SIMDATA_MEMORYDATASLICE_H
 #define SIMDATA_MEMORYDATASLICE_H
 
-#include <algorithm>
-#include <limits>
-#include <cfloat>
 #include <deque>
 #include "simData/DataTypes.h"
 #include "simData/DataSlice.h"

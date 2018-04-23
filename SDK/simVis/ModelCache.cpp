@@ -20,6 +20,7 @@
  *
  */
 #include <cassert>
+#include <limits>
 #include "osg/LOD"
 #include "osg/Node"
 #include "osg/NodeVisitor"
