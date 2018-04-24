@@ -1293,9 +1293,16 @@ void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
   if (geom && !geom->empty())
     geom->dirtyBound();
-  geom = SVFactory::outlineGeometry(xform);
-  if (geom && !geom->empty())
-    geom->dirtyBound();
+
+  osg::Group* group = SVFactory::outlineGeometry(xform);
+  if (group)
+  {
+    for (unsigned i = 0; i < group->getNumChildren(); ++i)
+    {
+      if (group->getChild(i)->asDrawable())
+        group->getChild(i)->dirtyBound();
+    }
+  }
 
   if (xform->getNumChildren() > 1)
   {
