@@ -165,7 +165,6 @@ void TrackChunkNode::allocate_()
   centerLine_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
   centerLine_->setDataVariance(osg::Object::DYNAMIC);
   centerLine_->allocate(maxSize_);
-  centerLine_->dirty();
   geode_->addChild(centerLine_.get());
 
   // center line (point mode)
@@ -187,7 +186,6 @@ void TrackChunkNode::allocate_()
     drop_ = new osgEarth::LineDrawable(GL_LINES);
     drop_->setDataVariance(osg::Object::DYNAMIC);
     drop_->allocate(2*maxSize_);
-    drop_->dirty();
     geode_->addChild(drop_.get());
   }
   else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
@@ -195,7 +193,6 @@ void TrackChunkNode::allocate_()
     ribbon_ = new osgEarth::LineDrawable(GL_LINES);
     ribbon_->setDataVariance(osg::Object::DYNAMIC);
     ribbon_->allocate(6*maxSize_);
-    ribbon_->dirty();
     geode_->addChild(ribbon_.get());
   }
 
