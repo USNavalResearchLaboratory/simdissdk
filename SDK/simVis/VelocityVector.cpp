@@ -22,7 +22,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"

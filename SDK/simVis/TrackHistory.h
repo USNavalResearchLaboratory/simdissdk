@@ -27,7 +27,7 @@
 #include "simData/DataTable.h"
 #include "osg/Geode"
 #include "osg/MatrixTransform"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "simVis/TrackChunkNode.h"
 #include "simVis/Types.h"
 

@@ -21,7 +21,7 @@
  */
 #include "osg/LineWidth"
 #include "osgGA/GUIActionAdapter"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "simVis/View.h"
 #include "simVis/Utils.h"
 #include "simUtil/ResizeViewManipulator.h"

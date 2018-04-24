@@ -27,7 +27,7 @@
  */
 
 #include "osgEarth/StringUtils"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "osgEarthSymbology/Style"
 #include "osgEarthUtil/LatLongFormatter"
 #include "osgEarthUtil/MGRSFormatter"

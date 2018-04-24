@@ -24,7 +24,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/Registry"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simData/DataTypes.h"

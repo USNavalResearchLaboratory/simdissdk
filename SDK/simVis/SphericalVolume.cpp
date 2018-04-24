@@ -28,7 +28,7 @@
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
 
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"

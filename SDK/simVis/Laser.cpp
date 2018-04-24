@@ -22,7 +22,7 @@
 #include "osg/Geometry"
 #include "osg/LineWidth"
 #include "osgEarth/Horizon"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"

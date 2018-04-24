@@ -25,7 +25,7 @@
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 
 #include "simCore/Calc/Angle.h"
 #include "simVis/Beam.h"

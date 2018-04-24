@@ -23,7 +23,7 @@
 #include "osg/Geometry"
 #include "osg/LineWidth"
 #include "osgEarth/Version"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "osgEarthUtil/Ephemeris"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"

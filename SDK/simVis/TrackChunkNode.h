@@ -24,7 +24,7 @@
 
 #include "osg/ref_ptr"
 #include "osg/MatrixTransform"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "simData/DataTypes.h"
 
 namespace osgEarth { class SpatialReference; }

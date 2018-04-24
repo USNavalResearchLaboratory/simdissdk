@@ -22,7 +22,7 @@
 */
 
 #include "osg/Geometry"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "simVis/BoxGraphic.h"
 
 namespace simVis

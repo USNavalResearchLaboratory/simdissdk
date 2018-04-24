@@ -30,7 +30,7 @@
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/StateSetCache"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "osgEarthUtil/Controls"
 
 #include "simCore/Calc/Angle.h"

@@ -26,7 +26,7 @@
 #include "osg/Geometry"
 #include "osg/LineWidth"
 #include "osgEarth/ECEF"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"

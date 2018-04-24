@@ -23,7 +23,7 @@
 #include "osg/Geode"
 #include "osg/CullFace"
 #include "osg/LineWidth"
-#include "osgEarth/LineDrawable"
+#include "simVis/LineDrawable.h"
 #include "osgEarthAnnotation/AnnotationUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
