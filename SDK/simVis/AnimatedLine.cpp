@@ -212,33 +212,7 @@ void AnimatedLineNode::initializeGeometry_()
     line1_->setLineWidth(lineWidth_->getWidth());
     line1_->setStipplePattern(stipple1_);
     line1_->dirty();
-    geode_->addChild(line1_);
-
-#if 0
-    osg::Geometry* geom = new osg::Geometry();
-    geom->setName("simVis::AnimatedLine");
-    geom->setDataVariance(osg::Object::DYNAMIC);
-    geom->setUseVertexBufferObjects(true);
-    geom->setVertexArray(verts_.get());
-    osg::VertexBufferObject* vbo = verts_->getVertexBufferObject();
-    if (vbo)
-      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
-    geom->addPrimitiveSet(primset_.get());
-    colors1_ = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-    (*colors1_)[0] = color1_;
-    geom->setColorArray(colors1_.get());
-    vbo = colors1_->getVertexBufferObject();
-    if (vbo)
-      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
-    osg::StateSet* stateSet = geom->getOrCreateStateSet();
-#ifdef OSG_GL1_AVAILABLE
-    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
-    stateSet->setAttributeAndModes(stippleAttr1_.get(), 1);
-#endif
-    stateSet->setAttributeAndModes(lineWidth_.get(), 1);
-    stateSet->setDataVariance(osg::Object::DYNAMIC);
-    geode_->addDrawable(geom);
-#endif
+    geode_->addChild(line1_.get());
   }
 
   // Second geometry:
@@ -251,29 +225,7 @@ void AnimatedLineNode::initializeGeometry_()
     line2_->setLineWidth(lineWidth_->getWidth());
     line2_->setStipplePattern(stipple2_);
     line2_->dirty();
-    geode_->addChild(line2_);
-
-#if 0
-    osg::Geometry* geom = new osg::Geometry();
-    geom->setName("simVis::AnimatedLine");
-    geom->setDataVariance(osg::Object::DYNAMIC);
-    geom->setUseVertexBufferObjects(true);
-    geom->setVertexArray(verts_.get());
-    geom->addPrimitiveSet(primset_.get());
-    colors2_ = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-    (*colors2_)[0] = color2_;
-    geom->setColorArray(colors2_.get());
-    osg::VertexBufferObject* vbo = colors2_->getVertexBufferObject();
-    if (vbo)
-      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
-#ifdef OSG_GL1_AVAILABLE
-    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
-    geom->getOrCreateStateSet()->setAttributeAndModes(stippleAttr2_.get(), 1);
-#endif
-    geom->getOrCreateStateSet()->setAttributeAndModes(lineWidth_.get(), 1);
-    geom->getOrCreateStateSet()->setDataVariance(osg::Object::DYNAMIC);
-    geode_->addDrawable(geom);
-#endif
+    geode_->addChild(line2_.get());
   }
 
   // top-level state set sets up lighting, etc.
@@ -281,7 +233,7 @@ void AnimatedLineNode::initializeGeometry_()
   stateSet->setMode(GL_BLEND, 1);
 
   fixDepth_(false);
-  this->addChild(geode_);
+  this->addChild(geode_.get());
 }
 
 void AnimatedLineNode::fixDepth_(bool isCloseToSurface)
@@ -560,7 +512,8 @@ void AnimatedLineNode::drawSlantLine_(const simCore::MultiFrameCoordinate& start
   }
 
   // Finish up
-  line1_->dirty(), line2_->dirty();
+  line1_->dirty();
+  line2_->dirty();
 }
 
 void AnimatedLineNode::dirtyGeometryBounds_()
@@ -598,7 +551,7 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
     const simCore::Coordinate& outEcef = coord2.ecefCoordinate();
     osg::Vec3f p2 = osg::Vec3f(outEcef.x(), outEcef.y(), outEcef.z()) - zeroPoint;
 
-    for (unsigned i = 0; i < 2; ++i)
+    for (unsigned int i = 0; i < 2; ++i)
     {
       osgEarth::LineDrawable* line = geode_->getLineDrawable(i);
       line->clear();

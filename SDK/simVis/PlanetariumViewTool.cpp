@@ -40,12 +40,13 @@
 
 #define LC "[PlanetariumView] "
 
-#define NUM_VECTOR_SEGS 25
-
 //-------------------------------------------------------------------
 
 namespace
 {
+  /** Number of segments in the vector line */
+  static const unsigned int NUM_VECTOR_SEGS = 25;
+
   /**
    * Adapter that routes geometry update calls back to our object.
    */
@@ -161,7 +162,7 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   targets_->setGeoFence(fence_.get());
   targets_->addUpdateGeometryCallback(new UpdateGeometryAdapter(this));
   root_->addChild(targets_.get());
-  
+
   // state for the delegation group:
   simVis::setLighting(targets_->getOrCreateStateSet(), 0);
   osgEarth::LineDrawable::installShader(targets_->getOrCreateStateSet());
@@ -263,10 +264,10 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
   vector->setVertex(1, s_up * (local_len - range_));
 
   osg::Vec3 V(s_up * (local_len-range_));
-  for (unsigned i = 1; i < NUM_VECTOR_SEGS; ++i)
+  for (unsigned int i = 1; i < NUM_VECTOR_SEGS; ++i)
   {
-      double t = (double)i / (double)(NUM_VECTOR_SEGS-1);
-      vector->setVertex(i, V*t);
+    const double t = static_cast<double>(i) / static_cast<double>(NUM_VECTOR_SEGS - 1);
+    vector->setVertex(i, V * t);
   }
 
   // create the target vector and scale it to the dome's surface.
@@ -371,7 +372,7 @@ void PlanetariumViewTool::scaleTargetGeometry_(double range) const
   // the graphic used for target delegates is scaled based on range (planetarium radius), this might be a dimension in meters
   // this formula for calculating s is purely trial-and-error, intended to maintain a minimum size at low range, but scale slowly with increasing range.
   const float s = static_cast<float>(20.0 + range / 60.0);
-  
+
   osgEarth::LineDrawable* geom = static_cast<osgEarth::LineDrawable*>(targetGeom_.get());
   geom->setVertex(0, osg::Vec3(-s, -s, 0.0f));
   geom->setVertex(1, osg::Vec3( s,  s, 0.0f));

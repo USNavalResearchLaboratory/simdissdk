@@ -31,7 +31,8 @@
 #include "simCore/Calc/MultiFrameCoordinate.h"
 
 namespace osgEarth {
-    class LineGroup; class LineDrawable;
+  class LineDrawable;
+  class LineGroup;
 }
 
 namespace simVis
@@ -211,16 +212,10 @@ namespace simVis
     /** Coordinate converter that is used to put secondCoord_ in a valid (Geo) frame */
     simCore::CoordinateConverter* coordinateConverter_;
 
-    // quick access to the VBO's
-    //osg::ref_ptr<osg::Vec3Array>  verts_;
-    //osg::ref_ptr<osg::DrawArrays> primset_;
-    //osg::ref_ptr<osg::Vec4Array>  colors1_;
-    //osg::ref_ptr<osg::Vec4Array>  colors2_;
-
     // access to the geode so we can properly dirty the geometries' bounds
-    osgEarth::LineGroup* geode_;
-    osgEarth::LineDrawable* line1_;
-    osgEarth::LineDrawable* line2_;
+    osg::ref_ptr<osgEarth::LineGroup> geode_;
+    osg::ref_ptr<osgEarth::LineDrawable> line1_;
+    osg::ref_ptr<osgEarth::LineDrawable> line2_;
 
     // track time deltas for smooth animation
     double timeLastShift_;

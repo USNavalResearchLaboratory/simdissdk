@@ -82,7 +82,7 @@ PlatformAzimElevViewTool::PlatformAzimElevViewTool(EntityNode* host) :
   targetGeom_ = buildTargetGeometry_();
 
   // the geofence will filter out visible objects
-  fence_ = new HorizonGeoFence();  
+  fence_ = new HorizonGeoFence();
 }
 
 osg::Node* PlatformAzimElevViewTool::getNode() const
@@ -321,7 +321,6 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
   for (unsigned int elevIndex = 0; elevIndex < numElevRings; elevIndex++)
   {
     const double e = elevIndex * elevStep;
-    //const GLint start = verts->size();
     const double cose = cos(e);
     const float z = static_cast<float>(sin(e));
 
@@ -414,7 +413,6 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
 osg::Node* PlatformAzimElevViewTool::buildTargetGeometry_()
 {
   float s = 3000.0f;
-  //float s = 10.0f;
 
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
 

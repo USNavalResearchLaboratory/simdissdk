@@ -241,7 +241,6 @@ namespace simVis
     simVis::Color                 lastOverrideColor_;
     osg::ref_ptr<osg::Uniform>    flatModeUniform_;
     osg::ref_ptr<osg::Group>      chunkGroup_;
-    //osg::ref_ptr<osg::Vec3Array>  dropVerts_;
     osg::ref_ptr<osgEarth::LineDrawable>   dropVertsDrawable_;
     osg::MatrixTransform*         altModeXform_;
     const simData::DataSliceBase* updateSliceBase_;

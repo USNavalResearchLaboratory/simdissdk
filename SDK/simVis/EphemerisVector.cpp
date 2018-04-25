@@ -47,8 +47,9 @@ static const simVis::DisplayMask DISPLAY_MASK_EPHEMERIS = DISPLAY_MASK_LABEL;
 /** Interval in minutes for updating ephemeris vectors on time, when they aren't rebuilt due to other means */
 static const int REBUILD_TIMEOUT = 15; // minutes of scenario time before vector gets rebuilt even when platform not moving
 
-#define VECTOR_MOON 0
-#define VECTOR_SUN  1
+// Indices for the moon and sun vector
+static const int VECTOR_MOON = 0;
+static const int VECTOR_SUN = 1;
 
 /** Every XX minutes of scenario time, make sure the ephemeris vector is rebuilt for new positions */
 class EphemerisVector::RebuildOnTimer : public osg::Callback
@@ -100,7 +101,7 @@ EphemerisVector::EphemerisVector(const simVis::Color& moonColor, const simVis::C
 
   // Group to hold the vector lines:
   geomGroup_ = new osgEarth::LineGroup();
-  addChild(geomGroup_);
+  addChild(geomGroup_.get());
 
   // Create and add the moon and sun lines
   geomGroup_->addChild(createVector_(moonColor, lineWidth));

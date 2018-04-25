@@ -30,7 +30,6 @@
 #include "simVis/Types.h"
 
 namespace osg { class Geometry; }
-
 namespace osgEarth { class LineGroup; }
 
 namespace simVis
@@ -94,7 +93,7 @@ private:
   /// most recent value for axis size
   osg::Vec3f axisLengths_;
   /// holds the 3 axis vectors
-  osgEarth::LineGroup* geode_;
+  osg::ref_ptr<osgEarth::LineGroup> geode_;
 };
 
 } // namespace simVis

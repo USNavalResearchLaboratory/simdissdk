@@ -836,11 +836,11 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, GLenum mode, 
       geom->installShader();
 
       geode->addChild(geom);
-      
+
       // don't bother drawing the second line if the first has a full stipple OR if the
       // second stipple is set to zero
       if (options_.lineStipple1_ == 0xFFFF || options_.lineStipple2_ == 0)
-          break;
+        break;
     }
   }
 }
@@ -1320,7 +1320,7 @@ void RangeTool::GroundLineGraphic::render(osg::Geode* geode, RangeTool::State& s
   simCore::Vec3 lla0(state.beginEntity_.lla_.x(), state.beginEntity_.lla_.y(), 0.0);
   simCore::Vec3 lla1(state.endEntity_.lla_.x(), state.endEntity_.lla_.y(), 0.0);
   state.line(lla0, lla1, 1.0, verts.get());
-  createGeometry(verts.get(), GL_LINE_STRIP, geode, state); 
+  createGeometry(verts.get(), GL_LINE_STRIP, geode, state);
 }
 
 osg::Vec3 RangeTool::GroundLineGraphic::labelPos(RangeTool::State& state)

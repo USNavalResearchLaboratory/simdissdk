@@ -64,8 +64,8 @@ AxisVector::~AxisVector()
 void AxisVector::init_()
 {
   geode_ = new osgEarth::LineGroup();
-  createAxisVectors_(geode_);
-  addChild(geode_);
+  createAxisVectors_(geode_.get());
+  addChild(geode_.get());
 }
 
 void AxisVector::setAxisLengths(osg::Vec3f axisLengths, bool force)

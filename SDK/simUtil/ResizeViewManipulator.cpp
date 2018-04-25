@@ -89,12 +89,12 @@ public:
     if (corner == ResizeViewManipulator::CENTER)
     {
       for (size_t k = 0; k < 8; ++k)
-          line_->setColor(k, (k % 2 == 1 ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
+        line_->setColor(k, (k % 2 == 1 ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
     }
     else
     {
       for (size_t k = 0; k < 8; ++k)
-          line_->setColor(k, (k == static_cast<size_t>(corner) ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
+        line_->setColor(k, (k == static_cast<size_t>(corner) ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
     }
   }
 
@@ -109,7 +109,7 @@ private:
   {
     line_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
     line_->allocate(8);
-    
+
     line_->setVertex(0, osg::Vec3(0, 1, 0));
     line_->setVertex(1, osg::Vec3(0.5, 1, 0));
     line_->setVertex(2, osg::Vec3(1, 1, 0));
@@ -120,7 +120,7 @@ private:
     line_->setVertex(7, osg::Vec3(0, 0.5, 0));
 
     line_->setColor(BAND_NORMAL_COLOR);
-    
+
     line_->dirty();
     line_->installShader();
 

@@ -85,7 +85,7 @@ float BoxGraphic::lineWidth() const
   return lineWidth_;
 }
 
-unsigned BoxGraphic::factor() const
+unsigned int BoxGraphic::factor() const
 {
   return factor_;
 }
@@ -119,7 +119,7 @@ void BoxGraphic::setLineWidth(float lineWidth)
   geom_->setLineWidth(lineWidth);
 }
 
-void BoxGraphic::setStippleFactor(unsigned factor)
+void BoxGraphic::setStippleFactor(unsigned int factor)
 {
   factor_ = factor;
   geom_->setStippleFactor(factor);

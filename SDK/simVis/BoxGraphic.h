@@ -71,6 +71,7 @@ public:
   /** Get line width, in pixels */
   float lineWidth() const;
 
+  /** Retrieve the stipple factor */
   unsigned int factor() const;
 
   /** Get stipple value */
@@ -131,7 +132,7 @@ private:
   /// line width in pixels
   float lineWidth_;
   /// stipple factor value
-  unsigned short factor_;
+  unsigned int factor_;
   /// stipple vpattern alue
   unsigned short stipple_;
   /// color vector, value ranges 0.0-1.0 (R,G,B,A)

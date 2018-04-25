@@ -28,9 +28,11 @@
 #include "simData/DataTypes.h"
 #include "simVis/Types.h"
 
+namespace osgEarth {
+  class LineDrawable;
+  class LineGroup;
+}
 namespace simCore { class CoordinateConverter; }
-
-namespace osgEarth { class LineGroup; class LineDrawable; }
 
 namespace simVis
 {
@@ -86,12 +88,12 @@ private:
   simData::PlatformUpdate              lastUpdate_;         ///< Current platform location
   simCore::CoordinateConverter*        coordConvert_;       ///< Converts ephemeris ECEF to TP for vector calc
 
-  osgEarth::LineGroup* geomGroup_;
+  osg::ref_ptr<osgEarth::LineGroup> geomGroup_;
   osg::observer_ptr<const PlatformModelNode> modelNode_;
   osg::ref_ptr<osgEarth::Util::Ephemeris> ephemeris_;
 
   /// working data
-  osg::ref_ptr<osg::Vec3Array> vertices_;  
+  osg::ref_ptr<osg::Vec3Array> vertices_;
 
   /// Last clock time when we rebuilt the line; detect time drift to rebuild line for entites that don't move
   simCore::TimeStamp lastUpdateTime_;

@@ -33,10 +33,7 @@ namespace osg {
   class Geometry;
   class Vec4f;
 }
-
-namespace osgEarth {
-    class LineDrawable;
-}
+namespace osgEarth { class LineDrawable; }
 
 namespace simVis
 {
