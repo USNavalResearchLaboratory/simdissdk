@@ -23,7 +23,6 @@
 #include "osg/CullFace"
 #include "osg/Depth"
 #include "osg/Geode"
-#include "osg/LineWidth"
 #include "osg/PolygonMode"
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
@@ -293,11 +292,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     outlineGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
 
     outlineGeom->setNormalArray(normalArray);
-
-    // configure a state set
-    outlineGeom->getOrCreateStateSet()->setAttributeAndModes(
-      new osg::LineWidth(d.outlineWidth_),
-      osg::StateAttribute::ON);
 
     // horizontals of the gate face outline
     for (unsigned int z = 0; z < numPointsZ; z += (numPointsZ - 1)) // iterate twice, first for the bottom, 2nd for the top
@@ -851,8 +845,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     }
   }
 
-  // finally, configure the stateset
-  geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(d.outlineWidth_), osg::StateAttribute::ON);
   return geom;
 }
 
@@ -921,6 +913,13 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
   // convert line geometries to LineDrawables, and remove old drawables.
   osgEarth::LineGroup* lineGroup = new osgEarth::LineGroup();
   lineGroup->import(geodeSolid.get(), true);
+  // Apply the line width to all the items in the line group
+  for (unsigned int i = 0; i < lineGroup->getNumChildren(); ++i)
+  {
+    osgEarth::LineDrawable* line = lineGroup->getLineDrawable(i);
+    if (line)
+      line->setLineWidth(d.outlineWidth_);
+  }
   xform->addChild(lineGroup);
 
   return xform;
@@ -997,7 +996,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
 
   osg::Vec4f opaqueColor = color;
   opaqueColor.a() = 1.0;
-  for (unsigned i = 0; i < lines->getNumChildren(); ++i)
+  for (unsigned int i = 0; i < lines->getNumChildren(); ++i)
   {
     osgEarth::LineDrawable* line = lines->getLineDrawable(i);
     if (line)
@@ -1299,7 +1298,7 @@ void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
   osg::Group* group = SVFactory::outlineGeometry(xform);
   if (group)
   {
-    for (unsigned i = 0; i < group->getNumChildren(); ++i)
+    for (unsigned int i = 0; i < group->getNumChildren(); ++i)
     {
       if (group->getChild(i)->asDrawable())
         group->getChild(i)->dirtyBound();
