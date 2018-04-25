@@ -243,13 +243,13 @@ namespace
       // Pop off anything at or past the mismatch
       state.popStateSetStackToSize(mismatchIndex);
       // Assert failure means that the popStateSetStackToSize() isn't doing what is advertised
-      assert(state.getStateSetstackSize() == mismatchIndex);
+      assert(state.getStateSetStackSize() == mismatchIndex);
 
       // Push on the states from the original until we're matching again
       for (; mismatchIndex < toStateStack.size(); ++mismatchIndex)
         state.pushStateSet(toStateStack[mismatchIndex]);
       // Assert failure means that the pushStateSet() isn't doing what is advertised
-      assert(state.getStateSetstackSize() == toStateStack.size());
+      assert(state.getStateSetStackSize() == toStateStack.size());
     }
 
     osg::ref_ptr<osg::StateSet> pass1_;
