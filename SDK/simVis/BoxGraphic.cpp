@@ -36,8 +36,8 @@ BoxGraphic::BoxGraphic(double x, double y, double width, double height,
     width_(width),
     height_(height),
     lineWidth_(lineWidth),
-    factor_(1u),
-    stipple_(stipple),
+    stippleFactor_(1u),
+    stipplePattern_(stipple),
     color_(color)
 {
   create_();
@@ -51,8 +51,8 @@ osg::Group(rhs)
   width_ = rhs.width_;
   height_ = rhs.height_;
   lineWidth_ = rhs.lineWidth_;
-  factor_ = rhs.factor_;
-  stipple_ = rhs.stipple_;
+  stippleFactor_ = rhs.stippleFactor_;
+  stipplePattern_ = rhs.stipplePattern_;
   color_ = rhs.color_;
   create_();
 }
@@ -85,14 +85,14 @@ float BoxGraphic::lineWidth() const
   return lineWidth_;
 }
 
-unsigned int BoxGraphic::factor() const
+unsigned int BoxGraphic::stippleFactor() const
 {
-  return factor_;
+  return stippleFactor_;
 }
 
-unsigned short BoxGraphic::stipple() const
+unsigned short BoxGraphic::stipplePattern() const
 {
-  return stipple_;
+  return stipplePattern_;
 }
 
 osg::Vec4 BoxGraphic::color() const
@@ -121,14 +121,14 @@ void BoxGraphic::setLineWidth(float lineWidth)
 
 void BoxGraphic::setStippleFactor(unsigned int factor)
 {
-  factor_ = factor;
-  geom_->setStippleFactor(factor);
+  stippleFactor_ = factor;
+  geom_->setStippleFactor(stippleFactor_);
 }
 
 void BoxGraphic::setStipplePattern(unsigned short stipple)
 {
-  stipple_ = stipple;
-  geom_->setStipplePattern(stipple);
+  stipplePattern_ = stipple;
+  geom_->setStipplePattern(stipplePattern_);
 }
 
 void BoxGraphic::setColor(const osg::Vec4& color)
@@ -149,8 +149,8 @@ void BoxGraphic::create_()
 
   setGeometry(x_, y_, width_, height_);
   setLineWidth(lineWidth_);
-  setStippleFactor(factor_);
-  setStipplePattern(stipple_);
+  setStippleFactor(stippleFactor_);
+  setStipplePattern(stipplePattern_);
   setColor(color_);
 
   // Add to the geode

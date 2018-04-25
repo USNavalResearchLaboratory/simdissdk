@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "osg/LineWidth"
 #include "osgEarth/GeoData"
 #include "osgEarth/Horizon"
 #include "simNotify/Notify.h"

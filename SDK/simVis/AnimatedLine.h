@@ -23,8 +23,6 @@
 #define SIMDIS_VISUALIZATION_ANIMATED_LINE_H
 
 #include "osg/MatrixTransform"
-#include "osg/LineStipple"
-#include "osg/LineWidth"
 #include "osg/PrimitiveSet"
 #include "osgEarth/Revisioning"
 #include "simCore/Common/Common.h"
@@ -190,11 +188,7 @@ namespace simVis
     osgEarth::SimpleMutable<osg::Vec4> color2_;
     osgEarth::SimpleMutable<osg::Vec4> colorOverride_;
     bool useOverrideColor_;
-
-    osg::ref_ptr<osg::LineStipple> stippleAttr1_;
-    osg::ref_ptr<osg::LineStipple> stippleAttr2_;
-
-    osg::ref_ptr<osg::LineWidth> lineWidth_;
+    float lineWidth_;
 
     osg::ref_ptr<const Locator> firstLocator_;
     osgEarth::Revision          firstLocatorRevision_;

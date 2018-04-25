@@ -24,7 +24,6 @@
 #include "osg/Geode"
 #include "osg/ImageStream"
 #include "osg/PolygonOffset"
-#include "osg/LineWidth"
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgDB/ReadFile"
@@ -586,7 +585,7 @@ void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
   stateSet->addUniform(projectorAlpha_.get());
   stateSet->addUniform(texGenMatUniform_.get());
   stateSet->addUniform(texProjDirUniform_.get());
-  stateSet->addUniform(texProjPosUniform_.get()); 
+  stateSet->addUniform(texProjPosUniform_.get());
 }
 
 void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
@@ -609,7 +608,7 @@ void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
   stateSet->removeUniform(projectorAlpha_.get());
   stateSet->removeUniform(texGenMatUniform_.get());
   stateSet->removeUniform(texProjDirUniform_.get());
-  stateSet->removeUniform(texProjPosUniform_.get()); 
+  stateSet->removeUniform(texProjPosUniform_.get());
 }
 
 }

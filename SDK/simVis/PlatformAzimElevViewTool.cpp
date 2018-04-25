@@ -20,7 +20,6 @@
  *
  */
 #include "osg/Depth"
-#include "osg/LineWidth"
 #include "osgText/Text"
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ShaderGenerator"

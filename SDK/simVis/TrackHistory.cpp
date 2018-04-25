@@ -21,7 +21,6 @@
  */
 #include <cassert>
 
-#include "osg/LineWidth"
 #include "osgEarth/Capabilities"
 #include "osgEarth/Horizon"
 #include "osgEarth/Registry"

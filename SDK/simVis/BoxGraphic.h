@@ -72,10 +72,10 @@ public:
   float lineWidth() const;
 
   /** Retrieve the stipple factor */
-  unsigned int factor() const;
+  unsigned int stippleFactor() const;
 
-  /** Get stipple value */
-  unsigned short stipple() const;
+  /** Get stipple pattern value */
+  unsigned short stipplePattern() const;
 
   /** Get color vector, value ranges 0.0-1.0 (R, G, B, A)*/
   osg::Vec4 color() const;
@@ -132,9 +132,9 @@ private:
   /// line width in pixels
   float lineWidth_;
   /// stipple factor value
-  unsigned int factor_;
-  /// stipple vpattern alue
-  unsigned short stipple_;
+  unsigned int stippleFactor_;
+  /// stipple pattern value
+  unsigned short stipplePattern_;
   /// color vector, value ranges 0.0-1.0 (R,G,B,A)
   osg::Vec4 color_;
   /// geometry used to draw the box

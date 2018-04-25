@@ -22,7 +22,6 @@
 #ifndef SIMVIS_AXIS_VECTOR_H
 #define SIMVIS_AXIS_VECTOR_H
 
-#include "osg/LineWidth"
 #include "osg/MatrixTransform"
 #include "osg/Vec3"
 #include "simCore/Common/Common.h"

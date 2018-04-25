@@ -22,7 +22,6 @@
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/CullFace"
-#include "osg/LineWidth"
 #include "simVis/LineDrawable.h"
 #include "osgEarthAnnotation/AnnotationUtils"
 #include "simCore/Calc/Angle.h"

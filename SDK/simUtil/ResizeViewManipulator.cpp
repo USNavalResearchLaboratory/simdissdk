@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "osg/LineWidth"
 #include "osgGA/GUIActionAdapter"
 #include "simVis/LineDrawable.h"
 #include "simVis/View.h"

@@ -20,7 +20,6 @@
  *
  */
 #include "osg/Geometry"
-#include "osg/LineWidth"
 #include "osgEarth/Horizon"
 #include "simVis/LineDrawable.h"
 #include "simCore/Calc/Math.h"

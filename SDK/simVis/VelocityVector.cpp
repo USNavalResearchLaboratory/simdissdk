@@ -41,7 +41,7 @@ namespace simVis
 VelocityVector::VelocityVector(Locator* hostLocator, const osg::Vec4f& vectorColor, float lineWidth)
   : LocatorNode(new Locator(hostLocator, Locator::COMP_POSITION)),
     forceRebuild_(true),
-    lineWidth_(new osg::LineWidth(lineWidth)),
+    lineWidth_(lineWidth),
     vectorColor_(vectorColor)
 {
   setName("VelocityVector");
@@ -166,7 +166,7 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   geom->dirty();
 
   // set linewidth
-  geom->setLineWidth(lineWidth_->getWidth());
+  geom->setLineWidth(lineWidth_);
 
   // Add the drawable to the geode
   geode->addDrawable(geom);

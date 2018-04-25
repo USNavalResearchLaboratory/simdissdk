@@ -24,7 +24,6 @@
 #include "osg/LineSegment"
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osg/LineWidth"
 #include "osgEarth/ECEF"
 #include "simVis/LineDrawable.h"
 #include "simCore/Calc/Math.h"
@@ -94,18 +93,11 @@ color1_(osg::Vec4(0.f, 0.f, 1.f, 1.f)),    // blue
 color2_(osg::Vec4(1.f, 1.f, 0.f, 1.f)),    // yellow
 colorOverride_(osg::Vec4()),    // no color
 useOverrideColor_(false),
+lineWidth_(lineWidth),
 coordinateConverter_(new simCore::CoordinateConverter),
 timeLastShift_(0.0),
 depthBufferTest_(depthBufferTest)
 {
-  stippleAttr1_ = new osg::LineStipple();
-  stippleAttr1_->setFactor(2);
-
-  stippleAttr2_ = new osg::LineStipple();
-  stippleAttr2_->setFactor(2);
-
-  lineWidth_ = new osg::LineWidth(lineWidth);
-
   // animation requires an update traversal.
   this->setNumChildrenRequiringUpdateTraversal(1);
 
@@ -177,12 +169,12 @@ void AnimatedLineNode::clearColorOverride()
 
 void AnimatedLineNode::setLineWidth(float width)
 {
-  lineWidth_->setWidth(width);
+  lineWidth_ = width;
 }
 
 float AnimatedLineNode::getLineWidth() const
 {
-  return lineWidth_->getWidth();
+  return lineWidth_;
 }
 
 void AnimatedLineNode::setShiftsPerSecond(double value)
@@ -195,10 +187,6 @@ void AnimatedLineNode::initializeGeometry_()
   // build the initial geometry from scratch.
   this->removeChildren(0, this->getNumChildren());
 
-  // set up the stipple attributes:
-  stippleAttr1_->setPattern(stipple1_);
-  stippleAttr2_->setPattern(stipple2_);
-
   // Geode to hold the geometry.
   geode_ = new osgEarth::LineGroup();
 
@@ -209,7 +197,7 @@ void AnimatedLineNode::initializeGeometry_()
     line1_->setDataVariance(osg::Object::DYNAMIC);
     line1_->allocate(2);
     line1_->setColor(color1_);
-    line1_->setLineWidth(lineWidth_->getWidth());
+    line1_->setLineWidth(lineWidth_);
     line1_->setStipplePattern(stipple1_);
     line1_->dirty();
     geode_->addChild(line1_.get());
@@ -222,7 +210,7 @@ void AnimatedLineNode::initializeGeometry_()
     line2_->setDataVariance(osg::Object::DYNAMIC);
     line2_->allocate(2);
     line2_->setColor(color2_);
-    line2_->setLineWidth(lineWidth_->getWidth());
+    line2_->setLineWidth(lineWidth_);
     line2_->setStipplePattern(stipple2_);
     line2_->dirty();
     geode_->addChild(line2_.get());

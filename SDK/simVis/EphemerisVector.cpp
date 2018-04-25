@@ -21,7 +21,6 @@
  */
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osg/LineWidth"
 #include "osgEarth/Version"
 #include "simVis/LineDrawable.h"
 #include "osgEarthUtil/Ephemeris"
