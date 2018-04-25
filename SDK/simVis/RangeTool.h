@@ -785,10 +785,9 @@ namespace simVis
        */
       void createGeometry(
         osg::Vec3Array*    verts,
-        osg::PrimitiveSet* primSet,
+        GLenum             mode,
         osg::Geode*        geode,
-        State&             state,
-        bool               subdivide = false);
+        State&             state);
 
       /// osg::Referenced-derived
       virtual ~LineGraphic() {}

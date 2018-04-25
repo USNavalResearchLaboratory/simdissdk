@@ -30,6 +30,10 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/MultiFrameCoordinate.h"
 
+namespace osgEarth {
+    class LineGroup; class LineDrawable;
+}
+
 namespace simVis
 {
   class Locator;
@@ -208,13 +212,15 @@ namespace simVis
     simCore::CoordinateConverter* coordinateConverter_;
 
     // quick access to the VBO's
-    osg::ref_ptr<osg::Vec3Array>  verts_;
-    osg::ref_ptr<osg::DrawArrays> primset_;
-    osg::ref_ptr<osg::Vec4Array>  colors1_;
-    osg::ref_ptr<osg::Vec4Array>  colors2_;
+    //osg::ref_ptr<osg::Vec3Array>  verts_;
+    //osg::ref_ptr<osg::DrawArrays> primset_;
+    //osg::ref_ptr<osg::Vec4Array>  colors1_;
+    //osg::ref_ptr<osg::Vec4Array>  colors2_;
 
     // access to the geode so we can properly dirty the geometries' bounds
-    osg::Geode* geode_;
+    osgEarth::LineGroup* geode_;
+    osgEarth::LineDrawable* line1_;
+    osgEarth::LineDrawable* line2_;
 
     // track time deltas for smooth animation
     double timeLastShift_;

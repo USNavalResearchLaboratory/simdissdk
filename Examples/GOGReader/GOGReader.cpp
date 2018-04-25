@@ -580,7 +580,7 @@ int main(int argc, char** argv)
       statusLabel,
       dataStore,
       showElevation,
-      attach ? platform : NULL);
+      attach ? platform.get() : NULL);
 
   mainView->getCamera()->addEventCallback(mouseHandler);
   viewer->run();

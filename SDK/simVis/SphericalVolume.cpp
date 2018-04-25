@@ -28,6 +28,8 @@
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
 
+#include "simVis/LineDrawable.h"
+
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
@@ -916,6 +918,11 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
   updateBlending(xform, d.blendingEnabled_);
   updateStippling(xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
 
+  // convert line geometries to LineDrawables, and remove old drawables.
+  osgEarth::LineGroup* lineGroup = new osgEarth::LineGroup();
+  lineGroup->import(geodeSolid.get(), true);
+  xform->addChild(lineGroup);
+
   return xform;
 }
 
@@ -984,26 +991,15 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 
   // if we have an (optional) outline geometry, update its color, remove transparency
-  geom = SVFactory::outlineGeometry(xform);
-  if (geom == NULL)
+  osgEarth::LineGroup* lines = SVFactory::outlineGeometry(xform);
+  if (lines == NULL)
     return;
-  colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
-  if (colors)
+
+  for (unsigned i = 0; i < lines->getNumChildren(); ++i)
   {
-    const size_t colorsSize = colors->size();
-    // check that all geometries use BIND_OVERALL, and color arrays are fixed at size 1
-    assert(colorsSize == 1);
-#ifdef DEBUG
-    OE_INFO << "update color, size = " << colorsSize << std::endl;
-#endif
-    if ((*colors)[0][0] != color[0] ||
-        (*colors)[0][1] != color[1] ||
-        (*colors)[0][2] != color[2])
-    {
-      colors->assign(colorsSize, color);
-      (*colors)[0][3] = 1.0f;
-      colors->dirty();
-    }
+      osgEarth::LineDrawable* line = lines->getLineDrawable(i);
+      if (line)
+          line->setColor(color);
   }
 }
 
@@ -1255,14 +1251,11 @@ osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 }
 
 // if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
-osg::Geometry* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
+osgEarth::LineGroup* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
 {
   if (xform == NULL || xform->getNumChildren() == 0)
     return NULL;
-  osg::Geode* geode = xform->getChild(0)->asGeode();
-  if (geode == NULL || geode->getNumDrawables() < 2)
-    return NULL;
-  return geode->getDrawable(1)->asGeometry();
+  return dynamic_cast<osgEarth::LineGroup*>(xform->getChild(1));
 }
 
 // if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
@@ -1300,9 +1293,16 @@ void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
   if (geom && !geom->empty())
     geom->dirtyBound();
-  geom = SVFactory::outlineGeometry(xform);
-  if (geom && !geom->empty())
-    geom->dirtyBound();
+
+  osg::Group* group = SVFactory::outlineGeometry(xform);
+  if (group)
+  {
+    for (unsigned i = 0; i < group->getNumChildren(); ++i)
+    {
+      if (group->getChild(i)->asDrawable())
+        group->getChild(i)->dirtyBound();
+    }
+  }
 
   if (xform->getNumChildren() > 1)
   {

@@ -55,6 +55,7 @@ struct AppData
   osg::ref_ptr<simVis::PlanetariumViewTool> planetarium;
 
   simData::MemoryDataStore dataStore;
+  osg::ref_ptr<simVis::Viewer> viewer;
   osg::ref_ptr<simVis::SceneManager>    scene;
   osg::ref_ptr<simVis::ScenarioManager> scenario;
   simData::ObjectId        platformId;
@@ -65,6 +66,7 @@ struct AppData
   osg::ref_ptr<ui::LabelControl>        rangeLabel;
   osg::ref_ptr<ui::HSliderControl>      colorSlider;
   osg::ref_ptr<ui::LabelControl>        colorLabel;
+  osg::ref_ptr<ui::CheckBoxControl>     ldbCheck;
 
   std::vector< std::pair<simVis::Color, std::string> > colors;
   int colorIndex;
@@ -100,6 +102,16 @@ struct ToggleVectors : public ui::ControlEventHandler
   void onValueChanged(ui::Control* c, bool value)
   {
     a.planetarium->setDisplayTargetVectors(value);
+  }
+};
+
+struct ToggleLDB : public ui::ControlEventHandler
+{
+  explicit ToggleLDB(AppData& app) : a(app) {}
+  AppData& a;
+  void onValueChanged(ui::Control* c, bool value)
+  {
+    a.viewer->setLogarithmicDepthBufferEnabled(!a.viewer->isLogarithmicDepthBufferEnabled());
   }
 };
 
@@ -153,6 +165,10 @@ ui::Control* createUI(AppData& app)
   grid->setControl(c, r, new ui::LabelControl("Color:"));
   app.colorSlider = grid->setControl(c+1, r, new ui::HSliderControl(0, app.colors.size()-1, 0, new SetColor(app)));
   app.colorLabel  = grid->setControl(c+2, r, new ui::LabelControl());
+
+  r++;
+  grid->setControl(c, r, new ui::LabelControl("LDB:"));
+  app.ldbCheck = grid->setControl(c+1, r, new ui::CheckBoxControl(true, new ToggleLDB(app)));
 
   // force a width.
   app.rangeSlider->setHorizFill(true, 200);
@@ -293,6 +309,7 @@ int main(int argc, char **argv)
 
   // Set up the data:
   AppData app;
+  app.viewer   = viewer.get();
   app.scene    = viewer->getSceneManager();
   app.scenario = app.scene->getScenario();
   app.scenario->bind(&app.dataStore);

@@ -28,6 +28,8 @@
 #include "osgEarth/Revisioning"
 #include "osgEarthSymbology/Symbol"
 
+namespace osgEarth { class LineGroup; }
+
 namespace simVis
 {
 
@@ -158,7 +160,7 @@ public:
   /// tweak the verts to update the vertical angle
   static void updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
   /// Retrieves the 'outline' geometry, or NULL if there is no such geometry
-  static osg::Geometry* outlineGeometry(osg::MatrixTransform* xform);
+  static osgEarth::LineGroup* outlineGeometry(osg::MatrixTransform* xform);
   /// Retrieves the 'solid' geometry, or NULL if there is no such geometry
   static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
 private:

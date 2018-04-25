@@ -26,6 +26,7 @@
 #include "osg/Geometry"
 #include "osg/LineWidth"
 #include "osgEarth/ECEF"
+#include "simVis/LineDrawable.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -199,18 +200,21 @@ void AnimatedLineNode::initializeGeometry_()
   stippleAttr2_->setPattern(stipple2_);
 
   // Geode to hold the geometry.
-  geode_ = new osg::Geode();
-
-  // Create a shared vertex buffer array.
-  verts_ = new osg::Vec3Array(2);
-  (*verts_)[0].set(0.0f, 0.0f, 0.0f);
-  (*verts_)[1].set(0.0f, 0.0f, 0.0f);
-
-  // And a shared EBO for the indexing:
-  primset_ = new osg::DrawArrays(GL_LINE_STRIP, 0, 2);
+  geode_ = new osgEarth::LineGroup();
 
   // First geometry:
   {
+    line1_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
+    line1_->setName("simVis::AnimatedLine");
+    line1_->setDataVariance(osg::Object::DYNAMIC);
+    line1_->allocate(2);
+    line1_->setColor(color1_);
+    line1_->setLineWidth(lineWidth_->getWidth());
+    line1_->setStipplePattern(stipple1_);
+    line1_->dirty();
+    geode_->addChild(line1_);
+
+#if 0
     osg::Geometry* geom = new osg::Geometry();
     geom->setName("simVis::AnimatedLine");
     geom->setDataVariance(osg::Object::DYNAMIC);
@@ -234,10 +238,22 @@ void AnimatedLineNode::initializeGeometry_()
     stateSet->setAttributeAndModes(lineWidth_.get(), 1);
     stateSet->setDataVariance(osg::Object::DYNAMIC);
     geode_->addDrawable(geom);
+#endif
   }
 
   // Second geometry:
   {
+    line2_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
+    line2_->setName("simVis::AnimatedLine");
+    line2_->setDataVariance(osg::Object::DYNAMIC);
+    line2_->allocate(2);
+    line2_->setColor(color2_);
+    line2_->setLineWidth(lineWidth_->getWidth());
+    line2_->setStipplePattern(stipple2_);
+    line2_->dirty();
+    geode_->addChild(line2_);
+
+#if 0
     osg::Geometry* geom = new osg::Geometry();
     geom->setName("simVis::AnimatedLine");
     geom->setDataVariance(osg::Object::DYNAMIC);
@@ -257,6 +273,7 @@ void AnimatedLineNode::initializeGeometry_()
     geom->getOrCreateStateSet()->setAttributeAndModes(lineWidth_.get(), 1);
     geom->getOrCreateStateSet()->setDataVariance(osg::Object::DYNAMIC);
     geode_->addDrawable(geom);
+#endif
   }
 
   // top-level state set sets up lighting, etc.
@@ -395,30 +412,24 @@ void AnimatedLineNode::update_(double t)
   {
     if (useOverrideColor_)
     {
-      (*colors1_)[0] = colorOverride_;
-      colors1_->dirty();
-      (*colors2_)[0] = colorOverride_;
-      colors2_->dirty();
+      line1_->setColor(colorOverride_);
+      line2_->setColor(colorOverride_);
     }
     else
     {
-      (*colors1_)[0] = color1_;
-      colors1_->dirty();
-      (*colors2_)[0] = color2_;
-      colors2_->dirty();
+      line1_->setColor(color1_);
+      line2_->setColor(color2_);
     }
   }
 
   if (color1_.changed() && !useOverrideColor_)
   {
-    (*colors1_)[0] = color1_;
-    colors1_->dirty();
+    line1_->setColor(color1_);
   }
 
   if (color2_.changed() && !useOverrideColor_)
   {
-    (*colors2_)[0] = color2_;
-    colors2_->dirty();
+    line2_->setColor(color2_);
   }
 
   // animate the line:
@@ -438,16 +449,17 @@ void AnimatedLineNode::update_(double t)
       rol(stipple1_, bits);
       rol(stipple2_, bits);
     }
-    stippleAttr1_->setPattern(stipple1_);
-    stippleAttr2_->setPattern(stipple2_);
+
+    line1_->setStipplePattern(stipple1_);
+    line2_->setStipplePattern(stipple2_);
 
     timeLastShift_ = t;
   }
   else
   {
     // process changes to stipple even if line is not animating
-    stippleAttr1_->setPattern(stipple1_);
-    stippleAttr2_->setPattern(stipple2_);
+    line1_->setStipplePattern(stipple1_);
+    line2_->setStipplePattern(stipple2_);
   }
 }
 
@@ -516,8 +528,8 @@ void AnimatedLineNode::drawSlantLine_(const simCore::MultiFrameCoordinate& start
   }
 
   // Reserve 2 points for the output
-  verts_->reserve(2);
-  verts_->clear();
+  line1_->clear();
+  line2_->clear();
 
   // Calculate the reference point in ECEF
   const osg::Vec3d zeroPoint = this->getMatrix().getTrans();
@@ -533,8 +545,8 @@ void AnimatedLineNode::drawSlantLine_(const simCore::MultiFrameCoordinate& start
 
   // make sure there's enough room. Don't bother shrinking.
   const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(distance / segmentLength)));
-  verts_->reserve(numSegs + 1);
-  verts_->clear();
+  line1_->reserve(numSegs + 1);
+  line2_->reserve(numSegs + 1);
 
   // Add points to the vertex list, from back to front, for consistent stippling.  Order
   // matters because it affects the line direction during stippling.
@@ -542,14 +554,13 @@ void AnimatedLineNode::drawSlantLine_(const simCore::MultiFrameCoordinate& start
   {
     // Add in the subdivided line point
     const double percentOfFull = static_cast<double>((numSegs-k)) / numSegs; // From 1 to 0
-    verts_->push_back(lastPoint * percentOfFull);
+    osg::Vec3f point = lastPoint * percentOfFull;
+    line1_->pushVertex(point);
+    line2_->pushVertex(point);
   }
 
   // Finish up
-  verts_->dirty();
-  primset_->setCount(numSegs+1);
-  primset_->dirty();
-  dirtyGeometryBounds_();
+  line1_->dirty(), line2_->dirty();
 }
 
 void AnimatedLineNode::dirtyGeometryBounds_()
@@ -583,19 +594,19 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
   // purely vertical line will be drawn as a single segment
   if (distance <= 0.0)
   {
-    verts_->reserve(2);
-    verts_->clear();
-
     // Convert back to ECEF and add the vertex
     const simCore::Coordinate& outEcef = coord2.ecefCoordinate();
-    verts_->push_back(osg::Vec3f(outEcef.x(), outEcef.y(), outEcef.z()) - zeroPoint);
+    osg::Vec3f p2 = osg::Vec3f(outEcef.x(), outEcef.y(), outEcef.z()) - zeroPoint;
 
-    // Finish up
-    verts_->push_back(osg::Vec3f());
-    verts_->dirty();
-    primset_->setCount(2);
-    primset_->dirty();
-    dirtyGeometryBounds_();
+    for (unsigned i = 0; i < 2; ++i)
+    {
+      osgEarth::LineDrawable* line = geode_->getLineDrawable(i);
+      line->clear();
+      line->pushVertex(p2);
+      line->pushVertex(osg::Vec3f());
+      line->dirty();
+    }
+
     return;
   }
 
@@ -610,8 +621,8 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
 
   // make sure there's enough room. Don't bother shrinking.
   const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(distance / segmentLength)));
-  verts_->reserve(numSegs + 1);
-  verts_->clear();
+  osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array();
+  verts->reserve(numSegs + 1);
 
   // Add points to the vertex list, from back to front, for consistent stippling.  Order
   // matters because it affects the line direction during stippling.
@@ -628,13 +639,12 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
     // Convert back to ECEF and add the vertex
     simCore::Vec3 ecefPos;
     simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
-    verts_->push_back(osg::Vec3f(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
+    verts->push_back(osg::Vec3f(ecefPos.x(), ecefPos.y(), ecefPos.z()) - zeroPoint);
   }
 
   // Finish up
-  verts_->push_back(osg::Vec3f());
-  verts_->dirty();
-  primset_->setCount(numSegs+1);
-  primset_->dirty();
-  dirtyGeometryBounds_();
+  verts->push_back(osg::Vec3f());
+
+  geode_->getLineDrawable(0)->importVertexArray(verts.get());
+  geode_->getLineDrawable(1)->importVertexArray(verts.get());
 }

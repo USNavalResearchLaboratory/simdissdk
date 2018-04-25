@@ -25,6 +25,7 @@
 #include "osgEarth/Horizon"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
+#include "osgEarth/CullingUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"

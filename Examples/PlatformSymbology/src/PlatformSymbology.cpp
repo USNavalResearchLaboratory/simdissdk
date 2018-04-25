@@ -32,6 +32,7 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Time/ClockImpl.h"
 
 /// the simulator provides time/space data for our platform
 #include "simUtil/PlatformSimulator.h"
@@ -46,6 +47,7 @@
 #include "simVis/RocketBurn.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Registry.h"
 
 /// some basic components (mouse hover popups, scenario, utilities, camera controls)
 #include "simVis/Popup.h"
@@ -95,6 +97,9 @@ static const std::string s_help =
   " w : model: toggle override color\n"
   " h : model: toggle highlight\n"
   " p : model: cycle highlight color\n"
+  " q : model: toggle axis vector\n"
+  " v : model: toggle velocity vector\n"
+  " 4 : model: toggle ephemeris vectors\n"
   "\n"
   " k : label: toggle text\n"
   " l : label: toggle text color\n"
@@ -258,6 +263,18 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
         prefs->set_dynamicscale(!prefs->dynamicscale());
         s_action->setText(Stringify() << "Set dynamic scale to " << SAYBOOL(prefs->dynamicscale()));
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
+      case '4': // toggle ephemeris vectors
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawsunvec(!prefs->drawsunvec());
+        prefs->set_drawmoonvec(!prefs->drawmoonvec());
+        s_action->setText(Stringify() << "Set ephemeris vectors to " << SAYBOOL(prefs->drawsunvec()));
         xaction.complete(&prefs);
         handled = true;
       }
@@ -657,6 +674,28 @@ struct MenuHandler : public osgGA::GUIEventHandler
       }
       break;
 
+      case 'v': // toggle velocity vector
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawvelocityvec(!prefs->drawvelocityvec());
+        s_action->setText(Stringify() << "Set velocity vector to " << SAYBOOL(prefs->drawvelocityvec()));
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
+      case 'q': // toggle body axis vector
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawbodyaxis(!prefs->drawbodyaxis());
+        s_action->setText(Stringify() << "Set body axis to " << SAYBOOL(prefs->drawbodyaxis()));
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
       case '?' : // toggle help
       {
         s_helpControl->setVisible(!s_helpControl->visible());
@@ -890,6 +929,11 @@ int main(int argc, char **argv)
   /// based on the simulation time.
   simData::MemoryDataStore dataStore;
   scene->getScenario()->bind(&dataStore);
+
+  /// create a clock so clock-based features will work (e.g. EphemerisVector)
+  simCore::Clock* clock = new simCore::ClockImpl;
+  simVis::Registry::instance()->setClock(clock);
+  clock->setMode(simCore::Clock::MODE_FREEWHEEL, simCore::TimeStamp(1970, simCore::getSystemTime()));
 
   /// add in the platform and beam
   simData::ObjectId platformId = addPlatform(dataStore);

@@ -21,6 +21,7 @@
  */
 #include "osg/LineWidth"
 #include "osgGA/GUIActionAdapter"
+#include "simVis/LineDrawable.h"
 #include "simVis/View.h"
 #include "simVis/Utils.h"
 #include "simUtil/ResizeViewManipulator.h"
@@ -88,62 +89,51 @@ public:
     if (corner == ResizeViewManipulator::CENTER)
     {
       for (size_t k = 0; k < 8; ++k)
-        (*colors_)[k] = (k % 2 == 1 ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR);
+          line_->setColor(k, (k % 2 == 1 ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
     }
     else
     {
       for (size_t k = 0; k < 8; ++k)
-        (*colors_)[k] = (k == static_cast<size_t>(corner) ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR);
+          line_->setColor(k, (k == static_cast<size_t>(corner) ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
     }
-    colors_->dirty();
   }
 
   /** Set the box to bold */
   void setBold(bool bold)
   {
-    xform_->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(bold ? BOLD_WIDTH : NORMAL_WIDTH));
+    line_->setLineWidth(bold ? BOLD_WIDTH : NORMAL_WIDTH);
   }
 
 private:
   void initialize_()
   {
-    osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 8);
+    line_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
+    line_->allocate(8);
+    
+    line_->setVertex(0, osg::Vec3(0, 1, 0));
+    line_->setVertex(1, osg::Vec3(0.5, 1, 0));
+    line_->setVertex(2, osg::Vec3(1, 1, 0));
+    line_->setVertex(3, osg::Vec3(1, 0.5, 0));
+    line_->setVertex(4, osg::Vec3(1, 0, 0));
+    line_->setVertex(5, osg::Vec3(0.5, 0, 0));
+    line_->setVertex(6, osg::Vec3(0, 0, 0));
+    line_->setVertex(7, osg::Vec3(0, 0.5, 0));
 
-    (*verts)[0].set(0, 1, 0);
-    (*verts)[1].set(0.5, 1, 0);
-    (*verts)[2].set(1, 1, 0);
-    (*verts)[3].set(1, 0.5, 0);
-    (*verts)[4].set(1, 0, 0);
-    (*verts)[5].set(0.5, 0, 0);
-    (*verts)[6].set(0, 0, 0);
-    (*verts)[7].set(0, 0.5, 0);
-
-    colors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, 8);
-    for (size_t k = 0; k < 8; ++k)
-      (*colors_)[k] = BAND_NORMAL_COLOR;
-
-    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-    geom->setUseVertexBufferObjects(true);
-
-    geom->setVertexArray(verts.get());
-    geom->setColorArray(colors_.get());
-    geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 8));
-
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-    geode->addDrawable(geom);
-    simVis::setLighting(geode->getOrCreateStateSet(),
-      osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+    line_->setColor(BAND_NORMAL_COLOR);
+    
+    line_->dirty();
+    line_->installShader();
 
     xform_ = new osg::MatrixTransform();
-    xform_->addChild(geode);
+    xform_->addChild(line_.get());
 
-    geom->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, 0);
-    geom->getOrCreateStateSet()->setMode(GL_BLEND, 1);
-    geode->setCullingActive(false);
+    line_->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, 0);
+    line_->getOrCreateStateSet()->setMode(GL_BLEND, 1);
+    line_->setCullingActive(false);
   }
 
   osg::ref_ptr<osg::MatrixTransform> xform_;
-  osg::ref_ptr<osg::Vec4Array> colors_;
+  osg::ref_ptr<osgEarth::LineDrawable> line_;
   ResizeViewManipulator& manip_;
 };
 

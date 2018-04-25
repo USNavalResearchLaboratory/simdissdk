@@ -23,6 +23,7 @@
 #include "osg/Geode"
 #include "osg/CullFace"
 #include "osg/LineWidth"
+#include "simVis/LineDrawable.h"
 #include "osgEarthAnnotation/AnnotationUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
@@ -38,6 +39,8 @@
 #define OVERRIDE_TAG "PlanetariumViewTool"
 
 #define LC "[PlanetariumView] "
+
+#define NUM_VECTOR_SEGS 25
 
 //-------------------------------------------------------------------
 
@@ -72,8 +75,13 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   fence_ = new HorizonGeoFence();
 
   // build the geometry for a target node
-  targetGeode_ = new osg::Geode();
-  scaleTargetGeode_(targetGeode_.get(), range_);
+  osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
+  geom->allocate(4);
+  geom->setColor(osg::Vec4(1,1,1,1));
+  geom->setLineWidth(2.0f);
+  targetGeom_ = geom;
+
+  scaleTargetGeometry_(range_);
 }
 
 osg::Node* PlanetariumViewTool::getNode() const
@@ -94,7 +102,7 @@ void PlanetariumViewTool::setRange(double range)
     updateDome_();
 
     // rescale the one geode that is reused for all target delegates
-    scaleTargetGeode_(targetGeode_.get(), range_);
+    scaleTargetGeometry_(range_);
 
     // recreate our target delegates
     if (scenario_.valid() && targets_.valid())
@@ -153,6 +161,10 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
   targets_->setGeoFence(fence_.get());
   targets_->addUpdateGeometryCallback(new UpdateGeometryAdapter(this));
   root_->addChild(targets_.get());
+  
+  // state for the delegation group:
+  simVis::setLighting(targets_->getOrCreateStateSet(), 0);
+  osgEarth::LineDrawable::installShader(targets_->getOrCreateStateSet());
 
   // sets horizon geofence to host position, which does not work correctly
   simCore::Vec3 ecef;
@@ -181,8 +193,6 @@ void PlanetariumViewTool::onUninstall(const ScenarioManager& scenario)
   applyOverrides_(false);
   family_.reset();
 
-  if (dome_.valid())
-    dome_->removeDrawables(0, dome_->getNumDrawables());
   if (targets_.valid())
     targets_->removeChildren(0, targets_->getNumChildren());
 
@@ -231,15 +241,15 @@ void PlanetariumViewTool::onUpdate(const ScenarioManager& scenario, const simCor
 }
 
 void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
-                                          const osg::Vec3d&     ecef)
+                                               const osg::Vec3d&     ecef)
 {
   static osg::Vec3d s_up(0.0, 0.0, 1.0);
 
   // if the transform has no children, create the initial subgraph.
   if (mt->getNumChildren() == 0)
   {
-    mt->addChild(targetGeode_.get());
-    mt->addChild(buildVectorGeode_());
+    mt->addChild(targetGeom_.get());
+    mt->addChild(buildVectorGeometry_());
   }
 
   // transform the target position into planetarium-local space:
@@ -248,12 +258,16 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
   osg::Vec3d local_n   = local / local_len;
 
   // update the vector.
-  osg::Geode* vectorNode = static_cast<osg::Geode*>(mt->getChild(1));
-  vectorNode->setNodeMask(displayTargetVectors_ ? ~0 : 0);
-  osg::Geometry* g = vectorNode->getDrawable(0)->asGeometry();
-  osg::Vec3Array* v = (osg::Vec3Array*)g->getVertexArray();
-  (*v)[1] = s_up * (local_len - range_);
-  v->dirty();
+  osgEarth::LineDrawable* vector = static_cast<osgEarth::LineDrawable*>(mt->getChild(1));
+  vector->setNodeMask(displayTargetVectors_ ? ~0 : 0);
+  vector->setVertex(1, s_up * (local_len - range_));
+
+  osg::Vec3 V(s_up * (local_len-range_));
+  for (unsigned i = 1; i < NUM_VECTOR_SEGS; ++i)
+  {
+      double t = (double)i / (double)(NUM_VECTOR_SEGS-1);
+      vector->setVertex(i, V*t);
+  }
 
   // create the target vector and scale it to the dome's surface.
   mt->setMatrix(
@@ -265,15 +279,8 @@ void PlanetariumViewTool::updateDome_()
 {
   if (root_.valid())
   {
-    if (!dome_.valid())
-    {
-      dome_ = new osg::Geode();
-      root_->addChild(dome_.get());
-    }
-    else
-    {
-      dome_->removeDrawables(0, dome_->getNumDrawables());
-    }
+    if (dome_.valid())
+      root_->removeChild(dome_.get());
 
     // build a sphere
     osg::Geometry* drawable = osgEarth::Annotation::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
@@ -281,7 +288,8 @@ void PlanetariumViewTool::updateDome_()
     stateSet->setMode(GL_BLEND, 1);
     stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
-    dome_->addDrawable(drawable);
+    root_->addChild(drawable);
+    dome_ = drawable;
   }
 }
 
@@ -358,64 +366,25 @@ void PlanetariumViewTool::applyOverrides_(EntityNode* entity, bool enable)
   }
 }
 
-void PlanetariumViewTool::scaleTargetGeode_(osg::Geode* geode, double range) const
+void PlanetariumViewTool::scaleTargetGeometry_(double range) const
 {
-  if (geode->getNumDrawables() > 0)
-    geode->removeDrawables(0);
-
   // the graphic used for target delegates is scaled based on range (planetarium radius), this might be a dimension in meters
   // this formula for calculating s is purely trial-and-error, intended to maintain a minimum size at low range, but scale slowly with increasing range.
   const float s = static_cast<float>(20.0 + range / 60.0);
-  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 4);
-  (*v)[0].set(-s, -s, 0.0f);
-  (*v)[1].set(s, s, 0.0f);
-  (*v)[2].set(-s, s, 0.0f);
-  (*v)[3].set(s, -s, 0.0f);
-
-  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-  (*c)[0].set(1.0f, 1.0f, 1.0f, 1.0f);
-
-  osg::PrimitiveSet* prim = new osg::DrawArrays(GL_LINES, 0, 4);
-
-  osg::Geometry* geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-  geom->setUseDisplayList(false);
-  geom->setVertexArray(v);
-  geom->setColorArray(c);
-  geom->addPrimitiveSet(prim);
-
-  osg::StateSet* stateset = geom->getOrCreateStateSet();
-  simVis::setLighting(stateset, 0);
-  stateset->setAttributeAndModes(new osg::LineWidth(2.0f), 1);
-
-  geode->addDrawable(geom);
+  
+  osgEarth::LineDrawable* geom = static_cast<osgEarth::LineDrawable*>(targetGeom_.get());
+  geom->setVertex(0, osg::Vec3(-s, -s, 0.0f));
+  geom->setVertex(1, osg::Vec3( s,  s, 0.0f));
+  geom->setVertex(2, osg::Vec3(-s,  s, 0.0f));
+  geom->setVertex(3, osg::Vec3( s, -s, 0.0f));
 }
 
-osg::Geode* PlanetariumViewTool::buildVectorGeode_()
+osg::Node* PlanetariumViewTool::buildVectorGeometry_()
 {
-  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 4);
-  (*v)[0].set(0.0f, 0.0f, 0.0f);
-  (*v)[1].set(0.0f, 0.0f, 1.0f);
-
-  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-  (*c)[0].set(0.0f, 1.0f, 0.0f, 1.0f);
-
-  osg::PrimitiveSet* prim = new osg::DrawArrays(GL_LINES, 0, 2);
-
-  osg::Geometry* geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-  geom->setUseDisplayList(false);
-  geom->setVertexArray(v);
-  geom->setColorArray(c);
-  geom->addPrimitiveSet(prim);
-
-  osg::StateSet* stateset = geom->getOrCreateStateSet();
-  simVis::setLighting(stateset, 0);
-
-  osg::Geode* geode = new osg::Geode();
-  geode->addDrawable(geom);
-
-  return geode;
+  osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  geom->allocate(NUM_VECTOR_SEGS);
+  geom->setColor(osg::Vec4(1,1,1,1));
+  return geom;
 }
 }
 
