@@ -372,6 +372,12 @@ void AnimatedLineNode::update_(double t)
     line2_->setColor(color2_);
   }
 
+  // LineDrawable is efficient in cases of no change
+  line1_->setLineWidth(lineWidth_);
+  line1_->setStipplePattern(stipple1_);
+  line2_->setLineWidth(lineWidth_);
+  line2_->setStipplePattern(stipple2_);
+
   // animate the line:
   const double dt        = t - timeLastShift_;
   const double numShifts = dt * fabs(shiftsPerSecond_);
