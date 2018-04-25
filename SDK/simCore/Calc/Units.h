@@ -99,6 +99,13 @@ public:
   static const Units YARDS_PER_SECOND ATTRIB_HIDDEN;
   ///@}
 
+  /** @name Frequency */
+  ///@{
+  /// Frequency Units
+  static const Units HERTZ ATTRIB_HIDDEN;
+  static const Units REVOLUTIONS_PER_MINUTE ATTRIB_HIDDEN;
+  ///@}
+
   ///@{
   /// Predefined unit families
   static const std::string INVALID_FAMILY ATTRIB_HIDDEN;
@@ -107,6 +114,7 @@ public:
   static const std::string ANGLE_FAMILY ATTRIB_HIDDEN;
   static const std::string LENGTH_FAMILY ATTRIB_HIDDEN;
   static const std::string SPEED_FAMILY ATTRIB_HIDDEN;
+  static const std::string FREQUENCY_FAMILY ATTRIB_HIDDEN;
   ///@}
 
   /** Construct an invalid unit */

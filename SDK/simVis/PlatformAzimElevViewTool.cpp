@@ -20,11 +20,11 @@
  *
  */
 #include "osg/Depth"
-#include "osg/LineWidth"
 #include "osgText/Text"
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
+#include "simVis/LineDrawable.h"
 
 #include "simCore/Calc/Angle.h"
 #include "simVis/Beam.h"
@@ -78,7 +78,7 @@ PlatformAzimElevViewTool::PlatformAzimElevViewTool(EntityNode* host) :
   grid_ = createAzElGrid_();
   grid_->setMatrix(osg::Matrix::scale(range_, range_, range_));
 
-  targetGeode_ = buildTargetGeode_();
+  targetGeom_ = buildTargetGeometry_();
 
   // the geofence will filter out visible objects
   fence_ = new HorizonGeoFence();
@@ -139,12 +139,18 @@ void PlatformAzimElevViewTool::onInstall(const ScenarioManager& scenario)
   targets_->addUpdateGeometryCallback(new UpdateGeometryAdapter(this));
   root_->addChild(targets_.get());
 
+  // set up state for the delegation:
+  simVis::setLighting(targets_->getOrCreateStateSet(), 0);
+  osgEarth::LineDrawable::installShader(targets_->getOrCreateStateSet());
+
   // build the scene elements:
   rebuild_();
 
   // collect the entity list from the scenario:
   family_.reset();
   family_.add(scenario, host_->getId());
+
+  root_->addCullCallback(new osgEarth::InstallViewportSizeUniform());
 
   // install all overrides
   applyOverrides_(true);
@@ -295,25 +301,15 @@ void PlatformAzimElevViewTool::applyOverrides_(EntityNode* entity, bool enable)
 // Builds the geometry for the elevation ring grid.
 osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
 {
-  osg::Geometry* geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-  geom->setUseDisplayList(false);
+  osgEarth::LineGroup* geomGroup = new osgEarth::LineGroup();
+  osg::Group* textGroup = new osg::Group();
 
   osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
-
-  osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-  (*colors)[0].set(1, 1, 1, 1);
-  geom->setColorArray(colors);
-
-  osg::Vec3Array* verts = new osg::Vec3Array();
-  geom->setVertexArray(verts);
 
   // all rings are drawn on the unit circle, and scaled elsewhere
   const unsigned int numAzPts = 72;
   const unsigned int numElevRings = 9;
   const unsigned int numTicks = 36; // 2 verts per tick
-  // reserve points for rings + ticks
-  verts->reserve((numAzPts * numElevRings) + (numTicks * 2));
 
   const double azMax = 2.0 * M_PI;
   const double azStep = azMax / numAzPts;
@@ -324,24 +320,26 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
   for (unsigned int elevIndex = 0; elevIndex < numElevRings; elevIndex++)
   {
     const double e = elevIndex * elevStep;
-    const GLint start = verts->size();
     const double cose = cos(e);
     const float z = static_cast<float>(sin(e));
+
+    osgEarth::LineDrawable* ring = new osgEarth::LineDrawable(GL_LINE_LOOP);
+    ring->reserve(numAzPts);
 
     for (unsigned int azIndex = 0; azIndex < numAzPts; azIndex++)
     {
       const double a = azIndex * azStep;
       const float x = static_cast<float>(cos(a) * cose);
       const float y = static_cast<float>(sin(a) * cose);
-      verts->push_back(osg::Vec3f(x, y, z));
+      ring->pushVertex(osg::Vec3f(x, y, z));
     }
-    geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, start, (GLsizei)(verts->size()-start)));
+    ring->dirty();
+    geomGroup->addChild(ring);
   }
-  // if assert fails, algorithm has changed, check for incorrect iteration
-  assert(verts->size() == (numAzPts * numElevRings));
 
   // 36 azimuth ticks (one every 10 degrees):
-  const GLint start = verts->size();
+  osgEarth::LineDrawable* ticks = new osgEarth::LineDrawable(GL_LINES);
+  ticks->reserve(numTicks*2);
   const double tickstep = azMax / numTicks;
   const float z = static_cast<float>(sin(tickstep * 0.25));
   for (unsigned int azIndex = 0; azIndex < numTicks; azIndex++)
@@ -349,16 +347,11 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
     const double a = azIndex * tickstep;
     const float x = static_cast<float>(cos(a));
     const float y = static_cast<float>(sin(a));
-    verts->push_back(osg::Vec3f(x, y, 0.0f));
-    verts->push_back(osg::Vec3f(x, y, z));
+    ticks->pushVertex(osg::Vec3f(x, y, 0));
+    ticks->pushVertex(osg::Vec3f(x, y, z));
   }
-  geom->addPrimitiveSet(new osg::DrawArrays(GL_LINES, start, (GLsizei)(verts->size()-start)));
-
-  // if assert fails, algorithm has changed, check for incorrect iteration
-  assert(verts->size() == (numAzPts * numElevRings) + (numTicks * 2));
-
-  osg::Geode* geode = new osg::Geode();
-  geode->addDrawable(geom);
+  ticks->dirty();
+  geomGroup->addChild(ticks);
 
   // N indicator
   osgText::Text* text = new osgText::Text();
@@ -372,7 +365,7 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
   text->setCharacterSize(elevStep * 0.75f);
   text->getOrCreateStateSet()->setRenderBinToInherit();
   text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
-  geode->addDrawable(text);
+  textGroup->addChild(text);
 
   // Elev indicators
   const double cosElevLabelAngle = cos(elevLabelAngle_);
@@ -396,15 +389,16 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
     text->setCharacterSize(static_cast<float>(elevStep * 0.35));
     text->getOrCreateStateSet()->setRenderBinToInherit();
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
-    geode->addDrawable(text);
+    textGroup->addChild(text);
   }
-
-  osg::MatrixTransform* scaler = new osg::MatrixTransform();
-  scaler->addChild(geode);
 
   // install default shader programs
   osgEarth::ShaderGenerator sg;
-  scaler->accept(sg);
+  textGroup->accept(sg);
+
+  osg::MatrixTransform* scaler = new osg::MatrixTransform();
+  scaler->addChild(geomGroup);
+  scaler->addChild(textGroup);
 
   // warp the geometry so the elevation rings are equidistant
   scaler->getOrCreateStateSet()->setAttributeAndModes(warpingProgram_.get(), 1);
@@ -415,37 +409,21 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
   return scaler;
 }
 
-osg::Geode* PlatformAzimElevViewTool::buildTargetGeode_()
+osg::Node* PlatformAzimElevViewTool::buildTargetGeometry_()
 {
   float s = 3000.0f;
-  //float s = 10.0f;
 
-  osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 4);
-  (*v)[0].set(-s, -s, 0.0);
-  (*v)[1].set(s,  s, 0.0);
-  (*v)[2].set(-s,  s, 0.0);
-  (*v)[3].set(s, -s, 0.0);
+  osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
 
-  osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-  (*c)[0].set(1.0, 1.0, 1.0, 1.0);
+  geom->allocate(4);
+  geom->setVertex(0, osg::Vec3(-s, -s, 0.0f));
+  geom->setVertex(1, osg::Vec3( s,  s, 0.0f));
+  geom->setVertex(2, osg::Vec3(-s,  s, 0.0f));
+  geom->setVertex(3, osg::Vec3( s, -s, 0.0f));
 
-  osg::PrimitiveSet* prim = new osg::DrawArrays(GL_LINES, 0, 4);
-
-  osg::Geometry* geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-  geom->setUseDisplayList(false);
-  geom->setVertexArray(v);
-  geom->setColorArray(c);
-  geom->addPrimitiveSet(prim);
-
-  osg::StateSet* stateset = geom->getOrCreateStateSet();
-  simVis::setLighting(stateset, 0);
-  stateset->setAttributeAndModes(new osg::LineWidth(2.0f), 1);
-
-  osg::Geode* geode = new osg::Geode();
-  geode->addDrawable(geom);
-
-  return geode;
+  geom->setColor(osg::Vec4(1,1,1,1));
+  geom->setLineWidth(2.0f);
+  return geom;
 }
 
 #ifdef DEBUG_LABELS
@@ -473,7 +451,7 @@ void PlatformAzimElevViewTool::updateTargetGeometry(osg::MatrixTransform* mt, co
   // if the transform has no children, create the initial subgraph.
   if (mt->getNumChildren() == 0)
   {
-    mt->addChild(targetGeode_.get());
+    mt->addChild(targetGeom_.get());
 
 #ifdef DEBUG_LABELS
     mt->addChild(createText());
@@ -500,7 +478,7 @@ void PlatformAzimElevViewTool::updateTargetGeometry(osg::MatrixTransform* mt, co
 #ifdef DEBUG_LABELS
   double angle = 90.0 - osg::RadiansToDegrees(acos(local_n * s_up));
   ((osgText::Text*)((osg::Geode*)mt->getChild(1))->getDrawable(0))->setText(
-    Stringify() << std::setprecision(2) << angle);
+    osgEarth::Stringify() << std::setprecision(2) << angle);
 #endif
 }
 }

@@ -19,18 +19,16 @@
  * disclose, or release this software.
  *
  */
+#include <cfloat>
 #include <iostream>
-#include <sstream>
-#include <vector>
 #include <limits>
+#include <vector>
 
 #include "simCore/Common/Version.h"
 #include "simCore/Common/Common.h"
 #include "simData/MemoryDataStore.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simUtil/DataStoreTestHelper.h"
-
-using namespace std;
 
 namespace {
 class AssertionException : public std::exception
@@ -140,7 +138,7 @@ void testPlatform_insert()
   // retrieve data points
   struct PlatformSliceCopy : public simData::PlatformUpdateSlice::Visitor
   {
-    vector<simData::PlatformUpdate> updates;
+    std::vector<simData::PlatformUpdate> updates;
     virtual void operator()(const simData::PlatformUpdate *update)
     {
       updates.push_back(*update);
@@ -411,7 +409,7 @@ void testLobGroup_insert()
   // retrieve data points
   struct LobGroupSliceCopy : public simData::LobGroupUpdateSlice::Visitor
   {
-    vector<simData::LobGroupUpdate> updates;
+    std::vector<simData::LobGroupUpdate> updates;
     virtual void operator()(const simData::LobGroupUpdate *update)
     {
       updates.push_back(*update);
@@ -701,7 +699,7 @@ void testGenericData_insert()
    // retrieve data points
   struct GenericDataSliceCopy : public simData::GenericDataSlice::Visitor
   {
-    vector<simData::GenericData_Entry> entries;
+    std::vector<simData::GenericData_Entry> entries;
     virtual void operator()(const simData::GenericData *update)
     {
       if (update == NULL)
@@ -1018,7 +1016,7 @@ int testCategoryData_insert()
    // retrieve data points
   struct CategoryDataSliceCopy : public simData::CategoryDataSlice::Visitor
   {
-    vector<simData::CategoryData> updates;
+    std::vector<simData::CategoryData> updates;
     virtual void operator()(const simData::CategoryData *update)
     {
       updates.push_back(*update);
@@ -1407,7 +1405,7 @@ int TestMemoryDataStore(int argc, char* argv[])
   }
   catch (AssertionException& e)
   {
-    cout << e.what() << endl;
+    std::cout << e.what() << std::endl;
     return 1;
   }
 }

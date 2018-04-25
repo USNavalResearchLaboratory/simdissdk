@@ -145,6 +145,9 @@ void BeamVolume::setBeamScale_(double beamScale)
 /// update prefs that can be updated without rebuilding the whole beam.
 void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
 {
+  if (a == NULL || b == NULL)
+    return;
+
   if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
   {
     // Check for transition between color and override color, then check for color change
@@ -175,6 +178,10 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
 
 void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
 {
+  if (a == NULL || b == NULL)
+    return;
+
+  // the update method calls dirtyBound on all beam volume geometries, so no need for that here
   if (PB_FIELD_CHANGED(a, b, range))
   {
     SVFactory::updateFarRange(beamSV_.get(), b->range());
@@ -643,7 +650,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     setActive_(true);
 
   // all activePrefs must be applied during this creation
-  if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
+  if (force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended)))
   {
     getOrCreateStateSet()->setRenderBinDetails(
       (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),

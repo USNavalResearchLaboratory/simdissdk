@@ -33,6 +33,7 @@ const std::string Units::ELAPSED_TIME_FAMILY("elapsed time");
 const std::string Units::ANGLE_FAMILY("angle");
 const std::string Units::LENGTH_FAMILY("length");
 const std::string Units::SPEED_FAMILY("speed");
+const std::string Units::FREQUENCY_FAMILY("frequency");
 
 const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
 
@@ -73,6 +74,10 @@ const Units Units::FEET_PER_SECOND("feet per second", "ft/sec", 0.3047999, Units
 const Units Units::KILOMETERS_PER_SECOND("kilometers per second", "km/sec", 1e3, Units::SPEED_FAMILY);
 const Units Units::DATA_MILES_PER_HOUR("data miles per hour", "dm/hr", 0.50797738, Units::SPEED_FAMILY);
 const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", 0.91439997, Units::SPEED_FAMILY);
+
+// Frequency units
+const Units Units::HERTZ("cycles per second", "Hz", 1.0, Units::FREQUENCY_FAMILY);
+const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 60.0, Units::FREQUENCY_FAMILY);
 
 ///////////////////////////////////////////////////////
 
@@ -209,6 +214,9 @@ void UnitsRegistry::registerDefaultUnits()
   registerUnits(Units::KILOMETERS_PER_SECOND);
   registerUnits(Units::DATA_MILES_PER_HOUR);
   registerUnits(Units::YARDS_PER_SECOND);
+
+  registerUnits(Units::HERTZ);
+  registerUnits(Units::REVOLUTIONS_PER_MINUTE);
 }
 
 int UnitsRegistry::registerUnits(const Units& units)

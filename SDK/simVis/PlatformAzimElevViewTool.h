@@ -122,7 +122,7 @@ private:
   osg::MatrixTransform* createAzElGrid_();
 
   void rebuild_();
-  osg::Geode* buildTargetGeode_();
+  osg::Node* buildTargetGeometry_();
   void applyOverrides_();
   void applyOverrides_(bool enable);
   void applyOverrides_(EntityNode* node);
@@ -143,7 +143,7 @@ private:
 
   osg::ref_ptr<osg::MatrixTransform> grid_;
   osg::ref_ptr<osg::StateAttribute>  warpingProgram_;
-  osg::ref_ptr<osg::Geode>           targetGeode_;
+  osg::ref_ptr<osg::Node>            targetGeom_;
 };
 
 } // namespace simVis

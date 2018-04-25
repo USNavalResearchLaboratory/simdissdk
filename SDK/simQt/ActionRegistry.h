@@ -124,6 +124,9 @@ public:
   /** remove the action corresponding to the given description; will not search aliases */
   int removeAction(const QString& desc);
 
+  /** remove an action no longer needed, returns 0 on success */
+  int removeUnknownAction(const QString& desc);
+
   /** remove from the given action the given key binding, returns 0 on success */
   int removeHotKey(Action* action, unsigned int bindingNum);
   /** bind the given action to the given hot key, returns 0 on success */

@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <limits>
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarthSymbology/MeshConsolidator"
@@ -419,10 +420,9 @@ void AntennaNode::render_()
       // compute first point in t-strip
       osg::Vec3f pt;
       float gain = ComputeRadius_(azim, elev, polarity_, pt);
-      osg::Vec3f ptNorm(pt);
-      ptNorm.normalize();
       verts->push_back(pt);
-      norms->push_back(ptNorm);
+      pt.normalize();
+      norms->push_back(pt);
       if (colorScale)
         colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
       else
@@ -432,10 +432,9 @@ void AntennaNode::render_()
       // TODO: this calculated result could potentially be reused in the next azim iteration; consider using an index array.
       osg::Vec3f ptne;
       gain = ComputeRadius_(azim2, elev, polarity_, ptne);
-      osg::Vec3f ptneNorm(ptne);
-      ptneNorm.normalize();
       verts->push_back(ptne);
-      norms->push_back(ptneNorm);
+      ptne.normalize();
+      norms->push_back(ptne);
       if (colorScale)
         colors->push_back(colorUtils_->GainThresholdColor(static_cast<int>(gain)));
       else

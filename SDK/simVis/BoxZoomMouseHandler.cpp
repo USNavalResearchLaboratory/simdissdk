@@ -24,6 +24,7 @@
 #include "osgEarthUtil/ViewFitter"
 #include "simVis/EarthManipulator.h"
 #include "simVis/BoxGraphic.h"
+#include "simVis/ModKeyHandler.h"
 #include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/BoxZoomMouseHandler.h"
@@ -35,7 +36,7 @@ BoxZoomMouseHandler::BoxZoomMouseHandler(const osgEarth::Util::EarthManipulator:
   : goToRangeFactor_(1.0),
     durationSec_(1.0),
     buttonMask_(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON),
-    modKeyMask_(0),
+    modKeys_(new ModKeyHandler()),
     cancelDragKey_(osgGA::GUIEventAdapter::KEY_Escape)
 {
   for (auto i = opts.begin(); i != opts.end(); ++i)
@@ -56,6 +57,7 @@ BoxZoomMouseHandler::~BoxZoomMouseHandler()
 {
   // Just in case, remove any remnants of the box
   stopDrag_();
+  delete modKeys_;
 }
 
 bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -80,8 +82,9 @@ bool BoxZoomMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIAct
     // Ignore all button presses after we start out first drag
     if (currentlyDragging)
       return true;
+
     // only handle defined button press, and only if the defined mod key is pressed
-    if (ea.getButtonMask() != buttonMask_ || ea.getModKeyMask() != modKeyMask_)
+    if (ea.getButtonMask() != buttonMask_ || !modKeys_->pass(ea.getModKeyMask()))
       return false;
     // Shouldn't happen, but make sure we don't leave the box laying around in an old view
     if (box_.valid() && zoomView_.valid())
@@ -301,7 +304,7 @@ void BoxZoomMouseHandler::setButtonMask(int buttonMask)
 
 void BoxZoomMouseHandler::setModKeyMask(int modKeyMask)
 {
-  modKeyMask_ = modKeyMask;
+  modKeys_->setModKeys(modKeyMask);
 }
 
 void BoxZoomMouseHandler::setCancelDragKey(int key)

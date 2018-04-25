@@ -28,6 +28,7 @@
 
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
+#include "simVis/LineDrawable.h"
 #include "osgEarthSymbology/Color"
 
 #include "simCore/Calc/Math.h"
@@ -85,41 +86,46 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
 {
   // clean the graph so we can rebuild it.
   this->removeChildren(0, this->getNumChildren());
-  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+  osg::ref_ptr<osg::Geode> geomGroup = new osg::Geode();
+  osg::ref_ptr<osg::Geode> labelGroup = new osg::Geode();
 
   // build for the appropriate grid type:
   switch (prefs.gridtype())
   {
   case simData::LocalGridPrefs_Type_CARTESIAN:
-    createCartesian_(prefs, geode.get());
+    createCartesian_(prefs, geomGroup.get(), labelGroup.get());
     break;
 
   case simData::LocalGridPrefs_Type_POLAR:
-    createRangeRings_(prefs, geode.get(), true);
+    createRangeRings_(prefs, geomGroup.get(), labelGroup.get(), true);
     break;
 
   case simData::LocalGridPrefs_Type_RANGE_RINGS:
-    createRangeRings_(prefs, geode.get(), false);
+    createRangeRings_(prefs, geomGroup.get(), labelGroup.get(), false);
     break;
 
   case simData::LocalGridPrefs_Type_SPEED_RINGS:
-    createSpeedRings_(prefs, geode.get(), false);
+    createSpeedRings_(prefs, geomGroup.get(), labelGroup.get(), false);
     break;
 
   case simData::LocalGridPrefs_Type_SPEED_LINE:
-    createSpeedRings_(prefs, geode.get(), true);
+    createSpeedRings_(prefs, geomGroup.get(), labelGroup.get(), true);
     break;
   }
 
-  // shader needed to draw text properly
-  osgEarth::Registry::shaderGenerator().run(geode.get());
+  // convert osg Geometry to a LineGroup.
+  osgEarth::LineGroup* lineGroup = new osgEarth::LineGroup();
+  lineGroup->import(geomGroup.get());
+  this->addChild(lineGroup);
 
-  // disable lighting
-  osg::StateSet* stateSet = geode->getOrCreateStateSet();
+  // generate text shaders and add the labels:
+  osgEarth::Registry::shaderGenerator().run(labelGroup.get());
+  this->addChild(labelGroup.get());
+  
+  // set up the default state set and render bins:
+  osg::StateSet* stateSet = this->getOrCreateStateSet();
   PointSize::setValues(stateSet, 1.5f, osg::StateAttribute::ON);
   stateSet->setRenderBinDetails(BIN_LOCAL_GRID, BIN_GLOBAL_SIMSDK);
-
-  this->addChild(geode);
 };
 
 void LocalGridNode::validatePrefs(const simData::LocalGridPrefs& prefs)
@@ -350,7 +356,7 @@ osgText::Text* LocalGridNode::createTextPrototype_(const simData::LocalGridPrefs
 }
 
 // creates a Cartesian grid.
-void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geode) const
+void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup) const
 {
   // create one geometry for divisions, and another for sub-divisions
   osg::ref_ptr<osg::Geometry> geomSub = new osg::Geometry();
@@ -424,7 +430,7 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
         osgEarth::Units::convert(osgEarth::Units::METERS, sizeUnits, -x),
         abbrev, prefs.gridlabelprecision());
       label->setPosition(osg::Vec3(-x, 0, 0));
-      geode->addDrawable(label);
+      labelGroup->addDrawable(label);
     }
 
     float y = y0 + divSpacing * (float)p;
@@ -437,17 +443,17 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
         osgEarth::Units::convert(osgEarth::Units::METERS, sizeUnits, y),
         abbrev, prefs.gridlabelprecision());
       label->setPosition(osg::Vec3(0, y, 0));
-      geode->addDrawable(label);
+      labelGroup->addDrawable(label);
     }
   }
 
   // Add the drawable to the geode
-  geode->addDrawable(geomSub);
-  geode->addDrawable(geomDiv);
+  geomGroup->addDrawable(geomSub);
+  geomGroup->addDrawable(geomDiv);
 }
 
 // creates a range-rings local grid with optional polar radials.
-void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool includePolarRadials) const
+void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const
 {
   const Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   // Note that size is halved; it's provided in diameter, and we need it as radius
@@ -512,11 +518,11 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
       osg::ref_ptr<osgText::Text> label = createTextPrototype_(prefs,
         osgEarth::Units::convert(osgEarth::Units::METERS, sizeUnits, radiusM), abbrev, prefs.gridlabelprecision());
       label->setPosition(osg::Vec3(0.0f, radiusM, 0.0f));
-      geode->addDrawable(label);
+      labelGroup->addDrawable(label);
 
       osg::ref_ptr<osgText::Text> label2 = static_cast<osgText::Text*>(label->clone(osg::CopyOp::SHALLOW_COPY));
       label2->setPosition(osg::Vec3(radiusM, 0.0f, 0.0f));
-      geode->addDrawable(label2);
+      labelGroup->addDrawable(label2);
     }
   }
 
@@ -552,11 +558,11 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
     geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, primitiveSetStart, verts));
   }
 
-  geode->addDrawable(geom);
+  geomGroup->addDrawable(geom);
 }
 
 // creates a speed-rings local grid with optional polar radials.
-void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool drawSpeedLine) const
+void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool drawSpeedLine) const
 {
   // determine the speed to be used for calculating the rings
   double speedMS = 10.0f; // m/s; this default should never be needed, should be overridden by DefaultDataStoreValues
@@ -704,14 +710,14 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
 
       // text label for major axis/speed line:
       label->setPosition(osg::Vec3(0.0f, radiusM, 0.0f));
-      geode->addDrawable(label);
+      labelGroup->addDrawable(label);
 
       // text label for minor axis:
       if (!drawSpeedLine)
       {
         osg::ref_ptr<osgText::Text> label2 = static_cast<osgText::Text*>(label->clone(osg::CopyOp::SHALLOW_COPY));
         label2->setPosition(osg::Vec3(radiusM, 0.0f, 0.0f));
-        geode->addDrawable(label2);
+        labelGroup->addDrawable(label2);
       }
     }
   }
@@ -754,7 +760,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     }
     geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, primitiveSetStart, verts));
   }
-  geode->addDrawable(geom);
+  geomGroup->addDrawable(geom);
 }
 
 void LocalGridNode::addLineStrip_(osg::Geometry& geom, osg::Vec3Array& vertices, int& primitiveSetStart,

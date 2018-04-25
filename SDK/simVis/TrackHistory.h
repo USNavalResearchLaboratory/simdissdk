@@ -27,6 +27,7 @@
 #include "simData/DataTable.h"
 #include "osg/Geode"
 #include "osg/MatrixTransform"
+#include "simVis/LineDrawable.h"
 #include "simVis/TrackChunkNode.h"
 #include "simVis/Types.h"
 
@@ -240,8 +241,7 @@ namespace simVis
     simVis::Color                 lastOverrideColor_;
     osg::ref_ptr<osg::Uniform>    flatModeUniform_;
     osg::ref_ptr<osg::Group>      chunkGroup_;
-    osg::ref_ptr<osg::Vec3Array>  dropVerts_;
-    osg::ref_ptr<osg::Geometry>   dropVertsDrawable_;
+    osg::ref_ptr<osgEarth::LineDrawable>   dropVertsDrawable_;
     osg::MatrixTransform*         altModeXform_;
     const simData::DataSliceBase* updateSliceBase_;
     PlatformTspiFilterManager& platformTspiFilterManager_;

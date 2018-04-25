@@ -23,10 +23,11 @@
 #include "osg/CullFace"
 #include "osg/Depth"
 #include "osg/Geode"
-#include "osg/LineWidth"
 #include "osg/PolygonMode"
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
+
+#include "simVis/LineDrawable.h"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -278,7 +279,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     outlineGeom->setUseVertexBufferObjects(true);
     outlineGeom->setUseDisplayList(false);
     outlineGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
-    outlineGeom->setCullingActive(false);
 
     osg::Vec4Array* outlineColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*outlineColor)[0] = d.color_;
@@ -292,11 +292,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     outlineGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
 
     outlineGeom->setNormalArray(normalArray);
-
-    // configure a state set
-    outlineGeom->getOrCreateStateSet()->setAttributeAndModes(
-      new osg::LineWidth(d.outlineWidth_),
-      osg::StateAttribute::ON);
 
     // horizontals of the gate face outline
     for (unsigned int z = 0; z < numPointsZ; z += (numPointsZ - 1)) // iterate twice, first for the bottom, 2nd for the top
@@ -850,10 +845,13 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
     }
   }
 
-  // finally, configure the stateset
-  geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(d.outlineWidth_), osg::StateAttribute::ON);
   return geom;
 }
+
+
+// A SphericalVolume is a MatrixTransform that parents up to two geodes.
+// The first geode always contains the primary geometry, and possibly a second outline geometry.
+// The second geode (if it exists) contains a wireframe geometry.
 
 osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
@@ -912,13 +910,25 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
   updateBlending(xform, d.blendingEnabled_);
   updateStippling(xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
 
+  // convert line geometries to LineDrawables, and remove old drawables.
+  osgEarth::LineGroup* lineGroup = new osgEarth::LineGroup();
+  lineGroup->import(geodeSolid.get(), true);
+  // Apply the line width to all the items in the line group
+  for (unsigned int i = 0; i < lineGroup->getNumChildren(); ++i)
+  {
+    osgEarth::LineDrawable* line = lineGroup->getLineDrawable(i);
+    if (line)
+      line->setLineWidth(d.outlineWidth_);
+  }
+  xform->addChild(lineGroup);
+
   return xform;
 }
 
 void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
 {
   // only the solid geometry can be stippled
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL || geom->empty())
@@ -929,7 +939,7 @@ void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
 void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
 {
   // lighting is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL || geom->empty())
@@ -944,7 +954,7 @@ void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
 void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
 {
   // blending is only applied to the solid geometry
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL || geom->empty())
@@ -958,7 +968,7 @@ void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
 
 void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color)
 {
-  osg::Geometry* geom = SVFactory::solidGeometry_(xform);
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(geom);
   if (geom == NULL)
@@ -980,26 +990,17 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 
   // if we have an (optional) outline geometry, update its color, remove transparency
-  geom = SVFactory::outlineGeometry(xform);
-  if (geom == NULL)
+  osgEarth::LineGroup* lines = SVFactory::outlineGeometry(xform);
+  if (lines == NULL)
     return;
-  colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
-  if (colors)
+
+  osg::Vec4f opaqueColor = color;
+  opaqueColor.a() = 1.0;
+  for (unsigned int i = 0; i < lines->getNumChildren(); ++i)
   {
-    const size_t colorsSize = colors->size();
-    // check that all geometries use BIND_OVERALL, and color arrays are fixed at size 1
-    assert(colorsSize == 1);
-#ifdef DEBUG
-    OE_INFO << "update color, size = " << colorsSize << std::endl;
-#endif
-    if ((*colors)[0][0] != color[0] ||
-        (*colors)[0][1] != color[1] ||
-        (*colors)[0][2] != color[2])
-    {
-      colors->assign(colorsSize, color);
-      (*colors)[0][3] = 1.0f;
-      colors->dirty();
-    }
+    osgEarth::LineDrawable* line = lines->getLineDrawable(i);
+    if (line)
+      line->setColor(opaqueColor);
   }
 }
 
@@ -1034,7 +1035,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
   }
 
   verts->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
@@ -1068,7 +1069,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
   }
 
   verts->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
@@ -1153,7 +1154,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
 
   verts->dirty();
   normals->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
@@ -1237,10 +1238,10 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
 
   verts->dirty();
   normals->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
-osg::Geometry* SVFactory::solidGeometry_(osg::MatrixTransform* xform)
+osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 {
   if (xform == NULL || xform->getNumChildren() == 0)
     return NULL;
@@ -1251,14 +1252,11 @@ osg::Geometry* SVFactory::solidGeometry_(osg::MatrixTransform* xform)
 }
 
 // if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
-osg::Geometry* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
+osgEarth::LineGroup* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
 {
   if (xform == NULL || xform->getNumChildren() == 0)
     return NULL;
-  osg::Geode* geode = xform->getChild(0)->asGeode();
-  if (geode == NULL || geode->getNumDrawables() < 2)
-    return NULL;
-  return geode->getDrawable(1)->asGeometry();
+  return dynamic_cast<osgEarth::LineGroup*>(xform->getChild(1));
 }
 
 // if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
@@ -1284,4 +1282,38 @@ osg::Geometry* SVFactory::validGeometry_(osg::MatrixTransform* xform)
     return geom;
   }
   return NULL;
+}
+
+// dirty bounds for all geometries in the xform
+void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
+{
+  if (xform == NULL || xform->getNumChildren() == 0)
+    return;
+
+  // handle the geometries in the primary geode
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  if (geom && !geom->empty())
+    geom->dirtyBound();
+
+  osg::Group* group = SVFactory::outlineGeometry(xform);
+  if (group)
+  {
+    for (unsigned int i = 0; i < group->getNumChildren(); ++i)
+    {
+      if (group->getChild(i)->asDrawable())
+        group->getChild(i)->dirtyBound();
+    }
+  }
+
+  if (xform->getNumChildren() > 1)
+  {
+    // DRAW_MODE_WIRE paired with another DRAW_MODE_ is the only case of two geodes in the xform
+    osg::Geode* geode = xform->getChild(1)->asGeode();
+    if (geode && geode->getNumDrawables() > 0)
+    {
+      osg::Geometry* geom = geode->getDrawable(0)->asGeometry();
+      if (geom && !geom->empty())
+        geom->dirtyBound();
+    }
+  }
 }

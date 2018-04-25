@@ -21,11 +21,11 @@
  */
 #include <cassert>
 
-#include "osg/LineWidth"
 #include "osgEarth/Capabilities"
 #include "osgEarth/Horizon"
 #include "osgEarth/Registry"
 #include "osgEarth/VirtualProgram"
+#include "simVis/LineDrawable.h"
 
 #include "simNotify/Notify.h"
 #include "simData/DataTable.h"
@@ -390,25 +390,16 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
   // create the altmode group if necessary:
   if (altmode && altModeXform_ == NULL)
   {
-    dropVertsDrawable_ = new osg::Geometry();
-    dropVertsDrawable_->setUseVertexBufferObjects(true);
+    dropVertsDrawable_ = new osgEarth::LineDrawable(GL_LINES);
+    dropVertsDrawable_->setColor(osg::Vec4(1,1,1,1));
+    dropVertsDrawable_->allocate(2);
+    dropVertsDrawable_->dirty();
 
-    dropVerts_ = new osg::Vec3Array(2);
-    (*dropVerts_)[0].set(0, 0, 0);
-    (*dropVerts_)[1].set(0, 0, 0);  // Will be updated in updateAltModePositionAndAppearance_
-    dropVertsDrawable_->setVertexArray(dropVerts_.get());
-
-    osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-    (*colors)[0].set(1, 1, 1, 1);
-    dropVertsDrawable_->setColorArray(colors);
-
-    dropVertsDrawable_->addPrimitiveSet(new osg::DrawArrays(GL_LINES, 0, 2));
-
-    osg::Geode* geode = new osg::Geode();
-    geode->addDrawable(dropVertsDrawable_);
+    // only necessary because we don't put the drawable under a LineGroup:
+    dropVertsDrawable_->installShader();
 
     altModeXform_ = new osg::MatrixTransform();
-    altModeXform_->addChild(geode);
+    altModeXform_->addChild(dropVertsDrawable_.get());
 
     this->addChild(altModeXform_);
   }
@@ -437,14 +428,7 @@ void TrackHistoryNode::updateAltModePositionAndAppearance_(const osg::Matrixd& m
 
   altModeXform_->setMatrix(mat);
 
-  osg::Array* colors =
-    static_cast<osg::Geode*>(altModeXform_->getChild(0))
-    ->getDrawable(0)
-    ->asGeometry()
-    ->getColorArray();
-
-  (*static_cast<osg::Vec4Array*>(colors))[0] = color;
-  colors->dirty();
+  dropVertsDrawable_->setColor(color);
 
   osg::Matrixd world2local;
   world2local.invert(mat);
@@ -460,9 +444,7 @@ void TrackHistoryNode::updateAltModePositionAndAppearance_(const osg::Matrixd& m
   geo.createWorldUpVector(up);
   up.normalize();
 
-  (*dropVerts_)[1] = (world - up*geo.alt()) * world2local;
-  dropVerts_->dirty();
-  dropVertsDrawable_->dirtyBound();
+  dropVertsDrawable_->setVertex(1, (world - up*geo.alt()) * world2local);
 }
 
 void TrackHistoryNode::setHostBounds(const osg::Vec2& bounds)
@@ -620,7 +602,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
   {
     double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
     osg::StateSet* stateSet = this->getOrCreateStateSet();
-    stateSet->setAttributeAndModes(new osg::LineWidth(lineWidth), osg::StateAttribute::ON);
+    osgEarth::LineDrawable::setLineWidth(stateSet, lineWidth);
     PointSize::setValues(stateSet, lineWidth, osg::StateAttribute::ON);
   }
 

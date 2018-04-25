@@ -19,8 +19,7 @@
  * disclose, or release this software.
  *
  */
-#include <climits>
-
+#include <limits>
 #include "osg/Image"
 #include "osgDB/FileUtils"
 
@@ -152,6 +151,7 @@ void HudTextAdapter::update_()
     if (osgTextVector_.size() <= ii)
     {
       osgText = new osgText::Text();
+      osgText->setDataVariance(osg::Object::DYNAMIC);
       osgTextVector_.push_back(osgText);
       addDrawable(osgText.get());
 
@@ -894,6 +894,7 @@ void HudImage::update_()
   tex2d->setResizeNonPowerOfTwoHint(true);
   tex2d->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
   tex2d->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+  simVis::fixTextureForGlCoreProfile(tex2d.get());
   geometry->getOrCreateStateSet()->setTextureAttributeAndModes(0, tex2d, osg::StateAttribute::ON);
 
   // Add to the geode

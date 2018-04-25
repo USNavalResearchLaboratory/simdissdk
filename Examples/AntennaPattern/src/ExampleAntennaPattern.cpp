@@ -334,11 +334,13 @@ int main(int argc, char **argv)
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
   viewer->setMap(map.get());
-
+  viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
+
+  // add sky node
+  simExamples::addDefaultSkyNode(viewer.get());
   if (scene->getSkyNode())
     scene->getSkyNode()->setDateTime(osgEarth::Util::DateTime(2012, 0, 0, 11.0));
-  viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   AppData app;
 

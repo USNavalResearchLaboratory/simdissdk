@@ -19,6 +19,7 @@
 * disclose, or release this software.
 *
 */
+#include <limits>
 #include "osg/Depth"
 #include "osgEarthAnnotation/LabelNode"
 #include "simCore/Calc/Math.h"

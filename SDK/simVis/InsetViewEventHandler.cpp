@@ -19,16 +19,14 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Geometry"
-#include "osg/Geode"
 #include "osg/MatrixTransform"
 #include "osg/Notify"
-#include "osg/LineStipple"
 #include "osgDB/ReadFile"
 #include "simNotify/Notify.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Utils.h"
 #include "simVis/InsetViewEventHandler.h"
+#include "simVis/BoxGraphic.h"
 
 using namespace simVis;
 
@@ -39,36 +37,14 @@ namespace
   // inset view rectangle
   static osg::MatrixTransform* createRubberBand()
   {
-    osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(4);
-    (*verts)[0].set(0, 0, 0);
-    (*verts)[1].set(0, 1, 0);
-    (*verts)[2].set(1, 1, 0);
-    (*verts)[3].set(1, 0, 0);
-
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
-    (*colors)[0].set(1, 1, 1, 1);
-
-    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-    geom->setUseVertexBufferObjects(true);
-
-    geom->setVertexArray(verts.get());
-    geom->setColorArray(colors.get());
-    geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 4));
-#ifdef OSG_GL1_AVAILABLE
-    // Line Stipple is only available in GL1 and needs to be implemented in shader for GL3
-    geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineStipple(6, 0x5555), 1);
-#endif
-
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-    geode->addDrawable(geom.get());
-    simVis::setLighting(geode->getOrCreateStateSet(),
-        osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+    simVis::BoxGraphic* box = new simVis::BoxGraphic(0, 0, 1, 1, 1.0f, 0x5555);
+    box->setStippleFactor(6u);
 
     osg::MatrixTransform* xform = new osg::MatrixTransform();
-    xform->addChild(geode);
+    xform->addChild(box);
 
-    geom->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, 0);
-    geode->setCullingActive(false);
+    box->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, 0);
+    box->setCullingActive(false);
 
     return xform;
   }

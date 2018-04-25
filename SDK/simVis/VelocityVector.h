@@ -23,7 +23,6 @@
 #define SIMVIS_VELOCITY_VECTOR_H
 
 #include <osg/Group>
-#include <osg/LineWidth>
 #include <osg/Vec4f>
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
@@ -80,7 +79,7 @@ private: // methods
 
   simData::PlatformPrefs               lastPrefs_;          ///< last prefs update
   bool                                 forceRebuild_;       ///< flag to force a rebuild
-  osg::ref_ptr<osg::LineWidth>         lineWidth_;          ///< width of velocity vector lines
+  float                                lineWidth_;          ///< width of velocity vector lines
   osg::Vec4f                           vectorColor_;        ///< color for velocity vector, in osg format: r,g,b,a values 0.0-1.0
   simData::PlatformUpdate              lastUpdate_;         ///< Platform location and velocity
 };

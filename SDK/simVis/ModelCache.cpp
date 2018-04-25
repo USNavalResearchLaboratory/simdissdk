@@ -20,6 +20,7 @@
  *
  */
 #include <cassert>
+#include <limits>
 #include "osg/LOD"
 #include "osg/Node"
 #include "osg/NodeVisitor"
@@ -127,7 +128,6 @@ public:
   ModelCacheLoaderOptions()
     : boxWhenNotFound(false),
       addLodNode(true),
-      runShaderGenerator(true),
       clock(NULL)
   {
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
@@ -142,7 +142,6 @@ public:
       boxWhenNotFound(rhs.boxWhenNotFound),
       addLodNode(rhs.addLodNode),
       optimizeFlags(rhs.optimizeFlags),
-      runShaderGenerator(rhs.runShaderGenerator),
       clock(rhs.clock),
       sequenceTimeUpdater(rhs.sequenceTimeUpdater)
   {
@@ -162,8 +161,6 @@ public:
   bool addLodNode;
   /** Change the flags sent to optimizer.  Set to 0 to disable optimization. */
   unsigned int optimizeFlags;
-  /** Set true to run the osgEarth shader generator on the resulting node. */
-  bool runShaderGenerator;
   /** Clock object used for SIMDIS Media Player 2 playlist nodes. */
   simCore::Clock* clock;
   /** Pointer to the class that fixes osg::Sequence; see simVis::Registry::sequenceTimeUpdater_. */
@@ -273,16 +270,14 @@ private:
       osgUtil::Optimizer o;
       o.optimize(result, options->optimizeFlags);
     }
-
     // Disable depth on all incoming models
     simVis::DisableDepthOnAlpha::setValues(result->getOrCreateStateSet(), osg::StateAttribute::ON);
 
-    // generate shaders.
-    if (options->runShaderGenerator)
-    {
-      osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
-      osgEarth::Registry::shaderGenerator().run(result.get(), stateCache.get());
-    }
+    // At one point, we would run the shader generator here in the threaded
+    // context.  However, in SIMDIS code in the Simple Server example, it looked
+    // like doing so would corrupt the vertex arrays on some text, sometimes,
+    // in unrelated objects.  As a result, the shader generator is now only
+    // run in the main thread.
   }
 
   /** Helper method to process the filename into an image.  Also handles SIMDIS MP2 files. */
@@ -472,6 +467,11 @@ public:
           // Load was requested, but didn't have a URI.  Someone might be messing with our nodes.
           assert(0);
         }
+
+        // Run the shader generator on the newly loaded node (in main thread)
+        osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
+        osgEarth::Registry::shaderGenerator().run(loaded.get(), stateCache.get());
+
         // Alert callbacks
         fireLoadFinished_(uri, loaded.get());
 

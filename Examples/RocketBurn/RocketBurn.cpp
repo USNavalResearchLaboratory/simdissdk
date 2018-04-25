@@ -157,6 +157,7 @@ void addVaporTrail(simVis::VaporTrailStorage &storage, simData::ObjectId platId)
   {
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D();
     texture->setImage(osgDB::readImageFile(foundFile));
+    simVis::fixTextureForGlCoreProfile(texture.get());
     textures.push_back(texture);
   }
 

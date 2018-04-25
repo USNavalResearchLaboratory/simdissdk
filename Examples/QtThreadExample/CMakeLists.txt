@@ -29,14 +29,14 @@ vsi_qt_wrap_ui(MY_UI QThreadExample.ui)
 # Initialize Qt variables
 VSI_INCLUDE_QT_USE_FILE(QTOPENGL)
 
-add_executable(example_qthread ${PROJECT_FILES} ${MY_WIDGETS_MOC} ${MY_UI})
-target_link_libraries(example_qthread PRIVATE simCore simData simVis
+add_executable(example_qtthreadexample ${PROJECT_FILES} ${MY_WIDGETS_MOC} ${MY_UI})
+target_link_libraries(example_qtthreadexample PRIVATE simCore simData simVis
     simUtil simQt)
-target_include_directories(example_qthread PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_target_properties(example_qthread PROPERTIES
+target_include_directories(example_qtthreadexample PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties(example_qtthreadexample PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - QThread Example"
+    PROJECT_LABEL "Example - Qt Thread Example"
 )
-vsi_install_target(example_qthread SDK_Examples)
+vsi_install_target(example_qtthreadexample SDK_Examples)
 
-VSI_QT_USE_MODULES(example_qthread LINK_PRIVATE Widgets OpenGL)
+VSI_QT_USE_MODULES(example_qtthreadexample LINK_PRIVATE Widgets OpenGL)

@@ -8,10 +8,10 @@ set(PROJECT_FILES
     src/GateTest.cpp
 )
 
-add_executable(example_gate ${PROJECT_FILES})
-target_link_libraries(example_gate PRIVATE simVis simUtil)
-set_target_properties(example_gate PROPERTIES
+add_executable(example_gatetest ${PROJECT_FILES})
+target_link_libraries(example_gatetest PRIVATE simVis simUtil)
+set_target_properties(example_gatetest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Gates"
+    PROJECT_LABEL "Example - Gates Test"
 )
-vsi_install_target(example_gate SDK_Examples)
+vsi_install_target(example_gatetest SDK_Examples)

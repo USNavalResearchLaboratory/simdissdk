@@ -20,7 +20,6 @@
  *
  */
 #include "osgEarth/Horizon"
-#include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/Entity.h"
 #include "simVis/View.h"
@@ -125,14 +124,13 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
   if (recalculateVPW_() != 0)
     return INVALID_COORDINATE;
 
-  // this could be simplified to a coord conversion
-  double alt = lla.alt();
-  if (view_.valid() && view_->isOverheadEnabled())
-    alt = 0.0;
-  osg::Matrix ecefMatrix;
-  osgEarth::SpatialReference::create("wgs84")->getEllipsoid()->computeLocalToWorldTransformFromLatLongHeight(lla.lat(), lla.lon(), alt, ecefMatrix);
+  simCore::Vec3 ecefOut;
+  if (!view_.valid() || !view_->isOverheadEnabled())
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
+  else
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lla.lat(), lla.lon(), 0.0), ecefOut);
 
-  return matrixCalculate_(ecefMatrix.getTrans());
+  return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
 }
 
 int ScreenCoordinateCalculator::recalculateVPW_()

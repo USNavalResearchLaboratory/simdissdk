@@ -22,7 +22,6 @@
 #ifndef SIMVIS_AXIS_VECTOR_H
 #define SIMVIS_AXIS_VECTOR_H
 
-#include "osg/LineWidth"
 #include "osg/MatrixTransform"
 #include "osg/Vec3"
 #include "simCore/Common/Common.h"
@@ -30,6 +29,7 @@
 #include "simVis/Types.h"
 
 namespace osg { class Geometry; }
+namespace osgEarth { class LineGroup; }
 
 namespace simVis
 {
@@ -87,16 +87,12 @@ private:
   /// create the axis vector lines
   void createAxisVectors_(osg::Geode* geode) const;
 
-  /// Draws a straight line between two points, subdividing it an arbitrary number of times
-  void addLineStrip_(osg::Geometry& geom, osg::Vec3Array& vertices, int& primitiveSetStart,
-    const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine) const;
-
   /// width of axis vector lines
-  osg::ref_ptr<osg::LineWidth> lineWidth_;
-  /// array of X, Y, and Z colors for binding
-  osg::ref_ptr<osg::Vec4Array> colors_;
+  float lineWidth_;
   /// most recent value for axis size
   osg::Vec3f axisLengths_;
+  /// holds the 3 axis vectors
+  osg::ref_ptr<osgEarth::LineGroup> geode_;
 };
 
 } // namespace simVis

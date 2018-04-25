@@ -98,13 +98,13 @@ namespace simVis
     osgText::Text* createTextPrototype_(const simData::LocalGridPrefs& prefs, const std::string& str) const;
 
     /// create Cartesian grid display
-    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geode) const;
+    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup) const;
 
     /// create polar ring or range ring display
-    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool includePolarRadials) const;
+    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const;
 
     /// create speed ring or speed line display
-    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool drawSpeedLine) const;
+    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool drawSpeedLine) const;
 
     /// Draws a straight line between two points, subdividing it an arbitrary number of times
     void addLineStrip_(osg::Geometry& geom, osg::Vec3Array& vertices, int& primitiveSetStart,

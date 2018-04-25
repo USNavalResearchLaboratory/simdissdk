@@ -22,6 +22,7 @@
 #ifndef SIMDATA_MEMORYDATASLICE_INL_H
 #define SIMDATA_MEMORYDATASLICE_INL_H
 
+#include <algorithm>
 #include <limits>
 #include "simData/DataStore.h"
 #include "simData/MessageVisitor/Message.h"

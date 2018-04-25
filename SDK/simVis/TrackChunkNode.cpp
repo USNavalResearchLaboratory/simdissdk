@@ -41,7 +41,8 @@ TrackChunkNode::TrackChunkNode(unsigned int maxSize, const osgEarth::SpatialRefe
 TrackChunkNode::~TrackChunkNode()
 {
   geode_ = NULL;
-  center_ = NULL;
+  centerLine_ = NULL;
+  centerPoints_ = NULL;
   ribbon_ = NULL;
   drop_ = NULL;
   srs_ = NULL;
@@ -90,7 +91,7 @@ bool TrackChunkNode::getNewestData(osg::Matrix& out_matrix, double& out_time) co
 {
   if (count_ == 0)
     return false;
-  const osg::Vec3& p = (*centerVerts_)[offset_ + count_ - 1];
+  const osg::Vec3& p = centerLine_->getVertex(offset_ + count_ - 1);
   out_matrix.makeTranslate(p * getMatrix());
   out_time = times_[offset_ + count_ - 1];
   return true;
@@ -137,10 +138,9 @@ unsigned int TrackChunkNode::removePointsBefore(double t)
 /// set the draw mode of the center line
 void TrackChunkNode::setCenterLineMode(const simData::TrackPrefs_Mode& mode)
 {
-  if (mode == simData::TrackPrefs_Mode_POINT)
-    centerPSet_->setMode(GL_POINTS);
-  else
-    centerPSet_->setMode(GL_LINE_STRIP);
+  bool usePoints = (mode == simData::TrackPrefs_Mode_POINT);
+  centerLine_->setNodeMask(usePoints? 0 : ~0);
+  centerPoints_->setNodeMask(usePoints? ~0 : 0);
 }
 
 /// allocate the graphical elements for this chunk.
@@ -158,65 +158,43 @@ void TrackChunkNode::allocate_()
   count_  = 0;
 
   // geode to hold all geometry:
-  geode_ = new osg::Geode();
+  geode_ = new osgEarth::LineGroup();
   this->addChild(geode_);
 
-  // center line:
-  centerVerts_  = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, maxSize_);
-  centerColors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, maxSize_);
-  centerPSet_   = new osg::DrawArrays(GL_POINTS, 0, 0);
-  center_ = new osg::Geometry();
-  center_->setVertexArray(centerVerts_);
-  center_->addPrimitiveSet(centerPSet_);
-  center_->setColorArray(centerColors_);
-  center_->setUseVertexBufferObjects(true);
-  center_->setDataVariance(osg::Object::DYNAMIC);
-  osg::VertexBufferObject* vbo = centerVerts_->getVertexBufferObject();
-  if (vbo)
-    vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
+  // center line (line mode)
+  centerLine_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  centerLine_->setDataVariance(osg::Object::DYNAMIC);
+  centerLine_->allocate(maxSize_);
+  geode_->addChild(centerLine_.get());
 
-  if (mode_ == simData::TrackPrefs_Mode_POINT)
-    centerPSet_->setMode(GL_POINTS);
-  else if (mode_ == simData::TrackPrefs_Mode_LINE)
-    centerPSet_->setMode(GL_LINE_STRIP);
-  else if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
+  // center line (point mode)
+  centerPoints_ = new osg::Geometry();
+  centerPoints_->setUseVertexBufferObjects(true);
+  centerPoints_->setUseDisplayList(false);
+  osg::Vec3Array* verts = new osg::Vec3Array();
+  verts->assign(maxSize_, osg::Vec3(0,0,0));
+  centerPoints_->setVertexArray(verts);
+  osg::Vec4Array* colors = new osg::Vec4Array();
+  colors->setBinding(osg::Array::BIND_PER_VERTEX);
+  colors->assign(maxSize_, osg::Vec4(1,1,1,1));
+  centerPoints_->setColorArray(colors);
+  centerPoints_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
+  this->addChild(centerPoints_.get());
+
+  if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
   {
-    // drop line:
-    dropVerts_  = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 2*maxSize_);
-    dropColors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, 2*maxSize_);
-    dropPSet_   = new osg::DrawArrays(GL_LINES, 0, 0);
-    drop_ = new osg::Geometry();
-    drop_->setVertexArray(dropVerts_);
-    drop_->addPrimitiveSet(dropPSet_);
-    drop_->setColorArray(dropColors_);
-    drop_->setUseDisplayList(false);
-    drop_->setUseVertexBufferObjects(true);
+    drop_ = new osgEarth::LineDrawable(GL_LINES);
     drop_->setDataVariance(osg::Object::DYNAMIC);
-    vbo = dropVerts_->getVertexBufferObject();
-    if (vbo)
-      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
-    geode_->addDrawable(drop_);
+    drop_->allocate(2*maxSize_);
+    geode_->addChild(drop_.get());
   }
   else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
   {
-    // ribbon:
-    ribbon_ = new osg::Geometry();
-    ribbonVerts_  = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, 6*maxSize_);
-    ribbonColors_ = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, 6*maxSize_);
-    ribbonPSet_   = new osg::DrawArrays(GL_LINES, 0, 0);
-    ribbon_->setVertexArray(ribbonVerts_);
-    ribbon_->addPrimitiveSet(ribbonPSet_);
-    ribbon_->setColorArray(ribbonColors_);
-    ribbon_->setUseDisplayList(false);
-    ribbon_->setUseVertexBufferObjects(true);
+    ribbon_ = new osgEarth::LineDrawable(GL_LINES);
     ribbon_->setDataVariance(osg::Object::DYNAMIC);
-    vbo = ribbonVerts_->getVertexBufferObject();
-    if (vbo)
-      vbo->setUsage(GL_DYNAMIC_DRAW_ARB);
-    geode_->addDrawable(ribbon_);
+    ribbon_->allocate(6*maxSize_);
+    geode_->addChild(ribbon_.get());
   }
-  // start with just the center line/points:
-  geode_->addDrawable(center_.get());
 
   // reset to identity matrices
   world2local_ = osg::Matrixd::identity();
@@ -268,11 +246,17 @@ void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
   const unsigned int i = offset_ + count_;
 
   // append to the centerline track (1 vert)
-  (*centerVerts_)[i]  = local;
-  (*centerColors_)[i] = color;
-  centerVerts_->dirty();
-  centerColors_->dirty();
-  center_->dirtyBound();
+  centerLine_->setVertex(i, local);
+  centerLine_->setColor(i, color);
+
+  // and update the center points track as well:
+  osg::Vec3Array& centerPointsVerts = static_cast<osg::Vec3Array&>(*centerPoints_->getVertexArray());
+  centerPointsVerts[i] = local;
+  centerPointsVerts.dirty();
+  osg::Vec4Array& centerPointsColors = static_cast<osg::Vec4Array&>(*centerPoints_->getColorArray());
+  centerPointsColors[i] = color;
+  centerPointsColors.dirty();
+  centerPoints_->dirtyBound();
 
   if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
   {
@@ -283,13 +267,10 @@ void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
     geo.createWorldUpVector(up);
     up.normalize();
 
-    (*dropVerts_) [2*i]   = local;
-    (*dropVerts_) [2*i+1] = (world - up*geo.alt()) * world2local_;
-    (*dropColors_)[2*i]   = color;
-    (*dropColors_)[2*i+1] = color;
-    dropVerts_->dirty();
-    dropColors_->dirty();
-    drop_->dirtyBound();
+    drop_->setVertex(2*i, local);
+    drop_->setVertex(2*i+1, (world - up*geo.alt()) * world2local_);
+    drop_->setColor(2*i, color);
+    drop_->setColor(2*i+1, color);
   }
   else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
   {
@@ -299,44 +280,44 @@ void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
     const osg::Vec3f left  = osg::Vec3d(hostBounds.x(), 0.0, 0.0) * posMatrix;
     const osg::Vec3f right = osg::Vec3d(hostBounds.y(), 0.0, 0.0) * posMatrix;
 
-    const osg::Vec3& leftPrev  = count_ > 0 ? (*ribbonVerts_)[6*i-2] : left;
-    const osg::Vec3& rightPrev = count_ > 0 ? (*ribbonVerts_)[6*i-1] : right;
-
+    const osg::Vec3& leftPrev  = count_ > 0 ? ribbon_->getVertex(6*i-2) : left;
+    const osg::Vec3& rightPrev = count_ > 0 ? ribbon_->getVertex(6*i-1) : right;
+    
     // add connector lines to previous sample
     // TODO: account for previous chunk
-    (*ribbonVerts_)[6*i]   = leftPrev;
-    (*ribbonVerts_)[6*i+1] = left;
-    (*ribbonVerts_)[6*i+2] = rightPrev;
-    (*ribbonVerts_)[6*i+3] = right;
+    ribbon_->setVertex(6*i, leftPrev);
+    ribbon_->setVertex(6*i+1, left);
+    ribbon_->setVertex(6*i+2, rightPrev);
+    ribbon_->setVertex(6*i+3, right);
     // ..and the new sample:
-    (*ribbonVerts_)[6*i+4] = left;
-    (*ribbonVerts_)[6*i+5] = right;
+    ribbon_->setVertex(6*i+4, left);
+    ribbon_->setVertex(6*i+5, right);
 
     for (unsigned int c = 0; c < 6; ++c)
-      (*ribbonColors_)[6*i+c] = color;
-
-    ribbonVerts_->dirty();
-    ribbonColors_->dirty();
-    ribbon_->dirtyBound();
+      ribbon_->setColor(6*i+c, color);
   }
 }
 
 /// update the offset and count on each primitive set to draw the proper data.
 void TrackChunkNode::updatePrimitiveSets_()
 {
-  centerPSet_->setFirst(offset_);
-  centerPSet_->setCount(count_);
+  centerLine_->setFirst(offset_);
+  centerLine_->setCount(count_);
+
+  osg::DrawArrays& centerPointsPrimSet = static_cast<osg::DrawArrays&>(*centerPoints_->getPrimitiveSet(0));
+  centerPointsPrimSet.setFirst(offset_);
+  centerPointsPrimSet.setCount(count_);
 
   if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
   {
-    dropPSet_->setFirst(2*offset_);
-    dropPSet_->setCount(2*count_);
+    drop_->setFirst(2*offset_);
+    drop_->setCount(2*count_);
   }
   else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
   {
     // TODO: fix for the first segment, which only has 2 instead of 6.
-    ribbonPSet_->setFirst(6*offset_);
-    ribbonPSet_->setCount(6*count_);
+    ribbon_->setFirst(6*offset_);
+    ribbon_->setCount(6*count_);
   }
 }
 
@@ -350,10 +331,8 @@ void TrackChunkNode::fixRibbon_()
     // TrackHistoryNode, when removing points, also removes chunks when their size = 0
     assert(offset_ < maxSize_);
     // reset verts that linked to a previous point that has been removed
-    (*ribbonVerts_)[6 * offset_] = (*ribbonVerts_)[6 * offset_ + 1];
-    (*ribbonVerts_)[6 * offset_ + 2] = (*ribbonVerts_)[6 * offset_ + 3];
-    ribbonVerts_->dirty();
-    ribbon_->dirtyBound();
+    ribbon_->setVertex(6 * offset_, ribbon_->getVertex(6*offset_+1));
+    ribbon_->setVertex(6 * offset_ + 2, ribbon_->getVertex(6*offset_+3));
   }
 }
 

@@ -19,25 +19,25 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Math"
-#include "osg/BlendFunc"
-#include "osg/NodeVisitor"
-#include "osg/MatrixTransform"
-#include "osg/PositionAttitudeTransform"
 #include "osg/Billboard"
+#include "osg/BlendFunc"
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/Geometry"
+#include "osg/Math"
+#include "osg/MatrixTransform"
+#include "osg/NodeVisitor"
+#include "osg/PositionAttitudeTransform"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgUtil/RenderBin"
 #include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/Capabilities"
+#include "osgEarth/CullingUtils"
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
 #include "osgEarth/Utils"
-#include "osgEarth/CullingUtils"
 #include "osgEarth/VirtualProgram"
 #include "simVis/osgEarthVersion.h"
 
@@ -51,9 +51,9 @@
 #include "simCore/Calc/Math.h"
 #endif
 
-#include "simCore/String/Format.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/String/Format.h"
 #include "simNotify/Notify.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
@@ -200,18 +200,58 @@ namespace
           osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
       }
 
+      // Create a copy of the state set stack so we can fix the internal stack after first drawImplementation()
+      osgUtil::RenderLeaf* oldPrevious = previous;
+
       // Render once with the first state set
-      osgUtil::RenderLeaf* originalPrevious = previous;
+      const osg::State::StateSetStack previousStateStack = ri.getState()->getStateSetStack();
       setStateSet(pass1_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
 
-      // Now do the second pass with the new state set
-      previous = originalPrevious;
+      // Get back to where we were at the start of this method, backing out state changes
+      migrateState_(*ri.getState(), previousStateStack);
+      previous = oldPrevious;
+
+      // Now do the second pass with the original values but with second set of state values
       setStateSet(pass2_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
     }
 
   private:
+    /**
+     * Given a current state, migrates its state stack backwards and forwards to get to the state
+     * provided.  This algorithm does the following:
+     *   - Pop the current state until it's the same size or smaller
+     *   - Find the first item in state that doesn't match the to-state-stack
+     *   - Pop off items from current state until it's down to the common ancestor
+     *   - Push on all remaining items from the to-state-stack
+     */
+    void migrateState_(osg::State& state, const osg::State::StateSetStack& toStateStack) const
+    {
+      // Pop off states from the current, until it matches incoming size
+      state.popStateSetStackToSize(toStateStack.size());
+      // State's size is now less or equal to the size requested.  If less or equal, we're OK
+      assert(state.getStateSetStackSize() <= toStateStack.size());
+
+      // Figure out the first mismatching state
+      unsigned int mismatchIndex = 0;
+      for (mismatchIndex = 0; mismatchIndex < state.getStateSetStackSize(); ++mismatchIndex)
+      {
+        if (state.getStateSetStack()[mismatchIndex] != toStateStack[mismatchIndex])
+          break;
+      }
+      // Pop off anything at or past the mismatch
+      state.popStateSetStackToSize(mismatchIndex);
+      // Assert failure means that the popStateSetStackToSize() isn't doing what is advertised
+      assert(state.getStateSetStackSize() == mismatchIndex);
+
+      // Push on the states from the original until we're matching again
+      for (; mismatchIndex < toStateStack.size(); ++mismatchIndex)
+        state.pushStateSet(toStateStack[mismatchIndex]);
+      // Assert failure means that the pushStateSet() isn't doing what is advertised
+      assert(state.getStateSetStackSize() == toStateStack.size());
+    }
+
     osg::ref_ptr<osg::StateSet> pass1_;
     osg::ref_ptr<osg::StateSet> pass2_;
     bool haveInit_;
@@ -302,6 +342,35 @@ void setLightingToInherit(osg::StateSet* stateset)
     stateset->removeUniform(temp->getName());
 #endif
   }
+}
+
+void fixTextureForGlCoreProfile(osg::Texture* texture)
+{
+  if (!texture)
+    return;
+
+  // No change is required if we're not supporting core profile
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  for (unsigned int k = 0; k < texture->getNumImages(); ++k)
+  {
+    // Get a pointer to the image, continuing if none
+    osg::Image* image = texture->getImage(k);
+    if (!image)
+      continue;
+
+    // Detect the image's pixel format, changing it out for a GL3-compatible one
+    if (image->getPixelFormat() == GL_LUMINANCE)
+    {
+      image->setPixelFormat(GL_RED);
+      texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_ONE));
+    }
+    else if (image->getPixelFormat() == GL_LUMINANCE_ALPHA)
+    {
+      image->setPixelFormat(GL_RG);
+      texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_GREEN));
+    }
+  }
+#endif
 }
 
 void convertNWUtoENU(osg::Node* node)
@@ -1081,3 +1150,4 @@ ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string&
 }
 
 }
+

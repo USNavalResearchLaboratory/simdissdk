@@ -8,10 +8,10 @@ set(PROJECT_FILES
     src/ExampleLOBTest.cpp
 )
 
-add_executable(example_lob_test ${PROJECT_FILES})
-target_link_libraries(example_lob_test PRIVATE simVis simUtil)
-set_target_properties(example_lob_test PROPERTIES
+add_executable(example_lobtest ${PROJECT_FILES})
+target_link_libraries(example_lobtest PRIVATE simVis simUtil)
+set_target_properties(example_lobtest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Line of Bearing"
+    PROJECT_LABEL "Example - Line of Bearing Test"
 )
-vsi_install_target(example_lob_test SDK_Examples)
+vsi_install_target(example_lobtest SDK_Examples)
