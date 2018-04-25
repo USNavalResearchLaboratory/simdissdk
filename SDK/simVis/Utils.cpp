@@ -204,19 +204,54 @@ namespace
       osgUtil::RenderLeaf* oldPrevious = previous;
 
       // Render once with the first state set
+      const osg::State::StateSetStack previousStateStack = ri.getState()->getStateSetStack();
       setStateSet(pass1_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
 
-      // Move state sets back from the current one ("previous") to the starting position ("oldPrevious")
-      osgUtil::StateGraph::moveStateGraph(*ri.getState(), previous->_parent, oldPrevious->_parent);
+      // Get back to where we were at the start of this method, backing out state changes
+      migrateState_(*ri.getState(), previousStateStack);
       previous = oldPrevious;
 
-      // Now do the second pass with the original values
+      // Now do the second pass with the original values but with second set of state values
       setStateSet(pass2_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
     }
 
   private:
+    /**
+     * Given a current state, migrates its state stack backwards and forwards to get to the state
+     * provided.  This algorithm does the following:
+     *   - Pop the current state until it's the same size or smaller
+     *   - Find the first item in state that doesn't match the to-state-stack
+     *   - Pop off items from current state until it's down to the common ancestor
+     *   - Push on all remaining items from the to-state-stack
+     */
+    void migrateState_(osg::State& state, const osg::State::StateSetStack& toStateStack) const
+    {
+      // Pop off states from the current, until it matches incoming size
+      state.popStateSetStackToSize(toStateStack.size());
+      // State's size is now less or equal to the size requested.  If less or equal, we're OK
+      assert(state.getStateSetStackSize() <= toStateStack.size());
+
+      // Figure out the first mismatching state
+      unsigned int mismatchIndex = 0;
+      for (mismatchIndex = 0; mismatchIndex < state.getStateSetStackSize(); ++mismatchIndex)
+      {
+        if (state.getStateSetStack()[mismatchIndex] != toStateStack[mismatchIndex])
+          break;
+      }
+      // Pop off anything at or past the mismatch
+      state.popStateSetStackToSize(mismatchIndex);
+      // Assert failure means that the popStateSetStackToSize() isn't doing what is advertised
+      assert(state.getStateSetstackSize() == mismatchIndex);
+
+      // Push on the states from the original until we're matching again
+      for (; mismatchIndex < toStateStack.size(); ++mismatchIndex)
+        state.pushStateSet(toStateStack[mismatchIndex]);
+      // Assert failure means that the pushStateSet() isn't doing what is advertised
+      assert(state.getStateSetstackSize() == toStateStack.size());
+    }
+
     osg::ref_ptr<osg::StateSet> pass1_;
     osg::ref_ptr<osg::StateSet> pass2_;
     bool haveInit_;
