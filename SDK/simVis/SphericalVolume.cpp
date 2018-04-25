@@ -995,11 +995,13 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   if (lines == NULL)
     return;
 
+  osg::Vec4f opaqueColor = color;
+  opaqueColor.a() = 1.0;
   for (unsigned i = 0; i < lines->getNumChildren(); ++i)
   {
-      osgEarth::LineDrawable* line = lines->getLineDrawable(i);
-      if (line)
-          line->setColor(color);
+    osgEarth::LineDrawable* line = lines->getLineDrawable(i);
+    if (line)
+      line->setColor(opaqueColor);
   }
 }
 
@@ -1316,5 +1318,3 @@ void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
     }
   }
 }
-
-

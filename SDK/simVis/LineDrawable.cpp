@@ -39,6 +39,8 @@
 #include <osgDB/InputStream>
 #include <osgDB/OutputStream>
 
+#include "simVis/Shaders.h"
+
 #if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GLES3_AVAILABLE)
 #define OE_GLES_AVAILABLE
 #endif
@@ -176,7 +178,7 @@ namespace
         }
     };
 
-    
+
 
     struct ImportLinesVisitor : public osg::NodeVisitor
     {
@@ -199,7 +201,7 @@ namespace
 
                 if (_removePrimSets)
                 {
-                    for (int i = 0; i < geom->getNumPrimitiveSets(); ++i)
+                    for (unsigned int i = 0; i < geom->getNumPrimitiveSets(); ++i)
                     {
                         GLenum mode = geom->getPrimitiveSet(i)->getMode();
                         if (mode == GL_LINES || mode == GL_LINE_STRIP || mode == GL_LINE_LOOP)
@@ -232,7 +234,7 @@ LineGroup::optimize()
     osg::ref_ptr<StateSetCache> cache = new StateSetCache();
     cache->optimize(this);
 
-    // Merge all non-dynamic drawables to reduce the total number of 
+    // Merge all non-dynamic drawables to reduce the total number of
     // OpenGL calls.
     osgUtil::Optimizer::MergeGeometryVisitor mg;
     mg.setTargetMaximumNumberOfVertices(65536);
@@ -374,7 +376,7 @@ LineDrawable::initialize()
             _previous = new osg::Vec3Array();
             _previous->setBinding(osg::Array::BIND_PER_VERTEX);
             _previous->setNormalize(false);
-            setVertexAttribArray(PreviousVertexAttrLocation, _previous);  
+            setVertexAttribArray(PreviousVertexAttrLocation, _previous);
 
             _next = new osg::Vec3Array();
             _next->setBinding(osg::Array::BIND_PER_VERTEX);
@@ -504,7 +506,7 @@ void
 LineDrawable::setCount(unsigned value)
 {
     _count = value;
-    
+
     if (_gpu && _mode == GL_LINE_STRIP)
     {
         osg::StateSet* ss = getOrCreateStateSet();
@@ -643,7 +645,7 @@ LineDrawable::setVertex(unsigned vi, const osg::Vec3& vert)
 
     unsigned size = _current->size();
     unsigned numVerts = getNumVerts();
-    
+
     // "vi" = virtual index, "ri" = real index.
 
     if (vi < numVerts)
@@ -666,7 +668,7 @@ LineDrawable::setVertex(unsigned vi, const osg::Vec3& vert)
                     (*_next)[0] = vert, (*_next)[1] = vert;
                     (*_previous)[0] = vert, (*_previous)[1] = vert;
                 }
-                else 
+                else
                 {
                     if (vi == 0u)
                     {
@@ -717,7 +719,7 @@ LineDrawable::setVertex(unsigned vi, const osg::Vec3& vert)
                     (*_next)[size - 2] = vert;
                     _next->dirty();
                 }
-                
+
                 if (vi < numVerts - 1)
                 {
                     (*_previous)[ri + 2] = vert;
@@ -846,7 +848,7 @@ LineDrawable::actualVertsPerVirtualVert(unsigned index) const
     if (_gpu)
         if (_mode == GL_LINE_STRIP)
             return index == 0u? 2u : 4u;
-        else 
+        else
             return 2u;
     else
         return 1u;
@@ -954,7 +956,7 @@ LineDrawable::dirty()
         if (_mode == GL_LINE_STRIP)
         {
             unsigned numEls = (getNumVerts()-1)*6;
-            osg::DrawElements* els = makeDE(numEls);  
+            osg::DrawElements* els = makeDE(numEls);
 
             for (int e = 0; e < _current->size() - 4; e += 4)
             {
@@ -965,14 +967,14 @@ LineDrawable::dirty()
                 els->addElement(e+3);
                 els->addElement(e+0); // PV
             }
-            
+
             addPrimitiveSet(els);
         }
 
         else if (_mode == GL_LINE_LOOP)
         {
             unsigned numEls = getNumVerts()*6;
-            osg::DrawElements* els = makeDE(numEls); 
+            osg::DrawElements* els = makeDE(numEls);
 
             int e;
             for (e = 0; e < _current->size()-2; e += 2)
@@ -991,14 +993,14 @@ LineDrawable::dirty()
             els->addElement(0);
             els->addElement(1);
             els->addElement(e+0); // PV
-            
+
             addPrimitiveSet(els);
         }
 
         else if (_mode == GL_LINES)
         {
             unsigned numEls = (getNumVerts()/2)*6;
-            osg::DrawElements* els = makeDE(numEls);  
+            osg::DrawElements* els = makeDE(numEls);
 
             for (int e = 0; e < _current->size(); e += 4)
             {
@@ -1041,8 +1043,8 @@ LineDrawable::installShader(osg::StateSet* stateSet)
 {
     // install the shader components for GPU lines.
     VirtualProgram* vp = VirtualProgram::getOrCreate(stateSet);
-    Shaders shaders;
-    shaders.load(vp, shaders.LineDrawable);
+    simVis::Shaders shaders;
+    shaders.load(vp, shaders.lineDrawable());
     vp->addBindAttribLocation("oe_GPULines_prev", LineDrawable::PreviousVertexAttrLocation);
     vp->addBindAttribLocation("oe_GPULines_next", LineDrawable::NextVertexAttrLocation);
     stateSet->setMode(GL_CULL_FACE, osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE | osg::StateAttribute::PROTECTED);

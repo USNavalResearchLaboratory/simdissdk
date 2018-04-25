@@ -33,6 +33,16 @@
 #include "osgEarth/Common"
 #include "osg/Geometry"
 #include "osg/Geode"
+#include "simCore/Common/Common.h"
+
+/**
+ * @file simVis/LineDrawable.h
+ * This is a copy of osgEarth::LineDrawable used to bridge the gap between osgEarth 2.9
+ * and the next stable release.  This file will be removed after the September 2018
+ * release of the SIMDIS SDK (version 1.9).
+ *
+ * TODO: Remove this and associated files after the September 2018 1.9 SIMDIS SDK release.
+ */
 
 namespace osgEarth
 {
@@ -50,11 +60,11 @@ namespace osgEarth
      * callback on your scene graph.
      *
      * Note: Try to use the provided functions whenever possible. If you do
-     * need to access the underlying Geometry arrays, keep in mind that 
+     * need to access the underlying Geometry arrays, keep in mind that
      * the implementation uses double verts; i.e. each vertex appears twice
      * (to support the shader code).
      */
-    class OSGEARTH_EXPORT LineDrawable : public osg::Geometry
+    class SDKVIS_EXPORT LineDrawable : public osg::Geometry
     {
     public:
         META_Node(osgEarth, LineDrawable);
@@ -88,7 +98,7 @@ namespace osgEarth
         //! GL mode (for serializer only; do not use)
         void setMode(GLenum mode);
         GLenum getMode() const { return _mode; }
-        
+
         //! Append a vertex to the line
         void pushVertex(const osg::Vec3& vert);
 
@@ -103,11 +113,11 @@ namespace osgEarth
 
         //! Copy a vertex array into the drawable
         void importVertexArray(const osg::Vec3Array* verts);
-        
+
         //! Copy a vertex attribute array into the drawable
         template<typename T>
         void importVertexAttribArray(unsigned location, const T* data);
-        
+
         //! Allocate space for vertices
         void allocate(unsigned numVerts);
 
@@ -193,7 +203,7 @@ namespace osgEarth
      * the OSG 3.4 MergeGeometryVisitor (which only works on Geodes). Once we
      * make OSG 3.6 the minimum supported version, we can change this to Group.
      */
-    class OSGEARTH_EXPORT LineGroup : public osg::Geode
+    class SDKVIS_EXPORT LineGroup : public osg::Geode
     {
     public:
         META_Node(osgEarth, LineGroup);
@@ -209,7 +219,7 @@ namespace osgEarth
         //! If you set removePrimitiveSets to true, it will remove all line-based
         //! primitive sets from the node after import.
         void import(osg::Node* node, bool removePrimitiveSets =false);
-        
+
         //! Optimize the LineDrawables under this group for performance.
         //! Only call this after you finish adding drawables to your group.
         void optimize();
@@ -222,7 +232,7 @@ namespace osgEarth
         virtual ~LineGroup() { }
     };
 
-    
+
     // Template implementations ..........................................
 
     template<typename T>

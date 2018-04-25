@@ -19,6 +19,7 @@ set(SHADER_FILES
     DisableDepthOnAlpha.frag.glsl
     Flashing.frag.glsl
     GlowHighlight.frag.glsl
+    LineDrawable.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
     Picker.vert.glsl

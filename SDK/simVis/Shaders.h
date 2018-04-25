@@ -58,6 +58,9 @@ public:
   /** Name of fragment shader for glowing highlight */
   std::string glowHighlightFragment() const;
 
+  /** osgEarth LineDrawable placeholder shader */
+  std::string lineDrawable() const;
+
   /** Name of vertex shader for overhead mode */
   std::string overheadModeVertex() const;
 
