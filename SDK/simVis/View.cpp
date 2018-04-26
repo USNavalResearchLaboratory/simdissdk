@@ -134,7 +134,9 @@ struct SetNearFarCallback : public osg::NodeCallback
 
   SetNearFarCallback()
   {
-    // create a state set to turn off depth buffer when in overhead mode
+    // create a state set to turn off depth buffer when in overhead mode.
+    // note: this will override the depth settings in the TwoPassAlphaRenderBin, and 
+    // that's OK because we don't care about TPA when the depth buffer is off.
     depthState_ = new osg::StateSet();
     depthState_->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
       osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
@@ -1467,7 +1469,8 @@ void View::enableOverheadMode(bool enableOverhead)
       // Only go into orthographic past 1.6 -- before then, the LDB would cause significant issues with platform and GOG display
       getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
       getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-      getCamera()->setCullCallback(overheadNearFarCallback_);
+      if (overheadNearFarCallback_->referenceCount() == 1)
+        getCamera()->addCullCallback(overheadNearFarCallback_);
 #endif
     }
 
