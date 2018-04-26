@@ -29,6 +29,7 @@
 #include "osgEarth/StringUtils"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
+#include "simVis/osgEarthVersion.h"
 #include "simUtil/Capabilities.h"
 
 namespace simUtil {
@@ -78,6 +79,9 @@ void Capabilities::init_()
   caps_.push_back(std::make_pair("Renderer", caps.getRenderer()));
   caps_.push_back(std::make_pair("OpenGL Version", caps.getVersion()));
   glVersion_ = extractGlVersion_(caps.getVersion());
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0)
+  caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
+#endif
 
   // List of software drivers is from testing and https://www.opengl.org/wiki/Get_Context_Info
   if (caps.getVendor().find("Mesa") != std::string::npos ||
