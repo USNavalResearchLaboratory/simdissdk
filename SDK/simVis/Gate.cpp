@@ -41,6 +41,12 @@
 #include "simVis/OverheadMode.h"
 #include "simVis/Gate.h"
 
+/**
+ * Gate updates are currently disabled as SphericalVolume needs updates in order
+ * to correctly reposition outline geometry with new osgEarth::LineDrawable.
+ */
+#undef GATE_IN_PLACE_UPDATES
+
 namespace simVis
 {
 
@@ -112,6 +118,7 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simDa
   if (a == NULL || b == NULL)
     return;
 
+#ifdef GATE_IN_PLACE_UPDATES
   // each update method calls dirtyBound on all gate volume geometries, so no need for that here
   if (PB_FIELD_CHANGED(a, b, minrange))
   {
@@ -129,6 +136,7 @@ void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simDa
   {
     SVFactory::updateVertAngle(gateSV_.get(), a->height(), b->height());
   }
+#endif
 }
 
 osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, const simData::GateUpdate* update)
@@ -841,10 +849,18 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
 
   if (newUpdate != NULL)
   {
+#ifdef GATE_IN_PLACE_UPDATES
     // changing a gate minrange to/from 0.0 requires a rebuild due to simplified shape
     if (PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, minrange) &&
       (newUpdate->minrange() == 0.0 || lastUpdateApplied_.minrange() == 0.0))
       return true;
+#else
+    if (PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, minrange) ||
+      PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, maxrange) ||
+      PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, width) ||
+      PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, height))
+      return true;
+#endif
 
     // changes to coverage gates require rebuild (instead of in-place updates)
     const simData::GatePrefs* activePrefs = newPrefs ? newPrefs : &lastPrefsApplied_;

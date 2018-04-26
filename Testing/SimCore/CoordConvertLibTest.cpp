@@ -151,7 +151,7 @@ static int checkValues(int uniqueID, const char* whichTest,
 {
   if (!simCore::v3AreEqual(result, correctValue, epsilon))
   {
-    std::cerr << "Test Failure:  UniqueID(" << uniqueID << "):\n"
+    std::cerr << "Test Failure:  UniqueID(" << uniqueID << "):\n" << std::fixed << std::setprecision(7)
       << "  result values  = (" << result[0] << ", " << result[1] << ", " << result[2] << ")\n"
       << "  correct values = (" << correctValue[0] << ", " << correctValue[1] << ", " << correctValue[2] << ")\n";
     return 1;
@@ -287,6 +287,49 @@ static void createTestCases(vTestCases* testCases)
   tempTestCase = new TestCase(14, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
   tempTestCase->SetInputPosition(2260694.333577, -2260694.333577, -5500477.133939); // ECEF
   tempTestCase->SetCorrectOutputPositionLLADeg(-60.0, -45.0, 0.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  // NGA GoldData does not test near-polar latitudes with non-zero longitudes - this means testing does not verify calculation of longitude for such points.
+  // test cases 15-22 use our LLA-ECEF conversion to produce ECEF positions.
+
+  tempTestCase = new TestCase(15, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(11167.8655243, 194.935817837, 6356842.566957016475); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.9, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(16, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(111.678713082785, 1.949359187960, 6356852.313270461746); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99900000, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(17, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(1.116787131430, 0.019493591890, 6356852.314245189540); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999000, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(18, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(.111678712501, .001949359178, 6356852.314245189540); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999900, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(19, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(11185.141643517663, 195.237373618911, 6366742.551878457889); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.9, 1.0, 10000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(20, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(111.851474362336, 1.952374747311, 6366752.313268953934); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99900000, 1.0, 10000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(21, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(1.118514744226, 0.019523747484, 6366752.314245093614); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999000, 1.0, 10000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(22, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(0.111851473780, 0.001952374737, 6366752.314245189540); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999900, 1.0, 10000.0); // LLA
   testCases->push_back(tempTestCase);
 }
 

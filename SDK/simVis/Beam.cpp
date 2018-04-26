@@ -40,6 +40,12 @@
 #include "simVis/Scenario.h"
 #include "simVis/Beam.h"
 
+/**
+ * Beam updates are currently disabled as SphericalVolume needs updates in order
+ * to correctly reposition outline geometry with new osgEarth::LineDrawable.
+ */
+#undef BEAM_IN_PLACE_UPDATES
+
 // --------------------------------------------------------------------------
 
 namespace
@@ -58,6 +64,10 @@ namespace
     else
     {
       return
+#ifndef BEAM_IN_PLACE_UPDATES
+        PB_FIELD_CHANGED(a, b, verticalwidth) ||
+        PB_FIELD_CHANGED(a, b, horizontalwidth) ||
+#endif
         PB_FIELD_CHANGED(a, b, polarity) ||
         PB_FIELD_CHANGED(a, b, colorscale) ||
         PB_FIELD_CHANGED(a, b, detail) ||
@@ -71,6 +81,18 @@ namespace
         PB_FIELD_CHANGED(a, b, capresolution) ||
         PB_FIELD_CHANGED(a, b, beamdrawmode);
     }
+  }
+
+  /// Some updates can require a rebuild too
+  bool changeRequiresRebuild(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
+  {
+#ifdef BEAM_IN_PLACE_UPDATES
+    return false;
+#else
+    if (a == NULL || b == NULL)
+      return false;
+    return PB_FIELD_CHANGED(a, b, range);
+#endif
   }
 }
 
@@ -168,10 +190,12 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
     SVFactory::updateLighting(beamSV_.get(), b->shaded());
   if (PB_FIELD_CHANGED(a, b, blended))
     SVFactory::updateBlending(beamSV_.get(), b->blended());
+#ifdef BEAM_IN_PLACE_UPDATES
   if (PB_FIELD_CHANGED(a, b, verticalwidth))
     SVFactory::updateVertAngle(beamSV_.get(), a->verticalwidth(), b->verticalwidth());
   if (PB_FIELD_CHANGED(a, b, horizontalwidth))
     SVFactory::updateHorizAngle(beamSV_.get(), a->horizontalwidth(), b->horizontalwidth());
+#endif
   if (PB_FIELD_CHANGED(a, b, beamscale))
     setBeamScale_(b->beamscale());
 }
@@ -181,11 +205,13 @@ void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simDa
   if (a == NULL || b == NULL)
     return;
 
+#ifdef BEAM_IN_PLACE_UPDATES
   // the update method calls dirtyBound on all beam volume geometries, so no need for that here
   if (PB_FIELD_CHANGED(a, b, range))
   {
     SVFactory::updateFarRange(beamSV_.get(), b->range());
   }
+#endif
 }
 
 // --------------------------------------------------------------------------
@@ -697,7 +723,8 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       antenna_->setPrefs(*activePrefs);
 
     const bool refreshRequiresNewNode = force ||
-      changeRequiresRebuild(&lastPrefsApplied_, newPrefs);
+      changeRequiresRebuild(&lastPrefsApplied_, newPrefs) ||
+      changeRequiresRebuild(&lastUpdateApplied_, newUpdate);
 
     // if new geometry is required, build it:
     if (!beamVolume_ || refreshRequiresNewNode)

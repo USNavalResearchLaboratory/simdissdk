@@ -135,6 +135,13 @@ unsigned int TrackChunkNode::removePointsBefore(double t)
   return offset_ - origOffset;
 }
 
+void TrackChunkNode::reset()
+{
+  times_[0] = 0.0;
+  offset_ = 0;
+  count_ = 0;
+}
+
 /// set the draw mode of the center line
 void TrackChunkNode::setCenterLineMode(const simData::TrackPrefs_Mode& mode)
 {

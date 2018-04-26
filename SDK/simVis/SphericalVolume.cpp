@@ -1004,6 +1004,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   }
 }
 
+#if 0
 void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
 {
   nearRange = simCore::sdkMax(1.0f, nearRange);
@@ -1240,6 +1241,7 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
   normals->dirty();
   dirtyBound_(xform);
 }
+#endif
 
 osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 {
@@ -1254,11 +1256,12 @@ osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 // if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
 osgEarth::LineGroup* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
 {
-  if (xform == NULL || xform->getNumChildren() == 0)
+  if (xform == NULL || xform->getNumChildren() < 2)
     return NULL;
   return dynamic_cast<osgEarth::LineGroup*>(xform->getChild(1));
 }
 
+#if 0
 // if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
 osg::Geometry* SVFactory::validGeometry_(osg::MatrixTransform* xform)
 {
@@ -1317,3 +1320,4 @@ void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
     }
   }
 }
+#endif

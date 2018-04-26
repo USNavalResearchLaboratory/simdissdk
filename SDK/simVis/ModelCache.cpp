@@ -626,6 +626,9 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
     // Not configured: synchronous load
     bool isImage = false;
     osg::ref_ptr<osg::Node> node = getOrCreateIconModel(uri, &isImage);
+    // Run the shader generator on the newly loaded node (in main thread)
+    osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
+    osgEarth::Registry::shaderGenerator().run(node.get(), stateCache.get());
     if (refCallback.valid())
       refCallback->loadFinished(node, isImage, uri);
     return;
