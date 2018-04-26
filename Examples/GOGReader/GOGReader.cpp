@@ -27,6 +27,7 @@
  */
 
 #include "osgEarth/NodeUtils"
+#include "osgEarth/optional"
 #include "osgEarthAnnotation/PlaceNode"
 #include "osgEarthAnnotation/LabelNode"
 #include "osgEarthUtil/Controls"
@@ -122,10 +123,10 @@ public:
     dynamicScaleOn_(true),
     labelsOn_(true),
     border_(0),
-    centeredGogIndex_(-1),
     platform_(platform),
     altMode_(simVis::GOG::ALTITUDE_NONE)
   {
+    centeredGogIndex_.init(0);
     mouseDispatcher_.reset(new simUtil::MouseDispatcher);
     mouseDispatcher_->setViewManager(NULL);
     latLonElevListener_.reset(new LatLonElevListener());
@@ -150,7 +151,7 @@ public:
       // panning uncenters from GOG
       if (ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
       {
-        centeredGogIndex_ = -1;
+        centeredGogIndex_.clear();
         updateStatusAndLabel_();
       }
       // zooming updates camera distance label
@@ -174,7 +175,7 @@ private:
     {
     case 'c': // center on next GOG
     {
-      centeredGogIndex_++;
+      centeredGogIndex_ = centeredGogIndex_.get() + 1;
       if (centeredGogIndex_ >= s_overlayNodes.size())
         centeredGogIndex_ = 0;
       osg::Vec3d position;
@@ -186,14 +187,14 @@ private:
         referencePosition.x() = coord.lon() * simCore::RAD2DEG;
         referencePosition.y() = coord.lat() * simCore::RAD2DEG;
         referencePosition.z() = coord.alt();
-        s_overlayNodes[centeredGogIndex_]->getPosition(position, &referencePosition);
+        s_overlayNodes[centeredGogIndex_.get()]->getPosition(position, &referencePosition);
 
       }
       else
-        s_overlayNodes[centeredGogIndex_]->getPosition(position);
+        s_overlayNodes[centeredGogIndex_.get()]->getPosition(position);
 
       simVis::GOG::AltitudeMode curMode;
-      if (s_overlayNodes[centeredGogIndex_]->getAltitudeMode(curMode) == 0)
+      if (s_overlayNodes[centeredGogIndex_.get()]->getAltitudeMode(curMode) == 0)
         altMode_ = curMode;
 
       simVis::View* focusedView = viewer_->getMainView()->getFocusManager()->getFocusedView();
@@ -212,25 +213,25 @@ private:
 
     case 'a': // change altitude mode for centered GOG
     {
-      if (centeredGogIndex_ < 0 || centeredGogIndex_ >= s_overlayNodes.size())
+      if (!centeredGogIndex_.isSet() || centeredGogIndex_ >= s_overlayNodes.size())
         return false;
       if (altMode_ == simVis::GOG::ALTITUDE_EXTRUDE)
         altMode_ = simVis::GOG::ALTITUDE_NONE;
       else
         altMode_ = static_cast<simVis::GOG::AltitudeMode>(altMode_ + 1);
-      s_overlayNodes[centeredGogIndex_]->setAltitudeMode(altMode_);
+      s_overlayNodes[centeredGogIndex_.get()]->setAltitudeMode(altMode_);
       updateStatusAndLabel_();
       return true;
     }
 
     case 'f': // change fill state for centered GOG
     {
-      if (centeredGogIndex_ < 0 || centeredGogIndex_ >= s_overlayNodes.size())
+      if (!centeredGogIndex_.isSet() || centeredGogIndex_ >= s_overlayNodes.size())
         return false;
       bool filled = false;
       osg::Vec4f fillColor;
-      if (s_overlayNodes[centeredGogIndex_]->getFilledState(filled, fillColor) == 0)
-        s_overlayNodes[centeredGogIndex_]->setFilledState(!filled);
+      if (s_overlayNodes[centeredGogIndex_.get()]->getFilledState(filled, fillColor) == 0)
+        s_overlayNodes[centeredGogIndex_.get()]->setFilledState(!filled);
       return true;
     }
 
@@ -275,8 +276,8 @@ private:
 
     // get centered GOG name
     text += "Centered: ";
-    if (centeredGogIndex_ >= 0 && centeredGogIndex_ < s_overlayNodes.size())
-      text += s_overlayNodes[centeredGogIndex_]->osgNode()->getName() + "\n";
+    if (centeredGogIndex_.isSet() && centeredGogIndex_ < s_overlayNodes.size())
+      text += s_overlayNodes[centeredGogIndex_.get()]->osgNode()->getName() + "\n";
     else
       text += "None\n";
 
@@ -342,7 +343,7 @@ private:
   bool dynamicScaleOn_;
   bool labelsOn_;
   int border_;
-  int centeredGogIndex_;
+  osgEarth::optional<size_t> centeredGogIndex_;
   osg::ref_ptr<simVis::PlatformNode> platform_;
   simVis::GOG::AltitudeMode altMode_;
 };
