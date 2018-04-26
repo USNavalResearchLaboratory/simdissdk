@@ -95,7 +95,9 @@ namespace
     style.getOrCreate<sym::PolygonSymbol>()->fill()->color() = simVis::Color(color, 0.5);
     style.getOrCreate<sym::LineSymbol>()->stroke()->color() = simVis::Color::White;
     style.getOrCreate<sym::LineSymbol>()->stroke()->width() = 2;
+    style.getOrCreate<sym::LineSymbol>()->tessellationSize()->set(100, simVis::Units::KILOMETERS);
     style.getOrCreate<sym::AltitudeSymbol>()->verticalOffset() = 10000;
+    style.getOrCreate<sym::RenderSymbol>()->backfaceCulling() = false;
 
     // Turn off depth testing, and enable the horizon clip plane (SDK-43)
     style.getOrCreate<sym::RenderSymbol>()->depthTest() = false;
