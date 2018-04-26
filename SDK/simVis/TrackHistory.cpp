@@ -786,10 +786,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
 {
   // remove previous, will recreate if needed
   if (currentPointChunk_ != NULL)
-  {
-    removeChild(currentPointChunk_);
-    currentPointChunk_ = NULL;
-  }
+    currentPointChunk_->reset();
 
   // only line, ribbon, and bridge draw modes require this processing,
   // but if there is not a previous point, there is nothing to do
@@ -800,13 +797,13 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
 
   // create the special chunk for rendering the interpolated point, has two points to connect to rest of history
   // for ribbon and bridge modes, SIMDIS 9 draws a center line from platform to first data point, use simData::TrackPrefs_Mode_LINE to duplicate that behavior
-  currentPointChunk_ = new TrackChunkNode(2, locator_->getSRS(), simData::TrackPrefs_Mode_LINE);
   if (currentPointChunk_ == NULL)
   {
-    return;
+    currentPointChunk_ = new TrackChunkNode(2, locator_->getSRS(), simData::TrackPrefs_Mode_LINE);
+    if (currentPointChunk_ == NULL)
+      return;
+    addChild(currentPointChunk_);
   }
-  this->addChild(currentPointChunk_);
-
   osg::Matrix hostMatrix;
 
   // find the most current update, either whatever is current, or the last available update

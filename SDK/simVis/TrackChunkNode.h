@@ -107,6 +107,9 @@ namespace simVis
     */
     unsigned int removePointsBefore(double t);
 
+    /** Allows the node to be re-used */
+    void reset();
+
     /**
     * Set the draw mode of the center line
     * @param mode track draw mode that this chunk will display
