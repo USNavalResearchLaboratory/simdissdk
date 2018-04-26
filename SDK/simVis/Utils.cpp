@@ -161,18 +161,18 @@ namespace
       setName(simVis::BIN_TWO_PASS_ALPHA);
       setStateSet(NULL);
 
-      // Note! We do not protect the depth settings here, because this then allows us to 
+      // Note! We do not protect the depth settings here, because this then allows us to
       // disable the depth buffer at a higher level (e.g. when enabling Overhead mode).
       const osg::StateAttribute::GLModeValue overrideOn = osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE;
-      const osg::StateAttribute::GLModeValue overrideProtecedOn = osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE | osg::StateAttribute::PROTECTED;
+      const osg::StateAttribute::GLModeValue overrideProtectedOn = overrideOn | osg::StateAttribute::PROTECTED;
 
       pass1_ = new osg::StateSet();
       pass1_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false), overrideOn);
-      pass1_->setAttributeAndModes(new osg::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), overrideProtecedOn);
+      pass1_->setAttributeAndModes(new osg::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), overrideProtectedOn);
 
       pass2_ = new osg::StateSet();
       pass2_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, true), overrideOn);
-      pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), overrideProtecedOn);
+      pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), overrideProtectedOn);
     }
 
     TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy)
