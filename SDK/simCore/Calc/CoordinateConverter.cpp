@@ -2118,51 +2118,47 @@ int CoordinateConverter::convertEcefToGeodeticPos(const Vec3 &ecefPos, Vec3 &lla
     }
   }
 
-  // derived from Fukushima's fast implementation of Bowring's formula (1999)
-  // Fukushima T., (1999) : Fast transform from geocentric to geodetic coordinates, Journal of Geodesy, Vol. 73, pp. 603-610.
-  // Note: Variable names follow the notation used in Fukushima, 1999
+  // derived from:
+  // Fukushima T., (2006) : Transformation from Cartesian to geodetic coordinates accelerated by Halley's method
+  //   Journal of Geodesy, Vol. 79, pp. 689-693.
+  // Note: Variable names follow the notation therein
 
-  // distance from Z axis
+  // p is distance from Z axis
   const double p = sqrt(square(ecefPos.x()) + square(ecefPos.y()));
-  // p = 0 is a case that must be caught in processing of polar/center-of-earth cases above.
-  assert(p > 0.0);
+  // in the Fukushima document, this is notated as: P
+  const double PP = p / WGS_A;
+  const double Z = FUKUSHIMA_eP * fabs(ecefPos.z()) / WGS_A;
+  double S = Z;
+  double C = WGS_ESQC * PP;
 
-  // z' in Fukushima
-  const double zP = FUKUSHIMA_eP * ecefPos.z();
-
-  // initial estimate of vertical component
-  double T = ecefPos.z() / (FUKUSHIMA_eP * p);
-
-  double h;
-  unsigned int iterations = 1;
-  for (unsigned int i = 0; i < iterations; ++i)
+  // iterative section, Halley's iterative formula
   {
-    const double C = 1.0 / sqrt(1.0 + T * T);
-    const double S = C * T;
-    const double denom = (p - WGS_A * WGS_ESQ * C * C * C);
-    if (denom == 0.0)
-    {
-      assert(0);
-      return 1;
-    }
-    T = (zP + WGS_A * WGS_ESQ * S * S * S) / denom;
+    const double A = sqrt(S * S + C * C);
+    const double B = 1.5 * WGS_ESQ * S * C * C * ((PP * S - Z * C) * A - WGS_ESQ * S * C);
+    const double D = Z * A * A * A + WGS_ESQ * S * S * S;
+    const double F = PP * A * A * A - WGS_ESQ * C * C * C;
+    S = D * F - B * S;
+    C = F * F - B * C;
+  }
+  // end
 
-    // divide-by-zero cannot happen below: T can be 0, but if so, p must be > ecefPos.z()
-    assert(T != 0.0 || p > ecefPos.z());
-
-    if (p > ecefPos.z())
-      h = (sqrt(WGS_ESQC + T * T) / FUKUSHIMA_eP) * (p - WGS_A / sqrt(1.0 + T * T));
-    else
-      h = sqrt(WGS_ESQC + T * T) * (ecefPos.z() / T - WGS_B / sqrt(1.0 + T * T));
-
-    // this condition provides 2e-5 accuracy for all GoldData cases; 48000m chosen due to good coverage in GoldData.
-    if (fabs(h) >= 48000.0)
-      iterations = 2;
+  // C == 0 should be equivalent to x == 0 && y == 0, which is handled by polar/center-of-earth code above
+  if (C == 0.0)
+  {
+    assert(0);
+    return 1;
   }
 
-  const double phi = atan(T / FUKUSHIMA_eP);
-  llaPos.setLat(phi);
-  llaPos.setAlt(h);
+  const double Cc = C * FUKUSHIMA_eP;
+  // it is believed that S/Cc is always positive and the angle returned is always first-quadrant
+  assert(S == 0.0 || sign(S) == sign(Cc));
+  const double lat = sign(ecefPos.z()) * atan(S / Cc);
+  const double num = Cc * p + fabs(ecefPos.z()) * S - WGS_B * (sqrt(C * C + S * S));
+  const double den = sqrt(Cc * Cc + S * S);
+  llaPos.setLat(lat);
+  // den cannot be 0.0 if C != 0.0
+  llaPos.setAlt(num/den);
+
   return 0;
 }
 
