@@ -1019,7 +1019,7 @@ int CoordConvertLibTest(int _argc_, char *_argv_[])
       std::cout << "outputEul: " << outputEul[0] << " " << outputEul[1] << " " << outputEul[2] << std::endl;
       // position check
       if (temp->CheckPosition_)
-        rv += checkValues(temp->UniqueID_, "position", simCore::Vec3(outputPosition), temp->CorrectOutputPosition_, 2e-5);
+        rv += checkValues(temp->UniqueID_, "position", simCore::Vec3(outputPosition), temp->CorrectOutputPosition_, 8e-7);
       // orientation check
       if (temp->CheckEul_)
         rv += checkValues(temp->UniqueID_, "orientation", simCore::Vec3(outputEul), temp->CorrectOutputEul_, 1e-4);
