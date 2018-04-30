@@ -121,7 +121,7 @@ simData::ObjectId addPlatform(simData::DataStore& dataStore, double lat, double 
 class FindNodeByName : public osg::NodeVisitor
 {
 public:
-  explicit FindNodeByName(const std::string& name)
+  FindNodeByName(const std::string& name)
     : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
       searchFor_(name),
       node_(NULL)
@@ -153,7 +153,7 @@ private:
 class TankNode
 {
 public:
-  explicit TankNode()
+  TankNode()
     : gun_(NULL),
       turret_(NULL)
   {
@@ -247,8 +247,6 @@ struct App : public osg::Node
   osg::ref_ptr<HSliderControl> turretSlider_;
   osg::ref_ptr<HSliderControl> gunSlider_;
 
-  void refresh();
-
   App(simVis::EntityNode* node) :
     node_(node)
   {
@@ -287,7 +285,7 @@ struct App : public osg::Node
 class TankGunPitchChange : public ControlEventHandler
 {
 public:
-  explicit TankGunPitchChange(TankNode* tank)
+  TankGunPitchChange(TankNode* tank)
     : tank_(tank)
   {
   }
@@ -305,7 +303,7 @@ private:
 class TankTurretYawChange : public ControlEventHandler
 {
 public:
-  explicit TankTurretYawChange(TankNode* tank)
+  TankTurretYawChange(TankNode* tank)
     : tank_(tank)
   {
   }
@@ -323,7 +321,7 @@ private:
 class SetLabelValue : public ControlEventHandler
 {
 public:
-  explicit SetLabelValue(LabelControl* label)
+  SetLabelValue(LabelControl* label)
     : label_(label)
   {
   }
