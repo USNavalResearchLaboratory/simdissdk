@@ -775,6 +775,7 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
     PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, azimuth) ||
     PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, elevation))) ||
     (newPrefs && (
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gatedrawmode) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gateazimuthoffset) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gateelevationoffset) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gaterolloffset)));
