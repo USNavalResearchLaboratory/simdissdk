@@ -40,11 +40,7 @@
 #include "simVis/Scenario.h"
 #include "simVis/Beam.h"
 
-/**
- * Beam updates are currently disabled as SphericalVolume needs updates in order
- * to correctly reposition outline geometry with new osgEarth::LineDrawable.
- */
-#undef BEAM_IN_PLACE_UPDATES
+#define BEAM_IN_PLACE_UPDATES
 
 // --------------------------------------------------------------------------
 

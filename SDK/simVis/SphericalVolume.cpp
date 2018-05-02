@@ -850,8 +850,10 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
 
 // A SphericalVolume is a MatrixTransform that parents up to two geodes.
-// The first geode always contains the primary geometry, and possibly a second outline geometry.
-// The second geode (if it exists) contains a wireframe geometry.
+// The first geode always contains the primary geometry, and possibly a second outline geometry (for pyramid sv only).
+// That outline geometry is converted to a LineGroup geode, and is then removed.
+// The converted LineGroup becomes a 2nd geode in the MatrixTransform.
+// For the cone sv, the second geode (if it exists) contains a wireframe (polygon) geometry.
 
 osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
@@ -1026,7 +1028,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
   if (verts == NULL || meta == NULL)
     return;
 
-  std::vector<SVMeta>& m = meta->vertMeta_;
+  const std::vector<SVMeta>& m = meta->vertMeta_;
   meta->nearRange_ = nearRange;
   const float range = meta->farRange_ - meta->nearRange_;
   for (unsigned int i = 0; i < verts->size(); ++i)
@@ -1038,19 +1040,18 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, float nearRange)
   verts->dirty();
   dirtyBound_(xform);
 }
-
+#endif
 void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
 {
-  farRange = simCore::sdkMax(1.0f, farRange);
-
-  osg::Geometry* geom = SVFactory::validGeometry_(xform);
-  if (geom == NULL || geom->empty())
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  if (geom == NULL)
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
     return;
   }
-
+  if (geom->empty())
+    return;
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(verts);
@@ -1060,7 +1061,8 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
   if (verts == NULL || meta == NULL)
     return;
 
-  std::vector<SVMeta>& m = meta->vertMeta_;
+  const std::vector<SVMeta>& m = meta->vertMeta_;
+  farRange = simCore::sdkMax(1.0f, farRange);
   meta->farRange_ = farRange;
   const float range = meta->farRange_ - meta->nearRange_;
   for (unsigned int i = 0; i < verts->size(); ++i)
@@ -1068,21 +1070,21 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
     const float farRatio = m[i].ratio_;
     (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
-
   verts->dirty();
-  dirtyBound_(xform);
+  geom->dirtyBound();
 }
 
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
-  osg::Geometry* geom = SVFactory::validGeometry_(xform);
-  if (geom == NULL || geom->empty())
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  if (geom == NULL)
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
     return;
   }
-
+  if (geom->empty())
+    return;
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
@@ -1155,18 +1157,20 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
 
   verts->dirty();
   normals->dirty();
-  dirtyBound_(xform);
+  geom->dirtyBound();
 }
 
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
 {
-  osg::Geometry* geom = SVFactory::validGeometry_(xform);
-  if (geom == NULL || geom->empty())
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  if (geom == NULL)
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
     return;
   }
+  if (geom->empty())
+    return;
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
@@ -1239,9 +1243,8 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
 
   verts->dirty();
   normals->dirty();
-  dirtyBound_(xform);
+  geom->dirtyBound();
 }
-#endif
 
 osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 {
@@ -1253,71 +1256,10 @@ osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
   return geode->getDrawable(0)->asGeometry();
 }
 
-// if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
+// if the sv pyramid has an LineGroup outline, it will be the MatrixTransform 2nd child
 osgEarth::LineGroup* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
 {
   if (xform == NULL || xform->getNumChildren() < 2)
     return NULL;
   return dynamic_cast<osgEarth::LineGroup*>(xform->getChild(1));
 }
-
-#if 0
-// if the sv pyramid has an outline, it will exist in its own geometry, which should always be the 2nd geometry
-osg::Geometry* SVFactory::validGeometry_(osg::MatrixTransform* xform)
-{
-  if (xform == NULL || xform->getNumChildren() == 0)
-    return NULL;
-  osg::Geode* geode = xform->getChild(0)->asGeode();
-  if (geode == NULL || geode->getNumDrawables() == 0)
-    return NULL;
-
-  // a SphericalGeometry geode can have up to two geometries, but the first may be empty in some cases (pyramid in outline-only fill mode)
-  osg::Geometry* geom = geode->getDrawable(0)->asGeometry();
-  if (geom->empty() && geode->getNumDrawables() > 1)
-    geom = geode->getDrawable(1)->asGeometry();
-
-  if (!geom->empty())
-  {
-    // if a geometry is non-empty, it must have vertex array, user data and normal arrays
-    assert(geom->getVertexArray());
-    assert(geom->getUserData());
-    assert(geom->getNormalArray());
-    return geom;
-  }
-  return NULL;
-}
-
-// dirty bounds for all geometries in the xform
-void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
-{
-  if (xform == NULL || xform->getNumChildren() == 0)
-    return;
-
-  // handle the geometries in the primary geode
-  osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom && !geom->empty())
-    geom->dirtyBound();
-
-  osg::Group* group = SVFactory::outlineGeometry(xform);
-  if (group)
-  {
-    for (unsigned int i = 0; i < group->getNumChildren(); ++i)
-    {
-      if (group->getChild(i)->asDrawable())
-        group->getChild(i)->dirtyBound();
-    }
-  }
-
-  if (xform->getNumChildren() > 1)
-  {
-    // DRAW_MODE_WIRE paired with another DRAW_MODE_ is the only case of two geodes in the xform
-    osg::Geode* geode = xform->getChild(1)->asGeode();
-    if (geode && geode->getNumDrawables() > 0)
-    {
-      osg::Geometry* geom = geode->getDrawable(0)->asGeometry();
-      if (geom && !geom->empty())
-        geom->dirtyBound();
-    }
-  }
-}
-#endif

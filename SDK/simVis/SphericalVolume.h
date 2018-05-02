@@ -159,15 +159,15 @@ public:
 #if 0
   /// move the verts comprising the far range
   static void updateNearRange(osg::MatrixTransform* xform, float range);
+#endif
   /// move the verts comprising the near range
   static void updateFarRange(osg::MatrixTransform* xform, float range);
   /// tweak the verts to update the horizontal angle
   static void updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
   /// tweak the verts to update the vertical angle
   static void updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
-#endif
 
-  /// Retrieves the 'outline' geometry, or NULL if there is no such geometry
+  /// Retrieves the 'outline' lineGroup, or NULL if there is none
   static osgEarth::LineGroup* outlineGeometry(osg::MatrixTransform* xform);
   /// Retrieves the 'solid' geometry, or NULL if there is no such geometry
   static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
@@ -175,14 +175,6 @@ public:
 private:
   static void createPyramid_(osg::Geode& geode, const SVData &data, const osg::Vec3& dir);
   static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& dir);
-
-#if 0
-  /// Retrieves the first non-empty geometry: the 'solid' geometry, or the outline geometry if the 'solid' geometry is empty
-  static osg::Geometry* validGeometry_(osg::MatrixTransform* xform);
-
-  /// Calls dirtyBound() for all geometries in the xform
-  static void dirtyBound_(osg::MatrixTransform* xform);
-#endif
 };
 
 }
