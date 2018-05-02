@@ -233,7 +233,7 @@ public:
   * @param out_matrix Result goes here upon success
   * @return True upon success, false on failure
   */
-  virtual bool getLocalTangentPlaneToWorldMatrix(osg::Matrixd& out_matrix) const;
+  SDK_DEPRECATE(virtual bool getLocalTangentPlaneToWorldMatrix(osg::Matrixd& out_matrix) const, "Method will be removed in future SDK release.");
 
   /**
   * Set timestamp associated with the locator. If converting to or from ECI, the

@@ -619,8 +619,16 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   // initialize coordinate system and converter to optimize repeated conversions and support other values (flat projections)
   state_.coordConv_.setReferenceOrigin(state_.beginEntity_.lla_);
 
-  const Locator* loc0 = obj0->getLocator();
-  loc0->getLocalTangentPlaneToWorldMatrix(state_.local2world_);
+  // get entity ecef position
+  simCore::Vec3 ecef;
+  obj0->getPosition(&ecef);
+
+  // create a local ENU coordinate frame
+  state_.local2world_.makeTranslate(ecef.x(), ecef.y(), ecef.z());
+  osg::ref_ptr<const osgEarth::SpatialReference> srs = obj0->getLocator()->getSRS();
+  srs->getEllipsoid()->computeCoordinateFrame(state_.beginEntity_.lla_.lat(), state_.beginEntity_.lla_.lon(), state_.local2world_);
+
+  // invert to support ECEF->ENU conversions
   state_.world2local_.invert(state_.local2world_);
 
   // localizes all geometry to the reference point of obj0, preventing precision jitter
