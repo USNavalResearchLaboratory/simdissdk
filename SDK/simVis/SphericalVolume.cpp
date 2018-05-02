@@ -42,8 +42,6 @@ using namespace simVis;
 
 //---------------------------------------------------------------------------
 
-#define TESS_SPACING_DEG 1.0f
-
 #define USAGE_CONE     0x00
 #define USAGE_NEAR     0x01
 #define USAGE_FAR      0x02
@@ -51,12 +49,6 @@ using namespace simVis;
 #define USAGE_BOTTOM   0x08
 #define USAGE_LEFT     0x10
 #define USAGE_RIGHT    0x20
-
-#define FACE_NONE     0
-#define FACE_NEAR     1
-#define FACE_FAR      2
-#define FACE_CONE     3
-#define FACE_CENTROID 4
 
 #define Q(T) #T
 
@@ -163,8 +155,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   dirQ.makeRotate(osg::Vec3(0.0f, 1.0f, 0.0f), direction);
 
   osg::Vec3Array* vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
-  osg::IntArray* faceArray = new osg::IntArray(osg::Array::BIND_PER_VERTEX);
-  faceArray->setNormalize(false);
   osg::Vec3Array* normalArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
 
   SVMetaContainer* metaContainer = new SVMetaContainer();
@@ -217,7 +207,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   }
   vertexArray->reserve(reserveSizeFace + reserveSizeCone);
   normalArray->reserve(reserveSizeFace + reserveSizeCone);
-  faceArray->reserve(reserveSizeFace + reserveSizeCone);
   vertexMetaData->reserve(reserveSizeFace + reserveSizeCone);
 
   // add a vertex at gate origin, to support outline drawing to origin when minrange is 0
@@ -226,7 +215,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   {
     vertexArray->push_back(osg::Vec3());
     normalArray->push_back(osg::Vec3());
-    faceArray->push_back(FACE_NEAR);
     vertexMetaData->push_back(SVMeta(USAGE_NEAR, 0.f, 0.f, osg::Vec3(), 0.0f));
   }
 
@@ -257,7 +245,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
         const osg::Vec3 p = unit * r;
         vertexArray->push_back(p);
         normalArray->push_back(unit * normalDir);
-        faceArray->push_back(i == 0 ? FACE_FAR : FACE_NEAR);
         vertexMetaData->push_back(SVMeta(i == 0 ? USAGE_FAR : USAGE_NEAR, angleX_rad, angleZ_rad, unitUnrot, i == 0 ? 1.0f : 0.0f));
       }
     }
@@ -284,13 +271,8 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
     (*outlineColor)[0] = d.color_;
     (*outlineColor)[0][3] = 1.0f; // no transparency in the outline
     outlineGeom->setColorArray(outlineColor);
-
     outlineGeom->setVertexArray(vertexArray);
-
     outlineGeom->setUserData(metaContainer);
-
-    outlineGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
-
     outlineGeom->setNormalArray(normalArray);
 
     // horizontals of the gate face outline
@@ -364,15 +346,10 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
   faceGeom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
   osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-  faceGeom->setColorArray(colorArray);
   (*colorArray)[0] = d.color_;
-
+  faceGeom->setColorArray(colorArray);
   faceGeom->setVertexArray(vertexArray);
-
   faceGeom->setUserData(metaContainer);
-
-  faceGeom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, faceArray);
-
   faceGeom->setNormalArray(normalArray);
 
   // if we are drawing the face (not just the outline) add primitives that index into the vertex array
@@ -457,7 +434,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           vertexArray->push_back(vert);
           // normal should be the unit vector rotated 90deg around x axis
           normalArray->push_back(osg::Vec3(unit.x(), unit.z(), -unit.y()));
-          faceArray->push_back(FACE_CONE);
           vertexMetaData->push_back(SVMeta(USAGE_BOTTOM, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
@@ -495,7 +471,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           vertexArray->push_back(vert);
           // normal should be the unit vector rotated 90deg around z axis
           normalArray->push_back(osg::Vec3(unit.y(), -unit.x(), unit.z()));
-          faceArray->push_back(FACE_CONE);
           vertexMetaData->push_back(SVMeta(USAGE_RIGHT, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
@@ -534,7 +509,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           vertexArray->push_back(vert);
           // normal should be the unit vector rotated -90deg around x axis
           normalArray->push_back(osg::Vec3(unit.x(), -unit.z(), unit.y()));
-          faceArray->push_back(FACE_CONE);
           vertexMetaData->push_back(SVMeta(USAGE_TOP, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
@@ -569,7 +543,6 @@ void SVFactory::createPyramid_(osg::Geode& geode, const SVData& d, const osg::Ve
           vertexArray->push_back(vert);
           // normal should be the unit vector rotated -90deg around z axis
           normalArray->push_back(osg::Vec3(-unit.y(), unit.x(), unit.z()));
-          faceArray->push_back(FACE_CONE);
           vertexMetaData->push_back(SVMeta(USAGE_LEFT, metafoff.anglex_, metafoff.anglez_, unit, w));
 
           strip->setElement(2 * q + i, vertexArray->size() - 1);
@@ -636,12 +609,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   metaContainer->nearRange_ = d.nearRange_ * d.scale_;
   metaContainer->farRange_  = d.farRange_ * d.scale_;
 
-  // face identifiers
-  osg::IntArray* f = new osg::IntArray(numVerts);
-  f->setBinding(osg::Array::BIND_PER_VERTEX);
-  f->setNormalize(false);
-  geom->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, f);
-
   // quaternion that will "point" the volume along our direction vector
   osg::Quat dirQ;
   dirQ.makeRotate(osg::Vec3(0.0f, 1.0f, 0.0f), direction);
@@ -657,14 +624,12 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   // first point in each strip  is the center point.
   (*v)[vptr] = dirQ * osg::Vec3(0.0f, farRange, 0.0f);
   (*n)[vptr] = dirQ * osg::Vec3(0.0f, 1.0f, 0.0f);
-  (*f)[vptr] = FACE_FAR;
   (*m)[vptr] = SVMeta(USAGE_FAR, 0.0f, 0.0f, osg::Vec3(0.0f, 1.0f, 0.0f), 1.0f);
   if (hasNear)
   {
     // first point in strip is the center point.
     (*v)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, nearRange, 0.0f);
     (*n)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, -1.0f, 0.0f);
-    (*f)[vptr + vertsPerFace] = FACE_NEAR;
     (*m)[vptr + vertsPerFace] = SVMeta(USAGE_NEAR, 0.0f, 0.0f, osg::Vec3(0.0f, 1.0f, 0.0f), 0.0f);
   }
   vptr++;
@@ -696,7 +661,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
       (*v)[vptr] = farVec;
       (*n)[vptr] = unitVec;
-      (*f)[vptr] = FACE_FAR;
       (*m)[vptr].set(USAGE_FAR, rx, rz, rawUnitVec, 1.0f);
 
       // add the new point to the slice's far face geometry:
@@ -710,7 +674,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
         const osg::Vec3 nearVec = unitVec * nearRange;
         (*v)[vptr + vertsPerFace] = nearVec;
         (*n)[vptr + vertsPerFace] = -unitVec;
-        (*f)[vptr + vertsPerFace] = FACE_NEAR;
         (*m)[vptr + vertsPerFace].set(USAGE_NEAR, rx, rz, rawUnitVec, 0.0f);
       }
 
@@ -824,7 +787,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
           normal.normalize();
           (*n)[vptr] = normal;
-          (*f)[vptr] = FACE_CONE;
           (*m)[vptr].set(USAGE_CONE, rx[i], rz[i], rawUnitVec[i], w);
           side->addElement(vptr);
           vptr++;
