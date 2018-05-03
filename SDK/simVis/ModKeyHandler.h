@@ -24,6 +24,7 @@
 
 #include <utility>
 #include <vector>
+#include "simCore/Common/Export.h"
 
 namespace simVis
 {
@@ -39,7 +40,7 @@ namespace simVis
 * pass MODKEY_LEFT_CTRL or MODKEY_RIGHT_CTRL depending on which actual key was pressed. This class ensures that all three of those
 * options will pass when MODKEY_CTRL is set as the required mod keys.
 */
-class ModKeyHandler
+class SDKVIS_EXPORT ModKeyHandler
 {
 public:
   ModKeyHandler();
