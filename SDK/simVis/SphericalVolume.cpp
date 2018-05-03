@@ -36,6 +36,7 @@
 #include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/SphericalVolume.h"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 
 using namespace simVis;
@@ -856,15 +857,48 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
     osg::Geometry* geom = geodeSolid->getDrawable(0)->asGeometry();
     if ((SVData::DRAW_MODE_SOLID & d.drawMode_) || (SVData::DRAW_MODE_STIPPLE & d.drawMode_))
     {
-      // include a second geode that will re-draw the item in wireframe mode.
+      // create a new wireframe geometry as a shallow copy of the solid geometry
+      osg::Geometry* wireframeGeom = new osg::Geometry(*geom);
+      wireframeGeom->setName("simVis::SphericalVolume::cone-wireframe");
+
+      // but with its own color array
+      osg::Vec4Array* wireframeColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+      // default to white
+      (*wireframeColor)[0] = simVis::Color::White;
+      // but use the solid geometry color if it can be found
+      osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
+      if (colors)
+      {
+        if (colors->size() == 1)
+        {
+          (*wireframeColor)[0] = (*colors)[0];
+          (*wireframeColor)[0][3] = 1.0f; // no transparency in the wireframe
+        }
+        else
+        {
+          // sv color arrays are fixed at size 1
+          assert(0);
+        }
+      }
+      wireframeGeom->setColorArray(wireframeColor);
+
+      // add this to a 2nd geode in the xform: the 2nd geode in the xform is for opaque features
       osg::Geode* geodeWire = new osg::Geode();
-      geodeWire->addDrawable(geom);
+      geodeWire->addDrawable(wireframeGeom);
       xform->addChild(geodeWire);
+
+      osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
       osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-      geodeWire->getOrCreateStateSet()->setAttributeAndModes(pm, osg::StateAttribute::ON);
+      stateset->setAttributeAndModes(pm, osg::StateAttribute::ON);
+
+      // wireframe is neither lit nor blended when it is paired with another draw type
+      simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+      stateset->setMode(GL_BLEND,
+        osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
     }
     else
     {
+      // wireframe is the primary/'solid' geometry - it can be lit, blended
       osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
       geom->getOrCreateStateSet()->setAttributeAndModes(pm, osg::StateAttribute::ON);
     }
@@ -923,11 +957,9 @@ void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
   assert(geom);
   if (geom == NULL || geom->empty())
     return;
-
-  osg::StateSet* stateSet = geom->getOrCreateStateSet();
-  stateSet->setMode(GL_BLEND, blending ?
+  geom->getOrCreateStateSet()->setMode(GL_BLEND, blending ?
     osg::StateAttribute::ON :
-  osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
+    osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
 }
 
 void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color)
@@ -953,18 +985,52 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
     }
   }
 
-  // if we have an (optional) outline geometry, update its color, remove transparency
-  osgEarth::LineGroup* lines = SVFactory::outlineGeometry(xform);
-  if (lines == NULL)
+  // if we have an 2nd (optional) geode, it is opaque; update its color, but remove transparency
+  osg::Geode* opaqueGeode = SVFactory::opaqueGeode(xform);
+  if (opaqueGeode == NULL)
     return;
-
   osg::Vec4f opaqueColor = color;
   opaqueColor.a() = 1.0;
-  for (unsigned int i = 0; i < lines->getNumChildren(); ++i)
+
+  // the opaque geode may be a lineGroup containing lineDrawables
+  osgEarth::LineGroup* lines = dynamic_cast<osgEarth::LineGroup*>(opaqueGeode);
+  if (lines)
   {
-    osgEarth::LineDrawable* line = lines->getLineDrawable(i);
-    if (line)
-      line->setColor(opaqueColor);
+    for (unsigned int i = 0; i < lines->getNumChildren(); ++i)
+    {
+      osgEarth::LineDrawable* line = lines->getLineDrawable(i);
+      // line drawable can set to same-as-current color w/o penalty
+      if (line)
+        line->setColor(opaqueColor);
+    }
+    return;
+  }
+
+  // if the opaque geode is not a linegroup, it may contain a wireframe geometry
+  if (opaqueGeode->getNumDrawables() == 1)
+  {
+    geom = opaqueGeode->getDrawable(0)->asGeometry();
+    if (geom == NULL)
+      return;
+    colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
+    if (colors)
+    {
+      if (colors->size() != 1)
+      {
+        // check that all geometries use BIND_OVERALL, and color arrays are fixed at size 1
+        assert(0);
+        return;
+      }
+
+      // do not dirty the geometry if there is no change
+      if ((*colors)[0][0] != color[0] ||
+        (*colors)[0][1] != color[1] ||
+        (*colors)[0][2] != color[2])
+      {
+        colors->assign(1, opaqueColor);
+        colors->dirty();
+      }
+    }
   }
 }
 
@@ -1033,7 +1099,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, float farRange)
     (*verts)[i] = m[i].unit_ * (meta->nearRange_ + range*farRatio);
   }
   verts->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
@@ -1119,7 +1185,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
 
   verts->dirty();
   normals->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
@@ -1205,7 +1271,7 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
 
   verts->dirty();
   normals->dirty();
-  geom->dirtyBound();
+  dirtyBound_(xform);
 }
 
 osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
@@ -1218,10 +1284,30 @@ osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
   return geode->getDrawable(0)->asGeometry();
 }
 
-// if the sv pyramid has an LineGroup outline, it will be the MatrixTransform 2nd child
-osgEarth::LineGroup* SVFactory::outlineGeometry(osg::MatrixTransform* xform)
+// if the sv has a 2nd geode that adds outline or wireframe, it will be the MatrixTransform 2nd child
+osg::Geode* SVFactory::opaqueGeode(osg::MatrixTransform* xform)
 {
   if (xform == NULL || xform->getNumChildren() < 2)
     return NULL;
-  return dynamic_cast<osgEarth::LineGroup*>(xform->getChild(1));
+  return xform->getChild(1)->asGeode();
+}
+
+// dirty bounds for all geometries in the xform
+void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
+{
+  if (xform == NULL || xform->getNumChildren() == 0)
+    return;
+
+  // handle the geometries in the primary geode
+  osg::Geometry* geom = SVFactory::solidGeometry(xform);
+  if (geom && !geom->empty())
+    geom->dirtyBound();
+
+  // handle the 2nd geode
+  osg::Geode* opaqueGeode = SVFactory::opaqueGeode(xform);
+  if (!opaqueGeode || opaqueGeode->getNumDrawables() == 0)
+    return;
+  geom = opaqueGeode->getDrawable(0)->asGeometry();
+  if (geom && !geom->empty())
+    geom->dirtyBound();
 }

@@ -167,14 +167,15 @@ public:
   /// tweak the verts to update the vertical angle
   static void updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
 
-  /// Retrieves the 'outline' lineGroup, or NULL if there is none
-  static osgEarth::LineGroup* outlineGeometry(osg::MatrixTransform* xform);
-  /// Retrieves the 'solid' geometry, or NULL if there is no such geometry
+  /// Retrieves the 2nd opaque geode (e.g., outline or wireframe), or NULL if there is none
+  static osg::Geode* opaqueGeode(osg::MatrixTransform* xform);
+  /// Retrieves the primary 'solid' geometry, or NULL if there is no such geometry
   static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
 
 private:
   static void createPyramid_(osg::Geode& geode, const SVData &data, const osg::Vec3& dir);
   static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& dir);
+  static void dirtyBound_(osg::MatrixTransform* xform);
 };
 
 }
