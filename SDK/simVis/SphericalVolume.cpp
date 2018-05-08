@@ -231,7 +231,7 @@ namespace
   void svPyramidOutline::regenerate()
   {
     const bool hasNearFace = (nearFaceOffset_ > 0);
-#ifdef DEBUG
+#ifndef NDEBUG
     // only needed to support assertions
     const size_t vertexArraySize = vertexArray_->size();
     const size_t bottomOutlineSize = bottomOutline_->size();
