@@ -143,7 +143,7 @@ namespace
   {
     // svPyramid must provide a non-NULL vertex array
     assert(vertexArray);
-
+    setName("simVis::SphericalVolume::svPyramidOutline");
     xform.addChild(this);
 
     const bool hasNearFace = (nearFaceOffset_ > 0);
@@ -496,12 +496,14 @@ namespace
 
     // by convention, the sv xform always contains a primary geode for the volume
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
+    geodeSolid->setName("simVis::SphericalVolume::PrimaryGeode");
     xform.addChild(geodeSolid.get());
 
     // if we are drawing outline only, we still need a solid geometry (with no primitives) to hold the metadata that support in-place-update of the vertices that lineDrawable uses
     solidGeometry_ = new osg::Geometry();
     // set up the face geometry
     solidGeometry_->setName("simVis::SphericalVolume::PyramidFaceGeometry");
+    solidGeometry_->setUseVertexBufferObjects(true);
     solidGeometry_->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
     osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
