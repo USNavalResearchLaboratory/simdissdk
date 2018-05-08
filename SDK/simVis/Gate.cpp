@@ -45,7 +45,7 @@
  * Gate updates are currently disabled as SphericalVolume needs updates in order
  * to correctly reposition outline geometry with new osgEarth::LineDrawable.
  */
-#undef GATE_IN_PLACE_UPDATES
+#define GATE_IN_PLACE_UPDATES
 
 namespace simVis
 {

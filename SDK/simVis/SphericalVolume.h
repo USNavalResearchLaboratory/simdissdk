@@ -23,12 +23,11 @@
 #define SIMVIS_SPHERICAL_VOLUME_H
 
 #include "simCore/Common/Common.h"
-#include "osg/Geometry"
-#include "osg/MatrixTransform"
-#include "osgEarth/Revisioning"
-#include "osgEarthSymbology/Symbol"
 
-namespace osgEarth { class LineGroup; }
+namespace osg {
+  class Geometry;
+  class MatrixTransform;
+}
 
 namespace simVis
 {
@@ -141,7 +140,7 @@ class SVFactory
 {
 public:
   /// create a node visualizing the spherical volume given in 'data'
-  static osg::MatrixTransform* createNode(const SVData &data, const osg::Vec3& dir = osg::Vec3(0, 1, 0));
+  static osg::MatrixTransform* createNode(const SVData &data, const osg::Vec3& dir = osg::Y_AXIS);
 
   /// set lighting
   static void updateLighting(osg::MatrixTransform* xform, bool lighting);
@@ -151,17 +150,10 @@ public:
   static void updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color);
   /// set the stipple mode
   static void updateStippling(osg::MatrixTransform* xform, bool stippling);
-
-  // The following methods are used as in-place geometry update methods.  This will correctly
-  // update the face geometry, but does not correctly update outlines.  As a result, this
-  // code is temporarily disabled until a solution is worked out.  In the meantime, any
-  // geometry changes should go through createNode().
-#if 0
   /// move the verts comprising the far range
-  static void updateNearRange(osg::MatrixTransform* xform, float range);
-#endif
+  static void updateNearRange(osg::MatrixTransform* xform, double range);
   /// move the verts comprising the near range
-  static void updateFarRange(osg::MatrixTransform* xform, float range);
+  static void updateFarRange(osg::MatrixTransform* xform, double range);
   /// tweak the verts to update the horizontal angle
   static void updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
   /// tweak the verts to update the vertical angle
@@ -173,8 +165,7 @@ public:
   static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
 
 private:
-  static void createPyramid_(osg::Geode& geode, const SVData &data, const osg::Vec3& dir);
-  static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& dir);
+  static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& direction);
   static void dirtyBound_(osg::MatrixTransform* xform);
 };
 

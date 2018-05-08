@@ -111,7 +111,7 @@ BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdat
       (prefs.blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
   }
 
-  // if there is a 2nd wireframe geode, it should be written (separately) to BIN_OPAQUE_BEAM
+  // if there is a 2nd wireframe geode, it should be renderbin'd to BIN_OPAQUE_BEAM
   osg::Geode* wireframeGeode = simVis::SVFactory::opaqueGeode(beamSV_.get());
   if (wireframeGeode != NULL)
   {
