@@ -37,7 +37,6 @@
 #include "simVis/LabelContentManager.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
-#include "simVis/SphericalVolume.h"
 #include "simVis/ClockOptions.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"

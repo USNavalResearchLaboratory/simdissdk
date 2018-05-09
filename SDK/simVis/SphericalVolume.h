@@ -71,19 +71,10 @@ struct SVData
   bool       lightingEnabled_;
   /** True if blending is enabled */
   bool       blendingEnabled_;
-  /** Shape XYZ offset from origin in meters */
-  osg::Vec3  xyzOffset_m_;
-  /** Heading and pitch offset for the shape in degrees */
-  osg::Vec2  hpOffset_deg_;
-  /** Scale to apply to the volume */
-  float      scale_;
   /** True if cone is drawn */
   bool       drawCone_;
   /** True if should be drawn as a spherical segment */
   bool       drawAsSphereSegment_;
-
-  /** True to draw */
-  bool  visible_;
   /** Horizontal field of view in degrees */
   float hfov_deg_;
   /** Vertical field of view in degrees */
@@ -96,8 +87,6 @@ struct SVData
   float nearRange_;
   /** Far plane for the volume in meters */
   float farRange_;
-  /** Center range for the centroid shape */
-  float centerRange_;
 
   /** Default constructor */
   SVData()
@@ -110,29 +99,16 @@ struct SVData
     outlineWidth_(1.0f),
     lightingEnabled_(false),
     blendingEnabled_(true),
-    scale_(1.0f),
     drawCone_(true),
     drawAsSphereSegment_(false),
-
-    visible_(true),
     hfov_deg_(15.0f),
     vfov_deg_(10.0f),
     azimOffset_deg_(0.0f),
     elevOffset_deg_(0.0f),
     nearRange_(0.0f),
-    farRange_(10000.0f),
-    centerRange_(5000.0f)
+    farRange_(10000.0f)
   {
   }
-};
-
-/// structure for recording information about an existing geometry so we can update it
-struct SVState
-{
-  /** Index offset for the near face */
-  unsigned int nearFaceOffset_;
-  /** Index offset for the far face */
-  unsigned int farFaceOffset_;
 };
 
 /// Utility class to create volumetric geometry for beams and gates (internal)
@@ -155,9 +131,9 @@ public:
   /// move the verts comprising the near range
   static void updateFarRange(osg::MatrixTransform* xform, double range);
   /// tweak the verts to update the horizontal angle
-  static void updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
+  static void updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
   /// tweak the verts to update the vertical angle
-  static void updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
+  static void updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
 
   /// Retrieves the 2nd opaque geode (e.g., outline or wireframe), or NULL if there is none
   static osg::Geode* opaqueGeode(osg::MatrixTransform* xform);

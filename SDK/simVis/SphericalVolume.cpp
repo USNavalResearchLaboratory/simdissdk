@@ -110,7 +110,7 @@ namespace
   class svPyramidOutline : public osgEarth::LineGroup
   {
   public:
-    svPyramidOutline(osg::MatrixTransform& xform, osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls);
+    svPyramidOutline(osg::MatrixTransform& xform, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls);
     void regenerate();
     void setColor(const osg::Vec4f& color);
   protected:
@@ -118,7 +118,7 @@ namespace
     virtual ~svPyramidOutline();
 
   private:
-    osg::ref_ptr<osg::Vec3Array> vertexArray_; // the vertex array that contains the vertices that are sifted through to produce the outline
+    osg::ref_ptr<const osg::Vec3Array> vertexArray_; // the vertex array that contains the vertices that are sifted through to produce the outline
     osg::ref_ptr<osgEarth::LineDrawable> bottomOutline_;
     osg::ref_ptr<osgEarth::LineDrawable> topOutline_;
     osg::ref_ptr<osgEarth::LineDrawable> farLeftOutline_;
@@ -133,7 +133,7 @@ namespace
     bool drawWalls_;
   };
 
-  svPyramidOutline::svPyramidOutline(osg::MatrixTransform& xform, osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls)
+  svPyramidOutline::svPyramidOutline(osg::MatrixTransform& xform, const osg::Vec3Array* vertexArray, unsigned int numPointsX, unsigned int numPointsZ, unsigned short farFaceOffset, unsigned short nearFaceOffset, bool drawWalls)
     : vertexArray_(vertexArray),
     numPointsX_(numPointsX),
     numPointsZ_(numPointsZ),
@@ -177,23 +177,23 @@ namespace
     }
     bottomOutline_->setName("simVis::SphericalVolumeBottomOutline");
     bottomOutline_->setColor(outlineColor_);
-    addChild(bottomOutline_);
+    addChild(bottomOutline_.get());
     topOutline_->setName("simVis::SphericalVolumeTopOutline");
     topOutline_->setColor(outlineColor_);
-    addChild(topOutline_);
+    addChild(topOutline_.get());
 
     // the gate's far face left side vertical (numPointsZ_)
     farLeftOutline_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
     farLeftOutline_->allocate(numPointsZ_);
     farLeftOutline_->setName("simVis::SphericalVolume-FarOutline");
     farLeftOutline_->setColor(outlineColor_);
-    addChild(farLeftOutline_);
+    addChild(farLeftOutline_.get());
     // the gate's far face right side vertical (numPointsZ_)
     farRightOutline_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
     farRightOutline_->allocate(numPointsZ_);
     farRightOutline_->setName("simVis::SphericalVolume-FarOutline");
     farRightOutline_->setColor(outlineColor_);
-    addChild(farRightOutline_);
+    addChild(farRightOutline_.get());
 
     if (hasNearFace)
     {
@@ -202,13 +202,13 @@ namespace
       nearLeftOutline_->allocate(numPointsZ_);
       nearLeftOutline_->setName("simVis::SphericalVolume-NearOutline");
       nearLeftOutline_->setColor(outlineColor_);
-      addChild(nearLeftOutline_);
+      addChild(nearLeftOutline_.get());
       // the gate's near face right side vertical (numPointsZ_)
       nearRightOutline_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
       nearRightOutline_->allocate(numPointsZ_);
       nearRightOutline_->setName("simVis::SphericalVolume-NearOutline");
       nearRightOutline_->setColor(outlineColor_);
-      addChild(nearRightOutline_);
+      addChild(nearRightOutline_.get());
     }
   }
 
@@ -358,9 +358,6 @@ namespace
     osg::ref_ptr<osg::Vec3Array> vertexArray_;
     osg::ref_ptr<osg::Vec3Array> normalArray_;
     SVMetaContainer* metaContainer_;
-    float nearRange_;
-    float farRange_;
-    osg::Quat dirQ_;
     float hfov_deg_;
     float vfov_deg_;
     unsigned int numPointsX_;
@@ -406,7 +403,7 @@ namespace
     {
       // must provide a non-NULL vertexArray to svPyramidOutline
       assert(vertexArray_);
-      svPyramidOutline* outline = new svPyramidOutline(xform, vertexArray_, numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
+      svPyramidOutline* outline = new svPyramidOutline(xform, vertexArray_.get(), numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
       outline->setColor(color_);
       outline->regenerate();
     }
@@ -416,12 +413,6 @@ namespace
   {
     color_ = data.color_;
     wallRes_ = data.wallRes_;
-
-    nearRange_ = data.nearRange_ * data.scale_;
-    farRange_ = data.farRange_  * data.scale_;
-
-    // quaternion that "points" the volume along our direction vector
-    dirQ_.makeRotate(osg::Vec3(0.0f, 1.0f, 0.0f), direction);
 
     hfov_deg_ = osg::clampBetween(data.hfov_deg_, 0.01f, 360.0f);
     numPointsX_ = data.capRes_ + 1;
@@ -468,10 +459,7 @@ namespace
 
     farFaceOffset_ = 1;
     nearFaceOffset_ = hasNear_ ? farFaceOffset_ + (numPointsX_ * numPointsZ_) : 0;
-  }
 
-  void svPyramidFactory::initializePyramid(osg::MatrixTransform& xform)
-  {
     vertexArray_ = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     vertexArray_->reserve(reserveSizeFace_ + reserveSizeCone_);
 
@@ -479,9 +467,10 @@ namespace
     normalArray_->reserve(reserveSizeFace_ + reserveSizeCone_);
 
     metaContainer_ = new SVMetaContainer();
-    metaContainer_->dirQ_ = dirQ_;
-    metaContainer_->nearRange_ = nearRange_;
-    metaContainer_->farRange_ = farRange_;
+    // quaternion that "points" the volume along our direction vector
+    metaContainer_->dirQ_.makeRotate(osg::Y_AXIS, direction);
+    metaContainer_->nearRange_ = data.nearRange_;
+    metaContainer_->farRange_ = data.farRange_;
     std::vector<SVMeta>& vertexMetaData = metaContainer_->vertMeta_;
     vertexMetaData.reserve(reserveSizeFace_ + reserveSizeCone_);
 
@@ -493,7 +482,10 @@ namespace
       normalArray_->push_back(osg::Vec3());
       vertexMetaData.push_back(SVMeta(USAGE_NEAR, 0.f, 0.f, osg::Vec3(), 0.0f));
     }
+  }
 
+  void svPyramidFactory::initializePyramid(osg::MatrixTransform& xform)
+  {
     // by convention, the sv xform always contains a primary geode for the volume
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
     geodeSolid->setName("simVis::SphericalVolume::PrimaryGeode");
@@ -509,19 +501,20 @@ namespace
     osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*colorArray)[0] = color_;
     solidGeometry_->setColorArray(colorArray);
-    solidGeometry_->setVertexArray(vertexArray_);
+    solidGeometry_->setVertexArray(vertexArray_.get());
     solidGeometry_->setUserData(metaContainer_);
-    solidGeometry_->setNormalArray(normalArray_);
-    geodeSolid->addDrawable(solidGeometry_);
+    solidGeometry_->setNormalArray(normalArray_.get());
+    geodeSolid->addDrawable(solidGeometry_.get());
   }
 
   void svPyramidFactory::populateFaceVertices_(Face face)
   {
-    const float r = (face == FARFACE) ? farRange_ : nearRange_;
+    const float r = (face == FARFACE) ? metaContainer_->farRange_ : metaContainer_->nearRange_;
     const float normalDir = (face == FARFACE) ? 1.0f : -1.0f;
     const char usage = (face == FARFACE ? USAGE_FAR : USAGE_NEAR);
     const float ratio = (face == FARFACE ? 1.0f : 0.0f);
     std::vector<SVMeta>& vertexMetaData = metaContainer_->vertMeta_;
+    const osg::Quat& dirQ = metaContainer_->dirQ_;
 
     // populate vertex array and other arrays for face geometry
     // if you are looking from the gate origin, 1st gate vertex is at bottom left corner, then vertices go up to top left corner
@@ -540,7 +533,7 @@ namespace
         const float cosAngleZ = cos(angleZ_rad);
 
         const osg::Vec3 unitUnrot(sinAngleX*cosAngleZ, cosAngleX*cosAngleZ, sinAngleZ);
-        const osg::Vec3 unit = dirQ_ * unitUnrot;
+        const osg::Vec3 unit = dirQ * unitUnrot;
         const osg::Vec3 p = unit * r;
         vertexArray_->push_back(p);
         normalArray_->push_back(unit * normalDir);
@@ -609,7 +602,7 @@ namespace
     // build vertex sets for the walls. we have to duplicate verts in order to get unique normals, unfortunately.
 
     const float tessStep = 1.0f / wallRes_;
-    const float coneLen = farRange_ - nearRange_;
+    const float coneLen = metaContainer_->farRange_ - metaContainer_->nearRange_;
     const unsigned int numWallElements = (1 + wallRes_) * 2;
 
     // bottom:
@@ -772,7 +765,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   osg::Geometry* geom = new osg::Geometry();
   geom->setName("simVis::SphericalVolume::cone");
   geom->setUseVertexBufferObjects(true);
-  geom->setUseDisplayList(false);
   geom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
   // the number of angular slices into which to tessellate the ellipsoid.
@@ -788,8 +780,8 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
   const bool hasNear = d.nearRange_ > 0.0 && d.drawCone_;
 
-  const double nearRange = d.nearRange_ * d.scale_;
-  const double farRange = d.farRange_  * d.scale_;
+  const double nearRange = d.nearRange_;
+  const double farRange = d.farRange_;
 
   const unsigned int vertsPerSlice = numRings; // not including the center point
   const unsigned int vertsPerFace = (vertsPerSlice * numSlices) + 1; // +1 for the center point
@@ -816,13 +808,12 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   geom->setUserData(metaContainer);
   std::vector<SVMeta>* m = &metaContainer->vertMeta_;
   m->resize(numVerts);
-  metaContainer->nearRange_ = d.nearRange_ * d.scale_;
-  metaContainer->farRange_  = d.farRange_ * d.scale_;
+  metaContainer->nearRange_ = d.nearRange_;
+  metaContainer->farRange_  = d.farRange_;
 
   // quaternion that will "point" the volume along our direction vector
-  osg::Quat dirQ;
-  dirQ.makeRotate(osg::Vec3(0.0f, 1.0f, 0.0f), direction);
-  metaContainer->dirQ_ = dirQ;
+  metaContainer->dirQ_.makeRotate(osg::Y_AXIS, direction);
+  const osg::Quat& dirQ = metaContainer->dirQ_;
 
   // vertices for far face start at beginning of vertex array
   const unsigned short farOffset = 0;
@@ -833,14 +824,14 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   unsigned int vptr = 0;
   // first point in each strip  is the center point.
   (*v)[vptr] = dirQ * osg::Vec3(0.0f, farRange, 0.0f);
-  (*n)[vptr] = dirQ * osg::Vec3(0.0f, 1.0f, 0.0f);
-  (*m)[vptr] = SVMeta(USAGE_FAR, 0.0f, 0.0f, osg::Vec3(0.0f, 1.0f, 0.0f), 1.0f);
+  (*n)[vptr] = dirQ * osg::Y_AXIS;
+  (*m)[vptr] = SVMeta(USAGE_FAR, 0.0f, 0.0f, osg::Y_AXIS, 1.0f);
   if (hasNear)
   {
     // first point in strip is the center point.
     (*v)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, nearRange, 0.0f);
-    (*n)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, -1.0f, 0.0f);
-    (*m)[vptr + vertsPerFace] = SVMeta(USAGE_NEAR, 0.0f, 0.0f, osg::Vec3(0.0f, 1.0f, 0.0f), 0.0f);
+    (*n)[vptr + vertsPerFace] = -dirQ * osg::Y_AXIS;
+    (*m)[vptr + vertsPerFace] = SVMeta(USAGE_NEAR, 0.0f, 0.0f, osg::Y_AXIS, 0.0f);
   }
   vptr++;
 
@@ -965,11 +956,8 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
         unitVec[i] = dirQ * rawUnitVec[i];
 
         // the point on the near face (or at the origin if there's no near face)
-        nearVec[i].set(0.0f, 0.0f, 0.0f);
-        if (hasNear)
-          nearVec[i] = unitVec[i] * nearRange;
-
-        lengthVec[i] = (unitVec[i] * farRange) - nearVec[i];
+        nearVec[i] = (hasNear ? (unitVec[i] * d.nearRange_) : osg::Vec3());
+        lengthVec[i] = (unitVec[i] * d.farRange_) - nearVec[i];
       }
 
       osg::ref_ptr<osg::DrawElementsUShort> side = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
@@ -1028,16 +1016,14 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
 osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
-  osg::MatrixTransform* xform = NULL;
+  osg::MatrixTransform* xform = new osg::MatrixTransform();
 
   if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
-    xform = new osg::MatrixTransform();
     svPyramidFactory(*xform, d, dir);
   }
   else
   {
-    xform = new osg::MatrixTransform();
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
     xform->addChild(geodeSolid.get());
 
@@ -1294,7 +1280,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
   dirtyBound_(xform);
 }
 
-void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
+void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
   if (geom == NULL || geom->empty())
@@ -1315,20 +1301,20 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
   // clamp to M_TWOPI, to match clamping in pyramid and cone
-  oldAngle = osg::clampBetween(oldAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_TWOPI));
-  newAngle = osg::clampBetween(newAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_TWOPI));
-  const float oldMinAngle = -oldAngle*0.5f;
-  const float newMinAngle = -newAngle*0.5f;
+  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), M_TWOPI);
+  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), M_TWOPI);
+  const double oldMinAngle = -oldAngle * 0.5;
+  const double newMinAngle = -newAngle * 0.5;
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     SVMeta& m = vertMeta[i];
     // exclude centroid verts
     if (m.unit_.x() != 0.0f || m.unit_.z() != 0.0f)
     {
-      const float t = (m.anglex_ - oldMinAngle) / oldAngle;
-      const float ax = newMinAngle + t*newAngle;
-      const float sinx = sin(ax);
-      const float cosx = cos(ax);
+      const double t = (m.anglex_ - oldMinAngle) / oldAngle;
+      const double ax = newMinAngle + t * newAngle;
+      const double sinx = sin(ax);
+      const double cosx = cos(ax);
       const float sinz = sin(m.anglez_);
       const float cosz = cos(m.anglez_);
       const float range =
@@ -1378,7 +1364,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, fl
   dirtyBound_(xform);
 }
 
-void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle)
+void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
   if (geom == NULL || geom->empty())
@@ -1399,22 +1385,22 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, float oldAngle, flo
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
 
   // clamp to M_PI, to match clamping in pyramid and cone
-  oldAngle = osg::clampBetween(oldAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_PI));
-  newAngle = osg::clampBetween(newAngle, static_cast<float>(0.01f * simCore::DEG2RAD), static_cast<float>(M_PI));
-  const float oldMinAngle = -oldAngle*0.5f;
-  const float newMinAngle = -newAngle*0.5f;
+  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), M_PI);
+  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), M_PI);
+  const double oldMinAngle = -oldAngle * 0.5;
+  const double newMinAngle = -newAngle * 0.5;
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     SVMeta& m = vertMeta[i];
     // exclude centroid verts
     if (m.unit_.x() != 0.0f || m.unit_.z() != 0.0f)
     {
-      const float t = (m.anglez_ - oldMinAngle) / oldAngle;
-      const float az = newMinAngle + t*newAngle;
+      const double t = (m.anglez_ - oldMinAngle) / oldAngle;
+      const double az = newMinAngle + t * newAngle;
       const float sinx = sin(m.anglex_);
       const float cosx = cos(m.anglex_);
-      const float sinz = sin(az);
-      const float cosz = cos(az);
+      const double sinz = sin(az);
+      const double cosz = cos(az);
       const float range =
         m.usage_ == USAGE_NEAR ? meta->nearRange_ :
         m.usage_ == USAGE_FAR  ? meta->farRange_  :
