@@ -50,7 +50,7 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
   ui_->fileButton->setToolTip(tr("Display File Browser to select file to load."));
   connect(ui_->fileText, SIGNAL(textEdited(const QString&)), this, SLOT(textEdited_()));
   connect(ui_->fileText, SIGNAL(editingFinished()), this, SLOT(editingFinished_()));
-#if DEBUG
+#ifndef NDEBUG
   ui_->fileText->setReadOnly(false);  // Only allows developers to type in a file name; users must use the file browser
 #endif
   ui_->fileText->installEventFilter(this);

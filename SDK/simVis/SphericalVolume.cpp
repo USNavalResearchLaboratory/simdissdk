@@ -1158,7 +1158,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
     const size_t colorsSize = colors->size();
     // check that all geometries use BIND_OVERALL, and color arrays are fixed at size 1
     assert(colorsSize == 1);
-#ifdef DEBUG
+#ifndef NDEBUG
     OE_INFO << "update color, size = " << colorsSize << std::endl;
 #endif
     if ((*colors)[0] != color)

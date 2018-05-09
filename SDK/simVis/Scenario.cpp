@@ -892,7 +892,7 @@ const EntityNode* ScenarioManager::getHostPlatform(const EntityNode* entity) con
 
 namespace {
 
-#ifdef DEBUG
+#ifndef NDEBUG
 /** Visitor that, in debug mode, asserts that the overhead mode hint is set to a certain value */
 class AssertOverheadModeHint : public osg::NodeVisitor
 {
@@ -962,7 +962,7 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
   osg::Vec3d beg(a.x() / a.w(), a.y() / a.w(), a.z() / a.w());
   osg::Vec3d end(b.x() / b.w(), b.y() / b.w(), b.z() / b.w());
 
-#ifdef DEBUG
+#ifndef NDEBUG
   // In debug mode, make sure the overhead hint is false, else a release mode
   // optimization that presumes hint is false will fail.
   AssertOverheadModeHint assertHintIsFalse(false);

@@ -1807,7 +1807,7 @@ int AntennaPatternCRUISE::readPat_(istream& fp)
   for (i = 0; i < freqLen_; i++)
   {
     fp >> tmpData;
-#ifdef DEBUG
+#ifndef NDEBUG
     // convert GHz to Hz
     assert(floor(0.5 + freqData_[i]) == floor(0.5 + (tmpData*1e09)));
 #endif

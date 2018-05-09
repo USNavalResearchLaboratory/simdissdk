@@ -61,7 +61,7 @@ int WidgetSettings::saveQSplitter_(simQt::Settings& settings, const QString& pat
 
   if (splitter->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use saveWidget [QSplitter].  path = " << path.toStdString() << std::endl;
 #endif
@@ -79,7 +79,7 @@ int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& pat
 
   if (view->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use saveWidget [QTreeView].  path = " << path.toStdString() << std::endl;
 #endif
@@ -113,7 +113,7 @@ int WidgetSettings::saveQColumnView_(simQt::Settings& settings, const QString& p
 
   if (view->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use saveWidget [QColumnView].  path = " << path.toStdString() << std::endl;
 #endif
@@ -133,7 +133,7 @@ int WidgetSettings::saveQTableView_(simQt::Settings& settings, const QString& pa
 
   if (view->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use saveWidget [QTableView].  path = " << path.toStdString() << std::endl;
 #endif
@@ -169,7 +169,7 @@ int WidgetSettings::saveQDialog_(simQt::Settings& settings, const QString& path,
 
   if (dialog->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use saveQDialog_ [QDialog].  path = " << path.toStdString() << std::endl;
 #endif
@@ -231,7 +231,7 @@ int WidgetSettings::loadQSplitter_(simQt::Settings& settings, const QString& pat
 
   if (splitter->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use loadWidget [QSplitter].  path = " << path.toStdString() << std::endl;
 #endif
@@ -251,7 +251,7 @@ int WidgetSettings::loadQTreeView_(simQt::Settings& settings, const QString& pat
 
   if (view->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use loadWidget [QTreeView].  path = " << path.toStdString() << std::endl;
 #endif
@@ -280,7 +280,7 @@ int WidgetSettings::loadQColumnView_(simQt::Settings& settings, const QString& p
 
   if (view->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use loadWidget [QColumnView].  path = " << path.toStdString() << std::endl;
 #endif
@@ -300,7 +300,7 @@ int WidgetSettings::loadQTableView_(simQt::Settings& settings, const QString& pa
 
   if (view->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use loadWidget [QTableView].  path = " << path.toStdString() << std::endl;
 #endif
@@ -329,7 +329,7 @@ int WidgetSettings::loadQDialog_(simQt::Settings& settings, const QString& path,
 
   if (dialog->objectName().isEmpty())
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     // Implies that a child with the given path has items without objectNames; use setObjectName() as needed to solve.
     SIM_ERROR << "Widget objectName must not be empty to use loadQDialog_ [QDialog].  path = " << path.toStdString() << std::endl;
 #endif
