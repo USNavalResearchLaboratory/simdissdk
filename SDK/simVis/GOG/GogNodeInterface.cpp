@@ -716,7 +716,7 @@ void GogNodeInterface::setExtrude(bool extrude)
     if (!filled_)
     {
       osgEarth::Symbology::PolygonSymbol* polygonSymbol = style_.getOrCreate<osgEarth::Symbology::PolygonSymbol>();
-      polygonSymbol->fill()->color() = osg::Vec4(0., 0., 0., 0.);
+      polygonSymbol->fill()->color() = osg::Vec4(); // transparent
     }
     osgEarth::Symbology::ExtrusionSymbol* ext = style_.getOrCreate<osgEarth::Symbology::ExtrusionSymbol>();
     // set the height value if necessary, otherwise unset to allow extrude to ground
@@ -781,7 +781,7 @@ void GogNodeInterface::setFilledState(bool state)
   {
     // since extrusion requires an invisible polygon symbol (if not filled), make it invisible if extruded, otherwise remove the symbol altogether
     if (extruded_)
-      style_.getSymbol<osgEarth::Symbology::PolygonSymbol>()->fill()->color() = osg::Vec4(0., 0., 0., 0.);
+      style_.getSymbol<osgEarth::Symbology::PolygonSymbol>()->fill()->color() = osg::Vec4(); // transparent
     else
       style_.remove<osgEarth::Symbology::PolygonSymbol>();
     setStyle_(style_);

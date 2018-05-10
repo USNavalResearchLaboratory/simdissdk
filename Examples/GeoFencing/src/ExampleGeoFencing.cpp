@@ -66,8 +66,8 @@ namespace
     vbox->setAbsorbEvents(true);
     vbox->setVertAlign(ui::Control::ALIGN_TOP);
     vbox->setPadding(10);
-    vbox->setBackColor(0, 0, 0, 0.4);
-    vbox->addControl(new ui::LabelControl("GeoFencing Test", 20));
+    vbox->setBackColor(0.f, 0.f, 0.f, 0.4f);
+    vbox->addControl(new ui::LabelControl("GeoFencing Test", 20.f));
     vbox->addControl(new ui::LabelControl("The yellow areas are geofences.", simVis::Color::Yellow));
     vbox->addControl(new ui::LabelControl("The red areas are invalid (concave) geofences.", simVis::Color::Red));
     vbox->addControl(new ui::LabelControl("Click to see whether you are inside one!"));
@@ -91,10 +91,10 @@ namespace
   void styleAnnotation(osgEarth::Symbology::Style& style, bool valid)
   {
     namespace sym = osgEarth::Symbology;
-    simVis::Color color = valid ? simVis::Color::Yellow : simVis::Color::Red;
-    style.getOrCreate<sym::PolygonSymbol>()->fill()->color() = simVis::Color(color, 0.5);
+    const simVis::Color color = valid ? simVis::Color::Yellow : simVis::Color::Red;
+    style.getOrCreate<sym::PolygonSymbol>()->fill()->color() = simVis::Color(color, 0.5f);
     style.getOrCreate<sym::LineSymbol>()->stroke()->color() = simVis::Color::White;
-    style.getOrCreate<sym::LineSymbol>()->stroke()->width() = 2;
+    style.getOrCreate<sym::LineSymbol>()->stroke()->width() = 2.f;
     style.getOrCreate<sym::LineSymbol>()->tessellationSize()->set(100, simVis::Units::KILOMETERS);
     style.getOrCreate<sym::AltitudeSymbol>()->verticalOffset() = 10000;
     style.getOrCreate<sym::RenderSymbol>()->backfaceCulling() = false;
@@ -111,7 +111,7 @@ namespace
     osg::ref_ptr<osgEarth::Symbology::Polygon> geom = new osgEarth::Symbology::Polygon();
     for (unsigned i = 0; i < v.size(); ++i)
     {
-      simCore::Vec3 deg = v[i] * simCore::RAD2DEG;
+      const simCore::Vec3 deg = v[i] * simCore::RAD2DEG;
       geom->push_back(osg::Vec3d(deg.y(), deg.x(), deg.z()));
     }
     geom->open();

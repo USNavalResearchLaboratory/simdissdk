@@ -836,8 +836,8 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, GLenum mode, 
     {
       osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(mode);
       geom->importVertexArray(verts);
-      geom->setColor(i==0? options_.lineColor1_ : options_.lineColor2_);
-      geom->setStipplePattern(i==0? options_.lineStipple1_ : options_.lineStipple2_);
+      geom->setColor(i==0 ? options_.lineColor1_ : options_.lineColor2_);
+      geom->setStipplePattern(i==0 ? options_.lineStipple1_ : options_.lineStipple2_);
       geom->setLineWidth(options_.lineWidth_);
       geom->installShader();
 
@@ -943,6 +943,7 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
     verts->push_back(endVec   * pieRadius * 1.5 + originVec);
 
     osgEarth::LineDrawable* vecs = new osgEarth::LineDrawable(GL_LINES);
+    vecs->reserve(4);
     vecs->pushVertex(verts->front());
     vecs->pushVertex((*verts)[verts->size()-2]);
     vecs->pushVertex(verts->front());

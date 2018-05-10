@@ -41,7 +41,7 @@ public:
     simCore::PolarityType polarity = simCore::POLARITY_UNKNOWN,
     float elevation = 0.0f,
     float detail = 1.0f,
-    const osg::Vec4& color = osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f),
+    const osg::Vec4& color = simVis::Color::White,
     bool colorOverride = false);
 
   virtual ~RCSRenderer();

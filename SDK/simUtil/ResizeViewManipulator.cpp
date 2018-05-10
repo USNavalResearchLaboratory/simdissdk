@@ -109,14 +109,14 @@ private:
     line_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
     line_->allocate(8);
 
-    line_->setVertex(0, osg::Vec3(0, 1, 0));
-    line_->setVertex(1, osg::Vec3(0.5, 1, 0));
-    line_->setVertex(2, osg::Vec3(1, 1, 0));
-    line_->setVertex(3, osg::Vec3(1, 0.5, 0));
-    line_->setVertex(4, osg::Vec3(1, 0, 0));
-    line_->setVertex(5, osg::Vec3(0.5, 0, 0));
-    line_->setVertex(6, osg::Vec3(0, 0, 0));
-    line_->setVertex(7, osg::Vec3(0, 0.5, 0));
+    line_->setVertex(0, osg::Vec3(0.f, 1.f, 0.f));
+    line_->setVertex(1, osg::Vec3(0.5f, 1.f, 0.f));
+    line_->setVertex(2, osg::Vec3(1.f, 1.f, 0.f));
+    line_->setVertex(3, osg::Vec3(1.f, 0.5f, 0.f));
+    line_->setVertex(4, osg::Vec3(1.f, 0.f, 0.f));
+    line_->setVertex(5, osg::Vec3(0.5f, 0.f, 0.f));
+    line_->setVertex(6, osg::Vec3(0.f, 0.f, 0.f));
+    line_->setVertex(7, osg::Vec3(0.f, 0.5f, 0.f));
 
     line_->setColor(BAND_NORMAL_COLOR);
 

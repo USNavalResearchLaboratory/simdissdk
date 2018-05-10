@@ -292,7 +292,7 @@ ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel, bool rttEnabled
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl("Picking Example", 20, osg::Vec4f(1, 1, 0, 1)));
+  vbox->addControl(new ui::LabelControl("Picking Example", 20, simVis::Color::Yellow));
   vbox->addControl(new ui::LabelControl("h: Toggle highlighting", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, osgEarth::Color::White));
   vbox->addControl(new ui::LabelControl("p: Pause playback", 14, osgEarth::Color::White));

@@ -427,8 +427,8 @@ ui::Control* ViewerApp::createHelp_() const
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(TITLE, 20, osg::Vec4f(1, 1, 0, 1)));
-  vbox->addControl(new ui::LabelControl(HELP_TEXT, 14, osg::Vec4f(.8, .8, .8, 1)));
+  vbox->addControl(new ui::LabelControl(TITLE, 20.f, simVis::Color::Yellow));
+  vbox->addControl(new ui::LabelControl(HELP_TEXT, 14, simVis::Color::Silver));
   // Move it down just a bit
   vbox->setPosition(10, 10);
   return vbox;

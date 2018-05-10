@@ -170,7 +170,7 @@ namespace
     vbox->setVertAlign(Control::ALIGN_TOP);
     vbox->setPadding(10);
     vbox->setBackColor(0, 0, 0, 0.4);
-    vbox->addControl(new LabelControl(s_title, 20, osg::Vec4f(1, 1, 0, 1)));
+    vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
 
     osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(app);
 
@@ -259,7 +259,7 @@ namespace
     osgEarth::Symbology::Style style;
 
     osg::ref_ptr<osgEarth::Symbology::LineSymbol> line = style.getOrCreate<osgEarth::Symbology::LineSymbol>();
-    line->stroke()->color() = osg::Vec4(1, 1, 0, 1);
+    line->stroke()->color() = simVis::Color::Yellow;
     line->stroke()->width() = 5.0f;
 
     osg::ref_ptr<osgEarth::Symbology::AltitudeSymbol> alt = style.getOrCreate<osgEarth::Symbology::AltitudeSymbol>();
@@ -274,8 +274,8 @@ namespace
     // create a dragger to move the crosshairs around:
     // Note that editor is returned to caller, and owned by caller
     osgEarth::Annotation::GeoPositionNodeEditor* editor = new osgEarth::Annotation::GeoPositionNodeEditor(node.get());
-    editor->getPositionDragger()->setColor(osg::Vec4f(1, 1, 1, 1));
-    editor->getPositionDragger()->setPickColor(osg::Vec4f(0, 1, 1, 1));
+    editor->getPositionDragger()->setColor(simVis::Color::White);
+    editor->getPositionDragger()->setPickColor(simVis::Color::Aqua);
     editor->addChild(node);
 
     editor->getPositionDragger()->addPositionChangedCallback(new RunPointToPointLOSCallback(app));

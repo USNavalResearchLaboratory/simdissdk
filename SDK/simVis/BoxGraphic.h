@@ -46,7 +46,7 @@ public:
   * @param color line color
   */
   BoxGraphic(double x = 0., double y = 0., double width = 0., double height = 0.,
-    float lineWidth = 2., unsigned short stipple = 0x9999, const osg::Vec4& color = osg::Vec4(1.0, 1.0, 1.0, 1.0));
+    float lineWidth = 2.f, unsigned short stipple = 0x9999, const osg::Vec4& color = osg::Vec4(1.f, 1.f, 1.f, 1.f));
 
   BoxGraphic(const BoxGraphic& rhs);
 

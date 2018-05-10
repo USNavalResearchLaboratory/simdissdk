@@ -54,7 +54,7 @@ public:
   * Display the status as specified by statusSpec
   * @return 0 on success, !0 on error
   */
-  int setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color = osg::Vec4f(1.0f, 1.0f, 1.0f, 1.0f), double fontSize = 16.0, const std::string& font = "arial.ttf");
+  int setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color = simVis::Color::White, double fontSize = 16.0, const std::string& font = "arial.ttf");
 
   /**
   * Remove the status display

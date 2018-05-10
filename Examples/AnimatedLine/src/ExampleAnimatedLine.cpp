@@ -170,8 +170,8 @@ void addAnimatedLines(simVis::EntityNode* node1, simVis::EntityNode* node2, osg:
 
     osg::ref_ptr<simVis::AnimatedLineNode> line = new simVis::AnimatedLineNode();
     line->setEndPoints(node2->getLocator(), coord);
-    line->setColor1(osg::Vec4(1, 0, 0, 1)); // red
-    line->setColor2(osg::Vec4(1, 1, 0, 1)); // yellow
+    line->setColor1(simVis::Color::Red);
+    line->setColor2(simVis::Color::Yellow);
     line->setShiftsPerSecond(40.0);      // speed
 
     parent->addChild(line);
@@ -190,8 +190,8 @@ void addAnimatedLines(simVis::EntityNode* node1, simVis::EntityNode* node2, osg:
 
     osg::ref_ptr<simVis::AnimatedLineNode> line = new simVis::AnimatedLineNode();
     line->setEndPoints(coord1, coord2);
-    line->setColor1(osg::Vec4(1, 0.5, 0, 1)); // orange
-    line->setColor2(osg::Vec4(0, 0, 0, 0));   // transparent
+    line->setColor1(simVis::Color::Orange); // orange
+    line->setColor2(osg::Vec4());   // transparent
     line->setShiftsPerSecond(-30.0);       // negative speed reverses the direction.
 
     parent->addChild(line);
@@ -218,8 +218,8 @@ void addAnimatedLines(simVis::EntityNode* node1, simVis::EntityNode* node2, osg:
     line->setEndPoints(node2->getLocator(), lob2.get());
     line->setStipple1(0xF0F0);
     line->setStipple2(0x0F00);
-    line->setColor1(osg::Vec4(0, 1, 0, 1));
-    line->setColor2(osg::Vec4(1, 1, 1, 1));
+    line->setColor1(simVis::Color::Lime);
+    line->setColor2(simVis::Color::White);
 
     parent->addChild(line);
   }
@@ -238,8 +238,8 @@ void addAnimatedLines(simVis::EntityNode* node1, simVis::EntityNode* node2, osg:
 
     osg::ref_ptr<simVis::AnimatedLineNode> line = new simVis::AnimatedLineNode();
     line->setEndPoints(fixedCoord, bearingLine);
-    line->setColor1(osg::Vec4(0, 1, 1, 1));
-    line->setColor2(osg::Vec4(1, 0, 0, 1));
+    line->setColor1(simVis::Color::Aqua);
+    line->setColor2(simVis::Color::Red);
     line->setStipple1(0xF0F0);
     line->setStipple2(0x0F0F);
 
@@ -255,8 +255,8 @@ void addAnimatedLines(simVis::EntityNode* node1, simVis::EntityNode* node2, osg:
 
     osg::ref_ptr<simVis::AnimatedLineNode> line = new simVis::AnimatedLineNode();
     line->setEndPoints(node2->getLocator(), bearingLine);
-    line->setColor1(osg::Vec4(1, 0, 0, 1)); // red
-    line->setColor2(osg::Vec4(1, 1, 0, 1)); // yellow
+    line->setColor1(simVis::Color::Red);
+    line->setColor2(simVis::Color::Yellow);
     line->setShiftsPerSecond(40.0);      // speed
 
     parent->addChild(line);
@@ -275,8 +275,8 @@ void addAnimatedLines(simVis::EntityNode* node1, simVis::EntityNode* node2, osg:
 
     osg::ref_ptr<simVis::AnimatedLineNode> line = new simVis::AnimatedLineNode(2.5f);
     line->setEndPoints(coord1, coord2);
-    line->setColor1(osg::Vec4(1, 0, 1, 1)); // magenta
-    line->setColor2(osg::Vec4(0, 0, 0, 0));   // transparent
+    line->setColor1(simVis::Color::Fuchsia);
+    line->setColor2(osg::Vec4());   // transparent
     line->setStipple1(0xf0ff);
     line->setStipple2(0x0);
     line->setShiftsPerSecond(20.0);

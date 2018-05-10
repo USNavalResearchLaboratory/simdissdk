@@ -135,9 +135,9 @@ static Control* createHelp()
   VBox* vbox = new VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20, osg::Vec4f(1, 1, 0, 1)));
-  vbox->addControl(new LabelControl(s_help, 14, osg::Vec4f(.8, .8, .8, 1)));
-  s_action = new LabelControl("", 16, osg::Vec4f(0, 1, 0, 1));
+  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
+  vbox->addControl(new LabelControl(s_help, 14, simVis::Color::Silver));
+  s_action = new LabelControl("", 16, simVis::Color::Lime);
   vbox->addControl(s_action.get());
   s_helpControl = vbox;
   return vbox;

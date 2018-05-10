@@ -391,7 +391,7 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
   if (altmode && altModeXform_ == NULL)
   {
     dropVertsDrawable_ = new osgEarth::LineDrawable(GL_LINES);
-    dropVertsDrawable_->setColor(osg::Vec4(1,1,1,1));
+    dropVertsDrawable_->setColor(simVis::Color::White);
     dropVertsDrawable_->allocate(2);
     dropVertsDrawable_->dirty();
 
@@ -434,9 +434,8 @@ void TrackHistoryNode::updateAltModePositionAndAppearance_(const osg::Matrixd& m
   world2local.invert(mat);
 
   // calculate the local point.
-  static const osg::Vec3d s_zero(0.0, 0.0, 0.0);
-  osg::Vec3d world = s_zero * mat;
-  osg::Vec3  local = world * world2local;
+  static const osg::Vec3d s_zero;
+  const osg::Vec3d world = s_zero * mat;
 
   osg::Vec3d up;
   osgEarth::GeoPoint geo;
@@ -584,7 +583,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
   else if (prefs.multitrackcolor())
   {
     // Set lastOverrideColor so re-enabling an override will trigger the logic at the end of setOverrideColor_
-    lastOverrideColor_ = (0, 0, 0, 0);
+    lastOverrideColor_ = osg::Vec4f();
     // Can only disable the override after one has been created
     if (enableOverrideColorUniform_.valid())
       enableOverrideColorUniform_->set(false);
@@ -600,7 +599,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, linewidth))
   {
-    double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
+    const double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
     osg::StateSet* stateSet = this->getOrCreateStateSet();
     osgEarth::LineDrawable::setLineWidth(stateSet, lineWidth);
     PointSize::setValues(stateSet, lineWidth, osg::StateAttribute::ON);

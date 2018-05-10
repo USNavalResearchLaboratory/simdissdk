@@ -86,8 +86,8 @@ public:
   virtual void update(const std::string& text, double x=0.0, double y=0.0,
         bool percentageX=true, bool percentageY=true,
         Alignment hAlign=ALIGN_LEFT, Alignment vAlign=ALIGN_BOTTOM,
-        const osg::Vec4& color=osg::Vec4(1.0, 1.0, 1.0, 1.0),
-        const std::string& font="arial.ttf", double fontSize=10) = 0;
+        const osg::Vec4& color=simVis::Color::White,
+        const std::string& font="arial.ttf", double fontSize=10.) = 0;
 
   // Functions to set/get smaller parts
 
@@ -186,8 +186,8 @@ public:
   virtual void update(const std::string& text, double x=0.0, double y=0.0,
         bool percentageX=true, bool percentageY=true,
         Alignment hAlign=ALIGN_LEFT, Alignment vAlign=ALIGN_BOTTOM,
-        const osg::Vec4& color=osg::Vec4(1.0, 1.0, 1.0, 1.0),
-        const std::string& font="arial.ttf", double fontSize=10);
+        const osg::Vec4& color=simVis::Color::White,
+        const std::string& font="arial.ttf", double fontSize=10.);
 
   // Functions to set/get smaller parts
 
@@ -492,8 +492,8 @@ public:
   HudText* createText(const std::string& text, double x=0.0, double y=0.0,
     bool percentageX=true, bool percentageY=true,
     Alignment hAlign=ALIGN_LEFT, Alignment vAlign=ALIGN_BOTTOM,
-    const osg::Vec4& color=osg::Vec4(1.0, 1.0, 1.0, 1.0),
-    const std::string& font="arial.ttf", double fontSize=10);
+    const osg::Vec4& color=simVis::Color::White,
+    const std::string& font="arial.ttf", double fontSize=10.);
 
   /**
    * Creates and returns a HudColumnText for displaying overlay text in columns.  Percentages are from 0 to 100.
@@ -510,8 +510,8 @@ public:
    */
   HudColumnText* createColumnText(const std::string& text, double x=0.0, double y=0.0,
                                   bool percentage=true, Alignment vAlign=ALIGN_BOTTOM,
-                                  const osg::Vec4& color=osg::Vec4(1.0, 1.0, 1.0, 1.0),
-                                  const std::string& font="arial.ttf", double fontSize=20);
+                                  const osg::Vec4& color=simVis::Color::White,
+                                  const std::string& font="arial.ttf", double fontSize=20.);
 
   /**
    * Creates and returns a HudImage for displaying images on the HUD.  Percentages are from 0 to 100.

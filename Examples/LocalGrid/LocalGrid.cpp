@@ -205,7 +205,7 @@ ui::Control* createHelp(simData::DataStore& ds, simData::ObjectId id)
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0);
-  vbox->addControl(new ui::LabelControl(s_title, 20, osg::Vec4f(1, 1, 0, 1)));
+  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
 
   // Grid for the various controls, memory will be owned by vbox
   ui::Grid* grid = new ui::Grid();

@@ -347,7 +347,7 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
     const double a = azIndex * tickstep;
     const float x = static_cast<float>(cos(a));
     const float y = static_cast<float>(sin(a));
-    ticks->pushVertex(osg::Vec3f(x, y, 0));
+    ticks->pushVertex(osg::Vec3f(x, y, 0.f));
     ticks->pushVertex(osg::Vec3f(x, y, z));
   }
   ticks->dirty();
@@ -411,8 +411,7 @@ osg::MatrixTransform* PlatformAzimElevViewTool::createAzElGrid_()
 
 osg::Node* PlatformAzimElevViewTool::buildTargetGeometry_()
 {
-  float s = 3000.0f;
-
+  const float s = 3000.0f;
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
 
   geom->allocate(4);
@@ -421,7 +420,7 @@ osg::Node* PlatformAzimElevViewTool::buildTargetGeometry_()
   geom->setVertex(2, osg::Vec3(-s,  s, 0.0f));
   geom->setVertex(3, osg::Vec3( s, -s, 0.0f));
 
-  geom->setColor(osg::Vec4(1,1,1,1));
+  geom->setColor(simVis::Color::White);
   geom->setLineWidth(2.0f);
   return geom;
 }

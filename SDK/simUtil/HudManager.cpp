@@ -166,7 +166,7 @@ void HudTextAdapter::update_()
       // Set up the Halo
       osgText->setBackdropType(backdrop_);
       osgText->setBackdropOffset(backdropOffset_);
-      osgText->setBackdropColor(osg::Vec4(0.f, 0.f, 0.f, 1.f));
+      osgText->setBackdropColor(simVis::Color::Black);
       osgText->setBackdropImplementation(osgText::Text::DELAYED_DEPTH_WRITES);
       initializeText_(osgText.get());
     }

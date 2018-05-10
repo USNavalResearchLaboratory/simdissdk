@@ -34,6 +34,7 @@
 #include "simVis/Constants.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/AnimatedLine.h"
 
@@ -89,9 +90,9 @@ AnimatedLineNode::AnimatedLineNode(float lineWidth, bool depthBufferTest) :
 stipple1_(0xFF00),
 stipple2_(0x00FF),
 shiftsPerSecond_(10.0),
-color1_(osg::Vec4(0.f, 0.f, 1.f, 1.f)),    // blue
-color2_(osg::Vec4(1.f, 1.f, 0.f, 1.f)),    // yellow
-colorOverride_(osg::Vec4()),    // no color
+color1_(simVis::Color::Blue),
+color2_(simVis::Color::Yellow),
+colorOverride_(osg::Vec4()),    // transparent
 useOverrideColor_(false),
 lineWidth_(lineWidth),
 coordinateConverter_(new simCore::CoordinateConverter),

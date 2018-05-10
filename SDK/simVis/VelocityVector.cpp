@@ -160,7 +160,7 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   simCore::v3Scale(scale, velocity, velocity);
 
   // draw velocity vector
-  geom->pushVertex(osg::Vec3(0, 0, 0));
+  geom->pushVertex(osg::Vec3());
   geom->pushVertex(osg::Vec3(velocity.x(), velocity.y(), velocity.z()));
   geom->setColor(vectorColor_);
   geom->dirty();
