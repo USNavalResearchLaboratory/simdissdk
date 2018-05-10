@@ -122,7 +122,7 @@ Control* createHelp()
   vbox->addControl(new LabelControl("5 : reset to main view", 14, simVis::Color::Silver));
 
   vbox->addControl(new LabelControl("t : toggle follow-platform", 14, simVis::Color::Silver));
-  vbox->addControl(new LabelControl("w,s : position offset north/south", 14, simVis::Color::Gray));
+  vbox->addControl(new LabelControl("w,x : position offset north/south", 14, simVis::Color::Gray));
   vbox->addControl(new LabelControl("a,d : position offset west/east", 14, simVis::Color::Gray));
   vbox->addControl(new LabelControl("q,z : position offset up/down", 14, simVis::Color::Gray));
   vbox->addControl(new LabelControl("g : reset position offset", 14, simVis::Color::Gray));
@@ -353,7 +353,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         handled = true;
         break;
 
-      case 's': // Position offset back
+      case 'x': // Position offset back
         vp.positionOffset() = (*viewer_->getMainView()->getViewpoint().positionOffset()) + osg::Vec3(0, -1, 0);
         viewer_->getMainView()->setViewpoint(vp);
         handled = true;
