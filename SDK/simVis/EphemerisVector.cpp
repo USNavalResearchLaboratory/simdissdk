@@ -40,7 +40,7 @@ namespace simVis
 {
 
 /** Number of vertices to use when drawing the line vectors (should be at least 2) */
-static const int NUM_LINE_VERTICES = 4;
+static const unsigned int NUM_LINE_VERTICES = 4;
 /** Ephemeris vector display mask when visible; uses label to avoid affecting platform bounds */
 static const simVis::DisplayMask DISPLAY_MASK_EPHEMERIS = DISPLAY_MASK_LABEL;
 /** Interval in minutes for updating ephemeris vectors on time, when they aren't rebuilt due to other means */

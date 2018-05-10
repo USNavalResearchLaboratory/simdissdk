@@ -34,7 +34,7 @@ namespace simVis
 namespace
 {
 /// Number of points in the subdivided line strip
-const int AXIS_NUM_POINTS_PER_LINE_STRIP = 4;
+const unsigned int AXIS_NUM_POINTS_PER_LINE_STRIP = 4;
 }
 
 // --------------------------------------------------------------------------

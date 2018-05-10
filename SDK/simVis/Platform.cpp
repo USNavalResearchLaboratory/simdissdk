@@ -55,7 +55,7 @@ static const simVis::Color BODY_AXIS_Z_COLOR = simVis::Color::Aqua;
 static const simVis::Color INERTIAL_AXIS_X_COLOR = simVis::Color::Red;
 static const simVis::Color INERTIAL_AXIS_Y_COLOR = simVis::Color::Lime;
 static const simVis::Color INERTIAL_AXIS_Z_COLOR = simVis::Color::Blue;
-static const simVis::Color VELOCITY_VECTOR_COLOR = (1.0f, 0.5f, 0.0f, 1.0f); // SIMDIS_ORANGE
+static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0f, 0.5f, 0.0f, 1.0f); // SIMDIS_ORANGE
 static const simVis::Color MOON_VECTOR_COLOR = simVis::Color::White;
 static const simVis::Color SUN_VECTOR_COLOR = simVis::Color::Yellow;
 
