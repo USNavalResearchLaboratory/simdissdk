@@ -461,6 +461,8 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   s->setMode(GL_CULL_FACE, 0);
   s->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
   geode_->setName("Line");
+  LineDrawable::installShader(s);
+
 
   labels_ = new osg::Geode();
   s = labels_->getOrCreateStateSet();
@@ -839,7 +841,7 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, GLenum mode, 
       geom->setColor(i==0 ? options_.lineColor1_ : options_.lineColor2_);
       geom->setStipplePattern(i==0 ? options_.lineStipple1_ : options_.lineStipple2_);
       geom->setLineWidth(options_.lineWidth_);
-      geom->installShader();
+      // geode installs the LineDrawable shader by default, so no need to do so here
 
       geode->addChild(geom);
 
@@ -928,8 +930,8 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
   // sweep between the vecs
   for (seg = 0; seg <= options_.pieSegments_; ++seg)
   {
-    osg::Quat& rot = slerp(static_cast<double>(seg) / options_.pieSegments_);
-    osg::Vec3 vert = rot * startVec * pieRadius + originVec;
+    const osg::Quat& rot = slerp(static_cast<double>(seg) / options_.pieSegments_);
+    const osg::Vec3 vert = rot * startVec * pieRadius + originVec;
     bbox.expandBy(vert);
     if (geode)
       verts->push_back(vert);
@@ -943,14 +945,14 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
     verts->push_back(endVec   * pieRadius * 1.5 + originVec);
 
     osgEarth::LineDrawable* vecs = new osgEarth::LineDrawable(GL_LINES);
-    vecs->reserve(4);
-    vecs->pushVertex(verts->front());
-    vecs->pushVertex((*verts)[verts->size()-2]);
-    vecs->pushVertex(verts->front());
-    vecs->pushVertex(verts->back());
-    vecs->dirty();
+    vecs->allocate(4);
+    vecs->setVertex(0, verts->front());
+    vecs->setVertex(1, (*verts)[verts->size()-2]);
+    vecs->setVertex(2, verts->front());
+    vecs->setVertex(3, verts->back());
     vecs->setColor(options_.pieColor_);
-    vecs->installShader();
+    // geode installs the LineDrawable shader by default, not needed here
+
     geode->addChild(vecs);
   }
 

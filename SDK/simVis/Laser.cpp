@@ -412,16 +412,15 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   g->setName("simVis::LaserNode");
 
   // make the vert array but don't populate it yet
-  g->reserve(numSegs + 1);
+  g->allocate(numSegs + 1);
 
   // populate with our segment verts
-  osg::Vec3 end(0.0f, length / numSegs, 0.0f);
+  const osg::Vec3 end(0.0f, length / numSegs, 0.0f);
   for (unsigned int i = 0; i < numSegs; ++i)
   {
-    g->pushVertex(end * i);
+    g->setVertex(i, end * i);
   }
-  g->pushVertex(osg::Vec3(0.0f, length, 0.0f));
-  g->dirty();
+  g->setVertex(numSegs, osg::Vec3(0.0f, length, 0.0f));
 
   // set the color:
   g->setColor(simVis::ColorUtils::RgbaToVec4(

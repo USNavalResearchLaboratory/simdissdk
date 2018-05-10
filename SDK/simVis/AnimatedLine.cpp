@@ -544,7 +544,7 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
   {
     // Convert back to ECEF and add the vertex
     const simCore::Coordinate& outEcef = coord2.ecefCoordinate();
-    osg::Vec3f p2 = osg::Vec3f(outEcef.x(), outEcef.y(), outEcef.z()) - zeroPoint;
+    const osg::Vec3f p2 = osg::Vec3f(outEcef.x(), outEcef.y(), outEcef.z()) - zeroPoint;
 
     for (unsigned int i = 0; i < 2; ++i)
     {
