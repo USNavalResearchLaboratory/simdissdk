@@ -496,6 +496,7 @@ namespace
     // set up the face geometry
     solidGeometry_->setName("simVis::SphericalVolume::PyramidFaceGeometry");
     solidGeometry_->setUseVertexBufferObjects(true);
+    solidGeometry_->setUseDisplayList(false);
     solidGeometry_->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
     osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
@@ -765,6 +766,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   osg::Geometry* geom = new osg::Geometry();
   geom->setName("simVis::SphericalVolume::cone");
   geom->setUseVertexBufferObjects(true);
+  geom->setUseDisplayList(false);
   geom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
   // the number of angular slices into which to tessellate the ellipsoid.
