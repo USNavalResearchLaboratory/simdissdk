@@ -145,8 +145,8 @@ void SceneManager::init_()
   // Create a default material for the scene (fixes NVidia bug where unset material defaults to white)
   osg::ref_ptr<osg::Material> material = new osg::Material;
   material->setAmbient(osg::Material::FRONT_AND_BACK, osg::Vec4(0.3f, 0.3f, 0.3f, 1.f));
-  material->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(1.f, 1.f, 1.f, 1.f));
-  material->setSpecular(osg::Material::FRONT_AND_BACK, osg::Vec4(1.f, 1.f, 1.f, 1.f));
+  material->setDiffuse(osg::Material::FRONT_AND_BACK, simVis::Color::White);
+  material->setSpecular(osg::Material::FRONT_AND_BACK, simVis::Color::White);
   material->setShininess(osg::Material::FRONT_AND_BACK, 10.f);
   getOrCreateStateSet()->setAttributeAndModes(material, osg::StateAttribute::ON);
 

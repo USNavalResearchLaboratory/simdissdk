@@ -69,8 +69,8 @@ static ui::Control* createHelp()
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(s_title, 20, osg::Vec4f(1, 1, 0, 1)));
-  vbox->addControl(new ui::LabelControl(s_help, 14, osg::Vec4f(.8, .8, .8, 1)));
+  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
+  vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
   // Move it down just a bit
   vbox->setPosition(10, 40);
   return vbox;
@@ -244,10 +244,10 @@ int main(int argc, char** argv)
   background1->setFont("arialbd.ttf", 520);
   background1->setColor(osg::Vec4(0,0.6,0.6,1)); // Cyan-ish, but darker
 
-  osg::ref_ptr<simUtil::HudText> title = hm.createText(s_title, 50.0, 99.0, true, simUtil::ALIGN_CENTER_X, simUtil::ALIGN_CENTER_Y, osg::Vec4f(1, 1, 0, 1), "arial.ttf", 20.0);
+  osg::ref_ptr<simUtil::HudText> title = hm.createText(s_title, 50.0, 99.0, true, simUtil::ALIGN_CENTER_X, simUtil::ALIGN_CENTER_Y, simVis::Color::Yellow, "arial.ttf", 20.0);
 
-  osg::ref_ptr<simUtil::HudText> abs1 = hm.createText("ABS 300/300\nALIGN_BOTTOM\nALIGN_LEFT", 300.0, 300.0, false, simUtil::ALIGN_LEFT, simUtil::ALIGN_BOTTOM, osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f), "arial.ttf", 20);
-  osg::ref_ptr<simUtil::HudText> abs2 = hm.createText("ABS 300/300\nALIGN_TOP\nALIGN_RIGHT", 300.0, 300.0, false, simUtil::ALIGN_RIGHT, simUtil::ALIGN_TOP, osg::Vec4f(1.0f, 0.0f, 0.0f, 1.0f), "arial.ttf", 20);
+  osg::ref_ptr<simUtil::HudText> abs1 = hm.createText("ABS 300/300\nALIGN_BOTTOM\nALIGN_LEFT", 300.0, 300.0, false, simUtil::ALIGN_LEFT, simUtil::ALIGN_BOTTOM, simVis::Color::Lime, "arial.ttf", 20);
+  osg::ref_ptr<simUtil::HudText> abs2 = hm.createText("ABS 300/300\nALIGN_TOP\nALIGN_RIGHT", 300.0, 300.0, false, simUtil::ALIGN_RIGHT, simUtil::ALIGN_TOP, simVis::Color::Red, "arial.ttf", 20);
 
   simCore::TextReplacerPtr textReplacer(new simCore::TextReplacer());
   textReplacer->addReplaceable(new simUtil::AzimuthVariable(mainView));

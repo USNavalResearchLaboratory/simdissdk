@@ -758,7 +758,7 @@ int main(int argc, char** argv)
   osg::ref_ptr<SkyNode> sky = makeSky(scene.get(), useSilverLining, sluser, sllicense, slpath);
   sky->attach(viewer->getMainView());
   sky->setDateTime(osgEarth::Util::DateTime(2014, 4, 22, 16.5));
-  sky->setMinimumAmbient(osg::Vec4f(0.5f, 0.5f, 0.5f, 1.f));
+  sky->setMinimumAmbient(simVis::Color::Gray);
   scene->setSkyNode(sky.get());
 
   // add an ocean surface to the scene.

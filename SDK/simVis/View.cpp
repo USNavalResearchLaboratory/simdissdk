@@ -597,7 +597,7 @@ View::View()
   thisCamera->setCullingMode(thisCamera->getCullingMode() & ~osg::CullSettings::SMALL_FEATURE_CULLING);
 
   // default our background to black
-  thisCamera->setClearColor(osg::Vec4(0,0,0,1));
+  thisCamera->setClearColor(simVis::Color::Black);
 
   // focus manager for insets, if present.
   focusMan_ = new FocusManager(this);

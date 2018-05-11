@@ -34,6 +34,7 @@
 #include "simVis/Constants.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/Registry.h"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/RCS.h"
 
@@ -320,7 +321,7 @@ osg::Node* RCSRenderer::render2D_()
     float rcsValue = 10;
     int lastCount = 4;
 
-    osg::Vec4 grey(0.4f, 0.4f, 0.4f, 1.0f);
+    const osg::Vec4 grey(0.4f, 0.4f, 0.4f, 1.0f);
 
     for (int j = 0; j < (zeroRing_ + end); j++)
     {
@@ -334,7 +335,7 @@ osg::Node* RCSRenderer::render2D_()
       lastCount = verts->size();
 
       if (j == zeroRing_)
-        colors->push_back(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f));  // white 0 dB ring
+        colors->push_back(simVis::Color::White);  // white 0 dB ring
       else
         colors->push_back(grey); // gray rings every 10 dB
 
@@ -361,7 +362,7 @@ osg::Node* RCSRenderer::render2D_()
     if (colorOverride_)
       colors->push_back(color_);
     else
-      colors->push_back(osg::Vec4(1.0f, 1.0f, 0.0f, 1.0f));
+      colors->push_back(simVis::Color::Yellow);
   }
 
   return geode;

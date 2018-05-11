@@ -163,7 +163,7 @@ compassUpdateEventHandler_(NULL)
     readout_->setName("Compass Readout");
 
     // pointer is a text character, using default font
-    pointer_ = new osgEarth::Util::Controls::LabelControl("|", osg::Vec4f(1, 0, 0, 1), static_cast<float>(fontSize));
+    pointer_ = new osgEarth::Util::Controls::LabelControl("|", simVis::Color::Red, static_cast<float>(fontSize));
     pointer_->setFont(simVis::Registry::instance()->getOrCreateFont("arial.ttf"));
     pointer_->setAbsorbEvents(false);
     pointer_->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_RIGHT);

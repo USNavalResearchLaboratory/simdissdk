@@ -153,19 +153,35 @@ private:
 class TankNode
 {
 public:
-  explicit TankNode(simVis::EntityNode* entity)
+  TankNode()
     : gun_(NULL),
       turret_(NULL)
   {
-    FindNodeByName gunFinder("gun");
-    entity->accept(gunFinder);
-    gun_ = dynamic_cast<osgSim::DOFTransform*>(gunFinder.node());
-    FindNodeByName turretFinder("turret");
-    entity->accept(turretFinder);
-    turret_ = dynamic_cast<osgSim::DOFTransform*>(turretFinder.node());
   }
   virtual ~TankNode()
   {
+  }
+
+  bool needsSetup() const
+  {
+    return !gun_.valid() || !turret_.valid();
+  }
+
+  void setup(osg::Node* node)
+  {   
+    if (!gun_.valid())
+    {
+      FindNodeByName gunFinder("gun");
+      node->accept(gunFinder);
+      gun_ = dynamic_cast<osgSim::DOFTransform*>(gunFinder.node());
+    }
+
+    if (!turret_.valid())
+    {
+      FindNodeByName turretFinder("turret");
+      node->accept(turretFinder);
+      turret_ = dynamic_cast<osgSim::DOFTransform*>(turretFinder.node());
+    }
   }
 
   void setGunPitch(double pitchDeg)
@@ -219,6 +235,48 @@ public:
 private:
   osg::observer_ptr<osgSim::DOFTransform> gun_;
   osg::observer_ptr<osgSim::DOFTransform> turret_;
+};
+
+//----------------------------------------------------------------------------
+
+/** Application object that syncs the UI with the Tank data after async model load */
+struct App : public osg::Node
+{
+  TankNode tank_;
+  osg::observer_ptr<osg::Node> node_;
+  osg::ref_ptr<HSliderControl> turretSlider_;
+  osg::ref_ptr<HSliderControl> gunSlider_;
+
+  explicit App(simVis::EntityNode* node) :
+    node_(node)
+  {
+    setNumChildrenRequiringUpdateTraversal(1u);
+  }
+
+  void traverse(osg::NodeVisitor& nv)
+  {
+    if (nv.getVisitorType() == nv.UPDATE_VISITOR && tank_.needsSetup())
+    {
+      osg::ref_ptr<osg::Node> node;
+      if (node_.lock(node))
+      {
+        tank_.setup(node.get());
+        syncUI();
+      }
+    }
+    osg::Node::traverse(nv);
+  }
+
+  void syncUI()
+  {
+    turretSlider_->setMin(tank_.turretMinimumYaw());
+    turretSlider_->setMax(tank_.turretMaximumYaw());
+    turretSlider_->setValue(tank_.turretYaw());
+    
+    gunSlider_->setMin(tank_.gunMinimumPitch());
+    gunSlider_->setMax(tank_.gunMaximumPitch());
+    gunSlider_->setValue(tank_.gunPitch());
+  }
 };
 
 //----------------------------------------------------------------------------
@@ -314,7 +372,8 @@ int main(int argc, char **argv)
   viewer->getMainView()->setFocalOffsets(135, -8, 30);
 
   // Set up the tank to manipulate the articulations
-  TankNode tank(node1.get());
+  App* app = new App(node2.get());
+  viewer->getMainView()->getSceneData()->asGroup()->addChild(app);
 
   // Set up a grid for animation controls
   osg::ref_ptr<Grid> grid = new Grid;
@@ -322,17 +381,19 @@ int main(int argc, char **argv)
 
   // Turret widgets
   grid->setControl(0, 0, new LabelControl("Turret:"));
-  osg::ref_ptr<HSliderControl> turret = grid->setControl(1, 0, new HSliderControl(tank.turretMinimumYaw(), tank.turretMaximumYaw(), tank.turretYaw()));
-  turret->setSize(300, 35);
-  turret->addEventHandler(new TankTurretYawChange(&tank));
-  turret->addEventHandler(new SetLabelValue(grid->setControl(2, 0, new LabelControl("0.0"))));
+  app->turretSlider_ = grid->setControl(1, 0, new HSliderControl());
+  app->turretSlider_->setSize(300, 35);
+  app->turretSlider_->addEventHandler(new TankTurretYawChange(&app->tank_));
+  app->turretSlider_->addEventHandler(new SetLabelValue(grid->setControl(2, 0, new LabelControl("0.0"))));
 
   // Gun widgets
   grid->setControl(0, 1, new LabelControl("Gun:"));
-  osg::ref_ptr<HSliderControl> gun = grid->setControl(1, 1, new HSliderControl(tank.gunMinimumPitch(), tank.gunMaximumPitch(), tank.gunPitch()));
-  gun->setSize(300, 35);
-  gun->addEventHandler(new TankGunPitchChange(&tank));
-  gun->addEventHandler(new SetLabelValue(grid->setControl(2, 1, new LabelControl("0.0"))));
+  app->gunSlider_ = grid->setControl(1, 1, new HSliderControl());
+  app->gunSlider_->setSize(300, 35);
+  app->gunSlider_->addEventHandler(new TankGunPitchChange(&app->tank_));
+  app->gunSlider_->addEventHandler(new SetLabelValue(grid->setControl(2, 1, new LabelControl("0.0"))));
+
+  app->syncUI();
 
   // Add grid to the main view
   viewer->getMainView()->addOverlayControl(grid.get());

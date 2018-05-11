@@ -160,16 +160,15 @@ void VelocityVector::createVelocityVector_(const simData::PlatformPrefs& prefs, 
   simCore::v3Scale(scale, velocity, velocity);
 
   // draw velocity vector
-  geom->pushVertex(osg::Vec3(0, 0, 0));
-  geom->pushVertex(osg::Vec3(velocity.x(), velocity.y(), velocity.z()));
+  geom->allocate(2);
+  geom->setVertex(0, osg::Vec3());
+  geom->setVertex(1, osg::Vec3(velocity.x(), velocity.y(), velocity.z()));
   geom->setColor(vectorColor_);
-  geom->dirty();
-
   // set linewidth
   geom->setLineWidth(lineWidth_);
 
   // Add the drawable to the geode
-  geode->addDrawable(geom);
+  geode->addDrawable(geom.get());
 }
 
 }

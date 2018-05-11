@@ -23,6 +23,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarth/GeoData"
+#include "simVis/Types.h"
 #include "simVis/TrackChunkNode.h"
 
 namespace simVis
@@ -179,11 +180,11 @@ void TrackChunkNode::allocate_()
   centerPoints_->setUseVertexBufferObjects(true);
   centerPoints_->setUseDisplayList(false);
   osg::Vec3Array* verts = new osg::Vec3Array();
-  verts->assign(maxSize_, osg::Vec3(0,0,0));
+  verts->assign(maxSize_, osg::Vec3());
   centerPoints_->setVertexArray(verts);
   osg::Vec4Array* colors = new osg::Vec4Array();
   colors->setBinding(osg::Array::BIND_PER_VERTEX);
-  colors->assign(maxSize_, osg::Vec4(1,1,1,1));
+  colors->assign(maxSize_, simVis::Color::White);
   centerPoints_->setColorArray(colors);
   centerPoints_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
   this->addChild(centerPoints_.get());

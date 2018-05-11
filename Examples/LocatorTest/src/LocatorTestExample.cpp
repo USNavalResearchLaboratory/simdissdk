@@ -158,20 +158,20 @@ osg::Node* createNode(float s)
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
   geom->allocate(6);
 
-  geom->setVertex(0, osg::Vec3(0, 0, 0));
-  geom->setVertex(1, osg::Vec3(s, 0, 0));   // E
-  geom->setVertex(2, osg::Vec3(0, 0, 0));
-  geom->setVertex(3, osg::Vec3(0, s, 0));   // N
-  geom->setVertex(4, osg::Vec3(0, 0, 0));
-  geom->setVertex(5, osg::Vec3(0, 0, s));   // U
+  geom->setVertex(0, osg::Vec3());
+  geom->setVertex(1, osg::Vec3(s, 0.f, 0.f));   // E
+  geom->setVertex(2, osg::Vec3());
+  geom->setVertex(3, osg::Vec3(0.f, s, 0.f));   // N
+  geom->setVertex(4, osg::Vec3());
+  geom->setVertex(5, osg::Vec3(0.f, 0.f, s));   // U
   geom->dirty();
 
-  geom->setColor(0, osg::Vec4(1, 0, 0, 1));
-  geom->setColor(1, osg::Vec4(1, 0, 0, 1));  //RED
-  geom->setColor(2, osg::Vec4(0, 1, 0, 1));
-  geom->setColor(3, osg::Vec4(0, 1, 0, 1));  //GREEN
-  geom->setColor(4, osg::Vec4(0, 1, 1, 1));
-  geom->setColor(5, osg::Vec4(0, 1, 1, 1));  //CYAN
+  geom->setColor(0, simVis::Color::Red);
+  geom->setColor(1, simVis::Color::Red);
+  geom->setColor(2, simVis::Color::Lime);
+  geom->setColor(3, simVis::Color::Lime);
+  geom->setColor(4, simVis::Color::Aqua);
+  geom->setColor(5, simVis::Color::Aqua);
 
   osg::ref_ptr<osg::StateSet> ss = geom->getOrCreateStateSet();
   simVis::setLighting(ss.get(), 0);
@@ -254,7 +254,7 @@ void addSlider(App& app, Grid* g, const std::string& text, osg::ref_ptr<HSliderC
   slider->setHorizFill(true, 200);
   LabelControl* resetButton = g->setControl(2, r, new LabelControl("0"));
   resetButton->setBackColor(osg::Vec4(.4, .4, .4, 1));
-  resetButton->setActiveColor(osg::Vec4(0, 1, 0, 1));
+  resetButton->setActiveColor(simVis::Color::Lime);
   resetButton->addEventHandler(new ResetValue(app, slider.get(), sset));
   g->setControl(3, r, new LabelControl(slider.get()));
 }

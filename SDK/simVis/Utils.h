@@ -423,7 +423,7 @@ namespace simVis
   {
   public:
     /** Generates scene points between start and end (inclusive), using numPointsPerLine */
-    static void generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine);
+    static void generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, unsigned int numPointsPerLine);
     /** Returns true if one of the prefs has changed that impacts vector scaling (requiring line rebuild) */
     static bool fieldsChanged(const simData::PlatformPrefs& lastPrefs, const simData::PlatformPrefs& newPrefs);
     /** Returns the line length of the platform node's vector, based on axis scale and model size */

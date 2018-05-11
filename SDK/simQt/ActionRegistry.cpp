@@ -442,7 +442,7 @@ int ActionRegistry::execute(const QString &actionDesc)
 
 void ActionRegistry::assertActionsByKeyValid_() const
 {
-#ifdef DEBUG
+#ifndef NDEBUG
   // Make sure that each action in actionsByKey_ has the entry in the list
   Q_FOREACH(const QKeySequence keySequence, actionsByKey_.keys())
   {

@@ -45,7 +45,7 @@
  * Gate updates are currently disabled as SphericalVolume needs updates in order
  * to correctly reposition outline geometry with new osgEarth::LineDrawable.
  */
-#undef GATE_IN_PLACE_UPDATES
+#define GATE_IN_PLACE_UPDATES
 
 namespace simVis
 {
@@ -72,10 +72,12 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
       (isOpaque ? BIN_GLOBAL_SIMSDK : BIN_TWO_PASS_ALPHA));
   }
 
-  osg::Node* outlineGeometry = simVis::SVFactory::outlineGeometry(gateSV_.get());
-  if (outlineGeometry != NULL)
+  osg::Geode* outlineGeode = simVis::SVFactory::opaqueGeode(gateSV_.get());
+  if (outlineGeode != NULL)
   {
-    outlineGeometry->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
+    // SphericalVolume code only adds the opaque geode when it is adding a geometry or lineGroup
+    assert(outlineGeode->getNumDrawables() > 0);
+    outlineGeode->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
   }
 }
 
@@ -225,7 +227,7 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   setActive(false);
   geom_ = new osgEarth::LineDrawable(GL_LINES);
   geom_->setName("simVis::GateCentroid");
-  geom_->setColor(osg::Vec4(1,1,1,1));
+  geom_->setColor(simVis::Color::White);
   geom_->allocate(6);
   geom_->dirty();
 
@@ -775,6 +777,7 @@ void GateNode::updateLocator_(const simData::GateUpdate* newUpdate, const simDat
     PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, azimuth) ||
     PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, elevation))) ||
     (newPrefs && (
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gatedrawmode) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gateazimuthoffset) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gateelevationoffset) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gaterolloffset)));

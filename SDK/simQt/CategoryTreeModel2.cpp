@@ -1152,7 +1152,7 @@ void CategoryTreeModel2::addName_(int nameInt)
 
   // Debug mode: Validate that there are no values in that category yet.  If this section
   // of code fails, then we'll need to add ValueItem entries for the category on creation.
-#ifdef DEBUG
+#ifndef NDEBUG
   std::vector<int> valuesInCategory;
   dataStore_->categoryNameManager().allValueIntsInCategory(nameInt, valuesInCategory);
   // Assertion failure means we need to update this code to add the values.

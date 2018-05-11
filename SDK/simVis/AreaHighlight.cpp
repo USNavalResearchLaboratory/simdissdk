@@ -130,14 +130,14 @@ void AreaHighlightNode::init_()
   geom->setColorArray(colorArray.get());
 
   // Declare color for the center of the circle and the triangles
-  osg::Vec4f color = osg::Vec4f(1, 1, 1, 1);
+  const osg::Vec4f& color = simVis::Color::White;
 
   // Center of the circle
-  vertexArray->push_back(osg::Vec3(0, 0, 0));
+  vertexArray->push_back(osg::Vec3());
   colorArray->push_back(color);
 
   // Make the edge of the circle darker and more transparent
-  osg::Vec4f edgeColor = color * 0.8;
+  const osg::Vec4f edgeColor = color * 0.8f;
 
   float inc = M_TWOPI / static_cast<float>(MIN_NUM_LINE_SEGMENTS);
   for (int j = MIN_NUM_LINE_SEGMENTS; j > 0; --j)
@@ -145,7 +145,7 @@ void AreaHighlightNode::init_()
     const float angle = inc * j;
     const float x = sin(angle);
     const float y = cos(angle);
-    vertexArray->push_back(osg::Vec3(x, y, 0));
+    vertexArray->push_back(osg::Vec3(x, y, 0.f));
     colorArray->push_back(edgeColor);
   }
 

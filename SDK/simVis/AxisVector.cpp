@@ -20,7 +20,6 @@
  *
  */
 #include "osg/Geode"
-#include "osg/Geometry"
 #include "simVis/LineDrawable.h"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
@@ -35,8 +34,7 @@ namespace simVis
 namespace
 {
 /// Number of points in the subdivided line strip
-const int AXIS_NUM_POINTS_PER_LINE_STRIP = 4;
-
+const unsigned int AXIS_NUM_POINTS_PER_LINE_STRIP = 4;
 }
 
 // --------------------------------------------------------------------------
@@ -141,7 +139,7 @@ void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f&
 
 void AxisVector::createAxisVectors_(osg::Geode* geode) const
 {
-  osgEarth::LineDrawable* line = 0L;
+  osgEarth::LineDrawable* line = NULL;
 
   osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
   vertices->reserve(AXIS_NUM_POINTS_PER_LINE_STRIP);
@@ -150,7 +148,7 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
   line->setName("simVis::AxisVector");
   vertices->clear();
-  VectorScaling::generatePoints(*vertices, osg::Vec3(0, 0, 0), osg::Vec3(1, 0, 0), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  VectorScaling::generatePoints(*vertices, osg::Vec3(), osg::X_AXIS, AXIS_NUM_POINTS_PER_LINE_STRIP);
   line->importVertexArray(vertices.get());
   line->setColor(simVis::Color::Yellow);
   line->setLineWidth(lineWidth_);
@@ -160,7 +158,7 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
   line->setName("simVis::AxisVector");
   vertices->clear();
-  VectorScaling::generatePoints(*vertices, osg::Vec3(0, 0, 0), osg::Vec3(0, 1, 0), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  VectorScaling::generatePoints(*vertices, osg::Vec3(), osg::Y_AXIS, AXIS_NUM_POINTS_PER_LINE_STRIP);
   line->importVertexArray(vertices.get());
   line->setColor(simVis::Color::Fuchsia);
   line->setLineWidth(lineWidth_);
@@ -170,7 +168,7 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
   line->setName("simVis::AxisVector");
   vertices->clear();
-  VectorScaling::generatePoints(*vertices, osg::Vec3(0, 0, 0), osg::Vec3(0, 0, 1), AXIS_NUM_POINTS_PER_LINE_STRIP);
+  VectorScaling::generatePoints(*vertices, osg::Vec3(), osg::Z_AXIS, AXIS_NUM_POINTS_PER_LINE_STRIP);
   line->importVertexArray(vertices.get());
   line->setColor(simVis::Color::Aqua);
   line->setLineWidth(lineWidth_);

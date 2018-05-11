@@ -40,7 +40,7 @@ namespace simVis
 {
 
 /** Number of vertices to use when drawing the line vectors (should be at least 2) */
-static const int NUM_LINE_VERTICES = 4;
+static const unsigned int NUM_LINE_VERTICES = 4;
 /** Ephemeris vector display mask when visible; uses label to avoid affecting platform bounds */
 static const simVis::DisplayMask DISPLAY_MASK_EPHEMERIS = DISPLAY_MASK_LABEL;
 /** Interval in minutes for updating ephemeris vectors on time, when they aren't rebuilt due to other means */
@@ -125,9 +125,9 @@ osg::Node* EphemerisVector::createVector_(const simVis::Color& color, float line
 {
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINE_STRIP);
   geom->setName("simVis::EphemerisVector");
-  for (int k = 0; k < NUM_LINE_VERTICES; ++k)
-    geom->pushVertex(osg::Vec3(k, 0, 0));
-  geom->dirty();
+  geom->allocate(NUM_LINE_VERTICES);
+  for (unsigned int k = 0; k < NUM_LINE_VERTICES; ++k)
+    geom->setVertex(k, osg::Vec3(k, 0.f, 0.f));
   geom->setColor(color);
   geom->setLineWidth(lineWidth);
   return geom;
@@ -172,7 +172,7 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
 #if OSGEARTH_VERSION_LESS_THAN(2,10,0)
     rebuildLine_(VECTOR_MOON, ephemeris_->getMoonPositionECEF(dateTime), lineLength);
 #else
-    osgEarth::Util::CelestialBody moon = ephemeris_->getMoonPosition(dateTime);
+    const osgEarth::Util::CelestialBody& moon = ephemeris_->getMoonPosition(dateTime);
     rebuildLine_(moonGeom, moon.geocentric, lineLength);
 #endif
     moonGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);
@@ -187,7 +187,7 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
 #if OSGEARTH_VERSION_LESS_THAN(2,10,0)
     rebuildLine_(sunGeom, ephemeris_->getSunPositionECEF(dateTime), lineLength);
 #else
-    osgEarth::Util::CelestialBody sun = ephemeris_->getSunPosition(dateTime);
+    const osgEarth::Util::CelestialBody& sun = ephemeris_->getSunPosition(dateTime);
     rebuildLine_(sunGeom, sun.geocentric, lineLength);
 #endif
     sunGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);
@@ -213,7 +213,7 @@ void EphemerisVector::rebuildLine_(osgEarth::LineDrawable* geom, const osg::Vec3
 
   // Generate all the points from center of platform to end of line
   vertices_->clear();
-  VectorScaling::generatePoints(*vertices_.get(), osg::Vec3(0, 0, 0), relToPlatform, NUM_LINE_VERTICES);
+  VectorScaling::generatePoints(*vertices_.get(), osg::Vec3(), relToPlatform, NUM_LINE_VERTICES);
   geom->importVertexArray(vertices_.get());
 }
 

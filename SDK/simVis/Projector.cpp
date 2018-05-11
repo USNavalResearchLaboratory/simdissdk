@@ -37,13 +37,13 @@
 #include "simVis/LabelContentManager.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
-#include "simVis/SphericalVolume.h"
 #include "simVis/ClockOptions.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/Shaders.h"
+#include "simVis/Types.h"
 
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
@@ -73,7 +73,7 @@ namespace
       geom->setVertexArray(v);
 
       osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
-      c->push_back(osg::Vec4(1., 1., 1., 1.));
+      c->push_back(simVis::Color::White);
       geom->setColorArray(c);
 
       GLubyte idxLines[8] = { 0, 5, 0, 6, 0, 7, 0, 8 };

@@ -901,14 +901,14 @@ float VectorScaling::lineLength(const PlatformModelNode* node, float axisScale)
   return adjustedLength * axisScale;
 }
 
-void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine)
+void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, unsigned int numPointsPerLine)
 {
   // Avoid divide-by-zero problems
   if (numPointsPerLine < 2)
     return;
 
   const osg::Vec3 delta = (end - start);
-  for (int k = 0; k < numPointsPerLine; ++k)
+  for (unsigned int k = 0; k < numPointsPerLine; ++k)
   {
     // Translate [0,numPointsPerLine) into [0,1]
     const float pct = static_cast<float>(k) / (numPointsPerLine - 1);

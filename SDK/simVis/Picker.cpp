@@ -418,7 +418,7 @@ void RTTPicker::setUpViewWithDebugTexture(osgViewer::View* intoView, simVis::Vie
   intoView->setCameraManipulator(0L);
   intoView->getCamera()->setName("RTT view");
   intoView->getCamera()->setViewport(0, 0, 256, 256);
-  intoView->getCamera()->setClearColor(osg::Vec4(1, 1, 1, 1));
+  intoView->getCamera()->setClearColor(simVis::Color::White);
   intoView->getCamera()->setProjectionMatrixAsOrtho2D(-.5, .5, -.5, .5);
   intoView->getCamera()->setViewMatrixAsLookAt(osg::Vec3d(0, -1, 0), osg::Vec3d(0, 0, 0), osg::Vec3d(0, 0, 1));
   intoView->getCamera()->setProjectionResizePolicy(osg::Camera::FIXED);

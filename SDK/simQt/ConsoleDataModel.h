@@ -251,7 +251,7 @@ public:
 
 private:
   std::vector<QString> filters_;
-#ifdef DEBUG
+#ifndef NDEBUG
   bool showInDebugMode_;
 #endif
 };

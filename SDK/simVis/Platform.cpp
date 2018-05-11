@@ -48,7 +48,6 @@
 
 namespace simVis
 {
-
 // colors for body axis vectors
 static const simVis::Color BODY_AXIS_X_COLOR = simVis::Color::Yellow;
 static const simVis::Color BODY_AXIS_Y_COLOR = simVis::Color::Fuchsia;
@@ -56,7 +55,7 @@ static const simVis::Color BODY_AXIS_Z_COLOR = simVis::Color::Aqua;
 static const simVis::Color INERTIAL_AXIS_X_COLOR = simVis::Color::Red;
 static const simVis::Color INERTIAL_AXIS_Y_COLOR = simVis::Color::Lime;
 static const simVis::Color INERTIAL_AXIS_Z_COLOR = simVis::Color::Blue;
-static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0, 0.5, 0.0, 1.0); // Orange from SIMDIS 9
+static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0f, 0.5f, 0.0f, 1.0f); // SIMDIS_ORANGE
 static const simVis::Color MOON_VECTOR_COLOR = simVis::Color::White;
 static const simVis::Color SUN_VECTOR_COLOR = simVis::Color::Yellow;
 
@@ -66,8 +65,8 @@ static const double HORIZON_RANGE_STEP = 100;
 static const double HORIZON_ALT_STEP = 10;
 
 // Colors to use when drawing optical or radio horizon
-static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0, 1, 0, 0.6); // Translucent green
-static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1, 0, 0, 0.6); // Translucent red
+static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0.f, 1.f, 0.f, 0.6f); // Translucent green
+static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1.f, 0.f, 0.f, 0.6f); // Translucent red
 
 // this is used as a sentinel value for an platform that does not (currently) have a valid position
 static const simData::PlatformUpdate NULL_PLATFORM_UPDATE = simData::PlatformUpdate();

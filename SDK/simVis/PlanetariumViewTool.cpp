@@ -77,7 +77,7 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   // build the geometry for a target node
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
   geom->allocate(4);
-  geom->setColor(osg::Vec4(1,1,1,1));
+  geom->setColor(simVis::Color::White);
   geom->setLineWidth(2.0f);
   targetGeom_ = geom;
 
@@ -262,7 +262,7 @@ void PlanetariumViewTool::updateTargetGeometry(osg::MatrixTransform* mt,
   vector->setNodeMask(displayTargetVectors_ ? ~0 : 0);
   vector->setVertex(1, s_up * (local_len - range_));
 
-  osg::Vec3 V(s_up * (local_len-range_));
+  osg::Vec3d V(s_up * (local_len - range_));
   for (unsigned int i = 1; i < NUM_VECTOR_SEGS; ++i)
   {
     const double t = static_cast<double>(i) / static_cast<double>(NUM_VECTOR_SEGS - 1);
@@ -383,7 +383,7 @@ osg::Node* PlanetariumViewTool::buildVectorGeometry_()
 {
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINE_STRIP);
   geom->allocate(NUM_VECTOR_SEGS);
-  geom->setColor(osg::Vec4(1,1,1,1));
+  geom->setColor(simVis::Color::White);
   return geom;
 }
 }

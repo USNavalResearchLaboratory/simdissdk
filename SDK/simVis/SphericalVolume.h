@@ -23,12 +23,11 @@
 #define SIMVIS_SPHERICAL_VOLUME_H
 
 #include "simCore/Common/Common.h"
-#include "osg/Geometry"
-#include "osg/MatrixTransform"
-#include "osgEarth/Revisioning"
-#include "osgEarthSymbology/Symbol"
 
-namespace osgEarth { class LineGroup; }
+namespace osg {
+  class Geometry;
+  class MatrixTransform;
+}
 
 namespace simVis
 {
@@ -72,19 +71,10 @@ struct SVData
   bool       lightingEnabled_;
   /** True if blending is enabled */
   bool       blendingEnabled_;
-  /** Shape XYZ offset from origin in meters */
-  osg::Vec3  xyzOffset_m_;
-  /** Heading and pitch offset for the shape in degrees */
-  osg::Vec2  hpOffset_deg_;
-  /** Scale to apply to the volume */
-  float      scale_;
   /** True if cone is drawn */
   bool       drawCone_;
   /** True if should be drawn as a spherical segment */
   bool       drawAsSphereSegment_;
-
-  /** True to draw */
-  bool  visible_;
   /** Horizontal field of view in degrees */
   float hfov_deg_;
   /** Vertical field of view in degrees */
@@ -97,8 +87,6 @@ struct SVData
   float nearRange_;
   /** Far plane for the volume in meters */
   float farRange_;
-  /** Center range for the centroid shape */
-  float centerRange_;
 
   /** Default constructor */
   SVData()
@@ -111,29 +99,16 @@ struct SVData
     outlineWidth_(1.0f),
     lightingEnabled_(false),
     blendingEnabled_(true),
-    scale_(1.0f),
     drawCone_(true),
     drawAsSphereSegment_(false),
-
-    visible_(true),
     hfov_deg_(15.0f),
     vfov_deg_(10.0f),
     azimOffset_deg_(0.0f),
     elevOffset_deg_(0.0f),
     nearRange_(0.0f),
-    farRange_(10000.0f),
-    centerRange_(5000.0f)
+    farRange_(10000.0f)
   {
   }
-};
-
-/// structure for recording information about an existing geometry so we can update it
-struct SVState
-{
-  /** Index offset for the near face */
-  unsigned int nearFaceOffset_;
-  /** Index offset for the far face */
-  unsigned int farFaceOffset_;
 };
 
 /// Utility class to create volumetric geometry for beams and gates (internal)
@@ -141,7 +116,7 @@ class SVFactory
 {
 public:
   /// create a node visualizing the spherical volume given in 'data'
-  static osg::MatrixTransform* createNode(const SVData &data, const osg::Vec3& dir = osg::Vec3(0, 1, 0));
+  static osg::MatrixTransform* createNode(const SVData &data, const osg::Vec3& dir = osg::Y_AXIS);
 
   /// set lighting
   static void updateLighting(osg::MatrixTransform* xform, bool lighting);
@@ -151,38 +126,23 @@ public:
   static void updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color);
   /// set the stipple mode
   static void updateStippling(osg::MatrixTransform* xform, bool stippling);
-
-  // The following methods are used as in-place geometry update methods.  This will correctly
-  // update the face geometry, but does not correctly update outlines.  As a result, this
-  // code is temporarily disabled until a solution is worked out.  In the meantime, any
-  // geometry changes should go through createNode().
-#if 0
   /// move the verts comprising the far range
-  static void updateNearRange(osg::MatrixTransform* xform, float range);
+  static void updateNearRange(osg::MatrixTransform* xform, double range);
   /// move the verts comprising the near range
-  static void updateFarRange(osg::MatrixTransform* xform, float range);
+  static void updateFarRange(osg::MatrixTransform* xform, double range);
   /// tweak the verts to update the horizontal angle
-  static void updateHorizAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
+  static void updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
   /// tweak the verts to update the vertical angle
-  static void updateVertAngle(osg::MatrixTransform* xform, float oldAngle, float newAngle);
-#endif
+  static void updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle);
 
-  /// Retrieves the 'outline' geometry, or NULL if there is no such geometry
-  static osgEarth::LineGroup* outlineGeometry(osg::MatrixTransform* xform);
-  /// Retrieves the 'solid' geometry, or NULL if there is no such geometry
+  /// Retrieves the 2nd opaque geode (e.g., outline or wireframe), or NULL if there is none
+  static osg::Geode* opaqueGeode(osg::MatrixTransform* xform);
+  /// Retrieves the primary 'solid' geometry, or NULL if there is no such geometry
   static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
 
 private:
-  static void createPyramid_(osg::Geode& geode, const SVData &data, const osg::Vec3& dir);
-  static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& dir);
-
-#if 0
-  /// Retrieves the first non-empty geometry: the 'solid' geometry, or the outline geometry if the 'solid' geometry is empty
-  static osg::Geometry* validGeometry_(osg::MatrixTransform* xform);
-
-  /// Calls dirtyBound() for all geometries in the xform
+  static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& direction);
   static void dirtyBound_(osg::MatrixTransform* xform);
-#endif
 };
 
 }

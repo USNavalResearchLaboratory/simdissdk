@@ -25,6 +25,7 @@
 #include "simVis/EarthManipulator.h"
 #include "simVis/BoxGraphic.h"
 #include "simVis/ModKeyHandler.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/SceneManager.h"
 #include "simVis/View.h"
 #include "simVis/BoxZoomMouseHandler.h"
@@ -287,6 +288,9 @@ void BoxZoomMouseHandler::setZoom_(double originX, double originY, double widthP
   // use osgEarthUtil ViewFitter to create a viewpoint that encompasses the 4 corner points
   osg::Camera* cam = zoomView_->getCamera();
   osgEarth::Util::ViewFitter vf(srs.get(), cam);
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0)
+  vf.setReferenceVFOV(zoomView_->fovY());
+#endif
 
   osgEarth::Viewpoint vp;
   vf.createViewpoint(points, vp);

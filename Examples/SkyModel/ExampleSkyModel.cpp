@@ -232,7 +232,7 @@ Control* createUi(AppData& app)
   VBox* vbox = new VBox;
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl("Sky Model Example", 20, osg::Vec4f(1, 1, 0, 1)));
+  vbox->addControl(new LabelControl("Sky Model Example", 20.f, simVis::Color::Yellow));
 
   osg::ref_ptr<Grid> grid = vbox->addControl(new Grid());
   unsigned int row = 0;
@@ -248,7 +248,7 @@ Control* createUi(AppData& app)
   grid->setControl(col, row, new LabelControl("Model"));
   app.skyModelSlider = grid->setControl(col + 1, row, new HSliderControl(0.0f, 3.0f, static_cast<float>(INITIAL_SKY_MODEL), new ApplySkyModel(app)));
   app.skyModelSlider->setHorizFill(true, 250.0);
-  app.skyModelText = grid->setControl(col + 2, row, new LabelControl("Sky Model", osg::Vec4f(1.f, 1.f, 1.f, 1.f)));
+  app.skyModelText = grid->setControl(col + 2, row, new LabelControl("Sky Model", simVis::Color::White));
 
   return vbox;
 }

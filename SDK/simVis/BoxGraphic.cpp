@@ -20,8 +20,6 @@
 ****************************************************************************
 *
 */
-
-#include "osg/Geometry"
 #include "simVis/LineDrawable.h"
 #include "simVis/BoxGraphic.h"
 
@@ -107,10 +105,10 @@ void BoxGraphic::setGeometry(double x, double y, double width, double height)
   width_ = width;
   height_ = height;
 
-  geom_->setVertex(0, osg::Vec3d(x, y, 0));
-  geom_->setVertex(1, osg::Vec3d(x + width, y, 0));
-  geom_->setVertex(2, osg::Vec3d(x + width, y + height, 0));
-  geom_->setVertex(3, osg::Vec3d(x, y + height, 0));
+  geom_->setVertex(0, osg::Vec3f(x, y, 0.f));
+  geom_->setVertex(1, osg::Vec3f(x + width, y, 0.f));
+  geom_->setVertex(2, osg::Vec3f(x + width, y + height, 0.f));
+  geom_->setVertex(3, osg::Vec3f(x, y + height, 0.f));
 }
 
 void BoxGraphic::setLineWidth(float lineWidth)

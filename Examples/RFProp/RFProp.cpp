@@ -334,11 +334,11 @@ struct ModeSelectHandler : public ControlEventHandler
     //Disable all the mode controls
     for (unsigned int i = 0; i < s_modes.size(); i++)
     {
-      s_modes[i]->setForeColor(osg::Vec4f(1, 1, 1, 1));
+      s_modes[i]->setForeColor(simVis::Color::White);
     }
 
     //Enable this mode
-    control->setForeColor(osg::Vec4f(0, 1, 0, 1));
+    control->setForeColor(simVis::Color::Lime);
 
     pm_->setMode(mode_);
   }
@@ -361,11 +361,11 @@ struct ThresholdModeHandler : public ControlEventHandler
     //Disable all the mode controls
     for (unsigned int i = 0; i < s_ThresholdModes.size(); i++)
     {
-      s_ThresholdModes[i]->setForeColor(osg::Vec4f(1, 1, 1, 1));
+      s_ThresholdModes[i]->setForeColor(simVis::Color::White);
     }
 
     //Enable this mode
-    control->setForeColor(osg::Vec4f(0, 1, 0, 1));
+    control->setForeColor(simVis::Color::Lime);
 
     provider_->setMode(mode_);
   }
@@ -388,11 +388,11 @@ struct ColorProviderSelectHandler : public ControlEventHandler
     //Disable all the mode controls
     for (unsigned int i = 0; i < s_colorProviders.size(); i++)
     {
-      s_colorProviders[i]->setForeColor(osg::Vec4f(1, 1, 1, 1));
+      s_colorProviders[i]->setForeColor(simVis::Color::White);
     }
 
     //Enable this mode
-    control->setForeColor(osg::Vec4f(0, 1, 0, 1));
+    control->setForeColor(simVis::Color::Lime);
 
     pm_->setColorProvider(cp_.get());
     // Update the gradient to whatever the state of the checkbox is
@@ -453,7 +453,7 @@ Control* createModeSelect(const std::string& name, bool enabled, simRF::Profile:
 {
   LabelControl* c = new LabelControl(name);
   c->setFontSize(16);
-  c->setForeColor(enabled ? osg::Vec4f(0, 1, 0, 1) : osg::Vec4(1, 1, 1, 1));
+  c->setForeColor(enabled ? simVis::Color::Lime : simVis::Color::White);
   c->addEventHandler(new ModeSelectHandler(pm, mode));
   s_modes.push_back(c);
   return c;
@@ -463,7 +463,7 @@ Control* createColorProviderSelect(const std::string& name, bool enabled, simRF:
 {
   LabelControl* c = new LabelControl(name);
   c->setFontSize(16);
-  c->setForeColor(enabled ? osg::Vec4f(0, 1, 0, 1) : osg::Vec4(1, 1, 1, 1));
+  c->setForeColor(enabled ? simVis::Color::Lime : simVis::Color::White);
   c->addEventHandler(new ColorProviderSelectHandler(pm, cp));
   s_colorProviders.push_back(c);
   return c;
@@ -473,7 +473,7 @@ Control* createThresholdModeSelect(const std::string& name, bool enabled, simRF:
 {
   LabelControl* c = new LabelControl(name);
   c->setFontSize(16);
-  c->setForeColor(enabled ? osg::Vec4f(0, 1, 0, 1) : osg::Vec4(1, 1, 1, 1));
+  c->setForeColor(enabled ? simVis::Color::Lime : simVis::Color::White);
   c->addEventHandler(new ThresholdModeHandler(pm, cp, mode));
   s_ThresholdModes.push_back(c);
   return c;
@@ -800,7 +800,7 @@ int main(int argc, char** argv)
 
   s_controlGrid->setControl(0, row, new LabelControl("Color Scheme"));
 
-  osg::ref_ptr<simRF::ThresholdColorProvider> thresholdColorProvider = new simRF::ThresholdColorProvider(osg::Vec4f(1, 0, 0, 1), osg::Vec4f(0, 1, 0, 1), (maxFSL - minFSL) / 2.0);
+  osg::ref_ptr<simRF::ThresholdColorProvider> thresholdColorProvider = new simRF::ThresholdColorProvider(simVis::Color::Red, simVis::Color::Lime, (maxFSL - minFSL) / 2.0);
   profileManager->setColorProvider(thresholdColorProvider.get());
   s_controlGrid->setControl(1, row, createColorProviderSelect("Threshold", true, thresholdColorProvider.get(), profileManager.get()));
 
