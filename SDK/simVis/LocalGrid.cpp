@@ -534,6 +534,7 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
     geom->setName("simVis::LocalGridNode::RadialPoints");
     geom->setUseVertexBufferObjects(true);
+    geom->setUseDisplayList(false);
 
     osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     geom->setVertexArray(vertexArray.get());
@@ -750,6 +751,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
     geom->setName("simVis::LocalGridNode::RadialPoints");
     geom->setUseVertexBufferObjects(true);
+    geom->setUseDisplayList(false);
 
     osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     geom->setVertexArray(vertexArray.get());
