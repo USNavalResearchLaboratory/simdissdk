@@ -22,13 +22,13 @@
 #ifndef SIMVIS_LOCAL_GRID_H
 #define SIMVIS_LOCAL_GRID_H
 
-#include "osg/Group"
 #include "osg/observer_ptr"
-#include "osgEarth/ShaderGenerator"
+#include "osg/ref_ptr"
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 #include "simVis/LocatorNode.h"
 
+namespace osg { class Geode; }
 namespace osgText { class Text; }
 
 namespace simVis
@@ -79,7 +79,7 @@ namespace simVis
   protected: // methods
 
     /// osg::Referenced-derived
-    virtual ~LocalGridNode() {}
+    virtual ~LocalGridNode();
 
   private: // methods
     /// recreate the geometry
@@ -106,9 +106,8 @@ namespace simVis
     /// create speed ring or speed line display
     void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool drawSpeedLine) const;
 
-    /// Draws a straight line between two points, subdividing it an arbitrary number of times
-    void addLineStrip_(osg::Geometry& geom, osg::Vec3Array& vertices, int& primitiveSetStart,
-      const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine) const;
+    osg::ref_ptr<osg::Geode> graphicsGroup_;
+    osg::ref_ptr<osg::Geode> labelGroup_;
 
     simData::LocalGridPrefs lastPrefs_;
     bool                    forceRebuild_;

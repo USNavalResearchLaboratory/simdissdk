@@ -58,6 +58,7 @@
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
 #include "simVis/DisableDepthOnAlpha.h"
+#include "simVis/LineDrawable.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
@@ -914,6 +915,17 @@ void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& st
     const float pct = static_cast<float>(k) / (numPointsPerLine - 1);
     vertices.push_back(start + delta * pct);
   }
+}
+
+void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end, unsigned int numPointsPerLine)
+{
+  // Avoid divide-by-zero problems
+  if (numPointsPerLine < 2)
+    return;
+  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  vertexArray->reserve(numPointsPerLine);
+  VectorScaling::generatePoints(*vertexArray, start, end, numPointsPerLine);
+  line.importVertexArray(vertexArray.get());
 }
 
 

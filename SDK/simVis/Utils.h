@@ -92,6 +92,8 @@
     PB_BOTH_HAVE_SUBFIELD((a), (b), first, second) && \
     (a)->first().second() != (b)->first().second() ) )
 
+namespace osgEarth { class LineDrawable; }
+
 namespace osgViewer {
   class StatsHandler;
   class View;
@@ -424,6 +426,9 @@ namespace simVis
   public:
     /** Generates scene points between start and end (inclusive), using numPointsPerLine */
     static void generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, unsigned int numPointsPerLine);
+    /** Generates scene points between start and end (inclusive), using numPointsPerLine, adding them to the LineDrawable */
+    static void generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end, unsigned int numPointsPerLine);
+
     /** Returns true if one of the prefs has changed that impacts vector scaling (requiring line rebuild) */
     static bool fieldsChanged(const simData::PlatformPrefs& lastPrefs, const simData::PlatformPrefs& newPrefs);
     /** Returns the line length of the platform node's vector, based on axis scale and model size */
