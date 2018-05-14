@@ -424,10 +424,8 @@ namespace simVis
   class SDKVIS_EXPORT VectorScaling
   {
   public:
-    /** Generates scene points between start and end (inclusive), using numPointsPerLine */
-    static void generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, unsigned int numPointsPerLine);
-    /** Generates scene points between start and end (inclusive), using numPointsPerLine, adding them to the LineDrawable */
-    static void generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end, unsigned int numPointsPerLine);
+    /** Generates scene points between start and end (inclusive) to fill a LineDrawable's vertex allocation, setting all vertices in the LineDrawable to new values */
+    static void generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end);
 
     /** Returns true if one of the prefs has changed that impacts vector scaling (requiring line rebuild) */
     static bool fieldsChanged(const simData::PlatformPrefs& lastPrefs, const simData::PlatformPrefs& newPrefs);

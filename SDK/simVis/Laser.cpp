@@ -411,22 +411,11 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   osgEarth::LineDrawable* g = new osgEarth::LineDrawable(GL_LINE_STRIP);
   g->setName("simVis::LaserNode");
 
-  // make the vert array but don't populate it yet
+  // allocate the desired number of points, then generate them
   g->allocate(numSegs + 1);
-
-  // populate with our segment verts
-  const osg::Vec3 end(0.0f, length / numSegs, 0.0f);
-  for (unsigned int i = 0; i < numSegs; ++i)
-  {
-    g->setVertex(i, end * i);
-  }
-  g->setVertex(numSegs, osg::Vec3(0.0f, length, 0.0f));
-
-  // set the color:
+  VectorScaling::generatePoints(*g, osg::Vec3(), osg::Vec3(0.0f, length, 0.0f));
   g->setColor(simVis::ColorUtils::RgbaToVec4(
     prefs.commonprefs().useoverridecolor() ? prefs.commonprefs().overridecolor() : prefs.commonprefs().color()));
-
-  // set up the state.
   g->setLineWidth(prefs.laserwidth());
 
   // done

@@ -388,7 +388,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
     {
       const float x = x0 + subSpacing * s;
       osgEarth::LineDrawable* sub1 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*sub1, osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      sub1->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*sub1, osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
       sub1->setName("simVis::LocalGridNode::GridSubDivision1");
       sub1->setColor(subColor);
       geomGroup->addDrawable(sub1);
@@ -396,7 +397,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
     {
       const float y = y0 + subSpacing * s;
       osgEarth::LineDrawable* sub2 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*sub2, osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      sub2->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*sub2, osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
       sub2->setName("simVis::LocalGridNode::GridSubDivision2");
       sub2->setColor(subColor);
       geomGroup->addDrawable(sub2);
@@ -410,7 +412,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
     const float x = x0 + divSpacing * p;
     {
       osgEarth::LineDrawable* div1 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*div1, osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      div1->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*div1, osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
       div1->setName("simVis::LocalGridNode::GridDivision1");
       div1->setColor(color);
       geomGroup->addDrawable(div1);
@@ -428,7 +431,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
     const float y = y0 + divSpacing * p;
     {
       osgEarth::LineDrawable* div2 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*div2, osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      div2->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*div2, osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
       div2->setName("simVis::LocalGridNode::GridDivision2");
       div2->setColor(color);
       geomGroup->addDrawable(div2);
@@ -515,14 +519,16 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
   {
     {
       osgEarth::LineDrawable* radial1 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*radial1, osg::Vec3(0.f, -size, 0.f), osg::Vec3(0.f, size, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      radial1->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*radial1, osg::Vec3(0.f, -size, 0.f), osg::Vec3(0.f, size, 0.f));
       radial1->setName("simVis::LocalGridNode::Radial1");
       radial1->setColor(color);
       geomGroup->addDrawable(radial1);
     }
     {
       osgEarth::LineDrawable* radial2 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*radial2, osg::Vec3(-size, 0.f, 0.f), osg::Vec3(size, 0.f, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      radial2->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*radial2, osg::Vec3(-size, 0.f, 0.f), osg::Vec3(size, 0.f, 0.f));
       radial2->setName("simVis::LocalGridNode::Radial2");
       radial2->setColor(color);
       geomGroup->addDrawable(radial2);
@@ -723,14 +729,16 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     // speed ring axes:
     {
       osgEarth::LineDrawable* radial1 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*radial1, osg::Vec3(0.f, -sizeMfloat, 0.f), osg::Vec3(0.f, sizeMfloat, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      radial1->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*radial1, osg::Vec3(0.f, -sizeMfloat, 0.f), osg::Vec3(0.f, sizeMfloat, 0.f));
       radial1->setName("simVis::LocalGridNode::SpeedRingAxis1");
       radial1->setColor(color);
       geomGroup->addDrawable(radial1);
     }
     {
       osgEarth::LineDrawable* radial2 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      VectorScaling::generatePoints(*radial2, osg::Vec3(-sizeMfloat, 0.f, 0.f), osg::Vec3(sizeMfloat, 0.f, 0.f), NUM_POINTS_PER_LINE_STRIP);
+      radial2->allocate(NUM_POINTS_PER_LINE_STRIP);
+      VectorScaling::generatePoints(*radial2, osg::Vec3(-sizeMfloat, 0.f, 0.f), osg::Vec3(sizeMfloat, 0.f, 0.f));
       radial2->setName("simVis::LocalGridNode::SpeedRingAxis2");
       radial2->setColor(color);
       geomGroup->addDrawable(radial2);
@@ -739,7 +747,8 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   else
   {
     osgEarth::LineDrawable* speedLine = new osgEarth::LineDrawable(GL_LINE_STRIP);
-    VectorScaling::generatePoints(*speedLine, osg::Vec3(), osg::Vec3(0.f, sizeMfloat, 0.f), NUM_POINTS_PER_LINE_STRIP);
+    speedLine->allocate(NUM_POINTS_PER_LINE_STRIP);
+    VectorScaling::generatePoints(*speedLine, osg::Vec3(), osg::Vec3(0.f, sizeMfloat, 0.f));
     speedLine->setName("simVis::LocalGridNode::SpeedLine");
     speedLine->setColor(color);
     geomGroup->addDrawable(speedLine);
