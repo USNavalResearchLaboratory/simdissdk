@@ -41,7 +41,7 @@
 #include "osgEarthUtil/LODBlending"
 
 #if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
-#include "osgEarthUtil/HorizonClipPlane"
+#include "osgEarth/HorizonClipPlane"
 #else
 #include "osgEarth/CullingUtils" // for ClipToGeocentricHorizon
 #endif
@@ -235,10 +235,9 @@ void SceneManager::init_()
   // mode on its stateset; or you can use osgEarth symbology and use
   // RenderSymbol::clipPlane() = CLIPPLANE_VISIBLE_HORIZON in conjunction with
   // RenderSymbol::depthTest() = false.
-  osgEarth::Util::HorizonClipPlane* hcp = new osgEarth::Util::HorizonClipPlane();
+  osgEarth::HorizonClipPlane* hcp = new osgEarth::HorizonClipPlane();
   hcp->setClipPlaneNumber(CLIPPLANE_VISIBLE_HORIZON);
-  hcp->installShaders(this->getOrCreateStateSet());
-  this->addCullCallback(hcp);
+  addCullCallback(hcp);
 #else // osgEarth 2.9 or older, use ClipToGeocentricHorizon object
   // Install a clip node. This will activate and maintain our visible-horizon
   // clip plane for geometry (or whatever else we want clipped). Then, to activate
