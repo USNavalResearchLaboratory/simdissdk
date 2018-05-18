@@ -264,12 +264,12 @@ public:
     // skip 0 and 360
     for (float angle = sectorAngleDeg_; angle < 360.0f; angle += sectorAngleDeg_)
     {
-      if (osg::equivalent(fmod(angle, 90.f), 0.f)) // don't overdraw the main X/Y axes
+      if (osg::equivalent(static_cast<float>(fmod(angle, 90.f)), 0.f)) // don't overdraw the main X/Y axes
         continue;
       // skip 0
       for (int i = 1; i < numRings_ * RADIAL_VERTEX_FACTOR; ++i)
       {
-        if (osg::equivalent(fmod(static_cast<float>(i), RADIAL_VERTEX_FACTOR), 0.f)) // don't overdraw the rings
+        if (osg::equivalent(static_cast<float>(fmod(static_cast<float>(i), RADIAL_VERTEX_FACTOR)), 0.f)) // don't overdraw the rings
           continue;
         vertexCount++;
       }
@@ -297,7 +297,7 @@ public:
     // skip 0 and 360
     for (float angle = sectorAngleDeg_; angle < 360.0f; angle += sectorAngleDeg_)
     {
-      if (osg::equivalent(fmod(angle, 90.f), 0.f)) // don't overdraw the main X/Y axes
+      if (osg::equivalent(static_cast<float>(fmod(angle, 90.f)), 0.f)) // don't overdraw the main X/Y axes
         continue;
       const float angleRad = osg::DegreesToRadians(angle);
       const float x = sinf(angleRad);
@@ -305,7 +305,7 @@ public:
       // skip 0
       for (int i = 1; i < numRings_ * RADIAL_VERTEX_FACTOR; ++i)
       {
-        if (osg::equivalent(fmod(static_cast<float>(i), RADIAL_VERTEX_FACTOR), 0.f)) // don't overdraw the rings
+        if (osg::equivalent(static_cast<float>(fmod(static_cast<float>(i), RADIAL_VERTEX_FACTOR)), 0.f)) // don't overdraw the rings
           continue;
         // if assert fails, re-check algorithm for determining vertexCount in constructor
         assert(index < vertexArray->getNumElements());
