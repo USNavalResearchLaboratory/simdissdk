@@ -328,7 +328,7 @@ public:
     : osgEarth::LineDrawable(GL_LINE_LOOP),
     ring_(ring)
   {
-    setName("simVis::LocalGridNode::SpeedLine");
+    setName("simVis::LocalGridNode::RangeRing");
   }
 
   void update(const simData::LocalGridPrefs& prefs, double sizeM)
@@ -882,7 +882,7 @@ int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, dou
   bool requiresUpdate = false;
 
   // determine the speed to be used for calculating the rings
-  double speedMS;
+  double speedMS = 0.0;
   if (prefs.speedring().useplatformspeed())
   {
     // force rebuild if speed rings are displayed, using platform speed, and host velocity changed
