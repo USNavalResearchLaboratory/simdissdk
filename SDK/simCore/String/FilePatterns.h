@@ -102,7 +102,8 @@ static const std::string SIMDIS10_VIEW_FILE_PATTERNS =
 
 /** Dialog-oriented user-friendly list of supported SIMDIS Bookmark format patterns to open*/
 static const std::string SIMDIS_BOOKMARK_FILE_PATTERNS =
-  "All Supported Bookmark Formats (*.toc, *.log, *.htm, *.html, *.csv)\n"
+  "All Supported Bookmark Formats (*.bml, *.toc, *.log, *.htm, *.html, *.csv)\n"
+  "Bookmark XML (*.bml)\n"
   "Media Player Bookmarks (*.toc)\n"
   "SCORE Event Log (*.log)\n"
   "NetMeeting Chat Log (*.htm,*.html)\n"
@@ -112,6 +113,7 @@ static const std::string SIMDIS_BOOKMARK_FILE_PATTERNS =
 /** Dialog-oriented user-friendly list of supported SIMDIS Bookmark format patterns to save/export */
 static const std::string SIMDIS_BOOKMARK_SAVE_FILE_PATTERNS =
   "Media Player Bookmarks (*.toc)\n"
+  "Bookmark XML (*.bml)\n"
   "All Files (*)";
 
 /** Dialog-oriented user-friendly list of SIMDIS 9 Terrain Configuration File patterns */
