@@ -24,10 +24,13 @@
 
 #include "osg/ref_ptr"
 #include "osg/MatrixTransform"
-#include "simVis/LineDrawable.h"
 #include "simData/DataTypes.h"
 
-namespace osgEarth { class SpatialReference; }
+namespace osgEarth
+{
+  class LineDrawable;
+  class SpatialReference;
+}
 
 namespace simVis
 {

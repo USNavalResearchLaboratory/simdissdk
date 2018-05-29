@@ -547,9 +547,17 @@ void PlatformNode::setInvalid_()
   setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
+// Track may be shown even when platform is not shown only in the "show expired track history" case.
+// Track history is not maintained when not drawn, but it is recreated from datastore when platform draw is turned on.
+// Due to common occurrence of scenarios with lots of platforms that are not of particular interest,
+// it was decided to make platform as lightweight an object as possible when not drawn.
+// The downside is that in a large scenario, turning draw off for all platforms then turning back on might cause hiccups.
 bool PlatformNode::showTrack_(const simData::PlatformPrefs& prefs) const
 {
-  return (lastUpdateTime_ != -1.0) && (prefs.trackprefs().trackdrawmode() != simData::TrackPrefs_Mode_OFF) && (isActive_(prefs) || showExpiredTrackHistory_(prefs));
+  return (lastUpdateTime_ != -1.0) &&
+    (prefs.commonprefs().draw()) &&
+    (prefs.trackprefs().trackdrawmode() != simData::TrackPrefs_Mode_OFF) &&
+    (isActive_(prefs) || showExpiredTrackHistory_(prefs));
 }
 
 bool PlatformNode::showExpiredTrackHistory_(const simData::PlatformPrefs& prefs) const
