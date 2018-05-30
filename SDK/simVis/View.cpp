@@ -24,6 +24,7 @@
 #include "osg/Depth"
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
+#include "osgEarth/GLUtils"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/Version"
@@ -608,6 +609,9 @@ View::View()
   // Install a viewport uniform on each camera, giving all shaders access
   // to the window size. The osgEarth::LineDrawable construct uses this.
   getCamera()->addCullCallback(new osgEarth::InstallViewportSizeUniform());
+
+  // set global defaults for LineDrawable
+  osgEarth::GLUtils::setGlobalDefaults(getCamera()->getOrCreateStateSet());
 }
 
 View::~View()

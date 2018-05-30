@@ -24,10 +24,13 @@
 
 #include "osg/ref_ptr"
 #include "osg/MatrixTransform"
-#include "simVis/LineDrawable.h"
 #include "simData/DataTypes.h"
 
-namespace osgEarth { class SpatialReference; }
+namespace osgEarth
+{
+  class LineDrawable;
+  class SpatialReference;
+}
 
 namespace simVis
 {
@@ -109,12 +112,6 @@ namespace simVis
 
     /** Allows the node to be re-used */
     void reset();
-
-    /**
-    * Set the draw mode of the center line
-    * @param mode track draw mode that this chunk will display
-    */
-    void setCenterLineMode(const simData::TrackPrefs_Mode& mode);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }

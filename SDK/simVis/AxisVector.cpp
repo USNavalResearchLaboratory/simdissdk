@@ -141,15 +141,11 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
 {
   osgEarth::LineDrawable* line = NULL;
 
-  osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
-  vertices->reserve(AXIS_NUM_POINTS_PER_LINE_STRIP);
-
   // draw x axis vector
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
   line->setName("simVis::AxisVector");
-  vertices->clear();
-  VectorScaling::generatePoints(*vertices, osg::Vec3(), osg::X_AXIS, AXIS_NUM_POINTS_PER_LINE_STRIP);
-  line->importVertexArray(vertices.get());
+  line->allocate(AXIS_NUM_POINTS_PER_LINE_STRIP);
+  VectorScaling::generatePoints(*line, osg::Vec3(), osg::X_AXIS);
   line->setColor(simVis::Color::Yellow);
   line->setLineWidth(lineWidth_);
   geode_->addChild(line);
@@ -157,9 +153,8 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   // draw y axis vector
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
   line->setName("simVis::AxisVector");
-  vertices->clear();
-  VectorScaling::generatePoints(*vertices, osg::Vec3(), osg::Y_AXIS, AXIS_NUM_POINTS_PER_LINE_STRIP);
-  line->importVertexArray(vertices.get());
+  line->allocate(AXIS_NUM_POINTS_PER_LINE_STRIP);
+  VectorScaling::generatePoints(*line, osg::Vec3(), osg::Y_AXIS);
   line->setColor(simVis::Color::Fuchsia);
   line->setLineWidth(lineWidth_);
   geode_->addChild(line);
@@ -167,9 +162,8 @@ void AxisVector::createAxisVectors_(osg::Geode* geode) const
   // draw z axis vector
   line = new osgEarth::LineDrawable(GL_LINE_STRIP);
   line->setName("simVis::AxisVector");
-  vertices->clear();
-  VectorScaling::generatePoints(*vertices, osg::Vec3(), osg::Z_AXIS, AXIS_NUM_POINTS_PER_LINE_STRIP);
-  line->importVertexArray(vertices.get());
+  line->allocate(AXIS_NUM_POINTS_PER_LINE_STRIP);
+  VectorScaling::generatePoints(*line, osg::Vec3(), osg::Z_AXIS);
   line->setColor(simVis::Color::Aqua);
   line->setLineWidth(lineWidth_);
   geode_->addChild(line);

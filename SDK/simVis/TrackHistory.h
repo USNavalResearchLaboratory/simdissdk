@@ -139,12 +139,6 @@ namespace simVis
     */
     void initializeTableId_();
 
-    /// Select center points or lines
-    void updateCenterLine_(simData::TrackPrefs_Mode mode);
-
-    /// Update the drawables to render a different mode
-    void updateTrackMode_(simData::TrackPrefs_Mode mode);
-
     /// Update the "flat mode" setting that zeros out the track history altitude; initialize shader programs if necessary
     void updateFlatMode_(bool enabled);
 

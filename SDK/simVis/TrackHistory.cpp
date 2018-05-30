@@ -304,13 +304,10 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
 
     // add the new chunk and update its appearance
     chunkGroup_->addChild(chunk);
-    // determine whether current draw mode requires the centerline to be drawn
-    updateCenterLine_(lastPlatformPrefs_.trackprefs().trackdrawmode());
-
     chunk->addCullCallback(new osgEarth::HorizonCullCallback());
   }
 
-  double drawTime = toDrawTime_(u.time());
+  const double drawTime = toDrawTime_(u.time());
 
   // add the point (along with its timestamp)
   bool addSuccess = chunk->addPoint(hostMatrix, drawTime, historyColorAtTime_(drawTime), hostBounds_);
@@ -367,15 +364,6 @@ void TrackHistoryNode::removePointsOlderThan_(double oldestDrawTime)
     }
     else
       break;
-  }
-}
-
-/// select center points or lines
-void TrackHistoryNode::updateCenterLine_(simData::TrackPrefs_Mode mode)
-{
-  for (unsigned int i = 0; i < chunkGroup_->getNumChildren(); ++i)
-  {
-    static_cast<TrackChunkNode*>(chunkGroup_->getChild(i))->setCenterLineMode(mode);
   }
 }
 
@@ -530,25 +518,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackdrawmode))
   {
-    if (force || prefs.trackdrawmode() == simData::TrackPrefs_Mode_BRIDGE ||
-        prefs.trackdrawmode() == simData::TrackPrefs_Mode_RIBBON ||
-        lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_BRIDGE ||
-        lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_RIBBON)
-    {
-      // change to/from ribbon or bridge(drop) requires rebuild of track
-      resetRequested = true;
-    }
-    else
-    {
-      // change from line to point, or vice versa does not require rebuild
-      assert(prefs.trackdrawmode() == simData::TrackPrefs_Mode_POINT ||
-        prefs.trackdrawmode() == simData::TrackPrefs_Mode_LINE);
-
-      assert(lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_POINT ||
-        lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_LINE);
-
-      updateCenterLine_(prefs.trackdrawmode());
-    }
+    resetRequested = true;
   }
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackcolor))
@@ -818,7 +788,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
   // points must be added in order of increasing drawTime
   if (timeDirection_ == simCore::REVERSE && getMatrix_(*current, hostMatrix))
   {
-    double drawTime = toDrawTime_(current->time());
+    const double drawTime = toDrawTime_(current->time());
     currentPointChunk_->addPoint(hostMatrix, drawTime, historyColorAtTime_(drawTime), hostBounds_);
   }
 
@@ -832,7 +802,6 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
     // this point should never be the current point; if assert fails, check to make sure we only process interpolated points
     assert(u->time() < current->time());
     currentPointChunk_->addPoint(hostMatrix, u->time(), historyColorAtTime_(u->time()), hostBounds_);
-    currentPointChunk_->setCenterLineMode(lastPlatformPrefs_.trackprefs().trackdrawmode());
   }
 
   if (timeDirection_ == simCore::FORWARD && getMatrix_(*current, hostMatrix))
