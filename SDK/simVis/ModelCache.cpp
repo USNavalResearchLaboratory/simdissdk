@@ -289,8 +289,12 @@ private:
     // and auto-scale to the screen.
     using namespace osgEarth::Annotation;
 
-    osg::ref_ptr<osg::Image> image = osgDB::readRefImageFile(filename);
-    if (image)
+    osg::ref_ptr<osg::Image> image;
+    // Avoid readRefImageFile() because in 3.6 it spams console, for LST and TMD files
+    const std::string ext = osgDB::getLowerCaseFileExtension(filename);
+    if (ext != "tmd" && ext != "lst")
+      image = osgDB::readRefImageFile(filename);
+    if (image.valid())
     {
       // create the geometry representing the icon:
       osg::Geometry* geom = AnnotationUtils::createImageGeometry(
