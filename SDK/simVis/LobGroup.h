@@ -156,7 +156,6 @@ public: // EntityNode interface
 
 private: // types
   class Cache;
-  class InternalTableObserver;
 
 private: // methods
   /** Copy constructor, not implemented or available. */
@@ -171,8 +170,6 @@ private: // methods
   void applyPlatformCoordClamping_(simCore::Coordinate& platformCoord);
   /// apply clamping to this endpoint coordinate. Assumes coord is XEAST
   void applyEndpointCoordClamping_(simCore::Coordinate& endpointCoord);
-  /// initialize the data table id for the internal draw style data table. returns 0 on success, non-zero otherwise
-  int initializeTableId_();
   /// update drawing for changes
   void refresh_(const simData::LobGroupUpdate* newUpdate, const simData::LobGroupPrefs* newPrefs);
 
@@ -209,8 +206,6 @@ private: // data
   simData::DataStore &ds_;
   /// Host platform ID
   simData::ObjectId hostId_;
-  /// cache the table id for the data table with draw style history
-  simData::TableId drawStyleTableId_;
 
   /// Cache of lines drawn
   Cache *lineCache_;
@@ -221,8 +216,6 @@ private: // data
   osg::ref_ptr<EntityLabelNode> label_;
   /// The callback to create the label contents
   osg::ref_ptr<LabelContentCallback> contentCallback_;
-  /// observer for when the internal draw style data table is added/removed
-  simData::DataTableManager::ManagerObserverPtr internalTableObserver_;
   /// Cache state to optimize call
   bool lastFlashingState_;
 };

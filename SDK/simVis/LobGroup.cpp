@@ -68,29 +68,6 @@ bool prefsRequiresRebuild(const simData::LobGroupPrefs* a, const simData::LobGro
 namespace simVis
 {
 
-// Observer for the DataTableManager for new and removed data tables
-class LobGroupNode::InternalTableObserver : public simData::DataTableManager::ManagerObserver
-{
-public:
-  explicit InternalTableObserver(LobGroupNode& parent)
-    : parent_(parent)
-  {}
-  void onAddTable(simData::DataTable* table)
-  {
-    if ((table != NULL) && (table->ownerId() == parent_.getId()) && (table->tableName() == simData::INTERNAL_LOB_DRAWSTYLE_TABLE))
-      parent_.initializeTableId_();
-  }
-  void onPreRemoveTable(simData::DataTable* table)
-  {
-    if (table != NULL && table->tableId() == parent_.drawStyleTableId_)
-      parent_.drawStyleTableId_ = 0;
-  }
-private:
-  LobGroupNode& parent_;
-};
-
-
-
 /// maps time to one or more animated lines
 class LobGroupNode::Cache
 {
@@ -185,7 +162,6 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
   coordConverter_(new simCore::CoordinateConverter()),
   ds_(ds),
   hostId_(host->getId()),
-  drawStyleTableId_(0),
   lineCache_(new Cache),
   label_(NULL),
   contentCallback_(new NullEntityCallback()),
@@ -209,15 +185,10 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
-
-  initializeTableId_();
-  internalTableObserver_.reset(new InternalTableObserver(*this));
-  ds.dataTableManager().addObserver(internalTableObserver_);
 }
 
 LobGroupNode::~LobGroupNode()
 {
-  ds_.dataTableManager().removeObserver(internalTableObserver_);
   delete coordConverter_;
   coordConverter_ = NULL;
   lineCache_->clearCache(this);
@@ -326,29 +297,9 @@ void LobGroupNode::setPrefs(const simData::LobGroupPrefs &prefs)
   updateLabel_(prefs);
 }
 
-int LobGroupNode::initializeTableId_()
-{
-  // try to initialize the table id for quick access to the internal table, if it exists
-  if (drawStyleTableId_ != 0)
-    return 0;
-  simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
-  if (table == NULL)
-    return 1;
-  drawStyleTableId_ = table->tableId();
-  assert(drawStyleTableId_ > 0); // a table was created with an invalid table id, check that DataTableManager has not changed how it creates table ids
-  return 0;
-}
-
 void LobGroupNode::setLineDrawStyle_(double time, simVis::AnimatedLineNode& line, const simData::LobGroupPrefs& defaultValues)
 {
-  if (drawStyleTableId_ == 0)
-  {
-    setLineValueFromPrefs_(line, defaultValues);
-    return;
-  }
-  // use the drawStyleTableId_ if we have it
-  simData::DataTable* table = ds_.dataTableManager().getTable(drawStyleTableId_);
-  // no draw style history table, simply use the default values from prefs
+  simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
   if (table == NULL)
   {
     setLineValueFromPrefs_(line, defaultValues);
@@ -589,7 +540,7 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
   const bool lobChangedToActive = (current != NULL && !hasLastUpdate_);
 
   // Do any necessary flashing
-  simData::DataTable* table = ds_.dataTableManager().getTable(drawStyleTableId_);
+  simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
   if (table != NULL)
   {
     bool flashing = false;
