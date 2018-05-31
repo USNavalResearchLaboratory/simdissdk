@@ -257,6 +257,7 @@ private:
     if (options->addLodNode)
     {
       osg::ref_ptr<osg::LOD> lod = new osg::LOD;
+      lod->setName("Auto LOD Node");
       // Use a pixel-size LOD.  Range LOD scales relative to eye distance, but models that get distorted
       // significantly in only 2 dimensions will have significant LOD issues with that approach.
       lod->setRangeMode(osg::LOD::PIXEL_SIZE_ON_SCREEN);
@@ -428,6 +429,7 @@ public:
     // Set up an options struct for the pseudo loader
     osg::ref_ptr<ModelCacheLoaderOptions> opts = new ModelCacheLoaderOptions;
     opts->clock = cache_->clock_;
+    opts->addLodNode = cache_->addLodNode_;
     opts->sequenceTimeUpdater = cache_->sequenceTimeUpdater_.get();
     // Need to return something or proxy never succeeds and keeps issuing searches
     opts->boxWhenNotFound = true;
@@ -538,6 +540,7 @@ private:
 
 ModelCache::ModelCache()
   : shareArticulatedModels_(false),
+    addLodNode_(true),
     clock_(NULL),
     asyncLoader_(new LoaderNode)
 {
@@ -545,6 +548,7 @@ ModelCache::ModelCache()
 
   // Create a box model as a placeholder for invalid model
   osg::Geode* geode = new osg::Geode();
+  geode->setName("Box Geode");
   geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
   boxNode_ = geode;
 
@@ -586,6 +590,7 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   // Set up an options struct for the pseudo loader
   osg::ref_ptr<ModelCacheLoaderOptions> opts = new ModelCacheLoaderOptions;
   opts->clock = clock_;
+  opts->addLodNode = addLodNode_;
   opts->sequenceTimeUpdater = sequenceTimeUpdater_.get();
   // Farm off to the pseudo-loader
   osg::ref_ptr<osg::Node> result = osgDB::readRefNodeFile(uri + "." + MODEL_LOADER_EXT, opts.get());
@@ -670,6 +675,16 @@ void ModelCache::setShareArticulatedIconModels(bool value)
 bool ModelCache::getShareArticulatedIconModels() const
 {
   return shareArticulatedModels_;
+}
+
+void ModelCache::setUseLodNode(bool useLodNode)
+{
+  addLodNode_ = useLodNode;
+}
+
+bool ModelCache::useLodNode() const
+{
+  return addLodNode_;
 }
 
 void ModelCache::setClock(simCore::Clock* clock)
