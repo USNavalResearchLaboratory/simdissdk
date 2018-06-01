@@ -405,7 +405,7 @@ void simExamples::configureSearchPaths()
   // profile on some drivers and cards that do not support compatibility mode.  As a result, we end up
   // getting a GL 1.4 context that only support GLSL 1.2.
 #ifdef OSG_GL3_AVAILABLE
-  osg::DisplaySettings* instance = osg::DisplaySettings::instance();
+  osg::DisplaySettings* instance = osg::DisplaySettings::instance().get();
   if (instance->getGLContextVersion() == "1.0")
     instance->setGLContextVersion("3.3");
 #ifdef __linux__

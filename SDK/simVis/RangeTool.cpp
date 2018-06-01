@@ -461,8 +461,6 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   s->setMode(GL_CULL_FACE, 0);
   s->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
   geode_->setName("Line");
-  LineDrawable::installShader(s);
-
 
   labels_ = new osg::Geode();
   s = labels_->getOrCreateStateSet();

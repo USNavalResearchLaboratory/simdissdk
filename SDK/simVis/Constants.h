@@ -25,7 +25,7 @@
 #include <string>
 #include "osgDB/Callbacks"
 #include "simCore/Common/Common.h"
-#include <GL/gl.h>
+#include "osg/GL"
 
 namespace simVis
 {

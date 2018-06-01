@@ -164,7 +164,6 @@ void PlanetariumViewTool::onInstall(const ScenarioManager& scenario)
 
   // state for the delegation group:
   simVis::setLighting(targets_->getOrCreateStateSet(), 0);
-  osgEarth::LineDrawable::installShader(targets_->getOrCreateStateSet());
 
   // sets horizon geofence to host position, which does not work correctly
   simCore::Vec3 ecef;

@@ -393,7 +393,6 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
     graphicsGroup_->setName("simVis::LocalGridNode::GraphicsGeode");
     osg::StateSet* ss = graphicsGroup_->getOrCreateStateSet();
     PointSize::setValues(ss, 1.5f, osg::StateAttribute::ON);
-    osgEarth::LineDrawable::installShader(ss);
     addChild(graphicsGroup_.get());
   }
 
