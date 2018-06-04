@@ -383,9 +383,6 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
     dropVertsDrawable_->allocate(2);
     dropVertsDrawable_->dirty();
 
-    // only necessary because we don't put the drawable under a LineGroup:
-    dropVertsDrawable_->installShader();
-
     altModeXform_ = new osg::MatrixTransform();
     altModeXform_->addChild(dropVertsDrawable_.get());
 

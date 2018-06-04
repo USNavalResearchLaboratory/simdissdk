@@ -121,7 +121,6 @@ private:
     line_->setColor(BAND_NORMAL_COLOR);
 
     line_->dirty();
-    line_->installShader();
 
     xform_ = new osg::MatrixTransform();
     xform_->addChild(line_.get());
