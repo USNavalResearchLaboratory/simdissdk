@@ -701,8 +701,8 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
       returnString = tr("Has Value");
     else
       returnString = tr("Not %1").arg(valueString_);
-    // Append the numeric count if specified
-    if (numMatches_ >= 0)
+    // Append the numeric count if specified -- only if in include mode, and NOT in exclude mode
+    if (numMatches_ >= 0 && !isUnlistedValueChecked())
       returnString = tr("%1 (%2)").arg(returnString).arg(numMatches_);
     return returnString;
   }
@@ -1715,7 +1715,7 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
     if (subElement == SE_EXCLUDE_TOGGLE)
     {
       QToolTip::showText(evt->globalPos(), simQt::formatTooltip(tr("Exclude"),
-        tr("When on, Exclude mode will omit all entities that match your selected values.<p>When off, the filter will match all entities that have one of your checked category values.")),
+        tr("When on, Exclude mode will omit all entities that match your selected values.<p>When off, the filter will match all entities that have one of your checked category values.<p>Exclude mode does not show entity counts.")),
         view);
       return true;
     }
