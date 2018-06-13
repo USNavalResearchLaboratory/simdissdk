@@ -3,6 +3,9 @@ if(NOT PROTOBUF_FOUND)
     return()
 endif()
 
+# The ENABLE_CUSTOM_RENDERING option is used to include the experimental Custom Rendering code
+option(ENABLE_CUSTOM_RENDERING "Include experimental code for Custom Rendering" OFF)
+
 # ----- simData --------------------------------------------------------
 
 set(DATA_INC)
@@ -159,6 +162,7 @@ target_include_directories(simData PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+
 target_link_libraries(simData PUBLIC PROTOBUF simCore simNotify)
 add_dependencies(simData simData_protobuf_generation)
 if(SIMDATA_SHARED)
@@ -167,6 +171,9 @@ else()
     target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
 endif()
 
+if(ENABLE_CUSTOM_RENDERING)
+    target_compile_definitions(simData PUBLIC ENABLE_CUSTOM_RENDERING)
+endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     set_target_properties(simData PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")

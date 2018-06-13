@@ -85,6 +85,11 @@ simData::ObjectType DataStoreHelpers::typeFromChar(char entityTypeChar)
   case 'R':
   case 'r': return simData::PROJECTOR;
 
+#ifdef ENABLE_CUSTOM_RENDERING
+  case 'C':
+  case 'c': return simData::CUSTOM_RENDERING;
+#endif
+
   case simData::ALL:
   case simData::NONE:
     return simData::NONE;
@@ -109,6 +114,10 @@ std::string DataStoreHelpers::typeToString(simData::ObjectType entityType)
     return "D";
   case simData::PROJECTOR:
     return "R";
+#ifdef ENABLE_CUSTOM_RENDERING
+  case simData::CUSTOM_RENDERING:
+    return "C";
+#endif
   case simData::ALL:
   case simData::NONE:
     return "";
@@ -140,6 +149,10 @@ std::string DataStoreHelpers::fullTypeToString(simData::ObjectType entityType)
     return "LOB";
   case simData::PROJECTOR:
     return "Projector";
+#ifdef ENABLE_CUSTOM_RENDERING
+  case simData::CUSTOM_RENDERING:
+    return "Custom";
+#endif
   case simData::ALL:
   case simData::NONE:
     return "";
@@ -200,6 +213,14 @@ uint64_t DataStoreHelpers::originalIdFromId(ObjectId objectId, const simData::Da
     assert(props);
     return props->originalid();
   }
+#ifdef ENABLE_CUSTOM_RENDERING
+  case simData::CUSTOM_RENDERING:
+  {
+    const simData::CustomRenderingProperties* props = dataStore->customRenderingProperties(objectId, &transaction);
+    assert(props);
+    return props->originalid();
+  }
+#endif
   case simData::NONE:
   case simData::ALL:
     break;
@@ -263,6 +284,10 @@ google::protobuf::Message* DataStoreHelpers::makeMessage(simData::ObjectType ent
     return new simData::LobGroupPrefs();
   case simData::PROJECTOR:
     return new simData::ProjectorPrefs();
+#ifdef ENABLE_CUSTOM_RENDERING
+  case simData::CUSTOM_RENDERING:
+    return new simData::CustomRenderingPrefs();
+#endif
   }
 
   assert(false);
@@ -515,6 +540,11 @@ bool DataStoreHelpers::isEntityActive(const simData::DataStore& dataStore, simDa
 
   case simData::PROJECTOR:
     return true;
+
+#ifdef ENABLE_CUSTOM_RENDERING
+  case simData::CUSTOM_RENDERING:
+    return true;
+#endif
 
   case simData::NONE:
     // Entity does not exist

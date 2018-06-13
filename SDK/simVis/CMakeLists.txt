@@ -59,6 +59,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ClockOptions.h
     ${VIS_INC}Compass.h
     ${VIS_INC}Constants.h
+    ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
     ${VIS_INC}DBOptions.h
@@ -192,6 +193,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}ClassificationBanner.cpp
     ${VIS_SRC}ClockOptions.cpp
     ${VIS_SRC}Compass.cpp
+    ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
     ${VIS_INC}DisableDepthOnAlpha.cpp

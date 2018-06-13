@@ -38,6 +38,9 @@
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
+#ifdef ENABLE_CUSTOM_RENDERING
+#include "simVis/CustomRendering.h"
+#endif
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -157,7 +160,7 @@ bool ScenarioManager::EntityRecord::dataStoreMatches(const simData::DataStore* d
 
 bool ScenarioManager::EntityRecord::updateFromDataStore(bool force) const
 {
-  return (updateSlice_ && node_.valid() && node_->updateFromDataStore(updateSlice_, force));
+  return (node_.valid() && node_->updateFromDataStore(updateSlice_, force));
 }
 
 // -----------------------------------------------------------------------
@@ -737,6 +740,37 @@ LobGroupNode* ScenarioManager::addLobGroup(const simData::LobGroupProperties& pr
   return NULL;
 }
 
+#ifdef ENABLE_CUSTOM_RENDERING
+CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRenderingProperties& props, simData::DataStore& dataStore)
+{
+  SAFETRYBEGIN;
+  // attempt to anchor to the host platform
+  EntityNode* host = NULL;
+  if (props.has_hostid())
+    host = find(props.hostid());
+
+  // make a locator, tying it to the host's locator if there is one
+  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+
+  // put the custom into our entity db:
+  auto node = new CustomRenderingNode(this, props, locator, host, dataStore.referenceYear());
+  entities_[node->getId()] = new EntityRecord(
+    node,
+    NULL,
+    &dataStore);
+
+  hosterTable_.insert(std::make_pair(host->getId(), node->getId()));
+
+  notifyToolsOfAdd_(node);
+
+  node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
+
+  return node;
+  SAFETRYEND("adding custom");
+  return NULL;
+}
+#endif
+
 ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties& props, simData::DataStore& dataStore)
 {
   SAFETRYBEGIN;
@@ -845,6 +879,21 @@ bool ScenarioManager::setLobGroupPrefs(simData::ObjectId id, const simData::LobG
   SAFETRYEND(std::string(osgEarth::Stringify() << "setting LOB group prefs of ID " << id));
   return false;
 }
+
+#ifdef ENABLE_CUSTOM_RENDERING
+bool ScenarioManager::setCustomRenderingPrefs(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs)
+{
+  SAFETRYBEGIN;
+  CustomRenderingNode* obj = find<CustomRenderingNode>(id);
+  if (obj)
+  {
+    obj->setPrefs(prefs);
+    return true;
+  }
+  SAFETRYEND(std::string(osgEarth::Stringify() << "setting custom prefs of ID " << id));
+  return false;
+}
+#endif
 
 void ScenarioManager::notifyBeamsOfNewHostSize(const PlatformNode& platform) const
 {

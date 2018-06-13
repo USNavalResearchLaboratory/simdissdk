@@ -38,7 +38,6 @@ else()
     remove_definitions(-DUSE_DEPRECATED_SIMDISSDK_API)
 endif()
 
-
 # Static build for libraries?
 option(SIMNOTIFY_SHARED "If off, simNotify SDK libraries are built statically; if on, simNotify SDK libraries are built dynamically" ON)
 option(SIMCORE_SHARED "If off, simCore SDK libraries are built statically; if on, simCore SDK libraries are built dynamically" ON)

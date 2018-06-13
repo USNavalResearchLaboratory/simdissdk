@@ -88,6 +88,16 @@ namespace simVis
     */
     virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
 
+#ifdef ENABLE_CUSTOM_RENDERING
+    /**
+    * Returns a custom rendering label content based on the given preference
+    * @param prefs Preferences for the custom rendering; must be valid
+    * @param fields Display fields to use when forming the display string
+    * @return A label content based on the given preference; does not include custom rendering name/alias
+    */
+    virtual std::string createString(const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields) = 0;
+#endif
+
   protected:
     virtual ~LabelContentCallback() {}
   };
@@ -139,6 +149,13 @@ namespace simVis
     {
       return "";
     }
+
+#ifdef ENABLE_CUSTOM_RENDERING
+    virtual std::string createString(const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields)
+    {
+      return "";
+    }
+#endif
 
   protected:
     virtual ~NullEntityCallback() {}
