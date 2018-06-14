@@ -221,7 +221,8 @@ namespace simVis
     simData::PlatformPrefs      lastPlatformPrefs_;
     simData::PlatformProperties lastPlatformProps_;
     unsigned int        chunkSize_;
-    osg::Vec4f          defaultColor_;
+    const osg::Vec4f    defaultColor_;
+    osg::Vec4f          activeColor_;
     unsigned int        totalPoints_;
 
     // "draw time" is the same as the clock's update time, but adjusted

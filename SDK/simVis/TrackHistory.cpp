@@ -104,6 +104,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, const osgEarth:
   : ds_(ds),
    supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
    chunkSize_(64),  // keep this lowish or your app won't scale.
+   defaultColor_(simVis::Color(simData::PlatformPrefs::default_instance().trackprefs().trackcolor(), simVis::Color::RGBA)),
    totalPoints_(0),
    hasLastDrawTime_(false),
    lastDrawTime_(0.0),
@@ -120,7 +121,8 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, const osgEarth:
   updateSliceBase_ = ds_.platformUpdateSlice(entityId);
   assert(updateSliceBase_); // should be a valid update slice before track history is created
 
-  defaultColor_ = simVis::Color(simData::PlatformPrefs::default_instance().trackprefs().trackcolor(), simVis::Color::RGBA);
+  activeColor_ = defaultColor_;
+
   locator_ = new simVis::Locator(srs);
 
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
@@ -520,12 +522,16 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackcolor))
   {
-    // store the trackcolor as the default track history color
-    osg::Vec4f newColor = simVis::Color(prefs.trackcolor(), simVis::Color::RGBA);
-    if (defaultColor_ != newColor)
+    // store the trackcolor as the active track history color
+    osg::Vec4f newColor;
+    if (prefs.has_trackcolor())
+      newColor = simVis::Color(prefs.trackcolor(), simVis::Color::RGBA);
+    else
+      newColor = defaultColor_;
+
+    if (activeColor_ != newColor)
     {
-      defaultColor_ = newColor;
-      //resetRequested = true;
+      activeColor_ = newColor;
     }
   }
 
@@ -557,8 +563,8 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
   }
   else
   {
-    // If Multiple Color is off, and both overrides are off, SIMDIS displays a line matching the default color
-    setOverrideColor_(defaultColor_);
+    // If Multiple Color is off, and both overrides are off, SIMDIS displays a line matching the active color
+    setOverrideColor_(activeColor_);
   }
 
   if (!supportsShaders_ && origOverideColor != lastOverrideColor_)
