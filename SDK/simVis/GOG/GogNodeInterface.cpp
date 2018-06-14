@@ -1018,8 +1018,9 @@ void GogNodeInterface::setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometr
   if (getAltitudeMode(currentMode) == 0 && currentMode == ALTITUDE_GROUND_RELATIVE)
   {
     // toggle altitude mode to get the altitude offset to apply. Due to the way osgEarth LocalGeometryNode works, it won't update the altitude offset otherwise.
-    setAltitudeMode(ALTITUDE_NONE);
-    setAltitudeMode(ALTITUDE_GROUND_RELATIVE);
+    // make sure to call the base class version of setAltitudeMode()
+    GogNodeInterface::setAltitudeMode(ALTITUDE_NONE);
+    GogNodeInterface::setAltitudeMode(ALTITUDE_GROUND_RELATIVE);
   }
 }
 
@@ -1607,6 +1608,7 @@ CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::An
     bottomCapNode_(bottomCapNode),
     height_(0.0),
     altitude_(0.0),
+    altOffset_(0.0),
     position_(NULL)
 {
   position_ = new osgEarth::GeoPoint(bottomCapNode_->getPosition());
@@ -1654,10 +1656,24 @@ void CylinderNodeInterface::setAltOffset(double altOffsetMeters)
 {
   metaData_.setExplicitly(GOG_THREE_D_OFFSET_ALT_SET);
 
+  // cache the altitude offset
+  altOffset_ = altOffsetMeters;
+
+  // don't update the offset if we are clamped to ground
+  AltitudeMode altMode = ALTITUDE_NONE;
+  getAltitudeMode(altMode);
+  if (altMode == ALTITUDE_GROUND_CLAMPED)
+    return;
+
+  // apply offset to all 3 nodes
+  setAltOffset_(altOffset_);
+}
+
+void CylinderNodeInterface::setAltOffset_(double altOffsetMeters)
+{
   setLocalNodeAltOffset_(sideNode_.get(), altOffsetMeters);
   setLocalNodeAltOffset_(topCapNode_.get(), altOffsetMeters + height_);
   setLocalNodeAltOffset_(bottomCapNode_.get(), altOffsetMeters);
-  reclamp_();
 }
 
 void CylinderNodeInterface::setPosition_(osgEarth::GeoPoint& position, bool groundClamped)
@@ -1681,7 +1697,13 @@ void CylinderNodeInterface::setAltitudeMode(AltitudeMode altMode)
   if (altMode == ALTITUDE_EXTRUDE)
     return;
 
+  // determine if clamping to ground, since that requires special processing
+  bool groundClamping = (altMode == ALTITUDE_GROUND_CLAMPED);
+
   // don't kick out early if no change to altitude mode, since any change to the geometry may require a re-application of the current altitude mode
+
+  // update the altitude offset to 0 if ground clamped, or restore cached altitude offset otherwise
+  setAltOffset_(groundClamping ? 0.0 : altOffset_);
 
   // always toggle altitude mode to NONE before any changes, required to clear out any vertex offsets that may have been introduced by clamping.
   // osgEarth::LocalGeometryNode doesn't properly support changes to altitude mode when clamping per vertex. Relative clamping applies vertex offsets
@@ -1692,11 +1714,13 @@ void CylinderNodeInterface::setAltitudeMode(AltitudeMode altMode)
     // set altitude mode to NONE, which clears out vertex offsets
     GogNodeInterface::setAltitudeMode(ALTITUDE_NONE);
     // set original position, which applies clamping changes and updates vertices properly
-    setPosition_(*position_, altMode == ALTITUDE_GROUND_CLAMPED);
+    setPosition_(*position_, groundClamping);
   }
+
   // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
   GogNodeInterface::setAltitudeMode(altMode);
-  setPosition_(*position_, altMode == ALTITUDE_GROUND_CLAMPED);
+  setPosition_(*position_, groundClamping);
+
 }
 
 void CylinderNodeInterface::setFilledState(bool state)

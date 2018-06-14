@@ -563,6 +563,7 @@ public:
   virtual ~CylinderNodeInterface();
   virtual int getAltOffset(double& altOffset) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
+  /// need to override setting altitude offset to handle updating all 3 nodes, avoid updating if clamped to ground
   virtual void setAltOffset(double altOffsetMeters);
   /// need to override setAltitudeMode to reset vertex offsets when changing clamping
   virtual void setAltitudeMode(AltitudeMode altMode);
@@ -579,6 +580,8 @@ protected:
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
 
 private:
+  /// Set the altitude offset in meters on the top, side, and bottom nodes
+  void setAltOffset_(double altOffsetMeters);
   /// Set the position on the various node geometries, accounting for clamping state
   void setPosition_(osgEarth::GeoPoint& position, bool groundClamped);
   /// Toggle the altitude mode to reset the clamping vertex offsets, which is required for various changes to the geometry
@@ -589,8 +592,10 @@ private:
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> bottomCapNode_; ///< draws the bottom cap
   /// height of the cylinder in meters
   float height_;
-  /// cache altitude for updating altitude mode
+  /// cache altitude for updating altitude mode, in meters
   double altitude_;
+  /// cache the altitude offset for updating when changing ground clamp state, in meters
+  double altOffset_;
   /// cache original position to restore correct vertex offsets when changing clamping
   osgEarth::GeoPoint* position_;
 };
