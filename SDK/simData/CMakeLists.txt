@@ -175,6 +175,10 @@ if(ENABLE_CUSTOM_RENDERING)
     target_compile_definitions(simData PUBLIC ENABLE_CUSTOM_RENDERING)
 endif()
 
+if(WIN32)
+    target_compile_options(simData PRIVATE -bigobj)
+endif()
+
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     set_target_properties(simData PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
     vsi_install_target(simData SDK_Library)
