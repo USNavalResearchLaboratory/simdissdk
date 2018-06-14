@@ -39,8 +39,10 @@ namespace simQt {
 FontWidget::FontWidget(QWidget* parent)
   : QWidget(parent),
     fontDir_(new QDir()),
-    ui_(NULL)
+    ui_(NULL),
+    useFriendlyFontName_(true)
 {
+
   ui_ = new Ui_FontWidget();
   ui_->setupUi(this);
   connect(ui_->fontNameComboBox, SIGNAL(currentIndexChanged(QString)),
@@ -109,9 +111,24 @@ void FontWidget::setFontDir(const QString& fontDir)
   QStringList fontFilters;
   fontFilters << "*.ttf"; // only look at .ttf files
   QFileInfoList fonts = fontDir_->entryInfoList(fontFilters, QDir::Files);
+
+#ifdef WIN32
+  // On some Windows systems, specific WinAPI calls can fail when trying to
+  // use SIMDIS fonts. Test to make sure we are able to use SIMDIS fonts. SDK-119
+  const QString& absPath = fonts.front().absoluteFilePath();
+  if (AddFontResourceEx(absPath.toStdString().c_str(), FR_PRIVATE, 0) == 0)
+    useFriendlyFontName_ = false;
+  // Make sure to remove added font resource
+  RemoveFontResourceEx(absPath.toStdString().c_str(), FR_PRIVATE, 0);
+#endif
+
   Q_FOREACH(QFileInfo fontFile, fonts)
   {
-    const QString fontName = getFriendlyFontName_(fontFile.absoluteFilePath());
+    // Only use getFriendlyFontName_() and QRawFont when we're able
+    // to use SIMDIS fonts. Otherwise, just use the font file name. SDK-119
+    QString fontName = fontFile.fileName();
+    if (useFriendlyFontName_)
+      fontName = getFriendlyFontName_(fontFile.absoluteFilePath());
     if (fontName.isEmpty())
       continue;
     // keep our font names in the hash table, don't want duplicates
@@ -129,8 +146,12 @@ void FontWidget::setFontFile(const QString& fontFile)
   QString fontFullPath = fontDir_->absoluteFilePath(fontFile);
   if (fontFullPath.isEmpty() || fontFile.isEmpty())
     return;
-  const QString friendlyName = getFriendlyFontName_(fontFullPath);
-  int index = ui_->fontNameComboBox->findText(friendlyName, Qt::MatchFixedString);
+  // Only use getFriendlyFontName_() and QRawFont when we're able
+  // to use SIMDIS fonts. Otherwise, just use the font file name. SDK-119
+  QString fontName = fontFile;
+  if (useFriendlyFontName_)
+    fontName = getFriendlyFontName_(fontFullPath);
+  int index = ui_->fontNameComboBox->findText(fontName, Qt::MatchFixedString);
   if (index >= 0) // only change if valid font was found
     ui_->fontNameComboBox->setCurrentIndex(index);
   else
