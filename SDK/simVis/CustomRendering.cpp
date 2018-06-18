@@ -39,7 +39,7 @@
 namespace simVis
 {
 
-CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
+CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props, const EntityNode* host, int referenceYear)
   : EntityNode(simData::CUSTOM_RENDERING),
     scenario_(scenario),
     contentCallback_(new NullEntityCallback()),
@@ -47,8 +47,8 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
     hasLastPrefs_(false),
     customActive_(false)
 {
-  // inherit the host platform's pos and ori, and add a body-local position offset.
-  setLocator(new Locator(hostLocator, Locator::COMP_ALL));
+  // Independent of the host like a LOB
+  setLocator(new Locator(host->getLocator()->getSRS()));
   setName("CustomRenderingNode");
 
   // set up a state set.
@@ -94,7 +94,7 @@ void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& pref
 
   std::string text = "This is a test, this only a test.";
   if (prefs.commonprefs().labelprefs().draw())
-    text = contentCallback_->createString(prefs, prefs.commonprefs().labelprefs().displayfields());
+    text = contentCallback_->createString(getId(), prefs, prefs.commonprefs().labelprefs().displayfields());
 
   if (!text.empty())
   {
@@ -127,7 +127,7 @@ double CustomRenderingNode::range() const
 std::string CustomRenderingNode::hookText() const
 {
   if (hasLastPrefs_)
-    return contentCallback_->createString(lastPrefs_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return contentCallback_->createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
 
   return "";
 }
@@ -135,7 +135,7 @@ std::string CustomRenderingNode::hookText() const
 std::string CustomRenderingNode::legendText() const
 {
   if (hasLastPrefs_)
-    return contentCallback_->createString(lastPrefs_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return contentCallback_->createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
 
   return "";
 }

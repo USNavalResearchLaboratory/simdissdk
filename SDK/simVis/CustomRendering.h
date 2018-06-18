@@ -54,11 +54,10 @@ namespace simVis
     * Construct a new node that displays a Custom.
     * @param scenario ScenarioManager that is managing this custom
     * @param props Initial custom properties
-    * @param locator Parent locator from which this custom's locator should inherit
     * @param host This custom's host entity
     * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props, Locator* locator = NULL,
+    CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props,
       const simVis::EntityNode* host = NULL, int referenceYear = 1970);
 
     /**

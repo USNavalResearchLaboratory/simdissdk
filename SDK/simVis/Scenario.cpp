@@ -744,16 +744,17 @@ LobGroupNode* ScenarioManager::addLobGroup(const simData::LobGroupProperties& pr
 CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRenderingProperties& props, simData::DataStore& dataStore)
 {
   SAFETRYBEGIN;
-  // attempt to anchor to the host platform
+  // attempt to anchor to the host
   EntityNode* host = NULL;
   if (props.has_hostid())
     host = find(props.hostid());
 
-  // make a locator, tying it to the host's locator if there is one
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  // no host, no custom rendering.
+  if (!host)
+    return NULL;
 
   // put the custom into our entity db:
-  auto node = new CustomRenderingNode(this, props, locator, host, dataStore.referenceYear());
+  auto node = new CustomRenderingNode(this, props, host, dataStore.referenceYear());
   entities_[node->getId()] = new EntityRecord(
     node,
     NULL,
