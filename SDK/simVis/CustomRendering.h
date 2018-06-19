@@ -99,8 +99,9 @@ namespace simVis
       /**
        * This callback allows the external code to determine if the entity should be displayed
        * @param updateSlice Currently not used
-       * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
-       * @return true if update applied, false if not
+       * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied.
+       *              If a force update results in no graphics than false is still returned.
+       * @return true if the entity should be displayed.
        */
       virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false) = 0;
 
