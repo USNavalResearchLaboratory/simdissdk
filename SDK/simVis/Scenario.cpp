@@ -1130,7 +1130,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
   EntityVector updates;
 
   SAFETRYBEGIN;
-  for (EntityRepo::iterator i = entities_.begin(); i != entities_.end(); ++i)
+  for (EntityRepo::const_iterator i = entities_.begin(); i != entities_.end(); ++i)
   {
     EntityRecord* record = i->second.get();
 

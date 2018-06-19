@@ -90,6 +90,31 @@ namespace simVis
     LabelContentCallback* labelContentCallback() const;
 
     /**
+     * This callback allows the external code to determine if the entity should be displayed.
+     * If update() returns true the entity continues to be processed for displaying
+     */
+    class UpdateCallback : public osg::Referenced
+    {
+    public:
+      /**
+       * This callback allows the external code to determine if the entity should be displayed
+       * @param updateSlice Currently not used
+       * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
+       * @return true if update applied, false if not
+       */
+      virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false) = 0;
+
+    protected:
+      virtual ~UpdateCallback() {}
+    };
+
+    /** set the update callback */
+    void setUpdateCallback(UpdateCallback* callback);
+
+    /** Returns the update callback */
+    UpdateCallback* updateCallback() const;
+
+    /**
     * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
     */
     virtual double range() const;
@@ -208,6 +233,7 @@ namespace simVis
     osg::observer_ptr<const ScenarioManager> scenario_;
     osg::observer_ptr<const EntityNode> host_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
+    osg::ref_ptr<UpdateCallback> updateCallback_;
     osg::ref_ptr<LocalGridNode> localGrid_;
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LocatorNode>  customLocatorNode_;

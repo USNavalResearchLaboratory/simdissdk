@@ -119,6 +119,16 @@ LabelContentCallback* CustomRenderingNode::labelContentCallback() const
   return contentCallback_.get();
 }
 
+void CustomRenderingNode::setUpdateCallback(UpdateCallback* callback)
+{
+  updateCallback_ = callback;
+}
+
+CustomRenderingNode::UpdateCallback* CustomRenderingNode::updateCallback() const
+{
+  return updateCallback_.get();
+}
+
 double CustomRenderingNode::range() const
 {
   return 0;
@@ -193,11 +203,18 @@ const std::string CustomRenderingNode::getEntityName(EntityNode::NameType nameTy
 
 bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
 {
-  dirtyBound();
-  customLocatorNode_->dirtyBound();
-  updateLabel_(lastPrefs_);
+  if (updateCallback_ == NULL)
+    return false;
 
-  return true;
+  if (updateCallback_->update(updateSliceBase, force))
+  {
+    dirtyBound();
+    customLocatorNode_->dirtyBound();
+    updateLabel_(lastPrefs_);
+    return true;
+  }
+
+  return false;
 }
 
 void CustomRenderingNode::flush()
