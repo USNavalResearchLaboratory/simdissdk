@@ -29,7 +29,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QFileDialog>
-#include <limits.h>
+
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simQt/ColorButton.h"

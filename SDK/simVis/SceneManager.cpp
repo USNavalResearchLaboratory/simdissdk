@@ -41,7 +41,7 @@
 #include "osgEarthUtil/LODBlending"
 
 #if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
-#include "osgEarthUtil/HorizonClipPlane"
+#include "osgEarth/HorizonClipPlane"
 #else
 #include "osgEarth/CullingUtils" // for ClipToGeocentricHorizon
 #endif
@@ -60,6 +60,7 @@
 #include "simVis/Utils.h"
 #include "simVis/SceneManager.h"
 
+#include "osgEarth/CullingUtils"
 
 #define LC "[SceneManager] "
 
@@ -74,12 +75,32 @@ namespace
 
   /** setUserData() tag for the scenario's object ID */
   static const std::string SCENARIO_OBJECT_ID = "scenid";
+
+  /** Debugging callback that will dump the culling results each frame -- useful for debugging render order */
+  struct DebugCallback : public osg::NodeCallback
+  {
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+      traverse(node, nv);
+      osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+      if (cv)
+      {
+        osgEarth::Config c = osgEarth::CullDebugger().dumpRenderBin(cv->getRenderStage());
+        OE_INFO << "FRAME " << cv->getFrameStamp()->getFrameNumber() << "-----------------------------------" << std::endl
+          << c.toJSON(true) << std::endl;
+      }
+    }
+  };
 }
 
 SceneManager::SceneManager()
   : hasEngineDriverProblem_(false)
 {
   init_();
+
+  // Uncomment this to activate the rendering debugger that will
+  // print the cull results each frame
+  //addCullCallback(new DebugCallback());
 }
 
 SceneManager::~SceneManager()
@@ -124,8 +145,8 @@ void SceneManager::init_()
   // Create a default material for the scene (fixes NVidia bug where unset material defaults to white)
   osg::ref_ptr<osg::Material> material = new osg::Material;
   material->setAmbient(osg::Material::FRONT_AND_BACK, osg::Vec4(0.3f, 0.3f, 0.3f, 1.f));
-  material->setDiffuse(osg::Material::FRONT_AND_BACK, osg::Vec4(1.f, 1.f, 1.f, 1.f));
-  material->setSpecular(osg::Material::FRONT_AND_BACK, osg::Vec4(1.f, 1.f, 1.f, 1.f));
+  material->setDiffuse(osg::Material::FRONT_AND_BACK, simVis::Color::White);
+  material->setSpecular(osg::Material::FRONT_AND_BACK, simVis::Color::White);
   material->setShininess(osg::Material::FRONT_AND_BACK, 10.f);
   getOrCreateStateSet()->setAttributeAndModes(material, osg::StateAttribute::ON);
 
@@ -178,28 +199,6 @@ void SceneManager::init_()
   if (!noAsyncLoad || strncmp(noAsyncLoad, "0", 1) == 0)
     addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
 
-  // SilverLining requires a write to the depth buffer to avoid having clouds overwrite objects
-  // in the scene.  Therefore everything needs to write to depth buffer.  However, some things
-  // cannot write to the depth buffer without causing graphics artifacts.  To resolve this, we
-  // create a second pass rendering that only writes to the depth buffer and not the color buffer.
-  // That is the point of this depth group.  It only is needed when SilverLining is in use.
-  depthRenderContainer_ = new osg::Group;
-  depthRenderContainer_->addChild(scenarioManager_);
-  // Turn it off by default for performance
-  depthRenderContainer_->setNodeMask(0);
-  drapeableNode_->addChild(depthRenderContainer_);
-
-  // Depth renderer draws scene elements before SilverLining
-  osg::StateSet* drcStateSet = depthRenderContainer_->getOrCreateStateSet();
-  drcStateSet->setRenderBinDetails(BIN_DEPTH_WRITER, BIN_GLOBAL_SIMSDK);
-  // Turn on depth writing and force it for children
-  drcStateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-  // Turn off all color masks so we don't write to the color buffer
-  drcStateSet->setAttributeAndModes(new osg::ColorMask(false, false, false, false), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-  // Omit any pixels with a low alpha, so things like text glyphs don't cause bad behavior
-  static const float ALPHA_THRESHOLD = 0.05f;
-  AlphaTest::setValues(drcStateSet, ALPHA_THRESHOLD, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
   // Configure the default terrain options
   if (simVis::useRexEngine())
   {
@@ -236,10 +235,9 @@ void SceneManager::init_()
   // mode on its stateset; or you can use osgEarth symbology and use
   // RenderSymbol::clipPlane() = CLIPPLANE_VISIBLE_HORIZON in conjunction with
   // RenderSymbol::depthTest() = false.
-  osgEarth::Util::HorizonClipPlane* hcp = new osgEarth::Util::HorizonClipPlane();
+  osgEarth::HorizonClipPlane* hcp = new osgEarth::HorizonClipPlane();
   hcp->setClipPlaneNumber(CLIPPLANE_VISIBLE_HORIZON);
-  hcp->installShaders(this->getOrCreateStateSet());
-  this->addCullCallback(hcp);
+  addCullCallback(hcp);
 #else // osgEarth 2.9 or older, use ClipToGeocentricHorizon object
   // Install a clip node. This will activate and maintain our visible-horizon
   // clip plane for geometry (or whatever else we want clipped). Then, to activate
@@ -256,6 +254,11 @@ void SceneManager::init_()
   simVis::Shaders package;
   package.load(clipVp, package.setClipVertex());
 #endif
+
+  // Use the labeling render bin for our labels
+  osgEarth::ScreenSpaceLayoutOptions screenOptions;
+  screenOptions.renderOrder() = BIN_SCREEN_SPACE_LABEL;
+  osgEarth::ScreenSpaceLayout::setOptions(screenOptions);
 
   // Turn off declutter
   osgEarth::ScreenSpaceLayout::setDeclutteringEnabled(false);
@@ -307,9 +310,6 @@ void SceneManager::setSkyNode(osgEarth::Util::SkyNode* skyNode)
     skyNode_ = skyNode;
     osgEarth::insertGroup(skyNode, this);
   }
-
-  // Turn on or off the second depth rendering based on whether we're running SilverLining or have an ocean
-  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 bool SceneManager::isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const
@@ -337,11 +337,6 @@ bool SceneManager::isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const
   return false;
 }
 
-void SceneManager::setDepthWriterNodeMask(osg::Node::NodeMask nodeMask)
-{
-  depthRenderContainer_->setNodeMask(nodeMask);
-}
-
 void SceneManager::setOceanNode(osgEarth::Util::OceanNode* oceanNode)
 {
   removeOceanNode();
@@ -352,9 +347,6 @@ void SceneManager::setOceanNode(osgEarth::Util::OceanNode* oceanNode)
     osg::Group* oceanParent = skyNode_.valid() ? skyNode_->asGroup() : this->asGroup();
     oceanParent->addChild(oceanNode);
   }
-
-  // Fix the depth writer mask
-  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 void SceneManager::removeOceanNode()
@@ -364,9 +356,6 @@ void SceneManager::removeOceanNode()
     oceanNode_->getParent(0)->removeChild(oceanNode_.get());
     oceanNode_ = NULL;
   }
-
-  // Fix the depth writer mask
-  setDepthWriterNodeMask((oceanNode_.get() != NULL) || isSilverLining_(skyNode_.get())  ? ~0 : 0);
 }
 
 void SceneManager::setScenarioDraping(bool value)

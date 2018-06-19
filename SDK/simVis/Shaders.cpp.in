@@ -33,8 +33,10 @@ Shaders::Shaders()
   add(bathymetryGeneratorVertex(), "@BathymetryGenerator.vert.glsl@");
   add(beamPulseVertex(), "@BeamPulse.vert.glsl@");
   add(beamPulseFragment(), "@BeamPulse.frag.glsl@");
+  add(disableDepthOnAlphaFragment(), "@DisableDepthOnAlpha.frag.glsl@");
   add(flashingFragment(), "@Flashing.frag.glsl@");
   add(glowHighlightFragment(), "@GlowHighlight.frag.glsl@");
+  add(lineDrawable(), "@LineDrawable.glsl@");
   add(overheadModeVertex(), "@OverheadMode.vert.glsl@");
   add(overrideColorFragment(), "@OverrideColor.frag.glsl@");
   add(pickerVertex(), "@Picker.vert.glsl@");
@@ -83,6 +85,16 @@ std::string Shaders::beamPulseVertex() const
 std::string Shaders::beamPulseFragment() const
 {
   return "BeamPulse.frag.glsl";
+}
+
+std::string Shaders::disableDepthOnAlphaFragment() const
+{
+  return "DisableDepthOnAlpha.frag.glsl";
+}
+
+std::string Shaders::lineDrawable() const
+{
+  return "LineDrawable.glsl";
 }
 
 std::string Shaders::projectorManagerVertex() const

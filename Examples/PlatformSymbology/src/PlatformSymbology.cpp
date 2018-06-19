@@ -32,6 +32,7 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Time/ClockImpl.h"
 
 /// the simulator provides time/space data for our platform
 #include "simUtil/PlatformSimulator.h"
@@ -46,6 +47,7 @@
 #include "simVis/RocketBurn.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Registry.h"
 
 /// some basic components (mouse hover popups, scenario, utilities, camera controls)
 #include "simVis/Popup.h"
@@ -95,6 +97,9 @@ static const std::string s_help =
   " w : model: toggle override color\n"
   " h : model: toggle highlight\n"
   " p : model: cycle highlight color\n"
+  " q : model: toggle axis vector\n"
+  " v : model: toggle velocity vector\n"
+  " 4 : model: toggle ephemeris vectors\n"
   "\n"
   " k : label: toggle text\n"
   " l : label: toggle text color\n"
@@ -130,9 +135,9 @@ static Control* createHelp()
   VBox* vbox = new VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20, osg::Vec4f(1, 1, 0, 1)));
-  vbox->addControl(new LabelControl(s_help, 14, osg::Vec4f(.8, .8, .8, 1)));
-  s_action = new LabelControl("", 16, osg::Vec4f(0, 1, 0, 1));
+  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
+  vbox->addControl(new LabelControl(s_help, 14, simVis::Color::Silver));
+  s_action = new LabelControl("", 16, simVis::Color::Lime);
   vbox->addControl(s_action.get());
   s_helpControl = vbox;
   return vbox;
@@ -258,6 +263,18 @@ struct MenuHandler : public osgGA::GUIEventHandler
         simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
         prefs->set_dynamicscale(!prefs->dynamicscale());
         s_action->setText(Stringify() << "Set dynamic scale to " << SAYBOOL(prefs->dynamicscale()));
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
+      case '4': // toggle ephemeris vectors
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawsunvec(!prefs->drawsunvec());
+        prefs->set_drawmoonvec(!prefs->drawmoonvec());
+        s_action->setText(Stringify() << "Set ephemeris vectors to " << SAYBOOL(prefs->drawsunvec()));
         xaction.complete(&prefs);
         handled = true;
       }
@@ -657,6 +674,28 @@ struct MenuHandler : public osgGA::GUIEventHandler
       }
       break;
 
+      case 'v': // toggle velocity vector
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawvelocityvec(!prefs->drawvelocityvec());
+        s_action->setText(Stringify() << "Set velocity vector to " << SAYBOOL(prefs->drawvelocityvec()));
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
+      case 'q': // toggle body axis vector
+      {
+        simData::DataStore::Transaction xaction;
+        simData::PlatformPrefs* prefs = dataStore_->mutable_platformPrefs(platformId_, &xaction);
+        prefs->set_drawbodyaxis(!prefs->drawbodyaxis());
+        s_action->setText(Stringify() << "Set body axis to " << SAYBOOL(prefs->drawbodyaxis()));
+        xaction.complete(&prefs);
+        handled = true;
+      }
+      break;
+
       case '?' : // toggle help
       {
         s_helpControl->setVisible(!s_helpControl->visible());
@@ -717,6 +756,7 @@ simData::ObjectId addBeam(simData::ObjectId hostId, simData::DataStore &dataStor
   beamPrefs->set_azimuthoffset(osg::DegreesToRadians(0.0));
   beamPrefs->set_verticalwidth(osg::DegreesToRadians(30.0));
   beamPrefs->set_horizontalwidth(osg::DegreesToRadians(60.0));
+  beamPrefs->mutable_commonprefs()->set_color(0x7FFF007F); // use a blendable yellow-green
   transaction.complete(&beamPrefs);
 
   return result;
@@ -890,6 +930,11 @@ int main(int argc, char **argv)
   simData::MemoryDataStore dataStore;
   scene->getScenario()->bind(&dataStore);
 
+  /// create a clock so clock-based features will work (e.g. EphemerisVector)
+  simCore::Clock* clock = new simCore::ClockImpl;
+  simVis::Registry::instance()->setClock(clock);
+  clock->setMode(simCore::Clock::MODE_FREEWHEEL, simCore::TimeStamp(1970, simCore::getSystemTime()));
+
   /// add in the platform and beam
   simData::ObjectId platformId = addPlatform(dataStore);
   simData::ObjectId     beamId = addBeam(platformId, dataStore);
@@ -903,6 +948,7 @@ int main(int argc, char **argv)
     simVis::PlatformNode *platNode = scene->getScenario()->find<simVis::PlatformNode>(platformId);
     osg::Texture2D* rocketBurnTexture = new osg::Texture2D();
     rocketBurnTexture->setImage(osgDB::readImageFile(EXAMPLE_ROCKET_BURN_TEXTURE));
+    simVis::fixTextureForGlCoreProfile(rocketBurnTexture);
     simVis::RocketBurn *rb = new simVis::RocketBurn(*platNode, *rocketBurnTexture);
     simVis::RocketBurn::ShapeData rocketBurnShape;
     rocketBurnShape.radiusFar = 0.001;

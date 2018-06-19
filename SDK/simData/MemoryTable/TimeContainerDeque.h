@@ -63,6 +63,14 @@ public:
   virtual void limitData(size_t maxPoints, double latestInvalidTime, const std::vector<DataColumn*>& columns,
     DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);
 
+  /**
+   * Not Implemented
+   * @param begin Returns the begin time
+   * @param end Returns the end time
+   * @returns 0 if begin and end are set
+   */
+  virtual int getTimeRange(double& begin, double& end) const;
+
 private:
   typedef std::pair<double, size_t> RowTimeToIndex; // pTimeIndex
   typedef std::deque<RowTimeToIndex> TimeIndexDeque;

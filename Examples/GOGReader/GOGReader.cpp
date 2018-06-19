@@ -26,19 +26,23 @@
  * Demonstrates the loading and display of SIMDIS .gog format vector overlay data.
  */
 
+#include "osgEarth/NodeUtils"
+#include "osgEarth/optional"
 #include "osgEarthAnnotation/PlaceNode"
 #include "osgEarthAnnotation/LabelNode"
+#include "osgEarthUtil/Controls"
 #include "osgEarthUtil/MouseCoordsTool"
+
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
+#include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simData/MemoryDataStore.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Locator.h"
-#include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
@@ -46,7 +50,10 @@
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Parser.h"
 #include "simUtil/ExampleResources.h"
-#include "simUtil/PlatformSimulator.h"
+#include "simUtil/MouseDispatcher.h"
+#include "simUtil/MousePositionManipulator.h"
+
+namespace ui = osgEarth::Util::Controls;
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
@@ -55,6 +62,292 @@ using namespace osgEarth::Annotation;
 
 typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;
+
+static std::string s_title = " \n \nGOG Example";
+static std::string s_help =
+"c : center on next GOG\n"
+"a : change altitude mode for centered GOG\n"
+"f : toggle fill state for centered GOG\n"
+"n : toggle labels for all platforms\n"
+"d : toggle dynamic scale for all platforms\n";
+
+//----------------------------------------------------------------------------
+/// A mouse position listener to update the elevation label with the current lat/lon/elevation value under the mouse
+class LatLonElevListener : public simUtil::MousePositionManipulator::Listener
+{
+public:
+  LatLonElevListener()
+    : lastLat_(0.),
+    lastLon_(0.),
+    lastElev_(0.)
+  {
+  }
+
+  // latitude in degrees
+  double lat() const { return lastLat_; }
+  // logintude in degrees
+  double lon() const { return lastLon_; }
+  // elevation in meters
+  double elev() const { return lastElev_; }
+
+  virtual void mouseOverLatLon(double lat, double lon, double elev)
+  {
+    lastLat_ = lat;
+    lastLon_ = lon;
+    lastElev_ = elev;
+  }
+
+private:
+  double lastLat_; // degrees
+  double lastLon_; // degrees
+  double lastElev_; // meters
+};
+
+//------------------------------------------------------------------------------
+/// An event handler to assist in testing the GOG dynamic update functionality.
+class MouseAndMenuHandler : public osgGA::GUIEventHandler
+{
+public:
+  MouseAndMenuHandler(simVis::Viewer* viewer,
+    ui::LabelControl* status,
+    simData::DataStore& dataStore,
+    bool showElevation,
+    simVis::PlatformNode* platform
+    )
+    : viewer_(viewer),
+    statusLabel_(status),
+    dataStore_(dataStore),
+    showElevation_(showElevation),
+    removeAllRequested_(false),
+    insertViewPortMode_(false),
+    dynamicScaleOn_(true),
+    labelsOn_(true),
+    border_(0),
+    platform_(platform),
+    altMode_(simVis::GOG::ALTITUDE_NONE)
+  {
+    centeredGogIndex_.init(0);
+    mouseDispatcher_.reset(new simUtil::MouseDispatcher);
+    mouseDispatcher_->setViewManager(NULL);
+    latLonElevListener_.reset(new LatLonElevListener());
+    setUpMouseManip_(viewer_.get());
+    updateStatusAndLabel_();
+  }
+
+  virtual ~MouseAndMenuHandler()
+  {
+    mouseManip_->removeListener(latLonElevListener_.get());
+  }
+
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  {
+    bool handled = false;
+
+
+    if (ea.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
+      handled = handleKeyPress_(ea.getKey());
+    else if (ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
+    {
+      // panning uncenters from GOG
+      if (ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
+      {
+        centeredGogIndex_.clear();
+        updateStatusAndLabel_();
+      }
+      // zooming updates camera distance label
+      if (ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON)
+        updateStatusAndLabel_();
+    }
+    else if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE)
+      updateStatusAndLabel_();
+    // scroll zooming updates camera distance label
+    else if (ea.getEventType() == osgGA::GUIEventAdapter::SCROLL)
+      updateStatusAndLabel_();
+
+    return handled;
+  }
+
+private:
+
+  bool handleKeyPress_(int keyPress)
+  {
+    switch (keyPress)
+    {
+    case 'c': // center on next GOG
+    {
+      centeredGogIndex_ = centeredGogIndex_.get() + 1;
+      if (centeredGogIndex_ >= s_overlayNodes.size())
+        centeredGogIndex_ = 0;
+      osg::Vec3d position;
+      if (platform_.valid())
+      {
+        osgEarth::GeoPoint referencePosition;
+        simCore::Coordinate coord;
+        platform_->getLocator()->getCoordinate(&coord, simCore::COORD_SYS_LLA);
+        referencePosition.x() = coord.lon() * simCore::RAD2DEG;
+        referencePosition.y() = coord.lat() * simCore::RAD2DEG;
+        referencePosition.z() = coord.alt();
+        s_overlayNodes[centeredGogIndex_.get()]->getPosition(position, &referencePosition);
+
+      }
+      else
+        s_overlayNodes[centeredGogIndex_.get()]->getPosition(position);
+
+      simVis::GOG::AltitudeMode curMode;
+      if (s_overlayNodes[centeredGogIndex_.get()]->getAltitudeMode(curMode) == 0)
+        altMode_ = curMode;
+
+      simVis::View* focusedView = viewer_->getMainView()->getFocusManager()->getFocusedView();
+      simVis::Viewpoint eyePos = focusedView->getViewpoint();
+
+      // update the eye position's focal point
+      focusedView->tetherCamera(NULL);
+      eyePos.focalPoint() = osgEarth::GeoPoint(osgEarth::SpatialReference::create("wgs84"), position);
+      eyePos.setNode(NULL);
+
+      focusedView->setViewpoint(eyePos);
+      updateStatusAndLabel_();
+
+      return true;
+    }
+
+    case 'a': // change altitude mode for centered GOG
+    {
+      if (!centeredGogIndex_.isSet() || centeredGogIndex_ >= s_overlayNodes.size())
+        return false;
+      if (altMode_ == simVis::GOG::ALTITUDE_EXTRUDE)
+        altMode_ = simVis::GOG::ALTITUDE_NONE;
+      else
+        altMode_ = static_cast<simVis::GOG::AltitudeMode>(altMode_ + 1);
+      s_overlayNodes[centeredGogIndex_.get()]->setAltitudeMode(altMode_);
+      updateStatusAndLabel_();
+      return true;
+    }
+
+    case 'f': // change fill state for centered GOG
+    {
+      if (!centeredGogIndex_.isSet() || centeredGogIndex_ >= s_overlayNodes.size())
+        return false;
+      bool filled = false;
+      osg::Vec4f fillColor;
+      if (s_overlayNodes[centeredGogIndex_.get()]->getFilledState(filled, fillColor) == 0)
+        s_overlayNodes[centeredGogIndex_.get()]->setFilledState(!filled);
+      return true;
+    }
+
+    case 'd': // toggle dynamic scale
+    {
+      dynamicScaleOn_ = !dynamicScaleOn_;
+      std::vector<simData::ObjectId>  ids;
+      dataStore_.idList(&ids, simData::PLATFORM);
+      for (auto iter = ids.begin(); iter != ids.end(); ++iter)
+      {
+        simData::DataStore::Transaction tn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(*iter, &tn);
+        prefs->set_dynamicscale(dynamicScaleOn_);
+        tn.complete(&prefs);
+      }
+      updateStatusAndLabel_();
+      return true;
+    }
+
+    case 'n': // toggle labels
+    {
+      labelsOn_ = !labelsOn_;
+      std::vector<simData::ObjectId>  ids;
+      dataStore_.idList(&ids, simData::PLATFORM);
+      for (auto iter = ids.begin(); iter != ids.end(); ++iter)
+      {
+        simData::DataStore::Transaction tn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(*iter, &tn);
+        prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(labelsOn_);
+        tn.complete(&prefs);
+      }
+      return true;
+    }
+
+    }
+    return false;
+  }
+
+  void updateStatusAndLabel_()
+  {
+    std::string text;
+
+    // get centered GOG name
+    text += "Centered: ";
+    if (centeredGogIndex_.isSet() && centeredGogIndex_ < s_overlayNodes.size())
+      text += s_overlayNodes[centeredGogIndex_.get()]->osgNode()->getName() + "\n";
+    else
+      text += "None\n";
+
+    text += "Altitude Mode: ";
+    switch (altMode_)
+    {
+    case simVis::GOG::ALTITUDE_NONE:
+      text += "NONE\n";
+      break;
+    case simVis::GOG::ALTITUDE_GROUND_RELATIVE:
+      text += "GROUND RELATIVE\n";
+      break;
+    case simVis::GOG::ALTITUDE_GROUND_CLAMPED:
+      text += "GROUND CLAMPED\n";
+      break;
+    case simVis::GOG::ALTITUDE_EXTRUDE:
+      text += "EXTRUDE\n";
+      break;
+    }
+
+    // indicate dynamic scale state
+    text += "\nDynamic Scale: ";
+    text += dynamicScaleOn_ ? "ON" : "OFF";
+    text += "\n";
+
+    const simVis::View* focusedView = viewer_->getMainView()->getFocusManager()->getFocusedView();
+
+    // get camera distance
+    std::ostringstream os;
+    os << std::fixed << std::setprecision(2) << "Camera Distance: " << focusedView->getViewpoint().range().value().getValue() << " m";
+    text += os.str() + " \n";
+
+    std::ostringstream mouseOs;
+    mouseOs << "Mouse lat:" << latLonElevListener_->lat() << ", lon:" << latLonElevListener_->lon();
+    if (showElevation_)
+      mouseOs << ", elev:" << latLonElevListener_->elev();
+    text += mouseOs.str() + "\n";
+
+    statusLabel_->setText(text);
+  }
+
+  void setUpMouseManip_(simVis::Viewer* viewer)
+  {
+    if (viewer == NULL || viewer->getSceneManager() == NULL || !mouseDispatcher_)
+      return;
+    mouseManip_.reset(new simUtil::MousePositionManipulator(viewer->getSceneManager()->getMapNode(), viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks")));
+    mouseManip_->setTerrainResolution(0.0001);
+    mouseDispatcher_->setViewManager(viewer);
+    mouseDispatcher_->addManipulator(0, mouseManip_);
+    mouseManip_->addListener(latLonElevListener_.get(), showElevation_);
+  }
+
+  osg::ref_ptr<simVis::Viewer> viewer_;
+  osg::observer_ptr<ui::LabelControl> statusLabel_;
+  std::shared_ptr<simUtil::MouseDispatcher> mouseDispatcher_;
+  std::shared_ptr<LatLonElevListener> latLonElevListener_;
+  std::shared_ptr<simUtil::MousePositionManipulator> mouseManip_;
+  simData::DataStore& dataStore_;
+
+  bool showElevation_;
+  bool removeAllRequested_;
+  bool insertViewPortMode_;
+  bool dynamicScaleOn_;
+  bool labelsOn_;
+  int border_;
+  osgEarth::optional<size_t> centeredGogIndex_;
+  osg::ref_ptr<simVis::PlatformNode> platform_;
+  simVis::GOG::AltitudeMode altMode_;
+};
+
 
 /// create a platform and add it to 'dataStore'
 ///@return id for the new platform
@@ -90,36 +383,32 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore, const std::string& 
     xaction.complete(&prefs);
   }
 
+  // now add some data points
+  {
+    // add some orientation values for testing 3d Follow
+    simCore::Coordinate lla(simCore::COORD_SYS_LLA,
+      simCore::Vec3(38.8 * simCore::DEG2RAD, -77.0 * simCore::DEG2RAD, 10.0),
+      simCore::Vec3(45.0, 45.0, 45.0),
+      simCore::Vec3(0.0, 0.0, 0.0));
+
+    simCore::Coordinate ecef;
+    simCore::CoordinateConverter::convertGeodeticToEcef(lla, ecef);
+
+    simData::DataStore::Transaction t;
+    simData::PlatformUpdate* u = dataStore.addPlatformUpdate(platformId, &t);
+    u->set_time(1.0);
+    u->set_x(ecef.x());
+    u->set_y(ecef.y());
+    u->set_z(ecef.z());
+    u->set_psi(ecef.psi());
+    u->set_theta(ecef.theta());
+    u->set_phi(ecef.phi());
+    t.complete(&u);
+  }
+
+  dataStore.update(1.0);
+
   return platformId;
-}
-
-simVis::PlatformNode* setupSimulation(
-                simUtil::PlatformSimulatorManager& simMgr,
-                simData::ObjectId                  platformId,
-                simData::DataStore&                dataStore,
-                simVis::Viewer*                    viewer)
-{
-  /// simulator will compute time-based updates for our platform (and any beams it is hosting)
-  osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(platformId);
-
-  /// create some waypoints (lat, lon, alt, duration)
-  sim->addWaypoint(simUtil::Waypoint(30.0,  -120.0, 30000, 2000.0)); // London
-  sim->addWaypoint(simUtil::Waypoint(38.8, -77.0, 30000, 2000.0)); // DC
-
-  sim->setSimulateRoll(true);
-
-  /// Install frame update handler that will update track positions over time.
-  simMgr.addSimulator(sim.get());
-  simMgr.simulate(0.0, 120.0, 60.0);
-
-  /// Attach the simulation updater to OSG timer events
-  osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler = new simUtil::SimulatorEventHandler(&simMgr, 0.0, 120.0);
-  viewer->addEventHandler(simHandler.get());
-
-  /// Tether camera to platform
-  osg::ref_ptr<simVis::PlatformNode> platformNode = viewer->getSceneManager()->getScenario()->find<simVis::PlatformNode>(platformId);
-
-  return platformNode.get();
 }
 
 int main(int argc, char** argv)
@@ -127,7 +416,7 @@ int main(int argc, char** argv)
   simCore::checkVersionThrow();
   if (argc < 2)
   {
-    std::cout << "Usage: example_gogreader <gogfile> [--mark] [--iconFile <icon file>]" << std::endl;
+    std::cout << "Usage: example_gogreader <gogfile> [--attach] [--showElevation] [--mark] [--sky] [--iconFile <icon file>]" << std::endl;
     return 0;
   }
 
@@ -138,10 +427,9 @@ int main(int argc, char** argv)
   // whether to add a push pin to each feature
   osg::ArgumentParser ap(&argc, argv);
 
-  // start up a SIMDIS viewer->
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(ap);
+  // start up a SIMDIS viewer
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(simVis::Viewer::WINDOWED, 100, 100, 800, 800);
   viewer->setMap(map.get());
-  viewer->installDebugHandlers();
   osg::ref_ptr<simVis::SceneManager> scene = viewer->getSceneManager();
 
   // add sky node
@@ -149,6 +437,8 @@ int main(int argc, char** argv)
     simExamples::addDefaultSkyNode(viewer.get());
 
   bool mark = ap.read("--mark");
+  bool showElevation = ap.read("--showElevation");
+  bool attach = ap.read("--attach");
 
   osg::ref_ptr<osg::Image> pin;
   if (mark)
@@ -157,6 +447,17 @@ int main(int argc, char** argv)
   GeoPoint go;
 
   std::string iconFile = EXAMPLE_IMAGE_ICON;
+
+  /// data source which will provide positions for the platform
+  /// based on the simulation time.
+  simData::MemoryDataStore dataStore;
+  scene->getScenario()->bind(&dataStore);
+
+  /// add in the platform
+  simData::ObjectId platformId = addPlatform(dataStore, iconFile);
+  osg::ref_ptr<simVis::PlatformNode> platform = scene->getScenario()->find<simVis::PlatformNode>(platformId);
+
+  osg::Group* group = new osg::Group();
 
   // add the gog file vector layers.
   for (int i = 1; i < argc; ++i)
@@ -183,13 +484,25 @@ int main(int argc, char** argv)
       return 1;
     }
 
-    if (parser.loadGOGs(is, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData))
+    if (parser.loadGOGs(is, attach ? simVis::GOG::GOGNODE_HOSTED : simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData))
     {
+      int followIndex = 0;
       for (simVis::GOG::Parser::OverlayNodeVector::iterator i = gogs.begin(); i != gogs.end(); ++i)
       {
         GogNodeInterfacePtr gogInterface(*i);
         osg::Node* gog = (*i)->osgNode();
-        scene->getScenario()->addChild(gog);
+
+        // attached GOGs get added to a locator based on the host platform
+        if (attach)
+        {
+          simVis::Locator* locator = new simVis::Locator(platform->getLocator(), followData[followIndex].locatorFlags);
+          locator->setLocalOffsets(simCore::Vec3(0, 0, 0), followData[followIndex].orientationOffsets);
+          simVis::LocatorNode* locatorNode = new simVis::LocatorNode(locator, gog);
+          group->addChild(locatorNode);
+        }
+        else
+          group->addChild(gog);
+
         // manage the GogNodeInterface object memory
         s_overlayNodes.push_back(gogInterface);
 
@@ -219,6 +532,7 @@ int main(int argc, char** argv)
 
           go = location;
         }
+        followIndex++;
       }
     }
     else
@@ -227,10 +541,17 @@ int main(int argc, char** argv)
     }
   }
 
-  // mouse coords readout
-  osg::ref_ptr<LabelControl> readout = new LabelControl("");
-  ControlCanvas::getOrCreate(viewer->getMainView())->addControl(readout.get());
-  viewer->getMainView()->addEventHandler(new MouseCoordsTool(scene->getMapNode(), readout.get()));
+  if (attach)
+    platform->addChild(group);
+  else
+    scene->getScenario()->addChild(group);
+
+  // nothing to do if no GOGs loaded
+  if (s_overlayNodes.empty())
+  {
+    std::cerr << "No valid GOGs loaded\n";
+    return 1;
+  }
 
   if (mark && go.isValid())
   {
@@ -241,20 +562,28 @@ int main(int argc, char** argv)
     viewer->getMainView()->setViewpoint( vp );
   }
 
-  /// data source which will provide positions for the platform
-  /// based on the simulation time.
-  simData::MemoryDataStore dataStore;
-  scene->getScenario()->bind(&dataStore);
+  simVis::View* mainView = viewer->getMainView();
 
-  /// add in the platform
-  simData::ObjectId platformId = addPlatform(dataStore, iconFile);
+  // add help and status labels
+  ui::VBox* vbox = new ui::VBox();
+  vbox->setPadding(10);
+  vbox->setBackColor(0, 0, 0, 0.6);
+  vbox->addControl(new ui::LabelControl(s_title, 20, simVis::Color::Yellow));
+  vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
+  ui::LabelControl* statusLabel = new ui::LabelControl("STATUS", 14, simVis::Color::Silver);
+  vbox->addControl(statusLabel);
+  mainView->addOverlayControl(vbox);
 
-  /// simulate it so we have something to attach GOGs to
-  osg::ref_ptr<simUtil::PlatformSimulatorManager> simMgr = new simUtil::PlatformSimulatorManager(&dataStore);
-  osg::ref_ptr<simVis::PlatformNode> platform = setupSimulation(*simMgr, platformId, dataStore, viewer.get());
+  // Install a handler to respond to the demo keys in this sample.
+  osg::ref_ptr<MouseAndMenuHandler> mouseHandler =
+    new MouseAndMenuHandler(
+      viewer.get(),
+      statusLabel,
+      dataStore,
+      showElevation,
+      attach ? platform.get() : NULL);
 
-  viewer->addEventHandler(new simVis::ToggleOverheadMode(viewer->getMainView(), 'O', 'C'));
-
+  mainView->getCamera()->addEventCallback(mouseHandler);
   viewer->run();
 }
 

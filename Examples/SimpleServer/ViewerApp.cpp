@@ -64,6 +64,7 @@ static const std::string HELP_TEXT =
   "n : Toggle labels\n"
   "o : Cycle time format\n"
   "O : Toggle overhead mode\n"
+  "p : Play/pause\n"
   "s : Cycle OSG statistics\n"
   "w : Toggle compass\n"
   "z : Toggle cockpit mode (if centered)\n"
@@ -113,6 +114,9 @@ public:
         return true;
       case osgGA::GUIEventAdapter::KEY_Z:
         app_.toggleCockpit();
+        return true;
+      case osgGA::GUIEventAdapter::KEY_P:
+        app_.playPause();
         return true;
       }
     }
@@ -386,6 +390,14 @@ void ViewerApp::toggleCockpit()
   view->enableCockpitMode(NULL);
 }
 
+void ViewerApp::playPause()
+{
+  if (clock_->timeScale() == 0.0)
+    clock_->setTimeScale(1.0);
+  else
+    clock_->setTimeScale(0.0);
+}
+
 void ViewerApp::toggleCompass()
 {
   if (compass_->drawView())
@@ -415,8 +427,8 @@ ui::Control* ViewerApp::createHelp_() const
   ui::VBox* vbox = new ui::VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.6);
-  vbox->addControl(new ui::LabelControl(TITLE, 20, osg::Vec4f(1, 1, 0, 1)));
-  vbox->addControl(new ui::LabelControl(HELP_TEXT, 14, osg::Vec4f(.8, .8, .8, 1)));
+  vbox->addControl(new ui::LabelControl(TITLE, 20.f, simVis::Color::Yellow));
+  vbox->addControl(new ui::LabelControl(HELP_TEXT, 14, simVis::Color::Silver));
   // Move it down just a bit
   vbox->setPosition(10, 10);
   return vbox;

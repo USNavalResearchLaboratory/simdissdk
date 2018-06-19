@@ -22,6 +22,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osg/Depth"
+#include "osg/BlendFunc"
 #include "simCore/Calc/Math.h"
 #include "simCore/String/Format.h"
 #include "simVis/Constants.h"
@@ -119,24 +120,24 @@ void AreaHighlightNode::init_()
   package.load(vp, package.areaHighlightFragment());
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setName("simVis::AreaHighlight");
   geom->setUseVertexBufferObjects(true);
 
-  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
+  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   geom->setVertexArray(vertexArray.get());
 
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
   geom->setColorArray(colorArray.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // Declare color for the center of the circle and the triangles
-  osg::Vec4f color = osg::Vec4f(1, 1, 1, 1);
+  const osg::Vec4f& color = simVis::Color::White;
 
   // Center of the circle
-  vertexArray->push_back(osg::Vec3(0, 0, 0));
+  vertexArray->push_back(osg::Vec3());
   colorArray->push_back(color);
 
   // Make the edge of the circle darker and more transparent
-  osg::Vec4f edgeColor = color * 0.8;
+  const osg::Vec4f edgeColor = color * 0.8f;
 
   float inc = M_TWOPI / static_cast<float>(MIN_NUM_LINE_SEGMENTS);
   for (int j = MIN_NUM_LINE_SEGMENTS; j > 0; --j)
@@ -144,7 +145,7 @@ void AreaHighlightNode::init_()
     const float angle = inc * j;
     const float x = sin(angle);
     const float y = cos(angle);
-    vertexArray->push_back(osg::Vec3(x, y, 0));
+    vertexArray->push_back(osg::Vec3(x, y, 0.f));
     colorArray->push_back(edgeColor);
   }
 
@@ -157,14 +158,14 @@ void AreaHighlightNode::init_()
 
   // Begin triangle creation ------------------------------
   osg::ref_ptr<osg::Geometry> triGeom = new osg::Geometry();
+  triGeom->setName("simVis::AreaHighlight");
   triGeom->setUseVertexBufferObjects(true);
 
-  osg::ref_ptr<osg::Vec3Array> triVertexArray = new osg::Vec3Array();
+  osg::ref_ptr<osg::Vec3Array> triVertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   triGeom->setVertexArray(triVertexArray.get());
 
-  osg::ref_ptr<osg::Vec4Array> triColorArray = new osg::Vec4Array();
+  osg::ref_ptr<osg::Vec4Array> triColorArray = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
   triGeom->setColorArray(triColorArray.get());
-  triGeom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
   // Separates the triangles from the circle an infinitesimal amount
   const float fudgeFactor = 0.001f;

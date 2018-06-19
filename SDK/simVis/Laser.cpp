@@ -20,8 +20,8 @@
  *
  */
 #include "osg/Geometry"
-#include "osg/LineWidth"
 #include "osgEarth/Horizon"
+#include "simVis/LineDrawable.h"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"
@@ -408,39 +408,19 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   const double segmentLength = simCore::sdkMin(prefs.maxrange(), MAX_SEGMENT_LENGTH);
   const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(length / segmentLength)));
 
-  osg::Geometry* g = new osg::Geometry();
-  g->setUseVertexBufferObjects(true);
+  osgEarth::LineDrawable* g = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  g->setName("simVis::LaserNode");
 
-  // make the vert array but don't populate it yet
-  osg::Vec3Array* verts = new osg::Vec3Array();
-  g->setVertexArray(verts);
-  verts->reserve(numSegs + 1);
-
-  // populate with our segment verts
-  osg::Vec3 end(0.0f, length / numSegs, 0.0f);
-  for (unsigned int i = 0; i < numSegs; ++i)
-  {
-    verts->push_back(end * i);
-  }
-  verts->push_back(osg::Vec3(0.0f, length, 0.0f));
-
-  osg::DrawArrays* primset = new osg::DrawArrays(GL_LINE_STRIP, 0, verts->size());
-  g->addPrimitiveSet(primset);
-
-  // set the color:
-  osg::Vec4Array* c = new osg::Vec4Array(1);
-  (*c)[0] = simVis::ColorUtils::RgbaToVec4(
-    prefs.commonprefs().useoverridecolor() ? prefs.commonprefs().overridecolor() : prefs.commonprefs().color());
-  g->setColorArray(c);
-  g->setColorBinding(osg::Geometry::BIND_OVERALL);
-
-  // set up the state.
-  osg::StateSet* stateSet = g->getOrCreateStateSet();
-  stateSet->setAttributeAndModes(new osg::LineWidth(prefs.laserwidth()), 1);
+  // allocate the desired number of points, then generate them
+  g->allocate(numSegs + 1);
+  VectorScaling::generatePoints(*g, osg::Vec3(), osg::Vec3(0.0f, length, 0.0f));
+  g->setColor(simVis::ColorUtils::RgbaToVec4(
+    prefs.commonprefs().useoverridecolor() ? prefs.commonprefs().overridecolor() : prefs.commonprefs().color()));
+  g->setLineWidth(prefs.laserwidth());
 
   // done
-  osg::Geode* geode = new osg::Geode();
-  geode->addDrawable(g);
+  osg::Geode* geode = new osgEarth::LineGroup();
+  geode->addChild(g);
   return geode;
 }
 
@@ -448,30 +428,16 @@ void LaserNode::updateLaser_(const simData::LaserPrefs &prefs)
 {
   if (node_ == NULL || node_->getNumChildren() == 0)
     return;
-  osg::Geometry* geom = node_->getDrawable(0)->asGeometry();
+  osgEarth::LineDrawable* geom = dynamic_cast<osgEarth::LineDrawable*>(node_->getChild(0));
   if (!geom)
     return;
-  osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
-  if (colors)
-  {
-    const size_t colorsSize = colors->size();
-    // laser geometry uses BIND_OVERALL, and color array is fixed at size 1
-    assert(colorsSize == 1);
-    if (colorsSize == 1)
-    {
-      const osg::Vec4f& color = simVis::ColorUtils::RgbaToVec4(
-        prefs.commonprefs().useoverridecolor() ? prefs.commonprefs().overridecolor() : prefs.commonprefs().color());
 
-      if ((*colors)[0] != color)
-      {
-        (*colors)[0] = color;
-        colors->dirty();
-      }
-    }
-  }
+  const osg::Vec4f color = simVis::ColorUtils::RgbaToVec4(
+    prefs.commonprefs().useoverridecolor() ? prefs.commonprefs().overridecolor() : prefs.commonprefs().color());
+  geom->setColor(color);
 
   // update the laser width
-  geom->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(prefs.laserwidth()), 1);
+  geom->setLineWidth(prefs.laserwidth());
 }
 
 unsigned int LaserNode::objectIndexTag() const

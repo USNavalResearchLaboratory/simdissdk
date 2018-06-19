@@ -1,4 +1,4 @@
-#version 120
+#version 140
 
 #pragma vp_entryPoint simVis_BathymetryGenerator_vertex
 #pragma vp_location vertex_clip

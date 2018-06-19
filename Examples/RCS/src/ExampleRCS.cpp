@@ -106,7 +106,7 @@ Control* createUI(AppData* app)
   vbox->setVertAlign(Control::ALIGN_TOP);
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20, osg::Vec4f(1, 1, 0, 1)));
+  vbox->addControl(new LabelControl(s_title, 20.f, simVis::Color::Yellow));
 
   // sensor parameters
   osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(app);

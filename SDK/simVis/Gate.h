@@ -29,6 +29,7 @@
 #include "simVis/LocatorNode.h"
 
 namespace osg { class Depth; }
+namespace osgEarth { class LineDrawable; }
 namespace simVis
 {
   class EntityLabelNode;
@@ -97,10 +98,10 @@ namespace simVis
     GateCentroid(const GateCentroid&);
 
     /// calculate centroid verts from update
-    void updateCentroid_(osg::Vec3Array* verts, const simData::GateUpdate& update);
+    void updateCentroid_(const simData::GateUpdate& update);
 
     /// Holds the vertices for geometry
-    osg::ref_ptr<osg::Geometry> geom_;
+    osg::ref_ptr<osgEarth::LineDrawable> geom_;
   };
 
   /// Scene graph node representing a Gate
@@ -355,7 +356,6 @@ namespace simVis
 
     osg::observer_ptr<const EntityNode> host_;
     osg::ref_ptr<LocalGridNode> localGrid_;
-    osg::Depth*             depthAttr_;
 
     /**
      * Locator that represents the "origin" of the gate, typically a position on the host platform, stripped of orientation

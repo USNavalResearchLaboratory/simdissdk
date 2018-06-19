@@ -270,13 +270,12 @@ void RadialLOSNode::refreshGeometry_()
     geom->setDataVariance(osg::Object::DYNAMIC);
     geom->setUseVertexBufferObjects(true);
 
-    verts = new osg::Vec3Array(numVerts);
+    verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, numVerts);
     geom->setVertexArray(verts);
     (*verts)[0].set(0, 0, 0);
 
-    colors = new osg::Vec4Array(numVerts);
+    colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX, numVerts);
     geom->setColorArray(colors);
-    geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
     tris = new osg::DrawElementsUInt(GL_TRIANGLES);
     geom->addPrimitiveSet(tris);
@@ -293,10 +292,9 @@ void RadialLOSNode::refreshGeometry_()
     // shares the same vert array
     pointsGeom->setVertexArray(verts);
 
-    osg::Vec4Array* pointsColors = new osg::Vec4Array(1);
+    osg::Vec4Array* pointsColors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*pointsColors)[0] = samplePointColor_;
     pointsGeom->setColorArray(pointsColors);
-    pointsGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     points = new osg::DrawElementsUInt(GL_POINTS);
     pointsGeom->addPrimitiveSet(points);

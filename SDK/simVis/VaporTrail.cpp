@@ -370,6 +370,7 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+  geom->setName("simVis::VaporTrail");
   osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array; // vertices to draw
   geom->setVertexArray(verts.get());
 
@@ -378,9 +379,8 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
   geom->setTexCoordArray(textureUnit, texcoords.get());
 
   // colors
-  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
+  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL);
   geom->setColorArray(colors.get());
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
   colors->push_back(simVis::Color::White);
 
   // add an instance of vapor trail

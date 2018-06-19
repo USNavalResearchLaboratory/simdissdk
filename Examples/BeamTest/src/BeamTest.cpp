@@ -97,6 +97,7 @@ struct AppData
   osg::ref_ptr<ui::CheckBoxControl> shadedCheck_;
   osg::ref_ptr<ui::CheckBoxControl> blendedCheck_;
   osg::ref_ptr<ui::CheckBoxControl> renderConeCheck_;
+  osg::ref_ptr<ui::CheckBoxControl> animateCheck_;
 
   osg::ref_ptr<ui::CheckBoxControl> globalToggle_;
 
@@ -134,6 +135,7 @@ struct AppData
      shadedCheck_(NULL),
      blendedCheck_(NULL),
      renderConeCheck_(NULL),
+     animateCheck_(NULL),
      ds_(NULL),
      hostId_(0),
      beamId_(0),
@@ -188,6 +190,9 @@ struct AppData
       prefs->set_rendercone(renderConeCheck_->getValue());
       prefs->set_capresolution(capRes);
       prefs->set_coneresolution(coneRes);
+      prefs->set_animate(animateCheck_->getValue());
+      prefs->set_pulserate(0.1);
+      prefs->set_pulsestipple(0xfff0);
 
       xaction.complete(&prefs);
     }
@@ -241,7 +246,7 @@ ui::Control* createUI(AppData& app)
   top->setAbsorbEvents(true);
   top->setMargin(ui::Gutter(5.0f));
   top->setBackColor(osg::Vec4(0, 0, 0, 0.5));
-  top->addControl(new ui::LabelControl("Beams - Test App", 22.0f, osg::Vec4(1, 1, 0, 1)));
+  top->addControl(new ui::LabelControl("Beams - Test App", 22.0f, simVis::Color::Yellow));
 
   int c=0, r=0;
   ui::Grid* grid = top->addControl(new ui::Grid());
@@ -313,6 +318,10 @@ ui::Control* createUI(AppData& app)
   app.renderConeCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
 
   r++;
+  grid->setControl(c, r, new ui::LabelControl("Animate"));
+  app.animateCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
+
+  r++;
   grid->setControl(c, r, new ui::LabelControl("Global Beam Toggle"));
   app.globalToggle_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
 
@@ -349,7 +358,7 @@ simData::ObjectId addPlatform(simData::DataStore& ds,
 
   // place it somewhere.
   {
-    simCore::Vec3 pos(simCore::DEG2RAD*51.0, 0.0, 20.0);
+    simCore::Vec3 pos(simCore::DEG2RAD*51.0, 0.0, 200.0);
 
     simCore::Vec3 ori = simExamples::hasArg("--br", argc, argv) ?
       simCore::Vec3(simCore::DEG2RAD*45.0, simCore::DEG2RAD*45.0, 0.0) :

@@ -87,13 +87,13 @@ static Control* createHelp()
   VBox* vbox = new VBox();
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.4);
-  vbox->addControl(new LabelControl(s_title, 20, osg::Vec4f(1, 1, 0, 1)));
-  vbox->addControl(new LabelControl(s_help, 14, osg::Vec4f(.8, .8, .8, 1)));
-  vbox->addControl(new LabelControl(s_rotate, 14, osg::Vec4f(.8, .8, .8, 1)));
-  vbox->addControl(new LabelControl(s_interpolate, 14, osg::Vec4f(.8, .8, .8, 1)));
-  vbox->addControl(new LabelControl(s_viewPlatformOne, 14, osg::Vec4f(.8, .8, .8, 1)));
-  vbox->addControl(new LabelControl(s_viewPlatformTwo, 14, osg::Vec4f(.8, .8, .8, 1)));
-  vbox->addControl(new LabelControl(s_viewPlatformThree, 14, osg::Vec4f(.8, .8, .8, 1)));
+  vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
+  vbox->addControl(new LabelControl(s_help, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_rotate, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_interpolate, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_viewPlatformOne, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_viewPlatformTwo, 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl(s_viewPlatformThree, 14, simVis::Color::Silver));
   s_helpControl = vbox;
   return vbox;
 }

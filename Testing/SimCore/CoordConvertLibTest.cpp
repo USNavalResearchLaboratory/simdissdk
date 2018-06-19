@@ -151,7 +151,7 @@ static int checkValues(int uniqueID, const char* whichTest,
 {
   if (!simCore::v3AreEqual(result, correctValue, epsilon))
   {
-    std::cerr << "Test Failure:  UniqueID(" << uniqueID << "):\n"
+    std::cerr << "Test Failure:  UniqueID(" << uniqueID << "):\n" << std::fixed << std::setprecision(7)
       << "  result values  = (" << result[0] << ", " << result[1] << ", " << result[2] << ")\n"
       << "  correct values = (" << correctValue[0] << ", " << correctValue[1] << ", " << correctValue[2] << ")\n";
     return 1;
@@ -206,14 +206,14 @@ static void createTestCases(vTestCases* testCases)
   // ECEF to LLA --------------------------------------------------------------
   // Position:  North Pole
   tempTestCase = new TestCase(3, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
-  tempTestCase->SetInputPosition(0.0, 0.0, 6356752.314); // ECEF
+  tempTestCase->SetInputPosition(0.0, 0.0, simCore::WGS_B); // ECEF
   tempTestCase->SetCorrectOutputPositionLLADeg(90.0, 0.0,         0.0); // LLA
   testCases->push_back(tempTestCase);
 
   // ECEF to LLA --------------------------------------------------------------
   // Position:  South Pole
   tempTestCase = new TestCase(4, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
-  tempTestCase->SetInputPosition(0.0, 0.0, -6356752.314); // ECEF
+  tempTestCase->SetInputPosition(0.0, 0.0, -simCore::WGS_B); // ECEF
   tempTestCase->SetCorrectOutputPositionLLADeg(-90.0, 0.0,         0.0); // LLA
   testCases->push_back(tempTestCase);
 
@@ -224,32 +224,113 @@ static void createTestCases(vTestCases* testCases)
   tempTestCase->SetCorrectOutputPositionLLADeg(-90.0, 0.0,       21347.46602); // LLA
   testCases->push_back(tempTestCase);
 
-      // ECEF to LLA --------------------------------------------------------------
-     // this test will fail with current ECEF->LLA conversion, as it cannot pass 1e-3 error tolerance.
-  // Position: SEDRIS GoldData 6.3, WGS84, rectangular line 85, geodetic line 86
-  //tempTestCase = new TestCase(6, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
-  //tempTestCase->SetInputPosition(3921315.206497, -3921315.206497, -3180373.735384); // ECEF
-  //tempTestCase->SetCorrectOutputPositionLLADeg( -30.0, -45.0, 20000.0); // LLA
-  //testCases->push_back(tempTestCase);
+  // ECEF to LLA --------------------------------------------------------------
+  // Position: NGA GoldData 6.3, WGS84, rectangular line 85, geodetic line 86
+  tempTestCase = new TestCase(6, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(3921315.206497, -3921315.206497, -3180373.735384); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg( -30.0, -45.0, 20000.0); // LLA
+  testCases->push_back(tempTestCase);
 
-      // ECEF to LLA --------------------------------------------------------------
-     // this test will fail with current ECEF->LLA conversion with 1.6e-3 error, tolerance is set at 1e-3.
+  // ECEF to LLA --------------------------------------------------------------
   // Position: NGA GoldData 6.3, WGS84, rectangular line 167, geodetic line 168
   // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
-  //tempTestCase = new TestCase(7, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
-  //tempTestCase->SetInputPosition(3921315.206497, 3921315.206497, 3180373.735384); // ECEF
-  //tempTestCase->SetCorrectOutputPositionLLADeg( 30.0, 45.0, 20000.0); // LLA
-  //testCases->push_back(tempTestCase);
+  tempTestCase = new TestCase(7, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(3921315.206497, 3921315.206497, 3180373.735384); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg( 30.0, 45.0, 20000.0); // LLA
+  testCases->push_back(tempTestCase);
 
-      // ECEF to LLA --------------------------------------------------------------
-     // this test will fail with current ECEF->LLA conversion, with 4.4e-3 error, tolerance is set at 1e-3.
+  // ECEF to LLA --------------------------------------------------------------
   // Position: NGA GoldData 6.3, WGS84, rectangular line 460, geodetic line 461
   // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
-  //tempTestCase = new TestCase(8, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
-  //tempTestCase->SetInputPosition(4595548.289592, 0.0, 4408161.078281); // ECEF
-  //tempTestCase->SetCorrectOutputPositionLLADeg( 44.0, 0.0, 100.0); // LLA
-  //testCases->push_back(tempTestCase);
+  tempTestCase = new TestCase(8, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(4595548.289592, 0.0, 4408161.078281); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg( 44.0, 0.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
 
+  // Position: NGA GoldData 6.3, WGS84, rectangular line 203, geodetic line 204
+  // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
+  tempTestCase = new TestCase(9, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(-2267765.401388, -2267765.401388, 5517797.642014); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(60.0, -135.0, 20000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  // Position: NGA GoldData 6.3, WGS84, rectangular line 271, geodetic line 272
+  // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
+  tempTestCase = new TestCase(10, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(2650785.323332, 0.0, 6865553.346493); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(69.0, 0.0, 1000000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  // Position: NGA GoldData 6.3, WGS84, rectangular line 271, geodetic line 272
+  // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
+  tempTestCase = new TestCase(11, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(2650785.323332, 0.0, 6865553.346493); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(69.0, 0.0, 1000000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  // Position: NGA GoldData 6.3, WGS84, rectangular line 272, geodetic line 273
+  // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
+  tempTestCase = new TestCase(12, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(2039152.983916, 0.0, 7070200.396837); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(74.0, 0.0, 1000000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  // Position: NGA GoldData 6.3, WGS84, rectangular line 427, geodetic line 428
+  // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
+  tempTestCase = new TestCase(13, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(6375072.400269, 0.0, -110532.124771); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(-1.0, 0.0, -2100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  // Position: NGA GoldData 6.3, WGS84, rectangular line 37, geodetic line 38
+  // http://earth-info.nga.mil/GandG/coordsys/Conversion_Software/index.html
+  tempTestCase = new TestCase(14, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(2260694.333577, -2260694.333577, -5500477.133939); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(-60.0, -45.0, 0.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  // NGA GoldData does not test near-polar latitudes with non-zero longitudes - this means testing does not verify calculation of longitude for such points.
+  // test cases 15-22 use our LLA-ECEF conversion to produce ECEF positions.
+
+  tempTestCase = new TestCase(15, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(11167.8655243, 194.935817837, 6356842.566957016475); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.9, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(16, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(111.678713082785, 1.949359187960, 6356852.313270461746); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99900000, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(17, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(1.116787131430, 0.019493591890, 6356852.314245189540); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999000, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(18, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(.111678712501, .001949359178, 6356852.314245189540); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999900, 1.0, 100.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(19, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(11185.141643517663, 195.237373618911, 6366742.551878457889); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.9, 1.0, 10000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(20, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(111.851474362336, 1.952374747311, 6366752.313268953934); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99900000, 1.0, 10000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(21, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(1.118514744226, 0.019523747484, 6366752.314245093614); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999000, 1.0, 10000.0); // LLA
+  testCases->push_back(tempTestCase);
+
+  tempTestCase = new TestCase(22, simCore::COORD_SYS_ECEF, simCore::COORD_SYS_LLA);
+  tempTestCase->SetInputPosition(0.111851473780, 0.001952374737, 6366752.314245189540); // ECEF
+  tempTestCase->SetCorrectOutputPositionLLADeg(89.99999900, 1.0, 10000.0); // LLA
+  testCases->push_back(tempTestCase);
 }
 
 //===========================================================================
@@ -260,7 +341,11 @@ int testGtp()
   cc.setReferenceOriginDegrees(49.3, -123.9666667, -16.77);
   cc.setTangentPlaneOffsets(-14063.024, 5641.235, 13.145999 * simCore::DEG2RAD);
 
-  double dLlaPos[] = {49.3368930371 * simCore::DEG2RAD, -124.073426963 * simCore::DEG2RAD, -10.7299084021};
+  // double dLlaPos[] = { 49.3368930371 * simCore::DEG2RAD, -124.073426963 * simCore::DEG2RAD, -10.7299084021 };
+  // source of the gtp and lla data is not documented;
+  // these values may represent the expected conversion, based on some version of our own code.
+  // as of 03/2018, dLlaPos.alt now represents the expected conversion from dGtpPos
+  double dLlaPos[] = { 49.3368930371 * simCore::DEG2RAD, -124.073426963 * simCore::DEG2RAD, -10.735150311142206};
   double dLlaVel[] = {9.804, -5.375, 0.002};
   double llaSpeed = sqrt(simCore::square(dLlaVel[0]) + simCore::square(dLlaVel[1]) + simCore::square(dLlaVel[2]));
   double dLlaAcc[] = {2.343, -1.438, 0.003};
@@ -284,19 +369,17 @@ int testGtp()
 
   simCore::Coordinate gtpFromLla;
   cc.convert(llaPos, gtpFromLla, simCore::COORD_SYS_GTP);
-  simCore::Coordinate xeastFromLla;
-  cc.convert(llaPos, xeastFromLla, simCore::COORD_SYS_XEAST);
   double gtpSpeedFromLla = sqrt(simCore::square(gtpFromLla.velocity()[0]) + simCore::square(gtpFromLla.velocity()[1]) + simCore::square(gtpFromLla.velocity()[2]));
   double gtpAccMagFromLla = sqrt(simCore::square(gtpFromLla.acceleration()[0]) + simCore::square(gtpFromLla.acceleration()[1]) + simCore::square(gtpFromLla.acceleration()[2]));
   rv += SDK_ASSERT(gtpFromLla.coordinateSystem() == simCore::COORD_SYS_GTP);
-  rv += SDK_ASSERT(almostEqualPos(gtpFromLla, gtpPos, 0.1));
+  rv += SDK_ASSERT(almostEqualPos(gtpFromLla, gtpPos, 0.005));
   rv += SDK_ASSERT(simCore::areEqual(gtpSpeedFromLla, llaSpeed, 0.001));
   rv += SDK_ASSERT(simCore::areEqual(gtpAccMagFromLla, llaAccMag, 0.001));
 
   simCore::Coordinate gtpFromGtp;
   cc.convert(gtpPos, gtpFromGtp, simCore::COORD_SYS_GTP);
   rv += SDK_ASSERT(gtpFromGtp.coordinateSystem() == simCore::COORD_SYS_GTP);
-  rv += SDK_ASSERT(almostEqualPos(gtpFromGtp, gtpPos, 0.1));
+  rv += SDK_ASSERT(almostEqualPos(gtpFromGtp, gtpPos, 0.001));
   rv += SDK_ASSERT(almostEqual(gtpFromGtp.velocity(), simCore::Vec3(dGtpVel), 0.001, 0.001));
   rv += SDK_ASSERT(almostEqual(gtpFromGtp.acceleration(), simCore::Vec3(dGtpAcc), 0.001, 0.001));
 
@@ -477,11 +560,10 @@ int testCC()
   rv += SDK_ASSERT(llaFromEcef.coordinateSystem() == simCore::COORD_SYS_LLA);
   rv += SDK_ASSERT(almostEqualCoord(llaFromEcef, llaPos));
 
-  //at 100m HaE, we need reduced error tolerance for altitude, as error here is 4.4e-3
   simCore::Coordinate llaFromEcef3;
   cc.convert(ecefPos3, llaFromEcef3, simCore::COORD_SYS_LLA);
   rv += SDK_ASSERT(llaFromEcef3.coordinateSystem() == simCore::COORD_SYS_LLA);
-  rv += SDK_ASSERT(almostEqualCoord(llaFromEcef3, llaPos3, 1e-5, 5e-3));
+  rv += SDK_ASSERT(almostEqualCoord(llaFromEcef3, llaPos3));// , 1e-5, 5e-3));
 
   simCore::Coordinate enuFromEcef;
   cc.convert(ecefPos, enuFromEcef, simCore::COORD_SYS_ENU);
@@ -500,7 +582,6 @@ int testCC()
 
 
   // Convert from LLA -> ECEF -> LLA -> ECEF, using NGA Gold Data
-  // we need even more error tolerance for altitude, as error here is 8e-3 (double the error of ecef->lla conv)
   simCore::Coordinate ecefFromLla1;
   cc.convert(llaPos3, ecefFromLla1, simCore::COORD_SYS_ECEF);
   rv += SDK_ASSERT(ecefFromLla1.coordinateSystem() == simCore::COORD_SYS_ECEF);
@@ -514,7 +595,7 @@ int testCC()
 
   cc.convert(ecefFromLla1, llaFromEcef2, simCore::COORD_SYS_LLA);
   rv += SDK_ASSERT(llaFromEcef2.coordinateSystem() == simCore::COORD_SYS_LLA);
-  rv += SDK_ASSERT(almostEqualCoord(llaFromEcef2, llaPos3, 1e-5, 1e-2));
+  rv += SDK_ASSERT(almostEqualCoord(llaFromEcef2, llaPos3));// , 1e-5, 1e-2));
 
 
   // Convert from X-East
@@ -757,6 +838,9 @@ int testScaledFlatEarthPole()
 
   // X axis position data from JIRA issue SIMDIS-2285
   const simCore::Coordinate xPos(simCore::COORD_SYS_NWU, simCore::Vec3(5556, 0, 0), simCore::Vec3(0, 0, 0), simCore::Vec3(5.144, 0, 0));
+  ecefPos.setCoordinateSystem(simCore::COORD_SYS_ECEF);
+  llaPos.setCoordinateSystem(simCore::COORD_SYS_LLA);
+  sfePos.setCoordinateSystem(simCore::COORD_SYS_NWU);
 
   // Validate conversion to and from ECEF fails as expected due to degenerate origin at pole
   if (cc.convert(xPos, ecefPos, simCore::COORD_SYS_ECEF) == 0)
@@ -935,7 +1019,7 @@ int CoordConvertLibTest(int _argc_, char *_argv_[])
       std::cout << "outputEul: " << outputEul[0] << " " << outputEul[1] << " " << outputEul[2] << std::endl;
       // position check
       if (temp->CheckPosition_)
-        rv += checkValues(temp->UniqueID_, "position", simCore::Vec3(outputPosition), temp->CorrectOutputPosition_, 1e-3);
+        rv += checkValues(temp->UniqueID_, "position", simCore::Vec3(outputPosition), temp->CorrectOutputPosition_, 8e-7);
       // orientation check
       if (temp->CheckEul_)
         rv += checkValues(temp->UniqueID_, "orientation", simCore::Vec3(outputEul), temp->CorrectOutputEul_, 1e-4);

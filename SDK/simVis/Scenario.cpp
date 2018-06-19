@@ -34,9 +34,13 @@
 #include "simVis/AlphaTest.h"
 #include "simVis/Beam.h"
 #include "simVis/BeamPulse.h"
+#include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
+#ifdef ENABLE_CUSTOM_RENDERING
+#include "simVis/CustomRendering.h"
+#endif
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -156,7 +160,7 @@ bool ScenarioManager::EntityRecord::dataStoreMatches(const simData::DataStore* d
 
 bool ScenarioManager::EntityRecord::updateFromDataStore(bool force) const
 {
-  return (updateSlice_ && node_.valid() && node_->updateFromDataStore(updateSlice_, force));
+  return (node_.valid() && node_->updateFromDataStore(updateSlice_, force));
 }
 
 // -----------------------------------------------------------------------
@@ -386,9 +390,6 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, true),
     osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
-  // set a default render bin to propagate down to child nodes
-  stateSet->setRenderBinDetails(BIN_POST_TERRAIN, BIN_GLOBAL_SIMSDK);
-
   setName("simVis::ScenarioManager");
 
   platformTspiFilterManager_->addFilter(surfaceClamping_);
@@ -396,6 +397,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // Install shaders used by multiple entities at the scenario level
   AlphaTest::installShaderProgram(stateSet);
   BeamPulse::installShaderProgram(stateSet);
+  DisableDepthOnAlpha::installShaderProgram(stateSet);
   LobGroupNode::installShaderProgram(stateSet);
   OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);
@@ -738,6 +740,38 @@ LobGroupNode* ScenarioManager::addLobGroup(const simData::LobGroupProperties& pr
   return NULL;
 }
 
+#ifdef ENABLE_CUSTOM_RENDERING
+CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRenderingProperties& props, simData::DataStore& dataStore)
+{
+  SAFETRYBEGIN;
+  // attempt to anchor to the host
+  EntityNode* host = NULL;
+  if (props.has_hostid())
+    host = find(props.hostid());
+
+  // no host, no custom rendering.
+  if (!host)
+    return NULL;
+
+  // put the custom into our entity db:
+  auto node = new CustomRenderingNode(this, props, host, dataStore.referenceYear());
+  entities_[node->getId()] = new EntityRecord(
+    node,
+    NULL,
+    &dataStore);
+
+  hosterTable_.insert(std::make_pair(host->getId(), node->getId()));
+
+  notifyToolsOfAdd_(node);
+
+  node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
+
+  return node;
+  SAFETRYEND("adding custom");
+  return NULL;
+}
+#endif
+
 ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties& props, simData::DataStore& dataStore)
 {
   SAFETRYBEGIN;
@@ -847,6 +881,21 @@ bool ScenarioManager::setLobGroupPrefs(simData::ObjectId id, const simData::LobG
   return false;
 }
 
+#ifdef ENABLE_CUSTOM_RENDERING
+bool ScenarioManager::setCustomRenderingPrefs(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs)
+{
+  SAFETRYBEGIN;
+  CustomRenderingNode* obj = find<CustomRenderingNode>(id);
+  if (obj)
+  {
+    obj->setPrefs(prefs);
+    return true;
+  }
+  SAFETRYEND(std::string(osgEarth::Stringify() << "setting custom prefs of ID " << id));
+  return false;
+}
+#endif
+
 void ScenarioManager::notifyBeamsOfNewHostSize(const PlatformNode& platform) const
 {
   SAFETRYBEGIN;
@@ -893,7 +942,7 @@ const EntityNode* ScenarioManager::getHostPlatform(const EntityNode* entity) con
 
 namespace {
 
-#ifdef DEBUG
+#ifndef NDEBUG
 /** Visitor that, in debug mode, asserts that the overhead mode hint is set to a certain value */
 class AssertOverheadModeHint : public osg::NodeVisitor
 {
@@ -963,7 +1012,7 @@ EntityNode* ScenarioManager::find(osg::View* _view, float x, float y, int typeMa
   osg::Vec3d beg(a.x() / a.w(), a.y() / a.w(), a.z() / a.w());
   osg::Vec3d end(b.x() / b.w(), b.y() / b.w(), b.z() / b.w());
 
-#ifdef DEBUG
+#ifndef NDEBUG
   // In debug mode, make sure the overhead hint is false, else a release mode
   // optimization that presumes hint is false will fail.
   AssertOverheadModeHint assertHintIsFalse(false);
@@ -1081,7 +1130,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
   EntityVector updates;
 
   SAFETRYBEGIN;
-  for (EntityRepo::iterator i = entities_.begin(); i != entities_.end(); ++i)
+  for (EntityRepo::const_iterator i = entities_.begin(); i != entities_.end(); ++i)
   {
     EntityRecord* record = i->second.get();
 

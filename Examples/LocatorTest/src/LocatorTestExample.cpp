@@ -26,8 +26,8 @@
  * A unit test program that validates the behavior of the Locator subsystem.
  */
 
-#include "osg/LineWidth"
 #include "osgEarth/StringUtils"
+#include "simVis/LineDrawable.h"
 #include "osgEarthSymbology/Style"
 #include "osgEarthUtil/LatLongFormatter"
 #include "osgEarthUtil/MGRSFormatter"
@@ -155,41 +155,31 @@ struct App
 
 osg::Node* createNode(float s)
 {
-  osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array();
-  verts->push_back(osg::Vec3(0, 0, 0));
-  verts->push_back(osg::Vec3(s, 0, 0));   // E
-  verts->push_back(osg::Vec3(0, 0, 0));
-  verts->push_back(osg::Vec3(0, s, 0));   // N
-  verts->push_back(osg::Vec3(0, 0, 0));
-  verts->push_back(osg::Vec3(0, 0, s));   // U
+  osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINES);
+  geom->allocate(6);
 
-  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array();
-  colors->push_back(osg::Vec4(1, 0, 0, 1));
-  colors->push_back(osg::Vec4(1, 0, 0, 1));  //RED
-  colors->push_back(osg::Vec4(0, 1, 0, 1));
-  colors->push_back(osg::Vec4(0, 1, 0, 1));  //GREEN
-  colors->push_back(osg::Vec4(0, 1, 1, 1));
-  colors->push_back(osg::Vec4(0, 1, 1, 1));  //CYAN
+  geom->setVertex(0, osg::Vec3());
+  geom->setVertex(1, osg::Vec3(s, 0.f, 0.f));   // E
+  geom->setVertex(2, osg::Vec3());
+  geom->setVertex(3, osg::Vec3(0.f, s, 0.f));   // N
+  geom->setVertex(4, osg::Vec3());
+  geom->setVertex(5, osg::Vec3(0.f, 0.f, s));   // U
+  geom->dirty();
 
-  osg::ref_ptr<osg::DrawArrays> da = new osg::DrawArrays(GL_LINES, 0, 6);
-
-  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-  geom->setVertexArray(verts.get());
-  geom->setColorArray(colors.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-  geom->addPrimitiveSet(da.get());
+  geom->setColor(0, simVis::Color::Red);
+  geom->setColor(1, simVis::Color::Red);
+  geom->setColor(2, simVis::Color::Lime);
+  geom->setColor(3, simVis::Color::Lime);
+  geom->setColor(4, simVis::Color::Aqua);
+  geom->setColor(5, simVis::Color::Aqua);
 
   osg::ref_ptr<osg::StateSet> ss = geom->getOrCreateStateSet();
   simVis::setLighting(ss.get(), 0);
   ss->setMode(GL_DEPTH_TEST, 0);
-  ss->setAttributeAndModes(new osg::LineWidth(2.0f), 1);
 
-  // geode is returned to caller and owned by caller
-  osg::Geode* geode = new osg::Geode();
-  geode->addDrawable(geom);
+  geom->setLineWidth(2.0f);
 
-  return geode;
+  return geom;
 }
 
 
@@ -263,7 +253,7 @@ void addSlider(App& app, Grid* g, const std::string& text, osg::ref_ptr<HSliderC
   slider->setHorizFill(true, 200);
   LabelControl* resetButton = g->setControl(2, r, new LabelControl("0"));
   resetButton->setBackColor(osg::Vec4(.4, .4, .4, 1));
-  resetButton->setActiveColor(osg::Vec4(0, 1, 0, 1));
+  resetButton->setActiveColor(simVis::Color::Lime);
   resetButton->addEventHandler(new ResetValue(app, slider.get(), sset));
   g->setControl(3, r, new LabelControl(slider.get()));
 }

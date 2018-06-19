@@ -92,6 +92,8 @@
     PB_BOTH_HAVE_SUBFIELD((a), (b), first, second) && \
     (a)->first().second() != (b)->first().second() ) )
 
+namespace osgEarth { class LineDrawable; }
+
 namespace osgViewer {
   class StatsHandler;
   class View;
@@ -121,6 +123,14 @@ namespace simVis
 
   /** gets the lighting state if there is one (true if there is, false if not) */
   SDKVIS_EXPORT bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value);
+
+  /**
+  * Fixes an osg::Texture to be OpenGL core profile compliant.  A texture cannot have a pixel format that
+  * matches GL_LUMINANCE or GL_LUMINANCE_ALPHA in OpenGL core profile.  This method detects that case, fixes
+  * the pixel format, and applies a swizzle to correctly map GL_RED or GL_RG components to visible spectrum.
+  * By necessity, this modifies texture->getImage().
+  */
+  SDKVIS_EXPORT void fixTextureForGlCoreProfile(osg::Texture* texture);
 
   /**
    * Internal update template callback - binds an update callback to the
@@ -414,8 +424,12 @@ namespace simVis
   class SDKVIS_EXPORT VectorScaling
   {
   public:
-    /** Generates scene points between start and end (inclusive), using numPointsPerLine */
-    static void generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine);
+    /** Generates scene points between start and end (inclusive) to fill a VertexArray's vertex allocation, setting all vertices to new values */
+    static void generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end);
+
+    /** Generates scene points between start and end (inclusive) to fill a LineDrawable's vertex allocation, setting all vertices in the LineDrawable to new values */
+    static void generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end);
+
     /** Returns true if one of the prefs has changed that impacts vector scaling (requiring line rebuild) */
     static bool fieldsChanged(const simData::PlatformPrefs& lastPrefs, const simData::PlatformPrefs& newPrefs);
     /** Returns the line length of the platform node's vector, based on axis scale and model size */

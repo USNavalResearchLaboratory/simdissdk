@@ -20,6 +20,7 @@
  *
  */
 #include <cassert>
+#include <limits>
 #include "osg/LOD"
 #include "osg/Node"
 #include "osg/NodeVisitor"
@@ -39,6 +40,7 @@
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simVis/ClockOptions.h"
+#include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/Utils.h"
 #include "simVis/ModelCache.h"
 
@@ -126,7 +128,6 @@ public:
   ModelCacheLoaderOptions()
     : boxWhenNotFound(false),
       addLodNode(true),
-      runShaderGenerator(true),
       clock(NULL)
   {
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
@@ -141,7 +142,6 @@ public:
       boxWhenNotFound(rhs.boxWhenNotFound),
       addLodNode(rhs.addLodNode),
       optimizeFlags(rhs.optimizeFlags),
-      runShaderGenerator(rhs.runShaderGenerator),
       clock(rhs.clock),
       sequenceTimeUpdater(rhs.sequenceTimeUpdater)
   {
@@ -161,8 +161,6 @@ public:
   bool addLodNode;
   /** Change the flags sent to optimizer.  Set to 0 to disable optimization. */
   unsigned int optimizeFlags;
-  /** Set true to run the osgEarth shader generator on the resulting node. */
-  bool runShaderGenerator;
   /** Clock object used for SIMDIS Media Player 2 playlist nodes. */
   simCore::Clock* clock;
   /** Pointer to the class that fixes osg::Sequence; see simVis::Registry::sequenceTimeUpdater_. */
@@ -259,6 +257,7 @@ private:
     if (options->addLodNode)
     {
       osg::ref_ptr<osg::LOD> lod = new osg::LOD;
+      lod->setName("Auto LOD Node");
       // Use a pixel-size LOD.  Range LOD scales relative to eye distance, but models that get distorted
       // significantly in only 2 dimensions will have significant LOD issues with that approach.
       lod->setRangeMode(osg::LOD::PIXEL_SIZE_ON_SCREEN);
@@ -272,13 +271,14 @@ private:
       osgUtil::Optimizer o;
       o.optimize(result, options->optimizeFlags);
     }
+    // Disable depth on all incoming models
+    simVis::DisableDepthOnAlpha::setValues(result->getOrCreateStateSet(), osg::StateAttribute::ON);
 
-    // generate shaders.
-    if (options->runShaderGenerator)
-    {
-      osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
-      osgEarth::Registry::shaderGenerator().run(result.get(), stateCache.get());
-    }
+    // At one point, we would run the shader generator here in the threaded
+    // context.  However, in SIMDIS code in the Simple Server example, it looked
+    // like doing so would corrupt the vertex arrays on some text, sometimes,
+    // in unrelated objects.  As a result, the shader generator is now only
+    // run in the main thread.
   }
 
   /** Helper method to process the filename into an image.  Also handles SIMDIS MP2 files. */
@@ -290,8 +290,12 @@ private:
     // and auto-scale to the screen.
     using namespace osgEarth::Annotation;
 
-    osg::ref_ptr<osg::Image> image = osgDB::readRefImageFile(filename);
-    if (image)
+    osg::ref_ptr<osg::Image> image;
+    // Avoid readRefImageFile() because in 3.6 it spams console, for LST and TMD files
+    const std::string ext = osgDB::getLowerCaseFileExtension(filename);
+    if (ext != "tmd" && ext != "lst")
+      image = osgDB::readRefImageFile(filename);
+    if (image.valid())
     {
       // create the geometry representing the icon:
       osg::Geometry* geom = AnnotationUtils::createImageGeometry(
@@ -425,6 +429,7 @@ public:
     // Set up an options struct for the pseudo loader
     osg::ref_ptr<ModelCacheLoaderOptions> opts = new ModelCacheLoaderOptions;
     opts->clock = cache_->clock_;
+    opts->addLodNode = cache_->addLodNode_;
     opts->sequenceTimeUpdater = cache_->sequenceTimeUpdater_.get();
     // Need to return something or proxy never succeeds and keeps issuing searches
     opts->boxWhenNotFound = true;
@@ -468,6 +473,11 @@ public:
           // Load was requested, but didn't have a URI.  Someone might be messing with our nodes.
           assert(0);
         }
+
+        // Run the shader generator on the newly loaded node (in main thread)
+        osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
+        osgEarth::Registry::shaderGenerator().run(loaded.get(), stateCache.get());
+
         // Alert callbacks
         fireLoadFinished_(uri, loaded.get());
 
@@ -530,6 +540,7 @@ private:
 
 ModelCache::ModelCache()
   : shareArticulatedModels_(false),
+    addLodNode_(true),
     clock_(NULL),
     asyncLoader_(new LoaderNode)
 {
@@ -537,6 +548,7 @@ ModelCache::ModelCache()
 
   // Create a box model as a placeholder for invalid model
   osg::Geode* geode = new osg::Geode();
+  geode->setName("Box Geode");
   geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
   boxNode_ = geode;
 
@@ -578,6 +590,7 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   // Set up an options struct for the pseudo loader
   osg::ref_ptr<ModelCacheLoaderOptions> opts = new ModelCacheLoaderOptions;
   opts->clock = clock_;
+  opts->addLodNode = addLodNode_;
   opts->sequenceTimeUpdater = sequenceTimeUpdater_.get();
   // Farm off to the pseudo-loader
   osg::ref_ptr<osg::Node> result = osgDB::readRefNodeFile(uri + "." + MODEL_LOADER_EXT, opts.get());
@@ -622,6 +635,9 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
     // Not configured: synchronous load
     bool isImage = false;
     osg::ref_ptr<osg::Node> node = getOrCreateIconModel(uri, &isImage);
+    // Run the shader generator on the newly loaded node (in main thread)
+    osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
+    osgEarth::Registry::shaderGenerator().run(node.get(), stateCache.get());
     if (refCallback.valid())
       refCallback->loadFinished(node, isImage, uri);
     return;
@@ -659,6 +675,16 @@ void ModelCache::setShareArticulatedIconModels(bool value)
 bool ModelCache::getShareArticulatedIconModels() const
 {
   return shareArticulatedModels_;
+}
+
+void ModelCache::setUseLodNode(bool useLodNode)
+{
+  addLodNode_ = useLodNode;
+}
+
+bool ModelCache::useLodNode() const
+{
+  return addLodNode_;
 }
 
 void ModelCache::setClock(simCore::Clock* clock)

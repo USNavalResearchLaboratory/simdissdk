@@ -28,6 +28,7 @@
 #include "simVis/Constants.h"
 #include "simVis/Locator.h"
 #include "simVis/LocatorNode.h"
+#include "simVis/Types.h"
 #include "simVis/RFProp/ArepsLoader.h"
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
@@ -41,6 +42,7 @@
 
 namespace
 {
+const osg::Vec4f SIMDIS_ORANGE(1.0f, 0.5f, 0.0f, 1.0f);
 
 void setDefaultPODVector(simRF::PODVectorPtr podLossThresholds)
 {
@@ -289,7 +291,7 @@ int RFPropagationFacade::setRangeTool(bool option)
 
 int RFPropagationFacade::setAglActive(bool aglActive)
 {
-  if (profileManager_ != NULL)
+  if (profileManager_ == NULL)
     return 1;
   profileManager_->setAGL(aglActive);
   return 0;
@@ -867,34 +869,34 @@ void RFPropagationFacade::setPosition(double latRad, double lonRad)
 void RFPropagationFacade::initializeDefaultColors_()
 {
   simRF::GradientColorProvider::ColorMap lossColors;
-  lossColors[0.0f] =  osg::Vec4f(1.0f, 0.0f, 0.0f, 1.0f);
-  lossColors[110.0f] = osg::Vec4f(1.0f, 1.0f, 0.0f, 1.0f);
-  lossColors[115.0f] = osg::Vec4f(1.0f, 0.0f, 1.0f, 1.0f);
-  lossColors[120.0f] = osg::Vec4f(0.0f, 0.0f, 1.0f, 1.0f);
-  lossColors[125.0f] = osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
-  lossColors[130.0f] = osg::Vec4f(1.0f, 0.5f, 0.0f, 1.0f);
-  lossColors[135.0f] = osg::Vec4f(0.0f, 0.5f, 0.5f, 1.0f);
-  lossColors[140.0f] = osg::Vec4f(0.0f, 0.5f, 0.0f, 1.0f);
-  lossColors[145.0f] = osg::Vec4f(0.0f, 0.0f, 0.5f, 1.0f);
+  lossColors[0.0f] = simVis::Color::Red;
+  lossColors[110.0f] = simVis::Color::Yellow;
+  lossColors[115.0f] = simVis::Color::Fuchsia;
+  lossColors[120.0f] = simVis::Color::Blue;
+  lossColors[125.0f] = simVis::Color::Lime;
+  lossColors[130.0f] = SIMDIS_ORANGE;
+  lossColors[135.0f] = simVis::Color::Teal;
+  lossColors[140.0f] = simVis::Color::Green;
+  lossColors[145.0f] = simVis::Color::Navy;
   lossColors[150.0f] = osg::Vec4f(0.0f, 0.75f, 0.75f, 1.0f);
-  lossColors[155.0f] = osg::Vec4f(0.0f, 1.0f, 1.0f, 1.0f);
-  lossColors[160.0f] = osg::Vec4f(0.5f, 0.0f, 0.5f, 1.0f);
+  lossColors[155.0f] = simVis::Color::Aqua;
+  lossColors[160.0f] = simVis::Color::Purple;
 
   colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_LOSS] = lossColors;
 
   simRF::GradientColorProvider::ColorMap complexColors;
-  complexColors[101.0f] = osg::Vec4f(1.0f, 0.0f, 0.0f, 1.0f);
-  complexColors[100.0f] = osg::Vec4f(1.0f, 1.0f, 0.0f, 1.0f);
-  complexColors[80.0f] = osg::Vec4f(1.0f, 0.0f, 1.0f, 1.0f);
-  complexColors[60.0f] = osg::Vec4f(0.0f, 0.0f, 1.0f, 1.0f);
-  complexColors[40.0f] = osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
-  complexColors[20.0f] = osg::Vec4f(1.0f, 0.5f, 0.0f, 1.0f);
-  complexColors[0.0f] = osg::Vec4f(0.0f, 0.5f, 0.5f, 1.0f);
-  complexColors[-20.0f] = osg::Vec4f(0.0f, 0.5f, 0.0f, 1.0f);
-  complexColors[-40.0f] = osg::Vec4f(0.0f, 0.0f, 0.5f, 1.0f);
-  complexColors[-60.0f] = osg::Vec4f(0.75f, 0.75f, 0.75f, 1.0f);
-  complexColors[-80.0f] = osg::Vec4f(0.0f, 1.0f, 1.0f, 1.0f);
-  complexColors[-100.0f] = osg::Vec4f(0.5f, 0.0f, 0.5f, 1.0f);
+  complexColors[101.0f] = simVis::Color::Red;
+  complexColors[100.0f] = simVis::Color::Yellow;
+  complexColors[80.0f] = simVis::Color::Fuchsia;
+  complexColors[60.0f] = simVis::Color::Blue;
+  complexColors[40.0f] = simVis::Color::Lime;
+  complexColors[20.0f] = SIMDIS_ORANGE;
+  complexColors[0.0f] = simVis::Color::Teal;
+  complexColors[-20.0f] = simVis::Color::Green;
+  complexColors[-40.0f] = simVis::Color::Navy;
+  complexColors[-60.0f] = simVis::Color::Silver;
+  complexColors[-80.0f] = simVis::Color::Aqua;
+  complexColors[-100.0f] = simVis::Color::Purple;
 
   colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_SNR] = complexColors;
   colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_CNR] = complexColors;
@@ -902,17 +904,17 @@ void RFPropagationFacade::initializeDefaultColors_()
   colorMaps_[simRF::ProfileDataProvider::THRESHOLDTYPE_FACTOR] = complexColors;
 
   // build a default color map
-  defaultColors_[100.0f] = osg::Vec4f(1.0f, 1.0f, 1.0f, 1.0f);
-  defaultColors_[90.0f] = osg::Vec4f(1.0f, 0.0f, 0.0f, 1.0f);
-  defaultColors_[80.0f] = osg::Vec4f(1.0f, 1.0f, 0.0f, 1.0f);
-  defaultColors_[70.0f] = osg::Vec4f(1.0f, 0.0f, 1.0f, 1.0f);
-  defaultColors_[60.0f] = osg::Vec4f(0.0f, 0.0f, 1.0f, 1.0f);
-  defaultColors_[50.0f] = osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
-  defaultColors_[40.0f] = osg::Vec4f(1.0f, 0.5f, 0.0f, 1.0f);
-  defaultColors_[30.0f] = osg::Vec4f(0.0f, 0.5f, 0.5f, 1.0f);
-  defaultColors_[20.0f] = osg::Vec4f(0.0f, 0.5f, 0.0f, 1.0f);
-  defaultColors_[10.0f] = osg::Vec4f(0.0f, 0.0f, 0.5f, 1.0f);
-  defaultColors_[0.0f] = osg::Vec4f(0.75f, 0.75f, 0.75f, 1.0f);
+  defaultColors_[100.0f] = simVis::Color::White;
+  defaultColors_[90.0f] = simVis::Color::Red;
+  defaultColors_[80.0f] = simVis::Color::Yellow;
+  defaultColors_[70.0f] = simVis::Color::Fuchsia;
+  defaultColors_[60.0f] = simVis::Color::Blue;
+  defaultColors_[50.0f] = simVis::Color::Lime;
+  defaultColors_[40.0f] = SIMDIS_ORANGE;
+  defaultColors_[30.0f] = simVis::Color::Teal;
+  defaultColors_[20.0f] = simVis::Color::Green;
+  defaultColors_[10.0f] = simVis::Color::Navy;
+  defaultColors_[0.0f] = simVis::Color::Silver;
 }
 
 void RFPropagationFacade::setGradientByThresholdType_(simRF::ProfileDataProvider::ThresholdType type)

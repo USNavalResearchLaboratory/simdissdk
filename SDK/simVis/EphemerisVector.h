@@ -28,6 +28,10 @@
 #include "simData/DataTypes.h"
 #include "simVis/Types.h"
 
+namespace osgEarth {
+  class LineDrawable;
+  class LineGroup;
+}
 namespace simCore { class CoordinateConverter; }
 
 namespace simVis
@@ -73,23 +77,26 @@ private:
   /// Callback that will call rebuild_() when too much time-of-day has elapsed since last rebuild
   class RebuildOnTimer;
 
+  /** Copy constructor, not implemented or available. */
+  EphemerisVector(const EphemerisVector&);
+
   /// recreate the geometry
   void rebuild_(const simData::PlatformPrefs& prefs);
   /// recreates the vertices for a single ephemeris position
-  void rebuildLine_(const osg::Vec3& ephemerisPosition, osg::Vec3Array& vertices, float lineLength) const;
+  void rebuildLine_(osgEarth::LineDrawable* which, const osg::Vec3& ephemerisPosition, float lineLength) const;
   /// creates a standard geode for an ephemeris axis line, returning the geode and setting the array
-  osg::Geode* createGeode_(osg::observer_ptr<osg::Vec3Array>& vertices, const simVis::Color& color) const;
+  osg::Node* createVector_(const simVis::Color& color, float lineWidth) const;
 
   simData::PlatformPrefs               lastPrefs_;          ///< last prefs update
   simData::PlatformUpdate              lastUpdate_;         ///< Current platform location
   simCore::CoordinateConverter*        coordConvert_;       ///< Converts ephemeris ECEF to TP for vector calc
 
-  osg::observer_ptr<osg::Geode> moonGeode_;
-  osg::observer_ptr<osg::Vec3Array> moonVertices_;
-  osg::observer_ptr<osg::Geode> sunGeode_;
-  osg::observer_ptr<osg::Vec3Array> sunVertices_;
+  osg::ref_ptr<osgEarth::LineGroup> geomGroup_;
   osg::observer_ptr<const PlatformModelNode> modelNode_;
   osg::ref_ptr<osgEarth::Util::Ephemeris> ephemeris_;
+
+  /// working data
+  osg::ref_ptr<osg::Vec3Array> vertices_;
 
   /// Last clock time when we rebuilt the line; detect time drift to rebuild line for entites that don't move
   simCore::TimeStamp lastUpdateTime_;

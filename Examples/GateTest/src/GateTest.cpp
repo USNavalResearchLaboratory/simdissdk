@@ -241,7 +241,7 @@ ui::Control* createUI(AppData& app)
   top->setAbsorbEvents(true);
   top->setMargin(ui::Gutter(5.0f));
   top->setBackColor(osg::Vec4(0, 0, 0, 0.5));
-  top->addControl(new ui::LabelControl("GATES - Test App", 22.0f, osg::Vec4(1, 1, 0, 1)));
+  top->addControl(new ui::LabelControl("GATES - Test App", 22.0f, simVis::Color::Yellow));
 
   int c=0, r=0;
   ui::Grid* grid = top->addControl(new ui::Grid());

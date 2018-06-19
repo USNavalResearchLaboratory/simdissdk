@@ -53,7 +53,7 @@ bool EntityNameFilter::acceptEntity(simData::ObjectId id) const
   if (model_ == NULL)
     return false;
   QString name = model_->data(model_->index(id)).toString();
-  return regExp_->match(name.toStdString());;
+  return regExp_->match(name.toStdString());
 }
 
 QWidget* EntityNameFilter::widget(QWidget* newWidgetParent) const

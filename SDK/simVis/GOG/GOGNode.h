@@ -66,6 +66,8 @@ namespace simVis { namespace GOG
   static const std::string RelativeShapeKeyword = "RELATIVE_SHAPE";
   // Keyword in meta data to indicate the shape has a referencepoint which may be obtained from the node's geometry
   static const std::string ReferencePointKeyword = "REFERENCE_POINT";
+  // Keyword in config to indicate shape has absolute points
+  static const std::string AbsoluteKeyword = "ABSOLUTE_SHAPE";
 
   // Forward declare an error handler for the context (see simVis/GOG/ErrorHandler.h"
   class ErrorHandler;

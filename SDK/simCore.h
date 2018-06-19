@@ -47,10 +47,6 @@
 #include "simCore/Common/Exception.h"
 #include "simCore/Common/Export.h"
 #include "simCore/Common/FileSearch.h"
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-/** @deprecated include, no longer used in the SDK, and may be removed in a future release. */
-#include "simCore/Common/Memory.h"
-#endif
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Time.h"
 #include "simCore/Common/Version.h"

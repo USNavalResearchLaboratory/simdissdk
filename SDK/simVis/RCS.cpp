@@ -34,6 +34,7 @@
 #include "simVis/Constants.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/Registry.h"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/RCS.h"
 
@@ -292,17 +293,17 @@ osg::Node* RCSRenderer::render2D_()
   if (rcs_)
   {
     osg::Geometry* rcsGeom = new osg::Geometry();
+    rcsGeom->setName("simVis::RCS");
     rcsGeom->setDataVariance(osg::Object::DYNAMIC);
     rcsGeom->setUseVertexBufferObjects(true);
     rcsGeom->getOrCreateStateSet()->setAttribute(new osg::LineWidth(3.0f), osg::StateAttribute::ON);
     geode->addDrawable(rcsGeom);
 
-    osg::Vec3Array* verts = new osg::Vec3Array();
+    osg::Vec3Array* verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     rcsGeom->setVertexArray(verts);
 
-    osg::Vec4Array* colors = new osg::Vec4Array;
+    osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_PER_PRIMITIVE_SET);
     rcsGeom->setColorArray(colors);
-    rcsGeom->setColorBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
 
     double elev = simCore::DEG2RAD * elev_;
     int end = 2 + static_cast<int>(osg::absolute(max_)/10.0);
@@ -320,7 +321,7 @@ osg::Node* RCSRenderer::render2D_()
     float rcsValue = 10;
     int lastCount = 4;
 
-    osg::Vec4 grey(0.4f, 0.4f, 0.4f, 1.0f);
+    const osg::Vec4 grey(0.4f, 0.4f, 0.4f, 1.0f);
 
     for (int j = 0; j < (zeroRing_ + end); j++)
     {
@@ -334,7 +335,7 @@ osg::Node* RCSRenderer::render2D_()
       lastCount = verts->size();
 
       if (j == zeroRing_)
-        colors->push_back(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f));  // white 0 dB ring
+        colors->push_back(simVis::Color::White);  // white 0 dB ring
       else
         colors->push_back(grey); // gray rings every 10 dB
 
@@ -361,7 +362,7 @@ osg::Node* RCSRenderer::render2D_()
     if (colorOverride_)
       colors->push_back(color_);
     else
-      colors->push_back(osg::Vec4(1.0f, 1.0f, 0.0f, 1.0f));
+      colors->push_back(simVis::Color::Yellow);
   }
 
   return geode;
@@ -377,6 +378,7 @@ osg::Node* RCSRenderer::render3D_()
   if (rcs_)
   {
     osg::Geometry* rcsGeom = new osg::Geometry();
+    rcsGeom->setName("simVis::RCS");
     rcsGeom->setDataVariance(osg::Object::DYNAMIC);
 
     rcsGeom->setUseVertexBufferObjects(true);
@@ -386,13 +388,11 @@ osg::Node* RCSRenderer::render3D_()
     osg::Vec3Array* verts = new osg::Vec3Array();
     rcsGeom->setVertexArray(verts);
 
-    osg::Vec3Array* norms = new osg::Vec3Array();
+    osg::Vec3Array* norms = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
     rcsGeom->setNormalArray(norms);
-    rcsGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
 
-    osg::Vec4Array* colors = new osg::Vec4Array;
+    osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
     rcsGeom->setColorArray(colors);
-    rcsGeom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
 
     double radDetail = simCore::DEG2RAD * detail_;
     float rcsdB;

@@ -221,7 +221,7 @@ void initializeDrawables(App& app)
 
   // Draw a red dot at the center of the sphere
   osg::ShapeDrawable* centerDot = new osg::ShapeDrawable(new osg::Sphere());
-  centerDot->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
+  centerDot->setColor(simVis::Color::Red);
   app.centroidNode->addChild(centerDot);
 }
 

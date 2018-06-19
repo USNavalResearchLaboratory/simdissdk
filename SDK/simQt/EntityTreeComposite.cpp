@@ -389,7 +389,7 @@ QList<uint64_t> EntityTreeComposite::selectedItems() const
 /** Allows the developer to customize the look by adding buttons after the filter text **/
 void EntityTreeComposite::addButton(QWidget* button)
 {
-  composite_->horizontalLayout->addWidget(button);
+  composite_->horizontalLayout_2->addWidget(button);
 }
 
 void EntityTreeComposite::setTreeViewActionEnabled(bool value)

@@ -30,9 +30,10 @@
 #include "simVis/Types.h"
 
 namespace osg {
-  class Geode;
+  class Geometry;
   class Vec4f;
 }
+namespace osgEarth { class LineDrawable; }
 
 namespace simVis
 {
@@ -149,16 +150,12 @@ private:
   void applyOverrides_(EntityNode* node, bool enable);
 
   void updateDome_();
-  /**
-  * Scales the geometry used to represent targets, based on input range
-  * @param[in ] geode  the osg::Geode that contains the geometry
-  * @param[in ] range (the planetarium radius) in meters
-  */
-  void scaleTargetGeode_(osg::Geode* geode, double range) const;
-  osg::Geode* buildVectorGeode_();
 
-  osg::ref_ptr<osg::Geode> dome_;
-  osg::ref_ptr<osg::Geode> targetGeode_;
+  void scaleTargetGeometry_(double range) const;
+  osg::Node* buildVectorGeometry_();
+
+  osg::ref_ptr<osg::Geometry> dome_;
+  osg::ref_ptr<osg::Node> targetGeom_;
 };
 
 } // namespace simVis

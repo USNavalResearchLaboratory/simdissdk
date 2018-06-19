@@ -22,13 +22,13 @@
 #ifndef SIMVIS_LOCAL_GRID_H
 #define SIMVIS_LOCAL_GRID_H
 
-#include "osg/Group"
 #include "osg/observer_ptr"
-#include "osgEarth/ShaderGenerator"
+#include "osg/ref_ptr"
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 #include "simVis/LocatorNode.h"
 
+namespace osg { class Geode; }
 namespace osgText { class Text; }
 
 namespace simVis
@@ -79,7 +79,7 @@ namespace simVis
   protected: // methods
 
     /// osg::Referenced-derived
-    virtual ~LocalGridNode() {}
+    virtual ~LocalGridNode();
 
   private: // methods
     /// recreate the geometry
@@ -88,27 +88,30 @@ namespace simVis
     /// update the locator settings
     void configureLocator_(const simData::LocalGridPrefs& prefs);
 
-    /// calculate Speed rings parameters based on host platform data
-    bool calcSpeedParams_(const simData::LocalGridPrefs& prefs);
-
-    /// convenience function to prepare text labeling
-    osgText::Text* createTextPrototype_(const simData::LocalGridPrefs& prefs, double value, const std::string& units="", int precision=1) const;
-
-    /// convenience function to prepare text labeling
-    osgText::Text* createTextPrototype_(const simData::LocalGridPrefs& prefs, const std::string& str) const;
-
     /// create Cartesian grid display
-    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geode) const;
+    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup) const;
 
     /// create polar ring or range ring display
-    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool includePolarRadials) const;
+    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const;
 
     /// create speed ring or speed line display
-    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool drawSpeedLine) const;
+    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool drawSpeedLine) const;
 
-    /// Draws a straight line between two points, subdividing it an arbitrary number of times
-    void addLineStrip_(osg::Geometry& geom, osg::Vec3Array& vertices, int& primitiveSetStart,
-      const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine) const;
+    /// update the speed ring/line display for current data
+    void updateSpeedRings_(const simData::LocalGridPrefs& prefs, double sizeM, double timeRadiusSeconds);
+
+    /**
+    * Determine if speed rings/speed line display can be displayed, and process speed-related variables for display
+    * @param[in ] prefs Preferences that determine display characteristics
+    * @param[out ] sizeM size in meters of outer ring/speed line
+    * @param[out ] timeRadiusSeconds  size of outer ring/speed line expressed as a time in seconds
+    * @return if < 0, display is not valid; if == 0, display is valid; if > 0, display needs to be updated.
+    */
+    int processSpeedParams_(const simData::LocalGridPrefs& prefs, double& sizeM, double& timeRadiusSeconds);
+
+  private: // data
+    osg::ref_ptr<osg::Geode> graphicsGroup_;
+    osg::ref_ptr<osg::Geode> labelGroup_;
 
     simData::LocalGridPrefs lastPrefs_;
     bool                    forceRebuild_;

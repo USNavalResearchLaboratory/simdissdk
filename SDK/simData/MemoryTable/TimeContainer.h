@@ -181,6 +181,14 @@ public:
   virtual void erase(Iterator iter, EraseBehavior eraseBehavior) = 0;
   /** Removes all entries from the container. */
   virtual DelayedFlushContainerPtr flush() = 0;
+
+  /**
+   * Returns the begin and end time
+   * @param begin Returns the begin time
+   * @param end Returns the end time
+   * @returns 0 if begin and end are set
+   */
+  virtual int getTimeRange(double& begin, double& end) const = 0;
 };
 
 } }

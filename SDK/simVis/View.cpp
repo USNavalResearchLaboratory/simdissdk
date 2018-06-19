@@ -24,9 +24,11 @@
 #include "osg/Depth"
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
+#include "osgEarth/GLUtils"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/Version"
+#include "osgEarth/CullingUtils"
 #include "osgEarthUtil/Sky"
 
 #include "simCore/Calc/Angle.h"
@@ -62,15 +64,15 @@ public:
   BorderNode() : osg::Geode(), props_(simVis::Color::White, 2)
   {
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+    geom->setName("simVis::BorderNode");
     geom->setUseVertexBufferObjects(true);
     geom->setDataVariance(osg::Object::DYNAMIC);
 
     osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array(10);
     geom->setVertexArray(verts.get());
 
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     geom->setColorArray(colors.get());
-    geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 10));
     this->addDrawable(geom.get());
@@ -133,7 +135,9 @@ struct SetNearFarCallback : public osg::NodeCallback
 
   SetNearFarCallback()
   {
-    // create a state set to turn off depth buffer when in overhead mode
+    // create a state set to turn off depth buffer when in overhead mode.
+    // note: this will override the depth settings in the TwoPassAlphaRenderBin, and 
+    // that's OK because we don't care about TPA when the depth buffer is off.
     depthState_ = new osg::StateSet();
     depthState_->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
       osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
@@ -540,7 +544,9 @@ View::View()
    borderProps_(simVis::Color::White,  2),
    extents_(0, 0, 200, 100, false),
    lighting_(true),
-   fovyDeg_(DEFAULT_VFOV),
+   fovXEnabled_(false),
+   fovXDeg_(60.0),
+   fovYDeg_(DEFAULT_VFOV),
    viewType_(VIEW_TOPLEVEL),
    useOverheadClamping_(true),
    overheadNearFarCallback_(new SetNearFarCallback),
@@ -592,13 +598,20 @@ View::View()
   thisCamera->setCullingMode(thisCamera->getCullingMode() & ~osg::CullSettings::SMALL_FEATURE_CULLING);
 
   // default our background to black
-  thisCamera->setClearColor(osg::Vec4(0,0,0,1));
+  thisCamera->setClearColor(simVis::Color::Black);
 
   // focus manager for insets, if present.
   focusMan_ = new FocusManager(this);
 
   // Apply the new viewport and new perspective matrix
   getCamera()->setProjectionMatrixAsPerspective(fovY(), extents_.width_ / extents_.height_, 1.f, 10000.f);
+
+  // Install a viewport uniform on each camera, giving all shaders access
+  // to the window size. The osgEarth::LineDrawable construct uses this.
+  getCamera()->addCullCallback(new osgEarth::InstallViewportSizeUniform());
+
+  // set global defaults for LineDrawable
+  osgEarth::GLUtils::setGlobalDefaults(getCamera()->getOrCreateStateSet());
 }
 
 View::~View()
@@ -701,7 +714,8 @@ bool View::setUpViewAsInset_(simVis::View* host)
     }
 
     // if the user hasn't created a camera for this view, do so now.
-    fovyDeg_ = host->fovY();
+    fovYDeg_ = host->fovY();
+    fovXDeg_ = host->fovX();
     osg::Camera* camera = this->getCamera();
     if (!camera)
     {
@@ -1115,25 +1129,42 @@ void View::setLighting(bool value)
   lighting_ = value;
 }
 
-double View::fovY() const
+double View::fovX() const
 {
-  return fovyDeg_;
+  return fovXDeg_;
 }
 
-void View::setFovY(double fovyDeg)
+void View::setFovX(double fovXDeg)
 {
   // do a simple check on invalid values, since EarthManipulator doesn't protect against invalid values
-  if (fovyDeg <= 0.0 || fovyDeg >= 360.0)
+  if (fovXDeg <= 0.0 || fovXDeg >= 360.0)
+    return;
+
+  if (fovXDeg == fovXDeg_)
+    return;
+  fovXDeg_ = fovXDeg;
+  refreshExtents();
+}
+
+double View::fovY() const
+{
+  return fovYDeg_;
+}
+
+void View::setFovY(double fovYDeg)
+{
+  // do a simple check on invalid values, since EarthManipulator doesn't protect against invalid values
+  if (fovYDeg <= 0.0 || fovYDeg >= 360.0)
     return;
 
   // always update the earth manipulator first
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovyDeg);
+    manip->setFovY(fovYDeg);
 
-  if (fovyDeg == fovyDeg_)
+  if (fovYDeg == fovYDeg_)
     return;
-  fovyDeg_ = fovyDeg;
+  fovYDeg_ = fovYDeg;
   refreshExtents();
 }
 
@@ -1405,7 +1436,7 @@ void View::enableOverheadMode(bool enableOverhead)
   // which may not be initialized properly if overhead mode is set too soon
   simVis::EarthManipulator* manip = dynamic_cast<simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
-    manip->setFovY(fovyDeg_);
+    manip->setFovY(fovYDeg_);
 
   // if this is the first time enabling overhead mode, install the node camera-update
   // node visitor in the earth manipulator to facilitate tethering. This NodeVisitor
@@ -1442,7 +1473,8 @@ void View::enableOverheadMode(bool enableOverhead)
       // Only go into orthographic past 1.6 -- before then, the LDB would cause significant issues with platform and GOG display
       getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
       getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-      getCamera()->setCullCallback(overheadNearFarCallback_);
+      if (overheadNearFarCallback_->referenceCount() == 1)
+        getCamera()->addCullCallback(overheadNearFarCallback_);
 #endif
     }
 
@@ -1457,7 +1489,21 @@ void View::enableOverheadMode(bool enableOverhead)
     {
       const osg::Viewport* vp = getCamera()->getViewport();
       const double aspectRatio = vp ? vp->aspectRatio() : 1.5;
-      getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+
+      if (!fovXEnabled_)
+      {
+        getCamera()->setProjectionMatrixAsPerspective(fovY(), aspectRatio, 1.0, 100.0);
+      }
+      else
+      {
+        double left = 0.0;
+        double right = 0.0;
+        double bottom = 0.0;
+        double top = 0.0;
+        getFrustumBounds_(left, right, bottom, top, 1.0);
+        getCamera()->setProjectionMatrix(osg::Matrixd::frustum(left, right, bottom, top, 1.0, 100.0));
+      }
+
       getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
       getCamera()->removeCullCallback(overheadNearFarCallback_);
     }
@@ -1822,8 +1868,10 @@ osg::Camera* View::createHUD_() const
   hud->setClearMask(GL_DEPTH_BUFFER_BIT);
   hud->setAllowEventFocus(true);
   hud->getOrCreateStateSet()->setRenderBinDetails(0, BIN_TRAVERSAL_ORDER_SIMSDK);
-  // Set up a program so that text is not blocky
+#if OSG_VERSION_LESS_OR_EQUAL(3,4,1)
+  // Set up a program so that text is not blocky for older OSG that didn't bake in programs
   hud->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), 0);
+#endif
   hud->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
   return hud;
 }
@@ -1875,14 +1923,26 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
 
   if (osg::equivalent(proj(3,3), 0.0)) // perspective
   {
-    double oldFovy = DEFAULT_VFOV;
+    double oldFovY = DEFAULT_VFOV;
     double oldAspectRatio = 1;
     double oldNear = DEFAULT_NEAR;
     double oldFar = DEFAULT_FAR;
 
     // Pull out the old values from the projection matrix
-    proj.getPerspective(oldFovy, oldAspectRatio, oldNear, oldFar);
-    camera->setProjectionMatrixAsPerspective(fovY(), newViewport->aspectRatio(), oldNear, oldFar);
+    proj.getPerspective(oldFovY, oldAspectRatio, oldNear, oldFar);
+    if (!fovXEnabled_)
+    {
+      camera->setProjectionMatrixAsPerspective(fovY(), newViewport->aspectRatio(), oldNear, oldFar);
+    }
+    else
+    {
+      double left = 0.0;
+      double right = 0.0;
+      double bottom = 0.0;
+      double top = 0.0;
+      getFrustumBounds_(left, right, bottom, top, oldNear);
+      camera->setProjectionMatrix(osg::Matrixd::frustum(left, right, bottom, top, oldNear, oldFar));
+    }
   }
   else
   {
@@ -1967,6 +2027,30 @@ void View::setUseOverheadClamping(bool clamp)
     return;
   useOverheadClamping_ = clamp;
   OverheadMode::setEnabled(isOverheadEnabled() && useOverheadClamping(), this);
+}
+
+void View::setFovXEnabled(bool fovXEnabled)
+{
+  if (fovXEnabled_ == fovXEnabled)
+    return;
+  fovXEnabled_ = fovXEnabled;
+  refreshExtents();
+}
+
+bool View::isFovXEnabled() const
+{
+  return fovXEnabled_;
+}
+
+void View::getFrustumBounds_(double& left, double& right, double& bottom, double& top, double zNear) const
+{
+  double tanFovX = tan(simCore::DEG2RAD * fovX() * 0.5);
+  double tanFovY = tan(simCore::DEG2RAD * fovY() * 0.5);
+
+  right = tanFovX * zNear;
+  left = -right;
+  top = tanFovY * zNear;
+  bottom = -top;
 }
 
 }

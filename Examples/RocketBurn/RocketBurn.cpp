@@ -132,7 +132,7 @@ void addRocketBurnData(simVis::RocketBurnStorage &rocketBurnStorage, simData::Ob
   rocketBurnStorage.addBurnData(platId, burnId, 5, updateData);
 
   // time 10 - change color and direction
-  rocketBurnShape.color = osg::Vec4(1, 0, 0, 1);
+  rocketBurnShape.color = simVis::Color::Red;
   updateData.pointingAngle = osg::Vec3f(1.57, 0, 0);
   rocketBurnStorage.addBurnData(platId, burnId, 10, updateData);
 
@@ -157,6 +157,7 @@ void addVaporTrail(simVis::VaporTrailStorage &storage, simData::ObjectId platId)
   {
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D();
     texture->setImage(osgDB::readImageFile(foundFile));
+    simVis::fixTextureForGlCoreProfile(texture.get());
     textures.push_back(texture);
   }
 

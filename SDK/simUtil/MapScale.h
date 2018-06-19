@@ -119,6 +119,9 @@ private:
   /** Use an update callback to recalculate the map scale */
   class UpdateCallback;
 
+  /** Changes visibility of the children */
+  void setVisible_(bool isVisible);
+
   /** Determines heightPx_ based on height of text and bars, and adjusts text position. */
   void recalculateHeight_();
   /** Draws bars out to maxValue using numDivisions, with a width provided and a given precision for text */
@@ -138,6 +141,8 @@ private:
 
   /** Geode holding the text and display data */
   osg::ref_ptr<osg::Geode> geode_;
+  /** Group holding all the text strings */
+  osg::ref_ptr<osg::Group> textGroup_;
 
   /** Representative text for the values on the top */
   osg::ref_ptr<simVis::Text> valueTextPrototype_;

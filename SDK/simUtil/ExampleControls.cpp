@@ -324,7 +324,7 @@ namespace
 
       this->addControl(grid);
 
-      LabelControl* instr = new LabelControl("Clear tether", 14, osg::Vec4(1, 1, 0, 1));
+      LabelControl* instr = new LabelControl("Clear tether", 14, simVis::Color::Yellow);
       instr->setActiveColor(Color::Blue);
       instr->addEventHandler(new ClearTether(view, &data_));
       this->addControl(instr);

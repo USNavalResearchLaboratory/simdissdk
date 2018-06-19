@@ -28,6 +28,7 @@
 
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
+#include "simVis/LineDrawable.h"
 #include "osgEarthSymbology/Color"
 
 #include "simCore/Calc/Math.h"
@@ -46,25 +47,392 @@
 
 #define LC "[LocalGrid] "
 
-using namespace osgEarth::Symbology;
-
 namespace simVis
 {
 // --------------------------------------------------------------------------
 namespace
 {
 const float CIRCLE_QUANT_LEN = 50.0f; // segment length for quantized circle
+const float RADIAL_VERTEX_FACTOR = 2.5f; // ratio of sector points to range rings
 
 // limit range ring and speed ring size to avoid excessive UI responsiveness penalty.
 // this number derived from trial and error, and corresponds to a several minute response time.
 const double MAX_RING_SIZE_M = 6e+06;
 
 // minimum number of line segments in a polar ring
-const int MIN_NUM_LINE_SEGMENTS = 50;
+const unsigned int MIN_NUM_LINE_SEGMENTS = 50;
 
 // Number of points in the subdivided line strip for horizontal and cross-hair grids
-const int NUM_POINTS_PER_LINE_STRIP = 10;
+const unsigned int NUM_POINTS_PER_LINE_STRIP = 10;
 
+/// Base Class for local grid label types.
+class LocalGridLabel : public osgText::Text
+{
+public:
+  explicit LocalGridLabel(const simData::LocalGridPrefs& prefs)
+  {
+    setFont(simVis::Registry::instance()->getOrCreateFont(prefs.gridlabelfontname()));
+    setAxisAlignment(osgText::TextBase::XY_PLANE);
+    setBackdropType(prefs.gridlabeltextoutline() == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
+    setBackdropColor(simVis::Color(prefs.gridlabeloutlinecolor(), simVis::Color::RGBA));
+    const float outlineThickness = simVis::outlineThickness(prefs.gridlabeltextoutline());
+    setBackdropOffset(outlineThickness, outlineThickness);
+    setColor(simVis::Color(prefs.gridlabelcolor(), simVis::Color::RGBA));
+    setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
+    // Scale font up, based on an eyeball estimate compared to SIMDIS 9
+    setCharacterSize(prefs.gridlabelfontsize() * 1.8);
+    setAlignment(osgText::TextBase::LEFT_BOTTOM);
+  }
+
+  LocalGridLabel(const LocalGridLabel& text, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY)
+    : osgText::Text(text, copyop)
+  {
+  }
+};
+
+/// Label class specialized for Cartesian grid types.
+class CartesianGridLabel : public LocalGridLabel
+{
+public:
+  CartesianGridLabel(const simData::LocalGridPrefs& prefs, float val) : LocalGridLabel(prefs)
+  {
+    std::stringstream buf;
+    const Units prefSizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
+    buf << std::fixed << std::setprecision(prefs.gridlabelprecision()) << val << ' ' << prefSizeUnits.getAbbr();
+    setText(buf.str());
+  }
+};
+
+/// Label class specialized for Polar, RangeRing, SpeedRing and SpeedLine grid types.
+class RingLabel : public LocalGridLabel
+{
+public:
+  RingLabel(const simData::LocalGridPrefs& prefs, unsigned int ring, bool isMajorAxisLabel)
+    : LocalGridLabel(prefs),
+    ring_(ring),
+    isMajorAxisLabel_(isMajorAxisLabel)
+  {
+  }
+
+  // this provides for minor-axis copy of major-axis label
+  RingLabel(const RingLabel& label, bool isMajorAxisLabel, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY)
+    : LocalGridLabel(label, copyop),
+    ring_(label.ring_),
+    isMajorAxisLabel_(isMajorAxisLabel)
+  {
+  }
+
+  void update(const simData::LocalGridPrefs& prefs, double sizeM, double timeRadiusSeconds)
+  {
+    if (!prefs.speedring().displaytime())
+    {
+      update(prefs, sizeM);
+      return;
+    }
+    if (timeRadiusSeconds <= 0.0)
+    {
+      setText("");
+      return;
+    }
+    const unsigned int numDivisions = prefs.gridsettings().numdivisions();
+    const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
+    const unsigned int numRings = osg::maximum(1u, (numDivisions + 1) * (numSubDivisions + 1));
+
+    const double spacingS = timeRadiusSeconds / numRings;
+    const double radiusS = spacingS * (ring_ + 1);
+
+    const simData::ElapsedTimeFormat timeFormat = prefs.speedring().timeformat();
+    assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
+    std::stringstream buf;
+
+    // show HH:MM:SS.SS
+    if (timeFormat == simData::ELAPSED_HOURS)
+    {
+      simCore::HoursTimeFormatter formatter;
+      formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
+    }
+
+    // show MM:SS.SS
+    else if (timeFormat == simData::ELAPSED_MINUTES)
+    {
+      simCore::MinutesTimeFormatter formatter;
+      formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
+    }
+
+    // show SS.SS
+    else
+    {
+      simCore::SecondsTimeFormatter formatter;
+      formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
+    }
+    setText(buf.str());
+
+    const float spacingM = sizeM / numRings;
+    const float radiusM = spacingM * (ring_ + 1);
+    updatePosition_(radiusM);
+  }
+
+  void update(const simData::LocalGridPrefs& prefs, double sizeM)
+  {
+    if (sizeM <= 0.0)
+    {
+      setText("");
+      return;
+    }
+    const unsigned int numDivisions = prefs.gridsettings().numdivisions();
+    const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
+    const unsigned int numRings = osg::maximum(1u, (numDivisions + 1) * (numSubDivisions + 1));
+    const float spacingM = sizeM / numRings;
+    const float radiusM = spacingM * (ring_ + 1);
+
+    // displaying distance, not time; convert labels value from meters to local grid units pref
+    const Units prefSizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
+    const double radius = osgEarth::Units::METERS.convertTo(prefSizeUnits, radiusM);
+    std::stringstream buf;
+    buf << std::fixed << std::setprecision(prefs.gridlabelprecision()) << radius << ' ' << prefSizeUnits.getAbbr();
+    setText(buf.str());
+
+    updatePosition_(radiusM);
+  }
+private:
+  void updatePosition_(float radiusM)
+  {
+    if (isMajorAxisLabel_)
+      setPosition(osg::Vec3(0.0f, radiusM, 0.0f));
+    else
+      setPosition(osg::Vec3(radiusM, 0.0f, 0.0f));
+  }
+
+  unsigned int ring_;
+  bool isMajorAxisLabel_;
+};
+/// Geometry for a simple linestrip with fixed NUM_POINTS_PER_LINE_STRIP
+class LineStrip : public osg::Geometry
+{
+public:
+  LineStrip()
+  {
+    setUseVertexBufferObjects(true);
+    setUseDisplayList(false);
+
+    osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, NUM_POINTS_PER_LINE_STRIP);
+    setVertexArray(vertexArray.get());
+
+    osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+    (*colorArray)[0] = simVis::Color::White;
+    setColorArray(colorArray.get());
+
+    addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, 0, vertexArray->size()));
+  }
+
+  void setColor(const osg::Vec4f& color)
+  {
+    osg::Vec4Array* colorArray = static_cast<osg::Vec4Array*>(getColorArray());
+    if (!colorArray)
+    {
+      assert(0);
+      return;
+    }
+    (*colorArray)[0] = color;
+  }
+
+  void update(const osg::Vec3f& start, const osg::Vec3f& end)
+  {
+    osg::ref_ptr<osg::Vec3Array> vertexArray = dynamic_cast<osg::Vec3Array*>(getVertexArray());
+    if (!vertexArray)
+    {
+      assert(0);
+      return;
+    }
+    assert(vertexArray->getNumElements() == NUM_POINTS_PER_LINE_STRIP);
+    VectorScaling::generatePoints(*(vertexArray.get()), start, end);
+    vertexArray->dirty();
+  }
+};
+/// Geometry for SpeedLine grid types.
+class SpeedLine : public LineStrip
+{
+public:
+  SpeedLine()
+  {
+    setName("simVis::LocalGridNode::SpeedLine");
+  }
+  void update(double sizeM)
+  {
+    LineStrip::update(osg::Vec3(), osg::Vec3(0.f, static_cast<float>(sizeM), 0.f));
+  }
+};
+
+/// Geometry for axes in Polar and SpeedRing grid types.
+class Axis : public LineStrip
+{
+public:
+  explicit Axis(bool isMajorAxis)
+    : isMajorAxis_(isMajorAxis)
+  {
+    if (isMajorAxis_)
+      setName("simVis::LocalGridNode::MajorAxis");
+    else
+      setName("simVis::LocalGridNode::MinorAxis");
+  }
+  void update(double sizeM)
+  {
+    if (isMajorAxis_)
+      LineStrip::update(osg::Vec3(0.f, -sizeM, 0.f), osg::Vec3(0.f, sizeM, 0.f));
+    else
+      LineStrip::update(osg::Vec3(-sizeM, 0.f, 0.f), osg::Vec3(sizeM, 0.f, 0.f));
+  }
+private:
+  bool isMajorAxis_;
+};
+
+/// Geometry for off-axis sectors in Polar and SpeedRing grid types.
+class RadialPoints : public osg::Geometry
+{
+public:
+  RadialPoints(const osg::Vec4f& color, float sectorAngleDeg, unsigned int numRings)
+    : sectorAngleDeg_(sectorAngleDeg),
+    numRings_(numRings)
+  {
+    setName("simVis::LocalGridNode::RadialPoints");
+    setUseVertexBufferObjects(true);
+    setUseDisplayList(false);
+
+    // determine how many vertices we'll actually use
+    unsigned int vertexCount = 0;
+    // skip 0 and 360
+    for (float angle = sectorAngleDeg_; angle < 360.0f; angle += sectorAngleDeg_)
+    {
+      if (osg::equivalent(static_cast<float>(fmod(angle, 90.f)), 0.f)) // don't overdraw the main X/Y axes
+        continue;
+      // skip 0
+      for (int i = 1; i < numRings_ * RADIAL_VERTEX_FACTOR; ++i)
+      {
+        if (osg::equivalent(static_cast<float>(fmod(static_cast<float>(i), RADIAL_VERTEX_FACTOR)), 0.f)) // don't overdraw the rings
+          continue;
+        vertexCount++;
+      }
+    }
+    osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, vertexCount);
+    setVertexArray(vertexArray.get());
+
+    osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+    (*colorArray)[0] = color;
+    setColorArray(colorArray.get());
+
+    addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, vertexArray->size()));
+  }
+  void update(double sizeM)
+  {
+    osg::ref_ptr<osg::Vec3Array> vertexArray = dynamic_cast<osg::Vec3Array*>(getVertexArray());
+    if (!vertexArray)
+    {
+      assert(0);
+      return;
+    }
+    const float spacingM = sizeM / osg::maximum(1u, numRings_);
+    const float radialVertexSpacing = spacingM / RADIAL_VERTEX_FACTOR;
+    size_t index = 0;
+    // skip 0 and 360
+    for (float angle = sectorAngleDeg_; angle < 360.0f; angle += sectorAngleDeg_)
+    {
+      if (osg::equivalent(static_cast<float>(fmod(angle, 90.f)), 0.f)) // don't overdraw the main X/Y axes
+        continue;
+      const float angleRad = osg::DegreesToRadians(angle);
+      const float x = sinf(angleRad);
+      const float y = cosf(angleRad);
+      // skip 0
+      for (int i = 1; i < numRings_ * RADIAL_VERTEX_FACTOR; ++i)
+      {
+        if (osg::equivalent(static_cast<float>(fmod(static_cast<float>(i), RADIAL_VERTEX_FACTOR)), 0.f)) // don't overdraw the rings
+          continue;
+        // if assert fails, re-check algorithm for determining vertexCount in constructor
+        assert(index < vertexArray->getNumElements());
+        (*vertexArray)[index] = osg::Vec3(x * radialVertexSpacing * i, y * radialVertexSpacing * i, 0.f);
+        index++;
+      }
+    }
+    vertexArray->dirty();
+  }
+private:
+  float sectorAngleDeg_;
+  unsigned int numRings_;
+};
+
+/// Geometry for range rings in Polar, RangeRing and SpeedRing grid types.
+class RangeRing : public osg::Geometry
+{
+public:
+  explicit RangeRing(unsigned int ring)
+    : ring_(ring)
+  {
+    setName("simVis::LocalGridNode::RangeRing");
+    setUseVertexBufferObjects(true);
+    setUseDisplayList(false);
+
+    osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+    setVertexArray(vertexArray.get());
+
+    osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+    (*colorArray)[0] = simVis::Color::White;
+    setColorArray(colorArray.get());
+
+    drawArray_ = new osg::DrawArrays(GL_LINE_LOOP);
+    addPrimitiveSet(drawArray_.get());
+  }
+
+  void setColor(const osg::Vec4f& color)
+  {
+    osg::Vec4Array* colorArray = static_cast<osg::Vec4Array*>(getColorArray());
+    if (!colorArray)
+    {
+      assert(0);
+      return;
+    }
+    (*colorArray)[0] = color;
+  }
+
+  void update(const simData::LocalGridPrefs& prefs, double sizeM)
+  {
+    osg::ref_ptr<osg::Vec3Array> vertexArray = dynamic_cast<osg::Vec3Array*>(getVertexArray());
+    if (!vertexArray)
+    {
+      assert(0);
+      return;
+    }
+    if (sizeM <= 0.0)
+    {
+      drawArray_->setFirst(0);
+      drawArray_->setCount(0);
+      return;
+    }
+    const unsigned int numDivisions = prefs.gridsettings().numdivisions();
+    const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
+    const unsigned int numRings = osg::maximum(1u, (numDivisions + 1) * (numSubDivisions + 1));
+    const float spacingM = sizeM / numRings;
+    const float radiusM = spacingM * (ring_ + 1);
+    const double circum = 2.0 * M_PI * radiusM;
+    const unsigned int segs = simCore::sdkMax(MIN_NUM_LINE_SEGMENTS, static_cast<unsigned int>(::ceil(circum / CIRCLE_QUANT_LEN)));
+    const float inc = M_TWOPI / segs;
+
+    vertexArray->resize(segs);
+
+    for (unsigned int j = 0; j < segs; ++j)
+    {
+      const float angle = inc * j;
+      const float x = sin(angle);
+      const float y = cos(angle);
+      assert(j < vertexArray->getNumElements());
+      (*vertexArray)[j] = osg::Vec3(x * radiusM, y * radiusM, 0.0f);
+    }
+    vertexArray->dirty();
+    drawArray_->setFirst(0);
+    drawArray_->setCount(vertexArray->size());
+  }
+private:
+  osg::ref_ptr<osg::DrawArrays> drawArray_;
+  unsigned int ring_;
+};
 }
 
 // --------------------------------------------------------------------------
@@ -78,48 +446,71 @@ LocalGridNode::LocalGridNode(Locator* hostLocator, const EntityNode* host, int r
     host_(host)
 {
   setName("LocalGrid");
+  // the underlying locatorNode will be inactive until the node mask is changed
   setNodeMask(DISPLAY_MASK_NONE);
 }
 
+LocalGridNode::~LocalGridNode() {}
+
 void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
 {
-  // clean the graph so we can rebuild it.
-  this->removeChildren(0, this->getNumChildren());
-  osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+  // set up the default state set and render bins:
+  getOrCreateStateSet()->setRenderBinDetails(BIN_LOCAL_GRID, BIN_GLOBAL_SIMSDK);
+
+  if (!graphicsGroup_)
+  {
+    graphicsGroup_ = new osg::Geode();
+    graphicsGroup_->setName("simVis::LocalGridNode::GraphicsGeode");
+    osg::StateSet* ss = graphicsGroup_->getOrCreateStateSet();
+    PointSize::setValues(ss, 1.5f, osg::StateAttribute::ON);
+    addChild(graphicsGroup_.get());
+  }
+
+  if (!labelGroup_)
+  {
+    labelGroup_ = new osg::Geode();
+    labelGroup_->setName("simVis::LocalGridNode::LabelGeode");
+    addChild(labelGroup_.get());
+  }
+
+  // LocalGrid is constructed with 2 children; they are not removed
+  assert(getNumChildren() == 2);
+  graphicsGroup_->removeChildren(0, graphicsGroup_->getNumChildren());
+  labelGroup_->removeChildren(0, labelGroup_->getNumChildren());
 
   // build for the appropriate grid type:
   switch (prefs.gridtype())
   {
   case simData::LocalGridPrefs_Type_CARTESIAN:
-    createCartesian_(prefs, geode.get());
+    createCartesian_(prefs, graphicsGroup_.get(), labelGroup_.get());
     break;
 
   case simData::LocalGridPrefs_Type_POLAR:
-    createRangeRings_(prefs, geode.get(), true);
+    createRangeRings_(prefs, graphicsGroup_.get(), labelGroup_.get(), true);
     break;
 
   case simData::LocalGridPrefs_Type_RANGE_RINGS:
-    createRangeRings_(prefs, geode.get(), false);
+    createRangeRings_(prefs, graphicsGroup_.get(), labelGroup_.get(), false);
     break;
 
   case simData::LocalGridPrefs_Type_SPEED_RINGS:
-    createSpeedRings_(prefs, geode.get(), false);
-    break;
-
   case simData::LocalGridPrefs_Type_SPEED_LINE:
-    createSpeedRings_(prefs, geode.get(), true);
+  {
+    // determine if we can validly display speedrings/speedline
+    double sizeM;
+    double timeRadiusSeconds;
+    const int status = processSpeedParams_(prefs, sizeM, timeRadiusSeconds);
+    if (status >= 0)
+    {
+      createSpeedRings_(prefs, graphicsGroup_.get(), labelGroup_.get(), (prefs.gridtype() == simData::LocalGridPrefs_Type_SPEED_LINE));
+      updateSpeedRings_(prefs, sizeM, timeRadiusSeconds);
+    }
     break;
   }
-
-  // shader needed to draw text properly
-  osgEarth::Registry::shaderGenerator().run(geode.get());
-
-  // disable lighting
-  osg::StateSet* stateSet = geode->getOrCreateStateSet();
-  PointSize::setValues(stateSet, 1.5f, osg::StateAttribute::ON);
-  stateSet->setRenderBinDetails(BIN_LOCAL_GRID, BIN_GLOBAL_SIMSDK);
-
-  this->addChild(geode);
+  }
+  // have to run ShaderGenerator after adding labels
+  if (labelGroup_->getNumChildren() > 0)
+    osgEarth::Registry::shaderGenerator().run(labelGroup_.get());
 };
 
 void LocalGridNode::validatePrefs(const simData::LocalGridPrefs& prefs)
@@ -195,11 +586,6 @@ void LocalGridNode::setPrefs(const simData::LocalGridPrefs& prefs, bool force)
 
     if (rebuildRequired)
     {
-      if ((prefs.gridtype() == simData::LocalGridPrefs_Type_SPEED_RINGS) ||
-          (prefs.gridtype() == simData::LocalGridPrefs_Type_SPEED_LINE))
-      {
-        calcSpeedParams_(prefs);
-      }
       rebuild_(prefs);
     }
 
@@ -274,104 +660,21 @@ void LocalGridNode::syncWithLocator()
   // call the base class to update the matrix.
   LocatorNode::syncWithLocator();
 
-  if ((lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_RINGS) && (lastPrefs_.gridtype() != simData::LocalGridPrefs_Type_SPEED_LINE))
-    return;
-
-  if (calcSpeedParams_(lastPrefs_))
-    rebuild_(lastPrefs_);
-}
-
-// determine host's update time and calculate host speed as required for current speed-rings mode
-bool LocalGridNode::calcSpeedParams_(const simData::LocalGridPrefs& prefs)
-{
-  if (!prefs.speedring().useplatformspeed() && !prefs.speedring().usefixedtime())
-    return false;
-  const Locator* hostLocator = host_->getLocator();
-  if (!hostLocator)
-    return false;
-  const PlatformNode* hostPlatform = dynamic_cast<const PlatformNode*>(host_.get());
-  // if host is a platform, use its locator. if not, use host locator's parent locator.
-  const Locator* hostPlatformLocator = (hostPlatform) ? hostLocator : hostLocator->getParentLocator();
-  if (!hostPlatformLocator)
-    return false;
- 
-  bool rebuild = false;
-  // force rebuild if speed rings are displayed, using platform speed, and host velocity changed
-  if (prefs.speedring().useplatformspeed())
+  if ((lastPrefs_.gridtype() == simData::LocalGridPrefs_Type_SPEED_RINGS) ||
+    (lastPrefs_.gridtype() == simData::LocalGridPrefs_Type_SPEED_LINE))
   {
-    const double speedMS = simCore::v3Length(hostPlatformLocator->getCoordinate().velocity());
-    if (!simCore::areEqual(hostSpeedMS_, speedMS, 0.01))
-    {
-      hostSpeedMS_ = speedMS;
-      rebuild = true;
-    }
+    double sizeM;
+    double timeRadiusSeconds;
+    // has there been a change in params that will require the speed ring/line to update?
+    const int status = processSpeedParams_(lastPrefs_, sizeM, timeRadiusSeconds);
+    if (status > 0)
+      updateSpeedRings_(lastPrefs_, sizeM, timeRadiusSeconds);
   }
-
-  // if we are displaying speed rings with fixed time, rebuild the display when host locator time changes
-  if (prefs.speedring().usefixedtime())
-  {
-    const double timeS = hostPlatformLocator->getTime();
-    if (!simCore::areEqual(hostTimeS_, timeS))
-    {
-      hostTimeS_ = timeS;
-      rebuild = true;
-    }
-  }
-  return rebuild;
-}
-
-// creates a prototype Text template for the grid labels.
-osgText::Text* LocalGridNode::createTextPrototype_(const simData::LocalGridPrefs& prefs, double value, const std::string& units, int precision) const
-{
-  std::stringstream buf;
-  buf << std::fixed << std::setprecision(precision) << value << ' ' << units;
-  std::string str = buf.str();
-  return createTextPrototype_(prefs, str);
-}
-
-// creates a prototype Text template for the grid labels.
-osgText::Text* LocalGridNode::createTextPrototype_(const simData::LocalGridPrefs& prefs, const std::string& str) const
-{
-  osgText::Text* label = new osgText::Text();
-  label->setFont(simVis::Registry::instance()->getOrCreateFont(prefs.gridlabelfontname()));
-  label->setAxisAlignment(osgText::TextBase::XY_PLANE);
-  label->setBackdropType(prefs.gridlabeltextoutline() == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
-  label->setBackdropColor(simVis::Color(prefs.gridlabeloutlinecolor(), simVis::Color::RGBA));
-  float outlineThickness = simVis::outlineThickness(prefs.gridlabeltextoutline());
-  label->setBackdropOffset(outlineThickness, outlineThickness);
-  label->setColor(simVis::Color(prefs.gridlabelcolor(), simVis::Color::RGBA));
-  label->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
-  // Scale font up, based on an eyeball estimate compared to SIMDIS 9
-  label->setCharacterSize(prefs.gridlabelfontsize() * 1.8);
-  label->setAlignment(osgText::TextBase::LEFT_BOTTOM);
-  label->setText(str);
-
-  return label;
 }
 
 // creates a Cartesian grid.
-void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geode) const
+void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup) const
 {
-  // create one geometry for divisions, and another for sub-divisions
-  osg::ref_ptr<osg::Geometry> geomSub = new osg::Geometry();
-  osg::ref_ptr<osg::Geometry> geomDiv = new osg::Geometry();
-
-  geomSub->setUseVertexBufferObjects(true);
-  geomDiv->setUseVertexBufferObjects(true);
-
-  osg::ref_ptr<osg::Vec3Array> vertSub = new osg::Vec3Array();
-  osg::ref_ptr<osg::Vec3Array> vertDiv = new osg::Vec3Array();
-  geomSub->setVertexArray(vertSub.get());
-  geomDiv->setVertexArray(vertDiv.get());
-
-  osg::ref_ptr<osg::Vec4Array> colorArraySub = new osg::Vec4Array();
-  osg::ref_ptr<osg::Vec4Array> colorArrayDiv = new osg::Vec4Array();
-  geomSub->setColorArray(colorArraySub.get());
-  geomDiv->setColorArray(colorArrayDiv.get());
-
-  geomSub->setColorBinding(osg::Geometry::BIND_OVERALL);
-  geomDiv->setColorBinding(osg::Geometry::BIND_OVERALL);
-
   const Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   // Note that size is halved; it's provided in diameter, and we need it as radius
   const float size = sizeUnits.convertTo(Units::METERS, prefs.size()) * 0.5f;
@@ -380,210 +683,307 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
   const int numDivLines = (numDivisions * 2) + 3;
   const int numSubLines = (numDivLines-1) * (numSubDivisions + 1);
 
-  float span = 2 * size;
-  float divSpacing = span / (float)(numDivLines-1);
-  float subSpacing = span / (float)(numSubLines);
-  float x0 = -0.5 * span;
-  float y0 = -0.5 * span;
+  const float span = 2.f * size;
+  const float divSpacing = span / (numDivLines-1);
+  const float subSpacing = span / (numSubLines);
+  const float x0 = -0.5f * span;
+  const float y0 = -0.5f * span;
 
-  const osg::Vec4f color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  osg::Vec4f subColor = color * 0.5;
-  subColor.a() = 1.0;
-
-  colorArraySub->push_back(subColor);
-  colorArrayDiv->push_back(color);
-
-  // Keep track of location in the primitive set array
-  int primitiveSetStart = 0;
+  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
+  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
 
   // first draw the subdivision lines
-  for (int s=0; s<numSubLines; ++s)
+  for (int s = 0; s < numSubLines; ++s)
   {
     // skip sub lines that are coincident with main division lines
     if (s % (numSubDivisions+1) == 0)
       continue;
 
-    float x = x0 + subSpacing * (float)s;
-    addLineStrip_(*geomSub, *vertSub, primitiveSetStart, osg::Vec3(x, y0, 0), osg::Vec3(x, y0 + span, 0), NUM_POINTS_PER_LINE_STRIP);
-
-    float y = y0 + subSpacing * (float)s;
-    addLineStrip_(*geomSub, *vertSub, primitiveSetStart, osg::Vec3(x0, y, 0), osg::Vec3(x0 + span, y, 0), NUM_POINTS_PER_LINE_STRIP);
+    {
+      const float x = x0 + subSpacing * s;
+      LineStrip* sub1 = new LineStrip();
+      sub1->update(osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
+      sub1->setName("simVis::LocalGridNode::GridSubDivision1");
+      sub1->setColor(subColor);
+      geomGroup->addDrawable(sub1);
+    }
+    {
+      const float y = y0 + subSpacing * s;
+      LineStrip* sub2 = new LineStrip();
+      sub2->update(osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
+      sub2->setName("simVis::LocalGridNode::GridSubDivision2");
+      sub2->setColor(subColor);
+      geomGroup->addDrawable(sub2);
+    }
   }
 
   // second draw the main division lines and the text labels
-  primitiveSetStart = 0;
   const std::string abbrev = sizeUnits.getAbbr();
-  for (int p=0; p<numDivLines; ++p)
+  for (int p=0; p < numDivLines; ++p)
   {
-    float x = x0 + divSpacing * (float)p;
-    addLineStrip_(*geomDiv, *vertDiv, primitiveSetStart, osg::Vec3(x, y0, 0), osg::Vec3(x, y0 + span, 0), NUM_POINTS_PER_LINE_STRIP);
-
+    const float x = x0 + divSpacing * p;
+    {
+      LineStrip* div1 = new LineStrip();
+      div1->update(osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
+      div1->setName("simVis::LocalGridNode::GridDivision1");
+      div1->setColor(color);
+      geomGroup->addDrawable(div1);
+    }
     // x-label:
     if (x < 0 && prefs.gridlabeldraw())
     {
-      osg::ref_ptr<osgText::Text> label = createTextPrototype_(prefs,
-        osgEarth::Units::convert(osgEarth::Units::METERS, sizeUnits, -x),
-        abbrev, prefs.gridlabelprecision());
-      label->setPosition(osg::Vec3(-x, 0, 0));
-      geode->addDrawable(label);
+      CartesianGridLabel* label = new CartesianGridLabel(prefs, -x);
+      label->setPosition(osg::Vec3(-x, 0.f, 0.f));
+      labelGroup->addDrawable(label);
     }
 
-    float y = y0 + divSpacing * (float)p;
-    addLineStrip_(*geomDiv, *vertDiv, primitiveSetStart, osg::Vec3(x0, y, 0), osg::Vec3(x0 + span, y, 0), NUM_POINTS_PER_LINE_STRIP);
-
+    const float y = y0 + divSpacing * p;
+    {
+      LineStrip* div2 = new LineStrip();
+      div2->update(osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
+      div2->setName("simVis::LocalGridNode::GridDivision2");
+      div2->setColor(color);
+      geomGroup->addDrawable(div2);
+    }
     // y-label
     if (y > 0 && prefs.gridlabeldraw())
     {
-      osg::ref_ptr<osgText::Text> label = createTextPrototype_(prefs,
-        osgEarth::Units::convert(osgEarth::Units::METERS, sizeUnits, y),
-        abbrev, prefs.gridlabelprecision());
-      label->setPosition(osg::Vec3(0, y, 0));
-      geode->addDrawable(label);
+      CartesianGridLabel* label = new CartesianGridLabel(prefs, y);
+      label->setPosition(osg::Vec3(0.f, y, 0.f));
+      labelGroup->addDrawable(label);
     }
   }
-
-  // Add the drawable to the geode
-  geode->addDrawable(geomSub);
-  geode->addDrawable(geomDiv);
 }
 
 // creates a range-rings local grid with optional polar radials.
-void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool includePolarRadials) const
+void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const
 {
   const Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   // Note that size is halved; it's provided in diameter, and we need it as radius
-  const float size = sizeUnits.convertTo(Units::METERS, prefs.size()) * 0.5f;
+  const float sizeM = sizeUnits.convertTo(Units::METERS, prefs.size()) * 0.5f;
 
-  if (simCore::areEqual(size, 0.0))
+  if (simCore::areEqual(sizeM, 0.0))
     return;
 
   // if size exceeds this number there is an excessive UI responsiveness penalty
-  if (size > MAX_RING_SIZE_M)
+  if (sizeM > MAX_RING_SIZE_M)
   {
     SIM_ERROR << "Range Rings radius exceeds maximum ring size." << std::endl;
     return;
   }
 
-  const float sectorAngle     = prefs.gridsettings().sectorangle();
   const int   numDivisions    = prefs.gridsettings().numdivisions();
   const int   numSubDivisions = prefs.gridsettings().numsubdivisions();
   const int numRings          = (numDivisions + 1) * (numSubDivisions + 1);
-  const float spacing         = size / osg::maximum(1, numRings);
 
-  osg::Vec4f color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  osg::Vec4f subColor = color * 0.5;
-  subColor.a() = 1.0;
-
-  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-
-  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
-  geom->setVertexArray(vertexArray.get());
-
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
+  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
 
   // rings:
-  int primitiveSetStart = 0;
-  const std::string abbrev = sizeUnits.getAbbr();
   for (int i = 0; i < numRings; ++i)
   {
-    double radiusM = spacing * static_cast<double>(i + 1);
-    float circum = 2.0 * M_PI * radiusM;
-    const int segs = simCore::sdkMax(MIN_NUM_LINE_SEGMENTS, static_cast<int>(::ceil(circum / CIRCLE_QUANT_LEN)));
-    float inc = M_TWOPI / static_cast<float>(segs);
+    const bool isMajorRing = ((i + 1) % (numSubDivisions + 1)) == 0;
 
-    bool isMajorRing = ((i + 1) % (numSubDivisions + 1)) == 0;
-
-    for (int j = 0; j < segs; ++j)
-    {
-      float angle = inc * j;
-      float x = sin(angle);
-      float y = cos(angle);
-      vertexArray->push_back(osg::Vec3(x * radiusM, y * radiusM, 0));
-      colorArray->push_back(isMajorRing ? color : subColor);
-    }
-    geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, primitiveSetStart, segs));
-    primitiveSetStart += segs;
+    RangeRing* rangeRing = new RangeRing(i);
+    rangeRing->setColor(isMajorRing ? color : subColor);
+    geomGroup->addDrawable(rangeRing);
+    rangeRing->update(prefs, sizeM);
 
     // label:
     if (isMajorRing && prefs.gridlabeldraw())
     {
-      osg::ref_ptr<osgText::Text> label = createTextPrototype_(prefs,
-        osgEarth::Units::convert(osgEarth::Units::METERS, sizeUnits, radiusM), abbrev, prefs.gridlabelprecision());
-      label->setPosition(osg::Vec3(0.0f, radiusM, 0.0f));
-      geode->addDrawable(label);
+      RingLabel* label = new RingLabel(prefs, i, true);
+      labelGroup->addDrawable(label);
+      label->update(prefs, sizeM);
 
-      osg::ref_ptr<osgText::Text> label2 = static_cast<osgText::Text*>(label->clone(osg::CopyOp::SHALLOW_COPY));
-      label2->setPosition(osg::Vec3(radiusM, 0.0f, 0.0f));
-      geode->addDrawable(label2);
+      // add minor axis label as clone
+      RingLabel* label2 = new RingLabel(*label, false);
+      labelGroup->addChild(label2);
+      label2->update(prefs, sizeM);
     }
   }
 
   // Cross-hair lines don't get drawn for Range Rings, but do for Polar
   if (includePolarRadials)
   {
-    addLineStrip_(*geom, *vertexArray, primitiveSetStart, osg::Vec3(0.f, -size, 0.f), osg::Vec3(0.f, size, 0.f), NUM_POINTS_PER_LINE_STRIP);
-    addLineStrip_(*geom, *vertexArray, primitiveSetStart, osg::Vec3(-size, 0.f, 0.f), osg::Vec3(size, 0.f, 0.f), NUM_POINTS_PER_LINE_STRIP);
-    for (int k = 0; k < NUM_POINTS_PER_LINE_STRIP * 2; ++k)
-      colorArray->push_back(color);
-  }
+    Axis* majorAxis = new Axis(true);
+    majorAxis->setColor(color);
+    geomGroup->addDrawable(majorAxis);
+    majorAxis->update(sizeM);
 
-  if (includePolarRadials && sectorAngle > 0.0f)
-  {
-    int verts = 0;
-    // drawing 2.5 vertices per ring
-    float radialVertexFactor = 2.5f;
-    float radialVertexSpacing = size / static_cast<float>(numRings * radialVertexFactor);
-    for (float angle = sectorAngle; angle < 360.0f; angle += sectorAngle)
+    Axis* minorAxis = new Axis(false);
+    minorAxis->setColor(color);
+    geomGroup->addDrawable(minorAxis);
+    minorAxis->update(sizeM);
+
+    const float sectorAngle = prefs.gridsettings().sectorangle();
+    if (sectorAngle > 0.0f)
     {
-      if (!osg::equivalent(fmod(angle, 90), 0)) // so we don't overdraw the main X/Y axes
-      {
-        float x = sin(osg::DegreesToRadians(angle));
-        float y = cos(osg::DegreesToRadians(angle));
-        for (int i = 0; i < numRings * radialVertexFactor; ++i)
-        {
-          vertexArray->push_back(osg::Vec3(x * radialVertexSpacing * static_cast<float>(i), y * radialVertexSpacing * static_cast<float>(i), 0));
-          colorArray->push_back(subColor);
-          verts++;
-        }
-      }
+      RadialPoints* points = new RadialPoints(subColor, sectorAngle, numRings);
+      geomGroup->addDrawable(points);
+      points->update(sizeM);
     }
-    geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, primitiveSetStart, verts));
   }
-
-  geode->addDrawable(geom);
 }
 
 // creates a speed-rings local grid with optional polar radials.
-void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geode, bool drawSpeedLine) const
+void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* graphicsGroup, osg::Geode* labelGroup, bool drawSpeedLine) const
 {
+  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
+  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
+  const unsigned int numDivisions = prefs.gridsettings().numdivisions();
+  const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
+  const unsigned int numRings = (numDivisions + 1) * (numSubDivisions + 1);
+
+  if (drawSpeedLine)
+  {
+    SpeedLine* speedLine = new SpeedLine();
+    speedLine->setColor(color);
+    graphicsGroup->addDrawable(speedLine);
+
+    if (!prefs.gridlabeldraw())
+      return;
+  }
+  else
+  {
+    Axis* majorAxis = new Axis(true);
+    majorAxis->setColor(color);
+    graphicsGroup->addDrawable(majorAxis);
+    Axis* minorAxis = new Axis(false);
+    minorAxis->setColor(color);
+    graphicsGroup->addDrawable(minorAxis);
+
+    const float sectorAngle = prefs.gridsettings().sectorangle();
+    // draw polar radials for speed rings
+    if (sectorAngle > 0.0f)
+    {
+      RadialPoints* points = new RadialPoints(subColor, sectorAngle, numRings);
+      graphicsGroup->addDrawable(points);
+    }
+  }
+
+  for (unsigned int i = 0; i < numRings; ++i)
+  {
+    const bool isMajorRing = ((i + 1) % (numSubDivisions + 1)) == 0;
+    if (!drawSpeedLine)
+    {
+      RangeRing* speedRing = new RangeRing(i);
+      speedRing->setColor(isMajorRing ? color : subColor);
+      graphicsGroup->addDrawable(speedRing);
+    }
+    // labels are only added to major rings
+    if (isMajorRing && prefs.gridlabeldraw())
+    {
+      RingLabel* label = new RingLabel(prefs, i, true);
+      labelGroup->addDrawable(label);
+
+      if (!drawSpeedLine)
+      {
+        // add minor axis label as clone
+        RingLabel* label2 = new RingLabel(*label, false);
+        labelGroup->addChild(label2);
+      }
+    }
+  }
+}
+
+void LocalGridNode::updateSpeedRings_(const simData::LocalGridPrefs& prefs, double sizeM, double timeRadiusSeconds)
+{
+  if ((prefs.gridtype() != simData::LocalGridPrefs_Type_SPEED_RINGS) && (prefs.gridtype() != simData::LocalGridPrefs_Type_SPEED_LINE))
+  {
+    assert(0);
+    return;
+  }
+  const unsigned int numLabels = labelGroup_->getNumChildren();
+  for (unsigned int i = 0; i < numLabels; i++)
+  {
+    osg::Node* child = labelGroup_->getChild(i);
+    RingLabel* label = dynamic_cast<RingLabel*>(child);
+    if (label)
+      label->update(prefs, sizeM, timeRadiusSeconds);
+  }
+  const unsigned int numGraphics = graphicsGroup_->getNumChildren();
+  for (unsigned int i = 0; i < numGraphics; i++)
+  {
+    osg::Node* child = graphicsGroup_->getChild(i);
+    RangeRing* ring = dynamic_cast<RangeRing*>(child);
+    if (ring)
+    {
+      ring->update(prefs, sizeM);
+      continue;
+    }
+    SpeedLine* line = dynamic_cast<SpeedLine*>(child);
+    if (line)
+    {
+      line->update(sizeM);
+      continue;
+    }
+    Axis* axis = dynamic_cast<Axis*>(child);
+    if (axis)
+    {
+      axis->update(sizeM);
+      continue;
+    }
+    RadialPoints* pts = dynamic_cast<RadialPoints*>(child);
+    if (pts)
+    {
+      pts->update(sizeM);
+      continue;
+    }
+  }
+}
+
+int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, double& sizeM, double& timeRadiusSeconds)
+{
+  const Locator* hostLocator = host_->getLocator();
+  if (!hostLocator)
+    return -1;
+  const PlatformNode* hostPlatform = dynamic_cast<const PlatformNode*>(host_.get());
+  // if host is a platform, use its locator. if not, use host locator's parent locator.
+  const Locator* hostPlatformLocator = (hostPlatform) ? hostLocator : hostLocator->getParentLocator();
+  if (!hostPlatformLocator)
+    return -2;
+
+  bool requiresUpdate = false;
+
   // determine the speed to be used for calculating the rings
-  double speedMS = 10.0f; // m/s; this default should never be needed, should be overridden by DefaultDataStoreValues
+  double speedMS = 0.0;
   if (prefs.speedring().useplatformspeed())
   {
-    speedMS = hostSpeedMS_;
+    // force rebuild if speed rings are displayed, using platform speed, and host velocity changed
+    speedMS = simCore::v3Length(hostPlatformLocator->getCoordinate().velocity());
+    if (!simCore::areEqual(hostSpeedMS_, speedMS, 0.01))
+    {
+      hostSpeedMS_ = speedMS;
+      requiresUpdate = true;
+    }
   }
   else if (prefs.speedring().has_speedtouse())
   {
     // using speedToUse, convert to m/s
     const Units prefSpeedUnits = simVis::convertUnitsToOsgEarth(prefs.speedring().speedunits());
     speedMS = prefSpeedUnits.convertTo(osgEarth::Units::METERS_PER_SECOND, prefs.speedring().speedtouse());
+    if (simCore::areEqual(speedMS, 0.0))
+    {
+      // do not display anything if this speed is zero
+      return -3;
+    }
   }
 
-  if (simCore::areEqual(speedMS, 0.0))
-  {
-    // do not display anything if speed is zero
-    return;
-  }
 
   // determine the time radius for the speed rings display
-  double timeRadiusSeconds = 0;
+  timeRadiusSeconds = 0;
   if (prefs.speedring().usefixedtime())
   {
+    // if we are displaying speed rings with fixed time, rebuild the display when host locator time changes
+    const double timeS = hostPlatformLocator->getTime();
+    if (!simCore::areEqual(hostTimeS_, timeS))
+    {
+      hostTimeS_ = timeS;
+      requiresUpdate = true;
+    }
     // as time moves forward, rings should shrink; if platform speed increases, rings should expand, and vice versa
-    timeRadiusSeconds = fixedTime_ - hostTimeS_;
+    timeRadiusSeconds = simCore::sdkMax(0.0, fixedTime_ - timeS);
   }
   else
   {
@@ -595,187 +995,27 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
       timeRadiusSeconds *= simCore::SECPERMIN;
     else if (timeFormat == simCore::TIMEFORMAT_HOURS)
       timeRadiusSeconds *= simCore::SECPERHOUR;
+
+    // Verify that there is something to draw
+    if (timeRadiusSeconds <= 0.0)
+    {
+      timeRadiusSeconds = 0;
+      return -4;
+    }
   }
 
-  // Verify that there is something to draw
-  if (timeRadiusSeconds <= 0.0)
-    return;
-
-  const double sizeM = timeRadiusSeconds * speedMS;
+  sizeM = timeRadiusSeconds * speedMS;
 
   // if sizeM exceeds this number there is an excessive UI responsiveness penalty
   if (sizeM > MAX_RING_SIZE_M)
   {
     SIM_ERROR << "Speed Rings radius exceeds maximum ring size." << std::endl;
-    return;
+    requiresUpdate = true;
+    sizeM = 0.0;
+    timeRadiusSeconds = 0.0;
   }
 
-  const float sectorAngle     = prefs.gridsettings().sectorangle();
-  const int   numDivisions    = prefs.gridsettings().numdivisions();
-  const int   numSubDivisions = prefs.gridsettings().numsubdivisions();
-  const int numRings          = (numDivisions + 1) * (numSubDivisions + 1);
-  const double spacingM       = sizeM / osg::maximum(1, numRings);
-
-  osg::Vec4f color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  osg::Vec4f subColor = color * 0.5f;
-  subColor.a() = 1.0f;
-
-  // label prefs and values
-  const bool displayLabels    = prefs.gridlabeldraw();
-  const bool displayTime      = prefs.speedring().displaytime();
-  const Units prefSizeUnits   = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
-  const double spacingS = timeRadiusSeconds / osg::maximum(1, numRings);
-
-  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-
-  osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array();
-  geom->setVertexArray(vertexArray.get());
-
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array();
-  geom->setColorArray(colorArray.get());
-  geom->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-
-  // rings or speed line:
-  int primitiveSetStart = 0;
-  for (int i = 0; i < numRings; ++i)
-  {
-    double radiusM = spacingM * static_cast<double>(i + 1);
-    bool isMajorRing = ((i + 1) % (numSubDivisions + 1)) == 0;
-
-    // concentric rings:
-    if (!drawSpeedLine)
-    {
-      double circum = 2.0 * M_PI * radiusM;
-      const int segs = simCore::sdkMax(MIN_NUM_LINE_SEGMENTS, static_cast<int>(::ceil(circum / CIRCLE_QUANT_LEN)));
-      double inc = M_TWOPI / segs;
-
-      for (int j = 0; j < segs; ++j)
-      {
-        double angle = inc * j;
-        double x = sin(angle);
-        double y = cos(angle);
-        vertexArray->push_back(osg::Vec3(static_cast<float>(x * radiusM), static_cast<float>(y * radiusM), 0.0f));
-        colorArray->push_back(isMajorRing ? color : subColor);
-      }
-      geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, primitiveSetStart, segs));
-      primitiveSetStart += segs;
-    }
-
-    // label formatting:
-    if (displayLabels && isMajorRing)
-    {
-      osg::ref_ptr<osgText::Text> label = NULL;
-      if (displayTime)
-      {
-        double radiusS = spacingS * static_cast<double>(i + 1);
-        const simData::ElapsedTimeFormat timeFormat = prefs.speedring().timeformat();
-        assert(timeFormat == simData::ELAPSED_HOURS || timeFormat == simData::ELAPSED_MINUTES || timeFormat == simData::ELAPSED_SECONDS);
-        std::stringstream buf;
-
-        // show HH:MM:SS.SS
-        if (timeFormat == simData::ELAPSED_HOURS)
-        {
-          simCore::HoursTimeFormatter formatter;
-          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
-        }
-
-        // show MM:SS.SS
-        else if (timeFormat == simData::ELAPSED_MINUTES)
-        {
-          simCore::MinutesTimeFormatter formatter;
-          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
-        }
-
-        // show SS.SS
-        else
-        {
-          simCore::SecondsTimeFormatter formatter;
-          formatter.toStream(buf, radiusS, prefs.gridlabelprecision());
-        }
-        std::string str = buf.str();
-        label = createTextPrototype_(prefs, str);
-      }
-      else
-      {
-        // displaying distance, not time; convert labels value from meters to local grid units pref
-        double radius = osgEarth::Units::METERS.convertTo(prefSizeUnits, radiusM);
-        label = createTextPrototype_(prefs, radius, prefSizeUnits.getAbbr(), prefs.gridlabelprecision());
-      }
-
-      // text label for major axis/speed line:
-      label->setPosition(osg::Vec3(0.0f, radiusM, 0.0f));
-      geode->addDrawable(label);
-
-      // text label for minor axis:
-      if (!drawSpeedLine)
-      {
-        osg::ref_ptr<osgText::Text> label2 = static_cast<osgText::Text*>(label->clone(osg::CopyOp::SHALLOW_COPY));
-        label2->setPosition(osg::Vec3(radiusM, 0.0f, 0.0f));
-        geode->addDrawable(label2);
-      }
-    }
-  }
-
-  if (!drawSpeedLine)
-  {
-    // speed ring axes:
-    addLineStrip_(*geom, *vertexArray, primitiveSetStart, osg::Vec3(0.f, -sizeM, 0.f), osg::Vec3(0.f, sizeM, 0.f), NUM_POINTS_PER_LINE_STRIP);
-    addLineStrip_(*geom, *vertexArray, primitiveSetStart, osg::Vec3(-sizeM, 0.f, 0.f), osg::Vec3(sizeM, 0.f, 0.f), NUM_POINTS_PER_LINE_STRIP);
-    for (int i = 0; i < NUM_POINTS_PER_LINE_STRIP * 2; i++)
-      colorArray->push_back(color);
-  }
-  else
-  {
-    addLineStrip_(*geom, *vertexArray, primitiveSetStart, osg::Vec3(0.f, 0.f, 0.f), osg::Vec3(0.f, sizeM, 0.f), NUM_POINTS_PER_LINE_STRIP);
-    for (int k = 0; k < NUM_POINTS_PER_LINE_STRIP; ++k)
-      colorArray->push_back(color);
-  }
-
-  // draw polar radials for speed rings
-  if (!drawSpeedLine && sectorAngle > 0.0f)
-  {
-    int verts = 0;
-    // drawing 2.5 vertices per ring
-    float radialVertexFactor = 2.5f;
-    float radialVertexSpacing = spacingM / radialVertexFactor;
-    for (float angle = sectorAngle; angle < 360.0f; angle += sectorAngle)
-    {
-      if (!osg::equivalent(fmod(angle, 90), 0)) // so we don't overdraw the main X/Y axes
-      {
-        float x = sinf(osg::DegreesToRadians(angle));
-        float y = cosf(osg::DegreesToRadians(angle));
-        for (int i = 0; i < numRings * radialVertexFactor; ++i)
-        {
-          vertexArray->push_back(osg::Vec3(x * radialVertexSpacing * static_cast<float>(i), y * radialVertexSpacing * static_cast<float>(i), 0));
-          colorArray->push_back(subColor);
-          verts++;
-        }
-      }
-    }
-    geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, primitiveSetStart, verts));
-  }
-  geode->addDrawable(geom);
-}
-
-void LocalGridNode::addLineStrip_(osg::Geometry& geom, osg::Vec3Array& vertices, int& primitiveSetStart,
-  const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine) const
-{
-  // Avoid divide-by-zero problems
-  if (numPointsPerLine < 2)
-    return;
-
-  const osg::Vec3 delta = (end - start);
-  for (int k = 0; k < numPointsPerLine; ++k)
-  {
-    // Translate [0,numPointsPerLine) into [0,1]
-    const float pct = static_cast<float>(k) / (numPointsPerLine - 1);
-    vertices.push_back(start + delta * pct);
-  }
-
-  // Add line strips for each line
-  geom.addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, primitiveSetStart, numPointsPerLine));
-  primitiveSetStart += numPointsPerLine;
+  return requiresUpdate ? 1 : 0;
 }
 
 }

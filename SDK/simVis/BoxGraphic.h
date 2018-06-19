@@ -24,15 +24,15 @@
 
 #include "osg/ref_ptr"
 #include "osg/Vec4"
-#include "osg/Geode"
+#include "osg/Group"
 #include "simCore/Common/Common.h"
 
-namespace osg { class Geometry; }
+namespace osgEarth { class LineDrawable; }
 
 namespace simVis {
 
 /** Draws a simple box graphic. */
-class SDKVIS_EXPORT BoxGraphic : public osg::Geode
+class SDKVIS_EXPORT BoxGraphic : public osg::Group
 {
 public:
   /**
@@ -46,7 +46,7 @@ public:
   * @param color line color
   */
   BoxGraphic(double x = 0., double y = 0., double width = 0., double height = 0.,
-    float lineWidth = 2., unsigned short stipple = 0x9999, const osg::Vec4& color = osg::Vec4(1.0, 1.0, 1.0, 1.0));
+    float lineWidth = 2.f, unsigned short stipple = 0x9999, const osg::Vec4& color = osg::Vec4(1.f, 1.f, 1.f, 1.f));
 
   BoxGraphic(const BoxGraphic& rhs);
 
@@ -71,8 +71,11 @@ public:
   /** Get line width, in pixels */
   float lineWidth() const;
 
-  /** Get stipple value */
-  unsigned short stipple() const;
+  /** Retrieve the stipple factor */
+  unsigned int stippleFactor() const;
+
+  /** Get stipple pattern value */
+  unsigned short stipplePattern() const;
 
   /** Get color vector, value ranges 0.0-1.0 (R, G, B, A)*/
   osg::Vec4 color() const;
@@ -91,6 +94,12 @@ public:
   * @param lineWidth Width to which to set the line.
   */
   void setLineWidth(float lineWidth);
+
+  /**
+  * Sets the stipple factor.
+  * @param factor Stipple factor for the line.
+  */
+  void setStippleFactor(unsigned int factor);
 
   /**
   * Sets the stipple pattern in OpenGL format.
@@ -122,16 +131,14 @@ private:
   double height_;
   /// line width in pixels
   float lineWidth_;
-  /// stipple value
-  unsigned short stipple_;
+  /// stipple factor value
+  unsigned int stippleFactor_;
+  /// stipple pattern value
+  unsigned short stipplePattern_;
   /// color vector, value ranges 0.0-1.0 (R,G,B,A)
   osg::Vec4 color_;
   /// geometry used to draw the box
-  osg::ref_ptr<osg::Geometry> geometry_;
-  // vector of points
-  osg::ref_ptr<osg::Vec3Array> verts_;
-  /// primitive for updating geometry
-  osg::ref_ptr<osg::DrawArrays> primset_;
+  osg::ref_ptr<osgEarth::LineDrawable> geom_;
 
 };
 

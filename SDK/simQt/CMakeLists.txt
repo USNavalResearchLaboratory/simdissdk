@@ -32,6 +32,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}SettingsModel.h
     ${SIMQT_INC}SettingsProxyModel.h
     ${SIMQT_INC}SliderTimeWidgetBinding.h
+    ${SIMQT_SRC}SortFilterProxyModel.h
     ${SIMQT_INC}SplashScreen.h
     ${SIMQT_INC}StartupLayoutTask.h
     ${SIMQT_INC}StdStreamConsoleChannel.h
@@ -148,6 +149,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}SettingsModel.cpp
     ${SIMQT_SRC}SettingsProxyModel.cpp
     ${SIMQT_SRC}SliderTimeWidgetBinding.cpp
+    ${SIMQT_SRC}SortFilterProxyModel.cpp
     ${SIMQT_SRC}SplashScreen.cpp
     ${SIMQT_SRC}StartupLayoutManager.cpp
     ${SIMQT_SRC}StartupLayoutTask.cpp
@@ -219,7 +221,7 @@ set(SIMQT_FORMS
     ${SIMQT_INC}EntityTypeFilter.ui
     ${SIMQT_INC}FileSelectorWidget.ui
     ${SIMQT_INC}FontWidget.ui
-    ${SIMQT_INC}SearchLineEdit.ui
+    ${SIMQT_INC}SearchLineEditQt4.ui
     ${SIMQT_INC}TimeButtons.ui
 )
 set(SIMQT_RESOURCES
@@ -308,6 +310,9 @@ if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
         target_link_libraries(simQt PRIVATE simVis)
     endif()
 else()
+    if(ENABLE_CUSTOM_RENDERING)
+        target_compile_definitions(simQt PUBLIC ENABLE_CUSTOM_RENDERING)
+    endif()
     if(TARGET simData)
         target_include_directories(simQt PUBLIC $<BUILD_INTERFACE:${SIMDIS_SDK_BINARY_DIR}/simData>)
     endif()

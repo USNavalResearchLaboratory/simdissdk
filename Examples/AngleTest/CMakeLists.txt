@@ -8,10 +8,10 @@ set(PROJECT_FILES
     src/AngleTestExample.cpp
 )
 
-add_executable(example_angle_test ${PROJECT_FILES})
-target_link_libraries(example_angle_test PRIVATE simVis simUtil)
-set_target_properties(example_angle_test PROPERTIES
+add_executable(example_angletest ${PROJECT_FILES})
+target_link_libraries(example_angletest PRIVATE simVis simUtil)
+set_target_properties(example_angletest PROPERTIES
     FOLDER "Examples"
     PROJECT_LABEL "Example - Angle Test"
 )
-vsi_install_target(example_angle_test SDK_Examples)
+vsi_install_target(example_angletest SDK_Examples)

@@ -48,7 +48,6 @@
 
 namespace simVis
 {
-
 // colors for body axis vectors
 static const simVis::Color BODY_AXIS_X_COLOR = simVis::Color::Yellow;
 static const simVis::Color BODY_AXIS_Y_COLOR = simVis::Color::Fuchsia;
@@ -56,7 +55,7 @@ static const simVis::Color BODY_AXIS_Z_COLOR = simVis::Color::Aqua;
 static const simVis::Color INERTIAL_AXIS_X_COLOR = simVis::Color::Red;
 static const simVis::Color INERTIAL_AXIS_Y_COLOR = simVis::Color::Lime;
 static const simVis::Color INERTIAL_AXIS_Z_COLOR = simVis::Color::Blue;
-static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0, 0.5, 0.0, 1.0); // Orange from SIMDIS 9
+static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0f, 0.5f, 0.0f, 1.0f); // SIMDIS_ORANGE
 static const simVis::Color MOON_VECTOR_COLOR = simVis::Color::White;
 static const simVis::Color SUN_VECTOR_COLOR = simVis::Color::Yellow;
 
@@ -66,8 +65,8 @@ static const double HORIZON_RANGE_STEP = 100;
 static const double HORIZON_ALT_STEP = 10;
 
 // Colors to use when drawing optical or radio horizon
-static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0, 1, 0, 0.6); // Translucent green
-static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1, 0, 0, 0.6); // Translucent red
+static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0.f, 1.f, 0.f, 0.6f); // Translucent green
+static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1.f, 0.f, 0.f, 0.6f); // Translucent red
 
 // this is used as a sentinel value for an platform that does not (currently) have a valid position
 static const simData::PlatformUpdate NULL_PLATFORM_UPDATE = simData::PlatformUpdate();
@@ -289,7 +288,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
         track_->update();
       }
       if (track_.valid())
-        track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_PLATFORM : simVis::DISPLAY_MASK_NONE);
+        track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
     }
   }
   else
@@ -548,9 +547,17 @@ void PlatformNode::setInvalid_()
   setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
+// Track may be shown even when platform is not shown only in the "show expired track history" case.
+// Track history is not maintained when not drawn, but it is recreated from datastore when platform draw is turned on.
+// Due to common occurrence of scenarios with lots of platforms that are not of particular interest,
+// it was decided to make platform as lightweight an object as possible when not drawn.
+// The downside is that in a large scenario, turning draw off for all platforms then turning back on might cause hiccups.
 bool PlatformNode::showTrack_(const simData::PlatformPrefs& prefs) const
 {
-  return (lastUpdateTime_ != -1.0) && (prefs.trackprefs().trackdrawmode() != simData::TrackPrefs_Mode_OFF) && (isActive_(prefs) || showExpiredTrackHistory_(prefs));
+  return (lastUpdateTime_ != -1.0) &&
+    (prefs.commonprefs().draw()) &&
+    (prefs.trackprefs().trackdrawmode() != simData::TrackPrefs_Mode_OFF) &&
+    (isActive_(prefs) || showExpiredTrackHistory_(prefs));
 }
 
 bool PlatformNode::showExpiredTrackHistory_(const simData::PlatformPrefs& prefs) const
@@ -570,7 +577,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   updateHostBounds_(prefs.scale());
   track_->update();
   const bool prefsDraw = lastPrefs_.commonprefs().datadraw() && prefs.commonprefs().draw();
-  track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_PLATFORM : simVis::DISPLAY_MASK_NONE);
+  track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
   return true;
 }
 

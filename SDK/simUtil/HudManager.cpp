@@ -19,8 +19,7 @@
  * disclose, or release this software.
  *
  */
-#include <climits>
-
+#include <limits>
 #include "osg/Image"
 #include "osgDB/FileUtils"
 
@@ -152,6 +151,7 @@ void HudTextAdapter::update_()
     if (osgTextVector_.size() <= ii)
     {
       osgText = new osgText::Text();
+      osgText->setDataVariance(osg::Object::DYNAMIC);
       osgTextVector_.push_back(osgText);
       addDrawable(osgText.get());
 
@@ -166,7 +166,7 @@ void HudTextAdapter::update_()
       // Set up the Halo
       osgText->setBackdropType(backdrop_);
       osgText->setBackdropOffset(backdropOffset_);
-      osgText->setBackdropColor(osg::Vec4(0.f, 0.f, 0.f, 1.f));
+      osgText->setBackdropColor(simVis::Color::Black);
       osgText->setBackdropImplementation(osgText::Text::DELAYED_DEPTH_WRITES);
       initializeText_(osgText.get());
     }
@@ -832,6 +832,7 @@ void HudImage::update_()
 
   // Allocate the geometry and the screen vertices
   osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
+  geometry->setName("simVis::Hud");
   geometry->setUseVertexBufferObjects(true);
   geometry->setUseDisplayList(false);
   geometry->setDataVariance(osg::Object::DYNAMIC);
@@ -876,10 +877,9 @@ void HudImage::update_()
   geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
   // Set up the color
-  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(1);
+  osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*colorArray)[0] = color_;
   geometry->setColorArray(colorArray.get());
-  geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
   // Map texture coordinates to the corners
   osg::ref_ptr<osg::Vec2Array> texCoords = new osg::Vec2Array(4);
@@ -894,14 +894,14 @@ void HudImage::update_()
   tex2d->setResizeNonPowerOfTwoHint(true);
   tex2d->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
   tex2d->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+  simVis::fixTextureForGlCoreProfile(tex2d.get());
   geometry->getOrCreateStateSet()->setTextureAttributeAndModes(0, tex2d, osg::StateAttribute::ON);
-
-  // Finish up the color settings
-  osg::ref_ptr<osg::TexEnv> texEnv = new osg::TexEnv(osg::TexEnv::MODULATE);
-  geometry->getStateSet()->setTextureAttributeAndModes(0, texEnv, osg::StateAttribute::ON);
 
   // Add to the geode
   addDrawable(geometry);
+
+  // Run shader generator to get texturing parameters correct
+  osgEarth::Registry::shaderGenerator().run(this);
 }
 
 void HudImage::update(osg::Image* image, double x, double y, double w, double h,

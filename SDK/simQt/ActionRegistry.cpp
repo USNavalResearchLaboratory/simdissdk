@@ -442,7 +442,7 @@ int ActionRegistry::execute(const QString &actionDesc)
 
 void ActionRegistry::assertActionsByKeyValid_() const
 {
-#ifdef DEBUG
+#ifndef NDEBUG
   // Make sure that each action in actionsByKey_ has the entry in the list
   Q_FOREACH(const QKeySequence keySequence, actionsByKey_.keys())
   {
@@ -519,6 +519,16 @@ int ActionRegistry::removeAction(const QString& desc)
   // Ensure internal consistency at this check point
   assertActionsByKeyValid_();
 
+  return 0;
+}
+
+int ActionRegistry::removeUnknownAction(const QString& desc)
+{
+  auto it = unknownActions_.find(desc);
+  if (it == unknownActions_.end())
+    return 1;
+
+  unknownActions_.erase(it);
   return 0;
 }
 

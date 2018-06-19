@@ -5,7 +5,7 @@ $GLSL_DEFAULT_PRECISION_FLOAT
 #pragma vp_location   vertex_model
 #pragma vp_order      4.0
 
-attribute vec4 oe_terrain_attr;
+in vec4 oe_terrain_attr;
 uniform bool simutil_terraintoggle_enabled;
 
 // Move the elevation vertex from height back to earth surface to flatten terrain

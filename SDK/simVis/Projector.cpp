@@ -24,7 +24,6 @@
 #include "osg/Geode"
 #include "osg/ImageStream"
 #include "osg/PolygonOffset"
-#include "osg/LineWidth"
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgDB/ReadFile"
@@ -38,13 +37,13 @@
 #include "simVis/LabelContentManager.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
-#include "simVis/SphericalVolume.h"
 #include "simVis/ClockOptions.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/Shaders.h"
+#include "simVis/Types.h"
 
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
@@ -73,10 +72,9 @@ namespace
       v = new osg::Vec3Array(9);
       geom->setVertexArray(v);
 
-      osg::Vec4Array* c = new osg::Vec4Array;
-      c->push_back(osg::Vec4(1., 1., 1., 1.));
+      osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
+      c->push_back(simVis::Color::White);
       geom->setColorArray(c);
-      geom->setColorBinding(osg::Geometry::BIND_OVERALL);
 
       GLubyte idxLines[8] = { 0, 5, 0, 6, 0, 7, 0, 8 };
       GLubyte idxLoops0[4] = { 1, 2, 3, 4 };
@@ -136,6 +134,7 @@ void ProjectorTextureImpl::setImage(osg::Image *image)
   if (texture_.valid())
   {
     texture_->setImage(image);
+    simVis::fixTextureForGlCoreProfile(texture_.get());
   }
 }
 
@@ -377,6 +376,7 @@ void ProjectorNode::setImage(osg::Image* image)
   // Reset video node if one is set.
   imageProvider_ = NULL;
   texture_->setImage(image);
+  simVis::fixTextureForGlCoreProfile(texture_.get());
 }
 
 osg::Texture2D* ProjectorNode::getTexture() const
@@ -585,7 +585,7 @@ void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
   stateSet->addUniform(projectorAlpha_.get());
   stateSet->addUniform(texGenMatUniform_.get());
   stateSet->addUniform(texProjDirUniform_.get());
-  stateSet->addUniform(texProjPosUniform_.get()); 
+  stateSet->addUniform(texProjPosUniform_.get());
 }
 
 void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
@@ -608,7 +608,7 @@ void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
   stateSet->removeUniform(projectorAlpha_.get());
   stateSet->removeUniform(texGenMatUniform_.get());
   stateSet->removeUniform(texProjDirUniform_.get());
-  stateSet->removeUniform(texProjPosUniform_.get()); 
+  stateSet->removeUniform(texProjPosUniform_.get());
 }
 
 }

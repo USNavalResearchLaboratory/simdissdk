@@ -212,13 +212,13 @@ QVariant ConsoleDataModel::headerData(int section, Qt::Orientation orientation, 
         tr("Time column is in Coordinated Universal Time (UTC)."));
     case COLUMN_SEVERITY:
       return simQt::formatTooltip(tr("Severity"),
-        tr("Displays the severity of the console log entries."));;
+        tr("Displays the severity of the console log entries."));
     case COLUMN_CATEGORY:
       return simQt::formatTooltip(tr("Category"),
-        tr("Displays the category of the console log entries."));;
+        tr("Displays the category of the console log entries."));
     case COLUMN_TEXT:
       return simQt::formatTooltip(tr("Text"),
-        tr("Displays the details of the console log entries."));;
+        tr("Displays the details of the console log entries."));
     }
   }
 
@@ -610,7 +610,7 @@ QString ConsoleDataModel::LineEntry::text() const
 /////////////////////////////////////////////////////////////////
 
 SimpleConsoleTextFilter::SimpleConsoleTextFilter()
-#ifdef DEBUG
+#ifndef NDEBUG
   : showInDebugMode_(true)
 #endif
 {
@@ -623,7 +623,7 @@ void SimpleConsoleTextFilter::addFilter(const QString& filter)
 
 void SimpleConsoleTextFilter::setShowInDebugMode(bool showInDebug)
 {
-#ifdef DEBUG
+#ifndef NDEBUG
   showInDebugMode_ = showInDebug;
 #endif
 }
@@ -680,7 +680,7 @@ bool SimpleConsoleTextFilter::acceptEntry(ConsoleDataModel::ConsoleEntry& entry)
     // String matching, case-sensitive
     if (entry.text.contains((*i)))
     {
-#ifdef DEBUG
+#ifndef NDEBUG
       // Drop message, if showInDebugMode_ is off
       if (!showInDebugMode_)
         return false;

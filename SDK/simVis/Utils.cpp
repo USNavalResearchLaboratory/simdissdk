@@ -19,23 +19,26 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Math"
-#include "osg/CullFace"
-#include "osg/BlendFunc"
-#include "osg/NodeVisitor"
-#include "osg/MatrixTransform"
-#include "osg/PositionAttitudeTransform"
 #include "osg/Billboard"
+#include "osg/BlendFunc"
+#include "osg/Depth"
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osgDB/FileUtils"
+#include "osg/Math"
+#include "osg/MatrixTransform"
+#include "osg/NodeVisitor"
+#include "osg/PositionAttitudeTransform"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
+#include "osgUtil/RenderBin"
 #include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/Capabilities"
+#include "osgEarth/CullingUtils"
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
+#include "osgEarth/Utils"
+#include "osgEarth/VirtualProgram"
 #include "simVis/osgEarthVersion.h"
 
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
@@ -48,12 +51,16 @@
 #include "simCore/Calc/Math.h"
 #endif
 
-#include "simCore/String/Format.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/String/Format.h"
 #include "simNotify/Notify.h"
-#include "simVis/Registry.h"
+#include "simVis/AlphaTest.h"
+#include "simVis/Constants.h"
+#include "simVis/DisableDepthOnAlpha.h"
+#include "simVis/LineDrawable.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/Registry.h"
 #include "simVis/Utils.h"
 
 namespace
@@ -135,6 +142,128 @@ namespace
 
   // Unscaled line length in meters for Platform line Vectors
   const int BASE_LINE_LENGTH = 50;
+
+  /**
+   * Custom render bin that implements a two-pass technique for rendering multiple
+   * semi-transparent objects. It draws the entire bin twice: the first time with
+   * depth-buffer writes turned off to enable full translucent blending; the second
+   * time to populate the depth buffer.
+   *
+   * Since the bin needs to manage its own state, we have to manually draw the
+   * render leaves and skip OSG's default state-tracking RenderBin code.
+   */
+  class TwoPassAlphaRenderBin : public osgUtil::RenderBin
+  {
+  public:
+    TwoPassAlphaRenderBin()
+      : osgUtil::RenderBin(SORT_BACK_TO_FRONT),
+        haveInit_(false)
+    {
+      setName(simVis::BIN_TWO_PASS_ALPHA);
+      setStateSet(NULL);
+
+      // Note! We do not protect the depth settings here, because this then allows us to
+      // disable the depth buffer at a higher level (e.g. when enabling Overhead mode).
+      const osg::StateAttribute::GLModeValue overrideOn = osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE;
+      const osg::StateAttribute::GLModeValue overrideProtectedOn = overrideOn | osg::StateAttribute::PROTECTED;
+
+      pass1_ = new osg::StateSet();
+      pass1_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false), overrideOn);
+      pass1_->setAttributeAndModes(new osg::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), overrideProtectedOn);
+
+      pass2_ = new osg::StateSet();
+      pass2_->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, true), overrideOn);
+      pass2_->setAttributeAndModes(new osg::ColorMask(false, false, false, false), overrideProtectedOn);
+    }
+
+    TwoPassAlphaRenderBin(const TwoPassAlphaRenderBin& rhs, const osg::CopyOp& copy)
+      : osgUtil::RenderBin(rhs, copy),
+        pass1_(rhs.pass1_),
+        pass2_(rhs.pass2_),
+        haveInit_(rhs.haveInit_)
+    {
+      //nop
+    }
+
+    virtual osg::Object* clone(const osg::CopyOp& copyop) const
+    {
+      return new TwoPassAlphaRenderBin(*this, copyop);
+    }
+
+    // Draw the same geometry twice, once for each pass.
+    // We ignore the incoming "previous" leaf since we are handling state changes
+    // manually in this bin.
+    void drawImplementation(osg::RenderInfo& ri, osgUtil::RenderLeaf*& previous)
+    {
+      // Initialize the alpha test, which cannot be done in the constructor due to static
+      // initialization conflicts with its use of osgEarth::Registry::capabilities()
+      if (!haveInit_)
+      {
+        haveInit_ = true;
+        simVis::AlphaTest::setValues(pass2_.get(), 0.05f, osg::StateAttribute::ON |
+          osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
+      }
+
+      // Create a copy of the state set stack so we can fix the internal stack after first drawImplementation()
+      osgUtil::RenderLeaf* oldPrevious = previous;
+
+      // Render once with the first state set
+      const osg::State::StateSetStack previousStateStack = ri.getState()->getStateSetStack();
+      setStateSet(pass1_.get());
+      osgUtil::RenderBin::drawImplementation(ri, previous);
+
+      // Get back to where we were at the start of this method, backing out state changes
+      migrateState_(*ri.getState(), previousStateStack);
+      previous = oldPrevious;
+
+      // Now do the second pass with the original values but with second set of state values
+      setStateSet(pass2_.get());
+      osgUtil::RenderBin::drawImplementation(ri, previous);
+    }
+
+  private:
+    /**
+     * Given a current state, migrates its state stack backwards and forwards to get to the state
+     * provided.  This algorithm does the following:
+     *   - Pop the current state until it's the same size or smaller
+     *   - Find the first item in state that doesn't match the to-state-stack
+     *   - Pop off items from current state until it's down to the common ancestor
+     *   - Push on all remaining items from the to-state-stack
+     */
+    void migrateState_(osg::State& state, const osg::State::StateSetStack& toStateStack) const
+    {
+      // Pop off states from the current, until it matches incoming size
+      state.popStateSetStackToSize(toStateStack.size());
+      // State's size is now less or equal to the size requested.  If less or equal, we're OK
+      assert(state.getStateSetStackSize() <= toStateStack.size());
+
+      // Figure out the first mismatching state
+      unsigned int mismatchIndex = 0;
+      for (mismatchIndex = 0; mismatchIndex < state.getStateSetStackSize(); ++mismatchIndex)
+      {
+        if (state.getStateSetStack()[mismatchIndex] != toStateStack[mismatchIndex])
+          break;
+      }
+      // Pop off anything at or past the mismatch
+      state.popStateSetStackToSize(mismatchIndex);
+      // Assert failure means that the popStateSetStackToSize() isn't doing what is advertised
+      assert(state.getStateSetStackSize() == mismatchIndex);
+
+      // Push on the states from the original until we're matching again
+      for (; mismatchIndex < toStateStack.size(); ++mismatchIndex)
+        state.pushStateSet(toStateStack[mismatchIndex]);
+      // Assert failure means that the pushStateSet() isn't doing what is advertised
+      assert(state.getStateSetStackSize() == toStateStack.size());
+    }
+
+    osg::ref_ptr<osg::StateSet> pass1_;
+    osg::ref_ptr<osg::StateSet> pass2_;
+    bool haveInit_;
+  };
+
+  /** the actual registration. */
+  extern "C" void osgEarth_BIN_TWO_PASS_ALPHA(void) {}
+  static osgEarth::osgEarthRegisterRenderBinProxy<TwoPassAlphaRenderBin> s_regbin(simVis::BIN_TWO_PASS_ALPHA);
 }
 
 namespace simVis
@@ -217,6 +346,35 @@ void setLightingToInherit(osg::StateSet* stateset)
     stateset->removeUniform(temp->getName());
 #endif
   }
+}
+
+void fixTextureForGlCoreProfile(osg::Texture* texture)
+{
+  if (!texture)
+    return;
+
+  // No change is required if we're not supporting core profile
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  for (unsigned int k = 0; k < texture->getNumImages(); ++k)
+  {
+    // Get a pointer to the image, continuing if none
+    osg::Image* image = texture->getImage(k);
+    if (!image)
+      continue;
+
+    // Detect the image's pixel format, changing it out for a GL3-compatible one
+    if (image->getPixelFormat() == GL_LUMINANCE)
+    {
+      image->setPixelFormat(GL_RED);
+      texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_ONE));
+    }
+    else if (image->getPixelFormat() == GL_LUMINANCE_ALPHA)
+    {
+      image->setPixelFormat(GL_RG);
+      texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_GREEN));
+    }
+  }
+#endif
 }
 
 void convertNWUtoENU(osg::Node* node)
@@ -744,88 +902,40 @@ float VectorScaling::lineLength(const PlatformModelNode* node, float axisScale)
   return adjustedLength * axisScale;
 }
 
-void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end, int numPointsPerLine)
+void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end)
 {
+  const unsigned int numPointsPerLine = vertices.getNumElements();
   // Avoid divide-by-zero problems
   if (numPointsPerLine < 2)
     return;
 
   const osg::Vec3 delta = (end - start);
-  for (int k = 0; k < numPointsPerLine; ++k)
+  for (unsigned int k = 0; k < numPointsPerLine - 1; ++k)
   {
-    // Translate [0,numPointsPerLine) into [0,1]
+    // Translate [0,numPointsPerLine-1) into [0,1)
     const float pct = static_cast<float>(k) / (numPointsPerLine - 1);
-    vertices.push_back(start + delta * pct);
+    vertices[k] = (start + delta * pct);
   }
+  vertices[numPointsPerLine - 1] = end;
 }
 
-
-#if 0
-osg::Geometry* createEllipsoid(double major, double minor, int segments, const osg::Vec4& color)
+void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end)
 {
-  osg::EllipsoidModel em(major, minor);
+  const unsigned int numPointsPerLine = line.getNumVerts();
+  // Avoid divide-by-zero problems
+  if (numPointsPerLine < 2)
+    return;
 
-  osg::Geometry* geom = new osg::Geometry();
-  geom->setUseVertexBufferObjects(true);
-
-  int latSegments = osg::clampBetween(segments, 10, 100);
-  int lonSegments = 2 * latSegments;
-
-  double segmentSize = 180.0/(double)latSegments; // degrees
-
-  osg::Vec3Array* verts = new osg::Vec3Array();
-  verts->reserve(latSegments * lonSegments);
-
-  osg::Vec3Array* normals = 0;
-  normals = new osg::Vec3Array();
-  normals->reserve(latSegments * lonSegments);
-  geom->setNormalArray(normals);
-  geom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
-
-  osg::Vec4Array* colors = new osg::Vec4Array();
-  colors->push_back(color);
-  geom->setColorArray(colors);
-  geom->setColorBinding(osg::Geometry::BIND_OVERALL);
-
-  osg::DrawElementsUShort* el = new osg::DrawElementsUShort(GL_TRIANGLES);
-  el->reserve(latSegments * lonSegments * 6);
-
-  for (int y = 0; y <= latSegments; ++y)
+  const osg::Vec3 delta = (end - start);
+  for (unsigned int k = 0; k < numPointsPerLine - 1; ++k)
   {
-    double lat = -90.0 + segmentSize * (double)y;
-    for (int x = 0; x < lonSegments; ++x)
-    {
-      double lon = -180.0 + segmentSize * (double)x;
-      double gx, gy, gz;
-      em.convertLatLongHeightToXYZ(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), 0.0, gx, gy, gz);
-      verts->push_back(osg::Vec3(gx, gy, gz));
-
-      osg::Vec3 normal(gx, gy, gz);
-      normal.normalize();
-      normals->push_back(normal);
-
-      if (y < latSegments)
-      {
-        int x_plus_1 = x < lonSegments-1 ? x+1 : 0;
-        int y_plus_1 = y+1;
-        el->push_back(y*lonSegments + x);
-        el->push_back(y*lonSegments + x_plus_1);
-        el->push_back(y_plus_1*lonSegments + x);
-        el->push_back(y*lonSegments + x_plus_1);
-        el->push_back(y_plus_1*lonSegments + x_plus_1);
-        el->push_back(y_plus_1*lonSegments + x);
-      }
-    }
+    // Translate [0,numPointsPerLine-1) into [0,1)
+    const float pct = static_cast<float>(k) / (numPointsPerLine - 1);
+    line.setVertex(k, start + delta * pct);
   }
-
-  geom->setVertexArray(verts);
-  geom->addPrimitiveSet(el);
-
-  //        OSG_ALWAYS << "s_makeEllipsoidGeometry Bounds: " << geom->computeBound().radius() << " outerRadius: " << outerRadius << std::endl;
-
-  return geom;
+  line.setVertex(numPointsPerLine - 1, end);
 }
-#endif
+
 
 //--------------------------------------------------------------------------
 
@@ -1063,3 +1173,4 @@ ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string&
 }
 
 }
+

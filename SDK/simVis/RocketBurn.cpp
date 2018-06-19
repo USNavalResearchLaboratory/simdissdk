@@ -41,7 +41,7 @@ RocketBurn::RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture)
 {
   // Set up the render bin, turn off depth writes, and turn on depth reads
   osg::StateSet* stateSet = transform_->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_ROCKETBURN, BIN_TRAVERSAL_ORDER_SIMSDK);
+  stateSet->setRenderBinDetails(BIN_ROCKETBURN, BIN_GLOBAL_SIMSDK);
   stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
   // Must be able to blend or the graphics will look awful
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
@@ -94,6 +94,7 @@ void RocketBurn::rebuild_()
   while (currentLength < currentShape_.length)
   {
     osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
+    geometry->setName("simVis::RocketBurn");
     osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array; // vertexes to draw
     geometry->setVertexArray(verts.get());
 
@@ -102,9 +103,8 @@ void RocketBurn::rebuild_()
     geometry->setTexCoordArray(textureUnit, texcoords.get());
 
     // colors
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL);
     geometry->setColorArray(colors.get());
-    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     simVis::Color currentColor(currentShape_.color);
     if (currentShape_.scaleAlpha)

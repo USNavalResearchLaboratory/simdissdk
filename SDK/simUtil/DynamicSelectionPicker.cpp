@@ -93,7 +93,7 @@ DynamicSelectionPicker::DynamicSelectionPicker(simVis::ViewManager* viewManager,
   : Picker(scenarioManager->getOrCreateStateSet()),
     viewManager_(viewManager),
     scenario_(scenarioManager),
-    minimumValidRange_(100.0), // pixels
+    maximumValidRange_(100.0), // pixels
     pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL)
 {
   // By default, only platforms are picked.  Gates are feasibly pickable though.
@@ -126,7 +126,7 @@ void DynamicSelectionPicker::pickThisFrame_()
   scenario_->getAllEntities(allEntities);
 
   // We square the range to avoid sqrt() in a tight loop
-  double closestRangePx = osg::square(minimumValidRange_);
+  double closestRangePx = osg::square(maximumValidRange_);
   simVis::EntityNode* closest = NULL;
 
   // Loop through all entities
@@ -172,7 +172,7 @@ bool DynamicSelectionPicker::isPickable_(const simVis::EntityNode* entityNode) c
 
 void DynamicSelectionPicker::setRange(double pixelsFromCenter)
 {
-  minimumValidRange_ = pixelsFromCenter;
+  maximumValidRange_ = pixelsFromCenter;
 }
 
 void DynamicSelectionPicker::setPickMask(osg::Node::NodeMask pickMask)

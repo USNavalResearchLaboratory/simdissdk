@@ -333,7 +333,7 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), getElapsedEciTime());
     simCore::Coordinate out;
-    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
+    simCore::CoordinateConverter::convertEcefToEci(in, out);
     *out_position = out.position();
     return true;
   }
@@ -369,7 +369,7 @@ bool Locator::getLocatorPositionOrientation(simCore::Vec3* out_position, simCore
   {
     const simCore::Coordinate in(simCore::COORD_SYS_ECEF, *out_position, *out_orientation, getElapsedEciTime());
     simCore::Coordinate out;
-    simCore::CoordinateConverter::convertEcefToEci(in, out, in.elapsedEciTime());
+    simCore::CoordinateConverter::convertEcefToEci(in, out);
     *out_position = out.position();
     *out_orientation = out.orientation();
     return true;

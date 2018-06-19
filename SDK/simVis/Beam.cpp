@@ -40,6 +40,8 @@
 #include "simVis/Scenario.h"
 #include "simVis/Beam.h"
 
+#define BEAM_IN_PLACE_UPDATES
+
 // --------------------------------------------------------------------------
 
 namespace
@@ -58,6 +60,10 @@ namespace
     else
     {
       return
+#ifndef BEAM_IN_PLACE_UPDATES
+        PB_FIELD_CHANGED(a, b, verticalwidth) ||
+        PB_FIELD_CHANGED(a, b, horizontalwidth) ||
+#endif
         PB_FIELD_CHANGED(a, b, polarity) ||
         PB_FIELD_CHANGED(a, b, colorscale) ||
         PB_FIELD_CHANGED(a, b, detail) ||
@@ -72,6 +78,18 @@ namespace
         PB_FIELD_CHANGED(a, b, beamdrawmode);
     }
   }
+
+  /// Some updates can require a rebuild too
+  bool changeRequiresRebuild(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
+  {
+#ifdef BEAM_IN_PLACE_UPDATES
+    return false;
+#else
+    if (a == NULL || b == NULL)
+      return false;
+    return PB_FIELD_CHANGED(a, b, range);
+#endif
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -83,6 +101,24 @@ BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdat
   beamSV_ = createBeamSV_(prefs, update);
   addChild(beamSV_);
   setBeamScale_(prefs.beamscale());
+
+  // if blended, use BIN_BEAM & TPA, otherwise use BIN_OPAQUE_BEAM & BIN_GLOBAL_SIMSDK
+  osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(beamSV_.get());
+  if (solidGeometry != NULL)
+  {
+    solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
+      (prefs.blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
+      (prefs.blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
+  }
+
+  // if there is a 2nd wireframe geode, it should be renderbin'd to BIN_OPAQUE_BEAM
+  osg::Geode* wireframeGeode = simVis::SVFactory::opaqueGeode(beamSV_.get());
+  if (wireframeGeode != NULL)
+  {
+    // SphericalVolume code only adds the opaque geode when it is adding a geometry or lineGroup
+    assert(wireframeGeode->getNumDrawables() > 0);
+    wireframeGeode->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_BEAM, BIN_GLOBAL_SIMSDK);
+  }
 }
 
 osg::MatrixTransform* BeamVolume::createBeamSV_(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
@@ -145,6 +181,9 @@ void BeamVolume::setBeamScale_(double beamScale)
 /// update prefs that can be updated without rebuilding the whole beam.
 void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
 {
+  if (a == NULL || b == NULL)
+    return;
+
   if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
   {
     // Check for transition between color and override color, then check for color change
@@ -164,21 +203,39 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
   if (PB_FIELD_CHANGED(a, b, shaded))
     SVFactory::updateLighting(beamSV_.get(), b->shaded());
   if (PB_FIELD_CHANGED(a, b, blended))
+  {
+    // if blended, use BIN_BEAM & TPA, otherwise use BIN_OPAQUE_BEAM & BIN_GLOBAL_SIMSDK
+    osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(beamSV_.get());
+    if (solidGeometry != NULL)
+    {
+      solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
+        (b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
+        (b->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
+    }
     SVFactory::updateBlending(beamSV_.get(), b->blended());
+  }
+#ifdef BEAM_IN_PLACE_UPDATES
   if (PB_FIELD_CHANGED(a, b, verticalwidth))
     SVFactory::updateVertAngle(beamSV_.get(), a->verticalwidth(), b->verticalwidth());
   if (PB_FIELD_CHANGED(a, b, horizontalwidth))
     SVFactory::updateHorizAngle(beamSV_.get(), a->horizontalwidth(), b->horizontalwidth());
+#endif
   if (PB_FIELD_CHANGED(a, b, beamscale))
     setBeamScale_(b->beamscale());
 }
 
 void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
 {
+  if (a == NULL || b == NULL)
+    return;
+
+#ifdef BEAM_IN_PLACE_UPDATES
+  // the update method calls dirtyBound on all beam volume geometries, so no need for that here
   if (PB_FIELD_CHANGED(a, b, range))
   {
     SVFactory::updateFarRange(beamSV_.get(), b->range());
   }
+#endif
 }
 
 // --------------------------------------------------------------------------
@@ -222,11 +279,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // before everything else (including the terrain) since they are
   // transparent and potentially self-blending
   osg::StateSet* stateSet = this->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_BEAM, BIN_GLOBAL_SIMSDK);
-
-  // depth-writing is disabled for the beams by default.
-  depthAttr_ = new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false);
-  stateSet->setAttributeAndModes(depthAttr_, osg::StateAttribute::ON);
+  stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
@@ -646,18 +699,16 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   if (force)
     setActive_(true);
 
-  // all activePrefs must be applied during this creation
-  if (force || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended))
-  {
-    depthAttr_->setWriteMask(!activePrefs->blended());
-    getOrCreateStateSet()->setRenderBinDetails((activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM), BIN_GLOBAL_SIMSDK);
-    // If beam is drawn as a spherical volume, then the spherical volume also needs to be recreated/updated when blending changes.
-    // If the spherical volume does not need to be recreated, updating will be done by performInPlacePrefChanges().
-    // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.
-  }
-
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
+    if (force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended)))
+    {
+      getOrCreateStateSet()->setRenderBinDetails(
+        (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
+        (activePrefs->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
+      // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.
+    }
+
     force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
 
     // beam visual is drawn by Antenna
@@ -693,7 +744,8 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       antenna_->setPrefs(*activePrefs);
 
     const bool refreshRequiresNewNode = force ||
-      changeRequiresRebuild(&lastPrefsApplied_, newPrefs);
+      changeRequiresRebuild(&lastPrefsApplied_, newPrefs) ||
+      changeRequiresRebuild(&lastUpdateApplied_, newUpdate);
 
     // if new geometry is required, build it:
     if (!beamVolume_ || refreshRequiresNewNode)

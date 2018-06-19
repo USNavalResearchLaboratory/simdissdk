@@ -778,17 +778,15 @@ namespace simVis
 
       /** add our geometry to 'geode'
        * @param verts vertex array to use (shared reference)
-       * @param primSet primitive set to use (shared reference)
+       * @param mode primitive set type to use
        * @param geode root node to attach to
        * @param state control display settings
-       * @param subdivide not currently used
        */
       void createGeometry(
         osg::Vec3Array*    verts,
-        osg::PrimitiveSet* primSet,
+        GLenum             mode,
         osg::Geode*        geode,
-        State&             state,
-        bool               subdivide = false);
+        State&             state);
 
       /// osg::Referenced-derived
       virtual ~LineGraphic() {}

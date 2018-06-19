@@ -16,8 +16,10 @@ set(SHADER_FILES
     BathymetryGenerator.vert.glsl
     BeamPulse.vert.glsl
     BeamPulse.frag.glsl
+    DisableDepthOnAlpha.frag.glsl
     Flashing.frag.glsl
     GlowHighlight.frag.glsl
+    LineDrawable.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
     Picker.vert.glsl
@@ -57,9 +59,11 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ClockOptions.h
     ${VIS_INC}Compass.h
     ${VIS_INC}Constants.h
+    ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
     ${VIS_INC}DBOptions.h
+    ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
     ${VIS_INC}EarthManipulator.h
     ${VIS_INC}ElevationQueryProxy.h
@@ -74,11 +78,13 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
+    ${VIS_INC}LineDrawable.h
     ${VIS_INC}LobGroup.h
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
     ${VIS_INC}LocatorNode.h
     ${VIS_INC}ModelCache.h
+    ${VIS_INC}ModKeyHandler.h
     ${VIS_INC}NavigationModes.h
     ${VIS_INC}ObjectSelectionHandler.h
     ${VIS_INC}OverheadMode.h
@@ -187,8 +193,10 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}ClassificationBanner.cpp
     ${VIS_SRC}ClockOptions.cpp
     ${VIS_SRC}Compass.cpp
+    ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
+    ${VIS_INC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
     ${VIS_SRC}ElevationQueryProxy.cpp
@@ -200,11 +208,13 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
     ${VIS_SRC}Laser.cpp
+    ${VIS_SRC}LineDrawable.cpp
     ${VIS_SRC}LobGroup.cpp
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
     ${VIS_SRC}LocatorNode.cpp
     ${VIS_SRC}ModelCache.cpp
+    ${VIS_SRC}ModKeyHandler.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
     ${VIS_SRC}Picker.cpp
@@ -302,33 +312,42 @@ if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
     set(HAVE_SILVERLINING_NODEKIT 1)
 endif()
 include(CheckOSGEarthMethodExists)
-# Newer than 1.7.0 release adds clear() to Profiler
-check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
-if(HAVE_OSGEARTH_PROFILER_CLEAR)
+# Newer than 1.8.0 release adds GeodeticLabelingEngine file and getResolution()
+check_osgearth_method_exists(HAVE_OSGEARTH_GEOLABELENGINE "osgEarthUtil/GeodeticLabelingEngine" "getResolution")
+if(HAVE_OSGEARTH_GEOLABELENGINE)
     set(SDK_OSGEARTH_DEVEL 1)
-    # Next anticipated version is 1.8.0
+    # Next anticipated version is 1.9.0
     set(SDK_OSGEARTH_VERSION_MAJOR 1)
-    set(SDK_OSGEARTH_VERSION_MINOR 8)
+    set(SDK_OSGEARTH_VERSION_MINOR 9)
     set(SDK_OSGEARTH_VERSION_PATCH 0)
 else()
-    # Newer than 1.6.0 release removes tileSize() from TileSource
-    check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
-    if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
+    # Newer than 1.7.0 release adds clear() to Profiler
+    check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
+    if(HAVE_OSGEARTH_PROFILER_CLEAR)
+        # Next anticipated version is 1.8.0
         set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 7)
+        set(SDK_OSGEARTH_VERSION_MINOR 8)
         set(SDK_OSGEARTH_VERSION_PATCH 0)
     else()
-        # Version 1.6.0 changed Map's setName to setMapName
-        check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-        if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+        # Newer than 1.6.0 release removes tileSize() from TileSource
+        check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
+        if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
             set(SDK_OSGEARTH_VERSION_MAJOR 1)
-            set(SDK_OSGEARTH_VERSION_MINOR 6)
+            set(SDK_OSGEARTH_VERSION_MINOR 7)
             set(SDK_OSGEARTH_VERSION_PATCH 0)
         else()
-            # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
-            set(SDK_OSGEARTH_VERSION_MAJOR 1)
-            set(SDK_OSGEARTH_VERSION_MINOR 5)
-            set(SDK_OSGEARTH_VERSION_PATCH 0)
+            # Version 1.6.0 changed Map's setName to setMapName
+            check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
+            if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+                set(SDK_OSGEARTH_VERSION_MAJOR 1)
+                set(SDK_OSGEARTH_VERSION_MINOR 6)
+                set(SDK_OSGEARTH_VERSION_PATCH 0)
+            else()
+                # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
+                set(SDK_OSGEARTH_VERSION_MAJOR 1)
+                set(SDK_OSGEARTH_VERSION_MINOR 5)
+                set(SDK_OSGEARTH_VERSION_PATCH 0)
+            endif()
         endif()
     endif()
 endif()

@@ -515,4 +515,8 @@ DataContainer* DataColumn::dataContainer_(bool freshContainer) const
   return freshContainer ? freshData_ : staleData_;
 }
 
+int DataColumn::getTimeRange(double& begin, double& end) const
+{
+  return timeContainer_->getTimeRange(begin, end);
+}
 } }

@@ -285,7 +285,7 @@ void setupGOGAttachments(simVis::PlatformNode* platform)
     def.push_back("cylinder");
     def.push_back("rangeunits km");
     def.push_back("radius 1");
-    def.push_back("height 1");
+    def.push_back("height 200");
     def.push_back("anglestart 45");
     def.push_back("angleend 315");
     def.push_back("end");

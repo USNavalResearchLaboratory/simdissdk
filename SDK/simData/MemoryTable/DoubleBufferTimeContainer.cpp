@@ -698,4 +698,21 @@ void DoubleBufferTimeContainer::limitData(size_t maxPoints, double latestInvalid
     (*i)->swapFreshStaleData();
 }
 
+int DoubleBufferTimeContainer::getTimeRange(double& begin, double& end) const
+{
+  if (times_[BIN_FRESH]->empty()) // Need to have some times in the fresh bin
+  {
+    begin = 0.0;
+    end = 0.0;
+    return 1;
+  }
+
+  begin = times_[BIN_FRESH]->front().first;
+  if (times_[BIN_STALE]->empty())
+    end = times_[BIN_FRESH]->back().first;
+  else
+    end = times_[BIN_STALE]->back().first;
+  return 0;
+}
+
 } }

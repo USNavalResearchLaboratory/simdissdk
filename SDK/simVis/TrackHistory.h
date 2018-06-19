@@ -31,8 +31,11 @@
 #include "simVis/Types.h"
 
 //----------------------------------------------------------------------------
-namespace osgEarth { class SpatialReference; }
-
+namespace osgEarth
+{
+  class LineDrawable;
+  class SpatialReference;
+}
 namespace simData
 {
   class DataStore;
@@ -113,6 +116,9 @@ namespace simVis
     class ColorChangeObserver;
     class ColorTableObserver;
 
+    /** Copy constructor, not implemented or available. */
+    TrackHistoryNode(const TrackHistoryNode&);
+
     /**
     * If the color history change is within the time span of the currently displayed track history, redraw all history points
     * @param table  color track history data table
@@ -137,12 +143,6 @@ namespace simVis
     * Try to initialize the track history color table id
     */
     void initializeTableId_();
-
-    /// Select center points or lines
-    void updateCenterLine_(simData::TrackPrefs_Mode mode);
-
-    /// Update the drawables to render a different mode
-    void updateTrackMode_(simData::TrackPrefs_Mode mode);
 
     /// Update the "flat mode" setting that zeros out the track history altitude; initialize shader programs if necessary
     void updateFlatMode_(bool enabled);
@@ -221,7 +221,8 @@ namespace simVis
     simData::PlatformPrefs      lastPlatformPrefs_;
     simData::PlatformProperties lastPlatformProps_;
     unsigned int        chunkSize_;
-    osg::Vec4f          defaultColor_;
+    const osg::Vec4f    defaultColor_;
+    osg::Vec4f          activeColor_;
     unsigned int        totalPoints_;
 
     // "draw time" is the same as the clock's update time, but adjusted
@@ -240,8 +241,7 @@ namespace simVis
     simVis::Color                 lastOverrideColor_;
     osg::ref_ptr<osg::Uniform>    flatModeUniform_;
     osg::ref_ptr<osg::Group>      chunkGroup_;
-    osg::ref_ptr<osg::Vec3Array>  dropVerts_;
-    osg::ref_ptr<osg::Geometry>   dropVertsDrawable_;
+    osg::ref_ptr<osgEarth::LineDrawable>   dropVertsDrawable_;
     osg::MatrixTransform*         altModeXform_;
     const simData::DataSliceBase* updateSliceBase_;
     PlatformTspiFilterManager& platformTspiFilterManager_;

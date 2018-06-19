@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <limits>
 #include "simData/DataStore.h"
 #include "simData/MemoryDataSlice.h"
 

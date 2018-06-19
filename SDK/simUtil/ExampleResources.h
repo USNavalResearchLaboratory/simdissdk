@@ -31,8 +31,8 @@
 /**
 * Resources for use with the SIMDIS SDK Examples
 */
-#define EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS  "http://readymap.org/readymap/tiles/1.0.0/22/"
-#define EXAMPLE_ELEVATION_LAYER_TMS       "http://readymap.org/readymap/tiles/1.0.0/9/"
+#define EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS  "http://readymap.org/readymap/tiles/1.0.0/7/"
+#define EXAMPLE_ELEVATION_LAYER_TMS       "http://readymap.org/readymap/tiles/1.0.0/116/"
 
 // Environment variable to query for SIMDIS SDK data path
 #define EXAMPLE_FILE_PATH_VAR             "SIMDIS_SDK_FILE_PATH"

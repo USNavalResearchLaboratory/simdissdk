@@ -25,7 +25,7 @@
 #include <string>
 #include "osgDB/Callbacks"
 #include "simCore/Common/Common.h"
-#include <GL/gl.h>
+#include "osg/GL"
 
 namespace simVis
 {
@@ -85,6 +85,9 @@ namespace simVis
     DISPLAY_MASK_LABEL              = 1 << 8,
     DISPLAY_MASK_PLATFORM_MODEL     = 1 << 9,
     DISPLAY_MASK_GOG                = 1 << 10,
+#ifdef ENABLE_CUSTOM_RENDERING
+    DISPLAY_MASK_CUSTOM_RENDERING   = 1 << 11,
+#endif
     DISPLAY_MASK_ALL                = ~0
   };
 
@@ -104,39 +107,54 @@ namespace simVis
    */
   enum RenderBinNumber
   {
+    // Bin type = BIN_GLOBAL_SIMSDK
     BIN_TERRAIN             = 0,  // terrain renders in bin 0.
     BIN_GOG_FLAT            = 1,  // terrain-clamped GOG
     BIN_ANIMATEDLINE_FLAT   = 1,  // animated lines clamped to terrain
     BIN_RCS                 = 1,  // RCS is drawn at the same time as GOG
     BIN_POST_TERRAIN        = 10, // marker ending terrain-clamped items
-    BIN_RFPROPAGATION       = 10, // rfprop objects need to be up high since depth buffer is turned off
     BIN_AZIM_ELEV_TOOL      = 11, // Platform Azim/Elev tool rings and text drawn under entities
     BIN_RANGE_TOOL          = 11,
     BIN_ANIMATEDLINE        = 11,
-    BIN_AREA_HIGHLIGHT      = 11, // drawn before platforms to avoid platform alpha blend artifacts
 
-    BIN_PLATFORM_MODEL      = 13,
+    // Opaque platform-related graphics that do not require depth sorting or blending
+    // Bin type = BIN_GLOBAL_SIMSDK
     BIN_LOCAL_GRID          = 13,
     BIN_TRACK_HISTORY       = 13,
     BIN_LASER               = 13,
     BIN_OPAQUE_BEAM         = 13,
     BIN_OPAQUE_GATE         = 13,
 
-    // Transparent items are drawn after opaque items to maximize likelihood of
-    // correct colorization.  OSG will sort from back to front in the same render
-    // bin, so generally anything with equal graphical priority should share the
-    // same render bin ID.
+    // Platform models are general opaque but have some translucent parts.
+    // These need to be rendered in traversal order to preserve the alpha
+    // components at the end of the mode graph. Later we should explore
+    // pre-processing these models to separate the translucent parts for
+    // two-pass alpha rendering.
+    // Bin type = BIN_TRAVERSAL_ORDER_SIMSDK
+    BIN_PLATFORM_MODEL      = 14,
+
+    // Bin #15 is for depth-sorted translucent graphics. Render these in the
+    // BIN_TWO_PASS_ALPHA renderbin. All graphics will draw with depth-writing off,
+    // then draw a second time to populate the depth buffer.
+    // Bin type = BIN_TWO_PASS_ALPHA
     BIN_PLATFORM_IMAGE      = 15,
     BIN_BEAM                = 15,
     BIN_GATE                = 15,
     BIN_PROJECTOR           = 15,
-    BIN_ROCKETBURN          = 15,
     BIN_CYLINDER            = 15,
-    BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
+    BIN_RFPROPAGATION       = 15,
 
-    BIN_DEPTH_WRITER        = 98, // Locks in depth values prior to SilverLining / Triton, to prevent stacking problems with transparency
-    BIN_SILVERLINING        = 99, // SilverLining is automatically drawn at RenderBin 99
-    BIN_OCEAN               = 99, // Recommended render bin for Triton and Simple Ocean
+    // Bin type = BIN_GLOBAL_SIMSDK
+    BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
+    BIN_OCEAN               = 98, // Ocean draws late because we needs to be able to see through it
+
+    // Following this are graphics that render with depth-writing OFF
+    // Bin type = BIN_GLOBAL_SIMSDK
+    BIN_SILVERLINING        = 99,  // SilverLining is automatically drawn at RenderBin 99 (no depth writing)
+    BIN_AREA_HIGHLIGHT      = 105,
+    BIN_ROCKETBURN          = 106,
+    BIN_SCREEN_SPACE_LABEL  = 108, // osgEarth screen-space labels (PlaceNode, LabelNode, etc.)
+
 
     BIN_TOP_1               = 110, // use these values for visuals that should be displayed above anything else in the scene
     BIN_TOP_2               = 115,
@@ -145,6 +163,8 @@ namespace simVis
 
   /** Almost all SDK items are depth-sorted */
   static const std::string BIN_GLOBAL_SIMSDK = "DepthSortedBin";
+  /** Semi-transparent objects (bin #15) render in a two-pass alpha bin */
+  static const std::string BIN_TWO_PASS_ALPHA = "TwoPassAlphaRenderBin";
   /** Platforms and some HUD elements are placed into a traversal order bin */
   static const std::string BIN_TRAVERSAL_ORDER_SIMSDK = "TraversalOrderBin";
 

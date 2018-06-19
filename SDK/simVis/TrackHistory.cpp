@@ -21,11 +21,11 @@
  */
 #include <cassert>
 
-#include "osg/LineWidth"
 #include "osgEarth/Capabilities"
 #include "osgEarth/Horizon"
 #include "osgEarth/Registry"
 #include "osgEarth/VirtualProgram"
+#include "simVis/LineDrawable.h"
 
 #include "simNotify/Notify.h"
 #include "simData/DataTable.h"
@@ -104,6 +104,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, const osgEarth:
   : ds_(ds),
    supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
    chunkSize_(64),  // keep this lowish or your app won't scale.
+   defaultColor_(simVis::Color(simData::PlatformPrefs::default_instance().trackprefs().trackcolor(), simVis::Color::RGBA)),
    totalPoints_(0),
    hasLastDrawTime_(false),
    lastDrawTime_(0.0),
@@ -120,7 +121,8 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, const osgEarth:
   updateSliceBase_ = ds_.platformUpdateSlice(entityId);
   assert(updateSliceBase_); // should be a valid update slice before track history is created
 
-  defaultColor_ = simVis::Color(simData::PlatformPrefs::default_instance().trackprefs().trackcolor(), simVis::Color::RGBA);
+  activeColor_ = defaultColor_;
+
   locator_ = new simVis::Locator(srs);
 
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
@@ -304,13 +306,10 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
 
     // add the new chunk and update its appearance
     chunkGroup_->addChild(chunk);
-    // determine whether current draw mode requires the centerline to be drawn
-    updateCenterLine_(lastPlatformPrefs_.trackprefs().trackdrawmode());
-
     chunk->addCullCallback(new osgEarth::HorizonCullCallback());
   }
 
-  double drawTime = toDrawTime_(u.time());
+  const double drawTime = toDrawTime_(u.time());
 
   // add the point (along with its timestamp)
   bool addSuccess = chunk->addPoint(hostMatrix, drawTime, historyColorAtTime_(drawTime), hostBounds_);
@@ -370,15 +369,6 @@ void TrackHistoryNode::removePointsOlderThan_(double oldestDrawTime)
   }
 }
 
-/// select center points or lines
-void TrackHistoryNode::updateCenterLine_(simData::TrackPrefs_Mode mode)
-{
-  for (unsigned int i = 0; i < chunkGroup_->getNumChildren(); ++i)
-  {
-    static_cast<TrackChunkNode*>(chunkGroup_->getChild(i))->setCenterLineMode(mode);
-  }
-}
-
 void TrackHistoryNode::updateVisibility_(const simData::TrackPrefs& prefs)
 {
   const bool invisible = (prefs.trackdrawmode() == simData::TrackPrefs::OFF);
@@ -390,26 +380,13 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
   // create the altmode group if necessary:
   if (altmode && altModeXform_ == NULL)
   {
-    dropVertsDrawable_ = new osg::Geometry();
-    dropVertsDrawable_->setUseVertexBufferObjects(true);
-
-    dropVerts_ = new osg::Vec3Array(2);
-    (*dropVerts_)[0].set(0, 0, 0);
-    (*dropVerts_)[1].set(0, 0, 0);  // Will be updated in updateAltModePositionAndAppearance_
-    dropVertsDrawable_->setVertexArray(dropVerts_.get());
-
-    osg::Vec4Array* colors = new osg::Vec4Array(1);
-    (*colors)[0].set(1, 1, 1, 1);
-    dropVertsDrawable_->setColorArray(colors);
-    dropVertsDrawable_->setColorBinding(osg::Geometry::BIND_OVERALL);
-
-    dropVertsDrawable_->addPrimitiveSet(new osg::DrawArrays(GL_LINES, 0, 2));
-
-    osg::Geode* geode = new osg::Geode();
-    geode->addDrawable(dropVertsDrawable_);
+    dropVertsDrawable_ = new osgEarth::LineDrawable(GL_LINES);
+    dropVertsDrawable_->setColor(simVis::Color::White);
+    dropVertsDrawable_->allocate(2);
+    dropVertsDrawable_->dirty();
 
     altModeXform_ = new osg::MatrixTransform();
-    altModeXform_->addChild(geode);
+    altModeXform_->addChild(dropVertsDrawable_.get());
 
     this->addChild(altModeXform_);
   }
@@ -438,22 +415,14 @@ void TrackHistoryNode::updateAltModePositionAndAppearance_(const osg::Matrixd& m
 
   altModeXform_->setMatrix(mat);
 
-  osg::Array* colors =
-    static_cast<osg::Geode*>(altModeXform_->getChild(0))
-    ->getDrawable(0)
-    ->asGeometry()
-    ->getColorArray();
-
-  (*static_cast<osg::Vec4Array*>(colors))[0] = color;
-  colors->dirty();
+  dropVertsDrawable_->setColor(color);
 
   osg::Matrixd world2local;
   world2local.invert(mat);
 
   // calculate the local point.
-  static const osg::Vec3d s_zero(0.0, 0.0, 0.0);
-  osg::Vec3d world = s_zero * mat;
-  osg::Vec3  local = world * world2local;
+  static const osg::Vec3d s_zero;
+  const osg::Vec3d world = s_zero * mat;
 
   osg::Vec3d up;
   osgEarth::GeoPoint geo;
@@ -461,9 +430,7 @@ void TrackHistoryNode::updateAltModePositionAndAppearance_(const osg::Matrixd& m
   geo.createWorldUpVector(up);
   up.normalize();
 
-  (*dropVerts_)[1] = (world - up*geo.alt()) * world2local;
-  dropVerts_->dirty();
-  dropVertsDrawable_->dirtyBound();
+  dropVertsDrawable_->setVertex(1, (world - up*geo.alt()) * world2local);
 }
 
 void TrackHistoryNode::setHostBounds(const osg::Vec2& bounds)
@@ -550,35 +517,21 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackdrawmode))
   {
-    if (force || prefs.trackdrawmode() == simData::TrackPrefs_Mode_BRIDGE ||
-        prefs.trackdrawmode() == simData::TrackPrefs_Mode_RIBBON ||
-        lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_BRIDGE ||
-        lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_RIBBON)
-    {
-      // change to/from ribbon or bridge(drop) requires rebuild of track
-      resetRequested = true;
-    }
-    else
-    {
-      // change from line to point, or vice versa does not require rebuild
-      assert(prefs.trackdrawmode() == simData::TrackPrefs_Mode_POINT ||
-        prefs.trackdrawmode() == simData::TrackPrefs_Mode_LINE);
-
-      assert(lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_POINT ||
-        lastPrefs.trackdrawmode() == simData::TrackPrefs_Mode_LINE);
-
-      updateCenterLine_(prefs.trackdrawmode());
-    }
+    resetRequested = true;
   }
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackcolor))
   {
-    // store the trackcolor as the default track history color
-    osg::Vec4f newColor = simVis::Color(prefs.trackcolor(), simVis::Color::RGBA);
-    if (defaultColor_ != newColor)
+    // store the trackcolor as the active track history color
+    osg::Vec4f newColor;
+    if (prefs.has_trackcolor())
+      newColor = simVis::Color(prefs.trackcolor(), simVis::Color::RGBA);
+    else
+      newColor = defaultColor_;
+
+    if (activeColor_ != newColor)
     {
-      defaultColor_ = newColor;
-      //resetRequested = true;
+      activeColor_ = newColor;
     }
   }
 
@@ -603,15 +556,15 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
   else if (prefs.multitrackcolor())
   {
     // Set lastOverrideColor so re-enabling an override will trigger the logic at the end of setOverrideColor_
-    lastOverrideColor_ = (0, 0, 0, 0);
+    lastOverrideColor_ = osg::Vec4f();
     // Can only disable the override after one has been created
     if (enableOverrideColorUniform_.valid())
       enableOverrideColorUniform_->set(false);
   }
   else
   {
-    // If Multiple Color is off, and both overrides are off, SIMDIS displays a line matching the default color
-    setOverrideColor_(defaultColor_);
+    // If Multiple Color is off, and both overrides are off, SIMDIS displays a line matching the active color
+    setOverrideColor_(activeColor_);
   }
 
   if (!supportsShaders_ && origOverideColor != lastOverrideColor_)
@@ -619,9 +572,9 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, linewidth))
   {
-    double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
+    const double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
     osg::StateSet* stateSet = this->getOrCreateStateSet();
-    stateSet->setAttributeAndModes(new osg::LineWidth(lineWidth), osg::StateAttribute::ON);
+    osgEarth::LineDrawable::setLineWidth(stateSet, lineWidth);
     PointSize::setValues(stateSet, lineWidth, osg::StateAttribute::ON);
   }
 
@@ -805,10 +758,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
 {
   // remove previous, will recreate if needed
   if (currentPointChunk_ != NULL)
-  {
-    removeChild(currentPointChunk_);
-    currentPointChunk_ = NULL;
-  }
+    currentPointChunk_->reset();
 
   // only line, ribbon, and bridge draw modes require this processing,
   // but if there is not a previous point, there is nothing to do
@@ -819,13 +769,13 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
 
   // create the special chunk for rendering the interpolated point, has two points to connect to rest of history
   // for ribbon and bridge modes, SIMDIS 9 draws a center line from platform to first data point, use simData::TrackPrefs_Mode_LINE to duplicate that behavior
-  currentPointChunk_ = new TrackChunkNode(2, locator_->getSRS(), simData::TrackPrefs_Mode_LINE);
   if (currentPointChunk_ == NULL)
   {
-    return;
+    currentPointChunk_ = new TrackChunkNode(2, locator_->getSRS(), simData::TrackPrefs_Mode_LINE);
+    if (currentPointChunk_ == NULL)
+      return;
+    addChild(currentPointChunk_);
   }
-  this->addChild(currentPointChunk_);
-
   osg::Matrix hostMatrix;
 
   // find the most current update, either whatever is current, or the last available update
@@ -841,7 +791,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
   // points must be added in order of increasing drawTime
   if (timeDirection_ == simCore::REVERSE && getMatrix_(*current, hostMatrix))
   {
-    double drawTime = toDrawTime_(current->time());
+    const double drawTime = toDrawTime_(current->time());
     currentPointChunk_->addPoint(hostMatrix, drawTime, historyColorAtTime_(drawTime), hostBounds_);
   }
 
@@ -855,7 +805,6 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
     // this point should never be the current point; if assert fails, check to make sure we only process interpolated points
     assert(u->time() < current->time());
     currentPointChunk_->addPoint(hostMatrix, u->time(), historyColorAtTime_(u->time()), hostBounds_);
-    currentPointChunk_->setCenterLineMode(lastPlatformPrefs_.trackprefs().trackdrawmode());
   }
 
   if (timeDirection_ == simCore::FORWARD && getMatrix_(*current, hostMatrix))
