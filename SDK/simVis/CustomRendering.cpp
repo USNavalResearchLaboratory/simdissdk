@@ -92,7 +92,7 @@ void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& pref
   if (prefs.commonprefs().labelprefs().namelength() > 0)
     label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
-  std::string text = "This is a test, this only a test.";
+  std::string text;
   if (prefs.commonprefs().labelprefs().draw())
     text = contentCallback_->createString(getId(), prefs, prefs.commonprefs().labelprefs().displayfields());
 
