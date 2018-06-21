@@ -28,6 +28,7 @@
 #include "osg/ref_ptr"
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
+#include "osgEarth/GLUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -145,6 +146,7 @@ namespace
     assert(vertexArray);
     setName("simVis::SphericalVolume::svPyramidOutline");
     xform.addChild(this);
+    osgEarth::GLUtils::setLineSmooth(getOrCreateStateSet(), osg::StateAttribute::ON);
 
     const bool hasNearFace = (nearFaceOffset_ > 0);
     // if we are drawing near and far faces, bottom and top outlines are each line loops, if not, (far face) outlines are each simple line strips
