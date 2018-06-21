@@ -121,8 +121,8 @@ else()
 endif()
 
 set(PROTOBUF_VERSION "2.6.0")
-# Note that OSG 3.4.1 is used against Qt 5.5.1 builds internally
-set(OSG_VERSION "3.4.1")
+# Note that OSG 3.6.2 is used against Qt 5.5.1 builds internally
+set(OSG_VERSION "3.6.2")
 set(SQLITE_VERSION "3.8.11.1")
 set(GDAL_VERSION "2.1.1")
 
