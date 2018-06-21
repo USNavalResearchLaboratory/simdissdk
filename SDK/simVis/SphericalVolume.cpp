@@ -177,9 +177,11 @@ namespace
     }
     bottomOutline_->setName("simVis::SphericalVolumeBottomOutline");
     bottomOutline_->setColor(outlineColor_);
+    bottomOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(bottomOutline_.get());
     topOutline_->setName("simVis::SphericalVolumeTopOutline");
     topOutline_->setColor(outlineColor_);
+    topOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(topOutline_.get());
 
     // the gate's far face left side vertical (numPointsZ_)
@@ -187,12 +189,14 @@ namespace
     farLeftOutline_->allocate(numPointsZ_);
     farLeftOutline_->setName("simVis::SphericalVolume-FarOutline");
     farLeftOutline_->setColor(outlineColor_);
+    farLeftOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(farLeftOutline_.get());
     // the gate's far face right side vertical (numPointsZ_)
     farRightOutline_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
     farRightOutline_->allocate(numPointsZ_);
     farRightOutline_->setName("simVis::SphericalVolume-FarOutline");
     farRightOutline_->setColor(outlineColor_);
+    farRightOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(farRightOutline_.get());
 
     if (hasNearFace)
@@ -202,12 +206,14 @@ namespace
       nearLeftOutline_->allocate(numPointsZ_);
       nearLeftOutline_->setName("simVis::SphericalVolume-NearOutline");
       nearLeftOutline_->setColor(outlineColor_);
+      nearLeftOutline_->setDataVariance(osg::Object::DYNAMIC);
       addChild(nearLeftOutline_.get());
       // the gate's near face right side vertical (numPointsZ_)
       nearRightOutline_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
       nearRightOutline_->allocate(numPointsZ_);
       nearRightOutline_->setName("simVis::SphericalVolume-NearOutline");
       nearRightOutline_->setColor(outlineColor_);
+      nearRightOutline_->setDataVariance(osg::Object::DYNAMIC);
       addChild(nearRightOutline_.get());
     }
   }
@@ -237,9 +243,9 @@ namespace
     const size_t bottomOutlineSize = bottomOutline_->size();
     const size_t topOutlineSize = topOutline_->size();
     const size_t farLeftOutlineSize = farLeftOutline_->size();
-    const size_t nearLeftOutlineSize = nearLeftOutline_->size();
+    const size_t nearLeftOutlineSize = hasNearFace ? nearLeftOutline_->size() : 0;
     const size_t farRightOutlineSize = farRightOutline_->size();
-    const size_t nearRightOutlineSize = nearRightOutline_->size();
+    const size_t nearRightOutlineSize = hasNearFace ? nearRightOutline_->size() : 0;
 #endif
     // bottom outline
     {
