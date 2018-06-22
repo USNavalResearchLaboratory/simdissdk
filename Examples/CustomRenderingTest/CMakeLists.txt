@@ -1,3 +1,7 @@
+if(NOT TARGET simUtil)
+    return()
+endif()
+
 project(EXAMPLE_CUSTOM_RENDERING_TEST)
 
 set(PROJECT_FILES
