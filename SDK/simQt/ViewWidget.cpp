@@ -30,6 +30,7 @@
 #include "osg/Viewport"
 #include "osgViewer/View"
 #include "osgQt/GraphicsWindowQt"
+#include "simQt/Gl3FormatGuesser.h"
 #include "simQt/ViewWidget.h"
 
 namespace simQt
@@ -66,7 +67,7 @@ public:
 ////////////////////////////////////////////////////////////////
 
 ViewWidget::ViewWidget(osgViewer::View* view)
-  : osgQt::GLWidget()
+  : osgQt::GLWidget(simQt::Gl3FormatGuesser::getFormat())
 {
   init_(view);
 
@@ -133,6 +134,7 @@ osg::GraphicsContext* ViewWidget::createGraphicsContext_()
   unsigned int minor = 0;
   if (traits->getContextVersion(major, minor))
     fmt.setVersion(static_cast<int>(major), static_cast<int>(minor));
+  fmt = simQt::Gl3FormatGuesser::getFormat(fmt);
 
   // Apply the new format to the GL Widget
   setFormat(fmt);

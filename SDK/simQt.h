@@ -59,6 +59,7 @@
 #include "simQt/FileUtilities.h"
 #include "simQt/FontWidget.h"
 #include "simQt/GanttChartView.h"
+#include "simQt/Gl3FormatGuesser.h"
 #include "simQt/IncrementalCompileSettings.h"
 #include "simQt/MapDataModel.h"
 #include "simQt/MonospaceItemDelegate.h"

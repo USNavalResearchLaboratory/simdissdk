@@ -99,6 +99,9 @@ if(TARGET simVis)
         ${SIMQT_INC}ViewManagerDataModel.h
         ${SIMQT_INC}ViewWidget.h
     )
+    list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}Gl3FormatGuesser.h
+    )
 endif()
 
 if(OSG_FOUND)
@@ -195,6 +198,7 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
+        ${SIMQT_SRC}Gl3FormatGuesser.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
@@ -271,6 +275,10 @@ if(TARGET simVis)
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
         $<BUILD_INTERFACE:${OSGEARTH_LIBRARY_INCLUDE_PATH}>
     )
+
+    # Gl3FormatGuesser depends on OpenGL libraries
+    find_package(OpenGL)
+    target_link_libraries(simQt PRIVATE ${OPENGL_LIBRARIES})
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
