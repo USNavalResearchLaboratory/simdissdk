@@ -30,6 +30,7 @@
 #include "osg/Viewport"
 #include "osgViewer/View"
 #include "osgQt/GraphicsWindowQt"
+#include "simVis/Gl3Utils.h"
 #include "simQt/Gl3FormatGuesser.h"
 #include "simQt/ViewWidget.h"
 
@@ -102,6 +103,10 @@ void ViewWidget::init_(osgViewer::View* view)
     camera->setProjectionMatrixAsPerspective(30.0f, gc->getTraits()->width / gc->getTraits()->height, 1.0f, 10000.0f);
   camera->setDrawBuffer(gc->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
   camera->setReadBuffer(gc->getTraits()->doubleBuffer ? GL_BACK : GL_FRONT);
+
+  // Apply the mesa fix.  We can't rely on the realize operation in simQt to call this consistently
+  // because the realize operation can be arbitrarily changed.
+  simVis::applyMesaGeometryShaderFix(gc);
 }
 
 osg::GraphicsContext* ViewWidget::createGraphicsContext_()
