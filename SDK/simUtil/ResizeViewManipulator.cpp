@@ -108,6 +108,7 @@ private:
   {
     line_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
     line_->allocate(8);
+    line_->setDataVariance(osg::Object::DYNAMIC);
 
     line_->setVertex(0, osg::Vec3(0.f, 1.f, 0.f));
     line_->setVertex(1, osg::Vec3(0.5f, 1.f, 0.f));
