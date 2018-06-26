@@ -409,6 +409,7 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(length / segmentLength)));
 
   osgEarth::LineDrawable* g = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  g->setDataVariance(osg::Object::DYNAMIC);
   g->setName("simVis::LaserNode");
 
   // allocate the desired number of points, then generate them
