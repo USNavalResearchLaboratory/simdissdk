@@ -144,7 +144,7 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     dataStore_(NULL),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
-    customRenderingIcon_(":/simQt/images/Question.png"),
+    customRenderingIcon_(":/simQt/images/CustomRender.png"),
     gateIcon_(":/simQt/images/gate.png"),
     laserIcon_(":/simQt/images/laser.png"),
     lobIcon_(":/simQt/images/lob.png"),
