@@ -597,6 +597,10 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   if (!result)
     return NULL;
 
+  // Synchronous load needs to run the shader generator here
+  osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
+  osgEarth::Registry::shaderGenerator().run(result.get(), stateCache.get());
+
   // Store the image hint
   bool isImage = false;
   result->getUserValue(IMAGE_HINT_KEY, isImage);
