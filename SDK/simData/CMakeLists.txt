@@ -3,9 +3,6 @@ if(NOT PROTOBUF_FOUND)
     return()
 endif()
 
-# The ENABLE_CUSTOM_RENDERING option is used to include the experimental Custom Rendering code
-option(ENABLE_CUSTOM_RENDERING "Include experimental code for Custom Rendering" OFF)
-
 # ----- simData --------------------------------------------------------
 
 set(DATA_INC)
@@ -179,10 +176,6 @@ if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
-endif()
-
-if(ENABLE_CUSTOM_RENDERING)
-    target_compile_definitions(simData PUBLIC ENABLE_CUSTOM_RENDERING)
 endif()
 
 if(WIN32)

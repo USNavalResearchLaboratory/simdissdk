@@ -20,8 +20,6 @@
  *
  */
 
-#ifdef ENABLE_CUSTOM_RENDERING
-
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
@@ -42,6 +40,7 @@ namespace simVis
 CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props, const EntityNode* host, int referenceYear)
   : EntityNode(simData::CUSTOM_RENDERING),
     scenario_(scenario),
+    host_(host),
     contentCallback_(new NullEntityCallback()),
     lastProps_(props),
     hasLastPrefs_(false),
@@ -260,6 +259,9 @@ LocatorNode* CustomRenderingNode::locatorNode() const
   return customLocatorNode_.get();
 }
 
+const EntityNode* CustomRenderingNode::host() const
+{
+  return host_.get();
 }
 
-#endif // ENABLE_CUSTOM_RENDERING
+}

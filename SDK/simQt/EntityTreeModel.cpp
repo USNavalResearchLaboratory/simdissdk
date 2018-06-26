@@ -144,9 +144,7 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     dataStore_(NULL),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
-#ifdef ENABLE_CUSTOM_RENDERING
     customRenderingIcon_(":/simQt/images/Question.png"),
-#endif
     gateIcon_(":/simQt/images/gate.png"),
     laserIcon_(":/simQt/images/laser.png"),
     lobIcon_(":/simQt/images/lob.png"),
@@ -439,10 +437,8 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
         return platformIcon_;
       case simData::BEAM:
         return beamIcon_;
-#ifdef ENABLE_CUSTOM_RENDERING
       case simData::CUSTOM_RENDERING:
         return customRenderingIcon_;
-#endif
       case simData::GATE:
         return gateIcon_;
       case simData::LASER:
@@ -636,11 +632,9 @@ void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataSt
       simData::DataStore::IdList idList;
       dataStore->beamIdListForHost(*iter, &idList);
       buildTree_(simData::BEAM, dataStore, idList, newItem);
-#ifdef ENABLE_CUSTOM_RENDERING
       idList.clear();
       dataStore->customRenderingIdListForHost(*iter, &idList);
       buildTree_(simData::CUSTOM_RENDERING, dataStore, idList, newItem);
-#endif
       idList.clear();
       dataStore->laserIdListForHost(*iter, &idList);
       buildTree_(simData::LASER, dataStore, idList, newItem);

@@ -22,18 +22,11 @@
 #ifndef SIMVIS_CUSTOM_RENDERING_H
 #define SIMVIS_CUSTOM_RENDERING_H
 
-#ifdef ENABLE_CUSTOM_RENDERING
-
 #include "osg/observer_ptr"
 #include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 #include "simVis/LocatorNode.h"
-
-namespace osg {
-  class Depth;
-  class MatrixTransform;
-}
 
 namespace simVis
 {
@@ -217,6 +210,9 @@ namespace simVis
     // Expose the locator node so an outside source can add graphics.
     LocatorNode* locatorNode() const;
 
+    /// Returns the host
+    const EntityNode* host() const;
+
   protected:
     /// osg::Referenced-derived; destructor body needs to be in the .cpp
     virtual ~CustomRenderingNode();
@@ -245,8 +241,6 @@ namespace simVis
   };
 
 } //namespace simVis
-
-#endif // ENABLE_CUSTOM_RENDERING
 
 #endif //SIMVIS_CUSTOM_H
 

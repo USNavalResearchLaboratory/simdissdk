@@ -38,9 +38,7 @@
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
-#ifdef ENABLE_CUSTOM_RENDERING
 #include "simVis/CustomRendering.h"
-#endif
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -740,7 +738,6 @@ LobGroupNode* ScenarioManager::addLobGroup(const simData::LobGroupProperties& pr
   return NULL;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRenderingProperties& props, simData::DataStore& dataStore)
 {
   SAFETRYBEGIN;
@@ -770,7 +767,6 @@ CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRe
   SAFETRYEND("adding custom");
   return NULL;
 }
-#endif
 
 ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties& props, simData::DataStore& dataStore)
 {
@@ -881,7 +877,6 @@ bool ScenarioManager::setLobGroupPrefs(simData::ObjectId id, const simData::LobG
   return false;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 bool ScenarioManager::setCustomRenderingPrefs(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs)
 {
   SAFETRYBEGIN;
@@ -894,7 +889,6 @@ bool ScenarioManager::setCustomRenderingPrefs(simData::ObjectId id, const simDat
   SAFETRYEND(std::string(osgEarth::Stringify() << "setting custom prefs of ID " << id));
   return false;
 }
-#endif
 
 void ScenarioManager::notifyBeamsOfNewHostSize(const PlatformNode& platform) const
 {

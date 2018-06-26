@@ -101,9 +101,7 @@ public: // types
   static const simData::ObjectType LASER = simData::LASER;
   static const simData::ObjectType PROJECTOR = simData::PROJECTOR;
   static const simData::ObjectType LOB_GROUP = simData::LOB_GROUP;
-#ifdef ENABLE_CUSTOM_RENDERING
   static const simData::ObjectType CUSTOM_RENDERING = simData::CUSTOM_RENDERING;
-#endif
   static const simData::ObjectType ALL = simData::ALL;
 #endif
 
@@ -359,10 +357,8 @@ public: // methods
   /// Retrieve a list of IDs for all LobGroups associated with a platform
   virtual void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const = 0;
 
-#ifdef ENABLE_CUSTOM_RENDERING
   /// Retrieve a list of IDs for all customs associated with a platform
   virtual void customRenderingIdListForHost(ObjectId hostid, IdList *ids) const = 0;
-#endif
 
   /// Retrieves the ObjectType for a particular ID
   virtual simData::ObjectType objectType(ObjectId id) const = 0;
@@ -391,18 +387,14 @@ public: // methods
   virtual const     LaserProperties*             laserProperties(ObjectId id, Transaction *transaction) const = 0;
   virtual const ProjectorProperties*         projectorProperties(ObjectId id, Transaction *transaction) const = 0;
   virtual const  LobGroupProperties*          lobGroupProperties(ObjectId id, Transaction *transaction) const = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual const CustomRenderingProperties* customRenderingProperties(ObjectId id, Transaction *transaction) const = 0;
-#endif
   virtual        PlatformProperties*  mutable_platformProperties(ObjectId id, Transaction *transaction) = 0;
   virtual            BeamProperties*      mutable_beamProperties(ObjectId id, Transaction *transaction) = 0;
   virtual            GateProperties*      mutable_gateProperties(ObjectId id, Transaction *transaction) = 0;
   virtual           LaserProperties*     mutable_laserProperties(ObjectId id, Transaction *transaction) = 0;
   virtual       ProjectorProperties* mutable_projectorProperties(ObjectId id, Transaction *transaction) = 0;
   virtual        LobGroupProperties*  mutable_lobGroupProperties(ObjectId id, Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual CustomRenderingProperties* mutable_customRenderingProperties(ObjectId id, Transaction *transaction) = 0;
-#endif
   ///@}
 
   /**@name Object Preferences
@@ -422,10 +414,8 @@ public: // methods
   virtual           LaserPrefs*     mutable_laserPrefs(ObjectId id, Transaction *transaction) = 0;
   virtual       ProjectorPrefs* mutable_projectorPrefs(ObjectId id, Transaction *transaction) = 0;
   virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual const CustomRenderingPrefs* customRenderingPrefs(ObjectId id, Transaction *transaction) const = 0;
   virtual       CustomRenderingPrefs* mutable_customRenderingPrefs(ObjectId id, Transaction *transaction) = 0;
-#endif
   virtual          CommonPrefs*    mutable_commonPrefs(ObjectId id, Transaction* transaction) = 0;
   ///@}
 
@@ -466,9 +456,7 @@ public: // methods
   virtual     LaserProperties* addLaser(Transaction *transaction) = 0;
   virtual ProjectorProperties* addProjector(Transaction *transaction) = 0;
   virtual  LobGroupProperties* addLobGroup(Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual CustomRenderingProperties* addCustomRendering(Transaction *transaction) = 0;
-#endif
   ///@}
 
   /// remove an entity from the data store
@@ -508,9 +496,7 @@ public: // methods
   virtual ProjectorCommand*   addProjectorCommand(ObjectId id, Transaction *transaction) = 0;
   virtual   LobGroupUpdate*   addLobGroupUpdate(ObjectId id, Transaction *transaction) = 0;
   virtual  LobGroupCommand*   addLobGroupCommand(ObjectId id, Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual CustomRenderingCommand* addCustomRenderingCommand(ObjectId id, Transaction *transaction) = 0;
-#endif
   virtual      GenericData*   addGenericData(ObjectId id, Transaction *transaction) = 0;
   virtual     CategoryData*   addCategoryData(ObjectId id, Transaction *transaction) = 0;
   //virtual        TableData*        addTableData(ObjectId id, Transaction *transaction) = 0;
@@ -532,9 +518,7 @@ public: // methods
   virtual const ProjectorCommandSlice* projectorCommandSlice(ObjectId id) const = 0;
   virtual const LobGroupUpdateSlice*   lobGroupUpdateSlice(ObjectId id) const = 0;
   virtual const LobGroupCommandSlice*  lobGroupCommandSlice(ObjectId id) const = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual const CustomRenderingCommandSlice* customRenderingCommandSlice(ObjectId id) const = 0;
-#endif
   virtual const GenericDataSlice*      genericDataSlice(ObjectId id) const = 0;
   virtual const CategoryDataSlice*     categoryDataSlice(ObjectId id) const = 0;
   ///@}

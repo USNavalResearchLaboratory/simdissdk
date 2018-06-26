@@ -106,7 +106,6 @@ void configurePlatformPrefs(simData::ObjectId platformId, simData::DataStore* da
 
 //----------------------------------------------------------------------------
 
-#ifdef ENABLE_CUSTOM_RENDERING
 
 /// create a Custom Entity and add it to 'dataStore'
 ///@return id for new Custom Entity
@@ -144,14 +143,86 @@ public:
   }
 };
 
+/// Handles the datastore update from the CustomRenderingNode
+class UpdateFromDatastore : public simVis::CustomRenderingNode::UpdateCallback
+{
+public:
+  explicit UpdateFromDatastore(simVis::ScenarioManager* manager)
+    : manager_(manager)
+  {
+  }
+
+  virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false)
+  {
+    if (node_ == NULL)
+      return false;
+
+    if (geom_ == NULL)
+    {
+      simVis::LocatorNode* locatorNode = node_->locatorNode();
+      locatorNode->removeChildren(0, locatorNode->getNumChildren());
+
+      osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+      (*colors)[0] = osg::Vec4(1, 1, 1, 1);
+      geom_ = new osg::Geometry;
+      geom_->setColorArray(colors);
+
+      geom_->setUseVertexBufferObjects(true);
+      fillVerts_ = new osg::Vec3Array();
+      fillVerts_->setDataVariance(osg::Object::DYNAMIC);
+      geom_->setVertexArray(fillVerts_);
+      fillVerts_->push_back(osg::Vec3(1000, -100, 0));
+      fillVerts_->push_back(osg::Vec3(1000, 0, 0));
+      fillVerts_->push_back(osg::Vec3(0, 0, 0));
+      geom_->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 3));
+      locatorNode->addChild(geom_);
+      locatorNode->dirtyBound();
+    }
+    else
+    {
+      if (fillVerts_->front().y() > -1000)
+        fillVerts_->front().y() -= 100;
+      else
+        fillVerts_->front().y() = -100;
+      fillVerts_->dirty();
+    }
+
+    auto host = node_->host();
+    if (host != NULL)
+    {
+      simCore::Coordinate coord;
+      host->getLocator()->getCoordinate(&coord);
+      node_->getLocator()->setCoordinate(coord);
+      node_->dirtyBound();
+    }
+
+    return true;
+  }
+
+  void setId(simData::ObjectId id)
+  {
+    node_ = manager_->find<simVis::CustomRenderingNode>(id);
+  }
+
+protected:
+  virtual ~UpdateFromDatastore() {}
+
+private:
+  osg::observer_ptr<simVis::ScenarioManager> manager_;
+  osg::observer_ptr<simVis::CustomRenderingNode> node_;
+  osg::ref_ptr<osg::Geometry> geom_;
+  osg::ref_ptr<osg::Vec3Array> fillVerts_;;
+};
+
+
 // Code similar to what a extension will do; hard-coded to one Custom Entity
 class UpdateGraphics : public simData::DataStore::DefaultListener
 {
 public:
   explicit UpdateGraphics(simVis::ScenarioManager* manager)
     : manager_(manager),
-      node_(NULL),
-      callback_(new LabelCallback)
+      callback_(new LabelCallback),
+      update_(new UpdateFromDatastore(manager))
   {
   }
 
@@ -166,57 +237,27 @@ public:
 
     if (ot == simData::CUSTOM_RENDERING)
     {
-      node_ = manager_->find<simVis::CustomRenderingNode>(newId);
-      if (node_ != NULL)
+      auto node = manager_->find<simVis::CustomRenderingNode>(newId);
+      if (node != NULL)
       {
-        node_->setLabelContentCallback(callback_);
-        node_->setCustomActive(true);
-
-        simVis::LocatorNode* locatorNode = node_->locatorNode();
-        locatorNode->removeChildren(0, locatorNode->getNumChildren());
-
-        osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-        (*colors)[0] = osg::Vec4(1, 1, 1, 1);
-        geom_ = new osg::Geometry;
-        geom_->setColorArray(colors);
-
-        geom_->setUseVertexBufferObjects(true);
-        fillVerts_ = new osg::Vec3Array();
-        geom_->setVertexArray(fillVerts_);
-        fillVerts_->push_back(osg::Vec3(1000, -100, 0));
-        fillVerts_->push_back(osg::Vec3(1000, 0, 0));
-        fillVerts_->push_back(osg::Vec3(0, 0, 0));
-        geom_->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 3));
-        locatorNode->addChild(geom_);
-        locatorNode->dirtyBound();
+        update_->setId(newId);
+        node->setUpdateCallback(update_);
+        node->setLabelContentCallback(callback_);
+        node->setCustomActive(true);
       }
     }
   }
 
   virtual void onTimeChange(simData::DataStore *source)
   {
-    if (node_ == NULL)
-      return;
-
-    if (!fillVerts_->empty())
-    {
-      if (fillVerts_->front().y() > -1000)
-        fillVerts_->front().y() -= 100;
-      else
-        fillVerts_->front().y() = -100;
-      fillVerts_->dirty();
-    }
   }
 
 private:
   osg::observer_ptr<simVis::ScenarioManager> manager_;
-  osg::observer_ptr<simVis::CustomRenderingNode> node_;
   osg::ref_ptr<LabelCallback> callback_;
-  osg::ref_ptr<osg::Geometry> geom_;
-  osg::ref_ptr<osg::Vec3Array> fillVerts_;
+  osg::ref_ptr<UpdateFromDatastore> update_;
 };
 
-#endif
 
 }
 //----------------------------------------------------------------------------
@@ -255,10 +296,8 @@ int main(int argc, char **argv)
   configurePlatformPrefs(platformId, &dataStore, "Simulated Platform");
 
 // Custom specific code
-#ifdef ENABLE_CUSTOM_RENDERING
   dataStore.addListener(simData::DataStore::ListenerPtr(new UpdateGraphics(scene->getScenario())));
   addCustomRendering(platformId, dataStore);
-#endif
 
   /// simulator will compute time-based updates for our platform (and any beams it is hosting)
   osg::ref_ptr<simUtil::PlatformSimulator> sim = new simUtil::PlatformSimulator(platformId);

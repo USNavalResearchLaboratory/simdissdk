@@ -240,11 +240,8 @@ typedef DataSlice<LaserCommand>     LaserCommandSlice;
 typedef DataSlice<ProjectorCommand> ProjectorCommandSlice;
 /// Slice of LOB Group commands
 typedef DataSlice<LobGroupCommand>  LobGroupCommandSlice;
-
-#ifdef ENABLE_CUSTOM_RENDERING
 /// Slice of Custom Rendering commands
 typedef DataSlice<CustomRenderingCommand> CustomRenderingCommandSlice;
-#endif
 
 } // End of namespace simData
 

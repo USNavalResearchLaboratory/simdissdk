@@ -88,7 +88,6 @@ namespace simVis
     */
     virtual std::string createString(const simData::ProjectorPrefs& prefs, const simData::ProjectorUpdate& lastUpdate, const simData::LabelPrefs_DisplayFields& fields) = 0;
 
-#ifdef ENABLE_CUSTOM_RENDERING
     /**
     * Returns a custom rendering label content based on the given preference
     * @param id Since there is no update for custom rendering, need the id get information for the text string
@@ -97,7 +96,6 @@ namespace simVis
     * @return A label content based on the given preference; does not include custom rendering name/alias
     */
     virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields) = 0;
-#endif
 
   protected:
     virtual ~LabelContentCallback() {}
@@ -151,12 +149,10 @@ namespace simVis
       return "";
     }
 
-#ifdef ENABLE_CUSTOM_RENDERING
     virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields)
     {
       return "";
     }
-#endif
 
   protected:
     virtual ~NullEntityCallback() {}
