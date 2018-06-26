@@ -312,6 +312,9 @@ public: // methods
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) { return dataStore_->modifyPlatformCommandSlice(id, modifier); }
 
+  /// @copydoc simData::DataStore::modifyCustomRenderingCommandSlice
+  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) { return dataStore_->modifyCustomRenderingCommandSlice(id, modifier); }
+
   /**@name Listeners
    * @{
    */

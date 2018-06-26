@@ -531,6 +531,14 @@ public: // methods
    */
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) = 0;
 
+  /**
+   * Modify commands for a given custom rendering entity
+   * @param id Custom rendering entity that needs commands modified
+   * @param modifier The object to modify the commands
+   * @return 0 on success
+   */
+  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) = 0;
+
   /**@name Listeners
    * @{
    */

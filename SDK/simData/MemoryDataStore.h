@@ -292,6 +292,9 @@ public:
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier);
 
+  /// @copydoc simData::DataStore::modifyCustomRenderingCommandSlice
+  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier);
+
   /**@name Listeners
    * @{
    */

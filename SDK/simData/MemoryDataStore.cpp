@@ -2227,6 +2227,27 @@ int MemoryDataStore::modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<
   return 1;
 }
 
+int MemoryDataStore::modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier)
+{
+  switch (objectType(id))
+  {
+  case simData::CUSTOM_RENDERING:
+  {
+    CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
+    if (entry == NULL)
+      return 1;
+    CustomRenderingCommandSlice* commands = entry->commands();
+    commands->modify(modifier);
+    hasChanged_ = true;
+    break;
+  }
+  default:
+    break;
+  }
+
+  return 1;
+}
+
 namespace
 {
   // Template function to add an observer to a list of observers associated with a specific object type
