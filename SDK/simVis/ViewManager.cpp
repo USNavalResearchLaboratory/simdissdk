@@ -20,9 +20,10 @@
  *
  */
 #include <algorithm>
+#include <cstring>
 #include <iterator>
-#include "osg/GLExtensions"
 #include "simNotify/Notify.h"
+#include "simVis/Gl3Utils.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/Registry.h"
 #include "simVis/ViewManager.h"
@@ -40,25 +41,9 @@ namespace
     explicit OnRealize(simVis::ViewManager* viewman) : viewman_(viewman) { }
     void operator()(osg::Object* gc_obj)
     {
-      osg::GraphicsContext* gc = static_cast<osg::GraphicsContext*>(gc_obj);
-
-      // Can only call some methods on a current context
-      if (gc && gc->getState() && gc->makeCurrent())
-      {
-        const float glVersion = osg::getGLVersionNumber();
-        osg::State* state = gc->getState();
-        const unsigned int contextId = state->getContextID();
-        // One of the most reliable ways to test for core profile is to check for the
-        // compatibility profile.  If it exists, then we're not in core profile mode.
-        const bool isCoreProfile = (glVersion >= 3.2f) && !osg::isGLExtensionSupported(contextId, "GL_ARB_compatibility");
-
-        // For core profile, disable certain incompatible modes that are seen in osgEarth and loaded models
-        if (isCoreProfile)
-        {
-          state->setModeValidity(GL_LIGHTING, false);
-          state->setModeValidity(GL_RESCALE_NORMAL, false);
-        }
-      }
+      osg::GraphicsContext* gc = dynamic_cast<osg::GraphicsContext*>(gc_obj);
+      simVis::applyCoreProfileValidity(gc);
+      simVis::applyMesaGeometryShaderFix(gc);
 
       for (unsigned int i = 0; i < viewman_->getNumViews(); ++i)
       {

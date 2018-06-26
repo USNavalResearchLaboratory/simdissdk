@@ -277,7 +277,6 @@ if(TARGET simVis)
     )
 
     # Gl3FormatGuesser depends on OpenGL libraries
-    find_package(OpenGL)
     target_link_libraries(simQt PRIVATE ${OPENGL_LIBRARIES})
 endif()
 

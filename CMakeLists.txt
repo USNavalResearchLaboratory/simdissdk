@@ -191,6 +191,9 @@ include(CMakeModules/ImportOPENTHREADS.cmake)
 include(CMakeModules/ImportOSG.cmake)
 include(CMakeModules/ImportOSGQT.cmake)
 
+# Find OpenGL library, required to execute certain GL calls
+find_package(OpenGL)
+
 
 # --- osgEarth -----------------------------
 

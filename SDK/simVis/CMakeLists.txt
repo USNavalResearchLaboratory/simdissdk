@@ -75,6 +75,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}Gate.h
     ${VIS_INC}GeoFence.h
     ${VIS_INC}GlowHighlight.h
+    ${VIS_INC}Gl3Utils.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
@@ -412,6 +413,8 @@ target_include_directories(simVis PUBLIC
 )
 target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} ${OSGEARTH_ALL_LIBDEPENDENCIES})
+target_link_libraries(simVis PRIVATE ${OPENGL_LIBRARIES})
+
 if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
