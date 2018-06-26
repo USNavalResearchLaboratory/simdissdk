@@ -1153,6 +1153,8 @@ message CustomRenderingProperties {
   optional uint64 originalId = 3;
   /// User-defined source string
   optional string source = 4;
+  /// The name of the renderer that should process this entity
+  optional string renderer = 5;
 };
 
 /// preferences for the display of a Custom RenRenderingderng
