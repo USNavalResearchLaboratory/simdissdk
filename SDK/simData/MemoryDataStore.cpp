@@ -1807,6 +1807,9 @@ CommonPrefs* MemoryDataStore::mutable_commonPrefs(ObjectId id, Transaction* tran
   ProjectorPrefs* proj = mutable_projectorPrefs(id, transaction);
   if (proj != NULL)
     return proj->mutable_commonprefs();
+  CustomRenderingPrefs* custom = mutable_customRenderingPrefs(id, transaction);
+  if (custom != NULL)
+    return custom->mutable_commonprefs();
   return NULL;
 }
 
