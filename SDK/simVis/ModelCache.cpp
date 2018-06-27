@@ -110,6 +110,11 @@ public:
 
       // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
       ss->removeTextureMode(0, GL_TEXTURE_2D);
+
+      // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
+      osg::Texture* texture = dynamic_cast<osg::Texture*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+      if (texture)
+        simVis::fixTextureForGlCoreProfile(texture);
 #endif
     }
     traverse(node);
@@ -304,6 +309,14 @@ private:
         0,                // texture image unit
         0.0,              // heading
         1.0);             // scale
+
+      // Texture could feasibly be GL_LUMINANCE or GL_LUMINANCE_ALPHA; fix it if so
+      if (geom && geom->getStateSet())
+      {
+        osg::Texture* texture = dynamic_cast<osg::Texture*>(geom->getStateSet()->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+        if (texture)
+          simVis::fixTextureForGlCoreProfile(texture);
+      }
 
       osg::Geode* geode = new osg::Geode();
       geode->addDrawable(geom);
