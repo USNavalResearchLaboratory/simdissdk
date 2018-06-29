@@ -25,6 +25,19 @@
 #include "osg/Math"
 #include "simQt/Gl3FormatGuesser.h"
 
+#ifndef WIN32
+#include <X11/Xlib.h>
+namespace {
+static bool ctxErrorOccurred = false;
+int ctxErrorHandler(Display *d, XErrorEvent* e)
+{
+  // not testing on e->error_code at this point
+  ctxErrorOccurred = true;
+  return 0;
+}
+}
+#endif
+
 namespace simQt {
 
 Gl3FormatGuesser::Gl3FormatGuesser()
@@ -98,11 +111,26 @@ int Gl3FormatGuesser::findCompatibleFormat()
   return 1;
 }
 
-
 bool Gl3FormatGuesser::testFormat_(const QGLFormat& format) const
 {
+#ifndef WIN32
+  // process any Linux X error as failure to configure a context
+  ctxErrorOccurred = false;
+  int(*oldHandler)(Display*, XErrorEvent*) =
+    XSetErrorHandler(&ctxErrorHandler);
+
+  QGLWidget widget(format);
+  if (!ctxErrorOccurred)
+    widget.makeCurrent();
+
+  // Restore the original error handler
+  XSetErrorHandler(oldHandler);
+  if (ctxErrorOccurred)
+    return false;
+#else
   QGLWidget widget(format);
   widget.makeCurrent();
+#endif
   // reset error flag
   while (glGetError() != GL_NO_ERROR) {}
   const char* glslVersion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
