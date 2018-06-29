@@ -237,6 +237,12 @@ public:
   */
   virtual void getLoadedGogs(std::vector<simUtil::GogObjectPtr>& loadedGogs) const = 0;
 
+  /**
+  * Retrieve all provisional GOGs. Only returns provisional GOGs, not finalized.
+  * @param getProvisionalGogs vector of all provisional GogObjects
+  */
+  virtual void getProvisionalGogs(std::vector<simUtil::GogObjectPtr>& getProvisionalGogs) const = 0;
+
   /** Identifies if this GogObject is valid in the GogManager, either finalized or provisional */
   virtual bool isValidGog(const simUtil::GogObject* gogObject) const = 0;
 
