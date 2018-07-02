@@ -670,7 +670,7 @@ namespace simVis
       bool                               visible_;               // whether to render the association
       osg::ref_ptr<osg::MatrixTransform> xform_;                 // local-to-world transform
       osg::Geode*                        geode_;                 // scene geometry
-      osg::Geode*                        labels_;                // label controls
+      osg::Group*                        labels_;                // label controls
       osg::observer_ptr<EntityNode>      obj1_obs_;              // cached pointer to first entity
       osg::observer_ptr<EntityNode>      obj2_obs_;              // cached pointer to second entity
       osgEarth::Revision                 obj1LocatorRev_;        // tracks whether entity 1 is up to date with scenario data
