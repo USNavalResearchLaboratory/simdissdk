@@ -1045,59 +1045,11 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
       return NULL;
     }
     geodeSolid->addDrawable(geom);
-
-    // apply wireframe mode if necessary
-    if (SVData::DRAW_MODE_WIRE & d.drawMode_)
-    {
-      if ((SVData::DRAW_MODE_SOLID & d.drawMode_) || (SVData::DRAW_MODE_STIPPLE & d.drawMode_))
-      {
-        // create a new wireframe geometry as a shallow copy of the solid geometry
-        osg::Geometry* wireframeGeom = new osg::Geometry(*geom);
-        wireframeGeom->setName("simVis::SphericalVolume::cone-wireframe");
-
-        // but with its own color array
-        osg::Vec4Array* wireframeColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-        // default to white
-        (*wireframeColor)[0] = simVis::Color::White;
-        // but use the solid geometry color if it can be found
-        osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
-        if (colors)
-        {
-          if (colors->size() == 1)
-          {
-            (*wireframeColor)[0] = (*colors)[0];
-            (*wireframeColor)[0][3] = 1.0f; // no transparency in the wireframe
-          }
-          else
-          {
-            // sv color arrays are fixed at size 1
-            assert(0);
-          }
-        }
-        wireframeGeom->setColorArray(wireframeColor);
-
-        // add this to a 2nd geode in the xform: the 2nd geode in the xform is for opaque features
-        osg::Geode* geodeWire = new osg::Geode();
-        geodeWire->addDrawable(wireframeGeom);
-        xform->addChild(geodeWire);
-
-        osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
-        osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-        stateset->setAttributeAndModes(pm, osg::StateAttribute::ON);
-
-        // wireframe is neither lit nor blended when it is paired with another draw type
-        simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
-        stateset->setMode(GL_BLEND,
-          osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
-      }
-      else
-      {
-        // wireframe is the primary/'solid' geometry - it can be lit, blended
-        osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-        geom->getOrCreateStateSet()->setAttributeAndModes(pm, osg::StateAttribute::ON);
-      }
-    }
   }
+
+  // draw-as-wireframe or add wireframe to stipple/solid geom
+  if (SVData::DRAW_MODE_WIRE & d.drawMode_)
+    processWireframe_(xform, d.drawMode_);
 
   // Turn off backface culling
   xform->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
@@ -1107,6 +1059,66 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
   updateStippling(xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
 
   return xform;
+}
+
+void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
+{
+  if (SVData::DRAW_MODE_WIRE & drawMode)
+  {
+    osg::Geometry* solidGeom = SVFactory::solidGeometry(xform);
+    if (solidGeom == NULL || solidGeom->empty())
+    {
+      assert(0);
+      return;
+    }
+    if ((SVData::DRAW_MODE_SOLID & drawMode) || (SVData::DRAW_MODE_STIPPLE & drawMode))
+    {
+      // create a new wireframe geometry as a shallow copy of the solid geometry
+      osg::Geometry* wireframeGeom = new osg::Geometry(*solidGeom);
+      wireframeGeom->setName("simVis::SphericalVolume::cone-wireframe");
+
+      // but with its own color array
+      osg::Vec4Array* wireframeColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+      // default to white
+      (*wireframeColor)[0] = simVis::Color::White;
+      // but use the solid geometry color if it can be found
+      osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(solidGeom->getColorArray());
+      if (colors)
+      {
+        if (colors->size() == 1)
+        {
+          (*wireframeColor)[0] = (*colors)[0];
+          (*wireframeColor)[0][3] = 1.0f; // no transparency in the wireframe
+        }
+        else
+        {
+          // sv color arrays are fixed at size 1
+          assert(0);
+        }
+      }
+      wireframeGeom->setColorArray(wireframeColor);
+
+      // add this to a 2nd geode in the xform: the 2nd geode in the xform is for opaque features
+      osg::Geode* geodeWire = new osg::Geode();
+      geodeWire->addDrawable(wireframeGeom);
+      xform->addChild(geodeWire);
+
+      osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
+      osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+      stateset->setAttributeAndModes(pm, osg::StateAttribute::ON);
+
+      // wireframe is neither lit nor blended when it is paired with another draw type
+      simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+      stateset->setMode(GL_BLEND,
+        osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+    }
+    else
+    {
+      // wireframe is the primary/'solid' geometry - it can be lit, blended
+      osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+      solidGeom->getOrCreateStateSet()->setAttributeAndModes(pm, osg::StateAttribute::ON);
+    }
+  }
 }
 
 void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)

@@ -142,6 +142,7 @@ public:
 
 private:
   static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& direction);
+  static void processWireframe_(osg::MatrixTransform* xform, int drawMode);
   static void dirtyBound_(osg::MatrixTransform* xform);
 };
 
