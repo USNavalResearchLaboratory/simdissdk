@@ -138,6 +138,16 @@ unsigned int SecondsContainer::precision()
   return widget_->line()->precision();
 }
 
+void SecondsContainer::setTimeZone(simCore::TimeZone zone)
+{
+  widget_->line()->setTimeZone(zone);
+}
+
+simCore::TimeZone SecondsContainer::timeZone() const
+{
+  return widget_->line()->timeZone();
+}
+
 //----------------------------------------------------------------------------------------------
 MonthContainer::MonthContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_MONTHDAY, "Month Day Year"),
@@ -209,6 +219,16 @@ void MonthContainer::setPrecision(unsigned int digits)
 unsigned int MonthContainer::precision()
 {
   return widget_->line()->precision();
+}
+
+void MonthContainer::setTimeZone(simCore::TimeZone zone)
+{
+  widget_->line()->setTimeZone(zone);
+}
+
+simCore::TimeZone MonthContainer::timeZone() const
+{
+  return widget_->line()->timeZone();
 }
 
 //----------------------------------------------------------------------------------------------
@@ -285,6 +305,16 @@ unsigned int OrdinalContainer::precision()
   return widget_->line()->precision();
 }
 
+void OrdinalContainer::setTimeZone(simCore::TimeZone zone)
+{
+  widget_->line()->setTimeZone(zone);
+}
+
+simCore::TimeZone OrdinalContainer::timeZone() const
+{
+  return widget_->line()->timeZone();
+}
+
 //----------------------------------------------------------------------------------------------
 
 MinutesContainer::MinutesContainer(QWidget* parent)
@@ -357,6 +387,16 @@ unsigned int MinutesContainer::precision()
 {
   return widget_->line()->precision();
 }
+
+void MinutesContainer::setTimeZone(simCore::TimeZone zone)
+{
+  widget_->line()->setTimeZone(zone);
+}
+
+simCore::TimeZone MinutesContainer::timeZone() const
+{
+  return widget_->line()->timeZone();
+}
 //----------------------------------------------------------------------------------------------
 
 HoursContainer::HoursContainer(QWidget* parent)
@@ -428,6 +468,16 @@ void HoursContainer::setPrecision(unsigned int digits)
 unsigned int HoursContainer::precision()
 {
   return widget_->line()->precision();
+}
+
+void HoursContainer::setTimeZone(simCore::TimeZone zone)
+{
+  widget_->line()->setTimeZone(zone);
+}
+
+simCore::TimeZone HoursContainer::timeZone() const
+{
+  return widget_->line()->timeZone();
 }
 
 }

@@ -23,6 +23,7 @@
 #define SIMQT_SEGMENTED_LINE_H
 
 #include <QSpinBox>
+#include "simCore/Time/Constants.h"
 #include "simCore/Time/TimeClass.h"
 
 namespace simQt {
@@ -183,9 +184,9 @@ public:
   SegmentedTexts();
   virtual ~SegmentedTexts();
 
-  /// Returns the displayed time
+  /// Returns the displayed time in UTC
   virtual simCore::TimeStamp timeStamp() const = 0;
-  /// Sets the displayed time
+  /// Sets the displayed time in UTC
   virtual void setTimeStamp(const simCore::TimeStamp& value) = 0;
   /// Sets the time range
   virtual void setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end);
@@ -205,6 +206,10 @@ public:
   virtual void setPrecision(unsigned int digits) = 0;
   /// Returns the number of digits after the decimal point
   unsigned int precision() const;
+  /// Set the time zone to use when displaying time
+  virtual void setTimeZone(simCore::TimeZone Zone) = 0;
+  /// Returns the time zone to use when displaying time
+  virtual simCore::TimeZone timeZone() const = 0;
 
   /// Adds a line segment; takes ownership of part
   void addPart(SegmentedText* part);
@@ -280,6 +285,9 @@ public:
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
+  // Seconds texts does not support timezone offset
+  virtual void setTimeZone(simCore::TimeZone) { }
+  virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
 
 private:
   void makeSegments_();
@@ -302,6 +310,9 @@ public:
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
+  // Minutes texts does not support timezone offset
+  virtual void setTimeZone(simCore::TimeZone) { }
+  virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
 
 private:
   void makeSegments_();
@@ -325,6 +336,9 @@ public:
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
+  // Hours texts does not support timezone offset
+  virtual void setTimeZone(simCore::TimeZone) { }
+  virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
 
 private:
   void makeSegments_();
@@ -349,6 +363,8 @@ public:
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
+  virtual void setTimeZone(simCore::TimeZone zone);
+  virtual simCore::TimeZone timeZone() const;
 
 private:
   void makeSegments_();
@@ -359,6 +375,7 @@ private:
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
+  simCore::TimeZone zone_;
 };
 
 /// Implements the MonthDayYear format, NNN D YYYY HH:MM::SS.sss
@@ -375,6 +392,8 @@ public:
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
   virtual void setPrecision(unsigned int digits);
+  virtual void setTimeZone(simCore::TimeZone zone);
+  virtual simCore::TimeZone timeZone() const;
 
 private:
   void makeSegments_();
@@ -386,6 +405,7 @@ private:
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
+  simCore::TimeZone zone_;
 };
 }
 
