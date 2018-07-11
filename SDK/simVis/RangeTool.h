@@ -158,13 +158,13 @@ namespace simVis
       simCore::Vec3 ypr_;  ///< Yaw, pitch, roll in rad, rad, rad
       simCore::Vec3 vel_;  ///< X, Y and Z velocities in m/s
       osg::ref_ptr<const simVis::EntityNode> node_; ///< The node of the entity
-      simData::ObjectId platformHostId_;   ///< Unique ID of the host entity; for platforms platformHostId_ == id_
+      simData::ObjectId hostId_;   ///< Unique ID of the host entity; for platforms and custom renderings hostId_ == id_
       osg::ref_ptr<const simVis::PlatformNode> platformHostNode_; ///< The node of the host platform; for platforms platformHostNode_ == node_
       simRF::RFPropagationFacade* rfPropagation_;  ///< If the entity is a beam this MAY BE set
 
       EntityState()
         : node_(NULL),
-          platformHostId_(0),
+          hostId_(0),
           platformHostNode_(NULL),
           rfPropagation_(NULL)
       {
@@ -336,6 +336,13 @@ namespace simVis
     protected:
       GraphicOptions options_; ///< controls for drawing
 
+      /**
+      * Returns true if the type is Platform or Custom Rendering
+      * @param type Object type
+      * @return True if the type is Platform or Custom Rendering
+      */
+      bool hasPosition_(simData::ObjectType type) const;
+
     private:
       std::string typeName_;
       GraphicType graphicType_;
@@ -452,6 +459,8 @@ namespace simVis
       bool isEntityToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if both types are platforms
       bool isPlatformToPlatform_(simData::ObjectType fromType, simData::ObjectType toType) const;
+      /// Returns true if both types are either platforms or custom rendering
+      bool isLocationToLocation_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if one type is a beam and the other is a non-beam
       bool isBeamToNonBeamAssociation_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if the fromType is a beam and the toType is a valid entity

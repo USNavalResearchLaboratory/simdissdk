@@ -263,19 +263,27 @@ bool RangeTool::Measurement::isPlatformToPlatform_(simData::ObjectType fromType,
   return true;
 }
 
+bool RangeTool::Measurement::isLocationToLocation_(simData::ObjectType fromType, simData::ObjectType toType) const
+{
+  return (((fromType == simData::PLATFORM) || (fromType == simData::CUSTOM_RENDERING)) &&
+    ((toType == simData::PLATFORM) || (toType == simData::CUSTOM_RENDERING)));
+}
+
 bool RangeTool::Measurement::isBeamToNonBeamAssociation_(simData::ObjectType fromType, simData::ObjectType toType) const
 {
   if (((fromType == simData::PLATFORM) ||
        (fromType == simData::GATE) ||
        (fromType == simData::LOB_GROUP) ||
-       (fromType == simData::LASER)) &&
+       (fromType == simData::LASER) ||
+       (fromType == simData::CUSTOM_RENDERING)) &&
        (toType == simData::BEAM))
      return true;
 
   return (((toType == simData::PLATFORM) ||
            (toType == simData::GATE) ||
            (toType == simData::LOB_GROUP) ||
-           (toType == simData::LASER)) &&
+           (toType == simData::LASER) ||
+           (toType == simData::CUSTOM_RENDERING)) &&
            (fromType == simData::BEAM));
 }
 
@@ -288,7 +296,7 @@ bool RangeTool::Measurement::isBeamToEntity_(simData::ObjectType fromType, simDa
     (toType == simData::GATE) ||
     (toType == simData::LOB_GROUP) ||
     (toType == simData::LASER) ||
-    (fromType == simData::BEAM));
+    (toType == simData::CUSTOM_RENDERING));
 }
 
 bool RangeTool::Measurement::isRaeObject_(simData::ObjectType type) const
@@ -342,8 +350,8 @@ void RangeTool::Measurement::calculateTrueAngles_(const RangeTool::State& state,
   bool raeBeginEntity = isRaeObject_(state.beginEntity_.node_->type());
   bool raeEndEntity = isRaeObject_(state.endEntity_.node_->type());
 
-  if ((raeBeginEntity && raeEndEntity && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_)) ||
-      (raeEndEntity && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_)))
+  if ((raeBeginEntity && raeEndEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)) ||
+      (raeEndEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)))
   {
     // handle cases where calculations are between RAE based objects on the same host platform or
     // between a host platform (begin) and one of its own RAE based objects (end)
@@ -354,7 +362,7 @@ void RangeTool::Measurement::calculateTrueAngles_(const RangeTool::State& state,
     if (cmp)
       *cmp = getCompositeAngle_(0 ,0, state.endEntity_.ypr_.yaw(), state.endEntity_.ypr_.pitch());
   }
-  else if (raeBeginEntity && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_))
+  else if (raeBeginEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_))
   {
     // between a host platform (end) and one of its own RAE based objects (begin)
     if (az)
@@ -910,7 +918,7 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
   if (options_.usePercentOfSlantDistance_)
   {
     // using the RAE entity's range if both RAE entities share the same host
-    if (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_)
+    if (state.beginEntity_.hostId_ == state.endEntity_.hostId_)
     {
       if (state.beginEntity_.node_->type() != simData::PLATFORM)
         pieRadius = state.beginEntity_.node_->range();
@@ -1096,7 +1104,11 @@ int RangeTool::State::populateEntityState(const ScenarioManager& scenario, const
   // if no platform host return with error
   if (state.platformHostNode_ == NULL)
     return 1;
-  state.platformHostId_ = state.platformHostNode_->getId();
+
+  if (node->type() == simData::CUSTOM_RENDERING)
+    state.hostId_ = node->getId();
+  else
+    state.hostId_ = state.platformHostNode_->getId();
 
   // Kick out only after setting non-location information
   if (!node->isActive())
@@ -1326,6 +1338,13 @@ simCore::Vec3 RangeTool::State::osg2simCore(const osg::Vec3d& point) const
 osg::Vec3d RangeTool::State::simCore2osg(const simCore::Vec3& point) const
 {
   return osg::Vec3d(point.x(), point.y(), point.z());
+}
+
+//----------------------------------------------------------------------------
+
+bool RangeTool::Graphic::hasPosition_(simData::ObjectType type) const
+{
+  return ((type == simData::PLATFORM) || (type == simData::CUSTOM_RENDERING));
 }
 
 //----------------------------------------------------------------------------
@@ -1765,7 +1784,7 @@ void RangeTool::TrueAzimuthPieSliceGraphic::render(osg::Geode* geode, State& sta
 {
   osg::Vec3d endVec;
 
-  if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
+  if (state.beginEntity_.hostId_ != state.endEntity_.hostId_)
   {
     endVec = state.coord(State::COORD_OBJ_1_AT_OBJ_0_ALT);
     endVec[2] = 0.0;  // COORD_OBJ_1_AT_OBJ_0_ALT accounts for the earth's curvature which we don't want, so jam into local plane
@@ -1774,7 +1793,7 @@ void RangeTool::TrueAzimuthPieSliceGraphic::render(osg::Geode* geode, State& sta
   {
     // Get the RAE object to get its angles
     simCore::Vec3& ori = state.beginEntity_.ypr_;
-    if (state.endEntity_.node_->type() != simData::PLATFORM)
+    if (!hasPosition_(state.endEntity_.node_->type()))
       ori = state.endEntity_.ypr_;
 
     endVec = osg::Vec3d(sin(ori.x())*cos(ori.y()), cos(ori.x())*cos(ori.y()), 0.0);
@@ -1795,7 +1814,7 @@ void RangeTool::TrueElevationPieSliceGraphic::render(osg::Geode* geode, State& s
   osg::Vec3d startVec;
   osg::Vec3d endVec;
 
-  if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
+  if (state.beginEntity_.hostId_ != state.endEntity_.hostId_)
   {
     startVec = state.coord(State::COORD_OBJ_1_AT_OBJ_0_ALT);
     startVec[2] = 0.0;  // COORD_OBJ_1_AT_OBJ_0_ALT accounts for the earth's curvature which we don't want, so jam into local plane
@@ -1805,7 +1824,7 @@ void RangeTool::TrueElevationPieSliceGraphic::render(osg::Geode* geode, State& s
   {
     // Get the RAE object to get its angles
     simCore::Vec3& ori = state.beginEntity_.ypr_;
-    if (state.endEntity_.node_->type() != simData::PLATFORM)
+    if (!hasPosition_(state.endEntity_.node_->type()))
       ori = state.endEntity_.ypr_;
 
     startVec = calcYprVector(ori);
@@ -1827,7 +1846,7 @@ void RangeTool::TrueCompositeAnglePieSliceGraphic::render(osg::Geode* geode, Sta
 {
   osg::Vec3d endVec;
 
-  if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
+  if (state.beginEntity_.hostId_ != state.endEntity_.hostId_)
   {
     endVec = state.coord(State::COORD_OBJ_1);
   }
@@ -1835,7 +1854,7 @@ void RangeTool::TrueCompositeAnglePieSliceGraphic::render(osg::Geode* geode, Sta
   {
     // Get the RAE object to get its angles
     simCore::Vec3& ori = state.beginEntity_.ypr_;
-    if (state.endEntity_.node_->type() != simData::PLATFORM)
+    if (!hasPosition_(state.endEntity_.node_->type()))
       ori = state.endEntity_.ypr_;
 
     endVec = calcYprVector(ori);
@@ -1856,7 +1875,7 @@ void RangeTool::MagneticAzimuthPieSliceGraphic::render(osg::Geode* geode, State&
   osg::Vec3d endVecENU;
   const double magAz = measuredValue_;
 
-  if (state.beginEntity_.platformHostId_ != state.endEntity_.platformHostId_)
+  if (state.beginEntity_.hostId_ != state.endEntity_.hostId_)
   {
     endVecENU = state.coord(State::COORD_OBJ_1_AT_OBJ_0_ALT);
     endVecENU[2] = 0.0;  // COORD_OBJ_1_AT_OBJ_0_ALT accounts for the earth's curvature which we don't want, so jam into local plane
@@ -1867,7 +1886,7 @@ void RangeTool::MagneticAzimuthPieSliceGraphic::render(osg::Geode* geode, State&
   else
   {
     // Determine which is the RAE object, and get its angles
-    simCore::Vec3 ori = (state.endEntity_.node_->type() != simData::PLATFORM) ? state.endEntity_.ypr_ : state.beginEntity_.ypr_;
+    simCore::Vec3 ori = (!hasPosition_(state.endEntity_.node_->type())) ? state.endEntity_.ypr_ : state.beginEntity_.ypr_;
 
     endVecENU = osg::Vec3d(sin(ori.x())*cos(ori.y()), cos(ori.x())*cos(ori.y()), 0.0);
     // start vec is end vec (true azim to rae object) rotated by magAz
@@ -1914,10 +1933,8 @@ void RangeTool::RelOriElevationPieSliceGraphic::render(osg::Geode* geode, State&
     startVecENU = calcYprVector(rotatedOri);
   }
 
-
   const double relOriElev = measuredValue_;
-  if ((state.beginEntity_.node_->type() == simData::PLATFORM) &&
-      (state.endEntity_.node_->type() == simData::PLATFORM))
+  if (hasPosition_(state.beginEntity_.node_->type()) && hasPosition_(state.endEntity_.node_->type()))
   {
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), relOriElev, geode, state);
   }
@@ -1941,8 +1958,7 @@ void RangeTool::RelOriCompositeAnglePieSliceGraphic::render(osg::Geode* geode, S
 {
   const osg::Vec3d& startVecENU = calcYprVector(state.beginEntity_.ypr_);
 
-  if ((state.beginEntity_.node_->type() == simData::PLATFORM) &&
-    (state.endEntity_.node_->type() == simData::PLATFORM))
+  if (hasPosition_(state.beginEntity_.node_->type()) && hasPosition_(state.endEntity_.node_->type()))
   {
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), measuredValue_, geode, state);
   }
@@ -2017,7 +2033,7 @@ void RangeTool::RelVelElevationPieSliceGraphic::render(osg::Geode* geode, State&
   }
 
   const double relVelElev = measuredValue_;
-  if (state.endEntity_.node_->type() == simData::PLATFORM)
+  if (hasPosition_(state.endEntity_.node_->type()))
   {
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), relVelElev, geode, state);
   }
@@ -2046,7 +2062,7 @@ void RangeTool::RelVelCompositeAnglePieSliceGraphic::render(osg::Geode* geode, S
   const simCore::Vec3& vel = state.beginEntity_.vel_;
   const osg::Vec3d startVecENU(vel.x(), vel.y(), vel.z());
   const double relVelComposite = measuredValue_;
-  if (state.endEntity_.node_->type() == simData::PLATFORM)
+  if (hasPosition_(state.endEntity_.node_->type()))
   {
     createGeometry(state.coord(State::COORD_OBJ_0), startVecENU, state.coord(State::COORD_OBJ_1), relVelComposite, geode, state);
   }
@@ -2265,7 +2281,7 @@ double RangeTool::TrueAzimuthMeasurement::value(State& state) const
 
 bool RangeTool::TrueAzimuthMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2283,7 +2299,7 @@ double RangeTool::TrueElevationMeasurement::value(State& state) const
 
 bool RangeTool::TrueElevationMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2301,7 +2317,7 @@ double RangeTool::TrueCompositeAngleMeasurement::value(State& state) const
 
 bool RangeTool::TrueCompositeAngleMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2322,7 +2338,7 @@ double RangeTool::MagneticAzimuthMeasurement::value(State& state) const
 
 bool RangeTool::MagneticAzimuthMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2331,7 +2347,7 @@ void RangeTool::RelOriMeasurement::getAngles(double* az, double* el, double* cmp
 {
   bool raeBgnEntity = isRaeObject_(state.beginEntity_.node_->type());
   bool raeEndEntity = isRaeObject_(state.endEntity_.node_->type());
-  if (raeBgnEntity && raeEndEntity && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_))
+  if (raeBgnEntity && raeEndEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_))
   {
     // handle cases where calculations are between RAE based objects with the same host platform
     if (az)
@@ -2341,8 +2357,8 @@ void RangeTool::RelOriMeasurement::getAngles(double* az, double* el, double* cmp
     if (cmp)
       *cmp = getCompositeAngle_(state.beginEntity_.ypr_.yaw(), state.beginEntity_.ypr_.pitch(), state.endEntity_.ypr_.yaw(), state.endEntity_.ypr_.pitch());
   }
-  else if ((raeBgnEntity && (state.endEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_)) ||
-           (raeEndEntity && (state.beginEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_)))
+  else if ((raeBgnEntity && (state.endEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)) ||
+           (raeEndEntity && (state.beginEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)))
   {
     // handle cases where calculations are between RAE based objects their own host platform
     if (az)
@@ -2374,7 +2390,7 @@ double RangeTool::RelOriAzimuthMeasurement::value(State& state) const
 
 bool RangeTool::RelOriAzimuthMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2392,7 +2408,7 @@ double RangeTool::RelOriElevationMeasurement::value(State& state) const
 
 bool RangeTool::RelOriElevationMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2410,7 +2426,7 @@ double RangeTool::RelOriCompositeAngleMeasurement::value(State& state) const
 
 bool RangeTool::RelOriCompositeAngleMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2429,7 +2445,7 @@ void RangeTool::RelVelMeasurement::getAngles(double* az, double* el, double* cmp
   simCore::calculateFlightPathAngles(vel, fpaVec);
 
   bool raeEndEntity = isRaeObject_(state.endEntity_.node_->type());
-  if (raeEndEntity && (state.beginEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.platformHostId_ == state.endEntity_.platformHostId_))
+  if (raeEndEntity && (state.beginEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.hostId_ == state.endEntity_.hostId_))
   {
     // handle case where calculation is between host platform and its RAE based objects
     if (az)
@@ -2460,7 +2476,7 @@ double RangeTool::RelVelAzimuthMeasurement::value(State& state) const
 
 bool RangeTool::RelVelAzimuthMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2478,7 +2494,7 @@ double RangeTool::RelVelElevationMeasurement::value(State& state) const
 
 bool RangeTool::RelVelElevationMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -2496,7 +2512,7 @@ double RangeTool::RelVelCompositeAngleMeasurement::value(State& state) const
 
 bool RangeTool::RelVelCompositeAngleMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.platformHostId_, state.endEntity_.node_->type(), state.endEntity_.platformHostId_);
+  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
 }
 //----------------------------------------------------------------------------
 
@@ -2655,7 +2671,7 @@ double RangeTool::AspectAngleMeasurement::value(State& state) const
 
 bool RangeTool::AspectAngleMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isPlatformToPlatform_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isLocationToLocation_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
 }
 
 //----------------------------------------------------------------------------
