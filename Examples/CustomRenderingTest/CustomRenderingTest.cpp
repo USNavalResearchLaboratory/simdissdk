@@ -165,12 +165,12 @@ public:
       osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
       (*colors)[0] = osg::Vec4(1, 1, 1, 1);
       geom_ = new osg::Geometry;
-      geom_->setColorArray(colors);
+      geom_->setColorArray(colors.get());
 
       geom_->setUseVertexBufferObjects(true);
       fillVerts_ = new osg::Vec3Array();
       fillVerts_->setDataVariance(osg::Object::DYNAMIC);
-      geom_->setVertexArray(fillVerts_);
+      geom_->setVertexArray(fillVerts_.get());
       fillVerts_->push_back(osg::Vec3(1000, -100, 0));
       fillVerts_->push_back(osg::Vec3(1000, 0, 0));
       fillVerts_->push_back(osg::Vec3(0, 0, 0));
@@ -241,8 +241,8 @@ public:
       if (node != NULL)
       {
         update_->setId(newId);
-        node->setUpdateCallback(update_);
-        node->setLabelContentCallback(callback_);
+        node->setUpdateCallback(update_.get());
+        node->setLabelContentCallback(callback_.get());
         node->setCustomActive(true);
       }
     }
