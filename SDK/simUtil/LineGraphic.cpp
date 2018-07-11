@@ -25,6 +25,7 @@
 #include "osgEarthAnnotation/LabelNode"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simVis/CustomRendering.h"
 #include "simVis/Constants.h"
 #include "simVis/Utils.h"
 #include "simVis/AnimatedLine.h"
@@ -321,6 +322,53 @@ bool PlatformPosition::operator==(const Position& other) const
 }
 
 bool PlatformPosition::operator!=(const Position& other) const
+{
+  return !operator==(other);
+}
+
+///////////////////////////////////////////////////////////////////////
+
+/** Position based off a custom rendering's location */
+CustomRenderingPosition::CustomRenderingPosition(simVis::CustomRenderingNode* node)
+  : node_(node)
+{
+}
+
+CustomRenderingPosition::~CustomRenderingPosition()
+{
+}
+
+bool CustomRenderingPosition::isValid() const
+{
+  if (node_ == NULL)
+    return false;
+
+  return node_->customActive();
+}
+
+const simCore::Vec3& CustomRenderingPosition::lla() const
+{
+  if (node_ != NULL)
+    node_->getPosition(&lla_, simCore::COORD_SYS_LLA);
+
+  return lla_;
+}
+
+simData::ObjectId CustomRenderingPosition::customRenderingId() const
+{
+  if (node_ == NULL)
+    return 0;
+
+  return node_->getId();
+}
+
+bool CustomRenderingPosition::operator==(const Position& other) const
+{
+  const CustomRenderingPosition* pp = dynamic_cast<const CustomRenderingPosition*>(&other);
+  return (pp != NULL && (pp->customRenderingId() == this->customRenderingId()));
+}
+
+bool CustomRenderingPosition::operator!=(const Position& other) const
 {
   return !operator==(other);
 }
