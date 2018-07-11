@@ -46,6 +46,7 @@ namespace simVis
 class BeamNode;
 class CoordSurfaceClamping;
 class GateNode;
+class CustomRenderingNode;
 class LabelContentManager;
 class LaserNode;
 class LobGroupNode;
@@ -228,6 +229,10 @@ public:
     const simData::LobGroupProperties& props,
     simData::DataStore&                dataStore);
 
+  CustomRenderingNode* addCustomRendering(
+    const simData::CustomRenderingProperties& props,
+    simData::DataStore&            dataStore);
+
   /**
   * Set new preferences for a platform.
   * @param id    ID of the platform
@@ -287,6 +292,16 @@ public:
   bool setLobGroupPrefs(
     simData::ObjectId          id,
     const simData::LobGroupPrefs& prefs);
+
+  /**
+  * Set new preferences for a LobGroup.
+  * @param id    Object id
+  * @param prefs New preferences to set
+  * @return      True upon success; false if the object could not be found.
+  */
+  bool setCustomRenderingPrefs(
+    simData::ObjectId          id,
+    const simData::CustomRenderingPrefs& prefs);
 
   /**
   * Find an entity by its unique ID.

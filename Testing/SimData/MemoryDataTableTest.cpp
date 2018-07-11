@@ -25,7 +25,9 @@
 #include "simData/DataTable.h"
 #include "simData/MemoryDataStore.h"
 #include "simData/MemoryTable/DoubleBufferTimeContainer.h"
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 #include "simData/MemoryTable/TimeContainerDeque.h"
+#endif
 #include "simData/MemoryTable/SubTable.h"
 #include "simData/MemoryTable/TableManager.h"
 #include "simUtil/DataStoreTestHelper.h"
@@ -625,6 +627,13 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(table.column(column2->columnId()) == column2);
   rv += SDK_ASSERT(table.column(500) == NULL); // Should be unique
 
+  // Should be no times
+  double begin;
+  double end;
+  rv += SDK_ASSERT(column1->getTimeRange(begin, end) != 0);
+  rv += SDK_ASSERT(begin == 0.0);
+  rv += SDK_ASSERT(end == 0.0);
+
   // Start to add cells
   TableRow row;
   row.setTime(10.0);
@@ -632,12 +641,20 @@ int tableTest(simData::DataTable& table)
   row.setValue(column2->columnId(), 1002);
   testObserver->setExpectedRowTime(10.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
+  rv += SDK_ASSERT(column1->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 10.0);
+  rv += SDK_ASSERT(end == 10.0);
+
   row = TableRow();
   row.setTime(20.0);
   row.setValue(column1->columnId(), 2001.0);
   row.setValue(column2->columnId(), 2002.0);
   testObserver->setExpectedRowTime(20.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
+  rv += SDK_ASSERT(column1->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 10.0);
+  rv += SDK_ASSERT(end == 20.0);
+
   // Adding empty row should be an error (and not leak memory)
   row.clear();
   rv += SDK_ASSERT(table.addRow(row).isError());
@@ -1745,8 +1762,10 @@ int timeContainerTest()
   MemoryTable::DoubleBufferTimeContainer dbContainer;
   int rv = 0;
   rv += SDK_ASSERT(timeContainerTest(dbContainer) == 0);
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   MemoryTable::TimeContainerDeque sbContainer;
   rv += SDK_ASSERT(timeContainerTest(sbContainer) == 0);
+#endif
   return rv;
 }
 
@@ -2006,7 +2025,9 @@ int MemoryDataTableTest(int argc, char* argv[])
   rv += removeEntityTest();
   rv += dataLimitingTest();
   rv += dataLimitSecondsTest();
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   rv += subTableIterationTest(new simData::MemoryTable::TimeContainerDeque());
+#endif
   rv += subTableIterationTest(new simData::MemoryTable::DoubleBufferTimeContainer());
   rv += testColumnIteration();
   rv += doubleBufferTimeContainerTest();

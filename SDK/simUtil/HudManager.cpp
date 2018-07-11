@@ -163,11 +163,23 @@ void HudTextAdapter::update_()
       osgText->setPosition(osg::Vec3(0.0f, 0.0f, 0.0f));
       osgText->setColor(color_);
       osgText->setEnableDepthWrites(false); // No depth buffering needed
-      // Set up the Halo
-      osgText->setBackdropType(backdrop_);
-      osgText->setBackdropOffset(backdropOffset_);
-      osgText->setBackdropColor(simVis::Color::Black);
-      osgText->setBackdropImplementation(osgText::Text::DELAYED_DEPTH_WRITES);
+      osgText->setBoundingBoxMargin(2.f);
+
+      if (backgroundColor_.a() == 0.f)
+      {
+        // Set up the Halo if there is no background
+        osgText->setBackdropType(backdrop_);
+        osgText->setBackdropOffset(backdropOffset_);
+        osgText->setBackdropColor(simVis::Color::Black);
+        osgText->setBackdropImplementation(osgText::Text::DELAYED_DEPTH_WRITES);
+      }
+      else
+      {
+        // Else set up the background color
+        osgText->setBackdropType(osgText::Text::NONE);
+        osgText->setBoundingBoxColor(backgroundColor_);
+        osgText->setDrawMode(osgText::TextBase::FILLEDBOUNDINGBOX | osgText::TextBase::TEXT);
+      }
       initializeText_(osgText.get());
     }
     else
@@ -200,6 +212,17 @@ void HudTextAdapter::update_()
         osgText->setBackdropType(backdropType);
       if (!simCore::areEqual(osgText->getBackdropHorizontalOffset(), backdropOffset_))
         osgText->setBackdropOffset(backdropOffset_);
+
+      // Set up the halo by turning on TEXT and off FILLEDBOUNDINGBOX
+      if (backgroundColor_.a() == 0.f)
+        osgText->setDrawMode(osgText::TextBase::TEXT);
+      else
+      {
+        // Turn on the bounding box, which disables Halo
+        osgText->setBackdropType(osgText::Text::NONE);
+        osgText->setBoundingBoxColor(backgroundColor_);
+        osgText->setDrawMode(osgText::TextBase::FILLEDBOUNDINGBOX | osgText::TextBase::TEXT);
+      }
     }
 
     osgText->setText(tokens[ii]);
@@ -358,6 +381,20 @@ void HudTextAdapter::setColor(const osg::Vec4& color)
   if (color != color_)
   {
     color_ = color;
+    update_();
+  }
+}
+
+osg::Vec4 HudTextAdapter::backgroundColor() const
+{
+  return backgroundColor_;
+}
+
+void HudTextAdapter::setBackgroundColor(const osg::Vec4& color)
+{
+  if (backgroundColor_ != color)
+  {
+    backgroundColor_ = color;
     update_();
   }
 }

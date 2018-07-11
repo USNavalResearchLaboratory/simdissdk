@@ -1143,6 +1143,43 @@ message LaserCommand {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+/// (mostly) unchanging aspects of a Custom Rendering
+message CustomRenderingProperties {
+  /// ID assigned to the entity from the data store; unchangeable; might change during file conversion
+  optional uint64 id = 1;
+  /// ID of the Custom's host, if any
+  optional uint64 hostId = 2;
+  /// User-defined ID value, will not change during file conversion
+  optional uint64 originalId = 3;
+  /// User-defined source string
+  optional string source = 4;
+  /// The name of the renderer that should process this entity
+  optional string renderer = 5;
+};
+
+/// preferences for the display of a Custom RenRenderingderng
+message CustomRenderingPrefs {
+  /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
+  optional CommonPrefs commonPrefs = 1;
+};
+
+/// common update to Custom Rendering data
+message CustomRenderingUpdate {
+  optional double time = 1;
+};
+
+/// timed update to Custom Rendering prefs; commands override prefs
+message CustomRenderingCommand {
+  /// The time at which the command should be executed
+  optional double time = 1;
+  /// The prefs message that will contain the command's settings
+  optional CustomRenderingPrefs updatePrefs = 2;
+  /// Indicates that the command will clear the values that are set in updatePrefs from the command set
+  optional bool isClearCommand = 3 [default = false];
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
 /// Unchanging aspects of a projector
 message ProjectorProperties {
   /// ID assigned to the entity from the data store; unchangeable; might change during file conversion

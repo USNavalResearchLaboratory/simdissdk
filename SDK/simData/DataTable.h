@@ -633,6 +633,14 @@ public:
    *   there is no such iterator.
    */
   virtual Iterator findAtOrBeforeTime(double timeValue) const = 0;
+
+  /**
+   * Returns the begin and end time of the column
+   * @param begin Returns the begin time
+   * @param end Returns the end time
+   * @returns 0 if begin and end are set
+   */
+  virtual int getTimeRange(double& begin, double& end) const = 0;
   /// @}
 };
 

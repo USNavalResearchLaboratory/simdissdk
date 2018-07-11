@@ -206,31 +206,70 @@ private:
   unsigned int ring_;
   bool isMajorAxisLabel_;
 };
-
-/// Geometry for SpeedLine grid types.
-class SpeedLine : public osgEarth::LineDrawable
+/// Geometry for a simple linestrip with fixed NUM_POINTS_PER_LINE_STRIP
+class LineStrip : public osg::Geometry
 {
 public:
-  SpeedLine() : osgEarth::LineDrawable(GL_LINE_STRIP)
+  LineStrip()
   {
-    allocate(NUM_POINTS_PER_LINE_STRIP);
+    setUseVertexBufferObjects(true);
+    setUseDisplayList(false);
+
+    osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, NUM_POINTS_PER_LINE_STRIP);
+    setVertexArray(vertexArray.get());
+
+    osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+    (*colorArray)[0] = simVis::Color::White;
+    setColorArray(colorArray.get());
+
+    addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, 0, vertexArray->size()));
+  }
+
+  void setColor(const osg::Vec4f& color)
+  {
+    osg::Vec4Array* colorArray = static_cast<osg::Vec4Array*>(getColorArray());
+    if (!colorArray)
+    {
+      assert(0);
+      return;
+    }
+    (*colorArray)[0] = color;
+  }
+
+  void update(const osg::Vec3f& start, const osg::Vec3f& end)
+  {
+    osg::ref_ptr<osg::Vec3Array> vertexArray = dynamic_cast<osg::Vec3Array*>(getVertexArray());
+    if (!vertexArray)
+    {
+      assert(0);
+      return;
+    }
+    assert(vertexArray->getNumElements() == NUM_POINTS_PER_LINE_STRIP);
+    VectorScaling::generatePoints(*(vertexArray.get()), start, end);
+    vertexArray->dirty();
+  }
+};
+/// Geometry for SpeedLine grid types.
+class SpeedLine : public LineStrip
+{
+public:
+  SpeedLine()
+  {
     setName("simVis::LocalGridNode::SpeedLine");
   }
   void update(double sizeM)
   {
-    VectorScaling::generatePoints(*this, osg::Vec3(), osg::Vec3(0.f, static_cast<float>(sizeM), 0.f));
+    LineStrip::update(osg::Vec3(), osg::Vec3(0.f, static_cast<float>(sizeM), 0.f));
   }
 };
 
 /// Geometry for axes in Polar and SpeedRing grid types.
-class Axis : public osgEarth::LineDrawable
+class Axis : public LineStrip
 {
 public:
   explicit Axis(bool isMajorAxis)
-    : osgEarth::LineDrawable(GL_LINE_STRIP),
-    isMajorAxis_(isMajorAxis)
+    : isMajorAxis_(isMajorAxis)
   {
-    allocate(NUM_POINTS_PER_LINE_STRIP);
     if (isMajorAxis_)
       setName("simVis::LocalGridNode::MajorAxis");
     else
@@ -239,9 +278,9 @@ public:
   void update(double sizeM)
   {
     if (isMajorAxis_)
-      VectorScaling::generatePoints(*this, osg::Vec3(0.f, -sizeM, 0.f), osg::Vec3(0.f, sizeM, 0.f));
+      LineStrip::update(osg::Vec3(0.f, -sizeM, 0.f), osg::Vec3(0.f, sizeM, 0.f));
     else
-      VectorScaling::generatePoints(*this, osg::Vec3(-sizeM, 0.f, 0.f), osg::Vec3(sizeM, 0.f, 0.f));
+      LineStrip::update(osg::Vec3(-sizeM, 0.f, 0.f), osg::Vec3(sizeM, 0.f, 0.f));
   }
 private:
   bool isMajorAxis_;
@@ -321,21 +360,50 @@ private:
 };
 
 /// Geometry for range rings in Polar, RangeRing and SpeedRing grid types.
-class RangeRing : public osgEarth::LineDrawable
+class RangeRing : public osg::Geometry
 {
 public:
   explicit RangeRing(unsigned int ring)
-    : osgEarth::LineDrawable(GL_LINE_LOOP),
-    ring_(ring)
+    : ring_(ring)
   {
     setName("simVis::LocalGridNode::RangeRing");
+    setUseVertexBufferObjects(true);
+    setUseDisplayList(false);
+
+    osg::ref_ptr<osg::Vec3Array> vertexArray = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+    setVertexArray(vertexArray.get());
+
+    osg::ref_ptr<osg::Vec4Array> colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+    (*colorArray)[0] = simVis::Color::White;
+    setColorArray(colorArray.get());
+
+    drawArray_ = new osg::DrawArrays(GL_LINE_LOOP);
+    addPrimitiveSet(drawArray_.get());
+  }
+
+  void setColor(const osg::Vec4f& color)
+  {
+    osg::Vec4Array* colorArray = static_cast<osg::Vec4Array*>(getColorArray());
+    if (!colorArray)
+    {
+      assert(0);
+      return;
+    }
+    (*colorArray)[0] = color;
   }
 
   void update(const simData::LocalGridPrefs& prefs, double sizeM)
   {
+    osg::ref_ptr<osg::Vec3Array> vertexArray = dynamic_cast<osg::Vec3Array*>(getVertexArray());
+    if (!vertexArray)
+    {
+      assert(0);
+      return;
+    }
     if (sizeM <= 0.0)
     {
-      clear();
+      drawArray_->setFirst(0);
+      drawArray_->setCount(0);
       return;
     }
     const unsigned int numDivisions = prefs.gridsettings().numdivisions();
@@ -347,20 +415,22 @@ public:
     const unsigned int segs = simCore::sdkMax(MIN_NUM_LINE_SEGMENTS, static_cast<unsigned int>(::ceil(circum / CIRCLE_QUANT_LEN)));
     const float inc = M_TWOPI / segs;
 
-    // allocate cannot reduce size, does not clear out vertices above the allocation number
-    if (getNumVerts() > segs)
-      clear();
-    allocate(segs);
+    vertexArray->resize(segs);
 
     for (unsigned int j = 0; j < segs; ++j)
     {
       const float angle = inc * j;
       const float x = sin(angle);
       const float y = cos(angle);
-      setVertex(j, osg::Vec3(x * radiusM, y * radiusM, 0.0f));
+      assert(j < vertexArray->getNumElements());
+      (*vertexArray)[j] = osg::Vec3(x * radiusM, y * radiusM, 0.0f);
     }
+    vertexArray->dirty();
+    drawArray_->setFirst(0);
+    drawArray_->setCount(vertexArray->size());
   }
 private:
+  osg::ref_ptr<osg::DrawArrays> drawArray_;
   unsigned int ring_;
 };
 }
@@ -393,7 +463,6 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
     graphicsGroup_->setName("simVis::LocalGridNode::GraphicsGeode");
     osg::StateSet* ss = graphicsGroup_->getOrCreateStateSet();
     PointSize::setValues(ss, 1.5f, osg::StateAttribute::ON);
-    osgEarth::LineDrawable::installShader(ss);
     addChild(graphicsGroup_.get());
   }
 
@@ -632,18 +701,16 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
 
     {
       const float x = x0 + subSpacing * s;
-      osgEarth::LineDrawable* sub1 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      sub1->allocate(NUM_POINTS_PER_LINE_STRIP);
-      VectorScaling::generatePoints(*sub1, osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
+      LineStrip* sub1 = new LineStrip();
+      sub1->update(osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
       sub1->setName("simVis::LocalGridNode::GridSubDivision1");
       sub1->setColor(subColor);
       geomGroup->addDrawable(sub1);
     }
     {
       const float y = y0 + subSpacing * s;
-      osgEarth::LineDrawable* sub2 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      sub2->allocate(NUM_POINTS_PER_LINE_STRIP);
-      VectorScaling::generatePoints(*sub2, osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
+      LineStrip* sub2 = new LineStrip();
+      sub2->update(osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
       sub2->setName("simVis::LocalGridNode::GridSubDivision2");
       sub2->setColor(subColor);
       geomGroup->addDrawable(sub2);
@@ -656,9 +723,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
   {
     const float x = x0 + divSpacing * p;
     {
-      osgEarth::LineDrawable* div1 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      div1->allocate(NUM_POINTS_PER_LINE_STRIP);
-      VectorScaling::generatePoints(*div1, osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
+      LineStrip* div1 = new LineStrip();
+      div1->update(osg::Vec3(x, y0, 0.f), osg::Vec3(x, y0 + span, 0.f));
       div1->setName("simVis::LocalGridNode::GridDivision1");
       div1->setColor(color);
       geomGroup->addDrawable(div1);
@@ -673,9 +739,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
 
     const float y = y0 + divSpacing * p;
     {
-      osgEarth::LineDrawable* div2 = new osgEarth::LineDrawable(GL_LINE_STRIP);
-      div2->allocate(NUM_POINTS_PER_LINE_STRIP);
-      VectorScaling::generatePoints(*div2, osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
+      LineStrip* div2 = new LineStrip();
+      div2->update(osg::Vec3(x0, y, 0.f), osg::Vec3(x0 + span, y, 0.f));
       div2->setName("simVis::LocalGridNode::GridDivision2");
       div2->setColor(color);
       geomGroup->addDrawable(div2);

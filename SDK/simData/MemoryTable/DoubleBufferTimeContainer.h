@@ -69,6 +69,14 @@ public:
   virtual void limitData(size_t maxPoints, double latestInvalidTime, const std::vector<DataColumn*>& columns,
     DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);
 
+  /**
+   * Returns the begin and end time of the column
+   * @param begin Returns the begin time
+   * @param end Returns the end time
+   * @returns 0 if begin and end are set
+   */
+  virtual int getTimeRange(double& begin, double& end) const;
+
   /** Swaps the fresh to stale, stale to fresh, and clears out the fresh vector; announces all items removed */
   void swapFreshStaleData(DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);
 

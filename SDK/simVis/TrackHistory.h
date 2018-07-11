@@ -27,13 +27,15 @@
 #include "simData/DataTable.h"
 #include "osg/Geode"
 #include "osg/MatrixTransform"
-#include "simVis/LineDrawable.h"
 #include "simVis/TrackChunkNode.h"
 #include "simVis/Types.h"
 
 //----------------------------------------------------------------------------
-namespace osgEarth { class SpatialReference; }
-
+namespace osgEarth
+{
+  class LineDrawable;
+  class SpatialReference;
+}
 namespace simData
 {
   class DataStore;
@@ -113,6 +115,9 @@ namespace simVis
 
     class ColorChangeObserver;
     class ColorTableObserver;
+
+    /** Copy constructor, not implemented or available. */
+    TrackHistoryNode(const TrackHistoryNode&);
 
     /**
     * If the color history change is within the time span of the currently displayed track history, redraw all history points
@@ -216,7 +221,8 @@ namespace simVis
     simData::PlatformPrefs      lastPlatformPrefs_;
     simData::PlatformProperties lastPlatformProps_;
     unsigned int        chunkSize_;
-    osg::Vec4f          defaultColor_;
+    const osg::Vec4f    defaultColor_;
+    osg::Vec4f          activeColor_;
     unsigned int        totalPoints_;
 
     // "draw time" is the same as the clock's update time, but adjusted

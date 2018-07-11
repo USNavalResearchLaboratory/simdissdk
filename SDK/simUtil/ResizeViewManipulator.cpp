@@ -88,12 +88,18 @@ public:
     if (corner == ResizeViewManipulator::CENTER)
     {
       for (size_t k = 0; k < 8; ++k)
-        line_->setColor(k, (k % 2 == 1 ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
+        line_->setColor(k, BAND_HIGHLIGHT_COLOR);
     }
     else
     {
+      size_t cornerNum = static_cast<size_t>(corner);
+      // To color the line segments on both sides of the appropriate vertex, set the next vertex's color too
+      size_t otherCorner = (cornerNum == 7 ? 0 : cornerNum + 1);
       for (size_t k = 0; k < 8; ++k)
-        line_->setColor(k, (k == static_cast<size_t>(corner) ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
+      {
+        bool highlight = (k == cornerNum || k == otherCorner);
+        line_->setColor(k, (highlight ? BAND_HIGHLIGHT_COLOR : BAND_NORMAL_COLOR));
+      }
     }
   }
 
@@ -107,21 +113,20 @@ private:
   void initialize_()
   {
     line_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
-    line_->allocate(8);
+    line_->setDataVariance(osg::Object::DYNAMIC);
 
-    line_->setVertex(0, osg::Vec3(0.f, 1.f, 0.f));
-    line_->setVertex(1, osg::Vec3(0.5f, 1.f, 0.f));
-    line_->setVertex(2, osg::Vec3(1.f, 1.f, 0.f));
-    line_->setVertex(3, osg::Vec3(1.f, 0.5f, 0.f));
-    line_->setVertex(4, osg::Vec3(1.f, 0.f, 0.f));
-    line_->setVertex(5, osg::Vec3(0.5f, 0.f, 0.f));
-    line_->setVertex(6, osg::Vec3(0.f, 0.f, 0.f));
-    line_->setVertex(7, osg::Vec3(0.f, 0.5f, 0.f));
+    line_->pushVertex(osg::Vec3(0.f, 1.f, 0.f));
+    line_->pushVertex(osg::Vec3(0.5f, 1.f, 0.f));
+    line_->pushVertex(osg::Vec3(1.f, 1.f, 0.f));
+    line_->pushVertex(osg::Vec3(1.f, 0.5f, 0.f));
+    line_->pushVertex(osg::Vec3(1.f, 0.f, 0.f));
+    line_->pushVertex(osg::Vec3(0.5f, 0.f, 0.f));
+    line_->pushVertex(osg::Vec3(0.f, 0.f, 0.f));
+    line_->pushVertex(osg::Vec3(0.f, 0.5f, 0.f));
 
     line_->setColor(BAND_NORMAL_COLOR);
 
     line_->dirty();
-    line_->installShader();
 
     xform_ = new osg::MatrixTransform();
     xform_->addChild(line_.get());

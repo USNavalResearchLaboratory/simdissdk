@@ -179,7 +179,6 @@ osg::Node* createNode(float s)
 
   geom->setLineWidth(2.0f);
 
-  geom->installShader();
   return geom;
 }
 

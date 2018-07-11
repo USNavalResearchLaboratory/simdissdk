@@ -83,23 +83,21 @@ void Capabilities::init_()
   caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
 #endif
 
-  // List of software drivers is from testing and https://www.opengl.org/wiki/Get_Context_Info
-  if (caps.getVendor().find("Mesa") != std::string::npos ||
-    caps.getVersion().find("Mesa") != std::string::npos ||
-    caps.getVendor().find("Microsoft") != std::string::npos ||
-    caps.getRenderer().find("Direct3D") != std::string::npos ||
-    caps.getRenderer().find("Gallium") != std::string::npos)
+  // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
+  // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
+  // acceleration, and do not necessarily imply software acceleration.
+  if (caps.getVendor().find("Microsoft") != std::string::npos)
   {
-    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; no 3D acceleration; performance concerns");
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; possibly no 3D acceleration; performance concerns");
   }
 
-  // OpenGL version must be usable.  1.5 is plausibly usable if the GLSL implementation
-  // is of appropriate version.  We could add a usable-with-artifacts warning on versions
-  // between 1.5 and 3.3, but it's unclear that we actually require features in anything
-  // in that area or if it's just a requirement on GLSL version.
-  if (glVersion_ < 1.5) // Note release date of 2003
+  // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
+  // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
+  // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
+  // from 3.0, so test against that.
+  if (glVersion_ < 3.0f) // Note release date of 2008
   {
-    recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.3 (detected " << glVersion_ << ")");
+    recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
   }
 
   caps_.push_back(std::make_pair("Max FFP texture units", toString_(caps.getMaxFFPTextureUnits())));
@@ -114,7 +112,7 @@ void Capabilities::init_()
   {
     caps_.push_back(std::make_pair("GLSL Version", toString_(caps.getGLSLVersion())));
     if (!caps.supportsGLSL(3.3f))
-      recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "GLSL version reported is under 3.30");
+      recordUsabilityConcern_(UNUSABLE, "GLSL version reported is under 3.30");
   }
   else
     recordUsabilityConcern_(UNUSABLE, "GLSL is not supported.");

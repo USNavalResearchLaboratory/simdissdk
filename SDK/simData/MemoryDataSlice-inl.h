@@ -628,6 +628,11 @@ namespace {
   {
     *prefs = ds->mutable_projectorPrefs(id, t);
   }
+
+  void getPreference(DataStore *ds, ObjectId id, CustomRenderingPrefs** prefs, DataStore::Transaction* t)
+  {
+    *prefs = ds->mutable_customRenderingPrefs(id, t);
+  }
 }
 
 template<class CommandType, class PrefType>

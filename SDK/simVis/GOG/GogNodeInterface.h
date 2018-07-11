@@ -31,7 +31,9 @@
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/Utils.h"
 
-namespace osgEarth{ namespace Annotation {
+namespace osgEarth{
+  class GeoPoint;
+namespace Annotation {
   class FeatureNode;
   class GeometryNode;
   class LabelNode;
@@ -558,25 +560,44 @@ class SDKVIS_EXPORT CylinderNodeInterface : public GogNodeInterface
 public:
   /** Constructor */
   CylinderNodeInterface(osg::Group* groupNode, osgEarth::Annotation::LocalGeometryNode* sideNode, osgEarth::Annotation::LocalGeometryNode* topCapNode, osgEarth::Annotation::LocalGeometryNode* bottomCapNode, const simVis::GOG::GogMetaData& metaData);
-  virtual ~CylinderNodeInterface() {}
+  virtual ~CylinderNodeInterface();
   virtual int getAltOffset(double& altOffset) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
+  /// need to override setting altitude offset to handle updating all 3 nodes, avoid updating if clamped to ground
   virtual void setAltOffset(double altOffsetMeters);
-  /// need to override setAltitudeMode to adjust altitude for clampToGround case
+  /// need to override setAltitudeMode to reset vertex offsets when changing clamping
   virtual void setAltitudeMode(AltitudeMode altMode);
+  /// need to override the fill and outline state change methods, because changes to the Polygon or Line symbol will produce invalid vertex offsets if clamped
+  virtual void setFilledState(bool state);
+  virtual void setFillColor(const osg::Vec4f& color);
+  virtual void setLineColor(const osg::Vec4f& color);
+  virtual void setLineStyle(Utils::LineStyle style);
+  virtual void setLineWidth(int lineWidth);
+  virtual void setOutlineState(bool outlineState);
 
 protected:
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
 
 private:
+  /// Set the altitude offset in meters on the top, side, and bottom nodes
+  void setAltOffset_(double altOffsetMeters);
+  /// Set the position on the various node geometries, accounting for clamping state
+  void setPosition_(osgEarth::GeoPoint& position, bool groundClamped);
+  /// Toggle the altitude mode to reset the clamping vertex offsets, which is required for various changes to the geometry
+  void reclamp_();
+
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> sideNode_; ///< draws the sides
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> topCapNode_; ///< draws the top cap
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> bottomCapNode_; ///< draws the bottom cap
   /// height of the cylinder in meters
   float height_;
-  /// cache altitude for updating altitude mode
+  /// cache altitude for updating altitude mode, in meters
   double altitude_;
+  /// cache the altitude offset for updating when changing ground clamp state, in meters
+  double altOffset_;
+  /// cache original position to restore correct vertex offsets when changing clamping
+  osgEarth::GeoPoint* position_;
 };
 
 /**

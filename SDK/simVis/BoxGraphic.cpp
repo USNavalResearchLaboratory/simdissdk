@@ -142,9 +142,6 @@ void BoxGraphic::create_()
   geom_->setDataVariance(osg::Object::DYNAMIC);
   geom_->allocate(4);
 
-  // since we're not adding it to a LineGroup, call this:
-  geom_->installShader();
-
   setGeometry(x_, y_, width_, height_);
   setLineWidth(lineWidth_);
   setStippleFactor(stippleFactor_);

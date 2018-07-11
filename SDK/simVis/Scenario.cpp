@@ -38,6 +38,7 @@
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
+#include "simVis/CustomRendering.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -157,7 +158,7 @@ bool ScenarioManager::EntityRecord::dataStoreMatches(const simData::DataStore* d
 
 bool ScenarioManager::EntityRecord::updateFromDataStore(bool force) const
 {
-  return (updateSlice_ && node_.valid() && node_->updateFromDataStore(updateSlice_, force));
+  return (node_.valid() && node_->updateFromDataStore(updateSlice_, force));
 }
 
 // -----------------------------------------------------------------------
@@ -737,6 +738,36 @@ LobGroupNode* ScenarioManager::addLobGroup(const simData::LobGroupProperties& pr
   return NULL;
 }
 
+CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRenderingProperties& props, simData::DataStore& dataStore)
+{
+  SAFETRYBEGIN;
+  // attempt to anchor to the host
+  EntityNode* host = NULL;
+  if (props.has_hostid())
+    host = find(props.hostid());
+
+  // no host, no custom rendering.
+  if (!host)
+    return NULL;
+
+  // put the custom into our entity db:
+  auto node = new CustomRenderingNode(this, props, host, dataStore.referenceYear());
+  entities_[node->getId()] = new EntityRecord(
+    node,
+    NULL,
+    &dataStore);
+
+  hosterTable_.insert(std::make_pair(host->getId(), node->getId()));
+
+  notifyToolsOfAdd_(node);
+
+  node->setLabelContentCallback(labelContentManager_->createLabelContentCallback(node->getId()));
+
+  return node;
+  SAFETRYEND("adding custom");
+  return NULL;
+}
+
 ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties& props, simData::DataStore& dataStore)
 {
   SAFETRYBEGIN;
@@ -843,6 +874,19 @@ bool ScenarioManager::setLobGroupPrefs(simData::ObjectId id, const simData::LobG
     return true;
   }
   SAFETRYEND(std::string(osgEarth::Stringify() << "setting LOB group prefs of ID " << id));
+  return false;
+}
+
+bool ScenarioManager::setCustomRenderingPrefs(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs)
+{
+  SAFETRYBEGIN;
+  CustomRenderingNode* obj = find<CustomRenderingNode>(id);
+  if (obj)
+  {
+    obj->setPrefs(prefs);
+    return true;
+  }
+  SAFETRYEND(std::string(osgEarth::Stringify() << "setting custom prefs of ID " << id));
   return false;
 }
 
@@ -1080,7 +1124,7 @@ void ScenarioManager::update(simData::DataStore* ds, bool force)
   EntityVector updates;
 
   SAFETRYBEGIN;
-  for (EntityRepo::iterator i = entities_.begin(); i != entities_.end(); ++i)
+  for (EntityRepo::const_iterator i = entities_.begin(); i != entities_.end(); ++i)
   {
     EntityRecord* record = i->second.get();
 

@@ -28,6 +28,7 @@
 #include "osg/ref_ptr"
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
+#include "osgEarth/GLUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -145,6 +146,7 @@ namespace
     assert(vertexArray);
     setName("simVis::SphericalVolume::svPyramidOutline");
     xform.addChild(this);
+    osgEarth::GLUtils::setLineSmooth(getOrCreateStateSet(), osg::StateAttribute::ON);
 
     const bool hasNearFace = (nearFaceOffset_ > 0);
     // if we are drawing near and far faces, bottom and top outlines are each line loops, if not, (far face) outlines are each simple line strips
@@ -177,9 +179,11 @@ namespace
     }
     bottomOutline_->setName("simVis::SphericalVolumeBottomOutline");
     bottomOutline_->setColor(outlineColor_);
+    bottomOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(bottomOutline_.get());
     topOutline_->setName("simVis::SphericalVolumeTopOutline");
     topOutline_->setColor(outlineColor_);
+    topOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(topOutline_.get());
 
     // the gate's far face left side vertical (numPointsZ_)
@@ -187,12 +191,14 @@ namespace
     farLeftOutline_->allocate(numPointsZ_);
     farLeftOutline_->setName("simVis::SphericalVolume-FarOutline");
     farLeftOutline_->setColor(outlineColor_);
+    farLeftOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(farLeftOutline_.get());
     // the gate's far face right side vertical (numPointsZ_)
     farRightOutline_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
     farRightOutline_->allocate(numPointsZ_);
     farRightOutline_->setName("simVis::SphericalVolume-FarOutline");
     farRightOutline_->setColor(outlineColor_);
+    farRightOutline_->setDataVariance(osg::Object::DYNAMIC);
     addChild(farRightOutline_.get());
 
     if (hasNearFace)
@@ -202,12 +208,14 @@ namespace
       nearLeftOutline_->allocate(numPointsZ_);
       nearLeftOutline_->setName("simVis::SphericalVolume-NearOutline");
       nearLeftOutline_->setColor(outlineColor_);
+      nearLeftOutline_->setDataVariance(osg::Object::DYNAMIC);
       addChild(nearLeftOutline_.get());
       // the gate's near face right side vertical (numPointsZ_)
       nearRightOutline_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
       nearRightOutline_->allocate(numPointsZ_);
       nearRightOutline_->setName("simVis::SphericalVolume-NearOutline");
       nearRightOutline_->setColor(outlineColor_);
+      nearRightOutline_->setDataVariance(osg::Object::DYNAMIC);
       addChild(nearRightOutline_.get());
     }
   }
@@ -237,9 +245,9 @@ namespace
     const size_t bottomOutlineSize = bottomOutline_->size();
     const size_t topOutlineSize = topOutline_->size();
     const size_t farLeftOutlineSize = farLeftOutline_->size();
-    const size_t nearLeftOutlineSize = nearLeftOutline_->size();
+    const size_t nearLeftOutlineSize = hasNearFace ? nearLeftOutline_->size() : 0;
     const size_t farRightOutlineSize = farRightOutline_->size();
-    const size_t nearRightOutlineSize = nearRightOutline_->size();
+    const size_t nearRightOutlineSize = hasNearFace ? nearRightOutline_->size() : 0;
 #endif
     // bottom outline
     {
@@ -1037,59 +1045,11 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
       return NULL;
     }
     geodeSolid->addDrawable(geom);
-
-    // apply wireframe mode if necessary
-    if (SVData::DRAW_MODE_WIRE & d.drawMode_)
-    {
-      if ((SVData::DRAW_MODE_SOLID & d.drawMode_) || (SVData::DRAW_MODE_STIPPLE & d.drawMode_))
-      {
-        // create a new wireframe geometry as a shallow copy of the solid geometry
-        osg::Geometry* wireframeGeom = new osg::Geometry(*geom);
-        wireframeGeom->setName("simVis::SphericalVolume::cone-wireframe");
-
-        // but with its own color array
-        osg::Vec4Array* wireframeColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-        // default to white
-        (*wireframeColor)[0] = simVis::Color::White;
-        // but use the solid geometry color if it can be found
-        osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
-        if (colors)
-        {
-          if (colors->size() == 1)
-          {
-            (*wireframeColor)[0] = (*colors)[0];
-            (*wireframeColor)[0][3] = 1.0f; // no transparency in the wireframe
-          }
-          else
-          {
-            // sv color arrays are fixed at size 1
-            assert(0);
-          }
-        }
-        wireframeGeom->setColorArray(wireframeColor);
-
-        // add this to a 2nd geode in the xform: the 2nd geode in the xform is for opaque features
-        osg::Geode* geodeWire = new osg::Geode();
-        geodeWire->addDrawable(wireframeGeom);
-        xform->addChild(geodeWire);
-
-        osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
-        osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-        stateset->setAttributeAndModes(pm, osg::StateAttribute::ON);
-
-        // wireframe is neither lit nor blended when it is paired with another draw type
-        simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
-        stateset->setMode(GL_BLEND,
-          osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
-      }
-      else
-      {
-        // wireframe is the primary/'solid' geometry - it can be lit, blended
-        osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-        geom->getOrCreateStateSet()->setAttributeAndModes(pm, osg::StateAttribute::ON);
-      }
-    }
   }
+
+  // draw-as-wireframe or add wireframe to stipple/solid geom
+  if (SVData::DRAW_MODE_WIRE & d.drawMode_)
+    processWireframe_(xform, d.drawMode_);
 
   // Turn off backface culling
   xform->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
@@ -1099,6 +1059,66 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
   updateStippling(xform, ((SVData::DRAW_MODE_STIPPLE & d.drawMode_) == SVData::DRAW_MODE_STIPPLE));
 
   return xform;
+}
+
+void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
+{
+  if (SVData::DRAW_MODE_WIRE & drawMode)
+  {
+    osg::Geometry* solidGeom = SVFactory::solidGeometry(xform);
+    if (solidGeom == NULL || solidGeom->empty())
+    {
+      assert(0);
+      return;
+    }
+    if ((SVData::DRAW_MODE_SOLID & drawMode) || (SVData::DRAW_MODE_STIPPLE & drawMode))
+    {
+      // create a new wireframe geometry as a shallow copy of the solid geometry
+      osg::Geometry* wireframeGeom = new osg::Geometry(*solidGeom);
+      wireframeGeom->setName("simVis::SphericalVolume::cone-wireframe");
+
+      // but with its own color array
+      osg::Vec4Array* wireframeColor = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+      // default to white
+      (*wireframeColor)[0] = simVis::Color::White;
+      // but use the solid geometry color if it can be found
+      osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(solidGeom->getColorArray());
+      if (colors)
+      {
+        if (colors->size() == 1)
+        {
+          (*wireframeColor)[0] = (*colors)[0];
+          (*wireframeColor)[0][3] = 1.0f; // no transparency in the wireframe
+        }
+        else
+        {
+          // sv color arrays are fixed at size 1
+          assert(0);
+        }
+      }
+      wireframeGeom->setColorArray(wireframeColor);
+
+      // add this to a 2nd geode in the xform: the 2nd geode in the xform is for opaque features
+      osg::Geode* geodeWire = new osg::Geode();
+      geodeWire->addDrawable(wireframeGeom);
+      xform->addChild(geodeWire);
+
+      osg::StateSet* stateset = wireframeGeom->getOrCreateStateSet();
+      osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+      stateset->setAttributeAndModes(pm, osg::StateAttribute::ON);
+
+      // wireframe is neither lit nor blended when it is paired with another draw type
+      simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+      stateset->setMode(GL_BLEND,
+        osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+    }
+    else
+    {
+      // wireframe is the primary/'solid' geometry - it can be lit, blended
+      osg::PolygonMode* pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+      solidGeom->getOrCreateStateSet()->setAttributeAndModes(pm, osg::StateAttribute::ON);
+    }
+  }
 }
 
 void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)

@@ -120,6 +120,14 @@ public:
   /// Swaps the contents of the fresh and stale data, flushing out the stale
   void swapFreshStaleData();
 
+  /**
+   * Returns the begin and end time of the column
+   * @param begin Returns the begin time
+   * @param end Returns the end time
+   * @returns 0 if begin and end are set
+   */
+  virtual int getTimeRange(double& begin, double& end) const;
+
 private:
   /// Allocates a new data container based on the data storage type
   DataContainer* newDataContainer_(simData::VariableType variableType) const;

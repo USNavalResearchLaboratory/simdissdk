@@ -141,7 +141,6 @@ void PlatformAzimElevViewTool::onInstall(const ScenarioManager& scenario)
 
   // set up state for the delegation:
   simVis::setLighting(targets_->getOrCreateStateSet(), 0);
-  osgEarth::LineDrawable::installShader(targets_->getOrCreateStateSet());
 
   // build the scene elements:
   rebuild_();

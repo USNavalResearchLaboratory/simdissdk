@@ -19,9 +19,11 @@
  * disclose, or release this software.
  *
  */
+#include "simData/DataStoreHelpers.h"
 #include "simData/MemoryDataStore.h"
 #include "simQt/EntityTreeComposite.h"
 #include "simQt/EntityTreeModel.h"
+#include "simQt/EntityTypeFilter.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
@@ -84,6 +86,24 @@ simData::ObjectId createGate(simData::DataStore* dataStore, simData::ObjectId be
   return id;
 }
 
+simData::ObjectId createCustomRendering(simData::DataStore* dataStore, simData::ObjectId platformId, const QString& name)
+{
+  simData::DataStore::Transaction xaction;
+  simData::CustomRenderingProperties* props = dataStore->addCustomRendering(&xaction);
+  simData::ObjectId id = props->id();
+  props->set_hostid(platformId);
+  props->set_originalid(id);
+  xaction.complete(&props);
+
+  simData::DataStore::Transaction transaction;
+  simData::CustomRenderingPrefs* prefs = dataStore->mutable_customRenderingPrefs(id, &transaction);
+  assert(prefs);
+  prefs->mutable_commonprefs()->set_name(name.toStdString());
+  transaction.complete(&prefs);
+
+  return id;
+}
+
 }
 
 MainWindow::MainWindow(QWidget *parent) : QDialog(parent)
@@ -111,10 +131,13 @@ MainWindow::MainWindow(QWidget *parent) : QDialog(parent)
 
   entityTreeModel_ = new simQt::EntityTreeModel(NULL, dataStore_);
   entityTreeComposite_ = mainWindowGui_->entityTreeComposite;
+  entityTreeComposite_->addEntityFilter(new simQt::EntityTypeFilter(*dataStore_, simData::ALL, true));
   entityTreeComposite_->setModel(entityTreeModel_);
   connect(entityTreeComposite_, SIGNAL(itemsSelected(QList<uint64_t>)), this, SLOT(itemsSelected_(QList<uint64_t>)));
   connect(entityTreeComposite_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(itemDoubleClicked_(uint64_t)));
-  entityTreeComposite_->addButton(new QPushButton("Test", parent));
+  auto testButton = new QPushButton("Test", parent);
+  connect(testButton, SIGNAL(clicked()), this, SLOT(test_()));
+  entityTreeComposite_->addButton(testButton);
 }
 
 MainWindow::~MainWindow()
@@ -144,10 +167,14 @@ void MainWindow::addGates_()
 
 void MainWindow::test_()
 {
-  for (int ii = 0; ii < 10000; ii++)
+  // attach a Custom Rendering entity to the selected platforms
+  QList<uint64_t> selectedItems = entityTreeComposite_->selectedItems();
+  Q_FOREACH(uint64_t id, selectedItems)
   {
-    QString name = QString("New Platform %1").arg(ii, 0, 16);
-    createPlatform(dataStore_, name);
+    if (simData::DataStoreHelpers::typeFromId(id, dataStore_) == "P")
+    {
+      createCustomRendering(dataStore_, id, "Custom Rendering");
+    }
   }
 }
 

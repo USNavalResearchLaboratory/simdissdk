@@ -150,6 +150,9 @@ public: // methods
   /// Retrieve a list of IDs for all LobGroups associated with a platform
   virtual void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const {dataStore_->lobGroupIdListForHost(hostid, ids);}
 
+  /// Retrieve a list of IDs for all custom renderings associated with a platform
+  virtual void customRenderingIdListForHost(ObjectId hostid, IdList *ids) const {dataStore_->customRenderingIdListForHost(hostid, ids);}
+
   /// Retrieves the ObjectType for a particular ID
   virtual simData::ObjectType objectType(ObjectId id) const {return dataStore_->objectType(id);}
 
@@ -177,12 +180,14 @@ public: // methods
   virtual const     LaserProperties*             laserProperties(ObjectId id, Transaction *transaction) const {return dataStore_->laserProperties(id, transaction);}
   virtual const ProjectorProperties*         projectorProperties(ObjectId id, Transaction *transaction) const {return dataStore_->projectorProperties(id, transaction);}
   virtual const  LobGroupProperties*          lobGroupProperties(ObjectId id, Transaction *transaction) const {return dataStore_->lobGroupProperties(id, transaction);}
+  virtual const CustomRenderingProperties* customRenderingProperties(ObjectId id, Transaction *transaction) const { return dataStore_->customRenderingProperties(id, transaction); }
   virtual        PlatformProperties*  mutable_platformProperties(ObjectId id, Transaction *transaction) {return dataStore_->mutable_platformProperties(id, transaction);}
   virtual            BeamProperties*      mutable_beamProperties(ObjectId id, Transaction *transaction) {return dataStore_->mutable_beamProperties(id, transaction);}
   virtual            GateProperties*      mutable_gateProperties(ObjectId id, Transaction *transaction) {return dataStore_->mutable_gateProperties(id, transaction);}
   virtual           LaserProperties*     mutable_laserProperties(ObjectId id, Transaction *transaction) {return dataStore_->mutable_laserProperties(id, transaction);}
   virtual       ProjectorProperties* mutable_projectorProperties(ObjectId id, Transaction *transaction) {return dataStore_->mutable_projectorProperties(id, transaction);}
   virtual        LobGroupProperties*  mutable_lobGroupProperties(ObjectId id, Transaction *transaction) {return dataStore_->mutable_lobGroupProperties(id, transaction);}
+  virtual CustomRenderingProperties* mutable_customRenderingProperties(ObjectId id, Transaction *transaction) { return dataStore_->mutable_customRenderingProperties(id, transaction); }
   ///@}
 
   /**@name Object Preferences
@@ -201,8 +206,10 @@ public: // methods
   virtual            GatePrefs*      mutable_gatePrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_gatePrefs(id, transaction);}
   virtual           LaserPrefs*     mutable_laserPrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_laserPrefs(id, transaction);}
   virtual       ProjectorPrefs* mutable_projectorPrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_projectorPrefs(id, transaction);}
-  virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction) {return dataStore_->mutable_lobGroupPrefs(id, transaction);}
-  virtual          CommonPrefs*    mutable_commonPrefs(ObjectId id, Transaction* transaction) {return dataStore_->mutable_commonPrefs(id, transaction);}
+  virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction) { return dataStore_->mutable_lobGroupPrefs(id, transaction); }
+  virtual const CustomRenderingPrefs* customRenderingPrefs(ObjectId id, Transaction *transaction) const { return dataStore_->customRenderingPrefs(id, transaction); }
+  virtual       CustomRenderingPrefs* mutable_customRenderingPrefs(ObjectId id, Transaction *transaction) { return dataStore_->mutable_customRenderingPrefs(id, transaction); }
+  virtual          CommonPrefs*    mutable_commonPrefs(ObjectId id, Transaction* transaction) { return dataStore_->mutable_commonPrefs(id, transaction); }
   ///@}
 
  /**@name Set default pref values
@@ -240,6 +247,7 @@ public: // methods
   virtual     LaserProperties* addLaser(Transaction *transaction) {return dataStore_->addLaser(transaction);}
   virtual ProjectorProperties* addProjector(Transaction *transaction) {return dataStore_->addProjector(transaction);}
   virtual  LobGroupProperties* addLobGroup(Transaction *transaction) {return dataStore_->addLobGroup(transaction);}
+  virtual CustomRenderingProperties* addCustomRendering(Transaction *transaction) {return dataStore_->addCustomRendering(transaction);}
   ///@}
 
   /// remove an entity from the data store
@@ -274,6 +282,7 @@ public: // methods
   virtual ProjectorCommand*   addProjectorCommand(ObjectId id, Transaction *transaction) {return dataStore_->addProjectorCommand(id, transaction);}
   virtual   LobGroupUpdate*   addLobGroupUpdate(ObjectId id, Transaction *transaction) {return dataStore_->addLobGroupUpdate(id, transaction);}
   virtual  LobGroupCommand*   addLobGroupCommand(ObjectId id, Transaction *transaction) {return dataStore_->addLobGroupCommand(id, transaction);}
+  virtual CustomRenderingCommand* addCustomRenderingCommand(ObjectId id, Transaction *transaction) { return dataStore_->addCustomRenderingCommand(id, transaction); }
   virtual      GenericData*   addGenericData(ObjectId id, Transaction *transaction) {return dataStore_->addGenericData(id, transaction);}
   virtual     CategoryData*   addCategoryData(ObjectId id, Transaction *transaction) {return dataStore_->addCategoryData(id, transaction);}
   //virtual        TableData*        addTableData(ObjectId id, Transaction *transaction) = 0;
@@ -295,12 +304,16 @@ public: // methods
   virtual const ProjectorCommandSlice* projectorCommandSlice(ObjectId id) const {return dataStore_->projectorCommandSlice(id);}
   virtual const LobGroupUpdateSlice*   lobGroupUpdateSlice(ObjectId id) const {return dataStore_->lobGroupUpdateSlice(id);}
   virtual const LobGroupCommandSlice*  lobGroupCommandSlice(ObjectId id) const {return dataStore_->lobGroupCommandSlice(id);}
+  virtual const CustomRenderingCommandSlice* customRenderingCommandSlice(ObjectId id) const { return dataStore_->customRenderingCommandSlice(id); }
   virtual const GenericDataSlice*      genericDataSlice(ObjectId id) const {return dataStore_->genericDataSlice(id);}
   virtual const CategoryDataSlice*     categoryDataSlice(ObjectId id) const {return dataStore_->categoryDataSlice(id);}
   ///@}
 
   /// @copydoc simData::DataStore::modifyPlatformCommandSlice
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) { return dataStore_->modifyPlatformCommandSlice(id, modifier); }
+
+  /// @copydoc simData::DataStore::modifyCustomRenderingCommandSlice
+  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) { return dataStore_->modifyCustomRenderingCommandSlice(id, modifier); }
 
   /**@name Listeners
    * @{

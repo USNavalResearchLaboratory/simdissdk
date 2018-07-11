@@ -43,6 +43,7 @@ EntityTypeFilterWidget::EntityTypeFilterWidget(QWidget* parent, unsigned int typ
   connect(ui_->laserCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
   connect(ui_->lobCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
   connect(ui_->projectorCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
+  connect(ui_->customRenderingCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
 
   // Set tooltips
   ui_->allCheckable->setToolTip(simQt::formatTooltip(tr("All"),
@@ -59,6 +60,8 @@ EntityTypeFilterWidget::EntityTypeFilterWidget(QWidget* parent, unsigned int typ
     tr("Toggles the display of all LOB entities in the Entity List.")));
   ui_->projectorCheckable->setToolTip(simQt::formatTooltip(tr("Projectors"),
     tr("Toggles the display of all projector entities in the Entity List.")));
+  ui_->customRenderingCheckable->setToolTip(simQt::formatTooltip(tr("Custom Rendering"),
+    tr("Toggles the display of all custom rendering entities in the Entity List.")));
 }
 
 EntityTypeFilterWidget::~EntityTypeFilterWidget()
@@ -83,6 +86,8 @@ unsigned int EntityTypeFilterWidget::getSelections() const
     rv |= simData::LOB_GROUP;
   if (ui_->projectorCheckable->isChecked())
     rv |= simData::PROJECTOR;
+  if (ui_->customRenderingCheckable->isChecked())
+    rv |= simData::CUSTOM_RENDERING;
   // update the all button state, based on components' state
   ui_->allCheckable->setChecked(rv == simData::ALL);
   return rv;
@@ -103,6 +108,8 @@ std::set<simData::ObjectType> EntityTypeFilterWidget::getSelectionsSet() const
     rv.insert(simData::LOB_GROUP);
   if (ui_->projectorCheckable->isChecked())
     rv.insert(simData::PROJECTOR);
+  if (ui_->customRenderingCheckable->isChecked())
+    rv.insert(simData::CUSTOM_RENDERING);
   return rv;
 }
 
@@ -120,6 +127,7 @@ void EntityTypeFilterWidget::setSelections(unsigned int types)
   ui_->laserCheckable->setChecked(simData::LASER & types);
   ui_->lobCheckable->setChecked(simData::LOB_GROUP & types);
   ui_->projectorCheckable->setChecked(simData::PROJECTOR & types);
+  ui_->customRenderingCheckable->setChecked(simData::CUSTOM_RENDERING & types);
   ui_->allCheckable->setChecked(types == simData::ALL);
 
   // Emit a signal that the values have changed

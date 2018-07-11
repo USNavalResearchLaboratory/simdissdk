@@ -110,6 +110,11 @@ public:
 
       // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
       ss->removeTextureMode(0, GL_TEXTURE_2D);
+
+      // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
+      osg::Texture* texture = dynamic_cast<osg::Texture*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+      if (texture)
+        simVis::fixTextureForGlCoreProfile(texture);
 #endif
     }
     traverse(node);
@@ -257,6 +262,7 @@ private:
     if (options->addLodNode)
     {
       osg::ref_ptr<osg::LOD> lod = new osg::LOD;
+      lod->setName("Auto LOD Node");
       // Use a pixel-size LOD.  Range LOD scales relative to eye distance, but models that get distorted
       // significantly in only 2 dimensions will have significant LOD issues with that approach.
       lod->setRangeMode(osg::LOD::PIXEL_SIZE_ON_SCREEN);
@@ -289,8 +295,12 @@ private:
     // and auto-scale to the screen.
     using namespace osgEarth::Annotation;
 
-    osg::ref_ptr<osg::Image> image = osgDB::readRefImageFile(filename);
-    if (image)
+    osg::ref_ptr<osg::Image> image;
+    // Avoid readRefImageFile() because in 3.6 it spams console, for LST and TMD files
+    const std::string ext = osgDB::getLowerCaseFileExtension(filename);
+    if (ext != "tmd" && ext != "lst")
+      image = osgDB::readRefImageFile(filename);
+    if (image.valid())
     {
       // create the geometry representing the icon:
       osg::Geometry* geom = AnnotationUtils::createImageGeometry(
@@ -299,6 +309,14 @@ private:
         0,                // texture image unit
         0.0,              // heading
         1.0);             // scale
+
+      // Texture could feasibly be GL_LUMINANCE or GL_LUMINANCE_ALPHA; fix it if so
+      if (geom && geom->getStateSet())
+      {
+        osg::Texture* texture = dynamic_cast<osg::Texture*>(geom->getStateSet()->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+        if (texture)
+          simVis::fixTextureForGlCoreProfile(texture);
+      }
 
       osg::Geode* geode = new osg::Geode();
       geode->addDrawable(geom);
@@ -424,6 +442,7 @@ public:
     // Set up an options struct for the pseudo loader
     osg::ref_ptr<ModelCacheLoaderOptions> opts = new ModelCacheLoaderOptions;
     opts->clock = cache_->clock_;
+    opts->addLodNode = cache_->addLodNode_;
     opts->sequenceTimeUpdater = cache_->sequenceTimeUpdater_.get();
     // Need to return something or proxy never succeeds and keeps issuing searches
     opts->boxWhenNotFound = true;
@@ -534,6 +553,7 @@ private:
 
 ModelCache::ModelCache()
   : shareArticulatedModels_(false),
+    addLodNode_(true),
     clock_(NULL),
     asyncLoader_(new LoaderNode)
 {
@@ -541,6 +561,7 @@ ModelCache::ModelCache()
 
   // Create a box model as a placeholder for invalid model
   osg::Geode* geode = new osg::Geode();
+  geode->setName("Box Geode");
   geode->addDrawable(new osg::ShapeDrawable(new osg::Box()));
   boxNode_ = geode;
 
@@ -582,11 +603,16 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   // Set up an options struct for the pseudo loader
   osg::ref_ptr<ModelCacheLoaderOptions> opts = new ModelCacheLoaderOptions;
   opts->clock = clock_;
+  opts->addLodNode = addLodNode_;
   opts->sequenceTimeUpdater = sequenceTimeUpdater_.get();
   // Farm off to the pseudo-loader
   osg::ref_ptr<osg::Node> result = osgDB::readRefNodeFile(uri + "." + MODEL_LOADER_EXT, opts.get());
   if (!result)
     return NULL;
+
+  // Synchronous load needs to run the shader generator here
+  osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
+  osgEarth::Registry::shaderGenerator().run(result.get(), stateCache.get());
 
   // Store the image hint
   bool isImage = false;
@@ -666,6 +692,16 @@ void ModelCache::setShareArticulatedIconModels(bool value)
 bool ModelCache::getShareArticulatedIconModels() const
 {
   return shareArticulatedModels_;
+}
+
+void ModelCache::setUseLodNode(bool useLodNode)
+{
+  addLodNode_ = useLodNode;
+}
+
+bool ModelCache::useLodNode() const
+{
+  return addLodNode_;
 }
 
 void ModelCache::setClock(simCore::Clock* clock)

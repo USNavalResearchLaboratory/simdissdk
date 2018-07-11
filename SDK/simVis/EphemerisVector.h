@@ -77,6 +77,9 @@ private:
   /// Callback that will call rebuild_() when too much time-of-day has elapsed since last rebuild
   class RebuildOnTimer;
 
+  /** Copy constructor, not implemented or available. */
+  EphemerisVector(const EphemerisVector&);
+
   /// recreate the geometry
   void rebuild_(const simData::PlatformPrefs& prefs);
   /// recreates the vertices for a single ephemeris position

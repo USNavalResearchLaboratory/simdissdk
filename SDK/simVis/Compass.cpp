@@ -132,7 +132,7 @@ compassUpdateEventHandler_(NULL)
     texture->setResizeNonPowerOfTwoHint(false);
     texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
     texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-    simVis::fixTextureForGlCoreProfile(texture);
+    simVis::fixTextureForGlCoreProfile(texture.get());
     compass_ = new osgEarth::Util::Controls::ImageControl(texture.get());
 #else
     // Fall back to ImageControl(Image) constructor, which fails in GL3 on some textures

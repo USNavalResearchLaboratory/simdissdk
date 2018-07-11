@@ -58,6 +58,11 @@ public:
   /** Retrieves the flag for whether to share articulated models or not */
   bool getShareArticulatedIconModels() const;
 
+  /** Flag whether to use an LOD node to hide the model at an appropriate distance.  Default: true. */
+  void setUseLodNode(bool useLodNode);
+  /** Retrieves flag for whether to add an LOD node at the root level */
+  bool useLodNode() const;
+
   /** Sets the clock instance to use for SIMDIS Media Player 2 time updates. */
   void setClock(simCore::Clock* clock);
   /** Retrieves the currently set clock instance. */
@@ -143,6 +148,8 @@ private:
 
   /// If false, return a separate model instance for any model with articulations
   bool shareArticulatedModels_;
+  /// If true (default), add an LOD node at the top of the scene
+  bool addLodNode_;
   /// Clock is required for SIMDIS MP2 models
   simCore::Clock* clock_;
   /// Sequence updater is associated with nodes with osg::Sequence, to fix backwards time problems.  See simVis::Registry::sequenceTimeUpdater_

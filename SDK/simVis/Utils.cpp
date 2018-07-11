@@ -902,6 +902,23 @@ float VectorScaling::lineLength(const PlatformModelNode* node, float axisScale)
   return adjustedLength * axisScale;
 }
 
+void VectorScaling::generatePoints(osg::Vec3Array& vertices, const osg::Vec3& start, const osg::Vec3& end)
+{
+  const unsigned int numPointsPerLine = vertices.getNumElements();
+  // Avoid divide-by-zero problems
+  if (numPointsPerLine < 2)
+    return;
+
+  const osg::Vec3 delta = (end - start);
+  for (unsigned int k = 0; k < numPointsPerLine - 1; ++k)
+  {
+    // Translate [0,numPointsPerLine-1) into [0,1)
+    const float pct = static_cast<float>(k) / (numPointsPerLine - 1);
+    vertices[k] = (start + delta * pct);
+  }
+  vertices[numPointsPerLine - 1] = end;
+}
+
 void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3& start, const osg::Vec3& end)
 {
   const unsigned int numPointsPerLine = line.getNumVerts();
@@ -910,12 +927,13 @@ void VectorScaling::generatePoints(osgEarth::LineDrawable& line, const osg::Vec3
     return;
 
   const osg::Vec3 delta = (end - start);
-  for (unsigned int k = 0; k < numPointsPerLine; ++k)
+  for (unsigned int k = 0; k < numPointsPerLine - 1; ++k)
   {
-    // Translate [0,numPointsPerLine) into [0,1]
+    // Translate [0,numPointsPerLine-1) into [0,1)
     const float pct = static_cast<float>(k) / (numPointsPerLine - 1);
     line.setVertex(k, start + delta * pct);
   }
+  line.setVertex(numPointsPerLine - 1, end);
 }
 
 

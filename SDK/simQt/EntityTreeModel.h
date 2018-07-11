@@ -149,6 +149,7 @@ private:
   /** Icons for entity types */
   QIcon platformIcon_;
   QIcon beamIcon_;
+  QIcon customRenderingIcon_;
   QIcon gateIcon_;
   QIcon laserIcon_;
   QIcon lobIcon_;

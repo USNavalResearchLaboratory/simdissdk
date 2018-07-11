@@ -429,4 +429,11 @@ void TimeContainerDeque::limitData(size_t maxPoints, double latestInvalidTime,
   }
 }
 
+int TimeContainerDeque::getTimeRange(double& begin, double& end) const
+{
+  // Not implemented
+  assert(0);
+  return 1;
+}
+
 } }

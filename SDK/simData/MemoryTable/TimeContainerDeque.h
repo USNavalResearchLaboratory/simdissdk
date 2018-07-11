@@ -21,6 +21,7 @@
  */
 #ifndef SIMDATA_MEMORYTABLE_TIMECONTAINERDEQUE_H
 #define SIMDATA_MEMORYTABLE_TIMECONTAINERDEQUE_H
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 
 #include <deque>
 #include <utility>
@@ -63,6 +64,14 @@ public:
   virtual void limitData(size_t maxPoints, double latestInvalidTime, const std::vector<DataColumn*>& columns,
     DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);
 
+  /**
+   * Not Implemented
+   * @param begin Returns the begin time
+   * @param end Returns the end time
+   * @returns 0 if begin and end are set
+   */
+  virtual int getTimeRange(double& begin, double& end) const;
+
 private:
   typedef std::pair<double, size_t> RowTimeToIndex; // pTimeIndex
   typedef std::deque<RowTimeToIndex> TimeIndexDeque;
@@ -80,4 +89,5 @@ private:
 
 } }
 
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
 #endif /* SIMDATA_MEMORYTABLE_TIMECONTAINERDEQUE_H */

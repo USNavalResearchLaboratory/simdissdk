@@ -54,6 +54,7 @@
 #include "simVis/EyePositionManager.h"
 #include "simVis/Gate.h"
 #include "simVis/GeoFence.h"
+#include "simVis/Gl3Utils.h"
 #include "simVis/GlowHighlight.h"
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/Arc.h"

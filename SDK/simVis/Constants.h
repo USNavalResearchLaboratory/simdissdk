@@ -25,7 +25,7 @@
 #include <string>
 #include "osgDB/Callbacks"
 #include "simCore/Common/Common.h"
-#include <GL/gl.h>
+#include "osg/GL"
 
 namespace simVis
 {
@@ -85,6 +85,7 @@ namespace simVis
     DISPLAY_MASK_LABEL              = 1 << 8,
     DISPLAY_MASK_PLATFORM_MODEL     = 1 << 9,
     DISPLAY_MASK_GOG                = 1 << 10,
+    DISPLAY_MASK_CUSTOM_RENDERING   = 1 << 11,
     DISPLAY_MASK_ALL                = ~0
   };
 

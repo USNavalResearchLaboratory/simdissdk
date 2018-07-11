@@ -148,7 +148,8 @@ ViewerApp::~ViewerApp()
 void ViewerApp::init_(osg::ArgumentParser& args)
 {
   // Set up OSG features if supported
-  osg::DisplaySettings::instance()->setNumMultiSamples(4);
+  if (args.read("--multisample"))
+    osg::DisplaySettings::instance()->setNumMultiSamples(4);
 
   // First we need a map.
   osg::ref_ptr<osgEarth::Map> map = simExamples::createDefaultExampleMap();

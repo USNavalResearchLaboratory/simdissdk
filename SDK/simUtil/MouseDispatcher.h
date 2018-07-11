@@ -55,6 +55,9 @@ public:
   /** Changes the view manager and sets up the callbacks required for intercepting the mouse */
   void setViewManager(simVis::ViewManager* viewManager);
 
+  /** Retrieves a pointer to the dispatcher event handler. */
+  osgGA::GUIEventHandler* eventHandler() const;
+
   /** Lower weight number means the manipulator will be serviced before others with higher weight numbers. */
   void addManipulator(int weight, MouseManipulatorPtr manipulator);
   /**

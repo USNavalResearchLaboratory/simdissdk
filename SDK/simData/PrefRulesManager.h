@@ -114,6 +114,13 @@ public:
   virtual std::string serializeRules(const std::vector<PrefRule*>& rules) = 0;
 
   /**
+   * Serializes the rules of this preference rules manager into the given output stream
+   * @param os the given output stream
+   * @return 0 on total success, non-zero if there were any problems serializing the rules
+   */
+  virtual int serializeRules(std::ostream& os) = 0;
+
+  /**
    * Deserializes the rules passed in the istream
    * @param[in] rules  rules to deserialize
    * @return 0 on total success, non-zero if there were any problems loading rules. Note that non-zero return can still indicate partial success
@@ -182,6 +189,7 @@ class NullPrefRulesManager : public simData::PrefRulesManager
   virtual int loadRuleFiles(const std::vector<std::string>& , bool ) { return 1; }
   virtual int removeAllRules() { return 1; }
   virtual std::string serializeRules(const std::vector<simData::PrefRule*>& rules) { return ""; }
+  virtual int serializeRules(std::ostream& os) { return 1; }
   virtual int deserializeRules(std::istream& rules) { return 1; }
   virtual int addSerializedRule(std::vector<simData::PrefRule*>& rules, const std::string& serializedRule, int fileFormatVersion){ return 1; }
   virtual void listRules(std::vector<simData::PrefRule*>& prefRules) { }

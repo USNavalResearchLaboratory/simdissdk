@@ -236,7 +236,7 @@ public:
     defaultLaserPrefs_.CopyFrom(ds.defaultLaserPrefs_);
     defaultLobGroupPrefs_.CopyFrom(ds.defaultLobGroupPrefs_);
     defaultProjectorPrefs_.CopyFrom(ds.defaultProjectorPrefs_);
-
+    defaultCustomRenderingPrefs_.CopyFrom(ds.defaultCustomRenderingPrefs_);
     boundClock_ = ds.boundClock_;
   }
 
@@ -283,6 +283,7 @@ private: // data
   LaserPrefs defaultLaserPrefs_;
   LobGroupPrefs defaultLobGroupPrefs_;
   ProjectorPrefs defaultProjectorPrefs_;
+  CustomRenderingPrefs defaultCustomRenderingPrefs_;
   simCore::Clock* boundClock_;
 };
 
@@ -355,6 +356,7 @@ void MemoryDataStore::clear()
   deleteEntries_<Lasers>(&lasers_);
   deleteEntries_<Projectors>(&projectors_);
   deleteEntries_<LobGroups>(&lobGroups_);
+  deleteEntries_<CustomRenderings>(&customRenderings_);
   GenericDataMap::const_iterator it = genericData_.find(0);
   if (it != genericData_.end())
     delete it->second;
@@ -756,6 +758,16 @@ void MemoryDataStore::updateLobGroups_(double time)
   }
 }
 
+void MemoryDataStore::updateCustomRenderings_(double time)
+{
+  //for each entry
+  for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
+  {
+    // apply commands
+    iter->second->commands()->update(this, iter->first, time);
+  }
+}
+
 void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, FlushType flushType)
 {
   bool recursive = (flushType == RECURSIVE);
@@ -805,6 +817,9 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
   case PROJECTOR:
     flushEntityData(projectors_, flushId, categoryData_, genericData_);
     break;
+  case CUSTOM_RENDERING:
+    flushEntityData(customRenderings_, flushId, categoryData_, genericData_);
+    break;
   case ALL:
   case NONE:
     break;
@@ -845,6 +860,7 @@ void MemoryDataStore::setDefaultPrefs(const PlatformPrefs& platformPrefs, const 
   defaultLaserPrefs_.CopyFrom(laserPrefs);
   defaultLobGroupPrefs_.CopyFrom(lobPrefs);
   defaultProjectorPrefs_.CopyFrom(projectorPrefs);
+  defaultCustomRenderingPrefs_.CopyFrom(CustomRenderingPrefs());
 }
 
 void MemoryDataStore::setDefaultPrefs(const PlatformPrefs& platformPrefs)
@@ -957,6 +973,8 @@ void MemoryDataStore::flush(ObjectId flushId, FlushType flushType)
     GenericDataMap::const_iterator it = genericData_.find(0);
     if (it != genericData_.end())
       it->second->flush();
+    for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
+      flushEntity_(iter->first, simData::CUSTOM_RENDERING, RECURSIVE);
   }
   else
     flushEntity_(flushId, objType, flushType);
@@ -1002,6 +1020,9 @@ void MemoryDataStore::applyDataLimiting_(ObjectId id)
     break;
   case PROJECTOR:
     dataLimit_(projectors_, id, prefs);
+    break;
+  case CUSTOM_RENDERING:
+    dataLimit_(customRenderings_, id, prefs);
     break;
   case ALL:
   case NONE:
@@ -1067,6 +1088,14 @@ void MemoryDataStore::idList(IdList *ids, simData::ObjectType type) const
       ids->push_back(iter->first);
     }
   }
+
+  if (type & CUSTOM_RENDERING)
+  {
+    for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
+    {
+      ids->push_back(iter->first);
+    }
+  }
 }
 
 /// Retrieve a list of IDs for objects of 'type' with the given name
@@ -1119,6 +1148,8 @@ void MemoryDataStore::idListByOriginalId(IdList *ids, uint64_t originalId, simDa
     idsByOriginalId(projectors_, ids, originalId);
   if (type & LOB_GROUP)
     idsByOriginalId(lobGroups_, ids, originalId);
+  if (type & CUSTOM_RENDERING)
+    idsByOriginalId(customRenderings_, ids, originalId);
 }
 
 ///Retrieve a list of IDs for all beams associated with a platform
@@ -1196,6 +1227,18 @@ void MemoryDataStore::lobGroupIdListForHost(ObjectId hostid, IdList *ids) const
   }
 }
 
+///Retrieve a list of IDs for all customs associated with a platform
+void MemoryDataStore::customRenderingIdListForHost(ObjectId hostid, IdList *ids) const
+{
+  for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
+  {
+    if (iter->second->properties()->hostid() == hostid)
+    {
+      ids->push_back(iter->first);
+    }
+  }
+}
+
 ///Retrieves the ObjectType for a particular ID
 simData::ObjectType MemoryDataStore::objectType(ObjectId id) const
 {
@@ -1211,6 +1254,8 @@ simData::ObjectType MemoryDataStore::objectType(ObjectId id) const
     return simData::PROJECTOR;
   if (lobGroups_.find(id) != lobGroups_.end())
     return simData::LOB_GROUP;
+  if (customRenderings_.find(id) != customRenderings_.end())
+    return simData::CUSTOM_RENDERING;
   return simData::NONE;
 }
 
@@ -1235,6 +1280,8 @@ ObjectId MemoryDataStore::entityHostId(ObjectId childId) const
     return projectorProperties(childId, &t)->hostid();
   case simData::LOB_GROUP:
     return lobGroupProperties(childId, &t)->hostid();
+  case simData::CUSTOM_RENDERING:
+    return customRenderingProperties(childId, &t)->hostid();
   }
   return 0;
 }
@@ -1352,6 +1399,17 @@ LobGroupProperties* MemoryDataStore::addLobGroup(Transaction *transaction)
   return rv;
 }
 
+CustomRenderingProperties* MemoryDataStore::addCustomRendering(Transaction *transaction)
+{
+  simData::ObjectId id = genUniqueId_();
+  CustomRenderingProperties* rv = addEntry<CustomRenderingEntry,
+    CustomRenderingProperties,
+    NewEntryTransactionImpl<CustomRenderingEntry, CustomRenderingPrefs>,
+    ListenerList>(id, &customRenderings_, this, transaction, &listeners_, &defaultCustomRenderingPrefs_);
+  entityNameCache_->addEntity(defaultCustomRenderingPrefs_.commonprefs().name(), id, simData::CUSTOM_RENDERING);
+  return rv;
+}
+
 void MemoryDataStore::removeEntity(ObjectId id)
 {
   const simData::ObjectType ot = objectType(id);
@@ -1393,6 +1451,7 @@ void MemoryDataStore::removeEntity(ObjectId id)
     laserIdListForHost(id, &ids);
     projectorIdListForHost(id, &ids);
     lobGroupIdListForHost(id, &ids);
+    customRenderingIdListForHost(id, &ids);
 
     for (IdList::const_iterator i = ids.begin(); i != ids.end(); ++i)
       removeEntity(*i);
@@ -1426,6 +1485,9 @@ void MemoryDataStore::removeEntity(ObjectId id)
     return;
 
   if (deleteFromMap(lobGroups_, id))
+    return;
+
+  if (deleteFromMap(customRenderings_, id))
     return;
 }
 
@@ -1530,6 +1592,18 @@ const LobGroupProperties* MemoryDataStore::lobGroupProperties(ObjectId id, Trans
 LobGroupProperties* MemoryDataStore::mutable_lobGroupProperties(ObjectId id, Transaction *transaction)
 {
   LobGroupEntry *entry = getEntry<LobGroupEntry, LobGroups, NullTransactionImpl>(id, &lobGroups_, transaction);
+  return entry ? entry->mutable_properties() : NULL;
+}
+
+const CustomRenderingProperties* MemoryDataStore::customRenderingProperties(ObjectId id, Transaction *transaction) const
+{
+  const CustomRenderingEntry *entry = getEntry<const CustomRenderingEntry, CustomRenderings, NullTransactionImpl>(id, &customRenderings_, transaction);
+  return entry ? entry->properties() : NULL;
+}
+
+CustomRenderingProperties* MemoryDataStore::mutable_customRenderingProperties(ObjectId id, Transaction *transaction)
+{
+  CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings, NullTransactionImpl>(id, &customRenderings_, transaction);
   return entry ? entry->mutable_properties() : NULL;
 }
 
@@ -1665,6 +1739,27 @@ LobGroupPrefs* MemoryDataStore::mutable_lobGroupPrefs(ObjectId id, Transaction *
   return NULL;
 }
 
+const CustomRenderingPrefs* MemoryDataStore::customRenderingPrefs(ObjectId id, Transaction *transaction) const
+{
+  const CustomRenderingEntry *entry = getEntry<const CustomRenderingEntry, CustomRenderings, NullTransactionImpl>(id, &customRenderings_, transaction);
+  return entry ? entry->preferences() : NULL;
+}
+
+CustomRenderingPrefs* MemoryDataStore::mutable_customRenderingPrefs(ObjectId id, Transaction *transaction)
+{
+  assert(transaction);
+  CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
+  if (entry)
+  {
+    MutableSettingsTransactionImpl<CustomRenderingPrefs> *impl =
+      new MutableSettingsTransactionImpl<CustomRenderingPrefs>(entry->mutable_properties()->id(), entry->mutable_preferences(), this, &listeners_);
+    *transaction = Transaction(impl);
+    return impl->settings();
+  }
+
+  return NULL;
+}
+
 const CommonPrefs* MemoryDataStore::commonPrefs(ObjectId id, Transaction* transaction) const
 {
   const PlatformPrefs* plat = platformPrefs(id, transaction);
@@ -1685,6 +1780,10 @@ const CommonPrefs* MemoryDataStore::commonPrefs(ObjectId id, Transaction* transa
   const ProjectorPrefs* proj = projectorPrefs(id, transaction);
   if (proj != NULL)
     return &proj->commonprefs();
+  const CustomRenderingPrefs* custom = customRenderingPrefs(id, transaction);
+  if (custom != NULL)
+    return &custom->commonprefs();
+
   return NULL;
 }
 
@@ -1708,6 +1807,9 @@ CommonPrefs* MemoryDataStore::mutable_commonPrefs(ObjectId id, Transaction* tran
   ProjectorPrefs* proj = mutable_projectorPrefs(id, transaction);
   if (proj != NULL)
     return proj->mutable_commonprefs();
+  CustomRenderingPrefs* custom = mutable_customRenderingPrefs(id, transaction);
+  if (custom != NULL)
+    return custom->mutable_commonprefs();
   return NULL;
 }
 
@@ -1957,6 +2059,26 @@ LobGroupCommand *MemoryDataStore::addLobGroupCommand(ObjectId id, Transaction *t
   return command;
 }
 
+CustomRenderingCommand* MemoryDataStore::addCustomRenderingCommand(ObjectId id, Transaction *transaction)
+{
+  assert(transaction);
+
+  auto *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
+  if (!entry)
+  {
+    return NULL;
+  }
+
+  auto *command = new CustomRenderingCommand();
+
+  // Setup transaction
+  auto *slice = entry->commands();
+  // Note that Command doesn't change the time bounds for this data store
+  *transaction = Transaction(new NewUpdateTransactionImpl<CustomRenderingCommand, MemoryCommandSlice<CustomRenderingCommand, CustomRenderingPrefs> >(command, slice, this, id, false));
+
+  return command;
+}
+
 ///@return NULL if generic data for specified 'id' does not exist
 GenericData* MemoryDataStore::addGenericData(ObjectId id, Transaction *transaction)
 {
@@ -2071,6 +2193,12 @@ const LobGroupCommandSlice* MemoryDataStore::lobGroupCommandSlice(ObjectId id) c
   return entry ? entry->commands() : NULL;
 }
 
+const CustomRenderingCommandSlice* MemoryDataStore::customRenderingCommandSlice(ObjectId id) const
+{
+  CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
+  return entry ? entry->commands() : NULL;
+}
+
 const GenericDataSlice* MemoryDataStore::genericDataSlice(ObjectId id) const
 {
   return getEntry<GenericDataSlice, GenericDataMap>(id, &genericData_);
@@ -2091,6 +2219,27 @@ int MemoryDataStore::modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<
     if (entry == NULL)
       return 1;
     PlatformCommandSlice* commands = entry->commands();
+    commands->modify(modifier);
+    hasChanged_ = true;
+    break;
+  }
+  default:
+    break;
+  }
+
+  return 1;
+}
+
+int MemoryDataStore::modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier)
+{
+  switch (objectType(id))
+  {
+  case simData::CUSTOM_RENDERING:
+  {
+    CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
+    if (entry == NULL)
+      return 1;
+    CustomRenderingCommandSlice* commands = entry->commands();
     commands->modify(modifier);
     hasChanged_ = true;
     break;

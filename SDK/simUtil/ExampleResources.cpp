@@ -308,8 +308,20 @@ void simExamples::configureSearchPaths()
     ""  // Placeholder last item
   };
 
-  std::string basePath = getSampleDataPath();
-  std::string modelPath = basePath + PATH_SEP + "models";
+  const std::string& basePath = getSampleDataPath();
+  const std::string modelPath = basePath + PATH_SEP + "models";
+
+#ifndef WIN32
+  {
+    // On Linux, add a search path for libraries relative to executable path (installDir/bin)
+    osgDB::FilePathList libPaths = osgDB::getLibraryFilePathList();
+    // ../lib/amd64-linux is used by SIMDIS applications distributed by NRL
+    libPaths.push_back("../lib/amd64-linux");
+    // SDK examples from an SDK build need ../lib in the libpath
+    libPaths.push_back("../lib");
+    osgDB::setLibraryFilePathList(libPaths);
+  }
+#endif
 
   simVis::Registry* simVisRegistry = simVis::Registry::instance();
   simVis::FilePathList pathList;
@@ -391,21 +403,12 @@ void simExamples::configureSearchPaths()
 
   osgEarth::Registry::instance()->setDefaultFont(simVisRegistry->getOrCreateFont("arial.ttf"));
 
-#ifndef WIN32
-  // On Linux, add a search path for libraries relative to executable path
-  osgDB::FilePathList libPaths = osgDB::getLibraryFilePathList();
-  // lib/amd64-linux is used by SIMDIS applications distributed by NRL; lib is used by SDK build defaults
-  libPaths.push_back("../lib/amd64-linux");
-  libPaths.push_back("../lib");
-  osgDB::setLibraryFilePathList(libPaths);
-#endif
-
   // Configure OSG to search for the right GL version.  By default, GL3 builds use "1.0" as the version,
   // which creates a compatibility context at the highest level.  That creates problems with GL core
   // profile on some drivers and cards that do not support compatibility mode.  As a result, we end up
   // getting a GL 1.4 context that only support GLSL 1.2.
 #ifdef OSG_GL3_AVAILABLE
-  osg::DisplaySettings* instance = osg::DisplaySettings::instance();
+  osg::DisplaySettings* instance = osg::DisplaySettings::instance().get();
   if (instance->getGLContextVersion() == "1.0")
     instance->setGLContextVersion("3.3");
 #ifdef __linux__

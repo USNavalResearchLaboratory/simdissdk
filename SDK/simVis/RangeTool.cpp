@@ -22,13 +22,12 @@
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osgText/Text"
 #include "osgEarth/DepthOffset"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/StateSetCache"
-#include "simVis/LineDrawable.h"
+#include "osgEarthAnnotation/LabelNode"
 #include "osgEarthUtil/Controls"
 
 #include "simCore/Calc/Angle.h"
@@ -38,18 +37,19 @@
 #include "simCore/EM/Decibel.h"
 #include "simCore/Time/TimeClass.h"
 
+#include "simVis/AlphaTest.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/Platform.h"
 #include "simVis/Beam.h"
 #include "simVis/Antenna.h"
+#include "simVis/LineDrawable.h"
 #include "simVis/LobGroup.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 #include "simVis/RFProp/RFPropagationManager.h"
-#include "simVis/Text.h"
 
 #include "simVis/RangeTool.h"
 
@@ -59,6 +59,8 @@ using namespace osgEarth::Symbology;
 
 /// Minimum depth bias for offsetting in meters
 const int DEPTH_BUFFER_MIN_BIAS = 5000;
+/** Reject pixels with an alpha equal or less than this value.  Useful for blending text correctly against SilverLining. */
+static const float ALPHA_THRESHOLD = 0.05f;
 
 namespace
 {
@@ -461,28 +463,21 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   s->setMode(GL_CULL_FACE, 0);
   s->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
   geode_->setName("Line");
-  LineDrawable::installShader(s);
 
-
-  labels_ = new osg::Geode();
+  labels_ = new osg::Group();
   s = labels_->getOrCreateStateSet();
   simVis::setLighting(s, 0);
   s->setMode(GL_BLEND, 1);
   s->setMode(GL_CULL_FACE, 0);
   s->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
   labels_->setName("Graphics");
-
-  // group exists solely to house the horizon culler, since cull callbacks do not
-  // work on a Geode. -gw
-  osg::Group* labelsContainer = new osg::Group();
-  labelsContainer->addChild(labels_);
   osgEarth::HorizonCullCallback* horizonCull = new osgEarth::HorizonCullCallback();
   horizonCull->setCullByCenterPointOnly(true);
-  labelsContainer->setCullCallback(horizonCull);
+  labels_->setCullCallback(horizonCull);
 
   xform_ = new osg::MatrixTransform();
   xform_->addChild(geode_);
-  xform_->addChild(labelsContainer);
+  xform_->addChild(labels_);
   xform_->setName("Range Tool Association");
   // enable flattening on the graphics, but not on the label node
   OverheadMode::enableGeometryFlattening(true, geode_);
@@ -570,7 +565,7 @@ bool RangeTool::Association::update(const ScenarioManager& scenario, const simCo
 
 void RangeTool::Association::setDirty()
 {
-  this->labels_->removeDrawables(0, labels_->getNumDrawables()); // Clear existing labels to force a refresh to update colors if needed
+  labels_->removeChildren(0, labels_->getNumChildren()); // Clear existing labels to force a refresh to update colors if needed
   osgEarth::DirtyNotifier::setDirty();
 }
 
@@ -605,7 +600,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   // If one of the entities is not valid at this time or the association is not visible; remove labels and return (graphics were removed above)
   if ((rv != 0) || !visible_)
   {
-    labels_->removeDrawables(0, labels_->getNumDrawables());
+    labels_->removeChildren(0, labels_->getNumChildren());
     for (CalculationVector::iterator c = calculations_.begin(); c != calculations_.end(); ++c)
       (*c)->setValid(false);
     return;
@@ -720,7 +715,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
   // finally, assemble the labels.
   unsigned int labelCount = 0;
-  unsigned int originalLabelCount = labels_->getNumDrawables();
+  unsigned int originalLabelCount = labels_->getNumChildren();
   for (Labels::const_iterator i = labels.begin(); i != labels.end(); ++i)
   {
     osg::Vec3                pos         = i->first;
@@ -782,38 +777,58 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
     if (textOptions.showText_ == TextOptions::NONE)
       continue;
 
-    simVis::Text* text = NULL;
-    if (labelCount >= labels_->getNumDrawables())
+    osgEarth::Annotation::LabelNode* text = NULL;
+    if (labelCount >= labels_->getNumChildren())
     {
-      text = new simVis::Text();
-      text->setAutoRotateToScreen(true);
-      text->setCharacterSizeMode(osgText::Text::SCREEN_COORDS);
-      text->setAlignment(osgText::Text::CENTER_CENTER);
-      text->setFont(simVis::Registry::instance()->getOrCreateFont(textOptions.font_));
-      text->setCharacterSize(textOptions.fontSize_);
-      text->setColor(textOptions.color_);
-      text->setBackdropType(text->OUTLINE);
-      text->setBackdropColor(textOptions.outlineColor_);
-      text->setScreenOffset(textOptions.xOffset_, textOptions.yOffset_);
-      switch (textOptions.outlineType_)
+      osgEarth::Symbology::Style style;
+      osgEarth::Symbology::TextSymbol* ts = style.getOrCreate<osgEarth::Symbology::TextSymbol>();
+      ts->alignment() = osgEarth::Symbology::TextSymbol::ALIGN_CENTER_CENTER;
+      ts->pixelOffset() = osg::Vec2s(textOptions.xOffset_, textOptions.yOffset_);
+      // Font color
+      ts->fill() = osgEarth::Symbology::Fill(textOptions.color_.r(), textOptions.color_.g(), textOptions.color_.b(), textOptions.color_.a());
+      // Outline
+      if (textOptions.outlineType_ != TextOptions::OUTLINE_NONE &&  textOptions.outlineColor_.a() != 0)
       {
-      case TextOptions::OUTLINE_NONE: text->setBackdropOffset(simVis::outlineThickness(simData::TO_NONE));
-        break;
-      case TextOptions::OUTLINE_THIN: text->setBackdropOffset(simVis::outlineThickness(simData::TO_THIN));
-        break;
-      case TextOptions::OUTLINE_THICK: text->setBackdropOffset(simVis::outlineThickness(simData::TO_THICK));
-        break;
+        ts->halo()->color() = textOptions.outlineColor_;
+        ts->haloOffset() = simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_));
+        ts->halo()->width() = simVis::outlineThickness(static_cast<simData::TextOutline>(textOptions.outlineType_));
+        ts->haloBackdropType() = osgText::Text::OUTLINE;
       }
-      text->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS), 1);
-      text->getOrCreateStateSet()->setRenderBinDetails(BIN_LABEL, BIN_GLOBAL_SIMSDK);
-      labels_->addDrawable(text);
+      else
+      {
+        ts->halo()->color() = osg::Vec4();
+        ts->haloOffset() = 0.f;
+        ts->haloBackdropType() = osgText::Text::NONE;
+      }
+      // Font
+      if (!textOptions.font_.empty())
+      {
+        std::string fileFullPath = simVis::Registry::instance()->findFontFile(textOptions.font_);
+        if (!fileFullPath.empty()) // only set if font file found, uses default OS font otherwise
+          ts->font() = fileFullPath;
+      }
+      ts->size() = textOptions.fontSize_;
+
+      text = new osgEarth::Annotation::LabelNode("", style);
+      text->setDynamic(true);
+      text->setNodeMask(simVis::DISPLAY_MASK_LABEL);
+      text->setHorizonCulling(false);
+      text->setOcclusionCulling(false);
+
+      // Set various states in order to make rendering text look better against SilverLining
+      osg::StateSet* stateSet = text->getOrCreateStateSet();
+
+      // Always write to the depth buffer, overriding the osgEarth internal settings
+      stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+      AlphaTest::setValues(stateSet, ALPHA_THRESHOLD, osg::StateAttribute::ON);
+      labels_->addChild(text);
     }
     else
-      text = static_cast<simVis::Text*>(labels_->getDrawable(labelCount));
+      text = static_cast<osgEarth::Annotation::LabelNode*>(labels_->getChild(labelCount));
 
     labelCount++;
 
-    text->setPosition(pos);
+    text->getPositionAttitudeTransform()->setPosition(pos);
     text->setText(buf.str());
   }
 
@@ -821,7 +836,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   if (labelCount != originalLabelCount)
   {
     if (labelCount < originalLabelCount)
-      labels_->removeDrawables(labelCount, originalLabelCount - labelCount);
+      labels_->removeChildren(labelCount, originalLabelCount - labelCount);
     osgEarth::Registry::shaderGenerator().run(labels_, osgEarth::Registry::stateSetCache());
   }
 }

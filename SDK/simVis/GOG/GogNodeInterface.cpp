@@ -1018,8 +1018,9 @@ void GogNodeInterface::setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometr
   if (getAltitudeMode(currentMode) == 0 && currentMode == ALTITUDE_GROUND_RELATIVE)
   {
     // toggle altitude mode to get the altitude offset to apply. Due to the way osgEarth LocalGeometryNode works, it won't update the altitude offset otherwise.
-    setAltitudeMode(ALTITUDE_NONE);
-    setAltitudeMode(ALTITUDE_GROUND_RELATIVE);
+    // make sure to call the base class version of setAltitudeMode()
+    GogNodeInterface::setAltitudeMode(ALTITUDE_NONE);
+    GogNodeInterface::setAltitudeMode(ALTITUDE_GROUND_RELATIVE);
   }
 }
 
@@ -1606,13 +1607,16 @@ CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::An
     topCapNode_(topCapNode),
     bottomCapNode_(bottomCapNode),
     height_(0.0),
-    altitude_(0.0)
+    altitude_(0.0),
+    altOffset_(0.0),
+    position_(NULL)
 {
+  position_ = new osgEarth::GeoPoint(bottomCapNode_->getPosition());
   // height is from the side node's extrusion height, altitude is from side node's altitude
   if (sideNode_.valid() && sideNode_->getStyle().has<osgEarth::Annotation::ExtrusionSymbol>())
   {
-    height_ = sideNode_->getStyle().getSymbol<osgEarth::Annotation::ExtrusionSymbol>()->height().value();
-    altitude_ = sideNode_->getPosition().alt();
+      height_ = sideNode_->getStyle().getSymbol<osgEarth::Annotation::ExtrusionSymbol>()->height().value();
+      altitude_ = sideNode_->getPosition().alt();
   }
 
   if (topCapNode_.valid())
@@ -1625,6 +1629,12 @@ CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::An
 
   initializeFillColor_();
   initializeLineColor_();
+}
+
+CylinderNodeInterface::~CylinderNodeInterface()
+{
+  delete position_;
+  position_ = NULL;
 }
 
 int CylinderNodeInterface::getAltOffset(double& altOffset) const
@@ -1646,33 +1656,115 @@ void CylinderNodeInterface::setAltOffset(double altOffsetMeters)
 {
   metaData_.setExplicitly(GOG_THREE_D_OFFSET_ALT_SET);
 
+  // cache the altitude offset
+  altOffset_ = altOffsetMeters;
+
+  // don't update the offset if we are clamped to ground
+  AltitudeMode altMode = ALTITUDE_NONE;
+  getAltitudeMode(altMode);
+  if (altMode == ALTITUDE_GROUND_CLAMPED)
+    return;
+
+  // apply offset to all 3 nodes
+  setAltOffset_(altOffset_);
+}
+
+void CylinderNodeInterface::setAltOffset_(double altOffsetMeters)
+{
   setLocalNodeAltOffset_(sideNode_.get(), altOffsetMeters);
   setLocalNodeAltOffset_(topCapNode_.get(), altOffsetMeters + height_);
   setLocalNodeAltOffset_(bottomCapNode_.get(), altOffsetMeters);
 }
 
+void CylinderNodeInterface::setPosition_(osgEarth::GeoPoint& position, bool groundClamped)
+{
+  if (!sideNode_.valid())
+    return;
+  double newAltitude = (groundClamped ? 0.0 : altitude_);
+  position.alt() = newAltitude;
+  sideNode_->setPosition(position);
+  if (bottomCapNode_.valid())
+    bottomCapNode_->setPosition(position);
+  if (topCapNode_.valid())
+    topCapNode_->setPosition(position);
+}
+
 void CylinderNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  // position_ is required for updating altitude mode
+  assert(position_ != NULL);
   // cylinder doesn't support extrusion
   if (altMode == ALTITUDE_EXTRUDE)
     return;
+
+  // determine if clamping to ground, since that requires special processing
+  bool groundClamping = (altMode == ALTITUDE_GROUND_CLAMPED);
+
+  // don't kick out early if no change to altitude mode, since any change to the geometry may require a re-application of the current altitude mode
+
+  // update the altitude offset to 0 if ground clamped, or restore cached altitude offset otherwise
+  setAltOffset_(groundClamping ? 0.0 : altOffset_);
+
+  // always toggle altitude mode to NONE before any changes, required to clear out any vertex offsets that may have been introduced by clamping.
+  // osgEarth::LocalGeometryNode doesn't properly support changes to altitude mode when clamping per vertex. Relative clamping applies vertex offsets
+  // that only get cleared out if clamping is removed. Otherwise, the vertex offsets accumulate. Because the cylinder side node is always clamped relative
+  // to prevent the extrusion from being flattened, there will always be vertex offsets on the side node when the shape is ground clamped or relative.
+  if (altMode != ALTITUDE_NONE)
+  {
+    // set altitude mode to NONE, which clears out vertex offsets
+    GogNodeInterface::setAltitudeMode(ALTITUDE_NONE);
+    // set original position, which applies clamping changes and updates vertices properly
+    setPosition_(*position_, groundClamping);
+  }
+
   // call to setAltitudeMode will not initiate a redraw, so call before setPosition, which will
   GogNodeInterface::setAltitudeMode(altMode);
-  if (sideNode_.valid())
-  {
-    double newAltitude = (altMode == ALTITUDE_GROUND_CLAMPED) ? 0.0 : altitude_;
-    osgEarth::GeoPoint newPos = sideNode_->getPosition();
-    newPos.alt() = newAltitude;
-    sideNode_->setPosition(newPos);
-    if (bottomCapNode_.valid())
-      bottomCapNode_->setPosition(newPos);
-    if (topCapNode_.valid())
-    {
-      if (altMode == ALTITUDE_GROUND_CLAMPED)
-        newPos.alt() = height_;
-      topCapNode_->setPosition(newPos);
-    }
-  }
+  setPosition_(*position_, groundClamping);
+
+}
+
+void CylinderNodeInterface::setFilledState(bool state)
+{
+  GogNodeInterface::setFilledState(state);
+  reclamp_();
+}
+
+void CylinderNodeInterface::setFillColor(const osg::Vec4f& color)
+{
+  GogNodeInterface::setFillColor(color);
+  reclamp_();
+}
+
+void CylinderNodeInterface::setLineColor(const osg::Vec4f& color)
+{
+  GogNodeInterface::setLineColor(color);
+  reclamp_();
+}
+
+void CylinderNodeInterface::setLineStyle(Utils::LineStyle style)
+{
+  GogNodeInterface::setLineStyle(style);
+  reclamp_();
+}
+
+void CylinderNodeInterface::setLineWidth(int lineWidth)
+{
+  GogNodeInterface::setLineWidth(lineWidth);
+  reclamp_();
+}
+
+void CylinderNodeInterface::setOutlineState(bool outlineState)
+{
+  GogNodeInterface::setOutlineState(outlineState);
+  reclamp_();
+}
+
+void CylinderNodeInterface::reclamp_()
+{
+  // initialize altMode in case getAltitudeMode fails
+  AltitudeMode altMode = ALTITUDE_NONE;
+  getAltitudeMode(altMode);
+  setAltitudeMode(altMode);
 }
 
 void CylinderNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
@@ -1710,12 +1802,17 @@ void CylinderNodeInterface::setStyle_(const osgEarth::Symbology::Style& style)
   osgEarth::Symbology::AltitudeSymbol* alt = sideStyle.getSymbol<osgEarth::Symbology::AltitudeSymbol>();
   if (alt && alt->clamping() == osgEarth::Symbology::AltitudeSymbol::CLAMP_TO_TERRAIN)
     alt->clamping() = osgEarth::Symbology::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN;
-
   sideNode_->setStyle(sideStyle);
+
+  // format style for the top node
+  osgEarth::Symbology::Style topStyle = style_;
+  osgEarth::Symbology::AltitudeSymbol* topAlt = topStyle.getSymbol<osgEarth::Symbology::AltitudeSymbol>();
+  if (topAlt && topAlt->clamping() == osgEarth::Symbology::AltitudeSymbol::CLAMP_TO_TERRAIN)
+    topAlt->clamping() = osgEarth::Symbology::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN;
 
   // can't have an extrusion symbol for the cap node
   style_.remove<osgEarth::Symbology::ExtrusionSymbol>();
-  topCapNode_->setStyle(style_);
+  topCapNode_->setStyle(topStyle);
   bottomCapNode_->setStyle(style_);
 }
 
