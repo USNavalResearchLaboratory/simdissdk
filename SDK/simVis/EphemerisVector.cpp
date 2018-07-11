@@ -124,6 +124,7 @@ void EphemerisVector::setModelNode(const PlatformModelNode* hostPlatformModel)
 osg::Node* EphemerisVector::createVector_(const simVis::Color& color, float lineWidth) const
 {
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  geom->setDataVariance(osg::Object::DYNAMIC);
   geom->setName("simVis::EphemerisVector");
   geom->allocate(NUM_LINE_VERTICES);
   for (unsigned int k = 0; k < NUM_LINE_VERTICES; ++k)
