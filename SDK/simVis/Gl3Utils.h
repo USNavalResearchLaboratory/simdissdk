@@ -26,6 +26,7 @@
 #include "osg/GLExtensions"
 #include "osg/GraphicsContext"
 #include "osg/Light"
+#include "osg/Point"
 #include "osg/OperationThread"
 #include "simNotify/Notify.h"
 
@@ -57,6 +58,7 @@ inline void applyCoreProfileValidity(osg::GraphicsContext* graphicsContext)
   {
     state->setModeValidity(GL_LIGHTING, false);
     state->setModeValidity(GL_RESCALE_NORMAL, false);
+    state->setModeValidity(GL_POINT_SMOOTH, false);
   }
 }
 
