@@ -126,7 +126,7 @@ void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& desti
       double labelLon = 0;
       osgEarth::GeoMath::midpoint(originLLA.lat(), originLLA.lon(),
         destinationLLA.lat(), destinationLLA.lon(), labelLat, labelLon);
-      label_->setPosition(osgEarth::GeoPoint(wgs84Srs_.get(), labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG));
+      label_->setPosition(osgEarth::GeoPoint(wgs84Srs_.get(), labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG, (originLLA.alt() + destinationLLA.alt()) / 2.0));
       label_->setText(labelString);
       label_->setNodeMask(displayMask_);
     }
@@ -328,25 +328,25 @@ bool PlatformPosition::operator!=(const Position& other) const
 
 ///////////////////////////////////////////////////////////////////////
 
-/** Position based off a custom rendering's location */
-CustomRenderingPosition::CustomRenderingPosition(simVis::CustomRenderingNode* node)
+/** Position based off a node's locator LLA coordinate location */
+EntityNodePosition::EntityNodePosition(simVis::EntityNode* node)
   : node_(node)
 {
 }
 
-CustomRenderingPosition::~CustomRenderingPosition()
+EntityNodePosition::~EntityNodePosition()
 {
 }
 
-bool CustomRenderingPosition::isValid() const
+bool EntityNodePosition::isValid() const
 {
   if (node_ == NULL)
     return false;
 
-  return node_->customActive();
+  return node_->getNodeMask() != 0;
 }
 
-const simCore::Vec3& CustomRenderingPosition::lla() const
+const simCore::Vec3& EntityNodePosition::lla() const
 {
   if (node_ != NULL)
     node_->getPosition(&lla_, simCore::COORD_SYS_LLA);
@@ -354,7 +354,7 @@ const simCore::Vec3& CustomRenderingPosition::lla() const
   return lla_;
 }
 
-simData::ObjectId CustomRenderingPosition::customRenderingId() const
+simData::ObjectId EntityNodePosition::id() const
 {
   if (node_ == NULL)
     return 0;
@@ -362,13 +362,13 @@ simData::ObjectId CustomRenderingPosition::customRenderingId() const
   return node_->getId();
 }
 
-bool CustomRenderingPosition::operator==(const Position& other) const
+bool EntityNodePosition::operator==(const Position& other) const
 {
-  const CustomRenderingPosition* pp = dynamic_cast<const CustomRenderingPosition*>(&other);
-  return (pp != NULL && (pp->customRenderingId() == this->customRenderingId()));
+  const EntityNodePosition* pp = dynamic_cast<const EntityNodePosition*>(&other);
+  return (pp != NULL && (pp->id() == this->id()));
 }
 
-bool CustomRenderingPosition::operator!=(const Position& other) const
+bool EntityNodePosition::operator!=(const Position& other) const
 {
   return !operator==(other);
 }

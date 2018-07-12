@@ -41,7 +41,7 @@ namespace osgEarth {
 namespace simData { class DataStore; }
 namespace simVis {
   class AnimatedLineNode;
-  class CustomRenderingNode;
+  class EntityNode;
 }
 
 namespace simUtil {
@@ -244,11 +244,11 @@ private:
   mutable simCore::Vec3 lla_;
 };
 
-/** Position based off a custom rendering's LLA coordinate location. */
-class SDKUTIL_EXPORT CustomRenderingPosition : public Position
+/** Position based off a node's locator LLA coordinate location. */
+class SDKUTIL_EXPORT EntityNodePosition : public Position
 {
 public:
-  explicit CustomRenderingPosition(simVis::CustomRenderingNode* node);
+  explicit EntityNodePosition(simVis::EntityNode* node);
 
   virtual bool isValid() const;
   virtual const simCore::Vec3& lla() const;
@@ -256,17 +256,17 @@ public:
   virtual bool operator!=(const Position& other) const;
 
   /**
-  * Returns the Unique ID of the custom rendering
-  * @return The Unique ID of the custom rendering
+  * Returns the Unique ID of the node
+  * @return The Unique ID of the node
   */
-  simData::ObjectId customRenderingId() const;
+  simData::ObjectId id() const;
 
 protected:
   /** Reference-derived */
-  virtual ~CustomRenderingPosition();
+  virtual ~EntityNodePosition();
 
 private:
-  osg::ref_ptr<simVis::CustomRenderingNode> node_;
+  osg::ref_ptr<simVis::EntityNode> node_;
   /** Cache of the LLA from the data store. */
   mutable simCore::Vec3 lla_;
 };
