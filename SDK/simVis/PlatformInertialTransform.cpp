@@ -19,6 +19,7 @@
 * disclose, or release this software.
 *
 */
+#include "osg/Version"
 #include "osgUtil/CullVisitor"
 #include "simNotify/Notify.h"
 #include "simVis/Locator.h"
@@ -48,6 +49,9 @@ PlatformInertialTransform::PlatformInertialTransform(const PlatformInertialTrans
 
 bool PlatformInertialTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
 {
+  // Pre-3.6, there's no access to the MV stack.  As a result, billboard image icons
+  // may not correctly deal with inertial angles.
+#if OSG_MIN_VERSION_REQUIRED(3,6,0)
   // Do not perform any recalculation if visitor is not a cull visitor, if there
   // are no children nodes, or if there aren't the anticipated number of matrices
   // in the model view stack
@@ -63,6 +67,7 @@ bool PlatformInertialTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, o
   stack.pop_back();
   // Use the scaled matrix here, but un-rotate the icon to get to inertial angles
   matrix = *stack.back();
+#endif
   matrix.preMultRotate(entityRotationInverse_);
   return true;
 }
