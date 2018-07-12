@@ -228,6 +228,7 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   geom_ = new osgEarth::LineDrawable(GL_LINES);
   geom_->setName("simVis::GateCentroid");
   geom_->setColor(simVis::Color::White);
+  geom_->setDataVariance(osg::Object::DYNAMIC);
   geom_->allocate(6);
   geom_->dirty();
 

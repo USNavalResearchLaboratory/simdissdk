@@ -383,6 +383,7 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
     dropVertsDrawable_ = new osgEarth::LineDrawable(GL_LINES);
     dropVertsDrawable_->setColor(simVis::Color::White);
     dropVertsDrawable_->allocate(2);
+    dropVertsDrawable_->setDataVariance(osg::Object::DYNAMIC);
     dropVertsDrawable_->dirty();
 
     altModeXform_ = new osg::MatrixTransform();

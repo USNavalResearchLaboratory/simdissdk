@@ -28,7 +28,6 @@
 
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
-#include "simVis/LineDrawable.h"
 #include "osgEarthSymbology/Color"
 
 #include "simCore/Calc/Math.h"
