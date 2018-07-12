@@ -19,6 +19,7 @@
 * disclose, or release this software.
 *
 */
+#include "osgUtil/CullVisitor"
 #include "simNotify/Notify.h"
 #include "simVis/Locator.h"
 #include "simVis/Utils.h"
@@ -30,13 +31,16 @@ namespace simVis
 PlatformInertialTransform::PlatformInertialTransform()
   : Transform()
 {
+  // Because the matrix changes based on other input, this must be marked
+  // dynamic to avoid being marked as redundant by an optimizer pass.
+  setDataVariance(osg::Object::DYNAMIC);
   setName("PlatformInertialTransform");
   callback_ = new SyncLocatorCallback<PlatformInertialTransform>(this);
 }
 
 PlatformInertialTransform::PlatformInertialTransform(const PlatformInertialTransform& rhs, const osg::CopyOp& copyop)
   : Transform(rhs, copyop),
-    rotation_(rhs.rotation_),
+    entityRotationInverse_(rhs.entityRotationInverse_),
     locator_(rhs.locator_),
     callback_(static_cast<LocatorCallback*>(copyop(rhs.callback_.get())))
 {
@@ -44,14 +48,30 @@ PlatformInertialTransform::PlatformInertialTransform(const PlatformInertialTrans
 
 bool PlatformInertialTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
 {
-  matrix.preMultRotate(rotation_);
+  // Do not perform any recalculation if visitor is not a cull visitor, if there
+  // are no children nodes, or if there aren't the anticipated number of matrices
+  // in the model view stack
+  osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+  if (!cv || getNumChildren() == 0 || cv->getModelViewStack().size() < 2)
+  {
+    matrix.preMultRotate(entityRotationInverse_);
+    return true;
+  }
+
+  // Drop off the last matrix which came from the simVis::BillboardAutoTransform
+  osg::CullStack::MatrixStack stack = cv->getModelViewStack();
+  stack.pop_back();
+  // Use the scaled matrix here, but un-rotate the icon to get to inertial angles
+  matrix = *stack.back();
+  matrix.preMultRotate(entityRotationInverse_);
   return true;
 }
 
 bool PlatformInertialTransform::computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
 {
-  matrix.postMultRotate(rotationInverse_);
-  return true;
+  // Not supported; not required in the use case of setting up inertial axis at this time,
+  // and implementation could be expensive.
+  return false;
 }
 
 void PlatformInertialTransform::childInserted(unsigned int pos)
@@ -90,12 +110,7 @@ void PlatformInertialTransform::syncWithLocator()
   {
     // Reverse the rotation relative to the host platform's locator
     const osg::Quat& q = simVis::Math::eulerRadToQuat(llaOri.yaw(), llaOri.pitch(), llaOri.roll());
-    if (q != rotationInverse_)
-    {
-      // We only really care about the inverse of the angle, but we're storing both for efficiency
-      rotation_ = q.inverse();
-      rotationInverse_ = q;
-    }
+    entityRotationInverse_ = q.inverse();
   }
 }
 
