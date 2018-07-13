@@ -199,25 +199,6 @@ const std::string CustomRenderingNode::getEntityName(EntityNode::NameType nameTy
   return getEntityName_(lastPrefs_.commonprefs(), nameType, allowBlankAlias);
 }
 
-std::string CustomRenderingNode::getEntityName_(const simData::CommonPrefs& common, EntityNode::NameType nameType, bool allowBlankAlias) const
-{
-  switch (nameType)
-  {
-  case EntityNode::REAL_NAME:
-    return common.name();
-  case EntityNode::ALIAS_NAME:
-    return common.alias();
-  case EntityNode::DISPLAY_NAME:
-    if (common.usealias())
-    {
-      if (!common.alias().empty() || allowBlankAlias)
-        return common.alias();
-    }
-    return common.name();
-  }
-  return "";
-}
-
 bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
 {
   if (updateCallback_ == NULL)

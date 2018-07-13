@@ -379,7 +379,7 @@ void GateNode::updateLabel_(const simData::GatePrefs& prefs)
 {
   if (hasLastUpdate_)
   {
-    std::string label = getEntityName(EntityNode::DISPLAY_NAME);
+    std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
     if (prefs.commonprefs().labelprefs().namelength() > 0)
       label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
@@ -484,21 +484,8 @@ const std::string GateNode::getEntityName(EntityNode::NameType nameType, bool al
 {
   // if assert fails, check whether prefs are initialized correctly when entity is created
   assert(hasLastPrefs_);
-  switch (nameType)
-  {
-  case EntityNode::REAL_NAME:
-    return lastPrefsApplied_.commonprefs().name();
-  case EntityNode::ALIAS_NAME:
-    return lastPrefsApplied_.commonprefs().alias();
-  case EntityNode::DISPLAY_NAME:
-    if (lastPrefsApplied_.commonprefs().usealias())
-    {
-      if (!lastPrefsApplied_.commonprefs().alias().empty() || allowBlankAlias)
-        return lastPrefsApplied_.commonprefs().alias();
-    }
-    return lastPrefsApplied_.commonprefs().name();
-  }
-  return "";
+  return getEntityName_(lastPrefsApplied_.commonprefs(), nameType, allowBlankAlias);
+
 }
 
 bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
