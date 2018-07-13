@@ -148,7 +148,7 @@ namespace simVis
     * @param nameType  enum option to always return real/alias name or name based on
     *            the commonprefs usealias flag.
     * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
-    * @return    actual/alias entity name string
+    * @return actual/alias entity name string
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
@@ -226,6 +226,17 @@ namespace simVis
     * @param prefs the custom preferences to update
     */
     void updateLabel_(const simData::CustomRenderingPrefs& prefs);
+
+    /**
+    * Returns the entity name. Can be used to get the actual name always or the
+    * actual/alias depending on the commonprefs.usealias flag.
+    * @param common The preference that contain the name and alias
+    * @param nameType  enum option to always return real/alias name or name based on
+    *            the commonprefs usealias flag.
+    * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
+    * @return actual/alias entity name string
+    */
+    std::string getEntityName_(const simData::CommonPrefs& common, EntityNode::NameType nameType, bool allowBlankAlias) const;
 
     osg::observer_ptr<const ScenarioManager> scenario_;
     osg::observer_ptr<const EntityNode> host_;

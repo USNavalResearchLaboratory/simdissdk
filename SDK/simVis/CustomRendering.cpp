@@ -87,7 +87,7 @@ CustomRenderingNode::~CustomRenderingNode()
 
 void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& prefs)
 {
-  std::string label = getEntityName(EntityNode::DISPLAY_NAME);
+  std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
   if (prefs.commonprefs().labelprefs().namelength() > 0)
     label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
@@ -151,11 +151,24 @@ std::string CustomRenderingNode::legendText() const
 
 void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
 {
+  const bool prefsDraw = prefs.commonprefs().datadraw() && prefs.commonprefs().draw();
+  setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_CUSTOM_RENDERING : simVis::DISPLAY_MASK_NONE);
+
+  if (prefsDraw)
+    updateLabel_(prefs);
+
   // validate localgrid prefs changes that might provide user notifications
-  localGrid_->validatePrefs(prefs.commonprefs().localgrid());
+  if (localGrid_.valid())
+  {
+    localGrid_->validatePrefs(prefs.commonprefs().localgrid());
+
+    // update the local grid, only if platform drawn
+    if (prefsDraw)
+      localGrid_->setPrefs(prefs.commonprefs().localgrid());
+  }
+
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
-  updateLabel_(prefs);
 }
 
 bool CustomRenderingNode::isActive() const
@@ -183,19 +196,24 @@ const std::string CustomRenderingNode::getEntityName(EntityNode::NameType nameTy
 {
   // if assert fails, check whether prefs are initialized correctly when entity is created
   assert(hasLastPrefs_);
+  return getEntityName_(lastPrefs_.commonprefs(), nameType, allowBlankAlias);
+}
+
+std::string CustomRenderingNode::getEntityName_(const simData::CommonPrefs& common, EntityNode::NameType nameType, bool allowBlankAlias) const
+{
   switch (nameType)
   {
   case EntityNode::REAL_NAME:
-    return lastPrefs_.commonprefs().name();
+    return common.name();
   case EntityNode::ALIAS_NAME:
-    return lastPrefs_.commonprefs().alias();
+    return common.alias();
   case EntityNode::DISPLAY_NAME:
-    if (lastPrefs_.commonprefs().usealias())
+    if (common.usealias())
     {
-      if (!lastPrefs_.commonprefs().alias().empty() || allowBlankAlias)
-        return lastPrefs_.commonprefs().alias();
+      if (!common.alias().empty() || allowBlankAlias)
+        return common.alias();
     }
-    return lastPrefs_.commonprefs().name();
+    return common.name();
   }
   return "";
 }

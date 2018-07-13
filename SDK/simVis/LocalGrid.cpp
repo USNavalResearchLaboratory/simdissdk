@@ -957,7 +957,7 @@ int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, dou
       requiresUpdate = true;
     }
   }
-  else if (prefs.speedring().has_speedtouse())
+  else if (prefs.speedring().speedtouse() > 0.0)
   {
     // using speedToUse, convert to m/s
     const Units prefSpeedUnits = simVis::convertUnitsToOsgEarth(prefs.speedring().speedunits());
@@ -967,6 +967,11 @@ int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, dou
       // do not display anything if this speed is zero
       return -3;
     }
+  }
+  else
+  {
+    // do not display anything if this speed is less than or equal to zero
+    return -5;
   }
 
 
