@@ -31,6 +31,7 @@
 #include "osg/TexEnv"
 #include "osg/ValueObject"
 #include "osgSim/DOFTransform"
+#include "osgSim/LightPointNode"
 #include "osgSim/MultiSwitch"
 #include "osgUtil/Optimizer"
 #include "osgEarth/NodeUtils"
@@ -83,8 +84,15 @@ public:
     : NodeVisitor(TRAVERSE_ALL_CHILDREN)
   {
   }
+
   virtual void apply(osg::Node& node)
   {
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+    // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
+    if (dynamic_cast<osgSim::LightPointNode*>(&node) != NULL)
+      node.setNodeMask(0);
+#endif
+
     osg::StateSet* ss = node.getStateSet();
     if (ss)
     {
@@ -99,14 +107,11 @@ public:
         SIM_WARN << "Unexpected TexEnv mode: 0x" << std::hex << texEnv->getMode() << "\n";
       }
 
-      // GLCORE does not support ShadeModel.  Remove unnecessary ones
+      // GLCORE does not support ShadeModel.  Only smooth shading is supported.  Many SIMDIS
+      // models in sites/ use flat shading, but don't seem to need it.  Drop the attribute.
       osg::ShadeModel* shadeModel = dynamic_cast<osg::ShadeModel*>(ss->getAttribute(osg::StateAttribute::SHADEMODEL));
-      if (shadeModel != NULL && shadeModel->getMode() == osg::ShadeModel::SMOOTH)
+      if (shadeModel != NULL)
         ss->removeAttribute(shadeModel);
-      else if (shadeModel != NULL)
-      {
-        SIM_WARN << "Unexpected ShadeModel mode: 0x" << std::hex << shadeModel->getMode() << "\n";
-      }
 
       // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
       ss->removeTextureMode(0, GL_TEXTURE_2D);
