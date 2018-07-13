@@ -29,6 +29,7 @@
 #include "simVis/LocalGrid.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/OverrideColor.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/Scenario.h"
@@ -76,6 +77,10 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
   customLocatorNode_ = new LocatorNode(getLocator());
   customLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
   addChild(customLocatorNode_);
+
+  // Apply the override color shader to the container
+  overrideColor_ = new simVis::OverrideColor(customLocatorNode_->getOrCreateStateSet());
+  overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
@@ -167,8 +172,28 @@ void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
       localGrid_->setPrefs(prefs.commonprefs().localgrid());
   }
 
+  updateOverrideColor_(prefs);
+
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
+}
+
+void CustomRenderingNode::updateOverrideColor_(const simData::CustomRenderingPrefs& prefs)
+{
+  if (!overrideColor_.valid())
+    return;
+
+  if (hasLastPrefs_ &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, color))
+    return;
+
+  // using an override color?
+  if (prefs.commonprefs().useoverridecolor())
+    overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
+  else
+    overrideColor_->setColor(simVis::Color(prefs.commonprefs().color(), simVis::Color::RGBA));
 }
 
 bool CustomRenderingNode::isActive() const
@@ -208,7 +233,11 @@ bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* upda
   {
     dirtyBound();
     customLocatorNode_->dirtyBound();
-    updateLabel_(lastPrefs_);
+    if (hasLastPrefs_)
+    {
+      updateOverrideColor_(lastPrefs_);
+      updateLabel_(lastPrefs_);
+    }
     return true;
   }
 

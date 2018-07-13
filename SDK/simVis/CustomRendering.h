@@ -30,11 +30,12 @@
 
 namespace simVis
 {
-  class EntityLabelNode;
   class CustomLabelContentCallback;
+  class EntityLabelNode;
   class LabelContentCallback;
   class LocalGridNode;
   class Locator;
+  class OverrideColor;
   class ScenarioManager;
 
   /**
@@ -227,6 +228,12 @@ namespace simVis
     */
     void updateLabel_(const simData::CustomRenderingPrefs& prefs);
 
+    /**
+    * Update the color with the specified custom rendering preferences
+    * @param prefs the custom rendering preferences
+    */
+    void updateOverrideColor_(const simData::CustomRenderingPrefs& prefs);
+
     osg::observer_ptr<const ScenarioManager> scenario_;
     osg::observer_ptr<const EntityNode> host_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
@@ -234,6 +241,7 @@ namespace simVis
     osg::ref_ptr<LocalGridNode> localGrid_;
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LocatorNode>  customLocatorNode_;
+    osg::ref_ptr<OverrideColor> overrideColor_;
     simData::CustomRenderingProperties lastProps_;
     simData::CustomRenderingPrefs lastPrefs_;
     bool hasLastPrefs_;

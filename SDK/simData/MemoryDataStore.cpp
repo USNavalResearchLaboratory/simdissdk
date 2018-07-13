@@ -911,6 +911,7 @@ void MemoryDataStore::update(double time)
   updateLasers_(time);
   updateProjectors_(time);
   updateLobGroups_(time);
+  updateCustomRenderings_(time);
 
   // After all the slice updates, set the new update time and notify observers
   lastUpdateTime_ = time;
