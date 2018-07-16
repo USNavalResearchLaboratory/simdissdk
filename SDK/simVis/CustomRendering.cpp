@@ -23,6 +23,7 @@
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
@@ -45,7 +46,8 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
     contentCallback_(new NullEntityCallback()),
     lastProps_(props),
     hasLastPrefs_(false),
-    customActive_(false)
+    customActive_(false),
+    objectIndexTag_(0)
 {
   // Independent of the host like a LOB
   setLocator(new Locator(host->getLocator()->getSRS()));
@@ -84,10 +86,14 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
+
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
 }
 
 CustomRenderingNode::~CustomRenderingNode()
 {
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 }
 
 void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& prefs)
@@ -266,8 +272,7 @@ int CustomRenderingNode::getPositionOrientation(simCore::Vec3* out_position, sim
 
 unsigned int CustomRenderingNode::objectIndexTag() const
 {
-  // Not supported for custom
-  return 0;
+  return objectIndexTag_;
 }
 
 bool CustomRenderingNode::customActive() const

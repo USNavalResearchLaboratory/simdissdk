@@ -246,6 +246,7 @@ namespace simVis
     simData::CustomRenderingPrefs lastPrefs_;
     bool hasLastPrefs_;
     bool customActive_;
+    unsigned int objectIndexTag_;
   };
 
 } //namespace simVis
