@@ -46,16 +46,16 @@ namespace simVis
   class Picker;
 
   /**
-  * A platform mouse-over pop up control. Using the PopupHandler, you can
-  * display this pop up when hovering the mouse over a platform in the scene.
+  * A entity mouse-over pop up control. Using the PopupHandler, you can
+  * display this pop up when hovering the mouse over a entity in the scene.
   */
-  class SDKVIS_EXPORT PlatformPopup : public osgEarth::Util::Controls::VBox
+  class SDKVIS_EXPORT EntityPopup : public osgEarth::Util::Controls::VBox
   {
   public:
     /**
-    * Constructs a new platform pop up control
+    * Constructs a new entity pop up control
     */
-    PlatformPopup();
+    EntityPopup();
 
     /**
     * Sets the title text of the pop up
@@ -72,7 +72,7 @@ namespace simVis
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
     /** Return the class name */
-    virtual const char* className() const { return "PlatformPopup"; }
+    virtual const char* className() const { return "EntityPopup"; }
 
     /** Retrieve the label for the title */
     osgEarth::Util::Controls::LabelControl* titleLabel() const;
@@ -81,7 +81,7 @@ namespace simVis
 
   protected:
     /// osg::Referenced-derived
-    virtual ~PlatformPopup() {}
+    virtual ~EntityPopup() {}
 
   private:
     osgEarth::Util::Controls::LabelControl* titleLabel_;
@@ -200,11 +200,11 @@ namespace simVis
   private:
     osg::observer_ptr<ScenarioManager> scenario_;             ///< ref to the scenario for finding platforms
     osg::observer_ptr<Picker>          picker_;               ///< Picker class that finds platforms
-    osg::observer_ptr<PlatformNode>    currentPlatform_;      ///< keep track of current platform
-    osg::ref_ptr<PlatformPopup>        popup_;                ///< the popup display
+    osg::observer_ptr<EntityNode>      currentEntity_;        ///< keep track of current entity
+    osg::ref_ptr<EntityPopup>          popup_;                ///< the popup display
     osg::ref_ptr<PopupContentCallback> contentCallback_;      ///< callback for filling in platform's data in popup
     osg::observer_ptr<View>            view_;                 ///< view where popup should draw
-    osgEarth::Revision                 platformLocatorRev_;   ///< current platform's locator revision
+    osgEarth::Revision                 entityLocatorRev_;     ///< current platform's locator revision
     float                              lastMX_;               ///< last stored mouse X position, 0 is left side
     float                              lastMY_;               ///< last stored mouse Y position, 0 is bottom
     bool                               mouseDirty_;           ///< flag indicating if mouse was moved

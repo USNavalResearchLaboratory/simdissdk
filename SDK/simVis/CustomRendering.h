@@ -214,6 +214,9 @@ namespace simVis
     /// Returns the host
     const EntityNode* host() const;
 
+    /// Returns the pop up text based on the label content callback, update and preference
+    std::string popupText() const;
+
   protected:
     /// osg::Referenced-derived; destructor body needs to be in the .cpp
     virtual ~CustomRenderingNode();

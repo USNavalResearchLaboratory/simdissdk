@@ -96,6 +96,26 @@ CustomRenderingNode::~CustomRenderingNode()
   osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 }
 
+std::string CustomRenderingNode::popupText() const
+{
+  if (hasLastPrefs_ && customActive_)
+  {
+    std::string prefix;
+    /// if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    if (!lastPrefs_.commonprefs().alias().empty())
+    {
+      if (lastPrefs_.commonprefs().usealias())
+        prefix = getEntityName(EntityNode::REAL_NAME);
+      else
+        prefix = getEntityName(EntityNode::ALIAS_NAME);
+      prefix += "\n";
+    }
+    return prefix + contentCallback_->createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+  }
+
+  return "";
+}
+
 void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& prefs)
 {
   std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
