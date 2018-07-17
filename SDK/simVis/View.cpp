@@ -41,6 +41,7 @@
 #include "simVis/Gate.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/CustomRendering.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
@@ -1972,6 +1973,12 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
     // Fall back to Gate centroids
     if (!proxyNode)
       proxyNode = entityNode->findAttachment<GateCentroid>();
+
+    if ((!proxyNode) && (entityNode->type() == simData::CUSTOM_RENDERING))
+    {
+      auto customNode = static_cast<CustomRenderingNode*>(entityNode);
+      proxyNode = customNode->locatorNode();
+    }
 
     if (proxyNode)
       node = proxyNode;
