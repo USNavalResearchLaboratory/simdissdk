@@ -751,6 +751,11 @@ osg::Node* ModelCache::boxNode() const
   return boxNode_.get();
 }
 
+void ModelCache::erase(const std::string& uri)
+{
+  cache_.erase(uri);
+}
+
 ////////////////////////////////////////////////////////////////////////////
 
 ReplaceChildReadyCallback::ReplaceChildReadyCallback(osg::Group* parent, unsigned int childIndex)

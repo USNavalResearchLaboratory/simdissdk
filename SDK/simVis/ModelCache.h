@@ -92,6 +92,9 @@ public:
   /** Clears the cache. */
   void clear();
 
+  /** Erases a single element from the cache. */
+  void erase(const std::string& uri);
+
   /**
    * Retrieves the asynchronous loader node.  This node must be added to the scene graph for
    * asynchronous loading to work correctly.  The Registry's default model cache is registered with
