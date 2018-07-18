@@ -164,6 +164,7 @@ void TrackChunkNode::allocate_()
     centerPoints_ = new osg::Geometry();
     centerPoints_->setUseVertexBufferObjects(true);
     centerPoints_->setUseDisplayList(false);
+    centerPoints_->setDataVariance(osg::Object::DYNAMIC);
     osg::Vec3Array* verts = new osg::Vec3Array();
     verts->assign(maxSize_, osg::Vec3());
     centerPoints_->setVertexArray(verts);
