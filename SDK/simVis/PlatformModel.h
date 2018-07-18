@@ -124,6 +124,16 @@ public:
   /** Removes a callback from the platform */
   void removeCallback(Callback* callback);
 
+  /**
+   * Override the platform icon with the given node.  This node will be replaced on the
+   * next setPrefs() call if the prefs.icon() changes.  This is useful for temporarily
+   * overriding a platform's model with a custom texture or icon.  This is a relatively
+   * low level method that is also used internally by the model loading code.
+   * @param node Node to use for model
+   * @param isImage True if image icon transformations should be valid
+   */
+  void setModel(osg::Node* node, bool isImage);
+
 public: // PlatformAttachment interface
 
   /** Sets the properties for the platform */
@@ -152,6 +162,8 @@ private:
 
   /// Callback to the Model Cache that will set our platform model on asynchronous load
   class SetModelCallback;
+  /// Member pointer to the most recent set-model-callback
+  osg::ref_ptr<SetModelCallback> lastSetModelCallback_;
 
   simData::PlatformProperties        lastProps_;
   simData::PlatformPrefs             lastPrefs_;
@@ -216,9 +228,6 @@ private:
   void updateOverrideColor_(const simData::PlatformPrefs& prefs);
   /// Updates the alpha volume based on prefs
   void updateAlphaVolume_(const simData::PlatformPrefs& prefs);
-
-  /// Changes the model to the given node, also fires off bounds updates
-  void setModel_(osg::Node* newModel, bool isImage);
 };
 
 } // namespace simVis
