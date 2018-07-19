@@ -362,13 +362,13 @@ void fixTextureForGlCoreProfile(osg::Texture* texture)
     if (!image)
       continue;
 
-    // Detect the image's pixel format, changing it out for a GL3-compatible one
-    if (image->getPixelFormat() == GL_LUMINANCE)
+    // Detect the image's pixel format, changing it out for a GL3-compatible one, fixing swizzle
+    if (image->getPixelFormat() == GL_LUMINANCE || image->getPixelFormat() == GL_RED)
     {
       image->setPixelFormat(GL_RED);
       texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_ONE));
     }
-    else if (image->getPixelFormat() == GL_LUMINANCE_ALPHA)
+    else if (image->getPixelFormat() == GL_LUMINANCE_ALPHA || image->getPixelFormat() == GL_RG)
     {
       image->setPixelFormat(GL_RG);
       texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_GREEN));
