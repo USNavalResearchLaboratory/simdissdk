@@ -31,16 +31,21 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simData/MemoryDataStore.h"
 
-#include "simVis/Viewer.h"
-#include "simVis/SceneManager.h"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
 #include "simVis/Scenario.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/SceneManager.h"
+#include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/HudManager.h"
+
+#ifdef HAVE_TRITON_NODEKIT
+#include "osgEarthTriton/TritonLayer"
+#include "osgEarthTriton/TritonOptions"
+#endif
 
 #include "osgEarthUtil/Controls"
 
@@ -295,16 +300,31 @@ int main(int argc, char** argv)
   s_shipId = createShip(dataStore);
 
   // add an ocean surface to the scene.
-  Config oceanOptions;
-  oceanOptions.set("driver", useTriton ? "triton" : "simple");
-  if (!tritonUser.empty())
-    oceanOptions.set("user", tritonUser);
-  if (!tritonLicense.empty())
-    oceanOptions.set("license_code", tritonLicense);
-  if (!tritonPath.empty())
-    oceanOptions.set("resource_path", tritonPath);
-  osg::ref_ptr<osg::Node> ocean = OceanNode::create(ConfigOptions(oceanOptions), scene->getMapNode());
-  scene->getScenario()->addChild(ocean);
+#ifdef HAVE_TRITON_NODEKIT
+  if (useTriton)
+  {
+    osgEarth::Triton::TritonOptions triton;
+    if (!tritonUser.empty())
+      triton.user() = tritonUser;
+    if (!tritonLicense.empty())
+      triton.licenseCode() = tritonLicense;
+    if (!tritonPath.empty())
+      triton.resourcePath() = tritonPath;
+
+    triton.useHeightMap() = false;
+    triton.maxAltitude() = 30000.0f;
+    triton.renderBinNumber() = simVis::BIN_OCEAN;
+    osgEarth::Triton::TritonLayer* layer = new osgEarth::Triton::TritonLayer(triton);
+    scene->getMap()->addLayer(layer);
+  }
+  else
+#endif
+  {
+    Config oceanOptions;
+    oceanOptions.set("driver", "simple");
+    osg::ref_ptr<osg::Node> ocean = OceanNode::create(ConfigOptions(oceanOptions), scene->getMapNode());
+    scene->getScenario()->addChild(ocean.get());
+  }
 
   // Add a sky
   // add a sky to the scene.

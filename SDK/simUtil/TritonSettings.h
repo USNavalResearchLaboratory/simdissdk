@@ -38,7 +38,8 @@
  *
  * <code>
  *   osg::ref_ptr<simUtil::TritonSettingsAdapter> tritonSettings(new simUtil::TritonSettingsAdapter);
- *   OceanNode* ocean = new Triton::TritonNode(scene->getMapNode(), opts, tritonSettings);
+ *   TritonLayer* layer = new Triton::TritonLayer(opts, tritonSettings);
+ *   scene->getMap()->addLayer(layer);
  * </code>
  *
  * From there, you can access settings from the TritonSettingsAdapter.  Changes
