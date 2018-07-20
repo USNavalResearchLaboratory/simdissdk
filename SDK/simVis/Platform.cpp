@@ -352,6 +352,9 @@ void PlatformNode::updateHostBounds_(double scale)
   frontOffset_ = unscaledBounds.yMax() * scale;
   if (track_.valid())
     track_->setHostBounds(osg::Vec2(unscaledBounds.xMin() * scale, unscaledBounds.xMax() * scale));
+  // Ephemeris vector length depends on model bounds
+  if (ephemerisVector_.valid())
+    ephemerisVector_->update(lastUpdate_);
 }
 
 void PlatformNode::updateHostBounds()

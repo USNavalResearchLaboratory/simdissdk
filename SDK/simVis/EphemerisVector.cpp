@@ -95,9 +95,6 @@ EphemerisVector::EphemerisVector(const simVis::Color& moonColor, const simVis::C
   setName("EphemerisVector");
   setNodeMask(DISPLAY_MASK_NONE);
 
-  // scratch area for updating vectors
-  vertices_ = new osg::Vec3Array();
-
   // Group to hold the vector lines:
   geomGroup_ = new osgEarth::LineGroup();
   addChild(geomGroup_.get());
