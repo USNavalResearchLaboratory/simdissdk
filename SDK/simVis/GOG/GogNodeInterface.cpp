@@ -43,6 +43,7 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
+#include "simCore/String/ValidNumber.h"
 #include "simVis/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
@@ -147,17 +148,17 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
     gogShape == GOG_CYLINDER || gogShape == GOG_LATLONALTBOX);
 
   // do we need an ExtrusionSymbol? Note that 3D shapes cannot be extruded
-  bool isExtruded = (simCore::caseCompare(parent.value("extrude"), "true") == 0) && !is3dShape;
+  bool isExtruded = simCore::stringIsTrueToken(parent.value("extrude")) && !is3dShape;
 
   // do we need a PolygonSymbol?
   bool isFillable = isExtruded || key == "poly" || key == "polygon" || key == "ellipse" || key == "circle" || key == "arc" || is3dShape;
-  bool isFilled   = isFillable && (simCore::caseCompare(parent.value("filled"), "true") == 0);
+  bool isFilled   = isFillable && simCore::stringIsTrueToken(parent.value("filled"));
 
   // do we need a LineSymbol?
-  bool isOutlined = (simCore::caseCompare(parent.value("outline"), "true") == 0);
+  bool isOutlined = simCore::stringIsTrueToken(parent.value("outline"));
   bool hasLineAttrs = parent.hasValue("linecolor") || parent.hasValue("linewidth") || parent.hasValue("linestyle") || isOutlined;
   // Tessellate behaves badly with cirles, arcs, ellipses and 3dShapes, do not apply
-  bool isTessellated = (simCore::caseCompare(parent.value("tessellate"), "true") == 0) && !(is3dShape || key == "circle" || key == "ellipse" || key == "arc");
+  bool isTessellated = simCore::stringIsTrueToken(parent.value("tessellate")) && !(is3dShape || key == "circle" || key == "ellipse" || key == "arc");
   // need to create a LineSymbol if the shape is filled or has some line attributes or is tessellated, since tessellation is handled in the LineSymbol
   bool isLined = isFilled || hasLineAttrs || isTessellated;
   bool isText = (key == "annotation");
@@ -271,7 +272,7 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
   // depth buffer defaults to disable to match SIMDIS 9
   bool depthTest = false;
   if (parent.hasValue("depthbuffer"))
-    depthTest = (simCore::caseCompare(parent.value("depthbuffer"), "true") == 0);
+    depthTest = simCore::stringIsTrueToken(parent.value("depthbuffer"));
   setDepthBuffer(depthTest);
 
   // apply backface culling here
