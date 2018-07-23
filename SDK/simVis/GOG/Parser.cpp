@@ -50,6 +50,14 @@ using namespace osgEarth::Symbology;
 namespace
 {
 
+// Define the shape geo type, relative or absolute, i.e. has xyz points or lla points
+enum ShapeType
+{
+  SHAPE_UNKNOWN,
+  SHAPE_RELATIVE,
+  SHAPE_ABSOLUTE
+};
+
 /** Default Specialization of ErrorHandler that prints a generic message using SIM_WARN and SIM_ERROR */
 class NotifyErrorHandler : public ErrorHandler
 {
@@ -193,8 +201,8 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
   std::set<std::string> unhandledStyleKeywords;
   unhandledStyleKeywords.insert("innerradius");
 
-  // relative shapes will store their metadata differently, and need a metadata flag to indicate they are relative
-  bool relative = false;
+  // need to track shape type, relative or absolute
+  ShapeType type = SHAPE_UNKNOWN;
   // valid commands must occur within a start/end block
   bool validStartEndBlock = false;
 
@@ -289,7 +297,9 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
       // apply all cached information to metadata when end is reached
       if (tokens[0] == "end")
       {
-        updateMetaData_(state, refOriginLine, positionLines, relative, currentMetaData);
+        if (type == SHAPE_ABSOLUTE)
+          current.set(simVis::GOG::AbsoluteKeyword, 1);
+        updateMetaData_(state, refOriginLine, positionLines, type == SHAPE_RELATIVE, currentMetaData);
         metaData.push_back(currentMetaData);
         state.apply(current);
         output.add(current);
@@ -301,7 +311,7 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
       refLon.clear();
       refAlt.clear();
       positionLines.clear();
-      relative = false;
+      type = SHAPE_UNKNOWN;
 
       // "start" indicates a valid block, "end" indicates the block of commands are complete and subsequent commands will be invalid
       validStartEndBlock = (tokens[0] == "start");
@@ -321,11 +331,11 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
         // a single start/end block.
         if (current.key() == "annotation")
         {
-          updateMetaData_(state, refOriginLine, positionLines, relative, currentMetaData);
+          updateMetaData_(state, refOriginLine, positionLines, type == SHAPE_RELATIVE, currentMetaData);
           metaData.push_back(currentMetaData);
           currentMetaData.metadata.clear();
           positionLines.clear();
-          relative = false;
+          type = SHAPE_UNKNOWN;
           currentMetaData.shape = GOG_UNKNOWN;
           currentMetaData.clearSetFields();
           state.apply(current);
@@ -430,9 +440,13 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
     {
       if (tokens.size() >= 3)
       {
+        if (type == SHAPE_UNKNOWN)
+          type = SHAPE_RELATIVE;
+        // ignore relative components if this shape is already defined as absolute
+        else if (type == SHAPE_ABSOLUTE)
+          continue;
         // need to cache xyz for annotations
         positionLines += line + "\n";
-        relative = true;
 
         Config point("xy");
         point.set("x", tokens[1]);
@@ -450,7 +464,10 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
     {
       if (tokens.size() >= 3)
       {
-        current.set(simVis::GOG::AbsoluteKeyword, 1);
+        if (type == SHAPE_UNKNOWN)
+          type = SHAPE_ABSOLUTE;
+        else if (type == SHAPE_RELATIVE)
+          continue;
         // need to save lla for annotations
         positionLines += line + "\n";
 
@@ -496,6 +513,10 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
     {
       if (tokens.size() >= 3)
       {
+        if (type == SHAPE_UNKNOWN)
+          type = SHAPE_RELATIVE;
+        else if (type == SHAPE_ABSOLUTE)
+          continue;
         currentMetaData.metadata += line + "\n";
         Config point("centerxy");
         point.set("x", tokens[1]);
@@ -513,7 +534,10 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
     {
       if (tokens.size() >= 3)
       {
-        current.add(simVis::GOG::AbsoluteKeyword, 1);
+        if (type == SHAPE_UNKNOWN)
+          type = SHAPE_ABSOLUTE;
+        else if (type == SHAPE_RELATIVE)
+          continue;
         currentMetaData.metadata += line + "\n";
         Config point("centerll");
         point.set("lat", parseGogGeodeticAngle_(tokens[1]));
