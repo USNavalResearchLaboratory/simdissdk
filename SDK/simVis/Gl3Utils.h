@@ -57,6 +57,7 @@ inline void applyCoreProfileValidity(osg::GraphicsContext* graphicsContext)
   if (isCoreProfile)
   {
     state->setModeValidity(GL_LIGHTING, false);
+    state->setModeValidity(GL_LIGHT0, false);
     state->setModeValidity(GL_RESCALE_NORMAL, false);
     state->setModeValidity(GL_POINT_SMOOTH, false);
   }
