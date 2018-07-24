@@ -574,4 +574,26 @@ bool DataStoreHelpers::isEntityActive(const simData::DataStore& dataStore, simDa
   return false;
 }
 
+double DataStoreHelpers::getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id)
+{
+  // Custom Rendering can be anywhere; but they do not support custom coordinate frames.
+  // Other types use the hosting platform for vertical datum.
+
+  if ((id == 0) || (dataStore.objectType(id) == simData::CUSTOM_RENDERING))
+  {
+    simData::DataStore::Transaction transaction;
+    auto sp = dataStore.scenarioProperties(&transaction);
+    if ((sp != NULL) && sp->has_coordinateframe())
+      return sp->coordinateframe().verticaldatumuservalue();
+    return 0.0;
+  }
+
+  simData::ObjectId platformId = simData::DataStoreHelpers::getPlatformHostId(id, &dataStore);
+  simData::DataStore::Transaction transaction;
+  const simData::PlatformProperties* prop = dataStore.platformProperties(platformId, &transaction);
+  if (prop != NULL)
+    return prop->coordinateframe().verticaldatumuservalue();
+  return 0.0;
+}
+
 }
