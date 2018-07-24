@@ -309,7 +309,7 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
 
 bool ProjectorNode::readVideoFile_(const std::string& filename)
 {
-   osg::Node* result = NULL;
+  osg::Node* result = NULL;
 
   // Make sure we have the clock which is needed for the video node.
   simCore::Clock* clock = simVis::Registry::instance()->getClock();

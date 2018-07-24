@@ -1172,5 +1172,20 @@ ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string&
   statsTimer_.start();
 }
 
+//--------------------------------------------------------------------------
+
+RemoveModeVisitor::RemoveModeVisitor(GLenum mode)
+  : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
+    mode_(mode)
+{
 }
 
+void RemoveModeVisitor::apply(osg::Node& node)
+{
+  osg::StateSet* stateSet = node.getStateSet();
+  if (stateSet)
+    stateSet->removeMode(mode_);
+  osg::NodeVisitor::apply(node);
+}
+
+}

@@ -47,6 +47,7 @@
 #include "simVis/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Utils.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/Arc.h"
@@ -627,6 +628,14 @@ void GogNodeInterface::setDepthBuffer(bool depthBuffer)
   style_.getOrCreate<osgEarth::Symbology::RenderSymbol>()->depthTest() = depthBuffer;
   if (!depthBuffer) // unset the clip pane if depth buffer turned off
     style_.getOrCreate<osgEarth::Symbology::RenderSymbol>()->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
+  else
+  {
+    style_.getOrCreate<osgEarth::Symbology::RenderSymbol>()->clipPlane().unset();
+    // Explicitly remove all clip planes settings from child nodes
+    if (osgNode_.valid())
+      osgNode_->accept(RemoveModeVisitor(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE));
+  }
+
   setStyle_(style_);
 }
 

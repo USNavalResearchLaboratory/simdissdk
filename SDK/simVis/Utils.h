@@ -643,6 +643,20 @@ namespace simVis
     StatsTimer statsTimer_;
   };
 
+  /** Simple visitor that removes the provided Mode from all statesets. */
+  class RemoveModeVisitor : public osg::NodeVisitor
+  {
+  public:
+    /** Remove the mode provided from nodes visited */
+    explicit RemoveModeVisitor(GLenum mode);
+
+    /** Override apply(osg::Node&) to remove from all statesets */
+    virtual void apply(osg::Node& node);
+
+  private:
+    GLenum mode_;
+  };
+
 } // namespace simVis
 
 #endif // SIMVIS_UTILS_H
