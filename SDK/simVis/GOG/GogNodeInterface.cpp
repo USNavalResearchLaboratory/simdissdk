@@ -633,7 +633,10 @@ void GogNodeInterface::setDepthBuffer(bool depthBuffer)
     style_.getOrCreate<osgEarth::Symbology::RenderSymbol>()->clipPlane().unset();
     // Explicitly remove all clip planes settings from child nodes
     if (osgNode_.valid())
-      osgNode_->accept(RemoveModeVisitor(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE));
+    {
+      RemoveModeVisitor removeClipPlane(simVis::CLIPPLANE_VISIBLE_HORIZON_GL_MODE);
+      osgNode_->accept(removeClipPlane);
+    }
   }
 
   setStyle_(style_);
