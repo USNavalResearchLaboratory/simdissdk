@@ -54,7 +54,10 @@ GogNodeInterface* Sphere::deserialize(const osgEarth::Config&  conf,
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
-    node = new osgEarth::Annotation::LocalGeometryNode(mapNode, shape, p.style_);
+    node = new osgEarth::Annotation::LocalGeometryNode();
+    node->getPositionAttitudeTransform()->addChild(shape);
+    node->setStyle(p.style_);
+    node->setMapNode(mapNode);
     node->setPosition(p.getMapPosition());
   }
   else

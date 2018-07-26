@@ -522,11 +522,19 @@ int main(int argc, char** argv)
             0.0,
             ALTMODE_ABSOLUTE);
 
-          osg::ref_ptr<AnnotationNode> marker;
+          osg::ref_ptr<GeoPositionNode> marker;
           if (label.empty())
-            marker = new PlaceNode(scene->getMapNode(), location, pin.get(), label);
+          {
+            PlaceNode* place = new PlaceNode();
+            place->setIconImage(pin.get());
+            marker = place;
+            marker->setMapNode(scene->getMapNode());
+          }
           else
-            marker = new LabelNode(scene->getMapNode(), location, label);
+            marker = new LabelNode(label);
+
+          marker->setMapNode(scene->getMapNode());
+          marker->setPosition(location);
 
           scene->getScenario()->addChild(marker);
 

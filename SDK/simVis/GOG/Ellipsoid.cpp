@@ -84,7 +84,10 @@ GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
-    node = new osgEarth::Annotation::LocalGeometryNode(mapNode, shape, p.style_);
+    node = new osgEarth::Annotation::LocalGeometryNode();
+    node->getPositionAttitudeTransform()->addChild(shape);
+    node->setStyle(p.style_); // pointless?
+    node->setMapNode(mapNode);
     Utils::applyLocalGeometryOffsets(*node, p);
   }
   else

@@ -332,10 +332,11 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
       Utils::configureStyleForClipping(fillStyle);
     }
 
-    shapeNode = new osgEarth::Annotation::LocalGeometryNode(mapNode, outlineShape, shapeStyle);
+    shapeNode = new osgEarth::Annotation::LocalGeometryNode(outlineShape, shapeStyle);
+    shapeNode->setMapNode(mapNode);
     Utils::applyLocalGeometryOffsets(*shapeNode, p);
 
-    fillNode = new osgEarth::Annotation::LocalGeometryNode(mapNode, filledShape, fillStyle);
+    fillNode = new osgEarth::Annotation::LocalGeometryNode(filledShape, fillStyle);
     Utils::applyLocalGeometryOffsets(*fillNode, p);
   }
   else

@@ -72,7 +72,9 @@ LineGraphic::LineGraphic(osg::Group* scene, osgEarth::MapNode* mapNode)
   text->declutter() = false;
 
   // Create the label node itself
-  label_ = new osgEarth::Annotation::LabelNode(mapNode, labelStyle_);
+  label_ = new osgEarth::Annotation::LabelNode();
+  label_->setMapNode(mapNode);
+  label_->setStyle(labelStyle_);
   label_->setDynamic(true);
 
   // Hide the line and label until we need them

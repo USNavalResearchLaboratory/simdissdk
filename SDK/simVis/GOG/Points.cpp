@@ -105,11 +105,14 @@ GogNodeInterface* Points::deserializeImpl_(const osgEarth::Config&  conf,
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
       if (p.geoInterp_.isSet())
         feature->geoInterp() = p.geoInterp_.value();
-      rv = new FeatureNodeInterface(new FeatureNode(mapNode, feature), metaData);
+      FeatureNode* featureNode = new FeatureNode(feature);
+      featureNode->setMapNode(mapNode);
+      rv = new FeatureNodeInterface(featureNode, metaData);
     }
     else
     {
-      LocalGeometryNode* node = new LocalGeometryNode(mapNode, p.geom_.get(), p.style_);
+      LocalGeometryNode* node = new LocalGeometryNode(p.geom_.get(), p.style_);
+      node->setMapNode(mapNode);
       node->setPosition(p.getMapPosition());
       // if only a single point, offset is already built in, since center will be the same as the point postion
       if (p.geom_.valid() && p.geom_->size() > 1)

@@ -92,7 +92,8 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {
-      sideNode = new LocalGeometryNode(mapNode, shape.get(), style);
+      sideNode = new LocalGeometryNode(shape.get(), style);
+      sideNode->setMapNode(mapNode);
       sideNode->setPosition(p.getMapPosition());
     }
     else
@@ -115,7 +116,8 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {
-      topCapNode = new LocalGeometryNode(mapNode, shape.get(), style);
+      topCapNode = new LocalGeometryNode(shape.get(), style);
+      topCapNode->setMapNode(mapNode);
       topCapNode->setPosition(p.getMapPosition());
     }
     else
@@ -142,7 +144,8 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {
-      bottomCapNode = new LocalGeometryNode(mapNode, shape.get(), style);
+      bottomCapNode = new LocalGeometryNode(shape.get(), style);
+      bottomCapNode->setMapNode(mapNode);
       bottomCapNode->setPosition(p.getMapPosition());
     }
     else
