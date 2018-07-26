@@ -89,6 +89,16 @@ public:
    */
   static osg::Node* readEarthFile(const std::string& filename);
 
+  /**
+   * Stream-based version of readEarthFile().  Loads the .earth file from an input stream, using
+   * the provided referrer (relativeTo) to help resolve relative paths.
+   * @param istream Input stream holding the .earth file contents
+   * @param relativeTo Absolute path to a location used to help resolve relative paths.  Sometimes called "referrer",
+   *   or the Database Path in OSG parlance.
+   * @return NULL on error, else newly allocated node from osgDB::ReaderWriter for earth files
+   */
+  static osg::Node* readEarthFile(std::istream& istream, const std::string& relativeTo);
+
 private:
   /// does some error checking on the parsed tokens, returns false on error
   static int parseCommonTokens_(const std::vector<std::string>& tokens, int currentLineNumber);
