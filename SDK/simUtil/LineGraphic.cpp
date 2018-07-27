@@ -21,6 +21,7 @@
 *
 */
 #include "osgEarth/GeoMath"
+#include "osgEarth/Utils"
 #include "osgEarthSymbology/Color"
 #include "osgEarthAnnotation/LabelNode"
 #include "simCore/Calc/Angle.h"
@@ -129,6 +130,9 @@ void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& desti
       label_->setPosition(osgEarth::GeoPoint(wgs84Srs_.get(), labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG, (originLLA.alt() + destinationLLA.alt()) / 2.0));
       label_->setText(labelString);
       label_->setNodeMask(displayMask_);
+      // need to update the data variance; remove after SIM-8806 is fixed.
+      osgEarth::SetDataVarianceVisitor dv(osg::Object::DYNAMIC);
+      label_->accept(dv);
     }
   }
   else

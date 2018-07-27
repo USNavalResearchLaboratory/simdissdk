@@ -181,7 +181,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       ts->content()->setLiteral(!commonPrefs.name().empty() ? commonPrefs.name() : "unnamed");
 
       label_->setStyle(style);
-      // need to update the data variance, since setStyle rebuilds the Drawable and doesn't pass along current data variance state
+      // need to update the data variance, since setStyle rebuilds the Drawable and doesn't pass along current data variance state; remove after SIM-8806 is fixed.
       osgEarth::SetDataVarianceVisitor dv(osg::Object::DYNAMIC);
       label_->accept(dv);
     }
