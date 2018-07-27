@@ -722,6 +722,8 @@ void GogNodeInterface::setExtrude(bool extrude)
   // There is an exception for Lines/LineSegs due to extrusion to 2D instead of 3D
   const bool isLine = (metaData_.shape == GOG_LINE || metaData_.shape == GOG_LINESEGS);
   style_.getOrCreate<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = extrude && !isLine;
+  // In some cases it appears that extrusion can cause lighting
+  style_.getOrCreate<osgEarth::Symbology::RenderSymbol>()->lighting() = false;
 
   if (extrude)
   {
@@ -1799,6 +1801,8 @@ void CylinderNodeInterface::setStyle_(const osgEarth::Symbology::Style& style)
   osgEarth::Symbology::Style sideStyle = style_;
   // need to add the extrusion symbol to the side style
   sideStyle.getOrCreate<osgEarth::Annotation::ExtrusionSymbol>()->height() = height_;
+  // In some cases it appears that extrusion can cause lighting
+  sideStyle.getOrCreate<osgEarth::Symbology::RenderSymbol>()->lighting() = false;
   // need to remove the line symbol from the side style
   sideStyle.remove<osgEarth::Symbology::LineSymbol>();
   // if not filled, need to make sure the side node has a fill color that matches the line color
