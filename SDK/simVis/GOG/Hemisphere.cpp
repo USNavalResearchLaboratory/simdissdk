@@ -55,8 +55,11 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
-    node = new osgEarth::Annotation::LocalGeometryNode(mapNode, shape, p.style_);
+    node = new osgEarth::Annotation::LocalGeometryNode();
+    node->setMapNode(mapNode);
     node->setPosition(p.getMapPosition());
+    node->getPositionAttitudeTransform()->addChild(shape);
+    node->setStyle(p.style_);
     osg::Quat yaw(p.localHeadingOffset_->as(Units::RADIANS), -osg::Vec3(0, 0, 1));
     osg::Quat pitch(p.localPitchOffset_->as(Units::RADIANS), osg::Vec3(1, 0, 0));
     osg::Quat roll(p.localRollOffset_->as(Units::RADIANS), osg::Vec3(0, 1, 0));

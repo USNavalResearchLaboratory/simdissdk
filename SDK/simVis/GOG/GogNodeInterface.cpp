@@ -1983,7 +1983,8 @@ void SphericalNodeInterface::setColor_(const osg::Vec4f& color)
 {
   // need to dig down into the LocalGeometryNode to get the underlying Geometry object to set its color array
   // NOTE: this assumes a specific implementation for spherical nodes. May fail if that implementation changes
-  osg::Node* node = localNode_->getNode();
+  osg::Group* group = localNode_->getPositionAttitudeTransform();
+  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : NULL;
   if (!node)
     return;
   osg::Geode* geode = node->asGeode();

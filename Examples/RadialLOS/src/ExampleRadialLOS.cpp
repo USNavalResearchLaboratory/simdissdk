@@ -267,7 +267,8 @@ namespace
     alt->technique() = osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_DRAPE;
 
     osg::ref_ptr<osgEarth::Annotation::LocalGeometryNode> node =
-        new osgEarth::Annotation::LocalGeometryNode(mapNode, m.get(), style);
+        new osgEarth::Annotation::LocalGeometryNode(m.get(), style);
+    node->setMapNode(mapNode);
 
     node->setPosition(GeoPoint(mapNode->getMapSRS(), RLOS_LON, RLOS_LAT));
 
@@ -286,7 +287,8 @@ namespace
     p2pLine->push_back(osg::Vec3d(RLOS_LON, RLOS_LAT, RLOS_ALT));
     style.getOrCreate<osgEarth::AltitudeSymbol>()->technique() == osgEarth::AltitudeSymbol::TECHNIQUE_DRAPE;
     osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(p2pLine.get(), mapNode->getMapSRS(), style);
-    app->p2pFeature = new osgEarth::Annotation::FeatureNode(mapNode, feature.get());
+    app->p2pFeature = new osgEarth::Annotation::FeatureNode(feature.get());
+    app->p2pFeature->setMapNode(mapNode);
     app->p2pFeature->setNodeMask(0);
 
     editor->addChild(app->p2pFeature);

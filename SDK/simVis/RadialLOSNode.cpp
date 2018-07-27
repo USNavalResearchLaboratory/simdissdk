@@ -37,7 +37,7 @@ using namespace simVis;
 //----------------------------------------------------------------------------
 
 RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
-  : GeoPositionNode(mapNode),
+  : GeoPositionNode(),
     visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
     obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
     samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
@@ -58,6 +58,8 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
 #if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
   drapeable_->setMapNode(mapNode);
 #endif
+
+  setMapNode(mapNode);
 
   mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 }
