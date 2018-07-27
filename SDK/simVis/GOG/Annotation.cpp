@@ -48,6 +48,7 @@ GogNodeInterface* TextAnnotation::deserialize(
   if (nodeType == GOGNODE_GEOGRAPHIC)
     label->setPosition(p.getMapPosition());
 
+  label->setMapNode(mapNode);
   label->setDynamic(true);
   label->setLocalOffset(p.getLTPOffset());
   label->setPriority(8000);

@@ -337,6 +337,7 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
     Utils::applyLocalGeometryOffsets(*shapeNode, p);
 
     fillNode = new osgEarth::Annotation::LocalGeometryNode(filledShape, fillStyle);
+    fillNode->setMapNode(mapNode);
     Utils::applyLocalGeometryOffsets(*fillNode, p);
   }
   else
