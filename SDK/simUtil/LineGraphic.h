@@ -261,6 +261,12 @@ public:
   */
   simData::ObjectId id() const;
 
+  /**
+  * Returns the display name of the entity or empty string if there is no entity
+  * @return the display name of the entity or empty string if there is no entity
+  */
+  std::string entityName() const;
+
 protected:
   /** Reference-derived */
   virtual ~EntityNodePosition();

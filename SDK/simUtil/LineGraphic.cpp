@@ -366,6 +366,14 @@ simData::ObjectId EntityNodePosition::id() const
   return node_->getId();
 }
 
+std::string EntityNodePosition::entityName() const
+{
+  if (node_ == NULL)
+    return "";
+
+  return node_->getEntityName(simVis::EntityNode::DISPLAY_NAME);
+}
+
 bool EntityNodePosition::operator==(const Position& other) const
 {
   const EntityNodePosition* pp = dynamic_cast<const EntityNodePosition*>(&other);
