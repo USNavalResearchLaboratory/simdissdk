@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_PLATFORM_AZIM_ELEV_VIEW)
 
 set(PROJECT_FILES
-    src/PlatformAzimElevViewTest.cpp
+    PlatformAzimElevViewTest.cpp
 )
 
 add_executable(example_platformazimelevviewtest ${PROJECT_FILES})

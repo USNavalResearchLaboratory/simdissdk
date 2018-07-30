@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_RCS)
 
 set(PROJECT_FILES
-    src/ExampleRCS.cpp
+    ExampleRCS.cpp
 )
 
 add_executable(example_rcs ${PROJECT_FILES})

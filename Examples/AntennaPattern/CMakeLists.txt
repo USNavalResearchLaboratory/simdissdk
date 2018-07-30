@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_ANTENNA_PATTERN)
 
 set(PROJECT_FILES
-    src/ExampleAntennaPattern.cpp
+    ExampleAntennaPattern.cpp
 )
 
 add_executable(example_antennapattern ${PROJECT_FILES})

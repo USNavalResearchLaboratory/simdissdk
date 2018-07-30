@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_RADIAL_LOS)
 
 set(PROJECT_FILES
-    src/ExampleRadialLOS.cpp
+    ExampleRadialLOS.cpp
 )
 
 add_executable(example_radiallos ${PROJECT_FILES})

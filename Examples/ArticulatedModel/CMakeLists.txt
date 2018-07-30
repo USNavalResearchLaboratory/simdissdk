@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_ARTICULATED_MODEL)
 
 set(PROJECT_FILES
-    src/ExampleArticulatedModel.cpp
+    ExampleArticulatedModel.cpp
 )
 
 add_executable(example_articulatedmodel ${PROJECT_FILES})

@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_LOB_TEST)
 
 set(PROJECT_FILES
-    src/ExampleLOBTest.cpp
+    ExampleLOBTest.cpp
 )
 
 add_executable(example_lobtest ${PROJECT_FILES})

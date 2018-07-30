@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_TIMESTAMPED_LAYER)
 
 set(PROJECT_FILES
-    src/ExampleTimestampedLayer.cpp
+    ExampleTimestampedLayer.cpp
 )
 
 add_executable(example_timestampedlayer ${PROJECT_FILES})
