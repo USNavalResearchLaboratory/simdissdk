@@ -21,7 +21,6 @@
 */
 #include <limits>
 #include "osg/Depth"
-#include "osgEarth/Utils"
 #include "osgEarthAnnotation/LabelNode"
 #include "simCore/Calc/Math.h"
 #include "simVis/AlphaTest.h"
@@ -181,9 +180,6 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       ts->content()->setLiteral(!commonPrefs.name().empty() ? commonPrefs.name() : "unnamed");
 
       label_->setStyle(style);
-      // need to update the data variance, since setStyle rebuilds the Drawable and doesn't pass along current data variance state; remove after SIM-8806 is fixed.
-      osgEarth::SetDataVarianceVisitor dv(osg::Object::DYNAMIC);
-      label_->accept(dv);
     }
 
     // apply the local altitude offset passed in
