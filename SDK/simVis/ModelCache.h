@@ -26,6 +26,7 @@
 #include <string>
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
+#include "osgEarth/Containers"
 #include "simCore/Common/Export.h"
 
 namespace osg {
@@ -157,8 +158,11 @@ private:
   simCore::Clock* clock_;
   /// Sequence updater is associated with nodes with osg::Sequence, to fix backwards time problems.  See simVis::Registry::sequenceTimeUpdater_
   osg::observer_ptr<SequenceTimeUpdater> sequenceTimeUpdater_;
+
+  /// Typedef for Cache class instance
+  typedef osgEarth::LRUCache<std::string, Entry> Cache;
   /// Maps string name to cache entry
-  std::map<std::string, Entry> cache_;
+  Cache cache_;
 
   /// Node that is used for when platforms do not exist as a placeholder object
   osg::ref_ptr<osg::Node> boxNode_;

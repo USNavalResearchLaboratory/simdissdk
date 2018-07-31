@@ -34,6 +34,7 @@
 #include "osgSim/LightPointNode"
 #include "osgSim/MultiSwitch"
 #include "osgUtil/Optimizer"
+#include "osgEarth/Containers"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
@@ -560,6 +561,7 @@ ModelCache::ModelCache()
   : shareArticulatedModels_(false),
     addLodNode_(true),
     clock_(NULL),
+    cache_(false, 30), // No need for thread safety, max of 30 elements
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
@@ -588,10 +590,11 @@ ModelCache::~ModelCache()
 osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsImage)
 {
   // first check the cache.
-  auto i = cache_.find(uri);
-  if (i != cache_.end())
+  Cache::Record record;
+  if (cache_.get(uri, record))
   {
-    const Entry& entry = i->second;
+    assert(record.valid()); // Guaranteed by get()
+    const Entry& entry = record.value();
     if (pIsImage)
       *pIsImage = entry.isImage_;
 
@@ -636,10 +639,11 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
 
 void ModelCache::saveToCache_(const std::string& uri, osg::Node* node, bool isArticulated, bool isImage)
 {
-  Entry& entry = cache_[uri];
-  entry.node_ = node;
-  entry.isImage_ = isImage;
-  entry.isArticulated_ = isArticulated;
+  Entry newEntry;
+  newEntry.node_ = node;
+  newEntry.isImage_ = isImage;
+  newEntry.isArticulated_ = isArticulated;
+  cache_.insert(uri, newEntry);
 }
 
 void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
@@ -666,15 +670,17 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
   }
 
   // first check the cache
-  const auto cacheIter = cache_.find(uri);
-  if (cacheIter != cache_.end())
+  Cache::Record record;
+  if (cache_.get(uri, record))
   {
+    assert(record.valid()); // Guaranteed by get()
+
     // If the callback is valid, then pass the model back immediately.  It's possible the
     // callback might not be valid in cases where someone is attempting to preload icons
     // for the sake of performance.  In that case we just return early because it's loaded.
     if (refCallback.valid())
     {
-      const Entry& entry = cacheIter->second;
+      const Entry& entry = record.value();
       osg::ref_ptr<osg::Node> node = entry.node_.get();
       // clone articulated nodes so we get independent articulations
       if (entry.isArticulated_ && !shareArticulatedModels_)
