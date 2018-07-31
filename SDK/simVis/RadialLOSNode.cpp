@@ -61,7 +61,8 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
 
   setMapNode(mapNode);
 
-  mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
+  if (mapNode && mapNode->getTerrain())
+    mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 }
 
 RadialLOSNode::~RadialLOSNode()
@@ -73,9 +74,10 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
   osgEarth::MapNode* oldMap = getMapNode();
   if (mapNode == oldMap)
     return;
-
-  oldMap->getTerrain()->removeTerrainCallback(callbackHook_.get());
-  mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
+  if (oldMap && oldMap->getTerrain())
+    oldMap->getTerrain()->removeTerrainCallback(callbackHook_.get());
+  if (mapNode && mapNode->getTerrain())
+    mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 
   GeoPositionNode::setMapNode(mapNode);
 #if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
