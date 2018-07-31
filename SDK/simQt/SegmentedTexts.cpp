@@ -892,7 +892,8 @@ namespace simQt {
   //------------------------------------------------------------------------------------------------------------------
 
   OrdinalTexts::OrdinalTexts()
-    : SegmentedTexts()
+    : SegmentedTexts(),
+      zone_(simCore::TIMEZONE_UTC)
   {
     makeSegments_();
   }
@@ -1073,7 +1074,8 @@ namespace simQt {
 
   //--------------------------------------------------------------------------
   MonthDayYearTexts::MonthDayYearTexts()
-    : SegmentedTexts()
+    : SegmentedTexts(),
+      zone_(simCore::TIMEZONE_UTC)
   {
     makeSegments_();
   }
