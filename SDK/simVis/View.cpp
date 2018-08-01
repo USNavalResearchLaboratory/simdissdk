@@ -613,6 +613,7 @@ View::View()
 
   // set global defaults for LineDrawable
   osgEarth::GLUtils::setGlobalDefaults(getCamera()->getOrCreateStateSet());
+  osgEarth::GLUtils::setPointSmooth(getCamera()->getOrCreateStateSet(), osg::StateAttribute::ON);
 }
 
 View::~View()
