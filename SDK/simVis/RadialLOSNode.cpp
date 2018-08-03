@@ -26,7 +26,6 @@
 #include "simNotify/Notify.h"
 #include "simVis/Constants.h"
 #include "simVis/osgEarthVersion.h"
-#include "simVis/PointSize.h"
 #include "simVis/Utils.h"
 #include "simVis/RadialLOSNode.h"
 
@@ -40,7 +39,6 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
   : GeoPositionNode(),
     visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
     obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
-    samplePointColor_(1.0f, 1.0f, 1.0f, 1.0f),
     active_(false)
 {
   callbackHook_ = new TerrainCallbackHook(this);
@@ -88,7 +86,6 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
   setCoordinate(coord_);
 }
 
-
 bool RadialLOSNode::setCoordinate(const simCore::Coordinate& coord)
 {
   if (!getMapNode())
@@ -113,7 +110,6 @@ bool RadialLOSNode::setCoordinate(const simCore::Coordinate& coord)
 
   return true;
 }
-
 
 void RadialLOSNode::setDataModel(const RadialLOS& los)
 {
@@ -179,7 +175,6 @@ void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
   }
 }
 
-
 void RadialLOSNode::setVisibleColor(const osg::Vec4& value)
 {
   if (value != visibleColor_)
@@ -189,22 +184,11 @@ void RadialLOSNode::setVisibleColor(const osg::Vec4& value)
   }
 }
 
-
 void RadialLOSNode::setObstructedColor(const osg::Vec4& value)
 {
   if (value != obstructedColor_)
   {
     obstructedColor_ = value;
-    refreshGeometry_();
-  }
-}
-
-
-void RadialLOSNode::setSamplePointColor(const osg::Vec4& value)
-{
-  if (value != samplePointColor_)
-  {
-    samplePointColor_ = value;
     refreshGeometry_();
   }
 }
@@ -250,13 +234,11 @@ void RadialLOSNode::refreshGeometry_()
     return;
   }
 
-  //const RadialLOS::Radial& r0 = radials.front();
   unsigned int numVerts = 1u + radials.size() * samplesPerRadial;
 
   osg::Vec3Array*        verts  = NULL;
   osg::Vec4Array*        colors = NULL;
   osg::DrawElementsUInt* tris   = NULL;
-  osg::DrawElementsUInt* points = NULL;
 
   if (rebuildGeometry)
   {
@@ -266,7 +248,6 @@ void RadialLOSNode::refreshGeometry_()
     osg::StateSet* stateSet = new osg::StateSet();
     stateSet->setRenderBinDetails(0, BIN_TRAVERSAL_ORDER_SIMSDK);
     stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false), osg::StateAttribute::ON);
-    PointSize::setValues(stateSet, 2.f, osg::StateAttribute::ON);
 
     // set up and pre-allocate the geometry arrays:
     osg::Geometry* geom = new osg::Geometry();
@@ -285,25 +266,6 @@ void RadialLOSNode::refreshGeometry_()
     geom->addPrimitiveSet(tris);
 
     geode_->addDrawable(geom);
-
-
-    // the points overlay geometry.
-    osg::Geometry* pointsGeom = new osg::Geometry();
-    pointsGeom->setStateSet(stateSet);
-    pointsGeom->setDataVariance(osg::Object::DYNAMIC);
-    pointsGeom->setUseVertexBufferObjects(true);
-
-    // shares the same vert array
-    pointsGeom->setVertexArray(verts);
-
-    osg::Vec4Array* pointsColors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-    (*pointsColors)[0] = samplePointColor_;
-    pointsGeom->setColorArray(pointsColors);
-
-    points = new osg::DrawElementsUInt(GL_POINTS);
-    pointsGeom->addPrimitiveSet(points);
-
-    geode_->addDrawable(pointsGeom);
   }
   else
   {
@@ -318,12 +280,6 @@ void RadialLOSNode::refreshGeometry_()
     // prepare to update the triangle colors:
     colors = dynamic_cast<osg::Vec4Array*>(geom->getColorArray());
     colors->dirty();
-
-    // update the sample point color:
-    osg::Geometry* pointsGeom = geode_->getDrawable(1)->asGeometry();
-    osg::Vec4Array* samplePointColors = dynamic_cast<osg::Vec4Array*>(pointsGeom->getColorArray());
-    (*samplePointColors)[0] = samplePointColor_;
-    samplePointColors->dirty();
   }
 
   // go through the radials and generate verts and colors.
@@ -382,9 +338,6 @@ void RadialLOSNode::refreshGeometry_()
             tris->push_back(1 + (radialIndex     * samplesPerRadial) + (sampleIndex + 1));
           }
         }
-
-        // the point primset.
-        points->push_back(1 + (radialIndex * samplesPerRadial) + sampleIndex);
       }
 
       vertIndex++;
