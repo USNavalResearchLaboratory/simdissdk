@@ -183,7 +183,9 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
     }
 
     // apply the local altitude offset passed in
-    label_->setLocalOffset(osg::Vec3f(0.0f, 0.0f, zOffset));
+    const osg::Vec3d labelOffset(0.0, 0.0, zOffset);
+    if (label_->getLocalOffset() != labelOffset)
+      label_->setLocalOffset(labelOffset);
   }
 
   lastCommonPrefs_ = commonPrefs;

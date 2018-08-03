@@ -846,9 +846,12 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
 
-  // Note that the brightness calculation is low cost and we do not check PB_FIELD_CHANGED on it
-  const float brightnessMagnitude = prefs.brightness() * BRIGHTNESS_TO_AMBIENT;
-  brightnessUniform_->set(osg::Vec4f(brightnessMagnitude, brightnessMagnitude, brightnessMagnitude, 1.f));
+  // Note that the brightness calculation is low cost, but setting brightness uniform is not necessarily low-cost, so we do check PB_FIELD_CHANGED
+  if (PB_FIELD_CHANGED(&prefs, &lastPrefs_, brightness))
+  {
+    const float brightnessMagnitude = prefs.brightness() * BRIGHTNESS_TO_AMBIENT;
+    brightnessUniform_->set(osg::Vec4f(brightnessMagnitude, brightnessMagnitude, brightnessMagnitude, 1.f));
+  }
 
   if (needsBoundsUpdate)
     updateBounds_();
