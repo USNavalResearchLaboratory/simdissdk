@@ -125,11 +125,11 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     depthBuffer_(false),
     depthBufferOverride_(DEPTHBUFFER_IGNORE_OVERRIDE),
     extrudedHeight_(0.0),
-    deferringStyleUpdate_(false),
     altitude_(0.),
     altOffset_(0.),
-    altMode_(ALTITUDE_NONE)
-{
+    altMode_(ALTITUDE_NONE),
+    deferringStyleUpdate_(false)
+  {
   if (osgNode_.valid())
   {
     osgNode_->setNodeMask(simVis::DISPLAY_MASK_GOG);
@@ -918,19 +918,19 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::Annotation::GeoPosition
   switch (altMode_)
   {
   case ALTITUDE_NONE:
-    pos.altitudeMode() = osgEarth::AltitudeMode::ALTMODE_ABSOLUTE;
+    pos.altitudeMode() = osgEarth::ALTMODE_ABSOLUTE;
     pos.alt() = altitude_ + altOffset_;
     break;
   case ALTITUDE_GROUND_RELATIVE:
-    pos.altitudeMode() = osgEarth::AltitudeMode::ALTMODE_RELATIVE;
+    pos.altitudeMode() = osgEarth::ALTMODE_RELATIVE;
     pos.alt() = altitude_ + altOffset_ + altitudeAdjustment;
     break;
   case ALTITUDE_GROUND_CLAMPED:
-    pos.altitudeMode() = osgEarth::AltitudeMode::ALTMODE_RELATIVE;
+    pos.altitudeMode() = osgEarth::ALTMODE_RELATIVE;
     pos.alt() = altitudeAdjustment;
     break;
   case ALTITUDE_EXTRUDE:
-    pos.altitudeMode() = osgEarth::AltitudeMode::ALTMODE_RELATIVE;
+    pos.altitudeMode() = osgEarth::ALTMODE_RELATIVE;
     pos.alt() = altitude_ + altOffset_ + altitudeAdjustment;
     extrude = true;
     break;
