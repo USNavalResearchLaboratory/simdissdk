@@ -780,6 +780,12 @@ message PlatformPrefs {
 
   /// The polygonStipple rendering option, a value between 1 and 9 corresponding to 9 SIMDIS stipple patterns
   optional uint32 polygonStipple = 59;
+
+  /// The color to use for visible horizon line of sight areas
+  optional fixed32 visibleLosColor = 64 [default = 0x00FF0080];
+
+  /// The color to use for obstructed horizon line of sight areas
+  optional fixed32 obstructedLosColor = 65 [default = 0xFF000080];
 };
 
 /// timed update to platform prefs; commands override prefs

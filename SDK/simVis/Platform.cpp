@@ -882,6 +882,22 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     return;
   }
 
+  // Update the visible color if it has changed
+  if (prefs.has_visibleloscolor())
+  {
+    osg::Vec4f color = ColorUtils::RgbaToVec4(prefs.visibleloscolor());
+    if (color != los->getVisibleColor())
+      los->setVisibleColor(color);
+  }
+
+  // Update the obstructed color if it has changed
+  if (prefs.has_obstructedloscolor())
+  {
+    osg::Vec4f color = ColorUtils::RgbaToVec4(prefs.obstructedloscolor());
+    if (color != los->getObstructedColor())
+      los->setObstructedColor(color);
+  }
+
   double rangeDist = 0;
   double altDist = 0;
 
