@@ -786,6 +786,12 @@ message PlatformPrefs {
 
   /// The color to use for obstructed horizon line of sight areas
   optional fixed32 obstructedLosColor = 65 [default = 0xFF000080];
+
+  /// The range resolution to use for line of sight calculations, in meters
+  optional double losRangeResolution = 66 [default = 1000.0];
+
+  /// The azimuthal resolution to use for line of sight calculations, in degrees
+  optional double losAzimuthalResolution = 67 [default = 15.0];
 };
 
 /// timed update to platform prefs; commands override prefs

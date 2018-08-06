@@ -64,10 +64,6 @@ static const double HORIZON_RANGE_STEP = 100;
 // Distance in meters that a platform drawing optical or radio horizon must move vertically before the horizon is recalculated
 static const double HORIZON_ALT_STEP = 10;
 
-// Colors to use when drawing optical or radio horizon
-static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0.f, 1.f, 0.f, 0.6f); // Translucent green
-static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1.f, 0.f, 0.f, 0.6f); // Translucent red
-
 // this is used as a sentinel value for an platform that does not (currently) have a valid position
 static const simData::PlatformUpdate NULL_PLATFORM_UPDATE = simData::PlatformUpdate();
 
@@ -882,6 +878,9 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     return;
   }
 
+  // Deactivate temporarily to prevent unnecessary calculations while updating LOS fields
+  los->setActive(false);
+
   // Update the visible color if it has changed
   if (prefs.has_visibleloscolor())
   {
@@ -896,6 +895,24 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     osg::Vec4f color = ColorUtils::RgbaToVec4(prefs.obstructedloscolor());
     if (color != los->getObstructedColor())
       los->setObstructedColor(color);
+  }
+
+  // Update the range resolution if it has changed
+  if (prefs.has_losrangeresolution())
+  {
+    const auto& rr = los->getRangeResolution();
+    const double val = rr.getValue();
+    if (val > 0.0 && val != prefs.losrangeresolution())
+      los->setRangeResolution(Distance(prefs.losrangeresolution(), osgEarth::Units::METERS));
+  }
+
+  // Update the azimuthal resolution if it has changed
+  if (prefs.has_losazimuthalresolution())
+  {
+    const auto& ar = los->getAzimuthalResolution();
+    const double val = ar.getValue();
+    if (val > 0.0 && val != prefs.losazimuthalresolution())
+      los->setAzimuthalResolution(Angle(prefs.losazimuthalresolution(), osgEarth::Units::DEGREES));
   }
 
   double rangeDist = 0;
@@ -923,18 +940,18 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     rangeDist = HORIZON_RANGE_STEP + 1;
   }
 
-  // Don't update if horizon is already active and platform is within acceptable range of last horizon center
-  if (HORIZON_ALT_STEP > altDist && HORIZON_RANGE_STEP > rangeDist && los->getActive())
+  // Don't update if platform is within acceptable range of last horizon center
+  if (HORIZON_ALT_STEP > altDist && HORIZON_RANGE_STEP > rangeDist)
+  {
+    // Reactivate after updating LOS fields
+    los->setActive(true);
     return;
-
-  // Deactivate temporarily to prevent unnecessary calculations while updating los fields
-  los->setActive(false);
+  }
 
   los->setCoordinate(getLocator()->getCoordinate());
-
   los->setMaxRange(Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
-  los->setAzimuthalResolution(Angle(5, osgEarth::Units::DEGREES));
 
+  // Reactivate after updating LOS fields
   los->setActive(true);
 }
 
