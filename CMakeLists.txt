@@ -76,6 +76,9 @@ test_big_endian(SDK_BIG_ENDIAN)
 include(CMakeModules/TestTimespec.cmake)
 test_timespec(SDK_TIMESPEC)
 
+# Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
+include(CMakeModules/AddExecutablePostfix.cmake)
+
 # Set architecture identifiers
 string(TOUPPER ${BUILD_SYSTEM_ARCH} ARCH)
 add_definitions(-D${ARCH})
