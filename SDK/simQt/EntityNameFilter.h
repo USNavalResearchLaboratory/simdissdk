@@ -82,6 +82,9 @@ private slots:
   void setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression);
 
 private:
+  /// Recursively determines if the specified index or any of its children pass the filter
+  bool acceptIndex_(const QModelIndex& idx) const;
+
   // reference to the entity tree model for looking up entity name
   AbstractEntityTreeModel* model_;
   /// regular expression filter to apply to entity name

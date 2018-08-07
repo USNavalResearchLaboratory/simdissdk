@@ -52,8 +52,8 @@ bool EntityNameFilter::acceptEntity(simData::ObjectId id) const
 {
   if (model_ == NULL)
     return false;
-  QString name = model_->data(model_->index(id)).toString();
-  return regExp_->match(name.toStdString());
+
+  return acceptIndex_(model_->index(id));
 }
 
 QWidget* EntityNameFilter::widget(QWidget* newWidgetParent) const
@@ -127,6 +127,28 @@ void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity 
   }
   if (changed)
     emit filterUpdated();
+}
+
+bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
+{
+  // Check if this index passes the filter, return true if it does
+  QString name = model_->data(index).toString();
+  bool rv = regExp_->match(name.toStdString());
+  if (rv)
+    return rv;
+
+  // Index didn't pass, check its children
+  int numChildren = model_->rowCount(index);
+  for (int i = 0; i < numChildren; ++i)
+  {
+    const QModelIndex& childIdx = index.child(i, 0);
+    // Check if this child index (or any of its children)
+    // passes the filter, return true if any of them pass
+    rv = acceptIndex_(childIdx);
+    if (rv)
+      break;
+  }
+  return rv;
 }
 
 }
