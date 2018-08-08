@@ -264,8 +264,6 @@ signals:
   void filterEdited(const simData::CategoryFilter& filter);
 
 private slots:
-  /** Expand the given index from the model if filtering */
-  void expandDueToModel_(const QModelIndex& parentIndex, int to, int from);
   /** Expand the given index from the proxy if filtering */
   void expandDueToProxy_(const QModelIndex& parentIndex, int to, int from);
   /** Conditionally expand tree after filter edited. */

@@ -1802,9 +1802,7 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(treeView_, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu_(QPoint)));
   connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), this, SIGNAL(filterChanged(simData::CategoryFilter)));
   connect(treeModel_, SIGNAL(filterEdited(simData::CategoryFilter)), this, SIGNAL(filterEdited(simData::CategoryFilter)));
-  connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToModel_(QModelIndex, int, int)));
   connect(proxy_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToProxy_(QModelIndex, int, int)));
-  connect(proxy_, SIGNAL(modelReset()), treeView_, SLOT(expandAll()));
   connect(search, SIGNAL(textChanged(QString)), this, SLOT(expandAfterFilterEdited_(QString)));
   connect(search, SIGNAL(textChanged(QString)), proxy_, SLOT(setFilterText(QString)));
   connect(itemDelegate, SIGNAL(expandClicked(QModelIndex)), this, SLOT(toggleExpanded_(QModelIndex)));
@@ -1822,7 +1820,6 @@ void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
 {
   treeModel_->setDataStore(dataStore);
   counter_->setFilter(categoryFilter());
-  treeView_->expandAll();
 }
 
 const simData::CategoryFilter& CategoryFilterWidget2::categoryFilter() const
@@ -1874,9 +1871,9 @@ void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
 {
   if (filterText.isEmpty())
   {
-    // Just removed the last character of a search so expand all to make everything visible
+    // Just removed the last character of a search so collapse all to hide everything
     if (activeFiltering_)
-      treeView_->expandAll();
+      treeView_->collapseAll();
 
     activeFiltering_ = false;
   }
@@ -1890,21 +1887,13 @@ void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
   }
 }
 
-void CategoryFilterWidget2::expandDueToModel_(const QModelIndex& parentIndex, int to, int from)
+void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, int to, int from)
 {
+  // Only expand when we're actively filtering, because we want
+  // to see rows that match the active filter as they show up
   if (!activeFiltering_)
     return;
 
-  bool isCategory = !parentIndex.isValid();
-  if (isCategory)
-    return;
-
-  if (!treeView_->isExpanded(parentIndex))
-    proxy_->resetFilter();
-}
-
-void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, int to, int from)
-{
   bool isCategory = !parentIndex.isValid();
   if (isCategory)
   {
