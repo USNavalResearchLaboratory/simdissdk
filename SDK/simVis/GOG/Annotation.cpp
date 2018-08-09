@@ -46,11 +46,17 @@ GogNodeInterface* TextAnnotation::deserialize(
   osgEarth::Annotation::LabelNode* label = NULL;
   label = new osgEarth::Annotation::LabelNode(text, p.style_);
   if (nodeType == GOGNODE_GEOGRAPHIC)
+  {
     label->setPosition(p.getMapPosition());
-
-  label->setMapNode(mapNode);
+    label->setMapNode(mapNode);
+  }
+  else
+  {
+    osg::PositionAttitudeTransform* trans = label->getPositionAttitudeTransform();
+    if (trans != NULL)
+      trans->setPosition(p.getLTPOffset());
+  }
   label->setDynamic(true);
-  label->setLocalOffset(p.getLTPOffset());
   label->setPriority(8000);
 
   // in overhead mode, clamp the label's position to the ellipsoid.

@@ -113,24 +113,14 @@ GogNodeInterface* Points::deserializeImpl_(const osgEarth::Config&  conf,
     {
       LocalGeometryNode* node = new LocalGeometryNode(p.geom_.get(), p.style_);
       node->setMapNode(mapNode);
-      node->setPosition(p.getMapPosition());
-      // if only a single point, offset is already built in, since center will be the same as the point postion
-      if (p.geom_.valid() && p.geom_->size() > 1)
-        node->setLocalOffset(p.getLTPOffset());
-      osg::Quat yaw(p.localHeadingOffset_->as(Units::RADIANS), -osg::Vec3(0, 0, 1));
-      osg::Quat pitch(p.localPitchOffset_->as(Units::RADIANS), osg::Vec3(1, 0, 0));
-      osg::Quat roll(p.localRollOffset_->as(Units::RADIANS), osg::Vec3(0, 1, 0));
-      node->setLocalRotation(roll * pitch * yaw);
-
+      Utils::applyLocalGeometryOffsets(*node, p, nodeType, p.geom_->size() == 1);
       rv = new LocalGeometryNodeInterface(node, metaData);
     }
   }
   else // if ( nodeType == GOGNODE_HOSTED )
   {
     LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
-    // if only a single point, offset is already built in, since center will be the same as the point postion
-    if (p.geom_.valid() && p.geom_->size() > 1)
-      node->setLocalOffset(p.getLTPOffset());
+    // note no offset to apply for points, since each point inherently defines its own offsets when hosted
     rv = new LocalGeometryNodeInterface(node, metaData);
   }
 

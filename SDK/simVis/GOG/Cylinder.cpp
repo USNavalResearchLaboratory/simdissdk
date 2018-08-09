@@ -94,13 +94,12 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     {
       sideNode = new LocalGeometryNode(shape.get(), style);
       sideNode->setMapNode(mapNode);
-      sideNode->setPosition(p.getMapPosition());
     }
     else
     {
       sideNode = new HostedLocalGeometryNode(shape.get(), style);
     }
-    sideNode->setLocalOffset(p.getLTPOffset());
+    Utils::applyLocalGeometryOffsets(*sideNode, p, nodeType);
     g->addChild(sideNode);
   }
 
@@ -118,7 +117,6 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     {
       topCapNode = new LocalGeometryNode(shape.get(), style);
       topCapNode->setMapNode(mapNode);
-      topCapNode->setPosition(p.getMapPosition());
     }
     else
     {
@@ -127,7 +125,20 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     // apply a local offset to get the cap node to the correct height
     osg::Vec3d localOffset = p.getLTPOffset();
     localOffset[2] += heightValue;
-    topCapNode->setLocalOffset(localOffset);
+    Utils::applyLocalGeometryOffsets(*topCapNode, p, nodeType);
+    // offset the top cap node's altitude by the height
+    if (nodeType == GOGNODE_GEOGRAPHIC)
+    {
+      osgEarth::GeoPoint pos = topCapNode->getPosition();
+      pos.alt() += heightValue;
+      topCapNode->setPosition(pos);
+    }
+    else
+    {
+      osg::Vec3d pos = topCapNode->getPositionAttitudeTransform()->getPosition();
+      pos.z() += heightValue;
+      topCapNode->getPositionAttitudeTransform()->setPosition(pos);
+    }
 
     g->addChild(topCapNode);
   }
@@ -146,13 +157,12 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     {
       bottomCapNode = new LocalGeometryNode(shape.get(), style);
       bottomCapNode->setMapNode(mapNode);
-      bottomCapNode->setPosition(p.getMapPosition());
     }
     else
     {
       bottomCapNode = new HostedLocalGeometryNode(shape.get(), style);
     }
-    bottomCapNode->setLocalOffset(p.getLTPOffset());
+    Utils::applyLocalGeometryOffsets(*bottomCapNode, p, nodeType);
 
     // Set the frontface on bottom to clockwise, since we cannot easily rewind vertices
     bottomCapNode->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);

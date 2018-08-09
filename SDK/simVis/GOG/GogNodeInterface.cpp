@@ -128,8 +128,9 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     altitude_(0.),
     altOffset_(0.),
     altMode_(ALTITUDE_NONE),
+    hasMapNode_(false),
     deferringStyleUpdate_(false)
-  {
+{
   if (osgNode_.valid())
   {
     osgNode_->setNodeMask(simVis::DISPLAY_MASK_GOG);
@@ -217,8 +218,12 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
 
   // altitude offset
   if (parent.hasValue("3d offsetalt"))
-    setAltOffset(parent.value<double>("3d offsetalt", 0.));
-
+  {
+    double altOffset = parent.value<double>("3d offsetalt", 0.);
+    // convert from gog file altitude units to meters; gog file default units are ft, but file can specify different units
+    altOffset = units.altitudeUnits_.convertTo(osgEarth::Units::METERS, altOffset);
+    setAltOffset(altOffset);
+  }
   // ALTITUDE mode, handles extrude attribute, which requires a specific AltitudeSymbol
   AltitudeMode altMode = ALTITUDE_NONE;
   if (simCore::caseCompare(parent.value("altitudemode"), "relativetoground") == 0)
@@ -439,7 +444,11 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 
 int GogNodeInterface::getAltitudeMode(AltitudeMode& altMode) const
 {
+  if (!hasMapNode_)
+    return 1;
+
   bool isValid = false;
+
   int rv = getExtruded(isValid);
   if (rv == 0 && isValid)
   {
@@ -914,35 +923,57 @@ void GogNodeInterface::fireDrawChanged_() const
 void GogNodeInterface::setGeoPositionAltitude_(osgEarth::Annotation::GeoPositionNode& node, double altitudeAdjustment)
 {
   bool extrude = false;
-  osgEarth::GeoPoint pos = node.getPosition();
+  osgEarth::AltitudeMode mode = osgEarth::ALTMODE_ABSOLUTE;
+  double altitude = altitude_ + altOffset_ + altitudeAdjustment;
+
   switch (altMode_)
   {
   case ALTITUDE_NONE:
-    pos.altitudeMode() = osgEarth::ALTMODE_ABSOLUTE;
-    pos.alt() = altitude_ + altOffset_;
     break;
   case ALTITUDE_GROUND_RELATIVE:
-    pos.altitudeMode() = osgEarth::ALTMODE_RELATIVE;
-    pos.alt() = altitude_ + altOffset_ + altitudeAdjustment;
+    mode = osgEarth::ALTMODE_RELATIVE;
     break;
   case ALTITUDE_GROUND_CLAMPED:
-    pos.altitudeMode() = osgEarth::ALTMODE_RELATIVE;
-    pos.alt() = altitudeAdjustment;
+    mode = osgEarth::ALTMODE_RELATIVE;
+    altitude = altitudeAdjustment;
     break;
   case ALTITUDE_EXTRUDE:
-    pos.altitudeMode() = osgEarth::ALTMODE_RELATIVE;
-    pos.alt() = altitude_ + altOffset_ + altitudeAdjustment;
+    mode = osgEarth::ALTMODE_RELATIVE;
     extrude = true;
     break;
   }
-  node.setPosition(pos);
+
+  // hosted shape must apply altitude to the attitude transform
+  if (!hasMapNode_)
+  {
+    osg::Vec3d hostPos = node.getPositionAttitudeTransform()->getPosition();
+    hostPos.z() = altitude;
+    node.getPositionAttitudeTransform()->setPosition(hostPos);
+  }
+  else // geo nodes apply altitude directly to the node's position
+  {
+    osgEarth::GeoPoint pos = node.getPosition();
+    pos.altitudeMode() = mode;
+    pos.alt() = altitude;
+    node.setPosition(pos);
+  }
   // make sure to update any extrusion
   setExtrude(extrude);
 }
 
+void GogNodeInterface::initializeFromGeoPositionNode_(const osgEarth::Annotation::GeoPositionNode& node)
+{
+  hasMapNode_ = (node.getMapNode() != NULL);
+  // use node position if there is a map node
+  if (hasMapNode_)
+    altitude_ = node.getPosition().alt();
+  else // otherwise, use the attitude transform position
+    altitude_ = node.getPositionAttitudeTransform()->getPosition().z();
+}
+
 bool GogNodeInterface::hasValidAltitudeMode() const
 {
-  // The combinations here match those applied in the setAltitudeMode or initializeAltitude_ methods, since those are the known valid combinations.
+  // The combinations here match those applied in the setAltitudeMode or initializeAltitudeSymbol_ methods, since those are the known valid combinations.
 
   // check for altitude mode ALTITUDE_EXTRUDE
   if (style_.has<osgEarth::Symbology::ExtrusionSymbol>())
@@ -994,7 +1025,7 @@ bool GogNodeInterface::getMetaDataFlag_(const std::string& flag, std::string& me
   return true;
 }
 
-void GogNodeInterface::initializeAltitude_()
+void GogNodeInterface::initializeAltitudeSymbol_()
 {
   osgEarth::Symbology::AltitudeSymbol* alt = style_.getOrCreate<osgEarth::Symbology::AltitudeSymbol>();
   alt->clamping() = osgEarth::Symbology::AltitudeSymbol::CLAMP_TO_TERRAIN;
@@ -1017,17 +1048,6 @@ void GogNodeInterface::initializeLineColor_()
     lineColor_ = style_.getSymbol<osgEarth::Symbology::LineSymbol>()->stroke()->color();
   else
     lineColor_ = osgEarth::Symbology::Color::Red; // default to red
-}
-
-void GogNodeInterface::setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters)
-{
-  if (!node)
-    return;
-  osg::Vec3d offset = node->getLocalOffset();
-  if (offset[2] == altOffsetMeters)
-    return;
-  offset[2] = altOffsetMeters;
-  node->setLocalOffset(offset);
 }
 
 bool GogNodeInterface::isFillable_(simVis::GOG::GogShape shape) const
@@ -1086,8 +1106,8 @@ bool GogNodeInterface::fillOnlyWhenExtruded_(simVis::GOG::GogShape shape) const
 const osgEarth::Symbology::Style& GogNodeInterface::getStyle_() const
 {
   return style_;
-
 }
+
 void GogNodeInterface::beginStyleUpdates_()
 {
   // Avoid nested begin/ends
@@ -1170,11 +1190,13 @@ void AnnotationNodeInterface::setStyle_(const osgEarth::Symbology::Style& style)
 
 FeatureNodeInterface::FeatureNodeInterface(osgEarth::Annotation::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(featureNode, metaData),
-  featureNode_(featureNode)
+    featureNode_(featureNode)
 {
   if (featureNode_.valid() && featureNode_->getFeature())
+  {
     style_ = *(featureNode_->getFeature()->style());
-
+    hasMapNode_ = true; // feature nodes always have a map node
+  }
   initializeFillColor_();
   initializeLineColor_();
 
@@ -1452,9 +1474,9 @@ LocalGeometryNodeInterface::LocalGeometryNodeInterface(osgEarth::Annotation::Loc
 {
   if (localNode_.valid())
   {
-    altitude_ = localNode->getPosition().alt();
+    initializeFromGeoPositionNode_(*localNode);
     style_ = localNode_->getStyle();
-    initializeAltitude_();
+    initializeAltitudeSymbol_();
   }
 
   initializeFillColor_();
@@ -1523,8 +1545,8 @@ LabelNodeInterface::LabelNodeInterface(osgEarth::Annotation::LabelNode* labelNod
   if (labelNode_.valid())
   {
     style_ = labelNode_->getStyle();
-    altitude_ = labelNode_->getPosition().alt();
-    initializeAltitude_();
+    initializeFromGeoPositionNode_(*labelNode);
+    initializeAltitudeSymbol_();
   }
   initializeFillColor_();
   initializeLineColor_();
@@ -1540,8 +1562,8 @@ LabelNodeInterface::LabelNodeInterface(osgEarth::Annotation::PlaceNode* placeNod
   if (labelNode_.valid())
   {
     style_ = labelNode_->getStyle();
-    altitude_ = labelNode_->getPosition().alt();
-    initializeAltitude_();
+    initializeFromGeoPositionNode_(*placeNode);
+    initializeAltitudeSymbol_();
   }
   initializeFillColor_();
   initializeLineColor_();
@@ -1657,8 +1679,8 @@ CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::An
   // height is from the side node's extrusion height, altitude is from side node's altitude
   if (sideNode_.valid() && sideNode_->getStyle().has<osgEarth::Annotation::ExtrusionSymbol>())
   {
-      height_ = sideNode_->getStyle().getSymbol<osgEarth::Annotation::ExtrusionSymbol>()->height().value();
-      altitude_ = sideNode_->getPosition().alt();
+    height_ = sideNode_->getStyle().getSymbol<osgEarth::Annotation::ExtrusionSymbol>()->height().value();
+    initializeFromGeoPositionNode_(*sideNode);
   }
 
   if (topCapNode_.valid())
@@ -1667,7 +1689,7 @@ CylinderNodeInterface::CylinderNodeInterface(osg::Group* groupNode, osgEarth::An
     style_ = topCapNode_->getStyle();
     // fill state is determined by the cap node's fill state
     filled_ = topCapNode_->getStyle().has<osgEarth::Annotation::PolygonSymbol>();
-    initializeAltitude_();
+    initializeAltitudeSymbol_();
   }
 
   initializeFillColor_();
@@ -1750,11 +1772,11 @@ ArcNodeInterface::ArcNodeInterface(osg::Group* groupNode, osgEarth::Annotation::
     fillNode_(fillNode)
 {
   if (shapeNode_.valid())
-    altitude_ = shapeNode_->getPosition().alt();
+    initializeFromGeoPositionNode_(*shapeNode);
 
   style_ = shapeNode_->getStyle();
 
-  initializeAltitude_();
+  initializeAltitudeSymbol_();
   initializeLineColor_();
 
   osg::Node::NodeMask mask = simVis::DISPLAY_MASK_NONE;

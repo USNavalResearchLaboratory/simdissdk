@@ -55,17 +55,14 @@ GogNodeInterface* Circle::deserialize(const osgEarth::Config&  conf,
 
     node = new osgEarth::Annotation::LocalGeometryNode(shape, p.style_);
     node->setMapNode(mapNode);
-    Utils::applyLocalGeometryOffsets(*node, p);
   }
   else
-  {
     node = new HostedLocalGeometryNode(shape, p.style_);
-    node->setLocalOffset(p.getLTPOffset());
-  }
 
   GogNodeInterface* rv = NULL;
   if (node)
   {
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new LocalGeometryNodeInterface(node, metaData);
     rv->applyConfigToStyle(conf, p.units_);
   }

@@ -71,14 +71,14 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const osgEarth::Config&  con
     {
       LocalGeometryNode* node = new LocalGeometryNode(p.geom_.get(), p.style_);
       node->setMapNode(mapNode);
-      Utils::applyLocalGeometryOffsets(*node, p);
+      Utils::applyLocalGeometryOffsets(*node, p, nodeType);
       rv = new LocalGeometryNodeInterface(node, metaData);
     }
   }
   else // if ( nodeType == GOGNODE_HOSTED )
   {
     LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
-    node->setLocalOffset(p.getLTPOffset());
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new LocalGeometryNodeInterface(node, metaData);
   }
 

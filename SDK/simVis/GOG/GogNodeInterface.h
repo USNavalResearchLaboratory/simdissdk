@@ -382,7 +382,7 @@ protected: // methods
   virtual void adjustAltitude_() = 0;
 
   /** Initialize altitude symbol to clamp per vertex to work properly with altitude modes. Will have no effect unless called after style_ object has been assigned */
-  void initializeAltitude_();
+  void initializeAltitudeSymbol_();
 
   /** Initialize fill color. Will have no effect unless called after style_ object has been assigned */
   void initializeFillColor_();
@@ -390,17 +390,10 @@ protected: // methods
   /** Initialize line color. Will have no effect unless called after style_ object has been assigned */
   void initializeLineColor_();
 
-  /** Helper method to update the altitude component of a local geometry node's local offset */
-  void setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters);
-
-  /**
-  * Begin batched updates to the Style, subsequent sets will not apply the style to the GOG
-  */
+  /** Begin batched updates to the Style, subsequent sets will not apply the style to the GOG */
   void beginStyleUpdates_();
 
-  /**
-  * End batched updates to the Style, subsequent sets will apply the style to the GOG
-  */
+  /** End batched updates to the Style, subsequent sets will apply the style to the GOG */
   void endStyleUpdates_();
 
   /**
@@ -418,6 +411,9 @@ protected: // methods
   */
   void setGeoPositionAltitude_(osgEarth::Annotation::GeoPositionNode& node, double altitudeAdjustment);
 
+  /** Helper method for initializeing hasMapNode_ and altitude_ from the specified GeoPosition node. */
+  void initializeFromGeoPositionNode_(const osgEarth::Annotation::GeoPositionNode& node);
+
 protected: // data
   osg::ref_ptr<osg::Node> osgNode_;  ///< reference to the basic osg::Node. Keep in ref_ptr so this instance will hold on the memory even if it's removed from the scene
   simVis::GOG::GogMetaData metaData_;  ///< meta data returned by the Parser
@@ -433,6 +429,7 @@ protected: // data
   double altitude_; ///< cache the original altitude, in meters
   double altOffset_; ///< cache the altitude offset, in meters
   AltitudeMode altMode_; ///< cache the altitude mode
+  bool hasMapNode_; ///< indicates if this shape has a map node
 
 private:
 

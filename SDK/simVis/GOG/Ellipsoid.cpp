@@ -88,17 +88,14 @@ GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
     node->getPositionAttitudeTransform()->addChild(shape);
     node->setStyle(p.style_);
     node->setMapNode(mapNode);
-    Utils::applyLocalGeometryOffsets(*node, p);
   }
   else
-  {
     node = new HostedLocalGeometryNode(shape, p.style_);
-    node->setLocalOffset(p.getLTPOffset());
-  }
 
   GogNodeInterface* rv = NULL;
   if (node)
   {
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new SphericalNodeInterface(node, metaData);
     rv->applyConfigToStyle(conf, p.units_);
   }

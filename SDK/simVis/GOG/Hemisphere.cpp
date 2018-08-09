@@ -66,14 +66,12 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
     node->setLocalRotation(roll * pitch * yaw);
   }
   else
-  {
     node = new HostedLocalGeometryNode(shape, p.style_);
-  }
 
   GogNodeInterface* rv = NULL;
   if (node)
   {
-    node->setLocalOffset(p.getLTPOffset());
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new SphericalNodeInterface(node, metaData);
     rv->applyConfigToStyle(conf, p.units_);
   }

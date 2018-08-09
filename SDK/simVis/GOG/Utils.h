@@ -55,10 +55,12 @@ namespace simVis { namespace GOG
 
       /**
       * Apply local geometry offsets to the node as defined in the ParserData, including any position and orientation offsets
-      * @param node  shape node the receive offsets
+      * @param node  shape node updating offsets
       * @param data  parsed offset data to apply to the shape node
+      * @param nodeType indicates if GOG is hosted of geographic centered
+      * @param ignoreOffset if true, get map position without any offset applied
       */
-      static void applyLocalGeometryOffsets(osgEarth::Annotation::LocalGeometryNode& node, ParserData& data);
+      static void applyLocalGeometryOffsets(osgEarth::Annotation::LocalGeometryNode& node, ParserData& data, GOGNodeType nodeType, bool ignoreOffset = false);
 
       /**
       * Determines if the specified shape's geometry can be serialized directly into Overlay format. This is dependent on how the shapes
@@ -269,9 +271,10 @@ namespace simVis { namespace GOG
 
     /**
      * Gets the absolute map position parsed for the current GOG
+     * @param ignoreOffset if true will ignore any LTPOffset if returning defined reference point
      * @return A map point (valid only is hasMapPosition()==true)
      */
-    osgEarth::GeoPoint getMapPosition() const;
+    osgEarth::GeoPoint getMapPosition(bool ignoreOffset = false) const;
 
     /**
      * Gets the offset of the GOG from a local tangent plane (in meters)
@@ -329,7 +332,6 @@ namespace simVis { namespace GOG
     unsigned int                         locatorComps_;  ///< Combination of heading, pitch and roll
 
     osgEarth::optional<osg::Vec3f>       scale_; ///< Scale of the GOG
-    osgEarth::optional<osgEarth::Distance> localAltOffset_;  ///< Altitude offset of the GOG
     osgEarth::optional<osgEarth::Angle>  localHeadingOffset_; ///< Heading offset of the GOG
     osgEarth::optional<osgEarth::Angle>  localPitchOffset_; ///< Pitch offset of the GOG
     osgEarth::optional<osgEarth::Angle>  localRollOffset_; ///< Roll offset of the GOG
