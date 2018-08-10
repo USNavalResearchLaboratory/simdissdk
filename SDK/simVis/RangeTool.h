@@ -218,7 +218,7 @@ namespace simVis
 
       /**
        * Converts simCore::Vec3 to osg::Vec3d
-       *@param point the data to convert
+       * @param point the data to convert
        * @return osg::Vec3d of the given point
        */
       ///@return osg:Vec3d of the given point
@@ -231,11 +231,21 @@ namespace simVis
         double               altOffset,
         osg::Vec3Array*      verts);
 
+      /**
+       * Generate a list of lat/lon points between lla0 and lla1 at intervals of at most distDelta.  List does not include lla0 or lla1.
+       * If lla0 == lla1, list will be empty.
+       * @param lla0 Start point to generate intermediate points from
+       * @param lla1 End point to generate intermediate points towards
+       * @param distDelta Maximum distance between intermediate points.  Actual distance between may be lower.
+       * @param[out] llaPointsOut Vector of intermediate points.  All points have an altitude of 0
+       */
+      void intermediatePoints(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double distDelta, std::vector<simCore::Vec3>& llaPointsOut) const;
+
       /// Returns the midpoint between the two given positions
       simCore::Vec3 midPoint(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset);
 
       ///@return the given lla to relative values scaled to the local frame (xyz)
-      osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m);
+      osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m) const;
 
       ///@return lla values for the given position relative to the local frame
       simCore::Vec3 local2lla(const osg::Vec3d& local);
@@ -268,6 +278,7 @@ namespace simVis
       simCore::CoordinateConverter     coordConv_;
       osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
       simCore::TimeStamp timeStamp_; // the timeStamp of the last update
+      osg::observer_ptr<osgEarth::MapNode>  mapNode_;
       ///@}
     };
 

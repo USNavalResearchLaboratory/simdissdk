@@ -442,6 +442,11 @@ public: // package protected
   void notifyOfClockChange(const simCore::Clock* clock);
 
   /**
+   * Gets map information
+   */
+  osgEarth::MapNode* mapNode() const { return mapNode_.get(); }
+
+  /**
    * Sets map information
    */
   void setMapNode(osgEarth::MapNode* map);

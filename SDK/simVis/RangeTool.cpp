@@ -38,18 +38,19 @@
 #include "simCore/Time/TimeClass.h"
 
 #include "simVis/AlphaTest.h"
-#include "simVis/Utils.h"
-#include "simVis/Registry.h"
-#include "simVis/Platform.h"
-#include "simVis/Beam.h"
 #include "simVis/Antenna.h"
+#include "simVis/Beam.h"
+#include "simVis/ElevationQueryProxy.h"
 #include "simVis/LineDrawable.h"
-#include "simVis/LobGroup.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Platform.h"
+#include "simVis/LobGroup.h" // Must come after Platform.h
 #include "simVis/PolygonStipple.h"
+#include "simVis/Registry.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 #include "simVis/RFProp/RFPropagationManager.h"
+#include "simVis/Utils.h"
 
 #include "simVis/RangeTool.h"
 
@@ -639,6 +640,8 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   // localizes all geometry to the reference point of obj0, preventing precision jitter
   xform_->setMatrix(state_.local2world_);
 
+  state_.mapNode_ = scenario.mapNode();
+
   typedef std::pair<CalculationVector, TextOptions> LabelSetup;
   typedef std::map<osg::Vec3, LabelSetup, CloseEnoughCompare> Labels;
   Labels labels;
@@ -1045,6 +1048,33 @@ void RangeTool::State::line(const simCore::Vec3& lla0, const simCore::Vec3& lla1
   }
 }
 
+void RangeTool::State::intermediatePoints(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double rangeDelta, std::vector<simCore::Vec3>& llaPointsOut) const
+{
+  llaPointsOut.clear();
+
+  // Use Sodano method to calculate azimuth and distance
+  double azimuth = 0.0;
+  double distance = simCore::sodanoInverse(lla0.lat(), lla0.lon(), lla0.alt(), lla1.lat(), lla1.lon(), &azimuth);
+
+  if (simCore::areEqual(distance, 0))
+  {
+    return;
+  }
+
+  rangeDelta = simCore::sdkMin(distance, rangeDelta);
+  const unsigned int numPoints = static_cast<unsigned int>(distance / rangeDelta) + 1;
+  for (unsigned int i = 1; i < numPoints; i++)
+  {
+    const float portionOfFull = static_cast<float>(i) / static_cast<float>(numPoints); // From 0 to 1
+
+    // Calculate the LLA value of the point, and replace the altitude
+    double lat = 0.0;
+    double lon = 0.0;
+    simCore::sodanoDirect(lla0.lat(), lla0.lon(), lla0.alt(), distance * portionOfFull, azimuth, &lat, &lon);
+    llaPointsOut.push_back(simCore::Vec3(lat, lon, 0));
+  }
+}
+
 simCore::Vec3 RangeTool::State::midPoint(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset)
 {
   // Use Sodano method to calculate azimuth and distance
@@ -1079,7 +1109,7 @@ osg::Vec3d RangeTool::State::rotateEndVec(double az)
   return lla2local(lat, lon, endEntity_.lla_.alt());
 }
 
-osg::Vec3 RangeTool::State::lla2local(double lat, double lon, double alt)
+osg::Vec3 RangeTool::State::lla2local(double lat, double lon, double alt) const
 {
   simCore::Vec3 ecefPos;
   simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lat, lon, alt), ecefPos);
@@ -2865,14 +2895,53 @@ void RangeTool::HorizonMeasurement::setEffectiveRadius(double opticalRadius, dou
   rfEffectiveRadius_ = rfRadius;
 }
 
+// TODO this needs to be recalculated if an elevation map layer is added or removed
 double RangeTool::HorizonMeasurement::calcAboveHorizon_(State& state, simCore::HorizonCalculations horizon) const
 {
-  // TODO: SDK-52 Add terrain blocking
-
+  // Check that they're within range of each other
   double maxRng = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
   double losRng = simCore::calculateHorizonDist(state.beginEntity_.lla_, horizon, opticalEffectiveRadius_, rfEffectiveRadius_) +
     simCore::calculateHorizonDist(state.endEntity_.lla_, horizon, opticalEffectiveRadius_, rfEffectiveRadius_);
-  return (maxRng <= losRng) ? 1 : 0;
+  if (maxRng > losRng)
+    return 0;
+
+  // Check if obstructed by terrain
+  if (state.mapNode_.valid() && state.mapNode_->getMap() && state.mapNode_->getMap()->getElevationPool())
+  {
+    // If any elevation from beginEntity_ to the terrain at an intermediate point is higher than this, endEntity_ is obstructed by terrain
+    double targetElev;
+    simCore::calculateAbsAzEl(state.beginEntity_.lla_, state.endEntity_.lla_, NULL, &targetElev, NULL, state.earthModel_, &state.coordConv_);
+
+    simVis::ElevationQueryProxy query(state.mapNode_->getMap(), NULL);
+
+    // Use the los range resolution of the begin entity as the rangeDelta for getting intermediate points
+    double rangeDelta = state.beginEntity_.platformHostNode_->getPrefs().losrangeresolution();
+
+    std::vector<simCore::Vec3> points;
+    state.intermediatePoints(state.beginEntity_.lla_, state.endEntity_.lla_, rangeDelta, points);
+    for (auto iter = points.begin(); iter != points.end(); iter++)
+    {
+      osgEarth::GeoPoint currGeoPoint;
+      // A geopoint is necessary to get elevation.  If conversion fails, disregard this point
+      if (!convertCoordToGeoPoint(simCore::Coordinate(simCore::COORD_SYS_LLA, *iter), currGeoPoint, state.mapNode_->getMapSRS()))
+        continue;
+
+      double elevation = 0;
+      if (query.getElevation(currGeoPoint, elevation))
+      {
+        currGeoPoint.z() = elevation;
+        simCore::Coordinate currLlaPoint;
+        convertGeoPointToCoord(currGeoPoint, currLlaPoint, state.mapNode_.get());
+        double elev;
+        simCore::calculateAbsAzEl(state.beginEntity_.lla_, currLlaPoint.position(), NULL, &elev, NULL, state.earthModel_, &state.coordConv_);
+        if (elev > targetElev)
+          return 0;
+      }
+    }
+  }
+
+  // Within range and not blocked by terrain
+  return 1;
 }
 
 //----------------------------------------------------------------------------

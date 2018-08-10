@@ -150,13 +150,8 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   if (!convertCoordToGeoPoint(originCoord, originMap_, mapNode->getMapSRS()))
     return false;
 
-  osg::Matrix local2world, world2local;
+  osg::Matrix local2world;
   originMap_.createLocalToWorld(local2world);
-  osg::Vec3d originWorld = osg::Vec3d(0, 0, 0) * local2world;
-
-  // store to world up vector for LOS testing later:
-  osg::Vec3d originUpWorld = osg::Vec3d(0, 0, 1) * local2world;
-  originUpWorld.normalize();
 
   // convert everything to the proper units:
   double azim_center  = azim_center_.as(Units::RADIANS);
@@ -190,6 +185,11 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   {
     azimuths.push_back(azim_max_rad);
   }
+
+  simCore::CoordinateConverter cc;
+  simCore::Coordinate originLlaCoord;
+  cc.convert(originCoord, originLlaCoord, simCore::COORD_SYS_LLA);
+  cc.setReferenceOrigin(originLlaCoord.position());
 
   // step through the azimuthal range:
   for (std::vector<double>::iterator i = azimuths.begin(); i != azimuths.end(); ++i)
@@ -229,15 +229,9 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       {
         // see if the point is unobstructed.
         mapPoint.z() = hae;
-        mapPoint.toWorld(sampleWorld);
 
         simCore::Coordinate destCoord;
         convertGeoPointToCoord(mapPoint, destCoord, mapNode);
-
-        simCore::CoordinateConverter cc;
-        simCore::Coordinate originLlaCoord;
-        cc.convert(originCoord, originLlaCoord, simCore::COORD_SYS_LLA);
-        cc.setReferenceOrigin(originLlaCoord.lat(), originLlaCoord.lon(), originLlaCoord.alt());
 
         double elev;
         simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), NULL, &elev, NULL, simCore::FLAT_EARTH, &cc);
