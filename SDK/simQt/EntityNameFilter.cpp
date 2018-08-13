@@ -132,13 +132,13 @@ void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity 
 bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
 {
   // Check if this index passes the filter, return true if it does
-  QString name = model_->data(index).toString();
+  QString name = index.model()->data(index).toString();
   bool rv = regExp_->match(name.toStdString());
   if (rv)
     return rv;
 
   // Index didn't pass, check its children
-  int numChildren = model_->rowCount(index);
+  int numChildren = index.model()->rowCount(index);
   for (int i = 0; i < numChildren; ++i)
   {
     const QModelIndex& childIdx = index.child(i, 0);
