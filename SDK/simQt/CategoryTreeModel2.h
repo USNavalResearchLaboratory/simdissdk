@@ -100,7 +100,8 @@ public:
     ROLE_SORT_STRING = Qt::UserRole,
     ROLE_EXCLUDE,
     ROLE_CATEGORY_NAME,
-    ROLE_REGEXP_STRING
+    ROLE_REGEXP_STRING,
+    ROLE_LOCKED_STATE
   };
 
   // QAbstractItemModel overrides
@@ -280,6 +281,10 @@ private slots:
   void setRegularExpression_();
   /** Clears the regular expression on the item saved from showContextMenu_ */
   void clearRegularExpression_();
+  /** Locks the current category saved from the showContextMenu_ */
+  void toggleLockCategory_();
+  /** Expands all unlocked categories */
+  void expandUnlockedCategories_();
 
 private:
   /** The tree */
@@ -298,6 +303,8 @@ private:
   QAction* setRegExpAction_;
   /** Action used for clearing regular expressions */
   QAction* clearRegExpAction_;
+  /** Action used for toggling the lock state of a category */
+  QAction* toggleLockCategoryAction_;
 };
 
 }
