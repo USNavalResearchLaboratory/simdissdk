@@ -23,6 +23,7 @@
 #define SIMQT_CATEGORYDATABREADCRUMBS_H
 
 #include <map>
+#include <memory>
 #include <QPen>
 #include <QStyledItemDelegate>
 #include <QWidget>
@@ -253,6 +254,10 @@ private:
 
   /** Creates a list for tooltips that uses <li> items for each check in the list */
   QString buildValuesHtmlList_(const simData::CategoryNameManager& nameManager, const std::map<int, bool>& checks, size_t maxItems) const;
+
+  /** Listens to CategoryNameManager to know when the category filter is cleared */
+  class FilterClearListener;
+  std::shared_ptr<FilterClearListener> listener_;
 
   /** Widget that displays the filters */
   QListWidget* listWidget_;
