@@ -258,7 +258,7 @@ private:
     return result.release();
   }
 
-  /** Helper method that applies the various post-read-node operations to a node. */
+  /** Helper method that applies the various post-read-node operations to a node.  This might be in a thread. */
   void applyPostLoadOptions_(osg::ref_ptr<osg::Node>& result, const ModelCacheLoaderOptions* options) const
   {
     if (!result || !options)
@@ -284,6 +284,10 @@ private:
     }
     // Disable depth on all incoming models
     simVis::DisableDepthOnAlpha::setValues(result->getOrCreateStateSet(), osg::StateAttribute::ON);
+
+    // Fix the GL_QUADS, GL_QUAD_STRIPS, and GL_POLYGON geometries
+    simVis::FixDeprecatedDrawModes fixDrawModes;
+    result->accept(fixDrawModes);
 
     // At one point, we would run the shader generator here in the threaded
     // context.  However, in SIMDIS code in the Simple Server example, it looked

@@ -31,6 +31,7 @@
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgUtil/RenderBin"
+#include "osgUtil/TriStripVisitor"
 #include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/Capabilities"
@@ -1186,6 +1187,38 @@ void RemoveModeVisitor::apply(osg::Node& node)
   if (stateSet)
     stateSet->removeMode(mode_);
   osg::NodeVisitor::apply(node);
+}
+
+//--------------------------------------------------------------------------
+
+FixDeprecatedDrawModes::FixDeprecatedDrawModes()
+  : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN)
+{
+}
+
+void FixDeprecatedDrawModes::apply(osg::Geometry& geom)
+{
+  // Loop through all of the primitive sets on the geometry
+  const unsigned int numPrimSets = geom.getNumPrimitiveSets();
+  for (unsigned int k = 0; k < numPrimSets; ++k)
+  {
+    // Only care about non-NULL primitive sets
+    const osg::PrimitiveSet* primSet = geom.getPrimitiveSet(k);
+    if (primSet == NULL)
+      continue;
+
+    // Search for modes that are deprecated in GL3
+    if (primSet->getMode() == GL_POLYGON || primSet->getMode() == GL_QUADS || primSet->getMode() == GL_QUAD_STRIP)
+    {
+      // Turn deprecated geometry into tri-strips; affects whole geometry
+      osgUtil::TriStripVisitor triStrip;
+      triStrip.stripify(geom);
+      break;
+    }
+  }
+
+  // Call into base class method
+  osg::NodeVisitor::apply(geom);
 }
 
 }
