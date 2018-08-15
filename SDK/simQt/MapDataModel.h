@@ -85,7 +85,7 @@ private:
 /**
  * Abstract item model representing an osgEarth::Map.  This is a hierarchical model that
  * has three levels of hierarchy.  The top level is the Map itself.  The next level breaks
- * out the layer type into Image, Elevation, and Model.  The final level is the individual
+ * out the layer type into Image, Elevation, and Feature.  The final level is the individual
  * layers that are loaded in the map.
  *
  * There is only a single column, representing the name of the item.  Mid-tier layer types
@@ -122,19 +122,23 @@ public:
   ///@return the flags on the given item
   virtual Qt::ItemFlags flags(const QModelIndex& index) const;
 
-  /// Map is the top level node; it has 4 children: Image, Elevation, Model, and Other
+  /// Map is the top level node; it has 4 children: Image, Elevation, Feature, and Other
   enum MapChildren
   {
     CHILD_IMAGE = 0,
     CHILD_ELEVATION,
-    CHILD_MODEL,
+    CHILD_FEATURE,
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+    /// @deprecated Use CHILD_FEATURE instead
+    CHILD_MODEL = CHILD_FEATURE,
+#endif
     CHILD_OTHER,
     CHILD_NONE
   };
 
   /** data() returns the pointer to the layer, or NULL */
   static const int LAYER_POINTER_ROLE = Qt::UserRole + 0;
-  /** data() returns the type of node: image, elevation, model, or none for top level MAP selection */
+  /** data() returns the type of node: image, elevation, feature, or none for top level MAP selection */
   static const int LAYER_TYPE_ROLE = Qt::UserRole + 1;
   /** data() returns the 'global' map index for the layer type */
   static const int LAYER_MAP_INDEX_ROLE = Qt::UserRole + 2;
@@ -161,11 +165,30 @@ signals:
   /** Qt signal as described by the signal name */
   void elevationLayerAdded(osgEarth::ElevationLayer* layer);
   /** Qt signal as described by the signal name */
+  void featureLayerVisibleChanged(osgEarth::Features::FeatureModelLayer* layer);
+  /** Qt signal as described by the signal name */
+  void featureLayerOpacityChanged(osgEarth::Features::FeatureModelLayer* layer);
+  /** Qt signal as described by the signal name */
+  void featureLayerAdded(osgEarth::Features::FeatureModelLayer* layer);
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  /**
+   * Qt signal as described by the signal name
+   * @deprecated Use featureLayerVisibleChanged() instead
+   */
   void modelLayerVisibleChanged(osgEarth::Features::FeatureModelLayer* layer);
-  /** Qt signal as described by the signal name */
+  /**
+  * Qt signal as described by the signal name
+  * @deprecated Use featureLayerOpacityChanged() instead
+  */
   void modelLayerOpacityChanged(osgEarth::Features::FeatureModelLayer* layer);
-  /** Qt signal as described by the signal name */
+  /**
+  * Qt signal as described by the signal name
+  * @deprecated Use featureLayerAdded() instead
+  */
   void modelLayerAdded(osgEarth::Features::FeatureModelLayer* layer);
+#endif
+
   /** Qt signal as described by the signal name */
   void otherLayerVisibleChanged(osgEarth::VisibleLayer* layer);
   /** Qt signal as described by the signal name */
@@ -193,9 +216,9 @@ private: // methods
   void addImageLayer_(osgEarth::ImageLayer* layer, unsigned int index);
   /** add an elevation layer */
   void addElevationLayer_(osgEarth::ElevationLayer* layer, unsigned int index);
-  /** add a model layer */
+  /** add a feature layer */
   void addFeatureLayer_(osgEarth::Features::FeatureModelLayer* layer, unsigned int index);
-  /** add a layer other than image, elevation, or model */
+  /** add a layer other than image, elevation, or feature */
   void addOtherLayer_(osgEarth::VisibleLayer* layer, unsigned int index);
 
   /** return the Item for the given index (NULL if it can't be represented) */
@@ -226,8 +249,8 @@ private: // methods
   QIcon imageIcon_;
   /** Icon for elevation layer */
   QIcon elevationIcon_;
-  /** Icon for model layer */
-  QIcon modelIcon_;
+  /** Icon for feature layer */
+  QIcon featureIcon_;
   /** Icon for other layer */
   QIcon otherIcon_;
 

@@ -548,7 +548,7 @@ public:
 
   virtual MapDataModel::MapChildren layerTypeRole() const
   {
-    return MapDataModel::CHILD_MODEL;
+    return MapDataModel::CHILD_FEATURE;
   }
 
   virtual QVariant layerPtr() const
@@ -860,7 +860,12 @@ public:
   {
     osgEarth::Features::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer);
     if (modelLayer)
+    {
+      emit dataModel_.featureLayerVisibleChanged(modelLayer);
+#ifdef USE_DEPRECATED_SIMDISSDK_API
       emit dataModel_.modelLayerVisibleChanged(modelLayer);
+#endif
+    }
   }
 
   /** Inherited from ModelLayerCallback */
@@ -868,7 +873,12 @@ public:
   {
     osgEarth::Features::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer);
     if (modelLayer)
+    {
+      emit dataModel_.featureLayerOpacityChanged(modelLayer);
+#ifdef USE_DEPRECATED_SIMDISSDK_API
       emit dataModel_.modelLayerOpacityChanged(modelLayer);
+#endif
+    }
   }
 
 private:
@@ -906,7 +916,7 @@ MapDataModel::MapDataModel(QObject* parent)
     rootItem_(new MapItem(NULL)),
     imageIcon_(":/simQt/images/Globe.png"),
     elevationIcon_(":/simQt/images/Image.png"),
-    modelIcon_(":/simQt/images/Building Corporation.png")
+    featureIcon_(":/simQt/images/Building Corporation.png")
 {
   mapListener_ = new MapListener(*this);
 }
@@ -1129,7 +1139,10 @@ void MapDataModel::addFeatureLayer_(osgEarth::Features::FeatureModelLayer *layer
   osg::ref_ptr<osgEarth::VisibleLayerCallback> cb = new FeatureModelLayerListener(*this);
   featureCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
+  emit featureLayerAdded(layer);
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   emit modelLayerAdded(layer);
+#endif
 }
 
 void MapDataModel::addOtherLayer_(osgEarth::VisibleLayer *layer, unsigned int index)
@@ -1246,8 +1259,8 @@ QVariant MapDataModel::data(const QModelIndex &index, int role) const
       case CHILD_ELEVATION:
         return elevationIcon_;
 
-      case CHILD_MODEL:
-        return modelIcon_;
+      case CHILD_FEATURE:
+        return featureIcon_;
 
       case CHILD_OTHER:
         return otherIcon_;
