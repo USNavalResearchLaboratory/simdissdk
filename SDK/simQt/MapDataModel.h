@@ -29,7 +29,7 @@
 #include "osg/ref_ptr"
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
-#include "osgEarth/ModelLayer"
+#include "osgEarthFeatures/FeatureModelLayer"
 #include "simCore/Common/Export.h"
 
 namespace osgEarth {
@@ -37,6 +37,8 @@ namespace osgEarth {
   class Map;
   class TerrainLayer;
 }
+
+typedef std::vector<osg::ref_ptr<osgEarth::Features::FeatureModelLayer> > FeatureModelLayerVector;
 
 namespace simQt {
 
@@ -60,7 +62,7 @@ public:
   /** Retrieves the map elevation layers using a consistent interface */
   static void getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers);
   /** Retrieves the map model layers using a consistent interface */
-  static void getLayers(osgEarth::Map* map, osgEarth::ModelLayerVector& modelLayers);
+  static void getLayers(osgEarth::Map* map, FeatureModelLayerVector& modelLayers);
   /** Retrieves all other map layers that aren't explicitly of type ImageLayer, ElevationLayer, or ModelLayer */
   static void getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers);
 
@@ -71,8 +73,8 @@ public:
   unsigned int layerTypeIndex(osgEarth::ImageLayer* layer) const;
   /** Returns the layer index relative to other layers in getLayers(ElevationVector&) */
   unsigned int layerTypeIndex(osgEarth::ElevationLayer* layer) const;
-  /** Returns the layer index relative to other layers in getLayers(ModelVector&) */
-  unsigned int layerTypeIndex(osgEarth::ModelLayer* layer) const;
+  /** Returns the layer index relative to other layers in getLayers(FeatureModelVector&) */
+  unsigned int layerTypeIndex(osgEarth::Features::FeatureModelLayer* layer) const;
   /** Returns the layer index relative to other layers in getOtherLayers(VisibleLayerVector&) */
   unsigned int otherLayerTypeIndex(osgEarth::VisibleLayer* layer) const;
 
@@ -159,11 +161,11 @@ signals:
   /** Qt signal as described by the signal name */
   void elevationLayerAdded(osgEarth::ElevationLayer* layer);
   /** Qt signal as described by the signal name */
-  void modelLayerVisibleChanged(osgEarth::ModelLayer* layer);
+  void modelLayerVisibleChanged(osgEarth::Features::FeatureModelLayer* layer);
   /** Qt signal as described by the signal name */
-  void modelLayerOpacityChanged(osgEarth::ModelLayer* layer);
+  void modelLayerOpacityChanged(osgEarth::Features::FeatureModelLayer* layer);
   /** Qt signal as described by the signal name */
-  void modelLayerAdded(osgEarth::ModelLayer* layer);
+  void modelLayerAdded(osgEarth::Features::FeatureModelLayer* layer);
   /** Qt signal as described by the signal name */
   void otherLayerVisibleChanged(osgEarth::VisibleLayer* layer);
   /** Qt signal as described by the signal name */
@@ -192,7 +194,7 @@ private: // methods
   /** add an elevation layer */
   void addElevationLayer_(osgEarth::ElevationLayer* layer, unsigned int index);
   /** add a model layer */
-  void addModelLayer_(osgEarth::ModelLayer* layer, unsigned int index);
+  void addFeatureLayer_(osgEarth::Features::FeatureModelLayer* layer, unsigned int index);
   /** add a layer other than image, elevation, or model */
   void addOtherLayer_(osgEarth::VisibleLayer* layer, unsigned int index);
 
@@ -203,8 +205,8 @@ private: // methods
   Item* imageGroup_() const;
   /** return the Item for the elevation group */
   Item* elevationGroup_() const;
-  /** return the Item for the model group */
-  Item* modelGroup_() const;
+  /** return the Item for the feature group */
+  Item* featureGroup_() const;
   /** return the Item for the other group */
   Item* otherGroup_() const;
 
@@ -214,7 +216,7 @@ private: // methods
   class MapListener;
   class ImageLayerListener;
   class ElevationLayerListener;
-  class ModelLayerListener;
+  class FeatureModelLayerListener;
   class OtherLayerListener;
 
   /** holds the invisible root item */
@@ -232,7 +234,7 @@ private: // methods
   /** Maps of terrain layer callbacks */
   QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::ImageLayerCallback> > imageCallbacks_;
   QMap<osgEarth::ElevationLayer*, osg::ref_ptr<osgEarth::ElevationLayerCallback> > elevationCallbacks_;
-  QMap<osgEarth::ModelLayer*, osg::ref_ptr<osgEarth::ModelLayerCallback> > modelCallbacks_;
+  QMap<osgEarth::Features::FeatureModelLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > featureCallbacks_;
   QMap<osgEarth::VisibleLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > otherCallbacks_;
 
   /** Weak pointer back to the map */
