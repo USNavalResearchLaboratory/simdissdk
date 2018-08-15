@@ -304,7 +304,6 @@ void CustomRenderingNode::setCustomActive(bool value)
 {
   customActive_ = value;
   customLocatorNode_->setNodeMask(customActive_ ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
-  setNodeMask(customActive_ ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
 }
 
 LocatorNode* CustomRenderingNode::locatorNode() const
