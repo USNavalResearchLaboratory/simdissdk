@@ -58,7 +58,7 @@ IndexedPointerContainer<T>::IndexedPointerContainer()
 template <typename T>
 IndexedPointerContainer<T>::~IndexedPointerContainer()
 {
-  clear();
+  deleteAll();
 }
 
 template <typename T>
@@ -92,18 +92,12 @@ void IndexedPointerContainer<T>::push_back(T* item)
 }
 
 template <typename T>
-void IndexedPointerContainer<T>::clear()
-{
-  vec_.clear();
-  itemToIndex_.clear();
-}
-
-template <typename T>
 void IndexedPointerContainer<T>::deleteAll()
 {
   for (auto i = vec_.begin(); i != vec_.end(); ++i)
     delete *i;
-  clear();
+  vec_.clear();
+  itemToIndex_.clear();
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -1155,8 +1149,10 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
 void CategoryTreeModel2::clearTree_()
 {
   beginResetModel();
-  categories_.clear();
+  categories_.deleteAll();
   categoryIntToItem_.clear();
+  // need to manually clear the filter_ since auto update was turned off
+  filter_->clear();
   endResetModel();
 }
 

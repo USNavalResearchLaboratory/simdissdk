@@ -70,8 +70,6 @@ public:
   int size() const;
   /** Adds an item into the container.  Must be a unique item. */
   void push_back(T* item);
-  /** Removes all items from container; does not delete memory. */
-  void clear();
   /** Convenience method to delete each item, then clear(). */
   void deleteAll();
 
