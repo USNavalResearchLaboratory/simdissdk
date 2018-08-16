@@ -161,9 +161,6 @@ public:
   virtual QSize minimumSizeHint() const;
   virtual QSize sizeHint() const;
 
-  /** Retrieve the current filter.  Note that this is a simplified filter and may not match setFilter()'s values unsimplified. */
-  void getFilter(simData::CategoryFilter& filter);
-
   // Property accessors
   qreal rectangleRadiusX() const;
   qreal rectangleRadiusY() const;

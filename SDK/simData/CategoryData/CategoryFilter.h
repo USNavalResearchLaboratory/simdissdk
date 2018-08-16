@@ -175,9 +175,11 @@ public:
   /** Destructor */
   virtual ~CategoryFilter();
 
-  /** Assignment operator */
-  CategoryFilter& operator=(const CategoryFilter& other);
-  /** Assignment with options */
+  /** Assignment with options
+   * @param other The object to copy from
+   * @param copyAutoUpdateFlag A flag to control the copying of the autoUpdate flag.  Normally the
+   *     flag should be false.
+   */
   CategoryFilter& assign(const CategoryFilter& other, bool copyAutoUpdateFlag);
   /** Comparison operator */
   bool operator==(const CategoryFilter& rhs) const;
@@ -313,6 +315,9 @@ public:
 
 private:
   class CategoryFilterListener;
+
+  /** Assignment operator; made private to force developers to use assign */
+  CategoryFilter& operator=(const CategoryFilter& other);
 
   /**
   * build the category filter based on what is in the data store.

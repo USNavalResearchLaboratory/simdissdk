@@ -744,14 +744,6 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex, bool useAltFillColor
   }
 }
 
-void CategoryDataBreadcrumbs::getFilter(simData::CategoryFilter& filter)
-{
-  if (filter_)
-    filter = *filter_;
-  else
-    filter.clear();
-}
-
 void CategoryDataBreadcrumbs::clearFilter()
 {
   if (!filter_)
