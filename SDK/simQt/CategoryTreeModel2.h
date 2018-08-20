@@ -247,6 +247,8 @@ public:
   bool showEntityCount() const;
   /** Changes whether entity count is shown next to category values. */
   void setShowEntityCount(bool show);
+  /** Updates entity counts */
+  void updateEntityCount();
 
 public slots:
   /** Changes the model state to match the values in the filter. */
@@ -285,6 +287,8 @@ private slots:
   void expandUnlockedCategories_();
 
 private:
+  class DataStoreListener;
+
   /** The tree */
   QTreeView* treeView_;
   /** Hold the category data */
@@ -303,6 +307,8 @@ private:
   QAction* clearRegExpAction_;
   /** Action used for toggling the lock state of a category */
   QAction* toggleLockCategoryAction_;
+  /** Listener for datastore entity events */
+  std::shared_ptr<DataStoreListener> dsListener_;
 };
 
 }

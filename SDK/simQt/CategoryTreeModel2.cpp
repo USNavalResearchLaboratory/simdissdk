@@ -1780,6 +1780,30 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
 }
 
 /////////////////////////////////////////////////////////////////////////
+/**
+* Class that listens for entity events in the DataStore, and
+* informs the parent when they happen.
+*/
+class CategoryFilterWidget2::DataStoreListener : public simData::DataStore::DefaultListener
+{
+public:
+  explicit DataStoreListener(CategoryFilterWidget2& parent)
+    : parent_(parent)
+  {};
+
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  {
+    parent_.updateEntityCount();
+  }
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  {
+    parent_.updateEntityCount();
+  }
+private:
+  CategoryFilterWidget2& parent_;
+};
+
+/////////////////////////////////////////////////////////////////////////
 
 CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   : QWidget(parent),
@@ -1867,16 +1891,30 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
 
   // Entity filtering is on by default
   setShowEntityCount(true);
+
+  dsListener_.reset(new CategoryFilterWidget2::DataStoreListener(*this));
 }
 
 CategoryFilterWidget2::~CategoryFilterWidget2()
 {
+  if (categoryFilter().getDataStore())
+    categoryFilter().getDataStore()->removeListener(dsListener_);
 }
 
 void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
 {
+  simData::DataStore* prevDataStore = categoryFilter().getDataStore();
+  if (prevDataStore == dataStore)
+    return;
+
+  if (prevDataStore)
+    prevDataStore->removeListener(dsListener_);
+
   treeModel_->setDataStore(dataStore);
   counter_->setFilter(categoryFilter());
+
+  if (dataStore)
+    dataStore->addListener(dsListener_);
 }
 
 const simData::CategoryFilter& CategoryFilterWidget2::categoryFilter() const
@@ -1922,6 +1960,12 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
   {
     treeModel_->processCategoryCounts(simQt::CategoryCountResults());
   }
+}
+
+void CategoryFilterWidget2::updateEntityCount()
+{
+  if (counter_ && showEntityCount_)
+    counter_->asyncCountEntities();
 }
 
 void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
