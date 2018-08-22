@@ -65,10 +65,12 @@
 #endif
 #include "osgEarthUtil/Sky"
 #include "osgEarthUtil/Ocean"
+#include "osgEarthDrivers/mbtiles/MBTilesOptions"
 
 // Hawaii:
 #define LAT             19.698193
 #define LON           -156.20224
+#define ALT              0.0
 #define PLATFORM_SHIP "Ship"
 
 using namespace osgEarth::Util;
@@ -76,7 +78,7 @@ using namespace osgEarth::Drivers;
 namespace osgEarth { namespace Triton { class TritonLayer; } }
 
 static simCore::Coordinate s_shipPosOri(simCore::COORD_SYS_LLA,
-                                        simCore::Vec3(simCore::DEG2RAD*(LAT), simCore::DEG2RAD*(LON), 0),
+                                        simCore::Vec3(simCore::DEG2RAD*(LAT), simCore::DEG2RAD*(LON), ALT),
                                         simCore::Vec3(0.0, 0.0, 0.0));
 
 static simData::ObjectId     s_shipId;
@@ -742,8 +744,8 @@ int main(int argc, char** argv)
   // If we are testing the bathymetry offset, only load a Kauai inset.
   if (bathymetryOffset != 0.0f)
   {
-    simVis::DBOptions options;
-    options.url() = simExamples::getSampleDataPath() + "/terrain/" + EXAMPLE_ELEVATION_LAYER_DB;
+    osgEarth::Drivers::MBTilesTileSourceOptions options;
+    options.filename() = simExamples::getSampleDataPath() + "/terrain/" + EXAMPLE_ELEVATION_LAYER_DB;
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->addLayer(new ElevationLayer("simdis.elevation.no.bathy", options));
 #else
