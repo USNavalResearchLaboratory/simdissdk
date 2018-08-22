@@ -238,6 +238,30 @@ public: // types
 
   };
 
+  /// Observer interface for a class that gets notified when Updates are added to the data store
+  class NewUpdatesListener
+  {
+  public:
+    virtual ~NewUpdatesListener() {}
+
+    /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
+    virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) = 0;
+    /// Notification of flush, which may interleave other entity updates.  @see simData::DataStore::Listener::onFlush()
+    virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId) = 0;
+  };
+  /// Managed pointer for NewUpdatesListener
+  typedef std::shared_ptr<NewUpdatesListener> NewUpdatesListenerPtr;
+
+  /// Default implementation does nothing
+  class DefaultNewUpdatesListener : public NewUpdatesListener
+  {
+  public:
+    /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
+    virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) {}
+    /// Notification of flush, which may interleave other entity updates.  @see simData::DataStore::Listener::onFlush()
+    virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId) {}
+  };
+
   /// opaque class used to store internals when swapping data stores
   class InternalsMemento
   {
@@ -553,6 +577,13 @@ public: // methods
   /// Add or remove a listener for scenario event messages
   virtual void addScenarioListener(ScenarioListenerPtr callback) = 0;
   virtual void removeScenarioListener(ScenarioListenerPtr callback) = 0;
+  ///@}
+
+  /**@name NewUpdatesListener
+  * @{
+  */
+  /// Sets a listener for when entity updates are added; use NULL to remove.
+  virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback) = 0;
   ///@}
 
   /**@name Get a handle to the CategoryNameManager

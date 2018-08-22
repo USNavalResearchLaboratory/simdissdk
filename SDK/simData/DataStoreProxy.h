@@ -331,6 +331,13 @@ public: // methods
   virtual void removeScenarioListener(DataStore::ScenarioListenerPtr callback);
   ///@}
 
+  /**@name NewUpdatesListener
+  * @{
+  */
+  /// Sets a listener for when entity updates are added; use NULL to remove.
+  virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback);
+  ///@}
+
   /**@name Get a handle to the CategoryNameManager
    * @{
    */

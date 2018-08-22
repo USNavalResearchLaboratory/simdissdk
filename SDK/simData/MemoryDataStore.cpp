@@ -228,6 +228,7 @@ public:
 
     listeners_ = ds.listeners_;
     scenarioListeners_ = ds.scenarioListeners_;
+    newUpdatesListener_ = ds.newUpdatesListener_;
     ds.dataTableManager().getObservers(dtObservers_);
     ds.categoryNameManager().getListeners(catListeners_);
     defaultPlatformPrefs_.CopyFrom(ds.defaultPlatformPrefs_);
@@ -257,6 +258,8 @@ public:
     for (ScenarioListenerList::const_iterator iter2 = scenarioListeners_.begin(); iter2 != scenarioListeners_.end(); ++iter2)
       ds.addScenarioListener(*iter2);
 
+    ds.setNewUpdatesListener(newUpdatesListener_);
+
     for (std::vector<DataTableManager::ManagerObserverPtr>::const_iterator iter = dtObservers_.begin(); iter != dtObservers_.end(); ++iter)
       ds.dataTableManager().addObserver(*iter);
 
@@ -273,6 +276,7 @@ private: // data
 
   DataStore::ListenerList listeners_;
   DataStore::ScenarioListenerList scenarioListeners_;
+  DataStore::NewUpdatesListenerPtr newUpdatesListener_;
   std::vector<DataTableManager::ManagerObserverPtr> dtObservers_;
   std::vector<CategoryNameManager::ListenerPtr> catListeners_;
 
@@ -295,6 +299,7 @@ MemoryDataStore::MemoryDataStore()
   interpolationEnabled_(false),
   interpolator_(NULL),
   timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
+  newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
   dataLimitsProvider_(NULL),
@@ -315,6 +320,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   interpolationEnabled_(false),
   interpolator_(NULL),
   timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
+  newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
   dataLimitsProvider_(NULL),
@@ -992,6 +998,8 @@ void MemoryDataStore::flush(ObjectId flushId, FlushType flushType)
       checkForRemoval_(localCopy);
     }
   }
+  // Send out notification to the new-updates listener
+  newUpdatesListener_->onFlush(this, flushId);
 }
 
 void MemoryDataStore::applyDataLimiting_(ObjectId id)
@@ -2312,6 +2320,19 @@ void MemoryDataStore::removeScenarioListener(ScenarioListenerPtr callback)
     scenarioListeners_.erase(i);
 }
 
+void MemoryDataStore::setNewUpdatesListener(NewUpdatesListenerPtr callback)
+{
+  if (callback == NULL)
+    newUpdatesListener_.reset(new DefaultNewUpdatesListener);
+  else
+    newUpdatesListener_ = callback;
+}
+
+DataStore::NewUpdatesListener& MemoryDataStore::newUpdatesListener() const
+{
+  return *newUpdatesListener_;
+}
+
 CategoryNameManager& MemoryDataStore::categoryNameManager() const
 {
   return *categoryNameManager_;
@@ -2587,6 +2608,9 @@ void MemoryDataStore::NewUpdateTransactionImpl<T, SliceType>::commit()
     if (applyTimeBound_)
       dataStore_->newTimeBound_(updateTime);
     dataStore_->hasChanged_ = true;
+
+    // Notify the data store's new-update code
+    dataStore_->newUpdatesListener().onEntityUpdate(dataStore_, id_, updateTime);
   }
 }
 

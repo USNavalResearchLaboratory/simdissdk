@@ -311,6 +311,15 @@ public:
   virtual void removeScenarioListener(ScenarioListenerPtr callback);
   ///@}
 
+  /**@name NewUpdatesListener
+  * @{
+  */
+  /// Sets a listener for when entity updates are added; use NULL to remove.
+  virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback);
+  /// Retrieves the listener for new updates (internal)
+  NewUpdatesListener& newUpdatesListener() const;
+  ///@}
+
   /**@name Get a handle to the CategoryNameManager
    * @{
    */
@@ -660,6 +669,8 @@ private:
   ListenerList listeners_;
   /// Observers to receive notifications when things change
   ScenarioListenerList scenarioListeners_;
+  /// Observer for new updates
+  NewUpdatesListenerPtr newUpdatesListener_;
   /// Flag indicating if data limiting is set
   bool dataLimiting_;
   /// The CategoryNameManager coordinates string/int values
