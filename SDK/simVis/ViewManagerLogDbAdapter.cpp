@@ -87,10 +87,12 @@ public:
     {
     case VIEW_ADDED:
       ldb_->install(inset->getCamera());
+      //inset->getCamera()->setNearFarRatio(LDB_NEAR_FAR_RATIO);
       inset->getCamera()->addUpdateCallback(clampNearPlaneCallback_.get());
       break;
     case VIEW_REMOVED:
       ldb_->uninstall(inset->getCamera());
+      inset->getCamera()->setNearFarRatio(DEFAULT_NEAR_FAR_RATIO);
       inset->getCamera()->removeUpdateCallback(clampNearPlaneCallback_.get());
       break;
     }
