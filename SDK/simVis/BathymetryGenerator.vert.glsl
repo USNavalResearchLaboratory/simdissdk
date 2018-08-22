@@ -1,7 +1,7 @@
-#version 140
+#version $GLSL_VERSION_STR
 
 #pragma vp_entryPoint simVis_BathymetryGenerator_vertex
-#pragma vp_location vertex_clip
+#pragma vp_location vertex_view
 
 uniform float simVis_BathymetryGenerator_offset;
 uniform float simVis_BathymetryGenerator_seaLevel;
