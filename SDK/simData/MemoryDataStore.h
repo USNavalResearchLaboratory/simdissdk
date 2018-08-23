@@ -31,9 +31,10 @@ namespace simCore { class Clock; }
 
 namespace simData {
 
-class MemoryCategoryDataSlice;
-class GenericDataSlice;
 class EntityNameCache;
+class GenericDataSlice;
+class MemoryCategoryDataSlice;
+class NewRowDataToNewUpdatesAdapter;
 namespace MemoryTable { class DataLimitsProvider; }
 
 /** @brief Implementation of DataStore using plain memory
@@ -45,7 +46,7 @@ class SDKDATA_EXPORT MemoryDataStore : public DataStore
 {
 public:
   MemoryDataStore();
-  MemoryDataStore(const ScenarioProperties &properties);
+  explicit MemoryDataStore(const ScenarioProperties &properties);
 
   virtual ~MemoryDataStore();
 
@@ -682,7 +683,11 @@ private:
   /// Clock pointer is bound to application's Clock, allows datastore to determine current application's data mode
   simCore::Clock* boundClock_;
 
+  /// Improves performance of by-name searches in the data store
   EntityNameCache* entityNameCache_;
+
+  /// Links together the TableManager::NewRowDataListener to our newUpdatesListener_
+  std::shared_ptr<NewRowDataToNewUpdatesAdapter> newRowDataListener_;
 
 }; // End of class MemoryDataStore
 

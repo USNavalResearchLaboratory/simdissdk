@@ -215,6 +215,26 @@ private:
 
 //----------------------------------------------------------------------------
 
+/** Adapts NewRowDataListener to MemoryDataStore's newUpdatesListener_ */
+class NewRowDataToNewUpdatesAdapter : public MemoryTable::TableManager::NewRowDataListener
+{
+public:
+  explicit NewRowDataToNewUpdatesAdapter(simData::MemoryDataStore& dataStore)
+    : dataStore_(dataStore)
+  {
+  }
+
+  virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime)
+  {
+    dataStore_.newUpdatesListener().onNewRowData(&dataStore_, table, id, dataTime);
+  }
+
+private:
+  simData::MemoryDataStore& dataStore_;
+};
+
+//----------------------------------------------------------------------------
+
 /** InternalsMemento implementation for MemoryDataStore */
 class MemoryDataStore::MemoryInternalsMemento : public InternalsMemento
 {
@@ -291,6 +311,8 @@ private: // data
   simCore::Clock* boundClock_;
 };
 
+//----------------------------------------------------------------------------
+
 ///constructor
 MemoryDataStore::MemoryDataStore()
 : baseId_(0),
@@ -309,6 +331,7 @@ MemoryDataStore::MemoryDataStore()
 {
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
+  newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
   genericData_[0] = new MemoryGenericDataSlice();
 }
 
@@ -330,6 +353,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
 {
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
+  newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
   properties_.CopyFrom(properties);
   genericData_[0] = new MemoryGenericDataSlice();
 }
@@ -2322,10 +2346,20 @@ void MemoryDataStore::removeScenarioListener(ScenarioListenerPtr callback)
 
 void MemoryDataStore::setNewUpdatesListener(NewUpdatesListenerPtr callback)
 {
+  std::shared_ptr<MemoryTable::TableManager::NewRowDataListener> newRowListener;
+
+  // If clearing out the updates listener, then also clear out the memory table's listener for performance
   if (callback == NULL)
     newUpdatesListener_.reset(new DefaultNewUpdatesListener);
   else
+  {
+    // Set the updates listener, and tie in updates from the table manager too.
     newUpdatesListener_ = callback;
+    newRowListener = newRowDataListener_;
+  }
+
+  // Update table manager with whatever updater was picked
+  static_cast<MemoryTable::TableManager*>(dataTableManager_)->setNewRowDataListener(newRowListener);
 }
 
 DataStore::NewUpdatesListener& MemoryDataStore::newUpdatesListener() const

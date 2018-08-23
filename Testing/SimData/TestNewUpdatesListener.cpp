@@ -23,6 +23,7 @@
 #include <map>
 #include "simCore/Common/SDKAssert.h"
 #include "simData/DataStoreProxy.h"
+#include "simData/DataTable.h"
 #include "simUtil/DataStoreTestHelper.h"
 
 namespace {
@@ -33,6 +34,12 @@ class TimeCollector : public simData::DataStore::NewUpdatesListener
 public:
   /** Record the time value of entity update */
   virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime)
+  {
+    allData_[id].insert(dataTime);
+  }
+
+  /** Record the time value of the new row for the entity, same as onEntityUpdate(). */
+  virtual void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime)
   {
     allData_[id].insert(dataTime);
   }
@@ -213,6 +220,177 @@ int testEntityCollection()
   return rv;
 }
 
+int testDataTableCollection()
+{
+  int rv = 0;
+
+  // Create data store; configure time collector
+  simUtil::DataStoreTestHelper helper;
+  simData::DataStore* ds = helper.dataStore();
+  std::shared_ptr<TimeCollector> timeCollector(new TimeCollector);
+  ds->setNewUpdatesListener(timeCollector);
+
+  // Create two platforms with initial data points
+  simData::ObjectId plat1 = helper.addPlatform(1);
+  simData::ObjectId plat2 = helper.addPlatform(2);
+  helper.addPlatformUpdate(1.0, plat1);
+  helper.addPlatformUpdate(1.0, plat2);
+  helper.addPlatformUpdate(5.0, plat1);
+  helper.addPlatformUpdate(5.0, plat2);
+
+  // Clear out the values
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).size() == 2);
+  timeCollector->clear();
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
+  rv += SDK_ASSERT(timeCollector->getTimes(plat2).empty());
+  rv += SDK_ASSERT(timeCollector->getTimes(0).empty());
+
+  // Create three tables; one on each platform, and one on the scenario
+  simData::DataTableManager& dtm = ds->dataTableManager();
+  simData::DataTable* table0;
+  rv += SDK_ASSERT(dtm.addDataTable(0, "Table 0", &table0).isSuccess());
+  rv += SDK_ASSERT(table0 != NULL);
+  simData::DataTable* table1;
+  rv += SDK_ASSERT(dtm.addDataTable(plat1, "Table 1", &table1).isSuccess());
+  rv += SDK_ASSERT(table1 != NULL);
+  simData::DataTable* table2;
+  rv += SDK_ASSERT(dtm.addDataTable(plat2, "Table 2", &table2).isSuccess());
+  rv += SDK_ASSERT(table2 != NULL);
+
+  // Create the table columns; plat1 gets 2 columns, rest get 1 column
+  simData::TableColumn* col0_1;
+  rv += SDK_ASSERT(table0->addColumn("Column 0_1", simData::VT_DOUBLE, 0, &col0_1).isSuccess());
+  simData::TableColumn* col1_1;
+  rv += SDK_ASSERT(table1->addColumn("Column 1_1", simData::VT_DOUBLE, 0, &col1_1).isSuccess());
+  simData::TableColumn* col1_2;
+  rv += SDK_ASSERT(table1->addColumn("Column 1_2", simData::VT_DOUBLE, 0, &col1_2).isSuccess());
+  simData::TableColumn* col2_1;
+  rv += SDK_ASSERT(table2->addColumn("Column 2_1", simData::VT_DOUBLE, 0, &col2_1).isSuccess());
+
+  // Verify that we still don't have any resolved times
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
+  rv += SDK_ASSERT(timeCollector->getTimes(plat2).empty());
+  rv += SDK_ASSERT(timeCollector->getTimes(0).empty());
+
+  // Add rows to validate times
+  {
+    simData::TableRow row;
+    row.setTime(1.1);
+    row.setValue(col1_1->columnId(), 100.0);
+    rv += SDK_ASSERT(table1->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).size() == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(1.1) == 1);
+
+    row.setTime(2.2);
+    rv += SDK_ASSERT(table1->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).size() == 2);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(1.1) == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(2.2) == 1);
+
+    row.setTime(1.7);
+    rv += SDK_ASSERT(table1->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).size() == 3);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(1.1) == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(1.7) == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(2.2) == 1);
+  }
+
+  { // Add rows to the second column
+    simData::TableRow row;
+    row.setTime(2.8);
+    row.setValue(col1_2->columnId(), 100.0);
+    rv += SDK_ASSERT(table1->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).size() == 4);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(2.8) == 1);
+
+    // Duplicate time from the other column
+    row.setTime(2.2);
+    rv += SDK_ASSERT(table1->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).size() == 4);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(2.2) == 1);
+
+    // Within time bounds but not a duplicate
+    row.setTime(2.0);
+    rv += SDK_ASSERT(table1->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).size() == 5);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat1).count(2.0) == 1);
+  }
+
+  { // Add rows to the table on the scenario
+    simData::TableRow row;
+    row.setTime(1.2);
+    row.setValue(col0_1->columnId(), 100.0);
+    rv += SDK_ASSERT(table0->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(0).size() == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(0).count(1.2) == 1);
+
+    row.setTime(2.0);
+    rv += SDK_ASSERT(table0->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(0).size() == 2);
+    rv += SDK_ASSERT(timeCollector->getTimes(0).count(1.2) == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(0).count(2.0) == 1);
+  }
+
+  // Verify behavior of getTimeRange()
+  double begin = 0.0;
+  double end = 0.0;
+  rv += SDK_ASSERT(col0_1->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 1.2);
+  rv += SDK_ASSERT(end == 2.0);
+  rv += SDK_ASSERT(col1_1->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 1.1);
+  rv += SDK_ASSERT(end == 2.2);
+  rv += SDK_ASSERT(col1_2->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 2.0);
+  rv += SDK_ASSERT(end == 2.8);
+  rv += SDK_ASSERT(col2_1->getTimeRange(begin, end) != 0);
+
+  // Execute a flush on the data and make sure things are good still
+  ds->flush(0);
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
+  rv += SDK_ASSERT(timeCollector->getTimes(plat2).empty());
+  rv += SDK_ASSERT(timeCollector->getTimes(0).empty());
+  rv += SDK_ASSERT(col0_1->getTimeRange(begin, end) != 0);
+  rv += SDK_ASSERT(col1_1->getTimeRange(begin, end) != 0);
+  rv += SDK_ASSERT(col1_2->getTimeRange(begin, end) != 0);
+  rv += SDK_ASSERT(col2_1->getTimeRange(begin, end) != 0);
+
+  // Add two rows and make sure they're caught
+  { // Add row to table0
+    simData::TableRow row;
+    row.setTime(3.5);
+    row.setValue(col0_1->columnId(), 100.0);
+    rv += SDK_ASSERT(table0->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(0).size() == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(0).count(3.5) == 1);
+  }
+  { // Add row to table2
+    simData::TableRow row;
+    row.setTime(3.6);
+    row.setValue(col2_1->columnId(), 100.0);
+    rv += SDK_ASSERT(table2->addRow(row).isSuccess());
+    rv += SDK_ASSERT(timeCollector->getTimes(plat2).size() == 1);
+    rv += SDK_ASSERT(timeCollector->getTimes(plat2).count(3.6) == 1);
+  }
+
+  return rv;
+}
+
+int addTableAndTime(simData::DataStore& ds, simData::ObjectId id, double timeValue)
+{
+  simData::DataTableManager& dtm = ds.dataTableManager();
+  simData::DataTable* table;
+  if (dtm.addDataTable(id, "Table", &table).isError())
+    return 1;
+  simData::TableColumn* column;
+  if (table->addColumn("Column", simData::VT_DOUBLE, 0, &column).isError())
+    return 1;
+  simData::TableRow row;
+  row.setTime(timeValue);
+  row.setValue(column->columnId(), 100.0);
+  return table->addRow(row).isError() ? 1 : 0;
+}
+
 int testDataStoreProxy()
 {
   int rv = 0;
@@ -224,6 +402,10 @@ int testDataStoreProxy()
   // Listener should not have changed
   rv += SDK_ASSERT(&ds1->newUpdatesListener() == &ds1UpdatesListener);
 
+  // Add a table and row to ds1 for later testing
+  rv += SDK_ASSERT(addTableAndTime(proxy, 0, 1.5) == 0);
+
+  // Migrate to a new datastore
   simData::MemoryDataStore* ds2 = new simData::MemoryDataStore;
   const auto& ds2UpdatesListener = ds2->newUpdatesListener();
   rv += SDK_ASSERT(&ds2->newUpdatesListener() == &ds2UpdatesListener);
@@ -233,10 +415,18 @@ int testDataStoreProxy()
   rv += SDK_ASSERT(&ds2->newUpdatesListener() == &ds1UpdatesListener);
   rv += SDK_ASSERT(&ds2->newUpdatesListener() != &ds2UpdatesListener);
 
-  // Now update it to a custom one we provide, TIme Collector
+  // Now update it to a custom one we provide, Time Collector
   std::shared_ptr<TimeCollector> timeCollector(new TimeCollector);
   proxy.setNewUpdatesListener(timeCollector);
   rv += SDK_ASSERT(&ds2->newUpdatesListener() == timeCollector.get());
+
+  // Should have no time collections on entity 0
+  rv += SDK_ASSERT(timeCollector->getTimes(0).empty());
+
+  // Make sure it counts times for new rows
+  rv += SDK_ASSERT(addTableAndTime(proxy, 0, 2.5) == 0);
+  rv += SDK_ASSERT(timeCollector->getTimes(0).size() == 1);
+  rv += SDK_ASSERT(timeCollector->getTimes(0).count(2.5) == 1);
 
   // Reset a new proxy and our Time Collector should have carried over
   simData::MemoryDataStore* ds3 = new simData::MemoryDataStore;
@@ -247,6 +437,14 @@ int testDataStoreProxy()
   // Listener should have changed
   rv += SDK_ASSERT(&ds3->newUpdatesListener() == timeCollector.get());
   rv += SDK_ASSERT(&ds3->newUpdatesListener() != &ds3UpdatesListener);
+
+  // Make sure it counts times for new rows still after the proxy reset
+  rv += SDK_ASSERT(timeCollector->getTimes(0).size() == 1);  // Because we never reset it
+  rv += SDK_ASSERT(addTableAndTime(proxy, 0, 3.5) == 0);
+  rv += SDK_ASSERT(timeCollector->getTimes(0).size() == 2);
+  rv += SDK_ASSERT(timeCollector->getTimes(0).count(2.5) == 1);
+  rv += SDK_ASSERT(timeCollector->getTimes(0).count(3.5) == 1);
+
   return rv;
 }
 
@@ -256,6 +454,7 @@ int TestNewUpdatesListener(int argc, char* argv[])
 {
   int rv = 0;
   rv += SDK_ASSERT(testEntityCollection() == 0);
+  rv += SDK_ASSERT(testDataTableCollection() == 0);
   rv += SDK_ASSERT(testDataStoreProxy() == 0);
   return rv;
 }

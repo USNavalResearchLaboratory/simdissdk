@@ -40,6 +40,7 @@ class CategoryDataSlice;
 class CategoryNameManager;
 class GenericDataSlice;
 class DataTableManager;
+class DataTable;
 
 /** @brief Interface for storing and retrieving scenario data
  *
@@ -238,7 +239,7 @@ public: // types
 
   };
 
-  /// Observer interface for a class that gets notified when Updates are added to the data store
+  /// Observer interface for a class that gets notified when Updates and Rows are added to the data store
   class NewUpdatesListener
   {
   public:
@@ -246,6 +247,8 @@ public: // types
 
     /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
     virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) = 0;
+    /// New table row was added for the entity ID provided, at the time provided.  Query the data table for contents of the row.
+    virtual void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime) = 0;
     /// Notification of flush, which may interleave other entity updates.  @see simData::DataStore::Listener::onFlush()
     virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId) = 0;
   };
@@ -258,6 +261,8 @@ public: // types
   public:
     /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
     virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) {}
+    /// New table row was added for the entity ID provided, at the time provided.  Query the data table for contents of the row.
+    virtual void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime) {}
     /// Notification of flush, which may interleave other entity updates.  @see simData::DataStore::Listener::onFlush()
     virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId) {}
   };

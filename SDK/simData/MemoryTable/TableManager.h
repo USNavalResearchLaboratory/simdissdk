@@ -39,7 +39,7 @@ class SDKDATA_EXPORT TableManager : public simData::DataTableManager
 {
 public:
   /** Constructs a new table manager using data limits provided by the dataLimitsProvider. */
-  TableManager(const DataLimitsProvider* dataLimitsProvider);
+  explicit TableManager(const DataLimitsProvider* dataLimitsProvider);
   virtual ~TableManager();
 
   /** Adds a data table to the owner specified, with name specified. */
@@ -68,6 +68,32 @@ public:
   /** Removes a table from internal lists without removing it; used by simData::MemoryTable::~Table() */
   void removeTable(Table* table);
 
+  /// Observer interface for a class that gets notified when rows are added to a data table.
+  class NewRowDataListener
+  {
+  public:
+    virtual ~NewRowDataListener() {}
+
+    /// New row was processed for the entity ID provided, at the time provided.  Query the table for contents of update.
+    virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime) = 0;
+  };
+  /// Managed pointer for NewUpdatesListener
+  typedef std::shared_ptr<NewRowDataListener> NewRowDataListenerPtr;
+
+  /// Default implementation of NewRowDataListener is a no-op
+  class DefaultNewRowDataListener : public NewRowDataListener
+  {
+  public:
+    /// Implemented as Noop
+    virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime) {}
+  };
+
+  /** Sets the new-row data listener for when new table rows are added; use NULL to remove. */
+  void setNewRowDataListener(NewRowDataListenerPtr listener);
+
+  /** Internal method for Table to use to alert on new row data */
+  void fireOnNewRowData(Table& table, double dataTime);
+
 private:
   typedef std::vector<ManagerObserverPtr> ManagerObserverList;
   class MemTableList;
@@ -87,6 +113,9 @@ private:
   ManagerObserverList observers_;
   /// Provides data limits for tables
   const DataLimitsProvider* dataLimitsProvider_;
+
+  /// Pointer to tell when new rows are added
+  NewRowDataListenerPtr newRowDataListener_;
 };
 
 } }
