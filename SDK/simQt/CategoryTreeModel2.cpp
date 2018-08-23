@@ -28,6 +28,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QTimer>
 #include <QToolTip>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -1793,11 +1794,11 @@ public:
 
   virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    parent_.updateEntityCount();
+    parent_.updateEntityCount_();
   }
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    parent_.updateEntityCount();
+    parent_.updateEntityCount_();
   }
 private:
   CategoryFilterWidget2& parent_;
@@ -1889,6 +1890,11 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(itemDelegate, SIGNAL(expandClicked(QModelIndex)), this, SLOT(toggleExpanded_(QModelIndex)));
   connect(itemDelegate, SIGNAL(editRegExpClicked(QModelIndex)), this, SLOT(showRegExpEditGui_(QModelIndex)));
 
+  // timer is connected by setShowEntityCount below; it must be constructed before setShowEntityCount
+  recountTimer_ = new QTimer(this);
+  recountTimer_->setSingleShot(true);
+  recountTimer_->setInterval(0);
+
   // Entity filtering is on by default
   setShowEntityCount(true);
 
@@ -1941,8 +1947,15 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
 {
   if (fl == showEntityCount_)
     return;
-
   showEntityCount_ = fl;
+
+  // recountTimer_ must be created in the constructor before this call to setShowEntityCount
+  assert(recountTimer_);
+  if (recountTimer_ && counter_)
+  {
+    recountTimer_->stop();
+    disconnect(recountTimer_, SIGNAL(timeout()), counter_, SLOT(asyncCountEntities()));
+  }
   // Clear out the old counter
   delete counter_;
   counter_ = NULL;
@@ -1955,6 +1968,8 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
     connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), counter_, SLOT(setFilter(simData::CategoryFilter)));
     connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), counter_, SLOT(asyncCountEntities()));
     counter_->setFilter(categoryFilter());
+
+    connect(recountTimer_, SIGNAL(timeout()), counter_, SLOT(asyncCountEntities()));
   }
   else
   {
@@ -1962,10 +1977,10 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
   }
 }
 
-void CategoryFilterWidget2::updateEntityCount()
+void CategoryFilterWidget2::updateEntityCount_()
 {
-  if (counter_ && showEntityCount_)
-    counter_->asyncCountEntities();
+  if (showEntityCount_)
+    recountTimer_->start();
 }
 
 void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
