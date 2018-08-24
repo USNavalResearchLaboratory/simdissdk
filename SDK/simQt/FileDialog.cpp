@@ -75,6 +75,11 @@ QString FileDialog::foxToQtFilter(const QString& foxFilter)
 QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QString& registryDir,
                              const QString& filter, QString* selectedFilter, QFileDialog::Options options)
 {
+  // linux needs the main window activated, to ensure dialog shows on top
+#ifndef WIN32
+  if (owner)
+    owner->activateWindow();
+#endif
   QString directory = FileDialog::getRegistryDir(registryDir);
   QString file = QFileDialog::getSaveFileName(owner, caption, directory,
     FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
@@ -88,6 +93,11 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
 QString FileDialog::loadFile(QWidget* owner, const QString& caption, const QString& registryDir,
                              const QString& filter, QString* selectedFilter, QFileDialog::Options options)
 {
+  // linux needs the main window activated, to ensure dialog shows on top
+#ifndef WIN32
+  if (owner)
+    owner->activateWindow();
+#endif
   QString directory = FileDialog::getRegistryDir(registryDir);
   QString file = QFileDialog::getOpenFileName(owner, caption, directory,
     FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
@@ -101,6 +111,11 @@ QString FileDialog::loadFile(QWidget* owner, const QString& caption, const QStri
 QStringList FileDialog::loadFiles(QWidget* owner, const QString& caption, const QString& registryDir,
                                   const QString& filter, QString* selectedFilter, QFileDialog::Options options)
 {
+  // linux needs the main window activated, to ensure dialog shows on top
+#ifndef WIN32
+  if (owner)
+    owner->activateWindow();
+#endif
   QString directory = FileDialog::getRegistryDir(registryDir);
   QStringList files = QFileDialog::getOpenFileNames(owner, caption, directory,
     FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
@@ -114,6 +129,11 @@ QStringList FileDialog::loadFiles(QWidget* owner, const QString& caption, const 
 QString FileDialog::findDirectory(QWidget* owner, const QString& caption, const QString& registryDir,
    QFileDialog::Options options)
 {
+  // linux needs the main window activated, to ensure dialog shows on top
+#ifndef WIN32
+  if (owner)
+    owner->activateWindow();
+#endif
   QString priorDirectory = FileDialog::getRegistryDir(registryDir);
   QString directory = QFileDialog::getExistingDirectory(owner, caption, priorDirectory, options | getFileDialogDefaultOptions());
   if (!directory.isEmpty() && !registryDir.isEmpty())
