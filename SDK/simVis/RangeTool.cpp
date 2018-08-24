@@ -818,7 +818,13 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
         if (!fileFullPath.empty()) // only set if font file found, uses default OS font otherwise
           ts->font() = fileFullPath;
       }
+
+#if OSG_VERSION_GREATER_OR_EQUAL(3,6,0)
+      // Font sizes changed at 3.6, so rescale to keep a constant size
+      ts->size() = textOptions.fontSize_ / 1.75;
+#else
       ts->size() = textOptions.fontSize_;
+#endif
 
       text = new osgEarth::Annotation::LabelNode("", style);
       text->setDynamic(true);
