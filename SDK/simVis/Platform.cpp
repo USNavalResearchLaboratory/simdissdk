@@ -922,6 +922,8 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   simCore::Coordinate platLlaCoord;
   simCore::CoordinateConverter converter;
   converter.convert(platCoord, platLlaCoord, simCore::COORD_SYS_LLA);
+  // Add the altitude offset after the conversion for correctness
+  platLlaCoord.setPositionLLA(platLlaCoord.x(), platLlaCoord.y(), platLlaCoord.z() + prefs.losaltitudeoffset());
 
   // Draw/update horizon
   simCore::Coordinate losCoord = los->getCoordinate();
@@ -948,7 +950,9 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     return;
   }
 
-  los->setCoordinate(getLocator()->getCoordinate());
+  // Need to convert the updated coord back to original system before giving to LOS Node
+  converter.convert(platLlaCoord, platCoord, platCoord.coordinateSystem());
+  los->setCoordinate(platCoord);
   los->setMaxRange(Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
 
   // Reactivate after updating LOS fields
