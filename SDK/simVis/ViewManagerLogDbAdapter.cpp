@@ -20,6 +20,7 @@
 *
 */
 #include <algorithm>
+#include <cassert>
 #include "osgEarthUtil/LogarithmicDepthBuffer"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
@@ -35,31 +36,39 @@ static const double LDB_NEAR_FAR_RATIO = 0.000001;
 /** Minimum near plane distance when the LDB is active */
 static const double LDB_MIN_NEAR = 1.0;
 
-/** Update callback for an osg::Camera that will automatically
-    adjust the near/far ratio in order to clamp the near plane
-    to a minimum value. */
+/**
+ * Update callback for an osg::Camera that will automatically adjust the
+ * near/far ratio in order to clamp the near plane to a minimum value.
+ */
 class ClampNearPlaneCallback : public osg::NodeCallback
 {
 public:
   ClampNearPlaneCallback(double minNear, double minNearFarRatio)
-    : minNear_(minNear), minNearFarRatio_(minNearFarRatio) 
+    : minNear_(minNear),
+      minNearFarRatio_(minNearFarRatio)
   {
     //nop
   }
 
 public: // osg::NodeCallback
-  void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  /** Override near/far ratio */
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
   {
     osg::Camera* camera = static_cast<osg::Camera*>(node);
     double vfov, ar, n, f;
     camera->getProjectionMatrixAsPerspective(vfov, ar, n, f);
-    if (n < minNear_)
+    // Cannot have a 0.0 far
+    assert(f != 0.0);
+    if (f != 0.0)
     {
-      camera->setNearFarRatio(minNear_/f);
-    }
-    else if (n/f >= minNearFarRatio_)
-    {
-      camera->setNearFarRatio(minNearFarRatio_);
+      if (n < minNear_)
+      {
+        camera->setNearFarRatio(minNear_ / f);
+      }
+      else if (n / f >= minNearFarRatio_)
+      {
+        camera->setNearFarRatio(minNearFarRatio_);
+      }
     }
     traverse(node, nv);
   }
@@ -87,7 +96,6 @@ public:
     {
     case VIEW_ADDED:
       ldb_->install(inset->getCamera());
-      //inset->getCamera()->setNearFarRatio(LDB_NEAR_FAR_RATIO);
       inset->getCamera()->addUpdateCallback(clampNearPlaneCallback_.get());
       break;
     case VIEW_REMOVED:

@@ -67,9 +67,9 @@
 #include "osgEarthUtil/Ocean"
 #include "osgEarthDrivers/mbtiles/MBTilesOptions"
 
-// Hawaii:
-#define LAT             19.698193
-#define LON           -156.20224
+// Hawaii near Kauai:
+#define LAT             21.937611
+#define LON           -159.793521
 #define ALT              0.0
 #define PLATFORM_SHIP "Ship"
 
