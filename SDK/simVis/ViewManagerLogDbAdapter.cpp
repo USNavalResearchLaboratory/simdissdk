@@ -56,19 +56,13 @@ public: // osg::NodeCallback
   {
     osg::Camera* camera = static_cast<osg::Camera*>(node);
     double vfov, ar, n, f;
-    camera->getProjectionMatrixAsPerspective(vfov, ar, n, f);
-    // Cannot have a 0.0 far
-    assert(f != 0.0);
-    if (f != 0.0)
+    // Camera might be in ortho mode, would return false
+    if (camera->getProjectionMatrixAsPerspective(vfov, ar, n, f) && f != 0.0)
     {
       if (n < minNear_)
-      {
         camera->setNearFarRatio(minNear_ / f);
-      }
       else if (n / f >= minNearFarRatio_)
-      {
         camera->setNearFarRatio(minNearFarRatio_);
-      }
     }
     traverse(node, nv);
   }
