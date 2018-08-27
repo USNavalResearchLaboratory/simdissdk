@@ -1685,8 +1685,11 @@ namespace simVis
        * @param rcvGaindB The gain, in dB, of the receive antenna
        * @param rcsSqm RCS db if useDb is true or RCS dBsm if useDb is false;
        * @param useDb Flag for selecting type of rcs value to return
+       * @param freqMHz The frequency, in MHz, of the RF signal
+       * @param powerWatts The power, in watts, of the RF signal
        */
-      void getRfParameters_(State& state, double* azAbs, double* elAbs, double *hgtMeters, double* xmtGaindB, double* rcvGaindB, double* rcsSqm, bool useDb) const;
+      void getRfParameters_(State& state, double* azAbs, double* elAbs, double *hgtMeters, double* xmtGaindB, double* rcvGaindB, double* rcsSqm, bool useDb,
+        double* freqMHz, double* powerWatts) const;
     };
 
     /// Antenna Gain

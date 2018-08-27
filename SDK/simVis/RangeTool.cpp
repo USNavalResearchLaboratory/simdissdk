@@ -35,6 +35,7 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/EM/Decibel.h"
+#include "simCore/EM/Propagation.h"
 #include "simCore/Time/TimeClass.h"
 
 #include "simVis/AlphaTest.h"
@@ -294,6 +295,7 @@ bool RangeTool::Measurement::isBeamToEntity_(simData::ObjectType fromType, simDa
     return false;
 
   return ((toType == simData::PLATFORM) ||
+    (toType == simData::BEAM) ||
     (toType == simData::GATE) ||
     (toType == simData::LOB_GROUP) ||
     (toType == simData::LASER) ||
@@ -2718,7 +2720,8 @@ RangeTool::RfMeasurement::RfMeasurement(const std::string& name, const std::stri
 
 }
 
-void RangeTool::RfMeasurement::getRfParameters_(State& state, double *azAbs, double *elAbs, double *hgtMeters, double* xmtGaindB, double* rcvGaindB, double* rcs, bool useDb) const
+void RangeTool::RfMeasurement::getRfParameters_(State& state, double *azAbs, double *elAbs, double *hgtMeters, double* xmtGaindB, double* rcvGaindB, double* rcs, bool useDb,
+  double* freqMHz, double* powerWatts) const
 {
   if (azAbs != NULL || elAbs != NULL)
   {
@@ -2787,6 +2790,25 @@ void RangeTool::RfMeasurement::getRfParameters_(State& state, double *azAbs, dou
     }
     *rcs = rcsLocal;
   }
+
+  if ((freqMHz != NULL) || (powerWatts != NULL))
+  {
+    double freqMHzBLocal = 0.0;
+    double powerWattsLocal = 0.0;
+    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(state.beginEntity_.node_.get());
+    if (beam)
+    {
+      auto prefs = beam->getPrefs();
+      freqMHzBLocal = prefs.frequency();
+      powerWattsLocal = prefs.power();
+    }
+
+    if (freqMHz != NULL)
+      *freqMHz = freqMHzBLocal;
+
+    if (powerWatts != NULL)
+      *powerWatts = powerWattsLocal;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -2822,17 +2844,15 @@ RangeTool::RFPowerMeasurement::RFPowerMeasurement()
 
 double RangeTool::RFPowerMeasurement::value(State& state) const
 {
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
-  if (rf == NULL)
-    return static_cast<double>(simCore::SMALL_DB_VAL);
-
   double az;
   double hgtMeters;
   double xmtGaindB;
   double rcvGaindB;
   double rcsSqm;
+  double freqMHz;
+  double xmtPowerWatts;
 
-  getRfParameters_(state, &az, NULL, &hgtMeters, &xmtGaindB, &rcvGaindB, &rcsSqm, false);
+  getRfParameters_(state, &az, NULL, &hgtMeters, &xmtGaindB, &rcvGaindB, &rcsSqm, false, &freqMHz, &xmtPowerWatts);
   double slantRngMeters = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
   double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
   if (rcsSqm == simCore::SMALL_RCS_SM)
@@ -2840,13 +2860,25 @@ double RangeTool::RFPowerMeasurement::value(State& state) const
     // no valid rcs data found; use default 1.0 sqm as documented in SIMDIS User Manual
     rcsSqm = 1.0;
   }
-  return rf->getReceivedPower(az, slantRngMeters, hgtMeters, xmtGaindB, rcvGaindB, rcsSqm, gndRngMeters);
+
+  double power = simCore::SMALL_DB_VAL;
+
+  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
+  if (rf != NULL)
+    power = rf->getReceivedPower(az, slantRngMeters, hgtMeters, xmtGaindB, rcvGaindB, rcsSqm, gndRngMeters);
+
+  // if simRF::RFPropagationFacade did not return a value, use free space calculation if values available
+  if ((power == simCore::SMALL_DB_VAL) && (freqMHz != 0.0) && (xmtPowerWatts != 0.0))
+    power = simCore::getRcvdPowerFreeSpace(slantRngMeters, freqMHz, xmtPowerWatts,
+      xmtGaindB, rcvGaindB, rcsSqm, 0.0, false);
+
+  return power;
 }
 
 bool RangeTool::RFPowerMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type()) &&
-         (state.beginEntity_.rfPropagation_ != NULL);
+  // rfPropagation_ is not required, can fall back to free space calculation
+  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
 }
 
 //----------------------------------------------------------------------------
@@ -2857,26 +2889,35 @@ RangeTool::RFOneWayPowerMeasurement::RFOneWayPowerMeasurement()
 
 double RangeTool::RFOneWayPowerMeasurement::value(State& state) const
 {
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
-  if (rf == NULL)
-    return static_cast<double>(simCore::SMALL_DB_VAL);
-
   double az;
   double hgtMeters;
   double xmtGaindB;
   double rcvGaindB;
+  double freqMHz;
+  double xmtPowerWatts;
 
-  getRfParameters_(state, &az, NULL, &hgtMeters, &xmtGaindB, &rcvGaindB, NULL, false);
+  getRfParameters_(state, &az, NULL, &hgtMeters, &xmtGaindB, &rcvGaindB, NULL, false, &freqMHz, &xmtPowerWatts);
   double slantRngMeters = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
   double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
 
-  return rf->getOneWayPower(az, slantRngMeters, hgtMeters, xmtGaindB, gndRngMeters, rcvGaindB);
+  double power = simCore::SMALL_DB_VAL;
+
+  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
+  if (rf != NULL)
+    power = rf->getOneWayPower(az, slantRngMeters, hgtMeters, xmtGaindB, gndRngMeters, rcvGaindB);
+
+  // if simRF::RFPropagationFacade did not return a value, use free space calculation if values available
+  if ((power == simCore::SMALL_DB_VAL) && (freqMHz != 0.0) && (xmtPowerWatts != 0.0))
+    power = simCore::getRcvdPowerFreeSpace(slantRngMeters, freqMHz, xmtPowerWatts,
+      xmtGaindB, 0.0, 1.0, 0.0, true);
+
+  return power;
 }
 
 bool RangeTool::RFOneWayPowerMeasurement::willAccept(const simVis::RangeTool::State& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type()) &&
-         (state.beginEntity_.rfPropagation_ != NULL);
+  // rfPropagation_ is not required, can fall back to free space calculation
+  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
 }
 
 //----------------------------------------------------------------------------
@@ -2986,7 +3027,7 @@ double RangeTool::PodMeasurement::value(State& state) const
     return 0.0;
 
   double az;
-  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false);
+  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
   double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
 
   return rf->getPOD(az, gndRngMeters, state.endEntity_.lla_.alt());
@@ -3012,7 +3053,7 @@ double RangeTool::LossMeasurement::value(State& state) const
     return static_cast<double>(simCore::SMALL_DB_VAL);
 
   double az;
-  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false);
+  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
   double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
 
   return rf->getLoss(az, gndRngMeters, state.endEntity_.lla_.alt());
@@ -3038,7 +3079,7 @@ double RangeTool::PpfMeasurement::value(State& state) const
     return static_cast<double>(simCore::SMALL_DB_VAL);
 
   double az;
-  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false);
+  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
   double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
 
   return rf->getPPF(az, gndRngMeters, state.endEntity_.lla_.alt());
@@ -3068,7 +3109,7 @@ double RangeTool::SnrMeasurement::value(State& state) const
   double rcvGaindB;
   double rcsSqm;
 
-  getRfParameters_(state, &az, NULL, NULL, &xmtGaindB, &rcvGaindB, &rcsSqm, false);
+  getRfParameters_(state, &az, NULL, NULL, &xmtGaindB, &rcvGaindB, &rcsSqm, false, NULL, NULL);
   double slantRngMeters = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
   double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
   double altitude = state.endEntity_.lla_.alt();
@@ -3100,7 +3141,7 @@ double RangeTool::CnrMeasurement::value(State& state) const
     return static_cast<double>(simCore::SMALL_DB_VAL);
 
   double az;
-  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false);
+  getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
   //unlike other RF - related calculations, CNR doesn't have a height component
   double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
 
@@ -3123,7 +3164,7 @@ double RangeTool::RcsMeasurement::value(State& state) const
 {
   //RCS is a measure of the electrical or reflective area of a target, it is usually expressed in square meters or dBsm.
   double rcsDb;
-  getRfParameters_(state, NULL, NULL, NULL, NULL, NULL, &rcsDb, true);
+  getRfParameters_(state, NULL, NULL, NULL, NULL, NULL, &rcsDb, true, NULL, NULL);
 
   return rcsDb;
 }
