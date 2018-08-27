@@ -170,6 +170,10 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   unsigned int halfCountInt = static_cast<unsigned int>(floor(halfCount));
   double remainder = halfRemainder;
 
+  // Precision issues can sometimes cause a remainder to exist when azim_res_rad divides halfSpan evenly
+  if (osg::equivalent(fov, azim_res_rad * 2 * halfCountInt))
+    remainder = 0.0;
+
   double azim_iter = azim_min_rad;
   if (!osg::equivalent(remainder, 0.0))
   {
