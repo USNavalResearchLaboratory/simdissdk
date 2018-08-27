@@ -1,13 +1,9 @@
 #version $GLSL_VERSION_STR
 
 #pragma vp_entryPoint simVis_BathymetryGenerator_vertex
-#pragma vp_location vertex_clip
-
-// TODO: Investigate why vertex_view works in example_ocean, but not in SIMDIS.
-// Based on https://github.com/USNavalResearchLaboratory/simdissdk/pull/27 the
-// location should be vertex_view to reduce stutter on screen, but this causes
-// display issues in SIMDIS.
-// #pragma vp_location vertex_view
+#pragma vp_location vertex_view
+// Note that if you cannot see Triton with this shader, be sure to check that
+// TritonOptions::useHeightMap() is set to false.
 
 uniform float simVis_BathymetryGenerator_offset;
 uniform float simVis_BathymetryGenerator_seaLevel;
