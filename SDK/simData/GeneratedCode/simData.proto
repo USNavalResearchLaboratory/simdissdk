@@ -1216,7 +1216,7 @@ message ProjectorPrefs {
   /// Determine if we want to show projector frustum
   optional bool showFrustum = 3 [default = false];
   /// Projector alpha for blending [0.0, 1.0]
-  optional float projectorAlpha = 4 [default = 0.1];
+  optional float projectorAlpha = 4 [default = 1.0];
   /// Determine if we should interpolate FOV
   optional bool interpolateProjectorFov = 5 [default = true];
 };
