@@ -448,6 +448,46 @@ int testDataStoreProxy()
   return rv;
 }
 
+// Ensure things like Category Data do not clutter the entity values
+int testIgnoresCategoryData()
+{
+  simUtil::DataStoreTestHelper helper;
+
+  simData::DataStore* ds = helper.dataStore();
+  std::shared_ptr<TimeCollector> timeCollector(new TimeCollector);
+  ds->setNewUpdatesListener(timeCollector);
+
+  simData::ObjectId plat1 = helper.addPlatform(1);
+  helper.addPlatformUpdate(1.0, plat1);
+  helper.addPlatformUpdate(2.0, plat1);
+
+  int rv = 0;
+
+  // Verify initial state
+  auto p1Times = timeCollector->getTimes(plat1);
+  rv += SDK_ASSERT(p1Times.size() == 2);
+  rv += SDK_ASSERT(p1Times.count(1.0) != 0);
+  rv += SDK_ASSERT(p1Times.count(2.0) != 0);
+  timeCollector->clear();
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
+
+  // Add category update
+  helper.addCategoryData(plat1, "Key", "Value", 2.5);
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
+  // And Generic update
+  helper.addGenericData(plat1, "GenData", "Value", 2.8);
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
+
+  // Add a command
+  simData::PlatformCommand cmd;
+  cmd.set_time(2.9);
+  cmd.mutable_updateprefs()->set_axisscale(2.0);
+  helper.addPlatformCommand(cmd, plat1);
+  rv += SDK_ASSERT(timeCollector->getTimes(plat1).empty());
+
+  return rv;
+}
+
 }
 
 int TestNewUpdatesListener(int argc, char* argv[])
@@ -456,5 +496,6 @@ int TestNewUpdatesListener(int argc, char* argv[])
   rv += SDK_ASSERT(testEntityCollection() == 0);
   rv += SDK_ASSERT(testDataTableCollection() == 0);
   rv += SDK_ASSERT(testDataStoreProxy() == 0);
+  rv += SDK_ASSERT(testIgnoresCategoryData() == 0);
   return rv;
 }

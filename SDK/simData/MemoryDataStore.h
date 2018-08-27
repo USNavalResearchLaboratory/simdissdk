@@ -519,13 +519,13 @@ private:
   class NewUpdateTransactionImpl : public TransactionImpl
   {
   public:
-    NewUpdateTransactionImpl(T *update, SliceType *slice, MemoryDataStore* dataStore, ObjectId id, bool applyTimeBound = true)
+    NewUpdateTransactionImpl(T *update, SliceType *slice, MemoryDataStore* dataStore, ObjectId id, bool isEntityUpdate)
       : committed_(false),
         update_(update),
         slice_(slice),
         dataStore_(dataStore),
         id_(id),
-        applyTimeBound_(applyTimeBound)
+        isEntityUpdate_(isEntityUpdate)
     { }
 
     /// Transfers ownership of the update object to the MemoryDataStore
@@ -548,7 +548,7 @@ private:
     SliceType *slice_;     // Type such as PlatformEntry, BeamEntry, GateEntry, LaserEntry, ProjectorEntry, or LobGroupEntry
     MemoryDataStore* dataStore_; // Pointer back to the data store
     ObjectId id_; // entity id for applying data limiting
-    bool applyTimeBound_; // flag to indicate if update time should apply to time bounds
+    bool isEntityUpdate_; // flag to indicate if transaction is entity update; if so, update time should apply to time bounds, and applies to new-updates listener
   };
 
   /** Perform transactions on new scenario generic updates

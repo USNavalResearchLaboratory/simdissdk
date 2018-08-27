@@ -1861,7 +1861,7 @@ PlatformUpdate* MemoryDataStore::addPlatformUpdate(ObjectId id, Transaction *tra
 
   // Setup transaction
   MemoryDataSlice<PlatformUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<PlatformUpdate, MemoryDataSlice<PlatformUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<PlatformUpdate, MemoryDataSlice<PlatformUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -1902,7 +1902,7 @@ BeamUpdate* MemoryDataStore::addBeamUpdate(ObjectId id, Transaction *transaction
 
   // Setup transaction
   MemoryDataSlice<BeamUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<BeamUpdate, MemoryDataSlice<BeamUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<BeamUpdate, MemoryDataSlice<BeamUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -1943,7 +1943,7 @@ GateUpdate* MemoryDataStore::addGateUpdate(ObjectId id, Transaction *transaction
 
   // Setup transaction
   MemoryDataSlice<GateUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<GateUpdate, MemoryDataSlice<GateUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<GateUpdate, MemoryDataSlice<GateUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -1984,7 +1984,7 @@ LaserUpdate* MemoryDataStore::addLaserUpdate(ObjectId id, Transaction *transacti
 
   // Setup transaction
   MemoryDataSlice<LaserUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<LaserUpdate, MemoryDataSlice<LaserUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<LaserUpdate, MemoryDataSlice<LaserUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -2025,7 +2025,7 @@ ProjectorUpdate* MemoryDataStore::addProjectorUpdate(ObjectId id, Transaction *t
 
   // Setup transaction
   MemoryDataSlice<ProjectorUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<ProjectorUpdate, MemoryDataSlice<ProjectorUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<ProjectorUpdate, MemoryDataSlice<ProjectorUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -2066,7 +2066,7 @@ LobGroupUpdate* MemoryDataStore::addLobGroupUpdate(ObjectId id, Transaction *tra
 
   // Setup transaction
   MemoryDataSlice<LobGroupUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<LobGroupUpdate, MemoryDataSlice<LobGroupUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<LobGroupUpdate, MemoryDataSlice<LobGroupUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -2639,12 +2639,13 @@ void MemoryDataStore::NewUpdateTransactionImpl<T, SliceType>::commit()
       const CommonPrefs* prefs = dataStore_->commonPrefs(id_, &t);
       slice_->limitByPrefs(*prefs);
     }
-    if (applyTimeBound_)
-      dataStore_->newTimeBound_(updateTime);
     dataStore_->hasChanged_ = true;
-
-    // Notify the data store's new-update code
-    dataStore_->newUpdatesListener().onEntityUpdate(dataStore_, id_, updateTime);
+    if (isEntityUpdate_)
+    {
+      dataStore_->newTimeBound_(updateTime);
+      // Notify the data store's new-update callback
+      dataStore_->newUpdatesListener().onEntityUpdate(dataStore_, id_, updateTime);
+    }
   }
 }
 
