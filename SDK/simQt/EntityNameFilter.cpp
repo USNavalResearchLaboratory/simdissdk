@@ -131,6 +131,12 @@ void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity 
 
 bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
 {
+  // Should only pass in a valid index
+  assert(index.model() != NULL);
+  // Make sure pointers are valid
+  if ((index.model() == NULL) || (regExp_ == NULL))
+    return false;
+
   // Check if this index passes the filter, return true if it does
   QString name = index.model()->data(index).toString();
   bool rv = regExp_->match(name.toStdString());
