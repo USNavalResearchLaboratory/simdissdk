@@ -316,16 +316,11 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
 
   if ((parentItem != rootItem_) && treeView_)
   {
+    beginInsertRows(createIndex(parentItem->row(), 0, parentItem), parentItem->childCount(), parentItem->childCount());
     EntityTreeItem* newItem = new EntityTreeItem(id, parentItem);
     itemsById_[id] = newItem;
     parentItem->appendChild(newItem);
-    if (newItem->row() == 0)
-      emit(layoutAboutToBeChanged());
-    beginInsertRows(createIndex(parentItem->row(), 0, parentItem), newItem->row(), newItem->row());
-    insertRow(newItem->row(), createIndex(newItem->row(), 0, newItem));
     endInsertRows();
-    if (newItem->row() == 0)  // if first one, needed to get the |> to show up on the tree
-      emit(layoutChanged());
   }
   else
   {
@@ -333,7 +328,6 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
     EntityTreeItem* newItem = new EntityTreeItem(id, rootItem_);
     itemsById_[id] = newItem;
     rootItem_->appendChild(newItem);
-    insertRow(newItem->row());
     endInsertRows();
   }
 }
@@ -355,14 +349,13 @@ void EntityTreeModel::removeEntity_(uint64_t id)
   // Qt requires we notify it of all the rows to be removed
   if (found->parent() != rootItem_)
   {
-    beginRemoveRows(createIndex(found->row(), 0, found->parent()), found->row(), found->row() + found->childCount());
+    const QModelIndex parentIndex = createIndex(found->parent()->row(), 0, found->parent());
+    beginRemoveRows(parentIndex, found->row(), found->row());
   }
   else
   {
-    beginRemoveRows(QModelIndex(), found->row(), found->row() + found->childCount());
+    beginRemoveRows(QModelIndex(), found->row(), found->row());
   }
-
-  removeRows(found->row(), found->childCount());
 
   // Get any children before deleting
   std::vector<uint64_t> ids;
