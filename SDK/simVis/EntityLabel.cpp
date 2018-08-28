@@ -104,9 +104,6 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
   // Detect label changes in the last update and apply those changes
   if (label_.valid())
   {
-    // check for an update:
-    const bool textChanged = (text != lastText_);
-
     setNodeMask(draw ? DISPLAY_MASK_LABEL : DISPLAY_MASK_NONE);
     label_->setNodeMask(draw ? DISPLAY_MASK_LABEL : DISPLAY_MASK_NONE);
     // if label was just enabled with this prefs change, force our locator node to sync with its locator
@@ -134,12 +131,6 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, backdroptype) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, alignment) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, backdropimplementation);
-
-    if (textChanged)
-    {
-      // update the text label.
-      label_->setText(text);
-    }
 
     // update the style:
     if (labelStylePrefsChanged || forceStyle)
@@ -186,11 +177,17 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
     const osg::Vec3d labelOffset(0.0, 0.0, zOffset);
     if (label_->getLocalOffset() != labelOffset)
       label_->setLocalOffset(labelOffset);
+
+    // check for an update:
+    if (text != lastText_)
+    {
+      label_->setText(text);
+      lastText_ = text;
+    }
   }
 
   lastCommonPrefs_ = commonPrefs;
   hasLastPrefs_ = true;
-  lastText_ = text;
 }
 
 }

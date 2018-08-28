@@ -23,7 +23,9 @@
 /**
  * Custom Rendering Example
  *
- * Demonstrates how to inject a custom entity into a scene.
+ * Demonstrates how to inject a custom entity into a scene.  This example
+ * creates a unit circle and scales the size by a counter.  The unit
+ * circle could represent an error ellipse.
  */
 
 #include "simCore/Common/Version.h"
@@ -58,8 +60,6 @@ using namespace osgEarth::Util::Controls;
 
 namespace {
 
-//----------------------------------------------------------------------------
-/// create an overlay with some helpful information
 
 /// first line, describe the program
 static const std::string s_title = "Custom Rendering Example";
@@ -124,7 +124,7 @@ simData::ObjectId addCustomRendering(simData::ObjectId hostId, simData::DataStor
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_overlayfontpointsize(14);
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_offsety(200);
-  prefs->mutable_commonprefs()->mutable_labelprefs()->set_color(0xFF0000FF);
+  prefs->mutable_commonprefs()->mutable_labelprefs()->set_color(0xFFFF00FF);
 
   transaction.complete(&prefs);
 
@@ -137,9 +137,9 @@ public:
   LabelCallback() {}
   virtual ~LabelCallback() {}
 
-  virtual std::string createString(const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields)
+  virtual std::string createString(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs, const simData::LabelPrefs_DisplayFields& fields)
   {
-    return "Do something special here.";
+    return "Create an application specific string here";
   }
 };
 
@@ -148,7 +148,9 @@ class UpdateFromDatastore : public simVis::CustomRenderingNode::UpdateCallback
 {
 public:
   explicit UpdateFromDatastore(simVis::ScenarioManager* manager)
-    : manager_(manager)
+    : manager_(manager),
+      xScale_(100.0),
+      yScale_(100.0)
   {
   }
 
@@ -162,29 +164,29 @@ public:
       simVis::LocatorNode* locatorNode = node_->locatorNode();
       locatorNode->removeChildren(0, locatorNode->getNumChildren());
 
-      osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
-      (*colors)[0] = osg::Vec4(1, 1, 1, 1);
-      geom_ = new osg::Geometry;
-      geom_->setColorArray(colors.get());
-
-      geom_->setUseVertexBufferObjects(true);
-      fillVerts_ = new osg::Vec3Array();
-      fillVerts_->setDataVariance(osg::Object::DYNAMIC);
-      geom_->setVertexArray(fillVerts_.get());
-      fillVerts_->push_back(osg::Vec3(1000, -100, 0));
-      fillVerts_->push_back(osg::Vec3(1000, 0, 0));
-      fillVerts_->push_back(osg::Vec3(0, 0, 0));
-      geom_->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 3));
-      locatorNode->addChild(geom_);
+      // In this example do a simple unit circle.
+      geom_ = makeUnitCircle_();
+      transform_ = new osg::MatrixTransform;
+      transform_->addChild(geom_);
+      locatorNode->addChild(transform_);
+      node_->setCustomActive(true);
       locatorNode->dirtyBound();
     }
-    else
+
+    if (transform_ != NULL)
     {
-      if (fillVerts_->front().y() > -1000)
-        fillVerts_->front().y() -= 100;
-      else
-        fillVerts_->front().y() = -100;
-      fillVerts_->dirty();
+      // In this example scale the size of the customer rendering.
+      // It is possible to change the color and/or shape.  The flexibility
+      // is limited by OSG.
+      osg::Matrix matrix;
+      matrix.makeScale(osg::Vec3d(xScale_, yScale_, 1.0));
+      xScale_ += 3.0;
+      if (xScale_ > 200.0)
+        xScale_ = 100;
+      yScale_ += 2.0;
+      if (yScale_ > 200.0)
+        yScale_ = 100;
+      transform_->setMatrix(matrix);
     }
 
     auto host = node_->host();
@@ -192,6 +194,9 @@ public:
     {
       simCore::Coordinate coord;
       host->getLocator()->getCoordinate(&coord);
+      // In this example the custom rendering is tracking the host platform.
+      // It is possible to add offsets or to set a completely independent
+      // location.
       node_->getLocator()->setCoordinate(coord);
       node_->dirtyBound();
     }
@@ -208,10 +213,42 @@ protected:
   virtual ~UpdateFromDatastore() {}
 
 private:
+  osg::Geometry* makeUnitCircle_() const
+  {
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+    (*colors)[0] = osg::Vec4(1, 1, 1, 1);
+    geom->setColorArray(colors);
+
+    const int pointsPerQuarter = 20;
+    osg::ref_ptr<osg::Vec3Array> fillVerts = new osg::Vec3Array(4 * pointsPerQuarter);
+    for (auto ii = 0; ii < pointsPerQuarter; ++ii)
+    {
+      float arg = static_cast<float>(ii) / static_cast<float>(pointsPerQuarter)* static_cast<float>(M_PI_2);
+      float x = static_cast<float>(cos(arg));
+      float y = static_cast<float>(sin(arg));
+
+      (*fillVerts)[ii].set(x, y, 0);
+      (*fillVerts)[ii + pointsPerQuarter].set(-y, x, 0);
+      (*fillVerts)[ii + 2 * pointsPerQuarter].set(-x, -y, 0);
+      (*fillVerts)[ii + 3 * pointsPerQuarter].set(y, -x, 0);
+    }
+    geom->setVertexArray(fillVerts.get());
+    geom->setDataVariance(osg::Object::DYNAMIC);
+    geom->setUseDisplayList(false);
+    geom->setUseVertexBufferObjects(true);
+    geom->addPrimitiveSet(new osg::DrawArrays(GL_LINE_LOOP, 0, 4 * pointsPerQuarter));
+
+    return geom.release();
+  }
+
   osg::observer_ptr<simVis::ScenarioManager> manager_;
   osg::observer_ptr<simVis::CustomRenderingNode> node_;
   osg::ref_ptr<osg::Geometry> geom_;
-  osg::ref_ptr<osg::Vec3Array> fillVerts_;;
+  osg::ref_ptr<osg::MatrixTransform> transform_;
+  double xScale_;
+  double yScale_;
 };
 
 
@@ -295,7 +332,7 @@ int main(int argc, char **argv)
   simData::ObjectId platformId = addPlatform(dataStore);
   configurePlatformPrefs(platformId, &dataStore, "Simulated Platform");
 
-// Custom specific code
+  // Custom specific code
   dataStore.addListener(simData::DataStore::ListenerPtr(new UpdateGraphics(scene->getScenario())));
   addCustomRendering(platformId, dataStore);
 
