@@ -454,25 +454,25 @@ void DataColumn::fillRow(const TimeContainer::IteratorData& timeIdxData, TableRo
 }
 
 // Start iteration at the beginning of the container (smallest time).
-TableColumn::Iterator DataColumn::begin()
+TableColumn::Iterator DataColumn::begin() const
 {
   return Iterator(new ColumnIteratorImpl(freshData_, staleData_, timeContainer_->begin()));
 }
 
 // Iterator representing the back of the container (largest time).
-TableColumn::Iterator DataColumn::end()
+TableColumn::Iterator DataColumn::end() const
 {
   return Iterator(new ColumnIteratorImpl(freshData_, staleData_, timeContainer_->end()));
 }
 
 // Returns lower_bound() iterator into container
-TableColumn::Iterator DataColumn::lower_bound(double timeValue)
+TableColumn::Iterator DataColumn::lower_bound(double timeValue) const
 {
   return Iterator(new ColumnIteratorImpl(freshData_, staleData_, timeContainer_->lower_bound(timeValue)));
 }
 
 // Returns upper_bound() iterator into container
-TableColumn::Iterator DataColumn::upper_bound(double timeValue)
+TableColumn::Iterator DataColumn::upper_bound(double timeValue) const
 {
   return Iterator(new ColumnIteratorImpl(freshData_, staleData_, timeContainer_->upper_bound(timeValue)));
 }
