@@ -112,7 +112,7 @@ public:
       : GenericIterator<const T*>(slice->iterator_())
     {
     }
-    /// Copies an iterator; Note: no clone here, to prevent memory loss
+    /// Initializes from an IteratorImpl; Note: no clone here, ownership transfers to this instance via shared_ptr
     explicit Iterator(IteratorImpl* impl)
       : GenericIterator<const T*>(impl)
     {

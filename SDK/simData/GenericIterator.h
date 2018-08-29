@@ -62,13 +62,40 @@ public:
   virtual GenericIteratorImpl<ValueType>* clone() const = 0;
 };
 
+/**
+ * Implementation of GenericIteratorImpl that can be used for default-constructible objects.
+ * This is useful because GenericIterator requires a valid GenericIteratorImpl in all cases,
+ * and there may be conditions where a valid GenericIteratorImpl cannot be constructed.  In
+ * these cases, pass in an instance of a NullIteratorImpl.
+ */
+template <typename ValueType>
+class NullIteratorImpl : public GenericIteratorImpl<ValueType>
+{
+public:
+  // Return a default-constructible instance of ValueType
+  virtual const ValueType next() { return ValueType(); }
+  virtual const ValueType peekNext() const { return ValueType(); }
+  virtual const ValueType previous() { return ValueType(); }
+  virtual const ValueType peekPrevious() const { return ValueType(); }
+
+  // Noop, cannot move to front or back
+  virtual void toFront() {}
+  virtual void toBack() {}
+
+  // No next, no previous
+  virtual bool hasNext() const { return false; }
+  virtual bool hasPrevious() const { return false; }
+
+  // Clone another NullIteratorImpl
+  virtual GenericIteratorImpl<ValueType>* clone() const { return new NullIteratorImpl<ValueType>(); }
+};
 
 /** Iterator for containers, modeled after Qt and Java iteration, returns time values */
 template <typename ValueType>
 class GenericIterator
 {
 public:
-  /// Copies an iterator; Note: no clone here, to prevent memory loss
+  /// Initializes with the given iterator implementation; accepts ownership of pointer through shared_ptr
   explicit GenericIterator(GenericIteratorImpl<ValueType>* impl)
     : impl_(impl)
   {
