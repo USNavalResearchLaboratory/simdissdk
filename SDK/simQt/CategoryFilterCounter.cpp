@@ -173,10 +173,19 @@ void CategoryFilterCounter::testCategory_(int nameInt, CategoryCountResults::Val
 
 AsyncCategoryCounter::AsyncCategoryCounter(QObject* parent)
   : QObject(parent),
+    counter_(NULL),
     futureWatcher_(NULL),
     retestPending_(false)
 {
-  counter_ = NULL;
+}
+
+AsyncCategoryCounter::~AsyncCategoryCounter()
+{
+  if (futureWatcher_ != NULL)
+  {
+    // need to wait for the thread to finish before Qt auto deletes the member variables it references
+    static_cast<QFutureWatcher<void>*>(futureWatcher_)->waitForFinished();
+  }
 }
 
 void AsyncCategoryCounter::setFilter(const simData::CategoryFilter& filter)

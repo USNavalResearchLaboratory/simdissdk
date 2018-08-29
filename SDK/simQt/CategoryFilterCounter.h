@@ -130,6 +130,8 @@ public:
   /** Default constructor */
   explicit AsyncCategoryCounter(QObject* parent = NULL);
 
+  virtual ~AsyncCategoryCounter();
+
   /** Retrieves the last fully executed results. */
   const simQt::CategoryCountResults& lastResults() const;
 
