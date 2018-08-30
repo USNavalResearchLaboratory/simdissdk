@@ -163,7 +163,6 @@ private slots:
 private:
   simQt::CategoryCountResults lastResults_;
   CategoryFilterCounter* counter_;
-  QObject* futureWatcher_;
   std::unique_ptr<simData::CategoryFilter> nextFilter_;
   bool retestPending_;
 };

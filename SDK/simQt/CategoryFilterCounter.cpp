@@ -174,18 +174,12 @@ void CategoryFilterCounter::testCategory_(int nameInt, CategoryCountResults::Val
 AsyncCategoryCounter::AsyncCategoryCounter(QObject* parent)
   : QObject(parent),
     counter_(NULL),
-    futureWatcher_(NULL),
     retestPending_(false)
 {
 }
 
 AsyncCategoryCounter::~AsyncCategoryCounter()
 {
-  if (futureWatcher_ != NULL)
-  {
-    // need to wait for the thread to finish before Qt auto deletes the member variables it references
-    static_cast<QFutureWatcher<void>*>(futureWatcher_)->waitForFinished();
-  }
 }
 
 void AsyncCategoryCounter::setFilter(const simData::CategoryFilter& filter)
@@ -197,7 +191,7 @@ void AsyncCategoryCounter::setFilter(const simData::CategoryFilter& filter)
 
 void AsyncCategoryCounter::asyncCountEntities()
 {
-  if (futureWatcher_ != NULL)
+  if (counter_ != NULL)
   {
     retestPending_ = true;
     return;
@@ -206,19 +200,19 @@ void AsyncCategoryCounter::asyncCountEntities()
   // Turn off the retest flag
   retestPending_ = false;
 
-  // Delete the old counter and make a new one
-  delete counter_;
-  counter_ = new CategoryFilterCounter(this);
+  // Create a watcher that will tell us when the task is complete
+  QFutureWatcher<void>* watcher = new QFutureWatcher<void>();
+
+  counter_ = new CategoryFilterCounter(watcher);
   if (nextFilter_ != NULL)
     counter_->setFilter(*nextFilter_);
   counter_->prepare();
 
-  // Create a watcher that will tell us when the task is complete
-  QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
-  // Save it as a pointer so we avoid calling this multiple times
-  futureWatcher_ = watcher;
-  // Be sure to set up a connect() before setFuture() to avoid race
+  // Be sure to set up a connect() before setFuture() to avoid race.
   connect(watcher, SIGNAL(finished()), this, SLOT(emitResults_()));
+  // To prevent race conditions use deleteLater() instead of Qt parents to manage lifespan
+  connect(watcher, SIGNAL(finished()), watcher, SLOT(deleteLater()));
+
   watcher->setFuture(QtConcurrent::run(counter_, &CategoryFilterCounter::testAllCategories));
 }
 
@@ -228,9 +222,8 @@ void AsyncCategoryCounter::emitResults_()
   lastResults_ = counter_->results();
   emit resultsReady(lastResults_);
 
-  // Delete the future watcher immediately
-  delete futureWatcher_;
-  futureWatcher_ = NULL;
+  // just set to NULL, the deleteLater() for watcher will do the actual delete
+  counter_ = NULL;
 
   // Retest now that it's safe to do so
   if (retestPending_)
