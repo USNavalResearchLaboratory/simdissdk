@@ -1794,12 +1794,17 @@ public:
 
   virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    parent_.updateEntityCount_();
+    parent_.countDirty_ = true;
   }
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    parent_.updateEntityCount_();
+    parent_.countDirty_ = true;
   }
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  {
+    parent_.countDirty_ = true;
+  }
+
 private:
   CategoryFilterWidget2& parent_;
 };
@@ -1811,7 +1816,8 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
     activeFiltering_(false),
     showEntityCount_(false),
     counter_(NULL),
-    setRegExpAction_(NULL)
+    setRegExpAction_(NULL),
+    countDirty_(true)
 {
   setWindowTitle("Category Data Filter");
   setObjectName("CategoryFilterWidget2");
@@ -1891,9 +1897,11 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(itemDelegate, SIGNAL(editRegExpClicked(QModelIndex)), this, SLOT(showRegExpEditGui_(QModelIndex)));
 
   // timer is connected by setShowEntityCount below; it must be constructed before setShowEntityCount
-  recountTimer_ = new QTimer(this);
-  recountTimer_->setSingleShot(true);
-  recountTimer_->setInterval(0);
+  auto recountTimer = new QTimer(this);
+  recountTimer->setSingleShot(false);
+  recountTimer->setInterval(3000);
+  connect(recountTimer, SIGNAL(timeout()), this, SLOT(recountCategories_()));
+  recountTimer->start();
 
   // Entity filtering is on by default
   setShowEntityCount(true);
@@ -1949,13 +1957,6 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
     return;
   showEntityCount_ = fl;
 
-  // recountTimer_ must be created in the constructor before this call to setShowEntityCount
-  assert(recountTimer_);
-  if (recountTimer_ && counter_)
-  {
-    recountTimer_->stop();
-    disconnect(recountTimer_, SIGNAL(timeout()), counter_, SLOT(asyncCountEntities()));
-  }
   // Clear out the old counter
   delete counter_;
   counter_ = NULL;
@@ -1968,19 +1969,11 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
     connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), counter_, SLOT(setFilter(simData::CategoryFilter)));
     connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), counter_, SLOT(asyncCountEntities()));
     counter_->setFilter(categoryFilter());
-
-    connect(recountTimer_, SIGNAL(timeout()), counter_, SLOT(asyncCountEntities()));
   }
   else
   {
     treeModel_->processCategoryCounts(simQt::CategoryCountResults());
   }
-}
-
-void CategoryFilterWidget2::updateEntityCount_()
-{
-  if (showEntityCount_)
-    recountTimer_->start();
 }
 
 void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
@@ -2176,6 +2169,16 @@ void CategoryFilterWidget2::expandUnlockedCategories_()
     const QModelIndex& idx = proxy_->index(i, 0);
     if (!idx.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
       treeView_->setExpanded(idx, true);
+  }
+}
+
+void CategoryFilterWidget2::recountCategories_()
+{
+  if (countDirty_)
+  {
+    if (showEntityCount_ && counter_)
+      counter_->asyncCountEntities();
+    countDirty_ = false;
   }
 }
 

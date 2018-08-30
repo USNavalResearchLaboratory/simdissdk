@@ -283,8 +283,8 @@ private slots:
   void toggleLockCategory_();
   /** Expands all unlocked categories */
   void expandUnlockedCategories_();
-  /** Updates entity counts */
-  void updateEntityCount_();
+  /** Start a recount of the category values if countDirty_ is true */
+  void recountCategories_();
 
 private:
   class DataStoreListener;
@@ -307,10 +307,10 @@ private:
   QAction* clearRegExpAction_;
   /** Action used for toggling the lock state of a category */
   QAction* toggleLockCategoryAction_;
-  /** Single-shot timer to start the async count after entity event notifications */
-  QTimer* recountTimer_;
   /** Listener for datastore entity events */
   std::shared_ptr<DataStoreListener> dsListener_;
+  /** If true then the category counts need to be redone */
+  bool countDirty_;
 };
 
 }
