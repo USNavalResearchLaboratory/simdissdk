@@ -53,13 +53,6 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
   setLocator(new Locator(host->getLocator()->getSRS()));
   setName("CustomRenderingNode");
 
-  // set up a state set.
-  // carefully set the rendering order for custom. We want to render them
-  // before everything else (including the terrain) since they are
-  // transparent and potentially self-blending
-  osg::StateSet* stateSet = getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
-
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
 
