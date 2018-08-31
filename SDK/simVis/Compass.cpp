@@ -113,6 +113,7 @@ private:
 };
 
 Compass::Compass(const std::string& compassFilename) :
+height_(0),
 drawView_(NULL),
 activeView_(NULL),
 compass_(NULL),
@@ -123,6 +124,7 @@ compassUpdateEventHandler_(NULL)
   osg::ref_ptr<osg::Image> image = osgDB::readImageFile(compassFilename);
   if (image.valid())
   {
+    height_ = image->t();
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0) && defined(OSG_GL3_AVAILABLE)
     // Use the swizzle ImageControl(Texture) constructor, if available, to avoid GL3
     // errors with the texture being black due to not supporting GL_LUMINANCE*
@@ -242,11 +244,7 @@ void Compass::setActiveView(simVis::View* activeView)
 
 int Compass::size() const
 {
-  if (compass_ == NULL)
-    return 0;
-
-  osg::Image* image = compass_->getImage();
-  return image != NULL ? image->t() : 0;
+  return height_;
 }
 
 void Compass::update_()
