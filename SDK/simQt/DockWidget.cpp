@@ -728,7 +728,7 @@ void DockWidget::setWidget(QWidget* widget)
 
 bool DockWidget::isDockable() const
 {
-  return isDockable_;
+  return !allDockingDisabled() && isDockable_;
 }
 
 void DockWidget::setDockable(bool dockable)
@@ -738,13 +738,17 @@ void DockWidget::setDockable(bool dockable)
   // call this method.
 
   // Override the dockability flag with the global if needed
-  const bool globalDockDisable = (disableAllDocking_ != NULL && disableAllDocking_->value());
+  const bool globalDockDisable = allDockingDisabled();
   if (globalDockDisable)
     dockable = false;
 
   // Update settings and QMenu's QAction
   bool emitIt = (dockable != isDockable_);
-  isDockable_ = dockable;
+  // Do not override isDockable_ if globalDockDisable is active
+  if (!globalDockDisable)
+    isDockable_ = dockable;
+  else
+    emitIt = false;
 
   // only set dockable if we can be dockable
   if (dockable)
@@ -762,6 +766,11 @@ void DockWidget::setDockable(bool dockable)
     dockableAction_->setChecked(dockable);
   if (emitIt)
     emit isDockableChanged(isDockable_);
+}
+
+bool DockWidget::allDockingDisabled() const
+{
+  return (disableAllDocking_ != NULL && disableAllDocking_->value());
 }
 
 void DockWidget::verifyDockState_(bool floating)
@@ -1139,7 +1148,9 @@ void DockWidget::setGlobalNotDockableFlag_(bool disallowDocking)
 {
   if (dockableAction_)
     dockableAction_->setEnabled(!disallowDocking);
-  setDockable(isDockable_ && !disallowDocking);
+  // Call setDockable() with the current dockable state. setDockable()
+  // will check disableAllDocking_'s value and dock or undock appropriately
+  setDockable(isDockable_);
 }
 
 }

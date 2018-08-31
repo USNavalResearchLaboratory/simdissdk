@@ -147,7 +147,8 @@ public:
   void setWidget(QWidget* widget);
 
   /**
-  * Get the dockable state of the dock widget, if false, docking is disabled
+  * Get the dockable state of the dock widget, if false, docking is disabled. This will always
+  * return false if all docking is disabled, regardless of the widget's internal dockable state.
   * @return bool The dockable state of the dock widget, if false, docking is disabled
   */
   bool isDockable() const;
@@ -191,6 +192,9 @@ public:
 
   /** Undocks the dock window */
   void undock();
+
+  /** Returns true if all docking is disabled via settings */
+  bool allDockingDisabled() const;
 
 public slots:
 
