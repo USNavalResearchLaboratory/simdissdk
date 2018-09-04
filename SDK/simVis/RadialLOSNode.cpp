@@ -40,7 +40,8 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
     visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
     obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
     active_(false),
-    isValid_(true)
+    isValid_(true),
+    requireUpdateLOS_(true)
 {
   callbackHook_ = new TerrainCallbackHook(this);
 
@@ -158,6 +159,14 @@ void RadialLOSNode::setAzimuthalResolution(const Angle& value)
 
 bool RadialLOSNode::updateLOS_(osgEarth::MapNode* mapNode, const simCore::Coordinate& coord)
 {
+  if (!active_)
+  {
+    requireUpdateLOS_ = true;
+    return false;
+  }
+
+  requireUpdateLOS_ = false;
+
   if (!los_.compute(mapNode, coord))
   {
     if (isValid_)
@@ -215,6 +224,8 @@ void RadialLOSNode::setActive(bool active)
   if (active != active_)
   {
     active_ = active;
+    if (requireUpdateLOS_)
+      updateLOS_(getMapNode(), coord_);
     refreshGeometry_();
   }
 }

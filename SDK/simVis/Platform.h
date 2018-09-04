@@ -292,8 +292,8 @@ private:
   void updateOrRemoveVelocityVector_(bool prefsDraw, const simData::PlatformPrefs& prefs);
   void updateOrRemoveEphemerisVector_(bool prefsDraw, const simData::PlatformPrefs& prefs);
   void updateOrRemoveCircleHighlight_(bool prefsDraw, const simData::PlatformPrefs& prefs);
-  void updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs);
-  void updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs);
+  void updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs, bool force);
+  void updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs, bool force);
 
   const simData::DataStore&       ds_;
   PlatformTspiFilterManager&      platformTspiFilterManager_;

@@ -258,7 +258,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateOrRemoveVelocityVector_(prefsDraw, prefs);
   updateOrRemoveEphemerisVector_(prefsDraw, prefs);
   updateOrRemoveCircleHighlight_(prefsDraw, prefs);
-  updateOrRemoveHorizons_(prefs);
+  updateOrRemoveHorizons_(prefs, true);
 
   setRcsPrefs_(prefs);
 
@@ -383,7 +383,7 @@ void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 
   if (lastPrefsValid_)
   {
-    updateOrRemoveHorizons_(lastPrefs_);
+    updateOrRemoveHorizons_(lastPrefs_, false);
   }
 }
 
@@ -814,13 +814,13 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
   }
 }
 
-void PlatformNode::updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs)
+void PlatformNode::updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs, bool force)
 {
-  updateOrRemoveHorizon_(simCore::OPTICAL_HORIZON, prefs);
-  updateOrRemoveHorizon_(simCore::RADAR_HORIZON, prefs);
+  updateOrRemoveHorizon_(simCore::OPTICAL_HORIZON, prefs, force);
+  updateOrRemoveHorizon_(simCore::RADAR_HORIZON, prefs, force);
 }
 
-void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs)
+void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs, bool force)
 {
   RadialLOSNode* los = NULL;
   bool drawHorizon = false;
@@ -943,7 +943,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   }
 
   // Don't update if platform is within acceptable range of last horizon center
-  if (HORIZON_ALT_STEP > altDist && HORIZON_RANGE_STEP > rangeDist)
+  if ((HORIZON_ALT_STEP > altDist) && (HORIZON_RANGE_STEP > rangeDist) && !force)
   {
     // Reactivate after updating LOS fields
     los->setActive(true);

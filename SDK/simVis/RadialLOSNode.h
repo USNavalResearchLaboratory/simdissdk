@@ -180,6 +180,7 @@ private:
   osg::ref_ptr<TerrainCallbackHook> callbackHook_;
   bool active_;
   bool isValid_;
+  bool requireUpdateLOS_;
 
   /** Rebuilds the geometry if needed when parameters change. */
   void refreshGeometry_();
