@@ -440,6 +440,9 @@ VaporTrail::VaporTrailPuff::~VaporTrailPuff()
 void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double startTime)
 {
   position_ = position;
+  // set this position in our matrix; it is required to set position for puffs with no expansion;
+  // if there is a radius expansion/scaling, that will be handled in update() below
+  puff_->setMatrix(osg::Matrixd::translate(position_.x(), position_.y(), position_.z()));
   startTime_ = startTime;
   puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
   active_ = true;
