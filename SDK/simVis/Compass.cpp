@@ -121,7 +121,10 @@ readout_(NULL),
 pointer_(NULL),
 compassUpdateEventHandler_(NULL)
 {
-  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(compassFilename);
+  osg::ref_ptr<osg::Image> image;
+  if (!compassFilename.empty())
+    image = osgDB::readImageFile(compassFilename);
+
   if (image.valid())
   {
     height_ = image->t();

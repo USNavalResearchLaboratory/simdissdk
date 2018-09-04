@@ -334,6 +334,8 @@ bool ProjectorNode::readVideoFile_(const std::string& filename)
 bool ProjectorNode::readRasterFile_(const std::string& filename)
 {
   bool imageLoaded = false;
+  if (filename.empty())
+    return imageLoaded;
   osg::Image *image = osgDB::readImageFile(filename);
   if (image)
   {
