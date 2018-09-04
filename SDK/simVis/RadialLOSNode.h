@@ -152,6 +152,12 @@ private:
   /** Not implemented */
   RadialLOSNode(const RadialLOSNode& rhs);
 
+  /**
+   * Central location to call los_.compute() to reduce spam on error.
+   * Returning true means valid graphics were added to the scene.
+   */
+  bool updateLOS_(osgEarth::MapNode* mapNode, const simCore::Coordinate& coord);
+
   // callback hook.
   struct TerrainCallbackHook : public osgEarth::TerrainCallback
   {
@@ -173,6 +179,7 @@ private:
   osgEarth::optional<RadialLOS> losPrevious_;
   osg::ref_ptr<TerrainCallbackHook> callbackHook_;
   bool active_;
+  bool isValid_;
 
   /** Rebuilds the geometry if needed when parameters change. */
   void refreshGeometry_();

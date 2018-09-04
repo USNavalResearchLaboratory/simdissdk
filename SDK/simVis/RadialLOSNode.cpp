@@ -39,7 +39,8 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
   : GeoPositionNode(),
     visibleColor_(0.0f, 1.0f, 0.0f, 0.5f),
     obstructedColor_(1.0f, 0.0f, 0.0f, 0.5f),
-    active_(false)
+    active_(false),
+    isValid_(true)
 {
   callbackHook_ = new TerrainCallbackHook(this);
 
@@ -100,7 +101,7 @@ bool RadialLOSNode::setCoordinate(const simCore::Coordinate& coord)
   setPosition(point);
 
   // update the LOS model and recompute it:
-  if (los_.compute(getMapNode(), coord))
+  if (updateLOS_(getMapNode(), coord))
   {
     refreshGeometry_();
   }
@@ -128,31 +129,47 @@ void RadialLOSNode::setDataModel(const RadialLOS& los)
 void RadialLOSNode::setMaxRange(const Distance& value)
 {
   los_.setMaxRange(value);
-  los_.compute(getMapNode(), coord_);
+  updateLOS_(getMapNode(), coord_);
 }
 
 void RadialLOSNode::setCentralAzimuth(const Angle& value)
 {
   los_.setCentralAzimuth(value);
-  los_.compute(getMapNode(), coord_);
+  updateLOS_(getMapNode(), coord_);
 }
 
 void RadialLOSNode::setFieldOfView(const Angle& value)
 {
   los_.setFieldOfView(value);
-  los_.compute(getMapNode(), coord_);
+  updateLOS_(getMapNode(), coord_);
 }
 
 void RadialLOSNode::setRangeResolution(const Distance& value)
 {
   los_.setRangeResolution(value);
-  los_.compute(getMapNode(), coord_);
+  updateLOS_(getMapNode(), coord_);
 }
 
 void RadialLOSNode::setAzimuthalResolution(const Angle& value)
 {
   los_.setAzimuthalResolution(value);
-  los_.compute(getMapNode(), coord_);
+  updateLOS_(getMapNode(), coord_);
+}
+
+bool RadialLOSNode::updateLOS_(osgEarth::MapNode* mapNode, const simCore::Coordinate& coord)
+{
+  if (!los_.compute(mapNode, coord))
+  {
+    if (isValid_)
+    {
+      SIM_WARN << "Failed to compute LOS.  Consider adjusting range, azimuth angle and/or altitude.\n";
+    }
+    isValid_ = false;
+    return false;
+  }
+
+  isValid_ = true;
+  return true;
 }
 
 void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
