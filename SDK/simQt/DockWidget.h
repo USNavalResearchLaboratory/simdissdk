@@ -43,6 +43,7 @@ namespace simQt {
 
 class SearchLineEdit;
 class BoundBooleanSetting;
+class BoundIntegerSetting;
 
 /**
  * DockWidget is a wrapper class around the QDockWidget, to provide a supplemented dock widget.  The
@@ -294,6 +295,9 @@ private slots:
   /** Enables or disables dockability from the global flag */
   void setGlobalNotDockableFlag_(bool disallowDocking);
 
+  /** Set dock widget border thickness, in pixels */
+  void setBorderThickness_(int thickness);
+
 private:
   /**
    * Find the QTabBar that contains the DockWidet with this title, fill in its index. This assumes
@@ -389,6 +393,9 @@ private:
 
   /** Global flag that can be used to turn off all docking at once. */
   simQt::BoundBooleanSetting* disableAllDocking_;
+
+  /** Setting to update border thickess */
+  simQt::BoundIntegerSetting* borderThickness_;
 };
 
 }
