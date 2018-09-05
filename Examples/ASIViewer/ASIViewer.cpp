@@ -677,6 +677,99 @@ private:
         std::cerr << "ASI Parser: Reference year before 1970 is not reliable." << std::endl;
       refYear_ = year;
     }
+    else if (token == "Projector")
+    {
+      unsigned host, id;
+      buf >> host >> id;
+
+      // convert ASI host id to data-store id
+      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(host);
+      if (i == idMap_.end())
+      {
+        std::cerr << "ASI Parser: Attempt to create projector " << id << " before host platform " << host << std::endl;
+        return;
+      }
+      
+      simData::DataStore::Transaction xaction;
+      simData::ProjectorProperties* props = app_.ds_->addProjector(&xaction);
+      idMap_[id] = props->id(); // stash data-store id
+      props->set_hostid(host);
+      xaction.complete(&props);
+    }
+    else if (token == "ProjectorRasterFile")
+    {
+      unsigned id;
+      std::string fileString;
+      buf >> id;
+      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      if (i == idMap_.end())
+        return;
+
+      buf >> fileString;
+      deQuote(fileString);
+      
+      const unsigned dsId = i->second;
+      simData::ProjectorPrefs* prefs = app_.ds_->mutable_projectorPrefs(dsId, &xaction);
+      prefs->set_rasterfile(fileString);
+      xaction.complete(&prefs);
+    }
+    else if (token == "ProjectorInterpolateFOV")
+    {
+      unsigned id;
+      buf >> id;
+      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      if (i == idMap_.end())
+        return;
+
+      unsigned value;
+      buf >> value;
+      
+      const unsigned dsId = i->second;
+      simData::ProjectorPrefs* prefs = app_.ds_->mutable_projectorPrefs(dsId, &xaction);
+      prefs->set_interpolateprojectorfov(value==1? true: false);
+      xaction.complete(&prefs);
+    }
+    else if (token == "ProjectorOn")
+    {
+      unsigned id;
+      std::string timeString;
+      int onOff;
+      buf >> id >> timeString >> onOff;
+
+      // convert ASI id to data-store id
+      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      if (i == idMap_.end())
+        return;
+
+      const unsigned dsId = i->second;
+      simData::ProjectorCommand* cmd = app_.ds_->addProjectorCommand(dsId, &xaction);
+
+      const double t = timeFromString(timeString, refYear_);
+      cmd->set_time(t);
+
+      simData::CommonPrefs *commonPrefs = cmd->mutable_updateprefs()->mutable_commonprefs();
+      commonPrefs->set_draw(onOff == 1);
+      xaction.complete(&cmd);
+    }
+    else if (token == "ProjectorFOV")
+    {
+      unsigned id;
+      buf >> id;
+      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      if (i == idMap_.end())
+        return;
+
+      std::string timeString;
+      double value;
+      buf >> timeString >> value;
+      const double t = timeFromString(timeString, refYear_);
+      
+      const unsigned dsId = i->second;
+      simData::ProjectorUpdate* update = app_.ds_->addProjectorUpdate(dsId, &xaction);
+      update->set_time(t);
+      update->set_fov(simCore::DEG2RAD * value);
+      xaction.complete(&update);
+    }
   }
 
   AppData &app_;
