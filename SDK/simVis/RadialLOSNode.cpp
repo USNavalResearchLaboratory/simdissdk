@@ -131,6 +131,7 @@ void RadialLOSNode::setMaxRange(const Distance& value)
 {
   los_.setMaxRange(value);
   updateLOS_(getMapNode(), coord_);
+  bound_ = osgEarth::GeoCircle(getPosition(), los_.getMaxRange().as(osgEarth::Units::METERS));
 }
 
 void RadialLOSNode::setCentralAzimuth(const Angle& value)

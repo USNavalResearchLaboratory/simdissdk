@@ -919,6 +919,14 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   double altDist = 0;
 
   simCore::Coordinate platCoord = getLocator()->getCoordinate();
+  // Make sure the position has been set
+  if (platCoord.position() == simCore::Vec3(0.0, 0.0, 0.0))
+  {
+    // Reactivate the LOS, undoing the setActive(false) above
+    los->setActive(true);
+    return;
+  }
+
   simCore::Coordinate platLlaCoord;
   simCore::CoordinateConverter converter;
   converter.convert(platCoord, platLlaCoord, simCore::COORD_SYS_LLA);
@@ -945,7 +953,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   // Don't update if platform is within acceptable range of last horizon center
   if ((HORIZON_ALT_STEP > altDist) && (HORIZON_RANGE_STEP > rangeDist) && !force)
   {
-    // Reactivate after updating LOS fields
+    // Reactivate the LOS, undoing the setActive(false) above
     los->setActive(true);
     return;
   }
@@ -955,7 +963,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   los->setCoordinate(platCoord);
   los->setMaxRange(Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
 
-  // Reactivate after updating LOS fields
+  // Reactivate the LOS, undoing the setActive(false) above
   los->setActive(true);
 }
 
