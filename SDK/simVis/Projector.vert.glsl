@@ -1,4 +1,4 @@
-#version 330
+#version $GLSL_VERSION_STR
 
 #pragma vp_entryPoint sim_proj_vert
 #pragma vp_location vertex_view
