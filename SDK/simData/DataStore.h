@@ -240,7 +240,7 @@ public: // types
   };
 
   /// Observer interface for a class that gets notified when Updates and Rows are added to the data store
-  class NewUpdatesListener
+  class SDKDATA_EXPORT NewUpdatesListener
   {
   public:
     virtual ~NewUpdatesListener() {}
