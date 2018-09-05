@@ -70,7 +70,6 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
 
   // create the locator node that will parent our geometry
   customLocatorNode_ = new LocatorNode(getLocator());
-  customLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
   addChild(customLocatorNode_);
 
   // Apply the override color shader to the container
@@ -176,7 +175,8 @@ std::string CustomRenderingNode::legendText() const
 void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
 {
   const bool prefsDraw = prefs.commonprefs().datadraw() && prefs.commonprefs().draw();
-  setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_CUSTOM_RENDERING : simVis::DISPLAY_MASK_NONE);
+  // Visibility is determined by both customActive_ and draw state preferences
+  setNodeMask((customActive_ && prefsDraw) ? simVis::DISPLAY_MASK_CUSTOM_RENDERING : simVis::DISPLAY_MASK_NONE);
 
   if (prefsDraw)
     updateLabel_(prefs);
@@ -296,7 +296,12 @@ bool CustomRenderingNode::customActive() const
 void CustomRenderingNode::setCustomActive(bool value)
 {
   customActive_ = value;
-  customLocatorNode_->setNodeMask(customActive_ ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
+
+  bool prefsDraw = customActive_;
+  if (hasLastPrefs_)
+    prefsDraw = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
+  // Visibility is determined by both customActive_ and draw state preferences
+  setNodeMask((customActive_ && prefsDraw) ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
 }
 
 LocatorNode* CustomRenderingNode::locatorNode() const
