@@ -27,16 +27,16 @@
  */
 #include <cstdlib>
 #include "osgEarth/NodeUtils"
-#include "osgEarth/Registry"
 #include "osgEarth/ObjectIndex"
+#include "osgEarth/Registry"
 #include "simNotify/Notify.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Time/ClockImpl.h"
-#include "simData/MemoryDataStore.h"
 #include "simData/LinearInterpolator.h"
+#include "simData/MemoryDataStore.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/OverheadMode.h"
@@ -47,10 +47,11 @@
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simVis/ViewManagerLogDbAdapter.h"
-#include "simVis/GOG/Parser.h"
 #include "simVis/GOG/GogNodeInterface.h"
-#include "simUtil/ExampleResources.h"
+#include "simVis/GOG/Parser.h"
 #include "simUtil/DynamicSelectionPicker.h"
+#include "simUtil/ExampleResources.h"
+#include "CustomRender.h"
 
 namespace ui = osgEarth::Util::Controls;
 
@@ -366,12 +367,23 @@ void addDataPoints(simCore::CoordinateConverter& cc, simData::DataStore& dataSto
   }
 }
 
+/** Configures common prefs between platforms and custom renders */
+void configureCommonPrefs(simData::CommonPrefs& prefs, const std::string& namePrefix, simData::ObjectId id, int labelOffsetY)
+{
+  prefs.set_name(osgEarth::Stringify() << namePrefix << " " << id);
+  prefs.mutable_labelprefs()->set_draw(true);
+  prefs.mutable_labelprefs()->set_offsety(labelOffsetY);
+  prefs.mutable_labelprefs()->set_overlayfontpointsize(10);
+  prefs.mutable_labelprefs()->set_backdroptype(simData::BDT_SHADOW_BOTTOM_RIGHT);
+  prefs.mutable_labelprefs()->set_textoutline(simData::TO_THICK);
+}
+
 /** Creates a single platform and sets its properties */
-uint64_t createPlatform(simData::DataStore& dataStore)
+simData::ObjectId createPlatform(simData::DataStore& dataStore)
 {
   simData::DataStore::Transaction txn;
   simData::PlatformProperties* props = dataStore.addPlatform(&txn);
-  const uint64_t id = props->id();
+  const simData::ObjectId id = props->id();
   txn.complete(&props);
 
   simData::PlatformPrefs* prefs = dataStore.mutable_platformPrefs(id, &txn);
@@ -387,15 +399,32 @@ uint64_t createPlatform(simData::DataStore& dataStore)
     prefs->set_icon(EXAMPLE_AIRPLANE_ICON);
     prefs->set_scale(3.5);
   }
-  prefs->mutable_commonprefs()->set_name(osgEarth::Stringify() << "Platform " << id);
-  prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
-  prefs->mutable_commonprefs()->mutable_labelprefs()->set_offsety(18);
-  prefs->mutable_commonprefs()->mutable_labelprefs()->set_overlayfontpointsize(10);
-  prefs->mutable_commonprefs()->mutable_labelprefs()->set_backdroptype(simData::BDT_SHADOW_BOTTOM_RIGHT);
-  prefs->mutable_commonprefs()->mutable_labelprefs()->set_textoutline(simData::TO_THICK);
   prefs->mutable_trackprefs()->set_tracklength(4);
+  configureCommonPrefs(*prefs->mutable_commonprefs(), "Platform", id, 18);
   txn.complete(&prefs);
   return id;
+}
+
+/** Creates a new custom rendering entity in the DataStore, setting default prefs. */
+simData::ObjectId addCustomRendering(simData::ObjectId hostId, simData::DataStore &dataStore, uint32_t prefsColor)
+{
+  simData::DataStore::Transaction txn;
+
+  // Create the render object and set its properties
+  simData::CustomRenderingProperties* customProps = dataStore.addCustomRendering(&txn);
+  const simData::ObjectId result = customProps->id();
+  customProps->set_hostid(hostId);
+  // Set the renderer name.  This allows for multiple custom render engines
+  customProps->set_renderer(ExamplePicking::RENDERER_NAME);
+  txn.complete(&customProps);
+
+  // Configure the prefs for the render object
+  simData::CustomRenderingPrefs* prefs = dataStore.mutable_customRenderingPrefs(result, &txn);
+  prefs->mutable_commonprefs()->set_color(prefsColor);
+  configureCommonPrefs(*prefs->mutable_commonprefs(), "Custom Render", result, 35);
+  txn.complete(&prefs);
+
+  return result;
 }
 
 /** Creates a GOG */
@@ -540,12 +569,21 @@ int main(int argc, char** argv)
   simCore::CoordinateConverter cc;
   cc.setReferenceOriginDegrees(LAT, LON, 100.0);
 
+  // Configure a listener to attach graphics for custom rendering entities
+  dataStore.addListener(simData::DataStore::ListenerPtr(new ExamplePicking::AttachRenderGraphics(scenarioManager)));
+
   // Seed the random number generator for more deterministic results
   srand(0);
   for (int k = 0; k < NUM_PLATFORMS; ++k)
   {
     uint64_t id = createPlatform(dataStore);
     addDataPoints(cc, dataStore, id);
+
+    // Add custom render nodes on these iterations
+    if (k == 10)
+      addCustomRendering(id, dataStore, 0xFFFF0080); // Yellow
+    else if (k == 59)
+      addCustomRendering(id, dataStore, 0xFF804080); // Orange-ish
   }
 
   // Apply the interpolator
@@ -587,9 +625,6 @@ int main(int argc, char** argv)
   app.insetView->getEarthManipulator()->setHeadingLocked(true);
   app.insetView->getEarthManipulator()->setPitchLocked(false);
 
-  // TODO: Detect GLSL version and print a warning to end user that picking won't
-  // work if the GLSL doesn't support the picking shader.
-
   // Enable highlighting for the picker
   app.highlightShader = new simVis::PickerHighlightShader(scenarioManager->getOrCreateStateSet());
   simVis::PickerHighlightShader::installShaderProgram(scenarioManager->getOrCreateStateSet(), true);
@@ -598,7 +633,12 @@ int main(int argc, char** argv)
   if (pickType == PickIntersect)
     app.picker = new simVis::IntersectPicker(viewMan.get(), scenarioManager);
   else if (pickType == PickDynamic)
-    app.picker = new simUtil::DynamicSelectionPicker(viewMan.get(), scenarioManager);
+  {
+    // Configure the dynamic selection picker to also pick Custom Render entities
+    simUtil::DynamicSelectionPicker* dynamicPicker = new simUtil::DynamicSelectionPicker(viewMan.get(), scenarioManager);
+    dynamicPicker->setPickMask(dynamicPicker->pickMask() | simVis::DISPLAY_MASK_CUSTOM_RENDERING);
+    app.picker = dynamicPicker;
+  }
   else // pickType == PickRtt
   {
     // Create the RTT picker
@@ -607,7 +647,7 @@ int main(int argc, char** argv)
     // Add GOG to the pickable mask
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
     osgEarth::Util::RTTPicker* osgEarthPicker = rttPicker->rttPicker();
-    osgEarthPicker->setCullMask(osgEarthPicker->getCullMask() | simVis::DISPLAY_MASK_GOG);
+    osgEarthPicker->setCullMask(osgEarthPicker->getCullMask() | simVis::DISPLAY_MASK_GOG | simVis::DISPLAY_MASK_CUSTOM_RENDERING);
 #endif
     app.picker = rttPicker;
 

@@ -5,6 +5,7 @@ endif()
 project(EXAMPLE_PICKING)
 
 set(PROJECT_FILES
+    CustomRender.h
     ExamplePicking.cpp
 )
 
