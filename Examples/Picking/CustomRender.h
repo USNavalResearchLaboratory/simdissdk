@@ -41,7 +41,7 @@ static const std::string RENDERER_NAME = "example_picking";
 class RenderEngine : public simVis::CustomRenderingNode::UpdateCallback
 {
 public:
-  explicit RenderEngine(simVis::ScenarioManager* manager)
+  RenderEngine()
     : scale_(100.f, 100.f, 1.f)
   {
   }
@@ -67,7 +67,7 @@ public:
       locatorNode->dirtyBound();
 
       // Configure a render bin that is appropriate for semi-transparent graphics
-      transform_->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_TWO_PASS_ALPHA);
+      transform_->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_CUSTOM_RENDER, simVis::BIN_TWO_PASS_ALPHA);
     }
 
     // Alter the transform's scale to demonstrate the rendering effect
@@ -155,7 +155,7 @@ public:
   /** Detect our Custom Render nodes */
   virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    // Break out if not a custom rendering; we don't care
+    // Break out if not a custom rendering; we don't care about those entities here
     if (!manager_.valid() || ot != simData::CUSTOM_RENDERING)
       return;
 
@@ -173,7 +173,7 @@ public:
       // A real render engine would need to account for multiple Custom Render nodes here,
       // either by creating a separate updater per entity, or configuring the updater to
       // correctly handle multiple entities.
-      RenderEngine* updater = new RenderEngine(manager_.get());
+      RenderEngine* updater = new RenderEngine();
       updater->setNode(node);
       node->setUpdateCallback(updater);
       node->setCustomActive(true);

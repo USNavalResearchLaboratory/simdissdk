@@ -122,6 +122,7 @@ namespace simVis
     BIN_LASER               = 13,
     BIN_OPAQUE_BEAM         = 13,
     BIN_OPAQUE_GATE         = 13,
+    BIN_OPAQUE_CUSTOM_RENDER = 13,
 
     // Platform models are general opaque but have some translucent parts.
     // These need to be rendered in traversal order to preserve the alpha
@@ -139,6 +140,7 @@ namespace simVis
     BIN_BEAM                = 15,
     BIN_GATE                = 15,
     BIN_PROJECTOR           = 15,
+    BIN_CUSTOM_RENDER       = 15,
     BIN_CYLINDER            = 15,
     BIN_RFPROPAGATION       = 15,
 
@@ -152,7 +154,6 @@ namespace simVis
     BIN_AREA_HIGHLIGHT      = 105,
     BIN_ROCKETBURN          = 106,
     BIN_SCREEN_SPACE_LABEL  = 108, // osgEarth screen-space labels (PlaceNode, LabelNode, etc.)
-
 
     BIN_TOP_1               = 110, // use these values for visuals that should be displayed above anything else in the scene
     BIN_TOP_2               = 115,
