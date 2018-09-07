@@ -1785,7 +1785,7 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
 * Class that listens for entity events in the DataStore, and
 * informs the parent when they happen.
 */
-class CategoryFilterWidget2::DataStoreListener : public simData::DataStore::DefaultListener
+class CategoryFilterWidget2::DataStoreListener : public simData::DataStore::Listener
 {
 public:
   explicit DataStoreListener(CategoryFilterWidget2& parent)
@@ -1804,6 +1804,13 @@ public:
   {
     parent_.countDirty_ = true;
   }
+
+  // Fulfill the interface
+  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) {}
+  virtual void onScenarioDelete(simData::DataStore* source) {}
+  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
+  virtual void onTimeChange(simData::DataStore *source) {}
+  virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
 
 private:
   CategoryFilterWidget2& parent_;

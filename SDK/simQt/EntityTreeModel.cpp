@@ -32,7 +32,7 @@
 namespace simQt {
 
 /// notify the tree model about data store changes
-class EntityTreeModel::TreeListener : public simData::DataStore::DefaultListener
+class EntityTreeModel::TreeListener : public simData::DataStore::Listener
 {
 public:
   /// constructor
@@ -71,7 +71,12 @@ public:
     parent_->removeAllEntities_();
   }
 
-protected:
+  // Fulfill the interface
+  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
+  virtual void onTimeChange(simData::DataStore *source) {}
+  virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
+
+private:
   EntityTreeModel *parent_; ///< model which receives notices
 };
 
