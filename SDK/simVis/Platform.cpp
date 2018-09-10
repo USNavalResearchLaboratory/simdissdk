@@ -321,7 +321,8 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
      (PB_FIELD_CHANGED(&lastPrefs_, &prefs, surfaceclamping) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, useclampalt) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, clampvalaltmin) ||
-      PB_FIELD_CHANGED(&lastPrefs_, &prefs, clampvalaltmax)))
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, clampvalaltmax) ||
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, abovesurfaceclamping)))
   {
     // these prefs changes require an update to the locator
     forceUpdateFromDataStore_ = true;

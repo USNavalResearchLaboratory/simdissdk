@@ -664,8 +664,10 @@ message PlatformPrefs {
   /// Automatically use the platform's orientation clamp values at extremely low velocity.
   optional bool clampOrientationAtLowVelocity = 60 [default = false];
 
-  // Toggle surface clamping of the platform
+  // Keep platform clamp to the surface
   optional bool surfaceClamping = 61 [default = false];
+  /// Keep platform above the surface
+  optional bool aboveSurfaceClamping = 69 [default = false];
 
   /// Toggles lighting
   optional bool lighted = 16 [default = true];

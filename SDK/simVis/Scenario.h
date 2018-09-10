@@ -456,8 +456,9 @@ protected:
   virtual ~ScenarioManager();
 
 protected:
-  class SurfaceClamping;
   class ScenarioLosCreator;
+  class SurfaceClamping;
+  class AboveSurfaceClamping;
 
   /** Generates locators for entities */
   LocatorFactory*              locatorFactory_;
@@ -465,6 +466,8 @@ protected:
   PlatformTspiFilterManager*   platformTspiFilterManager_;
   /** PlatformTspiFilter that provides surface clamping capabilities */
   SurfaceClamping*             surfaceClamping_;
+  /** PlatformTspiFilter that provides surface limiting capabilities */
+  AboveSurfaceClamping*        aboveSurfaceClamping_;
   /** Helps clamping for LOBs to map surface */
   CoordSurfaceClamping*        lobSurfaceClamping_;
   /** Root node for the scenario */
