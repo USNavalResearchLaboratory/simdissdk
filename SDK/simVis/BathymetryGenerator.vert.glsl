@@ -13,7 +13,7 @@ vec3 oe_UpVectorView; // stage global from osgEarth
 void simVis_BathymetryGenerator_vertex(inout vec4 vertex)
 {
   float elev = oe_terrain_getElevation();
-  if (elev <= simVis_BathymetryGenerator_seaLevel) {
+  if (elev == 0.0) {
     vertex.xyz += oe_UpVectorView * simVis_BathymetryGenerator_offset;
   }
 }
