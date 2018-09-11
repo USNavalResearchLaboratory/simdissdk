@@ -159,7 +159,7 @@ void HudTextAdapter::update_()
       // Set a minimum font size so that large text doesn't invoke magnification filtering
       if (requestedFontSize_ > 32)
         osgText->setFontResolution(static_cast<unsigned int>(requestedFontSize_), static_cast<unsigned int>(requestedFontSize_));
-      osgText->setCharacterSize(requestedFontSize_);
+      osgText->setCharacterSize(simVis::osgFontSize(requestedFontSize_));
       osgText->setPosition(osg::Vec3(0.0f, 0.0f, 0.0f));
       osgText->setColor(color_);
       osgText->setEnableDepthWrites(false); // No depth buffering needed
@@ -194,7 +194,7 @@ void HudTextAdapter::update_()
 
       if (requestedFontSize_ != currentFontSize_)
       {
-        osgText->setCharacterSize(requestedFontSize_);
+        osgText->setCharacterSize(simVis::osgFontSize(requestedFontSize_));
         // Set a minimum font size so that large text doesn't invoke magnification filtering
         if (requestedFontSize_ > 32)
           osgText->setFontResolution(static_cast<unsigned int>(requestedFontSize_), static_cast<unsigned int>(requestedFontSize_));

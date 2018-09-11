@@ -45,6 +45,7 @@
 #include "simVis/Registry.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
+#include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "simVis/Popup.h"
 
@@ -60,8 +61,8 @@ static const simVis::Color DEFAULT_BORDER_COLOR(1, 1, 0, 1);
 static const simVis::Color DEFAULT_BACK_COLOR(0, 0, 0, 0.5);
 static const simVis::Color DEFAULT_TITLE_COLOR(.9, .9, 0, 1);
 static const simVis::Color DEFAULT_CONTENT_COLOR(.9, .9, .9, 1);
-static const int DEFAULT_TITLE_SIZE = 16;
-static const int DEFAULT_CONTENT_SIZE = 14;
+static const int DEFAULT_TITLE_SIZE = 13;
+static const int DEFAULT_CONTENT_SIZE = 11;
 static const int DEFAULT_PADDING = 10;
 static const int DEFAULT_SPACING = 4;
 
@@ -75,14 +76,14 @@ EntityPopup::EntityPopup()
   titleLabel_->setForeColor(DEFAULT_TITLE_COLOR);
   osgText::Font* defaultFont = simVis::Registry::instance()->getOrCreateFont("arial.ttf");
   titleLabel_->setFont(defaultFont);
-  titleLabel_->setFontSize(DEFAULT_TITLE_SIZE);
+  titleLabel_->setFontSize(simVis::osgFontSize(DEFAULT_TITLE_SIZE));
   this->addControl(titleLabel_);
 
   contentLabel_ = new osgEarth::Util::Controls::LabelControl();
   contentLabel_->setName("EntityPopup Content");
   contentLabel_->setForeColor(DEFAULT_CONTENT_COLOR);
   contentLabel_->setFont(defaultFont);
-  contentLabel_->setFontSize(DEFAULT_CONTENT_SIZE);
+  contentLabel_->setFontSize(simVis::osgFontSize(DEFAULT_CONTENT_SIZE));
   this->addControl(contentLabel_);
 
   // add yellow border
@@ -446,9 +447,9 @@ void PopupHandler::applySettings_()
   popup_->setBorderColor(borderColor_);
   popup_->setBackColor(backColor_);
   popup_->titleLabel()->setForeColor(titleColor_);
-  popup_->titleLabel()->setFontSize(titleFontSize_);
+  popup_->titleLabel()->setFontSize(simVis::osgFontSize(titleFontSize_));
   popup_->contentLabel()->setForeColor(contentColor_);
-  popup_->contentLabel()->setFontSize(contentFontSize_);
+  popup_->contentLabel()->setFontSize(simVis::osgFontSize(contentFontSize_));
   popup_->setPadding(padding_);
   popup_->setChildSpacing(childSpacing_);
 }

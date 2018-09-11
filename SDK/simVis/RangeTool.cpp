@@ -823,7 +823,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
 #if OSG_VERSION_GREATER_OR_EQUAL(3,6,0)
       // Font sizes changed at 3.6, so rescale to keep a constant size
-      ts->size() = textOptions.fontSize_ / 1.75;
+      ts->size() = simVis::osgFontSize(textOptions.fontSize_);
 #else
       ts->size() = textOptions.fontSize_;
 #endif

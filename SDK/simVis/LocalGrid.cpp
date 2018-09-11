@@ -78,8 +78,7 @@ public:
     setBackdropOffset(outlineThickness, outlineThickness);
     setColor(simVis::Color(prefs.gridlabelcolor(), simVis::Color::RGBA));
     setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
-    // Scale font up, based on an eyeball estimate compared to SIMDIS 9
-    setCharacterSize(prefs.gridlabelfontsize() * 1.8);
+    setCharacterSize(simVis::osgFontSize(prefs.gridlabelfontsize()));
     setAlignment(osgText::TextBase::LEFT_BOTTOM);
   }
 

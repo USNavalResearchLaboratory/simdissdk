@@ -28,6 +28,7 @@
 #include "osg/MatrixTransform"
 #include "osg/NodeVisitor"
 #include "osg/PositionAttitudeTransform"
+#include "osg/Version"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgUtil/RenderBin"
@@ -472,37 +473,17 @@ float outlineThickness(simData::TextOutline outline)
 
 float osgFontSize(float simFontSize)
 {
-  // At lower font sizes (11 or less), we want to make the font a bit
-  // crisper and more readable, so we force the return value to be the
-  // closest rounded number and add an offset to convert the value from
-  // simFontSize to osgFontSize.
-  if (simFontSize <= 6.0)
-  {
-    return simCore::rint(simFontSize) + 1.0;
-  }
-  else if (simFontSize <= 11.0)
-  {
-    return simCore::rint(simFontSize) + 2.0;
-  }
-
-  // Value of 1.33 was confirmed using fonts of varying sizes in example
-  // data files.
-  return simFontSize * 1.33;
+  // When comparing SIMDIS 9 text, considered the standard for text size for SIMDIS applications,
+  // the OSG font size was typically about 3/4 the size of a SIMDIS string for the same font and
+  // same size.  To to convert the SIMDIS font size to OSG, we multiply by the inversion, 1.333f.
+  return simFontSize * 1.333f;
 }
 
 float simdisFontSize(float osgFontSize)
 {
-  float roundedSize = simCore::rint(osgFontSize);
-  if (roundedSize <= 7.0)
-  {
-    return roundedSize - 1.0;
-  }
-  else if (roundedSize <= 13.0)
-  {
-    return roundedSize - 2.0;
-  }
-
-  return osgFontSize / 1.33;
+  // See the discussion above, explaining that OSG fonts are about 3/4 the size of a historic
+  // SIMDIS font size.
+  return osgFontSize * 0.75f;
 }
 
 osgText::Text::BackdropType backdropType(simData::BackdropType type)
