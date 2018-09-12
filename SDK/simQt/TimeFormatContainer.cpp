@@ -138,6 +138,13 @@ unsigned int SecondsContainer::precision()
   return widget_->line()->precision();
 }
 
+void SecondsContainer::setFontPointSize(unsigned int fontPointSize)
+{
+  QFont curFont = widget_->font();
+  curFont.setPointSize(fontPointSize);
+  widget_->setFont(curFont);
+}
+
 void SecondsContainer::setTimeZone(simCore::TimeZone zone)
 {
   widget_->line()->setTimeZone(zone);
@@ -214,6 +221,13 @@ void MonthContainer::setColorCode(bool value)
 void MonthContainer::setPrecision(unsigned int digits)
 {
   widget_->line()->setPrecision(digits);
+}
+
+void MonthContainer::setFontPointSize(unsigned int fontPointSize)
+{
+  QFont curFont = widget_->font();
+  curFont.setPointSize(fontPointSize);
+  widget_->setFont(curFont);
 }
 
 unsigned int MonthContainer::precision()
@@ -305,6 +319,13 @@ unsigned int OrdinalContainer::precision()
   return widget_->line()->precision();
 }
 
+void OrdinalContainer::setFontPointSize(unsigned int fontPointSize)
+{
+  QFont curFont = widget_->font();
+  curFont.setPointSize(fontPointSize);
+  widget_->setFont(curFont);
+}
+
 void OrdinalContainer::setTimeZone(simCore::TimeZone zone)
 {
   widget_->line()->setTimeZone(zone);
@@ -388,6 +409,13 @@ unsigned int MinutesContainer::precision()
   return widget_->line()->precision();
 }
 
+void MinutesContainer::setFontPointSize(unsigned int fontPointSize)
+{
+  QFont curFont = widget_->font();
+  curFont.setPointSize(fontPointSize);
+  widget_->setFont(curFont);
+}
+
 void MinutesContainer::setTimeZone(simCore::TimeZone zone)
 {
   widget_->line()->setTimeZone(zone);
@@ -468,6 +496,13 @@ void HoursContainer::setPrecision(unsigned int digits)
 unsigned int HoursContainer::precision()
 {
   return widget_->line()->precision();
+}
+
+void HoursContainer::setFontPointSize(unsigned int fontPointSize)
+{
+  QFont curFont = widget_->font();
+  curFont.setPointSize(fontPointSize);
+  widget_->setFont(curFont);
 }
 
 void HoursContainer::setTimeZone(simCore::TimeZone zone)

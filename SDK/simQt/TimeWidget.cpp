@@ -245,6 +245,17 @@ void TimeWidget::setPrecision(unsigned int digits)
   currentContainer_->setTimeStamp(currentTime);
 }
 
+void TimeWidget::setFontPointSize(unsigned int fontPointSize)
+{
+  // save off the current time to force a redraw after setting the precision
+  simCore::TimeStamp currentTime = currentContainer_->timeStamp();
+  Q_FOREACH(TimeFormatContainer* w, containers_)
+  {
+    w->setFontPointSize(fontPointSize);
+  }
+  currentContainer_->setTimeStamp(currentTime);
+}
+
 void TimeWidget::setTimeZone(simCore::TimeZone zone)
 {
   // Some formats use time zone when calculating time stamp.
