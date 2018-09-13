@@ -84,8 +84,6 @@ public:
   virtual void setPrecision(unsigned int digits) = 0;
   /// get the number of digits after the decimal point
   virtual unsigned int precision() = 0;
-  /// Set the font size for the SegmentedSpinBox
-  virtual void setFontPointSize(unsigned int fontPointSize) = 0;
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone) = 0;
@@ -137,8 +135,6 @@ public:
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
-  /// Set the font size for the SegmentedSpinBoxes
-  virtual void setFontPointSize(unsigned int fontPointSize);
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -180,8 +176,6 @@ public:
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
-  /// Set the font size for the SegmentedSpinBoxes
-  virtual void setFontPointSize(unsigned int fontPointSize);
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -224,8 +218,6 @@ public:
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
-  /// Set the font size for the SegmentedSpinBoxes
-  virtual void setFontPointSize(unsigned int fontPointSize);
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -267,8 +259,6 @@ public:
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
-  /// Set the font size for the SegmentedSpinBoxes
-  virtual void setFontPointSize(unsigned int fontPointSize);
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);
@@ -310,8 +300,6 @@ public:
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
-  /// Set the font size for the SegmentedSpinBoxes
-  virtual void setFontPointSize(unsigned int fontPointSize);
 
   /// Set the time zone to use when displaying text
   virtual void setTimeZone(simCore::TimeZone zone);

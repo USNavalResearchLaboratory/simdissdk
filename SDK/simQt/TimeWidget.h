@@ -109,8 +109,6 @@ public slots:
   void setTimeFormat(simCore::TimeFormat newFormat);
   /** Set the number of digits after the decimal point */
   void setPrecision(unsigned int digits);
-  /** Set the point size of the time display font */
-  void setFontPointSize(unsigned int fontPointSize);
   /** Set the time zone */
   void setTimeZone(simCore::TimeZone newZone);
   /** An alternative enable that replaces the time with ----- when disabled */
