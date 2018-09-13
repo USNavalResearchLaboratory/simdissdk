@@ -23,6 +23,7 @@
 #define SIMVIS_GL3UTILS_H
 
 #include <cstring>
+#include "osg/DisplaySettings"
 #include "osg/GLExtensions"
 #include "osg/GraphicsContext"
 #include "osg/Light"
@@ -113,6 +114,30 @@ inline void applyMesaGeometryShaderFix(osg::GraphicsContext* graphicsContext)
       glExtensions->isGeometryShader4Supported = false;
     }
   }
+}
+
+/**
+ * Configure OSG to search for the right GL version.  By default, GL3 builds use "1.0" as the version,
+ * which creates a compatibility context at the highest level.  That creates problems with GL core
+ * profile on some drivers and cards that do not support compatibility mode.  As a result, we end up
+ * getting a GL 1.4 context that only support GLSL 1.2.
+ *
+ * MESA drivers have an additional problem that has them ignoring the requested GL context version unless
+ * the environment variable MESA_GL_VERSION_OVERRIDE is specified.  This sets that variable if needed.
+ */
+inline void applyMesaGlVersionOverride()
+{
+#ifdef OSG_GL3_AVAILABLE
+  osg::DisplaySettings* instance = osg::DisplaySettings::instance().get();
+  if (instance->getGLContextVersion() == "1.0")
+    instance->setGLContextVersion("3.3");
+#ifdef __linux__
+  // To compound the problem, certain MESA drivers on Linux have an additional requirement of setting
+  // the MESA_GL_VERSION_OVERRIDE environment variable, else we get a bad version.
+  if (getenv("MESA_GL_VERSION_OVERRIDE") == NULL)
+    setenv("MESA_GL_VERSION_OVERRIDE", instance->getGLContextVersion().c_str(), 1);
+#endif
+#endif
 }
 
 /**
