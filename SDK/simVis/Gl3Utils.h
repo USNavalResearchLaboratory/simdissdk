@@ -27,6 +27,7 @@
 #include "osg/GraphicsContext"
 #include "osg/Light"
 #include "osg/Point"
+#include "osg/PointSprite"
 #include "osg/OperationThread"
 #include "simNotify/Notify.h"
 
@@ -60,6 +61,15 @@ inline void applyCoreProfileValidity(osg::GraphicsContext* graphicsContext)
     state->setModeValidity(GL_LIGHT0, false);
     state->setModeValidity(GL_RESCALE_NORMAL, false);
     state->setModeValidity(GL_POINT_SMOOTH, false);
+  }
+  else
+  {
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+    // Point sprite needs to be explicitly enabled for compatibility profile to match OSG expectations.
+    // If this line goes away, stars in osgEarth will not be visible, when in compatibility profile
+    // under an OSG built for core profile.
+    state->applyMode(GL_POINT_SPRITE_ARB, true);
+#endif
   }
 }
 
