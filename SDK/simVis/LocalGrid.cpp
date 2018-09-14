@@ -71,7 +71,7 @@ public:
   explicit LocalGridLabel(const simData::LocalGridPrefs& prefs)
   {
     setFont(simVis::Registry::instance()->getOrCreateFont(prefs.gridlabelfontname()));
-    setAxisAlignment(osgText::TextBase::XY_PLANE);
+    setAxisAlignment(osgText::TextBase::SCREEN);
     setBackdropType(prefs.gridlabeltextoutline() == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
     setBackdropColor(simVis::Color(prefs.gridlabeloutlinecolor(), simVis::Color::RGBA));
     const float outlineThickness = simVis::outlineThickness(prefs.gridlabeltextoutline());
