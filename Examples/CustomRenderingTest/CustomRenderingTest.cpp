@@ -252,7 +252,7 @@ private:
     //     colors of your geometry.
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*colors)[0] = osg::Vec4(1, 1, 1, 1);
-    geom->setColorArray(colors);
+    geom->setColorArray(colors.get());
 
     // Build 4 quarters at once to reduce number of calls to sin() and cos()
     const int pointsPerQuarter = 20;
