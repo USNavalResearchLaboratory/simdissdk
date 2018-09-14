@@ -493,6 +493,7 @@ public:
   virtual int getTessellation(TessellationStyle& style) const;
   virtual void setAltitudeMode(AltitudeMode altMode);
   virtual void setAltOffset(double altOffsetMeters);
+  virtual void setExtrude(bool extrude);
   virtual void setTessellation(TessellationStyle style);
 
 protected:

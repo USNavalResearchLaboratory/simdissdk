@@ -1319,6 +1319,23 @@ void FeatureNodeInterface::setAltOffset(double altOffsetMeters)
   featureNode_->dirty();
 }
 
+void FeatureNodeInterface::setExtrude(bool extrude)
+{
+  if (extrude)
+  {
+    osgEarth::Symbology::AltitudeSymbol* alt = style_.getOrCreate<osgEarth::Symbology::AltitudeSymbol>();
+    alt->clamping() = osgEarth::Symbology::AltitudeSymbol::CLAMP_RELATIVE_TO_TERRAIN;
+    alt->technique() = osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_SCENE;
+  }
+  else
+  {
+    osgEarth::Symbology::AltitudeSymbol* alt = style_.getOrCreate<osgEarth::Symbology::AltitudeSymbol>();
+    if (alt)
+      alt->clamping() = osgEarth::Symbology::AltitudeSymbol::CLAMP_NONE;
+  }
+  GogNodeInterface::setExtrude(extrude);
+}
+
 void FeatureNodeInterface::setTessellation(TessellationStyle style)
 {
   metaData_.setExplicitly(GOG_TESSELLATE_SET);
@@ -1393,7 +1410,7 @@ void FeatureNodeInterface::setAltitudeMode(AltitudeMode altMode)
     return;
   altMode_ = altMode;
   // The altitude mode combinations applied here should match those in the hasValidAltitudeMode() method. Update both methods with changes.
-  GogNodeInterface::setExtrude(altMode == ALTITUDE_EXTRUDE);
+  setExtrude(altMode == ALTITUDE_EXTRUDE);
 
   if (style_.has<osgEarth::Symbology::ExtrusionSymbol>())
   {
