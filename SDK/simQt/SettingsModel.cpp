@@ -933,6 +933,9 @@ int SettingsModel::loadSettingsFile(const QString& path)
   bool containsLayout = false;
   Q_FOREACH(const QString& key, allKeys)
   {
+    // meta data doesn't get treated as a value
+    if (key.startsWith(METADATA_GROUP))
+      continue;
     setValue(key, settings.value(key));
     // now check to see if this setting is a LAYOUT
     TreeNode* node = getNode_(key);
