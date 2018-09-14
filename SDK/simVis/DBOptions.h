@@ -66,8 +66,8 @@ namespace simVis
     virtual osgEarth::Config getConfig() const
     {
       osgEarth::Config conf = osgEarth::TileSourceOptions::getConfig();
-      conf.updateIfSet("url", _url);
-      conf.updateIfSet("deepest_level", _deepestLevel);
+      conf.set("url", _url);
+      conf.set("deepest_level", _deepestLevel);
       return conf;
     }
 
@@ -83,8 +83,8 @@ namespace simVis
     /// set current settings to 'conf'
     void fromConfig_(const osgEarth::Config& conf)
     {
-      conf.getIfSet("url", _url);
-      conf.getIfSet("deepest_level", _deepestLevel);
+      conf.get("url", _url);
+      conf.get("deepest_level", _deepestLevel);
     }
 
     osgEarth::optional<osgEarth::URI> _url;
