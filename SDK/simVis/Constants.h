@@ -143,6 +143,7 @@ namespace simVis
     BIN_CUSTOM_RENDER       = 15,
     BIN_CYLINDER            = 15,
     BIN_RFPROPAGATION       = 15,
+    BIN_VAPOR_TRAIL         = 15,
 
     // Bin type = BIN_GLOBAL_SIMSDK
     BIN_LABEL               = 35, // Labels must be drawn after other items to avoid blending artifacts
