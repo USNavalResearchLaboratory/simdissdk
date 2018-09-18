@@ -22,10 +22,11 @@
 #ifndef SIMDIS_DB_H
 #define SIMDIS_DB_H 1
 
-#include "simCore/Common/Common.h"
+#include <string>
 #include "osgEarth/TileSource"
 #include "osgEarth/URI"
-#include <string>
+#include "simCore/Common/Common.h"
+#include "simVis/osgEarthVersion.h"
 
 namespace simVis
 {
@@ -66,8 +67,13 @@ namespace simVis
     virtual osgEarth::Config getConfig() const
     {
       osgEarth::Config conf = osgEarth::TileSourceOptions::getConfig();
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
+      conf.set("url", _url);
+      conf.set("deepest_level", _deepestLevel);
+#else
       conf.updateIfSet("url", _url);
       conf.updateIfSet("deepest_level", _deepestLevel);
+#endif
       return conf;
     }
 
@@ -83,8 +89,13 @@ namespace simVis
     /// set current settings to 'conf'
     void fromConfig_(const osgEarth::Config& conf)
     {
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
+      conf.get("url", _url);
+      conf.get("deepest_level", _deepestLevel);
+#else
       conf.getIfSet("url", _url);
       conf.getIfSet("deepest_level", _deepestLevel);
+#endif
     }
 
     osgEarth::optional<osgEarth::URI> _url;
