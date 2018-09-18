@@ -308,6 +308,11 @@ if(TARGET simVis)
     target_compile_definitions(simQt PRIVATE HAVE_SIMVIS)
 endif()
 
+# Add a define to handle the custom rendering GUI removal for SIMDIS 10.0 SR4.
+if(ENABLE_QT_CUSTOM_RENDER)
+    target_compile_definitions(simQt PRIVATE ENABLE_QT_CUSTOM_RENDER)
+endif()
+
 # If simQt is a DLL, avoid linking in "heavy" dependencies if possible
 if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
     if(TARGET simData)
