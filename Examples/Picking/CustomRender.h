@@ -112,7 +112,7 @@ private:
 
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
     (*colors)[0] = osg::Vec4(1, 1, 1, 1);
-    geom->setColorArray(colors);
+    geom->setColorArray(colors.get());
 
     const int NUM_EDGE_POINTS = 80; // one point every (360/80) degrees
     osg::ref_ptr<osg::Vec3Array> fillVerts = new osg::Vec3Array(2 + NUM_EDGE_POINTS);
