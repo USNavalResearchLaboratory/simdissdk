@@ -49,7 +49,17 @@ MyMainWindow::MyMainWindow(simVis::ViewManager* viewMan, simData::DataStore& dat
   simVis::fixStatsHandlerGl2BlockyText(_statsHandler.get());
   osg::observer_ptr<simVis::View> mainView = viewManager_->getView(0);
   if (mainView.valid())
+  {
     mainView->addEventHandler(_statsHandler.get());
+
+    // Set an initial viewpoint near the data
+    simVis::Viewpoint vp;
+    vp.focalPoint()->set(osgEarth::SpatialReference::get("wgs84"), osg::Vec3d(-159.3, 22.4, 0.0), osgEarth::ALTMODE_ABSOLUTE);
+    vp.pitch()->set(-45.0, osgEarth::Units::DEGREES);
+    vp.heading()->set(25.0, osgEarth::Units::DEGREES);
+    vp.range()->set(1e5, osgEarth::Units::METERS);
+    mainView->setViewpoint(vp);
+  }
 }
 
 MyMainWindow::~MyMainWindow()

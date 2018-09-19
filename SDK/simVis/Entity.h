@@ -35,7 +35,10 @@ namespace simCore {
   class Coordinate;
 }
 
-namespace simData { class DataSliceBase; }
+namespace simData {
+  class CommonPrefs;
+  class DataSliceBase;
+}
 
 namespace simVis
 {
@@ -278,6 +281,17 @@ namespace simVis
 
   protected:
     virtual ~EntityNode();
+
+    /**
+    * Returns the entity name. Can be used to get the actual name always or the
+    * actual/alias depending on the commonprefs.usealias flag.
+    * @param common The preference that contain the name and alias
+    * @param nameType  enum option to always return real/alias name or name based on
+    *            the commonprefs usealias flag.
+    * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
+    * @return actual/alias entity name string
+    */
+    std::string getEntityName_(const simData::CommonPrefs& common, EntityNode::NameType nameType, bool allowBlankAlias) const;
 
   private:
     /** Copy constructor, not implemented or available. */

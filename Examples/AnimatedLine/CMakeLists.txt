@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_ANIMATED_LINE)
 
 set(PROJECT_FILES
-    src/ExampleAnimatedLine.cpp
+    ExampleAnimatedLine.cpp
 )
 
 add_executable(example_animatedline ${PROJECT_FILES})

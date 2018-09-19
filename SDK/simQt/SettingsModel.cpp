@@ -933,6 +933,9 @@ int SettingsModel::loadSettingsFile(const QString& path)
   bool containsLayout = false;
   Q_FOREACH(const QString& key, allKeys)
   {
+    // meta data doesn't get treated as a value
+    if (key.startsWith(METADATA_GROUP))
+      continue;
     setValue(key, settings.value(key));
     // now check to see if this setting is a LAYOUT
     TreeNode* node = getNode_(key);
@@ -950,7 +953,7 @@ int SettingsModel::loadSettingsFile(const QString& path)
   return 0;
 }
 
-int SettingsModel::saveSettingsFileAs(const QString& path)
+int SettingsModel::saveSettingsFileAs(const QString& path, bool onlyDeltas)
 {
   if (path.isEmpty())
     return 1;
@@ -970,10 +973,12 @@ int SettingsModel::saveSettingsFileAs(const QString& path)
   // Start fresh
   settings.clear();
 
-  storeNodes_(settings, rootNode_, true);
+  if (onlyDeltas)
+    storeNodesDeltas_(settings, rootNode_);
+  else
+    storeNodes_(settings, rootNode_, true);
   return 0;
 }
-
 
 void SettingsModel::storeNodes_(QSettings& settings, TreeNode* node, bool force) const
 {
@@ -994,6 +999,27 @@ void SettingsModel::storeNodes_(QSettings& settings, TreeNode* node, bool force)
   int size = node->childCount();
   for (int ii = 0; ii < size; ++ii)
     storeNodes_(settings, node->child(ii), force);
+}
+
+void SettingsModel::storeNodesDeltas_(QSettings& settings, TreeNode* node) const
+{
+  if (node == NULL)
+    return;
+
+  QVariant value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
+  // Only need to write out leaves
+  if (!node->isRootItem() && value.isValid())
+  {
+    if (node->metaData().defaultValue() != value)
+      settings.setValue(node->fullPath(), value);
+
+    // It is a leaf so return
+    return;
+  }
+
+  int size = node->childCount();
+  for (int ii = 0; ii < size; ++ii)
+    storeNodesDeltas_(settings, node->child(ii));
 }
 
 void SettingsModel::clear()

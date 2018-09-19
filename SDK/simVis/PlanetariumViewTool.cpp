@@ -79,6 +79,7 @@ PlanetariumViewTool::PlanetariumViewTool(PlatformNode* host) :
   geom->allocate(4);
   geom->setColor(simVis::Color::White);
   geom->setLineWidth(2.0f);
+  geom->setDataVariance(osg::Object::DYNAMIC);
   targetGeom_ = geom;
 
   scaleTargetGeometry_(range_);
@@ -383,6 +384,7 @@ osg::Node* PlanetariumViewTool::buildVectorGeometry_()
   osgEarth::LineDrawable* geom = new osgEarth::LineDrawable(GL_LINE_STRIP);
   geom->allocate(NUM_VECTOR_SEGS);
   geom->setColor(simVis::Color::White);
+  geom->setDataVariance(osg::Object::DYNAMIC);
   return geom;
 }
 }

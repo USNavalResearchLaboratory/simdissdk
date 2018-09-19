@@ -40,6 +40,7 @@ class CategoryDataSlice;
 class CategoryNameManager;
 class GenericDataSlice;
 class DataTableManager;
+class DataTable;
 
 /** @brief Interface for storing and retrieving scenario data
  *
@@ -101,9 +102,7 @@ public: // types
   static const simData::ObjectType LASER = simData::LASER;
   static const simData::ObjectType PROJECTOR = simData::PROJECTOR;
   static const simData::ObjectType LOB_GROUP = simData::LOB_GROUP;
-#ifdef ENABLE_CUSTOM_RENDERING
   static const simData::ObjectType CUSTOM_RENDERING = simData::CUSTOM_RENDERING;
-#endif
   static const simData::ObjectType ALL = simData::ALL;
 #endif
 
@@ -240,6 +239,34 @@ public: // types
 
   };
 
+  /// Observer interface for a class that gets notified when Updates and Rows are added to the data store
+  class SDKDATA_EXPORT NewUpdatesListener
+  {
+  public:
+    virtual ~NewUpdatesListener() {}
+
+    /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
+    virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) = 0;
+    /// New table row was added for the entity ID provided, at the time provided.  Query the data table for contents of the row.
+    virtual void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime) = 0;
+    /// Notification of flush, which may interleave other entity updates.  @see simData::DataStore::Listener::onFlush()
+    virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId) = 0;
+  };
+  /// Managed pointer for NewUpdatesListener
+  typedef std::shared_ptr<NewUpdatesListener> NewUpdatesListenerPtr;
+
+  /// Default implementation does nothing
+  class DefaultNewUpdatesListener : public NewUpdatesListener
+  {
+  public:
+    /// New update was added for the entity ID provided, at the time provided.  Query the data store for the contents of the update.
+    virtual void onEntityUpdate(simData::DataStore* source, simData::ObjectId id, double dataTime) {}
+    /// New table row was added for the entity ID provided, at the time provided.  Query the data table for contents of the row.
+    virtual void onNewRowData(simData::DataStore* source, simData::DataTable& table, simData::ObjectId id, double dataTime) {}
+    /// Notification of flush, which may interleave other entity updates.  @see simData::DataStore::Listener::onFlush()
+    virtual void onFlush(simData::DataStore* source, simData::ObjectId flushedId) {}
+  };
+
   /// opaque class used to store internals when swapping data stores
   class InternalsMemento
   {
@@ -359,10 +386,8 @@ public: // methods
   /// Retrieve a list of IDs for all LobGroups associated with a platform
   virtual void lobGroupIdListForHost(ObjectId hostid, IdList *ids) const = 0;
 
-#ifdef ENABLE_CUSTOM_RENDERING
   /// Retrieve a list of IDs for all customs associated with a platform
   virtual void customRenderingIdListForHost(ObjectId hostid, IdList *ids) const = 0;
-#endif
 
   /// Retrieves the ObjectType for a particular ID
   virtual simData::ObjectType objectType(ObjectId id) const = 0;
@@ -391,18 +416,14 @@ public: // methods
   virtual const     LaserProperties*             laserProperties(ObjectId id, Transaction *transaction) const = 0;
   virtual const ProjectorProperties*         projectorProperties(ObjectId id, Transaction *transaction) const = 0;
   virtual const  LobGroupProperties*          lobGroupProperties(ObjectId id, Transaction *transaction) const = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual const CustomRenderingProperties* customRenderingProperties(ObjectId id, Transaction *transaction) const = 0;
-#endif
   virtual        PlatformProperties*  mutable_platformProperties(ObjectId id, Transaction *transaction) = 0;
   virtual            BeamProperties*      mutable_beamProperties(ObjectId id, Transaction *transaction) = 0;
   virtual            GateProperties*      mutable_gateProperties(ObjectId id, Transaction *transaction) = 0;
   virtual           LaserProperties*     mutable_laserProperties(ObjectId id, Transaction *transaction) = 0;
   virtual       ProjectorProperties* mutable_projectorProperties(ObjectId id, Transaction *transaction) = 0;
   virtual        LobGroupProperties*  mutable_lobGroupProperties(ObjectId id, Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual CustomRenderingProperties* mutable_customRenderingProperties(ObjectId id, Transaction *transaction) = 0;
-#endif
   ///@}
 
   /**@name Object Preferences
@@ -422,10 +443,8 @@ public: // methods
   virtual           LaserPrefs*     mutable_laserPrefs(ObjectId id, Transaction *transaction) = 0;
   virtual       ProjectorPrefs* mutable_projectorPrefs(ObjectId id, Transaction *transaction) = 0;
   virtual        LobGroupPrefs*  mutable_lobGroupPrefs(ObjectId id, Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual const CustomRenderingPrefs* customRenderingPrefs(ObjectId id, Transaction *transaction) const = 0;
   virtual       CustomRenderingPrefs* mutable_customRenderingPrefs(ObjectId id, Transaction *transaction) = 0;
-#endif
   virtual          CommonPrefs*    mutable_commonPrefs(ObjectId id, Transaction* transaction) = 0;
   ///@}
 
@@ -466,9 +485,7 @@ public: // methods
   virtual     LaserProperties* addLaser(Transaction *transaction) = 0;
   virtual ProjectorProperties* addProjector(Transaction *transaction) = 0;
   virtual  LobGroupProperties* addLobGroup(Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual CustomRenderingProperties* addCustomRendering(Transaction *transaction) = 0;
-#endif
   ///@}
 
   /// remove an entity from the data store
@@ -508,9 +525,7 @@ public: // methods
   virtual ProjectorCommand*   addProjectorCommand(ObjectId id, Transaction *transaction) = 0;
   virtual   LobGroupUpdate*   addLobGroupUpdate(ObjectId id, Transaction *transaction) = 0;
   virtual  LobGroupCommand*   addLobGroupCommand(ObjectId id, Transaction *transaction) = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual CustomRenderingCommand* addCustomRenderingCommand(ObjectId id, Transaction *transaction) = 0;
-#endif
   virtual      GenericData*   addGenericData(ObjectId id, Transaction *transaction) = 0;
   virtual     CategoryData*   addCategoryData(ObjectId id, Transaction *transaction) = 0;
   //virtual        TableData*        addTableData(ObjectId id, Transaction *transaction) = 0;
@@ -532,9 +547,7 @@ public: // methods
   virtual const ProjectorCommandSlice* projectorCommandSlice(ObjectId id) const = 0;
   virtual const LobGroupUpdateSlice*   lobGroupUpdateSlice(ObjectId id) const = 0;
   virtual const LobGroupCommandSlice*  lobGroupCommandSlice(ObjectId id) const = 0;
-#ifdef ENABLE_CUSTOM_RENDERING
   virtual const CustomRenderingCommandSlice* customRenderingCommandSlice(ObjectId id) const = 0;
-#endif
   virtual const GenericDataSlice*      genericDataSlice(ObjectId id) const = 0;
   virtual const CategoryDataSlice*     categoryDataSlice(ObjectId id) const = 0;
   ///@}
@@ -546,6 +559,14 @@ public: // methods
    * @return 0 on success
    */
   virtual int modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<PlatformCommand>::Modifier* modifier) = 0;
+
+  /**
+   * Modify commands for a given custom rendering entity
+   * @param id Custom rendering entity that needs commands modified
+   * @param modifier The object to modify the commands
+   * @return 0 on success
+   */
+  virtual int modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier) = 0;
 
   /**@name Listeners
    * @{
@@ -561,6 +582,13 @@ public: // methods
   /// Add or remove a listener for scenario event messages
   virtual void addScenarioListener(ScenarioListenerPtr callback) = 0;
   virtual void removeScenarioListener(ScenarioListenerPtr callback) = 0;
+  ///@}
+
+  /**@name NewUpdatesListener
+  * @{
+  */
+  /// Sets a listener for when entity updates are added; use NULL to remove.
+  virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback) = 0;
   ///@}
 
   /**@name Get a handle to the CategoryNameManager

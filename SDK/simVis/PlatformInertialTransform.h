@@ -33,7 +33,7 @@ namespace simVis
 /**
  * Transform that reverses the orientation transform of a Platform.  Useful as a child
  * or scaled child of a PlatformModel.  Will align with the entity's inertial axis rather
- * than the body axis.  For example:
+ * than the body axis.  Correctly accounts for icon billboarding.  For example:
  *
  * PlatformInertialTransform* inertialXform = new PlatformInertialTransform;
  * platform->addScaledChild(inertialXform);
@@ -64,8 +64,9 @@ protected:
   virtual void childInserted(unsigned int pos);
 
 private:
-  osg::Quat rotation_;
-  osg::Quat rotationInverse_;
+  /** Computed entity rotation matrix for the locator, inverted to back out the rotation */
+  osg::Quat entityRotationInverse_;
+
   osg::observer_ptr<Locator> locator_;
   osg::ref_ptr<LocatorCallback> callback_;
 };

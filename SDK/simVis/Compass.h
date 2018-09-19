@@ -145,6 +145,7 @@ namespace simVis
   private:
     class FrameEventHandler;
 
+    int height_;                                                    ///< Height of the image in pixels
     osg::observer_ptr<simVis::View> drawView_;                      ///< Reference to the view on which to overlay the compass
     osg::observer_ptr<simVis::View> activeView_;                    ///< Reference to the view whose data the compass is showing
 

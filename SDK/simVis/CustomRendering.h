@@ -22,26 +22,20 @@
 #ifndef SIMVIS_CUSTOM_RENDERING_H
 #define SIMVIS_CUSTOM_RENDERING_H
 
-#ifdef ENABLE_CUSTOM_RENDERING
-
 #include "osg/observer_ptr"
 #include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 #include "simVis/LocatorNode.h"
 
-namespace osg {
-  class Depth;
-  class MatrixTransform;
-}
-
 namespace simVis
 {
-  class EntityLabelNode;
   class CustomLabelContentCallback;
+  class EntityLabelNode;
   class LabelContentCallback;
   class LocalGridNode;
   class Locator;
+  class OverrideColor;
   class ScenarioManager;
 
   /**
@@ -155,7 +149,7 @@ namespace simVis
     * @param nameType  enum option to always return real/alias name or name based on
     *            the commonprefs usealias flag.
     * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
-    * @return    actual/alias entity name string
+    * @return actual/alias entity name string
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
@@ -217,6 +211,12 @@ namespace simVis
     // Expose the locator node so an outside source can add graphics.
     LocatorNode* locatorNode() const;
 
+    /// Returns the host
+    const EntityNode* host() const;
+
+    /// Returns the pop up text based on the label content callback, update and preference
+    std::string popupText() const;
+
   protected:
     /// osg::Referenced-derived; destructor body needs to be in the .cpp
     virtual ~CustomRenderingNode();
@@ -231,6 +231,12 @@ namespace simVis
     */
     void updateLabel_(const simData::CustomRenderingPrefs& prefs);
 
+    /**
+    * Update the color with the specified custom rendering preferences
+    * @param prefs the custom rendering preferences
+    */
+    void updateOverrideColor_(const simData::CustomRenderingPrefs& prefs);
+
     osg::observer_ptr<const ScenarioManager> scenario_;
     osg::observer_ptr<const EntityNode> host_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
@@ -238,15 +244,15 @@ namespace simVis
     osg::ref_ptr<LocalGridNode> localGrid_;
     osg::ref_ptr<EntityLabelNode> label_;
     osg::ref_ptr<LocatorNode>  customLocatorNode_;
+    osg::ref_ptr<OverrideColor> overrideColor_;
     simData::CustomRenderingProperties lastProps_;
     simData::CustomRenderingPrefs lastPrefs_;
     bool hasLastPrefs_;
     bool customActive_;
+    unsigned int objectIndexTag_;
   };
 
 } //namespace simVis
-
-#endif // ENABLE_CUSTOM_RENDERING
 
 #endif //SIMVIS_CUSTOM_H
 

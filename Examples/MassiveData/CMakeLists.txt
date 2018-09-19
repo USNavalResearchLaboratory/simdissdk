@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_MASSIVE_DATA)
 
 set(PROJECT_FILES
-    src/MassiveData.cpp
+    MassiveData.cpp
 )
 
 add_executable(example_massivedata ${PROJECT_FILES})

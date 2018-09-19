@@ -104,6 +104,13 @@ namespace simCore
     TIMEFORMAT_DTG          ///< MDYHHMM:SS.SSS Z MON YEAR
   };
 
+  /// Time sources
+  enum TimeZone
+  {
+    TIMEZONE_UTC = 0,
+    TIMEZONE_LOCAL
+  };
+
   ///Time directions
   enum TimeDirection
   {

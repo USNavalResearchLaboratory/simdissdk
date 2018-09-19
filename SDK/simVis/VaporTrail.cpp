@@ -359,15 +359,14 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
   osg::StateSet* stateSet = textureBillboard->getOrCreateStateSet();
   stateSet->setTextureAttributeAndModes(textureUnit, texture, osg::StateAttribute::ON);
 
-  // Set up the render bin, turn off depth writes, and turn on depth reads
-  stateSet->setRenderBinDetails(BIN_ROCKETBURN, BIN_GLOBAL_SIMSDK);
-  // Depth writes need to be off because sometimes the puffs, even in depth-sorted bin, will
-  // draw in front of one another incorrectly, causing the puff alpha to take a depth that
-  // other puffs should have instead.
-  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
+  osg::StateSet* groupState = vaporTrailGroup_->getOrCreateStateSet();
 
+  // Set up the render bin, turn off depth writes, and turn on depth reads
+  groupState->setRenderBinDetails(BIN_VAPOR_TRAIL, BIN_GLOBAL_SIMSDK);
   // Must be able to blend or the graphics will look awful
-  stateSet->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
+  groupState->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
+  // Disable depth writing, even in the second pass for TPA
+  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false), osg::StateAttribute::ON|osg::StateAttribute::PROTECTED);
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   geom->setName("simVis::VaporTrail");
@@ -440,6 +439,9 @@ VaporTrail::VaporTrailPuff::~VaporTrailPuff()
 void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double startTime)
 {
   position_ = position;
+  // set this position in our matrix; it is required to set position for puffs with no expansion;
+  // if there is a radius expansion/scaling, that will be handled in update() below
+  puff_->setMatrix(osg::Matrixd::translate(position_.x(), position_.y(), position_.z()));
   startTime_ = startTime;
   puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
   active_ = true;

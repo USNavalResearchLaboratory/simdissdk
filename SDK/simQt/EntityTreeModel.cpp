@@ -32,7 +32,7 @@
 namespace simQt {
 
 /// notify the tree model about data store changes
-class EntityTreeModel::TreeListener : public simData::DataStore::DefaultListener
+class EntityTreeModel::TreeListener : public simData::DataStore::Listener
 {
 public:
   /// constructor
@@ -71,7 +71,12 @@ public:
     parent_->removeAllEntities_();
   }
 
-protected:
+  // Fulfill the interface
+  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
+  virtual void onTimeChange(simData::DataStore *source) {}
+  virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
+
+private:
   EntityTreeModel *parent_; ///< model which receives notices
 };
 
@@ -144,9 +149,7 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     dataStore_(NULL),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
-#ifdef ENABLE_CUSTOM_RENDERING
-    customRenderingIcon_(":/simQt/images/Question.png"),
-#endif
+    customRenderingIcon_(":/simQt/images/CustomRender.png"),
     gateIcon_(":/simQt/images/gate.png"),
     laserIcon_(":/simQt/images/laser.png"),
     lobIcon_(":/simQt/images/lob.png"),
@@ -318,16 +321,11 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
 
   if ((parentItem != rootItem_) && treeView_)
   {
+    beginInsertRows(createIndex(parentItem->row(), 0, parentItem), parentItem->childCount(), parentItem->childCount());
     EntityTreeItem* newItem = new EntityTreeItem(id, parentItem);
     itemsById_[id] = newItem;
     parentItem->appendChild(newItem);
-    if (newItem->row() == 0)
-      emit(layoutAboutToBeChanged());
-    beginInsertRows(createIndex(parentItem->row(), 0, parentItem), newItem->row(), newItem->row());
-    insertRow(newItem->row(), createIndex(newItem->row(), 0, newItem));
     endInsertRows();
-    if (newItem->row() == 0)  // if first one, needed to get the |> to show up on the tree
-      emit(layoutChanged());
   }
   else
   {
@@ -335,7 +333,6 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
     EntityTreeItem* newItem = new EntityTreeItem(id, rootItem_);
     itemsById_[id] = newItem;
     rootItem_->appendChild(newItem);
-    insertRow(newItem->row());
     endInsertRows();
   }
 }
@@ -357,14 +354,13 @@ void EntityTreeModel::removeEntity_(uint64_t id)
   // Qt requires we notify it of all the rows to be removed
   if (found->parent() != rootItem_)
   {
-    beginRemoveRows(createIndex(found->row(), 0, found->parent()), found->row(), found->row() + found->childCount());
+    const QModelIndex parentIndex = createIndex(found->parent()->row(), 0, found->parent());
+    beginRemoveRows(parentIndex, found->row(), found->row());
   }
   else
   {
-    beginRemoveRows(QModelIndex(), found->row(), found->row() + found->childCount());
+    beginRemoveRows(QModelIndex(), found->row(), found->row());
   }
-
-  removeRows(found->row(), found->childCount());
 
   // Get any children before deleting
   std::vector<uint64_t> ids;
@@ -439,10 +435,8 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
         return platformIcon_;
       case simData::BEAM:
         return beamIcon_;
-#ifdef ENABLE_CUSTOM_RENDERING
       case simData::CUSTOM_RENDERING:
         return customRenderingIcon_;
-#endif
       case simData::GATE:
         return gateIcon_;
       case simData::LASER:
@@ -636,11 +630,9 @@ void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataSt
       simData::DataStore::IdList idList;
       dataStore->beamIdListForHost(*iter, &idList);
       buildTree_(simData::BEAM, dataStore, idList, newItem);
-#ifdef ENABLE_CUSTOM_RENDERING
       idList.clear();
       dataStore->customRenderingIdListForHost(*iter, &idList);
       buildTree_(simData::CUSTOM_RENDERING, dataStore, idList, newItem);
-#endif
       idList.clear();
       dataStore->laserIdListForHost(*iter, &idList);
       buildTree_(simData::LASER, dataStore, idList, newItem);

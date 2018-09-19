@@ -332,26 +332,26 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
       Utils::configureStyleForClipping(fillStyle);
     }
 
-    shapeNode = new osgEarth::Annotation::LocalGeometryNode(mapNode, outlineShape, shapeStyle);
-    Utils::applyLocalGeometryOffsets(*shapeNode, p);
+    shapeNode = new osgEarth::Annotation::LocalGeometryNode(outlineShape, shapeStyle);
+    shapeNode->setMapNode(mapNode);
 
-    fillNode = new osgEarth::Annotation::LocalGeometryNode(mapNode, filledShape, fillStyle);
-    Utils::applyLocalGeometryOffsets(*fillNode, p);
+    fillNode = new osgEarth::Annotation::LocalGeometryNode(filledShape, fillStyle);
+    fillNode->setMapNode(mapNode);
   }
   else
   {
     shapeNode = new HostedLocalGeometryNode(outlineShape, shapeStyle);
-    shapeNode->setLocalOffset(p.getLTPOffset());
     fillNode = new HostedLocalGeometryNode(filledShape, fillStyle);
-    fillNode->setLocalOffset(p.getLTPOffset());
   }
 
   GogNodeInterface* rv = NULL;
   if (shapeNode)
   {
+    Utils::applyLocalGeometryOffsets(*shapeNode, p, nodeType);
     // only bother with fill node if we have the shape
     if (fillNode)
     {
+      Utils::applyLocalGeometryOffsets(*fillNode, p, nodeType);
       // show the filled node only if filled
       fillNode->setNodeMask(filled ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
       g->addChild(fillNode);

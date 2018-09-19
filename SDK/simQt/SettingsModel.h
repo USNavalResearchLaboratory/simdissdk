@@ -154,8 +154,8 @@ public slots:
   void reloadModel();
   //// Loads a settings file into this data model, returns 0 on success. Will emit the layoutLoaded signal if the specified settings file contains LAYOUT data
   int loadSettingsFile(const QString& path);
-  /// Saves the settings to a file, return 0 on success.
-  int saveSettingsFileAs(const QString& path);
+  /// Saves the settings to a file. If onlyDeltas is true, saves out only settings whose value differs from default value. Return 0 on success.
+  int saveSettingsFileAs(const QString& path, bool onlyDeltas=false);
 
   /// Saves out data to the default QSettings location
   void save();
@@ -190,6 +190,8 @@ private:
   void allNames_(TreeNode* node, QStringList& all) const;
   /// Stores the changed leaf nodes under node to settings; store all leaf nodes if force is true
   void storeNodes_(QSettings& settings, TreeNode* node, bool force) const;
+  /// Stores the leaf nodes under node to settings only if the value differs from the original default value. Recursively calls itself on children of node.
+  void storeNodesDeltas_(QSettings& settings, TreeNode* node) const;
   /// Initializes the meta data from persistent storage. Note that meta data will not override
   void initMetaData_(QSettings& settings);
   /// Saves meta data into persistent storage

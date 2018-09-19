@@ -24,6 +24,9 @@
  *
  */
 #include <cassert>
+#include "osg/GL"
+#include "osg/GLExtensions"
+#include "osg/Version"
 #include "osgEarth/Registry"
 #include "osgEarth/Capabilities"
 #include "osgEarth/StringUtils"
@@ -32,11 +35,25 @@
 #include "simVis/osgEarthVersion.h"
 #include "simUtil/Capabilities.h"
 
+#ifndef GL_CONTEXT_PROFILE_MASK
+#define GL_CONTEXT_PROFILE_MASK 0x9126
+#endif
+#ifndef GL_CONTEXT_CORE_PROFILE_BIT
+#define GL_CONTEXT_CORE_PROFILE_BIT 0x00000001
+#endif
+
 namespace simUtil {
+
+Capabilities::Capabilities(osg::GraphicsContext& gc)
+  : glVersion_(1.0),
+    isUsable_(USABLE)
+{
+  init_(gc);
+}
 
 Capabilities::Capabilities()
   : glVersion_(1.0),
-    isUsable_(USABLE)
+  isUsable_(USABLE)
 {
   init_();
 }
@@ -83,23 +100,21 @@ void Capabilities::init_()
   caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
 #endif
 
-  // List of software drivers is from testing and https://www.opengl.org/wiki/Get_Context_Info
-  if (caps.getVendor().find("Mesa") != std::string::npos ||
-    caps.getVersion().find("Mesa") != std::string::npos ||
-    caps.getVendor().find("Microsoft") != std::string::npos ||
-    caps.getRenderer().find("Direct3D") != std::string::npos ||
-    caps.getRenderer().find("Gallium") != std::string::npos)
+  // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
+  // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
+  // acceleration, and do not necessarily imply software acceleration.
+  if (caps.getVendor().find("Microsoft") != std::string::npos)
   {
-    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; no 3D acceleration; performance concerns");
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; possibly no 3D acceleration; performance concerns");
   }
 
-  // OpenGL version must be usable.  1.5 is plausibly usable if the GLSL implementation
-  // is of appropriate version.  We could add a usable-with-artifacts warning on versions
-  // between 1.5 and 3.3, but it's unclear that we actually require features in anything
-  // in that area or if it's just a requirement on GLSL version.
-  if (glVersion_ < 1.5) // Note release date of 2003
+  // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
+  // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
+  // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
+  // from 3.0, so test against that.
+  if (glVersion_ < 3.0f) // Note release date of 2008
   {
-    recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.3 (detected " << glVersion_ << ")");
+    recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
   }
 
   caps_.push_back(std::make_pair("Max FFP texture units", toString_(caps.getMaxFFPTextureUnits())));
@@ -114,7 +129,7 @@ void Capabilities::init_()
   {
     caps_.push_back(std::make_pair("GLSL Version", toString_(caps.getGLSLVersion())));
     if (!caps.supportsGLSL(3.3f))
-      recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "GLSL version reported is under 3.30");
+      recordUsabilityConcern_(UNUSABLE, "GLSL version reported is under 3.30");
   }
   else
     recordUsabilityConcern_(UNUSABLE, "GLSL is not supported.");
@@ -144,6 +159,136 @@ void Capabilities::init_()
   if (caps.supportsTextureCompression(osg::Texture::USE_ETC_COMPRESSION))
     compressionSupported += "ETC1 ";
   if (caps.supportsTextureCompression(osg::Texture::USE_RGTC1_COMPRESSION))
+    compressionSupported += "RG ";
+  if (compressionSupported.empty())
+    compressionSupported = "no";
+  else // Remove trailing space
+    compressionSupported = compressionSupported.substr(0, compressionSupported.length() - 1);
+  caps_.push_back(std::make_pair("Texture compression", compressionSupported));
+}
+
+void Capabilities::init_(osg::GraphicsContext& gc)
+{
+  osg::GLExtensions* ext = NULL;
+  if (gc.makeCurrent() && gc.getState())
+    ext = osg::GLExtensions::Get(gc.getState()->getContextID(), true);
+
+  // Make sure we have an active context, else we can't initialize.
+  if (!ext) // not initialized
+  {
+    caps_.push_back(std::make_pair("Vendor", "Unknown"));
+    caps_.push_back(std::make_pair("Renderer", "Unknown"));
+    caps_.push_back(std::make_pair("OpenGL Version", "Unknown"));
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0)
+    caps_.push_back(std::make_pair("Core Profile", toString_(false)));
+#endif
+    glVersion_ = 0.0;
+    recordUsabilityConcern_(Capabilities::UNUSABLE, "Unable to activate context.");
+    return;
+  }
+
+  const std::string vendorString = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+  caps_.push_back(std::make_pair("Vendor", vendorString));
+  caps_.push_back(std::make_pair("Renderer", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
+  const std::string glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  caps_.push_back(std::make_pair("OpenGL Version", glVersionString));
+  glVersion_ = extractGlVersion_(glVersionString);
+  const unsigned int contextId = gc.getState()->getContextID();
+
+  // Detect core profile by investigating GL_CONTEXT_PROFILE_MASK
+  GLint profileMask = 0;
+  glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profileMask);
+  const bool isCoreProfile = (glVersion_ >= 3.2f && ((profileMask & GL_CONTEXT_CORE_PROFILE_BIT) != 0));
+  caps_.push_back(std::make_pair("Core Profile", toString_(isCoreProfile)));
+
+  // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
+  // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
+  // acceleration, and do not necessarily imply software acceleration.
+  if (vendorString.find("Microsoft") != std::string::npos)
+  {
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; possibly no 3D acceleration; performance concerns");
+  }
+
+  // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
+  // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
+  // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
+  // from 3.0, so test against that.
+  if (glVersion_ < 3.0f) // Note release date of 2008
+  {
+    recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
+  }
+
+#if OSG_MIN_VERSION_REQUIRED(3,6,0)
+  // OSG 3.6 auto-detects for us
+  GLint maxTextureUnits = ext->glMaxTextureUnits;
+  GLint maxTextureCoords = ext->glMaxTextureCoords;
+#else
+  // Follow th OSG 3.6 style of detection for texture units and coords
+  GLint maxTextureUnits = 1;
+  GLint maxTextureCoords = 1;
+  if (glVersion_ >= 2.0f || osg::isGLExtensionSupported(contextId, "GL_ARB_vertex_shader"))
+  {
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
+    // GL_MAX_TEXTURE_COORDS goes away in newer OpenGL
+    glGetIntegerv(GL_MAX_TEXTURE_COORDS, &maxTextureCoords);
+#else
+    maxTextureCoords = maxTextureUnits;
+#endif
+  }
+  else if (glVersion_ >= 1.3f || osg::isGLExtensionSupported(contextId, "GL_ARB_multitexture") || osg::isGLExtensionSupported(contextId, "GL_ARB_multitexture"))
+  {
+    // Fall back to multitexturing units for oldest OpenGL
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTextureUnits);
+    maxTextureCoords = maxTextureUnits;
+  }
+#endif
+  caps_.push_back(std::make_pair("Max GPU texture units", toString_(maxTextureUnits)));
+  caps_.push_back(std::make_pair("Max GPU texture coordinate sets", toString_(maxTextureCoords)));
+
+  // Need to query for maximum vertex attributes
+  GLint maxAttribs = 0;
+  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttribs);
+  caps_.push_back(std::make_pair("Max GPU attributes", toString_(maxAttribs)));
+
+  // Continue pulling values out of ext
+  caps_.push_back(std::make_pair("Max texture size", toString_(ext->maxTextureSize)));
+  caps_.push_back(std::make_pair("GLSL", toString_(ext->isGlslSupported)));
+  if (ext->isGlslSupported)
+  {
+    caps_.push_back(std::make_pair("GLSL Version", toString_(ext->glslLanguageVersion)));
+    if (ext->glslLanguageVersion < 3.3f)
+      recordUsabilityConcern_(UNUSABLE, "GLSL version reported is under 3.30");
+  }
+  else
+    recordUsabilityConcern_(UNUSABLE, "GLSL is not supported.");
+  caps_.push_back(std::make_pair("Texture arrays", toString_(ext->isTexture2DArraySupported)));
+  caps_.push_back(std::make_pair("Multitexturing", toString_(ext->isMultiTexSupported)));
+  caps_.push_back(std::make_pair("Stencil wrap", toString_(ext->isStencilWrapSupported)));
+  caps_.push_back(std::make_pair("2-sided stencils", toString_(ext->isStencilTwoSidedSupported)));
+  caps_.push_back(std::make_pair("Depth-packed stencil", toString_(ext->isPackedDepthStencilSupported)));
+  caps_.push_back(std::make_pair("Occlusion query", toString_(ext->isOcclusionQuerySupported)));
+
+  // Need to query for uniform block size
+  GLint maxUniformBlockSize = 0;
+  glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxUniformBlockSize);
+  caps_.push_back(std::make_pair("Max uniform block size", toString_(maxUniformBlockSize)));
+
+  // Keep pulling values out of ext
+  caps_.push_back(std::make_pair("Uniform buffer objects", toString_(ext->isUniformBufferObjectSupported)));
+  caps_.push_back(std::make_pair("NPOT textures", toString_(ext->isNonPowerOfTwoTextureMipMappedSupported)));
+
+  // Reconstruct the supported compressions string
+  std::string compressionSupported;
+  if (ext->isTextureCompressionARBSupported)
+    compressionSupported += "ARB ";
+  if (ext->isTextureCompressionS3TCSupported)
+    compressionSupported += "S3 ";
+  if (ext->isTextureCompressionPVRTCSupported)
+    compressionSupported += "PVR ";
+  if (ext->isTextureCompressionETCSupported)
+    compressionSupported += "ETC1 ";
+  if (ext->isTextureCompressionRGTCSupported)
     compressionSupported += "RG ";
   if (compressionSupported.empty())
     compressionSupported = "no";

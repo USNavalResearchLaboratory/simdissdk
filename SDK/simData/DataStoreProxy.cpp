@@ -94,6 +94,11 @@ void DataStoreProxy::removeScenarioListener(DataStore::ScenarioListenerPtr callb
   dataStore_->removeScenarioListener(callback);
 }
 
+void DataStoreProxy::setNewUpdatesListener(DataStore::NewUpdatesListenerPtr callback)
+{
+  dataStore_->setNewUpdatesListener(callback);
+}
+
 void DataStoreProxy::bindToClock(simCore::Clock* clock)
 {
   dataStore_->bindToClock(clock);
@@ -105,4 +110,3 @@ simCore::Clock* DataStoreProxy::getBoundClock() const
 }
 
 } // End of namespace simData
-

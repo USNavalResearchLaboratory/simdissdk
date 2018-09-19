@@ -31,8 +31,10 @@
 #include "osg/TexEnv"
 #include "osg/ValueObject"
 #include "osgSim/DOFTransform"
+#include "osgSim/LightPointNode"
 #include "osgSim/MultiSwitch"
 #include "osgUtil/Optimizer"
+#include "osgEarth/Containers"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
@@ -83,8 +85,15 @@ public:
     : NodeVisitor(TRAVERSE_ALL_CHILDREN)
   {
   }
+
   virtual void apply(osg::Node& node)
   {
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+    // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
+    if (dynamic_cast<osgSim::LightPointNode*>(&node) != NULL)
+      node.setNodeMask(0);
+#endif
+
     osg::StateSet* ss = node.getStateSet();
     if (ss)
     {
@@ -99,17 +108,19 @@ public:
         SIM_WARN << "Unexpected TexEnv mode: 0x" << std::hex << texEnv->getMode() << "\n";
       }
 
-      // GLCORE does not support ShadeModel.  Remove unnecessary ones
+      // GLCORE does not support ShadeModel.  Only smooth shading is supported.  Many SIMDIS
+      // models in sites/ use flat shading, but don't seem to need it.  Drop the attribute.
       osg::ShadeModel* shadeModel = dynamic_cast<osg::ShadeModel*>(ss->getAttribute(osg::StateAttribute::SHADEMODEL));
-      if (shadeModel != NULL && shadeModel->getMode() == osg::ShadeModel::SMOOTH)
+      if (shadeModel != NULL)
         ss->removeAttribute(shadeModel);
-      else if (shadeModel != NULL)
-      {
-        SIM_WARN << "Unexpected ShadeModel mode: 0x" << std::hex << shadeModel->getMode() << "\n";
-      }
 
       // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
       ss->removeTextureMode(0, GL_TEXTURE_2D);
+
+      // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
+      osg::Texture* texture = dynamic_cast<osg::Texture*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+      if (texture)
+        simVis::fixTextureForGlCoreProfile(texture);
 #endif
     }
     traverse(node);
@@ -247,7 +258,7 @@ private:
     return result.release();
   }
 
-  /** Helper method that applies the various post-read-node operations to a node. */
+  /** Helper method that applies the various post-read-node operations to a node.  This might be in a thread. */
   void applyPostLoadOptions_(osg::ref_ptr<osg::Node>& result, const ModelCacheLoaderOptions* options) const
   {
     if (!result || !options)
@@ -273,6 +284,10 @@ private:
     }
     // Disable depth on all incoming models
     simVis::DisableDepthOnAlpha::setValues(result->getOrCreateStateSet(), osg::StateAttribute::ON);
+
+    // Fix the GL_QUADS, GL_QUAD_STRIPS, and GL_POLYGON geometries
+    simVis::FixDeprecatedDrawModes fixDrawModes;
+    result->accept(fixDrawModes);
 
     // At one point, we would run the shader generator here in the threaded
     // context.  However, in SIMDIS code in the Simple Server example, it looked
@@ -304,6 +319,14 @@ private:
         0,                // texture image unit
         0.0,              // heading
         1.0);             // scale
+
+      // Texture could feasibly be GL_LUMINANCE or GL_LUMINANCE_ALPHA; fix it if so
+      if (geom && geom->getStateSet())
+      {
+        osg::Texture* texture = dynamic_cast<osg::Texture*>(geom->getStateSet()->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+        if (texture)
+          simVis::fixTextureForGlCoreProfile(texture);
+      }
 
       osg::Geode* geode = new osg::Geode();
       geode->addDrawable(geom);
@@ -542,6 +565,7 @@ ModelCache::ModelCache()
   : shareArticulatedModels_(false),
     addLodNode_(true),
     clock_(NULL),
+    cache_(false, 30), // No need for thread safety, max of 30 elements
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
@@ -570,10 +594,11 @@ ModelCache::~ModelCache()
 osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsImage)
 {
   // first check the cache.
-  auto i = cache_.find(uri);
-  if (i != cache_.end())
+  Cache::Record record;
+  if (cache_.get(uri, record))
   {
-    const Entry& entry = i->second;
+    assert(record.valid()); // Guaranteed by get()
+    const Entry& entry = record.value();
     if (pIsImage)
       *pIsImage = entry.isImage_;
 
@@ -597,6 +622,10 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   if (!result)
     return NULL;
 
+  // Synchronous load needs to run the shader generator here
+  osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
+  osgEarth::Registry::shaderGenerator().run(result.get(), stateCache.get());
+
   // Store the image hint
   bool isImage = false;
   result->getUserValue(IMAGE_HINT_KEY, isImage);
@@ -614,10 +643,11 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
 
 void ModelCache::saveToCache_(const std::string& uri, osg::Node* node, bool isArticulated, bool isImage)
 {
-  Entry& entry = cache_[uri];
-  entry.node_ = node;
-  entry.isImage_ = isImage;
-  entry.isArticulated_ = isArticulated;
+  Entry newEntry;
+  newEntry.node_ = node;
+  newEntry.isImage_ = isImage;
+  newEntry.isArticulated_ = isArticulated;
+  cache_.insert(uri, newEntry);
 }
 
 void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
@@ -644,15 +674,17 @@ void ModelCache::asyncLoad(const std::string& uri, ModelReadyCallback* callback)
   }
 
   // first check the cache
-  const auto cacheIter = cache_.find(uri);
-  if (cacheIter != cache_.end())
+  Cache::Record record;
+  if (cache_.get(uri, record))
   {
+    assert(record.valid()); // Guaranteed by get()
+
     // If the callback is valid, then pass the model back immediately.  It's possible the
     // callback might not be valid in cases where someone is attempting to preload icons
     // for the sake of performance.  In that case we just return early because it's loaded.
     if (refCallback.valid())
     {
-      const Entry& entry = cacheIter->second;
+      const Entry& entry = record.value();
       osg::ref_ptr<osg::Node> node = entry.node_.get();
       // clone articulated nodes so we get independent articulations
       if (entry.isArticulated_ && !shareArticulatedModels_)
@@ -727,6 +759,11 @@ osg::Node* ModelCache::asyncLoaderNode() const
 osg::Node* ModelCache::boxNode() const
 {
   return boxNode_.get();
+}
+
+void ModelCache::erase(const std::string& uri)
+{
+  cache_.erase(uri);
 }
 
 ////////////////////////////////////////////////////////////////////////////

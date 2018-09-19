@@ -20,6 +20,7 @@
 *
 */
 #include <algorithm>
+#include <cassert>
 #include "osgEarthUtil/LogarithmicDepthBuffer"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
@@ -32,13 +33,53 @@ namespace simVis
 static const double DEFAULT_NEAR_FAR_RATIO = 0.0005;
 static const double LDB_NEAR_FAR_RATIO = 0.000001;
 
+/** Minimum near plane distance when the LDB is active */
+static const double LDB_MIN_NEAR = 1.0;
+
+/**
+ * Update callback for an osg::Camera that will automatically adjust the
+ * near/far ratio in order to clamp the near plane to a minimum value.
+ */
+class ClampNearPlaneCallback : public osg::NodeCallback
+{
+public:
+  ClampNearPlaneCallback(double minNear, double minNearFarRatio)
+    : minNear_(minNear),
+      minNearFarRatio_(minNearFarRatio)
+  {
+    //nop
+  }
+
+public: // osg::NodeCallback
+  /** Override near/far ratio */
+  virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  {
+    osg::Camera* camera = static_cast<osg::Camera*>(node);
+    double vfov, ar, n, f;
+    // Camera might be in ortho mode, would return false
+    if (camera->getProjectionMatrixAsPerspective(vfov, ar, n, f) && f != 0.0)
+    {
+      if (n < minNear_)
+        camera->setNearFarRatio(minNear_ / f);
+      else if (n / f >= minNearFarRatio_)
+        camera->setNearFarRatio(minNearFarRatio_);
+    }
+    traverse(node, nv);
+  }
+
+private:
+  double minNear_;
+  double minNearFarRatio_;
+};
+
 /** Installs on individual views */
 class InstallCallback : public ViewManager::Callback
 {
 public:
   /** Configure with an LDB that gets installed on new views */
   explicit InstallCallback(osgEarth::Util::LogarithmicDepthBuffer* ldb)
-    : ldb_(ldb)
+    : ldb_(ldb),
+      clampNearPlaneCallback_(new ClampNearPlaneCallback(LDB_MIN_NEAR, LDB_NEAR_FAR_RATIO))
   {
   }
 
@@ -49,11 +90,12 @@ public:
     {
     case VIEW_ADDED:
       ldb_->install(inset->getCamera());
-      inset->getCamera()->setNearFarRatio(LDB_NEAR_FAR_RATIO);
+      inset->getCamera()->addUpdateCallback(clampNearPlaneCallback_.get());
       break;
     case VIEW_REMOVED:
       ldb_->uninstall(inset->getCamera());
       inset->getCamera()->setNearFarRatio(DEFAULT_NEAR_FAR_RATIO);
+      inset->getCamera()->removeUpdateCallback(clampNearPlaneCallback_.get());
       break;
     }
   }
@@ -61,6 +103,7 @@ public:
 private:
   /** Pointer to the Log Depth Buffer */
   osgEarth::Util::LogarithmicDepthBuffer* ldb_;
+  osg::ref_ptr<ClampNearPlaneCallback> clampNearPlaneCallback_;
 };
 
 /////////////////////////////////////////////////////////////////////////

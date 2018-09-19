@@ -54,11 +54,9 @@
 
 #include "osgEarthDrivers/tms/TMSOptions"
 #ifdef HAVE_TRITON_NODEKIT
+#include "osgEarthTriton/TritonLayer"
 #include "osgEarthTriton/TritonOptions"
-#include "osgEarthTriton/TritonNode"
 #include "simUtil/TritonSettings.h"
-#else
-#include "osgEarthDrivers/ocean_triton/TritonOptions"
 #endif
 #include "osgEarthDrivers/ocean_simple/SimpleOceanOptions"
 #ifdef HAVE_SILVERLINING_NODEKIT
@@ -67,18 +65,20 @@
 #endif
 #include "osgEarthUtil/Sky"
 #include "osgEarthUtil/Ocean"
+#include "osgEarthDrivers/mbtiles/MBTilesOptions"
 
-// Hawaii:
-#define LAT             19.698193
-#define LON           -156.20224
+// Hawaii near Kauai:
+#define LAT             21.937611
+#define LON           -159.793521
+#define ALT              0.0
 #define PLATFORM_SHIP "Ship"
 
 using namespace osgEarth::Util;
 using namespace osgEarth::Drivers;
-
+namespace osgEarth { namespace Triton { class TritonLayer; } }
 
 static simCore::Coordinate s_shipPosOri(simCore::COORD_SYS_LLA,
-                                        simCore::Vec3(simCore::DEG2RAD*(LAT), simCore::DEG2RAD*(LON), 0),
+                                        simCore::Vec3(simCore::DEG2RAD*(LAT), simCore::DEG2RAD*(LON), ALT),
                                         simCore::Vec3(0.0, 0.0, 0.0));
 
 static simData::ObjectId     s_shipId;
@@ -199,18 +199,27 @@ namespace
     {
     }
 
+    ApplyOpacity(VisibleLayer* layer, LabelControl* pctLabel)
+      : layer_(layer),
+        pctLabel_(pctLabel)
+    {
+    }
+
     virtual void onValueChanged(Control* c, float value)
     {
       // Clamp between 0.f and 1.f
       value = simCore::sdkMax(0.f, simCore::sdkMin(1.f, value));
       if (ocean_.valid())
         ocean_->setAlpha(value);
+      if (layer_.valid())
+        layer_->setOpacity(value);
       if (pctLabel_.valid())
         pctLabel_->setText(Stringify() << static_cast<int>(value * 100.f) << "%");
     }
 
   private:
     osg::observer_ptr<OceanNode> ocean_;
+    osg::observer_ptr<VisibleLayer> layer_;
     osg::observer_ptr<LabelControl> pctLabel_;
   };
 
@@ -368,7 +377,7 @@ namespace
   };
 #endif
 
-  Control* createMenu(OceanNode* ocean, SkyNode* skyNode, bool isTriton, bool isSilverLining)
+  Control* createMenu(OceanNode* simpleOcean, osgEarth::VisibleLayer* oceanLayer, SkyNode* skyNode, bool isTriton, bool isSilverLining)
   {
     static const float TITLE_SIZE = 16.f;
     static const float TEXT_SIZE = 12.f;
@@ -388,14 +397,18 @@ namespace
     grid->setControl(0, row, new LabelControl("Opacity", TEXT_SIZE, WHITE));
     LabelControl* opacityPctLabel = grid->setControl(2, row, new LabelControl("80%", TEXT_SIZE, WHITE));
     // Provide a little buffer on either side so we can get to 0% and 100%...
-    HSliderControl* opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(ocean, opacityPctLabel)));
+    HSliderControl* opacitySlider;
+    if (simpleOcean)
+      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(simpleOcean, opacityPctLabel)));
+    else
+      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(oceanLayer, opacityPctLabel)));
     opacitySlider->setHorizFill(true, 250.0f);
 
     // Sea level
     ++row;
     grid->setControl(0, row, new LabelControl("Sea Level", TEXT_SIZE, WHITE));
     LabelControl* seaLevelLabel = grid->setControl(2, row, new LabelControl("0 m", TEXT_SIZE, WHITE));
-    HSliderControl* seaLevelSlider = grid->setControl(1, row, new HSliderControl(-100.f, 100.f, 0.f, new ApplySeaLevel(ocean, seaLevelLabel)));
+    HSliderControl* seaLevelSlider = grid->setControl(1, row, new HSliderControl(-100.f, 100.f, 0.f, new ApplySeaLevel(simpleOcean, seaLevelLabel)));
     seaLevelSlider->setHorizFill(true, 250.0f);
 
     // Sky lighting
@@ -626,34 +639,43 @@ namespace
     return SkyNode::create(ConfigOptions(skyOptions), scene->getMapNode());
   }
 
-  /** Factory an ocean node */
-  OceanNode* makeOcean(osgEarth::MapNode* mapNode, bool useTriton, const std::string& tritonUser = "", const std::string& tritonLicense = "", const std::string& resourcePath = "")
-  {
-    if (useTriton)
-    {
-      osgEarth::Triton::TritonOptions triton;
-      if (!tritonUser.empty())
-        triton.user() = tritonUser;
-      if (!tritonLicense.empty())
-        triton.licenseCode() = tritonLicense;
-      if (!resourcePath.empty())
-        triton.resourcePath() = resourcePath;
-
-      triton.useHeightMap() = false;
-      triton.maxAltitude() = 30000.0f;
-      triton.renderBinNumber() = simVis::BIN_OCEAN;
 #ifdef HAVE_TRITON_NODEKIT
-      return new Triton::TritonNode(mapNode, triton, s_TritonSettings.get());
+  osgEarth::Triton::TritonLayer* makeTriton(const std::string& tritonUser = "", const std::string& tritonLicense = "", const std::string& resourcePath = "")
+  {
+    osgEarth::Triton::TritonOptions triton;
+    if (!tritonUser.empty())
+      triton.user() = tritonUser;
+    if (!tritonLicense.empty())
+      triton.licenseCode() = tritonLicense;
+    if (!resourcePath.empty())
+      triton.resourcePath() = resourcePath;
+
+    triton.useHeightMap() = false;
+    triton.maxAltitude() = 30000.0f;
+    triton.renderBinNumber() = simVis::BIN_OCEAN;
+
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0)
+    // Only newest osgEarth has callback support
+    osgEarth::Triton::TritonLayer* rv = new osgEarth::Triton::TritonLayer(triton, s_TritonSettings.get());
 #else
-      return OceanNode::create(triton, scene->getMapNode());
+    osgEarth::Triton::TritonLayer* rv = new osgEarth::Triton::TritonLayer(triton);
 #endif
-    }
+    rv->setOpacity(0.8f);
+    return rv;
+  }
+#endif
+
+  /** Factory an ocean node */
+  OceanNode* makeSimpleOcean(osgEarth::MapNode* mapNode)
+  {
     osgEarth::Drivers::SimpleOcean::SimpleOceanOptions ocean;
     ocean.maxAltitude() = 30000.0f;
     ocean.lowFeatherOffset() = 0.0f;
     ocean.highFeatherOffset() = 1.0f;
     ocean.renderBinNumber() = simVis::BIN_OCEAN;
-    return OceanNode::create(ocean, mapNode);
+    OceanNode* rv = OceanNode::create(ocean, mapNode);
+    rv->setAlpha(0.8f);
+    return rv;
   }
 }
 
@@ -722,8 +744,8 @@ int main(int argc, char** argv)
   // If we are testing the bathymetry offset, only load a Kauai inset.
   if (bathymetryOffset != 0.0f)
   {
-    simVis::DBOptions options;
-    options.url() = simExamples::getSampleDataPath() + "/terrain/" + EXAMPLE_ELEVATION_LAYER_DB;
+    osgEarth::Drivers::MBTilesTileSourceOptions options;
+    options.filename() = simExamples::getSampleDataPath() + "/terrain/" + EXAMPLE_ELEVATION_LAYER_DB;
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->addLayer(new ElevationLayer("simdis.elevation.no.bathy", options));
 #else
@@ -751,7 +773,7 @@ int main(int argc, char** argv)
   simData::MemoryDataStore dataStore;
   simVis::ScenarioDataStoreAdapter adapter(&dataStore, scene->getScenario());
 
-  // create out ship:
+  // create our ship:
   s_shipId = createShip(dataStore);
 
   // add a sky to the scene.
@@ -762,9 +784,20 @@ int main(int argc, char** argv)
   scene->setSkyNode(sky.get());
 
   // add an ocean surface to the scene.
-  osg::ref_ptr<OceanNode> ocean = makeOcean(scene->getMapNode(), useTriton, tritonuser, tritonlicense, tritonpath);
-  ocean->setAlpha(0.8f);
-  scene->setOceanNode(ocean.get());
+  osg::ref_ptr<OceanNode> simpleOcean;
+  osg::ref_ptr<osgEarth::VisibleLayer> tritonLayer;
+#ifdef HAVE_TRITON_NODEKIT
+  if (useTriton)
+  {
+    tritonLayer = makeTriton(tritonuser, tritonlicense, tritonpath);
+    viewer->getSceneManager()->getMap()->addLayer(tritonLayer.get());
+  }
+  else
+#endif
+  {
+    simpleOcean = makeSimpleOcean(scene->getMapNode());
+    scene->setOceanNode(simpleOcean.get());
+  }
 
   // if we're using Triton, install a module to "sink" the MSL=0 terrain down, creating makeshift bathymetry
   if (bathymetryOffset != 0.0f)
@@ -781,7 +814,7 @@ int main(int argc, char** argv)
   viewer->getMainView()->setFocalOffsets(80.0, -10.0, 2000.0);
 
   // install an on-screen menu
-  Control* menu = createMenu(ocean.get(), sky.get(), useTriton, useSilverLining);
+  Control* menu = createMenu(simpleOcean.get(), tritonLayer.get(), sky.get(), useTriton, useSilverLining);
   viewer->getMainView()->addOverlayControl(menu);
 
   // install the handler for the demo keys in the notify() above

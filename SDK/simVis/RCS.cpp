@@ -24,6 +24,7 @@
 #include "osg/LineWidth"
 #include "osg/MatrixTransform"
 #include "osg/Depth"
+#include "osgEarth/LineDrawable"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -288,61 +289,64 @@ int RCSRenderer::computeRadius_(double azim, double elev, osg::Vec3f &p, float *
 
 osg::Node* RCSRenderer::render2D_()
 {
-  osg::Geode* geode = new osg::Geode();
+  osgEarth::LineGroup* lineGroup = new osgEarth::LineGroup();
+  lineGroup->setName("simVis::RCS");
 
   if (rcs_)
   {
-    osg::Geometry* rcsGeom = new osg::Geometry();
-    rcsGeom->setName("simVis::RCS");
-    rcsGeom->setDataVariance(osg::Object::DYNAMIC);
-    rcsGeom->setUseVertexBufferObjects(true);
-    rcsGeom->getOrCreateStateSet()->setAttribute(new osg::LineWidth(3.0f), osg::StateAttribute::ON);
-    geode->addDrawable(rcsGeom);
-
-    osg::Vec3Array* verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
-    rcsGeom->setVertexArray(verts);
-
-    osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_PER_PRIMITIVE_SET);
-    rcsGeom->setColorArray(colors);
+    osgEarth::LineDrawable* crosshair = new osgEarth::LineDrawable(GL_LINES);
+    crosshair->setDataVariance(osg::Object::DYNAMIC);
+    crosshair->setUseVertexBufferObjects(true);
+    crosshair->setLineWidth(3);
+    lineGroup->addDrawable(crosshair);
 
     double elev = simCore::DEG2RAD * elev_;
     int end = 2 + static_cast<int>(osg::absolute(max_)/10.0);
 
     // draw cross hair
     float chLength = (float)((zeroRing_ + end + 1) * 10);
-    verts->push_back(osg::Vec3(0.0f, chLength, 0.0f + z_));
-    verts->push_back(osg::Vec3(0.0f, -chLength, 0.0f + z_));
-    verts->push_back(osg::Vec3(chLength, 0.0f, 0.0f + z_));
-    verts->push_back(osg::Vec3(-chLength, 0.0f, 0.0f + z_));
-    rcsGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 4));
-    colors->push_back(osg::Vec4(0.2f, 0.2f, 0.2f, 1.0f));
+    crosshair->pushVertex(osg::Vec3(0.0f, chLength, 0.0f + z_));
+    crosshair->pushVertex(osg::Vec3(0.0f, -chLength, 0.0f + z_));
+    crosshair->pushVertex(osg::Vec3(chLength, 0.0f, 0.0f + z_));
+    crosshair->pushVertex(osg::Vec3(-chLength, 0.0f, 0.0f + z_));
+    crosshair->setColor(osg::Vec4(0.2f, 0.2f, 0.2f, 1.0f));
+    crosshair->dirty();
 
     // draw polar rings
     float rcsValue = 10;
-    int lastCount = 4;
 
     const osg::Vec4 grey(0.4f, 0.4f, 0.4f, 1.0f);
 
     for (int j = 0; j < (zeroRing_ + end); j++)
     {
-      for (int i = 0; i < 360; i += 10)
+      osgEarth::LineDrawable* polarRing = new osgEarth::LineDrawable(GL_LINE_LOOP);
+      polarRing->setDataVariance(osg::Object::DYNAMIC);
+      polarRing->setUseVertexBufferObjects(true);
+      polarRing->setLineWidth(3);
+      lineGroup->addDrawable(polarRing);
+
+      for (int i = 0; i < 36; i ++)
       {
-        double azim = simCore::DEG2RAD * i;
-        verts->push_back(osg::Vec3(rcsValue * cos(azim), rcsValue * sin(azim), 0.0f + z_));
+        double azim = simCore::DEG2RAD * i * 10;
+        polarRing->pushVertex(osg::Vec3(rcsValue * cos(azim), rcsValue * sin(azim), 0.0f + z_));
       }
 
-      rcsGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_LOOP, lastCount, verts->size() - lastCount));
-      lastCount = verts->size();
-
       if (j == zeroRing_)
-        colors->push_back(simVis::Color::White);  // white 0 dB ring
+        polarRing->setColor(simVis::Color::White);  // white 0 dB ring
       else
-        colors->push_back(grey); // gray rings every 10 dB
+        polarRing->setColor(grey); // gray rings every 10 dB
 
+      polarRing->dirty();
       rcsValue += 10;
     }
 
     // draw RCS
+    osgEarth::LineDrawable* rcs = new osgEarth::LineDrawable(GL_LINE_LOOP);
+    rcs->setDataVariance(osg::Object::DYNAMIC);
+    rcs->setUseVertexBufferObjects(true);
+    rcs->setLineWidth(3);
+    lineGroup->addDrawable(rcs);
+
     for (int i = 0; i < 360; i++)
     {
       double azim = simCore::DEG2RAD * i;
@@ -354,18 +358,17 @@ osg::Node* RCSRenderer::render2D_()
       // course is off Y, elevation off horizon...
       float x = rcsValue * cos(-azim);
       float y = rcsValue * sin(-azim);
-      verts->push_back(osg::Vec3(x, y, 0 + z_));
+      rcs->pushVertex(osg::Vec3(x, y, 0 + z_));
     }
 
-    rcsGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_LOOP, lastCount, verts->size() - lastCount));
-
     if (colorOverride_)
-      colors->push_back(color_);
+      rcs->setColor(color_);
     else
-      colors->push_back(simVis::Color::Yellow);
+      rcs->setColor(simVis::Color::Yellow);
+    rcs->dirty();
   }
 
-  return geode;
+  return lineGroup;
 }
 
 osg::Node* RCSRenderer::render3D_()

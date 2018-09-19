@@ -25,8 +25,9 @@
 #include "osgEarthAnnotation/GeoPositionNode"
 #include "osgEarthAnnotation/LocalGeometryNode"
 #include "simNotify/Notify.h"
-#include "simCore/Calc/Math.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/CoordinateConverter.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
@@ -53,14 +54,25 @@ static const float DEFAULT_LABEL_PRIORITY = 100.f;
 
 #define LC "[GOG::UnitsState] "
 
-void Utils::applyLocalGeometryOffsets(LocalGeometryNode& node, ParserData& data)
+void Utils::applyLocalGeometryOffsets(LocalGeometryNode& node, ParserData& data, GOGNodeType nodeType, bool ignoreOffset)
 {
-  node.setPosition(data.getMapPosition());
-  node.setLocalOffset(data.getLTPOffset());
-  osg::Quat yaw(data.localHeadingOffset_->as(Units::RADIANS), -osg::Vec3(0, 0, 1));
-  osg::Quat pitch(data.localPitchOffset_->as(Units::RADIANS), osg::Vec3(1, 0, 0));
-  osg::Quat roll(data.localRollOffset_->as(Units::RADIANS), osg::Vec3(0, 1, 0));
-  node.setLocalRotation(roll * pitch * yaw);
+  if (nodeType == GOGNODE_GEOGRAPHIC)
+  {
+    // if this is a geographic node, set position and local rotation directly on the node
+    node.setPosition(data.getMapPosition(ignoreOffset));
+    osg::Quat yaw(data.localHeadingOffset_->as(Units::RADIANS), -osg::Vec3(0, 0, 1));
+    osg::Quat pitch(data.localPitchOffset_->as(Units::RADIANS), osg::Vec3(1, 0, 0));
+    osg::Quat roll(data.localRollOffset_->as(Units::RADIANS), osg::Vec3(0, 1, 0));
+    node.setLocalRotation(roll * pitch * yaw);
+  }
+  else
+  {
+    // if this is a hosted node, it will need to set any offsets in the attitude transform's position, since it's position is ignored
+    osg::PositionAttitudeTransform* trans = node.getPositionAttitudeTransform();
+    if (trans != NULL)
+      trans->setPosition(data.getLTPOffset());
+    // hosted nodes don't set orientation offsets directly, they are instead applied through a Locator attached to the host
+  }
 }
 
 
@@ -447,11 +459,6 @@ void ParserData::parseOffsetsAndTracking(const Config& conf)
     if (value.find("r") != std::string::npos) locatorComps_ |= Locator::COMP_ROLL;
   }
 
-  if (conf.hasValue("3d offsetalt"))
-  {
-    localAltOffset_ = Distance(conf.value<double>("3d offsetalt", 0.0), units_.altitudeUnits_);
-  }
-
   if (conf.hasValue("3d offsetcourse"))
   {
     locatorComps_ |= Locator::COMP_HEADING;
@@ -662,11 +669,25 @@ bool ParserData::hasMapPosition() const
   return false;
 }
 
-GeoPoint ParserData::getMapPosition() const
+GeoPoint ParserData::getMapPosition(bool ignoreOffset) const
 {
   if (refPointLLA_.isSet())
   {
-    return GeoPoint(srs_.get(), *refPointLLA_, ALTMODE_ABSOLUTE);
+    osg::Vec3d xyz = getLTPOffset();
+    if (ignoreOffset || (xyz.x() == 0 && xyz.y() == 0 && xyz.z() == 0))
+      return GeoPoint(srs_.get(), *refPointLLA_, ALTMODE_ABSOLUTE);
+
+    // apply any xyz offset to the map position ref point if there is one
+    simCore::CoordinateConverter cc;
+    cc.setReferenceOrigin(refPointLLA_->y() * simCore::DEG2RAD, refPointLLA_->x() * simCore::DEG2RAD, refPointLLA_->z());
+    simCore::Coordinate coord(simCore::COORD_SYS_ENU, simCore::Vec3(xyz.x(), xyz.y(), xyz.z()));
+    simCore::Coordinate outCoord;
+    cc.convert(coord, outCoord, simCore::COORD_SYS_LLA);
+
+    xyz.y() = outCoord.lat() * simCore::RAD2DEG;
+    xyz.x() = outCoord.lon() * simCore::RAD2DEG;
+    xyz.z() = outCoord.alt();
+    return  GeoPoint(srs_.get(), xyz, ALTMODE_ABSOLUTE);
   }
   else if (centerLLA_.isSet())
   {
@@ -785,10 +806,6 @@ void ParserData::applyToAnnotationNode(osg::Node* annoGraph)
     if (scale_.isSet())
       local->setScale(scale_.get());
 
-    if (localAltOffset_.isSet())
-    {
-      local->setLocalOffset(osg::Vec3d(0, 0, localAltOffset_->as(Units::METERS)));
-    }
     // Don't apply the orientation offsets to the local rotation, it will be handled later through the Locator when adding to the parent node
   }
 

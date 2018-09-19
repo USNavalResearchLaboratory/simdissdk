@@ -28,6 +28,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QTimer>
 #include <QToolTip>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -58,7 +59,7 @@ IndexedPointerContainer<T>::IndexedPointerContainer()
 template <typename T>
 IndexedPointerContainer<T>::~IndexedPointerContainer()
 {
-  clear();
+  deleteAll();
 }
 
 template <typename T>
@@ -92,18 +93,12 @@ void IndexedPointerContainer<T>::push_back(T* item)
 }
 
 template <typename T>
-void IndexedPointerContainer<T>::clear()
-{
-  vec_.clear();
-  itemToIndex_.clear();
-}
-
-template <typename T>
 void IndexedPointerContainer<T>::deleteAll()
 {
   for (auto i = vec_.begin(); i != vec_.end(); ++i)
     delete *i;
-  clear();
+  vec_.clear();
+  itemToIndex_.clear();
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -202,6 +197,8 @@ private:
   bool contributesToFilter_;
   /** Font to use for FontRole (not owned) */
   QFont* font_;
+  /** Tracks whether this category item is locked */
+  bool locked_;
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -312,7 +309,8 @@ CategoryTreeModel2::CategoryItem::CategoryItem(const simData::CategoryNameManage
     nameInt_(nameInt),
     unlistedValue_(false),
     contributesToFilter_(false),
-    font_(NULL)
+    font_(NULL),
+    locked_(false)
 {
 }
 
@@ -354,6 +352,8 @@ QVariant CategoryTreeModel2::CategoryItem::data(int role) const
     return unlistedValue_;
   case ROLE_REGEXP_STRING:
     return regExpString_;
+  case ROLE_LOCKED_STATE:
+    return locked_;
   case Qt::BackgroundColorRole:
     if (contributesToFilter_)
       return CONTRIBUTING_BG_COLOR;
@@ -374,6 +374,12 @@ bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, 
     return setExcludeData_(value, filter, filterChanged);
   else if (role == ROLE_REGEXP_STRING)
     return setRegExpStringData_(value, filter, filterChanged);
+  else if (role == ROLE_LOCKED_STATE && locked_ != value.toBool())
+  {
+    locked_ = value.toBool();
+    filterChanged = true;
+    return true;
+  }
   filterChanged = false;
   return false;
 }
@@ -727,6 +733,12 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
       return parent()->data(ROLE_REGEXP_STRING);
     break;
 
+  case ROLE_LOCKED_STATE:
+    // Parent node holds the lock state
+    if (parent())
+      return parent()->data(ROLE_LOCKED_STATE);
+    break;
+
   default:
     break;
   }
@@ -735,10 +747,12 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
 
 bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
 {
-  // Internally handle check/uncheck value.  For ROLE_REGEXP, rely on category parent
+  // Internally handle check/uncheck value.  For ROLE_REGEXP and ROLE_LOCKED_STATE, rely on category parent
   if (role == Qt::CheckStateRole)
     return setCheckStateData_(value, filter, filterChanged);
   else if (role == ROLE_REGEXP_STRING && parent() != NULL)
+    return parent()->setData(value, role, filter, filterChanged);
+  else if (role == ROLE_LOCKED_STATE && parent() != NULL)
     return parent()->setData(value, role, filter, filterChanged);
   filterChanged = false;
   return false;
@@ -1136,8 +1150,10 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
 void CategoryTreeModel2::clearTree_()
 {
   beginResetModel();
-  categories_.clear();
+  categories_.deleteAll();
   categoryIntToItem_.clear();
+  // need to manually clear the filter_ since auto update was turned off
+  filter_->clear();
   endResetModel();
 }
 
@@ -1252,8 +1268,10 @@ struct StyleOptionToggleSwitch
 
   /** State: on (to the right) or off (to the left) */
   bool value;
+  /** Locked state gives the toggle a disabled look */
+  bool locked;
 
-  /** Describes On|Off styles */
+  /** Describes On|Off|Lock styles */
   struct StateStyle {
     /** Brush for painting the track */
     QBrush track;
@@ -1267,13 +1285,16 @@ struct StyleOptionToggleSwitch
 
   /** Style to use for ON state */
   StateStyle on;
-  /** Stile to use for OFF state */
+  /** Style to use for OFF state */
   StateStyle off;
+  /** Style to use for LOCK state */
+  StateStyle lock;
 
   /** Initialize to default options */
   StyleOptionToggleSwitch()
     : trackMargin(0),
-    value(false)
+    value(false),
+    locked(false)
   {
     // Teal colored track and thumb
     on.track = QColor(0, 150, 136);
@@ -1286,6 +1307,12 @@ struct StyleOptionToggleSwitch
     off.thumb = QColor(200, 200, 200);
     off.text = QObject::tr("Match");
     off.textColor = Qt::white;
+
+    // Disabled-looking grey track and thumb
+    lock.track = QColor(100, 100, 100);
+    lock.thumb = lock.track.color().lighter();
+    lock.text = QObject::tr("Locked");
+    lock.textColor = Qt::black;
   }
 };
 
@@ -1323,7 +1350,8 @@ void ToggleSwitchPainter::paint(const StyleOptionToggleSwitch& option, QPainter*
   ChildRects r;
   calculateRects_(option, r);
 
-  const StyleOptionToggleSwitch::StateStyle& valueStyle = (option.value ? option.on : option.off);
+  // Priority goes to the locked state style over on/off
+  const StyleOptionToggleSwitch::StateStyle& valueStyle = (option.locked ? option.lock : (option.value ? option.on : option.off));
 
   // Draw the track
   painter->setPen(Qt::NoPen);
@@ -1356,7 +1384,9 @@ QSize ToggleSwitchPainter::sizeHint(const StyleOptionToggleSwitch& option) const
   {
     const int onWidth = fontMetrics.width(option.on.text);
     const int offWidth = fontMetrics.width(option.off.text);
+    const int lockWidth = fontMetrics.width(option.lock.text);
     textWidth = qMax(onWidth, offWidth);
+    textWidth = qMax(lockWidth, textWidth);
   }
 
   // Best width depends on height
@@ -1376,8 +1406,8 @@ void ToggleSwitchPainter::calculateRects_(const StyleOptionToggleSwitch& option,
   // Thumb should be 1 pixel shorter than the track on top and bottom
   rects.thumb = QRect(option.rect.adjusted(0, 1, 0, -1));
   rects.thumb.setWidth(rects.thumb.height());
-  // Move thumb to the right
-  if (option.value)
+  // Move thumb to the right if on and if category isn't locked
+  if (option.value && !option.locked)
     rects.thumb.translate(rects.track.width() - rects.thumb.height(), 0);
 
   // Text is inside the rect, excluding the thumb area
@@ -1460,7 +1490,8 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
     StyleOptionToggleSwitch switchOpt;
     ToggleSwitchPainter switchPainter;
     switchOpt.rect = r.excludeToggle;
-    switchOpt.value = index.data(CategoryTreeModel2::ROLE_EXCLUDE).toBool();
+    switchOpt.locked = index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool();
+    switchOpt.value = (switchOpt.locked ? false : index.data(CategoryTreeModel2::ROLE_EXCLUDE).toBool());
     switchPainter.paint(switchOpt, painter);
   }
 
@@ -1535,6 +1566,12 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
       clickedIndex_ = QModelIndex();
       return false;
     }
+    // Ignore event if category is locked
+    if (index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+    {
+      clickedIndex_ = QModelIndex();
+      return true;
+    }
 
     clickedElement_ = hit_(me->pos(), option, index);
     // Eat the branch press and don't do anything on release
@@ -1551,6 +1588,12 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
 
   case QEvent::MouseButtonRelease:
   {
+    // Ignore event if category is locked
+    if (index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+    {
+      clickedIndex_ = QModelIndex();
+      return true;
+    }
     // Clicking on toggle should save the index to detect release on the toggle
     const auto newHit = hit_(me->pos(), option, index);
     // Must match button, index, and element clicked
@@ -1578,6 +1621,13 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
   }
 
   case QEvent::MouseButtonDblClick:
+    // Ignore event if category is locked
+    if (index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+    {
+      clickedIndex_ = QModelIndex();
+      return true;
+    }
+
     clickedIndex_ = QModelIndex();
     clickedElement_ = hit_(me->pos(), option, index);
     // Ignore double click on the toggle, branch, and RegExp buttons, so that it doesn't cause expand/contract
@@ -1731,13 +1781,50 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
 }
 
 /////////////////////////////////////////////////////////////////////////
+/**
+* Class that listens for entity events in the DataStore, and
+* informs the parent when they happen.
+*/
+class CategoryFilterWidget2::DataStoreListener : public simData::DataStore::Listener
+{
+public:
+  explicit DataStoreListener(CategoryFilterWidget2& parent)
+    : parent_(parent)
+  {};
+
+  virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  {
+    parent_.countDirty_ = true;
+  }
+  virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
+  {
+    parent_.countDirty_ = true;
+  }
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  {
+    parent_.countDirty_ = true;
+  }
+
+  // Fulfill the interface
+  virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) {}
+  virtual void onScenarioDelete(simData::DataStore* source) {}
+  virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
+  virtual void onTimeChange(simData::DataStore *source) {}
+  virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
+
+private:
+  CategoryFilterWidget2& parent_;
+};
+
+/////////////////////////////////////////////////////////////////////////
 
 CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   : QWidget(parent),
     activeFiltering_(false),
     showEntityCount_(false),
     counter_(NULL),
-    setRegExpAction_(NULL)
+    setRegExpAction_(NULL),
+    countDirty_(true)
 {
   setWindowTitle("Category Data Filter");
   setObjectName("CategoryFilterWidget2");
@@ -1773,12 +1860,18 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   QAction* separator2 = new QAction(this);
   separator2->setSeparator(true);
 
+  toggleLockCategoryAction_ = new QAction(tr("Lock Category"), this);
+  connect(toggleLockCategoryAction_, SIGNAL(triggered()), this, SLOT(toggleLockCategory_()));
+
+  QAction* separator3 = new QAction(this);
+  separator3->setSeparator(true);
+
   QAction* collapseAction = new QAction(tr("Collapse Values"), this);
   connect(collapseAction, SIGNAL(triggered()), treeView_, SLOT(collapseAll()));
   collapseAction->setIcon(QIcon(":/simQt/images/Collapse.png"));
 
   QAction* expandAction = new QAction(tr("Expand Values"), this);
-  connect(expandAction, SIGNAL(triggered()), treeView_, SLOT(expandAll()));
+  connect(expandAction, SIGNAL(triggered()), this, SLOT(expandUnlockedCategories_()));
   expandAction->setIcon(QIcon(":/simQt/images/Expand.png"));
 
   treeView_->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -1787,6 +1880,8 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   treeView_->addAction(separator1);
   treeView_->addAction(resetAction);
   treeView_->addAction(separator2);
+  treeView_->addAction(toggleLockCategoryAction_);
+  treeView_->addAction(separator3);
   treeView_->addAction(collapseAction);
   treeView_->addAction(expandAction);
 
@@ -1802,27 +1897,45 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   connect(treeView_, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu_(QPoint)));
   connect(treeModel_, SIGNAL(filterChanged(simData::CategoryFilter)), this, SIGNAL(filterChanged(simData::CategoryFilter)));
   connect(treeModel_, SIGNAL(filterEdited(simData::CategoryFilter)), this, SIGNAL(filterEdited(simData::CategoryFilter)));
-  connect(treeModel_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToModel_(QModelIndex, int, int)));
   connect(proxy_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(expandDueToProxy_(QModelIndex, int, int)));
-  connect(proxy_, SIGNAL(modelReset()), treeView_, SLOT(expandAll()));
   connect(search, SIGNAL(textChanged(QString)), this, SLOT(expandAfterFilterEdited_(QString)));
   connect(search, SIGNAL(textChanged(QString)), proxy_, SLOT(setFilterText(QString)));
   connect(itemDelegate, SIGNAL(expandClicked(QModelIndex)), this, SLOT(toggleExpanded_(QModelIndex)));
   connect(itemDelegate, SIGNAL(editRegExpClicked(QModelIndex)), this, SLOT(showRegExpEditGui_(QModelIndex)));
 
+  // timer is connected by setShowEntityCount below; it must be constructed before setShowEntityCount
+  auto recountTimer = new QTimer(this);
+  recountTimer->setSingleShot(false);
+  recountTimer->setInterval(3000);
+  connect(recountTimer, SIGNAL(timeout()), this, SLOT(recountCategories_()));
+  recountTimer->start();
+
   // Entity filtering is on by default
   setShowEntityCount(true);
+
+  dsListener_.reset(new CategoryFilterWidget2::DataStoreListener(*this));
 }
 
 CategoryFilterWidget2::~CategoryFilterWidget2()
 {
+  if (categoryFilter().getDataStore())
+    categoryFilter().getDataStore()->removeListener(dsListener_);
 }
 
 void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
 {
+  simData::DataStore* prevDataStore = categoryFilter().getDataStore();
+  if (prevDataStore == dataStore)
+    return;
+
+  if (prevDataStore)
+    prevDataStore->removeListener(dsListener_);
+
   treeModel_->setDataStore(dataStore);
   counter_->setFilter(categoryFilter());
-  treeView_->expandAll();
+
+  if (dataStore)
+    dataStore->addListener(dsListener_);
 }
 
 const simData::CategoryFilter& CategoryFilterWidget2::categoryFilter() const
@@ -1849,8 +1962,8 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
 {
   if (fl == showEntityCount_)
     return;
-
   showEntityCount_ = fl;
+
   // Clear out the old counter
   delete counter_;
   counter_ = NULL;
@@ -1874,9 +1987,9 @@ void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
 {
   if (filterText.isEmpty())
   {
-    // Just removed the last character of a search so expand all to make everything visible
+    // Just removed the last character of a search so collapse all to hide everything
     if (activeFiltering_)
-      treeView_->expandAll();
+      treeView_->collapseAll();
 
     activeFiltering_ = false;
   }
@@ -1890,21 +2003,13 @@ void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
   }
 }
 
-void CategoryFilterWidget2::expandDueToModel_(const QModelIndex& parentIndex, int to, int from)
+void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, int to, int from)
 {
+  // Only expand when we're actively filtering, because we want
+  // to see rows that match the active filter as they show up
   if (!activeFiltering_)
     return;
 
-  bool isCategory = !parentIndex.isValid();
-  if (isCategory)
-    return;
-
-  if (!treeView_->isExpanded(parentIndex))
-    proxy_->resetFilter();
-}
-
-void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, int to, int from)
-{
   bool isCategory = !parentIndex.isValid();
   if (isCategory)
   {
@@ -1947,13 +2052,23 @@ void CategoryFilterWidget2::showContextMenu_(const QPoint& point)
   QMenu contextMenu(this);
   contextMenu.addActions(treeView_->actions());
 
-  // Mark the Set RegExp action enabled or disabled based on what you clicked on
+  // Mark the RegExp and Lock actions enabled or disabled based on current state
   const QModelIndex idx = treeView_->indexAt(point);
+  const bool emptyRegExp = idx.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString().isEmpty();
+  const bool locked = idx.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool();
+  if (locked && !emptyRegExp)
+    assert(0); // Should not be possible to have a RegExp set on a locked category
   setRegExpAction_->setProperty("index", idx);
-  setRegExpAction_->setEnabled(idx.isValid());
+  setRegExpAction_->setEnabled(idx.isValid() && !locked); // RegExp is disabled while locked
   // Mark the Clear RegExp action similarly
   clearRegExpAction_->setProperty("index", idx);
-  clearRegExpAction_->setEnabled(idx.isValid() && !idx.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString().isEmpty());
+  clearRegExpAction_->setEnabled(idx.isValid() && !emptyRegExp && !locked); // RegExp is disabled while locked
+
+  // Store the index in the Toggle Lock Category action
+  toggleLockCategoryAction_->setProperty("index", idx);
+  toggleLockCategoryAction_->setEnabled(idx.isValid() && emptyRegExp); // Locking is disabled while locked
+  // Update the text based on the current lock state
+  toggleLockCategoryAction_->setText(locked ? tr("Unlock Category") : tr("Lock Category"));
 
   // Show the menu
   contextMenu.exec(treeView_->mapToGlobal(point));
@@ -1963,6 +2078,7 @@ void CategoryFilterWidget2::showContextMenu_(const QPoint& point)
   setRegExpAction_->setEnabled(false);
   clearRegExpAction_->setProperty("index", idx);
   clearRegExpAction_->setEnabled(false);
+  toggleLockCategoryAction_->setProperty("index", QVariant());
 }
 
 void CategoryFilterWidget2::setRegularExpression_()
@@ -2016,6 +2132,61 @@ void CategoryFilterWidget2::clearRegularExpression_()
   // and no longer use the index after this call, it is safe to use const_cast here to use setData().
   QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
   model->setData(index, QString(""), CategoryTreeModel2::ROLE_REGEXP_STRING);
+}
+
+void CategoryFilterWidget2::toggleLockCategory_()
+{
+  // Make sure we have a sender and can pull out the index.  If not, return
+  QObject* senderObject = sender();
+  if (senderObject == NULL)
+    return;
+  QModelIndex index = senderObject->property("index").toModelIndex();
+  if (!index.isValid())
+    return;
+
+  const bool locked = index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool();
+
+  if (!locked)
+  {
+    // If index is a value, get its category parent
+    if (index.parent().isValid())
+      index = index.parent();
+    if (!index.isValid())
+    {
+      assert(0); // value index should have a valid parent
+      return;
+    }
+
+    // Collapse the category
+    treeView_->setExpanded(index, false);
+  }
+
+  // index.model() is const because changes to the model might invalidate indices.  Since we know this
+  // and no longer use the index after this call, it is safe to use const_cast here to use setData().
+  QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
+  // Unlock the category
+  model->setData(index, !locked, CategoryTreeModel2::ROLE_LOCKED_STATE);
+}
+
+void CategoryFilterWidget2::expandUnlockedCategories_()
+{
+  // Expand each category if it isn't locked
+  for (int i = 0; i < proxy_->rowCount(); ++i)
+  {
+    const QModelIndex& idx = proxy_->index(i, 0);
+    if (!idx.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+      treeView_->setExpanded(idx, true);
+  }
+}
+
+void CategoryFilterWidget2::recountCategories_()
+{
+  if (countDirty_)
+  {
+    if (showEntityCount_ && counter_)
+      counter_->asyncCountEntities();
+    countDirty_ = false;
+  }
 }
 
 }

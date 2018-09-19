@@ -21,6 +21,7 @@
  */
 
 #include "simVis/CentroidManager.h"
+#include "simVis/CustomRendering.h"
 #include "simVis/Scenario.h"
 #include "simVis/Platform.h"
 #include "simVis/Gate.h"
@@ -96,10 +97,11 @@ void CenterEntity::centerOnEntity(uint64_t id)
 
   simVis::EntityNode* node = scenarioManager_->find(id);
 
-  // tetherCamera works only with platforms and gates, so work up the chain until
-  // a platform or gate is found.
+  // tetherCamera works only with platforms, custom renderings and gates, so work up the chain until
+  // a platform, custom rendering or gate is found.
   while ((node != NULL) && (dynamic_cast<simVis::PlatformNode*>(node) == NULL) &&
-     (dynamic_cast<simVis::GateNode*>(node) == NULL))
+     (dynamic_cast<simVis::GateNode*>(node) == NULL) &&
+     (dynamic_cast<simVis::CustomRenderingNode*>(node) == NULL))
   {
     uint64_t parentId;
     if (node->getHostId(parentId))

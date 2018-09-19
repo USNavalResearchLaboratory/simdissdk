@@ -315,6 +315,48 @@ const CloseableItemDelegate::Style& CloseableItemDelegate::style() const
 
 ////////////////////////////////////////////////////////////////////
 
+class CategoryDataBreadcrumbs::FilterClearListener : public simData::CategoryNameManager::Listener
+{
+public:
+  explicit FilterClearListener(CategoryDataBreadcrumbs& parent)
+    : parent_(parent)
+  {
+  }
+
+  ~FilterClearListener()
+  {
+  }
+
+  /// Invoked when a new category is added
+  virtual void onAddCategory(int categoryIndex)
+  {
+    // noop
+  }
+
+  /// Invoked when a new value is added to a category
+  virtual void onAddValue(int categoryIndex, int valueIndex)
+  {
+    // noop
+  }
+
+  /// Invoked when all data is cleared
+  virtual void onClear()
+  {
+    parent_.rebuildList_();
+  }
+
+  /// Invoked when all listeners have received onClear()
+  virtual void doneClearing()
+  {
+    // noop
+  }
+
+private:
+  CategoryDataBreadcrumbs& parent_;
+};
+
+////////////////////////////////////////////////////////////////////
+
 CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
   : QWidget(parent),
     filter_(NULL),
@@ -363,10 +405,15 @@ CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
 
   // Set the list contents
   rebuildList_();
+
+  listener_.reset(new FilterClearListener(*this));
 }
 
 CategoryDataBreadcrumbs::~CategoryDataBreadcrumbs()
 {
+  if (filter_ && filter_->getDataStore())
+    filter_->getDataStore()->categoryNameManager().removeListener(listener_);
+  listener_.reset();
   delete filter_;
 }
 
@@ -428,10 +475,15 @@ void CategoryDataBreadcrumbs::setFilter(const simData::CategoryFilter& filter)
   if (filter_ == &filter)
     return;
 
+  if (filter_ && filter_->getDataStore())
+    filter_->getDataStore()->categoryNameManager().removeListener(listener_);
+
   // Recreate our filter
   delete filter_;
   filter_ = new simData::CategoryFilter(filter);
   filter_->simplify();
+  if (filter_->getDataStore())
+    filter_->getDataStore()->categoryNameManager().addListener(listener_);
 
   rebuildList_();
 }
@@ -690,14 +742,6 @@ void CategoryDataBreadcrumbs::addNameToList_(int nameIndex, bool useAltFillColor
     newItem->setToolTip(simQt::formatTooltip(tr("Exclude %1: %2").arg(name, value),
       tr("Match without value '%2' in category '%1'.").arg(name, value)));
   }
-}
-
-void CategoryDataBreadcrumbs::getFilter(simData::CategoryFilter& filter)
-{
-  if (filter_)
-    filter = *filter_;
-  else
-    filter.clear();
 }
 
 void CategoryDataBreadcrumbs::clearFilter()

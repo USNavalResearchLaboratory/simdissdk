@@ -158,13 +158,13 @@ namespace simVis
       simCore::Vec3 ypr_;  ///< Yaw, pitch, roll in rad, rad, rad
       simCore::Vec3 vel_;  ///< X, Y and Z velocities in m/s
       osg::ref_ptr<const simVis::EntityNode> node_; ///< The node of the entity
-      simData::ObjectId platformHostId_;   ///< Unique ID of the host entity; for platforms platformHostId_ == id_
+      simData::ObjectId hostId_;   ///< Unique ID of the host entity; for platforms and custom renderings hostId_ == id_
       osg::ref_ptr<const simVis::PlatformNode> platformHostNode_; ///< The node of the host platform; for platforms platformHostNode_ == node_
       simRF::RFPropagationFacade* rfPropagation_;  ///< If the entity is a beam this MAY BE set
 
       EntityState()
         : node_(NULL),
-          platformHostId_(0),
+          hostId_(0),
           platformHostNode_(NULL),
           rfPropagation_(NULL)
       {
@@ -218,7 +218,7 @@ namespace simVis
 
       /**
        * Converts simCore::Vec3 to osg::Vec3d
-       *@param point the data to convert
+       * @param point the data to convert
        * @return osg::Vec3d of the given point
        */
       ///@return osg:Vec3d of the given point
@@ -231,11 +231,21 @@ namespace simVis
         double               altOffset,
         osg::Vec3Array*      verts);
 
+      /**
+       * Generate a list of lat/lon points between lla0 and lla1 at intervals of at most distDelta.  List does not include lla0 or lla1.
+       * If lla0 == lla1, list will be empty.
+       * @param lla0 Start point to generate intermediate points from
+       * @param lla1 End point to generate intermediate points towards
+       * @param distDelta Maximum distance between intermediate points.  Actual distance between may be lower.
+       * @param[out] llaPointsOut Vector of intermediate points.  All points have an altitude of 0
+       */
+      void intermediatePoints(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double distDelta, std::vector<simCore::Vec3>& llaPointsOut) const;
+
       /// Returns the midpoint between the two given positions
       simCore::Vec3 midPoint(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset);
 
       ///@return the given lla to relative values scaled to the local frame (xyz)
-      osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m);
+      osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m) const;
 
       ///@return lla values for the given position relative to the local frame
       simCore::Vec3 local2lla(const osg::Vec3d& local);
@@ -268,6 +278,7 @@ namespace simVis
       simCore::CoordinateConverter     coordConv_;
       osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
       simCore::TimeStamp timeStamp_; // the timeStamp of the last update
+      osg::observer_ptr<osgEarth::MapNode>  mapNode_;
       ///@}
     };
 
@@ -335,6 +346,13 @@ namespace simVis
 
     protected:
       GraphicOptions options_; ///< controls for drawing
+
+      /**
+      * Returns true if the type is Platform or Custom Rendering
+      * @param type Object type
+      * @return True if the type is Platform or Custom Rendering
+      */
+      bool hasPosition_(simData::ObjectType type) const;
 
     private:
       std::string typeName_;
@@ -452,6 +470,8 @@ namespace simVis
       bool isEntityToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if both types are platforms
       bool isPlatformToPlatform_(simData::ObjectType fromType, simData::ObjectType toType) const;
+      /// Returns true if both types are either platforms or custom rendering
+      bool isLocationToLocation_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if one type is a beam and the other is a non-beam
       bool isBeamToNonBeamAssociation_(simData::ObjectType fromType, simData::ObjectType toType) const;
       /// Returns true if the fromType is a beam and the toType is a valid entity
@@ -670,7 +690,7 @@ namespace simVis
       bool                               visible_;               // whether to render the association
       osg::ref_ptr<osg::MatrixTransform> xform_;                 // local-to-world transform
       osg::Geode*                        geode_;                 // scene geometry
-      osg::Geode*                        labels_;                // label controls
+      osg::Group*                        labels_;                // label controls
       osg::observer_ptr<EntityNode>      obj1_obs_;              // cached pointer to first entity
       osg::observer_ptr<EntityNode>      obj2_obs_;              // cached pointer to second entity
       osgEarth::Revision                 obj1LocatorRev_;        // tracks whether entity 1 is up to date with scenario data
@@ -1665,8 +1685,11 @@ namespace simVis
        * @param rcvGaindB The gain, in dB, of the receive antenna
        * @param rcsSqm RCS db if useDb is true or RCS dBsm if useDb is false;
        * @param useDb Flag for selecting type of rcs value to return
+       * @param freqMHz The frequency, in MHz, of the RF signal
+       * @param powerWatts The power, in watts, of the RF signal
        */
-      void getRfParameters_(State& state, double* azAbs, double* elAbs, double *hgtMeters, double* xmtGaindB, double* rcvGaindB, double* rcsSqm, bool useDb) const;
+      void getRfParameters_(State& state, double* azAbs, double* elAbs, double *hgtMeters, double* xmtGaindB, double* rcvGaindB, double* rcsSqm, bool useDb,
+        double* freqMHz, double* powerWatts) const;
     };
 
     /// Antenna Gain

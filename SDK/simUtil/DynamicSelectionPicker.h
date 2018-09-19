@@ -54,6 +54,8 @@ public:
 
   /** Changes the pick mask.  Use this to pick only on certain entity types. */
   void setPickMask(osg::Node::NodeMask pickMask);
+  /** Retrieves the current pick mask. */
+  osg::Node::NodeMask pickMask() const;
 
 protected:
   /** Derived from osg::Referenced, protect destructor */

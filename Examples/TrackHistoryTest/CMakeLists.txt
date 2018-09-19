@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_TRACK_HISTORY)
 
 set(PROJECT_FILES
-    src/TrackHistoryTest.cpp
+    TrackHistoryTest.cpp
 )
 
 add_executable(example_trackhistorytest ${PROJECT_FILES})

@@ -64,10 +64,6 @@ static const double HORIZON_RANGE_STEP = 100;
 // Distance in meters that a platform drawing optical or radio horizon must move vertically before the horizon is recalculated
 static const double HORIZON_ALT_STEP = 10;
 
-// Colors to use when drawing optical or radio horizon
-static const osg::Vec4 HORIZON_VISIBLE_COLOR = osg::Vec4(0.f, 1.f, 0.f, 0.6f); // Translucent green
-static const osg::Vec4 HORIZON_OBSTRUCTED_COLOR = osg::Vec4(1.f, 0.f, 0.f, 0.6f); // Translucent red
-
 // this is used as a sentinel value for an platform that does not (currently) have a valid position
 static const simData::PlatformUpdate NULL_PLATFORM_UPDATE = simData::PlatformUpdate();
 
@@ -262,7 +258,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateOrRemoveVelocityVector_(prefsDraw, prefs);
   updateOrRemoveEphemerisVector_(prefsDraw, prefs);
   updateOrRemoveCircleHighlight_(prefsDraw, prefs);
-  updateOrRemoveHorizons_(prefs);
+  updateOrRemoveHorizons_(prefs, true);
 
   setRcsPrefs_(prefs);
 
@@ -325,7 +321,8 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
      (PB_FIELD_CHANGED(&lastPrefs_, &prefs, surfaceclamping) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, useclampalt) ||
       PB_FIELD_CHANGED(&lastPrefs_, &prefs, clampvalaltmin) ||
-      PB_FIELD_CHANGED(&lastPrefs_, &prefs, clampvalaltmax)))
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, clampvalaltmax) ||
+      PB_FIELD_CHANGED(&lastPrefs_, &prefs, abovesurfaceclamping)))
   {
     // these prefs changes require an update to the locator
     forceUpdateFromDataStore_ = true;
@@ -352,6 +349,9 @@ void PlatformNode::updateHostBounds_(double scale)
   frontOffset_ = unscaledBounds.yMax() * scale;
   if (track_.valid())
     track_->setHostBounds(osg::Vec2(unscaledBounds.xMin() * scale, unscaledBounds.xMax() * scale));
+  // Ephemeris vector length depends on model bounds
+  if (ephemerisVector_.valid())
+    ephemerisVector_->update(lastUpdate_);
 }
 
 void PlatformNode::updateHostBounds()
@@ -384,7 +384,7 @@ void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 
   if (lastPrefsValid_)
   {
-    updateOrRemoveHorizons_(lastPrefs_);
+    updateOrRemoveHorizons_(lastPrefs_, false);
   }
 }
 
@@ -619,21 +619,7 @@ const std::string PlatformNode::getEntityName(EntityNode::NameType nameType, boo
 {
   // if assert fails, check whether prefs are initialized correctly when entity is created
   assert(lastPrefsValid_);
-  switch (nameType)
-  {
-  case EntityNode::REAL_NAME:
-    return lastPrefs_.commonprefs().name();
-  case EntityNode::ALIAS_NAME:
-    return lastPrefs_.commonprefs().alias();
-  case EntityNode::DISPLAY_NAME:
-    if (lastPrefs_.commonprefs().usealias())
-    {
-      if (!lastPrefs_.commonprefs().alias().empty() || allowBlankAlias)
-        return lastPrefs_.commonprefs().alias();
-    }
-    return lastPrefs_.commonprefs().name();
-  }
-  return "";
+  return getEntityName_(lastPrefs_.commonprefs(), nameType, allowBlankAlias);
 }
 
 void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
@@ -641,7 +627,7 @@ void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
   if (!valid_)
     return;
 
-  std::string label = getEntityName(EntityNode::DISPLAY_NAME, true);
+  std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, true);
   if (prefs.commonprefs().labelprefs().namelength() > 0)
     label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
@@ -829,13 +815,13 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
   }
 }
 
-void PlatformNode::updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs)
+void PlatformNode::updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs, bool force)
 {
-  updateOrRemoveHorizon_(simCore::OPTICAL_HORIZON, prefs);
-  updateOrRemoveHorizon_(simCore::RADAR_HORIZON, prefs);
+  updateOrRemoveHorizon_(simCore::OPTICAL_HORIZON, prefs, force);
+  updateOrRemoveHorizon_(simCore::RADAR_HORIZON, prefs, force);
 }
 
-void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs)
+void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs, bool force)
 {
   RadialLOSNode* los = NULL;
   bool drawHorizon = false;
@@ -893,13 +879,60 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     return;
   }
 
+  // Deactivate temporarily to prevent unnecessary calculations while updating LOS fields
+  los->setActive(false);
+
+  // Update the visible color if it has changed
+  if (prefs.has_visibleloscolor())
+  {
+    osg::Vec4f color = ColorUtils::RgbaToVec4(prefs.visibleloscolor());
+    if (color != los->getVisibleColor())
+      los->setVisibleColor(color);
+  }
+
+  // Update the obstructed color if it has changed
+  if (prefs.has_obstructedloscolor())
+  {
+    osg::Vec4f color = ColorUtils::RgbaToVec4(prefs.obstructedloscolor());
+    if (color != los->getObstructedColor())
+      los->setObstructedColor(color);
+  }
+
+  // Update the range resolution if it has changed
+  if (prefs.has_losrangeresolution())
+  {
+    const auto& rr = los->getRangeResolution();
+    const double val = rr.getValue();
+    if (val > 0.0 && val != prefs.losrangeresolution())
+      los->setRangeResolution(Distance(prefs.losrangeresolution(), osgEarth::Units::METERS));
+  }
+
+  // Update the azimuthal resolution if it has changed
+  if (prefs.has_losazimuthalresolution())
+  {
+    const auto& ar = los->getAzimuthalResolution();
+    const double val = ar.getValue();
+    if (val > 0.0 && val != prefs.losazimuthalresolution())
+      los->setAzimuthalResolution(Angle(prefs.losazimuthalresolution(), osgEarth::Units::DEGREES));
+  }
+
   double rangeDist = 0;
   double altDist = 0;
 
   simCore::Coordinate platCoord = getLocator()->getCoordinate();
+  // Make sure the position has been set
+  if (platCoord.position() == simCore::Vec3(0.0, 0.0, 0.0))
+  {
+    // Reactivate the LOS, undoing the setActive(false) above
+    los->setActive(true);
+    return;
+  }
+
   simCore::Coordinate platLlaCoord;
   simCore::CoordinateConverter converter;
   converter.convert(platCoord, platLlaCoord, simCore::COORD_SYS_LLA);
+  // Add the altitude offset after the conversion for correctness
+  platLlaCoord.setPositionLLA(platLlaCoord.x(), platLlaCoord.y(), platLlaCoord.z() + prefs.losaltitudeoffset());
 
   // Draw/update horizon
   simCore::Coordinate losCoord = los->getCoordinate();
@@ -918,18 +951,20 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     rangeDist = HORIZON_RANGE_STEP + 1;
   }
 
-  // Don't update if horizon is already active and platform is within acceptable range of last horizon center
-  if (HORIZON_ALT_STEP > altDist && HORIZON_RANGE_STEP > rangeDist && los->getActive())
+  // Don't update if platform is within acceptable range of last horizon center
+  if ((HORIZON_ALT_STEP > altDist) && (HORIZON_RANGE_STEP > rangeDist) && !force)
+  {
+    // Reactivate the LOS, undoing the setActive(false) above
+    los->setActive(true);
     return;
+  }
 
-  // Deactivate temporarily to prevent unnecessary calculations while updating los fields
-  los->setActive(false);
-
-  los->setCoordinate(getLocator()->getCoordinate());
-
+  // Need to convert the updated coord back to original system before giving to LOS Node
+  converter.convert(platLlaCoord, platCoord, platCoord.coordinateSystem());
+  los->setCoordinate(platCoord);
   los->setMaxRange(Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
-  los->setAzimuthalResolution(Angle(5, osgEarth::Units::DEGREES));
 
+  // Reactivate the LOS, undoing the setActive(false) above
   los->setActive(true);
 }
 

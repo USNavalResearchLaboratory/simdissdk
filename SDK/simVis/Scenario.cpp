@@ -38,9 +38,7 @@
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
-#ifdef ENABLE_CUSTOM_RENDERING
 #include "simVis/CustomRendering.h"
-#endif
 #include "simVis/LabelContentManager.h"
 #include "simVis/Laser.h"
 #include "simVis/LobGroup.h"
@@ -312,6 +310,55 @@ private:
 };
 
 
+/// Prevents a platform from going below the surface (terrain). Expects coordinates to be in LLA
+class ScenarioManager::AboveSurfaceClamping : public PlatformTspiFilter
+{
+public:
+  /** Constructor */
+  AboveSurfaceClamping()
+    : PlatformTspiFilter()
+  {
+  }
+
+  virtual ~AboveSurfaceClamping()
+  {
+  }
+
+  /** Returns true if surface clamping should be applied */
+  virtual bool isApplicable(const simData::PlatformPrefs& prefs) const
+  {
+    return prefs.abovesurfaceclamping() && mapNode_.valid();
+  }
+
+  /** Applies coordinate surface clamping to the LLA coordinate */
+  virtual PlatformTspiFilterManager::FilterResponse filter(simCore::Coordinate& llaCoord, const simData::PlatformPrefs& prefs, const simData::PlatformProperties& props)
+  {
+    if (!prefs.abovesurfaceclamping() || !mapNode_.valid())
+      return PlatformTspiFilterManager::POINT_UNCHANGED;
+
+    double hamsl;  // Not used
+    double terrainHeightHae = 0.0; // height above ellipsoid, the rough elevation
+    mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, &hamsl, &terrainHeightHae);
+    // If getHeight() fails, terrainHeightHae will have 0.0 (our intended fallback)
+    if (llaCoord.alt() < terrainHeightHae)
+    {
+      llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), terrainHeightHae);
+      return PlatformTspiFilterManager::POINT_CHANGED;
+    }
+
+    return PlatformTspiFilterManager::POINT_UNCHANGED;
+  }
+
+  /** Sets the map pointer, required for proper clamping */
+  void setMapNode(const osgEarth::MapNode* map)
+  {
+    mapNode_ = map;
+  }
+
+private:
+  osg::observer_ptr<const osgEarth::MapNode> mapNode_;
+};
+
 // -----------------------------------------------------------------------
 
 class ScenarioManager::ScenarioLosCreator : public LosCreator
@@ -347,6 +394,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   : locatorFactory_(factory),
   platformTspiFilterManager_(new PlatformTspiFilterManager()),
   surfaceClamping_(NULL),
+  aboveSurfaceClamping_(NULL),
   lobSurfaceClamping_(NULL),
   root_(new osg::Group),
   entityGraph_(new SimpleEntityGraph),
@@ -369,6 +417,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
 
   // Clamping requires a Group for MapNode changes
   surfaceClamping_ = new SurfaceClamping();
+  aboveSurfaceClamping_ = new AboveSurfaceClamping();
   lobSurfaceClamping_ = new CoordSurfaceClamping();
 
   // set normal rescaling so that dynamically-scaled platforms have
@@ -393,6 +442,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   setName("simVis::ScenarioManager");
 
   platformTspiFilterManager_->addFilter(surfaceClamping_);
+  platformTspiFilterManager_->addFilter(aboveSurfaceClamping_);
 
   // Install shaders used by multiple entities at the scenario level
   AlphaTest::installShaderProgram(stateSet);
@@ -407,7 +457,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
 
 ScenarioManager::~ScenarioManager()
 {
-  // Do not delete surfaceClamping_
+  // Do not delete surfaceClamping_ or surfaceLimiting_
   delete platformTspiFilterManager_;
   platformTspiFilterManager_ = NULL;
   delete lobSurfaceClamping_;
@@ -570,6 +620,7 @@ void ScenarioManager::setMapNode(osgEarth::MapNode* map)
 
   losCreator_->setMapNode(mapNode_.get());
   surfaceClamping_->setMapNode(mapNode_.get());
+  aboveSurfaceClamping_->setMapNode(mapNode_.get());
   lobSurfaceClamping_->setMapNode(mapNode_.get());
 
   if (map)
@@ -740,7 +791,6 @@ LobGroupNode* ScenarioManager::addLobGroup(const simData::LobGroupProperties& pr
   return NULL;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRenderingProperties& props, simData::DataStore& dataStore)
 {
   SAFETRYBEGIN;
@@ -770,7 +820,6 @@ CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRe
   SAFETRYEND("adding custom");
   return NULL;
 }
-#endif
 
 ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties& props, simData::DataStore& dataStore)
 {
@@ -881,7 +930,6 @@ bool ScenarioManager::setLobGroupPrefs(simData::ObjectId id, const simData::LobG
   return false;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 bool ScenarioManager::setCustomRenderingPrefs(simData::ObjectId id, const simData::CustomRenderingPrefs& prefs)
 {
   SAFETRYBEGIN;
@@ -894,7 +942,6 @@ bool ScenarioManager::setCustomRenderingPrefs(simData::ObjectId id, const simDat
   SAFETRYEND(std::string(osgEarth::Stringify() << "setting custom prefs of ID " << id));
   return false;
 }
-#endif
 
 void ScenarioManager::notifyBeamsOfNewHostSize(const PlatformNode& platform) const
 {

@@ -28,7 +28,6 @@
 
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
-#include "simVis/LineDrawable.h"
 #include "osgEarthSymbology/Color"
 
 #include "simCore/Calc/Math.h"
@@ -72,15 +71,14 @@ public:
   explicit LocalGridLabel(const simData::LocalGridPrefs& prefs)
   {
     setFont(simVis::Registry::instance()->getOrCreateFont(prefs.gridlabelfontname()));
-    setAxisAlignment(osgText::TextBase::XY_PLANE);
+    setAxisAlignment(osgText::TextBase::SCREEN);
     setBackdropType(prefs.gridlabeltextoutline() == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
     setBackdropColor(simVis::Color(prefs.gridlabeloutlinecolor(), simVis::Color::RGBA));
     const float outlineThickness = simVis::outlineThickness(prefs.gridlabeltextoutline());
     setBackdropOffset(outlineThickness, outlineThickness);
     setColor(simVis::Color(prefs.gridlabelcolor(), simVis::Color::RGBA));
     setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
-    // Scale font up, based on an eyeball estimate compared to SIMDIS 9
-    setCharacterSize(prefs.gridlabelfontsize() * 1.8);
+    setCharacterSize(simVis::osgFontSize(prefs.gridlabelfontsize()));
     setAlignment(osgText::TextBase::LEFT_BOTTOM);
   }
 
@@ -958,7 +956,7 @@ int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, dou
       requiresUpdate = true;
     }
   }
-  else if (prefs.speedring().has_speedtouse())
+  else if (prefs.speedring().speedtouse() > 0.0)
   {
     // using speedToUse, convert to m/s
     const Units prefSpeedUnits = simVis::convertUnitsToOsgEarth(prefs.speedring().speedunits());
@@ -968,6 +966,11 @@ int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, dou
       // do not display anything if this speed is zero
       return -3;
     }
+  }
+  else
+  {
+    // do not display anything if this speed is less than or equal to zero
+    return -5;
   }
 
 

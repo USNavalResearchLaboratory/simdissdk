@@ -76,6 +76,9 @@ test_big_endian(SDK_BIG_ENDIAN)
 include(CMakeModules/TestTimespec.cmake)
 test_timespec(SDK_TIMESPEC)
 
+# Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
+include(CMakeModules/AddExecutablePostfix.cmake)
+
 # Set architecture identifiers
 string(TOUPPER ${BUILD_SYSTEM_ARCH} ARCH)
 add_definitions(-D${ARCH})
@@ -191,6 +194,9 @@ include(CMakeModules/ImportOPENTHREADS.cmake)
 include(CMakeModules/ImportOSG.cmake)
 include(CMakeModules/ImportOSGQT.cmake)
 
+# Find OpenGL library, required to execute certain GL calls
+find_package(OpenGL)
+
 
 # --- osgEarth -----------------------------
 
@@ -207,6 +213,11 @@ include(CMakeModules/ImportPROTOBUF.cmake)
 # --- SQLITE3 -----------------------------
 set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
 include(CMakeModules/ImportSQLITE3.cmake)
+
+
+# Enable simQt Custom Rendering features.  This option will go away after version 1.9 is released.
+option(ENABLE_QT_CUSTOM_RENDER "Enable custom rendering GUI features in simQt." ON)
+mark_as_advanced(ENABLE_QT_CUSTOM_RENDER)
 
 
 # subprojects

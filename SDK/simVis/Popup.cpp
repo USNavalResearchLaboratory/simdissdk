@@ -37,6 +37,7 @@
 #include "simCore/String/Constants.h"
 #include "simCore/Time/Utils.h"
 
+#include "simVis/CustomRendering.h"
 #include "simVis/Locator.h"
 #include "simVis/Picker.h"
 #include "simVis/Platform.h"
@@ -44,6 +45,7 @@
 #include "simVis/Registry.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
+#include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "simVis/Popup.h"
 
@@ -59,29 +61,29 @@ static const simVis::Color DEFAULT_BORDER_COLOR(1, 1, 0, 1);
 static const simVis::Color DEFAULT_BACK_COLOR(0, 0, 0, 0.5);
 static const simVis::Color DEFAULT_TITLE_COLOR(.9, .9, 0, 1);
 static const simVis::Color DEFAULT_CONTENT_COLOR(.9, .9, .9, 1);
-static const int DEFAULT_TITLE_SIZE = 16;
-static const int DEFAULT_CONTENT_SIZE = 14;
+static const int DEFAULT_TITLE_SIZE = 13;
+static const int DEFAULT_CONTENT_SIZE = 11;
 static const int DEFAULT_PADDING = 10;
 static const int DEFAULT_SPACING = 4;
 
 
-PlatformPopup::PlatformPopup()
+EntityPopup::EntityPopup()
 {
-  setName("Platform Popup");
+  setName("Entity Popup");
 
   titleLabel_ = new osgEarth::Util::Controls::LabelControl();
-  titleLabel_->setName("PlatformPopup Title");
+  titleLabel_->setName("EntityPopup Title");
   titleLabel_->setForeColor(DEFAULT_TITLE_COLOR);
   osgText::Font* defaultFont = simVis::Registry::instance()->getOrCreateFont("arial.ttf");
   titleLabel_->setFont(defaultFont);
-  titleLabel_->setFontSize(DEFAULT_TITLE_SIZE);
+  titleLabel_->setFontSize(simVis::osgFontSize(DEFAULT_TITLE_SIZE));
   this->addControl(titleLabel_);
 
   contentLabel_ = new osgEarth::Util::Controls::LabelControl();
-  contentLabel_->setName("PlatformPopup Content");
+  contentLabel_->setName("EntityPopup Content");
   contentLabel_->setForeColor(DEFAULT_CONTENT_COLOR);
   contentLabel_->setFont(defaultFont);
-  contentLabel_->setFontSize(DEFAULT_CONTENT_SIZE);
+  contentLabel_->setFontSize(simVis::osgFontSize(DEFAULT_CONTENT_SIZE));
   this->addControl(contentLabel_);
 
   // add yellow border
@@ -96,22 +98,22 @@ PlatformPopup::PlatformPopup()
   this->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
 }
 
-void PlatformPopup::setTitle(const std::string& value)
+void EntityPopup::setTitle(const std::string& value)
 {
   titleLabel_->setText(value);
 }
 
-void PlatformPopup::setContent(const std::string& value)
+void EntityPopup::setContent(const std::string& value)
 {
   contentLabel_->setText(value);
 }
 
-osgEarth::Util::Controls::LabelControl* PlatformPopup::titleLabel() const
+osgEarth::Util::Controls::LabelControl* EntityPopup::titleLabel() const
 {
   return titleLabel_;
 }
 
-osgEarth::Util::Controls::LabelControl* PlatformPopup::contentLabel() const
+osgEarth::Util::Controls::LabelControl* EntityPopup::contentLabel() const
 {
   return contentLabel_;
 }
@@ -177,15 +179,15 @@ void PopupHandler::enable(bool v)
 
 void PopupHandler::clear()
 {
-  if (currentPlatform_.valid())
+  if (currentEntity_.valid())
   {
-    currentPlatform_ = NULL;
+    currentEntity_ = NULL;
     if (popup_.valid() && (view_.valid()))
     {
       view_->removeOverlayControl(popup_.get());
     }
     popup_ = NULL;
-    platformLocatorRev_.reset();
+    entityLocatorRev_.reset();
   }
 }
 
@@ -324,70 +326,80 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
     view_ = currentView;
 
   // get a safe handler on the observer
-  osg::ref_ptr<PlatformNode> platform;
+  osg::ref_ptr<EntityNode> entity;
   osg::ref_ptr<Picker> picker;
   if (picker_.lock(picker))
-    platform = picker_->pickedPlatform();
+    entity = picker_->pickedEntity();
   else
   {
     osg::ref_ptr<ScenarioManager> scenarioSafe;
     // intersect the scenario graph, looking for PlatformModelNodes, need to also traverse PlatformNode to get to PlatformModelNode
     if (scenario_.lock(scenarioSafe))
-      platform = scenarioSafe->find<PlatformNode>(currentView, lastMX_, lastMY_, PlatformNode::getMask() | PlatformModelNode::getMask());
+      entity = scenarioSafe->find<PlatformNode>(currentView, lastMX_, lastMY_, PlatformNode::getMask() | PlatformModelNode::getMask());
   }
 
-  if (!platform)
+  if (!entity)
   {
     clear();
     return;
   }
 
-  if (!currentPlatform_.valid())
+  if (!currentEntity_.valid())
   {
-    // if there is no current platform, assign one.
-    currentPlatform_ = platform;
-    platformLocatorRev_.reset();
+    // if there is no current entity, assign one.
+    currentEntity_ = entity;
+    entityLocatorRev_.reset();
   }
 
-  else if (currentPlatform_.valid() && platform != currentPlatform_.get())
+  else if (currentEntity_.valid() && entity != currentEntity_.get())
   {
-    // if there is an active platform, but the new platform is different,
+    // if there is an active entity, but the new entity is different,
     // remove the old pop up.
     if (popup_.valid())
     {
       view_->removeOverlayControl(popup_.get());
     }
     popup_ = NULL;
-    currentPlatform_ = platform;
-    platformLocatorRev_.reset();
+    currentEntity_ = entity;
+    entityLocatorRev_.reset();
   }
 
-  if (currentPlatform_.valid())
+  if (currentEntity_.valid())
   {
-    // if we have an active platform, reposition the pop up, creating it if it does
+    // if we have an active entity, reposition the pop up, creating it if it does
     // not already exist.
     if (!popup_.valid())
     {
-      popup_ = new PlatformPopup();
+      popup_ = new EntityPopup();
       applySettings_();
-      popup_->setTitle(currentPlatform_->getEntityName(EntityNode::DISPLAY_NAME, true));
+      popup_->setTitle(currentEntity_->getEntityName(EntityNode::DISPLAY_NAME, true));
       view_->addOverlayControl(popup_.get());
       showStartTime_ = simCore::getSystemTime();
     }
 
-    Locator* locator = currentPlatform_->getLocator();
-    if (!locator->inSyncWith(platformLocatorRev_))
+    Locator* locator = currentEntity_->getLocator();
+    if (!locator->inSyncWith(entityLocatorRev_))
     {
       if (contentCallback_.valid())
       {
-        popup_->setContent(contentCallback_->createString(currentPlatform_.get()));
+        auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
+        if (platform != NULL)
+          popup_->setContent(contentCallback_->createString(platform));
       }
       else
       {
-        popup_->setContent(currentPlatform_->popupText());
+        auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
+        if (platform != NULL)
+          popup_->setContent(platform->popupText());
+        else
+        {
+          auto custom = dynamic_cast<simVis::CustomRenderingNode*>(currentEntity_.get());
+          if (custom != NULL)
+            popup_->setContent(custom->popupText());
+        }
       }
 
-      locator->sync(platformLocatorRev_);
+      locator->sync(entityLocatorRev_);
     }
 
     // if using main view, then show popup on lower right, otherwise use mouse position
@@ -435,9 +447,9 @@ void PopupHandler::applySettings_()
   popup_->setBorderColor(borderColor_);
   popup_->setBackColor(backColor_);
   popup_->titleLabel()->setForeColor(titleColor_);
-  popup_->titleLabel()->setFontSize(titleFontSize_);
+  popup_->titleLabel()->setFontSize(simVis::osgFontSize(titleFontSize_));
   popup_->contentLabel()->setForeColor(contentColor_);
-  popup_->contentLabel()->setFontSize(contentFontSize_);
+  popup_->contentLabel()->setFontSize(simVis::osgFontSize(contentFontSize_));
   popup_->setPadding(padding_);
   popup_->setChildSpacing(childSpacing_);
 }

@@ -53,18 +53,16 @@ GogNodeInterface* Circle::deserialize(const osgEarth::Config&  conf,
     if (p.geometryRequiresClipping())
       Utils::configureStyleForClipping(p.style_);
 
-    node = new osgEarth::Annotation::LocalGeometryNode(mapNode, shape, p.style_);
-    Utils::applyLocalGeometryOffsets(*node, p);
+    node = new osgEarth::Annotation::LocalGeometryNode(shape, p.style_);
+    node->setMapNode(mapNode);
   }
   else
-  {
     node = new HostedLocalGeometryNode(shape, p.style_);
-    node->setLocalOffset(p.getLTPOffset());
-  }
 
   GogNodeInterface* rv = NULL;
   if (node)
   {
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new LocalGeometryNodeInterface(node, metaData);
     rv->applyConfigToStyle(conf, p.units_);
   }

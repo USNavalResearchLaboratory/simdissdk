@@ -129,7 +129,6 @@ MouseDispatcher::MouseDispatcher()
   : exclusiveProxy_(new MouseManipulatorProxy)
 {
   eventHandler_ = new EventHandler(*this);
-  viewObserver_ = new simVis::AddEventHandlerToViews(eventHandler_.get());
 
   addManipulator(EXCLUSIVE_MOUSE_WEIGHT, exclusiveProxy_);
 }
@@ -147,6 +146,10 @@ void MouseDispatcher::setViewManager(simVis::ViewManager* viewManager)
   if (viewManager_ == viewManager)
     return;
 
+  // Create the view observer if we haven't yet
+  if (!viewObserver_)
+    viewObserver_ = new simVis::AddEventHandlerToViews(eventHandler_.get());
+
   // Remove all observers and GUI handlers
   if (viewManager_ != NULL)
   {
@@ -161,6 +164,11 @@ void MouseDispatcher::setViewManager(simVis::ViewManager* viewManager)
     viewManager_->addCallback(viewObserver_.get());
     viewObserver_->addToViews(*viewManager_);
   }
+}
+
+osgGA::GUIEventHandler* MouseDispatcher::eventHandler() const
+{
+  return eventHandler_.get();
 }
 
 void MouseDispatcher::addManipulator(int weight, MouseManipulatorPtr manipulator)

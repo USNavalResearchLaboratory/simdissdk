@@ -228,6 +228,7 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   geom_ = new osgEarth::LineDrawable(GL_LINES);
   geom_->setName("simVis::GateCentroid");
   geom_->setColor(simVis::Color::White);
+  geom_->setDataVariance(osg::Object::DYNAMIC);
   geom_->allocate(6);
   geom_->dirty();
 
@@ -307,15 +308,25 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   // 5) the centroid visual must be parented by a different locatorNode than the gate visual
   //  so that centroid can be correctly drawn when the gate visual is coverage gate
 
-  // inherit from beam's locator, including its position offset, but stripping out all orientation
+  // gates can be hosted by platforms or beams
+  const BeamNode* beam = dynamic_cast<const BeamNode*>(host_.get());
+  if (beam != NULL && hostLocator)
+  {
+    // body and range gates are positioned relative to beam origin, but never relative to beam orientation.
+    // in some cases, the locator that beam provides via getLocator() (beamOrientationLocator_) strips out platform orientation;
+    // in those cases, it can't be used for BODY gates, which are relative to platform orientation.
+    // beam->getLocator()'s parent (beamOriginLocator_) always provides the the beam origin with platform orientation.
+    // gate locators here maintain or strip out platform orientation as required.
+    hostLocator = hostLocator->getParentLocator();
+  }
 
   // if the properties call for a body-relative beam, reconfigure locators to include platform orientation
   if (props.has_type() && props.type() == simData::GateProperties_GateType_BODY_RELATIVE)
   {
-    // for body beam, inherit from beam's locator, including its position offset, but stripping out only beam orientation offset (keeping platform orientation).
+    // for body beam, inherit from beam's position offset, and keep platform orientation.
     gateVolumeLocator_ = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
 
-    // for body beam, inherit from beam's locator, including its position offset, but stripping out only beam orientation offset (keeping platform orientation).
+    // for body beam, inherit from beam's position offset, and keep platform orientation.
     baseLocator_ = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
 
     // this locator sets the centroid position offset from the platform, using the gate orientation offsets
@@ -378,7 +389,7 @@ void GateNode::updateLabel_(const simData::GatePrefs& prefs)
 {
   if (hasLastUpdate_)
   {
-    std::string label = getEntityName(EntityNode::DISPLAY_NAME);
+    std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
     if (prefs.commonprefs().labelprefs().namelength() > 0)
       label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
@@ -483,21 +494,8 @@ const std::string GateNode::getEntityName(EntityNode::NameType nameType, bool al
 {
   // if assert fails, check whether prefs are initialized correctly when entity is created
   assert(hasLastPrefs_);
-  switch (nameType)
-  {
-  case EntityNode::REAL_NAME:
-    return lastPrefsApplied_.commonprefs().name();
-  case EntityNode::ALIAS_NAME:
-    return lastPrefsApplied_.commonprefs().alias();
-  case EntityNode::DISPLAY_NAME:
-    if (lastPrefsApplied_.commonprefs().usealias())
-    {
-      if (!lastPrefsApplied_.commonprefs().alias().empty() || allowBlankAlias)
-        return lastPrefsApplied_.commonprefs().alias();
-    }
-    return lastPrefsApplied_.commonprefs().name();
-  }
-  return "";
+  return getEntityName_(lastPrefsApplied_.commonprefs(), nameType, allowBlankAlias);
+
 }
 
 bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)

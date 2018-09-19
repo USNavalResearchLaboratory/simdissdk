@@ -70,8 +70,6 @@ public:
   int size() const;
   /** Adds an item into the container.  Must be a unique item. */
   void push_back(T* item);
-  /** Removes all items from container; does not delete memory. */
-  void clear();
   /** Convenience method to delete each item, then clear(). */
   void deleteAll();
 
@@ -100,7 +98,8 @@ public:
     ROLE_SORT_STRING = Qt::UserRole,
     ROLE_EXCLUDE,
     ROLE_CATEGORY_NAME,
-    ROLE_REGEXP_STRING
+    ROLE_REGEXP_STRING,
+    ROLE_LOCKED_STATE
   };
 
   // QAbstractItemModel overrides
@@ -264,8 +263,6 @@ signals:
   void filterEdited(const simData::CategoryFilter& filter);
 
 private slots:
-  /** Expand the given index from the model if filtering */
-  void expandDueToModel_(const QModelIndex& parentIndex, int to, int from);
   /** Expand the given index from the proxy if filtering */
   void expandDueToProxy_(const QModelIndex& parentIndex, int to, int from);
   /** Conditionally expand tree after filter edited. */
@@ -282,8 +279,16 @@ private slots:
   void setRegularExpression_();
   /** Clears the regular expression on the item saved from showContextMenu_ */
   void clearRegularExpression_();
+  /** Locks the current category saved from the showContextMenu_ */
+  void toggleLockCategory_();
+  /** Expands all unlocked categories */
+  void expandUnlockedCategories_();
+  /** Start a recount of the category values if countDirty_ is true */
+  void recountCategories_();
 
 private:
+  class DataStoreListener;
+
   /** The tree */
   QTreeView* treeView_;
   /** Hold the category data */
@@ -300,6 +305,12 @@ private:
   QAction* setRegExpAction_;
   /** Action used for clearing regular expressions */
   QAction* clearRegExpAction_;
+  /** Action used for toggling the lock state of a category */
+  QAction* toggleLockCategoryAction_;
+  /** Listener for datastore entity events */
+  std::shared_ptr<DataStoreListener> dsListener_;
+  /** If true then the category counts need to be redone */
+  bool countDirty_;
 };
 
 }

@@ -130,7 +130,8 @@ GogNodeInterface* LatLonAltBox::deserialize(const osgEarth::Config&  conf,
       style.remove<PolygonSymbol>();
 
     Feature* feature = new Feature(lines, mapNode->getMapSRS(), style);
-    osgEarth::Annotation::FeatureNode* node = new osgEarth::Annotation::FeatureNode(mapNode, feature);
+    osgEarth::Annotation::FeatureNode* node = new osgEarth::Annotation::FeatureNode(feature);
+    node->setMapNode(mapNode);
     GogNodeInterface* rv = new FeatureNodeInterface(node, metaData);
     rv->applyConfigToStyle(conf, p.units_);
     return rv;

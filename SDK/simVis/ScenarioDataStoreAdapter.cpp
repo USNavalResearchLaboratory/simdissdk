@@ -54,9 +54,7 @@ public:
     case simData::PROJECTOR: addProjector_(*source, newId); break;
     case simData::LASER: addLaser_(*source, newId); break;
     case simData::LOB_GROUP: addLobGroup_(*source, newId); break;
-#ifdef ENABLE_CUSTOM_RENDERING
     case simData::CUSTOM_RENDERING: addCustomRendering_(*source, newId); break;
-#endif
     case simData::ALL: // shouldn't see these
     case simData::NONE:
       assert(false);
@@ -80,9 +78,7 @@ public:
     case simData::PROJECTOR: changeProjectorPrefs_(*source, id); break;
     case simData::LASER: changeLaserPrefs_(*source, id); break;
     case simData::LOB_GROUP: changeLobGroupPrefs_(*source, id); break;
-#ifdef ENABLE_CUSTOM_RENDERING
     case simData::CUSTOM_RENDERING: changeCustomRenderingPrefs_(*source, id); break;
-#endif
     case simData::ALL: // shouldn't see these
     case simData::NONE:
       assert(false);
@@ -193,7 +189,6 @@ private: // methods
     scenarioManager_->addLobGroup(props, ds);
   }
 
-#ifdef ENABLE_CUSTOM_RENDERING
   void addCustomRendering_(simData::DataStore &ds, simData::ObjectId newId) const
   {
     simData::CustomRenderingProperties props;
@@ -205,7 +200,6 @@ private: // methods
 
     scenarioManager_->addCustomRendering(props, ds);
   }
-#endif
 
   void changePlatformPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
@@ -273,7 +267,6 @@ private: // methods
     scenarioManager_->setLobGroupPrefs(id, prefs);
   }
 
-#ifdef ENABLE_CUSTOM_RENDERING
   void changeCustomRenderingPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
     simData::CustomRenderingPrefs            prefs;
@@ -284,7 +277,6 @@ private: // methods
 
     scenarioManager_->setCustomRenderingPrefs(id, prefs);
   }
-#endif
 
 private: // data
   ScenarioManager *scenarioManager_;

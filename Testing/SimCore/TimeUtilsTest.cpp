@@ -20,6 +20,7 @@
  *
  */
 #include "simCore/Common/SDKAssert.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Utils.h"
 
@@ -173,6 +174,75 @@ int testIsValidDMY()
   return rv;
 }
 
+int timeStepTest()
+{
+  int rv = 0;
+
+  // Test zero
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 0.0) == 0.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 0.0) == 0.0);
+
+  // Test increasing [0.1, 1.0)
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 0.1) == 0.25);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 0.25) == 0.5);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 0.5) == 1.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 0.7) == 1.0);
+
+  // Test increasing (0.0, 0.1)
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(true, 0.09), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(true, 0.05), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(true, 0.01), 0.05));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(true, 0.009), 0.01));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(true, 0.005), 0.01));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(true, 0.001), 0.005));
+
+  // Test increasing from 1.0 (exclusive) and up
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 1.1) == 2.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 1.7) == 2.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 3.0) == 4.0);
+
+  // Testing increasing from whole numbers
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 1.0) == 2.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 2.0) == 3.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, 8.0) == 9.0);
+
+  // Test decreasing (0.1, 1.0)
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 0.2) == 0.1);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 0.25) == 0.1);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 0.4) == 0.25);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 0.5) == 0.25);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 0.8) == 0.5);
+
+  // Test decreasing (0.0, 0.1]
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(false, 0.09), 0.01));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(false, 0.05), 0.01));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(false, 0.04), 0.005));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(false, 0.01), 0.005));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(false, 0.009), 0.001));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(false, 0.005), 0.001));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::getNextTimeStep(false, 0.001), 0.0005));
+
+  // Test decreasing from 2.0 (inclusive) and up
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 2.0) == 1.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 3.0) == 2.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 9.0) == 8.0);
+
+  // Test decreasing 1.0
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 1.0) == 0.5);
+
+  // Test decreasing (1.0, 2.0)
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 1.1) == 1.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 1.4) == 1.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 1.5) == 1.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, 1.7) == 1.0);
+
+  // Test sending in negative steps
+  rv += SDK_ASSERT(simCore::getNextTimeStep(true, -0.6) == 1.0);
+  rv += SDK_ASSERT(simCore::getNextTimeStep(false, -0.6) == 0.5);
+
+  return rv;
+}
+
 }
 
 int TimeUtilsTest(int argc, char *argv[])
@@ -181,6 +251,7 @@ int TimeUtilsTest(int argc, char *argv[])
 
   rv += SDK_ASSERT(timeStructDifferenceTest() == 0);
   rv += SDK_ASSERT(testIsValidDMY() == 0);
+  rv += SDK_ASSERT(timeStepTest() == 0);
 
   return rv;
 }

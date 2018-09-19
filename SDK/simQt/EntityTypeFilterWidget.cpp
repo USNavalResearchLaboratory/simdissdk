@@ -43,11 +43,7 @@ EntityTypeFilterWidget::EntityTypeFilterWidget(QWidget* parent, unsigned int typ
   connect(ui_->laserCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
   connect(ui_->lobCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
   connect(ui_->projectorCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
-#ifdef ENABLE_CUSTOM_RENDERING
   connect(ui_->customRenderingCheckable, SIGNAL(clicked(bool)), this, SLOT(entityTypeClicked_()));
-#else
-  ui_->customRenderingCheckable->hide();
-#endif
 
   // Set tooltips
   ui_->allCheckable->setToolTip(simQt::formatTooltip(tr("All"),
@@ -64,9 +60,12 @@ EntityTypeFilterWidget::EntityTypeFilterWidget(QWidget* parent, unsigned int typ
     tr("Toggles the display of all LOB entities in the Entity List.")));
   ui_->projectorCheckable->setToolTip(simQt::formatTooltip(tr("Projectors"),
     tr("Toggles the display of all projector entities in the Entity List.")));
-#ifdef ENABLE_CUSTOM_RENDERING
   ui_->customRenderingCheckable->setToolTip(simQt::formatTooltip(tr("Custom Rendering"),
     tr("Toggles the display of all custom rendering entities in the Entity List.")));
+
+#ifndef ENABLE_QT_CUSTOM_RENDER
+  // Hide the custom render toolbar button for now, unless ENABLE_QT_CUSTOM_RENDER is defined.
+  ui_->customRenderingCheckable->hide();
 #endif
 }
 
@@ -92,10 +91,8 @@ unsigned int EntityTypeFilterWidget::getSelections() const
     rv |= simData::LOB_GROUP;
   if (ui_->projectorCheckable->isChecked())
     rv |= simData::PROJECTOR;
-#ifdef ENABLE_CUSTOM_RENDERING
   if (ui_->customRenderingCheckable->isChecked())
     rv |= simData::CUSTOM_RENDERING;
-#endif
   // update the all button state, based on components' state
   ui_->allCheckable->setChecked(rv == simData::ALL);
   return rv;
@@ -116,10 +113,8 @@ std::set<simData::ObjectType> EntityTypeFilterWidget::getSelectionsSet() const
     rv.insert(simData::LOB_GROUP);
   if (ui_->projectorCheckable->isChecked())
     rv.insert(simData::PROJECTOR);
-#ifdef ENABLE_CUSTOM_RENDERING
   if (ui_->customRenderingCheckable->isChecked())
     rv.insert(simData::CUSTOM_RENDERING);
-#endif
   return rv;
 }
 
@@ -137,9 +132,7 @@ void EntityTypeFilterWidget::setSelections(unsigned int types)
   ui_->laserCheckable->setChecked(simData::LASER & types);
   ui_->lobCheckable->setChecked(simData::LOB_GROUP & types);
   ui_->projectorCheckable->setChecked(simData::PROJECTOR & types);
-#ifdef ENABLE_CUSTOM_RENDERING
   ui_->customRenderingCheckable->setChecked(simData::CUSTOM_RENDERING & types);
-#endif
   ui_->allCheckable->setChecked(types == simData::ALL);
 
   // Emit a signal that the values have changed

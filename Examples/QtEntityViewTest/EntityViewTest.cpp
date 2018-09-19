@@ -86,7 +86,6 @@ simData::ObjectId createGate(simData::DataStore* dataStore, simData::ObjectId be
   return id;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 simData::ObjectId createCustomRendering(simData::DataStore* dataStore, simData::ObjectId platformId, const QString& name)
 {
   simData::DataStore::Transaction xaction;
@@ -104,7 +103,6 @@ simData::ObjectId createCustomRendering(simData::DataStore* dataStore, simData::
 
   return id;
 }
-#endif
 
 }
 
@@ -169,7 +167,6 @@ void MainWindow::addGates_()
 
 void MainWindow::test_()
 {
-#ifdef ENABLE_CUSTOM_RENDERING
   // attach a Custom Rendering entity to the selected platforms
   QList<uint64_t> selectedItems = entityTreeComposite_->selectedItems();
   Q_FOREACH(uint64_t id, selectedItems)
@@ -179,8 +176,6 @@ void MainWindow::test_()
       createCustomRendering(dataStore_, id, "Custom Rendering");
     }
   }
-
-#endif
 }
 
 void MainWindow::itemsSelected_(QList<uint64_t> ids)

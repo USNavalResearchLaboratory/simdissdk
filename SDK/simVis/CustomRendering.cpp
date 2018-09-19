@@ -20,17 +20,17 @@
  *
  */
 
-#ifdef ENABLE_CUSTOM_RENDERING
-
 #include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/LocalGrid.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/OverrideColor.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/Scenario.h"
@@ -42,21 +42,16 @@ namespace simVis
 CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props, const EntityNode* host, int referenceYear)
   : EntityNode(simData::CUSTOM_RENDERING),
     scenario_(scenario),
+    host_(host),
     contentCallback_(new NullEntityCallback()),
     lastProps_(props),
     hasLastPrefs_(false),
-    customActive_(false)
+    customActive_(false),
+    objectIndexTag_(0)
 {
   // Independent of the host like a LOB
   setLocator(new Locator(host->getLocator()->getSRS()));
   setName("CustomRenderingNode");
-
-  // set up a state set.
-  // carefully set the rendering order for custom. We want to render them
-  // before everything else (including the terrain) since they are
-  // transparent and potentially self-blending
-  osg::StateSet* stateSet = getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
@@ -75,20 +70,47 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
 
   // create the locator node that will parent our geometry
   customLocatorNode_ = new LocatorNode(getLocator());
-  customLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
   addChild(customLocatorNode_);
+
+  // Apply the override color shader to the container
+  overrideColor_ = new simVis::OverrideColor(customLocatorNode_->getOrCreateStateSet());
+  overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
+
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
 }
 
 CustomRenderingNode::~CustomRenderingNode()
 {
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
+}
+
+std::string CustomRenderingNode::popupText() const
+{
+  if (hasLastPrefs_ && customActive_)
+  {
+    std::string prefix;
+    /// if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    if (!lastPrefs_.commonprefs().alias().empty())
+    {
+      if (lastPrefs_.commonprefs().usealias())
+        prefix = getEntityName(EntityNode::REAL_NAME);
+      else
+        prefix = getEntityName(EntityNode::ALIAS_NAME);
+      prefix += "\n";
+    }
+    return prefix + contentCallback_->createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+  }
+
+  return "";
 }
 
 void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& prefs)
 {
-  std::string label = getEntityName(EntityNode::DISPLAY_NAME);
+  std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
   if (prefs.commonprefs().labelprefs().namelength() > 0)
     label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
@@ -152,11 +174,45 @@ std::string CustomRenderingNode::legendText() const
 
 void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
 {
+  const bool prefsDraw = prefs.commonprefs().datadraw() && prefs.commonprefs().draw();
+  // Visibility is determined by both customActive_ and draw state preferences
+  setNodeMask((customActive_ && prefsDraw) ? simVis::DISPLAY_MASK_CUSTOM_RENDERING : simVis::DISPLAY_MASK_NONE);
+
+  if (prefsDraw)
+    updateLabel_(prefs);
+
   // validate localgrid prefs changes that might provide user notifications
-  localGrid_->validatePrefs(prefs.commonprefs().localgrid());
+  if (localGrid_.valid())
+  {
+    localGrid_->validatePrefs(prefs.commonprefs().localgrid());
+
+    // update the local grid, only if platform drawn
+    if (prefsDraw)
+      localGrid_->setPrefs(prefs.commonprefs().localgrid());
+  }
+
+  updateOverrideColor_(prefs);
+
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
-  updateLabel_(prefs);
+}
+
+void CustomRenderingNode::updateOverrideColor_(const simData::CustomRenderingPrefs& prefs)
+{
+  if (!overrideColor_.valid())
+    return;
+
+  if (hasLastPrefs_ &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, color))
+    return;
+
+  // using an override color?
+  if (prefs.commonprefs().useoverridecolor())
+    overrideColor_->setColor(simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA));
+  else
+    overrideColor_->setColor(simVis::Color(prefs.commonprefs().color(), simVis::Color::RGBA));
 }
 
 bool CustomRenderingNode::isActive() const
@@ -184,21 +240,7 @@ const std::string CustomRenderingNode::getEntityName(EntityNode::NameType nameTy
 {
   // if assert fails, check whether prefs are initialized correctly when entity is created
   assert(hasLastPrefs_);
-  switch (nameType)
-  {
-  case EntityNode::REAL_NAME:
-    return lastPrefs_.commonprefs().name();
-  case EntityNode::ALIAS_NAME:
-    return lastPrefs_.commonprefs().alias();
-  case EntityNode::DISPLAY_NAME:
-    if (lastPrefs_.commonprefs().usealias())
-    {
-      if (!lastPrefs_.commonprefs().alias().empty() || allowBlankAlias)
-        return lastPrefs_.commonprefs().alias();
-    }
-    return lastPrefs_.commonprefs().name();
-  }
-  return "";
+  return getEntityName_(lastPrefs_.commonprefs(), nameType, allowBlankAlias);
 }
 
 bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
@@ -210,7 +252,11 @@ bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* upda
   {
     dirtyBound();
     customLocatorNode_->dirtyBound();
-    updateLabel_(lastPrefs_);
+    if (hasLastPrefs_)
+    {
+      updateOverrideColor_(lastPrefs_);
+      updateLabel_(lastPrefs_);
+    }
     return true;
   }
 
@@ -239,8 +285,7 @@ int CustomRenderingNode::getPositionOrientation(simCore::Vec3* out_position, sim
 
 unsigned int CustomRenderingNode::objectIndexTag() const
 {
-  // Not supported for custom
-  return 0;
+  return objectIndexTag_;
 }
 
 bool CustomRenderingNode::customActive() const
@@ -251,8 +296,12 @@ bool CustomRenderingNode::customActive() const
 void CustomRenderingNode::setCustomActive(bool value)
 {
   customActive_ = value;
-  customLocatorNode_->setNodeMask(customActive_ ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
-  setNodeMask(customActive_ ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
+
+  bool prefsDraw = customActive_;
+  if (hasLastPrefs_)
+    prefsDraw = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
+  // Visibility is determined by both customActive_ and draw state preferences
+  setNodeMask((customActive_ && prefsDraw) ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
 }
 
 LocatorNode* CustomRenderingNode::locatorNode() const
@@ -260,6 +309,9 @@ LocatorNode* CustomRenderingNode::locatorNode() const
   return customLocatorNode_.get();
 }
 
+const EntityNode* CustomRenderingNode::host() const
+{
+  return host_.get();
 }
 
-#endif // ENABLE_CUSTOM_RENDERING
+}

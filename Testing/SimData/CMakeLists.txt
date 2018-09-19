@@ -8,17 +8,18 @@ endif()
 project(SimData_UnitTests)
 
 set(TEST_FILENAMES
-    TestDataLimiting.cpp
-    TestInterpolation.cpp
-    TestMemoryDataStore.cpp
-    TestMemRetrieval.cpp
-    TestCommands.cpp
-    TestSliceBounds.cpp
     MemoryDataTableTest.cpp
+    TestCommands.cpp
+    TestDataLimiting.cpp
     TestGenericData.cpp
-    TestMemorySlice.cpp
-    TestMessageVisitor.cpp
+    TestInterpolation.cpp
     TestListener.cpp
+    TestMemoryDataStore.cpp
+    TestMemorySlice.cpp
+    TestMemRetrieval.cpp
+    TestMessageVisitor.cpp
+    TestNewUpdatesListener.cpp
+    TestSliceBounds.cpp
 )
 
 # simQt is used in CategoryDataTest for its Regular Expression implementation
@@ -42,16 +43,17 @@ if(TARGET simQt)
     add_test(NAME simData_TestCategoryRegExp COMMAND SimDataTests CategoryRegExpTest)
 endif()
 
-add_test(NAME simData_TestDataLimiting COMMAND SimDataTests TestDataLimiting)
-add_test(NAME simData_TestInterpolation COMMAND SimDataTests TestInterpolation)
-add_test(NAME simData_TestMemoryDataStore COMMAND SimDataTests TestMemoryDataStore)
-add_test(NAME simData_TestMemRetrieval COMMAND SimDataTests TestMemRetrieval)
-add_test(NAME simData_TestCommands COMMAND SimDataTests TestCommands)
-add_test(NAME simData_TestSliceBounds COMMAND SimDataTests TestSliceBounds)
 add_test(NAME simData_MemoryDataTableTest COMMAND SimDataTests MemoryDataTableTest)
+add_test(NAME simData_TestCommands COMMAND SimDataTests TestCommands)
+add_test(NAME simData_TestDataLimiting COMMAND SimDataTests TestDataLimiting)
 add_test(NAME simData_TestGenericData COMMAND SimDataTests TestGenericData)
-add_test(NAME simData_TestMemorySlice COMMAND SimDataTests TestMemorySlice)
-add_test(NAME simData_TestMessageVisitor COMMAND SimDataTests TestMessageVisitor)
+add_test(NAME simData_TestInterpolation COMMAND SimDataTests TestInterpolation)
 add_test(NAME simData_TestListener COMMAND SimDataTests TestListener)
+add_test(NAME simData_TestMemoryDataStore COMMAND SimDataTests TestMemoryDataStore)
+add_test(NAME simData_TestMemorySlice COMMAND SimDataTests TestMemorySlice)
+add_test(NAME simData_TestMemRetrieval COMMAND SimDataTests TestMemRetrieval)
+add_test(NAME simData_TestMessageVisitor COMMAND SimDataTests TestMessageVisitor)
+add_test(NAME simData_TestNewUpdatesListener COMMAND SimDataTests TestNewUpdatesListener)
+add_test(NAME simData_TestSliceBounds COMMAND SimDataTests TestSliceBounds)
 
 add_subdirectory(DataStorePerformanceTest)

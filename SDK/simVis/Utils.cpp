@@ -28,9 +28,11 @@
 #include "osg/MatrixTransform"
 #include "osg/NodeVisitor"
 #include "osg/PositionAttitudeTransform"
+#include "osg/Version"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgUtil/RenderBin"
+#include "osgUtil/TriStripVisitor"
 #include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/Capabilities"
@@ -362,13 +364,13 @@ void fixTextureForGlCoreProfile(osg::Texture* texture)
     if (!image)
       continue;
 
-    // Detect the image's pixel format, changing it out for a GL3-compatible one
-    if (image->getPixelFormat() == GL_LUMINANCE)
+    // Detect the image's pixel format, changing it out for a GL3-compatible one, fixing swizzle
+    if (image->getPixelFormat() == GL_LUMINANCE || image->getPixelFormat() == GL_RED)
     {
       image->setPixelFormat(GL_RED);
       texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_ONE));
     }
-    else if (image->getPixelFormat() == GL_LUMINANCE_ALPHA)
+    else if (image->getPixelFormat() == GL_LUMINANCE_ALPHA || image->getPixelFormat() == GL_RG)
     {
       image->setPixelFormat(GL_RG);
       texture->setSwizzle(osg::Vec4i(GL_RED, GL_RED, GL_RED, GL_GREEN));
@@ -471,37 +473,17 @@ float outlineThickness(simData::TextOutline outline)
 
 float osgFontSize(float simFontSize)
 {
-  // At lower font sizes (11 or less), we want to make the font a bit
-  // crisper and more readable, so we force the return value to be the
-  // closest rounded number and add an offset to convert the value from
-  // simFontSize to osgFontSize.
-  if (simFontSize <= 6.0)
-  {
-    return simCore::rint(simFontSize) + 1.0;
-  }
-  else if (simFontSize <= 11.0)
-  {
-    return simCore::rint(simFontSize) + 2.0;
-  }
-
-  // Value of 1.33 was confirmed using fonts of varying sizes in example
-  // data files.
-  return simFontSize * 1.33;
+  // When comparing SIMDIS 9 text, considered the standard for text size for SIMDIS applications,
+  // the OSG font size was typically about 3/4 the size of a SIMDIS string for the same font and
+  // same size.  To to convert the SIMDIS font size to OSG, we multiply by the inversion, 1.333f.
+  return simFontSize * 1.333f;
 }
 
 float simdisFontSize(float osgFontSize)
 {
-  float roundedSize = simCore::rint(osgFontSize);
-  if (roundedSize <= 7.0)
-  {
-    return roundedSize - 1.0;
-  }
-  else if (roundedSize <= 13.0)
-  {
-    return roundedSize - 2.0;
-  }
-
-  return osgFontSize / 1.33;
+  // See the discussion above, explaining that OSG fonts are about 3/4 the size of a historic
+  // SIMDIS font size.
+  return osgFontSize * 0.75f;
 }
 
 osgText::Text::BackdropType backdropType(simData::BackdropType type)
@@ -1172,5 +1154,52 @@ ScopedStatsTimer::ScopedStatsTimer(osgViewer::View* mainView, const std::string&
   statsTimer_.start();
 }
 
+//--------------------------------------------------------------------------
+
+RemoveModeVisitor::RemoveModeVisitor(GLenum mode)
+  : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
+    mode_(mode)
+{
 }
 
+void RemoveModeVisitor::apply(osg::Node& node)
+{
+  osg::StateSet* stateSet = node.getStateSet();
+  if (stateSet)
+    stateSet->removeMode(mode_);
+  osg::NodeVisitor::apply(node);
+}
+
+//--------------------------------------------------------------------------
+
+FixDeprecatedDrawModes::FixDeprecatedDrawModes()
+  : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN)
+{
+}
+
+void FixDeprecatedDrawModes::apply(osg::Geometry& geom)
+{
+  // Loop through all of the primitive sets on the geometry
+  const unsigned int numPrimSets = geom.getNumPrimitiveSets();
+  for (unsigned int k = 0; k < numPrimSets; ++k)
+  {
+    // Only care about non-NULL primitive sets
+    const osg::PrimitiveSet* primSet = geom.getPrimitiveSet(k);
+    if (primSet == NULL)
+      continue;
+
+    // Search for modes that are deprecated in GL3
+    if (primSet->getMode() == GL_POLYGON || primSet->getMode() == GL_QUADS || primSet->getMode() == GL_QUAD_STRIP)
+    {
+      // Turn deprecated geometry into tri-strips; affects whole geometry
+      osgUtil::TriStripVisitor triStrip;
+      triStrip.stripify(geom);
+      break;
+    }
+  }
+
+  // Call into base class method
+  osg::NodeVisitor::apply(geom);
+}
+
+}

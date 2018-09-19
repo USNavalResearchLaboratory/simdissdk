@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_GOG_ATTACHMENTS)
 
 set(PROJECT_FILES
-    src/ExampleGOGAttachments.cpp
+    ExampleGOGAttachments.cpp
 )
 
 add_executable(example_gogattachments ${PROJECT_FILES})

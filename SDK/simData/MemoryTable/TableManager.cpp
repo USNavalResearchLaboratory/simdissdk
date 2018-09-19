@@ -108,7 +108,8 @@ private:
 
 TableManager::TableManager(const DataLimitsProvider* dataLimitsProvider)
   : nextId_(1),
-    dataLimitsProvider_(dataLimitsProvider)
+    dataLimitsProvider_(dataLimitsProvider),
+    newRowDataListener_(new DefaultNewRowDataListener)
 {
 }
 
@@ -223,6 +224,19 @@ void TableManager::removeTable(MemoryTable::Table* table)
 
   // Remove it from our map too
   tablesById_.erase(tableIter);
+}
+
+void TableManager::setNewRowDataListener(TableManager::NewRowDataListenerPtr listener)
+{
+  if (listener == NULL)
+    newRowDataListener_.reset(new DefaultNewRowDataListener);
+  else
+    newRowDataListener_ = listener;
+}
+
+void TableManager::fireOnNewRowData(Table& table, double dataTime)
+{
+  newRowDataListener_->onNewRowData(table, table.ownerId(), dataTime);
 }
 
 void TableManager::addObserver(ManagerObserverPtr callback)

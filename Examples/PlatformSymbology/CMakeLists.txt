@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_PLATFORM_SYMBOLOGY)
 
 set(PROJECT_FILES
-    src/PlatformSymbology.cpp
+    PlatformSymbology.cpp
 )
 
 add_executable(example_platformsymbology ${PROJECT_FILES})

@@ -208,7 +208,7 @@ void LobGroupNode::updateLabel_(const simData::LobGroupPrefs& prefs)
 {
   if (hasLastUpdate_)
   {
-    std::string label = getEntityName(EntityNode::DISPLAY_NAME);
+    std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
     if (prefs.commonprefs().labelprefs().namelength() > 0)
       label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
@@ -504,21 +504,8 @@ const std::string LobGroupNode::getEntityName(EntityNode::NameType nameType, boo
     assert(0);
     return "";
   }
-  switch (nameType)
-  {
-  case EntityNode::REAL_NAME:
-    return lastPrefs_.commonprefs().name();
-  case EntityNode::ALIAS_NAME:
-    return lastPrefs_.commonprefs().alias();
-  case EntityNode::DISPLAY_NAME:
-    if (lastPrefs_.commonprefs().usealias())
-    {
-      if (!lastPrefs_.commonprefs().alias().empty() || allowBlankAlias)
-        return lastPrefs_.commonprefs().alias();
-    }
-    return lastPrefs_.commonprefs().name();
-  }
-  return "";
+
+  return getEntityName_(lastPrefs_.commonprefs(), nameType, allowBlankAlias);
 }
 
 simData::ObjectId LobGroupNode::getId() const

@@ -262,7 +262,8 @@ int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
   osg::ArgumentParser arguments(&argc, argv);
-  osg::DisplaySettings::instance()->setNumMultiSamples(4);
+  if (arguments.read("--multisample"))
+    osg::DisplaySettings::instance()->setNumMultiSamples(4);
   simExamples::configureSearchPaths();
 
   // initialize a SIMDIS viewer and load a planet.

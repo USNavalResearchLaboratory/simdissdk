@@ -75,6 +75,8 @@ public:
 
   /** Returns true if the entity is active, or false if inactive; e.g. for Super Form-like filtering. */
   static bool isEntityActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime);
+  /** Returns the user vertical datum value, in meters, for the given entity. */
+  static double getUserVerticalDatum(const simData::DataStore& dataStore, simData::ObjectId id);
 };
 
 }

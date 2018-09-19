@@ -25,7 +25,9 @@
 #include "simData/DataTable.h"
 #include "simData/MemoryDataStore.h"
 #include "simData/MemoryTable/DoubleBufferTimeContainer.h"
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 #include "simData/MemoryTable/TimeContainerDeque.h"
+#endif
 #include "simData/MemoryTable/SubTable.h"
 #include "simData/MemoryTable/TableManager.h"
 #include "simUtil/DataStoreTestHelper.h"
@@ -1760,8 +1762,10 @@ int timeContainerTest()
   MemoryTable::DoubleBufferTimeContainer dbContainer;
   int rv = 0;
   rv += SDK_ASSERT(timeContainerTest(dbContainer) == 0);
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   MemoryTable::TimeContainerDeque sbContainer;
   rv += SDK_ASSERT(timeContainerTest(sbContainer) == 0);
+#endif
   return rv;
 }
 
@@ -2021,7 +2025,9 @@ int MemoryDataTableTest(int argc, char* argv[])
   rv += removeEntityTest();
   rv += dataLimitingTest();
   rv += dataLimitSecondsTest();
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   rv += subTableIterationTest(new simData::MemoryTable::TimeContainerDeque());
+#endif
   rv += subTableIterationTest(new simData::MemoryTable::DoubleBufferTimeContainer());
   rv += testColumnIteration();
   rv += doubleBufferTimeContainerTest();

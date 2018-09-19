@@ -160,5 +160,25 @@ void EntityNode::attach(osg::Node* node)
 
   attach(node, comp);
 }
+
+std::string EntityNode::getEntityName_(const simData::CommonPrefs& common, EntityNode::NameType nameType, bool allowBlankAlias) const
+{
+  switch (nameType)
+  {
+  case EntityNode::REAL_NAME:
+    return common.name();
+  case EntityNode::ALIAS_NAME:
+    return common.alias();
+  case EntityNode::DISPLAY_NAME:
+    if (common.usealias())
+    {
+      if (!common.alias().empty() || allowBlankAlias)
+        return common.alias();
+    }
+    return common.name();
+  }
+  return "";
+}
+
 }
 

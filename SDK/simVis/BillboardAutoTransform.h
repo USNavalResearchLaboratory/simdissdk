@@ -33,8 +33,9 @@ namespace simVis
 {
 
 /**
-* An AutoTransform variant for orienting billboard icons.  Adapted with permission from the deprecated osgEarth::PixelAutoTransform.
-*/
+ * An AutoTransform variant for orienting billboard icons.  Adapted with permission from the
+ * deprecated osgEarth::PixelAutoTransform.
+ */
 class SDKVIS_EXPORT BillboardAutoTransform : public osg::AutoTransform
 {
 public:

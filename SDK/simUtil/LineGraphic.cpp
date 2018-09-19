@@ -25,6 +25,7 @@
 #include "osgEarthAnnotation/LabelNode"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simVis/CustomRendering.h"
 #include "simVis/Constants.h"
 #include "simVis/Utils.h"
 #include "simVis/AnimatedLine.h"
@@ -71,7 +72,9 @@ LineGraphic::LineGraphic(osg::Group* scene, osgEarth::MapNode* mapNode)
   text->declutter() = false;
 
   // Create the label node itself
-  label_ = new osgEarth::Annotation::LabelNode(mapNode, labelStyle_);
+  label_ = new osgEarth::Annotation::LabelNode();
+  label_->setMapNode(mapNode);
+  label_->setStyle(labelStyle_);
   label_->setDynamic(true);
 
   // Hide the line and label until we need them
@@ -125,7 +128,7 @@ void LineGraphic::set(const simCore::Vec3& originLLA, const simCore::Vec3& desti
       double labelLon = 0;
       osgEarth::GeoMath::midpoint(originLLA.lat(), originLLA.lon(),
         destinationLLA.lat(), destinationLLA.lon(), labelLat, labelLon);
-      label_->setPosition(osgEarth::GeoPoint(wgs84Srs_.get(), labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG));
+      label_->setPosition(osgEarth::GeoPoint(wgs84Srs_.get(), labelLon * simCore::RAD2DEG, labelLat * simCore::RAD2DEG, (originLLA.alt() + destinationLLA.alt()) / 2.0));
       label_->setText(labelString);
       label_->setNodeMask(displayMask_);
     }
@@ -321,6 +324,61 @@ bool PlatformPosition::operator==(const Position& other) const
 }
 
 bool PlatformPosition::operator!=(const Position& other) const
+{
+  return !operator==(other);
+}
+
+///////////////////////////////////////////////////////////////////////
+
+/** Position based off a node's locator LLA coordinate location */
+EntityNodePosition::EntityNodePosition(simVis::EntityNode* node)
+  : node_(node)
+{
+}
+
+EntityNodePosition::~EntityNodePosition()
+{
+}
+
+bool EntityNodePosition::isValid() const
+{
+  if (node_ == NULL)
+    return false;
+
+  return node_->getNodeMask() != 0;
+}
+
+const simCore::Vec3& EntityNodePosition::lla() const
+{
+  if (node_ != NULL)
+    node_->getPosition(&lla_, simCore::COORD_SYS_LLA);
+
+  return lla_;
+}
+
+simData::ObjectId EntityNodePosition::id() const
+{
+  if (node_ == NULL)
+    return 0;
+
+  return node_->getId();
+}
+
+std::string EntityNodePosition::entityName() const
+{
+  if (node_ == NULL)
+    return "";
+
+  return node_->getEntityName(simVis::EntityNode::DISPLAY_NAME);
+}
+
+bool EntityNodePosition::operator==(const Position& other) const
+{
+  const EntityNodePosition* pp = dynamic_cast<const EntityNodePosition*>(&other);
+  return (pp != NULL && (pp->id() == this->id()));
+}
+
+bool EntityNodePosition::operator!=(const Position& other) const
 {
   return !operator==(other);
 }

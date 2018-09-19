@@ -180,4 +180,9 @@ void DynamicSelectionPicker::setPickMask(osg::Node::NodeMask pickMask)
   pickMask_ = pickMask;
 }
 
+osg::Node::NodeMask DynamicSelectionPicker::pickMask() const
+{
+  return pickMask_;
+}
+
 }

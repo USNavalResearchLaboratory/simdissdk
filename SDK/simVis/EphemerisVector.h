@@ -95,9 +95,6 @@ private:
   osg::observer_ptr<const PlatformModelNode> modelNode_;
   osg::ref_ptr<osgEarth::Util::Ephemeris> ephemeris_;
 
-  /// working data
-  osg::ref_ptr<osg::Vec3Array> vertices_;
-
   /// Last clock time when we rebuilt the line; detect time drift to rebuild line for entites that don't move
   simCore::TimeStamp lastUpdateTime_;
   bool hasLastPrefs_; ///< Whether lastPrefs_ has been set by prefs we received

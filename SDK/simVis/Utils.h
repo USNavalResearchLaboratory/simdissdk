@@ -643,6 +643,44 @@ namespace simVis
     StatsTimer statsTimer_;
   };
 
+  /** Simple visitor that removes the provided Mode from all statesets. */
+  class SDKVIS_EXPORT RemoveModeVisitor : public osg::NodeVisitor
+  {
+  public:
+    /** Remove the mode provided from nodes visited */
+    explicit RemoveModeVisitor(GLenum mode);
+
+    /** Override apply(osg::Node&) to remove from all statesets */
+    virtual void apply(osg::Node& node);
+
+  private:
+    GLenum mode_;
+  };
+
+  /**
+   * In OpenGL 3.2, various geometry draw modes that were previously deprecated were finally
+   * removed.  A core profile implementation does not have the capability to render these
+   * deprecated draw modes.  This visitor is responsible for detecting any geometry with
+   * deprecated draw modes and convert them into triangle strips, which are not deprecated.
+   * This is more efficient than using osgUtil::TriStripVisitor directly because it is only
+   * executed on geometry that actually contains deprecated modes, rather than all geometry.
+   *
+   * The deprecated modes that this class handles are GL_POLYGON, GL_QUADS, and GL_QUAD_STRIPS.
+   *
+   * Usage:
+   *   FixDeprecatedDrawModes visitor;
+   *   node->accept(visitor);
+   */
+  class SDKVIS_EXPORT FixDeprecatedDrawModes : public osg::NodeVisitor
+  {
+  public:
+    /** Default constructor */
+    FixDeprecatedDrawModes();
+
+    /** Override apply() to detect GL3-incompatible draw modes on primitive sets */
+    virtual void apply(osg::Geometry& geom);
+  };
+
 } // namespace simVis
 
 #endif // SIMVIS_UTILS_H

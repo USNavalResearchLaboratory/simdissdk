@@ -427,6 +427,10 @@ TableStatus Table::addRow(const TableRow& row)
   if (row.time() > endTime_)
     endTime_ = row.time();
 
+  // Alert the Data Store that we have new time values on this entity.  This is internal for
+  // Memory Table and Memory Data Store to keep the Data Store's NewUpdatesListener correct.
+  tableManager_.fireOnNewRowData(*this, row.time());
+
   // notify observers of new row. NOTE: do this before data limiting check, as data limiting may remove this row if it is inserted prior to the last row
   fireOnAddRow_(row);
 

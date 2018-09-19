@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_GEOFENCING)
 
 set(PROJECT_FILES
-    src/ExampleGeoFencing.cpp
+    ExampleGeoFencing.cpp
 )
 
 add_executable(example_geofencing ${PROJECT_FILES})

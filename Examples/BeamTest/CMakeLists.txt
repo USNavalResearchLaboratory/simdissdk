@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_BEAM)
 
 set(PROJECT_FILES
-    src/BeamTest.cpp
+    BeamTest.cpp
 )
 
 add_executable(example_beamtest ${PROJECT_FILES})

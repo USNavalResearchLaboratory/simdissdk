@@ -98,6 +98,9 @@ public:
   /** Returns the number of digits after the decimal point */
   unsigned int precision() const;
 
+  /** Returns the time zone */
+  simCore::TimeZone timeZone() const;
+
   /** Returns true if the time widget is enabled */
   bool timeEnabled() const;
 
@@ -106,6 +109,8 @@ public slots:
   void setTimeFormat(simCore::TimeFormat newFormat);
   /** Set the number of digits after the decimal point */
   void setPrecision(unsigned int digits);
+  /** Set the time zone */
+  void setTimeZone(simCore::TimeZone newZone);
   /** An alternative enable that replaces the time with ----- when disabled */
   void setTimeEnabled(bool value);
 

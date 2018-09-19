@@ -114,23 +114,11 @@ public:
    */
   const osg::Vec4& getObstructedColor() const { return obstructedColor_; }
 
-  /**
-   * Sets the sample point color
-   * @param[in ] color for the sample points (rgba, [0..1])
-   */
-  void setSamplePointColor(const osg::Vec4& color);
-
-  /**
-   * Gets the sample point color
-   */
-  const osg::Vec4& getSamplePointColor() const { return samplePointColor_; }
-
   /** Set the node active or inactive.  Inactive node will not draw LOS or perform LOS calculations */
   void setActive(bool);
 
   /** Returns active state of node */
   bool getActive() const { return active_; }
-
 
 public: // GeoPositionNode
 
@@ -164,6 +152,12 @@ private:
   /** Not implemented */
   RadialLOSNode(const RadialLOSNode& rhs);
 
+  /**
+   * Central location to call los_.compute() to reduce spam on error.
+   * Returning true means valid graphics were added to the scene.
+   */
+  bool updateLOS_(osgEarth::MapNode* mapNode, const simCore::Coordinate& coord);
+
   // callback hook.
   struct TerrainCallbackHook : public osgEarth::TerrainCallback
   {
@@ -181,11 +175,12 @@ private:
   osg::ref_ptr<osgEarth::DrapeableNode> drapeable_;
   osg::Vec4 visibleColor_;
   osg::Vec4 obstructedColor_;
-  osg::Vec4 samplePointColor_;
   osgEarth::GeoCircle bound_;
   osgEarth::optional<RadialLOS> losPrevious_;
   osg::ref_ptr<TerrainCallbackHook> callbackHook_;
   bool active_;
+  bool isValid_;
+  bool requireUpdateLOS_;
 
   /** Rebuilds the geometry if needed when parameters change. */
   void refreshGeometry_();

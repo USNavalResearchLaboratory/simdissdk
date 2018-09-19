@@ -21,11 +21,11 @@
 */
 
 #include <QThread>
-
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simData/DataStore.h"
+#include "simUtil/ExampleResources.h"
 #include "DataGenerator.h"
 #include "Reader.h"
 
@@ -97,11 +97,12 @@ simData::ObjectId Reader::addPlatform_()
   {
     simData::DataStore::Transaction xaction;
     simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(hostId, &xaction);
-    prefs->set_icon("aqm-37c/aqm-37c.ive");
+    prefs->set_icon(EXAMPLE_AIRPLANE_ICON);
     prefs->set_scale(1000.0);  // large so we can see it
     prefs->set_dynamicscale(false);
     prefs->mutable_commonprefs()->set_name("My Platform");
     prefs->mutable_commonprefs()->set_draw(true);
+    prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
     xaction.complete(&prefs);
   }
 
@@ -138,7 +139,6 @@ void Reader::addDataPoint_(double lat, double lon, double alt)
 
   if (id_ != 0)
     addPlatformPoint_(id_, numberProcessed_, lat, lon, alt);  // Use numberProcessed_ as a time
-
 
   numberProcessed_++;
 }

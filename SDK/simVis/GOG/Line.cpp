@@ -69,20 +69,22 @@ GogNodeInterface* Line::deserialize(const osgEarth::Config&  conf,
       {
         feature->geoInterp() = p.geoInterp_.value();
       }
-      FeatureNode* node = new FeatureNode(mapNode, feature);
+      FeatureNode* node = new FeatureNode(feature);
+      node->setMapNode(mapNode);
       rv = new FeatureNodeInterface(node, metaData);
     }
     else
     {
-      LocalGeometryNode* node = new LocalGeometryNode(mapNode, p.geom_.get(), p.style_);
-      Utils::applyLocalGeometryOffsets(*node, p);
+      LocalGeometryNode* node = new LocalGeometryNode(p.geom_.get(), p.style_);
+      node->setMapNode(mapNode);
+      Utils::applyLocalGeometryOffsets(*node, p, nodeType);
       rv = new LocalGeometryNodeInterface(node, metaData);
     }
   }
   else // if ( nodeType == GOGNODE_HOSTED )
   {
-      LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
-      node->setLocalOffset(p.getLTPOffset());
+    LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
+      Utils::applyLocalGeometryOffsets(*node, p, nodeType);
       rv = new LocalGeometryNodeInterface(node, metaData);
   }
 

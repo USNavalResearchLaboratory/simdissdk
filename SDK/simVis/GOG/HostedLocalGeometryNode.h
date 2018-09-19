@@ -36,13 +36,15 @@ class /* HEADER-ONLY */ HostedLocalGeometryNode : public osgEarth::Annotation::L
 {
 public:
   HostedLocalGeometryNode(osgEarth::Symbology::Geometry* geometry, const osgEarth::Style& style)
-    : LocalGeometryNode(NULL, geometry, style)
+    : LocalGeometryNode(geometry, style)
   {
   }
 
   HostedLocalGeometryNode(osg::Node* node, const osgEarth::Style& style)
-    : LocalGeometryNode(NULL, node, style)
+    : LocalGeometryNode()
   {
+      getPositionAttitudeTransform()->addChild(node);
+      setStyle(style);
   }
 
   /// Override setMapNode to ignore values

@@ -2,6 +2,7 @@
 
 #pragma vp_location fragment_coloring
 #pragma vp_entryPoint sdkPickHighlightFragment
+#pragma vp_order 3.0
 
 // Input from the vertex shader
 flat in int sdk_pick_isselected;

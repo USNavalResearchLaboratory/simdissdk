@@ -249,7 +249,7 @@ namespace
     NewPlatformListener(Container* container, simVis::View* view, PlatformListData* data)
       : container_(container), view_(view), data_(data) { }
 
-    void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::ObjectType ot)
+    virtual void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::ObjectType ot)
     {
       if (ot != simData::PLATFORM)
         return;
@@ -297,7 +297,7 @@ namespace
   {
     explicit ControlPrefsNotification(ControlPrefsListener* listener) : listener_(listener) { }
 
-    void onPrefsChange(simData::DataStore &ds, simData::ObjectId id)
+    virtual void onPrefsChange(simData::DataStore &ds, simData::ObjectId id)
     {
       if (ds.objectType(id) == simData::PLATFORM)
         listener_->notifyPrefsChange(ds, id);
@@ -376,7 +376,7 @@ namespace
       simData::DataStore* dataStore)
       : container_(container), view_(view), data_(data), antennaPattern_(antennaPattern), dataStore_(dataStore) { }
 
-    void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::ObjectType ot)
+    virtual void onAddEntity(simData::DataStore *ds, simData::ObjectId newId, simData::ObjectType ot)
     {
       if (ot != simData::BEAM)
         return;

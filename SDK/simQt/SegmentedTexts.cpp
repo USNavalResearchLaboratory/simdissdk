@@ -22,6 +22,7 @@
 #include <cassert>
 #include <math.h>
 #include <limits>
+#include <QDateTime>
 
 #include "simCore/Calc/Math.h"
 #include "simCore/Time/Exception.h"
@@ -891,7 +892,8 @@ namespace simQt {
   //------------------------------------------------------------------------------------------------------------------
 
   OrdinalTexts::OrdinalTexts()
-    : SegmentedTexts()
+    : SegmentedTexts(),
+      zone_(simCore::TIMEZONE_UTC)
   {
     makeSegments_();
   }
@@ -958,7 +960,18 @@ namespace simQt {
     if (fraction_ != NULL)
       seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
 
-    return simCore::TimeStamp(years_->value(), seconds);
+    simCore::TimeStamp stamp(years_->value(), seconds);
+    // Remove the timezone offset that was introduced by setTimestamp()
+    if (zone_ == simCore::TIMEZONE_LOCAL)
+    {
+      // Define a UTC datetime with the timestamp
+      tm timeComponents = simCore::getTimeStruct(stamp.secondsSinceRefYear(), stamp.referenceYear() - 1900);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      // Change it to local time so that Qt figures out the local time offset from UTC time
+      dateTime.setTimeSpec(Qt::LocalTime);
+      stamp -= dateTime.offsetFromUtc();
+    }
+    return stamp;
   }
 
   void OrdinalTexts::setTimeStamp(const simCore::TimeStamp& value)
@@ -966,8 +979,19 @@ namespace simQt {
     if (!inRange_(value, limitBeforeStart_, limitAfterEnd_))
       return;
 
-    years_->setValue(value.referenceYear());
-    double time = value.secondsSinceRefYear().Double();
+    simCore::TimeStamp stamp = value;
+    if (zone_ == simCore::TIMEZONE_LOCAL)
+    {
+      // Define a UTC datetime with the timestamp
+      tm timeComponents = simCore::getTimeStruct(value.secondsSinceRefYear(), value.referenceYear() - 1900);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      // Change it to local time so that Qt figures out the local time offset from UTC time
+      dateTime.setTimeSpec(Qt::LocalTime);
+      stamp += dateTime.offsetFromUtc();
+    }
+
+    years_->setValue(stamp.referenceYear());
+    double time = stamp.secondsSinceRefYear().Double();
     int days = static_cast<int>(time/86400.0);
     int hours = static_cast<int>((time-days*86400)/3600);
     int minutes = static_cast<int>((time-days*86400-hours*3600)/60);
@@ -1015,6 +1039,7 @@ namespace simQt {
       OrdinalTexts temp;
       temp.setTimeRange(scenarioReferenceYear_, simCore::TimeStamp(1970, 0.0), simCore::TimeStamp(2070, 0.0));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
+      temp.setTimeZone(zone_);
       temp.setText(text);
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
         return QValidator::Intermediate;
@@ -1033,9 +1058,24 @@ namespace simQt {
     emit timeChanged(timeStamp());
   }
 
+  void OrdinalTexts::setTimeZone(simCore::TimeZone zone)
+  {
+    if (zone == zone_)
+      return;
+
+    // Timestamp() is no longer correct after this line.  If timestamp must stay consistent after this call, caller must save it and restore it after calling
+    zone_ = zone;
+  }
+
+  simCore::TimeZone OrdinalTexts::timeZone() const
+  {
+    return zone_;
+  }
+
   //--------------------------------------------------------------------------
   MonthDayYearTexts::MonthDayYearTexts()
-    : SegmentedTexts()
+    : SegmentedTexts(),
+      zone_(simCore::TIMEZONE_UTC)
   {
     makeSegments_();
   }
@@ -1122,7 +1162,17 @@ namespace simQt {
       secondsIntoYear += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
 
     // combine the reference year with the seconds offset to make a TimeStamp
-    return simCore::TimeStamp(years_->value(), secondsIntoYear);
+    simCore::TimeStamp stamp(years_->value(), secondsIntoYear);
+    if (zone_ == simCore::TIMEZONE_LOCAL)
+    {
+      // Define a UTC datetime with the timestamp
+      tm timeComponents = simCore::getTimeStruct(stamp.secondsSinceRefYear(), stamp.referenceYear() - 1900);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      // Change it to local time so that Qt figures out the local time offset from UTC time
+      dateTime.setTimeSpec(Qt::LocalTime);
+      stamp -= dateTime.offsetFromUtc();
+    }
+    return stamp;
   }
 
   void MonthDayYearTexts::setTimeStamp(const simCore::TimeStamp& value)
@@ -1130,9 +1180,20 @@ namespace simQt {
     if (!inRange_(value, limitBeforeStart_, limitAfterEnd_))
       return;
 
+    simCore::TimeStamp stamp = value;
+    if (zone_ == simCore::TIMEZONE_LOCAL)
+    {
+      // Define a UTC datetime with the timestamp
+      tm timeComponents = simCore::getTimeStruct(value.secondsSinceRefYear(), value.referenceYear() - 1900);
+      QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
+      // Change it to local time so that Qt figures out the local time offset from UTC time
+      dateTime.setTimeSpec(Qt::LocalTime);
+      stamp += dateTime.offsetFromUtc();
+    }
+
     try
     {
-      double secondsSinceRefYear = value.secondsSinceRefYear();
+      double secondsSinceRefYear = stamp.secondsSinceRefYear();
       const double fractionsOfSecond = secondsSinceRefYear - static_cast<int>(secondsSinceRefYear);
       int fraction = static_cast<int>(fractionsOfSecond * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
       // Check to see if rounded up to a full second
@@ -1152,7 +1213,7 @@ namespace simQt {
       int dayInMonth = 0; // 1 to 31
 
       // need the day to be 0 to 365
-      simCore::getMonthAndDayOfMonth(month, dayInMonth, value.referenceYear() - 1900, dayOfYear - 1);
+      simCore::getMonthAndDayOfMonth(month, dayInMonth, stamp.referenceYear() - 1900, dayOfYear - 1);
 
       if (fraction_ != NULL)
         fraction_->setValue(static_cast<int>(fractionsOfSecond * std::pow(10.0, static_cast<double>(precision_)) + 0.5));
@@ -1160,7 +1221,7 @@ namespace simQt {
       minutes_->setValue(static_cast<int>(min));
       hours_->setValue(static_cast<int>(hour));
       days_->setValue(dayInMonth);
-      years_->setValue(value.referenceYear());
+      years_->setValue(stamp.referenceYear());
       month_->setIntValue(month);
     }
     catch (simCore::TimeException &)
@@ -1187,12 +1248,27 @@ namespace simQt {
       MonthDayYearTexts temp;
       temp.setTimeRange(scenarioReferenceYear_, simCore::TimeStamp(1970, 0.0), simCore::TimeStamp(2070, 0.0));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
+      temp.setTimeZone(zone_);
       temp.setText(text);
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
         return QValidator::Intermediate;
     }
 
     return lastState;
+  }
+
+  void MonthDayYearTexts::setTimeZone(simCore::TimeZone zone)
+  {
+    if (zone == zone_)
+      return;
+
+    // Timestamp() is no longer correct after this line.  If timestamp must stay consistent after this call, caller must save it and restore it after calling
+    zone_ = zone;
+  }
+
+  simCore::TimeZone MonthDayYearTexts::timeZone() const
+  {
+    return zone_;
   }
 }
 

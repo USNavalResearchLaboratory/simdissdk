@@ -39,7 +39,10 @@ namespace osgEarth {
   }
 }
 namespace simData { class DataStore; }
-namespace simVis { class AnimatedLineNode; }
+namespace simVis {
+  class AnimatedLineNode;
+  class EntityNode;
+}
 
 namespace simUtil {
 
@@ -237,6 +240,39 @@ private:
 
   const simData::DataStore& dataStore_;
   simData::ObjectId platformId_;
+  /** Cache of the LLA from the data store. */
+  mutable simCore::Vec3 lla_;
+};
+
+/** Position based off a node's locator LLA coordinate location. */
+class SDKUTIL_EXPORT EntityNodePosition : public Position
+{
+public:
+  explicit EntityNodePosition(simVis::EntityNode* node);
+
+  virtual bool isValid() const;
+  virtual const simCore::Vec3& lla() const;
+  virtual bool operator==(const Position& other) const;
+  virtual bool operator!=(const Position& other) const;
+
+  /**
+  * Returns the Unique ID of the node
+  * @return The Unique ID of the node
+  */
+  simData::ObjectId id() const;
+
+  /**
+  * Returns the display name of the entity or empty string if there is no entity
+  * @return the display name of the entity or empty string if there is no entity
+  */
+  std::string entityName() const;
+
+protected:
+  /** Reference-derived */
+  virtual ~EntityNodePosition();
+
+private:
+  osg::ref_ptr<simVis::EntityNode> node_;
   /** Cache of the LLA from the data store. */
   mutable simCore::Vec3 lla_;
 };

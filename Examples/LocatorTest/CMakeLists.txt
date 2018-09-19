@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_LOCATOR_TEST)
 
 set(PROJECT_FILES
-    src/LocatorTestExample.cpp
+    LocatorTestExample.cpp
 )
 
 add_executable(example_locatortest ${PROJECT_FILES})

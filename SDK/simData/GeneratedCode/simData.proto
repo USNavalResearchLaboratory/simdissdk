@@ -664,8 +664,10 @@ message PlatformPrefs {
   /// Automatically use the platform's orientation clamp values at extremely low velocity.
   optional bool clampOrientationAtLowVelocity = 60 [default = false];
 
-  // Toggle surface clamping of the platform
+  // Keep platform clamp to the surface
   optional bool surfaceClamping = 61 [default = false];
+  /// Keep platform above the surface
+  optional bool aboveSurfaceClamping = 69 [default = false];
 
   /// Toggles lighting
   optional bool lighted = 16 [default = true];
@@ -780,6 +782,21 @@ message PlatformPrefs {
 
   /// The polygonStipple rendering option, a value between 1 and 9 corresponding to 9 SIMDIS stipple patterns
   optional uint32 polygonStipple = 59;
+
+  /// The color to use for visible horizon line of sight areas
+  optional fixed32 visibleLosColor = 64 [default = 0x00FF0080];
+
+  /// The color to use for obstructed horizon line of sight areas
+  optional fixed32 obstructedLosColor = 65 [default = 0xFF000080];
+
+  /// The range resolution to use for line of sight calculations, in meters
+  optional double losRangeResolution = 66 [default = 1000.0];
+
+  /// The azimuthal resolution to use for line of sight calculations, in degrees
+  optional double losAzimuthalResolution = 67 [default = 15.0];
+
+  /// The altitude offset applied to the Platform's altitude when calculating LOS, in meters
+  optional double losAltitudeOffset = 68 [default = 0.0];
 };
 
 /// timed update to platform prefs; commands override prefs
@@ -1153,6 +1170,8 @@ message CustomRenderingProperties {
   optional uint64 originalId = 3;
   /// User-defined source string
   optional string source = 4;
+  /// The name of the renderer that should process this entity
+  optional string renderer = 5;
 };
 
 /// preferences for the display of a Custom RenRenderingderng
@@ -1199,7 +1218,7 @@ message ProjectorPrefs {
   /// Determine if we want to show projector frustum
   optional bool showFrustum = 3 [default = false];
   /// Projector alpha for blending [0.0, 1.0]
-  optional float projectorAlpha = 4 [default = 0.1];
+  optional float projectorAlpha = 4 [default = 1.0];
   /// Determine if we should interpolate FOV
   optional bool interpolateProjectorFov = 5 [default = true];
 };

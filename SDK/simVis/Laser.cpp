@@ -99,7 +99,7 @@ void LaserNode::updateLabel_(const simData::LaserPrefs& prefs)
 {
   if (hasLastUpdate_)
   {
-    std::string label = getEntityName(EntityNode::DISPLAY_NAME);
+    std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
     if (prefs.commonprefs().labelprefs().namelength() > 0)
       label = label.substr(0, prefs.commonprefs().labelprefs().namelength());
 
@@ -185,21 +185,7 @@ const std::string LaserNode::getEntityName(EntityNode::NameType nameType, bool a
   if (!hasLastPrefs_)
     return "";
 
-  switch (nameType)
-  {
-  case EntityNode::REAL_NAME:
-    return lastPrefs_.commonprefs().name();
-  case EntityNode::ALIAS_NAME:
-    return lastPrefs_.commonprefs().alias();
-  case EntityNode::DISPLAY_NAME:
-    if (lastPrefs_.commonprefs().usealias())
-    {
-      if (!lastPrefs_.commonprefs().alias().empty() || allowBlankAlias)
-        return lastPrefs_.commonprefs().alias();
-    }
-    return lastPrefs_.commonprefs().name();
-  }
-  return "";
+  return getEntityName_(lastPrefs_.commonprefs(), nameType, allowBlankAlias);
 }
 
 bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
@@ -409,6 +395,7 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
   const unsigned int numSegs = simCore::sdkMax(MIN_NUM_SEGMENTS, simCore::sdkMin(MAX_NUM_SEGMENTS, static_cast<unsigned int>(length / segmentLength)));
 
   osgEarth::LineDrawable* g = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  g->setDataVariance(osg::Object::DYNAMIC);
   g->setName("simVis::LaserNode");
 
   // allocate the desired number of points, then generate them

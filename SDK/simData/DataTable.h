@@ -611,19 +611,19 @@ public:
    * @{
    */
   /** Start iteration at the beginning of the container (smallest time). */
-  virtual Iterator begin() = 0;
+  virtual Iterator begin() const = 0;
   /** Iterator representing the back of the container (largest time). */
-  virtual Iterator end() = 0;
+  virtual Iterator end() const = 0;
   /**
    * Returns lower_bound() iterator into container; see DataSlice::lower_bound()
    * for detailed examples and description of lower_bound() functionality.
    */
-  virtual Iterator lower_bound(double timeValue) = 0;
+  virtual Iterator lower_bound(double timeValue) const = 0;
   /**
    * Returns upper_bound() iterator into container; see DataSlice::upper_bound()
    * for detailed examples and description of upper_bound() functionality.
    */
-  virtual Iterator upper_bound(double timeValue) = 0;
+  virtual Iterator upper_bound(double timeValue) const = 0;
   /**
    * Retrieves an iterator such that next() is the time at or immediately before
    * the current time.  If there is no value at or before the current time, then

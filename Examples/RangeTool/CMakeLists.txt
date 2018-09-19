@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_RANGE_TOOL)
 
 set(PROJECT_FILES
-    src/ExampleRangeTool.cpp
+    ExampleRangeTool.cpp
 )
 
 add_executable(example_rangetool ${PROJECT_FILES})

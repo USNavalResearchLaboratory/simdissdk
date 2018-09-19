@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cassert>
 #include "osg/Depth"
+#include "osg/PointSprite"
 #include "osgGA/StateSetManipulator"
 #include "osgViewer/ViewerEventHandlers"
 #include "osgEarth/GLUtils"
@@ -41,6 +42,7 @@
 #include "simVis/Gate.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/CustomRendering.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
@@ -580,6 +582,14 @@ View::View()
   osg::Group* root = new osg::Group();
   osgViewer::View::setSceneData(root);
 
+#ifdef OSG_GL3_AVAILABLE
+  // For GL3, Point Sprite is always on.  But the mode validity flags need to be configured
+  // properly, and there is a bug in OSG 3.6.2 where mode validity flags are only initialized
+  // correctly if the StateAttribute is in the state tree of the SceneData on the first
+  // rendering pass for that view.  So we enable Point Sprite explicitly here at the top level.
+  root->getOrCreateStateSet()->setTextureAttributeAndModes(0, new osg::PointSprite);
+#endif
+
   // Ready the overhead mode. This just installs the uniforms; it does not
   // activate the actual overhead mode on the view.
   OverheadMode::install(root);
@@ -604,14 +614,15 @@ View::View()
   focusMan_ = new FocusManager(this);
 
   // Apply the new viewport and new perspective matrix
-  getCamera()->setProjectionMatrixAsPerspective(fovY(), extents_.width_ / extents_.height_, 1.f, 10000.f);
+  thisCamera->setProjectionMatrixAsPerspective(fovY(), extents_.width_ / extents_.height_, 1.f, 10000.f);
 
   // Install a viewport uniform on each camera, giving all shaders access
   // to the window size. The osgEarth::LineDrawable construct uses this.
-  getCamera()->addCullCallback(new osgEarth::InstallViewportSizeUniform());
+  thisCamera->addCullCallback(new osgEarth::InstallViewportSizeUniform());
 
-  // set global defaults for LineDrawable
-  osgEarth::GLUtils::setGlobalDefaults(getCamera()->getOrCreateStateSet());
+  // set global defaults for various scene elements
+  osgEarth::GLUtils::setGlobalDefaults(thisCamera->getOrCreateStateSet());
+  osgEarth::GLUtils::setPointSmooth(thisCamera->getOrCreateStateSet(), osg::StateAttribute::ON);
 }
 
 View::~View()
@@ -1972,6 +1983,12 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
     // Fall back to Gate centroids
     if (!proxyNode)
       proxyNode = entityNode->findAttachment<GateCentroid>();
+
+    if ((!proxyNode) && (entityNode->type() == simData::CUSTOM_RENDERING))
+    {
+      auto customNode = static_cast<CustomRenderingNode*>(entityNode);
+      proxyNode = customNode->locatorNode();
+    }
 
     if (proxyNode)
       node = proxyNode;

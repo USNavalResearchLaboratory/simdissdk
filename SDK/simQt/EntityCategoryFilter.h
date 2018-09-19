@@ -62,13 +62,6 @@ public:
    */
   explicit EntityCategoryFilter(simData::DataStore* dataStore, WidgetType widgetType = NO_WIDGET);
 
-  /**
-   * Constructor.  Pass in a CategoryFilter object and a flag to indicate if a widget should be created or not.
-   * @param categoryFilter Category filter that serves as the initial state
-   * @param widgetType  Enumeration to indicate if a widget should be created and what type
-   */
-  explicit EntityCategoryFilter(const simData::CategoryFilter& categoryFilter, WidgetType widgetType = NO_WIDGET);
-
   /** Destructor */
   virtual ~EntityCategoryFilter();
 

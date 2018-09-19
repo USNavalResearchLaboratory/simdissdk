@@ -126,7 +126,7 @@ osgEarth::Util::Controls::LabelControl* ClassificationBanner::createControl_(con
   osgEarth::Util::Controls::Control::Alignment vertAlign) const
 {
   osgEarth::Util::Controls::LabelControl* classControl = new osgEarth::Util::Controls::LabelControl(classLabel, simVis::osgFontSize(fontSize_), classColor);
-  classControl->setHaloColor(osg::Vec4f(0.f, 0.f, 0.f, classColor.a()));
+  classControl->setHaloColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f)); // opaque outline
   classControl->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_CENTER);
   classControl->setVertAlign(vertAlign);
   classControl->setPadding(0);
@@ -163,17 +163,11 @@ void ClassificationBanner::updateClassLabel_()
   if (classLabelUpper_->text() != classLabel)
     classLabelUpper_->setText(classLabel);
   if (classLabelUpper_->foreColor() != classColor)
-  {
     classLabelUpper_->setForeColor(classColor);
-    classLabelUpper_->setHaloColor(osg::Vec4f(0.f, 0.f, 0.f, classColor.a()));
-  }
   if (classLabelLower_->text() != classLabel)
     classLabelLower_->setText(classLabel);
   if (classLabelLower_->foreColor() != classColor)
-  {
     classLabelLower_->setForeColor(classColor);
-    classLabelLower_->setHaloColor(osg::Vec4f(0.f, 0.f, 0.f, classColor.a()));
-  }
 }
 
 } // namespace simVis

@@ -69,23 +69,30 @@ static const osg::Vec4f DEFAULT_AMBIENT(
   1.f
   );
 
-/** Callback to ModelCache that calls setModel_() when the model is ready. */
+/** Callback to ModelCache that calls setModel() when the model is ready. */
 class PlatformModelNode::SetModelCallback : public simVis::ModelCache::ModelReadyCallback
 {
 public:
   explicit SetModelCallback(PlatformModelNode* platform)
-    : platform_(platform)
+    : platform_(platform),
+      ignoreResult_(false)
   {
   }
   virtual void loadFinished(const osg::ref_ptr<osg::Node>& model, bool isImage, const std::string& uri)
   {
     osg::ref_ptr<PlatformModelNode> refPlatform;
-    if (platform_.lock(refPlatform))
-      refPlatform->setModel_(model.get(), isImage);
+    if (platform_.lock(refPlatform) && !ignoreResult_)
+      refPlatform->setModel(model.get(), isImage);
+  }
+
+  void ignoreResult()
+  {
+    ignoreResult_ = true;
   }
 
 private:
   osg::observer_ptr<PlatformModelNode> platform_;
+  bool ignoreResult_;
 };
 
 /* OSG Scene Graph Layout of This Class
@@ -199,7 +206,7 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   alphaVolumeGroup_->getOrCreateStateSet()->setAttributeAndModes(new osg::CullFace(osg::CullFace::FRONT), osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
 
   // Set an initial model.  Without this, visitors expecting a node may fail early.
-  setModel_(simVis::Registry::instance()->modelCache()->boxNode(), false);
+  setModel(simVis::Registry::instance()->modelCache()->boxNode(), false);
 }
 
 PlatformModelNode::~PlatformModelNode()
@@ -261,7 +268,7 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
 
   const simVis::Registry* registry = simVis::Registry::instance();
   if (prefs.icon().empty())
-    setModel_(NULL, false);
+    setModel(NULL, false);
   else if (!registry->isMemoryCheck())
   {
     // Find the fully qualified URI
@@ -270,20 +277,31 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
     if (uri.empty())
     {
       SIM_WARN << "Failed to find icon model: " << prefs.icon() << "\n";
-      setModel_(simVis::Registry::instance()->modelCache()->boxNode(), false);
+      setModel(simVis::Registry::instance()->modelCache()->boxNode(), false);
     }
     else
     {
-      registry->modelCache()->asyncLoad(uri, new SetModelCallback(this));
+      // Kill off any pending async model loads
+      if (lastSetModelCallback_.valid())
+        lastSetModelCallback_->ignoreResult();
+      lastSetModelCallback_ = new SetModelCallback(this);
+      registry->modelCache()->asyncLoad(uri, lastSetModelCallback_.get());
     }
   }
   return true;
 }
 
-void PlatformModelNode::setModel_(osg::Node* newModel, bool isImage)
+void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
 {
   if (model_ == newModel && isImageModel_ == isImage)
     return;
+
+  // Kill off any pending async model loads
+  if (lastSetModelCallback_.valid())
+  {
+    lastSetModelCallback_->ignoreResult();
+    lastSetModelCallback_ = NULL;
+  }
 
   isImageModel_ = isImage;
 
@@ -828,9 +846,12 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
 
-  // Note that the brightness calculation is low cost and we do not check PB_FIELD_CHANGED on it
-  const float brightnessMagnitude = prefs.brightness() * BRIGHTNESS_TO_AMBIENT;
-  brightnessUniform_->set(osg::Vec4f(brightnessMagnitude, brightnessMagnitude, brightnessMagnitude, 1.f));
+  // Note that the brightness calculation is low cost, but setting brightness uniform is not necessarily low-cost, so we do check PB_FIELD_CHANGED
+  if (PB_FIELD_CHANGED(&prefs, &lastPrefs_, brightness))
+  {
+    const float brightnessMagnitude = prefs.brightness() * BRIGHTNESS_TO_AMBIENT;
+    brightnessUniform_->set(osg::Vec4f(brightnessMagnitude, brightnessMagnitude, brightnessMagnitude, 1.f));
+  }
 
   if (needsBoundsUpdate)
     updateBounds_();

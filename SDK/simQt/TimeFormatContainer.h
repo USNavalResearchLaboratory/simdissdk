@@ -85,6 +85,11 @@ public:
   /// get the number of digits after the decimal point
   virtual unsigned int precision() = 0;
 
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone) = 0;
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const = 0;
+
 signals:
   /// Emitted when the time changes via the user
   void timeEdited(const simCore::TimeStamp& value);
@@ -131,6 +136,11 @@ public:
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
 
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone zone);
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const;
+
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the time in seconds
 };
@@ -166,6 +176,11 @@ public:
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
+
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone zone);
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
@@ -204,6 +219,11 @@ public:
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
 
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone zone);
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const;
+
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
 };
@@ -240,6 +260,11 @@ public:
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
 
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone zone);
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const;
+
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the minutes
 };
@@ -275,6 +300,11 @@ public:
   virtual void setPrecision(unsigned int digits);
   /// get the number of digits after the decimal point
   virtual unsigned int precision();
+
+  /// Set the time zone to use when displaying text
+  virtual void setTimeZone(simCore::TimeZone zone);
+  /// Get the time zone to use when displaying text
+  virtual simCore::TimeZone timeZone() const;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the hours

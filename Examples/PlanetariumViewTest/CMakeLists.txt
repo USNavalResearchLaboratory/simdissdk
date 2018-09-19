@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_PLANETARIUM_VIEW)
 
 set(PROJECT_FILES
-    src/PlanetariumViewTest.cpp
+    PlanetariumViewTest.cpp
 )
 
 add_executable(example_planetariumviewtest ${PROJECT_FILES})

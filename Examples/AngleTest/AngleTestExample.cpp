@@ -86,14 +86,17 @@ struct SetUpdate : public ControlEventHandler
 
     simData::DataStore::Transaction t;
     simData::PlatformUpdate* u = s_dataStore->addPlatformUpdate(s_id, &t);
-    u->set_time(s_time);
-    u->set_x(ecef.x());
-    u->set_y(ecef.y());
-    u->set_z(ecef.z());
-    u->set_psi(ecef.psi());
-    u->set_theta(ecef.theta());
-    u->set_phi(ecef.phi());
-    t.complete(&u);
+    if (u)
+    {
+      u->set_time(s_time);
+      u->set_x(ecef.x());
+      u->set_y(ecef.y());
+      u->set_z(ecef.z());
+      u->set_psi(ecef.psi());
+      u->set_theta(ecef.theta());
+      u->set_phi(ecef.phi());
+      t.complete(&u);
+    }
 
     s_dataStore->update(s_time);
   }

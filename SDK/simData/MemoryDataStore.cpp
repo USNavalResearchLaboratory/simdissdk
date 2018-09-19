@@ -215,6 +215,26 @@ private:
 
 //----------------------------------------------------------------------------
 
+/** Adapts NewRowDataListener to MemoryDataStore's newUpdatesListener_ */
+class NewRowDataToNewUpdatesAdapter : public MemoryTable::TableManager::NewRowDataListener
+{
+public:
+  explicit NewRowDataToNewUpdatesAdapter(simData::MemoryDataStore& dataStore)
+    : dataStore_(dataStore)
+  {
+  }
+
+  virtual void onNewRowData(simData::DataTable& table, simData::ObjectId id, double dataTime)
+  {
+    dataStore_.newUpdatesListener().onNewRowData(&dataStore_, table, id, dataTime);
+  }
+
+private:
+  simData::MemoryDataStore& dataStore_;
+};
+
+//----------------------------------------------------------------------------
+
 /** InternalsMemento implementation for MemoryDataStore */
 class MemoryDataStore::MemoryInternalsMemento : public InternalsMemento
 {
@@ -228,6 +248,7 @@ public:
 
     listeners_ = ds.listeners_;
     scenarioListeners_ = ds.scenarioListeners_;
+    newUpdatesListener_ = ds.newUpdatesListener_;
     ds.dataTableManager().getObservers(dtObservers_);
     ds.categoryNameManager().getListeners(catListeners_);
     defaultPlatformPrefs_.CopyFrom(ds.defaultPlatformPrefs_);
@@ -236,9 +257,7 @@ public:
     defaultLaserPrefs_.CopyFrom(ds.defaultLaserPrefs_);
     defaultLobGroupPrefs_.CopyFrom(ds.defaultLobGroupPrefs_);
     defaultProjectorPrefs_.CopyFrom(ds.defaultProjectorPrefs_);
-#ifdef ENABLE_CUSTOM_RENDERING
     defaultCustomRenderingPrefs_.CopyFrom(ds.defaultCustomRenderingPrefs_);
-#endif
     boundClock_ = ds.boundClock_;
   }
 
@@ -259,6 +278,8 @@ public:
     for (ScenarioListenerList::const_iterator iter2 = scenarioListeners_.begin(); iter2 != scenarioListeners_.end(); ++iter2)
       ds.addScenarioListener(*iter2);
 
+    ds.setNewUpdatesListener(newUpdatesListener_);
+
     for (std::vector<DataTableManager::ManagerObserverPtr>::const_iterator iter = dtObservers_.begin(); iter != dtObservers_.end(); ++iter)
       ds.dataTableManager().addObserver(*iter);
 
@@ -275,6 +296,7 @@ private: // data
 
   DataStore::ListenerList listeners_;
   DataStore::ScenarioListenerList scenarioListeners_;
+  DataStore::NewUpdatesListenerPtr newUpdatesListener_;
   std::vector<DataTableManager::ManagerObserverPtr> dtObservers_;
   std::vector<CategoryNameManager::ListenerPtr> catListeners_;
 
@@ -285,11 +307,11 @@ private: // data
   LaserPrefs defaultLaserPrefs_;
   LobGroupPrefs defaultLobGroupPrefs_;
   ProjectorPrefs defaultProjectorPrefs_;
-#ifdef ENABLE_CUSTOM_RENDERING
   CustomRenderingPrefs defaultCustomRenderingPrefs_;
-#endif
   simCore::Clock* boundClock_;
 };
+
+//----------------------------------------------------------------------------
 
 ///constructor
 MemoryDataStore::MemoryDataStore()
@@ -299,6 +321,7 @@ MemoryDataStore::MemoryDataStore()
   interpolationEnabled_(false),
   interpolator_(NULL),
   timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
+  newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
   dataLimitsProvider_(NULL),
@@ -308,6 +331,7 @@ MemoryDataStore::MemoryDataStore()
 {
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
+  newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
   genericData_[0] = new MemoryGenericDataSlice();
 }
 
@@ -319,6 +343,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   interpolationEnabled_(false),
   interpolator_(NULL),
   timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
+  newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
   dataLimitsProvider_(NULL),
@@ -328,6 +353,7 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
 {
   dataLimitsProvider_ = new DataStoreLimits(*this);
   dataTableManager_ = new MemoryTable::TableManager(dataLimitsProvider_);
+  newRowDataListener_.reset(new NewRowDataToNewUpdatesAdapter(*this));
   properties_.CopyFrom(properties);
   genericData_[0] = new MemoryGenericDataSlice();
 }
@@ -360,9 +386,7 @@ void MemoryDataStore::clear()
   deleteEntries_<Lasers>(&lasers_);
   deleteEntries_<Projectors>(&projectors_);
   deleteEntries_<LobGroups>(&lobGroups_);
-#ifdef ENABLE_CUSTOM_RENDERING
   deleteEntries_<CustomRenderings>(&customRenderings_);
-#endif
   GenericDataMap::const_iterator it = genericData_.find(0);
   if (it != genericData_.end())
     delete it->second;
@@ -764,7 +788,6 @@ void MemoryDataStore::updateLobGroups_(double time)
   }
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 void MemoryDataStore::updateCustomRenderings_(double time)
 {
   //for each entry
@@ -774,7 +797,6 @@ void MemoryDataStore::updateCustomRenderings_(double time)
     iter->second->commands()->update(this, iter->first, time);
   }
 }
-#endif
 
 void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, FlushType flushType)
 {
@@ -825,11 +847,9 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
   case PROJECTOR:
     flushEntityData(projectors_, flushId, categoryData_, genericData_);
     break;
-#ifdef ENABLE_CUSTOM_RENDERING
   case CUSTOM_RENDERING:
     flushEntityData(customRenderings_, flushId, categoryData_, genericData_);
     break;
-#endif
   case ALL:
   case NONE:
     break;
@@ -870,9 +890,7 @@ void MemoryDataStore::setDefaultPrefs(const PlatformPrefs& platformPrefs, const 
   defaultLaserPrefs_.CopyFrom(laserPrefs);
   defaultLobGroupPrefs_.CopyFrom(lobPrefs);
   defaultProjectorPrefs_.CopyFrom(projectorPrefs);
-#ifdef ENABLE_CUSTOM_RENDERING
   defaultCustomRenderingPrefs_.CopyFrom(CustomRenderingPrefs());
-#endif
 }
 
 void MemoryDataStore::setDefaultPrefs(const PlatformPrefs& platformPrefs)
@@ -923,6 +941,7 @@ void MemoryDataStore::update(double time)
   updateLasers_(time);
   updateProjectors_(time);
   updateLobGroups_(time);
+  updateCustomRenderings_(time);
 
   // After all the slice updates, set the new update time and notify observers
   lastUpdateTime_ = time;
@@ -985,10 +1004,8 @@ void MemoryDataStore::flush(ObjectId flushId, FlushType flushType)
     GenericDataMap::const_iterator it = genericData_.find(0);
     if (it != genericData_.end())
       it->second->flush();
-#ifdef ENABLE_CUSTOM_RENDERING
     for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
       flushEntity_(iter->first, simData::CUSTOM_RENDERING, RECURSIVE);
-#endif
   }
   else
     flushEntity_(flushId, objType, flushType);
@@ -1005,6 +1022,8 @@ void MemoryDataStore::flush(ObjectId flushId, FlushType flushType)
       checkForRemoval_(localCopy);
     }
   }
+  // Send out notification to the new-updates listener
+  newUpdatesListener_->onFlush(this, flushId);
 }
 
 void MemoryDataStore::applyDataLimiting_(ObjectId id)
@@ -1035,11 +1054,9 @@ void MemoryDataStore::applyDataLimiting_(ObjectId id)
   case PROJECTOR:
     dataLimit_(projectors_, id, prefs);
     break;
-#ifdef ENABLE_CUSTOM_RENDERING
   case CUSTOM_RENDERING:
     dataLimit_(customRenderings_, id, prefs);
     break;
-#endif
   case ALL:
   case NONE:
     break;
@@ -1105,7 +1122,6 @@ void MemoryDataStore::idList(IdList *ids, simData::ObjectType type) const
     }
   }
 
-#ifdef ENABLE_CUSTOM_RENDERING
   if (type & CUSTOM_RENDERING)
   {
     for (auto iter = customRenderings_.begin(); iter != customRenderings_.end(); ++iter)
@@ -1113,7 +1129,6 @@ void MemoryDataStore::idList(IdList *ids, simData::ObjectType type) const
       ids->push_back(iter->first);
     }
   }
-#endif
 }
 
 /// Retrieve a list of IDs for objects of 'type' with the given name
@@ -1166,10 +1181,8 @@ void MemoryDataStore::idListByOriginalId(IdList *ids, uint64_t originalId, simDa
     idsByOriginalId(projectors_, ids, originalId);
   if (type & LOB_GROUP)
     idsByOriginalId(lobGroups_, ids, originalId);
-#ifdef ENABLE_CUSTOM_RENDERING
   if (type & CUSTOM_RENDERING)
     idsByOriginalId(customRenderings_, ids, originalId);
-#endif
 }
 
 ///Retrieve a list of IDs for all beams associated with a platform
@@ -1247,7 +1260,6 @@ void MemoryDataStore::lobGroupIdListForHost(ObjectId hostid, IdList *ids) const
   }
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 ///Retrieve a list of IDs for all customs associated with a platform
 void MemoryDataStore::customRenderingIdListForHost(ObjectId hostid, IdList *ids) const
 {
@@ -1259,7 +1271,6 @@ void MemoryDataStore::customRenderingIdListForHost(ObjectId hostid, IdList *ids)
     }
   }
 }
-#endif
 
 ///Retrieves the ObjectType for a particular ID
 simData::ObjectType MemoryDataStore::objectType(ObjectId id) const
@@ -1276,10 +1287,8 @@ simData::ObjectType MemoryDataStore::objectType(ObjectId id) const
     return simData::PROJECTOR;
   if (lobGroups_.find(id) != lobGroups_.end())
     return simData::LOB_GROUP;
-#ifdef ENABLE_CUSTOM_RENDERING
   if (customRenderings_.find(id) != customRenderings_.end())
     return simData::CUSTOM_RENDERING;
-#endif
   return simData::NONE;
 }
 
@@ -1304,10 +1313,8 @@ ObjectId MemoryDataStore::entityHostId(ObjectId childId) const
     return projectorProperties(childId, &t)->hostid();
   case simData::LOB_GROUP:
     return lobGroupProperties(childId, &t)->hostid();
-#ifdef ENABLE_CUSTOM_RENDERING
   case simData::CUSTOM_RENDERING:
     return customRenderingProperties(childId, &t)->hostid();
-#endif
   }
   return 0;
 }
@@ -1425,7 +1432,6 @@ LobGroupProperties* MemoryDataStore::addLobGroup(Transaction *transaction)
   return rv;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 CustomRenderingProperties* MemoryDataStore::addCustomRendering(Transaction *transaction)
 {
   simData::ObjectId id = genUniqueId_();
@@ -1436,7 +1442,6 @@ CustomRenderingProperties* MemoryDataStore::addCustomRendering(Transaction *tran
   entityNameCache_->addEntity(defaultCustomRenderingPrefs_.commonprefs().name(), id, simData::CUSTOM_RENDERING);
   return rv;
 }
-#endif
 
 void MemoryDataStore::removeEntity(ObjectId id)
 {
@@ -1479,9 +1484,7 @@ void MemoryDataStore::removeEntity(ObjectId id)
     laserIdListForHost(id, &ids);
     projectorIdListForHost(id, &ids);
     lobGroupIdListForHost(id, &ids);
-#ifdef ENABLE_CUSTOM_RENDERING
     customRenderingIdListForHost(id, &ids);
-#endif
 
     for (IdList::const_iterator i = ids.begin(); i != ids.end(); ++i)
       removeEntity(*i);
@@ -1517,10 +1520,8 @@ void MemoryDataStore::removeEntity(ObjectId id)
   if (deleteFromMap(lobGroups_, id))
     return;
 
-#ifdef ENABLE_CUSTOM_RENDERING
   if (deleteFromMap(customRenderings_, id))
     return;
-#endif
 }
 
 int MemoryDataStore::removeCategoryDataPoint(ObjectId id, double time, int catNameInt, int valueInt)
@@ -1627,8 +1628,6 @@ LobGroupProperties* MemoryDataStore::mutable_lobGroupProperties(ObjectId id, Tra
   return entry ? entry->mutable_properties() : NULL;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
-
 const CustomRenderingProperties* MemoryDataStore::customRenderingProperties(ObjectId id, Transaction *transaction) const
 {
   const CustomRenderingEntry *entry = getEntry<const CustomRenderingEntry, CustomRenderings, NullTransactionImpl>(id, &customRenderings_, transaction);
@@ -1640,8 +1639,6 @@ CustomRenderingProperties* MemoryDataStore::mutable_customRenderingProperties(Ob
   CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings, NullTransactionImpl>(id, &customRenderings_, transaction);
   return entry ? entry->mutable_properties() : NULL;
 }
-
-#endif
 
 const PlatformPrefs* MemoryDataStore::platformPrefs(ObjectId id, Transaction *transaction) const
 {
@@ -1775,8 +1772,6 @@ LobGroupPrefs* MemoryDataStore::mutable_lobGroupPrefs(ObjectId id, Transaction *
   return NULL;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
-
 const CustomRenderingPrefs* MemoryDataStore::customRenderingPrefs(ObjectId id, Transaction *transaction) const
 {
   const CustomRenderingEntry *entry = getEntry<const CustomRenderingEntry, CustomRenderings, NullTransactionImpl>(id, &customRenderings_, transaction);
@@ -1798,8 +1793,6 @@ CustomRenderingPrefs* MemoryDataStore::mutable_customRenderingPrefs(ObjectId id,
   return NULL;
 }
 
-#endif
-
 const CommonPrefs* MemoryDataStore::commonPrefs(ObjectId id, Transaction* transaction) const
 {
   const PlatformPrefs* plat = platformPrefs(id, transaction);
@@ -1820,11 +1813,10 @@ const CommonPrefs* MemoryDataStore::commonPrefs(ObjectId id, Transaction* transa
   const ProjectorPrefs* proj = projectorPrefs(id, transaction);
   if (proj != NULL)
     return &proj->commonprefs();
-#ifdef ENABLE_CUSTOM_RENDERING
   const CustomRenderingPrefs* custom = customRenderingPrefs(id, transaction);
   if (custom != NULL)
     return &custom->commonprefs();
-#endif
+
   return NULL;
 }
 
@@ -1848,6 +1840,9 @@ CommonPrefs* MemoryDataStore::mutable_commonPrefs(ObjectId id, Transaction* tran
   ProjectorPrefs* proj = mutable_projectorPrefs(id, transaction);
   if (proj != NULL)
     return proj->mutable_commonprefs();
+  CustomRenderingPrefs* custom = mutable_customRenderingPrefs(id, transaction);
+  if (custom != NULL)
+    return custom->mutable_commonprefs();
   return NULL;
 }
 
@@ -1866,7 +1861,7 @@ PlatformUpdate* MemoryDataStore::addPlatformUpdate(ObjectId id, Transaction *tra
 
   // Setup transaction
   MemoryDataSlice<PlatformUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<PlatformUpdate, MemoryDataSlice<PlatformUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<PlatformUpdate, MemoryDataSlice<PlatformUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -1907,7 +1902,7 @@ BeamUpdate* MemoryDataStore::addBeamUpdate(ObjectId id, Transaction *transaction
 
   // Setup transaction
   MemoryDataSlice<BeamUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<BeamUpdate, MemoryDataSlice<BeamUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<BeamUpdate, MemoryDataSlice<BeamUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -1948,7 +1943,7 @@ GateUpdate* MemoryDataStore::addGateUpdate(ObjectId id, Transaction *transaction
 
   // Setup transaction
   MemoryDataSlice<GateUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<GateUpdate, MemoryDataSlice<GateUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<GateUpdate, MemoryDataSlice<GateUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -1989,7 +1984,7 @@ LaserUpdate* MemoryDataStore::addLaserUpdate(ObjectId id, Transaction *transacti
 
   // Setup transaction
   MemoryDataSlice<LaserUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<LaserUpdate, MemoryDataSlice<LaserUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<LaserUpdate, MemoryDataSlice<LaserUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -2030,7 +2025,7 @@ ProjectorUpdate* MemoryDataStore::addProjectorUpdate(ObjectId id, Transaction *t
 
   // Setup transaction
   MemoryDataSlice<ProjectorUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<ProjectorUpdate, MemoryDataSlice<ProjectorUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<ProjectorUpdate, MemoryDataSlice<ProjectorUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -2071,7 +2066,7 @@ LobGroupUpdate* MemoryDataStore::addLobGroupUpdate(ObjectId id, Transaction *tra
 
   // Setup transaction
   MemoryDataSlice<LobGroupUpdate> *slice = entry->updates();
-  *transaction = Transaction(new NewUpdateTransactionImpl<LobGroupUpdate, MemoryDataSlice<LobGroupUpdate> >(update, slice, this, id));
+  *transaction = Transaction(new NewUpdateTransactionImpl<LobGroupUpdate, MemoryDataSlice<LobGroupUpdate> >(update, slice, this, id, true));
 
   return update;
 }
@@ -2097,7 +2092,6 @@ LobGroupCommand *MemoryDataStore::addLobGroupCommand(ObjectId id, Transaction *t
   return command;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 CustomRenderingCommand* MemoryDataStore::addCustomRenderingCommand(ObjectId id, Transaction *transaction)
 {
   assert(transaction);
@@ -2117,7 +2111,6 @@ CustomRenderingCommand* MemoryDataStore::addCustomRenderingCommand(ObjectId id, 
 
   return command;
 }
-#endif
 
 ///@return NULL if generic data for specified 'id' does not exist
 GenericData* MemoryDataStore::addGenericData(ObjectId id, Transaction *transaction)
@@ -2233,13 +2226,11 @@ const LobGroupCommandSlice* MemoryDataStore::lobGroupCommandSlice(ObjectId id) c
   return entry ? entry->commands() : NULL;
 }
 
-#ifdef ENABLE_CUSTOM_RENDERING
 const CustomRenderingCommandSlice* MemoryDataStore::customRenderingCommandSlice(ObjectId id) const
 {
   CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
   return entry ? entry->commands() : NULL;
 }
-#endif
 
 const GenericDataSlice* MemoryDataStore::genericDataSlice(ObjectId id) const
 {
@@ -2261,6 +2252,27 @@ int MemoryDataStore::modifyPlatformCommandSlice(ObjectId id, VisitableDataSlice<
     if (entry == NULL)
       return 1;
     PlatformCommandSlice* commands = entry->commands();
+    commands->modify(modifier);
+    hasChanged_ = true;
+    break;
+  }
+  default:
+    break;
+  }
+
+  return 1;
+}
+
+int MemoryDataStore::modifyCustomRenderingCommandSlice(ObjectId id, VisitableDataSlice<CustomRenderingCommand>::Modifier* modifier)
+{
+  switch (objectType(id))
+  {
+  case simData::CUSTOM_RENDERING:
+  {
+    CustomRenderingEntry *entry = getEntry<CustomRenderingEntry, CustomRenderings>(id, &customRenderings_);
+    if (entry == NULL)
+      return 1;
+    CustomRenderingCommandSlice* commands = entry->commands();
     commands->modify(modifier);
     hasChanged_ = true;
     break;
@@ -2330,6 +2342,29 @@ void MemoryDataStore::removeScenarioListener(ScenarioListenerPtr callback)
   ScenarioListenerList::iterator i = std::find(scenarioListeners_.begin(), scenarioListeners_.end(), callback);
   if (i != scenarioListeners_.end())
     scenarioListeners_.erase(i);
+}
+
+void MemoryDataStore::setNewUpdatesListener(NewUpdatesListenerPtr callback)
+{
+  std::shared_ptr<MemoryTable::TableManager::NewRowDataListener> newRowListener;
+
+  // If clearing out the updates listener, then also clear out the memory table's listener for performance
+  if (callback == NULL)
+    newUpdatesListener_.reset(new DefaultNewUpdatesListener);
+  else
+  {
+    // Set the updates listener, and tie in updates from the table manager too.
+    newUpdatesListener_ = callback;
+    newRowListener = newRowDataListener_;
+  }
+
+  // Update table manager with whatever updater was picked
+  static_cast<MemoryTable::TableManager*>(dataTableManager_)->setNewRowDataListener(newRowListener);
+}
+
+DataStore::NewUpdatesListener& MemoryDataStore::newUpdatesListener() const
+{
+  return *newUpdatesListener_;
 }
 
 CategoryNameManager& MemoryDataStore::categoryNameManager() const
@@ -2604,9 +2639,13 @@ void MemoryDataStore::NewUpdateTransactionImpl<T, SliceType>::commit()
       const CommonPrefs* prefs = dataStore_->commonPrefs(id_, &t);
       slice_->limitByPrefs(*prefs);
     }
-    if (applyTimeBound_)
-      dataStore_->newTimeBound_(updateTime);
     dataStore_->hasChanged_ = true;
+    if (isEntityUpdate_)
+    {
+      dataStore_->newTimeBound_(updateTime);
+      // Notify the data store's new-update callback
+      dataStore_->newUpdatesListener().onEntityUpdate(dataStore_, id_, updateTime);
+    }
   }
 }
 

@@ -248,7 +248,7 @@
      </property>
      <property name="icon">
       <iconset resource="simQtResources.qrc">
-       <normaloff>:/simQt/images/Question.png</normaloff>:/simQt/images/Question.png</iconset>
+       <normaloff>:/simQt/images/CustomRender.png</normaloff>:/simQt/images/CustomRender.png</iconset>
      </property>
      <property name="iconSize">
       <size>

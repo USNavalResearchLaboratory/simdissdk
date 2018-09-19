@@ -55,22 +55,23 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
-    node = new osgEarth::Annotation::LocalGeometryNode(mapNode, shape, p.style_);
+    node = new osgEarth::Annotation::LocalGeometryNode();
+    node->setMapNode(mapNode);
     node->setPosition(p.getMapPosition());
+    node->getPositionAttitudeTransform()->addChild(shape);
+    node->setStyle(p.style_);
     osg::Quat yaw(p.localHeadingOffset_->as(Units::RADIANS), -osg::Vec3(0, 0, 1));
     osg::Quat pitch(p.localPitchOffset_->as(Units::RADIANS), osg::Vec3(1, 0, 0));
     osg::Quat roll(p.localRollOffset_->as(Units::RADIANS), osg::Vec3(0, 1, 0));
     node->setLocalRotation(roll * pitch * yaw);
   }
   else
-  {
     node = new HostedLocalGeometryNode(shape, p.style_);
-  }
 
   GogNodeInterface* rv = NULL;
   if (node)
   {
-    node->setLocalOffset(p.getLTPOffset());
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new SphericalNodeInterface(node, metaData);
     rv->applyConfigToStyle(conf, p.units_);
   }

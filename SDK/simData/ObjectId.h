@@ -39,12 +39,8 @@ enum ObjectType
   LASER     = 0x08,
   PROJECTOR = 0x10,
   LOB_GROUP = 0x20,
-#ifdef ENABLE_CUSTOM_RENDERING
   CUSTOM_RENDERING    = 0x40,
   ALL = (PLATFORM | BEAM | GATE | LASER | PROJECTOR | LOB_GROUP | CUSTOM_RENDERING)
-#else
-  ALL = (PLATFORM | BEAM | GATE | LASER | PROJECTOR | LOB_GROUP)
-#endif
 };
 
 } // End of namespace simData

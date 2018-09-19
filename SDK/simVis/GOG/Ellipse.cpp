@@ -66,14 +66,13 @@ GogNodeInterface* Ellipse::deserialize(const osgEarth::Config&  conf,
     if (p.geometryRequiresClipping())
       Utils::configureStyleForClipping(p.style_);
 
-    node = new osgEarth::Annotation::LocalGeometryNode(mapNode, shape, p.style_);
-    Utils::applyLocalGeometryOffsets(*node, p);
+    node = new osgEarth::Annotation::LocalGeometryNode(shape, p.style_);
+    node->setMapNode(mapNode);
   }
   else
-  {
     node = new HostedLocalGeometryNode(shape, p.style_);
-    node->setLocalOffset(p.getLTPOffset());
-  }
+
+  Utils::applyLocalGeometryOffsets(*node, p, nodeType);
 
   GogNodeInterface* rv = NULL;
   if (node)

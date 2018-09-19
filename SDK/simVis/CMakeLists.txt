@@ -75,6 +75,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}Gate.h
     ${VIS_INC}GeoFence.h
     ${VIS_INC}GlowHighlight.h
+    ${VIS_INC}Gl3Utils.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
@@ -312,41 +313,51 @@ if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
     set(HAVE_SILVERLINING_NODEKIT 1)
 endif()
 include(CheckOSGEarthMethodExists)
-# Newer than 1.8.0 release adds GeodeticLabelingEngine file and getResolution()
-check_osgearth_method_exists(HAVE_OSGEARTH_GEOLABELENGINE "osgEarthUtil/GeodeticLabelingEngine" "getResolution")
-if(HAVE_OSGEARTH_GEOLABELENGINE)
+
+# Newer than 1.9.0 release adds PointDrawable::checkSharedStateSet() to osgEarth
+check_osgearth_method_exists(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET1 "osgEarth/PointDrawable" "checkSharedStateSet")
+if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET1)
     set(SDK_OSGEARTH_DEVEL 1)
-    # Next anticipated version is 1.9.0
+    # Next anticipated version is 1.10.0
     set(SDK_OSGEARTH_VERSION_MAJOR 1)
-    set(SDK_OSGEARTH_VERSION_MINOR 9)
+    set(SDK_OSGEARTH_VERSION_MINOR 10)
     set(SDK_OSGEARTH_VERSION_PATCH 0)
 else()
-    # Newer than 1.7.0 release adds clear() to Profiler
-    check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
-    if(HAVE_OSGEARTH_PROFILER_CLEAR)
-        # Next anticipated version is 1.8.0
+    # Newer than 1.8.0 release adds GeodeticLabelingEngine file and getResolution()
+    check_osgearth_method_exists(HAVE_OSGEARTH_GEOLABELENGINE "osgEarthUtil/GeodeticLabelingEngine" "getResolution")
+    if(HAVE_OSGEARTH_GEOLABELENGINE)
+        # Next anticipated version is 1.9.0
         set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 8)
+        set(SDK_OSGEARTH_VERSION_MINOR 9)
         set(SDK_OSGEARTH_VERSION_PATCH 0)
     else()
-        # Newer than 1.6.0 release removes tileSize() from TileSource
-        check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
-        if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
+        # Newer than 1.7.0 release adds clear() to Profiler
+        check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
+        if(HAVE_OSGEARTH_PROFILER_CLEAR)
+            # Next anticipated version is 1.8.0
             set(SDK_OSGEARTH_VERSION_MAJOR 1)
-            set(SDK_OSGEARTH_VERSION_MINOR 7)
+            set(SDK_OSGEARTH_VERSION_MINOR 8)
             set(SDK_OSGEARTH_VERSION_PATCH 0)
         else()
-            # Version 1.6.0 changed Map's setName to setMapName
-            check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-            if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+            # Newer than 1.6.0 release removes tileSize() from TileSource
+            check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
+            if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
                 set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                set(SDK_OSGEARTH_VERSION_MINOR 6)
+                set(SDK_OSGEARTH_VERSION_MINOR 7)
                 set(SDK_OSGEARTH_VERSION_PATCH 0)
             else()
-                # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
-                set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                set(SDK_OSGEARTH_VERSION_MINOR 5)
-                set(SDK_OSGEARTH_VERSION_PATCH 0)
+                # Version 1.6.0 changed Map's setName to setMapName
+                check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
+                if(HAVE_OSGEARTH_MAP_SETMAPNAME)
+                    set(SDK_OSGEARTH_VERSION_MAJOR 1)
+                    set(SDK_OSGEARTH_VERSION_MINOR 6)
+                    set(SDK_OSGEARTH_VERSION_PATCH 0)
+                else()
+                    # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
+                    set(SDK_OSGEARTH_VERSION_MAJOR 1)
+                    set(SDK_OSGEARTH_VERSION_MINOR 5)
+                    set(SDK_OSGEARTH_VERSION_PATCH 0)
+                endif()
             endif()
         endif()
     endif()
@@ -412,6 +423,8 @@ target_include_directories(simVis PUBLIC
 )
 target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} ${OSGEARTH_ALL_LIBDEPENDENCIES})
+target_link_libraries(simVis PRIVATE ${OPENGL_LIBRARIES})
+
 if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()

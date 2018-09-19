@@ -121,7 +121,9 @@ namespace
     styleAnnotation(feature->style().mutable_value(), valid);
     feature->geoInterp() = osgEarth::GEOINTERP_GREAT_CIRCLE;
 
-    return new osgEarth::Annotation::FeatureNode(mapnode, feature.get());
+    osgEarth::Annotation::FeatureNode* featureNode = new osgEarth::Annotation::FeatureNode(feature.get());
+    featureNode->setMapNode(mapnode);
+    return featureNode;
   }
 
   /// creates all the fences

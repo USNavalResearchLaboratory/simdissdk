@@ -5,7 +5,7 @@ endif()
 project(EXAMPLE_PROJECTORS)
 
 set(PROJECT_FILES
-    src/Projectors.cpp
+    Projectors.cpp
 )
 
 add_executable(example_projectors ${PROJECT_FILES})

@@ -36,6 +36,7 @@ namespace osgEarth{
 namespace Annotation {
   class FeatureNode;
   class GeometryNode;
+  class GeoPositionNode;
   class LabelNode;
   class LocalGeometryNode;
   class GeoPositionNode;
@@ -377,23 +378,22 @@ protected: // methods
   */
   virtual void setStyle_(const osgEarth::Symbology::Style& style) = 0;
 
-  /** initialize fill color. Will have no effect unless called after style_ object has been assigned */
+  /** Called whenever altitude needs to be adjusted, based on altitude offset and altitude mode */
+  virtual void adjustAltitude_() = 0;
+
+  /** Initialize altitude symbol to clamp per vertex to work properly with altitude modes. Will have no effect unless called after style_ object has been assigned */
+  void initializeAltitudeSymbol_();
+
+  /** Initialize fill color. Will have no effect unless called after style_ object has been assigned */
   void initializeFillColor_();
 
-  /** initialize line color. Will have no effect unless called after style_ object has been assigned */
+  /** Initialize line color. Will have no effect unless called after style_ object has been assigned */
   void initializeLineColor_();
 
-  /** Helper method to update the altitude component of a local geometry node's local offset */
-  void setLocalNodeAltOffset_(osgEarth::Annotation::LocalGeometryNode* node, double altOffsetMeters);
-
-  /**
-  * Begin batched updates to the Style, subsequent sets will not apply the style to the GOG
-  */
+  /** Begin batched updates to the Style, subsequent sets will not apply the style to the GOG */
   void beginStyleUpdates_();
 
-  /**
-  * End batched updates to the Style, subsequent sets will apply the style to the GOG
-  */
+  /** End batched updates to the Style, subsequent sets will apply the style to the GOG */
   void endStyleUpdates_();
 
   /**
@@ -404,6 +404,15 @@ protected: // methods
 
   /** Notify listeners that the draw state has changed */
   void fireDrawChanged_() const;
+
+  /**
+  * Helper method for setting the altitude on a geo position node. Determines the altitude based on original altitude, altitude mode,
+  * and altitude offset. The altitudeAdjustment param is for offsets specific to the node (not the shape altitude offset), is typically 0.
+  */
+  void setGeoPositionAltitude_(osgEarth::Annotation::GeoPositionNode& node, double altitudeAdjustment);
+
+  /** Helper method for initializeing hasMapNode_ and altitude_ from the specified GeoPosition node. */
+  void initializeFromGeoPositionNode_(const osgEarth::Annotation::GeoPositionNode& node);
 
 protected: // data
   osg::ref_ptr<osg::Node> osgNode_;  ///< reference to the basic osg::Node. Keep in ref_ptr so this instance will hold on the memory even if it's removed from the scene
@@ -417,6 +426,10 @@ protected: // data
   osgEarth::Symbology::Style style_; ///< style for this node
   osg::Vec4f fillColor_;  ///< fill color; saved because setFilledState can be destructive on shape's fill color
   osg::Vec4f lineColor_; ///< line color needs to be stored in case LineSymbol is turned off
+  double altitude_; ///< cache the original altitude, in meters
+  double altOffset_; ///< cache the altitude offset, in meters
+  AltitudeMode altMode_; ///< cache the altitude mode
+  bool hasMapNode_; ///< indicates if this shape has a map node
 
 private:
 
@@ -459,6 +472,7 @@ public:
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
 
 protected:
+  virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
 
@@ -475,20 +489,20 @@ public:
   /** Constructor */
   FeatureNodeInterface(osgEarth::Annotation::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~FeatureNodeInterface() {}
-  virtual int getAltOffset(double& altOffset) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
   virtual int getTessellation(TessellationStyle& style) const;
-  virtual void setTessellation(TessellationStyle style);
+  virtual void setAltitudeMode(AltitudeMode altMode);
   virtual void setAltOffset(double altOffsetMeters);
+  virtual void setExtrude(bool extrude);
+  virtual void setTessellation(TessellationStyle style);
 
 protected:
+  virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
 
 private:
   osg::observer_ptr<osgEarth::Annotation::FeatureNode> featureNode_;
-  /// cache the altitude offset, in meters
-  double altitudeOffset_;
   /// cache the original altitude values, to apply altitude offset dynamically
   std::vector<double> originalAltitude_;
 };
@@ -502,22 +516,17 @@ public:
   /** Constructor */
   LocalGeometryNodeInterface(osgEarth::Annotation::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~LocalGeometryNodeInterface() {}
-  virtual int getAltOffset(double& altOffset) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
   /// override the get reference position
   virtual int getReferencePosition(osg::Vec3d& referencePosition) const;
-  virtual void setAltOffset(double altOffsetMeters);
 
 protected:
+  virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
 
   /** LocalGeometryNode that this interface represents */
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> localNode_;
-
-private:
-  /// cache altitude for updating altitude mode
-  double altitude_;
 };
 
 /**
@@ -539,6 +548,7 @@ public:
   virtual void setTextOutline(bool draw, const osg::Vec4f& outlineColor);
 
 protected:
+  virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void serializeKeyword_(std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
@@ -561,43 +571,21 @@ public:
   /** Constructor */
   CylinderNodeInterface(osg::Group* groupNode, osgEarth::Annotation::LocalGeometryNode* sideNode, osgEarth::Annotation::LocalGeometryNode* topCapNode, osgEarth::Annotation::LocalGeometryNode* bottomCapNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~CylinderNodeInterface();
-  virtual int getAltOffset(double& altOffset) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
-  /// need to override setting altitude offset to handle updating all 3 nodes, avoid updating if clamped to ground
-  virtual void setAltOffset(double altOffsetMeters);
-  /// need to override setAltitudeMode to reset vertex offsets when changing clamping
   virtual void setAltitudeMode(AltitudeMode altMode);
-  /// need to override the fill and outline state change methods, because changes to the Polygon or Line symbol will produce invalid vertex offsets if clamped
-  virtual void setFilledState(bool state);
-  virtual void setFillColor(const osg::Vec4f& color);
-  virtual void setLineColor(const osg::Vec4f& color);
-  virtual void setLineStyle(Utils::LineStyle style);
-  virtual void setLineWidth(int lineWidth);
-  virtual void setOutlineState(bool outlineState);
 
 protected:
+  virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
 
 private:
-  /// Set the altitude offset in meters on the top, side, and bottom nodes
-  void setAltOffset_(double altOffsetMeters);
-  /// Set the position on the various node geometries, accounting for clamping state
-  void setPosition_(osgEarth::GeoPoint& position, bool groundClamped);
-  /// Toggle the altitude mode to reset the clamping vertex offsets, which is required for various changes to the geometry
-  void reclamp_();
 
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> sideNode_; ///< draws the sides
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> topCapNode_; ///< draws the top cap
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> bottomCapNode_; ///< draws the bottom cap
   /// height of the cylinder in meters
   float height_;
-  /// cache altitude for updating altitude mode, in meters
-  double altitude_;
-  /// cache the altitude offset for updating when changing ground clamp state, in meters
-  double altOffset_;
-  /// cache original position to restore correct vertex offsets when changing clamping
-  osgEarth::GeoPoint* position_;
 };
 
 /**
@@ -611,20 +599,17 @@ public:
   /** Constructor */
   ArcNodeInterface(osg::Group* groupNode, osgEarth::Annotation::LocalGeometryNode* shapeNode, osgEarth::Annotation::LocalGeometryNode* fillNode, const simVis::GOG::GogMetaData& metatData);
   virtual ~ArcNodeInterface() {}
-  virtual int getAltOffset(double& altOffset) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
-  virtual void setAltOffset(double altOffsetMeters);
   virtual void setFilledState(bool state);
 
 protected:
+  virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Symbology::Style& style);
 
 private:
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> shapeNode_; ///< draws the arc
   osg::observer_ptr<osgEarth::Annotation::LocalGeometryNode> fillNode_; ///< draws the filled pie shape
-  /// cache altitude for updating altitude mode
-  double altitude_;
 };
 
 /**

@@ -476,13 +476,13 @@ void simCore::normalizeTime(int &refYear, double &secondsSinceRefYear)
 
 double simCore::getNextTimeStep(bool faster, double lastStep)
 {
-  if (lastStep < 0)
+  if (lastStep < 0.0)
     lastStep = -lastStep;
-  else if (lastStep == 0)
+  else if (lastStep == 0.0)
     return 0;
 
   int factor = 0;
-  if (faster == true)
+  if (faster)
   {
     if (lastStep >= 0.1 && lastStep < 1.0)
     {
@@ -504,12 +504,13 @@ double simCore::getNextTimeStep(bool faster, double lastStep)
       lastStep = (lastStep >= 5.0) ? 10.0 : 5.0;
       lastStep /= pow(10.0, factor);
     }
-    else if (lastStep > 1.0)
+    else if (lastStep >= 1.0)
       lastStep = floor(lastStep + 1.0);
-    else if (lastStep == 1.0)
-      lastStep = 2.0;
     else
-      lastStep = .25;
+    {
+      // Dev error, all number ranges should be covered by the logic above
+      assert(0);
+    }
   }
   else  // Handle backward time
   {
@@ -535,12 +536,17 @@ double simCore::getNextTimeStep(bool faster, double lastStep)
       lastStep = (lastStep >= 5.0) ? 10.0 : 5.0;
       lastStep /= pow(10.0, factor);
     }
-    else if (lastStep > 1.0)
+    else if (lastStep >= 2.0)
       lastStep = floor(lastStep - 1.0);
     else if (lastStep == 1.0)
       lastStep = 0.5;
+    else if (lastStep > 1.0 && lastStep < 2.0)
+      lastStep = 1.0;
     else
-      lastStep = 0.05;
+    {
+      // Dev error, all number ranges should be covered by the logic above
+      assert(0);
+    }
   }
   return lastStep;
 }

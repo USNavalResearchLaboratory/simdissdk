@@ -3,9 +3,6 @@ if(NOT PROTOBUF_FOUND)
     return()
 endif()
 
-# The ENABLE_CUSTOM_RENDERING option is used to include the experimental Custom Rendering code
-option(ENABLE_CUSTOM_RENDERING "Include experimental code for Custom Rendering" OFF)
-
 # ----- simData --------------------------------------------------------
 
 set(DATA_INC)
@@ -73,21 +70,31 @@ set (MEMORYTABLE_HEADERS
     ${DATA_INC}MemoryTable/Table.h
     ${DATA_INC}MemoryTable/SubTable.h
     ${DATA_INC}MemoryTable/TimeContainer.h
-    ${DATA_INC}MemoryTable/TimeContainerDeque.h
     ${DATA_INC}MemoryTable/DoubleBufferTimeContainer.h
     ${DATA_INC}MemoryTable/DataColumn.h
     ${DATA_INC}MemoryTable/DataContainer.h
     ${DATA_INC}MemoryTable/DataLimitsProvider.h
 )
 
+if(ENABLE_DEPRECATED_SIMDISSDK_API)
+list(APPEND MEMORYTABLE_HEADERS
+    ${DATA_INC}MemoryTable/TimeContainerDeque.h
+)
+endif()
+
 set(MEMORYTABLE_SOURCES
     ${DATA_SRC}MemoryTable/TableManager.cpp
     ${DATA_SRC}MemoryTable/Table.cpp
     ${DATA_SRC}MemoryTable/SubTable.cpp
-    ${DATA_SRC}MemoryTable/TimeContainerDeque.cpp
     ${DATA_SRC}MemoryTable/DoubleBufferTimeContainer.cpp
     ${DATA_SRC}MemoryTable/DataColumn.cpp
 )
+
+if(ENABLE_DEPRECATED_SIMDISSDK_API)
+    list(APPEND MEMORYTABLE_SOURCES
+        ${DATA_INC}MemoryTable/TimeContainerDeque.cpp
+    )
+endif()
 
 set(MESSAGEVISITOR_HEADERS
     ${DATA_INC}MessageVisitor/Message.h
@@ -169,10 +176,6 @@ if(SIMDATA_SHARED)
     target_compile_definitions(simData PRIVATE simData_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simData PUBLIC simData_LIB_EXPORT_STATIC)
-endif()
-
-if(ENABLE_CUSTOM_RENDERING)
-    target_compile_definitions(simData PUBLIC ENABLE_CUSTOM_RENDERING)
 endif()
 
 if(WIN32)

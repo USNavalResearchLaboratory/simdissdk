@@ -99,6 +99,9 @@ if(TARGET simVis)
         ${SIMQT_INC}ViewManagerDataModel.h
         ${SIMQT_INC}ViewWidget.h
     )
+    list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}Gl3FormatGuesser.h
+    )
 endif()
 
 if(OSG_FOUND)
@@ -195,6 +198,7 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
+        ${SIMQT_SRC}Gl3FormatGuesser.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
@@ -271,6 +275,9 @@ if(TARGET simVis)
         $<BUILD_INTERFACE:${OSG_LIBRARY_INCLUDE_PATH}>
         $<BUILD_INTERFACE:${OSGEARTH_LIBRARY_INCLUDE_PATH}>
     )
+
+    # Gl3FormatGuesser depends on OpenGL libraries
+    target_link_libraries(simQt PRIVATE ${OPENGL_LIBRARIES})
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
@@ -301,6 +308,11 @@ if(TARGET simVis)
     target_compile_definitions(simQt PRIVATE HAVE_SIMVIS)
 endif()
 
+# Add a define to handle the custom rendering GUI removal for SIMDIS 10.0 SR4.
+if(ENABLE_QT_CUSTOM_RENDER)
+    target_compile_definitions(simQt PRIVATE ENABLE_QT_CUSTOM_RENDER)
+endif()
+
 # If simQt is a DLL, avoid linking in "heavy" dependencies if possible
 if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
     if(TARGET simData)
@@ -310,9 +322,6 @@ if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
         target_link_libraries(simQt PRIVATE simVis)
     endif()
 else()
-    if(ENABLE_CUSTOM_RENDERING)
-        target_compile_definitions(simQt PUBLIC ENABLE_CUSTOM_RENDERING)
-    endif()
     if(TARGET simData)
         target_include_directories(simQt PUBLIC $<BUILD_INTERFACE:${SIMDIS_SDK_BINARY_DIR}/simData>)
     endif()

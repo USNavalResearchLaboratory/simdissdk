@@ -130,6 +130,8 @@ public:
   /** Default constructor */
   explicit AsyncCategoryCounter(QObject* parent = NULL);
 
+  virtual ~AsyncCategoryCounter();
+
   /** Retrieves the last fully executed results. */
   const simQt::CategoryCountResults& lastResults() const;
 
@@ -161,7 +163,6 @@ private slots:
 private:
   simQt::CategoryCountResults lastResults_;
   CategoryFilterCounter* counter_;
-  QObject* futureWatcher_;
   std::unique_ptr<simData::CategoryFilter> nextFilter_;
   bool retestPending_;
 };

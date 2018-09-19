@@ -67,19 +67,22 @@ GogNodeInterface* LineSegs::deserialize(const osgEarth::Config&  conf,
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
-      rv = new FeatureNodeInterface(new FeatureNode(mapNode, feature), metaData);
+      FeatureNode* featureNode = new FeatureNode(feature);
+      featureNode->setMapNode(mapNode);
+      rv = new FeatureNodeInterface(featureNode, metaData);
     }
     else
     {
-      LocalGeometryNode* node = new LocalGeometryNode(mapNode, p.geom_.get(), p.style_);
-      Utils::applyLocalGeometryOffsets(*node, p);
+      LocalGeometryNode* node = new LocalGeometryNode(p.geom_.get(), p.style_);
+      node->setMapNode(mapNode);
+      Utils::applyLocalGeometryOffsets(*node, p, nodeType);
       rv = new LocalGeometryNodeInterface(node, metaData);
     }
   }
   else
   {
     LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
-    node->setLocalOffset(p.getLTPOffset());
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new LocalGeometryNodeInterface(node, metaData);
   }
   if (rv)
