@@ -165,16 +165,16 @@ private:
 /**
 * Class that holds a visual representation of a single vapor trail component.
 */
-class VaporTrail::VaporTrailPuff : public osg::Referenced
+class VaporTrail::VaporTrailPuff : public osg::MatrixTransform
 {
 public:
   /**
   * Construct a vapor trail puff.
-  * @param puffTransform the container for the puff graphic.
+  * @param graphic the puff graphic.
   * @param position ECEF position at which this puff will be located.
   * @param startTime time that this puff is created.
   */
-  VaporTrailPuff(osg::MatrixTransform* puffTransform, const simCore::Vec3& position, double startTime);
+  VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime);
 
   /**
   * Update the puff representation for elapsing time.
@@ -212,7 +212,6 @@ protected:
   virtual ~VaporTrailPuff();
 
 private:
-  osg::ref_ptr<osg::MatrixTransform> puff_;
   /// Controls the shader that will apply fading to all puffs in this vaporTrail
   osg::ref_ptr<OverrideColor> overrideColor_;
   /// the puff's current scale

@@ -35,7 +35,6 @@
 namespace simVis
 {
 
-
 VaporTrail::VaporTrailData::VaporTrailData()
   : startTime(10.0),
   endTime(20.0),
@@ -51,7 +50,6 @@ VaporTrail::VaporPuffData::VaporPuffData()
 
 //////////////////////////////////////////////////////////////////////////
 
-
 VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPlatform, const VaporTrailData& vaporTrailData, const VaporPuffData& vaporPuffData, const std::vector< osg::ref_ptr<osg::Texture2D> >& textures)
   : dataStore_(dataStore),
     hostPlatform_(&hostPlatform),
@@ -61,6 +59,12 @@ VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPl
 {
   vaporTrailGroup_ = new osg::Group();
   vaporTrailGroup_->setNodeMask(simVis::DISPLAY_MASK_NONE);
+
+  osg::StateSet* groupState = vaporTrailGroup_->getOrCreateStateSet();
+  // Vapor/Wake trails draw in the Two Pass Alpha render bin
+  groupState->setRenderBinDetails(BIN_VAPOR_TRAIL, BIN_TWO_PASS_ALPHA);
+  // Must be able to blend or the graphics will look awful
+  groupState->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
   for (std::vector< osg::ref_ptr<osg::Texture2D> >::const_iterator it = textures.begin(); it != textures.end(); ++it)
   {
@@ -323,15 +327,10 @@ void VaporTrail::addPuff_(const simCore::Vec3& puffPosition, double puffTime)
 
   if (recyclePuffs_.empty())
   {
-    osg::Matrixd pos;
-    pos.makeTranslate(puffPosition.x(), puffPosition.y(), puffPosition.z());
     // create the transform that will contain the puff graphic
-    osg::ref_ptr<osg::MatrixTransform> puffTransform = new osg::MatrixTransform(pos);
-    puffTransform->addChild(textureBillboards_[textureCounter_]);
-
-    puff = new VaporTrailPuff(puffTransform.get(), puffPosition, puffTime);
+    puff = new VaporTrailPuff(textureBillboards_[textureCounter_], puffPosition, puffTime);
     // add it to the group/scenegraph
-    vaporTrailGroup_->addChild(puffTransform.get());
+    vaporTrailGroup_->addChild(puff);
   }
   else
   {
@@ -359,12 +358,6 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
   osg::StateSet* stateSet = textureBillboard->getOrCreateStateSet();
   stateSet->setTextureAttributeAndModes(textureUnit, texture, osg::StateAttribute::ON);
 
-  osg::StateSet* groupState = vaporTrailGroup_->getOrCreateStateSet();
-
-  // Set up the render bin, turn off depth writes, and turn on depth reads
-  groupState->setRenderBinDetails(BIN_VAPOR_TRAIL, BIN_GLOBAL_SIMSDK);
-  // Must be able to blend or the graphics will look awful
-  groupState->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
   // Disable depth writing, even in the second pass for TPA
   stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false), osg::StateAttribute::ON|osg::StateAttribute::PROTECTED);
 
@@ -409,30 +402,31 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
 //////////////////////////////////////////////////////////////////////////
 
 
-VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::MatrixTransform* puffTransform, const simCore::Vec3& position, double startTime)
+VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime)
   : scale_(1.0),
-    startTime_(startTime),
-    active_(true)
+  startTime_(startTime),
+  active_(true)
 {
-  puff_ = puffTransform;
-  puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
+  addChild(graphic);
+  setMatrix(osg::Matrixd::translate(position.x(), position.y(), position.z()));
+  setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
 
   // set up our uniform for parent's shader, setting the default color.
-  overrideColor_ = new OverrideColor(puff_->getOrCreateStateSet());
+  overrideColor_ = new OverrideColor(getOrCreateStateSet());
   overrideColor_->setColor(simVis::Color::White);
 }
 
 VaporTrail::VaporTrailPuff::~VaporTrailPuff()
 {
   // remove from scene graph
-  puff_->removeChildren(0, puff_->getNumChildren());
+  removeChildren(0, getNumChildren());
 
-  const osg::Node::ParentList& parents = puff_->getParents();
+  const osg::Node::ParentList& parents = getParents();
   for (osg::Node::ParentList::const_iterator j = parents.begin(); j != parents.end(); ++j)
   {
     osg::observer_ptr<osg::Group> parentAsGroup = (*j)->asGroup();
     if (parentAsGroup.valid())
-      parentAsGroup->removeChild(puff_);
+      parentAsGroup->removeChild(this);
   }
 }
 
@@ -440,9 +434,9 @@ void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double start
 {
   // set this position in our matrix; it is required to set position for puffs with no expansion;
   // if there is a radius expansion/scaling, that will be handled in update() below
-  puff_->setMatrix(osg::Matrixd::translate(position.x(), position.y(), position.z()));
+  setMatrix(osg::Matrixd::translate(position.x(), position.y(), position.z()));
   startTime_ = startTime;
-  puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
+  setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
   active_ = true;
   scale_ = 1.0;
 }
@@ -450,12 +444,12 @@ void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double start
 void VaporTrail::VaporTrailPuff::clear()
 {
   active_ = false;
-  puff_->setNodeMask(simVis::DISPLAY_MASK_NONE);
+  setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
 simCore::Vec3 VaporTrail::VaporTrailPuff::position() const
 {
-  const osg::Vec3d& trans = puff_->getMatrix().getTrans();
+  const osg::Vec3d& trans = getMatrix().getTrans();
   return simCore::Vec3(trans.x(), trans.y(), trans.z());
 }
 
@@ -473,25 +467,25 @@ void VaporTrail::VaporTrailPuff::update(double currentTime, const VaporTrail::Va
   {
     // if assert fails, check that VaporTrail::update removes all puffs with time > current time
     assert(0);
-    puff_->setNodeMask(simVis::DISPLAY_MASK_NONE);
+    setNodeMask(simVis::DISPLAY_MASK_NONE);
     return;
   }
   // turn the puff off if update time is after fadeTime
   if (puffData.fadeTimeS != 0.0 && currentTime >= (startTime_ + puffData.fadeTimeS))
   {
-    puff_->setNodeMask(simVis::DISPLAY_MASK_NONE);
+    setNodeMask(simVis::DISPLAY_MASK_NONE);
     return;
   }
 
-  puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
+  setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
   const double deltaTime = currentTime - startTime_;
   if (puffData.radiusExpansionRate != 0.0 && scale_ != 0.0)
   {
     const double newScale = (puffData.initialRadiusM + (puffData.radiusExpansionRate * deltaTime)) / puffData.initialRadiusM;
     const double scaleRatio = newScale / scale_;
-    osg::Matrixd rescaled = puff_->getMatrix();
+    osg::Matrixd rescaled = getMatrix();
     rescaled.preMultScale(osg::Vec3d(scaleRatio, scaleRatio, scaleRatio));
-    puff_->setMatrix(rescaled);
+    setMatrix(rescaled);
     scale_ = newScale;
   }
 
