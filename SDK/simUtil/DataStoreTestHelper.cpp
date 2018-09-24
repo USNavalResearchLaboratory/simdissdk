@@ -66,31 +66,35 @@ uint64_t DataStoreTestHelper::addPlatform(uint64_t originalId)
   return p->id();
 }
 
-uint64_t DataStoreTestHelper::addBeam(uint64_t hostId, uint64_t originalId)
+uint64_t DataStoreTestHelper::addBeam(uint64_t hostId, uint64_t originalId, bool targetBeam)
 {
   simData::DataStore::Transaction t;
   simData::BeamProperties* beamProps = dataStore_->addBeam(&t);
   beamProps->set_hostid(hostId);
   beamProps->set_originalid(originalId);
+  if (targetBeam)
+    beamProps->set_type(simData::BeamProperties_BeamType_TARGET);
   t.commit();
   simData::BeamPrefs* beamPrefs = dataStore_->mutable_beamPrefs(beamProps->id(), &t);
   std::ostringstream beamName;
-  beamName << "beam" << beamProps->id() << "_" << hostId;
+  beamName << (targetBeam ? "targetBeam" : "beam") << beamProps->id() << "_" << hostId;
   beamPrefs->mutable_commonprefs()->set_name(beamName.str());
   t.commit();
   return beamProps->id();
 }
 
-uint64_t DataStoreTestHelper::addGate(uint64_t hostId, uint64_t originalId)
+uint64_t DataStoreTestHelper::addGate(uint64_t hostId, uint64_t originalId, bool targetGate)
 {
   simData::DataStore::Transaction t;
   simData::GateProperties* gateProps = dataStore_->addGate(&t);
   gateProps->set_hostid(hostId);
   gateProps->set_originalid(originalId);
+  if (targetGate)
+    gateProps->set_type(simData::GateProperties_GateType_TARGET);
   t.commit();
   simData::GatePrefs* gatePrefs = dataStore_->mutable_gatePrefs(gateProps->id(), &t);
   std::ostringstream gateName;
-  gateName << "gate" << gateProps->id() << "_" << hostId;
+  gateName << (targetGate ? "targetGate" : "gate") << gateProps->id() << "_" << hostId;
   gatePrefs->mutable_commonprefs()->set_name(gateName.str());
   t.commit();
   return gateProps->id();

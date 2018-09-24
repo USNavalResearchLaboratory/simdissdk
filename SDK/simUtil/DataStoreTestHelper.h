@@ -60,18 +60,20 @@ public:
   * Uses the id to construct a name of 'beam<id>_<hostId>'
   * @param hostId platform host
   * @param originalId Original ID to use for entity
+  * @param targetBeam Flag to indicate if beam is a target type
   * @return uint64_t  the id for the entity
   */
-  uint64_t addBeam(uint64_t hostId, uint64_t originalId = 0);
+  uint64_t addBeam(uint64_t hostId, uint64_t originalId = 0, bool targetBeam = false);
 
   /**
   * Add a gate
   * Uses the id to construct a name of 'gate<id>_<hostId>'
   * @param hostId beam host
   * @param originalId Original ID to use for entity
+  * @param targetGate Flag to indicate if gate is a target type
   * @return uint64_t  the id for the entity
   */
-  uint64_t addGate(uint64_t hostId, uint64_t originalId = 0);
+  uint64_t addGate(uint64_t hostId, uint64_t originalId = 0, bool targetGate = false);
 
   /**
   * Add a laser
