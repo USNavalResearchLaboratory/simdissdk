@@ -215,9 +215,8 @@ private:
   osg::ref_ptr<osg::MatrixTransform> puff_;
   /// Controls the shader that will apply fading to all puffs in this vaporTrail
   osg::ref_ptr<OverrideColor> overrideColor_;
-  /// the puff's ECEF position
-  simCore::Vec3 position_;
-
+  /// the puff's current scale
+  double scale_;
   /// the puff's start time, for modeling fade and expand
   double startTime_;
   /// if true the puff is active and should be updated

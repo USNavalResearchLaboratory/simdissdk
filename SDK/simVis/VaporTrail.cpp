@@ -410,9 +410,9 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
 
 
 VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::MatrixTransform* puffTransform, const simCore::Vec3& position, double startTime)
-  :  position_(position),
-     startTime_(startTime),
-     active_(true)
+  : scale_(1.0),
+    startTime_(startTime),
+    active_(true)
 {
   puff_ = puffTransform;
   puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
@@ -438,13 +438,13 @@ VaporTrail::VaporTrailPuff::~VaporTrailPuff()
 
 void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double startTime)
 {
-  position_ = position;
   // set this position in our matrix; it is required to set position for puffs with no expansion;
   // if there is a radius expansion/scaling, that will be handled in update() below
-  puff_->setMatrix(osg::Matrixd::translate(position_.x(), position_.y(), position_.z()));
+  puff_->setMatrix(osg::Matrixd::translate(position.x(), position.y(), position.z()));
   startTime_ = startTime;
   puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
   active_ = true;
+  scale_ = 1.0;
 }
 
 void VaporTrail::VaporTrailPuff::clear()
@@ -455,7 +455,8 @@ void VaporTrail::VaporTrailPuff::clear()
 
 simCore::Vec3 VaporTrail::VaporTrailPuff::position() const
 {
-  return position_;
+  const osg::Vec3d& trans = puff_->getMatrix().getTrans();
+  return simCore::Vec3(trans.x(), trans.y(), trans.z());
 }
 
 double VaporTrail::VaporTrailPuff::time() const
@@ -484,13 +485,14 @@ void VaporTrail::VaporTrailPuff::update(double currentTime, const VaporTrail::Va
 
   puff_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
   const double deltaTime = currentTime - startTime_;
-  if (puffData.radiusExpansionRate != 0.0)
+  if (puffData.radiusExpansionRate != 0.0 && scale_ != 0.0)
   {
     const double newScale = (puffData.initialRadiusM + (puffData.radiusExpansionRate * deltaTime)) / puffData.initialRadiusM;
-    osg::Matrixd scaled;
-    scaled.makeTranslate(position_.x(), position_.y(), position_.z());
-    scaled.preMultScale(osg::Vec3d(newScale, newScale, newScale));
-    puff_->setMatrix(scaled);
+    const double scaleRatio = newScale / scale_;
+    osg::Matrixd rescaled = puff_->getMatrix();
+    rescaled.preMultScale(osg::Vec3d(scaleRatio, scaleRatio, scaleRatio));
+    puff_->setMatrix(rescaled);
+    scale_ = newScale;
   }
 
   if (puffData.fadeTimeS != 0.0)
