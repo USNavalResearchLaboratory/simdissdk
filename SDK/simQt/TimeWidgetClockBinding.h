@@ -55,6 +55,14 @@ public:
   virtual ~TimeWidgetClockBinding();
 
   /**
+   * Set whether end time is respected in live mode.  If end time is not respected, time widget will
+   * have an infinite upper bound in live mode.
+   * @param respectLiveModeEndtTime If false, the upper bound of the widget's time range while in live mode
+   *   will be infinite.  If true, the upper bound will be kept equal to the clock's end time.
+   */
+  void setRespectLiveModeEndTime(bool respectLiveModeEndTime);
+
+  /**
    * Binds the slider to the value of the clock.  Can optionally bind the current time, which
    * will cause the time widget to reflect the current time, and set the current time when changed.
    * Additionally, when bound to current time, this binding will update the enabled/disabled state
@@ -64,7 +72,7 @@ public:
    *   will keep the time widget's time in sync with the clock's time, and vice versa, while also
    *   managing the enable/disable state of the time widget.
    */
-  void bindClock(simCore::Clock* clock, bool bindCurrentTime=false);
+  void bindClock(simCore::Clock* clock, bool bindCurrentTime = false);
   /** Removes bindings to a previously bound clock */
   void unbindClock();
 
@@ -100,6 +108,7 @@ private:
   simCore::Clock::ModeChangeObserverPtr modeObserver_;
   simData::DataStore* dataStore_;
   simData::DataStore::ScenarioListenerPtr refYearCache_;
+  bool respectLiveModeEndTime_;
 };
 
 /** Caches the current reference year and emits signals when it changes */
