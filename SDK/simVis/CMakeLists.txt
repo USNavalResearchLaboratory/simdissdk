@@ -315,8 +315,8 @@ endif()
 include(CheckOSGEarthMethodExists)
 
 # Newer than 1.9.0 release adds PointDrawable::checkSharedStateSet() to osgEarth
-check_osgearth_method_exists(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET1 "osgEarth/PointDrawable" "checkSharedStateSet")
-if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET1)
+check_osgearth_method_exists(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET "osgEarth/PointDrawable" "checkSharedStateSet")
+if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET)
     set(SDK_OSGEARTH_DEVEL 1)
     # Next anticipated version is 1.10.0
     set(SDK_OSGEARTH_VERSION_MAJOR 1)
