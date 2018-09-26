@@ -453,6 +453,7 @@ VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const simCore::V
   // set up our uniform for parent's shader, setting the default color.
   overrideColor_ = new OverrideColor(getOrCreateStateSet());
   overrideColor_->setColor(simVis::Color::White);
+  overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 }
 
 VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const osg::Matrixd& mat, double startTime)
@@ -467,6 +468,7 @@ VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const osg::Matri
   // set up our uniform for parent's shader, setting the default color.
   overrideColor_ = new OverrideColor(getOrCreateStateSet());
   overrideColor_->setColor(simVis::Color::White);
+  overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 }
 
 VaporTrail::VaporTrailPuff::~VaporTrailPuff()
