@@ -19,17 +19,23 @@
  * disclose, or release this software.
  *
  */
+#include "osg/Billboard"
+#include "osg/CullFace"
 #include "osg/Depth"
 #include "osg/Geometry"
+#include "osg/Texture2D"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 
+#include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simData/LimitData.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/OverrideColor.h"
 #include "simVis/Platform.h"
 #include "simVis/Registry.h"
+#include "simVis/Utils.h"
 #include "simVis/VaporTrail.h"
 
 namespace simVis
@@ -39,7 +45,8 @@ VaporTrail::VaporTrailData::VaporTrailData()
   : startTime(10.0),
   endTime(20.0),
   numRadiiFromPreviousSmoke(1.5),
-  metersBehindCurrentPosition(5.0)
+  metersBehindCurrentPosition(5.0),
+  isWake(false)
 {}
 
 VaporTrail::VaporPuffData::VaporPuffData()
@@ -66,16 +73,16 @@ VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPl
   // Must be able to blend or the graphics will look awful
   groupState->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
-  for (std::vector< osg::ref_ptr<osg::Texture2D> >::const_iterator it = textures.begin(); it != textures.end(); ++it)
-  {
-    textureBillboards_.push_back(createTextureBillboard_(it->get()));
-  }
-
   hostPlatform_->addChild(vaporTrailGroup_);
+
+  // process the supplied texture(s)
+  processTextures_(textures);
 
   // create locator to track our host, and generate our offset position
   locator_ = new Locator(hostPlatform_->getLocator());
-  locator_->setLocalOffsets(simCore::Vec3(0.0, -vaporTrailData_.metersBehindCurrentPosition, 0.0), simCore::Vec3());
+  // add offset for wake to prevent wake from getting wet
+  const double altOffset = (vaporTrailData_.isWake ? 0.1 : 0.0);
+  locator_->setLocalOffsets(simCore::Vec3(0.0, -vaporTrailData_.metersBehindCurrentPosition, altOffset), simCore::Vec3());
 
   OverheadMode::enableGeometryFlattening(true, vaporTrailGroup_.get());
 }
@@ -87,13 +94,13 @@ VaporTrail::~VaporTrail()
   if (hostPlatform_.valid())
     hostPlatform_->removeChild(vaporTrailGroup_);
   vaporTrailGroup_ = NULL;
-  textureBillboards_.clear();
+  textures_.clear();
   locator_ = NULL;
 }
 
 void VaporTrail::update(double time)
 {
-  if (textureBillboards_.empty() ||
+  if (textures_.empty() ||
     vaporTrailData_.numRadiiFromPreviousSmoke <= 0 ||
     vaporPuffData_.initialRadiusM <= 0)
     return;
@@ -258,7 +265,7 @@ unsigned int VaporTrail::applyDataLimiting_(unsigned int puffsToAdd, double time
 
 void VaporTrail::addNewPuffs_(double time)
 {
-  if (!hostPlatform_->isActive() || textureBillboards_.empty())
+  if (!hostPlatform_->isActive() || textures_.empty())
     return;
 
   if (puffs_.empty())
@@ -320,22 +327,25 @@ void VaporTrail::addNewPuffs_(double time)
 
 void VaporTrail::addPuff_(const simCore::Vec3& puffPosition, double puffTime)
 {
-  assert(textureCounter_ < textureBillboards_.size());
+  // textureCounter must always reference a valid texture; see arithmetic below
+  assert(textureCounter_ < textures_.size());
 
   // create the puff class that will own the puff graphic
   osg::ref_ptr<VaporTrailPuff> puff;
 
+  const osg::Matrixd& puffMatrix = (vaporTrailData_.isWake ? calcWakeMatrix_(puffPosition) :
+    osg::Matrixd::translate(puffPosition.x(), puffPosition.y(), puffPosition.z()));
+
   if (recyclePuffs_.empty())
   {
-    // create the transform that will contain the puff graphic
-    puff = new VaporTrailPuff(textureBillboards_[textureCounter_], puffPosition, puffTime);
+    puff = new VaporTrailPuff(textures_[textureCounter_], puffMatrix, puffTime);
     // add it to the group/scenegraph
     vaporTrailGroup_->addChild(puff);
   }
   else
   {
     puff = recyclePuffs_.front();
-    puff->set(puffPosition, puffTime);
+    puff->set(puffMatrix, puffTime);
     recyclePuffs_.pop_front();
   }
 
@@ -343,23 +353,57 @@ void VaporTrail::addPuff_(const simCore::Vec3& puffPosition, double puffTime)
   puffs_.push_back(puff);
 
   // update our texture counter
-  if (textureCounter_ < textureBillboards_.size() - 1)
+  if (textureCounter_ < textures_.size() - 1)
     ++textureCounter_;
   else
     textureCounter_ = 0;
 }
 
-osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) const
+osg::Matrixd VaporTrail::calcWakeMatrix_(const simCore::Vec3& ecefPosition)
+{
+  // convert an lla coordinate with null orientation to an ecef coordinate.
+  // the resultant ecef orientation will be flat on the earth/ocean surface
+  simCore::Vec3 llaPos;
+  simCore::Vec3 ecefOri;
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefPosition, llaPos);
+  simCore::CoordinateConverter::convertGeodeticOriToEcef(llaPos, simCore::Vec3(0., -M_PI_2, 0.), ecefOri);
+  osg::Matrixd mat;
+  simVis::Math::ecefEulerToEnuRotMatrix(ecefOri, mat);
+  mat.setTrans(ecefPosition.x(), ecefPosition.y(), ecefPosition.z());
+  return mat;
+}
+
+void VaporTrail::processTextures_(const std::vector< osg::ref_ptr<osg::Texture2D> >& textures)
+{
+  for (std::vector< osg::ref_ptr<osg::Texture2D> >::const_iterator it = textures.begin(); it != textures.end(); ++it)
+  {
+    if (vaporTrailData_.isWake)
+    {
+      osg::ref_ptr<osg::Geode> geode = new osg::Geode();
+      createTexture_(*(geode.get()), *it);
+      // show back facing texture so that wake can be seen from under water
+      geode->getOrCreateStateSet()->setAttributeAndModes(new osg::CullFace(osg::CullFace::BACK), osg::StateAttribute::OFF);
+      textures_.push_back(geode);
+    }
+    else
+    {
+      osg::ref_ptr<osg::Billboard> billboard = new osg::Billboard();
+      billboard->setMode(osg::Billboard::POINT_ROT_EYE);
+      createTexture_(*(billboard.get()), *it);
+      textures_.push_back(billboard);
+    }
+  }
+}
+
+void VaporTrail::createTexture_(osg::Geode& geode, osg::Texture2D* texture) const
 {
   const unsigned int textureUnit = 1;
-  const double initialRadius = vaporPuffData_.initialRadiusM;
+  const float initialRadius = static_cast<float>(vaporPuffData_.initialRadiusM);
 
-  osg::ref_ptr<osg::Billboard> textureBillboard = new osg::Billboard();
-  osg::StateSet* stateSet = textureBillboard->getOrCreateStateSet();
+  osg::StateSet* stateSet = geode.getOrCreateStateSet();
   stateSet->setTextureAttributeAndModes(textureUnit, texture, osg::StateAttribute::ON);
-
   // Disable depth writing, even in the second pass for TPA
-  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false), osg::StateAttribute::ON|osg::StateAttribute::PROTECTED);
+  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false), osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
   osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
   geom->setName("simVis::VaporTrail");
@@ -390,17 +434,12 @@ osg::Billboard* VaporTrail::createTextureBillboard_(osg::Texture2D* texture) con
 
   geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, verts->size()));
 
-  textureBillboard->addDrawable(geom.get());
+  geode.addDrawable(geom.get());
 
-  textureBillboard->setMode(osg::Billboard::POINT_ROT_EYE);
-
-  osgEarth::Registry::shaderGenerator().run(textureBillboard.get());
-
-  return textureBillboard.release();
+  osgEarth::Registry::shaderGenerator().run(&geode);
 }
 
 //////////////////////////////////////////////////////////////////////////
-
 
 VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime)
   : scale_(1.0),
@@ -409,6 +448,20 @@ VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const simCore::V
 {
   addChild(graphic);
   setMatrix(osg::Matrixd::translate(position.x(), position.y(), position.z()));
+  setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
+
+  // set up our uniform for parent's shader, setting the default color.
+  overrideColor_ = new OverrideColor(getOrCreateStateSet());
+  overrideColor_->setColor(simVis::Color::White);
+}
+
+VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const osg::Matrixd& mat, double startTime)
+  : scale_(1.0),
+  startTime_(startTime),
+  active_(true)
+{
+  addChild(graphic);
+  setMatrix(mat);
   setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
 
   // set up our uniform for parent's shader, setting the default color.
@@ -435,6 +488,16 @@ void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double start
   // set this position in our matrix; it is required to set position for puffs with no expansion;
   // if there is a radius expansion/scaling, that will be handled in update() below
   setMatrix(osg::Matrixd::translate(position.x(), position.y(), position.z()));
+  startTime_ = startTime;
+  setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
+  active_ = true;
+  scale_ = 1.0;
+}
+
+void VaporTrail::VaporTrailPuff::set(const osg::Matrixd& mat, double startTime)
+{
+  // set puff position and orientation; puff scaling is handled in update() below
+  setMatrix(mat);
   startTime_ = startTime;
   setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
   active_ = true;

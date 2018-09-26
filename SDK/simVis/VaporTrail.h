@@ -22,18 +22,22 @@
 #ifndef SIMVIS_VAPOR_TRAIL_H
 #define SIMVIS_VAPOR_TRAIL_H
 #include <map>
+#include <vector>
 #include "osg/observer_ptr"
 #include "osg/MatrixTransform"
-#include "osg/Texture2D"
-#include "osg/Billboard"
 #include "simCore/Common/Export.h"
-#include "simVis/OverrideColor.h"
 
+namespace osg {
+  class Geode;
+  class Group;
+  class Texture2D;
+}
 namespace simData { class DataStore; }
 namespace simVis
 {
 class Locator;
 class PlatformNode;
+class OverrideColor;
 
 /**
  * Class that holds a visual representation of a vapor trail.
@@ -59,6 +63,7 @@ public:
     double endTime;               ///< end time for the trail
     double numRadiiFromPreviousSmoke;    ///< distance from last puff for new puff, in number of radii
     double metersBehindCurrentPosition;  ///< distance behind platform for closest puff, in meters
+    bool isWake;                    ///< the trail will not be billboarded, but rendered flat wrt earth
 
     /// default constructor gives reasonable values
     VaporTrailData();
@@ -124,11 +129,24 @@ private:
   void addPuff_(const simCore::Vec3& position, double startTime);
 
   /**
-  * Create a reusable billboard with specified texture.
-  * @param texture texture to use.
-  * @return the billboard created
+  * Returns a matrix with the position and corrected orientation for a puff.
+  * @param[in] position ECEF position for this puff.
+  * @return position and orientation matrix for the puff.
   */
-  osg::Billboard* createTextureBillboard_(osg::Texture2D* texture) const;
+  static osg::Matrixd VaporTrail::calcWakeMatrix_(const simCore::Vec3& ecefPosition);
+
+  /**
+  * Process all specified textures into reusable geodes that are managed internally.
+  * @param textures vector of textures to process.
+  */
+  void processTextures_(const std::vector<osg::ref_ptr<osg::Texture2D> >& textures);
+
+  /**
+  * Create a geometry from the specified texture in the specified geode.
+  * @param geode geode to which to add the geometry.
+  * @param texture texture to use.
+  */
+  void createTexture_(osg::Geode& geode, osg::Texture2D* texture) const;
 
   /// DataStore for getting the limits
   const simData::DataStore& dataStore_;
@@ -159,7 +177,7 @@ private:
   unsigned int textureCounter_;
 
   /// the list of textures that cyclically initialize new puffs
-  std::vector< osg::ref_ptr<osg::Billboard> > textureBillboards_;
+  std::vector< osg::ref_ptr<osg::Geode> > textures_;
 };
 
 /**
@@ -171,10 +189,18 @@ public:
   /**
   * Construct a vapor trail puff.
   * @param graphic the puff graphic.
+  * @param matrix position and orientation for the puff.
+  * @param startTime time that this puff is created.
+  */
+  VaporTrailPuff(osg::Geode* graphic, const osg::Matrixd& matrix, double startTime);
+
+  /**
+  * Construct a vapor trail puff.
+  * @param graphic the puff graphic.
   * @param position ECEF position at which this puff will be located.
   * @param startTime time that this puff is created.
   */
-  VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime);
+  SDK_DEPRECATE(VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
 
   /**
   * Update the puff representation for elapsing time.
@@ -201,11 +227,18 @@ public:
   void clear();
 
   /**
-   * Turns the puff back on with the given values
-   * @param position ECEF position at which this puff will be located.
-   * @param startTime time that this puff is created.
-   */
-  void set(const simCore::Vec3& position, double startTime);
+  * Turns the puff back on with the given values
+  * @param matrix pos and ori for the puff.
+  * @param startTime time that this puff is created.
+  */
+  void set(const osg::Matrixd& matrix, double startTime);
+
+  /**
+  * Turns the puff back on with the given values
+  * @param position ECEF position at which this puff will be located.
+  * @param startTime time that this puff is created.
+  */
+  SDK_DEPRECATE(void set(const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
 
 protected:
   /// osg::Referenced-derived
