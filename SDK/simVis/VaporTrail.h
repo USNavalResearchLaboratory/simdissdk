@@ -133,7 +133,7 @@ private:
   * @param[in] position ECEF position for this puff.
   * @return position and orientation matrix for the puff.
   */
-  static osg::Matrixd VaporTrail::calcWakeMatrix_(const simCore::Vec3& ecefPosition);
+  static osg::Matrixd calcWakeMatrix_(const simCore::Vec3& ecefPosition);
 
   /**
   * Process all specified textures into reusable geodes that are managed internally.
