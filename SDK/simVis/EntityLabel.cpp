@@ -25,6 +25,8 @@
 #include "simCore/Calc/Math.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
+#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
@@ -36,17 +38,18 @@ namespace simVis
 static const float ALPHA_THRESHOLD = 0.05f;
 
 EntityLabelNode::EntityLabelNode()
-  : LocatorNode(),
-  hasLastPrefs_(false)
+  : hasLastPrefs_(false)
 {
   // entity labels are off until prefs turn them on
   setNodeMask(DISPLAY_MASK_NONE);
 }
 
 EntityLabelNode::EntityLabelNode(simVis::Locator* locator)
-  : LocatorNode(locator),
-  hasLastPrefs_(false)
+  : hasLastPrefs_(false)
 {
+  locatorNode_ = new LocatorNode(locator);
+  locatorNode_->setNodeMask(DISPLAY_MASK_NONE);
+  addChild(locatorNode_.get());
   // entity labels are off until prefs turn them on
   setNodeMask(DISPLAY_MASK_NONE);
 }
@@ -96,8 +99,10 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
 
     // Note: no need to clamp the label's geo transform in overhead mode, since the Locator
     // will take care of that for us. -gw
-
-    addChild(label_.get());
+    if (locatorNode_.valid())
+      locatorNode_->addChild(label_.get());
+    else
+      addChild(label_.get());
     forceStyle = true;
   }
 
@@ -105,11 +110,14 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
   if (label_.valid())
   {
     setNodeMask(draw ? DISPLAY_MASK_LABEL : DISPLAY_MASK_NONE);
-    label_->setNodeMask(draw ? DISPLAY_MASK_LABEL : DISPLAY_MASK_NONE);
-    // if label was just enabled with this prefs change, force our locator node to sync with its locator
-    if (draw && (!hasLastPrefs_ || !lastCommonPrefs_.draw() || !lastCommonPrefs_.labelprefs().draw()))
-      syncWithLocator();
+    if (locatorNode_.valid())
+    {
+      locatorNode_->setNodeMask(draw ? DISPLAY_MASK_LABEL : DISPLAY_MASK_NONE);
 
+      // if label was just enabled with this prefs change, force our locator node to sync with its locator
+      if (draw && (!hasLastPrefs_ || !lastCommonPrefs_.draw() || !lastCommonPrefs_.labelprefs().draw()))
+        locatorNode_->syncWithLocator();
+    }
     // For priority pref, 0 is least likely to show, higher values more likely to show, negative values are always shown
     // FLT_MAX means always show to osgEarth
     const float actualPriority = (labelPrefs.priority() >= 0.0) ? labelPrefs.priority() : std::numeric_limits<float>::max();

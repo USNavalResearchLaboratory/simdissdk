@@ -23,19 +23,24 @@
 #define SIMVIS_ENTITY_LABEL_H
 
 #include <string>
+#include "osg/Group"
 #include "osg/ref_ptr"
 #include "simData/DataTypes.h"
-#include "simVis/LocatorNode.h"
 
 namespace osgEarth { namespace Annotation { class LabelNode; } }
 namespace simVis
 {
+class Locator;
+class LocatorNode;
+
 /// Class for managing the labels
-class SDKVIS_EXPORT EntityLabelNode : public LocatorNode
+class SDKVIS_EXPORT EntityLabelNode : public osg::Group
 {
 public:
-  /// Constructors
+  /// constructor for (most) entity that provides a locatorNode to parent/position the label
   EntityLabelNode();
+
+  /// constructor for (lob & projector) entity that does not provide a locatorNode to parent/position the label
   explicit EntityLabelNode(simVis::Locator* locator);
 
   /// Update the label with the given preferences and text
@@ -54,6 +59,7 @@ private:
   /** Copy constructor, not implemented or available. */
   EntityLabelNode(const EntityLabelNode&);
 
+  osg::ref_ptr<LocatorNode> locatorNode_; // optional locator node to position the label
   osg::ref_ptr<osgEarth::Annotation::LabelNode> label_;  ///< The actual label
   simData::CommonPrefs lastCommonPrefs_;  ///< The last preferences to check for changes
   bool hasLastPrefs_; ///< Whether lastCommonPrefs_ has been set by prefs we received
