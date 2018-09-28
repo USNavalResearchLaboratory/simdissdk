@@ -83,10 +83,6 @@ protected:
   virtual ~ProjectorManager();
 
 private:
-  /**
-  * Initialize projector manager
-  */
-  void initialize_();
 
   /// Move projector layers to the bottom of the layer stack to ensure visibility
   void reorderProjectorLayers_();

@@ -104,71 +104,35 @@ void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
     // reinitialize the projection system
     if (mapNode_.valid())
     {
-      initialize_();
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-      if (simVis::useRexEngine())
+      // Get existing layers in the new map
+      osgEarth::LayerVector currentLayers;
+      osgEarth::Map* map = mapNode_->getMap();
+      if (!map)
+        return;
+      map->getLayers(currentLayers);
+
+      for (ProjectorLayerVector::const_iterator piter = projectorLayers_.begin(); piter != projectorLayers_.end(); ++piter)
       {
-        // Get existing layers in the new map
-        osgEarth::LayerVector currentLayers;
-        osgEarth::Map* map = mapNode_->getMap();
-        if (!map)
-          return;
-        map->getLayers(currentLayers);
-
-        for (ProjectorLayerVector::const_iterator piter = projectorLayers_.begin(); piter != projectorLayers_.end(); ++piter)
+        // Check if projector layer already exists
+        bool found = false;
+        for (osgEarth::LayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
         {
-          // Check if projector layer already exists
-          bool found = false;
-          for (osgEarth::LayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
+          ProjectorLayer* pLayer = dynamic_cast<ProjectorLayer*>((*iter).get());
+          if ((*piter) == pLayer)
           {
-            ProjectorLayer* pLayer = dynamic_cast<ProjectorLayer*>((*iter).get());
-            if ((*piter) == pLayer)
-            {
-              found = true;
-              break;
-            }
+            found = true;
+            break;
           }
-
-          // If not found, add this layer to the map
-          if (!found)
-            map->addLayer(piter->get());
         }
-        map->addMapCallback(mapListener_.get());
+
+        // If not found, add this layer to the map
+        if (!found)
+          map->addLayer(piter->get());
       }
+      map->addMapCallback(mapListener_.get());
 #endif
     }
-  }
-}
-
-void ProjectorManager::initialize_()
-{
-  if (simVis::useRexEngine() == false)
-  {
-    osg::StateSet* stateSet = getOrCreateStateSet();
-
-    // shader code to render the projectors
-    osgEarth::VirtualProgram* vp = new osgEarth::VirtualProgram();
-    vp->setInheritShaders(true);
-    simVis::Shaders package;
-    package.load(vp, package.projectorManagerVertex());
-    package.load(vp, package.projectorManagerFragment());
-
-    // the OVERRIDE flag will cause this program of override the terrain engine's programs,
-    // but it will still inherit those above (like the log depth buffer shader!)
-    stateSet->setAttributeAndModes(vp, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
-    // tells the shader to always find its sampler on unit 0
-    osg::Uniform* samplerUniform = new osg::Uniform(osg::Uniform::SAMPLER_2D, "simProjSampler");
-    samplerUniform->set(PROJECTOR_TEXTURE_UNIT);
-    stateSet->addUniform(samplerUniform);
-
-    // An LEQUAL depth test lets consecutive passes overwrite each other:
-    // Needs help: (TODO) ... can see the skirts
-    stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
-    // BlendFunc controls how the resulting shader fragment gets combined with the frame buffer.
-    // This will "decal" the projected image on the terrain and will preserve alpha in the src image.
-    stateSet->setAttributeAndModes(new osg::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
   }
 }
 
