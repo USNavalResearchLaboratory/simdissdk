@@ -25,7 +25,6 @@
 #include "osgDB/FileNameUtils"
 #include "osgEarth/Map"
 #include "osgEarth/ImageLayer"
-#include "osgEarthDrivers/engine_mp/MPTerrainEngineOptions"
 #include "osgEarthDrivers/engine_rex/RexTerrainEngineOptions"
 
 #include "simNotify/Notify.h"
@@ -109,21 +108,10 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     SAFETRYBEGIN;
     osg::ref_ptr<osgEarth::Map> map = simUtil::DbConfigurationFile::loadLegacyConfigFile(adjustedConfigFile, quiet);
 
-    if (simVis::useRexEngine())
-    {
-      // Set up a map node with the supplied options
-      osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
-      simVis::SceneManager::initializeTerrainOptions(options);
-      mapNode = new osgEarth::MapNode(map.get(), options);
-    }
-
-    else
-    {
-      // Set up a map node with the supplied options
-      osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions options;
-      simVis::SceneManager::initializeTerrainOptions(options);
-      mapNode = new osgEarth::MapNode(map.get(), options);
-    }
+    // Set up a map node with the supplied options
+    osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
+    simVis::SceneManager::initializeTerrainOptions(options);
+    mapNode = new osgEarth::MapNode(map.get(), options);
 
     SAFETRYEND((std::string("legacy SIMDIS 9 .txt processing of file ") + configFile));
   }
@@ -571,22 +559,11 @@ osg::Node* DbConfigurationFile::readEarthFile(std::istream& istream, const std::
     return NULL;
 
   osgEarth::MapNodeOptions defaults;
-  if (simVis::useRexEngine())
-  {
-    // Fill out a MPTerrainEngineOptions with default options
-    osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
-    simVis::SceneManager::initializeTerrainOptions(options);
-    // Put it into a MapNodeOptions, which will help encode to JSON
-    defaults.setTerrainOptions(options);
-  }
-  else
-  {
-    // Fill out a MPTerrainEngineOptions with default options
-    osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions options;
-    simVis::SceneManager::initializeTerrainOptions(options);
-    // Put it into a MapNodeOptions, which will help encode to JSON
-    defaults.setTerrainOptions(options);
-  }
+  // Fill out a RexTerrainEngineOptions with default options
+  osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
+  simVis::SceneManager::initializeTerrainOptions(options);
+  // Put it into a MapNodeOptions, which will help encode to JSON
+  defaults.setTerrainOptions(options);
 
   // Create an osgDB::Options structure to hold our defaults and the referrer
   osg::ref_ptr<osgDB::Options> dbOptions = new osgDB::Options();

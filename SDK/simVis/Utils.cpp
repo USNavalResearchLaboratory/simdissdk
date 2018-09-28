@@ -273,27 +273,8 @@ namespace simVis
 
 bool useRexEngine()
 {
-  osgEarth::Registry* reg = osgEarth::Registry::instance();
-
-  // first use the default name
-  std::string engineName = reg->getDefaultTerrainEngineDriverName();
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-  // See if the override is set, which takes precedence. This will be the same as default name
-  // if terrain engine was set by environment variable OSGEARTH_TERRAIN_ENGINE
-  if (reg->overrideTerrainEngineDriverName().isSet())
-    engineName = reg->overrideTerrainEngineDriverName().value();
-#endif
-
-  // If we cannot support REX due to GLSL version, then fall back to MP automatically
-  if (reg->capabilities().getGLSLVersionInt() < 330)
-  {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-    reg->overrideTerrainEngineDriverName() = "mp";
-#endif
-    return false;
-  }
-
-  return simCore::caseCompare(engineName, "rex") == 0;
+  // The MP engine is no longer supported.  Always use rex.
+  return true;
 }
 
 bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value)
