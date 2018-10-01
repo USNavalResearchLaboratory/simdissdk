@@ -31,7 +31,13 @@
 #include "osgEarthTriton/TritonLayer"
 #include "osgEarthTriton/TritonOptions"
 #endif
+
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,10,0)
 #include "osgEarthDrivers/ocean_simple/SimpleOceanOptions"
+#else
+#include "osgEarthUtil/SimpleOceanLayer"
+#endif
+
 #include "simVis/BathymetryGenerator.h"
 #include "simVis/Constants.h"
 #include "simVis/SceneManager.h"
@@ -125,9 +131,17 @@ void InstallOcean::install(simVis::SceneManager& scene)
   else // type_ == SIMPLE
 #endif
   {
-    osgEarth::SimpleOcean::SimpleOceanOptions ocean;
-    ocean.maxAltitude() = 30000.0f;
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,10,0)
+    osgEarth::Drivers::SimpleOcean::SimpleOceanOptions ocean;
+    ocean.lowFeatherOffset() = 0.0f;
+    ocean.highFeatherOffset() = 1.0f;
     ocean.renderBinNumber() = simVis::BIN_OCEAN;
+#else
+    osgEarth::Util::SimpleOceanLayerOptions ocean;
+    // To get similar behavior as old ocean_simple driver, useBathymetry() == false helps
+    ocean.useBathymetry() = false;
+#endif
+    ocean.maxAltitude() = 30000.0f;
     osg::ref_ptr<osgEarth::Util::OceanNode> oceanNode = osgEarth::Util::OceanNode::create(ocean, scene.getMapNode());
     if (oceanNode.valid())
       scene.setOceanNode(oceanNode.get());

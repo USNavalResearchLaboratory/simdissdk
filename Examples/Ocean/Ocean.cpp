@@ -58,7 +58,13 @@
 #include "osgEarthTriton/TritonOptions"
 #include "simUtil/TritonSettings.h"
 #endif
+
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,10,0)
 #include "osgEarthDrivers/ocean_simple/SimpleOceanOptions"
+#else
+#include "osgEarthUtil/SimpleOceanLayer"
+#endif
+
 #ifdef HAVE_SILVERLINING_NODEKIT
 #include "osgEarthSilverLining/SilverLiningNode"
 #include "simUtil/SilverLiningSettings.h"
@@ -668,11 +674,17 @@ namespace
   /** Factory an ocean node */
   OceanNode* makeSimpleOcean(osgEarth::MapNode* mapNode)
   {
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,10,0)
     osgEarth::Drivers::SimpleOcean::SimpleOceanOptions ocean;
-    ocean.maxAltitude() = 30000.0f;
     ocean.lowFeatherOffset() = 0.0f;
     ocean.highFeatherOffset() = 1.0f;
     ocean.renderBinNumber() = simVis::BIN_OCEAN;
+#else
+    osgEarth::Util::SimpleOceanLayerOptions ocean;
+    // To get similar behavior as old ocean_simple driver, useBathymetry() == false helps
+    ocean.useBathymetry() = false;
+#endif
+    ocean.maxAltitude() = 30000.0f;
     OceanNode* rv = OceanNode::create(ocean, mapNode);
     rv->setAlpha(0.8f);
     return rv;
