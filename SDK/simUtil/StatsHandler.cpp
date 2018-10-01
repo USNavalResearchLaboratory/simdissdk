@@ -20,8 +20,8 @@
  *
  */
 #include <limits>
+#include "osgViewer/View"
 #include "simVis/Utils.h"
-#include "simVis/View.h"
 #include "simUtil/StatsHandler.h"
 
 namespace simUtil
@@ -41,7 +41,7 @@ StatsHandler::StatsHandler()
   simVis::fixStatsHandlerGl2BlockyText(this);
 }
 
-void StatsHandler::setStatsType(StatsHandler::StatsType statsType, simVis::View* onWhichView)
+void StatsHandler::setStatsType(StatsHandler::StatsType statsType, osgViewer::View* onWhichView)
 {
   if (onWhichView == NULL)
     return;
@@ -75,7 +75,7 @@ StatsHandler::StatsType StatsHandler::validate_(StatsHandler::StatsType type) co
   return NO_STATS;
 }
 
-void StatsHandler::cycleStats(simVis::View* onWhichView)
+void StatsHandler::cycleStats(osgViewer::View* onWhichView)
 {
   if (!onWhichView)
     return;
