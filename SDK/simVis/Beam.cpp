@@ -273,13 +273,6 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   setLocator(beamOrientationLocator_.get());
   setName("BeamNode");
 
-  // set up a state set.
-  // carefully set the rendering order for beams. We want to render them
-  // before everything else (including the terrain) since they are
-  // transparent and potentially self-blending
-  osg::StateSet* stateSet = this->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
-
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
 
@@ -686,14 +679,6 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
-    if (force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended)))
-    {
-      getOrCreateStateSet()->setRenderBinDetails(
-        (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
-        (activePrefs->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
-      // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.
-    }
-
     force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
 
     // beam visual is drawn by Antenna
