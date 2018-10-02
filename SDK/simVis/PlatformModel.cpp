@@ -318,13 +318,20 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   model_ = newModel;
   if (newModel != NULL)
   {
-    // set render order.
-    // we set the OVERRIDE flag in case the model has renderbins set inside of it
+    // Set render order by setting render bin.  We set the OVERRIDE flag in case the model has renderbins set inside of it.
+    // We also ensure depth reads and writes are on for 3D models to avoid inside-out issues.  For image icons, we use
+    // the inherited depth settings to avoid causing issues with TPA.
     osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
     if (isImageModel_)
+    {
+      modelStateSet->removeAttribute(osg::StateAttribute::DEPTH);
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
+    }
     else
+    {
+      modelStateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, true), osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
+    }
 
     // re-add to the parent groups
     offsetXform_->addChild(model_.get());

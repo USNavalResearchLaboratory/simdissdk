@@ -20,7 +20,6 @@
  *
  */
 #include <algorithm>
-#include "osg/Depth"
 #include "osgEarth/GeoData"
 #include "osgEarth/Horizon"
 #include "osgEarth/NodeUtils"
@@ -431,13 +430,6 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   // Lighting will be off for all objects under the Scenario,
   // unless explicitly turned on further down the scene graph
   simVis::setLighting(stateSet, osg::StateAttribute::OFF);
-
-  // Protect the depth test and turn it on.  This prevents overhead mode from overriding
-  // depth test on items, even though overhead mode needs to turn off depth writes for terrain.
-  // Note that this is protected to stop the OVERRIDE (required) in simVis/View.cpp, but
-  // is not set to OVERRIDE, so child nodes can then change the state as needed.
-  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, true),
-    osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
   setName("simVis::ScenarioManager");
 

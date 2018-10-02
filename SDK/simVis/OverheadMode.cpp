@@ -20,7 +20,6 @@
  *
  */
 #include <cassert>
-#include "osg/Depth"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/VirtualProgram"
 #include "simNotify/Notify.h"

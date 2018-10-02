@@ -29,10 +29,7 @@
 #include "simVis/Entity.h"
 #include "simVis/LocatorNode.h"
 
-namespace osg {
-  class Depth;
-  class MatrixTransform;
-}
+namespace osg { class MatrixTransform; }
 
 namespace simVis
 {

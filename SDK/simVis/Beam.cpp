@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
 #include "simNotify/Notify.h"

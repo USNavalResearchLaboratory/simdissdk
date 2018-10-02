@@ -28,7 +28,6 @@
 #include "simVis/Entity.h"
 #include "simVis/LocatorNode.h"
 
-namespace osg { class Depth; }
 namespace osgEarth { class LineDrawable; }
 namespace simVis
 {

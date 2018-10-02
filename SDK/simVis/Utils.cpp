@@ -153,6 +153,19 @@ namespace
    *
    * Since the bin needs to manage its own state, we have to manually draw the
    * render leaves and skip OSG's default state-tracking RenderBin code.
+   *
+   * Testing in OSG reveals that the StateSet associated with the render bin is inserted
+   * into the render graph very "early," before even the camera's state set.  That means
+   * any PROTECTED value later in the scene will override the behavior of the TPA.  This
+   * matters for a TPA item because although a leaf node may have TPA set as the render
+   * bin, a PROTECTED depth setting between the camera and the leaf node could override
+   * the TPA behavior, disrupting the graphics.
+   *
+   * If you are reading this comment because you're debugging TPA not working, set a
+   * breakpoint in the first call to State::apply() after the call here to
+   * osgUtil::RenderBin::drawImplementation(), and inspect the _stateStateStack carefully.
+   * You should see TPA setting Depth early in the stack; ensure nothing else overrides
+   * that depth later with a PROTECTED attribute.
    */
   class TwoPassAlphaRenderBin : public osgUtil::RenderBin
   {
@@ -209,7 +222,9 @@ namespace
       // Create a copy of the state set stack so we can fix the internal stack after first drawImplementation()
       osgUtil::RenderLeaf* oldPrevious = previous;
 
-      // Render once with the first state set
+      // Render once with the first state set.  Note that the state set is inserted into the
+      // state set stack relatively early -- probably earlier than you expect -- and therefore
+      // later PROTECTED elements can override the TPA state.
       const osg::State::StateSetStack previousStateStack = ri.getState()->getStateSetStack();
       setStateSet(pass1_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
