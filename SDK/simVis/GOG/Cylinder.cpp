@@ -33,7 +33,6 @@
 #include "simVis/GOG/Utils.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace osgEarth::Symbology;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
 
@@ -56,7 +55,7 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
   else if (conf.hasValue("angleend"))
     end = Angle(conf.value<double>("angleend", 0.0), p.units_.angleUnits_);
 
-  GeometryFactory gf;
+  osgEarth::Symbology::GeometryFactory gf;
   osg::ref_ptr<Geometry> tgeom = start == end ? (Geometry*)new Ring() : (Geometry*)new LineString();
   osg::ref_ptr<Geometry> shape;
 

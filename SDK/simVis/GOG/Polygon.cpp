@@ -39,7 +39,7 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const osgEarth::Config&  con
                                   const GOGNodeType&       nodeType,
                                   const GOGContext&        context,
                                   const GogMetaData&       metaData,
-                                  MapNode*                 mapNode)
+                                  osgEarth::MapNode*       mapNode)
 {
   p.parseGeometry<osgEarth::Symbology::Polygon>(conf);
   GogNodeInterface* rv = NULL;

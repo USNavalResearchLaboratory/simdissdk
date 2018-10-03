@@ -31,7 +31,6 @@
 #include "simVis/GOG/Utils.h"
 
 using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
 
 
 GogNodeInterface* Sphere::deserialize(const osgEarth::Config&  conf,
@@ -39,13 +38,13 @@ GogNodeInterface* Sphere::deserialize(const osgEarth::Config&  conf,
                     const GOGNodeType&       nodeType,
                     const GOGContext&        context,
                     const GogMetaData&       metaData,
-                    MapNode*                 mapNode)
+                    osgEarth::MapNode*       mapNode)
 {
-  Distance radius(conf.value("radius", 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance radius(conf.value("radius", 1000.0), p.units_.rangeUnits_);
 
-  osg::Vec4f color(Color::White);
+  osg::Vec4f color(osgEarth::Symbology::Color::White);
 
-  float radius_m = radius.as(Units::METERS);
+  float radius_m = radius.as(osgEarth::Units::METERS);
 
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createSphere(
     radius_m, color);

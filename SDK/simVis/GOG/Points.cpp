@@ -33,7 +33,6 @@
 #define LC "[GOG::PointSet] "
 
 using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
 
@@ -42,7 +41,7 @@ GogNodeInterface* Points::deserialize(const osgEarth::Config&  conf,
                     const GOGNodeType&       nodeType,
                     const GOGContext&        context,
                     const GogMetaData&       metaData,
-                    MapNode*                 mapNode)
+                    osgEarth::MapNode*       mapNode)
 {
   p.parseGeometry<osgEarth::Symbology::PointSet>(conf);
 

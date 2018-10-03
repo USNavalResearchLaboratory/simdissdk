@@ -37,7 +37,6 @@
 
 using namespace simVis::GOG;
 using namespace osgEarth::Features;
-using namespace osgEarth::Symbology;
 
 namespace
 {
@@ -184,7 +183,7 @@ Geometry* createArc(const osg::Vec3d& center,
                           const Distance&   innerRadius,
                           bool              drawPie,
                           Geometry*         geomToUse,
-                          GeometryFactory&  gf)
+                          osgEarth::Symbology::GeometryFactory&  gf)
 {
   if (drawDonut)
     return createDonut(center, radius, innerRadius, start, end, geomToUse);
@@ -202,7 +201,7 @@ Geometry* createEllipticalArc(const osg::Vec3d& center,
                           const Distance&   innerRadius,
                           bool              drawPie,
                           Geometry*         geomToUse,
-                          GeometryFactory&  gf)
+                          osgEarth::Symbology::GeometryFactory&  gf)
 {
   if (drawDonut)
     return createEllipticalDonut(center, radiusMajor, radiusMinor, innerRadius, rotationAngle, start, end, geomToUse);
@@ -287,7 +286,7 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
 
   // whether to include the center point in the geometry.
   bool filled = p.style_.has<PolygonSymbol>();
-  GeometryFactory gf;
+  osgEarth::Symbology::GeometryFactory gf;
   Geometry* outlineShape = (Geometry*)new LineString();
   Geometry* filledShape = (Geometry*)new osgEarth::Symbology::Polygon();
 

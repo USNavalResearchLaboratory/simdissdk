@@ -20,7 +20,6 @@
  *
  */
 #include <limits>
-#include "osg/Depth"
 #include "osgEarth/NodeUtils"
 #include "osgEarthAnnotation/GeoPositionNode"
 #include "osgEarthAnnotation/LocalGeometryNode"

@@ -31,19 +31,18 @@
 #include "simVis/GOG/Utils.h"
 
 using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
 
 GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
                        simVis::GOG::ParserData& p,
                        const GOGNodeType&       nodeType,
                        const GOGContext&        context,
                        const GogMetaData&       metaData,
-                       MapNode*                 mapNode)
+                       osgEarth::MapNode*       mapNode)
 {
   // all the ways to set the radii
-  Distance y_diam(conf.value("minoraxis", 1000.0), p.units_.rangeUnits_);
-  Distance x_diam(conf.value("majoraxis", 1000.0), p.units_.rangeUnits_);
-  Distance z_diam(conf.value("height", 0.0), p.units_.altitudeUnits_);
+  osgEarth::Distance y_diam(conf.value("minoraxis", 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance x_diam(conf.value("majoraxis", 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance z_diam(conf.value("height", 0.0), p.units_.altitudeUnits_);
 
   if (conf.hasValue("radius"))
   {
@@ -71,11 +70,11 @@ GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
     x_diam = conf.value<double>("semimajoraxis", 0) * 2;
   }
 
-  osg::Vec4f color(Color::White);
+  osg::Vec4f color(osgEarth::Symbology::Color::White);
 
-  float x_radius_m = x_diam.as(Units::METERS) / 2.0;
-  float y_radius_m = y_diam.as(Units::METERS) / 2.0;
-  float z_radius_m = z_diam.as(Units::METERS) / 2.0;
+  float x_radius_m = x_diam.as(osgEarth::Units::METERS) / 2.0;
+  float y_radius_m = y_diam.as(osgEarth::Units::METERS) / 2.0;
+  float z_radius_m = z_diam.as(osgEarth::Units::METERS) / 2.0;
 
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createEllipsoid(
     y_radius_m, x_radius_m, z_radius_m, color);  // y, x, z order to match SIMDIS 9

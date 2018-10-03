@@ -30,7 +30,6 @@
 #include "simNotify/Notify.h"
 
 using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
 using namespace osgEarth::Features;
 
 GogNodeInterface* Circle::deserialize(const osgEarth::Config&  conf,
@@ -42,7 +41,7 @@ GogNodeInterface* Circle::deserialize(const osgEarth::Config&  conf,
 {
   Distance radius(conf.value("radius", 1000.), p.units_.rangeUnits_);
 
-  GeometryFactory gf;
+  osgEarth::Symbology::GeometryFactory gf;
   Geometry* shape = gf.createCircle(osg::Vec3d(0, 0, 0), radius);
 
   osgEarth::Annotation::LocalGeometryNode* node = NULL;

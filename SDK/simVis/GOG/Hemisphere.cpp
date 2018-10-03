@@ -31,22 +31,20 @@
 #include "simVis/GOG/HostedLocalGeometryNode.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
-using namespace osgEarth::Features;
+namespace simVis { namespace GOG {
 
 GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
                         simVis::GOG::ParserData& p,
                         const GOGNodeType&       nodeType,
                         const GOGContext&        context,
                         const GogMetaData&       metaData,
-                        MapNode*                 mapNode)
+                        osgEarth::MapNode*       mapNode)
 {
-  Distance radius(conf.value("radius", 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance radius(conf.value("radius", 1000.0), p.units_.rangeUnits_);
 
-  osg::Vec4f color(Color::White);
+  osg::Vec4f color(osgEarth::Symbology::Color::White);
 
-  float radius_m = radius.as(Units::METERS);
+  float radius_m = radius.as(osgEarth::Units::METERS);
 
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createHemisphere(
     radius_m, color);
@@ -60,9 +58,9 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
     node->setPosition(p.getMapPosition());
     node->getPositionAttitudeTransform()->addChild(shape);
     node->setStyle(p.style_);
-    osg::Quat yaw(p.localHeadingOffset_->as(Units::RADIANS), -osg::Vec3(0, 0, 1));
-    osg::Quat pitch(p.localPitchOffset_->as(Units::RADIANS), osg::Vec3(1, 0, 0));
-    osg::Quat roll(p.localRollOffset_->as(Units::RADIANS), osg::Vec3(0, 1, 0));
+    osg::Quat yaw(p.localHeadingOffset_->as(osgEarth::Units::RADIANS), -osg::Vec3(0, 0, 1));
+    osg::Quat pitch(p.localPitchOffset_->as(osgEarth::Units::RADIANS), osg::Vec3(1, 0, 0));
+    osg::Quat roll(p.localRollOffset_->as(osgEarth::Units::RADIANS), osg::Vec3(0, 1, 0));
     node->setLocalRotation(roll * pitch * yaw);
   }
   else
@@ -77,3 +75,5 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
   }
   return rv;
 }
+
+} }

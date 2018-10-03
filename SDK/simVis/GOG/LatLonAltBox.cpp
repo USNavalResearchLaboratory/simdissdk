@@ -27,7 +27,6 @@
 #include "simVis/GOG/Utils.h"
 
 using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
 using namespace osgEarth::Features;
 
 GogNodeInterface* LatLonAltBox::deserialize(const osgEarth::Config&  conf,
@@ -35,14 +34,14 @@ GogNodeInterface* LatLonAltBox::deserialize(const osgEarth::Config&  conf,
                           const GOGNodeType&       nodeType,
                           const GOGContext&        context,
                           const GogMetaData&       metaData,
-                          MapNode*                 mapNode)
+                          osgEarth::MapNode*       mapNode)
 {
-  Angle    minLat(p.parseAngle(conf.value("s"), 0.0), p.units_.angleUnits_);
-  Angle    maxLat(p.parseAngle(conf.value("n"), 1.0), p.units_.angleUnits_);
-  Angle    minLon(p.parseAngle(conf.value("w"), 0.0), p.units_.angleUnits_);
-  Angle    maxLon(p.parseAngle(conf.value("e"), 1.0), p.units_.angleUnits_);
-  Distance minAlt(conf.value("minalt", 0.0), p.units_.altitudeUnits_);
-  Distance maxAlt(conf.value("maxalt", 1000.0), p.units_.altitudeUnits_);
+  osgEarth::Angle    minLat(p.parseAngle(conf.value("s"), 0.0), p.units_.angleUnits_);
+  osgEarth::Angle    maxLat(p.parseAngle(conf.value("n"), 1.0), p.units_.angleUnits_);
+  osgEarth::Angle    minLon(p.parseAngle(conf.value("w"), 0.0), p.units_.angleUnits_);
+  osgEarth::Angle    maxLon(p.parseAngle(conf.value("e"), 1.0), p.units_.angleUnits_);
+  osgEarth::Distance minAlt(conf.value("minalt", 0.0), p.units_.altitudeUnits_);
+  osgEarth::Distance maxAlt(conf.value("maxalt", 1000.0), p.units_.altitudeUnits_);
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {

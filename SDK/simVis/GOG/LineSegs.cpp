@@ -31,7 +31,6 @@
 #define LC "[GOG::LineSegs] "
 
 using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
 
@@ -40,7 +39,7 @@ GogNodeInterface* LineSegs::deserialize(const osgEarth::Config&  conf,
                       const GOGNodeType&       nodeType,
                       const GOGContext&        context,
                       const GogMetaData&       metaData,
-                      MapNode*                 mapNode)
+                      osgEarth::MapNode*       mapNode)
 {
   osg::ref_ptr<Geometry> temp = new Geometry();
   p.parseLineSegmentPoints(conf, p.units_, temp.get(), p.geomIsLLA_);
