@@ -115,8 +115,27 @@ public:
 
   /**@return the action corresponding to the given description; will search aliases */
   Action* findAction(const QString& desc) const;
-  /**@return the action corresponding to the given hot key */
+  /**@return the action corresponding to the given hot key.  "Unknown" actions are not searched. */
   Action* findAction(QKeySequence hotKey) const;
+
+  /** Enumeration of assignment possibilities for a hot key. */
+  enum AssignmentStatus {
+    /** Hot key is unassigned to any action. */
+    UNASSIGNED,
+    /** Hot key is assigned to a known action. */
+    ASSIGNED_TO_ACTION,
+    /** Hot key is assigned to an action name, but that action name is not currently registered. */
+    ASSIGNED_TO_UNKNOWN
+  };
+
+  /**
+   * Retrieves the name of the action associated with the key sequence, or empty string if none.
+   * Unlike findAction(QKeySequence), this version will check unknown actions.
+   * @param hotKey Hot key to search for
+   * @param actionName Will be filled out with the action name, or empty string if not found
+   * @return Assignment status describing what type of action (if any) this action is.
+   */
+  AssignmentStatus getKeySequenceAssignment(const QKeySequence& hotKey, QString& actionName) const;
 
   /**@return all actions */
   QList<Action*> actions() const;
@@ -187,6 +206,8 @@ private:
   };
   /// List of all unknown actions
   QMap<QString, UnknownAction*> unknownActions_;
+  /// List of hot keys to unknown actions
+  QMap<QKeySequence, QString> unknownActionsByKey_;
 
   /// Search only actionsByDesc_ for an action
   Action* findWithoutAliases_(const QString& desc) const;
