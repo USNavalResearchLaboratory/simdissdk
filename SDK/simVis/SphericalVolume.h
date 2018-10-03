@@ -141,7 +141,10 @@ public:
   static osg::Geometry* solidGeometry(osg::MatrixTransform* xform);
 
 private:
-  static osg::Geometry* createCone_(const SVData &data, const osg::Vec3& direction);
+  /// Create an sv cone using specified data & direction, as a child geometry of the specified geode
+  static void createCone_(osg::Geode* geode, const SVData &data, const osg::Vec3& direction);
+  /// Calculate the y value that will make a unit vector from specified x and z
+  static float calcYValue_(double x, double z);
   static void processWireframe_(osg::MatrixTransform* xform, int drawMode);
   static void dirtyBound_(osg::MatrixTransform* xform);
 };
