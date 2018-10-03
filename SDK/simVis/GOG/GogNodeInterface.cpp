@@ -63,6 +63,10 @@
 #include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/GogNodeInterface.h"
 
+#ifndef GL_CLIP_DISTANCE0
+#define GL_CLIP_DISTANCE0 0x3000
+#endif
+
 namespace {
 
   /**
