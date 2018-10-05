@@ -69,18 +69,33 @@ void ClassificationBanner::addToView(simVis::View* managedView)
 {
   updateClassLabel_(); // update before adding
   if (managedView) // only add if we have main view
-  {
-    managedView->addOverlayControl(classLabelUpper_.get());
-    managedView->addOverlayControl(classLabelLower_.get());
-  }
+    addToView(managedView->controlCanvas());
 }
 
 void ClassificationBanner::removeFromView(simVis::View* managedView)
 {
   if (managedView) // only remove if we have main view
+    removeFromView(managedView->controlCanvas());
+}
+
+void ClassificationBanner::addToView(osgEarth::Util::Controls::ControlCanvas* controlCanvas)
+{
+  updateClassLabel_(); // update before adding
+  if (controlCanvas)
   {
-    managedView->removeOverlayControl(classLabelUpper_.get());
-    managedView->removeOverlayControl(classLabelLower_.get());
+    if (!controlCanvas->containsNode(classLabelUpper_.get()))
+      controlCanvas->addControl(classLabelUpper_.get());
+    if (!controlCanvas->containsNode(classLabelLower_.get()))
+      controlCanvas->addControl(classLabelLower_.get());
+  }
+}
+
+void ClassificationBanner::removeFromView(osgEarth::Util::Controls::ControlCanvas* controlCanvas)
+{
+  if (controlCanvas)
+  {
+    controlCanvas->removeControl(classLabelUpper_.get());
+    controlCanvas->removeControl(classLabelLower_.get());
   }
 }
 

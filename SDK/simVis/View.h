@@ -605,6 +605,9 @@ public:
   /// the view manager overseeing this view
   ViewManager* getViewManager() const { return viewman_.get(); }
 
+  /// The view's control canvas
+  osgEarth::Util::Controls::ControlCanvas* controlCanvas() const;
+
   /// type of view either top level, inset, or super hud
   ViewType type() const;
 

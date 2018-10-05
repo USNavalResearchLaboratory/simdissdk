@@ -138,7 +138,7 @@ struct SetNearFarCallback : public osg::NodeCallback
   SetNearFarCallback()
   {
     // create a state set to turn off depth buffer when in overhead mode.
-    // note: this will override the depth settings in the TwoPassAlphaRenderBin, and 
+    // note: this will override the depth settings in the TwoPassAlphaRenderBin, and
     // that's OK because we don't care about TPA when the depth buffer is off.
     depthState_ = new osg::StateSet();
     depthState_->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
@@ -2068,6 +2068,11 @@ void View::getFrustumBounds_(double& left, double& right, double& bottom, double
   left = -right;
   top = tanFovY * zNear;
   bottom = -top;
+}
+
+osgEarth::Util::Controls::ControlCanvas* View::controlCanvas() const
+{
+  return controlCanvas_.get();
 }
 
 }

@@ -28,7 +28,11 @@
 #include "simData/DataStore.h"
 
 namespace osgText { class Font; }
-namespace osgEarth{ namespace Util{ namespace Controls{ class LabelControl; } } }
+namespace osgEarth { namespace Util { namespace Controls {
+  class ControlCanvas;
+  class LabelControl;
+} } }
+namespace osgViewer { class View; }
 
 namespace simVis
 {
@@ -64,6 +68,18 @@ namespace simVis
     * @param managedView
     */
     void removeFromView(simVis::View* managedView);
+
+    /**
+    * Add the ClassificationBanner to a control canvas
+    * @param controlCanvas
+    */
+    void addToView(osgEarth::Util::Controls::ControlCanvas* controlCanvas);
+
+    /**
+    * Remove the ClassificationBanner from a control canvas
+    * @param controlCanvas
+    */
+    void removeFromView(osgEarth::Util::Controls::ControlCanvas* controlCanvas);
 
     /** Set the font file of the banner, can include full path (e.g. "arial.ttf", "full/path/to/arialbd.ttf") */
     void setFontFile(const std::string& fontFile);
