@@ -338,7 +338,7 @@ void VaporTrail::addPuff_(const simCore::Vec3& puffPosition, double puffTime)
 
   if (recyclePuffs_.empty())
   {
-    puff = new VaporTrailPuff(textures_[textureCounter_], puffMatrix, puffTime);
+    puff = new VaporTrailPuff(textures_[textureCounter_].get(), puffMatrix, puffTime);
     // add it to the group/scenegraph
     vaporTrailGroup_->addChild(puff);
   }
@@ -380,7 +380,7 @@ void VaporTrail::processTextures_(const std::vector< osg::ref_ptr<osg::Texture2D
     if (vaporTrailData_.isWake)
     {
       osg::ref_ptr<osg::Geode> geode = new osg::Geode();
-      createTexture_(*(geode.get()), *it);
+      createTexture_(*(geode.get()), (*it).get());
       // show back facing texture so that wake can be seen from under water
       geode->getOrCreateStateSet()->setAttributeAndModes(new osg::CullFace(osg::CullFace::BACK), osg::StateAttribute::OFF);
       textures_.push_back(geode);
@@ -389,7 +389,7 @@ void VaporTrail::processTextures_(const std::vector< osg::ref_ptr<osg::Texture2D
     {
       osg::ref_ptr<osg::Billboard> billboard = new osg::Billboard();
       billboard->setMode(osg::Billboard::POINT_ROT_EYE);
-      createTexture_(*(billboard.get()), *it);
+      createTexture_(*(billboard.get()), (*it).get());
       textures_.push_back(billboard);
     }
   }

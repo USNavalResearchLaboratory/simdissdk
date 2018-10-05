@@ -157,7 +157,7 @@ struct SetNearFarCallback : public osg::NodeCallback
     if (cv)
     {
       cv->popStateSet();
-      osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
+      osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix();
       double eyeR = eye.length();
       const double earthR = simCore::EARTH_RADIUS;
       double eyeAlt = std::max(0.0, eyeR - earthR);

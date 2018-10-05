@@ -1,6 +1,6 @@
 #version $GLSL_VERSION_STR
 
-#pragma import_defines(OE_TERRAIN_RENDER_ELEVATION)
+#pragma import_defines(SIMVIS_IGNORE_BATHYMETRY_GEN)
 
 #pragma vp_entryPoint simVis_BathymetryGenerator_vertex
 #pragma vp_location vertex_view
@@ -14,7 +14,7 @@ vec3 oe_UpVectorView; // stage global from osgEarth
 
 void simVis_BathymetryGenerator_vertex(inout vec4 vertex)
 {
-#ifdef OE_TERRAIN_RENDER_ELEVATION
+#if !defined(SIMVIS_IGNORE_BATHYMETRY_GEN)
   float elev = oe_terrain_getElevation();
   if (elev == 0.0) {
     vertex.xyz += oe_UpVectorView * simVis_BathymetryGenerator_offset;

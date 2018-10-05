@@ -140,11 +140,18 @@ void InstallOcean::install(simVis::SceneManager& scene)
     osgEarth::Util::SimpleOceanLayerOptions ocean;
     // To get similar behavior as old ocean_simple driver, useBathymetry() == false helps
     ocean.useBathymetry() = false;
-#endif
     ocean.maxAltitude() = 30000.0f;
-    osg::ref_ptr<osgEarth::Util::OceanNode> oceanNode = osgEarth::Util::OceanNode::create(ocean, scene.getMapNode());
-    if (oceanNode.valid())
-      scene.setOceanNode(oceanNode.get());
+    osg::ref_ptr<osgEarth::Layer> layer = new osgEarth::Util::SimpleOceanLayer(ocean);
+
+    // Control the ocean's rendering order so we can see underwater objects:
+    layer->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_OCEAN, simVis::BIN_GLOBAL_SIMSDK);
+
+    // Do not apply the bathymetry generator when drawing the ocean surface:
+    layer->getOrCreateStateSet()->setDefine("SIMVIS_IGNORE_BATHYMETRY_GEN");
+
+    // Add to the map.
+    scene.getMap()->addLayer(layer.get());
+#endif
   }
 }
 

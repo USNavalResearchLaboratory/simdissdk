@@ -50,6 +50,7 @@
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
+#include "simVis/Constants.h"
 #include "simUtil/ExampleResources.h"
 
 #include "osgEarthDrivers/tms/TMSOptions"
@@ -199,12 +200,6 @@ namespace
   class ApplyOpacity : public ControlEventHandler
   {
   public:
-    ApplyOpacity(OceanNode* ocean, LabelControl* pctLabel)
-      : ocean_(ocean),
-        pctLabel_(pctLabel)
-    {
-    }
-
     ApplyOpacity(VisibleLayer* layer, LabelControl* pctLabel)
       : layer_(layer),
         pctLabel_(pctLabel)
@@ -215,8 +210,6 @@ namespace
     {
       // Clamp between 0.f and 1.f
       value = simCore::sdkMax(0.f, simCore::sdkMin(1.f, value));
-      if (ocean_.valid())
-        ocean_->setAlpha(value);
       if (layer_.valid())
         layer_->setOpacity(value);
       if (pctLabel_.valid())
@@ -224,7 +217,6 @@ namespace
     }
 
   private:
-    osg::observer_ptr<OceanNode> ocean_;
     osg::observer_ptr<VisibleLayer> layer_;
     osg::observer_ptr<LabelControl> pctLabel_;
   };
@@ -233,7 +225,7 @@ namespace
   class ApplySeaLevel : public ControlEventHandler
   {
   public:
-    ApplySeaLevel(OceanNode* ocean, LabelControl* valueLabel)
+    ApplySeaLevel(SimpleOceanLayer* ocean, LabelControl* valueLabel)
       : ocean_(ocean),
         valueLabel_(valueLabel)
     {
@@ -248,7 +240,7 @@ namespace
     }
 
   private:
-    osg::observer_ptr<OceanNode> ocean_;
+    osg::observer_ptr<SimpleOceanLayer> ocean_;
     osg::observer_ptr<LabelControl> valueLabel_;
   };
 
@@ -268,6 +260,24 @@ namespace
 
   private:
     osg::observer_ptr<SkyNode> sky_;
+  };
+
+  /** Check or uncheck to toggle overhead mode */
+  class ToggleOverheadMode : public ControlEventHandler
+  {
+  public:
+    explicit ToggleOverheadMode(simVis::View* view)
+      : view_(view)
+    {
+    }
+    virtual void onValueChanged(Control* control, bool value)
+    {
+      if (view_.valid())
+        view_->enableOverheadMode(!view_->isOverheadEnabled());
+    }
+
+  private:
+    osg::observer_ptr<simVis::View> view_;
   };
 
 #ifdef HAVE_SILVERLINING_NODEKIT
@@ -383,7 +393,7 @@ namespace
   };
 #endif
 
-  Control* createMenu(OceanNode* simpleOcean, osgEarth::VisibleLayer* oceanLayer, SkyNode* skyNode, bool isTriton, bool isSilverLining)
+  Control* createMenu(osgEarth::Util::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer, SkyNode* skyNode, simVis::View* view, bool isTriton, bool isSilverLining)
   {
     static const float TITLE_SIZE = 16.f;
     static const float TEXT_SIZE = 12.f;
@@ -404,23 +414,27 @@ namespace
     LabelControl* opacityPctLabel = grid->setControl(2, row, new LabelControl("80%", TEXT_SIZE, WHITE));
     // Provide a little buffer on either side so we can get to 0% and 100%...
     HSliderControl* opacitySlider;
-    if (simpleOcean)
-      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(simpleOcean, opacityPctLabel)));
+    if (simpleOceanLayer)
+      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(simpleOceanLayer, opacityPctLabel)));
     else
-      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(oceanLayer, opacityPctLabel)));
+      opacitySlider = grid->setControl(1, row, new HSliderControl(-0.1f, 1.1f, 0.8f, new ApplyOpacity(tritonLayer, opacityPctLabel)));
     opacitySlider->setHorizFill(true, 250.0f);
 
     // Sea level
     ++row;
     grid->setControl(0, row, new LabelControl("Sea Level", TEXT_SIZE, WHITE));
     LabelControl* seaLevelLabel = grid->setControl(2, row, new LabelControl("0 m", TEXT_SIZE, WHITE));
-    HSliderControl* seaLevelSlider = grid->setControl(1, row, new HSliderControl(-100.f, 100.f, 0.f, new ApplySeaLevel(simpleOcean, seaLevelLabel)));
+    HSliderControl* seaLevelSlider = grid->setControl(1, row, new HSliderControl(-100.f, 100.f, 0.f, new ApplySeaLevel(simpleOceanLayer, seaLevelLabel)));
     seaLevelSlider->setHorizFill(true, 250.0f);
 
     // Sky lighting
     ++row;
     grid->setControl(0, row, new LabelControl("Lighting", TEXT_SIZE));
     grid->setControl(1, row, new CheckBoxControl(true, new ToggleLighting(skyNode)));
+
+    ++row;
+    grid->setControl(0, row, new LabelControl("Overhead mode", TEXT_SIZE));
+    grid->setControl(1, row, new CheckBoxControl(false, new ToggleOverheadMode(view)));
 
 #ifdef HAVE_TRITON_NODEKIT
     if (isTriton)
@@ -672,22 +686,26 @@ namespace
 #endif
 
   /** Factory an ocean node */
-  OceanNode* makeSimpleOcean(osgEarth::MapNode* mapNode)
+  osgEarth::Util::SimpleOceanLayer* makeSimpleOcean()
   {
 #if SDK_OSGEARTH_VERSION_LESS_THAN(1,10,0)
     osgEarth::Drivers::SimpleOcean::SimpleOceanOptions ocean;
     ocean.lowFeatherOffset() = 0.0f;
     ocean.highFeatherOffset() = 1.0f;
     ocean.renderBinNumber() = simVis::BIN_OCEAN;
+    return 0L;
 #else
     osgEarth::Util::SimpleOceanLayerOptions ocean;
     // To get similar behavior as old ocean_simple driver, useBathymetry() == false helps
     ocean.useBathymetry() = false;
-#endif
     ocean.maxAltitude() = 30000.0f;
-    OceanNode* rv = OceanNode::create(ocean, mapNode);
-    rv->setAlpha(0.8f);
+    SimpleOceanLayer* rv = new SimpleOceanLayer(ocean);
+    rv->setOpacity(0.8f);
+    osg::StateSet* stateSet = rv->getOrCreateStateSet();
+    stateSet->setRenderBinDetails(simVis::BIN_OCEAN, simVis::BIN_GLOBAL_SIMSDK);
+    stateSet->setDefine("SIMVIS_IGNORE_BATHYMETRY_GEN");
     return rv;
+#endif
   }
 }
 
@@ -796,7 +814,7 @@ int main(int argc, char** argv)
   scene->setSkyNode(sky.get());
 
   // add an ocean surface to the scene.
-  osg::ref_ptr<OceanNode> simpleOcean;
+  osg::ref_ptr<osgEarth::Util::SimpleOceanLayer> simpleOceanLayer;
   osg::ref_ptr<osgEarth::VisibleLayer> tritonLayer;
 #ifdef HAVE_TRITON_NODEKIT
   if (useTriton)
@@ -807,8 +825,9 @@ int main(int argc, char** argv)
   else
 #endif
   {
-    simpleOcean = makeSimpleOcean(scene->getMapNode());
-    scene->setOceanNode(simpleOcean.get());
+    simpleOceanLayer = makeSimpleOcean();
+    if (simpleOceanLayer.valid())
+        viewer->getSceneManager()->getMap()->addLayer(simpleOceanLayer.get());
   }
 
   // if we're using Triton, install a module to "sink" the MSL=0 terrain down, creating makeshift bathymetry
@@ -826,7 +845,7 @@ int main(int argc, char** argv)
   viewer->getMainView()->setFocalOffsets(80.0, -10.0, 2000.0);
 
   // install an on-screen menu
-  Control* menu = createMenu(simpleOcean.get(), tritonLayer.get(), sky.get(), useTriton, useSilverLining);
+  Control* menu = createMenu(simpleOceanLayer.get(), tritonLayer.get(), sky.get(), viewer->getMainView(), useTriton, useSilverLining);
   viewer->getMainView()->addOverlayControl(menu);
 
   // install the handler for the demo keys in the notify() above
