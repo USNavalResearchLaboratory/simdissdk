@@ -21,6 +21,7 @@
  */
 #include <cassert>
 #include <limits>
+#include "osg/LightModel"
 #include "osg/LOD"
 #include "osg/Node"
 #include "osg/NodeVisitor"
@@ -116,6 +117,11 @@ public:
 
       // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
       ss->removeTextureMode(0, GL_TEXTURE_2D);
+
+      // GLCORE does not support LightModel; drop it; see SIMDIS-3089
+      osg::LightModel* lightModel = dynamic_cast<osg::LightModel*>(ss->getAttribute(osg::StateAttribute::LIGHTMODEL));
+      if (lightModel != NULL)
+        ss->removeAttribute(lightModel);
 
       // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
       osg::Texture* texture = dynamic_cast<osg::Texture*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
