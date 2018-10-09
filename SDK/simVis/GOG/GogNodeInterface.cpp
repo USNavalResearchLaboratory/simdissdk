@@ -511,7 +511,7 @@ int GogNodeInterface::getExtruded(bool& extruded) const
 int GogNodeInterface::getExtrudedHeight(double& extrudeHeightM) const
 {
   bool isExtruded = false;
-  if (1 == getExtruded(isExtruded) || !isExtruded)
+  if (1 == getExtruded(isExtruded) || !isExtruded || extrudedHeight_ == 0.)
     return 1;
   extrudeHeightM = extrudedHeight_;
   return 0;
