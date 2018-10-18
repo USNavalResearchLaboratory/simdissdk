@@ -319,19 +319,12 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   if (newModel != NULL)
   {
     // Set render order by setting render bin.  We set the OVERRIDE flag in case the model has renderbins set inside of it.
-    // We also ensure depth reads and writes are on for 3D models to avoid inside-out issues.  For image icons, we use
-    // the inherited depth settings to avoid causing issues with TPA.
+    // Note that osg::Depth settings are not changed here, but are instead dealt with inside updateImageDepth_() call below.
     osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
     if (isImageModel_)
-    {
-      modelStateSet->removeAttribute(osg::StateAttribute::DEPTH);
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
-    }
     else
-    {
-      modelStateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, true), osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_MODEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
-    }
 
     // re-add to the parent groups
     offsetXform_->addChild(model_.get());
@@ -574,8 +567,10 @@ void PlatformModelNode::updateImageDepth_(const simData::PlatformPrefs& prefs, b
     if (!isImageModel_)
       return;
     // image models need to always pass depth test if nodepthicons is set to true
-    osg::Depth::Function depthFunc = (prefs.nodepthicons() && isImageModel_) ? osg::Depth::ALWAYS : osg::Depth::LESS;
-    state->setAttributeAndModes(new osg::Depth(depthFunc, 0, 1, true), osg::StateAttribute::ON);
+    if (prefs.nodepthicons() && isImageModel_)
+      state->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
+    else
+      state->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, true), osg::StateAttribute::ON);
   }
 }
 
