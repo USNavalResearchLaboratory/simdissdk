@@ -28,14 +28,13 @@
 
 namespace simUtil {
 
-class HudManager;
 class HudColumnText;
 class View;
 
 /**
  * Class that manages status display info overlay on the specified view
  */
-class SDKUTIL_EXPORT StatusText : public osg::Referenced
+class SDKUTIL_EXPORT StatusText : public osg::Group
 {
 public:
   /// Enumeration of positions for status display
@@ -67,6 +66,11 @@ protected:
 
 private:
   class FrameEventHandler;
+  /**
+   * Called by FrameEventHandler when the window re-sizes, passes the
+   * width and height (in pixels) to the hud status text to resize
+   */
+  void resize_(int widthPx, int heightPx);
 
   /** Build the status text object */
   void create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize);
@@ -75,13 +79,14 @@ private:
   void update_();
 
 private:
-  osg::observer_ptr<simVis::View> view_;        /// Reference to the view in which the status will be displayed
-  simUtil::HudManager* hudManager_;                   ///< Reference to the HudManager
-  osg::observer_ptr<simUtil::HudColumnText> statusHudText_;   ///< Reference to the HudText that contains the status display
-  osg::ref_ptr<FrameEventHandler> updateEventHandler_;  ///< Reference to the update event handler
-  simCore::TextReplacerPtr textReplacer_;               ///< Reference to the replacer that processes status specification into status text
+  osg::observer_ptr<simVis::View> view_;                ///< Pointer to the view in which the status will be displayed
+  osg::ref_ptr<simUtil::HudColumnText> statusHudText_;  ///< Pointer to the HudText that contains the status display
+  osg::ref_ptr<FrameEventHandler> frameEventHandler_;   ///< Pointer to the frame event handler
+  simCore::TextReplacerPtr textReplacer_;               ///< Pointer to the replacer that processes status specification into status text
   Position position_;                                   ///< Position of status display
   std::string statusSpec_;                              ///< Current status specifier from which status display is generated
+  int windowWidthPx_;                                   ///< Save a copy of the window width (pixels)
+  int windowHeightPx_;                                  ///< Save a copy of the window height (pixels)
 };
 
 } // namespace simUtil
