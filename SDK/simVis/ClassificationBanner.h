@@ -24,7 +24,7 @@
 
 #include <osg/ref_ptr>
 #include <osg/Vec4f>
-#include <osgEarthUtil/Controls>
+#include <osgText/Text>
 #include "simData/DataStore.h"
 
 namespace osgText { class Font; }
@@ -41,7 +41,7 @@ namespace simVis
   /**
   * Creates the ClassificationBanner, and keeps it synchronized with the DataStore
   */
-  class SDKVIS_EXPORT ClassificationBanner
+  class SDKVIS_EXPORT ClassificationBanner : public osg::Group
   {
 
   public:
@@ -69,23 +69,17 @@ namespace simVis
     */
     void removeFromView(simVis::View* managedView);
 
-    /**
-    * Add the ClassificationBanner to a control canvas
-    * @param controlCanvas
-    */
-    void addToView(osgEarth::Util::Controls::ControlCanvas* controlCanvas);
-
-    /**
-    * Remove the ClassificationBanner from a control canvas
-    * @param controlCanvas
-    */
-    void removeFromView(osgEarth::Util::Controls::ControlCanvas* controlCanvas);
-
     /** Set the font file of the banner, can include full path (e.g. "arial.ttf", "full/path/to/arialbd.ttf") */
     void setFontFile(const std::string& fontFile);
 
     /** Set the font size of the banner */
     void setFontSize(unsigned int fontSize);
+
+    /** Set the position of the top classification label */
+    void setTopPosition(const osg::Vec3& topPos);
+
+    /** Set the position of the bottom classification label */
+    void setBottomPosition(const osg::Vec3& bottomPos);
 
   private:
     /** Class implements data store listener */
@@ -95,10 +89,10 @@ namespace simVis
     void createClassLabels_();
 
     /** Create a classification banner label control */
-    osgEarth::Util::Controls::LabelControl* createControl_(const std::string& classLabel,
+    osgText::Text* createText_(const std::string& classLabel,
       const osg::Vec4f& classColor,
       osgText::Font* fontFile,
-      osgEarth::Util::Controls::Control::Alignment vertAlign) const;
+      osgText::Text::AlignmentType alignment) const;
 
     /** Retrieves the current classification label and color from the DataStore */
     void getCurrentClassification_(std::string& classLabel, osg::Vec4f& classColor);
@@ -109,8 +103,8 @@ namespace simVis
     simData::DataStore*            dataStore_;                              ///< Reference to the data store
     unsigned int fontSize_;
     std::string fontFile_;
-    osg::ref_ptr<osgEarth::Util::Controls::LabelControl> classLabelUpper_;  ///< Upper classification label
-    osg::ref_ptr<osgEarth::Util::Controls::LabelControl> classLabelLower_;  ///< Lower classification label
+    osg::ref_ptr<osgText::Text> classLabelUpper_;
+    osg::ref_ptr<osgText::Text> classLabelLower_;
     simData::DataStore::ScenarioListenerPtr listener_;                      ///< Listener to the data store
   };
 

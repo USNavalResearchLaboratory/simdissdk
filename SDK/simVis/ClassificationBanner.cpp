@@ -20,6 +20,8 @@
  *
  */
 #include <osgText/Font>
+#include <osgText/Text>
+#include <osgEarthSymbology/TextSymbol>
 #include "simVis/View.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
@@ -27,6 +29,9 @@
 
 namespace simVis
 {
+
+// Classification banner outline thickness
+static const double OUTLINE_THICKNESS = .03;
 
 /** Data Store listener that updates the classification label contents when scenario properties change */
 class ClassificationBanner::ScenarioListenerImpl : public simData::DataStore::ScenarioListener
@@ -49,7 +54,8 @@ private:
 //////////////////////////////////////////////
 
 ClassificationBanner::ClassificationBanner(simData::DataStore* dataStore, unsigned int fontSize, const std::string& fontFile)
-  :dataStore_(dataStore),
+  : osg::Group(),
+  dataStore_(dataStore),
   fontSize_(fontSize),
   fontFile_(fontFile)
 {
@@ -67,36 +73,15 @@ ClassificationBanner::~ClassificationBanner()
 
 void ClassificationBanner::addToView(simVis::View* managedView)
 {
-  updateClassLabel_(); // update before adding
-  if (managedView) // only add if we have main view
-    addToView(managedView->controlCanvas());
+  if (!managedView)
+    return;
+  managedView->getOrCreateHUD()->addChild(this);
 }
 
 void ClassificationBanner::removeFromView(simVis::View* managedView)
 {
-  if (managedView) // only remove if we have main view
-    removeFromView(managedView->controlCanvas());
-}
-
-void ClassificationBanner::addToView(osgEarth::Util::Controls::ControlCanvas* controlCanvas)
-{
-  updateClassLabel_(); // update before adding
-  if (controlCanvas)
-  {
-    if (!controlCanvas->containsNode(classLabelUpper_.get()))
-      controlCanvas->addControl(classLabelUpper_.get());
-    if (!controlCanvas->containsNode(classLabelLower_.get()))
-      controlCanvas->addControl(classLabelLower_.get());
-  }
-}
-
-void ClassificationBanner::removeFromView(osgEarth::Util::Controls::ControlCanvas* controlCanvas)
-{
-  if (controlCanvas)
-  {
-    controlCanvas->removeControl(classLabelUpper_.get());
-    controlCanvas->removeControl(classLabelLower_.get());
-  }
+  if (managedView)
+    managedView->getOrCreateHUD()->removeChild(this);
 }
 
 void ClassificationBanner::setFontFile(const std::string& fontFile)
@@ -113,9 +98,21 @@ void ClassificationBanner::setFontSize(unsigned int fontSize)
 {
   fontSize_ = fontSize;
   if (classLabelUpper_)
-    classLabelUpper_->setFontSize(simVis::osgFontSize(fontSize_));
+    classLabelUpper_->setCharacterSize(simVis::osgFontSize(fontSize_));
   if (classLabelLower_)
-    classLabelLower_->setFontSize(simVis::osgFontSize(fontSize_));
+    classLabelLower_->setCharacterSize(simVis::osgFontSize(fontSize_));
+}
+
+void ClassificationBanner::setTopPosition(const osg::Vec3& topPos)
+{
+  if (classLabelUpper_)
+    classLabelUpper_->setPosition(topPos);
+}
+
+void ClassificationBanner::setBottomPosition(const osg::Vec3& bottomPos)
+{
+  if (classLabelLower_)
+    classLabelLower_->setPosition(bottomPos);
 }
 
 void ClassificationBanner::createClassLabels_()
@@ -129,28 +126,35 @@ void ClassificationBanner::createClassLabels_()
   assert(foundFont);
 
   // create upper and lower label controls
-  classLabelUpper_ = createControl_(classLabel, classColor, foundFont, osgEarth::Util::Controls::Control::ALIGN_TOP);
+  classLabelUpper_ = createText_(classLabel, classColor, foundFont, osgText::Text::CENTER_TOP);
   classLabelUpper_->setName("Classification Banner Upper");
-  classLabelLower_ = createControl_(classLabel, classColor, foundFont, osgEarth::Util::Controls::Control::ALIGN_BOTTOM);
+  addChild(classLabelUpper_);
+  classLabelLower_ = createText_(classLabel, classColor, foundFont, osgText::Text::CENTER_BOTTOM);
   classLabelLower_->setName("Classification Banner Lower");
+  addChild(classLabelLower_);
 }
 
-osgEarth::Util::Controls::LabelControl* ClassificationBanner::createControl_(const std::string& classLabel,
+osgText::Text* ClassificationBanner::createText_(const std::string& classLabel,
   const osg::Vec4f& classColor,
   osgText::Font* fontFile,
-  osgEarth::Util::Controls::Control::Alignment vertAlign) const
+  osgText::Text::AlignmentType alignment) const
 {
-  osgEarth::Util::Controls::LabelControl* classControl = new osgEarth::Util::Controls::LabelControl(classLabel, simVis::osgFontSize(fontSize_), classColor);
-  classControl->setHaloColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f)); // opaque outline
-  classControl->setHorizAlign(osgEarth::Util::Controls::Control::ALIGN_CENTER);
-  classControl->setVertAlign(vertAlign);
-  classControl->setPadding(0);
-  classControl->setPadding(osgEarth::Util::Controls::Control::SIDE_TOP, 10);
-  classControl->setPadding(osgEarth::Util::Controls::Control::SIDE_BOTTOM, 10);
-  classControl->setFont(fontFile);
-  classControl->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
-  classControl->setTextBackdropType(osgText::Text::OUTLINE);
-  return classControl;
+  osgText::Text* newText = new osgText::Text;
+  newText->setText(classLabel);
+  newText->setFont(fontFile);
+  newText->setCharacterSize(simVis::osgFontSize(fontSize_));
+  newText->setColor(classColor);
+  newText->setBackdropType(osgText::Text::OUTLINE);
+  // Set opaque black outline color
+  newText->setBackdropColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f));
+  newText->setBackdropOffset(OUTLINE_THICKNESS);
+  newText->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+  newText->setAlignment(alignment);
+  newText->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
+  newText->setAxisAlignment(osgText::TextBase::SCREEN);
+  newText->setDataVariance(osg::Object::DYNAMIC);
+
+  return newText;
 }
 
 void ClassificationBanner::getCurrentClassification_(std::string& classLabel, osg::Vec4f& classColor)
@@ -175,14 +179,14 @@ void ClassificationBanner::updateClassLabel_()
   if (!classLabelUpper_.valid()) // assume upper and lower are always same state
     return;
 
-  if (classLabelUpper_->text() != classLabel)
+  if (classLabelUpper_->getText().createUTF8EncodedString() != classLabel)
     classLabelUpper_->setText(classLabel);
-  if (classLabelUpper_->foreColor() != classColor)
-    classLabelUpper_->setForeColor(classColor);
-  if (classLabelLower_->text() != classLabel)
+  if (classLabelUpper_->getColor() != classColor)
+    classLabelUpper_->setColor(classColor);
+  if (classLabelLower_->getText().createUTF8EncodedString() != classLabel)
     classLabelLower_->setText(classLabel);
-  if (classLabelLower_->foreColor() != classColor)
-    classLabelLower_->setForeColor(classColor);
+  if (classLabelLower_->getColor() != classColor)
+    classLabelLower_->setColor(classColor);
 }
 
 } // namespace simVis
