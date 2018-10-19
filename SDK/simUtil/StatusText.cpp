@@ -37,9 +37,11 @@ public:
   /** Handles frame updates and returns false so other handlers can process as well */
   bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
   {
+    if (!parent_.valid())
+      return false;
     if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
     {
-      // Update the text first
+      // Update the text each frame
       parent_->update_();
     }
 
@@ -73,7 +75,7 @@ protected:
   virtual ~FrameEventHandler(){}
 
 private:
-  osg::ref_ptr<simUtil::StatusText> parent_;
+  osg::observer_ptr<simUtil::StatusText> parent_;
   int widthPx_;
   int heightPx_;
 };

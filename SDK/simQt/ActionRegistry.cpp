@@ -313,7 +313,7 @@ private:
     return 0;
   }
 
-  /** Restores a map of string/hotkey to the registry provided: destructive, does not removing existing items */
+  /** Restores a map of string/hotkey to the registry provided: non-destructive, does not remove existing items */
   static int restoreNonDestructive_(ActionRegistry& registry, const QMap<QString, HotKeys>& keys)
   {
     // Simply override each value for each item in the list
@@ -327,10 +327,14 @@ private:
         // The action does not exist; add a new one (will show up as Unknown)
         if (i.value().empty())
         {
-          // Store an empty unknown value so that end users can clear out values
-          UnknownAction* unknown = new UnknownAction;
-          unknown->description = i.key();
-          registry.unknownActions_[i.key()] = unknown;
+          // Only add if key is unique to unknownActions_
+          if (!registry.unknownActions_.contains(i.key()))
+          {
+            // Store an empty unknown value so that end users can clear out values
+            UnknownAction* unknown = new UnknownAction;
+            unknown->description = i.key();
+            registry.unknownActions_[i.key()] = unknown;
+          }
         }
         else
         {
