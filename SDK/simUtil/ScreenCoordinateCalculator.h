@@ -27,7 +27,7 @@
 #include "osg/Matrix"
 #include "osg/Vec2"
 #include "osg/Vec3"
-#include "simCore/Common/Export.h"
+#include "simCore/Common/Common.h"
 
 namespace osg { class Viewport; }
 namespace osgEarth { class Horizon; }
@@ -107,8 +107,15 @@ public:
 
   /** Retrieves a coordinate for a given entity, using the matrix from the most recent call to updateMatrix() */
   ScreenCoordinate calculate(const simVis::EntityNode& entity);
-  /** Retrieves a screen coordinate for a given lla coordinate */
-  ScreenCoordinate calculate(const simCore::Vec3& lla);
+  /** Retrieves a screen coordinate for a given LLA coordinate */
+  ScreenCoordinate calculateLla(const simCore::Vec3& lla);
+  /** Retrieves a screen coordinate for a given ECEF coordinate */
+  ScreenCoordinate calculateEcef(const simCore::Vec3& ecef);
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  /** Retrieves a screen coordinate for a given LLA coordinate */
+  SDK_DEPRECATE(ScreenCoordinate calculate(const simCore::Vec3& lla), "Use calculateLla() instead.");
+#endif
 
 private:
   /** recalculates the VPW matrix if needed (if dirty); returns 0 on success */
