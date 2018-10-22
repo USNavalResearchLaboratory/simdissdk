@@ -25,6 +25,7 @@
 namespace simData {
   class DataStore;
   class LaserPrefs;
+  class LobGroupPrefs;
   class PlatformPrefs;
   class ScenarioProperties;
 }
@@ -45,6 +46,8 @@ public:
   static void initializeDefaultPlatformPrefs(simData::PlatformPrefs& prefs);
   /** Set the default values for laser preferences */
   static void initializeDefaultLaserPrefs(simData::LaserPrefs& prefs);
+  /** Set the default values for LOB Group preferences */
+  static void initializeDefaultLobGroupPrefs(simData::LobGroupPrefs& prefs);
 };
 
 }
