@@ -19,10 +19,12 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/Scenario.h"
-#include "simVis/View.h"
+#include "simCore/Calc/Math.h"
+#include "simVis/LobGroup.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/Scenario.h"
+#include "simVis/View.h"
 #include "simUtil/ScreenCoordinateCalculator.h"
 #include "simUtil/DynamicSelectionPicker.h"
 
@@ -135,14 +137,12 @@ void DynamicSelectionPicker::pickThisFrame_()
     if (!isPickable_(i->get()))
       continue;
 
-    // Calculate the position on the platform
-    const simUtil::ScreenCoordinate pos = calc.calculate(*(*i).get());
-    // Ignore objects that are off screen or behind the camera
-    if (pos.isBehindCamera() || pos.isOffScreen() || pos.isOverHorizon())
+    // Ask the calculator for the range from the mouse position
+    double rangeSquared;
+    if (calculateSquaredRange_(calc, *i->get(), rangeSquared) != 0)
       continue;
 
     // Choose the closest object
-    const double rangeSquared = (mouseXy_ - pos.position()).length2();
     if (rangeSquared < closestRangePx)
     {
       closestRangePx = rangeSquared;
@@ -168,6 +168,42 @@ bool DynamicSelectionPicker::isPickable_(const simVis::EntityNode* entityNode) c
 
   // Do not pick inactive or invisible entities
   return entityNode->isActive() && entityNode->isVisible();
+}
+
+int DynamicSelectionPicker::calculateSquaredRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::EntityNode& entityNode, double& rangeSquared) const
+{
+  // Fall back to the LOB case if it's requesting a LOB, since it picks individual points on the lines shown
+  const simVis::LobGroupNode* lobNode = dynamic_cast<const simVis::LobGroupNode*>(&entityNode);
+  if (lobNode)
+    return calculateLobSquaredRange_(calc, *lobNode, rangeSquared);
+
+  const simUtil::ScreenCoordinate& pos = calc.calculate(entityNode);
+  // Ignore objects that are off screen or behind the camera
+  if (pos.isBehindCamera() || pos.isOffScreen() || pos.isOverHorizon())
+    return 1;
+  rangeSquared = (mouseXy_ - pos.position()).length2();
+  return 0;
+}
+
+int DynamicSelectionPicker::calculateLobSquaredRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LobGroupNode& lobNode, double& rangeSquared) const
+{
+  rangeSquared = std::numeric_limits<double>::max();
+  // Pull out the vector of all endpoints on the LOB that are visible
+  std::vector<osg::Vec3d> ecefVec;
+  lobNode.getVisibleEndPoints(ecefVec);
+  if (ecefVec.empty())
+    return 1;
+
+  for (auto i = ecefVec.begin(); i != ecefVec.end(); ++i)
+  {
+    const simUtil::ScreenCoordinate& pos = calc.calculateEcef(simCore::Vec3(i->x(), i->y(), i->z()));
+    // Ignore objects that are off screen or behind the camera
+    if (pos.isBehindCamera() || pos.isOffScreen() || pos.isOverHorizon())
+      continue;
+    rangeSquared = simCore::sdkMin(rangeSquared, (mouseXy_ - pos.position()).length2());
+  }
+
+  return (rangeSquared == std::numeric_limits<double>::max()) ? 1 : 0;
 }
 
 void DynamicSelectionPicker::setRange(double pixelsFromCenter)

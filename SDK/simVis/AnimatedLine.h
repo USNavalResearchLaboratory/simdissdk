@@ -73,6 +73,9 @@ namespace simVis
      */
     void setEndPoints(const Locator* first, const Locator* second);
 
+    /** Retrieves the current resolved position of the start and end of the line, returning 0 on success */
+    int getEndPoints(simCore::MultiFrameCoordinate& coord1, simCore::MultiFrameCoordinate& coord2) const;
+
     /**
      * Sets the first stippling pattern for this line. The first color will
      * appear wherever this pattern has a set bit.
@@ -203,6 +206,8 @@ namespace simVis
      * resolve it until later.  Because of this, we use a Coordinate and not a MFC.
      */
     osgEarth::SimpleMutable<simCore::Coordinate> secondCoord_;
+    /** ... but we still save the most recently resolved MF coordinate, only set when drawing. */
+    osgEarth::SimpleMutable<simCore::MultiFrameCoordinate> secondCoordMF_;
     /** Coordinate converter that is used to put secondCoord_ in a valid (Geo) frame */
     simCore::CoordinateConverter* coordinateConverter_;
 

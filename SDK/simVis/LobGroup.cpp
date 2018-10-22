@@ -21,10 +21,13 @@
  */
 #include "osgEarth/GeoData"
 #include "osgEarth/Horizon"
+#include "osgEarth/ObjectIndex"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/Calc/MultiFrameCoordinate.h"
+#include "simData/DataTable.h"
 #include "simData/LinearInterpolator.h"
 #include "simVis/AnimatedLine.h"
 #include "simVis/EntityLabel.h"
@@ -147,6 +150,24 @@ public:
     entries_.insert(std::make_pair(t, osg::ref_ptr<AnimatedLineNode>(a)));
   }
 
+  /// Gets the endpoints of all lines in the cache
+  void getVisibleEndpoints(std::vector<osg::Vec3d>& ecefVec) const
+  {
+    simCore::MultiFrameCoordinate first;
+    simCore::MultiFrameCoordinate second;
+    for (LineCache::const_iterator iter = entries_.begin(); iter != entries_.end(); ++iter)
+    {
+      // Only save points of lines that are visible
+      if (iter->second->getNodeMask() != 0 && iter->second->getEndPoints(first, second) == 0)
+      {
+        const simCore::Vec3 firstPos = first.ecefCoordinate().position();
+        const simCore::Vec3 secondPos = second.ecefCoordinate().position();
+        ecefVec.push_back(osg::Vec3d(firstPos.x(), firstPos.y(), firstPos.z()));
+        ecefVec.push_back(osg::Vec3d(secondPos.x(), secondPos.y(), secondPos.z()));
+      }
+    }
+  }
+
 protected:
   typedef std::multimap<double, osg::ref_ptr<AnimatedLineNode> > LineCache;
   /** Multimap of scenario time to the animated lines at that time */
@@ -165,7 +186,8 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
   lineCache_(new Cache),
   label_(NULL),
   contentCallback_(new NullEntityCallback()),
-  lastFlashingState_(false)
+  lastFlashingState_(false),
+  objectIndexTag_(0)
 {
   setName("LobGroup");
   localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
@@ -185,10 +207,15 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
+
+  // Add a tag for picking
+  objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);
 }
 
 LobGroupNode::~LobGroupNode()
 {
+  osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
+
   delete coordConverter_;
   coordConverter_ = NULL;
   lineCache_->clearCache(this);
@@ -623,10 +650,17 @@ void LobGroupNode::applyEndpointCoordClamping_(simCore::Coordinate& endpointCoor
   coordConverter_->convert(endLla, endpointCoord, simCore::COORD_SYS_XEAST);
 }
 
+void LobGroupNode::getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const
+{
+  ecefVec.clear();
+  // Line cache only stores lines at current time
+  if (isActive())
+    lineCache_->getVisibleEndpoints(ecefVec);
+}
+
 unsigned int LobGroupNode::objectIndexTag() const
 {
-  // Not supported for LOB groups
-  return 0;
+  return objectIndexTag_;
 }
 
 } // namespace simVis

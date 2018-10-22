@@ -22,11 +22,15 @@
 #ifndef SIMVIS_LOB_GROUP_H
 #define SIMVIS_LOB_GROUP_H
 
-#include "simData/DataTable.h"
+#include "simData/DataTypes.h"
 #include "simVis/Entity.h"
 #include "simVis/Constants.h"
 
 namespace simCore { class CoordinateConverter; }
+namespace simData {
+  class DataStore;
+  class DataTable;
+}
 
 namespace simVis
 {
@@ -80,6 +84,9 @@ public:
 
   /// Returns current content callback
   LabelContentCallback* labelContentCallback() const;
+
+  /** Retrieves the currently visible end points */
+  void getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const;
 
 public: // EntityNode interface
   /**
@@ -170,8 +177,6 @@ private: // methods
   void applyPlatformCoordClamping_(simCore::Coordinate& platformCoord);
   /// apply clamping to this endpoint coordinate. Assumes coord is XEAST
   void applyEndpointCoordClamping_(simCore::Coordinate& endpointCoord);
-  /// update drawing for changes
-  void refresh_(const simData::LobGroupUpdate* newUpdate, const simData::LobGroupPrefs* newPrefs);
 
   /// get the value for the specified colume from the specified data table, at the specified time. Returns 0 on success, non-zero on failure
   template <class T>
@@ -218,6 +223,9 @@ private: // data
   osg::ref_ptr<LabelContentCallback> contentCallback_;
   /// Cache state to optimize call
   bool lastFlashingState_;
+
+  /// Tag used for picking
+  unsigned int objectIndexTag_;
 };
 
 }
