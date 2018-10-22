@@ -245,7 +245,6 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
     hasLastPrefs_(false),
     host_(host),
     hostMissileOffset_(0.0),
-    contentCallback_(new NullEntityCallback()),
     scenario_(scenario)
 {
   lastProps_ = props;
@@ -312,7 +311,7 @@ void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
 
     std::string text;
     if (prefs.commonprefs().labelprefs().draw())
-      text = contentCallback_->createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields());
+      text = labelContentCallback().createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields());
 
     if (!text.empty())
     {
@@ -325,31 +324,37 @@ void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
   }
 }
 
-void BeamNode::setLabelContentCallback(LabelContentCallback* cb)
+std::string BeamNode::popupText() const
 {
-  if (cb == NULL)
-    contentCallback_ = new NullEntityCallback();
-  else
-    contentCallback_ = cb;
-}
+  if (hasLastPrefs_ && hasLastUpdate_)
+  {
+    std::string prefix;
+    // if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    if (!lastPrefsFromDS_.commonprefs().alias().empty())
+    {
+      if (lastPrefsFromDS_.commonprefs().usealias())
+        prefix = getEntityName(EntityNode::REAL_NAME);
+      else
+        prefix = getEntityName(EntityNode::ALIAS_NAME);
+      prefix += "\n";
+    }
+    return prefix + labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hoverdisplayfields());
+  }
 
-LabelContentCallback* BeamNode::labelContentCallback() const
-{
-  return contentCallback_.get();
+  return "";
 }
 
 std::string BeamNode::hookText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
-
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
   return "";
 }
 
 std::string BeamNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields());
 
   return "";
 }

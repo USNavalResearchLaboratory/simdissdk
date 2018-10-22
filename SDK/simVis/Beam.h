@@ -36,7 +36,6 @@ namespace simVis
   class AntennaNode;
   class BeamPulse;
   class EntityLabelNode;
-  class LabelContentCallback;
   class LocalGridNode;
   class Locator;
   class ScenarioManager;
@@ -174,18 +173,8 @@ namespace simVis
     */
     simCore::PolarityType polarity() const;
 
-    /**
-    * Sets a custom callback that will be used to generate the string that goes in the label.
-    * @param callback Callback that will generate content; if NULL will only display platform name/alias
-    */
-    void setLabelContentCallback(LabelContentCallback* callback);
-
-    /// Returns current content callback
-    LabelContentCallback* labelContentCallback() const;
-
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
-
     /** Return the class name */
     virtual const char* className() const { return "BeamNode"; }
 
@@ -222,9 +211,10 @@ namespace simVis
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the pop up text based on the label content callback, update and preference
+    virtual std::string popupText() const;
     /// Returns the hook text based on the label content callback, update and preference
     virtual std::string hookText() const;
-
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 
@@ -372,7 +362,6 @@ namespace simVis
     std::map<std::string, simData::BeamPrefs> prefsOverrides_;
     std::map<std::string, simData::BeamUpdate> updateOverrides_;
     osg::ref_ptr<EntityLabelNode> label_;
-    osg::ref_ptr<LabelContentCallback> contentCallback_;
     osg::observer_ptr<const ScenarioManager> scenario_;
     osg::ref_ptr<BeamPulse> beamPulse_;
   };

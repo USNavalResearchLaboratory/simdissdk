@@ -167,7 +167,6 @@ scaledInertialTransform_(new PlatformInertialTransform),
 velocityAxisVector_(NULL),
 ephemerisVector_(NULL),
 model_(NULL),
-contentCallback_(new NullEntityCallback()),
 losCreator_(NULL),
 opticalLosNode_(NULL),
 radioLosNode_(NULL),
@@ -633,7 +632,7 @@ void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
 
   std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = contentCallback_->createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
 
   if (!text.empty())
   {
@@ -646,19 +645,6 @@ void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
   model_->label()->update(prefs.commonprefs(), label, zOffset);
 }
 
-void PlatformNode::setLabelContentCallback(LabelContentCallback* cb)
-{
-  if (cb == NULL)
-    contentCallback_ = new NullEntityCallback();
-  else
-    contentCallback_ = cb;
-}
-
-LabelContentCallback* PlatformNode::labelContentCallback() const
-{
-  return contentCallback_.get();
-}
-
 std::string PlatformNode::popupText() const
 {
   if (lastPrefsValid_ && valid_)
@@ -666,7 +652,7 @@ std::string PlatformNode::popupText() const
     // a valid_ platform should never have an update that does not have a time
     assert(lastUpdate_.has_time());
     std::string prefix;
-    /// if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    // if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
     if (!lastPrefs_.commonprefs().alias().empty())
     {
       if (lastPrefs_.commonprefs().usealias())
@@ -675,7 +661,7 @@ std::string PlatformNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
   }
 
   return "";
@@ -687,7 +673,7 @@ std::string PlatformNode::hookText() const
   {
     // a valid_ platform should never have an update that does not have a time
     assert(lastUpdate_.has_time());
-    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
   }
 
   return "";
@@ -699,7 +685,7 @@ std::string PlatformNode::legendText() const
   {
     // a valid_ platform should never have an update that does not have a time
     assert(lastUpdate_.has_time());
-    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   }
 
   return "";

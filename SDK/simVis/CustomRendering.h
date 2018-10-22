@@ -32,7 +32,6 @@ namespace simVis
 {
   class CustomLabelContentCallback;
   class EntityLabelNode;
-  class LabelContentCallback;
   class LocalGridNode;
   class Locator;
   class OverrideColor;
@@ -73,15 +72,6 @@ namespace simVis
     * @param prefs New preferences to apply
     */
     void setPrefs(const simData::CustomRenderingPrefs& prefs);
-
-    /**
-    * Sets a custom callback that will be used to generate the string that goes in the label.
-    * @param callback Callback that will generate content; if NULL will only display platform name/alias
-    */
-    void setLabelContentCallback(LabelContentCallback* callback);
-
-    /// Returns current content callback
-    LabelContentCallback* labelContentCallback() const;
 
     /**
      * This callback allows the external code to determine if the entity should be displayed.
@@ -153,9 +143,10 @@ namespace simVis
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the pop up text based on the label content callback, update and preference
+    virtual std::string popupText() const;
     /// Returns the hook text based on the label content callback, update and preference
     virtual std::string hookText() const;
-
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 
@@ -213,9 +204,6 @@ namespace simVis
 
     /// Returns the host
     const EntityNode* host() const;
-
-    /// Returns the pop up text based on the label content callback, update and preference
-    std::string popupText() const;
 
   protected:
     /// osg::Referenced-derived; destructor body needs to be in the .cpp

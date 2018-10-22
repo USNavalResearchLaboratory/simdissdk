@@ -380,23 +380,15 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
     Locator* locator = currentEntity_->getLocator();
     if (!locator->inSyncWith(entityLocatorRev_))
     {
-      if (contentCallback_.valid())
+      auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
+      // Prefer the content callback over the entity's method
+      if (contentCallback_.valid() && platform != NULL)
       {
-        auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
-        if (platform != NULL)
-          popup_->setContent(contentCallback_->createString(platform));
+        popup_->setContent(contentCallback_->createString(platform));
       }
       else
       {
-        auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
-        if (platform != NULL)
-          popup_->setContent(platform->popupText());
-        else
-        {
-          auto custom = dynamic_cast<simVis::CustomRenderingNode*>(currentEntity_.get());
-          if (custom != NULL)
-            popup_->setContent(custom->popupText());
-        }
+        popup_->setContent(currentEntity_->popupText());
       }
 
       locator->sync(entityLocatorRev_);

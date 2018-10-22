@@ -19,8 +19,6 @@
  * disclose, or release this software.
  *
  */
-
-#include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
@@ -43,7 +41,6 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
   : EntityNode(simData::CUSTOM_RENDERING),
     scenario_(scenario),
     host_(host),
-    contentCallback_(new NullEntityCallback()),
     lastProps_(props),
     hasLastPrefs_(false),
     customActive_(false),
@@ -88,26 +85,6 @@ CustomRenderingNode::~CustomRenderingNode()
   osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 }
 
-std::string CustomRenderingNode::popupText() const
-{
-  if (hasLastPrefs_ && customActive_)
-  {
-    std::string prefix;
-    /// if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
-    if (!lastPrefs_.commonprefs().alias().empty())
-    {
-      if (lastPrefs_.commonprefs().usealias())
-        prefix = getEntityName(EntityNode::REAL_NAME);
-      else
-        prefix = getEntityName(EntityNode::ALIAS_NAME);
-      prefix += "\n";
-    }
-    return prefix + contentCallback_->createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
-  }
-
-  return "";
-}
-
 void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& prefs)
 {
   std::string label = getEntityName_(prefs.commonprefs(), EntityNode::DISPLAY_NAME, false);
@@ -116,7 +93,7 @@ void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& pref
 
   std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = contentCallback_->createString(getId(), prefs, prefs.commonprefs().labelprefs().displayfields());
+    text = labelContentCallback().createString(getId(), prefs, prefs.commonprefs().labelprefs().displayfields());
 
   if (!text.empty())
   {
@@ -126,19 +103,6 @@ void CustomRenderingNode::updateLabel_(const simData::CustomRenderingPrefs& pref
 
   const float zOffset = 0.0f;
   label_->update(prefs.commonprefs(), label, zOffset);
-}
-
-void CustomRenderingNode::setLabelContentCallback(LabelContentCallback* cb)
-{
-  if (cb == NULL)
-    contentCallback_ = new NullEntityCallback();
-  else
-    contentCallback_ = cb;
-}
-
-LabelContentCallback* CustomRenderingNode::labelContentCallback() const
-{
-  return contentCallback_.get();
 }
 
 void CustomRenderingNode::setUpdateCallback(UpdateCallback* callback)
@@ -156,19 +120,37 @@ double CustomRenderingNode::range() const
   return 0;
 }
 
+std::string CustomRenderingNode::popupText() const
+{
+  if (hasLastPrefs_ && customActive_)
+  {
+    std::string prefix;
+    // if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    if (!lastPrefs_.commonprefs().alias().empty())
+    {
+      if (lastPrefs_.commonprefs().usealias())
+        prefix = getEntityName(EntityNode::REAL_NAME);
+      else
+        prefix = getEntityName(EntityNode::ALIAS_NAME);
+      prefix += "\n";
+    }
+    return prefix + labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+  }
+
+  return "";
+}
+
 std::string CustomRenderingNode::hookText() const
 {
   if (hasLastPrefs_)
-    return contentCallback_->createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
-
+    return labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
   return "";
 }
 
 std::string CustomRenderingNode::legendText() const
 {
   if (hasLastPrefs_)
-    return contentCallback_->createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
-
+    return labelContentCallback().createString(getId(), lastPrefs_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   return "";
 }
 

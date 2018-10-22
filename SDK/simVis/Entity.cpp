@@ -22,6 +22,7 @@
 #include "osgEarth/Terrain"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
+#include "simVis/LabelContentManager.h"
 #include "simVis/Locator.h"
 #include "simVis/LocatorNode.h"
 #include "simVis/Utils.h"
@@ -90,7 +91,8 @@ void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 /////////////////////////////////////////////////////////////////////////////////
 
 EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
-  : type_(type)
+  : type_(type),
+    contentCallback_(new NullEntityCallback())
 {
   setNodeMask(0);  // Draw is off until a valid update is received
   setLocator(locator);
@@ -180,5 +182,17 @@ std::string EntityNode::getEntityName_(const simData::CommonPrefs& common, Entit
   return "";
 }
 
+void EntityNode::setLabelContentCallback(LabelContentCallback* cb)
+{
+  if (cb == NULL)
+    contentCallback_ = new NullEntityCallback();
+  else
+    contentCallback_ = cb;
 }
 
+LabelContentCallback& EntityNode::labelContentCallback() const
+{
+  return *contentCallback_;
+}
+
+}

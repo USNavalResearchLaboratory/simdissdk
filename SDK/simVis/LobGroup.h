@@ -36,7 +36,6 @@ namespace simVis
 {
 class AnimatedLineNode;
 class EntityLabelNode;
-class LabelContentCallback;
 class LocalGridNode;
 
 /**
@@ -76,15 +75,6 @@ public:
   */
   void setPrefs(const simData::LobGroupPrefs &prefs);
 
-  /**
-  * Sets a custom callback that will be used to generate the string that goes in the label.
-  * @param callback Callback that will generate content; if NULL will only display platform name/alias
-  */
-  void setLabelContentCallback(LabelContentCallback* callback);
-
-  /// Returns current content callback
-  LabelContentCallback* labelContentCallback() const;
-
   /** Retrieves the currently visible end points */
   void getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const;
 
@@ -107,9 +97,10 @@ public: // EntityNode interface
   */
   virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+  /// Returns the pop up text based on the label content callback, update and preference
+  virtual std::string popupText() const;
   /// Returns the hook text based on the label content callback, update and preference
   virtual std::string hookText() const;
-
   /// Returns the legend text based on the label content callback, update and preference
   virtual std::string legendText() const;
 
@@ -219,8 +210,6 @@ private: // data
 
   /// The actual label for displaying
   osg::ref_ptr<EntityLabelNode> label_;
-  /// The callback to create the label contents
-  osg::ref_ptr<LabelContentCallback> contentCallback_;
   /// Cache state to optimize call
   bool lastFlashingState_;
 

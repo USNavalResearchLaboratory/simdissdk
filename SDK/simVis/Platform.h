@@ -37,7 +37,6 @@ namespace simVis
 class AreaHighlightNode;
 class AxisVector;
 class EphemerisVector;
-class LabelContentCallback;
 class LocalGridNode;
 class PlatformInertialTransform;
 class PlatformModelNode;
@@ -127,18 +126,6 @@ public:
   */
   void setPrefs(const simData::PlatformPrefs& prefs);
 
-  /**
-  * Sets a custom callback that will be used to generate the string that goes in the label.
-  * @param callback Callback that will generate content; if NULL will only display platform name/alias
-  */
-  void setLabelContentCallback(LabelContentCallback* callback);
-
-  /// Returns current content callback
-  LabelContentCallback* labelContentCallback() const;
-
-  /// Returns the pop up text based on the label content callback, update and preference
-  std::string popupText() const;
-
   /// Set the creator for the LOS nodes
   void setLosCreator(LosCreator* losCreator);
 
@@ -174,9 +161,10 @@ public: // EntityNode interface
   */
   virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+  /// Returns the pop up text based on the label content callback, update and preference
+  virtual std::string popupText() const;
   /// Returns the hook text based on the label content callback, update and preference
   virtual std::string hookText() const;
-
   /// Returns the legend text based on the label content callback, update and preference
   virtual std::string legendText() const;
 
@@ -317,7 +305,6 @@ private:
   osg::ref_ptr<VelocityVector>    velocityAxisVector_;
   osg::ref_ptr<EphemerisVector>   ephemerisVector_;
   osg::ref_ptr<PlatformModelNode> model_;
-  osg::ref_ptr<LabelContentCallback> contentCallback_;
   LosCreator*                     losCreator_; // Not owned
   RadialLOSNode*                  opticalLosNode_;
   RadialLOSNode*                  radioLosNode_;

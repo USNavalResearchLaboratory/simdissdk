@@ -24,6 +24,7 @@
 
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
+#include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 
@@ -32,8 +33,8 @@ namespace osg { class Geode; }
 namespace simVis
 {
   class EntityLabelNode;
-  class LabelContentCallback;
   class LocalGridNode;
+  class LocatorNode;
 
   /// Scene graph node that renders a Laser
   class SDKVIS_EXPORT LaserNode : public EntityNode
@@ -74,15 +75,6 @@ namespace simVis
     */
     void setPrefs(const simData::LaserPrefs& prefs);
 
-    /**
-    * Sets a custom callback that will be used to generate the string that goes in the label.
-    * @param callback Callback that will generate content; if NULL will only display platform name/alias
-    */
-    void setLabelContentCallback(LabelContentCallback* callback);
-
-    /// Returns current content callback
-    LabelContentCallback* labelContentCallback() const;
-
   public: // EntityNode interface
     /**
     * Whether the entity is active within the scenario at the current time.
@@ -116,9 +108,10 @@ namespace simVis
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the pop up text based on the label content callback, update and preference
+    virtual std::string popupText() const;
     /// Returns the hook text based on the label content callback, update and preference
     virtual std::string hookText() const;
-
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 
@@ -215,8 +208,6 @@ namespace simVis
 
     void updateLabel_(const simData::LaserPrefs& prefs);
     osg::ref_ptr<EntityLabelNode> label_;
-    osg::ref_ptr<LabelContentCallback> contentCallback_;
-
   };
 
 } //namespace simVis
