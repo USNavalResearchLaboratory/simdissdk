@@ -32,9 +32,49 @@ class HudColumnText;
 class View;
 
 /**
- * Class that manages status display info overlay on the specified view
+ * Representation of Status Text that gets used in SIMDIS.  This is a text area that is
+ * configurable using a simCore::TextReplacer.  Set up a template status specification,
+ * and on each frame the text will update.  For convenience, the class is placed in a
+ * MatrixTransform.  Text is aligned lower-left wherever you position the matrix.
  */
-class SDKUTIL_EXPORT StatusText : public osg::Group
+class SDKUTIL_EXPORT StatusTextBase : public osg::MatrixTransform
+{
+public:
+  explicit StatusTextBase(simCore::TextReplacerPtr textReplacer);
+
+  /**
+   * Display the status as specified by statusSpec
+   * @return 0 on success, !0 on error
+   */
+  int setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color = simVis::Color::White, double fontSize = 16.0, const std::string& font = "arial.ttf");
+
+  /** Override from osg::MatrixTransform to call update_() */
+  virtual void traverse(osg::NodeVisitor& nv);
+
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simUtil"; }
+  /** Return the class name */
+  virtual const char* className() const { return "StatusTextBase"; }
+
+protected:
+  /** Destructor */
+  virtual ~StatusTextBase();
+
+  /** Build the status text object */
+  virtual void create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize);
+  /** Update the existing text object  */
+  void update_();
+
+  osg::ref_ptr<simUtil::HudColumnText> statusHudText_;  ///< Pointer to the HudText that contains the status display
+  simCore::TextReplacerPtr textReplacer_;               ///< Pointer to the replacer that processes status specification into status text
+  std::string statusSpec_;                              ///< Current status specifier from which status display is generated
+};
+
+/**
+ * Class that manages status display info overlay on the specified view.  This is
+ * a StatusTextBase that is able to automatically reposition itself inside a View.
+ */
+class SDKUTIL_EXPORT StatusText : public StatusTextBase
 {
 public:
   /// Enumeration of positions for status display
@@ -45,20 +85,16 @@ public:
     LEFT_TOP
   };
 
-
   /** Constructs a new StatusText */
   StatusText(simVis::View* view, simCore::TextReplacerPtr textReplacer, StatusText::Position pos=LEFT_BOTTOM);
 
-  /**
-  * Display the status as specified by statusSpec
-  * @return 0 on success, !0 on error
-  */
-  int setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color = simVis::Color::White, double fontSize = 16.0, const std::string& font = "arial.ttf");
-
-  /**
-  * Remove the status display
-  */
+  /** Remove the status display */
   void removeFromView();
+
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simUtil"; }
+  /** Return the class name */
+  virtual const char* className() const { return "StatusText"; }
 
 protected:
   /** Destructor */
@@ -72,19 +108,13 @@ private:
    */
   void resize_(int widthPx, int heightPx);
 
-  /** Build the status text object */
-  void create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize);
-
-  /** Update the existing text object  */
-  void update_();
+  /** Build the status text object, positioned based on window coords */
+  virtual void create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize);
 
 private:
   osg::observer_ptr<simVis::View> view_;                ///< Pointer to the view in which the status will be displayed
-  osg::ref_ptr<simUtil::HudColumnText> statusHudText_;  ///< Pointer to the HudText that contains the status display
   osg::ref_ptr<FrameEventHandler> frameEventHandler_;   ///< Pointer to the frame event handler
-  simCore::TextReplacerPtr textReplacer_;               ///< Pointer to the replacer that processes status specification into status text
   Position position_;                                   ///< Position of status display
-  std::string statusSpec_;                              ///< Current status specifier from which status display is generated
   int windowWidthPx_;                                   ///< Save a copy of the window width (pixels)
   int windowHeightPx_;                                  ///< Save a copy of the window height (pixels)
 };
@@ -92,4 +122,3 @@ private:
 } // namespace simUtil
 
 #endif // SIMUTIL_STATUSTEXT_H
-
