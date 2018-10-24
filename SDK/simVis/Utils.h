@@ -683,6 +683,17 @@ namespace simVis
     virtual void apply(osg::Geometry& geom);
   };
 
+  /** Turns a DOF transform's animation on or off. */
+  class EnableDOFTransform : public osg::NodeVisitor
+  {
+  public:
+    explicit EnableDOFTransform(bool enabled);
+    virtual void apply(osg::Node& node);
+
+  private:
+    bool enabled_;
+  };
+
 } // namespace simVis
 
 #endif // SIMVIS_UTILS_H

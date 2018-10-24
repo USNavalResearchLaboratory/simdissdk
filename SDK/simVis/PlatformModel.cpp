@@ -352,6 +352,7 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   updateOffsets_(lastPrefs_);
   updateImageAlignment_(lastPrefs_, true);
   updateBounds_();
+  updateDofTransform_(lastPrefs_, true);
 }
 
 void PlatformModelNode::setRotateToScreen(bool value)
@@ -816,6 +817,18 @@ void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
   }
 }
 
+void PlatformModelNode::updateDofTransform_(const simData::PlatformPrefs& prefs, bool force) const
+{
+  // Don't need to apply to image models
+  if (!model_.valid() || isImageModel_)
+    return;
+  // Don't execute if field did not change, unless we're being forced due to model loading
+  if (!force && lastPrefsValid_ && !PB_FIELD_CHANGED(&lastPrefs_, &prefs, animatedofnodes))
+    return;
+  simVis::EnableDOFTransform enableDof(prefs.animatedofnodes());
+  model_->accept(enableDof);
+}
+
 void PlatformModelNode::setProperties(const simData::PlatformProperties& props)
 {
   lastProps_ = props;
@@ -847,6 +860,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateLighting_(prefs, false);
   updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
+  updateDofTransform_(prefs, false);
 
   // Note that the brightness calculation is low cost, but setting brightness uniform is not necessarily low-cost, so we do check PB_FIELD_CHANGED
   if (PB_FIELD_CHANGED(&prefs, &lastPrefs_, brightness))

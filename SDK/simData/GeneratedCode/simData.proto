@@ -797,6 +797,9 @@ message PlatformPrefs {
 
   /// The altitude offset applied to the Platform's altitude when calculating LOS, in meters
   optional double losAltitudeOffset = 68 [default = 0.0];
+
+  /// Automatic animation of Degree-of-Freedom nodes is enabled or disabled
+  optional bool animateDofNodes = 70 [default = false];
 };
 
 /// timed update to platform prefs; commands override prefs

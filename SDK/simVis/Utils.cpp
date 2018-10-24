@@ -31,6 +31,7 @@
 #include "osg/Version"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
+#include "osgSim/DOFTransform"
 #include "osgUtil/RenderBin"
 #include "osgUtil/TriStripVisitor"
 #include "osgViewer/ViewerEventHandlers"
@@ -1196,6 +1197,89 @@ void FixDeprecatedDrawModes::apply(osg::Geometry& geom)
 
   // Call into base class method
   osg::NodeVisitor::apply(geom);
+}
+
+//--------------------------------------------------------------------------
+
+// Flags pulled from DOFTransform.cpp and map to osgSim::DOFTransform::getLimitationFlags()
+static const unsigned int ROTATION_PITCH_LIMIT_BIT = 0x80000000u >> 3;
+static const unsigned int ROTATION_ROLL_LIMIT_BIT = 0x80000000u >> 4;
+static const unsigned int ROTATION_YAW_LIMIT_BIT = 0x80000000u >> 5;
+static const unsigned int ROTATION_LIMIT_MASK = ROTATION_PITCH_LIMIT_BIT | ROTATION_ROLL_LIMIT_BIT | ROTATION_YAW_LIMIT_BIT;
+
+/**
+ * osgSim::DOFTransform blindly adds values to deal with DOF Transform animation, scaled on
+ * the delta time.  That's fine for most cases, but when limits are disabled and we're still
+ * incrementing, you can get large values in the current HPR.  That means "infinite" rotation
+ * breaks.  This callback ensures that all rotations are within [0, 2PI] in those cases.
+ *
+ * This scaling only applies to angle values for HPR, and does not cover infinitely scaling
+ * translate or scale values.
+ */
+class ConstrainHprValues : public osg::Callback
+{
+public:
+  virtual bool run(osg::Object* object, osg::Object* data)
+  {
+    // Only work on animated DOFs
+    osgSim::DOFTransform* dofXform = dynamic_cast<osgSim::DOFTransform*>(object);
+    if (dofXform && dofXform->getAnimationOn())
+    {
+      const osg::Vec3& increment = dofXform->getIncrementHPR();
+      const unsigned long flags = dofXform->getLimitationFlags();
+      if ((flags & ROTATION_LIMIT_MASK) != ROTATION_LIMIT_MASK)
+      {
+        // Constrain from [0,2PI] only in cases where limiting is disabled and we're incrementing the value.
+        osg::Vec3f hpr = dofXform->getCurrentHPR();
+        if ((flags & ROTATION_YAW_LIMIT_BIT) == 0 && increment.x() != 0)
+          hpr.x() = simCore::angFix(hpr.x(), simCore::ANGLEEXTENTS_TWOPI);
+        if ((flags & ROTATION_PITCH_LIMIT_BIT) == 0 && increment.y() != 0)
+          hpr.y() = simCore::angFix(hpr.y(), simCore::ANGLEEXTENTS_TWOPI);
+        if ((flags & ROTATION_ROLL_LIMIT_BIT) == 0 && increment.z() != 0)
+          hpr.z() = simCore::angFix(hpr.z(), simCore::ANGLEEXTENTS_TWOPI);
+        dofXform->setCurrentHPR(hpr);
+      }
+    }
+
+    // Continue on
+    return traverse(object, data);
+  }
+};
+
+EnableDOFTransform::EnableDOFTransform(bool enabled)
+  : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
+    enabled_(enabled)
+{
+}
+
+void EnableDOFTransform::apply(osg::Node& node)
+{
+  osgSim::DOFTransform* dofXform = dynamic_cast<osgSim::DOFTransform*>(&node);
+  if (dofXform)
+  {
+    dofXform->setAnimationOn(enabled_);
+
+    // We want to add a callback to fix a bug in osgSim::DOFTransform, where infinitely
+    // increasing HPR values cause precision problems with high scenario delta time values.
+    // Without this, infinite rotations will skip and stutter, and not work in real-time playback.
+    const osg::Vec3& incr = dofXform->getIncrementHPR();
+    if (enabled_ && (incr.x() != 0.f || incr.y() != 0.f || incr.z() != 0.f))
+    {
+      // Search for an already-existing ConstrainHprValues; avoid adding a new one if one exists
+      bool exists = false;
+      osg::Callback* callback = dofXform->getUpdateCallback();
+      while (callback && !exists)
+      {
+        if (dynamic_cast<ConstrainHprValues*>(callback))
+          exists = true;
+        callback = callback->getNestedCallback();
+      }
+      // Add a new callback to constrain HPR values using fmod, if needed
+      if (!exists)
+        dofXform->addUpdateCallback(new ConstrainHprValues);
+    }
+  }
+  traverse(node);
 }
 
 }
