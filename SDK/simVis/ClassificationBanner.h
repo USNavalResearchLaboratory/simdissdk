@@ -22,95 +22,114 @@
 #ifndef SIMVIS_CLASSIFICATION_BANNER_H
 #define SIMVIS_CLASSIFICATION_BANNER_H
 
+#include "osg/observer_ptr"
 #include "osg/ref_ptr"
-#include "osg/Vec4f"
 #include "osgText/Text"
 #include "simData/DataStore.h"
 
-namespace osgText { class Font; }
-namespace osgEarth { namespace Util { namespace Controls {
-  class ControlCanvas;
-  class LabelControl;
-} } }
-namespace osgViewer { class View; }
-
 namespace simVis
 {
-  class View;
+
+class View;
+
+/** Given a text, updates its text and color to data store's classification fields. */
+class SDKVIS_EXPORT SetToClassificationTextCallback : public simData::DataStore::ScenarioListener
+{
+public:
+  /** Construct to update a text string */
+  explicit SetToClassificationTextCallback(osgText::Text* text);
+  /** Override from ScenarioListener. */
+  virtual void onScenarioPropertiesChange(simData::DataStore* source);
+
+private:
+  osg::observer_ptr<osgText::Text> text_;
+};
+
+/**
+ * osgText::Text specialization that defaults the settings to look like a SIMDIS classification
+ * string, and provides utility methods to bind to a data store.  Like most nodes in OSG, the
+ * position of this node is controlled externally and not internally.
+ */
+class SDKVIS_EXPORT ClassificationLabelNode : public osgText::Text
+{
+public:
+  /** Constructs a Text with default settings that look like SIMDIS classification text. */
+  ClassificationLabelNode();
+  /** OSG-like copy constructor. */
+  ClassificationLabelNode(const ClassificationLabelNode& node, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
 
   /**
-  * Creates the ClassificationBanner, and keeps it synchronized with the DataStore
-  */
-  class SDKVIS_EXPORT ClassificationBanner : public osg::Group
-  {
+   * Binds the label to the data store, so that the label's content and color represents
+   * the values in the data store's scenario properties.  Pass in NULL to unbind.  The
+   * label can only be bound to a single data store.
+   * @param ds Data store that supplies the classification text and color through scenario
+   *    properties.  Use NULL to unbind from the data store.
+   */
+  void bindTo(simData::DataStore* ds);
 
-  public:
+  // Override osgText::Text methods
+  virtual osg::Object* cloneType() const { return new ClassificationLabelNode(); }
+  virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new ClassificationLabelNode(*this, copyop); }
+  virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const ClassificationLabelNode*>(obj) != NULL; }
+  virtual const char* className() const { return "simVis"; }
+  virtual const char* libraryName() const { return "ClassificationLabelNode"; }
 
-    /**
-    * Constructs a new ClassificationBanner
-    * @param dataStore  ptr to the current data store
-    * @param fontSize  point size of the font to display
-    * @param fontFile  file name of the font to display, can include full path (e.g. "arial.ttf", "full/path/to/arialbd.ttf")
-    */
-    ClassificationBanner(simData::DataStore* dataStore, unsigned int fontSize, const std::string& fontFile);
+protected:
+  /** Virtual destructor protected to avoid ref_ptr double delete issues. */
+  virtual ~ClassificationLabelNode();
 
-    /** Destructor */
-    virtual ~ClassificationBanner();
+private:
+  simData::DataStore* dataStore_;
+  std::shared_ptr<SetToClassificationTextCallback> listener_;
+};
 
-    /**
-    * Add the ClassificationBanner to a managed view
-    * @param managedView
-    */
-    void addToView(simVis::View* managedView);
+/**
+ * Keeps two classification banner texts, synchronized with the data store, and aligns
+ * them along the top and bottom of the screen.
+ */
+class SDKVIS_EXPORT ClassificationBanner : public osg::Group
+{
+public:
+  /**
+   * Constructs a new ClassificationBanner
+   * @param dataStore  ptr to the current data store
+   * @param fontSize  point size of the font to display
+   * @param fontFile  file name of the font to display, can include full path (e.g. "arial.ttf", "full/path/to/arialbd.ttf")
+   */
+  ClassificationBanner(simData::DataStore* dataStore, unsigned int fontSize, const std::string& fontFile);
 
-    /**
-    * Remove the ClassificationBanner from a managed view
-    * @param managedView
-    */
-    void removeFromView(simVis::View* managedView);
+  /** Destructor */
+  virtual ~ClassificationBanner();
 
-    /** Set the font file of the banner, can include full path (e.g. "arial.ttf", "full/path/to/arialbd.ttf") */
-    void setFontFile(const std::string& fontFile);
+  /**
+   * Add the ClassificationBanner to a managed view
+   * @param managedView View onto which to add the classification
+   */
+  void addToView(simVis::View* managedView);
 
-    /** Set the font size of the banner */
-    void setFontSize(unsigned int fontSize);
+  /**
+   * Remove the ClassificationBanner from a managed view
+   * @param managedView View from which to remove the classification
+   */
+  void removeFromView(simVis::View* managedView);
 
-  private:
-    /** Class implements data store listener */
-    class ScenarioListenerImpl;
-    /** Callback that checks for screen resize on each frame and notifies banner if needed */
-    class FrameResizeCallback;
+  /** Set the font file of the banner, can include full path (e.g. "arial.ttf", "full/path/to/arialbd.ttf") */
+  void setFontFile(const std::string& fontFile);
 
-    /** Build the label objects */
-    void createClassLabels_();
+  /** Set the font size of the banner */
+  void setFontSize(unsigned int fontSize);
 
-    /** Set the position of the top classification label */
-    void setTopPosition_(const osg::Vec3& topPos);
+private:
+  /** Callback that checks for screen resize on each frame and notifies banner if needed */
+  class FrameResizeCallback;
 
-    /** Set the position of the bottom classification label */
-    void setBottomPosition_(const osg::Vec3& bottomPos);
-
-    /** Create a classification banner label control */
-    osgText::Text* createText_(const std::string& classLabel,
-      const osg::Vec4f& classColor,
-      osgText::Font* fontFile,
-      osgText::Text::AlignmentType alignment) const;
-
-    /** Retrieves the current classification label and color from the DataStore */
-    void getCurrentClassification_(std::string& classLabel, osg::Vec4f& classColor);
-
-    /** Update the ClassificationLabels on callback from the data store */
-    void updateClassLabel_();
-
-    simData::DataStore*            dataStore_;                              ///< Reference to the data store
-    unsigned int fontSize_;
-    std::string fontFile_;
-    osg::ref_ptr<osgText::Text> classLabelUpper_;
-    osg::ref_ptr<osgText::Text> classLabelLower_;
-    simData::DataStore::ScenarioListenerPtr listener_;                      ///< Listener to the data store
-    /// Callback to reposition the classification banners when screen size changes
-    osg::ref_ptr<FrameResizeCallback> resizeCallback_;
-  };
+  /// Reference to the data store
+  simData::DataStore* dataStore_;
+  osg::ref_ptr<ClassificationLabelNode> classLabelUpper_;
+  osg::ref_ptr<ClassificationLabelNode> classLabelLower_;
+  /// Callback to reposition the classification banners when screen size changes
+  osg::ref_ptr<FrameResizeCallback> resizeCallback_;
+};
 
 } // namespace simVis
 
