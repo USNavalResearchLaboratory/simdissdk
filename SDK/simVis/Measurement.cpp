@@ -172,34 +172,34 @@ double Measurement::getCompositeAngle_(double bgnAz, double bgnEl, double endAz,
 
 void Measurement::calculateTrueAngles_(const RangeToolState& state, double* az, double* el, double* cmp) const
 {
-  bool raeBeginEntity = isRaeObject_(state.beginEntity_.node_->type());
-  bool raeEndEntity = isRaeObject_(state.endEntity_.node_->type());
+  bool raeBeginEntity = isRaeObject_(state.beginEntity_->type_);
+  bool raeEndEntity = isRaeObject_(state.endEntity_->type_);
 
-  if ((raeBeginEntity && raeEndEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)) ||
-    (raeEndEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)))
+  if ((raeBeginEntity && raeEndEntity && (state.beginEntity_->hostId_ == state.endEntity_->hostId_)) ||
+    (raeEndEntity && (state.beginEntity_->hostId_ == state.endEntity_->hostId_)))
   {
     // handle cases where calculations are between RAE based objects on the same host platform or
     // between a host platform (begin) and one of its own RAE based objects (end)
     if (az)
-      *az = state.endEntity_.ypr_.yaw();
+      *az = state.endEntity_->ypr_.yaw();
     if (el)
-      *el = state.endEntity_.ypr_.pitch();
+      *el = state.endEntity_->ypr_.pitch();
     if (cmp)
-      *cmp = getCompositeAngle_(0, 0, state.endEntity_.ypr_.yaw(), state.endEntity_.ypr_.pitch());
+      *cmp = getCompositeAngle_(0, 0, state.endEntity_->ypr_.yaw(), state.endEntity_->ypr_.pitch());
   }
-  else if (raeBeginEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_))
+  else if (raeBeginEntity && (state.beginEntity_->hostId_ == state.endEntity_->hostId_))
   {
     // between a host platform (end) and one of its own RAE based objects (begin)
     if (az)
-      *az = state.beginEntity_.ypr_.yaw();
+      *az = state.beginEntity_->ypr_.yaw();
     if (el)
-      *el = state.beginEntity_.ypr_.pitch();
+      *el = state.beginEntity_->ypr_.pitch();
     if (cmp)
-      *cmp = getCompositeAngle_(0, 0, state.beginEntity_.ypr_.yaw(), state.beginEntity_.ypr_.pitch());
+      *cmp = getCompositeAngle_(0, 0, state.beginEntity_->ypr_.yaw(), state.beginEntity_->ypr_.pitch());
   }
   else
   {
-    simCore::calculateAbsAzEl(state.beginEntity_.lla_, state.endEntity_.lla_, az, el, cmp, state.earthModel_, &state.coordConv_);
+    simCore::calculateAbsAzEl(state.beginEntity_->lla_, state.endEntity_->lla_, az, el, cmp, state.earthModel_, &state.coordConv_);
   }
 }
 
@@ -212,12 +212,12 @@ GroundDistanceMeasurement::GroundDistanceMeasurement()
 
 double GroundDistanceMeasurement::value(RangeToolState& state) const
 {
-  return simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  return simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 }
 
 bool GroundDistanceMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -228,12 +228,12 @@ SlantDistanceMeasurement::SlantDistanceMeasurement()
 
 double SlantDistanceMeasurement::value(RangeToolState& state) const
 {
-  return simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  return simCore::calculateSlant(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 }
 
 bool SlantDistanceMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -244,12 +244,12 @@ AltitudeDeltaMeasurement::AltitudeDeltaMeasurement()
 
 double AltitudeDeltaMeasurement::value(RangeToolState& state) const
 {
-  return simCore::calculateAltitude(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  return simCore::calculateAltitude(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 }
 
 bool AltitudeDeltaMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -267,7 +267,7 @@ double BeamGroundDistanceMeasurement::value(RangeToolState& state) const
 
 bool BeamGroundDistanceMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToNonBeamAssociation_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isBeamToNonBeamAssociation_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -285,7 +285,7 @@ double BeamSlantDistanceMeasurement::value(RangeToolState& state) const
 
 bool BeamSlantDistanceMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToNonBeamAssociation_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isBeamToNonBeamAssociation_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -303,7 +303,7 @@ double BeamAltitudeDeltaMeasurement::value(RangeToolState& state) const
 
 bool BeamAltitudeDeltaMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToNonBeamAssociation_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isBeamToNonBeamAssociation_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -315,13 +315,13 @@ DownRangeMeasurement::DownRangeMeasurement()
 double DownRangeMeasurement::value(RangeToolState& state) const
 {
   double dr;
-  simCore::calculateDRCRDownValue(state.beginEntity_.lla_, state.beginEntity_.ypr_.x(), state.endEntity_.lla_, state.earthModel_, &state.coordConv_, &dr, NULL, NULL);
+  simCore::calculateDRCRDownValue(state.beginEntity_->lla_, state.beginEntity_->ypr_.x(), state.endEntity_->lla_, state.earthModel_, &state.coordConv_, &dr, NULL, NULL);
   return dr;
 }
 
 bool DownRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -333,13 +333,13 @@ CrossRangeMeasurement::CrossRangeMeasurement()
 double CrossRangeMeasurement::value(RangeToolState& state) const
 {
   double cr;
-  simCore::calculateDRCRDownValue(state.beginEntity_.lla_, state.beginEntity_.ypr_.x(), state.endEntity_.lla_, state.earthModel_, &state.coordConv_, NULL, &cr, NULL);
+  simCore::calculateDRCRDownValue(state.beginEntity_->lla_, state.beginEntity_->ypr_.x(), state.endEntity_->lla_, state.earthModel_, &state.coordConv_, NULL, &cr, NULL);
   return cr;
 }
 
 bool CrossRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -351,13 +351,13 @@ DownRangeCrossRangeDownValueMeasurement::DownRangeCrossRangeDownValueMeasurement
 double DownRangeCrossRangeDownValueMeasurement::value(RangeToolState& state) const
 {
   double dv;
-  simCore::calculateDRCRDownValue(state.beginEntity_.lla_, state.beginEntity_.ypr_.x(), state.endEntity_.lla_, state.earthModel_, &state.coordConv_, NULL, NULL, &dv);
+  simCore::calculateDRCRDownValue(state.beginEntity_->lla_, state.beginEntity_->ypr_.x(), state.endEntity_->lla_, state.earthModel_, &state.coordConv_, NULL, NULL, &dv);
   return dv;
 }
 
 bool DownRangeCrossRangeDownValueMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -369,13 +369,13 @@ GeoDownRangeMeasurement::GeoDownRangeMeasurement()
 double GeoDownRangeMeasurement::value(RangeToolState& state) const
 {
   double dr;
-  simCore::calculateGeodesicDRCR(state.beginEntity_.lla_, state.beginEntity_.ypr_.x(), state.endEntity_.lla_, &dr, NULL);
+  simCore::calculateGeodesicDRCR(state.beginEntity_->lla_, state.beginEntity_->ypr_.x(), state.endEntity_->lla_, &dr, NULL);
   return dr;
 }
 
 bool GeoDownRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -387,13 +387,13 @@ GeoCrossRangeMeasurement::GeoCrossRangeMeasurement()
 double GeoCrossRangeMeasurement::value(RangeToolState& state) const
 {
   double cr;
-  simCore::calculateGeodesicDRCR(state.beginEntity_.lla_, state.beginEntity_.ypr_.x(), state.endEntity_.lla_, NULL, &cr);
+  simCore::calculateGeodesicDRCR(state.beginEntity_->lla_, state.beginEntity_->ypr_.x(), state.endEntity_->lla_, NULL, &cr);
   return cr;
 }
 
 bool GeoCrossRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -411,7 +411,7 @@ double TrueAzimuthMeasurement::value(RangeToolState& state) const
 
 bool TrueAzimuthMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -429,7 +429,7 @@ double TrueElevationMeasurement::value(RangeToolState& state) const
 
 bool TrueElevationMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -447,7 +447,7 @@ double TrueCompositeAngleMeasurement::value(RangeToolState& state) const
 
 bool TrueCompositeAngleMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -462,45 +462,45 @@ double MagneticAzimuthMeasurement::value(RangeToolState& state) const
 {
   double az;
   calculateTrueAngles_(state, &az, NULL, NULL);
-  az = datumConvert_->convertMagneticDatum(state.beginEntity_.lla_, state.timeStamp_, az, simCore::COORD_SYS_LLA, simCore::MAGVAR_TRUE, simCore::MAGVAR_WMM, 0.0);
+  az = datumConvert_->convertMagneticDatum(state.beginEntity_->lla_, state.timeStamp_, az, simCore::COORD_SYS_LLA, simCore::MAGVAR_TRUE, simCore::MAGVAR_WMM, 0.0);
   return az;
 }
 
 bool MagneticAzimuthMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
 
 void RelOriMeasurement::getAngles(double* az, double* el, double* cmp, RangeToolState& state) const
 {
-  bool raeBgnEntity = isRaeObject_(state.beginEntity_.node_->type());
-  bool raeEndEntity = isRaeObject_(state.endEntity_.node_->type());
-  if (raeBgnEntity && raeEndEntity && (state.beginEntity_.hostId_ == state.endEntity_.hostId_))
+  bool raeBgnEntity = isRaeObject_(state.beginEntity_->type_);
+  bool raeEndEntity = isRaeObject_(state.endEntity_->type_);
+  if (raeBgnEntity && raeEndEntity && (state.beginEntity_->hostId_ == state.endEntity_->hostId_))
   {
     // handle cases where calculations are between RAE based objects with the same host platform
     if (az)
-      *az = state.endEntity_.ypr_.yaw() - state.beginEntity_.ypr_.yaw();
+      *az = state.endEntity_->ypr_.yaw() - state.beginEntity_->ypr_.yaw();
     if (el)
-      *el = state.endEntity_.ypr_.pitch() - state.beginEntity_.ypr_.pitch();
+      *el = state.endEntity_->ypr_.pitch() - state.beginEntity_->ypr_.pitch();
     if (cmp)
-      *cmp = getCompositeAngle_(state.beginEntity_.ypr_.yaw(), state.beginEntity_.ypr_.pitch(), state.endEntity_.ypr_.yaw(), state.endEntity_.ypr_.pitch());
+      *cmp = getCompositeAngle_(state.beginEntity_->ypr_.yaw(), state.beginEntity_->ypr_.pitch(), state.endEntity_->ypr_.yaw(), state.endEntity_->ypr_.pitch());
   }
-  else if ((raeBgnEntity && (state.endEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)) ||
-    (raeEndEntity && (state.beginEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.hostId_ == state.endEntity_.hostId_)))
+  else if ((raeBgnEntity && (state.endEntity_->type_ == simData::PLATFORM) && (state.beginEntity_->hostId_ == state.endEntity_->hostId_)) ||
+    (raeEndEntity && (state.beginEntity_->type_ == simData::PLATFORM) && (state.beginEntity_->hostId_ == state.endEntity_->hostId_)))
   {
     // handle cases where calculations are between RAE based objects their own host platform
     if (az)
-      *az = state.endEntity_.ypr_.yaw() - state.beginEntity_.ypr_.yaw();
+      *az = state.endEntity_->ypr_.yaw() - state.beginEntity_->ypr_.yaw();
     if (el)
-      *el = state.endEntity_.ypr_.pitch() - state.beginEntity_.ypr_.pitch();
+      *el = state.endEntity_->ypr_.pitch() - state.beginEntity_->ypr_.pitch();
     if (cmp)
-      *cmp = getCompositeAngle_(state.beginEntity_.ypr_.yaw(), state.beginEntity_.ypr_.pitch(), state.endEntity_.ypr_.yaw(), state.endEntity_.ypr_.pitch());
+      *cmp = getCompositeAngle_(state.beginEntity_->ypr_.yaw(), state.beginEntity_->ypr_.pitch(), state.endEntity_->ypr_.yaw(), state.endEntity_->ypr_.pitch());
   }
   else
   {
-    simCore::calculateRelAzEl(state.beginEntity_.lla_, state.beginEntity_.ypr_, state.endEntity_.lla_, az, el, cmp, state.earthModel_, &state.coordConv_);
+    simCore::calculateRelAzEl(state.beginEntity_->lla_, state.beginEntity_->ypr_, state.endEntity_->lla_, az, el, cmp, state.earthModel_, &state.coordConv_);
   }
 }
 
@@ -520,7 +520,7 @@ double RelOriAzimuthMeasurement::value(RangeToolState& state) const
 
 bool RelOriAzimuthMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -538,7 +538,7 @@ double RelOriElevationMeasurement::value(RangeToolState& state) const
 
 bool RelOriElevationMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -556,14 +556,14 @@ double RelOriCompositeAngleMeasurement::value(RangeToolState& state) const
 
 bool RelOriCompositeAngleMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
 
 void RelVelMeasurement::getAngles(double* az, double* el, double* cmp, RangeToolState& state) const
 {
-  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  const simCore::Vec3& vel = state.beginEntity_->vel_;
   if (simCore::v3AreEqual(vel, simCore::Vec3()))
   {
     *az = 0.;
@@ -574,20 +574,20 @@ void RelVelMeasurement::getAngles(double* az, double* el, double* cmp, RangeTool
   simCore::Vec3 fpaVec;
   simCore::calculateFlightPathAngles(vel, fpaVec);
 
-  bool raeEndEntity = isRaeObject_(state.endEntity_.node_->type());
-  if (raeEndEntity && (state.beginEntity_.node_->type() == simData::PLATFORM) && (state.beginEntity_.hostId_ == state.endEntity_.hostId_))
+  bool raeEndEntity = isRaeObject_(state.endEntity_->type_);
+  if (raeEndEntity && (state.beginEntity_->type_ == simData::PLATFORM) && (state.beginEntity_->hostId_ == state.endEntity_->hostId_))
   {
     // handle case where calculation is between host platform and its RAE based objects
     if (az)
-      *az = state.endEntity_.ypr_.yaw() - fpaVec.yaw();
+      *az = state.endEntity_->ypr_.yaw() - fpaVec.yaw();
     if (el)
-      *el = state.endEntity_.ypr_.pitch() - fpaVec.pitch();
+      *el = state.endEntity_->ypr_.pitch() - fpaVec.pitch();
     if (cmp)
-      *cmp = getCompositeAngle_(fpaVec.yaw(), fpaVec.pitch(), state.endEntity_.ypr_.yaw(), state.endEntity_.ypr_.pitch());
+      *cmp = getCompositeAngle_(fpaVec.yaw(), fpaVec.pitch(), state.endEntity_->ypr_.yaw(), state.endEntity_->ypr_.pitch());
   }
   else
   {
-    simCore::calculateRelAzEl(state.beginEntity_.lla_, fpaVec, state.endEntity_.lla_, az, el, cmp, state.earthModel_, &state.coordConv_);
+    simCore::calculateRelAzEl(state.beginEntity_->lla_, fpaVec, state.endEntity_->lla_, az, el, cmp, state.earthModel_, &state.coordConv_);
   }
 }
 
@@ -606,7 +606,7 @@ double RelVelAzimuthMeasurement::value(RangeToolState& state) const
 
 bool RelVelAzimuthMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isVelocityAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -624,7 +624,7 @@ double RelVelElevationMeasurement::value(RangeToolState& state) const
 
 bool RelVelElevationMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isVelocityAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 
 //----------------------------------------------------------------------------
@@ -642,7 +642,7 @@ double RelVelCompositeAngleMeasurement::value(RangeToolState& state) const
 
 bool RelVelCompositeAngleMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isVelocityAngle_(state.beginEntity_.node_->type(), state.beginEntity_.hostId_, state.endEntity_.node_->type(), state.endEntity_.hostId_);
+  return isVelocityAngle_(state.beginEntity_->type_, state.beginEntity_->hostId_, state.endEntity_->type_, state.endEntity_->hostId_);
 }
 //----------------------------------------------------------------------------
 
@@ -652,12 +652,12 @@ ClosingVelocityMeasurement::ClosingVelocityMeasurement()
 
 double ClosingVelocityMeasurement::value(RangeToolState& state) const
 {
-  return simCore::calculateClosingVelocity(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_, state.beginEntity_.vel_, state.endEntity_.vel_);
+  return simCore::calculateClosingVelocity(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_, state.beginEntity_->vel_, state.endEntity_->vel_);
 }
 
 bool ClosingVelocityMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isPlatformToPlatform_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isPlatformToPlatform_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -668,12 +668,12 @@ SeparationVelocityMeasurement::SeparationVelocityMeasurement()
 
 double SeparationVelocityMeasurement::value(RangeToolState& state) const
 {
-  return -simCore::calculateClosingVelocity(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_, state.beginEntity_.vel_, state.endEntity_.vel_);
+  return -simCore::calculateClosingVelocity(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_, state.beginEntity_->vel_, state.endEntity_->vel_);
 }
 
 bool SeparationVelocityMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isPlatformToPlatform_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isPlatformToPlatform_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -684,12 +684,12 @@ VelocityDeltaMeasurement::VelocityDeltaMeasurement()
 
 double VelocityDeltaMeasurement::value(RangeToolState& state) const
 {
-  return simCore::calculateVelocityDelta(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_, state.beginEntity_.vel_, state.endEntity_.vel_);
+  return simCore::calculateVelocityDelta(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_, state.beginEntity_->vel_, state.endEntity_->vel_);
 }
 
 bool VelocityDeltaMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isPlatformToPlatform_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isPlatformToPlatform_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -700,20 +700,20 @@ VelAzimDownRangeMeasurement::VelAzimDownRangeMeasurement()
 
 double VelAzimDownRangeMeasurement::value(RangeToolState& state) const
 {
-  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  const simCore::Vec3& vel = state.beginEntity_->vel_;
   if (simCore::v3AreEqual(vel, simCore::Vec3()))
     return 0.0;
 
   double downRng = 0;
   simCore::Vec3 fpa;
   simCore::calculateFlightPathAngles(vel, fpa);
-  simCore::calculateDRCRDownValue(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, state.earthModel_, &state.coordConv_, &downRng, NULL, NULL);
+  simCore::calculateDRCRDownValue(state.beginEntity_->lla_, fpa[0], state.endEntity_->lla_, state.earthModel_, &state.coordConv_, &downRng, NULL, NULL);
   return downRng;
 }
 
 bool VelAzimDownRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return (state.beginEntity_.node_->type() == simData::PLATFORM);
+  return (state.beginEntity_->type_ == simData::PLATFORM);
 }
 
 //----------------------------------------------------------------------------
@@ -724,20 +724,20 @@ VelAzimCrossRangeMeasurement::VelAzimCrossRangeMeasurement()
 
 double VelAzimCrossRangeMeasurement::value(RangeToolState& state) const
 {
-  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  const simCore::Vec3& vel = state.beginEntity_->vel_;
   if (simCore::v3AreEqual(vel, simCore::Vec3()))
     return 0.0;
 
   double crossRng = 0;
   simCore::Vec3 fpa;
   simCore::calculateFlightPathAngles(vel, fpa);
-  simCore::calculateDRCRDownValue(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, state.earthModel_, &state.coordConv_, NULL, &crossRng, NULL);
+  simCore::calculateDRCRDownValue(state.beginEntity_->lla_, fpa[0], state.endEntity_->lla_, state.earthModel_, &state.coordConv_, NULL, &crossRng, NULL);
   return crossRng;
 }
 
 bool VelAzimCrossRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return (state.beginEntity_.node_->type() == simData::PLATFORM);
+  return (state.beginEntity_->type_ == simData::PLATFORM);
 }
 
 //----------------------------------------------------------------------------
@@ -748,20 +748,20 @@ VelAzimGeoDownRangeMeasurement::VelAzimGeoDownRangeMeasurement()
 
 double VelAzimGeoDownRangeMeasurement::value(RangeToolState& state) const
 {
-  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  const simCore::Vec3& vel = state.beginEntity_->vel_;
   if (simCore::v3AreEqual(vel, simCore::Vec3()))
     return 0.0;
 
   double downRng = 0;
   simCore::Vec3 fpa;
   simCore::calculateFlightPathAngles(vel, fpa);
-  simCore::calculateGeodesicDRCR(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, &downRng, NULL);
+  simCore::calculateGeodesicDRCR(state.beginEntity_->lla_, fpa[0], state.endEntity_->lla_, &downRng, NULL);
   return downRng;
 }
 
 bool VelAzimGeoDownRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return (state.beginEntity_.node_->type() == simData::PLATFORM);
+  return (state.beginEntity_->type_ == simData::PLATFORM);
 }
 
 //----------------------------------------------------------------------------
@@ -772,20 +772,20 @@ VelAzimGeoCrossRangeMeasurement::VelAzimGeoCrossRangeMeasurement()
 
 double VelAzimGeoCrossRangeMeasurement::value(RangeToolState& state) const
 {
-  const simCore::Vec3& vel = state.beginEntity_.vel_;
+  const simCore::Vec3& vel = state.beginEntity_->vel_;
   if (simCore::v3AreEqual(vel, simCore::Vec3()))
     return 0.0;
 
   double crossRng = 0;
   simCore::Vec3 fpa;
   simCore::calculateFlightPathAngles(vel, fpa);
-  simCore::calculateGeodesicDRCR(state.beginEntity_.lla_, fpa[0], state.endEntity_.lla_, NULL, &crossRng);
+  simCore::calculateGeodesicDRCR(state.beginEntity_->lla_, fpa[0], state.endEntity_->lla_, NULL, &crossRng);
   return crossRng;
 }
 
 bool VelAzimGeoCrossRangeMeasurement::willAccept(const RangeToolState& state) const
 {
-  return (state.beginEntity_.node_->type() == simData::PLATFORM);
+  return (state.beginEntity_->type_ == simData::PLATFORM);
 }
 
 //----------------------------------------------------------------------------
@@ -796,12 +796,12 @@ AspectAngleMeasurement::AspectAngleMeasurement()
 
 double AspectAngleMeasurement::value(RangeToolState& state) const
 {
-  return simCore::calculateAspectAngle(state.beginEntity_.lla_, state.endEntity_.lla_, state.endEntity_.ypr_);
+  return simCore::calculateAspectAngle(state.beginEntity_->lla_, state.endEntity_->lla_, state.endEntity_->ypr_);
 }
 
 bool AspectAngleMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isLocationToLocation_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isLocationToLocation_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -827,13 +827,19 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
       *elAbs = elAbsLocal;
   }
 
+  auto simdisBeginState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  auto simdisEndState = dynamic_cast<SimdisEntityState*>(state.endEntity_);
+
   if (hgtMeters != NULL)
   {
-    const simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
-    if (rf != NULL)
-      *hgtMeters = rf->antennaHeight();
-    else
-      *hgtMeters = 0.0;
+    *hgtMeters = 0.0;
+
+    if (simdisBeginState != NULL)
+    {
+      const simRF::RFPropagationFacade* rf = simdisBeginState->rfPropagation_;
+      if (rf != NULL)
+        *hgtMeters = rf->antennaHeight();
+    }
   }
 
   // Do NOT set RF parameter values from RFPropagationFacade, in order to match the behavior of SIMDIS 9
@@ -842,15 +848,19 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
   {
     double xmtGaindBLocal = simCore::DEFAULT_ANTENNA_GAIN;
     double rcvGaindBLocal = simCore::DEFAULT_ANTENNA_GAIN;
-    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(state.beginEntity_.node_.get());
-    if (beam)
+    if (simdisBeginState != NULL)
     {
-      double azRelLocal;
-      double elRelLocal;
-      RelOriMeasurement::getAngles(&azRelLocal, &elRelLocal, NULL, state);
-      xmtGaindBLocal = beam->gain(azRelLocal, elRelLocal);
-      rcvGaindBLocal = xmtGaindBLocal;
+      const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisBeginState->node_.get());
+      if (beam)
+      {
+        double azRelLocal;
+        double elRelLocal;
+        RelOriMeasurement::getAngles(&azRelLocal, &elRelLocal, NULL, state);
+        xmtGaindBLocal = beam->gain(azRelLocal, elRelLocal);
+        rcvGaindBLocal = xmtGaindBLocal;
+      }
     }
+
     if (xmtGaindB != NULL)
       *xmtGaindB = xmtGaindBLocal;
 
@@ -862,22 +872,25 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
   {
     double rcsLocal = useDb ? simCore::SMALL_DB_VAL : simCore::SMALL_RCS_SM;
     // To match SIMDIS 9, the end entity must be a platform.
-    if (state.endEntity_.node_->type() == simData::PLATFORM)
+    if (state.endEntity_->type_ == simData::PLATFORM)
     {
-      simCore::RadarCrossSectionPtr rcsPtr = state.endEntity_.platformHostNode_->getRcs();
-      if (rcsPtr != NULL)
+      if (simdisEndState != NULL)
       {
-        // need the angles from the target to the beam source to get the correct rcs values
-        double azTarget;
-        double elTarget;
-        const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(state.beginEntity_.node_.get());
-        simCore::PolarityType type = (beam != NULL) ? beam->polarity() : simCore::POLARITY_UNKNOWN;
-        const double frequency = simCore::DEFAULT_FREQUENCY;
-        simCore::calculateRelAzEl(state.endEntity_.lla_, state.endEntity_.ypr_, state.beginEntity_.lla_, &azTarget, &elTarget, NULL, state.earthModel_, &state.coordConv_);
-        if (useDb)
-          rcsLocal = rcsPtr->RCSdB(frequency, azTarget, elTarget, type);
-        else
-          rcsLocal = rcsPtr->RCSsm(frequency, azTarget, elTarget, type);
+        simCore::RadarCrossSectionPtr rcsPtr = simdisEndState->platformHostNode_->getRcs();
+        if (rcsPtr != NULL)
+        {
+          // need the angles from the target to the beam source to get the correct rcs values
+          double azTarget;
+          double elTarget;
+          const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisBeginState->node_.get());
+          simCore::PolarityType type = (beam != NULL) ? beam->polarity() : simCore::POLARITY_UNKNOWN;
+          const double frequency = simCore::DEFAULT_FREQUENCY;
+          simCore::calculateRelAzEl(state.endEntity_->lla_, state.endEntity_->ypr_, state.beginEntity_->lla_, &azTarget, &elTarget, NULL, state.earthModel_, &state.coordConv_);
+          if (useDb)
+            rcsLocal = rcsPtr->RCSdB(frequency, azTarget, elTarget, type);
+          else
+            rcsLocal = rcsPtr->RCSsm(frequency, azTarget, elTarget, type);
+        }
       }
     }
     *rcs = rcsLocal;
@@ -887,7 +900,7 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
   {
     double freqMHzBLocal = 0.0;
     double powerWattsLocal = 0.0;
-    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(state.beginEntity_.node_.get());
+    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisBeginState->node_.get());
     if (beam)
     {
       auto prefs = beam->getPrefs();
@@ -911,20 +924,25 @@ RFGainMeasurement::RFGainMeasurement()
 
 double RFGainMeasurement::value(RangeToolState& state) const
 {
-  const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(state.beginEntity_.node_.get());
-  if (beam)
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+
+  if (simdisState)
   {
-    double azRelLocal;
-    double elRelLocal;
-    getAngles(&azRelLocal, &elRelLocal, NULL, state);
-    return beam->gain(azRelLocal, elRelLocal);
+    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisState->node_.get());
+    if (beam)
+    {
+      double azRelLocal;
+      double elRelLocal;
+      getAngles(&azRelLocal, &elRelLocal, NULL, state);
+      return beam->gain(azRelLocal, elRelLocal);
+    }
   }
   return 0.0;
 }
 
 bool RFGainMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 
@@ -945,8 +963,8 @@ double RFPowerMeasurement::value(RangeToolState& state) const
   double xmtPowerWatts;
 
   getRfParameters_(state, &az, NULL, &hgtMeters, &xmtGaindB, &rcvGaindB, &rcsSqm, false, &freqMHz, &xmtPowerWatts);
-  double slantRngMeters = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
-  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  double slantRngMeters = simCore::calculateSlant(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
+  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
   if (rcsSqm == simCore::SMALL_RCS_SM)
   {
     // no valid rcs data found; use default 1.0 sqm as documented in SIMDIS User Manual
@@ -955,9 +973,13 @@ double RFPowerMeasurement::value(RangeToolState& state) const
 
   double power = simCore::SMALL_DB_VAL;
 
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
-  if (rf != NULL)
-    power = rf->getReceivedPower(az, slantRngMeters, hgtMeters, xmtGaindB, rcvGaindB, rcsSqm, gndRngMeters);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState)
+  {
+    simRF::RFPropagationFacade* rf = simdisState->rfPropagation_;
+    if (rf != NULL)
+      power = rf->getReceivedPower(az, slantRngMeters, hgtMeters, xmtGaindB, rcvGaindB, rcsSqm, gndRngMeters);
+  }
 
   // if simRF::RFPropagationFacade did not return a value, use free space calculation if values available
   if ((power == simCore::SMALL_DB_VAL) && (freqMHz != 0.0) && (xmtPowerWatts != 0.0))
@@ -970,7 +992,7 @@ double RFPowerMeasurement::value(RangeToolState& state) const
 bool RFPowerMeasurement::willAccept(const RangeToolState& state) const
 {
   // rfPropagation_ is not required, can fall back to free space calculation
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -989,14 +1011,18 @@ double RFOneWayPowerMeasurement::value(RangeToolState& state) const
   double xmtPowerWatts;
 
   getRfParameters_(state, &az, NULL, &hgtMeters, &xmtGaindB, &rcvGaindB, NULL, false, &freqMHz, &xmtPowerWatts);
-  double slantRngMeters = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
-  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  double slantRngMeters = simCore::calculateSlant(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
+  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 
   double power = simCore::SMALL_DB_VAL;
 
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
-  if (rf != NULL)
-    power = rf->getOneWayPower(az, slantRngMeters, hgtMeters, xmtGaindB, gndRngMeters, rcvGaindB);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState)
+  {
+    simRF::RFPropagationFacade* rf = simdisState->rfPropagation_;
+    if (rf != NULL)
+      power = rf->getOneWayPower(az, slantRngMeters, hgtMeters, xmtGaindB, gndRngMeters, rcvGaindB);
+  }
 
   // if simRF::RFPropagationFacade did not return a value, use free space calculation if values available
   if ((power == simCore::SMALL_DB_VAL) && (freqMHz != 0.0) && (xmtPowerWatts != 0.0))
@@ -1009,7 +1035,7 @@ double RFOneWayPowerMeasurement::value(RangeToolState& state) const
 bool RFOneWayPowerMeasurement::willAccept(const RangeToolState& state) const
 {
   // rfPropagation_ is not required, can fall back to free space calculation
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 //----------------------------------------------------------------------------
@@ -1025,7 +1051,7 @@ HorizonMeasurement::HorizonMeasurement(const std::string &typeName, const std::s
 
 bool HorizonMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isEntityToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type());
+  return isEntityToEntity_(state.beginEntity_->type_, state.endEntity_->type_);
 }
 
 void HorizonMeasurement::setEffectiveRadius(double opticalRadius, double rfRadius)
@@ -1038,10 +1064,14 @@ void HorizonMeasurement::setEffectiveRadius(double opticalRadius, double rfRadiu
 double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::HorizonCalculations horizon) const
 {
   // Check that they're within range of each other
-  double maxRng = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
-  double losRng = simCore::calculateHorizonDist(state.beginEntity_.lla_, horizon, opticalEffectiveRadius_, rfEffectiveRadius_) +
-    simCore::calculateHorizonDist(state.endEntity_.lla_, horizon, opticalEffectiveRadius_, rfEffectiveRadius_);
+  double maxRng = simCore::calculateSlant(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
+  double losRng = simCore::calculateHorizonDist(state.beginEntity_->lla_, horizon, opticalEffectiveRadius_, rfEffectiveRadius_) +
+    simCore::calculateHorizonDist(state.endEntity_->lla_, horizon, opticalEffectiveRadius_, rfEffectiveRadius_);
   if (maxRng > losRng)
+    return 0;
+
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
     return 0;
 
   // Check if obstructed by terrain
@@ -1049,15 +1079,15 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
   {
     // If any elevation from beginEntity_ to the terrain at an intermediate point is higher than this, endEntity_ is obstructed by terrain
     double targetElev;
-    simCore::calculateAbsAzEl(state.beginEntity_.lla_, state.endEntity_.lla_, NULL, &targetElev, NULL, state.earthModel_, &state.coordConv_);
+    simCore::calculateAbsAzEl(state.beginEntity_->lla_, state.endEntity_->lla_, NULL, &targetElev, NULL, state.earthModel_, &state.coordConv_);
 
     simVis::ElevationQueryProxy query(state.mapNode_->getMap(), NULL);
 
     // Use the los range resolution of the begin entity as the rangeDelta for getting intermediate points
-    double rangeDelta = state.beginEntity_.platformHostNode_->getPrefs().losrangeresolution();
+    double rangeDelta = simdisState->platformHostNode_->getPrefs().losrangeresolution();
 
     std::vector<simCore::Vec3> points;
-    state.intermediatePoints(state.beginEntity_.lla_, state.endEntity_.lla_, rangeDelta, points);
+    state.intermediatePoints(state.beginEntity_->lla_, state.endEntity_->lla_, rangeDelta, points);
     for (auto iter = points.begin(); iter != points.end(); iter++)
     {
       osgEarth::GeoPoint currGeoPoint;
@@ -1072,7 +1102,7 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
         simCore::Coordinate currLlaPoint;
         convertGeoPointToCoord(currGeoPoint, currLlaPoint, state.mapNode_.get());
         double elev;
-        simCore::calculateAbsAzEl(state.beginEntity_.lla_, currLlaPoint.position(), NULL, &elev, NULL, state.earthModel_, &state.coordConv_);
+        simCore::calculateAbsAzEl(state.beginEntity_->lla_, currLlaPoint.position(), NULL, &elev, NULL, state.earthModel_, &state.coordConv_);
         if (elev > targetElev)
           return 0;
       }
@@ -1113,22 +1143,29 @@ PodMeasurement::PodMeasurement()
 
 double PodMeasurement::value(RangeToolState& state) const
 {
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return 0.0;
 
+  simRF::RFPropagationFacade* rf = simdisState->rfPropagation_;
   if (rf == NULL)
     return 0.0;
 
   double az;
   getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
-  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 
-  return rf->getPOD(az, gndRngMeters, state.endEntity_.lla_.alt());
+  return rf->getPOD(az, gndRngMeters, state.endEntity_->lla_.alt());
 }
 
 bool PodMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type()) &&
-    (state.beginEntity_.rfPropagation_ != NULL);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return false;
+
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
+    (simdisState->rfPropagation_ != NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -1139,22 +1176,29 @@ LossMeasurement::LossMeasurement()
 
 double LossMeasurement::value(RangeToolState& state) const
 {
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return static_cast<double>(simCore::SMALL_DB_VAL);
 
+  simRF::RFPropagationFacade* rf = simdisState->rfPropagation_;
   if (rf == NULL)
     return static_cast<double>(simCore::SMALL_DB_VAL);
 
   double az;
   getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
-  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 
-  return rf->getLoss(az, gndRngMeters, state.endEntity_.lla_.alt());
+  return rf->getLoss(az, gndRngMeters, state.endEntity_->lla_.alt());
 }
 
 bool LossMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type()) &&
-    (state.beginEntity_.rfPropagation_ != NULL);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return false;
+
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
+    (simdisState->rfPropagation_ != NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -1165,22 +1209,29 @@ PpfMeasurement::PpfMeasurement()
 
 double PpfMeasurement::value(RangeToolState& state) const
 {
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return static_cast<double>(simCore::SMALL_DB_VAL);
 
+  simRF::RFPropagationFacade* rf = simdisState->rfPropagation_;
   if (rf == NULL)
     return static_cast<double>(simCore::SMALL_DB_VAL);
 
   double az;
   getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
-  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 
-  return rf->getPPF(az, gndRngMeters, state.endEntity_.lla_.alt());
+  return rf->getPPF(az, gndRngMeters, state.endEntity_->lla_.alt());
 }
 
 bool PpfMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type()) &&
-    (state.beginEntity_.rfPropagation_ != NULL);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return false;
+
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
+    (simdisState->rfPropagation_ != NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -1191,8 +1242,11 @@ SnrMeasurement::SnrMeasurement()
 
 double SnrMeasurement::value(RangeToolState& state) const
 {
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return static_cast<double>(simCore::SMALL_DB_VAL);
 
+  simRF::RFPropagationFacade* rf = simdisState->rfPropagation_;
   if (rf == NULL)
     return static_cast<double>(simCore::SMALL_DB_VAL);
 
@@ -1202,9 +1256,9 @@ double SnrMeasurement::value(RangeToolState& state) const
   double rcsSqm;
 
   getRfParameters_(state, &az, NULL, NULL, &xmtGaindB, &rcvGaindB, &rcsSqm, false, NULL, NULL);
-  double slantRngMeters = simCore::calculateSlant(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
-  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
-  double altitude = state.endEntity_.lla_.alt();
+  double slantRngMeters = simCore::calculateSlant(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
+  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
+  double altitude = state.endEntity_->lla_.alt();
   if (rcsSqm == simCore::SMALL_RCS_SM)
   {
     // no valid rcs data found; use default 1.0 sqm as documented in SIMDIS User Manual
@@ -1215,8 +1269,12 @@ double SnrMeasurement::value(RangeToolState& state) const
 
 bool SnrMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type()) &&
-    (state.beginEntity_.rfPropagation_ != NULL);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return false;
+
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
+    (simdisState->rfPropagation_ != NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -1227,23 +1285,30 @@ CnrMeasurement::CnrMeasurement()
 
 double CnrMeasurement::value(RangeToolState& state) const
 {
-  simRF::RFPropagationFacade* rf = state.beginEntity_.rfPropagation_;
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return static_cast<double>(simCore::SMALL_DB_VAL);
 
+  simRF::RFPropagationFacade* rf = simdisState->rfPropagation_;
   if (rf == NULL)
     return static_cast<double>(simCore::SMALL_DB_VAL);
 
   double az;
   getRfParameters_(state, &az, NULL, NULL, NULL, NULL, NULL, false, NULL, NULL);
   //unlike other RF - related calculations, CNR doesn't have a height component
-  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_.lla_, state.endEntity_.lla_, state.earthModel_, &state.coordConv_);
+  double gndRngMeters = simCore::calculateGroundDist(state.beginEntity_->lla_, state.endEntity_->lla_, state.earthModel_, &state.coordConv_);
 
   return rf->getCNR(az, gndRngMeters);
 }
 
 bool CnrMeasurement::willAccept(const RangeToolState& state) const
 {
-  return isBeamToEntity_(state.beginEntity_.node_->type(), state.endEntity_.node_->type()) &&
-    (state.beginEntity_.rfPropagation_ != NULL);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  if (simdisState == NULL)
+    return false;
+
+  return isBeamToEntity_(state.beginEntity_->type_, state.endEntity_->type_) &&
+    (simdisState->rfPropagation_ != NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -1263,9 +1328,13 @@ double RcsMeasurement::value(RangeToolState& state) const
 
 bool RcsMeasurement::willAccept(const RangeToolState& state) const
 {
-  return (state.endEntity_.node_->type() == simData::PLATFORM) &&
-    (state.endEntity_.node_->getId() == state.endEntity_.platformHostNode_->getId()) &&
-    (state.endEntity_.platformHostNode_->getRcs() != NULL);
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state.endEntity_);
+  if (simdisState == NULL)
+    return false;
+
+  return (simdisState->type_ == simData::PLATFORM) &&
+    (simdisState->node_->getId() == simdisState->platformHostNode_->getId()) &&
+    (simdisState->platformHostNode_->getRcs() != NULL);
 }
 
 

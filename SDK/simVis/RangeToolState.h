@@ -44,23 +44,44 @@ class ScenarioManager;
 const size_t COORD_CACHE_SIZE = 16;
 
 /**
-* Entity state needed to do Range calculations
+* Entity state needed to do basic Range calculations
 */
 struct SDKVIS_EXPORT EntityState
 {
   simCore::Vec3 lla_;  ///< Lat, lon, alt in rad, rad, m
   simCore::Vec3 ypr_;  ///< Yaw, pitch, roll in rad, rad, rad
   simCore::Vec3 vel_;  ///< X, Y and Z velocities in m/s
-  osg::ref_ptr<const simVis::EntityNode> node_; ///< The node of the entity
+  simData::ObjectType type_;  ///< The type of the entity
+  simData::ObjectId id_;   ///< Unique ID of the entity
   simData::ObjectId hostId_;   ///< Unique ID of the host entity; for platforms and custom renderings hostId_ == id_
+
+  EntityState()
+    : type_(simData::NONE),
+    id_(0),
+    hostId_(0)
+  {
+  }
+  virtual ~EntityState()
+  {
+  }
+};
+
+/**
+* Additional information for SIMDIS specific Range calculations
+*/
+struct SDKVIS_EXPORT SimdisEntityState : public EntityState
+{
+  osg::ref_ptr<const simVis::EntityNode> node_; ///< The node of the entity
   osg::ref_ptr<const simVis::PlatformNode> platformHostNode_; ///< The node of the host platform; for platforms platformHostNode_ == node_
   simRF::RFPropagationFacade* rfPropagation_;  ///< If the entity is a beam this MAY BE set
 
-  EntityState()
+  SimdisEntityState()
     : node_(NULL),
-    hostId_(0),
     platformHostNode_(NULL),
     rfPropagation_(NULL)
+  {
+  }
+  virtual ~SimdisEntityState()
   {
   }
 };
@@ -72,6 +93,14 @@ struct SDKVIS_EXPORT EntityState
 */
 struct SDKVIS_EXPORT RangeToolState
 {
+  /**
+   * Constructor
+   * @param beginEntity State for the begin entity; takes ownership of the memory
+   * @param endEntity State for the end entity; takes ownership of the memory
+   */
+  RangeToolState(EntityState* beginEntity, EntityState* endEntity);
+  virtual ~RangeToolState();
+
   /**
   * Coordinate data saved in the coord_ member variable for later use
   * Local coordinate mean LTP with OBJ 0 at the origin
@@ -101,7 +130,7 @@ struct SDKVIS_EXPORT RangeToolState
   * @param coord the type value to calculate and cache
   * @return the requested values, the type of values detailed in Coord
   */
-  osg::Vec3d coord(Coord coord);
+  virtual osg::Vec3d coord(Coord coord);
 
   /**
   * Converts osg::Vec3d to simCore::Vec3
@@ -147,14 +176,6 @@ struct SDKVIS_EXPORT RangeToolState
   ///@return the local/ENU vector produced by rotating the start->end vector by specified az, rotated in the ltp
   osg::Vec3d rotateEndVec(double az);
 
-  /**
-  * Fills in a entity state based on the given scenario and entity node
-  * @param scenario The scenario for getting the host platform of node
-  * @param node The node to extract information from
-  * @param state Range Tool state information needed to do the calculations
-  * @return zero on success and non-zero on failure
-  */
-  int populateEntityState(const simVis::ScenarioManager& scenario, const simVis::EntityNode* node, EntityState& state);
 
   /**
   * Resets the coord cache to initial state
@@ -166,14 +187,38 @@ struct SDKVIS_EXPORT RangeToolState
   */
   osg::Matrixd                     world2local_;     // world to local tangent plane
   osg::Matrixd                     local2world_;     // reverse of above
-  EntityState                      beginEntity_;
-  EntityState                      endEntity_;
+  EntityState*                     beginEntity_;
+  EntityState*                     endEntity_;
   simCore::EarthModelCalculations  earthModel_;
   simCore::CoordinateConverter     coordConv_;
   osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
   simCore::TimeStamp timeStamp_; // the timeStamp of the last update
   osg::observer_ptr<osgEarth::MapNode>  mapNode_;
   ///@}
+};
+
+/**
+* A SIMDIS specific version
+*/
+struct SDKVIS_EXPORT SimdisRangeToolState : public RangeToolState
+{
+  SimdisRangeToolState(SimdisEntityState* beginEntity, SimdisEntityState* endEntity);
+
+  /**
+  * Fills in a entity state based on the given scenario an entity node
+  * @param scenario The scenario for getting the host platform of node
+  * @param node The node to extract information from
+  * @param state Range Tool state information needed to do the calculations
+  * @return zero on success and non-zero on failure
+  */
+  int populateEntityState(const simVis::ScenarioManager& scenario, const simVis::EntityNode* node, EntityState* state);
+
+  /**
+  * Calculates and caches the requested values
+  * @param coord the type value to calculate and cache
+  * @return the requested values, the type of values detailed in Coord
+  */
+  virtual osg::Vec3d coord(Coord coord);
 };
 
 }

@@ -30,6 +30,21 @@
 namespace simVis
 {
 
+RangeToolState::RangeToolState(EntityState* beginEntity, EntityState* endEntity)
+  : beginEntity_(beginEntity),
+  endEntity_(endEntity)
+{
+  // Must pass in entities
+  assert(beginEntity_ != NULL);
+  assert(endEntity_ != NULL);
+}
+
+RangeToolState::~RangeToolState()
+{
+  delete beginEntity_;
+  delete endEntity_;
+}
+
 void RangeToolState::line(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset, osg::Vec3Array* verts)
 {
   // Use Sodano method to calculate azimuth and distance
@@ -120,7 +135,7 @@ osg::Vec3d RangeToolState::rotateEndVec(double az)
 {
   // Use Sodano method to calculate azimuth and distance from beginEntity_ to endEntity_
   double azimuth = 0.0;
-  const double distance = simCore::sodanoInverse(beginEntity_.lla_.lat(), beginEntity_.lla_.lon(), beginEntity_.lla_.alt(), endEntity_.lla_.lat(), endEntity_.lla_.lon(), &azimuth);
+  const double distance = simCore::sodanoInverse(beginEntity_->lla_.lat(), beginEntity_->lla_.lon(), beginEntity_->lla_.alt(), endEntity_->lla_.lat(), endEntity_->lla_.lon(), &azimuth);
 
   // purely vertical line returns the original end entity pos, in local coords
   if (simCore::areEqual(distance, 0.0))
@@ -129,8 +144,8 @@ osg::Vec3d RangeToolState::rotateEndVec(double az)
   // Calculate the LLA value of the point, and replace the altitude
   double lat = 0.0;
   double lon = 0.0;
-  simCore::sodanoDirect(beginEntity_.lla_.lat(), beginEntity_.lla_.lon(), beginEntity_.lla_.alt(), distance, (azimuth - az), &lat, &lon);
-  return lla2local(lat, lon, endEntity_.lla_.alt());
+  simCore::sodanoDirect(beginEntity_->lla_.lat(), beginEntity_->lla_.lon(), beginEntity_->lla_.alt(), distance, (azimuth - az), &lat, &lon);
+  return lla2local(lat, lon, endEntity_->lla_.alt());
 }
 
 osg::Vec3 RangeToolState::lla2local(double lat, double lon, double alt) const
@@ -148,59 +163,6 @@ simCore::Vec3 RangeToolState::local2lla(const osg::Vec3d& local)
   return llaPos;
 }
 
-int RangeToolState::populateEntityState(const ScenarioManager& scenario, const simVis::EntityNode* node, EntityState& state)
-{
-  if (node == NULL)
-    return 1;
-
-  state.node_ = node;
-  state.platformHostNode_ = dynamic_cast<const simVis::PlatformNode*>(scenario.getHostPlatform(node));
-  // if no platform host return with error
-  if (state.platformHostNode_ == NULL)
-    return 1;
-
-  if (node->type() == simData::CUSTOM_RENDERING)
-    state.hostId_ = node->getId();
-  else
-    state.hostId_ = state.platformHostNode_->getId();
-
-  // Kick out only after setting non-location information
-  if (!node->isActive())
-    return 1;
-
-  if (0 != node->getPositionOrientation(&state.lla_, &state.ypr_, simCore::COORD_SYS_LLA))
-    return 1;
-
-  if (state.node_->type() == simData::PLATFORM)
-  {
-    // Platforms need velocity which is not available from getPositionOrientation, so add it in
-    const simVis::PlatformNode* platform = dynamic_cast<const simVis::PlatformNode*>(node);
-    if (platform == NULL)
-      return 1;
-
-    const simData::PlatformUpdate* update = platform->update();
-    if (update == NULL)
-      return 1;
-
-    simCore::Coordinate ecef(simCore::COORD_SYS_ECEF,
-      simCore::Vec3(update->x(), update->y(), update->z()),
-      simCore::Vec3(update->psi(), update->theta(), update->phi()),
-      simCore::Vec3(update->vx(), update->vy(), update->vz()));
-    simCore::Coordinate needVelocity;
-    simCore::CoordinateConverter::convertEcefToGeodetic(ecef, needVelocity);
-    // Take only the velocity since the other values have not gone been modified by any preferences
-    state.vel_ = needVelocity.velocity();
-  }
-
-  if (state.node_->type() == simData::BEAM)
-  {
-    simRF::RFPropagationManagerPtr manager = scenario.rfPropagationManager();
-    state.rfPropagation_ = manager->getRFPropagation(node->getId());
-  }
-
-  return 0;
-}
-
 osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
 {
   if (coord_[which].isSet())
@@ -211,7 +173,7 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   case COORD_OBJ_0:
   {
     simCore::Vec3 ecefPos;
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(beginEntity_.lla_, ecefPos);
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(beginEntity_->lla_, ecefPos);
     coord_[which] = simCore2osg(ecefPos) * world2local_;
   }
   break;
@@ -219,7 +181,7 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   case COORD_OBJ_1:
   {
     simCore::Vec3 ecefPos;
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(endEntity_.lla_, ecefPos);
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(endEntity_->lla_, ecefPos);
     coord_[which] = simCore2osg(ecefPos) * world2local_;
   }
   break;
@@ -227,7 +189,7 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   case COORD_OBJ_0_0HAE:
   {
     simCore::Vec3 ecefPos;
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(beginEntity_.lla_.x(), beginEntity_.lla_.y(), 0.0), ecefPos);
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(beginEntity_->lla_.x(), beginEntity_->lla_.y(), 0.0), ecefPos);
     coord_[which] = simCore2osg(ecefPos) * world2local_;
   }
   break;
@@ -235,7 +197,7 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   case COORD_OBJ_1_0HAE:
   {
     simCore::Vec3 ecefPos;
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(endEntity_.lla_.x(), endEntity_.lla_.y(), 0.0), ecefPos);
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(endEntity_->lla_.x(), endEntity_->lla_.y(), 0.0), ecefPos);
     coord_[which] = simCore2osg(ecefPos) * world2local_;
   }
   break;
@@ -243,7 +205,7 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   case COORD_OBJ_1_AT_OBJ_0_ALT:
   {
     simCore::Vec3 ecefPos;
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(endEntity_.lla_.x(), endEntity_.lla_.y(), beginEntity_.lla_.z()), ecefPos);
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(endEntity_->lla_.x(), endEntity_->lla_.y(), beginEntity_->lla_.z()), ecefPos);
     coord_[which] = simCore2osg(ecefPos) * world2local_;
   }
   break;
@@ -251,7 +213,7 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   case COORD_OBJ_0_AT_OBJ_1_ALT:
   {
     simCore::Vec3 ecefPos;
-    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(beginEntity_.lla_.x(), beginEntity_.lla_.y(), endEntity_.lla_.z()), ecefPos);
+    simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(beginEntity_->lla_.x(), beginEntity_->lla_.y(), endEntity_->lla_.z()), ecefPos);
     coord_[which] = simCore2osg(ecefPos) * world2local_;
   }
   break;
@@ -259,26 +221,26 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   case COORD_DR:
   {
     double dr, cr, dv;
-    simCore::calculateDRCRDownValue(beginEntity_.lla_, beginEntity_.ypr_.x(), endEntity_.lla_, earthModel_, &coordConv_, &dr, &cr, &dv);
+    simCore::calculateDRCRDownValue(beginEntity_->lla_, beginEntity_->ypr_.x(), endEntity_->lla_, earthModel_, &coordConv_, &dr, &cr, &dv);
 
     // down/cross range point in TP coords:
     // TODO: not sure this is correct, should it be calculated in TP space?
-    coord_[which] = osg::Vec3d(dr*sin(beginEntity_.ypr_.x()), dr*cos(beginEntity_.ypr_.x()), 0.0);
+    coord_[which] = osg::Vec3d(dr*sin(beginEntity_->ypr_.x()), dr*cos(beginEntity_->ypr_.x()), 0.0);
   }
   break;
   case COORD_VEL_AZIM_DR:
   {
     // measurement is not meaningful when vel is zero
-    if (simCore::v3AreEqual(beginEntity_.vel_, simCore::Vec3()))
+    if (simCore::v3AreEqual(beginEntity_->vel_, simCore::Vec3()))
     {
       coord_[which] = osg::Vec3d();
       break;
     }
     double downRng = 0.0;
     simCore::Vec3 fpa;
-    simCore::calculateFlightPathAngles(beginEntity_.vel_, fpa);
-    simCore::calculateDRCRDownValue(beginEntity_.lla_, fpa[0],
-      endEntity_.lla_,
+    simCore::calculateFlightPathAngles(beginEntity_->vel_, fpa);
+    simCore::calculateDRCRDownValue(beginEntity_->lla_, fpa[0],
+      endEntity_->lla_,
       earthModel_,
       &coordConv_,
       &downRng,
@@ -289,34 +251,8 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
   break;
   case COORD_BEAM_LLA_0:
   case COORD_BEAM_LLA_1:
-    if (beginEntity_.node_->type() == simData::BEAM)
-    {
-      const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(beginEntity_.node_.get());
-      // Node not defined correctly; type() and pointer should match)
-      assert(beam != NULL);
-      if (beam != NULL)
-      {
-        simCore::Vec3 from;
-        beam->getClosestPoint(endEntity_.lla_, from);
-        coord_[COORD_BEAM_LLA_0] = simCore2osg(from);
-        coord_[COORD_BEAM_LLA_1] = simCore2osg(endEntity_.lla_);
-      }
-    }
-    else
-    {
-      // at least one side must be a beam.  Check willAccept for errors
-      assert(endEntity_.node_->type() == simData::BEAM);
-      const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(endEntity_.node_.get());
-      // Node not defined correctly; type() and pointer should match)
-      assert(beam != NULL);
-      if (beam != NULL)
-      {
-        simCore::Vec3 to;
-        beam->getClosestPoint(beginEntity_.lla_, to);
-        coord_[COORD_BEAM_LLA_0] = simCore2osg(beginEntity_.lla_);
-        coord_[COORD_BEAM_LLA_1] = simCore2osg(to);
-      }
-    }
+    // Needs to be handled at a higher level
+    assert(0);
     break;
 
   case COORD_BEAM_0:
@@ -392,6 +328,124 @@ simCore::Vec3 RangeToolState::osg2simCore(const osg::Vec3d& point) const
 osg::Vec3d RangeToolState::simCore2osg(const simCore::Vec3& point) const
 {
   return osg::Vec3d(point.x(), point.y(), point.z());
+}
+
+
+//-----------------------------------------------------------------------------------------------------------
+
+SimdisRangeToolState::SimdisRangeToolState(SimdisEntityState* beginEntity, SimdisEntityState* endEntity)
+  : RangeToolState(beginEntity, endEntity)
+{
+}
+
+osg::Vec3d SimdisRangeToolState::coord(Coord which)
+{
+  if (coord_[which].isSet())
+    return *coord_[which];
+
+  if ((which != COORD_BEAM_LLA_0) && (which != COORD_BEAM_LLA_1))
+    return RangeToolState::coord(which);
+
+  if (beginEntity_->type_ == simData::BEAM)
+  {
+    auto simdisState = dynamic_cast<SimdisEntityState*>(beginEntity_);
+    if (simdisState == NULL)
+      return osg::Vec3d();
+
+    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisState->node_.get());
+    // Node not defined correctly; type() and pointer should match)
+    assert(beam != NULL);
+    if (beam != NULL)
+    {
+      simCore::Vec3 from;
+      beam->getClosestPoint(endEntity_->lla_, from);
+      coord_[COORD_BEAM_LLA_0] = simCore2osg(from);
+      coord_[COORD_BEAM_LLA_1] = simCore2osg(endEntity_->lla_);
+    }
+  }
+  else
+  {
+    // at least one side must be a beam.  Check willAccept for errors
+    assert(endEntity_->type_ == simData::BEAM);
+
+    auto simdisState = dynamic_cast<SimdisEntityState*>(endEntity_);
+    if (simdisState == NULL)
+      return osg::Vec3d();
+
+    const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisState->node_.get());
+    // Node not defined correctly; type() and pointer should match)
+    assert(beam != NULL);
+    if (beam != NULL)
+    {
+      simCore::Vec3 to;
+      beam->getClosestPoint(beginEntity_->lla_, to);
+      coord_[COORD_BEAM_LLA_0] = simCore2osg(beginEntity_->lla_);
+      coord_[COORD_BEAM_LLA_1] = simCore2osg(to);
+    }
+  }
+
+  return *coord_[which];
+}
+
+int SimdisRangeToolState::populateEntityState(const simVis::ScenarioManager& scenario, const simVis::EntityNode* node, EntityState* state)
+{
+  if ((node == NULL) || (state == NULL))
+    return 1;
+
+  auto hostNode = dynamic_cast<const simVis::PlatformNode*>(scenario.getHostPlatform(node));
+  if (hostNode == NULL)
+    return 1;
+
+  state->id_ = node->getId();
+  state->type_ = node->type();
+  state->hostId_ = hostNode->getId();
+  if (state->type_ == simData::CUSTOM_RENDERING)
+    state->hostId_ = state->id_;
+  else
+    state->hostId_ = hostNode->getId();
+
+  auto simdisState = dynamic_cast<SimdisEntityState*>(state);
+  if (simdisState != NULL)
+  {
+    simdisState->node_ = node;
+    simdisState->platformHostNode_ = hostNode;
+  }
+
+  // Kick out only after setting non-location information
+  if (!node->isActive())
+    return 1;
+
+  if (0 != node->getPositionOrientation(&state->lla_, &state->ypr_, simCore::COORD_SYS_LLA))
+    return 1;
+
+  if (state->type_ == simData::PLATFORM)
+  {
+    // Platforms need velocity which is not available from getPositionOrientation, so add it in
+    const simVis::PlatformNode* platform = dynamic_cast<const simVis::PlatformNode*>(node);
+    if (platform == NULL)
+      return 1;
+
+    const simData::PlatformUpdate* update = platform->update();
+    if (update == NULL)
+      return 1;
+
+    simCore::Coordinate ecef(simCore::COORD_SYS_ECEF,
+      simCore::Vec3(update->x(), update->y(), update->z()),
+      simCore::Vec3(update->psi(), update->theta(), update->phi()),
+      simCore::Vec3(update->vx(), update->vy(), update->vz()));
+    simCore::Coordinate needVelocity;
+    simCore::CoordinateConverter::convertEcefToGeodetic(ecef, needVelocity);
+    // Take only the velocity since the other values have not gone been modified by any preferences
+    state->vel_ = needVelocity.velocity();
+  }
+
+  if ((simdisState != NULL) && (simdisState->type_ == simData::BEAM))
+  {
+    simRF::RFPropagationManagerPtr manager = scenario.rfPropagationManager();
+    simdisState->rfPropagation_ = manager->getRFPropagation(node->getId());
+  }
+
+  return 0;
 }
 
 }

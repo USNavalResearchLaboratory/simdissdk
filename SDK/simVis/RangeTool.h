@@ -132,29 +132,6 @@ namespace simVis
     };
 
     /**
-    * Entity state needed to do Range calculations
-    */
-    struct SDKVIS_EXPORT EntityState
-    {
-      simCore::Vec3 lla_;  ///< Lat, lon, alt in rad, rad, m
-      simCore::Vec3 ypr_;  ///< Yaw, pitch, roll in rad, rad, rad
-      simCore::Vec3 vel_;  ///< X, Y and Z velocities in m/s
-      osg::ref_ptr<const simVis::EntityNode> node_; ///< The node of the entity
-      simData::ObjectId hostId_;   ///< Unique ID of the host entity; for platforms and custom renderings hostId_ == id_
-      osg::ref_ptr<const simVis::PlatformNode> platformHostNode_; ///< The node of the host platform; for platforms platformHostNode_ == node_
-      simRF::RFPropagationFacade* rfPropagation_;  ///< If the entity is a beam this MAY BE set
-
-      EntityState()
-        : node_(NULL),
-        hostId_(0),
-        platformHostNode_(NULL),
-        rfPropagation_(NULL)
-      {
-      }
-    };
-
-
-    /**
     * Base class for a Graphic Primitive. Included are a set of built-in primitives
     * (see below), but you can use this base class to create custom primitives
     * as well.
@@ -427,12 +404,12 @@ namespace simVis
       osgEarth::Revision                 obj1LocatorRev_;        // tracks whether entity 1 is up to date with scenario data
       osgEarth::Revision                 obj2LocatorRev_;        // tracks whether entity 2 is up to date with scenario data
       CalculationVector                  calculations_;          // calculations to render
-      RangeToolState                     state_;                 // the calc state for this assoc
+      SimdisRangeToolState*              state_;                 // the calc state for this assoc
       osg::ref_ptr<Graphic>              labelPos_;              // Use the mid-point of the slant line for the text
 
     protected:
       /// osg::Referenced-derived
-      virtual ~Association() {}
+      virtual ~Association();
 
     private:
       // regenerates scene geometry
