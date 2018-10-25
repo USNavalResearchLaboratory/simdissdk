@@ -53,6 +53,67 @@ private:
 
 //////////////////////////////////////////////
 
+class ClassificationBanner::FrameResizeCallback : public osg::NodeCallback
+{
+public:
+  /** Constructor */
+  explicit FrameResizeCallback(ClassificationBanner* parent) :parent_(parent) {}
+  virtual ~FrameResizeCallback(){}
+
+  /** Updates banner positions when the screen size changes */
+  virtual void operator()(osg::Node *node, osg::NodeVisitor *nv)
+  {
+    if (nv->getVisitorType() != osg::NodeVisitor::CULL_VISITOR)
+    {
+      traverse(node, nv);
+      return;
+    }
+
+    osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+    if (!cv)
+    {
+      traverse(node, nv);
+      return;
+    }
+    // Get the Model-View-Projection-Window matrix (MVPW) from the visitor
+    const osg::RefMatrixd* mvpw = cv->getMVPW();
+    if (!mvpw)
+    {
+      traverse(node, nv);
+      return;
+    }
+    // Nothing to do if the MVPW hasn't changed
+    if (lastMvpw_ == (*mvpw))
+    {
+      traverse(node, nv);
+      return;
+    }
+    lastMvpw_ = *mvpw;
+
+    double width = cv->getViewport()->width();
+    // Banners should be horizontally centered and ten pixels from the top and bottom
+    osg::Vec3 topPixelPos(width / 2, cv->getViewport()->height() - 10, 0);
+    osg::Vec3 bottomPixelPos(width / 2, 10, 0);
+    // Multiply the desired pixel position of the banners with the inverse mvpw to get the local position to set the banners to
+    osg::Matrix inverseMvpw = osg::Matrix::inverse(lastMvpw_);
+    osg::Vec3 topLocalPos = topPixelPos * inverseMvpw;
+    osg::Vec3 bottomLocalPos = bottomPixelPos * inverseMvpw;
+    // Z coordinate should always be 0 for HUD text, but can be something else after multiplying by inverse matrix
+    topLocalPos.z() = 0;
+    bottomLocalPos.z() = 0;
+    parent_->setTopPosition_(topLocalPos);
+    parent_->setBottomPosition_(bottomLocalPos);
+
+    traverse(node, nv);
+  }
+
+private:
+  ClassificationBanner* parent_;
+  osg::Matrix lastMvpw_;
+};
+
+//////////////////////////////////////////////
+
 ClassificationBanner::ClassificationBanner(simData::DataStore* dataStore, unsigned int fontSize, const std::string& fontFile)
   : osg::Group(),
   dataStore_(dataStore),
@@ -63,6 +124,9 @@ ClassificationBanner::ClassificationBanner(simData::DataStore* dataStore, unsign
   listener_ = simData::DataStore::ScenarioListenerPtr(new ScenarioListenerImpl(this));
   if (dataStore_)
     dataStore_->addScenarioListener(listener_);
+
+  resizeCallback_ = new FrameResizeCallback(this);
+  addCullCallback(resizeCallback_);
 }
 
 ClassificationBanner::~ClassificationBanner()
@@ -103,13 +167,13 @@ void ClassificationBanner::setFontSize(unsigned int fontSize)
     classLabelLower_->setCharacterSize(simVis::osgFontSize(fontSize_));
 }
 
-void ClassificationBanner::setTopPosition(const osg::Vec3& topPos)
+void ClassificationBanner::setTopPosition_(const osg::Vec3& topPos)
 {
   if (classLabelUpper_)
     classLabelUpper_->setPosition(topPos);
 }
 
-void ClassificationBanner::setBottomPosition(const osg::Vec3& bottomPos)
+void ClassificationBanner::setBottomPosition_(const osg::Vec3& bottomPos)
 {
   if (classLabelLower_)
     classLabelLower_->setPosition(bottomPos);

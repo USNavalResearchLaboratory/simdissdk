@@ -75,18 +75,20 @@ namespace simVis
     /** Set the font size of the banner */
     void setFontSize(unsigned int fontSize);
 
-    /** Set the position of the top classification label */
-    void setTopPosition(const osg::Vec3& topPos);
-
-    /** Set the position of the bottom classification label */
-    void setBottomPosition(const osg::Vec3& bottomPos);
-
   private:
     /** Class implements data store listener */
     class ScenarioListenerImpl;
+    /** Callback that checks for screen resize on each frame and notifies banner if needed */
+    class FrameResizeCallback;
 
     /** Build the label objects */
     void createClassLabels_();
+
+    /** Set the position of the top classification label */
+    void setTopPosition_(const osg::Vec3& topPos);
+
+    /** Set the position of the bottom classification label */
+    void setBottomPosition_(const osg::Vec3& bottomPos);
 
     /** Create a classification banner label control */
     osgText::Text* createText_(const std::string& classLabel,
@@ -106,6 +108,8 @@ namespace simVis
     osg::ref_ptr<osgText::Text> classLabelUpper_;
     osg::ref_ptr<osgText::Text> classLabelLower_;
     simData::DataStore::ScenarioListenerPtr listener_;                      ///< Listener to the data store
+    /// Callback to reposition the classification banners when screen size changes
+    osg::ref_ptr<FrameResizeCallback> resizeCallback_;
   };
 
 } // namespace simVis
