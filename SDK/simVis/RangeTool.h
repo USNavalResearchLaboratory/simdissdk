@@ -72,8 +72,6 @@ namespace simVis
   class SDKVIS_EXPORT RangeTool : public ScenarioTool
   {
   public:
-    class Calculation;
-
     /**
     * Describes how to draw a Graphic.
     */
@@ -372,10 +370,10 @@ namespace simVis
       /**
       * Formats the value into a string
       * @param value The value that needs to be converted into a string.
-      * @param calc The calculation for the value
+      * @param precision The number of digits after the decimal point
       * @return The value as a string
       */
-      virtual std::string stringValue(double value, Calculation* calc) const;
+      virtual std::string stringValue(double value, int precision) const;
     };
 
     /**
@@ -389,10 +387,10 @@ namespace simVis
       /**
       * Formats the value into a string
       * @param value The value that needs to be converted into a string.
-      * @param calc The calculation for the value
+      * @param precision Ignored
       * @return The value as a string
       */
-      virtual std::string stringValue(double value, Calculation* calc) const;
+      virtual std::string stringValue(double value, int precision) const;
     };
 
     /**

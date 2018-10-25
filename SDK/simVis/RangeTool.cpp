@@ -213,16 +213,16 @@ RangeTool::TextOptions::TextOptions()
 
 //------------------------------------------------------------------------
 
-std::string RangeTool::ValueFormatter::stringValue(double value, Calculation* calc) const
+std::string RangeTool::ValueFormatter::stringValue(double value, int precision) const
 {
   std::stringstream buf;
-  buf << std::fixed << std::setprecision(static_cast<int>(calc->labelPrecision())) << value;
+  buf << std::fixed << std::setprecision(precision) << value;
   return buf.str();
 }
 
 //------------------------------------------------------------------------
 
-std::string RangeTool::HorizonFormatter::stringValue(double value, Calculation* calc) const
+std::string RangeTool::HorizonFormatter::stringValue(double value, int precision) const
 {
   if (value == 0.0)
     return "Below";
@@ -773,7 +773,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
 
       if (textOptions.showText_ == TextOptions::FULL)
         buf << m->typeAbbr() << ": ";
-      buf << m->formatter()->stringValue(value, calc);
+      buf << m->formatter()->stringValue(value, static_cast<int>(calc->labelPrecision()));
       if (units != osgEarth::Units::DEGREES)
         buf << " ";
       buf << units.getAbbr();
