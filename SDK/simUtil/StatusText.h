@@ -37,10 +37,10 @@ class View;
  * and on each frame the text will update.  For convenience, the class is placed in a
  * MatrixTransform.  Text is aligned lower-left wherever you position the matrix.
  */
-class SDKUTIL_EXPORT StatusTextBase : public osg::MatrixTransform
+class SDKUTIL_EXPORT StatusTextNode : public osg::MatrixTransform
 {
 public:
-  explicit StatusTextBase(simCore::TextReplacerPtr textReplacer);
+  explicit StatusTextNode(simCore::TextReplacerPtr textReplacer);
 
   /**
    * Display the status as specified by statusSpec
@@ -54,11 +54,11 @@ public:
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simUtil"; }
   /** Return the class name */
-  virtual const char* className() const { return "StatusTextBase"; }
+  virtual const char* className() const { return "StatusTextNode"; }
 
 protected:
   /** Destructor */
-  virtual ~StatusTextBase();
+  virtual ~StatusTextNode();
 
   /** Build the status text object */
   virtual void create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize);
@@ -72,9 +72,9 @@ protected:
 
 /**
  * Class that manages status display info overlay on the specified view.  This is
- * a StatusTextBase that is able to automatically reposition itself inside a View.
+ * a StatusTextNode that is able to automatically reposition itself inside a View.
  */
-class SDKUTIL_EXPORT StatusText : public StatusTextBase
+class SDKUTIL_EXPORT StatusText : public StatusTextNode
 {
 public:
   /// Enumeration of positions for status display

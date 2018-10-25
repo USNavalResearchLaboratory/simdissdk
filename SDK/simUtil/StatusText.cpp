@@ -28,7 +28,7 @@
 namespace simUtil
 {
 
-StatusTextBase::StatusTextBase(simCore::TextReplacerPtr textReplacer)
+StatusTextNode::StatusTextNode(simCore::TextReplacerPtr textReplacer)
   : textReplacer_(textReplacer)
 {
   // Assertion failure means text replacer was not correctly set up
@@ -38,18 +38,18 @@ StatusTextBase::StatusTextBase(simCore::TextReplacerPtr textReplacer)
   setNumChildrenRequiringUpdateTraversal(1);
 }
 
-StatusTextBase::~StatusTextBase()
+StatusTextNode::~StatusTextNode()
 {
 }
 
-void StatusTextBase::traverse(osg::NodeVisitor& nv)
+void StatusTextNode::traverse(osg::NodeVisitor& nv)
 {
   if (nv.getVisitorType() == osg::NodeVisitor::UPDATE_VISITOR)
     update_();
   osg::MatrixTransform::traverse(nv);
 }
 
-void StatusTextBase::create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize)
+void StatusTextNode::create_(const std::string& status, const osg::Vec4f& color, const std::string& font, double fontSize)
 {
   // Create the HUD text
   statusHudText_ = new HudColumnText(0, 0);
@@ -58,7 +58,7 @@ void StatusTextBase::create_(const std::string& status, const osg::Vec4f& color,
   statusHudText_->setName("HUD Corner Status Text");
 }
 
-void StatusTextBase::update_()
+void StatusTextNode::update_()
 {
   if (statusHudText_.valid())
   {
@@ -69,7 +69,7 @@ void StatusTextBase::update_()
   }
 }
 
-int StatusTextBase::setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color, double fontSize, const std::string& font)
+int StatusTextNode::setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color, double fontSize, const std::string& font)
 {
   // Note, don't check statusSpec for change, because other parameters might change
   statusSpec_ = statusSpec;
@@ -133,7 +133,7 @@ private:
 //-------------------------------------------------------------------------------------------------------
 
 StatusText::StatusText(simVis::View* view, simCore::TextReplacerPtr textReplacer, Position pos)
-  : StatusTextBase(textReplacer),
+  : StatusTextNode(textReplacer),
     view_(view),
     frameEventHandler_(NULL),
     position_(pos)
