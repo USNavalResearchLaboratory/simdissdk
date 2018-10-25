@@ -34,8 +34,10 @@
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
 #include "simData/ObjectId.h"
-#include "simVis/Scenario.h"
+#include "simVis/Measurement.h"
 #include "simVis/Platform.h"
+#include "simVis/RangeToolState.h"
+#include "simVis/Scenario.h"
 #include "simVis/Tool.h"
 #include "simVis/Utils.h"
 
@@ -44,25 +46,7 @@ namespace simRF { class RFPropagationFacade; }
 
 namespace simVis
 {
-  /// Units for calculations that have no units
-  const osgEarth::Units UNITLESS = osgEarth::Units("nounits", "", osgEarth::Units::TYPE_INVALID, 1.0);
-  /// Units in db
-  const osgEarth::Units LOG10  = osgEarth::Units("log10", "dB", osgEarth::Units::TYPE_INVALID, 1.0);
-  /// Units for RF Power in dBW
-  const osgEarth::Units RF_POWER = osgEarth::Units("rf_power", "dBW", osgEarth::Units::TYPE_INVALID, 1.0);
-  /// Units for RF Power in dBsm (square meters)
-  const osgEarth::Units RF_POWER_SM = osgEarth::Units("rf_power_sm", "dBsm", osgEarth::Units::TYPE_INVALID, 1.0);
-  /// Units for %
-  const osgEarth::Units PERCENTAGE = osgEarth::Units("percentage", "%", osgEarth::Units::TYPE_INVALID, 1.0);
 
-  /// Default effective Earth radius scalar for optical horizon measurement
-  const double DEFAULT_OPTICAL_RADIUS = 1.06;
-
-  /// Default effective Earth radius scalar for RF horizon measurement
-  const double DEFAULT_RF_RADIUS = 4. / 3.;
-
-  /// Number of enumerations in State::Coord
-  const size_t COORD_CACHE_SIZE = 16;
   /**
   * RangeTool is a subsystem for drawing range measurements.
   *
@@ -82,7 +66,7 @@ namespace simVis
       /**@name display settings
        *@{
        */
-      osg::Vec4f     lineColor1_,   lineColor2_;
+      osg::Vec4f     lineColor1_, lineColor2_;
       unsigned short lineStipple1_, lineStipple2_;
       unsigned int   lineWidth_;
 
@@ -162,123 +146,13 @@ namespace simVis
 
       EntityState()
         : node_(NULL),
-          hostId_(0),
-          platformHostNode_(NULL),
-          rfPropagation_(NULL)
+        hostId_(0),
+        platformHostNode_(NULL),
+        rfPropagation_(NULL)
       {
       }
     };
 
-    /**
-    * Internal state class for Graphic rendering. Graphic primitives and
-    * Measurements receive a State object internally when rendering in order
-    * to track object locations and other shared data.
-    */
-    struct SDKVIS_EXPORT State
-    {
-      /**
-       * Coordinate data saved in the coord_ member variable for later use
-       * Local coordinate mean LTP with OBJ 0 at the origin
-       */
-      enum Coord
-      {
-        COORD_OBJ_0,  ///< The "to" object in local coordinates
-        COORD_OBJ_1,  ///< The "from" object in local coordinates
-        COORD_OBJ_0_0HAE,  ///< The "to" object forced to zero altitude, in local coordinates
-        COORD_OBJ_1_0HAE,  ///< The "from" object forced to zero altitude, in local coordinates
-        COORD_OBJ_0_AT_OBJ_1_ALT,  ///< The "to" object at the "from" object altitude, in local coordinates
-        COORD_OBJ_1_AT_OBJ_0_ALT,  ///< The "from" object at the "to" object altitude, in local coordinates
-        COORD_DR,  ///< Down Range inflection point (the corner of the "L") in local coordinates
-        COORD_VEL_AZIM_DR, ///< Velocity Azimuth Down Range inflection point (the corner of the "L") in local coordinates
-        COORD_BEAM_LLA_0,  ///< The "to" object for beam calculation (closest point) in LLA (rad, rad, m)
-        COORD_BEAM_LLA_1,  ///< TThe "from" object for beam calculation (closest point) in LLA (rad, rad, m)
-        COORD_BEAM_0,  ///< The "to" object for beam calculation (closest point) in local coordinates
-        COORD_BEAM_1,  ///< TThe "from" object for beam calculation (closest point) in local coordinates
-        COORD_BEAM_0_0HAE,  ///< The "to" beam forced to zero altitude, in local coordinates
-        COORD_BEAM_1_0HAE,  ///< The "from" beam forced to zero altitude, in local coordinates
-        COORD_BEAM_0_AT_BEAM_1_ALT,  ///< The "to" beam at the "from" object altitude, in local coordinates
-        COORD_BEAM_1_AT_BEAM_0_ALT,  ///< The "from" beam at the "to" object altitude, in local coordinates
-      };
-
-      /**
-       * Calculates and caches the requested values
-       * @param coord the type value to calculate and cache
-       * @return the requested values, the type of values detailed in Coord
-       */
-      osg::Vec3d coord(Coord coord);
-
-      /**
-       * Converts osg::Vec3d to simCore::Vec3
-       * @param point the data to convert
-       * @return simCore::Vec3 of the given point
-       */
-      simCore::Vec3 osg2simCore(const osg::Vec3d& point) const;
-
-      /**
-       * Converts simCore::Vec3 to osg::Vec3d
-       * @param point the data to convert
-       * @return osg::Vec3d of the given point
-       */
-      ///@return osg:Vec3d of the given point
-      osg::Vec3d simCore2osg(const simCore::Vec3& point) const;
-
-      /// Interpolate 'numSeg' positions between 'lla0' and 'lla1', adding them to 'verts'
-      void line(
-        const simCore::Vec3& lla0,
-        const simCore::Vec3& lla1,
-        double               altOffset,
-        osg::Vec3Array*      verts);
-
-      /**
-       * Generate a list of lat/lon points between lla0 and lla1 at intervals of at most distDelta.  List does not include lla0 or lla1.
-       * If lla0 == lla1, list will be empty.
-       * @param lla0 Start point to generate intermediate points from
-       * @param lla1 End point to generate intermediate points towards
-       * @param distDelta Maximum distance between intermediate points.  Actual distance between may be lower.
-       * @param[out] llaPointsOut Vector of intermediate points.  All points have an altitude of 0
-       */
-      void intermediatePoints(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double distDelta, std::vector<simCore::Vec3>& llaPointsOut) const;
-
-      /// Returns the midpoint between the two given positions
-      simCore::Vec3 midPoint(const simCore::Vec3& lla0, const simCore::Vec3& lla1, double altOffset);
-
-      ///@return the given lla to relative values scaled to the local frame (xyz)
-      osg::Vec3 lla2local(double lat_rad, double lon_rad, double alt_m) const;
-
-      ///@return lla values for the given position relative to the local frame
-      simCore::Vec3 local2lla(const osg::Vec3d& local);
-
-      ///@return the local/ENU vector produced by rotating the start->end vector by specified az, rotated in the ltp
-      osg::Vec3d rotateEndVec(double az);
-
-      /**
-      * Fills in a entity state based on the given scenario and entity node
-      * @param scenario The scenario for getting the host platform of node
-      * @param node The node to extract information from
-      * @param state Range Tool state information needed to do the calculations
-      * @return zero on success and non-zero on failure
-      */
-      int populateEntityState(const simVis::ScenarioManager& scenario, const simVis::EntityNode* node, EntityState& state);
-
-      /**
-      * Resets the coord cache to initial state
-      */
-      void resetCoordCache();
-
-      /**@name internal state (TODO: make private)
-       *@{
-       */
-      osg::Matrixd                     world2local_;     // world to local tangent plane
-      osg::Matrixd                     local2world_;     // reverse of above
-      EntityState                      beginEntity_;
-      EntityState                      endEntity_;
-      simCore::EarthModelCalculations  earthModel_;
-      simCore::CoordinateConverter     coordConv_;
-      osgEarth::optional<osg::Vec3d>   coord_[COORD_CACHE_SIZE];  // number of enumerations in State::Coord
-      simCore::TimeStamp timeStamp_; // the timeStamp of the last update
-      osg::observer_ptr<osgEarth::MapNode>  mapNode_;
-      ///@}
-    };
 
     /**
     * Base class for a Graphic Primitive. Included are a set of built-in primitives
@@ -329,14 +203,14 @@ namespace simVis
       * @param geode Geode to which to render
       * @param state Context object
       */
-      virtual void render(osg::Geode* geode, State& state) =0;
+      virtual void render(osg::Geode* geode, RangeToolState& state) = 0;
 
       /**
       * Gets a coordinate at which to place a text label for this primitive.
       * @param state context object
       * @return A local (tangent-plane) space coordinate
       */
-      virtual osg::Vec3 labelPos(State& state) = 0;
+      virtual osg::Vec3 labelPos(RangeToolState& state) = 0;
 
     protected:
       /// osg::Referenced-derived
@@ -360,147 +234,6 @@ namespace simVis
     /// a vector of Graphic pointers
     typedef std::vector< osg::ref_ptr<Graphic> > GraphicVector;
 
-    /**
-    * Base class for formatting values into a string
-    */
-    class SDKVIS_EXPORT ValueFormatter : public osg::Referenced
-    {
-    public:
-      virtual ~ValueFormatter() {}
-      /**
-      * Formats the value into a string
-      * @param value The value that needs to be converted into a string.
-      * @param precision The number of digits after the decimal point
-      * @return The value as a string
-      */
-      virtual std::string stringValue(double value, int precision) const;
-    };
-
-    /**
-    * Class for formatting Above/Below into a string.
-    * Intended for use with RadioHorizonMeasurement and OpticalHorizonMeasurement
-    */
-    class SDKVIS_EXPORT HorizonFormatter : public ValueFormatter
-    {
-    public:
-      virtual ~HorizonFormatter() {}
-      /**
-      * Formats the value into a string
-      * @param value The value that needs to be converted into a string.
-      * @param precision Ignored
-      * @return The value as a string
-      */
-      virtual std::string stringValue(double value, int precision) const;
-    };
-
-    /**
-    * Base class for a Measurement. A Measurement is a value derived from the
-    * simulation state data (object positions, orientations, velocities, etc.).
-    * Each calculation consists of multiple Graphic primitives and a single
-    * Measurement, which is the value displayed in the text label.
-    *
-    * You can create custom measurements by sub-classing Measurement.
-    */
-    class SDKVIS_EXPORT Measurement : public osg::Referenced
-    {
-    protected:
-      /**
-      * Constructs a new Measurement
-      * @param typeName    Unique type name of this measurement.
-      * @param typeAbbr    Prefix string for labeling.
-      * @param units       Units of the measurement value.
-      */
-      Measurement(const std::string &typeName, const std::string &typeAbbr, const osgEarth::Units &units);
-
-    public:
-      /**
-      * Gets the unique type name of the measurement
-      */
-      const std::string& typeName() const { return typeName_; }
-
-      /**
-      * The abbreviation string to use for labeling/UI.
-      * @return A short string
-      */
-      const std::string& typeAbbr() const { return typeAbbr_; }
-
-      /**
-      * The Units in which value() is expressed.
-      * @return Units
-      */
-      const osgEarth::Units& units() const { return units_; }
-
-      /**
-      * Returns the calculated value of the measurement
-      * @param state Context object
-      * @return Calculated value
-      */
-      virtual double value(State& state) const = 0;
-
-      /**
-      * Returns if the calculation is valid for the given types
-      * @param state All the state information for both entities
-      * @return True if the types are valid for the calculation otherwise false
-      */
-      virtual bool willAccept(const simVis::RangeTool::State& state) const = 0;
-
-      /**
-      * Returns the calculated value converted to the specified units.
-      * @param outputUnits units to which to convert
-      * @param state Context object
-      * @return Calculated value in target units
-      */
-      double value(const osgEarth::Units& outputUnits, State& state) const;
-
-      /**
-      * Returns the formatter for the measurement
-      * @return The formatter for the measurement
-      */
-      ValueFormatter* formatter() const { return formatter_.get(); }
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~Measurement() {}
-
-      /// Returns true if the type is a beam, gate, laser or lob group
-      bool isRaeObject_(simData::ObjectType type) const;
-      /// Returns true if both types are either platform, beam, gate, laser or lob group
-      bool isEntityToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
-      /// Returns true if both types are platforms
-      bool isPlatformToPlatform_(simData::ObjectType fromType, simData::ObjectType toType) const;
-      /// Returns true if both types are either platforms or custom rendering
-      bool isLocationToLocation_(simData::ObjectType fromType, simData::ObjectType toType) const;
-      /// Returns true if one type is a beam and the other is a non-beam
-      bool isBeamToNonBeamAssociation_(simData::ObjectType fromType, simData::ObjectType toType) const;
-      /// Returns true if the fromType is a beam and the toType is a valid entity
-      bool isBeamToEntity_(simData::ObjectType fromType, simData::ObjectType toType) const;
-      /// Returns true if the nodes are valid for a angle calculation
-      bool isAngle_(simData::ObjectType fromType, simData::ObjectId fromHostId, simData::ObjectType toType, simData::ObjectId toHostId) const;
-      /// Returns true if the nodes are valid for velocity angle calculation
-      bool isVelocityAngle_(simData::ObjectType fromType, simData::ObjectId fromHostId, simData::ObjectType toType, simData::ObjectId toHostId) const;
-      /// Returns the composite angle (rad) for the given angles (rad) for entities on the SAME platform
-      double getCompositeAngle_(double bgnAz, double bgnEl, double endAz, double endEl) const;
-      /// Returns the true angles (rad) for the given state
-      void calculateTrueAngles_(const RangeTool::State& state, double* az, double* el, double* cmp) const;
-      /**
-      * Calculates the relative angles between entities (for the given state)
-      * @param state current range tool state upon to use for calculation
-      * @param az Relative azimuth angle to calculate (rad)
-      * @param el Relative elevation angle to calculate (rad)
-      * @param cmp Relative composite angle to calculate (rad)
-      */
-      void calculateRelativeAngles_(const RangeTool::State& state, double* az, double* el, double* cmp) const;
-      /// Formats the double value to a string
-      osg::ref_ptr< ValueFormatter > formatter_;
-
-    private:
-      std::string     typeName_;
-      std::string     typeAbbr_;
-      osgEarth::Units units_;
-    };
-
-    /// a vector of Measurement pointers
-    typedef std::vector< osg::ref_ptr<Measurement> > MeasurementVector;
 
     /**
      * Calculation is a visual representation of a collection of Graphics
@@ -529,7 +262,7 @@ namespace simVis
       bool visible() const { return visible_; }
 
       /// add a graphic
-      void addGraphic(Graphic* graphic, bool useAsLabelGraphic =false);
+      void addGraphic(Graphic* graphic, bool useAsLabelGraphic = false);
 
       /** Accesses the graphics list. If you modify the list manually you must call setDirty() */
       GraphicVector& graphics() { return graphics_; }
@@ -694,7 +427,7 @@ namespace simVis
       osgEarth::Revision                 obj1LocatorRev_;        // tracks whether entity 1 is up to date with scenario data
       osgEarth::Revision                 obj2LocatorRev_;        // tracks whether entity 2 is up to date with scenario data
       CalculationVector                  calculations_;          // calculations to render
-      State                              state_;                 // the calc state for this assoc
+      RangeToolState                     state_;                 // the calc state for this assoc
       osg::ref_ptr<Graphic>              labelPos_;              // Use the mid-point of the slant line for the text
 
     protected:
@@ -790,7 +523,7 @@ namespace simVis
     protected:
       /// constructor with name of the measurement type
       LineGraphic(const std::string& typeName, GraphicType graphicType)
-      : Graphic(typeName, graphicType)
+        : Graphic(typeName, graphicType)
       {
       }
 
@@ -804,7 +537,7 @@ namespace simVis
         osg::Vec3Array*    verts,
         GLenum             mode,
         osg::Geode*        geode,
-        State&             state);
+        RangeToolState&             state);
 
       /// osg::Referenced-derived
       virtual ~LineGraphic() {}
@@ -814,7 +547,7 @@ namespace simVis
     class SDKVIS_EXPORT PieSliceGraphic : public Graphic
     {
     public:
-      virtual osg::Vec3 labelPos(State& state);
+      virtual osg::Vec3 labelPos(RangeToolState& state);
 
       /// PieSliceGraphics cache their measured value here
       virtual void setMeasuredValue(double value) { measuredValue_ = value; }
@@ -822,7 +555,7 @@ namespace simVis
     protected:
       /// constructor with name of the measurement type
       PieSliceGraphic(const std::string& typeName)
-      : Graphic(typeName, PIE_SLICE)
+        : Graphic(typeName, PIE_SLICE)
       {
       }
 
@@ -833,7 +566,7 @@ namespace simVis
         osg::Vec3d    endVec,
         double       angle,
         osg::Geode*  geode,
-        State&       state);
+        RangeToolState&       state);
 
       /// osg::Referenced-derived
       virtual ~PieSliceGraphic() {}
@@ -849,8 +582,8 @@ namespace simVis
     {
     public:
       GroundLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
 
     protected:
       /// osg::Referenced-derived
@@ -862,8 +595,8 @@ namespace simVis
     {
     public:
       SlantLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~SlantLineGraphic() {}
@@ -874,8 +607,8 @@ namespace simVis
     {
     public:
       BeginAltitudeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeginAltitudeLineGraphic() {}
@@ -886,8 +619,8 @@ namespace simVis
     {
     public:
       EndAltitudeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~EndAltitudeLineGraphic() {}
@@ -898,8 +631,8 @@ namespace simVis
     {
     public:
       BeginAltitudeLineToEndAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeginAltitudeLineToEndAltitudeGraphic() {}
@@ -910,8 +643,8 @@ namespace simVis
     {
     public:
       EndAltitudeLineToBeginAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~EndAltitudeLineToBeginAltitudeGraphic() {}
@@ -922,8 +655,8 @@ namespace simVis
     {
     public:
       BeginToEndLineAtBeginAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeginToEndLineAtBeginAltitudeGraphic() {}
@@ -934,8 +667,8 @@ namespace simVis
     {
     public:
       BeginToEndLineAtEndAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeginToEndLineAtEndAltitudeGraphic() {}
@@ -946,8 +679,8 @@ namespace simVis
     {
     public:
       BeamGroundLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamGroundLineGraphic() {}
@@ -958,8 +691,8 @@ namespace simVis
     {
     public:
       BeamSlantLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamSlantLineGraphic() {}
@@ -970,8 +703,8 @@ namespace simVis
     {
     public:
       BeamBeginAltitudeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamBeginAltitudeLineGraphic() {}
@@ -982,8 +715,8 @@ namespace simVis
     {
     public:
       BeamEndAltitudeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamEndAltitudeLineGraphic() {}
@@ -994,8 +727,8 @@ namespace simVis
     {
     public:
       BeamBeginAltitudeLineToEndAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamBeginAltitudeLineToEndAltitudeGraphic() {}
@@ -1006,8 +739,8 @@ namespace simVis
     {
     public:
       BeamEndAltitudeLineToBeginAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamEndAltitudeLineToBeginAltitudeGraphic() {}
@@ -1018,8 +751,8 @@ namespace simVis
     {
     public:
       BeamBeginToEndLineAtBeginAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamBeginToEndLineAtBeginAltitudeGraphic() {}
@@ -1030,8 +763,8 @@ namespace simVis
     {
     public:
       BeamBeginToEndLineAtEndAltitudeGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~BeamBeginToEndLineAtEndAltitudeGraphic() {}
@@ -1042,8 +775,8 @@ namespace simVis
     {
     public:
       CrossRangeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~CrossRangeLineGraphic() {}
@@ -1054,8 +787,8 @@ namespace simVis
     {
     public:
       DownRangeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~DownRangeLineGraphic() {}
@@ -1066,8 +799,8 @@ namespace simVis
     {
     public:
       VelAzimDownRangeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~VelAzimDownRangeLineGraphic() {}
@@ -1078,8 +811,8 @@ namespace simVis
     {
     public:
       VelAzimCrossRangeLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~VelAzimCrossRangeLineGraphic() {}
@@ -1090,8 +823,8 @@ namespace simVis
     {
     public:
       DownRangeCrossRangeDownLineGraphic();
-      void render(osg::Geode* geode, State& state);
-      osg::Vec3 labelPos(State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
+      osg::Vec3 labelPos(RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~DownRangeCrossRangeDownLineGraphic() {}
@@ -1102,7 +835,7 @@ namespace simVis
     {
     public:
       TrueAzimuthPieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~TrueAzimuthPieSliceGraphic() {}
@@ -1113,7 +846,7 @@ namespace simVis
     {
     public:
       TrueElevationPieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~TrueElevationPieSliceGraphic() {}
@@ -1124,7 +857,7 @@ namespace simVis
     {
     public:
       TrueCompositeAnglePieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~TrueCompositeAnglePieSliceGraphic() {}
@@ -1134,7 +867,7 @@ namespace simVis
     {
     public:
       MagneticAzimuthPieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~MagneticAzimuthPieSliceGraphic() {}
@@ -1145,7 +878,7 @@ namespace simVis
     {
     public:
       RelOriAzimuthPieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~RelOriAzimuthPieSliceGraphic() {}
@@ -1156,7 +889,7 @@ namespace simVis
     {
     public:
       RelOriElevationPieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~RelOriElevationPieSliceGraphic() {}
@@ -1167,7 +900,7 @@ namespace simVis
     {
     public:
       RelOriCompositeAnglePieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~RelOriCompositeAnglePieSliceGraphic() {}
@@ -1178,7 +911,7 @@ namespace simVis
     {
     public:
       RelAspectAnglePieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     private:
       /// osg::Referenced-derived
       virtual ~RelAspectAnglePieSliceGraphic() {}
@@ -1189,7 +922,7 @@ namespace simVis
     {
     public:
       RelVelAzimuthPieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~RelVelAzimuthPieSliceGraphic() {}
@@ -1200,7 +933,7 @@ namespace simVis
     {
     public:
       RelVelElevationPieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~RelVelElevationPieSliceGraphic() {}
@@ -1211,666 +944,12 @@ namespace simVis
     {
     public:
       RelVelCompositeAnglePieSliceGraphic();
-      void render(osg::Geode* geode, State& state);
+      void render(osg::Geode* geode, RangeToolState& state);
     protected:
       /// osg::Referenced-derived
       virtual ~RelVelCompositeAnglePieSliceGraphic() {}
     };
-
-  public: // Built-in Measurements
-
-    /// Ground Range
-    class SDKVIS_EXPORT GroundDistanceMeasurement : public Measurement
-    {
-    public:
-      GroundDistanceMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~GroundDistanceMeasurement() {}
-    };
-
-    /// Slant Range
-    class SDKVIS_EXPORT SlantDistanceMeasurement : public Measurement
-    {
-    public:
-      SlantDistanceMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~SlantDistanceMeasurement() {}
-    };
-
-    /// Altitude
-    class SDKVIS_EXPORT AltitudeDeltaMeasurement : public Measurement
-    {
-    public:
-      AltitudeDeltaMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~AltitudeDeltaMeasurement() {}
-    };
-
-    /// Beam Ground Range
-    class SDKVIS_EXPORT BeamGroundDistanceMeasurement : public Measurement
-    {
-    public:
-      BeamGroundDistanceMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~BeamGroundDistanceMeasurement() {}
-    };
-
-    /// Beam Slant Range
-    class SDKVIS_EXPORT BeamSlantDistanceMeasurement : public Measurement
-    {
-    public:
-      BeamSlantDistanceMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~BeamSlantDistanceMeasurement() {}
-    };
-
-    /// Beam Altitude
-    class SDKVIS_EXPORT BeamAltitudeDeltaMeasurement : public Measurement
-    {
-    public:
-      BeamAltitudeDeltaMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~BeamAltitudeDeltaMeasurement() {}
-    };
-
-    /// Down Range
-    class SDKVIS_EXPORT DownRangeMeasurement : public Measurement
-    {
-    public:
-      DownRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~DownRangeMeasurement() {}
-    };
-
-    /// Cross Range
-    class SDKVIS_EXPORT CrossRangeMeasurement : public Measurement
-    {
-    public:
-      CrossRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~CrossRangeMeasurement() {}
-    };
-
-    /// Down Value
-    class SDKVIS_EXPORT DownRangeCrossRangeDownValueMeasurement : public Measurement
-    {
-    public:
-      DownRangeCrossRangeDownValueMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~DownRangeCrossRangeDownValueMeasurement() {}
-    };
-
-    /// Geodesic Down Range
-    class SDKVIS_EXPORT GeoDownRangeMeasurement : public Measurement
-    {
-    public:
-      GeoDownRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~GeoDownRangeMeasurement() {}
-    };
-
-    /// Geodesic Cross Range
-    class SDKVIS_EXPORT GeoCrossRangeMeasurement : public Measurement
-    {
-    public:
-      GeoCrossRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~GeoCrossRangeMeasurement() {}
-    };
-
-    // True angles
-
-    /// True Azimuth
-    class SDKVIS_EXPORT TrueAzimuthMeasurement : public Measurement
-    {
-    public:
-      TrueAzimuthMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~TrueAzimuthMeasurement() {}
-    };
-
-    /// True Elevation
-    class SDKVIS_EXPORT TrueElevationMeasurement : public Measurement
-    {
-    public:
-      TrueElevationMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~TrueElevationMeasurement() {}
-    };
-
-    /// True Composite Angle Calculation
-    class SDKVIS_EXPORT TrueCompositeAngleMeasurement : public Measurement
-    {
-    public:
-      TrueCompositeAngleMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~TrueCompositeAngleMeasurement() {}
-    };
-
-    class SDKVIS_EXPORT MagneticAzimuthMeasurement : public Measurement
-    {
-    public:
-      explicit MagneticAzimuthMeasurement(std::shared_ptr<simCore::DatumConvert> datumConvert);
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~MagneticAzimuthMeasurement() {}
-    private:
-      std::shared_ptr<const simCore::DatumConvert> datumConvert_;
-    };
-
-    // Orientation-relative angles
-
-    /// helper class - internal
-    struct RelOriMeasurement : public Measurement
-    {
-    protected:
-      /**
-       * Constructor.
-       * @param name The name of the type.
-       * @param abbr The type abbr.
-       * @param units The units.
-       */
-      RelOriMeasurement(const std::string& name, const std::string& abbr, const osgEarth::Units& units)
-        : Measurement(name, abbr, units) { }
-
-      /**
-       * Calculates the angles for the given state
-       * @param az If non-null, the azimuth (radians).
-       * @param el If non-null, the elevation (radians).
-       * @param cmp If non-null, the composite angle (radians).
-       * @param state The state information for both the begin and end entities
-       */
-      void getAngles(double* az, double* el, double* cmp, State& state) const;
-
-      /// osg::Referenced-derived
-      virtual ~RelOriMeasurement() {}
-    };
-
-    /// Orientation Relative Azimuth
-    class SDKVIS_EXPORT RelOriAzimuthMeasurement : public RelOriMeasurement
-    {
-    public:
-      RelOriAzimuthMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~RelOriAzimuthMeasurement() {}
-    };
-
-    /// Orientation Relative Elevation
-    class SDKVIS_EXPORT RelOriElevationMeasurement : public RelOriMeasurement
-    {
-    public:
-      RelOriElevationMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~RelOriElevationMeasurement() {}
-    };
-
-    /// Orientation Relative Composite Angle
-    class SDKVIS_EXPORT RelOriCompositeAngleMeasurement : public RelOriMeasurement
-    {
-    public:
-      RelOriCompositeAngleMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~RelOriCompositeAngleMeasurement() {}
-    };
-
-    // Velocity vector-relative angles
-
-    /// helper class - internal
-    struct RelVelMeasurement : public Measurement
-    {
-    protected:
-
-      /**
-       * Constructor.
-       * @param name The name of the type.
-       * @param abbr The type abbr.
-       * @param units The units.
-      */
-      RelVelMeasurement(const std::string& name, const std::string& abbr, const osgEarth::Units& units)
-        : Measurement(name, abbr, units) { }
-
-      /**
-       * Calculates the angles for the given state
-       * @param az If non-null, the azimuth (radians).
-       * @param el If non-null, the elevation (radians).
-       * @param cmp If non-null, the composite angle (radians).
-       * @param state The state information for both the begin and end entities
-       */
-      void getAngles(double* az, double* el, double* cmp, State& state) const;
-
-      /// osg::Referenced-derived
-      virtual ~RelVelMeasurement() {}
-    };
-
-    /// Velocity Relative Azimuth
-    class SDKVIS_EXPORT RelVelAzimuthMeasurement : public RelVelMeasurement
-    {
-    public:
-      RelVelAzimuthMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~RelVelAzimuthMeasurement() {}
-    };
-
-    /// Velocity Relative Elevation
-    class SDKVIS_EXPORT RelVelElevationMeasurement : public RelVelMeasurement
-    {
-    public:
-      RelVelElevationMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~RelVelElevationMeasurement() {}
-    };
-
-    /// Velocity Relative Composite Angle
-    class SDKVIS_EXPORT RelVelCompositeAngleMeasurement : public RelVelMeasurement
-    {
-    public:
-      RelVelCompositeAngleMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    public:
-      /// osg::Referenced-derived
-      virtual ~RelVelCompositeAngleMeasurement() {}
-    };
-
-    // Velocity measures
-
-    /// Closing Velocity
-    class SDKVIS_EXPORT ClosingVelocityMeasurement : public Measurement
-    {
-    public:
-      ClosingVelocityMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~ClosingVelocityMeasurement() {}
-    };
-
-    /// Separation Velocity
-    class SDKVIS_EXPORT SeparationVelocityMeasurement : public Measurement
-    {
-    public:
-      SeparationVelocityMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~SeparationVelocityMeasurement() {}
-    };
-
-    /// Velocity Delta
-    class SDKVIS_EXPORT VelocityDeltaMeasurement : public Measurement
-    {
-    public:
-      VelocityDeltaMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~VelocityDeltaMeasurement() {}
-    };
-
-    /// Velocity Azimuth Down Range
-    class SDKVIS_EXPORT VelAzimDownRangeMeasurement : public Measurement
-    {
-    public:
-      VelAzimDownRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~VelAzimDownRangeMeasurement() {}
-    };
-
-    /// Velocity Azimuth Cross Range
-    class SDKVIS_EXPORT VelAzimCrossRangeMeasurement : public Measurement
-    {
-    public:
-      VelAzimCrossRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~VelAzimCrossRangeMeasurement() {}
-    };
-
-    /// Velocity Azimuth Geodesic Down Range
-    class SDKVIS_EXPORT VelAzimGeoDownRangeMeasurement : public Measurement
-    {
-    public:
-      VelAzimGeoDownRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~VelAzimGeoDownRangeMeasurement() {}
-    };
-
-    /// Velocity Azimuth Geodesic Cross Range
-    class SDKVIS_EXPORT VelAzimGeoCrossRangeMeasurement : public Measurement
-    {
-    public:
-      VelAzimGeoCrossRangeMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~VelAzimGeoCrossRangeMeasurement() {}
-    };
-
-    /// Aspect Angle
-    class SDKVIS_EXPORT AspectAngleMeasurement : public Measurement
-    {
-    public:
-      AspectAngleMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    private:
-      /// osg::Referenced-derived
-      virtual ~AspectAngleMeasurement() {}
-    };
-
-    /// Base class for RF calculations
-    class SDKVIS_EXPORT RfMeasurement : public RelOriMeasurement
-    {
-    public:
-      /**
-       * Constructor.
-       * @param name Name of the type.
-       * @param abbr The type abbr.
-       * @param units The units.
-       */
-      RfMeasurement(const std::string& name, const std::string& abbr, const osgEarth::Units& units);
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~RfMeasurement() {}
-      /**
-       * Calculates RF parameters from the given state
-       * @param state State information for both the begin and end entities
-       * @param azAbs The absolute true azimuth, in radians, between the begin entity and the end entity
-       * @param elAbs The absolute elevation, in radians, between the begin entity and the end entity
-       * @param hgtMeters The height, in meters, of the antenna
-       * @param xmtGaindB The gain, in dB, of the transmit antenna
-       * @param rcvGaindB The gain, in dB, of the receive antenna
-       * @param rcsSqm RCS db if useDb is true or RCS dBsm if useDb is false;
-       * @param useDb Flag for selecting type of rcs value to return
-       * @param freqMHz The frequency, in MHz, of the RF signal
-       * @param powerWatts The power, in watts, of the RF signal
-       */
-      void getRfParameters_(State& state, double* azAbs, double* elAbs, double *hgtMeters, double* xmtGaindB, double* rcvGaindB, double* rcsSqm, bool useDb,
-        double* freqMHz, double* powerWatts) const;
-    };
-
-    /// Antenna Gain
-    class SDKVIS_EXPORT RFGainMeasurement : public RfMeasurement
-    {
-    public:
-      RFGainMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~RFGainMeasurement() {}
-    };
-
-    /// Received Power
-    class SDKVIS_EXPORT RFPowerMeasurement : public RfMeasurement
-    {
-    public:
-      RFPowerMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~RFPowerMeasurement() {}
-    };
-
-    /// One-Way Power
-    class SDKVIS_EXPORT RFOneWayPowerMeasurement : public RfMeasurement
-    {
-    public:
-      RFOneWayPowerMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~RFOneWayPowerMeasurement() {}
-    };
-
-    /// Base class for Horizon calculations
-    class SDKVIS_EXPORT HorizonMeasurement : public Measurement
-    {
-    public:
-
-      /**
-       * Constructor.
-       * @param typeName Name of the type.
-       * @param typeAbbr The type abbr.
-       * @param units The units.
-       */
-      HorizonMeasurement(const std::string &typeName, const std::string &typeAbbr, const osgEarth::Units &units);
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-      /**
-      * Set effective Earth radius scalars for optical and rf horizon measurement.
-      * @param opticalRadius new Earth radius scalar for optical horizon calculations
-      * @param rfRadius new Earth radius scalar for rf horizon calculations
-      */
-      void setEffectiveRadius(double opticalRadius, double rfRadius);
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~HorizonMeasurement() {}
-
-      /**
-       * Calculates if the end entity is above or below the horizon
-       * @param state Information on both the begin entity and end entity
-       * @param horizon Type of calculation
-       * @return 0 = below horizon and 1 = above horizon
-       */
-      virtual double calcAboveHorizon_(State& state, simCore::HorizonCalculations horizon) const;
-
-    private:
-      double opticalEffectiveRadius_;
-      double rfEffectiveRadius_;
-    };
-
-    /// Radio Horizon
-    class SDKVIS_EXPORT RadioHorizonMeasurement : public HorizonMeasurement
-    {
-    public:
-      RadioHorizonMeasurement();
-      virtual double value(State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~RadioHorizonMeasurement() {}
-    };
-
-    /// Optical Horizon
-    class SDKVIS_EXPORT OpticalHorizonMeasurement : public HorizonMeasurement
-    {
-    public:
-      OpticalHorizonMeasurement();
-      virtual double value(State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~OpticalHorizonMeasurement() {}
-    };
-
-    /// Probability of Detection (PoD)
-    class SDKVIS_EXPORT PodMeasurement : public RfMeasurement
-    {
-    public:
-      PodMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~PodMeasurement() {}
-    };
-
-    /// Propagation Loss
-    class SDKVIS_EXPORT LossMeasurement : public RfMeasurement
-    {
-    public:
-      LossMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~LossMeasurement() {}
-    };
-
-    /// Pattern Propagation Factor (PPF)
-    class SDKVIS_EXPORT PpfMeasurement : public RfMeasurement
-    {
-    public:
-      PpfMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~PpfMeasurement() {}
-    };
-
-    /// Signal to Noise (SNR)
-    class SDKVIS_EXPORT SnrMeasurement : public RfMeasurement
-    {
-    public:
-      SnrMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~SnrMeasurement() {}
-    };
-
-    /// Clutter to Noise (CNR)
-    class SDKVIS_EXPORT CnrMeasurement : public RfMeasurement
-    {
-    public:
-      CnrMeasurement();
-      //unlike other RF - related calculations, CNR doesn't have a height component
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~CnrMeasurement() {}
-    };
-
-    /// Radar Cross Section (RCS)
-    class SDKVIS_EXPORT RcsMeasurement : public RfMeasurement
-    {
-    public:
-      RcsMeasurement();
-      virtual double value(State& state) const;
-      virtual bool willAccept(const simVis::RangeTool::State& state) const;
-
-    protected:
-      /// osg::Referenced-derived
-      virtual ~RcsMeasurement() {}
-    };
   };
-
 } // namespace simVis
 
 #endif // SIMVIS_RANGETOOL_H

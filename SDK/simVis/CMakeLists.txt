@@ -84,6 +84,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
     ${VIS_INC}LocatorNode.h
+    ${VIS_INC}Measurement.h
     ${VIS_INC}ModelCache.h
     ${VIS_INC}ModKeyHandler.h
     ${VIS_INC}NavigationModes.h
@@ -105,6 +106,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}RadialLOS.h
     ${VIS_INC}RadialLOSNode.h
     ${VIS_INC}RangeTool.h
+    ${VIS_INC}RangeToolState.h
     ${VIS_INC}RCS.h
     ${VIS_INC}Registry.h
     ${VIS_INC}RocketBurn.h
@@ -214,6 +216,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
     ${VIS_SRC}LocatorNode.cpp
+    ${VIS_SRC}Measurement.cpp
     ${VIS_SRC}ModelCache.cpp
     ${VIS_SRC}ModKeyHandler.cpp
     ${VIS_SRC}OverheadMode.cpp
@@ -233,6 +236,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}RadialLOS.cpp
     ${VIS_SRC}RadialLOSNode.cpp
     ${VIS_SRC}RangeTool.cpp
+    ${VIS_SRC}RangeToolState.cpp
     ${VIS_SRC}RCS.cpp
     ${VIS_SRC}Registry.cpp
     ${VIS_SRC}RocketBurn.cpp
