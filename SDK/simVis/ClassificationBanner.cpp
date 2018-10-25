@@ -19,9 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include <osgText/Font>
-#include <osgText/Text>
-#include <osgEarthSymbology/TextSymbol>
+#include "osgText/Font"
+#include "osgText/Text"
+#include "osgEarthSymbology/TextSymbol"
 #include "simVis/View.h"
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"

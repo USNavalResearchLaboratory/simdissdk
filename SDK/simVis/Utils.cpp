@@ -1263,19 +1263,10 @@ void EnableDOFTransform::apply(osg::Node& node)
     // increasing HPR values cause precision problems with high scenario delta time values.
     // Without this, infinite rotations will skip and stutter, and not work in real-time playback.
     const osg::Vec3& incr = dofXform->getIncrementHPR();
+    // Add a new callback to constrain HPR values using fmod, if needed
     if (enabled_ && (incr.x() != 0.f || incr.y() != 0.f || incr.z() != 0.f))
     {
-      // Search for an already-existing ConstrainHprValues; avoid adding a new one if one exists
-      bool exists = false;
-      osg::Callback* callback = dofXform->getUpdateCallback();
-      while (callback && !exists)
-      {
-        if (dynamic_cast<ConstrainHprValues*>(callback))
-          exists = true;
-        callback = callback->getNestedCallback();
-      }
-      // Add a new callback to constrain HPR values using fmod, if needed
-      if (!exists)
+      if (!findUpdateCallbackOfType<ConstrainHprValues>(dofXform))
         dofXform->addUpdateCallback(new ConstrainHprValues);
     }
   }

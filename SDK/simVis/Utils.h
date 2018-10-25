@@ -160,6 +160,25 @@ namespace simVis
     virtual ~NodeUpdateCallback() {}
   };
 
+  /**
+   * Utility template method to find the first Update Callback of the given type.
+   * @param node Node to search the update callback chain of
+   * @return First update callback that is of type T, or NULL if none is found.
+   */
+  template <typename T>
+  T* findUpdateCallbackOfType(osg::Node* node)
+  {
+    osg::Callback* callback = node->getUpdateCallback();
+    while (callback)
+    {
+      T* asType = dynamic_cast<T*>(callback);
+      if (asType)
+        return asType;
+      callback = callback->getNestedCallback();
+    }
+    return NULL;
+  }
+
   /// convert a simCore::Coordinate to a GeoPoint, if possible
   SDKVIS_EXPORT bool convertCoordToGeoPoint(
     const simCore::Coordinate&        input,

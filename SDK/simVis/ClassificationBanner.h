@@ -22,9 +22,9 @@
 #ifndef SIMVIS_CLASSIFICATION_BANNER_H
 #define SIMVIS_CLASSIFICATION_BANNER_H
 
-#include <osg/ref_ptr>
-#include <osg/Vec4f>
-#include <osgText/Text>
+#include "osg/ref_ptr"
+#include "osg/Vec4f"
+#include "osgText/Text"
 #include "simData/DataStore.h"
 
 namespace osgText { class Font; }
