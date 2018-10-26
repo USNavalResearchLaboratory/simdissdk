@@ -67,26 +67,6 @@ struct SDKVIS_EXPORT EntityState
 };
 
 /**
-* Additional information for SIMDIS specific Range calculations
-*/
-struct SDKVIS_EXPORT SimdisEntityState : public EntityState
-{
-  osg::ref_ptr<const simVis::EntityNode> node_; ///< The node of the entity
-  osg::ref_ptr<const simVis::PlatformNode> platformHostNode_; ///< The node of the host platform; for platforms platformHostNode_ == node_
-  simRF::RFPropagationFacade* rfPropagation_;  ///< If the entity is a beam this MAY BE set
-
-  SimdisEntityState()
-    : node_(NULL),
-    platformHostNode_(NULL),
-    rfPropagation_(NULL)
-  {
-  }
-  virtual ~SimdisEntityState()
-  {
-  }
-};
-
-/**
 * Internal state class for Graphic rendering. Graphic primitives and
 * Measurements receive a State object internally when rendering in order
 * to track object locations and other shared data.
@@ -195,30 +175,6 @@ struct SDKVIS_EXPORT RangeToolState
   simCore::TimeStamp timeStamp_; // the timeStamp of the last update
   osg::observer_ptr<osgEarth::MapNode>  mapNode_;
   ///@}
-};
-
-/**
-* A SIMDIS specific version
-*/
-struct SDKVIS_EXPORT SimdisRangeToolState : public RangeToolState
-{
-  SimdisRangeToolState(SimdisEntityState* beginEntity, SimdisEntityState* endEntity);
-
-  /**
-  * Fills in a entity state based on the given scenario an entity node
-  * @param scenario The scenario for getting the host platform of node
-  * @param node The node to extract information from
-  * @param state Range Tool state information needed to do the calculations
-  * @return zero on success and non-zero on failure
-  */
-  int populateEntityState(const simVis::ScenarioManager& scenario, const simVis::EntityNode* node, EntityState* state);
-
-  /**
-  * Calculates and caches the requested values
-  * @param coord the type value to calculate and cache
-  * @return the requested values, the type of values detailed in Coord
-  */
-  virtual osg::Vec3d coord(Coord coord);
 };
 
 }

@@ -36,7 +36,7 @@
 #include "simData/ObjectId.h"
 #include "simVis/Measurement.h"
 #include "simVis/Platform.h"
-#include "simVis/RangeToolState.h"
+#include "simVis/SimdisRangeToolState.h"
 #include "simVis/Scenario.h"
 #include "simVis/Tool.h"
 #include "simVis/Utils.h"

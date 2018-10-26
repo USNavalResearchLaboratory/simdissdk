@@ -114,6 +114,8 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}Scenario.h
     ${VIS_INC}ScenarioDataStoreAdapter.h
     ${VIS_INC}SceneManager.h
+    ${VIS_INC}SimdisMeasurement.h
+    ${VIS_INC}SimdisRangeToolState.h
     ${VIS_INC}SphericalVolume.h
     ${VIS_INC}TargetDelegation.h
     ${VIS_INC}Text.h
@@ -244,6 +246,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Scenario.cpp
     ${VIS_SRC}ScenarioDataStoreAdapter.cpp
     ${VIS_SRC}SceneManager.cpp
+    ${VIS_SRC}SimdisMeasurement.cpp
+    ${VIS_SRC}SimdisRangeToolState.cpp
     ${VIS_SRC}SphericalVolume.cpp
     ${VIS_SRC}TargetDelegation.cpp
     ${VIS_SRC}Text.cpp
