@@ -27,15 +27,16 @@
 #include "osg/observer_ptr"
 #include "osg/MatrixTransform"
 #include "simCore/Common/Export.h"
+#include "simData/DataStore.h"
 
 namespace osgText { class Text; }
 
 namespace simVis
 {
 
-class View;
-class FocusManager;
 class CompassNode;
+class FocusManager;
+class View;
 
 /**
  * Adapter class that allows compass to work with FocusManager to switch its display to reflect newly focused view
@@ -59,24 +60,28 @@ private:
   osg::ref_ptr<FocusCallback> callback_;
 };
 
-/// define an interface for listeners for compass heading updates
-class SDKVIS_EXPORT CompassUpdateListener
+/** Callback to a datastore you can add to synchornize its wind values to a compass. */
+class SDKVIS_EXPORT UpdateWindVaneListener : public simData::DataStore::ScenarioListener
 {
 public:
-  CompassUpdateListener() {}
-  virtual ~CompassUpdateListener() {}
+  explicit UpdateWindVaneListener(simVis::CompassNode* compass);
 
-  /** Executed when the compass heading changes, passes in heading in degrees */
-  virtual void onUpdate(double heading) = 0;
+  /** Override to pass along wind values */
+  virtual void onScenarioPropertiesChange(simData::DataStore* source);
+
+private:
+  osg::observer_ptr<simVis::CompassNode> compass_;
 };
-
-/// Shared pointer to a CompassUpdateListener
-typedef std::shared_ptr<CompassUpdateListener> CompassUpdateListenerPtr;
 
 /**
  * Representation of a Compass Node that gets used in SIMDIS.  This is an image with text
  * that uses a 128x128 image to draw a compass on-screen.  The anchor point for the compass
  * is in the middle of the compass area.
+ *
+ * This class also shows a wind vane, if configured.  The wind vane can be enabled by
+ * calling setWindVaneVisible(true) and using setWindParameters().  To have the wind vane
+ * show the values from the Data Store, you can attach an UpdateWindVaneCallback to the
+ * data store.
  */
 class SDKVIS_EXPORT CompassNode : public osg::MatrixTransform
 {
@@ -93,22 +98,21 @@ public:
   simVis::View* activeView() const;
 
   /**
-   * Set our listener
-   * @param listener Observer for the compass updates
-   */
-  void setListener(simVis::CompassUpdateListenerPtr listener);
-
-  /**
-   * Unset our listener
-   * @param listener Observer for the compass updates
-   */
-  void removeListener(const simVis::CompassUpdateListenerPtr& listener);
-
-  /**
    * Get the width/height size of the image in pixels. Width and height are the same
    * @return size of the compass image in pixels, returns 0 if no image found
    */
   int size() const;
+
+  /** Sets whether the wind vane is visible or not.  By default, the wind vane is not visible. */
+  void setWindVaneVisible(bool visible);
+  /** Returns whether the wind vane is visible. */
+  bool isWindVaneVisible() const;
+
+  /**
+   * Updates the wind vane "direction from", and the speed.  Use a
+   * UpdateWindVaneCallback to update it from the data store values.
+   */
+  void setWindParameters(double angleRad, double speedMs);
 
   /// Override traverse() to update the compass based on the view
   virtual void traverse(osg::NodeVisitor& nv);
@@ -117,9 +121,16 @@ protected:
   /** Protect destructor to avoid ref_ptr double delete issue */
   virtual ~CompassNode();
 
-private:
+  /** Retrieves the last heading in degrees */
+  double getHeading_() const;
   /** Updates the orientation of the compass to point in the right direction. */
-  void updateCompass_();
+  virtual void updateCompass_();
+
+private:
+  /** Initializes the nodes for the compass part. */
+  void initCompass_(const std::string& compassFilename);
+  /** Initializes the nodes for the wind vane part. */
+  void initWindVane_();
 
   /// Reference to the view whose data the compass is showing
   osg::observer_ptr<simVis::View> activeView_;
@@ -130,9 +141,29 @@ private:
   /// Last heading shown by the compass, required to keep the callbacks correct
   double lastHeadingDeg_;
 
-  /// Listener for our updates, if any
-  simVis::CompassUpdateListenerPtr compassUpdateListener_;
+  /// Holds the image of the wind vane
+  osg::ref_ptr<osg::MatrixTransform> windVaneImage_;
+  /// Groups together the two texts for easy show/hide
+  osg::ref_ptr<osg::Group> windVaneTexts_;
+  /// Shows the speed of the wind
+  osg::ref_ptr<osgText::Text> windSpeedText_;
+  /// Shows the direction of the wind
+  osg::ref_ptr<osgText::Text> windFromText_;
 };
+
+/// define an interface for listeners for compass heading updates
+class SDKVIS_EXPORT CompassUpdateListener
+{
+public:
+  CompassUpdateListener() {}
+  virtual ~CompassUpdateListener() {}
+
+  /** Executed when the compass heading changes, passes in heading in degrees */
+  virtual void onUpdate(double heading) = 0;
+};
+
+/// Shared pointer to a CompassUpdateListener
+typedef std::shared_ptr<CompassUpdateListener> CompassUpdateListenerPtr;
 
 /**
  * Creates a Compass which can be displayed as a HUD "widget" in a single view.  The
@@ -148,6 +179,18 @@ class SDKVIS_EXPORT Compass : public CompassNode
 public:
   /** Constructs a new Compass */
   explicit Compass(const std::string& compassFilename);
+
+  /**
+   * Set our listener
+   * @param listener Observer for the compass updates
+   */
+  void setListener(simVis::CompassUpdateListenerPtr listener);
+
+  /**
+   * Unset our listener
+   * @param listener Observer for the compass updates
+   */
+  void removeListener(const simVis::CompassUpdateListenerPtr& listener);
 
   /**
    * Display the Compass node as an overlay in the specified view
@@ -173,6 +216,9 @@ protected:
   /** Destructor */
   virtual ~Compass();
 
+  /** Override to fire off callbacks. */
+  virtual void updateCompass_();
+
 private:
   class RepositionEventHandler;
   /// Event Handler that repositions the compass to the lower-right
@@ -180,6 +226,8 @@ private:
 
   /// Pointer to the view on which to overlay the compass
   osg::observer_ptr<simVis::View> drawView_;
+  /// Listener for our updates, if any
+  simVis::CompassUpdateListenerPtr compassUpdateListener_;
 };
 
 } // namespace simVis

@@ -23,6 +23,7 @@
 #include "osgEarthAnnotation/AnnotationUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/String/Constants.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
@@ -33,6 +34,38 @@ namespace simVis
 
 /** Expected size of the compass in pixels. */
 static const double COMPASS_SIZE = 128.0;
+
+/** Image file to search for when loading the wind vane. */
+static const std::string WIND_VANE_IMAGE = "windVane.rgb";
+/** Wind vane image is resized to this X-by-Y */
+static const int WIND_VANE_SCALE_X = 90;
+static const int WIND_VANE_SCALE_Y = 22;
+
+/** Name of the font for read-out text */
+static const std::string COMPASS_FONT = "arial.ttf";
+/** Character size of the text */
+static const float TEXT_POINT_SIZE = simVis::osgFontSize(11.f);
+
+/** Position and alignment of the compass value text */
+static const float POS_COMPASS_X = 19.f;
+static const float POS_COMPASS_Y = 13.f;
+static const osgText::TextBase::AlignmentType ALIGN_COMPASS = osgText::TextBase::RIGHT_BASE_LINE;
+
+/** Position and alignment of the Wind Speed text on the wind vane */
+static const float POS_WIND_SPEED_X = 33.f;
+static const float POS_WIND_SPEED_Y = -1.f;
+static const osgText::TextBase::AlignmentType ALIGN_WIND_SPEED = osgText::TextBase::RIGHT_TOP;
+
+/** Position and alignment of the Wind Angle text on the wind vane */
+static const float POS_WIND_ANGLE_X = 0.f;
+static const float POS_WIND_ANGLE_Y = -69.f;
+static const osgText::TextBase::AlignmentType ALIGN_WIND_ANGLE = osgText::TextBase::CENTER_TOP;
+
+/** Color of the (normally red) line pointing to current compass position */
+static const osg::Vec4f POINTING_LINE_COLOR(osgEarth::Symbology::Color::Red);
+/** Minimum and maximum Y values for the pointing line */
+static const float POS_POINTING_MIN_Y = 39.f;
+static const float POS_POINTING_MAX_Y = 52.f;
 
 /**
  * Callback functor for view focus changes
@@ -88,19 +121,34 @@ CompassNode::CompassNode(const std::string& compassFilename)
   : valueText_(new osgText::Text),
     lastHeadingDeg_(0.0)
 {
+  initCompass_(compassFilename);
+  initWindVane_();
+
+  getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+  osgEarth::Registry::shaderGenerator().run(this);
+  // We want to use our traverse() method to update the compass direction
+  setNumChildrenRequiringUpdateTraversal(1);
+}
+
+CompassNode::~CompassNode()
+{
+}
+
+void CompassNode::initCompass_(const std::string& compassFilename)
+{
   osg::ref_ptr<osg::Image> image;
   if (!compassFilename.empty())
     image = osgDB::readImageFile(compassFilename);
 
   valueText_->setName("Compass Value Readout");
   valueText_->setText("0.00");
-  valueText_->setCharacterSize(simVis::osgFontSize(11.f));
-  valueText_->setFont(simVis::Registry::instance()->getOrCreateFont("arial.ttf"));
-  valueText_->setAlignment(osgText::TextBase::RIGHT_BASE_LINE);
+  valueText_->setCharacterSize(TEXT_POINT_SIZE);
+  valueText_->setFont(simVis::Registry::instance()->getOrCreateFont(COMPASS_FONT));
+  valueText_->setAlignment(ALIGN_COMPASS);
   valueText_->setAxisAlignment(osgText::TextBase::SCREEN);
   valueText_->setBackdropColor(osgEarth::Symbology::Color::Black);
   valueText_->setDataVariance(osg::Object::DYNAMIC);
-  valueText_->setPosition(osg::Vec3f(19.f, 13.f, 0.f));
+  valueText_->setPosition(osg::Vec3f(POS_COMPASS_X, POS_COMPASS_Y, 0.f));
   addChild(valueText_);
 
   compassImageXform_ = new osg::MatrixTransform;
@@ -127,30 +175,76 @@ CompassNode::CompassNode(const std::string& compassFilename)
   // Move the compass image back slightly so it doesn't occlude text
   compassImageXform_->setMatrix(osg::Matrix::translate(osg::Vec3f(0.f, 0.f, -0.01f)));
 
-  {
-    // Add a red line (tristrip) to indicate the pointing angle
-    osg::Geometry* pointer = new osg::Geometry;
-    osg::Vec3Array* points = new osg::Vec3Array;
-    points->push_back(osg::Vec3(-0.5f, 39.f, 0.f));
-    points->push_back(osg::Vec3(0.5f, 39.f, 0.f));
-    points->push_back(osg::Vec3(-0.5f, 52.f, 0.f));
-    points->push_back(osg::Vec3(0.5f, 52.f, 0.f));
-    osg::Vec4Array* colors = new osg::Vec4Array;
-    colors->push_back(osgEarth::Symbology::Color::Red);
-    pointer->setVertexArray(points);
-    pointer->setColorArray(colors, osg::Array::BIND_OVERALL);
-    pointer->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-    addChild(pointer);
-  }
-
-  getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
-  osgEarth::Registry::shaderGenerator().run(this);
-  // We want to use our traverse() method to update the compass direction
-  setNumChildrenRequiringUpdateTraversal(1);
+  // Add a red line (tristrip) to indicate the pointing angle
+  osg::Geometry* pointer = new osg::Geometry;
+  osg::Vec3Array* points = new osg::Vec3Array;
+  points->push_back(osg::Vec3(-0.5f, POS_POINTING_MIN_Y, 0.f));
+  points->push_back(osg::Vec3(0.5f, POS_POINTING_MIN_Y, 0.f));
+  points->push_back(osg::Vec3(-0.5f, POS_POINTING_MAX_Y, 0.f));
+  points->push_back(osg::Vec3(0.5f, POS_POINTING_MAX_Y, 0.f));
+  osg::Vec4Array* colors = new osg::Vec4Array;
+  colors->push_back(POINTING_LINE_COLOR);
+  pointer->setVertexArray(points);
+  pointer->setColorArray(colors, osg::Array::BIND_OVERALL);
+  pointer->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+  addChild(pointer);
 }
 
-CompassNode::~CompassNode()
+void CompassNode::initWindVane_()
 {
+  windVaneTexts_ = new osg::Group;
+  windVaneTexts_->setName("Wind Vane");
+  addChild(windVaneTexts_);
+
+  // Wind speed is in middle of compass, just below the middle
+  windSpeedText_ = new osgText::Text;
+  windSpeedText_->setName("Wind Speed Text");
+  windSpeedText_->setCharacterSize(TEXT_POINT_SIZE);
+  windSpeedText_->setFont(simVis::Registry::instance()->getOrCreateFont(COMPASS_FONT));
+  windSpeedText_->setAlignment(ALIGN_WIND_SPEED);
+  windSpeedText_->setAxisAlignment(osgText::TextBase::SCREEN);
+  windSpeedText_->setBackdropColor(osgEarth::Symbology::Color::Black);
+  windSpeedText_->setDataVariance(osg::Object::DYNAMIC);
+  windSpeedText_->setPosition(osg::Vec3f(POS_WIND_SPEED_X, POS_WIND_SPEED_Y, 0.f));
+  windVaneTexts_->addChild(windSpeedText_);
+
+  // Wind angle text is shown below the compass
+  windFromText_ = new osgText::Text(*windSpeedText_);
+  windFromText_->setName("Wind From Text");
+  windFromText_->setAlignment(ALIGN_WIND_ANGLE);
+  windFromText_->setPosition(osg::Vec3f(POS_WIND_ANGLE_X, POS_WIND_ANGLE_Y, 0.f));
+  windVaneTexts_->addChild(windFromText_);
+
+  // The image is a child of the compass rotating node, because it rotates with true north
+  windVaneImage_ = new osg::MatrixTransform;
+  windVaneImage_->setName("Wind Vane Image");
+  compassImageXform_->addChild(windVaneImage_);
+  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(WIND_VANE_IMAGE);
+  if (image.valid())
+  {
+    // Scale the image to expected size
+    image->scaleImage(WIND_VANE_SCALE_X, WIND_VANE_SCALE_Y, 1);
+    osg::Geometry* windVane = osgEarth::Annotation::AnnotationUtils::createImageGeometry(
+      image.get(),
+      osg::Vec2s(0, 0),   // pixel offsets from center
+      0,                  // texture image unit
+      0.0,                // heading
+      1.0);               // scale
+
+    // Texture is possibly GL_LUMINANCE or GL_LUMINANCE_ALPHA; fix it if so
+    if (windVane && windVane->getStateSet())
+    {
+      osg::Texture* texture = dynamic_cast<osg::Texture*>(windVane->getStateSet()->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+      if (texture)
+        simVis::fixTextureForGlCoreProfile(texture);
+    }
+    windVaneImage_->addChild(windVane);
+  }
+
+  // Set the wind vane angle and speed
+  setWindParameters(0.0, 0.0);
+  // By default the wind vane is not shown
+  setWindVaneVisible(false);
 }
 
 void CompassNode::setActiveView(simVis::View* activeView)
@@ -219,27 +313,65 @@ void CompassNode::updateCompass_()
   std::stringstream str;
   str << std::fixed << std::setprecision(2) << headingDeg;
   valueText_->setText(str.str());
-
-  // if we have a listener, notify that we have updated
-  if (compassUpdateListener_)
-    compassUpdateListener_->onUpdate(headingDeg);
 }
 
-void CompassNode::setListener(simVis::CompassUpdateListenerPtr listener)
+double CompassNode::getHeading_() const
 {
-  compassUpdateListener_ = listener;
+  return lastHeadingDeg_;
 }
 
-void CompassNode::removeListener(const simVis::CompassUpdateListenerPtr& listener)
+void CompassNode::setWindParameters(double angleRad, double speedMs)
 {
-  if (compassUpdateListener_ == listener)
-    compassUpdateListener_.reset();
+  // always 2 decimal places, red points in right direction
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(2) << speedMs << " m/s";
+  windSpeedText_->setText(ss.str());
+
+  ss.str("");
+  ss << "Wind From: " << std::fixed << std::setprecision(2) << angleRad * simCore::RAD2DEG << simCore::STR_DEGREE_SYMBOL_UNICODE;
+  windFromText_->setText(ss.str());
+
+  // Rotate the vane, and push it back a little so it doesn't overlap text
+  osg::Matrix m;
+  m.postMultRotate(osg::Quat(M_PI_2 - angleRad, osg::Vec3d(0.0, 0.0, 1.0)));
+  m.postMultTranslate(osg::Vec3f(0.f, 0.f, -0.005f));
+  windVaneImage_->setMatrix(m);
 }
 
 int CompassNode::size() const
 {
   // Image is fixed in size at 128x128
   return static_cast<int>(COMPASS_SIZE);
+}
+
+void CompassNode::setWindVaneVisible(bool visible)
+{
+  // Note the different parents, so need for two node mask settings
+  windVaneTexts_->setNodeMask(visible ? ~0 : 0);
+  windVaneImage_->setNodeMask(visible ? ~0 : 0);
+}
+
+bool CompassNode::isWindVaneVisible() const
+{
+  return windVaneTexts_->getNodeMask() != 0;
+}
+
+///////////////////////////////////////////
+
+UpdateWindVaneListener::UpdateWindVaneListener(simVis::CompassNode* compass)
+  : compass_(compass)
+{
+}
+
+void UpdateWindVaneListener::onScenarioPropertiesChange(simData::DataStore* source)
+{
+  osg::ref_ptr<simVis::CompassNode> compass;
+  if (source && compass_.lock(compass))
+  {
+    simData::DataStore::Transaction txn;
+    const simData::ScenarioProperties* props = source->scenarioProperties(&txn);
+    compass->setWindParameters(props->windangle(), props->windspeed());
+  }
 }
 
 ///////////////////////////////////////////
@@ -311,6 +443,17 @@ void Compass::setDrawView(simVis::View* drawView)
   }
 }
 
+void Compass::setListener(simVis::CompassUpdateListenerPtr listener)
+{
+  compassUpdateListener_ = listener;
+}
+
+void Compass::removeListener(const simVis::CompassUpdateListenerPtr& listener)
+{
+  if (compassUpdateListener_ == listener)
+    compassUpdateListener_.reset();
+}
+
 simVis::View* Compass::drawView() const
 {
   return drawView_.get();
@@ -325,6 +468,18 @@ void Compass::removeFromView()
     drawView_->getOrCreateHUD()->removeChild(this);
     drawView_ = NULL;
   }
+}
+
+void Compass::updateCompass_()
+{
+  // Attempt to determine changes in heading
+  const double oldHeading = getHeading_();
+  CompassNode::updateCompass_();
+
+  // if we have a listener, notify that we have updated
+  const double newHeading = getHeading_();
+  if (compassUpdateListener_ && newHeading != oldHeading)
+    compassUpdateListener_->onUpdate(newHeading);
 }
 
 void Compass::traverse(osg::NodeVisitor& nv)
