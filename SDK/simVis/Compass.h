@@ -60,7 +60,7 @@ private:
   osg::ref_ptr<FocusCallback> callback_;
 };
 
-/** Callback to a datastore you can add to synchornize its wind values to a compass. */
+/** Callback to a datastore you can add to synchronize its wind values to a compass. */
 class SDKVIS_EXPORT UpdateWindVaneListener : public simData::DataStore::ScenarioListener
 {
 public:
