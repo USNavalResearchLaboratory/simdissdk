@@ -98,9 +98,6 @@ public:
    */
   ClassificationBanner(simData::DataStore* dataStore, unsigned int fontSize, const std::string& fontFile);
 
-  /** Destructor */
-  virtual ~ClassificationBanner();
-
   /**
    * Add the ClassificationBanner to a managed view
    * @param managedView View onto which to add the classification
@@ -118,6 +115,10 @@ public:
 
   /** Set the font size of the banner */
   void setFontSize(unsigned int fontSize);
+
+protected:
+  /** Destructor is protected to avoid ref_ptr double delete issues. */
+  virtual ~ClassificationBanner();
 
 private:
   /** Callback that checks for screen resize on each frame and notifies banner if needed */
