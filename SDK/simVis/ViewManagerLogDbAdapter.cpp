@@ -139,6 +139,7 @@ void ViewManagerLogDbAdapter::install(simVis::ViewManager* viewManager)
   {
     logDepthBuffer_->install((*i)->getCamera());
     (*i)->getCamera()->setNearFarRatio(LDB_NEAR_FAR_RATIO);
+    (*i)->getCamera()->getOrCreateStateSet()->setDefine("SV_USE_LOG_DEPTH_BUFFER");
   }
   // Remember the manager
   viewManager->addCallback(installCallback_.get());
@@ -166,6 +167,7 @@ void ViewManagerLogDbAdapter::uninstall(simVis::ViewManager* viewManager)
     {
       logDepthBuffer_->uninstall(camera);
       camera->setNearFarRatio(DEFAULT_NEAR_FAR_RATIO);
+      camera->getOrCreateStateSet()->removeDefine("SV_USE_LOG_DEPTH_BUFFER");
     }
   }
 }
