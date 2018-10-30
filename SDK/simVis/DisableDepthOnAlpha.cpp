@@ -61,7 +61,7 @@ void DisableDepthOnAlpha::setValues(osg::StateSet* stateset, int value)
   int over = value & osg::StateAttribute::OVERRIDE;
   int prot = value & osg::StateAttribute::PROTECTED;
 
-  int negValue = (value | osg::StateAttribute::ON)?
+  int negValue = (value & osg::StateAttribute::ON)?
       osg::StateAttribute::OFF | over | prot :
       osg::StateAttribute::ON | over | prot;
 
