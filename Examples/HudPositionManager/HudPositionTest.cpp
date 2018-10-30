@@ -20,6 +20,7 @@
  *
  */
 
+#include "osgEarth/CullingUtils"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Common/Version.h"
@@ -29,10 +30,13 @@
 #include "simData/MemoryDataStore.h"
 #include "simVis/ClassificationBanner.h"
 #include "simVis/Compass.h"
+#include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
+#include "simUtil/HudPositionEditor.h"
 #include "simUtil/HudPositionManager.h"
 #include "simUtil/MapScale.h"
+#include "simUtil/MouseDispatcher.h"
 #include "simUtil/Replaceables.h"
 #include "simUtil/StatusText.h"
 
@@ -58,6 +62,7 @@ static std::string s_help =
   "5 : Move 'Bottom Classification' to mouse position\n"
   "6 : Move 'Compass' to mouse position\n"
   "c : Cycle classification string and color\n"
+  "e : Toggle HUD Editor mode\n"
   "r : Reset all to default positions\n"
   "w : Toggle Wind Vane on Compass\n"
   "z : Cycle wind angle and speed values\n"
@@ -81,8 +86,8 @@ static ui::Control* createHelp()
 // An event handler to assist in testing the Inset functionality.
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(simUtil::HudPositionManager* hud, simData::DataStore& ds)
-    : hud_(hud),
+  MenuHandler(simUtil::HudPositionEditor& hudEditor, simData::DataStore& ds)
+    : hudEditor_(hudEditor),
       dataStore_(ds),
       classificationCycle_(0),
       windCycle_(0)
@@ -94,7 +99,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
     compass_ = compass;
   }
 
-  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
   {
     if (ea.getEventType() != osgGA::GUIEventAdapter::KEYDOWN)
       return false;
@@ -149,8 +154,13 @@ struct MenuHandler : public osgGA::GUIEventHandler
       break;
     }
 
+    case 'e':
+      hudEditor_.setVisible(!hudEditor_.isVisible());
+      handled = true;
+      break;
+
     case 'r':
-      hud_->resetAllPositions();
+      hudEditor_.resetAllPositions();
       handled = true;
       break;
 
@@ -192,21 +202,17 @@ struct MenuHandler : public osgGA::GUIEventHandler
     // Assign the position to the mouse's location
     if (!windowName.empty())
     {
-      osg::ref_ptr<simUtil::HudPositionManager> hud;
-      if (hud_.lock(hud))
-      {
-        // Rescale normalized from (-1,+1) to (0,1)
-        const osg::Vec2d pos(0.5 * (1.0 + ea.getXnormalized()),
-          0.5 * (1.0 + ea.getYnormalized()));
-        hud->setPosition(windowName, pos);
-        handled = true;
-      }
+      // Rescale normalized from (-1,+1) to (0,1)
+      const osg::Vec2d pos(0.5 * (1.0 + ea.getXnormalized()),
+        0.5 * (1.0 + ea.getYnormalized()));
+      hudEditor_.setPosition(windowName, pos);
+      handled = true;
     }
     return handled;
   }
 
 private:
-  osg::observer_ptr<simUtil::HudPositionManager> hud_;
+  simUtil::HudPositionEditor& hudEditor_;
   osg::observer_ptr<simVis::CompassNode> compass_;
   simData::DataStore& dataStore_;
   int classificationCycle_;
@@ -223,8 +229,13 @@ int main(int argc, char** argv)
   osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(arguments);
   viewer->setMap(simExamples::createDefaultExampleMap());
 
+  // Create a mouse dispatcher for the HUD Editor
+  simUtil::MouseDispatcher mouseDispatcher;
+  mouseDispatcher.setViewManager(viewer);
+
   // Create a HUD position manager that will move on-screen objects
-  osg::ref_ptr<simUtil::HudPositionManager> hud = new simUtil::HudPositionManager;
+  simUtil::HudPositionEditor hudEditor;
+  osg::ref_ptr<simUtil::HudPositionManager> hud = hudEditor.hud();
 
   // add sky node
   simExamples::addDefaultSkyNode(viewer.get());
@@ -240,6 +251,11 @@ int main(int argc, char** argv)
   superHUD->addOverlayControl(createHelp());
   mainView->getViewManager()->addView(superHUD);
 
+  // For osgEarth::LineDrawable to work on SuperHUD, need an InstallViewportSizeUniform
+  superHUD->getOrCreateHUD()->addCullCallback(new osgEarth::InstallViewportSizeUniform());
+  // Configure the HUD Editor properly
+  hudEditor.bindAll(*superHUD->getOrCreateHUD(), mouseDispatcher, -100);
+
   // Add a classification banner
   simData::MemoryDataStore dataStore;
   {
@@ -253,7 +269,7 @@ int main(int argc, char** argv)
   }
 
   // Install a handler to respond to the demo keys in this sample.
-  MenuHandler* menuHandler = new MenuHandler(hud.get(), dataStore);
+  MenuHandler* menuHandler = new MenuHandler(hudEditor, dataStore);
   mainView->getCamera()->addEventCallback(menuHandler);
 
   // Configure text replacement variables that will be used for status text
@@ -341,7 +357,7 @@ int main(int argc, char** argv)
     demoText->setAlignment(osgText::TextBase::LEFT_BOTTOM_BASE_LINE);
     demoText->setAxisAlignment(osgText::TextBase::SCREEN);
     demoText->setAutoRotateToScreen(true);
-    demoText->setCharacterSize(16.f);
+    demoText->setCharacterSize(simVis::osgFontSize(16.f));
     demoText->setColor(osg::Vec4f(1.f, 1.f, 1.f, 1.f));
     demoText->setFont("arialbd.ttf");
     demoText->setBackdropColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f));
