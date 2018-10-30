@@ -132,7 +132,47 @@ protected:
   virtual ~HudPositionManager();
 
 private:
-  class WindowData;
+  /** Provides a container for information about a particular window. */
+  class WindowData : public osg::Referenced
+  {
+  public:
+    explicit WindowData(const std::string& name);
+
+    /** Retrieves the (immutable) name */
+    std::string name() const;
+
+    /** Sets the reposition callback for the window.  May be NULL. */
+    void setRepositionCallback(HudPositionManager::RepositionCallback* callback);
+    /** Retrieves the current reposition callback */
+    HudPositionManager::RepositionCallback* repositionCallback() const;
+
+    /** Sets the position, alerting the callback. */
+    void setPosition(const osg::Vec2d& positionPct);
+    /** Sends the current position to the callback. */
+    void emitPosition();
+    /** Retrieves position in percentage */
+    osg::Vec2d position() const;
+    /** Changes the default position, in percentage */
+    void setDefaultPosition(const osg::Vec2d& posPct);
+    /** Retrieves the default position in percentage */
+    osg::Vec2d defaultPosition() const;
+
+    /** Changes size data, which is just metadata about the window */
+    void setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
+    /** Retrieves size data about the window */
+    void getSize(osg::Vec2d& minXyPx, osg::Vec2d& maxXyPx) const;
+
+  protected:
+    virtual ~WindowData();
+
+  private:
+    const std::string name_;
+    osg::Vec2d positionPct_;
+    osg::Vec2d defaultPositionPct_;
+    osg::Vec2d minXyPx_;
+    osg::Vec2d maxXyPx_;
+    osg::ref_ptr<HudPositionManager::RepositionCallback> callback_;
+  };
   std::map<std::string, osg::ref_ptr<WindowData> > allWindows_;
 };
 

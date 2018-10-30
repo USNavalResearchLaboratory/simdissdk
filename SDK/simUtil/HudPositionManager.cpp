@@ -34,92 +34,70 @@
 
 namespace simUtil {
 
-/** Describes the contents of a single window managed by the HUD position manager. */
-class HudPositionManager::WindowData : public osg::Referenced
+HudPositionManager::WindowData::WindowData(const std::string& name)
+  : name_(name)
 {
-public:
-  explicit WindowData(const std::string& name)
-    : name_(name)
-  {
-  }
+}
 
-  /** Retrieves the (immutable) name */
-  std::string name() const
-  {
-    return name_;
-  }
+std::string HudPositionManager::WindowData::name() const
+{
+  return name_;
+}
 
-  /** Sets the reposition callback for the window.  May be NULL. */
-  void setRepositionCallback(HudPositionManager::RepositionCallback* callback)
-  {
-    callback_ = callback;
-  }
+void HudPositionManager::WindowData::setRepositionCallback(HudPositionManager::RepositionCallback* callback)
+{
+  callback_ = callback;
+}
 
-  /** Retrieves the current reposition callback */
-  HudPositionManager::RepositionCallback* repositionCallback() const
-  {
-    return callback_.get();
-  }
+HudPositionManager::RepositionCallback* HudPositionManager::WindowData::repositionCallback() const
+{
+  return callback_.get();
+}
 
-  /** Sets the position, alerting the callback. */
-  void setPosition(const osg::Vec2d& positionPct)
-  {
-    if (positionPct_ == positionPct)
-      return;
-    positionPct_ = positionPct;
-    emitPosition();
-  }
+void HudPositionManager::WindowData::setPosition(const osg::Vec2d& positionPct)
+{
+  if (positionPct_ == positionPct)
+    return;
+  positionPct_ = positionPct;
+  emitPosition();
+}
 
-  /** Sends the current position to the callback. */
-  void emitPosition()
-  {
-    if (callback_.valid())
-      callback_->setPosition(name_, positionPct_);
-  }
+void HudPositionManager::WindowData::emitPosition()
+{
+  if (callback_.valid())
+    callback_->setPosition(name_, positionPct_);
+}
 
-  /** Retrieves position in percentage */
-  osg::Vec2d position() const
-  {
-    return positionPct_;
-  }
+osg::Vec2d HudPositionManager::WindowData::position() const
+{
+  return positionPct_;
+}
 
-  /** Changes the default position, in percentage */
-  void setDefaultPosition(const osg::Vec2d& posPct)
-  {
-    defaultPositionPct_ = posPct;
-  }
+void HudPositionManager::WindowData::setDefaultPosition(const osg::Vec2d& posPct)
+{
+  defaultPositionPct_ = posPct;
+}
 
-  /** Retrieves the default position in percentage */
-  osg::Vec2d defaultPosition() const
-  {
-    return defaultPositionPct_;
-  }
+osg::Vec2d HudPositionManager::WindowData::defaultPosition() const
+{
+  return defaultPositionPct_;
+}
 
-  /** Changes size data, which is just metadata about the window */
-  void setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
-  {
-    minXyPx_ = minXyPx;
-    maxXyPx_ = maxXyPx;
-  }
+void HudPositionManager::WindowData::setSize(const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
+{
+  minXyPx_ = minXyPx;
+  maxXyPx_ = maxXyPx;
+}
 
-  /** Retrieves size data about the window */
-  void getSize(osg::Vec2d& minXyPx, osg::Vec2d& maxXyPx) const
-  {
-    minXyPx = minXyPx_;
-    maxXyPx = maxXyPx_;
-  }
+void HudPositionManager::WindowData::getSize(osg::Vec2d& minXyPx, osg::Vec2d& maxXyPx) const
+{
+  minXyPx = minXyPx_;
+  maxXyPx = maxXyPx_;
+}
 
-protected:
-  virtual ~WindowData() {}
-
-private:
-  const std::string name_;
-  osg::Vec2d positionPct_;
-  osg::Vec2d defaultPositionPct_;
-  osg::Vec2d minXyPx_;
-  osg::Vec2d maxXyPx_;
-  osg::ref_ptr<HudPositionManager::RepositionCallback> callback_;
-};
+HudPositionManager::WindowData::~WindowData()
+{
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 
