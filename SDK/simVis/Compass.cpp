@@ -334,7 +334,7 @@ void CompassNode::setWindParameters(double angleRad, double speedMs)
   // Rotate the vane, and push it back a little so it doesn't overlap text
   osg::Matrix m;
   m.postMultRotate(osg::Quat(M_PI_2 - angleRad, osg::Vec3d(0.0, 0.0, 1.0)));
-  m.postMultTranslate(osg::Vec3f(0.f, 0.f, -0.005f));
+  m.postMultTranslate(osg::Vec3f(0.f, 0.f, 0.005f));
   windVaneImage_->setMatrix(m);
 }
 
