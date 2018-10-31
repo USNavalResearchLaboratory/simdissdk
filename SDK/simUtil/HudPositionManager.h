@@ -220,7 +220,7 @@ private:
 class SDKUTIL_EXPORT RepositionMatrixPxCallback : public RepositionPixelsCallback
 {
 public:
-  RepositionMatrixPxCallback(osg::MatrixTransform* xform);
+  explicit RepositionMatrixPxCallback(osg::MatrixTransform* xform);
 
   /** Overrides the Reposition callback to set the matrix translate in pixels. */
   virtual void setPositionPx(const std::string& name, const osg::Vec2d& positionPx);

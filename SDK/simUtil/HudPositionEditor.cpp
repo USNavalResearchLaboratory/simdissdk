@@ -481,8 +481,20 @@ int HudEditorMouse::drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapt
 
 int HudEditorMouse::doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  // Drop mouse commands on the ground
-  return inEditorMode_() ? 1 : 0;
+  if (!inEditorMode_())
+    return 0;
+  // On double-click, in editor mode reset the position of the current selection
+  if (!currentSelection_.empty())
+  {
+    osg::ref_ptr<simUtil::HudPositionManager> hud;
+    if (hud_.lock(hud))
+      hud->resetPosition(currentSelection_);
+    osg::ref_ptr<simUtil::HudEditorGui> gui;
+    if (gui_.lock(gui))
+      gui->updatePosition(currentSelection_);
+  }
+  // Eat the double-click
+  return 1;
 }
 
 int HudEditorMouse::scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
