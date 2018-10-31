@@ -1273,4 +1273,42 @@ void EnableDOFTransform::apply(osg::Node& node)
   traverse(node);
 }
 
+//--------------------------------------------------------------------------
+
+PixelScaleHudTransform::PixelScaleHudTransform()
+{
+}
+
+PixelScaleHudTransform::PixelScaleHudTransform(const PixelScaleHudTransform& rhs, const osg::CopyOp& copyop)
+  : Transform(rhs, copyop),
+    invertedMvpw_(rhs.invertedMvpw_)
+{
+}
+
+bool PixelScaleHudTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
+{
+  if (_referenceFrame == RELATIVE_RF)
+    matrix.preMult(computeMatrix_(nv));
+  else // absolute
+    matrix = computeMatrix_(nv);
+  return true;
+}
+
+bool PixelScaleHudTransform::computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
+{
+  if (_referenceFrame == RELATIVE_RF)
+    matrix.postMult(osg::Matrix::inverse(computeMatrix_(nv)));
+  else // absolute
+    matrix = osg::Matrix::inverse(computeMatrix_(nv));
+  return true;
+}
+
+osg::Matrixd PixelScaleHudTransform::computeMatrix_(osg::NodeVisitor* nv) const
+{
+  osg::CullStack* cs = nv ? nv->asCullStack() : NULL;
+  if (cs)
+    invertedMvpw_ = osg::Matrix::inverse(*cs->getMVPW());
+  return invertedMvpw_;
+}
+
 }

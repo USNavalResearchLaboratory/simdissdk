@@ -29,11 +29,12 @@
 #include "simData/DataStore.h"
 #include "simData/DataTypes.h"
 
-#include "osg/NodeCallback"
-#include "osg/Geometry"
-#include "osg/Quat"
-#include "osg/Matrix"
 #include "osg/BoundingBox"
+#include "osg/Geometry"
+#include "osg/Matrix"
+#include "osg/NodeCallback"
+#include "osg/Quat"
+#include "osg/Transform"
 #include "osgGA/GUIEventHandler"
 #include "osgText/Text"
 
@@ -711,6 +712,32 @@ namespace simVis
 
   private:
     bool enabled_;
+  };
+
+  /**
+   * Utility class that is intended to do a transform to screen coordinates, backing out MVPW.
+   * This is similar to osg::AutoTransform but does not attempt to maintain an aspect ratio,
+   * instead preferring to back out to pixel scale in both the X and the Y axes.
+   */
+  class SDKVIS_EXPORT PixelScaleHudTransform : public osg::Transform
+  {
+  public:
+    PixelScaleHudTransform();
+    PixelScaleHudTransform(const PixelScaleHudTransform& rhs, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+    META_Node(simVis, PixelScaleHudTransform);
+
+    /** Override osg::Transform method. */
+    virtual bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const;
+    /** Override osg::Transform method. */
+    virtual bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const;
+
+  private:
+    /** Computes the inverse of the MVPW and saves it */
+    osg::Matrixd computeMatrix_(osg::NodeVisitor* nv) const;
+
+  private:
+    /** Model-View Projection Window matrix, inverted for performance.  Mutable for caching. */
+    mutable osg::Matrixd invertedMvpw_;
   };
 
 } // namespace simVis
