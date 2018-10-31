@@ -91,9 +91,9 @@ protected:
 
 private:
   /** Presumes that box is oriented on the Z plane.  Draws the filled background. */
-  osg::Geometry* WindowNodePx::filledBox_(const osg::Vec3d& min, const osg::Vec3d& max, const osg::Vec4f& color) const;
+  osg::Geometry* filledBox_(const osg::Vec3d& min, const osg::Vec3d& max, const osg::Vec4f& color) const;
   /** Draws the control point as a filled diamond. */
-  osg::Geometry* WindowNodePx::diamond_(float halfWidth, const osg::Vec4f& color) const;
+  osg::Geometry* diamond_(float halfWidth, const osg::Vec4f& color) const;
 
   osg::ref_ptr<osgEarth::LineDrawable> outline_;
   osg::BoundingBoxd box_;
