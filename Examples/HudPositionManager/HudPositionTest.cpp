@@ -131,7 +131,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
     case 'c':
     {
       // Cycle through a few different classification strings
-      classificationCycle_ = (++classificationCycle_ % 3);
+      classificationCycle_ = ((++classificationCycle_) % 3);
       simData::DataStore::Transaction txn;
       simData::ScenarioProperties* props = dataStore_.mutable_scenarioProperties(&txn);
       switch (classificationCycle_)
@@ -175,7 +175,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
     case 'z':
     {
       // Cycle through a few different wind settings
-      windCycle_ = (++windCycle_ % 3);
+      windCycle_ = ((++windCycle_) % 3);
       simData::DataStore::Transaction txn;
       simData::ScenarioProperties* props = dataStore_.mutable_scenarioProperties(&txn);
       switch (windCycle_)
