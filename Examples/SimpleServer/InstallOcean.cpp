@@ -20,6 +20,7 @@
 *
 */
 #include "osg/ArgumentParser"
+#include "osg/Depth"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarthUtil/Ocean"
@@ -41,6 +42,7 @@
 #include "simVis/BathymetryGenerator.h"
 #include "simVis/Constants.h"
 #include "simVis/SceneManager.h"
+#include "simVis/OverheadMode.h"
 #include "simUtil/ExampleResources.h"
 #include "InstallOcean.h"
 
@@ -126,7 +128,13 @@ void InstallOcean::install(simVis::SceneManager& scene)
     triton.maxAltitude() = 30000.0f;
     triton.renderBinNumber() = simVis::BIN_OCEAN;
     osg::ref_ptr<osgEarth::Triton::TritonLayer> layer = new osgEarth::Triton::TritonLayer(triton);
+    
+    // Configure it to work in overhead mode
+    simVis::OverheadMode::configureOceanLayer(layer.get());
+
+    // Add to the map
     scene.getMap()->addLayer(layer.get());
+    //layer->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false), 1);
   }
   else // type_ == SIMPLE
 #endif
@@ -142,6 +150,9 @@ void InstallOcean::install(simVis::SceneManager& scene)
     ocean.useBathymetry() = false;
     ocean.maxAltitude() = 30000.0f;
     osg::ref_ptr<osgEarth::Layer> layer = new osgEarth::Util::SimpleOceanLayer(ocean);
+
+    // Configure it to work in overhead mode
+    simVis::OverheadMode::configureOceanLayer(layer.get());
 
     // Control the ocean's rendering order so we can see underwater objects:
     layer->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_OCEAN, simVis::BIN_GLOBAL_SIMSDK);

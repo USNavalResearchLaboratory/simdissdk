@@ -26,7 +26,7 @@
 #include "osgGA/GUIEventHandler"
 #include "simCore/Common/Common.h"
 
-namespace osgEarth { class GeoTransform; }
+namespace osgEarth { class GeoTransform; class Layer; }
 
 namespace simVis
 {
@@ -85,6 +85,11 @@ public:
    * do it manually by calling this method. (For an intersection visitor, for example)
    */
   static void prepareVisitor(const View* view, osg::NodeVisitor* nv);
+
+  /**
+   * Configures an ocean layer to work properly in overhead mode.
+   */
+  static void configureOceanLayer(osgEarth::Layer* layer);
 
 public:
   /**

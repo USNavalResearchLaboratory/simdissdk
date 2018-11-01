@@ -51,6 +51,7 @@
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/Constants.h"
+#include "simVis/OverheadMode.h"
 #include "simUtil/ExampleResources.h"
 
 #include "osgEarthDrivers/tms/TMSOptions"
@@ -73,6 +74,8 @@
 #include "osgEarthUtil/Sky"
 #include "osgEarthUtil/Ocean"
 #include "osgEarthDrivers/mbtiles/MBTilesOptions"
+
+#include "osg/Depth"
 
 // Hawaii near Kauai:
 #define LAT             21.937611
@@ -133,6 +136,11 @@ struct MenuHandler : public osgGA::GUIEventHandler
         if (menuControl_)
           menuControl_->setVisible(!menuControl_->visible());
         break;
+
+      case 'a':
+          viewer_->setLogarithmicDepthBufferEnabled(
+              !viewer_->isLogarithmicDepthBufferEnabled());
+          break;
       }
     }
     return handled;
@@ -155,7 +163,8 @@ static simData::ObjectId createShip(simData::DataStore& dataStore)
   {
     simData::PlatformPrefs* prefs = dataStore.mutable_platformPrefs(result, &transaction);
     prefs->mutable_commonprefs()->set_name(PLATFORM_SHIP);
-    prefs->set_icon(EXAMPLE_SHIP_ICON);
+    prefs->set_icon("H:/data/simdis/JIRA/SIM-9189/cvn68_20181023-174634/data/cvn_68.osgb");
+    //prefs->set_icon(EXAMPLE_SHIP_ICON);
     prefs->set_dynamicscale(true);
     prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
     transaction.complete(&prefs);
@@ -681,6 +690,7 @@ namespace
     osgEarth::Triton::TritonLayer* rv = new osgEarth::Triton::TritonLayer(triton);
 #endif
     rv->setOpacity(0.8f);
+    simVis::OverheadMode::configureOceanLayer(rv);
     return rv;
   }
 #endif
@@ -701,6 +711,7 @@ namespace
     ocean.maxAltitude() = 30000.0f;
     SimpleOceanLayer* rv = new SimpleOceanLayer(ocean);
     rv->setOpacity(0.8f);
+    simVis::OverheadMode::configureOceanLayer(rv);
     osg::StateSet* stateSet = rv->getOrCreateStateSet();
     stateSet->setRenderBinDetails(simVis::BIN_OCEAN, simVis::BIN_GLOBAL_SIMSDK);
     stateSet->setDefine("SIMVIS_IGNORE_BATHYMETRY_GEN");
