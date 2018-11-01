@@ -20,12 +20,14 @@ void simvis_disable_depth_alpha(inout vec4 color)
     // Fragment depth is all the way in the back; does not matter if LDB is on or not.
     gl_FragDepth = 1.0;
   }
+
+  #ifndef SV_USE_LOG_DEPTH_BUFFER
   else
   {
     // only set this if the LDB didn't already set it
-    #ifndef SV_USE_LOG_DEPTH_BUFFER
-      gl_FragDepth = gl_FragCoord.z;
-    #endif
+    gl_FragDepth = gl_FragCoord.z;
   }  
+  #endif
+
 #endif
 }
