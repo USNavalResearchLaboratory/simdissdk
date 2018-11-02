@@ -99,17 +99,30 @@ std::string expandEnv(const std::string& val)
       firstPart = value.substr(0, start);
     const std::string middlePart = value.substr(start + 2, end - start - 2);
     const std::string endPart = value.substr(end + 1);
+    // Replace $(ENV) only if ENV is not empty and contains no whitespace
+    bool replace = (middlePart.empty() ? false : true);
+    for (int i = 0; i < middlePart.size() && replace; i++)
+      replace = !isspace(middlePart[i]);
+
+    size_t searchFrom;
     rv = firstPart;
-    const std::string envVar = simCore::getEnvVar(middlePart);
-    if (!envVar.empty())
+    if (replace)
+    {
+      const std::string envVar = simCore::getEnvVar(middlePart);
       rv += envVar;
-    else // Retain the environment variable part, as per review 546
+      // Search starting from the end of the replacement text
+      searchFrom = start + envVar.size();
+    }
+    else
+    {
       rv += "$(" + middlePart + ")";
+      // Search starting from after the current $ to avoid circular loop
+      searchFrom = start + 1;
+    }
     rv += endPart;
     // check remainder for additional envs to expand
     value = rv;
-    // set starting value 1 past last starting position to avoid circular loop
-    start = value.find("$(", start + 1);
+    start = value.find("$(", searchFrom);
   }
 
   return rv;
