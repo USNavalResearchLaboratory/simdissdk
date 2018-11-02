@@ -101,7 +101,7 @@ std::string expandEnv(const std::string& val)
     const std::string endPart = value.substr(end + 1);
     // Replace $(ENV) only if ENV is not empty and contains no whitespace
     bool replace = (middlePart.empty() ? false : true);
-    for (int i = 0; i < middlePart.size() && replace; i++)
+    for (size_t i = 0; i < middlePart.size() && replace; i++)
       replace = !isspace(middlePart[i]);
 
     size_t searchFrom;
