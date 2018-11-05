@@ -20,6 +20,7 @@
  *
  */
 #include <cassert>
+#include "osg/Depth"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/VirtualProgram"
 #include "simNotify/Notify.h"
@@ -27,12 +28,12 @@
 #include "simCore/Calc/Calculations.h"
 #include "simCore/String/Format.h"
 #include "simVis/LocatorNode.h"
-#include "simVis/View.h"
+#include "simVis/osgEarthVersion.h"
+#include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
 #include "simVis/Shaders.h"
-#include "simVis/OverheadMode.h"
+#include "simVis/View.h"
 #include "simVis/Constants.h"
-#include "osg/Depth"
 
 namespace simVis {
 
@@ -44,8 +45,8 @@ static const std::string OVERHEAD_MODE_TOKEN = "simSDK.OverheadModeEnabled";
 
 namespace
 {
-    // Just for debugging. It will turn any flattened geometry Yellow.
-    static const char* s_overheadModeDebugFS =
+  // Just for debugging. It will turn any flattened geometry Yellow.
+  static const char* s_overheadModeDebugFS =
         "#version 330\n"
         "uniform bool " FLATTEN_UNIFORM ";\n"
         "void simVis_flatten_FS_debug(inout vec4 color) { \n"
@@ -128,9 +129,12 @@ namespace
     }
     int _count;
   };
-  
-  //! Cull callback for ocean layers that will change the stateset
-  //! when in overhead mode
+
+#if 0 && SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
+  /**
+   * Cull callback for ocean layers that will change the stateset
+   * when in overhead mode
+   */
   class OceanOverheadModeCallback : public osgEarth::Layer::TraversalCallback
   {
   public:
@@ -160,6 +164,7 @@ namespace
       }
     }
   };
+#endif
 }
 
 void OverheadMode::install(osg::Node* root)
@@ -309,7 +314,9 @@ void OverheadMode::IndicatorCallback::operator()(osg::Node* node, osg::NodeVisit
 
 void OverheadMode::configureOceanLayer(osgEarth::Layer* layer)
 {
+#if 0 && SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
   layer->setCullCallback(new OceanOverheadModeCallback());
+#endif
 }
 
 ///////////////////////////////////////////////////////////
