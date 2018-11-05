@@ -149,6 +149,8 @@ void CompassNode::initCompass_(const std::string& compassFilename)
   valueText_->setBackdropColor(osgEarth::Symbology::Color::Black);
   valueText_->setDataVariance(osg::Object::DYNAMIC);
   valueText_->setPosition(osg::Vec3f(POS_COMPASS_X, POS_COMPASS_Y, 0.f));
+  // Without this, text goes into a depth sorted bin, and might draw on top of things it shouldn't
+  valueText_->getOrCreateStateSet()->setRenderBinToInherit();
   addChild(valueText_);
 
   compassImageXform_ = new osg::MatrixTransform;
@@ -206,6 +208,8 @@ void CompassNode::initWindVane_()
   windSpeedText_->setBackdropColor(osgEarth::Symbology::Color::Black);
   windSpeedText_->setDataVariance(osg::Object::DYNAMIC);
   windSpeedText_->setPosition(osg::Vec3f(POS_WIND_SPEED_X, POS_WIND_SPEED_Y, 0.f));
+  // Without this, text goes into a depth sorted bin, and might draw on top of things it shouldn't
+  windSpeedText_->getOrCreateStateSet()->setRenderBinToInherit();
   windVaneTexts_->addChild(windSpeedText_);
 
   // Wind angle text is shown below the compass

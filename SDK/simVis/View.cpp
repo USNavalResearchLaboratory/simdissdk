@@ -1884,6 +1884,8 @@ osg::Camera* View::createHUD_() const
   hud->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), 0);
 #endif
   hud->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
+  hud->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+  hud->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, false));
   return hud;
 }
 

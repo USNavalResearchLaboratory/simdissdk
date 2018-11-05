@@ -152,6 +152,8 @@ void HudTextAdapter::update_()
     {
       osgText = new osgText::Text();
       osgText->setDataVariance(osg::Object::DYNAMIC);
+      // Without this, text goes into a depth sorted bin, and might draw on top of things it shouldn't
+      osgText->getOrCreateStateSet()->setRenderBinToInherit();
       osgTextVector_.push_back(osgText);
       addDrawable(osgText.get());
 
