@@ -35,7 +35,10 @@
 #include "osg/Vec2d"
 #include "simCore/Common/Export.h"
 
-namespace osg { class MatrixTransform; }
+namespace osg {
+  class MatrixTransform;
+  class Node;
+}
 namespace osgViewer { class ViewerBase; }
 
 namespace simUtil {
