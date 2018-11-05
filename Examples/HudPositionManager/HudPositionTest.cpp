@@ -231,7 +231,7 @@ int main(int argc, char** argv)
 
   // Create a mouse dispatcher for the HUD Editor
   simUtil::MouseDispatcher mouseDispatcher;
-  mouseDispatcher.setViewManager(viewer);
+  mouseDispatcher.setViewManager(viewer.get());
 
   // Create a HUD position manager that will move on-screen objects
   simUtil::HudPositionEditor hudEditor;

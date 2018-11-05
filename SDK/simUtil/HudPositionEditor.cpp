@@ -332,7 +332,7 @@ void HudEditorGui::updatePosition(const std::string& windowName)
     windows_[windowName] = window;
   }
   else
-    window = i->second;
+    window = i->second.get();
 
   // Should not be possible to be NULL here
   assert(window);
@@ -403,7 +403,7 @@ void HudEditorGui::handleResize_(double width, double height)
   {
     osg::Vec2d posPct;
     if (hud->getPosition(i->first, posPct) == 0)
-      movePercent_(i->second, posPct);
+      movePercent_(i->second.get(), posPct);
   }
 }
 
