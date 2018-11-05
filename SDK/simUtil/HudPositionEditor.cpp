@@ -77,6 +77,9 @@ public:
   /** Creates the window with the given name and the min/max XYZ values. */
   WindowNodePx(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz);
 
+  /** Changes the size of the window frame */
+  void updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz);
+
   /**
    * Retrieves the bounding box in window coordinates of the entire area.  This is expanded slightly for
    * buffer and for the control point graphic.
@@ -95,17 +98,35 @@ private:
   /** Draws the control point as a filled diamond. */
   osg::Geometry* diamond_(float halfWidth, const osg::Vec4f& color) const;
 
+  /** Removes all children and recreates the geometry based on new size. */
+  void recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz);
+
+  osg::Vec3d minXyz_;
+  osg::Vec3d maxXyz_;
   osg::ref_ptr<osgEarth::LineDrawable> outline_;
   osg::BoundingBoxd box_;
+  bool selected_;
 };
 
 /////////////////////////////////////////////////////////
 
 WindowNodePx::WindowNodePx(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz)
+  : selected_(false)
 {
   // Use osg::Node::setName() for storing the window's name
   setName(name);
+  recreateGeometry_(name, minXyz, maxXyz);
+}
 
+void WindowNodePx::recreateGeometry_(const std::string& name, const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz)
+{
+  // Refuse to recreate if all parameters match
+  if (minXyz_ == minXyz && maxXyz_ == maxXyz)
+    return;
+
+  removeChildren(0, getNumChildren());
+
+  box_.init();
   box_.expandBy(minXyz - osg::Vec3d(BOX_PADDING, BOX_PADDING, 0.));
   box_.expandBy(maxXyz + osg::Vec3d(BOX_PADDING, BOX_PADDING, 0.));
   box_.expandBy(-ANCHOR_HALF_WIDTH - BOX_PADDING, -ANCHOR_HALF_WIDTH - BOX_PADDING, 0.);
@@ -144,8 +165,16 @@ WindowNodePx::WindowNodePx(const std::string& name, const osg::Vec3d& minXyz, co
   outline_->finish();
   addChild(outline_.get());
 
-  // Initialize the graphics to look unselected
-  setSelected(false);
+  // Initialize the selection graphics
+  setSelected(selected_);
+
+  minXyz_ = minXyz;
+  maxXyz_ = maxXyz;
+}
+
+void WindowNodePx::updateSize(const osg::Vec3d& minXyz, const osg::Vec3d& maxXyz)
+{
+  recreateGeometry_(getName(), minXyz, maxXyz);
 }
 
 const osg::BoundingBoxd& WindowNodePx::boundingBoxPx() const
@@ -155,6 +184,11 @@ const osg::BoundingBoxd& WindowNodePx::boundingBoxPx() const
 
 void WindowNodePx::setSelected(bool selected)
 {
+  // Cache the state of selected for recreation of geometry later, but
+  // do not bother testing for changes here because the logic gets too
+  // complex on construction, because "not selected" state for graphics
+  // includes non-default stipple/color.
+  selected_ = selected;
   if (selected)
   {
     outline_->setStipplePattern(OUTLINE_SELECTED_STIPPLE);
@@ -309,6 +343,27 @@ void HudEditorGui::updatePosition(const std::string& windowName)
   osg::Vec2d posPct;
   if (hud->getPosition(windowName, posPct) == 0)
     movePercent_(window, posPct);
+}
+
+int HudEditorGui::updateSize(const std::string& windowName)
+{
+  // Pull out size parameters from the HUD Position Manager
+  osg::ref_ptr<simUtil::HudPositionManager> hud;
+  if (!hud_.lock(hud))
+    return 1;
+  osg::Vec2d minXyPx;
+  osg::Vec2d maxXyPx;
+  if (hud->getSize(windowName, minXyPx, maxXyPx) != 0)
+    return 1;
+
+  // Get our window pointer
+  auto i = windows_.find(windowName);
+  if (i == windows_.end() || !i->second)
+    return 1;
+  const osg::Vec3d minXyz(minXyPx, 0.);
+  const osg::Vec3d maxXyz(maxXyPx, 0.);
+  i->second->updateSize(minXyz, maxXyz);
+  return 0;
 }
 
 void HudEditorGui::traverse(osg::NodeVisitor& nv)
@@ -630,6 +685,18 @@ void HudPositionEditor::setVisible(bool fl)
   // scene somewhere appropriate.
   assert(gui_->getNumParents() != 0);
   gui_->setVisible(fl);
+}
+
+void HudPositionEditor::addWindow(const std::string& name, const osg::Vec2d& defaultPositionPct, HudPositionManager::RepositionCallback* reposCallback)
+{
+  hud_->addWindow(name, defaultPositionPct, reposCallback);
+  gui_->updatePosition(name);
+}
+
+void HudPositionEditor::setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
+{
+  if (hud_->setSize(name, minXyPx, maxXyPx) == 0)
+    gui_->updateSize(name);
 }
 
 void HudPositionEditor::setPosition(const std::string& name, const osg::Vec2d& positionPct)

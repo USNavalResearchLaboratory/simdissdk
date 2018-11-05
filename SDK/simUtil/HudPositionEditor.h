@@ -26,11 +26,11 @@
 #include "osg/observer_ptr"
 #include "osg/Camera"
 #include "simCore/Common/Export.h"
+#include "simUtil/HudPositionManager.h"
 #include "simUtil/MouseManipulator.h"
 
 namespace simUtil {
 
-class HudPositionManager;
 class MouseDispatcher;
 class WindowNodePx;
 
@@ -59,6 +59,9 @@ public:
    * then the window is created and sized and placed appropriately.
    */
   void updatePosition(const std::string& windowName);
+  /** Updates the size of an existing window.  Unlike updatePosition(), does not create windows. */
+  int updateSize(const std::string& windowName);
+
   /** Sets the flag for whether a particular window is selected or not.  Window must exist. */
   void setSelected(const std::string& name, bool selected);
 
@@ -180,6 +183,11 @@ public:
   bool isVisible() const;
   /** Show or hide the HUD Editor */
   void setVisible(bool visible);
+
+  /** Adds a window to the HUD Position Manager */
+  void addWindow(const std::string& name, const osg::Vec2d& defaultPositionPct, HudPositionManager::RepositionCallback* reposCallback);
+  /** Resizes a window in the HUD Position Manager */
+  void setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
 
   /** Changes a single window's position */
   void setPosition(const std::string& name, const osg::Vec2d& positionPct);
