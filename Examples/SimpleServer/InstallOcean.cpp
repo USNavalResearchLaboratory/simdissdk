@@ -134,7 +134,6 @@ void InstallOcean::install(simVis::SceneManager& scene)
 
     // Add to the map
     scene.getMap()->addLayer(layer.get());
-    //layer->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false), 1);
   }
   else // type_ == SIMPLE
 #endif

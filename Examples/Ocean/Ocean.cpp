@@ -163,8 +163,7 @@ static simData::ObjectId createShip(simData::DataStore& dataStore)
   {
     simData::PlatformPrefs* prefs = dataStore.mutable_platformPrefs(result, &transaction);
     prefs->mutable_commonprefs()->set_name(PLATFORM_SHIP);
-    prefs->set_icon("H:/data/simdis/JIRA/SIM-9189/cvn68_20181023-174634/data/cvn_68.osgb");
-    //prefs->set_icon(EXAMPLE_SHIP_ICON);
+    prefs->set_icon(EXAMPLE_SHIP_ICON);
     prefs->set_dynamicscale(true);
     prefs->mutable_commonprefs()->mutable_labelprefs()->set_draw(true);
     transaction.complete(&prefs);
