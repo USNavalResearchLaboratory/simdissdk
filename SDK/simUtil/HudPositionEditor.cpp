@@ -189,6 +189,8 @@ void WindowNodePx::setSelected(bool selected)
   // complex on construction, because "not selected" state for graphics
   // includes non-default stipple/color.
   selected_ = selected;
+  if (!outline_)
+    return;
   if (selected)
   {
     outline_->setStipplePattern(OUTLINE_SELECTED_STIPPLE);
