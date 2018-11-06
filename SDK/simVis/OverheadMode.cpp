@@ -130,7 +130,7 @@ namespace
     int _count;
   };
 
-#if 0 && SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
   /**
    * Cull callback for ocean layers that will change the stateset
    * when in overhead mode
@@ -314,7 +314,7 @@ void OverheadMode::IndicatorCallback::operator()(osg::Node* node, osg::NodeVisit
 
 void OverheadMode::configureOceanLayer(osgEarth::Layer* layer)
 {
-#if 0 && SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
   layer->setCullCallback(new OceanOverheadModeCallback());
 #endif
 }
