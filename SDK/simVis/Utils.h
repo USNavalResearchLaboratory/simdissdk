@@ -704,7 +704,7 @@ namespace simVis
   };
 
   /** Turns a DOF transform's animation on or off. */
-  class EnableDOFTransform : public osg::NodeVisitor
+  class SDKVIS_EXPORT EnableDOFTransform : public osg::NodeVisitor
   {
   public:
     explicit EnableDOFTransform(bool enabled);
