@@ -71,8 +71,8 @@ public:
   virtual osg::Object* cloneType() const { return new ClassificationLabelNode(); }
   virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new ClassificationLabelNode(*this, copyop); }
   virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const ClassificationLabelNode*>(obj) != NULL; }
-  virtual const char* className() const { return "simVis"; }
-  virtual const char* libraryName() const { return "ClassificationLabelNode"; }
+  virtual const char* className() const { return "ClassificationLabelNode"; }
+  virtual const char* libraryName() const { return "simVis"; }
 
 protected:
   /** Virtual destructor protected to avoid ref_ptr double delete issues. */
