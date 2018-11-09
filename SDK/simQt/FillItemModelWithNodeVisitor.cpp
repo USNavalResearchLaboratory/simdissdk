@@ -28,6 +28,332 @@
 
 namespace simQt {
 
+StateSetVisitor::StateSetVisitor(osg::NodeVisitor::TraversalMode tm)
+  : NodeVisitor(tm)
+{
+}
+
+void StateSetVisitor::apply(osg::Node& node)
+{
+  if (!node.getStateSet())
+  {
+    traverse(node);
+    return;
+  }
+
+  // Render Bin
+  osg::StateSet& stateSet = *node.getStateSet();
+  applyRenderBin(stateSet, stateSet.getBinNumber(), stateSet.getBinName(), stateSet.getRenderBinMode(), stateSet.getNestRenderBins());
+
+  // Modes
+  for (auto i = stateSet.getModeList().begin(); i != stateSet.getModeList().end(); ++i)
+    applyMode(stateSet, i->first, i->second);
+
+  // Attributes
+  for (auto i = stateSet.getAttributeList().begin(); i != stateSet.getAttributeList().end(); ++i)
+  {
+    if (i->second.first.valid())
+      applyAttribute(stateSet, *i->second.first, i->second.second);
+  }
+
+  // Texture Modes
+  for (unsigned int unit = 0; unit < stateSet.getTextureModeList().size(); ++unit)
+  {
+    const auto& modes = stateSet.getTextureModeList()[unit];
+    for (auto i = modes.begin(); i != modes.end(); ++i)
+      applyTextureMode(stateSet, unit, i->first, i->second);
+  }
+
+  // Texture attributes
+  for (unsigned int unit = 0; unit < stateSet.getTextureAttributeList().size(); ++unit)
+  {
+    const auto& attribs = stateSet.getTextureAttributeList()[unit];
+    for (auto i = attribs.begin(); i != attribs.end(); ++i)
+    {
+      if (i->second.first.valid())
+        applyTextureAttribute(stateSet, unit, *i->second.first, i->second.second);
+    }
+  }
+
+  // Uniforms
+  for (auto i = stateSet.getUniformList().begin(); i != stateSet.getUniformList().end(); ++i)
+  {
+    if (i->second.first.valid())
+      applyUniform(stateSet, *i->second.first, i->second.second);
+  }
+
+  // Defines
+  for (auto i = stateSet.getDefineList().begin(); i != stateSet.getDefineList().end(); ++i)
+    applyDefine(stateSet, i->first, i->second.first, i->second.second);
+}
+
+void StateSetVisitor::applyRenderBin(osg::StateSet& stateSet, int binNumber, const std::string& binName, osg::StateSet::RenderBinMode binMode, bool nestedBins)
+{
+  // noop
+}
+
+void StateSetVisitor::applyMode(osg::StateSet& stateSet, unsigned int mode, unsigned int value)
+{
+  // noop
+}
+
+void StateSetVisitor::applyAttribute(osg::StateSet& stateSet, osg::StateAttribute& attrib, unsigned int value)
+{
+  // noop
+}
+
+void StateSetVisitor::applyTextureMode(osg::StateSet& stateSet, unsigned int unit, unsigned int mode, unsigned int value)
+{
+  // noop
+}
+
+void StateSetVisitor::applyTextureAttribute(osg::StateSet& stateSet, unsigned int unit, osg::StateAttribute& attrib, unsigned int value)
+{
+  // noop
+}
+
+void StateSetVisitor::applyUniform(osg::StateSet& stateSet, osg::Uniform& uniform, unsigned int value)
+{
+  // noop
+}
+
+void StateSetVisitor::applyDefine(osg::StateSet& stateSet, const std::string& name, const std::string& definition, unsigned int value)
+{
+  // noop
+}
+
+std::string StateSetVisitor::renderBinModeToString(osg::StateSet::RenderBinMode binMode)
+{
+  if (binMode == osg::StateSet::INHERIT_RENDERBIN_DETAILS)
+    return "Inherit";
+  std::stringstream rv;
+  rv << "ON";
+  if (binMode & osg::StateSet::OVERRIDE_RENDERBIN_DETAILS)
+    rv << " | OVERRIDE";
+  if (binMode & osg::StateSet::PROTECTED_RENDERBIN_DETAILS)
+    rv << " | PROTECTED";
+  return rv.str();
+}
+
+std::string StateSetVisitor::modeToString(unsigned int mode)
+{
+  // Reuse the registry
+  return osgDB::Registry::instance()->getObjectWrapperManager()->getString("GL", mode);
+}
+
+std::string StateSetVisitor::valueToString(unsigned int value)
+{
+  std::stringstream str;
+  if (value & osg::StateAttribute::ON)
+    str << "ON";
+  else
+    str << "OFF";
+  if (value & osg::StateAttribute::OVERRIDE)
+    str << " | OVERRIDE";
+  if (value & osg::StateAttribute::PROTECTED)
+    str << " | PROTECTED";
+  if (value & osg::StateAttribute::INHERIT)
+    str << " | INHERIT";
+  return str.str();
+}
+
+std::string StateSetVisitor::uniformToString(const osg::Uniform& uniform)
+{
+  if (uniform.getNumElements() == 0)
+    return "";
+  std::stringstream ss;
+  // Surround arrays with [ ]
+  if (uniform.getNumElements() != 1)
+    ss << "[ ";
+
+  // Break out by data type
+  if (uniform.getFloatArray())
+  {
+    for (size_t k = 0; k < uniform.getNumElements(); ++k)
+      ss << (k == 0 ? "" : ", ") << uniform.getFloatArray()->at(k);
+  }
+
+  else if (uniform.getDoubleArray())
+  {
+    for (size_t k = 0; k < uniform.getNumElements(); ++k)
+      ss << (k == 0 ? "" : ", ") << uniform.getDoubleArray()->at(k);
+  }
+
+  else if (uniform.getIntArray())
+  {
+    // Handle special case of booleans
+    if (uniform.getType() == osg::Uniform::BOOL || uniform.getType() == osg::Uniform::BOOL_VEC2 ||
+      uniform.getType() == osg::Uniform::BOOL_VEC3 || uniform.getType() == osg::Uniform::BOOL_VEC4)
+    {
+      for (size_t k = 0; k < uniform.getNumElements(); ++k)
+        ss << (k == 0 ? "" : ", ") << (uniform.getIntArray()->at(k) == 0 ? "False" : "True");
+    }
+    else
+    {
+      for (size_t k = 0; k < uniform.getNumElements(); ++k)
+        ss << (k == 0 ? "" : ", ") << uniform.getIntArray()->at(k);
+    }
+  }
+
+  else if (uniform.getUIntArray())
+  {
+    for (size_t k = 0; k < uniform.getNumElements(); ++k)
+      ss << (k == 0 ? "" : ", ") << uniform.getUIntArray()->at(k);
+  }
+
+  else if (uniform.getUInt64Array())
+  {
+    for (size_t k = 0; k < uniform.getNumElements(); ++k)
+      ss << (k == 0 ? "" : ", ") << uniform.getUInt64Array()->at(k);
+  }
+
+  else if (uniform.getInt64Array())
+  {
+    for (size_t k = 0; k < uniform.getNumElements(); ++k)
+      ss << (k == 0 ? "" : ", ") << uniform.getInt64Array()->at(k);
+  }
+
+  else
+    return "Unknown Values";
+
+  if (uniform.getNumElements() != 1)
+    ss << " ]";
+  return ss.str();
+}
+
+
+///////////////////////////////////////////////////////////////
+
+FillTreeStateSetVisitor::FillTreeStateSetVisitor(QStandardItem& parent, osg::NodeVisitor::TraversalMode tm)
+  : StateSetVisitor(tm),
+    parent_(parent),
+    modes_(NULL),
+    attributes_(NULL),
+    textureModes_(NULL),
+    textureAttributes_(NULL),
+    uniforms_(NULL),
+    defines_(NULL)
+{
+}
+
+void FillTreeStateSetVisitor::applyRenderBin(osg::StateSet& stateSet, int binNumber, const std::string& binName, osg::StateSet::RenderBinMode binMode, bool nestedBins)
+{
+  if (binMode != osg::StateSet::INHERIT_RENDERBIN_DETAILS)
+  {
+    const QString renderBinModeString = QString::fromStdString(StateSetVisitor::renderBinModeToString(binMode));
+    appendRow_(parent_, QObject::tr("Bin Number"), QString::number(binNumber), renderBinModeString);
+    appendRow_(parent_, QObject::tr("Bin Name"), QString::fromStdString(binName), renderBinModeString);
+  }
+  // Call out unusual nesting
+  if (!nestedBins)
+  {
+    auto row = appendRow_(parent_, QObject::tr("Nested Bins"), QObject::tr("False"), "");
+    for (auto i = row.begin(); i != row.end(); ++i)
+      (*i)->setBackground(Qt::red);
+  }
+}
+
+void FillTreeStateSetVisitor::applyMode(osg::StateSet& stateSet, unsigned int mode, unsigned int value)
+{
+  if (!modes_)
+    modes_ = newStandardItem_(&parent_, QObject::tr("Modes"));
+  auto row = appendRow_(*modes_,
+    QString::fromStdString(StateSetVisitor::modeToString(mode)),
+    "",
+    QString::fromStdString(StateSetVisitor::valueToString(value)));
+  colorizeItem_(*row[0], value);
+}
+
+void FillTreeStateSetVisitor::applyAttribute(osg::StateSet& stateSet, osg::StateAttribute& attrib, unsigned int value)
+{
+  if (!attributes_)
+    attributes_ = newStandardItem_(&parent_, QObject::tr("Attributes"));
+  appendRow_(*attributes_,
+    QString::fromStdString(attrib.className()),
+    "",
+    QString::fromStdString(StateSetVisitor::valueToString(value)));
+}
+
+void FillTreeStateSetVisitor::applyTextureMode(osg::StateSet& stateSet, unsigned int unit, unsigned int mode, unsigned int value)
+{
+  if (!textureModes_)
+    textureModes_ = newStandardItem_(&parent_, QObject::tr("Texture Modes"));
+  QStandardItem* rowParent = getOrCreateStandardItem_(*textureModes_, QObject::tr("Unit %1").arg(unit));
+  auto row = appendRow_(*rowParent,
+    QString::fromStdString(StateSetVisitor::modeToString(mode)),
+    "",
+    QString::fromStdString(StateSetVisitor::valueToString(value)));
+  colorizeItem_(*row[0], value);
+}
+
+void FillTreeStateSetVisitor::applyTextureAttribute(osg::StateSet& stateSet, unsigned int unit, osg::StateAttribute& attrib, unsigned int value)
+{
+  if (!textureAttributes_)
+    textureAttributes_ = newStandardItem_(&parent_, QObject::tr("Texture Attributes"));
+  QStandardItem* rowParent = getOrCreateStandardItem_(*textureAttributes_, QObject::tr("Unit %1").arg(unit));
+  appendRow_(*attributes_,
+    QString::fromStdString(attrib.className()),
+    "",
+    QString::fromStdString(StateSetVisitor::valueToString(value)));
+}
+
+void FillTreeStateSetVisitor::applyUniform(osg::StateSet& stateSet, osg::Uniform& uniform, unsigned int value)
+{
+  if (!uniforms_)
+    uniforms_ = newStandardItem_(&parent_, QObject::tr("Uniforms"));
+  appendRow_(*uniforms_,
+    QString::fromStdString(uniform.getName()),
+    QString::fromStdString(StateSetVisitor::uniformToString(uniform)),
+    QString::fromStdString(StateSetVisitor::valueToString(value)));
+}
+
+void FillTreeStateSetVisitor::applyDefine(osg::StateSet& stateSet, const std::string& name, const std::string& definition, unsigned int value)
+{
+  if (!defines_)
+    defines_ = newStandardItem_(&parent_, QObject::tr("Defines"));
+  appendRow_(*defines_,
+    QString::fromStdString(name),
+    QString::fromStdString(definition),
+    QString::fromStdString(StateSetVisitor::valueToString(value)));
+}
+
+QList<QStandardItem*> FillTreeStateSetVisitor::appendRow_(QStandardItem& parent, const QString& column1, const QString& column2, const QString& column3) const
+{
+  QList<QStandardItem*> row;
+  row.push_back(newStandardItem_(NULL, column1));
+  row.push_back(newStandardItem_(NULL, column2));
+  row.push_back(newStandardItem_(NULL, column3));
+  parent.appendRow(row);
+  return row;
+}
+
+QStandardItem* FillTreeStateSetVisitor::newStandardItem_(QStandardItem* parent, const QString& title) const
+{
+  QStandardItem* item = new QStandardItem(title);
+  item->setEditable(false);
+  if (parent)
+    parent->appendRow(item);
+  return item;
+}
+
+QStandardItem* FillTreeStateSetVisitor::getOrCreateStandardItem_(QStandardItem& parent, const QString& title) const
+{
+  for (int row = 0; row < parent.rowCount(); ++row)
+  {
+    QStandardItem* child = parent.child(row, 0);
+    if (child && child->text() == title)
+      return child;
+  }
+  return newStandardItem_(&parent, title);
+}
+
+void FillTreeStateSetVisitor::colorizeItem_(QStandardItem& item, unsigned int mode) const
+{
+  item.setForeground(((mode & osg::StateAttribute::ON) != 0) ? Qt::darkGreen : Qt::darkRed);
+}
+
+///////////////////////////////////////////////////////////////
+
 FillItemModelWithNodeVisitor::FillItemModelWithNodeVisitor(QStandardItemModel* model, osg::NodeVisitor::TraversalMode tm)
   : NodeVisitor(tm),
     model_(model)
@@ -60,7 +386,7 @@ void FillItemModelWithNodeVisitor::apply(osg::Group& group)
   stack_.pop_back();
 }
 
-QStandardItem* FillItemModelWithNodeVisitor::appendNode_(const osg::Node& node) const
+QStandardItem* FillItemModelWithNodeVisitor::appendNode_(osg::Node& node) const
 {
   QList<QStandardItem*> row;
   row.push_back(newNodeNameItem_(node));
@@ -73,236 +399,27 @@ QStandardItem* FillItemModelWithNodeVisitor::appendNode_(const osg::Node& node) 
     model_->appendRow(row);
   else
     (*stack_.rbegin())->appendRow(row);
-  buildStateSetTree_(node.getStateSet(), row[0]);
+
+  // Build the state tree
+  buildStateSetTree_(node, row[0]);
   return row[0];
 }
 
-void FillItemModelWithNodeVisitor::buildStateSetTree_(const osg::StateSet* state, QStandardItem* item) const
+void FillItemModelWithNodeVisitor::buildStateSetTree_(osg::Node& node, QStandardItem* item) const
 {
-  if (!state || !item)
+  if (!node.getStateSet() || !item)
     return;
   QStandardItem* parent = new QStandardItem(QObject::tr("State Set"));
   parent->setEditable(false);
   parent->setForeground(Qt::darkBlue);
-  if (state->useRenderBinDetails())
-  {
-    const QString renderBinModeString = renderBinModeString_(state->getRenderBinMode());
-    appendRow_(*parent, QObject::tr("Bin Number"), QString::number(state->getBinNumber()), renderBinModeString);
-    appendRow_(*parent, QObject::tr("Bin Name"), QString::fromStdString(state->getBinName()), renderBinModeString);
-  }
-  // Call out unusual nesting
-  if (!state->getNestRenderBins())
-  {
-    auto row = appendRow_(*parent, QObject::tr("Nested Bins"), QObject::tr("False"), "");
-    for (auto i = row.begin(); i != row.end(); ++i)
-      (*i)->setBackground(Qt::red);
-  }
 
-  // Modes
-  auto& modes = state->getModeList();
-  if (!modes.empty())
-  {
-    QStandardItem* modeParent = new QStandardItem(QObject::tr("Modes"));
-    modeParent->setEditable(false);
-    for (auto i = modes.begin(); i != modes.end(); ++i)
-    {
-      auto row = appendRow_(*modeParent, modeString_(i->first), "", stateValueString_(i->second));
-      colorizeColumn_(*row[0], i->second);
-    }
-    parent->appendRow(modeParent);
-  }
-
-  // Attributes
-  auto& attribs = state->getAttributeList();
-  if (!attribs.empty())
-  {
-    QStandardItem* attribParent = new QStandardItem(QObject::tr("Attributes"));
-    attribParent->setEditable(false);
-    for (auto i = attribs.begin(); i != attribs.end(); ++i)
-      appendRow_(*attribParent, QString::fromStdString(i->second.first->className()), "", stateValueString_(i->second.second));
-    parent->appendRow(attribParent);
-  }
-
-  // Texture modes
-  auto& textureModes = state->getTextureModeList();
-  if (!textureModes.empty())
-  {
-    QStandardItem* modeParent = new QStandardItem(QObject::tr("Texture Modes"));
-    modeParent->setEditable(false);
-    unsigned int unit = 0;
-    for (unit = 0; unit < textureModes.size(); ++unit)
-    {
-      const auto& modes = textureModes[unit];
-      QStandardItem* unitParent = new QStandardItem(QObject::tr("Unit %1").arg(unit));
-      for (auto i = modes.begin(); i != modes.end(); ++i)
-      {
-        auto row = appendRow_(*modeParent, modeString_(i->first), "", stateValueString_(i->second));
-        colorizeColumn_(*row[0], i->second);
-      }
-
-      // Only add if the unit has values
-      if (unitParent->rowCount() == 0)
-        delete unitParent;
-      else
-        modeParent->appendRow(unitParent);
-    }
-    parent->appendRow(modeParent);
-  }
-
-  // Texture attributes
-  auto& textureAttribs = state->getTextureAttributeList();
-  if (!textureAttribs.empty())
-  {
-    QStandardItem* attribParent = new QStandardItem(QObject::tr("Texture Attributes"));
-    attribParent->setEditable(false);
-    unsigned int unit = 0;
-    for (unit = 0; unit < textureAttribs.size(); ++unit)
-    {
-      const auto& attribs = textureAttribs[unit];
-      QStandardItem* unitParent = new QStandardItem(QObject::tr("Unit %1").arg(unit));
-      unitParent->setEditable(false);
-      for (auto i = attribs.begin(); i != attribs.end(); ++i)
-        appendRow_(*attribParent, QString::fromStdString(i->second.first->className()), "", stateValueString_(i->second.second));
-
-      // Only add if the unit has values
-      if (unitParent->rowCount() == 0)
-        delete unitParent;
-      else
-        attribParent->appendRow(unitParent);
-    }
-    parent->appendRow(attribParent);
-  }
-
-  // Uniforms
-  auto& uniforms = state->getUniformList();
-  if (!uniforms.empty())
-  {
-    QStandardItem* uniformParent = new QStandardItem(QObject::tr("Uniforms"));
-    uniformParent->setEditable(false);
-    for (auto i = uniforms.begin(); i != uniforms.end(); ++i)
-      appendRow_(*uniformParent, QString::fromStdString(i->first), uniformString_(*i->second.first), stateValueString_(i->second.second));
-    parent->appendRow(uniformParent);
-  }
-
-  // Defines
-  auto& defines = state->getDefineList();
-  if (!defines.empty())
-  {
-    QStandardItem* defineParent = new QStandardItem(QObject::tr("Defines"));
-    defineParent->setEditable(false);
-    for (auto i = defines.begin(); i != defines.end(); ++i)
-    {
-      auto row = appendRow_(*defineParent, QString::fromStdString(i->first), QString::fromStdString(i->second.first), stateValueString_(i->second.second));
-      colorizeColumn_(*row[0], i->second.second);
-    }
-    parent->appendRow(defineParent);
-  }
+  FillTreeStateSetVisitor fillState(*parent);
+  node.accept(fillState);
 
   // Add the item
   if (parent->rowCount() == 0)
     parent->setBackground(Qt::red);
   item->appendRow(parent);
-}
-
-QString FillItemModelWithNodeVisitor::uniformString_(const osg::Uniform& uniform) const
-{
-  if (uniform.getNumElements() == 0)
-    return "";
-  QString rv;
-  if (uniform.getNumElements() != 1)
-    rv = "[ ";
-
-  if (uniform.getFloatArray())
-  {
-    for (size_t k = 0; k < uniform.getNumElements(); ++k)
-      rv += QString("%1%2").arg(k == 0 ? "" : ", ").arg(uniform.getFloatArray()->at(k));
-  }
-
-  else if (uniform.getDoubleArray())
-  {
-    for (size_t k = 0; k < uniform.getNumElements(); ++k)
-      rv += QString("%1%2").arg(k == 0 ? "" : ", ").arg(uniform.getDoubleArray()->at(k));
-  }
-
-  else if (uniform.getIntArray())
-  {
-    // Handle special case of booleans
-    if (uniform.getType() == osg::Uniform::BOOL || uniform.getType() == osg::Uniform::BOOL_VEC2 ||
-      uniform.getType() == osg::Uniform::BOOL_VEC3 || uniform.getType() == osg::Uniform::BOOL_VEC4)
-    {
-      for (size_t k = 0; k < uniform.getNumElements(); ++k)
-        rv += QString("%1%2").arg(k == 0 ? "" : ", ").arg(uniform.getIntArray()->at(k) == 0 ? QObject::tr("False") : QObject::tr("True"));
-    }
-    else
-    {
-      for (size_t k = 0; k < uniform.getNumElements(); ++k)
-        rv += QString("%1%2").arg(k == 0 ? "" : ", ").arg(uniform.getIntArray()->at(k));
-    }
-  }
-
-  else if (uniform.getUIntArray())
-  {
-    for (size_t k = 0; k < uniform.getNumElements(); ++k)
-      rv += QString("%1%2").arg(k == 0 ? "" : ", ").arg(uniform.getUIntArray()->at(k));
-  }
-
-  else if (uniform.getUInt64Array())
-  {
-    for (size_t k = 0; k < uniform.getNumElements(); ++k)
-      rv += QString("%1%2").arg(k == 0 ? "" : ", ").arg(uniform.getUInt64Array()->at(k));
-  }
-
-  else if (uniform.getInt64Array())
-  {
-    for (size_t k = 0; k < uniform.getNumElements(); ++k)
-      rv += QString("%1%2").arg(k == 0 ? "" : ", ").arg(uniform.getInt64Array()->at(k));
-  }
-
-  else
-    return QObject::tr("Unknown Values");
-
-  if (uniform.getNumElements() != 1)
-    rv += " ]";
-  return rv;
-}
-
-void FillItemModelWithNodeVisitor::colorizeColumn_(QStandardItem& item, unsigned int mode) const
-{
-  item.setForeground(((mode & osg::StateAttribute::ON) != 0) ? Qt::darkGreen : Qt::darkRed);
-}
-
-QString FillItemModelWithNodeVisitor::stateValueString_(unsigned int value) const
-{
-  QString str;
-  if (value & osg::StateAttribute::ON)
-    str = QObject::tr("ON");
-  else
-    str = QObject::tr("OFF");
-  if (value & osg::StateAttribute::OVERRIDE)
-    str += QObject::tr(" | OVERRIDE");
-  if (value & osg::StateAttribute::PROTECTED)
-    str += QObject::tr(" | PROTECTED");
-  if (value & osg::StateAttribute::INHERIT)
-    str += QObject::tr(" | INHERIT");
-  return str;
-}
-
-QString FillItemModelWithNodeVisitor::renderBinModeString_(unsigned int mode) const
-{
-  if (mode == osg::StateSet::INHERIT_RENDERBIN_DETAILS)
-    return QObject::tr("Inherit");
-  QString rv = QObject::tr("ON");
-  if (mode & osg::StateSet::OVERRIDE_RENDERBIN_DETAILS)
-    rv += QObject::tr(" | OVERRIDE");
-  if (mode & osg::StateSet::PROTECTED_RENDERBIN_DETAILS)
-    rv += QObject::tr(" | PROTECTED");
-  return rv;
-}
-
-QString FillItemModelWithNodeVisitor::modeString_(unsigned int mode) const
-{
-  const std::string glString = osgDB::Registry::instance()->getObjectWrapperManager()->getString("GL", mode);
-  return QString::fromStdString(glString);
 }
 
 QStandardItem* FillItemModelWithNodeVisitor::newNodeNameItem_(const osg::Node& node) const
@@ -317,18 +434,6 @@ QStandardItem* FillItemModelWithNodeVisitor::newNodeNameItem_(const osg::Node& n
     newItem->setText(QString::fromStdString(node.getName()));
   newItem->setEditable(false);
   return newItem;
-}
-
-QList<QStandardItem*> FillItemModelWithNodeVisitor::appendRow_(QStandardItem& parent, const QString& column1, const QString& column2, const QString& column3) const
-{
-  QList<QStandardItem*> row;
-  row.push_back(new QStandardItem(column1));
-  row.push_back(new QStandardItem(column2));
-  row.push_back(new QStandardItem(column3));
-  for (auto i = row.begin(); i != row.end(); ++i)
-    (*i)->setEditable(false);
-  parent.appendRow(row);
-  return row;
 }
 
 }
