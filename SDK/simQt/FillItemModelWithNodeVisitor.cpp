@@ -291,7 +291,7 @@ void FillTreeStateSetVisitor::applyTextureAttribute(osg::StateSet& stateSet, uns
   if (!textureAttributes_)
     textureAttributes_ = newStandardItem_(&parent_, QObject::tr("Texture Attributes"));
   QStandardItem* rowParent = getOrCreateStandardItem_(*textureAttributes_, QObject::tr("Unit %1").arg(unit));
-  appendRow_(*attributes_,
+  appendRow_(*rowParent,
     QString::fromStdString(attrib.className()),
     "",
     QString::fromStdString(StateSetVisitor::valueToString(value)));
