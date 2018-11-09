@@ -57,6 +57,7 @@
 #include "simQt/FileDialog.h"
 #include "simQt/FileSelectorWidget.h"
 #include "simQt/FileUtilities.h"
+#include "simQt/FillItemModelWithNodeVisitor.h"
 #include "simQt/FontWidget.h"
 #include "simQt/GanttChartView.h"
 #include "simQt/Gl3FormatGuesser.h"
