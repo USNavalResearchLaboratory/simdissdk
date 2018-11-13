@@ -154,7 +154,8 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
     laserIcon_(":/simQt/images/laser.png"),
     lobIcon_(":/simQt/images/lob.png"),
     projectorIcon_(":/simQt/images/projector.png"),
-    useEntityIcons_(true)
+    useEntityIcons_(true),
+    customAsTopLevel_(true)
 {
   // create observers/listeners
   listener_ = simData::DataStore::ListenerPtr(new TreeListener(this));
@@ -170,6 +171,14 @@ EntityTreeModel::~EntityTreeModel()
 {
   setDataStore(NULL);
   delete rootItem_;
+}
+
+void EntityTreeModel::setCustomRenderingAsTopLevelItem(bool customAsTopLevel)
+{
+  if (customAsTopLevel_ == customAsTopLevel)
+    return;
+  customAsTopLevel_ = customAsTopLevel;
+  forceRefresh();
 }
 
 void EntityTreeModel::setDataStore(simData::DataStore* dataStore)
@@ -217,14 +226,21 @@ void EntityTreeModel::commitDelayedEntities_()
       continue;
     }
 
-    // Pick out the host's id (0 for platforms)
+    // Pick out the host's id (0 for platforms (and custom renderings if they are being treated as top-level))
     uint64_t hostId = 0;
-    if (entityType != simData::PLATFORM)
+    bool getHostId = (entityType != simData::PLATFORM);
+    if (customAsTopLevel_ && entityType == simData::CUSTOM_RENDERING)
+      getHostId = false;
+    if (getHostId)
       hostId = dataStore_->entityHostId(*it);
 
-    // Only add the item if it's a platform, or if it has a valid host
-    assert(!((hostId == 0) && (entityType != simData::PLATFORM)));
-    if ((hostId > 0 || entityType == simData::PLATFORM))
+    bool entityTypeNeedsHost = (entityType != simData::PLATFORM);
+    if (customAsTopLevel_)
+      entityTypeNeedsHost = ((entityType != simData::PLATFORM) && (entityType != simData::CUSTOM_RENDERING));
+
+    // Only add the item if it's a valid top level entity, or if it has a valid host
+    assert(!((hostId == 0) && entityTypeNeedsHost));
+    if ((hostId > 0 || !entityTypeNeedsHost))
     {
       addTreeItem_(*it, entityType, hostId);
     }
@@ -289,6 +305,21 @@ void EntityTreeModel::forceRefresh()
     simData::DataStore::IdList platformList;
     dataStore_->idList(&platformList, simData::PLATFORM);
     buildTree_(simData::PLATFORM, dataStore_, platformList, NULL);
+    if (customAsTopLevel_)
+    {
+      // Get custom rendering objects from DataStore
+      simData::DataStore::IdList crList;
+      dataStore_->idList(&crList, simData::CUSTOM_RENDERING);
+      // Only use top-level custom renderings
+      simData::DataStore::IdList topLevelCrList;
+      for (auto it = crList.begin(); it != crList.end(); ++it)
+      {
+        auto hostId = dataStore_->entityHostId(*it);
+        if (hostId == 0)
+          topLevelCrList.push_back(*it);
+      }
+      buildTree_(simData::CUSTOM_RENDERING, dataStore_, topLevelCrList, NULL);
+    }
     endResetModel();
   }
 }
@@ -654,6 +685,8 @@ void EntityTreeModel::buildTree_(simData::ObjectType type, const simData::DataSt
       dataStore->projectorIdListForHost(*iter, &idList);
       buildTree_(simData::PROJECTOR, dataStore, idList, newItem);
     }
+
+    // other object types are not expected to have any children objects
 
     // now add to tree appropriately
     if (parent && treeView_)

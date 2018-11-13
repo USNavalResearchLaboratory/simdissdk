@@ -94,6 +94,9 @@ public:
   /// Return the dataStore
   simData::DataStore* dataStore() const;
 
+  /// Set whether to use custom rendering objects as top-level items. Defaults to true.
+  void setCustomRenderingAsTopLevelItem(bool customAsTopLevel);
+
 public slots:
   /** Swaps the view to the hierarchy tree */
   virtual void setToTreeView();
@@ -157,6 +160,8 @@ private:
 
   /// If true, entity icons are used instead of entity letters
   bool useEntityIcons_;
+  /// If true, use custom rendering objects as top-level objects. Defaults to true
+  bool customAsTopLevel_;
 };
 
 } // namespace
