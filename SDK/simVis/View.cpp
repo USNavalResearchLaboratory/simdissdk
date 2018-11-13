@@ -2019,7 +2019,6 @@ simVis::EntityNode* View::getEntityNode(osg::Node* node) const
   // Maybe it's really a Platform Model or Centroid node, which is the child of an EntityNode
   if (node)
   {
-    //TESTING: When watching from a centroid, the parent is a simVis::CentroidManager, not an EntityNode
     simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(node->getParent(0));
     // If assert triggers, there's some weird unexpected hierarchy; investigate and resolve weirdness
     assert(entityNode != NULL);
