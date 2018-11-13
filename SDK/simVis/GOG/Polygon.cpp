@@ -61,11 +61,13 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const osgEarth::Config&  con
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
+      feature->setName("GOG Polygon Feature");
       if (p.geoInterp_.isSet())
         feature->geoInterp() = p.geoInterp_.value();
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
       rv = new FeatureNodeInterface(featureNode, metaData);
+      featureNode->setName("GOG Polygon");
     }
     else
     {
@@ -73,6 +75,7 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const osgEarth::Config&  con
       node->setMapNode(mapNode);
       Utils::applyLocalGeometryOffsets(*node, p, nodeType);
       rv = new LocalGeometryNodeInterface(node, metaData);
+      node->setName("GOG Polygon");
     }
   }
   else // if ( nodeType == GOGNODE_HOSTED )
@@ -80,6 +83,7 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const osgEarth::Config&  con
     LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new LocalGeometryNodeInterface(node, metaData);
+    node->setName("GOG Polygon");
   }
 
   if (rv)

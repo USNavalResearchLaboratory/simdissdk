@@ -342,6 +342,8 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
     shapeNode = new HostedLocalGeometryNode(outlineShape, shapeStyle);
     fillNode = new HostedLocalGeometryNode(filledShape, fillStyle);
   }
+  shapeNode->setName("Arc Outline Node");
+  fillNode->setName("Arc Fill Node");
 
   GogNodeInterface* rv = NULL;
   if (shapeNode)

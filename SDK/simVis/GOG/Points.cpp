@@ -102,11 +102,13 @@ GogNodeInterface* Points::deserializeImpl_(const osgEarth::Config&  conf,
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
+      feature->setName("GOG Points Feature");
       if (p.geoInterp_.isSet())
         feature->geoInterp() = p.geoInterp_.value();
       FeatureNode* featureNode = new FeatureNode(feature);
       featureNode->setMapNode(mapNode);
       rv = new FeatureNodeInterface(featureNode, metaData);
+      featureNode->setName("GOG Points");
     }
     else
     {
@@ -114,6 +116,7 @@ GogNodeInterface* Points::deserializeImpl_(const osgEarth::Config&  conf,
       node->setMapNode(mapNode);
       Utils::applyLocalGeometryOffsets(*node, p, nodeType, p.geom_->size() == 1);
       rv = new LocalGeometryNodeInterface(node, metaData);
+      node->setName("GOG Points");
     }
   }
   else // if ( nodeType == GOGNODE_HOSTED )
@@ -121,6 +124,7 @@ GogNodeInterface* Points::deserializeImpl_(const osgEarth::Config&  conf,
     LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
     // note no offset to apply for points, since each point inherently defines its own offsets when hosted
     rv = new LocalGeometryNodeInterface(node, metaData);
+    node->setName("GOG Points");
   }
 
   if (rv)

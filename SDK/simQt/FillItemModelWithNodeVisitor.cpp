@@ -417,8 +417,6 @@ void FillItemModelWithNodeVisitor::buildStateSetTree_(osg::Node& node, QStandard
   node.accept(fillState);
 
   // Add the item
-  if (parent->rowCount() == 0)
-    parent->setBackground(Qt::red);
   item->appendRow(parent);
 }
 

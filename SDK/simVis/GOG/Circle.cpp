@@ -57,6 +57,7 @@ GogNodeInterface* Circle::deserialize(const osgEarth::Config&  conf,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
+  node->setName("GOG Circle Position");
 
   GogNodeInterface* rv = NULL;
   if (node)

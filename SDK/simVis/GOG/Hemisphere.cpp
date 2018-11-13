@@ -48,6 +48,7 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
 
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createHemisphere(
     radius_m, color);
+  shape->setName("GOG Hemisphere");
 
   osgEarth::Annotation::LocalGeometryNode* node = NULL;
 
@@ -65,6 +66,7 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
+  node->setName("GOG Hemisphere Position");
 
   GogNodeInterface* rv = NULL;
   if (node)

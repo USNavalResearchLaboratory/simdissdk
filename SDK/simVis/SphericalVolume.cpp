@@ -1078,6 +1078,7 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
 osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
   osg::MatrixTransform* xform = new osg::MatrixTransform();
+  xform->setName("SVFactory Node Transform");
 
   if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
@@ -1086,6 +1087,7 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
   else
   {
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
+    geodeSolid->setName("Solid Geode");
     xform->addChild(geodeSolid.get());
     createCone_(geodeSolid.get(), d, dir);
   }

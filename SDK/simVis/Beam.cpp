@@ -97,6 +97,7 @@ namespace simVis
 {
 BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
 {
+  setName("Beam Volume");
   beamSV_ = createBeamSV_(prefs, update);
   addChild(beamSV_);
   setBeamScale_(prefs.beamscale());
@@ -277,6 +278,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
 
   // create the locator node that will parent our geometry and label
   beamLocatorNode_ = new LocatorNode(getLocator());
+  beamLocatorNode_->setName("Beam Locator");
   beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
   addChild(beamLocatorNode_);
 

@@ -48,6 +48,7 @@ GogNodeInterface* Sphere::deserialize(const osgEarth::Config&  conf,
 
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createSphere(
     radius_m, color);
+  shape->setName("GOG Sphere");
 
   osgEarth::Annotation::LocalGeometryNode* node = NULL;
 
@@ -62,6 +63,7 @@ GogNodeInterface* Sphere::deserialize(const osgEarth::Config&  conf,
   {
     node = new HostedLocalGeometryNode(shape, p.style_);
   }
+  node->setName("GOG Sphere Position");
 
   GogNodeInterface* rv = NULL;
   if (node)

@@ -52,6 +52,7 @@ void Viewer::init_(DefaultScreenSize screenSize, int x, int y, int w, int h)
 {
   // create a scene manager that all the views will share.
   scene_ = new SceneManager();
+  scene_->setName("Scene Manager");
   // Logarithmic depth buffer managing view depth buffer settings
   logDb_ = new ViewManagerLogDbAdapter;
   setLogarithmicDepthBufferEnabled(true);

@@ -168,6 +168,7 @@ void SceneManager::init_()
 
   // a container group so we always have a manipulator attach point:
   mapContainer_ = new osg::Group();
+  mapContainer_->setName("Map Container");
   addChild(mapContainer_.get());
   globeColor_ = new osg::Uniform("oe_terrain_color", MAP_COLOR);
   mapContainer_->getOrCreateStateSet()->addUniform(globeColor_, osg::StateAttribute::OVERRIDE);
@@ -177,18 +178,22 @@ void SceneManager::init_()
 
   // handles centroids
   centroidManager_ = new CentroidManager();
+  centroidManager_->setName("Centroid Manager");
   addChild(centroidManager_.get());
 
   // handles projected textures/videos
   projectorManager_ = new ProjectorManager();
+  projectorManager_->setName("Projector Manager");
   addChild(projectorManager_.get());
 
   drapeableNode_ = new osgEarth::DrapeableNode();
+  drapeableNode_->setName("Drapeable Scene Objects");
   drapeableNode_->setDrapingEnabled(false);
   addChild(drapeableNode_.get());
 
   // updates scenario objects
   scenarioManager_ = new ScenarioManager(this, projectorManager_.get());
+  scenarioManager_->setName("Scenario");
   drapeableNode_->addChild(scenarioManager_.get());
 
   // Add the Model Cache's asynchronous loader node.  This is needed for asynchronous loading, which

@@ -52,6 +52,7 @@ namespace simVis
 GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs, const simData::GateUpdate* update)
   : LocatorNode(locator)
 {
+  setName("Gate Volume Locator");
   gateSV_ = createNode_(prefs, update);
   setNodeMask(DISPLAY_MASK_GATE);
   addChild(gateSV_);
@@ -223,9 +224,10 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
 GateCentroid::GateCentroid(simVis::Locator* locator)
   : LocatorNode(locator)
 {
+  setName("Centroid Locator");
   setActive(false);
   geom_ = new osgEarth::LineDrawable(GL_LINES);
-  geom_->setName("simVis::GateCentroid");
+  geom_->setName("simVis::GateCentroid Geometry");
   geom_->setColor(simVis::Color::White);
   geom_->setDataVariance(osg::Object::DYNAMIC);
   geom_->allocate(6);
@@ -234,6 +236,7 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   geom_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 
   osg::Geode* geodeSolid = new osgEarth::LineGroup();
+  geodeSolid->setName("Solid LineGroup");
   geodeSolid->addChild(geom_);
   addChild(geodeSolid);
 }

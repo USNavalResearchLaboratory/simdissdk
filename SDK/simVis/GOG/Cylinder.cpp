@@ -98,6 +98,7 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     {
       sideNode = new HostedLocalGeometryNode(shape.get(), style);
     }
+    sideNode->setName("Cylinder Side");
     Utils::applyLocalGeometryOffsets(*sideNode, p, nodeType);
     g->addChild(sideNode);
   }
@@ -121,6 +122,8 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     {
       topCapNode = new HostedLocalGeometryNode(shape.get(), style);
     }
+    topCapNode->setName("Cylinder Top");
+
     // apply a local offset to get the cap node to the correct height
     osg::Vec3d localOffset = p.getLTPOffset();
     localOffset[2] += heightValue;
@@ -161,6 +164,7 @@ GogNodeInterface* Cylinder::deserialize(const osgEarth::Config&  conf,
     {
       bottomCapNode = new HostedLocalGeometryNode(shape.get(), style);
     }
+    bottomCapNode->setName("Cylinder Bottom");
     Utils::applyLocalGeometryOffsets(*bottomCapNode, p, nodeType);
 
     // Set the frontface on bottom to clockwise, since we cannot easily rewind vertices

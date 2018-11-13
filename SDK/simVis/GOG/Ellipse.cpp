@@ -70,6 +70,7 @@ GogNodeInterface* Ellipse::deserialize(const osgEarth::Config&  conf,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
+  node->setName("GOG Ellipse Position");
 
   Utils::applyLocalGeometryOffsets(*node, p, nodeType);
 

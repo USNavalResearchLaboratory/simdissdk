@@ -65,8 +65,9 @@ class BorderNode : public osg::Geode
 public:
   BorderNode() : osg::Geode(), props_(simVis::Color::White, 2)
   {
+    setName("Border Node");
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-    geom->setName("simVis::BorderNode");
+    geom->setName("simVis::BorderNode Goemetry");
     geom->setUseVertexBufferObjects(true);
     geom->setDataVariance(osg::Object::DYNAMIC);
 
@@ -566,6 +567,7 @@ View::View()
 
   // attach an earth manipulator to it, and install the startup nav mode.
   simVis::EarthManipulator* manip = new simVis::EarthManipulator();
+  manip->setName("Earth Manipulator");
   // Initialize good default settings
   manip->getSettings()->setTerrainAvoidanceEnabled(false);
   manip->getSettings()->setArcViewpointTransitions(false);
@@ -580,6 +582,7 @@ View::View()
 
   // install a root group.
   osg::Group* root = new osg::Group();
+  root->setName("Scene Manager Root");
   osgViewer::View::setSceneData(root);
 
 #ifdef OSG_GL3_AVAILABLE
@@ -596,15 +599,18 @@ View::View()
 
   // install a control canvas for UI elements
   controlCanvas_ = new osgEarth::Util::Controls::ControlCanvas();
+  controlCanvas_->setName("Control Canvas");
   root->addChild(controlCanvas_.get());
 
   // install a group for 'scene controls' like a platform pop up
   sceneControls_ = new osg::Group();
+  sceneControls_->setName("Scene Controls");
   root->addChild(sceneControls_.get());
 
   // initial camera configuration
   // disable 'small feature culling'
   osg::Camera* thisCamera = this->getCamera();
+  thisCamera->setName("Camera");
   thisCamera->setCullingMode(thisCamera->getCullingMode() & ~osg::CullSettings::SMALL_FEATURE_CULLING);
 
   // default our background to black
@@ -677,6 +683,7 @@ bool View::setUpViewAsHUD(simVis::View* host)
 
     // if the user hasn't created a camera for this view, do so now.
     osg::Camera* camera = this->getCamera();
+    camera->setName("SuperHUD Camera");
 
     // render this view just before the canvas; that way it will
     // always render atop everything else.
@@ -731,6 +738,7 @@ bool View::setUpViewAsInset_(simVis::View* host)
     if (!camera)
     {
       camera = new osg::Camera();
+      camera->setName("Inset Camera");
       this->setCamera(camera);
     }
 
@@ -1102,6 +1110,7 @@ void View::setSceneManager(simVis::SceneManager* node)
     oldVP.getNode(oldTetherNode);
     oldManip->setTetherCallback(0L);
     simVis::EarthManipulator* newManip = new simVis::EarthManipulator();
+    newManip->setName("Earth Manipulator");
 
     // The following lines will change the manipulator, which resets the viewpoint.  In
     // some cases we want to save the old viewpoint, and restore it afterwards.
@@ -1302,6 +1311,7 @@ bool View::addSceneControl(osgEarth::Util::Controls::Control* control, const osg
     return false;
 
   osg::ref_ptr<osg::MatrixTransform> xform = new osg::MatrixTransform();
+  xform->setName("Scene Control Position");
   xform->addChild(new osgEarth::Util::Controls::ControlNode(control, priority));
 
   osg::Matrixd placer;
@@ -1869,6 +1879,7 @@ osg::Camera* View::createHUD_() const
 {
   const osg::Viewport* vp = this->getCamera()->getViewport();
   osg::Camera* hud = new osg::Camera();
+  hud->setName("HUD Camera");
   // Be sure to render after the controls widgets.
   // "10" is arbitrary, so there's room between the two (default Control Canvas value is 25000)
   hud->setRenderOrder(osg::Camera::POST_RENDER, controlCanvas_->getRenderOrderNum() + 10);

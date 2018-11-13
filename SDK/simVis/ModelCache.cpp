@@ -517,6 +517,11 @@ public:
     }
   }
 
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simVis"; }
+  /** Return the class name */
+  virtual const char* className() const { return "ModelCache::LoaderNode"; }
+
 private:
   /** Loading on a URI completed.  Alert everyone who cares. */
   void fireLoadFinished_(const std::string& uri, const osg::ref_ptr<osg::Node>& node)
@@ -575,6 +580,7 @@ ModelCache::ModelCache()
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
+  asyncLoader_->setName("Asynchronous Load Helper");
 
   // Create a box model as a placeholder for invalid model
   osg::Geode* geode = new osg::Geode();

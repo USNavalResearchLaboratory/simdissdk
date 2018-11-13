@@ -79,6 +79,7 @@ public:
   explicit MapChangeListener(ElevationQueryProxy& queryProxy)
     : queryProxy_(queryProxy)
   {
+    setName("Elevation Query Proxy CB");
   }
 
   /** Override setMapNode() from MapNodeObserver to inform the MousePositionManipulator. */
@@ -93,6 +94,11 @@ public:
   {
     return mapNode_.get();
   }
+
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simVis"; }
+  /** Return the class name */
+  virtual const char* className() const { return "ElevationQueryProxy::MapChangeListener"; }
 
 protected:
   /** osg::Referenced-derived */

@@ -78,6 +78,7 @@ GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
 
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createEllipsoid(
     y_radius_m, x_radius_m, z_radius_m, color);  // y, x, z order to match SIMDIS 9
+  shape->setName("GOG Ellipsoid");
 
   osgEarth::Annotation::LocalGeometryNode* node = NULL;
 
@@ -90,6 +91,7 @@ GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
+  node->setName("GOG Ellipsoid Position");
 
   GogNodeInterface* rv = NULL;
   if (node)

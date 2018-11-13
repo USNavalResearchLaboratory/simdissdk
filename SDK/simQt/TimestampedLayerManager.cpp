@@ -149,6 +149,7 @@ public:
   explicit MapChangeObserver(TimestampedLayerManager& parent)
     : parent_(parent)
   {
+    setName("Timestamped Layer CB");
   }
 
   /* Reimplemented from MapNodeObserver */
@@ -165,6 +166,11 @@ public:
   {
     return (map_.valid() ? map_.get() : NULL);
   }
+
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simQt"; }
+  /** Return the class name */
+  virtual const char* className() const { return "TimestampedLayerManager::MapChangeObserver"; }
 
 protected:
   /* Descendants of osg::referenced need protected destructor */
