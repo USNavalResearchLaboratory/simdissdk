@@ -23,7 +23,7 @@
 #define SIMCORE_STRING_TEXT_REPLACER_H
 
 #include <memory>
-#include <vector>
+#include <map>
 #include "simCore/Common/Common.h"
 
 namespace simCore
@@ -38,46 +38,86 @@ public:
   public:
     virtual ~Replaceable() {}
     /**
-    * Returns the replacement string that matches the variable string
-    * @return String that will replace the variable string
-    */
+     * Returns the replacement string that matches the variable string
+     * @return String that will replace the variable string
+     */
     virtual std::string getText() const = 0;
     /**
-    * Returns the variable string that will be replaced
-    * @return String that will be replaced, e.g., %TIME%
-    */
+     * Returns the variable string that will be replaced.  This should not change.
+     * @return String that will be replaced, e.g., %TIME%.  Must have % marks on either side.
+     */
     virtual std::string getVariableName() const = 0;
   };
 
-  /**
-  * Construct a TextReplacer
-  */
+  /** Handles cases when the variable is not defined. */
+  class UndefinedVariableHandler
+  {
+  public:
+    virtual ~UndefinedVariableHandler() {}
+    /** Returns the string to use for the undefined variable string, such as "%TIME%".  Guaranteed to have surrounding % marks */
+    virtual std::string getText(const std::string& varName) const = 0;
+  };
+  typedef std::shared_ptr<UndefinedVariableHandler> UndefinedVariableHandlerPtr;
+
+  /** Construct a TextReplacer */
   TextReplacer();
   virtual ~TextReplacer();
 
   /**
-  * Process the format string using all replaceables in this TextReplacer registry
-  * @param formatString String that will be processed for replacement
-  * @return the processed format string
-  */
-  std::string format(const std::string& formatString);
+   * Process the format string using all replaceables in this TextReplacer registry
+   * @param formatString String that will be processed for replacement
+   * @return the processed format string
+   */
+  std::string format(const std::string& formatString) const;
 
   /**
-  * Add a replaceable to this registry, TextReplacer assumes ownership of the Replaceable
-  * @param r Pointer to the replaceable to be added to registry
-  * @return 0 on success, 1 on failure if replaceable is already in registry
-  */
+   * Add a replaceable to this registry, TextReplacer assumes ownership of the Replaceable
+   * @param r Pointer to the replaceable to be added to registry
+   * @return 0 on success, 1 on failure if replaceable is already in registry
+   */
   int addReplaceable(TextReplacer::Replaceable* r);
 
   /**
-  * Delete a replaceable from this registry.  Deletes replaceable on success.
-  * @param r Pointer to the replaceable to be deleted from registry
-  * @return 0 on success; r will be deleted.  Non-zero on error (not found); r will not be deleted.
-  */
+   * Delete a replaceable from this registry.  Deletes replaceable on success.
+   * @param r Pointer to the replaceable to be deleted from registry
+   * @return 0 on success; r will be deleted.  Non-zero on error (not found); r will not be deleted.
+   */
   int deleteReplaceable(TextReplacer::Replaceable* r);
+  /** String version of deleting a replaceable, deleting by its variable name. */
+  int deleteReplaceable(const std::string& variableName);
+
+  /**
+   * Changes the handler to use for undefined variables.  By default, undefined
+   * variables are replaced with an empty string.  If a UndefinedVariableHandler
+   * is defined, then it is responsible for supplying the text to replace.  This
+   * can be useful for a system environment variable replacer.  Only one
+   * UndefinedVariableHandler can be active at a time.
+   */
+  void setUndefinedVariableHandler(UndefinedVariableHandlerPtr hander);
 
 private:
-  std::vector<TextReplacer::Replaceable*> replaceables_;   /// vector of registered replaceables
+  /** Implementation of format(), which helps with recursive variable resolving */
+  std::string formatImpl_(const std::string& formatString, int depth) const;
+
+  /** Given the variable name, return the string to replace */
+  std::string evaluate_(const std::string& varNameWithPct, int depth) const;
+  /** Returns the validated variable name.  Empty string returned if name invalid. */
+  std::string validateName_(const std::string& inputName) const;
+
+  /// vector of registered replaceables
+  std::map<std::string, TextReplacer::Replaceable*> replaceables_;
+  /// Handles undefined variables
+  UndefinedVariableHandlerPtr undefinedHandler_;
+};
+
+/**
+ * Undefined variables handler that simply ignores variables that are undefined,
+ * not even replacing with empty string.  This is the default handler.
+ */
+class IgnoreUndefinedVariables : public TextReplacer::UndefinedVariableHandler
+{
+public:
+  virtual std::string getText(const std::string& varName) const { return varName; }
 };
 
 /// Shared pointer to a TextReplacer
