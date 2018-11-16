@@ -384,6 +384,14 @@ int buildFormatStrTest()
   return rv;
 }
 
+// Create an undefined-variables helper; it effectively replaces '%' with '-'
+class TestUndefinedHelper : public simCore::TextReplacer::UndefinedVariableHandler
+{
+public:
+  // Add extra percent signs so that incoming value's percent signs get interpreted as text, not variable markers.
+  virtual std::string getText(const std::string& varName) const { return "-%" + varName + "%-"; }
+};
+
 int testTextReplacer()
 {
   /** Create a custom replaceable that returns any text desired */
@@ -472,13 +480,6 @@ int testTextReplacer()
   rv += SDK_ASSERT(replacer.format("%TEST% %VAR%") == "baz2 baz");
   rv += SDK_ASSERT(replacer.format("%TEST2% %TEST%") == "%TEST2% baz2");
 
-  // Create an undefined-variables helper; it effectively replaces '%' with '-'
-  class TestUndefinedHelper : public simCore::TextReplacer::UndefinedVariableHandler
-  {
-  public:
-    // Add extra percent signs so that incoming value's percent signs get interpreted as text, not variable markers.
-    virtual std::string getText(const std::string& varName) const { return "-%" + varName + "%-"; }
-  };
   replacer.setUndefinedVariableHandler(std::make_shared<TestUndefinedHelper>());
   auto str = replacer.format("test %VAR% %VAR% %NOTHING% 123");
   rv += SDK_ASSERT(replacer.format("test %VAR% %VAR% %NOTHING% 123") == "test baz baz -%NOTHING%- 123");
