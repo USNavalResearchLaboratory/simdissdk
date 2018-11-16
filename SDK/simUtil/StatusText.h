@@ -46,7 +46,7 @@ public:
    * Display the status as specified by statusSpec
    * @return 0 on success, !0 on error
    */
-  int setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color = simVis::Color::White, double fontSize = 16.0, const std::string& font = "arial.ttf");
+  int setStatusSpec(const std::string& statusSpec, const osg::Vec4f& color = simVis::Color::White, double fontSize = 12.0, const std::string& font = "arial.ttf");
 
   /** Override from osg::MatrixTransform to call update_() */
   virtual void traverse(osg::NodeVisitor& nv);

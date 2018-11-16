@@ -642,10 +642,12 @@ void SceneManager::setGlobeColor(const simVis::Color& color)
   globeColor_->set(color);
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void SceneManager::initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions& options)
 {
   SIM_WARN << "The MP Terrain engine is no longer supported.\n";
 }
+#endif
 
 void SceneManager::initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions& options)
 {
