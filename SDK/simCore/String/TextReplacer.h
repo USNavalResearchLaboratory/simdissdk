@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <map>
+#include <string>
 #include "simCore/Common/Common.h"
 
 namespace simCore
