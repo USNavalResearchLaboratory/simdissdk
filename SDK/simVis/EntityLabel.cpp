@@ -87,6 +87,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
     label_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
     label_->setHorizonCulling(false);
     label_->setOcclusionCulling(false);
+    label_->setText(lastText_);
 
     // Note that labels are not flattened (by default) in overhead mode
 
@@ -176,7 +177,6 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       }
 
       ts->size() = simVis::osgFontSize(static_cast<float>(labelPrefs.overlayfontpointsize()));
-      ts->content()->setLiteral(!commonPrefs.name().empty() ? commonPrefs.name() : "unnamed");
 
       label_->setStyle(style);
     }
