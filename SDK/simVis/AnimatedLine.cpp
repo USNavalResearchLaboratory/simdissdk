@@ -148,11 +148,15 @@ int AnimatedLineNode::getEndPoints(simCore::MultiFrameCoordinate& coord1, simCor
 void AnimatedLineNode::setStipple1(unsigned short value)
 {
   stipple1_ = value;
+  // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
+  timeLastShift_ = 0.0;
 }
 
 void AnimatedLineNode::setStipple2(unsigned short value)
 {
   stipple2_ = value;
+  // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
+  timeLastShift_ = 0.0;
 }
 
 void AnimatedLineNode::setColor1(const osg::Vec4& value)
@@ -190,6 +194,8 @@ float AnimatedLineNode::getLineWidth() const
 void AnimatedLineNode::setShiftsPerSecond(double value)
 {
   shiftsPerSecond_ = value;
+  // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
+  timeLastShift_ = 0.0;
 }
 
 void AnimatedLineNode::initializeGeometry_()
@@ -384,9 +390,7 @@ void AnimatedLineNode::update_(double t)
 
   // LineDrawable is efficient in cases of no change
   line1_->setLineWidth(lineWidth_);
-  line1_->setStipplePattern(stipple1_);
   line2_->setLineWidth(lineWidth_);
-  line2_->setStipplePattern(stipple2_);
 
   // animate the line:
   const double dt        = t - timeLastShift_;
