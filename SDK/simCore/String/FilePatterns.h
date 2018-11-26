@@ -292,6 +292,11 @@ static const std::string SIMDIS10_SETTINGS_FILE_PATTERNS =
   "SIMDIS 10 Configuration Files (*.ini)\n"
   "All Files (*)";
 
+/** Dialog-oriented user-friendly list of Plot-XY Settings files */
+static const std::string PLOT_SETTINGS_FILE_PATTERNS =
+  "Plot-XY Configuration Files (*.ini)\n"
+  "All Files (*)";
+
 /** Combination of all data file patterns */
 static const std::string ALL_DATA_FILE_PATTERNS = ALL_SIMDIS_FILE_PATTERNS +
   std::string(",.prefs,.rul,.view,.rcs,.hdf5,") +
