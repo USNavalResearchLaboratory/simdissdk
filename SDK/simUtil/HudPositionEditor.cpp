@@ -486,8 +486,16 @@ int HudEditorMouse::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapt
 
 int HudEditorMouse::release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  // Drop mouse commands on the ground
-  return inEditorMode_() ? 1 : 0;
+  // Ignore if not in editor mode
+  if (!inEditorMode_())
+    return 0;
+
+  // Process right clicks on windows if we have a callback set
+  if (ea.getButton() == ea.RIGHT_MOUSE_BUTTON && !currentSelection_.empty() && callback_)
+    callback_->rightClicked(currentSelection_);
+
+  // Eat the right click so it doesn't fall through to SIMDIS
+  return 1;
 }
 
 int HudEditorMouse::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -638,6 +646,11 @@ bool HudEditorMouse::inEditorMode_() const
 {
   osg::ref_ptr<simUtil::HudEditorGui> gui;
   return hud_.valid() && gui_.lock(gui) && gui->isVisible();
+}
+
+void HudEditorMouse::setRightClickCallback(std::shared_ptr<simUtil::HudEditorRightClickCallback> cb)
+{
+  callback_ = cb;
 }
 
 /////////////////////////////////////////////////////////

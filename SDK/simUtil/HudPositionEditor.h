@@ -109,6 +109,24 @@ private:
   double heightPx_;
 };
 
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Right click callback interface. Install an implementation of this callback via
+ * HudEditorMouse::setRightClickCallback() to receive notifications when a HUD
+ * Editor window is right clicked.
+ */
+class SDKUTIL_EXPORT HudEditorRightClickCallback
+{
+public:
+  virtual ~HudEditorRightClickCallback() {}
+
+  /** Called when a window named windowName is right clicked. */
+  virtual void rightClicked(const std::string& windowName) = 0;
+};
+
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Mouse Manipulator that ties into a simUtil::MouseDispatcher, which is responsible
  * for intercepting mouse events for use with a HudPositionManager and a HudEditorGui.
@@ -142,6 +160,9 @@ public:
   virtual void activate();
   virtual void deactivate();
 
+  /** Set a pointer to the right click callback to be used by the mouse manipulator. */
+  void setRightClickCallback(std::shared_ptr<simUtil::HudEditorRightClickCallback> cb);
+
 private:
   /** Returns the HUD window under the mouse */
   std::string hudUnderMouse_(double xPx, double yPx, osg::Vec3d& mouseOffsetPx) const;
@@ -150,11 +171,14 @@ private:
 
   osg::observer_ptr<simUtil::HudPositionManager> hud_;
   osg::observer_ptr<simUtil::HudEditorGui> gui_;
+  std::shared_ptr<simUtil::HudEditorRightClickCallback> callback_;
   double widthPx_;
   double heightPx_;
   std::string currentSelection_;
   osg::Vec3d mouseOffsetPx_;
 };
+
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Convenience class that ties together the HUD, GUI, and Mouse.  This class serves as a facade
