@@ -179,8 +179,8 @@ void GridCell::setPositionImpl_()
 ////////////////////////////////////////////////////////////////
 
 GridTransform::GridTransform()
-  : hSpacing_(9.f),
-    vSpacing_(2.f),
+  : hSpacing_(0.f),
+    vSpacing_(0.f),
     width_(1.f),
     height_(1.f),
     packUniformWidth_(false),
@@ -192,8 +192,8 @@ GridTransform::GridTransform()
 }
 
 GridTransform::GridTransform(int size, bool fixedByColumns)
-  : hSpacing_(9.f),
-    vSpacing_(2.f),
+  : hSpacing_(0.f),
+    vSpacing_(0.f),
     width_(1.f),
     height_(1.f),
     packUniformWidth_(false),
