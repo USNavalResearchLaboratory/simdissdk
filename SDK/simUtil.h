@@ -31,6 +31,7 @@
 #include "simUtil/ExampleControls.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/GogManager.h"
+#include "simUtil/GridTransform.h"
 #include "simUtil/HudManager.h"
 #include "simUtil/HudPositionEditor.h"
 #include "simUtil/HudPositionManager.h"

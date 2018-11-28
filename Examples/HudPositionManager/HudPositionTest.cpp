@@ -33,12 +33,16 @@
 #include "simVis/Utils.h"
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
+#include "simUtil/GridTransform.h"
 #include "simUtil/HudPositionEditor.h"
 #include "simUtil/HudPositionManager.h"
 #include "simUtil/MapScale.h"
 #include "simUtil/MouseDispatcher.h"
 #include "simUtil/Replaceables.h"
 #include "simUtil/StatusText.h"
+
+// Uncomment this define to add various GridTransform test grids
+// #define GRID_TESTING
 
 namespace ui = osgEarth::Util::Controls;
 
@@ -48,6 +52,7 @@ static const std::string KEY_DEMO_TEXT = "DemoText";
 static const std::string KEY_CLASSIFICATION_TOP = "ClassificationTop";
 static const std::string KEY_CLASSIFICATION_BOTTOM = "ClassificationBottom";
 static const std::string KEY_COMPASS = "Compass";
+static const std::string KEY_LEGEND = "Legend";
 
 //----------------------------------------------------------------------------
 
@@ -61,6 +66,7 @@ static std::string s_help =
   "4 : Move 'Top Classification' to mouse position\n"
   "5 : Move 'Bottom Classification' to mouse position\n"
   "6 : Move 'Compass' to mouse position\n"
+  "7 : Move 'Legend' to mouse position\n"
   "c : Cycle classification string and color\n"
   "e : Toggle HUD Editor mode\n"
   "r : Reset all to default positions\n"
@@ -126,6 +132,9 @@ struct MenuHandler : public osgGA::GUIEventHandler
       break;
     case '6':
       windowName = KEY_COMPASS;
+      break;
+    case '7':
+      windowName = KEY_LEGEND;
       break;
 
     case 'c':
@@ -218,6 +227,105 @@ private:
   int classificationCycle_;
   int windCycle_;
 };
+
+/** Helper method that creates a colored square from (0,0) to (width,width) */
+osg::Geometry* newSquare(const osg::Vec4f& color, float width=1.f)
+{
+  osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+  osg::Vec3Array* verts = new osg::Vec3Array;
+  verts->push_back(osg::Vec3f(0.f, 0.f, 0.f));
+  verts->push_back(osg::Vec3f(width, 0.f, 0.f));
+  verts->push_back(osg::Vec3f(width, width, 0.f));
+  verts->push_back(osg::Vec3f(0.f, width, 0.f));
+  geom->setVertexArray(verts);
+  osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL);
+  colors->push_back(color);
+  geom->setColorArray(colors);
+  geom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_FAN, 0, 4));
+  return geom.release();
+}
+
+/** size of square for legend icons */
+static const float SQUARE_SIZE = 48.f;
+
+/** Draws a green square of fixed size at upper-left of cell. */
+class LegendIconCell : public simUtil::GridCell
+{
+public:
+  LegendIconCell()
+  {
+    // Placeholder, just use a green-ish square
+    addChild(newSquare(osg::Vec4f(0.f, 0.6f, 0.f, 1.f), SQUARE_SIZE));
+    // Configure the default size
+    setDefaultSize(SQUARE_SIZE, SQUARE_SIZE);
+    // Icon cells have a fixed width
+    setFixedWidth(SQUARE_SIZE);
+  }
+
+protected:
+  /** Similar to GridCell::setPositionImpl_(), but do not scale contents, and positions a little different. */
+  virtual void setPositionImpl_()
+  {
+    osg::Matrix m;
+    // Do not scale contents; we're already at right pixel size.
+    // Translate so upper-left corner is at (height) pixels.
+    m.postMult(osg::Matrix::translate(osg::Vec3f(x(), y() + height() - SQUARE_SIZE, 0.f)));
+    setMatrix(m);
+  }
+};
+
+/** Encapsulates the content and label text for a single cell in the legend */
+class LegendTextCell : public simUtil::GridCell
+{
+public:
+  LegendTextCell(const std::string& title, const std::string& content)
+    : title_(new osgText::Text)
+  {
+    // Create the title label
+    title_->setText(title);
+    title_->setAlignment(osgText::TextBase::LEFT_TOP);
+    title_->setAxisAlignment(osgText::TextBase::SCREEN);
+    title_->setAutoRotateToScreen(true);
+    title_->setCharacterSize(simVis::osgFontSize(16.f));
+    title_->setColor(osg::Vec4f(1.f, 1.f, 1.f, 1.f));
+    title_->setFont("arialbd.ttf");
+    title_->setBackdropColor(osg::Vec4f(0.f, 0.f, 0.f, 1.f));
+    title_->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
+
+    // Create the content label
+    content_ = new osgText::Text(*title_);
+    content_->setText(content);
+    content_->setCharacterSize(simVis::osgFontSize(10.f));
+
+    // Add the children
+    addChild(title_.get());
+    addChild(content_.get());
+
+    // Assign the width and height based on title/outline size
+    const auto& titleBb = title_->getBoundingBox();
+    const auto& contentBb = content_->getBoundingBox();
+    const osg::Vec2f titleSize(titleBb.xMax() - titleBb.xMin(), titleBb.yMax() - titleBb.yMin());
+    const osg::Vec2f contentSize(contentBb.xMax() - contentBb.xMin(), contentBb.yMax() - contentBb.yMin());
+    setDefaultSize(simCore::sdkMax(titleSize.x(), contentSize.x()),
+      2.f + titleSize.y() + contentSize.y());
+    titleHeight_ = titleSize.y();
+  }
+
+protected:
+  /** Override to reposition the text based on the X, Y, and Height values configured. */
+  virtual void setPositionImpl_()
+  {
+    // Adjust the position of the text manually
+    title_->setPosition(osg::Vec3f(x(), y() + height(), 0.f));
+    content_->setPosition(osg::Vec3f(x(), y() + height() - titleHeight_ - 2.f, 0.f));
+  }
+
+private:
+  osg::ref_ptr<osgText::Text> title_;
+  osg::ref_ptr<osgText::Text> content_;
+  float titleHeight_;
+};
+
 
 int main(int argc, char** argv)
 {
@@ -370,6 +478,99 @@ int main(int argc, char** argv)
     hud->addWindow(KEY_DEMO_TEXT, osg::Vec2d(0.1, 0.5), new simUtil::RepositionMatrixPxCallback(xform));
     const osg::BoundingBox& bbox = demoText->getBoundingBox();
     hud->setSize(KEY_DEMO_TEXT, osg::Vec2d(bbox.xMin(), bbox.yMin()), osg::Vec2d(bbox.xMax(), bbox.yMax()));
+  }
+
+#ifdef GRID_TESTING
+  {
+    // Add a "horizontal" grid with 3 columns, each child increasing to right, wrapping to next row
+    simUtil::GridTransform* grid3Cols = new simUtil::GridTransform(3, true);
+    grid3Cols->setSize(250.f, 200.f);
+    grid3Cols->setSpacing(5.f);
+    grid3Cols->setMatrix(osg::Matrix::translate(osg::Vec3f(100.f, 100.f, 0.f)));
+    superHUD->getOrCreateHUD()->addChild(grid3Cols);
+    // Build a 3x4 array (3 wide, 4 tall)
+    for (int k = 0; k < 12; ++k)
+    {
+      // First has almost no color; last has full red
+      const float magnitude = (k + 1) / 12.f;
+      osg::ref_ptr<osg::Geometry> geom = newSquare(osg::Vec4f(magnitude, 0.f, 0.f, 1.f));
+      osg::ref_ptr<simUtil::GridCell> item = new simUtil::GridCell();
+      item->addChild(geom);
+      grid3Cols->addChild(item);
+    }
+  }
+
+  {
+    // Add a "vertical" grid with 3 rows, each child increasing down, wrapping to next column
+    simUtil::GridTransform* grid3Rows = new simUtil::GridTransform(3, false);
+    grid3Rows->setSize(250.f, 200.f);
+    grid3Rows->setSpacing(5.f);
+    grid3Rows->setMatrix(osg::Matrix::translate(osg::Vec3f(400.f, 100.f, 0.f)));
+    superHUD->getOrCreateHUD()->addChild(grid3Rows);
+    // Build a 4x3 array (4 wide, 3 tall)
+    for (int k = 0; k < 12; ++k)
+    {
+      // First has almost no color; last has full green
+      const float magnitude = (k + 1) / 12.f;
+      osg::ref_ptr<osg::Geometry> geom = newSquare(osg::Vec4f(0.f, magnitude, 0.f, 1.f));
+      osg::ref_ptr<simUtil::GridCell> item = new simUtil::GridCell();
+      item->addChild(geom);
+      grid3Rows->addChild(item);
+    }
+  }
+
+  {
+    // Add a grid that tests fixed width
+    simUtil::GridTransform* grid = new simUtil::GridTransform(3, false);
+    grid->setSize(250.f, 200.f);
+    grid->setSpacing(5.f);
+    grid->setMatrix(osg::Matrix::translate(osg::Vec3f(700.f, 100.f, 0.f)));
+    superHUD->getOrCreateHUD()->addChild(grid);
+    // Build a 4x3 array (4 wide, 3 tall)
+    for (int k = 0; k < 12; ++k)
+    {
+      // First has almost no color; last has full blue
+      const float magnitude = (k + 1) / 12.f;
+      osg::ref_ptr<osg::Geometry> geom = newSquare(osg::Vec4f(0.f, 0.f, magnitude, 1.f));
+      osg::ref_ptr<simUtil::GridCell> item = new simUtil::GridCell();
+      if (k / 3 == 1) // Second row is super wide
+      {
+        item->setFixedWidth(175.f);
+        item->unsetOption(simUtil::GRID_STRETCH_COLUMN);
+      }
+      if (k % 3 == 1) // Second column is super short
+      {
+        item->setFixedHeight(10.f);
+        item->unsetOption(simUtil::GRID_STRETCH_ROW);
+      }
+      item->addChild(geom);
+      grid->addChild(item);
+    }
+  }
+#endif /* GRID_TESTING */
+
+  {
+    // Create a legend that is 4x2
+    simUtil::GridTransform* legendGrid = new simUtil::GridTransform(2, true);
+    legendGrid->setSpacing(6.f);
+    superHUD->getOrCreateHUD()->addChild(legendGrid);
+
+    // Add 4 entries
+    legendGrid->addChild(new LegendIconCell);
+    legendGrid->addChild(new LegendTextCell("Entity 1", "Content for entity 1"));
+    legendGrid->addChild(new LegendIconCell);
+    legendGrid->addChild(new LegendTextCell("Entity 2", "[none]"));
+    legendGrid->addChild(new LegendIconCell);
+    legendGrid->addChild(new LegendTextCell("Entity 3", "Multi-line content\nEntity 3\nhas multiple lines of text.\nThere are 4 lines of text in this legend entry."));
+    legendGrid->addChild(new LegendIconCell);
+    legendGrid->addChild(new LegendTextCell("Entity 4", "Content"));
+
+    // Adjust size
+    legendGrid->setSize(legendGrid->getDefaultWidth(), legendGrid->getDefaultHeight());
+
+    // Add the text to the HUD at 80% / 50%
+    hud->addWindow(KEY_LEGEND, osg::Vec2d(0.8, 0.5), new simUtil::RepositionMatrixPxCallback(legendGrid));
+    hud->setSize(KEY_LEGEND, osg::Vec2d(0.0, 0.0), osg::Vec2d(legendGrid->width(), legendGrid->height()));
   }
 
   // for status and debugging

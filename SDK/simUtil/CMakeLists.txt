@@ -23,6 +23,7 @@ set(UTIL_HEADERS
     ${UTIL_INC}ExampleControls.h
     ${UTIL_INC}ExampleResources.h
     ${UTIL_INC}GogManager.h
+    ${UTIL_INC}GridTransform.h
     ${UTIL_INC}HudManager.h
     ${UTIL_INC}HudPositionEditor.h
     ${UTIL_INC}HudPositionManager.h
@@ -57,6 +58,7 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ExampleControls.cpp
     ${UTIL_SRC}ExampleResources.cpp
     ${UTIL_SRC}GogManager.cpp
+    ${UTIL_SRC}GridTransform.cpp
     ${UTIL_SRC}HudManager.cpp
     ${UTIL_SRC}HudPositionEditor.cpp
     ${UTIL_SRC}HudPositionManager.cpp
