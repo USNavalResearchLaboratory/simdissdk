@@ -255,6 +255,8 @@ private:
   /** Returns the height of the tallest child. Useful for packing by uniform height. */
   float maxChildHeight_() const;
 
+  /** Clears the dirty flag, fixing update traversals as needed. */
+  void unsetLayoutDirtyFlag_();
   /** Workhorse method that positions children based on settings. */
   void doLayout_();
 

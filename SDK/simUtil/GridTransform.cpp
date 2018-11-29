@@ -385,13 +385,18 @@ const GridCell* GridTransform::childAt(int row, int column) const
 
 void GridTransform::traverse(osg::NodeVisitor& nv)
 {
-  if (nv.getVisitorType() == osg::NodeVisitor::UPDATE_VISITOR && layoutDirty_)
+  // Ideally the layout management occurs in the update traversal; that's what it's for.
+  // But there are cases where the layout can change between the update traversal and the
+  // cull traversal.  Because of this, double check the layout during cull traversal too.
+  if (layoutDirty_ && (nv.getVisitorType() == osg::NodeVisitor::UPDATE_VISITOR ||
+    nv.getVisitorType() == osg::NodeVisitor::CULL_VISITOR))
   {
     doLayout_();
     // doLayout_() is responsible for clearing the dirty flag, and also for dealing
     // with the update traversal count.
     assert(!layoutDirty_);
   }
+
   osg::MatrixTransform::traverse(nv);
 }
 
@@ -553,6 +558,15 @@ float GridTransform::maxChildHeight_() const
   return height;
 }
 
+void GridTransform::unsetLayoutDirtyFlag_()
+{
+  if (layoutDirty_)
+  {
+    ADJUST_UPDATE_TRAV_COUNT(this, -1);
+    layoutDirty_ = false;
+  }
+}
+
 void GridTransform::doLayout_()
 {
   /*
@@ -597,8 +611,15 @@ void GridTransform::doLayout_()
   std::vector<float> rowHeights(numRows, 0.f);
   std::vector<bool> stretchRows(numRows, true);
 
-  // Loop through each child
+  // Early exit if no children
   const unsigned int numChildren = getNumChildren();
+  if (numChildren == 0)
+  {
+    unsetLayoutDirtyFlag_();
+    return;
+  }
+
+  // Loop through each child
   for (unsigned int idx = 0; idx < numChildren; ++idx)
   {
     // Skip child if it's not visible
@@ -693,8 +714,9 @@ void GridTransform::doLayout_()
       assert(hNumStretched > 0);
 
       if (hTotalStretchedSize == 0.f)
-      { // Divide it up equally
-        width = hRemain / hNumStretched;
+      { // Divide it up equally; avoid divide-by-zero in invalid layouts
+        if (hNumStretched != 0)
+          width = hRemain / hNumStretched;
       }
       else
       { // Divide by proportion of sum
@@ -707,21 +729,22 @@ void GridTransform::doLayout_()
   xPositions[numColumns] = currentX;
 
   // Second pass on stretching passes out the vertical stretch
-  std::vector<float> yPositions(numRows + 1, 0.f);
+  std::vector<float> yTopPositions(numRows + 1, 0.f);
   float currentY = top;
   for (int row = 0; row < numRows; ++row)
   {
     float height = rowHeights[row];
-    yPositions[row] = currentY;
-    // Adjust the width for stretched rows
+    yTopPositions[row] = currentY;
+    // Adjust the height for stretched rows
     if (stretchRows[row])
     {
       // Guaranteed by the ++vNumStretched when stretchRows flagged true
       assert(vNumStretched > 0);
 
       if (vTotalStretchedSize == 0.f)
-      { // Divide it up equally
-        height = vRemain / vNumStretched;
+      { // Divide it up equally; avoid divide-by-zero in invalid layouts
+        if (vNumStretched != 0)
+          height = vRemain / vNumStretched;
       }
       else
       { // Divide by proportion of sum
@@ -731,7 +754,7 @@ void GridTransform::doLayout_()
     currentY -= height + vSpacing_;
   }
   // Save the final Y as start of next (non-existent) row, for easier calcs later
-  yPositions[numRows] = currentY;
+  yTopPositions[numRows] = currentY;
 
   // Finally, do the positioning for each child
   for (unsigned int idx = 0; idx < numChildren; ++idx)
@@ -761,8 +784,8 @@ void GridTransform::doLayout_()
     else
       width = node->defaultWidth();
 
-    const float yPosition = yPositions[row + 1];
-    const float columnHeight = yPositions[row] - yPosition - vSpacing_;
+    const float yBottomPosition = yTopPositions[row + 1] + vSpacing_;
+    const float columnHeight = yTopPositions[row] - yBottomPosition;
     // Figure out the height to pass down to child
     float height = 0.f;
     if (node->fixedHeight())
@@ -775,14 +798,11 @@ void GridTransform::doLayout_()
       height = node->defaultHeight();
 
     // We could align here: left, right, center; top, bottom, center
-    node->setPosition(xPosition, yPosition, width, height);
+    node->setPosition(xPosition, yBottomPosition, width, height);
   }
 
-  if (layoutDirty_)
-  {
-    ADJUST_UPDATE_TRAV_COUNT(this, -1);
-    layoutDirty_ = false;
-  }
+  // Clear the dirty flag since we just did layout
+  unsetLayoutDirtyFlag_();
 }
 
 }
