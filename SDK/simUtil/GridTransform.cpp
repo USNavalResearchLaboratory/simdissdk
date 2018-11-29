@@ -70,7 +70,7 @@ void GridCell::unsetOption(GridOption option)
 
 bool GridCell::testOption(GridOption option) const
 {
-  return (options_ & option) == option;
+  return (options_ & static_cast<unsigned int>(option)) == static_cast<unsigned int>(option);
 }
 
 unsigned int GridCell::options() const
