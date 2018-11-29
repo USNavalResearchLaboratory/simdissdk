@@ -181,12 +181,12 @@ void GridCell::setPositionImpl_()
 GridTransform::GridTransform()
   : hSpacing_(0.f),
     vSpacing_(0.f),
-    width_(1.f),
-    height_(1.f),
     packUniformWidth_(false),
     packUniformHeight_(false),
     userNum_(1),
     fixedByColumns_(true),
+    width_(1.f),
+    height_(1.f),
     layoutDirty_(false)
 {
 }
@@ -194,12 +194,12 @@ GridTransform::GridTransform()
 GridTransform::GridTransform(int size, bool fixedByColumns)
   : hSpacing_(0.f),
     vSpacing_(0.f),
-    width_(1.f),
-    height_(1.f),
     packUniformWidth_(false),
     packUniformHeight_(false),
     userNum_(simCore::sdkMax(1, size)),
     fixedByColumns_(fixedByColumns),
+    width_(1.f),
+    height_(1.f),
     layoutDirty_(false)
 {
 }
@@ -355,8 +355,8 @@ void GridTransform::setNumRows(int rows)
 int GridTransform::rowOfChild(const GridCell* item) const
 {
   assert(userNum_ > 0); // guaranteed by setNumRows / setNumColumns
-  const int idx = getChildIndex(item);
-  if (idx == getNumChildren())
+  const unsigned int idx = getChildIndex(item);
+  if (idx >= getNumChildren())
     return -1;
   return fixedByColumns_ ? (idx % userNum_) : (idx / userNum_);
 }
@@ -364,8 +364,8 @@ int GridTransform::rowOfChild(const GridCell* item) const
 int GridTransform::columnOfChild(const GridCell* item) const
 {
   assert(userNum_ > 0); // guaranteed by setNumRows / setNumColumns
-  const int idx = getChildIndex(item);
-  if (idx == getNumChildren())
+  const unsigned int idx = getChildIndex(item);
+  if (idx >= getNumChildren())
     return -1;
   return fixedByColumns_ ? (idx / userNum_) : (idx % userNum_);
 }
