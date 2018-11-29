@@ -222,6 +222,11 @@ GridTransform::~GridTransform()
 {
 }
 
+void GridTransform::setLayoutListener(GridLayoutListener* listener)
+{
+  listener_ = listener;
+}
+
 void GridTransform::setSpacing(float spacing)
 {
   if (hSpacing_ == spacing && vSpacing_ == spacing)
@@ -565,6 +570,9 @@ void GridTransform::unsetLayoutDirtyFlag_()
     ADJUST_UPDATE_TRAV_COUNT(this, -1);
     layoutDirty_ = false;
   }
+
+  if (listener_)
+    listener_->postLayoutChange();
 }
 
 void GridTransform::doLayout_()

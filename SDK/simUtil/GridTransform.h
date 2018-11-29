@@ -53,6 +53,15 @@ enum GridOption {
   DEFAULT_GRID_OPTIONS = GRID_FILL
 };
 
+/** Listener interface used to announce when the layout has changed. */
+class SDKUTIL_EXPORT GridLayoutListener : public osg::Referenced
+{
+public:
+  virtual ~GridLayoutListener() {}
+  /** Called after the layout has changed. */
+  virtual void postLayoutChange() = 0;
+};
+
 /**
  * Represents a single cell in the GridTransform.  All children of GridTransform should
  * be instances of GridCell.  Positions and sizes are typically in pixels, but the system
@@ -171,6 +180,9 @@ public:
   /** Define the default node parameters */
   META_Node(simUtil, GridTransform);
 
+  /** Set a GridLayoutListener. Any previously set listener will be overwritten. */
+  void setLayoutListener(GridLayoutListener* listener);
+
   /** Changes the horizontal and vertical spacing. */
   void setSpacing(float spacing);
   /** Changes the horizontal spacing. */
@@ -259,6 +271,9 @@ private:
   void unsetLayoutDirtyFlag_();
   /** Workhorse method that positions children based on settings. */
   void doLayout_();
+
+  /** Pointer to the GridLayoutListener, if any. */
+  osg::ref_ptr<GridLayoutListener> listener_;
 
   /** Spacing between each consecutive column, horizontally. */
   float hSpacing_;
