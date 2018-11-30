@@ -265,9 +265,8 @@ public:
   /** Checks for resize events */
   bool virtual handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*)
   {
-    // RESIZE does not always emit correctly, especially starting in full screen mode
-    if (ea.getEventType() == osgGA::GUIEventAdapter::RESIZE ||
-        (windowSize_.x() == 0 && ea.getEventType() == osgGA::GUIEventAdapter::FRAME))
+    // RESIZE does not always emit correctly, especially starting in full screen mode, so use FRAME and always check size
+    if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
     {
       // Cannot rely on getWindowWidth(), need to check viewport
       const osg::View* view = aa.asView();
