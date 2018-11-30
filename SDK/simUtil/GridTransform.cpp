@@ -514,6 +514,22 @@ int GridTransform::getDefaultHeight() const
   return totalHeight + padding_[2] + padding_[3];
 }
 
+float GridTransform::getColumnWidth(int column) const
+{
+  if (column < 0 || column >= static_cast<int>(columnWidths_.size()))
+    return 0.f;
+
+  return columnWidths_[column];
+}
+
+float GridTransform::getRowHeight(int row) const
+{
+  if (row < 0 || row >= static_cast<int>(rowHeights_.size()))
+    return 0.f;
+
+  return rowHeights_[row];
+}
+
 void GridTransform::childRemoved(unsigned int pos, unsigned int numChildrenToRemove)
 {
   recalc();
@@ -570,9 +586,6 @@ void GridTransform::unsetLayoutDirtyFlag_()
     ADJUST_UPDATE_TRAV_COUNT(this, -1);
     layoutDirty_ = false;
   }
-
-  if (listener_)
-    listener_->postLayoutChange();
 }
 
 void GridTransform::doLayout_()
@@ -618,6 +631,8 @@ void GridTransform::doLayout_()
   std::vector<bool> stretchColumns(numColumns, true);
   std::vector<float> rowHeights(numRows, 0.f);
   std::vector<bool> stretchRows(numRows, true);
+  columnWidths_.assign(numColumns, 0.f);
+  rowHeights_.assign(numRows, 0.f);
 
   // Early exit if no children
   const unsigned int numChildren = getNumChildren();
@@ -807,10 +822,15 @@ void GridTransform::doLayout_()
 
     // We could align here: left, right, center; top, bottom, center
     node->setPosition(xPosition, yBottomPosition, width, height);
+    columnWidths_[column] = width;
+    rowHeights_[row] = height;
   }
 
   // Clear the dirty flag since we just did layout
   unsetLayoutDirtyFlag_();
+
+  if (listener_)
+    listener_->postLayoutChange();
 }
 
 }

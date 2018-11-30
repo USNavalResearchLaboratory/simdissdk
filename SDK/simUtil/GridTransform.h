@@ -57,9 +57,12 @@ enum GridOption {
 class SDKUTIL_EXPORT GridLayoutListener : public osg::Referenced
 {
 public:
-  virtual ~GridLayoutListener() {}
   /** Called after the layout has changed. */
   virtual void postLayoutChange() = 0;
+
+protected:
+  /** Protect osg::Referenced-derived destructor */
+  virtual ~GridLayoutListener() {}
 };
 
 /**
@@ -252,6 +255,11 @@ public:
   /** Calculates the height of the children, accounting for spacing and padding. */
   int getDefaultHeight() const;
 
+  /** Get the actual width of the specified column, valid only after a call to doLayout_(). */
+  float getColumnWidth(int column) const;
+  /** Get the actual height of the specified row, valid only after a call to doLayout_(). */
+  float getRowHeight(int row) const;
+
 protected:
   /** Protect from osg::ref_ptr double delete common issue */
   virtual ~GridTransform();
@@ -302,6 +310,11 @@ private:
 
   /** Indicates that the layout needs to re-run on next update traversal */
   bool layoutDirty_;
+
+  /** Cache of the actual column widths being used, updated via doLayout_(). */
+  std::vector<float> columnWidths_;
+  /** Cache of the actual row heights being used, updated via doLayout_(). */
+  std::vector<float> rowHeights_;
 };
 
 
