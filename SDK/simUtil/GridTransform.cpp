@@ -264,7 +264,11 @@ float GridTransform::verticalSpacing() const
 
 void GridTransform::setPadding(const osg::Vec4f& padding)
 {
+  if (padding_ == padding)
+    return;
+
   padding_ = padding;
+  recalc();
 }
 
 osg::Vec4f GridTransform::padding() const
