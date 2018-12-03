@@ -472,7 +472,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   if (updateSlice->current())
   {
     simData::PlatformUpdate current = *updateSlice->current();
-
+    lastUnfilteredUpdate_ = current;
     PlatformTspiFilterManager::FilterResponse modified = platformTspiFilterManager_.filter(current, lastPrefs_, lastProps_);
     if (modified == PlatformTspiFilterManager::POINT_DROPPED)
     {
@@ -543,6 +543,7 @@ void PlatformNode::setInvalid_()
 {
   valid_ = false;
   lastUpdate_ = NULL_PLATFORM_UPDATE;
+  lastUnfilteredUpdate_ = NULL_PLATFORM_UPDATE;
   setNodeMask(simVis::DISPLAY_MASK_NONE);
 }
 
@@ -614,6 +615,11 @@ const simData::PlatformUpdate* PlatformNode::update() const
   return isActive() ? &lastUpdate_ : NULL;
 }
 
+const simData::PlatformUpdate* PlatformNode::labelUpdate() const
+{
+  return isActive() ? labelUpdate_(lastPrefs_) : NULL;
+}
+
 const std::string PlatformNode::getEntityName(EntityNode::NameType nameType, bool allowBlankAlias) const
 {
   // if assert fails, check whether prefs are initialized correctly when entity is created
@@ -632,7 +638,7 @@ void PlatformNode::updateLabel_(const simData::PlatformPrefs& prefs)
 
   std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+    text = labelContentCallback().createString(prefs, *labelUpdate_(prefs), prefs.commonprefs().labelprefs().displayfields());
 
   if (!text.empty())
   {
@@ -661,7 +667,7 @@ std::string PlatformNode::popupText() const
         prefix = getEntityName(EntityNode::ALIAS_NAME);
       prefix += "\n";
     }
-    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+    return prefix + labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
   }
 
   return "";
@@ -673,7 +679,7 @@ std::string PlatformNode::hookText() const
   {
     // a valid_ platform should never have an update that does not have a time
     assert(lastUpdate_.has_time());
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
+    return labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
   }
 
   return "";
@@ -685,10 +691,22 @@ std::string PlatformNode::legendText() const
   {
     // a valid_ platform should never have an update that does not have a time
     assert(lastUpdate_.has_time());
-    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefs_, *labelUpdate_(lastPrefs_), lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   }
 
   return "";
+}
+
+const simData::PlatformUpdate* PlatformNode::labelUpdate_(const simData::PlatformPrefs& prefs) const
+{
+  switch (prefs.commonprefs().labelprefs().usevalues())
+  {
+  case simData::LabelPrefs::DISPLAY_VALUE:
+    break;
+  case simData::LabelPrefs::ACTUAL_VALUE:
+    return &lastUnfilteredUpdate_;
+  }
+  return &lastUpdate_;
 }
 
 void PlatformNode::updateOrRemoveBodyAxis_(bool prefsDraw, const simData::PlatformPrefs& prefs)

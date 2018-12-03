@@ -224,10 +224,17 @@ public: // EntityNode interface
   double getFrontOffset() const { return frontOffset_; }
 
   /**
-  * Returns the last update for the platform
+  * Returns the last update for the platform; note this update has been filtered e.g. clamping has been applied
   * @return the last update for the platform, or NULL if platform has no valid update
   */
   const simData::PlatformUpdate* update() const;
+
+  /**
+  * Returns the update valid for displaying current values in labels, which could be the actual values from the last unfiltered update,
+  * or the filtered values, depending on the label prefs useValues field
+  * @return the current update for the platform, or NULL if platform has no valid update
+  */
+  const simData::PlatformUpdate* labelUpdate() const;
 
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simVis"; }
@@ -283,12 +290,16 @@ private:
   void updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs, bool force);
   void updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs, bool force);
 
+  /// Return the current platform update to populate labels, based on the supplied prefs, either the lastUpdate_ or the lastUnfilteredUpdate_
+  const simData::PlatformUpdate* labelUpdate_(const simData::PlatformPrefs& prefs) const;
+
   const simData::DataStore&       ds_;
   PlatformTspiFilterManager&      platformTspiFilterManager_;
   simCore::RadarCrossSectionPtr   rcs_;
   simData::PlatformProperties     lastProps_;
   simData::PlatformPrefs          lastPrefs_;
   simData::PlatformUpdate         lastUpdate_;
+  simData::PlatformUpdate         lastUnfilteredUpdate_;
   /// the last time a data store update came in
   double                          lastUpdateTime_;
   /// the time of the earliest history point that still exists in the data slice
