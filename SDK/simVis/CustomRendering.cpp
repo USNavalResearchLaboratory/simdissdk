@@ -46,8 +46,19 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
     customActive_(false),
     objectIndexTag_(0)
 {
-  // Independent of the host like a LOB
-  setLocator(new Locator(host->getLocator()->getSRS()));
+  if (host)
+  {
+    // Independent of the host like a LOB
+    setLocator(new Locator(host->getLocator()->getSRS()));
+  }
+  else if (scenario)
+    setLocator(new Locator(scenario->mapNode()->getMapSRS()));
+  else
+  {
+    // Must have valid scenario
+    assert(false);
+    setLocator(NULL);
+  }
   setName("CustomRenderingNode");
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);

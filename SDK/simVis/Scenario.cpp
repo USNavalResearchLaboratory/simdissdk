@@ -791,10 +791,6 @@ CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRe
   if (props.has_hostid())
     host = find(props.hostid());
 
-  // no host, no custom rendering.
-  if (!host)
-    return NULL;
-
   // put the custom into our entity db:
   auto node = new CustomRenderingNode(this, props, host, dataStore.referenceYear());
   entities_[node->getId()] = new EntityRecord(
@@ -802,7 +798,7 @@ CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRe
     NULL,
     &dataStore);
 
-  hosterTable_.insert(std::make_pair(host->getId(), node->getId()));
+  hosterTable_.insert(std::make_pair((host ? host->getId() : 0), node->getId()));
 
   notifyToolsOfAdd_(node);
 

@@ -130,7 +130,7 @@ namespace simVis
     */
     virtual simData::ObjectId getId() const;
 
-    /** Get the custom's host's ID; returns true if out_hostId is set */
+    /** Get the custom's host's ID.  May be 0 if no host; returns true on success, in which case out_hostId is set */
     virtual bool getHostId(simData::ObjectId& out_hostId) const;
 
     /**
@@ -202,7 +202,7 @@ namespace simVis
     // Expose the locator node so an outside source can add graphics.
     LocatorNode* locatorNode() const;
 
-    /// Returns the host
+    /// Returns the host.  May be NULL if hosted under the scenario with no parent
     const EntityNode* host() const;
 
   protected:

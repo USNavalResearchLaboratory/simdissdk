@@ -226,11 +226,10 @@ void EntityTreeModel::commitDelayedEntities_()
       continue;
     }
 
-    // Pick out the host's id (0 for platforms (and custom renderings if they are being treated as top-level))
+    // Pick out the host's id (0 for platforms (and some custom renderings if they are being treated as top-level))
     uint64_t hostId = 0;
     bool getHostId = (entityType != simData::PLATFORM);
-    if (customAsTopLevel_ && entityType == simData::CUSTOM_RENDERING)
-      getHostId = false;
+    // Even if allowing custom rendering to be top level, only those with host ID = 0 are.  Still need to check host ID
     if (getHostId)
       hostId = dataStore_->entityHostId(*it);
 
