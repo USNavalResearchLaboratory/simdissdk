@@ -263,6 +263,56 @@ unsigned int VaporTrail::applyDataLimiting_(unsigned int puffsToAdd, double time
   return addAmount;
 }
 
+int VaporTrail::addFirstPuff_()
+{
+  const simData::PlatformUpdateSlice* platformUpdateSlice = dataStore_.platformUpdateSlice(hostPlatform_->getId());
+  if (!platformUpdateSlice)
+  {
+    assert(0);
+    return 2;
+  }
+  const double time = vaporTrailData_.startTime;
+  const simData::PlatformUpdateSlice::Iterator platformIter = platformUpdateSlice->upper_bound(time);
+  if (!platformIter.hasPrevious())
+  {
+    // cannot process this since there is no platform position at or before time; possibly the platform point was removed by data limiting.
+    return 1;
+  }
+  // last update at or before time:
+  const simData::PlatformUpdate* platformUpdate = platformIter.peekPrevious();
+
+  // interpolation may be required
+  simData::PlatformUpdate interpolatedPlatformUpdate;
+  simData::Interpolator* li = dataStore_.interpolator();
+  if (platformUpdate->time() != time && li != NULL && platformIter.hasNext())
+  {
+    // defn of upper_bound previous()
+    assert(platformUpdate->time() < time);
+    // defn of upper_bound next()
+    assert(platformIter.peekNext()->time() > time);
+    li->interpolate(time, *platformUpdate, *(platformIter.peekNext()), &interpolatedPlatformUpdate);
+    platformUpdate = &interpolatedPlatformUpdate;
+  }
+
+  const simCore::Coordinate coord(
+    simCore::COORD_SYS_ECEF,
+    simCore::Vec3(platformUpdate->x(), platformUpdate->y(), platformUpdate->z()),
+    simCore::Vec3(platformUpdate->psi(), platformUpdate->theta(), platformUpdate->phi()),
+    simCore::Vec3(platformUpdate->vx(), platformUpdate->vy(), platformUpdate->vz()));
+
+  osg::ref_ptr<Locator> startTimeLocator = new Locator(locator_->getSRS());
+  startTimeLocator->setCoordinate(coord, platformUpdate->time(), locator_->getEciRefTime());
+  // add offset for wake to prevent wake from getting wet
+  const double altOffset = (vaporTrailData_.isWake ? 0.1 : 0.0);
+  startTimeLocator->setLocalOffsets(simCore::Vec3(0.0, -vaporTrailData_.metersBehindCurrentPosition, altOffset), simCore::Vec3());
+
+  simCore::Vec3 hostOffsetPosition;
+  startTimeLocator->getLocatorPosition(&hostOffsetPosition);
+  addPuff_(hostOffsetPosition, platformUpdate->time());
+
+  return 0;
+}
+
 void VaporTrail::addNewPuffs_(double time)
 {
   if (!hostPlatform_->isActive() || textures_.empty())
@@ -270,9 +320,19 @@ void VaporTrail::addNewPuffs_(double time)
 
   if (puffs_.empty())
   {
-    simCore::Vec3 hostOffsetPosition;
-    locator_->getLocatorPosition(&hostOffsetPosition);
-    addPuff_(hostOffsetPosition, time);
+    // guaranteed by caller: VaporTrail::update
+    assert(time >= vaporTrailData_.startTime);
+
+    // if time jumped over trail's start time, we need to add the start time puff and all succeeding puffs up to current time
+    if ((time == vaporTrailData_.startTime) || (0 != addFirstPuff_()))
+    {
+      // there are no previous puffs, just add a puff for current time
+      simCore::Vec3 hostOffsetPosition;
+      locator_->getLocatorPosition(&hostOffsetPosition);
+      addPuff_(hostOffsetPosition, time);
+      return;
+    }
+    // we successfully added the puff for start time, now fall through to add all succeeding puffs up to current time
   }
   else if (puffs_.back()->time() == time)
   {
@@ -280,7 +340,8 @@ void VaporTrail::addNewPuffs_(double time)
     applyDataLimiting_(0, time, puffs_.back()->time());
     return;
   }
-  else
+
+  if (!puffs_.empty())
   {
     // add new puff(s) to an existing vaporTrail
 

@@ -116,6 +116,12 @@ private:
   unsigned int applyDataLimiting_(unsigned int puffsToAdd, double time, double prevPuffTime);
 
   /**
+  * Adds one new puff (corresponding to vapor trail start time) to the trail.
+  * @return 0 on success, non-zero on failure
+  */
+  int addFirstPuff_();
+
+  /**
   * Adds new puffs to the trail if conditions require it.
   * @param time time to evaluate vapor trail parameters.
   */
