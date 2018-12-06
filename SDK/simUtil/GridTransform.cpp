@@ -367,7 +367,7 @@ int GridTransform::rowOfChild(const GridCell* item) const
   const unsigned int idx = getChildIndex(item);
   if (idx >= getNumChildren())
     return -1;
-  return fixedByColumns_ ? (idx % userNum_) : (idx / userNum_);
+  return fixedByColumns_ ? (idx / userNum_) : (idx % userNum_);
 }
 
 int GridTransform::columnOfChild(const GridCell* item) const
@@ -376,7 +376,7 @@ int GridTransform::columnOfChild(const GridCell* item) const
   const unsigned int idx = getChildIndex(item);
   if (idx >= getNumChildren())
     return -1;
-  return fixedByColumns_ ? (idx / userNum_) : (idx % userNum_);
+  return fixedByColumns_ ? (idx % userNum_) : (idx / userNum_);
 }
 
 const GridCell* GridTransform::childAt(int row, int column) const
