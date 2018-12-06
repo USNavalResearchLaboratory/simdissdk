@@ -239,6 +239,8 @@ public:
   int columnOfChild(const GridCell* item) const;
   /** Returns child at index, or NULL if none */
   const GridCell* childAt(int row, int column) const;
+  /** Returns child at index, or NULL if none */
+  GridCell* childAt(int row, int column);
 
   /** Override to update layout */
   virtual void traverse(osg::NodeVisitor& nv);

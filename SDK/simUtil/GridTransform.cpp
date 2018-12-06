@@ -385,11 +385,36 @@ const GridCell* GridTransform::childAt(int row, int column) const
   {
     if (column < 0 || column >= userNum_)
       return NULL;
-    return dynamic_cast<const GridCell*>(getChild(column + userNum_ * row));
+    const int idx = column + userNum_ * row;
+    if (idx >= static_cast<int>(getNumChildren()))
+      return NULL;
+    return dynamic_cast<const GridCell*>(getChild(idx));
   }
   if (row < 0 || row >= userNum_)
     return NULL;
-  return dynamic_cast<const GridCell*>(getChild(row + userNum_ * column));
+  const int idx = row + userNum_ * column;
+  if (idx >= static_cast<int>(getNumChildren()))
+    return NULL;
+  return dynamic_cast<const GridCell*>(getChild(idx));
+}
+
+GridCell* GridTransform::childAt(int row, int column)
+{
+  if (fixedByColumns_)
+  {
+    if (column < 0 || column >= userNum_)
+      return NULL;
+    const int idx = column + userNum_ * row;
+    if (idx >= static_cast<int>(getNumChildren()))
+      return NULL;
+    return dynamic_cast<GridCell*>(getChild(idx));
+  }
+  if (row < 0 || row >= userNum_)
+    return NULL;
+  const int idx = row + userNum_ * column;
+  if (idx >= static_cast<int>(getNumChildren()))
+    return NULL;
+  return dynamic_cast<GridCell*>(getChild(idx));
 }
 
 void GridTransform::traverse(osg::NodeVisitor& nv)
