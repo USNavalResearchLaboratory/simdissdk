@@ -57,8 +57,9 @@ VaporTrail::VaporPuffData::VaporPuffData()
 
 //////////////////////////////////////////////////////////////////////////
 
-VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPlatform, const VaporTrailData& vaporTrailData, const VaporPuffData& vaporPuffData, const std::vector< osg::ref_ptr<osg::Texture2D> >& textures)
+VaporTrail::VaporTrail(const simData::DataStore& dataStore, osg::Group* expireModeGroup, PlatformNode& hostPlatform, const VaporTrailData& vaporTrailData, const VaporPuffData& vaporPuffData, const std::vector< osg::ref_ptr<osg::Texture2D> >& textures)
   : dataStore_(dataStore),
+    expireModeGroup_(expireModeGroup),
     hostPlatform_(&hostPlatform),
     vaporTrailData_(vaporTrailData),
     vaporPuffData_(vaporPuffData),
@@ -73,7 +74,8 @@ VaporTrail::VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPl
   // Must be able to blend or the graphics will look awful
   groupState->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
 
-  hostPlatform_->addChild(vaporTrailGroup_);
+  if (expireModeGroup_.valid())
+    expireModeGroup_->addChild(vaporTrailGroup_);
 
   // process the supplied texture(s)
   processTextures_(textures);
@@ -91,9 +93,11 @@ VaporTrail::~VaporTrail()
 {
   puffs_.clear();
   recyclePuffs_.clear();
-  if (hostPlatform_.valid())
-    hostPlatform_->removeChild(vaporTrailGroup_);
+  if (expireModeGroup_.valid())
+    expireModeGroup_->removeChild(vaporTrailGroup_);
   vaporTrailGroup_ = NULL;
+  hostPlatform_ = NULL;
+
   textures_.clear();
   locator_ = NULL;
 }
@@ -265,6 +269,12 @@ unsigned int VaporTrail::applyDataLimiting_(unsigned int puffsToAdd, double time
 
 int VaporTrail::addFirstPuff_()
 {
+  if (!hostPlatform_.valid())
+  {
+    // platform should be valid; vaporTrail should be removed if platform removed.
+    assert(0);
+    return 3;
+  }
   const simData::PlatformUpdateSlice* platformUpdateSlice = dataStore_.platformUpdateSlice(hostPlatform_->getId());
   if (!platformUpdateSlice)
   {
@@ -315,7 +325,7 @@ int VaporTrail::addFirstPuff_()
 
 void VaporTrail::addNewPuffs_(double time)
 {
-  if (!hostPlatform_->isActive() || textures_.empty())
+  if (!hostPlatform_.valid() || !hostPlatform_->isActive() || textures_.empty())
     return;
 
   if (puffs_.empty())

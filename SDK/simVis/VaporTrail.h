@@ -23,7 +23,7 @@
 #define SIMVIS_VAPOR_TRAIL_H
 #include <map>
 #include <vector>
-#include "osg/observer_ptr"
+#include "osg/ref_ptr"
 #include "osg/MatrixTransform"
 #include "simCore/Common/Export.h"
 
@@ -72,12 +72,13 @@ public:
   /**
   * Construct a new vapor trail. Adds to the scene.
   * @param dataStore needed for the limits
+  * @param expireModeGroup the ExpireModeGroup that attaches this vaporTrail to the scenegraph.
   * @param hostPlatform platform the vapor trail is connected to.
   * @param vaporTrailData data used to construct the vapor trail.
   * @param vaporPuffData data used to specify the vapor puff.
   * @param textures vector of textures to use for alternating puffs.
   */
-  VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPlatform, const VaporTrailData& vaporTrailData, const VaporPuffData& vaporPuffData, const std::vector< osg::ref_ptr<osg::Texture2D> >& textures);
+  VaporTrail(const simData::DataStore& dataStore, osg::Group* expireModeGroup, PlatformNode& hostPlatform, const VaporTrailData& vaporTrailData, const VaporPuffData& vaporPuffData, const std::vector< osg::ref_ptr<osg::Texture2D> >& textures);
 
   /**
    * Add new puffs, update all existing puffs in the vapor trail.
@@ -157,7 +158,10 @@ private:
   /// DataStore for getting the limits
   const simData::DataStore& dataStore_;
 
-  /// the host platform for this vapor trail
+  /// the scenegraph attachment for the vaporTrail
+  osg::observer_ptr<osg::Group> expireModeGroup_;
+
+  /// the platform for this vapor trail
   osg::observer_ptr<simVis::PlatformNode> hostPlatform_;
 
   /// locator to track the host and calculate the puff offset

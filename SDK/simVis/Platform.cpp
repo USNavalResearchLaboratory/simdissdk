@@ -151,14 +151,14 @@ private:
 PlatformNode::PlatformNode(const simData::PlatformProperties& props,
                            const simData::DataStore& dataStore,
                            PlatformTspiFilterManager& manager,
-                           osg::Group* trackParent,
+                           osg::Group* expireModeGroupAttach,
                            Locator* locator, int referenceYear) :
 EntityNode(simData::PLATFORM, locator),
 ds_(dataStore),
 platformTspiFilterManager_(manager),
 lastUpdateTime_(-std::numeric_limits<float>::max()),
 firstHistoryTime_(std::numeric_limits<float>::max()),
-trackParent_(trackParent),
+expireModeGroupAttach_(expireModeGroupAttach),
 track_(NULL),
 localGrid_(NULL),
 bodyAxisVector_(NULL),
@@ -176,6 +176,13 @@ lastPrefsValid_(false),
 forceUpdateFromDataStore_(false),
 queuedInvalidate_(false)
 {
+  // create a container for platform-related objects that can be rendered even when platform is no longer valid.
+  // platform manages the visibility of the group.
+  // any class that adds a child is reponsible for removing that child.
+  expireModeGroup_ = new osg::Group;
+  if (expireModeGroupAttach_.valid())
+    expireModeGroupAttach_->addChild(expireModeGroup_);
+
   model_ = new PlatformModelNode(new Locator(locator));
   addChild(model_);
   model_->addCallback(new BoundsUpdater(this));
@@ -196,7 +203,12 @@ queuedInvalidate_(false)
 PlatformNode::~PlatformNode()
 {
   if (track_.valid())
-    trackParent_->removeChild(track_);
+    expireModeGroup_->removeChild(track_);
+  track_ = NULL;
+
+  if (expireModeGroupAttach_.valid())
+    expireModeGroupAttach_->removeChild(expireModeGroup_);
+  expireModeGroup_ = NULL;
 }
 
 void PlatformNode::setProperties(const simData::PlatformProperties& props)
@@ -261,6 +273,9 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
 
   setRcsPrefs_(prefs);
 
+  // manage visibility of track and trail group
+  expireModeGroup_->setNodeMask(showTrackTrail_(prefs) ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+
   // remove or create track history
   if (showTrack_(prefs))
   {
@@ -288,7 +303,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   }
   else
   {
-    trackParent_->removeChild(track_);
+    expireModeGroup_->removeChild(track_);
     track_ = NULL;
   }
 
@@ -358,6 +373,11 @@ void PlatformNode::updateHostBounds()
   // It does not matter here whether lastPrefs is valid or not.  The bounds of the
   // child definitely updated, and we just need to fix the track values and front offset
   updateHostBounds_(lastPrefs_.scale());
+}
+
+osg::Group* PlatformNode::getExpireModeGroup() const
+{
+  return expireModeGroup_.get();
 }
 
 PlatformModelNode* PlatformNode::getModel()
@@ -505,6 +525,9 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
     setInvalid_();
   }
 
+  // manage visibility of track and trail group
+  expireModeGroup_->setNodeMask(showTrackTrail_(lastPrefs_) ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+
   // remove or create track history
   if (showTrack_(lastPrefs_))
   {
@@ -515,7 +538,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   }
   else if (track_.valid())
   {
-    trackParent_->removeChild(track_);
+    expireModeGroup_->removeChild(track_);
     track_ = NULL;
   }
 
@@ -554,9 +577,14 @@ void PlatformNode::setInvalid_()
 // The downside is that in a large scenario, turning draw off for all platforms then turning back on might cause hiccups.
 bool PlatformNode::showTrack_(const simData::PlatformPrefs& prefs) const
 {
+  return showTrackTrail_(prefs) &&
+    prefs.trackprefs().trackdrawmode() != simData::TrackPrefs_Mode_OFF;
+}
+
+bool PlatformNode::showTrackTrail_(const simData::PlatformPrefs& prefs) const
+{
   return (lastUpdateTime_ != -1.0) &&
     (prefs.commonprefs().draw()) &&
-    (prefs.trackprefs().trackdrawmode() != simData::TrackPrefs_Mode_OFF) &&
     (isActive_(prefs) || showExpiredTrackHistory_(prefs));
 }
 
@@ -572,7 +600,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   assert(!track_.valid());
   // create the Track History "on demand" if requested
   track_ = new TrackHistoryNode(ds_, getLocator()->getSRS(), platformTspiFilterManager_, getId());
-  trackParent_->addChild(track_);
+  expireModeGroup_->addChild(track_);
   track_->setPrefs(prefs, lastProps_, true);
   updateHostBounds_(prefs.scale());
   track_->update();

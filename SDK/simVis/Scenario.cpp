@@ -635,7 +635,7 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
 {
   SAFETRYBEGIN;
   // create the OSG node representing this entity
-  PlatformNode* node = new PlatformNode(props, dataStore, *platformTspiFilterManager_, this, locatorFactory_->createCachingLocator(), dataStore.referenceYear());
+  PlatformNode* node = new PlatformNode(props, dataStore, *platformTspiFilterManager_, root_, locatorFactory_->createCachingLocator(), dataStore.referenceYear());
   node->getModel()->addCallback(new BeamNoseFixer(this));
 
   // put it in the vis database.

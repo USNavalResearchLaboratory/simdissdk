@@ -73,16 +73,22 @@ public:
   * @param props   Initialization properties
   * @param dataStore Reference to the datastore that contains platform data
   * @param manager Filters platform TSPI points
-  * @param trackParent Parent node for the track history, since it cannot be a child of the platform node
+  * @param expireModeGroupAttach Parent node for the expireModeGroup (which parents TrackHistory), since it cannot be a child of the platform node
   * @param locator Locator that will position this platform
   * @param referenceYear The calculations for the Speed Rings Fixed Time preference needs the scenario reference year
   */
   PlatformNode(const simData::PlatformProperties& props,
     const simData::DataStore& dataStore,
     PlatformTspiFilterManager& manager,
-    osg::Group* trackParent,
+    osg::Group* expireModeGroupAttach,
     Locator* locator = NULL,
     int referenceYear = 1970);
+
+  /**
+  * Access to the group that holds track history and vapor trail (to support expire mode)
+  * @return expireModeGroup
+  */
+  osg::Group* getExpireModeGroup() const;
 
   /**
   * Access to the node that renders the 3D model/icon
@@ -267,6 +273,13 @@ private:
   bool showTrack_(const simData::PlatformPrefs& prefs) const;
 
   /**
+  * Indicates if the track history and vapor trail can exist in the scene, based on the expireMode, if the platform is active, non-static
+  * @param prefs pref values to interrogate
+  * @return true if the track history and vapor trial can exist in the scene
+  */
+  bool showTrackTrail_(const simData::PlatformPrefs& prefs) const;
+
+  /**
   * Mark the platform as not valid; receipt of a valid datastore update will make the platform valid again
   */
   void setInvalid_();
@@ -304,8 +317,10 @@ private:
   double                          lastUpdateTime_;
   /// the time of the earliest history point that still exists in the data slice
   double                          firstHistoryTime_;
-  /// parent of the track history points, which must be different from the platform node to support expiremode
-  osg::observer_ptr<osg::Group>   trackParent_;
+  /// container for trackHistory and vaporTrail, which must be different from the platform node to support expiremode
+  osg::ref_ptr<osg::Group> expireModeGroup_;
+  /// scenegraph parent to the expireModeGroup_
+  osg::observer_ptr<osg::Group> expireModeGroupAttach_;
   /// track history points
   osg::ref_ptr<TrackHistoryNode>  track_;
   osg::ref_ptr<LocalGridNode>     localGrid_;
@@ -331,6 +346,5 @@ private:
 };
 
 } // namespace simVis
-
 
 #endif // SIMVIS_PLATFORM_NODE_H
