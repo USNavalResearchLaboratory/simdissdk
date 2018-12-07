@@ -43,7 +43,7 @@ public:
   /** Sends the last of the buffer off, if any buffer exists */
   virtual ~TextBuffer()
   {
-    if (!buffer_.isEmpty())
+    if (!buffer_.isEmpty() && channel_)
       channel_->addText(severity_, buffer_);
   }
 
