@@ -225,7 +225,14 @@ public:
    * children are added to the bottom, wrapping around to the top when row is filled.
    */
   bool isFixedByColumns() const;
-  /** Changes the fixed-by-columns flag.  Forces a re-layout to rearrange children. */
+  /**
+   * Changes the fixed-by-columns flag.  Forces a re-layout to rearrange children.  If true,
+   * then there are a fixed number of columns, and each row is filled from left to right, with
+   * an ever-expanding number of rows (it grows "down").  If false, then there are a fixed
+   * number of rows.  Each column fills from the top down before starting a new row, with
+   * an ever-expanding number of columns (it grows "right").
+   * @param fixedByColumns When true, column count is fixed.  When false, row count is fixed.
+   */
   void setFixedByColumns(bool fixedByColumns);
 
   /** Only applicable when fixed by columns is true. */
