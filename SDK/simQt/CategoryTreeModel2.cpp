@@ -23,11 +23,14 @@
 #include <QAction>
 #include <QApplication>
 #include <QColor>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QFont>
-#include <QInputDialog>
+#include <QLabel>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPushButton>
 #include <QTimer>
 #include <QToolTip>
 #include <QTreeView>
@@ -38,6 +41,7 @@
 #include "simQt/QtFormatting.h"
 #include "simQt/CategoryFilterCounter.h"
 #include "simQt/CategoryTreeModel.h"
+#include "simQt/EntityFilterLineEdit.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/Settings.h"
@@ -2160,24 +2164,34 @@ void CategoryFilterWidget2::showRegExpEditGui_(const QModelIndex& index)
   const QString oldRegExp = index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString();
   const QString categoryName = index.data(CategoryTreeModel2::ROLE_CATEGORY_NAME).toString();
 
-  // Create an input dialog on the stack so that we can set a What's This tip for more information
-  QInputDialog inputDialog(this);
-  inputDialog.setWhatsThis(tr(
-"Regular expressions can be applied to categories in a filter.  Categories with regular expression filters will match only the values that match the regular expression."
-"<p>This popup changes the regular expression value for the category '%1'."
-"<p>An empty string can be used to clear the regular expression and return to normal matching mode.").arg(categoryName));
-  inputDialog.setInputMode(QInputDialog::TextInput);
-  inputDialog.setTextValue(oldRegExp);
-  inputDialog.setWindowTitle(tr("Set Regular Expression"));
-  inputDialog.setLabelText(tr("Set '%1' value regular expression:").arg(categoryName));
+  // pop up dialog with a entity filter line edit that supports formatting regexp
+  QDialog optionsDialog(this);
+  optionsDialog.setWindowTitle(tr("Set Regular Expression"));
+  optionsDialog.setWindowFlags(optionsDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
-  // Execute the GUI and set the regexp
-  if (inputDialog.exec() == QDialog::Accepted && inputDialog.textValue() != oldRegExp)
+  QLayout* layout = new QVBoxLayout(&optionsDialog);
+  QLabel* label = new QLabel(tr("Set '%1' value regular expression:").arg(categoryName), &optionsDialog);
+  layout->addWidget(label);
+  EntityFilterLineEdit* lineEdit = new EntityFilterLineEdit(&optionsDialog);
+  lineEdit->setRegexOnly(true);
+  lineEdit->setText(oldRegExp);
+  lineEdit->setToolTip(
+    tr("Regular expressions can be applied to categories in a filter.  Categories with regular expression filters will match only the values that match the regular expression."
+    "<p>This popup changes the regular expression value for the category '%1'."
+    "<p>An empty string can be used to clear the regular expression and return to normal matching mode.").arg(categoryName));
+  layout->addWidget(lineEdit);
+  QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &optionsDialog);
+  connect(lineEdit, SIGNAL(isValidChanged(bool)), buttons.button(QDialogButtonBox::Ok), SLOT(setEnabled(bool)));
+  connect(&buttons, SIGNAL(accepted()), &optionsDialog, SLOT(accept()));
+  connect(&buttons, SIGNAL(rejected()), &optionsDialog, SLOT(reject()));
+  layout->addWidget(&buttons);
+  optionsDialog.setLayout(layout);
+  if (optionsDialog.exec() == QDialog::Accepted && lineEdit->text() != oldRegExp)
   {
     // index.model() is const because changes to the model might invalidate indices.  Since we know this
     // and no longer use the index after this call, it is safe to use const_cast here to use setData().
     QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
-    model->setData(index, inputDialog.textValue(), CategoryTreeModel2::ROLE_REGEXP_STRING);
+    model->setData(index, lineEdit->text(), CategoryTreeModel2::ROLE_REGEXP_STRING);
   }
 }
 
