@@ -463,6 +463,7 @@ int GridTransform::getDefaultWidth() const
   const int numColumns = this->numColumns();
   std::vector<float> columnWidths(numColumns, 0.f);
   float totalWidth = 0.f;
+  int numVisibleColumns = 0;
 
   // Loop through the children
   const unsigned int numChildren = getNumChildren();
@@ -487,14 +488,16 @@ int GridTransform::getDefaultWidth() const
     float& lastColumnWidth = columnWidths[column];
     if (width > lastColumnWidth)
     { // Increase the total by the delta from old value
+      if (lastColumnWidth == 0.f)
+        ++numVisibleColumns;
       totalWidth += (width - lastColumnWidth);
       lastColumnWidth = width;
     }
   }
 
   // Adjust for internal spacing and padding
-  if (numColumns > 0)
-    totalWidth += (numColumns - 1) * hSpacing_;
+  if (numVisibleColumns > 0)
+    totalWidth += (numVisibleColumns - 1) * hSpacing_;
   return totalWidth + padding_[0] + padding_[1];
 }
 
@@ -508,6 +511,7 @@ int GridTransform::getDefaultHeight() const
   const int numRows = this->numRows();
   std::vector<float> rowHeights(numRows, 0.f);
   float totalHeight = 0.f;
+  int numVisibleRows = 0;
 
   // Loop through the children
   const unsigned int numChildren = getNumChildren();
@@ -532,14 +536,16 @@ int GridTransform::getDefaultHeight() const
     float& lastRowHeight = rowHeights[row];
     if (height > lastRowHeight)
     { // Increase the total by the delta from old value
+      if (lastRowHeight == 0.f)
+        ++numVisibleRows;
       totalHeight += (height - lastRowHeight);
       lastRowHeight = height;
     }
   }
 
   // Adjust for internal spacing and padding
-  if (numRows > 0)
-    totalHeight += (numRows - 1) * vSpacing_;
+  if (numVisibleRows > 0)
+    totalHeight += (numVisibleRows - 1) * vSpacing_;
   return totalHeight + padding_[2] + padding_[3];
 }
 
