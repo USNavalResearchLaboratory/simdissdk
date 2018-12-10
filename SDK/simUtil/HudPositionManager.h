@@ -179,23 +179,6 @@ private:
   std::map<std::string, osg::ref_ptr<WindowData> > allWindows_;
 };
 
-/** Repositions matrices that are in a 0-to-1 format */
-class SDKUTIL_EXPORT RepositionMatrixCallback : public HudPositionManager::RepositionCallback
-{
-public:
-  explicit RepositionMatrixCallback(osg::MatrixTransform* xform);
-
-  /** Overrides RepositionCallback to update the matrix transform's translation with the given values. */
-  virtual void setPosition(const std::string& name, const osg::Vec2d& positionPct);
-
-protected:
-  /** osg::Referenced classes have protected destructors to avoid double delete. */
-  virtual ~RepositionMatrixCallback();
-
-private:
-  osg::observer_ptr<osg::MatrixTransform> xform_;
-};
-
 /** Converts pixels to percentages and monitors for window resizes. */
 class SDKUTIL_EXPORT RepositionPixelsCallback : public HudPositionManager::RepositionCallback
 {

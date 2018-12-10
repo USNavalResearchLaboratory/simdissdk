@@ -230,27 +230,6 @@ int HudPositionManager::setSize(const std::string& name, const osg::Vec2d& minXy
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-RepositionMatrixCallback::RepositionMatrixCallback(osg::MatrixTransform* xform)
-  : xform_(xform)
-{
-}
-
-RepositionMatrixCallback::~RepositionMatrixCallback()
-{
-}
-
-void RepositionMatrixCallback::setPosition(const std::string& name, const osg::Vec2d& positionPct)
-{
-  osg::ref_ptr<osg::MatrixTransform> xform;
-  if (!xform_.lock(xform))
-    return;
-  osg::Matrix mat = xform->getMatrix();
-  mat.setTrans(osg::Vec3d(positionPct.x(), positionPct.y(), 0.0));
-  xform->setMatrix(mat);
-}
-
-////////////////////////////////////////////////////////////////////////////////////
-
 /** Responsible for tying in to get window sizes out for positioning */
 class RepositionPixelsCallback::ResizeCallback : public osgGA::GUIEventHandler
 {
