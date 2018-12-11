@@ -22,6 +22,7 @@
 #include "osg/Version"
 #include "osgUtil/CullVisitor"
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Math.h"
 #include "simVis/Locator.h"
 #include "simVis/Utils.h"
 #include "simVis/PlatformInertialTransform.h"
@@ -56,7 +57,7 @@ bool PlatformInertialTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, o
   // are no children nodes, or if there aren't the anticipated number of matrices
   // in the model view stack
   osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-  if (!cv || getNumChildren() == 0 || cv->getModelViewStack().size() < 2)
+  if (!cv || getNumChildren() == 0 || cv->getModelViewStack().size() < 3)
   {
     matrix.preMultRotate(entityRotationInverse_);
     return true;
@@ -65,9 +66,23 @@ bool PlatformInertialTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, o
   // Drop off the last matrix which came from the simVis::BillboardAutoTransform
   osg::CullStack::MatrixStack stack = cv->getModelViewStack();
   stack.pop_back();
-  // Use the scaled matrix here, but un-rotate the icon to get to inertial angles
+
+  // Save the dynamic scale values.  We're going to want to uniformly re-scale.  If
+  // we fail to do so, non-uniform scaling (e.g. from ScaleXYZ) will scale the original
+  // rotation vector too, which causes problems with display.
+  const auto& dynamicScale = stack.back()->getScale();
+  const double maxScale = simCore::sdkMax(dynamicScale.x(), simCore::sdkMax(dynamicScale.y(), dynamicScale.z()));
+
+  // Pop off the dynamic scale transform's matrix, and start with that matrix
+  stack.pop_back();
   matrix = *stack.back();
+
+  // Now uniformly scale back up to match dynamic scale
+  matrix.preMultScale(osg::Vec3f(maxScale, maxScale, maxScale));
+
 #endif
+
+  // Apply the rotation to get into inertial space
   matrix.preMultRotate(entityRotationInverse_);
   return true;
 }
