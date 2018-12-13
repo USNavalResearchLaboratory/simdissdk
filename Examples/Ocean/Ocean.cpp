@@ -94,6 +94,76 @@ static simCore::Coordinate s_shipPosOri(simCore::COORD_SYS_LLA,
 static simData::ObjectId     s_shipId;
 
 
+// cull callback that adds buoyancy to a platform
+// using its offset transform - this is not really
+// appropriate in the long run since the offset xform
+// is used for other things, but it works for a quick demo
+class PlatformBuoyancyCallback : public osg::NodeCallback
+{
+public:
+  PlatformBuoyancyCallback(osgEarth::Triton::TritonLayer* triton) :
+  _triton(triton),
+  _enabled(false),
+  _reset(false)
+  {
+    _srs = osgEarth::SpatialReference::get("wgs84");
+    _isect = new osgEarth::Triton::TritonIntersections();
+    _isect->addLocalPoint(osg::Vec3d(0, 0, 0));
+    triton->addIntersections(_isect.get());
+  }
+
+  void setEnabled(bool enable)
+  {
+    if (_enabled && !enable)
+    {
+      _reset = true;
+    }
+    _enabled = enable;
+  }
+
+  virtual ~PlatformBuoyancyCallback()
+  {
+    //osg::ref_ptr<osgEarth::Triton::TritonLayer> triton;
+    //if (_triton.lock(triton))
+    //    triton->removeIntersections(_isect.get());
+  }
+
+  void operator()(osg::Node* node, osg::NodeVisitor* nv)
+  {
+    if (_enabled || _reset)
+    {
+      simVis::PlatformNode* platform = dynamic_cast<simVis::PlatformNode*>(node);
+      if (platform)
+      {
+        osg::MatrixTransform* xform = dynamic_cast<osg::MatrixTransform*>(platform->getModel()->offsetNode());
+        if (_reset)
+        {
+          xform->setMatrix(osg::Matrix::identity());
+          _reset = false;
+        }
+        else
+        {
+          simCore::Vec3 pos;
+          platform->getPosition(&pos, simCore::COORD_SYS_LLA);
+          GeoPoint anchor(_srs.get(), simCore::RAD2DEG*pos.lon(), simCore::RAD2DEG*pos.lat(), 0);
+          _isect->setAnchor(anchor);
+
+          xform->setMatrix(
+            osg::Matrix::translate(0, 0, _isect->getHeights()[0]) *
+            osg::Matrix::rotate(osg::Vec3d(0,0,1), _isect->getNormals()[0]) );
+        }
+      }
+    }
+
+    traverse(node, nv);
+  }
+  
+  osg::ref_ptr<const SpatialReference> _srs;
+  osg::ref_ptr<osgEarth::Triton::TritonIntersections> _isect;
+  osg::observer_ptr<osgEarth::Triton::TritonLayer> _triton;
+  bool _enabled, _reset;
+};
+
 // An event handler to assist in testing Ocean
 struct MenuHandler : public osgGA::GUIEventHandler
 {
@@ -288,6 +358,22 @@ namespace
     osg::observer_ptr<simVis::View> view_;
   };
 
+  /** Toggler for the Triton buoyancy simulation */
+  class ToggleBuoyancySimulation : public ControlEventHandler
+  {
+  public:
+    explicit ToggleBuoyancySimulation(PlatformBuoyancyCallback* cb)
+      : _cb(cb)
+    {
+    }
+    virtual void onValueChanged(Control* control, bool value)
+    {
+      _cb->setEnabled(value);
+    }
+  private:
+    osg::ref_ptr<PlatformBuoyancyCallback> _cb;
+  };
+
 #ifdef HAVE_SILVERLINING_NODEKIT
   osg::ref_ptr<simUtil::SilverLiningSettingsAdapter> s_SlSettings = new simUtil::SilverLiningSettingsAdapter;
 
@@ -401,7 +487,9 @@ namespace
   };
 #endif
 
-  Control* createMenu(osgEarth::Util::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer, SkyNode* skyNode, simVis::View* view, bool isTriton, bool isSilverLining)
+  Control* createMenu(osgEarth::Util::SimpleOceanLayer* simpleOceanLayer, osgEarth::VisibleLayer* tritonLayer, 
+                      PlatformBuoyancyCallback* buoyancyCallback, SkyNode* skyNode, simVis::View* view,
+                      bool isTriton, bool isSilverLining)
   {
     static const float TITLE_SIZE = 16.f;
     static const float TEXT_SIZE = 12.f;
@@ -523,6 +611,12 @@ namespace
       slider->setHorizFill(true, 250.0f);
       slider->setValue(s_TritonSettings->godRaysFade()->value());
       grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
+
+      // Platform Buoyancy
+      ++row;
+      grid->setControl(0, row, new LabelControl("Platform Buoyancy", TEXT_SIZE, WHITE));
+      evtHandler = new ToggleBuoyancySimulation(buoyancyCallback);
+      grid->setControl(1, row, new CheckBoxControl(false, evtHandler));
     }
 #endif /* HAVE_TRITON_NODEKIT */
 
@@ -692,6 +786,7 @@ namespace
     simVis::OverheadMode::configureOceanLayer(rv);
     return rv;
   }
+
 #endif
 
   /** Factory an ocean node */
@@ -815,6 +910,7 @@ int main(int argc, char** argv)
 
   // create our ship:
   s_shipId = createShip(dataStore);
+  osg::ref_ptr<simVis::PlatformNode> shipNode = scene->getScenario()->find<simVis::PlatformNode>(s_shipId);
 
   // add a sky to the scene.
   osg::ref_ptr<SkyNode> sky = makeSky(scene.get(), useSilverLining, sluser, sllicense, slpath);
@@ -826,11 +922,16 @@ int main(int argc, char** argv)
   // add an ocean surface to the scene.
   osg::ref_ptr<osgEarth::Util::SimpleOceanLayer> simpleOceanLayer;
   osg::ref_ptr<osgEarth::VisibleLayer> tritonLayer;
+  osg::ref_ptr<PlatformBuoyancyCallback> buoyancyCallback;
+
 #ifdef HAVE_TRITON_NODEKIT
   if (useTriton)
   {
-    tritonLayer = makeTriton(tritonuser, tritonlicense, tritonpath);
-    viewer->getSceneManager()->getMap()->addLayer(tritonLayer.get());
+    osgEarth::Triton::TritonLayer* triton = makeTriton(tritonuser, tritonlicense, tritonpath);
+    viewer->getSceneManager()->getMap()->addLayer(triton);
+    tritonLayer = triton;
+    buoyancyCallback = new PlatformBuoyancyCallback(triton);
+    shipNode->addCullCallback(buoyancyCallback.get());
   }
   else
 #endif
@@ -850,12 +951,19 @@ int main(int argc, char** argv)
   }
 
   // zoom to the starting AOI:
-  osg::observer_ptr<simVis::PlatformNode> shipNode = scene->getScenario()->find<simVis::PlatformNode>(s_shipId);
   viewer->getMainView()->tetherCamera(shipNode.get());
   viewer->getMainView()->setFocalOffsets(80.0, -10.0, 2000.0);
 
   // install an on-screen menu
-  Control* menu = createMenu(simpleOceanLayer.get(), tritonLayer.get(), sky.get(), viewer->getMainView(), useTriton, useSilverLining);
+  Control* menu = createMenu(
+      simpleOceanLayer.get(),
+      tritonLayer.get(),
+      buoyancyCallback.get(),
+      sky.get(),
+      viewer->getMainView(),
+      useTriton,
+      useSilverLining);
+
   viewer->getMainView()->addOverlayControl(menu);
 
   // install the handler for the demo keys in the notify() above
