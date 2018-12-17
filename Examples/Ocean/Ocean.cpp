@@ -101,56 +101,58 @@ static simData::ObjectId     s_shipId;
 class PlatformBuoyancyCallback : public osg::NodeCallback
 {
 public:
-  PlatformBuoyancyCallback(osgEarth::Triton::TritonLayer* triton) :
-  _triton(triton),
-  _enabled(false),
-  _reset(false)
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
+  explicit PlatformBuoyancyCallback(osgEarth::Triton::TritonLayer* triton) :
+    triton_(triton),
+    enabled_(false),
+    reset_(false)
   {
-    _srs = osgEarth::SpatialReference::get("wgs84");
-    _isect = new osgEarth::Triton::TritonIntersections();
-    _isect->addLocalPoint(osg::Vec3d(0, 0, 0));
-    triton->addIntersections(_isect.get());
+    srs_ = osgEarth::SpatialReference::get("wgs84");
+    isect_ = new osgEarth::Triton::TritonIntersections();
+    isect_->addLocalPoint(osg::Vec3d(0, 0, 0));
+    triton_->addIntersections(isect_.get());
   }
 
   void setEnabled(bool enable)
   {
-    if (_enabled && !enable)
+    if (enabled_ && !enable)
     {
-      _reset = true;
+      reset_ = true;
     }
-    _enabled = enable;
+    enabled_ = enable;
   }
 
   virtual ~PlatformBuoyancyCallback()
   {
+    // removeIntersections is not currently exposed in the Triton Layer API
     //osg::ref_ptr<osgEarth::Triton::TritonLayer> triton;
-    //if (_triton.lock(triton))
-    //    triton->removeIntersections(_isect.get());
+    //if (triton_.lock(triton))
+    //  triton_->removeIntersections(isect_.get());
   }
 
   void operator()(osg::Node* node, osg::NodeVisitor* nv)
   {
-    if (_enabled || _reset)
+    if (enabled_ || reset_)
     {
       simVis::PlatformNode* platform = dynamic_cast<simVis::PlatformNode*>(node);
       if (platform)
       {
         osg::MatrixTransform* xform = dynamic_cast<osg::MatrixTransform*>(platform->getModel()->offsetNode());
-        if (_reset)
+        if (reset_)
         {
           xform->setMatrix(osg::Matrix::identity());
-          _reset = false;
+          reset_ = false;
         }
         else
         {
           simCore::Vec3 pos;
           platform->getPosition(&pos, simCore::COORD_SYS_LLA);
-          GeoPoint anchor(_srs.get(), simCore::RAD2DEG*pos.lon(), simCore::RAD2DEG*pos.lat(), 0);
-          _isect->setAnchor(anchor);
+          GeoPoint anchor(srs_.get(), simCore::RAD2DEG*pos.lon(), simCore::RAD2DEG*pos.lat(), 0);
+          isect_->setAnchor(anchor);
 
           xform->setMatrix(
-            osg::Matrix::translate(0, 0, _isect->getHeights()[0]) *
-            osg::Matrix::rotate(osg::Vec3d(0,0,1), _isect->getNormals()[0]) );
+            osg::Matrix::translate(0, 0, isect_->getHeights()[0]) *
+            osg::Matrix::rotate(osg::Vec3d(0,0,1), isect_->getNormals()[0]) );
         }
       }
     }
@@ -158,10 +160,17 @@ public:
     traverse(node, nv);
   }
   
-  osg::ref_ptr<const SpatialReference> _srs;
-  osg::ref_ptr<osgEarth::Triton::TritonIntersections> _isect;
-  osg::observer_ptr<osgEarth::Triton::TritonLayer> _triton;
-  bool _enabled, _reset;
+  osg::ref_ptr<const SpatialReference> srs_;
+  osg::ref_ptr<osgEarth::Triton::TritonIntersections> isect_;
+  osg::observer_ptr<osgEarth::Triton::TritonLayer> triton_;
+  bool enabled_;
+  bool reset_;
+
+#else
+  /** Simply adapt to the interface and provide no-ops */
+  explicit PlatformBuoyancyCallback(osgEarth::Triton::TritonLayer* triton) {}
+  void setEnabled(bool fl) {}
+#endif
 };
 
 // An event handler to assist in testing Ocean
@@ -612,11 +621,13 @@ namespace
       slider->setValue(s_TritonSettings->godRaysFade()->value());
       grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
 
+#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
       // Platform Buoyancy
       ++row;
       grid->setControl(0, row, new LabelControl("Platform Buoyancy", TEXT_SIZE, WHITE));
       evtHandler = new ToggleBuoyancySimulation(buoyancyCallback);
       grid->setControl(1, row, new CheckBoxControl(false, evtHandler));
+#endif
     }
 #endif /* HAVE_TRITON_NODEKIT */
 
