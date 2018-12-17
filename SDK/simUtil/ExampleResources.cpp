@@ -402,8 +402,6 @@ void simExamples::configureSearchPaths()
   simVisRegistry->setModelSearchPaths(modelPathList);
   osgDB::setDataFilePathList(pathList);
 
-  osgEarth::Registry::instance()->setDefaultFont(simVisRegistry->getOrCreateFont("arial.ttf"));
-
   // Fix the GL3 version
   simVis::applyMesaGlVersionOverride();
 }
