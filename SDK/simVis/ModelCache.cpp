@@ -21,6 +21,7 @@
  */
 #include <cassert>
 #include <limits>
+#include "osg/LightModel"
 #include "osg/LOD"
 #include "osg/Node"
 #include "osg/NodeVisitor"
@@ -116,6 +117,11 @@ public:
 
       // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
       ss->removeTextureMode(0, GL_TEXTURE_2D);
+
+      // GLCORE does not support LightModel; drop it; see SIMDIS-3089
+      osg::LightModel* lightModel = dynamic_cast<osg::LightModel*>(ss->getAttribute(osg::StateAttribute::LIGHTMODEL));
+      if (lightModel != NULL)
+        ss->removeAttribute(lightModel);
 
       // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
       osg::Texture* texture = dynamic_cast<osg::Texture*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
@@ -511,6 +517,11 @@ public:
     }
   }
 
+  /** Return the proper library name */
+  virtual const char* libraryName() const { return "simVis"; }
+  /** Return the class name */
+  virtual const char* className() const { return "ModelCache::LoaderNode"; }
+
 private:
   /** Loading on a URI completed.  Alert everyone who cares. */
   void fireLoadFinished_(const std::string& uri, const osg::ref_ptr<osg::Node>& node)
@@ -569,6 +580,7 @@ ModelCache::ModelCache()
     asyncLoader_(new LoaderNode)
 {
   asyncLoader_->setCache(this);
+  asyncLoader_->setName("Asynchronous Load Helper");
 
   // Create a box model as a placeholder for invalid model
   osg::Geode* geode = new osg::Geode();

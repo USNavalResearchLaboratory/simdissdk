@@ -29,11 +29,12 @@
 #include "simData/DataStore.h"
 #include "simData/DataTypes.h"
 
-#include "osg/NodeCallback"
-#include "osg/Geometry"
-#include "osg/Quat"
-#include "osg/Matrix"
 #include "osg/BoundingBox"
+#include "osg/Geometry"
+#include "osg/Matrix"
+#include "osg/NodeCallback"
+#include "osg/Quat"
+#include "osg/Transform"
 #include "osgGA/GUIEventHandler"
 #include "osgText/Text"
 
@@ -103,10 +104,12 @@ namespace simVis
 {
   class PlatformModelNode;
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
    * Whether to use the REX terrain engine.
    */
-  SDKVIS_EXPORT bool useRexEngine();
+  SDK_DEPRECATE(SDKVIS_EXPORT bool useRexEngine(), "Method will be removed in a future SDK release.");
+#endif
 
   /**
    * Enable or disable lighting on a state set. We must set both the
@@ -157,6 +160,25 @@ namespace simVis
     /// osg::Referenced-derived
     virtual ~NodeUpdateCallback() {}
   };
+
+  /**
+   * Utility template method to find the first Update Callback of the given type.
+   * @param node Node to search the update callback chain of
+   * @return First update callback that is of type T, or NULL if none is found.
+   */
+  template <typename T>
+  T* findUpdateCallbackOfType(osg::Node* node)
+  {
+    osg::Callback* callback = node->getUpdateCallback();
+    while (callback)
+    {
+      T* asType = dynamic_cast<T*>(callback);
+      if (asType)
+        return asType;
+      callback = callback->getNestedCallback();
+    }
+    return NULL;
+  }
 
   /// convert a simCore::Coordinate to a GeoPoint, if possible
   SDKVIS_EXPORT bool convertCoordToGeoPoint(
@@ -679,6 +701,43 @@ namespace simVis
 
     /** Override apply() to detect GL3-incompatible draw modes on primitive sets */
     virtual void apply(osg::Geometry& geom);
+  };
+
+  /** Turns a DOF transform's animation on or off. */
+  class SDKVIS_EXPORT EnableDOFTransform : public osg::NodeVisitor
+  {
+  public:
+    explicit EnableDOFTransform(bool enabled);
+    virtual void apply(osg::Node& node);
+
+  private:
+    bool enabled_;
+  };
+
+  /**
+   * Utility class that is intended to do a transform to screen coordinates, backing out MVPW.
+   * This is similar to osg::AutoTransform but does not attempt to maintain an aspect ratio,
+   * instead preferring to back out to pixel scale in both the X and the Y axes.
+   */
+  class SDKVIS_EXPORT PixelScaleHudTransform : public osg::Transform
+  {
+  public:
+    PixelScaleHudTransform();
+    PixelScaleHudTransform(const PixelScaleHudTransform& rhs, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+    META_Node(simVis, PixelScaleHudTransform);
+
+    /** Override osg::Transform method. */
+    virtual bool computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const;
+    /** Override osg::Transform method. */
+    virtual bool computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const;
+
+  private:
+    /** Computes the inverse of the MVPW and saves it */
+    osg::Matrixd computeMatrix_(osg::NodeVisitor* nv) const;
+
+  private:
+    /** Model-View Projection Window matrix, inverted for performance.  Mutable for caching. */
+    mutable osg::Matrixd invertedMvpw_;
   };
 
 } // namespace simVis

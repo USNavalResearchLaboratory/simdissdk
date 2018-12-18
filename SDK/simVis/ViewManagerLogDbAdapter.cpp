@@ -84,18 +84,20 @@ public:
   }
 
   /** Each time view is added or removed, install/uninstall the LDB */
-  virtual void operator()(simVis::View* inset, const EventType& e)
+  virtual void operator()(simVis::View* view, const EventType& e)
   {
     switch (e)
     {
     case VIEW_ADDED:
-      ldb_->install(inset->getCamera());
-      inset->getCamera()->addUpdateCallback(clampNearPlaneCallback_.get());
+      ldb_->install(view->getCamera());
+      view->getCamera()->addUpdateCallback(clampNearPlaneCallback_.get());
+      view->getCamera()->getOrCreateStateSet()->setDefine("SV_USE_LOG_DEPTH_BUFFER");
       break;
     case VIEW_REMOVED:
-      ldb_->uninstall(inset->getCamera());
-      inset->getCamera()->setNearFarRatio(DEFAULT_NEAR_FAR_RATIO);
-      inset->getCamera()->removeUpdateCallback(clampNearPlaneCallback_.get());
+      ldb_->uninstall(view->getCamera());
+      view->getCamera()->setNearFarRatio(DEFAULT_NEAR_FAR_RATIO);
+      view->getCamera()->removeUpdateCallback(clampNearPlaneCallback_.get());
+      view->getCamera()->getOrCreateStateSet()->removeDefine("SV_USE_LOG_DEPTH_BUFFER");
       break;
     }
   }
@@ -139,6 +141,7 @@ void ViewManagerLogDbAdapter::install(simVis::ViewManager* viewManager)
   {
     logDepthBuffer_->install((*i)->getCamera());
     (*i)->getCamera()->setNearFarRatio(LDB_NEAR_FAR_RATIO);
+    (*i)->getCamera()->getOrCreateStateSet()->setDefine("SV_USE_LOG_DEPTH_BUFFER");
   }
   // Remember the manager
   viewManager->addCallback(installCallback_.get());
@@ -166,6 +169,7 @@ void ViewManagerLogDbAdapter::uninstall(simVis::ViewManager* viewManager)
     {
       logDepthBuffer_->uninstall(camera);
       camera->setNearFarRatio(DEFAULT_NEAR_FAR_RATIO);
+      camera->getOrCreateStateSet()->removeDefine("SV_USE_LOG_DEPTH_BUFFER");
     }
   }
 }

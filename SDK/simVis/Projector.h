@@ -31,7 +31,6 @@ namespace osg { class Texture2D; }
 namespace simVis
 {
   class EntityLabelNode;
-  class LabelContentCallback;
   struct LocatorCallback;
 
 /** Projector video interface on the MediaPlayer2 side */
@@ -104,15 +103,6 @@ public:
   void setImage(osg::Image *image);
 
   /**
-  * Sets a custom callback that will be used to generate the string that goes in the label.
-  * @param callback Callback that will generate content; if NULL will only display platform name/alias
-  */
-  void setLabelContentCallback(LabelContentCallback* callback);
-
-  /// Returns current content callback
-  LabelContentCallback* labelContentCallback() const;
-
-  /**
    * Gets a pointer to the last data store update, or NULL if
    * none have been applied.
    */
@@ -151,9 +141,10 @@ public: // EntityNode interface
   */
   virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+  /// Returns the pop up text based on the label content callback, update and preference
+  virtual std::string popupText() const;
   /// Returns the hook text based on the label content callback, update and preference
   virtual std::string hookText() const;
-
   /// Returns the legend text based on the label content callback, update and preference
   virtual std::string legendText() const;
 
@@ -192,7 +183,6 @@ public: // EntityNode interface
 
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simVis"; }
-
   /** Return the class name */
   virtual const char* className() const { return "ProjectorNode"; }
 
@@ -220,7 +210,6 @@ private:
   osg::observer_ptr<const EntityNode> host_;
   osg::ref_ptr<LocatorCallback> locatorCallback_;
   osg::ref_ptr<EntityLabelNode> label_;
-  osg::ref_ptr<LabelContentCallback> contentCallback_;
   bool                         hasLastUpdate_;
   bool                         hasLastPrefs_;
 

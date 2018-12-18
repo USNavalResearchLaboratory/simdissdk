@@ -65,8 +65,9 @@ class BorderNode : public osg::Geode
 public:
   BorderNode() : osg::Geode(), props_(simVis::Color::White, 2)
   {
+    setName("Border Node");
     osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-    geom->setName("simVis::BorderNode");
+    geom->setName("simVis::BorderNode Goemetry");
     geom->setUseVertexBufferObjects(true);
     geom->setDataVariance(osg::Object::DYNAMIC);
 
@@ -138,7 +139,7 @@ struct SetNearFarCallback : public osg::NodeCallback
   SetNearFarCallback()
   {
     // create a state set to turn off depth buffer when in overhead mode.
-    // note: this will override the depth settings in the TwoPassAlphaRenderBin, and 
+    // note: this will override the depth settings in the TwoPassAlphaRenderBin, and
     // that's OK because we don't care about TPA when the depth buffer is off.
     depthState_ = new osg::StateSet();
     depthState_->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
@@ -157,7 +158,7 @@ struct SetNearFarCallback : public osg::NodeCallback
     if (cv)
     {
       cv->popStateSet();
-      osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix(); //cv->getCurrentCamera()->getViewMatrix().getTrans(); //osg::Vec3d(0,0,0)*(*cv->getModelViewMatrix());
+      osg::Vec3d eye = osg::Vec3d(0, 0, 0)* cv->getCurrentCamera()->getInverseViewMatrix();
       double eyeR = eye.length();
       const double earthR = simCore::EARTH_RADIUS;
       double eyeAlt = std::max(0.0, eyeR - earthR);
@@ -566,6 +567,7 @@ View::View()
 
   // attach an earth manipulator to it, and install the startup nav mode.
   simVis::EarthManipulator* manip = new simVis::EarthManipulator();
+  manip->setName("Earth Manipulator");
   // Initialize good default settings
   manip->getSettings()->setTerrainAvoidanceEnabled(false);
   manip->getSettings()->setArcViewpointTransitions(false);
@@ -580,6 +582,7 @@ View::View()
 
   // install a root group.
   osg::Group* root = new osg::Group();
+  root->setName("Scene Manager Root");
   osgViewer::View::setSceneData(root);
 
 #ifdef OSG_GL3_AVAILABLE
@@ -596,15 +599,18 @@ View::View()
 
   // install a control canvas for UI elements
   controlCanvas_ = new osgEarth::Util::Controls::ControlCanvas();
+  controlCanvas_->setName("Control Canvas");
   root->addChild(controlCanvas_.get());
 
   // install a group for 'scene controls' like a platform pop up
   sceneControls_ = new osg::Group();
+  sceneControls_->setName("Scene Controls");
   root->addChild(sceneControls_.get());
 
   // initial camera configuration
   // disable 'small feature culling'
   osg::Camera* thisCamera = this->getCamera();
+  thisCamera->setName("Camera");
   thisCamera->setCullingMode(thisCamera->getCullingMode() & ~osg::CullSettings::SMALL_FEATURE_CULLING);
 
   // default our background to black
@@ -677,6 +683,7 @@ bool View::setUpViewAsHUD(simVis::View* host)
 
     // if the user hasn't created a camera for this view, do so now.
     osg::Camera* camera = this->getCamera();
+    camera->setName("SuperHUD Camera");
 
     // render this view just before the canvas; that way it will
     // always render atop everything else.
@@ -731,6 +738,7 @@ bool View::setUpViewAsInset_(simVis::View* host)
     if (!camera)
     {
       camera = new osg::Camera();
+      camera->setName("Inset Camera");
       this->setCamera(camera);
     }
 
@@ -1102,6 +1110,7 @@ void View::setSceneManager(simVis::SceneManager* node)
     oldVP.getNode(oldTetherNode);
     oldManip->setTetherCallback(0L);
     simVis::EarthManipulator* newManip = new simVis::EarthManipulator();
+    newManip->setName("Earth Manipulator");
 
     // The following lines will change the manipulator, which resets the viewpoint.  In
     // some cases we want to save the old viewpoint, and restore it afterwards.
@@ -1302,6 +1311,7 @@ bool View::addSceneControl(osgEarth::Util::Controls::Control* control, const osg
     return false;
 
   osg::ref_ptr<osg::MatrixTransform> xform = new osg::MatrixTransform();
+  xform->setName("Scene Control Position");
   xform->addChild(new osgEarth::Util::Controls::ControlNode(control, priority));
 
   osg::Matrixd placer;
@@ -1869,6 +1879,7 @@ osg::Camera* View::createHUD_() const
 {
   const osg::Viewport* vp = this->getCamera()->getViewport();
   osg::Camera* hud = new osg::Camera();
+  hud->setName("HUD Camera");
   // Be sure to render after the controls widgets.
   // "10" is arbitrary, so there's room between the two (default Control Canvas value is 25000)
   hud->setRenderOrder(osg::Camera::POST_RENDER, controlCanvas_->getRenderOrderNum() + 10);
@@ -1884,6 +1895,8 @@ osg::Camera* View::createHUD_() const
   hud->getOrCreateStateSet()->setAttributeAndModes(new osg::Program(), 0);
 #endif
   hud->getOrCreateStateSet()->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
+  hud->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+  hud->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, false));
   return hud;
 }
 
@@ -2006,7 +2019,6 @@ simVis::EntityNode* View::getEntityNode(osg::Node* node) const
   // Maybe it's really a Platform Model or Centroid node, which is the child of an EntityNode
   if (node)
   {
-    //TESTING: When watching from a centroid, the parent is a simVis::CentroidManager, not an EntityNode
     simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(node->getParent(0));
     // If assert triggers, there's some weird unexpected hierarchy; investigate and resolve weirdness
     assert(entityNode != NULL);
@@ -2068,6 +2080,11 @@ void View::getFrustumBounds_(double& left, double& right, double& bottom, double
   left = -right;
   top = tanFovY * zNear;
   bottom = -top;
+}
+
+osgEarth::Util::Controls::ControlCanvas* View::controlCanvas() const
+{
+  return controlCanvas_.get();
 }
 
 }

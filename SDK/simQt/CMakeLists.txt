@@ -100,6 +100,7 @@ if(TARGET simVis)
         ${SIMQT_INC}ViewWidget.h
     )
     list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}FillItemModelWithNodeVisitor.h
         ${SIMQT_INC}Gl3FormatGuesser.h
     )
 endif()
@@ -198,6 +199,7 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
+        ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
         ${SIMQT_SRC}Gl3FormatGuesser.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp

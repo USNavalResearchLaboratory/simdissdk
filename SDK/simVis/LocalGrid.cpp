@@ -933,7 +933,7 @@ void LocalGridNode::updateSpeedRings_(const simData::LocalGridPrefs& prefs, doub
 
 int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, double& sizeM, double& timeRadiusSeconds)
 {
-  const Locator* hostLocator = host_->getLocator();
+  const Locator* hostLocator = (host_.valid() ? host_->getLocator() : NULL);
   if (!hostLocator)
     return -1;
   const PlatformNode* hostPlatform = dynamic_cast<const PlatformNode*>(host_.get());

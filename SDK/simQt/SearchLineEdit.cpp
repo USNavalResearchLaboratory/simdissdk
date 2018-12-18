@@ -81,7 +81,8 @@ SearchLineEdit::SearchLineEdit(QWidget* parent)
   QLabel* iconLabel = new QLabel(this);
   iconLabel->setPixmap(icon.pixmap(ICON_SIZE));
   // Label needs the custom Style so the icon doesn't turn grey
-  iconLabel->setStyle(new NoDisabledStyle);
+  proxyStyle_ = new NoDisabledStyle;
+  iconLabel->setStyle(proxyStyle_);
   iconAction_->setDefaultWidget(iconLabel);
   // Need to hide this action from possible ActionsContextMenus
   iconAction_->setVisible(false);
@@ -97,6 +98,8 @@ SearchLineEdit::~SearchLineEdit()
   searchTimer_ = NULL;
   delete iconAction_;
   iconAction_ = NULL;
+  delete proxyStyle_;
+  proxyStyle_ = NULL;
 }
 
 const QPixmap* SearchLineEdit::searchPixmap() const

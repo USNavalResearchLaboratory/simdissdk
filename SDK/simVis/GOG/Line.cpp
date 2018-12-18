@@ -32,7 +32,6 @@
 #define LC "[GOG::Line] "
 
 using namespace simVis::GOG;
-using namespace osgEarth::Symbology;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
 
@@ -41,7 +40,7 @@ GogNodeInterface* Line::deserialize(const osgEarth::Config&  conf,
                   const GOGNodeType&       nodeType,
                   const GOGContext&        context,
                   const GogMetaData&       metaData,
-                  MapNode*                 mapNode)
+                  osgEarth::MapNode*       mapNode)
 {
   p.parseGeometry<LineString>(conf);
 
@@ -65,6 +64,7 @@ GogNodeInterface* Line::deserialize(const osgEarth::Config&  conf,
     if (p.hasAbsoluteGeometry())
     {
       Feature* feature = new Feature(p.geom_.get(), p.srs_.get(), p.style_);
+      feature->setName("GOG Line Feature");
       if (p.geoInterp_.isSet())
       {
         feature->geoInterp() = p.geoInterp_.value();
@@ -72,6 +72,7 @@ GogNodeInterface* Line::deserialize(const osgEarth::Config&  conf,
       FeatureNode* node = new FeatureNode(feature);
       node->setMapNode(mapNode);
       rv = new FeatureNodeInterface(node, metaData);
+      node->setName("GOG Line");
     }
     else
     {
@@ -79,13 +80,15 @@ GogNodeInterface* Line::deserialize(const osgEarth::Config&  conf,
       node->setMapNode(mapNode);
       Utils::applyLocalGeometryOffsets(*node, p, nodeType);
       rv = new LocalGeometryNodeInterface(node, metaData);
+      node->setName("GOG Line");
     }
   }
   else // if ( nodeType == GOGNODE_HOSTED )
   {
     LocalGeometryNode* node = new HostedLocalGeometryNode(p.geom_.get(), p.style_);
-      Utils::applyLocalGeometryOffsets(*node, p, nodeType);
-      rv = new LocalGeometryNodeInterface(node, metaData);
+    Utils::applyLocalGeometryOffsets(*node, p, nodeType);
+    rv = new LocalGeometryNodeInterface(node, metaData);
+    node->setName("GOG Line");
   }
 
   if (rv)

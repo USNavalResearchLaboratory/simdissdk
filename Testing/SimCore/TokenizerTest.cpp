@@ -457,7 +457,7 @@ namespace
     rv += testExpandEnv("$()", "$()");
     rv += testExpandEnv("$(SIMDIS_DIR)", env("SIMDIS_DIR"));
     rv += testExpandEnv(" $(TMP) ", std::string(" ") + env("TMP") + " ");
-    rv += testExpandEnv(" $(ENV_NO_EXIST) ", " $(ENV_NO_EXIST) ");
+    rv += testExpandEnv(" $(ENV_NO_EXIST) ", "  ");
     rv += testExpandEnv("foo)$(SIMDIS_DIR)bar", "foo)" + env("SIMDIS_DIR") + "bar");
     rv += testExpandEnv("foo)$(SIMDIS_DIR", "foo)$(SIMDIS_DIR");
     rv += testExpandEnv("$(SIMDIS_HOME)", env("SIMDIS_HOME"));
@@ -473,7 +473,7 @@ namespace
     // Test multiple envs in a name
     rv += testExpandEnv("$(SIMDIS_HOME)/$(TEST_HOST_ARCH)/$(TEST_HOST_OS)/test", env("SIMDIS_HOME") + "/" + env("TEST_HOST_ARCH") + "/" + env("TEST_HOST_OS") + "/test");
     // Test multiple envs in a name, including one that does not exist (review 546 case)
-    rv += testExpandEnv("$(SIMDIS_HOME)/$(TEST_HOST_PLAT)/$(TEST_HOST_OS)/test", env("SIMDIS_HOME") + "/$(TEST_HOST_PLAT)/" + env("TEST_HOST_OS") + "/test");
+    rv += testExpandEnv("$(SIMDIS_HOME)/$(TEST_HOST_PLAT)/$(TEST_HOST_OS)/test", env("SIMDIS_HOME") + "//" + env("TEST_HOST_OS") + "/test");
     // Test env with both front and back slashes
     rv += testExpandEnv("$(FILE_TEST_SLASH_DIR)", env("FILE_TEST_SLASH_DIR"));
     return rv;

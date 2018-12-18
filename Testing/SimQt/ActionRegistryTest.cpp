@@ -209,10 +209,11 @@ int testAddHotKey()
   // case 4: addAction's hotkey ends up being in use already
   QAction test4("test4", NULL);
   reg.reg->addHotKey("test4", QKeySequence("G"));
-  rv += SDK_ASSERT(hasKey(reg, "test3", "G"));
-  reg.reg->registerAction("test4", "test4", &test4);
-  rv += SDK_ASSERT(hasKey(reg, "test3", "G"));
-  rv += SDK_ASSERT(t3act->hotkeys().size() == 1); // only G, still
+  rv += SDK_ASSERT(!hasKey(reg, "test3", "G"));
+  auto t4act = reg.reg->registerAction("test4", "test4", &test4);
+  rv += SDK_ASSERT(!hasKey(reg, "test3", "G"));
+  rv += SDK_ASSERT(t3act->hotkeys().empty()); // G got assigned to test4
+  rv += SDK_ASSERT(t4act->hotkeys().size() == 1);
 
   // Test remove action while we're at it, since there's a potential for crashing here due
   // to the out of order destruction.  Note the intentional excessive checking for side effects
@@ -224,22 +225,23 @@ int testAddHotKey()
   rv += SDK_ASSERT(hasKey(reg, "test2", "E"));
   rv += SDK_ASSERT(reg.reg->removeAction("test2") == 0);
   rv += SDK_ASSERT(!hasKey(reg, "test2", "E"));
-  rv += SDK_ASSERT(hasKey(reg, "test3", "G"));
+  rv += SDK_ASSERT(hasKey(reg, "test4", "G"));
   rv += SDK_ASSERT(reg.reg->removeAction("test3") == 0);
   rv += SDK_ASSERT(reg.reg->removeAction("test4") == 0);
   rv += SDK_ASSERT(reg.reg->removeAction("test5") != 0);
 
   // Re-add the test3 and make sure its hotkeys were saved
-  test3.setShortcuts(QList<QKeySequence>()); // make sure it's empty and coming from the action registry
+  test4.setShortcuts(QList<QKeySequence>()); // make sure it's empty and coming from the action registry
   rv += SDK_ASSERT(!hasKey(reg, "test3", "G"));
-  t3act = reg.reg->registerAction("test3", "test3", &test3);
+  rv += SDK_ASSERT(!hasKey(reg, "test4", "G"));
+  t4act = reg.reg->registerAction("test4", "test4", &test4);
   rv += SDK_ASSERT(!hasKey(reg, "test2", "E"));
-  rv += SDK_ASSERT(hasKey(reg, "test3", "G"));
-  rv += SDK_ASSERT(t3act->hotkeys().size() == 1); // only G
+  rv += SDK_ASSERT(hasKey(reg, "test4", "G"));
+  rv += SDK_ASSERT(t4act->hotkeys().size() == 1); // only G
 
   // Re-remove it
-  rv += SDK_ASSERT(reg.reg->removeAction("test3") == 0);
-  rv += SDK_ASSERT(reg.reg->removeAction("test3") != 0);
+  rv += SDK_ASSERT(reg.reg->removeAction("test4") == 0);
+  rv += SDK_ASSERT(reg.reg->removeAction("test4") != 0);
 
   return rv;
 }
@@ -364,6 +366,117 @@ int testAlias()
   return rv;
 }
 
+int testHotKeyAssignment()
+{
+  int rv = 0;
+  NewRegistry reg;
+
+  QAction exec1("exec1", NULL);
+  const QKeySequence ks1("1");
+  exec1.setShortcut(ks1);
+
+  // Nothing in here yet, should be empty
+  QString actionName = "NotEmpty";
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::UNASSIGNED);
+  rv += SDK_ASSERT(actionName.isEmpty());
+
+  // Add action; it should recognize shortcut and be correct
+  simQt::Action* qAction = reg.reg->registerAction("Temp", "exec1", &exec1);
+  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
+  rv += SDK_ASSERT(actionName == "exec1");
+
+  // Swap hot key
+  const QKeySequence ks2("2");
+  rv += SDK_ASSERT(reg.reg->setHotKey(qAction, ks2) == 0);
+  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::UNASSIGNED);
+  rv += SDK_ASSERT(actionName.isEmpty());
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks2, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
+  rv += SDK_ASSERT(actionName == "exec1");
+
+  // Remove hot key
+  rv += SDK_ASSERT(reg.reg->removeAction("exec1") == 0);
+  qAction = NULL;
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::UNASSIGNED);
+  rv += SDK_ASSERT(actionName.isEmpty());
+  // ks2 should have transitioned to unknown
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks2, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec1");
+
+  // Add hot key for unknown action
+  const QKeySequence ks3("3");
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::UNASSIGNED);
+  rv += SDK_ASSERT(actionName.isEmpty());
+  rv += SDK_ASSERT(reg.reg->addHotKey("exec3", ks3) == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec3");
+
+  // Reassign it to something that does exist
+  QAction exec2("exec2", NULL);
+  qAction = reg.reg->registerAction("Temp", "exec2", &exec2);
+  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec3");
+  rv += SDK_ASSERT(reg.reg->addHotKey("exec2", ks3) == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
+  rv += SDK_ASSERT(actionName == "exec2");
+
+  // Remove that action; it should be assigned to unknown, but to exec2 now and not exec3
+  rv += SDK_ASSERT(reg.reg->removeAction("exec2") == 0);
+  qAction = NULL;
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec2");
+  // Fix it back to exec3
+  rv += SDK_ASSERT(reg.reg->addHotKey("exec3", ks3) == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec3");
+
+  // Add exec3 and it should still be on exec3
+  QAction exec3("exec3", NULL);
+  qAction = reg.reg->registerAction("Temp", "exec3", &exec3);
+  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks3, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
+  rv += SDK_ASSERT(actionName == "exec3");
+
+  // Make sure removeUnknownAction() works
+  const QKeySequence ks4("4");
+  rv += SDK_ASSERT(reg.reg->addHotKey("exec4", ks4) == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks4, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec4");
+  rv += SDK_ASSERT(reg.reg->removeUnknownAction("exec4") == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks4, actionName) == simQt::ActionRegistry::UNASSIGNED);
+  rv += SDK_ASSERT(actionName.isEmpty());
+
+  // Adding another action that takes a hot key should supersede old saved action
+  rv += SDK_ASSERT(reg.reg->addHotKey("exec4", ks4) == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks4, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec4");
+  QAction exec5("exec5", NULL);
+  exec5.setShortcut(ks4);
+  qAction = reg.reg->registerAction("Temp", "exec5", &exec5);
+  rv += SDK_ASSERT(qAction != NULL);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks4, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
+  rv += SDK_ASSERT(actionName == "exec5");
+  rv += SDK_ASSERT(reg.reg->setHotKey(qAction, ks1) == 0);
+  // This should not be assigned to unknown exec4 at this point
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks4, actionName) == simQt::ActionRegistry::UNASSIGNED);
+  rv += SDK_ASSERT(actionName.isEmpty());
+
+  // If an existing action has a hot key, and that hot key is assigned to a non-existing action,
+  // it should remove that hot key from the real action
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::ASSIGNED_TO_ACTION);
+  rv += SDK_ASSERT(actionName == "exec5");
+  rv += SDK_ASSERT(reg.reg->addHotKey("exec6", ks1) == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::ASSIGNED_TO_UNKNOWN);
+  rv += SDK_ASSERT(actionName == "exec6");
+  rv += SDK_ASSERT(reg.reg->removeUnknownAction("exec6") == 0);
+  rv += SDK_ASSERT(reg.reg->getKeySequenceAssignment(ks1, actionName) == simQt::ActionRegistry::UNASSIGNED);
+  rv += SDK_ASSERT(actionName.isEmpty());
+
+  return rv;
+}
+
 }
 
 int ActionRegistryTest(int argc, char* argv[])
@@ -381,6 +494,7 @@ int ActionRegistryTest(int argc, char* argv[])
   rv += testExecute();
   rv += testMemento();
   rv += testAlias();
+  rv += testHotKeyAssignment();
   return rv;
 }
 

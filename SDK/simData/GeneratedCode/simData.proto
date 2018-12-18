@@ -438,6 +438,13 @@ message LabelPrefs {
   optional int32 altitudePrecision = 31 [default = 1];
   /// If set overrides the precision field and sets the precision for time
   optional int32 timePrecision = 32 [default = 0];
+
+  enum UseValue {
+    ACTUAL_VALUE = 0; ///< labels use actual data value
+    DISPLAY_VALUE = 1; ///< labels use display value, which may include adjustments like clamping and offsets
+  };
+  /// Indicates which value to use in labels
+  optional UseValue useValues = 37 [default = DISPLAY_VALUE];
 };
 
 /// a grid attached to an entity
@@ -797,6 +804,9 @@ message PlatformPrefs {
 
   /// The altitude offset applied to the Platform's altitude when calculating LOS, in meters
   optional double losAltitudeOffset = 68 [default = 0.0];
+
+  /// Automatic animation of Degree-of-Freedom nodes is enabled or disabled
+  optional bool animateDofNodes = 70 [default = false];
 };
 
 /// timed update to platform prefs; commands override prefs

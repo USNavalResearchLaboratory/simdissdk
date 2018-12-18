@@ -41,7 +41,7 @@ RocketBurn::RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture)
 {
   // Set up the render bin, turn off depth writes, and turn on depth reads
   osg::StateSet* stateSet = transform_->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_ROCKETBURN, BIN_GLOBAL_SIMSDK);
+  stateSet->setRenderBinDetails(BIN_ROCKETBURN, BIN_TRAVERSAL_ORDER_SIMSDK);
   stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
   // Must be able to blend or the graphics will look awful
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);

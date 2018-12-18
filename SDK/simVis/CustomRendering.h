@@ -32,7 +32,6 @@ namespace simVis
 {
   class CustomLabelContentCallback;
   class EntityLabelNode;
-  class LabelContentCallback;
   class LocalGridNode;
   class Locator;
   class OverrideColor;
@@ -73,15 +72,6 @@ namespace simVis
     * @param prefs New preferences to apply
     */
     void setPrefs(const simData::CustomRenderingPrefs& prefs);
-
-    /**
-    * Sets a custom callback that will be used to generate the string that goes in the label.
-    * @param callback Callback that will generate content; if NULL will only display platform name/alias
-    */
-    void setLabelContentCallback(LabelContentCallback* callback);
-
-    /// Returns current content callback
-    LabelContentCallback* labelContentCallback() const;
 
     /**
      * This callback allows the external code to determine if the entity should be displayed.
@@ -140,7 +130,7 @@ namespace simVis
     */
     virtual simData::ObjectId getId() const;
 
-    /** Get the custom's host's ID; returns true if out_hostId is set */
+    /** Get the custom's host's ID.  May be 0 if no host; returns true on success, in which case out_hostId is set */
     virtual bool getHostId(simData::ObjectId& out_hostId) const;
 
     /**
@@ -153,9 +143,10 @@ namespace simVis
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the pop up text based on the label content callback, update and preference
+    virtual std::string popupText() const;
     /// Returns the hook text based on the label content callback, update and preference
     virtual std::string hookText() const;
-
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 
@@ -211,11 +202,8 @@ namespace simVis
     // Expose the locator node so an outside source can add graphics.
     LocatorNode* locatorNode() const;
 
-    /// Returns the host
+    /// Returns the host.  May be NULL if hosted under the scenario with no parent
     const EntityNode* host() const;
-
-    /// Returns the pop up text based on the label content callback, update and preference
-    std::string popupText() const;
 
   protected:
     /// osg::Referenced-derived; destructor body needs to be in the .cpp

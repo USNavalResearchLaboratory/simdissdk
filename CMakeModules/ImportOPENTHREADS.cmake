@@ -4,7 +4,7 @@
 set(LIBRARYNAME OPENTHREADS)
 
 # OpenThreads is stored under the OpenSceneGraph folder
-set(${LIBRARYNAME}_VERSION 3.6.2)
+set(${LIBRARYNAME}_VERSION 3.6.3)
 # Prefix on the DLL under Windows
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 

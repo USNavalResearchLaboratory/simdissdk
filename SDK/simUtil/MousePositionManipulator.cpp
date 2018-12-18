@@ -44,6 +44,7 @@ public:
   explicit MapChangeListener(MousePositionManipulator& manip)
     : manip_(manip)
   {
+    setName("Mouse Position Manipulator CB");
   }
 
   /** Override setMapNode() from MapNodeObserver to inform the MousePositionManipulator. */
@@ -60,7 +61,6 @@ public:
 
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simUtil"; }
-
   /** Return the class name */
   virtual const char* className() const { return "MousePositionManipulator::MapChangeListener"; }
 

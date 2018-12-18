@@ -27,6 +27,7 @@
 #include <QPixmap>
 #include "simCore/Common/Common.h"
 
+class QProxyStyle;
 class QTimer;
 class QToolButton;
 class QWidgetAction;
@@ -76,6 +77,7 @@ private:
   QTimer* searchTimer_;
   QWidgetAction* iconAction_;
   bool iconEnabled_;
+  QProxyStyle* proxyStyle_;
 };
 
 

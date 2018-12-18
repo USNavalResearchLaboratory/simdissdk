@@ -326,6 +326,11 @@ void DockWidget::init_()
   titleBar_ = createTitleBar_();
   // Create our non-visible title bar widget
   noTitleBar_ = new QWidget();
+  // Widget needs a layout, else QWidget::sizeHint() returns (-1,-1), which adversely
+  // affects the size of the QGLWidget in SIMDIS in fullscreen mode.
+  QHBoxLayout* noLayout = new QHBoxLayout;
+  noLayout->setMargin(0);
+  noTitleBar_->setLayout(noLayout);
   noTitleBar_->setMinimumSize(1, 1);
 
   // Turn on the title bar

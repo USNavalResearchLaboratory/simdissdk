@@ -629,6 +629,10 @@ public:
   virtual void setFilledState(bool state);
   virtual void setLineColor(const osg::Vec4f& color);
 
+protected:
+  /** Override setStyle to fix the depth */
+  virtual void setStyle_(const osgEarth::Symbology::Style& style);
+
 private:
   void setColor_(const osg::Vec4f& color);
 };

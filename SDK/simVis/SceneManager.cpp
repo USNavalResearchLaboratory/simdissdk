@@ -37,7 +37,6 @@
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/ScreenSpaceLayout"
 #include "osgEarthDrivers/engine_rex/RexTerrainEngineOptions"
-#include "osgEarthDrivers/engine_mp/MPTerrainEngineOptions"
 #include "osgEarthUtil/LODBlending"
 
 #if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
@@ -109,9 +108,9 @@ SceneManager::~SceneManager()
 
 void SceneManager::detectTerrainEngineDriverProblems_()
 {
-  // Try to detect the osgearth_engine_mp driver; if not present, we will likely fail to render anything useful
+  // Try to detect the osgearth_engine_rex driver; if not present, we will likely fail to render anything useful
   osgDB::Registry* registry = osgDB::Registry::instance();
-  const std::string engineDriverExtension = "osgearth_engine_mp";
+  const std::string engineDriverExtension = "osgearth_engine_rex";
   if (registry->getReaderWriterForExtension(engineDriverExtension) != NULL)
   {
     hasEngineDriverProblem_ = false;
@@ -121,7 +120,7 @@ void SceneManager::detectTerrainEngineDriverProblems_()
   // Construct a user message
   std::stringstream ss;
   const std::string libName = registry->createLibraryNameForExtension(engineDriverExtension);
-  ss << "osgEarth MP engine driver (" << libName << ") not found on file system.  Tried search paths:\n";
+  ss << "osgEarth REX engine driver (" << libName << ") not found on file system.  Tried search paths:\n";
   const osgDB::FilePathList& libList = registry->getLibraryFilePathList();
   for (osgDB::FilePathList::const_iterator i = libList.begin(); i != libList.end(); ++i)
     ss << "  " << simCore::toNativeSeparators(osgDB::getRealPath(*i)) << "\n";
@@ -169,6 +168,7 @@ void SceneManager::init_()
 
   // a container group so we always have a manipulator attach point:
   mapContainer_ = new osg::Group();
+  mapContainer_->setName("Map Container");
   addChild(mapContainer_.get());
   globeColor_ = new osg::Uniform("oe_terrain_color", MAP_COLOR);
   mapContainer_->getOrCreateStateSet()->addUniform(globeColor_, osg::StateAttribute::OVERRIDE);
@@ -178,18 +178,22 @@ void SceneManager::init_()
 
   // handles centroids
   centroidManager_ = new CentroidManager();
+  centroidManager_->setName("Centroid Manager");
   addChild(centroidManager_.get());
 
   // handles projected textures/videos
   projectorManager_ = new ProjectorManager();
+  projectorManager_->setName("Projector Manager");
   addChild(projectorManager_.get());
 
   drapeableNode_ = new osgEarth::DrapeableNode();
+  drapeableNode_->setName("Drapeable Scene Objects");
   drapeableNode_->setDrapingEnabled(false);
   addChild(drapeableNode_.get());
 
   // updates scenario objects
   scenarioManager_ = new ScenarioManager(this, projectorManager_.get());
+  scenarioManager_->setName("Scenario");
   drapeableNode_->addChild(scenarioManager_.get());
 
   // Add the Model Cache's asynchronous loader node.  This is needed for asynchronous loading, which
@@ -200,19 +204,9 @@ void SceneManager::init_()
     addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
 
   // Configure the default terrain options
-  if (simVis::useRexEngine())
-  {
-    osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
-    SceneManager::initializeTerrainOptions(options);
-    setMapNode(new osgEarth::MapNode(options));
-  }
-
-  else // MP engine
-  {
-    osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions options;
-    SceneManager::initializeTerrainOptions(options);
-    setMapNode(new osgEarth::MapNode(options));
-  }
+  osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
+  SceneManager::initializeTerrainOptions(options);
+  setMapNode(new osgEarth::MapNode(options));
 
   // TODO: Re-evaluate
   // getOrCreateStateSet()->setDefine("OE_TERRAIN_RENDER_NORMAL_MAP", osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
@@ -418,18 +412,9 @@ void SceneManager::setMap(osgEarth::Map* map)
   }
   else
   {
-    if (simVis::useRexEngine())
-    {
-      osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
-      SceneManager::initializeTerrainOptions(options);
-      setMapNode(new osgEarth::MapNode(map, options));
-    }
-    else // MP engine
-    {
-      osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions options;
-      SceneManager::initializeTerrainOptions(options);
-      setMapNode(new osgEarth::MapNode(map, options));
-    }
+    osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
+    SceneManager::initializeTerrainOptions(options);
+    setMapNode(new osgEarth::MapNode(map, options));
   }
 }
 
@@ -657,19 +642,12 @@ void SceneManager::setGlobeColor(const simVis::Color& color)
   globeColor_->set(color);
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void SceneManager::initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions& options)
 {
-  // ensure sufficient tessellation for areas without hires data (e.g. ocean)
-  options.minLOD() = 20;
-  // Drop default tile size down to 7 by default to reduce tile subdivision (suggested by GW 5/13/15)
-  options.tileSize() = 7;
-  // Display should match the data more closely; don't smooth out elevation across large LOD
-  options.elevationSmoothing() = false;
-  // edges will be normalized, reducing seam stitch artifacts
-  options.normalizeEdges() = true;
-  // polar areas "take longer" to subdivide, reducing CPU thrash at poles
-  options.adaptivePolarRangeFactor() = true;
+  SIM_WARN << "The MP Terrain engine is no longer supported.\n";
 }
+#endif
 
 void SceneManager::initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions& options)
 {

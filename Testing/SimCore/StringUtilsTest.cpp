@@ -384,38 +384,138 @@ int buildFormatStrTest()
   return rv;
 }
 
+// Create an undefined-variables helper; it effectively replaces '%' with '-'
+class TestUndefinedHelper : public simCore::TextReplacer::UndefinedVariableHandler
+{
+public:
+  // Add extra percent signs so that incoming value's percent signs get interpreted as text, not variable markers.
+  virtual std::string getText(const std::string& varName) const { return "-%" + varName + "%-"; }
+};
+
 int testTextReplacer()
 {
-  class VarReplaceable : public simCore::TextReplacer::Replaceable
+  /** Create a custom replaceable that returns any text desired */
+  class CustomReplaceable : public simCore::TextReplacer::Replaceable
   {
   public:
-    virtual std::string getText() const { return "foobar"; }
-    virtual std::string getVariableName() const { return "%VAR%"; }
+    CustomReplaceable(const std::string& varName, const std::string& textValue)
+      : varName_(varName),
+        textValue_(textValue)
+    {
+    }
+    virtual std::string getText() const { return textValue_; }
+    virtual std::string getVariableName() const { return varName_; }
+  private:
+    std::string varName_;
+    std::string textValue_;
   };
 
   simCore::TextReplacer replacer;
   int rv = 0;
+  // Variable does not exist; it does not get replaced (by default, from default unknown-handler)
   rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
+  // Built-in support for %%
+  rv += SDK_ASSERT(replacer.format("test %% 123") == "test % 123");
+  // Non-matching %
+  rv += SDK_ASSERT(replacer.format("test % 123") == "test % 123");
+  // Non-matching %, with %% next to it
+  rv += SDK_ASSERT(replacer.format("test %%% 123") == "test %% 123");
 
-  // Create a replaceable and test that it works
-  VarReplaceable* varReplaceable1 = new VarReplaceable;
+  // Test a bunch of failures on addReplaceable
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("", "foo")) != 0);
   rv += SDK_ASSERT(replacer.addReplaceable(NULL) != 0);
-  rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable1) == 0);
-  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test foobar 123");
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR%", "foo")) == 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR%", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("V%AR", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR", "foo")) == 0);
+  // Adding a new one should not leak, and should succeed
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR", "foo")) == 0);
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test foo 123");
   // Remove it and make sure that the replacement is gone
-  rv += SDK_ASSERT(replacer.deleteReplaceable(NULL) != 0);
-  rv += SDK_ASSERT(replacer.deleteReplaceable(varReplaceable1) == 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable("") != 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable("DOESNOTEXIST") != 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable("VAR") == 0);
   // Should not be able to delete twice
-  rv += SDK_ASSERT(replacer.deleteReplaceable(varReplaceable1) != 0);
-  // The memory in varReplaceable1 is considered deleted and is now invalid
-  varReplaceable1 = NULL;
-  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
+  rv += SDK_ASSERT(replacer.deleteReplaceable("VAR") != 0);
 
-  VarReplaceable* varReplaceable2 = new VarReplaceable;
-  rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable2) == 0);
-  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test foobar 123");
-  rv += SDK_ASSERT(replacer.addReplaceable(varReplaceable2) != 0);
-  // Note that replacer owns memory and will delete it
+  // Test the deleteReplaceable() with pointers
+  rv += SDK_ASSERT(replacer.deleteReplaceable(NULL) != 0);
+  auto* fooVariable = new CustomReplaceable("VAR", "foo");
+  rv += SDK_ASSERT(replacer.addReplaceable(fooVariable) == 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable(NULL) != 0);
+  rv += SDK_ASSERT(replacer.deleteReplaceable(fooVariable) == 0);
+  // Should not stay in the list after last command
+  rv += SDK_ASSERT(replacer.deleteReplaceable("VAR") != 0);
+
+  // The memory in fooVariable is considered deleted and is now invalid
+  fooVariable = NULL;
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test %VAR% 123");
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR", "baz")) == 0);
+  rv += SDK_ASSERT(replacer.format("test %VAR% 123") == "test baz 123");
+  // Should be able to overwrite existing "VAR" string
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR", "baz")) == 0);
+
+  // Make sure it can replace more than once
+  rv += SDK_ASSERT(replacer.format("test %VAR%%VAR% 123") == "test bazbaz 123");
+  rv += SDK_ASSERT(replacer.format("test %VAR% %VAR% 123") == "test baz baz 123");
+  // Ensure %% resolves to %
+  rv += SDK_ASSERT(replacer.format("test %VAR% %% %VAR% 123") == "test baz % baz 123");
+  // Mess up the percents
+  rv += SDK_ASSERT(replacer.format("test %VAR%%%%VAR% 123") == "test baz%baz 123");
+  rv += SDK_ASSERT(replacer.format("test %VAR%%%VAR% 123") == "test baz%VAR% 123");
+
+  // Beginning of string
+  rv += SDK_ASSERT(replacer.format("%VAR% %% 123") == "baz % 123");
+  rv += SDK_ASSERT(replacer.format("%% %VAR% 123") == "% baz 123");
+  // End of string
+  rv += SDK_ASSERT(replacer.format("123 %VAR% %%") == "123 baz %");
+  rv += SDK_ASSERT(replacer.format("123 %% %VAR%") == "123 % baz");
+  // Both
+  rv += SDK_ASSERT(replacer.format("%VAR% %VAR%") == "baz baz");
+  rv += SDK_ASSERT(replacer.format("%% %%") == "% %");
+
+  // Check that we can add the another variable with a different name
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("TEST", "baz2")) == 0);
+  rv += SDK_ASSERT(replacer.format("%TEST% %VAR%") == "baz2 baz");
+  rv += SDK_ASSERT(replacer.format("%TEST2% %TEST%") == "%TEST2% baz2");
+
+  replacer.setUndefinedVariableHandler(std::make_shared<TestUndefinedHelper>());
+  auto str = replacer.format("test %VAR% %VAR% %NOTHING% 123");
+  rv += SDK_ASSERT(replacer.format("test %VAR% %VAR% %NOTHING% 123") == "test baz baz -%NOTHING%- 123");
+  rv += SDK_ASSERT(replacer.format("test %VAR% %% %VAR% %NOTHING% 123") == "test baz % baz -%NOTHING%- 123");
+
+  // Clear out the handler and retest
+  replacer.setUndefinedVariableHandler(std::shared_ptr<simCore::TextReplacer::UndefinedVariableHandler>());
+  rv += SDK_ASSERT(replacer.format("test %VAR% %VAR% %NOTHING% 123") == "test baz baz  123");
+  rv += SDK_ASSERT(replacer.format("test %VAR% %% %VAR% %NOTHING% 123") == "test baz % baz  123");
+
+  // Test getVariableName() with funky inputs.  Start with known good, then divert into bad territory
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR%", "foo")) == 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR", "foo")) == 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("VAR%", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%V%AR%", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("V%AR%", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%V%AR", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("V%AR", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("V%%AR", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%%", "foo")) != 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%", "foo")) != 0);
+
+  // Handle embedded variables
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("EMBED1", "embed1")) == 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%EMBED2%", "embed2")) == 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR%", "A:%EMBED2% B:%EMBED1%")) == 0);
+  rv += SDK_ASSERT(replacer.format("> %VAR% <") == "> A:embed2 B:embed1 <");
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR%", "A:%EMBED2%%% B:%EMBED1%")) == 0);
+  rv += SDK_ASSERT(replacer.format("> %VAR% <") == "> A:embed2% B:embed1 <");
+
+  // Make sure embedded variables can't cause infinite recursion
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%VAR%", "%EMBED2%")) == 0);
+  rv += SDK_ASSERT(replacer.addReplaceable(new CustomReplaceable("%EMBED2%", "%VAR%")) == 0);
+  const std::string recursed = replacer.format("%VAR%");
+  rv += SDK_ASSERT(recursed == "%VAR%" || recursed == "%EMBED2%");
 
   return rv;
 }

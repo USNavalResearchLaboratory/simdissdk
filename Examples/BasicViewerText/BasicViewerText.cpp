@@ -277,8 +277,8 @@ int main(int argc, char** argv)
     props->mutable_classification()->set_label("UNCLASSIFIED");
     txn.complete(&props);
   }
-  simVis::ClassificationBanner banner(&dataStore, 24, "arialbd.ttf");
-  banner.addToView(superHUD);
+  osg::ref_ptr<simVis::ClassificationBanner> banner = new simVis::ClassificationBanner(&dataStore, 24, "arialbd.ttf");
+  banner->addToView(superHUD);
 
   // Add a help control
   superHUD->addOverlayControl(createHelp());

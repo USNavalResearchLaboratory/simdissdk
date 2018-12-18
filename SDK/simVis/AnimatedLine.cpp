@@ -136,14 +136,27 @@ void AnimatedLineNode::setEndPoints(const Locator* first, const Locator* second)
   secondLocator_ = second;
 }
 
+int AnimatedLineNode::getEndPoints(simCore::MultiFrameCoordinate& coord1, simCore::MultiFrameCoordinate& coord2) const
+{
+  if (!line1_.valid())
+    return 1;
+  coord1 = firstCoord_;
+  coord2 = secondCoordMF_;
+  return (coord1.isValid() && coord2.isValid()) ? 0 : 1;
+}
+
 void AnimatedLineNode::setStipple1(unsigned short value)
 {
   stipple1_ = value;
+  // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
+  timeLastShift_ = 0.0;
 }
 
 void AnimatedLineNode::setStipple2(unsigned short value)
 {
   stipple2_ = value;
+  // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
+  timeLastShift_ = 0.0;
 }
 
 void AnimatedLineNode::setColor1(const osg::Vec4& value)
@@ -181,6 +194,8 @@ float AnimatedLineNode::getLineWidth() const
 void AnimatedLineNode::setShiftsPerSecond(double value)
 {
   shiftsPerSecond_ = value;
+  // Need to reset the time shift to recalculate shifting correctly, per SIMDIS-3104
+  timeLastShift_ = 0.0;
 }
 
 void AnimatedLineNode::initializeGeometry_()
@@ -375,9 +390,7 @@ void AnimatedLineNode::update_(double t)
 
   // LineDrawable is efficient in cases of no change
   line1_->setLineWidth(lineWidth_);
-  line1_->setStipplePattern(stipple1_);
   line2_->setLineWidth(lineWidth_);
-  line2_->setStipplePattern(stipple2_);
 
   // animate the line:
   const double dt        = t - timeLastShift_;
@@ -442,23 +455,23 @@ bool AnimatedLineNode::doesLineIntersectEarth_(const simCore::MultiFrameCoordina
 
 void AnimatedLineNode::drawLine_(const simCore::MultiFrameCoordinate& coord1, const simCore::MultiFrameCoordinate& coord2)
 {
+  // firstCoord_ is already initialized.  Because secondCoord_ might be in tangent plane or a
+  // locator, it needs to be explicitly updated when its target is dirty.  Because of this, we
+  // can cache the secondCoord in a MultiFrameCoordinate only after it's been resolved.  That's
+  // here.  We store it even if it is not valid.
+  secondCoordMF_ = coord2;
+
+  // Both coordinates must be valid
   if (!coord1.isValid() || !coord2.isValid())
-  {
-    // Both coordinates must be valid
     return;
-  }
 
   // Do horizon checking to determine if the coordinates will hit the earth
   // with a slant line.  If so, then draw a bending line, else draw a straight line.
   const bool drawSlant = !doesLineIntersectEarth_(coord1, coord2);
   if (drawSlant)
-  {
     drawSlantLine_(coord1, coord2);
-  }
   else
-  {
     drawBendingLine_(coord1, coord2);
-  }
 
   // Prevent terrain interference with lines ~1m from the surface
   fixDepth_(simCore::areEqual(coord1.llaCoordinate().alt(), 0.0, 1.0) &&

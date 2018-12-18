@@ -23,11 +23,14 @@
 #include <QAction>
 #include <QApplication>
 #include <QColor>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QFont>
-#include <QInputDialog>
+#include <QLabel>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPushButton>
 #include <QTimer>
 #include <QToolTip>
 #include <QTreeView>
@@ -38,8 +41,10 @@
 #include "simQt/QtFormatting.h"
 #include "simQt/CategoryFilterCounter.h"
 #include "simQt/CategoryTreeModel.h"
+#include "simQt/EntityFilterLineEdit.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/SearchLineEdit.h"
+#include "simQt/Settings.h"
 #include "simQt/CategoryTreeModel2.h"
 
 namespace simQt {
@@ -48,6 +53,11 @@ namespace simQt {
 static const QColor MIDLIGHT_BG_COLOR(227, 227, 227);
 /** Breadcrumb's default fill color, used here for background brush on filter items that contribute to filter. */
 static const QColor CONTRIBUTING_BG_COLOR(195, 225, 240); // Light gray with a hint of blue
+/** Locked settings keys */
+static const QString LOCKED_SETTING = "LockedCategories";
+/** Locked settings meta data to define it as private */
+static const simQt::Settings::MetaData LOCKED_SETTING_METADATA(Settings::STRING_LIST, "", "", Settings::PRIVATE);
+
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -889,7 +899,8 @@ CategoryTreeModel2::CategoryTreeModel2(QObject* parent)
   : QAbstractItemModel(parent),
     dataStore_(NULL),
     filter_(new simData::CategoryFilter(NULL)),
-    categoryFont_(new QFont)
+    categoryFont_(new QFont),
+    settings_(NULL)
 {
   listener_.reset(new CategoryFilterListener(*this));
 
@@ -997,6 +1008,17 @@ bool CategoryTreeModel2::setData(const QModelIndex& index, const QVariant& value
   assert(filter_ && item);
   bool wasEdited = false;
   const bool rv = item->setData(value, role, *filter_, wasEdited);
+
+  // update locked setting for this category if it is a category item and this is a locked state update
+  if (settings_ && item->childCount() > 0 && role == ROLE_LOCKED_STATE)
+  {
+    QStringList lockedCategories = settings_->value(settingsKey_, LOCKED_SETTING_METADATA).toStringList();
+    lockedCategories.removeOne(item->categoryName());
+    if (value.toBool())
+      lockedCategories.push_back(item->categoryName());
+    settings_->setValue(settingsKey_, lockedCategories);
+  }
+
   // Logic below needs to change if this assert triggers.  Basically, GUI may
   // update without the filter updating, but not vice versa.
   assert(rv || !wasEdited);
@@ -1116,6 +1138,12 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
     // Populate the GUI
     std::vector<int> nameInts;
     nameManager.allCategoryNameInts(nameInts);
+
+    QString settingsKey;
+    QStringList lockedCategories;
+    if (settings_)
+      lockedCategories = settings_->value(settingsKey_, LOCKED_SETTING_METADATA).toStringList();
+
     for (auto i = nameInts.begin(); i != nameInts.end(); ++i)
     {
       // Save the Category item and map it into our quick-search map
@@ -1136,6 +1164,10 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
         ValueItem* valueItem = new ValueItem(nameManager, *i, *vi);
         category->addChild(valueItem);
       }
+
+      // check settings to determine if newly added categories should be locked
+      if (settings_)
+        updateLockedState_(lockedCategories, *category);
     }
   }
 
@@ -1145,6 +1177,22 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
   // Alert listeners if we have a new filter
   if (hadFilter && filter_)
     emit filterChanged(*filter_);
+}
+
+void CategoryTreeModel2::setSettings(Settings* settings, const QString& settingsKeyPrefix)
+{
+  settings_ = settings;
+  settingsKey_ = settingsKeyPrefix + "/" + LOCKED_SETTING;
+
+  if (!settings_)
+    return;
+
+  // check settings to determine if newly added categories should be locked
+  QStringList lockedCategories = settings_->value(settingsKey_, LOCKED_SETTING_METADATA).toStringList();
+  for (int i = 0; i < categories_.size(); ++i)
+  {
+    updateLockedState_(lockedCategories, *categories_[i]);
+  }
 }
 
 void CategoryTreeModel2::clearTree_()
@@ -1165,7 +1213,12 @@ void CategoryTreeModel2::addName_(int nameInt)
   const auto& nameManager = dataStore_->categoryNameManager();
   CategoryItem* category = new CategoryItem(nameManager, nameInt);
   category->setFont(categoryFont_);
-
+  // check settings to determine if newly added categories should be locked
+  if (settings_)
+  {
+    QStringList lockedCategories = settings_->value(settingsKey_, LOCKED_SETTING_METADATA).toStringList();
+    updateLockedState_(lockedCategories, *category);
+  }
   // Debug mode: Validate that there are no values in that category yet.  If this section
   // of code fails, then we'll need to add ValueItem entries for the category on creation.
 #ifndef NDEBUG
@@ -1191,6 +1244,14 @@ CategoryTreeModel2::CategoryItem* CategoryTreeModel2::findNameTree_(int nameInt)
 {
   auto i = categoryIntToItem_.find(nameInt);
   return (i == categoryIntToItem_.end()) ? NULL : i->second;
+}
+
+void CategoryTreeModel2::updateLockedState_(const QStringList& lockedCategories, CategoryItem& category)
+{
+  if (!lockedCategories.contains(category.categoryName()))
+    return;
+  bool wasChanged = false;
+  category.setData(true, CategoryTreeModel2::ROLE_LOCKED_STATE, *filter_, wasChanged);
 }
 
 void CategoryTreeModel2::addValue_(int nameInt, int valueInt)
@@ -1938,6 +1999,11 @@ void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
     dataStore->addListener(dsListener_);
 }
 
+void CategoryFilterWidget2::setSettings(Settings* settings, const QString& settingsKeyPrefix)
+{
+  treeModel_->setSettings(settings, settingsKeyPrefix);
+}
+
 const simData::CategoryFilter& CategoryFilterWidget2::categoryFilter() const
 {
   return treeModel_->categoryFilter();
@@ -2098,24 +2164,34 @@ void CategoryFilterWidget2::showRegExpEditGui_(const QModelIndex& index)
   const QString oldRegExp = index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString();
   const QString categoryName = index.data(CategoryTreeModel2::ROLE_CATEGORY_NAME).toString();
 
-  // Create an input dialog on the stack so that we can set a What's This tip for more information
-  QInputDialog inputDialog(this);
-  inputDialog.setWhatsThis(tr(
-"Regular expressions can be applied to categories in a filter.  Categories with regular expression filters will match only the values that match the regular expression."
-"<p>This popup changes the regular expression value for the category '%1'."
-"<p>An empty string can be used to clear the regular expression and return to normal matching mode.").arg(categoryName));
-  inputDialog.setInputMode(QInputDialog::TextInput);
-  inputDialog.setTextValue(oldRegExp);
-  inputDialog.setWindowTitle(tr("Set Regular Expression"));
-  inputDialog.setLabelText(tr("Set '%1' value regular expression:").arg(categoryName));
+  // pop up dialog with a entity filter line edit that supports formatting regexp
+  QDialog optionsDialog(this);
+  optionsDialog.setWindowTitle(tr("Set Regular Expression"));
+  optionsDialog.setWindowFlags(optionsDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
-  // Execute the GUI and set the regexp
-  if (inputDialog.exec() == QDialog::Accepted && inputDialog.textValue() != oldRegExp)
+  QLayout* layout = new QVBoxLayout(&optionsDialog);
+  QLabel* label = new QLabel(tr("Set '%1' value regular expression:").arg(categoryName), &optionsDialog);
+  layout->addWidget(label);
+  EntityFilterLineEdit* lineEdit = new EntityFilterLineEdit(&optionsDialog);
+  lineEdit->setRegexOnly(true);
+  lineEdit->setText(oldRegExp);
+  lineEdit->setToolTip(
+    tr("Regular expressions can be applied to categories in a filter.  Categories with regular expression filters will match only the values that match the regular expression."
+    "<p>This popup changes the regular expression value for the category '%1'."
+    "<p>An empty string can be used to clear the regular expression and return to normal matching mode.").arg(categoryName));
+  layout->addWidget(lineEdit);
+  QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &optionsDialog);
+  connect(lineEdit, SIGNAL(isValidChanged(bool)), buttons.button(QDialogButtonBox::Ok), SLOT(setEnabled(bool)));
+  connect(&buttons, SIGNAL(accepted()), &optionsDialog, SLOT(accept()));
+  connect(&buttons, SIGNAL(rejected()), &optionsDialog, SLOT(reject()));
+  layout->addWidget(&buttons);
+  optionsDialog.setLayout(layout);
+  if (optionsDialog.exec() == QDialog::Accepted && lineEdit->text() != oldRegExp)
   {
     // index.model() is const because changes to the model might invalidate indices.  Since we know this
     // and no longer use the index after this call, it is safe to use const_cast here to use setData().
     QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
-    model->setData(index, inputDialog.textValue(), CategoryTreeModel2::ROLE_REGEXP_STRING);
+    model->setData(index, lineEdit->text(), CategoryTreeModel2::ROLE_REGEXP_STRING);
   }
 }
 

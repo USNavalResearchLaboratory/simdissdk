@@ -37,7 +37,6 @@ namespace simVis
 class AreaHighlightNode;
 class AxisVector;
 class EphemerisVector;
-class LabelContentCallback;
 class LocalGridNode;
 class PlatformInertialTransform;
 class PlatformModelNode;
@@ -74,16 +73,22 @@ public:
   * @param props   Initialization properties
   * @param dataStore Reference to the datastore that contains platform data
   * @param manager Filters platform TSPI points
-  * @param trackParent Parent node for the track history, since it cannot be a child of the platform node
+  * @param expireModeGroupAttach Parent node for the expireModeGroup (which parents TrackHistory), since it cannot be a child of the platform node
   * @param locator Locator that will position this platform
   * @param referenceYear The calculations for the Speed Rings Fixed Time preference needs the scenario reference year
   */
   PlatformNode(const simData::PlatformProperties& props,
     const simData::DataStore& dataStore,
     PlatformTspiFilterManager& manager,
-    osg::Group* trackParent,
+    osg::Group* expireModeGroupAttach,
     Locator* locator = NULL,
     int referenceYear = 1970);
+
+  /**
+  * Access to the group that holds track history and vapor trail (to support expire mode)
+  * @return expireModeGroup
+  */
+  osg::Group* getExpireModeGroup() const;
 
   /**
   * Access to the node that renders the 3D model/icon
@@ -127,18 +132,6 @@ public:
   */
   void setPrefs(const simData::PlatformPrefs& prefs);
 
-  /**
-  * Sets a custom callback that will be used to generate the string that goes in the label.
-  * @param callback Callback that will generate content; if NULL will only display platform name/alias
-  */
-  void setLabelContentCallback(LabelContentCallback* callback);
-
-  /// Returns current content callback
-  LabelContentCallback* labelContentCallback() const;
-
-  /// Returns the pop up text based on the label content callback, update and preference
-  std::string popupText() const;
-
   /// Set the creator for the LOS nodes
   void setLosCreator(LosCreator* losCreator);
 
@@ -174,9 +167,10 @@ public: // EntityNode interface
   */
   virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+  /// Returns the pop up text based on the label content callback, update and preference
+  virtual std::string popupText() const;
   /// Returns the hook text based on the label content callback, update and preference
   virtual std::string hookText() const;
-
   /// Returns the legend text based on the label content callback, update and preference
   virtual std::string legendText() const;
 
@@ -236,10 +230,17 @@ public: // EntityNode interface
   double getFrontOffset() const { return frontOffset_; }
 
   /**
-  * Returns the last update for the platform
+  * Returns the last update for the platform; note this update has been filtered e.g. clamping has been applied
   * @return the last update for the platform, or NULL if platform has no valid update
   */
   const simData::PlatformUpdate* update() const;
+
+  /**
+  * Returns the update valid for displaying current values in labels, which could be the actual values from the last unfiltered update,
+  * or the filtered values, depending on the label prefs useValues field
+  * @return the current update for the platform, or NULL if platform has no valid update
+  */
+  const simData::PlatformUpdate* labelUpdate() const;
 
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simVis"; }
@@ -272,6 +273,13 @@ private:
   bool showTrack_(const simData::PlatformPrefs& prefs) const;
 
   /**
+  * Indicates if the track history and vapor trail can exist in the scene, based on the expireMode, if the platform is active, non-static
+  * @param prefs pref values to interrogate
+  * @return true if the track history and vapor trial can exist in the scene
+  */
+  bool showTrackTrail_(const simData::PlatformPrefs& prefs) const;
+
+  /**
   * Mark the platform as not valid; receipt of a valid datastore update will make the platform valid again
   */
   void setInvalid_();
@@ -295,18 +303,24 @@ private:
   void updateOrRemoveHorizons_(const simData::PlatformPrefs& prefs, bool force);
   void updateOrRemoveHorizon_(simCore::HorizonCalculations horizonType, const simData::PlatformPrefs& prefs, bool force);
 
+  /// Return the current platform update to populate labels, based on the supplied prefs, either the lastUpdate_ or the lastUnfilteredUpdate_
+  const simData::PlatformUpdate* labelUpdate_(const simData::PlatformPrefs& prefs) const;
+
   const simData::DataStore&       ds_;
   PlatformTspiFilterManager&      platformTspiFilterManager_;
   simCore::RadarCrossSectionPtr   rcs_;
   simData::PlatformProperties     lastProps_;
   simData::PlatformPrefs          lastPrefs_;
   simData::PlatformUpdate         lastUpdate_;
+  simData::PlatformUpdate         lastUnfilteredUpdate_;
   /// the last time a data store update came in
   double                          lastUpdateTime_;
   /// the time of the earliest history point that still exists in the data slice
   double                          firstHistoryTime_;
-  /// parent of the track history points, which must be different from the platform node to support expiremode
-  osg::observer_ptr<osg::Group>   trackParent_;
+  /// container for trackHistory and vaporTrail, which must be different from the platform node to support expiremode
+  osg::ref_ptr<osg::Group> expireModeGroup_;
+  /// scenegraph parent to the expireModeGroup_
+  osg::observer_ptr<osg::Group> expireModeGroupAttach_;
   /// track history points
   osg::ref_ptr<TrackHistoryNode>  track_;
   osg::ref_ptr<LocalGridNode>     localGrid_;
@@ -317,7 +331,6 @@ private:
   osg::ref_ptr<VelocityVector>    velocityAxisVector_;
   osg::ref_ptr<EphemerisVector>   ephemerisVector_;
   osg::ref_ptr<PlatformModelNode> model_;
-  osg::ref_ptr<LabelContentCallback> contentCallback_;
   LosCreator*                     losCreator_; // Not owned
   RadialLOSNode*                  opticalLosNode_;
   RadialLOSNode*                  radioLosNode_;
@@ -333,6 +346,5 @@ private:
 };
 
 } // namespace simVis
-
 
 #endif // SIMVIS_PLATFORM_NODE_H

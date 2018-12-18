@@ -42,6 +42,7 @@ namespace simData {
 
 namespace simVis
 {
+  class LabelContentCallback;
   class Locator;
 
   /**
@@ -130,9 +131,18 @@ namespace simVis
     */
     virtual const std::string getEntityName(NameType nameType, bool allowBlankAlias = false) const = 0;
 
+    /**
+    * Sets a custom callback that will be used to generate the string that goes in the label.
+    * @param callback Callback that will generate content; if NULL will only display entity name/alias
+    */
+    void setLabelContentCallback(LabelContentCallback* callback);
+    /// Returns current content callback; guaranteed non-NULL
+    LabelContentCallback& labelContentCallback() const;
+
+    /// Returns the pop up text based on the label content callback, update and preference
+    virtual std::string popupText() const = 0;
     /// Returns the hook text based on the label content callback, update and preference
     virtual std::string hookText() const = 0;
-
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const = 0;
 
@@ -275,7 +285,6 @@ namespace simVis
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
-
     /** Return the class name */
     virtual const char* className() const { return "EntityNode"; }
 
@@ -299,6 +308,7 @@ namespace simVis
 
     simData::ObjectType type_;
     osg::ref_ptr<Locator> locator_;
+    osg::ref_ptr<LabelContentCallback> contentCallback_;
   };
 
 } // namespace simVis

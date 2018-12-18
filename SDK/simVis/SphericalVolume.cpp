@@ -42,14 +42,16 @@
 #include "simVis/Utils.h"
 
 //---------------------------------------------------------------------------
-
+// note that these are distinct values, not components of a bitmask.
 #define USAGE_CONE     0x00
-#define USAGE_NEAR     0x01
-#define USAGE_FAR      0x02
-#define USAGE_TOP      0x04
-#define USAGE_BOTTOM   0x08
-#define USAGE_LEFT     0x10
-#define USAGE_RIGHT    0x20
+#define USAGE_CONENEAR 0x01
+#define USAGE_CONEFAR  0x02
+#define USAGE_NEAR     0x04
+#define USAGE_FAR      0x08
+#define USAGE_TOP      0x10
+#define USAGE_BOTTOM   0x20
+#define USAGE_LEFT     0x40
+#define USAGE_RIGHT    0x80
 
 #define Q(T) #T
 
@@ -57,27 +59,27 @@ namespace
 {
   struct SVMeta
   {
-    char      usage_;     // near, far, or centroid
-    float     anglex_;    // angle in X
-    float     anglez_;    // angle in Z
-    float     ratio_;     // 0 at near, 1 at far
-    osg::Vec3 unit_;      // unit vector
+    unsigned char usage_; // where in the sv is this vertex: near face, far face, etc. Note that this is not a bitmask.
+    float     anglex_;    // vertex is at this angle in X; different meaning for cone than for pyramid
+    float     anglez_;    // vertex is at this angle in Z, different meaning for cone than for pyramid
+    float     ratio_;     // ratio of vertex magnitude to beam range/magnitude; 0 at near, 1 at far
+    osg::Vec3 unit_;      // vertex unit vector
 
-    SVMeta() : usage_(static_cast<char>(0)), anglex_(0.0f), anglez_(0.0f), ratio_(0.0f)
+    SVMeta() : usage_(static_cast<unsigned char>(0)), anglex_(0.0f), anglez_(0.0f), ratio_(0.0f)
     {
     }
 
-    explicit SVMeta(char usage) : usage_(usage), anglex_(0.0f), anglez_(0.0f), ratio_(0.0f)
+    explicit SVMeta(unsigned char usage) : usage_(usage), anglex_(0.0f), anglez_(0.0f), ratio_(0.0f)
     {
     }
 
-    SVMeta(char usage, float anglex, float anglez, const osg::Vec3& unit, float ratio)
+    SVMeta(unsigned char usage, float anglex, float anglez, const osg::Vec3& unit, float ratio)
     {
       usage_ = usage;
       set(anglex, anglez, unit, ratio);
     }
 
-    inline void set(char usage, float anglex, float anglez, const osg::Vec3& unit, float ratio)
+    inline void set(unsigned char usage, float anglex, float anglez, const osg::Vec3& unit, float ratio)
     {
       usage_ = usage;
       set(anglex, anglez, unit, ratio);
@@ -769,36 +771,51 @@ namespace
 
 namespace simVis
 {
-osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& direction)
+float SVFactory::calcYValue_(double x, double z)
+{
+  // calc what y needs to be to have a valid unit vector using x and z
+  const double xzsumsqr = (x * x) + (z * z);
+  // avoid sqrt(negative number)
+  return (xzsumsqr >= 1.0 ? 0.f : static_cast<float>(sqrt(1. - xzsumsqr)));
+}
+
+/// Class that creates a cone geometry as a child of the geode arg.
+/// The x-axis roughly parallels the cone horizontals; if you look from cone origin down the y-axis, x increases from left to right.
+/// The y-axis connects the cone origin to the cone center at the range extent.
+/// The z-axis roughly parallels the cone verticals;  if you look from cone origin down the y-axis, z increases from bottom to top.
+void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3& direction)
 {
   osg::Geometry* geom = new osg::Geometry();
+  geode->addDrawable(geom);
   geom->setName("simVis::SphericalVolume::cone");
   geom->setUseVertexBufferObjects(true);
   geom->setUseDisplayList(false);
   geom->setDataVariance(osg::Object::DYNAMIC); // prevent draw/update overlap
 
-  // the number of angular slices into which to tessellate the ellipsoid.
+  // the number of angular slices into which to tessellate the cone and its face(s). works best when wallres is a multiple of 4.
   const unsigned int numSlices = osg::clampBetween(d.coneRes_, 4u, 40u);
   const double sliceAngle_rad = M_TWOPI / numSlices;
 
-  // the number of concentric rings forming the facade
+  // the number of concentric rings forming a face
   const unsigned int numRings = osg::clampBetween(d.capRes_, 1u, 10u);
-  const float hfov_deg = osg::clampBetween(d.hfov_deg_, 0.01f, 360.0f);
-  const float vfov_deg = osg::clampBetween(d.vfov_deg_, 0.01f, 180.0f);
+  // cone cannot support anything > 180
+  const double hfov_deg = osg::clampBetween(static_cast<double>(d.hfov_deg_), 0.01, 180.0);
+  const double vfov_deg = osg::clampBetween(static_cast<double>(d.vfov_deg_), 0.01, 180.0);
+  // each ring has this angular span
   const double ringSpanX = 0.5 * osg::DegreesToRadians(hfov_deg) / numRings;
   const double ringSpanZ = 0.5 * osg::DegreesToRadians(vfov_deg) / numRings;
 
+  // determine if the near face will be drawn
   const bool hasNear = d.nearRange_ > 0.0 && d.drawCone_;
 
-  const double nearRange = d.nearRange_;
-  const double farRange = d.farRange_;
-
+  // determine number of vertices on a cone face
   const unsigned int vertsPerSlice = numRings; // not including the center point
   const unsigned int vertsPerFace = (vertsPerSlice * numSlices) + 1; // +1 for the center point
+
+  // determine number of vertices on the cone wall
   const unsigned int vertsOnWall = numSlices * (d.wallRes_ + 1) * 2;
-  const unsigned int numVerts = hasNear ?
-    (2 * vertsPerFace) + vertsOnWall :
-    vertsPerFace + vertsOnWall;
+  // total number of verts is face(s) + wall
+  const unsigned int numVerts = hasNear ? (2 * vertsPerFace) + vertsOnWall : vertsPerFace + vertsOnWall;
 
   // create the vertices
   osg::Vec3Array* v = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, numVerts);
@@ -813,7 +830,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   osg::Vec3Array* n = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX, numVerts);
   geom->setNormalArray(n);
 
-  // metadata (for fast updates)
+  // metadata (for fast in-place updates)
   SVMetaContainer* metaContainer = new SVMetaContainer();
   geom->setUserData(metaContainer);
   std::vector<SVMeta>* m = &metaContainer->vertMeta_;
@@ -830,64 +847,80 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
   // vertices for near face start immediately after the far face vertices
   const unsigned short nearOffset = farOffset + vertsPerFace;
 
-  // near and far faces are built with triangle strip radial slices using two vertices per concentric ring
+  // near and far faces are built with triangle strip radial slices using two vertices on each concentric ring
   unsigned int vptr = 0;
   // first point in each strip  is the center point.
-  (*v)[vptr] = dirQ * osg::Vec3(0.0f, farRange, 0.0f);
+  (*v)[vptr] = dirQ * osg::Vec3(0.0f, d.farRange_, 0.0f);
   (*n)[vptr] = dirQ * osg::Y_AXIS;
-  (*m)[vptr] = SVMeta(USAGE_FAR, 0.0f, 0.0f, osg::Y_AXIS, 1.0f);
+  (*m)[vptr] = SVMeta(USAGE_CONEFAR, 0.0f, 0.0f, osg::Y_AXIS, 1.0f);
   if (hasNear)
   {
     // first point in strip is the center point.
-    (*v)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, nearRange, 0.0f);
+    (*v)[vptr + vertsPerFace] = dirQ * osg::Vec3(0.0f, d.nearRange_, 0.0f);
     (*n)[vptr + vertsPerFace] = -dirQ * osg::Y_AXIS;
-    (*m)[vptr + vertsPerFace] = SVMeta(USAGE_NEAR, 0.0f, 0.0f, osg::Y_AXIS, 0.0f);
+    (*m)[vptr + vertsPerFace] = SVMeta(USAGE_CONENEAR, 0.0f, 0.0f, osg::Y_AXIS, 0.0f);
   }
   vptr++;
 
   const unsigned int elsPerSlice = 1 + (2 * numRings);
-
-  // loop over the slices and build the vert array (far first, near second if required)
   for (unsigned int slice = 0; slice < numSlices; ++slice)
   {
-    // starting and ending angles of the slice.
-    // (the PI_2 offset ensures a vertex on the top.)
+    // iterate around the 360 degrees of the cone, slice by slice; phi is the angle
+    // the PI_2 offset ensures a vertex at the top, to ensure that slices in face matches slices in walls
     const double phi = simCore::angFixPI(M_PI_2 + sliceAngle_rad * slice);
-    const double xRingScale = ringSpanX * cos(phi);
-    const double zRingScale = ringSpanZ * sin(phi);
+    const double cosphi = cos(phi);
+    const double sinphi = sin(phi);
 
-    // a triangle strip for the slice. each always starts as the center point.
+    // a triangle strip for this pie slice of the face. each always starts at the center point, extends radially to the outer edge of the cone face.
     osg::ref_ptr<osg::DrawElementsUShort> farWedge = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
     farWedge->reserveElements(elsPerSlice);
     farWedge->push_back(farOffset); // start with the center point
 
-    for (unsigned int ring = 0; ring < numRings; ++ring)
+    for (unsigned int ring = 1; ring <= numRings; ++ring)
     {
-      const double rx = (ring + 1) * xRingScale;
-      const double rz = (ring + 1) * zRingScale;
-      osg::Vec3 rawUnitVec(sin(rx)*cos(rz), cos(rx)*cos(rz), sin(rz));
-      rawUnitVec.normalize();
+      // x-axis angular extent/radius in radians for this ring
+      const double angleX = ring * ringSpanX;
+      // z-axis angular extent/radius in radians for this ring
+      const double angleZ = ring * ringSpanZ;
+      // clamping of numRings, hfov_deg, and vfov_deg guarantee these asserts
+      assert(angleX > 0. && angleX <= M_PI_2);
+      assert(angleZ > 0. && angleZ <= M_PI_2);
+      const double ringRadiusX = sin(angleX);
+      const double ringRadiusZ = sin(angleZ);
+      // previous asserts guarantee this assert
+      assert(ringRadiusX > 0. && ringRadiusZ > 0.);
+
+      // create a unit vector from cone origin to the point on the face at angle phi
+      const double rx = ringRadiusX * cosphi;
+      const double rz = ringRadiusZ * sinphi;
+      // Calculate the y value that will make a unit vector from rx and rz
+      const float ry = calcYValue_(rx, rz);
+      const osg::Vec3 rawUnitVec(static_cast<float>(rx), ry, static_cast<float>(rz));
+      // this is a unit vector, no need to normalize
+      assert(simCore::areEqual(rawUnitVec.length(), 1.0));
+
       const osg::Vec3 unitVec = dirQ * rawUnitVec;
-      const osg::Vec3 farVec = unitVec * farRange;
+      const osg::Vec3 farVec = unitVec * d.farRange_;
 
       (*v)[vptr] = farVec;
       (*n)[vptr] = unitVec;
-      (*m)[vptr].set(USAGE_FAR, rx, rz, rawUnitVec, 1.0f);
+      (*m)[vptr].set(USAGE_CONEFAR, angleX, angleZ, rawUnitVec, 1.0f);
 
       // add the new point to the slice's far face geometry:
       // vptr + numRings is the corresponding vertex in the next slice; can't use that when we get to last slice.
-      const unsigned int correspondingVertexInNextSlice = (slice + 1 < numSlices) ? (vptr + numRings) : (farOffset + 1 + ring);
+      const unsigned int correspondingVertexInNextSlice = (slice + 1 < numSlices) ? (vptr + numRings) : (farOffset + ring);
       farWedge->push_back(correspondingVertexInNextSlice);
       farWedge->push_back(vptr);
 
+      // if drawing the near face, the vertices are calculated and stored in the vertex array here,
+      // but added to primitive separately below, to mitigate near/far face artifacts
       if (hasNear)
       {
-        const osg::Vec3 nearVec = unitVec * nearRange;
+        const osg::Vec3 nearVec = unitVec * d.nearRange_;
         (*v)[vptr + vertsPerFace] = nearVec;
         (*n)[vptr + vertsPerFace] = -unitVec;
-        (*m)[vptr + vertsPerFace].set(USAGE_NEAR, rx, rz, rawUnitVec, 0.0f);
+        (*m)[vptr + vertsPerFace].set(USAGE_CONENEAR, rx, angleZ, rawUnitVec, 0.0f);
       }
-
       vptr++;
     }
     // add face to the geometry
@@ -910,11 +943,11 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       nearWedge->reserveElements(elsPerSlice);
       nearWedge->push_back(nearOffset); // start with the center point
 
-      for (unsigned int ring = 0; ring < numRings; ++ring)
+      for (unsigned int ring = 1; ring <= numRings; ++ring)
       {
         nearWedge->push_back(vptr);
         // vptr + numRings is the corresponding vertex in the next slice; can't use that when we get to last slice.
-        const unsigned int correspondingVertexInNextSlice = (slice + 1 < numSlices) ? (vptr + numRings) : (nearOffset + 1 + ring);
+        const unsigned int correspondingVertexInNextSlice = (slice + 1 < numSlices) ? (vptr + numRings) : (nearOffset + ring);
         nearWedge->push_back(correspondingVertexInNextSlice);
         vptr++;
       }
@@ -927,19 +960,27 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
   if (d.drawCone_)
   {
-    // next, build the walls. we need two additional outer rings with out-facing normals.
+    // next, build the cone wall. we need out-facing normals.
     // yes this can be computed while we are building the faces but that is an optimization for later.
     const int wallOffset = vptr;
 
     // ensure that cone is aligned to cap, since cap is drawn normally, but cone is drawn in alternating strips from bottom.
     bool evenSlice = ((numSlices % 2) == 0);
 
+    const double angleX = ringSpanX * numRings;
+    const double angleZ = numRings * ringSpanZ;
+    // clamping of numRings, hfov_deg, and vfov_deg guarantee this assert
+    assert(angleX > 0. && angleX <= M_PI_2);
+    assert(angleZ > 0. && angleZ <= M_PI_2);
+    const double coneRadiusX = sin(angleX);
+    const double coneRadiusZ = sin(angleZ);
+    // previous asserts guarantee this assert
+    assert(coneRadiusX > 0. && coneRadiusZ > 0.);
+
+
     // iterate for triangle strip slices that start at tip of cone and extend to far end(base) of cone
     for (unsigned int slice = 0; slice < numSlices; ++slice)
     {
-      osg::Vec3 rawUnitVec[2], unitVec[2], nearVec[2], lengthVec[2];
-      double rx[2], rz[2];
-
       // start at bottom of cone and alternately build strips on either side ascending, to manage draw order
       // this approach fixes obvious artifacts when beam is viewed from above, but may display artifacts when cone is viewed from side or from below,
       // or more obviously if roll offset is applied
@@ -952,17 +993,26 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
       // build a triangle strip for the slice
 
-      // precalculate
+      // precalculate the two vertices on the far end of cone
+      osg::Vec3 rawUnitVec[2], unitVec[2], nearVec[2], lengthVec[2];
+      float rx[2], rz[2];
       for (unsigned int i = 0; i < 2; ++i)
       {
         // starting and ending angles of the slice, in order to set winding correctly
         const double phi = (i == 0) ? simCore::angFixPI(sliceAngle + sliceAngle_rad) : simCore::angFixPI(sliceAngle);
 
-        // these are the offset factors for the actual face size:
-        rx[i] = ringSpanX * numRings * cos(phi);
-        rz[i] = ringSpanZ * numRings * sin(phi);
-        rawUnitVec[i].set(sin(rx[i])*cos(rz[i]), cos(rx[i])*cos(rz[i]), sin(rz[i]));
-        rawUnitVec[i].normalize();
+        // create a unit vector to the point on the face at angle phi
+        const double r_x = coneRadiusX * cos(phi);
+        const double r_z = coneRadiusZ * sin(phi);
+        rx[i] = static_cast<float>(r_x);
+        rz[i] = static_cast<float>(r_z);
+
+        // Calculate the y value that will make a unit vector from r_x and r_z
+        const float ry = calcYValue_(r_x, r_z);
+        rawUnitVec[i].set(rx[i], ry, rz[i]);
+        // this is a unit vector, no need to normalize
+        assert(simCore::areEqual(rawUnitVec[i].length(), 1.0));
+
         unitVec[i] = dirQ * rawUnitVec[i];
 
         // the point on the near face (or at the origin if there's no near face)
@@ -973,11 +1023,14 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       osg::ref_ptr<osg::DrawElementsUShort> side = new osg::DrawElementsUShort(GL_TRIANGLE_STRIP);
       side->reserveElements(2 * (d.wallRes_ + 1));
 
+      // calculate vertices, tesselating from cone origin out to pre-calc'd points on cone far edge
       const float tessStep = 1.0f / d.wallRes_;
       for (unsigned int q = 0; q < d.wallRes_ + 1; ++q)
       {
+        // double precision calcs might be required below.
         const float w = tessStep * q;
-        // this appears to be duplicating vertices that are shared between slices, could be optimized to reuse vertices from prev or next slice.
+        // this duplicates vertices that are shared between slices;
+        // could be optimized instead to reuse vertices from prev or next slice (but calc'ing normals might be complicated)
         for (unsigned int i = 0; i < 2; ++i)
         {
           (*v)[vptr] = nearVec[i] + (lengthVec[i] * w);
@@ -995,7 +1048,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 
           normal.normalize();
           (*n)[vptr] = normal;
-          (*m)[vptr].set(USAGE_CONE, rx[i], rz[i], rawUnitVec[i], w);
+          (*m)[vptr].set(USAGE_CONE, angleX, angleZ, rawUnitVec[i], w);
           side->addElement(vptr);
           vptr++;
         }
@@ -1014,8 +1067,6 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
       PointSize::setValues(geom->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
     }
   }
-
-  return geom;
 }
 
 // A SphericalVolume is a MatrixTransform that parents up to two geodes.
@@ -1027,6 +1078,7 @@ osg::Geometry* SVFactory::createCone_(const SVData& d, const osg::Vec3& directio
 osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& dir)
 {
   osg::MatrixTransform* xform = new osg::MatrixTransform();
+  xform->setName("SVFactory Node Transform");
 
   if (d.shape_ == SVData::SHAPE_PYRAMID)
   {
@@ -1035,16 +1087,9 @@ osg::MatrixTransform* SVFactory::createNode(const SVData& d, const osg::Vec3& di
   else
   {
     osg::ref_ptr<osg::Geode> geodeSolid = new osg::Geode();
+    geodeSolid->setName("Solid Geode");
     xform->addChild(geodeSolid.get());
-
-    osg::Geometry* geom = createCone_(d, dir);
-    if (geom == NULL)
-    {
-      // Assertion failure means create*_() did not return a valid geometry
-      assert(0);
-      return NULL;
-    }
-    geodeSolid->addDrawable(geom);
+    createCone_(geodeSolid.get(), d, dir);
   }
 
   // draw-as-wireframe or add wireframe to stipple/solid geom
@@ -1321,63 +1366,131 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
     return;
   }
   std::vector<SVMeta>& vertMeta = meta->vertMeta_;
-
-  // clamp to M_TWOPI, to match clamping in pyramid and cone
-  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), M_TWOPI);
-  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), M_TWOPI);
-  const double oldMinAngle = -oldAngle * 0.5;
-  const double newMinAngle = -newAngle * 0.5;
+  const bool isCone = (vertMeta[0].usage_ == USAGE_CONEFAR);
+  // for horiz bw: cone clamped to PI, pyramid clamped to TWOPI
+  const double maxClamp = (isCone ? M_PI : M_TWOPI);
+  oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), maxClamp);
+  newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), maxClamp);
+  const double oldMinAngle = oldAngle * 0.5;
+  const double newMinAngle = newAngle * 0.5;
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     SVMeta& m = vertMeta[i];
-    // exclude centroid verts
-    if (m.unit_.x() != 0.0f || m.unit_.z() != 0.0f)
+    // exclude cone origin
+    if (m.unit_.x() == 0.0f && m.unit_.z() == 0.0f)
+      continue;
+
+    // recalc metadata
+    switch (m.usage_)
     {
-      const double t = (m.anglex_ - oldMinAngle) / oldAngle;
-      const double ax = newMinAngle + t * newAngle;
+    // cone metadata has different meaning than pyramid metadata wrt to h and v angles, and the calcs are distinct.
+    case USAGE_CONE:
+    case USAGE_CONENEAR:
+    case USAGE_CONEFAR:
+    {
+      // osg::clampBetween above guarantees this assert
+      assert(oldMinAngle > 0.);
+      // anglez_ in metadata is in a fixed ratio to max angle;
+      // it may be the angle to a subring (in face), or max angle (in the cone)
+      // max angle will change, but that ratio does not change, as we're not adding rings.
+
+      // createCone_ and updateVertAngle guarantee this
+      assert(m.anglex_ > 0. && m.anglex_ <= (M_PI_2 + std::numeric_limits<float>::epsilon()));
+
+      // developer error indicated; oldMinAngle is the max possible value for m.anglex_
+      assert(m.anglex_ <= (oldMinAngle + std::numeric_limits<float>::epsilon()));
+
+      // if ratio is less than 1, this is a vertex in a subring in the face
+      // simple ratio logic works since cone is symmetric around 0; if not symmetric around 0, need to use pyramid logic
+      const double ratio = (simCore::areEqual(m.anglex_, oldMinAngle) ? 1.0 : m.anglex_ / oldMinAngle);
+      // previous asserts and clamps guarantee this
+      assert(ratio > 0. && ratio <= 1.);
+      const double ax_new = newMinAngle * ratio;
+
+      // clamping and previous asserts guaranteee this
+      assert(ax_new > 0. && ax_new <= M_PI_2);
+
+      // this assert guaranteed by assert above
+      assert(sin(m.anglex_) != 0.);
+      // x value of vert is proportional to sin(h beamwidth)
+      const double multiplier = sin(ax_new) / sin(m.anglex_);
+
+      m.anglex_ = ax_new;
+      // change in x is proportional to change in sin(vert beamwidth) (phi is not changing)
+      const double rx = m.unit_.x() * multiplier;
+
+      // Calculate the y value that will make a unit vector from rx and m.unit_.z
+      const float ry = calcYValue_(rx, static_cast<double>(m.unit_.z()));
+      m.unit_.set(static_cast<float>(rx), ry, m.unit_.z());
+
+      // this is a unit vector, no need to normalize
+      assert(simCore::areEqual(m.unit_.length(), 1.0));
+      break;
+    }
+    // cone metadata has different meaning than pyramid metadata wrt to h and v angles, and the calcs are distinct.
+    case USAGE_NEAR:
+    case USAGE_FAR:
+    case USAGE_TOP:
+    case USAGE_BOTTOM:
+    case USAGE_LEFT:
+    case USAGE_RIGHT:
+    {
+      // osg::clampBetween above guarantees this assert
+      assert(oldAngle > 0.);
+      const double t = (m.anglex_ + oldMinAngle) / oldAngle;
+      const double ax = -newMinAngle + t * newAngle;
       const double sinx = sin(ax);
       const double cosx = cos(ax);
       const float sinz = sin(m.anglez_);
       const float cosz = cos(m.anglez_);
-      const float range =
-        m.usage_ == USAGE_NEAR ? meta->nearRange_ :
-        m.usage_ == USAGE_FAR  ? meta->farRange_  :
-        (*verts)[i].length();
-
       m.anglex_ = ax;
       m.unit_.set(sinx*cosz, cosx*cosz, sinz);
-      m.unit_.normalize();
-      const osg::Vec3 unitRot = meta->dirQ_ * m.unit_;
-      (*verts)[i] = unitRot * range;
+      // this is a unit vector, no need to normalize
+      assert(simCore::areEqual(m.unit_.length(), 1.0));
+      break;
+    }
+    }
+    // rotate the unit vector in the direction dirQ_
+    const osg::Vec3 unitRot = meta->dirQ_ * m.unit_;
 
-      switch (m.usage_)
-      {
-      case USAGE_NEAR:
-        (*normals)[i] = (unitRot * -1);
-        break;
-      case USAGE_FAR:
-        (*normals)[i] = unitRot;
-        break;
-      case USAGE_BOTTOM:
-        (*normals)[i] = (osg::Vec3(unitRot.x(), unitRot.z(), -unitRot.y()));
-        break;
-      case USAGE_TOP:
-        (*normals)[i] = (osg::Vec3(unitRot.x(), -unitRot.z(), unitRot.y()));
-        break;
-      case USAGE_RIGHT:
-        (*normals)[i] = (osg::Vec3(unitRot.y(), -unitRot.x(), unitRot.z()));
-        break;
-      case USAGE_LEFT:
-        (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
-        break;
-      case USAGE_CONE:
-      {
-        osg::Vec3 normal((*verts)[i].x(), (*verts)[i].y() - range, (*verts)[i].z());
-        normal.normalize();
-        (*normals)[i] = normal;
-        break;
-      }
-      }
+    // recalc vertex and its normal
+    switch (m.usage_)
+    {
+    case USAGE_CONENEAR:
+    case USAGE_NEAR:
+      (*verts)[i] = unitRot * meta->nearRange_;
+      (*normals)[i] = (unitRot * -1);
+      break;
+    case USAGE_CONEFAR:
+    case USAGE_FAR:
+      (*verts)[i] = unitRot * meta->farRange_;
+      (*normals)[i] = unitRot;
+      break;
+    case USAGE_BOTTOM:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(unitRot.x(), unitRot.z(), -unitRot.y()));
+      break;
+    case USAGE_TOP:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(unitRot.x(), -unitRot.z(), unitRot.y()));
+      break;
+    case USAGE_RIGHT:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(unitRot.y(), -unitRot.x(), unitRot.z()));
+      break;
+    case USAGE_LEFT:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
+      break;
+    case USAGE_CONE:
+    {
+      const float range = (*verts)[i].length();
+      (*verts)[i] = unitRot * range;
+      osg::Vec3 normal((*verts)[i].x(), (*verts)[i].y() - range, (*verts)[i].z());
+      normal.normalize();
+      (*normals)[i] = normal;
+      break;
+    }
     }
   }
 
@@ -1409,59 +1522,126 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
   // clamp to M_PI, to match clamping in pyramid and cone
   oldAngle = osg::clampBetween(oldAngle, (0.01 * simCore::DEG2RAD), M_PI);
   newAngle = osg::clampBetween(newAngle, (0.01 * simCore::DEG2RAD), M_PI);
-  const double oldMinAngle = -oldAngle * 0.5;
-  const double newMinAngle = -newAngle * 0.5;
+  const double oldMinAngle = oldAngle * 0.5;
+  const double newMinAngle = newAngle * 0.5;
+
   for (unsigned int i = 0; i < verts->size(); ++i)
   {
     SVMeta& m = vertMeta[i];
-    // exclude centroid verts
-    if (m.unit_.x() != 0.0f || m.unit_.z() != 0.0f)
+
+    // exclude cone origin
+    if (m.unit_.x() == 0.0f && m.unit_.z() == 0.0f)
+      continue;
+
+    // recalc metadata
+    switch (m.usage_)
     {
-      const double t = (m.anglez_ - oldMinAngle) / oldAngle;
-      const double az = newMinAngle + t * newAngle;
+    // cone metadata has different meaning than pyramid metadata wrt to h and v angles, and the calcs are distinct.
+    case USAGE_CONE:
+    case USAGE_CONENEAR:
+    case USAGE_CONEFAR:
+    {
+      // osg::clampBetween above guarantees this assert
+      assert(oldMinAngle > 0.);
+      // anglez_ in metadata is in a fixed ratio to max angle;
+      // it may be the angle to a subring (in face), or max angle (in the cone)
+      // that ratio does not change, as we're not adding rings
+
+      // createCone_ and updateVertAngle guarantee this
+      assert(m.anglez_ > 0. && m.anglez_ <= (M_PI_2 + std::numeric_limits<float>::epsilon()));
+
+      // developer error indicated; oldMinAngle is the max possible value for m.anglez_
+      assert(m.anglez_ <= (oldMinAngle + std::numeric_limits<float>::epsilon()));
+
+      // if ratio is less than 1, this is a vertex in a subring in the face
+      // simple ratio logic works since cone is symmetric around 0; if not, need to use (pyramid) logic below
+      const double ratio = (simCore::areEqual(m.anglez_, oldMinAngle) ? 1.0 : m.anglez_ / oldMinAngle);
+      // previous asserts and clamps guarantee this
+      assert(ratio > 0. && ratio <= 1.);
+
+      const double az_new = newMinAngle * ratio;
+      // clamping and previous asserts guaranteee this
+      assert(az_new > 0. && az_new <= M_PI_2);
+
+      // this assert guaranteed by assert above
+      assert(sin(m.anglez_) != 0.);
+      // z value of vert is proportional to sin(beamwidth)
+      const double multiplier = sin(az_new) / sin(m.anglez_);
+
+      m.anglez_ = az_new;
+      // change in z is proportional to change in sin(vert beamwidth) (phi is not changing)
+      const double rz = m.unit_.z() * multiplier;
+      // Calculate the y value that will make a unit vector from m.unit_.x and rz
+      const float ry = calcYValue_(static_cast<double>(m.unit_.x()), rz);
+      m.unit_.set(m.unit_.x(), ry, static_cast<float>(rz));
+      // this is a unit vector, no need to normalize
+      assert(simCore::areEqual(m.unit_.length(), 1.0));
+      break;
+    }
+    // cone metadata has different meaning than pyramid metadata wrt to h and v angles, and the calcs are distinct.
+    case USAGE_NEAR:
+    case USAGE_FAR:
+    case USAGE_TOP:
+    case USAGE_BOTTOM:
+    case USAGE_LEFT:
+    case USAGE_RIGHT:
+    {
+      // osg::clampBetween above guarantees this assert
+      assert(oldAngle > 0.);
+      const double t = (m.anglez_ + oldMinAngle) / oldAngle;
+      const double az = -newMinAngle + t * newAngle;
       const float sinx = sin(m.anglex_);
       const float cosx = cos(m.anglex_);
       const double sinz = sin(az);
       const double cosz = cos(az);
-      const float range =
-        m.usage_ == USAGE_NEAR ? meta->nearRange_ :
-        m.usage_ == USAGE_FAR  ? meta->farRange_  :
-        (*verts)[i].length();
-
       m.anglez_ = az;
       m.unit_.set(sinx*cosz, cosx*cosz, sinz);
-      m.unit_.normalize();
-      const osg::Vec3 unitRot = meta->dirQ_ * m.unit_;
-      (*verts)[i] = unitRot * range;
+      // this is a unit vector, no need to normalize
+      assert(simCore::areEqual(m.unit_.length(), 1.0));
+      break;
+    }
+    }
+    // rotate the unit vector in the direction dirQ_
+    const osg::Vec3 unitRot = meta->dirQ_ * m.unit_;
 
-      switch (m.usage_)
-      {
-      case USAGE_NEAR:
-        (*normals)[i] = (unitRot * -1);
-        break;
-      case USAGE_FAR:
-        (*normals)[i] = unitRot;
-        break;
-      case USAGE_BOTTOM:
-        (*normals)[i] = (osg::Vec3(unitRot.x(), unitRot.z(), -unitRot.y()));
-        break;
-      case USAGE_TOP:
-        (*normals)[i] = (osg::Vec3(unitRot.x(), -unitRot.z(), unitRot.y()));
-        break;
-      case USAGE_RIGHT:
-        (*normals)[i] = (osg::Vec3(unitRot.y(), -unitRot.x(), unitRot.z()));
-        break;
-      case USAGE_LEFT:
-        (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
-        break;
-      case USAGE_CONE:
-      {
-        osg::Vec3 normal((*verts)[i].x(), (*verts)[i].y() - range, (*verts)[i].z());
-        normal.normalize();
-        (*normals)[i] = normal;
-        break;
-      }
-      }
+    // recalc vertex and normal
+    switch (m.usage_)
+    {
+    case USAGE_CONENEAR:
+    case USAGE_NEAR:
+      (*verts)[i] = unitRot * meta->nearRange_;
+      (*normals)[i] = (unitRot * -1);
+      break;
+    case USAGE_CONEFAR:
+    case USAGE_FAR:
+      (*verts)[i] = unitRot * meta->farRange_;
+      (*normals)[i] = unitRot;
+      break;
+    case USAGE_BOTTOM:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(unitRot.x(), unitRot.z(), -unitRot.y()));
+      break;
+    case USAGE_TOP:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(unitRot.x(), -unitRot.z(), unitRot.y()));
+      break;
+    case USAGE_RIGHT:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(unitRot.y(), -unitRot.x(), unitRot.z()));
+      break;
+    case USAGE_LEFT:
+      (*verts)[i] = unitRot * (*verts)[i].length();
+      (*normals)[i] = (osg::Vec3(-unitRot.y(), unitRot.x(), unitRot.z()));
+      break;
+    case USAGE_CONE:
+    {
+      const float range = (*verts)[i].length();
+      (*verts)[i] = unitRot * range;
+      osg::Vec3 normal((*verts)[i].x(), (*verts)[i].y() - range, (*verts)[i].z());
+      normal.normalize();
+      (*normals)[i] = normal;
+      break;
+    }
     }
   }
 

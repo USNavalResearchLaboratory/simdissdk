@@ -30,7 +30,6 @@
 
 using namespace simVis::GOG;
 using namespace osgEarth::Features;
-using namespace osgEarth::Symbology;
 
 GogNodeInterface* Ellipse::deserialize(const osgEarth::Config&  conf,
                      simVis::GOG::ParserData& p,
@@ -55,7 +54,7 @@ GogNodeInterface* Ellipse::deserialize(const osgEarth::Config&  conf,
 
   Angle rotation(conf.value<double>("rotation", 0.0), p.units_.angleUnits_);
 
-  GeometryFactory gf;
+  osgEarth::Symbology::GeometryFactory gf;
   Geometry* shape = gf.createEllipse(osg::Vec3d(0, 0, 0), minorRadius, majorRadius, rotation);
 
   osgEarth::Annotation::LocalGeometryNode* node = NULL;
@@ -71,6 +70,7 @@ GogNodeInterface* Ellipse::deserialize(const osgEarth::Config&  conf,
   }
   else
     node = new HostedLocalGeometryNode(shape, p.style_);
+  node->setName("GOG Ellipse Position");
 
   Utils::applyLocalGeometryOffsets(*node, p, nodeType);
 

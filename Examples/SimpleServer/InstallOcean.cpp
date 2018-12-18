@@ -20,6 +20,7 @@
 *
 */
 #include "osg/ArgumentParser"
+#include "osg/Depth"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarthUtil/Ocean"
@@ -31,10 +32,17 @@
 #include "osgEarthTriton/TritonLayer"
 #include "osgEarthTriton/TritonOptions"
 #endif
+
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,10,0)
 #include "osgEarthDrivers/ocean_simple/SimpleOceanOptions"
+#else
+#include "osgEarthUtil/SimpleOceanLayer"
+#endif
+
 #include "simVis/BathymetryGenerator.h"
 #include "simVis/Constants.h"
 #include "simVis/SceneManager.h"
+#include "simVis/OverheadMode.h"
 #include "simUtil/ExampleResources.h"
 #include "InstallOcean.h"
 
@@ -120,17 +128,40 @@ void InstallOcean::install(simVis::SceneManager& scene)
     triton.maxAltitude() = 30000.0f;
     triton.renderBinNumber() = simVis::BIN_OCEAN;
     osg::ref_ptr<osgEarth::Triton::TritonLayer> layer = new osgEarth::Triton::TritonLayer(triton);
+    
+    // Configure it to work in overhead mode
+    simVis::OverheadMode::configureOceanLayer(layer.get());
+
+    // Add to the map
     scene.getMap()->addLayer(layer.get());
   }
   else // type_ == SIMPLE
 #endif
   {
-    osgEarth::SimpleOcean::SimpleOceanOptions ocean;
-    ocean.maxAltitude() = 30000.0f;
+#if SDK_OSGEARTH_VERSION_LESS_THAN(1,10,0)
+    osgEarth::Drivers::SimpleOcean::SimpleOceanOptions ocean;
+    ocean.lowFeatherOffset() = 0.0f;
+    ocean.highFeatherOffset() = 1.0f;
     ocean.renderBinNumber() = simVis::BIN_OCEAN;
-    osg::ref_ptr<osgEarth::Util::OceanNode> oceanNode = osgEarth::Util::OceanNode::create(ocean, scene.getMapNode());
-    if (oceanNode.valid())
-      scene.setOceanNode(oceanNode.get());
+#else
+    osgEarth::Util::SimpleOceanLayerOptions ocean;
+    // To get similar behavior as old ocean_simple driver, useBathymetry() == false helps
+    ocean.useBathymetry() = false;
+    ocean.maxAltitude() = 30000.0f;
+    osg::ref_ptr<osgEarth::Layer> layer = new osgEarth::Util::SimpleOceanLayer(ocean);
+
+    // Configure it to work in overhead mode
+    simVis::OverheadMode::configureOceanLayer(layer.get());
+
+    // Control the ocean's rendering order so we can see underwater objects:
+    layer->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_OCEAN, simVis::BIN_GLOBAL_SIMSDK);
+
+    // Do not apply the bathymetry generator when drawing the ocean surface:
+    layer->getOrCreateStateSet()->setDefine("SIMVIS_IGNORE_BATHYMETRY_GEN");
+
+    // Add to the map.
+    scene.getMap()->addLayer(layer.get());
+#endif
   }
 }
 

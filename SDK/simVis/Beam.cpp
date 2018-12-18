@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Depth"
 #include "osg/MatrixTransform"
 #include "osgEarth/Horizon"
 #include "simNotify/Notify.h"
@@ -98,6 +97,7 @@ namespace simVis
 {
 BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdate& update)
 {
+  setName("Beam Volume");
   beamSV_ = createBeamSV_(prefs, update);
   addChild(beamSV_);
   setBeamScale_(prefs.beamscale());
@@ -246,7 +246,6 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
     hasLastPrefs_(false),
     host_(host),
     hostMissileOffset_(0.0),
-    contentCallback_(new NullEntityCallback()),
     scenario_(scenario)
 {
   lastProps_ = props;
@@ -274,18 +273,12 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   setLocator(beamOrientationLocator_.get());
   setName("BeamNode");
 
-  // set up a state set.
-  // carefully set the rendering order for beams. We want to render them
-  // before everything else (including the terrain) since they are
-  // transparent and potentially self-blending
-  osg::StateSet* stateSet = this->getOrCreateStateSet();
-  stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
-
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
   addChild(localGrid_);
 
   // create the locator node that will parent our geometry and label
   beamLocatorNode_ = new LocatorNode(getLocator());
+  beamLocatorNode_->setName("Beam Locator");
   beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
   addChild(beamLocatorNode_);
 
@@ -320,7 +313,7 @@ void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
 
     std::string text;
     if (prefs.commonprefs().labelprefs().draw())
-      text = contentCallback_->createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields());
+      text = labelContentCallback().createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields());
 
     if (!text.empty())
     {
@@ -333,31 +326,37 @@ void BeamNode::updateLabel_(const simData::BeamPrefs& prefs)
   }
 }
 
-void BeamNode::setLabelContentCallback(LabelContentCallback* cb)
+std::string BeamNode::popupText() const
 {
-  if (cb == NULL)
-    contentCallback_ = new NullEntityCallback();
-  else
-    contentCallback_ = cb;
-}
+  if (hasLastPrefs_ && hasLastUpdate_)
+  {
+    std::string prefix;
+    // if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    if (!lastPrefsFromDS_.commonprefs().alias().empty())
+    {
+      if (lastPrefsFromDS_.commonprefs().usealias())
+        prefix = getEntityName(EntityNode::REAL_NAME);
+      else
+        prefix = getEntityName(EntityNode::ALIAS_NAME);
+      prefix += "\n";
+    }
+    return prefix + labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hoverdisplayfields());
+  }
 
-LabelContentCallback* BeamNode::labelContentCallback() const
-{
-  return contentCallback_.get();
+  return "";
 }
 
 std::string BeamNode::hookText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
-
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
   return "";
 }
 
 std::string BeamNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields());
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields());
 
   return "";
 }
@@ -687,14 +686,6 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
-    if (force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, blended)))
-    {
-      getOrCreateStateSet()->setRenderBinDetails(
-        (activePrefs->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
-        (activePrefs->blended() ? BIN_TWO_PASS_ALPHA : BIN_GLOBAL_SIMSDK));
-      // If beam is drawn as an antenna pattern, Antenna class also processes the blended preference.
-    }
-
     force = force || (newPrefs && PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawtype));
 
     // beam visual is drawn by Antenna

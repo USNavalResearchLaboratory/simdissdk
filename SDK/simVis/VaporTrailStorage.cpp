@@ -101,6 +101,15 @@ int VaporTrailStorage::addVaporTrail(simData::ObjectId platId, unsigned int id, 
     SIM_DEBUG << "Vapor Trail created for non-existent platform" << std::endl;
     return 1;
   }
+  // get the scenegraph attachment mgr for expiremode items
+  osg::ref_ptr<osg::Group> expireModeGroup = hostPlat->getExpireModeGroup();
+  if (!expireModeGroup.valid())
+  {
+    // see PlatformNode, which creates the ExpireModeManager for each platform
+    assert(0);
+    SIM_DEBUG << "Vapor Trail created for deficient platform" << std::endl;
+    return 1;
+  }
 
   if (dataStoreListener_ == NULL)
   {
@@ -109,7 +118,7 @@ int VaporTrailStorage::addVaporTrail(simData::ObjectId platId, unsigned int id, 
   }
 
   // create a new VaporTrail
-  osg::ref_ptr<simVis::VaporTrail> newTrail = new simVis::VaporTrail(dataStore_, *hostPlat, vaporTrailData, vaporPuffData, textures);
+  osg::ref_ptr<simVis::VaporTrail> newTrail = new simVis::VaporTrail(dataStore_, expireModeGroup.get(), *hostPlat, vaporTrailData, vaporPuffData, textures);
   idsByPlatform_.insert(std::make_pair(platId, id));
   vaporTrailsByKey_[key] = newTrail;
   return 0;

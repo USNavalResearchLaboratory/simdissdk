@@ -28,12 +28,10 @@
 #include "simVis/Entity.h"
 #include "simVis/LocatorNode.h"
 
-namespace osg { class Depth; }
 namespace osgEarth { class LineDrawable; }
 namespace simVis
 {
   class EntityLabelNode;
-  class LabelContentCallback;
   class LocalGridNode;
   class Locator;
 
@@ -167,15 +165,6 @@ namespace simVis
     */
     void removeUpdateOverride(const std::string& id);
 
-    /**
-    * Sets a custom callback that will be used to generate the string that goes in the label.
-    * @param callback Callback that will generate content; if NULL will only display platform name/alias
-    */
-    void setLabelContentCallback(LabelContentCallback* callback);
-
-    /// Returns current content callback
-    LabelContentCallback* labelContentCallback() const;
-
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
     /** Return the class name */
@@ -214,9 +203,10 @@ namespace simVis
     */
     virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
 
+    /// Returns the pop up text based on the label content callback, update and preference
+    virtual std::string popupText() const;
     /// Returns the hook text based on the label content callback, update and preference
     virtual std::string hookText() const;
-
     /// Returns the legend text based on the label content callback, update and preference
     virtual std::string legendText() const;
 
@@ -375,7 +365,6 @@ namespace simVis
 
     void updateLabel_(const simData::GatePrefs& prefs);
     osg::ref_ptr<EntityLabelNode> label_;
-    osg::ref_ptr<LabelContentCallback> contentCallback_;
 
     unsigned int objectIndexTag_;
   };

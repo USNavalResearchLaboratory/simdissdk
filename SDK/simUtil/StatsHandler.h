@@ -26,7 +26,7 @@
 #include <osgViewer/ViewerEventHandlers>
 #include "simCore/Common/Export.h"
 
-namespace simVis { class View; }
+namespace osgViewer { class View; }
 
 namespace simUtil {
 
@@ -55,10 +55,10 @@ public:
    * @param statsType Statistics to show on the main view
    * @param onWhichView View with which to associate the stats
    */
-  void setStatsType(StatsType statsType, simVis::View* onWhichView);
+  void setStatsType(StatsType statsType, osgViewer::View* onWhichView);
 
   /** Cycles to the next stats type for the given view. */
-  void cycleStats(simVis::View* onWhichView);
+  void cycleStats(osgViewer::View* onWhichView);
 
   /** Retrieves the currently displayed statistics. */
   StatsType statsType() const;

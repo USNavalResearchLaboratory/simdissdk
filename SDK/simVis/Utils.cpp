@@ -31,6 +31,7 @@
 #include "osg/Version"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
+#include "osgSim/DOFTransform"
 #include "osgUtil/RenderBin"
 #include "osgUtil/TriStripVisitor"
 #include "osgViewer/ViewerEventHandlers"
@@ -153,6 +154,19 @@ namespace
    *
    * Since the bin needs to manage its own state, we have to manually draw the
    * render leaves and skip OSG's default state-tracking RenderBin code.
+   *
+   * Testing in OSG reveals that the StateSet associated with the render bin is inserted
+   * into the render graph very "early," before even the camera's state set.  That means
+   * any PROTECTED value later in the scene will override the behavior of the TPA.  This
+   * matters for a TPA item because although a leaf node may have TPA set as the render
+   * bin, a PROTECTED depth setting between the camera and the leaf node could override
+   * the TPA behavior, disrupting the graphics.
+   *
+   * If you are reading this comment because you're debugging TPA not working, set a
+   * breakpoint in the first call to State::apply() after the call here to
+   * osgUtil::RenderBin::drawImplementation(), and inspect the _stateStateStack carefully.
+   * You should see TPA setting Depth early in the stack; ensure nothing else overrides
+   * that depth later with a PROTECTED attribute.
    */
   class TwoPassAlphaRenderBin : public osgUtil::RenderBin
   {
@@ -209,7 +223,9 @@ namespace
       // Create a copy of the state set stack so we can fix the internal stack after first drawImplementation()
       osgUtil::RenderLeaf* oldPrevious = previous;
 
-      // Render once with the first state set
+      // Render once with the first state set.  Note that the state set is inserted into the
+      // state set stack relatively early -- probably earlier than you expect -- and therefore
+      // later PROTECTED elements can override the TPA state.
       const osg::State::StateSetStack previousStateStack = ri.getState()->getStateSetStack();
       setStateSet(pass1_.get());
       osgUtil::RenderBin::drawImplementation(ri, previous);
@@ -273,27 +289,8 @@ namespace simVis
 
 bool useRexEngine()
 {
-  osgEarth::Registry* reg = osgEarth::Registry::instance();
-
-  // first use the default name
-  std::string engineName = reg->getDefaultTerrainEngineDriverName();
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-  // See if the override is set, which takes precedence. This will be the same as default name
-  // if terrain engine was set by environment variable OSGEARTH_TERRAIN_ENGINE
-  if (reg->overrideTerrainEngineDriverName().isSet())
-    engineName = reg->overrideTerrainEngineDriverName().value();
-#endif
-
-  // If we cannot support REX due to GLSL version, then fall back to MP automatically
-  if (reg->capabilities().getGLSLVersionInt() < 330)
-  {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-    reg->overrideTerrainEngineDriverName() = "mp";
-#endif
-    return false;
-  }
-
-  return simCore::caseCompare(engineName, "rex") == 0;
+  // The MP engine is no longer supported.  Always use rex.
+  return true;
 }
 
 bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value)
@@ -1200,6 +1197,118 @@ void FixDeprecatedDrawModes::apply(osg::Geometry& geom)
 
   // Call into base class method
   osg::NodeVisitor::apply(geom);
+}
+
+//--------------------------------------------------------------------------
+
+// Flags pulled from DOFTransform.cpp and map to osgSim::DOFTransform::getLimitationFlags()
+static const unsigned int ROTATION_PITCH_LIMIT_BIT = 0x80000000u >> 3;
+static const unsigned int ROTATION_ROLL_LIMIT_BIT = 0x80000000u >> 4;
+static const unsigned int ROTATION_YAW_LIMIT_BIT = 0x80000000u >> 5;
+static const unsigned int ROTATION_LIMIT_MASK = ROTATION_PITCH_LIMIT_BIT | ROTATION_ROLL_LIMIT_BIT | ROTATION_YAW_LIMIT_BIT;
+
+/**
+ * osgSim::DOFTransform blindly adds values to deal with DOF Transform animation, scaled on
+ * the delta time.  That's fine for most cases, but when limits are disabled and we're still
+ * incrementing, you can get large values in the current HPR.  That means "infinite" rotation
+ * breaks.  This callback ensures that all rotations are within [0, 2PI] in those cases.
+ *
+ * This scaling only applies to angle values for HPR, and does not cover infinitely scaling
+ * translate or scale values.
+ */
+class ConstrainHprValues : public osg::Callback
+{
+public:
+  virtual bool run(osg::Object* object, osg::Object* data)
+  {
+    // Only work on animated DOFs
+    osgSim::DOFTransform* dofXform = dynamic_cast<osgSim::DOFTransform*>(object);
+    if (dofXform && dofXform->getAnimationOn())
+    {
+      const osg::Vec3& increment = dofXform->getIncrementHPR();
+      const unsigned long flags = dofXform->getLimitationFlags();
+      if ((flags & ROTATION_LIMIT_MASK) != ROTATION_LIMIT_MASK)
+      {
+        // Constrain from [0,2PI] only in cases where limiting is disabled and we're incrementing the value.
+        osg::Vec3f hpr = dofXform->getCurrentHPR();
+        if ((flags & ROTATION_YAW_LIMIT_BIT) == 0 && increment.x() != 0)
+          hpr.x() = simCore::angFix(hpr.x(), simCore::ANGLEEXTENTS_TWOPI);
+        if ((flags & ROTATION_PITCH_LIMIT_BIT) == 0 && increment.y() != 0)
+          hpr.y() = simCore::angFix(hpr.y(), simCore::ANGLEEXTENTS_TWOPI);
+        if ((flags & ROTATION_ROLL_LIMIT_BIT) == 0 && increment.z() != 0)
+          hpr.z() = simCore::angFix(hpr.z(), simCore::ANGLEEXTENTS_TWOPI);
+        dofXform->setCurrentHPR(hpr);
+      }
+    }
+
+    // Continue on
+    return traverse(object, data);
+  }
+};
+
+EnableDOFTransform::EnableDOFTransform(bool enabled)
+  : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
+    enabled_(enabled)
+{
+}
+
+void EnableDOFTransform::apply(osg::Node& node)
+{
+  osgSim::DOFTransform* dofXform = dynamic_cast<osgSim::DOFTransform*>(&node);
+  if (dofXform)
+  {
+    dofXform->setAnimationOn(enabled_);
+
+    // We want to add a callback to fix a bug in osgSim::DOFTransform, where infinitely
+    // increasing HPR values cause precision problems with high scenario delta time values.
+    // Without this, infinite rotations will skip and stutter, and not work in real-time playback.
+    const osg::Vec3& incr = dofXform->getIncrementHPR();
+    // Add a new callback to constrain HPR values using fmod, if needed
+    if (enabled_ && (incr.x() != 0.f || incr.y() != 0.f || incr.z() != 0.f))
+    {
+      if (!findUpdateCallbackOfType<ConstrainHprValues>(dofXform))
+        dofXform->addUpdateCallback(new ConstrainHprValues);
+    }
+  }
+  traverse(node);
+}
+
+//--------------------------------------------------------------------------
+
+PixelScaleHudTransform::PixelScaleHudTransform()
+{
+}
+
+PixelScaleHudTransform::PixelScaleHudTransform(const PixelScaleHudTransform& rhs, const osg::CopyOp& copyop)
+  : Transform(rhs, copyop),
+    invertedMvpw_(rhs.invertedMvpw_)
+{
+}
+
+bool PixelScaleHudTransform::computeLocalToWorldMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
+{
+  if (_referenceFrame == RELATIVE_RF)
+    matrix.preMult(computeMatrix_(nv));
+  else // absolute
+    matrix = computeMatrix_(nv);
+  return true;
+}
+
+bool PixelScaleHudTransform::computeWorldToLocalMatrix(osg::Matrix& matrix, osg::NodeVisitor* nv) const
+{
+  if (_referenceFrame == RELATIVE_RF)
+    matrix.postMult(osg::Matrix::inverse(computeMatrix_(nv)));
+  else // absolute
+    matrix = osg::Matrix::inverse(computeMatrix_(nv));
+  return true;
+}
+
+osg::Matrixd PixelScaleHudTransform::computeMatrix_(osg::NodeVisitor* nv) const
+{
+  osg::CullStack* cs = nv ? nv->asCullStack() : NULL;
+  if (cs)
+    invertedMvpw_ = osg::Matrix::inverse(*cs->getMVPW());
+  return invertedMvpw_;
 }
 
 }

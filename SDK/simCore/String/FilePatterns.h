@@ -187,14 +187,13 @@ static const std::string ANTENNA_FILE_PATTERNS =
   "All Files (*)\n";
 
 /** SIMDIS GOG Overlay Format patterns, separated by commas */
-static const std::string ALL_GOG_FILE_PATTERNS = "*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf,*.asc";
+static const std::string ALL_GOG_FILE_PATTERNS = "*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.kml,*.kmz,*.lgf,*.asc";
 /** Dialog-oriented user-friendly list of SIMDIS GOG Overlay Format files */
 static const std::string GOG_FILE_PATTERNS =
-  "All Supported GOG Formats (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.shp,*.kml,*.kmz,*.lgf,*.asc)\n"
+  "All Supported GOG Formats (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz,*.ovl,*.kml,*.kmz,*.lgf,*.asc)\n"
   "GOG Files (*.gog,*.ll,*.lla,*.xy,*.xyz,*.rxy,*.rxyz)\n"
   "Misc GOG (*.gog)\nxygeo (*.ll,*.lla)\nxygeo and crossplot (*.xy,*.xyz)\n"
   "Relative xygeo and crossplot (*.rxy,*.rxyz)\n"
-  "ESRI Shape Files (*.shp)\n"
   "KML Files (*.kml,*.kmz)\n"
   "LATR GEO Files (*.lgf)\n"
   "GCCS OVLY Files (*.ovl)\n"
@@ -291,6 +290,11 @@ static const std::string UDP_CAPTURE_FILE_PATTERNS =
 /** Dialog-oriented user-friendly list of SIMDIS 10 Settings files */
 static const std::string SIMDIS10_SETTINGS_FILE_PATTERNS =
   "SIMDIS 10 Configuration Files (*.ini)\n"
+  "All Files (*)";
+
+/** Dialog-oriented user-friendly list of Plot-XY Settings files */
+static const std::string PLOT_SETTINGS_FILE_PATTERNS =
+  "Plot-XY Configuration Files (*.ini)\n"
   "All Files (*)";
 
 /** Combination of all data file patterns */

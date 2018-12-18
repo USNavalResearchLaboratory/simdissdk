@@ -228,6 +228,8 @@ private:
   void updateOverrideColor_(const simData::PlatformPrefs& prefs);
   /// Updates the alpha volume based on prefs
   void updateAlphaVolume_(const simData::PlatformPrefs& prefs);
+  /// Updates the DOF Transform animation based on prefs
+  void updateDofTransform_(const simData::PlatformPrefs& prefs, bool force) const;
 };
 
 } // namespace simVis

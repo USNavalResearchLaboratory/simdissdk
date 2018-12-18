@@ -42,7 +42,9 @@ osg::Vec2 ScreenCoordinate::position() const
 
 osg::Vec3 ScreenCoordinate::positionV3() const
 {
-  return position_;
+  // Due to a current (12/18/18) bug in osgEarth::LineDrawable, zero out the returned position.
+  // Note that we need the position Z value to test for isBehindCamera() internally.
+  return osg::Vec3f(position_.x(), position_.y(), 0.f);
 }
 
 bool ScreenCoordinate::isBehindCamera() const
@@ -118,19 +120,42 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
   return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
+{
+  return calculateLla(lla);
+}
+#endif
+
+ScreenCoordinate ScreenCoordinateCalculator::calculateLla(const simCore::Vec3& lla)
 {
   // Refresh the VPW if needed, returning invalid coordinate if needed
   if (recalculateVPW_() != 0)
     return INVALID_COORDINATE;
-
   simCore::Vec3 ecefOut;
   if (!view_.valid() || !view_->isOverheadEnabled())
     simCore::CoordinateConverter::convertGeodeticPosToEcef(lla, ecefOut);
   else
     simCore::CoordinateConverter::convertGeodeticPosToEcef(simCore::Vec3(lla.lat(), lla.lon(), 0.0), ecefOut);
-
   return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
+}
+
+ScreenCoordinate ScreenCoordinateCalculator::calculateEcef(const simCore::Vec3& ecef)
+{
+  // Refresh the VPW if needed, returning invalid coordinate if needed
+  if (recalculateVPW_() != 0)
+    return INVALID_COORDINATE;
+  if (!view_.valid() || !view_->isOverheadEnabled())
+    return matrixCalculate_(osg::Vec3d(ecef.x(), ecef.y(), ecef.z()));
+
+  // Clamping is required in overhead mode, so we need to convert to LLA
+  simCore::Vec3 llaPos;
+  if (simCore::CoordinateConverter::convertEcefToGeodeticPos(ecef, llaPos) != 0)
+    return INVALID_COORDINATE;
+  llaPos.setAlt(0.0);
+  simCore::Vec3 clampedEcef;
+  simCore::CoordinateConverter::convertGeodeticPosToEcef(llaPos, clampedEcef);
+  return matrixCalculate_(osg::Vec3d(clampedEcef.x(), clampedEcef.y(), clampedEcef.z()));
 }
 
 int ScreenCoordinateCalculator::recalculateVPW_()

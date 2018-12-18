@@ -19,13 +19,10 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Notify"
-#include "osg/CullFace"
 #include "osg/Geode"
 #include "osg/ImageStream"
-#include "osg/PolygonOffset"
-#include "osg/Depth"
 #include "osg/MatrixTransform"
+#include "osg/Notify"
 #include "osgDB/ReadFile"
 #include "osgEarth/Horizon"
 
@@ -33,17 +30,17 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/String/Format.h"
+#include "simVis/ClockOptions.h"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Locator.h"
 #include "simVis/Platform.h"
-#include "simVis/ClockOptions.h"
-#include "simVis/Utils.h"
-#include "simVis/Registry.h"
-#include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
+#include "simVis/Registry.h"
 #include "simVis/Shaders.h"
 #include "simVis/Types.h"
+#include "simVis/Utils.h"
+#include "simVis/Projector.h"
 
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
@@ -149,7 +146,6 @@ ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::
   : EntityNode(simData::PROJECTOR, hostLocator),
     lastProps_(props),
     host_(host),
-    contentCallback_(new NullEntityCallback()),
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     projectorTextureImpl_(new ProjectorTextureImpl())
@@ -217,7 +213,7 @@ void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
 
   std::string text;
   if (prefs.commonprefs().labelprefs().draw())
-    text = contentCallback_->createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
+    text = labelContentCallback().createString(prefs, lastUpdate_, prefs.commonprefs().labelprefs().displayfields());
 
   if (!text.empty())
   {
@@ -229,37 +225,42 @@ void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
   label_->update(prefs.commonprefs(), label, zOffset);
 }
 
-void ProjectorNode::setLabelContentCallback(LabelContentCallback* cb)
-{
-  if (cb == NULL)
-    contentCallback_ = new NullEntityCallback();
-  else
-    contentCallback_ = cb;
-}
-
-LabelContentCallback* ProjectorNode::labelContentCallback() const
-{
-  return contentCallback_.get();
-}
-
 const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
 {
   return hasLastUpdate_ ? &lastUpdate_ : NULL;
 }
 
+std::string ProjectorNode::popupText() const
+{
+  if (hasLastUpdate_ && hasLastPrefs_)
+  {
+    std::string prefix;
+    // if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    if (!lastPrefs_.commonprefs().alias().empty())
+    {
+      if (lastPrefs_.commonprefs().usealias())
+        prefix = getEntityName(EntityNode::REAL_NAME);
+      else
+        prefix = getEntityName(EntityNode::ALIAS_NAME);
+      prefix += "\n";
+    }
+    return prefix + labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hoverdisplayfields());
+  }
+
+  return "";
+}
+
 std::string ProjectorNode::hookText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)
-    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
-
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().hookdisplayfields());
   return "";
 }
 
 std::string ProjectorNode::legendText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)
-    return contentCallback_->createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
-
+    return labelContentCallback().createString(lastPrefs_, lastUpdate_, lastPrefs_.commonprefs().labelprefs().legenddisplayfields());
   return "";
 }
 

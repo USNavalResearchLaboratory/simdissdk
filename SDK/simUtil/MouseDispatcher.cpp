@@ -34,94 +34,75 @@ static const int MOUSE_EVENT_MASK = osgGA::GUIEventAdapter::PUSH | osgGA::GUIEve
   osgGA::GUIEventAdapter::MOVE | osgGA::GUIEventAdapter::DRAG | osgGA::GUIEventAdapter::DOUBLECLICK |
   osgGA::GUIEventAdapter::SCROLL | osgGA::GUIEventAdapter::FRAME;
 
-/// Encapsulates the GUI Event Handler operation as it adapts it to the MouseManipulator interface
-class MouseDispatcher::EventHandler : public osgGA::GUIEventHandler
+MouseDispatcher::EventHandler::EventHandler(const MouseDispatcher& dispatch)
+  : GUIEventHandler(),
+  dispatch_(dispatch)
 {
-public:
-  /** Constructor */
-  explicit EventHandler(const MouseDispatcher& dispatch)
-    : GUIEventHandler(),
-      dispatch_(dispatch)
-  {
-  }
+}
 
-  /** Handle events, return true if handled, false otherwise. */
-  virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object* object, osg::NodeVisitor* nv)
-  {
-    if ((ea.getEventType() & MOUSE_EVENT_MASK) == 0)
-      return false;
+bool MouseDispatcher::EventHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object* object, osg::NodeVisitor* nv)
+{
+  if ((ea.getEventType() & MOUSE_EVENT_MASK) == 0)
+    return false;
 
-    // Iterate through each manipulator and give it a chance to steal
-    for (MouseDispatcher::PriorityMap::const_iterator i = dispatch_.priorityMap_.begin();
-      i != dispatch_.priorityMap_.end(); ++i)
+  // Iterate through each manipulator and give it a chance to steal
+  for (MouseDispatcher::PriorityMap::const_iterator i = dispatch_.priorityMap_.begin();
+    i != dispatch_.priorityMap_.end(); ++i)
+  {
+    if (!i->second)
+      continue;
+    // the rv gets set to non-zero if event is handled
+    int rv = 0;
+    switch (ea.getEventType())
     {
-      if (!i->second)
-        continue;
-      // the rv gets set to non-zero if event is handled
-      int rv = 0;
-      switch (ea.getEventType())
-      {
-      case osgGA::GUIEventAdapter::PUSH:
-        rv = i->second->push(ea, aa);
-        break;
+    case osgGA::GUIEventAdapter::PUSH:
+      rv = i->second->push(ea, aa);
+      break;
 
-      case osgGA::GUIEventAdapter::DRAG:
-        rv = i->second->drag(ea, aa);
-        break;
+    case osgGA::GUIEventAdapter::DRAG:
+      rv = i->second->drag(ea, aa);
+      break;
 
-      case osgGA::GUIEventAdapter::MOVE:
-        rv = i->second->move(ea, aa);
-        break;
+    case osgGA::GUIEventAdapter::MOVE:
+      rv = i->second->move(ea, aa);
+      break;
 
-      case osgGA::GUIEventAdapter::RELEASE:
-        rv = i->second->release(ea, aa);
-        break;
+    case osgGA::GUIEventAdapter::RELEASE:
+      rv = i->second->release(ea, aa);
+      break;
 
-      case osgGA::GUIEventAdapter::DOUBLECLICK:
-        rv = i->second->doubleClick(ea, aa);
-        break;
+    case osgGA::GUIEventAdapter::DOUBLECLICK:
+      rv = i->second->doubleClick(ea, aa);
+      break;
 
-      case osgGA::GUIEventAdapter::SCROLL:
-        rv = i->second->scroll(ea, aa);
-        break;
+    case osgGA::GUIEventAdapter::SCROLL:
+      rv = i->second->scroll(ea, aa);
+      break;
 
-      case osgGA::GUIEventAdapter::FRAME:
-        rv = i->second->frame(ea, aa);
-        break;
+    case osgGA::GUIEventAdapter::FRAME:
+      rv = i->second->frame(ea, aa);
+      break;
 
-      default:
-        // Don't need to pass on other events
-        break;
-      }
-
-      // rv will be non-zero if the event was intercepted
-      if (rv != 0)
-      {
-        ea.setHandled(true);
-        return true;
-      }
+    default:
+      // Don't need to pass on other events
+      break;
     }
 
-    // Fall back to default implementation (next in Chain of Responsibility)
-    return GUIEventHandler::handle(ea, aa, object, nv);
+    // rv will be non-zero if the event was intercepted
+    if (rv != 0)
+    {
+      ea.setHandled(true);
+      return true;
+    }
   }
 
-  /** Return the proper library name */
-  virtual const char* libraryName() const { return "simUtil"; }
+  // Fall back to default implementation (next in Chain of Responsibility)
+  return GUIEventHandler::handle(ea, aa, object, nv);
+}
 
-  /** Return the class name */
-  virtual const char* className() const { return "MouseDispatcher::EventHandler"; }
-
-protected:
-  /** Derived from osg::Referenced */
-  virtual ~EventHandler()
-  {
-  }
-
-private:
-  /** Reference back to the owner */
-  const MouseDispatcher& dispatch_;
-};
+MouseDispatcher::EventHandler::~EventHandler()
+{
+}
 
 ///////////////////////////////////////////////////////////////////////////
 

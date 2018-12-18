@@ -318,8 +318,8 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   model_ = newModel;
   if (newModel != NULL)
   {
-    // set render order.
-    // we set the OVERRIDE flag in case the model has renderbins set inside of it
+    // Set render order by setting render bin.  We set the OVERRIDE flag in case the model has renderbins set inside of it.
+    // Note that osg::Depth settings are not changed here, but are instead dealt with inside updateImageDepth_() call below.
     osg::StateSet* modelStateSet = model_->getOrCreateStateSet();
     if (isImageModel_)
       modelStateSet->setRenderBinDetails(simVis::BIN_PLATFORM_IMAGE, simVis::BIN_TWO_PASS_ALPHA, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
@@ -352,6 +352,7 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   updateOffsets_(lastPrefs_);
   updateImageAlignment_(lastPrefs_, true);
   updateBounds_();
+  updateDofTransform_(lastPrefs_, true);
 }
 
 void PlatformModelNode::setRotateToScreen(bool value)
@@ -567,8 +568,10 @@ void PlatformModelNode::updateImageDepth_(const simData::PlatformPrefs& prefs, b
     if (!isImageModel_)
       return;
     // image models need to always pass depth test if nodepthicons is set to true
-    osg::Depth::Function depthFunc = (prefs.nodepthicons() && isImageModel_) ? osg::Depth::ALWAYS : osg::Depth::LESS;
-    state->setAttributeAndModes(new osg::Depth(depthFunc, 0, 1, true), osg::StateAttribute::ON);
+    if (prefs.nodepthicons() && isImageModel_)
+      state->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
+    else
+      state->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, true), osg::StateAttribute::ON);
   }
 }
 
@@ -814,6 +817,18 @@ void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
   }
 }
 
+void PlatformModelNode::updateDofTransform_(const simData::PlatformPrefs& prefs, bool force) const
+{
+  // Don't need to apply to image models
+  if (!model_.valid() || isImageModel_)
+    return;
+  // Don't execute if field did not change, unless we're being forced due to model loading
+  if (!force && lastPrefsValid_ && !PB_FIELD_CHANGED(&lastPrefs_, &prefs, animatedofnodes))
+    return;
+  simVis::EnableDOFTransform enableDof(prefs.animatedofnodes());
+  model_->accept(enableDof);
+}
+
 void PlatformModelNode::setProperties(const simData::PlatformProperties& props)
 {
   lastProps_ = props;
@@ -845,6 +860,7 @@ void PlatformModelNode::setPrefs(const simData::PlatformPrefs& prefs)
   updateLighting_(prefs, false);
   updateOverrideColor_(prefs);
   updateAlphaVolume_(prefs);
+  updateDofTransform_(prefs, false);
 
   // Note that the brightness calculation is low cost, but setting brightness uniform is not necessarily low-cost, so we do check PB_FIELD_CHANGED
   if (PB_FIELD_CHANGED(&prefs, &lastPrefs_, brightness))

@@ -35,7 +35,9 @@
 
 namespace osgEarth { namespace Drivers
 {
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   namespace MPTerrainEngine { class MPTerrainEngineOptions; }
+#endif
   namespace RexTerrainEngine { class RexTerrainEngineOptions; }
 }}
 
@@ -169,8 +171,10 @@ namespace simVis
     /** Returns true if there is an engine driver problem */
     bool hasEngineDriverProblem() const;
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
     /** Fills out an MPTerrainEngineOptions with good default values */
-    static void initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions& options);
+    SDK_DEPRECATE(static void initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions& options), "Method will be removed in future SDK release.");
+#endif
 
     /** Fills out an RexTerrainEngineOptions with good default values */
     static void initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions& options);

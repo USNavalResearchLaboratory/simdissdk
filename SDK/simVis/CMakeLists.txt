@@ -84,6 +84,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
     ${VIS_INC}LocatorNode.h
+    ${VIS_INC}Measurement.h
     ${VIS_INC}ModelCache.h
     ${VIS_INC}ModKeyHandler.h
     ${VIS_INC}NavigationModes.h
@@ -105,6 +106,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}RadialLOS.h
     ${VIS_INC}RadialLOSNode.h
     ${VIS_INC}RangeTool.h
+    ${VIS_INC}RangeToolState.h
     ${VIS_INC}RCS.h
     ${VIS_INC}Registry.h
     ${VIS_INC}RocketBurn.h
@@ -112,6 +114,8 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}Scenario.h
     ${VIS_INC}ScenarioDataStoreAdapter.h
     ${VIS_INC}SceneManager.h
+    ${VIS_INC}SimdisMeasurement.h
+    ${VIS_INC}SimdisRangeToolState.h
     ${VIS_INC}SphericalVolume.h
     ${VIS_INC}TargetDelegation.h
     ${VIS_INC}Text.h
@@ -214,6 +218,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
     ${VIS_SRC}LocatorNode.cpp
+    ${VIS_SRC}Measurement.cpp
     ${VIS_SRC}ModelCache.cpp
     ${VIS_SRC}ModKeyHandler.cpp
     ${VIS_SRC}OverheadMode.cpp
@@ -233,6 +238,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}RadialLOS.cpp
     ${VIS_SRC}RadialLOSNode.cpp
     ${VIS_SRC}RangeTool.cpp
+    ${VIS_SRC}RangeToolState.cpp
     ${VIS_SRC}RCS.cpp
     ${VIS_SRC}Registry.cpp
     ${VIS_SRC}RocketBurn.cpp
@@ -240,6 +246,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Scenario.cpp
     ${VIS_SRC}ScenarioDataStoreAdapter.cpp
     ${VIS_SRC}SceneManager.cpp
+    ${VIS_SRC}SimdisMeasurement.cpp
+    ${VIS_SRC}SimdisRangeToolState.cpp
     ${VIS_SRC}SphericalVolume.cpp
     ${VIS_SRC}TargetDelegation.cpp
     ${VIS_SRC}Text.cpp
@@ -315,8 +323,8 @@ endif()
 include(CheckOSGEarthMethodExists)
 
 # Newer than 1.9.0 release adds PointDrawable::checkSharedStateSet() to osgEarth
-check_osgearth_method_exists(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET1 "osgEarth/PointDrawable" "checkSharedStateSet")
-if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET1)
+check_osgearth_method_exists(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET "osgEarth/PointDrawable" "checkSharedStateSet")
+if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET)
     set(SDK_OSGEARTH_DEVEL 1)
     # Next anticipated version is 1.10.0
     set(SDK_OSGEARTH_VERSION_MAJOR 1)

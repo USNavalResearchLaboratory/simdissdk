@@ -30,10 +30,14 @@ namespace simUtil {
 void DefaultEntityPrefs::initializeDataStorePrefs(simData::DataStore& dataStore)
 {
   // most of the default values are in the protobuf definitions
-  simData::PlatformPrefs platformPrefs;
 
-  initializeDefaultPlatformPrefs(platformPrefs);
-  dataStore.setDefaultPrefs(platformPrefs, simData::BeamPrefs(), simData::GatePrefs(), simData::LaserPrefs(), simData::LobGroupPrefs(), simData::ProjectorPrefs());
+  simData::PlatformPrefs platformPrefs;
+  DefaultEntityPrefs::initializeDefaultPlatformPrefs(platformPrefs);
+  simData::LaserPrefs laserPrefs;
+  DefaultEntityPrefs::initializeDefaultLaserPrefs(laserPrefs);
+  simData::LobGroupPrefs lobPrefs;
+  DefaultEntityPrefs::initializeDefaultLobGroupPrefs(lobPrefs);
+  dataStore.setDefaultPrefs(platformPrefs, simData::BeamPrefs(), simData::GatePrefs(), laserPrefs, lobPrefs, simData::ProjectorPrefs());
 }
 
 void DefaultEntityPrefs::initializeDefaultPlatformPrefs(simData::PlatformPrefs& prefs)
@@ -66,6 +70,27 @@ void DefaultEntityPrefs::initializeDefaultLaserPrefs(simData::LaserPrefs& prefs)
 {
   // Lasers default to red, not yellow (colors are 0xRRGGBBAA in protobuf)
   prefs.mutable_commonprefs()->set_color(0xff0000ff);
+}
+
+void DefaultEntityPrefs::initializeDefaultLobGroupPrefs(simData::LobGroupPrefs& prefs)
+{
+  // LOBs get default hover settings for position and az/el on
+  simData::LabelPrefs_DisplayFields* hoverFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hoverdisplayfields();
+  hoverFields->set_xlat(true);
+  hoverFields->set_ylon(true);
+  hoverFields->set_zalt(true);
+  hoverFields->set_yaw(true);
+  hoverFields->set_pitch(true);
+
+  // Default hook window content should show position, az/el, and generic/category values
+  simData::LabelPrefs_DisplayFields* hookFields = prefs.mutable_commonprefs()->mutable_labelprefs()->mutable_hookdisplayfields();
+  hookFields->set_xlat(true);
+  hookFields->set_ylon(true);
+  hookFields->set_zalt(true);
+  hookFields->set_genericdata(true);
+  hookFields->set_categorydata(true);
+  hookFields->set_yaw(true);
+  hookFields->set_pitch(true);
 }
 
 }

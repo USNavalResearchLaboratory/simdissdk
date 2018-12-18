@@ -25,8 +25,12 @@
 #include "simCore/Common/Export.h"
 #include "simVis/Picker.h"
 
+namespace simVis { class LobGroupNode; }
+
 namespace simUtil
 {
+
+class ScreenCoordinateCalculator;
 
 /**
  * Implementation of the advanced selection algorithm, sometimes referred to as the advanced
@@ -66,6 +70,10 @@ private:
   void pickThisFrame_();
   /** Returns true if the entity type is pickable. */
   bool isPickable_(const simVis::EntityNode* entityNode) const;
+  /** Calculates the squared range from the mouse for the given entity, returning 0 on success */
+  int calculateSquaredRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::EntityNode& entityNode, double& rangeSquared) const;
+  /** Special case calculation for LOBs, called by calculateSquaredRange_() automatically */
+  int calculateLobSquaredRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LobGroupNode& lobNode, double& rangeSquared) const;
 
   class RepickEventHandler;
 

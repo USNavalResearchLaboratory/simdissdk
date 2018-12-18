@@ -70,7 +70,7 @@ writeFooter simNotify.h SIMNOTIFY
 
 # simData
 writeHeader simData.h SIMDATA
-find simData -name '*.h' | sort -f | grep -v "simData.pb.h" | grep -v "\-inl.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simData.h.inc
+find simData -name '*.h' | sort -f | grep -v "TimeContainerDeque.h" | grep -v "simData.pb.h" | grep -v "\-inl.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simData.h.inc
 addIncludes simData.h
 writeFooter simData.h SIMDATA
 

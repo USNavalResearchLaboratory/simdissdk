@@ -41,7 +41,7 @@ class SDKQT_EXPORT Settings
 public:
 
   /// Type information to drive what controls to use on a user interface
-  enum DataTypes { INTEGER, DOUBLE, BOOLEAN, STRING, FILENAME, COLOR, POINT, SIZE, ENUMERATION, STRING_LIST, DIRECTORY, FONT, HEX, VARIANT_MAP, LAYOUT };
+  enum DataTypes { INTEGER, DOUBLE, BOOLEAN, STRING, FILENAME, COLOR, POINT, SIZE, ENUMERATION, STRING_LIST, DIRECTORY, FONT, HEX, VARIANT_MAP, LAYOUT, OTHER_DATATYPE };
   /// Level information to help filter what fields to display on the user interface
   enum DataLevel { DEFAULT, ADVANCED, PRIVATE, UNKNOWN};
 

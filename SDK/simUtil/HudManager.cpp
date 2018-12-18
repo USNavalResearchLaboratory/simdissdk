@@ -152,6 +152,8 @@ void HudTextAdapter::update_()
     {
       osgText = new osgText::Text();
       osgText->setDataVariance(osg::Object::DYNAMIC);
+      // Without this, text goes into a depth sorted bin, and might draw on top of things it shouldn't
+      osgText->getOrCreateStateSet()->setRenderBinToInherit();
       osgTextVector_.push_back(osgText);
       addDrawable(osgText.get());
 
@@ -928,7 +930,7 @@ void HudImage::update_()
 
   // Set up the Texture2D
   osg::ref_ptr<osg::Texture2D> tex2d = new osg::Texture2D(image_);
-  tex2d->setResizeNonPowerOfTwoHint(true);
+  tex2d->setResizeNonPowerOfTwoHint(false);
   tex2d->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
   tex2d->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
   simVis::fixTextureForGlCoreProfile(tex2d.get());

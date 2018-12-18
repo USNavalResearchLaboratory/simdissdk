@@ -44,6 +44,7 @@ namespace simQt {
 class AsyncCategoryCounter;
 class CategoryProxyModel;
 struct CategoryCountResults;
+class Settings;
 
 /**
 * Container class that keeps track of a set of pointers.  The container is indexed to
@@ -92,6 +93,8 @@ public:
   void setDataStore(simData::DataStore* dataStore);
   /** Retrieves the category filter.  Only call this if the Data Store has been set. */
   const simData::CategoryFilter& categoryFilter() const;
+  /** Sets the settings and the key prefix for saving and loading the locked states */
+  void setSettings(Settings* settings, const QString& settingsKeyPrefix);
 
   /** Enumeration of user roles supported by data() */
   enum {
@@ -138,6 +141,11 @@ private:
   void clearTree_();
   /** Retrieve the CategoryItem representing the name provided. */
   CategoryItem* findNameTree_(int nameInt) const;
+  /**
+  * Update the locked state of the specified category if its name appears in the lockedCategories list.
+  * This method should only be called on data that is updating, since it doesn't emit its own signal for a data change
+  */
+  void updateLockedState_(const QStringList& lockedCategories, CategoryItem& category);
 
   /** Quick-search vector of category tree items */
   simQt::IndexedPointerContainer<CategoryItem> categories_;
@@ -155,6 +163,11 @@ private:
 
   /** Font used for the Category Name tree items */
   QFont* categoryFont_;
+
+  /** Ptr to settings for storing locked states */
+  Settings* settings_;
+  /** Key for accessing the setting */
+  QString settingsKey_;
 };
 
 /**
@@ -242,6 +255,8 @@ public:
   void setDataStore(simData::DataStore* dataStore);
   /** Retrieves the category filter.  Only call this if the Data Store has been set. */
   const simData::CategoryFilter& categoryFilter() const;
+  /** Sets the settings and the key prefix for saving and loading the locked states */
+  void setSettings(Settings* settings, const QString& settingsKeyPrefix);
 
   /** Returns true if the entity count should be shown next to values. */
   bool showEntityCount() const;

@@ -23,6 +23,8 @@
 #include <cassert>
 #include <iostream>
 #include <limits>
+#include "osg/Depth"
+#include "osg/PolygonOffset"
 #include "osgEarth/Units"
 #include "osgEarth/Version"
 #include "osgEarthSymbology/Style"
@@ -60,6 +62,10 @@
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/GogNodeInterface.h"
+
+#ifndef GL_CLIP_DISTANCE0
+#define GL_CLIP_DISTANCE0 0x3000
+#endif
 
 namespace {
 
@@ -505,7 +511,7 @@ int GogNodeInterface::getExtruded(bool& extruded) const
 int GogNodeInterface::getExtrudedHeight(double& extrudeHeightM) const
 {
   bool isExtruded = false;
-  if (1 == getExtruded(isExtruded) || !isExtruded)
+  if (1 == getExtruded(isExtruded) || !isExtruded || extrudedHeight_ == 0.)
     return 1;
   extrudeHeightM = extrudedHeight_;
   return 0;
@@ -1935,6 +1941,70 @@ void SphericalNodeInterface::setColor_(const osg::Vec4f& color)
   osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*colorArray)[0] = color;
   geometry->setColorArray(colorArray);
+}
+
+void SphericalNodeInterface::setStyle_(const osgEarth::Symbology::Style& style)
+{
+  LocalGeometryNodeInterface::setStyle_(style);
+  if (deferringStyleUpdates_() || !localNode_)
+    return;
+
+  // Find the internal node
+  osg::Group* group = localNode_->getPositionAttitudeTransform();
+  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : NULL;
+  if (!node)
+    return;
+
+  // Pull out the render symbol
+  const osgEarth::Symbology::RenderSymbol* render = style_.get<osgEarth::Symbology::RenderSymbol>();
+  if (!render)
+    return;
+
+  // Subset of osgEarth::AnnotationNode::applyRenderSymbology() supported out of the box
+
+  if (render->depthTest().isSet())
+  {
+    node->getOrCreateStateSet()->setMode(GL_DEPTH_TEST,
+      (render->depthTest().get() ? osg::StateAttribute::ON : osg::StateAttribute::OFF) | osg::StateAttribute::OVERRIDE);
+  }
+
+  if (render->lighting().isSet())
+  {
+    simVis::setLighting(node->getOrCreateStateSet(),
+      (render->lighting().get() ? osg::StateAttribute::ON : osg::StateAttribute::OFF) | osg::StateAttribute::OVERRIDE);
+  }
+
+  if (render->backfaceCulling().isSet())
+  {
+    node->getOrCreateStateSet()->setMode(GL_CULL_FACE,
+      (render->backfaceCulling().get() ? osg::StateAttribute::ON : osg::StateAttribute::OFF) | osg::StateAttribute::OVERRIDE);
+  }
+
+#if !( defined(OSG_GLES2_AVAILABLE) || defined(OSG_GLES3_AVAILABLE) )
+  if (render->clipPlane().isSet())
+    node->getOrCreateStateSet()->setMode(GL_CLIP_DISTANCE0 + render->clipPlane().value(), 1);
+#endif
+
+  if (render->order().isSet() || render->renderBin().isSet())
+  {
+    osg::StateSet* ss = node->getOrCreateStateSet();
+    int binNumber = render->order().isSet() ? (int)render->order()->eval() : ss->getBinNumber();
+    std::string binName =
+      render->renderBin().isSet() ? render->renderBin().get() :
+        ss->useRenderBinDetails() ? ss->getBinName() : "DepthSortedBin";
+    ss->setRenderBinDetails(binNumber, binName);
+  }
+
+  // Respect Transparent although we prefer renderBin and order
+  if (render->transparent().get())
+    node->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+
+  if (render->decal() == true)
+  {
+    osg::StateSet* ss = node->getOrCreateStateSet();
+    ss->setAttributeAndModes(new osg::PolygonOffset(-1, -1), 1);
+    ss->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
+  }
 }
 
 } }

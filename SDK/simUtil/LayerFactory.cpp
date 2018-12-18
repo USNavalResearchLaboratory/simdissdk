@@ -21,6 +21,7 @@
  */
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
+#include "osgEarthFeatures/FeatureModelLayer"
 #include "simCore/Common/Exception.h"
 #include "simUtil/LayerFactory.h"
 
@@ -96,6 +97,20 @@ osgEarth::ElevationLayer* LayerFactory::newElevationLayer(
 
   // Error encountered
   SAFETRYEND("during LayerFactory::newElevationLayer()");
+  return NULL;
+}
+
+osgEarth::Features::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::Features::FeatureModelLayerOptions& options)
+{
+  SAFETRYBEGIN;
+  osg::ref_ptr<osgEarth::Features::FeatureModelLayer> featureLayer = new osgEarth::Features::FeatureModelLayer(options);
+
+  // Return layer regardless of if open() succeeds
+  featureLayer->open();
+  return featureLayer.release();
+
+  // Error encountered
+  SAFETRYEND("during LayerFactory::newFeatureLayer()");
   return NULL;
 }
 

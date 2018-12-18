@@ -32,6 +32,12 @@ namespace osgEarth
   class ElevationLayer;
   class CachePolicy;
   class Profile;
+
+  namespace Features
+  {
+    class FeatureModelLayer;
+    class FeatureModelLayerOptions;
+  }
 }
 
 namespace simUtil {
@@ -81,6 +87,14 @@ public:
     const osgEarth::TileSourceOptions& options,
     const osgEarth::CachePolicy* cachePolicy=NULL,
     const osgEarth::ElevationLayerOptions* extraOptions=NULL);
+
+  /**
+   * Factory method for creating a new feature model layer.
+   * @param options Configuration options for the layer.
+   * @return Feature model layer on success; NULL on failure.  Caller responsible for memory.
+   *   (put in ref_ptr)
+   */
+  static osgEarth::Features::FeatureModelLayer* newFeatureLayer(const osgEarth::Features::FeatureModelLayerOptions& options);
 };
 
 }

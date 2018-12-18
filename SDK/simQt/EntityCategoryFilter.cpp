@@ -30,7 +30,8 @@ namespace simQt {
 EntityCategoryFilter::EntityCategoryFilter(simData::DataStore* dataStore, WidgetType widgetType)
   : EntityFilter(),
     categoryFilter_(new simData::CategoryFilter(dataStore, true)),
-    widgetType_(widgetType)
+    widgetType_(widgetType),
+    settings_(NULL)
 {
 }
 
@@ -57,6 +58,7 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
     CategoryFilterWidget2* rv = new CategoryFilterWidget2(newWidgetParent);
     rv->setDataStore(categoryFilter_->getDataStore());
     rv->setFilter(*categoryFilter_);
+    rv->setSettings(settings_, settingsKeyPrefix_);
     bindToWidget(rv);
     return rv;
   }
@@ -131,6 +133,12 @@ void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& cate
 const simData::CategoryFilter& EntityCategoryFilter::categoryFilter() const
 {
   return *categoryFilter_;
+}
+
+void EntityCategoryFilter::setSettings(Settings* settings, const QString& settingsKeyPrefix)
+{
+  settings_ = settings;
+  settingsKeyPrefix_ = settingsKeyPrefix;
 }
 
 void EntityCategoryFilter::setCategoryFilterFromGui_(const simData::CategoryFilter& categoryFilter)

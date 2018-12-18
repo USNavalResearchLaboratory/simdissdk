@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "osg/Depth"
 #include "osg/Geode"
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
@@ -53,6 +52,7 @@ namespace simVis
 GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs, const simData::GateUpdate* update)
   : LocatorNode(locator)
 {
+  setName("Gate Volume Locator");
   gateSV_ = createNode_(prefs, update);
   setNodeMask(DISPLAY_MASK_GATE);
   addChild(gateSV_);
@@ -224,9 +224,10 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
 GateCentroid::GateCentroid(simVis::Locator* locator)
   : LocatorNode(locator)
 {
+  setName("Centroid Locator");
   setActive(false);
   geom_ = new osgEarth::LineDrawable(GL_LINES);
-  geom_->setName("simVis::GateCentroid");
+  geom_->setName("simVis::GateCentroid Geometry");
   geom_->setColor(simVis::Color::White);
   geom_->setDataVariance(osg::Object::DYNAMIC);
   geom_->allocate(6);
@@ -235,6 +236,7 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   geom_->getOrCreateStateSet()->setRenderBinDetails(BIN_OPAQUE_GATE, BIN_GLOBAL_SIMSDK);
 
   osg::Geode* geodeSolid = new osgEarth::LineGroup();
+  geodeSolid->setName("Solid LineGroup");
   geodeSolid->addChild(geom_);
   addChild(geodeSolid);
 }
@@ -285,7 +287,6 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
     hasLastUpdate_(false),
     hasLastPrefs_(false),
     host_(host),
-    contentCallback_(new NullEntityCallback()),
     objectIndexTag_(0)
 {
   setNodeMask(DISPLAY_MASK_NONE);
@@ -395,7 +396,7 @@ void GateNode::updateLabel_(const simData::GatePrefs& prefs)
 
     std::string text;
     if (prefs.commonprefs().labelprefs().draw())
-      text = contentCallback_->createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields());
+      text = labelContentCallback().createString(prefs, lastUpdateFromDS_, prefs.commonprefs().labelprefs().displayfields());
 
     if (!text.empty())
     {
@@ -408,32 +409,37 @@ void GateNode::updateLabel_(const simData::GatePrefs& prefs)
   }
 }
 
-void GateNode::setLabelContentCallback(LabelContentCallback* cb)
+std::string GateNode::popupText() const
 {
-  if (cb == NULL)
-    contentCallback_ = new NullEntityCallback();
-  else
-    contentCallback_ = cb;
-}
+  if (hasLastPrefs_ && hasLastUpdate_)
+  {
+    std::string prefix;
+    // if alias is defined show both in the popup to match SIMDIS 9's behavior.  SIMDIS-2241
+    if (!lastPrefsFromDS_.commonprefs().alias().empty())
+    {
+      if (lastPrefsFromDS_.commonprefs().usealias())
+        prefix = getEntityName(EntityNode::REAL_NAME);
+      else
+        prefix = getEntityName(EntityNode::ALIAS_NAME);
+      prefix += "\n";
+    }
+    return prefix + labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hoverdisplayfields());
+  }
 
-LabelContentCallback* GateNode::labelContentCallback() const
-{
-  return contentCallback_.get();
+  return "";
 }
 
 std::string GateNode::hookText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
-
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().hookdisplayfields());
   return "";
 }
 
 std::string GateNode::legendText() const
 {
   if (hasLastPrefs_ && hasLastUpdate_)
-    return contentCallback_->createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields());
-
+    return labelContentCallback().createString(lastPrefsFromDS_, lastUpdateFromDS_, lastPrefsFromDS_.commonprefs().labelprefs().legenddisplayfields());
   return "";
 }
 

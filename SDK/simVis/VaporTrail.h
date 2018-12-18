@@ -22,18 +22,22 @@
 #ifndef SIMVIS_VAPOR_TRAIL_H
 #define SIMVIS_VAPOR_TRAIL_H
 #include <map>
-#include "osg/observer_ptr"
+#include <vector>
+#include "osg/ref_ptr"
 #include "osg/MatrixTransform"
-#include "osg/Texture2D"
-#include "osg/Billboard"
 #include "simCore/Common/Export.h"
-#include "simVis/OverrideColor.h"
 
+namespace osg {
+  class Geode;
+  class Group;
+  class Texture2D;
+}
 namespace simData { class DataStore; }
 namespace simVis
 {
 class Locator;
 class PlatformNode;
+class OverrideColor;
 
 /**
  * Class that holds a visual representation of a vapor trail.
@@ -59,6 +63,7 @@ public:
     double endTime;               ///< end time for the trail
     double numRadiiFromPreviousSmoke;    ///< distance from last puff for new puff, in number of radii
     double metersBehindCurrentPosition;  ///< distance behind platform for closest puff, in meters
+    bool isWake;                    ///< the trail will not be billboarded, but rendered flat wrt earth
 
     /// default constructor gives reasonable values
     VaporTrailData();
@@ -67,12 +72,13 @@ public:
   /**
   * Construct a new vapor trail. Adds to the scene.
   * @param dataStore needed for the limits
+  * @param expireModeGroup the ExpireModeGroup that attaches this vaporTrail to the scenegraph.
   * @param hostPlatform platform the vapor trail is connected to.
   * @param vaporTrailData data used to construct the vapor trail.
   * @param vaporPuffData data used to specify the vapor puff.
   * @param textures vector of textures to use for alternating puffs.
   */
-  VaporTrail(const simData::DataStore& dataStore, PlatformNode& hostPlatform, const VaporTrailData& vaporTrailData, const VaporPuffData& vaporPuffData, const std::vector< osg::ref_ptr<osg::Texture2D> >& textures);
+  VaporTrail(const simData::DataStore& dataStore, osg::Group* expireModeGroup, PlatformNode& hostPlatform, const VaporTrailData& vaporTrailData, const VaporPuffData& vaporPuffData, const std::vector< osg::ref_ptr<osg::Texture2D> >& textures);
 
   /**
    * Add new puffs, update all existing puffs in the vapor trail.
@@ -111,6 +117,12 @@ private:
   unsigned int applyDataLimiting_(unsigned int puffsToAdd, double time, double prevPuffTime);
 
   /**
+  * Adds one new puff (corresponding to vapor trail start time) to the trail.
+  * @return 0 on success, non-zero on failure
+  */
+  int addFirstPuff_();
+
+  /**
   * Adds new puffs to the trail if conditions require it.
   * @param time time to evaluate vapor trail parameters.
   */
@@ -124,16 +136,32 @@ private:
   void addPuff_(const simCore::Vec3& position, double startTime);
 
   /**
-  * Create a reusable billboard with specified texture.
-  * @param texture texture to use.
-  * @return the billboard created
+  * Returns a matrix with the position and corrected orientation for a puff.
+  * @param[in] position ECEF position for this puff.
+  * @return position and orientation matrix for the puff.
   */
-  osg::Billboard* createTextureBillboard_(osg::Texture2D* texture) const;
+  static osg::Matrixd calcWakeMatrix_(const simCore::Vec3& ecefPosition);
+
+  /**
+  * Process all specified textures into reusable geodes that are managed internally.
+  * @param textures vector of textures to process.
+  */
+  void processTextures_(const std::vector<osg::ref_ptr<osg::Texture2D> >& textures);
+
+  /**
+  * Create a geometry from the specified texture in the specified geode.
+  * @param geode geode to which to add the geometry.
+  * @param texture texture to use.
+  */
+  void createTexture_(osg::Geode& geode, osg::Texture2D* texture) const;
 
   /// DataStore for getting the limits
   const simData::DataStore& dataStore_;
 
-  /// the host platform for this vapor trail
+  /// the scenegraph attachment for the vaporTrail
+  osg::observer_ptr<osg::Group> expireModeGroup_;
+
+  /// the platform for this vapor trail
   osg::observer_ptr<simVis::PlatformNode> hostPlatform_;
 
   /// locator to track the host and calculate the puff offset
@@ -159,22 +187,30 @@ private:
   unsigned int textureCounter_;
 
   /// the list of textures that cyclically initialize new puffs
-  std::vector< osg::ref_ptr<osg::Billboard> > textureBillboards_;
+  std::vector< osg::ref_ptr<osg::Geode> > textures_;
 };
 
 /**
 * Class that holds a visual representation of a single vapor trail component.
 */
-class VaporTrail::VaporTrailPuff : public osg::Referenced
+class VaporTrail::VaporTrailPuff : public osg::MatrixTransform
 {
 public:
   /**
   * Construct a vapor trail puff.
-  * @param puffTransform the container for the puff graphic.
+  * @param graphic the puff graphic.
+  * @param matrix position and orientation for the puff.
+  * @param startTime time that this puff is created.
+  */
+  VaporTrailPuff(osg::Geode* graphic, const osg::Matrixd& matrix, double startTime);
+
+  /**
+  * Construct a vapor trail puff.
+  * @param graphic the puff graphic.
   * @param position ECEF position at which this puff will be located.
   * @param startTime time that this puff is created.
   */
-  VaporTrailPuff(osg::MatrixTransform* puffTransform, const simCore::Vec3& position, double startTime);
+  SDK_DEPRECATE(VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
 
   /**
   * Update the puff representation for elapsing time.
@@ -201,23 +237,28 @@ public:
   void clear();
 
   /**
-   * Turns the puff back on with the given values
-   * @param position ECEF position at which this puff will be located.
-   * @param startTime time that this puff is created.
-   */
-  void set(const simCore::Vec3& position, double startTime);
+  * Turns the puff back on with the given values
+  * @param matrix pos and ori for the puff.
+  * @param startTime time that this puff is created.
+  */
+  void set(const osg::Matrixd& matrix, double startTime);
+
+  /**
+  * Turns the puff back on with the given values
+  * @param position ECEF position at which this puff will be located.
+  * @param startTime time that this puff is created.
+  */
+  SDK_DEPRECATE(void set(const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
 
 protected:
   /// osg::Referenced-derived
   virtual ~VaporTrailPuff();
 
 private:
-  osg::ref_ptr<osg::MatrixTransform> puff_;
   /// Controls the shader that will apply fading to all puffs in this vaporTrail
   osg::ref_ptr<OverrideColor> overrideColor_;
-  /// the puff's ECEF position
-  simCore::Vec3 position_;
-
+  /// the puff's current scale
+  double scale_;
   /// the puff's start time, for modeling fade and expand
   double startTime_;
   /// if true the puff is active and should be updated

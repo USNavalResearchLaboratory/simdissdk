@@ -238,8 +238,16 @@ void AntennaNode::updateLighting_(bool shaded)
 void AntennaNode::updateBlending_(bool blending)
 {
   osg::StateSet* stateSet = getOrCreateStateSet();
-  stateSet->setMode(GL_BLEND, 
-    (blending ? osg::StateAttribute::ON : osg::StateAttribute::OFF));
+  if (blending)
+  {
+    stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+    stateSet->setRenderBinDetails(BIN_BEAM, BIN_TWO_PASS_ALPHA);
+  }
+  else
+  {
+    stateSet->setMode(GL_BLEND, osg::StateAttribute::OFF);
+    stateSet->setRenderBinDetails(BIN_OPAQUE_BEAM, BIN_GLOBAL_SIMSDK);
+  }
 }
 
 float AntennaNode::PatternGain(float azim, float elev, simCore::PolarityType polarity) const
