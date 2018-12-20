@@ -163,6 +163,21 @@ void addSideRocketBurn(simVis::RocketBurnStorage &rocketBurnStorage, simData::Ob
   rocketBurnShape.radiusNear = 0.3f;
   rocketBurnShape.color.set(0.9843f, 1.f, 0.4902f, 1.f);
   rocketBurnStorage.addBurnData(platId, 8, 0, updateData);
+
+  // Add a small burn on the side to simulate a control nozzle
+  rocketBurnShape.radiusFar = 0.08f;
+  rocketBurnShape.radiusNear = 0.03f;
+  rocketBurnShape.length = 0.3f;
+  rocketBurnShape.color.set(0.9765f, 0.1804f, 0.0157f, 0.53f);
+  updateData.pointingAngle.set(0.f, -M_PI_2, 0.f);
+  updateData.positionOffset.set(0.f, 0.f, platformWidth * 0.4f);
+  updateData.duration = -1;
+  rocketBurnStorage.addBurnData(platId, 9, 0, updateData);
+
+  rocketBurnShape.radiusFar = 0.05f;
+  rocketBurnShape.radiusNear = 0.02f;
+  rocketBurnShape.color.set(0.9843f, 1.f, 0.4902f, 0.53f);
+  rocketBurnStorage.addBurnData(platId, 10, 0, updateData);
 }
 
 void addVaporTrail(simVis::VaporTrailStorage &storage, simData::ObjectId platId)
