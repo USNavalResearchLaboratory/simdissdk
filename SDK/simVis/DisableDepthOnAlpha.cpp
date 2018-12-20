@@ -31,6 +31,7 @@ namespace simVis {
 namespace
 {
 const std::string USE_DISABLE_DEPTH_DEFINE = "SV_USE_DISABLE_DEPTH_ON_ALPHA";
+const std::string DEPTH_THRESHOLD = "simvis_disabledepth_threshold";
 }
 
 DisableDepthOnAlpha::DisableDepthOnAlpha()
@@ -50,6 +51,7 @@ void DisableDepthOnAlpha::installShaderProgram(osg::StateSet* intoStateSet)
     simVis::Shaders shaders;
     shaders.load(vp, shaders.disableDepthOnAlphaFragment());
     intoStateSet->setDefine(USE_DISABLE_DEPTH_DEFINE, osg::StateAttribute::OFF);
+    DisableDepthOnAlpha::setAlphaThreshold(intoStateSet, 0.05f);
   }
 }
 
@@ -66,6 +68,12 @@ void DisableDepthOnAlpha::setValues(osg::StateSet* stateset, int value)
       osg::StateAttribute::ON | over | prot;
 
   stateset->setDefine(USE_DISABLE_DEPTH_DEFINE, negValue);
+}
+
+void DisableDepthOnAlpha::setAlphaThreshold(osg::StateSet* stateset, float alphaThreshold, int value)
+{
+  if (stateset != NULL)
+    stateset->getOrCreateUniform(DEPTH_THRESHOLD, osg::Uniform::FLOAT)->set(alphaThreshold);
 }
 
 }
