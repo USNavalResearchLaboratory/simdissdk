@@ -342,7 +342,12 @@ namespace
     virtual void onValueChanged(Control* control, bool value)
     {
       if (sky_.valid())
-        sky_->setLighting(value);
+      {
+        if (value)
+          sky_->setLighting(osg::StateAttribute::OVERRIDE | osg::StateAttribute::ON);
+        else
+          sky_->setLighting(osg::StateAttribute::OVERRIDE | osg::StateAttribute::OFF);
+      }
     }
 
   private:
