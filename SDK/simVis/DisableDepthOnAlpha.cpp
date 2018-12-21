@@ -73,7 +73,7 @@ void DisableDepthOnAlpha::setValues(osg::StateSet* stateset, int value)
 void DisableDepthOnAlpha::setAlphaThreshold(osg::StateSet* stateset, float alphaThreshold, int value)
 {
   if (stateset != NULL)
-    stateset->getOrCreateUniform(DEPTH_THRESHOLD, osg::Uniform::FLOAT)->set(alphaThreshold);
+    stateset->addUniform(new osg::Uniform(DEPTH_THRESHOLD.c_str(), alphaThreshold), value);
 }
 
 }
