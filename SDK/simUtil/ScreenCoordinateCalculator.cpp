@@ -42,7 +42,9 @@ osg::Vec2 ScreenCoordinate::position() const
 
 osg::Vec3 ScreenCoordinate::positionV3() const
 {
-  return position_;
+  // Due to a current (12/18/18) bug in osgEarth::LineDrawable, zero out the returned position.
+  // Note that we need the position Z value to test for isBehindCamera() internally.
+  return osg::Vec3f(position_.x(), position_.y(), 0.f);
 }
 
 bool ScreenCoordinate::isBehindCamera() const

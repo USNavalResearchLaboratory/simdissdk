@@ -97,12 +97,20 @@ if(TARGET simVis)
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
-        ${SIMQT_INC}ViewWidget.h
     )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}FillItemModelWithNodeVisitor.h
-        ${SIMQT_INC}Gl3FormatGuesser.h
     )
+
+    # Parts of simQt depend on both simVis and osgQt
+    if (TARGET OSGQT)
+        list(APPEND SIMQT_HEADERS_TO_MOC
+            ${SIMQT_INC}ViewWidget.h
+        )
+        list(APPEND SIMQT_HEADERS
+            ${SIMQT_INC}Gl3FormatGuesser.h
+        )
+    endif()
 endif()
 
 if(OSG_FOUND)
@@ -200,13 +208,19 @@ if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
-        ${SIMQT_SRC}Gl3FormatGuesser.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
-        ${SIMQT_SRC}ViewWidget.cpp
     )
+
+    # Parts of simQt depend on both simVis and osgQt
+    if (TARGET OSGQT)
+        list(APPEND SIMQT_SOURCES
+            ${SIMQT_SRC}Gl3FormatGuesser.cpp
+            ${SIMQT_SRC}ViewWidget.cpp
+        )
+    endif()
 endif()
 
 if(OSG_FOUND)

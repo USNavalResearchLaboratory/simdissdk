@@ -55,7 +55,7 @@ int simCore::julianDay(double secsSinceRefYear, unsigned int refYear)
 double simCore::julianDayFrac()
 {
   return static_cast<double>(simCore::julianDay()) - 1.
-    + simCore::systemTimeToSecsBgnYr() / static_cast<double>(simCore::SECPERDAY);
+    + simCore::systemTimeToSecsBgnDay() / static_cast<double>(simCore::SECPERDAY);
 }
 
 double simCore::julianDate(int yr, double juldayfrac)
@@ -72,7 +72,8 @@ double simCore::julianDate(int yr, double juldayfrac)
 
 double simCore::julianDate()
 {
-  return simCore::julianDate(simCore::currentYear(), simCore::julianDayFrac());
+  // Add one because julianDayFrac() subtracts one to get the last full day
+  return simCore::julianDate(simCore::currentYear(), simCore::julianDayFrac() + 1);
 }
 
 int simCore::julianDate(int year, int month, int monthDay)

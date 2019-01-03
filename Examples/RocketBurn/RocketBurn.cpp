@@ -143,6 +143,44 @@ void addRocketBurnData(simVis::RocketBurnStorage &rocketBurnStorage, simData::Ob
   rocketBurnStorage.addBurnData(platId, burnId, 15, updateData);
 }
 
+void addSideRocketBurn(simVis::RocketBurnStorage &rocketBurnStorage, simData::ObjectId platId, float platformWidth)
+{
+  simVis::RocketBurnStorage::Update updateData;
+
+  // some initial data
+  simVis::RocketBurn::ShapeData &rocketBurnShape = updateData.shapeData;
+  rocketBurnShape.radiusFar = 1.f;
+  rocketBurnShape.radiusNear = 0.4f;
+  rocketBurnShape.length = 5.;
+  rocketBurnShape.scaleAlpha = true;
+  rocketBurnShape.color.set(0.9765f, 0.1804f, 0.0157f, 1.f);
+  updateData.pointingAngle.set(-M_PI_2, 0.f, 0.f);
+  updateData.positionOffset.set(platformWidth, 0.f, 0.f);
+  updateData.duration = -1;
+  rocketBurnStorage.addBurnData(platId, 7, 0, updateData);
+
+  // Other fields are the same
+  rocketBurnShape.radiusFar = 0.8f;
+  rocketBurnShape.radiusNear = 0.3f;
+  rocketBurnShape.color.set(0.9843f, 1.f, 0.4902f, 1.f);
+  rocketBurnStorage.addBurnData(platId, 8, 0, updateData);
+
+  // Add a small burn on the side to simulate a control nozzle
+  rocketBurnShape.radiusFar = 0.08f;
+  rocketBurnShape.radiusNear = 0.03f;
+  rocketBurnShape.length = 0.3f;
+  rocketBurnShape.color.set(0.9765f, 0.1804f, 0.0157f, 0.53f);
+  updateData.pointingAngle.set(0.f, -M_PI_2, 0.f);
+  updateData.positionOffset.set(0.f, 0.f, platformWidth * 0.4f);
+  updateData.duration = -1;
+  rocketBurnStorage.addBurnData(platId, 9, 0, updateData);
+
+  rocketBurnShape.radiusFar = 0.05f;
+  rocketBurnShape.radiusNear = 0.02f;
+  rocketBurnShape.color.set(0.9843f, 1.f, 0.4902f, 0.53f);
+  rocketBurnStorage.addBurnData(platId, 10, 0, updateData);
+}
+
 void addVaporTrail(simVis::VaporTrailStorage &storage, simData::ObjectId platId)
 {
   std::vector< osg::ref_ptr<osg::Texture2D> > textures;
@@ -208,6 +246,7 @@ int main(int argc, char **argv)
   osg::ref_ptr<simVis::PlatformNode> platformNode = scene->getScenario()->find<simVis::PlatformNode>(platformId);
   addRocketBurnData(rocketBurnStorage, platformId, platformNode->getActualSize().yMax());
   addVaporTrail(vaporTrailStorage, platformId);
+  addSideRocketBurn(rocketBurnStorage, platformId, platformNode->getActualSize().xMax() * 0.75f);
   osg::ref_ptr<simUtil::PlatformSimulator> sim = addSimulatedData(platformId);
 
   // Install frame update handler that will update track positions over time.

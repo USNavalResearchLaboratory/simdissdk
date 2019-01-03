@@ -50,6 +50,8 @@ public:
 
   /** Static instance-less setting of alpha test on a state set. */
   static void setValues(osg::StateSet* stateset, int value=osg::StateAttribute::ON);
+  /** Change the alpha threshold for rejecting pixels.  By default, pixels are rejected for 0.05 alpha and below. */
+  static void setAlphaThreshold(osg::StateSet* stateset, float alphaThreshold, int value = osg::StateAttribute::ON);
 
 protected:
   /** Prevent construction/destruction, since there is no state. */

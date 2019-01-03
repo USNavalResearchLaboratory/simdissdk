@@ -765,6 +765,9 @@ void GridTransform::doLayout_()
   {
     float width = columnWidths[column];
     xPositions[column] = currentX;
+    if (width == 0.f)
+      continue;
+
     // Adjust the width for stretched columns
     if (stretchColumns[column])
     {
@@ -793,6 +796,9 @@ void GridTransform::doLayout_()
   {
     float height = rowHeights[row];
     yTopPositions[row] = currentY;
+    if (height == 0.f)
+      continue;
+
     // Adjust the height for stretched rows
     if (stretchRows[row])
     {

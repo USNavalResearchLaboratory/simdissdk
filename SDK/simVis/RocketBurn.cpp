@@ -27,6 +27,7 @@
 #include "OpenThreads/ScopedLock"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
+#include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Types.h"
@@ -50,6 +51,8 @@ RocketBurn::RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture)
   stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
   // Must be able to blend or the graphics will look awful
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
+  // Drastically lower the threshold for disabling depth on alpha, to improve typical use case
+  simVis::DisableDepthOnAlpha::setAlphaThreshold(stateSet, 0.001f);
 
   // Add to the platform
   if (hostPlatform.getModel() != NULL)
