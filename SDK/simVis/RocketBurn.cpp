@@ -23,6 +23,8 @@
 #include "osg/Geometry"
 #include "osg/MatrixTransform"
 #include "osg/Depth"
+#include "OpenThreads/Mutex"
+#include "OpenThreads/ScopedLock"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Registry"
 #include "simVis/Platform.h"
@@ -33,6 +35,9 @@
 
 namespace simVis
 {
+// statics
+osg::observer_ptr<osg::StateSet> RocketBurn::s_stateSet_;
+
 RocketBurn::RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture)
   : Referenced(),
   texture_(&texture),
@@ -59,22 +64,73 @@ RocketBurn::~RocketBurn()
 
 void RocketBurn::rebuild_()
 {
-  const unsigned int textureUnit = 0; // first available unit
-  // the geode is a node which contains the geometry to draw
-  // use a billboard to keep the effect pointed at the camera
+  // hard-coded texture image unit.
+  // (If you decide to parameterize this, see the note below about
+  // moving the associated Uniform into the transform's stateset.)
+  const unsigned int textureUnit = 0;
 
-  if (geode_.valid())
+  static const char* rbVSView =
+      "#version " GLSL_VERSION_STR "\n" 
+      //"#pragma vp_entryPoint sim_RocketBurn_VS \n"
+      //"#pragma vp_location vertex_view \n"    
+      "out vec2 sim_RocketBurn_texcoord; \n"
+      "in float sim_RocketBurn_radius; \n" // attr 6
+      "uniform mat4 osg_ViewMatrixInverse; \n"
+
+      "void sim_RocketBurn_VS(inout vec4 vertexView) \n"
+      "{ \n"
+      "  // shortcut that assumes positive uniform scaling: \n"
+      "  float scale = length((osg_ViewMatrixInverse * gl_ModelViewMatrix)[0].xyz); \n"
+
+      "  // verts are in groups of 4 so take a modulus: \n"
+      "  int n = gl_VertexID & 3; \n"
+
+      "  // expand the 4 verts into a billboard in view space: \n"
+      "  float x = n == 2 || n == 3? -1.0 : 1.0; \n"
+      "  float y = n == 0 || n == 3? -1.0 : 1.0; \n"
+      "  vertexView.xy += vec2(x*sim_RocketBurn_radius*scale, y*sim_RocketBurn_radius*scale); \n"
+
+      "  // generate the texture coordinate: \n"
+      "  sim_RocketBurn_texcoord = vec2(x,y)*0.5 + 0.5; \n"
+      "} \n";
+  
+  static const char* rbFS =
+      "#version " GLSL_VERSION_STR "\n"
+      //"#pragma vp_entryPoint sim_RocketBurn_FS\n"
+      //"#pragma vp_location fragment_coloring\n"
+      "in vec2 sim_RocketBurn_texcoord; \n"
+      "uniform sampler2D sim_RocketBurn_tex; \n"
+      "void sim_RocketBurn_FS(inout vec4 color) \n"
+      "{ \n"
+      "  color *= texture(sim_RocketBurn_tex, sim_RocketBurn_texcoord); \n"
+      "} \n";
+
+  if (!group_.valid())
   {
-    // Remove the drawables from the geode
-    geode_->removeDrawables(0, geode_->getNumDrawables());
-  }
-  else
-  {
-    geode_ = new osg::Billboard;
-    geode_->setMode(osg::Billboard::POINT_ROT_EYE);
-    geode_->getOrCreateStateSet()->setTextureAttributeAndModes(textureUnit, texture_);
-    // attach the geode to ourselves
-    transform_->addChild(geode_);
+    group_ = new osg::Group();
+
+    // program goes on the group since it's globally shared
+    osg::ref_ptr<osg::StateSet> stateSet;
+    if (s_stateSet_.lock(stateSet) == false)
+    {
+        static OpenThreads::Mutex s_mutex;
+        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex);
+        if (s_stateSet_.lock(stateSet) == false)
+        {
+            s_stateSet_ = stateSet = new osg::StateSet();
+            osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet.get());
+            vp->setFunction("sim_RocketBurn_VS", rbVSView, osgEarth::ShaderComp::LOCATION_VERTEX_VIEW);
+            vp->setFunction("sim_RocketBurn_FS", rbFS, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
+            vp->addBindAttribLocation("sim_RocketBurn_radius", osg::Drawable::ATTRIBUTE_6);
+
+            // Note: textureUnit is a const delcared above. If you parameterize it,
+            // you will need to move this uniform to the transform_'s stateset! -gw
+            stateSet->addUniform(new osg::Uniform("sim_RocketBurn_tex", (int)textureUnit));
+        }
+    }
+    group_->setStateSet(stateSet.get());
+
+    transform_->addChild(group_.get());
   }
 
   if (currentShape_.length <= 0)
@@ -86,64 +142,122 @@ void RocketBurn::rebuild_()
 
   transform_->setNodeMask(simVis::DISPLAY_MASK_PLATFORM);
 
+  // texture information goes on the transform since it can change
+  // across RocketBurn instances
+  transform_->getOrCreateStateSet()->setTextureAttributeAndModes(textureUnit, texture_);
+
   // Scaling Factor for multiple QUADS to create a Rocket burn
   static const float ROCKETBURN_SCALE_FACTOR = 0.5f;
-  double radiusCurrent = currentShape_.radiusNear;
+  double currentRadius = currentShape_.radiusNear;
   double currentLength = 0.0;
 
-  while (currentLength < currentShape_.length)
+  osg::ref_ptr<osg::Vec3Array> verts;
+  osg::ref_ptr<osg::FloatArray> radii;
+  osg::ref_ptr<osg::Vec4Array> colors;
+  osg::ref_ptr<osg::DrawElementsUShort> elements;
+
+  if (!geometry_.valid())
   {
-    osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
-    geometry->setName("simVis::RocketBurn");
-    osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array; // vertexes to draw
-    geometry->setVertexArray(verts.get());
+    // Holds the poof visuals. Mark as DYNAMIC to support
+    // runtime updates to the buffers.
+    geometry_ = new osg::Geometry();
+    geometry_->setDataVariance(osg::Object::DYNAMIC);
+    geometry_->setName("simVis::RocketBurn");
 
-    // map (x,y) pixel coordinate to (s,t) texture coordinate
-    osg::ref_ptr<osg::Vec2Array> texcoords = new osg::Vec2Array;
-    geometry->setTexCoordArray(textureUnit, texcoords.get());
+    verts = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+    geometry_->setVertexArray(verts.get());
+    colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
+    geometry_->setColorArray(colors.get());
+    radii = new osg::FloatArray(osg::Array::BIND_PER_VERTEX);
+    geometry_->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, radii.get(), osg::Array::BIND_PER_VERTEX);
+    elements = new osg::DrawElementsUShort(GL_TRIANGLES);
+    geometry_->addPrimitiveSet(elements.get());
 
-    // colors
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_OVERALL);
-    geometry->setColorArray(colors.get());
+    group_->addChild(geometry_.get());
+  }
+  else
+  {
+    // Buffers already exist...find them
+    verts = static_cast<osg::Vec3Array*>(geometry_->getVertexArray());
+    colors = static_cast<osg::Vec4Array*>(geometry_->getColorArray());
+    radii = static_cast<osg::FloatArray*>(geometry_->getVertexAttribArray(osg::Drawable::ATTRIBUTE_6));
+    elements = static_cast<osg::DrawElementsUShort*>(geometry_->getPrimitiveSet(0));
+  }
 
-    simVis::Color currentColor(currentShape_.color);
-    if (currentShape_.scaleAlpha)
-    {
-      // alpha will vary per quad
-      currentColor.a() = float(1.0 - currentLength / currentShape_.length);
-    }
-    colors->push_back(currentColor);
+  // A RocketBurn visual is a series of poofs (textured quads).
+  // Calculate all poof parameters before updating the geometry
+  // so we know how much memory to allocate:
+  struct Poof
+  {
+    float radius;
+    float length;
+    float alpha;
+  };
+  std::vector<Poof> poofs; 
+  if (!verts->empty())
+    poofs.reserve(verts->size()/4);
 
-    // add the vertices
-    texcoords->push_back(osg::Vec2(1, 0));
-    verts->push_back(osg::Vec3(radiusCurrent, 0, -radiusCurrent));
+  while(currentLength < currentShape_.length)
+  {
+    Poof p;
+    p.radius = currentRadius;
+    p.length = currentLength;
+    p.alpha = currentShape_.scaleAlpha?
+        float(1.0 - currentLength / currentShape_.length) :
+        currentShape_.color.a();
 
-    texcoords->push_back(osg::Vec2(1, 1));
-    verts->push_back(osg::Vec3(radiusCurrent, 0, radiusCurrent));
-
-    texcoords->push_back(osg::Vec2(0, 0));
-    verts->push_back(osg::Vec3(-radiusCurrent, 0, -radiusCurrent));
-
-    texcoords->push_back(osg::Vec2(0, 1));
-    verts->push_back(osg::Vec3(-radiusCurrent, 0, radiusCurrent));
-
-    // tell the geometry that the array data describes triangle strips
-    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_STRIP, 0, verts->size()));
-
-    // load the geometry into the geode
-    geode_->addDrawable(geometry.get(), osg::Vec3(0, -currentLength, 0));
+    poofs.push_back(p);
 
     // A heuristic algorithm for dividing up the rocket burn.
-    currentLength = currentLength + radiusCurrent * ROCKETBURN_SCALE_FACTOR;
-    radiusCurrent = currentShape_.radiusNear + ((currentShape_.radiusFar - currentShape_.radiusNear) * (currentLength / currentShape_.length));
+    currentLength = currentLength + currentRadius * ROCKETBURN_SCALE_FACTOR;
+    currentRadius = currentShape_.radiusNear + ((currentShape_.radiusFar - currentShape_.radiusNear) * (currentLength / currentShape_.length));
   }
 
-  // Generate shaders for the texturing to work (avoid doing more than once)
-  if (!shaderGeneratorRun_)
+  // Clear all buffers and reserve new space if necessary.
+  // Memory will only allocate if more space is needed.
+  verts->clear();
+  verts->reserveArray(poofs.size()*4u);
+  colors->clear();
+  colors->reserveArray(poofs.size()*4u);
+  radii->clear();
+  radii->reserveArray(poofs.size()*4u);
+  elements->clear();
+  elements->reserveElements(poofs.size()*6u);
+
+  for(unsigned i=0; i<poofs.size(); ++i)
   {
-    osgEarth::Registry::shaderGenerator().run(transform_.get());
-    shaderGeneratorRun_ = true;
+    Poof& poof = poofs[i];
+
+    // two triangles comprise a quad:
+    unsigned k = i*4u;
+    elements->addElement(k);
+    elements->addElement(k+1);
+    elements->addElement(k+2);
+    elements->addElement(k+2);
+    elements->addElement(k+3);
+    elements->addElement(k);
+
+    // offsets the poof along the length of the burn:
+    osg::Vec3 currentVert(0, -poof.length, 0);
+
+    // custom alpha per poof:
+    osg::Vec4 currentColor(currentShape_.color);
+    currentColor.a() = poof.alpha;
+
+    // 4 verts per poof (4 corners to be expanded by the shader)
+    for(unsigned j=0; j<4u; ++j)
+    {
+      verts->push_back(currentVert);
+      colors->push_back(currentColor);
+      radii->push_back(poof.radius);
+    }
   }
+
+  // Mark all arrays dirty so they re-sync with the GPU
+  verts->dirty();
+  colors->dirty();
+  radii->dirty();
+  elements->dirty();
 }
 
 void RocketBurn::update(const ShapeData &newShapeData)
