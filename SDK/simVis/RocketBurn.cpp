@@ -30,6 +30,7 @@
 #include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
+#include "simVis/Shaders.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/RocketBurn.h"
@@ -72,42 +73,7 @@ void RocketBurn::rebuild_()
   // moving the associated Uniform into the transform's stateset.)
   const unsigned int textureUnit = 0;
 
-  static const char* rbVSView =
-      "#version " GLSL_VERSION_STR "\n" 
-      //"#pragma vp_entryPoint sim_RocketBurn_VS \n"
-      //"#pragma vp_location vertex_view \n"    
-      "out vec2 sim_RocketBurn_texcoord; \n"
-      "in float sim_RocketBurn_radius; \n" // attr 6
-      "uniform mat4 osg_ViewMatrixInverse; \n"
-
-      "void sim_RocketBurn_VS(inout vec4 vertexView) \n"
-      "{ \n"
-      "  // shortcut that assumes positive uniform scaling: \n"
-      "  float scale = length((osg_ViewMatrixInverse * gl_ModelViewMatrix)[0].xyz); \n"
-
-      "  // verts are in groups of 4 so take a modulus: \n"
-      "  int n = gl_VertexID & 3; \n"
-
-      "  // expand the 4 verts into a billboard in view space: \n"
-      "  float x = n == 2 || n == 3? -1.0 : 1.0; \n"
-      "  float y = n == 0 || n == 3? -1.0 : 1.0; \n"
-      "  vertexView.xy += vec2(x*sim_RocketBurn_radius*scale, y*sim_RocketBurn_radius*scale); \n"
-
-      "  // generate the texture coordinate: \n"
-      "  sim_RocketBurn_texcoord = vec2(x,y)*0.5 + 0.5; \n"
-      "} \n";
-  
-  static const char* rbFS =
-      "#version " GLSL_VERSION_STR "\n"
-      //"#pragma vp_entryPoint sim_RocketBurn_FS\n"
-      //"#pragma vp_location fragment_coloring\n"
-      "in vec2 sim_RocketBurn_texcoord; \n"
-      "uniform sampler2D sim_RocketBurn_tex; \n"
-      "void sim_RocketBurn_FS(inout vec4 color) \n"
-      "{ \n"
-      "  color *= texture(sim_RocketBurn_tex, sim_RocketBurn_texcoord); \n"
-      "} \n";
-
+  // Lazy initialization on the group
   if (!group_.valid())
   {
     group_ = new osg::Group();
@@ -116,23 +82,23 @@ void RocketBurn::rebuild_()
     osg::ref_ptr<osg::StateSet> stateSet;
     if (s_stateSet_.lock(stateSet) == false)
     {
-        static OpenThreads::Mutex s_mutex;
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex);
-        if (s_stateSet_.lock(stateSet) == false)
-        {
-            s_stateSet_ = stateSet = new osg::StateSet();
-            osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet.get());
-            vp->setFunction("sim_RocketBurn_VS", rbVSView, osgEarth::ShaderComp::LOCATION_VERTEX_VIEW);
-            vp->setFunction("sim_RocketBurn_FS", rbFS, osgEarth::ShaderComp::LOCATION_FRAGMENT_COLORING);
-            vp->addBindAttribLocation("sim_RocketBurn_radius", osg::Drawable::ATTRIBUTE_6);
+      static OpenThreads::Mutex s_mutex;
+      OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex);
+      if (s_stateSet_.lock(stateSet) == false)
+      {
+        s_stateSet_ = stateSet = new osg::StateSet();
+        // Load the virtual program and attach the ATTRIBUTE_6 parameter to the shader's radius attribute
+        osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet.get());
+        simVis::Shaders shaders;
+        shaders.load(vp, shaders.rocketBurn());
+        vp->addBindAttribLocation("sim_RocketBurn_radius", osg::Drawable::ATTRIBUTE_6);
 
-            // Note: textureUnit is a const delcared above. If you parameterize it,
-            // you will need to move this uniform to the transform_'s stateset! -gw
-            stateSet->addUniform(new osg::Uniform("sim_RocketBurn_tex", (int)textureUnit));
-        }
+        // Note: textureUnit is a const delcared above. If you parameterize it,
+        // you will need to move this uniform to the transform_'s stateset! -gw
+        stateSet->addUniform(new osg::Uniform("sim_RocketBurn_tex", static_cast<int>(textureUnit)));
+      }
     }
     group_->setStateSet(stateSet.get());
-
     transform_->addChild(group_.get());
   }
 
@@ -196,18 +162,18 @@ void RocketBurn::rebuild_()
     float length;
     float alpha;
   };
-  std::vector<Poof> poofs; 
+  std::vector<Poof> poofs;
   if (!verts->empty())
-    poofs.reserve(verts->size()/4);
+    poofs.reserve(verts->size() / 4);
 
-  while(currentLength < currentShape_.length)
+  while (currentLength < currentShape_.length)
   {
     Poof p;
     p.radius = currentRadius;
     p.length = currentLength;
-    p.alpha = currentShape_.scaleAlpha?
-        float(1.0 - currentLength / currentShape_.length) :
-        currentShape_.color.a();
+    p.alpha = currentShape_.scaleAlpha ?
+      static_cast<float>(1.0 - currentLength / currentShape_.length) :
+      currentShape_.color.a();
 
     poofs.push_back(p);
 
@@ -219,36 +185,36 @@ void RocketBurn::rebuild_()
   // Clear all buffers and reserve new space if necessary.
   // Memory will only allocate if more space is needed.
   verts->clear();
-  verts->reserveArray(poofs.size()*4u);
+  verts->reserveArray(poofs.size() * 4u);
   colors->clear();
-  colors->reserveArray(poofs.size()*4u);
+  colors->reserveArray(poofs.size() * 4u);
   radii->clear();
-  radii->reserveArray(poofs.size()*4u);
+  radii->reserveArray(poofs.size() * 4u);
   elements->clear();
-  elements->reserveElements(poofs.size()*6u);
+  elements->reserveElements(poofs.size() * 6u);
 
-  for(unsigned i=0; i<poofs.size(); ++i)
+  for (unsigned int i = 0; i < poofs.size(); ++i)
   {
     Poof& poof = poofs[i];
 
     // two triangles comprise a quad:
-    unsigned k = i*4u;
+    unsigned int k = i * 4u;
     elements->addElement(k);
-    elements->addElement(k+1);
-    elements->addElement(k+2);
-    elements->addElement(k+2);
-    elements->addElement(k+3);
+    elements->addElement(k + 1);
+    elements->addElement(k + 2);
+    elements->addElement(k + 2);
+    elements->addElement(k + 3);
     elements->addElement(k);
 
     // offsets the poof along the length of the burn:
-    osg::Vec3 currentVert(0, -poof.length, 0);
+    osg::Vec3f currentVert(0.f, -poof.length, 0.f);
 
     // custom alpha per poof:
-    osg::Vec4 currentColor(currentShape_.color);
+    osg::Vec4f currentColor(currentShape_.color);
     currentColor.a() = poof.alpha;
 
     // 4 verts per poof (4 corners to be expanded by the shader)
-    for(unsigned j=0; j<4u; ++j)
+    for (unsigned int j = 0; j < 4u; ++j)
     {
       verts->push_back(currentVert);
       colors->push_back(currentColor);

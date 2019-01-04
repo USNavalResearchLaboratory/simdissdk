@@ -35,6 +35,7 @@ set(SHADER_FILES
     RF.Texture.frag.glsl
     RF.Vertex.vert.glsl
     RF.Vertex.frag.glsl
+    RocketBurn.glsl
     SetClipVertex.vert.glsl
     TrackHistory.vert.glsl
     TrackHistory.frag.glsl
