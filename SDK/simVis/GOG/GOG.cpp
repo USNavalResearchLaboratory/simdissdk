@@ -24,7 +24,7 @@
 
 //------------------------------------------------------------------------
 
-// GOG default reference origin: a location off the Pacific Missile Range Facility "BARSTRUR Center"
+// GOG default reference origin: a location off the Pacific Missile Range Facility "BARSTUR Center"
 // (ref SIMDIS user manual, sec. 4.8.1)
 const simCore::Coordinate simVis::GOG::BSTUR(
   simCore::COORD_SYS_LLA,
