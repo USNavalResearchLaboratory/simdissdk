@@ -83,6 +83,7 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore, simVis::ScenarioMan
   prefs->mutable_commonprefs()->mutable_labelprefs()->set_overlayfontpointsize(14);
   prefs->mutable_commonprefs()->set_datalimitpoints(600);
   prefs->mutable_commonprefs()->set_datalimittime(120.0);
+  prefs->mutable_trackprefs()->set_trackdrawmode(simData::TrackPrefs_Mode_OFF);
   prefs->set_dynamicscale(true);
   prefs->set_scale(5);
   transaction.complete(&prefs);

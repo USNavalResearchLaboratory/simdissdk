@@ -85,11 +85,15 @@ private:
   /// Rotate and position matrix
   osg::ref_ptr<osg::MatrixTransform> transform_;
   /// Holds the drawables for the rocketburn
-  osg::ref_ptr<osg::Billboard> geode_;
+  osg::ref_ptr<osg::Group> group_;
+  /// Rocket burn geometry
+  osg::ref_ptr<osg::Geometry> geometry_;
   /// Describes the current burn
   ShapeData currentShape_;
   /// Flags whether we've had the shader generator run or not (shader generation can be expensive)
   bool shaderGeneratorRun_;
+  /// Shared stateset for rocket burn programs
+  static osg::observer_ptr<osg::StateSet> s_stateSet_;
 };
 
 }
