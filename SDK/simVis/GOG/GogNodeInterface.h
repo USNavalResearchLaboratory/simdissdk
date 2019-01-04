@@ -103,6 +103,13 @@ public:
   /** Destructor */
   virtual ~GogNodeInterface() {}
 
+  /** Font to use if not defined in annotation block */
+  void setDefaultFont(const std::string& fontName);
+  /** Text Size to use if not defined in annotation block */
+  void setDefaultTextSize(int textSize);
+  /** Text Color to use if not defined in annotation block */
+  void setDefaultTextColor(const osg::Vec4f& textColor);
+
   /** Apply a Config object to the GOG's style */
   virtual void applyConfigToStyle(const osgEarth::Config& config, const UnitsState& units);
 
@@ -173,14 +180,14 @@ public:
   */
   virtual int getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const;
 
- /**
-  * Get the line attributes of the Overlay
-  * @param outlineState  set to true if there is a line symbol
-  * @param color  set to the color of the line in osg format (r,g,b,a) between 0.0 - 1.0
-  * @param lineStyle  set to the line style (solid, dashed, dotted)
-  * @param lineWidth  set to the lineWidth (0-10)
-  * @return 0 if this Overlay has lines, non-zero otherwise
-  */
+  /**
+   * Get the line attributes of the Overlay
+   * @param outlineState  set to true if there is a line symbol
+   * @param color  set to the color of the line in osg format (r,g,b,a) between 0.0 - 1.0
+   * @param lineStyle  set to the line style (solid, dashed, dotted)
+   * @param lineWidth  set to the lineWidth (0-10)
+   * @return 0 if this Overlay has lines, non-zero otherwise
+   */
   virtual int getLineState(bool& outlineState, osg::Vec4f& color, Utils::LineStyle& lineStyle, int& lineWidth) const;
 
   /**
@@ -228,10 +235,10 @@ public:
   */
   osg::Node* osgNode() const;
 
- /**
-  * Serialize the GogNodeInterface into an ostream
-  * @param gogOutputStream  ostream to hold serialized Overlay
-  */
+  /**
+   * Serialize the GogNodeInterface into an ostream
+   * @param gogOutputStream  ostream to hold serialized Overlay
+   */
   virtual void serializeToStream(std::ostream& gogOutputStream);
 
   /** Update the altitude mode of the Overlay */
@@ -339,20 +346,19 @@ public:
   void applyBackfaceCulling();
 
   /**
-  * Get the shape's original load format, which is defined in the meta data
-  * @return load format enum
-  */
+   * Get the shape's original load format, which is defined in the meta data
+   * @return load format enum
+   */
   simVis::GOG::LoadFormat loadFormat() const;
 
   /**
-  * Get the shape type of this Overlay, which is defined in the meta data
-  * @return shape type enum
-  */
+   * Get the shape type of this Overlay, which is defined in the meta data
+   * @return shape type enum
+   */
   simVis::GOG::GogShape shape() const;
 
   /** Add the specified listener */
   void addGogNodeListener(GogNodeListenerPtr listener);
-
   /** Remove the specified listener */
   void removeGogNodeListener(GogNodeListenerPtr listener);
 
@@ -450,10 +456,17 @@ private:
   /** Check if this shape should only be filled when extruded */
   bool fillOnlyWhenExtruded_(simVis::GOG::GogShape shape) const;
 
-  // indicates whether updates to GOG are deferred in a begin/end batch update
+  /** indicates whether updates to GOG are deferred in a begin/end batch update */
   bool deferringStyleUpdate_;
 
-  // listeners for updates
+  /** Font to use if not defined in annotation block */
+  std::string defaultFont_;
+  /** Text Size to use if not defined in annotation block */
+  int defaultTextSize_;
+  /** Text Color to use if not defined in annotation block */
+  osg::Vec4f defaultTextColor_;
+
+  /** listeners for updates */
   std::vector<GogNodeListenerPtr> listeners_;
 };
 

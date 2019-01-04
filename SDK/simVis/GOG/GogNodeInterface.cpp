@@ -135,7 +135,10 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     altOffset_(0.),
     altMode_(ALTITUDE_NONE),
     hasMapNode_(false),
-    deferringStyleUpdate_(false)
+    deferringStyleUpdate_(false),
+    defaultFont_("arial.ttf"),
+    defaultTextSize_(15),
+    defaultTextColor_(osgEarth::Symbology::Color::Red)
 {
   if (osgNode_.valid())
   {
@@ -144,6 +147,21 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     // flatten in overhead mode by default - subclass might change this
     simVis::OverheadMode::enableGeometryFlattening(true, osgNode_.get());
   }
+}
+
+void GogNodeInterface::setDefaultFont(const std::string& fontName)
+{
+  defaultFont_ = fontName;
+}
+
+void GogNodeInterface::setDefaultTextSize(int textSize)
+{
+  defaultTextSize_ = textSize;
+}
+
+void GogNodeInterface::setDefaultTextColor(const osg::Vec4f& textColor)
+{
+  defaultTextColor_ = textColor;
 }
 
 void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const UnitsState& units)
@@ -264,15 +282,15 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
   if (isText)
   {
     // default to font arial 15, color red
-    std::string fontName = "arial.ttf";
-    int fontSize = 15;
-    osg::Vec4f fontColor = osgEarth::Symbology::Color::Red;
+    std::string fontName = defaultFont_;
+    int fontSize = defaultTextSize_;
+    osg::Vec4f fontColor = defaultTextColor_;
     // fonts.
     if (parent.hasValue("fontname"))
       fontName = parent.value("fontname");
 
     if (parent.hasValue("fontsize"))
-      fontSize = parent.value<int>("fontsize", 15);
+      fontSize = parent.value<int>("fontsize", fontSize);
 
     if (parent.hasValue("linecolor"))
       fontColor = osgEarth::Symbology::Color(parent.value("linecolor"));
