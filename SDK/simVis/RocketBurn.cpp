@@ -66,6 +66,16 @@ RocketBurn::~RocketBurn()
   transform_ = NULL;
 }
 
+// A RocketBurn visual is a series of poofs (textured quads).
+// Calculate all poof parameters before updating the geometry
+// so we know how much memory to allocate:
+struct Poof
+{
+  float radius;
+  float length;
+  float alpha;
+};
+
 void RocketBurn::rebuild_()
 {
   // hard-coded texture image unit.
@@ -153,15 +163,6 @@ void RocketBurn::rebuild_()
     elements = static_cast<osg::DrawElementsUShort*>(geometry_->getPrimitiveSet(0));
   }
 
-  // A RocketBurn visual is a series of poofs (textured quads).
-  // Calculate all poof parameters before updating the geometry
-  // so we know how much memory to allocate:
-  struct Poof
-  {
-    float radius;
-    float length;
-    float alpha;
-  };
   std::vector<Poof> poofs;
   if (!verts->empty())
     poofs.reserve(verts->size() / 4);
