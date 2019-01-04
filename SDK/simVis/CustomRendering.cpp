@@ -259,7 +259,6 @@ bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* upda
 void CustomRenderingNode::flush()
 {
   setNodeMask(DISPLAY_MASK_NONE);
-  customLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
 }
 
 int CustomRenderingNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
