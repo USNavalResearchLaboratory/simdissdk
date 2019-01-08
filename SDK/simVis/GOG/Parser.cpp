@@ -221,17 +221,11 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
   // track line number parsed for error reporting
   size_t lineNumber = 0;
 
-  // parse each line from the stream individually
+  std::vector<std::string> tokens;
   while (simCore::getStrippedLine(input, line))
   {
     ++lineNumber;
-    StringVector tokens;
-    StringTokenizer tokenizer;
-    tokenizer.addDelims(" \t");
-    tokenizer.keepEmpties() = false;
-    // keep the quotes to protect quoted token from lower-casing below
-    tokenizer.addQuotes("'\"", true);
-    tokenizer.tokenize(line, tokens);
+    simCore::quoteTokenizer(tokens, line);
 
     // convert tokens to lower case (unless it's in quotes or commented)
     for (StringVector::iterator j = tokens.begin(); j != tokens.end(); ++j)
