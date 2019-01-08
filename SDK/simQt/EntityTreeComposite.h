@@ -69,6 +69,10 @@ class SDKQT_EXPORT EntityTreeComposite : public QWidget
 {
   Q_OBJECT;
   Q_PROPERTY(bool useEntityIcons READ useEntityIcons WRITE setUseEntityIcons);
+  Q_ENUMS(QAbstractItemView::SelectionMode); // Needed even though this is a Qt enum
+  Q_PROPERTY(QAbstractItemView::SelectionMode selectionMode READ selectionMode WRITE setSelectionMode);
+  Q_PROPERTY(bool useCenterAction READ useCenterAction WRITE setUseCenterAction);
+  Q_PROPERTY(bool expandsOnDoubleClick READ expandsOnDoubleClick WRITE setExpandsOnDoubleClick);
 
 public:
   /** Constructor needs the parent widget */
@@ -120,6 +124,8 @@ public:
   bool useEntityIcons() const;
   /** Shows icons instead of text for the entity tree list Entity Type column */
   void setUseEntityIcons(bool showIcons);
+  /** Returns true if the context menu center action is enabled */
+  bool useCenterAction() const;
   /** Sets the ability to use the context menu center action, which is disabled by default */
   void setUseCenterAction(bool use);
 

@@ -607,6 +607,11 @@ bool EntityTreeComposite::expandsOnDoubleClick() const
   return composite_->treeView->expandsOnDoubleClick();
 }
 
+bool EntityTreeComposite::useCenterAction() const
+{
+  return useCenterAction_;
+}
+
 void EntityTreeComposite::setUseCenterAction(bool use)
 {
   if (use == useCenterAction_)

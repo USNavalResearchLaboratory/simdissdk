@@ -56,7 +56,7 @@ class QtDesignerDisplayTree : public simQt::AbstractEntityTreeModel
   Q_OBJECT
 
 public:
-  explicit QtDesignerDisplayTree(QObject* parent) : simQt::AbstractEntityTreeModel(parent), useEntityIcons_(true) {}
+  explicit QtDesignerDisplayTree(QObject* parent);
   virtual ~QtDesignerDisplayTree() {}
 
 
@@ -72,6 +72,9 @@ public:
   virtual QModelIndex parent(const QModelIndex &index) const { return QModelIndex(); }
   virtual int rowCount(const QModelIndex &parent) const { return 0; }
   virtual bool useEntityIcons() const { return useEntityIcons_; }
+  virtual QAbstractItemView::SelectionMode selectionMode() const { return selectionMode_; }
+  virtual bool useCenterAction() const { return useCenterAction_; }
+  virtual bool expandsOnDoubleClick() const { return expandsOnDoubleClick_; }
 
 public slots:
   /** Swaps the view to the hierarchy tree */
@@ -88,6 +91,9 @@ public slots:
 
 private:
   bool useEntityIcons_;
+  QAbstractItemView::SelectionMode selectionMode_;
+  bool useCenterAction_;
+  bool expandsOnDoubleClick_;
 };
 
 #endif // ENTITY_TREE_COMPOSITE_PLUGIN_H
