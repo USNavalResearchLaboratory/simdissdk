@@ -22,10 +22,10 @@
 #ifndef SIMVIS_GOG_PARSER_H
 #define SIMVIS_GOG_PARSER_H
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
-#include <iostream>
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simVis/GOG/GOGNode.h"
@@ -173,14 +173,14 @@ namespace simVis { namespace GOG
     * Parses an input GOG stream into a Config structure and parallel vector of meta data.
     * The metadata contains attributes of the GOG shape that may be lost when converting to an osg::Node,
     * things like the GOG shape type (circle, polygon, etc.) and other information that is not in the node or its
-    * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.
-    * @param[in ] input    GOG input data
-    * @param[out] output   Config structure
+    * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.  Although
+    * this is a public method, it is lower level than loadGOGs(), which uses the configured Registry to
+    * create instances of GogNodeInterface representing each OSG node for the GOG.
+    * @param[in ] input GOG input data
+    * @param[out] output Vector that will contain a Config element for each GOG node.
     * @param[out] metaData Meta data about the GOG that needs to be stored with the resulting osg::Node
     */
-    bool parse(
-      std::istream&              input,
-      osgEarth::Config&          output,
+    bool parse(std::istream& input, std::vector<osgEarth::Config>& output,
       std::vector<GogMetaData>&  metaData) const;
 
   private:
@@ -210,15 +210,15 @@ namespace simVis { namespace GOG
     /**
      * Parses an input Config structure into a collection of GOG nodes.  Pass in the Config, and parallel vectors of meta data.
      * There must be an entry in the meta data vector for every item in the Config structure.
-     * @param[in ] input    Config serialization
+     * @param[in ] input GOG data, deserialized as from parse()
      * @param[in ] nodeType Read GOGs as this type
      * @param[in ] metaData Meta data about the GOG that is lost in the osg::Node
-     * @param[out] output   Resulting GOG collection
+     * @param[out] output Resulting GOG collection
      * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
      * @return True upon success, false upon failure
      */
     bool createGOGs_(
-      const osgEarth::Config&         input,
+      const std::vector<osgEarth::Config>& input,
       const GOGNodeType&              nodeType,
       const std::vector<GogMetaData>& metaData,
       OverlayNodeVector&              output,

@@ -35,8 +35,8 @@ static const std::string FILE_VERSION = "version 2\n";
 
 bool parseGog(std::stringstream& gog, simVis::GOG::Parser& parser, std::vector<simVis::GOG::GogMetaData>& metaData, int& rv)
 {
-  osgEarth::Config config;
-  if (!parser.parse(gog, config, metaData))
+  std::vector<osgEarth::Config> configs;
+  if (!parser.parse(gog, configs, metaData))
   {
     rv += SDK_ASSERT(0); // failed to parse
     SIM_ERROR << "Parser failed to parse GOG stream " << gog.str() << "\n";
@@ -432,5 +432,3 @@ int GogTest(int argc, char* argv[])
 
   return rv;
 }
-
-

@@ -187,7 +187,7 @@ GogNodeInterface* Parser::createGOG(const std::vector<std::string>& lines, const
   return result;
 }
 
-bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>& metaData) const
+bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, std::vector<GogMetaData>& metaData) const
 {
   // Set up the modifier state object with default values. The state persists
   // across the parsing of the GOG input, spanning actual objects. (e.g. if the
@@ -296,7 +296,7 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
         updateMetaData_(state, refOriginLine, positionLines, type == SHAPE_RELATIVE, currentMetaData);
         metaData.push_back(currentMetaData);
         state.apply(current);
-        output.add(current);
+        output.push_back(current);
       }
 
       // clear reference origin settings for new block of commands
@@ -333,7 +333,7 @@ bool Parser::parse(std::istream& input, Config& output, std::vector<GogMetaData>
           currentMetaData.shape = GOG_UNKNOWN;
           currentMetaData.clearSetFields();
           state.apply(current);
-          output.add(current);
+          output.push_back(current);
           current = Config();
           // if available, recreate reference origin
           // values are needed for subsequent annotation points since meta data was cleared and a new "current" is used
@@ -993,16 +993,13 @@ void Parser::updateMetaData_(const ModifierState& state, const std::string& refO
       currentMetaData.metadata += positionLines;
 }
 
-bool Parser::createGOGs_(const Config& conf, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::createGOGs_(const std::vector<osgEarth::Config>& configVec, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
 {
   // add exception handling prior to passing data to renderer
   SAFETRYBEGIN;
-  const ConfigSet& objects = conf.children();
-
-  size_t index = 0;
-  for (ConfigSet::const_iterator i = objects.begin(); i != objects.end(); ++i)
+  for (size_t index = 0; index < configVec.size(); ++index)
   {
-    const Config& conf = *i;
+    const Config& conf = configVec[index];
 
     GogFollowData follow;
     // make sure the lists are parallel, assert if they are not
@@ -1020,7 +1017,6 @@ bool Parser::createGOGs_(const Config& conf, const GOGNodeType& nodeType, const 
       if (node->osgNode())
         simVis::setLighting(node->osgNode()->getOrCreateStateSet(), osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE | osg::StateAttribute::PROTECTED);
     }
-    index++;
   }
 
   return true;
@@ -1032,7 +1028,7 @@ bool Parser::createGOGs_(const Config& conf, const GOGNodeType& nodeType, const 
 bool Parser::createGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
 {
   // first, parse from GOG into Config
-  Config conf;
+  std::vector<osgEarth::Config> conf;
   std::vector<GogMetaData> metaData;
   if (!parse(input, conf, metaData))
     return false;
