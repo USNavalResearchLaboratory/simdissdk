@@ -110,6 +110,11 @@ public:
   /** Text Color to use if not defined in annotation block */
   void setDefaultTextColor(const osg::Vec4f& textColor);
 
+  /** Store the current style as a default style. Revert to this style at any time using revertToDefaultStyle(). */
+  void storeDefaultStyle();
+  /** Revert to the default style set by storeDefaultStyle(). */
+  void revertToDefaultStyle();
+
   /** Apply a Config object to the GOG's style */
   virtual void applyConfigToStyle(const osgEarth::Config& config, const UnitsState& units);
 
@@ -430,6 +435,8 @@ protected: // data
   DepthBufferOverride depthBufferOverride_; ///< determines the state of depth buffer override
   double extrudedHeight_; ///< cache the extruded height value, in meters
   osgEarth::Symbology::Style style_; ///< style for this node
+  osgEarth::Symbology::Style defaultStyle_; ///< stored default style for this node
+  bool hasDefaultStyle_; ///< tracks if a default style has been stored
   osg::Vec4f fillColor_;  ///< fill color; saved because setFilledState can be destructive on shape's fill color
   osg::Vec4f lineColor_; ///< line color needs to be stored in case LineSymbol is turned off
   double altitude_; ///< cache the original altitude, in meters

@@ -131,6 +131,7 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     depthBuffer_(false),
     depthBufferOverride_(DEPTHBUFFER_IGNORE_OVERRIDE),
     extrudedHeight_(0.0),
+    hasDefaultStyle_(false),
     altitude_(0.),
     altOffset_(0.),
     altMode_(ALTITUDE_NONE),
@@ -162,6 +163,18 @@ void GogNodeInterface::setDefaultTextSize(int textSize)
 void GogNodeInterface::setDefaultTextColor(const osg::Vec4f& textColor)
 {
   defaultTextColor_ = textColor;
+}
+
+void GogNodeInterface::storeDefaultStyle()
+{
+  defaultStyle_ = style_;
+  hasDefaultStyle_ = true;
+}
+
+void GogNodeInterface::revertToDefaultStyle()
+{
+  if (hasDefaultStyle_)
+    setStyle_(defaultStyle_);
 }
 
 void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const UnitsState& units)
