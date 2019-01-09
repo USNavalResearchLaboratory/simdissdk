@@ -29,11 +29,12 @@
 #include "simVis/GOG/Ellipse.h"
 #include "simVis/GOG/Ellipsoid.h"
 #include "simVis/GOG/GOGNode.h"
+#include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Hemisphere.h"
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
-#include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/Sphere.h"
@@ -54,7 +55,7 @@ namespace
   {
     /** Forward the call to the typename T's deserialize() method */
     GogNodeInterface* operator()(
-      const osgEarth::Config&  conf,
+      const ParsedShape&       parsedShape,
       simVis::GOG::ParserData& pd,
       const GOGNodeType&       nodeType,
       const GOGContext&        context,
@@ -62,7 +63,7 @@ namespace
       MapNode*                 mapNode) const
     {
       T ser;
-      return ser.deserialize(conf, pd, nodeType, context, metaData, mapNode);
+      return ser.deserialize(parsedShape, pd, nodeType, context, metaData, mapNode);
     }
   };
 }
@@ -100,13 +101,13 @@ void GOGRegistry::add(const std::string& tag, Deserializer* functor)
   deserializers_[tag] = functor;
 }
 
-GogNodeInterface* GOGRegistry::createGOG(const Config& conf, const GOGNodeType& nodeType, const Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData, GogFollowData& followData) const
+GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const GOGNodeType& nodeType, const Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData, GogFollowData& followData) const
 {
   GogNodeInterface* result = NULL;
-  std::string key = toLower(conf.key());
+  std::string key = toLower(parsedShape.shape());
 
   // don't allow attached GOGs with absolute values
-  if (nodeType == GOGNODE_HOSTED && conf.hasValue(simVis::GOG::AbsoluteKeyword))
+  if (nodeType == GOGNODE_HOSTED && parsedShape.hasValue(simVis::GOG::AbsoluteKeyword))
   {
     SIM_WARN << "Attempting to load attached GOG with absolute points\n";
     return NULL;
@@ -116,13 +117,13 @@ GogNodeInterface* GOGRegistry::createGOG(const Config& conf, const GOGNodeType& 
   {
     const Deserializer* f = i->second.get();
 
-    ParserData parserData(conf, context, metaData.shape);
+    ParserData parserData(parsedShape, context, metaData.shape);
 
     // apply any override style params:
     if (!overrideStyle.empty())
       parserData.style_ = parserData.style_.combineWith(overrideStyle);
 
-    result = (*f)(conf, parserData, nodeType, context, metaData, mapNode_.get());
+    result = (*f)(parsedShape, parserData, nodeType, context, metaData, mapNode_.get());
 
     // get the follow orientation data
     followData.locatorFlags = parserData.locatorComps_;

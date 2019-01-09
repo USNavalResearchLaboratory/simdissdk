@@ -22,29 +22,29 @@
 #ifndef SIMVIS_GOG_ANNOTATION_H
 #define SIMVIS_GOG_ANNOTATION_H
 
-#include "simCore/Common/Common.h"
 #include "simVis/GOG/GOGNode.h"
-#include "simVis/GOG/Utils.h"
-#include "osgEarth/MapNode"
 
+namespace osgEarth { class MapNode; }
 
-namespace simVis { namespace GOG
+namespace simVis { namespace GOG {
+
+class GogNodeInterface;
+class ParsedShape;
+class ParserData;
+
+/** Display GOG Annotation */
+class SDKVIS_EXPORT TextAnnotation
 {
-  class GogNodeInterface;
-
-  /** Display GOG Annotation */
-  class SDKVIS_EXPORT TextAnnotation
-  {
-  public:
-    /** Create the annotation from the parser data and GOG meta data */
-    GogNodeInterface* deserialize(
-      const osgEarth::Config&  conf,
-      simVis::GOG::ParserData& p,
-      const GOGNodeType&       nodeType,
-      const GOGContext&        context,
-      const GogMetaData&       metaData,
-      osgEarth::MapNode*       mapNode);
-  };
+public:
+  /** Create the annotation from the parser data and GOG meta data */
+  GogNodeInterface* deserialize(
+    const ParsedShape&       parsedShape,
+    simVis::GOG::ParserData& p,
+    const GOGNodeType&       nodeType,
+    const GOGContext&        context,
+    const GogMetaData&       metaData,
+    osgEarth::MapNode*       mapNode);
+};
 
 } } // namespace simVis::GOG
 

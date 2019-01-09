@@ -36,18 +36,26 @@
 
 namespace simVis { namespace GOG
 {
-  class GogNodeInterface;
+
   class ErrorHandler;
+  class GogNodeInterface;
+  class ParsedShape;
 
   /**
    * Parses GOG files (streams).
    *
-   * The GOG Parser will read a GOG file (or stream) and encode it as a
-   * Config object (a general data container). It will then invoke the GOG
-   * Registry, which will create the actual GOG Node from the config data.
+   * The GOG Parser will read a GOG file or stream, and encode it into a vector
+   * of ParsedShape objects.  This is an in-memory representation of the GOG shape
+   * data for the input stream.  Using loadGOGs() and the configured GOG Registry,
+   * this class will then create the actual GOG Node (GogNodeInterface) from the
+   * configuration data in ParsedShape.
+   *
+   * The low level parsing is handled by the parse() method.  Typically you need
+   * to call loadGOGs(), unless your goal is only to get the in-memory representation
+   * of the GOG data.
    *
    * The GOG Registry has built-in support for documented GOG types. You can
-   * pass in a custom GOG Registry if you wish to register addition, custom
+   * pass in a custom GOG Registry if you wish to register additional, custom
    * GOG types.
    *
    * The Parser should be instantiated on demand, so as not to outlive its
@@ -170,17 +178,17 @@ namespace simVis { namespace GOG
     void addOverwriteColor(const std::string& key, osgEarth::Symbology::Color color);
 
     /**
-    * Parses an input GOG stream into a Config structure and parallel vector of meta data.
-    * The metadata contains attributes of the GOG shape that may be lost when converting to an osg::Node,
-    * things like the GOG shape type (circle, polygon, etc.) and other information that is not in the node or its
-    * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.  Although
-    * this is a public method, it is lower level than loadGOGs(), which uses the configured Registry to
-    * create instances of GogNodeInterface representing each OSG node for the GOG.
-    * @param[in ] input GOG input data
-    * @param[out] output Vector that will contain a Config element for each GOG node.
-    * @param[out] metaData Meta data about the GOG that needs to be stored with the resulting osg::Node
-    */
-    bool parse(std::istream& input, std::vector<osgEarth::Config>& output,
+     * Parses an input GOG stream into a vector of ParsedShape entries, and a parallel vector of GogMetaData.
+     * The metadata contains attributes of the GOG shape that may be lost when converting to an osg::Node,
+     * things like the GOG shape type (circle, polygon, etc.) and other information that is not in the node or its
+     * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.  Although
+     * this is a public method, it is lower level than loadGOGs(), which uses the configured Registry to
+     * create instances of GogNodeInterface representing each OSG node for the GOG.
+     * @param[in ] input GOG input data
+     * @param[out] output Vector that will contain a ParsedShape element for each GOG node (shape) in the input stream.
+     * @param[out] metaData Meta data about the GOG that needs to be stored with the resulting osg::Node
+     */
+    bool parse(std::istream& input, std::vector<ParsedShape>& output,
       std::vector<GogMetaData>&  metaData) const;
 
   private:
@@ -208,9 +216,9 @@ namespace simVis { namespace GOG
     std::string parseGogGeodeticAngle_(const std::string& input) const;
 
     /**
-     * Parses an input Config structure into a collection of GOG nodes.  Pass in the Config, and parallel vectors of meta data.
-     * There must be an entry in the meta data vector for every item in the Config structure.
-     * @param[in ] input GOG data, deserialized as from parse()
+     * Given an input vector of ParsedShapes and GogMetaData, create individual GogNodeInterface classes (using
+     * the configured Registry), and return a vector of those instances, for every item in the ParsedShape list.
+     * @param[in ] parsedShapes GOG data, deserialized as from parse()
      * @param[in ] nodeType Read GOGs as this type
      * @param[in ] metaData Meta data about the GOG that is lost in the osg::Node
      * @param[out] output Resulting GOG collection
@@ -218,7 +226,7 @@ namespace simVis { namespace GOG
      * @return True upon success, false upon failure
      */
     bool createGOGs_(
-      const std::vector<osgEarth::Config>& input,
+      const std::vector<ParsedShape>& parsedShapes,
       const GOGNodeType&              nodeType,
       const std::vector<GogMetaData>& metaData,
       OverlayNodeVector&              output,

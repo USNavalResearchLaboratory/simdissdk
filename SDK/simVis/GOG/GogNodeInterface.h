@@ -115,8 +115,8 @@ public:
   /** Revert to the default style set by storeDefaultStyle(). */
   void revertToDefaultStyle();
 
-  /** Apply a Config object to the GOG's style */
-  virtual void applyConfigToStyle(const osgEarth::Config& config, const UnitsState& units);
+  /** Apply a ParsedShape object to the GOG's style */
+  virtual void applyToStyle(const ParsedShape& parsedShape, const UnitsState& units);
 
   /**
   * Get the altitude mode of the Overlay, returns false if the Overlay does not support an altitude mode

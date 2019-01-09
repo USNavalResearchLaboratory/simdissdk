@@ -29,18 +29,19 @@
 #include "simVis/GOG/Hemisphere.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
 namespace simVis { namespace GOG {
 
-GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
                         simVis::GOG::ParserData& p,
                         const GOGNodeType&       nodeType,
                         const GOGContext&        context,
                         const GogMetaData&       metaData,
                         osgEarth::MapNode*       mapNode)
 {
-  osgEarth::Distance radius(conf.value("radius", 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance radius(parsedShape.doubleValue("radius", 1000.0), p.units_.rangeUnits_);
 
   osg::Vec4f color(osgEarth::Symbology::Color::White);
 
@@ -73,7 +74,7 @@ GogNodeInterface* Hemisphere::deserialize(const osgEarth::Config&  conf,
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new SphericalNodeInterface(node, metaData);
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
   }
   return rv;
 }

@@ -24,29 +24,28 @@
 
 #include "simVis/GOG/GOGNode.h"
 
-namespace osgEarth {
-  class MapNode;
-  class Config;
-}
+namespace osgEarth { class MapNode; }
 
-namespace simVis { namespace GOG {
+namespace simVis {
+namespace GOG {
 
-  class GogNodeInterface;
-  class ParserData;
+class GogNodeInterface;
+class ParsedShape;
+class ParserData;
 
-  /** Display GOG Ellipsoid */
-  class SDKVIS_EXPORT Ellipsoid
-  {
-  public:
-    /** Create the ellipsoid from the parser data and GOG meta data */
-    GogNodeInterface* deserialize(
-      const osgEarth::Config&  conf,
-      simVis::GOG::ParserData& p,
-      const GOGNodeType&       nodeType,
-      const GOGContext&        context,
-      const GogMetaData&       metaData,
-      osgEarth::MapNode*       mapNode);
-  };
+/** Display GOG Ellipsoid */
+class SDKVIS_EXPORT Ellipsoid
+{
+public:
+  /** Create the ellipsoid from the parser data and GOG meta data */
+  GogNodeInterface* deserialize(
+    const ParsedShape&       parsedShape,
+    simVis::GOG::ParserData& p,
+    const GOGNodeType&       nodeType,
+    const GOGContext&        context,
+    const GogMetaData&       metaData,
+    osgEarth::MapNode*       mapNode);
+};
 
 } } // namespace simVis::GOG
 

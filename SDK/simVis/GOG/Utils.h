@@ -25,7 +25,6 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
 #include "simVis/GOG/GOGNode.h"
-#include "osgEarth/Config"
 #include "osgEarth/GeoData"
 #include "osgEarth/Units"
 #include "osgEarthSymbology/Geometry"
@@ -39,7 +38,9 @@ namespace osgEarth { namespace Annotation { class LocalGeometryNode; } }
  */
 namespace simVis { namespace GOG
 {
+  class ParsedShape;
   class ParserData;
+  struct PositionStrings;
 
   /** Utility class for the shapes */
   class SDKVIS_EXPORT Utils
@@ -160,9 +161,9 @@ namespace simVis { namespace GOG
 
     /**
      * Initializes the units state from a structured representation.
-     * @param[in ] conf Structured data input
+     * @param[in ] parsedShape Structured data input
      */
-    void parse(const osgEarth::Config& conf);
+    void parse(const ParsedShape& parsedShape);
 
     /**
      * Initialized the units state from a GOG string.
@@ -200,7 +201,7 @@ namespace simVis { namespace GOG
      * Stores the modifier state in a structured object.
      * @param[in ] conf Object in which to store the state
      */
-    void apply(osgEarth::Config& conf);
+    void apply(ParsedShape& shape);
   };
 
 
@@ -212,25 +213,25 @@ namespace simVis { namespace GOG
   public:
     /**
      * Initialize the parsing data from a structured object
-     * @param[in ] conf    Input data (GOG stored in a Config)
+     * @param[in ] parsedShape Input data (GOG stored in a ParsedShape structure)
      * @param[in ] context Shared parser information
      * @param[in ] shape   Type of shape being parsed
      */
-    ParserData(const osgEarth::Config& conf, const GOGContext& context, GogShape shape);
+    ParserData(const ParsedShape& parsedShape, const GOGContext& context, GogShape shape);
 
     /** initialize the parser data */
     void init();
 
     /**
-     * Reads geometry (coordinate sets) from a Config object. Use the
+     * Reads geometry (coordinate sets) from a ParsedShape object. Use the
      * template parameter to pass in the type you want returned.
-     * @param[in ] conf Config from which to read geometry
+     * @param[in ] parsedShape Parsed Shape from which to read geometry
      */
     template<typename T>
-    void parseGeometry(const osgEarth::Config& conf)
+    void parseGeometry(const ParsedShape& parsedShape)
     {
       geom_ = new T();
-      parsePoints(conf, units_, geom_.get(), geomIsLLA_);
+      parsePoints(parsedShape, units_, geom_.get(), geomIsLLA_);
     }
 
     /**
@@ -240,7 +241,7 @@ namespace simVis { namespace GOG
      * @param[out] geom   Where to store the parsed points
      * @param[out] isLLA  Whether the output is lat/long/alt data
      */
-    void parsePoints(const osgEarth::Config& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
+    void parsePoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
 
     /**
     * Accounts for the unique requirements of a line segment points
@@ -249,7 +250,7 @@ namespace simVis { namespace GOG
     * @param[out] geom   Where to store the parsed points
     * @param[out] isLLA  Whether the output is lat/long/alt data
     */
-    void parseLineSegmentPoints(const osgEarth::Config& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
+    void parseLineSegmentPoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
 
     /**
      * Parses a string containing a angular coordinate value. Supports
@@ -259,9 +260,9 @@ namespace simVis { namespace GOG
 
     /**
      * Reads optional offset and host-tracking properties.
-     * @param[in ] parent Node from which to read data
+     * @param[in ] parent Structure from which to read data
      */
-    void parseOffsetsAndTracking(const osgEarth::Config& parent);
+    void parseOffsetsAndTracking(const ParsedShape& parent);
 
     /**
      * Whether the current GOG has an absolute Map position.
@@ -316,6 +317,11 @@ namespace simVis { namespace GOG
      * @param[in ] node Annotation node to target
      */
     void applyToAnnotationNode(osg::Node* node);
+
+    /** Converts the string values in the position strings to a osg::Vec3d using LLA units. */
+    osg::Vec3d llaPositionToVec(const UnitsState& us, const PositionStrings& posStrings) const;
+    /** Converts the string values in the position strings to a osg::Vec3d using XYZ units. */
+    osg::Vec3d xyzPositionToVec(const UnitsState& us, const PositionStrings& posStrings) const;
 
     GOGContext                           context_; ///< Context
     osgEarth::Style                      style_; ///< Style

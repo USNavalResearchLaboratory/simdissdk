@@ -27,8 +27,8 @@
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
-
 
 #define LC "[GOG::PointSet] "
 
@@ -36,31 +36,31 @@ using namespace simVis::GOG;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
 
-GogNodeInterface* Points::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* Points::deserialize(const ParsedShape& parsedShape,
                     simVis::GOG::ParserData& p,
                     const GOGNodeType&       nodeType,
                     const GOGContext&        context,
                     const GogMetaData&       metaData,
                     osgEarth::MapNode*       mapNode)
 {
-  p.parseGeometry<osgEarth::Symbology::PointSet>(conf);
+  p.parseGeometry<osgEarth::Symbology::PointSet>(parsedShape);
 
   // Extruded points are not supported in osgEarth; replace with line segments
-  const bool isExtruded = conf.value("extrude", false);
+  const bool isExtruded = parsedShape.boolValue("extrude", false);
   if (isExtruded)
   {
     // Note that an extrudeHeight of 0 means to extrude to ground
-    const Distance extrudeHeight(conf.value<double>("extrudeheight", 0.0), p.units_.altitudeUnits_);
+    const Distance extrudeHeight(parsedShape.doubleValue("extrudeheight", 0.0), p.units_.altitudeUnits_);
     recreateAsLineSegs_(p, extrudeHeight.as(Units::METERS));
 
     // Impersonate LINESEGS instead of points
     GogMetaData newMetaData(metaData);
     newMetaData.shape = simVis::GOG::GOG_LINESEGS;
 
-    return deserializeImpl_(conf, p, nodeType, context, newMetaData, mapNode);
+    return deserializeImpl_(parsedShape, p, nodeType, context, newMetaData, mapNode);
   }
 
-  return deserializeImpl_(conf, p, nodeType, context, metaData, mapNode);
+  return deserializeImpl_(parsedShape, p, nodeType, context, metaData, mapNode);
 }
 
 void Points::recreateAsLineSegs_(simVis::GOG::ParserData& p, double extrudeHeight) const
@@ -85,7 +85,7 @@ void Points::recreateAsLineSegs_(simVis::GOG::ParserData& p, double extrudeHeigh
   p.geom_ = m;
 }
 
-GogNodeInterface* Points::deserializeImpl_(const osgEarth::Config&  conf,
+GogNodeInterface* Points::deserializeImpl_(const ParsedShape& parsedShape,
                     simVis::GOG::ParserData& p,
                     const GOGNodeType&       nodeType,
                     const GOGContext&        context,
@@ -128,7 +128,7 @@ GogNodeInterface* Points::deserializeImpl_(const osgEarth::Config&  conf,
   }
 
   if (rv)
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
 
   return rv;
 }

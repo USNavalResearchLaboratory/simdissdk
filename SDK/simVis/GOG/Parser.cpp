@@ -35,6 +35,7 @@
 #include "simCore/Calc/Mgrs.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/Utils.h"
 #include "simVis/GOG/ErrorHandler.h"
@@ -187,7 +188,7 @@ GogNodeInterface* Parser::createGOG(const std::vector<std::string>& lines, const
   return result;
 }
 
-bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, std::vector<GogMetaData>& metaData) const
+bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::vector<GogMetaData>& metaData) const
 {
   // Set up the modifier state object with default values. The state persists
   // across the parsing of the GOG input, spanning actual objects. (e.g. if the
@@ -206,7 +207,7 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
   // valid commands must occur within a start/end block
   bool validStartEndBlock = false;
 
-  Config current;
+  ParsedShape current;
   std::string line;
   GogMetaData currentMetaData;
   currentMetaData.shape = GOG_UNKNOWN;
@@ -292,7 +293,7 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
       if (tokens[0] == "end")
       {
         if (type == SHAPE_ABSOLUTE)
-          current.set(simVis::GOG::AbsoluteKeyword, 1);
+          current.set(simVis::GOG::AbsoluteKeyword, "1");
         updateMetaData_(state, refOriginLine, positionLines, type == SHAPE_RELATIVE, currentMetaData);
         metaData.push_back(currentMetaData);
         state.apply(current);
@@ -312,8 +313,8 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
       currentMetaData.metadata.clear();
       currentMetaData.shape = GOG_UNKNOWN;
       currentMetaData.clearSetFields();
-      current = Config();
-      current.set("linenumber", lineNumber);  // Save the line number in the configuration
+      current.reset();
+      current.setLineNumber(lineNumber);
       state = ModifierState();
       state.lineColor_ = parseGogColor_("red", false);
     }
@@ -323,7 +324,7 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
       {
         // special case: annotations. you can have multiple annotations within
         // a single start/end block.
-        if (current.key() == "annotation")
+        if (current.shape() == "annotation")
         {
           updateMetaData_(state, refOriginLine, positionLines, type == SHAPE_RELATIVE, currentMetaData);
           metaData.push_back(currentMetaData);
@@ -334,7 +335,7 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
           currentMetaData.clearSetFields();
           state.apply(current);
           output.push_back(current);
-          current = Config();
+          current.reset();
           // if available, recreate reference origin
           // values are needed for subsequent annotation points since meta data was cleared and a new "current" is used
           if (!refOriginLine.empty())
@@ -349,12 +350,12 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
         }
         currentMetaData.metadata += line + "\n";
         currentMetaData.shape = GOG_ANNOTATION;
-        current.key() = "annotation";
+        current.setShape("annotation");
         const std::string textToken = osgEarth::trim(line.substr(tokens[0].length() + 1));
         // Store the un-decoded text in textToken to avoid problems with trim in osgEarth code. (SIMDIS-2875)
-        current.add("text", textToken);
+        current.set("text", textToken);
         // add support to show annotation text in dialog
-        current.add("3d name", Utils::decodeAnnotation(textToken));
+        current.set("3d name", Utils::decodeAnnotation(textToken));
       }
       else
       {
@@ -378,7 +379,7 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
       )
     {
       currentMetaData.shape = Parser::getShapeFromKeyword(tokens[0]);
-      current.key() = line;
+      current.setShape(line);
     }
     else if (tokens[0] == "latlonaltbox")
     {
@@ -386,14 +387,14 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
       {
         currentMetaData.shape = Parser::getShapeFromKeyword(tokens[0]);
         currentMetaData.metadata += line + "\n";
-        current.key() = "latlonaltbox";
-        current.add("n", tokens[1]);
-        current.add("s", tokens[2]);
-        current.add("w", tokens[3]);
-        current.add("e", tokens[4]);
-        current.add("minalt", tokens[5]);
+        current.setShape("latlonaltbox");
+        current.set("n", tokens[1]);
+        current.set("s", tokens[2]);
+        current.set("w", tokens[3]);
+        current.set("e", tokens[4]);
+        current.set("minalt", tokens[5]);
         if (tokens.size() > 6)
-          current.add("maxalt", tokens[6]);
+          current.set("maxalt", tokens[6]);
       }
       else
       {
@@ -442,12 +443,10 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
         // need to cache xyz for annotations
         positionLines += line + "\n";
 
-        Config point("xy");
-        point.set("x", tokens[1]);
-        point.set("y", tokens[2]);
         if (tokens.size() >= 4)
-          point.set("z", tokens[3]);
-        current.add(point);
+          current.append(ParsedShape::XYZ, PositionStrings(tokens[1], tokens[2], tokens[3]));
+        else
+          current.append(ParsedShape::XYZ, PositionStrings(tokens[1], tokens[2]));
       }
       else
       {
@@ -465,12 +464,10 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
         // need to save lla for annotations
         positionLines += line + "\n";
 
-        Config point("ll");
-        point.set("lat", parseGogGeodeticAngle_(tokens[1]));
-        point.set("lon", parseGogGeodeticAngle_(tokens[2]));
         if (tokens.size() >= 4)
-          point.set("alt", tokens[3]);
-        current.add(point);
+          current.append(ParsedShape::LLA, PositionStrings(tokens[1], tokens[2], tokens[3]));
+        else
+          current.append(ParsedShape::LLA, PositionStrings(tokens[1], tokens[2]));
       }
       else
       {
@@ -490,12 +487,12 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
           // need to save lla for annotations
           positionLines += line + "\n";
 
-          Config point("ll");
-          point.set("lat", simCore::buildString("", lat * simCore::RAD2DEG));
-          point.set("lon", simCore::buildString("", lon * simCore::RAD2DEG));
+          const std::string& latString = simCore::buildString("", lat * simCore::RAD2DEG);
+          const std::string& lonString = simCore::buildString("", lon * simCore::RAD2DEG);
           if (tokens.size() >= 3)
-            point.set("alt", tokens[2]);
-          current.add(point);
+            current.append(ParsedShape::LLA, PositionStrings(latString, lonString, tokens[2]));
+          else
+            current.append(ParsedShape::LLA, PositionStrings(latString, lonString));
         }
       }
       else
@@ -512,12 +509,10 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
         else if (type == SHAPE_ABSOLUTE)
           continue;
         currentMetaData.metadata += line + "\n";
-        Config point("centerxy");
-        point.set("x", tokens[1]);
-        point.set("y", tokens[2]);
         if (tokens.size() >= 4)
-          point.set("z", tokens[3]);
-        current.add(point);
+          current.set("centerxy", PositionStrings(tokens[1], tokens[2], tokens[3]));
+        else
+          current.set("centerxy", PositionStrings(tokens[1], tokens[2]));
       }
       else
       {
@@ -533,12 +528,10 @@ bool Parser::parse(std::istream& input, std::vector<osgEarth::Config>& output, s
         else if (type == SHAPE_RELATIVE)
           continue;
         currentMetaData.metadata += line + "\n";
-        Config point("centerll");
-        point.set("lat", parseGogGeodeticAngle_(tokens[1]));
-        point.set("lon", parseGogGeodeticAngle_(tokens[2]));
         if (tokens.size() >= 4)
-          point.set("alt", tokens[3]);
-        current.add(point);
+          current.set("centerll", PositionStrings(tokens[1], tokens[2], tokens[3]));
+        else
+          current.set("centerll", PositionStrings(tokens[1], tokens[2]));
       }
       else
       {
@@ -993,23 +986,23 @@ void Parser::updateMetaData_(const ModifierState& state, const std::string& refO
       currentMetaData.metadata += positionLines;
 }
 
-bool Parser::createGOGs_(const std::vector<osgEarth::Config>& configVec, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::createGOGs_(const std::vector<ParsedShape>& parsedShapes, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
 {
   // add exception handling prior to passing data to renderer
   SAFETRYBEGIN;
-  for (size_t index = 0; index < configVec.size(); ++index)
+  for (size_t index = 0; index < parsedShapes.size(); ++index)
   {
-    const Config& conf = configVec[index];
+    const ParsedShape& shape = parsedShapes[index];
 
     GogFollowData follow;
     // make sure the lists are parallel, assert if they are not
     assert(index < metaData.size());
-    GogNodeInterface* node = registry_.createGOG(conf, nodeType, style_, context_, metaData[index], follow);
+    GogNodeInterface* node = registry_.createGOG(shape, nodeType, style_, context_, metaData[index], follow);
 
     if (node)
     {
       // update draw
-      node->setDrawState(conf.value<bool>("draw", true));
+      node->setDrawState(shape.boolValue("draw", true));
       output.push_back(node);
       followData.push_back(follow);
 
@@ -1028,13 +1021,13 @@ bool Parser::createGOGs_(const std::vector<osgEarth::Config>& configVec, const G
 bool Parser::createGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
 {
   // first, parse from GOG into Config
-  std::vector<osgEarth::Config> conf;
+  std::vector<ParsedShape> parsedShapes;
   std::vector<GogMetaData> metaData;
-  if (!parse(input, conf, metaData))
+  if (!parse(input, parsedShapes, metaData))
     return false;
 
   // then parse from Config into Annotation.
-  return createGOGs_(conf, nodeType, metaData, output, followData);
+  return createGOGs_(parsedShapes, nodeType, metaData, output, followData);
 }
 
 GogShape Parser::getShapeFromKeyword(const std::string& keyword)

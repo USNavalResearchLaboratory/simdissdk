@@ -24,15 +24,12 @@
 
 #include "simVis/GOG/GOGNode.h"
 
-namespace osgEarth {
-  class MapNode;
-  class Config;
-}
+namespace osgEarth { class MapNode; }
 
-namespace simVis { namespace GOG
-{
+namespace simVis { namespace GOG {
 
 class GogNodeInterface;
+class ParsedShape;
 class ParserData;
 
 /** Display GOG Arc */
@@ -41,7 +38,7 @@ class SDKVIS_EXPORT Arc
 public:
   /** Create the arc from the parser data and GOG meta data */
   GogNodeInterface* deserialize(
-    const osgEarth::Config&  conf,
+    const ParsedShape&       parsedShape,
     simVis::GOG::ParserData& p,
     const GOGNodeType&       nodeType,
     const GOGContext&        context,

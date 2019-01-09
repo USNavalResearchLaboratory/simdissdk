@@ -26,20 +26,21 @@
 #include "simVis/GOG/Circle.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 #include "simNotify/Notify.h"
 
 using namespace simVis::GOG;
 using namespace osgEarth::Features;
 
-GogNodeInterface* Circle::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
                     simVis::GOG::ParserData& p,
                     const GOGNodeType&       nodeType,
                     const GOGContext&        context,
                     const GogMetaData&       metaData,
                     MapNode*                 mapNode)
 {
-  Distance radius(conf.value("radius", 1000.), p.units_.rangeUnits_);
+  Distance radius(parsedShape.doubleValue("radius", 1000.), p.units_.rangeUnits_);
 
   osgEarth::Symbology::GeometryFactory gf;
   Geometry* shape = gf.createCircle(osg::Vec3d(0, 0, 0), radius);
@@ -64,7 +65,7 @@ GogNodeInterface* Circle::deserialize(const osgEarth::Config&  conf,
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new LocalGeometryNodeInterface(node, metaData);
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
   }
   return rv;
 }

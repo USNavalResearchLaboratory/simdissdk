@@ -33,6 +33,7 @@
 #include "simVis/GOG/ErrorHandler.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
 using namespace simVis::GOG;
@@ -223,31 +224,31 @@ Angle fmod_(Angle angle, double denom=M_TWOPI)
 
 }
 
-GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::ParserData& p, const GOGNodeType& nodeType, const GOGContext& context, const GogMetaData& metaData, MapNode* mapNode)
+GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::ParserData& p, const GOGNodeType& nodeType, const GOGContext& context, const GogMetaData& metaData, MapNode* mapNode)
 {
   bool hasInnerRadius = false;
   Distance iRadius;
 
-  if (conf.hasChild("innerradius"))
+  if (parsedShape.hasValue("innerradius"))
   {
-    iRadius = Distance(conf.value("innerradius", 0), p.units_.rangeUnits_);
+    iRadius = Distance(parsedShape.doubleValue("innerradius", 0.), p.units_.rangeUnits_);
     if (iRadius.as(Units::METERS) > 0)
       hasInnerRadius = true;
   }
 
-  Distance radius(conf.value("radius", 1000.), p.units_.rangeUnits_);
-  Angle    rotation(conf.value<double>("rotation", 0.0), p.units_.angleUnits_);
-  Angle    start(conf.value<double>("anglestart", 0.0), p.units_.angleUnits_);
+  Distance radius(parsedShape.doubleValue("radius", 1000.), p.units_.rangeUnits_);
+  Angle    rotation(parsedShape.doubleValue("rotation", 0.0), p.units_.angleUnits_);
+  Angle    start(parsedShape.doubleValue("anglestart", 0.0), p.units_.angleUnits_);
   // angFix() the start between 0,360.  osgEarth takes the direct path between two angles
   // when drawing the arc.  Two angles (start+end) between [0,360) means no crossing 0
   start = angFix2PI_(start);
   Angle    end = start;
-  const size_t lineNumber = conf.value<size_t>("linenumber", 0);
+  const size_t lineNumber = parsedShape.lineNumber();
 
   // Check for the angledeg (sweep) version of arc, which can cross 0 degrees
-  if (conf.hasValue("angledeg"))
+  if (parsedShape.hasValue("angledeg"))
   {
-    Angle sweep = Angle(conf.value<double>("angledeg", 0.0), p.units_.angleUnits_);
+    Angle sweep = Angle(parsedShape.doubleValue("angledeg", 0.0), p.units_.angleUnits_);
 
     // Print a warning on invalid spread values (0 is invalid, >360 is warning)
     const double sweepRadians = sweep.as(Units::RADIANS);
@@ -268,9 +269,9 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
     // Use fmod to keep the correct sign for correct sweep angle
     end = start + fmod_(sweep);
   }
-  else if (conf.hasValue("angleend"))
+  else if (parsedShape.hasValue("angleend"))
   {
-    end = Angle(conf.value<double>("angleend", 0.0), p.units_.angleUnits_);
+    end = Angle(parsedShape.doubleValue("angleend", 0.0), p.units_.angleUnits_);
     // angFix2PI() forces end between [0,360).  Since start is in the same range, we'll
     // never cross 0 with the osgEarth drawing algorithm.
     end = angFix2PI_(end);
@@ -290,12 +291,12 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
   Geometry* outlineShape = (Geometry*)new LineString();
   Geometry* filledShape = (Geometry*)new osgEarth::Symbology::Polygon();
 
-  if (conf.hasValue("majoraxis"))
+  if (parsedShape.hasValue("majoraxis"))
   {
-    radius = Distance(0.5 * conf.value<double>("majoraxis", 2000.0), p.units_.rangeUnits_);
-    if (conf.hasValue("minoraxis"))
+    radius = Distance(0.5 * parsedShape.doubleValue("majoraxis", 2000.0), p.units_.rangeUnits_);
+    if (parsedShape.hasValue("minoraxis"))
     {
-      Distance minorRadius = Distance(0.5 * conf.value<double>("minoraxis", 2000.0), p.units_.rangeUnits_);
+      Distance minorRadius = Distance(0.5 * parsedShape.doubleValue("minoraxis", 2000.0), p.units_.rangeUnits_);
       outlineShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, false, outlineShape, gf);
       filledShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, true, filledShape, gf);
     }
@@ -360,7 +361,7 @@ GogNodeInterface* Arc::deserialize(const osgEarth::Config& conf, simVis::GOG::Pa
     g->addChild(shapeNode);
 
     rv = new ArcNodeInterface(g, shapeNode, fillNode, metaData);
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
   }
 
   return rv;
