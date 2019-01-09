@@ -174,7 +174,10 @@ void GogNodeInterface::storeDefaultStyle()
 void GogNodeInterface::revertToDefaultStyle()
 {
   if (hasDefaultStyle_)
-    setStyle_(defaultStyle_);
+  {
+    style_ = defaultStyle_;
+    setStyle_(style_);
+  }
 }
 
 void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const UnitsState& units)
