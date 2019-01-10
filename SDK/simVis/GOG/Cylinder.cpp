@@ -45,26 +45,26 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
                       const GogMetaData&       metaData,
                       MapNode*                 mapNode)
 {
-  Distance radius(parsedShape.doubleValue("radius", 1000.), p.units_.rangeUnits_);
-  Angle    rotation(parsedShape.doubleValue("rotation", 0.0), p.units_.angleUnits_);
-  Distance height(parsedShape.doubleValue("height", 1000.), p.units_.altitudeUnits_);
-  Angle    start(parsedShape.doubleValue("anglestart", 0.0), p.units_.angleUnits_);
+  Distance radius(parsedShape.doubleValue(GOG_RADIUS, 1000.), p.units_.rangeUnits_);
+  Angle    rotation(parsedShape.doubleValue(GOG_ROTATION, 0.0), p.units_.angleUnits_);
+  Distance height(parsedShape.doubleValue(GOG_HEIGHT, 1000.), p.units_.altitudeUnits_);
+  Angle    start(parsedShape.doubleValue(GOG_ANGLESTART, 0.0), p.units_.angleUnits_);
   Angle    end = start;
-  if (parsedShape.hasValue("angledeg"))
-    end = start + Angle(parsedShape.doubleValue("angledeg", 90.0), Units::DEGREES);
-  else if (parsedShape.hasValue("angleend"))
-    end = Angle(parsedShape.doubleValue("angleend", 0.0), p.units_.angleUnits_);
+  if (parsedShape.hasValue(GOG_ANGLEDEG))
+    end = start + Angle(parsedShape.doubleValue(GOG_ANGLEDEG, 90.0), Units::DEGREES);
+  else if (parsedShape.hasValue(GOG_ANGLEEND))
+    end = Angle(parsedShape.doubleValue(GOG_ANGLEEND, 0.0), p.units_.angleUnits_);
 
   osgEarth::Symbology::GeometryFactory gf;
   osg::ref_ptr<Geometry> tgeom = start == end ? (Geometry*)new Ring() : (Geometry*)new LineString();
   osg::ref_ptr<Geometry> shape;
 
-  if (parsedShape.hasValue("majoraxis"))
+  if (parsedShape.hasValue(GOG_MAJORAXIS))
   {
-    radius = Distance(0.5 * parsedShape.doubleValue("majoraxis", 2000.0), p.units_.rangeUnits_);
-    if (parsedShape.hasValue("minoraxis"))
+    radius = Distance(0.5 * parsedShape.doubleValue(GOG_MAJORAXIS, 2000.0), p.units_.rangeUnits_);
+    if (parsedShape.hasValue(GOG_MINORAXIS))
     {
-      Distance minorRadius = Distance(0.5 * parsedShape.doubleValue("minoraxis", 2000.0), p.units_.rangeUnits_);
+      Distance minorRadius = Distance(0.5 * parsedShape.doubleValue(GOG_MINORAXIS, 2000.0), p.units_.rangeUnits_);
       shape = gf.createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, 0u, tgeom.get(), true);
     }
     else
@@ -86,7 +86,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
     style.remove<LineSymbol>();
 
     // Need to turn backface culling off for unfilled cylinders so the sides are visible
-    if (!parsedShape.hasValue("filled"))
+    if (!parsedShape.hasValue(GOG_FILLED))
       style.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = false;
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
@@ -110,7 +110,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
 
     // remove the extrusion symbol
     style.remove<ExtrusionSymbol>();
-    if (!parsedShape.hasValue("filled"))
+    if (!parsedShape.hasValue(GOG_FILLED))
       style.remove<PolygonSymbol>();
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
@@ -152,7 +152,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
 
     // remove the extrusion symbol
     style.remove<ExtrusionSymbol>();
-    if (!parsedShape.hasValue("filled"))
+    if (!parsedShape.hasValue(GOG_FILLED))
       style.remove<PolygonSymbol>();
 
     if (nodeType == GOGNODE_GEOGRAPHIC)

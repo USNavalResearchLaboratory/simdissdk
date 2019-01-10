@@ -37,12 +37,12 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
                           const GogMetaData&       metaData,
                           osgEarth::MapNode*       mapNode)
 {
-  osgEarth::Angle    minLat(p.parseAngle(parsedShape.stringValue("s"), 0.0), p.units_.angleUnits_);
-  osgEarth::Angle    maxLat(p.parseAngle(parsedShape.stringValue("n"), 1.0), p.units_.angleUnits_);
-  osgEarth::Angle    minLon(p.parseAngle(parsedShape.stringValue("w"), 0.0), p.units_.angleUnits_);
-  osgEarth::Angle    maxLon(p.parseAngle(parsedShape.stringValue("e"), 1.0), p.units_.angleUnits_);
-  osgEarth::Distance minAlt(parsedShape.doubleValue("minalt", 0.0), p.units_.altitudeUnits_);
-  osgEarth::Distance maxAlt(parsedShape.doubleValue("maxalt", 1000.0), p.units_.altitudeUnits_);
+  osgEarth::Angle    minLat(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_S), 0.0), p.units_.angleUnits_);
+  osgEarth::Angle    maxLat(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_N), 1.0), p.units_.angleUnits_);
+  osgEarth::Angle    minLon(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_W), 0.0), p.units_.angleUnits_);
+  osgEarth::Angle    maxLon(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_E), 1.0), p.units_.angleUnits_);
+  osgEarth::Distance minAlt(parsedShape.doubleValue(GOG_LLABOX_MINALT, 0.0), p.units_.altitudeUnits_);
+  osgEarth::Distance maxAlt(parsedShape.doubleValue(GOG_LLABOX_MAXALT, 1000.0), p.units_.altitudeUnits_);
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -126,7 +126,7 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
     }
 
     // An unfilled LLB should be drawn as lines, so remove any conflicting symbology
-    if (!parsedShape.hasValue("filled"))
+    if (!parsedShape.hasValue(GOG_FILLED))
       style.remove<PolygonSymbol>();
 
     Feature* feature = new Feature(lines, mapNode->getMapSRS(), style);

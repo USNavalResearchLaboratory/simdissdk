@@ -229,16 +229,16 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   bool hasInnerRadius = false;
   Distance iRadius;
 
-  if (parsedShape.hasValue("innerradius"))
+  if (parsedShape.hasValue(GOG_INNERRADIUS))
   {
-    iRadius = Distance(parsedShape.doubleValue("innerradius", 0.), p.units_.rangeUnits_);
+    iRadius = Distance(parsedShape.doubleValue(GOG_INNERRADIUS, 0.), p.units_.rangeUnits_);
     if (iRadius.as(Units::METERS) > 0)
       hasInnerRadius = true;
   }
 
-  Distance radius(parsedShape.doubleValue("radius", 1000.), p.units_.rangeUnits_);
-  Angle    rotation(parsedShape.doubleValue("rotation", 0.0), p.units_.angleUnits_);
-  Angle    start(parsedShape.doubleValue("anglestart", 0.0), p.units_.angleUnits_);
+  Distance radius(parsedShape.doubleValue(GOG_RADIUS, 1000.), p.units_.rangeUnits_);
+  Angle    rotation(parsedShape.doubleValue(GOG_ROTATION, 0.0), p.units_.angleUnits_);
+  Angle    start(parsedShape.doubleValue(GOG_ANGLESTART, 0.0), p.units_.angleUnits_);
   // angFix() the start between 0,360.  osgEarth takes the direct path between two angles
   // when drawing the arc.  Two angles (start+end) between [0,360) means no crossing 0
   start = angFix2PI_(start);
@@ -246,9 +246,9 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   const size_t lineNumber = parsedShape.lineNumber();
 
   // Check for the angledeg (sweep) version of arc, which can cross 0 degrees
-  if (parsedShape.hasValue("angledeg"))
+  if (parsedShape.hasValue(GOG_ANGLEDEG))
   {
-    Angle sweep = Angle(parsedShape.doubleValue("angledeg", 0.0), p.units_.angleUnits_);
+    Angle sweep = Angle(parsedShape.doubleValue(GOG_ANGLEDEG, 0.0), p.units_.angleUnits_);
 
     // Print a warning on invalid spread values (0 is invalid, >360 is warning)
     const double sweepRadians = sweep.as(Units::RADIANS);
@@ -269,9 +269,9 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
     // Use fmod to keep the correct sign for correct sweep angle
     end = start + fmod_(sweep);
   }
-  else if (parsedShape.hasValue("angleend"))
+  else if (parsedShape.hasValue(GOG_ANGLEEND))
   {
-    end = Angle(parsedShape.doubleValue("angleend", 0.0), p.units_.angleUnits_);
+    end = Angle(parsedShape.doubleValue(GOG_ANGLEEND, 0.0), p.units_.angleUnits_);
     // angFix2PI() forces end between [0,360).  Since start is in the same range, we'll
     // never cross 0 with the osgEarth drawing algorithm.
     end = angFix2PI_(end);
@@ -291,12 +291,12 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   Geometry* outlineShape = (Geometry*)new LineString();
   Geometry* filledShape = (Geometry*)new osgEarth::Symbology::Polygon();
 
-  if (parsedShape.hasValue("majoraxis"))
+  if (parsedShape.hasValue(GOG_MAJORAXIS))
   {
-    radius = Distance(0.5 * parsedShape.doubleValue("majoraxis", 2000.0), p.units_.rangeUnits_);
-    if (parsedShape.hasValue("minoraxis"))
+    radius = Distance(0.5 * parsedShape.doubleValue(GOG_MAJORAXIS, 2000.0), p.units_.rangeUnits_);
+    if (parsedShape.hasValue(GOG_MINORAXIS))
     {
-      Distance minorRadius = Distance(0.5 * parsedShape.doubleValue("minoraxis", 2000.0), p.units_.rangeUnits_);
+      Distance minorRadius = Distance(0.5 * parsedShape.doubleValue(GOG_MINORAXIS, 2000.0), p.units_.rangeUnits_);
       outlineShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, false, outlineShape, gf);
       filledShape = createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, hasInnerRadius, iRadius, true, filledShape, gf);
     }

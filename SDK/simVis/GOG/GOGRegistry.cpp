@@ -107,7 +107,7 @@ GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const G
   std::string key = toLower(parsedShape.shape());
 
   // don't allow attached GOGs with absolute values
-  if (nodeType == GOGNODE_HOSTED && parsedShape.hasValue(simVis::GOG::AbsoluteKeyword))
+  if (nodeType == GOGNODE_HOSTED && parsedShape.hasValue(GOG_ABSOLUTE))
   {
     SIM_WARN << "Attempting to load attached GOG with absolute points\n";
     return NULL;

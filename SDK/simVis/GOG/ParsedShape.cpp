@@ -52,17 +52,17 @@ size_t ParsedShape::lineNumber() const
   return lineNumber_;
 }
 
-void ParsedShape::set(const std::string& key, const std::string& value)
+void ParsedShape::set(ShapeParameter key, const std::string& value)
 {
   stringParams_[key] = value;
 }
 
-void ParsedShape::set(const std::string& key, const PositionStrings& pos)
+void ParsedShape::set(ShapeParameter key, const PositionStrings& pos)
 {
   positionParams_[key] = pos;
 }
 
-std::string ParsedShape::stringValue(const std::string& key, const std::string& defaultValue) const
+std::string ParsedShape::stringValue(ShapeParameter key, const std::string& defaultValue) const
 {
   auto i = stringParams_.find(key);
   if (i != stringParams_.end())
@@ -70,7 +70,7 @@ std::string ParsedShape::stringValue(const std::string& key, const std::string& 
   return defaultValue;
 }
 
-bool ParsedShape::boolValue(const std::string& key, bool defaultValue) const
+bool ParsedShape::boolValue(ShapeParameter key, bool defaultValue) const
 {
   auto i = stringParams_.find(key);
   if (i == stringParams_.end())
@@ -83,7 +83,7 @@ bool ParsedShape::boolValue(const std::string& key, bool defaultValue) const
   return defaultValue;
 }
 
-double ParsedShape::doubleValue(const std::string& key, double defaultValue) const
+double ParsedShape::doubleValue(ShapeParameter key, double defaultValue) const
 {
   auto i = stringParams_.find(key);
   if (i == stringParams_.end())
@@ -94,7 +94,7 @@ double ParsedShape::doubleValue(const std::string& key, double defaultValue) con
   return defaultValue;
 }
 
-PositionStrings ParsedShape::positionValue(const std::string& key) const
+PositionStrings ParsedShape::positionValue(ShapeParameter key) const
 {
   auto i = positionParams_.find(key);
   if (i != positionParams_.end())
@@ -102,7 +102,7 @@ PositionStrings ParsedShape::positionValue(const std::string& key) const
   return PositionStrings();
 }
 
-bool ParsedShape::hasValue(const std::string& key) const
+bool ParsedShape::hasValue(ShapeParameter key) const
 {
   return (stringParams_.find(key) != stringParams_.end()) ||
     (positionParams_.find(key) != positionParams_.end());

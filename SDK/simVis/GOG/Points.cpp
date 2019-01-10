@@ -46,11 +46,11 @@ GogNodeInterface* Points::deserialize(const ParsedShape& parsedShape,
   p.parseGeometry<osgEarth::Symbology::PointSet>(parsedShape);
 
   // Extruded points are not supported in osgEarth; replace with line segments
-  const bool isExtruded = parsedShape.boolValue("extrude", false);
+  const bool isExtruded = parsedShape.boolValue(GOG_EXTRUDE, false);
   if (isExtruded)
   {
     // Note that an extrudeHeight of 0 means to extrude to ground
-    const Distance extrudeHeight(parsedShape.doubleValue("extrudeheight", 0.0), p.units_.altitudeUnits_);
+    const Distance extrudeHeight(parsedShape.doubleValue(GOG_EXTRUDE_HEIGHT, 0.0), p.units_.altitudeUnits_);
     recreateAsLineSegs_(p, extrudeHeight.as(Units::METERS));
 
     // Impersonate LINESEGS instead of points

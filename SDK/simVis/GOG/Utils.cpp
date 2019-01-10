@@ -267,14 +267,14 @@ UnitsState::UnitsState()
 
 void UnitsState::parse(const ParsedShape& parsedShape)
 {
-  if (parsedShape.hasValue("angleunits"))
-    parse(parsedShape.stringValue("angleunits"), Units::TYPE_ANGULAR, angleUnits_);
-  if (parsedShape.hasValue("altitudeunits"))
-    parse(parsedShape.stringValue("altitudeunits"), Units::TYPE_LINEAR, altitudeUnits_);
-  if (parsedShape.hasValue("rangeunits"))
-    parse(parsedShape.stringValue("rangeunits"), Units::TYPE_LINEAR, rangeUnits_);
-  if (parsedShape.hasValue("timeunits"))
-    parse(parsedShape.stringValue("timeunits"), Units::TYPE_TEMPORAL, timeUnits_);
+  if (parsedShape.hasValue(GOG_ANGLEUNITS))
+    parse(parsedShape.stringValue(GOG_ANGLEUNITS), Units::TYPE_ANGULAR, angleUnits_);
+  if (parsedShape.hasValue(GOG_ALTITUDEUNITS))
+    parse(parsedShape.stringValue(GOG_ALTITUDEUNITS), Units::TYPE_LINEAR, altitudeUnits_);
+  if (parsedShape.hasValue(GOG_RANGEUNITS))
+    parse(parsedShape.stringValue(GOG_RANGEUNITS), Units::TYPE_LINEAR, rangeUnits_);
+  if (parsedShape.hasValue(GOG_TIMEUNITS))
+    parse(parsedShape.stringValue(GOG_TIMEUNITS), Units::TYPE_TEMPORAL, timeUnits_);
 }
 
 void UnitsState::parse(const std::string& s, osgEarth::Units::Type type, osgEarth::Units& units)
@@ -317,18 +317,18 @@ void UnitsState::parse(const std::string& s, osgEarth::Units::Type type, osgEart
 
 void ModifierState::apply(ParsedShape& shape)
 {
-  if (lineColor_.isSet()) shape.set("linecolor", *lineColor_);
-  if (lineWidth_.isSet()) shape.set("linewidth", *lineWidth_);
-  if (lineStyle_.isSet()) shape.set("linestyle", *lineStyle_);
-  if (fillColor_.isSet()) shape.set("fillcolor", *fillColor_);
-  if (pointSize_.isSet()) shape.set("pointsize", *pointSize_);
-  if (altitudeMode_.isSet()) shape.set("altitudemode", *altitudeMode_);
-  if (altitudeUnits_.isSet()) shape.set("altitudeunits", *altitudeUnits_);
-  if (rangeUnits_.isSet()) shape.set("rangeunits", *rangeUnits_);
-  if (timeUnits_.isSet()) shape.set("timeunits", *timeUnits_);
-  if (angleUnits_.isSet()) shape.set("angleunits", *angleUnits_);
-  if (verticalDatum_.isSet()) shape.set("verticaldatum", *verticalDatum_);
-  if (priority_.isSet()) shape.set("priority", *priority_);
+  if (lineColor_.isSet()) shape.set(GOG_LINECOLOR, *lineColor_);
+  if (lineWidth_.isSet()) shape.set(GOG_LINEWIDTH, *lineWidth_);
+  if (lineStyle_.isSet()) shape.set(GOG_LINESTYLE, *lineStyle_);
+  if (fillColor_.isSet()) shape.set(GOG_FILLCOLOR, *fillColor_);
+  if (pointSize_.isSet()) shape.set(GOG_POINTSIZE, *pointSize_);
+  if (altitudeMode_.isSet()) shape.set(GOG_ALTITUDEMODE, *altitudeMode_);
+  if (altitudeUnits_.isSet()) shape.set(GOG_ALTITUDEUNITS, *altitudeUnits_);
+  if (rangeUnits_.isSet()) shape.set(GOG_RANGEUNITS, *rangeUnits_);
+  if (timeUnits_.isSet()) shape.set(GOG_TIMEUNITS, *timeUnits_);
+  if (angleUnits_.isSet()) shape.set(GOG_ANGLEUNITS, *angleUnits_);
+  if (verticalDatum_.isSet()) shape.set(GOG_VERTICALDATUM, *verticalDatum_);
+  if (priority_.isSet()) shape.set(GOG_PRIORITY, *priority_);
 }
 
 //------------------------------------------------------------------------
@@ -345,20 +345,20 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
   units_.parse(parsedShape);
 
   // check for a reference position for NED coordinates
-  if (parsedShape.hasValue("lat"))
+  if (parsedShape.hasValue(GOG_REF_LAT))
   {
     refPointLLA_->set(
-      parseAngle(parsedShape.stringValue("lon"), 0.0),
-      parseAngle(parsedShape.stringValue("lat"), 0.0),
-      units_.altitudeUnits_.convertTo(Units::METERS, parsedShape.doubleValue("alt", 0.0)));
+      parseAngle(parsedShape.stringValue(GOG_REF_LON), 0.0),
+      parseAngle(parsedShape.stringValue(GOG_REF_LAT), 0.0),
+      units_.altitudeUnits_.convertTo(Units::METERS, parsedShape.doubleValue(GOG_REF_ALT, 0.0)));
   }
 
   // The centerLLA and centerXYZ doe not apply to points, lines, line segments and polygons
   if ((shape != GOG_POINTS) && (shape != GOG_POLYGON) && (shape != GOG_LINE) && (shape != GOG_LINESEGS))
   {
-    if (parsedShape.hasValue("centerll"))
+    if (parsedShape.hasValue(GOG_CENTERLL))
     {
-      const PositionStrings& p = parsedShape.positionValue("centerll");
+      const PositionStrings& p = parsedShape.positionValue(GOG_CENTERLL);
       // Convert altitude value from string
       double altitude = 0.;
       simCore::isValidNumber(p.z, altitude);
@@ -369,9 +369,9 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
         units_.altitudeUnits_.convertTo(Units::METERS, altitude));
     }
 
-    if (parsedShape.hasValue("centerxy"))
+    if (parsedShape.hasValue(GOG_CENTERXY))
     {
-      const PositionStrings& p = parsedShape.positionValue("centerxy");
+      const PositionStrings& p = parsedShape.positionValue(GOG_CENTERXY);
       // Convert Z value from string
       double xyz[3] = {0.};
       simCore::isValidNumber(p.x, xyz[0]);
@@ -385,17 +385,17 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
     }
   }
 
-  if (parsedShape.hasValue("lineprojection"))
+  if (parsedShape.hasValue(GOG_LINEPROJECTION))
   {
-    if (simCore::caseCompare(parsedShape.stringValue("lineprojection"), "greatcircle") == 0)
+    if (simCore::caseCompare(parsedShape.stringValue(GOG_LINEPROJECTION), "greatcircle") == 0)
       geoInterp_ = GEOINTERP_GREAT_CIRCLE;
-    else if (simCore::caseCompare(parsedShape.stringValue("lineprojection"), "rhumbline") == 0)
+    else if (simCore::caseCompare(parsedShape.stringValue(GOG_LINEPROJECTION), "rhumbline") == 0)
       geoInterp_ = GEOINTERP_RHUMB_LINE;
   }
 
-  if (parsedShape.hasValue("verticaldatum"))
+  if (parsedShape.hasValue(GOG_VERTICALDATUM))
   {
-    const std::string& vdatum = parsedShape.stringValue("verticaldatum");
+    const std::string& vdatum = parsedShape.stringValue(GOG_VERTICALDATUM);
     if (simCore::caseCompare(vdatum, "egm1984") == 0 || simCore::caseCompare(vdatum, "egm84") == 0)
       srs_ = SpatialReference::create("wgs84", "egm84");
     else if (simCore::caseCompare(vdatum, "egm1996") == 0 || simCore::caseCompare(vdatum, "egm96") == 0)
@@ -420,9 +420,9 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
   {
     float priority = DEFAULT_LABEL_PRIORITY;
     // Note that this if() statement will assign priority value if isValidNumber succeeds.
-    if (parsedShape.hasValue("priority") && !simCore::isValidNumber(parsedShape.stringValue("priority"), priority))
+    if (parsedShape.hasValue(GOG_PRIORITY) && !simCore::isValidNumber(parsedShape.stringValue(GOG_PRIORITY), priority))
     {
-      SIM_WARN << LC << "Invalid priority value \"" << parsedShape.stringValue("priority") << "\", expected numeric value.\n";
+      SIM_WARN << LC << "Invalid priority value \"" << parsedShape.stringValue(GOG_PRIORITY) << "\", expected numeric value.\n";
     }
     // Negative priority means to always show
     if (priority < 0.0)
@@ -430,12 +430,12 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
     style_.getOrCreateSymbol<TextSymbol>()->priority() = priority;
 
     // Print the priority for debugging purposes
-    SIM_DEBUG << "GOG Annotation \"" << parsedShape.stringValue("text", "<None>") << "\" priority: "
+    SIM_DEBUG << "GOG Annotation \"" << parsedShape.stringValue(GOG_TEXT, "<None>") << "\" priority: "
       << (priority == std::numeric_limits<float>::max() ? -1.f : priority) << "\n";
   }
 
   // name.
-  name_ = parsedShape.stringValue("3d name");
+  name_ = parsedShape.stringValue(GOG_3D_NAME);
   if (name_.empty())
     name_ = simVis::GOG::Parser::getKeywordFromShape(shape);
 }
@@ -449,58 +449,58 @@ void ParserData::init()
 
 void ParserData::parseOffsetsAndTracking(const ParsedShape& parsedShape)
 {
-  if (parsedShape.hasValue("orient"))
+  if (parsedShape.hasValue(GOG_ORIENT))
   {
     locatorComps_ &= ~Locator::COMP_ORIENTATION; // reset first
-    const std::string& value = parsedShape.stringValue("orient");
+    const std::string& value = parsedShape.stringValue(GOG_ORIENT);
     if (value.find("c") != std::string::npos) locatorComps_ |= Locator::COMP_HEADING;
     if (value.find("p") != std::string::npos) locatorComps_ |= Locator::COMP_PITCH;
     if (value.find("r") != std::string::npos) locatorComps_ |= Locator::COMP_ROLL;
   }
 
-  if (parsedShape.hasValue("3d follow"))
+  if (parsedShape.hasValue(GOG_3D_FOLLOW))
   {
     locatorComps_ &= ~Locator::COMP_ORIENTATION; // reset first
-    const std::string& value = parsedShape.stringValue("3d follow");
+    const std::string& value = parsedShape.stringValue(GOG_3D_FOLLOW);
     if (value.find("c") != std::string::npos) locatorComps_ |= Locator::COMP_HEADING;
     if (value.find("p") != std::string::npos) locatorComps_ |= Locator::COMP_PITCH;
     if (value.find("r") != std::string::npos) locatorComps_ |= Locator::COMP_ROLL;
   }
 
-  if (parsedShape.hasValue("3d offsetcourse"))
+  if (parsedShape.hasValue(GOG_3D_OFFSETCOURSE))
   {
     locatorComps_ |= Locator::COMP_HEADING;
-    localHeadingOffset_ = Angle(parsedShape.doubleValue("3d offsetcourse", 0.0), units_.angleUnits_);
+    localHeadingOffset_ = Angle(parsedShape.doubleValue(GOG_3D_OFFSETCOURSE, 0.0), units_.angleUnits_);
   }
-  if (parsedShape.hasValue("3d offsetpitch"))
+  if (parsedShape.hasValue(GOG_3D_OFFSETPITCH))
   {
     locatorComps_ |= Locator::COMP_PITCH;
-    localPitchOffset_ = Angle(parsedShape.doubleValue("3d offsetpitch", 0.0), units_.angleUnits_);
+    localPitchOffset_ = Angle(parsedShape.doubleValue(GOG_3D_OFFSETPITCH, 0.0), units_.angleUnits_);
   }
-  if (parsedShape.hasValue("3d offsetroll"))
+  if (parsedShape.hasValue(GOG_3D_OFFSETROLL))
   {
     locatorComps_ |= Locator::COMP_ROLL;
-    localRollOffset_ = Angle(parsedShape.doubleValue("3d offsetroll", 0.0), units_.angleUnits_);
+    localRollOffset_ = Angle(parsedShape.doubleValue(GOG_3D_OFFSETROLL, 0.0), units_.angleUnits_);
   }
 
-  if (parsedShape.hasValue("heading"))
+  if (parsedShape.hasValue(GOG_ORIENT_HEADING))
   {
-    localHeadingOffset_ = Angle(parsedShape.doubleValue("heading", 0.0), units_.angleUnits_);
+    localHeadingOffset_ = Angle(parsedShape.doubleValue(GOG_ORIENT_HEADING, 0.0), units_.angleUnits_);
   }
-  if (parsedShape.hasValue("pitch"))
+  if (parsedShape.hasValue(GOG_ORIENT_PITCH))
   {
-    localPitchOffset_ = Angle(parsedShape.doubleValue("pitch", 0.0), units_.angleUnits_);
+    localPitchOffset_ = Angle(parsedShape.doubleValue(GOG_ORIENT_PITCH, 0.0), units_.angleUnits_);
   }
-  if (parsedShape.hasValue("roll"))
+  if (parsedShape.hasValue(GOG_ORIENT_ROLL))
   {
-    localRollOffset_ = Angle(parsedShape.doubleValue("roll", 0.0), units_.angleUnits_);
+    localRollOffset_ = Angle(parsedShape.doubleValue(GOG_ORIENT_ROLL, 0.0), units_.angleUnits_);
   }
 
   // scale
   scale_->set(
-    parsedShape.doubleValue("scalex", 1.0f),
-    parsedShape.doubleValue("scaley", 1.0f),
-    parsedShape.doubleValue("scalez", 1.0f));
+    parsedShape.doubleValue(GOG_SCALEX, 1.0f),
+    parsedShape.doubleValue(GOG_SCALEY, 1.0f),
+    parsedShape.doubleValue(GOG_SCALEZ, 1.0f));
 }
 
 void ParserData::parsePoints(const ParsedShape& parent, const UnitsState& us, Geometry* geom, bool& isLLA)

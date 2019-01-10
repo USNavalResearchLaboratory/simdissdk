@@ -41,34 +41,34 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
                        osgEarth::MapNode*       mapNode)
 {
   // all the ways to set the radii
-  osgEarth::Distance y_diam(parsedShape.doubleValue("minoraxis", 1000.0), p.units_.rangeUnits_);
-  osgEarth::Distance x_diam(parsedShape.doubleValue("majoraxis", 1000.0), p.units_.rangeUnits_);
-  osgEarth::Distance z_diam(parsedShape.doubleValue("height", 0.0), p.units_.altitudeUnits_);
+  osgEarth::Distance y_diam(parsedShape.doubleValue(GOG_MINORAXIS, 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance x_diam(parsedShape.doubleValue(GOG_MAJORAXIS, 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance z_diam(parsedShape.doubleValue(GOG_HEIGHT, 0.0), p.units_.altitudeUnits_);
 
-  if (parsedShape.hasValue("radius"))
+  if (parsedShape.hasValue(GOG_RADIUS))
   {
-    x_diam = parsedShape.doubleValue("radius", 0) * 2;
-    y_diam = parsedShape.doubleValue("radius", 0) * 2;
+    x_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
+    y_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
     if (z_diam == 0.0)
-      z_diam = parsedShape.doubleValue("radius", 0) * 2;
+      z_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
   }
 
-  if (parsedShape.hasValue("diameter"))
+  if (parsedShape.hasValue(GOG_DIAMETER))
   {
-    x_diam = parsedShape.doubleValue("diameter", 0);
-    y_diam = parsedShape.doubleValue("diameter", 0);
+    x_diam = parsedShape.doubleValue(GOG_DIAMETER, 0);
+    y_diam = parsedShape.doubleValue(GOG_DIAMETER, 0);
     if (z_diam == 0.0)
-      z_diam = parsedShape.doubleValue("diameter", 0);
+      z_diam = parsedShape.doubleValue(GOG_DIAMETER, 0);
   }
 
-  if (parsedShape.hasValue("semiminoraxis"))
+  if (parsedShape.hasValue(GOG_SEMIMINORAXIS))
   {
-    y_diam = parsedShape.doubleValue("semiminoraxis", 0) * 2;
+    y_diam = parsedShape.doubleValue(GOG_SEMIMINORAXIS, 0) * 2;
   }
 
-  if (parsedShape.hasValue("semimajoraxis"))
+  if (parsedShape.hasValue(GOG_SEMIMAJORAXIS))
   {
-    x_diam = parsedShape.doubleValue("semimajoraxis", 0) * 2;
+    x_diam = parsedShape.doubleValue(GOG_SEMIMAJORAXIS, 0) * 2;
   }
 
   osg::Vec4f color(osgEarth::Symbology::Color::White);
