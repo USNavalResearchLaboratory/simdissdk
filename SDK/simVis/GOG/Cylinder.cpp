@@ -46,7 +46,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
                       MapNode*                 mapNode)
 {
   Distance radius(parsedShape.doubleValue(GOG_RADIUS, 1000.), p.units_.rangeUnits_);
-  Angle    rotation(parsedShape.doubleValue(GOG_ROTATION, 0.0), p.units_.angleUnits_);
+  Angle    rotation(0., p.units_.angleUnits_); // Rotation handled by parameters in GOG_ORIENT
   Distance height(parsedShape.doubleValue(GOG_HEIGHT, 1000.), p.units_.altitudeUnits_);
   Angle    start(parsedShape.doubleValue(GOG_ANGLESTART, 0.0), p.units_.angleUnits_);
   Angle    end = start;

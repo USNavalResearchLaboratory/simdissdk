@@ -130,6 +130,7 @@ enum ShapeParameter
   GOG_FONTNAME,
   GOG_FONTSIZE,
   GOG_HEIGHT, // Used by Cylinder, Ellipsoid
+  GOG_INNERRADIUS, // Used by Arc; currently unsupported
   GOG_LINECOLOR,
   GOG_LINEPROJECTION,
   GOG_LINESTYLE,
@@ -156,12 +157,6 @@ enum ShapeParameter
   GOG_3D_OFFSETCOURSE,
   GOG_3D_OFFSETPITCH,
   GOG_3D_OFFSETROLL,
-
-  GOG_DIAMETER, // Used by Ellipsoid
-  GOG_INNERRADIUS, // Used by Arc
-  GOG_SEMIMAJORAXIS, // Used by Ellipsoid
-  GOG_SEMIMINORAXIS, // Used by Ellipsoid
-  GOG_ROTATION, // Used by Arc, Cylinder, Ellipse
 
   // Set to non-empty when GOG is absolute
   GOG_ABSOLUTE = 200,

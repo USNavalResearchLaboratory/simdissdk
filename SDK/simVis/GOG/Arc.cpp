@@ -237,7 +237,7 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   }
 
   Distance radius(parsedShape.doubleValue(GOG_RADIUS, 1000.), p.units_.rangeUnits_);
-  Angle    rotation(parsedShape.doubleValue(GOG_ROTATION, 0.0), p.units_.angleUnits_);
+  Angle    rotation(0., p.units_.angleUnits_); // Rotation handled by parameters in GOG_ORIENT
   Angle    start(parsedShape.doubleValue(GOG_ANGLESTART, 0.0), p.units_.angleUnits_);
   // angFix() the start between 0,360.  osgEarth takes the direct path between two angles
   // when drawing the arc.  Two angles (start+end) between [0,360) means no crossing 0

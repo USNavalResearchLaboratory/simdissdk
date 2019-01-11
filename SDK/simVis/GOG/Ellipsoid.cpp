@@ -48,27 +48,9 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
   if (parsedShape.hasValue(GOG_RADIUS))
   {
     x_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
-    y_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
+    y_diam = x_diam;
     if (z_diam == 0.0)
-      z_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
-  }
-
-  if (parsedShape.hasValue(GOG_DIAMETER))
-  {
-    x_diam = parsedShape.doubleValue(GOG_DIAMETER, 0);
-    y_diam = parsedShape.doubleValue(GOG_DIAMETER, 0);
-    if (z_diam == 0.0)
-      z_diam = parsedShape.doubleValue(GOG_DIAMETER, 0);
-  }
-
-  if (parsedShape.hasValue(GOG_SEMIMINORAXIS))
-  {
-    y_diam = parsedShape.doubleValue(GOG_SEMIMINORAXIS, 0) * 2;
-  }
-
-  if (parsedShape.hasValue(GOG_SEMIMAJORAXIS))
-  {
-    x_diam = parsedShape.doubleValue(GOG_SEMIMAJORAXIS, 0) * 2;
+      z_diam = x_diam;
   }
 
   osg::Vec4f color(osgEarth::Symbology::Color::White);
