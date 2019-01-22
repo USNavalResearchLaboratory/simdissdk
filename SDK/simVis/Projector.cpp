@@ -24,6 +24,7 @@
 #include "osg/MatrixTransform"
 #include "osg/Notify"
 #include "osgDB/ReadFile"
+#include "osgUtil/CullVisitor"
 #include "osgEarth/Horizon"
 
 #include "simNotify/Notify.h"
@@ -175,7 +176,6 @@ void ProjectorNode::init_()
   // create the uniforms that will control the texture projection:
   projectorActive_        = new osg::Uniform(osg::Uniform::BOOL,       "projectorActive");
   projectorAlpha_         = new osg::Uniform(osg::Uniform::FLOAT,      "projectorAlpha");
-  texGenMatUniform_       = new osg::Uniform(osg::Uniform::FLOAT_MAT4, "simProjTexGenMat");
   texProjPosUniform_      = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "simProjPos");
   texProjDirUniform_      = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "simProjDir");
 
@@ -428,13 +428,15 @@ void ProjectorNode::syncWithLocator()
   // construct the model view matrix:
   const osg::Matrix modelViewMat = modelMat * viewMat;
 
-  // the coordinate generator for our projected texture:
-  const osg::Matrix texGenMat =
+  // the coordinate generator for our projected texture -
+  // during traversal, multiple the inverse view matrix by this
+  // matrix to set a texture projection uniform that transform
+  // verts from view space to texture space
+  texGenMatrix_ =
     modelViewMat *
     projectionMat *
     osg::Matrix::translate(1.0, flip, 1.0) *        // bias
     osg::Matrix::scale(0.5, 0.5 * flip, 0.5);     // scale
-  texGenMatUniform_->set(texGenMat);
 
   // the texture projector's position and directional vector in world space:
   osg::Vec3d eye, cen, up;
@@ -564,6 +566,8 @@ void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
 
   stateSet->setDefine("SIMVIS_PROJECT_ON_PLATFORM");
 
+  stateSet->setDefine("SIMVIS_USE_REX");
+
   // tells the shader where to bind the sampler uniform
   stateSet->addUniform(new osg::Uniform("simProjSampler", ProjectorManager::getTextureImageUnit()));
 
@@ -572,7 +576,6 @@ void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
 
   stateSet->addUniform(projectorActive_.get());
   stateSet->addUniform(projectorAlpha_.get());
-  stateSet->addUniform(texGenMatUniform_.get());
   stateSet->addUniform(texProjDirUniform_.get());
   stateSet->addUniform(texProjPosUniform_.get());
 }
@@ -595,7 +598,6 @@ void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
 
   stateSet->removeUniform(projectorActive_.get());
   stateSet->removeUniform(projectorAlpha_.get());
-  stateSet->removeUniform(texGenMatUniform_.get());
   stateSet->removeUniform(texProjDirUniform_.get());
   stateSet->removeUniform(texProjPosUniform_.get());
 }

@@ -102,6 +102,9 @@ public:
   /// Load image into texture
   void setImage(osg::Image *image);
 
+  /// Gets the texture generation matrix
+  const osg::Matrixd& getTexGenMatrix() const { return texGenMatrix_; }
+
   /**
    * Gets a pointer to the last data store update, or NULL if
    * none have been applied.
@@ -213,6 +216,7 @@ private:
   bool                         hasLastUpdate_;
   bool                         hasLastPrefs_;
 
+  osg::Matrixd texGenMatrix_;
   osg::ref_ptr<osg::Texture2D> texture_;
   // Projector video interface for transferring video image.
   osg::ref_ptr<ProjectorTextureImpl> projectorTextureImpl_;
@@ -222,7 +226,6 @@ private:
   osg::MatrixTransform* graphics_;
   osg::ref_ptr<osg::Uniform> projectorActive_;
   osg::ref_ptr<osg::Uniform> projectorAlpha_;
-  osg::ref_ptr<osg::Uniform> texGenMatUniform_;
   osg::ref_ptr<osg::Uniform> texProjPosUniform_;
   osg::ref_ptr<osg::Uniform> texProjDirUniform_;
   osg::ref_ptr<osg::Uniform> texProjSamplerUniform_;
