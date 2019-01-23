@@ -651,12 +651,6 @@ void SceneManager::initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::
 
 void SceneManager::initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions& options)
 {
-  // Drop default tile size down to 7 by default to reduce tile subdivision (suggested by GW 5/13/15)
-  options.tileSize() = 7;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-  // edges will be normalized, reducing seam stitch artifacts
-  options.normalizeEdges() = true;
-#endif
-  // turn off normal maps
-  options.normalMaps() = false;
+  // Default options for the Rex engine can be initialized here.
+  // These options apply to the default map loaded on initialization.
 }
