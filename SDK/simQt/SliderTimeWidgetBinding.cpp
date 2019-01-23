@@ -22,8 +22,8 @@
 
 #include <cassert>
 #include <QSlider>
-
 #include "simCore/Time/TimeClass.h"
+#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/TimeWidget.h"
 #include "simQt/SliderTimeWidgetBinding.h"
 
@@ -93,7 +93,7 @@ void SliderTimeWidgetBinding::setSliderValue_(const simCore::TimeStamp& time)
   int index = static_cast<int>(max * (currentTime - minTime) / (maxTime - minTime));
 
   // Block slider signals when setting slider value to prevent constantly changing time bounds (e.g. live mode) from causing drift
-  QSignalBlocker blocker(slider_);
+  simQt::ScopedSignalBlocker blocker(*slider_);
   slider_->setValue(index);
 }
 
