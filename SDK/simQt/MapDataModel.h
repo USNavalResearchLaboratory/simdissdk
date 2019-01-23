@@ -159,6 +159,8 @@ signals:
   /** Qt signal as described by the signal name */
   void imageLayerVisibleRangeChanged(osgEarth::ImageLayer* layer);
   /** Qt signal as described by the signal name */
+  void imageLayerAltitudeChanged(osgEarth::ImageLayer* layer);
+  /** Qt signal as described by the signal name */
   void imageLayerAdded(osgEarth::ImageLayer* layer);
   /** Qt signal as described by the signal name */
   void elevationLayerVisibleChanged(osgEarth::ElevationLayer* layer);
