@@ -32,10 +32,24 @@ namespace simVis {
 static const char* SEA_LEVEL_UNIFORM = "simVis_BathymetryGenerator_seaLevel";
 static const char* OFFSET_UNIFORM = "simVis_BathymetryGenerator_offset";
 
+BathymetryGenerator::AlterTileBBoxCB::AlterTileBBoxCB()
+{
+  //nop
+}
+
+
+void BathymetryGenerator::AlterTileBBoxCB::modifyBoundingBox(const osgEarth::TileKey&, osg::BoundingBox& box) const
+{
+    box.zMin() += offset_;
+}
+
 BathymetryGenerator::BathymetryGenerator()
 {
+  const float defaultOffset = -75.0f;
   seaLevelUniform_ = new osg::Uniform(SEA_LEVEL_UNIFORM, 0.1f);
-  offsetUniform_ = new osg::Uniform(OFFSET_UNIFORM, -75.0f);
+  offsetUniform_ = new osg::Uniform(OFFSET_UNIFORM, defaultOffset);
+  alterTileBBoxCB_ = new AlterTileBBoxCB();  
+  alterTileBBoxCB_->offset_ = defaultOffset;
 }
 
 void BathymetryGenerator::onInstall(osgEarth::TerrainEngineNode* engine)
@@ -51,6 +65,8 @@ void BathymetryGenerator::onInstall(osgEarth::TerrainEngineNode* engine)
 
     stateSet->addUniform(seaLevelUniform_.get());
     stateSet->addUniform(offsetUniform_.get());
+
+    engine->addModifyTileBoundingBoxCallback(alterTileBBoxCB_.get());
   }
 }
 
@@ -58,6 +74,8 @@ void BathymetryGenerator::onUninstall(osgEarth::TerrainEngineNode* engine)
 {
   if (engine)
   {
+    engine->removeModifyTileBoundingBoxCallback(alterTileBBoxCB_.get());
+
     osg::StateSet* stateSet = engine->getStateSet();
     if (stateSet)
     {
@@ -91,6 +109,7 @@ float BathymetryGenerator::getSeaLevelElevation() const
 void BathymetryGenerator::setOffset(float value)
 {
   offsetUniform_->set(value);
+  alterTileBBoxCB_->offset_ = value;
 }
 
 float BathymetryGenerator::getOffset() const

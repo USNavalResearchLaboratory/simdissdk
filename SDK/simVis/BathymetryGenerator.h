@@ -85,6 +85,14 @@ protected:
 private:
   osg::ref_ptr<osg::Uniform> seaLevelUniform_;
   osg::ref_ptr<osg::Uniform> offsetUniform_;
+
+  /// callback to ensure a proper tile bounding box ...
+  struct AlterTileBBoxCB : public osgEarth::TerrainEngineNode::ModifyTileBoundingBoxCallback {
+    AlterTileBBoxCB();
+    void modifyBoundingBox(const osgEarth::TileKey&, osg::BoundingBox&) const;
+    float offset_;
+  };
+  osg::ref_ptr<AlterTileBBoxCB> alterTileBBoxCB_;
 };
 
 } // namespace simVis
