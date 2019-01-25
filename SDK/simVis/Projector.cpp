@@ -365,10 +365,7 @@ bool ProjectorNode::readRasterFile_(const std::string& filename)
 {
   bool imageLoaded = false;
   if (filename.empty())
-  {
-    SIM_WARN << "Filename empty" << std::endl;
     return imageLoaded;
-  }
 
   osg::Image *image = osgDB::readImageFile(filename);
   if (image)
@@ -381,10 +378,6 @@ bool ProjectorNode::readRasterFile_(const std::string& filename)
     setImage(image);
     imageLoaded = true;
   }
-  else
-  {
-      SIM_WARN << "osgDB::readImageFile(" << filename << ") failed" << std::endl;
-  }
   return imageLoaded;
 }
 
@@ -396,11 +389,11 @@ void ProjectorNode::loadRequestedFile_(const std::string& newFilename)
   // If the file is a video file (TMD or LST), load node file via plugin and set projector interface
   if (simCore::hasExtension(newFilename, ".tmd") || simCore::hasExtension(newFilename, ".lst"))
   {
-    imageLoaded = readVideoFile_(newFilename);
+    imageLoaded = readVideoFile_(absURL);
   }
   else // Otherwise, load a static file
   {
-    imageLoaded = readRasterFile_(newFilename);
+    imageLoaded = readRasterFile_(absURL);
   }
 
   // if there's not image, use a default "broken" image.
