@@ -31,6 +31,7 @@
 #include <QFileDialog>
 
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/String/Utils.h"
 #include "simQt/ColorButton.h"
 #include "simQt/DirectorySelectorWidget.h"
@@ -261,6 +262,16 @@ void SettingsDoubleSpinBoxDelegate::setEditorData(QWidget* editor, const QModelI
   spinBox->setMaximum(max);
   spinBox->setDecimals(numDecimals);
   spinBox->setValue(index.model()->data(index, Qt::EditRole).toDouble());
+
+  // If minVal and maxVal both have a valid value and aren't equal, set the step to be (max + min) / 100 rounded to a multiple of precision
+  if (min != -std::numeric_limits<double>::max() && max != std::numeric_limits<double>::max() && min != max)
+  {
+    double step = (max - min) / 100;
+    // Round to a multiple of precision
+    double precisionMulti = std::pow(10, numDecimals);
+    step = simCore::round(step * precisionMulti) / precisionMulti;
+    spinBox->setSingleStep(step);
+  }
 }
 
 void SettingsDoubleSpinBoxDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
