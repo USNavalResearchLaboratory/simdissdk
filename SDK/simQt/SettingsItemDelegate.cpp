@@ -268,7 +268,7 @@ void SettingsDoubleSpinBoxDelegate::setEditorData(QWidget* editor, const QModelI
   {
     double step = (max - min) / 100;
     // Round to a multiple of precision
-    double precisionMulti = std::pow(10, numDecimals);
+    double precisionMulti = std::pow(10.0, numDecimals);
     step = simCore::round(step * precisionMulti) / precisionMulti;
     spinBox->setSingleStep(step);
   }

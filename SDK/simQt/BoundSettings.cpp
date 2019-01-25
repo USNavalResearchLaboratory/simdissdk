@@ -347,7 +347,7 @@ void BoundDoubleSetting::bindTo(QDoubleSpinBox* box, bool populateToolTip, bool 
         {
           double step = (maxVal - minVal) / 100;
           // Round to a multiple of precision
-          double precisionMulti = std::pow(10, metaData.numDecimals());
+          double precisionMulti = std::pow(10.0, metaData.numDecimals());
           step = simCore::round(step * precisionMulti) / precisionMulti;
           box->setSingleStep(step);
         }
