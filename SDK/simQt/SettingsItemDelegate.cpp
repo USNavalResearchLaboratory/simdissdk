@@ -263,15 +263,9 @@ void SettingsDoubleSpinBoxDelegate::setEditorData(QWidget* editor, const QModelI
   spinBox->setDecimals(numDecimals);
   spinBox->setValue(index.model()->data(index, Qt::EditRole).toDouble());
 
-  // If minVal and maxVal both have a valid value and aren't equal, set the step to be (max + min) / 100 rounded to a multiple of precision
+  // If minVal and maxVal both have a valid value and aren't equal, set a reasonable step based on range and precision
   if (min != -std::numeric_limits<double>::max() && max != std::numeric_limits<double>::max() && min != max)
-  {
-    double step = (max - min) / 100;
-    // Round to a multiple of precision
-    double precisionMulti = std::pow(10.0, numDecimals);
-    step = simCore::round(step * precisionMulti) / precisionMulti;
-    spinBox->setSingleStep(step);
-  }
+    spinBox->setSingleStep(simCore::guessStepSize(max - min, numDecimals));
 }
 
 void SettingsDoubleSpinBoxDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const

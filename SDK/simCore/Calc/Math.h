@@ -162,6 +162,26 @@ namespace simCore
     return fabs(a - b) < t;
   }
 
+  /**
+   * Gives a reasonable step size for incrementing through the given range.
+   * Step size is a power of 10, no smaller than 1e(-precision), and spans the full range in no more than 1000 increments.
+   * @param[in ] range Size of the range of values.  Must be >0
+   * @param[in ] precision Precision of the range.  Must be >=0
+   * @return A reasonable step size for incrementing through the range or 0 if input is invalid
+   */
+  inline double guessStepSize(double range, int precision)
+  {
+    if (range <= 0 || precision < 0)
+    {
+      // Given invalid input
+      assert(0);
+      return 0;
+    }
+    double rangeStep = pow(10.0, ceil(log10(range))) / 1000;
+    double precStep = 1/pow(10.0, precision);
+    return sdkMax(rangeStep, precStep);
+  }
+
   //--------------------------------------------------------------------------
   //---Vec3 related functions
 

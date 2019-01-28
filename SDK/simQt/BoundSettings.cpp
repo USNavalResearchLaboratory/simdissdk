@@ -342,15 +342,9 @@ void BoundDoubleSetting::bindTo(QDoubleSpinBox* box, bool populateToolTip, bool 
         }
         box->setDecimals(metaData.numDecimals());
 
-        // If minVal and maxVal both have a valid value and aren't equal, set the step to be (max + min) / 100 rounded to a multiple of precision
+        // If minVal and maxVal both have a valid value and aren't equal, set a reasonable step based on range and precision
         if (minVal != -std::numeric_limits<double>::max() && maxVal != std::numeric_limits<double>::max())
-        {
-          double step = (maxVal - minVal) / 100;
-          // Round to a multiple of precision
-          double precisionMulti = std::pow(10.0, metaData.numDecimals());
-          step = simCore::round(step * precisionMulti) / precisionMulti;
-          box->setSingleStep(step);
-        }
+          box->setSingleStep(simCore::guessStepSize(maxVal - minVal, metaData.numDecimals()));
       }
     }
   }
