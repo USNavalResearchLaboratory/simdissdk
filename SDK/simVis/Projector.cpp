@@ -118,6 +118,35 @@ namespace
     mt->setMatrix(osg::Matrixd::inverse(mv));
   }
 
+  /**
+   * Identical to the UpdateProjMatrix found in ProjectorManager.cpp -
+   * but with a different base class. In osgEarth 3.x we expect that
+   * this will be consolidated and osgEarth::Layer::TraversalCallback
+   * will be replaced with osg::Callback, after which these two can be
+   * unified.
+   */
+  class UpdateProjMatrix : public osg::NodeCallback
+  {
+  public:
+    UpdateProjMatrix(simVis::ProjectorNode* node) : proj_(node)
+    {
+      //nop
+    }
+
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+      osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+      osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
+      osg::Matrixf projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj_->getTexGenMatrix();
+      ss->addUniform(new osg::Uniform("simProjTexGenMat", projMat));
+      cv->pushStateSet(ss.get());
+      traverse(node, nv);
+      cv->popStateSet();
+    }
+
+  private:
+    osg::ref_ptr<simVis::ProjectorNode> proj_;
+  };
 };
 
 namespace simVis
@@ -337,6 +366,7 @@ bool ProjectorNode::readRasterFile_(const std::string& filename)
   bool imageLoaded = false;
   if (filename.empty())
     return imageLoaded;
+
   osg::Image *image = osgDB::readImageFile(filename);
   if (image)
   {
@@ -557,16 +587,25 @@ unsigned int ProjectorNode::objectIndexTag() const
   return 0;
 }
 
-void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
+void ProjectorNode::addProjectionToNode(osg::Node* node)
 {
+  if (!node) return;
+
+  // create the projection matrix callback on demand:
+  if (!projectOnNodeCallback_.valid())
+  {
+    projectOnNodeCallback_ = new UpdateProjMatrix(this);
+  }
+
+  // install the texture application snippet.
+  // TODO: optimize by creating this VP once and sharing across all projectors (low priority)
+  osg::StateSet* stateSet = node->getOrCreateStateSet();
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
   simVis::Shaders package;
   package.load(vp, package.projectorManagerVertex());
   package.load(vp, package.projectorManagerFragment());
 
   stateSet->setDefine("SIMVIS_PROJECT_ON_PLATFORM");
-
-  stateSet->setDefine("SIMVIS_USE_REX");
 
   // tells the shader where to bind the sampler uniform
   stateSet->addUniform(new osg::Uniform("simProjSampler", ProjectorManager::getTextureImageUnit()));
@@ -578,28 +617,39 @@ void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
   stateSet->addUniform(projectorAlpha_.get());
   stateSet->addUniform(texProjDirUniform_.get());
   stateSet->addUniform(texProjPosUniform_.get());
+
+  // to compute the texture generation matrix:
+  node->addCullCallback(projectOnNodeCallback_.get());
 }
 
-void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
+void ProjectorNode::removeProjectionFromNode(osg::Node* node)
 {
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
-  if (vp)
+  if (!node) return;
+
+  osg::StateSet* stateSet = node->getStateSet();
+  if (stateSet)
   {
-    simVis::Shaders package;
-    package.unload(vp, package.projectorManagerVertex());
-    package.unload(vp, package.projectorManagerFragment());
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
+    if (vp)
+    {
+      simVis::Shaders package;
+      package.unload(vp, package.projectorManagerVertex());
+      package.unload(vp, package.projectorManagerFragment());
+    }
+
+    stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
+
+    stateSet->removeUniform("simProjSampler");
+
+    stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
+
+    stateSet->removeUniform(projectorActive_.get());
+    stateSet->removeUniform(projectorAlpha_.get());
+    stateSet->removeUniform(texProjDirUniform_.get());
+    stateSet->removeUniform(texProjPosUniform_.get());
   }
 
-  stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
-
-  stateSet->removeUniform("simProjSampler");
-
-  stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
-
-  stateSet->removeUniform(projectorActive_.get());
-  stateSet->removeUniform(projectorAlpha_.get());
-  stateSet->removeUniform(texProjDirUniform_.get());
-  stateSet->removeUniform(texProjPosUniform_.get());
+  node->removeCullCallback(projectOnNodeCallback_.get());
 }
 
 }

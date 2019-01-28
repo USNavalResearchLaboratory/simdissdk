@@ -1012,15 +1012,12 @@ unsigned int PlatformNode::objectIndexTag() const
 
 void PlatformNode::acceptProjector(ProjectorNode* proj)
 {
-  osg::StateSet* stateSet = this->getOrCreateStateSet();
-  proj->addProjectionToStateSet(stateSet);
+  proj->addProjectionToNode(model_->offsetNode());
 }
 
 void PlatformNode::removeProjector(ProjectorNode* proj)
 {
-  osg::StateSet* stateSet = this->getStateSet();
-  if (stateSet)
-    proj->removeProjectionFromStateSet(stateSet);
+  proj->removeProjectionFromNode(model_->offsetNode());
 }
 
 }

@@ -172,11 +172,11 @@ public: // EntityNode interface
   /** This entity type is, at this time, unpickable. */
   virtual unsigned int objectIndexTag() const;
 
-  /** Configure a state set to accept the texture projected by this projector */
-  void addProjectionToStateSet(osg::StateSet* stateSet);
+  /** Configure a node to accept the texture projected by this projector */
+  void addProjectionToNode(osg::Node* node);
 
-  /** Remove the attributes added by addProjectionToStateSet */
-  void removeProjectionFromStateSet(osg::StateSet* stateSet);
+  /** Remove the setup configured by addProjectionToNode */
+  void removeProjectionFromNode(osg::Node* node);
 
   /**
   * Get the traversal mask for this node type
@@ -229,6 +229,9 @@ private:
   osg::ref_ptr<osg::Uniform> texProjPosUniform_;
   osg::ref_ptr<osg::Uniform> texProjDirUniform_;
   osg::ref_ptr<osg::Uniform> texProjSamplerUniform_;
+
+  osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
+
   friend class ProjectorManager; // manager wants access to the uniforms.
 
   void getMatrices_(
