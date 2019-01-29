@@ -63,7 +63,6 @@ public:
   float getOffset() const;
 
 public: // osgEarth::TerrainEffect
-
   /** Called by the terrain engine when you install the effect */
   void onInstall(osgEarth::TerrainEngineNode* engine);
 
@@ -78,20 +77,15 @@ public: // osg::Object
   const char* className() const { return "BathymetryGenerator"; }
 
 protected:
-
   /// osg::Referenced-derived
-  virtual ~BathymetryGenerator() {}
+  virtual ~BathymetryGenerator();
 
 private:
   osg::ref_ptr<osg::Uniform> seaLevelUniform_;
   osg::ref_ptr<osg::Uniform> offsetUniform_;
 
-  /// callback to ensure a proper tile bounding box ...
-  struct AlterTileBBoxCB : public osgEarth::TerrainEngineNode::ModifyTileBoundingBoxCallback {
-    AlterTileBBoxCB();
-    void modifyBoundingBox(const osgEarth::TileKey&, osg::BoundingBox&) const;
-    float offset_;
-  };
+  /// callback to ensure a proper tile bounding box on tiles that are dropped in altitude
+  class AlterTileBBoxCB;
   osg::ref_ptr<AlterTileBBoxCB> alterTileBBoxCB_;
 };
 
