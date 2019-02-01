@@ -197,6 +197,12 @@ include(CMakeModules/ImportOSGQT.cmake)
 # Find OpenGL library, required to execute certain GL calls
 find_package(OpenGL)
 
+## Find and include the OpenGL core header
+# By default search for the GLCORE header in the OSG include path.  Non-default locations for the header
+# can be set through the GLCORE_GLCOREARB_HEADER CMake cache variable
+set(GLCORE_ROOT ${OSG_LIBRARY_INCLUDE_PATH})
+find_package(GLCORE)
+
 
 # --- osgEarth -----------------------------
 
