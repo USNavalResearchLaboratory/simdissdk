@@ -135,12 +135,6 @@ public:
   /// Set the creator for the LOS nodes
   void setLosCreator(LosCreator* losCreator);
 
-  /// Accept textures from a projector.
-  void acceptProjector(ProjectorNode* projector);
-
-  /// Stop accepting textures from a projector.
-  void removeProjector(ProjectorNode* projector);
-
 public: // EntityNode interface
 
   /**
@@ -197,6 +191,12 @@ public: // EntityNode interface
   * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
   */
   virtual double range() const;
+
+  /// Accept textures from a projector.
+  void acceptProjector(ProjectorNode* projector);
+
+  /// Stop accepting textures from a projector.
+  void removeProjector(ProjectorNode* projector);
 
   /** Retrieve the object index tag for platforms. */
   virtual unsigned int objectIndexTag() const;

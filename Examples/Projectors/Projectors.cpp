@@ -310,15 +310,29 @@ simData::ObjectId addGate(simData::ObjectId hostId, simData::DataStore &dataStor
   simData::DataStore::Transaction transaction;
 
   simData::GateProperties *gateProps = dataStore.addGate(&transaction);
-  simData::ObjectId result = gateProps->id();
+  simData::ObjectId gateId = gateProps->id();
   gateProps->set_hostid(hostId);
   transaction.complete(&gateProps);
 
-  simData::GatePrefs* gatePrefs = dataStore.mutable_gatePrefs(result, &transaction);
+  simData::GatePrefs* gatePrefs = dataStore.mutable_gatePrefs(gateId, &transaction);
   gatePrefs->set_gateazimuthoffset(osg::DegreesToRadians(0.0));
+  gatePrefs->mutable_commonprefs()->set_color(0xffffff7f); //simVis::Color::White.as(simVis::Color::RGBA));
+  gatePrefs->set_fillpattern(simData::GatePrefs_FillPattern_ALPHA);
+  gatePrefs->set_gatedrawmode(simData::GatePrefs_DrawMode_ANGLE);
+  gatePrefs->set_gatelighting(false);
   transaction.complete(&gatePrefs);
 
-  return result;
+  simData::GateUpdate* gateUpdate = dataStore.addGateUpdate(gateId, &transaction);
+  gateUpdate->set_time(0.0);
+  gateUpdate->set_minrange(85000.0);
+  gateUpdate->set_maxrange(85000.0);
+  gateUpdate->set_azimuth(90.0 * simCore::DEG2RAD);
+  gateUpdate->set_elevation(0.0);
+  gateUpdate->set_width(40.0 * simCore::DEG2RAD);
+  gateUpdate->set_height(30.0 * simCore::DEG2RAD);
+  transaction.complete(&gateUpdate);
+
+  return gateId;
 }
 
 /// connect beam to platform, set some properties
@@ -384,6 +398,13 @@ int main(int argc, char **argv)
   osg::ref_ptr<simVis::EntityNode> vehicle_1 = scenario->find(platformId_1);
   projectorId_1 = addProjector(scenario.get(), vehicle_1->getId(), dataStore, imageURL, true);
 
+  // add a gate to use it as a projection surface:
+  simData::ObjectId gateId = addGate(platformId_1, dataStore);
+  osg::ref_ptr<simVis::GateNode> gateNode = scenario->find<simVis::GateNode>(gateId);
+  osg::ref_ptr<simVis::ProjectorNode> projector_1 = scenario->find<simVis::ProjectorNode>(projectorId_1);
+  if (gateNode.valid() && projector_1.valid())
+      gateNode->acceptProjector(projector_1.get());
+
   /// platform to use as a target to test projecting on to a platform
   platformId_2 = addPlatform(dataStore);
   osg::ref_ptr<simVis::PlatformNode> vehicle_2 = scenario->find<simVis::PlatformNode>(platformId_2);
@@ -409,9 +430,9 @@ int main(int argc, char **argv)
   sim_0->setSimulateRoll(false);
   sim_0->setSimulatePitch(true);
 
-  sim_1->addWaypoint(simUtil::Waypoint(0.0, -90.0, 200, 20.0));
-  sim_1->addWaypoint(simUtil::Waypoint(0.0, 60.0, 200, 20.0));
-  sim_1->addWaypoint(simUtil::Waypoint(0.0, 180.0, 200, 20.0));
+  sim_1->addWaypoint(simUtil::Waypoint(0.0, -90.0, 120000, 20.0));
+  sim_1->addWaypoint(simUtil::Waypoint(0.0,  60.0, 120000, 20.0));
+  sim_1->addWaypoint(simUtil::Waypoint(0.0, 180.0, 120000, 20.0));
   sim_1->setSimulateRoll(false);
   sim_1->setSimulatePitch(false);
 
