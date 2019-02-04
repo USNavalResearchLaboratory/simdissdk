@@ -27,6 +27,7 @@
 #include "simVis/LocatorNode.h"
 #include "simVis/Utils.h"
 #include "simVis/Entity.h"
+#include "simVis/Projector.h"
 
 #define LC "[EntityNode] "
 
@@ -195,4 +196,13 @@ LabelContentCallback& EntityNode::labelContentCallback() const
   return *contentCallback_;
 }
 
+void EntityNode::acceptProjector(ProjectorNode* proj)
+{
+  proj->addProjectionToNode(this);
+}
+
+void EntityNode::removeProjector(ProjectorNode* proj)
+{
+  proj->removeProjectionFromNode(this);
+}
 }

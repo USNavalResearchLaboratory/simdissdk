@@ -44,6 +44,7 @@ namespace simVis
 {
   class LabelContentCallback;
   class Locator;
+  class ProjectorNode;
 
   /**
    * Pure interface class for a node that you can call EntityNode::attach with
@@ -282,6 +283,12 @@ namespace simVis
     * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
     */
     virtual double range() const = 0;
+
+    /** Accept textures from a projector. */
+    virtual void acceptProjector(ProjectorNode* projector);
+
+    /** Stop accepting textures from a projector. */ 
+    virtual void removeProjector(ProjectorNode* projector);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
