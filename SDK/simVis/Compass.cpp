@@ -294,7 +294,7 @@ void CompassNode::updateCompass_()
     else
     {
       // Fall back to the viewpoint's heading
-      headingDeg = simCore::angFix360(view->getViewpoint().heading()->as(Units::DEGREES));
+      headingDeg = simCore::angFix360(view->getViewpoint().heading()->as(osgEarth::Units::DEGREES));
     }
 
     // make sure that anything equivalent to 0.00 is displayed as 0.00

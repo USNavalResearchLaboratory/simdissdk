@@ -1265,13 +1265,13 @@ void View::setFocalOffsets(double heading_deg, double pitch_deg, double range, d
   if (manip)
   {
     Viewpoint vp;
-    vp.heading()->set(heading_deg, Units::DEGREES);
+    vp.heading()->set(heading_deg, osgEarth::Units::DEGREES);
     if (pitch_deg > MAX_ELEVATION_DEGREES)
       pitch_deg = MAX_ELEVATION_DEGREES;
     else if (pitch_deg < -MAX_ELEVATION_DEGREES)
       pitch_deg = -MAX_ELEVATION_DEGREES;
-    vp.pitch()->set(pitch_deg, Units::DEGREES);
-    vp.range()->set(range, Units::METERS);
+    vp.pitch()->set(pitch_deg, osgEarth::Units::DEGREES);
+    vp.range()->set(range, osgEarth::Units::METERS);
     manip->setViewpoint(vp, transition_s);
   }
 }
@@ -1281,13 +1281,13 @@ void View::lookAt(double lat_deg, double lon_deg, double alt_m, double heading_d
   simVis::Viewpoint vp;
   vp.name() = "lookat";
   vp.focalPoint() = osgEarth::GeoPoint(osgEarth::SpatialReference::create("wgs84"), lon_deg, lat_deg, alt_m);
-  vp.heading()->set(heading_deg, Units::DEGREES);
+  vp.heading()->set(heading_deg, osgEarth::Units::DEGREES);
   if (pitch_deg > MAX_ELEVATION_DEGREES)
     pitch_deg = MAX_ELEVATION_DEGREES;
   else if (pitch_deg < -MAX_ELEVATION_DEGREES)
     pitch_deg = -MAX_ELEVATION_DEGREES;
-  vp.pitch()->set(pitch_deg, Units::DEGREES);
-  vp.range()->set(range, Units::METERS);
+  vp.pitch()->set(pitch_deg, osgEarth::Units::DEGREES);
+  vp.range()->set(range, osgEarth::Units::METERS);
   // Clear the viewpoint's position offsets for look-at's
   vp.positionOffset() = osg::Vec3();
   setViewpoint(vp, transition_s);
@@ -1481,8 +1481,8 @@ void View::enableOverheadMode(bool enableOverhead)
     }
     // always have north up in overhead mode
     simVis::Viewpoint vp = getViewpoint();
-    vp.heading()->set(0.0, Units::DEGREES);
-    vp.pitch()->set(-90.0, Units::DEGREES);
+    vp.heading()->set(0.0, osgEarth::Units::DEGREES);
+    vp.pitch()->set(-90.0, osgEarth::Units::DEGREES);
     this->setViewpoint(vp);
 
     // Set an orthographic camera. We don't call enableOrthographic() here

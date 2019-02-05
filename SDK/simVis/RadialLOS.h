@@ -95,62 +95,62 @@ public:
    * Sets the maximum range of the sample
    * @param[in ] value Maximum range
    */
-  void setMaxRange(const Distance& value);
+  void setMaxRange(const osgEarth::Distance& value);
 
   /**
    * Gets the maximum range of the sample
    * @return Maximum range
    */
-  const Distance& getMaxRange() const { return range_max_; }
+  const osgEarth::Distance& getMaxRange() const { return range_max_; }
 
   /**
    * Sets the azimuth of center of the LOS's field of view.
    * @param[in ] value LOS field of view azimuth
    */
-  void setCentralAzimuth(const Angle& value);
+  void setCentralAzimuth(const osgEarth::Angle& value);
 
   /**
    * Gets the azimuth of the center of the field of view.
    * @return An angle
    */
-  const Angle& getCentralAzimuth() const { return azim_center_; }
+  const osgEarth::Angle& getCentralAzimuth() const { return azim_center_; }
 
   /**
    * Sets the field of view.
    * @param[in ] value An angle measuring the field of view of the calculation
    *   about the central azimuth
    */
-  void setFieldOfView(const Angle& value);
+  void setFieldOfView(const osgEarth::Angle& value);
 
   /**
    * Gets the field of view
    * @return An angle
    */
-  const Angle& getFieldOfView() const { return fov_; }
+  const osgEarth::Angle& getFieldOfView() const { return fov_; }
 
   /**
    * Sets the range resolution (max distance between range samples)
    * @param[in ] value Range resolution
    */
-  void setRangeResolution(const Distance& value);
+  void setRangeResolution(const osgEarth::Distance& value);
 
   /**
    * Gets the range resolution (max distance between range samples)
    * @return Range step
    */
-  const Distance& getRangeResolution() const { return range_resolution_; }
+  const osgEarth::Distance& getRangeResolution() const { return range_resolution_; }
 
   /**
    * Sets the azimuthal resolution (max angle between radials)
    * @param[in ] value Azimuthal resolution
    */
-  void setAzimuthalResolution(const Angle& value);
+  void setAzimuthalResolution(const osgEarth::Angle& value);
 
   /**
    * Gets the azimuthal resolution (max angle between radials)
    * @return Azimuthal resolution
    */
-  const Angle& getAzimuthalResolution() const { return azim_resolution_; }
+  const osgEarth::Angle& getAzimuthalResolution() const { return azim_resolution_; }
 
 
 public:
@@ -186,7 +186,7 @@ public:
    * @param[out] maxHeight Maximum sample along the radial
    * @return True if and only if data exists for the specified azimuth.
    */
-  bool getMinMaxHeight(const Angle& azimuth, Distance& minHeight, Distance& maxHeight) const;
+  bool getMinMaxHeight(const osgEarth::Angle& azimuth, osgEarth::Distance& minHeight, osgEarth::Distance& maxHeight) const;
 
   /**
    * Given a target coordinate, compute whether there is a clear line of sight from
@@ -225,11 +225,11 @@ private:
   bool                dirty_;
   RadialVector        radials_;
   osgEarth::GeoPoint  originMap_;
-  Distance            range_max_;
-  Distance            range_resolution_;
-  Angle               azim_center_;
-  Angle               fov_;
-  Angle               azim_resolution_;
+  osgEarth::Distance  range_max_;
+  osgEarth::Distance  range_resolution_;
+  osgEarth::Angle     azim_center_;
+  osgEarth::Angle     fov_;
+  osgEarth::Angle     azim_resolution_;
   osg::ref_ptr<const osgEarth::SpatialReference> srs_;
 
   bool getBoundingRadials_(double azim_rad, const Radial*& out_r0, const Radial*& out_r1, double& out_mix) const;

@@ -127,32 +127,32 @@ void RadialLOSNode::setDataModel(const RadialLOS& los)
   }
 }
 
-void RadialLOSNode::setMaxRange(const Distance& value)
+void RadialLOSNode::setMaxRange(const osgEarth::Distance& value)
 {
   los_.setMaxRange(value);
   updateLOS_(getMapNode(), coord_);
   bound_ = osgEarth::GeoCircle(getPosition(), los_.getMaxRange().as(osgEarth::Units::METERS));
 }
 
-void RadialLOSNode::setCentralAzimuth(const Angle& value)
+void RadialLOSNode::setCentralAzimuth(const osgEarth::Angle& value)
 {
   los_.setCentralAzimuth(value);
   updateLOS_(getMapNode(), coord_);
 }
 
-void RadialLOSNode::setFieldOfView(const Angle& value)
+void RadialLOSNode::setFieldOfView(const osgEarth::Angle& value)
 {
   los_.setFieldOfView(value);
   updateLOS_(getMapNode(), coord_);
 }
 
-void RadialLOSNode::setRangeResolution(const Distance& value)
+void RadialLOSNode::setRangeResolution(const osgEarth::Distance& value)
 {
   los_.setRangeResolution(value);
   updateLOS_(getMapNode(), coord_);
 }
 
-void RadialLOSNode::setAzimuthalResolution(const Angle& value)
+void RadialLOSNode::setAzimuthalResolution(const osgEarth::Angle& value)
 {
   los_.setAzimuthalResolution(value);
   updateLOS_(getMapNode(), coord_);
