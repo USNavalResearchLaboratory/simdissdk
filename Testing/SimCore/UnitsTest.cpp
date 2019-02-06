@@ -128,17 +128,17 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::METERS) == speedVec.end());
 
   const UnitsRegistry::UnitsVector& accelerationVec = reg.units(Units::ACCELERATION_FAMILY);
-  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND_SQUARED) != accelerationVec.end());
-  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::KILOMETERS_PER_SECOND_SQUARED) != accelerationVec.end());
-  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::YARDS_PER_SECOND_SQUARED) != accelerationVec.end());
-  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::MILES_PER_SECOND_SQUARED) != accelerationVec.end());
-  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::FEET_PER_SECOND_SQUARED) != accelerationVec.end());
-  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::INCHES_PER_SECOND_SQUARED) != accelerationVec.end());
-  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::NAUTICAL_MILES_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::KILOMETERS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::YARDS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::MILES_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::FEET_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::INCHES_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::NAUTICAL_MILES_PER_SECOND_SQUARED) != accelerationVec.end());
   // Following few tests are expected to fail
-  rv += SDK_ASSERT(std::find(lengthVec.begin(), accelerationVec.end(), Units::SECONDS) == accelerationVec.end());
-  rv += SDK_ASSERT(std::find(lengthVec.begin(), accelerationVec.end(), Units::RADIANS) == accelerationVec.end());
-  rv += SDK_ASSERT(std::find(lengthVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND) == accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::SECONDS) == accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::RADIANS) == accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND) == accelerationVec.end());
 
   const UnitsRegistry::UnitsVector& frequencyVeq = reg.units(Units::FREQUENCY_FAMILY);
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::HERTZ) != frequencyVeq.end());
@@ -188,14 +188,6 @@ int testRegistrySearchByName()
   rv += SDK_ASSERT(reg.unitsByName("fathoms") == Units::FATHOMS);
   rv += SDK_ASSERT(reg.unitsByName("kilofeet") == Units::KILOFEET);
 
-  rv += SDK_ASSERT(reg.unitsByName("meters per second squared") == Units::METERS_PER_SECOND_SQUARED);
-  rv += SDK_ASSERT(reg.unitsByName("kilometers per second squared") == Units::KILOMETERS_PER_SECOND_SQUARED);
-  rv += SDK_ASSERT(reg.unitsByName("yards per second squared") == Units::YARDS_PER_SECOND_SQUARED);
-  rv += SDK_ASSERT(reg.unitsByName("miles per second squared") == Units::MILES_PER_SECOND_SQUARED);
-  rv += SDK_ASSERT(reg.unitsByName("feet per second squared") == Units::FEET_PER_SECOND_SQUARED);
-  rv += SDK_ASSERT(reg.unitsByName("inches per second squared") == Units::INCHES_PER_SECOND_SQUARED);
-  rv += SDK_ASSERT(reg.unitsByName("knots per second") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
-
   rv += SDK_ASSERT(reg.unitsByName("meters per second") == Units::METERS_PER_SECOND);
   rv += SDK_ASSERT(reg.unitsByName("kilometers per hour") == Units::KILOMETERS_PER_HOUR);
   rv += SDK_ASSERT(reg.unitsByName("knots") == Units::KNOTS);
@@ -204,6 +196,14 @@ int testRegistrySearchByName()
   rv += SDK_ASSERT(reg.unitsByName("kilometers per second") == Units::KILOMETERS_PER_SECOND);
   rv += SDK_ASSERT(reg.unitsByName("data miles per hour") == Units::DATA_MILES_PER_HOUR);
   rv += SDK_ASSERT(reg.unitsByName("yards per second") == Units::YARDS_PER_SECOND);
+
+  rv += SDK_ASSERT(reg.unitsByName("meters per second squared") == Units::METERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("kilometers per second squared") == Units::KILOMETERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("yards per second squared") == Units::YARDS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("miles per second squared") == Units::MILES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("feet per second squared") == Units::FEET_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("inches per second squared") == Units::INCHES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("knots per second") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
 
   rv += SDK_ASSERT(reg.unitsByName("revolutions per minute") == Units::REVOLUTIONS_PER_MINUTE);
   rv += SDK_ASSERT(reg.unitsByName("cycles per second") == Units::HERTZ);
