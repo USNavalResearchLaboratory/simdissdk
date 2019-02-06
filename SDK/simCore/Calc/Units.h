@@ -99,6 +99,18 @@ public:
   static const Units YARDS_PER_SECOND ATTRIB_HIDDEN;
   ///@}
 
+  /** @name Acceleration */
+  ///@{
+  /// Acceleration measurement units
+  static const Units METERS_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units KILOMETERS_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units YARDS_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units MILES_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units FEET_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units INCHES_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units NAUTICAL_MILES_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  ///@}
+
   /** @name Frequency */
   ///@{
   /// Frequency Units
@@ -114,6 +126,7 @@ public:
   static const std::string ANGLE_FAMILY ATTRIB_HIDDEN;
   static const std::string LENGTH_FAMILY ATTRIB_HIDDEN;
   static const std::string SPEED_FAMILY ATTRIB_HIDDEN;
+  static const std::string ACCELERATION_FAMILY ATTRIB_HIDDEN;
   static const std::string FREQUENCY_FAMILY ATTRIB_HIDDEN;
   ///@}
 

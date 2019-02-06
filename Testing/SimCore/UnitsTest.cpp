@@ -127,6 +127,19 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::RADIANS) == speedVec.end());
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::METERS) == speedVec.end());
 
+  const UnitsRegistry::UnitsVector& accelerationVec = reg.units(Units::ACCELERATION_FAMILY);
+  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::KILOMETERS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::YARDS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::MILES_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::FEET_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::INCHES_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(speedVec.begin(), accelerationVec.end(), Units::NAUTICAL_MILES_PER_SECOND_SQUARED) != accelerationVec.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(lengthVec.begin(), accelerationVec.end(), Units::SECONDS) == accelerationVec.end());
+  rv += SDK_ASSERT(std::find(lengthVec.begin(), accelerationVec.end(), Units::RADIANS) == accelerationVec.end());
+  rv += SDK_ASSERT(std::find(lengthVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND) == accelerationVec.end());
+
   const UnitsRegistry::UnitsVector& frequencyVeq = reg.units(Units::FREQUENCY_FAMILY);
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::HERTZ) != frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::REVOLUTIONS_PER_MINUTE) != frequencyVeq.end());
@@ -174,6 +187,14 @@ int testRegistrySearchByName()
   rv += SDK_ASSERT(reg.unitsByName("data miles") == Units::DATA_MILES);
   rv += SDK_ASSERT(reg.unitsByName("fathoms") == Units::FATHOMS);
   rv += SDK_ASSERT(reg.unitsByName("kilofeet") == Units::KILOFEET);
+
+  rv += SDK_ASSERT(reg.unitsByName("meters per second squared") == Units::METERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("kilometers per second squared") == Units::KILOMETERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("yards per second squared") == Units::YARDS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("miles per second squared") == Units::MILES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("feet per second squared") == Units::FEET_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("inches per second squared") == Units::INCHES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("knots per second") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
 
   rv += SDK_ASSERT(reg.unitsByName("meters per second") == Units::METERS_PER_SECOND);
   rv += SDK_ASSERT(reg.unitsByName("kilometers per hour") == Units::KILOMETERS_PER_HOUR);
@@ -257,6 +278,14 @@ int testRegistrySearchByAbbrev()
   rv += SDK_ASSERT(reg.unitsByAbbreviation("km/sec") == Units::KILOMETERS_PER_SECOND);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("dm/hr") == Units::DATA_MILES_PER_HOUR);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("yd/sec") == Units::YARDS_PER_SECOND);
+
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("m/(s^2)") == Units::METERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("km/(s^2)") == Units::KILOMETERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("yd/(s^2)") == Units::YARDS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("sm/(s^2)") == Units::MILES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("ft/(s^2)") == Units::FEET_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("in/(s^2)") == Units::INCHES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("nm/(s^2)") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
 
   rv += SDK_ASSERT(reg.unitsByAbbreviation("Hz") == Units::HERTZ);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("rpm") == Units::REVOLUTIONS_PER_MINUTE);
@@ -366,7 +395,7 @@ int testLengthConvert()
   rv += SDK_ASSERT(simCore::areEqual(Units::METERS.convertTo(Units::FEET, 1.5), 4.92126));
   rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS.convertTo(Units::METERS, 1.5), 1500.0));
   rv += SDK_ASSERT(simCore::areEqual(Units::YARDS.convertTo(Units::METERS, 1.5), 1.3716));
-  rv += SDK_ASSERT(simCore::areEqual(Units::MILES.convertTo(Units::METERS, 1.5), 2414.01585));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MILES.convertTo(Units::METERS, 1.5), 2414.016));
   rv += SDK_ASSERT(simCore::areEqual(Units::FEET.convertTo(Units::METERS, 1.5), 0.457199984));
   rv += SDK_ASSERT(simCore::areEqual(Units::INCHES.convertTo(Units::METERS, 1.5), 0.0381));
   rv += SDK_ASSERT(simCore::areEqual(Units::NAUTICAL_MILES.convertTo(Units::METERS, 1.5), 2778.0));
@@ -393,6 +422,21 @@ int testSpeedConvert()
   rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS_PER_SECOND.convertTo(Units::METERS_PER_SECOND, 1.5), 1500.0));
   rv += SDK_ASSERT(simCore::areEqual(Units::DATA_MILES_PER_HOUR.convertTo(Units::METERS_PER_SECOND, 1.5), 0.76196607));
   rv += SDK_ASSERT(simCore::areEqual(Units::YARDS_PER_SECOND.convertTo(Units::METERS_PER_SECOND, 1.5), 1.3716));
+
+  return rv;
+}
+
+int testAccelerationConvert()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::areEqual(Units::METERS_PER_SECOND_SQUARED.convertTo(Units::FEET_PER_SECOND_SQUARED, 1.5), 4.92125984));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 1500.0));
+  rv += SDK_ASSERT(simCore::areEqual(Units::YARDS_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 1.3716));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MILES_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 2414.016));
+  rv += SDK_ASSERT(simCore::areEqual(Units::FEET_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 0.4572));
+  rv += SDK_ASSERT(simCore::areEqual(Units::INCHES_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 0.0381));
+  rv += SDK_ASSERT(simCore::areEqual(Units::NAUTICAL_MILES_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 2778.0));
 
   return rv;
 }
@@ -544,6 +588,7 @@ int UnitsTest(int argc, char* argv[])
   rv += testAngleConvert();
   rv += testLengthConvert();
   rv += testSpeedConvert();
+  rv += testAccelerationConvert();
   rv += testFrequencyConvert();
   rv += testCustomUnitsToExistingFamily();
   rv += testCustomFamily();

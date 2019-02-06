@@ -33,6 +33,7 @@ const std::string Units::ELAPSED_TIME_FAMILY("elapsed time");
 const std::string Units::ANGLE_FAMILY("angle");
 const std::string Units::LENGTH_FAMILY("length");
 const std::string Units::SPEED_FAMILY("speed");
+const std::string Units::ACCELERATION_FAMILY("acceleration");
 const std::string Units::FREQUENCY_FAMILY("frequency");
 
 const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
@@ -54,7 +55,7 @@ const Units Units::MIL("angular mil", "mil", 9.8174770424681038701957605727484e-
 const Units Units::METERS("meters", "m", 1.0, Units::LENGTH_FAMILY);
 const Units Units::KILOMETERS("kilometers", "km", 1e3, Units::LENGTH_FAMILY);
 const Units Units::YARDS("yards", "yd", 0.91439997, Units::LENGTH_FAMILY);
-const Units Units::MILES("miles", "mi", 1609.3439, Units::LENGTH_FAMILY);
+const Units Units::MILES("miles", "mi", 1609.344, Units::LENGTH_FAMILY);
 const Units Units::FEET("feet", "ft", 0.30479999, Units::LENGTH_FAMILY);
 const Units Units::INCHES("inches", "in", 0.025399999, Units::LENGTH_FAMILY);
 const Units Units::NAUTICAL_MILES("nautical miles", "nm", 1852.0, Units::LENGTH_FAMILY);
@@ -74,6 +75,14 @@ const Units Units::FEET_PER_SECOND("feet per second", "ft/sec", 0.3047999, Units
 const Units Units::KILOMETERS_PER_SECOND("kilometers per second", "km/sec", 1e3, Units::SPEED_FAMILY);
 const Units Units::DATA_MILES_PER_HOUR("data miles per hour", "dm/hr", 0.50797738, Units::SPEED_FAMILY);
 const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", 0.91439997, Units::SPEED_FAMILY);
+
+const Units Units::METERS_PER_SECOND_SQUARED("meters per second squared", "m/(s^2)", 1.0, Units::ACCELERATION_FAMILY);
+const Units Units::KILOMETERS_PER_SECOND_SQUARED("kilometers per second squared", "km/(s^2)", 1e3, Units::ACCELERATION_FAMILY);
+const Units Units::YARDS_PER_SECOND_SQUARED("yards per second squared", "yd/(s^2)", 0.91439997, Units::ACCELERATION_FAMILY);
+const Units Units::MILES_PER_SECOND_SQUARED("miles per second squared", "sm/(s^2)", 1609.344, Units::ACCELERATION_FAMILY);
+const Units Units::FEET_PER_SECOND_SQUARED("feet per second squared", "ft/(s^2)", 0.30479999, Units::ACCELERATION_FAMILY);
+const Units Units::INCHES_PER_SECOND_SQUARED("inches per second squared", "in/(s^2)", 0.025399999, Units::ACCELERATION_FAMILY);
+const Units Units::NAUTICAL_MILES_PER_SECOND_SQUARED("knots per second", "nm/(s^2)", 1852.0, Units::ACCELERATION_FAMILY);
 
 // Frequency units
 const Units Units::HERTZ("cycles per second", "Hz", 1.0, Units::FREQUENCY_FAMILY);
@@ -214,6 +223,14 @@ void UnitsRegistry::registerDefaultUnits()
   registerUnits(Units::KILOMETERS_PER_SECOND);
   registerUnits(Units::DATA_MILES_PER_HOUR);
   registerUnits(Units::YARDS_PER_SECOND);
+
+  registerUnits(Units::METERS_PER_SECOND_SQUARED);
+  registerUnits(Units::KILOMETERS_PER_SECOND_SQUARED);
+  registerUnits(Units::YARDS_PER_SECOND_SQUARED);
+  registerUnits(Units::MILES_PER_SECOND_SQUARED);
+  registerUnits(Units::FEET_PER_SECOND_SQUARED);
+  registerUnits(Units::INCHES_PER_SECOND_SQUARED);
+  registerUnits(Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
 
   registerUnits(Units::HERTZ);
   registerUnits(Units::REVOLUTIONS_PER_MINUTE);
