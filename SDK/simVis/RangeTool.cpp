@@ -34,6 +34,7 @@
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/DatumConvert.h"
 #include "simCore/Calc/Math.h"
+#include "simCore/Calc/Units.h"
 #include "simCore/EM/Decibel.h"
 #include "simCore/EM/Propagation.h"
 #include "simCore/String/Constants.h"
@@ -185,7 +186,7 @@ RangeTool::GraphicOptions::GraphicOptions()
     usePercentOfSlantDistance_(true),
     pieRadiusPercent_(0.30f),
     pieRadiusValue_(100.0f),
-    pieRadiusUnits_(osgEarth::Units::METERS),
+    pieRadiusUnits_(simCore::Units::METERS),
     useDepthTest_(true),
     showGraphics_(true)
 {
@@ -251,7 +252,7 @@ void RangeTool::Calculation::setLabelMeasurement(Measurement* measurement)
   setDirty();
 }
 
-void RangeTool::Calculation::setLabelUnits(const osgEarth::Units& units)
+void RangeTool::Calculation::setLabelUnits(const simCore::Units& units)
 {
   labelUnits_ = units;
   setDirty();
@@ -281,7 +282,7 @@ void RangeTool::Calculation::setLastValue(double value)
   lastValue_ = value;
 }
 
-double RangeTool::Calculation::lastValue(const osgEarth::Units& outputUnits) const
+double RangeTool::Calculation::lastValue(const simCore::Units& outputUnits) const
 {
   return labelMeasurement()->units().convertTo(outputUnits, lastValue_);
 }
@@ -600,7 +601,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       }
 
       Measurement* m = calc->labelMeasurement();
-      const osgEarth::Units& units =
+      const simCore::Units& units =
         calc->labelUnits().isSet() ?
         *calc->labelUnits() :
         m->units();
@@ -612,11 +613,11 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       if (textOptions.showText_ == TextOptions::FULL)
         bufUtf8 << m->typeAbbr() << ": ";
       bufUtf8 << m->formatter()->stringValue(value, static_cast<int>(calc->labelPrecision()));
-      if (units == osgEarth::Units::DEGREES)
+      if (units == simCore::Units::DEGREES)
         bufUtf8 << simCore::STR_DEGREE_SYMBOL_UTF8;
       else
-        bufUtf8 << " " << units.getAbbr();
-      if ((units == osgEarth::Units::DEGREES) && (textOptions.showText_ == TextOptions::VALUES_ONLY))
+        bufUtf8 << " " << units.abbreviation();
+      if ((units == simCore::Units::DEGREES) && (textOptions.showText_ == TextOptions::VALUES_ONLY))
       {
         // If an angle was True or Magnetic add it to the back of the value if Values Only
         if (m->typeAbbr().find("(T)") != std::string::npos)
@@ -766,7 +767,7 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
   startVec.normalize();
   endVec.normalize();
 
-  double pieRadius = options_.pieRadiusUnits_.convertTo(osgEarth::Units::METERS, options_.pieRadiusValue_);
+  double pieRadius = options_.pieRadiusUnits_.convertTo(simCore::Units::METERS, options_.pieRadiusValue_);
   if (options_.usePercentOfSlantDistance_)
   {
     // using the RAE entity's range if both RAE entities share the same host
@@ -785,7 +786,7 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
 
     // If radius is still zero use the default value otherwise scale radius by the percentage
     if (pieRadius <= 0.0)
-      pieRadius = options_.pieRadiusUnits_.convertTo(osgEarth::Units::METERS, options_.pieRadiusValue_);
+      pieRadius = options_.pieRadiusUnits_.convertTo(simCore::Units::METERS, options_.pieRadiusValue_);
     else
       pieRadius *= options_.pieRadiusPercent_;
   }

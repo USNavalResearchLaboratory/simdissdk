@@ -45,7 +45,7 @@ std::string HorizonFormatter::stringValue(double value, int precision) const
 
 //------------------------------------------------------------------------
 
-RfMeasurement::RfMeasurement(const std::string& name, const std::string& abbr, const osgEarth::Units& units)
+RfMeasurement::RfMeasurement(const std::string& name, const std::string& abbr, const simCore::Units& units)
   : RelOriMeasurement(name, abbr, units)
 {
 
@@ -279,7 +279,7 @@ bool RFOneWayPowerMeasurement::willAccept(const RangeToolState& state) const
 
 //----------------------------------------------------------------------------
 
-HorizonMeasurement::HorizonMeasurement(const std::string &typeName, const std::string &typeAbbr, const osgEarth::Units &units)
+HorizonMeasurement::HorizonMeasurement(const std::string &typeName, const std::string &typeAbbr, const simCore::Units &units)
   : Measurement(typeName, typeAbbr, units),
   opticalEffectiveRadius_(DEFAULT_OPTICAL_RADIUS),
   rfEffectiveRadius_(DEFAULT_RF_RADIUS)
@@ -355,7 +355,7 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
 //----------------------------------------------------------------------------
 
 RadioHorizonMeasurement::RadioHorizonMeasurement()
-  : HorizonMeasurement("Radio Horizon", "Hor(r)", UNITLESS)
+  : HorizonMeasurement("Radio Horizon", "Hor(r)", simCore::Units::UNITLESS)
 { }
 
 double RadioHorizonMeasurement::value(RangeToolState& state) const
@@ -366,7 +366,7 @@ double RadioHorizonMeasurement::value(RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 OpticalHorizonMeasurement::OpticalHorizonMeasurement()
-  : HorizonMeasurement("Optical Horizon", "Hor(o)", UNITLESS)
+  : HorizonMeasurement("Optical Horizon", "Hor(o)", simCore::Units::UNITLESS)
 { }
 
 double OpticalHorizonMeasurement::value(RangeToolState& state) const
