@@ -56,6 +56,7 @@
 #include "simUtil/StatusText.h"
 #include "simUtil/TerrainToggleEffect.h"
 #include "simUtil/TritonSettings.h"
+#include "simUtil/UnitTypeConverter.h"
 #include "simUtil/ViewpointMonitor.h"
 #include "simUtil/ViewpointPositions.h"
 
