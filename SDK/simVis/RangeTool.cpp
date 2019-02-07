@@ -31,11 +31,12 @@
 #include "osgEarthUtil/Controls"
 
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/DatumConvert.h"
 #include "simCore/Calc/Math.h"
-#include "simCore/Calc/Calculations.h"
 #include "simCore/EM/Decibel.h"
 #include "simCore/EM/Propagation.h"
+#include "simCore/String/Constants.h"
 #include "simCore/Time/TimeClass.h"
 
 #include "simVis/AlphaTest.h"
@@ -572,7 +573,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
     const LabelSetup&        setup       = i->second;
     const CalculationVector& calcs       = setup.first;
     const TextOptions&       textOptions = setup.second;
-    std::stringstream        buf;
+    std::stringstream        bufUtf8;
 
     if (textOptions.displayAssociationName_)
     {
@@ -580,11 +581,11 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       const std::string& name1 = obj1->getEntityName(EntityNode::DISPLAY_NAME);
       if (!name0.empty() && !name1.empty())
       {
-        buf << name0 << " to " << name1 << std::endl;
+        bufUtf8 << name0 << " to " << name1 << std::endl;
       }
     }
 
-    buf << std::fixed;
+    bufUtf8 << std::fixed;
 
     for (CalculationVector::const_iterator c = calcs.begin(); c != calcs.end(); ++c)
     {
@@ -593,9 +594,9 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       if (c != calcs.begin())
       {
         if (textOptions.textLocation_ == TextOptions::ALL)
-          buf << ", ";
+          bufUtf8 << ", ";
         else
-          buf << "\n";
+          bufUtf8 << "\n";
       }
 
       Measurement* m = calc->labelMeasurement();
@@ -609,18 +610,19 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       value = m->units().convertTo(units, value);
 
       if (textOptions.showText_ == TextOptions::FULL)
-        buf << m->typeAbbr() << ": ";
-      buf << m->formatter()->stringValue(value, static_cast<int>(calc->labelPrecision()));
-      if (units != osgEarth::Units::DEGREES)
-        buf << " ";
-      buf << units.getAbbr();
+        bufUtf8 << m->typeAbbr() << ": ";
+      bufUtf8 << m->formatter()->stringValue(value, static_cast<int>(calc->labelPrecision()));
+      if (units == osgEarth::Units::DEGREES)
+        bufUtf8 << simCore::STR_DEGREE_SYMBOL_UTF8;
+      else
+        bufUtf8 << " " << units.getAbbr();
       if ((units == osgEarth::Units::DEGREES) && (textOptions.showText_ == TextOptions::VALUES_ONLY))
       {
         // If an angle was True or Magnetic add it to the back of the value if Values Only
         if (m->typeAbbr().find("(T)") != std::string::npos)
-          buf << "T";
+          bufUtf8 << "T";
         else if (m->typeAbbr().find("(M)") != std::string::npos)
-          buf << "M";
+          bufUtf8 << "M";
       }
     }
 
@@ -657,6 +659,8 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
         if (!fileFullPath.empty()) // only set if font file found, uses default OS font otherwise
           ts->font() = fileFullPath;
       }
+      // Explicitly enable UTF-8 encoding
+      ts->encoding() = osgEarth::Symbology::TextSymbol::ENCODING_UTF8;
 
 #if OSG_VERSION_GREATER_OR_EQUAL(3,6,0)
       // Font sizes changed at 3.6, so rescale to keep a constant size
@@ -685,7 +689,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
     labelCount++;
 
     text->getPositionAttitudeTransform()->setPosition(pos);
-    text->setText(buf.str());
+    text->setText(bufUtf8.str());
   }
 
   // shader needed to draw text properly
