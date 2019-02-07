@@ -58,7 +58,7 @@ void Utils::applyLocalGeometryOffsets(LocalGeometryNode& node, ParserData& data,
 {
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
-    // if this is a geographic node, set position and local rotation directly on the node
+    // if this is a geographic node, set position and local rotation directly on the node; note that un-attached relative GOGs are treated as geographic
     node.setPosition(data.getMapPosition(ignoreOffset));
     osg::Quat yaw(data.localHeadingOffset_->as(Units::RADIANS), -osg::Vec3(0, 0, 1));
     osg::Quat pitch(data.localPitchOffset_->as(Units::RADIANS), osg::Vec3(1, 0, 0));
@@ -382,6 +382,9 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
         units_.rangeUnits_.convertTo(Units::METERS, xyz[0]),
         units_.rangeUnits_.convertTo(Units::METERS, xyz[1]),
         units_.altitudeUnits_.convertTo(Units::METERS, xyz[2]));
+      // if this is a relative GOG with no reference point defined, use the default reference point
+      if (!refPointLLA_.isSet())
+        refPointLLA_->set(context_.refPoint_->vec3d());
     }
   }
 
