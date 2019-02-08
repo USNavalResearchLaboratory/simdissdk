@@ -262,6 +262,7 @@ int testFromCore()
   rv += SDK_ASSERT(conv.toOsgEarth(simCore::Units::YARDS_PER_SECOND) == osgEarth::Units::YARDS_PER_SECOND);
 
   // acceleration is not supported in osgEarth, don't bother testing
+  // temperature is not supported in osgEarth, don't bother testing
   // frequency is not supported in osgEarth, don't bother testing
 
   // Distance to simData
@@ -305,6 +306,7 @@ int testFromCore()
   rv += SDK_ASSERT(conv.toData(simCore::Units::YARDS_PER_SECOND) == simData::UNITS_YARDS_PER_SECOND);
 
   // acceleration is not supported in simData, don't bother testing
+  // temperature is not supported in simData, don't bother testing
   // frequency is not supported in simData, don't bother testing
 
   return rv;

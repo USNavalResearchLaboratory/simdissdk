@@ -215,6 +215,13 @@ UnitTypeConverter::UnitTypeConverter()
   helper_->add(OSGEARTH_NONE, simCore::Units::INCHES_PER_SECOND_SQUARED, 0);
   helper_->add(OSGEARTH_NONE, simCore::Units::NAUTICAL_MILES_PER_SECOND_SQUARED, 0);
 
+  // Temperature
+  helper_->add(OSGEARTH_NONE, simCore::Units::CELSIUS, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::FAHRENHEIT, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::KELVIN, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::RANKINE, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::REAUMUR, 0);
+
   // Frequency
   helper_->add(OSGEARTH_NONE, simCore::Units::HERTZ, 0);
   helper_->add(OSGEARTH_NONE, simCore::Units::REVOLUTIONS_PER_MINUTE, 0);

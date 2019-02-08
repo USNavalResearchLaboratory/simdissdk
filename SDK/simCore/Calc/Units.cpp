@@ -34,6 +34,7 @@ const std::string Units::ANGLE_FAMILY("angle");
 const std::string Units::LENGTH_FAMILY("length");
 const std::string Units::SPEED_FAMILY("speed");
 const std::string Units::ACCELERATION_FAMILY("acceleration");
+const std::string Units::TEMPERATURE_FAMILY("temperature");
 const std::string Units::FREQUENCY_FAMILY("frequency");
 
 const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
@@ -84,6 +85,12 @@ const Units Units::FEET_PER_SECOND_SQUARED("feet per second squared", "ft/(s^2)"
 const Units Units::INCHES_PER_SECOND_SQUARED("inches per second squared", "in/(s^2)", 0.025399999, Units::ACCELERATION_FAMILY);
 const Units Units::NAUTICAL_MILES_PER_SECOND_SQUARED("knots per second", "nm/(s^2)", 1852.0, Units::ACCELERATION_FAMILY);
 
+const Units Units::CELSIUS("celsius", "C", 1.0, Units::TEMPERATURE_FAMILY);
+const Units Units::FAHRENHEIT(Units::offsetThenScaleUnit("fahrenheit", "F", -32.0, 5./9., Units::TEMPERATURE_FAMILY));
+const Units Units::KELVIN(Units::offsetThenScaleUnit("kelvin", "k", -273.15, 1.0, Units::TEMPERATURE_FAMILY));
+const Units Units::RANKINE(Units::offsetThenScaleUnit("rankine", "ra", -491.67, 5./9., Units::TEMPERATURE_FAMILY));
+const Units Units::REAUMUR("reaumur", "re", 1.25, Units::TEMPERATURE_FAMILY);
+
 // Frequency units
 const Units Units::HERTZ("cycles per second", "Hz", 1.0, Units::FREQUENCY_FAMILY);
 const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 60.0, Units::FREQUENCY_FAMILY);
@@ -93,6 +100,7 @@ const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 60.0,
 Units::Units(const std::string& name, const std::string& abbrev, double toBase, const std::string& family)
   : name_(name),
     abbrev_(abbrev),
+    toBaseOffset_(0.0),
     toBase_(toBase),
     family_(family)
 {
@@ -106,9 +114,17 @@ Units::Units(const std::string& name, const std::string& abbrev, double toBase, 
 Units::Units()
   : name_("Invalid"),
     abbrev_("inv"),
+    toBaseOffset_(0.0),
     toBase_(1.0),
     family_(Units::INVALID_FAMILY)
 {
+}
+
+Units Units::offsetThenScaleUnit(const std::string& name, const std::string& abbrev, double offset, double toBase, const std::string& family)
+{
+  Units rv(name, abbrev, toBase, family);
+  rv.toBaseOffset_ = offset;
+  return rv;
 }
 
 Units::~Units()
@@ -151,7 +167,8 @@ int Units::convertTo(const Units& toUnits, double value, double& output) const
   }
 
   // Convert the value to the base units, then to our unit format
-  output = (value * toBase_) / toUnits.toBase_;
+  const double inBaseUnits = (value + toBaseOffset_) * toBase_;
+  output = (inBaseUnits / toUnits.toBase_) - toUnits.toBaseOffset_;
   return 0;
 }
 
@@ -159,13 +176,15 @@ double Units::convertTo(const Units& toUnits, double value) const
 {
   if (!canConvert(toUnits))
     return value;
-  return (value * toBase_) / toUnits.toBase_;
+  const double inBaseUnits = (value + toBaseOffset_) * toBase_;
+  return (inBaseUnits / toUnits.toBase_) - toUnits.toBaseOffset_;
 }
 
 bool Units::operator==(const Units& other) const
 {
   // Ignore the name and abbreviation
   return toBase_ == other.toBase_ &&
+    toBaseOffset_ == other.toBaseOffset_ &&
     family_ == other.family_;
 }
 
@@ -231,6 +250,12 @@ void UnitsRegistry::registerDefaultUnits()
   registerUnits(Units::FEET_PER_SECOND_SQUARED);
   registerUnits(Units::INCHES_PER_SECOND_SQUARED);
   registerUnits(Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
+
+  registerUnits(Units::CELSIUS);
+  registerUnits(Units::FAHRENHEIT);
+  registerUnits(Units::KELVIN);
+  registerUnits(Units::RANKINE);
+  registerUnits(Units::REAUMUR);
 
   registerUnits(Units::HERTZ);
   registerUnits(Units::REVOLUTIONS_PER_MINUTE);

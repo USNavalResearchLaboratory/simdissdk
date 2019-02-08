@@ -140,6 +140,17 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::RADIANS) == accelerationVec.end());
   rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND) == accelerationVec.end());
 
+  const UnitsRegistry::UnitsVector& temperatureVec = reg.units(Units::TEMPERATURE_FAMILY);
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::CELSIUS) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::FAHRENHEIT) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::KELVIN) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::RANKINE) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::REAUMUR) != temperatureVec.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::SECONDS) == temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::RADIANS) == temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::METERS_PER_SECOND) == temperatureVec.end());
+
   const UnitsRegistry::UnitsVector& frequencyVeq = reg.units(Units::FREQUENCY_FAMILY);
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::HERTZ) != frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::REVOLUTIONS_PER_MINUTE) != frequencyVeq.end());
@@ -204,6 +215,12 @@ int testRegistrySearchByName()
   rv += SDK_ASSERT(reg.unitsByName("feet per second squared") == Units::FEET_PER_SECOND_SQUARED);
   rv += SDK_ASSERT(reg.unitsByName("inches per second squared") == Units::INCHES_PER_SECOND_SQUARED);
   rv += SDK_ASSERT(reg.unitsByName("knots per second") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
+
+  rv += SDK_ASSERT(reg.unitsByName("celsius") == Units::CELSIUS);
+  rv += SDK_ASSERT(reg.unitsByName("fahrenheit") == Units::FAHRENHEIT);
+  rv += SDK_ASSERT(reg.unitsByName("kelvin") == Units::KELVIN);
+  rv += SDK_ASSERT(reg.unitsByName("rankine") == Units::RANKINE);
+  rv += SDK_ASSERT(reg.unitsByName("reaumur") == Units::REAUMUR);
 
   rv += SDK_ASSERT(reg.unitsByName("revolutions per minute") == Units::REVOLUTIONS_PER_MINUTE);
   rv += SDK_ASSERT(reg.unitsByName("cycles per second") == Units::HERTZ);
@@ -286,6 +303,12 @@ int testRegistrySearchByAbbrev()
   rv += SDK_ASSERT(reg.unitsByAbbreviation("ft/(s^2)") == Units::FEET_PER_SECOND_SQUARED);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("in/(s^2)") == Units::INCHES_PER_SECOND_SQUARED);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("nm/(s^2)") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
+
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("C") == Units::CELSIUS);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("F") == Units::FAHRENHEIT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("k") == Units::KELVIN);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("ra") == Units::RANKINE);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("re") == Units::REAUMUR);
 
   rv += SDK_ASSERT(reg.unitsByAbbreviation("Hz") == Units::HERTZ);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("rpm") == Units::REVOLUTIONS_PER_MINUTE);
@@ -441,6 +464,23 @@ int testAccelerationConvert()
   return rv;
 }
 
+int testTemperatureConvert()
+{
+  int rv = 0;
+
+  // Convert both ways for temperature, since it's the first unit introduced that uses offsets
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::FAHRENHEIT, 1.5), 34.7));
+  rv += SDK_ASSERT(simCore::areEqual(Units::FAHRENHEIT.convertTo(Units::CELSIUS, 1.5), -16.944444));
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::KELVIN, 1.5), 274.65));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KELVIN.convertTo(Units::CELSIUS, 1.5), -271.65));
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::RANKINE, 1.5), 494.37));
+  rv += SDK_ASSERT(simCore::areEqual(Units::RANKINE.convertTo(Units::CELSIUS, 1.5), -272.316667));
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::REAUMUR, 1.5), 1.2));
+  rv += SDK_ASSERT(simCore::areEqual(Units::REAUMUR.convertTo(Units::CELSIUS, 1.5), 1.875));
+
+  return rv;
+}
+
 int testFrequencyConvert()
 {
   int rv = 0;
@@ -589,6 +629,7 @@ int UnitsTest(int argc, char* argv[])
   rv += testLengthConvert();
   rv += testSpeedConvert();
   rv += testAccelerationConvert();
+  rv += testTemperatureConvert();
   rv += testFrequencyConvert();
   rv += testCustomUnitsToExistingFamily();
   rv += testCustomFamily();

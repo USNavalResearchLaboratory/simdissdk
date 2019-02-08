@@ -111,6 +111,16 @@ public:
   static const Units NAUTICAL_MILES_PER_SECOND_SQUARED ATTRIB_HIDDEN;
   ///@}
 
+  /** @name Temperature */
+  ///@{
+  /// Temperature measurement units
+  static const Units CELSIUS ATTRIB_HIDDEN;
+  static const Units FAHRENHEIT ATTRIB_HIDDEN;
+  static const Units KELVIN ATTRIB_HIDDEN;
+  static const Units RANKINE ATTRIB_HIDDEN;
+  static const Units REAUMUR ATTRIB_HIDDEN;
+  ///@}
+
   /** @name Frequency */
   ///@{
   /// Frequency Units
@@ -127,6 +137,7 @@ public:
   static const std::string LENGTH_FAMILY ATTRIB_HIDDEN;
   static const std::string SPEED_FAMILY ATTRIB_HIDDEN;
   static const std::string ACCELERATION_FAMILY ATTRIB_HIDDEN;
+  static const std::string TEMPERATURE_FAMILY ATTRIB_HIDDEN;
   static const std::string FREQUENCY_FAMILY ATTRIB_HIDDEN;
   ///@}
 
@@ -159,9 +170,21 @@ public:
   /** Returns true if valid unit type */
   bool isValid() const;
 
+  /**
+   * Factory Method for a unit that is scaled and offset from base, such that:
+   *   baseUnitValue = (unitValue + offset) * toBase.
+   * This is useful for conversions like Celsius and Fahrenheit, where Fahrenheit can be defined as:
+   *   Celsius = (5. / 9.) * (Fahrenheit - 32.)
+   * In the example above, offset is -32.0 and toBase is (5. / 9.).  This can
+   * also be used for Kelvin conversion, where toBase would be 1. and offset -273.
+   */
+  static Units offsetThenScaleUnit(const std::string& name, const std::string& abbrev,
+    double offset, double toBase, const std::string& family);
+
 private:
   std::string name_;
   std::string abbrev_;
+  double toBaseOffset_;
   double toBase_;
   std::string family_;
 };
