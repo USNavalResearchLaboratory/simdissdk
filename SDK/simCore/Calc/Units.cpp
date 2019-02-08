@@ -39,7 +39,7 @@ const std::string Units::FREQUENCY_FAMILY("frequency");
 
 const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
 
-const Units Units::SECONDS("seconds", "sec", 1.0, Units::ELAPSED_TIME_FAMILY);
+const Units Units::SECONDS("seconds", "s", 1.0, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MILLISECONDS("milliseconds", "ms", 0.001, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MICROSECONDS("microseconds", "us", 1e-6, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MINUTES("minutes", "min", 60.0, Units::ELAPSED_TIME_FAMILY);

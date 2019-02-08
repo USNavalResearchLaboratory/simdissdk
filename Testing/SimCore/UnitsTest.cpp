@@ -253,7 +253,7 @@ int testRegistrySearchByAbbrev()
 
   rv += SDK_ASSERT(reg.unitsByAbbreviation("") == Units::UNITLESS);
 
-  rv += SDK_ASSERT(reg.unitsByAbbreviation("sec") == Units::SECONDS);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("s") == Units::SECONDS);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("ms") == Units::MILLISECONDS);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("us") == Units::MICROSECONDS);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("min") == Units::MINUTES);
