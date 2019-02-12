@@ -151,6 +151,16 @@ const std::string& Units::family() const
   return family_;
 }
 
+double Units::toBaseScalar() const
+{
+  return toBase_;
+}
+
+double Units::toBaseOffset() const
+{
+  return toBaseOffset_;
+}
+
 bool Units::canConvert(const Units& toUnits) const
 {
   // A to-base of 0.0 would cause a divide-by-zero later, and doesn't make sense

@@ -170,6 +170,11 @@ public:
   /** Returns true if valid unit type */
   bool isValid() const;
 
+  /** Retrieves the to-base scalar.  This is 1.0 for base units. */
+  double toBaseScalar() const;
+  /** Retrieves the to-base offset.  This is typically 0.0 */
+  double toBaseOffset() const;
+
   /**
    * Factory Method for a unit that is scaled and offset from base, such that:
    *   baseUnitValue = (unitValue + offset) * toBase.

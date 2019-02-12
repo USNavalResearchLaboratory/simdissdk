@@ -24,6 +24,8 @@
 *
 */
 #include <cassert>
+#include <set>
+#include "simCore/String/Format.h"
 #include "simQt/ScopedSignalBlocker.h"
 #include "simQt/UnitsComboBox.h"
 
@@ -39,6 +41,27 @@ void addToList(QComboBox& comboBox, const QString& text, T value)
   var.setValue(value);
   comboBox.addItem(text, var);
 }
+
+/** Provides sorting for simCore::Units using operator< logic */
+class UnitsLessThan
+{
+public:
+  /** Returns true if lhs < rhs */
+  bool operator()(const simCore::Units& lhs, const simCore::Units& rhs) const
+  {
+    // Prefer base scalar
+    if (lhs.toBaseScalar() < rhs.toBaseScalar())
+      return true;
+    if (lhs.toBaseScalar() > rhs.toBaseScalar())
+      return false;
+    // Return simply based on name
+    return simCore::upperCase(lhs.name()) < simCore::upperCase(rhs.name());
+  }
+};
+
+/** Create an easy-to-use name for the set that is ordered by to-base scalar */
+typedef std::set<simCore::Units, UnitsLessThan> SortedUnitsSet;
+
 }
 
 ////////////////////////////////////////////////////
@@ -46,7 +69,53 @@ void addToList(QComboBox& comboBox, const QString& text, T value)
 void UnitsComboBox::addUnits(QComboBox& comboBox, const std::string& unitFamily, const simCore::UnitsRegistry& reg)
 {
   simCore::UnitsRegistry::UnitsVector units = reg.units(unitFamily);
-  for (simCore::UnitsRegistry::UnitsVector::const_iterator i = units.begin(); i != units.end(); ++i)
+
+  // Establish a list of candidate priority units based on type.
+  SortedUnitsSet candidatePriority;
+  if (unitFamily == simCore::Units::ANGLE_FAMILY)
+  {
+    candidatePriority.insert(simCore::Units::DEGREES);
+    candidatePriority.insert(simCore::Units::RADIANS);
+  }
+  else if (unitFamily == simCore::Units::LENGTH_FAMILY)
+  {
+    candidatePriority.insert(simCore::Units::FEET);
+    candidatePriority.insert(simCore::Units::YARDS);
+    candidatePriority.insert(simCore::Units::METERS);
+    candidatePriority.insert(simCore::Units::KILOFEET);
+    candidatePriority.insert(simCore::Units::KILOYARDS);
+    candidatePriority.insert(simCore::Units::KILOMETERS);
+    candidatePriority.insert(simCore::Units::NAUTICAL_MILES);
+  }
+  else if (unitFamily == simCore::Units::SPEED_FAMILY)
+  {
+    candidatePriority.insert(simCore::Units::MILES_PER_HOUR);
+    candidatePriority.insert(simCore::Units::KNOTS);
+    candidatePriority.insert(simCore::Units::METERS_PER_SECOND);
+  }
+  // Other families do not have default priority units
+
+  // Next, sort the list into priority and normal units.  Note that the candidate
+  // priorities are NOT instantly added.
+  SortedUnitsSet priorityUnits;
+  SortedUnitsSet remainingUnits;
+  for (auto i = units.begin(); i != units.end(); ++i)
+  {
+    if (candidatePriority.find(*i) != candidatePriority.end())
+      priorityUnits.insert(*i);
+    else
+      remainingUnits.insert(*i);
+  }
+
+  // Add each priority unit, along with a separator
+  if (!priorityUnits.empty())
+  {
+    for (auto i = priorityUnits.begin(); i != priorityUnits.end(); ++i)
+      addUnitsItem_(comboBox, *i);
+    comboBox.insertSeparator(comboBox.count());
+  }
+  // Add the remaining, non-priority units
+  for (auto i = remainingUnits.begin(); i != remainingUnits.end(); ++i)
     addUnitsItem_(comboBox, *i);
 }
 
@@ -147,7 +216,13 @@ void UnitsComboBox::addUnitsItem_(QComboBox& comboBox, const simCore::Units& uni
 {
   QVariant unitVar;
   unitVar.setValue(units);
-  comboBox.addItem(QString::fromStdString(units.name()), unitVar);
+
+  // Capitalize the first letter of each word
+  QStringList parts = QString::fromStdString(units.name()).split(' ', QString::SkipEmptyParts);
+  for (int k = 0; k < parts.size(); ++k)
+    parts[k][0] = parts[k][0].toUpper();
+
+  comboBox.addItem(parts.join(' '), unitVar);
 }
 
 ////////////////////////////////////////////////////
