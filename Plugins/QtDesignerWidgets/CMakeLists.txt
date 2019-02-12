@@ -25,6 +25,7 @@ set(PROJ_HEADERS
     SearchLineEditPlugin.h
     TimeButtonsPlugin.h
     TimeWidgetPlugin.h
+    UnitsSelectorComboBoxPlugin.h
 )
 source_group(Headers FILES ${PROJ_HEADERS})
 
@@ -48,6 +49,7 @@ set(PROJ_SOURCES
     SearchLineEditPlugin.cpp
     TimeButtonsPlugin.cpp
     TimeWidgetPlugin.cpp
+    UnitsSelectorComboBoxPlugin.cpp
     simQtDesignerPlugins.cpp
 )
 source_group(Sources FILES ${PROJ_SOURCES})

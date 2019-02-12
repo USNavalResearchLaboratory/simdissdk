@@ -42,6 +42,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}TimeWidget.h
     ${SIMQT_INC}Toast.h
     ${SIMQT_INC}UnitContext.h
+    ${SIMQT_INC}UnitsComboBox.h
 )
 set(SIMQT_HEADERS
     ${SIMQT_INC}ConsoleChannel.h
@@ -54,7 +55,6 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}Settings.h
     ${SIMQT_INC}SettingsGroup.h
     ${SIMQT_INC}StartupLayoutManager.h
-    ${SIMQT_INC}UnitsComboBox.h
     ${SIMQT_INC}WeightedMenuManager.h
     ${SIMQT_INC}WidgetSettings.h
 )
