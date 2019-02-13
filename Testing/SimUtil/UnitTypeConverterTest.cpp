@@ -264,6 +264,9 @@ int testFromCore()
   // acceleration is not supported in osgEarth, don't bother testing
   // temperature is not supported in osgEarth, don't bother testing
   // frequency is not supported in osgEarth, don't bother testing
+  // volume is not supported in osgEarth, don't bother testing
+  // pressure is not supported in osgEarth, don't bother testing
+  // potential is not supported in osgEarth, don't bother testing
 
   // Distance to simData
   rv += SDK_ASSERT(conv.toData(simCore::Units::METERS) == simData::UNITS_METERS);
@@ -308,6 +311,9 @@ int testFromCore()
   // acceleration is not supported in simData, don't bother testing
   // temperature is not supported in simData, don't bother testing
   // frequency is not supported in simData, don't bother testing
+  // volume is not supported in simData, don't bother testing
+  // pressure is not supported in simData, don't bother testing
+  // potential is not supported in simData, don't bother testing
 
   return rv;
 }

@@ -225,6 +225,37 @@ UnitTypeConverter::UnitTypeConverter()
   // Frequency
   helper_->add(OSGEARTH_NONE, simCore::Units::HERTZ, 0);
   helper_->add(OSGEARTH_NONE, simCore::Units::REVOLUTIONS_PER_MINUTE, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::RADIANS_PER_SECOND, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::DEGREES_PER_SECOND, 0);
+
+  // Volume
+  helper_->add(OSGEARTH_NONE, simCore::Units::LITER, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::MILLILITER, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::FLUID_OUNCE, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::CUP, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::PINT, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::QUART, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::GALLON, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::TEASPOON, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::TABLESPOON, 0);
+
+  // Pressure
+  helper_->add(OSGEARTH_NONE, simCore::Units::MILLIBAR, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::BAR, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::POUNDS_PER_SQUARE_INCH, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::ATMOSPHERE, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::TORR, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::PASCALS, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::KILOPASCAL, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::MEGAPASCAL, 0);
+
+  // Potential
+  helper_->add(OSGEARTH_NONE, simCore::Units::VOLT, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::MILLIVOLT, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::MICROVOLT, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::KILOVOLT, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::MEGAVOLT, 0);
+  helper_->add(OSGEARTH_NONE, simCore::Units::GIGAVOLT, 0);
 }
 
 UnitTypeConverter::~UnitTypeConverter()

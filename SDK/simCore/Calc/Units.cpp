@@ -36,6 +36,9 @@ const std::string Units::SPEED_FAMILY("speed");
 const std::string Units::ACCELERATION_FAMILY("acceleration");
 const std::string Units::TEMPERATURE_FAMILY("temperature");
 const std::string Units::FREQUENCY_FAMILY("frequency");
+const std::string Units::VOLUME_FAMILY("volume");
+const std::string Units::PRESSURE_FAMILY("pressure");
+const std::string Units::POTENTIAL_FAMILY("potential");
 
 const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
 
@@ -93,7 +96,38 @@ const Units Units::REAUMUR("reaumur", "re", 1.25, Units::TEMPERATURE_FAMILY);
 
 // Frequency units
 const Units Units::HERTZ("cycles per second", "Hz", 1.0, Units::FREQUENCY_FAMILY);
-const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 60.0, Units::FREQUENCY_FAMILY);
+const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 0.01666666666, Units::FREQUENCY_FAMILY);
+const Units Units::RADIANS_PER_SECOND("radians per second", "rad/sec", 0.15915494309, Units::FREQUENCY_FAMILY);
+const Units Units::DEGREES_PER_SECOND("degrees per second", "deg/sec", 0.00277777777, Units::FREQUENCY_FAMILY);
+
+// Volume units
+const Units Units::LITER("liters", "l", 1.0, Units::VOLUME_FAMILY);
+const Units Units::MILLILITER("milliliters", "ml", 0.001, Units::VOLUME_FAMILY);
+const Units Units::FLUID_OUNCE("fluid ounces", "fl oz", 0.0295703125, Units::VOLUME_FAMILY);
+const Units Units::CUP("cups", "cup", 0.2365625, Units::VOLUME_FAMILY);
+const Units Units::PINT("pints", "pt", 0.473125, Units::VOLUME_FAMILY);
+const Units Units::QUART("quarts", "qt", 0.94625, Units::VOLUME_FAMILY);
+const Units Units::GALLON("gallons", "gal", 3.785, Units::VOLUME_FAMILY);
+const Units Units::TEASPOON("teaspoons", "tsp", 0.00492838542, Units::VOLUME_FAMILY);
+const Units Units::TABLESPOON("tablespoons", "tbsp", 0.01478515625, Units::VOLUME_FAMILY);
+
+// Pressure units
+const Units Units::MILLIBAR("millibar", "mbar", 1.0, Units::PRESSURE_FAMILY);
+const Units Units::BAR("bars", "bar", 1000, Units::PRESSURE_FAMILY);
+const Units Units::POUNDS_PER_SQUARE_INCH("pounds per square inch", "psia", 68.94757, Units::PRESSURE_FAMILY);
+const Units Units::ATMOSPHERE("atmospheres", "atm", 1013.247139776643, Units::PRESSURE_FAMILY);
+const Units Units::TORR("torr", "torr", 1.33321992075874, Units::PRESSURE_FAMILY);
+const Units Units::PASCALS("pascals", "Pa", 0.01, Units::PRESSURE_FAMILY);
+const Units Units::KILOPASCAL("kilopascals", "kPa", 10, Units::PRESSURE_FAMILY);
+const Units Units::MEGAPASCAL("megapascals", "MPa", 1e4, Units::PRESSURE_FAMILY);
+
+// Potential units
+const Units Units::VOLT("volts", "V", 1.0, Units::POTENTIAL_FAMILY);
+const Units Units::MILLIVOLT("millivolts", "mV", .001, Units::POTENTIAL_FAMILY);
+const Units Units::MICROVOLT("microvolts", "uV", 1e-6, Units::POTENTIAL_FAMILY);
+const Units Units::KILOVOLT("kilovolts", "kV", 1000, Units::POTENTIAL_FAMILY);
+const Units Units::MEGAVOLT("megavolts", "MV", 1e6, Units::POTENTIAL_FAMILY);
+const Units Units::GIGAVOLT("gigavolts", "GV", 1e9, Units::POTENTIAL_FAMILY);
 
 ///////////////////////////////////////////////////////
 
@@ -269,6 +303,34 @@ void UnitsRegistry::registerDefaultUnits()
 
   registerUnits(Units::HERTZ);
   registerUnits(Units::REVOLUTIONS_PER_MINUTE);
+  registerUnits(Units::RADIANS_PER_SECOND);
+  registerUnits(Units::DEGREES_PER_SECOND);
+
+  registerUnits(Units::LITER);
+  registerUnits(Units::MILLILITER);
+  registerUnits(Units::FLUID_OUNCE);
+  registerUnits(Units::CUP);
+  registerUnits(Units::PINT);
+  registerUnits(Units::QUART);
+  registerUnits(Units::GALLON);
+  registerUnits(Units::TEASPOON);
+  registerUnits(Units::TABLESPOON);
+
+  registerUnits(Units::MILLIBAR);
+  registerUnits(Units::BAR);
+  registerUnits(Units::POUNDS_PER_SQUARE_INCH);
+  registerUnits(Units::ATMOSPHERE);
+  registerUnits(Units::TORR);
+  registerUnits(Units::PASCALS);
+  registerUnits(Units::KILOPASCAL);
+  registerUnits(Units::MEGAPASCAL);
+
+  registerUnits(Units::VOLT);
+  registerUnits(Units::MILLIVOLT);
+  registerUnits(Units::MICROVOLT);
+  registerUnits(Units::KILOVOLT);
+  registerUnits(Units::MEGAVOLT);
+  registerUnits(Units::GIGAVOLT);
 }
 
 int UnitsRegistry::registerUnits(const Units& units)

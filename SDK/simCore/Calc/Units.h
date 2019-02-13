@@ -126,6 +126,47 @@ public:
   /// Frequency Units
   static const Units HERTZ ATTRIB_HIDDEN;
   static const Units REVOLUTIONS_PER_MINUTE ATTRIB_HIDDEN;
+  static const Units RADIANS_PER_SECOND ATTRIB_HIDDEN;
+  static const Units DEGREES_PER_SECOND ATTRIB_HIDDEN;
+  ///@}
+
+  /** @name Volume */
+  ///@{
+  /// Volume Units
+  static const Units LITER ATTRIB_HIDDEN;
+  static const Units MILLILITER ATTRIB_HIDDEN;
+  static const Units FLUID_OUNCE ATTRIB_HIDDEN;
+  static const Units CUP ATTRIB_HIDDEN;
+  static const Units PINT ATTRIB_HIDDEN;
+  static const Units QUART ATTRIB_HIDDEN;
+  static const Units GALLON ATTRIB_HIDDEN;
+  static const Units TEASPOON ATTRIB_HIDDEN;
+  static const Units TABLESPOON ATTRIB_HIDDEN;
+  ///@}
+
+  /** @name Pressure */
+  ///@{
+  /// Pressure Units
+  static const Units MILLIBAR ATTRIB_HIDDEN;
+  static const Units BAR ATTRIB_HIDDEN;
+  static const Units POUNDS_PER_SQUARE_INCH ATTRIB_HIDDEN;
+  static const Units ATMOSPHERE ATTRIB_HIDDEN;
+  static const Units TORR ATTRIB_HIDDEN;
+  /** NOTE: Use PASCALS instead of PASCAL to avoid naming conflict with macro from minwindef.h */
+  static const Units PASCALS ATTRIB_HIDDEN;
+  static const Units KILOPASCAL ATTRIB_HIDDEN;
+  static const Units MEGAPASCAL ATTRIB_HIDDEN;
+  ///@}
+
+  /** @name Potential */
+  ///@{
+  /// Potential Units
+  static const Units VOLT ATTRIB_HIDDEN;
+  static const Units MILLIVOLT ATTRIB_HIDDEN;
+  static const Units MICROVOLT ATTRIB_HIDDEN;
+  static const Units KILOVOLT ATTRIB_HIDDEN;
+  static const Units MEGAVOLT ATTRIB_HIDDEN;
+  static const Units GIGAVOLT ATTRIB_HIDDEN;
   ///@}
 
   ///@{
@@ -139,6 +180,9 @@ public:
   static const std::string ACCELERATION_FAMILY ATTRIB_HIDDEN;
   static const std::string TEMPERATURE_FAMILY ATTRIB_HIDDEN;
   static const std::string FREQUENCY_FAMILY ATTRIB_HIDDEN;
+  static const std::string VOLUME_FAMILY ATTRIB_HIDDEN;
+  static const std::string PRESSURE_FAMILY ATTRIB_HIDDEN;
+  static const std::string POTENTIAL_FAMILY ATTRIB_HIDDEN;
   ///@}
 
   /** Construct an invalid unit */
