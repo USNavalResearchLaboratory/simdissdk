@@ -24,6 +24,7 @@
 
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
+#include "simCore/Calc/Units.h"
 #include "simVis/GOG/GOGNode.h"
 #include "osgEarth/GeoData"
 #include "osgEarth/Units"
@@ -149,10 +150,10 @@ namespace simVis { namespace GOG
    */
   struct SDKVIS_EXPORT UnitsState
   {
-    osgEarth::Units altitudeUnits_; ///< Altitude units
-    osgEarth::Units rangeUnits_; ///< Range units
-    osgEarth::Units timeUnits_; ///< Time units
-    osgEarth::Units angleUnits_; ///< Angle units
+    simCore::Units altitudeUnits_; ///< Altitude units
+    simCore::Units rangeUnits_; ///< Range units
+    simCore::Units timeUnits_; ///< Time units
+    simCore::Units angleUnits_; ///< Angle units
 
     /**
      * Construct the units state
@@ -163,15 +164,15 @@ namespace simVis { namespace GOG
      * Initializes the units state from a structured representation.
      * @param[in ] parsedShape Structured data input
      */
-    void parse(const ParsedShape& parsedShape);
+    void parse(const ParsedShape& parsedShape, const simCore::UnitsRegistry& unitsRegistry);
 
     /**
      * Initialized the units state from a GOG string.
      * @param[in ] s     Input string to parse
-     * @param[in ] type  Units type (angular, linear, etc)
+     * @param[in ] unitsRegistry Supplies to-string conversion for units
      * @param[out] units Parsed units
      */
-    void parse(const std::string& s, osgEarth::Units::Type type, osgEarth::Units& units);
+    void parse(const std::string& s, const simCore::UnitsRegistry& unitsRegistry, simCore::Units& units);
   };
 
 

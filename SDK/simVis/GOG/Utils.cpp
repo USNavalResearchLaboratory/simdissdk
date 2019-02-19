@@ -259,55 +259,33 @@ std::string Utils::decodeAnnotation(const std::string& anno)
 UnitsState::UnitsState()
 {
   //defaults
-  altitudeUnits_ = Units::FEET;
-  rangeUnits_ = Units::YARDS;
-  timeUnits_ = Units::SECONDS;
-  angleUnits_ = Units::DEGREES;
+  altitudeUnits_ = simCore::Units::FEET;
+  rangeUnits_ = simCore::Units::YARDS;
+  timeUnits_ = simCore::Units::SECONDS;
+  angleUnits_ = simCore::Units::DEGREES;
 }
 
-void UnitsState::parse(const ParsedShape& parsedShape)
+void UnitsState::parse(const ParsedShape& parsedShape, const simCore::UnitsRegistry& unitsRegistry)
 {
   if (parsedShape.hasValue(GOG_ANGLEUNITS))
-    parse(parsedShape.stringValue(GOG_ANGLEUNITS), Units::TYPE_ANGULAR, angleUnits_);
+    parse(parsedShape.stringValue(GOG_ANGLEUNITS), unitsRegistry, angleUnits_);
   if (parsedShape.hasValue(GOG_ALTITUDEUNITS))
-    parse(parsedShape.stringValue(GOG_ALTITUDEUNITS), Units::TYPE_LINEAR, altitudeUnits_);
+    parse(parsedShape.stringValue(GOG_ALTITUDEUNITS), unitsRegistry, altitudeUnits_);
   if (parsedShape.hasValue(GOG_RANGEUNITS))
-    parse(parsedShape.stringValue(GOG_RANGEUNITS), Units::TYPE_LINEAR, rangeUnits_);
+    parse(parsedShape.stringValue(GOG_RANGEUNITS), unitsRegistry, rangeUnits_);
   if (parsedShape.hasValue(GOG_TIMEUNITS))
-    parse(parsedShape.stringValue(GOG_TIMEUNITS), Units::TYPE_TEMPORAL, timeUnits_);
+    parse(parsedShape.stringValue(GOG_TIMEUNITS), unitsRegistry, timeUnits_);
 }
 
-void UnitsState::parse(const std::string& s, osgEarth::Units::Type type, osgEarth::Units& units)
+void UnitsState::parse(const std::string& s, const simCore::UnitsRegistry& unitsRegistry, simCore::Units& units)
 {
-  if (type == Units::TYPE_LINEAR)
-  {
-    if (s == "mm" || s == "millimeters") units = Units::MILLIMETERS;
-    else if (s == "cm" || s == "centimeters") units = Units::CENTIMETERS;
-    else if (s == "in" || s == "inches") units = Units::INCHES;
-    else if (s == "ft" || s == "feet") units = Units::FEET;
-    else if (s == "yd" || s == "yards") units = Units::YARDS;
-    else if (s == "m"  || s == "meters") units = Units::METERS;
-    else if (s == "fm" || s == "fathoms") units = Units::FATHOMS;
-    else if (s == "kf" || s == "kilofeet") units = Units::KILOFEET;
-    else if (s == "kyd"|| s == "kiloyards") units = Units::KILOYARDS;
-    else if (s == "km" || s == "kilometers") units = Units::KILOMETERS;
-    else if (s == "sm" || s == "miles") units = Units::MILES;
-    else if (s == "nm" || s == "nautical miles") units = Units::NAUTICAL_MILES;
-    else if (s == "dm" || s == "data miles") units = Units::DATA_MILES;
-  }
-  else if (type == Units::TYPE_TEMPORAL)
-  {
-    if (s == "secs" || s == "seconds") units = Units::SECONDS;
-    else if (s == "mins" || s == "minutes") units = Units::MINUTES;
-    else if (s == "hrs"  || s == "hours") units = Units::HOURS;
-  }
-  else if (type == Units::TYPE_ANGULAR)
-  {
-    if (s == "bam") units = Units::BAM;
-    else if (s == "mil" || s == "mils") units = Units::NATO_MILS;
-    else if (s == "rad" || s == "radians") units = Units::RADIANS;
-    else if (s == "deg" || s == "degrees") units = Units::DEGREES;
-  }
+  if (s == "secs") units = simCore::Units::SECONDS;
+  else if (s == "mins") units = simCore::Units::MINUTES;
+  else if (s == "hrs") units = simCore::Units::HOURS;
+  else if (s == "sm") units = simCore::Units::MILES;
+  if (unitsRegistry.unitsByAbbreviation(s, units) == 0)
+    return;
+  unitsRegistry.unitsByName(s, units);
 }
 
 //------------------------------------------------------------------------
@@ -342,7 +320,14 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
   init();
 
   // extract the units modifiers:
-  units_.parse(parsedShape);
+  if (context.unitsRegistry_)
+    units_.parse(parsedShape, *context.unitsRegistry_);
+  else
+  {
+    simCore::UnitsRegistry registry;
+    registry.registerDefaultUnits();
+    units_.parse(parsedShape, registry);
+  }
 
   // check for a reference position for NED coordinates
   if (parsedShape.hasValue(GOG_REF_LAT))
@@ -350,7 +335,7 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
     refPointLLA_->set(
       parseAngle(parsedShape.stringValue(GOG_REF_LON), 0.0),
       parseAngle(parsedShape.stringValue(GOG_REF_LAT), 0.0),
-      units_.altitudeUnits_.convertTo(Units::METERS, parsedShape.doubleValue(GOG_REF_ALT, 0.0)));
+      units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_REF_ALT, 0.0)));
   }
 
   // The centerLLA and centerXYZ doe not apply to points, lines, line segments and polygons
@@ -366,7 +351,7 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
       centerLLA_->set(
         parseAngle(p.y, 0.0),  // longitude
         parseAngle(p.x, 0.0),  // latitude
-        units_.altitudeUnits_.convertTo(Units::METERS, altitude));
+        units_.altitudeUnits_.convertTo(simCore::Units::METERS, altitude));
     }
 
     if (parsedShape.hasValue(GOG_CENTERXY))
@@ -379,9 +364,9 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
       simCore::isValidNumber(p.z, xyz[2]);
       // units as per the SIMDIS user manual:
       centerXYZ_->set(
-        units_.rangeUnits_.convertTo(Units::METERS, xyz[0]),
-        units_.rangeUnits_.convertTo(Units::METERS, xyz[1]),
-        units_.altitudeUnits_.convertTo(Units::METERS, xyz[2]));
+        units_.rangeUnits_.convertTo(simCore::Units::METERS, xyz[0]),
+        units_.rangeUnits_.convertTo(simCore::Units::METERS, xyz[1]),
+        units_.altitudeUnits_.convertTo(simCore::Units::METERS, xyz[2]));
       // if this is a relative GOG with no reference point defined, use the default reference point
       if (!refPointLLA_.isSet())
         refPointLLA_->set(context_.refPoint_->vec3d());
@@ -473,30 +458,30 @@ void ParserData::parseOffsetsAndTracking(const ParsedShape& parsedShape)
   if (parsedShape.hasValue(GOG_3D_OFFSETCOURSE))
   {
     locatorComps_ |= Locator::COMP_HEADING;
-    localHeadingOffset_ = Angle(parsedShape.doubleValue(GOG_3D_OFFSETCOURSE, 0.0), units_.angleUnits_);
+    localHeadingOffset_ = Angle(units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_3D_OFFSETCOURSE, 0.0)), Units::DEGREES);
   }
   if (parsedShape.hasValue(GOG_3D_OFFSETPITCH))
   {
     locatorComps_ |= Locator::COMP_PITCH;
-    localPitchOffset_ = Angle(parsedShape.doubleValue(GOG_3D_OFFSETPITCH, 0.0), units_.angleUnits_);
+    localPitchOffset_ = Angle(units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_3D_OFFSETPITCH, 0.0)), Units::DEGREES);
   }
   if (parsedShape.hasValue(GOG_3D_OFFSETROLL))
   {
     locatorComps_ |= Locator::COMP_ROLL;
-    localRollOffset_ = Angle(parsedShape.doubleValue(GOG_3D_OFFSETROLL, 0.0), units_.angleUnits_);
+    localRollOffset_ = Angle(units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_3D_OFFSETROLL, 0.0)), Units::DEGREES);
   }
 
   if (parsedShape.hasValue(GOG_ORIENT_HEADING))
   {
-    localHeadingOffset_ = Angle(parsedShape.doubleValue(GOG_ORIENT_HEADING, 0.0), units_.angleUnits_);
+    localHeadingOffset_ = Angle(units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ORIENT_HEADING, 0.0)), Units::DEGREES);
   }
   if (parsedShape.hasValue(GOG_ORIENT_PITCH))
   {
-    localPitchOffset_ = Angle(parsedShape.doubleValue(GOG_ORIENT_PITCH, 0.0), units_.angleUnits_);
+    localPitchOffset_ = Angle(units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ORIENT_PITCH, 0.0)), Units::DEGREES);
   }
   if (parsedShape.hasValue(GOG_ORIENT_ROLL))
   {
-    localRollOffset_ = Angle(parsedShape.doubleValue(GOG_ORIENT_ROLL, 0.0), units_.angleUnits_);
+    localRollOffset_ = Angle(units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ORIENT_ROLL, 0.0)), Units::DEGREES);
   }
 
   // scale
@@ -544,7 +529,7 @@ osg::Vec3d ParserData::llaPositionToVec(const UnitsState& us, const PositionStri
   simCore::getAngleFromDegreeString(posStrings.y, false, point.x()); // longitude
   simCore::getAngleFromDegreeString(posStrings.x, false, point.y()); // latitude
   simCore::isValidNumber(posStrings.z, point.z());
-  point.z() = us.altitudeUnits_.convertTo(Units::METERS, point.z());
+  point.z() = us.altitudeUnits_.convertTo(simCore::Units::METERS, point.z());
 
   // normalize to -180/+180
   point.x() = simCore::angFix180(point.x());
@@ -558,9 +543,9 @@ osg::Vec3d ParserData::xyzPositionToVec(const UnitsState& us, const PositionStri
   simCore::isValidNumber(posStrings.y, point.y());
   simCore::isValidNumber(posStrings.z, point.z());
   // Convert into proper units
-  point.set(us.rangeUnits_.convertTo(Units::METERS, point.x()),
-    us.rangeUnits_.convertTo(Units::METERS, point.y()),
-    us.altitudeUnits_.convertTo(Units::METERS, point.z()));
+  point.set(us.rangeUnits_.convertTo(simCore::Units::METERS, point.x()),
+    us.rangeUnits_.convertTo(simCore::Units::METERS, point.y()),
+    us.altitudeUnits_.convertTo(simCore::Units::METERS, point.z()));
   return point;
 }
 

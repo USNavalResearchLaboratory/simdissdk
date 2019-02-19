@@ -41,9 +41,9 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
                        osgEarth::MapNode*       mapNode)
 {
   // all the ways to set the radii
-  osgEarth::Distance y_diam(parsedShape.doubleValue(GOG_MINORAXIS, 1000.0), p.units_.rangeUnits_);
-  osgEarth::Distance x_diam(parsedShape.doubleValue(GOG_MAJORAXIS, 1000.0), p.units_.rangeUnits_);
-  osgEarth::Distance z_diam(parsedShape.doubleValue(GOG_HEIGHT, 0.0), p.units_.altitudeUnits_);
+  osgEarth::Distance y_diam(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_MINORAXIS, 1000.0)), osgEarth::Units::METERS);
+  osgEarth::Distance x_diam(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_MAJORAXIS, 1000.0)), osgEarth::Units::METERS);
+  osgEarth::Distance z_diam(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_HEIGHT, 0.0)), osgEarth::Units::METERS);
 
   if (parsedShape.hasValue(GOG_RADIUS))
   {

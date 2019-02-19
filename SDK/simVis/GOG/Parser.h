@@ -34,6 +34,8 @@
 #include "osgEarthSymbology/Style"
 #include "osgEarthSymbology/Color"
 
+namespace simCore { class UnitsRegistry; }
+
 namespace simVis { namespace GOG
 {
 
@@ -111,6 +113,9 @@ namespace simVis { namespace GOG
      * @param errorHandler Error handler to use when parsing GOG data
      */
     void setErrorHandler(std::shared_ptr<ErrorHandler> errorHandler);
+
+    /** Changes the Units Registry for unit conversions. */
+    void setUnitsRegistry(const simCore::UnitsRegistry* registry);
 
     /**
      * Sets a style that will override style information found in the GOG input.

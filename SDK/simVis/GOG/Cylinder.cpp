@@ -45,15 +45,15 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
                       const GogMetaData&       metaData,
                       MapNode*                 mapNode)
 {
-  Distance radius(parsedShape.doubleValue(GOG_RADIUS, 1000.), p.units_.rangeUnits_);
-  Angle    rotation(0., p.units_.angleUnits_); // Rotation handled by parameters in GOG_ORIENT
-  Distance height(parsedShape.doubleValue(GOG_HEIGHT, 1000.), p.units_.altitudeUnits_);
-  Angle    start(parsedShape.doubleValue(GOG_ANGLESTART, 0.0), p.units_.angleUnits_);
+  Distance radius(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_RADIUS, 1000.)), Units::METERS);
+  Angle    rotation(0., Units::DEGREES); // Rotation handled by parameters in GOG_ORIENT
+  Distance height(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_HEIGHT, 1000.)), Units::METERS);
+  Angle    start(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ANGLESTART, 0.)), Units::DEGREES);
   Angle    end = start;
   if (parsedShape.hasValue(GOG_ANGLEDEG))
     end = start + Angle(parsedShape.doubleValue(GOG_ANGLEDEG, 90.0), Units::DEGREES);
   else if (parsedShape.hasValue(GOG_ANGLEEND))
-    end = Angle(parsedShape.doubleValue(GOG_ANGLEEND, 0.0), p.units_.angleUnits_);
+    end = Angle(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ANGLEEND, 0.0)), Units::DEGREES);
 
   osgEarth::Symbology::GeometryFactory gf;
   osg::ref_ptr<Geometry> tgeom = start == end ? (Geometry*)new Ring() : (Geometry*)new LineString();
@@ -61,10 +61,10 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
 
   if (parsedShape.hasValue(GOG_MAJORAXIS))
   {
-    radius = Distance(0.5 * parsedShape.doubleValue(GOG_MAJORAXIS, 2000.0), p.units_.rangeUnits_);
+    radius = Distance(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, 0.5 * parsedShape.doubleValue(GOG_MAJORAXIS, 2000.0)), Units::METERS);
     if (parsedShape.hasValue(GOG_MINORAXIS))
     {
-      Distance minorRadius = Distance(0.5 * parsedShape.doubleValue(GOG_MINORAXIS, 2000.0), p.units_.rangeUnits_);
+      Distance minorRadius = Distance(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, 0.5 * parsedShape.doubleValue(GOG_MINORAXIS, 2000.0)), Units::METERS);
       shape = gf.createEllipticalArc(osg::Vec3d(0, 0, 0), radius, minorRadius, rotation, start, end, 0u, tgeom.get(), true);
     }
     else

@@ -41,7 +41,7 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
                         const GogMetaData&       metaData,
                         osgEarth::MapNode*       mapNode)
 {
-  osgEarth::Distance radius(parsedShape.doubleValue(GOG_RADIUS, 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance radius(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_RADIUS, 1000.0)), osgEarth::Units::METERS);
 
   osg::Vec4f color(osgEarth::Symbology::Color::White);
 

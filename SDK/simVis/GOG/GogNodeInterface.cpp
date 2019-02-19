@@ -140,7 +140,8 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     deferringStyleUpdate_(false),
     defaultFont_("arial.ttf"),
     defaultTextSize_(15),
-    defaultTextColor_(osgEarth::Symbology::Color::Red)
+    defaultTextColor_(osgEarth::Symbology::Color::Red),
+    rangeUnits_(simCore::Units::YARDS)
 {
   if (osgNode_.valid())
   {
@@ -262,7 +263,7 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
   {
     double altOffset = parent.doubleValue(GOG_3D_OFFSETALT, 0.);
     // convert from gog file altitude units to meters; gog file default units are ft, but file can specify different units
-    altOffset = units.altitudeUnits_.convertTo(osgEarth::Units::METERS, altOffset);
+    altOffset = units.altitudeUnits_.convertTo(simCore::Units::METERS, altOffset);
     setAltOffset(altOffset);
   }
   // ALTITUDE mode, handles extrude attribute, which requires a specific AltitudeSymbol
@@ -280,7 +281,7 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
   {
     double extrudeHeight = static_cast<double>(parent.doubleValue(GOG_EXTRUDE_HEIGHT, 0));
     // convert from gog file altitude units to meters; gog file default units are ft, but file can specify different units
-    extrudeHeight = units.altitudeUnits_.convertTo(osgEarth::Units::METERS, extrudeHeight);
+    extrudeHeight = units.altitudeUnits_.convertTo(simCore::Units::METERS, extrudeHeight);
     setExtrudedHeight(extrudeHeight);
   }
 
@@ -343,6 +344,16 @@ osg::Node* GogNodeInterface::osgNode() const
 simVis::GOG::LoadFormat GogNodeInterface::loadFormat() const
 {
   return metaData_.loadFormat;
+}
+
+void GogNodeInterface::setRangeUnits(const simCore::Units& units)
+{
+  rangeUnits_ = units;
+}
+
+const simCore::Units& GogNodeInterface::rangeUnits() const
+{
+  return rangeUnits_;
 }
 
 simVis::GOG::GogShape GogNodeInterface::shape() const

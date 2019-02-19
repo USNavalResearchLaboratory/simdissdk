@@ -50,7 +50,7 @@ GogNodeInterface* Points::deserialize(const ParsedShape& parsedShape,
   if (isExtruded)
   {
     // Note that an extrudeHeight of 0 means to extrude to ground
-    const Distance extrudeHeight(parsedShape.doubleValue(GOG_EXTRUDE_HEIGHT, 0.0), p.units_.altitudeUnits_);
+    const Distance extrudeHeight(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_EXTRUDE_HEIGHT, 0.0)), Units::METERS);
     recreateAsLineSegs_(p, extrudeHeight.as(Units::METERS));
 
     // Impersonate LINESEGS instead of points

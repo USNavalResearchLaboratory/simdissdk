@@ -26,6 +26,7 @@
 #include <vector>
 #include <osg/ref_ptr>
 #include "simCore/Calc/Coordinate.h"
+#include "simCore/Calc/Units.h"
 #include "simData/DataTypes.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/GOGNode.h"
@@ -33,14 +34,14 @@
 
 namespace osgEarth{
   class GeoPoint;
-namespace Annotation {
-  class FeatureNode;
-  class GeometryNode;
-  class GeoPositionNode;
-  class LabelNode;
-  class LocalGeometryNode;
-  class GeoPositionNode;
-  class PlaceNode;
+  namespace Annotation {
+    class FeatureNode;
+    class GeometryNode;
+    class GeoPositionNode;
+    class LabelNode;
+    class LocalGeometryNode;
+    class GeoPositionNode;
+    class PlaceNode;
 }}
 
 //----------------------------------------------------------------------------
@@ -356,6 +357,11 @@ public:
    */
   simVis::GOG::LoadFormat loadFormat() const;
 
+  /** Sets the units that were specified for "xy" commands (default to YARDS) */
+  void setRangeUnits(const simCore::Units& rangeUnits);
+  /** Retrieves the units for "xy" commands (default to YARDS) */
+  const simCore::Units& rangeUnits() const;
+
   /**
    * Get the shape type of this Overlay, which is defined in the meta data
    * @return shape type enum
@@ -472,6 +478,9 @@ private:
   int defaultTextSize_;
   /** Text Color to use if not defined in annotation block */
   osg::Vec4f defaultTextColor_;
+
+  /** Range units specified by user in file */
+  simCore::Units rangeUnits_;
 
   /** listeners for updates */
   std::vector<GogNodeListenerPtr> listeners_;

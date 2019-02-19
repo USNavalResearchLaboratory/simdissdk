@@ -42,18 +42,21 @@ GogNodeInterface* Ellipse::deserialize(const ParsedShape& parsedShape,
   Distance majorRadius, minorRadius;
 
   if (parsedShape.hasValue(GOG_MAJORAXIS))
-    majorRadius = Distance(0.5*parsedShape.doubleValue(GOG_MAJORAXIS, 10.0), p.units_.rangeUnits_);
+    majorRadius = Distance(p.units_.rangeUnits_.convertTo(simCore::Units::METERS,
+      0.5 * parsedShape.doubleValue(GOG_MAJORAXIS, 10.0)), Units::METERS);
 
   if (parsedShape.hasValue(GOG_MINORAXIS))
-    minorRadius = Distance(0.5*parsedShape.doubleValue(GOG_MINORAXIS, 5.0), p.units_.rangeUnits_);
+    minorRadius = Distance(p.units_.rangeUnits_.convertTo(simCore::Units::METERS,
+      0.5 * parsedShape.doubleValue(GOG_MINORAXIS, 5.0)), Units::METERS);
 
   if (parsedShape.hasValue(GOG_RADIUS))
   {
-    majorRadius = Distance(parsedShape.doubleValue(GOG_RADIUS, 10.0), p.units_.rangeUnits_);
+    majorRadius = Distance(p.units_.rangeUnits_.convertTo(simCore::Units::METERS,
+      parsedShape.doubleValue(GOG_RADIUS, 10.0)), Units::METERS);
     minorRadius = majorRadius;
   }
 
-  const Angle rotation(0., p.units_.angleUnits_); // Rotation handled by parameters in GOG_ORIENT
+  const Angle rotation(0., Units::DEGREES); // Rotation handled by parameters in GOG_ORIENT
   osgEarth::Symbology::GeometryFactory gf;
   Geometry* shape = gf.createEllipse(osg::Vec3d(0, 0, 0), minorRadius, majorRadius, rotation);
 

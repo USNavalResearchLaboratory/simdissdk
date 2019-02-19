@@ -40,7 +40,7 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
                     const GogMetaData&       metaData,
                     MapNode*                 mapNode)
 {
-  Distance radius(parsedShape.doubleValue(GOG_RADIUS, 1000.), p.units_.rangeUnits_);
+  Distance radius(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_RADIUS, 1000.)), Units::METERS);
 
   osgEarth::Symbology::GeometryFactory gf;
   Geometry* shape = gf.createCircle(osg::Vec3d(0, 0, 0), radius);

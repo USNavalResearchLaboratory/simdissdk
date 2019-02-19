@@ -168,6 +168,11 @@ void Parser::setReferenceLocation(const osgEarth::GeoPoint& refPoint)
   context_.refPoint_ = refPoint;
 }
 
+void Parser::setUnitsRegistry(const simCore::UnitsRegistry* registry)
+{
+  context_.unitsRegistry_ = registry;
+}
+
 GogNodeInterface* Parser::createGOG(const std::vector<std::string>& lines, const GOGNodeType& nodeType, GogFollowData& followData) const
 {
   std::stringstream buf;

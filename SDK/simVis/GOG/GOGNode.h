@@ -31,6 +31,8 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"
 
+namespace simCore { class UnitsRegistry; }
+
 namespace simVis { namespace GOG
 {
   /**
@@ -79,6 +81,13 @@ namespace simVis { namespace GOG
     osgEarth::optional<osgEarth::GeoPoint> refPoint_;
     /** Error reporting */
     std::shared_ptr<ErrorHandler> errorHandler_;
+    /** Possibly NULL pointer to the shared Units Registry */
+    const simCore::UnitsRegistry* unitsRegistry_;
+
+    GOGContext()
+      : unitsRegistry_(NULL)
+    {
+    }
   };
 
 

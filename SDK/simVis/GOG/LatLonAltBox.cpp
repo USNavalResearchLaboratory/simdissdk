@@ -37,12 +37,12 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
                           const GogMetaData&       metaData,
                           osgEarth::MapNode*       mapNode)
 {
-  osgEarth::Angle    minLat(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_S), 0.0), p.units_.angleUnits_);
-  osgEarth::Angle    maxLat(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_N), 1.0), p.units_.angleUnits_);
-  osgEarth::Angle    minLon(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_W), 0.0), p.units_.angleUnits_);
-  osgEarth::Angle    maxLon(p.parseAngle(parsedShape.stringValue(GOG_LLABOX_E), 1.0), p.units_.angleUnits_);
-  osgEarth::Distance minAlt(parsedShape.doubleValue(GOG_LLABOX_MINALT, 0.0), p.units_.altitudeUnits_);
-  osgEarth::Distance maxAlt(parsedShape.doubleValue(GOG_LLABOX_MAXALT, 1000.0), p.units_.altitudeUnits_);
+  osgEarth::Angle    minLat(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_S), 0.0)), Units::DEGREES);
+  osgEarth::Angle    maxLat(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_N), 1.0)), Units::DEGREES);
+  osgEarth::Angle    minLon(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_W), 0.0)), Units::DEGREES);
+  osgEarth::Angle    maxLon(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_E), 1.0)), Units::DEGREES);
+  osgEarth::Distance minAlt(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_LLABOX_MINALT, 0.0)), Units::METERS);
+  osgEarth::Distance maxAlt(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_LLABOX_MAXALT, 1000.0)), Units::METERS);
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
