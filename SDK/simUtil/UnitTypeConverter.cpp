@@ -46,12 +46,14 @@ public:
     // No way to add new families in osgEarth, so we can't test getType()
     const bool osgValid = !osg.getName().empty();
     const bool coreValid = core.isValid();
-    const bool dataValid = (data != 0);
+    // Data of 0 (Plug-in API CU_UNKNOWN) might sometimes map to simCore::UNITLESS, so cover that case
+    const bool dataValid = (data != 0 || (!osgValid && coreValid));
 
     // Core <=> OSG, and Core <=> Data
     if (coreValid)
     {
-      knownCore_.insert(core.name());
+      if (!core.name().empty())
+        knownCore_.insert(core.name());
       // Core <=> OSG
       if (osgValid)
       {
