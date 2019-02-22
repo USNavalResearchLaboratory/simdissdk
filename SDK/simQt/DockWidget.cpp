@@ -1050,6 +1050,14 @@ void DockWidget::show()
   setFocus();
 }
 
+void DockWidget::setGlobalSettings(Settings* globalSettings)
+{
+  if (globalSettings_ == globalSettings)
+    return;
+  globalSettings_ = globalSettings;
+  applyGlobalSettings_();
+}
+
 void DockWidget::loadSettings_()
 {
   // nothing to do if ignoring settings
@@ -1071,17 +1079,7 @@ void DockWidget::loadSettings_()
   }
 
   // Initialize the bound setting for disable-all-docking
-  if (globalSettings_)
-  {
-    disableAllDocking_ = new simQt::BoundBooleanSetting(this, *globalSettings_, DockWidget::DISABLE_DOCKING_SETTING,
-      DockWidget::DISABLE_DOCKING_METADATA);
-    connect(disableAllDocking_, SIGNAL(valueChanged(bool)), this, SLOT(setGlobalNotDockableFlag_(bool)));
-    setGlobalNotDockableFlag_(disableAllDocking_->value());
-
-    borderThickness_ = new simQt::BoundIntegerSetting(this, *globalSettings_, DOCK_BORDER_THICKNESS, DOCK_BORDER_METADATA);
-    connect(borderThickness_, SIGNAL(valueChanged(int)), this, SLOT(setBorderThickness_(int)));
-    setBorderThickness_(borderThickness_->value());
-  }
+  applyGlobalSettings_();
 
   normalGeometry_ = geometry();
   restoreFloating_(widgetGeometry.toByteArray());
@@ -1173,6 +1171,22 @@ void DockWidget::setGlobalNotDockableFlag_(bool disallowDocking)
 void DockWidget::setBorderThickness_(int thickness)
 {
   setStyleSheet(QString("QDockWidget { border: %1px solid; }").arg(thickness));
+}
+
+void DockWidget::applyGlobalSettings_()
+{
+  if (!globalSettings_)
+    return;
+  delete disableAllDocking_;
+  disableAllDocking_ = new simQt::BoundBooleanSetting(this, *globalSettings_, DockWidget::DISABLE_DOCKING_SETTING,
+    DockWidget::DISABLE_DOCKING_METADATA);
+  connect(disableAllDocking_, SIGNAL(valueChanged(bool)), this, SLOT(setGlobalNotDockableFlag_(bool)));
+  setGlobalNotDockableFlag_(disableAllDocking_->value());
+
+  delete borderThickness_;
+  borderThickness_ = new simQt::BoundIntegerSetting(this, *globalSettings_, DOCK_BORDER_THICKNESS, DOCK_BORDER_METADATA);
+  connect(borderThickness_, SIGNAL(valueChanged(int)), this, SLOT(setBorderThickness_(int)));
+  setBorderThickness_(borderThickness_->value());
 }
 
 }
