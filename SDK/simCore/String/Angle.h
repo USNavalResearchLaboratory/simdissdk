@@ -67,6 +67,24 @@ namespace simCore
   };
 
   /**
+   * Underlying method used by printLatitude and printLongitude for a formatted angle string.
+   * @param radianAngle Angle in radians to print to string
+   * @param format Geodetic output format.
+   * @param allNumerics If true, string omits positiveDir and negativeDir, and omits the degree, minute, and second
+   *   symbol between tokens for DMS/DMD/DD formats, using a "-" sign as needed.  If false, then DD/DMD/DMS formatting
+   *   is applied, and either positiveDir and negativeDir are appended, OR a "-" sign is appended if negativeDir is 0.
+   * @param precision Decimal precision to be used in formatting the value.
+   * @param degSymbol Symbol to use when formatting output in DMD, DMS, or DD output
+   * @param positiveDir Character to append for positive angles, only when allNumerics==false.  Set this to 0 (\0 or NULL)
+   *   to not append anything for positive directions.
+   * @param positiveDir Character to append for negative angles, only when allNumerics==false.  Set this to 0 (\0 or NULL)
+   *   to not append anything for negative directions, in which case a negative sign is prepended.
+   * @return Formatted string
+   */
+  SDKCORE_EXPORT std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNumerics,
+    size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir);
+
+  /**
    * Formats a latitude value (in radians) into a string value according to the format specification.
    * @param latRadians Latitude value to print to string, in radians.
    * @param format Geodetic output format.
