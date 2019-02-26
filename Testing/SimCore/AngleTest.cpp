@@ -172,6 +172,15 @@ int testGetDegreeAngleFromDegreeString()
     testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_UNICODE);
     errCode = simCore::getAngleFromDegreeString(testString, false, conv);
     rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_UTF8);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_ASCII);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_NONE);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
   }
   // Test longitude next
   for (int k = 0; k < 1000; ++k)
@@ -183,6 +192,15 @@ int testGetDegreeAngleFromDegreeString()
     else if (unitRandom == 1) angle = simCore::FMT_DEGREES;
     int coinFlip = random2();
     testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_UNICODE);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_UTF8);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_ASCII);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_NONE);
     errCode = simCore::getAngleFromDegreeString(testString, false, conv);
     rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
   }

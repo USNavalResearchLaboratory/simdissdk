@@ -32,7 +32,8 @@ namespace simCore
   {
     DEG_SYM_NONE = 0, ///< ""; no symbol
     DEG_SYM_ASCII,    ///< "\xB0"; screen text usable
-    DEG_SYM_UNICODE   ///< "\u00B0"; GUI usable
+    DEG_SYM_UNICODE,  ///< "\u00B0"; GUI usable
+    DEG_SYM_UTF8      ///< "\xC2\xB0"; UTF-8 degree symbol
   };
 
   /**

@@ -43,10 +43,10 @@ std::string getDegreeSymbol(DegreeSymbolFormat fmt)
   {
   case DEG_SYM_UNICODE:
     return STR_DEGREE_SYMBOL_UNICODE;
-    break;
   case DEG_SYM_ASCII:
     return STR_DEGREE_SYMBOL_ASCII;
-    break;
+  case DEG_SYM_UTF8:
+    return STR_DEGREE_SYMBOL_UTF8;
   case DEG_SYM_NONE:
     break;
   }
@@ -68,7 +68,7 @@ int getAngleFromDegreeString(const std::string& degStr, bool rads, double& ang)
   std::vector<std::string> outputVec;
   size_t end = degStr.find_first_of("SsWw-", 0);
   double signVal = (end == degStr.npos) ? 1. : -1.;
-  static const std::string wsTokens = " \t\n,:\u00B0'\"NnEeSsWw";
+  static const std::string wsTokens = " \t\n,:\u00B0\xC2\xB0'\"NnEeSsWw";
   simCore::stringTokenizer(outputVec, degStr, wsTokens);
   if (outputVec.empty())
   {
