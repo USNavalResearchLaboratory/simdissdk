@@ -22,6 +22,7 @@
 #include <QDialog>
 #include <QGroupBox>
 #include <QInputDialog>
+#include <QMenu>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QSignalMapper>
@@ -218,6 +219,9 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   nameFilter_->bindToWidget(composite_->lineEdit);
   addEntityFilter(nameFilter_);
 
+  composite_->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(composite_->treeView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(makeAndDisplayMenu_(QPoint)));
+
   // handle right-context menu (any actions will appear there)
   // Create a new QAction for copying data from the clipboard
   copyAction_ = new QAction(tr("&Copy"), composite_->treeView);
@@ -226,7 +230,6 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   copyAction_->setShortcutContext(Qt::WidgetShortcut);
   copyAction_->setEnabled(false); // Should only be enabled when selections made
   connect(copyAction_, SIGNAL(triggered()), this, SLOT(copySelection_()));
-  composite_->treeView->addAction(copyAction_);
 
   // Right click center action
   // NOTE: Use of this action must be enabled by the caller with setUseCenterAction()
@@ -234,12 +237,6 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   centerAction_->setIcon(QIcon(":simQt/images/Find.png"));
   centerAction_->setEnabled(false); // Should only be enabled when selections made
   connect(centerAction_, SIGNAL(triggered()), this, SLOT(centerOnSelection_()));
-  composite_->treeView->addAction(centerAction_);
-
-  // Add separator
-  QAction* sep = new QAction(this);
-  sep->setSeparator(true);
-  composite_->treeView->addAction(sep);
 
   // Switch tree mode action
   toggleTreeViewAction_ = new QAction("Tree View", composite_->treeView);
@@ -249,15 +246,12 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   toggleTreeViewAction_->setToolTip(simQt::formatTooltip(tr("Toggle Tree View"), tr("Toggles the display of entity types between a tree and a list view.")));
   toggleTreeViewAction_->setEnabled(false); // Disabled until entities are added
   connect(toggleTreeViewAction_, SIGNAL(triggered(bool)), this, SLOT(setTreeView_(bool)));
-  composite_->treeView->addAction(toggleTreeViewAction_);
 
   // Collapse All and Expand All actions
   collapseAllAction_ = composite_->actionCollapse_All;
   collapseAllAction_->setEnabled(false); // Disabled until entities are added
-  composite_->treeView->addAction(collapseAllAction_);
   expandAllAction_ = composite_->actionExpand_All;
   expandAllAction_->setEnabled(false); // Disabled until entities are added
-  composite_->treeView->addAction(expandAllAction_);
 
   connect(composite_->filterButton, SIGNAL(clicked()), this, SLOT(showFilters_()));
   connect(entityTreeWidget_, SIGNAL(numFilteredItemsChanged(int, int)), this, SLOT(setNumFilteredItemsLabel_(int, int)));
@@ -288,6 +282,48 @@ EntityTreeComposite::~EntityTreeComposite()
   delete entityTreeWidget_;
   // entityTreeWidget_ owns nameFilter_, so don't delete it
   // we don't own model_ so don't delete it
+}
+
+void EntityTreeComposite::addExternalAction(QAction* action)
+{
+  if ((action == NULL) || action->isSeparator())
+    return;
+
+  externalActions_.push_back(action);
+}
+
+void EntityTreeComposite::removeExternalActions()
+{
+  externalActions_.clear();
+}
+
+void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
+{
+  // Give outside code a chance to update the menu before showing the menu
+  emit rightClickMenuRequested();
+
+  QMenu* menu = new QMenu(composite_->treeView);
+
+  menu->addAction(copyAction_);
+  menu->addAction(centerAction_);
+
+  menu->addSeparator();
+
+  if (!externalActions_.empty())
+  {
+    for (auto it = externalActions_.begin(); it != externalActions_.end(); ++it)
+        menu->addAction(*it);
+
+    menu->addSeparator();
+  }
+
+  menu->addAction(toggleTreeViewAction_);
+  menu->addAction(collapseAllAction_);
+  menu->addAction(expandAllAction_);
+
+  // Show the menu with exec(), making sure the position is correctly relative
+  menu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
+  delete menu;
 }
 
 void EntityTreeComposite::addEntityFilter(EntityFilter* entityFilter)
