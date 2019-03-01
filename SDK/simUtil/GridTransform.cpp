@@ -650,8 +650,10 @@ void GridTransform::doLayout_()
 
   // Initialize some useful constants and the remaining space we're eating away at.  Note
   // that this uses the Box Model, in which the padding is internal to the reserved space.
-  const float left = padding_[0];
-  const float right = width_ - padding_[1];
+  const bool xInverted = (width_ < 0);
+  const bool yInverted = (height_ < 0);
+  const float left = (xInverted ? -padding_[0] : padding_[0]);
+  const float right = width_ - (xInverted ? -padding_[1] : padding_[1]);
   const float top = height_ - padding_[2];
   const float bottom = padding_[3];
   float hRemain = right - left;
@@ -729,10 +731,15 @@ void GridTransform::doLayout_()
       if (stretchColumns[column])
       {
         ++hNumStretched;
-        hTotalStretchedSize += width;
+        // Make stretched size negative in cases where grid width is negative
+        hTotalStretchedSize += (xInverted ? -width : width);
       }
       else
-        hRemain -= width;
+      {
+        // width is positive. In negative grid width cases, decrease hRemain
+        // by adding width to it
+        hRemain += (xInverted ? width : -width);
+      }
     }
   }
 
@@ -747,7 +754,8 @@ void GridTransform::doLayout_()
       if (stretchRows[row])
       {
         ++vNumStretched;
-        vTotalStretchedSize += height;
+        // Make stretched size negative in cases where grid height is negative
+        vTotalStretchedSize += (yInverted ? -height : height);
       }
       else
         vRemain -= height;
@@ -755,8 +763,15 @@ void GridTransform::doLayout_()
   }
 
   // Reserve the spacing
-  hRemain -= (numColumns - 1) * hSpacing_;
-  vRemain -= (numRows - 1) * vSpacing_;
+  if (!xInverted)
+    hRemain -= (numColumns - 1) * hSpacing_;
+  else
+    hRemain += (numColumns - 1) * hSpacing_;
+
+  if (!yInverted)
+    vRemain -= (numRows - 1) * vSpacing_;
+  else
+    vRemain += (numRows - 1) * vSpacing_;
 
   // Second pass on stretching passes out the horizontal stretch
   std::vector<float> xPositions(numColumns + 1, 0.f);
@@ -784,7 +799,12 @@ void GridTransform::doLayout_()
         width = (width * hRemain) / hTotalStretchedSize;
       }
     }
-    currentX += width + hSpacing_;
+    // In negative grid width cases, decrease currentX instead of increasing
+    // because the loop is working from 0 to the outer edge in all cases
+    if (!xInverted)
+      currentX += width + hSpacing_;
+    else
+      currentX -= width + hSpacing_;
   }
   // Save the final X as start of next (non-existent) column, for easier calcs later
   xPositions[numColumns] = currentX;
@@ -815,7 +835,12 @@ void GridTransform::doLayout_()
         height = (height * vRemain) / vTotalStretchedSize;
       }
     }
-    currentY -= height + vSpacing_;
+    // In negative grid height cases, increase currentY instead of decreasing
+    // because the loop is working from the outer edge to 0 in all cases
+    if (!yInverted)
+      currentY -= height + vSpacing_;
+    else
+      currentY += height + vSpacing_;
   }
   // Save the final Y as start of next (non-existent) row, for easier calcs later
   yTopPositions[numRows] = currentY;
@@ -835,7 +860,9 @@ void GridTransform::doLayout_()
       std::swap(row, column);
 
     const float xPosition = xPositions[column];
-    const float columnWidth = xPositions[column + 1] - xPosition - hSpacing_;
+    float columnWidth = xPositions[column + 1] - xPosition;
+    // Correctly account for horizontal spacing in negative grid width cases
+    columnWidth += (xInverted ? hSpacing_ : -hSpacing_);
 
     // Figure out the width to pass down to child
     float width = 0.f;
@@ -848,7 +875,9 @@ void GridTransform::doLayout_()
     else
       width = node->defaultWidth();
 
-    const float yBottomPosition = yTopPositions[row + 1] + vSpacing_;
+    float yBottomPosition = yTopPositions[row + 1];
+    // Correctly account for vertical spacing in negative grid height cases
+    yBottomPosition += (yInverted ? -vSpacing_ : vSpacing_);
     const float columnHeight = yTopPositions[row] - yBottomPosition;
     // Figure out the height to pass down to child
     float height = 0.f;
