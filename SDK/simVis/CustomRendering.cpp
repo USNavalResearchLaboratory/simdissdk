@@ -78,6 +78,8 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
 
   // create the locator node that will parent our geometry
   customLocatorNode_ = new LocatorNode(getLocator());
+  // Locator node starts turned off until an update is received to turn it on
+  customLocatorNode_->setNodeMask(0);
   addChild(customLocatorNode_);
 
   // Apply the override color shader to the container
@@ -169,7 +171,7 @@ void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
 {
   const bool prefsDraw = prefs.commonprefs().datadraw() && prefs.commonprefs().draw();
   // Visibility is determined by both customActive_ and draw state preferences
-  setNodeMask((customActive_ && prefsDraw) ? simVis::DISPLAY_MASK_CUSTOM_RENDERING : simVis::DISPLAY_MASK_NONE);
+  setNodeMask_((customActive_ && prefsDraw) ? simVis::DISPLAY_MASK_CUSTOM_RENDERING : simVis::DISPLAY_MASK_NONE);
 
   if (prefsDraw)
     updateLabel_(prefs);
@@ -258,7 +260,7 @@ bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* upda
 
 void CustomRenderingNode::flush()
 {
-  setNodeMask(DISPLAY_MASK_NONE);
+  setNodeMask_(DISPLAY_MASK_NONE);
 }
 
 int CustomRenderingNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
@@ -293,7 +295,7 @@ void CustomRenderingNode::setCustomActive(bool value)
   if (hasLastPrefs_)
     prefsDraw = lastPrefs_.commonprefs().datadraw() && lastPrefs_.commonprefs().draw();
   // Visibility is determined by both customActive_ and draw state preferences
-  setNodeMask((customActive_ && prefsDraw) ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
+  setNodeMask_((customActive_ && prefsDraw) ? DISPLAY_MASK_CUSTOM_RENDERING : DISPLAY_MASK_NONE);
 }
 
 LocatorNode* CustomRenderingNode::locatorNode() const
@@ -304,6 +306,12 @@ LocatorNode* CustomRenderingNode::locatorNode() const
 const EntityNode* CustomRenderingNode::host() const
 {
   return host_.get();
+}
+
+void CustomRenderingNode::setNodeMask_(unsigned int mask)
+{
+  setNodeMask(mask);
+  customLocatorNode_->setNodeMask(mask == 0 ? 0 : ~0);
 }
 
 }

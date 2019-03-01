@@ -225,6 +225,12 @@ namespace simVis
     */
     void updateOverrideColor_(const simData::CustomRenderingPrefs& prefs);
 
+    /**
+     * Set the node mask for this object and its locator
+     * @param mask Node mask to set on this object and its locator
+     */
+    void setNodeMask_(unsigned int mask);
+
     osg::observer_ptr<const ScenarioManager> scenario_;
     osg::observer_ptr<const EntityNode> host_;
     osg::ref_ptr<LabelContentCallback> contentCallback_;
