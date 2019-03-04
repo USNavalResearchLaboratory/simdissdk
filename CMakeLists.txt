@@ -220,12 +220,6 @@ include(CMakeModules/ImportPROTOBUF.cmake)
 set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
 include(CMakeModules/ImportSQLITE3.cmake)
 
-
-# Enable simQt Custom Rendering features.  This option will go away after version 1.9 is released.
-option(ENABLE_QT_CUSTOM_RENDER "Enable custom rendering GUI features in simQt." ON)
-mark_as_advanced(ENABLE_QT_CUSTOM_RENDER)
-
-
 # subprojects
 add_subdirectory(SDK)
 option(BUILD_SDK_EXAMPLES "Build SIMDIS SDK Example Applications" ON)
