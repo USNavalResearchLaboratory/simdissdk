@@ -123,6 +123,15 @@ public:
   static bool isStrictMinutesString(const std::string& str);
 };
 
+/** Alternate formatter for simCore::TimeStamp's TIMEFORMAT_MINUTES that wraps minutes from [0,59] */
+class SDKCORE_EXPORT MinutesWrappedTimeFormatter : public MinutesTimeFormatter
+{
+public:
+  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision = 5) const;
+  /** Converts a Seconds value to a minutes string for an ostream. */
+  static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
+};
+
 /** Formatter for simCore::TimeStamp's TIMEFORMAT_HOURS */
 class SDKCORE_EXPORT HoursTimeFormatter : public TimeFormatter
 {
@@ -140,6 +149,15 @@ public:
    * a minutes value < 60 (no decimal) and seconds value < 60 (decimals allowed)
    */
   static bool isStrictHoursString(const std::string& str);
+};
+
+/** Alternate formatter for simCore::TimeStamp's TIMEFORMAT_HOURS that wraps hours from [0,23] */
+class SDKCORE_EXPORT HoursWrappedTimeFormatter : public HoursTimeFormatter
+{
+public:
+  virtual std::string toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision = 5) const;
+  /** Converts a Seconds value to an hours string for an ostream. */
+  static void toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision);
 };
 
 /** Formatter for simCore::TimeStamp's TIMEFORMAT_ORDINAL */
@@ -210,8 +228,13 @@ public:
 class SDKCORE_EXPORT TimeFormatterRegistry
 {
 public:
-  /** Constructs a time formatter registry and registers all the built-in formatters. */
-  TimeFormatterRegistry();
+  /**
+   * Constructs a time formatter registry and registers all the built-in formatters.
+   * By default, the normal formatters are used.  Setting wrappedFormatters true will
+   * use the wrapped minutes and hours formatters, keeping them under 60 minutes and
+   * 24 hours respectively.  This can be useful for clock displays.
+   */
+  explicit TimeFormatterRegistry(bool wrappedFormatters=false);
   /** Destroys the registry */
   virtual ~TimeFormatterRegistry();
 
