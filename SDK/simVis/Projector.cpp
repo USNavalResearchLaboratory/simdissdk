@@ -52,9 +52,9 @@ namespace
   // (NOTE: some of this code is borrowed from OSG's osgthirdpersonview example)
   void makeFrustum(const osg::Matrixd& proj, const osg::Matrixd& mv, osg::MatrixTransform* mt)
   {
-    osg::Geode* geode = NULL;
-    osg::Geometry* geom = NULL;
-    osg::Vec3Array* v = NULL;
+    osg::ref_ptr<osg::Geode> geode;
+    osg::ref_ptr<osg::Geometry> geom;
+    osg::ref_ptr<osg::Vec3Array> v;
 
     if (mt->getNumChildren() > 0)
     {
@@ -65,14 +65,14 @@ namespace
     else
     {
       geom = new osg::Geometry();
-      geom->setUseVertexBufferObjects(true);
-      geom->setUseDisplayList(false);
       v = new osg::Vec3Array(9);
-      geom->setVertexArray(v);
+      v->setDataVariance(osg::Object::DYNAMIC);
+      geom->setVertexArray(v.get());
+      geom->setDataVariance(osg::Object::DYNAMIC);
 
-      osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
+      osg::ref_ptr<osg::Vec4Array> c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
       c->push_back(simVis::Color::White);
-      geom->setColorArray(c);
+      geom->setColorArray(c.get());
 
       GLubyte idxLines[8] = { 0, 5, 0, 6, 0, 7, 0, 8 };
       GLubyte idxLoops0[4] = { 1, 2, 3, 4 };
@@ -82,10 +82,10 @@ namespace
       geom->addPrimitiveSet(new osg::DrawElementsUByte(osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1));
 
       geode = new osg::Geode();
-      geode->addDrawable(geom);
+      geode->addDrawable(geom.get());
       simVis::setLighting(geode->getOrCreateStateSet(), osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
-      mt->addChild(geode);
+      mt->addChild(geode.get());
     }
 
     // Get near and far from the Projection matrix.
@@ -332,9 +332,21 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     projectorAlpha_->set(prefs.projectoralpha());
   }
 
+  // If override FOV changes, update the FOV with a sync-with-locator call
+  bool syncAfterPrefsUpdate = false;
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefov) ||
+    PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefovangle))
+  {
+    syncAfterPrefsUpdate = true;
+  }
+
   updateLabel_(prefs);
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
+
+  // Apply the sync after prefs are updated, so that overridden FOV can be retrieved correctly
+  if (hasLastUpdate_ && syncAfterPrefsUpdate)
+    syncWithLocator();
 }
 
 bool ProjectorNode::readVideoFile_(const std::string& filename)
@@ -422,6 +434,10 @@ double ProjectorNode::getVFOV() const
   // Not active, so return 0.0
   if (!hasLastUpdate_)
     return 0.0;
+
+  // Allow for override
+  if (hasLastPrefs_ && lastPrefs_.overridefov() && lastPrefs_.overridefovangle() > 0.)
+    return lastPrefs_.overridefovangle() * simCore::RAD2DEG;
 
   // Return last FOV sent as an update
   if (lastUpdate_.has_fov())
