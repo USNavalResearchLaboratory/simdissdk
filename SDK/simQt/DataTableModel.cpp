@@ -348,7 +348,7 @@ QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::
         return QVariant(QString::fromStdString("-Infinity"));
       }
 
-      return QVariant(QString::number(val, 'f', genericPrecision_));
+      return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
     }
   case simData::VT_DOUBLE:
     {
@@ -365,7 +365,7 @@ QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::
         return QVariant(QString::fromStdString("-Infinity"));
       }
 
-      return QVariant(QString::number(val, 'f', genericPrecision_));
+      return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
     }
   case simData::VT_STRING:
     {

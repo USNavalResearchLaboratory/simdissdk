@@ -95,7 +95,7 @@ namespace simQt {
     simData::DataTable* dataTable_; ///< reference to the data table this model represents
     QList<const simData::TableColumn*> columns_; ///< index in list corresponds to model column index
     QList<double> rows_; ///< index in list corresponds to model row index
-    int genericPrecision_;  ///< number of digits after the decimal for floats and doubles
+    unsigned int genericPrecision_;  ///< number of digits after the decimal for floats and doubles
   };
 
 }
