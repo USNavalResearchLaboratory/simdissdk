@@ -99,8 +99,8 @@ private:
   void queueApplyTimestamp_() const;
   /// The text to display in the spin box
   SegmentedTexts* completeLine_;
-  /// The time at the start of input focus
-  simCore::TimeStamp initialTime_;
+  /// The time at the last edit
+  simCore::TimeStamp lastEditedTime_;
   /// Flag to indicate if text color should change based on validation
   bool colorCode_;
   /// event filter object
@@ -113,8 +113,6 @@ private:
   QTimer* timer_;
   /// Amount of time in milliseconds to wait between user editing time and applying new timestamp.  Default is one second.  Interval < 0 disables automatic updates from edits
   int applyInterval_;
-  /// Tracks whether current time has changed since spinbox got focus.  Prevents resetting timestamp if set before losing focus
-  bool setSinceFocus_;
 };
 
 }
