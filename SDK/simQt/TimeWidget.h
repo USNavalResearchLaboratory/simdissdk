@@ -104,6 +104,9 @@ public:
   /** Returns true if the time widget is enabled */
   bool timeEnabled() const;
 
+  /** Disable the tool tips over the time control, since the can interfere with the user editing time */
+  void disableControlToolTips();
+
 public slots:
   /** Set the time format */
   void setTimeFormat(simCore::TimeFormat newFormat);
@@ -163,6 +166,8 @@ private:
   QLineEdit* disabledLineEdit_;
   /// True if the widget is enabled
   bool timeEnabled_;
+  /// If the label tool tip has been set, don't override
+  bool labelToolTipSet_;
 };
 
 } // namespace
