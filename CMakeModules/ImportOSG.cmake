@@ -226,10 +226,10 @@ endif()
 # Determine which files to install based on Debug or Release Build Type
 if(WIN32)
     set(DEBUG_INSTALL_PATTERN "osgdb_.+(_d|d)\\.dll")
-    set(RELEASE_INSTALL_PATTERN "osgdb_.+[^_][^d]\\.dll")
+    set(RELEASE_INSTALL_PATTERN "osgdb_.*[^d]\\.dll")
 else()
     set(DEBUG_INSTALL_PATTERN "osgdb_.+(_d|d)\\.so")
-    set(RELEASE_INSTALL_PATTERN "osgdb_.+[^_][^d]\\.so")
+    set(RELEASE_INSTALL_PATTERN "osgdb_.*[^d]\\.so")
 endif()
 
 # Set the full install path to the plugin directory
