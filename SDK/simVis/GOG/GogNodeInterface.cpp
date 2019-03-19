@@ -58,6 +58,7 @@
 #include "simVis/GOG/Ellipsoid.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/Polygon.h"
@@ -131,11 +132,16 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     depthBuffer_(false),
     depthBufferOverride_(DEPTHBUFFER_IGNORE_OVERRIDE),
     extrudedHeight_(0.0),
+    hasDefaultStyle_(false),
     altitude_(0.),
     altOffset_(0.),
     altMode_(ALTITUDE_NONE),
     hasMapNode_(false),
-    deferringStyleUpdate_(false)
+    deferringStyleUpdate_(false),
+    defaultFont_("arial.ttf"),
+    defaultTextSize_(15),
+    defaultTextColor_(osgEarth::Symbology::Color::Red),
+    rangeUnits_(simCore::Units::YARDS)
 {
   if (osgNode_.valid())
   {
@@ -146,56 +152,86 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
   }
 }
 
-void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const UnitsState& units)
+void GogNodeInterface::setDefaultFont(const std::string& fontName)
+{
+  defaultFont_ = fontName;
+}
+
+void GogNodeInterface::setDefaultTextSize(int textSize)
+{
+  defaultTextSize_ = textSize;
+}
+
+void GogNodeInterface::setDefaultTextColor(const osg::Vec4f& textColor)
+{
+  defaultTextColor_ = textColor;
+}
+
+void GogNodeInterface::storeDefaultStyle()
+{
+  defaultStyle_ = style_;
+  hasDefaultStyle_ = true;
+}
+
+void GogNodeInterface::revertToDefaultStyle()
+{
+  if (hasDefaultStyle_)
+  {
+    style_ = defaultStyle_;
+    setStyle_(style_);
+  }
+}
+
+void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState& units)
 {
   // for performance reasons, cache all style updates, apply once when done
   beginStyleUpdates_();
 
   metaData_.allowSetExplicitly(false);  ///< setFields will incorrectly respond to defaults here, so cache the correct value and restore it at the end
 
-  const std::string& key = parent.key();
+  const std::string& key = parent.shape();
   const simVis::GOG::GogShape gogShape = metaData_.shape;
   bool is3dShape = (gogShape == GOG_SPHERE || gogShape == GOG_ELLIPSOID || gogShape == GOG_HEMISPHERE ||
     gogShape == GOG_CYLINDER || gogShape == GOG_LATLONALTBOX);
 
   // do we need an ExtrusionSymbol? Note that 3D shapes cannot be extruded
-  bool isExtruded = simCore::stringIsTrueToken(parent.value("extrude")) && !is3dShape;
+  bool isExtruded = simCore::stringIsTrueToken(parent.stringValue(GOG_EXTRUDE)) && !is3dShape;
 
   // do we need a PolygonSymbol?
   bool isFillable = isExtruded || key == "poly" || key == "polygon" || key == "ellipse" || key == "circle" || key == "arc" || is3dShape;
-  bool isFilled   = isFillable && simCore::stringIsTrueToken(parent.value("filled"));
+  bool isFilled   = isFillable && simCore::stringIsTrueToken(parent.stringValue(GOG_FILLED));
 
   // do we need a LineSymbol?
-  bool isOutlined = simCore::stringIsTrueToken(parent.value("outline"));
-  bool hasLineAttrs = parent.hasValue("linecolor") || parent.hasValue("linewidth") || parent.hasValue("linestyle") || isOutlined;
+  bool isOutlined = simCore::stringIsTrueToken(parent.stringValue(GOG_OUTLINE));
+  bool hasLineAttrs = parent.hasValue(GOG_LINECOLOR) || parent.hasValue(GOG_LINEWIDTH) || parent.hasValue(GOG_LINESTYLE) || isOutlined;
   // Tessellate behaves badly with cirles, arcs, ellipses and 3dShapes, do not apply
-  bool isTessellated = simCore::stringIsTrueToken(parent.value("tessellate")) && !(is3dShape || key == "circle" || key == "ellipse" || key == "arc");
+  bool isTessellated = simCore::stringIsTrueToken(parent.stringValue(GOG_TESSELLATE)) && !(is3dShape || key == "circle" || key == "ellipse" || key == "arc");
   // need to create a LineSymbol if the shape is filled or has some line attributes or is tessellated, since tessellation is handled in the LineSymbol
   bool isLined = isFilled || hasLineAttrs || isTessellated;
   bool isText = (key == "annotation");
 
   // POINT attributes
-  if (gogShape == GOG_POINTS && parent.hasValue("pointsize"))
-    setPointSize(parent.value<int>("pointsize", 1));
+  if (gogShape == GOG_POINTS && parent.hasValue(GOG_POINTSIZE))
+    setPointSize(parent.doubleValue(GOG_POINTSIZE, 1));
 
   // LINE attributes
   if (isLined)
   {
 
-    if (parent.hasValue("outline"))
+    if (parent.hasValue(GOG_OUTLINE))
       setOutlineState(isOutlined);
     else
       setOutlineState(true);
 
-    if (parent.hasValue("linecolor"))
-      setLineColor(osgEarth::Symbology::Color(parent.value("linecolor")));
+    if (parent.hasValue(GOG_LINECOLOR))
+      setLineColor(osgEarth::Symbology::Color(parent.stringValue(GOG_LINECOLOR)));
 
-    if (parent.hasValue("linewidth"))
-      setLineWidth(parent.value<int>("linewidth", 1));
+    if (parent.hasValue(GOG_LINEWIDTH))
+      setLineWidth(parent.doubleValue(GOG_LINEWIDTH, 1));
 
-    if (parent.hasValue("linestyle"))
+    if (parent.hasValue(GOG_LINESTYLE))
     {
-      const std::string& ls = parent.value("linestyle");
+      const std::string& ls = parent.stringValue(GOG_LINESTYLE);
       if (simCore::caseCompare(ls, "dash") == 0 || simCore::caseCompare(ls, "dashed") == 0)
         setLineStyle(Utils::LINE_DASHED);
       else if (simCore::caseCompare(ls, "dot") == 0 || simCore::caseCompare(ls, "dotted") == 0)
@@ -210,42 +246,42 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
   // FILL attributes
   if (isFillable)
   {
-    if (parent.hasValue("fillcolor"))
-      setFillColor(osgEarth::Symbology::Color(parent.value("fillcolor")));
-    else if (parent.hasValue("linecolor"))
-      setFillColor(osgEarth::Symbology::Color(parent.value("linecolor")));  // Default to the line color if the fill color is not set
+    if (parent.hasValue(GOG_FILLCOLOR))
+      setFillColor(osgEarth::Symbology::Color(parent.stringValue(GOG_FILLCOLOR)));
+    else if (parent.hasValue(GOG_LINECOLOR))
+      setFillColor(osgEarth::Symbology::Color(parent.stringValue(GOG_LINECOLOR)));  // Default to the line color if the fill color is not set
     setFilledState(isFilled);
   }
   // only points and annotation do not support the fillcolor keyword
-  else if ((gogShape == GOG_POINTS || gogShape == GOG_ANNOTATION) && parent.hasValue("fillcolor"))
+  else if ((gogShape == GOG_POINTS || gogShape == GOG_ANNOTATION) && parent.hasValue(GOG_FILLCOLOR))
   {
     SIM_WARN << "The GOG keyword " << key << " does not support fillcolor.\n";
   }
 
   // altitude offset
-  if (parent.hasValue("3d offsetalt"))
+  if (parent.hasValue(GOG_3D_OFFSETALT))
   {
-    double altOffset = parent.value<double>("3d offsetalt", 0.);
+    double altOffset = parent.doubleValue(GOG_3D_OFFSETALT, 0.);
     // convert from gog file altitude units to meters; gog file default units are ft, but file can specify different units
-    altOffset = units.altitudeUnits_.convertTo(osgEarth::Units::METERS, altOffset);
+    altOffset = units.altitudeUnits_.convertTo(simCore::Units::METERS, altOffset);
     setAltOffset(altOffset);
   }
   // ALTITUDE mode, handles extrude attribute, which requires a specific AltitudeSymbol
   AltitudeMode altMode = ALTITUDE_NONE;
-  if (simCore::caseCompare(parent.value("altitudemode"), "relativetoground") == 0)
+  if (simCore::caseCompare(parent.stringValue(GOG_ALTITUDEMODE), "relativetoground") == 0)
     altMode = ALTITUDE_GROUND_RELATIVE;
-  else if (simCore::caseCompare(parent.value("altitudemode"), "clamptoground") == 0)
+  else if (simCore::caseCompare(parent.stringValue(GOG_ALTITUDEMODE), "clamptoground") == 0)
     altMode = ALTITUDE_GROUND_CLAMPED;
   else if (isExtruded)
     altMode = ALTITUDE_EXTRUDE;
   setAltitudeMode(altMode);
 
   // process extrude height if extrude is set and if an extrude height was specified
-  if (altMode == ALTITUDE_EXTRUDE && parent.hasChild("extrudeheight"))
+  if (altMode == ALTITUDE_EXTRUDE && parent.hasValue(GOG_EXTRUDE_HEIGHT))
   {
-    double extrudeHeight = static_cast<double>(parent.value<int>("extrudeheight", 0));
+    double extrudeHeight = static_cast<double>(parent.doubleValue(GOG_EXTRUDE_HEIGHT, 0));
     // convert from gog file altitude units to meters; gog file default units are ft, but file can specify different units
-    extrudeHeight = units.altitudeUnits_.convertTo(osgEarth::Units::METERS, extrudeHeight);
+    extrudeHeight = units.altitudeUnits_.convertTo(simCore::Units::METERS, extrudeHeight);
     setExtrudedHeight(extrudeHeight);
   }
 
@@ -255,7 +291,7 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
   {
     // default to rhumbline
     tessStyle = TESSELLATE_RHUMBLINE;
-    if (parent.hasValue("lineprojection") && (simCore::caseCompare(parent.value("lineprojection"), "greatcircle") == 0))
+    if (parent.hasValue(GOG_LINEPROJECTION) && (simCore::caseCompare(parent.stringValue(GOG_LINEPROJECTION), "greatcircle") == 0))
       tessStyle = TESSELLATE_GREAT_CIRCLE_PROJECTION;
   }
   setTessellation(tessStyle);
@@ -264,18 +300,18 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
   if (isText)
   {
     // default to font arial 15, color red
-    std::string fontName = "arial.ttf";
-    int fontSize = 15;
-    osg::Vec4f fontColor = osgEarth::Symbology::Color::Red;
+    std::string fontName = defaultFont_;
+    int fontSize = defaultTextSize_;
+    osg::Vec4f fontColor = defaultTextColor_;
     // fonts.
-    if (parent.hasValue("fontname"))
-      fontName = parent.value("fontname");
+    if (parent.hasValue(GOG_FONTNAME))
+      fontName = parent.stringValue(GOG_FONTNAME);
 
-    if (parent.hasValue("fontsize"))
-      fontSize = parent.value<int>("fontsize", 15);
+    if (parent.hasValue(GOG_FONTSIZE))
+      fontSize = parent.doubleValue(GOG_FONTSIZE, fontSize);
 
-    if (parent.hasValue("linecolor"))
-      fontColor = osgEarth::Symbology::Color(parent.value("linecolor"));
+    if (parent.hasValue(GOG_LINECOLOR))
+      fontColor = osgEarth::Symbology::Color(parent.stringValue(GOG_LINECOLOR));
 
     setFont(fontName, fontSize, fontColor);
 
@@ -286,8 +322,8 @@ void GogNodeInterface::applyConfigToStyle(const osgEarth::Config& parent, const 
   // DEPTH BUFFER attribute
   // depth buffer defaults to disable to match SIMDIS 9
   bool depthTest = false;
-  if (parent.hasValue("depthbuffer"))
-    depthTest = simCore::stringIsTrueToken(parent.value("depthbuffer"));
+  if (parent.hasValue(GOG_DEPTHBUFFER))
+    depthTest = simCore::stringIsTrueToken(parent.stringValue(GOG_DEPTHBUFFER));
   setDepthBuffer(depthTest);
 
   // apply backface culling here
@@ -308,6 +344,16 @@ osg::Node* GogNodeInterface::osgNode() const
 simVis::GOG::LoadFormat GogNodeInterface::loadFormat() const
 {
   return metaData_.loadFormat;
+}
+
+void GogNodeInterface::setRangeUnits(const simCore::Units& units)
+{
+  rangeUnits_ = units;
+}
+
+const simCore::Units& GogNodeInterface::rangeUnits() const
+{
+  return rangeUnits_;
 }
 
 simVis::GOG::GogShape GogNodeInterface::shape() const

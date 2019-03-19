@@ -21,8 +21,10 @@
  */
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
+#include "osgEarthDrivers/feature_ogr/OGRFeatureOptions"
 #include "osgEarthFeatures/FeatureModelLayer"
 #include "simCore/Common/Exception.h"
+#include "simVis/Constants.h"
 #include "simUtil/LayerFactory.h"
 
 namespace simUtil {
@@ -112,6 +114,68 @@ osgEarth::Features::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEa
   // Error encountered
   SAFETRYEND("during LayerFactory::newFeatureLayer()");
   return NULL;
+}
+
+/////////////////////////////////////////////////////////////////
+
+ShapeFileLayerFactory::ShapeFileLayerFactory()
+  : style_(new osgEarth::Symbology::Style)
+{
+  // Configure some defaults
+  setLineColor(osgEarth::Symbology::Color::Cyan);
+  setLineWidth(1.5f);
+
+  // Configure the render symbol to render line shapes
+  osgEarth::RenderSymbol* rs = style_->getOrCreateSymbol<osgEarth::RenderSymbol>();
+  rs->depthTest() = false;
+  rs->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
+  rs->order()->setLiteral(simVis::BIN_GOG_FLAT);
+  rs->renderBin() = simVis::BIN_GLOBAL_SIMSDK;
+}
+
+ShapeFileLayerFactory::~ShapeFileLayerFactory()
+{
+}
+
+osgEarth::Features::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url) const
+{
+  osgEarth::Features::FeatureModelLayerOptions layerOptions;
+  configureOptions(url, layerOptions);
+  return LayerFactory::newFeatureLayer(layerOptions);
+}
+
+void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::Features::FeatureModelLayerOptions& driver) const
+{
+  osgEarth::Drivers::OGRFeatureOptions ogr;
+  ogr.url() = url;
+
+  // Configure the stylesheet that will be associated with the layer
+  osgEarth::StyleSheet* stylesheet = new osgEarth::StyleSheet;
+  stylesheet->addStyle(*style_);
+
+  driver.featureSource() = ogr;
+  driver.styles() = stylesheet;
+  driver.alphaBlending() = true;
+  driver.enableLighting() = false;
+}
+
+void ShapeFileLayerFactory::setLineColor(const osg::Vec4f& color)
+{
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
+  ls->stroke()->color() = color;
+}
+
+void ShapeFileLayerFactory::setLineWidth(float width)
+{
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
+  ls->stroke()->width() = width;
+}
+
+void ShapeFileLayerFactory::setStipple(unsigned short pattern, unsigned int factor)
+{
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
+  ls->stroke()->stipplePattern() = pattern;
+  ls->stroke()->stippleFactor() = factor;
 }
 
 }

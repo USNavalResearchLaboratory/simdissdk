@@ -43,10 +43,10 @@ std::string getDegreeSymbol(DegreeSymbolFormat fmt)
   {
   case DEG_SYM_UNICODE:
     return STR_DEGREE_SYMBOL_UNICODE;
-    break;
   case DEG_SYM_ASCII:
     return STR_DEGREE_SYMBOL_ASCII;
-    break;
+  case DEG_SYM_UTF8:
+    return STR_DEGREE_SYMBOL_UTF8;
   case DEG_SYM_NONE:
     break;
   }
@@ -68,7 +68,7 @@ int getAngleFromDegreeString(const std::string& degStr, bool rads, double& ang)
   std::vector<std::string> outputVec;
   size_t end = degStr.find_first_of("SsWw-", 0);
   double signVal = (end == degStr.npos) ? 1. : -1.;
-  static const std::string wsTokens = " \t\n,:\u00B0'\"NnEeSsWw";
+  static const std::string wsTokens = " \t\n,:\u00B0\xC2\xB0'\"NnEeSsWw";
   simCore::stringTokenizer(outputVec, degStr, wsTokens);
   if (outputVec.empty())
   {
@@ -132,23 +132,32 @@ const simCore::Units& formatToUnits(GeodeticFormat format)
   return simCore::Units::UNITLESS;
 }
 
-/// return a string formatted for Lat or Lon
-std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allNumerics,
+}
+
+/// return a formatted angle string
+std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNumerics,
   size_t precision, simCore::DegreeSymbolFormat degSymbol, char positiveDir, char negativeDir)
 {
+  double degreeAngle = simCore::Units::RADIANS.convertTo(simCore::Units::DEGREES, radianAngle);
   precision = simCore::sdkMin(precision, static_cast<size_t>(16));
 
   std::string hemiDir = " ";
   bool negative = false;
   if (degreeAngle < 0.0)
   {
-    hemiDir += negativeDir;
+    if (negativeDir == '\0')
+      hemiDir.clear();
+    else
+      hemiDir += negativeDir;
     degreeAngle = -degreeAngle;
     negative = true;
   }
   else
   {
-    hemiDir += positiveDir;
+    if (positiveDir == '\0')
+      hemiDir.clear();
+    else
+      hemiDir += positiveDir;
   }
 
   std::string degreeSymbolString;
@@ -165,6 +174,8 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
   {
     hemiDir.clear();
   }
+
+  const bool printNegativeSign = (allNumerics || negativeDir == '\0');
 
   const double tolerance = 0.00000001; //< Value to avoid instance of -0
   double minValue = 0;  // DM min value
@@ -200,14 +211,14 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
     }
     else
     {
-        double fraction = fmod(secValue * pow(10.0, precision + 1.0), 10.0);
-        if ((fraction > 5.0) || simCore::areEqual(fraction, 5.0))
-        {
-            secValue += rounding;
-        }
+      double fraction = fmod(secValue * pow(10.0, precision + 1.0), 10.0);
+      if ((fraction > 5.0) || simCore::areEqual(fraction, 5.0))
+      {
+        secValue += rounding;
+      }
     }
 
-    degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
+    degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDeg;
     strDeg << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
@@ -239,14 +250,14 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
     }
     else
     {
-        double fraction = fmod(minValue * pow(10.0, precision + 1.0), 10.0);
-        if ((fraction > 5.0) || simCore::areEqual(fraction, 5.0))
-        {
-            minValue += rounding;
-        }
+      double fraction = fmod(minValue * pow(10.0, precision + 1.0), 10.0);
+      if ((fraction > 5.0) || simCore::areEqual(fraction, 5.0))
+      {
+        minValue += rounding;
+      }
     }
 
-    degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
+    degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDeg;
     strDeg << static_cast<int>(degreeAngle) << degreeSymbolString << " ";
@@ -263,7 +274,7 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
   case FMT_MIL:
   case FMT_MILLIRADIANS:
   {
-    degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
+    degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
     std::stringstream str;
     str.setf(std::ios::fixed, std::ios::floatfield);
     str << std::setprecision(precision) << simCore::Units::DEGREES.convertTo(formatToUnits(format), degreeAngle);
@@ -274,7 +285,7 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
   case FMT_DEGREES:
   default:
   {
-    degreeAngle = (negative && allNumerics) ? -degreeAngle : degreeAngle;
+    degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
     std::stringstream str;
     str.setf(std::ios::fixed, std::ios::floatfield);
     str << std::setprecision(precision) << degreeAngle << degreeSymbolString;
@@ -285,22 +296,21 @@ std::string getLatLonString(double degreeAngle, GeodeticFormat format, bool allN
 
   return angleString + hemiDir;
 }
-}
 
 /// convert lat (in radians) to string in the form: ##.####### N/S
 std::string printLatitude(double latRadians, GeodeticFormat format, bool allNumerics,
     size_t precision, simCore::DegreeSymbolFormat degSymbol)
 {
-  const double degValue = simCore::RAD2DEG*(simCore::angWrapPI2(latRadians));
-  return getLatLonString(degValue, format, allNumerics, precision, degSymbol, 'N', 'S');
+  latRadians = simCore::angWrapPI2(latRadians);
+  return getAngleString(latRadians, format, allNumerics, precision, degSymbol, 'N', 'S');
 }
 
 /// convert lon (in radians) to string in the form: ###.####### E/W
 std::string printLongitude(double lonRadians, GeodeticFormat format, bool allNumerics,
     size_t precision, simCore::DegreeSymbolFormat degSymbol)
 {
-  const double degValue = simCore::RAD2DEG*(simCore::angFixPI(lonRadians));
-  return getLatLonString(degValue, format, allNumerics, precision, degSymbol, 'E', 'W');
+  lonRadians = simCore::angFixPI(lonRadians);
+  return getAngleString(lonRadians, format, allNumerics, precision, degSymbol, 'E', 'W');
 }
 
 } // namespace simCore

@@ -27,20 +27,21 @@
 #include "simCore/Calc/Math.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Sphere.h"
 #include "simVis/GOG/Utils.h"
 
 using namespace simVis::GOG;
 
 
-GogNodeInterface* Sphere::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
                     simVis::GOG::ParserData& p,
                     const GOGNodeType&       nodeType,
                     const GOGContext&        context,
                     const GogMetaData&       metaData,
                     osgEarth::MapNode*       mapNode)
 {
-  osgEarth::Distance radius(conf.value("radius", 1000.0), p.units_.rangeUnits_);
+  osgEarth::Distance radius(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_RADIUS, 1000.0)), osgEarth::Units::METERS);
 
   osg::Vec4f color(osgEarth::Symbology::Color::White);
 
@@ -70,7 +71,7 @@ GogNodeInterface* Sphere::deserialize(const osgEarth::Config&  conf,
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new SphericalNodeInterface(node, metaData);
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
   }
   return rv;
 }

@@ -99,11 +99,74 @@ public:
   static const Units YARDS_PER_SECOND ATTRIB_HIDDEN;
   ///@}
 
+  /** @name Acceleration */
+  ///@{
+  /// Acceleration measurement units
+  static const Units METERS_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units KILOMETERS_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units YARDS_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units MILES_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units FEET_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units INCHES_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  static const Units NAUTICAL_MILES_PER_SECOND_SQUARED ATTRIB_HIDDEN;
+  ///@}
+
+  /** @name Temperature */
+  ///@{
+  /// Temperature measurement units
+  static const Units CELSIUS ATTRIB_HIDDEN;
+  static const Units FAHRENHEIT ATTRIB_HIDDEN;
+  static const Units KELVIN ATTRIB_HIDDEN;
+  static const Units RANKINE ATTRIB_HIDDEN;
+  static const Units REAUMUR ATTRIB_HIDDEN;
+  ///@}
+
   /** @name Frequency */
   ///@{
   /// Frequency Units
   static const Units HERTZ ATTRIB_HIDDEN;
   static const Units REVOLUTIONS_PER_MINUTE ATTRIB_HIDDEN;
+  static const Units RADIANS_PER_SECOND ATTRIB_HIDDEN;
+  static const Units DEGREES_PER_SECOND ATTRIB_HIDDEN;
+  ///@}
+
+  /** @name Volume */
+  ///@{
+  /// Volume Units
+  static const Units LITER ATTRIB_HIDDEN;
+  static const Units MILLILITER ATTRIB_HIDDEN;
+  static const Units FLUID_OUNCE ATTRIB_HIDDEN;
+  static const Units CUP ATTRIB_HIDDEN;
+  static const Units PINT ATTRIB_HIDDEN;
+  static const Units QUART ATTRIB_HIDDEN;
+  static const Units GALLON ATTRIB_HIDDEN;
+  static const Units TEASPOON ATTRIB_HIDDEN;
+  static const Units TABLESPOON ATTRIB_HIDDEN;
+  ///@}
+
+  /** @name Pressure */
+  ///@{
+  /// Pressure Units
+  static const Units MILLIBAR ATTRIB_HIDDEN;
+  static const Units BAR ATTRIB_HIDDEN;
+  static const Units POUNDS_PER_SQUARE_INCH ATTRIB_HIDDEN;
+  static const Units ATMOSPHERE ATTRIB_HIDDEN;
+  static const Units TORR ATTRIB_HIDDEN;
+  /** NOTE: Use PASCALS instead of PASCAL to avoid naming conflict with macro from minwindef.h */
+  static const Units PASCALS ATTRIB_HIDDEN;
+  static const Units KILOPASCAL ATTRIB_HIDDEN;
+  static const Units MEGAPASCAL ATTRIB_HIDDEN;
+  ///@}
+
+  /** @name Potential */
+  ///@{
+  /// Potential Units
+  static const Units VOLT ATTRIB_HIDDEN;
+  static const Units MILLIVOLT ATTRIB_HIDDEN;
+  static const Units MICROVOLT ATTRIB_HIDDEN;
+  static const Units KILOVOLT ATTRIB_HIDDEN;
+  static const Units MEGAVOLT ATTRIB_HIDDEN;
+  static const Units GIGAVOLT ATTRIB_HIDDEN;
   ///@}
 
   ///@{
@@ -114,7 +177,12 @@ public:
   static const std::string ANGLE_FAMILY ATTRIB_HIDDEN;
   static const std::string LENGTH_FAMILY ATTRIB_HIDDEN;
   static const std::string SPEED_FAMILY ATTRIB_HIDDEN;
+  static const std::string ACCELERATION_FAMILY ATTRIB_HIDDEN;
+  static const std::string TEMPERATURE_FAMILY ATTRIB_HIDDEN;
   static const std::string FREQUENCY_FAMILY ATTRIB_HIDDEN;
+  static const std::string VOLUME_FAMILY ATTRIB_HIDDEN;
+  static const std::string PRESSURE_FAMILY ATTRIB_HIDDEN;
+  static const std::string POTENTIAL_FAMILY ATTRIB_HIDDEN;
   ///@}
 
   /** Construct an invalid unit */
@@ -146,9 +214,26 @@ public:
   /** Returns true if valid unit type */
   bool isValid() const;
 
+  /** Retrieves the to-base scalar.  This is 1.0 for base units. */
+  double toBaseScalar() const;
+  /** Retrieves the to-base offset.  This is typically 0.0 */
+  double toBaseOffset() const;
+
+  /**
+   * Factory Method for a unit that is scaled and offset from base, such that:
+   *   baseUnitValue = (unitValue + offset) * toBase.
+   * This is useful for conversions like Celsius and Fahrenheit, where Fahrenheit can be defined as:
+   *   Celsius = (5. / 9.) * (Fahrenheit - 32.)
+   * In the example above, offset is -32.0 and toBase is (5. / 9.).  This can
+   * also be used for Kelvin conversion, where toBase would be 1. and offset -273.
+   */
+  static Units offsetThenScaleUnit(const std::string& name, const std::string& abbrev,
+    double offset, double toBase, const std::string& family);
+
 private:
   std::string name_;
   std::string abbrev_;
+  double toBaseOffset_;
   double toBase_;
   std::string family_;
 };

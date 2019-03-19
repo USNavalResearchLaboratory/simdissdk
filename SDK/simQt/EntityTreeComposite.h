@@ -49,7 +49,7 @@ class SDKQT_EXPORT FilterDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  FilterDialog(QWidget* parent = NULL);
+  explicit FilterDialog(QWidget* parent = NULL);
   virtual ~FilterDialog(){};
 
   /** Override the QDialog close event to emit the closedGui signal */
@@ -69,10 +69,14 @@ class SDKQT_EXPORT EntityTreeComposite : public QWidget
 {
   Q_OBJECT;
   Q_PROPERTY(bool useEntityIcons READ useEntityIcons WRITE setUseEntityIcons);
+  Q_ENUMS(QAbstractItemView::SelectionMode); // Needed even though this is a Qt enum
+  Q_PROPERTY(QAbstractItemView::SelectionMode selectionMode READ selectionMode WRITE setSelectionMode);
+  Q_PROPERTY(bool useCenterAction READ useCenterAction WRITE setUseCenterAction);
+  Q_PROPERTY(bool expandsOnDoubleClick READ expandsOnDoubleClick WRITE setExpandsOnDoubleClick);
 
 public:
   /** Constructor needs the parent widget */
-  EntityTreeComposite(QWidget* parent);
+  explicit EntityTreeComposite(QWidget* parent);
   virtual ~EntityTreeComposite();
 
   /** Adds an entity filter to the entity tree widget's proxy model.  NOTE: the proxy model takes ownership of the memory */
@@ -120,6 +124,8 @@ public:
   bool useEntityIcons() const;
   /** Shows icons instead of text for the entity tree list Entity Type column */
   void setUseEntityIcons(bool showIcons);
+  /** Returns true if the context menu center action is enabled */
+  bool useCenterAction() const;
   /** Sets the ability to use the context menu center action, which is disabled by default */
   void setUseCenterAction(bool use);
 
@@ -143,6 +149,11 @@ public:
     QString description_;                   ///< User-supplied description of the configuration
     QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
+
+  /** Add an action to the right mouse click menu, separators are ignored */
+  void addExternalAction(QAction* action);
+  /** Remove all actions added by the addExternalAction() call */
+  void removeExternalActions();
 
 public slots:
   /** If true expand the tree on double click */
@@ -173,6 +184,8 @@ signals:
    * @param settings Filters get data from the setting using a global unique key
    */
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
+  /** Fired before showing the right mouse click menu to allow external code to call addAction() and removeActions() */
+  void rightClickMenuRequested();
 
 protected slots:
   /** Receive notice of an inserted row */
@@ -200,6 +213,8 @@ private slots:
   void saveFilterConfig_(int index);
   /** Clears the filter configuration indicated by the index provided */
   void clearFilterConfig_(int index);
+  /** Make and display the right mouse click menu */
+  void makeAndDisplayMenu_(const QPoint& pos);
 
 private:
   /** Watch for settings changes related to the buttons */
@@ -222,6 +237,7 @@ private:
   QAction* toggleTreeViewAction_;
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
+  std::vector<QAction*> externalActions_;
   bool useCenterAction_;
   bool treeViewUsable_;
 

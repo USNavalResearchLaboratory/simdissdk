@@ -68,6 +68,10 @@ namespace simQt {
     // Let the model handle the data call as normal
     const QVariant rv = QSortFilterProxyModel::data(index, role);
 
+    // if alwaysShow_ not set return early
+    if (alwaysShow_ == 0)
+      return rv;
+
     const QModelIndex sourceIndex = mapToSource(index);
     const QModelIndex showIndex = model_->index(alwaysShow_);
 

@@ -127,13 +127,80 @@ int testRegistryFamilies()
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::RADIANS) == speedVec.end());
   rv += SDK_ASSERT(std::find(speedVec.begin(), speedVec.end(), Units::METERS) == speedVec.end());
 
+  const UnitsRegistry::UnitsVector& accelerationVec = reg.units(Units::ACCELERATION_FAMILY);
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::KILOMETERS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::YARDS_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::MILES_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::FEET_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::INCHES_PER_SECOND_SQUARED) != accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::NAUTICAL_MILES_PER_SECOND_SQUARED) != accelerationVec.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::SECONDS) == accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::RADIANS) == accelerationVec.end());
+  rv += SDK_ASSERT(std::find(accelerationVec.begin(), accelerationVec.end(), Units::METERS_PER_SECOND) == accelerationVec.end());
+
+  const UnitsRegistry::UnitsVector& temperatureVec = reg.units(Units::TEMPERATURE_FAMILY);
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::CELSIUS) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::FAHRENHEIT) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::KELVIN) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::RANKINE) != temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::REAUMUR) != temperatureVec.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::SECONDS) == temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::RADIANS) == temperatureVec.end());
+  rv += SDK_ASSERT(std::find(temperatureVec.begin(), temperatureVec.end(), Units::METERS_PER_SECOND) == temperatureVec.end());
+
   const UnitsRegistry::UnitsVector& frequencyVeq = reg.units(Units::FREQUENCY_FAMILY);
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::HERTZ) != frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::REVOLUTIONS_PER_MINUTE) != frequencyVeq.end());
+  rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::RADIANS_PER_SECOND) != frequencyVeq.end());
+  rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::DEGREES_PER_SECOND) != frequencyVeq.end());
   // Following few tests are expected to fail
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::SECONDS) == frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::RADIANS) == frequencyVeq.end());
   rv += SDK_ASSERT(std::find(frequencyVeq.begin(), frequencyVeq.end(), Units::METERS) == frequencyVeq.end());
+
+  const UnitsRegistry::UnitsVector& volumeVec = reg.units(Units::VOLUME_FAMILY);
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::LITER) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::MILLILITER) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::FLUID_OUNCE) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::CUP) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::PINT) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::QUART) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::GALLON) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::TEASPOON) != volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::TABLESPOON) != volumeVec.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::SECONDS) == volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::RADIANS) == volumeVec.end());
+  rv += SDK_ASSERT(std::find(volumeVec.begin(), volumeVec.end(), Units::METERS) == volumeVec.end());
+
+  const UnitsRegistry::UnitsVector& pressureVec = reg.units(Units::PRESSURE_FAMILY);
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::MILLIBAR) != pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::BAR) != pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::POUNDS_PER_SQUARE_INCH) != pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::ATMOSPHERE) != pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::TORR) != pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::PASCALS) != pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::KILOPASCAL) != pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::MEGAPASCAL) != pressureVec.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::SECONDS) == pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::RADIANS) == pressureVec.end());
+  rv += SDK_ASSERT(std::find(pressureVec.begin(), pressureVec.end(), Units::METERS) == pressureVec.end());
+
+  const UnitsRegistry::UnitsVector& potentialVec = reg.units(Units::POTENTIAL_FAMILY);
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::VOLT) != potentialVec.end());
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::MILLIVOLT) != potentialVec.end());
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::MICROVOLT) != potentialVec.end());
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::KILOVOLT) != potentialVec.end());
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::MEGAVOLT) != potentialVec.end());
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::GIGAVOLT) != potentialVec.end());
+  // Following few tests are expected to fail
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::SECONDS) == potentialVec.end());
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::RADIANS) == potentialVec.end());
+  rv += SDK_ASSERT(std::find(potentialVec.begin(), potentialVec.end(), Units::METERS) == potentialVec.end());
 
   return rv;
 }
@@ -184,8 +251,50 @@ int testRegistrySearchByName()
   rv += SDK_ASSERT(reg.unitsByName("data miles per hour") == Units::DATA_MILES_PER_HOUR);
   rv += SDK_ASSERT(reg.unitsByName("yards per second") == Units::YARDS_PER_SECOND);
 
+  rv += SDK_ASSERT(reg.unitsByName("meters per second squared") == Units::METERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("kilometers per second squared") == Units::KILOMETERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("yards per second squared") == Units::YARDS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("miles per second squared") == Units::MILES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("feet per second squared") == Units::FEET_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("inches per second squared") == Units::INCHES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByName("knots per second") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
+
+  rv += SDK_ASSERT(reg.unitsByName("celsius") == Units::CELSIUS);
+  rv += SDK_ASSERT(reg.unitsByName("fahrenheit") == Units::FAHRENHEIT);
+  rv += SDK_ASSERT(reg.unitsByName("kelvin") == Units::KELVIN);
+  rv += SDK_ASSERT(reg.unitsByName("rankine") == Units::RANKINE);
+  rv += SDK_ASSERT(reg.unitsByName("reaumur") == Units::REAUMUR);
+
   rv += SDK_ASSERT(reg.unitsByName("revolutions per minute") == Units::REVOLUTIONS_PER_MINUTE);
   rv += SDK_ASSERT(reg.unitsByName("cycles per second") == Units::HERTZ);
+  rv += SDK_ASSERT(reg.unitsByName("radians per second") == Units::RADIANS_PER_SECOND);
+  rv += SDK_ASSERT(reg.unitsByName("degrees per second") == Units::DEGREES_PER_SECOND);
+
+  rv += SDK_ASSERT(reg.unitsByName("liters") == Units::LITER);
+  rv += SDK_ASSERT(reg.unitsByName("milliliters") == Units::MILLILITER);
+  rv += SDK_ASSERT(reg.unitsByName("fluid ounces") == Units::FLUID_OUNCE);
+  rv += SDK_ASSERT(reg.unitsByName("cups") == Units::CUP);
+  rv += SDK_ASSERT(reg.unitsByName("pints") == Units::PINT);
+  rv += SDK_ASSERT(reg.unitsByName("quarts") == Units::QUART);
+  rv += SDK_ASSERT(reg.unitsByName("gallons") == Units::GALLON);
+  rv += SDK_ASSERT(reg.unitsByName("teaspoons") == Units::TEASPOON);
+  rv += SDK_ASSERT(reg.unitsByName("tablespoons") == Units::TABLESPOON);
+
+  rv += SDK_ASSERT(reg.unitsByName("millibar") == Units::MILLIBAR);
+  rv += SDK_ASSERT(reg.unitsByName("bars") == Units::BAR);
+  rv += SDK_ASSERT(reg.unitsByName("pounds per square inch") == Units::POUNDS_PER_SQUARE_INCH);
+  rv += SDK_ASSERT(reg.unitsByName("atmospheres") == Units::ATMOSPHERE);
+  rv += SDK_ASSERT(reg.unitsByName("torr") == Units::TORR);
+  rv += SDK_ASSERT(reg.unitsByName("pascals") == Units::PASCALS);
+  rv += SDK_ASSERT(reg.unitsByName("kilopascals") == Units::KILOPASCAL);
+  rv += SDK_ASSERT(reg.unitsByName("megapascals") == Units::MEGAPASCAL);
+
+  rv += SDK_ASSERT(reg.unitsByName("volts") == Units::VOLT);
+  rv += SDK_ASSERT(reg.unitsByName("millivolts") == Units::MILLIVOLT);
+  rv += SDK_ASSERT(reg.unitsByName("microvolts") == Units::MICROVOLT);
+  rv += SDK_ASSERT(reg.unitsByName("kilovolts") == Units::KILOVOLT);
+  rv += SDK_ASSERT(reg.unitsByName("megavolts") == Units::MEGAVOLT);
+  rv += SDK_ASSERT(reg.unitsByName("gigavolts") == Units::GIGAVOLT);
 
   // Search for invalid units
   const Units& inv1 = reg.unitsByName("invalid");
@@ -215,7 +324,7 @@ int testRegistrySearchByAbbrev()
 
   rv += SDK_ASSERT(reg.unitsByAbbreviation("") == Units::UNITLESS);
 
-  rv += SDK_ASSERT(reg.unitsByAbbreviation("sec") == Units::SECONDS);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("s") == Units::SECONDS);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("ms") == Units::MILLISECONDS);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("us") == Units::MICROSECONDS);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("min") == Units::MINUTES);
@@ -258,8 +367,50 @@ int testRegistrySearchByAbbrev()
   rv += SDK_ASSERT(reg.unitsByAbbreviation("dm/hr") == Units::DATA_MILES_PER_HOUR);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("yd/sec") == Units::YARDS_PER_SECOND);
 
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("m/(s^2)") == Units::METERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("km/(s^2)") == Units::KILOMETERS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("yd/(s^2)") == Units::YARDS_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("sm/(s^2)") == Units::MILES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("ft/(s^2)") == Units::FEET_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("in/(s^2)") == Units::INCHES_PER_SECOND_SQUARED);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("nm/(s^2)") == Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
+
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("C") == Units::CELSIUS);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("F") == Units::FAHRENHEIT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("k") == Units::KELVIN);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("ra") == Units::RANKINE);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("re") == Units::REAUMUR);
+
   rv += SDK_ASSERT(reg.unitsByAbbreviation("Hz") == Units::HERTZ);
   rv += SDK_ASSERT(reg.unitsByAbbreviation("rpm") == Units::REVOLUTIONS_PER_MINUTE);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("rad/sec") == Units::RADIANS_PER_SECOND);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("deg/sec") == Units::DEGREES_PER_SECOND);
+
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("l") == Units::LITER);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("ml") == Units::MILLILITER);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("fl oz") == Units::FLUID_OUNCE);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("cup") == Units::CUP);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("pt") == Units::PINT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("qt") == Units::QUART);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("gal") == Units::GALLON);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("tsp") == Units::TEASPOON);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("tbsp") == Units::TABLESPOON);
+
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("mbar") == Units::MILLIBAR);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("bar") == Units::BAR);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("psia") == Units::POUNDS_PER_SQUARE_INCH);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("atm") == Units::ATMOSPHERE);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("torr") == Units::TORR);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("Pa") == Units::PASCALS);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("kPa") == Units::KILOPASCAL);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("MPa") == Units::MEGAPASCAL);
+
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("V") == Units::VOLT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("mV") == Units::MILLIVOLT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("uV") == Units::MICROVOLT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("kV") == Units::KILOVOLT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("MV") == Units::MEGAVOLT);
+  rv += SDK_ASSERT(reg.unitsByAbbreviation("GV") == Units::GIGAVOLT);
 
   // Search for invalid units
   const Units& inv1 = reg.unitsByAbbreviation("inv");
@@ -366,7 +517,7 @@ int testLengthConvert()
   rv += SDK_ASSERT(simCore::areEqual(Units::METERS.convertTo(Units::FEET, 1.5), 4.92126));
   rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS.convertTo(Units::METERS, 1.5), 1500.0));
   rv += SDK_ASSERT(simCore::areEqual(Units::YARDS.convertTo(Units::METERS, 1.5), 1.3716));
-  rv += SDK_ASSERT(simCore::areEqual(Units::MILES.convertTo(Units::METERS, 1.5), 2414.01585));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MILES.convertTo(Units::METERS, 1.5), 2414.016));
   rv += SDK_ASSERT(simCore::areEqual(Units::FEET.convertTo(Units::METERS, 1.5), 0.457199984));
   rv += SDK_ASSERT(simCore::areEqual(Units::INCHES.convertTo(Units::METERS, 1.5), 0.0381));
   rv += SDK_ASSERT(simCore::areEqual(Units::NAUTICAL_MILES.convertTo(Units::METERS, 1.5), 2778.0));
@@ -397,12 +548,93 @@ int testSpeedConvert()
   return rv;
 }
 
+int testAccelerationConvert()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::areEqual(Units::METERS_PER_SECOND_SQUARED.convertTo(Units::FEET_PER_SECOND_SQUARED, 1.5), 4.92125984));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOMETERS_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 1500.0));
+  rv += SDK_ASSERT(simCore::areEqual(Units::YARDS_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 1.3716));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MILES_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 2414.016));
+  rv += SDK_ASSERT(simCore::areEqual(Units::FEET_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 0.4572));
+  rv += SDK_ASSERT(simCore::areEqual(Units::INCHES_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 0.0381));
+  rv += SDK_ASSERT(simCore::areEqual(Units::NAUTICAL_MILES_PER_SECOND_SQUARED.convertTo(Units::METERS_PER_SECOND_SQUARED, 1.5), 2778.0));
+
+  return rv;
+}
+
+int testTemperatureConvert()
+{
+  int rv = 0;
+
+  // Convert both ways for temperature, since it's the first unit introduced that uses offsets
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::FAHRENHEIT, 1.5), 34.7));
+  rv += SDK_ASSERT(simCore::areEqual(Units::FAHRENHEIT.convertTo(Units::CELSIUS, 1.5), -16.944444));
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::KELVIN, 1.5), 274.65));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KELVIN.convertTo(Units::CELSIUS, 1.5), -271.65));
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::RANKINE, 1.5), 494.37));
+  rv += SDK_ASSERT(simCore::areEqual(Units::RANKINE.convertTo(Units::CELSIUS, 1.5), -272.316667));
+  rv += SDK_ASSERT(simCore::areEqual(Units::CELSIUS.convertTo(Units::REAUMUR, 1.5), 1.2));
+  rv += SDK_ASSERT(simCore::areEqual(Units::REAUMUR.convertTo(Units::CELSIUS, 1.5), 1.875));
+
+  return rv;
+}
+
 int testFrequencyConvert()
 {
   int rv = 0;
 
-  rv += SDK_ASSERT(simCore::areEqual(Units::REVOLUTIONS_PER_MINUTE.convertTo(Units::HERTZ, 2.5), 150.0));
-  rv += SDK_ASSERT(simCore::areEqual(Units::HERTZ.convertTo(Units::REVOLUTIONS_PER_MINUTE, 600), 10.0));
+  rv += SDK_ASSERT(simCore::areEqual(Units::REVOLUTIONS_PER_MINUTE.convertTo(Units::HERTZ, 150.0), 2.5));
+  rv += SDK_ASSERT(simCore::areEqual(Units::HERTZ.convertTo(Units::REVOLUTIONS_PER_MINUTE, 10.0), 600.0));
+  rv += SDK_ASSERT(simCore::areEqual(Units::RADIANS_PER_SECOND.convertTo(Units::DEGREES_PER_SECOND, 1.5), 85.94367));
+  rv += SDK_ASSERT(simCore::areEqual(Units::DEGREES_PER_SECOND.convertTo(Units::HERTZ, 540.0), 1.5));
+
+  return rv;
+}
+
+int testVolumeConvert()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::areEqual(Units::LITER.convertTo(Units::PINT, 1.5), 3.17041));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MILLILITER.convertTo(Units::LITER, 1.5), 0.0015));
+  rv += SDK_ASSERT(simCore::areEqual(Units::FLUID_OUNCE.convertTo(Units::LITER, 1.5), 0.0443555));
+  rv += SDK_ASSERT(simCore::areEqual(Units::CUP.convertTo(Units::LITER, 1.5), 0.354844));
+  rv += SDK_ASSERT(simCore::areEqual(Units::PINT.convertTo(Units::LITER, 1.5), 0.709687));
+  rv += SDK_ASSERT(simCore::areEqual(Units::QUART.convertTo(Units::LITER, 1.5), 1.419375));
+  rv += SDK_ASSERT(simCore::areEqual(Units::GALLON.convertTo(Units::LITER, 1.5), 5.6775));
+  rv += SDK_ASSERT(simCore::areEqual(Units::TEASPOON.convertTo(Units::LITER, 1.5), 0.00739338));
+  rv += SDK_ASSERT(simCore::areEqual(Units::TABLESPOON.convertTo(Units::LITER, 1.5), 0.022177));
+
+  return rv;
+}
+
+int testPressureConvert()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::areEqual(Units::MILLIBAR.convertTo(Units::BAR, 1.5), .0015));
+  rv += SDK_ASSERT(simCore::areEqual(Units::BAR.convertTo(Units::MILLIBAR, 1.5), 1500));
+  rv += SDK_ASSERT(simCore::areEqual(Units::POUNDS_PER_SQUARE_INCH.convertTo(Units::BAR, 1.5), 0.103421));
+  rv += SDK_ASSERT(simCore::areEqual(Units::ATMOSPHERE.convertTo(Units::BAR, 1.5), 1.519871));
+  rv += SDK_ASSERT(simCore::areEqual(Units::TORR.convertTo(Units::BAR, 1.5), 0.00199984));
+  rv += SDK_ASSERT(simCore::areEqual(Units::PASCALS.convertTo(Units::BAR, 1.5), 1.5e-5));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOPASCAL.convertTo(Units::BAR, 1.5), 0.015));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MEGAPASCAL.convertTo(Units::BAR, 1.5), 15));
+
+  return rv;
+}
+
+int testPotentialConvert()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::areEqual(Units::VOLT.convertTo(Units::MILLIVOLT, 1.5), 1500));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MILLIVOLT.convertTo(Units::VOLT, 1.5), 0.0015));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MICROVOLT.convertTo(Units::VOLT, 1.5), 1.5e-6));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOVOLT.convertTo(Units::VOLT, 1.5), 1500));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MEGAVOLT.convertTo(Units::VOLT, 1.5), 1500000));
+  rv += SDK_ASSERT(simCore::areEqual(Units::GIGAVOLT.convertTo(Units::VOLT, 1.5), 1500000000));
 
   return rv;
 }
@@ -544,7 +776,12 @@ int UnitsTest(int argc, char* argv[])
   rv += testAngleConvert();
   rv += testLengthConvert();
   rv += testSpeedConvert();
+  rv += testAccelerationConvert();
+  rv += testTemperatureConvert();
   rv += testFrequencyConvert();
+  rv += testVolumeConvert();
+  rv += testPressureConvert();
+  rv += testPotentialConvert();
   rv += testCustomUnitsToExistingFamily();
   rv += testCustomFamily();
 

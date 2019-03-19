@@ -21,6 +21,7 @@
  */
 #include "osg/Depth"
 #include "osg/BlendFunc"
+#include "osgUtil/CullVisitor"
 #include "osgEarth/StringUtils"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/VirtualProgram"
@@ -52,6 +53,36 @@ simData::ObjectId ProjectorManager::ProjectorLayer::id() const
 {
   return id_;
 }
+
+/**
+ * Cull callback for a projector layer that will update the 
+ * texture projection matrix. Since we need the inverse view 
+ * matrix to properly transform from view coords to texture
+ * coords, we have to install this each frame. Doing it in 
+ * the shader would cause precision loss and jittering.
+ */
+class UpdateProjMatrix : public osgEarth::Layer::TraversalCallback
+{
+public:
+  UpdateProjMatrix(ProjectorNode* node) : proj_(node)
+  {
+    //nop
+  }
+
+  void operator()(osg::Node* node, osg::NodeVisitor* nv) const
+  {
+    osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+    osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
+    osg::Matrixf projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj_->getTexGenMatrix();
+    ss->addUniform(new osg::Uniform("simProjTexGenMat", projMat));
+    cv->pushStateSet(ss.get());
+    traverse(node, nv);
+    cv->popStateSet();
+  }
+
+private:
+  osg::ref_ptr<ProjectorNode> proj_;
+};
 
 /**
  * A class to listen to the map for new layers being added
@@ -147,6 +178,7 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   ProjectorLayer* layer = new ProjectorLayer(proj->getId());
   layer->setName("SIMSDK Projector");
+  layer->setCullCallback(new UpdateProjMatrix(proj));
   osg::StateSet* projStateSet = layer->getOrCreateStateSet();
   projectorLayers_.push_back(layer);
 
@@ -171,7 +203,6 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 
   projStateSet->addUniform(proj->projectorActive_.get());
   projStateSet->addUniform(proj->projectorAlpha_.get());
-  projStateSet->addUniform(proj->texGenMatUniform_.get());
   projStateSet->addUniform(proj->texProjDirUniform_.get());
   projStateSet->addUniform(proj->texProjPosUniform_.get());
 }

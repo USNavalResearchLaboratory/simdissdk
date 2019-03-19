@@ -269,6 +269,8 @@ bool StaticPosition::operator!=(const Position& other) const
 
 ///////////////////////////////////////////////////////////////////////
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 /** Position based off a platform's location */
 PlatformPosition::PlatformPosition(const simData::DataStore& dataStore, simData::ObjectId platformId)
   : dataStore_(dataStore),
@@ -327,6 +329,8 @@ bool PlatformPosition::operator!=(const Position& other) const
 {
   return !operator==(other);
 }
+
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
 
 ///////////////////////////////////////////////////////////////////////
 

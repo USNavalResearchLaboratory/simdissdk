@@ -332,6 +332,18 @@ EntityTreeItem* EntityTreeModel::findItem_(uint64_t entityId) const
   return NULL;
 }
 
+void EntityTreeModel::setIncludeScenario(bool showScenario)
+{
+  bool currentShow = (findItem_(0) != NULL);
+  if (currentShow == showScenario)
+    return;  // nothing changed
+
+  if (showScenario)
+    addTreeItem_(0, simData::NONE, 0);
+  else
+    removeEntity_(0);
+}
+
 void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64_t parentId)
 {
   EntityTreeItem* found = findItem_(id);
@@ -441,15 +453,23 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
   {
   case Qt::DisplayRole:
     if (index.column() == 0)
+    {
+      if (item->id() == 0)
+        return "Scenario Data";
       return QString::fromStdString(simData::DataStoreHelpers::nameOrAliasFromId(item->id(), dataStore_));
+    }
     if (index.column() == 1)
     {
-      if (useEntityIcons_)
+      if ((useEntityIcons_) || (item->id() == 0))
         return QVariant();
       return QString::fromStdString(simData::DataStoreHelpers::typeFromId(item->id(), dataStore_));
     }
     if (index.column() == 2)
+    {
+      if (item->id() == 0)
+        return QVariant();
       return QString("%1").arg(simData::DataStoreHelpers::originalIdFromId(item->id(), dataStore_));
+    }
 
     // Invalid index encountered
     assert(0);
@@ -496,6 +516,9 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
   case Qt::ToolTipRole:
     if (index.column() == 0)
     {
+      if (item->id() == 0)
+        return tr("Scenario Data");
+
       QString toolTip = tr("Name: %1\nAlias: %2\nType: %3\nOriginal ID: %4")
         .arg(QString::fromStdString(simData::DataStoreHelpers::nameFromId(item->id(), dataStore_)))
         .arg(QString::fromStdString(simData::DataStoreHelpers::aliasFromId(item->id(), dataStore_)))
@@ -524,8 +547,10 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
       return QString::fromStdString(simData::DataStoreHelpers::fullTypeFromId(item->id(), dataStore_));
 
     if (index.column() == 2)
-      return tr("Original ID");
-
+    {
+      if (item->id() != 0)
+        return tr("Original ID");
+    }
     break;
 
   case SORT_BY_ENTITY_ROLE:

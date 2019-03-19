@@ -24,14 +24,12 @@
 
 #include "simVis/GOG/GOGNode.h"
 
-namespace osgEarth {
-  class MapNode;
-  class Config;
-}
+namespace osgEarth { class MapNode; }
 
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
+class ParsedShape;
 class ParserData;
 
 /** Display GOG Points */
@@ -40,7 +38,7 @@ class SDKVIS_EXPORT Points
 public:
   /** Create the points from the parser data and GOG meta data */
   GogNodeInterface* deserialize(
-    const osgEarth::Config&  conf,
+    const ParsedShape&       parsedShape,
     simVis::GOG::ParserData& p,
     const GOGNodeType&       nodeType,
     const GOGContext&        context,
@@ -50,7 +48,7 @@ public:
 private:
   /** Implements the deserialization once the parser data's points have been configured. */
   GogNodeInterface* deserializeImpl_(
-    const osgEarth::Config&  conf,
+    const ParsedShape&       parsedShape,
     simVis::GOG::ParserData& p,
     const GOGNodeType&       nodeType,
     const GOGContext&        context,

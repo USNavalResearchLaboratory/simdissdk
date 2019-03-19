@@ -62,11 +62,6 @@ EntityTypeFilterWidget::EntityTypeFilterWidget(QWidget* parent, unsigned int typ
     tr("Toggles the display of all projector entities in the Entity List.")));
   ui_->customRenderingCheckable->setToolTip(simQt::formatTooltip(tr("Custom Rendering"),
     tr("Toggles the display of all custom rendering entities in the Entity List.")));
-
-#ifndef ENABLE_QT_CUSTOM_RENDER
-  // Hide the custom render toolbar button for now, unless ENABLE_QT_CUSTOM_RENDER is defined.
-  ui_->customRenderingCheckable->hide();
-#endif
 }
 
 EntityTypeFilterWidget::~EntityTypeFilterWidget()

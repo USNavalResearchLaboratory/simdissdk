@@ -220,6 +220,9 @@ public slots:
   /** Set the point size of the title bar text, which also increases the window icon size proportionately */
   void setTitleBarTextSize(int pointSize);
 
+  /** Set the global settings ptr, which will apply any global settings if ptr is valid */
+  void setGlobalSettings(Settings* globalSettings);
+
 signals:
   /** Emitted after the dock widget is closed. */
   void closedGui();
@@ -297,6 +300,9 @@ private slots:
 
   /** Set dock widget border thickness, in pixels */
   void setBorderThickness_(int thickness);
+
+  /** Apply the appropriate global settings from the current globalSettings_ member */
+  void applyGlobalSettings_();
 
 private:
   /**

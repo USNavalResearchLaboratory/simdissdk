@@ -19,11 +19,12 @@
  * disclose, or release this software.
  *
  */
+#include "osgEarthAnnotation/LabelNode"
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 #include "simVis/Utils.h"
-#include "osgEarthAnnotation/LabelNode"
 #include "simVis/OverheadMode.h"
 
 using namespace simVis;
@@ -31,7 +32,7 @@ using namespace simVis::GOG;
 using namespace osgEarth::Symbology;
 
 GogNodeInterface* TextAnnotation::deserialize(
-                            const osgEarth::Config&  conf,
+                            const ParsedShape&       parsedShape,
                             simVis::GOG::ParserData& p,
                             const GOGNodeType&       nodeType,
                             const GOGContext&        context,
@@ -39,9 +40,9 @@ GogNodeInterface* TextAnnotation::deserialize(
                             MapNode*                 mapNode)
 {
   // parse:
-  const std::string text = Utils::decodeAnnotation(conf.value("text"));
+  const std::string text = Utils::decodeAnnotation(parsedShape.stringValue(GOG_TEXT));
 
-  p.parseGeometry<Geometry>(conf);
+  p.parseGeometry<Geometry>(parsedShape);
   GogNodeInterface* rv = NULL;
   osgEarth::Annotation::LabelNode* label = NULL;
   label = new osgEarth::Annotation::LabelNode(text, p.style_);
@@ -69,7 +70,7 @@ GogNodeInterface* TextAnnotation::deserialize(
     label->setPriority(textSymbol->priority().value().eval());
 
   rv = new LabelNodeInterface(label, metaData);
-  rv->applyConfigToStyle(conf, p.units_);
+  rv->applyToStyle(parsedShape, p.units_);
 
   return rv;
 }

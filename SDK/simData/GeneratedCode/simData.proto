@@ -1231,6 +1231,11 @@ message ProjectorPrefs {
   optional float projectorAlpha = 4 [default = 1.0];
   /// Determine if we should interpolate FOV
   optional bool interpolateProjectorFov = 5 [default = true];
+
+  /// Override the field of view display if true, using overrideFovValue and ignoring projector updates
+  optional bool overrideFov = 6 [default = false];
+  /// Field of view for projector in radians, if overrideFov is true (default is ~10 degrees)
+  optional double overrideFovAngle = 7 [default = 0.174533];
 };
 
 /// common update to projector data

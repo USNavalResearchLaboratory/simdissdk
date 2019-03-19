@@ -212,7 +212,11 @@ private:
   simCore::Vec3 lla_;
 };
 
-/** Position based off a platform's LLA coordinate location. */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+/**
+ * @deprecated class, may be removed in a future release. Use simUtil::EntityNodePosition instead.
+ * Position based off a platform's LLA coordinate location.
+ */
 class SDKUTIL_EXPORT PlatformPosition : public Position
 {
 public:
@@ -243,6 +247,8 @@ private:
   /** Cache of the LLA from the data store. */
   mutable simCore::Vec3 lla_;
 };
+
+#endif
 
 /** Position based off a node's locator LLA coordinate location. */
 class SDKUTIL_EXPORT EntityNodePosition : public Position

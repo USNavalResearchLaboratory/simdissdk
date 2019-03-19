@@ -42,6 +42,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}TimeWidget.h
     ${SIMQT_INC}Toast.h
     ${SIMQT_INC}UnitContext.h
+    ${SIMQT_INC}UnitsComboBox.h
 )
 set(SIMQT_HEADERS
     ${SIMQT_INC}ConsoleChannel.h
@@ -54,7 +55,6 @@ set(SIMQT_HEADERS
     ${SIMQT_INC}Settings.h
     ${SIMQT_INC}SettingsGroup.h
     ${SIMQT_INC}StartupLayoutManager.h
-    ${SIMQT_INC}UnitsComboBox.h
     ${SIMQT_INC}WeightedMenuManager.h
     ${SIMQT_INC}WidgetSettings.h
 )
@@ -97,12 +97,20 @@ if(TARGET simVis)
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
-        ${SIMQT_INC}ViewWidget.h
     )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}FillItemModelWithNodeVisitor.h
-        ${SIMQT_INC}Gl3FormatGuesser.h
     )
+
+    # Parts of simQt depend on both simVis and osgQt
+    if (TARGET OSGQT)
+        list(APPEND SIMQT_HEADERS_TO_MOC
+            ${SIMQT_INC}ViewWidget.h
+        )
+        list(APPEND SIMQT_HEADERS
+            ${SIMQT_INC}Gl3FormatGuesser.h
+        )
+    endif()
 endif()
 
 if(OSG_FOUND)
@@ -200,13 +208,19 @@ if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
-        ${SIMQT_SRC}Gl3FormatGuesser.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
-        ${SIMQT_SRC}ViewWidget.cpp
     )
+
+    # Parts of simQt depend on both simVis and osgQt
+    if (TARGET OSGQT)
+        list(APPEND SIMQT_SOURCES
+            ${SIMQT_SRC}Gl3FormatGuesser.cpp
+            ${SIMQT_SRC}ViewWidget.cpp
+        )
+    endif()
 endif()
 
 if(OSG_FOUND)
@@ -308,11 +322,6 @@ if(TARGET simData)
 endif()
 if(TARGET simVis)
     target_compile_definitions(simQt PRIVATE HAVE_SIMVIS)
-endif()
-
-# Add a define to handle the custom rendering GUI removal for SIMDIS 10.0 SR4.
-if(ENABLE_QT_CUSTOM_RENDER)
-    target_compile_definitions(simQt PRIVATE ENABLE_QT_CUSTOM_RENDER)
 endif()
 
 # If simQt is a DLL, avoid linking in "heavy" dependencies if possible

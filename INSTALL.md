@@ -13,26 +13,29 @@ Supported Systems/Compilers
 ===========================
 Operating systems officially supported by the SIMDIS SDK:
 
-* Windows Vista/7/8/10
+* Windows 7/8/10
 * Red Hat Enterprise Linux 6/7
 
 Compilers officially supported by the SIMDIS SDK:
 
 * Windows compilers:
-  - Microsoft Visual C++ 2010 (VC10)
-  - Microsoft Visual C++ 2012 (VC11)
   - Microsoft Visual C++ 2013 (VC12)
   - Microsoft Visual C++ 2015 (VC14)
 * Linux compilers:
   - GCC 4.x series
+
+Other compiler combinations may work, or could work with minimal improvements
+to the CMake configuration.  This is only a list of the systems that we internally
+are able to support.  We are glad to accept pull requests supporting new
+compilers.
 
 
 Third Party Dependencies
 ========================
 The SIMDIS SDK depends on the following third party libraries:
 
-- [OpenSceneGraph 3.4+](http://www.openscenegraph.org)
-- [osgEarth 2.8+](http://www.osgearth.org)
+- [OpenSceneGraph 3.6+](http://www.openscenegraph.org)
+- [osgEarth 2.9+](http://www.osgearth.org)
 - [protobuf 2.6+](http://code.google.com/p/protobuf)
 - [Qt 5.5+](http://qt-project.org)
 - [SQLite 3.8+](http://www.sqlite.org)
@@ -50,7 +53,21 @@ To build the dependencies from source, obtain the source packages from the
 specified project websites and follow the included build and installation
 instructions.
 
-NOTE: Both OpenSceneGraph and osgEarth have additional third party
+The SIMDIS SDK requires a minimum GLSL version 3.3 to support osgEarth.  We
+internally only test OpenSceneGraph and osgEarth against the Core Profile,
+since it has wider support across a larger variety of hardware for OpenGL 3.3.
+If you build OpenSceneGraph yourself, we recommend
+[building OpenSceneGraph with GL3 support](https://github.com/openscenegraph/OpenSceneGraph/blob/master/examples/osgsimplegl3/osgsimplegl3.cpp#L121).
+
+We also maintain a "Third Party Pack" for each supported architecture on the
+SIMDIS website.  This is a set of precompiled binaries for each dependency,
+in a directory layout that is automatically detected by CMake.  To download
+the Third Party Pack for your platform, visit the [SIMDIS website](https://simdis.nrl.navy.mil).
+We host Third Party Packs for each major release, and on the current
+[nightly build page](https://simdis.nrl.navy.mil/NightlySDK.aspx) too.  A
+free SIMDIS account is required to access this download.
+
+**NOTE:** Both OpenSceneGraph and osgEarth have additional third party
 dependencies.  More information about these dependencies can be found at the
 OpenSceneGraph and osgEarth web sites.  Linux users will likely find that all
 of these additional dependencies are available in the package repository for
@@ -140,22 +157,21 @@ System Environment Setup
 ========================
 1.  Environment setup for the sample data set
 The example programs provided with the SIMDIS SDK require a sample data set
-for proper operation.  This data set can be obtained from the SIMDIS SDK
-project page.  Once you have downloaded the zip file containing the sample data
-set, you should extract it to a directory of your choosing.  After the files
-have been extracted, you must create an environment variable named:
+for proper operation.  This data set can be obtained from the SIMDIS website;
+a free SIMDIS account is required.  Once you have downloaded the zip file containing
+the sample data set, you should extract it to a directory of your choosing.
+After the files have been extracted, you must create an environment variable
+named:
 
   SIMDIS\_SDK\_FILE\_PATH
 
   whose value is set to the path to the directory containing the sample data.
-  Instructions for setting environment variables on Windows can be found [here](http://support.microsoft.com/kb/310519)
 
-2.  Setting the system search path
+2.  Setting the system library search path
   The system library and program search paths must be setup to find the
   libraries and programs installed for the SIMDIS SDK.  Windows users need to
   add &lt;simdis-sdk-bin-dir&gt;/bin to the PATH environment variable, so
   Windows knows where to look for the SIMDIS SDK DLLs and example programs.
-  Instructions for setting environment variables on Windows can be found [here](http://support.microsoft.com/kb/310519)
 
   Linux users will need to add &lt;simdis-sdk-bin-dir&gt;/bin to their PATH
   environment variable to run the SIMDIS SDK examples from the command line

@@ -172,6 +172,15 @@ int testGetDegreeAngleFromDegreeString()
     testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_UNICODE);
     errCode = simCore::getAngleFromDegreeString(testString, false, conv);
     rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_UTF8);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_ASCII);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLatitude(lat, angle, coinFlip != 0, 3, simCore::DEG_SYM_NONE);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lat*simCore::RAD2DEG, 0.001) && errCode == 0);
   }
   // Test longitude next
   for (int k = 0; k < 1000; ++k)
@@ -183,6 +192,15 @@ int testGetDegreeAngleFromDegreeString()
     else if (unitRandom == 1) angle = simCore::FMT_DEGREES;
     int coinFlip = random2();
     testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_UNICODE);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_UTF8);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_ASCII);
+    errCode = simCore::getAngleFromDegreeString(testString, false, conv);
+    rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
+    testString = simCore::printLongitude(lon, angle, coinFlip != 0, 3, simCore::DEG_SYM_NONE);
     errCode = simCore::getAngleFromDegreeString(testString, false, conv);
     rv += SDK_ASSERT(simCore::areEqual(conv, lon*simCore::RAD2DEG, 0.001) && errCode == 0);
   }
@@ -303,6 +321,15 @@ int testSim4481()
   rv += SDK_ASSERT(simCore::printLatitude(31.9999999 * simCore::DEG2RAD, simCore::FMT_DEGREES_MINUTES, true, 1, simCore::DEG_SYM_UNICODE) == "32 00.0");
   rv += SDK_ASSERT(simCore::printLatitude(31.9999999 * simCore::DEG2RAD, simCore::FMT_DEGREES_MINUTES, true, 2, simCore::DEG_SYM_UNICODE) == "32 00.00");
   rv += SDK_ASSERT(simCore::printLatitude(31.9999999 * simCore::DEG2RAD, simCore::FMT_DEGREES_MINUTES, true, 3, simCore::DEG_SYM_UNICODE) == "32 00.000");
+
+  // Test the more low level getAngleString()
+  const auto DEG_U8 = simCore::getDegreeSymbol(simCore::DEG_SYM_UTF8);
+  rv += SDK_ASSERT(simCore::getAngleString(32.0166666666 * simCore::DEG2RAD, simCore::FMT_DEGREES, false, 3, simCore::DEG_SYM_UTF8, 0, 0) == ("32.017" + DEG_U8));
+  rv += SDK_ASSERT(simCore::getAngleString(32.0166666666 * simCore::DEG2RAD, simCore::FMT_DEGREES_MINUTES, false, 3, simCore::DEG_SYM_UTF8, 0, 0) == ("32" + DEG_U8 + " 01.000'"));
+  rv += SDK_ASSERT(simCore::getAngleString(32.0166666666 * simCore::DEG2RAD, simCore::FMT_DEGREES_MINUTES_SECONDS, false, 3, simCore::DEG_SYM_UTF8, 0, 0) == ("32" + DEG_U8 + " 01' 00.000\""));
+  rv += SDK_ASSERT(simCore::getAngleString(-32.0166666666 * simCore::DEG2RAD, simCore::FMT_DEGREES, false, 3, simCore::DEG_SYM_UTF8, 0, 0) == ("-32.017" + DEG_U8));
+  rv += SDK_ASSERT(simCore::getAngleString(-32.0166666666 * simCore::DEG2RAD, simCore::FMT_DEGREES_MINUTES, false, 3, simCore::DEG_SYM_UTF8, 0, 0) == ("-32" + DEG_U8 + " 01.000'"));
+  rv += SDK_ASSERT(simCore::getAngleString(-32.0166666666 * simCore::DEG2RAD, simCore::FMT_DEGREES_MINUTES_SECONDS, false, 3, simCore::DEG_SYM_UTF8, 0, 0) == ("-32" + DEG_U8 + " 01' 00.000\""));
 
   return rv;
 }

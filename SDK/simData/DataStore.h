@@ -321,7 +321,8 @@ public: // methods
   {
     NON_RECURSIVE,   ///< Flush only the supplied entity and keep any static point
     NON_RECURSIVE_TSPI_STATIC, ///< Flush only the supplied PLATFORM and flush any static TSPI point
-    RECURSIVE ///< Flush the supplied entity and any children and keep any static point
+    RECURSIVE, ///< Flush the supplied entity and any children and keep any static point
+    NON_RECURSIVE_TSPI_ONLY  ///< Flush TSPI only including static points, keep category data, generic data and data tables
   };
 
   /**

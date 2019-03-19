@@ -90,6 +90,11 @@ public:
   /// Get the time zone to use when displaying text
   virtual simCore::TimeZone timeZone() const = 0;
 
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip() = 0;
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const = 0;
+
 signals:
   /// Emitted when the time changes via the user
   void timeEdited(const simCore::TimeStamp& value);
@@ -141,6 +146,11 @@ public:
   /// Get the time zone to use when displaying text
   virtual simCore::TimeZone timeZone() const;
 
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip();
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const;
+
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the time in seconds
 };
@@ -181,6 +191,11 @@ public:
   virtual void setTimeZone(simCore::TimeZone zone);
   /// Get the time zone to use when displaying text
   virtual simCore::TimeZone timeZone() const;
+
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip();
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
@@ -224,6 +239,11 @@ public:
   /// Get the time zone to use when displaying text
   virtual simCore::TimeZone timeZone() const;
 
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip();
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const;
+
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the ordinal time
 };
@@ -265,6 +285,11 @@ public:
   /// Get the time zone to use when displaying text
   virtual simCore::TimeZone timeZone() const;
 
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip();
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const;
+
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the minutes
 };
@@ -305,6 +330,11 @@ public:
   virtual void setTimeZone(simCore::TimeZone zone);
   /// Get the time zone to use when displaying text
   virtual simCore::TimeZone timeZone() const;
+
+  /// Disable tool tip since it can interfere with editing the time
+  virtual void disableToolTip();
+  /// Returns the text for a tool tip
+  virtual QString toolTipText() const;
 
 protected:
   SegmentedSpinBox* widget_; ///< The widget to display the hours

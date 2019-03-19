@@ -57,11 +57,10 @@ public:
   };
 
   /**
-  * Construct a new rocket burn.  Adds to the scene.
-  * @param hostPlatform platform the burn is connected to.
-  * @param texture the texture that will be used for the rcoket burn visualization.
-  */
-
+   * Construct a new rocket burn.  Adds to the scene.
+   * @param hostPlatform platform the burn is connected to.
+   * @param texture the texture that will be used for the rcoket burn visualization.
+   */
   RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture);
 
   /// update the shape of the burn
@@ -77,7 +76,7 @@ protected:
 private:
   /// Removes the rocket burn node from the scene
   void removeFromScene_();
-
+  /// Lazy initialize on the group_, build or update the puff geometry
   void rebuild_();
 
   /// Holds onto the billboard texture
@@ -85,11 +84,16 @@ private:
   /// Rotate and position matrix
   osg::ref_ptr<osg::MatrixTransform> transform_;
   /// Holds the drawables for the rocketburn
-  osg::ref_ptr<osg::Billboard> geode_;
+  osg::ref_ptr<osg::Group> group_;
+  /// Rocket burn geometry
+  osg::ref_ptr<osg::Geometry> geometry_;
   /// Describes the current burn
   ShapeData currentShape_;
   /// Flags whether we've had the shader generator run or not (shader generation can be expensive)
   bool shaderGeneratorRun_;
+
+  /// Shared stateset for rocket burn programs
+  static osg::observer_ptr<osg::StateSet> s_stateSet_;
 };
 
 }

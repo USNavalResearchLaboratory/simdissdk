@@ -24,24 +24,25 @@
 #include "osgEarthAnnotation/FeatureNode"
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/GogNodeInterface.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
 using namespace simVis::GOG;
 using namespace osgEarth::Features;
 
-GogNodeInterface* LatLonAltBox::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
                           simVis::GOG::ParserData& p,
                           const GOGNodeType&       nodeType,
                           const GOGContext&        context,
                           const GogMetaData&       metaData,
                           osgEarth::MapNode*       mapNode)
 {
-  osgEarth::Angle    minLat(p.parseAngle(conf.value("s"), 0.0), p.units_.angleUnits_);
-  osgEarth::Angle    maxLat(p.parseAngle(conf.value("n"), 1.0), p.units_.angleUnits_);
-  osgEarth::Angle    minLon(p.parseAngle(conf.value("w"), 0.0), p.units_.angleUnits_);
-  osgEarth::Angle    maxLon(p.parseAngle(conf.value("e"), 1.0), p.units_.angleUnits_);
-  osgEarth::Distance minAlt(conf.value("minalt", 0.0), p.units_.altitudeUnits_);
-  osgEarth::Distance maxAlt(conf.value("maxalt", 1000.0), p.units_.altitudeUnits_);
+  osgEarth::Angle    minLat(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_S), 0.0)), Units::DEGREES);
+  osgEarth::Angle    maxLat(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_N), 1.0)), Units::DEGREES);
+  osgEarth::Angle    minLon(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_W), 0.0)), Units::DEGREES);
+  osgEarth::Angle    maxLon(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, p.parseAngle(parsedShape.stringValue(GOG_LLABOX_E), 1.0)), Units::DEGREES);
+  osgEarth::Distance minAlt(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_LLABOX_MINALT, 0.0)), Units::METERS);
+  osgEarth::Distance maxAlt(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_LLABOX_MAXALT, 1000.0)), Units::METERS);
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -125,7 +126,7 @@ GogNodeInterface* LatLonAltBox::deserialize(const osgEarth::Config&  conf,
     }
 
     // An unfilled LLB should be drawn as lines, so remove any conflicting symbology
-    if (!conf.hasValue("filled"))
+    if (!parsedShape.hasValue(GOG_FILLED))
       style.remove<PolygonSymbol>();
 
     Feature* feature = new Feature(lines, mapNode->getMapSRS(), style);
@@ -134,7 +135,7 @@ GogNodeInterface* LatLonAltBox::deserialize(const osgEarth::Config&  conf,
     node->setName("GOG LatLonAltBox");
     node->setMapNode(mapNode);
     GogNodeInterface* rv = new FeatureNodeInterface(node, metaData);
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
     return rv;
   }
   // no "hosted" version of this GOG.

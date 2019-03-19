@@ -81,6 +81,10 @@ namespace simQt {
     /** Returns the current data table; can be NULL */
     simData::DataTable* dataTable() const;
 
+  public slots:
+    /** Set the number of digits after the decimal for floats and doubles */
+    void setGenericPrecision(unsigned int digitsAfterDecimal);
+
   protected:
     /** Convert the DataTable cell value to a QVariant; converting float and double into strings with the correct precision */
     QVariant cellDisplayValue_(simData::VariableType type, simData::TableColumn::Iterator& cellIter) const;
@@ -91,6 +95,7 @@ namespace simQt {
     simData::DataTable* dataTable_; ///< reference to the data table this model represents
     QList<const simData::TableColumn*> columns_; ///< index in list corresponds to model column index
     QList<double> rows_; ///< index in list corresponds to model row index
+    unsigned int genericPrecision_;  ///< number of digits after the decimal for floats and doubles
   };
 
 }

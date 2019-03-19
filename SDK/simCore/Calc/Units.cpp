@@ -33,11 +33,16 @@ const std::string Units::ELAPSED_TIME_FAMILY("elapsed time");
 const std::string Units::ANGLE_FAMILY("angle");
 const std::string Units::LENGTH_FAMILY("length");
 const std::string Units::SPEED_FAMILY("speed");
+const std::string Units::ACCELERATION_FAMILY("acceleration");
+const std::string Units::TEMPERATURE_FAMILY("temperature");
 const std::string Units::FREQUENCY_FAMILY("frequency");
+const std::string Units::VOLUME_FAMILY("volume");
+const std::string Units::PRESSURE_FAMILY("pressure");
+const std::string Units::POTENTIAL_FAMILY("potential");
 
 const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
 
-const Units Units::SECONDS("seconds", "sec", 1.0, Units::ELAPSED_TIME_FAMILY);
+const Units Units::SECONDS("seconds", "s", 1.0, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MILLISECONDS("milliseconds", "ms", 0.001, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MICROSECONDS("microseconds", "us", 1e-6, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MINUTES("minutes", "min", 60.0, Units::ELAPSED_TIME_FAMILY);
@@ -54,7 +59,7 @@ const Units Units::MIL("angular mil", "mil", 9.8174770424681038701957605727484e-
 const Units Units::METERS("meters", "m", 1.0, Units::LENGTH_FAMILY);
 const Units Units::KILOMETERS("kilometers", "km", 1e3, Units::LENGTH_FAMILY);
 const Units Units::YARDS("yards", "yd", 0.91439997, Units::LENGTH_FAMILY);
-const Units Units::MILES("miles", "mi", 1609.3439, Units::LENGTH_FAMILY);
+const Units Units::MILES("miles", "mi", 1609.344, Units::LENGTH_FAMILY);
 const Units Units::FEET("feet", "ft", 0.30479999, Units::LENGTH_FAMILY);
 const Units Units::INCHES("inches", "in", 0.025399999, Units::LENGTH_FAMILY);
 const Units Units::NAUTICAL_MILES("nautical miles", "nm", 1852.0, Units::LENGTH_FAMILY);
@@ -75,15 +80,61 @@ const Units Units::KILOMETERS_PER_SECOND("kilometers per second", "km/sec", 1e3,
 const Units Units::DATA_MILES_PER_HOUR("data miles per hour", "dm/hr", 0.50797738, Units::SPEED_FAMILY);
 const Units Units::YARDS_PER_SECOND("yards per second", "yd/sec", 0.91439997, Units::SPEED_FAMILY);
 
+const Units Units::METERS_PER_SECOND_SQUARED("meters per second squared", "m/(s^2)", 1.0, Units::ACCELERATION_FAMILY);
+const Units Units::KILOMETERS_PER_SECOND_SQUARED("kilometers per second squared", "km/(s^2)", 1e3, Units::ACCELERATION_FAMILY);
+const Units Units::YARDS_PER_SECOND_SQUARED("yards per second squared", "yd/(s^2)", 0.91439997, Units::ACCELERATION_FAMILY);
+const Units Units::MILES_PER_SECOND_SQUARED("miles per second squared", "sm/(s^2)", 1609.344, Units::ACCELERATION_FAMILY);
+const Units Units::FEET_PER_SECOND_SQUARED("feet per second squared", "ft/(s^2)", 0.30479999, Units::ACCELERATION_FAMILY);
+const Units Units::INCHES_PER_SECOND_SQUARED("inches per second squared", "in/(s^2)", 0.025399999, Units::ACCELERATION_FAMILY);
+const Units Units::NAUTICAL_MILES_PER_SECOND_SQUARED("knots per second", "nm/(s^2)", 1852.0, Units::ACCELERATION_FAMILY);
+
+const Units Units::CELSIUS("celsius", "C", 1.0, Units::TEMPERATURE_FAMILY);
+const Units Units::FAHRENHEIT(Units::offsetThenScaleUnit("fahrenheit", "F", -32.0, 5./9., Units::TEMPERATURE_FAMILY));
+const Units Units::KELVIN(Units::offsetThenScaleUnit("kelvin", "k", -273.15, 1.0, Units::TEMPERATURE_FAMILY));
+const Units Units::RANKINE(Units::offsetThenScaleUnit("rankine", "ra", -491.67, 5./9., Units::TEMPERATURE_FAMILY));
+const Units Units::REAUMUR("reaumur", "re", 1.25, Units::TEMPERATURE_FAMILY);
+
 // Frequency units
 const Units Units::HERTZ("cycles per second", "Hz", 1.0, Units::FREQUENCY_FAMILY);
-const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 60.0, Units::FREQUENCY_FAMILY);
+const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 0.01666666666, Units::FREQUENCY_FAMILY);
+const Units Units::RADIANS_PER_SECOND("radians per second", "rad/sec", 0.15915494309, Units::FREQUENCY_FAMILY);
+const Units Units::DEGREES_PER_SECOND("degrees per second", "deg/sec", 0.00277777777, Units::FREQUENCY_FAMILY);
+
+// Volume units
+const Units Units::LITER("liters", "l", 1.0, Units::VOLUME_FAMILY);
+const Units Units::MILLILITER("milliliters", "ml", 0.001, Units::VOLUME_FAMILY);
+const Units Units::FLUID_OUNCE("fluid ounces", "fl oz", 0.0295703125, Units::VOLUME_FAMILY);
+const Units Units::CUP("cups", "cup", 0.2365625, Units::VOLUME_FAMILY);
+const Units Units::PINT("pints", "pt", 0.473125, Units::VOLUME_FAMILY);
+const Units Units::QUART("quarts", "qt", 0.94625, Units::VOLUME_FAMILY);
+const Units Units::GALLON("gallons", "gal", 3.785, Units::VOLUME_FAMILY);
+const Units Units::TEASPOON("teaspoons", "tsp", 0.00492838542, Units::VOLUME_FAMILY);
+const Units Units::TABLESPOON("tablespoons", "tbsp", 0.01478515625, Units::VOLUME_FAMILY);
+
+// Pressure units
+const Units Units::MILLIBAR("millibar", "mbar", 1.0, Units::PRESSURE_FAMILY);
+const Units Units::BAR("bars", "bar", 1000, Units::PRESSURE_FAMILY);
+const Units Units::POUNDS_PER_SQUARE_INCH("pounds per square inch", "psia", 68.94757, Units::PRESSURE_FAMILY);
+const Units Units::ATMOSPHERE("atmospheres", "atm", 1013.247139776643, Units::PRESSURE_FAMILY);
+const Units Units::TORR("torr", "torr", 1.33321992075874, Units::PRESSURE_FAMILY);
+const Units Units::PASCALS("pascals", "Pa", 0.01, Units::PRESSURE_FAMILY);
+const Units Units::KILOPASCAL("kilopascals", "kPa", 10, Units::PRESSURE_FAMILY);
+const Units Units::MEGAPASCAL("megapascals", "MPa", 1e4, Units::PRESSURE_FAMILY);
+
+// Potential units
+const Units Units::VOLT("volts", "V", 1.0, Units::POTENTIAL_FAMILY);
+const Units Units::MILLIVOLT("millivolts", "mV", .001, Units::POTENTIAL_FAMILY);
+const Units Units::MICROVOLT("microvolts", "uV", 1e-6, Units::POTENTIAL_FAMILY);
+const Units Units::KILOVOLT("kilovolts", "kV", 1000, Units::POTENTIAL_FAMILY);
+const Units Units::MEGAVOLT("megavolts", "MV", 1e6, Units::POTENTIAL_FAMILY);
+const Units Units::GIGAVOLT("gigavolts", "GV", 1e9, Units::POTENTIAL_FAMILY);
 
 ///////////////////////////////////////////////////////
 
 Units::Units(const std::string& name, const std::string& abbrev, double toBase, const std::string& family)
   : name_(name),
     abbrev_(abbrev),
+    toBaseOffset_(0.0),
     toBase_(toBase),
     family_(family)
 {
@@ -97,9 +148,17 @@ Units::Units(const std::string& name, const std::string& abbrev, double toBase, 
 Units::Units()
   : name_("Invalid"),
     abbrev_("inv"),
+    toBaseOffset_(0.0),
     toBase_(1.0),
     family_(Units::INVALID_FAMILY)
 {
+}
+
+Units Units::offsetThenScaleUnit(const std::string& name, const std::string& abbrev, double offset, double toBase, const std::string& family)
+{
+  Units rv(name, abbrev, toBase, family);
+  rv.toBaseOffset_ = offset;
+  return rv;
 }
 
 Units::~Units()
@@ -126,6 +185,16 @@ const std::string& Units::family() const
   return family_;
 }
 
+double Units::toBaseScalar() const
+{
+  return toBase_;
+}
+
+double Units::toBaseOffset() const
+{
+  return toBaseOffset_;
+}
+
 bool Units::canConvert(const Units& toUnits) const
 {
   // A to-base of 0.0 would cause a divide-by-zero later, and doesn't make sense
@@ -142,7 +211,8 @@ int Units::convertTo(const Units& toUnits, double value, double& output) const
   }
 
   // Convert the value to the base units, then to our unit format
-  output = (value * toBase_) / toUnits.toBase_;
+  const double inBaseUnits = (value + toBaseOffset_) * toBase_;
+  output = (inBaseUnits / toUnits.toBase_) - toUnits.toBaseOffset_;
   return 0;
 }
 
@@ -150,13 +220,15 @@ double Units::convertTo(const Units& toUnits, double value) const
 {
   if (!canConvert(toUnits))
     return value;
-  return (value * toBase_) / toUnits.toBase_;
+  const double inBaseUnits = (value + toBaseOffset_) * toBase_;
+  return (inBaseUnits / toUnits.toBase_) - toUnits.toBaseOffset_;
 }
 
 bool Units::operator==(const Units& other) const
 {
   // Ignore the name and abbreviation
   return toBase_ == other.toBase_ &&
+    toBaseOffset_ == other.toBaseOffset_ &&
     family_ == other.family_;
 }
 
@@ -215,8 +287,50 @@ void UnitsRegistry::registerDefaultUnits()
   registerUnits(Units::DATA_MILES_PER_HOUR);
   registerUnits(Units::YARDS_PER_SECOND);
 
+  registerUnits(Units::METERS_PER_SECOND_SQUARED);
+  registerUnits(Units::KILOMETERS_PER_SECOND_SQUARED);
+  registerUnits(Units::YARDS_PER_SECOND_SQUARED);
+  registerUnits(Units::MILES_PER_SECOND_SQUARED);
+  registerUnits(Units::FEET_PER_SECOND_SQUARED);
+  registerUnits(Units::INCHES_PER_SECOND_SQUARED);
+  registerUnits(Units::NAUTICAL_MILES_PER_SECOND_SQUARED);
+
+  registerUnits(Units::CELSIUS);
+  registerUnits(Units::FAHRENHEIT);
+  registerUnits(Units::KELVIN);
+  registerUnits(Units::RANKINE);
+  registerUnits(Units::REAUMUR);
+
   registerUnits(Units::HERTZ);
   registerUnits(Units::REVOLUTIONS_PER_MINUTE);
+  registerUnits(Units::RADIANS_PER_SECOND);
+  registerUnits(Units::DEGREES_PER_SECOND);
+
+  registerUnits(Units::LITER);
+  registerUnits(Units::MILLILITER);
+  registerUnits(Units::FLUID_OUNCE);
+  registerUnits(Units::CUP);
+  registerUnits(Units::PINT);
+  registerUnits(Units::QUART);
+  registerUnits(Units::GALLON);
+  registerUnits(Units::TEASPOON);
+  registerUnits(Units::TABLESPOON);
+
+  registerUnits(Units::MILLIBAR);
+  registerUnits(Units::BAR);
+  registerUnits(Units::POUNDS_PER_SQUARE_INCH);
+  registerUnits(Units::ATMOSPHERE);
+  registerUnits(Units::TORR);
+  registerUnits(Units::PASCALS);
+  registerUnits(Units::KILOPASCAL);
+  registerUnits(Units::MEGAPASCAL);
+
+  registerUnits(Units::VOLT);
+  registerUnits(Units::MILLIVOLT);
+  registerUnits(Units::MICROVOLT);
+  registerUnits(Units::KILOVOLT);
+  registerUnits(Units::MEGAVOLT);
+  registerUnits(Units::GIGAVOLT);
 }
 
 int UnitsRegistry::registerUnits(const Units& units)

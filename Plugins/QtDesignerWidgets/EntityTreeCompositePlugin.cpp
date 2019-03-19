@@ -93,6 +93,15 @@ QString EntityTreeCompositePlugin::includeFile() const
   return "simQt/EntityTreeComposite.h";
 }
 
+QtDesignerDisplayTree::QtDesignerDisplayTree(QObject* parent)
+  : simQt::AbstractEntityTreeModel(parent),
+    useEntityIcons_(true),
+    selectionMode_(QAbstractItemView::ExtendedSelection),
+    useCenterAction_(false),
+    expandsOnDoubleClick_(true)
+  {
+  }
+
 // Needed to make the column appear
 QVariant QtDesignerDisplayTree::headerData(int section, Qt::Orientation orientation, int role) const
 {

@@ -293,7 +293,7 @@ void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
 
     const osg::Vec3& leftPrev  = count_ > 0 ? ribbon_->getVertex(6*i-2) : left;
     const osg::Vec3& rightPrev = count_ > 0 ? ribbon_->getVertex(6*i-1) : right;
-    
+
     // add connector lines to previous sample
     // TODO: account for previous chunk
     ribbon_->setVertex(6*i, leftPrev);

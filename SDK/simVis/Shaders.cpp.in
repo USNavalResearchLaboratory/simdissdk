@@ -52,6 +52,7 @@ Shaders::Shaders()
   add(rfPropTextureBasedFragment(), "@RF.Texture.frag.glsl@");
   add(rfPropLossToColorDefault(), "@RF.LossToColor.Default.lib.glsl@");
   add(rfPropLossToColorThreshold(), "@RF.LossToColor.Threshold.lib.glsl@");
+  add(rocketBurn(), "@RocketBurn.glsl@");
   add(setClipVertex(), "@SetClipVertex.vert.glsl@");
   add(trackHistoryVertex(), "@TrackHistory.vert.glsl@");
   add(trackHistoryFragment(), "@TrackHistory.frag.glsl@");
@@ -175,6 +176,11 @@ std::string Shaders::rfPropLossToColorDefault() const
 std::string Shaders::rfPropLossToColorThreshold() const
 {
   return "RF.LossToColor.Threshold.lib.glsl";
+}
+
+std::string Shaders::rocketBurn() const
+{
+  return "RocketBurn.glsl";
 }
 
 std::string Shaders::setClipVertex() const

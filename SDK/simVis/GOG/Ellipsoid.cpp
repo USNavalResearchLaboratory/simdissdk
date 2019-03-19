@@ -28,11 +28,12 @@
 #include "simVis/GOG/Ellipsoid.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
 using namespace simVis::GOG;
 
-GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
                        simVis::GOG::ParserData& p,
                        const GOGNodeType&       nodeType,
                        const GOGContext&        context,
@@ -40,34 +41,16 @@ GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
                        osgEarth::MapNode*       mapNode)
 {
   // all the ways to set the radii
-  osgEarth::Distance y_diam(conf.value("minoraxis", 1000.0), p.units_.rangeUnits_);
-  osgEarth::Distance x_diam(conf.value("majoraxis", 1000.0), p.units_.rangeUnits_);
-  osgEarth::Distance z_diam(conf.value("height", 0.0), p.units_.altitudeUnits_);
+  osgEarth::Distance y_diam(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_MINORAXIS, 1000.0)), osgEarth::Units::METERS);
+  osgEarth::Distance x_diam(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_MAJORAXIS, 1000.0)), osgEarth::Units::METERS);
+  osgEarth::Distance z_diam(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_HEIGHT, 0.0)), osgEarth::Units::METERS);
 
-  if (conf.hasValue("radius"))
+  if (parsedShape.hasValue(GOG_RADIUS))
   {
-    x_diam = conf.value<double>("radius", 0) * 2;
-    y_diam = conf.value<double>("radius", 0) * 2;
+    x_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
+    y_diam = x_diam;
     if (z_diam == 0.0)
-      z_diam = conf.value<double>("radius", 0) * 2;
-  }
-
-  if (conf.hasValue("diameter"))
-  {
-    x_diam = conf.value<double>("diameter", 0);
-    y_diam = conf.value<double>("diameter", 0);
-    if (z_diam == 0.0)
-      z_diam = conf.value<double>("diameter", 0);
-  }
-
-  if (conf.hasValue("semiminoraxis"))
-  {
-    y_diam = conf.value<double>("semiminoraxis", 0) * 2;
-  }
-
-  if (conf.hasValue("semimajoraxis"))
-  {
-    x_diam = conf.value<double>("semimajoraxis", 0) * 2;
+      z_diam = x_diam;
   }
 
   osg::Vec4f color(osgEarth::Symbology::Color::White);
@@ -98,7 +81,7 @@ GogNodeInterface* Ellipsoid::deserialize(const osgEarth::Config&  conf,
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);
     rv = new SphericalNodeInterface(node, metaData);
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
   }
   return rv;
 }

@@ -936,7 +936,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     const auto& rr = los->getRangeResolution();
     const double val = rr.getValue();
     if (val > 0.0 && val != prefs.losrangeresolution())
-      los->setRangeResolution(Distance(prefs.losrangeresolution(), osgEarth::Units::METERS));
+      los->setRangeResolution(osgEarth::Distance(prefs.losrangeresolution(), osgEarth::Units::METERS));
   }
 
   // Update the azimuthal resolution if it has changed
@@ -945,7 +945,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
     const auto& ar = los->getAzimuthalResolution();
     const double val = ar.getValue();
     if (val > 0.0 && val != prefs.losazimuthalresolution())
-      los->setAzimuthalResolution(Angle(prefs.losazimuthalresolution(), osgEarth::Units::DEGREES));
+      los->setAzimuthalResolution(osgEarth::Angle(prefs.losazimuthalresolution(), osgEarth::Units::DEGREES));
   }
 
   double rangeDist = 0;
@@ -994,7 +994,7 @@ void PlatformNode::updateOrRemoveHorizon_(simCore::HorizonCalculations horizonTy
   // Need to convert the updated coord back to original system before giving to LOS Node
   converter.convert(platLlaCoord, platCoord, platCoord.coordinateSystem());
   los->setCoordinate(platCoord);
-  los->setMaxRange(Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
+  los->setMaxRange(osgEarth::Distance(simCore::calculateHorizonDist(platLlaCoord.position(), horizonType), osgEarth::Units::METERS));
 
   // Reactivate the LOS, undoing the setActive(false) above
   los->setActive(true);
@@ -1012,15 +1012,12 @@ unsigned int PlatformNode::objectIndexTag() const
 
 void PlatformNode::acceptProjector(ProjectorNode* proj)
 {
-  osg::StateSet* stateSet = this->getOrCreateStateSet();
-  proj->addProjectionToStateSet(stateSet);
+  proj->addProjectionToNode(model_->offsetNode());
 }
 
 void PlatformNode::removeProjector(ProjectorNode* proj)
 {
-  osg::StateSet* stateSet = this->getStateSet();
-  if (stateSet)
-    proj->removeProjectionFromStateSet(stateSet);
+  proj->removeProjectionFromNode(model_->offsetNode());
 }
 
 }

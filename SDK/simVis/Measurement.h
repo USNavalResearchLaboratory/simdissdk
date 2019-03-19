@@ -27,8 +27,9 @@
 #include <vector>
 
 #include "osg/Referenced"
-#include "osgEarth/Units"
+#include "osg/ref_ptr"
 #include "simCore/Common/Common.h"
+#include "simCore/Calc/Units.h"
 #include "simData/ObjectId.h"
 
 namespace simCore { class DatumConvert; }
@@ -37,16 +38,14 @@ namespace simVis
 {
 struct RangeToolState;
 
-/// Units for calculations that have no units
-const osgEarth::Units UNITLESS = osgEarth::Units("nounits", "", osgEarth::Units::TYPE_INVALID, 1.0);
 /// Units in db
-const osgEarth::Units LOG10 = osgEarth::Units("log10", "dB", osgEarth::Units::TYPE_INVALID, 1.0);
+const simCore::Units LOG10("log10", "dB", 1.0, "log10");
 /// Units for RF Power in dBW
-const osgEarth::Units RF_POWER = osgEarth::Units("rf_power", "dBW", osgEarth::Units::TYPE_INVALID, 1.0);
+const simCore::Units RF_POWER("rf_power", "dBW", 1.0, "rf_power");
 /// Units for RF Power in dBsm (square meters)
-const osgEarth::Units RF_POWER_SM = osgEarth::Units("rf_power_sm", "dBsm", osgEarth::Units::TYPE_INVALID, 1.0);
+const simCore::Units RF_POWER_SM("rf_power_sm", "dBsm", 1.0, "rf_power_sm");
 /// Units for %
-const osgEarth::Units PERCENTAGE = osgEarth::Units("percentage", "%", osgEarth::Units::TYPE_INVALID, 1.0);
+const simCore::Units PERCENTAGE("percentage", "%", 1.0, "percentage");
 
 /// Default effective Earth radius scalar for optical horizon measurement
 const double DEFAULT_OPTICAL_RADIUS = 1.06;
@@ -87,7 +86,7 @@ protected:
   * @param typeAbbr    Prefix string for labeling.
   * @param units       Units of the measurement value.
   */
-  Measurement(const std::string &typeName, const std::string &typeAbbr, const osgEarth::Units &units);
+  Measurement(const std::string &typeName, const std::string &typeAbbr, const simCore::Units &units);
 
 public:
   /**
@@ -105,7 +104,7 @@ public:
   * The Units in which value() is expressed.
   * @return Units
   */
-  const osgEarth::Units& units() const { return units_; }
+  const simCore::Units& units() const { return units_; }
 
   /**
   * Returns the calculated value of the measurement
@@ -127,7 +126,7 @@ public:
   * @param state Context object
   * @return Calculated value in target units
   */
-  double value(const osgEarth::Units& outputUnits, RangeToolState& state) const;
+  double value(const simCore::Units& outputUnits, RangeToolState& state) const;
 
   /**
   * Returns the formatter for the measurement
@@ -173,7 +172,7 @@ protected:
 private:
   std::string     typeName_;
   std::string     typeAbbr_;
-  osgEarth::Units units_;
+  simCore::Units  units_;
 };
 
 /// a vector of Measurement pointers
@@ -390,7 +389,7 @@ protected:
   * @param abbr The type abbr.
   * @param units The units.
   */
-  RelOriMeasurement(const std::string& name, const std::string& abbr, const osgEarth::Units& units)
+  RelOriMeasurement(const std::string& name, const std::string& abbr, const simCore::Units& units)
     : Measurement(name, abbr, units) { }
 
   /**
@@ -458,7 +457,7 @@ protected:
   * @param abbr The type abbr.
   * @param units The units.
   */
-  RelVelMeasurement(const std::string& name, const std::string& abbr, const osgEarth::Units& units)
+  RelVelMeasurement(const std::string& name, const std::string& abbr, const simCore::Units& units)
     : Measurement(name, abbr, units) { }
 
   /**

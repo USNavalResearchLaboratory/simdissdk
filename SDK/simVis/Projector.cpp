@@ -24,6 +24,7 @@
 #include "osg/MatrixTransform"
 #include "osg/Notify"
 #include "osgDB/ReadFile"
+#include "osgUtil/CullVisitor"
 #include "osgEarth/Horizon"
 
 #include "simNotify/Notify.h"
@@ -51,9 +52,9 @@ namespace
   // (NOTE: some of this code is borrowed from OSG's osgthirdpersonview example)
   void makeFrustum(const osg::Matrixd& proj, const osg::Matrixd& mv, osg::MatrixTransform* mt)
   {
-    osg::Geode* geode = NULL;
-    osg::Geometry* geom = NULL;
-    osg::Vec3Array* v = NULL;
+    osg::ref_ptr<osg::Geode> geode;
+    osg::ref_ptr<osg::Geometry> geom;
+    osg::ref_ptr<osg::Vec3Array> v;
 
     if (mt->getNumChildren() > 0)
     {
@@ -64,14 +65,14 @@ namespace
     else
     {
       geom = new osg::Geometry();
-      geom->setUseVertexBufferObjects(true);
-      geom->setUseDisplayList(false);
       v = new osg::Vec3Array(9);
-      geom->setVertexArray(v);
+      v->setDataVariance(osg::Object::DYNAMIC);
+      geom->setVertexArray(v.get());
+      geom->setDataVariance(osg::Object::DYNAMIC);
 
-      osg::Vec4Array* c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
+      osg::ref_ptr<osg::Vec4Array> c = new osg::Vec4Array(osg::Array::BIND_OVERALL);
       c->push_back(simVis::Color::White);
-      geom->setColorArray(c);
+      geom->setColorArray(c.get());
 
       GLubyte idxLines[8] = { 0, 5, 0, 6, 0, 7, 0, 8 };
       GLubyte idxLoops0[4] = { 1, 2, 3, 4 };
@@ -81,10 +82,10 @@ namespace
       geom->addPrimitiveSet(new osg::DrawElementsUByte(osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1));
 
       geode = new osg::Geode();
-      geode->addDrawable(geom);
+      geode->addDrawable(geom.get());
       simVis::setLighting(geode->getOrCreateStateSet(), osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
-      mt->addChild(geode);
+      mt->addChild(geode.get());
     }
 
     // Get near and far from the Projection matrix.
@@ -117,6 +118,35 @@ namespace
     mt->setMatrix(osg::Matrixd::inverse(mv));
   }
 
+  /**
+   * Identical to the UpdateProjMatrix found in ProjectorManager.cpp -
+   * but with a different base class. In osgEarth 3.x we expect that
+   * this will be consolidated and osgEarth::Layer::TraversalCallback
+   * will be replaced with osg::Callback, after which these two can be
+   * unified.
+   */
+  class UpdateProjMatrix : public osg::NodeCallback
+  {
+  public:
+    UpdateProjMatrix(simVis::ProjectorNode* node) : proj_(node)
+    {
+      //nop
+    }
+
+    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+      osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+      osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
+      osg::Matrixf projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj_->getTexGenMatrix();
+      ss->addUniform(new osg::Uniform("simProjTexGenMat", projMat));
+      cv->pushStateSet(ss.get());
+      traverse(node, nv);
+      cv->popStateSet();
+    }
+
+  private:
+    osg::ref_ptr<simVis::ProjectorNode> proj_;
+  };
 };
 
 namespace simVis
@@ -175,7 +205,6 @@ void ProjectorNode::init_()
   // create the uniforms that will control the texture projection:
   projectorActive_        = new osg::Uniform(osg::Uniform::BOOL,       "projectorActive");
   projectorAlpha_         = new osg::Uniform(osg::Uniform::FLOAT,      "projectorAlpha");
-  texGenMatUniform_       = new osg::Uniform(osg::Uniform::FLOAT_MAT4, "simProjTexGenMat");
   texProjPosUniform_      = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "simProjPos");
   texProjDirUniform_      = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "simProjDir");
 
@@ -303,9 +332,21 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     projectorAlpha_->set(prefs.projectoralpha());
   }
 
+  // If override FOV changes, update the FOV with a sync-with-locator call
+  bool syncAfterPrefsUpdate = false;
+  if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefov) ||
+    PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefovangle))
+  {
+    syncAfterPrefsUpdate = true;
+  }
+
   updateLabel_(prefs);
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
+
+  // Apply the sync after prefs are updated, so that overridden FOV can be retrieved correctly
+  if (hasLastUpdate_ && syncAfterPrefsUpdate)
+    syncWithLocator();
 }
 
 bool ProjectorNode::readVideoFile_(const std::string& filename)
@@ -337,6 +378,7 @@ bool ProjectorNode::readRasterFile_(const std::string& filename)
   bool imageLoaded = false;
   if (filename.empty())
     return imageLoaded;
+
   osg::Image *image = osgDB::readImageFile(filename);
   if (image)
   {
@@ -393,6 +435,10 @@ double ProjectorNode::getVFOV() const
   if (!hasLastUpdate_)
     return 0.0;
 
+  // Allow for override
+  if (hasLastPrefs_ && lastPrefs_.overridefov() && lastPrefs_.overridefovangle() > 0.)
+    return lastPrefs_.overridefovangle() * simCore::RAD2DEG;
+
   // Return last FOV sent as an update
   if (lastUpdate_.has_fov())
     return lastUpdate_.fov() * simCore::RAD2DEG;
@@ -428,13 +474,15 @@ void ProjectorNode::syncWithLocator()
   // construct the model view matrix:
   const osg::Matrix modelViewMat = modelMat * viewMat;
 
-  // the coordinate generator for our projected texture:
-  const osg::Matrix texGenMat =
+  // the coordinate generator for our projected texture -
+  // during traversal, multiple the inverse view matrix by this
+  // matrix to set a texture projection uniform that transform
+  // verts from view space to texture space
+  texGenMatrix_ =
     modelViewMat *
     projectionMat *
     osg::Matrix::translate(1.0, flip, 1.0) *        // bias
     osg::Matrix::scale(0.5, 0.5 * flip, 0.5);     // scale
-  texGenMatUniform_->set(texGenMat);
 
   // the texture projector's position and directional vector in world space:
   osg::Vec3d eye, cen, up;
@@ -555,8 +603,19 @@ unsigned int ProjectorNode::objectIndexTag() const
   return 0;
 }
 
-void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
+void ProjectorNode::addProjectionToNode(osg::Node* node)
 {
+  if (!node) return;
+
+  // create the projection matrix callback on demand:
+  if (!projectOnNodeCallback_.valid())
+  {
+    projectOnNodeCallback_ = new UpdateProjMatrix(this);
+  }
+
+  // install the texture application snippet.
+  // TODO: optimize by creating this VP once and sharing across all projectors (low priority)
+  osg::StateSet* stateSet = node->getOrCreateStateSet();
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateSet);
   simVis::Shaders package;
   package.load(vp, package.projectorManagerVertex());
@@ -572,32 +631,41 @@ void ProjectorNode::addProjectionToStateSet(osg::StateSet* stateSet)
 
   stateSet->addUniform(projectorActive_.get());
   stateSet->addUniform(projectorAlpha_.get());
-  stateSet->addUniform(texGenMatUniform_.get());
   stateSet->addUniform(texProjDirUniform_.get());
   stateSet->addUniform(texProjPosUniform_.get());
+
+  // to compute the texture generation matrix:
+  node->addCullCallback(projectOnNodeCallback_.get());
 }
 
-void ProjectorNode::removeProjectionFromStateSet(osg::StateSet* stateSet)
+void ProjectorNode::removeProjectionFromNode(osg::Node* node)
 {
-  osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
-  if (vp)
+  if (!node) return;
+
+  osg::StateSet* stateSet = node->getStateSet();
+  if (stateSet)
   {
-    simVis::Shaders package;
-    package.unload(vp, package.projectorManagerVertex());
-    package.unload(vp, package.projectorManagerFragment());
+    osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::get(stateSet);
+    if (vp)
+    {
+      simVis::Shaders package;
+      package.unload(vp, package.projectorManagerVertex());
+      package.unload(vp, package.projectorManagerFragment());
+    }
+
+    stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
+
+    stateSet->removeUniform("simProjSampler");
+
+    stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
+
+    stateSet->removeUniform(projectorActive_.get());
+    stateSet->removeUniform(projectorAlpha_.get());
+    stateSet->removeUniform(texProjDirUniform_.get());
+    stateSet->removeUniform(texProjPosUniform_.get());
   }
 
-  stateSet->removeDefine("SIMVIS_PROJECT_ON_PLATFORM");
-
-  stateSet->removeUniform("simProjSampler");
-
-  stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
-
-  stateSet->removeUniform(projectorActive_.get());
-  stateSet->removeUniform(projectorAlpha_.get());
-  stateSet->removeUniform(texGenMatUniform_.get());
-  stateSet->removeUniform(texProjDirUniform_.get());
-  stateSet->removeUniform(texProjPosUniform_.get());
+  node->removeCullCallback(projectOnNodeCallback_.get());
 }
 
 }

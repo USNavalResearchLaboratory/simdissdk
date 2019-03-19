@@ -71,7 +71,7 @@ SecondsContainer::SecondsContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_SECONDS, "Seconds")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in seconds since beginning of reference year.") + USAGE_STR));
+  widget_->setToolTip(toolTipText());
 
   widget_->setLine(new SecondsTexts());
   connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
@@ -148,13 +148,23 @@ simCore::TimeZone SecondsContainer::timeZone() const
   return widget_->line()->timeZone();
 }
 
+void SecondsContainer::disableToolTip()
+{
+  widget_->setToolTip("");
+}
+
+QString SecondsContainer::toolTipText() const
+{
+  return simQt::formatTooltip(tr("Time"), tr("Set the time in seconds since beginning of reference year.") + USAGE_STR);
+}
+
 //----------------------------------------------------------------------------------------------
 MonthContainer::MonthContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_MONTHDAY, "Month Day Year"),
     colorCode_(true)
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in Month Day Year format.") + USAGE_STR));
+  widget_->setToolTip(toolTipText());
 
   widget_->setLine(new MonthDayYearTexts());
   connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
@@ -231,13 +241,23 @@ simCore::TimeZone MonthContainer::timeZone() const
   return widget_->line()->timeZone();
 }
 
+void MonthContainer::disableToolTip()
+{
+  widget_->setToolTip("");
+}
+
+QString MonthContainer::toolTipText() const
+{
+  return simQt::formatTooltip(tr("Time"), tr("Set the time in Month Day Year format.") + USAGE_STR);
+}
+
 //----------------------------------------------------------------------------------------------
 
 OrdinalContainer::OrdinalContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_ORDINAL, "Ordinal")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in Ordinal format.") + USAGE_STR));
+  widget_->setToolTip(toolTipText());
 
   widget_->setLine(new OrdinalTexts());
   connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
@@ -315,13 +335,23 @@ simCore::TimeZone OrdinalContainer::timeZone() const
   return widget_->line()->timeZone();
 }
 
+void OrdinalContainer::disableToolTip()
+{
+  widget_->setToolTip("");
+}
+
+QString OrdinalContainer::toolTipText() const
+{
+  return simQt::formatTooltip(tr("Time"), tr("Set the time in Ordinal format.") + USAGE_STR);
+}
+
 //----------------------------------------------------------------------------------------------
 
 MinutesContainer::MinutesContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_MINUTES, "Minutes")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in minutes since beginning of reference year.") + USAGE_STR));
+  widget_->setToolTip(toolTipText());
 
   widget_->setLine(new MinutesTexts());
   connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
@@ -397,13 +427,24 @@ simCore::TimeZone MinutesContainer::timeZone() const
 {
   return widget_->line()->timeZone();
 }
+
+void MinutesContainer::disableToolTip()
+{
+  widget_->setToolTip("");
+}
+
+QString MinutesContainer::toolTipText() const
+{
+  return simQt::formatTooltip(tr("Time"), tr("Set the time in minutes since beginning of reference year.") + USAGE_STR);
+}
+
 //----------------------------------------------------------------------------------------------
 
 HoursContainer::HoursContainer(QWidget* parent)
   : TimeFormatContainer(simCore::TIMEFORMAT_HOURS, "Hours")
 {
   widget_ = new SegmentedSpinBox(parent);
-  widget_->setToolTip(simQt::formatTooltip(tr("Time"), tr("Set the time in hours since beginning of reference year.") + USAGE_STR));
+  widget_->setToolTip(toolTipText());
 
   widget_->setLine(new HoursTexts());
   connect(widget_->line(), SIGNAL(timeEdited(simCore::TimeStamp)), this, SIGNAL(timeEdited(simCore::TimeStamp)));
@@ -478,6 +519,16 @@ void HoursContainer::setTimeZone(simCore::TimeZone zone)
 simCore::TimeZone HoursContainer::timeZone() const
 {
   return widget_->line()->timeZone();
+}
+
+void HoursContainer::disableToolTip()
+{
+  widget_->setToolTip("");
+}
+
+QString HoursContainer::toolTipText() const
+{
+  return simQt::formatTooltip(tr("Time"), tr("Set the time in hours since beginning of reference year.") + USAGE_STR);
 }
 
 }

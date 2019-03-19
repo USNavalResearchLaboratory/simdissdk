@@ -76,20 +76,20 @@ public:
    * @note Setting a new data model will override values set by these functions
    * @{
    */
-  void setMaxRange(const Distance& value);
-  const Distance& getMaxRange() const { return los_.getMaxRange(); }
+  void setMaxRange(const osgEarth::Distance& value);
+  const osgEarth::Distance& getMaxRange() const { return los_.getMaxRange(); }
 
-  void setCentralAzimuth(const Angle& value);
-  const Angle& getCentralAzimuth() const { return los_.getCentralAzimuth(); }
+  void setCentralAzimuth(const osgEarth::Angle& value);
+  const osgEarth::Angle& getCentralAzimuth() const { return los_.getCentralAzimuth(); }
 
-  void setFieldOfView(const Angle& value);
-  const Angle& getFieldOfView() const { return los_.getFieldOfView(); }
+  void setFieldOfView(const osgEarth::Angle& value);
+  const osgEarth::Angle& getFieldOfView() const { return los_.getFieldOfView(); }
 
-  void setRangeResolution(const Distance& value);
-  const Distance& getRangeResolution() const { return los_.getRangeResolution(); }
+  void setRangeResolution(const osgEarth::Distance& value);
+  const osgEarth::Distance& getRangeResolution() const { return los_.getRangeResolution(); }
 
-  void setAzimuthalResolution(const Angle& value);
-  const Angle& getAzimuthalResolution() const { return los_.getAzimuthalResolution(); }
+  void setAzimuthalResolution(const osgEarth::Angle& value);
+  const osgEarth::Angle& getAzimuthalResolution() const { return los_.getAzimuthalResolution(); }
   ///@}
 
   /**

@@ -57,7 +57,7 @@ public:
   * @param abbr The type abbr.
   * @param units The units.
   */
-  RfMeasurement(const std::string& name, const std::string& abbr, const osgEarth::Units& units);
+  RfMeasurement(const std::string& name, const std::string& abbr, const simCore::Units& units);
 
 protected:
   /// osg::Referenced-derived
@@ -129,7 +129,7 @@ public:
   * @param typeAbbr The type abbr.
   * @param units The units.
   */
-  HorizonMeasurement(const std::string &typeName, const std::string &typeAbbr, const osgEarth::Units &units);
+  HorizonMeasurement(const std::string &typeName, const std::string &typeAbbr, const simCore::Units &units);
   virtual bool willAccept(const RangeToolState& state) const;
 
   /**

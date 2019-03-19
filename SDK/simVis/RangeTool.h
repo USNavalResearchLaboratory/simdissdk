@@ -28,7 +28,6 @@
 #include "osg/Group"
 #include "osg/MatrixTransform"
 #include "osgEarth/Revisioning"
-#include "osgEarth/Units"
 
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Math.h"
@@ -75,7 +74,7 @@ namespace simVis
       bool           usePercentOfSlantDistance_;
       float          pieRadiusPercent_;
       float          pieRadiusValue_;
-      osgEarth::Units pieRadiusUnits_;
+      simCore::Units pieRadiusUnits_;
 
       bool           useDepthTest_;
       bool           showGraphics_;
@@ -257,9 +256,9 @@ namespace simVis
       Measurement* labelMeasurement() const { return labelMeasurement_.get(); }
 
       /// set the label units
-      void setLabelUnits(const osgEarth::Units& units);
+      void setLabelUnits(const simCore::Units& units);
       /// get the label units
-      const osgEarth::optional<osgEarth::Units>& labelUnits() const { return labelUnits_; }
+      const osgEarth::optional<simCore::Units>& labelUnits() const { return labelUnits_; }
 
       /// set the label precision
       void setLabelPrecision(unsigned int precision);
@@ -289,7 +288,7 @@ namespace simVis
       * Returns the last calculated value converted to the specified units.
       * @return Calculated value in target units
       */
-      double lastValue(const osgEarth::Units& outputUnits) const;
+      double lastValue(const simCore::Units& outputUnits) const;
 
       /**
       * Returns true if the call to lastValue will return a valid value
@@ -310,9 +309,9 @@ namespace simVis
     protected: // data
       std::string                 name_; ///< name of the measurement
       GraphicVector               graphics_; ///< displays the graphics
-      osg::ref_ptr< Graphic >     labelGraphic_; ///< displays the label
-      osg::ref_ptr< Measurement > labelMeasurement_; ///< class to make calculation
-      osgEarth::optional<osgEarth::Units> labelUnits_; ///< units to display
+      osg::ref_ptr<Graphic>       labelGraphic_; ///< displays the label
+      osg::ref_ptr<Measurement>   labelMeasurement_; ///< class to make calculation
+      osgEarth::optional<simCore::Units> labelUnits_; ///< units to display
       unsigned int                labelPrecision_; ///< number of decimal points to display
       TextOptions                 textOptions_; ///< control label appearance
       AngleType                   angleType_; ///< store angle type, used when setting color

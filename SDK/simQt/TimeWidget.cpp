@@ -40,7 +40,8 @@ TimeWidget::TimeWidget(QWidget* parent)
   : QWidget(parent),
     scenarioReferenceYear_(1970),
     disabledLineEdit_(NULL),
-    timeEnabled_(true)
+    timeEnabled_(true),
+    labelToolTipSet_(false)
 {
   // Setup the format widgets to switch between
   addContainer_(new SecondsContainer(this), SLOT(setSeconds_()));
@@ -119,6 +120,7 @@ QString TimeWidget::labelToolTip() const
 void TimeWidget::setLabelToolTip(QString value)
 {
   title_->setToolTip(value);
+  labelToolTipSet_ = !value.isEmpty();
 }
 
 bool TimeWidget::colorCodeText() const
@@ -208,6 +210,12 @@ simCore::TimeZone TimeWidget::timeZone() const
   return currentContainer_->timeZone();
 }
 
+void TimeWidget::disableControlToolTips()
+{
+  for (auto it = containers_.begin(); it != containers_.end(); ++it)
+    (*it)->disableToolTip();
+}
+
 /// Switch the display format to newFormat
 void TimeWidget::setTimeFormat(simCore::TimeFormat newFormat)
 {
@@ -229,6 +237,8 @@ void TimeWidget::setTimeFormat(simCore::TimeFormat newFormat)
         currentContainer_->widget()->setHidden(false);
         layout()->addWidget(currentContainer_->widget());
       }
+      if (!labelToolTipSet_)
+        title_->setToolTip(currentContainer_->toolTipText());
       break;
     }
   }

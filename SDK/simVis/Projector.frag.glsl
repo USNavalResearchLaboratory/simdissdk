@@ -21,8 +21,14 @@ void sim_proj_frag(inout vec4 color)
 {
   if (projectorActive && simProjTexCoord.q > 0)
   {
-    vec4 textureColor = textureProj(simProjSampler, simProjTexCoord);
-    color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a * projectorAlpha);
+    // clip to projected texture domain; otherwise the texture will project
+    // even when the target is outside the projection frustum
+    vec2 local = simProjTexCoord.st / simProjTexCoord.q;
+    if (clamp(local, 0.0, 1.0) == local) 
+    {
+      vec4 textureColor = textureProj(simProjSampler, simProjTexCoord);
+      color.rgb = mix(color.rgb, textureColor.rgb, textureColor.a * projectorAlpha);
+    }
   }
 }
 
@@ -39,9 +45,10 @@ void sim_proj_frag(inout vec4 color)
 
   if (projectorActive)
   {
-    vec2 local = simProjTexCoord.st / simProjTexCoord.q; // same as textureProj, but do it manually so we can check extents
-
-    if (clamp(local, 0.0, 1.0) == local) // clip to projected texture domain
+    // clip to projected texture domain; otherwise the texture will project
+    // even when the target is outside the projection frustum
+    vec2 local = simProjTexCoord.st / simProjTexCoord.q;
+    if (clamp(local, 0.0, 1.0) == local)
     {
       if (dot(simProjLookVector_VIEW, simProjToVert_VIEW) >= 0.0)  // only draw in front of projector (not behind)
       {

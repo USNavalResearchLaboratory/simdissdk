@@ -38,6 +38,7 @@
 #include "SearchLineEditPlugin.h"
 #include "TimeWidgetPlugin.h"
 #include "TimeButtonsPlugin.h"
+#include "UnitsSelectorComboBoxPlugin.h"
 #include "simQtDesignerPlugins.h"
 
 simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
@@ -61,6 +62,7 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   widgetFactories_.append(new SearchLineEditPlugin(this));
   widgetFactories_.append(new TimeButtonsPlugin(this));
   widgetFactories_.append(new TimeWidgetPlugin(this));
+  widgetFactories_.append(new UnitsSelectorComboBoxPlugin(this));
 }
 
 QList<QDesignerCustomWidgetInterface*> simQtDesignerPlugins::customWidgets() const

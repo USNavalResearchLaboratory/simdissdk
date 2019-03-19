@@ -85,12 +85,11 @@ private:
   SegmentedSpinBox::SegmentedSpinBox(QWidget* parent)
     : QSpinBox(parent),
       completeLine_(NULL),
-      initialTime_(1970, 0),
+      lastEditedTime_(1970, 0),
       colorCode_(true),
       segmentedEventFilter_(NULL),
       timer_(new QTimer(this)),
-      applyInterval_(1000),
-      setSinceFocus_(true)
+      applyInterval_(500)
   {
     setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed));
     // the method sizeHint is suppose to calculate the correct default minimum width, but something is not right.
@@ -269,15 +268,14 @@ private:
         lineEdit()->setSelection(newSelectionStart, simCore::sdkMin(selectionLength, lineEdit()->text().length() - newSelectionStart));
     }
 
-    if (initialTime_ != completeLine_->timeStamp())
+    if (lastEditedTime_ != completeLine_->timeStamp())
     {
       completeLine_->valueChanged();
       // If we have focus assume the change was user initiated
-      if (setSinceFocus_ == false)
+      if (hasFocus())
         completeLine_->valueEdited();
+      lastEditedTime_ = completeLine_->timeStamp();
     }
-
-    setSinceFocus_ = true;
   }
 
   void SegmentedSpinBox::queueApplyTimestamp_() const
@@ -302,15 +300,13 @@ private:
 
   void SegmentedSpinBox::focusOutEvent(QFocusEvent* e)
   {
-    if (!setSinceFocus_)
-      applyTimestamp_();
+    applyTimestamp_();
     QSpinBox::focusOutEvent(e);
   }
 
   void SegmentedSpinBox::focusInEvent(QFocusEvent* e)
   {
-    initialTime_ = completeLine_->timeStamp();
-    setSinceFocus_ = false;
+    lastEditedTime_ = completeLine_->timeStamp();
     QSpinBox::focusInEvent(e);
   }
 

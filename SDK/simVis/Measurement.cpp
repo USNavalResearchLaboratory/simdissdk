@@ -36,7 +36,7 @@ std::string ValueFormatter::stringValue(double value, int precision) const
 
 //------------------------------------------------------------------------
 
-Measurement::Measurement(const std::string& typeName, const std::string& typeAbbr, const osgEarth::Units& units)
+Measurement::Measurement(const std::string& typeName, const std::string& typeAbbr, const simCore::Units& units)
   : formatter_(new ValueFormatter),
   typeName_(typeName),
   typeAbbr_(typeAbbr),
@@ -45,7 +45,7 @@ Measurement::Measurement(const std::string& typeName, const std::string& typeAbb
   //nop
 }
 
-double Measurement::value(const osgEarth::Units& outputUnits, RangeToolState& state) const
+double Measurement::value(const simCore::Units& outputUnits, RangeToolState& state) const
 {
   return units_.convertTo(outputUnits, value(state));
 }
@@ -189,7 +189,7 @@ void Measurement::calculateTrueAngles_(const RangeToolState& state, double* az, 
 //----------------------------------------------------------------------------
 
 GroundDistanceMeasurement::GroundDistanceMeasurement()
-  : Measurement("Ground Rng", "Dist", osgEarth::Units::METERS)
+  : Measurement("Ground Rng", "Dist", simCore::Units::METERS)
 { }
 
 double GroundDistanceMeasurement::value(RangeToolState& state) const
@@ -205,7 +205,7 @@ bool GroundDistanceMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 SlantDistanceMeasurement::SlantDistanceMeasurement()
-  : Measurement("Slant Rng", "Rng", osgEarth::Units::METERS)
+  : Measurement("Slant Rng", "Rng", simCore::Units::METERS)
 { }
 
 double SlantDistanceMeasurement::value(RangeToolState& state) const
@@ -221,7 +221,7 @@ bool SlantDistanceMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 AltitudeDeltaMeasurement::AltitudeDeltaMeasurement()
-  : Measurement("Altitude", "Alt", osgEarth::Units::METERS)
+  : Measurement("Altitude", "Alt", simCore::Units::METERS)
 { }
 
 double AltitudeDeltaMeasurement::value(RangeToolState& state) const
@@ -237,7 +237,7 @@ bool AltitudeDeltaMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 BeamGroundDistanceMeasurement::BeamGroundDistanceMeasurement()
-  : Measurement("Beam Ground Rng", "Dist(B)", osgEarth::Units::METERS)
+  : Measurement("Beam Ground Rng", "Dist(B)", simCore::Units::METERS)
 { }
 
 double BeamGroundDistanceMeasurement::value(RangeToolState& state) const
@@ -255,7 +255,7 @@ bool BeamGroundDistanceMeasurement::willAccept(const RangeToolState& state) cons
 //----------------------------------------------------------------------------
 
 BeamSlantDistanceMeasurement::BeamSlantDistanceMeasurement()
-  : Measurement("Beam Slant Rng", "Rng(B)", osgEarth::Units::METERS)
+  : Measurement("Beam Slant Rng", "Rng(B)", simCore::Units::METERS)
 { }
 
 double BeamSlantDistanceMeasurement::value(RangeToolState& state) const
@@ -273,7 +273,7 @@ bool BeamSlantDistanceMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 BeamAltitudeDeltaMeasurement::BeamAltitudeDeltaMeasurement()
-  : Measurement("Beam Altitude", "Alt(B)", osgEarth::Units::METERS)
+  : Measurement("Beam Altitude", "Alt(B)", simCore::Units::METERS)
 { }
 
 double BeamAltitudeDeltaMeasurement::value(RangeToolState& state) const
@@ -291,7 +291,7 @@ bool BeamAltitudeDeltaMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 DownRangeMeasurement::DownRangeMeasurement()
-  : Measurement("Downrange", "DR", osgEarth::Units::METERS)
+  : Measurement("Downrange", "DR", simCore::Units::METERS)
 { }
 
 double DownRangeMeasurement::value(RangeToolState& state) const
@@ -309,7 +309,7 @@ bool DownRangeMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 CrossRangeMeasurement::CrossRangeMeasurement()
-  : Measurement("Crossrange", "CR", osgEarth::Units::METERS)
+  : Measurement("Crossrange", "CR", simCore::Units::METERS)
 { }
 
 double CrossRangeMeasurement::value(RangeToolState& state) const
@@ -327,7 +327,7 @@ bool CrossRangeMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 DownRangeCrossRangeDownValueMeasurement::DownRangeCrossRangeDownValueMeasurement()
-  : Measurement("Down Value", "DV", osgEarth::Units::METERS)
+  : Measurement("Down Value", "DV", simCore::Units::METERS)
 { }
 
 double DownRangeCrossRangeDownValueMeasurement::value(RangeToolState& state) const
@@ -345,7 +345,7 @@ bool DownRangeCrossRangeDownValueMeasurement::willAccept(const RangeToolState& s
 //----------------------------------------------------------------------------
 
 GeoDownRangeMeasurement::GeoDownRangeMeasurement()
-  : Measurement("Geo Downrange", "DR(g)", osgEarth::Units::METERS)
+  : Measurement("Geo Downrange", "DR(g)", simCore::Units::METERS)
 { }
 
 double GeoDownRangeMeasurement::value(RangeToolState& state) const
@@ -363,7 +363,7 @@ bool GeoDownRangeMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 GeoCrossRangeMeasurement::GeoCrossRangeMeasurement()
-  : Measurement("Geo Crossrange", "CR(g)", osgEarth::Units::METERS)
+  : Measurement("Geo Crossrange", "CR(g)", simCore::Units::METERS)
 { }
 
 double GeoCrossRangeMeasurement::value(RangeToolState& state) const
@@ -381,7 +381,7 @@ bool GeoCrossRangeMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 TrueAzimuthMeasurement::TrueAzimuthMeasurement()
-  : Measurement("True Azim", "Az(T)", osgEarth::Units::RADIANS)
+  : Measurement("True Azim", "Az(T)", simCore::Units::RADIANS)
 { }
 
 double TrueAzimuthMeasurement::value(RangeToolState& state) const
@@ -399,7 +399,7 @@ bool TrueAzimuthMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 TrueElevationMeasurement::TrueElevationMeasurement()
-  : Measurement("True Elev", "El", osgEarth::Units::RADIANS)
+  : Measurement("True Elev", "El", simCore::Units::RADIANS)
 { }
 
 double TrueElevationMeasurement::value(RangeToolState& state) const
@@ -417,7 +417,7 @@ bool TrueElevationMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 TrueCompositeAngleMeasurement::TrueCompositeAngleMeasurement()
-  : Measurement("True Composite", "Cmp(T)", osgEarth::Units::RADIANS)
+  : Measurement("True Composite", "Cmp(T)", simCore::Units::RADIANS)
 { }
 
 double TrueCompositeAngleMeasurement::value(RangeToolState& state) const
@@ -435,7 +435,7 @@ bool TrueCompositeAngleMeasurement::willAccept(const RangeToolState& state) cons
 //----------------------------------------------------------------------------
 
 MagneticAzimuthMeasurement::MagneticAzimuthMeasurement(std::shared_ptr<simCore::DatumConvert> datumConvert)
-  : Measurement("Mag Azim", "Az(M)", osgEarth::Units::RADIANS),
+  : Measurement("Mag Azim", "Az(M)", simCore::Units::RADIANS),
   datumConvert_(datumConvert)
 {
 }
@@ -489,7 +489,7 @@ void RelOriMeasurement::getAngles(double* az, double* el, double* cmp, RangeTool
 //----------------------------------------------------------------------------
 
 RelOriAzimuthMeasurement::RelOriAzimuthMeasurement()
-  : RelOriMeasurement("Rel Azim", "Az(r)", osgEarth::Units::RADIANS)
+  : RelOriMeasurement("Rel Azim", "Az(r)", simCore::Units::RADIANS)
 { }
 
 double RelOriAzimuthMeasurement::value(RangeToolState& state) const
@@ -508,7 +508,7 @@ bool RelOriAzimuthMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 RelOriElevationMeasurement::RelOriElevationMeasurement()
-  : RelOriMeasurement("Rel Elev", "El(r)", osgEarth::Units::RADIANS)
+  : RelOriMeasurement("Rel Elev", "El(r)", simCore::Units::RADIANS)
 { }
 
 double RelOriElevationMeasurement::value(RangeToolState& state) const
@@ -526,7 +526,7 @@ bool RelOriElevationMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 RelOriCompositeAngleMeasurement::RelOriCompositeAngleMeasurement()
-  : RelOriMeasurement("Rel Composite", "Cmp(r)", osgEarth::Units::RADIANS)
+  : RelOriMeasurement("Rel Composite", "Cmp(r)", simCore::Units::RADIANS)
 { }
 
 double RelOriCompositeAngleMeasurement::value(RangeToolState& state) const
@@ -576,7 +576,7 @@ void RelVelMeasurement::getAngles(double* az, double* el, double* cmp, RangeTool
 //----------------------------------------------------------------------------
 
 RelVelAzimuthMeasurement::RelVelAzimuthMeasurement()
-  : RelVelMeasurement("Rel Vel Azim", "Az(v)", osgEarth::Units::RADIANS)
+  : RelVelMeasurement("Rel Vel Azim", "Az(v)", simCore::Units::RADIANS)
 { }
 
 double RelVelAzimuthMeasurement::value(RangeToolState& state) const
@@ -594,7 +594,7 @@ bool RelVelAzimuthMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 RelVelElevationMeasurement::RelVelElevationMeasurement()
-  : RelVelMeasurement("Rel Vel Elev", "El(v)", osgEarth::Units::RADIANS)
+  : RelVelMeasurement("Rel Vel Elev", "El(v)", simCore::Units::RADIANS)
 { }
 
 double RelVelElevationMeasurement::value(RangeToolState& state) const
@@ -612,7 +612,7 @@ bool RelVelElevationMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 RelVelCompositeAngleMeasurement::RelVelCompositeAngleMeasurement()
-  : RelVelMeasurement("Rel Vel Composite", "Cmp(v)", osgEarth::Units::RADIANS)
+  : RelVelMeasurement("Rel Vel Composite", "Cmp(v)", simCore::Units::RADIANS)
 { }
 
 double RelVelCompositeAngleMeasurement::value(RangeToolState& state) const
@@ -629,7 +629,7 @@ bool RelVelCompositeAngleMeasurement::willAccept(const RangeToolState& state) co
 //----------------------------------------------------------------------------
 
 ClosingVelocityMeasurement::ClosingVelocityMeasurement()
-  : Measurement("Closing Vel", "V(c)", osgEarth::Units::METERS_PER_SECOND)
+  : Measurement("Closing Vel", "V(c)", simCore::Units::METERS_PER_SECOND)
 { }
 
 double ClosingVelocityMeasurement::value(RangeToolState& state) const
@@ -645,7 +645,7 @@ bool ClosingVelocityMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 SeparationVelocityMeasurement::SeparationVelocityMeasurement()
-  : Measurement("Separation Vel", "V(s)", osgEarth::Units::METERS_PER_SECOND)
+  : Measurement("Separation Vel", "V(s)", simCore::Units::METERS_PER_SECOND)
 { }
 
 double SeparationVelocityMeasurement::value(RangeToolState& state) const
@@ -661,7 +661,7 @@ bool SeparationVelocityMeasurement::willAccept(const RangeToolState& state) cons
 //----------------------------------------------------------------------------
 
 VelocityDeltaMeasurement::VelocityDeltaMeasurement()
-  : Measurement("Vel Delta", "V(d)", osgEarth::Units::METERS_PER_SECOND)
+  : Measurement("Vel Delta", "V(d)", simCore::Units::METERS_PER_SECOND)
 { }
 
 double VelocityDeltaMeasurement::value(RangeToolState& state) const
@@ -677,7 +677,7 @@ bool VelocityDeltaMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 VelAzimDownRangeMeasurement::VelAzimDownRangeMeasurement()
-  : Measurement("Vel Azim Down Range", "DR(v)", osgEarth::Units::METERS)
+  : Measurement("Vel Azim Down Range", "DR(v)", simCore::Units::METERS)
 { }
 
 double VelAzimDownRangeMeasurement::value(RangeToolState& state) const
@@ -701,7 +701,7 @@ bool VelAzimDownRangeMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 VelAzimCrossRangeMeasurement::VelAzimCrossRangeMeasurement()
-  : Measurement("Vel Azim Cross Range", "CR(v)", osgEarth::Units::METERS)
+  : Measurement("Vel Azim Cross Range", "CR(v)", simCore::Units::METERS)
 { }
 
 double VelAzimCrossRangeMeasurement::value(RangeToolState& state) const
@@ -725,7 +725,7 @@ bool VelAzimCrossRangeMeasurement::willAccept(const RangeToolState& state) const
 //----------------------------------------------------------------------------
 
 VelAzimGeoDownRangeMeasurement::VelAzimGeoDownRangeMeasurement()
-  : Measurement("Vel Azim Geo Down Range", "DR(gv)", osgEarth::Units::METERS)
+  : Measurement("Vel Azim Geo Down Range", "DR(gv)", simCore::Units::METERS)
 { }
 
 double VelAzimGeoDownRangeMeasurement::value(RangeToolState& state) const
@@ -749,7 +749,7 @@ bool VelAzimGeoDownRangeMeasurement::willAccept(const RangeToolState& state) con
 //----------------------------------------------------------------------------
 
 VelAzimGeoCrossRangeMeasurement::VelAzimGeoCrossRangeMeasurement()
-  : Measurement("Vel Azim Geo Cross Range", "CR(gv)", osgEarth::Units::METERS)
+  : Measurement("Vel Azim Geo Cross Range", "CR(gv)", simCore::Units::METERS)
 { }
 
 double VelAzimGeoCrossRangeMeasurement::value(RangeToolState& state) const
@@ -773,7 +773,7 @@ bool VelAzimGeoCrossRangeMeasurement::willAccept(const RangeToolState& state) co
 //----------------------------------------------------------------------------
 
 AspectAngleMeasurement::AspectAngleMeasurement()
-  : Measurement("Aspect Angle", "Asp(r)", osgEarth::Units::RADIANS)
+  : Measurement("Aspect Angle", "Asp(r)", simCore::Units::RADIANS)
 { }
 
 double AspectAngleMeasurement::value(RangeToolState& state) const

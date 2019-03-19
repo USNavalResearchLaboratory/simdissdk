@@ -26,6 +26,7 @@
 #include <vector>
 #include <osg/ref_ptr>
 #include "simCore/Calc/Coordinate.h"
+#include "simCore/Calc/Units.h"
 #include "simData/DataTypes.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/GOGNode.h"
@@ -33,14 +34,14 @@
 
 namespace osgEarth{
   class GeoPoint;
-namespace Annotation {
-  class FeatureNode;
-  class GeometryNode;
-  class GeoPositionNode;
-  class LabelNode;
-  class LocalGeometryNode;
-  class GeoPositionNode;
-  class PlaceNode;
+  namespace Annotation {
+    class FeatureNode;
+    class GeometryNode;
+    class GeoPositionNode;
+    class LabelNode;
+    class LocalGeometryNode;
+    class GeoPositionNode;
+    class PlaceNode;
 }}
 
 //----------------------------------------------------------------------------
@@ -103,8 +104,20 @@ public:
   /** Destructor */
   virtual ~GogNodeInterface() {}
 
-  /** Apply a Config object to the GOG's style */
-  virtual void applyConfigToStyle(const osgEarth::Config& config, const UnitsState& units);
+  /** Font to use if not defined in annotation block */
+  void setDefaultFont(const std::string& fontName);
+  /** Text Size to use if not defined in annotation block */
+  void setDefaultTextSize(int textSize);
+  /** Text Color to use if not defined in annotation block */
+  void setDefaultTextColor(const osg::Vec4f& textColor);
+
+  /** Store the current style as a default style. Revert to this style at any time using revertToDefaultStyle(). */
+  void storeDefaultStyle();
+  /** Revert to the default style set by storeDefaultStyle(). */
+  void revertToDefaultStyle();
+
+  /** Apply a ParsedShape object to the GOG's style */
+  virtual void applyToStyle(const ParsedShape& parsedShape, const UnitsState& units);
 
   /**
   * Get the altitude mode of the Overlay, returns false if the Overlay does not support an altitude mode
@@ -173,14 +186,14 @@ public:
   */
   virtual int getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const;
 
- /**
-  * Get the line attributes of the Overlay
-  * @param outlineState  set to true if there is a line symbol
-  * @param color  set to the color of the line in osg format (r,g,b,a) between 0.0 - 1.0
-  * @param lineStyle  set to the line style (solid, dashed, dotted)
-  * @param lineWidth  set to the lineWidth (0-10)
-  * @return 0 if this Overlay has lines, non-zero otherwise
-  */
+  /**
+   * Get the line attributes of the Overlay
+   * @param outlineState  set to true if there is a line symbol
+   * @param color  set to the color of the line in osg format (r,g,b,a) between 0.0 - 1.0
+   * @param lineStyle  set to the line style (solid, dashed, dotted)
+   * @param lineWidth  set to the lineWidth (0-10)
+   * @return 0 if this Overlay has lines, non-zero otherwise
+   */
   virtual int getLineState(bool& outlineState, osg::Vec4f& color, Utils::LineStyle& lineStyle, int& lineWidth) const;
 
   /**
@@ -228,10 +241,10 @@ public:
   */
   osg::Node* osgNode() const;
 
- /**
-  * Serialize the GogNodeInterface into an ostream
-  * @param gogOutputStream  ostream to hold serialized Overlay
-  */
+  /**
+   * Serialize the GogNodeInterface into an ostream
+   * @param gogOutputStream  ostream to hold serialized Overlay
+   */
   virtual void serializeToStream(std::ostream& gogOutputStream);
 
   /** Update the altitude mode of the Overlay */
@@ -339,20 +352,24 @@ public:
   void applyBackfaceCulling();
 
   /**
-  * Get the shape's original load format, which is defined in the meta data
-  * @return load format enum
-  */
+   * Get the shape's original load format, which is defined in the meta data
+   * @return load format enum
+   */
   simVis::GOG::LoadFormat loadFormat() const;
 
+  /** Sets the units that were specified for "xy" commands (default to YARDS) */
+  void setRangeUnits(const simCore::Units& rangeUnits);
+  /** Retrieves the units for "xy" commands (default to YARDS) */
+  const simCore::Units& rangeUnits() const;
+
   /**
-  * Get the shape type of this Overlay, which is defined in the meta data
-  * @return shape type enum
-  */
+   * Get the shape type of this Overlay, which is defined in the meta data
+   * @return shape type enum
+   */
   simVis::GOG::GogShape shape() const;
 
   /** Add the specified listener */
   void addGogNodeListener(GogNodeListenerPtr listener);
-
   /** Remove the specified listener */
   void removeGogNodeListener(GogNodeListenerPtr listener);
 
@@ -424,6 +441,8 @@ protected: // data
   DepthBufferOverride depthBufferOverride_; ///< determines the state of depth buffer override
   double extrudedHeight_; ///< cache the extruded height value, in meters
   osgEarth::Symbology::Style style_; ///< style for this node
+  osgEarth::Symbology::Style defaultStyle_; ///< stored default style for this node
+  bool hasDefaultStyle_; ///< tracks if a default style has been stored
   osg::Vec4f fillColor_;  ///< fill color; saved because setFilledState can be destructive on shape's fill color
   osg::Vec4f lineColor_; ///< line color needs to be stored in case LineSymbol is turned off
   double altitude_; ///< cache the original altitude, in meters
@@ -450,10 +469,20 @@ private:
   /** Check if this shape should only be filled when extruded */
   bool fillOnlyWhenExtruded_(simVis::GOG::GogShape shape) const;
 
-  // indicates whether updates to GOG are deferred in a begin/end batch update
+  /** indicates whether updates to GOG are deferred in a begin/end batch update */
   bool deferringStyleUpdate_;
 
-  // listeners for updates
+  /** Font to use if not defined in annotation block */
+  std::string defaultFont_;
+  /** Text Size to use if not defined in annotation block */
+  int defaultTextSize_;
+  /** Text Color to use if not defined in annotation block */
+  osg::Vec4f defaultTextColor_;
+
+  /** Range units specified by user in file */
+  simCore::Units rangeUnits_;
+
+  /** listeners for updates */
   std::vector<GogNodeListenerPtr> listeners_;
 };
 

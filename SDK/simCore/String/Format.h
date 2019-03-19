@@ -98,9 +98,9 @@ namespace simCore
   SDKCORE_EXPORT std::string getExtension(const std::string &inName);
 
   /**
-  * Verifies the incoming string has the specified extension
+  * Verifies the incoming string has the specified extension, including the '.'
   * @param[in ] inName Input file name
-  * @param[in ] newExt Extension to verify
+  * @param[in ] newExt Extension to verify, including the '.'
   * @return boolean, true if found, false otherwise
   */
   SDKCORE_EXPORT bool hasExtension(const std::string& inName, std::string newExt);

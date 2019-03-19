@@ -6,6 +6,7 @@ project(SimUtil_UnitTests)
 
 create_test_sourcelist(SimUtilTestFiles SimUtilTests.cpp
     IdMapperTest.cpp
+    UnitTypeConverterTest.cpp
 )
 
 add_executable(SimUtilTests ${SimUtilTestFiles})

@@ -185,7 +185,9 @@ void EntityTreeWidget::setSelected(uint64_t id, bool selected, bool signalItemsS
   // properly tells the view_ to update graphically, but so that we don't unnecessarily update in selectionChanged_()
   emitSelectionChanged_ = signalItemsSelected;
   // Update the selection
-  view_->selectionModel()->select(index, QItemSelectionModel::Rows | (selected ? QItemSelectionModel::Select : QItemSelectionModel::Deselect));
+  QItemSelectionModel::SelectionFlags flags = QItemSelectionModel::Rows | (selected ? QItemSelectionModel::Select : QItemSelectionModel::Deselect);
+  view_->selectionModel()->select(index, flags);
+  view_->selectionModel()->setCurrentIndex(index, flags);
   // Restore the flag to true, so that single selections work as expected
   emitSelectionChanged_ = true;
 }

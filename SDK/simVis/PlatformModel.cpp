@@ -496,7 +496,11 @@ void PlatformModelNode::updateBounds_()
 
   // add rcs back to the image transform
   if (rcs_.valid())
+  {
     imageIconXform_->addChild(rcs_.get());
+    // Adjust the RCS scale at this point too
+    rcs_->setScale(model_->getBound().radius() * 2.0);
+  }
 
   // add children back to model container in original order
   offsetXform_->removeChild(model_);

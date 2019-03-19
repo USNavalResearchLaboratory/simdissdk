@@ -145,7 +145,7 @@ void createLineCalculations(simVis::RangeTool::CalculationVector& calcs)
   ground->addGraphic(new simVis::RangeTool::BeginAltitudeLineGraphic);
   ground->addGraphic(new simVis::RangeTool::EndAltitudeLineGraphic);
   ground->setLabelMeasurement(new simVis::GroundDistanceMeasurement);
-  ground->setLabelUnits(osgEarth::Units::KILOMETERS);
+  ground->setLabelUnits(simCore::Units::KILOMETERS);
   calcs.push_back(ground);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> slant = new simVis::RangeTool::Calculation("Slant");
@@ -214,55 +214,55 @@ void createAngleCalculations(simVis::RangeTool::CalculationVector& calcs)
   osg::ref_ptr<simVis::RangeTool::Calculation> trueAz = new simVis::RangeTool::Calculation("True Azimuth");
   trueAz->addGraphic(new simVis::RangeTool::TrueAzimuthPieSliceGraphic, true);
   trueAz->setLabelMeasurement(new simVis::TrueAzimuthMeasurement);
-  trueAz->setLabelUnits(osgEarth::Units::DEGREES);
+  trueAz->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(trueAz);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> trueEl = new simVis::RangeTool::Calculation("True Elevation");
   trueEl->addGraphic(new simVis::RangeTool::TrueElevationPieSliceGraphic, true);
   trueEl->setLabelMeasurement(new simVis::TrueElevationMeasurement);
-  trueEl->setLabelUnits(osgEarth::Units::DEGREES);
+  trueEl->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(trueEl);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> trueCmp = new simVis::RangeTool::Calculation("True Composite Angle");
   trueCmp->addGraphic(new simVis::RangeTool::TrueCompositeAnglePieSliceGraphic, true);
   trueCmp->setLabelMeasurement(new simVis::TrueCompositeAngleMeasurement);
-  trueCmp->setLabelUnits(osgEarth::Units::DEGREES);
+  trueCmp->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(trueCmp);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> relOriAz = new simVis::RangeTool::Calculation("Rel Ori Azimuth");
   relOriAz->addGraphic(new simVis::RangeTool::RelOriAzimuthPieSliceGraphic, true);
   relOriAz->setLabelMeasurement(new simVis::RelOriAzimuthMeasurement);
-  relOriAz->setLabelUnits(osgEarth::Units::DEGREES);
+  relOriAz->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(relOriAz);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> relOriEl = new simVis::RangeTool::Calculation("Rel Ori Elevation");
   relOriEl->addGraphic(new simVis::RangeTool::RelOriElevationPieSliceGraphic, true);
   relOriEl->setLabelMeasurement(new simVis::RelOriElevationMeasurement);
-  relOriEl->setLabelUnits(osgEarth::Units::DEGREES);
+  relOriEl->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(relOriEl);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> relOriCmp = new simVis::RangeTool::Calculation("Rel Ori Composite Angle");
   relOriCmp->addGraphic(new simVis::RangeTool::RelOriCompositeAnglePieSliceGraphic, true);
   relOriCmp->setLabelMeasurement(new simVis::RelOriCompositeAngleMeasurement);
-  relOriCmp->setLabelUnits(osgEarth::Units::DEGREES);
+  relOriCmp->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(relOriCmp);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> relVelAz = new simVis::RangeTool::Calculation("Rel Vel Azimuth");
   relVelAz->addGraphic(new simVis::RangeTool::RelVelAzimuthPieSliceGraphic, true);
   relVelAz->setLabelMeasurement(new simVis::RelVelAzimuthMeasurement);
-  relVelAz->setLabelUnits(osgEarth::Units::DEGREES);
+  relVelAz->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(relVelAz);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> relVelEl = new simVis::RangeTool::Calculation("Rel Vel Elevation");
   relVelEl->addGraphic(new simVis::RangeTool::RelVelElevationPieSliceGraphic, true);
   relVelEl->setLabelMeasurement(new simVis::RelVelElevationMeasurement);
-  relVelEl->setLabelUnits(osgEarth::Units::DEGREES);
+  relVelEl->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(relVelEl);
 
   osg::ref_ptr<simVis::RangeTool::Calculation> relVelCmp = new simVis::RangeTool::Calculation("Rel Vel Composite Angle");
   relVelCmp->addGraphic(new simVis::RangeTool::RelVelCompositeAnglePieSliceGraphic, true);
   relVelCmp->setLabelMeasurement(new simVis::RelVelCompositeAngleMeasurement);
-  relVelCmp->setLabelUnits(osgEarth::Units::DEGREES);
+  relVelCmp->setLabelUnits(simCore::Units::DEGREES);
   calcs.push_back(relVelCmp);
 }
 

@@ -32,6 +32,13 @@
 #include "osg/OperationThread"
 #include "simNotify/Notify.h"
 
+#ifndef GL_CONTEXT_PROFILE_MASK
+#define GL_CONTEXT_PROFILE_MASK 0x9126
+#endif
+#ifndef GL_CONTEXT_CORE_PROFILE_BIT
+#define GL_CONTEXT_CORE_PROFILE_BIT 0x00000001
+#endif
+
 namespace simVis {
 
 /**
@@ -53,7 +60,11 @@ inline void applyCoreProfileValidity(osg::GraphicsContext* graphicsContext)
   // One of the most reliable ways to test for core profile is to check for the
   // compatibility profile.  If it exists, then we're not in core profile mode.
   const float glVersion = osg::getGLVersionNumber();
-  const bool isCoreProfile = (glVersion >= 3.2f) && !osg::isGLExtensionSupported(contextId, "GL_ARB_compatibility");
+
+  // Test for core profile by checking profile mask
+  GLint profileMask = 0;
+  glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profileMask);
+  const bool isCoreProfile = (glVersion >= 3.2f && ((profileMask & GL_CONTEXT_CORE_PROFILE_BIT) != 0));
 
   // For core profile, disable certain incompatible modes that are seen in osgEarth and loaded models
   if (isCoreProfile)

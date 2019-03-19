@@ -113,6 +113,12 @@ public slots:
   /** Changes out the data store pointers, unregistering and re-registering observers */
   void setDataStore(simData::DataStore* dataStore);
 
+  /**
+   * Allows for the displaying / hiding of a scenario entry
+   * @param showScenario If true the model will contain an entry for scenario
+   */
+  void setIncludeScenario(bool showScenario);
+
 private slots:
   /** Added any delayed entities */
   void commitDelayedEntities_();

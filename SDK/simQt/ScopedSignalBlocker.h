@@ -33,15 +33,19 @@ namespace simQt
  * QObject instances, while ensuring that previously blocking state is reinstated at
  * the end of the current scope.  For example:
  *
+ * <code>
  *  ScopedSignalBlocker blockEditSignals(*ui_->editText);
  *  ui_->editText->setText("Text not announced through signals");
+ * </code>
  *
+ * This class serves the same intent as QSignalBlocker, but QSignalBlocker is introduced
+ * in Qt 5.3.  This class provides a wider range of compatibility.
  */
 class /* SDKQT_EXPORT */ ScopedSignalBlocker
 {
 public:
   /** Blocks signals coming from the specified object, as long as this instance is in scope. */
-  ScopedSignalBlocker(QObject& obj, bool blockSignals=true)
+  explicit ScopedSignalBlocker(QObject& obj, bool blockSignals=true)
     : object_(obj)
   {
     blocked_ = object_.blockSignals(blockSignals);

@@ -26,6 +26,7 @@
 #include "simVis/GOG/LineSegs.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
 #define LC "[GOG::LineSegs] "
@@ -34,7 +35,7 @@ using namespace simVis::GOG;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
 
-GogNodeInterface* LineSegs::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* LineSegs::deserialize(const ParsedShape& parsedShape,
                       simVis::GOG::ParserData& p,
                       const GOGNodeType&       nodeType,
                       const GOGContext&        context,
@@ -42,7 +43,7 @@ GogNodeInterface* LineSegs::deserialize(const osgEarth::Config&  conf,
                       osgEarth::MapNode*       mapNode)
 {
   osg::ref_ptr<Geometry> temp = new Geometry();
-  p.parseLineSegmentPoints(conf, p.units_, temp.get(), p.geomIsLLA_);
+  p.parseLineSegmentPoints(parsedShape, p.units_, temp.get(), p.geomIsLLA_);
 
   MultiGeometry* m = new MultiGeometry();
 
@@ -89,6 +90,6 @@ GogNodeInterface* LineSegs::deserialize(const osgEarth::Config&  conf,
     node->setName("GOG LineSegs");
   }
   if (rv)
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
   return rv;
 }

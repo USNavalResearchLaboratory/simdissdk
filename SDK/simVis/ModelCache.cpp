@@ -148,7 +148,6 @@ public:
       clock(NULL)
   {
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
-      osgUtil::Optimizer::VERTEX_PRETRANSFORM |
       osgUtil::Optimizer::VERTEX_POSTTRANSFORM |
       osgUtil::Optimizer::INDEX_MESH;
   }

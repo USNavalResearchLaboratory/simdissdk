@@ -83,7 +83,8 @@ private:
 //----------------------------------------------------------------------------
 DataTableModel::DataTableModel(QObject *parent, simData::DataTable* dataTable)
 :QAbstractItemModel(parent),
-dataTable_(NULL)
+dataTable_(NULL),
+genericPrecision_(3)
 {
   setDataTable(dataTable);
 }
@@ -267,6 +268,16 @@ simData::DataTable* DataTableModel::dataTable() const
   return dataTable_;
 }
 
+void DataTableModel::setGenericPrecision(unsigned int digitsAfterDecimal)
+{
+  if (genericPrecision_ == digitsAfterDecimal)
+    return;
+
+  genericPrecision_ = digitsAfterDecimal;
+  if (!rows_.empty() && !columns_.empty())
+    emit dataChanged(createIndex(0, 0), createIndex(static_cast<int>(rows_.size() - 1), static_cast<int>(columns_.size() - 1)));
+}
+
 QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::TableColumn::Iterator& cell) const
 {
   if (!cell.hasNext())
@@ -337,7 +348,7 @@ QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::
         return QVariant(QString::fromStdString("-Infinity"));
       }
 
-      return QVariant(QString::number(val, 'f', 3));
+      return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
     }
   case simData::VT_DOUBLE:
     {
@@ -354,7 +365,7 @@ QVariant DataTableModel::cellDisplayValue_(simData::VariableType type, simData::
         return QVariant(QString::fromStdString("-Infinity"));
       }
 
-      return QVariant(QString::number(val, 'f', 3));
+      return QVariant(QString::number(val, 'f', static_cast<int>(genericPrecision_)));
     }
   case simData::VT_STRING:
     {

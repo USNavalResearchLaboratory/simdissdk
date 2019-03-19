@@ -25,8 +25,9 @@
 #include "osgEarthAnnotation/LocalGeometryNode"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/GogNodeInterface.h"
-#include "simVis/GOG/Utils.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ParsedShape.h"
+#include "simVis/GOG/Utils.h"
 #include "simVis/Constants.h"
 
 #define LC "[GOG::Line] "
@@ -35,14 +36,14 @@ using namespace simVis::GOG;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
 
-GogNodeInterface* Line::deserialize(const osgEarth::Config&  conf,
+GogNodeInterface* Line::deserialize(const ParsedShape& parsedShape,
                   simVis::GOG::ParserData& p,
                   const GOGNodeType&       nodeType,
                   const GOGContext&        context,
                   const GogMetaData&       metaData,
                   osgEarth::MapNode*       mapNode)
 {
-  p.parseGeometry<LineString>(conf);
+  p.parseGeometry<LineString>(parsedShape);
 
   GogNodeInterface* rv = NULL;
 
@@ -92,7 +93,7 @@ GogNodeInterface* Line::deserialize(const osgEarth::Config&  conf,
   }
 
   if (rv)
-    rv->applyConfigToStyle(conf, p.units_);
+    rv->applyToStyle(parsedShape, p.units_);
 
   return rv;
 }

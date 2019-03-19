@@ -35,6 +35,7 @@ set(SHADER_FILES
     RF.Texture.frag.glsl
     RF.Vertex.vert.glsl
     RF.Vertex.frag.glsl
+    RocketBurn.glsl
     SetClipVertex.vert.glsl
     TrackHistory.vert.glsl
     TrackHistory.frag.glsl
@@ -174,6 +175,7 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/LatLonAltBox.h
     ${VIS_INC}GOG/Line.h
     ${VIS_INC}GOG/LineSegs.h
+    ${VIS_INC}GOG/ParsedShape.h
     ${VIS_INC}GOG/Parser.h
     ${VIS_INC}GOG/Points.h
     ${VIS_INC}GOG/Polygon.h
@@ -301,6 +303,7 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/LatLonAltBox.cpp
     ${VIS_SRC}GOG/Line.cpp
     ${VIS_SRC}GOG/LineSegs.cpp
+    ${VIS_SRC}GOG/ParsedShape.cpp
     ${VIS_SRC}GOG/Parser.cpp
     ${VIS_SRC}GOG/Points.cpp
     ${VIS_SRC}GOG/Polygon.cpp

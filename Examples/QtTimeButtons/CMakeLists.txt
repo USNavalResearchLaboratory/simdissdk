@@ -1,4 +1,4 @@
-if(NOT TARGET simQt OR NOT TARGET simUtil)
+if(NOT TARGET simQt OR NOT TARGET simUtil OR NOT TARGET OSGQT)
     return()
 endif()
 

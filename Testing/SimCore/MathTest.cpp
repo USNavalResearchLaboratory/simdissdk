@@ -537,6 +537,55 @@ int testToScientific()
   return rv;
 }
 
+int testGuessStepSize()
+{
+  int rv = 0;
+
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(10, 2), 0.01));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 9, 2), 0.01));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(10, 1), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 9, 1), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(10, 0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 9, 0), 1.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(100, 2), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 99, 2), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(100, 1), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 99, 1), 0.1));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(100, 0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 99, 0), 1.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(180, 2), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(179, 2), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(180, 1), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(179, 1), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(180, 0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(179, 0), 1.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(360, 2), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(359, 2), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(360, 1), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(359, 1), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(360, 0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(359, 0), 1.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(1000, 2), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 999, 2), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(1000, 1), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 999, 1), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(1000, 0), 1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 999, 0), 1.0));
+
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(10000, 2), 10.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 9999, 2), 10.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(10000, 1), 10.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 9999, 1), 10.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize(10000, 0), 10.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::guessStepSize( 9999, 0), 10.0));
+
+  return rv;
+}
+
 }
 
 int MathTest(int argc, char* argv[])
@@ -555,6 +604,7 @@ int MathTest(int argc, char* argv[])
   rv += runD3DCMtoFromEuler();
   rv += runV3SphtoRec();
   rv += testToScientific();
+  rv += testGuessStepSize();
 
   return rv;
 }

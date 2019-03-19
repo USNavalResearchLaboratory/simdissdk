@@ -37,11 +37,15 @@
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simVis/Utils.h"
+#include "simVis/Registry.h"
+#include "simVis/Projector.h"
 #include "simUtil/ExampleResources.h"
 
 #include <osgEarth/StringUtils>
 #include <osgEarthSymbology/Color>
 #include <osgEarthUtil/Controls>
+#include <osg/ImageStream>
+
 namespace ui = osgEarth::Util::Controls;
 
 //----------------------------------------------------------------------------
@@ -162,12 +166,17 @@ struct AppData
   osg::ref_ptr<ui::HSliderControl> timeSlider_;
   osg::ref_ptr<ui::CheckBoxControl> playCheck_;
   osg::ref_ptr<ui::CheckBoxControl> overheadMode_;
+  osg::ref_ptr<ui::LabelControl> timeReadout_;
   simData::DataStore *ds_;
   simVis::View* view_;
+  simCore::Clock* clock_;
   double startTime_;
   double endTime_;
   double lastTime_;
   bool playing_;
+  std::vector<unsigned> platformIDs_;
+  int tetherIndex_;
+  osgEarth::DateTime refDateTime_;
 
   explicit AppData(simData::DataStore *ds, simVis::View* view)
   : timeSlider_(NULL),
@@ -176,7 +185,8 @@ struct AppData
     startTime_(0.0),
     endTime_(0.0),
     lastTime_(0.0),
-    playing_(false)
+    playing_(true),
+    tetherIndex_(-1)
   {
   }
 
@@ -192,6 +202,29 @@ struct AppData
     view_->enableOverheadMode(overheadMode_->getValue());
   }
 
+  void tetherNext()
+  {
+    osg::Node* node = view_->getCameraTether();
+    if (node)
+      node->setNodeMask(~0);
+
+    tetherIndex_++;
+    if(tetherIndex_ >= platformIDs_.size())
+      tetherIndex_ = -1;
+
+    if (tetherIndex_ < 0)
+    {
+      view_->tetherCamera(0L);
+    }
+    else
+    {
+      simVis::EntityNode* node = view_->getSceneManager()->getScenario()->find(platformIDs_[tetherIndex_]);
+      view_->tetherCamera(node);
+      dynamic_cast<osgEarth::Util::EarthManipulator*>(view_->getCameraManipulator())
+        ->getSettings()->setTetherMode(osgEarth::Util::EarthManipulator::TETHER_CENTER_AND_ROTATION);
+    }
+  }
+
   void advance(double dt)
   {
     if (playing_)
@@ -200,6 +233,9 @@ struct AppData
       ds_->update(t);
       lastTime_ = t;
       timeSlider_->setValue(lastTime_, false);
+
+      osgEarth::DateTime now = refDateTime_ + (t/3600.0);
+      timeReadout_->setText(now.asRFC1123());
     }
   }
 };
@@ -336,6 +372,7 @@ private:
       simData::PlatformProperties *props = app_.ds_->addPlatform(&xaction);
       idMap_[id] = props->id();
       xaction.complete(&props);
+      app_.platformIDs_.push_back(id);
     }
     else if (token == "PlatformIcon")
     {
@@ -676,6 +713,7 @@ private:
       if (year < 1970)
         std::cerr << "ASI Parser: Reference year before 1970 is not reliable." << std::endl;
       refYear_ = year;
+      app_.refDateTime_ = osgEarth::DateTime(refYear_, 1, 1, 0.0);
     }
     else if (token == "Projector")
     {
@@ -794,6 +832,13 @@ struct ApplyUI : public ui::ControlEventHandler
   void onValueChanged(ui::Control* c, double value) { onValueChanged(c, (float)value); }
 };
 
+struct TetherNext : public ui::ControlEventHandler
+{
+    explicit TetherNext(AppData* app) : app_(app) {}
+    AppData* app_;
+    void onClick(ui::Control* c) { app_->tetherNext(); }
+};
+
 ui::Control* createUI(AppData& app)
 {
   osg::ref_ptr<ApplyUI> applyUI = new ApplyUI(&app);
@@ -814,12 +859,18 @@ ui::Control* createUI(AppData& app)
   app.timeSlider_->setHorizFill(true, 700);
 
   ++r;
+  app.timeReadout_ = grid->setControl(c+1, r, new ui::LabelControl());
+
+  ++r;
   grid->setControl(c, r, new ui::LabelControl("Playing:"));
-  app.playCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
+  app.playCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(app.playing_, applyUI.get()));
 
   ++r;
   grid->setControl(c, r, new ui::LabelControl("Overhead:"));
   app.overheadMode_ = grid->setControl(c + 1, r, new ui::CheckBoxControl(false, applyUI.get()));
+
+  ++r;
+  grid->setControl(c, r, new ui::ButtonControl("Tether Next", new TetherNext(&app)));
 
   return top;
 }
@@ -846,15 +897,26 @@ int main(int argc, char **argv)
   simCore::checkVersionThrow();
   simExamples::configureSearchPaths();
 
+  osg::ArgumentParser args(&argc, argv);
+  std::string earthFile;
+  osg::ref_ptr<osgEarth::MapNode> mapNode;
+  if (args.read("--earthfile", earthFile))
+  {
+    osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(earthFile);
+    mapNode = osgEarth::MapNode::get(node.get());
+  }
+
   // fire up the viewer.
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
-  viewer->setMap(simExamples::createDefaultExampleMap());
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(); 
+  if (mapNode.valid())
+    viewer->setMapNode(mapNode.get());
+  else
+    viewer->setMap(simExamples::createDefaultExampleMap());
   viewer->setNavigationMode(simVis::NAVMODE_ROTATEPAN);
 
   // read the ASI data into the datastore.
   simData::MemoryDataStore dataStore;
   AppData app(&dataStore, viewer->getMainView());
-  osg::ArgumentParser args(&argc, argv);
   readASI(args, app);
   viewer->getSceneManager()->getScenario()->bind(&dataStore);
 
@@ -864,6 +926,8 @@ int main(int argc, char **argv)
 
   /// add some stock OSG handlers
   viewer->installDebugHandlers();
+
+  viewer->getSceneManager()->setSkyNode(osgEarth::Util::SkyNode::create());
 
   double last_t = 0.0;
   while (!viewer->getViewer()->done())

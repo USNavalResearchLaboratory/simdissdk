@@ -29,6 +29,7 @@
 namespace simVis { namespace GOG {
 
 class GogNodeInterface;
+class ParsedShape;
 
 /**
  * Place to register GOG object parser functions. The GOG::Parser
@@ -54,10 +55,10 @@ public:
   virtual ~GOGRegistry() {}
 
   /**
-   * Creates a GOG node by parsing input data that corresponds to the
-   * specified tag. The conf's key must be registered here in order to locate
-   * and invoke the appropriate factory method.
-   * @param[in ] conf       Serialized object data
+   * Creates a single GOG node by parsing input data that corresponds to the
+   * specified shape tag. The parse shape's shape keyword must be registered
+   * here in order to locate and invoke the appropriate factory method.
+   * @param[in ] parsedShape Serialized object data, output from Parser::parse()
    * @param[in ] nodeType   Whether to create a geographic or hosted GOG
    * @param[in ] style      Override style parameters
    * @param[in ] context    Common GOG information
@@ -66,7 +67,7 @@ public:
    * @return a new instance of GogNodeInterface. Caller takes ownership of the memory
    */
   GogNodeInterface* createGOG(
-    const osgEarth::Config& conf,
+    const ParsedShape& parsedShape,
     const GOGNodeType& nodeType,
     const osgEarth::Style& style,
     const GOGContext&  context,
@@ -86,7 +87,7 @@ public:
   {
     /** Functor method to deserialize a GOG into the scene */
     virtual GogNodeInterface* operator()(
-      const osgEarth::Config&  conf,
+      const ParsedShape&  parsedShape,
       simVis::GOG::ParserData& p,
       const GOGNodeType&       nodeType,
       const GOGContext&        context,
