@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-# disable autolinking to qtmain as we have our own main() functions (new in Qt 5.1)
-if(POLICY CMP0020)
-    cmake_policy(SET CMP0020 OLD)
+# disable using <PackageName>_ROOT for paths, since GLCORE_ROOT is the RESULT of FindPackage(GLCORE)
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 OLD)
 endif()
 
 # Append our CMakeModules to the CMAKE_MODULE_PATH for better include() support
