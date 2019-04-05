@@ -19,9 +19,10 @@
  * disclose, or release this software.
  *
  */
-#include <QDialog>
-#include <QVBoxLayout>
 #include <QAbstractProxyModel>
+#include <QDialog>
+#include <QHeaderView>
+#include <QVBoxLayout>
 
 #include "simData/DataStoreHelpers.h"
 #include "simCore/Time/Clock.h"

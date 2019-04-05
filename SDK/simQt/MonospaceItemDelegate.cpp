@@ -38,7 +38,7 @@ MonospaceItemDelegate::~MonospaceItemDelegate()
 
 void MonospaceItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-  QStyleOptionViewItemV4 opt(option);
+  QStyleOptionViewItem opt(option);
   // Adjust the pixel size based on the incoming pixel size
   if (option.font.pointSize() > 0)
   {

@@ -222,7 +222,9 @@ private:
 
 };
 
-
 }
+
+Q_DECLARE_METATYPE(simQt::FileSelectorWidget::FileOption);
+Q_DECLARE_METATYPE(simQt::FileSelectorWidget::FilterOptions);
 
 #endif /* SIMQT_FILESELECTOR_WIDGET_H */

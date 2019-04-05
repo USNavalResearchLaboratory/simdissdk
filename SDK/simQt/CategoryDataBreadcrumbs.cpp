@@ -179,7 +179,7 @@ void CloseableItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
   }
 
   { // Draw the text for the list item
-    QStyleOptionViewItemV4 textOpt(inOption);
+    QStyleOptionViewItem textOpt(inOption);
     initStyleOption(&textOpt, index);
     textOpt.showDecorationSelected = false;
     textOpt.palette.setBrush(QPalette::Text, QBrush(style_.textColor));
@@ -445,7 +445,7 @@ QSize CategoryDataBreadcrumbs::minimumSizeHint() const
   else if (!hideWhenEmpty_)
   {
     // Ask for the height/width of an invalid item
-    QStyleOptionViewItemV4 opt;
+    QStyleOptionViewItem opt;
     opt.fontMetrics = fontMetrics();
     opt.font = font();
     const QSize itemSize = itemDelegate_->sizeHint(opt, QModelIndex());
