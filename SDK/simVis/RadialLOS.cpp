@@ -69,6 +69,7 @@ RadialLOS::Sample::Sample(const Sample& rhs)
 }
 
 //----------------------------------------------------------------------------
+//#define USE_SCENE_GRAPH
 
 RadialLOS::RadialLOS()
   : dirty_(true),
@@ -143,12 +144,23 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
 {
   assert(mapNode != NULL);
 
+  osg::Timer_t startTime = osg::Timer::instance()->tick();
+
   // clear out existing data
   radials_.clear();
 
   // set up the localizer transforms:
   if (!convertCoordToGeoPoint(originCoord, originMap_, mapNode->getMapSRS()))
     return false;
+
+#ifndef USE_SCENE_GRAPH
+  // create an elevation sampler on demand:
+  if (envelope_.valid() == false)
+  {
+      envelope_ = mapNode->getMap()->getElevationPool()->createEnvelope(
+          mapNode->getMapSRS(), 23);
+  }
+#endif
 
   osg::Matrix local2world;
   originMap_.createLocalToWorld(local2world);
@@ -229,7 +241,13 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       // sample the terrain at that point
       double hamsl = 0.0, hae = 0.0;
 
+#ifdef USE_SCENE_GRAPH
       bool ok = mapNode->getTerrain()->getHeight(mapPoint.getSRS(), mapPoint.x(), mapPoint.y(), &hamsl, &hae);
+#else
+      hae = envelope_->getElevation(mapPoint.x(), mapPoint.y());
+      hamsl = hae;
+      bool ok = (hae != NO_DATA_VALUE);
+#endif
 
       if (ok)
       {
@@ -270,11 +288,16 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   srs_ = mapNode->getMapSRS();
 
   dirty_ = false;
+
+  osg::Timer_t endTime = osg::Timer::instance()->tick();
+  SIM_NOTICE << "RLOS::compute time=" << osg::Timer::instance()->delta_m(startTime, endTime) << " ms" << std::endl;
+
   return validLos;
 }
 
 bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch)
 {
+#ifdef USE_SCENE_GRAPH
   osg::Vec3d originWorld;
   originMap_.toWorld(originWorld);
 
@@ -349,6 +372,7 @@ bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& ex
       }
     }
   }
+#endif
   return true;
 }
 
