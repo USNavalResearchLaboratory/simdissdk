@@ -70,6 +70,7 @@ RadialLOS::Sample::Sample(const Sample& rhs)
 
 //----------------------------------------------------------------------------
 //#define USE_SCENE_GRAPH
+//#define LOS_TIME_PROFILING
 
 RadialLOS::RadialLOS()
   : dirty_(true),
@@ -144,7 +145,9 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
 {
   assert(mapNode != NULL);
 
+#ifdef LOS_TIME_PROFILING
   osg::Timer_t startTime = osg::Timer::instance()->tick();
+#endif
 
   // clear out existing data
   radials_.clear();
@@ -289,8 +292,10 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
 
   dirty_ = false;
 
+#ifdef LOS_TIME_PROFILING
   osg::Timer_t endTime = osg::Timer::instance()->tick();
   SIM_NOTICE << "RLOS::compute time=" << osg::Timer::instance()->delta_m(startTime, endTime) << " ms" << std::endl;
+#endif
 
   return validLos;
 }
