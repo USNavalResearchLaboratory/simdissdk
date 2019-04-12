@@ -70,7 +70,7 @@ protected:
   /** Return true if the given view is suitable for this mouse handler's use. */
   virtual bool validateView_(const simVis::View& view) const = 0;
   /** Called on a mouse release event. Process the box's geometry. */
-  virtual void processGeometry_(double originX, double originY, double widthPixels, double heightPixels) const = 0;
+  virtual void processGeometry_(double originX, double originY, double widthPixels, double heightPixels) = 0;
 
   /// View used by the mouse handler
   osg::observer_ptr<simVis::View> view_;
@@ -103,7 +103,7 @@ protected:
 
   /** Overrides from BoxMouseHandler */
   virtual bool validateView_(const simVis::View& view) const;
-  virtual void processGeometry_(double originX, double originY, double widthPixels, double heightPixels) const;
+  virtual void processGeometry_(double originX, double originY, double widthPixels, double heightPixels);
 
 private:
   /** Calculates an LLA GeoPoint based on the screen x and y coordinates provided. If the resulting GeoPoint is valid, it gets added to the provided points vector */

@@ -270,7 +270,7 @@ bool BoxZoomMouseHandler::validateView_(const simVis::View& view) const
   return (mapNodeForView_(view) != NULL);
 }
 
-void BoxZoomMouseHandler::processGeometry_(double originX, double originY, double widthPixels, double heightPixels) const
+void BoxZoomMouseHandler::processGeometry_(double originX, double originY, double widthPixels, double heightPixels)
 {
   if (!view_.valid() || !mapNodeForView_(*view_))
     return;
