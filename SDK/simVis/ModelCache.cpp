@@ -85,52 +85,98 @@ public:
   SetRenderBinsToInherit()
     : NodeVisitor(TRAVERSE_ALL_CHILDREN)
   {
+      setNodeMaskOverride(~0);
   }
 
   virtual void apply(osg::Node& node)
   {
-#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
-    // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
-    if (dynamic_cast<osgSim::LightPointNode*>(&node) != NULL)
-      node.setNodeMask(0);
-#endif
-
     osg::StateSet* ss = node.getStateSet();
     if (ss)
     {
+      // Fix regularly occuring alpha issues by negating explicit render bin assignments
+      // in the loaded model
       ss->setRenderBinToInherit();
-#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
-      // GLCORE does not support TexEnv.  Remove unnecessary ones
-      osg::TexEnv* texEnv = dynamic_cast<osg::TexEnv*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXENV));
-      if (texEnv != NULL && texEnv->getMode() == osg::TexEnv::MODULATE)
-        ss->removeTextureAttribute(0, texEnv);
-      else if (texEnv != NULL)
-      {
-        SIM_WARN << "Unexpected TexEnv mode: 0x" << std::hex << texEnv->getMode() << "\n";
-      }
-
-      // GLCORE does not support ShadeModel.  Only smooth shading is supported.  Many SIMDIS
-      // models in sites/ use flat shading, but don't seem to need it.  Drop the attribute.
-      osg::ShadeModel* shadeModel = dynamic_cast<osg::ShadeModel*>(ss->getAttribute(osg::StateAttribute::SHADEMODEL));
-      if (shadeModel != NULL)
-        ss->removeAttribute(shadeModel);
-
-      // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
-      ss->removeTextureMode(0, GL_TEXTURE_2D);
-
-      // GLCORE does not support LightModel; drop it; see SIMDIS-3089
-      osg::LightModel* lightModel = dynamic_cast<osg::LightModel*>(ss->getAttribute(osg::StateAttribute::LIGHTMODEL));
-      if (lightModel != NULL)
-        ss->removeAttribute(lightModel);
-
-      // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
-      osg::Texture* texture = dynamic_cast<osg::Texture*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
-      if (texture)
-        simVis::fixTextureForGlCoreProfile(texture);
-#endif
     }
     traverse(node);
   }
+};
+
+////////////////////////////////////////////////////////////////////////////
+
+/** Visitor that adjusts the scene graph for GLCORE/non-FFP compatibility */
+class PrepareForProgrammablePipeline : public osg::NodeVisitor
+{
+public:
+    PrepareForProgrammablePipeline()
+        : NodeVisitor(TRAVERSE_ALL_CHILDREN)
+    {
+        setNodeMaskOverride(~0);
+    }
+
+    virtual void apply(osg::Node& node)
+    {
+#ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
+        // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
+        if (dynamic_cast<osgSim::LightPointNode*>(&node) != NULL)
+            node.setNodeMask(0);
+
+        osg::StateSet* ss = node.getStateSet();
+        if (ss)
+        {
+            // GLCORE does not support TexEnv.  Remove unnecessary ones
+            osg::TexEnv* texEnv = dynamic_cast<osg::TexEnv*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXENV));
+            if (texEnv != NULL && texEnv->getMode() == osg::TexEnv::MODULATE)
+                ss->removeTextureAttribute(0, texEnv);
+            else if (texEnv != NULL)
+            {
+                SIM_WARN << "Unexpected TexEnv mode: 0x" << std::hex << texEnv->getMode() << "\n";
+            }
+
+            // GLCORE does not support ShadeModel.  Only smooth shading is supported.  Many SIMDIS
+            // models in sites/ use flat shading, but don't seem to need it.  Drop the attribute.
+            osg::ShadeModel* shadeModel = dynamic_cast<osg::ShadeModel*>(ss->getAttribute(osg::StateAttribute::SHADEMODEL));
+            if (shadeModel != NULL)
+                ss->removeAttribute(shadeModel);
+
+            // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
+            ss->removeTextureMode(0, GL_TEXTURE_2D);
+
+            // GLCORE does not support LightModel; drop it; see SIMDIS-3089
+            osg::LightModel* lightModel = dynamic_cast<osg::LightModel*>(ss->getAttribute(osg::StateAttribute::LIGHTMODEL));
+            if (lightModel != NULL)
+                ss->removeAttribute(lightModel);
+
+            // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
+            osg::Texture* texture = dynamic_cast<osg::Texture*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE));
+            if (texture)
+                simVis::fixTextureForGlCoreProfile(texture);
+        }
+#endif
+
+        traverse(node);
+    }
+
+    virtual void apply(osg::Drawable& drawable)
+    {
+        apply(static_cast<osg::Node&>(drawable));
+
+        osg::Geometry* geom = drawable.asGeometry();
+        if (geom)
+        {
+            // Ensure every geometry has a valid color array.
+            // Some older models that use an FFP Material default to using the diffuse 
+            // material color as the active color, but this only works under FFP. Without
+            // a color array, state leakage can occur.
+            if (geom->getColorArray() == NULL)
+            {
+                osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+                (*colors)[0].set(1,1,1,1);
+                geom->setColorArray(colors);
+            }
+        }
+
+        traverse(drawable);
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -383,6 +429,10 @@ private:
       // the model into a traversal order bin.  This helps with model display of alpha textures.
       SetRenderBinsToInherit setRenderBinsToInherit;
       result->accept(setRenderBinsToInherit);
+
+      // Scrub the model so it renders properly under GLCORE et al.
+      PrepareForProgrammablePipeline prepareForProgrammablePipeline;
+      result->accept(prepareForProgrammablePipeline);
     }
     return result;
   }
