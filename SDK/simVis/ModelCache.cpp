@@ -152,6 +152,8 @@ public:
                 simVis::fixTextureForGlCoreProfile(texture);
         }
 #endif
+
+        traverse(node);
     }
 
     virtual void apply(osg::Drawable& drawable)
