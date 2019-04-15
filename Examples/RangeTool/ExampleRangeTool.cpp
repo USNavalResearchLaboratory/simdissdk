@@ -47,6 +47,7 @@
 
 /// the RangeTool API.
 #include "simVis/RangeTool.h"
+#include "simVis/SimdisMeasurement.h"
 
 /// paths to models
 #include "simUtil/ExampleResources.h"
@@ -207,6 +208,16 @@ void createLineCalculations(simVis::RangeTool::CalculationVector& calcs)
   vd->addGraphic(new simVis::RangeTool::SlantLineGraphic, true);
   vd->setLabelMeasurement(new simVis::VelocityDeltaMeasurement);
   calcs.push_back(vd);
+
+  osg::ref_ptr<simVis::RangeTool::Calculation> opticalHorizon = new simVis::RangeTool::Calculation("Optical Horizon");
+  opticalHorizon->addGraphic(new simVis::RangeTool::SlantLineGraphic, true);
+  opticalHorizon->setLabelMeasurement(new simVis::OpticalHorizonMeasurement());
+  calcs.push_back(opticalHorizon);
+
+  osg::ref_ptr<simVis::RangeTool::Calculation> radioHorizon = new simVis::RangeTool::Calculation("Radio Horizon");
+  radioHorizon->addGraphic(new simVis::RangeTool::SlantLineGraphic, true);
+  radioHorizon->setLabelMeasurement(new simVis::RadioHorizonMeasurement());
+  calcs.push_back(radioHorizon);
 }
 
 void createAngleCalculations(simVis::RangeTool::CalculationVector& calcs)
