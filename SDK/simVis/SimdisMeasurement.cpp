@@ -309,7 +309,7 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
   if (maxRng > losRng)
     return 0;
 
-  auto simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
+  SimdisEntityState* simdisState = dynamic_cast<SimdisEntityState*>(state.beginEntity_);
   if (simdisState == NULL)
     return 0;
 
@@ -320,29 +320,31 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
     double targetElev;
     simCore::calculateAbsAzEl(state.beginEntity_->lla_, state.endEntity_->lla_, NULL, &targetElev, NULL, state.earthModel_, &state.coordConv_);
 
-    simVis::ElevationQueryProxy query(state.mapNode_->getMap(), NULL);
+    osg::ref_ptr<osgEarth::ElevationPool> pool = state.mapNode_->getMap()->getElevationPool();
+    osg::ref_ptr<osgEarth::ElevationEnvelope> envelope = pool->createEnvelope(state.mapNode_->getMapSRS(), 23);
 
     // Use the los range resolution of the begin entity as the rangeDelta for getting intermediate points
     double rangeDelta = simdisState->platformHostNode_->getPrefs().losrangeresolution();
-
     std::vector<simCore::Vec3> points;
     state.intermediatePoints(state.beginEntity_->lla_, state.endEntity_->lla_, rangeDelta, points);
-    for (auto iter = points.begin(); iter != points.end(); iter++)
-    {
-      osgEarth::GeoPoint currGeoPoint;
-      // A geopoint is necessary to get elevation.  If conversion fails, disregard this point
-      if (!convertCoordToGeoPoint(simCore::Coordinate(simCore::COORD_SYS_LLA, *iter), currGeoPoint, state.mapNode_->getMapSRS()))
-        continue;
 
-      double elevation = 0;
-      if (query.getElevation(currGeoPoint, elevation))
+    osgEarth::GeoPoint currGeoPoint(state.mapNode_->getMapSRS()->getGeographicSRS(), 0, 0, 0, osgEarth::ALTMODE_ABSOLUTE);
+
+    // Iterate over the points, sampling the elevation at each until the target becomes invisible:
+    for (std::vector<simCore::Vec3>::const_iterator iter = points.begin(); iter != points.end(); iter++)
+    {
+      currGeoPoint.x() = iter->lon() * simCore::RAD2DEG;
+      currGeoPoint.y() = iter->lat() * simCore::RAD2DEG;
+
+      float elevation = envelope->getElevation(currGeoPoint.x(), currGeoPoint.y());
+      if (elevation != NO_DATA_VALUE)
       {
         currGeoPoint.z() = elevation;
-        simCore::Coordinate currLlaPoint;
-        convertGeoPointToCoord(currGeoPoint, currLlaPoint, state.mapNode_.get());
-        double elev;
-        simCore::calculateAbsAzEl(state.beginEntity_->lla_, currLlaPoint.position(), NULL, &elev, NULL, state.earthModel_, &state.coordConv_);
-        if (elev > targetElev)
+        simCore::Vec3 currLLA(currGeoPoint.y() * simCore::DEG2RAD, currGeoPoint.x() * simCore::DEG2RAD, elevation);
+
+        double relativeElev;
+        simCore::calculateAbsAzEl(state.beginEntity_->lla_, currLLA, NULL, &relativeElev, NULL, state.earthModel_, &state.coordConv_);
+        if (relativeElev > targetElev)
           return 0;
       }
     }
