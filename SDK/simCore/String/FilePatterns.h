@@ -149,6 +149,10 @@ static const std::string SIMDIS_MODEL_FILE_PATTERNS =
   "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp)\n"
   "Media Player Video Icons (*.tmd,*.lst)\n"
   "All Files (*)";
+/** Dialog-oriented user-friendly list of SIMDIS supported image format patterns. */
+static const std::string SIMDIS_IMAGE_FILE_PATTERNS =
+  "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp)\n"
+  "All Files (*)";
 
 /** Media Player file format patterns, separated by commas */
 static const std::string ALL_MEDIA_FILE_PATTERNS = "*.avi,*.wmv,*.mpeg,*.mpg,*.m1v,*.mp2,*.mpa,*.mpe,*.mov,*.asf,*.aiff,*.aifc,*.audio,*.au,*.m4a,*.m4v,*.mp4,*.mp3,*.wav,*.wma,*.tmd,*.lst,*.pst,*.toc";
