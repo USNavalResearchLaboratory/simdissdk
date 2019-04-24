@@ -211,6 +211,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
   ShapeType type = SHAPE_UNKNOWN;
   // valid commands must occur within a start/end block
   bool validStartEndBlock = false;
+  bool invalidShape = false;
 
   ParsedShape current;
   std::string line;
@@ -294,8 +295,8 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
         continue;
       }
 
-      // apply all cached information to metadata when end is reached
-      if (tokens[0] == "end")
+      // apply all cached information to metadata when end is reached, only if shape is valid
+      if (tokens[0] == "end" && !invalidShape)
       {
         if (type == SHAPE_ABSOLUTE)
           current.set(GOG_ABSOLUTE, "1");
@@ -312,6 +313,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       refAlt.clear();
       positionLines.clear();
       type = SHAPE_UNKNOWN;
+      invalidShape = false;
 
       // "start" indicates a valid block, "end" indicates the block of commands are complete and subsequent commands will be invalid
       validStartEndBlock = (tokens[0] == "start");
@@ -354,6 +356,11 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
           }
         }
         currentMetaData.metadata += line + "\n";
+        if (currentMetaData.shape != GOG_UNKNOWN)
+        {
+          SIM_WARN << "Multiple shape keywords found in single start/end block\n";
+          invalidShape = true;
+        }
         currentMetaData.shape = GOG_ANNOTATION;
         current.setShape("annotation");
         const std::string textToken = osgEarth::trim(line.substr(tokens[0].length() + 1));
@@ -383,6 +390,11 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       tokens[0] == "linesegs"
       )
     {
+      if (currentMetaData.shape != GOG_UNKNOWN)
+      {
+        SIM_WARN << "Multiple shape keywords found in single start/end block\n";
+        invalidShape = true;
+      }
       currentMetaData.shape = Parser::getShapeFromKeyword(tokens[0]);
       current.setShape(line);
     }
@@ -390,6 +402,11 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
     {
       if (tokens.size() > 5)
       {
+        if (currentMetaData.shape != GOG_UNKNOWN)
+        {
+          SIM_WARN << "Multiple shape keywords found in single start/end block\n";
+          invalidShape = true;
+        }
         currentMetaData.shape = Parser::getShapeFromKeyword(tokens[0]);
         currentMetaData.metadata += line + "\n";
         current.setShape("latlonaltbox");
