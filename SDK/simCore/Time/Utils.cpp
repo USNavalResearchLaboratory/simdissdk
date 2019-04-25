@@ -141,6 +141,15 @@ void simCore::timeSinceJan1970ToSecsBgnYr(double timeSinceJan1970, unsigned int 
   time_t t(seconds);
   pTime = gmtime(&t);
 
+  if (pTime == NULL)
+  {
+    // timeSinceJan1970 is invalid
+    pSecs = 0;
+    pMillisec = 0;
+    pRefyear = 1970;
+    return;
+  }
+
   // assemble a UTC "system time"
   pSecs = static_cast<unsigned int>(pTime->tm_sec) +
     ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
