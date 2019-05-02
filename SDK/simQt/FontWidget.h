@@ -111,6 +111,18 @@ public:
   */
   void setFontDir(const QString& fontDir);
 
+  /**
+  * Set the enabled state of the font name combo box. Defaults to enabled
+  * @param enabled  new enabled state for the font name combo box
+  */
+  void setFontNameEnabled(bool enabled);
+
+  /**
+  * Returns if custom font files are available on the current system with the configured font directory
+  * @return True if custom font files are available on the current system with the configured font directory
+  */
+  bool customFontsAvailable() const;
+
 public slots:
 
   /**
