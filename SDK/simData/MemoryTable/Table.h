@@ -65,6 +65,8 @@ public:
   virtual TableColumn* column(const std::string& name) const;
   /** Adds a new data column, returning a pointer to the table interface. */
   virtual TableStatus addColumn(const std::string& columnName, VariableType storageType, UnitType unitType, TableColumn** newColumn);
+  /** Removes a data column */
+  virtual TableStatus removeColumn(const std::string& columnName);
   /** Visitor pattern to access all rows in the table. */
   virtual void accept(double beginTime, double endTime, DataTable::RowVisitor& visitor) const;
   /** Visitor pattern to access all columns in the table. */

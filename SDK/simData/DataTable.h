@@ -386,6 +386,13 @@ public:
   virtual TableStatus addColumn(const std::string& columnName, VariableType storageType, UnitType unitType, TableColumn** column) = 0;
 
   /**
+   * Removes a column with the given name from the data table.
+   * @param columnName Name of the column to remove from this data table.
+   * @return Status describing success or failure of this function call.
+   */
+  virtual TableStatus removeColumn(const std::string& columnName) = 0;
+
+  /**
    * Performs visitation of each row in this list after beginTime (inclusive) until endTime
    * (exclusive), calling the RowVisitor provided.  The rows are visited in time order from
    * earliest to latest time value.
@@ -708,7 +715,7 @@ public:
   void setTime(double t);
 
   /**
-  * Optionally reserve the space for the expected number of values; minor performance improvement 
+  * Optionally reserve the space for the expected number of values; minor performance improvement
   * @param number Expected number of values
   */
   void reserve(size_t number);

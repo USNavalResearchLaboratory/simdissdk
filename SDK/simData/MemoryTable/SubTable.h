@@ -124,6 +124,13 @@ public:
     VariableType storageType, UnitType unitType, TableColumn** newCol);
 
   /**
+   * Removes the column with the given ID.
+   * @param columnId Unique identifier for the column in the context of a data table.
+   * @return Status of the operation
+   */
+  TableStatus removeColumn(TableColumnId columnId);
+
+  /**
    * Interpolates a double precision value from the column at the given time, using
    * the interpolator provided.
    */

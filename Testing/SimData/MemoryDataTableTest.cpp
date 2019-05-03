@@ -595,6 +595,7 @@ int tableTest(simData::DataTable& table)
   int rv = 0;
   simData::TableColumn* column1 = NULL;
   simData::TableColumn* column2 = NULL;
+  simData::TableColumn* column3 = NULL;
 
   // create test observer. NOTE: since this is wrapped in a shared ptr, don't need to delete explicitly
   TestTableObserver* testObserver = new TestTableObserver(table);
@@ -627,6 +628,54 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(table.column(column2->columnId()) == column2);
   rv += SDK_ASSERT(table.column(500) == NULL); // Should be unique
 
+  // Add another column
+  testObserver->setExpectedColumnName("3");
+  rv += SDK_ASSERT(table.addColumn("3", VT_INT32, 0, &column3).isSuccess());
+  rv += SDK_ASSERT(column3 != column1);
+  rv += SDK_ASSERT(column3 != column2);
+  rv += SDK_ASSERT(column3 != NULL);
+  // Store the column IDs to check that they don't change over the next few tests
+  simData::TableColumnId col1Id = column1->columnId();
+  simData::TableColumnId col2Id = column2->columnId();
+  simData::TableColumnId col3Id = column3->columnId();
+  rv += SDK_ASSERT(col3Id != col1Id);
+  rv += SDK_ASSERT(col3Id != col2Id);
+
+  // Remove column 2
+  testObserver->setExpectedColumnName("2");
+  rv += SDK_ASSERT(table.removeColumn("2").isSuccess());
+  // Verify that the column is in fact removed
+  rv += SDK_ASSERT(table.column(col2Id) == NULL);
+  rv += SDK_ASSERT(table.column("2") == NULL);
+
+  // Removing a column should not affect the other columns
+  rv += SDK_ASSERT(col1Id == column1->columnId());
+  rv += SDK_ASSERT(col3Id == column3->columnId());
+  rv += SDK_ASSERT(table.column(column1->columnId()) == column1);
+  rv += SDK_ASSERT(table.column(column3->columnId()) == column3);
+  rv += SDK_ASSERT(table.column("1") == column1);
+  rv += SDK_ASSERT(table.column("3") == column3);
+  rv += SDK_ASSERT(table.columnCount() == 2);
+
+  // Replacing column 2
+  rv += SDK_ASSERT(table.addColumn("2", VT_INT32, 0, &column2).isSuccess());
+  rv += SDK_ASSERT(column2 != column1);
+  rv += SDK_ASSERT(column2 != column3);
+  rv += SDK_ASSERT(column2 != NULL);
+  // Should not reuse the ID of removed column
+  rv += SDK_ASSERT(col2Id != column2->columnId());
+  col2Id = column2->columnId();
+  rv += SDK_ASSERT(col2Id != col1Id);
+  rv += SDK_ASSERT(col2Id != col3Id);
+  // Replacing a column should not affect the other columns
+  rv += SDK_ASSERT(col1Id == column1->columnId());
+  rv += SDK_ASSERT(col3Id == column3->columnId());
+  rv += SDK_ASSERT(table.column(column1->columnId()) == column1);
+  rv += SDK_ASSERT(table.column(column3->columnId()) == column3);
+  rv += SDK_ASSERT(table.column("1") == column1);
+  rv += SDK_ASSERT(table.column("3") == column3);
+  rv += SDK_ASSERT(table.columnCount() == 3);
+
   // Should be no times
   double begin;
   double end;
@@ -639,6 +688,7 @@ int tableTest(simData::DataTable& table)
   row.setTime(10.0);
   row.setValue(column1->columnId(), 1001);
   row.setValue(column2->columnId(), 1002);
+  row.setValue(column3->columnId(), 1003);
   testObserver->setExpectedRowTime(10.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
   rv += SDK_ASSERT(column1->getTimeRange(begin, end) == 0);
@@ -649,6 +699,7 @@ int tableTest(simData::DataTable& table)
   row.setTime(20.0);
   row.setValue(column1->columnId(), 2001.0);
   row.setValue(column2->columnId(), 2002.0);
+  row.setValue(column3->columnId(), 2003.0);
   testObserver->setExpectedRowTime(20.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
   rv += SDK_ASSERT(column1->getTimeRange(begin, end) == 0);
@@ -664,11 +715,12 @@ int tableTest(simData::DataTable& table)
   // Add one more good row
   row.setValue(column1->columnId(), 3001.0);
   row.setValue(column2->columnId(), 3002.0);
+  row.setValue(column3->columnId(), 3003.0);
   testObserver->setExpectedRowTime(30.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
 
   // Sanity check state
-  rv += SDK_ASSERT(table.columnCount() == 2);
+  rv += SDK_ASSERT(table.columnCount() == 3);
 
   // Check interpolate on given values
   double value = 0;
@@ -701,25 +753,41 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(column2->interpolate(value, 35.0, NULL).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 3002.0));
 
+  // Now with column 3
+  rv += SDK_ASSERT(column3->interpolate(value, 10.0, NULL).isSuccess());
+  rv += SDK_ASSERT(simCore::areEqual(value, 1003.0));
+  rv += SDK_ASSERT(column3->interpolate(value, 20.0, NULL).isSuccess());
+  rv += SDK_ASSERT(simCore::areEqual(value, 2003.0));
+  rv += SDK_ASSERT(column3->interpolate(value, 30.0, NULL).isSuccess());
+  rv += SDK_ASSERT(simCore::areEqual(value, 3003.0));
+  // Actually interpolate
+  rv += SDK_ASSERT(column3->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(simCore::areEqual(value, 2503.0));
+  // Check that extrapolation fails before time, and succeeds with current value after time
+  rv += SDK_ASSERT(column3->interpolate(value, 5.0, NULL).isError());
+  rv += SDK_ASSERT(column3->interpolate(value, 35.0, NULL).isSuccess());
+  rv += SDK_ASSERT(simCore::areEqual(value, 3003.0));
+
   // Add 3 new columns
-  simData::TableColumn* column3 = NULL;
   simData::TableColumn* column4 = NULL;
   simData::TableColumn* column5 = NULL;
-  testObserver->setExpectedColumnName("3");
-  rv += SDK_ASSERT(table.addColumn("3", VT_INT16, 0, &column3).isSuccess());
+  simData::TableColumn* column6 = NULL;
   testObserver->setExpectedColumnName("4");
   rv += SDK_ASSERT(table.addColumn("4", VT_UINT32, 0, &column4).isSuccess());
   testObserver->setExpectedColumnName("5");
   rv += SDK_ASSERT(table.addColumn("5", VT_STRING, 0, &column5).isSuccess());
   rv += SDK_ASSERT(table.columnCount() == 5);
+  testObserver->setExpectedColumnName("6");
+  rv += SDK_ASSERT(table.addColumn("6", VT_INT16, 0, &column6).isSuccess());
 
-  // Add values to 4 of the 5 columns, out of order
+  // Add values to 5 of the 6 columns, out of order
   row.clear();
   row.setTime(50.0);
   row.setValue(column2->columnId(), 5002.0);
   row.setValue(column3->columnId(), 5003.0);
   row.setValue(column4->columnId(), 5004.0);
   row.setValue(column5->columnId(), 5005.0);
+  row.setValue(column6->columnId(), 5006.0);
   testObserver->setExpectedRowTime(50.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
   row.clear();
@@ -728,6 +796,7 @@ int tableTest(simData::DataTable& table)
   row.setValue(column3->columnId(), 0003.0);
   row.setValue(column4->columnId(), 0004.0);
   row.setValue(column5->columnId(), 0005.0);
+  row.setValue(column6->columnId(), 0006.0);
   testObserver->setExpectedRowTime(0.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
 
@@ -742,6 +811,38 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(simCore::areEqual(value, 2504.0));
   rv += SDK_ASSERT(column5->interpolate(value, 25.0, NULL).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2505.0));
+  rv += SDK_ASSERT(column6->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(simCore::areEqual(value, 2506.0));
+
+  // Store column IDs to check for changes in later steps
+  simData::TableColumnId col4Id = column4->columnId();
+  simData::TableColumnId col5Id = column5->columnId();
+  simData::TableColumnId col6Id = column6->columnId();
+
+  // Remove column 3
+  testObserver->setExpectedColumnName("3");
+  rv += SDK_ASSERT(table.removeColumn("3").isSuccess());
+  // Verify that the column is in fact removed
+  rv += SDK_ASSERT(table.column(col3Id) == NULL);
+  rv += SDK_ASSERT(table.column("3") == NULL);
+
+  // Check that other columns are not affected, especially columns 1 and 2 which are in the same subtable at this point
+  rv += SDK_ASSERT(col1Id == column1->columnId());
+  rv += SDK_ASSERT(col2Id == column2->columnId());
+  rv += SDK_ASSERT(col4Id == column4->columnId());
+  rv += SDK_ASSERT(col5Id == column5->columnId());
+  rv += SDK_ASSERT(col6Id == column6->columnId());
+  rv += SDK_ASSERT(table.column(column1->columnId()) == column1);
+  rv += SDK_ASSERT(table.column(column2->columnId()) == column2);
+  rv += SDK_ASSERT(table.column(column4->columnId()) == column4);
+  rv += SDK_ASSERT(table.column(column5->columnId()) == column5);
+  rv += SDK_ASSERT(table.column(column6->columnId()) == column6);
+  rv += SDK_ASSERT(table.column("1") == column1);
+  rv += SDK_ASSERT(table.column("2") == column2);
+  rv += SDK_ASSERT(table.column("4") == column4);
+  rv += SDK_ASSERT(table.column("5") == column5);
+  rv += SDK_ASSERT(table.column("6") == column6);
+  rv += SDK_ASSERT(table.columnCount() == 5);
 
   // Add data to the first column, then the second column, and make sure we can find
   // the data in both cases.  This validates that the split doesn't lose subtable pointers.
