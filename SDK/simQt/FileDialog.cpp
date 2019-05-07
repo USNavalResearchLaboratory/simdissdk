@@ -21,6 +21,7 @@
  */
 #include <QSettings>
 #include <QFileDialog>
+#include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simQt/FileDialog.h"
 
@@ -80,9 +81,33 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
   if (owner)
     owner->activateWindow();
 #endif
+
   QString directory = FileDialog::getRegistryDir(registryDir);
+
+  // If the caller did not provide a selected filter, attempt to find a matching filter
+  QString* localPointer = selectedFilter;
+  QString localSelectedFilter;
+  if (localPointer == NULL)
+  {
+    QString ext = QString::fromStdString(simCore::getExtension(directory.toStdString()));
+    if (!ext.isEmpty())
+    {
+      QStringList eachLine = filter.split("\n", QString::SkipEmptyParts);
+      QString match = "(*" + ext + ")";
+      for (auto it = eachLine.begin(); it != eachLine.end(); ++it)
+      {
+        if ((*it).contains(match))
+        {
+          localSelectedFilter = *it;
+          localPointer = &localSelectedFilter;
+          break;
+        }
+      }
+    }
+  }
+
   QString file = QFileDialog::getSaveFileName(owner, caption, directory,
-    FileDialog::foxToQtFilter(filter), selectedFilter, options | getFileDialogDefaultOptions());
+    FileDialog::foxToQtFilter(filter), localPointer, options | getFileDialogDefaultOptions());
   if (!file.isEmpty() && !registryDir.isEmpty())
   {
     FileDialog::setRegistryDir(registryDir, file, true);

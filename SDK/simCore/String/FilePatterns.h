@@ -112,8 +112,8 @@ static const std::string SIMDIS_BOOKMARK_FILE_PATTERNS =
 
 /** Dialog-oriented user-friendly list of supported SIMDIS Bookmark format patterns to save/export */
 static const std::string SIMDIS_BOOKMARK_SAVE_FILE_PATTERNS =
-  "Media Player Bookmarks (*.toc)\n"
   "Bookmark XML (*.bml)\n"
+  "Media Player Bookmarks (*.toc)\n"
   "All Files (*)";
 
 /** Dialog-oriented user-friendly list of SIMDIS 9 Terrain Configuration File patterns */
