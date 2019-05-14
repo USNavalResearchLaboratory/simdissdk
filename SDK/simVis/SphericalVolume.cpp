@@ -148,7 +148,7 @@ namespace
     assert(vertexArray);
     setName("simVis::SphericalVolume::svPyramidOutline");
     xform.addChild(this);
-    osgEarth::GLUtils::setLineSmooth(getOrCreateStateSet(), osg::StateAttribute::ON);
+    // Line smoothing is not enabled by default, as it might cause problems with multisampling, or maybe with draw order.
 
     const bool hasNearFace = (nearFaceOffset_ > 0);
     // if we are drawing near and far faces, bottom and top outlines are each line loops, if not, (far face) outlines are each simple line strips
