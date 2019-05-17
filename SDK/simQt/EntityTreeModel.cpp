@@ -219,7 +219,7 @@ void EntityTreeModel::commitDelayedEntities_()
   for (std::vector<simData::ObjectId>::const_iterator it = delayedAdds_.begin(); it != delayedAdds_.end(); ++it)
   {
     simData::ObjectType entityType = dataStore_->objectType(*it);
-    if (simData::NONE)
+    if (entityType == simData::NONE)
     {
       // the entity should have been removed from the vector
       assert(false);
