@@ -45,6 +45,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}UnitsComboBox.h
 )
 set(SIMQT_HEADERS
+    ${SIMQT_INC}ColorGradient.h
     ${SIMQT_INC}ConsoleChannel.h
     ${SIMQT_INC}FileDialog.h
     ${SIMQT_INC}FileUtilities.h
@@ -136,6 +137,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}ActionItemModel.cpp
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
+    ${SIMQT_SRC}ColorGradient.cpp
     ${SIMQT_SRC}ColorWidget.cpp
     ${SIMQT_SRC}ConsoleChannel.cpp
     ${SIMQT_SRC}ConsoleDataModel.cpp

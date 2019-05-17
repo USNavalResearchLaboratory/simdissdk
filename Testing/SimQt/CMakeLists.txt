@@ -9,6 +9,7 @@ project(SimQt_UnitTests)
 
 set(SimQtTestsSourceList
     ActionRegistryTest.cpp
+    GradientTest.cpp
     SettingsTest.cpp
     PersistentLoggerTest.cpp
 )
@@ -43,6 +44,7 @@ VSI_QT_USE_MODULES(SimQtTests LINK_PRIVATE Widgets)
 add_test(NAME ActionRegistryTest COMMAND SimQtTests ActionRegistryTest)
 add_test(NAME SettingsTest COMMAND SimQtTests SettingsTest)
 add_test(NAME PersistentLoggerTest COMMAND SimQtTests PersistentLoggerTest)
+add_test(NAME GradientTest COMMAND SimQtTests GradientTest)
 if(TARGET simData)
     add_test(NAME RangeToRegExpTest COMMAND SimQtTests RangeToRegExpTest)
 endif()
