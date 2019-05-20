@@ -28,7 +28,7 @@ macro(PostBuildInstallSharedObjects TARGET)
     if(MSVC)
         # Windows copies the DLLs into the runtime directory
         set(SHARED_LIBRARY_OUPUT_LOC ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_RUNTIME_DIR})
-    endif(MSVC)
+    endif()
 
     # Make sure the target directory exists
     add_custom_command(TARGET ${CMD_TARGET} PRE_BUILD
