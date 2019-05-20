@@ -14,6 +14,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}ActionItemModel.h
     ${SIMQT_INC}BoundSettings.h
     ${SIMQT_INC}ColorButton.h
+    ${SIMQT_INC}ColorGradientWidget.h
     ${SIMQT_INC}ColorWidget.h
     ${SIMQT_INC}ConsoleDataModel.h
     ${SIMQT_INC}ConsoleLogger.h
@@ -138,6 +139,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
     ${SIMQT_SRC}ColorGradient.cpp
+    ${SIMQT_SRC}ColorGradientWidget.cpp
     ${SIMQT_SRC}ColorWidget.cpp
     ${SIMQT_SRC}ConsoleChannel.cpp
     ${SIMQT_SRC}ConsoleDataModel.cpp
@@ -235,6 +237,7 @@ source_group(Sources FILES ${SIMQT_SOURCES})
 
 # .ui files
 set(SIMQT_FORMS
+    ${SIMQT_INC}ColorGradientWidget.ui
     ${SIMQT_INC}ColorWidget.ui
     ${SIMQT_INC}DataTableComboBox.ui
     ${SIMQT_INC}DirectorySelectorWidget.ui

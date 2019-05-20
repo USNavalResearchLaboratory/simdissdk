@@ -11,6 +11,7 @@ set(PROJ_HEADERS
     CategoryFilterWidgetPlugin.h
     CategoryFilterWidget2Plugin.h
     ColorButtonPlugin.h
+    ColorGradientWidgetPlugin.h
     ColorWidgetPlugin.h
     DataTableComboBoxPlugin.h
     DirectorySelectorWidgetPlugin.h
@@ -35,6 +36,7 @@ set(PROJ_SOURCES
     CategoryFilterWidgetPlugin.cpp
     CategoryFilterWidget2Plugin.cpp
     ColorButtonPlugin.cpp
+    ColorGradientWidgetPlugin.cpp
     ColorWidgetPlugin.cpp
     DataTableComboBoxPlugin.cpp
     DirectorySelectorWidgetPlugin.cpp

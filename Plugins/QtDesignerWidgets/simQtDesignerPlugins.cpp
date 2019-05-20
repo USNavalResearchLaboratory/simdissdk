@@ -21,6 +21,7 @@
  */
 #include <QtCore/QtPlugin>
 #include "ColorButtonPlugin.h"
+#include "ColorGradientWidgetPlugin.h"
 #include "ColorWidgetPlugin.h"
 #include "CategoryDataBreadcrumbsPlugin.h"
 #include "CategoryFilterWidgetPlugin.h"
@@ -48,6 +49,7 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   widgetFactories_.append(new CategoryFilterWidgetPlugin(this));
   widgetFactories_.append(new CategoryFilterWidget2Plugin(this));
   widgetFactories_.append(new ColorButtonPlugin(this));
+  widgetFactories_.append(new ColorGradientWidgetPlugin(this));
   widgetFactories_.append(new ColorWidgetPlugin(this));
   widgetFactories_.append(new DataTableComboBoxPlugin(this));
   widgetFactories_.append(new DirectorySelectorWidgetPlugin(this));
