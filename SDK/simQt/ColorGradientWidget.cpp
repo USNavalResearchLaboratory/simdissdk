@@ -82,6 +82,8 @@ void ColorGradientWidget::setColorGradient(const ColorGradient& gradient)
   }
   ui_->indexCombo->setCurrentIndex(0);
 
+  // Update new enabled state, in case it changed
+  updateEnables_();
   // Update the graphics
   applyGradient_();
 }
@@ -137,7 +139,7 @@ void ColorGradientWidget::setSelectedGradientIndex_(int index)
     return;
   auto stop = stops_[index];
 
-  // Block signals, then manually update after all updates
+  // Since we want to update GUI elements, but the underlying data is not changing, block signals to prevent updates
   simQt::ScopedSignalBlocker blockerA(*ui_->horizontalSlider);
   simQt::ScopedSignalBlocker blockerB(*ui_->positionSpin);
 
@@ -146,8 +148,6 @@ void ColorGradientWidget::setSelectedGradientIndex_(int index)
   // Spinner maps [0,1] to [0,100]
   ui_->positionSpin->setValue(stop.first * ui_->positionSpin->maximum());
   ui_->colorWidget->setColor(stop.second);
-
-  applyGradient_();
 }
 
 void ColorGradientWidget::storeGradientSliderPosition_(int sliderPos)
@@ -271,6 +271,9 @@ void ColorGradientWidget::updateEnables_()
   ui_->positionSpin->setEnabled(canEdit);
   ui_->deleteColorButton->setEnabled(canEdit);
   ui_->colorWidget->setEnabled(canEdit);
+  // Repeat the setIndex call, in case it was last called while our GUI was disabled
+  if (ui_->indexCombo->count())
+    setSelectedGradientIndex_(ui_->indexCombo->currentIndex());
 }
 
 }
