@@ -108,7 +108,7 @@ QColor ColorGradient::colorAt(double zeroToOne) const
   --before;
   if (before->first == zeroToOne)
     return before->second;
-  return interpolate_(before->second, after->second, before->first, zeroToOne, after->first);
+  return ColorGradient::interpolate(before->second, after->second, before->first, zeroToOne, after->first);
 }
 
 int ColorGradient::setColor(double zeroToOne, const QColor& color)
@@ -146,7 +146,7 @@ void ColorGradient::setColors(const std::map<double, QColor>& colors)
   colors_.erase(colors_.upper_bound(1.), colors_.end());
 }
 
-QColor ColorGradient::interpolate_(const QColor& lowColor, const QColor& highColor, double low, double val, double high) const
+QColor ColorGradient::interpolate(const QColor& lowColor, const QColor& highColor, double low, double val, double high)
 {
   const double factor = simCore::getFactor(low, val, high);
   QColor rv;

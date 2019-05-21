@@ -44,6 +44,8 @@ public:
   static ColorGradient newDarkGradient();
   static ColorGradient newGreyscaleGradient();
   static ColorGradient newDopplerGradient();
+  /** Interpolates a color between lowColor and highColor, using low and high as guideposts against val. */
+  static QColor interpolate(const QColor& lowColor, const QColor& highColor, double low, double val, double high);
 
   /**
    * Retrieves the color mapping to the given value.  Values range [0,1].  If there are
@@ -70,8 +72,6 @@ public:
   bool operator!=(const ColorGradient& rhs) const;
 
 private:
-  /** Interpolates a color between lowColor and highColor, using low and high as guideposts against val. */
-  QColor interpolate_(const QColor& lowColor, const QColor& highColor, double low, double val, double high) const;
 
   std::map<double, QColor> colors_;
 };
