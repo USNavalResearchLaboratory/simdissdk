@@ -74,6 +74,19 @@ public:
    */
   static void installShaderProgram(osg::StateSet* intoStateSet);
 
+  /**
+   * Sets the override color via uniform variables.  Application of the color depends on
+   * the combine mode.
+   */
+  static void setColor(osg::StateSet* stateset, const simVis::Color& color);
+
+  /**
+   * Sets the combine mode to use for override color.  Classic SIMDIS always used a
+   * MULTIPLY_COLOR combination that merges the override color with the incoming color.
+   * The REPLACE_COLOR mode respects alpha blending but replaces the source color completely.
+   */
+  static void setCombineMode(osg::StateSet* stateset, CombineMode combineMode);
+
 protected:
   /// osg::Referenced-derived
   virtual ~OverrideColor();
