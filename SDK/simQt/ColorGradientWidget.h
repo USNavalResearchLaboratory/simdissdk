@@ -47,7 +47,7 @@ public:
 
 signals:
   /** Emitted when any change to the color gradient is made */
-  void gradientChanged(const ColorGradient& gradient);
+  void gradientChanged(const simQt::ColorGradient& gradient);
 
 private slots:
   /** Updates GUI to the values of the newly-selected gradient stop */

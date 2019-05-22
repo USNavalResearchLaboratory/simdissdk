@@ -91,6 +91,7 @@ void ColorGradientWidget::setColorGradient(const ColorGradient& gradient)
 ColorGradient ColorGradientWidget::getColorGradient() const
 {
   ColorGradient gradient;
+  gradient.clearColors();
   for (auto stopIter = stops_.begin(); stopIter != stops_.end(); ++stopIter)
     gradient.setColor(stopIter->first, stopIter->second);
 
