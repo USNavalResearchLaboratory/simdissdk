@@ -57,10 +57,10 @@ endfunction()
 find_program(QT_QMAKE_EXECUTABLE
     NAME qmake
     HINTS
-        c:/QtSDK/${BUILD_PLATFORM}_${BUILD_COMPILER}/5.5.1/bin
+        c:/QtSDK/${BUILD_PLATFORM}_${BUILD_COMPILER}/5.9.8/bin
         $ENV{ProgramFiles}/Qt/bin
         $ENV{QTDIR}/bin
-        /usr/local/Qt-5.5.1/bin
+        /usr/local/Qt-5.9.8/bin
         /usr/lib/x86_64-linux-gnu/qt5/bin
         /opt/Qt5/bin
         /usr/local/bin
