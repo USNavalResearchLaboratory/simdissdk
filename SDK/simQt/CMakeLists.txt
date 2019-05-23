@@ -14,7 +14,6 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}ActionItemModel.h
     ${SIMQT_INC}BoundSettings.h
     ${SIMQT_INC}ColorButton.h
-    ${SIMQT_INC}ColorGradientWidget.h
     ${SIMQT_INC}ColorWidget.h
     ${SIMQT_INC}ConsoleDataModel.h
     ${SIMQT_INC}ConsoleLogger.h
@@ -116,6 +115,9 @@ if(TARGET simVis)
 endif()
 
 if(OSG_FOUND)
+    list(APPEND SIMQT_HEADERS_TO_MOC
+        ${SIMQT_INC}ColorGradientWidget.h
+    )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}QtConversion.h
     )
@@ -139,7 +141,6 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
     ${SIMQT_SRC}ColorGradient.cpp
-    ${SIMQT_SRC}ColorGradientWidget.cpp
     ${SIMQT_SRC}ColorWidget.cpp
     ${SIMQT_SRC}ConsoleChannel.cpp
     ${SIMQT_SRC}ConsoleDataModel.cpp
@@ -229,6 +230,7 @@ endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_SOURCES
+        ${SIMQT_SRC}ColorGradientWidget.cpp
         ${SIMQT_SRC}QtConversion.cpp
     )
 endif()
@@ -237,7 +239,6 @@ source_group(Sources FILES ${SIMQT_SOURCES})
 
 # .ui files
 set(SIMQT_FORMS
-    ${SIMQT_INC}ColorGradientWidget.ui
     ${SIMQT_INC}ColorWidget.ui
     ${SIMQT_INC}DataTableComboBox.ui
     ${SIMQT_INC}DirectorySelectorWidget.ui
@@ -249,6 +250,12 @@ set(SIMQT_FORMS
     ${SIMQT_INC}SearchLineEditQt4.ui
     ${SIMQT_INC}TimeButtons.ui
 )
+if(OSG_FOUND)
+    list(APPEND SIMQT_FORMS
+        ${SIMQT_INC}ColorGradientWidget.ui
+    )
+endif()
+
 set(SIMQT_RESOURCES
     ${SIMQT_INC}simQtResources.qrc
 )

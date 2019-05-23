@@ -11,7 +11,6 @@ set(PROJ_HEADERS
     CategoryFilterWidgetPlugin.h
     CategoryFilterWidget2Plugin.h
     ColorButtonPlugin.h
-    ColorGradientWidgetPlugin.h
     ColorWidgetPlugin.h
     DataTableComboBoxPlugin.h
     DirectorySelectorWidgetPlugin.h
@@ -28,7 +27,6 @@ set(PROJ_HEADERS
     TimeWidgetPlugin.h
     UnitsSelectorComboBoxPlugin.h
 )
-source_group(Headers FILES ${PROJ_HEADERS})
 
 # .cpp files
 set(PROJ_SOURCES
@@ -36,7 +34,6 @@ set(PROJ_SOURCES
     CategoryFilterWidgetPlugin.cpp
     CategoryFilterWidget2Plugin.cpp
     ColorButtonPlugin.cpp
-    ColorGradientWidgetPlugin.cpp
     ColorWidgetPlugin.cpp
     DataTableComboBoxPlugin.cpp
     DirectorySelectorWidgetPlugin.cpp
@@ -54,6 +51,13 @@ set(PROJ_SOURCES
     UnitsSelectorComboBoxPlugin.cpp
     simQtDesignerPlugins.cpp
 )
+
+if(OSG_FOUND)
+    list(APPEND PROJ_HEADERS ColorGradientWidgetPlugin.h)
+    list(APPEND PROJ_SOURCES ColorGradientWidgetPlugin.cpp)
+endif()
+
+source_group(Headers FILES ${PROJ_HEADERS})
 source_group(Sources FILES ${PROJ_SOURCES})
 
 set(PROJ_RESOURCES
@@ -93,7 +97,11 @@ target_compile_definitions(simQtDesignerWidgets PRIVATE QDESIGNER_EXPORT_WIDGETS
 set_target_properties(simQtDesignerWidgets PROPERTIES
     FOLDER "Qt Designer Plugins"
     PROJECT_LABEL "Plugin - simQt Designer Widgets")
-    
+
+if(OSG_FOUND)
+    target_compile_definitions(simQtDesignerWidgets PRIVATE HAVE_OSG)
+endif()
+
 VSI_QT_USE_MODULES(simQtDesignerWidgets LINK_PRIVATE Widgets OpenGL ${DESIGNER_LIBRARY})
 
 option(AUTOINSTALL_QTDESIGNER_WIDGETS "Copies simQt Widgets to Qt Designer plugin directory" OFF)
