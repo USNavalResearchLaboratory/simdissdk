@@ -314,7 +314,7 @@ TimeCompVal TimeStamp::compare_(const TimeStamp& time) const
 
 //------------------------------------------------------------------------
 
-double simCore::getFactor(const TimeStamp &lowVal, const TimeStamp &exactVal, const TimeStamp &highVal)
+double getFactor(const TimeStamp &lowVal, const TimeStamp &exactVal, const TimeStamp &highVal)
 {
   // Perform bounds check and prevent divide by zero
   if (exactVal <= lowVal) return 0.;

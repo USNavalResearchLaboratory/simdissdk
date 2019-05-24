@@ -52,7 +52,7 @@ namespace simCore {
 //
 //=======================================================================
 
-double simCore::basicUniformVariable(double *seed)
+double basicUniformVariable(double *seed)
 {
   //
   // constants for the pseudo-random number generator

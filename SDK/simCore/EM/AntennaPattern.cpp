@@ -34,7 +34,7 @@
 
 namespace simCore {
 // Returns the string representation of the antenna pattern type
-std::string simCore::antennaPatternTypeString(AntennaPatternType antPatType)
+std::string antennaPatternTypeString(AntennaPatternType antPatType)
 {
   switch (antPatType)
   {
@@ -56,7 +56,7 @@ std::string simCore::antennaPatternTypeString(AntennaPatternType antPatType)
 }
 
 // Returns the antenna pattern type for the given string
-AntennaPatternType simCore::antennaPatternType(const std::string& antPatStr)
+AntennaPatternType antennaPatternType(const std::string& antPatStr)
 {
   simCore::AntennaPatternType type = simCore::NO_ANTENNA_PATTERN;
   if (!antPatStr.empty())
@@ -116,7 +116,7 @@ AntennaPatternType simCore::antennaPatternType(const std::string& antPatStr)
 /* SymmetricAntennaPattern                                                    */
 /* ************************************************************************** */
 
-bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const std::string &name, double frequency, double frequencythreshold)
+bool readPattern(SymmetricAntennaPattern *sap, std::istream &in, const std::string &name, double frequency, double frequencythreshold)
 {
   std::string st;
   double minfreq=0;
@@ -316,7 +316,7 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
   return true;
 }
 
-bool simCore::readPattern(SymmetricAntennaPattern *sap, const std::string &filename, const std::string &name, double frequency, double frequencythreshold)
+bool readPattern(SymmetricAntennaPattern *sap, const std::string &filename, const std::string &name, double frequency, double frequencythreshold)
 {
   std::fstream in(filename.c_str(), std::ios::in);
   return readPattern(sap, in, name, frequency, frequencythreshold);
@@ -326,7 +326,7 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, const std::string &filen
 /* Bilinear look up table for gain only antenna patterns                      */
 /* ************************************************************************** */
 
-bool simCore::readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequency, double frequencyThreshold)
+bool readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequency, double frequencyThreshold)
 {
   std::string st;
   double minfreq=0;
@@ -518,7 +518,7 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, std::istream &in, double
   return true;
 }
 
-bool simCore::readPattern(SymmetricGainAntPattern *sap, const std::string &filename, double frequency, double frequencythreshold)
+bool readPattern(SymmetricGainAntPattern *sap, const std::string &filename, double frequency, double frequencythreshold)
 {
   std::fstream in(filename.c_str(), std::ios::in);
   return readPattern(sap, in, frequency, frequencythreshold);
@@ -527,7 +527,7 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, const std::string &filen
 
   /* ************************************************************************** */
 
-  float simCore::calculateGain(const std::map<float, float> *azimData,
+  float calculateGain(const std::map<float, float> *azimData,
     const std::map<float, float> *elevData,
     AntennaLobeType &lastLobe,
     float azim,
@@ -705,7 +705,7 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, const std::string &filen
 /* AntennaPattern                                                             */
 /* ************************************************************************** */
 
-AntennaPattern* simCore::loadPatternFile(const std::string &filename, float freq)
+AntennaPattern* loadPatternFile(const std::string &filename, float freq)
 {
   AntennaPattern* pattern = NULL;
   if (filename.empty())

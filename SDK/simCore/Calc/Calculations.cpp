@@ -55,7 +55,7 @@ namespace simCore {
 * Calculates the relative azimuth, elevation, and composite angles from one entity to another in the given coordinate frame
 * along the from entity's line of sight.
 */
-void simCore::calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, double *azim, double *elev, double *cmp, const EarthModelCalculations model, const CoordinateConverter* coordConv)
+void calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, double *azim, double *elev, double *cmp, const EarthModelCalculations model, const CoordinateConverter* coordConv)
 {
   assert(azim || elev || cmp);
   if (!azim && !elev && !cmp)
@@ -98,7 +98,7 @@ void simCore::calculateRelAzEl(const Vec3 &fromLla, const Vec3 &fromOriLla, cons
 * Calculates the absolute azimuth, elevation, and composite angles from one entity to another in the given coordinate frame.
 * The calculation is performed with 0 degrees at true north
 */
-void simCore::calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double *azim, double *elev, double *cmp, const EarthModelCalculations model, const CoordinateConverter *coordConv)
+void calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double *azim, double *elev, double *cmp, const EarthModelCalculations model, const CoordinateConverter *coordConv)
 {
   assert(azim || elev || cmp);
   if (!azim && !elev && !cmp)
@@ -159,7 +159,7 @@ void simCore::calculateAbsAzEl(const Vec3 &fromLla, const Vec3 &toLla, double *a
 * Calculates the slant distance between two positions in space in the given coordinate system.  Order of entities (from/to)
 * will not affect the calculation.
 */
-double simCore::calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv)
+double calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv)
 {
   // determine correct object locations based on coordinate system
   Coordinate fromPos;
@@ -218,7 +218,7 @@ double simCore::calculateSlant(const Vec3 &fromLla, const Vec3 &toLla, const Ear
 * earth for both entities and calculating the distance of the line that connects the two surface points.  Order of the entities
 * (from/to) will not affect the calculation.
 */
-double simCore::calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv)
+double calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv)
 {
   // from and to are the states(double [9])
   if (model == WGS_84)
@@ -268,7 +268,7 @@ double simCore::calculateGroundDist(const Vec3 &fromLla, const Vec3 &toLla, cons
 * Calculates the altitude difference from one object to another.  Order of the entities (from/to) will negate the
 * result of the calculation.  A "higher" to altitude will return a positive value.
 */
-double simCore::calculateAltitude(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv)
+double calculateAltitude(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv)
 {
   if (model == WGS_84)
   {
@@ -305,7 +305,7 @@ double simCore::calculateAltitude(const Vec3 &fromLla, const Vec3 &toLla, const 
 * Calculates the downrange, crossrange, and down values between two entities in space along the pointing angle specified by the
 * from entity's state.
 */
-void simCore::calculateDRCRDownValue(const Vec3 &fromLla, const double &yaw, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, double* downRng, double* crossRng, double* downValue)
+void calculateDRCRDownValue(const Vec3 &fromLla, const double &yaw, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, double* downRng, double* crossRng, double* downValue)
 {
   assert(downRng || crossRng || downValue);
   if (!downRng && !crossRng && !downValue)
@@ -343,7 +343,7 @@ void simCore::calculateDRCRDownValue(const Vec3 &fromLla, const double &yaw, con
 * Calculates the closing velocity, which is the velocity at which the from and to entity are moving towards one another.  Closing
 * velocity is positive when the distance between two entities is decreasing (moving towards one another), and negative when moving apart.
 */
-double simCore::calculateClosingVelocity(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
+double calculateClosingVelocity(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
 {
   Coordinate fromPos;
   Coordinate toPos;
@@ -375,7 +375,7 @@ double simCore::calculateClosingVelocity(const Vec3 &fromLla, const Vec3 &toLla,
 * positive.  This is similar to the closing velocity, but does not alter the return value based on the velocity component that
 * is along the pointing vector.
 */
-double simCore::calculateVelocityDelta(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
+double calculateVelocityDelta(const Vec3 &fromLla, const Vec3 &toLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
 {
   Coordinate fromPos;
   Coordinate toPos;
@@ -394,7 +394,7 @@ double simCore::calculateVelocityDelta(const Vec3 &fromLla, const Vec3 &toLla, c
 }
 
 /// Calculates the range rate in m/sec between two entities.
-double simCore::calculateRangeRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, const Vec3 &toOriLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
+double calculateRangeRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, const Vec3 &toOriLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
 {
   Coordinate fromPos;
   Coordinate toPos;
@@ -444,7 +444,7 @@ double simCore::calculateBearingRate(const Vec3 &fromLla, const Vec3 &fromOriLla
 * Calculates the aspect angle between two objects in space in the given coordinate system.  Aspect angle is the angle between
 * the line of sight of the 'from' entity to the 'to' entity and the longitudinal axis of the 'to' entity.
 */
-double simCore::calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &toOriLla)
+double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &toOriLla)
 {
   // Determine geodetic unit vector for 'to' entity
   // LE is referenced to a NED system (Local Geodetic Horizon Coordinate System)
@@ -479,7 +479,7 @@ double simCore::calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, con
 * longitude and latitude and back azimuth given a geodetic reference longitude
 * and latitude, a geodesic length, a forward azimuth  and an ellipsoid definition.
 */
-void simCore::sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *lat, double *lon, double *azbck)
+void sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *lat, double *lon, double *azbck)
 {
   // Reference:
   // E. M. Sodano and T. A. Robinson,
@@ -537,7 +537,7 @@ void simCore::sodanoDirect(const double refLat, const double refLon, const doubl
 * This function implements Sodano's indirect algorithm to determine geodesic length or distance, forward
 * azimuth, and backward azimuth from a given pair of geodetic longitudes and latitudes and a given ellipsoid.
 */
-double simCore::sodanoInverse(const double refLat, const double refLon, const double refAlt, const double lat, const double lon, double *azfwd, double *azbck)
+double sodanoInverse(const double refLat, const double refLon, const double refAlt, const double lat, const double lon, double *azfwd, double *azbck)
 {
   // Reference:
   // E. M. Sodano and T. A. Robinson,
@@ -603,7 +603,7 @@ double simCore::sodanoInverse(const double refLat, const double refLon, const do
 * Calculates the geodesic downrange and crossrange values between two entities in space
 * referenced to the from entity's state using the Sodano method.
 */
-NumericalSearchType simCore::calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw, const Vec3 &toLla, double* downRng, double* crossRng, const double minDR, const double minCR)
+NumericalSearchType calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw, const Vec3 &toLla, double* downRng, double* crossRng, const double minDR, const double minCR)
 {
   // requires one output pointer
   if (!downRng && !crossRng)
@@ -830,7 +830,7 @@ NumericalSearchType simCore::calculateGeodesicDRCR(const Vec3 &fromLla, const do
   return type;
 }
 
-double simCore::calculateEarthRadius(const double latitude)
+double calculateEarthRadius(const double latitude)
 {
   double sLat = sin(latitude);
   double cLat = cos(latitude);
@@ -838,7 +838,7 @@ double simCore::calculateEarthRadius(const double latitude)
   return Re;
 }
 
-Vec3 simCore::clampEcefPointToGeodeticSurface(const Vec3& p)
+Vec3 clampEcefPointToGeodeticSurface(const Vec3& p)
 {
   Vec3 lla;
   CoordinateConverter::convertEcefToGeodeticPos(p, lla);
@@ -861,7 +861,7 @@ Vec3 simCore::clampEcefPointToGeodeticSurface(const Vec3& p)
 * Radar horizon uses a 4/3 effective Earth radius to account for refraction effects.
 * Earth radius is based on WGS-84 ellipsoid
 */
-double simCore::calculateHorizonDist(const Vec3& lla, const simCore::HorizonCalculations horizonType, const double opticalRadius, const double rfRadius)
+double calculateHorizonDist(const Vec3& lla, const simCore::HorizonCalculations horizonType, const double opticalRadius, const double rfRadius)
 {
   // Return if at/under ground
   if (lla.alt() <= 0)
@@ -891,7 +891,7 @@ double simCore::calculateHorizonDist(const Vec3& lla, const simCore::HorizonCalc
 /**
 * Converts the input locations to the specified coordinate system.
 */
-bool simCore::convertLocations(const Coordinate &fromState, const Coordinate &toState, const EarthModelCalculations model, const CoordinateConverter* coordConv, Coordinate& fromPos, Coordinate& toPos)
+bool convertLocations(const Coordinate &fromState, const Coordinate &toState, const EarthModelCalculations model, const CoordinateConverter* coordConv, Coordinate& fromPos, Coordinate& toPos)
 {
   // Test for same input/output -- this function cannot handle case of fromPos == toState
   if (&fromPos == &toState)
@@ -954,7 +954,7 @@ bool simCore::convertLocations(const Coordinate &fromState, const Coordinate &to
 * the tangent plane's latitude, longitude, and altitude.  Note: If tangent plane's perfect
 * sphere Earth XYZ values are available, they can be given for a faster calculation.
 */
-void simCore::sphere2TangentPlane(const Vec3& llaVec, const Vec3& sphereVec, Vec3& tpVec, const Vec3* sphereTpOrigin)
+void sphere2TangentPlane(const Vec3& llaVec, const Vec3& sphereVec, Vec3& tpVec, const Vec3* sphereTpOrigin)
 {
   // Test for same input/output -- this function cannot handle case of llaVec == tpVec
   if (&llaVec == &tpVec)
@@ -994,7 +994,7 @@ void simCore::sphere2TangentPlane(const Vec3& llaVec, const Vec3& sphereVec, Vec
 * the tangent planes latitude, longitude, and altitude.  Note: If tangent plane's perfect
 * sphere Earth XYZ values are available, they can be given for a faster calculation.
 */
-void simCore::tangentPlane2Sphere(const Vec3 &llaVec, const Vec3 &tpVec, Vec3& sphereVec, const Vec3* sphereTpOrigin)
+void tangentPlane2Sphere(const Vec3 &llaVec, const Vec3 &tpVec, Vec3& sphereVec, const Vec3* sphereTpOrigin)
 {
   // Test for same input/output -- this function cannot handle case of llaVec == sphereVec
   if (&llaVec == &sphereVec)
@@ -1036,7 +1036,7 @@ void simCore::tangentPlane2Sphere(const Vec3 &llaVec, const Vec3 &tpVec, Vec3& s
 *  +Y = (0, -90) -Y = (0,90)
 *  +Z = (90,0)   -Z = (-90,0)
 */
-void simCore::geodeticToSpherical(const double lat, const double lon, const double alt, Vec3 &point)
+void geodeticToSpherical(const double lat, const double lon, const double alt, Vec3 &point)
 {
   const double altscale = EARTH_RADIUS + alt;
   const double coslat = cos(lat);
@@ -1049,7 +1049,7 @@ void simCore::geodeticToSpherical(const double lat, const double lon, const doub
 /**
 * Calculates the relative angles between an ENU vector and a set of geodetic Euler angles
 */
-void simCore::calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *azim, double *elev, double *cmp)
+void calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *azim, double *elev, double *cmp)
 {
   assert(azim || elev || cmp);
   if (!azim && !elev && !cmp)
@@ -1097,7 +1097,7 @@ void simCore::calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *az
 /**
 * Calculates the body relative angles from a set of geodetic Euler angles to a true az/el vector
 */
-void simCore::calculateRelAngToTrueAzEl(double trueAz, double trueEl, const Vec3& refOri, double* azim, double* elev, double* cmp)
+void calculateRelAngToTrueAzEl(double trueAz, double trueEl, const Vec3& refOri, double* azim, double* elev, double* cmp)
 {
   // calculates a ENU unit vector from trueAz/trueEl
   Vec3 tmpUnitVecNED;
@@ -1109,7 +1109,7 @@ void simCore::calculateRelAngToTrueAzEl(double trueAz, double trueEl, const Vec3
 }
 
 /// Computes the X component of the body unit vector
-void simCore::calculateBodyUnitX(const double yaw, const double pitch, Vec3 &vecX)
+void calculateBodyUnitX(const double yaw, const double pitch, Vec3 &vecX)
 {
   // From Aircraft Control and Simulation 2nd Edition
   // B. Stevens & F. Lewis  2003
@@ -1119,7 +1119,7 @@ void simCore::calculateBodyUnitX(const double yaw, const double pitch, Vec3 &vec
 }
 
 /// Computes the Y component of the body unit vector
-void simCore::calculateBodyUnitY(const double yaw, const double pitch, const double roll, Vec3 &vecY)
+void calculateBodyUnitY(const double yaw, const double pitch, const double roll, Vec3 &vecY)
 {
   // From Aircraft Control and Simulation 2nd Edition
   // B. Stevens & F. Lewis  2003
@@ -1137,7 +1137,7 @@ void simCore::calculateBodyUnitY(const double yaw, const double pitch, const dou
 }
 
 /// Computes the Z component of the body unit vector
-void simCore::calculateBodyUnitZ(const double yaw, const double pitch, const double roll, Vec3 &vecZ)
+void calculateBodyUnitZ(const double yaw, const double pitch, const double roll, Vec3 &vecZ)
 {
   // From Aircraft Control and Simulation 2nd Edition
   // B. Stevens & F. Lewis  2003
@@ -1155,7 +1155,7 @@ void simCore::calculateBodyUnitZ(const double yaw, const double pitch, const dou
 }
 
 /// Decomposes the X component of the unit body vector into yaw and pitch angles
-void simCore::calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, double &pitch)
+void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, double &pitch)
 {
   // From Aircraft Control and Simulation 2nd Edition
   // B. Stevens & F. Lewis  2003
@@ -1185,7 +1185,7 @@ void simCore::calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, doub
 }
 
 /// Calculates an ENU geodetic velocity vector based on a local (moving) tangent plane whose origin is the current position
-void simCore::calculateVelFromGeodeticPos(const Vec3 &currPos, const Vec3 &prevPos, const double deltaTime, Vec3 &velVec)
+void calculateVelFromGeodeticPos(const Vec3 &currPos, const Vec3 &prevPos, const double deltaTime, Vec3 &velVec)
 {
   // Tolerance of at least half inch at equator, in radians, using 60nm = 1 deg
   // 1/2 inch = 1.14290857 x 10-7 degrees or 1.99475176 x 10-9 radians.  Round to 1e-9
@@ -1212,7 +1212,7 @@ void simCore::calculateVelFromGeodeticPos(const Vec3 &currPos, const Vec3 &prevP
 }
 
 /// Calculates an ENU geodetic velocity vector based on dp/dt, and flight path angle orientation from velocity
-bool simCore::calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const double deltaTime, const CoordinateSystem sysIn, Vec3 &velOut, Vec3 &oriOut, const Vec3 &refLLA, const CoordinateSystem sysOut)
+bool calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, const double deltaTime, const CoordinateSystem sysIn, Vec3 &velOut, Vec3 &oriOut, const Vec3 &refLLA, const CoordinateSystem sysOut)
 {
   // Calculates velocity vector based on dp/dt and derives orientation from velocity.
   // velocity vector calculated in switch, used to determine flight path angles
@@ -1330,7 +1330,7 @@ bool simCore::calculateVelOriFromPos(const Vec3 &currPos, const Vec3 &prevPos, c
 }
 
 /// Calculates a geodetic Euler orientation from angles relative to another geodetic Euler orientation
-void simCore::calculateGeodeticOriFromRelOri(const Vec3 &hostYpr, const Vec3 &relYpr, Vec3 &ypr)
+void calculateGeodeticOriFromRelOri(const Vec3 &hostYpr, const Vec3 &relYpr, Vec3 &ypr)
 {
   // create DCM based on host orientation
   double dcm[3][3];
@@ -1349,7 +1349,7 @@ void simCore::calculateGeodeticOriFromRelOri(const Vec3 &hostYpr, const Vec3 &re
 }
 
 /// Calculates a geodetic position from the given offset position and orientation vectors
-void simCore::calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::Vec3& bodyOriOffset, const simCore::Vec3& bodyPosOffset, simCore::Vec3& offsetLla)
+void calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const simCore::Vec3& bodyOriOffset, const simCore::Vec3& bodyPosOffset, simCore::Vec3& offsetLla)
 {
   // create DCM based on specified orientation (NED frame)
   double dcm[3][3];
@@ -1381,7 +1381,7 @@ void simCore::calculateGeodeticOffsetPos(const simCore::Vec3& llaBgnPos, const s
 }
 
 /// Calculates the geodetic end point of a vector based on a specified azimuth, elevation and range from a given geodetic position
-void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, const double el, const double rng, Vec3 &llaEndPos)
+void calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, const double el, const double rng, Vec3 &llaEndPos)
 {
   if (simCore::areEqual(rng, 0.))
   {
@@ -1393,7 +1393,7 @@ void simCore::calculateGeodeticEndPoint(const Vec3 &llaBgnPos, const double az, 
 }
 
 /// Calculates the middle position between two points on the globe, moving from west to east.
-void simCore::calculateGeodeticMidPoint(const Vec3& llaBgnPos, const Vec3& llaEndPos, bool highResolution, simCore::Vec3& midpoint, bool* wrapsDateline)
+void calculateGeodeticMidPoint(const Vec3& llaBgnPos, const Vec3& llaEndPos, bool highResolution, simCore::Vec3& midpoint, bool* wrapsDateline)
 {
   bool wrap = false;
 
@@ -1433,7 +1433,7 @@ void simCore::calculateGeodeticMidPoint(const Vec3& llaBgnPos, const Vec3& llaEn
 }
 
 /// Calculates flight path angles from an ENU geodetic velocity vector
-void simCore::calculateFlightPathAngles(const Vec3 &velVec, Vec3 &fpa)
+void calculateFlightPathAngles(const Vec3 &velVec, Vec3 &fpa)
 {
   // Test for same input/output -- this function cannot handle case of velVec == fpa
   if (&velVec == &fpa)
@@ -1463,7 +1463,7 @@ void simCore::calculateFlightPathAngles(const Vec3 &velVec, Vec3 &fpa)
 }
 
 /// Calculates an ENU geodetic velocity vector from speed, heading and pitch (flight path angles)
-void simCore::calculateVelocity(const double speed, const double heading, const double pitch, Vec3 &velVec)
+void calculateVelocity(const double speed, const double heading, const double pitch, Vec3 &velVec)
 {
   const double cPitch = cos(pitch);
   velVec.setY(speed * cos(heading) * cPitch);
@@ -1475,7 +1475,7 @@ void simCore::calculateVelocity(const double speed, const double heading, const 
  * Calculates the angle of attack, side slip, and total angle of attack from an ENU
  * geodetic velocity vector and a set of geodetic Euler angles (yaw, pitch, roll)
  */
-void simCore::calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoa)
+void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoa)
 {
   // aerodynamic version that accounts for roll
   Vec3 refOri = ypr;
@@ -1494,7 +1494,7 @@ void simCore::calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, 
   if (ss) *ss = -*ss;
 }
 
-double simCore::getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLla, const simCore::Vec3& toLLA_, simCore::Vec3& closestLLa)
+double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLla, const simCore::Vec3& toLLA_, simCore::Vec3& closestLLa)
 {
   simCore::Coordinate cvIn;
   simCore::Coordinate cvOut;
@@ -1559,7 +1559,7 @@ double simCore::getClosestPoint(const simCore::Vec3& startLla, const simCore::Ve
   return simCore::v3Length(delta);
 }
 
-bool simCore::positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& positionLLA,
+bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& positionLLA,
   double azimuthRad, double elevRad, double widthRad, double heightRad, double minRangeM, double maxRangeM,
   simCore::EarthModelCalculations earthModel, const CoordinateConverter& cc)
 {
@@ -1584,7 +1584,7 @@ bool simCore::positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Ve
   return false;
 }
 
-bool simCore::laserInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& laserHostLLA,
+bool laserInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& laserHostLLA,
     double gAzimuthRad, double gElevRad, double gWidthRad, double gHeightRad, double gMinRangeM, double gMaxRangeM,
     double laserAzRad, double laserElRad, double laserRngM,
     simCore::EarthModelCalculations earthModel, const CoordinateConverter& cc,
