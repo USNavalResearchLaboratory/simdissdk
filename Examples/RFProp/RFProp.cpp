@@ -66,12 +66,15 @@ using namespace simCore::LUT;
 /**
 * Compute the free space loss
 http://en.wikipedia.org/wiki/Free-space_path_loss
-* @param distance Distance in meters
-* @param frequency Frequency in MHz
+* @param distance Distance in meters, should be non-zero
+* @param frequency Frequency in MHz, should be non-zero
 * @return free space loss in dB
 */
 double freeSpaceLoss(double distance, double freq)
 {
+  // Avoid log10(0)
+  if (distance == 0.0 || freq == 0.0)
+    return std::numeric_limits<double>::max();
   return 20 * log10(distance) + 20 * log10(freq) - 27.55;
 }
 

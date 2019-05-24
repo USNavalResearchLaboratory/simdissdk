@@ -850,7 +850,26 @@ void AntennaPatternGauss::minMaxGain(float *min, float *max, const AntennaGainPa
 float AntennaPatternCscSq::gain(const AntennaGainParameters &params)
 {
   double delev = angFixPI(params.elev_);
-  double elevFactor = (delev <= params.vbw_) ? sdkMin(1.0, sdkMax(0.03, (1.0 + delev/params.vbw_))) : (sin(params.vbw_)/sin(fabs(delev)));
+  double elevFactor;
+  if (delev <= params.vbw_)
+  {
+    double onePlus = 1.0 + delev;
+    if (params.vbw_ != 0.f)
+      onePlus = 1.0 + delev/params.vbw_; // protect against divide by zero with params.vbw_
+    else
+      assert(0); //params.vbw_ should not be zero, would result in a divide by zero
+    elevFactor = sdkMin(1.0, sdkMax(0.03, onePlus));
+  }
+  else
+  {
+    double denom = sin(fabs(delev));
+    if (denom == 0.0)
+      denom = 1.0; // protect against divide by zero below
+    elevFactor = sin(params.vbw_ / denom);
+  }
+
+  if (elevFactor == 0.0)
+    elevFactor = 0.03; // Set to minimum possible result from if block above to avoid log10(0) below
   return static_cast<float>(params.refGain_ + 20. * log10(elevFactor));
 }
 

@@ -57,6 +57,17 @@ double getRcvdPowerBlake(double rngMeters, double freqMhz, double powerWatts, do
 
 double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb)
 {
+  if (xmtFreqMhz == 0.0)
+  {
+    assert(0); // Should not receive 0
+    xmtFreqMhz = 1.0; // Protect against divide by zero and log10(0) below
+  }
+  if (xmtrPwrWatts == 0.0)
+  {
+    assert(0); // Should not receive 0
+    xmtrPwrWatts = 1.0; // Protect against log10(0) below
+  }
+
   // Compute transmitter power in dB, function requires power in kilowatts
   const double xmtPwrDb = 10. * log10((xmtrPwrWatts * 1e-3) / (xmtFreqMhz * xmtFreqMhz));
 
