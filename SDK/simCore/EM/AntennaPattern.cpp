@@ -174,6 +174,11 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
       return 1;
     }
 
+    if (stepfreq == 0.) // Protect against divide by zero below
+    {
+      SIM_ERROR << "SymmetricAntennaPattern can not use step frequency of 0" << endl;
+      return 1;
+    }
     if (minfreq == maxfreq && minfreq == 0)
     {
       SIM_ERROR << "SymmetricAntennaPattern could not determine frequency limits";
@@ -199,10 +204,15 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
       SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern maximum azimuth" << endl;
       return 1;
     }
-    double stepaz = 0;
+    double stepaz = 0.;
     if (!isValidNumber(vec[2], stepaz))
     {
       SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step azimuth" << endl;
+      return 1;
+    }
+    if (stepaz == 0.) // Protect against divide by zero below
+    {
+      SIM_ERROR << "SymmetricAntennaPattern can not use step azimuth of 0" << endl;
       return 1;
     }
     numaz = size_t(floor((maxaz - minaz) / stepaz)) + 1;
@@ -230,6 +240,11 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
     if (!isValidNumber(vec[2], stepel))
     {
       SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step elevation" << endl;
+      return 1;
+    }
+    if (stepel == 0.) // Protect against divide by zero below
+    {
+      SIM_ERROR << "SymmetricAntennaPattern can not use step elevation of 0" << endl;
       return 1;
     }
     numel = size_t(floor((maxel - minel) / stepel)) + 1;
@@ -367,7 +382,11 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
       SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step frequency" << endl;
       return 1;
     }
-
+    if (stepfreq == 0.) // Protect against divide by zero below
+    {
+      SIM_ERROR << "SymmetricGainAntPattern can not use step frequency of 0" << endl;
+      return 1;
+    }
     if (minfreq == maxfreq && minfreq == 0)
     {
       SIM_ERROR << "SymmetricGainAntPattern could not determine frequency limits";
@@ -399,6 +418,11 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
       SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step azimuth" << endl;
       return 1;
     }
+    if (stepaz == 0.) // Protect against divide by zero below
+    {
+      SIM_ERROR << "SymmetricGainAntPattern can not use step azimuth of 0" << endl;
+      return 1;
+    }
     numaz = size_t(floor((maxaz - minaz) / stepaz)) + 1;
   }
   else
@@ -424,6 +448,11 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
     if (!isValidNumber(vec[2], stepel))
     {
       SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step elevation" << endl;
+      return 1;
+    }
+    if (stepel == 0.) // Protect against divide by zero below
+    {
+      SIM_ERROR << "SymmetricGainAntPattern can not use step elevation of 0" << endl;
       return 1;
     }
     numel = size_t((floor(maxel - minel) / stepel)) + 1;
@@ -512,6 +541,12 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, const string &filename, 
   {
     if (!azimData || azimData->size() == 0 || !elevData || elevData->size() == 0)
       return SMALL_DB_VAL;
+
+    if (hbw == 0.f || vbw == 0.f)
+    {
+      assert(0); // hbw and vbw must be non-zero to avoid divide-by-zero errors
+      return SMALL_DB_VAL;
+    }
 
     std::map<float, float>::const_iterator iter;
     if (applyWeight == false)
@@ -803,8 +838,9 @@ AntennaPattern* simCore::loadPatternFile(const std::string &filename, float freq
 
 float AntennaPatternGauss::gain(const AntennaGainParameters &params)
 {
+  double var = sin(0.5*params.vbw_); // Avoid divide by zero below
   // 0.69314718055994530942 = ln(2)
-  double antfac = -0.5 * (0.69314718055994530942 / square(sin(0.5*params.vbw_)));
+  double antfac = -0.5 * (0.69314718055994530942 / square(var == 0.0 ? 1.0 : var));
   double patfac = exp(antfac * square(sin(angFixPI(params.elev_))));
   // Ereps clips below 0.03
   return static_cast<float>(params.refGain_ + 20. * log10((patfac < 0.03) ? 0.03 : patfac));
@@ -915,6 +951,10 @@ float AntennaPatternSinXX::gain(const AntennaGainParameters &params)
   double delev = angFixPI(params.elev_);
   double dazim = angFixPI(params.azim_);
 
+  // Avoid divide by zero below
+  if (params.hbw_ == 0.f || params.vbw_ == 0.f)
+    return params.refGain_;
+
   // Compute angular distance in normalized beam widths
   double phi = sqrt(square(dazim/params.hbw_) + square(delev/params.vbw_));
 
@@ -1001,6 +1041,10 @@ float AntennaPatternPedestal::gain(const AntennaGainParameters &params)
 
   double delev = angFixPI(params.elev_);
   double dazim = angFixPI(params.azim_);
+
+  // Avoid divide by zero below
+  if (params.hbw_ == 0.f || params.vbw_ == 0.f)
+    return params.refGain_;
 
   // Compute angular distance in normalized beam widths
   double phi = (sqrt(square(dazim/params.hbw_) + square(delev/params.vbw_)));
@@ -1681,7 +1725,9 @@ float AntennaPatternCRUISE::gain(const AntennaGainParameters &params)
   }
   else
   {
-    temp      = (dazim-azimMin_)/azimStep_;
+    temp      = (dazim-azimMin_);
+    if (azimStep_ != 0.0)
+      temp    = temp/azimStep_;
     alowindex = static_cast<int>(floor(temp));
     adelta    = temp - alowindex;
   }
@@ -1699,7 +1745,9 @@ float AntennaPatternCRUISE::gain(const AntennaGainParameters &params)
   }
   else
   {
-    temp      = (delev-elevMin_)/elevStep_;
+    temp      = (delev-elevMin_);
+    if (elevStep_ != 0.0)
+      temp    = temp/elevStep_;
     elowindex = static_cast<int>(floor(temp));
     edelta    = temp - elowindex;
   }
@@ -1722,7 +1770,10 @@ float AntennaPatternCRUISE::gain(const AntennaGainParameters &params)
       if (params.freq_ < freqData_[i])
       {
         flowindex = i - 1;
-        fdelta = (params.freq_ - freqData_[flowindex]) / (freqData_[flowindex+1] - freqData_[flowindex]);
+        fdelta = (params.freq_ - freqData_[flowindex]);
+        double denom = (freqData_[flowindex + 1] - freqData_[flowindex]);
+        if (denom != 0.0)
+          fdelta = fdelta / denom;
         break;
       }
     }
@@ -3269,7 +3320,11 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
     SIM_ERROR << "Encountered invalid number for XFDTD phi increment" << endl;
     return 1;
   }
-
+  if (value == 0.f) // Avoid divide by zero below
+  {
+    SIM_ERROR << "Cannot use XFDTD phi increment of 0" << endl;
+    return 1;
+  }
   size_t azimCnt = static_cast<size_t>(rint((maxAzim - minAzim)/value));
 
   // theta_min
@@ -3311,7 +3366,11 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
     SIM_ERROR << "Encountered invalid number for XFDTD theta increment" << endl;
     return 1;
   }
-
+  if (value == 0.f) // Avoid divide by zero below
+  {
+    SIM_ERROR << "Cannot use XFDTD theta increment of 0" << endl;
+    return 1;
+  }
   size_t elevCnt = static_cast<size_t>(rint((maxElev - minElev)/value));
   elevCnt++;
 

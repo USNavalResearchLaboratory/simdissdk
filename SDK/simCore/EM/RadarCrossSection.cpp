@@ -1263,6 +1263,8 @@ int RCSLUT::loadSADMRCSFile_(std::istream &inFile)
 
 void RCSLUT::computeStatistics_(std::vector<float> *medianVec)
 {
+  if (medianVec->empty())
+    return; // Avoid divide by zero below
   // convert sq m to dBsm
   min_ = static_cast<float>(linear2dB(min_));
   max_ = static_cast<float>(linear2dB(max_));

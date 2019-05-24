@@ -29,6 +29,11 @@ namespace simCore
 
 double getRcvdPowerFreeSpace(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double systemLossdB, bool oneWay)
 {
+  if (freqMhz == 0.0 || rngMeters == 0.0)
+  {
+    assert(0); // Must be non-zero to avoid divide by zero below
+    return 0.0;
+  }
   // Free Space Radar range equation
   double rcvPower = simCore::SMALL_DB_VAL;
   double lamdaSqrd = square(simCore::LIGHT_SPEED_AIR / (1e6 * freqMhz));

@@ -131,8 +131,8 @@ namespace simCore
   * @param[in ] lastLobe AntennaLobeType of lobe last seen, set based on normalized beam width (phi)
   * @param[in ] azim Azimuth relative to antenna (rad)
   * @param[in ] elev Elevation relative to antenna (rad)
-  * @param[in ] hbw Horizontal beam width of radar (rad)
-  * @param[in ] vbw Vertical beam width of radar (rad)
+  * @param[in ] hbw Horizontal beam width of radar (rad), must be non-zero
+  * @param[in ] vbw Vertical beam width of radar (rad), must be non-zero
   * @param[in ] maxGain Maximum (normalized) antenna gain (dB)
   * @param[in ] applyWeight Boolean toggle to apply weighting (true) to the antenna gain
   * @return Antenna pattern gain (dB).
