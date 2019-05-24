@@ -414,7 +414,7 @@ double calculateRangeRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec
 }
 
 /// Calculates the bearing rate in rad/sec between two entities
-double simCore::calculateBearingRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, const Vec3 &toOriLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
+double calculateBearingRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec3 &toLla, const Vec3 &toOriLla, const EarthModelCalculations model, const CoordinateConverter* coordConv, const Vec3 &fromVel, const Vec3 &toVel)
 {
   Coordinate fromPos;
   Coordinate   toPos;

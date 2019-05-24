@@ -1981,7 +1981,7 @@ float AntennaPatternMonopulse::gain(const AntennaGainParameters &params)
     {
       magph = BilinearLookup(delPat_, RAD2DEG*(params.azim_), RAD2DEG*(params.elev_));
     }
-    catch (const SymmetricAntennaPatternLimitException)
+    catch (const SymmetricAntennaPatternLimitException&)
     {
       return SMALL_DB_VAL;
     }
@@ -1992,7 +1992,7 @@ float AntennaPatternMonopulse::gain(const AntennaGainParameters &params)
     {
       magph = BilinearLookup(sumPat_, RAD2DEG*(params.azim_), RAD2DEG*(params.elev_));
     }
-    catch (const SymmetricAntennaPatternLimitException)
+    catch (const SymmetricAntennaPatternLimitException&)
     {
       return SMALL_DB_VAL;
     }
@@ -2127,7 +2127,7 @@ float AntennaPatternBiLinear::gain(const AntennaGainParameters &params)
   {
     gain = static_cast<float>(BilinearLookup(antPat_, RAD2DEG*(params.azim_), RAD2DEG*(params.elev_)));
   }
-  catch (const SymmetricGainAntPatternLimitException)
+  catch (const SymmetricGainAntPatternLimitException&)
   {
     // error, could not find requested angles
     return SMALL_DB_VAL;
