@@ -32,8 +32,7 @@
 
 #define LC "[LOS] "
 
-using namespace simVis;
-
+namespace simVis {
 //----------------------------------------------------------------------------
 
 RadialLOS::Sample::Sample(double range_m, const osgEarth::GeoPoint& point)
@@ -563,4 +562,6 @@ bool RadialLOS::makeRadial_(Radial& out_radial) const
   }
 
   return true;
+}
+
 }

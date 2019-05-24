@@ -22,7 +22,7 @@
 #include <cassert>
 #include "simNotify/StandardNotifyHandlers.h"
 
-using namespace simNotify;
+namespace simNotify {
 
 void StandardNotifyHandler::notify(const std::string &message)
 {
@@ -78,4 +78,6 @@ void StreamNotifyHandler::notify(const std::string &message)
 {
   if (os_.good())
     os_ << message;
+}
+
 }

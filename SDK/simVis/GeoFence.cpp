@@ -23,7 +23,7 @@
 
 #define LC "[GeoFence] "
 
-using namespace simVis;
+namespace simVis {
 
 HorizonGeoFence::HorizonGeoFence(double earthRadius) :
 GeoFence(),
@@ -53,4 +53,6 @@ bool HorizonGeoFence::contains(const osg::Vec3d& p) const
   pt.normalize();
   double dev = pt * pnorm_;
   return dev >= minDeviation_;
+}
+
 }

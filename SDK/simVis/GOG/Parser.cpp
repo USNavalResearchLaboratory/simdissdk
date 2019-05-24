@@ -42,11 +42,8 @@
 #include "simVis/Constants.h"
 #include "simVis/Utils.h"
 
-using namespace simVis;
-using namespace simVis::GOG;
 using namespace osgEarth;
 using namespace osgEarth::Symbology;
-
 
 namespace
 {
@@ -60,7 +57,7 @@ enum ShapeType
 };
 
 /** Default Specialization of ErrorHandler that prints a generic message using SIM_WARN and SIM_ERROR */
-class NotifyErrorHandler : public ErrorHandler
+class NotifyErrorHandler : public simVis::GOG::ErrorHandler
 {
   virtual void printWarning(size_t lineNumber, const std::string& warningText)
   {
@@ -75,6 +72,8 @@ class NotifyErrorHandler : public ErrorHandler
 }
 
 //------------------------------------------------------------------------
+
+namespace simVis { namespace GOG {
 
 Parser::Parser(osgEarth::MapNode* mapNode) :
 mapNode_(mapNode),
@@ -1154,3 +1153,5 @@ void Parser::setErrorHandler(std::shared_ptr<ErrorHandler> errorHandler)
   else
     context_.errorHandler_ = errorHandler;
 }
+
+} }

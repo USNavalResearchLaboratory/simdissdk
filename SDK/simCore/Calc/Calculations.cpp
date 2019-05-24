@@ -33,21 +33,21 @@
 #include "simCore/Calc/CoordinateSystem.h"
 #include "simCore/Calc/Calculations.h"
 
-using namespace simCore;
-
 namespace
 {
   // note that this returns const simCore::CoordinateConverter& - we can guarantee that the static cc will be present;
   // if the caller provides a suitably initialized coordConv, then we just give it back.
-  const simCore::CoordinateConverter& initConverter(const CoordinateConverter* coordConv, const simCore::Vec3& refLla)
+  const simCore::CoordinateConverter& initConverter(const simCore::CoordinateConverter* coordConv, const simCore::Vec3& refLla)
   {
-    static CoordinateConverter cc;
+    static simCore::CoordinateConverter cc;
     if (coordConv && coordConv->hasReferenceOrigin() && coordConv->referenceOrigin() == refLla)
       return *coordConv;
     cc.setReferenceOrigin(refLla);
     return cc;
   }
 }
+
+namespace simCore {
 
 //------------------------------------------------------------------------
 
@@ -1613,4 +1613,6 @@ bool simCore::laserInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3&
 
   // At least one of the laser's endpoints was not in the gate
   return false;
+}
+
 }

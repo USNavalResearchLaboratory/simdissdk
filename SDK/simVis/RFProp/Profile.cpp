@@ -31,9 +31,7 @@
 #include "simVis/Utils.h"
 #include "simVis/RFProp/Profile.h"
 
-using namespace simRF;
-using namespace simCore;
-
+namespace simRF {
 
 Profile::Profile(CompositeProfileProvider* data)
  : bearing_(0),
@@ -268,7 +266,7 @@ void Profile::adjustSpherical_(osg::Vec3& v, const double *lla, const simCore::V
 {
   double pos[3] = { v[0], v[1], v[2] };
   simCore::Vec3 sphereXYZ;
-  simCore::tangentPlane2Sphere(Vec3(lla), Vec3(pos), sphereXYZ, tpSphereXYZ);
+  simCore::tangentPlane2Sphere(simCore::Vec3(lla), simCore::Vec3(pos), sphereXYZ, tpSphereXYZ);
   double alt = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
   v.z() = v.z() - (alt - v.z()) + refCoord_.z();
 }
@@ -1245,4 +1243,6 @@ void Profile::traverse(osg::NodeVisitor& nv)
     ADJUST_UPDATE_TRAV_COUNT(this, -1);
   }
   osg::Group::traverse(nv);
+}
+
 }

@@ -31,8 +31,7 @@
 
 #define LC "[RadialLOSNode] "
 
-using namespace simVis;
-
+namespace simVis {
 //----------------------------------------------------------------------------
 
 RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
@@ -383,4 +382,6 @@ void RadialLOSNode::refreshGeometry_()
 void RadialLOSNode::onTileAdded_(const osgEarth::TileKey& key, osg::Node* tile)
 {
   updateDataModel(key.getExtent(), tile);
+}
+
 }

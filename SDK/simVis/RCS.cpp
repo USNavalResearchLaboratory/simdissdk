@@ -41,8 +41,7 @@
 
 #define LC "[simVis::RCSNode] "
 
-using namespace simVis;
-
+namespace simVis {
 //-------------------------------------------------------------------------
 
 RCSNode::RCSNode() :
@@ -528,4 +527,6 @@ bool RCSRenderer::setColorOverride(bool colorOverride)
   }
 
   return false;
+}
+
 }

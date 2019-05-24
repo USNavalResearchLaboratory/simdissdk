@@ -21,7 +21,7 @@
  */
 #include "simCore/Calc/Random.h"
 
-using namespace simCore;
+namespace simCore {
 
 //=======================================================================
 //
@@ -255,4 +255,6 @@ int BinomialVariable::operator()()
 int DiscreteUniformVariable::operator()()
 {
   return static_cast<int>(min_ + range_ * basicUniformVariable(&seeds_) + 0.5);
+}
+
 }

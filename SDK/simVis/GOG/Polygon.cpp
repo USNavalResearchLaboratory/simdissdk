@@ -31,9 +31,10 @@
 
 #define LC "[GOG::Polygon] "
 
-using namespace simVis::GOG;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
+
+namespace simVis { namespace GOG {
 
 GogNodeInterface* simVis::GOG::Polygon::deserialize(const ParsedShape& parsedShape,
                                   simVis::GOG::ParserData& p,
@@ -92,3 +93,5 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const ParsedShape& parsedSha
 
   return rv;
 }
+
+} }

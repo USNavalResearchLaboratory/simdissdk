@@ -32,9 +32,7 @@
 #include "simCore/EM/Constants.h"
 #include "simCore/EM/AntennaPattern.h"
 
-using namespace std;
-using namespace simCore;
-
+namespace simCore {
 // Returns the string representation of the antenna pattern type
 std::string simCore::antennaPatternTypeString(AntennaPatternType antPatType)
 {
@@ -120,7 +118,7 @@ AntennaPatternType simCore::antennaPatternType(const std::string& antPatStr)
 
 bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const std::string &name, double frequency, double frequencythreshold)
 {
-  string st;
+  std::string st;
   double minfreq=0;
   double stepfreq=1;
   double minel=0;
@@ -131,9 +129,9 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
   size_t numel=0;
   size_t numaz=0;
   size_t i=0, j=0, k=0;
-  complex<double> magphase;
+  std::complex<double> magphase;
   double magnitude=0, phase=0;
-  std::vector<string> vec;
+  std::vector<std::string> vec;
   bool found = false;
   bool freqFound = false;
 
@@ -159,24 +157,24 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
   {
     if (!isValidNumber(vec[0], minfreq))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern minimum frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern minimum frequency" << std::endl;
       return 1;
     }
     double maxfreq = 0;
     if (!isValidNumber(vec[1], maxfreq))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern maximum frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern maximum frequency" << std::endl;
       return 1;
     }
     if (!isValidNumber(vec[2], stepfreq))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step frequency" << std::endl;
       return 1;
     }
 
     if (stepfreq == 0.) // Protect against divide by zero below
     {
-      SIM_ERROR << "SymmetricAntennaPattern can not use step frequency of 0" << endl;
+      SIM_ERROR << "SymmetricAntennaPattern can not use step frequency of 0" << std::endl;
       return 1;
     }
     if (minfreq == maxfreq && minfreq == 0)
@@ -196,23 +194,23 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
   {
     if (!isValidNumber(vec[0], minaz))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern minimum azimuth" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern minimum azimuth" << std::endl;
       return 1;
     }
     if (!isValidNumber(vec[1], maxaz))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern maximum azimuth" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern maximum azimuth" << std::endl;
       return 1;
     }
     double stepaz = 0.;
     if (!isValidNumber(vec[2], stepaz))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step azimuth" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step azimuth" << std::endl;
       return 1;
     }
     if (stepaz == 0.) // Protect against divide by zero below
     {
-      SIM_ERROR << "SymmetricAntennaPattern can not use step azimuth of 0" << endl;
+      SIM_ERROR << "SymmetricAntennaPattern can not use step azimuth of 0" << std::endl;
       return 1;
     }
     numaz = size_t(floor((maxaz - minaz) / stepaz)) + 1;
@@ -228,23 +226,23 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
   {
     if (!isValidNumber(vec[0], minel))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern minimum elevation" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern minimum elevation" << std::endl;
       return 1;
     }
     if (!isValidNumber(vec[1], maxel))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern maximum elevation" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern maximum elevation" << std::endl;
       return 1;
     }
     double stepel = 0;
     if (!isValidNumber(vec[2], stepel))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step elevation" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern step elevation" << std::endl;
       return 1;
     }
     if (stepel == 0.) // Protect against divide by zero below
     {
-      SIM_ERROR << "SymmetricAntennaPattern can not use step elevation of 0" << endl;
+      SIM_ERROR << "SymmetricAntennaPattern can not use step elevation of 0" << std::endl;
       return 1;
     }
     numel = size_t(floor((maxel - minel) / stepel)) + 1;
@@ -275,15 +273,15 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
           {
             if (!isValidNumber(vec[0], magnitude))
             {
-              SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern magnitude" << endl;
+              SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern magnitude" << std::endl;
               return 1;
             }
             if (!isValidNumber(vec[1], phase))
             {
-              SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern phase" << endl;
+              SIM_ERROR << "Encountered invalid number for SymmetricAntennaPattern phase" << std::endl;
               return 1;
             }
-            magphase = polar(simCore::dB2Linear(magnitude), simCore::DEG2RAD*(phase));
+            magphase = std::polar(simCore::dB2Linear(magnitude), simCore::DEG2RAD*(phase));
             (*sap)(j, k) = magphase;
           }
           else
@@ -320,7 +318,7 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, std::istream &in, const 
 
 bool simCore::readPattern(SymmetricAntennaPattern *sap, const std::string &filename, const std::string &name, double frequency, double frequencythreshold)
 {
-  fstream in(filename.c_str(), ios::in);
+  std::fstream in(filename.c_str(), std::ios::in);
   return readPattern(sap, in, name, frequency, frequencythreshold);
 }
 
@@ -328,9 +326,9 @@ bool simCore::readPattern(SymmetricAntennaPattern *sap, const std::string &filen
 /* Bilinear look up table for gain only antenna patterns                      */
 /* ************************************************************************** */
 
-bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double frequency, double frequencyThreshold)
+bool simCore::readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequency, double frequencyThreshold)
 {
-  string st;
+  std::string st;
   double minfreq=0;
   double stepfreq=1;
   double minel=0;
@@ -342,7 +340,7 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
   size_t numaz=0;
   size_t i=0, j=0, k=0;
   double magnitude=0;
-  std::vector<string> vec;
+  std::vector<std::string> vec;
   bool found = false;
   bool freqFound = false;
 
@@ -368,23 +366,23 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
   {
     if (!isValidNumber(vec[0], minfreq))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern minimum frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern minimum frequency" << std::endl;
       return 1;
     }
     double maxfreq = 0;
     if (!isValidNumber(vec[1], maxfreq))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern maximum frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern maximum frequency" << std::endl;
       return 1;
     }
     if (!isValidNumber(vec[2], stepfreq))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step frequency" << std::endl;
       return 1;
     }
     if (stepfreq == 0.) // Protect against divide by zero below
     {
-      SIM_ERROR << "SymmetricGainAntPattern can not use step frequency of 0" << endl;
+      SIM_ERROR << "SymmetricGainAntPattern can not use step frequency of 0" << std::endl;
       return 1;
     }
     if (minfreq == maxfreq && minfreq == 0)
@@ -404,23 +402,23 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
   {
     if (!isValidNumber(vec[0], minaz))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern minimum azimuth" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern minimum azimuth" << std::endl;
       return 1;
     }
     if (!isValidNumber(vec[1], maxaz))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern maximum azimuth" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern maximum azimuth" << std::endl;
       return 1;
     }
     double stepaz = 0;
     if (!isValidNumber(vec[2], stepaz))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step azimuth" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step azimuth" << std::endl;
       return 1;
     }
     if (stepaz == 0.) // Protect against divide by zero below
     {
-      SIM_ERROR << "SymmetricGainAntPattern can not use step azimuth of 0" << endl;
+      SIM_ERROR << "SymmetricGainAntPattern can not use step azimuth of 0" << std::endl;
       return 1;
     }
     numaz = size_t(floor((maxaz - minaz) / stepaz)) + 1;
@@ -436,23 +434,23 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
   {
     if (!isValidNumber(vec[0], minel))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern minimum elevation" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern minimum elevation" << std::endl;
       return 1;
     }
     if (!isValidNumber(vec[1], maxel))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern maximum elevation" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern maximum elevation" << std::endl;
       return 1;
     }
     double stepel = 0;
     if (!isValidNumber(vec[2], stepel))
     {
-      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step elevation" << endl;
+      SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern step elevation" << std::endl;
       return 1;
     }
     if (stepel == 0.) // Protect against divide by zero below
     {
-      SIM_ERROR << "SymmetricGainAntPattern can not use step elevation of 0" << endl;
+      SIM_ERROR << "SymmetricGainAntPattern can not use step elevation of 0" << std::endl;
       return 1;
     }
     numel = size_t((floor(maxel - minel) / stepel)) + 1;
@@ -483,7 +481,7 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
           {
             if (!isValidNumber(vec[0], magnitude))
             {
-              SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern magnitude" << endl;
+              SIM_ERROR << "Encountered invalid number for SymmetricGainAntPattern magnitude" << std::endl;
               return 1;
             }
             (*sap)(j, k) = magnitude;
@@ -520,9 +518,9 @@ bool simCore::readPattern(SymmetricGainAntPattern *sap, istream &in, double freq
   return true;
 }
 
-bool simCore::readPattern(SymmetricGainAntPattern *sap, const string &filename, double frequency, double frequencythreshold)
+bool simCore::readPattern(SymmetricGainAntPattern *sap, const std::string &filename, double frequency, double frequencythreshold)
 {
-  fstream in(filename.c_str(), ios::in);
+  std::fstream in(filename.c_str(), std::ios::in);
   return readPattern(sap, in, frequency, frequencythreshold);
 }
 
@@ -1143,7 +1141,7 @@ float AntennaPatternTable::gain(const AntennaGainParameters &params)
 }
 
 /// --------------------------------------------------------------------------
-int AntennaPatternTable::readPat(istream& fp)
+int AntennaPatternTable::readPat(std::istream& fp)
 {
   int i, j;
   short symmetry;
@@ -1160,7 +1158,7 @@ int AntennaPatternTable::readPat(istream& fp)
   {
     if (!getStrippedLine(fp, st))
     {
-      SIM_ERROR << "Antenna Table EOF reached while reading antenna pattern table data" << endl;
+      SIM_ERROR << "Antenna Table EOF reached while reading antenna pattern table data" << std::endl;
       return 1;
     }
     stringTokenizer(tmpvec, st);
@@ -1169,31 +1167,31 @@ int AntennaPatternTable::readPat(istream& fp)
   // Read in type and symmetry
   if (tmpvec.size() < 2)
   {
-    SIM_ERROR << "Invalid number of tokens for antenna pattern table type and symmetry" << endl;
+    SIM_ERROR << "Invalid number of tokens for antenna pattern table type and symmetry" << std::endl;
     return 1;
   }
   short type = 0;
   if (!isValidNumber(tmpvec[0], type))
   {
-    SIM_ERROR << "Encountered invalid number for antenna pattern table type" << endl;
+    SIM_ERROR << "Encountered invalid number for antenna pattern table type" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], symmetry))
   {
-    SIM_ERROR << "Encountered invalid number for antenna pattern table symmetry" << endl;
+    SIM_ERROR << "Encountered invalid number for antenna pattern table symmetry" << std::endl;
     return 1;
   }
 
   if (!(type == 1 || type == 0))
   {
-    SIM_ERROR << "Antenna Table Type must be 0 or 1 : " << type << endl;
+    SIM_ERROR << "Antenna Table Type must be 0 or 1 : " << type << std::endl;
     return 1;
   }
   beamWidthType_ = (type != 0);
 
   if (!(symmetry == 1 || symmetry == 2 || symmetry == 4))
   {
-    SIM_ERROR << "Antenna Table Symmetry must be 1, 2 or 4 : " << symmetry << endl;
+    SIM_ERROR << "Antenna Table Symmetry must be 1, 2 or 4 : " << symmetry << std::endl;
     return 1;
   }
 
@@ -1204,19 +1202,19 @@ int AntennaPatternTable::readPat(istream& fp)
     //  Read table size
     if (!getStrippedLine(fp, st))
     {
-      SIM_ERROR << "Antenna Table EOF reached while reading table size" << endl;
+      SIM_ERROR << "Antenna Table EOF reached while reading table size" << std::endl;
       return 1;
     }
     stringTokenizer(tmpvec, st);
 
     if (tmpvec.empty())
     {
-      SIM_ERROR << "Invalid number of tokens for antenna pattern table size" << endl;
+      SIM_ERROR << "Invalid number of tokens for antenna pattern table size" << std::endl;
       return 1;
     }
     if (!isValidNumber(tmpvec[0], tableSize[i]))
     {
-      SIM_ERROR << "Encountered invalid number for antenna table size" << endl;
+      SIM_ERROR << "Encountered invalid number for antenna table size" << std::endl;
       return 1;
     }
     value[i] = new float[tableSize[i]];
@@ -1226,24 +1224,24 @@ int AntennaPatternTable::readPat(istream& fp)
       dblVal=0;
       if (!getStrippedLine(fp, st))
       {
-        SIM_ERROR << "Antenna Table EOF reached while reading data" << endl;
+        SIM_ERROR << "Antenna Table EOF reached while reading data" << std::endl;
         return 1;
       }
       stringTokenizer(tmpvec, st);
 
       if (tmpvec.size() < 2)
       {
-        SIM_ERROR << "Invalid number of tokens for antenna pattern table angle and gain" << endl;
+        SIM_ERROR << "Invalid number of tokens for antenna pattern table angle and gain" << std::endl;
         return 1;
       }
       if (!isValidNumber(tmpvec[0], dblVal))
       {
-        SIM_ERROR << "Encountered invalid number for antenna table angle" << endl;
+        SIM_ERROR << "Encountered invalid number for antenna table angle" << std::endl;
         return 1;
       }
       if (!isValidNumber(tmpvec[1], gain[i][j]))
       {
-        SIM_ERROR << "Encountered invalid number for antenna table gain" << endl;
+        SIM_ERROR << "Encountered invalid number for antenna table gain" << std::endl;
         return 1;
       }
 
@@ -1387,8 +1385,8 @@ int AntennaPatternTable::readPat(const std::string& inFileName)
   if (!inFileName.empty())
   {
     filename_.clear();
-    fstream inFile;
-    inFile.open(inFileName.c_str(), ios::in);
+    std::fstream inFile;
+    inFile.open(inFileName.c_str(), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat(inFile);
@@ -1432,7 +1430,7 @@ float AntennaPatternRelativeTable::gain(const AntennaGainParameters &params)
 
 // ----------------------------------------------------------------------------
 
-int AntennaPatternRelativeTable::readPat_(istream& fp)
+int AntennaPatternRelativeTable::readPat_(std::istream& fp)
 {
   assert(fp);
 
@@ -1453,7 +1451,7 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
   {
     if (!getStrippedLine(fp, st))
     {
-      SIM_ERROR << "Relative Table EOF reached" << endl;
+      SIM_ERROR << "Relative Table EOF reached" << std::endl;
       return 1;
     }
     stringTokenizer(tmpvec, st, delimiter);
@@ -1465,30 +1463,30 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
   {
     if (!isValidNumber(tmpvec[0], azimLen))
     {
-      SIM_ERROR << "Encountered invalid number for relative Table azimuth length" << endl;
+      SIM_ERROR << "Encountered invalid number for relative Table azimuth length" << std::endl;
       return 1;
     }
     if (!isValidNumber(tmpvec[1], elevLen))
     {
-      SIM_ERROR << "Encountered invalid number for relative Table elevation length" << endl;
+      SIM_ERROR << "Encountered invalid number for relative Table elevation length" << std::endl;
       return 1;
     }
   }
   else
   {
-    SIM_ERROR << "Relative Table azim and elev length not found" << endl;
+    SIM_ERROR << "Relative Table azim and elev length not found" << std::endl;
     return 1;
   }
 
   if (azimLen < 2)
   {
-    SIM_ERROR << "Relative Table azim length < 2 : " << azimLen << endl;
+    SIM_ERROR << "Relative Table azim length < 2 : " << azimLen << std::endl;
     return 1;
   }
 
   if (elevLen < 2)
   {
-    SIM_ERROR << "Relative Table elev length < 2 : " << elevLen << endl;
+    SIM_ERROR << "Relative Table elev length < 2 : " << elevLen << std::endl;
     return 1;
   }
 
@@ -1500,7 +1498,7 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
     {
       if (!getStrippedLine(fp, st))
       {
-        SIM_ERROR << "Relative Table EOF reached while reading azim data" << endl;
+        SIM_ERROR << "Relative Table EOF reached while reading azim data" << std::endl;
         return 1;
       }
       stringTokenizer(tmpvec, st, delimiter);
@@ -1510,12 +1508,12 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
       double azAng = 0;
       if (!isValidNumber(tmpvec[0], azAng))
       {
-        SIM_ERROR << "Encountered invalid number for Relative Table azimuth angle" << endl;
+        SIM_ERROR << "Encountered invalid number for Relative Table azimuth angle" << std::endl;
         return 1;
       }
       if (!isValidNumber(tmpvec[1], tmp))
       {
-        SIM_ERROR << "Encountered invalid number for Relative Table azimuth data" << endl;
+        SIM_ERROR << "Encountered invalid number for Relative Table azimuth data" << std::endl;
         return 1;
       }
       // map key stored as radians
@@ -1523,7 +1521,7 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
     }
     else
     {
-      SIM_ERROR << "Relative Table corresponding azim angle and gain value not found" << endl;
+      SIM_ERROR << "Relative Table corresponding azim angle and gain value not found" << std::endl;
       return 1;
     }
   }
@@ -1544,7 +1542,7 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
     {
       if (!getStrippedLine(fp, st))
       {
-        SIM_ERROR << "Relative Table EOF reached while reading elev data" << endl;
+        SIM_ERROR << "Relative Table EOF reached while reading elev data" << std::endl;
         return 1;
       }
       stringTokenizer(tmpvec, st, delimiter);
@@ -1554,12 +1552,12 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
       double elAng = 0;
       if (!isValidNumber(tmpvec[0], elAng))
       {
-        SIM_ERROR << "Encountered invalid number for Relative Table elevation angle" << endl;
+        SIM_ERROR << "Encountered invalid number for Relative Table elevation angle" << std::endl;
         return 1;
       }
       if (!isValidNumber(tmpvec[1], tmp))
       {
-        SIM_ERROR << "Encountered invalid number for Relative Table elevation data" << endl;
+        SIM_ERROR << "Encountered invalid number for Relative Table elevation data" << std::endl;
         return 1;
       }
       // map key stored as radians
@@ -1567,7 +1565,7 @@ int AntennaPatternRelativeTable::readPat_(istream& fp)
     }
     else
     {
-      SIM_ERROR << "Relative Table: corresponding elev angle and gain value not found" << endl;
+      SIM_ERROR << "Relative Table: corresponding elev angle and gain value not found" << std::endl;
       return 1;
     }
   }
@@ -1626,8 +1624,8 @@ int AntennaPatternRelativeTable::readPat(const std::string& inFileName)
   if (!inFileName.empty())
   {
     filename_.clear();
-    fstream inFile;
-    inFile.open(inFileName.c_str(), ios::in);
+    std::fstream inFile;
+    inFile.open(inFileName.c_str(), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -1808,7 +1806,7 @@ void AntennaPatternCRUISE::minMaxGain(float *min, float *max, const AntennaGainP
 
 // ----------------------------------------------------------------------------
 
-int AntennaPatternCRUISE::readPat_(istream& fp)
+int AntennaPatternCRUISE::readPat_(std::istream& fp)
 {
   assert(fp);
 
@@ -1865,7 +1863,7 @@ int AntennaPatternCRUISE::readPat_(istream& fp)
   {
     delete [] elevData_;
     elevData_ = 0;
-    SIM_ERROR << "CRUISE azimLen_(" << azimLen_ << ") != elevLen_(" << elevLen_ << ") or freqLen_s (" << tmpFreq << ", "<< freqLen_ << ") do not match!" << endl;
+    SIM_ERROR << "CRUISE azimLen_(" << azimLen_ << ") != elevLen_(" << elevLen_ << ") or freqLen_s (" << tmpFreq << ", "<< freqLen_ << ") do not match!" << std::endl;
     return 1;
   }
 
@@ -1905,8 +1903,8 @@ int AntennaPatternCRUISE::readPat(const std::string& inFileName)
   if (!inFileName.empty())
   {
     filename_.clear();
-    fstream inFile;
-    inFile.open(inFileName.c_str(), ios::in);
+    std::fstream inFile;
+    inFile.open(inFileName.c_str(), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -2075,13 +2073,13 @@ int AntennaPatternMonopulse::readPat(const std::string& inFileName, double freq)
 
   if (!readPattern(&sumPat_, inFileName, "sum", freq_))
   {
-    SIM_ERROR << inFileName << " sum channel failed to load" << endl;
+    SIM_ERROR << inFileName << " sum channel failed to load" << std::endl;
     return 2;
   }
 
   if (!readPattern(&delPat_, inFileName, "diff", freq_))
   {
-    SIM_ERROR << inFileName << " diff channel failed to load" << endl;
+    SIM_ERROR << inFileName << " diff channel failed to load" << std::endl;
     return 2;
   }
 
@@ -2162,7 +2160,7 @@ int AntennaPatternBiLinear::readPat(const std::string& inFileName, double freq)
 
   if (!readPattern(&antPat_, inFileName, freq_))
   {
-    SIM_ERROR << inFileName << " Bilinear pattern failed to load" << endl;
+    SIM_ERROR << inFileName << " Bilinear pattern failed to load" << std::endl;
     return 2;
   }
 
@@ -2396,7 +2394,7 @@ namespace
   }
 }
 
-int AntennaPatternNSMA::readPat_(istream& fp)
+int AntennaPatternNSMA::readPat_(std::istream& fp)
 {
   assert(fp);
 
@@ -2417,7 +2415,7 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   {
     if (!getStrippedLine(fp, st))
     {
-      SIM_ERROR << "EOF reached while processing NSMA data" << endl;
+      SIM_ERROR << "EOF reached while processing NSMA data" << std::endl;
       return 1;
     }
   }
@@ -2425,17 +2423,17 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // [frequency range] + CRLF
   if (getTokens(fp, tmpvec, 2, "-") == false)
   {
-    SIM_ERROR << "Error processing NSMA frequency range" << endl;
+    SIM_ERROR << "Error processing NSMA frequency range" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[0], minFreq_))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA minimum frequency" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA minimum frequency" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], maxFreq_))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA maximum frequency" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA maximum frequency" << std::endl;
     return 1;
   }
   // convert MHz to Hz
@@ -2445,25 +2443,25 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // [mid-band gain] + CRLF
   if (getTokens(fp, tmpvec, 1) == false)
   {
-    SIM_ERROR << "Error processing NSMA mid band gain" << endl;
+    SIM_ERROR << "Error processing NSMA mid band gain" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[0], midBandGain_))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA midban gain" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA midban gain" << std::endl;
     return 1;
   }
 
   // [Half-power beam width] + CRLF
   if (getTokens(fp, tmpvec, 1) == false)
   {
-    SIM_ERROR << "Error processing NSMA half power beam width" << endl;
+    SIM_ERROR << "Error processing NSMA half power beam width" << std::endl;
     return 1;
   }
   double halfPwrBW = 0;
   if (!isValidNumber(tmpvec[0], halfPwrBW))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA half power beam width" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA half power beam width" << std::endl;
     return 1;
   }
   halfPowerBeamWidth_ = static_cast<float>(DEG2RAD*halfPwrBW);
@@ -2482,25 +2480,25 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle HH case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "HH")
   {
-    SIM_ERROR << "NSMA HH pattern not found" << endl;
+    SIM_ERROR << "NSMA HH pattern not found" << std::endl;
     return 1;
   }
   int dataCount = 0;
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA HH data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA HH data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA HH data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA HH data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "HH", HHDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2517,24 +2515,24 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle HV case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "HV")
   {
-    SIM_ERROR << "NSMA HV pattern not found" << endl;
+    SIM_ERROR << "NSMA HV pattern not found" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA HV data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA HV data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA HV data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA HV data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "HV", HVDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2550,24 +2548,24 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle VV case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "VV")
   {
-    SIM_ERROR << "NSMA VV pattern not found" << endl;
+    SIM_ERROR << "NSMA VV pattern not found" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA VV data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA VV data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA VV data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA VV data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "VV", VVDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2583,24 +2581,24 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle VH case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "VH")
   {
-    SIM_ERROR << "NSMA VH pattern not found" << endl;
+    SIM_ERROR << "NSMA VH pattern not found" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA VH data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA VH data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA VH data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA VH data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "VH", VHDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2616,24 +2614,24 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle ELHH case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "ELHH")
   {
-    SIM_ERROR << "NSMA ELHH pattern not found" << endl;
+    SIM_ERROR << "NSMA ELHH pattern not found" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA ELHH data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA ELHH data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA ELHH data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA ELHH data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "ELHH", ELHHDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2641,24 +2639,24 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle ELHV case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "ELHV")
   {
-    SIM_ERROR << "NSMA ELHV pattern not found" << endl;
+    SIM_ERROR << "NSMA ELHV pattern not found" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA ELHV data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA ELHV data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA ELHV data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA ELHV data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "ELHV", ELHVDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2666,24 +2664,24 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle ELVV case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "ELVV")
   {
-    SIM_ERROR << "NSMA ELVV pattern not found" << endl;
+    SIM_ERROR << "NSMA ELVV pattern not found" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA ELVV data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA ELVV data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA ELVV data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA ELVV data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "ELVV", ELVVDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2691,24 +2689,24 @@ int AntennaPatternNSMA::readPat_(istream& fp)
   // Handle ELVH case
   if (getTokens(fp, tmpvec, 2) == false || tmpvec[0] != "ELVH")
   {
-    SIM_ERROR << "NSMA ELVH pattern not found" << endl;
+    SIM_ERROR << "NSMA ELVH pattern not found" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], dataCount))
   {
-    SIM_ERROR << "Encountered invalid number for NSMA ELVH data count" << endl;
+    SIM_ERROR << "Encountered invalid number for NSMA ELVH data count" << std::endl;
     return 1;
   }
   for (i = 0; i < dataCount; i++)
   {
     if (getTokens(fp, tmpvec, 2) == false)
     {
-      SIM_ERROR << "Error processing NSMA ELVH data, expected two tokens" << endl;
+      SIM_ERROR << "Error processing NSMA ELVH data, expected two tokens" << std::endl;
       return 1;
     }
     if (readNmsaData(tmpvec, "ELVH", ELVHDataMap_, dataErrMsg) != 0)
     {
-      SIM_ERROR << dataErrMsg << endl;
+      SIM_ERROR << dataErrMsg << std::endl;
       return 1;
     }
   }
@@ -2725,8 +2723,8 @@ int AntennaPatternNSMA::readPat(const std::string& inFileName)
   if (!inFileName.empty())
   {
     filename_.clear();
-    fstream inFile;
-    inFile.open(inFileName.c_str(), ios::in);
+    std::fstream inFile;
+    inFile.open(inFileName.c_str(), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -2821,7 +2819,7 @@ void AntennaPatternEZNEC::minMaxGain(float *min, float *max, const AntennaGainPa
 
 // ----------------------------------------------------------------------------
 
-int AntennaPatternEZNEC::readPat_(istream& fp)
+int AntennaPatternEZNEC::readPat_(std::istream& fp)
 {
   assert(fp);
   std::string st;
@@ -2833,13 +2831,13 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   // EZNEC version
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "EZNEC EOF reached while searching for EZNEC" << endl;
+    SIM_ERROR << "EZNEC EOF reached while searching for EZNEC" << std::endl;
     return 1;
   }
 
   if (st.find("EZNEC") == std::string::npos)
   {
-    SIM_ERROR << "EZNEC file identifier not found" << endl;
+    SIM_ERROR << "EZNEC file identifier not found" << std::endl;
     return 1;
   }
 
@@ -2848,7 +2846,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   {
     if (!getStrippedLine(fp, st))
     {
-      SIM_ERROR << "EZNEC EOF reached while searching for Frequency" << endl;
+      SIM_ERROR << "EZNEC EOF reached while searching for Frequency" << std::endl;
       return 1;
     }
   } while (st.find("Frequency") == std::string::npos);
@@ -2866,7 +2864,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   {
     if (!isValidNumber(tmpvec[1], frequency_))
     {
-      SIM_ERROR << "Encountered invalid number for EZNEC frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for EZNEC frequency" << std::endl;
       return 1;
     }
   }
@@ -2874,13 +2872,13 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   {
     if (!isValidNumber(tmpvec[2], frequency_))
     {
-      SIM_ERROR << "Encountered invalid number for EZNEC frequency" << endl;
+      SIM_ERROR << "Encountered invalid number for EZNEC frequency" << std::endl;
       return 1;
     }
   }
   else
   {
-    SIM_ERROR << "EZNEC Frequency line has incorrect # of tokens" << endl;
+    SIM_ERROR << "EZNEC Frequency line has incorrect # of tokens" << std::endl;
     return 1;
   }
 
@@ -2889,7 +2887,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   {
     if (!getStrippedLine(fp, st))
     {
-      SIM_ERROR << "EZNEC EOF reached while searching for Reference" << endl;
+      SIM_ERROR << "EZNEC EOF reached while searching for Reference" << std::endl;
       return 1;
     }
   } while (st.find("Reference") == std::string::npos);
@@ -2897,7 +2895,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   // verify incoming gain units are referenced to dBi
   if (stringCaseFind(st, "dBi") == std::string::npos)
   {
-    SIM_ERROR << "EZNEC antenna pattern gain values must be in dB." << endl;
+    SIM_ERROR << "EZNEC antenna pattern gain values must be in dB." << std::endl;
     return 1;
   }
 
@@ -2907,7 +2905,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   {
     if (!isValidNumber(tmpvec[1], reference_))
     {
-      SIM_ERROR << "Encountered invalid number for EZNEC reference" << endl;
+      SIM_ERROR << "Encountered invalid number for EZNEC reference" << std::endl;
       return 1;
     }
   }
@@ -2915,13 +2913,13 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   {
     if (!isValidNumber(tmpvec[2], reference_))
     {
-      SIM_ERROR << "Encountered invalid number for EZNEC reference" << endl;
+      SIM_ERROR << "Encountered invalid number for EZNEC reference" << std::endl;
       return 1;
     }
   }
   else
   {
-    SIM_ERROR << "EZNEC Reference line has incorrect # of tokens" << endl;
+    SIM_ERROR << "EZNEC Reference line has incorrect # of tokens" << std::endl;
     return 1;
   }
 
@@ -2930,8 +2928,8 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   {
     if (!getStrippedLine(fp, st))
     {
-      SIM_ERROR << "EZNEC EOF reached while searching for Azimuth Pattern" << endl;
-      SIM_ERROR << "Elevation patterns are not supported." << endl;
+      SIM_ERROR << "EZNEC EOF reached while searching for Azimuth Pattern" << std::endl;
+      SIM_ERROR << "Elevation patterns are not supported." << std::endl;
       return 1;
     }
   } while (st.find("Azimuth Pattern") == std::string::npos);
@@ -2952,7 +2950,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   stringTokenizer(tmpvec, st, delimiter);
   if (!isValidNumber((csv ? tmpvec[1] : tmpvec[5]), value))
   {
-    SIM_ERROR << "Encountered invalid number for EZNEC elevation" << endl;
+    SIM_ERROR << "Encountered invalid number for EZNEC elevation" << std::endl;
     return 1;
   }
   minElev = sdkMin(value, minElev);
@@ -2974,7 +2972,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   // "Deg","V dB","H dB","Tot dB"
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "EZNEC EOF reached while searching for data row header" << endl;
+    SIM_ERROR << "EZNEC EOF reached while searching for data row header" << std::endl;
     return 1;
   }
 
@@ -2984,7 +2982,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
     stringCaseFind(st, "H dB") == std::string::npos ||
     stringCaseFind(st, "Tot dB") == std::string::npos)
   {
-    SIM_ERROR << "Vert, Horz and Total gain is the only EZNEC far field format supported" << endl;
+    SIM_ERROR << "Vert, Horz and Total gain is the only EZNEC far field format supported" << std::endl;
     return 1;
   }
 
@@ -3008,7 +3006,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
       {
         if (!isValidNumber(tmpvec[1], value))
         {
-          SIM_ERROR << "Encountered invalid number for EZNEC elevation" << endl;
+          SIM_ERROR << "Encountered invalid number for EZNEC elevation" << std::endl;
           return 1;
         }
       }
@@ -3016,13 +3014,13 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
       {
         if (!isValidNumber(tmpvec[5], value))
         {
-          SIM_ERROR << "Encountered invalid number for EZNEC elevation" << endl;
+          SIM_ERROR << "Encountered invalid number for EZNEC elevation" << std::endl;
           return 1;
         }
       }
       else
       {
-        SIM_ERROR << "EZNEC Azimuth Pattern line has incorrect # of tokens" << endl;
+        SIM_ERROR << "EZNEC Azimuth Pattern line has incorrect # of tokens" << std::endl;
         return 1;
       }
       minElev = sdkMin(value, minElev);
@@ -3040,7 +3038,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
       // EZNEC Pro also saves out circular and linear too
       if (!isValidNumber(tmpvec[0], value))
       {
-        SIM_ERROR << "Encountered invalid number for EZNEC azimuth" << endl;
+        SIM_ERROR << "Encountered invalid number for EZNEC azimuth" << std::endl;
         return 1;
       }
       minAzim = sdkMin(value, minAzim);
@@ -3049,7 +3047,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
 
       if (!isValidNumber(tmpvec[1], gainVal))
       {
-        SIM_ERROR << "Encountered invalid number for EZNEC V gain" << endl;
+        SIM_ERROR << "Encountered invalid number for EZNEC V gain" << std::endl;
         return 1;
       }
       vVPol.push_back(gainVal);
@@ -3058,7 +3056,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
 
       if (!isValidNumber(tmpvec[2], gainVal))
       {
-        SIM_ERROR << "Encountered invalid number for EZNEC H gain" << endl;
+        SIM_ERROR << "Encountered invalid number for EZNEC H gain" << std::endl;
         return 1;
       }
       vHPol.push_back(gainVal);
@@ -3067,7 +3065,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
 
       if (!isValidNumber(tmpvec[3], gainVal))
       {
-        SIM_ERROR << "Encountered invalid number for EZNEC T gain" << endl;
+        SIM_ERROR << "Encountered invalid number for EZNEC T gain" << std::endl;
         return 1;
       }
       vTPol.push_back(gainVal);
@@ -3079,7 +3077,7 @@ int AntennaPatternEZNEC::readPat_(istream& fp)
   // verify data was processed
   if (vVPol.empty() || vHPol.empty() || vTPol.empty())
   {
-    SIM_ERROR << "EZNEC antenna pattern data was not processed." << endl;
+    SIM_ERROR << "EZNEC antenna pattern data was not processed." << std::endl;
     return 1;
   }
 
@@ -3121,8 +3119,8 @@ int AntennaPatternEZNEC::readPat(const std::string& inFileName)
     maxHorzGain_ = SMALL_DB_VAL;
     minGain_ = -SMALL_DB_VAL;
     maxGain_ = SMALL_DB_VAL;
-    fstream inFile;
-    inFile.open(inFileName.c_str(), ios::in);
+    std::fstream inFile;
+    inFile.open(inFileName.c_str(), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -3214,7 +3212,7 @@ void AntennaPatternXFDTD::minMaxGain(float *min, float *max, const AntennaGainPa
 
 // ----------------------------------------------------------------------------
 
-int AntennaPatternXFDTD::readPat_(istream& fp)
+int AntennaPatternXFDTD::readPat_(std::istream& fp)
 {
   assert(fp);
   valid_ = false;
@@ -3272,57 +3270,57 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
   // skip begin
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for begin parameters" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for begin parameters" << std::endl;
     return 1;
   }
 
   // skip format
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for format" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for format" << std::endl;
     return 1;
   }
 
   // phi_min
   if (getTokens(fp, tmpvec, 2) == false)
   {
-    SIM_ERROR << "XFDTD processing phi_min" << endl;
+    SIM_ERROR << "XFDTD processing phi_min" << std::endl;
     return 1;
   }
   float minAzim = 0;
   if (!isValidNumber(tmpvec[1], minAzim))
   {
-    SIM_ERROR << "Encountered invalid number for XFDTD minimum phi" << endl;
+    SIM_ERROR << "Encountered invalid number for XFDTD minimum phi" << std::endl;
     return 1;
   }
 
   // phi_max
   if (getTokens(fp, tmpvec, 2) == false)
   {
-    SIM_ERROR << "XFDTD processing phi_max" << endl;
+    SIM_ERROR << "XFDTD processing phi_max" << std::endl;
     return 1;
   }
   float maxAzim = 0;
   if (!isValidNumber(tmpvec[1], maxAzim))
   {
-    SIM_ERROR << "Encountered invalid number for XFDTD maximum phi" << endl;
+    SIM_ERROR << "Encountered invalid number for XFDTD maximum phi" << std::endl;
     return 1;
   }
 
   // phi_inc
   if (getTokens(fp, tmpvec, 2) == false)
   {
-    SIM_ERROR << "XFDTD processing phi_inc" << endl;
+    SIM_ERROR << "XFDTD processing phi_inc" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], value))
   {
-    SIM_ERROR << "Encountered invalid number for XFDTD phi increment" << endl;
+    SIM_ERROR << "Encountered invalid number for XFDTD phi increment" << std::endl;
     return 1;
   }
   if (value == 0.f) // Avoid divide by zero below
   {
-    SIM_ERROR << "Cannot use XFDTD phi increment of 0" << endl;
+    SIM_ERROR << "Cannot use XFDTD phi increment of 0" << std::endl;
     return 1;
   }
   size_t azimCnt = static_cast<size_t>(rint((maxAzim - minAzim)/value));
@@ -3330,13 +3328,13 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
   // theta_min
   if (getTokens(fp, tmpvec, 2) == false)
   {
-    SIM_ERROR << "XFDTD processing theta_min" << endl;
+    SIM_ERROR << "XFDTD processing theta_min" << std::endl;
     return 1;
   }
   float minElev = 0.f;
   if (!isValidNumber(tmpvec[1], minElev))
   {
-    SIM_ERROR << "Encountered invalid number for XFDTD minimum theta" << endl;
+    SIM_ERROR << "Encountered invalid number for XFDTD minimum theta" << std::endl;
     return 1;
   }
   minElev -= 90.f;
@@ -3344,13 +3342,13 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
   // theta_max
   if (getTokens(fp, tmpvec, 2) == false)
   {
-    SIM_ERROR << "XFDTD processing theta_max" << endl;
+    SIM_ERROR << "XFDTD processing theta_max" << std::endl;
     return 1;
   }
   float maxElev = 0.f;
   if (!isValidNumber(tmpvec[1], maxElev))
   {
-    SIM_ERROR << "Encountered invalid number for XFDTD maximum theta" << endl;
+    SIM_ERROR << "Encountered invalid number for XFDTD maximum theta" << std::endl;
     return 1;
   }
   maxElev -= 90.f;
@@ -3358,17 +3356,17 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
   // theta_inc
   if (getTokens(fp, tmpvec, 2) == false)
   {
-    SIM_ERROR << "XFDTD processing theta_inc" << endl;
+    SIM_ERROR << "XFDTD processing theta_inc" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], value))
   {
-    SIM_ERROR << "Encountered invalid number for XFDTD theta increment" << endl;
+    SIM_ERROR << "Encountered invalid number for XFDTD theta increment" << std::endl;
     return 1;
   }
   if (value == 0.f) // Avoid divide by zero below
   {
-    SIM_ERROR << "Cannot use XFDTD theta increment of 0" << endl;
+    SIM_ERROR << "Cannot use XFDTD theta increment of 0" << std::endl;
     return 1;
   }
   size_t elevCnt = static_cast<size_t>(rint((maxElev - minElev)/value));
@@ -3377,28 +3375,28 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
   // skip complex
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for complex" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for complex" << std::endl;
     return 1;
   }
 
   // skip mag_phase
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for mag_phase" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for mag_phase" << std::endl;
     return 1;
   }
 
   // skip pattern
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for pattern" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for pattern" << std::endl;
     return 1;
   }
 
   // magnitude
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for magnitude" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for magnitude" << std::endl;
     return 1;
   }
   if (stringCaseFind(st, "dB") == std::string::npos)
@@ -3407,40 +3405,40 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
   // maximum_gain
   if (getTokens(fp, tmpvec, 2) == false)
   {
-    SIM_ERROR << "XFDTD processing maximum_gain" << endl;
+    SIM_ERROR << "XFDTD processing maximum_gain" << std::endl;
     return 1;
   }
   if (!isValidNumber(tmpvec[1], reference_))
   {
-    SIM_ERROR << "Encountered invalid number for XFDTD maximum gain" << endl;
+    SIM_ERROR << "Encountered invalid number for XFDTD maximum gain" << std::endl;
     return 1;
   }
 
   // phase
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for phase" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for phase" << std::endl;
     return 1;
   }
 
   // skip direction
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for direction" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for direction" << std::endl;
     return 1;
   }
 
   // skip polarization
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for polarization" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for polarization" << std::endl;
     return 1;
   }
 
   // skip end marker
   if (!getStrippedLine(fp, st))
   {
-    SIM_ERROR << "XFDTD EOF reached while searching for end parameters" << endl;
+    SIM_ERROR << "XFDTD EOF reached while searching for end parameters" << std::endl;
     return 1;
   }
 
@@ -3473,7 +3471,7 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
       }
       if (!isValidNumber(tmpvec[2], value))
       {
-        SIM_ERROR << "Encountered invalid number for XFDTD vertical gain" << endl;
+        SIM_ERROR << "Encountered invalid number for XFDTD vertical gain" << std::endl;
         return 1;
       }
       vVal = static_cast<float>((magLinear ? linear2dB(value) : value) - reference_);
@@ -3483,7 +3481,7 @@ int AntennaPatternXFDTD::readPat_(istream& fp)
 
       if (!isValidNumber(tmpvec[3], value))
       {
-        SIM_ERROR << "Encountered invalid number for XFDTD horizontal gain" << endl;
+        SIM_ERROR << "Encountered invalid number for XFDTD horizontal gain" << std::endl;
         return 1;
       }
       hVal = static_cast<float>((magLinear ? linear2dB(value) : value) - reference_);
@@ -3512,8 +3510,8 @@ int AntennaPatternXFDTD::readPat(const std::string& inFileName)
   if (!inFileName.empty())
   {
     filename_.clear();
-    fstream inFile;
-    inFile.open(inFileName.c_str(), ios::in);
+    std::fstream inFile;
+    inFile.open(inFileName.c_str(), std::ios::in);
     if (inFile.is_open())
     {
       st = readPat_(inFile);
@@ -3525,4 +3523,6 @@ int AntennaPatternXFDTD::readPat(const std::string& inFileName)
     }
   }
   return st;
+}
+
 }

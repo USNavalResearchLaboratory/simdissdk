@@ -29,7 +29,7 @@
 #include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Constants.h"
 
-using namespace simCore;
+namespace simCore {
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
@@ -320,4 +320,6 @@ double simCore::getFactor(const TimeStamp &lowVal, const TimeStamp &exactVal, co
   if (exactVal <= lowVal) return 0.;
   if (exactVal >= highVal || (highVal - lowVal) == 0) return 1.;
   return (exactVal - lowVal) / (highVal - lowVal);
+}
+
 }

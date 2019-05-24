@@ -27,8 +27,6 @@
 #include "osgEarthAnnotation/FeatureNode"
 #include "osgEarthAnnotation/LocalGeometryNode"
 
-using namespace simVis;
-using namespace simVis::GOG;
 using namespace osgEarth;
 using namespace osgEarth::Annotation;
 using namespace osgEarth::Features;

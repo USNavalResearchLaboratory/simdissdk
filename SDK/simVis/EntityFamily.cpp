@@ -25,7 +25,7 @@
 
 #define LC "[EntityFamily] "
 
-using namespace simVis;
+namespace simVis {
 
 EntityFamily::EntityFamily()
 {
@@ -102,4 +102,6 @@ void EntityFamily::reset()
 {
   entities_.clear();
   entityIds_.clear();
+}
+
 }

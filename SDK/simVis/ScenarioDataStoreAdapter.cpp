@@ -25,8 +25,6 @@
 #include "simVis/LobGroup.h"
 #include "simVis/Scenario.h"
 
-using namespace simVis;
-
 #define LC "[SimDataStoreAdapter] "
 
 // -----------------------------------------------------------------------
@@ -38,7 +36,7 @@ namespace
 class MyListener : public simData::DataStore::Listener
 {
 public:
-  explicit MyListener(ScenarioManager *parent)
+  explicit MyListener(simVis::ScenarioManager *parent)
     : scenarioManager_(parent)
   {
   }
@@ -279,14 +277,14 @@ private: // methods
   }
 
 private: // data
-  ScenarioManager *scenarioManager_;
+  simVis::ScenarioManager *scenarioManager_;
 };
 
 // Observer for time clock mode changes
 class MyClockModeChangeObserver : public simCore::Clock::ModeChangeObserver
 {
 public:
-  MyClockModeChangeObserver(ScenarioManager* scenarioManager, simCore::Clock* clock)
+  MyClockModeChangeObserver(simVis::ScenarioManager* scenarioManager, simCore::Clock* clock)
     : scenarioManager_(scenarioManager), clock_(clock)
   {
     //nop
@@ -325,10 +323,12 @@ public: // ModeChangeObserver interface
   }
 
 private: // data
-  ScenarioManager *scenarioManager_;
+  simVis::ScenarioManager *scenarioManager_;
   simCore::Clock  *clock_;
 };
 }
+
+namespace simVis {
 
 // -----------------------------------------------------------------------
 ScenarioDataStoreAdapter::ScenarioDataStoreAdapter(simData::DataStore* dataStore, ScenarioManager* scenario)
@@ -404,4 +404,6 @@ void ScenarioDataStoreAdapter::getBindings(std::set<simData::DataStore*>& output
   {
     output.insert(i->first);
   }
+}
+
 }

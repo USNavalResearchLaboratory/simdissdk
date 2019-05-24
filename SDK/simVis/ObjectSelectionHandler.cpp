@@ -23,8 +23,7 @@
 #include "osgViewer/View"
 #include "osgUtil/LineSegmentIntersector"
 
-using namespace simVis;
-
+namespace simVis {
 //----------------------------------------------------------------------------
 ObjectSelectionHandler::ObjectSelectionHandler()
   : traversalMask_(~0),
@@ -216,4 +215,6 @@ bool ObjectSelectionHandler::select_(float mx, float my, osg::View *aaView)
   }
 
   return false;
+}
+
 }

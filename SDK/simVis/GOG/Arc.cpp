@@ -36,7 +36,6 @@
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace simVis::GOG;
 using namespace osgEarth::Features;
 
 namespace
@@ -224,6 +223,8 @@ Angle fmod_(Angle angle, double denom=M_TWOPI)
 
 }
 
+namespace simVis { namespace GOG {
+
 GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::ParserData& p, const GOGNodeType& nodeType, const GOGContext& context, const GogMetaData& metaData, MapNode* mapNode)
 {
   bool hasInnerRadius = false;
@@ -367,3 +368,4 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   return rv;
 }
 
+} }

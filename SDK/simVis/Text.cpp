@@ -26,7 +26,7 @@
 
 #define SCREEN_COORDS_BUGFIX 1
 
-using namespace simVis;
+namespace simVis {
 
 #if OSG_VERSION_LESS_THAN(3,5,0)
 /**
@@ -215,4 +215,6 @@ void Text::setScreenOffset(float x, float y)
 {
   x_ = x;
   y_ = y;
+}
+
 }
