@@ -1184,10 +1184,12 @@ message CustomRenderingProperties {
   optional string renderer = 5;
 };
 
-/// preferences for the display of a Custom RenRenderingderng
+/// preferences for the display of a Custom Rendering
 message CustomRenderingPrefs {
   /// Contains name, draw/active flags, label prefs, data limiting, and possibly other settings
   optional CommonPrefs commonPrefs = 1;
+  /// If true, show outline instead of the shape.  Not all renderers support this field.
+  optional bool outline = 5 [default = false];
 };
 
 /// common update to Custom Rendering data
