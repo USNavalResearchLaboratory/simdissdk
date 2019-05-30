@@ -999,20 +999,21 @@ void View::refreshExtents()
 void View::processResize(int width, int height)
 {
   // each main view is responsible for resizing its insets in setExtents(), by iterating over and calling refreshExtents()
-  if (viewType_ != VIEW_INSET)
+  if (viewType_ == VIEW_INSET || !getCamera())
+    return;
+
+  // limit the resize processing to the main view that has same height/width as the event report
+  const osg::Viewport* vp = getCamera()->getViewport();
+  if (vp && width == vp->width() && height == vp->height())
   {
-    // limit the resize processing to the main view that has same height/width as the event report
-    if (this->getCamera())
-    {
-      const osg::Viewport* vp = this->getCamera()->getViewport();
-      if (vp && width == vp->width() && height == vp->height())
-      {
-        // this is the main view that the resize event was for
-        setExtents(Extents(this->extents_.x_, this->extents_.y_, width, height));
-      }
-    }
+    // this is the main view that the resize event was for.  Make sure the width and height are
+    // positive values, else the projection and view matrix gets broken.  This can happen in rare
+    // cases on Linux, NVIDIA driver, Qt 5.9 with osgQt, with external display on laptop where
+    // the external display is marked primary display.  Since this is such a specific use case,
+    // it's hard to know if there are other cases where the problem shows up, so we just always
+    // force the width and height to be valid.
+    setExtents(Extents(this->extents_.x_, this->extents_.y_, simCore::sdkMax(1, width), simCore::sdkMax(1, height)));
   }
-  //else TODO: resizing insets (via lasso-like mouse control on the inset) is not yet implemented
 }
 
 void View::setViewManager(simVis::ViewManager* viewman)
@@ -1935,8 +1936,15 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
 {
   // Avoid divide-by-0
   osg::Camera* camera = getCamera();
-  if (nh == 0.0 || nw == 0.0 || camera == NULL)
+  if (camera == NULL)
     return;
+  // nw and nh should not be 0.  If they are, someone upstream is giving incorrect values.
+  assert(nw != 0 && nh != 0);
+  // Fix those cases regardless here.
+  if (nh == 0.0)
+    nh = 1.0;
+  if (nw == 0.0)
+    nw = 1.0;
 
   // Apply the new viewport:
   osg::ref_ptr<osg::Viewport> newViewport = new osg::Viewport(nx, ny, nw, nh);
@@ -1970,8 +1978,8 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
   }
   else
   {
-      // In orthographic, do nothing since the EarthManipulator will automatically
-      // be tracking the last perspective FovY.
+    // In orthographic, do nothing since the EarthManipulator will automatically
+    // be tracking the last perspective FovY.
   }
 }
 

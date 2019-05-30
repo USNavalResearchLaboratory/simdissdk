@@ -44,10 +44,14 @@ namespace
       osg::GraphicsContext* gc = dynamic_cast<osg::GraphicsContext*>(gc_obj);
       simVis::applyCoreProfileValidity(gc);
       simVis::applyMesaGeometryShaderFix(gc);
+      const int width = gc->getTraits()->width;
+      const int height = gc->getTraits()->height;
 
       for (unsigned int i = 0; i < viewman_->getNumViews(); ++i)
       {
-        viewman_->getView(i)->processResize(gc->getTraits()->width, gc->getTraits()->height);
+        // View Manager does matching based on width/height against the view's
+        // viewport, so we can't modify width/height here even if they are invalid (0)
+        viewman_->getView(i)->processResize(width, height);
       }
     }
   };
