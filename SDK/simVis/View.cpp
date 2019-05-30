@@ -1939,7 +1939,6 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
   if (camera == NULL)
     return;
   // nw and nh should not be 0.  If they are, someone upstream is giving incorrect values.
-  assert(nw != 0 && nh != 0);
   // Fix those cases regardless here.
   if (nh == 0.0)
     nh = 1.0;
