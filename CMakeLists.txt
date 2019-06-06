@@ -190,6 +190,7 @@ include(CMakeModules/ImportOSG.cmake)
 include(CMakeModules/ImportOSGQT.cmake)
 
 # Find OpenGL library, required to execute certain GL calls
+set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL)
 
 ## Find and include the OpenGL core header
