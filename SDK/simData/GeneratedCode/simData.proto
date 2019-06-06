@@ -1191,15 +1191,15 @@ message CustomRenderingPrefs {
   /// How long, in seconds, to display a custom rendering after a data point
   optional double persistence = 2 [default = 5.0];
   /**
-   * The length of the history in seconds. The history is the smaller of timeHistory and dataHistory
+   * The length of the history in seconds. The history is the smaller of secondsHistory and pointsHistory
    * Not all renderers support this field.
    */
-  optional double timeHistory = 3 [default = 5.0];
+  optional double secondsHistory = 3 [default = 5.0];
   /**
    * How many data points before the current data point to display as a history.  Default to 0, which is no history.
    * Not all renderers support this field.
    */
-  optional uint32 dataHistory = 4 [default = 0];
+  optional uint32 pointsHistory = 4 [default = 0];
   /// If true, show outline instead of the shape.  Not all renderers support this field.
   optional bool outline = 5 [default = false];
 };
