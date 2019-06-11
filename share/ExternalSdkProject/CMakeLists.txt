@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-# disable autolinking to qtmain as we have our own main() functions (new in Qt 5.1)
-if(POLICY CMP0020)
-    cmake_policy(SET CMP0020 OLD)
-endif()
-
 # Create a new project
 project(ExternalSDKExamples)
 

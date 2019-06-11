@@ -173,6 +173,9 @@ include(CMakeModules/OsgVariables.cmake)
 include(CMakeModules/CreateInstallProperties.cmake)
 
 
+# --- System Libraries --------------------
+include(CMakeModules/ImportOPENGL.cmake)
+
 # ---Qt------------------------------------
 
 # Attempt to find Qt so we can build the Qt example(s).
@@ -188,10 +191,6 @@ include(CMakeModules/ImportGDAL.cmake)
 include(CMakeModules/ImportOPENTHREADS.cmake)
 include(CMakeModules/ImportOSG.cmake)
 include(CMakeModules/ImportOSGQT.cmake)
-
-# Find OpenGL library, required to execute certain GL calls
-set(OpenGL_GL_PREFERENCE LEGACY)
-find_package(OpenGL)
 
 ## Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header

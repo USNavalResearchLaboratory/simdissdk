@@ -434,7 +434,7 @@ target_include_directories(simVis PUBLIC
 )
 target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} ${OSGEARTH_ALL_LIBDEPENDENCIES})
-target_link_libraries(simVis PRIVATE ${OPENGL_LIBRARIES})
+target_link_libraries(simVis PRIVATE VSI::GL)
 
 if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
