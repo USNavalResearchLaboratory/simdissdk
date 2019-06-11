@@ -81,7 +81,6 @@ add_definitions(-D${ARCH})
 # Set system identifiers
 if(WIN32)
     if(MSVC)
-        set(SOCKET_LIBS ws2_32)
         add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 
         option(ENABLE_STATIC_ANALYSIS "Enable Visual Studio's static analyzer" OFF)
@@ -97,17 +96,6 @@ if(WIN32)
         endif()
     endif()
 else()
-    set(RT_LIBS -lrt)
-    set(PTHREAD_LIBS -lpthread)
-    set(MATH_LIBS -lm)
-    add_definitions(-DUNIX)
-
-    if(BUILD_SYSTEM_NAME STREQUAL "linux")
-        add_definitions(-DLinux)
-    elseif(BUILD_SYSTEM_NAME STREQUAL "solaris")
-        add_definitions(-DSolaris)
-    endif()
-
     # Export global symbols to combat .so dynamic_cast<> issues
     unique_append_string(CMAKE_EXE_LINKER_FLAGS "-Wl,-E")
     unique_append_string(CMAKE_SHARED_LINKER_FLAGS "-Wl,-E")
