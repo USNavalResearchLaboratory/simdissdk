@@ -30,7 +30,7 @@
 #include "simCore/Common/Common.h"
 
 #if !defined(SIM_LITTLE_ENDIAN) && !defined(SIM_BIG_ENDIAN)
-#if defined(X86) || defined(ALPHA) || defined(__x86_64__) || defined(_WIN64)
+#if defined(X86) || defined(ALPHA) || defined(__x86_64__) || defined(_WIN64) || defined(WIN32)
 #define SIM_LITTLE_ENDIAN
 #endif
 #endif
