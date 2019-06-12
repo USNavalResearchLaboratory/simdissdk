@@ -67,10 +67,6 @@ include(CMakeModules/CheckOSGEarthMethodExists.cmake)
 include(TestBigEndian)
 test_big_endian(SDK_BIG_ENDIAN)
 
-# Determine whether time.h includes timespec
-include(CMakeModules/TestTimespec.cmake)
-test_timespec(SDK_TIMESPEC)
-
 # Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
 include(CMakeModules/AddExecutablePostfix.cmake)
 
