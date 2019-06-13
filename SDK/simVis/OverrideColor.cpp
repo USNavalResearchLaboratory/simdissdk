@@ -58,14 +58,14 @@ void OverrideColor::setColor(const simVis::Color& color)
 {
   osg::ref_ptr<osg::StateSet> stateset;
   if (stateset_.lock(stateset))
-    OverrideColor::setColor(stateset, color);
+    OverrideColor::setColor(stateset.get(), color);
 }
 
 void OverrideColor::setCombineMode(CombineMode combineMode)
 {
   osg::ref_ptr<osg::StateSet> stateset;
   if (stateset_.lock(stateset))
-    OverrideColor::setCombineMode(stateset, combineMode);
+    OverrideColor::setCombineMode(stateset.get(), combineMode);
 }
 
 void OverrideColor::setColor(osg::StateSet* stateset, const simVis::Color& color)
