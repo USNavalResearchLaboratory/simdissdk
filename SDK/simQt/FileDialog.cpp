@@ -25,6 +25,8 @@
 #include "simCore/String/Utils.h"
 #include "simQt/FileDialog.h"
 
+static const QString PRIVATE_PREFIX = "private/";
+
 namespace simQt
 {
 
@@ -46,7 +48,8 @@ QString FileDialog::getRegistryDir(const QString& registryDir)
   if (!registryDir.isEmpty())
   {
     QSettings settings;
-    return settings.value(registryDir).toString();
+    // Prepend "private/" to the front of the setting name to prevent it from being visible to the user
+    return settings.value(PRIVATE_PREFIX + registryDir).toString();
   }
   return "";
 }
@@ -55,10 +58,12 @@ void FileDialog::setRegistryDir(const QString& registryDir, const QString& path,
 {
   if (registryDir.isEmpty())
     return;
+  // Prepend "private/" to the front of the setting name to prevent it from being visible to the user
+  QString privateRegDir = PRIVATE_PREFIX + registryDir;
   QSettings settings;
-  if (overwrite || !settings.contains(registryDir))
+  if (overwrite || !settings.contains(privateRegDir))
   {
-    settings.setValue(registryDir, QDir::toNativeSeparators(
+    settings.setValue(privateRegDir, QDir::toNativeSeparators(
       QString::fromStdString(simCore::expandEnv(path.toStdString()))));
   }
 }
