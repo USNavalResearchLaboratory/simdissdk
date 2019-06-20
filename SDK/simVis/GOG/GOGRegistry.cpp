@@ -124,8 +124,6 @@ GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const G
       parserData.style_ = parserData.style_.combineWith(overrideStyle);
 
     result = (*f)(parsedShape, parserData, nodeType, context, metaData, mapNode_.get());
-    // Store the range units in the GogNodeInterface
-    result->setRangeUnits(parserData.units_.rangeUnits_);
 
     // get the follow orientation data
     followData.locatorFlags = parserData.locatorComps_;
@@ -136,6 +134,8 @@ GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const G
     // post-processing:
     if (result && result->osgNode())
     {
+      // Store the range units in the GogNodeInterface
+      result->setRangeUnits(parserData.units_.rangeUnits_);
       result->osgNode()->setName(parserData.getName());
       parserData.applyToAnnotationNode(result->osgNode());
       result->osgNode()->getOrCreateStateSet()->setMode(GL_BLEND, 1);

@@ -47,6 +47,12 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
 
   float radius_m = radius.as(osgEarth::Units::METERS);
 
+  // cannot create a hemisphere with no radius
+  if (radius_m <= 0.f)
+  {
+    SIM_WARN << "Cannot create hemisphere with no radius\n";
+    return NULL;
+  }
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createHemisphere(
     radius_m, color);
   shape->setName("GOG Hemisphere");
