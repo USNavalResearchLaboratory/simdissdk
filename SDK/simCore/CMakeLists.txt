@@ -213,11 +213,11 @@ endif()
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
     set_target_properties(simCore PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
     vsi_install_target(simCore SDK_Library)
-endif(INSTALL_SIMDIS_SDK_LIBRARIES)
+endif()
 
 if(AUTOINSTALL_LIBS AND SIMCORE_SHARED)
     PostBuildInstallSdkSharedObjects(simCore)
-endif(AUTOINSTALL_LIBS AND SIMCORE_SHARED)
+endif()
 
 if(INSTALL_HEADERS)
     # Setup header file installation
@@ -235,4 +235,4 @@ if(INSTALL_HEADERS)
         DESTINATION include/simCore/Time)
     install(FILES ${CORE_ALL_HEADER}
         DESTINATION include)
-endif(INSTALL_HEADERS)
+endif()

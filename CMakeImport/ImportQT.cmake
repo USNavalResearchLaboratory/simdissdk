@@ -4,7 +4,7 @@
 function(install_qt_library LIBNAME COMPONENT)
     if(NOT INSTALL_THIRDPARTY_LIBRARIES)
         return()
-    endif(NOT INSTALL_THIRDPARTY_LIBRARIES)
+    endif()
     if(WIN32)
         INSTALL(FILES ${QT_BINARY_DIR}/Qt${LIBNAME}.dll
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}

@@ -91,7 +91,7 @@ function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT
 
     if(NOT EXPORT_TYPE)
         set(EXPORT_TYPE =.)
-    endif(NOT EXPORT_TYPE)
+    endif()
     # Keep a list of all the .proto files and all the .pb.h files
     set(_ALL_PROTO)
     set(_ALL_HDR)
@@ -129,7 +129,7 @@ function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT
 
         # Mark the files as generated
         set_source_files_properties(${_PROTO_OUT_BASENAME}.pb.h ${_PROTO_OUT_BASENAME}.pb.cc PROPERTIES GENERATED TRUE)
-    endforeach(_PROTO ${PROTO_FILES})
+    endforeach()
 
     # Create a target that includes on the .proto files and depends on the header files
     if(NOT "${TARGET_NAME}" STREQUAL "")
@@ -137,7 +137,7 @@ function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT
             SOURCES ${_ALL_PROTO}
             DEPENDS ${_ALL_HDR}
         )
-    endif(NOT "${TARGET_NAME}" STREQUAL "")
+    endif()
 
     # Pass back the hdr and src files
     set(${HDR_OUT} ${_ALL_HDR} PARENT_SCOPE)

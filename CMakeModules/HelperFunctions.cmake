@@ -11,7 +11,7 @@ macro(unique_append TARGET)
         # Remove the item if it was found
         if(NOT index EQUAL -1)
             list(REMOVE_AT ${TARGET} ${index})
-        endif(NOT index EQUAL -1)
+        endif()
 
         # Append the item to the list
         list(APPEND ${TARGET} ${value})
@@ -131,7 +131,7 @@ macro(VSI_QT_ADD_RESOURCES DEST)
     endif()
     SOURCE_GROUP("Qt\\Resource Files" FILES ${ARGN})
     SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
-endmacro(VSI_QT_ADD_RESOURCES DEST)
+endmacro()
 
 macro(VSI_INCLUDE_QT_USE_FILE)
     foreach(ARG ${ARGN})
@@ -140,7 +140,7 @@ macro(VSI_INCLUDE_QT_USE_FILE)
     if(QT4_FOUND)
         include(${QT_USE_FILE})
     endif()
-endmacro(VSI_INCLUDE_QT_USE_FILE)
+endmacro()
 
 macro(VSI_QT_USE_MODULES TARGET LINK_TYPE)
     set(_CM_LINK_TYPE)
@@ -162,7 +162,7 @@ macro(VSI_QT_USE_MODULES TARGET LINK_TYPE)
     else()
         target_link_libraries(${TARGET} ${_CM_LINK_TYPE} ${QT_LIBRARIES})
     endif()
-endmacro(VSI_QT_USE_MODULES TARGET)
+endmacro()
 
 # Errors out if an environment variable is not set. Useful mostly
 # for debugging.

@@ -55,7 +55,7 @@ foreach(IMPORTED_LIBRARY_NAME ${IMPLIBS})
         endif()
 
         # Create and install the Import___.cmake for this library
-        configure_file(CMakeModules/ImportedExport.cmake.in
+        configure_file(CMakeUtilities/ImportedExport.cmake.in
             ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_LIBRARY_NAME}.cmake
         )
         install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_LIBRARY_NAME}.cmake
@@ -69,7 +69,7 @@ foreach(IMPORTED_LIBRARY_NAME ${IMPLIBS})
 endforeach()
 
 # Create and install the FindSIMDIS_SDK.cmake file
-configure_file(CMakeModules/FindSIMDIS_SDK.cmake.in
+configure_file(CMakeUtilities/FindSIMDIS_SDK.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/FindSIMDIS_SDK.cmake
     @ONLY
 )
@@ -81,7 +81,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/FindSIMDIS_SDK.cmake
 # Get the absolute path out for use in the configured CMake file ImportSIMDIS_SDK.cmake
 set(SDK_LIB_CMAKE_FULLPATH "${CMAKE_INSTALL_PREFIX}/${SDK_LIB_CMAKE_PATH}")
 # Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
-configure_file(CMakeModules/ImportSIMDIS_SDK.cmake.in
+configure_file(CMakeUtilities/ImportSIMDIS_SDK.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
     @ONLY
 )

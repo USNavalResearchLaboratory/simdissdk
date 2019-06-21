@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
 
 # Append our CMakeModules to the CMAKE_MODULE_PATH for better include() support
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeImport")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeUtilities")
 project(SIMDIS_SDK)
 
 # Configure valgrind settings
 find_program(MEMORYCHECK_COMMAND NAMES valgrind)
-set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/CMakeModules/valgrind.supp" CACHE FILEPATH "File that contains suppressions for the memory checker")
+set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/CMakeUtilities/valgrind.supp" CACHE FILEPATH "File that contains suppressions for the memory checker")
 # Pick up CDash/CTest
 option(ENABLE_CDASH_PROJECTS "Generate the CDash test projects" OFF)
 option(ENABLE_UNIT_TESTING "Enable unit testing" ON)
@@ -46,7 +48,7 @@ set(INSTALL_SIMDIS_SDK_LIBRARIES ON)
 # Default to a release mode build if not specified
 if(NOT MSVC AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif(NOT MSVC AND NOT CMAKE_BUILD_TYPE)
+endif()
 
 # Allow CMake to use folders in MSVC; turn off when using Express versions
 option(ENABLE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
@@ -57,9 +59,9 @@ else()
 endif()
 
 # Include base macros required by other macros
-include(CMakeModules/BuildSystemVariables.cmake)
-include(CMakeModules/HelperFunctions.cmake)
-include(CMakeModules/CheckOSGEarthMethodExists.cmake)
+include(BuildSystemVariables)
+include(HelperFunctions)
+include(CheckOSGEarthMethodExists)
 
 
 # Determine endian-ness of current system (CMake provided test)
@@ -68,7 +70,7 @@ include(TestBigEndian)
 test_big_endian(SDK_BIG_ENDIAN)
 
 # Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
-include(CMakeModules/AddExecutablePostfix.cmake)
+include(AddExecutablePostfix)
 
 # Set architecture identifiers
 string(TOUPPER ${BUILD_SYSTEM_ARCH} ARCH)
@@ -116,14 +118,14 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # Configure 3rd party search path
 
 # Include specific defaults for building with public release environment (third party packs)
-include(CMakeModules/PublicDefaults.cmake)
+include(PublicDefaults)
 # Include specific defaults for building with VSI environment
-include(CMakeModules/VsiDefaults.cmake)
+include(VsiDefaults)
 
 # Copy the helper script into the build directory
-configure_file("${PROJECT_SOURCE_DIR}/CMakeModules/ExperimentalSubmit.cmake" "${PROJECT_BINARY_DIR}/ExperimentalSubmit.cmake")
-configure_file("${PROJECT_SOURCE_DIR}/CMakeModules/NightlySubmit.cmake" "${PROJECT_BINARY_DIR}/NightlySubmit.cmake")
-configure_file("${PROJECT_SOURCE_DIR}/CMakeModules/CTestCustom.cmake" "${PROJECT_BINARY_DIR}/CTestCustom.cmake")
+configure_file("${PROJECT_SOURCE_DIR}/CMakeUtilities/ExperimentalSubmit.cmake" "${PROJECT_BINARY_DIR}/ExperimentalSubmit.cmake")
+configure_file("${PROJECT_SOURCE_DIR}/CMakeUtilities/NightlySubmit.cmake" "${PROJECT_BINARY_DIR}/NightlySubmit.cmake")
+configure_file("${PROJECT_SOURCE_DIR}/CMakeUtilities/CTestCustom.cmake" "${PROJECT_BINARY_DIR}/CTestCustom.cmake")
 
 # Configure coverage if it exists
 if(${BUILD_COMPILER_NAME} STREQUAL "gcc" AND COVERAGE_COMMAND)
@@ -153,28 +155,28 @@ set(OSG_INCLUDE_DIR ${OSG_DIR}/include)
 
 # OsgVariables.cmake needs to come before CreateInstallProperties to ensure proper placement of OSG DLLs
 # else INSTALLSETTINGS_OSGPLUGIN_DIR will be set improperly
-include(CMakeModules/OsgVariables.cmake)
-include(CMakeModules/CreateInstallProperties.cmake)
+include(OsgVariables)
+include(CreateInstallProperties)
 
 
 # --- System Libraries --------------------
-include(CMakeModules/ImportOPENGL.cmake)
+include(ImportOpenGL)
 
 # ---Qt------------------------------------
 
 # Attempt to find Qt so we can build the Qt example(s).
-include(CMakeModules/ImportQT.cmake)
+include(ImportQT)
 
 
 # --- OpenSceneGraph ----------------------
 
 # OSG requires GDAL
-include(CMakeModules/ImportGDAL.cmake)
+include(ImportGDAL)
 
 # import the package OSG and its companion OpenThreads
-include(CMakeModules/ImportOPENTHREADS.cmake)
-include(CMakeModules/ImportOSG.cmake)
-include(CMakeModules/ImportOSGQT.cmake)
+include(ImportOpenThreads)
+include(ImportOSG)
+include(ImportOSGQt)
 
 ## Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header
@@ -187,17 +189,17 @@ find_package(GLCORE)
 
 # allow the user to set OSGEARTH_DIR in CMAKE GUI and auto-populate all OSGEARTH libraries:
 set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
-include(CMakeModules/ImportOSGEARTH.cmake)
+include(ImportOSGEarth)
 
 
 # --- Protocol Buffers -----------------------------
 set(PROTOBUF_DIR "" CACHE PATH "Protocol Buffers root directory")
-include(CMakeModules/ImportPROTOBUF.cmake)
+include(ImportProtobuf)
 
 
 # --- SQLITE3 -----------------------------
 set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
-include(CMakeModules/ImportSQLITE3.cmake)
+include(ImportSQLite)
 
 # subprojects
 add_subdirectory(SDK)
@@ -214,10 +216,10 @@ endif()
 add_subdirectory(Doc)
 
 # Configure the installs for CMake exports, e.g. for external projects
-include(CMakeModules/InstallCMakeExports.cmake)
+include(InstallCMakeExports)
 
 # Install the documentation to the root of the install directory
 install(FILES INSTALL.md LICENSE.txt README.md DESTINATION .)
 
 # Mark several variables as advanced
-include(CMakeModules/SdkAdvancedVariables.cmake)
+include(SdkAdvancedVariables)

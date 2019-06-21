@@ -199,9 +199,9 @@ set(PLUGIN_DIRS
 # Find the plugin location
 if(WIN32)
     find_path(OSG_PLUGIN_PATH NAMES osgdb_osg.dll PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-else(WIN32)
+else()
     find_path(OSG_PLUGIN_PATH NAMES osgdb_osg.so PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-endif(WIN32)
+endif()
 
 # Put the plugin location in the library list for 32 to 64 but Linux conversion
 # so it is properly updated when a 32/64 bit configuration change is made

@@ -40,7 +40,7 @@ elseif(UNIX)
             set(BUILD_TYPE "64")
         endif()
     endif()
-endif(WIN32)
+endif()
 
 
 # Get system name
@@ -123,10 +123,8 @@ if(VERBOSE)
     if(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND UNIX)
         if(COMPILE_32_ON_64)
             message(STATUS "  COMPILE_32_ON_64\t\tTrue")
-        else(COMPILE_32_ON_64)
+        else()
             message(STATUS "  COMPILE_32_ON_64\t\tFalse")
-        endif(COMPILE_32_ON_64)
-    endif(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND UNIX)
-endif(VERBOSE)
-
-include(CMakeModules/SdkAdvancedVariables.cmake)
+        endif()
+    endif()
+endif()

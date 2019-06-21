@@ -8,7 +8,7 @@ if(QT_FOUND)
     option(ENABLE_QTDESIGNER_WIDGETS "Build Qt Designer Plugins for simQt widgets" ON)
     if(ENABLE_QTDESIGNER_WIDGETS)
         add_subdirectory(QtDesignerWidgets)
-    endif(ENABLE_QTDESIGNER_WIDGETS)
-endif(QT_FOUND)
+    endif()
+endif()
 
 

@@ -119,7 +119,7 @@ endforeach()
 set(OS_PLUGIN_SUBDIR "lib${LIBDIRSUFFIX}")
 if(WIN32)
   set(OS_PLUGIN_SUBDIR "bin")
-endif(WIN32)
+endif()
 set(OS_PLUGIN_SUBDIR "${OS_PLUGIN_SUBDIR}/osgPlugins-${OSG_VERSION}")
 
 # Install OSGEarth plugins
@@ -138,9 +138,9 @@ set(PLUGIN_DIRS
 # Find the plugin location
 if(WIN32)
     find_path(OSGEARTH_PLUGIN_PATH NAMES osgdb_earth.dll PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-else(WIN32)
+else()
     find_path(OSGEARTH_PLUGIN_PATH NAMES osgdb_earth.so PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-endif(WIN32)
+endif()
 
 if(OSGEARTH_PLUGIN_PATH)
     mark_as_advanced(FORCE OSGEARTH_PLUGIN_PATH)
@@ -156,18 +156,18 @@ list(APPEND LIBRARY_LIST "OSGEARTH_PLUGIN_PATH")
 # Select installation location
 if(WIN32)
     set(OSGEARTH_PLUGIN_INSTALL_DIR ${INSTALLSETTINGS_RUNTIME_DIR})
-else(WIN32)
+else()
     set(OSGEARTH_PLUGIN_INSTALL_DIR ${INSTALLSETTINGS_LIBRARY_DIR})
-endif(WIN32)
+endif()
 
 # Determine which files to install based on Debug or Release Build Type
 if(WIN32)
     set(DEBUG_INSTALL_PATTERN "osgdb_.+d\\.dll")
     set(RELEASE_INSTALL_PATTERN "osgdb_.+[^d]\\.dll")
-else(WIN32)
+else()
     set(DEBUG_INSTALL_PATTERN "osgdb_.+d\\.so")
     set(RELEASE_INSTALL_PATTERN "osgdb_.+[^d]\\.so")
-endif(WIN32)
+endif()
 
 # Set the full install path to the plugin directory
 set(OSGEARTH_PLUGIN_INSTALL_DIR ${OSGEARTH_PLUGIN_INSTALL_DIR}/osgPlugins-${OSG_VERSION})
