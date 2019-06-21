@@ -40,8 +40,6 @@
 
 #define LC "[AnimatedLine] "
 
-using namespace simVis;
-
 //--------------------------------------------------------------------------
 
 // Local utility functions
@@ -85,6 +83,8 @@ namespace
 }
 
 //--------------------------------------------------------------------------
+
+namespace simVis {
 
 AnimatedLineNode::AnimatedLineNode(float lineWidth, bool depthBufferTest) :
 stipple1_(0xFF00),
@@ -608,4 +608,6 @@ void AnimatedLineNode::drawBendingLine_(const simCore::MultiFrameCoordinate& coo
 
   geode_->getLineDrawable(0)->importVertexArray(verts.get());
   geode_->getLineDrawable(1)->importVertexArray(verts.get());
+}
+
 }

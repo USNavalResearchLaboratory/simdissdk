@@ -30,8 +30,7 @@
 #include "simVis/RFProp/BearingProfileMap.h"
 #include "simVis/RFProp/ProfileManager.h"
 
-using namespace simRF;
-
+namespace simRF {
 //----------------------------------------------------------------------------
 ProfileManager::ProfileManager()
  : osg::Group(),
@@ -458,3 +457,4 @@ void ProfileManager::dirty()
   }
 }
 
+}

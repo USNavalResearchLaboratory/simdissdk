@@ -41,8 +41,6 @@
 #include "simCore/EM/Decibel.h"
 #include "simCore/EM/RadarCrossSection.h"
 
-using namespace simCore;
-
 namespace
 {
 
@@ -50,7 +48,7 @@ namespace
   {
     // track line number for error reporting purposes
     (*lineNumber)++;
-    return getStrippedLine(inFile, str);
+    return simCore::getStrippedLine(inFile, str);
   }
 
   bool getFirstToken(std::istream &inFile, std::string &token, size_t *lineNumber)
@@ -59,7 +57,7 @@ namespace
     if (getTokenLine(inFile, str, lineNumber))
     {
       std::vector<std::string> vec;
-      stringTokenizer(vec, str);
+      simCore::stringTokenizer(vec, str);
       if (!vec.empty())
       {
         token = vec[0];
@@ -70,9 +68,9 @@ namespace
   }
 
   /** Retrieve the RCS type from stream by inspecting contents for markers */
-  RCSType getRCSType(std::istream& is)
+  simCore::RCSType getRCSType(std::istream& is)
   {
-    RCSType rv = NO_RCS;
+    simCore::RCSType rv = simCore::NO_RCS;
     if (!is) // early exit
       return rv;
     const std::istream::pos_type readPosition = is.tellg();
@@ -88,13 +86,13 @@ namespace
 
       // Compare token to determine file type
       if (typeStr == "0")
-        rv = RCS_LUT;
+        rv = simCore::RCS_LUT;
       else if (typeStr == "1")
-        rv = RCS_BLOOM;
+        rv = simCore::RCS_BLOOM;
       else if (typeStr.find("%") != std::string::npos || typeStr.find("&") != std::string::npos)
-        rv = RCS_SADM;
+        rv = simCore::RCS_SADM;
       else if (typeStr.find("#") != std::string::npos || typeStr.find("f(GHz)") != std::string::npos)
-        rv = RCS_XPATCH;
+        rv = simCore::RCS_XPATCH;
     }
 
     // go back to the beginning of file
@@ -103,6 +101,8 @@ namespace
   }
 
 }
+
+namespace simCore {
 
 /* ************************************************************************ */
 /* RCSTableUD Methods                                                       */
@@ -1263,6 +1263,8 @@ int RCSLUT::loadSADMRCSFile_(std::istream &inFile)
 
 void RCSLUT::computeStatistics_(std::vector<float> *medianVec)
 {
+  if (medianVec->empty())
+    return; // Avoid divide by zero below
   // convert sq m to dBsm
   min_ = static_cast<float>(linear2dB(min_));
   max_ = static_cast<float>(linear2dB(max_));
@@ -1400,4 +1402,6 @@ RadarCrossSection* RcsFileParser::loadRCSFile(const std::string& fname)
   }
 
   return rcsdata;
+}
+
 }

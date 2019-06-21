@@ -22,8 +22,6 @@
 #include <cassert>
 #include "simData/NearestNeighborInterpolator.h"
 
-using namespace simData;
-
 namespace
 {
   template <typename T>
@@ -45,6 +43,8 @@ namespace
     return false;
   }
 }
+
+namespace simData {
 
 bool NearestNeighborInterpolator::interpolate(double time, const PlatformUpdate &prev, const PlatformUpdate &next, PlatformUpdate *result)
 {
@@ -69,4 +69,6 @@ bool NearestNeighborInterpolator::interpolate(double time, const LaserUpdate &pr
 bool NearestNeighborInterpolator::interpolate(double time, const ProjectorUpdate &prev, const ProjectorUpdate &next, ProjectorUpdate *result)
 {
   return compute(time, prev, next, result);
+}
+
 }

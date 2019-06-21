@@ -21,7 +21,7 @@
  */
 #include "simCore/Calc/Random.h"
 
-using namespace simCore;
+namespace simCore {
 
 //=======================================================================
 //
@@ -52,7 +52,7 @@ using namespace simCore;
 //
 //=======================================================================
 
-double simCore::basicUniformVariable(double *seed)
+double basicUniformVariable(double *seed)
 {
   //
   // constants for the pseudo-random number generator
@@ -99,7 +99,8 @@ double NormalVariable::operator()()
 
     // Apply transformations to get two new independent random numbers which
     // have a Gaussian distribution with zero mean and a standard deviation of one.
-    w = sqrt((-2.0 * log(w)) / w);
+    if (w != 0.0)
+      w = sqrt((-2.0 * log(w)) / w);
     sampleVar = x1 * w;
     uSample_ = x2 * w;
   }
@@ -123,7 +124,10 @@ double NormalVariable::operator()()
 
 Complex GaussianVariable::operator()()
 {
-  double uSample1 = stdDev_ * sqrt(-2.0 * log(1.0 - basicUniformVariable(&seeds_)));
+  double var = basicUniformVariable(&seeds_);
+  if (var == 1.0)
+    var = 0.0; // Avoid log(0) below
+  double uSample1 = stdDev_ * sqrt(-2.0 * log(1.0 - var));
   double uSample2 = basicUniformVariable(&seeds_);
   double r = uSample1 * cos(M_TWOPI * uSample2) + mean_;
   double i = uSample1 * sin(M_TWOPI * uSample2) + mean_;
@@ -149,7 +153,10 @@ double UniformVariable::operator()()
 
 double ExponentialVariable::operator()()
 {
-  return -mean_ * log(basicUniformVariable(&seeds_));
+  double var = basicUniformVariable(&seeds_);
+  if (var == 0.0)
+    var = 0.1; // avoid log(0) below
+  return -mean_ * log(var);
 }
 
 //=======================================================================
@@ -192,13 +199,19 @@ int PoissonVariable::operator()()
 //=======================================================================
 
 GeometricVariable::GeometricVariable(double mean)
-  : DiscreteRandomVariable(), beta_(1./log(1. - mean))
-{}
+  : DiscreteRandomVariable()
+{
+  if (mean == 0.0 || mean == 1.0)
+    mean = 0.5; // Avoid log(0) and divide by zero (log(1) == 0) below
+  beta_ = 1.0 / log(1.0 - mean);
+}
 
 //------------------------------------------------------------------------
 
-void GeometricVariable::setBeta(double  val)
+void GeometricVariable::setBeta(double val)
 {
+  if (val == 0.0 || val == 1.0)
+    val = 0.5; // Avoid log(0) and divide by zero (log(1) == 0) below
   beta_ = 1.0 / log(1.0 - val);
 }
 
@@ -206,7 +219,10 @@ void GeometricVariable::setBeta(double  val)
 
 int GeometricVariable::operator()()
 {
-  return 1 + static_cast<int>(beta_ * log(basicUniformVariable(&seeds_)));
+  double var = basicUniformVariable(&seeds_);
+  if (var == 0.0)
+    var = 0.1; // Avoid log(0) below
+  return 1 + static_cast<int>(beta_ * log(var));
 }
 
 //=======================================================================
@@ -239,4 +255,6 @@ int BinomialVariable::operator()()
 int DiscreteUniformVariable::operator()()
 {
   return static_cast<int>(min_ + range_ * basicUniformVariable(&seeds_) + 0.5);
+}
+
 }

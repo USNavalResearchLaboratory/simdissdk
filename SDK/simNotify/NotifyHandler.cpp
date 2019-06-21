@@ -21,7 +21,7 @@
  */
 #include "simNotify/NotifyHandler.h"
 
-using namespace simNotify;
+namespace simNotify {
 
 NotifyHandler::NotifyHandler()
   : severity_(simNotify::NOTIFY_INFO)
@@ -103,4 +103,6 @@ NotifyHandler &NotifyHandler::operator<<(NotifyHandlerManipFunction &manip)
   manip(stream_);
   unlockMutex_();
   return *this;
+}
+
 }

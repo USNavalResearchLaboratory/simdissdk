@@ -1,9 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
-
-# disable using <PackageName>_ROOT for paths, since GLCORE_ROOT is the RESULT of FindPackage(GLCORE)
-if(POLICY CMP0074)
-    cmake_policy(SET CMP0074 OLD)
-endif()
+cmake_minimum_required(VERSION 3.0)
 
 # Append our CMakeModules to the CMAKE_MODULE_PATH for better include() support
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
@@ -72,10 +67,6 @@ include(CMakeModules/CheckOSGEarthMethodExists.cmake)
 include(TestBigEndian)
 test_big_endian(SDK_BIG_ENDIAN)
 
-# Determine whether time.h includes timespec
-include(CMakeModules/TestTimespec.cmake)
-test_timespec(SDK_TIMESPEC)
-
 # Defines an add_executable that respects CMAKE_<CONFIGURATION>_POSTFIX for non-imported executables
 include(CMakeModules/AddExecutablePostfix.cmake)
 
@@ -86,7 +77,6 @@ add_definitions(-D${ARCH})
 # Set system identifiers
 if(WIN32)
     if(MSVC)
-        set(SOCKET_LIBS ws2_32)
         add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 
         option(ENABLE_STATIC_ANALYSIS "Enable Visual Studio's static analyzer" OFF)
@@ -102,17 +92,6 @@ if(WIN32)
         endif()
     endif()
 else()
-    set(RT_LIBS -lrt)
-    set(PTHREAD_LIBS -lpthread)
-    set(MATH_LIBS -lm)
-    add_definitions(-DUNIX)
-
-    if(BUILD_SYSTEM_NAME STREQUAL "linux")
-        add_definitions(-DLinux)
-    elseif(BUILD_SYSTEM_NAME STREQUAL "solaris")
-        add_definitions(-DSolaris)
-    endif()
-
     # Export global symbols to combat .so dynamic_cast<> issues
     unique_append_string(CMAKE_EXE_LINKER_FLAGS "-Wl,-E")
     unique_append_string(CMAKE_SHARED_LINKER_FLAGS "-Wl,-E")
@@ -178,6 +157,9 @@ include(CMakeModules/OsgVariables.cmake)
 include(CMakeModules/CreateInstallProperties.cmake)
 
 
+# --- System Libraries --------------------
+include(CMakeModules/ImportOPENGL.cmake)
+
 # ---Qt------------------------------------
 
 # Attempt to find Qt so we can build the Qt example(s).
@@ -194,13 +176,10 @@ include(CMakeModules/ImportOPENTHREADS.cmake)
 include(CMakeModules/ImportOSG.cmake)
 include(CMakeModules/ImportOSGQT.cmake)
 
-# Find OpenGL library, required to execute certain GL calls
-find_package(OpenGL)
-
 ## Find and include the OpenGL core header
 # By default search for the GLCORE header in the OSG include path.  Non-default locations for the header
 # can be set through the GLCORE_GLCOREARB_HEADER CMake cache variable
-set(GLCORE_ROOT ${OSG_LIBRARY_INCLUDE_PATH})
+set(GLCORE_DIR ${OSG_LIBRARY_INCLUDE_PATH})
 find_package(GLCORE)
 
 

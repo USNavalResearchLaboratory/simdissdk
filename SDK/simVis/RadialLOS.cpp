@@ -32,8 +32,7 @@
 
 #define LC "[LOS] "
 
-using namespace simVis;
-
+namespace simVis {
 //----------------------------------------------------------------------------
 
 RadialLOS::Sample::Sample(double range_m, const osgEarth::GeoPoint& point)
@@ -69,6 +68,7 @@ RadialLOS::Sample::Sample(const Sample& rhs)
 }
 
 //----------------------------------------------------------------------------
+//#define LOS_TIME_PROFILING
 
 RadialLOS::RadialLOS()
   : dirty_(true),
@@ -76,7 +76,8 @@ RadialLOS::RadialLOS()
     range_resolution_(osgEarth::Distance(1.0, osgEarth::Units::KILOMETERS)),
     azim_center_(osgEarth::Angle(0.0, osgEarth::Units::DEGREES)),
     fov_(osgEarth::Angle(360.0, osgEarth::Units::DEGREES)),
-    azim_resolution_(osgEarth::Angle(15.0, osgEarth::Units::DEGREES))
+    azim_resolution_(osgEarth::Angle(15.0, osgEarth::Units::DEGREES)),
+    use_scene_graph_(false)
 {
   //nop
 }
@@ -89,7 +90,8 @@ RadialLOS::RadialLOS(const RadialLOS& rhs)
     range_resolution_(rhs.range_resolution_),
     azim_center_(rhs.azim_center_),
     fov_(rhs.fov_),
-    azim_resolution_(rhs.azim_resolution_)
+    azim_resolution_(rhs.azim_resolution_),
+    use_scene_graph_(rhs.use_scene_graph_)
 {
   //nop
 }
@@ -143,12 +145,26 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
 {
   assert(mapNode != NULL);
 
+#ifdef LOS_TIME_PROFILING
+  osg::Timer_t startTime = osg::Timer::instance()->tick();
+#endif
+
   // clear out existing data
   radials_.clear();
 
   // set up the localizer transforms:
   if (!convertCoordToGeoPoint(originCoord, originMap_, mapNode->getMapSRS()))
     return false;
+
+  if (!use_scene_graph_)
+  {
+    // create an elevation sampler on demand:
+    if (envelope_.valid() == false)
+    {
+      envelope_ = mapNode->getMap()->getElevationPool()->createEnvelope(
+          mapNode->getMapSRS(), 23);
+    }
+  }
 
   osg::Matrix local2world;
   originMap_.createLocalToWorld(local2world);
@@ -229,7 +245,17 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       // sample the terrain at that point
       double hamsl = 0.0, hae = 0.0;
 
-      bool ok = mapNode->getTerrain()->getHeight(mapPoint.getSRS(), mapPoint.x(), mapPoint.y(), &hamsl, &hae);
+      bool ok;
+      if (use_scene_graph_)
+      {
+        ok = mapNode->getTerrain()->getHeight(mapPoint.getSRS(), mapPoint.x(), mapPoint.y(), &hamsl, &hae);
+      }
+      else
+      {
+        hae = envelope_->getElevation(mapPoint.x(), mapPoint.y());
+        hamsl = hae;
+        ok = (hae != NO_DATA_VALUE);
+      }
 
       if (ok)
       {
@@ -270,9 +296,16 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   srs_ = mapNode->getMapSRS();
 
   dirty_ = false;
+
+#ifdef LOS_TIME_PROFILING
+  osg::Timer_t endTime = osg::Timer::instance()->tick();
+  SIM_NOTICE << "RLOS::compute time=" << osg::Timer::instance()->delta_m(startTime, endTime) << " ms" << std::endl;
+#endif
+
   return validLos;
 }
 
+// Note: this method only used when use_scene_graph_ == true
 bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& extent, osg::Node* patch)
 {
   osg::Vec3d originWorld;
@@ -349,6 +382,7 @@ bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& ex
       }
     }
   }
+
   return true;
 }
 
@@ -528,4 +562,6 @@ bool RadialLOS::makeRadial_(Radial& out_radial) const
   }
 
   return true;
+}
+
 }

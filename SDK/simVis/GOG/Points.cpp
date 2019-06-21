@@ -32,9 +32,10 @@
 
 #define LC "[GOG::PointSet] "
 
-using namespace simVis::GOG;
 using namespace osgEarth::Features;
 using namespace osgEarth::Annotation;
+
+namespace simVis { namespace GOG {
 
 GogNodeInterface* Points::deserialize(const ParsedShape& parsedShape,
                     simVis::GOG::ParserData& p,
@@ -132,3 +133,5 @@ GogNodeInterface* Points::deserializeImpl_(const ParsedShape& parsedShape,
 
   return rv;
 }
+
+} }

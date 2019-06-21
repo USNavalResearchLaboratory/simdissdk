@@ -63,8 +63,6 @@
 
 #define LC "[SceneManager] "
 
-using namespace simVis;
-
 //------------------------------------------------------------------------
 namespace
 {
@@ -91,6 +89,8 @@ namespace
     }
   };
 }
+
+namespace simVis {
 
 SceneManager::SceneManager()
   : hasEngineDriverProblem_(false)
@@ -653,4 +653,6 @@ void SceneManager::initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine:
 {
   // Default options for the Rex engine can be initialized here.
   // These options apply to the default map loaded on initialization.
+}
+
 }

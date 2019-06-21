@@ -332,8 +332,8 @@ void CompassNode::setWindParameters(double angleRad, double speedMs)
   windSpeedText_->setText(ss.str());
 
   ss.str("");
-  ss << "Wind From: " << std::fixed << std::setprecision(2) << angleRad * simCore::RAD2DEG << simCore::STR_DEGREE_SYMBOL_UNICODE;
-  windFromText_->setText(ss.str());
+  ss << "Wind From: " << std::fixed << std::setprecision(2) << angleRad * simCore::RAD2DEG << simCore::STR_DEGREE_SYMBOL_UTF8;
+  windFromText_->setText(ss.str(), osgText::String::ENCODING_UTF8);
 
   // Rotate the vane, and push it back a little so it doesn't overlap text
   osg::Matrix m;

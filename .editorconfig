@@ -1,0 +1,15 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+insert_final_newline = true
+
+# Most text files use 2 spaces
+[*.{h,cpp,h.in,cpp.in,sh,proto}]
+indent_style = space
+indent_size = 2
+
+# CMake and GLSL files use 4 space indent
+[{CMakeLists.txt,*.cmake*,*.glsl}]
+indent_style = space
+indent_size = 4

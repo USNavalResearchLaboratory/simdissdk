@@ -209,7 +209,7 @@ struct AppData
       node->setNodeMask(~0);
 
     tetherIndex_++;
-    if(tetherIndex_ >= platformIDs_.size())
+    if (tetherIndex_ >= static_cast<int>(platformIDs_.size()))
       tetherIndex_ = -1;
 
     if (tetherIndex_ < 0)

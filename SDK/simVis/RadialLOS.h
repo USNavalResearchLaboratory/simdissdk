@@ -152,6 +152,11 @@ public:
    */
   const osgEarth::Angle& getAzimuthalResolution() const { return azim_resolution_; }
 
+  /**
+   * Gets whether to perform LOS computation against the live scene
+   * graph (versus the elevation model).
+   */
+  bool getUseSceneGraph() const { return use_scene_graph_; }
 
 public:
 
@@ -231,6 +236,8 @@ private:
   osgEarth::Angle     fov_;
   osgEarth::Angle     azim_resolution_;
   osg::ref_ptr<const osgEarth::SpatialReference> srs_;
+  osg::ref_ptr<osgEarth::ElevationEnvelope> envelope_;
+  bool use_scene_graph_;
 
   bool getBoundingRadials_(double azim_rad, const Radial*& out_r0, const Radial*& out_r1, double& out_mix) const;
 

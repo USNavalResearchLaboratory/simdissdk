@@ -75,10 +75,28 @@ namespace
     simCore::calculateVelocity(1.0, ypr.yaw(), ypr.pitch(), enuVector);
     return osg::Vec3d(enuVector.x(), enuVector.y(), enuVector.z());
   }
+
+  // Labels close to each other should be put on the same line
+  struct CloseEnoughCompare {
+    bool operator()(const osg::Vec3& lhs, const osg::Vec3& rhs) const
+    {
+      if (!simCore::areEqual(lhs.x(), rhs.x(), 1.0))
+        return lhs.x() < rhs.x();
+
+      if (!simCore::areEqual(lhs.y(), rhs.y(), 1.0))
+        return lhs.y() < rhs.y();
+
+      if (!simCore::areEqual(lhs.z(), rhs.z(), 1.0))
+        return lhs.z() < rhs.z();
+
+      return false;
+    }
+  };
 }
 
-
 //------------------------------------------------------------------------
+
+namespace simVis {
 
 void RangeTool::RefreshGroup::traverse(osg::NodeVisitor& nv)
 {
@@ -417,26 +435,6 @@ void RangeTool::Association::setDirty()
 {
   labels_->removeChildren(0, labels_->getNumChildren()); // Clear existing labels to force a refresh to update colors if needed
   osgEarth::DirtyNotifier::setDirty();
-}
-
-namespace
-{
-  // Labels close to each other should be put on the same line
-  struct CloseEnoughCompare {
-    bool operator()(const osg::Vec3& lhs, const osg::Vec3& rhs) const
-    {
-      if (!simCore::areEqual(lhs.x(), rhs.x(), 1.0))
-        return lhs.x() < rhs.x();
-
-      if (!simCore::areEqual(lhs.y(), rhs.y(), 1.0))
-        return lhs.y() < rhs.y();
-
-      if (!simCore::areEqual(lhs.z(), rhs.z(), 1.0))
-        return lhs.z() < rhs.z();
-
-      return false;
-    }
-  };
 }
 
 void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp)
@@ -1587,4 +1585,6 @@ void RangeTool::RelVelCompositeAnglePieSliceGraphic::render(osg::Geode* geode, R
     const osg::Vec3d& endVecENU = calcYprVector(state.endEntity_->ypr_);
     createGeometry(state.coord(RangeToolState::COORD_OBJ_0), startVecENU, endVecENU, relVelComposite, geode, state);
   }
+}
+
 }

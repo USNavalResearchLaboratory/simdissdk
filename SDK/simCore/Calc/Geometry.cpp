@@ -24,12 +24,10 @@
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simNotify/Notify.h"
 
-using namespace simCore;
-
-//------------------------------------------------------------------------
-
 #undef  LC
 #define LC "[simCore::Plane] "
+
+namespace simCore {
 
 Plane::Plane(const Vec3& p1, const Vec3& p2, const Vec3& p3)
 {
@@ -194,4 +192,6 @@ bool GeoFence::verifyConvexity_(const Vec3String& v) const
     }
   }
   return true;
+}
+
 }

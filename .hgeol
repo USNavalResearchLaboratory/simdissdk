@@ -386,3 +386,4 @@
 **.svg = native
 **.qrc = native
 **.cmd = native
+**.editorconfig = native

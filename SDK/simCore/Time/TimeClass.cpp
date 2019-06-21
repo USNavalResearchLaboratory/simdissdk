@@ -29,7 +29,7 @@
 #include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Constants.h"
 
-using namespace simCore;
+namespace simCore {
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
@@ -314,10 +314,12 @@ TimeCompVal TimeStamp::compare_(const TimeStamp& time) const
 
 //------------------------------------------------------------------------
 
-double simCore::getFactor(const TimeStamp &lowVal, const TimeStamp &exactVal, const TimeStamp &highVal)
+double getFactor(const TimeStamp &lowVal, const TimeStamp &exactVal, const TimeStamp &highVal)
 {
   // Perform bounds check and prevent divide by zero
   if (exactVal <= lowVal) return 0.;
   if (exactVal >= highVal || (highVal - lowVal) == 0) return 1.;
   return (exactVal - lowVal) / (highVal - lowVal);
+}
+
 }

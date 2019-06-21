@@ -67,7 +67,9 @@ public:
    * @param caption Top level window text title
    * @param registryDir Registry directory to load/save last directory, such as "SETTINGS/LastDir" or "DirectorySettings/ImportantFiles"
    * @param filter Newline separated list of filters, like "Text Files (*.txt,*.ascii)\nAll Files (*)"
-   * @param selectedFilter If non-NULL, will contain the text of the filter that was selected by the user when file was opened
+   * @param selectedFilter If non-NULL, the input value will select the default filter, the output value will contain the text of
+   *   the filter that was selected by the user when file was opened.  If NULL the code will use the extension of the last saved
+   *   file to set the default filter.
    * @param options Qt options for the file dialog, such as QFileDialog::ShowDirsOnly.  See QFileDialog documentation for all options
    * @return Name of file selected by user for saving
    */

@@ -28,13 +28,7 @@
 #include "stdgl_windows.h"
 #include <GL/glu.h>
 #else
-#if defined Linux
 #include "stdgl_linux.h"
-#elif defined IRIX
-#include "stdgl_irix.h"
-#elif defined Solaris
-#include "stdgl_solaris.h"
-#endif
 #endif
 #include "stdgl_constants.h"
 

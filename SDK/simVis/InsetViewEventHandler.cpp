@@ -28,9 +28,6 @@
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/BoxGraphic.h"
 
-using namespace simVis;
-
-
 namespace
 {
   // builds the geometry representing the "rubber band" graphic for selecting a new
@@ -62,7 +59,7 @@ namespace
   struct FocusDetector : public osgGA::GUIEventHandler
   {
     /** Constructor */
-    FocusDetector(FocusManager* focusMan, InsetViewEventHandler* handler)
+    FocusDetector(simVis::FocusManager* focusMan, simVis::InsetViewEventHandler* handler)
       : focusMan_(focusMan), handler_(handler) { }
 
     /// process events.
@@ -80,7 +77,7 @@ namespace
             focusMan_->focus(dynamic_cast<simVis::View*>(aa.asView()));
           }
         }
-        else if (mask & InsetViewEventHandler::ACTION_CLICK_SCROLL)
+        else if (mask & simVis::InsetViewEventHandler::ACTION_CLICK_SCROLL)
         {
           if (e == ea.PUSH || e == ea.SCROLL)
           {
@@ -88,7 +85,7 @@ namespace
           }
         }
 
-        if (mask & InsetViewEventHandler::ACTION_TAB)
+        if (mask & simVis::InsetViewEventHandler::ACTION_TAB)
         {
           if (e == ea.KEYDOWN && ea.getKey() == ea.KEY_Tab)
           {
@@ -106,16 +103,16 @@ namespace
     virtual const char* className() const { return "FocusDetector"; }
 
     /** Focus manager */
-    osg::observer_ptr<FocusManager>          focusMan_;
+    osg::observer_ptr<simVis::FocusManager>          focusMan_;
     /** Inset view event handler */
-    osg::observer_ptr<InsetViewEventHandler> handler_;
+    osg::observer_ptr<simVis::InsetViewEventHandler> handler_;
   };
 
 
   /**
    * ViewManager callback that notifies us of new insets.
    */
-  struct ViewListener : public ViewManager::Callback
+  struct ViewListener : public simVis::ViewManager::Callback
   {
     /** Constructor */
     explicit ViewListener(osgGA::GUIEventHandler* focusDetector) : focusDetector_(focusDetector) { }
@@ -146,6 +143,8 @@ namespace
 
 #undef  LC
 #define LC "[CreateInsetEventHandler] "
+
+namespace simVis {
 
 CreateInsetEventHandler::CreateInsetEventHandler(simVis::View* host)
   : enabled_(false),
@@ -382,4 +381,6 @@ bool InsetViewEventHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIA
     ensureViewListenerInstalled_();
 
   return handled;
+}
+
 }

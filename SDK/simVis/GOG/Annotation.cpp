@@ -27,9 +27,9 @@
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
 
-using namespace simVis;
-using namespace simVis::GOG;
 using namespace osgEarth::Symbology;
+
+namespace simVis { namespace GOG {
 
 GogNodeInterface* TextAnnotation::deserialize(
                             const ParsedShape&       parsedShape,
@@ -74,3 +74,5 @@ GogNodeInterface* TextAnnotation::deserialize(
 
   return rv;
 }
+
+} }

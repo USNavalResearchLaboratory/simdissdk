@@ -29,6 +29,11 @@ namespace simCore
 
 double getRcvdPowerFreeSpace(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double systemLossdB, bool oneWay)
 {
+  if (freqMhz == 0.0 || rngMeters == 0.0)
+  {
+    assert(0); // Must be non-zero to avoid divide by zero below
+    return 0.0;
+  }
   // Free Space Radar range equation
   double rcvPower = simCore::SMALL_DB_VAL;
   double lamdaSqrd = square(simCore::LIGHT_SPEED_AIR / (1e6 * freqMhz));
@@ -57,6 +62,17 @@ double getRcvdPowerBlake(double rngMeters, double freqMhz, double powerWatts, do
 
 double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb)
 {
+  if (xmtFreqMhz == 0.0)
+  {
+    assert(0); // Should not receive 0
+    xmtFreqMhz = 1.0; // Protect against divide by zero and log10(0) below
+  }
+  if (xmtrPwrWatts == 0.0)
+  {
+    assert(0); // Should not receive 0
+    xmtrPwrWatts = 1.0; // Protect against log10(0) below
+  }
+
   // Compute transmitter power in dB, function requires power in kilowatts
   const double xmtPwrDb = 10. * log10((xmtrPwrWatts * 1e-3) / (xmtFreqMhz * xmtFreqMhz));
 

@@ -334,6 +334,26 @@ TableStatus SubTable::addColumn(const std::string& columnName, TableColumnId col
   return TableStatus::Success();
 }
 
+TableStatus SubTable::removeColumn(TableColumnId columnId)
+{
+  std::map<TableColumnId, DataColumn*>::iterator mapIter = columnMap_.find(columnId);
+  if (mapIter == columnMap_.end())
+    return TableStatus::Error("Unrecognized column ID to remove from subtable.");
+
+  DataColumn* column = mapIter->second;
+  TableStatus rv = removeColumn_(columnId);
+  if (rv.isError())
+    return rv;
+
+  delete column;
+
+  // If that was the only column in the subtable, the table is now empty.  Clear the time container
+  if (columns_.empty())
+    timeContainer_->flush();
+
+  return TableStatus::Success();
+}
+
 TableStatus SubTable::removeColumn_(TableColumnId columnId)
 {
   // Remove from the map

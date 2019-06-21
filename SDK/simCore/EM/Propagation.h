@@ -28,8 +28,8 @@ namespace simCore
 {
   /**
   * This function returns the received power (dB) at the antenna using the free space received signal power calculation
-  * @param rngMeters Range from radar to target (m)
-  * @param freqMhz Transmitter frequency (MHz)
+  * @param rngMeters Range from radar to target (m), must be non-zero
+  * @param freqMhz Transmitter frequency (MHz), must be non-zero
   * @param powerWatts Transmitter peak power (Watts)
   * @param xmtGaindB Xmt antenna gain (dB)
   * @param rcvGaindB Rcv antenna gain (dB)
@@ -58,8 +58,8 @@ namespace simCore
   /**
   * This function returns the free space detection range (m) for an ESM receiver as well as an optional free space path loss (dB)
   * @param xmtGaindB Xmt antenna gain (dB)
-  * @param xmtFreqMhz Transmitter frequency (MHz)
-  * @param xmtrPwrWatts Transmitter peak power (Watts)
+  * @param xmtFreqMhz Transmitter frequency (MHz), must be non-zero
+  * @param xmtrPwrWatts Transmitter peak power (Watts), must be non-zero
   * @param rcvrSensDbm Receiver sensitivity (dBm)
   * @param fsLossDb Optional free space path loss calculation (dB)
   * @return Free space detection range for an ESM receiver (m).

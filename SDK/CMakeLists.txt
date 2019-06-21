@@ -2,9 +2,9 @@ project(SIMDIS_SDK)
 
 # Configure various version fields
 set(SIMDIS_SDK_MAJOR_VERSION 1)
-set(SIMDIS_SDK_MINOR_VERSION 10)
+set(SIMDIS_SDK_MINOR_VERSION 11)
 set(SIMDIS_SDK_REVISION_VERSION 0)
-set(SIMDIS_SDK_SOVERSION 10)
+set(SIMDIS_SDK_SOVERSION 11)
 set(SIMDIS_SDK_VERSION_STRING ${SIMDIS_SDK_MAJOR_VERSION}.${SIMDIS_SDK_MINOR_VERSION}.${SIMDIS_SDK_REVISION_VERSION} CACHE INTERNAL "SIMDIS SDK Version String" FORCE)
 
 # PostBuildInstallSharedObjects(TARGET [CUSTOM_TARGET_NAME])
@@ -28,7 +28,7 @@ macro(PostBuildInstallSharedObjects TARGET)
     if(MSVC)
         # Windows copies the DLLs into the runtime directory
         set(SHARED_LIBRARY_OUPUT_LOC ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_RUNTIME_DIR})
-    endif(MSVC)
+    endif()
 
     # Make sure the target directory exists
     add_custom_command(TARGET ${CMD_TARGET} PRE_BUILD

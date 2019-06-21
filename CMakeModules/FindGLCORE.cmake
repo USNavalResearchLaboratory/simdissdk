@@ -6,15 +6,15 @@
 #  GLCORE_INCLUDE_DIR // Parent directory of directory (gl, GL3, or OpenGL) containing the CP header.
 #  GLCORE_GLCOREARB_HEADER // advanced
 #
-# GLCORE_ROOT can be set as an environment variable or a CMake variable,
+# GLCORE_DIR can be set as an environment variable or a CMake variable,
 # to the parent directory of the gl, GL3, or OpenGL directory containing the CP header.
 #
 
 
 find_path(GLCORE_GLCOREARB_HEADER
     NAMES GL/glcorearb.h GL3/glcorearb.h OpenGL/glcorearb.h gl/glcorearb.h
-    HINTS ${GLCORE_ROOT}
-    PATHS ENV GLCORE_ROOT
+    HINTS ${GLCORE_DIR}
+    PATHS ENV GLCORE_DIR
 )
 
 set(GLCORE_INCLUDE_DIR)
@@ -27,7 +27,7 @@ endif()
 # GLCORE_FOUND to TRUE as appropriate
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(GLCORE
-    "Set GLCORE_ROOT as the parent of the directory containing the OpenGL core profile header."
+    "Set GLCORE_DIR as the parent of the directory containing the OpenGL core profile header."
     GLCORE_INCLUDE_DIR
 )
 

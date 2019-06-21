@@ -31,8 +31,7 @@
 
 #define LC "[RadialLOSNode] "
 
-using namespace simVis;
-
+namespace simVis {
 //----------------------------------------------------------------------------
 
 RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
@@ -43,8 +42,6 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
     isValid_(true),
     requireUpdateLOS_(true)
 {
-  callbackHook_ = new TerrainCallbackHook(this);
-
   geode_ = new osg::Geode();
 
   osg::StateSet* stateSet = geode_->getOrCreateStateSet();
@@ -60,9 +57,6 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
 #endif
 
   setMapNode(mapNode);
-
-  if (mapNode && mapNode->getTerrain())
-    mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 }
 
 RadialLOSNode::~RadialLOSNode()
@@ -115,7 +109,7 @@ bool RadialLOSNode::setCoordinate(const simCore::Coordinate& coord)
 
 void RadialLOSNode::setDataModel(const RadialLOS& los)
 {
-  if (!getMapNode())
+  if (!getMapNode() || !getMapNode()->getTerrain())
     return;
 
   RadialLOS newLOS = los;
@@ -124,6 +118,17 @@ void RadialLOSNode::setDataModel(const RadialLOS& los)
     los_ = newLOS;
     refreshGeometry_();
     losPrevious_ = los_;
+  }
+
+  // If the data model is using the scene graph for LOS computation,
+  // we need to listen for terrain changes and update the LOS dynamically.
+  if (los_.getUseSceneGraph())
+  {
+    if (callbackHook_.valid() == false)
+    {
+      callbackHook_ = new TerrainCallbackHook(this);
+      getMapNode()->getTerrain()->addTerrainCallback(callbackHook_.get());
+    }
   }
 }
 
@@ -377,4 +382,6 @@ void RadialLOSNode::refreshGeometry_()
 void RadialLOSNode::onTileAdded_(const osgEarth::TileKey& key, osg::Node* tile)
 {
   updateDataModel(key.getExtent(), tile);
+}
+
 }

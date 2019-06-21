@@ -1419,7 +1419,9 @@ void ToggleSwitchPainter::paint(const StyleOptionToggleSwitch& option, QPainter*
   painter->setBrush(valueStyle.track);
   painter->setOpacity(0.45);
   painter->setRenderHint(QPainter::Antialiasing, true);
-  const double halfHeight = r.track.height() * 0.5;
+  // Newer Qt with newer MSVC renders the rounded rect poorly if the rounding
+  // pixels argument is half of pixel height or greater; reduce to 0.49
+  const double halfHeight = r.track.height() * 0.49;
   painter->drawRoundedRect(r.track, halfHeight, halfHeight);
 
   // Draw the text next
@@ -1508,7 +1510,7 @@ CategoryTreeItemDelegate::~CategoryTreeItemDelegate()
 void CategoryTreeItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& inOption, const QModelIndex& index) const
 {
   // Initialize a new option struct that has data from the QModelIndex
-  QStyleOptionViewItemV4 opt(inOption);
+  QStyleOptionViewItem opt(inOption);
   initStyleOption(&opt, index);
 
   // Save the painter then draw based on type of node
@@ -1535,7 +1537,7 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
   }
 
   { // Draw the expand/collapse icon on left side
-    QStyleOptionViewItemV4 branchOpt(opt);
+    QStyleOptionViewItem branchOpt(opt);
     branchOpt.rect = r.branch;
     branchOpt.state &= ~QStyle::State_MouseOver;
     style->drawPrimitive(QStyle::PE_IndicatorBranch, &branchOpt, painter);

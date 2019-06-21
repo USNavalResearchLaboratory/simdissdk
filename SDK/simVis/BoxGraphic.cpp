@@ -109,6 +109,7 @@ void BoxGraphic::setGeometry(double x, double y, double width, double height)
   geom_->setVertex(1, osg::Vec3f(x + width, y, 0.f));
   geom_->setVertex(2, osg::Vec3f(x + width, y + height, 0.f));
   geom_->setVertex(3, osg::Vec3f(x, y + height, 0.f));
+  geom_->setVertex(4, osg::Vec3f(x, y, 0.f));
 }
 
 void BoxGraphic::setLineWidth(float lineWidth)
@@ -137,10 +138,10 @@ void BoxGraphic::setColor(const osg::Vec4& color)
 
 void BoxGraphic::create_()
 {
-  geom_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
+  geom_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
   geom_->setName("simVis::BoxGraphic");
   geom_->setDataVariance(osg::Object::DYNAMIC);
-  geom_->allocate(4);
+  geom_->allocate(5);
 
   setGeometry(x_, y_, width_, height_);
   setLineWidth(lineWidth_);

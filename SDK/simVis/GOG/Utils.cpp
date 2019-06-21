@@ -39,8 +39,6 @@
 #include "simVis/GOG/Parser.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace simVis;
-using namespace simVis::GOG;
 using namespace osgEarth;
 using namespace osgEarth::Annotation;
 using namespace osgEarth::Symbology;
@@ -53,6 +51,8 @@ static const float DEFAULT_LABEL_PRIORITY = 100.f;
 //------------------------------------------------------------------------
 
 #define LC "[GOG::UnitsState] "
+
+namespace simVis { namespace GOG {
 
 void Utils::applyLocalGeometryOffsets(LocalGeometryNode& node, ParserData& data, GOGNodeType nodeType, bool ignoreOffset)
 {
@@ -795,3 +795,5 @@ void ParserData::applyToAnnotationNode(osg::Node* annoGraph)
   // name the node after the GOG :)
   node->setName(name_);
 }
+
+} }

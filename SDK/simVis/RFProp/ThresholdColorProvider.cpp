@@ -23,7 +23,7 @@
 #include "simVis/Shaders.h"
 #include "simVis/RFProp/ThresholdColorProvider.h"
 
-using namespace simRF;
+namespace simRF {
 
 ThresholdColorProvider::ThresholdColorProvider()
  : belowColor_(0, 1, 0, 1),
@@ -122,4 +122,6 @@ void ThresholdColorProvider::uninstall(osg::StateSet* stateset)
   stateset->removeUniform(aboveColorUniform_.get());
   stateset->removeUniform(thresholdUniform_.get());
   stateset->removeUniform(modeUniform_.get());
+}
+
 }

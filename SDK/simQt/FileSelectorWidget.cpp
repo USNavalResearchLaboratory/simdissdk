@@ -293,6 +293,8 @@ QString FileSelectorWidget::filterOptions2QString_(FileSelectorWidget::FilterOpt
     return QString::fromStdString(simCore::SIMDIS_RASTER_DB_FILE_PATTERNS);
   case FileSelectorWidget::SIMDIS_MODEL_FILE_PATTERNS:
     return QString::fromStdString(simCore::SIMDIS_MODEL_FILE_PATTERNS);
+  case FileSelectorWidget::SIMDIS_IMAGE_FILE_PATTERNS:
+    return QString::fromStdString(simCore::SIMDIS_IMAGE_FILE_PATTERNS);
   case FileSelectorWidget::MEDIA_FILE_PATTERNS:
     return QString::fromStdString(simCore::MEDIA_FILE_PATTERNS);
   case FileSelectorWidget::SIMDIS_MEDIA_FILE_PATTERNS:

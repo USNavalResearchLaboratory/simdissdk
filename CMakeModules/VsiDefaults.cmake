@@ -28,7 +28,7 @@ endmacro()
 # Macro to configure Qt5 for VSI solutions; need to set Qt5Widgets_DIR and (for Windows) CMAKE_PREFIX_PATH
 macro(vsi_configure_qt5)
     # Figure out the expected version and expected folder based on VSI layout
-    set(EXPECTED_QT5_VERSION 5.5.1)
+    set(EXPECTED_QT5_VERSION 5.9.8)
     set(DEFAULT_QT_LOCATION "c:/QtSDK/${BUILD_SYSTEM_LIB_SUFFIX}/${EXPECTED_QT5_VERSION}")
     if(NOT WIN32)
         set(DEFAULT_QT_LOCATION "/usr/local/Qt-${EXPECTED_QT5_VERSION}")
@@ -121,7 +121,7 @@ else()
 endif()
 
 set(PROTOBUF_VERSION "2.6.0")
-# Note that OSG 3.6.3 is used against Qt 5.5.1 builds internally
+# Note that OSG 3.6.3 is used against Qt 5.9.8 builds internally
 set(OSG_VERSION "3.6.3")
 set(SQLITE_VERSION "3.8.11.1")
 set(GDAL_VERSION "2.1.1")

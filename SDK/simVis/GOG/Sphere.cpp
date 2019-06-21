@@ -31,8 +31,7 @@
 #include "simVis/GOG/Sphere.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace simVis::GOG;
-
+namespace simVis { namespace GOG {
 
 GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
                     simVis::GOG::ParserData& p,
@@ -47,6 +46,12 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
 
   float radius_m = radius.as(osgEarth::Units::METERS);
 
+  // cannot create a sphere with no radius
+  if (radius_m <= 0.f)
+  {
+    SIM_WARN << "Cannot create sphere with no radius\n";
+    return NULL;
+  }
   osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createSphere(
     radius_m, color);
   shape->setName("GOG Sphere");
@@ -75,3 +80,5 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
   }
   return rv;
 }
+
+} }

@@ -140,6 +140,16 @@ void FontWidget::setFontDir(const QString& fontDir)
   }
 }
 
+void FontWidget::setFontNameEnabled(bool enabled)
+{
+  ui_->fontNameComboBox->setEnabled(enabled);
+}
+
+bool FontWidget::customFontsAvailable() const
+{
+  return useFriendlyFontName_;
+}
+
 void FontWidget::setFontFile(const QString& fontFile)
 {
   // use QRawFont to convert the file name to a font family name

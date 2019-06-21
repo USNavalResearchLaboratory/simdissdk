@@ -19,9 +19,10 @@
  * disclose, or release this software.
  *
  */
-#include <QDialog>
-#include <QVBoxLayout>
 #include <QAbstractProxyModel>
+#include <QDialog>
+#include <QHeaderView>
+#include <QVBoxLayout>
 
 #include "simData/DataStoreHelpers.h"
 #include "simCore/Time/Clock.h"
@@ -75,6 +76,7 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   connect(tree_, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(accept())); // Have double click auto close the dialog
 
   QVBoxLayout* layout = new QVBoxLayout(this);
+  layout->setMargin(0);
   layout->addWidget(tree_);
   setLayout(layout);
 }

@@ -50,7 +50,7 @@ SettingsColorItemDelegate::SettingsColorItemDelegate(QObject* parent)
 
 void SettingsColorItemDelegate::paintItemBackground_(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-  QStyleOptionViewItemV4 opt = option;
+  QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
   opt.text.clear();
   QStyle *style = opt.widget ? opt.widget->style() : QApplication::style();
@@ -434,7 +434,7 @@ void SettingsHexEditDelegate::setModelData(QWidget* editor, QAbstractItemModel* 
 
 void SettingsHexEditDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-  QStyleOptionViewItemV4 opt = option;
+  QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
 
   // Convert the value to a hex string, converting to upper case and appending '0x'
@@ -523,7 +523,7 @@ void SettingsEnumerationDelegate::updateEditorGeometry(QWidget* editor, const QS
 
 void SettingsEnumerationDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-  QStyleOptionViewItemV4 opt = option;
+  QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
 
   // Pull out meta data and display data

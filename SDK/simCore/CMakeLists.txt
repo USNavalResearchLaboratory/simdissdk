@@ -202,6 +202,10 @@ if(SIMCORE_SHARED)
 else()
     target_compile_definitions(simCore PUBLIC simCore_LIB_EXPORT_STATIC)
 endif()
+
+# Determine whether time.h includes timespec
+include(TestTimespec)
+test_timespec(SDK_TIMESPEC)
 if(SDK_TIMESPEC)
     target_compile_definitions(simCore PUBLIC DEFINED_TIMESPEC_T)
 endif()

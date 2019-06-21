@@ -59,6 +59,12 @@ namespace simVis
     return true;
   }
 }
+
+// Some versions of Xlib.h define None, which conflicts with various code
+#ifdef None
+#undef None
+#endif
+
 #endif
 
 #endif

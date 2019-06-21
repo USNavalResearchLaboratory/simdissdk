@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <iomanip>
 #include "osg/CoordinateSystemNode"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Angle.h"
@@ -33,9 +34,6 @@
 #include "simVis/View.h"
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
-#include <iomanip>
-
-using namespace simUtil;
 
 #define LC "[PlatformSimulator] "
 
@@ -45,6 +43,8 @@ namespace
 {
   static osg::EllipsoidModel* ellip = new osg::EllipsoidModel();
 }
+
+namespace simUtil {
 
 //----------------------------------------------------------------------------
 PlatformSimulator::PlatformSimulator(simData::ObjectId platformId)
@@ -479,4 +479,6 @@ void SimulatorEventHandler::setTime(double t)
 double SimulatorEventHandler::getTime() const
 {
   return currentTime_;
+}
+
 }

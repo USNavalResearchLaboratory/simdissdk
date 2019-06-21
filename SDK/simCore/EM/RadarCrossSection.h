@@ -374,6 +374,7 @@ namespace simCore
 
     /**
     * This method computes the mean and median RCS values
+    * medianVec must not be empty
     */
     void computeStatistics_(std::vector<float> *medianVec);
   };

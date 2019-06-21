@@ -30,8 +30,9 @@
 #include "simVis/GOG/Utils.h"
 #include "simNotify/Notify.h"
 
-using namespace simVis::GOG;
 using namespace osgEarth::Features;
+
+namespace simVis { namespace GOG {
 
 GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
                     simVis::GOG::ParserData& p,
@@ -69,3 +70,5 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
   }
   return rv;
 }
+
+} }

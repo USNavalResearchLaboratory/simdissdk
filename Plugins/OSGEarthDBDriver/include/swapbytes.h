@@ -30,7 +30,7 @@
 #include "simCore/Common/Common.h"
 
 #if !defined(SIM_LITTLE_ENDIAN) && !defined(SIM_BIG_ENDIAN)
-#if defined(X86) || defined(ALPHA) || defined(__x86_64__) || defined(_WIN64)
+#if defined(X86) || defined(ALPHA) || defined(__x86_64__) || defined(_WIN64) || defined(WIN32)
 #define SIM_LITTLE_ENDIAN
 #endif
 #endif
@@ -96,10 +96,8 @@ namespace simVis_db
 
 #endif
 
-#if defined IRIX || defined Linux || defined WIN32
   inline
   void make_big_endian(char *const val) { make_big_endian_(val); }
-#endif
   inline
   void make_big_endian(int8_t *const val) { make_big_endian_(val); }
   inline
@@ -121,10 +119,8 @@ namespace simVis_db
   inline
   void make_big_endian(double *const val) { make_big_endian_(val); }
 
-#if defined IRIX || defined Linux || defined WIN32
   inline
   void make_little_endian(char *const val) { make_little_endian_(val); }
-#endif
   inline
   void make_little_endian(int8_t *const val) { make_little_endian_(val); }
   inline
@@ -347,10 +343,8 @@ namespace simVis_db
   // Specialized routines.
 
   // NULL routines.
-#if defined IRIX || defined Linux || defined WIN32
   template<> inline void swap_bytes(char *const value) {}
   template<> inline void swap_bytes(char *const value, register const size_t nItems) {}
-#endif
   template<> inline void swap_bytes(int8_t *const value) {}
   template<> inline void swap_bytes(uint8_t *const value) {}
   template<> inline void swap_bytes(int8_t *const value, register const size_t nItems) {}
@@ -383,9 +377,7 @@ namespace simVis_db
   template<class T> inline void make_little_endian_(T *const value) {}
   template<class T> inline void make_big_endian_(T *const value) { swap_bytes(value); }
 
-  #if defined IRIX || defined Linux || defined WIN32
   inline void make_big_endian(char *const value) {}
-  #endif
   inline void make_big_endian(int8_t *const value) {}
   inline void make_big_endian(uint8_t *const value) {}
   inline void make_big_endian(int16_t *const value) { *value=SWAP16(*value); }
@@ -411,9 +403,7 @@ namespace simVis_db
   template<class T> inline void make_big_endian_(T *const value) {}
   template<class T> inline void make_little_endian_(T *const value) { swap_bytes(value); }
 
-#if defined IRIX || defined Linux || defined WIN32
   inline void make_little_endian(char *const value) {}
-#endif
   inline void make_little_endian(int8_t *const value) {}
   inline void make_little_endian(uint8_t *const value) {}
   inline void make_little_endian(int16_t *const value) { *value=SWAP16(*value); }
@@ -484,9 +474,7 @@ namespace simVis_db
   template<class T> inline void make_little_endian_(T *const value, register const size_t nItems) {}
   template<class T> inline void make_big_endian_(T *const value, register const size_t nItems) { swap_bytes(value, nItems); }
 
-#if defined IRIX || defined Linux || defined WIN32
   inline void make_big_endian(char *const value, register const size_t nItems) {}
-#endif
   inline void make_big_endian(int8_t *const value, register const size_t nItems) {}
   inline void make_big_endian(uint8_t *const value, register const size_t nItems) {}
 
@@ -536,9 +524,7 @@ namespace simVis_db
   template<class T> inline void make_big_endian_(T *const value, register const size_t nItems) {}
   template<class T> inline void make_little_endian_(T *const value, register const size_t nItems) { swap_bytes(value, nItems); }
 
-#if defined IRIX || defined Linux || defined WIN32
   inline void make_little_endian(char *const value, register const size_t nItems) {}
-#endif
   inline void make_little_endian(int8_t *const value, register const size_t nItems) {}
   inline void make_little_endian(uint8_t *const value, register const size_t nItems) {}
 

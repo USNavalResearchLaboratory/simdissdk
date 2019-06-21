@@ -112,8 +112,8 @@ static const std::string SIMDIS_BOOKMARK_FILE_PATTERNS =
 
 /** Dialog-oriented user-friendly list of supported SIMDIS Bookmark format patterns to save/export */
 static const std::string SIMDIS_BOOKMARK_SAVE_FILE_PATTERNS =
-  "Media Player Bookmarks (*.toc)\n"
   "Bookmark XML (*.bml)\n"
+  "Media Player Bookmarks (*.toc)\n"
   "All Files (*)";
 
 /** Dialog-oriented user-friendly list of SIMDIS 9 Terrain Configuration File patterns */
@@ -148,6 +148,10 @@ static const std::string SIMDIS_MODEL_FILE_PATTERNS =
   "SIMDIS Model Files (*.opt,*.3db,*.flt,*.osg,*.osga,*.osgb,*.ive,*.obj,*.3ds,*.lwo,*.dxf,*.ac)\n"
   "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp)\n"
   "Media Player Video Icons (*.tmd,*.lst)\n"
+  "All Files (*)";
+/** Dialog-oriented user-friendly list of SIMDIS supported image format patterns. */
+static const std::string SIMDIS_IMAGE_FILE_PATTERNS =
+  "Image Files (*.png,*.gif,*.jpg,*.jpeg,*.rgb,*.tif,*.tiff,*.bmp)\n"
   "All Files (*)";
 
 /** Media Player file format patterns, separated by commas */

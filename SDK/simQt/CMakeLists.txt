@@ -45,6 +45,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}UnitsComboBox.h
 )
 set(SIMQT_HEADERS
+    ${SIMQT_INC}ColorGradient.h
     ${SIMQT_INC}ConsoleChannel.h
     ${SIMQT_INC}FileDialog.h
     ${SIMQT_INC}FileUtilities.h
@@ -114,6 +115,9 @@ if(TARGET simVis)
 endif()
 
 if(OSG_FOUND)
+    list(APPEND SIMQT_HEADERS_TO_MOC
+        ${SIMQT_INC}ColorGradientWidget.h
+    )
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}QtConversion.h
     )
@@ -136,6 +140,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}ActionItemModel.cpp
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
+    ${SIMQT_SRC}ColorGradient.cpp
     ${SIMQT_SRC}ColorWidget.cpp
     ${SIMQT_SRC}ConsoleChannel.cpp
     ${SIMQT_SRC}ConsoleDataModel.cpp
@@ -225,6 +230,7 @@ endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_SOURCES
+        ${SIMQT_SRC}ColorGradientWidget.cpp
         ${SIMQT_SRC}QtConversion.cpp
     )
 endif()
@@ -244,6 +250,12 @@ set(SIMQT_FORMS
     ${SIMQT_INC}SearchLineEditQt4.ui
     ${SIMQT_INC}TimeButtons.ui
 )
+if(OSG_FOUND)
+    list(APPEND SIMQT_FORMS
+        ${SIMQT_INC}ColorGradientWidget.ui
+    )
+endif()
+
 set(SIMQT_RESOURCES
     ${SIMQT_INC}simQtResources.qrc
 )
@@ -293,7 +305,7 @@ if(TARGET simVis)
     )
 
     # Gl3FormatGuesser depends on OpenGL libraries
-    target_link_libraries(simQt PRIVATE ${OPENGL_LIBRARIES})
+    target_link_libraries(simQt PRIVATE VSI::GL)
 endif()
 
 # Link against OpenGL if OSGQT is found to support simQt::ViewWidget
@@ -319,26 +331,11 @@ else()
 endif()
 if(TARGET simData)
     target_compile_definitions(simQt PRIVATE HAVE_SIMDATA)
+    target_link_libraries(simQt PUBLIC simData)
 endif()
 if(TARGET simVis)
     target_compile_definitions(simQt PRIVATE HAVE_SIMVIS)
-endif()
-
-# If simQt is a DLL, avoid linking in "heavy" dependencies if possible
-if(SIMQT_SHARED OR NOT SIMVIS_SHARED OR NOT SIMDATA_SHARED)
-    if(TARGET simData)
-        target_link_libraries(simQt PUBLIC simData)
-    endif()
-    if(TARGET simVis)
-        target_link_libraries(simQt PRIVATE simVis)
-    endif()
-else()
-    if(TARGET simData)
-        target_include_directories(simQt PUBLIC $<BUILD_INTERFACE:${SIMDIS_SDK_BINARY_DIR}/simData>)
-    endif()
-    if(TARGET simVis)
-        target_include_directories(simQt PRIVATE ${SIMDIS_SDK_BINARY_DIR}/simVis/include)
-    endif()
+    target_link_libraries(simQt PRIVATE simVis)
 endif()
 
 if(TARGET OSGQT)

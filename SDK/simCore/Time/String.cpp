@@ -137,12 +137,15 @@ int MinutesTimeFormatter::fromString(const std::string& timeString, simCore::Tim
 
 void MinutesTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision)
 {
-  seconds = seconds.rounded(precision);
+  const bool isNegative = (seconds < 0);
+  seconds = fabs(seconds.rounded(precision));
   // Rely on static_cast<> to floor the value
   int minutes = static_cast<int>(seconds.Double() / 60.0);
   seconds -= minutes * 60.0;
   // Account for the decimal spot when setting the width
   int numSpaces = precision + (precision == 0 ? 0 : 1);
+  if (isNegative)
+    os << "-";
   os << minutes << ':' << std::setw(2 + numSpaces) << std::setfill('0');
   // Add the seconds value
   SecondsTimeFormatter::toStream(os, seconds, precision);
@@ -232,10 +235,13 @@ int HoursTimeFormatter::fromString(const std::string& timeString, simCore::Secon
 
 void HoursTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision)
 {
-  seconds = seconds.rounded(precision);
+  const bool isNegative = (seconds < 0);
+  seconds = fabs(seconds.rounded(precision));
   // Rely on static_cast<> to floor the value
   int hours = static_cast<int>(seconds.Double() / 3600.0);
   seconds -= hours * 3600.0;
+  if (isNegative)
+    os << "-";
   os << hours << ':' << std::setfill('0') << std::setw(2);
   // Add the minutes value and seconds value
   MinutesTimeFormatter::toStream(os, seconds, precision);

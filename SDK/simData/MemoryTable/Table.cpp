@@ -282,6 +282,48 @@ TableStatus Table::addColumn(const std::string& columnName, VariableType storage
   return TableStatus::Success();
 }
 
+TableStatus Table::removeColumn(const std::string& columnName)
+{
+  auto colByNameIter = columnsByName_.find(columnName);
+  if (colByNameIter == columnsByName_.end())
+    return TableStatus::Error("Column \"" + columnName + "\" does not exist.");
+
+  TableColumn* column = colByNameIter->second;
+  if (!column)
+  {
+    // Shouldn't be storing a NULL column
+    assert(0);
+    return TableStatus::Error("Column \"" + columnName + "\" does not exist.");
+  }
+  auto columnsIter = columns_.find(column->columnId());
+  // If it's in columnsByName_, it should be columns_
+  assert(columnsIter != columns_.end());
+  if (columnsIter == columns_.end())
+    return TableStatus::Error("Column \"" + columnName + "\" does not exist.");
+
+  // Fire off the observers before doing the actual remove
+  fireOnPreRemoveColumn_(*column);
+
+  auto subtable = columnsIter->second.first;
+  if (!subtable)
+  {
+    // Shouldn't be storing a NULL subtable pointer
+    assert(0);
+    return TableStatus::Error("Column \"" + columnName + "\" does not exist.");
+  }
+  // Attempt to remove the column from the subtable
+  TableStatus rv = subtable->removeColumn(column->columnId());
+  if (rv.isError())
+    return rv;
+
+  // Note that subtables_ does not need to be updated even if the subtable is now empty since addColumn() can make use of empty sub tables in the table
+
+  columns_.erase(columnsIter);
+  columnsByName_.erase(colByNameIter);
+
+  return TableStatus::Success();
+}
+
 /**
  * Collection of subtable iterators, used to implement the Table::accept()
  * method for row visitation.
