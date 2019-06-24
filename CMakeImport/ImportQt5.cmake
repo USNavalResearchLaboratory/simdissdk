@@ -48,9 +48,8 @@ mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
 
-# If all looks good here, set the CMAKE_PREFIX_PATH
+# Need to be able to find glu32.lib -- different places for different builders
 if(WIN32 AND IS_DIRECTORY "${Qt5Widgets_DIR}")
-    # Need to be able to find glu32.lib -- different places for different builders
     if(CMAKE_CL_64)
         set(QT_GLU_PATHS
             "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x64"
@@ -104,14 +103,14 @@ macro(INSTALL_QT5_LIB LIBNAME)
         get_target_property(DEBUG_DLL Qt5::${LIBNAME} LOCATION_Debug)
         if(RELEASE_DLL)
             INSTALL(FILES ${RELEASE_DLL}
-                DESTINATION bin/${BUILD_HWOS}
+                DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
                 CONFIGURATIONS Release
                 COMPONENT ThirdPartyLibs
             )
         endif()
         if(DEBUG_DLL)
             INSTALL(FILES ${DEBUG_DLL}
-                DESTINATION bin/${BUILD_HWOS}
+                DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
                 CONFIGURATIONS Debug
                 COMPONENT ThirdPartyLibs
             )
@@ -119,12 +118,12 @@ macro(INSTALL_QT5_LIB LIBNAME)
     else()
         set(QT5_LIBRARY_DIR "${Qt5Widgets_DIR}/../..")
         INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.5
-            DESTINATION lib/${BUILD_HWOS}
+            DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs
         )
         INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.${EXPECTED_QT5_VERSION}
-            DESTINATION lib/${BUILD_HWOS}
+            DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
             CONFIGURATIONS Release
             COMPONENT ThirdPartyLibs
         )
@@ -135,20 +134,20 @@ endmacro()
 macro(install_qtplugins dir)
     if(WIN32)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
-            DESTINATION bin/${BUILD_HWOS}/
+            DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
             COMPONENT ThirdPartyLibs
             FILES_MATCHING PATTERN *.dll
             PATTERN *d.dll EXCLUDE)
     else()
         # Note that Qt requires the Linux shared objects in the executable's subdirectory (e.g. bin)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
-            DESTINATION bin/${BUILD_HWOS}/
+            DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
             COMPONENT ThirdPartyLibs
             FILES_MATCHING PATTERN *.so)
     endif()
 endmacro()
 
-set(QT_DESIGNER_PLUGIN_DIR "${_qt5Core_install_prefix}/plugins/designer")
+# Install each of the always-on libs
 INSTALL_QT5_LIB(Core)
 INSTALL_QT5_LIB(Gui)
 INSTALL_QT5_LIB(Widgets)
@@ -162,6 +161,7 @@ install_qtplugins(platforms)
 install_qtplugins(imageformats)
 
 # At this point, the Widgets package is found -- find the others too
+set(QT_DESIGNER_PLUGIN_DIR "${_qt5Core_install_prefix}/plugins/designer")
 foreach(PACKAGENAME IN LISTS QT5_MODULES)
     find_package(Qt5${PACKAGENAME} QUIET)
     if(TARGET Qt5::${PACKAGENAME})
@@ -175,7 +175,7 @@ foreach(PACKAGENAME IN LISTS QT5_MODULES)
     endif()
 endforeach()
 
-# Install each of the configure plugins
+# Install each of the configured plugins
 foreach(PLUGINNAME in LISTS QT5_PLUGINS)
     install_qtplugins(${PLUGINNAME})
 endforeach()

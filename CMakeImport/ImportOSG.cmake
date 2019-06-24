@@ -236,6 +236,8 @@ endif()
 
 # Set the full install path to the plugin directory
 set(OSG_PLUGIN_INSTALL_DIR ${OSG_PLUGIN_INSTALL_DIR}/osgPlugins-${OSG_VERSION})
+# Configure a INSTALLSETTINGS_OSGPLUGIN_DIR that tells us where to install plugins
+set(INSTALLSETTINGS_OSGPLUGIN_DIR ${OSG_PLUGIN_INSTALL_DIR})
 
 set(OSG_COMMON_LIBDEPENDENCIES
     OSG OSGDB OSGGA OSGUTIL OSGVIEWER OPENTHREADS
