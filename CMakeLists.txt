@@ -160,6 +160,7 @@ include(CreateInstallProperties)
 
 
 # --- System Libraries --------------------
+include(ImportSocket)
 include(ImportOpenGL)
 
 # ---Qt------------------------------------
