@@ -60,9 +60,9 @@ endif()
 
 # Include base macros required by other macros
 include(BuildSystemVariables)
+include(EnableGccNewCxxFeatures)
 include(HelperFunctions)
 include(CheckOSGEarthMethodExists)
-
 
 # Determine endian-ness of current system (CMake provided test)
 # SDK_BIG_ENDIAN is set to 0 or 1 (false or true) depending on result of test
@@ -156,6 +156,9 @@ set(OSG_INCLUDE_DIR ${OSG_DIR}/include)
 # OsgVariables.cmake needs to come before CreateInstallProperties to ensure proper placement of OSG DLLs
 # else INSTALLSETTINGS_OSGPLUGIN_DIR will be set improperly
 include(OsgVariables)
+# Prepopulate the installation runtime and library directory to override SIMDIS defaults
+set(INSTALLSETTINGS_RUNTIME_DIR "bin" CACHE STRING "Directory containing exectuables and DLLs; non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
+set(INSTALLSETTINGS_LIBRARY_DIR "lib" CACHE STRING "Directory containing shared object files (UNIX only); non-absolute paths are relative to CMAKE_INSTALL_PREFIX")
 include(CreateInstallProperties)
 
 

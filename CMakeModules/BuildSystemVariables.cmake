@@ -1,15 +1,17 @@
 # Define system specific parameters:
-# BUILD_SYSTEM_NAME {win|linux}
+# BUILD_SYSTEM_OS {win|linux}
 # BUILD_SYSTEM_ARCH {x86|amd64}
-# BUILD_TARGET_ARCH {x86|amd64}
-# BUILD_SYSTEM_OS {nt|linux}
-# BUILD_COMPILER {vc-10.0|vc-11.0|vc-12.0|vc-14.0|gcc-4.4}
+# BUILD_COMPILER {vc-10.0|vc-12.0|vc-14.0|vc-14.1|vc-14.2|gcc-4.4}
+# DEPRECATED_BUILD_COMPILER {vc-10.0|vc-12.0|vc-14.0|vc-14.1|vc-14.2|gcc-4.4}
 # BUILD_COMPILER_NAME {vc|${CMAKE_C_COMPILER}}
-# BUILD_COMPILER_VERSION 
+# BUILD_COMPILER_VERSION (Compiler name with max and min version numbers)
+# DEPRECATED_BUILD_COMPILER_VERSION (Compiler name with max, min, and patch version numbers)
 # BUILD_COMPILER_MAJOR_VERSION
 # BUILD_COMPILER_MINOR_VERSION
-# BUILD_SYSTEM_LIB_SUFFIX
+# BUILD_SYSTEM_CANONICAL_NAME {${BUILD_PLATFORM}_${BUILD_COMPILER}}
+# BUILD_SYSTEM_LIB_SUFFIX     (Similar to BUILD_SYSTEM_CANONICAL_NAME, but uses DEPRECATED_BUILD_COMPILER for GCC to match old style lib names)
 # BUILD_TYPE {32|64}
+# BUILD_HWOS {x86-nt|amd64-nt|amd64-linux}
 # BUILD_PLATFORM {win32|win64|linux64}
 
 # CMAKE_SYSTEM_PROCESSOR is set to the PROCESSOR_ARCHITECTURE value (eg x86 or AMD64) for Windows and uname -p result or UNIX/Linux
@@ -31,28 +33,34 @@ if(WIN32)
         set(BUILD_SYSTEM_ARCH "x86")
     endif()
 elseif(UNIX)
-    if(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND COMPILE_32_ON_64)
-        set(BUILD_TYPE "32")
+    if(BUILD_SYSTEM_ARCH STREQUAL "amd64")
+        set(BUILD_TYPE "64")
     else()
-        if(BUILD_SYSTEM_ARCH STREQUAL "x86")
-            set(BUILD_TYPE "32")
-        else()
-            set(BUILD_TYPE "64")
-        endif()
+        set(BUILD_TYPE "32")
     endif()
 endif()
 
 
 # Get system name
 if(WIN32)
-    set(BUILD_SYSTEM_NAME win)
-    set(BUILD_SYSTEM_OS nt)
+    set(BUILD_SYSTEM_OS win)
 elseif(UNIX)
-    set(BUILD_SYSTEM_NAME linux)
-    set(BUILD_SYSTEM_OS ${BUILD_SYSTEM_NAME})
+    set(BUILD_SYSTEM_OS linux)
 endif()
 
-set(BUILD_PLATFORM "${BUILD_SYSTEM_NAME}${BUILD_TYPE}")
+set(BUILD_PLATFORM "${BUILD_SYSTEM_OS}${BUILD_TYPE}")
+
+# Set HWOS value
+if(WIN32)
+    set(OS_TYPE "nt")
+else()
+    set(OS_TYPE ${BUILD_SYSTEM_OS})
+endif()
+if(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND NOT BUILD_TYPE STREQUAL "64")
+    set(BUILD_HWOS "x86-${OS_TYPE}")
+else()
+    set(BUILD_HWOS "${BUILD_SYSTEM_ARCH}-${OS_TYPE}")
+endif()
 
 # Get compiler info
 if(MSVC)
@@ -72,59 +80,55 @@ if(MSVC)
     math(EXPR BUILD_COMPILER_VERSION_MINOR "( ${MSVC_VERSION} % 100 ) / 10")
     # Put them together to form something like 9.0, 10.0, 7.1, etc.
     set(BUILD_COMPILER_VERSION "${BUILD_COMPILER_VERSION_MAJOR}.${BUILD_COMPILER_VERSION_MINOR}")
-elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    set(DEPRECATED_BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
+elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang\\+\\+$")
     # Intel compiler will use latest gcc build version for third party libraries
     set(BUILD_COMPILER_NAME gcc)
     set(BUILD_COMPILER_VERSION "4.4")
+    set(DEPRECATED_BUILD_COMPILER_VERSION "4.4.7")
 else()
     # Get compiler name and version (gcc and gcc-compatible compilers)
     exec_program(${CMAKE_C_COMPILER} ARGS --version OUTPUT_VARIABLE BUILD_COMPILER_VERSION)
-    string(REGEX REPLACE "([A-Za-z0-9])[ ].*" "\\1" BUILD_COMPILER_NAME ${BUILD_COMPILER_VERSION})
-    string(REGEX REPLACE ".*([0-9]\\.[0-9]\\.[0-9]).*" "\\1" BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
     set(BUILD_COMPILER_NAME gcc)
+    string(REGEX REPLACE ".*([0-9]\\.[0-9]\\.[0-9]).*" "\\1" DEPRECATED_BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
+    string(REGEX REPLACE ".*([0-9]\\.[0-9])\\.[0-9].*" "\\1" BUILD_COMPILER_VERSION ${BUILD_COMPILER_VERSION})
 endif()
 
 # Extract major and minor version numbers
-string(REGEX REPLACE "([0-9]+)\\.[0-9]+(\\.[0-9]+)?" "\\1" BUILD_COMPILER_MAJOR_VERSION ${BUILD_COMPILER_VERSION})
-string(REGEX REPLACE "[0-9]+\\.([0-9]+)(\\.[0-9]+)?" "\\1" BUILD_COMPILER_MINOR_VERSION ${BUILD_COMPILER_VERSION})
+string(REGEX REPLACE "([0-9]+)\\.[0-9]+" "\\1" BUILD_COMPILER_MAJOR_VERSION ${BUILD_COMPILER_VERSION})
+string(REGEX REPLACE "[0-9]+\\.([0-9]+)" "\\1" BUILD_COMPILER_MINOR_VERSION ${BUILD_COMPILER_VERSION})
 
 
-# Set the suffix for libraries.  Currently 32 bit only expected.  
+# Set the suffix for libraries
 if(WIN32)
     set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
+    set(BUILD_SYSTEM_CANONICAL_NAME "${BUILD_PLATFORM}_${BUILD_COMPILER}")
+
+    set(DEPRECATED_BUILD_COMPILER "${BUILD_COMPILER}")
     set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${BUILD_COMPILER}")
 else()
-    # Default to 4.4 unless we have good info otherwise
+    # These strings help identify the 3rd party libraries to link to
     set(BUILD_COMPILER_VERSION "4.4")
+    set(DEPRECATED_BUILD_COMPILER_VERSION "4.4")
     set(BUILD_COMPILER "${BUILD_COMPILER_NAME}-${BUILD_COMPILER_VERSION}")
-    set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${BUILD_COMPILER}")
+    set(BUILD_SYSTEM_CANONICAL_NAME "${BUILD_PLATFORM}_${BUILD_COMPILER}")
+
+    set(DEPRECATED_BUILD_COMPILER "${BUILD_COMPILER_NAME}-${DEPRECATED_BUILD_COMPILER_VERSION}")
+    set(BUILD_SYSTEM_LIB_SUFFIX "${BUILD_PLATFORM}_${DEPRECATED_BUILD_COMPILER}")
 endif()
-
-# Trying library search based on compiler major and minor version...
-set(BUILD_SYSTEM_LIB_SUFFIX_MAJOR_MINOR "${BUILD_PLATFORM}_${BUILD_COMPILER_NAME}-${BUILD_COMPILER_MAJOR_VERSION}\\.${BUILD_COMPILER_MINOR_VERSION}.*")
-
-# Trying library search based on compiler major and version...
-set(BUILD_SYSTEM_LIB_SUFFIX_MAJOR "${BUILD_PLATFORM}_${BUILD_COMPILER_NAME}-${BUILD_COMPILER_MAJOR_VERSION}.*")
-
-# Enable GCC C++XX features
-include(CMakeModules/EnableGccNewCxxFeatures.cmake)
 
 if(VERBOSE)
     message(STATUS "Configuration Details:")
-    message(STATUS "  BUILD_SYSTEM_NAME\t\t${BUILD_SYSTEM_NAME}")
-    message(STATUS "  BUILD_SYSTEM_ARCH\t\t${BUILD_SYSTEM_ARCH}")
     message(STATUS "  BUILD_SYSTEM_OS\t\t${BUILD_SYSTEM_OS}")
+    message(STATUS "  BUILD_SYSTEM_ARCH\t\t${BUILD_SYSTEM_ARCH}")
     message(STATUS "  BUILD_COMPILER\t\t${BUILD_COMPILER}")
+    message(STATUS "  DEPRECATED_BUILD_COMPILER\t${DEPRECATED_BUILD_COMPILER}")
     message(STATUS "  BUILD_COMPILER_NAME\t\t${BUILD_COMPILER_NAME}")
     message(STATUS "  BUILD_COMPILER_VERSION\t${BUILD_COMPILER_VERSION}")
+    message(STATUS "  DEPRECATED_BUILD_COMPILER_VERSION\t${DEPRECATED_BUILD_COMPILER_VERSION}")
+    message(STATUS "  BUILD_SYSTEM_CANONICAL_NAME\t${BUILD_SYSTEM_CANONICAL_NAME}")
     message(STATUS "  BUILD_SYSTEM_LIB_SUFFIX\t${BUILD_SYSTEM_LIB_SUFFIX}")
     message(STATUS "  BUILD_TYPE\t\t${BUILD_TYPE}")
+    message(STATUS "  BUILD_HWOS\t\t${BUILD_HWOS}")
     message(STATUS "  BUILD_PLATFORM\t\t${BUILD_PLATFORM}")
-    if(BUILD_SYSTEM_ARCH STREQUAL "amd64" AND UNIX)
-        if(COMPILE_32_ON_64)
-            message(STATUS "  COMPILE_32_ON_64\t\tTrue")
-        else()
-            message(STATUS "  COMPILE_32_ON_64\t\tFalse")
-        endif()
-    endif()
 endif()

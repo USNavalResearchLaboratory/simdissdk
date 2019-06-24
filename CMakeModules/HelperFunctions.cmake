@@ -101,11 +101,7 @@ endfunction()
 
 # Wrapper for Qt form files (.ui)
 macro(VSI_QT_WRAP_UI DEST)
-    if(Qt5Widgets_FOUND)
-        QT5_WRAP_UI(${DEST} ${ARGN})
-    else()
-        QT4_WRAP_UI(${DEST} ${ARGN})
-    endif()
+    QT5_WRAP_UI(${DEST} ${ARGN})
     SOURCE_GROUP("Qt\\Form Files" FILES ${ARGN})
     SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
 endmacro()
@@ -113,33 +109,20 @@ endmacro()
 # Wrapper for header files with the Qt macro QOBJECT
 macro(VSI_QT_WRAP_CPP DEST)
     if(NOT CMAKE_AUTOMOC)
-        if(Qt5Widgets_FOUND)
-            QT5_WRAP_CPP(${DEST} ${ARGN})
-        else()
-            QT4_WRAP_CPP(${DEST} ${ARGN})
-        endif()
+        QT5_WRAP_CPP(${DEST} ${ARGN})
         SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
     endif()
 endmacro()
 
 # Wrapper for Qt resource files (.qrc)
 macro(VSI_QT_ADD_RESOURCES DEST)
-    if(Qt5Widgets_FOUND)
-        QT5_ADD_RESOURCES(${DEST} ${ARGN})
-    else()
-        QT4_ADD_RESOURCES(${DEST} ${ARGN})
-    endif()
+    QT5_ADD_RESOURCES(${DEST} ${ARGN})
     SOURCE_GROUP("Qt\\Resource Files" FILES ${ARGN})
     SOURCE_GROUP("Qt\\Generated Files" FILES ${${DEST}})
 endmacro()
 
 macro(VSI_INCLUDE_QT_USE_FILE)
-    foreach(ARG ${ARGN})
-        set(QT_USE_${ARG} TRUE)
-    endforeach()
-    if(QT4_FOUND)
-        include(${QT_USE_FILE})
-    endif()
+    # Noop; only for Qt4 support
 endmacro()
 
 macro(VSI_QT_USE_MODULES TARGET LINK_TYPE)
@@ -339,7 +322,7 @@ function(vsi_install_shared_library TARGET COMPONENT)
     # Pull out custom target property TARGET_EXPORT_NAME
     get_target_property(TARGET_EXPORT_NAME ${TARGET} TARGET_EXPORT_NAME)
     if(NOT TARGET_EXPORT_NAME)
-        set(TARGET_EXPORT_NAME)
+        set(TARGET_EXPORT_NAME ${TARGET}Targets)
     endif()
 
     install(TARGETS ${TARGET}
@@ -411,7 +394,7 @@ function(vsi_install_static_library TARGET COMPONENT)
     # Pull out custom target property TARGET_EXPORT_NAME
     get_target_property(TARGET_EXPORT_NAME ${TARGET} TARGET_EXPORT_NAME)
     if(NOT TARGET_EXPORT_NAME)
-        set(TARGET_EXPORT_NAME)
+        set(TARGET_EXPORT_NAME ${TARGET}Targets)
     endif()
 
     install(TARGETS ${TARGET}
@@ -434,8 +417,9 @@ function(vsi_install_target TARGET COMPONENT)
         if(IS_IMPORTED)
             vsi_install_imported_shared_library(${TARGET} ${COMPONENT})
         else()
-            get_target_property(TARGET_PREFIX ${TARGET} PREFIX)
-            if(TARGET_PREFIX STREQUAL "pi")
+            # Don't rely on PREFIX -- it can be changed; instead rely on IS_PLUGIN custom property
+            get_target_property(TARGET_IS_PLUGIN ${TARGET} IS_PLUGIN)
+            if(TARGET_IS_PLUGIN)
                 vsi_install_plugin(${TARGET} ${COMPONENT})
             else()
                 vsi_install_shared_library(${TARGET} ${COMPONENT})
@@ -447,3 +431,72 @@ function(vsi_install_target TARGET COMPONENT)
         message(WARNING "Unsupported install on target ${TARGET} with type ${TARGET_TYPE}.")
     endif()
 endfunction()
+
+# vsi_install_export(TARGET VERSION COMPATIBILITY)
+#
+# Given a library TARGET that is being exported, installs a generated <TARGET>Targets.cmake
+# file, a generated <TARGET>ConfigVersion.cmake, and either a generated or in-source
+# <TARGET>Config.cmake file.  The files get installed to <INSTALLSETTINGS_CMAKE_DIR>/<TARGET>.
+#
+# The generated Targets file includes the namespace "VSI::".  The library gets installed to
+# <INSTALLSETTINGS_SHARED_LIBRARY_DIR> or <INSTALLSETTINGS_LIBRARY_DIR> as appropriate.
+#
+# This function also creates a new alias target VSI::<TARGET> for ease of use, so that in-source
+# builds and out-of-source builds can refer to the target by the same name.
+function(vsi_install_export TARGET VERSION COMPATIBILITY)
+    install(TARGETS ${TARGET} EXPORT ${TARGET}Targets
+        LIBRARY DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}
+        ARCHIVE DESTINATION ${INSTALLSETTINGS_LIBRARY_DIR}
+    )
+    install(EXPORT ${TARGET}Targets
+        FILE ${TARGET}Targets.cmake
+        NAMESPACE VSI::
+        DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET}
+    )
+
+    # Create the ConfigVersion.cmake file for the target
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file("${TARGET}ConfigVersion.cmake"
+        VERSION ${VERSION}
+        COMPATIBILITY ${COMPATIBILITY}
+    )
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}ConfigVersion.cmake"
+         DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET}
+    )
+
+    # Use a locally defined <TARGET>Config.cmake if possible
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake")
+        install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}Config.cmake"
+             DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET})
+    else()
+        # Create the placeholder file, only once (don't continuously overwrite)
+        if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake")
+            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake" "include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET}Targets.cmake\")\n")
+        endif()
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
+             DESTINATION ${INSTALLSETTINGS_CMAKE_DIR}/${TARGET})
+    endif()
+
+    # Create an alias library
+    add_library(VSI::${TARGET} ALIAS ${TARGET})
+endfunction()
+
+# vsi_find_package()
+#
+# Wraps find_package(), returning if VSI::PackageName is already defined.
+function(vsi_find_package)
+    if(NOT TARGET VSI::${ARGV0})
+        find_package(${ARGV})
+    endif()
+endfunction()
+
+# vsi_require_target(...)
+#
+# Given a list of targets, calls return() if any target does not exist.
+macro(vsi_require_target)
+    foreach(target ${ARGN})
+        if(NOT TARGET ${target})
+            return()
+        endif()
+    endforeach()
+endmacro()

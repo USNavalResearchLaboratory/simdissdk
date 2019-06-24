@@ -176,7 +176,7 @@ foreach(PACKAGENAME IN LISTS QT5_MODULES)
 endforeach()
 
 # Install each of the configured plugins
-foreach(PLUGINNAME in LISTS QT5_PLUGINS)
+foreach(PLUGINNAME IN LISTS QT5_PLUGINS)
     install_qtplugins(${PLUGINNAME})
 endforeach()
 
