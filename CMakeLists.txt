@@ -170,7 +170,8 @@ include(ImportQT)
 
 # --- OpenSceneGraph ----------------------
 
-# OSG requires GDAL
+# OSG requires GDAL, and VSI-distributed GDAL requires MrSID
+include(ImportMrSID)
 include(ImportGDAL)
 
 # import the package OSG and its companion OpenThreads

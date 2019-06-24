@@ -1,75 +1,105 @@
-# Finds and imports Protocol Buffers library.
+# Setup PROTOBUF library
+# Setting the PROTOBUF_DIR environment variable will allow use of a custom built library
 
-# First try to check PROTOBUF_DIR from PublicDefaults.cmake / CMake Cache
-if(PROTOBUF_DIR)
-    # Configure the protobuf variables for find_package(Protobuf) to work
-    find_library(PROTOBUF_LIBRARY
-        NAMES protobuf-2.6 libprotobuf-2.6 protobuf libprotobuf
-        PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
-    find_library(PROTOBUF_LIBRARY_DEBUG
-        NAMES protobuf-2.6_d libprotobuf-2.6_d protobuf_d libprotobuf_d
-        PATHS "${PROTOBUF_DIR}/lib" NO_DEFAULT_PATH)
-    find_program(PROTOBUF_PROTOC_EXECUTABLE NAMES protoc PATHS "${PROTOBUF_DIR}/bin" NO_DEFAULT_PATH)
-    find_path(PROTOBUF_INCLUDE_DIR NAME google/protobuf/stubs/common.h PATHS "${PROTOBUF_DIR}/include" NO_DEFAULT_PATH)
+set(PROTOBUF_SUBDIR 2.6.0)
 
-    # Determine whether we found the library correctly
-    if(NOT PROTOBUF_LIBRARY)
-        set(PROTOBUF_FOUND FALSE)
-        mark_as_advanced(CLEAR PROTOBUF_INCLUDE_DIR PROTOBUF_LIBRARY PROTOBUF_LIBRARY_DEBUG PROTOBUF_PROTOC_EXECUTABLE)
-    else()
-        mark_as_advanced(FORCE PROTOBUF_INCLUDE_DIR PROTOBUF_LIBRARY PROTOBUF_LIBRARY_DEBUG PROTOBUF_PROTOC_EXECUTABLE)
-        set(PROTOBUF_FOUND TRUE)
-    endif()
-endif()
+# Setup search paths
+initialize_ENV(PROTOBUF_DIR)
+set(INCLUDE_DIRS 
+    $ENV{PROTOBUF_DIR}/include
+    ${THIRD_DIR}/protobuf/${PROTOBUF_SUBDIR}/include
+    ${THIRD_DIR}/protobuf-${PROTOBUF_SUBDIR}/include
+)
 
-# Defer to the find_package() to fill out any variables that we don't have from defaults
-if(NOT PROTOBUF_FOUND)
-    # Note that this may change PROTOBUF_FOUND value
-    find_package(Protobuf)
-endif()
+set(LIB_DIRS 
+    $ENV{PROTOBUF_DIR}/lib
+    ${THIRD_DIR}/protobuf/${PROTOBUF_SUBDIR}/lib
+    ${THIRD_DIR}/protobuf-${PROTOBUF_SUBDIR}/lib
+)
 
-# Tell end user if there is a problem
-if(NOT PROTOBUF_FOUND)
-    message(WARNING "Did not find protobuf, required for building simData and its dependencies.")
+set(BIN_DIRS 
+    $ENV{PROTOBUF_DIR}/bin
+    ${THIRD_DIR}/protobuf/${PROTOBUF_SUBDIR}/bin
+    ${THIRD_DIR}/protobuf-${PROTOBUF_SUBDIR}/bin
+)
+
+find_path(PROTOBUF_LIBRARY_INCLUDE_PATH NAME google/protobuf/descriptor.h PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
+find_library(PROTOBUF_LIBRARY_DEBUG_NAME
+    NAMES protobuf-2.6_d libprotobuf-2.6_d protobuf_d libprotobuf_d
+    HINTS ${LIB_DIRS}
+    NO_DEFAULT_PATH
+)
+find_library(PROTOBUF_LIBRARY_RELEASE_NAME
+    NAMES protobuf-2.6 libprotobuf-2.6 protobuf libprotobuf
+    PATHS ${LIB_DIRS}
+    NO_DEFAULT_PATH
+)
+
+# Determine whether we found the library correctly
+if(NOT PROTOBUF_LIBRARY_RELEASE_NAME)
+    set(PROTOBUF_FOUND FALSE)
+    mark_as_advanced(CLEAR PROTOBUF_LIBRARY_INCLUDE_PATH PROTOBUF_LIBRARY_DEBUG_NAME PROTOBUF_LIBRARY_RELEASE_NAME)
     return()
 endif()
-
-# We only care about the targets for libprotobuf -- create the target
-add_library(PROTOBUF SHARED IMPORTED)
-set_target_properties(PROTOBUF PROPERTIES
-    IMPORTED_LOCATION "${PROTOBUF_LIBRARY}"
-    IMPORTED_IMPLIB "${PROTOBUF_LIBRARY}"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROTOBUF_INCLUDE_DIR}"
-)
-if(PROTOBUF_LIBRARY_DEBUG)
-    set_target_properties(PROTOBUF PROPERTIES
-        IMPORTED_LOCATION_DEBUG "${PROTOBUF_LIBRARY_DEBUG}"
-        IMPORTED_IMPLIB_DEBUG "${PROTOBUF_LIBRARY_DEBUG}"
-    )
+# Fall back on release library explicitly, only on Windows
+if(WIN32 AND NOT PROTOBUF_LIBRARY_DEBUG_NAME)
+    set(PROTOBUF_LIBRARY_DEBUG_NAME "${PROTOBUF_LIBRARY_RELEASE_NAME}" CACHE STRING "Path to a library" FORCE)
 endif()
-# On UNIX, protobuf depends on pthreads
+
+mark_as_advanced(FORCE PROTOBUF_LIBRARY_INCLUDE_PATH PROTOBUF_LIBRARY_DEBUG_NAME PROTOBUF_LIBRARY_RELEASE_NAME)
+set(PROTOBUF_FOUND TRUE)
+
+set(PROTOBUF_LIBS)
 if(UNIX)
-    set_target_properties(PROTOBUF PROPERTIES INTERFACE_LINK_LIBRARIES "-pthread")
+    set(PROTOBUF_LIBS -pthread)
 endif()
 
-# Detect if the library is a DLL by looking for its DLL
+# Detect whether protobuf is a shared library
+set(PROTO_IS_SHARED OFF)
 if(WIN32)
-    string(REGEX REPLACE "(.*)\\.lib$" "\\1.dll" LOCATION_RELEASE "${PROTOBUF_LIBRARY}")
+    string(REGEX REPLACE "(.*)\\.lib$" "\\1.dll" LOCATION_RELEASE "${PROTOBUF_LIBRARY_RELEASE_NAME}")
     string(REGEX REPLACE "/lib(|64)/" "/bin/" LOCATION_RELEASE "${LOCATION_RELEASE}")
     if(EXISTS "${LOCATION_RELEASE}")
-        set_target_properties(PROTOBUF PROPERTIES INTERFACE_COMPILE_DEFINITIONS "PROTOBUF_USE_DLLS")
-        # Need to set correct imported locations
-        vsi_set_imported_locations_from_implibs(PROTOBUF)
-        if(INSTALL_THIRDPARTY_LIBRARIES)
-            vsi_install_target(PROTOBUF THIRDPARTY)
-        endif()
+        set(PROTO_IS_SHARED ON)
     endif()
 endif()
 
 
-# Save the executable name as a separate variable used in VSI_PROTOBUF_GENERATE_TARGET_NAME
-set(PROTOBUF_PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
+# Set the release path, include path, and link libraries.  Deal with shared vs static differences
+if(PROTO_IS_SHARED)
+    add_library(PROTOBUF SHARED IMPORTED)
+    set_target_properties(PROTOBUF PROPERTIES
+        IMPORTED_IMPLIB "${PROTOBUF_LIBRARY_RELEASE_NAME}"
+        INTERFACE_COMPILE_DEFINITIONS "PROTOBUF_USE_DLLS"
+    )
+    if(PROTOBUF_LIBRARY_DEBUG_NAME)
+        set_target_properties(PROTOBUF PROPERTIES
+            IMPORTED_IMPLIB_DEBUG "${PROTOBUF_LIBRARY_DEBUG_NAME}"
+        )
+    endif()
+    vsi_set_imported_locations_from_implibs(PROTOBUF)
+    vsi_install_target(PROTOBUF ThirdPartyLibs)
+else()
+    add_library(PROTOBUF STATIC IMPORTED)
+    set_target_properties(PROTOBUF PROPERTIES
+        IMPORTED_LOCATION "${PROTOBUF_LIBRARY_RELEASE_NAME}"
+    )
+    if(PROTOBUF_LIBRARY_DEBUG_NAME)
+        set_target_properties(PROTOBUF PROPERTIES
+            IMPORTED_LOCATION_DEBUG "${PROTOBUF_LIBRARY_DEBUG_NAME}"
+        )
+    endif()
+endif()
+set_target_properties(PROTOBUF PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${PROTOBUF_LIBRARY_INCLUDE_PATH}"
+    INTERFACE_LINK_LIBRARIES "${PROTOBUF_LIBS}"
+)
 
+
+find_program(PROTOBUF_PROTOC NAMES protoc HINTS ${BIN_DIRS})
+if(NOT "${PROTOBUF_PROTOC}" MATCHES "-NOTFOUND")
+    mark_as_advanced(PROTOBUF_PROTOC)
+endif()
 
 
 # Creates a target responsible for generating protobuf files from output of protoc.  Note that this
@@ -78,6 +108,9 @@ set(PROTOBUF_PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
 #
 # If the PROTOBUF_PROTOC_ARGUMENTS CMake variable exists in this scope, the contents are added as arguments
 # to the protoc executable call.  This can be useful for adding extra include directories, for example.
+#
+# NOTE: This function is also present in SDK/CMakeImport/ImportPROTOBUF.cmake as part of the SIMDIS SDK
+#   release.  Please keep it up to date along with this version.
 # @param TARGET_NAME Name of a custom target to create that depends on the .proto files
 # @param PROTO_DIR Full path to the folder containing .proto files (include path)
 # @param PROTO_FILES Path under PROTO_DIR for each protobuf file to compile; relative path
@@ -87,7 +120,7 @@ set(PROTOBUF_PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
 function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT EXPORT_TYPE)
     if("${PROTOBUF_PROTOC}" MATCHES "-NOTFOUND")
         message(FATAL_ERROR "Unable to find PROTOBUF_PROTOC, which is required for simData.")
-    endif("${PROTOBUF_PROTOC}" MATCHES "-NOTFOUND")
+    endif()
 
     if(NOT EXPORT_TYPE)
         set(EXPORT_TYPE =.)
@@ -142,4 +175,87 @@ function(VSI_PROTOBUF_GENERATE TARGET_NAME PROTO_DIR PROTO_FILES HDR_OUT SRC_OUT
     # Pass back the hdr and src files
     set(${HDR_OUT} ${_ALL_HDR} PARENT_SCOPE)
     set(${SRC_OUT} ${_ALL_SRC} PARENT_SCOPE)
+endfunction()
+
+# Creates .h and .cpp wrappers around the .pb.h and .pb.cc files for the protos passed in.
+# @param HDR_OUT Variable name that will hold the list of full paths to all headers that
+#    get generated by this functions.
+# @param SRC_OUT Variable name that will hold the list of full paths to all source files that
+#    get generated by this functions.
+# @param ARGN[implied] Uses ARGN for the list of protos to build
+function(CREATE_PROTOBUF_WARNINGFREE_WRAPPERS HDR_OUT SRC_OUT)
+    set(_ALL_HDR)
+    set(_ALL_SRC)
+    foreach(_FILE_PREFIX ${ARGN})
+        # Figure out where we're writing the new .h and .cpp files
+        set(_NEW_H ${CMAKE_CURRENT_BINARY_DIR}/${_FILE_PREFIX}.h)
+        set(_NEW_CPP ${CMAKE_CURRENT_BINARY_DIR}/${_FILE_PREFIX}.cpp)
+        list(APPEND _ALL_HDR ${_NEW_H})
+        list(APPEND _ALL_SRC ${_NEW_CPP})
+
+        # Write the wrappers (which rely on _FILE_PREFIX variable)
+        configure_file(${CMAKE_SOURCE_DIR}/CMakeImport/ProtobufFileWrapper.h.in ${_NEW_H} @ONLY)
+        set_property(SOURCE ${_NEW_H} PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_FILE_PREFIX}.pb.h)
+        configure_file(${CMAKE_SOURCE_DIR}/CMakeImport/ProtobufFileWrapper.cpp.in ${_NEW_CPP} @ONLY)
+        set_property(SOURCE ${_NEW_CPP} PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_FILE_PREFIX}.pb.cc)
+    endforeach()
+
+    # Pass back the hdr and src files
+    set(${HDR_OUT} ${_ALL_HDR} PARENT_SCOPE)
+    set(${SRC_OUT} ${_ALL_SRC} PARENT_SCOPE)
+endfunction()
+
+# Runs the full circle on protobuf files, running protoc and generating a library target.
+# Creates library LIB_TARGETNAME under project LIB_PROJECTNAME.  Uses the FOLDER and
+# PROJECT_LABEL to describe the project locations.  Protobuf files are specified relative
+# to PROTO_PATH, and are appended to the end of the function (relying on ARGN functionality).
+# Protobuf files should be specified without extension.
+#
+# If the PROTOBUF_PROTOC_ARGUMENTS CMake variable exists in this scope, the contents are added as arguments
+# to the protoc executable call.  This can be useful for adding extra include directories, for example.
+# See function VSI_PROTOBUF_GENERATE() for details.
+function(CREATE_PROTOBUF_LIBRARY LIB_TARGETNAME LIB_PROJECTNAME FOLDER PROJECT_LABEL PROTO_PATH)
+    set(_PROTO_PB_CC) # These files won't be added to solution, but are generated.
+    set(_PROTO_PB_H)
+
+    # Create a list of proto files with relative path
+    set(_PROTO_FILES)
+    set(_PROTO_FILES_FULL_PATH)
+    foreach(_PROTO_FILE ${ARGN})
+        list(APPEND _PROTO_FILES ${_PROTO_FILE}.proto)
+        list(APPEND _PROTO_FILES_FULL_PATH ${PROTO_PATH}/${_PROTO_FILE}.proto)
+    endforeach()
+
+    # Generate the .pb.cc and .pb.h files from protobuf
+    vsi_protobuf_generate(${LIB_TARGETNAME}_Generate
+        ${PROTO_PATH}
+        "${_PROTO_FILES}"
+        _PROTO_PB_H _PROTO_PB_CC
+        =.)
+    # Set up labeling for the source file project on this target
+    set_target_properties(${LIB_TARGETNAME}_Generate PROPERTIES
+        FOLDER "${FOLDER}"
+        PROJECT_LABEL "${PROJECT_LABEL} Gen")
+    # Assign a source group to the generated files
+    source_group("Generated Files" FILES ${_PROTO_PB_H})
+    source_group("Protobuf Files" FILES ${_PROTO_FILES})
+
+    ##########################################################
+
+    # Generate the header and cpp files that are used to suppress warnings from protobuf
+    create_protobuf_warningfree_wrappers(
+        _WRAPPERS_H
+        _WRAPPERS_CPP
+        ${ARGN})
+
+    # Create the Protobuf Code Library
+    add_library(${LIB_TARGETNAME} ${_PROTO_FILES_FULL_PATH} ${_PROTO_PB_H} ${_WRAPPERS_H} ${_WRAPPERS_CPP})
+    add_dependencies(${LIB_TARGETNAME} ${LIB_TARGETNAME}_Generate)
+    target_link_libraries(${LIB_TARGETNAME} PUBLIC PROTOBUF)
+    target_include_directories(${LIB_TARGETNAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+    set_target_properties(${LIB_TARGETNAME} PROPERTIES
+        FOLDER "${FOLDER}"
+        PROJECT_LABEL "${PROJECT_LABEL}"
+    )
+
 endfunction()

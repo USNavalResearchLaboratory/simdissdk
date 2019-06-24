@@ -11,7 +11,7 @@ endif()
 set(LIBRARYNAME OSGQT)
 
 # OpenThreads is stored under the OpenSceneGraph folder
-set(${LIBRARYNAME}_VERSION 3.6.3)
+set(${LIBRARYNAME}_VERSION ${OSG_VERSION})
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Setup search paths

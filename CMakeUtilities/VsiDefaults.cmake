@@ -4,7 +4,8 @@ if("$ENV{PEOPLE_DIR}" STREQUAL "")
     set(OSGEARTH_DIR "" CACHE PATH "osgEarth root directory")
     set(PROTOBUF_DIR "" CACHE PATH "protobuf root directory")
     set(SQLITE3_DIR "" CACHE PATH "SQLite root directory")
-    set(GDAL_DIR "" CACHE PATH "3rd party library directory")
+    set(MRSID_DIR "" CACHE PATH "MrSID root directory")
+    set(GDAL_DIR "" CACHE PATH "GDAL library directory")
     return()
 endif()
 
@@ -126,6 +127,12 @@ set(OSG_VERSION "3.6.3")
 set(SQLITE_VERSION "3.8.11.1")
 set(GDAL_VERSION "2.1.1")
 
+set(MRSID_VERSION 9.5.1.4427)
+# MSVC 2017+ uses a different MrSID
+if(BUILD_COMPILER STREQUAL "vc-14.1" OR BUILD_COMPILER STREQUAL "vc-14.2")
+    set(MRSID_VERSION 9.5.4.4709)
+endif()
+
 # Set up Qt
 option(ENABLE_QT5 "Attempt to build against Qt5 instead of Qt4" ON)
 if(ENABLE_QT5)
@@ -149,6 +156,7 @@ set(PROTOBUF_DIR "${THIRDPARTY_LIBRARY_DIR}/protobuf/${PROTOBUF_VERSION}" CACHE 
 set(SQLITE3_DIR "${THIRDPARTY_LIBRARY_DIR}/SQLite/${SQLITE_VERSION}" CACHE PATH "SQLite root directory")
 set(SQLITE3_LIB_NAME "sqlite-3.8")
 set(GDAL_DIR "${THIRDPARTY_LIBRARY_DIR}/GDAL/${GDAL_VERSION}" CACHE PATH "3rd party library directory")
+set(MRSID_DIR "${THIRDPARTY_LIBRARY_DIR}/MrSID_DSDK/${MRSID_VERSION}" CACHE PATH "3rd party library directory")
 
 # Build Release mode by default on Linux, unless otherwise specified
 if(NOT MSVC AND NOT CMAKE_BUILD_TYPE)
@@ -169,4 +177,5 @@ mark_as_advanced(
     PROTOBUF_DIR
     QT_QMAKE_EXECUTABLE
     SQLITE3_DIR
+    MRSID_DIR
 )

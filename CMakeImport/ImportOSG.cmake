@@ -4,7 +4,7 @@
 set(OPENSCENEGRAPH_FOUND FALSE)
 set(LIBRARYNAME OSG)
 
-# OpenThreads is stored under the OpenSceneGraph folder
+# OpenThreads is stored under the OpenSceneGraph folder; it is required to find OpenThreads before OSG for OSG_VERSION
 set(OSG_VERSION 3.6.3)
 set(OSG_SUBDIR ${OSG_VERSION})
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
@@ -13,6 +13,8 @@ set(OSG_SHOULD_INSTALL FALSE)
 if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
     set(OSG_SHOULD_INSTALL TRUE)
 endif()
+# Normalization: Set the OPENSCENEGRAPH_VERSION value
+set(OPENSCENEGRAPH_VERSION ${OSG_VERSION})
 
 initialize_ENV(OSG_DIR)
 set(INCLUDE_DIRS
