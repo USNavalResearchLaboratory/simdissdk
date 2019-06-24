@@ -149,8 +149,7 @@ endif()
 
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(simUtil PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(simUtil SDK_Library)
+    vsi_install_export(simUtil ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
 if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)

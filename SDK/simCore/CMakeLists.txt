@@ -211,8 +211,7 @@ if(SDK_TIMESPEC)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(simCore PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(simCore SDK_Library)
+    vsi_install_export(simCore ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMCORE_SHARED)
