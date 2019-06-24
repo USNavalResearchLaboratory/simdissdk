@@ -64,6 +64,14 @@ public:
 
   CategoryNameManager();
 
+  /**
+   * By default the category manager is case sensitive; call this routine with false to make category manager case insensitive.
+   * This routine should only be called once and should be called immediately after the constructor.
+   * @param caseSensitive If true category tags and category values are case sensitive.
+   * @return 0 on success, non zero on failure because the map_ was not empty
+   */
+  int setCaseSensitive(bool caseSensitive);
+
   /// clear all category name and value mappings
   ///@note: this will invalidate any int id's being held elsewhere
   void clear();
@@ -123,9 +131,13 @@ private:
   /// Defined but not implemented; if implemented will need to clearout listeners_
   CategoryNameManager(const CategoryNameManager& rhs);
 
-  bool getStringId_(const std::string &str, int& id) const;
-  int addStringId_(const std::string &str);
+  /// Return the string if caseSensitive_ is true or return an upper case version of the string if caseSensitive_ is false
+  std::string fixString_(const std::string &str) const;
 
+  /// Get or create an ID for the given string
+  int getOrCreateStringId_(const std::string &str);
+
+  bool caseSensitive_;
   int nextInt_;
 
   /// all the values for a given category name

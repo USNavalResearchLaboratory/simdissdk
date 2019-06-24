@@ -20,6 +20,7 @@
  *
  */
 #include <algorithm>
+#include "simCore/String/Format.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 
 namespace simData
@@ -36,8 +37,18 @@ const int CategoryNameManager::UNLISTED_CATEGORY_VALUE = -3;
 
 //----------------------------------------------------------------------------
 CategoryNameManager::CategoryNameManager()
-: nextInt_(1)
+  : caseSensitive_(true),
+    nextInt_(1)
 {
+}
+
+int CategoryNameManager::setCaseSensitive(bool caseSensitive)
+{
+  if (!map_.empty())
+    return 1;
+
+  caseSensitive_ = caseSensitive;
+  return 0;
 }
 
 void CategoryNameManager::clear()
@@ -56,27 +67,29 @@ void CategoryNameManager::clear()
   }
 }
 
-bool CategoryNameManager::getStringId_(const std::string &str, int& id) const
+std::string CategoryNameManager::fixString_(const std::string &str) const
 {
-  std::map<std::string, int>::const_iterator i = map_.find(str);
+  if (caseSensitive_)
+    return str;
 
-  if (i != map_.end())
-  {
-    id = i->second;
-    return true;
-  }
-
-  return false;
+  return simCore::upperCase(str);
 }
 
-int CategoryNameManager::addStringId_(const std::string &str)
+
+int CategoryNameManager::getOrCreateStringId_(const std::string &str)
 {
+  std::string key = fixString_(str);
+  std::map<std::string, int>::const_iterator i = map_.find(key);
+
+  if (i != map_.end())
+    return i->second;
+
   // generate id
-  const int id = nextInt_;
+  int id = nextInt_;
   ++nextInt_;
 
-  map_[str] = id;
-  reverseMap_[id] = str;
+  map_[key] = id;
+  reverseMap_[id] = str;  // Use str so the original case is maintained
 
   return id;
 }
@@ -85,9 +98,7 @@ int CategoryNameManager::addStringId_(const std::string &str)
 ///@return new id that was assigned
 int CategoryNameManager::addCategoryName(const std::string &name)
 {
-  int catInt;
-  if (!getStringId_(name, catInt))
-    catInt = addStringId_(name);
+  int catInt = getOrCreateStringId_(name);
 
   if (categoryStringInts_.find(catInt) == categoryStringInts_.end())
   {
@@ -108,9 +119,7 @@ int CategoryNameManager::addCategoryName(const std::string &name)
 int CategoryNameManager::addCategoryValue(int nameInt, const std::string &value)
 {
   // 1. get an id for the value
-  int valueInt;
-  if (!getStringId_(value, valueInt))
-    valueInt = addStringId_(value);
+  int valueInt = getOrCreateStringId_(value);
 
   // 2. add the value to the category list
   std::map<int, std::vector<int> >::iterator i = categoryStringInts_.find(nameInt);
@@ -162,7 +171,7 @@ void CategoryNameManager::removeValue(int nameInt, int valueInt)
 // provide one mapping: string to int
 int CategoryNameManager::nameToInt(const std::string &name) const
 {
-  std::map<std::string, int>::const_iterator i = map_.find(name);
+  std::map<std::string, int>::const_iterator i = map_.find(fixString_(name));
   if (i == map_.end())
     return CategoryNameManager::NO_CATEGORY_NAME; // category name not found
 
@@ -171,7 +180,7 @@ int CategoryNameManager::nameToInt(const std::string &name) const
 
 int CategoryNameManager::valueToInt(const std::string &value) const
 {
-  std::map<std::string, int>::const_iterator i = map_.find(value);
+  std::map<std::string, int>::const_iterator i = map_.find(fixString_(value));
   if (i == map_.end())
     return CategoryNameManager::NO_CATEGORY_VALUE; // category value not found
 
