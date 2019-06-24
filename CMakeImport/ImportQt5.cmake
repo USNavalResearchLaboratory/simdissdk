@@ -1,0 +1,184 @@
+# Set up Qt5 library.  Core, Gui, and Widgets are found automatically, as well as XcbQpa and DBus on Linux.
+# Extra modules can be located by setting the QT5_MODULES variable.  If unset, QT5_MODULES includes a wide
+# variety of modules used by the SIMDIS software.  It can be useful to limit what is found here to keep
+# your CMake variables cleaner for end users.
+#
+# The QT5_PLUGINS variable is used in a similar way to determine which Qt5 plugins directories to copy
+# for install.  The platforms/ and imageformats/ directories are copied in automatically.  Extra plugins
+# to copy in can be added by setting the QT5_PLUGINS variable.  If unset, QT5_PLUGINS includes a wide
+# variety of plugins used by the SIMDIS software.
+
+# Initialize QT5_MODULES
+if(NOT DEFINED QT5_MODULES)
+    set(QT5_MODULES Concurrent Designer Network OpenGL Multimedia MultimediaWidgets Test UiPlugin Xml)
+endif()
+# Initialize QT5_PLUGINS
+if(NOT DEFINED QT5_PLUGINS)
+    set(QT5_PLUGINS mediaservice audio)
+    if(NOT WIN32)
+        list(APPEND QT5_PLUGINS xcbglintegrations)
+    endif()
+endif()
+
+# Figure out the expected version and expected folder based on VSI layout,
+# so that we can configure a good guess at the CMAKE_PREFIX_PATH required.
+# If your Qt is somewhere else, configure CMAKE_PREFIX_PATH appropriately.
+if(NOT MSVC10)
+    set(EXPECTED_QT5_VERSION 5.9.8)
+else()
+    set(EXPECTED_QT5_VERSION 5.5.1)
+endif()
+
+# VSI installs to a win64_vc-#.# subdirectory under c:/QtSDK.  By default, Qt is in /usr/local/Qt-* on both systems
+set(DEFAULT_QT_LOCATION "c:/QtSDK/${BUILD_SYSTEM_CANONICAL_NAME}/${EXPECTED_QT5_VERSION}")
+if(NOT WIN32 OR NOT EXISTS "${DEFAULT_QT_LOCATION}")
+    set(DEFAULT_QT_LOCATION "/usr/local/Qt-${EXPECTED_QT5_VERSION}")
+endif()
+# Append to CMAKE_PREFIX_PATH so that we can use find_package()
+if(EXISTS "${DEFAULT_QT_LOCATION}")
+    list(APPEND CMAKE_PREFIX_PATH "${DEFAULT_QT_LOCATION}")
+endif()
+
+# Find Qt5 Widgets
+find_package(Qt5Widgets QUIET)
+if(NOT Qt5Widgets_FOUND)
+    return()
+endif()
+mark_as_advanced(Qt5Widgets_DIR)
+mark_as_advanced(Qt5Core_DIR)
+mark_as_advanced(Qt5Gui_DIR)
+
+# If all looks good here, set the CMAKE_PREFIX_PATH
+if(WIN32 AND IS_DIRECTORY "${Qt5Widgets_DIR}")
+    # Need to be able to find glu32.lib -- different places for different builders
+    if(CMAKE_CL_64)
+        set(QT_GLU_PATHS
+            "c:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x64"
+            "c:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64"
+            "c:/Program Files/Microsoft SDKs/Windows/7.1A/Lib"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.1A/Lib/x64"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.1A/Lib"
+            "c:/Program Files/Microsoft SDKs/Windows/7.0A/Lib"
+            "c:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.0A/Lib"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
+            "c:/Program Files/Microsoft SDKs/Windows/6.0A/Lib"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/6.0A/Lib"
+        )
+    else()
+        set(QT_GLU_PATHS
+            "c:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x86"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.1A/Lib"
+            "c:/Program Files/Microsoft SDKs/Windows/7.1A/Lib"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/7.0A/Lib"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
+            "c:/Program Files/Microsoft SDKs/Windows/7.0A/Lib"
+            "c:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
+            "c:/Program Files (x86)/Microsoft SDKs/Windows/6.0A/Lib"
+            "c:/Program Files/Microsoft SDKs/Windows/6.0A/Lib"
+        )
+    endif()
+
+    # Locate glu32 and set up the CMAKE_PREFIX_PATH
+    find_path(QT_GLU_PATH NAMES glu32.lib user32.lib PATHS ${QT_GLU_PATHS})
+    if(NOT "${QT_GLU_PATH}" MATCHES "-NOTFOUND")
+        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${QT_GLU_PATH}" CACHE PATH "Prefix path, where to find glu32.lib")
+        mark_as_advanced(QT_GLU_PATH CMAKE_PREFIX_PATH)
+    endif()
+endif()
+
+# Set up the version numbers
+set(QT_VERSION ${Qt5Widgets_VERSION_STRING})
+string(REPLACE "." ";" QT_VERSION_LIST ${QT_VERSION})
+list(GET QT_VERSION_LIST 0 QT_VERSION_MAJOR)
+list(GET QT_VERSION_LIST 1 QT_VERSION_MINOR)
+list(GET QT_VERSION_LIST 2 QT_VERSION_PATCH)
+if(VERBOSE)
+    message(STATUS "Found Qt5 version: ${QT_VERSION}")
+endif()
+
+# sets up installation preferences for LIBNAME, i.e. Core; uses ARGN for component list
+macro(INSTALL_QT5_LIB LIBNAME)
+    if(WIN32)
+        get_target_property(RELEASE_DLL Qt5::${LIBNAME} LOCATION_Release)
+        get_target_property(DEBUG_DLL Qt5::${LIBNAME} LOCATION_Debug)
+        if(RELEASE_DLL)
+            INSTALL(FILES ${RELEASE_DLL}
+                DESTINATION bin/${BUILD_HWOS}
+                CONFIGURATIONS Release
+                COMPONENT ThirdPartyLibs
+            )
+        endif()
+        if(DEBUG_DLL)
+            INSTALL(FILES ${DEBUG_DLL}
+                DESTINATION bin/${BUILD_HWOS}
+                CONFIGURATIONS Debug
+                COMPONENT ThirdPartyLibs
+            )
+        endif()
+    else()
+        set(QT5_LIBRARY_DIR "${Qt5Widgets_DIR}/../..")
+        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.5
+            DESTINATION lib/${BUILD_HWOS}
+            CONFIGURATIONS Release
+            COMPONENT ThirdPartyLibs
+        )
+        INSTALL(FILES ${QT5_LIBRARY_DIR}/libQt5${LIBNAME}.so.${EXPECTED_QT5_VERSION}
+            DESTINATION lib/${BUILD_HWOS}
+            CONFIGURATIONS Release
+            COMPONENT ThirdPartyLibs
+        )
+    endif()
+endmacro()
+
+# Macro for installing platform, media, image, xcbglintegrations plug-ins for Qt
+macro(install_qtplugins dir)
+    if(WIN32)
+        INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
+            DESTINATION bin/${BUILD_HWOS}/
+            COMPONENT ThirdPartyLibs
+            FILES_MATCHING PATTERN *.dll
+            PATTERN *d.dll EXCLUDE)
+    else()
+        # Note that Qt requires the Linux shared objects in the executable's subdirectory (e.g. bin)
+        INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
+            DESTINATION bin/${BUILD_HWOS}/
+            COMPONENT ThirdPartyLibs
+            FILES_MATCHING PATTERN *.so)
+    endif()
+endmacro()
+
+set(QT_DESIGNER_PLUGIN_DIR "${_qt5Core_install_prefix}/plugins/designer")
+INSTALL_QT5_LIB(Core)
+INSTALL_QT5_LIB(Gui)
+INSTALL_QT5_LIB(Widgets)
+if(NOT WIN32)
+    INSTALL_QT5_LIB(DBus)
+    INSTALL_QT5_LIB(XcbQpa)
+endif()
+
+# Each install needs platforms and image formats
+install_qtplugins(platforms)
+install_qtplugins(imageformats)
+
+# At this point, the Widgets package is found -- find the others too
+foreach(PACKAGENAME IN LISTS QT5_MODULES)
+    find_package(Qt5${PACKAGENAME} QUIET)
+    if(TARGET Qt5::${PACKAGENAME})
+        # Ui Plug-in has nothing to install
+        if(NOT ${PACKAGENAME} STREQUAL "UiPlugin")
+            INSTALL_QT5_LIB(${PACKAGENAME})
+        endif()
+        mark_as_advanced(Qt5${PACKAGENAME}_DIR)
+    else()
+        mark_as_advanced(CLEAR Qt5${PACKAGENAME}_DIR)
+    endif()
+endforeach()
+
+# Install each of the configure plugins
+foreach(PLUGINNAME in LISTS QT5_PLUGINS)
+    install_qtplugins(${PLUGINNAME})
+endforeach()
+
+set(QT_FOUND TRUE)
+set(QT5_FOUND TRUE)

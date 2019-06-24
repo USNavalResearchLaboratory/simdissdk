@@ -166,7 +166,9 @@ include(ImportOpenGL)
 # ---Qt------------------------------------
 
 # Attempt to find Qt so we can build the Qt example(s).
-include(ImportQT)
+set(QT5_MODULES Designer OpenGL UiPlugin)
+set(QT5_PLUGINS xcbglintegrations)
+include(ImportQt5)
 
 
 # --- OpenSceneGraph ----------------------
