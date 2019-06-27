@@ -42,7 +42,7 @@ if(SDK_BIG_ENDIAN)
 else()
     target_compile_definitions(osgdb_osgearth_db PRIVATE SIM_LITTLE_ENDIAN)
 endif()
-if(BUILD_SYSTEM_NAME STREQUAL "linux")
+if(NOT WIN32)
     target_compile_definitions(osgdb_osgearth_db PRIVATE Linux)
 endif()
 

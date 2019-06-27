@@ -1,7 +1,7 @@
 if(SQLITE3_LIBRARY_RELEASE_NAME)
     add_subdirectory(OSGEarthDBDriver)
 else()
-    message(WARNING "osgEarth .db Driver plug-in omitted because of missing SQLite dependency.")
+    message(STATUS "Skipping osgEarth .db Driver plug-in because of missing dependencies.")
 endif()
 
 if(QT_FOUND)
