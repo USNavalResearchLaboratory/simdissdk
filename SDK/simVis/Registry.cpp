@@ -208,7 +208,7 @@ simVis::Registry::Registry()
 
   // prime a font when no fonts can be found.  This font will be invisible, but at least the program can limp along.
   osgText::Font* cantFindFont = new osgText::Font();
-#if OSG_VERSION_GREATER_OR_EQUAL(3, 4, 1) && OSG_VERSION_LESS_THAN(3, 7, 0) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
+#if OSG_VERSION_GREATER_OR_EQUAL(3, 4, 1) && OSG_VERSION_LESS_THAN(3, 6, 0) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
   // Remove the osgText::Font's program to avoid a bug where LDB does not apply due to conflict in programs
   if (cantFindFont->getStateSet())
     cantFindFont->getStateSet()->removeAttribute(osg::StateAttribute::PROGRAM);
@@ -402,7 +402,7 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
     return fontCache_.find(CANT_FIND_FONT)->second.get();
   }
 
-#if OSG_VERSION_GREATER_OR_EQUAL(3, 4, 1) && OSG_VERSION_LESS_THAN(3, 7, 0) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
+#if OSG_VERSION_GREATER_OR_EQUAL(3, 4, 1) && OSG_VERSION_LESS_THAN(3, 6, 0) && defined(OSG_GL_FIXED_FUNCTION_AVAILABLE)
   // Remove the osgText::Font's program to avoid a bug where LDB does not apply due to conflict in programs
   if (font->getStateSet())
     font->getStateSet()->removeAttribute(osg::StateAttribute::PROGRAM);
