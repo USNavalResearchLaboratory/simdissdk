@@ -77,9 +77,6 @@ function(osg_set_imported_locations_from_implibs TARGET WIN_PREFIX)
     endif()
 endfunction()
 
-############################################################
-########## Imported 3rd party library boilerplate ##########
-############################################################
 
 # Determine whether we found the library correctly
 if(NOT ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
@@ -90,6 +87,29 @@ endif()
 
 mark_as_advanced(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH ${LIBRARYNAME}_LIBRARY_DEBUG_NAME ${LIBRARYNAME}_LIBRARY_RELEASE_NAME OSG_DIR)
 set(${LIBRARYNAME}_FOUND TRUE)
+
+
+# We know we have a valid release library.  Determine the actual version of the library we found
+get_filename_component(_OSG_LIB_DIR "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}" DIRECTORY)
+find_program(OSG_VERSION_EXE NAMES osgversion PATHS ${_OSG_LIB_DIR}/../bin ${LIB_DIRS} NO_DEFAULT_PATH)
+if(OSG_VERSION_EXE)
+    # Configure LD_LIBRARY_PATH on UNIX
+    if(UNIX)
+        set(_OLD_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+        set(ENV{LD_LIBRARY_PATH} "${_OLD_LD_LIBRARY_PATH}:${_OSG_LIB_DIR}")
+    endif()
+    execute_process(COMMAND ${OSG_VERSION_EXE} --version-number OUTPUT_VARIABLE _OSG_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(UNIX)
+        set(ENV{LD_LIBRARY_PATH} ${_OLD_LD_LIBRARY_PATH})
+        unset(_OLD_LD_LIBRARY_PATH)
+    endif()
+    if(NOT _OSG_VERSION STREQUAL "")
+        set(OSG_VERSION ${_OSG_VERSION})
+    endif()
+    unset(_OLD_LD_LIBRARY_PATH)
+    unset(_OSG_VERSION)
+endif()
+
 
 # Set the release path, include path, and link libraries
 add_library(${LIBRARYNAME} SHARED IMPORTED)
@@ -187,6 +207,8 @@ endif()
 
 # Install OSG plugins
 set(PLUGIN_DIRS
+    ${_OSG_LIB_DIR}/osgPlugins-${OSG_VERSION}
+    ${_OSG_LIB_DIR}/../bin/osgPlugins-${OSG_VERSION}
     $ENV{OSG_DIR}/bin/osgPlugins-${OSG_VERSION}
     $ENV{OSG_DIR}/lib/osgPlugins-${OSG_VERSION}
     $ENV{OSG_DIR}/lib64/osgPlugins-${OSG_VERSION}
@@ -263,3 +285,5 @@ if(OSG_SHOULD_INSTALL)
         FILES_MATCHING REGEX ${RELEASE_INSTALL_PATTERN}
     )
 endif()
+
+unset(_OSG_LIB_DIR)
