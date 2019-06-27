@@ -92,6 +92,7 @@ set(${LIBRARYNAME}_FOUND TRUE)
 # We know we have a valid release library.  Determine the actual version of the library we found
 get_filename_component(_OSG_LIB_DIR "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}" DIRECTORY)
 find_program(OSG_VERSION_EXE NAMES osgversion PATHS ${_OSG_LIB_DIR}/../bin ${LIB_DIRS} NO_DEFAULT_PATH)
+mark_as_advanced(OSG_VERSION_EXE)
 if(OSG_VERSION_EXE)
     # Configure LD_LIBRARY_PATH on UNIX
     if(UNIX)

@@ -121,6 +121,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 include(PublicDefaults)
 # Include specific defaults for building with VSI environment
 include(VsiDefaults)
+# Build Release mode by default on Linux, unless otherwise specified
+include(DefaultToReleaseBuildType)
 
 # Copy the helper script into the build directory
 configure_file("${PROJECT_SOURCE_DIR}/CMakeUtilities/ExperimentalSubmit.cmake" "${PROJECT_BINARY_DIR}/ExperimentalSubmit.cmake")
