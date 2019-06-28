@@ -5,6 +5,11 @@
 # The purpose is to install the DLL / SO dependencies into INSTALLSETTINGS_SHARED_LIBRARY_DIR.
 #
 
+# No need to continue if not doing installation
+if(DEFINED INSTALL_THIRDPARTY_LIBRARIES AND NOT INSTALL_THIRDPARTY_LIBRARIES)
+    return()
+endif()
+
 set(LIBRARYNAME MRSID)
 set(${LIBRARYNAME}_VERSION 9.5.1.4427)
 # MSVC 2017 uses a different MrSID

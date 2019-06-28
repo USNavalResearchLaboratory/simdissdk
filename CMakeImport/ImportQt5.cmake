@@ -148,17 +148,20 @@ macro(install_qtplugins dir)
 endmacro()
 
 # Install each of the always-on libs
-INSTALL_QT5_LIB(Core)
-INSTALL_QT5_LIB(Gui)
-INSTALL_QT5_LIB(Widgets)
-if(NOT WIN32)
-    INSTALL_QT5_LIB(DBus)
-    INSTALL_QT5_LIB(XcbQpa)
-endif()
 
-# Each install needs platforms and image formats
-install_qtplugins(platforms)
-install_qtplugins(imageformats)
+if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
+    INSTALL_QT5_LIB(Core)
+    INSTALL_QT5_LIB(Gui)
+    INSTALL_QT5_LIB(Widgets)
+    if(NOT WIN32)
+        INSTALL_QT5_LIB(DBus)
+        INSTALL_QT5_LIB(XcbQpa)
+    endif()
+
+    # Each install needs platforms and image formats
+    install_qtplugins(platforms)
+    install_qtplugins(imageformats)
+endif()
 
 # At this point, the Widgets package is found -- find the others too
 set(QT_DESIGNER_PLUGIN_DIR "${_qt5Core_install_prefix}/plugins/designer")
@@ -167,7 +170,9 @@ foreach(PACKAGENAME IN LISTS QT5_MODULES)
     if(TARGET Qt5::${PACKAGENAME})
         # Ui Plug-in has nothing to install
         if(NOT ${PACKAGENAME} STREQUAL "UiPlugin")
-            INSTALL_QT5_LIB(${PACKAGENAME})
+            if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
+                INSTALL_QT5_LIB(${PACKAGENAME})
+            endif()
         endif()
         mark_as_advanced(Qt5${PACKAGENAME}_DIR)
     else()
@@ -176,9 +181,11 @@ foreach(PACKAGENAME IN LISTS QT5_MODULES)
 endforeach()
 
 # Install each of the configured plugins
-foreach(PLUGINNAME IN LISTS QT5_PLUGINS)
-    install_qtplugins(${PLUGINNAME})
-endforeach()
+if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
+    foreach(PLUGINNAME IN LISTS QT5_PLUGINS)
+        install_qtplugins(${PLUGINNAME})
+    endforeach()
+endif()
 
 set(QT_FOUND TRUE)
 set(QT5_FOUND TRUE)

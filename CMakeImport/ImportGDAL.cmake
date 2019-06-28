@@ -73,6 +73,10 @@ if(${LIBRARYNAME}_LIBRARY_DEBUG_NAME)
 endif()
 
 vsi_set_imported_locations_from_implibs(${LIBRARYNAME})
+# No need to continue if not doing installation
+if(DEFINED INSTALL_THIRDPARTY_LIBRARIES AND NOT INSTALL_THIRDPARTY_LIBRARIES)
+    return()
+endif()
 vsi_install_target(${LIBRARYNAME} ${${LIBRARYNAME}_INSTALL_COMPONENT})
 
 ############################################################
