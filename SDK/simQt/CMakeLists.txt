@@ -345,6 +345,15 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
+    # Configure the simQtConfig.cmake file; its dependencies are dynamic
+    set(SIMQT_DEPENDS)
+    foreach(TGT IN ITEMS simNotify simCore simData simVis)
+        if(TARGET ${TGT})
+            set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(${TGT})")
+        endif()
+    endforeach()
+    configure_file(simQtConfig.cmake.in simQtConfig.cmake @ONLY)
+
     vsi_install_export(simQt ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
