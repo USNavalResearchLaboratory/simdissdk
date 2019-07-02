@@ -94,15 +94,22 @@ namespace simCore
   *   when factor is >= 0.0 and < 1.0, the calculated value uses a weighting of the low and high values based on factor
   * @param[in ] lowVal Low value of first bound
   * @param[in ] highVal High value of first bound
-  * @param[in ] xLow Low value of second bound
+  * @param[in ] x1 Value of second bound mapping to lowVal
   * @param[in ] xVal value to perform interpolation
-  * @param[in ] xHigh High value of second bound
+  * @param[in ] x2 Value of second bound mapping to highVal
   * @return interpolated value
   */
   template <class Type>
-  inline Type linearInterpolate(const Type &lowVal, const Type &highVal, double xLow, double xVal, double xHigh)
+  inline Type linearInterpolate(const Type &lowVal, const Type &highVal, double x1, double xVal, double x2)
   {
-    double xFactor = getFactor(xLow, xVal, xHigh);
+    double xFactor = 0.0;
+
+    // Since getFactor relies on lowVal < highVal for its boundary conditions,
+    // swap the inputs and invert the factor to get the correct mapping.
+    if (x1 > x2)
+      xFactor = (1.0 - getFactor(x2, xVal, x1));
+    else
+      xFactor = getFactor(x1, xVal, x2);
     return linearInterpolate(lowVal, highVal, xFactor);
   }
 

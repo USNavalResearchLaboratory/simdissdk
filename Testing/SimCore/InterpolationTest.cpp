@@ -66,8 +66,8 @@ namespace
     int rv = 0;
 
     // The five-arg implementation uses the three-arg to interpolate between these, so we don't need to vary these inputs
-    const double lowVal = 0.0;
-    const double highVal = 1.0;
+    const double lowVal = 10.0;
+    const double highVal = 20.0;
 
     // Test correct responses when inputs are equal
     double xLow = 0.0;
@@ -85,30 +85,30 @@ namespace
 
     // Test responses when a < b
     rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 0.0, xHigh), lowVal));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 0.3, xHigh), 0.3));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 0.7, xHigh), 0.7));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 0.3, xHigh), 13.0));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 0.7, xHigh), 17.0));
     rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 1.0, xHigh), highVal));
 
-    // Test responses when b < a. Note that this will tend to always return lowVal, since an in-bounds xVal will be less than xHigh
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xHigh, 0.0, xLow), lowVal));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xHigh, 0.3, xLow), lowVal));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xHigh, 0.7, xLow), lowVal));
+    // Test responses when b < a
     rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xHigh, 1.0, xLow), lowVal));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xHigh, 0.7, xLow), 13.0));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xHigh, 0.3, xLow), 17.0));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xHigh, 0.0, xLow), highVal));
 
     // Test when inputs are negative
     xLow = -2.0;
     xHigh = -1.0;
     rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -2.0, xHigh), lowVal));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -1.7, xHigh), 0.3));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -1.3, xHigh), 0.7));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -1.7, xHigh), 13.0));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -1.3, xHigh), 17.0));
     rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -1.0, xHigh), highVal));
 
     // Test when inputs are mixed
     xLow = -1.0;
     xHigh = 1.0;
     rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -1.0, xHigh), lowVal));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -0.4, xHigh), 0.3));
-    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 0.4, xHigh), 0.7));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, -0.4, xHigh), 13.0));
+    rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 0.4, xHigh), 17.0));
     rv += SDK_ASSERT(simCore::areEqual(simCore::linearInterpolate(lowVal, highVal, xLow, 1.0, xHigh), highVal));
 
     return rv;
