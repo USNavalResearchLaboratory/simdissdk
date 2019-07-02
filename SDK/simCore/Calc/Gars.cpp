@@ -43,41 +43,32 @@ namespace {
 namespace simCore
 {
 
-int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double& lonRad, std::string* err)
+bool Gars::isValidGars(const std::string& gars, std::string* err, int* lonBand, int* latPimaryIdx, int* latSecondaryIdx, int* quad15, int* key5)
 {
-  latRad = 0.;
-  lonRad = 0.;
-
   // Verify length of GARS coordinate
   if (gars.size() < 5 || gars.size() > 7)
   {
     if (err)
       *err = "Invalid GARS coordinate length (valid range is [5, 7])";
-    return 1;
+    return false;
   }
 
   // Find longitude using first three characters
   const std::string lonBandStr = gars.substr(0, 3);
-  int lonBand;
-  if (!simCore::isValidNumber(lonBandStr, lonBand, false))
+  int lonBandInt;
+  if (!simCore::isValidNumber(lonBandStr, lonBandInt, false))
   {
     if (err)
       *err = "Longitudinal band not a valid number";
-    return 1;
+    return false;
   }
 
-  if (lonBand < 1 || lonBand > 720)
+  if (lonBandInt < 1 || lonBandInt > 720)
   {
     if (err)
       *err = "Longitudal band out of range (valid range is [001, 720])";
-    return 1;
+    return false;
   }
-
-  double lat = 0.;
-  double lon = 0.;
-
-  // Convert from lonBand integer to longitude value
-  lon = (lonBand - 360 - 1) * 0.5;
 
   // Find latitude band using next two characters
   std::string latBandStr = gars.substr(3, 2);
@@ -89,8 +80,82 @@ int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double&
   {
     if (err)
       *err = "Invalid letters given for latitudinal band (valid range is AA-QZ)";
-    return 1;
+    return false;
   }
+
+  if (gars.size() > 5)
+  {
+    // Adjust the coordinates based on the given 15 minute quadrant
+    std::string quad15str = gars.substr(5, 1);
+    int quad15Int;
+    if (!simCore::isValidNumber(quad15str, quad15Int, false))
+    {
+      if (err)
+        *err = "15 minute quadrant is not a valid number";
+      return false;
+    }
+    if (quad15Int < 1 || quad15Int > 4)
+    {
+      if (err)
+        *err = "Invalid number given for 15 minute quadrant (valid range is [1-4])";
+      return false;
+    }
+
+    if (gars.size() > 6)
+    {
+      // Adjust the coordinates based on the given 5 minute key
+      std::string key5str = gars.substr(6, 1);
+      int key5Int;
+      if (!simCore::isValidNumber(key5str, key5Int, false))
+      {
+        if (err)
+          *err = "5 minute key is not a valid number";
+        return false;
+      }
+      if (key5Int < 1 || key5Int > 9)
+      {
+        if (err)
+          *err = "Invalid number given for 5 minute key (valid range is [1-9])";
+        return false;
+      }
+      // Assign value only on success
+      if (key5)
+        *key5 = key5Int;
+    }
+    // Assign value only on success
+    if (quad15)
+      *quad15 = quad15Int;
+  }
+
+  // Assign values only on success
+  if (lonBand)
+    *lonBand = lonBandInt;
+  if (latPimaryIdx)
+    *latPimaryIdx = static_cast<int>(latPrimaryIndex);
+  if (latSecondaryIdx)
+    *latSecondaryIdx = static_cast<int>(latSecondaryIndex);
+
+  return true;
+}
+
+int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double& lonRad, std::string* err)
+{
+  latRad = 0.;
+  lonRad = 0.;
+  int lonBand;
+  int latPrimaryIndex;
+  int latSecondaryIndex;
+  int quad15;
+  int key5;
+
+  if (!Gars::isValidGars(gars, err, &lonBand, &latPrimaryIndex, &latSecondaryIndex, &quad15, &key5))
+    return 1; // Error was set by isValidGars()
+
+  double lat = 0.;
+  double lon = 0.;
+
+  // Convert from lonBand integer to longitude value
+  lon = (lonBand - 360 - 1) * 0.5;
 
   // Start latitude at -90
   lat = -90.0;
@@ -101,22 +166,6 @@ int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double&
 
   if (gars.size() > 5)
   {
-    // Adjust the coordinates based on the given 15 minute quadrant
-    std::string quad15str = gars.substr(5, 1);
-    int quad15;
-    if (!simCore::isValidNumber(quad15str, quad15, false))
-    {
-      if (err)
-        *err = "15 minute quadrant is not a valid number";
-      return 1;
-    }
-    if (quad15 < 1 || quad15 > 4)
-    {
-      if (err)
-        *err = "Invalid number given for 15 minute quadrant (valid range is [1-4])";
-      return 1;
-    }
-
     // Quadrants 1 and 2 are 0.25 degrees north of the cell's origin
     if (quad15 < 3)
       lat += 0.25;
@@ -126,22 +175,6 @@ int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double&
 
     if (gars.size() > 6)
     {
-      // Adjust the coordinates based on the given 5 minute key
-      std::string key5str = gars.substr(6, 1);
-      int key5;
-      if (!simCore::isValidNumber(key5str, key5, false))
-      {
-        if (err)
-          *err = "5 minute key is not a valid number";
-        return 1;
-      }
-      if (key5 < 1 || key5 > 9)
-      {
-        if (err)
-          *err = "Invalid number given for 5 minute key (valid range is [1-9])";
-        return 1;
-      }
-
       // Determine the column specified by the key number, move longitude east accordingly
       int x5 = ((key5 - 1) % 3);
       lon += (x5 / 12.);
