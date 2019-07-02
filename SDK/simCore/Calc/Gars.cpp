@@ -158,7 +158,7 @@ int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double&
   return 0;
 }
 
-int Gars::convertGeodeticToGars(double latRad, double lonRad, std::string& gars, std::string* err)
+int Gars::convertGeodeticToGars(double latRad, double lonRad, std::string& gars, Level level, std::string* err)
 {
   // Conversion algorithm below adapted from osgEarthUtil/GARSGraticule.cpp getGARSLabel()
 
@@ -207,23 +207,30 @@ int Gars::convertGeodeticToGars(double latRad, double lonRad, std::string& gars,
   // Format the latitude portion of the GARS coordinate
   buf << LAT_LETTERS[latPrimaryIndex] << LAT_LETTERS[latSecondaryIndex];
 
-  // Determine the 15 minute quadrant value [1, 4]
-  const int x15Cell = static_cast<int>(floor(fmod(lon + 180.0, 0.5) * 4.));
-  const int y15Cell = static_cast<int>(floor(fmod(lat + 90.0, 0.5)  * 4.));
-  const int y15CellInverted = 2 - y15Cell - 1;
-  // Format the 15 minute quadrant
-  const int quad15 = x15Cell + y15CellInverted * 2 + 1;
-  assert(quad15 >= 1 && quad15 <= 4); // Quadrant number should always fall in [1, 4] range
-  buf << quad15;
+  if (level == GARS_15 || level == GARS_5)
+  {
+    // Determine the 15 minute quadrant value [1, 4]
+    const int x15Cell = static_cast<int>(floor(fmod(lon + 180.0, 0.5) * 4.));
+    const int y15Cell = static_cast<int>(floor(fmod(lat + 90.0, 0.5)  * 4.));
+    const int y15CellInverted = 2 - y15Cell - 1;
+    // Format the 15 minute quadrant
+    const int quad15 = x15Cell + y15CellInverted * 2 + 1;
+    assert(quad15 >= 1 && quad15 <= 4); // Quadrant number should always fall in [1, 4] range
+    buf << quad15;
 
-  // Determine the 5 minute key value [1, 9]
-  const int x5Cell = static_cast<int>(floor((lon + 180.0 - (lonBand * 0.5 + x15Cell * 0.25)) * 12.));
-  const int y5Cell = static_cast<int>(floor((lat + 90.0 - (latBand * 0.5 + y15Cell * 0.25))  * 12.));
-  const int y5CellInverted = 3 - y5Cell - 1;
-  // Format the 5 minute key
-  const int key5 = x5Cell + y5CellInverted * 3 + 1;
-  assert(key5 >= 1 && key5 <= 9); // Key number should always fall in [1, 9] range
-  buf << key5;
+    if (level == GARS_5)
+    {
+      // Determine the 5 minute key value [1, 9]
+      const int x5Cell = static_cast<int>(floor((lon + 180.0 - (lonBand * 0.5 + x15Cell * 0.25)) * 12.));
+      const int y5Cell = static_cast<int>(floor((lat + 90.0 - (latBand * 0.5 + y15Cell * 0.25))  * 12.));
+      const int y5CellInverted = 3 - y5Cell - 1;
+      // Format the 5 minute key
+      const int key5 = x5Cell + y5CellInverted * 3 + 1;
+      assert(key5 >= 1 && key5 <= 9); // Key number should always fall in [1, 9] range
+      buf << key5;
+    }
+  }
+
 
   gars = buf.str();
   return 0;

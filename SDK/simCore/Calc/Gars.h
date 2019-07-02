@@ -36,6 +36,13 @@ class SDKCORE_EXPORT Gars
 {
 public:
 
+  /** Level of detail used when converting to a GARS coordinate. */
+  enum Level {
+    GARS_30, // 30 minute level, 5 character GARS coordinate
+    GARS_15, // 15 minute level, 6 character GARS coordinate
+    GARS_5 // 5 minute level, 7 character GARS coordinate
+  };
+
   /**
    * Converts a GARS coordinate to geodetic coordinates. The resulting latitude/longitude
    * will be the southwest corner of the specified GARS coordinate.
@@ -52,10 +59,11 @@ public:
    * @param[in ] lat Latitude to convert in radians
    * @param[in ] lon Longitude to convert in radians
    * @param[out] gars Resulting GARS coordinate string
+   * @param[in ] level Optional level of detail used when converting
    * @param[out] err Optional pointer to error string
    * @return 0 if conversion is successful, non-zero otherwise
    */
-  static int convertGeodeticToGars(double latRad, double lonRad, std::string& gars, std::string* err = NULL);
+  static int convertGeodeticToGars(double latRad, double lonRad, std::string& gars, Level level = GARS_5, std::string* err = NULL);
 };
 
 }

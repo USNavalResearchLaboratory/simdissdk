@@ -137,6 +137,35 @@ int llaToGars()
   rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(20.047015 * simCore::DEG2RAD, -37.549780 * simCore::DEG2RAD, gars) == 0);
   rv += SDK_ASSERT(gars == "285KE49");
 
+  // Test different levels of detail using the same geodetic coordinate
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(38.875653 * simCore::DEG2RAD, -5.286023 * simCore::DEG2RAD, gars, simCore::Gars::GARS_5) == 0);
+  rv += SDK_ASSERT(gars == "350LT16");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(38.875653 * simCore::DEG2RAD, -5.286023 * simCore::DEG2RAD, gars, simCore::Gars::GARS_15) == 0);
+  rv += SDK_ASSERT(gars == "350LT1");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(38.875653 * simCore::DEG2RAD, -5.286023 * simCore::DEG2RAD, gars, simCore::Gars::GARS_30) == 0);
+  rv += SDK_ASSERT(gars == "350LT");
+
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(26.374437 * simCore::DEG2RAD, -129.565481 * simCore::DEG2RAD, gars, simCore::Gars::GARS_5) == 0);
+  rv += SDK_ASSERT(gars == "101KS26");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(26.374437 * simCore::DEG2RAD, -129.565481 * simCore::DEG2RAD, gars, simCore::Gars::GARS_15) == 0);
+  rv += SDK_ASSERT(gars == "101KS2");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(26.374437 * simCore::DEG2RAD, -129.565481 * simCore::DEG2RAD, gars, simCore::Gars::GARS_30) == 0);
+  rv += SDK_ASSERT(gars == "101KS");
+
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(-25.296938 * simCore::DEG2RAD, -79.874783 * simCore::DEG2RAD, gars, simCore::Gars::GARS_5) == 0);
+  rv += SDK_ASSERT(gars == "201FK32");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(-25.296938 * simCore::DEG2RAD, -79.874783 * simCore::DEG2RAD, gars, simCore::Gars::GARS_15) == 0);
+  rv += SDK_ASSERT(gars == "201FK3");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(-25.296938 * simCore::DEG2RAD, -79.874783 * simCore::DEG2RAD, gars, simCore::Gars::GARS_30) == 0);
+  rv += SDK_ASSERT(gars == "201FK");
+
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(4.710671 * simCore::DEG2RAD, 105.974361 * simCore::DEG2RAD, gars, simCore::Gars::GARS_5) == 0);
+  rv += SDK_ASSERT(gars == "572HX43");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(4.710671 * simCore::DEG2RAD, 105.974361 * simCore::DEG2RAD, gars, simCore::Gars::GARS_15) == 0);
+  rv += SDK_ASSERT(gars == "572HX4");
+  rv += SDK_ASSERT(simCore::Gars::convertGeodeticToGars(4.710671 * simCore::DEG2RAD, 105.974361 * simCore::DEG2RAD, gars, simCore::Gars::GARS_30) == 0);
+  rv += SDK_ASSERT(gars == "572HX");
+
   return rv;
 }
 
