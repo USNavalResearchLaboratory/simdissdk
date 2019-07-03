@@ -122,7 +122,7 @@ namespace simCore
   }
 
   /**
-  * Adjusts incoming angle to fit the range [-180, 180)
+  * Adjusts incoming angle to fit the range [-180, 180]
   * @param[in ] in angle (deg)
   * @return equivalent angle between -180 and 180 (deg)
   */
