@@ -54,7 +54,6 @@ if(INSTALL_SIMDIS_SDK_LIBRARIES)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMNOTIFY_SHARED)
-    message("Post install simnotify")
     PostBuildInstallSharedObjects(simNotify)
 endif()
 
