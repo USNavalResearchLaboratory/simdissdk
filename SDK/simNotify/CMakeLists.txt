@@ -54,7 +54,8 @@ if(INSTALL_SIMDIS_SDK_LIBRARIES)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMNOTIFY_SHARED)
-    PostBuildInstallSdkSharedObjects( simNotify )
+    message("Post install simnotify")
+    PostBuildInstallSharedObjects(simNotify)
 endif()
 
 # Setup header file installation

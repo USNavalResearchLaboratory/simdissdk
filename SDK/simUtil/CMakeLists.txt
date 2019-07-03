@@ -170,7 +170,7 @@ if(INSTALL_SIMDIS_SDK_SHADERS)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMUTIL_SHARED)
-    PostBuildInstallSdkSharedObjects(simUtil)
+    PostBuildInstallSharedObjects(simUtil)
 endif()
 
 if(INSTALL_HEADERS)

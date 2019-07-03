@@ -457,7 +457,7 @@ if(INSTALL_SIMDIS_SDK_SHADERS)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMVIS_SHARED)
-    PostBuildInstallSdkSharedObjects(simVis)
+    PostBuildInstallSharedObjects(simVis)
 endif()
 
 # Setup header file installation

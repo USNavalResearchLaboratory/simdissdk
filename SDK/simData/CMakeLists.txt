@@ -187,7 +187,7 @@ if(INSTALL_SIMDIS_SDK_LIBRARIES)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMDATA_SHARED)
-    PostBuildInstallSdkSharedObjects(simData)
+    PostBuildInstallSharedObjects(simData)
 endif()
 
 if(INSTALL_HEADERS)

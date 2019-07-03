@@ -26,12 +26,6 @@ endmacro()
 # Include the definition for installing shared objects post-build
 include(PostBuildInstallSharedObjects)
 
-# Define a macro that helps with auto-installation of DLLs/SOs for AutoInstall-enabled builds.
-# This macro is used in the simCore, simData, simVis, and simUtil CMake files.
-macro(PostBuildInstallSdkSharedObjects TARGET)
-    PostBuildInstallSharedObjects(${TARGET})
-endmacro()
-
 add_subdirectory(simNotify)
 add_subdirectory(simCore)
 add_subdirectory(simData)

@@ -358,7 +358,7 @@ if(INSTALL_SIMDIS_SDK_LIBRARIES)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMQT_SHARED)
-    PostBuildInstallSdkSharedObjects(simQt)
+    PostBuildInstallSharedObjects(simQt)
 endif()
 
 if(INSTALL_HEADERS)
