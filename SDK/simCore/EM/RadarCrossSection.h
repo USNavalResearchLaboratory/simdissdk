@@ -373,10 +373,10 @@ namespace simCore
     int checkTokens_(size_t val, size_t min, const std::string& param);
 
     /**
-    * This method computes the mean and median RCS values
+    * This method computes the min, max, mean, and median RCS values
     * medianVec must not be empty
     */
-    void computeStatistics_(std::vector<float> *medianVec);
+    void computeStatistics_(std::vector<float>* medianVec);
   };
 
   /** @brief Contains static methods for loading RCS data files. */
