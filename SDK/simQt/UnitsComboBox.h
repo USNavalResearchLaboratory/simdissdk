@@ -46,48 +46,52 @@ namespace simQt {
  *
  * Example usage:
  *
- *  QComboBox* listBox = new QComboBox(frame);
+ *  QComboBox* comboBox = new QComboBox(frame);
  *
  *  // Initialization
- *  simQt::UnitsComboBox::addUnits(listBox, simCore::LENGTH_FAMILY);
+ *  simQt::UnitsComboBox::addUnits(comboBox, simCore::LENGTH_FAMILY);
  *
  *  // Data retrieval, explicit cast
  *  simCore::Units unit;
- *  simQt::UnitsComboBox::getCurrentValue(listBox, unit);
+ *  simQt::UnitsComboBox::getCurrentValue(comboBox, unit);
  *
  *  // Setting the current value
- *  simQt::UnitsComboBox::setCurrentValue(listBox, unit);
+ *  simQt::UnitsComboBox::setCurrentValue(comboBox, unit);
  *
  * The Units/enumeration value is stored in the "getItemData" of the QComboBox entry's item.
  */
 class SDKQT_EXPORT UnitsComboBox
 {
 public:
-  /** Populates a list box with simCore::Units values; generic, same order as the unit vector */
-  static void addUnits(QComboBox& listBox, const std::string& unitFamily, const simCore::UnitsRegistry& reg);
+  /** Populates a combo box with simCore::Units values; generic, same order as the unit vector */
+  static void addUnits(QComboBox& comboBox, const std::string& unitFamily, const simCore::UnitsRegistry& reg);
 
-  /** Populates a list box with altitude units in an altitude-friendly order */
-  static void addAltitudeUnits(QComboBox& listBox);
-  /** Populates a list box with distance units in a distance-friendly order */
-  static void addDistanceUnits(QComboBox& listBox);
-  /** Populates a list box with speed units in a speed-friendly order */
-  static void addSpeedUnits(QComboBox& listBox);
-  /** Populates a list box with simCore::TimeFormat values */
-  static void addTimeFormats(QComboBox& listBox);
-  /** Populates a list box with simCore::CoordinateSystem values */
-  static void addCoordinateSystems(QComboBox& listBox);
-  /** Populates a list box with simCore::VerticalDatum values */
-  static void addVerticalData(QComboBox& listBox);
-  /** Populates a list box with simCore::MagneticVariance values */
-  static void addMagneticVariances(QComboBox& listBox);
-  /** Populates a list box with simCore::GeodeticFormat values */
-  static void addGeodeticFormats(QComboBox& listBox);
+  /** Populates a combo box with altitude units in an altitude-friendly order */
+  static void addAltitudeUnits(QComboBox& comboBox);
+  /** Populates a combo box with distance units in a distance-friendly order */
+  static void addDistanceUnits(QComboBox& comboBox);
+  /** Populates a combo box with speed units in a speed-friendly order */
+  static void addSpeedUnits(QComboBox& comboBox);
+  /** Populates a combo box with angle units in a friendly order */
+  static void addAngleUnits(QComboBox& comboBox);
+  /** Populates a combo box with simCore::TimeFormat values */
+  static void addTimeFormats(QComboBox& comboBox);
+  /** Populates a combo box with simCore::CoordinateSystem values */
+  static void addCoordinateSystems(QComboBox& comboBox);
+  /** Populates a combo box with simCore::VerticalDatum values */
+  static void addVerticalData(QComboBox& comboBox);
+  /** Populates a combo box with simCore::MagneticVariance values */
+  static void addMagneticVariances(QComboBox& comboBox);
+  /** Populates a combo box with simCore::GeodeticFormat values */
+  static void addGeodeticFormats(QComboBox& comboBox);
+  /** Populates a combo box with simCore::TimeFormat values useful for duration */
+  static void addDurationFormats(QComboBox& comboBox);
 
   /** Retrieves the current value.  Returns 0 on success, non-zero otherwise */
   template <typename T>
-  static int getCurrentValue(QComboBox& listBox, T& value)
+  static int getCurrentValue(QComboBox& comboBox, T& value)
   {
-    const QVariant currentVal = listBox.itemData(listBox.currentIndex());
+    const QVariant currentVal = comboBox.itemData(comboBox.currentIndex());
     if (!currentVal.canConvert<T>())
       return 1;
     value = qvariant_cast<T>(currentVal);
@@ -96,17 +100,17 @@ public:
 
   /** Sets the index to the given item if it is found. Returns 0 on success; non-zero otherwise */
   template <typename T>
-  static int setCurrentValue(QComboBox& listBox, T value)
+  static int setCurrentValue(QComboBox& comboBox, T value)
   {
-    const QVariant currentData = listBox.itemData(listBox.currentIndex());
+    const QVariant currentData = comboBox.itemData(comboBox.currentIndex());
     if (currentData.canConvert<T>() && currentData.value<T>() != value)
     {
-      for (int k = 0; k < listBox.count(); ++k)
+      for (int k = 0; k < comboBox.count(); ++k)
       {
-        QVariant val = listBox.itemData(k);
+        QVariant val = comboBox.itemData(k);
         if (val.canConvert<T>() && val.value<T>() == value)
         {
-          listBox.setCurrentIndex(k);
+          comboBox.setCurrentIndex(k);
           return 0; // Success
         }
       }
