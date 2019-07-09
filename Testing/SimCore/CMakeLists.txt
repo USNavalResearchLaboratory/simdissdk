@@ -81,6 +81,15 @@ set(FILE_LOCATIONS
 )
 find_file(RCSFILE fake_rcs_3.rcs PATHS ${FILE_LOCATIONS})
 mark_as_advanced(RCSFILE)
+
+# Try to locate the correct path for the Antenna Pattern test files
+set(FILE_LOCATIONS
+    $ENV{SIMDIS_SDK_FILE_PATH}/data/ant/
+    ${INSTALLSOURCE_DATA_DIR}/TestData/AntPat/
+)
+find_path(ANT_PATH monopulse.apmf PATHS ${FILE_LOCATIONS})
+mark_as_advanced(ANT_PATH)
+
 if(EXISTS ${RCSFILE})
-    add_test(NAME CoreEMTest COMMAND SimCoreTests EMTest ${RCSFILE})
+    add_test(NAME CoreEMTest COMMAND SimCoreTests EMTest ${RCSFILE} ${ANT_PATH})
 endif()
