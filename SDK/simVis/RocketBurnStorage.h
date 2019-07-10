@@ -52,8 +52,8 @@ public:
   /// update all burns on all platforms according to the given time
   void update(double time);
 
-private: // methods
-  void removeBurnsForPlatform_(simData::ObjectId removedId);
+  /// remove burn data for the given platform, according to the given id
+  void removeBurnsForPlatform(simData::ObjectId removedId);
 
 private:
   typedef std::multimap<simData::ObjectId, unsigned int> RocketBurnIdByPlatform; ///< typedef to simplify usage of multimap
