@@ -35,76 +35,7 @@
 
 namespace simCore
 {
-/* ************************************************************************** */
-/* SymmetricAntennaPattern                                                    */
-/* ************************************************************************** */
-
-/** Bilinear look up table for complex antenna patterns */
-typedef InterpTable< std::complex<double> > SymmetricAntennaPattern;
-/** Bilinear look up table exception handler for complex antenna patterns */
-typedef InterpTableLimitException< std::complex<double> > SymmetricAntennaPatternLimitException;
-
-/**
-* Reads and parses a SymmetricAntennaPattern from an input stream
-* @param[out] sap SymmetricAntennaPattern class to fill
-* @param[in ] in Input stream to read
-* @param[in ] name Name of antenna pattern
-* @param[in ] frequency Frequency of antenna pattern (Hz)
-* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
-* @return boolean, true:success, false on failure
-* @pre sap valid param
-*/
-SDKCORE_EXPORT bool readPattern(SymmetricAntennaPattern *sap, std::istream &in, const std::string &name, double frequency, double frequencythreshold = 0.5e+9);
-
-/**
-* Reads and parses a SymmetricAntennaPattern from an input file
-* @param[out] sap SymmetricAntennaPattern class to fill
-* @param[in ] filename Input file name to read
-* @param[in ] name Name of antenna pattern
-* @param[in ] frequency Frequency of antenna pattern (Hz)
-* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
-* @return boolean, true:success, false on failure
-* @pre sap valid param
-*/
-SDKCORE_EXPORT bool readPattern(SymmetricAntennaPattern *sap, const std::string &filename, const std::string &name, double frequency, double frequencythreshold = 0.5e+9);
-
-/** Bilinear look up table for gain only antenna patterns */
-typedef InterpTable< double > SymmetricGainAntPattern;
-/** Bilinear look up table exception handler for gain only antenna patterns */
-typedef InterpTableLimitException< double > SymmetricGainAntPatternLimitException;
-
-/**
-* Reads and parses a SymmetricGainAntPattern from an input stream
-* @param[out] sap SymmetricGainAntPattern class to fill
-* @param[in ] in Input stream to read
-* @param[in ] frequency Frequency of antenna pattern (Hz)
-* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
-* @return boolean, true:success, false on failure
-* @pre sap valid param
-*/
-SDKCORE_EXPORT bool readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequency, double frequencythreshold = 0.5e+9);
-
-/**
-* Reads and parses a SymmetricGainAntPattern from an input file
-* @param[out] sap SymmetricGainAntPattern class to fill
-* @param[in ] filename Input file name to read
-* @param[in ] frequency Frequency of antenna pattern (Hz)
-* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
-* @return boolean, true:success, false on failure
-* @pre sap valid param
-*/
-SDKCORE_EXPORT bool readPattern(SymmetricGainAntPattern *sap, const std::string &filename, double frequency, double frequencythreshold = 0.5e+9);
-
-/* ************************************************************************** */
-/* Bilinear look up table for Gain Data                                       */
-/* ************************************************************************** */
-
-/** Look up table for floating point gain data */
-typedef InterpTable< float > GainData;
-/** Look up table exception handler for floating point gain data */
-typedef InterpTableLimitException< float > GainDataLimitException;
-
-/* ************************************************************************** */
+class AntennaPattern;
 
 /**
 * Returns the string representation of the antenna pattern type
@@ -113,8 +44,6 @@ typedef InterpTableLimitException< float > GainDataLimitException;
 */
 SDKCORE_EXPORT std::string antennaPatternTypeString(AntennaPatternType antPatType);
 
-/* ************************************************************************** */
-
 /**
 * Returns the antenna pattern type for the given string
 * @param[in ] antPatStr string representation of the antenna pattern type or antenna pattern file extension
@@ -122,31 +51,12 @@ SDKCORE_EXPORT std::string antennaPatternTypeString(AntennaPatternType antPatTyp
 */
 SDKCORE_EXPORT AntennaPatternType antennaPatternType(const std::string& antPatStr);
 
-/* ************************************************************************** */
-
-/**
-* @brief This function returns the gain for a antenna pattern look up table
-* @param[in ] azimData Azimuth gain data
-* @param[in ] elevData Elevation gain data
-* @param[out ] lastLobe AntennaLobeType of lobe last seen, set based on normalized beam width (phi)
-* @param[in ] azim Azimuth relative to antenna (rad)
-* @param[in ] elev Elevation relative to antenna (rad)
-* @param[in ] hbw Horizontal beam width of radar (rad), must be non-zero
-* @param[in ] vbw Vertical beam width of radar (rad), must be non-zero
-* @param[in ] maxGain Maximum (normalized) antenna gain (dB)
-* @param[in ] applyWeight Boolean toggle to apply weighting (true) to the antenna gain
-* @return Antenna pattern gain (dB).
+/** Factory function to load a pattern file with the given gain and frequency, based on the extension of the filename.
+* @param filename Name of the file to load (extension matters)
+* @param freqMHz Frequency value to pass to loader, in MHz
+* @return Pointer to antenna pattern instance
 */
-SDKCORE_EXPORT float calculateGain(const std::map<float, float> *azimData,
-  const std::map<float, float> *elevData,
-  AntennaLobeType &lastLobe,
-  float azim,
-  float elev,
-  float hbw,
-  float vbw,
-  float maxGain,
-  bool applyWeight);
-
+SDKCORE_EXPORT AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz);
 
 /// Container class that contains antenna parameters for gain calculations
 class SDKCORE_EXPORT AntennaGainParameters
@@ -264,97 +174,60 @@ protected:
 class SDKCORE_EXPORT AntennaPatternGauss : public AntennaPattern
 {
 public:
-  AntennaPatternGauss() : AntennaPattern(), lastVbw_(-FLT_MAX) {valid_ = true; filename_ = ANTENNA_STRING_ALGORITHM_GAUSS;}
+  AntennaPatternGauss();
   virtual ~AntennaPatternGauss() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_GAUSS; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
 protected:
   float lastVbw_;             ///< Last vertical beam width used to calculate min & max gains
 };
 
+// ----------------------------------------------------------------------------
 
 /// Cosecant squared antenna pattern class
 class SDKCORE_EXPORT AntennaPatternCscSq : public AntennaPattern
 {
 public:
-  AntennaPatternCscSq() : AntennaPattern(), lastVbw_(-FLT_MAX) {valid_ = true; filename_ = ANTENNA_STRING_ALGORITHM_CSCSQ;}
+  AntennaPatternCscSq();
   virtual ~AntennaPatternCscSq() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_CSCSQ; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
 protected:
   float lastVbw_;             ///< Last vertical beam width used to calculate min & max gains
 };
 
+// ----------------------------------------------------------------------------
 
 /// Sine X/X (sinc) antenna pattern class
 class SDKCORE_EXPORT AntennaPatternSinXX : public AntennaPattern
 {
 public:
-  AntennaPatternSinXX() : AntennaPattern(), lastVbw_(-FLT_MAX), lastHbw_(-FLT_MAX) {valid_ = true; filename_ = ANTENNA_STRING_ALGORITHM_SINXX;}
+  AntennaPatternSinXX();
   virtual ~AntennaPatternSinXX() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_SINXX; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
 protected:
@@ -362,34 +235,22 @@ protected:
   float lastHbw_;             ///< Last horizontal beam width used to calculate min & max gains
 };
 
+// ----------------------------------------------------------------------------
 
 /// Pedestal antenna pattern class
 class SDKCORE_EXPORT AntennaPatternPedestal : public AntennaPattern
 {
 public:
-  AntennaPatternPedestal() : AntennaPattern(), lastVbw_(-FLT_MAX), lastHbw_(-FLT_MAX), lastGain_(SMALL_DB_VAL) {valid_ = true; filename_ = ANTENNA_STRING_ALGORITHM_PEDESTAL;}
+  AntennaPatternPedestal();
   virtual ~AntennaPatternPedestal() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_PEDESTAL; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
 protected:
@@ -398,38 +259,50 @@ protected:
   float lastGain_;            ///< Last gain value used to calculate min & max gains
 };
 
+// ----------------------------------------------------------------------------
 
 /// Omni directional antenna pattern class
 class SDKCORE_EXPORT AntennaPatternOmni : public AntennaPattern
 {
 public:
-
-  AntennaPatternOmni() : AntennaPattern() {valid_ = true; filename_ = ANTENNA_STRING_ALGORITHM_OMNI;}
+  AntennaPatternOmni();
   virtual ~AntennaPatternOmni() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_OMNI; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 };
 
+// ----------------------------------------------------------------------------
+/**
+* @brief This function returns the gain for an antenna pattern lookup table
+* @param[in ] azimData Azimuth gain data
+* @param[in ] elevData Elevation gain data
+* @param[out ] lastLobe AntennaLobeType of lobe last seen, set based on normalized beam width (phi)
+* @param[in ] azim Azimuth relative to antenna (rad)
+* @param[in ] elev Elevation relative to antenna (rad)
+* @param[in ] hbw Horizontal beam width of radar (rad), must be non-zero
+* @param[in ] vbw Vertical beam width of radar (rad), must be non-zero
+* @param[in ] maxGain Maximum (normalized) antenna gain (dB)
+* @param[in ] applyWeight Boolean toggle to apply weighting (true) to the antenna gain
+* @return Antenna pattern gain (dB).
+*/
+SDKCORE_EXPORT float calculateGain(const std::map<float, float> *azimData,
+  const std::map<float, float> *elevData,
+  AntennaLobeType &lastLobe,
+  float azim,
+  float elev,
+  float hbw,
+  float vbw,
+  float maxGain,
+  bool applyWeight);
+
+// ----------------------------------------------------------------------------
 
 /// Table based antenna pattern class
 class SDKCORE_EXPORT AntennaPatternTable : public AntennaPattern
@@ -438,26 +311,13 @@ public:
   AntennaPatternTable(bool type = false);
   virtual ~AntennaPatternTable() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_TABLE; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -515,6 +375,7 @@ protected:
   std::map<float, float> elevData_; ///< Elevation gain data
 };
 
+// ----------------------------------------------------------------------------
 
 /// CRUISE model antenna pattern class
 class SDKCORE_EXPORT AntennaPatternCRUISE : public AntennaPattern
@@ -524,26 +385,13 @@ public:
   AntennaPatternCRUISE();
   virtual ~AntennaPatternCRUISE() {reset_();}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_CRUISE; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -579,6 +427,7 @@ protected:
   int readPat_(std::istream& fp);
 };
 
+// ----------------------------------------------------------------------------
 
 /// Relative table antenna pattern class
 class SDKCORE_EXPORT AntennaPatternRelativeTable : public AntennaPattern
@@ -587,26 +436,13 @@ public:
   AntennaPatternRelativeTable();
   virtual ~AntennaPatternRelativeTable() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_RELATIVE; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -631,6 +467,41 @@ protected:
   int readPat_(std::istream& fp);
 };
 
+// ----------------------------------------------------------------------------
+/* ************************************************************************** */
+/* SymmetricAntennaPattern                                                    */
+/* ************************************************************************** */
+
+/** Bilinear lookup table for complex antenna patterns */
+typedef InterpTable< std::complex<double> > SymmetricAntennaPattern;
+/** Bilinear lookup table exception handler for complex antenna patterns */
+typedef InterpTableLimitException< std::complex<double> > SymmetricAntennaPatternLimitException;
+
+/**
+* Reads and parses a SymmetricAntennaPattern from an input stream
+* @param[out] sap SymmetricAntennaPattern class to fill
+* @param[in ] in Input stream to read
+* @param[in ] name Name of antenna pattern
+* @param[in ] frequency Frequency of antenna pattern (Hz)
+* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
+* @return boolean, true:success, false on failure
+* @pre sap valid param
+*/
+SDKCORE_EXPORT bool readPattern(SymmetricAntennaPattern *sap, std::istream &in, const std::string &name, double frequency, double frequencythreshold = 0.5e+9);
+
+/**
+* Reads and parses a SymmetricAntennaPattern from an input file
+* @param[out] sap SymmetricAntennaPattern class to fill
+* @param[in ] filename Input file name to read
+* @param[in ] name Name of antenna pattern
+* @param[in ] frequency Frequency of antenna pattern (Hz)
+* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
+* @return boolean, true:success, false on failure
+* @pre sap valid param
+*/
+SDKCORE_EXPORT bool readPattern(SymmetricAntennaPattern *sap, const std::string &filename, const std::string &name, double frequency, double frequencythreshold = 0.5e+9);
+
+// ----------------------------------------------------------------------------
 
 /// Monopulse antenna pattern class
 class SDKCORE_EXPORT AntennaPatternMonopulse : public AntennaPattern
@@ -639,26 +510,13 @@ public:
   AntennaPatternMonopulse();
   virtual ~AntennaPatternMonopulse();
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_MONOPULSE; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -683,13 +541,6 @@ protected:
   void reset_();
 
   /**
-  * This method parses and stores the incoming antenna pattern data
-  * @param[in ] fp Input file stream handle
-  * @return 0 on success.
-  */
-  int readPat_(std::istream& fp);
-
-  /**
   * This method sets the minimum and maximum gains for the requested pattern type
   * @param[out] min Minimum gain value to set (dB)
   * @param[out] max Maximum gain value to set (dB)
@@ -701,6 +552,40 @@ protected:
 
 };
 
+// ----------------------------------------------------------------------------
+
+/* ************************************************************************** */
+/* SymmetricGainAntPattern                                                    */
+/* ************************************************************************** */
+
+/** Bilinear lookup table for gain only antenna patterns */
+typedef InterpTable< double > SymmetricGainAntPattern;
+/** Bilinear lookup table exception handler for gain only antenna patterns */
+typedef InterpTableLimitException< double > SymmetricGainAntPatternLimitException;
+
+/**
+* Reads and parses a SymmetricGainAntPattern from an input stream
+* @param[out] sap SymmetricGainAntPattern class to fill
+* @param[in ] in Input stream to read
+* @param[in ] frequency Frequency of antenna pattern (Hz)
+* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
+* @return boolean, true:success, false on failure
+* @pre sap valid param
+*/
+SDKCORE_EXPORT bool readPattern(SymmetricGainAntPattern *sap, std::istream &in, double frequency, double frequencythreshold = 0.5e+9);
+
+/**
+* Reads and parses a SymmetricGainAntPattern from an input file
+* @param[out] sap SymmetricGainAntPattern class to fill
+* @param[in ] filename Input file name to read
+* @param[in ] frequency Frequency of antenna pattern (Hz)
+* @param[in ] frequencythreshold Frequency threshold between different frequencies in pattern (Hz)
+* @return boolean, true:success, false on failure
+* @pre sap valid param
+*/
+SDKCORE_EXPORT bool readPattern(SymmetricGainAntPattern *sap, const std::string &filename, double frequency, double frequencythreshold = 0.5e+9);
+
+// ----------------------------------------------------------------------------
 
 /// Bilinear interpolation antenna pattern class
 class SDKCORE_EXPORT AntennaPatternBiLinear : public AntennaPattern
@@ -709,26 +594,13 @@ public:
   AntennaPatternBiLinear();
   virtual ~AntennaPatternBiLinear();
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_BILINEAR; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -747,15 +619,9 @@ protected:
   * This method resets the pattern
   */
   void reset_();
-
-  /**
-  * This method parses and stores the incoming antenna pattern data
-  * @param[in ] fp Input file stream handle
-  * @return 0 on success.
-  */
-  int readPat_(std::istream& fp);
 };
 
+// ----------------------------------------------------------------------------
 
 /// National Spectrum Management Association (NSMA) antenna pattern class
 class SDKCORE_EXPORT AntennaPatternNSMA : public AntennaPattern
@@ -765,26 +631,13 @@ public:
   AntennaPatternNSMA();
   virtual ~AntennaPatternNSMA() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_NSMA; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -836,6 +689,13 @@ protected:
   void setMinMax_(float *min, float *max, float maxGain, PolarityType polarity);
 };
 
+// ----------------------------------------------------------------------------
+
+/** Lookup table for floating point gain data */
+typedef InterpTable< float > GainData;
+/** Lookup table exception handler for floating point gain data */
+typedef InterpTableLimitException< float > GainDataLimitException;
+
 
 /// Easy Numerical Electromagnetic Code (EZNEC) antenna pattern class
 class SDKCORE_EXPORT AntennaPatternEZNEC : public AntennaPattern
@@ -844,26 +704,13 @@ public:
   AntennaPatternEZNEC();
   virtual ~AntennaPatternEZNEC() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_EZNEC; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -893,6 +740,7 @@ protected:
   int readPat_(std::istream& fp);
 };
 
+// ----------------------------------------------------------------------------
 
 /// REMCOM Finite Difference Time Domain (XFDTD) antenna pattern class
 class SDKCORE_EXPORT AntennaPatternXFDTD : public AntennaPattern
@@ -901,26 +749,13 @@ public:
   AntennaPatternXFDTD();
   virtual ~AntennaPatternXFDTD() {}
 
-  /**
-  * This method returns the type of antenna pattern
-  * @return antenna pattern type
-  */
+  /** @copydoc AntennaPattern::type */
   virtual AntennaPatternType type() const { return ANTENNA_PATTERN_XFDTD; }
 
-  /**
-  * This method computes the antenna pattern gain for the requested parameters
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain value
-  * @return antenna pattern gain (dB)
-  */
+  /** @copydoc AntennaPattern::gain */
   virtual float gain(const AntennaGainParameters &params);
 
-  /**
-  * This method returns the minimum and maximum gains for the pattern
-  * @param[out] min Minimum gain value to retrieve (dB)
-  * @param[out] max Maximum gain value to retrieve (dB)
-  * @param[in ] params Collection of antenna parameters used to compute the requested gain bounds
-  * @pre min and max valid params
-  */
+  /** @copydoc AntennaPattern::minMaxGain */
   virtual void minMaxGain(float *min, float *max, const AntennaGainParameters &params);
 
   /**
@@ -947,15 +782,6 @@ protected:
   */
   int readPat_(std::istream& fp);
 };
-
-
-/** Factory function to load a pattern file with the given gain and frequency, based
-  * on the extension of the filename.
-  * @param filename Name of the file to load (extension matters)
-  * @param freq Frequency value to pass to loader
-  * @return Pointer to antenna pattern instance
-  */
-SDKCORE_EXPORT AntennaPattern* loadPatternFile(const std::string &filename, float freq);
 
 } // namespace simCore
 
