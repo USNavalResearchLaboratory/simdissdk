@@ -96,7 +96,7 @@ void EntityDialog::setItemSelected(uint64_t id)
   tree_->clearSelection();
   if (id != 0)
   {
-    tree_->setSelected(id, true);
+    tree_->setSelected(id);
     tree_->scrollTo(id);
   }
 }

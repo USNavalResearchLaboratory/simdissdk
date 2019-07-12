@@ -84,10 +84,11 @@ public:
   /** The model that holds all the entity information */
   void setModel(AbstractEntityTreeModel* model);
 
-  /** Sets/clears the selected ID in the entity list */
-  void setSelected(uint64_t id, bool selected);
-  /** Sets/clears selection of the IDs in 'list' */
-  void setSelected(QList<uint64_t> list, bool selected);
+  /** Sets the selected ID in the entity list; all other selections are cleared */
+  void setSelected(uint64_t id);
+  /** Sets selection for the IDs in 'list'; all other selections are cleared  */
+  void setSelected(const QList<uint64_t>& list);
+
   /** Clears all selections */
   void clearSelection();
   /** Gets a list of all the selected IDs in the entity list */
@@ -154,6 +155,11 @@ public:
   void addExternalAction(QAction* action);
   /** Remove all actions added by the addExternalAction() call */
   void removeExternalActions();
+
+  /** DEPRECATED: Sets/clears the selected ID in the entity list */
+  void setSelected(uint64_t id, bool selected);
+  /** DEPRECATED: Sets/clears selection for the IDs in 'list' */
+  void setSelected(QList<uint64_t> list, bool selected);
 
 public slots:
   /** If true expand the tree on double click */

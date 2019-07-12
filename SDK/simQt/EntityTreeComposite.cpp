@@ -358,6 +358,17 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
   connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
 }
 
+
+void EntityTreeComposite::setSelected(uint64_t id)
+{
+  entityTreeWidget_->setSelected(id);
+}
+
+void EntityTreeComposite::setSelected(const QList<uint64_t>& list)
+{
+  entityTreeWidget_->setSelected(list);
+}
+
 /** Sets/clears the selected ID in the entity list */
 void EntityTreeComposite::setSelected(uint64_t id, bool selected)
 {
