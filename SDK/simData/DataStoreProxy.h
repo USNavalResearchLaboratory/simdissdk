@@ -227,7 +227,7 @@ public: // methods
     dataStore_->setDefaultPrefs(platformPrefs, beamPrefs, gatePrefs, laserPrefs, lobPrefs, projectorPrefs);
   }
 
-  /** @see simData::DataStore::defaultPlatformPrefs() */
+  /** @see simData::DataStore::setDefaultPrefs() */
   virtual void setDefaultPrefs(const PlatformPrefs& platformPrefs) { dataStore_->setDefaultPrefs(platformPrefs); }
 
   /** @see simData::DataStore::defaultPlatformPrefs() */
