@@ -21,6 +21,7 @@
  */
 
 #include <cassert>
+#include <set>
 #include <QSortFilterProxyModel>
 #include <QTreeWidget>
 #include <QTimer>
@@ -268,6 +269,9 @@ void EntityTreeWidget::setSelected(const QList<uint64_t>& list)
   }
   else
   {
+    // keep track of indexes by parent to minimize the number of selections by combining neighboring indexes into one range
+    std::set< std::pair<QModelIndex, QModelIndex> > indexes;
+
     for (int ii = 0; ii < list.count(); ii++)
     {
       uint64_t id = list[ii];
@@ -280,8 +284,43 @@ void EntityTreeWidget::setSelected(const QList<uint64_t>& list)
         current = index;
 
       newSet.insert(id);
-      QItemSelection range(index, index);
-      selections.merge(range, QItemSelectionModel::Rows | QItemSelectionModel::Select);
+      indexes.insert(std::make_pair(index.parent(), index));
+    }
+
+    // Minimize the number of selections by combining neighboring indexes into one range
+    if (!indexes.empty())
+    {
+      auto it = indexes.begin();
+      QModelIndex parentIndex = it->first;
+      QModelIndex startIndex = it->second;
+      QModelIndex currentIndex = startIndex;
+      ++it;
+      for (; it != indexes.end(); ++it)
+      {
+        // If parents are different then finish a range and start a new one
+        if (parentIndex != it->first)
+        {
+          selections.select(startIndex, currentIndex);
+          parentIndex = it->first;
+          startIndex = it->second;
+          currentIndex = startIndex;
+        }
+        else
+        {
+          // If children are not neighbors then finish a range and start a new one
+          if (it->second.row() != (currentIndex.row() + 1))
+          {
+            selections.select(startIndex, currentIndex);
+            startIndex = it->second;
+            currentIndex = startIndex;
+          }
+          else
+            currentIndex = it->second;  // neighbors so keep going
+        }
+      }
+
+      // The last range needs to be committed
+      selections.select(startIndex, currentIndex);
     }
   }
 
@@ -487,7 +526,7 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
 
   // Validates that there were no duplicates in the rows.  Assertion trigger means
   // that either the data store reported a duplicate ID, or tree is storing a dupe ID
-  assert(view_->selectionModel()->selectedRows().count() == selectionList_.size());
+  assert(selectionSet_.size() == selectionList_.size());
 
   // Tell listeners about the new selections (could be empty list)
   emit itemsSelected(selectionList_);
