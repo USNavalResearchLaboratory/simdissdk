@@ -359,14 +359,14 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
 }
 
 
-void EntityTreeComposite::setSelected(uint64_t id)
+int EntityTreeComposite::setSelected(uint64_t id)
 {
-  entityTreeWidget_->setSelected(id);
+  return entityTreeWidget_->setSelected(id);
 }
 
-void EntityTreeComposite::setSelected(const QList<uint64_t>& list)
+int EntityTreeComposite::setSelected(const QList<uint64_t>& list)
 {
-  entityTreeWidget_->setSelected(list);
+  return entityTreeWidget_->setSelected(list);
 }
 
 /** Sets/clears the selected ID in the entity list */

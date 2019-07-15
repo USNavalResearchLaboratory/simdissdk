@@ -84,10 +84,18 @@ public:
   /** The model that holds all the entity information */
   void setModel(AbstractEntityTreeModel* model);
 
-  /** Sets the selected ID in the entity list; all other selections are cleared */
-  void setSelected(uint64_t id);
-  /** Sets selection for the IDs in 'list'; all other selections are cleared  */
-  void setSelected(const QList<uint64_t>& list);
+  /**
+   * Sets the selected ID in the entity list; all other selections are cleared
+   * @param id The id to set the selection to
+   * @return 0 if the selection changed, non-zero if the selection did not change
+   */
+  int setSelected(uint64_t id);
+  /**
+   * Sets selection for the IDs in 'list'; all other selections are cleared
+   * @param list The list of ids to set the selection to
+   * @return 0 if the selection changed, non-zero if the selection did not change
+   */
+  int setSelected(const QList<uint64_t>& list);
 
   /** Clears all selections */
   void clearSelection();
