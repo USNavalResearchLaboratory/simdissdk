@@ -315,8 +315,23 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
 
     setFont(fontName, fontSize, fontColor);
 
-    // default to black outline
-    setTextOutline(true, osgEarth::Symbology::Color::Black);
+    osgEarth::Symbology::Color outlineColor = osgEarth::Symbology::Color::Black;
+    if (parent.hasValue(GOG_TEXTOUTLINECOLOR))
+      outlineColor = osgEarth::Symbology::Color(parent.stringValue(GOG_TEXTOUTLINECOLOR));
+
+    simData::TextOutline outlineThickness = simData::TO_THIN;
+    if (parent.hasValue(GOG_TEXTOUTLINETHICKNESS))
+    {
+      std::string thicknessStr = parent.stringValue(GOG_TEXTOUTLINETHICKNESS);
+      if (simCore::caseCompare(thicknessStr, "thick") == 0)
+        outlineThickness = simData::TO_THICK;
+      else if (simCore::caseCompare(thicknessStr, "none") == 0)
+        outlineThickness = simData::TO_NONE;
+      else if (simCore::caseCompare(thicknessStr, "thin") != 0)
+        SIM_WARN << "Found invalid text outline thickness value \"" << thicknessStr << "\" while parsing GOG\n";
+    }
+
+    setTextOutline(outlineColor, outlineThickness);
   }
 
   // DEPTH BUFFER attribute
@@ -465,6 +480,35 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
       gogOutputStream << "fontsize " << fontSize << "\n";
     if (metaData_.isSetExplicitly(GOG_LINE_COLOR_SET))
       gogOutputStream << "linecolor hex " << Utils::serializeOsgColor(fontColor) << "\n";
+  }
+
+  // text outline
+  osg::Vec4f outlineColor;
+  simData::TextOutline outlineThickness;
+  if (getTextOutline(outlineColor, outlineThickness) == 0)
+  {
+    if (metaData_.isSetExplicitly(GOG_TEXT_OUTLINE_COLOR_SET))
+      gogOutputStream << "textoutlinecolor hex " << Utils::serializeOsgColor(outlineColor) << "\n";
+    if (metaData_.isSetExplicitly(GOG_TEXT_OUTLINE_THICKNESS_SET))
+    {
+      std::string outlineThicknessStr;
+      switch (outlineThickness)
+      {
+      case simData::TO_THICK:
+        outlineThicknessStr = "thick";
+        break;
+      case simData::TO_THIN:
+        outlineThicknessStr = "thin";
+        break;
+      case simData::TO_NONE:
+        outlineThicknessStr = "none";
+        break;
+      }
+
+      // Assertion failure means there's an unhandled value in the above switch
+      assert(!outlineThicknessStr.empty());
+      gogOutputStream << "textoutlinethickness " << outlineThicknessStr << "\n";
+    }
   }
 
   // extrude
@@ -623,7 +667,7 @@ int GogNodeInterface::getTessellation(TessellationStyle& style) const
   return 1;
 }
 
-int GogNodeInterface::getTextOutline(bool& draw, osg::Vec4f& outlineColor) const
+int GogNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const
 {
   // only applies to label nodes
   return 1;
@@ -943,7 +987,7 @@ void GogNodeInterface::setTessellation(TessellationStyle style)
   // only feature node has tessellation
 }
 
-void GogNodeInterface::setTextOutline(bool draw, const osg::Vec4f& outlineColor)
+void GogNodeInterface::setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness)
 {
   // NOP only applies to label nodes
 }
@@ -1609,7 +1653,8 @@ void LocalGeometryNodeInterface::setStyle_(const osgEarth::Symbology::Style& sty
 
 LabelNodeInterface::LabelNodeInterface(osgEarth::Annotation::LabelNode* labelNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(labelNode, metaData),
-    labelNode_(labelNode)
+    labelNode_(labelNode),
+    outlineThickness_(simData::TO_THIN)
 {
   if (labelNode_.valid())
   {
@@ -1626,7 +1671,8 @@ LabelNodeInterface::LabelNodeInterface(osgEarth::Annotation::LabelNode* labelNod
 
 LabelNodeInterface::LabelNodeInterface(osgEarth::Annotation::PlaceNode* placeNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(placeNode, metaData),
-    labelNode_(placeNode)
+    labelNode_(placeNode),
+    outlineThickness_(simData::TO_THIN)
 {
   if (labelNode_.valid())
   {
@@ -1658,15 +1704,14 @@ int LabelNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* re
   return findLocalGeometryPosition(labelNode_.get(), referencePosition, position, true);
 }
 
-int LabelNodeInterface::getTextOutline(bool& draw, osg::Vec4f& outlineColor) const
+int LabelNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const
 {
   if (!style_.has<osgEarth::Symbology::TextSymbol>())
     return 1;
   const osgEarth::Symbology::TextSymbol* ts = style_.getSymbol<osgEarth::Symbology::TextSymbol>();
 
-  // draw state is defined by the halo color alpha value (4th item in the color array)
-  draw = (ts->halo().isSet() && ts->halo()->color()[3] != 0.f);
   outlineColor = outlineColor_;
+  outlineThickness = outlineThickness_;
   return 0;
 }
 
@@ -1691,21 +1736,30 @@ void LabelNodeInterface::setFont(const std::string& fontName, int fontSize, cons
     ts->font() = fileFullPath;
   ts->size() = simVis::osgFontSize(static_cast<float>(fontSize));
   ts->fill()->color() = colorVec;
-  ts->haloOffset() = simVis::outlineThickness(simData::TO_THIN);
   setStyle_(style_);
 }
 
-void LabelNodeInterface::setTextOutline(bool draw, const osg::Vec4f& outlineColor)
+void LabelNodeInterface::setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness)
 {
-  outlineColor_ = outlineColor;
   osgEarth::Symbology::TextSymbol* ts = style_.getOrCreate<osgEarth::Symbology::TextSymbol>();
   if (!ts)
     return;
 
-  if (draw)
-    ts->halo()->color() = outlineColor_;
-  else
-    ts->halo()->color() = osgEarth::Symbology::Color(0.f, 0.f, 0.f, 0.f);
+  // Check whether color or thickness have changed for serialization
+  if (outlineColor_ != outlineColor)
+    metaData_.setExplicitly(GOG_TEXT_OUTLINE_COLOR_SET);
+
+  if (outlineThickness_ != outlineThickness)
+    metaData_.setExplicitly(GOG_TEXT_OUTLINE_THICKNESS_SET);
+
+  outlineColor_ = outlineColor;
+  outlineThickness_ = outlineThickness;
+  ts->halo()->color() = outlineColor_;
+
+  osgText::Text::BackdropType;
+  ts->haloOffset() = simVis::outlineThickness(outlineThickness);
+  // Backdrop type must be set to none when outline thickness is none to avoid artifacts
+  ts->haloBackdropType() = (outlineThickness == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
 
   setStyle_(style_);
 }

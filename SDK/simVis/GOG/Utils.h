@@ -197,6 +197,8 @@ namespace simVis { namespace GOG
     osgEarth::optional<std::string> angleUnits_; ///< Angle units
     osgEarth::optional<std::string> verticalDatum_; ///< Vertical datum
     osgEarth::optional<std::string> priority_; ///< Label Priority
+    osgEarth::optional<std::string> textOutlineColor_; ///< Text outline color
+    osgEarth::optional<std::string> textOutlineThickness_; ///< Text outline thickness
 
     /**
      * Stores the modifier state in a structured object.

@@ -229,11 +229,11 @@ public:
 
   /**
   * Get the text outline style and color of the Overlay, returns false if the Overlay does not support a text outline
-  * @param draw  set to true if the text outline is displayed, false otherwise
   * @param outlineColor  set to the Overlay's outline color in osg format (r,g,b,a) between 0.0 - 1.0
+  * @param outlineThickness set to the Overlay's outline thickness (thick, thin, or none)
   * @return 0 if this Overlay has an outline style, non-zero otherwise
   */
-  virtual int getTextOutline(bool& draw, osg::Vec4f& outlineColor) const;
+  virtual int getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const;
 
   /**
   * Get the underlying osg::Node that represents the Overlay in the scene graph
@@ -333,10 +333,10 @@ public:
 
   /**
   * Update text outline of Overlay, only applies to Annotations
-  * @param draw  true if text outline should be displayed, false otherwise
   * @param outlineColor  color of the outline
+  * @param outlineThickness thickness fo the outline
   */
-  virtual void setTextOutline(bool draw, const osg::Vec4f& outlineColor);
+  virtual void setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness);
 
   /**
    * Indicates if the shape has a properly formatted AltitudeSymbol or an ExtrusionSymbol based
@@ -572,9 +572,9 @@ public:
   virtual ~LabelNodeInterface() {}
   virtual int getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
-  virtual int getTextOutline(bool& draw, osg::Vec4f& outlineColor) const;
+  virtual int getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const;
   virtual void setFont(const std::string& fontName, int fontSize, const osg::Vec4f& color);
-  virtual void setTextOutline(bool draw, const osg::Vec4f& outlineColor);
+  virtual void setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness);
 
 protected:
   virtual void adjustAltitude_();
@@ -587,6 +587,8 @@ private:
   osg::observer_ptr<osgEarth::Annotation::GeoPositionNode> labelNode_;
   // Cache the outline color for case when outline is turned off
   osg::Vec4f outlineColor_;
+  // Cache outline thickness
+  simData::TextOutline outlineThickness_;
 };
 
 /**
