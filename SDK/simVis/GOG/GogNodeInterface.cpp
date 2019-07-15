@@ -1756,7 +1756,6 @@ void LabelNodeInterface::setTextOutline(const osg::Vec4f& outlineColor, simData:
   outlineThickness_ = outlineThickness;
   ts->halo()->color() = outlineColor_;
 
-  osgText::Text::BackdropType;
   ts->haloOffset() = simVis::outlineThickness(outlineThickness);
   // Backdrop type must be set to none when outline thickness is none to avoid artifacts
   ts->haloBackdropType() = (outlineThickness == simData::TO_NONE ? osgText::Text::NONE : osgText::Text::OUTLINE);
