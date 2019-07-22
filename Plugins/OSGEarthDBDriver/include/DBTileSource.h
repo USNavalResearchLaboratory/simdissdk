@@ -27,7 +27,7 @@
 #include "simCore/Time/Utils.h"
 #include "simVis/DBOptions.h"
 #include "simVis/osgEarthVersion.h"
-#include "sqlite/sqlite3.h"
+#include "sqlite3.h"
 #include "SQLiteDataBaseReadUtil.h"
 #include "QSPosXYExtents.h"
 
