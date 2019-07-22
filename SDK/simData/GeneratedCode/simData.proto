@@ -1202,6 +1202,16 @@ message CustomRenderingPrefs {
   optional uint32 pointsHistory = 4 [default = 0];
   /// If true, show outline instead of the shape.  Not all renderers support this field.
   optional bool outline = 5 [default = false];
+  /**
+   * A flag to determine if the history override color should be applied
+   * Not all renderers support this field.
+   */
+  optional bool useHistoryOverrideColor = 6 [default = false];
+  /**
+   * The history override color
+   * Not all renderers support this field.
+   */
+  optional fixed32 historyOverrideColor = 7 [default = 0x19E500FF];
 };
 
 /// common update to Custom Rendering data
