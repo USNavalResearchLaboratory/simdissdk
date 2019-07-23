@@ -127,6 +127,7 @@ public:
   /// Frequency Units
   static const Units HERTZ ATTRIB_HIDDEN;
   static const Units KILOHERTZ ATTRIB_HIDDEN;
+  static const Units MEGAHERTZ ATTRIB_HIDDEN;
   static const Units REVOLUTIONS_PER_MINUTE ATTRIB_HIDDEN;
   static const Units RADIANS_PER_SECOND ATTRIB_HIDDEN;
   static const Units DEGREES_PER_SECOND ATTRIB_HIDDEN;

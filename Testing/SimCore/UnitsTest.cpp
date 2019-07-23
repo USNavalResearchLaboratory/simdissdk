@@ -588,6 +588,8 @@ int testFrequencyConvert()
   rv += SDK_ASSERT(simCore::areEqual(Units::HERTZ.convertTo(Units::REVOLUTIONS_PER_MINUTE, 10.0), 600.0));
   rv += SDK_ASSERT(simCore::areEqual(Units::RADIANS_PER_SECOND.convertTo(Units::DEGREES_PER_SECOND, 1.5), 85.94367));
   rv += SDK_ASSERT(simCore::areEqual(Units::DEGREES_PER_SECOND.convertTo(Units::HERTZ, 540.0), 1.5));
+  rv += SDK_ASSERT(simCore::areEqual(Units::KILOHERTZ.convertTo(Units::HERTZ, 150.0), 150000.0));
+  rv += SDK_ASSERT(simCore::areEqual(Units::MEGAHERTZ.convertTo(Units::HERTZ, 150.0), 150000000.0));
 
   return rv;
 }
