@@ -19,7 +19,11 @@ add_subdirectory(ImageIcons)
 add_subdirectory(MapScale)
 add_subdirectory(MassiveData)
 add_subdirectory(ObserverMaker)
-add_subdirectory(Ocean)
+
+if(HAVE_OSGEARTH_TRITON)
+    add_subdirectory(Ocean)
+endif()
+
 add_subdirectory(Overhead)
 add_subdirectory(Periscope)
 add_subdirectory(Picking)
