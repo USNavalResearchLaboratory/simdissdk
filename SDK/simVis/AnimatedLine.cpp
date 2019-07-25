@@ -292,14 +292,16 @@ void AnimatedLineNode::update_(double t)
         secondLocator_->outOfSyncWith(secondLocatorRevision_))
     {
       // Pull out the 2 ECEF coordinates, set up local matrix
-      const simCore::Coordinate& ecef1 = firstLocator_->getCoordinate();
+      simCore::Vec3 ecef1;
+      firstLocator_->getLocatorPosition(&ecef1);
       firstLocator_->sync(firstLocatorRevision_);
       this->setMatrix(osg::Matrix::translate(ecef1.x(), ecef1.y(), ecef1.z()));
-      const simCore::Coordinate& ecef2 = secondLocator_->getCoordinate();
+      simCore::Vec3 ecef2;
+      secondLocator_->getLocatorPosition(&ecef2);
       secondLocator_->sync(secondLocatorRevision_);
 
       // Perform the bendy
-      drawLine_(simCore::MultiFrameCoordinate(ecef1), simCore::MultiFrameCoordinate(ecef2));
+      drawLine_(simCore::MultiFrameCoordinate(simCore::Coordinate(simCore::COORD_SYS_ECEF, ecef1)), simCore::MultiFrameCoordinate(simCore::Coordinate(simCore::COORD_SYS_ECEF, ecef2)));
     }
   }
 
@@ -307,26 +309,28 @@ void AnimatedLineNode::update_(double t)
   else if (firstLocatorValid && !secondLocatorValid)
   {
     const bool locatorMoved = firstLocator_->outOfSyncWith(firstLocatorRevision_);
-    const simCore::MultiFrameCoordinate coord1(firstLocator_->getCoordinate());
-    if (locatorMoved)
-    {
-      // Need to update the local matrix
-      const simCore::Coordinate& ecef1 = coord1.ecefCoordinate();
-      this->setMatrix(osg::Matrix::translate(ecef1.x(), ecef1.y(), ecef1.z()));
-
-      // Update the coordinate reference origin.  Note that we could optimize this by
-      // only setting the reference origin when the second coordinate is non-Geo (ECEF/LLA),
-      // but there's an edge case where this could fail if the second coordinate changes
-      // via setEndPoints() but locator stays in same place.  This optimization is not
-      // being done right now because it overly complicates the code for a minor fix.
-      //
-      // Could also be optimized in Coord Converter to avoid doing complex math to initialize
-      // the matrices until a calculation is done that requires it.
-      coordinateConverter_->setReferenceOrigin(coord1.llaCoordinate().position());
-    }
 
     if (secondCoord_.changed() || locatorMoved)
     {
+      simCore::Vec3 ecef1;
+      firstLocator_->getLocatorPosition(&ecef1);
+      const simCore::MultiFrameCoordinate coord1(simCore::Coordinate(simCore::COORD_SYS_ECEF, ecef1));
+      if (locatorMoved)
+      {
+        // Need to update the local matrix
+        this->setMatrix(osg::Matrix::translate(ecef1.x(), ecef1.y(), ecef1.z()));
+
+        // Update the coordinate reference origin.  Note that we could optimize this by
+        // only setting the reference origin when the second coordinate is non-Geo (ECEF/LLA),
+        // but there's an edge case where this could fail if the second coordinate changes
+        // via setEndPoints() but locator stays in same place.  This optimization is not
+        // being done right now because it overly complicates the code for a minor fix.
+        //
+        // Could also be optimized in Coord Converter to avoid doing complex math to initialize
+        // the matrices until a calculation is done that requires it.
+        coordinateConverter_->setReferenceOrigin(coord1.llaCoordinate().position());
+      }
+
       // Resolve the second coordinate (may or may not be relative, so we need a CoordinateConverter)
       simCore::MultiFrameCoordinate secondCoordMF;
       secondCoordMF.setCoordinate(secondCoord_, *coordinateConverter_);
