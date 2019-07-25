@@ -94,6 +94,7 @@ static simCore::Coordinate s_shipPosOri(simCore::COORD_SYS_LLA,
 static simData::ObjectId     s_shipId;
 
 
+#ifdef HAVE_TRITON_NODEKIT
 // cull callback that adds buoyancy to a platform
 // using its offset transform - this is not really
 // appropriate in the long run since the offset xform
@@ -172,6 +173,10 @@ public:
   void setEnabled(bool fl) {}
 #endif
 };
+#else
+// Provide a typedef for the callback since Triton isn't available
+typedef osg::NodeCallback PlatformBuoyancyCallback;
+#endif
 
 // An event handler to assist in testing Ocean
 struct MenuHandler : public osgGA::GUIEventHandler
@@ -372,6 +377,7 @@ namespace
     osg::observer_ptr<simVis::View> view_;
   };
 
+#ifdef HAVE_TRITON_NODEKIT
   /** Toggler for the Triton buoyancy simulation */
   class ToggleBuoyancySimulation : public ControlEventHandler
   {
@@ -387,6 +393,7 @@ namespace
   private:
     osg::ref_ptr<PlatformBuoyancyCallback> _cb;
   };
+#endif
 
 #ifdef HAVE_SILVERLINING_NODEKIT
   osg::ref_ptr<simUtil::SilverLiningSettingsAdapter> s_SlSettings = new simUtil::SilverLiningSettingsAdapter;
