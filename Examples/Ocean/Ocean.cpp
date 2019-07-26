@@ -757,6 +757,7 @@ namespace
   /** Factory for a sky node */
   SkyNode* makeSky(simVis::SceneManager* scene, bool useSilverLining, const std::string& slUser = "", const std::string& slLicense = "", const std::string& resourcePath = "")
   {
+#ifdef HAVE_SILVERLINING_NODEKIT
     if (useSilverLining)
     {
       osgEarth::SilverLining::SilverLiningOptions skyOptions;
@@ -769,16 +770,13 @@ namespace
       skyOptions.drawClouds() = true;
       skyOptions.cloudsMaxAltitude() = 100000.0;
 
-#ifdef HAVE_SILVERLINING_NODEKIT
       s_SlSettings->lensFlare()->set(true);
 
       // Configure clouds with the SilverLining callback settings
       s_SlSettings->addValue(s_CloudManager.get());
       return new SilverLining::SilverLiningNode(scene->getMapNode()->getMapSRS(), skyOptions, s_SlSettings.get());
-#else
-      return SkyNode::create(ConfigOptions(skyOptions), scene->getMapNode());
-#endif /* HAVE_SILVERLINING_NODEKIT */
     }
+#endif /* HAVE_SILVERLINING_NODEKIT */
     Config skyOptions;
     skyOptions.set("driver", "simple");
     return SkyNode::create(ConfigOptions(skyOptions), scene->getMapNode());
