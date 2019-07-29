@@ -71,8 +71,11 @@ ColorGradientWidget::~ColorGradientWidget()
 
 void ColorGradientWidget::setColorGradient(const ColorGradient& gradient)
 {
-  stops_.clear();
-  ui_->indexCombo->clear();
+  // No-op if the gradients match, to prevent the stops order from resetting
+  if (gradient == getColorGradient())
+    return;
+
+  clear();
 
   auto colors = gradient.colors();
   for (auto gradIter = colors.begin(); gradIter != colors.end(); ++gradIter)
@@ -96,6 +99,12 @@ ColorGradient ColorGradientWidget::getColorGradient() const
     gradient.setColor(stopIter->first, stopIter->second);
 
   return gradient;
+}
+
+void ColorGradientWidget::clear()
+{
+  stops_.clear();
+  ui_->indexCombo->clear();
 }
 
 void ColorGradientWidget::applyGradient_()

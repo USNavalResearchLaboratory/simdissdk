@@ -42,8 +42,15 @@ public:
   explicit ColorGradientWidget(QWidget* parent = NULL);
   virtual ~ColorGradientWidget();
 
+  /**
+   * Sets the current gradient to the given ColorGradient.  Will not clear the current stops
+   * order if given an equivalent ColorGradient. To force stops to reset, call clear() first.
+   */
   void setColorGradient(const ColorGradient& gradient);
   ColorGradient getColorGradient() const;
+
+  /** Removes all colors and stops. */
+  void clear();
 
 signals:
   /** Emitted when any change to the color gradient is made */
