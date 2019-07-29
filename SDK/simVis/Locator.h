@@ -122,11 +122,12 @@ public:
   */
   Locator(Locator* parent, unsigned int compsToInherit = COMP_ALL);
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
    * @deprecated No longer has any function. Rotation order is always HPR.
    */
-  void setRotationOrder(const RotationOrder& order, bool notify = true);
-
+  SDK_DEPRECATE(void setRotationOrder(const RotationOrder& order, bool notify = true), "Method will be removed in a future SDK release");
+#endif
   /**
   * Notifies any listeners that properties of this Locator have changed.
   * Normally this happens automatically, but if you call any of the set*

@@ -89,22 +89,7 @@ class SDKDATA_EXPORT DataStore
 protected:
   class TransactionImpl;
 
-public: // types
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated enum, no longer used in the SDK, and may be removed in a future release. */
-
-  typedef simData::ObjectType ObjectType;
-
-  static const simData::ObjectType NONE = simData::NONE;
-  static const simData::ObjectType PLATFORM = simData::PLATFORM;
-  static const simData::ObjectType BEAM = simData::BEAM;
-  static const simData::ObjectType GATE = simData::GATE;
-  static const simData::ObjectType LASER = simData::LASER;
-  static const simData::ObjectType PROJECTOR = simData::PROJECTOR;
-  static const simData::ObjectType LOB_GROUP = simData::LOB_GROUP;
-  static const simData::ObjectType CUSTOM_RENDERING = simData::CUSTOM_RENDERING;
-  static const simData::ObjectType ALL = simData::ALL;
-#endif
+public:
 
   /** DataStore transaction handle
    *

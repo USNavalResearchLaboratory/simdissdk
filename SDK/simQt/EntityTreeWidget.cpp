@@ -138,6 +138,7 @@ void EntityTreeWidget::clearSelection()
   selectionSet_.clear();
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void EntityTreeWidget::setSelected(uint64_t id, bool selected, bool signalItemsSelected)
 {
   if (model_ == NULL)
@@ -198,6 +199,7 @@ void EntityTreeWidget::setSelected(QList<uint64_t> list, bool selected)
   for (int ii = 0; ii < list.count(); ii++)
     setSelected(list[ii], selected, ii == (list.count()-1));  // cause a GUI update on the last selection
 }
+#endif
 
 int EntityTreeWidget::setSelected(uint64_t id)
 {

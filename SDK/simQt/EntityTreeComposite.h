@@ -163,12 +163,12 @@ public:
   void addExternalAction(QAction* action);
   /** Remove all actions added by the addExternalAction() call */
   void removeExternalActions();
-
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /** DEPRECATED: Sets/clears the selected ID in the entity list */
-  void setSelected(uint64_t id, bool selected);
+  SDK_DEPRECATE(void setSelected(uint64_t id, bool selected), "Method will be removed in a future SDK release");
   /** DEPRECATED: Sets/clears selection for the IDs in 'list' */
-  void setSelected(QList<uint64_t> list, bool selected);
-
+  SDK_DEPRECATE(void setSelected(QList<uint64_t> list, bool selected), "Method will be removed in a future SDK release");
+#endif
 public slots:
   /** If true expand the tree on double click */
   void setExpandsOnDoubleClick(bool value);

@@ -144,7 +144,7 @@ namespace simVis
     * @param hints Display hints
     * @deprecated Use ScenarioManager::setEntityGraphStrategy(new ScenarioManager::GeoGraphEntityGraph(hints)) instead.
     */
-    void setScenarioDisplayHints(const ScenarioDisplayHints& hints);
+    SDK_DEPRECATE(void setScenarioDisplayHints(const ScenarioDisplayHints& hints), "Method will be removed in future SDK release.");
 #endif /* USE_DEPRECATED_SIMDISSDK_API */
 
     /** Turns scenario draping on and off, for use with overhead mode. */

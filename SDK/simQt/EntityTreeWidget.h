@@ -97,10 +97,12 @@ public:
   /** Get the settings for all the filters */
   void getFilterSettings(QMap<QString, QVariant>& settings) const;
 
-  /** DEPRECATED: Sets/clears the selected ID in the entity list; does NOT generate a itemsSelected signal */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  /** DEPRECATED: Sets/clears the selected ID in the entity list; does NOT generate a itemsSelected signal; instead, use setSelected method above */
   void setSelected(uint64_t id, bool selected, bool signalItemsSelected = false);
-  /** DEPRECATED: Sets/clears selection for the IDs in 'list' */
+  /** DEPRECATED: Sets/clears selection for the IDs in 'list'; instead, use setSelected method above */
   void setSelected(QList<uint64_t> list, bool selected);
+#endif
 
 public slots:
   /** Swaps the view to the hierarchy tree */
