@@ -19,7 +19,7 @@ else()
 endif()
 
 # Set all 3rd party variables relative to 3rd directory
-set(THIRD_PARTY_PACK_DIR "${THIRDPARTY_LIBRARY_DIR}")
+set(THIRD_DIR "${THIRDPARTY_LIBRARY_DIR}")
 
 # Force all VSI builds to have both unit tests and CDash projects
 if(NOT ENABLE_CDASH_PROJECTS)
