@@ -436,6 +436,8 @@ void EntityTreeWidget::setToTreeView()
     return;
 
   QList<uint64_t> entities = selectedItems();
+  // need to clear selection set here to ensure selected items get reselected properly in setSelected, since toggleTreeView resets the model
+  selectionSet_.clear();
   model_->setToTreeView();
   setSelected(entities);
   if (settings_)
@@ -451,6 +453,8 @@ void EntityTreeWidget::setToListView()
     return;
 
   QList<uint64_t> entities = selectedItems();
+  // need to clear selection set here to ensure selected items get reselected properly in setSelected, since toggleTreeView resets the model
+  selectionSet_.clear();
   model_->setToListView();
   setSelected(entities);
   if (settings_)
@@ -472,6 +476,8 @@ void EntityTreeWidget::toggleTreeView(bool useTree)
     return;
 
   QList<uint64_t> entities = selectedItems();
+  // need to clear selection set here to ensure selected items get reselected properly in setSelected, since toggleTreeView resets the model
+  selectionSet_.clear();
   model_->toggleTreeView(useTree);
   setSelected(entities);
 
