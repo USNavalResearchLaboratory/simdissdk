@@ -533,7 +533,7 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   {
     if (!track_.valid())
       createTrackHistoryNode_(lastPrefs_);
-    else if (timeChanged)
+    else if (timeChanged || updateSlice->hasChanged())
       track_->update();
   }
   else if (track_.valid())
