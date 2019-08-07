@@ -247,8 +247,8 @@ int EntityTreeWidget::setSelected(const QList<uint64_t>& list)
   QItemSelection selections;  ///< The selected entities
   QModelIndex current;  ///< The current index
 
-  // if all entities are selected just do one selection
-  if (list.size() == numberOfEntities_(QModelIndex()))
+  // if all entities are selected and in list view just do one selection
+  if ((list.size() == numberOfEntities_(QModelIndex())) && !treeView_)
   {
     for (int ii = 0; ii < list.count(); ii++)
     {
