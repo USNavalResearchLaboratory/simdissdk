@@ -398,10 +398,8 @@ void EntityTreeWidget::setFilterSettings(const QMap<QString, QVariant>& settings
 {
   const QList<uint64_t>& entities = selectedItems();
   proxyModel_->setFilterSettings(settings);
-
   if (entities.empty())
     return;
-  uint64_t scrollToId = 0;
   // try to scroll to the last selected item if it's valid, same behavior as setSelected
   auto iter = entities.end();
   --iter;
@@ -410,18 +408,13 @@ void EntityTreeWidget::setFilterSettings(const QMap<QString, QVariant>& settings
     const QModelIndex index = proxyModel_->mapFromSource(model_->index(*iter));
     if (index.isValid())
     {
-      scrollToId = *iter;
-      break;
+      scrollTo(*iter, QAbstractItemView::PositionAtCenter);
+      return;
     }
   }
-  if (scrollToId == 0 && iter == entities.begin())
-  {
-    const QModelIndex index = proxyModel_->mapFromSource(model_->index(entities.front()));
-    if (index.isValid())
-      scrollToId = entities.front();
-  }
-  if (scrollToId > 0)
-    scrollTo(scrollToId, QAbstractItemView::PositionAtCenter);
+  const QModelIndex index = proxyModel_->mapFromSource(model_->index(entities.front()));
+  if (index.isValid())
+    scrollTo(entities.front(), QAbstractItemView::PositionAtCenter);
 }
 
 QList<uint64_t> EntityTreeWidget::selectedItems() const
