@@ -43,8 +43,8 @@ public:
   virtual ~ColorGradientWidget();
 
   /**
-   * Sets the current gradient to the given ColorGradient.  Will not clear the current stops
-   * order if given an equivalent ColorGradient. To force stops to reset, call clear() first.
+   * Sets the current gradient to the given ColorGradient.
+   * Emits gradientChanged() only if changed.
    */
   void setColorGradient(const ColorGradient& gradient);
   ColorGradient getColorGradient() const;

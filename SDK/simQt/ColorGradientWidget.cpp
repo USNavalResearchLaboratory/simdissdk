@@ -75,7 +75,9 @@ void ColorGradientWidget::setColorGradient(const ColorGradient& gradient)
   if (gradient == getColorGradient())
     return;
 
-  clear();
+  // Don't call clear() here, to prevent an unnecessary change signal and graphics update
+  stops_.clear();
+  ui_->indexCombo->clear();
 
   auto colors = gradient.colors();
   for (auto gradIter = colors.begin(); gradIter != colors.end(); ++gradIter)
@@ -105,6 +107,9 @@ void ColorGradientWidget::clear()
 {
   stops_.clear();
   ui_->indexCombo->clear();
+
+  updateEnables_();
+  applyGradient_();
 }
 
 void ColorGradientWidget::applyGradient_()
