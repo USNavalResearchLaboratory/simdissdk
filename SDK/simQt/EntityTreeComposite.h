@@ -135,8 +135,12 @@ public:
   void setUseEntityIcons(bool showIcons);
   /** Returns true if the context menu center action is enabled */
   bool useCenterAction() const;
-  /** Sets the ability to use the context menu center action, which is disabled by default */
-  void setUseCenterAction(bool use);
+  /**
+   * Sets the ability to use the context menu center action, which is disabled by default
+   * @param use If true, then enable the center action
+   * @param reason If use is false the reason is appended to the end center action text
+   */
+  void setUseCenterAction(bool use, const QString& reason = "");
 
   /** Class to store information about an Entity Tab Filter Configuration */
   class FilterConfiguration

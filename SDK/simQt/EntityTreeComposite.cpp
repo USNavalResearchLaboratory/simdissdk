@@ -661,13 +661,25 @@ bool EntityTreeComposite::useCenterAction() const
   return useCenterAction_;
 }
 
-void EntityTreeComposite::setUseCenterAction(bool use)
+void EntityTreeComposite::setUseCenterAction(bool use, const QString& reason)
 {
+  if (use)
+    centerAction_->setText(tr("Center On Selection"));
+  else
+  {
+    if (!reason.isEmpty())
+      centerAction_->setText(tr("Center On Selection (%1)").arg(reason));
+    else
+      centerAction_->setText(tr("Center On Selection"));
+  }
+
   if (use == useCenterAction_)
     return;
   useCenterAction_ = use;
   if (!selectedItems().isEmpty())
     centerAction_->setEnabled(use); // Only enable if there's items in the tree
+  else
+    centerAction_->setEnabled(false);
 }
 
 void EntityTreeComposite::onItemsChanged_(const QList<uint64_t>& ids)
