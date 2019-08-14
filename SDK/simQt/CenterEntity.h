@@ -87,7 +87,7 @@ private:
  * Class for managing the entity centering feature of the simQt::EntityTreeComposite.
  * The class will enable/disable the centering feature and does the actual centering with the CenterEntity object.
  */
-class BindCenterEntityToEntityTreeComposite : public QObject
+class SDKQT_EXPORT BindCenterEntityToEntityTreeComposite : public QObject
 {
   Q_OBJECT;
 
