@@ -274,6 +274,13 @@ set(SIMQT_PROJECT_FILES
     ${Q_HEADERS} ${Q_FORMS} ${Q_RESOURCES}
 )
 
+# Ignore deprecation warnings
+if(MSVC)
+    set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
+else()
+    set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+endif()
+
 # Fix the library for static or shared
 set(STATIC_OR_SHARED STATIC)
 if(SIMQT_SHARED)
