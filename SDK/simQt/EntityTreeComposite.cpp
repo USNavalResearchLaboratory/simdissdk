@@ -201,7 +201,9 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   useCenterAction_(false),
   treeViewUsable_(true),
   useEntityIcons_(true),
-  useEntityIconsSet_(false)
+  useEntityIconsSet_(false),
+  showCenterInMenu_(true),
+  showTreeOptionsInMenu_(true)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -305,7 +307,8 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
   QMenu* menu = new QMenu(composite_->treeView);
 
   menu->addAction(copyAction_);
-  menu->addAction(centerAction_);
+  if (showCenterInMenu_)
+    menu->addAction(centerAction_);
 
   menu->addSeparator();
 
@@ -317,9 +320,12 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
     menu->addSeparator();
   }
 
-  menu->addAction(toggleTreeViewAction_);
-  menu->addAction(collapseAllAction_);
-  menu->addAction(expandAllAction_);
+  if (showTreeOptionsInMenu_)
+  {
+    menu->addAction(toggleTreeViewAction_);
+    menu->addAction(collapseAllAction_);
+    menu->addAction(expandAllAction_);
+  }
 
   // Show the menu with exec(), making sure the position is correctly relative
   menu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
@@ -421,6 +427,15 @@ void EntityTreeComposite::setFilterSettings(const QMap<QString, QVariant>& setti
 {
   simQt::ScopedSignalBlocker blockSignals(*this);
   entityTreeWidget_->setFilterSettings(settings);
+}
+
+void EntityTreeComposite::setShowCenterInMenu(bool show)
+{
+  showCenterInMenu_ = show;
+}
+void EntityTreeComposite::setShowTreeOptionsInMenu(bool show)
+{
+  showTreeOptionsInMenu_ = show;
 }
 
 /** Clears all selections */

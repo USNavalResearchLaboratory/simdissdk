@@ -188,6 +188,11 @@ public slots:
    */
   void setFilterSettings(const QMap<QString, QVariant>& settings);
 
+  /** If true show the centering option in the right click menu */
+  void setShowCenterInMenu(bool show);
+  /** If true show the tree options in the right click menu */
+  void setShowTreeOptionsInMenu(bool show);
+
 signals:
   /** Gives an unsorted list of currently selected entities */
   void itemsSelected(QList<uint64_t> ids);
@@ -269,6 +274,10 @@ private:
   bool useEntityIcons_;
   /// If true, a call to setUseEntityIcons() was explicitly made by caller
   bool useEntityIconsSet_;
+  /// If true, show the Center option on the right mouse click menu
+  bool showCenterInMenu_;
+  /// If true, show the Tree options on the right mouse click menu
+  bool showTreeOptionsInMenu_;
 };
 
 }

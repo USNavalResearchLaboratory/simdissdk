@@ -63,6 +63,8 @@ EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeMo
   tree_->setExpandsOnDoubleClick(true);
   tree_->setSelectionMode(QAbstractItemView::SingleSelection);
   tree_->setTreeViewActionEnabled(false);  // The Entity Line Composite does not support the tree view
+  tree_->setShowTreeOptionsInMenu(false);
+  tree_->setShowCenterInMenu(false);  // will be turned back on if setCenterEntity() is called
   if (settings)
     tree_->setSettings(settings);
 
@@ -135,6 +137,7 @@ void EntityDialog::setCenterEntity(CenterEntity* centerEntity)
 
   centerBind_ = new BindCenterEntityToEntityTreeComposite(*centerEntity, *tree_, *entityTreeModel_->dataStore(), tree_);
   centerBind_->bind(false);
+  tree_->setShowCenterInMenu(true);
 }
 
 void EntityDialog::setSelected_(QList<uint64_t> ids)
