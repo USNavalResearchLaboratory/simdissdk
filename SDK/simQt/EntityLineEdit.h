@@ -22,10 +22,11 @@
 #ifndef SIMQT_ENTITY_LINE_EDIT_H
 #define SIMQT_ENTITY_LINE_EDIT_H
 
-#include <QDialog>
-#include <QWidget>
-#include <QCompleter>
 #include <QAbstractItemView>
+#include <QCompleter>
+#include <QDialog>
+#include <QPointer>
+#include <QWidget>
 #include "simCore/Common/Common.h"
 #include "simData/DataStore.h"
 #include "simQt/BoundSettings.h"
@@ -40,6 +41,8 @@ namespace simCore { class Clock; }
 
 namespace simQt {
 
+class BindCenterEntityToEntityTreeComposite;
+class CenterEntity;
 class EntityProxyModel;
 class EntityTreeComposite;
 class EntityTreeModel;
@@ -60,6 +63,8 @@ public:
   void setStateFilter(EntityStateFilter::State state);
   /** Returns the current state filter */
   EntityStateFilter::State stateFilter() const;
+  /** Set the Center Entity to support the centering feature in the dialog */
+  void setCenterEntity(CenterEntity* centerEntity);
 
 protected:
   /** Override the QDialog close event to emit the closedGui signal */
@@ -76,9 +81,10 @@ private slots:
   void setSelected_(QList<uint64_t> ids);
 
 private:
-  simQt::EntityTreeModel* entityTreeModel_;
-  simQt::EntityTreeComposite* tree_;  ///< It may be a EntityTreeComposite, but will be hard-coded into List view
-  simQt::EntityStateFilter* entityStateFilter_;
+  EntityTreeModel* entityTreeModel_;
+  EntityTreeComposite* tree_;  ///< It may be a EntityTreeComposite, but will be hard-coded into List view
+  EntityStateFilter* entityStateFilter_;
+  BindCenterEntityToEntityTreeComposite* centerBind_;
 };
 
 /** A class for displaying a QLineEdit with a QCompleter for specifying an entity by name */
@@ -127,6 +133,9 @@ public:
 
   /** Pass in the global settings reference */
   void setSettings(SettingsPtr settings);
+
+  /** Set the Center Entity to support the centering feature in the dialog */
+  void setCenterEntity(CenterEntity* centerEntity);
 
 public slots:
   /** Set the state filter to the given state */
@@ -181,6 +190,7 @@ private:
   simQt::EntityStateFilter* entityStateFilter_; ///< Filtering based on entity state
   EntityStateFilter::State state_; ///< Current state of filtering
   SettingsPtr settings_; ///< Pointer to global settings
+  QPointer<CenterEntity> centerEntity_;  ///< Passed to the dialog for the centering feature
 };
 
 /** Helper class to bind a EntityLineEdit object to Settings*/

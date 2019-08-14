@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include <QAbstractProxyModel>
 #include <QDialog>
 #include <QHeaderView>
@@ -26,16 +27,17 @@
 
 #include "simData/DataStoreHelpers.h"
 #include "simCore/Time/Clock.h"
-#include "simQt/QtFormatting.h"
-#include "simQt/ScopedSignalBlocker.h"
-#include "simQt/ResourceInitializer.h"
-#include "simQt/EntityStateFilter.h"
-#include "simQt/EntityTreeWidget.h"
-#include "simQt/EntityTreeModel.h"
-#include "simQt/EntityTreeComposite.h"
-#include "simQt/EntityTypeFilter.h"
+#include "simQt/CenterEntity.h"
 #include "simQt/EntityCategoryFilter.h"
 #include "simQt/EntityProxyModel.h"
+#include "simQt/EntityStateFilter.h"
+#include "simQt/EntityTreeComposite.h"
+#include "simQt/EntityTreeModel.h"
+#include "simQt/EntityTreeWidget.h"
+#include "simQt/EntityTypeFilter.h"
+#include "simQt/QtFormatting.h"
+#include "simQt/ResourceInitializer.h"
+#include "simQt/ScopedSignalBlocker.h"
 #include "simQt/EntityLineEdit.h"
 #include "ui_EntityLineEdit.h"
 
@@ -49,7 +51,8 @@ namespace {
 EntityDialog::EntityDialog(QWidget* parent, simQt::EntityTreeModel* entityTreeModel, simData::ObjectType type, simCore::Clock* clock, SettingsPtr settings)
   : QDialog(parent),
     entityTreeModel_(entityTreeModel),
-    entityStateFilter_(NULL)
+    entityStateFilter_(NULL),
+    centerBind_(NULL)
 {
   setWindowTitle(tr("Select Entity"));
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -117,6 +120,23 @@ EntityStateFilter::State EntityDialog::stateFilter() const
   return EntityStateFilter::BOTH;
 }
 
+void EntityDialog::setCenterEntity(CenterEntity* centerEntity)
+{
+  if (centerBind_ != NULL)
+  {
+    // Dev error, call only once
+    assert(false);
+    return;
+  }
+
+  // OK to pass in a NULL
+  if (centerEntity == NULL)
+    return;
+
+  centerBind_ = new BindCenterEntityToEntityTreeComposite(*centerEntity, *tree_, *entityTreeModel_->dataStore(), tree_);
+  centerBind_->bind(false);
+}
+
 void EntityDialog::setSelected_(QList<uint64_t> ids)
 {
   if (!ids.isEmpty())
@@ -177,7 +197,8 @@ EntityLineEdit::EntityLineEdit(QWidget* parent, simQt::EntityTreeModel* entityTr
   clock_(NULL),
   entityStateFilter_(NULL),
   state_(EntityStateFilter::BOTH),
-  settings_(SettingsPtr())
+  settings_(SettingsPtr()),
+  centerEntity_(NULL)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -350,6 +371,11 @@ void EntityLineEdit::setSettings(SettingsPtr settings)
   settings_ = settings;
 }
 
+void EntityLineEdit::setCenterEntity(CenterEntity* centerEntity)
+{
+  centerEntity_ = centerEntity;
+}
+
 void EntityLineEdit::showEntityDialog_()
 {
   if (entityTreeModel_ == NULL)
@@ -359,6 +385,7 @@ void EntityLineEdit::showEntityDialog_()
   {
     entityDialog_ = new EntityDialog(this, entityTreeModel_, type_, clock_, settings_);
     entityDialog_->setStateFilter(state_);
+    entityDialog_->setCenterEntity(centerEntity_);
 
     connect(entityDialog_, SIGNAL(itemSelected(uint64_t)), this, SLOT(setSelected(uint64_t)));
     connect(entityDialog_, SIGNAL(closedGui()), this, SLOT(closeEntityDialog()));
