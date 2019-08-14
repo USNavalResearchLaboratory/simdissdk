@@ -19,19 +19,17 @@
  * disclose, or release this software.
  *
  */
-
+#include "simData/DataStoreHelpers.h"
 #include "simVis/CentroidManager.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/Scenario.h"
 #include "simVis/Platform.h"
 #include "simVis/Gate.h"
 #include "simVis/View.h"
-
 #include "simQt/EntityTreeComposite.h"
 #include "simQt/CenterEntity.h"
 
 namespace simQt {
-
 
 CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent)
   : QObject(parent),
@@ -40,6 +38,7 @@ CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioM
 {
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, EntityTreeComposite& tree)
   : QObject(&tree),
     focusManager_(&focusManager),
@@ -47,6 +46,7 @@ CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioM
 {
   bindTo(tree);
 }
+#endif
 
 CenterEntity::~CenterEntity()
 {
@@ -81,11 +81,13 @@ void CenterEntity::centerOnSelection(const QList<uint64_t>& ids)
   }
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void CenterEntity::bindTo(EntityTreeComposite& tree)
 {
   connect(&tree, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(centerOnEntity(uint64_t)));
   tree.setExpandsOnDoubleClick(false); /// Turns off the tree expansion on double click.
 }
+#endif
 
 void CenterEntity::centerOnEntity(uint64_t id)
 {
@@ -122,6 +124,53 @@ void CenterEntity::centerOnEntity(uint64_t id)
 void CenterEntity::setCentroidManager(simVis::CentroidManager* centroidManager)
 {
   centroidManager_ = centroidManager;
+}
+
+//--------------------------------------------------------------------------------------------------
+
+BindCenterEntityToEntityTreeComposite::BindCenterEntityToEntityTreeComposite(CenterEntity& centerEntity, EntityTreeComposite& tree, simData::DataStore& dataStore, QObject* parent)
+  : QObject(parent),
+    centerEntity_(centerEntity),
+    tree_(tree),
+    dataStore_(dataStore)
+{
+}
+
+BindCenterEntityToEntityTreeComposite::~BindCenterEntityToEntityTreeComposite()
+{
+}
+
+void BindCenterEntityToEntityTreeComposite::bind(bool centerOnDoubleClick)
+{
+  connect(&tree_, SIGNAL(rightClickMenuRequested()), this, SLOT(updateCenterEnable_()));
+  connect(&tree_, SIGNAL(centerOnEntityRequested(uint64_t)), &centerEntity_, SLOT(centerOnEntity(uint64_t)));
+  connect(&tree_, SIGNAL(centerOnSelectionRequested(QList<uint64_t>)), &centerEntity_, SLOT(centerOnSelection(QList<uint64_t>)));
+  if (centerOnDoubleClick)
+  {
+    connect(&tree_, SIGNAL(itemDoubleClicked(uint64_t)), &centerEntity_, SLOT(centerOnEntity(uint64_t)));
+    tree_.setExpandsOnDoubleClick(false); // Turns off the tree expansion on double click.
+  }
+}
+
+void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
+{
+  QList<uint64_t> ids = tree_.selectedItems();
+  if (ids.empty())
+  {
+    tree_.setUseCenterAction(false, "No entities selected");
+    return;
+  }
+
+  for (auto it = ids.begin(); it != ids.end(); ++it)
+  {
+    if (!simData::DataStoreHelpers::isEntityActive(dataStore_, *it, dataStore_.updateTime()))
+    {
+      tree_.setUseCenterAction(false, "Inactive entity selected");
+      return;
+    }
+  }
+
+  tree_.setUseCenterAction(true);
 }
 
 }
