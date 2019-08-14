@@ -538,11 +538,14 @@ namespace
     opacitySlider->setHorizFill(true, 250.0f);
 
     // Sea level
-    ++row;
-    grid->setControl(0, row, new LabelControl("Sea Level", TEXT_SIZE, WHITE));
-    LabelControl* seaLevelLabel = grid->setControl(2, row, new LabelControl("0 m", TEXT_SIZE, WHITE));
-    HSliderControl* seaLevelSlider = grid->setControl(1, row, new HSliderControl(-100.f, 100.f, 0.f, new ApplySeaLevel(simpleOceanLayer, seaLevelLabel)));
-    seaLevelSlider->setHorizFill(true, 250.0f);
+    if (simpleOceanLayer)
+    {
+      ++row;
+      grid->setControl(0, row, new LabelControl("Sea Level", TEXT_SIZE, WHITE));
+      LabelControl* seaLevelLabel = grid->setControl(2, row, new LabelControl("0 m", TEXT_SIZE, WHITE));
+      HSliderControl* seaLevelSlider = grid->setControl(1, row, new HSliderControl(-100.f, 100.f, 0.f, new ApplySeaLevel(simpleOceanLayer, seaLevelLabel)));
+      seaLevelSlider->setHorizFill(true, 250.0f);
+    }
 
     // Sky lighting
     ++row;
