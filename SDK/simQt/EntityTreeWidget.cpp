@@ -514,7 +514,12 @@ void EntityTreeWidget::forceRefresh()
 
 void EntityTreeWidget::selectionCleared_()
 {
-  emit itemsSelected(QList<uint64_t>());
+  if (!selectionList_.isEmpty())
+  {
+    selectionList_.clear();
+    selectionSet_.clear();
+    emit itemsSelected(selectionList_);
+  }
 }
 
 void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const QItemSelection& deselected)
