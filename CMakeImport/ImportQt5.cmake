@@ -44,6 +44,9 @@ find_package(Qt5Widgets QUIET)
 if(NOT Qt5Widgets_FOUND)
     return()
 endif()
+
+# SDK-146: Update EXPECTED_QT_VERSION based off the actual version string from Qt that was specified
+set(EXPECTED_QT_VERSION "${Qt5Widgets_VERSION_STRING}")
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
