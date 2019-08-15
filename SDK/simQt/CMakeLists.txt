@@ -73,7 +73,6 @@ if(TARGET simData)
         ${SIMQT_INC}EntityCategoryFilter.h
         ${SIMQT_INC}EntityFilter.h
         ${SIMQT_INC}EntityFilterLineEdit.h
-        ${SIMQT_INC}EntityLineEdit.h
         ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityProxyModel.h
         ${SIMQT_INC}EntityStateFilter.h
@@ -94,6 +93,7 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
+        ${SIMQT_INC}EntityLineEdit.h
         ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
@@ -194,7 +194,6 @@ if(TARGET simData)
         ${SIMQT_SRC}DataTableModel.cpp
         ${SIMQT_SRC}EntityCategoryFilter.cpp
         ${SIMQT_SRC}EntityFilterLineEdit.cpp
-        ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityProxyModel.cpp
         ${SIMQT_SRC}EntityStateFilter.cpp
@@ -212,6 +211,7 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
+        ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
@@ -225,6 +225,13 @@ if(TARGET simVis)
             ${SIMQT_SRC}Gl3FormatGuesser.cpp
             ${SIMQT_SRC}ViewWidget.cpp
         )
+    endif()
+
+    # Ignore deprecation warnings
+    if(MSVC)
+        set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
+    else()
+        set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
     endif()
 endif()
 
@@ -273,13 +280,6 @@ set(SIMQT_PROJECT_FILES
     ${SIMQT_HEADERS} ${SIMQT_ALL_HEADER} ${SIMQT_SOURCES} ${SIMQT_FORMS} ${SIMQT_RESOURCES}
     ${Q_HEADERS} ${Q_FORMS} ${Q_RESOURCES}
 )
-
-# Ignore deprecation warnings
-if(MSVC)
-    set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
-else()
-    set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
-endif()
 
 # Fix the library for static or shared
 set(STATIC_OR_SHARED STATIC)
