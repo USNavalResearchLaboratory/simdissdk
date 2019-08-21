@@ -24,6 +24,7 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
+#include "simCore/Calc/CoordinateSystem.h"
 #include "simCore/Calc/Random.h"
 #include "simCore/Calc/NumericalAnalysis.h"
 
@@ -1640,7 +1641,67 @@ int testTaos_intercept()
   return rv;
 }
 
+int testBoresightAlphaBeta()
+{
+  int rv = 0;		       // Test Data uses X-East coordinates in meters; Yaw, Pitch, and Roll as well as expected Azimuth, Elevation, and Composite are in degrees
+			       // Before passed into calculateRelAzEl(), X-East coordinates are converted to LLA (decimal degrees) and degrees are converted into radians
+                               //{    FromX,     FromY,    FromZ,     Yaw,    Pitch,    Roll,      ToX,      ToY,     ToZ,   ExpAzim,  ExpElev, ExpComAng}
+  double paramsTest[15][12] =  { {      0.0,       0.0,      0.0,    0.00,     0.00,    0.00,      0.0,      0.0,     0.0,      0.00,     0.00,     0.0}, // Changing Lat & Long
+                                 {      0.0,       0.0,      0.0,    0.00,     0.00,    0.00,      0.0,   1000.0,     0.0,      0.00,     0.00,     0.0},
+				 {      0.0,       0.0,      0.0,    0.00,     0.00,    0.00,   1000.0,   1000.0,     0.0,     45.00,     0.00,   45.00},
+                                 {      0.0,       0.0,      0.0,    0.00,     0.00,    0.00,   1000.0,      0.0,     0.0,     90.00,     0.00,   90.00},
+                                 {      0.0,       0.0,      0.0,    0.00,     0.00,    0.00,   1000.0,  -1000.0,     0.0,    135.00,     0.00,  135.00}, // #5
 
+                                 {      0.0,       0.0,      0.0,    0.00,     0.00,    0.00,      0.0,   1000.0,  1000.0,      0.00,    45.00,   45.00}, // Changing Alt
+				 {      0.0,       0.0,      0.0,    0.00,     0.00,    0.00,   1000.0,   1000.0,  1000.0,     45.00,    35.26,   54.73},
+                                 {      0.0,       0.0,   1000.0,    0.00,     0.00,    0.00,   1000.0,      0.0,     0.0,     90.00,   -45.00,   90.00},
+                                 {      0.0,    1000.0,   1000.0,    0.00,     0.00,    0.00,   1000.0,  -2000.0,     0.0,    161.56,   -17.55,  154.75},
+				 {  -3000.0,    4000.0,   3000.0,    0.00,     0.00,    0.00,  -6000.0,  -1000.0,     0.0,   -149.01,   -27.24,  139.65}, // #10
+
+				 {      0.0,       0.0,      0.0,    90.00,    0.00,    0.00,  -1000.0,  -1000.0,     0.0,    135.00,     0.00,  135.00}, // Changing YPR
+				 {      0.0,       0.0,      0.0,    45.00,   45.00,    0.00,      0.0,  -1000.0,  1000.0,     73.67,    58.60,   81.57},
+                                 {   1000.0,   -3000.0,   5000.0,    20.00,   20.00,  -80.00,   1000.0,   1000.0,  2000.0,    -59.67,     7.27,   59.94},
+                                 {   2000.0,    6000.0,  20000.0,  -120.00,  -30.00,    0.00,   1000.0,   1000.0,     0.0,    -16.47,   -49.30,   51.30},
+				 {      0.0,   -4000.0,      0.0,   160.00,   45.00,   90.00,  -3000.0,   2000.0,  5000.0,    -98.15,     5.25,   98.11}  // #15
+			       };
+
+  const double tolerance = 0.01 * simCore::DEG2RAD;
+  simCore::CoordinateConverter cc;
+  cc.setReferenceOrigin();
+
+  size_t testCaseCount = sizeof(paramsTest) / sizeof(paramsTest[0]);
+  for (size_t i = 0; i < testCaseCount; i++)
+  {
+    const double* row = paramsTest[i];
+
+    const simCore::Vec3 fromXEast(row[0], row[1], row[2]);
+    simCore::Coordinate fromLla;
+    cc.convert(simCore::Coordinate(simCore::COORD_SYS_XEAST, fromXEast), fromLla, simCore::COORD_SYS_LLA);
+
+    simCore::Vec3 fromOri(row[3], row[4], row[5]);
+    fromOri.scale(simCore::DEG2RAD);
+
+    const simCore::Vec3 toXEast(row[6], row[7], row[8]);
+    simCore::Coordinate toLla;
+    cc.convert(simCore::Coordinate(simCore::COORD_SYS_XEAST, toXEast), toLla, simCore::COORD_SYS_LLA);
+
+    double azim;
+    double elev;
+    double cmp;
+
+    const double azimExpected = row[9] * simCore::DEG2RAD;
+    const double elevExpected = row[10] * simCore::DEG2RAD;
+    const double cmpExpected = row[11] * simCore::DEG2RAD;
+
+    simCore::calculateRelAzEl(fromLla.position(), fromOri, toLla.position(), &azim, &elev, &cmp, simCore::WGS_84, NULL); // Coord Converter optional for WGS_84 models
+
+    rv += SDK_ASSERT(simCore::areAnglesEqual(azim, azimExpected, tolerance));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(elev, elevExpected, tolerance));
+    rv += SDK_ASSERT(simCore::areAnglesEqual(cmp, cmpExpected, tolerance));
+  }
+
+  return rv;
+}
 
 }
 
@@ -1669,6 +1730,7 @@ int CalculationTest(int argc, char* argv[])
   rv += testMidPointHighRes();
   rv += testRandom();
   rv += testTaos_intercept();
+  rv += testBoresightAlphaBeta();
 
   return rv;
 }
