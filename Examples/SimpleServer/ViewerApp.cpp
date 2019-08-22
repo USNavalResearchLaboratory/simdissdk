@@ -22,6 +22,7 @@
 #include "osg/ArgumentParser"
 #include "osgGA/GUIEventHandler"
 #include "osgViewer/ViewerEventHandlers"
+#include "osgEarth/ScreenSpaceLayout"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/Utils.h"
 #include "simData/DataStoreProxy.h"
@@ -60,12 +61,16 @@ static const std::string HELP_TEXT =
   "c : Cycle centered platform\n"
   "C : Toggle overhead clamping\n"
   "d : Toggle dynamic scale\n"
+  "D : Toggle label declutter on/off\n"
   "l : Toggle Logarithmic Depth Buffer\n"
   "n : Toggle labels\n"
   "o : Cycle time format\n"
   "O : Toggle overhead mode\n"
   "p : Play/pause\n"
   "s : Cycle OSG statistics\n"
+#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
+  "T : Toggle declutter technique\n"
+#endif
   "w : Toggle compass\n"
   "z : Toggle cockpit mode (if centered)\n"
   ;
@@ -77,7 +82,8 @@ class Shortcuts : public osgGA::GUIEventHandler
 {
 public:
   explicit Shortcuts(ViewerApp& app)
-    : app_(app)
+    : app_(app),
+      declutterOn_(false)
   {
   }
 
@@ -94,30 +100,56 @@ public:
           return true;
         }
         break;
-      case osgGA::GUIEventAdapter::KEY_C: // lowercase
+      case 'c': // lowercase
         app_.centerNext();
         return true;
-      case osgGA::GUIEventAdapter::KEY_D:
+      case 'd':
         app_.toggleDynamicScale();
         return true;
-      case osgGA::GUIEventAdapter::KEY_N:
+      case 'n':
         app_.toggleLabels();
         return true;
-      case osgGA::GUIEventAdapter::KEY_W:
+      case 'w':
         app_.toggleCompass();
         return true;
-      case osgGA::GUIEventAdapter::KEY_L:
+      case 'l':
         app_.toggleLogDb();
         return true;
-      case osgGA::GUIEventAdapter::KEY_O: // lowercase
+      case 'o': // lowercase
         app_.cycleTimeFormat();
         return true;
-      case osgGA::GUIEventAdapter::KEY_Z:
+      case 'z':
         app_.toggleCockpit();
         return true;
-      case osgGA::GUIEventAdapter::KEY_P:
+      case 'p':
         app_.playPause();
         return true;
+      case 'D':
+        declutterOn_ = !declutterOn_;
+        osgEarth::ScreenSpaceLayout::setDeclutteringEnabled(declutterOn_);
+        std::cout << "Decluttering " << (declutterOn_ ? "enabled" : "disabled") << "\n";
+        return true;
+
+#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
+      case 'T':
+      {
+        auto opts = osgEarth::ScreenSpaceLayout::getOptions();
+        if (opts.technique().get() == osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_LABELS)
+        {
+          opts.technique() = osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_CALLOUTS;
+          std::cout << "Decluttering technique set to Callouts.\n";
+          // Note that you can set debug of callouts with environment variable OSGEARTH_DECLUTTER_DEBUG=1
+        }
+        else
+        {
+          opts.technique() = osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_LABELS;
+          std::cout << "Decluttering technique set to Labels.\n";
+        }
+        osgEarth::ScreenSpaceLayout::setOptions(opts);
+        return true;
+      }
+#endif
+
       }
     }
     return false;
@@ -125,6 +157,7 @@ public:
 
 private:
   ViewerApp& app_;
+  bool declutterOn_;
 };
 
 //////////////////////////////////////////////////////////////////
