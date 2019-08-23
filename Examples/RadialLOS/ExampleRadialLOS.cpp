@@ -285,7 +285,7 @@ namespace
     osg::ref_ptr<osgEarth::Symbology::LineString> p2pLine = new osgEarth::Symbology::LineString();
     p2pLine->push_back(osg::Vec3d(RLOS_LON, RLOS_LAT, RLOS_ALT));
     p2pLine->push_back(osg::Vec3d(RLOS_LON, RLOS_LAT, RLOS_ALT));
-    style.getOrCreate<osgEarth::AltitudeSymbol>()->technique() == osgEarth::AltitudeSymbol::TECHNIQUE_DRAPE;
+    style.getOrCreate<osgEarth::Symbology::AltitudeSymbol>()->technique() == osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_DRAPE;
     osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(p2pLine.get(), mapNode->getMapSRS(), style);
     app->p2pFeature = new osgEarth::Annotation::FeatureNode(feature.get());
     app->p2pFeature->setMapNode(mapNode);

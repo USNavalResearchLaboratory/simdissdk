@@ -44,6 +44,7 @@
 using namespace simVis;
 using namespace simVis::GOG;
 using namespace osgEarth;
+using namespace osgEarth::Symbology;
 
 #define LC "[GOG::GOGRegistry] "
 
