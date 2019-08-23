@@ -69,7 +69,8 @@ static const std::string HELP_TEXT =
   "p : Play/pause\n"
   "s : Cycle OSG statistics\n"
 #ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
-  "T : Toggle declutter technique\n"
+  "t : Toggle declutter technique\n"
+  "T : Cycle callout line style\n"
 #endif
   "w : Toggle compass\n"
   "z : Toggle cockpit mode (if centered)\n"
@@ -82,8 +83,7 @@ class Shortcuts : public osgGA::GUIEventHandler
 {
 public:
   explicit Shortcuts(ViewerApp& app)
-    : app_(app),
-      declutterOn_(false)
+    : app_(app)
   {
   }
 
@@ -125,29 +125,16 @@ public:
         app_.playPause();
         return true;
       case 'D':
-        declutterOn_ = !declutterOn_;
-        osgEarth::ScreenSpaceLayout::setDeclutteringEnabled(declutterOn_);
-        std::cout << "Decluttering " << (declutterOn_ ? "enabled" : "disabled") << "\n";
+        app_.toggleTextDeclutter();
         return true;
 
 #ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
-      case 'T':
-      {
-        auto opts = osgEarth::ScreenSpaceLayout::getOptions();
-        if (opts.technique().get() == osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_LABELS)
-        {
-          opts.technique() = osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_CALLOUTS;
-          std::cout << "Decluttering technique set to Callouts.\n";
-          // Note that you can set debug of callouts with environment variable OSGEARTH_DECLUTTER_DEBUG=1
-        }
-        else
-        {
-          opts.technique() = osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_LABELS;
-          std::cout << "Decluttering technique set to Labels.\n";
-        }
-        osgEarth::ScreenSpaceLayout::setOptions(opts);
+      case 't':
+        app_.toggleDeclutterTechnique();
         return true;
-      }
+      case 'T':
+        app_.cycleCalloutLineStyle();
+        return true;
 #endif
 
       }
@@ -157,7 +144,6 @@ public:
 
 private:
   ViewerApp& app_;
-  bool declutterOn_;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -167,7 +153,9 @@ ViewerApp::ViewerApp(osg::ArgumentParser& args)
     textReplacer_(new simCore::TextReplacer),
     dataStore_(NULL),
     interpolator_(NULL),
-    timeVariable_(NULL)
+    timeVariable_(NULL),
+    declutterOn_(false),
+    colorIndex_(0)
 {
   init_(args);
 }
@@ -495,5 +483,64 @@ int ViewerApp::loadGog_(const std::string& filename)
   }
   return 1;
 }
+
+void ViewerApp::toggleTextDeclutter()
+{
+  declutterOn_ = !declutterOn_;
+  osgEarth::ScreenSpaceLayout::setDeclutteringEnabled(declutterOn_);
+  std::cout << "Decluttering " << (declutterOn_ ? "enabled" : "disabled") << "\n";
+}
+
+#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
+void ViewerApp::toggleDeclutterTechnique()
+{
+  auto opts = osgEarth::ScreenSpaceLayout::getOptions();
+  if (opts.technique().get() == osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_LABELS)
+  {
+    opts.technique() = osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_CALLOUTS;
+    std::cout << "Decluttering technique set to Callouts.\n";
+    // Note that you can set debug of callouts with environment variable OSGEARTH_DECLUTTER_DEBUG=1
+  }
+  else
+  {
+    opts.technique() = osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_LABELS;
+    std::cout << "Decluttering technique set to Labels.\n";
+  }
+  osgEarth::ScreenSpaceLayout::setOptions(opts);
+}
+
+void ViewerApp::cycleCalloutLineStyle()
+{
+  // Cycle the color index
+  if (++colorIndex_ > 4)
+    colorIndex_ = 0;
+
+  auto opts = osgEarth::ScreenSpaceLayout::getOptions();
+  switch (colorIndex_)
+  {
+  case 0:
+    opts.leaderLineColor() = osgEarth::Color::White;
+    std::cout << "Setting color to white.\n";
+    break;
+  case 1:
+    opts.leaderLineColor() = osgEarth::Color::Yellow;
+    std::cout << "Setting color to yellow.\n";
+    break;
+  case 2:
+    opts.leaderLineColor() = osgEarth::Color::Red;
+    std::cout << "Setting color to red.\n";
+    break;
+  case 3:
+    opts.leaderLineColor() = osgEarth::Color::Lime;
+    std::cout << "Setting color to lime.\n";
+    break;
+  case 4:
+    opts.leaderLineColor() = osgEarth::Color::Magenta;
+    std::cout << "Setting color to magenta.\n";
+    break;
+  }
+  osgEarth::ScreenSpaceLayout::setOptions(opts);
+}
+#endif // HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
 
 }
