@@ -19,9 +19,7 @@
  * disclose, or release this software.
  *
  */
-#include "simVis/GOG/GOGRegistry.h"
 #include "simNotify/Notify.h"
-
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/Arc.h"
 #include "simVis/GOG/Circle.h"
@@ -38,15 +36,12 @@
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/Polygon.h"
 #include "simVis/GOG/Sphere.h"
-
 #include "simVis/GOG/Utils.h"
-
-using namespace simVis;
-using namespace simVis::GOG;
-using namespace osgEarth;
-using namespace osgEarth::Symbology;
+#include "simVis/GOG/GOGRegistry.h"
 
 #define LC "[GOG::GOGRegistry] "
+
+namespace simVis { namespace GOG {
 
 namespace
 {
@@ -61,15 +56,13 @@ namespace
       const GOGNodeType&       nodeType,
       const GOGContext&        context,
       const GogMetaData&       metaData,
-      MapNode*                 mapNode) const
+      osgEarth::MapNode*       mapNode) const
     {
       T ser;
       return ser.deserialize(parsedShape, pd, nodeType, context, metaData, mapNode);
     }
   };
 }
-
-namespace simVis { namespace GOG {
 
 GOGRegistry::GOGRegistry(osgEarth::MapNode* mapNode)
  : mapNode_(mapNode)
@@ -102,10 +95,12 @@ void GOGRegistry::add(const std::string& tag, Deserializer* functor)
   deserializers_[tag] = functor;
 }
 
-GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const GOGNodeType& nodeType, const Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData, GogFollowData& followData) const
+GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const GOGNodeType& nodeType,
+  const osgEarth::Symbology::Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData,
+  GogFollowData& followData) const
 {
   GogNodeInterface* result = NULL;
-  std::string key = toLower(parsedShape.shape());
+  std::string key = osgEarth::toLower(parsedShape.shape());
 
   // don't allow attached GOGs with absolute values
   if (nodeType == GOGNODE_HOSTED && parsedShape.hasValue(GOG_ABSOLUTE))
@@ -128,9 +123,9 @@ GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const G
 
     // get the follow orientation data
     followData.locatorFlags = parserData.locatorComps_;
-    followData.orientationOffsets = simCore::Vec3(parserData.localHeadingOffset_->as(Units::RADIANS),
-      parserData.localPitchOffset_->as(Units::RADIANS),
-      parserData.localRollOffset_->as(Units::RADIANS));
+    followData.orientationOffsets = simCore::Vec3(parserData.localHeadingOffset_->as(osgEarth::Units::RADIANS),
+      parserData.localPitchOffset_->as(osgEarth::Units::RADIANS),
+      parserData.localRollOffset_->as(osgEarth::Units::RADIANS));
 
     // post-processing:
     if (result && result->osgNode())
