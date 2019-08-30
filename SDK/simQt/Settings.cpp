@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <QColor>
 #include <QDataStream>
 #include "simQt/Settings.h"
 
@@ -134,10 +135,12 @@ Settings::MetaData Settings::MetaData::makeDirectory(const QVariant& defaultValu
   return Settings::MetaData(DIRECTORY, defaultValue, tooltip, inLevel, QVariant(), QVariant());
 }
 
-/** Factory method for meta data representing a color value.  Use QRgb. */
+/** Factory method for meta data representing a color value.  Use QColor or QRgb. */
 Settings::MetaData Settings::MetaData::makeColor(const QVariant& defaultValue,
                                                  const QString& tooltip, Settings::DataLevel inLevel)
 {
+  if (defaultValue.type() == QMetaType::QColor)
+    return Settings::MetaData(COLOR, defaultValue.value<QColor>().rgba(), tooltip, inLevel);
   return Settings::MetaData(COLOR, defaultValue, tooltip, inLevel);
 }
 
