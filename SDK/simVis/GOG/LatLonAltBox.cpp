@@ -45,6 +45,15 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
   osgEarth::Distance minAlt(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_LLABOX_MINALT, 0.0)), Units::METERS);
   osgEarth::Distance maxAlt(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_LLABOX_MAXALT, 1000.0)), Units::METERS);
 
+
+  // Make sure min <= max
+  if (minLat > maxLat)
+    std::swap(minLat, maxLat);
+  if (minLon > maxLon)
+    std::swap(minLon, maxLon);
+  if (minAlt > maxAlt)
+    std::swap(minAlt, maxAlt);
+
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
     Style style(p.style_);
