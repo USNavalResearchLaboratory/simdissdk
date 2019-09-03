@@ -203,7 +203,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   offsetXform_->addChild(alphaVolumeGroup_);
   alphaVolumeGroup_->setNodeMask(0); // off by default
   // Draw the backface
-  alphaVolumeGroup_->getOrCreateStateSet()->setAttributeAndModes(new osg::CullFace(osg::CullFace::FRONT), osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
+  osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::FRONT);
+  alphaVolumeGroup_->getOrCreateStateSet()->setAttributeAndModes(face.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
   // Set an initial model.  Without this, visitors expecting a node may fail early.
   setModel(simVis::Registry::instance()->modelCache()->boxNode(), false);
@@ -573,9 +574,15 @@ void PlatformModelNode::updateImageDepth_(const simData::PlatformPrefs& prefs, b
       return;
     // image models need to always pass depth test if nodepthicons is set to true
     if (prefs.nodepthicons() && isImageModel_)
-      state->setAttributeAndModes(new osg::Depth(osg::Depth::ALWAYS, 0, 1, true), osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
+    {
+      osg::ref_ptr<osg::Depth> depth = new osg::Depth(osg::Depth::ALWAYS, 0, 1, true);
+      state->setAttributeAndModes(depth.get(), osg::StateAttribute::ON | osg::StateAttribute::PROTECTED);
+    }
     else
-      state->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, true), osg::StateAttribute::ON);
+    {
+      osg::ref_ptr<osg::Depth> depth = new osg::Depth(osg::Depth::LESS, 0, 1, true);
+      state->setAttributeAndModes(depth.get(), osg::StateAttribute::ON);
+    }
   }
 }
 
@@ -690,19 +697,28 @@ void PlatformModelNode::updateCulling_(const simData::PlatformPrefs& prefs)
   {
     switch (prefs.cullface())
     {
-      case simData::FRONT:
-        stateSet->setAttributeAndModes(new osg::CullFace(osg::CullFace::FRONT), osg::StateAttribute::ON);
-        break;
-      case simData::BACK:
-        stateSet->setAttributeAndModes(new osg::CullFace(osg::CullFace::BACK), osg::StateAttribute::ON);
-        break;
-      case simData::FRONT_AND_BACK:
-        stateSet->setAttributeAndModes(new osg::CullFace(osg::CullFace::FRONT_AND_BACK), osg::StateAttribute::ON);
-        break;
-      default:
-        // assert fail means an invalid face was specified
-        assert(0);
-        return;
+    case simData::FRONT:
+    {
+      osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::FRONT);
+      stateSet->setAttributeAndModes(face.get(), osg::StateAttribute::ON);
+      break;
+    }
+    case simData::BACK:
+    {
+      osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::BACK);
+      stateSet->setAttributeAndModes(face.get(), osg::StateAttribute::ON);
+      break;
+    }
+    case simData::FRONT_AND_BACK:
+    {
+      osg::ref_ptr<osg::CullFace> face = new osg::CullFace(osg::CullFace::FRONT_AND_BACK);
+      stateSet->setAttributeAndModes(face.get(), osg::StateAttribute::ON);
+      break;
+    }
+    default:
+      // assert fail means an invalid face was specified
+      assert(0);
+      return;
     }
   }
 }
@@ -765,7 +781,8 @@ void PlatformModelNode::updatePolygonMode_(const simData::PlatformPrefs& prefs)
   assert(face == osg::PolygonMode::FRONT || face == osg::PolygonMode::BACK || face == osg::PolygonMode::FRONT_AND_BACK);
   // assert fail means an invalid mode was specified;
   assert(mode == osg::PolygonMode::POINT || mode == osg::PolygonMode::LINE || mode == osg::PolygonMode::FILL);
-  stateSet->setAttributeAndModes(new osg::PolygonMode(face, mode), osg::StateAttribute::ON);
+  osg::ref_ptr<osg::PolygonMode> polygonMode = new osg::PolygonMode(face, mode);
+  stateSet->setAttributeAndModes(polygonMode.get(), osg::StateAttribute::ON);
 }
 
 void PlatformModelNode::updateLighting_(const simData::PlatformPrefs& prefs, bool force)
@@ -811,7 +828,8 @@ void PlatformModelNode::updateAlphaVolume_(const simData::PlatformPrefs& prefs)
   if (prefs.alphavolume())
   {
     // Turn off depth writes
-    offsetXform_->getOrCreateStateSet()->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
+    osg::ref_ptr<osg::Depth> depth = new osg::Depth(osg::Depth::LESS, 0, 1, false);
+    offsetXform_->getOrCreateStateSet()->setAttributeAndModes(depth.get());
     alphaVolumeGroup_->setNodeMask(getMask());
   }
   else
