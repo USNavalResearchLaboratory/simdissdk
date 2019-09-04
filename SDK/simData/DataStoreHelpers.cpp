@@ -511,10 +511,10 @@ namespace {
 /** Helper method to determine if a Custom Rendering is active */
 bool isCustomRenderingActive(const simData::DataStore& dataStore, simData::ObjectId objectId, double atTime)
 {
-  // Host must be active
+  // Host platform must be active. Custom Renderings can be top-level entities, ignore if host ID is 0
   simData::DataStore::Transaction propertyTrans;
   const auto* property = dataStore.customRenderingProperties(objectId, &propertyTrans);
-  if (!isPlatformActive(dataStore, property->hostid(), atTime))
+  if (property->hostid() != 0 && !isPlatformActive(dataStore, property->hostid(), atTime))
     return false;
 
   const auto* slice = dataStore.customRenderingCommandSlice(objectId);
