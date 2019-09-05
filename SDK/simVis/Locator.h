@@ -385,7 +385,7 @@ private: // methods
 
 private: // data
   osg::ref_ptr<const osgEarth::SpatialReference> mapSRS_;
-  osg::ref_ptr<Locator> parentLoc_;
+  osg::observer_ptr<Locator> parentLoc_;
   unsigned int componentsToInherit_; // Locator::Components mask
   RotationOrder rotOrder_;
   bool isEmpty_;                // if false, this locator has some data, though possibly only a timestamp
