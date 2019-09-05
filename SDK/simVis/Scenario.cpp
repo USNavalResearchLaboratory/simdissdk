@@ -551,6 +551,8 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
         }
       }
     }
+    // All entities have been removed, forget about any hosting relationships
+    hosterTable_.clear();
   }
 
   else
@@ -559,6 +561,7 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
     entityGraph_->clear();
     entities_.clear();
     projectorManager_->clear();
+    hosterTable_.clear();
   }
   SAFETRYEND("clearing scenario entities");
 }
@@ -580,6 +583,15 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
       projectorManager_->unregisterProjector(projectorNode);
     }
     entityGraph_->removeEntity(record);
+
+    // remove from the hoster table
+    hosterTable_.erase(id);
+    for (auto it = hosterTable_.begin(); it != hosterTable_.end();)
+    {
+      auto erase = it++;
+      if (erase->second == id)
+        hosterTable_.erase(erase);
+    }
 
     // remove it from the entities list
     entities_.erase(i);
