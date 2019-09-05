@@ -121,9 +121,27 @@ void RfMeasurement::getRfParameters_(RangeToolState& state, double *azAbs, doubl
           // need the angles from the target to the beam source to get the correct rcs values
           double azTarget;
           double elTarget;
+          double frequency = simCore::DEFAULT_FREQUENCY;
+          simCore::PolarityType type = simCore::POLARITY_UNKNOWN;
+          // if begin state node is a beam, use the beam polarity/frequency
           const simVis::BeamNode* beam = dynamic_cast<const simVis::BeamNode*>(simdisBeginState->node_.get());
-          simCore::PolarityType type = (beam != NULL) ? beam->polarity() : simCore::POLARITY_UNKNOWN;
-          const double frequency = simCore::DEFAULT_FREQUENCY;
+          if (beam)
+          {
+            type = static_cast<simCore::PolarityType>(beam->getPrefs().polarity());
+            frequency = beam->getPrefs().frequency();
+          }
+          else // otherwise, use the end platform's polarity/frequency
+          {
+            const simVis::PlatformNode* plat = dynamic_cast<const simVis::PlatformNode*>(simdisEndState->node_.get());
+            if (plat)
+            {
+              type = static_cast<simCore::PolarityType>(plat->getPrefs().rcspolarity());
+              frequency = plat->getPrefs().rcsfrequency();
+            }
+            else
+              assert(0); // node class should match the type, which was shown to be PLATFORM above
+
+          }
           simCore::calculateRelAzEl(state.endEntity_->lla_, state.endEntity_->ypr_, state.beginEntity_->lla_, &azTarget, &elTarget, NULL, state.earthModel_, &state.coordConv_);
           if (useDb)
             rcsLocal = rcsPtr->RCSdB(frequency, azTarget, elTarget, type);
