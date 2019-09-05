@@ -30,6 +30,7 @@
 
 namespace simData { class DataStore; }
 namespace simVis {
+  class EntityNode;
   class FocusManager;
   class ScenarioManager;
   class CentroidManager;
@@ -54,6 +55,7 @@ class SDKQT_EXPORT CenterEntity : public QObject
 public:
   /** Constructor for a generic parent */
   CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent=NULL);
+  virtual ~CenterEntity();
 
 // use BindCenterEntityToEntityTreeComposite instead
 #ifdef USE_DEPRECATED_SIMDISSDK_API
@@ -69,7 +71,12 @@ public:
    */
   void setCentroidManager(simVis::CentroidManager* centroidManager);
 
-  virtual ~CenterEntity();
+  /**
+   * Returns the view center-able node for the given id
+   * @param id The entity to get a view center-able node
+   * @return A node that a view can be centered on; returns NULL on error.
+   */
+  simVis::EntityNode* getViewCenterableNode(uint64_t id) const;
 
 public slots:
   /** Center the current view port on the given entity Unique ID */

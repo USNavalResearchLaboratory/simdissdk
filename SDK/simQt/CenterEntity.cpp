@@ -19,7 +19,6 @@
  * disclose, or release this software.
  *
  */
-#include "simData/DataStoreHelpers.h"
 #include "simVis/CentroidManager.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/Scenario.h"
@@ -93,25 +92,9 @@ void CenterEntity::centerOnEntity(uint64_t id)
 {
   // Need the scenario and focus manager to continue
   if (!scenarioManager_ || !focusManager_)
-  {
     return;
-  }
 
-  simVis::EntityNode* node = scenarioManager_->find(id);
-
-  // tetherCamera works only with platforms, custom renderings and gates, so work up the chain until
-  // a platform, custom rendering or gate is found.
-  while ((node != NULL) && (dynamic_cast<simVis::PlatformNode*>(node) == NULL) &&
-     (dynamic_cast<simVis::GateNode*>(node) == NULL) &&
-     (dynamic_cast<simVis::CustomRenderingNode*>(node) == NULL))
-  {
-    uint64_t parentId;
-    if (node->getHostId(parentId))
-      node = scenarioManager_->find(parentId);
-    else
-      node = NULL;
-  }
-
+  simVis::EntityNode* node = getViewCenterableNode(id);
   if ((node != NULL) && node->isActive() && node->isVisible())
   {
     if (focusManager_->getFocusedView() != NULL)
@@ -124,6 +107,29 @@ void CenterEntity::centerOnEntity(uint64_t id)
 void CenterEntity::setCentroidManager(simVis::CentroidManager* centroidManager)
 {
   centroidManager_ = centroidManager;
+}
+
+simVis::EntityNode* CenterEntity::getViewCenterableNode(uint64_t id) const
+{
+  if (!scenarioManager_ || !focusManager_)
+    return NULL;
+
+  simVis::EntityNode* node = scenarioManager_->find(id);
+
+  // tetherCamera works only with platforms, custom renderings and gates, so work up the chain until
+  // a platform, custom rendering or gate is found.
+  while ((node != NULL) && (dynamic_cast<simVis::PlatformNode*>(node) == NULL) &&
+    (dynamic_cast<simVis::GateNode*>(node) == NULL) &&
+    (dynamic_cast<simVis::CustomRenderingNode*>(node) == NULL))
+  {
+    uint64_t parentId;
+    if (node->getHostId(parentId))
+      node = scenarioManager_->find(parentId);
+    else
+      node = NULL;
+  }
+
+  return node;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -163,7 +169,8 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
 
   for (auto it = ids.begin(); it != ids.end(); ++it)
   {
-    if (!simData::DataStoreHelpers::isEntityActive(dataStore_, *it, dataStore_.updateTime()))
+    auto node = centerEntity_.getViewCenterableNode(*it);
+    if ((node == NULL) || !node->isActive() || !node->isVisible())
     {
       tree_.setUseCenterAction(false, "Inactive entity selected");
       return;
