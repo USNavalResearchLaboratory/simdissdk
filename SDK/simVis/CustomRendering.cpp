@@ -308,6 +308,32 @@ const EntityNode* CustomRenderingNode::host() const
   return host_.get();
 }
 
+void CustomRenderingNode::setPointPicker(const std::shared_ptr<AbstractPointPicker>& pointPicker)
+{
+  pointPicker_ = pointPicker;
+}
+
+void CustomRenderingNode::getPickingPoints(std::vector<osg::Vec3d>& ecefVec) const
+{
+  ecefVec.clear();
+
+  if (!isActive() || !isVisible())
+    return;
+
+  if (pointPicker_)
+  {
+    pointPicker_->getPickingPoints(ecefVec);
+    return;
+  }
+
+  // If no PointPicker was added, fall back on the locator position
+  simCore::Vec3 locatorNodeEcef;
+  if (getPosition(&locatorNodeEcef, simCore::COORD_SYS_ECEF) != 0)
+    return;
+
+  ecefVec.push_back(osg::Vec3d(locatorNodeEcef.x(), locatorNodeEcef.y(), locatorNodeEcef.z()));
+}
+
 void CustomRenderingNode::setNodeMask_(unsigned int mask)
 {
   setNodeMask(mask);
