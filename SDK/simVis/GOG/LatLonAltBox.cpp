@@ -31,6 +31,39 @@ using namespace osgEarth::Features;
 
 namespace simVis { namespace GOG {
 
+/** Ring that provides a noop for the rewind() method; used to fix box winding */
+class NoRewindRing : public osgEarth::Symbology::Ring
+{
+public:
+  NoRewindRing()
+   : Ring()
+  {
+  }
+  explicit NoRewindRing(const NoRewindRing& rhs)
+   : Ring(rhs)
+  {
+  }
+  explicit NoRewindRing(const Vec3dVector* toCopy)
+   : Ring(toCopy)
+  {
+  }
+
+  virtual void rewind(Orientation ori)
+  {
+    // Noop: Do not automatically rewind
+  }
+
+  virtual Geometry* cloneAs(const Geometry::Type& newType) const
+  {
+    if (newType == TYPE_LINESTRING)
+      return Ring::cloneAs(newType);
+    // Always return a NoRewindRing instead of a Ring
+    return new NoRewindRing(&asVector());
+  }
+};
+
+///////////////////////////////////////////////////////////////////////
+
 GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
                           simVis::GOG::ParserData& p,
                           const GOGNodeType&       nodeType,
@@ -95,44 +128,44 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
 
     // result geometry:
     MultiGeometry* lines = new MultiGeometry();
-
-    Geometry* bottom = lines->add(new Ring());
+    Geometry* bottom = lines->add(new NoRewindRing());
     bottom->push_back(minPoint.vec3d());
-    bottom->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
-    bottom->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
     bottom->push_back(minPoint.x(), maxPoint.y(), minPoint.z());
+    bottom->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
+    bottom->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
 
+    Geometry* top = lines->add(new NoRewindRing());
+    top->push_back(minPoint.x(), minPoint.y(), maxPoint.z());
+    top->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
+    top->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
+    top->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
+
+    // Top and bottom are required for proper display above and below.  Sides are not required for 0-height.
     if (maxPoint.z() > minPoint.z())
     {
-      Geometry* left = lines->add(new Ring());
+      Geometry* left = lines->add(new NoRewindRing());
       left->push_back(minPoint.x(), minPoint.y(), minPoint.z());
       left->push_back(minPoint.x(), minPoint.y(), maxPoint.z());
       left->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
       left->push_back(minPoint.x(), maxPoint.y(), minPoint.z());
 
-      Geometry* right = lines->add(new Ring());
+      Geometry* right = lines->add(new NoRewindRing());
       right->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
       right->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
       right->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
       right->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
 
-      Geometry* back = lines->add(new Ring());
-      back->push_back(minPoint.x(), minPoint.y(), minPoint.z());
-      back->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
-      back->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
-      back->push_back(minPoint.x(), minPoint.y(), maxPoint.z());
+      Geometry* back = lines->add(new NoRewindRing());
+      back->push_back(minPoint.x(), maxPoint.y(), minPoint.z());
+      back->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
+      back->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
+      back->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
 
-      Geometry* front = lines->add(new Ring());
-      front->push_back(minPoint.x(), maxPoint.y(), minPoint.z());
-      front->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
-      front->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
-      front->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
-
-      Geometry* top = lines->add(new Ring());
-      top->push_back(minPoint.x(), minPoint.y(), maxPoint.z());
-      top->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
-      top->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
-      top->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
+      Geometry* front = lines->add(new NoRewindRing());
+      front->push_back(minPoint.x(), minPoint.y(), minPoint.z());
+      front->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
+      front->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
+      front->push_back(minPoint.x(), minPoint.y(), maxPoint.z());
     }
 
     // An unfilled LLB should be drawn as lines, so remove any conflicting symbology
