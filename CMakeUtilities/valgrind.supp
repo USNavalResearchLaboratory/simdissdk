@@ -253,3 +253,52 @@
    fun:_dl_init
 }
 
+
+{
+   Ignore osgEarth globals in ref_ptr
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_GLOBAL__sub_*
+   fun:_dl_init
+   ...
+}
+
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*GoogleOnceInitImpl*Closure*
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_ZN7simData32protobuf_AddDesc_simData_2eprotoEv
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*protobuf_AddDesc_google*protobuf*descriptor*protoEv
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*DescriptorPool*InternalAddGeneratedFile*
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*mapnik*vector*protobuf_AddDesc_vector*tile*proto*
+   fun:_dl_init
+   ...
+}
+
