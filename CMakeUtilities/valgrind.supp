@@ -302,3 +302,14 @@
    ...
 }
 
+{
+   libglib leaks on CentOS7
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   obj:/usr/lib64/libglib*
+   fun:_dl_init
+   ...
+}
+
