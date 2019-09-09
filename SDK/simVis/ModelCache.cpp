@@ -30,6 +30,7 @@
 #include "osg/ShadeModel"
 #include "osg/ShapeDrawable"
 #include "osg/TexEnv"
+#include "osg/TexEnvCombine"
 #include "osg/ValueObject"
 #include "osgSim/DOFTransform"
 #include "osgSim/LightPointNode"
@@ -131,6 +132,11 @@ public:
       {
         SIM_WARN << "Unexpected TexEnv mode: 0x" << std::hex << texEnv->getMode() << "\n";
       }
+
+      // GLCORE does not support TexEnvCombine; drop it; see SIMDIS-3227
+      osg::TexEnvCombine* texEnvCombine = dynamic_cast<osg::TexEnvCombine*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXENV));
+      if (texEnvCombine != NULL)
+        ss->removeTextureAttribute(0, texEnvCombine);
 
       // GLCORE does not support ShadeModel.  Only smooth shading is supported.  Many SIMDIS
       // models in sites/ use flat shading, but don't seem to need it.  Drop the attribute.
