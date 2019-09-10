@@ -27,6 +27,7 @@
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/String/Format.h"
+#include "simCore/String/Tokenizer.h"
 #include "simCore/Time/Clock.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simCore/Time/String.h"
@@ -81,7 +82,7 @@ simData::GateProperties::GateType gateTypeFromString(const std::string &gateType
   return simData::GateProperties::ABSOLUTE_POSITION;
 }
 
-unsigned colorFromString(const std::string &colorString)
+uint32_t colorFromString(const std::string &colorString)
 {
   using namespace osgEarth::Symbology;
 
@@ -125,7 +126,7 @@ unsigned colorFromString(const std::string &colorString)
 double timeFromString(std::string t, int referenceYear)
 {
   deQuote(t);
-  if (t[0] == '-')
+  if (t.size() > 1 && t[0] == '-')
   {
     if (t[1] != '1')
       std::cerr << "ASI Parser: Static platforms should use -1, not other negative numbers." << std::endl;
@@ -134,25 +135,8 @@ double timeFromString(std::string t, int referenceYear)
   }
 
   simCore::TimeStamp ts;
-
-  simCore::SecondsTimeFormatter secondsFormat;
-  if (secondsFormat.canConvert(t) && secondsFormat.fromString(t, ts, referenceYear) == 0)
-    return ts.secondsSinceRefYear(referenceYear);
-
-  simCore::MinutesTimeFormatter minutesFormat;
-  if (minutesFormat.canConvert(t) && minutesFormat.fromString(t, ts, referenceYear) == 0)
-    return ts.secondsSinceRefYear(referenceYear);
-
-  simCore::HoursTimeFormatter hoursFormat;
-  if (hoursFormat.canConvert(t) && hoursFormat.fromString(t, ts, referenceYear) == 0)
-    return ts.secondsSinceRefYear(referenceYear);
-
-  simCore::OrdinalTimeFormatter ordFormat;
-  if (ordFormat.canConvert(t) && ordFormat.fromString(t, ts, referenceYear) == 0)
-    return ts.secondsSinceRefYear(referenceYear);
-
-  simCore::MonthDayTimeFormatter mdyFormat;
-  if (mdyFormat.canConvert(t) && mdyFormat.fromString(t, ts, referenceYear) == 0)
+  simCore::TimeFormatterRegistry timeFormats;
+  if (timeFormats.fromString(t, ts, referenceYear) == 0)
     return ts.secondsSinceRefYear(referenceYear);
 
   std::cerr << "ASI Parser: failed to parse time '" << t << '\'' << std::endl;
@@ -174,7 +158,7 @@ struct AppData
   double endTime_;
   double lastTime_;
   bool playing_;
-  std::vector<unsigned> platformIDs_;
+  std::vector<uint64_t> platformIDs_;
   int tetherIndex_;
   osgEarth::DateTime refDateTime_;
 
@@ -257,13 +241,12 @@ public:
     std::ifstream infile(filename.c_str());
 
     std::string line;
-    while (std::getline(infile, line))
+    while (simCore::getStrippedLine(infile, line))
     {
-      std::stringstream buf(line);
-      handleAsiCommand_(buf);
+      handleAsiCommand_(line);
     }
 
-    for (std::map<unsigned, unsigned>::iterator i = dataCount_.begin(); i != dataCount_.end(); ++i)
+    for (std::map<uint64_t, unsigned int>::const_iterator i = dataCount_.begin(); i != dataCount_.end(); ++i)
     {
       SIM_NOTICE << "Platform " << i->first << ": " << i->second << " updates\n";
     }
@@ -273,13 +256,13 @@ private:
   /// accumulate beam data, so it can all be set at creation time
   struct BeamData
   {
-    unsigned hostId;
-    unsigned beamId;
+    uint64_t hostId;
+    uint64_t beamId;
     simData::BeamProperties::BeamType beamType;
     double hw;
     double vw;
 
-    BeamData(unsigned id = 0, unsigned host = 0)
+    BeamData(uint64_t id = 0, uint64_t host = 0)
     : hostId(host),
       beamId(id),
       beamType(simData::BeamProperties::ABSOLUTE_POSITION),
@@ -289,10 +272,10 @@ private:
     }
   };
 
-  void createBeamIfNeeded_(unsigned id)
+  void createBeamIfNeeded_(uint64_t id)
   {
     // check the pending map for the given id
-    std::map<unsigned, BeamData>::iterator i = pendingBeams_.find(id);
+    std::map<uint64_t, BeamData>::iterator i = pendingBeams_.find(id);
     if (i == pendingBeams_.end())
       return; // beam has been created
 
@@ -301,7 +284,7 @@ private:
     simData::BeamProperties *props = app_.ds_->addBeam(&xaction);
     idMap_[id] = props->id(); // stash data-store id
 
-    const unsigned dsId = props->id();
+    const uint64_t dsId = props->id();
 
     props->set_hostid(i->second.hostId);
     props->set_type(i->second.beamType);
@@ -324,11 +307,11 @@ private:
   /// accumulate gate data, so it can all be set at creation time
   struct GateData
   {
-    unsigned hostId;
-    unsigned gateId;
+    uint64_t hostId;
+    uint64_t gateId;
     simData::GateProperties::GateType gateType;
 
-    GateData(unsigned id = 0, unsigned host = 0)
+    GateData(uint64_t id = 0, uint64_t host = 0)
     : hostId(host),
       gateId(id),
       gateType(simData::GateProperties::ABSOLUTE_POSITION)
@@ -336,10 +319,10 @@ private:
     }
   };
 
-  void createGateIfNeeded_(unsigned id)
+  void createGateIfNeeded_(uint64_t id)
   {
     // check the pending map for the given id
-    std::map<unsigned, GateData>::iterator i = pendingGates_.find(id);
+    std::map<uint64_t, GateData>::iterator i = pendingGates_.find(id);
     if (i == pendingGates_.end())
       return; // gate has been created
 
@@ -356,17 +339,59 @@ private:
     pendingGates_.erase(i);
   }
 
+  /**
+   * Simple wrapper around a vector<string> that provides stringstream-like extraction operators.
+   * This is better than using a raw stringstream on a line that needs tokenization, because stringstream
+   * does not handle tokenization correctly with quotes.
+   */
+  class VecExtraction
+  {
+  public:
+    /** Initialize with a vector of strings */
+    explicit VecExtraction(const std::vector<std::string>& vec)
+      : vec_(vec),
+        index_(0)
+    {
+    }
+
+    /** Extract a type, presuming that stringstream does the right thing with the token. */
+    template<typename T>
+    VecExtraction& operator>>(T& out)
+    {
+      std::string str;
+      operator>>(str);
+      std::stringstream ss(str);
+      ss >> out;
+      return *this;
+    }
+
+    /** Extract a single string -- specialized to return the whole string */
+    VecExtraction& operator>>(std::string& out)
+    {
+      if (index_ < vec_.size())
+        out = vec_[index_++];
+      return *this;
+    }
+
+  private:
+    std::vector<std::string> vec_;
+    size_t index_;
+  };
+
   /// take action for the given command (one line in the file)
-  void handleAsiCommand_(std::stringstream &buf)
+  void handleAsiCommand_(const std::string &line)
   {
     simData::DataStore::Transaction xaction;
+    std::vector<std::string> vec;
+    simCore::quoteCommentTokenizer(line, vec);
+    VecExtraction buf(vec);
 
     std::string token;
     buf >> token;
 
     if (token == "PlatformID")
     {
-      unsigned id;
+      uint64_t id;
       buf >> id;
 
       simData::PlatformProperties *props = app_.ds_->addPlatform(&xaction);
@@ -376,7 +401,7 @@ private:
     }
     else if (token == "PlatformIcon")
     {
-      unsigned id;
+      uint64_t id;
       std::string icon;
       buf >> id >> icon;
       deQuote(icon);
@@ -391,7 +416,7 @@ private:
     }
     else if (token == "PlatformName")
     {
-      unsigned id;
+      uint64_t id;
       std::string name;
       buf >> id >> name;
       deQuote(name);
@@ -403,7 +428,7 @@ private:
     }
     else if (token == "PlatformData")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       double lat, lon, alt, yaw, pitch, roll, vx, vy, vz;
       buf >> id >> timeString >> lat >> lon >> alt >> yaw >> pitch >> roll >> vx >> vy >> vz;
@@ -438,11 +463,11 @@ private:
     }
     else if (token == "BeamID")
     {
-      unsigned host, id;
+      uint64_t host, id;
       buf >> host >> id;
 
       // convert ASI host id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(host);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(host);
       if (i == idMap_.end())
       {
         std::cerr << "ASI Parser: Attempt to create beam " << id << " before host platform " << host << std::endl;
@@ -453,7 +478,7 @@ private:
     }
     else if (token == "BeamType")
     {
-      unsigned id;
+      uint64_t id;
       std::string beamTypeString;
       buf >> id >> beamTypeString;
 
@@ -462,7 +487,7 @@ private:
     }
     else if (token == "VertBW")
     {
-      unsigned id;
+      uint64_t id;
       double bw;
       buf >> id >> bw;
 
@@ -470,7 +495,7 @@ private:
     }
     else if (token == "HorzBW")
     {
-      unsigned id;
+      uint64_t id;
       double bw;
       buf >> id >> bw;
 
@@ -478,7 +503,7 @@ private:
     }
     else if (token == "BeamOnOffCmd")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       int onOff;
       buf >> id >> timeString >> onOff;
@@ -486,11 +511,11 @@ private:
       createBeamIfNeeded_(id);
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::BeamCommand *cmd = app_.ds_->addBeamCommand(dsId, &xaction);
 
       const double t = timeFromString(timeString, refYear_);
@@ -502,7 +527,7 @@ private:
     }
     else if (token == "BeamColorCmd")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       std::string colorString;
       buf >> id >> timeString >> colorString;
@@ -510,11 +535,11 @@ private:
       createBeamIfNeeded_(id);
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::BeamCommand *cmd = app_.ds_->addBeamCommand(dsId, &xaction);
       simData::CommonPrefs *commonPrefs = cmd->mutable_updateprefs()->mutable_commonprefs();
 
@@ -526,7 +551,7 @@ private:
     }
     else if (token == "BeamDataRAE")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       double az, el, range;
       buf >> id >> timeString >> az >> el >> range;
@@ -534,11 +559,11 @@ private:
       createBeamIfNeeded_(id);
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::BeamUpdate *up = app_.ds_->addBeamUpdate(dsId, &xaction);
 
       const double t = timeFromString(timeString, refYear_);
@@ -560,19 +585,19 @@ private:
     }
     else if (token == "BeamTargetIDCmd")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
-      unsigned targetId;
+      uint64_t targetId;
       buf >> id >> timeString >> targetId;
 
       createBeamIfNeeded_(id);
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::BeamCommand *cmd = app_.ds_->addBeamCommand(dsId, &xaction);
       simData::BeamPrefs *prefs = cmd->mutable_updateprefs();
 
@@ -590,11 +615,11 @@ private:
     }
     else if (token == "GateID")
     {
-      unsigned host, id;
+      uint64_t host, id;
       buf >> host >> id;
 
       // convert ASI host id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(host);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(host);
       if (i == idMap_.end())
       {
         std::cerr << "ASI Parser: Attempt to create gate " << id << " before host beam " << host << std::endl;
@@ -605,7 +630,7 @@ private:
     }
     else if (token == "GateType")
     {
-      unsigned id;
+      uint64_t id;
       std::string gateTypeString;
       buf >> id >> gateTypeString;
       deQuote(gateTypeString);
@@ -614,7 +639,7 @@ private:
     }
     else if (token == "GateOnOffCmd")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       int onOff;
       buf >> id >> timeString >> onOff;
@@ -622,11 +647,11 @@ private:
       createGateIfNeeded_(id);
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::GateCommand *cmd = app_.ds_->addGateCommand(dsId, &xaction);
 
       const double t = timeFromString(timeString, refYear_);
@@ -638,7 +663,7 @@ private:
     }
     else if (token == "GateColorCmd")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       std::string colorString;
       buf >> id >> timeString >> colorString;
@@ -646,11 +671,11 @@ private:
       createGateIfNeeded_(id);
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::GateCommand *cmd = app_.ds_->addGateCommand(dsId, &xaction);
       simData::CommonPrefs *commonPrefs = cmd->mutable_updateprefs()->mutable_commonprefs();
 
@@ -662,7 +687,7 @@ private:
     }
     else if (token == "GateDataRAE")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       double az, el, w, h, start, end, center;
       buf >> id >> timeString >> az >> el >> w >> h >> start >> end >> center;
@@ -670,11 +695,11 @@ private:
       createGateIfNeeded_(id);
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::GateUpdate *up = app_.ds_->addGateUpdate(dsId, &xaction);
 
       const double t = timeFromString(timeString, refYear_);
@@ -717,17 +742,17 @@ private:
     }
     else if (token == "Projector")
     {
-      unsigned host, id;
+      uint64_t host, id;
       buf >> host >> id;
 
       // convert ASI host id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(host);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(host);
       if (i == idMap_.end())
       {
         std::cerr << "ASI Parser: Attempt to create projector " << id << " before host platform " << host << std::endl;
         return;
       }
-      
+
       simData::DataStore::Transaction xaction;
       simData::ProjectorProperties* props = app_.ds_->addProjector(&xaction);
       idMap_[id] = props->id(); // stash data-store id
@@ -736,50 +761,50 @@ private:
     }
     else if (token == "ProjectorRasterFile")
     {
-      unsigned id;
+      uint64_t id;
       std::string fileString;
       buf >> id;
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
       buf >> fileString;
       deQuote(fileString);
-      
-      const unsigned dsId = i->second;
+
+      const uint64_t dsId = i->second;
       simData::ProjectorPrefs* prefs = app_.ds_->mutable_projectorPrefs(dsId, &xaction);
       prefs->set_rasterfile(fileString);
       xaction.complete(&prefs);
     }
     else if (token == "ProjectorInterpolateFOV")
     {
-      unsigned id;
+      uint64_t id;
       buf >> id;
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      unsigned value;
+      uint64_t value;
       buf >> value;
-      
-      const unsigned dsId = i->second;
+
+      const uint64_t dsId = i->second;
       simData::ProjectorPrefs* prefs = app_.ds_->mutable_projectorPrefs(dsId, &xaction);
       prefs->set_interpolateprojectorfov(value==1? true: false);
       xaction.complete(&prefs);
     }
     else if (token == "ProjectorOn")
     {
-      unsigned id;
+      uint64_t id;
       std::string timeString;
       int onOff;
       buf >> id >> timeString >> onOff;
 
       // convert ASI id to data-store id
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
-      const unsigned dsId = i->second;
+      const uint64_t dsId = i->second;
       simData::ProjectorCommand* cmd = app_.ds_->addProjectorCommand(dsId, &xaction);
 
       const double t = timeFromString(timeString, refYear_);
@@ -791,9 +816,9 @@ private:
     }
     else if (token == "ProjectorFOV")
     {
-      unsigned id;
+      uint64_t id;
       buf >> id;
-      std::map<unsigned, unsigned>::const_iterator i = idMap_.find(id);
+      std::map<uint64_t, uint64_t>::const_iterator i = idMap_.find(id);
       if (i == idMap_.end())
         return;
 
@@ -801,8 +826,8 @@ private:
       double value;
       buf >> timeString >> value;
       const double t = timeFromString(timeString, refYear_);
-      
-      const unsigned dsId = i->second;
+
+      const uint64_t dsId = i->second;
       simData::ProjectorUpdate* update = app_.ds_->addProjectorUpdate(dsId, &xaction);
       update->set_time(t);
       update->set_fov(simCore::DEG2RAD * value);
@@ -812,14 +837,14 @@ private:
 
   AppData &app_;
 
-  std::map<unsigned, BeamData> pendingBeams_;
-  std::map<unsigned, GateData> pendingGates_;
+  std::map<uint64_t, BeamData> pendingBeams_;
+  std::map<uint64_t, GateData> pendingGates_;
 
   int refYear_; /// scenario reference year
   bool degreeAngles_; /// true: data units are in degrees, false: radians
 
-  std::map<unsigned, unsigned> idMap_; /// map from ASI id to data-store id
-  std::map<unsigned, unsigned> dataCount_; /// number of data points (indexed by ASI id)
+  std::map<uint64_t, uint64_t> idMap_; /// map from ASI id to data-store id
+  std::map<uint64_t, unsigned int> dataCount_; /// number of data points (indexed by ASI id)
 };
 
 //----------------------------------------------------------------------------
@@ -907,7 +932,7 @@ int main(int argc, char **argv)
   }
 
   // fire up the viewer.
-  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer(); 
+  osg::ref_ptr<simVis::Viewer> viewer = new simVis::Viewer();
   if (mapNode.valid())
     viewer->setMapNode(mapNode.get());
   else
@@ -940,4 +965,3 @@ int main(int argc, char **argv)
     viewer->frame();
   }
 }
-
