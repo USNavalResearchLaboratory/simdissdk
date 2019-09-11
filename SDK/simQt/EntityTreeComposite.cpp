@@ -286,6 +286,11 @@ EntityTreeComposite::~EntityTreeComposite()
   // we don't own model_ so don't delete it
 }
 
+void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
+{
+  composite_->verticalLayout->layout()->setContentsMargins(left, top, right, bottom);
+}
+
 void EntityTreeComposite::addExternalAction(QAction* action)
 {
   if ((action == NULL) || action->isSeparator())

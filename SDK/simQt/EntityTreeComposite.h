@@ -79,6 +79,8 @@ public:
   explicit EntityTreeComposite(QWidget* parent);
   virtual ~EntityTreeComposite();
 
+  /** Set the margins */
+  void setMargins(int left, int top, int right, int bottom);
   /** Adds an entity filter to the entity tree widget's proxy model.  NOTE: the proxy model takes ownership of the memory */
   void addEntityFilter(EntityFilter* entityFilter);
   /** The model that holds all the entity information */
