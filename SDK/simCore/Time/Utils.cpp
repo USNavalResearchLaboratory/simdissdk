@@ -19,11 +19,12 @@
  * disclose, or release this software.
  *
  */
-#include <sstream>
-#include <iomanip>
 #include <cassert>
-#include <cstring>
 #include <cmath>
+#include <cstring>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 #include "simCore/Common/Time.h"
 #include "simCore/Time/Constants.h"
@@ -44,6 +45,9 @@ int simCore::currentYear()
   // put system time into a tm struct
   time_t t(tp.tv_sec);
   pTime = gmtime(&t);
+
+  if (pTime == NULL)
+    return std::numeric_limits<int>::max();
 
   // years are stored as values since 1900
   return static_cast<int>(pTime->tm_year + 1900);
@@ -76,6 +80,9 @@ double simCore::systemTimeToSecsBgnYr()
   time_t t(tp.tv_sec);
   struct tm* pTime = gmtime(&t);
 
+  if (pTime == NULL)
+    return std::numeric_limits<double>::max();
+
   // assemble a UTC "system time"
   unsigned int pSecs = static_cast<unsigned int>(pTime->tm_sec)  +
     ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
@@ -99,13 +106,21 @@ void simCore::systemTimeToSecsBgnYr(unsigned int &pSecs, unsigned short &pMillis
   time_t t(tp.tv_sec);
   struct tm* pTime = gmtime(&t);
 
-  // assemble a UTC "system time"
-  pSecs = static_cast<unsigned int>(pTime->tm_sec) +
-    ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
-    ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR) +
-    ((static_cast<unsigned int>(pTime->tm_yday)) * simCore::SECPERDAY);
+  if (pTime == NULL)
+  {
+    pSecs = std::numeric_limits<unsigned int>::max();
+    pMillisec = std::numeric_limits<unsigned short>::max();
+  }
+  else
+  {
+    // assemble a UTC "system time"
+    pSecs = static_cast<unsigned int>(pTime->tm_sec) +
+      ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
+      ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR) +
+      ((static_cast<unsigned int>(pTime->tm_yday)) * simCore::SECPERDAY);
 
-  pMillisec = static_cast<unsigned short>(tp.tv_usec * 1e-03);
+    pMillisec = static_cast<unsigned short>(tp.tv_usec * 1e-03);
+  }
 }
 
 //------------------------------------------------------------------------
@@ -121,6 +136,9 @@ double simCore::systemTimeToSecsBgnDay()
   // put system time into a tm struct
   time_t t(tp.tv_sec);
   struct tm* pTime = gmtime(&t);
+
+  if (pTime == NULL)
+    return std::numeric_limits<double>::max();
 
   // assemble a UTC "system time"
   unsigned int pSecs = (static_cast<unsigned int>(pTime->tm_sec) +
