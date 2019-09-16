@@ -1933,6 +1933,8 @@ void ArcNodeInterface::setFilledState(bool state)
   if (!fillNode_.valid())
     return;
   fillNode_->setNodeMask(state ? simVis::DISPLAY_MASK_GOG : simVis::DISPLAY_MASK_NONE);
+  // the arc's fill node has some problems keeping up with elevation data, so just reset the position when changing fill state to jog its memory
+  fillNode_->setPosition(fillNode_->getPosition());
 }
 
 void ArcNodeInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
