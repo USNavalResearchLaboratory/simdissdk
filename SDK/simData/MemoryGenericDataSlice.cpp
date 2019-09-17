@@ -152,35 +152,38 @@ public:
     }
   }
 
-  /// if ignoreDuplicates is true; successive duplicate values will not be added to time_
+  /// if ignoreDuplicates is true; successive duplicate values, with different times, will not be added to times_
   void insert(double time, const std::string& value, bool ignoreDuplicates)
   {
     // Find location
     TimeList::iterator start = times_.end();
-    if (!times_.empty())
+    if (!times_.empty() && (time <= times_.back().time))
+      start = std::lower_bound(times_.begin(), times_.end(), TimeIndex(time), Key::lessByTime);
+
+    // prevent duplicates at the same time; independent of the ignoreDuplicates
+    for (; start != times_.end(); ++start)
     {
-      if (time < times_.back().time)
-      {
-        start = std::lower_bound(times_.begin(), times_.end(), TimeIndex(time), Key::lessByTime);
-      }
+      if (start->time != time)
+        break;
+
+      // check values
+      const auto index = start->index - indexOffset_;
+      // verify that indexOffset_ is updated correctly; dev error if assert
+      assert((index >= 0) && (index < values_.size()));
+      const ValueIndex& cacheValue = values_[index];
+      if (cacheValue.value == value)
+        return; // no assert, user provided data
     }
 
-    if (start != times_.end())
-    {
-      if (start->time == time)
-      {
-        // it is not valid to have two values at the same time
-        // no assert, since this can occur when looping UDP playback in a live mode context
-        return;
-      }
-    }
-
-    // If necessary ignore duplicates
+    // If necessary ignore historical duplicates
     if ((ignoreDuplicates) && (!times_.empty()) && (start != times_.begin()))
     {
       TimeList::iterator check = start;
       --check;
-      const ValueIndex& cacheValue = values_[check->index - indexOffset_];
+      const auto index = check->index - indexOffset_;
+      // verify that indexOffset_ is updated correctly; dev error if assert
+      assert((index >= 0) && (index < values_.size()));
+      const ValueIndex& cacheValue = values_[index];
       if (cacheValue.value == value)
         return;
     }
