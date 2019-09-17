@@ -105,7 +105,7 @@ public:
   /** Removes the burns from storage when the entity is removed from data store */
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
-    storage_.removeBurnsForPlatform_(removedId);
+    storage_.removeBurnsForPlatform(removedId);
   }
 
 private:
@@ -190,7 +190,7 @@ void RocketBurnStorage::update(double time)
   }
 }
 
-void RocketBurnStorage::removeBurnsForPlatform_(simData::ObjectId removedId)
+void RocketBurnStorage::removeBurnsForPlatform(simData::ObjectId removedId)
 {
   // find all burnIds that associate with the platform
   const std::pair<RocketBurnIdByPlatform::iterator, RocketBurnIdByPlatform::iterator> ranges = idsByPlatform_.equal_range(removedId);

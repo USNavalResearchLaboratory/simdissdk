@@ -92,11 +92,12 @@ public:
 class CartesianGridLabel : public LocalGridLabel
 {
 public:
-  CartesianGridLabel(const simData::LocalGridPrefs& prefs, float val) : LocalGridLabel(prefs)
+  CartesianGridLabel(const simData::LocalGridPrefs& prefs, float valM) : LocalGridLabel(prefs)
   {
     std::stringstream buf;
-    const osgEarth::Units prefSizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
-    buf << std::fixed << std::setprecision(prefs.gridlabelprecision()) << val << ' ' << prefSizeUnits.getAbbr();
+    const osgEarth::Units& prefSizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
+    const double gridScale = osgEarth::Units::METERS.convertTo(prefSizeUnits, valM);
+    buf << std::fixed << std::setprecision(prefs.gridlabelprecision()) << gridScale << ' ' << prefSizeUnits.getAbbr();
     setText(buf.str());
   }
 };
@@ -184,7 +185,7 @@ public:
     const float radiusM = spacingM * (ring_ + 1);
 
     // displaying distance, not time; convert labels value from meters to local grid units pref
-    const osgEarth::Units prefSizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
+    const osgEarth::Units& prefSizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
     const double radius = osgEarth::Units::METERS.convertTo(prefSizeUnits, radiusM);
     std::stringstream buf;
     buf << std::fixed << std::setprecision(prefs.gridlabelprecision()) << radius << ' ' << prefSizeUnits.getAbbr();
@@ -628,7 +629,7 @@ void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
   if (prefs.has_gridpositionoffset())
   {
     const simData::Position& pos = prefs.gridpositionoffset();
-    const osgEarth::Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.positionoffsetunits());
+    const osgEarth::Units& sizeUnits = simVis::convertUnitsToOsgEarth(prefs.positionoffsetunits());
     const float x = sizeUnits.convertTo(osgEarth::Units::METERS, pos.x());
     const float y = sizeUnits.convertTo(osgEarth::Units::METERS, pos.y());
     const float z = sizeUnits.convertTo(osgEarth::Units::METERS, pos.z());
@@ -673,7 +674,7 @@ void LocalGridNode::syncWithLocator()
 // creates a Cartesian grid.
 void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup) const
 {
-  const osgEarth::Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
+  const osgEarth::Units& sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   // Note that size is halved; it's provided in diameter, and we need it as radius
   const float size = sizeUnits.convertTo(osgEarth::Units::METERS, prefs.size()) * 0.5f;
   const int numDivisions    = prefs.gridsettings().numdivisions();
@@ -716,7 +717,6 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
   }
 
   // second draw the main division lines and the text labels
-  const std::string abbrev = sizeUnits.getAbbr();
   for (int p=0; p < numDivLines; ++p)
   {
     const float x = x0 + divSpacing * p;
@@ -756,7 +756,7 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
 // creates a range-rings local grid with optional polar radials.
 void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const
 {
-  const osgEarth::Units sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
+  const osgEarth::Units& sizeUnits = simVis::convertUnitsToOsgEarth(prefs.sizeunits());
   // Note that size is halved; it's provided in diameter, and we need it as radius
   const float sizeM = sizeUnits.convertTo(osgEarth::Units::METERS, prefs.size()) * 0.5f;
 
@@ -959,7 +959,7 @@ int LocalGridNode::processSpeedParams_(const simData::LocalGridPrefs& prefs, dou
   else if (prefs.speedring().speedtouse() > 0.0)
   {
     // using speedToUse, convert to m/s
-    const osgEarth::Units prefSpeedUnits = simVis::convertUnitsToOsgEarth(prefs.speedring().speedunits());
+    const osgEarth::Units& prefSpeedUnits = simVis::convertUnitsToOsgEarth(prefs.speedring().speedunits());
     speedMS = prefSpeedUnits.convertTo(osgEarth::Units::METERS_PER_SECOND, prefs.speedring().speedtouse());
     if (simCore::areEqual(speedMS, 0.0))
     {

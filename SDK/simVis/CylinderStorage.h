@@ -51,9 +51,10 @@ public:
   /** Update all Cylinders on all platforms according to the given time */
   void update(double time);
 
-private: // methods
-  void removeCylindersForPlatform_(simData::ObjectId removedId);
+  /// Remove all cylinders for the given platform
+  void removeCylindersForPlatform(simData::ObjectId removedId);
 
+private:
   /** typedef to simplify usage of multimap */
   typedef std::multimap<simData::ObjectId, unsigned int> CylinderIdByPlatform;
   /** All the data points for one Cylinder object */

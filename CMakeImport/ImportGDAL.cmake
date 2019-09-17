@@ -1,0 +1,108 @@
+# Setup GDAL library
+# Setting the GDAL_DIR environment variable will allow use of a custom built library
+
+set(LIBRARYNAME GDAL)
+set(${LIBRARYNAME}_VERSION 2.1.1)
+set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
+
+# Setup search paths based off GDAL_ROOT
+initialize_ENV(${LIBRARYNAME}_DIR)
+find_path(${LIBRARYNAME}_ROOT
+    NAMES include/gdal.h
+    HINTS
+        $ENV{${LIBRARYNAME}_DIR}
+        $ENV{${LIBRARYNAME}_ROOT}
+        ${THIRD_DIR}/GDAL/${${LIBRARYNAME}_VERSION}
+        ${THIRD_DIR}/GDAL
+    NO_DEFAULT_PATH
+)
+
+# GDAL_LIBRARY_INCLUDE_PATH
+find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH
+    NAME gdal.h
+    PATHS ${${LIBRARYNAME}_ROOT}/include NO_DEFAULT_PATH)
+# GDAL_LIBRARY_RELEASE_PATH
+find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME
+    NAMES gdal gdal_i gdal201 gdal111
+    PATHS ${${LIBRARYNAME}_ROOT}/lib NO_DEFAULT_PATH)
+# GDAL_LIBRARY_DEBUG_PATH
+find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME
+    NAMES gdal_d gdal201_d gdal111_d
+    PATHS ${${LIBRARYNAME}_ROOT}/lib NO_DEFAULT_PATH)
+# Fall back on release library explicitly, only on Windows
+if(WIN32 AND ${LIBRARYNAME}_LIBRARY_RELEASE_NAME AND NOT ${LIBRARYNAME}_LIBRARY_DEBUG_NAME)
+    set(${LIBRARYNAME}_LIBRARY_DEBUG_NAME "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}" CACHE STRING "Path to a library" FORCE)
+endif()
+
+# Set up compile definitions and dependencies
+set(${LIBRARYNAME}_COMPILE_DEFINITIONS CPL_DISABLE_DLL)
+if(UNIX)
+    list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES dl)
+else()
+    list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES VSI::SOCKET)
+endif()
+
+############################################################
+########## Imported 3rd party library boilerplate ##########
+############################################################
+
+# Determine whether we found the library correctly
+if(NOT ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
+    set(${LIBRARYNAME}_FOUND FALSE)
+    mark_as_advanced(CLEAR ${LIBRARYNAME}_ROOT ${LIBRARYNAME}_LIBRARY_INCLUDE_PATH ${LIBRARYNAME}_LIBRARY_DEBUG_NAME ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
+    return()
+endif()
+
+mark_as_advanced(FORCE ${LIBRARYNAME}_ROOT ${LIBRARYNAME}_LIBRARY_INCLUDE_PATH ${LIBRARYNAME}_LIBRARY_DEBUG_NAME ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
+set(${LIBRARYNAME}_FOUND TRUE)
+
+# Set the release path, include path, and link libraries
+add_library(${LIBRARYNAME} SHARED IMPORTED)
+set_target_properties(${LIBRARYNAME} PROPERTIES
+    IMPORTED_IMPLIB "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}"
+    INTERFACE_INCLUDE_DIRECTORIES "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}"
+    INTERFACE_COMPILE_OPTIONS "${${LIBRARYNAME}_COMPILE_OPTIONS}"
+    INTERFACE_COMPILE_DEFINITIONS "${${LIBRARYNAME}_COMPILE_DEFINITIONS}"
+    INTERFACE_LINK_LIBRARIES "${${LIBRARYNAME}_LINK_LIBRARIES}"
+)
+# Deal with debug
+if(${LIBRARYNAME}_LIBRARY_DEBUG_NAME)
+    set_target_properties(${LIBRARYNAME} PROPERTIES
+        IMPORTED_IMPLIB_DEBUG "${${LIBRARYNAME}_LIBRARY_DEBUG_NAME}"
+    )
+endif()
+
+vsi_set_imported_locations_from_implibs(${LIBRARYNAME})
+# No need to continue if not doing installation
+if(DEFINED INSTALL_THIRDPARTY_LIBRARIES AND NOT INSTALL_THIRDPARTY_LIBRARIES)
+    return()
+endif()
+vsi_install_target(${LIBRARYNAME} ${${LIBRARYNAME}_INSTALL_COMPONENT})
+
+############################################################
+
+# Install GDAL plugins
+set(GDAL_PLUGINS_SUBDIR lib)
+if(WIN32)
+    set(GDAL_PLUGINS_SUBDIR bin)
+endif()
+if(IS_DIRECTORY "${${LIBRARYNAME}_ROOT}/${GDAL_PLUGINS_SUBDIR}/gdalplugins")
+    install(DIRECTORY "${${LIBRARYNAME}_ROOT}/${GDAL_PLUGINS_SUBDIR}/gdalplugins/"
+        DESTINATION ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/gdalplugins
+        COMPONENT ThirdPartyLibs)
+endif()
+
+# SIMDIS GDAL data
+set(DATA_DIRS
+    ${${LIBRARYNAME}_ROOT}/data
+    ${${LIBRARYNAME}_ROOT}/share/gdal
+)
+find_path(INSTALLSOURCE_GDAL_DATA_DIR gt_ellips.csv ${DATA_DIRS} NO_DEFAULT_PATH)
+if(NOT INSTALLSOURCE_GDAL_DATA_DIR)
+    mark_as_advanced(CLEAR INSTALLSOURCE_GDAL_DATA_DIR)
+    return()
+endif()
+mark_as_advanced(FORCE INSTALLSOURCE_GDAL_DATA_DIR)
+install(DIRECTORY ${INSTALLSOURCE_GDAL_DATA_DIR}/
+    DESTINATION data/GDAL
+    COMPONENT ThirdPartyLibs)

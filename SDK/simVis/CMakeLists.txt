@@ -443,8 +443,7 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(simVis PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(simVis SDK_Library)
+    vsi_install_export(simVis ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
 if(INSTALL_SIMDIS_SDK_SHADERS)
@@ -458,7 +457,7 @@ if(INSTALL_SIMDIS_SDK_SHADERS)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMVIS_SHARED)
-    PostBuildInstallSdkSharedObjects(simVis)
+    PostBuildInstallSharedObjects(simVis)
 endif()
 
 # Setup header file installation

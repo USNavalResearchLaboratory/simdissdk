@@ -79,15 +79,26 @@ public:
   explicit EntityTreeComposite(QWidget* parent);
   virtual ~EntityTreeComposite();
 
+  /** Set the margins */
+  void setMargins(int left, int top, int right, int bottom);
   /** Adds an entity filter to the entity tree widget's proxy model.  NOTE: the proxy model takes ownership of the memory */
   void addEntityFilter(EntityFilter* entityFilter);
   /** The model that holds all the entity information */
   void setModel(AbstractEntityTreeModel* model);
 
-  /** Sets/clears the selected ID in the entity list */
-  void setSelected(uint64_t id, bool selected);
-  /** Sets/clears selection of the IDs in 'list' */
-  void setSelected(QList<uint64_t> list, bool selected);
+  /**
+   * Sets the selected ID in the entity list; all other selections are cleared
+   * @param id The id to set the selection to
+   * @return 0 if the selection changed, non-zero if the selection did not change
+   */
+  int setSelected(uint64_t id);
+  /**
+   * Sets selection for the IDs in 'list'; all other selections are cleared
+   * @param list The list of ids to set the selection to
+   * @return 0 if the selection changed, non-zero if the selection did not change
+   */
+  int setSelected(const QList<uint64_t>& list);
+
   /** Clears all selections */
   void clearSelection();
   /** Gets a list of all the selected IDs in the entity list */
@@ -126,8 +137,12 @@ public:
   void setUseEntityIcons(bool showIcons);
   /** Returns true if the context menu center action is enabled */
   bool useCenterAction() const;
-  /** Sets the ability to use the context menu center action, which is disabled by default */
-  void setUseCenterAction(bool use);
+  /**
+   * Sets the ability to use the context menu center action, which is disabled by default
+   * @param use If true, then enable the center action
+   * @param reason If use is false the reason is appended to the end center action text
+   */
+  void setUseCenterAction(bool use, const QString& reason = "");
 
   /** Class to store information about an Entity Tab Filter Configuration */
   class FilterConfiguration
@@ -154,7 +169,12 @@ public:
   void addExternalAction(QAction* action);
   /** Remove all actions added by the addExternalAction() call */
   void removeExternalActions();
-
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  /** DEPRECATED: Sets/clears the selected ID in the entity list */
+  SDK_DEPRECATE(void setSelected(uint64_t id, bool selected), "Method will be removed in a future SDK release");
+  /** DEPRECATED: Sets/clears selection for the IDs in 'list' */
+  SDK_DEPRECATE(void setSelected(QList<uint64_t> list, bool selected), "Method will be removed in a future SDK release");
+#endif
 public slots:
   /** If true expand the tree on double click */
   void setExpandsOnDoubleClick(bool value);
@@ -169,6 +189,11 @@ public slots:
    * @param settings Filters get data from the setting using a global unique key
    */
   void setFilterSettings(const QMap<QString, QVariant>& settings);
+
+  /** If true show the centering option in the right click menu */
+  void setShowCenterInMenu(bool show);
+  /** If true show the tree options in the right click menu */
+  void setShowTreeOptionsInMenu(bool show);
 
 signals:
   /** Gives an unsorted list of currently selected entities */
@@ -251,6 +276,10 @@ private:
   bool useEntityIcons_;
   /// If true, a call to setUseEntityIcons() was explicitly made by caller
   bool useEntityIconsSet_;
+  /// If true, show the Center option on the right mouse click menu
+  bool showCenterInMenu_;
+  /// If true, show the Tree options on the right mouse click menu
+  bool showTreeOptionsInMenu_;
 };
 
 }

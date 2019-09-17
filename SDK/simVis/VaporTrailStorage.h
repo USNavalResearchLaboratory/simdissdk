@@ -61,12 +61,11 @@ public:
   */
   void update(double time);
 
-private: // methods
   /**
   * remove all vaporTrails associated with a deleted platform
   * @param removedId id of platform that will be removed
   */
-  void removeVaporTrailsForPlatform_(simData::ObjectId removedId);
+  void removeVaporTrailsForPlatform(simData::ObjectId removedId);
 
 private:
   typedef std::multimap<simData::ObjectId, unsigned int> VaporTrailIdByPlatform;

@@ -21,6 +21,7 @@
  */
 
 #include <cassert>
+#include <set>
 #include <QSortFilterProxyModel>
 #include <QTreeWidget>
 #include <QTimer>
@@ -137,6 +138,7 @@ void EntityTreeWidget::clearSelection()
   selectionSet_.clear();
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void EntityTreeWidget::setSelected(uint64_t id, bool selected, bool signalItemsSelected)
 {
   if (model_ == NULL)
@@ -197,6 +199,168 @@ void EntityTreeWidget::setSelected(QList<uint64_t> list, bool selected)
   for (int ii = 0; ii < list.count(); ii++)
     setSelected(list[ii], selected, ii == (list.count()-1));  // cause a GUI update on the last selection
 }
+#endif
+
+int EntityTreeWidget::setSelected(uint64_t id)
+{
+  if (model_ == NULL)
+    return 1;
+
+  if ((selectionList_.size() == 1) && (selectionList_.front() == id))
+    return 1;
+
+  // Ignore the signal so that selectionList_ does not get re-calculated
+  emitSelectionChanged_ = false;
+
+  selectionSet_.clear();
+  selectionList_.clear();
+
+  QModelIndex index = proxyModel_->mapFromSource(model_->index(id));
+  if (index != QModelIndex())
+  {
+    selectionSet_.insert(id);
+    selectionList_.append(id);
+
+    QItemSelectionModel::SelectionFlags flags = QItemSelectionModel::Rows | QItemSelectionModel::ClearAndSelect;
+    view_->selectionModel()->select(index, flags);
+    view_->selectionModel()->setCurrentIndex(index, flags);
+  }
+  else
+  {
+    view_->selectionModel()->clear();
+  }
+
+  // Stop ignoring the signal
+  emitSelectionChanged_ = true;
+
+  // Tell listeners about the new selections (could be empty list)
+  emit itemsSelected(selectionList_);
+  return 0;
+}
+
+int EntityTreeWidget::setSelected(const QList<uint64_t>& list)
+{
+  if (model_ == NULL)
+    return 1;
+
+  QSet<uint64_t> newSet;  ///< Use new set to detected changes with selectionSet_
+  QItemSelection selections;  ///< The selected entities
+  QModelIndex current;  ///< The current index
+
+  // if all entities are selected and in list view just do one selection
+  if ((list.size() == numberOfEntities_(QModelIndex())) && !treeView_)
+  {
+    for (int ii = 0; ii < list.count(); ii++)
+    {
+      uint64_t id = list[ii];
+
+      QModelIndex index = proxyModel_->mapFromSource(model_->index(id));
+      if (index == QModelIndex())
+        continue;
+
+      newSet.insert(id);
+    }
+
+    QModelIndex upperLeft = proxyModel_->index(0, 0);
+    QModelIndex lowerRight = proxyModel_->index(proxyModel_->rowCount() - 1, 0);
+    selections.select(upperLeft, lowerRight);
+  }
+  else
+  {
+    // keep track of indexes by parent to minimize the number of selections by combining neighboring indexes into one range
+    std::set< std::pair<QModelIndex, QModelIndex> > indexes;
+
+    for (int ii = 0; ii < list.count(); ii++)
+    {
+      uint64_t id = list[ii];
+
+      QModelIndex index = proxyModel_->mapFromSource(model_->index(id));
+      if (index == QModelIndex())
+        continue;
+
+      if (current.row() == -1)
+        current = index;
+
+      newSet.insert(id);
+      indexes.insert(std::make_pair(index.parent(), index));
+    }
+
+    // Minimize the number of selections by combining neighboring indexes into one range
+    if (!indexes.empty())
+    {
+      auto it = indexes.begin();
+      QModelIndex parentIndex = it->first;
+      QModelIndex startIndex = it->second;
+      QModelIndex currentIndex = startIndex;
+      ++it;
+      for (; it != indexes.end(); ++it)
+      {
+        // If parents are different then finish a range and start a new one
+        if (parentIndex != it->first)
+        {
+          selections.select(startIndex, currentIndex);
+          parentIndex = it->first;
+          startIndex = it->second;
+          currentIndex = startIndex;
+        }
+        else
+        {
+          // If children are not neighbors then finish a range and start a new one
+          if (it->second.row() != (currentIndex.row() + 1))
+          {
+            selections.select(startIndex, currentIndex);
+            startIndex = it->second;
+            currentIndex = startIndex;
+          }
+          else
+            currentIndex = it->second;  // neighbors so keep going
+        }
+      }
+
+      // The last range needs to be committed
+      selections.select(startIndex, currentIndex);
+    }
+  }
+
+  if (newSet == selectionSet_)
+    return 1;
+
+  // Ignore the signal so that selectionList_ does not get re-calculated
+  emitSelectionChanged_ = false;
+
+  if (!newSet.empty())
+  {
+    view_->selectionModel()->select(selections, QItemSelectionModel::Rows | QItemSelectionModel::ClearAndSelect);
+    if (current.isValid())
+      view_->selectionModel()->setCurrentIndex(current, QItemSelectionModel::Rows | QItemSelectionModel::Select);
+  }
+  else
+  {
+    view_->selectionModel()->clear();
+  }
+
+  // Stop ignoring the signal
+  emitSelectionChanged_ = true;
+
+  selectionSet_ = newSet;
+  selectionList_.clear();
+  for (auto it = selectionSet_.begin(); it != selectionSet_.end(); ++it)
+    selectionList_.push_back(*it);
+
+  // Tell listeners about the new selections (could be empty list)
+  emit itemsSelected(selectionList_);
+  return 0;
+}
+
+int EntityTreeWidget::numberOfEntities_(const QModelIndex& index)
+{
+  int partial = model_->rowCount(index);
+  int total = partial;
+  for (int ii = 0; ii < partial; ++ii)
+    total += numberOfEntities_(model_->index(ii, 0, index));
+
+  return total;
+}
 
 void EntityTreeWidget::scrollTo(uint64_t id, QAbstractItemView::ScrollHint hint)
 {
@@ -232,7 +396,25 @@ void EntityTreeWidget::getFilterSettings(QMap<QString, QVariant>& settings) cons
 
 void EntityTreeWidget::setFilterSettings(const QMap<QString, QVariant>& settings)
 {
+  const QList<uint64_t>& entities = selectedItems();
   proxyModel_->setFilterSettings(settings);
+  if (entities.empty())
+    return;
+  // try to scroll to the last selected item if it's valid, same behavior as setSelected
+  auto iter = entities.end();
+  --iter;
+  for (; iter != entities.begin(); --iter)
+  {
+    const QModelIndex index = proxyModel_->mapFromSource(model_->index(*iter));
+    if (index.isValid())
+    {
+      scrollTo(*iter, QAbstractItemView::PositionAtCenter);
+      return;
+    }
+  }
+  const QModelIndex index = proxyModel_->mapFromSource(model_->index(entities.front()));
+  if (index.isValid())
+    scrollTo(entities.front(), QAbstractItemView::PositionAtCenter);
 }
 
 QList<uint64_t> EntityTreeWidget::selectedItems() const
@@ -272,8 +454,10 @@ void EntityTreeWidget::setToTreeView()
     return;
 
   QList<uint64_t> entities = selectedItems();
+  // need to clear selection set here to ensure selected items get reselected properly in setSelected, since toggleTreeView resets the model
+  selectionSet_.clear();
   model_->setToTreeView();
-  setSelected(entities, true);
+  setSelected(entities);
   if (settings_)
     settings_->setValue(EntityTreeWidgetViewSetting, treeView_, settingsObserver_);
 }
@@ -287,8 +471,10 @@ void EntityTreeWidget::setToListView()
     return;
 
   QList<uint64_t> entities = selectedItems();
+  // need to clear selection set here to ensure selected items get reselected properly in setSelected, since toggleTreeView resets the model
+  selectionSet_.clear();
   model_->setToListView();
-  setSelected(entities, true);
+  setSelected(entities);
   if (settings_)
     settings_->setValue(EntityTreeWidgetViewSetting, treeView_, settingsObserver_);
 }
@@ -308,8 +494,10 @@ void EntityTreeWidget::toggleTreeView(bool useTree)
     return;
 
   QList<uint64_t> entities = selectedItems();
+  // need to clear selection set here to ensure selected items get reselected properly in setSelected, since toggleTreeView resets the model
+  selectionSet_.clear();
   model_->toggleTreeView(useTree);
-  setSelected(entities, true);
+  setSelected(entities);
 
   // Save the flag into settings
   if (settings_)
@@ -326,7 +514,12 @@ void EntityTreeWidget::forceRefresh()
 
 void EntityTreeWidget::selectionCleared_()
 {
-  emit itemsSelected(QList<uint64_t>());
+  if (!selectionList_.isEmpty())
+  {
+    selectionList_.clear();
+    selectionSet_.clear();
+    emit itemsSelected(selectionList_);
+  }
 }
 
 void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const QItemSelection& deselected)
@@ -361,7 +554,7 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
 
   // Validates that there were no duplicates in the rows.  Assertion trigger means
   // that either the data store reported a duplicate ID, or tree is storing a dupe ID
-  assert(view_->selectionModel()->selectedRows().count() == selectionList_.size());
+  assert(selectionSet_.size() == selectionList_.size());
 
   // Tell listeners about the new selections (could be empty list)
   emit itemsSelected(selectionList_);

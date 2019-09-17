@@ -50,12 +50,11 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(simNotify PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(simNotify SDK_Library)
+    vsi_install_export(simNotify ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMNOTIFY_SHARED)
-    PostBuildInstallSdkSharedObjects( simNotify )
+    PostBuildInstallSharedObjects(simNotify)
 endif()
 
 # Setup header file installation

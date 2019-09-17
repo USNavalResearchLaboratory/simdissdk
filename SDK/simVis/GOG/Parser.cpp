@@ -706,6 +706,31 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
         printError_(lineNumber, "outline command requires 1 argument");
       }
     }
+    else if (tokens[0] == "textoutlinecolor")
+    {
+      if (tokens.size() == 2)
+      {
+        state.textOutlineColor_ = parseGogColor_(tokens[1], false);
+        currentMetaData.setExplicitly(GOG_TEXT_OUTLINE_COLOR_SET);
+      }
+      else if (tokens.size() == 3)
+      {
+        state.textOutlineColor_ = parseGogColor_(tokens[2], true);
+        currentMetaData.setExplicitly(GOG_TEXT_OUTLINE_COLOR_SET);
+      }
+      else
+        printError_(lineNumber, "textoutlinecolor command requires at least 1 argument");
+    }
+    else if (tokens[0] == "textoutlinethickness")
+    {
+      if (tokens.size() >= 2)
+      {
+        state.textOutlineThickness_ = tokens[1];
+        currentMetaData.setExplicitly(GOG_TEXT_OUTLINE_THICKNESS_SET);
+      }
+      else
+        printError_(lineNumber, "textoutlinethickness command requires 1 argument");
+    }
     else if (startsWith(line, "3d billboard"))
     {
       // SIMDIS user manual claims this command is a singleton, however there are examples with boolean arguments in the public

@@ -511,7 +511,7 @@ void VaporTrail::createTexture_(osg::Geode& geode, osg::Texture2D* texture) cons
 }
 
 //////////////////////////////////////////////////////////////////////////
-
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime)
   : scale_(1.0),
   startTime_(startTime),
@@ -526,6 +526,7 @@ VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const simCore::V
   overrideColor_->setColor(simVis::Color::White);
   overrideColor_->setCombineMode(OverrideColor::MULTIPLY_COLOR);
 }
+#endif
 
 VaporTrail::VaporTrailPuff::VaporTrailPuff(osg::Geode* graphic, const osg::Matrixd& mat, double startTime)
   : scale_(1.0),
@@ -556,6 +557,7 @@ VaporTrail::VaporTrailPuff::~VaporTrailPuff()
   }
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double startTime)
 {
   // set this position in our matrix; it is required to set position for puffs with no expansion;
@@ -566,6 +568,7 @@ void VaporTrail::VaporTrailPuff::set(const simCore::Vec3& position, double start
   active_ = true;
   scale_ = 1.0;
 }
+#endif
 
 void VaporTrail::VaporTrailPuff::set(const osg::Matrixd& mat, double startTime)
 {

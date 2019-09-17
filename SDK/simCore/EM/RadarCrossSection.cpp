@@ -222,8 +222,6 @@ RCSLUT::RCSLUT()
   }
 }
 
-/* ************************************************************************ */
-
 RCSLUT::~RCSLUT()
 {
   POLARITY_FREQ_ELEV_MAP::iterator it = rcsMap_.begin();
@@ -233,8 +231,6 @@ RCSLUT::~RCSLUT()
     ++it;
   }
 }
-
-/* ************************************************************************ */
 
 RCSTable *RCSLUT::getTable_(float freq, float elev, PolarityType pol, bool create)
 {
@@ -302,11 +298,9 @@ RCSTable *RCSLUT::getTable_(float freq, float elev, PolarityType pol, bool creat
   return rcsTable;
 }
 
-/* ************************************************************************ */
-
 float RCSLUT::calcTableRCS_(float freq, double azim, double elev, PolarityType pol)
 {
-  float final_rcs = static_cast<float>(SMALL_RCS_SM);
+  float final_rcs = SMALL_RCS_SM;
 
   if (rcsMap_.empty())
   {
@@ -479,87 +473,62 @@ float RCSLUT::calcTableRCS_(float freq, double azim, double elev, PolarityType p
   return final_rcs;
 }
 
-/* ************************************************************************ */
-
-float RCSLUT::RCSdB(float freq, double azim, double elev,  PolarityType pol)
+float RCSLUT::RCSdB(float freq, double azim, double elev, PolarityType pol)
 {
-  return static_cast<float>(linear2dB(RCSsm(freq, azim, elev, pol)));
+  return linear2dB(RCSsm(freq, azim, elev, pol));
 }
-/* ************************************************************************ */
 
-
-float RCSLUT::RCSsm(float freq, double azim, double elev,  PolarityType pol)
+float RCSLUT::RCSsm(float freq, double azim, double elev, PolarityType pol)
 {
   // convert incoming azimuth & elevation to correct units & limits
   azim = angFix2PI(azim);
   elev = angFixPI(elev);
-  float rcs = static_cast<float>(SMALL_RCS_SM);
 
   switch (tableType_)
   {
   case RCS_LUT_TYPE:
-    {
-      // strictly a lookup table, return mean value
-      rcs = calcTableRCS_(freq, azim, elev, pol);
-    }
-    break;
-
+    // strictly a lookup table, return mean value
+    return calcTableRCS_(freq, azim, elev, pol);
+  
   case RCS_SYM_LUT_TYPE:
-    {
-      // symmetrical lookup table, return mean value
-      rcs = calcTableRCS_(freq, static_cast<float>(fabs(angFixPI(azim))), elev, pol);
-    }
-    break;
-
+    // symmetrical lookup table, return mean value
+    return calcTableRCS_(freq, fabs(angFixPI(azim)), elev, pol);
+  
+  case RCS_DISTRIBUTION_FUNC_TYPE:
   default: // UTILS::eRCS_DISTRIBUTION_FUNC_TYPE
     {
-      rcs = calcTableRCS_(freq, azim, elev, pol);
-
+      const double rcs = calcTableRCS_(freq, azim, elev, pol);
       // apply distribution to mean rcs value
       switch (functionType_)
       {
+      case RCS_MEAN_FUNC:
       default: // RCS_MEAN_FUNC
-        {
-          // apply scintillation to mean value
-          rcs += modulation_;
-        }
-        break;
-
+        // apply scintillation to mean value
+        return static_cast<float>(rcs + modulation_);
       case RCS_GAUSSIAN_FUNC:
-        {
-          // apply Gaussian distribution to rcs value
-          rcs += modulation_ * static_cast<float>(gaussian_());
-        }
-        break;
-
+        // apply Gaussian distribution to rcs value
+        return static_cast<float>(rcs + (modulation_ * gaussian_()));
       case RCS_RAYLEIGH_FUNC:
         {
           // apply Rayleigh distribution to rcs value
           // sqrt (sum of the squares of two gaussians)
           double x = gaussian_();
           double y = gaussian_();
-          rcs += modulation_ * static_cast<float>(sqrt(square(x) + square(y)));
+          return static_cast<float>(rcs + (modulation_ * (sqrt(square(x) + square(y)))));
         }
-        break;
-
       case RCS_LOG_NORMAL_FUNC:
         {
           // apply log normal distribution to rcs value
           // (log of Rayleigh)
           double x = gaussian_();
           double y = gaussian_();
-          rcs += modulation_ * static_cast<float>(log10(sqrt(square(x) + square(y))));
+          return static_cast<float>(rcs + (modulation_ * (log10(sqrt(square(x) + square(y))))));
         }
-        break;
       }
-      break;
     }
   }
-
-  return rcs;
+  return SMALL_RCS_SM;
 }
-
-/* ************************************************************************ */
 
 int RCSLUT::loadXPATCHRCSFile_(std::istream &inFile)
 {
@@ -667,8 +636,6 @@ int RCSLUT::loadXPATCHRCSFile_(std::istream &inFile)
   // So far, so good...
   return 0;
 }
-
-/* ************************************************************************ */
 
 int RCSLUT::loadRcsLutFile_(std::istream &inFile)
 {
@@ -935,8 +902,6 @@ int RCSLUT::loadRcsLutFile_(std::istream &inFile)
   // So far, so good...
   return 0;
 }
-
-/* ************************************************************************ */
 
 int RCSLUT::loadSADMRCSFile_(std::istream &inFile)
 {
@@ -1259,16 +1224,21 @@ int RCSLUT::loadSADMRCSFile_(std::istream &inFile)
   return 0;
 }
 
-/* ************************************************************************ */
-
-void RCSLUT::computeStatistics_(std::vector<float> *medianVec)
+void RCSLUT::computeStatistics_(std::vector<float>* medianVec)
 {
+  if (!medianVec)
+  {
+    // the argument cannot be NULL
+    assert(0);
+    return;
+  }
   if (medianVec->empty())
     return; // Avoid divide by zero below
+
   // convert sq m to dBsm
   min_ = static_cast<float>(linear2dB(min_));
   max_ = static_cast<float>(linear2dB(max_));
-  mean_ = static_cast<float>(linear2dB(mean_/static_cast<float>(medianVec->size())));
+  mean_ = static_cast<float>(linear2dB(mean_ / medianVec->size()));
 
   std::sort(medianVec->begin(), medianVec->end());
   float median = 0.f;
@@ -1276,22 +1246,17 @@ void RCSLUT::computeStatistics_(std::vector<float> *medianVec)
   {
     median = (*medianVec)[0];
   }
+  else if (odd(static_cast<int>(medianVec->size())))
+  {
+    median = (*medianVec)[medianVec->size()/2];
+  }
   else
   {
-    if (odd(static_cast<int>(medianVec->size())))
-    {
-      median = (*medianVec)[medianVec->size()/2];
-    }
-    else
-    {
-      size_t midpoint = medianVec->size()/2;
-      median = static_cast<float>(((*medianVec)[midpoint] + (*medianVec)[midpoint-1]) * .5);
-    }
+    const size_t midpoint = medianVec->size()/2;
+    median = static_cast<float>(((*medianVec)[midpoint] + (*medianVec)[midpoint-1]) * .5);
   }
   median_ = static_cast<float>(linear2dB(median));
 }
-
-/* ************************************************************************ */
 
 int RCSLUT::checkTokens_(size_t val, size_t min, const std::string& param)
 {
@@ -1305,11 +1270,9 @@ int RCSLUT::checkTokens_(size_t val, size_t min, const std::string& param)
   return 0;
 }
 
-/* ************************************************************************ */
-
 void RCSLUT::reset_()
 {
-  POLARITY_FREQ_ELEV_MAP::iterator it = rcsMap_.begin();
+  POLARITY_FREQ_ELEV_MAP::const_iterator it = rcsMap_.begin();
   while (it != rcsMap_.end())
   {
     delete it->second;
@@ -1332,8 +1295,6 @@ void RCSLUT::reset_()
   min_ = std::numeric_limits<float>::max();
   max_ = -std::numeric_limits<float>::max();
 }
-
-/* ************************************************************************ */
 
 int RCSLUT::loadRCSFile(const std::string& fname)
 {

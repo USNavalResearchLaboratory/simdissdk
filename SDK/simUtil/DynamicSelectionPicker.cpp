@@ -20,6 +20,7 @@
  *
  */
 #include "simCore/Calc/Math.h"
+#include "simVis/CustomRendering.h"
 #include "simVis/LobGroup.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
@@ -177,6 +178,11 @@ int DynamicSelectionPicker::calculateSquaredRange_(simUtil::ScreenCoordinateCalc
   if (lobNode)
     return calculateLobSquaredRange_(calc, *lobNode, rangeSquared);
 
+  // Fall back to the CustomRender case if it's requesting a CustomRender, since it picks different points depending on its type
+  const simVis::CustomRenderingNode* customNode = dynamic_cast<const simVis::CustomRenderingNode*>(&entityNode);
+  if (customNode)
+    return calculateCustomRenderRange_(calc, *customNode, rangeSquared);
+
   const simUtil::ScreenCoordinate& pos = calc.calculate(entityNode);
   // Ignore objects that are off screen or behind the camera
   if (pos.isBehindCamera() || pos.isOffScreen() || pos.isOverHorizon())
@@ -187,12 +193,25 @@ int DynamicSelectionPicker::calculateSquaredRange_(simUtil::ScreenCoordinateCalc
 
 int DynamicSelectionPicker::calculateLobSquaredRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::LobGroupNode& lobNode, double& rangeSquared) const
 {
-  rangeSquared = std::numeric_limits<double>::max();
   // Pull out the vector of all endpoints on the LOB that are visible
   std::vector<osg::Vec3d> ecefVec;
   lobNode.getVisibleEndPoints(ecefVec);
-  if (ecefVec.empty())
-    return 1;
+
+  return calculateScreenRange_(calc, ecefVec, rangeSquared);
+}
+
+int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::CustomRenderingNode& customNode, double& rangeSquared) const
+{
+  // Pull out the vector of all pick points on the CustomRendering that are visible
+  std::vector<osg::Vec3d> ecefVec;
+  customNode.getPickingPoints(ecefVec);
+
+  return calculateScreenRange_(calc, ecefVec, rangeSquared);
+}
+
+int DynamicSelectionPicker::calculateScreenRange_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const
+{
+  rangeSquared = std::numeric_limits<double>::max();
 
   for (auto i = ecefVec.begin(); i != ecefVec.end(); ++i)
   {

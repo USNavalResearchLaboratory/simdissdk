@@ -4,8 +4,8 @@
 set(OPENSCENEGRAPH_FOUND FALSE)
 set(LIBRARYNAME OSG)
 
-# OpenThreads is stored under the OpenSceneGraph folder
-set(OSG_VERSION 3.6.3)
+# OpenThreads is stored under the OpenSceneGraph folder; it is required to find OpenThreads before OSG for OSG_VERSION
+set(OSG_VERSION 3.6.4)
 set(OSG_SUBDIR ${OSG_VERSION})
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
@@ -13,6 +13,8 @@ set(OSG_SHOULD_INSTALL FALSE)
 if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
     set(OSG_SHOULD_INSTALL TRUE)
 endif()
+# Normalization: Set the OPENSCENEGRAPH_VERSION value
+set(OPENSCENEGRAPH_VERSION ${OSG_VERSION})
 
 initialize_ENV(OSG_DIR)
 set(INCLUDE_DIRS
@@ -22,21 +24,17 @@ set(INCLUDE_DIRS
     ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}/include
 )
 
-set(LIB_DIRS 
-    ${OSG_DIR}/lib
-    ${OSG_DIR}/lib64
-    $ENV{OSG_DIR}/lib
-    $ENV{OSG_DIR}/lib64
-    ${THIRD_DIR}/OpenSceneGraph-${OSG_VERSION}/lib
-    ${THIRD_DIR}/OpenSceneGraph-${OSG_VERSION}/lib64
-    ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}/lib
-    ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}/lib64
+set(LIB_DIRS
+    ${OSG_DIR}
+    $ENV{OSG_DIR}
+    ${THIRD_DIR}/OpenSceneGraph-${OSG_VERSION}
+    ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}
 )
 
 # Configure the core OSG library
 find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osg/Version PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgd PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osg PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osg PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
 
 # osg_add_filename_prefix(<VAR> <FILENAME> <PREFIX>)
 #
@@ -75,9 +73,6 @@ function(osg_set_imported_locations_from_implibs TARGET WIN_PREFIX)
     endif()
 endfunction()
 
-############################################################
-########## Imported 3rd party library boilerplate ##########
-############################################################
 
 # Determine whether we found the library correctly
 if(NOT ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
@@ -88,6 +83,30 @@ endif()
 
 mark_as_advanced(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH ${LIBRARYNAME}_LIBRARY_DEBUG_NAME ${LIBRARYNAME}_LIBRARY_RELEASE_NAME OSG_DIR)
 set(${LIBRARYNAME}_FOUND TRUE)
+
+
+# We know we have a valid release library.  Determine the actual version of the library we found
+get_filename_component(_OSG_LIB_DIR "${${LIBRARYNAME}_LIBRARY_RELEASE_NAME}" DIRECTORY)
+find_program(OSG_VERSION_EXE NAMES osgversion PATHS ${_OSG_LIB_DIR}/../bin ${LIB_DIRS} NO_DEFAULT_PATH)
+mark_as_advanced(OSG_VERSION_EXE)
+if(OSG_VERSION_EXE)
+    # Configure LD_LIBRARY_PATH on UNIX
+    if(UNIX)
+        set(_OLD_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+        set(ENV{LD_LIBRARY_PATH} "${_OLD_LD_LIBRARY_PATH}:${_OSG_LIB_DIR}")
+    endif()
+    execute_process(COMMAND ${OSG_VERSION_EXE} --version-number OUTPUT_VARIABLE _OSG_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(UNIX)
+        set(ENV{LD_LIBRARY_PATH} ${_OLD_LD_LIBRARY_PATH})
+        unset(_OLD_LD_LIBRARY_PATH)
+    endif()
+    if(NOT _OSG_VERSION STREQUAL "")
+        set(OSG_VERSION ${_OSG_VERSION})
+    endif()
+    unset(_OLD_LD_LIBRARY_PATH)
+    unset(_OSG_VERSION)
+endif()
+
 
 # Set the release path, include path, and link libraries
 add_library(${LIBRARYNAME} SHARED IMPORTED)
@@ -120,8 +139,8 @@ endif()
 # reuse the OSG_LIBRARY_INCLUDE_PATH for includes.
 function(import_osg_library LIBRARYNAME NAME)
 
-    find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES ${NAME}d PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-    find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES ${NAME} PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
+    find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES ${NAME}d PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+    find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES ${NAME} PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
 
     # Determine whether we found the library correctly
     if(NOT ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
@@ -185,23 +204,24 @@ endif()
 
 # Install OSG plugins
 set(PLUGIN_DIRS
-    $ENV{OSG_DIR}/bin/osgPlugins-${OSG_VERSION}
-    $ENV{OSG_DIR}/lib/osgPlugins-${OSG_VERSION}
-    $ENV{OSG_DIR}/lib64/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OpenSceneGraph-${OSG_VERSION}/bin/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OpenSceneGraph-${OSG_VERSION}/lib/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OpenSceneGraph-${OSG_VERSION}/lib64/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}/bin/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}/lib/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}/lib64/osgPlugins-${OSG_VERSION}
+    ${_OSG_LIB_DIR}
+    $ENV{OSG_DIR}
+    ${THIRD_DIR}/OpenSceneGraph-${OSG_VERSION}
+    ${THIRD_DIR}/OpenSceneGraph/${OSG_SUBDIR}
 )
 
 # Find the plugin location
-if(WIN32)
-    find_path(OSG_PLUGIN_PATH NAMES osgdb_osg.dll PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-else(WIN32)
-    find_path(OSG_PLUGIN_PATH NAMES osgdb_osg.so PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-endif(WIN32)
+find_path(OSG_PLUGIN_PATH
+    NAMES osgdb_osg.dll osgdb_osg.so
+    PATHS ${PLUGIN_DIRS}
+    PATH_SUFFIXES
+        osgPlugins-${OSG_VERSION}
+        ../bin/osgPlugins-${OSG_VERSION}
+        bin/osgPlugins-${OSG_VERSION}
+        lib/osgPlugins-${OSG_VERSION}
+        lib64/osgPlugins-${OSG_VERSION}
+    NO_DEFAULT_PATH
+)
 
 # Put the plugin location in the library list for 32 to 64 but Linux conversion
 # so it is properly updated when a 32/64 bit configuration change is made
@@ -234,6 +254,8 @@ endif()
 
 # Set the full install path to the plugin directory
 set(OSG_PLUGIN_INSTALL_DIR ${OSG_PLUGIN_INSTALL_DIR}/osgPlugins-${OSG_VERSION})
+# Configure a INSTALLSETTINGS_OSGPLUGIN_DIR that tells us where to install plugins
+set(INSTALLSETTINGS_OSGPLUGIN_DIR ${OSG_PLUGIN_INSTALL_DIR})
 
 set(OSG_COMMON_LIBDEPENDENCIES
     OSG OSGDB OSGGA OSGUTIL OSGVIEWER OPENTHREADS
@@ -259,3 +281,5 @@ if(OSG_SHOULD_INSTALL)
         FILES_MATCHING REGEX ${RELEASE_INSTALL_PATTERN}
     )
 endif()
+
+unset(_OSG_LIB_DIR)

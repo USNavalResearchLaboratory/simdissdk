@@ -115,6 +115,9 @@ namespace simCore
     void set(double v0, double v1, double v2) { v[0] = v0; v[1] = v1; v[2] = v2; }
     /// Set all elements
     void set(const Vec3 &value) { v[0] = value[0]; v[1] = value[1]; v[2] = value[2]; }
+
+    /// Scales all elements
+    void scale(double value) { v[0] *= value; v[1] *= value; v[2] *= value; }
     ///@}
 
     /**@name Mappings for {x,y,z}, {yaw,pitch,roll}, etc.

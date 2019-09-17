@@ -45,6 +45,7 @@ const Units Units::UNITLESS("", "", 1.0, Units::UNITLESS_FAMILY);
 const Units Units::SECONDS("seconds", "s", 1.0, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MILLISECONDS("milliseconds", "ms", 0.001, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MICROSECONDS("microseconds", "us", 1e-6, Units::ELAPSED_TIME_FAMILY);
+const Units Units::NANOSECONDS("nanoseconds", "ns", 1e-9, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MINUTES("minutes", "min", 60.0, Units::ELAPSED_TIME_FAMILY);
 const Units Units::HOURS("hours", "hr", 3600.0, Units::ELAPSED_TIME_FAMILY);
 const Units Units::DAYS("days", "d", 86400.0, Units::ELAPSED_TIME_FAMILY);
@@ -96,6 +97,8 @@ const Units Units::REAUMUR("reaumur", "re", 1.25, Units::TEMPERATURE_FAMILY);
 
 // Frequency units
 const Units Units::HERTZ("cycles per second", "Hz", 1.0, Units::FREQUENCY_FAMILY);
+const Units Units::KILOHERTZ("1000 cycles per second", "kHz", 1000.0, Units::FREQUENCY_FAMILY);
+const Units Units::MEGAHERTZ("1000000 cycles per second", "MHz", 1000000.0, Units::FREQUENCY_FAMILY);
 const Units Units::REVOLUTIONS_PER_MINUTE("revolutions per minute", "rpm", 0.01666666666, Units::FREQUENCY_FAMILY);
 const Units Units::RADIANS_PER_SECOND("radians per second", "rad/sec", 0.15915494309, Units::FREQUENCY_FAMILY);
 const Units Units::DEGREES_PER_SECOND("degrees per second", "deg/sec", 0.00277777777, Units::FREQUENCY_FAMILY);

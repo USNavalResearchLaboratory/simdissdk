@@ -204,6 +204,7 @@ public:
   */
   VaporTrailPuff(osg::Geode* graphic, const osg::Matrixd& matrix, double startTime);
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
   * Construct a vapor trail puff.
   * @param graphic the puff graphic.
@@ -211,6 +212,7 @@ public:
   * @param startTime time that this puff is created.
   */
   SDK_DEPRECATE(VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
+#endif
 
   /**
   * Update the puff representation for elapsing time.
@@ -243,12 +245,14 @@ public:
   */
   void set(const osg::Matrixd& matrix, double startTime);
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
   * Turns the puff back on with the given values
   * @param position ECEF position at which this puff will be located.
   * @param startTime time that this puff is created.
   */
   SDK_DEPRECATE(void set(const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
+#endif
 
 protected:
   /// osg::Referenced-derived

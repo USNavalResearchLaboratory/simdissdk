@@ -24,7 +24,7 @@
 #define SQLITE_DATABASE_READ_UTIL_H
 
 #include <string>
-#include "sqlite/sqlite3.h"
+#include "sqlite3.h"
 #include "simCore/Time/TimeClass.h"
 
 #ifndef USE_SIMDIS_SDK

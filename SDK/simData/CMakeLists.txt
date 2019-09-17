@@ -183,12 +183,11 @@ if(WIN32)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(simData PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(simData SDK_Library)
+    vsi_install_export(simData ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMDATA_SHARED)
-    PostBuildInstallSdkSharedObjects(simData)
+    PostBuildInstallSharedObjects(simData)
 endif()
 
 if(INSTALL_HEADERS)

@@ -197,6 +197,8 @@ namespace simVis { namespace GOG
     osgEarth::optional<std::string> angleUnits_; ///< Angle units
     osgEarth::optional<std::string> verticalDatum_; ///< Vertical datum
     osgEarth::optional<std::string> priority_; ///< Label Priority
+    osgEarth::optional<std::string> textOutlineColor_; ///< Text outline color
+    osgEarth::optional<std::string> textOutlineThickness_; ///< Text outline thickness
 
     /**
      * Stores the modifier state in a structured object.
@@ -242,7 +244,7 @@ namespace simVis { namespace GOG
      * @param[out] geom   Where to store the parsed points
      * @param[out] isLLA  Whether the output is lat/long/alt data
      */
-    void parsePoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
+    void parsePoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Symbology::Geometry* geom, bool& isLLA);
 
     /**
     * Accounts for the unique requirements of a line segment points
@@ -251,7 +253,7 @@ namespace simVis { namespace GOG
     * @param[out] geom   Where to store the parsed points
     * @param[out] isLLA  Whether the output is lat/long/alt data
     */
-    void parseLineSegmentPoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
+    void parseLineSegmentPoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Symbology::Geometry* geom, bool& isLLA);
 
     /**
      * Parses a string containing a angular coordinate value. Supports
@@ -288,7 +290,7 @@ namespace simVis { namespace GOG
      * Reads the parsed position into (absolute or relative) into the
      * output coordinate.
      */
-    simCore::Coordinate getCoordinate(osgEarth::MapNode* mapNode, osgEarth::Style& style) const;
+    simCore::Coordinate getCoordinate(osgEarth::MapNode* mapNode, osgEarth::Symbology::Style& style) const;
 
     /**
      * Whether the current object has absolute (map coordinate) geometry
@@ -325,11 +327,11 @@ namespace simVis { namespace GOG
     osg::Vec3d xyzPositionToVec(const UnitsState& us, const PositionStrings& posStrings) const;
 
     GOGContext                           context_; ///< Context
-    osgEarth::Style                      style_; ///< Style
+    osgEarth::Symbology::Style           style_; ///< Style
     osgEarth::optional<osg::Vec3d>       refPointLLA_; ///< Reference point in LLA
     osgEarth::optional<osg::Vec3d>       centerXYZ_; ///< Center point in XXZ
     osgEarth::optional<osg::Vec3d>       centerLLA_; ///< Center point in LLA
-    osg::ref_ptr<osgEarth::Geometry>     geom_; ///< Geometry
+    osg::ref_ptr<osgEarth::Symbology::Geometry> geom_; ///< Geometry
     bool                                 geomIsLLA_; ///< If true than in LLA; if false in XYZ
     bool                                 geomIsRelative_; ///< If true than GOG is relative; if false GOG is absolute
     UnitsState                           units_; ///< Units for the GOG

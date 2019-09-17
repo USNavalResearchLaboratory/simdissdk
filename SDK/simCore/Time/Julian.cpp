@@ -20,6 +20,7 @@
  *
  */
 #include <cmath>
+#include <limits>
 #include "simCore/Common/Time.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Exception.h"
@@ -38,6 +39,9 @@ int simCore::julianDay()
   // put system time into a tm struct
   time_t t(tp.tv_sec);
   pTime = gmtime(&t);
+
+  if (pTime == NULL)
+    return std::numeric_limits<int>::max();
 
   // tm struct year days range from 0 to 365, Julian days are 1 to 366
   // hence, need to add an extra day for Julian

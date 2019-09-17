@@ -103,7 +103,7 @@ public:
   /** Removes the Cylinders from storage when the entity is removed from data store */
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
-    storage_.removeCylindersForPlatform_(removedId);
+    storage_.removeCylindersForPlatform(removedId);
   }
 
 private:
@@ -178,7 +178,7 @@ void CylinderStorage::update(double time)
   }
 }
 
-void CylinderStorage::removeCylindersForPlatform_(simData::ObjectId removedId)
+void CylinderStorage::removeCylindersForPlatform(simData::ObjectId removedId)
 {
   // Find all cylinderIds that associate with the platform
   const std::pair<CylinderIdByPlatform::iterator, CylinderIdByPlatform::iterator> ranges = idsByPlatform_.equal_range(removedId);

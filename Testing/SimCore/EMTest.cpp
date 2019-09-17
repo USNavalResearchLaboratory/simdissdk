@@ -20,10 +20,11 @@
  *
  */
 #include <iostream>
+#include "simCore/Calc/Angle.h"
 #include "simCore/Common/SDKAssert.h"
+#include "simCore/EM/AntennaPattern.h"
 #include "simCore/EM/Propagation.h"
 #include "simCore/EM/RadarCrossSection.h"
-#include "simCore/Calc/Angle.h"
 
 #define EXAMPLE_RCS_FILE                  "fake_rcs_3.rcs"
 
@@ -46,63 +47,92 @@ If an Unknown polarization is specified by the beam, the RCS pattern will use th
 Frequency uses a nearest neighbor lookup. Azimuth and elevation values are interpolated.
 */
 
-  int rcsTest(int argc, char* argv[])
+int rcsTest(int argc, char* argv[])
+{
+  int rv = 0;
+  std::string filepath;
+
+  if (argc >= 2)
   {
-    int rv = 0;
-    std::string filepath;
+    filepath = argv[1];
+  }
+  else if (getenv("SIMDIS_SDK_FILE_PATH"))
+  {
+    const char *env = getenv("SIMDIS_SDK_FILE_PATH");
+    rv += SDK_ASSERT(env[0] != '\0');
+    filepath = env;
+    filepath += "/data/rcs/";
+    filepath.append(EXAMPLE_RCS_FILE);
+  }
+  else
+  {
+    std::cerr << "Skipping test, failed to find RCS file" << std::endl;
+    return 0;
+  }
 
-    if (argc == 2)
-    {
-      filepath = argv[1];
-    }
-    else if (getenv("SIMDIS_SDK_FILE_PATH"))
-    {
-      const char *env = getenv("SIMDIS_SDK_FILE_PATH");
-      rv += SDK_ASSERT(env[0] != '\0');
-      filepath = env;
-      filepath += "/data/rcs/";
-      filepath.append(EXAMPLE_RCS_FILE);
-    }
-    else
-    {
-      std::cerr << "Skipping test, failed to find RCS file" << std::endl;
-      return 0;
-    }
+  simCore::RadarCrossSection* rcsData_ = simCore::RcsFileParser::loadRCSFile(filepath);
+  rv += SDK_ASSERT(rcsData_!=NULL);
 
-    simCore::RadarCrossSection* rcsData_ = simCore::RcsFileParser::loadRCSFile(filepath);
-    rv += SDK_ASSERT(rcsData_!=NULL);
+  simCore::PolarityType polarity;
+  float freqHz;
+  double elevR;
+  double azimR;
+  float tableValue;   // correct value as determined by visual inspection of data file
+  float rcsValue_dB;
 
-    simCore::PolarityType polarity;
-    float freqHz;
-    double elevR;
-    double azimR;
-    float tableValue;   // correct value as determined by visual inspection of data file
-    float rcsValue_dB;
+  // If the beam's polarity is not found in the RCS file, -300 dB is returned. (regardless of other inputs)
+  polarity = simCore::POLARITY_LINEAR;
+  freqHz = 9000.0f;
+  elevR = (simCore::DEG2RAD * 0.0f);
+  azimR = (simCore::DEG2RAD * 10.0f);
+  rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+  rv += SDK_ASSERT(rcsValue_dB == -300);
 
-    // If the beam's polarity is not found in the RCS file, -300 dB is returned. (regardless of other inputs)
-    polarity = simCore::POLARITY_LINEAR;
-    freqHz = 9000.0f;
-    elevR = (simCore::DEG2RAD * 0.0f);
-    azimR = (simCore::DEG2RAD * 10.0f);
-    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-    rv += SDK_ASSERT(rcsValue_dB == -300);
+  polarity = simCore::POLARITY_LINEAR;
+  freqHz = 30000.0f;
+  elevR = (simCore::DEG2RAD * 0.0f);
+  azimR = (simCore::DEG2RAD * 10.0f);
+  rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+  rv += SDK_ASSERT(rcsValue_dB == -300);
 
-    polarity = simCore::POLARITY_LINEAR;
-    freqHz = 30000.0f;
-    elevR = (simCore::DEG2RAD * 0.0f);
-    azimR = (simCore::DEG2RAD * 10.0f);
-    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-    rv += SDK_ASSERT(rcsValue_dB == -300);
-
-    polarity = simCore::POLARITY_LINEAR;
-    freqHz = 9000.0f;
-    elevR = (simCore::DEG2RAD * -20.0f);
-    azimR = (simCore::DEG2RAD * 10.0f);
-    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-    rv += SDK_ASSERT(rcsValue_dB == -300);
+  polarity = simCore::POLARITY_LINEAR;
+  freqHz = 9000.0f;
+  elevR = (simCore::DEG2RAD * -20.0f);
+  azimR = (simCore::DEG2RAD * 10.0f);
+  rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+  rv += SDK_ASSERT(rcsValue_dB == -300);
 
 
-    // test exact match lookups
+  // test exact match lookups
+  polarity = simCore::POLARITY_VERTICAL;
+  freqHz = 9000.0f;
+  elevR = (simCore::DEG2RAD * 0.0f);
+  azimR = (simCore::DEG2RAD * 10.0f);
+  tableValue = 40.0f;
+  rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+  rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+
+  polarity = simCore::POLARITY_HORIZONTAL;
+  freqHz = 9000.0f;
+  elevR = (simCore::DEG2RAD * 0.0f);
+  azimR = (simCore::DEG2RAD * 10.0f);
+  tableValue = 30.0f;
+  rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+  rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+
+
+  // test return for unknown polarity:
+  // If an Unknown polarization is specified by the beam, the RCS pattern will use the first polarization found in the data structure.
+  polarity = simCore::POLARITY_UNKNOWN;
+  freqHz = 9000.0f;
+  elevR = (simCore::DEG2RAD * 0.0f);
+  azimR = (simCore::DEG2RAD * 10.0f);
+  tableValue = 30.0f;
+  rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+  rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+
+  // Frequency uses a nearest neighbor lookup.
+  {
     polarity = simCore::POLARITY_VERTICAL;
     freqHz = 9000.0f;
     elevR = (simCore::DEG2RAD * 0.0f);
@@ -111,242 +141,212 @@ Frequency uses a nearest neighbor lookup. Azimuth and elevation values are inter
     rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
     rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
 
-    polarity = simCore::POLARITY_HORIZONTAL;
-    freqHz = 9000.0f;
-    elevR = (simCore::DEG2RAD * 0.0f);
-    azimR = (simCore::DEG2RAD * 10.0f);
-    tableValue = 30.0f;
+    freqHz = 8000.0f;
     rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
     rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
 
-
-    // test return for unknown polarity:
-    // If an Unknown polarization is specified by the beam, the RCS pattern will use the first polarization found in the data structure.
-    polarity = simCore::POLARITY_UNKNOWN;
-    freqHz = 9000.0f;
-    elevR = (simCore::DEG2RAD * 0.0f);
-    azimR = (simCore::DEG2RAD * 10.0f);
-    tableValue = 30.0f;
+    freqHz = 11000.0f;
     rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
     rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-
-    // Frequency uses a nearest neighbor lookup.
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      elevR = (simCore::DEG2RAD * 0.0f);
-      azimR = (simCore::DEG2RAD * 10.0f);
-      tableValue = 40.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-
-      freqHz = 8000.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-
-      freqHz = 11000.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-    }
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 13000.0f;
-      elevR = (simCore::DEG2RAD * 0.0f);
-      azimR = (simCore::DEG2RAD * 10.0f);
-      tableValue = 46.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-
-      freqHz = 11001.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-
-      freqHz = 14000.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-    }
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 15000.0f;
-      elevR = (simCore::DEG2RAD * 0.0f);
-      azimR = (simCore::DEG2RAD * 10.0f);
-      tableValue = 37.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-
-      freqHz = 14001.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-
-      freqHz = 15001.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-    }
-
-
-    // test elevation angles that are outside table limits
-    {
-      // min table value
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      azimR = (simCore::DEG2RAD * 5.0);
-      elevR = (simCore::DEG2RAD * 0.0);
-      tableValue = 38.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-      // value below min value clamps to min value
-      elevR = (simCore::DEG2RAD * -10.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-    }
-
-    {
-      // max table value
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      azimR = (simCore::DEG2RAD * 5.0);
-      elevR = (simCore::DEG2RAD * 60.0);
-      tableValue = 33.8f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-      // value above max value clamps to max value
-      elevR = (simCore::DEG2RAD * 70.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
-    }
-
-    // test interpolation of elevation angle; interpolation operates on values in linear scale, not dB.
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      azimR = simCore::DEG2RAD * 5.0;
-
-      elevR = (simCore::DEG2RAD * 0.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 38.0f, 4e-06));
-      float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      elevR = (simCore::DEG2RAD * 30.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 35.8f, 4e-06));
-      float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
-      double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
-
-      // limits of float and extra calculation due to interpolation impose the 3e-04 precision limit
-      elevR = (simCore::DEG2RAD * 15.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      // this value determined from calculation, displayed here only to show that interpolation does not operate on dB scale  (38+35.8)/2 = 36.9
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 37.0378418f, 4e-06));
-      float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-
-      elevR = (simCore::DEG2RAD * 375.0);
-      rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-
-      elevR = (simCore::DEG2RAD * -345.0);
-      rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-    }
-    // once again, interpolation of elev angle, but with different values
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      azimR = simCore::DEG2RAD * 5.0;
-
-      elevR = (simCore::DEG2RAD * 30.0);
-      float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      elevR = (simCore::DEG2RAD * 60.0);
-      float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
-      double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
-
-      // limits of float and extra calculation due to interpolation impose the 3e-04 precision limit
-      elevR = (simCore::DEG2RAD * 45.0);
-      float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-
-      elevR = (simCore::DEG2RAD * 405.0);
-      rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-
-      elevR = (simCore::DEG2RAD * -315.0);
-      rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-    }
-
-    // test wrap around of azimuth angles
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      elevR = (simCore::DEG2RAD * 0.0);
-
-      azimR = (simCore::DEG2RAD * 5.0);
-      tableValue = 38.0f;
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue));
-
-      azimR = (simCore::DEG2RAD * 365.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue));
-
-      azimR = (simCore::DEG2RAD * -355.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue));
-    }
-
-    // test interpolation of azimuth angle; interpolation operates on values in linear scale, not dB.
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      elevR = (simCore::DEG2RAD * 0.0);
-
-      azimR = (simCore::DEG2RAD * 5.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 38.0f));
-      float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      azimR = (simCore::DEG2RAD * 10.0);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 40.0f));
-      float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
-      double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
-
-      azimR = (simCore::DEG2RAD * 7.5);
-      rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
-      // this value determined from calculation, displayed here only to show that interpolation does not operate on dB scale
-      rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 39.1141281f, 4e-06));
-      float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-    }
-    // again, with different values
-    {
-      polarity = simCore::POLARITY_VERTICAL;
-      freqHz = 9000.0f;
-      elevR = (simCore::DEG2RAD * 30.0);
-
-      azimR = (simCore::DEG2RAD * 20.0);
-      float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      azimR = (simCore::DEG2RAD * 25.0);
-      float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-
-      // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
-      double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
-
-      azimR = (simCore::DEG2RAD * 22.5);
-      float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
-      rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
-    }
-    delete rcsData_;
-    return rv;
   }
+  {
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 13000.0f;
+    elevR = (simCore::DEG2RAD * 0.0f);
+    azimR = (simCore::DEG2RAD * 10.0f);
+    tableValue = 46.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+
+    freqHz = 11001.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+
+    freqHz = 14000.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+  }
+  {
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 15000.0f;
+    elevR = (simCore::DEG2RAD * 0.0f);
+    azimR = (simCore::DEG2RAD * 10.0f);
+    tableValue = 37.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+
+    freqHz = 14001.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+
+    freqHz = 15001.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+  }
+
+
+  // test elevation angles that are outside table limits
+  {
+    // min table value
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 9000.0f;
+    azimR = (simCore::DEG2RAD * 5.0);
+    elevR = (simCore::DEG2RAD * 0.0);
+    tableValue = 38.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+    // value below min value clamps to min value
+    elevR = (simCore::DEG2RAD * -10.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+  }
+
+  {
+    // max table value
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 9000.0f;
+    azimR = (simCore::DEG2RAD * 5.0);
+    elevR = (simCore::DEG2RAD * 60.0);
+    tableValue = 33.8f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+    // value above max value clamps to max value
+    elevR = (simCore::DEG2RAD * 70.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue, 4e-06));
+  }
+
+  // test interpolation of elevation angle; interpolation operates on values in linear scale, not dB.
+  {
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 9000.0f;
+    azimR = simCore::DEG2RAD * 5.0;
+
+    elevR = (simCore::DEG2RAD * 0.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 38.0f, 4e-06));
+    float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    elevR = (simCore::DEG2RAD * 30.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 35.8f, 4e-06));
+    float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
+    double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
+
+    // limits of float and extra calculation due to interpolation impose the 3e-04 precision limit
+    elevR = (simCore::DEG2RAD * 15.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    // this value determined from calculation, displayed here only to show that interpolation does not operate on dB scale  (38+35.8)/2 = 36.9
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 37.0378418f, 4e-06));
+    float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+
+    elevR = (simCore::DEG2RAD * 375.0);
+    rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+
+    elevR = (simCore::DEG2RAD * -345.0);
+    rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+  }
+  // once again, interpolation of elev angle, but with different values
+  {
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 9000.0f;
+    azimR = simCore::DEG2RAD * 5.0;
+
+    elevR = (simCore::DEG2RAD * 30.0);
+    float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    elevR = (simCore::DEG2RAD * 60.0);
+    float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
+    double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
+
+    // limits of float and extra calculation due to interpolation impose the 3e-04 precision limit
+    elevR = (simCore::DEG2RAD * 45.0);
+    float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+
+    elevR = (simCore::DEG2RAD * 405.0);
+    rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+
+    elevR = (simCore::DEG2RAD * -315.0);
+    rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+  }
+
+  // test wrap around of azimuth angles
+  {
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 9000.0f;
+    elevR = (simCore::DEG2RAD * 0.0);
+
+    azimR = (simCore::DEG2RAD * 5.0);
+    tableValue = 38.0f;
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue));
+
+    azimR = (simCore::DEG2RAD * 365.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue));
+
+    azimR = (simCore::DEG2RAD * -355.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, tableValue));
+  }
+
+  // test interpolation of azimuth angle; interpolation operates on values in linear scale, not dB.
+  {
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 9000.0f;
+    elevR = (simCore::DEG2RAD * 0.0);
+
+    azimR = (simCore::DEG2RAD * 5.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 38.0f));
+    float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    azimR = (simCore::DEG2RAD * 10.0);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 40.0f));
+    float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
+    double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
+
+    azimR = (simCore::DEG2RAD * 7.5);
+    rcsValue_dB = rcsData_->RCSdB(freqHz, azimR, elevR, polarity);
+    // this value determined from calculation, displayed here only to show that interpolation does not operate on dB scale
+    rv += SDK_ASSERT(simCore::areEqual(rcsValue_dB, 39.1141281f, 4e-06));
+    float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+  }
+  // again, with different values
+  {
+    polarity = simCore::POLARITY_VERTICAL;
+    freqHz = 9000.0f;
+    elevR = (simCore::DEG2RAD * 30.0);
+
+    azimR = (simCore::DEG2RAD * 20.0);
+    float rcsValueL1 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    azimR = (simCore::DEG2RAD * 25.0);
+    float rcsValueL2 = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+
+    // casts to double are important, as (rcsValueL1 + rcsValueL2) / 2.0 leads to loss of precision on order of 3e-04
+    double interpolatedValue = (static_cast<double>(rcsValueL1) + static_cast<double>(rcsValueL2)) / 2.0;
+
+    azimR = (simCore::DEG2RAD * 22.5);
+    float rcsValueLI = rcsData_->RCSsm(freqHz, azimR, elevR, polarity);
+    rv += SDK_ASSERT(simCore::areEqual(rcsValueLI, interpolatedValue, 3e-04));
+  }
+  delete rcsData_;
+  return rv;
 }
 
 
@@ -453,6 +453,211 @@ int testOneWayFreeSpaceRangeLoss()
   return 1;
 }
 
+int antennaPatternTest(int argc, char* argv[])
+{
+  std::string filepath;
+  int rv = 0;
+  if (argc > 2)
+  {
+    filepath = argv[2];
+    filepath += PATH_SEP;
+  }
+  else if (getenv("SIMDIS_SDK_FILE_PATH"))
+  {
+    const char *env = getenv("SIMDIS_SDK_FILE_PATH");
+    rv += SDK_ASSERT(env[0] != '\0');
+    filepath = env;
+    filepath += "/data/ant/";
+  }
+  else
+  {
+    std::cerr << "Skipping test, failed to find antenna file path" << std::endl;
+    return 0;
+  }
+
+  // used and reused for gain calculations
+  simCore::AntennaGainParameters antennaGainParameters;
+  antennaGainParameters.azim_ = .57f;
+  antennaGainParameters.elev_ = .57f;
+  antennaGainParameters.freq_ = 3e+9f;
+
+
+  simCore::AntennaPattern* pattern = NULL;
+  const std::string bilinear = filepath + "bilinear.apbf";
+  {
+    pattern = simCore::loadPatternFile(bilinear, 3.0e+003);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+    {
+      float min, max;
+      pattern->minMaxGain(&min, &max, antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(min, -49.3984795f));
+      rv += SDK_ASSERT(simCore::areEqual(max, -0.964999974f));
+      // gain calc simply tests that same result continues to be returned; not testing validity of calc, not based on gold data.
+      const float gain = pattern->gain(antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(gain, -31.4724312f));
+      delete pattern;
+    }
+    pattern = NULL;
+  }
+  {
+    pattern = simCore::loadPatternFile(bilinear, 2.51e+003);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+      delete pattern;
+    pattern = NULL;
+  }
+  {
+    pattern = simCore::loadPatternFile(bilinear, 3.49e+003);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+      delete pattern;
+    pattern = NULL;
+  }
+  // successful test will output ERROR message to console
+  {
+    pattern = simCore::loadPatternFile(bilinear, 2.5e+003);
+    rv += SDK_ASSERT(NULL == pattern);
+  }
+  // successful test will output ERROR message to console
+  {
+    pattern = simCore::loadPatternFile(bilinear, 3.5e+003);
+    rv += SDK_ASSERT(NULL == pattern);
+  }
+
+  const std::string monopulse = filepath + "monopulse.apmf";
+  {
+    pattern = simCore::loadPatternFile(monopulse, 3.0e+003);
+    rv += SDK_ASSERT(NULL != pattern);
+    {
+      float min, max;
+      pattern->minMaxGain(&min, &max, antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(min, -49.3767319f));
+      rv += SDK_ASSERT(simCore::areEqual(max, -0.964999974f));
+      // gain calc simply tests that same result continues to be returned; not testing validity of calc, not based on gold data.
+      const float gain = pattern->gain(antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(gain, -31.4642982f));
+      delete pattern;
+    }
+    pattern = NULL;
+  }
+  {
+    pattern = simCore::loadPatternFile(monopulse, 2.51e+003);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+      delete pattern;
+    pattern = NULL;
+  }
+  {
+    pattern = simCore::loadPatternFile(monopulse, 3.49e+003);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+      delete pattern;
+    pattern = NULL;
+  }
+  // successful test will output ERROR message to console
+  {
+    pattern = simCore::loadPatternFile(monopulse, 2.5e+003);
+    rv += SDK_ASSERT(NULL == pattern);
+  }
+  // successful test will output ERROR message to console
+  {
+    pattern = simCore::loadPatternFile(monopulse, 3.5e+003);
+    rv += SDK_ASSERT(NULL == pattern);
+  }
+
+
+  {
+    pattern = simCore::loadPatternFile(filepath + "umts.aprf", -0.0);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+    {
+      // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
+      float min, max;
+      pattern->minMaxGain(&min, &max, antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(min, -28.8517990f));
+      rv += SDK_ASSERT(simCore::areEqual(max, 15.1331997f));
+      const float gain = pattern->gain(antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(gain, -2.80341649f));
+      delete pattern;
+    }
+    pattern = NULL;
+  }
+
+  {
+    pattern = simCore::loadPatternFile(filepath + "24032g.nsm", -0.0);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+    {
+      // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
+      float min, max;
+      pattern->minMaxGain(&min, &max, antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(min, 6.90000105f));
+      rv += SDK_ASSERT(simCore::areEqual(max, 25.1000004f));
+      const float gain = pattern->gain(antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(gain, -300.f));
+      delete pattern;
+    }
+    pattern = NULL;
+  }
+
+  {
+    pattern = simCore::loadPatternFile(filepath + "dipoleXFDTD.uan", -0.0);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+    {
+      // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
+      float min, max;
+      pattern->minMaxGain(&min, &max, antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(min, -123.439102f));
+      rv += SDK_ASSERT(simCore::areEqual(max, 4.30130720f));
+      const float gain = pattern->gain(antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(gain, 0.920442045f));
+      delete pattern;
+    }
+    pattern = NULL;
+  }
+
+  {
+    pattern = simCore::loadPatternFile(filepath + "ant_sidelobes.aptf", -0.0);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+    {
+      // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
+      float min, max;
+      pattern->minMaxGain(&min, &max, antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(min, -60.f));
+      rv += SDK_ASSERT(simCore::areEqual(max, 0.f));
+      const float gain = pattern->gain(antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(gain, -55.7457581f));
+      delete pattern;
+    }
+    pattern = NULL;
+  }
+
+  {
+    pattern = simCore::loadPatternFile(filepath + "cardioid_az.txt", -0.0);
+    rv += SDK_ASSERT(NULL != pattern);
+    if (pattern)
+    {
+      // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
+      float min, max;
+      pattern->minMaxGain(&min, &max, antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(min, -99.9899979f));
+      rv += SDK_ASSERT(simCore::areEqual(max, 4.78000021f));
+      const float gain = pattern->gain(antennaGainParameters);
+      rv += SDK_ASSERT(simCore::areEqual(gain, 2.88438296f));
+      delete pattern;
+    }
+    pattern = NULL;
+  }
+
+
+  return rv;
+}
+
+}
+
 int EMTest(int argc, char* argv[])
 {
   int rv = 0;
@@ -461,6 +666,7 @@ int EMTest(int argc, char* argv[])
   rv += testTwoWayRcvdPowerFreeSpace();
   rv += testOneWayRcvdPowerFreeSpace();
   rv += testOneWayFreeSpaceRangeLoss();
+  rv += antennaPatternTest(argc, argv);
 
   std::cout << "EMTests " << ((rv == 0) ? "Passed" : "Failed") << std::endl;
 

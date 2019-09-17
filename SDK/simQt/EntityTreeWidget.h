@@ -56,10 +56,18 @@ public:
   /** Sets the tree model to view */
   void setModel(AbstractEntityTreeModel* model);
 
-  /** Sets/clears the selected ID in the entity list; does NOT generate a itemsSelected signal */
-  void setSelected(uint64_t id, bool selected, bool signalItemsSelected=false);
-  /** Sets/clears selection for the IDs in 'list' */
-  void setSelected(QList<uint64_t> list, bool selected);
+  /**
+   * Sets the selected ID in the entity list; all other selections are cleared
+   * @param id The id to set the selection to
+   * @return 0 if the selection changed, non-zero if the selection did not change
+   */
+  int setSelected(uint64_t id);
+  /**
+   * Sets selection for the IDs in 'list'; all other selections are cleared
+   * @param list The list of ids to set the selection to
+   * @return 0 if the selection changed, non-zero if the selection did not change
+   */
+  int setSelected(const QList<uint64_t>& list);
   /** Clears all selections; does NOT generate a itemsSelected signal */
   void clearSelection();
   /** Gets a list of all the selected IDs in the entity list */
@@ -88,6 +96,13 @@ public:
 
   /** Get the settings for all the filters */
   void getFilterSettings(QMap<QString, QVariant>& settings) const;
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  /** DEPRECATED: Sets/clears the selected ID in the entity list; does NOT generate a itemsSelected signal; instead, use setSelected method above */
+  void setSelected(uint64_t id, bool selected, bool signalItemsSelected = false);
+  /** DEPRECATED: Sets/clears selection for the IDs in 'list'; instead, use setSelected method above */
+  void setSelected(QList<uint64_t> list, bool selected);
+#endif
 
 public slots:
   /** Swaps the view to the hierarchy tree */
@@ -133,6 +148,9 @@ protected:
   EntityProxyModel* proxyModel_; ///< proxy model stands between view and 'model_'
 
 private:
+  /// Returns the number of entities at the index level and below.
+  int numberOfEntities_(const QModelIndex& index);
+
   class EntitySettingsObserver; ///< private class to manage settings change notifications
   SettingsPtr settings_; ///< reference to the global settings object
   Settings::ObserverPtr settingsObserver_; ///< observer to listen to settings changes

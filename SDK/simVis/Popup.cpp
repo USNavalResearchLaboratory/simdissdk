@@ -77,6 +77,7 @@ EntityPopup::EntityPopup()
   osgText::Font* defaultFont = simVis::Registry::instance()->getOrCreateFont("arial.ttf");
   titleLabel_->setFont(defaultFont);
   titleLabel_->setFontSize(simVis::osgFontSize(DEFAULT_TITLE_SIZE));
+  titleLabel_->setEncoding(osgText::String::ENCODING_UTF8);
   this->addControl(titleLabel_);
 
   contentLabel_ = new osgEarth::Util::Controls::LabelControl();
@@ -84,6 +85,7 @@ EntityPopup::EntityPopup()
   contentLabel_->setForeColor(DEFAULT_CONTENT_COLOR);
   contentLabel_->setFont(defaultFont);
   contentLabel_->setFontSize(simVis::osgFontSize(DEFAULT_CONTENT_SIZE));
+  contentLabel_->setEncoding(osgText::String::ENCODING_UTF8);
   this->addControl(contentLabel_);
 
   // add yellow border

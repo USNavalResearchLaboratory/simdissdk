@@ -36,11 +36,11 @@ set(ALL_PROPS
 # Gather a list of all valid imported libs for the FindSIMDIS_SDK.cmake.in
 set(VALID_IMPLIBS)
 # Loop over all possible imported libs and create Import___.cmake files for each
-foreach(IMPORTED_LIBRARY_NAME ${IMPLIBS})
+foreach(IMPORTED_LIBRARY_NAME IN LISTS IMPLIBS)
     # Only create the file if the target exists
     if(TARGET ${IMPORTED_LIBRARY_NAME})
         # Pull out each property of interest into a variable used by configure_file
-        foreach(PROP ${ALL_PROPS})
+        foreach(PROP IN LISTS ALL_PROPS)
             get_target_property(LIB_${PROP} ${IMPORTED_LIBRARY_NAME} ${PROP})
             if(NOT LIB_${PROP})
                 set(LIB_${PROP})
@@ -50,12 +50,14 @@ foreach(IMPORTED_LIBRARY_NAME ${IMPLIBS})
         # Tag library correctly as static or shared (used by configure_file)
         if("${LIB_TYPE}" STREQUAL "STATIC_LIBRARY")
             set(LIB_STATIC_OR_SHARED STATIC)
-        else()
+        elseif("${LIB_TYPE}" STREQUAL "SHARED_LIBRARY")
             set(LIB_STATIC_OR_SHARED SHARED)
+        else()
+            set(LIB_STATIC_OR_SHARED UNKNOWN)
         endif()
 
         # Create and install the Import___.cmake for this library
-        configure_file(CMakeModules/ImportedExport.cmake.in
+        configure_file(CMakeUtilities/ImportedExport.cmake.in
             ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_LIBRARY_NAME}.cmake
         )
         install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/Import${IMPORTED_LIBRARY_NAME}.cmake
@@ -68,8 +70,29 @@ foreach(IMPORTED_LIBRARY_NAME ${IMPLIBS})
     endif()
 endforeach()
 
+# Add the extra VSI libraries for socket and GL
+if(TARGET VSI::SOCKET)
+    install(FILES CMakeImport/ImportSocket.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
+    list(APPEND VALID_IMPLIBS Socket)
+endif()
+if(TARGET VSI::GL)
+    install(FILES CMakeImport/ImportOpenGL.cmake DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)
+    list(APPEND VALID_IMPLIBS OpenGL)
+endif()
+
+# Detect the valid target names
+set(SDK_LIBS simNotify simCore simData simVis simUtil simQt)
+foreach(SDK_LIB IN LISTS SDK_LIBS)
+    if(TARGET ${SDK_LIB})
+        list(APPEND VALID_SDK_LIBS ${SDK_LIB})
+    endif()
+endforeach()
+
+# Get the absolute path out for use in the configured CMake file ImportSIMDIS_SDK.cmake
+set(SDK_LIB_CMAKE_FULLPATH "${CMAKE_INSTALL_PREFIX}/${SDK_LIB_CMAKE_PATH}")
+
 # Create and install the FindSIMDIS_SDK.cmake file
-configure_file(CMakeModules/FindSIMDIS_SDK.cmake.in
+configure_file(CMakeUtilities/FindSIMDIS_SDK.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/FindSIMDIS_SDK.cmake
     @ONLY
 )
@@ -78,10 +101,8 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/FindSIMDIS_SDK.cmake
     COMPONENT Exports
 )
 
-# Get the absolute path out for use in the configured CMake file ImportSIMDIS_SDK.cmake
-set(SDK_LIB_CMAKE_FULLPATH "${CMAKE_INSTALL_PREFIX}/${SDK_LIB_CMAKE_PATH}")
 # Configure and install the ImportSIMDIS_SDK.cmake useful for external projects
-configure_file(CMakeModules/ImportSIMDIS_SDK.cmake.in
+configure_file(CMakeUtilities/ImportSIMDIS_SDK.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/cmake/ImportSIMDIS_SDK.cmake
     @ONLY
 )
@@ -94,6 +115,3 @@ install(FILES
 
 # Install files from the share folder
 install(DIRECTORY share/ DESTINATION share COMPONENT Exports)
-
-# Finally install all the CMake auto-generated exports
-install(EXPORT SIMDIS_SDK DESTINATION ${SDK_LIB_CMAKE_PATH} COMPONENT Exports)

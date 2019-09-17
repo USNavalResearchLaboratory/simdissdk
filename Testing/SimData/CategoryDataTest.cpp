@@ -1417,6 +1417,37 @@ int testRegExpSimplify()
   return rv;
 }
 
+int testCaseInsensitivity()
+{
+  int rv = 0;
+
+  simData::CategoryNameManager nameMgr;
+  rv += SDK_ASSERT(nameMgr.setCaseSensitive(false) == 0);
+
+  int tagId = nameMgr.addCategoryName("Tag");
+  rv += SDK_ASSERT(tagId == nameMgr.addCategoryName("Tag"));
+  rv += SDK_ASSERT(tagId == nameMgr.addCategoryName("tag"));
+  rv += SDK_ASSERT(tagId == nameMgr.addCategoryName("TAG"));
+  rv += SDK_ASSERT(tagId == nameMgr.nameToInt("Tag"));
+  rv += SDK_ASSERT(tagId == nameMgr.nameToInt("tag"));
+  rv += SDK_ASSERT(tagId == nameMgr.nameToInt("TAG"));
+  rv += SDK_ASSERT(nameMgr.nameIntToString(tagId) == "Tag");
+
+  int valueId = nameMgr.addCategoryValue(tagId, "Value");
+  rv += SDK_ASSERT(valueId == nameMgr.addCategoryValue(tagId, "Value"));
+  rv += SDK_ASSERT(valueId == nameMgr.addCategoryValue(tagId, "value"));
+  rv += SDK_ASSERT(valueId == nameMgr.addCategoryValue(tagId, "VALUE"));
+  rv += SDK_ASSERT(valueId == nameMgr.nameToInt("Value"));
+  rv += SDK_ASSERT(valueId == nameMgr.nameToInt("value"));
+  rv += SDK_ASSERT(valueId == nameMgr.nameToInt("VALUE"));
+  rv += SDK_ASSERT(nameMgr.nameIntToString(valueId) == "Value");
+
+  // Will fail because the manager has data
+  rv += SDK_ASSERT(nameMgr.setCaseSensitive(false) != 0);
+
+  return rv;
+}
+
 }
 
 int CategoryDataTest(int argc, char *argv[])
@@ -1438,6 +1469,7 @@ int CategoryDataTest(int argc, char *argv[])
   rv += testAddRemoveFunctions();
   rv += testSimplify();
   rv += testRegExpSimplify();
+  rv += testCaseInsensitivity();
 
   return rv;
 }

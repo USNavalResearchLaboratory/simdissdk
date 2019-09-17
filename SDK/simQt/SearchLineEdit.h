@@ -31,7 +31,9 @@ class QProxyStyle;
 class QTimer;
 class QToolButton;
 class QWidgetAction;
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 class Ui_SearchLineEditQt4;
+#endif
 
 namespace simQt
 {

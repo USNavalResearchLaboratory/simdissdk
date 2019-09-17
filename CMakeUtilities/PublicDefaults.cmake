@@ -1,0 +1,7 @@
+set(THIRD_PARTY_PACK_DIR "${SIMDIS_SDK_SOURCE_DIR}/3rd/${BUILD_SYSTEM_OS}${BUILD_TYPE}_${BUILD_COMPILER}")
+if(IS_DIRECTORY "${THIRD_PARTY_PACK_DIR}")
+    message(STATUS "Detected 3rd party pack at:")
+    message(STATUS "   ${THIRD_PARTY_PACK_DIR}")
+    message(STATUS "   Auto-configuring defaults.")
+    set(THIRD_DIR "${THIRD_PARTY_PACK_DIR}")
+endif()

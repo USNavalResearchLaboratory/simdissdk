@@ -1150,6 +1150,11 @@ void View::setLighting(bool value)
   lighting_ = value;
 }
 
+bool View::getLighting() const
+{
+  return lighting_;
+}
+
 double View::fovX() const
 {
   return fovXDeg_;

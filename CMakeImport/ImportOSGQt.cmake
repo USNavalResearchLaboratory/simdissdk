@@ -11,34 +11,34 @@ endif()
 set(LIBRARYNAME OSGQT)
 
 # OpenThreads is stored under the OpenSceneGraph folder
-set(${LIBRARYNAME}_VERSION 3.6.3)
+set(${LIBRARYNAME}_VERSION ${OSG_VERSION})
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Setup search paths
 initialize_ENV(OSG_DIR)
 initialize_ENV(OSGQT_DIR)
-set(INCLUDE_DIRS 
+set(INCLUDE_DIRS
+    ${OSGQT_DIR}/include
     $ENV{OSGQT_DIR}/include
-    ${OSG_DIR}
+    ${THIRD_DIR}/osgQt/${${LIBRARYNAME}_VERSION}/include
+    ${OSG_DIR}/include
     $ENV{OSG_DIR}/include
     ${THIRD_DIR}/OpenSceneGraph/${${LIBRARYNAME}_VERSION}/include
 )
 
-set(LIB_DIRS 
-    $ENV{OSGQT_DIR}/lib
-    $ENV{OSGQT_DIR}/lib64
-    ${OSG_DIR}/lib
-    ${OSG_DIR}/lib64
-    $ENV{OSG_DIR}/lib
-    $ENV{OSG_DIR}/lib64
-    ${THIRD_DIR}/OpenSceneGraph/${${LIBRARYNAME}_VERSION}/lib
-    ${THIRD_DIR}/OpenSceneGraph/${${LIBRARYNAME}_VERSION}/lib64
+set(LIB_DIRS
+    ${OSGQT_DIR}
+    $ENV{OSGQT_DIR}
+    ${THIRD_DIR}/osgQt/${${LIBRARYNAME}_VERSION}
+    ${OSG_DIR}
+    $ENV{OSG_DIR}
+    ${THIRD_DIR}/OpenSceneGraph/${${LIBRARYNAME}_VERSION}
 )
 
 find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osgQt/Export PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
 # Newer versions of osgQt include the Qt version number in output name
-find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQt${QT_VERSION_MAJOR}d osgQtd PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQt${QT_VERSION_MAJOR} osgQt PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgQt${QT_VERSION_MAJOR}d osgQtd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgQt${QT_VERSION_MAJOR} osgQt PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
 
 ############################################################
 ########## Imported 3rd party library boilerplate ##########

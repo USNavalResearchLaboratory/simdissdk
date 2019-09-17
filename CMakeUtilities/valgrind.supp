@@ -253,3 +253,87 @@
    fun:_dl_init
 }
 
+
+{
+   Ignore osgEarth globals in ref_ptr
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_GLOBAL__sub_*
+   fun:_dl_init
+   ...
+}
+
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*GoogleOnceInitImpl*Closure*
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_ZN7simData32protobuf_AddDesc_simData_2eprotoEv
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*protobuf_AddDesc_google*protobuf*descriptor*protoEv
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*DescriptorPool*InternalAddGeneratedFile*
+}
+{
+   Protobuf globals that leak even when protobuf is not directly used
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*mapnik*vector*protobuf_AddDesc_vector*tile*proto*
+   fun:_dl_init
+   ...
+}
+
+{
+   libglib leaks on CentOS7
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   obj:/usr/lib64/libglib*
+   fun:_dl_init
+   ...
+}
+
+{
+   GDAL/TBB conditional jump
+   Memcheck:Cond
+   ...
+   fun:*_INTERNAL*src_tbb_dynamic_link_cpp*init*dl*data*
+   fun:run_initializer
+   fun:atomic_do_once
+   fun:atomic_once
+   fun:*tbb*internal*init_dynamic_link_data*
+   ...
+}
+{
+   CentOS 7 GDAL issue
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   ...
+}

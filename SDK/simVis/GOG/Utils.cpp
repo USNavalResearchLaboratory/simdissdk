@@ -195,7 +195,7 @@ std::string Utils::serializeOsgColor(const osg::Vec4f& colorVec)
 {
   osgEarth::Symbology::Color color(colorVec);
   std::ostringstream os;
-  os << std::hex << std::showbase << color.asRGBA();
+  os << "0x" << std::hex << std::setfill('0') << std::setw(8) << color.asRGBA();
   return os.str();
 }
 
@@ -307,6 +307,8 @@ void ModifierState::apply(ParsedShape& shape)
   if (angleUnits_.isSet()) shape.set(GOG_ANGLEUNITS, *angleUnits_);
   if (verticalDatum_.isSet()) shape.set(GOG_VERTICALDATUM, *verticalDatum_);
   if (priority_.isSet()) shape.set(GOG_PRIORITY, *priority_);
+  if (textOutlineColor_.isSet()) shape.set(GOG_TEXTOUTLINECOLOR, *textOutlineColor_);
+  if (textOutlineThickness_.isSet()) shape.set(GOG_TEXTOUTLINETHICKNESS, *textOutlineThickness_);
 }
 
 //------------------------------------------------------------------------
@@ -412,10 +414,16 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
     {
       SIM_WARN << LC << "Invalid priority value \"" << parsedShape.stringValue(GOG_PRIORITY) << "\", expected numeric value.\n";
     }
+    auto ts = style_.getOrCreateSymbol<TextSymbol>();
     // Negative priority means to always show
     if (priority < 0.0)
       priority = std::numeric_limits<float>::max();
-    style_.getOrCreateSymbol<TextSymbol>()->priority() = priority;
+    ts->priority() = priority;
+
+    if (parsedShape.hasValue(GOG_TEXTOUTLINECOLOR))
+      ts->halo()->color() = osgEarth::Symbology::Color(parsedShape.stringValue(GOG_TEXTOUTLINECOLOR));
+    else
+      ts->halo()->color() = osgEarth::Symbology::Color::Black;
 
     // Print the priority for debugging purposes
     SIM_DEBUG << "GOG Annotation \"" << parsedShape.stringValue(GOG_TEXT, "<None>") << "\" priority: "

@@ -314,7 +314,7 @@ simCore::TimeStamp TimeWidget::timeRangeEnd() const
 
 bool TimeWidget::timeEnabled() const
 {
-  return !timeEnabled_;
+  return timeEnabled_;
 }
 
 void TimeWidget::setTimeEnabled(bool value)
@@ -343,6 +343,11 @@ void TimeWidget::setTimeEnabled(bool value)
       disabledLineEdit_ = new QLineEdit(tr("--------------------------------------"), this);
       disabledLineEdit_->setEnabled(false);
       disabledLineEdit_->setMinimumWidth(175);
+      // Set horizontal size policy to match the time line edit. This avoids
+      // potential resize problems when swapping between the two line edits.
+      QSizePolicy policy = disabledLineEdit_->sizePolicy();
+      policy.setHorizontalPolicy(QSizePolicy::Preferred);
+      disabledLineEdit_->setSizePolicy(policy);
     }
     disabledLineEdit_->setVisible(true);
     layout()->addWidget(disabledLineEdit_);

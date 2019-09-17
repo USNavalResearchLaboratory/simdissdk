@@ -8,7 +8,6 @@ endif()
 
 set(LIBRARYNAME OSGEARTH)
 set(VSI_OSGEARTH_VERSION OSG-${OSG_VERSION})
-set(SIMDIS_SDK_OSGEARTH_PATH ${THIRD_DIR}/osgEarth-SDK-1.4)
 set(OSGEARTH_INSTALL_COMPONENT ThirdPartyLibs)
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
 set(OSGEARTH_SHOULD_INSTALL FALSE)
@@ -20,22 +19,17 @@ endif()
 initialize_ENV(${LIBRARYNAME}_DIR)
 set(INCLUDE_DIRS
     $ENV{${LIBRARYNAME}_DIR}/include
-    ${SIMDIS_SDK_OSGEARTH_PATH}/include
     ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/include
 )
 set(LIB_DIRS
-    $ENV{${LIBRARYNAME}_DIR}/lib
-    $ENV{${LIBRARYNAME}_DIR}/lib64
-    ${SIMDIS_SDK_OSGEARTH_PATH}/lib
-    ${SIMDIS_SDK_OSGEARTH_PATH}/lib64
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/lib
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/lib64
+    $ENV{${LIBRARYNAME}_DIR}
+    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}
 )
 
 # Configure the core osgEarth library
 find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH NAME osgEarth/Version PATHS ${INCLUDE_DIRS} NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgEarthd PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgEarth PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgEarthd PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgEarth PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
 
 if(NOT ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
     mark_as_advanced(CLEAR ${LIBRARYNAME}_LIBRARY_INCLUDE_PATH ${LIBRARYNAME}_LIBRARY_DEBUG_NAME ${LIBRARYNAME}_LIBRARY_RELEASE_NAME)
@@ -77,8 +71,8 @@ macro(import_osgearth_lib NAMEVAL)
     else()
         string(TOUPPER OSGEARTH_${NAMEVAL} LIBRARYNAME)
     endif()
-    find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgEarth${NAMEVAL}d PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
-    find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgEarth${NAMEVAL} PATHS ${LIB_DIRS} NO_DEFAULT_PATH)
+    find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME NAMES osgEarth${NAMEVAL}d PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
+    find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME NAMES osgEarth${NAMEVAL} PATHS ${LIB_DIRS} PATH_SUFFIXES lib lib64 NO_DEFAULT_PATH)
     list(APPEND ${LIBRARYNAME}_LINK_LIBRARIES OSGVIEWER OSGGA OPENTHREADS)
 
     # Determine whether we found the library correctly
@@ -119,28 +113,26 @@ endforeach()
 set(OS_PLUGIN_SUBDIR "lib${LIBDIRSUFFIX}")
 if(WIN32)
   set(OS_PLUGIN_SUBDIR "bin")
-endif(WIN32)
+endif()
 set(OS_PLUGIN_SUBDIR "${OS_PLUGIN_SUBDIR}/osgPlugins-${OSG_VERSION}")
 
 # Install OSGEarth plugins
 set(PLUGIN_DIRS
-    $ENV{OSGEARTH_DIR}/bin/osgPlugins-${OSG_VERSION}
-    $ENV{OSGEARTH_DIR}/lib/osgPlugins-${OSG_VERSION}
-    $ENV{OSGEARTH_DIR}/lib64/osgPlugins-${OSG_VERSION}
-    ${SIMDIS_SDK_OSGEARTH_PATH}/bin/osgPlugins-${OSG_VERSION}
-    ${SIMDIS_SDK_OSGEARTH_PATH}/lib/osgPlugins-${OSG_VERSION}
-    ${SIMDIS_SDK_OSGEARTH_PATH}/lib64/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/bin/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/lib/osgPlugins-${OSG_VERSION}
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/lib64/osgPlugins-${OSG_VERSION}
+    $ENV{OSGEARTH_DIR}
+    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}
 )
 
 # Find the plugin location
-if(WIN32)
-    find_path(OSGEARTH_PLUGIN_PATH NAMES osgdb_earth.dll PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-else(WIN32)
-    find_path(OSGEARTH_PLUGIN_PATH NAMES osgdb_earth.so PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
-endif(WIN32)
+find_path(OSGEARTH_PLUGIN_PATH
+    NAMES osgdb_earth.dll osgdb_earth.so
+    PATHS ${PLUGIN_DIRS}
+    PATH_SUFFIXES
+        bin/osgPlugins-${OSG_VERSION}
+        lib/osgPlugins-${OSG_VERSION}
+        lib64/osgPlugins-${OSG_VERSION}
+    NO_DEFAULT_PATH
+)
+find_path(OSGEARTH_PLUGIN_PATH NAMES osgdb_earth.dll osgdb_earth.so PATHS ${PLUGIN_DIRS} NO_DEFAULT_PATH)
 
 if(OSGEARTH_PLUGIN_PATH)
     mark_as_advanced(FORCE OSGEARTH_PLUGIN_PATH)
@@ -156,18 +148,18 @@ list(APPEND LIBRARY_LIST "OSGEARTH_PLUGIN_PATH")
 # Select installation location
 if(WIN32)
     set(OSGEARTH_PLUGIN_INSTALL_DIR ${INSTALLSETTINGS_RUNTIME_DIR})
-else(WIN32)
+else()
     set(OSGEARTH_PLUGIN_INSTALL_DIR ${INSTALLSETTINGS_LIBRARY_DIR})
-endif(WIN32)
+endif()
 
 # Determine which files to install based on Debug or Release Build Type
 if(WIN32)
     set(DEBUG_INSTALL_PATTERN "osgdb_.+d\\.dll")
     set(RELEASE_INSTALL_PATTERN "osgdb_.+[^d]\\.dll")
-else(WIN32)
+else()
     set(DEBUG_INSTALL_PATTERN "osgdb_.+d\\.so")
     set(RELEASE_INSTALL_PATTERN "osgdb_.+[^d]\\.so")
-endif(WIN32)
+endif()
 
 # Set the full install path to the plugin directory
 set(OSGEARTH_PLUGIN_INSTALL_DIR ${OSGEARTH_PLUGIN_INSTALL_DIR}/osgPlugins-${OSG_VERSION})

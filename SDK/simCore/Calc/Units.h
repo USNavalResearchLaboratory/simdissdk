@@ -50,6 +50,7 @@ public:
   static const Units SECONDS ATTRIB_HIDDEN;
   static const Units MILLISECONDS ATTRIB_HIDDEN;
   static const Units MICROSECONDS ATTRIB_HIDDEN;
+  static const Units NANOSECONDS ATTRIB_HIDDEN;
   static const Units MINUTES ATTRIB_HIDDEN;
   static const Units HOURS ATTRIB_HIDDEN;
   static const Units DAYS ATTRIB_HIDDEN;
@@ -125,6 +126,8 @@ public:
   ///@{
   /// Frequency Units
   static const Units HERTZ ATTRIB_HIDDEN;
+  static const Units KILOHERTZ ATTRIB_HIDDEN;
+  static const Units MEGAHERTZ ATTRIB_HIDDEN;
   static const Units REVOLUTIONS_PER_MINUTE ATTRIB_HIDDEN;
   static const Units RADIANS_PER_SECOND ATTRIB_HIDDEN;
   static const Units DEGREES_PER_SECOND ATTRIB_HIDDEN;

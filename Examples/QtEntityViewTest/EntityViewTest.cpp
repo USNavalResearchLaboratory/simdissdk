@@ -150,19 +150,19 @@ MainWindow::~MainWindow()
 void MainWindow::addPlatforms_()
 {
   simData::ObjectId platformId = createPlatform(dataStore_, "Sample Platform 1");
-  entityTreeComposite_->setSelected(platformId, true);
+  entityTreeComposite_->setSelected(platformId);
 }
 
 void MainWindow::addBeams_()
 {
   simData::ObjectId beamId = createBeam(dataStore_, 9, "Beam 2");
-  entityTreeComposite_->setSelected(beamId, true);
+  entityTreeComposite_->setSelected(beamId);
 }
 
 void MainWindow::addGates_()
 {
   simData::ObjectId gateId = createGate(dataStore_, 10, "Gate 2");
-  entityTreeComposite_->setSelected(gateId, true);
+  entityTreeComposite_->setSelected(gateId);
 }
 
 void MainWindow::test_()

@@ -68,6 +68,12 @@ public:
   void cycleTimeFormat();
   void toggleCockpit();
   void playPause();
+  void toggleTextDeclutter();
+
+#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
+  void toggleDeclutterTechnique();
+  void cycleCalloutLineStyle();
+#endif
 
 private:
   void init_(osg::ArgumentParser& args);
@@ -86,6 +92,9 @@ private:
   simData::DataStore* dataStore_;
   simData::Interpolator* interpolator_;
   simUtil::TimeVariable* timeVariable_;
+
+  bool declutterOn_;
+  int colorIndex_;
 };
 
 }

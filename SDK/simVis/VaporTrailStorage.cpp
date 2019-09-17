@@ -42,7 +42,7 @@ public:
   /** Removes the vaporTrails from storage when the entity is removed from data store */
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
-    storage_.removeVaporTrailsForPlatform_(removedId);
+    storage_.removeVaporTrailsForPlatform(removedId);
   }
 
 private:
@@ -134,7 +134,7 @@ void VaporTrailStorage::update(double time)
   }
 }
 
-void VaporTrailStorage::removeVaporTrailsForPlatform_(simData::ObjectId removedId)
+void VaporTrailStorage::removeVaporTrailsForPlatform(simData::ObjectId removedId)
 {
   // find all vapor trail keys that associate with the platform
   std::pair<VaporTrailIdByPlatform::iterator, VaporTrailIdByPlatform::iterator> ranges;

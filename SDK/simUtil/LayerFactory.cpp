@@ -126,7 +126,7 @@ ShapeFileLayerFactory::ShapeFileLayerFactory()
   setLineWidth(1.5f);
 
   // Configure the render symbol to render line shapes
-  osgEarth::RenderSymbol* rs = style_->getOrCreateSymbol<osgEarth::RenderSymbol>();
+  osgEarth::Symbology::RenderSymbol* rs = style_->getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>();
   rs->depthTest() = false;
   rs->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
   rs->order()->setLiteral(simVis::BIN_GOG_FLAT);
@@ -150,7 +150,7 @@ void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::F
   ogr.url() = url;
 
   // Configure the stylesheet that will be associated with the layer
-  osgEarth::StyleSheet* stylesheet = new osgEarth::StyleSheet;
+  osgEarth::Symbology::StyleSheet* stylesheet = new osgEarth::Symbology::StyleSheet;
   stylesheet->addStyle(*style_);
 
   driver.featureSource() = ogr;
@@ -161,19 +161,19 @@ void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::F
 
 void ShapeFileLayerFactory::setLineColor(const osg::Vec4f& color)
 {
-  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
+  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
   ls->stroke()->color() = color;
 }
 
 void ShapeFileLayerFactory::setLineWidth(float width)
 {
-  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
+  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
   ls->stroke()->width() = width;
 }
 
 void ShapeFileLayerFactory::setStipple(unsigned short pattern, unsigned int factor)
 {
-  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
+  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
   ls->stroke()->stipplePattern() = pattern;
   ls->stroke()->stippleFactor() = factor;
 }

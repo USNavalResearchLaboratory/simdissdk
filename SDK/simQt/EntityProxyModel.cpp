@@ -127,9 +127,9 @@ namespace simQt {
 
     // If item passes the filters, no need to set it to always show
     if (checkFilters_(id))
-      return;
-
-    alwaysShow_ = id;
+      alwaysShow_ = 0; // unset previous id
+    else
+      alwaysShow_ = id;
     invalidate();
   }
 
@@ -151,7 +151,18 @@ namespace simQt {
       return true;
 
     // check against all filters
-    return checkFilters_(id);
+    if (checkFilters_(id))
+      return true;
+
+    // didn't pass, check children
+    int numChildren = sourceModel()->rowCount(index0);
+    for (int i = 0; i < numChildren; ++i)
+    {
+      if (filterAcceptsRow(i, index0))
+        return true;
+    }
+
+    return false;
   }
 
   bool EntityProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const

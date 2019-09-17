@@ -73,7 +73,6 @@ if(TARGET simData)
         ${SIMQT_INC}EntityCategoryFilter.h
         ${SIMQT_INC}EntityFilter.h
         ${SIMQT_INC}EntityFilterLineEdit.h
-        ${SIMQT_INC}EntityLineEdit.h
         ${SIMQT_INC}EntityNameFilter.h
         ${SIMQT_INC}EntityProxyModel.h
         ${SIMQT_INC}EntityStateFilter.h
@@ -94,6 +93,7 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
+        ${SIMQT_INC}EntityLineEdit.h
         ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
@@ -194,7 +194,6 @@ if(TARGET simData)
         ${SIMQT_SRC}DataTableModel.cpp
         ${SIMQT_SRC}EntityCategoryFilter.cpp
         ${SIMQT_SRC}EntityFilterLineEdit.cpp
-        ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}EntityNameFilter.cpp
         ${SIMQT_SRC}EntityProxyModel.cpp
         ${SIMQT_SRC}EntityStateFilter.cpp
@@ -212,6 +211,7 @@ endif()
 if(TARGET simVis)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CenterEntity.cpp
+        ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
         ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
@@ -225,6 +225,13 @@ if(TARGET simVis)
             ${SIMQT_SRC}Gl3FormatGuesser.cpp
             ${SIMQT_SRC}ViewWidget.cpp
         )
+    endif()
+
+    # Ignore deprecation warnings
+    if(MSVC)
+        set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
+    else()
+        set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
     endif()
 endif()
 
@@ -345,12 +352,20 @@ else()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
-    set_target_properties(simQt PROPERTIES TARGET_EXPORT_NAME "SIMDIS_SDK")
-    vsi_install_target(simQt SDK_Library)
+    # Configure the simQtConfig.cmake file; its dependencies are dynamic
+    set(SIMQT_DEPENDS)
+    foreach(TGT IN ITEMS simNotify simCore simData simVis)
+        if(TARGET ${TGT})
+            set(SIMQT_DEPENDS "${SIMQT_DEPENDS}\nfind_dependency(${TGT})")
+        endif()
+    endforeach()
+    configure_file(simQtConfig.cmake.in simQtConfig.cmake @ONLY)
+
+    vsi_install_export(simQt ${SIMDIS_SDK_VERSION_STRING} AnyNewerVersion)
 endif()
 
 if(AUTOINSTALL_LIBS AND SIMQT_SHARED)
-    PostBuildInstallSdkSharedObjects(simQt)
+    PostBuildInstallSharedObjects(simQt)
 endif()
 
 if(INSTALL_HEADERS)

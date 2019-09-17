@@ -201,7 +201,9 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   useCenterAction_(false),
   treeViewUsable_(true),
   useEntityIcons_(true),
-  useEntityIconsSet_(false)
+  useEntityIconsSet_(false),
+  showCenterInMenu_(true),
+  showTreeOptionsInMenu_(true)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -284,6 +286,11 @@ EntityTreeComposite::~EntityTreeComposite()
   // we don't own model_ so don't delete it
 }
 
+void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
+{
+  composite_->verticalLayout->layout()->setContentsMargins(left, top, right, bottom);
+}
+
 void EntityTreeComposite::addExternalAction(QAction* action)
 {
   if ((action == NULL) || action->isSeparator())
@@ -305,7 +312,8 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
   QMenu* menu = new QMenu(composite_->treeView);
 
   menu->addAction(copyAction_);
-  menu->addAction(centerAction_);
+  if (showCenterInMenu_)
+    menu->addAction(centerAction_);
 
   menu->addSeparator();
 
@@ -317,9 +325,12 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
     menu->addSeparator();
   }
 
-  menu->addAction(toggleTreeViewAction_);
-  menu->addAction(collapseAllAction_);
-  menu->addAction(expandAllAction_);
+  if (showTreeOptionsInMenu_)
+  {
+    menu->addAction(toggleTreeViewAction_);
+    menu->addAction(collapseAllAction_);
+    menu->addAction(expandAllAction_);
+  }
 
   // Show the menu with exec(), making sure the position is correctly relative
   menu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
@@ -358,6 +369,18 @@ void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
   connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(rowsInserted_(QModelIndex, int, int)));
 }
 
+
+int EntityTreeComposite::setSelected(uint64_t id)
+{
+  return entityTreeWidget_->setSelected(id);
+}
+
+int EntityTreeComposite::setSelected(const QList<uint64_t>& list)
+{
+  return entityTreeWidget_->setSelected(list);
+}
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 /** Sets/clears the selected ID in the entity list */
 void EntityTreeComposite::setSelected(uint64_t id, bool selected)
 {
@@ -368,6 +391,7 @@ void EntityTreeComposite::setSelected(QList<uint64_t> list, bool selected)
 {
   entityTreeWidget_->setSelected(list, selected);
 }
+#endif
 
 void EntityTreeComposite::scrollTo(uint64_t id, QAbstractItemView::ScrollHint hint)
 {
@@ -408,6 +432,15 @@ void EntityTreeComposite::setFilterSettings(const QMap<QString, QVariant>& setti
 {
   simQt::ScopedSignalBlocker blockSignals(*this);
   entityTreeWidget_->setFilterSettings(settings);
+}
+
+void EntityTreeComposite::setShowCenterInMenu(bool show)
+{
+  showCenterInMenu_ = show;
+}
+void EntityTreeComposite::setShowTreeOptionsInMenu(bool show)
+{
+  showTreeOptionsInMenu_ = show;
 }
 
 /** Clears all selections */
@@ -648,13 +681,25 @@ bool EntityTreeComposite::useCenterAction() const
   return useCenterAction_;
 }
 
-void EntityTreeComposite::setUseCenterAction(bool use)
+void EntityTreeComposite::setUseCenterAction(bool use, const QString& reason)
 {
+  if (use)
+    centerAction_->setText(tr("Center On Selection"));
+  else
+  {
+    if (!reason.isEmpty())
+      centerAction_->setText(tr("Center On Selection (%1)").arg(reason));
+    else
+      centerAction_->setText(tr("Center On Selection"));
+  }
+
   if (use == useCenterAction_)
     return;
   useCenterAction_ = use;
   if (!selectedItems().isEmpty())
     centerAction_->setEnabled(use); // Only enable if there's items in the tree
+  else
+    centerAction_->setEnabled(false);
 }
 
 void EntityTreeComposite::onItemsChanged_(const QList<uint64_t>& ids)

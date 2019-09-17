@@ -1,0 +1,3 @@
+include(CMakeFindDependencyMacro)
+@SIMQT_DEPENDS@
+include("${CMAKE_CURRENT_LIST_DIR}/simQtTargets.cmake")

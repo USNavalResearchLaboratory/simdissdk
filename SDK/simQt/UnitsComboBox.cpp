@@ -168,6 +168,15 @@ void UnitsComboBox::addSpeedUnits(QComboBox& comboBox)
   addUnitsItem_(comboBox, simCore::Units::DATA_MILES_PER_HOUR);
 }
 
+void UnitsComboBox::addAngleUnits(QComboBox& comboBox)
+{
+  addUnitsItem_(comboBox, simCore::Units::DEGREES);
+  addUnitsItem_(comboBox, simCore::Units::RADIANS);
+  addUnitsItem_(comboBox, simCore::Units::MILLIRADIANS);
+  addUnitsItem_(comboBox, simCore::Units::BAM);
+  addUnitsItem_(comboBox, simCore::Units::MIL);
+}
+
 void UnitsComboBox::addTimeFormats(QComboBox& comboBox)
 {
   addToList(comboBox, QObject::tr("Seconds"), simCore::TIMEFORMAT_SECONDS);
@@ -176,6 +185,13 @@ void UnitsComboBox::addTimeFormats(QComboBox& comboBox)
   addToList(comboBox, QObject::tr("Ordinal"), simCore::TIMEFORMAT_ORDINAL);
   addToList(comboBox, QObject::tr("Month Day Year"), simCore::TIMEFORMAT_MONTHDAY);
   addToList(comboBox, QObject::tr("Date Time Group"), simCore::TIMEFORMAT_DTG);
+}
+
+void UnitsComboBox::addDurationFormats(QComboBox& comboBox)
+{
+  addToList(comboBox, QObject::tr("Seconds"), simCore::TIMEFORMAT_SECONDS);
+  addToList(comboBox, QObject::tr("Minutes"), simCore::TIMEFORMAT_MINUTES);
+  addToList(comboBox, QObject::tr("Hours"), simCore::TIMEFORMAT_HOURS);
 }
 
 void UnitsComboBox::addCoordinateSystems(QComboBox& comboBox)
