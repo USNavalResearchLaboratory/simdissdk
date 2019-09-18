@@ -169,7 +169,7 @@ public:
       // check values
       const auto index = start->index - indexOffset_;
       // verify that indexOffset_ is updated correctly; dev error if assert
-      assert((index >= 0) && (index < values_.size()));
+      assert((index >= 0) && (index < static_cast<int>(values_.size())));
       const ValueIndex& cacheValue = values_[index];
       if (cacheValue.value == value)
         return; // no assert, user provided data
@@ -182,7 +182,7 @@ public:
       --check;
       const auto index = check->index - indexOffset_;
       // verify that indexOffset_ is updated correctly; dev error if assert
-      assert((index >= 0) && (index < values_.size()));
+      assert((index >= 0) && (index < static_cast<int>(values_.size())));
       const ValueIndex& cacheValue = values_[index];
       if (cacheValue.value == value)
         return;
