@@ -23,11 +23,14 @@
 #ifndef SIMQT_CENTERENTITY_H
 #define SIMQT_CENTERENTITY_H
 
+#include <memory>
 #include <QObject>
 
 #include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
+#include "simCore/Time/Constants.h"
 
+namespace simCore { class TimeFormatterRegistry; }
 namespace simData { class DataStore; }
 namespace simVis {
   class EntityNode;
@@ -108,13 +111,27 @@ public:
    */
   void bind(bool centerOnDoubleClick);
 
+public slots:
+  /** The format for displaying the time in the right click mouse menu */
+  void setTimeFormat(simCore::TimeFormat timeFormat);
+  /** The digits after the decimal point in the time format */
+  void setTimePrecision(unsigned int precision);
+
 private slots:
   void updateCenterEnable_();
+  void centerOnEntity_(uint64_t id);
 
 private:
+  /** Returns the closet TSPI time to the current time if the platform is active and has TSPI points.  Return -1.0 on error */
+  double getPlatformNearestTime_(uint64_t id) const;
+
   CenterEntity& centerEntity_;
   EntityTreeComposite& tree_;
   simData::DataStore& dataStore_;
+  std::unique_ptr<simCore::TimeFormatterRegistry> timeFormatter_;
+  simCore::TimeFormat timeFormat_;
+  unsigned short precision_;
+  double newTime_;  ///< If not -1, it represents the time (seconds since reference year) needed to make the entity valid for a view center
 };
 
 }

@@ -140,7 +140,7 @@ public:
   /**
    * Sets the ability to use the context menu center action, which is disabled by default
    * @param use If true, then enable the center action
-   * @param reason If use is false the reason is appended to the end center action text
+   * @param reason The reason is appended to the end of the center action text
    */
   void setUseCenterAction(bool use, const QString& reason = "");
 

@@ -683,15 +683,10 @@ bool EntityTreeComposite::useCenterAction() const
 
 void EntityTreeComposite::setUseCenterAction(bool use, const QString& reason)
 {
-  if (use)
-    centerAction_->setText(tr("Center On Selection"));
+  if (!reason.isEmpty())
+    centerAction_->setText(tr("Center On Selection (%1)").arg(reason));
   else
-  {
-    if (!reason.isEmpty())
-      centerAction_->setText(tr("Center On Selection (%1)").arg(reason));
-    else
-      centerAction_->setText(tr("Center On Selection"));
-  }
+    centerAction_->setText(tr("Center On Selection"));
 
   if (use == useCenterAction_)
     return;

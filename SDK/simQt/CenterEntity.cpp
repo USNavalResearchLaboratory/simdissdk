@@ -19,6 +19,8 @@
  * disclose, or release this software.
  *
  */
+#include "simCore/Time/Clock.h"
+#include "simCore/Time/String.h"
 #include "simVis/CentroidManager.h"
 #include "simVis/CustomRendering.h"
 #include "simVis/Scenario.h"
@@ -138,7 +140,11 @@ BindCenterEntityToEntityTreeComposite::BindCenterEntityToEntityTreeComposite(Cen
   : QObject(parent),
     centerEntity_(centerEntity),
     tree_(tree),
-    dataStore_(dataStore)
+    dataStore_(dataStore),
+    timeFormatter_(new simCore::TimeFormatterRegistry),
+    timeFormat_(simCore::TIMEFORMAT_ORDINAL),
+    precision_(3),
+    newTime_(-1.0)
 {
 }
 
@@ -149,7 +155,7 @@ BindCenterEntityToEntityTreeComposite::~BindCenterEntityToEntityTreeComposite()
 void BindCenterEntityToEntityTreeComposite::bind(bool centerOnDoubleClick)
 {
   connect(&tree_, SIGNAL(rightClickMenuRequested()), this, SLOT(updateCenterEnable_()));
-  connect(&tree_, SIGNAL(centerOnEntityRequested(uint64_t)), &centerEntity_, SLOT(centerOnEntity(uint64_t)));
+  connect(&tree_, SIGNAL(centerOnEntityRequested(uint64_t)), this, SLOT(centerOnEntity_(uint64_t)));
   connect(&tree_, SIGNAL(centerOnSelectionRequested(QList<uint64_t>)), &centerEntity_, SLOT(centerOnSelection(QList<uint64_t>)));
   if (centerOnDoubleClick)
   {
@@ -158,26 +164,118 @@ void BindCenterEntityToEntityTreeComposite::bind(bool centerOnDoubleClick)
   }
 }
 
+void BindCenterEntityToEntityTreeComposite::setTimeFormat(simCore::TimeFormat timeFormat)
+{
+  timeFormat_ = timeFormat;
+}
+
+void BindCenterEntityToEntityTreeComposite::setTimePrecision(unsigned int precision)
+{
+  precision_ = static_cast<unsigned short>(precision);
+}
+
 void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
 {
+  // Clear out any previous center on inactive platform
+  newTime_ = -1.0;
+
   QList<uint64_t> ids = tree_.selectedItems();
   if (ids.empty())
   {
-    tree_.setUseCenterAction(false, "No entities selected");
+    tree_.setUseCenterAction(false, tr("No entities selected"));
     return;
   }
 
+  // Make sure all entities are active
   for (auto it = ids.begin(); it != ids.end(); ++it)
   {
     auto node = centerEntity_.getViewCenterableNode(*it);
-    if ((node == NULL) || !node->isActive() || !node->isVisible())
+    if ((node == NULL) || (node->isActive() && !node->isVisible()))
     {
-      tree_.setUseCenterAction(false, "Inactive entity selected");
+      tree_.setUseCenterAction(false, tr("Inactive entity selected"));
       return;
+    }
+
+    // If there is one selected platform look for a time to make the center command valid
+    if (!node->isActive())
+    {
+      // If more than one entity is selected don't try to find a time where all are active
+      if (ids.size() != 1)
+      {
+        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+        return;
+      }
+
+      // Make sure time controls are enabled and that the scenario is in file mode
+      if ((dataStore_.getBoundClock() == NULL) || dataStore_.getBoundClock()->controlsDisabled() || dataStore_.getBoundClock()->isLiveMode())
+      {
+        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+        return;
+      }
+
+      // Only find time for a platform
+      if (dataStore_.objectType(ids.front()) != simData::PLATFORM)
+      {
+        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+        return;
+      }
+
+      newTime_ = getPlatformNearestTime_(ids.front());
+      if (newTime_ == -1.0)
+      {
+        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+        return;
+      }
     }
   }
 
-  tree_.setUseCenterAction(true);
+  QString message;
+  if (newTime_ != -1.0)
+  {
+    message = "Time ";
+    int referenceYear = dataStore_.referenceYear();
+    simCore::TimeStamp time(referenceYear, newTime_);
+    message += QString::fromStdString(timeFormatter_->toString(timeFormat_, time, referenceYear, precision_));
+  }
+  tree_.setUseCenterAction(true, message);
+}
+
+void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
+{
+  if ((newTime_ != -1.0) && (dataStore_.getBoundClock() != NULL) && !dataStore_.getBoundClock()->controlsDisabled() && !dataStore_.getBoundClock()->isLiveMode())
+    dataStore_.getBoundClock()->setTime(simCore::TimeStamp(dataStore_.referenceYear(), newTime_));
+
+  centerEntity_.centerOnEntity(id);
+}
+
+double BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(uint64_t id) const
+{
+  // First check the visible flag
+  simData::DataStore::Transaction trans;
+  auto pref = dataStore_.platformPrefs(id, &trans);
+  if ((pref == NULL) || !pref->commonprefs().draw() || !pref->commonprefs().datadraw())
+    return -1.0;
+
+  // Next check data points
+  auto slice = dataStore_.platformUpdateSlice(id);
+  if ((slice == NULL) || (slice->numItems() == 0))
+    return -1.0;
+
+  auto time = dataStore_.updateTime();
+  auto iter = slice->upper_bound(time);
+
+  // Since there is a check above for at least one point, previous or next must be set
+
+  if (iter.peekNext() == NULL)
+    return iter.peekPrevious()->time();
+
+  if (iter.peekPrevious() == NULL)
+    return iter.peekNext()->time();
+
+  const double nextDelta = iter.peekNext()->time() - time;
+  const double previousDelta = time - iter.peekPrevious()->time();
+
+  return nextDelta < previousDelta ? iter.peekNext()->time() : iter.peekPrevious()->time();
 }
 
 }
