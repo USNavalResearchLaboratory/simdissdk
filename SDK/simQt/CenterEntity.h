@@ -29,6 +29,7 @@
 #include "osg/observer_ptr"
 #include "simCore/Common/Common.h"
 #include "simCore/Time/Constants.h"
+#include "simData/DataSlice.h"
 
 namespace simCore { class TimeFormatterRegistry; }
 namespace simData { class DataStore; }
@@ -124,6 +125,12 @@ private slots:
 private:
   /** Returns the closet TSPI time to the current time if the platform is active and has TSPI points.  Return -1.0 on error */
   double getPlatformNearestTime_(uint64_t id) const;
+  /** Returns the closest draw data time to the current time if the custom rendering is active.  Return -1.0 on error */
+  double getCustomRenderingNearestTime_(uint64_t id) const;
+  /** The valid time at or before the search time; returns -1.0 on error */
+  double getCustomRenderingEarlierTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const;
+  /** The valid time at or after the search time; returns -1.0 on error */
+  double getCustomRenderingLaterTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const;
 
   CenterEntity& centerEntity_;
   EntityTreeComposite& tree_;

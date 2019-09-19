@@ -32,6 +32,9 @@
 
 namespace simQt {
 
+// The amount of time, in seconds, to back into a custom rendering valid time range
+static const double TIME_DELTA = 1e-6;
+
 CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent)
   : QObject(parent),
     focusManager_(&focusManager),
@@ -213,15 +216,26 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
         return;
       }
 
-      // Only find time for a platform
-      if (dataStore_.objectType(ids.front()) != simData::PLATFORM)
+      auto type = dataStore_.objectType(ids.front());
+      if (type == simData::PLATFORM)
       {
-        tree_.setUseCenterAction(false, tr("Inactive entity selected"));
-        return;
+        newTime_ = getPlatformNearestTime_(ids.front());
+        if (newTime_ == -1.0)
+        {
+          tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+          return;
+        }
       }
-
-      newTime_ = getPlatformNearestTime_(ids.front());
-      if (newTime_ == -1.0)
+      else if (type == simData::CUSTOM_RENDERING)
+      {
+        newTime_ = getCustomRenderingNearestTime_(ids.front());
+        if (newTime_ == -1.0)
+        {
+          tree_.setUseCenterAction(false, tr("Inactive entity selected"));
+          return;
+        }
+      }
+      else
       {
         tree_.setUseCenterAction(false, tr("Inactive entity selected"));
         return;
@@ -255,13 +269,14 @@ double BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(uint64_t i
   auto pref = dataStore_.platformPrefs(id, &trans);
   if ((pref == NULL) || !pref->commonprefs().draw() || !pref->commonprefs().datadraw())
     return -1.0;
+  trans.release(&pref);
 
   // Next check data points
   auto slice = dataStore_.platformUpdateSlice(id);
   if ((slice == NULL) || (slice->numItems() == 0))
     return -1.0;
 
-  auto time = dataStore_.updateTime();
+  const auto time = dataStore_.updateTime();
   auto iter = slice->upper_bound(time);
 
   // Since there is a check above for at least one point, previous or next must be set
@@ -276,6 +291,86 @@ double BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(uint64_t i
   const double previousDelta = time - iter.peekPrevious()->time();
 
   return nextDelta < previousDelta ? iter.peekNext()->time() : iter.peekPrevious()->time();
+}
+
+double BindCenterEntityToEntityTreeComposite::getCustomRenderingNearestTime_(uint64_t id) const
+{
+  // First check the visible flag
+  simData::DataStore::Transaction trans;
+  auto pref = dataStore_.customRenderingPrefs(id, &trans);
+  if ((pref == NULL) || !pref->commonprefs().draw())
+    return -1.0;
+  trans.release(&pref);
+
+  auto commands = dataStore_.customRenderingCommandSlice(id);
+  if ((commands == NULL) || (commands->numItems() == 0))
+    return -1.0;
+
+  const auto time = dataStore_.updateTime();
+  const auto earlierTime = getCustomRenderingEarlierTime_(time, commands);
+  const auto laterTime = getCustomRenderingLaterTime_(time, commands);
+
+  if ((earlierTime == -1.0) && (laterTime == -1.0))
+    return -1.0;
+
+  if (earlierTime == -1.0)
+    return laterTime;
+
+  if (laterTime == -1.0)
+    return earlierTime;
+
+  const double previousDelta = time - earlierTime;
+  const double nextDelta = laterTime - time;
+
+  return nextDelta < previousDelta ? laterTime : earlierTime;
+}
+
+double BindCenterEntityToEntityTreeComposite::getCustomRenderingEarlierTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const
+{
+  auto iter = slice->upper_bound(searchTime);
+
+  // Custom Render code enforces no repeats on data draw, so this is safe
+  while (iter.peekPrevious() != NULL)
+  {
+    auto previous = iter.previous();
+    if (previous->has_updateprefs() &&
+      previous->updateprefs().has_commonprefs() &&
+      previous->updateprefs().commonprefs().has_datadraw())
+    {
+      // If in a valid time range return the search time
+      if (previous->updateprefs().commonprefs().datadraw())
+        return searchTime;
+      // Return the time right before the end of the previous time range
+      return previous->time() - TIME_DELTA;
+    }
+  }
+
+  // did not find a data draw command
+  return -1.0;
+}
+
+double BindCenterEntityToEntityTreeComposite::getCustomRenderingLaterTime_(double searchTime, const simData::CustomRenderingCommandSlice* slice) const
+{
+  auto iter = slice->upper_bound(searchTime);
+
+  // Custom Render code enforces no repeats on data draw, so this is safe
+  while (iter.peekNext() != NULL)
+  {
+    auto next = iter.next();
+    if (next->has_updateprefs() &&
+      next->updateprefs().has_commonprefs() &&
+      next->updateprefs().commonprefs().has_datadraw())
+    {
+      // Start of a new time range so return its time
+      if (next->updateprefs().commonprefs().datadraw())
+        return next->time();
+      // Turning off so that means the search time was in a valid time range so return the search time
+      return searchTime;
+    }
+  }
+
+  // did not find a data draw command
+  return -1.0;
 }
 
 }
