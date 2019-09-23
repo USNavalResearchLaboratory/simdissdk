@@ -25,6 +25,7 @@
 #include <vector>
 #include "osg/Group"
 #include "osg/observer_ptr"
+#include "osgEarth/ElevationPool"
 #include "simCore/Calc/Coordinate.h"
 #include "simData/ObjectId.h"
 
@@ -79,8 +80,13 @@ namespace simVis
     /** Set the map node for querying terrain height for clamping */
     void setMapNode(const osgEarth::MapNode* map);
 
+    /** Set whether to use the most accurate altitude sampling method when clamping.  Using the most accurate method can be prohibitively expensive if there are many clamped entities. */
+    void setUseMaxElevPrec(bool useMaxElevPrec);
+
   private:
     osg::observer_ptr<const osgEarth::MapNode> mapNode_;
+    osg::ref_ptr<osgEarth::ElevationEnvelope> envelope_;
+    bool useMaxElevPrec_;
   };
 
   /**
@@ -287,7 +293,7 @@ namespace simVis
     /** Accept textures from a projector. */
     virtual void acceptProjector(ProjectorNode* projector);
 
-    /** Stop accepting textures from a projector. */ 
+    /** Stop accepting textures from a projector. */
     virtual void removeProjector(ProjectorNode* projector);
 
     /** Return the proper library name */

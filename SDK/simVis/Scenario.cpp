@@ -61,6 +61,9 @@
 
 #define LC "[Scenario] "
 
+/// The highest available Level of Detail from ElevationPool
+static const unsigned int MAX_LOD = 23;
+
 namespace
 {
 /**
@@ -304,6 +307,11 @@ public:
     coordSurfaceClamping_.setMapNode(map);
   }
 
+  void setUseMaxElevPrec(bool useMaxElev)
+  {
+    coordSurfaceClamping_.setUseMaxElevPrec(useMaxElev);
+  }
+
 private:
   CoordSurfaceClamping coordSurfaceClamping_;
 };
@@ -335,13 +343,28 @@ public:
     if (!prefs.abovesurfaceclamping() || !mapNode_.valid())
       return PlatformTspiFilterManager::POINT_UNCHANGED;
 
-    double hamsl;  // Not used
-    double terrainHeightHae = 0.0; // height above ellipsoid, the rough elevation
-    mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, &hamsl, &terrainHeightHae);
-    // If getHeight() fails, terrainHeightHae will have 0.0 (our intended fallback)
-    if (llaCoord.alt() < terrainHeightHae)
+    // Both methods for getting terrain elevation have drawbacks that make them undesirable in certain situations. SIM-10423
+    // getHeight() can give inaccurate results depending on how much map data is loaded into the scene graph, while ElevationEnvelope can be prohibitively slow if there are many clamped entities
+    double elevation = 0;
+
+    if (useMaxElevPrec_ && envelope_.valid())
     {
-      llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), terrainHeightHae);
+      double terrainHeightHae = envelope_->getElevation(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG); // height above ellipsoid, the rough elevation
+      // If getting elevation fails, clamp above 0
+      if (terrainHeightHae != NO_DATA_VALUE)
+        elevation = terrainHeightHae;
+    }
+    else
+    {
+      double hamsl;  // Not used
+      double terrainHeightHae = 0.0; // height above ellipsoid, the rough elevation
+      if (mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, &hamsl, &terrainHeightHae))
+        elevation = terrainHeightHae;
+    }
+
+    if (llaCoord.alt() < elevation)
+    {
+      llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), elevation);
       return PlatformTspiFilterManager::POINT_CHANGED;
     }
 
@@ -352,10 +375,32 @@ public:
   void setMapNode(const osgEarth::MapNode* map)
   {
     mapNode_ = map;
+    if (mapNode_.valid() && useMaxElevPrec_)
+      envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
+    else
+      envelope_ = NULL;
+  }
+
+  void setUseMaxElevPrec(bool useMaxElevPrec)
+  {
+    if (useMaxElevPrec_ == useMaxElevPrec)
+      return;
+
+    useMaxElevPrec_ = useMaxElevPrec;
+    if (useMaxElevPrec_ && mapNode_.valid())
+    {
+      // Envelope should not be valid if useMaxElevPrec was just turned on
+      assert(!envelope_.valid());
+      envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
+    }
+    else
+      envelope_ = NULL;
   }
 
 private:
   osg::observer_ptr<const osgEarth::MapNode> mapNode_;
+  osg::ref_ptr<osgEarth::ElevationEnvelope> envelope_;
+  bool useMaxElevPrec_;
 };
 
 // -----------------------------------------------------------------------
@@ -956,6 +1001,13 @@ void ScenarioManager::notifyBeamsOfNewHostSize(const PlatformNode& platform) con
       beam->setHostMissileOffset(platform.getFrontOffset());
   }
   SAFETRYEND("notifying beams of new host size");
+}
+
+void ScenarioManager::setUseMaxElevClampPrec(bool useMaxPrec)
+{
+  surfaceClamping_->setUseMaxElevPrec(useMaxPrec);
+  aboveSurfaceClamping_->setUseMaxElevPrec(useMaxPrec);
+  lobSurfaceClamping_->setUseMaxElevPrec(useMaxPrec);
 }
 
 EntityNode* ScenarioManager::find(const simData::ObjectId& id) const

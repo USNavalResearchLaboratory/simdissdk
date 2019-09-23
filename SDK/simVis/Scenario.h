@@ -414,6 +414,9 @@ public:
   /** Called internally when the platform size changes, to notify the beam so it can adjust to actual/visual size */
   void notifyBeamsOfNewHostSize(const PlatformNode& platform) const;
 
+  /** Set whether to use the most precise elevation sampling method for platform clamping.  Using max precision may cause performance hits. */
+  void setUseMaxElevClampPrec(bool useMaxPrec);
+
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simVis"; }
 
