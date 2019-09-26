@@ -31,6 +31,8 @@
 
 namespace simCore {
 
+static const unsigned int SECPERYEAR = SECPERDAY * 365; // seconds in a standard non-leap year: 31536000
+static const int MAX_FIX = MAX_TIME_YEAR - MIN_TIME_YEAR + 1;
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
@@ -160,51 +162,85 @@ TimeStamp::TimeStamp(int refYear, Seconds secondsSinceRefYear)
 
 //------------------------------------------------------------------------
 
+int TimeStamp::fixRequired_() const
+{
+  const double secondsSinceRefYear = secondsSinceRefYear_.Double();
+  if (secondsSinceRefYear < 0.)
+    return 1;
+  const double secondsInRefYear = SECPERDAY * daysPerYear(referenceYear_);
+  return (secondsSinceRefYear < secondsInRefYear) ?  0 : 2;
+}
+
+//------------------------------------------------------------------------
+
 void TimeStamp::fix_()
 {
-  // Test for Infinite time
   if (referenceYear_ == INFINITE_TIME_YEAR)
   {
     secondsSinceRefYear_ = ZERO_SECONDS;
     return;
   }
-
-  double secondsPerYear = SECPERDAY * daysPerYear(referenceYear_);
-  const int MAX_FIX = MAX_TIME_YEAR - MIN_TIME_YEAR + 1;
-  int counter = 0;
-
-  while ((secondsSinceRefYear_ >= (Seconds)secondsPerYear) && (counter++ < MAX_FIX))
-  {
-    secondsSinceRefYear_ -= secondsPerYear;
-    secondsPerYear = SECPERDAY * daysPerYear(++referenceYear_);
-  }
-
-  while ((secondsSinceRefYear_ < ZERO_SECONDS) && (counter++ < MAX_FIX))
-  {
-    secondsPerYear = SECPERDAY * daysPerYear(--referenceYear_);
-    secondsSinceRefYear_ += secondsPerYear;
-  }
-
-  // Bad data made it in
-  if (counter >= MAX_FIX)
-  {
-    if (secondsSinceRefYear_ < ZERO_SECONDS)
-    {
-      *this = MIN_TIME_STAMP;
-    }
-    else
-    {
-      *this = MAX_TIME_STAMP;
-    }
-  }
-  else if (referenceYear_ < MIN_TIME_YEAR)
+  if (referenceYear_ < MIN_TIME_YEAR)
   {
     *this = MIN_TIME_STAMP;
+    return;
   }
-  else if (referenceYear_ > MAX_TIME_YEAR)
+  if (referenceYear_ > MAX_TIME_YEAR)
   {
     *this = MAX_TIME_STAMP;
+    return;
   }
+  if (secondsSinceRefYear_ == ZERO_SECONDS)
+    return;
+  if (0 == fixRequired_())
+    return;
+
+  // treat all intervening years as non-leap years
+  const double years = floor(secondsSinceRefYear_.Double() / SECPERYEAR);
+  if (fabs(years) > MAX_FIX)
+  {
+    if (years < 0)
+    {
+      *this = MIN_TIME_STAMP;
+      return;
+    }
+    *this = MAX_TIME_STAMP;
+    return;
+  }
+
+  const int64_t seconds = static_cast<int64_t>(years * SECPERYEAR);
+  secondsSinceRefYear_ -= Seconds(seconds, 0);
+  int newReferenceYear = referenceYear_ + static_cast<int>(years);
+  // now account for the leap days in those years
+  const int leapDays = simCore::leapDays(newReferenceYear - 1900) - simCore::leapDays(referenceYear_ - 1900);
+  secondsSinceRefYear_ -= (leapDays * SECPERDAY);
+
+  // leap days calculation may result in reference year needing to be corrected +/- 1
+  const int validFixResult = fixRequired_();
+  if (validFixResult == 1)
+  {
+    newReferenceYear--;
+    const double secondsInRefYear = SECPERDAY * daysPerYear(newReferenceYear);
+    secondsSinceRefYear_ += secondsInRefYear;
+  }
+  else if (validFixResult == 2)
+  {
+    const double secondsInRefYear = SECPERDAY * daysPerYear(newReferenceYear);
+    newReferenceYear++;
+    secondsSinceRefYear_ += secondsInRefYear;
+  }
+  if (newReferenceYear < MIN_TIME_YEAR)
+  {
+    *this = MIN_TIME_STAMP;
+    return;
+  }
+  if (newReferenceYear > MAX_TIME_YEAR)
+  {
+    *this = MAX_TIME_STAMP;
+    return;
+  }
+  referenceYear_ = newReferenceYear;
+  return;
 }
 
 //------------------------------------------------------------------------

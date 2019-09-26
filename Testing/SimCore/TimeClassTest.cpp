@@ -28,7 +28,7 @@
 
 namespace
 {
-  int testAdditonSeconds()
+  int testAdditionSeconds()
   {
     int rv = 0;
 
@@ -142,21 +142,21 @@ namespace
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         result += 1;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), 10.1));
     }
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         result += .1;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), 1.1));
     }
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         ++result;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), 10.1));
     }
@@ -240,21 +240,21 @@ namespace
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         result -= 1;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), -9.9));
     }
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         result -= .1;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), -0.9));
     }
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         --result;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), -9.9));
     }
@@ -375,7 +375,7 @@ namespace
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         result *= 1;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), .1));
     }
@@ -391,7 +391,7 @@ namespace
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         result *= .1;
       rv += SDK_ASSERT(!simCore::areEqual(result.Double(), 1e-10, 1e-10));
     }
@@ -483,7 +483,7 @@ namespace
 
     {
       simCore::Seconds result(0, .1);
-      for (size_t i=0; i<10; i++)
+      for (size_t i = 0; i < 10; i++)
         result /= 1;
       rv += SDK_ASSERT(simCore::areEqual(result.Double(), .1));
     }
@@ -592,19 +592,47 @@ namespace
 
     // Handle bogus values
     rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_STAMP.referenceYear(), std::numeric_limits<double>::max()) == simCore::MAX_TIME_STAMP);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_STAMP.referenceYear(), -0.1) == simCore::MIN_TIME_STAMP);
     rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_STAMP.referenceYear(), -std::numeric_limits<double>::max()) == simCore::MIN_TIME_STAMP);
+
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MAX_TIME_STAMP.referenceYear(), 365 * simCore::SECPERDAY) == simCore::MAX_TIME_STAMP);
     rv += SDK_ASSERT(simCore::TimeStamp(simCore::MAX_TIME_STAMP.referenceYear(), std::numeric_limits<double>::max()) == simCore::MAX_TIME_STAMP);
     rv += SDK_ASSERT(simCore::TimeStamp(simCore::MAX_TIME_STAMP.referenceYear(), -std::numeric_limits<double>::max()) == simCore::MIN_TIME_STAMP);
 
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_YEAR - 1, 0) == simCore::MIN_TIME_STAMP);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MAX_TIME_YEAR + 1, 0) == simCore::MAX_TIME_STAMP);
+
+    // test correct fix from min to max
+    const simCore::Seconds secs = simCore::MAX_TIME_STAMP.secondsSinceRefYear(simCore::MIN_TIME_YEAR);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_YEAR, secs) == simCore::MAX_TIME_STAMP);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_YEAR, (secs - simCore::Seconds(0.1))) != simCore::MAX_TIME_STAMP);
+
+    // test correct fix from max to min
+    const simCore::Seconds negSecs = secs * simCore::Seconds(-1, 0);
+    rv += SDK_ASSERT((simCore::MAX_TIME_STAMP + negSecs) == simCore::MIN_TIME_STAMP);
+    rv += SDK_ASSERT((simCore::MAX_TIME_STAMP + (negSecs + simCore::Seconds(0.1))) != simCore::MIN_TIME_STAMP);
+
+    // test a particular case for correct leap day behavior
+    const simCore::TimeStamp ts2001(2001, 3. * simCore::SECPERDAY);
+    const simCore::Seconds& secs2001_1972 = ts2001.secondsSinceRefYear(1972);
+    simCore::TimeStamp ts1972(1972, secs2001_1972);
+    rv += SDK_ASSERT(ts2001 == ts1972);
+    const simCore::Seconds& secs1972_2001 = ts1972.secondsSinceRefYear(2001);
+    rv += SDK_ASSERT(secs1972_2001.getSeconds() == (3. * simCore::SECPERDAY));
+
+    const simCore::Seconds& secs2001_1973 = ts2001.secondsSinceRefYear(1973);
+    simCore::TimeStamp ts1973(1973, secs2001_1973);
+    rv += SDK_ASSERT(ts2001 == ts1973);
+    const simCore::Seconds& secs1973_2001 = ts1973.secondsSinceRefYear(2001);
+    rv += SDK_ASSERT(secs1973_2001.getSeconds() == (3. * simCore::SECPERDAY));
     return rv;
   }
 }
-
 int TimeClassTest(int argc, char* argv[])
 {
   int rv = 0;
 
-  rv += testAdditonSeconds();
+  rv += testAdditionSeconds();
   rv += testSubtractionSeconds();
   rv += testMultiplicationSeconds();
   rv += testDivisionSeconds();

@@ -216,6 +216,13 @@ namespace simCore
   SDKCORE_EXPORT bool isLeapYear(int year);
 
   /**
+  * Returns the number of leap days from 1900 up to (but not including) the year specified by yearsSince1900.
+  * @param[in ] yearsSince1900 An integer specifying the year, as a number of years since 1900.
+  * @return value indicating number of leap days since 1900 up to the year specified by yearsSince1900.
+  */
+  SDKCORE_EXPORT unsigned int leapDays(int yearsSince1900);
+
+  /**
   * Returns the number of days in the Gregorian year that corresponds to the given years since 1900.
   *   yearsSince1900 >= 0, i.e. 1999 would be represented as 99
   * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900.

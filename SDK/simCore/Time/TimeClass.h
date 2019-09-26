@@ -391,6 +391,12 @@ namespace simCore
     int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1970 */
     Seconds secondsSinceRefYear_;  /**< Number of seconds relative to reference year */
 
+    /// Indicates whether secondsSinceRefYear_ requires fix_() processing
+    /**
+    * @return 0 if no fix()'ing required; 1 if negative, 2 if too large
+    */
+    int fixRequired_() const;
+
     /// Verifies the precision and sign of stored time values
     void fix_();
 

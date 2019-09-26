@@ -397,6 +397,24 @@ int simCore::getLeapDay(int yearsSince1900)
 
 //------------------------------------------------------------------------
 
+unsigned int simCore::leapDays(int yearsSince1900)
+{
+  if (yearsSince1900 < 0)
+  {
+    assert(0);
+    return 0;
+  }
+  // -1 means that a leap year (e.g., 1904) does not generate a count, whereas leap year+1 (.e.g. 1905) does.
+  const unsigned int normalLeapDays = (yearsSince1900 - 1) / 4;
+  // -1 means that 100-year (e.g., 2000) does not generate a count, whereas 100-year+1 (.e.g. 2001) does.
+  const unsigned int nonLeapDays100 = (yearsSince1900 - 1) / 100;
+  // +299 means that 400-year (e.g., 2000) does not generate a count, whereas 400-year+1 (.e.g. 2001) does.
+  const unsigned int leapDays400 = (yearsSince1900 + 299) / 400;
+  return normalLeapDays + leapDays400 - nonLeapDays100;
+}
+
+//------------------------------------------------------------------------
+
 int simCore::daysPerYear(int yearsSince1900)
 {
   if (yearsSince1900 < 0)
@@ -425,7 +443,7 @@ bool simCore::isLeapYear(int year)
   if (year < 0)
     throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::isLeapYear, The given year is not valid.");
 
-  int gregorianYear((year > 1900) ? year : year+1900);
+  const int gregorianYear((year > 1900) ? year : year+1900);
   // A year is a leap year if it is divisible by 4, but not by 100
   // except that years divisible by 400 are leap years.
   return ((gregorianYear % 4 == 0 && gregorianYear % 100 != 0) || gregorianYear % 400 == 0) ? true : false;
@@ -437,10 +455,10 @@ bool simCore::isLeapYear(int year)
 std::string simCore::getTimeComponents(double time, unsigned int *day, unsigned int *hour, unsigned int *min, unsigned int *sec, unsigned int *tenthSec, bool ordinal)
 {
   unsigned int d = static_cast<unsigned int>(time/86400.0);
-  unsigned int h = static_cast<unsigned int>((time-d*86400)/3600);
-  unsigned int m = static_cast<unsigned int>((time-d*86400-h*3600)/60);
-  unsigned int s = static_cast<unsigned int>((time-d*86400-h*3600-m*60));
-  unsigned int t = static_cast<unsigned int>((time-d*86400-h*3600-m*60-s)*10);
+  const unsigned int h = static_cast<unsigned int>((time-d*86400)/3600);
+  const unsigned int m = static_cast<unsigned int>((time-d*86400-h*3600)/60);
+  const unsigned int s = static_cast<unsigned int>((time-d*86400-h*3600-m*60));
+  const unsigned int t = static_cast<unsigned int>((time-d*86400-h*3600-m*60-s)*10);
   if (ordinal)
     ++d;
 

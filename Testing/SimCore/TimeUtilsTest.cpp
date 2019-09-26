@@ -243,6 +243,18 @@ int timeStepTest()
   return rv;
 }
 
+int leapDaysTest()
+{
+  int rv = 0;
+  rv += SDK_ASSERT(simCore::leapDays(0) == 0);
+  rv += SDK_ASSERT(simCore::leapDays(72) == 17);
+  rv += SDK_ASSERT(simCore::leapDays(73) == 18);
+  rv += SDK_ASSERT(simCore::leapDays(99) == 24);
+  rv += SDK_ASSERT(simCore::leapDays(100) == 24);
+  rv += SDK_ASSERT(simCore::leapDays(101) == 25);
+  rv += SDK_ASSERT(simCore::leapDays(119) == 29);
+  return rv;
+}
 }
 
 int TimeUtilsTest(int argc, char *argv[])
@@ -252,6 +264,7 @@ int TimeUtilsTest(int argc, char *argv[])
   rv += SDK_ASSERT(timeStructDifferenceTest() == 0);
   rv += SDK_ASSERT(testIsValidDMY() == 0);
   rv += SDK_ASSERT(timeStepTest() == 0);
+  rv += SDK_ASSERT(leapDaysTest() == 0);
 
   return rv;
 }
