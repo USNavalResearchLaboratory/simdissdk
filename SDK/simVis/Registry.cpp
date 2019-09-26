@@ -135,17 +135,13 @@ public:
   virtual std::string findDataFile(const std::string& filename, const osgDB::Options* options, osgDB::CaseSensitivity caseSensitivity)
   {
     std::string rv;
-
-    rv = registry_.findFile_(filename, simCore::FileSearch::OTHER);
-
+    // Search the original one (presumably faster) first
+    if (searchFirst_.valid())
+      rv = searchFirst_->findDataFile(filename, options, caseSensitivity);
+    else
+      rv = osgDB::Registry::instance()->findDataFileImplementation(filename, options, caseSensitivity);
     if (rv.empty())
-    {
-      if (searchFirst_.valid())
-        rv = searchFirst_->findDataFile(filename, options, caseSensitivity);
-      else
-        rv = osgDB::Registry::instance()->findDataFileImplementation(filename, options, caseSensitivity);
-    }
-
+      rv = registry_.findFile_(filename, simCore::FileSearch::OTHER);
     return rv;
   }
 
