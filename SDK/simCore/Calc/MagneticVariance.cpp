@@ -693,7 +693,7 @@ int WorldMagneticModel::calculateMagneticVariance(const simCore::Vec3& lla, int 
 
 int WorldMagneticModel::calculateMagneticVariance(const simCore::Vec3& lla, const simCore::TimeStamp& timeStamp, double& varianceRad)
 {
-  return calculateMagneticVariance(lla, static_cast<int>(timeStamp.secondsSinceRefYear().Double() / 86400.0), timeStamp.referenceYear(), varianceRad);
+  return calculateMagneticVariance(lla, static_cast<int>(timeStamp.secondsSinceRefYear().Double() / SECPERDAY), timeStamp.referenceYear(), varianceRad);
 }
 
 int WorldMagneticModel::calculateMagneticBearing(const simCore::Vec3& lla, const simCore::TimeStamp& timeStamp, double& bearingRad)

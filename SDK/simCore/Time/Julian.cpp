@@ -50,7 +50,7 @@ int simCore::julianDay()
 
 int simCore::julianDay(double secsSinceRefYear, unsigned int refYear)
 {
-  struct tm timeval = simCore::getTimeStruct(secsSinceRefYear, refYear - 1900);
+  const struct tm& timeval = simCore::getTimeStruct(secsSinceRefYear, refYear - 1900);
   // tm struct year days range from 0 to 365, Julian days are 1 to 366
   // hence, need to add an extra day for Julian
   return static_cast<int>(timeval.tm_yday + 1);
@@ -140,31 +140,31 @@ void simCore::calendarDateFromJulianDate(double jd, int &year, unsigned int &mon
 
   // Compute time of day from fractional part; add one-half day since
   // Julian day and calendar day start 12 hours apart.
-  double dummy = (fmod(((fracjd * 24.0) + 12.0), 24.0));
+  double dummy = (fmod(((fracjd * HOURPERDAY) + 12.0), HOURPERDAY));
   hour = static_cast<unsigned int>(dummy);
 
-  dummy = (dummy - static_cast<double>(hour)) * 60.0;
+  dummy = (dummy - static_cast<double>(hour)) * MINPERHOUR;
   minute = static_cast<unsigned int>(dummy);
 
-  second = (dummy - static_cast<double>(minute)) * 60.0;
+  second = (dummy - static_cast<double>(minute)) * SECPERMIN;
 
   // Rectify output values; adjust calendar date taking into account
   // rounding the seconds.
   unsigned int test = static_cast<unsigned int>(floor(second + 0.5));
 
-  if (test >= 60)
+  if (test >= SECPERMIN)
   {
     second = 0;
     minute += 1;
   }
 
-  if (minute >= 60)
+  if (minute >= MINPERHOUR)
   {
     minute = 0;
     hour  += 1;
   }
 
-  if (hour >= 24)
+  if (hour >= HOURPERDAY)
   {
     hour  = 0;
     jd12h += 1;

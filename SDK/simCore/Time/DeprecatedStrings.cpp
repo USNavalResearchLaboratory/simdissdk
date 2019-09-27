@@ -64,7 +64,7 @@ int DDD_HHMMSS_YYYY_Formatter::fromString(const std::string& timeString, simCore
     timeStamp = simCore::TimeStamp(1970, 0);
     return 1;
   }
-  timeStamp = simCore::TimeStamp(year, (days - 1) * 86400 + seconds);
+  timeStamp = simCore::TimeStamp(year, (days - 1) * SECPERDAY + seconds);
   return 0;
 }
 
@@ -119,7 +119,7 @@ int DDD_HHMMSS_Formatter::fromString(const std::string& timeString, simCore::Tim
     timeStamp = simCore::TimeStamp(1970, 0);
     return 1;
   }
-  timeStamp = simCore::TimeStamp(referenceYear, (days - 1) * 86400 + seconds);
+  timeStamp = simCore::TimeStamp(referenceYear, (days - 1) * SECPERDAY + seconds);
   return 0;
 }
 
@@ -178,7 +178,7 @@ int MON_MD_HHMMSS_YYYY_Formatter::fromString(const std::string& timeString, simC
   {
     try
     {
-      timeStamp.setTime(year, 86400 * simCore::getYearDay(month, monthDay, year - 1900) + seconds);
+      timeStamp.setTime(year, SECPERDAY * simCore::getYearDay(month, monthDay, year) + seconds);
       return 0;
     }
     catch (const simCore::TimeException& te)
@@ -205,7 +205,7 @@ int MON_MD_HHMMSS_YYYY_Formatter::getComponents_(const std::string& timeString, 
   month = MonthDayTimeFormatter::monthStringToInt(vec[0]);
   try
   {
-    if (month != -1 && monthDay >= 1 && monthDay <= simCore::daysPerMonth(year - 1900, month))
+    if (month != -1 && monthDay >= 1 && monthDay <= simCore::daysPerMonth(year, month))
     {
       return HoursTimeFormatter::fromString(vec[2], seconds);
     }
@@ -258,7 +258,7 @@ int MD_MON_YYYY_HHMMSS_Formatter::fromString(const std::string& timeString, simC
   {
     try
     {
-      timeStamp.setTime(year, 86400 * simCore::getYearDay(month, monthDay, year - 1900) + seconds);
+      timeStamp.setTime(year, SECPERDAY * simCore::getYearDay(month, monthDay, year) + seconds);
       return 0;
     }
     catch (const simCore::TimeException& te)
@@ -285,7 +285,7 @@ int MD_MON_YYYY_HHMMSS_Formatter::getComponents_(const std::string& timeString, 
   month = MonthDayTimeFormatter::monthStringToInt(vec[1]);
   try
   {
-    if (month != -1 && monthDay >= 1 && monthDay <= simCore::daysPerMonth(year - 1900, month))
+    if (month != -1 && monthDay >= 1 && monthDay <= simCore::daysPerMonth(year, month))
     {
       return HoursTimeFormatter::fromString(vec[3], seconds);
     }
@@ -326,7 +326,7 @@ int WKD_MON_MD_HHMMSS_YYYY_Formatter::fromString(const std::string& timeString, 
   {
     try
     {
-      timeStamp.setTime(year, 86400 * simCore::getYearDay(month, monthDay, year - 1900) + seconds);
+      timeStamp.setTime(year, SECPERDAY * simCore::getYearDay(month, monthDay, year) + seconds);
       return 0;
     }
     catch (const simCore::TimeException& te)
@@ -394,7 +394,7 @@ int WKD_MON_MD_HHMMSS_YYYY_Formatter::getComponents_(const std::string& timeStri
   {
     // Ignore the weekday except to make sure it's a valid one
     if (month != -1 && weekDay != -1 && monthDay >= 1 &&
-      monthDay <= simCore::daysPerMonth(year - 1900, month))
+      monthDay <= simCore::daysPerMonth(year, month))
     {
       return HoursTimeFormatter::fromString(vec[3], seconds);
     }
@@ -471,7 +471,7 @@ int WKD_MON_MD_HHMMSS_Formatter::fromString(const std::string& timeString, simCo
   {
     try
     {
-      timeStamp.setTime(referenceYear, 86400 * simCore::getYearDay(month, monthDay, referenceYear - 1900) + seconds);
+      timeStamp.setTime(referenceYear, SECPERDAY * simCore::getYearDay(month, monthDay, referenceYear) + seconds);
       return 0;
     }
     catch (const simCore::TimeException& te)
@@ -500,7 +500,7 @@ int WKD_MON_MD_HHMMSS_Formatter::getComponents_(const std::string& timeString, i
   {
     // Ignore the weekday except to make sure it's a valid one
     if (month != -1 && weekDay != -1 && monthDay >= 1 &&
-      monthDay <= simCore::daysPerMonth(referenceYear - 1900, month))
+      monthDay <= simCore::daysPerMonth(referenceYear, month))
     {
       return HoursTimeFormatter::fromString(vec[3], seconds);
     }

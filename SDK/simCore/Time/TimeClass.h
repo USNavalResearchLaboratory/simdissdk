@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "simCore/Common/Common.h"
+#include "simCore/Time/Constants.h"
 
 namespace simCore
 {
@@ -421,7 +422,7 @@ namespace simCore
   /** Sentinel value for maximum year supported by simCore::TimeStamp */
   static const int MAX_TIME_YEAR = 2200;
   /** Sentinel value for simCore::TimeStamp that represents the maximum valid time value while maintaining microsecond resolution. */
-  static const TimeStamp MAX_TIME_STAMP(MAX_TIME_YEAR, Seconds(365 * 24 * 60 * 60 - 1, 999999));
+  static const TimeStamp MAX_TIME_STAMP(MAX_TIME_YEAR, Seconds(365 * SECPERDAY - 1, 999999));
   /** Static value representing zero seconds, shared for performance reasons. */
   static const Seconds ZERO_SECONDS;
 
