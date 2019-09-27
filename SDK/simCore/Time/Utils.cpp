@@ -239,51 +239,61 @@ tm simCore::getTimeStruct(double secSinceBgnEpochTime, unsigned int yearsSince19
   if (refYear >= MIN_TIME_YEAR && refYear <= MAX_TIME_YEAR)
   {
     const simCore::TimeStamp timeStamp(refYear, secSinceBgnEpochTime);
-    returnTime.tm_year = timeStamp.referenceYear() - 1900;
-    int64_t seconds = timeStamp.secondsSinceRefYear().getSeconds();
-
-    // calculate the day of the year (returnTime.tm_yday)
-    returnTime.tm_yday = static_cast<int>(floor(seconds / simCore::SECPERDAY));
-    seconds -= (returnTime.tm_yday * simCore::SECPERDAY);
-
-    // calculate the hour of the day (returnTime.tm_hour)
-    returnTime.tm_hour = static_cast<int>(floor(seconds / simCore::SECPERHOUR));
-    seconds -= (returnTime.tm_hour * simCore::SECPERHOUR);
-
-    // calculate the minute of the hour (returnTime.tm_min)
-    returnTime.tm_min = static_cast<int>(floor(seconds / simCore::SECPERMIN));
-    seconds -= (returnTime.tm_min * simCore::SECPERMIN);
-    returnTime.tm_sec = static_cast<int>(seconds);
-  }
-  else
-  {
-    returnTime.tm_year = yearsSince1900;
-    double tmSec = floor(secSinceBgnEpochTime);
-
-    // figure out what the year is and update both
-    // returnTime.tm_sec and returnTime.tm_year accordingly
-    int daysPerCurrentYear = simCore::daysPerYear(yearsSince1900);
-    double secondsPerYear = daysPerCurrentYear * simCore::SECPERDAY;
-    while (tmSec >= secondsPerYear)
+    // if normalized timeStamp is MIN_TIME_STAMP or MAX_TIME_STAMP, 
+    //  possible that we are outside TimeStamp capability. fall back to old impl.
+    if (timeStamp != MIN_TIME_STAMP && timeStamp != MAX_TIME_STAMP)
     {
-      tmSec -= secondsPerYear;
-      daysPerCurrentYear = simCore::daysPerYear(++(returnTime.tm_year));
-      secondsPerYear = daysPerCurrentYear * simCore::SECPERDAY;
+      returnTime.tm_year = timeStamp.referenceYear() - 1900;
+      int64_t seconds = timeStamp.secondsSinceRefYear().getSeconds();
+
+      // calculate the day of the year (returnTime.tm_yday)
+      returnTime.tm_yday = static_cast<int>(floor(seconds / simCore::SECPERDAY));
+      seconds -= (returnTime.tm_yday * simCore::SECPERDAY);
+
+      // calculate the hour of the day (returnTime.tm_hour)
+      returnTime.tm_hour = static_cast<int>(floor(seconds / simCore::SECPERHOUR));
+      seconds -= (returnTime.tm_hour * simCore::SECPERHOUR);
+
+      // calculate the minute of the hour (returnTime.tm_min)
+      returnTime.tm_min = static_cast<int>(floor(seconds / simCore::SECPERMIN));
+      seconds -= (returnTime.tm_min * simCore::SECPERMIN);
+      returnTime.tm_sec = static_cast<int>(seconds);
+
+      // calculate the month (returnTime.tm_mon) of the year and the day of the month (returnTime.tm_mday)
+      simCore::getMonthAndDayOfMonth(returnTime.tm_mon, returnTime.tm_mday, returnTime.tm_year, returnTime.tm_yday);
+
+      // calculate the weekday (returnTime.tm_wday)
+      returnTime.tm_wday = simCore::getWeekDay(returnTime.tm_year, returnTime.tm_yday);
+
+      return returnTime;
     }
-
-    // calculate the day of the year (returnTime.tm_yday) and update returnTime.tm_sec accordingly
-    returnTime.tm_yday = static_cast<int>(floor(tmSec / simCore::SECPERDAY));
-    tmSec -= static_cast<double>(returnTime.tm_yday)*simCore::SECPERDAY;
-
-    // calculate the hour of the day (returnTime.tm_hour) and update returnTime.tm_sec accordingly
-    returnTime.tm_hour = static_cast<int>(floor(tmSec / simCore::SECPERHOUR));
-    tmSec -= static_cast<double>(returnTime.tm_hour)*simCore::SECPERHOUR;
-
-    // calculate the minute of the hour (returnTime.tm_min) and update returnTime.tm_sec accordingly
-    returnTime.tm_min = static_cast<int>(floor(tmSec / simCore::SECPERMIN));
-    tmSec -= static_cast<double>(returnTime.tm_min)*simCore::SECPERMIN;
-    returnTime.tm_sec = static_cast<int>(tmSec);
   }
+  
+  returnTime.tm_year = yearsSince1900;
+  double tmSec = floor(secSinceBgnEpochTime);
+
+  // calculate the year and update both tm_sec and returnTime.tm_year accordingly
+  int daysPerCurrentYear = simCore::daysPerYear(yearsSince1900);
+  double secondsPerYear = daysPerCurrentYear * simCore::SECPERDAY;
+  while (tmSec >= secondsPerYear)
+  {
+    tmSec -= secondsPerYear;
+    daysPerCurrentYear = simCore::daysPerYear(++(returnTime.tm_year));
+    secondsPerYear = daysPerCurrentYear * simCore::SECPERDAY;
+  }
+
+  // calculate the day of the year (returnTime.tm_yday) and update returnTime.tm_sec accordingly
+  returnTime.tm_yday = static_cast<int>(floor(tmSec / simCore::SECPERDAY));
+  tmSec -= static_cast<double>(returnTime.tm_yday)*simCore::SECPERDAY;
+
+  // calculate the hour of the day (returnTime.tm_hour) and update returnTime.tm_sec accordingly
+  returnTime.tm_hour = static_cast<int>(floor(tmSec / simCore::SECPERHOUR));
+  tmSec -= static_cast<double>(returnTime.tm_hour)*simCore::SECPERHOUR;
+
+  // calculate the minute of the hour (returnTime.tm_min) and update returnTime.tm_sec accordingly
+  returnTime.tm_min = static_cast<int>(floor(tmSec / simCore::SECPERMIN));
+  tmSec -= static_cast<double>(returnTime.tm_min)*simCore::SECPERMIN;
+  returnTime.tm_sec = static_cast<int>(tmSec);
 
   // calculate the month (returnTime.tm_mon) of the year and the day of the month (returnTime.tm_mday)
   simCore::getMonthAndDayOfMonth(returnTime.tm_mon, returnTime.tm_mday, returnTime.tm_year, returnTime.tm_yday);
