@@ -389,12 +389,24 @@ int simCore::getWeekDay(int yearsSince1900, int yearDay)
   int currDay = 0;
 
   // set weekday based on closest leap year
-  currDay = simCore::getLeapDay(yearsSince1900);
+  if (yearsSince1900 >= 4)
+    currDay = simCore::getLeapDay(yearsSince1900);
+  else
+  {
+    // leap days started 1904. for [1900,1904), this ensures correct result
+    currDay = 0;
+  }
 
   // determine difference between current year and previous
   // leap year, the difference will match the exact weekday
   // for the current year of interest
-  if (simCore::isLeapYear(yearsSince1900) == false)
+  if (yearsSince1900 >= 200)
+  {
+    // 2100 is not a leap year, so the pattern is different
+    if (yearsSince1900 >= 201 && !simCore::isLeapYear(yearsSince1900))
+      leaps = (yearsSince1900 % 4);
+  }
+  else if (!simCore::isLeapYear(yearsSince1900))
   {
     // increment extra day due to previous leap year
     leaps = 1 + (yearsSince1900 % 4);
@@ -411,18 +423,16 @@ int simCore::getWeekDay(int yearsSince1900, int yearDay)
 
 int simCore::getLeapDay(int yearsSince1900)
 {
-  if (yearsSince1900 < 0)
+  if (yearsSince1900 < 4)
     throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::getLeapDay, The given year is not valid.");
 
   // The first day of the first leap year was a Friday (01.01.1904)
   // each successive leap year's first day is 5 days beyond that of
-  // previous leap year.
+  // previous leap year, until 2104 (b/c 2100 is not a leap year).
   const int leap = yearsSince1900 / 4;
 
-  // this pattern fails on the non-leap year 2100.
-
-  // every 7 leap years, the cycle repeats itself
-  return (leap * 5) % 7;
+  // every 7 leap years, the cycle repeats itself, until 2104, when it restarts with a -1 offset
+  return (yearsSince1900 < 204) ? (leap * 5) % 7 : ((leap * 5) % 7) - 1;
 }
 
 //------------------------------------------------------------------------
