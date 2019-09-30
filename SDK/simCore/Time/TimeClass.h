@@ -275,7 +275,7 @@ namespace simCore
     * @param[in ] refYear Initial reference year,  must be >= 1970
     * @param[in ] secs Initial seconds since beginning of reference year
     */
-    TimeStamp(int refYear, Seconds secs);
+    TimeStamp(int refYear, const Seconds& secs);
 
     /// Returns the reference year
     /** @return The saved reference year of this time stamp  */
@@ -299,7 +299,7 @@ namespace simCore
     * @param[in ] refYear Initial reference year,  must be >= 1970
     * @param[in ] secs Initial seconds since beginning of reference year
     */
-    void setTime(int refYear, Seconds secs);
+    void setTime(int refYear, const Seconds& secs);
 
     /// Assignment
     /** @param[in ] time TimeStamp class to be assigned  */

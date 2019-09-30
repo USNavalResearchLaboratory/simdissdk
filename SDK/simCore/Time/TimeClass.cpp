@@ -155,7 +155,7 @@ TimeStamp::TimeStamp()
 
 //------------------------------------------------------------------------
 
-TimeStamp::TimeStamp(int refYear, Seconds secondsSinceRefYear)
+TimeStamp::TimeStamp(int refYear, const Seconds& secondsSinceRefYear)
 {
   setTime(refYear, secondsSinceRefYear);
 }
@@ -253,7 +253,7 @@ Seconds TimeStamp::secondsSinceRefYear(int refYear) const
 
 //------------------------------------------------------------------------
 
-void TimeStamp::setTime(int refYear, Seconds secondsSinceRefYear)
+void TimeStamp::setTime(int refYear, const Seconds& secondsSinceRefYear)
 {
   // In an attempt to catch parameter reversal problems, we are also checking the
   // actual year of the date.  It should generally be between 1900 and INFINITE_TIME_YEAR.  This is
