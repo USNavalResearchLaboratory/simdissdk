@@ -233,42 +233,18 @@ tm simCore::getTimeStruct(double secSinceBgnEpochTime, unsigned int yearsSince19
   if (secSinceBgnEpochTime > (1000.0 * 365.0 * simCore::SECPERDAY))
     throw simCore::TimeException(simCore::SECONDS_SINCE_EPOCHTIME_NOT_VALID, "simCore::getTimeStruct, The seconds since epoch time is > 1000 years.");
 
-  tm returnTime = { 0 };
-
   const int refYear = 1900 + yearsSince1900;
   if (refYear >= MIN_TIME_YEAR && refYear <= MAX_TIME_YEAR)
   {
     const simCore::TimeStamp timeStamp(refYear, secSinceBgnEpochTime);
-    // if normalized timeStamp is MIN_TIME_STAMP or MAX_TIME_STAMP, 
+    // if normalized timeStamp is MIN_TIME_STAMP or MAX_TIME_STAMP,
     //  possible that we are outside TimeStamp capability. fall back to old impl.
     if (timeStamp != MIN_TIME_STAMP && timeStamp != MAX_TIME_STAMP)
     {
-      returnTime.tm_year = timeStamp.referenceYear() - 1900;
-      int64_t seconds = timeStamp.secondsSinceRefYear().getSeconds();
-
-      // calculate the day of the year (returnTime.tm_yday)
-      returnTime.tm_yday = static_cast<int>(floor(seconds / simCore::SECPERDAY));
-      seconds -= (returnTime.tm_yday * simCore::SECPERDAY);
-
-      // calculate the hour of the day (returnTime.tm_hour)
-      returnTime.tm_hour = static_cast<int>(floor(seconds / simCore::SECPERHOUR));
-      seconds -= (returnTime.tm_hour * simCore::SECPERHOUR);
-
-      // calculate the minute of the hour (returnTime.tm_min)
-      returnTime.tm_min = static_cast<int>(floor(seconds / simCore::SECPERMIN));
-      seconds -= (returnTime.tm_min * simCore::SECPERMIN);
-      returnTime.tm_sec = static_cast<int>(seconds);
-
-      // calculate the month (returnTime.tm_mon) of the year and the day of the month (returnTime.tm_mday)
-      simCore::getMonthAndDayOfMonth(returnTime.tm_mon, returnTime.tm_mday, returnTime.tm_year, returnTime.tm_yday);
-
-      // calculate the weekday (returnTime.tm_wday)
-      returnTime.tm_wday = simCore::getWeekDay(returnTime.tm_year, returnTime.tm_yday);
-
-      return returnTime;
+      return getTimeStruct(timeStamp);
     }
   }
-  
+  tm returnTime = { 0 };
   returnTime.tm_year = yearsSince1900;
   double tmSec = floor(secSinceBgnEpochTime);
 
@@ -294,6 +270,37 @@ tm simCore::getTimeStruct(double secSinceBgnEpochTime, unsigned int yearsSince19
   returnTime.tm_min = static_cast<int>(floor(tmSec / simCore::SECPERMIN));
   tmSec -= static_cast<double>(returnTime.tm_min)*simCore::SECPERMIN;
   returnTime.tm_sec = static_cast<int>(tmSec);
+
+  // calculate the month (returnTime.tm_mon) of the year and the day of the month (returnTime.tm_mday)
+  simCore::getMonthAndDayOfMonth(returnTime.tm_mon, returnTime.tm_mday, returnTime.tm_year, returnTime.tm_yday);
+
+  // calculate the weekday (returnTime.tm_wday)
+  returnTime.tm_wday = simCore::getWeekDay(returnTime.tm_year, returnTime.tm_yday);
+
+  return returnTime;
+}
+
+//------------------------------------------------------------------------
+
+tm simCore::getTimeStruct(const TimeStamp& timeStamp)
+{
+  tm returnTime = { 0 };
+
+  returnTime.tm_year = timeStamp.referenceYear() - 1900;
+  int64_t seconds = timeStamp.secondsSinceRefYear().getSeconds();
+
+  // calculate the day of the year (returnTime.tm_yday)
+  returnTime.tm_yday = static_cast<int>(floor(seconds / simCore::SECPERDAY));
+  seconds -= (returnTime.tm_yday * simCore::SECPERDAY);
+
+  // calculate the hour of the day (returnTime.tm_hour)
+  returnTime.tm_hour = static_cast<int>(floor(seconds / simCore::SECPERHOUR));
+  seconds -= (returnTime.tm_hour * simCore::SECPERHOUR);
+
+  // calculate the minute of the hour (returnTime.tm_min)
+  returnTime.tm_min = static_cast<int>(floor(seconds / simCore::SECPERMIN));
+  seconds -= (returnTime.tm_min * simCore::SECPERMIN);
+  returnTime.tm_sec = static_cast<int>(seconds);
 
   // calculate the month (returnTime.tm_mon) of the year and the day of the month (returnTime.tm_mday)
   simCore::getMonthAndDayOfMonth(returnTime.tm_mon, returnTime.tm_mday, returnTime.tm_year, returnTime.tm_yday);

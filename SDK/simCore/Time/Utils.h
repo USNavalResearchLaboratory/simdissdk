@@ -29,6 +29,8 @@
 
 namespace simCore
 {
+  class TimeStamp;
+
   //------------------------------------------------------------------------
   //
   // <time.h> struct tm definition
@@ -148,6 +150,15 @@ namespace simCore
   * @throw TimeException
   */
   SDKCORE_EXPORT tm getTimeStruct(double secSinceBgnOfEpochTime, unsigned int yearsSince1900);
+
+  /**
+  * Returns a tm time struct that corresponds to the input timeStamp.
+  * Note: the struct tm uses an int for storing the seconds value, so the tm struct that is returned
+  * by this function is less accurate a time than the input seconds since epoch time.
+  * @param[in ] timeStamp A timestamp containing reference year and seconds since that reference year.
+  * @return A tm time struct referenced to the input timeStamp.
+  */
+  SDKCORE_EXPORT tm getTimeStruct(const simCore::TimeStamp& timeStamp);
 
   /**
   * Returns the difference in seconds between two tm time structs

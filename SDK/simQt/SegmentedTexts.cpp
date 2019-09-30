@@ -965,7 +965,7 @@ namespace simQt {
     if (zone_ == simCore::TIMEZONE_LOCAL)
     {
       // Define a UTC datetime with the timestamp
-      tm timeComponents = simCore::getTimeStruct(stamp.secondsSinceRefYear(), stamp.referenceYear() - 1900);
+      const tm& timeComponents = simCore::getTimeStruct(stamp);
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
@@ -983,7 +983,7 @@ namespace simQt {
     if (zone_ == simCore::TIMEZONE_LOCAL)
     {
       // Define a UTC datetime with the timestamp
-      tm timeComponents = simCore::getTimeStruct(value.secondsSinceRefYear(), value.referenceYear() - 1900);
+      const tm& timeComponents = simCore::getTimeStruct(value);
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
@@ -1166,7 +1166,7 @@ namespace simQt {
     if (zone_ == simCore::TIMEZONE_LOCAL)
     {
       // Define a UTC datetime with the timestamp
-      tm timeComponents = simCore::getTimeStruct(stamp.secondsSinceRefYear(), stamp.referenceYear() - 1900);
+      const tm& timeComponents = simCore::getTimeStruct(stamp);
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
@@ -1184,7 +1184,7 @@ namespace simQt {
     if (zone_ == simCore::TIMEZONE_LOCAL)
     {
       // Define a UTC datetime with the timestamp
-      tm timeComponents = simCore::getTimeStruct(value.secondsSinceRefYear(), value.referenceYear() - 1900);
+      const tm& timeComponents = simCore::getTimeStruct(value);
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
