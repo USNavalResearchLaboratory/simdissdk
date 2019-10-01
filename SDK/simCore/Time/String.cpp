@@ -52,7 +52,7 @@ bool NullTimeFormatter::canConvert(const std::string& timeString) const
 
 int NullTimeFormatter::fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const
 {
-  timeStamp = simCore::TimeStamp(1970, 0);
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -79,7 +79,7 @@ int SecondsTimeFormatter::fromString(const std::string& timeString, simCore::Tim
     timeStamp = simCore::TimeStamp(referenceYear, tmpVal);
     return 0;
   }
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -131,7 +131,7 @@ int MinutesTimeFormatter::fromString(const std::string& timeString, simCore::Tim
       return 0;
     }
   }
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -207,7 +207,7 @@ int HoursTimeFormatter::fromString(const std::string& timeString, simCore::TimeS
     timeStamp = simCore::TimeStamp(referenceYear, seconds);
     return 0;
   }
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -335,7 +335,7 @@ int OrdinalTimeFormatter::fromString(const std::string& timeString, simCore::Tim
   }
 
   // Falling down to failure
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -502,7 +502,7 @@ int MonthDayTimeFormatter::fromString(const std::string& timeString, simCore::Ti
   }
 
   // Falling down to failure
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 

@@ -70,8 +70,8 @@ public:
       assert(clock != NULL);
       if (clock != NULL)
       {
-        const simCore::TimeStamp now = clock->currentTime();
-        const simCore::Seconds delta = now - ephemeris->lastUpdateTime_;
+        const simCore::TimeStamp& now = clock->currentTime();
+        const simCore::Seconds& delta = now - ephemeris->lastUpdateTime_;
         if (fabs(delta.Double()) > maxDelta_)
           ephemeris->rebuild_(ephemeris->lastPrefs_);
       }
@@ -150,7 +150,7 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
   }
 
   // Pull out the DateTime that we can then send to the Ephemeris calculations
-  const simCore::TimeStamp timeStamp = clock->currentTime();
+  const simCore::TimeStamp& timeStamp = clock->currentTime();
   lastUpdateTime_ = timeStamp;
   const osgEarth::DateTime dateTime(timeStamp.secondsSinceRefYear(1970));
 

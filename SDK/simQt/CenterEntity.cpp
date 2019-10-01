@@ -248,7 +248,7 @@ void BindCenterEntityToEntityTreeComposite::updateCenterEnable_()
   {
     message = "Time ";
     int referenceYear = dataStore_.referenceYear();
-    simCore::TimeStamp time(referenceYear, newTime_);
+    const simCore::TimeStamp time(referenceYear, newTime_);
     message += QString::fromStdString(timeFormatter_->toString(timeFormat_, time, referenceYear, precision_));
   }
   tree_.setUseCenterAction(true, message);

@@ -61,7 +61,7 @@ int DDD_HHMMSS_YYYY_Formatter::fromString(const std::string& timeString, simCore
   int year;
   if (getComponents_(timeString, days, seconds, year) != 0)
   {
-    timeStamp = simCore::TimeStamp(1970, 0);
+    timeStamp = simCore::MIN_TIME_STAMP;
     return 1;
   }
   timeStamp = simCore::TimeStamp(year, (days - 1) * SECPERDAY + seconds);
@@ -116,7 +116,7 @@ int DDD_HHMMSS_Formatter::fromString(const std::string& timeString, simCore::Tim
   simCore::Seconds seconds;
   if (getComponents_(timeString, days, seconds, referenceYear) != 0)
   {
-    timeStamp = simCore::TimeStamp(1970, 0);
+    timeStamp = simCore::MIN_TIME_STAMP;
     return 1;
   }
   timeStamp = simCore::TimeStamp(referenceYear, (days - 1) * SECPERDAY + seconds);

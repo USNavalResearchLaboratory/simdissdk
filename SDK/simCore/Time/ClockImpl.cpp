@@ -272,7 +272,7 @@ void ClockImpl::setTime_(const simCore::TimeStamp& timeVal, bool isJump)
 
 void ClockImpl::setTimeNoThresholdCheck_(const simCore::TimeStamp& timeVal, bool isJump)
 {
-  simCore::TimeStamp newTime = clamp_(timeVal);
+  const simCore::TimeStamp& newTime = clamp_(timeVal);
   if (newTime != currentTime_)
   {
     currentTime_ = newTime;

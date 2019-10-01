@@ -411,20 +411,20 @@ namespace simCore
 
   //------------------------------------------------------------------------
 
+  /** Static value representing zero seconds, shared for performance reasons. */
+  static const Seconds ZERO_SECONDS;
   /** Sentinel value for year that represents an infinite time value. */
   static const int INFINITE_TIME_YEAR = 16384;
   /** Sentinel value for simCore::TimeStamp that represents an infinite time value. */
-  static const TimeStamp INFINITE_TIME_STAMP(INFINITE_TIME_YEAR, 0.0);
+  static const TimeStamp INFINITE_TIME_STAMP(INFINITE_TIME_YEAR, ZERO_SECONDS);
   /** Sentinel value for minimum year supported by simCore::TimeStamp */
   static const int MIN_TIME_YEAR = 1970;
   /** Sentinel value for simCore::TimeStamp that represents the minimum valid time value. */
-  static const TimeStamp MIN_TIME_STAMP(MIN_TIME_YEAR, 0.0);
+  static const TimeStamp MIN_TIME_STAMP(MIN_TIME_YEAR, ZERO_SECONDS);
   /** Sentinel value for maximum year supported by simCore::TimeStamp */
   static const int MAX_TIME_YEAR = 2200;
   /** Sentinel value for simCore::TimeStamp that represents the maximum valid time value while maintaining microsecond resolution. */
   static const TimeStamp MAX_TIME_STAMP(MAX_TIME_YEAR, Seconds(365 * SECPERDAY - 1, 999999));
-  /** Static value representing zero seconds, shared for performance reasons. */
-  static const Seconds ZERO_SECONDS;
 
   /**
   * Computes a scale factor [0,1] between a set of bounded TimeStamps at the specified value.

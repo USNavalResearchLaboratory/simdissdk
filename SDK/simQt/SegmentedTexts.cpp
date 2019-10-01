@@ -486,7 +486,7 @@ namespace simQt {
 
   void MonthText::stepUp_()
   {
-    const simCore::TimeStamp currentTimeStamp = line_->timeStamp();
+    const simCore::TimeStamp& currentTimeStamp = line_->timeStamp();
     const double initialTime = currentTimeStamp.secondsSinceRefYear(1970);
 
     // add one month (in seconds)(Jan 29 will become Mar 1)
@@ -497,7 +497,7 @@ namespace simQt {
 
   void MonthText::stepDn_()
   {
-    const simCore::TimeStamp currentTimeStamp = line_->timeStamp();
+    const simCore::TimeStamp& currentTimeStamp = line_->timeStamp();
     const double initialTime = currentTimeStamp.secondsSinceRefYear(1970);
     const int refYear = currentTimeStamp.referenceYear();
 
@@ -625,7 +625,7 @@ namespace simQt {
       return lastState;
 
     SecondsTexts temp;
-    temp.setTimeRange(scenarioReferenceYear_, simCore::TimeStamp(1970, 0.0), simCore::TimeStamp(2070, 0.0));
+    temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
     temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
     temp.setText(text);
     if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
@@ -740,7 +740,7 @@ namespace simQt {
     if (lastState == QValidator::Acceptable)
     {
       MinutesTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::TimeStamp(1970, 0.0), simCore::TimeStamp(2070, 0.0));
+      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setText(text);
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
@@ -869,7 +869,7 @@ namespace simQt {
     if (lastState == QValidator::Acceptable)
     {
       HoursTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::TimeStamp(1970, 0.0), simCore::TimeStamp(2070, 0.0));
+      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setText(text);
       if (!inRange_(temp.timeStamp(), true, true))  // Always color code base on the limits
@@ -1037,7 +1037,7 @@ namespace simQt {
     if (lastState == QValidator::Acceptable)
     {
       OrdinalTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::TimeStamp(1970, 0.0), simCore::TimeStamp(2070, 0.0));
+      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
       temp.setText(text);
@@ -1246,7 +1246,7 @@ namespace simQt {
     if (lastState == QValidator::Acceptable)
     {
       MonthDayYearTexts temp;
-      temp.setTimeRange(scenarioReferenceYear_, simCore::TimeStamp(1970, 0.0), simCore::TimeStamp(2070, 0.0));
+      temp.setTimeRange(scenarioReferenceYear_, simCore::MIN_TIME_STAMP, simCore::TimeStamp(2070, simCore::ZERO_SECONDS));
       temp.setEnforceLimits(limitBeforeStart_, limitAfterEnd_);
       temp.setTimeZone(zone_);
       temp.setText(text);

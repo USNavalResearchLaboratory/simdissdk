@@ -247,8 +247,8 @@ private:
     // If apply was queued and something else triggers an apply first, don't bother applying again
     timer_->stop();
 
-    simCore::TimeStamp currentTime = completeLine_->timeStamp();
-    simCore::TimeStamp clampedTime = completeLine_->clampTime(currentTime);
+    const simCore::TimeStamp& currentTime = completeLine_->timeStamp();
+    const simCore::TimeStamp& clampedTime = completeLine_->clampTime(currentTime);
     if (currentTime != clampedTime)
     {
       // Range Limit the value, since the user can type in a value out of range
