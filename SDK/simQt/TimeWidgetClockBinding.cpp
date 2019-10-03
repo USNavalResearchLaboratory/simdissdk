@@ -230,11 +230,7 @@ void TimeWidgetClockBinding::updateWidgetBounds_(bool notifyTimeChange)
     int refYear = cache->referenceYear();
     if (refYear <= 0)
       refYear = clock_->startTime().referenceYear();
-    simCore::TimeStamp endBound;
-    if (!respectLiveModeEndTime_ && clock_->isLiveMode())
-      endBound = simCore::INFINITE_TIME_STAMP;
-    else
-      endBound = clock_->endTime();
+    const simCore::TimeStamp& endBound = (!respectLiveModeEndTime_ && clock_->isLiveMode()) ? simCore::INFINITE_TIME_STAMP : clock_->endTime();
     if (!notifyTimeChange)
     {
       // Range is set before the clock time is set. On initialization, block signals so setting time range does not alter clock time

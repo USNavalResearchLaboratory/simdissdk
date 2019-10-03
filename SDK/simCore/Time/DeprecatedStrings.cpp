@@ -37,8 +37,8 @@ namespace simCore { namespace Deprecated {
 
 std::string DDD_HHMMSS_YYYY_Formatter::toString(const simCore::TimeStamp& timeStamp, int referenceYear, unsigned short precision) const
 {
-  int days = static_cast<int>(timeStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
-  simCore::Seconds seconds = timeStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
+  const int days = static_cast<int>(timeStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
+  const simCore::Seconds seconds = timeStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
   std::stringstream ss;
   ss << std::setw(3) << std::setfill('0') << (days + 1) << " ";
   HoursTimeFormatter::toStream(ss, seconds, precision);
@@ -94,8 +94,8 @@ std::string DDD_HHMMSS_Formatter::toString(const simCore::TimeStamp& timeStamp, 
   }
   else
   {
-    int days = static_cast<int>(timeStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
-    simCore::Seconds seconds = timeStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
+    const int days = static_cast<int>(timeStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
+    const simCore::Seconds seconds = timeStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
     ss << std::setw(3) << std::setfill('0') << (days + 1) << " ";
     HoursTimeFormatter::toStream(ss, seconds, precision);
   }

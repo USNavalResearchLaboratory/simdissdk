@@ -227,11 +227,9 @@ unsigned long SLRegistryClockTime::getMilliseconds() const
   if (clock == NULL)
     return 0;
   // Avoid negative values
-  simCore::Seconds elapsed = clock->currentTime() - clock->startTime();
-  if (elapsed < 0.0)
-    elapsed = 0.0;
+  const simCore::Seconds& elapsed = clock->currentTime() - clock->startTime();
   // Avoid returning 0, to avoid the default behavior
-  return 1 + static_cast<unsigned long>(elapsed.Double() * 1000);
+  return (elapsed < 0.0) ? 1 : 1 + static_cast<unsigned long>(elapsed.Double() * 1000);
 }
 
 /////////////////////////////////////////////////////////

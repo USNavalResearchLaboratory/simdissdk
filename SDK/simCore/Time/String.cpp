@@ -328,7 +328,7 @@ int OrdinalTimeFormatter::fromString(const std::string& timeString, simCore::Tim
       simCore::Seconds seconds;
       if (HoursTimeFormatter::fromString(dayYearHours[2], seconds) == 0)
       {
-        timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds((day - 1) * SECPERDAY));
+        timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds((day - 1) * SECPERDAY, 0));
         return 0;
       }
     }
@@ -343,8 +343,8 @@ void OrdinalTimeFormatter::toStream(std::ostream& os, const simCore::TimeStamp& 
 {
   const int refYear = timeStamp.referenceYear();
   const simCore::TimeStamp roundedStamp(refYear, timeStamp.secondsSinceRefYear(refYear).rounded(precision));
-  int days = static_cast<int>(roundedStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
-  simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
+  const int days = static_cast<int>(roundedStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
+  const simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
   os << std::setfill('0') << std::setw(3) << (days + 1) << " " << refYear << " " << std::setw(2);
   HoursTimeFormatter::toStream(os, seconds, precision);
 }
@@ -410,7 +410,7 @@ std::string MonthDayTimeFormatter::monthIntToString(int monthValue)
 int MonthDayTimeFormatter::getMonthComponents(const simCore::TimeStamp& timeStamp, int& month, int& monthDay, simCore::Seconds& secondsPastMidnight)
 {
   const int realYear = timeStamp.referenceYear();
-  const int days = static_cast<int>(timeStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
+  const int days = static_cast<int>(timeStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
   try
   {
     simCore::getMonthAndDayOfMonth(month, monthDay, realYear, days);
@@ -426,7 +426,7 @@ int MonthDayTimeFormatter::getMonthComponents(const simCore::TimeStamp& timeStam
   // Validate the output of getMonthAndDayOfMonth
   assert(month >= 0 && month < 12);
   assert(monthDay >= 1 && monthDay <= 31);
-  secondsPastMidnight = timeStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
+  secondsPastMidnight = timeStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
   return 0;
 }
 
@@ -489,8 +489,8 @@ int MonthDayTimeFormatter::fromString(const std::string& timeString, simCore::Ti
         simCore::Seconds seconds;
         if (HoursTimeFormatter::fromString(mdyh[3], seconds) == 0)
         {
-          int yearDay = getYearDay(month, monthDay, year - 1900);
-          timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds(yearDay * SECPERDAY));
+          const int yearDay = getYearDay(month, monthDay, year - 1900);
+          timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds(yearDay * SECPERDAY, 0));
           return 0;
         }
       }
@@ -513,7 +513,7 @@ std::string DtgTimeFormatter::toString(const simCore::TimeStamp& timeStamp, int 
   std::stringstream ss;
   const int realYear = timeStamp.referenceYear();
   const simCore::TimeStamp roundedStamp(realYear, timeStamp.secondsSinceRefYear(realYear).rounded(precision));
-  int days = static_cast<int>(roundedStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
+  const int days = static_cast<int>(roundedStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
   int month = 0; // Between 0-11
   int monthDay = 0; // Between 1-31
   try
@@ -539,9 +539,8 @@ std::string DtgTimeFormatter::toString(const simCore::TimeStamp& timeStamp, int 
   if (month >= 0 && month < MONPERYEAR)
     monthName = ABBREV_MONTH_NAME[month];
 
-  simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
-  // Rely on static_cast<> to floor the value
-  int hours = static_cast<int>(seconds.Double() / SECPERHOUR);
+  simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
+  const int hours = static_cast<int>(seconds.getSeconds() / SECPERHOUR);
   seconds -= hours * SECPERHOUR; // seconds now holds minutes+seconds past hour
 
   // EG 061435:03.010 Z Apr07

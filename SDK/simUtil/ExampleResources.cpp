@@ -507,7 +507,7 @@ void simExamples::SkyNodeTimeUpdater::onSetTime(const simCore::TimeStamp &t, boo
   lastTime_ = t;
   if (sceneManager_.valid() && sceneManager_->getSkyNode() != NULL)
   {
-    sceneManager_->getSkyNode()->setDateTime(osgEarth::Util::DateTime(t.secondsSinceRefYear(1970) + simCore::Seconds(hoursOffset_ * 3600)));
+    sceneManager_->getSkyNode()->setDateTime(osgEarth::Util::DateTime(t.secondsSinceRefYear(1970) + simCore::Seconds(hoursOffset_ * simCore::SECPERHOUR)));
   }
 }
 
