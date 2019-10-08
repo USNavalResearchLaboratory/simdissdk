@@ -627,6 +627,53 @@ namespace
     rv += SDK_ASSERT(secs1973_2001.getSeconds() == (3. * simCore::SECPERDAY));
     return rv;
   }
+  int testTimeStampComparison()
+  {
+    int rv = 0;
+
+    // tests below demonstrate that there is variability in ability of Seconds::compare() to detect a difference between two timestamps
+    // due to limits in the resolution of double especially when its magnitude is large.
+    // that is: two timestamps may be different but compare()'d to be equal
+    // in normal cases, this tolerance is on the order of a 1 or 2 ns; in the worst case (below), the tolerance is 71ns.
+
+    // this variability in resolution is acceptable as long as the detection of an inequality is consistent and correct.
+    // that is: two timestamps that compare() detects as inequal are actually inequal.
+    //     and: two timestamps that are/(should be) equal are always detected to be equal.
+
+    // various TimeStringTest cases demonstrate that two timestamps that should be equal are off by 1ns
+    // due to noise from string->double->Seconds conversion.
+    // this +/- 1ns limitation of comparison resolution is coded into Seconds::compare().
+
+    // test that Seconds::compare correctly ignore +/- 1 ns differences in its fractional part
+    rv += SDK_ASSERT(simCore::TimeStamp(1973, simCore::Seconds(10, 0)) == simCore::TimeStamp(1973, simCore::Seconds(10, 1)));
+    rv += SDK_ASSERT(simCore::TimeStamp(1973, simCore::Seconds(10, 1)) == simCore::TimeStamp(1973, simCore::Seconds(10, 2)));
+    rv += SDK_ASSERT(simCore::TimeStamp(1973, 0.0) == simCore::TimeStamp(1973, 1e-09));
+
+    // this is a special case: difference is not in the fractional part
+    rv += SDK_ASSERT(simCore::TimeStamp(1973, simCore::Seconds(10, 0)) > simCore::TimeStamp(1973, simCore::Seconds(10, -1)));
+
+    // correctly detect +/- 2ns differences
+    rv += SDK_ASSERT(simCore::TimeStamp(1973, simCore::Seconds(0, 1)) < simCore::TimeStamp(1973, simCore::Seconds(0, 3)));
+    rv += SDK_ASSERT(simCore::TimeStamp(1973, simCore::Seconds(0, 3)) > simCore::TimeStamp(1973, simCore::Seconds(0, 1)));
+    rv += SDK_ASSERT(simCore::TimeStamp(1973, 0.0) < simCore::TimeStamp(1973, 2e-09));
+
+
+    // this is the max value of a Seconds instance that can be obtained from a TimeStamp
+    const simCore::Seconds& maxTimeStampSecs = simCore::MAX_TIME_STAMP.secondsSinceRefYear(simCore::MIN_TIME_YEAR);
+
+    // can't resolve 71ns difference due to loss of precision when using a (large) double to construct a Seconds instance.
+    const simCore::Seconds secsm71 = maxTimeStampSecs - simCore::Seconds(0, 71);
+    const simCore::TimeStamp max(simCore::MIN_TIME_YEAR, maxTimeStampSecs.Double());
+    const simCore::TimeStamp maxm71(simCore::MIN_TIME_YEAR, secsm71.Double());
+    rv += SDK_ASSERT(max.secondsSinceRefYear().getFractionLong() == maxm71.secondsSinceRefYear().getFractionLong());
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_YEAR, maxTimeStampSecs.Double()) == simCore::TimeStamp(simCore::MIN_TIME_YEAR, secsm71.Double()));
+
+    // can resolve 72ns
+    const simCore::Seconds secsm72 = maxTimeStampSecs - simCore::Seconds(0, 72);
+    rv += SDK_ASSERT(simCore::TimeStamp(simCore::MIN_TIME_YEAR, maxTimeStampSecs.Double()) > simCore::TimeStamp(simCore::MIN_TIME_YEAR, secsm72.Double()));
+
+    return rv;
+  }
 }
 int TimeClassTest(int argc, char* argv[])
 {
@@ -639,6 +686,7 @@ int TimeClassTest(int argc, char* argv[])
   rv += testInput();
   rv += testRound();
   rv += testTimeStamp();
+  rv += testTimeStampComparison();
 
   std::cout << "TimeClassTest " << (rv == 0 ? "PASSED" : "FAILED") << std::endl;
 

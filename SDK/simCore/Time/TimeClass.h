@@ -194,6 +194,13 @@ namespace simCore
     */
     std::ostream& operator <<(std::ostream& out) const;
 
+    /// Boolean comparison to another Seconds class.
+    /**
+    * @param[in ] time Seconds
+    * @return The boolean comparison to the two Seconds classes
+    */
+    TimeCompVal compare(const Seconds& time) const;
+
   protected:
     int64_t seconds_;   /**< Whole second representation  */
     int fraction_;  /**< Fraction of second, nanosecond precision */
@@ -209,20 +216,6 @@ namespace simCore
 
     /// Verifies the precision and sign of stored time values
     void fix_();
-
-    /// Boolean comparison to another Seconds class.
-    /**
-    * @param[in ] time Seconds
-    * @return The boolean comparison to the two Seconds classes
-    */
-    TimeCompVal compare_(const Seconds& time) const
-    {
-      if (seconds_ > time.seconds_) return TCV_GREATER;
-      if (seconds_ < time.seconds_) return TCV_LESS;
-      if (fraction_ > time.fraction_) return TCV_GREATER;
-      if (fraction_ < time.fraction_) return TCV_LESS;
-      return TCV_EQUAL;
-    }
   };
 
   //------------------------------------------------------------------------
@@ -308,11 +301,11 @@ namespace simCore
 
     /// Increment
     /** @return the updated result of the current TimeStamp plus one second */
-    TimeStamp& operator ++() {secondsSinceRefYear_ += 1; fix_(); return *this;}
+    TimeStamp& operator ++() {secondsSinceRefYear_ += Seconds(1, 0); fix_(); return *this;}
 
     /// Decrement
     /** @return the updated result of the current TimeStamp minus one second */
-    TimeStamp& operator --() {secondsSinceRefYear_ -= 1; fix_(); return *this;}
+    TimeStamp& operator --() {secondsSinceRefYear_ -= Seconds(1, 0); fix_(); return *this;}
 
     /// Addition
     //** @param[in ] t Seconds class to be added to existing TimeStamp value  */
