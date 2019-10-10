@@ -1116,34 +1116,12 @@ namespace simQt {
 
   simCore::TimeStamp MonthDayYearTexts::timeStamp() const
   {
-    //--- convert month/day/year + hours/min/sec into a timestamp (ref year + seconds)
-    const int yearsSince1900 = years_->value() - 1900;
+    const int yearDay = simCore::getYearDay(month_->intValue(), days_->value(), years_->value());
+    const int64_t secondsIntoYear = yearDay*simCore::SECPERDAY + hours_->value()*simCore::SECPERHOUR + minutes_->value()*simCore::SECPERMIN + seconds_->value();
 
-    // make a tm for the displayed time
-    tm displayedTime = {0};
-    displayedTime.tm_sec = seconds_->value();
-    displayedTime.tm_min = minutes_->value();
-    displayedTime.tm_hour = hours_->value();
-    displayedTime.tm_mday = days_->value();
-    displayedTime.tm_mon = month_->intValue();
-    displayedTime.tm_year = yearsSince1900;
-    displayedTime.tm_yday = simCore::getYearDay(month_->intValue(), days_->value(), yearsSince1900);
-    displayedTime.tm_wday = simCore::getWeekDay(yearsSince1900, displayedTime.tm_yday);
+    const int fraction = (fraction_ == NULL) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    simCore::TimeStamp stamp(years_->value(), simCore::Seconds(secondsIntoYear, fraction));
 
-    // make a tm for the start of the reference year
-    tm startOfRefYear = {0};
-    startOfRefYear.tm_mday = 1; // first
-    startOfRefYear.tm_mon = 0; // Jan
-    startOfRefYear.tm_year = displayedTime.tm_year;
-    startOfRefYear.tm_wday = simCore::getWeekDay(yearsSince1900, startOfRefYear.tm_yday);
-
-    // calculate the number of seconds into the ref year (add fraction)
-    double secondsIntoYear = simCore::getTimeStructDifferenceInSeconds(startOfRefYear, displayedTime);
-    if (fraction_ != NULL)
-      secondsIntoYear += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
-
-    // combine the reference year with the seconds offset to make a TimeStamp
-    simCore::TimeStamp stamp(years_->value(), secondsIntoYear);
     if (zone_ == simCore::TIMEZONE_LOCAL)
     {
       // Define a UTC datetime with the timestamp
@@ -1151,7 +1129,7 @@ namespace simQt {
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
-      stamp -= dateTime.offsetFromUtc();
+      stamp -= simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
     return stamp;
   }
@@ -1169,43 +1147,33 @@ namespace simQt {
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
-      stamp += dateTime.offsetFromUtc();
+      stamp += simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
 
     try
     {
-      double secondsSinceRefYear = stamp.secondsSinceRefYear();
-      const double fractionsOfSecond = secondsSinceRefYear - static_cast<int>(secondsSinceRefYear);
-      int fraction = static_cast<int>(fractionsOfSecond * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
-      // Check to see if rounded up to a full second
-      if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
-      {
-        fraction = 0;
-        secondsSinceRefYear = static_cast<int>(secondsSinceRefYear) + 1;
-      }
-      unsigned int dayOfYear = 0; // will be 1 to 366
+      // rounding the seconds can increase the refyear, need to reset the timestamp with rounded time to ensure no artifacts.
+      stamp.setTime(stamp.referenceYear(), stamp.secondsSinceRefYear().rounded(precision_));
+      unsigned int dayOfYear = 0; // [0,365] 365 possible in leap year
       unsigned int hour = 0; // hours since midnight (0..23)
       unsigned int min = 0;
-      unsigned int sec = 0;
-      unsigned int tenths = 0;
-      simCore::getTimeComponents(floor(secondsSinceRefYear), &dayOfYear, &hour, &min, &sec, &tenths, true);
+      unsigned int  sec = 0;
+      stamp.getTimeComponents(dayOfYear, hour, min, sec);
 
       int month = 0; // 0 to 11
       int dayInMonth = 0; // 1 to 31
+      simCore::getMonthAndDayOfMonth(month, dayInMonth, stamp.referenceYear(), dayOfYear);
 
-      // need the day to be 0 to 365
-      simCore::getMonthAndDayOfMonth(month, dayInMonth, stamp.referenceYear() - 1900, dayOfYear - 1);
-
-      if (fraction_ != NULL)
-        fraction_->setValue(static_cast<int>(fractionsOfSecond * std::pow(10.0, static_cast<double>(precision_)) + 0.5));
       seconds_->setValue(static_cast<int>(sec));
       minutes_->setValue(static_cast<int>(min));
       hours_->setValue(static_cast<int>(hour));
       days_->setValue(dayInMonth);
       years_->setValue(stamp.referenceYear());
       month_->setIntValue(month);
+      if (fraction_ != NULL)
+        fraction_->setValue(fractionToField_(stamp.secondsSinceRefYear()));
     }
-    catch (simCore::TimeException &)
+    catch (const simCore::TimeException &)
     {
       // on exception, don't set anything
     }
