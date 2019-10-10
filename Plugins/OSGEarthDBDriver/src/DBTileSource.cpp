@@ -220,7 +220,7 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
       // Set time value of image if a time was found in the db
       if (timeStamp_ != simCore::INFINITE_TIME_STAMP)
       {
-        DateTime osgTime(timeStamp_.secondsSinceRefYear(1970));
+        const DateTime osgTime(timeStamp_.secondsSinceRefYear(1970).getSeconds());
         // Set time as a user value since config is not editable from here
         setUserValue("time", osgTime.asISO8601());
       }

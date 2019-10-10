@@ -31,6 +31,9 @@
 
 namespace simQt {
 
+// Precision limit is 6 -- bad precision past 6
+  static const unsigned int MAX_PRECISION = 6;
+
   SegmentedTexts::SegmentedTexts()
     : scenarioReferenceYear_(1970),
       precision_(3),
@@ -182,28 +185,24 @@ namespace simQt {
     scenarioReferenceYear_ = scenarioReferenceYear;
     start_ = start;
     end_ = end;
+
     adjustedStart_ = start_;
-    double time = adjustedStart_.secondsSinceRefYear();
-    double scale = std::pow(10.0, static_cast<double>(precision_));
-    if (time != 0.0)
+    if (adjustedStart_.secondsSinceRefYear() != simCore::ZERO_SECONDS)
     {
-      // There seems to be less rounding error if time is divided into parts
-      int seconds = static_cast<int>(time);
-      // Sometimes the math works out to 0.999999999 and other times it is 0.000000001.  I removed the basis and going with simple truncation.
-      double faction = std::floor((time - seconds) * scale) / scale;
-      adjustedStart_ = simCore::TimeStamp(adjustedStart_.referenceYear(), seconds + faction);
-    }
-    adjustedEnd_ = end_;
-    time = adjustedEnd_.secondsSinceRefYear();
-    if (time != 0.0)
-    {
-      // There seems to be less rounding error if time is divided into parts
-      int seconds = static_cast<int>(time);
-      // Sometimes the math works out to 0.999999999 and other times it is 0.000000001.  I removed the basis and going with simple truncation.
-      double faction = std::ceil((time - seconds) * scale) / scale;
-      adjustedEnd_ = simCore::TimeStamp(adjustedEnd_.referenceYear(), seconds+faction);
+      const simCore::Seconds& secondsStart = adjustedStart_.secondsSinceRefYear();
+      // adjust the fraction representation to contain number of digits corresponding to precision
+      const int fraction = fractionFromField_(fractionToField_(secondsStart), precision_);
+      adjustedStart_.setTime(adjustedStart_.referenceYear(), simCore::Seconds(secondsStart.getSeconds(), fraction));
     }
 
+    adjustedEnd_ = end_;
+    if (adjustedEnd_.secondsSinceRefYear() != simCore::ZERO_SECONDS)
+    {
+      const simCore::Seconds& secondsEnd = adjustedEnd_.secondsSinceRefYear();
+      // adjust the fraction representation to contain number of digits corresponding to precision
+      const int fraction = fractionFromField_(fractionToField_(secondsEnd), precision_);
+      adjustedEnd_.setTime(adjustedEnd_.referenceYear(), simCore::Seconds(secondsEnd.getSeconds(), fraction));
+    }
   }
 
   void SegmentedTexts::timeRange(int& scenarioReferenceYear, simCore::TimeStamp& start, simCore::TimeStamp& end)
@@ -253,23 +252,43 @@ namespace simQt {
 
   NumberText* SegmentedTexts::createFactionOfSeconds_(int precision)
   {
-    double scale = std::pow(10.0, static_cast<double>(precision_));
-    int maxValue = static_cast<int>(scale) - 1;
+    const double scale = std::pow(10.0, precision_);
+    const int maxValue = static_cast<int>(scale) - 1;
     return new NumberText(this, 0, maxValue, precision, true, 1.0/scale, true);
   }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   NumberText* SegmentedTexts::updateFactionOfSeconds_(int precision)
   {
     if (precision < 1)
       precision = 1;
-    else if (precision > 6)
-      precision = 6;
+    else if (precision > MAX_PRECISION)
+      precision = MAX_PRECISION;
 
     delete segments_.back();
     segments_.pop_back();
     NumberText* fraction = createFactionOfSeconds_(precision_);
     addPart(fraction);
     return fraction;
+  }
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
+
+  int SegmentedTexts::fractionToField_(const simCore::Seconds& secondsRounded) const
+  {
+    // precision limit of 9 is due to simCore::Seconds implementation, and is independent of SegmentedText MAX_PRECISION
+    // scale factor to convert from # nanoseconds to field value in specified precision
+    const int scale = (precision_ >= 9) ? 1 : static_cast<int>(pow(10.0, 9 - precision_));
+    assert(scale > 0);
+    return secondsRounded.getFractionLong() / scale;
+  }
+
+  int SegmentedTexts::fractionFromField_(int fractionFieldValue, int precision) const
+  {
+    // precision limit of 9 is due to simCore::Seconds implementation, and is independent of SegmentedText MAX_PRECISION
+    // scale factor to convert from field value in specified precision to # nanoseconds
+    const int scale = (precision >= 9) ? 1 : static_cast<int>(pow(10.0, 9 - precision));
+    assert(scale > 0);
+    return fractionFieldValue * scale;
   }
 
   //------------------------------------------------------------------------------------------------------------------
@@ -374,13 +393,11 @@ namespace simQt {
 
   void NumberText::stepBy(int amount)
   {
-    // Adjust the time by the timeScaleFactor than limit the change by the time range
+    // Adjust the time by the timeScaleFactor then limit the change by the time range
     // The timeScaleFactor is 1 for seconds, 60 for minutes, 3600 for hours, etc
-    double initialTime = line_->timeStamp().secondsSinceRefYear(1970);
-    double currentTime = initialTime + amount * timeScaleFactor_;
-    if (currentTime < 0.0)
-      currentTime = 0.0;
-    line_->setTimeStamp(line_->clampTime(simCore::TimeStamp(1970, currentTime)));
+    const double initialTime = line_->timeStamp().secondsSinceRefYear();
+    const double currentTime = initialTime + amount * timeScaleFactor_;
+    line_->setTimeStamp(line_->clampTime(simCore::TimeStamp(line_->timeStamp().referenceYear(), currentTime)));
   }
 
   QString NumberText::text() const
@@ -573,9 +590,7 @@ namespace simQt {
 
   void SecondsTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 0 and 6 -- bad precision past 6
-    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
-
+    digits = simCore::sdkMin(MAX_PRECISION, digits);
     if (digits == precision_)
       return;
 
@@ -680,9 +695,7 @@ namespace simQt {
 
   void MinutesTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 0 and 6 -- bad precision past 6
-    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
-
+    digits = simCore::sdkMin(MAX_PRECISION, digits);
     if (digits == precision_)
       return;
 
@@ -800,9 +813,7 @@ namespace simQt {
 
   void HoursTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 0 and 6 -- bad precision past 6
-    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
-
+    digits = simCore::sdkMin(MAX_PRECISION, digits);
     if (digits == precision_)
       return;
 
@@ -938,9 +949,7 @@ namespace simQt {
 
   void OrdinalTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 0 and 6 -- bad precision past 6
-    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
-
+    digits = simCore::sdkMin(MAX_PRECISION, digits);
     if (digits == precision_)
       return;
 
@@ -950,17 +959,16 @@ namespace simQt {
 
   simCore::TimeStamp OrdinalTexts::timeStamp() const
   {
-    double seconds = (days_->value()-1) * 24.0;
+    int64_t seconds = (days_->value()-1) * 24;
     seconds += hours_->value();
-    seconds *= 60.0;
+    seconds *= 60;
     seconds += minutes_->value();
-    seconds *= 60.0;
+    seconds *= 60;
     seconds += seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    if (fraction_ != NULL)
-      seconds += static_cast<double>(fraction_->value()) / pow(10.0, fraction_->text().size());
+    const int fraction = (fraction_ == NULL) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    simCore::TimeStamp stamp(years_->value(), simCore::Seconds(seconds, fraction));
 
-    simCore::TimeStamp stamp(years_->value(), seconds);
     // Remove the timezone offset that was introduced by setTimestamp()
     if (zone_ == simCore::TIMEZONE_LOCAL)
     {
@@ -969,7 +977,7 @@ namespace simQt {
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
-      stamp -= dateTime.offsetFromUtc();
+      stamp -= simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
     return stamp;
   }
@@ -987,48 +995,23 @@ namespace simQt {
       QDateTime dateTime(QDate(1900 + timeComponents.tm_year, 1 + timeComponents.tm_mon, timeComponents.tm_mday), QTime(timeComponents.tm_hour, timeComponents.tm_min, timeComponents.tm_sec), Qt::UTC);
       // Change it to local time so that Qt figures out the local time offset from UTC time
       dateTime.setTimeSpec(Qt::LocalTime);
-      stamp += dateTime.offsetFromUtc();
+      stamp += simCore::Seconds(dateTime.offsetFromUtc(), 0);
     }
 
+    // rounding the seconds can increase the refyear, need to reset the timestamp with rounded time to ensure no artifacts.
+    stamp.setTime(stamp.referenceYear(), stamp.secondsSinceRefYear().rounded(precision_));
+    unsigned int dayOfYear = 0; // [0,365] 365 possible in leap year
+    unsigned int hour = 0; // hours since midnight (0..23)
+    unsigned int min = 0;
+    unsigned int sec = 0;
+    stamp.getTimeComponents(dayOfYear, hour, min, sec);
     years_->setValue(stamp.referenceYear());
-    double time = stamp.secondsSinceRefYear().Double();
-    int days = static_cast<int>(time/86400.0);
-    int hours = static_cast<int>((time-days*86400)/3600);
-    int minutes = static_cast<int>((time-days*86400-hours*3600)/60);
-    int seconds = static_cast<int>((time-days*86400-hours*3600-minutes*60));
-    int fraction = 0;
-    if (precision_ != 0)
-    {
-      fraction = static_cast<int>((time - days * 86400 - hours * 3600 - minutes * 60 - seconds) * std::pow(10.0, static_cast<double>(precision_)) + 0.5);
-      // Check to see if rounded up to a full second
-      if (simCore::areEqual(fraction, std::pow(10.0, static_cast<double>(precision_))))
-      {
-        seconds++;
-        fraction = 0;
-        if (seconds == 60)
-        {
-          seconds = 0;
-          ++minutes;
-          if (minutes == 60)
-          {
-            minutes = 0;
-            ++hours;
-            if (hours == 24)
-            {
-              hours = 0;
-              ++days;
-            }
-          }
-        }
-      }
-    }
-
-    days_->setValue(days + 1);  // User interface see 1 to 365/366, but internal is 0 to 364/365
-    hours_->setValue(hours);
-    minutes_->setValue(minutes);
-    seconds_->setValue(seconds);
+    days_->setValue(static_cast<int>(dayOfYear + 1));  // User interface see 1 to 365/366, but internal is 0 to 364/365
+    hours_->setValue(static_cast<int>(hour));
+    minutes_->setValue(static_cast<int>(min));
+    seconds_->setValue(static_cast<int>(sec));
     if (fraction_ != NULL)
-      fraction_->setValue(fraction);
+      fraction_->setValue(fractionToField_(stamp.secondsSinceRefYear()));
   }
 
   QValidator::State OrdinalTexts::validateText(const QString& text) const
@@ -1123,9 +1106,7 @@ namespace simQt {
 
   void MonthDayYearTexts::setPrecision(unsigned int digits)
   {
-    // Limit between 0 and 6 -- bad precision past 6
-    digits = simCore::sdkMin(static_cast<unsigned int>(6), digits);
-
+    digits = simCore::sdkMin(MAX_PRECISION, digits);
     if (digits == precision_)
       return;
 

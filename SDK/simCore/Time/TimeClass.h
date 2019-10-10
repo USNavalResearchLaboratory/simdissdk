@@ -380,6 +380,15 @@ namespace simCore
     */
     bool operator >=(const TimeStamp& t) const {return (compare_(t) != TCV_LESS);}
 
+    /// Breaks a TimeStamp value into individual components relative to the TimeStamp's reference year.
+    /**
+    * @param[out] day Computed number of days in the TimeStamp's reference year [0, 364/365] 365 only on leap years
+    * @param[out] hour Computed number of hours since midnight [0, 23]
+    * @param[out] min Computed number of minutes after the hour [0, 59]
+    * @param[out] sec Computed number of seconds after the minute [0, 59]
+    */
+    void getTimeComponents(unsigned int& day, unsigned int& hour, unsigned int& min, unsigned int& sec) const;
+
   protected:
 
     int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1970 */

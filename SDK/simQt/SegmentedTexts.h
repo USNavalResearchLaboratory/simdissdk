@@ -253,10 +253,18 @@ signals:
 protected:
   /// Returns true if current is within the time range of start to end as dictated by the flags
   bool inRange_(const simCore::TimeStamp& current, bool limitBeforeStart, bool limitAfterEnd) const;
-  /// Creates the faction part accounting for the precision.  Cannot be const.
+  /// Creates the fraction part accounting for the precision.  Cannot be const.
   NumberText* createFactionOfSeconds_(int precision);
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /// Replaces the fraction part with a new fraction part of the given precision.
-  NumberText* updateFactionOfSeconds_(int precision);
+  SDK_DEPRECATE(NumberText* updateFactionOfSeconds_(int precision), "Method will be removed in future SDK release.");
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
+
+  /// convert the fractional part of Seconds (# of ns) to a field representation
+  int fractionToField_(const simCore::Seconds& secondsRounded) const;
+  /// convert the field representation of the fraction to a # of ns
+  int fractionFromField_(int fractionFieldValue, int precision) const;
 
   simCore::TimeStamp start_;  ///< Start Time
   simCore::TimeStamp end_;  ///< End time

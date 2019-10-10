@@ -381,4 +381,22 @@ double getFactor(const TimeStamp &lowVal, const TimeStamp &exactVal, const TimeS
   return (exactVal - lowVal) / (highVal - lowVal);
 }
 
+//------------------------------------------------------------------------
+
+void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigned int& min, unsigned int& sec) const
+{
+  int64_t time = secondsSinceRefYear().getSeconds();
+  // TimeStamp fix() always normalizes Seconds to a positive number.
+  assert(time >= 0);
+  day = static_cast<unsigned int>(time / simCore::SECPERDAY);
+
+  time -= (day*simCore::SECPERDAY);
+  hour = static_cast<unsigned int>(time / simCore::SECPERHOUR);
+
+  time -= (hour*simCore::SECPERHOUR);
+  min = static_cast<unsigned int>(time / simCore::SECPERMIN);
+
+  time -= (min*simCore::SECPERMIN);
+  sec = static_cast<unsigned int>(time);
+}
 }

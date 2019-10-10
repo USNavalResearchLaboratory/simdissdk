@@ -152,7 +152,7 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
   // Pull out the DateTime that we can then send to the Ephemeris calculations
   const simCore::TimeStamp& timeStamp = clock->currentTime();
   lastUpdateTime_ = timeStamp;
-  const osgEarth::DateTime dateTime(timeStamp.secondsSinceRefYear(1970));
+  const osgEarth::DateTime dateTime(timeStamp.secondsSinceRefYear(1970).getSeconds());
 
   // Reset the coordinate conversion center point
   const simCore::Coordinate asEcef(simCore::COORD_SYS_ECEF, simCore::Vec3(lastUpdate_.x(), lastUpdate_.y(), lastUpdate_.z()));
