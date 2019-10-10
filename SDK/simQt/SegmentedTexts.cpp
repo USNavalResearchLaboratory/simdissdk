@@ -262,8 +262,8 @@ namespace simQt {
   {
     if (precision < 1)
       precision = 1;
-    else if (precision > MAX_PRECISION)
-      precision = MAX_PRECISION;
+    else if (precision > static_cast<int>(MAX_PRECISION))
+      precision = static_cast<int>(MAX_PRECISION);
 
     delete segments_.back();
     segments_.pop_back();
