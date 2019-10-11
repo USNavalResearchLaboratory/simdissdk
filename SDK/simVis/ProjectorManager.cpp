@@ -207,7 +207,7 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   projStateSet->addUniform(proj->texProjPosUniform_.get());
 }
 
-void ProjectorManager::unregisterProjector(ProjectorNode* proj)
+void ProjectorManager::unregisterProjector(const ProjectorNode* proj)
 {
   for (ProjectorLayerVector::iterator i = projectorLayers_.begin(); i != projectorLayers_.end(); ++i)
   {

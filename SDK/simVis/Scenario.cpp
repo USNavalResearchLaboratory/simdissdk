@@ -185,13 +185,18 @@ int ScenarioManager::SimpleEntityGraph::addOrUpdate(EntityRecord* record)
   // Assertion failure means ScenarioManager error
   assert(record != NULL && record->getEntityNode() != NULL);
 
-  // Only need to insert in Group, and only if we're not on parents list
-  const auto node = record->getNode();
-  const int numParents = node->getNumParents();
-  for (int k = 0; k < numParents; ++k)
+  // add the entity to the scenegraph by adding the entity to the Group, but only if: not already in the group and not a CR that is hosted (into the scenegraph) by its host platform.
+  const auto node = record->getEntityNode();
+  const unsigned int numParents = node->getNumParents();
+  for (unsigned int k = 0; k < numParents; ++k)
   {
     // This is an update -- don't need to do anything
     if (node->getParent(k) == group_)
+      return 0;
+
+    // custom rendering nodes hosted by platforms are attached to the scenegraph by their host; see ScenarioManager::addCustomRendering
+    simData::ObjectId hostId;
+    if ((node->type() == simData::CUSTOM_RENDERING) && (node->getHostId(hostId) != 0) && dynamic_cast<CustomRenderingNode*>(node))
       return 0;
   }
 
@@ -580,9 +585,14 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
       {
         if (record->dataStoreMatches(dataStore))
         {
-          ProjectorNode* projectorNode = dynamic_cast<ProjectorNode*>(record->getEntityNode());
-          if (projectorNode)
-            projectorManager_->unregisterProjector(projectorNode);
+          notifyToolsOfRemove_(record->getEntityNode());
+
+          if (record->getEntityNode()->type() == simData::PROJECTOR)
+          {
+            const ProjectorNode* projectorNode = dynamic_cast<const ProjectorNode*>(record->getEntityNode());
+            if (projectorNode)
+              projectorManager_->unregisterProjector(projectorNode);
+          }
 
           // remove it from the scene graph:
           entityGraph_->removeEntity(record);
@@ -599,7 +609,6 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
     // All entities have been removed, forget about any hosting relationships
     hosterTable_.clear();
   }
-
   else
   {
     // just remove everything.
@@ -614,23 +623,25 @@ void ScenarioManager::clearEntities(simData::DataStore* dataStore)
 void ScenarioManager::removeEntity(simData::ObjectId id)
 {
   SAFETRYBEGIN;
-  EntityRepo::iterator i = entities_.find(id);
-
+  const EntityRepo::iterator i = entities_.find(id);
   EntityRecord* record = (i != entities_.end()) ? i->second.get() : NULL;
   if (record)
   {
-    notifyToolsOfRemove_(record->getEntityNode());
+    EntityNode* entity = record->getEntityNode();
+    notifyToolsOfRemove_(entity);
 
     // If this is a projector node, delete this from the projector manager
-    ProjectorNode* projectorNode = dynamic_cast<ProjectorNode*>(record->getEntityNode());
-    if (projectorNode)
+    if (entity->type() == simData::PROJECTOR)
     {
-      projectorManager_->unregisterProjector(projectorNode);
+      const ProjectorNode* projectorNode = dynamic_cast<const ProjectorNode*>(entity);
+      if (projectorNode)
+        projectorManager_->unregisterProjector(projectorNode);
     }
     entityGraph_->removeEntity(record);
 
     // remove from the hoster table
     hosterTable_.erase(id);
+    // if entity was hosted by another entity, remove the link to this entity from other entity
     for (auto it = hosterTable_.begin(); it != hosterTable_.end();)
     {
       auto erase = it++;
@@ -850,11 +861,12 @@ CustomRenderingNode* ScenarioManager::addCustomRendering(const simData::CustomRe
 
   // put the custom into our entity db:
   auto node = new CustomRenderingNode(this, props, host, dataStore.referenceYear());
-  entities_[node->getId()] = new EntityRecord(
-    node,
-    NULL,
-    &dataStore);
-
+  if (host)
+  {
+    // host will attach the cr to the scenegraph; ScenarioManager::SimpleEntityGraph::addOrUpdate will understand not to attach to scenario's group
+    host->addChild(node);
+  }
+  entities_[node->getId()] = new EntityRecord(node, NULL, &dataStore);
   hosterTable_.insert(std::make_pair((host ? host->getId() : 0), node->getId()));
 
   notifyToolsOfAdd_(node);

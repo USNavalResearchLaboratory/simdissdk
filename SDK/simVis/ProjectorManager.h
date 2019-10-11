@@ -49,7 +49,7 @@ public:
   * Unregisters a projector.
   * @param proj Projector to remove.
   */
-  void unregisterProjector(ProjectorNode* proj);
+  void unregisterProjector(const ProjectorNode* proj);
 
   /**
   * Clear all projector nodes and group nodes from manager
