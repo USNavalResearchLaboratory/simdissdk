@@ -625,6 +625,15 @@ namespace
     rv += SDK_ASSERT(ts2001 == ts1973);
     const simCore::Seconds& secs1973_2001 = ts1973.secondsSinceRefYear(2001);
     rv += SDK_ASSERT(secs1973_2001.getSeconds() == (3. * simCore::SECPERDAY));
+
+    // Test reference time when result is negative
+    const simCore::TimeStamp ts1990(1990, 1.0);
+    rv += SDK_ASSERT(ts1990.secondsSinceRefYear() == 1.0);
+    rv += SDK_ASSERT(ts1990.secondsSinceRefYear(1990) == 1.0);
+    const int SECPERYEAR = 365 * simCore::SECPERDAY;
+    rv += SDK_ASSERT(ts1990.secondsSinceRefYear(1989) == SECPERYEAR + 1);
+    rv += SDK_ASSERT(ts1990.secondsSinceRefYear(1991) == 1 - SECPERYEAR);
+
     return rv;
   }
   int testTimeStampComparison()

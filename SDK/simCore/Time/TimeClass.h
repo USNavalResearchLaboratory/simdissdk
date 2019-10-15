@@ -282,7 +282,7 @@ namespace simCore
     /**
     * Return the saved seconds, relative to given reference year
     * @param[in ] refYear Reference year to compare; must be >= 1970
-    * @return Seconds since the given reference year
+    * @return Seconds since the given reference year.  This value might be negative.
     */
     Seconds secondsSinceRefYear(int refYear) const;
 
