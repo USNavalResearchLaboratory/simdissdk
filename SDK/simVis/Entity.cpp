@@ -39,6 +39,7 @@ namespace simVis
 {
 
 CoordSurfaceClamping::CoordSurfaceClamping()
+  : useMaxElevPrec_(false)
 {}
 
 CoordSurfaceClamping::~CoordSurfaceClamping()

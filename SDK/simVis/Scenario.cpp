@@ -328,7 +328,8 @@ class ScenarioManager::AboveSurfaceClamping : public PlatformTspiFilter
 public:
   /** Constructor */
   AboveSurfaceClamping()
-    : PlatformTspiFilter()
+    : PlatformTspiFilter(),
+    useMaxElevPrec_(false)
   {
   }
 
