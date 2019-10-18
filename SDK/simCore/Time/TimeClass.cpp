@@ -275,6 +275,8 @@ void TimeStamp::fix_()
 
 Seconds TimeStamp::secondsSinceRefYear(int refYear) const
 {
+  if (referenceYear_ == refYear)
+    return secondsSinceRefYear_;
   const TimeStamp ref(refYear, ZERO_SECONDS);
   return *this - ref;
 }
