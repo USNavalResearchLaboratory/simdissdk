@@ -121,9 +121,10 @@ ConsoleDataModel::~ConsoleDataModel()
   delete pendingTimer_;
   qDeleteAll(lines_);
   qDeleteAll(pendingLines_);
-  Q_FOREACH(ConsoleChannelPtr ptr, channels_.values())
+  auto channels = channels_.values();
+  for (auto it = channels.begin(); it != channels.end(); ++it)
   {
-    ChannelImpl* impl = dynamic_cast<ChannelImpl*>(ptr.get());
+    ChannelImpl* impl = dynamic_cast<ChannelImpl*>((*it).get());
     // Clear out the pointer to "this", in case it survives beyond us
     impl->setConsoleDataModel(NULL);
   }
@@ -276,8 +277,8 @@ void ConsoleDataModel::clear()
     return;
 
   beginRemoveRows(QModelIndex(), 0, lines_.count() - 1);
-  Q_FOREACH(LineEntry* line, lines_)
-    delete line;
+  for (auto it = lines_.begin(); it != lines_.end(); ++it)
+    delete *it;
   lines_.clear();
   endRemoveRows();
 }
@@ -285,8 +286,10 @@ void ConsoleDataModel::clear()
 void ConsoleDataModel::addEntry(simNotify::NotifySeverity severity, const QString& channel, const QString& text)
 {
   // One message per line, omit empty lines
-  Q_FOREACH(QString str, text.split("\n"))
+  auto split = text.split("\n");
+  for (auto it = split.begin(); it != split.end(); ++it)
   {
+    QString& str = *it;
     // Remove instances of carriage return before adding text
     str.remove('\r');
     if (!str.isEmpty())
@@ -338,10 +341,10 @@ void ConsoleDataModel::addPlainEntry_(simNotify::NotifySeverity severity, const 
     consoleEntry.text = text;
 
     // Pass through the filters
-    Q_FOREACH(EntryFilterPtr entryFilter, entryFilters_)
+    for (auto it = entryFilters_.begin(); it != entryFilters_.end(); ++it)
     {
       // If any filter rejects text, return early
-      if (!entryFilter->acceptEntry(consoleEntry))
+      if (!(*it)->acceptEntry(consoleEntry))
         return;
     }
 

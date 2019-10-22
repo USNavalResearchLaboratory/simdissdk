@@ -808,8 +808,9 @@ void DockWidget::setEscapeClosesWidget(bool escapeCloses)
 
 QTabBar* DockWidget::findTabWithTitle_(const QList<QTabBar*>& fromBars, const QString& title, int& index) const
 {
-  Q_FOREACH(QTabBar* tabBar, fromBars)
+  for (auto it = fromBars.begin(); it != fromBars.end(); ++it)
   {
+    QTabBar* tabBar = *it;
     // Now search each tab bar for the tab whose title matches ours
     int numTabs = tabBar->count();
     for (index = 0; index < numTabs; index++)

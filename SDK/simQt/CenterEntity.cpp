@@ -74,9 +74,9 @@ void CenterEntity::centerOnSelection(const QList<uint64_t>& ids)
     // Create a centroid node about the selected ids
     std::vector<simVis::EntityNode*> nodes;
     // Get the entity nodes involved
-    Q_FOREACH(uint64_t id, ids)
+    for (auto it = ids.begin(); it != ids.end(); ++it)
     {
-      simVis::EntityNode* node = scenarioManager_->find<simVis::EntityNode>(id);
+      simVis::EntityNode* node = scenarioManager_->find<simVis::EntityNode>(*it);
       if (node)
         nodes.push_back(node);
     }

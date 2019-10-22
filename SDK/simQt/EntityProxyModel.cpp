@@ -35,10 +35,8 @@ namespace simQt {
 
   EntityProxyModel::~EntityProxyModel()
   {
-    Q_FOREACH(EntityFilter* filter, entityFilters_)
-    {
-      delete filter;
-    }
+    for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
+      delete *it;
     entityFilters_.clear();
   }
 
@@ -106,9 +104,9 @@ namespace simQt {
   QList<QWidget*> EntityProxyModel::filterWidgets(QWidget* newWidgetParent) const
   {
     QList<QWidget*> rv;
-    Q_FOREACH(EntityFilter* filter, entityFilters_)
+    for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
     {
-      QWidget* filterWidget = filter->widget(newWidgetParent);
+      QWidget* filterWidget = (*it)->widget(newWidgetParent);
       if (filterWidget != NULL) // only add the widget if not NULL
         rv.push_back(filterWidget);
     }
@@ -193,35 +191,29 @@ namespace simQt {
     // apply new filter, invalidate current one
     invalidateFilter();
     QMap<QString, QVariant> settings;
-    Q_FOREACH(EntityFilter* filter, entityFilters_)
-    {
-      filter->getFilterSettings(settings);
-    }
+    for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
+      (*it)->getFilterSettings(settings);
     emit filterSettingsChanged(settings);
   }
 
   void EntityProxyModel::getFilterSettings(QMap<QString, QVariant>& settings) const
   {
-    Q_FOREACH(EntityFilter* filter, entityFilters_)
-    {
-      filter->getFilterSettings(settings);
-    }
+    for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
+      (*it)->getFilterSettings(settings);
   }
 
   void EntityProxyModel::setFilterSettings(const QMap<QString, QVariant>& settings)
   {
-    Q_FOREACH(EntityFilter* filter, entityFilters_)
-    {
-      filter->setFilterSettings(settings);
-    }
+    for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
+      (*it)->setFilterSettings(settings);
   }
 
   bool EntityProxyModel::checkFilters_(simData::ObjectId id) const
   {
-    Q_FOREACH(EntityFilter* filter, entityFilters_)
+    for (auto it = entityFilters_.begin(); it != entityFilters_.end(); ++it)
     {
       // only need one failure to fail
-      if (!filter->acceptEntity(id))
+      if (!(*it)->acceptEntity(id))
         return false;
     }
     return true;
