@@ -634,13 +634,13 @@ void EntityTreeComposite::showFilters_()
   filterDialog_->setWindowFlags(filterDialog_->windowFlags() ^ Qt::WindowContextHelpButtonHint);
   QVBoxLayout* layout = new QVBoxLayout(filterDialog_);
   layout->setContentsMargins(2, 2, 2, 2);
-  Q_FOREACH(QWidget* widget, filterWidgets)
+  for (auto it = filterWidgets.begin(); it != filterWidgets.end(); ++it)
   {
     // create a label for each widget, using the widget WindowTitle as text
-    QGroupBox* groupBox = new QGroupBox(widget->windowTitle(), filterDialog_);
+    QGroupBox* groupBox = new QGroupBox((*it)->windowTitle(), filterDialog_);
     QVBoxLayout* gbLayout = new QVBoxLayout(groupBox);
     gbLayout->setContentsMargins(2, 2, 2, 2);
-    gbLayout->addWidget(widget);
+    gbLayout->addWidget(*it);
     groupBox->setLayout(gbLayout);
     layout->addWidget(groupBox);
   }
@@ -713,12 +713,12 @@ void EntityTreeComposite::copySelection_()
     return;
 
   QString clipboardText;
-  Q_FOREACH(uint64_t id, ids)
+  for (auto it = ids.begin(); it != ids.end(); ++it)
   {
     if (!clipboardText.isEmpty())
       clipboardText.append("\n");
 
-    QModelIndex index = model_->index(id);
+    QModelIndex index = model_->index(*it);
     clipboardText.append(model_->data(index, Qt::DisplayRole).toString());
   }
 

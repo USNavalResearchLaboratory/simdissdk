@@ -142,15 +142,15 @@ int PersistentFileLogger::clean(const DetermineRemovable& removable)
 
   int rv = 0;
   // Try to remove the files we just gathered
-  Q_FOREACH(QString filename, filesToDelete)
+  for (auto it = filesToDelete.begin(); it != filesToDelete.end(); ++it)
   {
     // Don't delete current file
-    if (filename_ == (logsDir.path() + "/" +  filename))
+    if (filename_ == (logsDir.path() + "/" +  *it))
       continue;
 
-    if (!logsDir.remove(filename))
+    if (!logsDir.remove(*it))
     {
-      SIM_WARN << "Unable to remove " << filename.toStdString() << "\n";
+      SIM_WARN << "Unable to remove " << (*it).toStdString() << "\n";
       rv = 1;
     }
   }

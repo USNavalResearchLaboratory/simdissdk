@@ -120,10 +120,10 @@ simData::ObjectId EntityTreeItem::id() const
 
 void EntityTreeItem::getChildrenIds(std::vector<uint64_t>& ids) const
 {
-  Q_FOREACH(const EntityTreeItem* child, childItems_)
+  for (auto it = childItems_.begin(); it != childItems_.end(); ++it)
   {
-    ids.push_back(child->id());
-    child->getChildrenIds(ids);
+    ids.push_back((*it)->id());
+    (*it)->getChildrenIds(ids);
   }
 }
 
@@ -414,8 +414,8 @@ void EntityTreeModel::removeEntity_(uint64_t id)
   // remove the item
   itemsById_.erase(id);
   // now remove any children
-  Q_FOREACH(uint64_t deleteId, ids)
-    itemsById_.erase(deleteId);
+  for (auto it = ids.begin(); it != ids.end(); ++it)
+    itemsById_.erase(*it);
 
   endRemoveRows();
 }

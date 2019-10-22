@@ -220,8 +220,9 @@ void WidgetSettings::saveWindowGeometry_(simQt::Settings& settings, const QStrin
     }
   }
 
-  Q_FOREACH(QObject* obj, object->children())
-    WidgetSettings::saveWindowGeometry_(settings, newPath + "/", obj);
+  auto childrenList = object->children();
+  for (auto it = childrenList.begin(); it != childrenList.end(); ++it)
+    WidgetSettings::saveWindowGeometry_(settings, newPath + "/", *it);
 }
 
 int WidgetSettings::loadQSplitter_(simQt::Settings& settings, const QString& path, QSplitter *splitter)
@@ -393,8 +394,9 @@ void WidgetSettings::loadWindowGeometry_(simQt::Settings& settings, const QStrin
   }
 
   // Scan children
-  Q_FOREACH(QObject* obj, object->children())
-    WidgetSettings::loadWindowGeometry_(settings, newPath + "/", obj);
+  auto childrenList = object->children();
+  for (auto it = childrenList.begin(); it != childrenList.end(); ++it)
+    WidgetSettings::loadWindowGeometry_(settings, newPath + "/", *it);
 }
 
 }

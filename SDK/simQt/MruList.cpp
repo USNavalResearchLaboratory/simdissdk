@@ -56,8 +56,8 @@ MruList::MruList(int maxFiles, QObject* parent)
 MruList::~MruList()
 {
   // separators are owned by the generating menu, not by us
-  Q_FOREACH(QAction* separator, separators_)
-    delete separator;
+  for (auto it = separators_.begin(); it != separators_.end(); ++it)
+    delete *it;
 }
 
 int MruList::maximumSize() const
@@ -175,10 +175,8 @@ void MruList::fixActions_()
   // Get rid of NULLs that might be introduced by deleted menus
   separators_.removeAll(NULL);
   // Hide or show separators based on whether any actions are shown
-  Q_FOREACH(QAction* separator, separators_)
-  {
-    separator->setVisible(showSeparators);
-  }
+  for (auto it = separators_.begin(); it != separators_.end(); ++it)
+    (*it)->setVisible(showSeparators);
 
   // Clear action gets the same treatment -- either shown or not shown based on number of entries
   clearAction_->setVisible(showSeparators);

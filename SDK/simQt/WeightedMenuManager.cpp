@@ -36,8 +36,8 @@ namespace
 QDataStream &operator<<(QDataStream &out, const QList<int> &values)
 {
   out << values.count();
-  Q_FOREACH(int value, values)
-    out << value;
+  for (auto it = values.begin(); it != values.end(); ++it)
+    out << *it;
   return out;
 }
 
@@ -113,10 +113,11 @@ void WeightedMenuManager::insertMenuSeparator(QMenu* menu, int weight)
 QMenu* WeightedMenuManager::findMenu_(QWidget* parent, const QString& title) const
 {
   // Loop through each entry in the menu
-  Q_FOREACH(QObject* menuHeader, parent->children())
+  auto childrenList = parent->children();
+  for (auto it = childrenList.begin(); it != childrenList.end(); ++it)
   {
     // Only accept menus in our search (ignore actions)
-    QMenu* topMenu = qobject_cast<QMenu*>(menuHeader);
+    QMenu* topMenu = qobject_cast<QMenu*>(*it);
     if (topMenu == NULL)
       continue;
 

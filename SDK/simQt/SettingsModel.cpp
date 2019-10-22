@@ -360,8 +360,9 @@ public:
   {
     QString name = fullPath();
     QVariant value = itemData_.value(COLUMN_VALUE);
-    Q_FOREACH(const ObserverPtr& ptr, observers_)
+    for (auto it = observers_.begin(); it != observers_.end(); ++it)
     {
+      const ObserverPtr& ptr = *it;
       if (ptr != skipObserver && ptr != NULL)
       {
         ptr->onSettingChange(name, value);
@@ -602,8 +603,9 @@ QModelIndex SettingsModel::addKeyToTree_(const QString& key)
   directories.pop_back();
   bool forceToPrivate = false;
   // Loop through each directory, creating the hierarchy
-  Q_FOREACH(const QString& directory, directories)
+  for (auto it = directories.begin(); it != directories.end(); ++it)
   {
+    const QString& directory = *it;
     if (directory.compare("Private", Qt::CaseInsensitive) == 0)
       forceToPrivate = true;
 
@@ -625,7 +627,7 @@ QModelIndex SettingsModel::addKeyToTree_(const QString& key)
     fromNode = child;
   }
 
-  // Assertion failure means Q_FOREACH has logic failure and ended with a fromNode
+  // Assertion failure means above for loop has logic failure and ended with a fromNode
   // that isn't really correct
   assert(fromNode != NULL);
 
@@ -661,8 +663,10 @@ void SettingsModel::initModelData_(QSettings& settings, SettingsModel::TreeNode*
   settings.beginGroup(parent->path());
 
   // Loop through all groups under this one (recursive)
-  Q_FOREACH(const QString& group, settings.childGroups())
+  auto childGroups = settings.childGroups();
+  for (auto it = childGroups.begin(); it != childGroups.end(); ++it)
   {
+    const QString& group = *it;
     // If parent is private, all its children are private.  If child private, parent is not necessarily private.
     bool localForcePrivate = forceToPrivate;
     if (group.toCaseFolded() == "private")
@@ -681,8 +685,10 @@ void SettingsModel::initModelData_(QSettings& settings, SettingsModel::TreeNode*
   }
 
   // Loop through all leaf nodes under this one
-  Q_FOREACH(const QString& key, settings.childKeys())
+  auto childKeys = settings.childKeys();
+  for (auto it = childKeys.begin(); it != childKeys.end(); ++it)
   {
+    const QString& key = *it;
     TreeNode* node = new TreeNode(noIcon_, key, settings.value(key), parent, forceToPrivate);
     parent->appendChild(node);
     // add pending observer, if it exists, to leaf nodes
@@ -934,8 +940,9 @@ int SettingsModel::loadSettingsFile(const QString& path)
   if (allKeys.empty()) // Empty file
     return 1;
   bool containsLayout = false;
-  Q_FOREACH(const QString& key, allKeys)
+  for (auto it = allKeys.begin(); it != allKeys.end(); ++it)
   {
+    const QString& key = *it;
     // meta data doesn't get treated as a value
     if (key.startsWith(METADATA_GROUP))
       continue;
@@ -1323,10 +1330,10 @@ int SettingsModel::removeObserver(ObserverPtr observer)
 
 void SettingsModel::fireObservers_(const QList<ObserverPtr>& observers, const QString& name, const QVariant& value, ObserverPtr skipThisObserver)
 {
-  Q_FOREACH(const SettingsModel::ObserverPtr& ob, observers)
+  for (auto it = observers.begin(); it != observers.end(); ++it)
   {
-    if (ob != skipThisObserver)
-      ob->onSettingChange(name, value);
+    if (*it != skipThisObserver)
+      (*it)->onSettingChange(name, value);
   }
 }
 
@@ -1345,8 +1352,10 @@ void SettingsModel::initMetaData_(QSettings& settings)
 {
   // We actually store the meta data in Settings!
   settings.beginGroup(METADATA_GROUP);
-  Q_FOREACH(const QString& key, settings.allKeys())
+  auto allKeys = settings.allKeys();
+  for (auto it = allKeys.begin(); it != allKeys.end(); ++it)
   {
+    const QString& key = *it;
     QVariant qvMetaData = settings.value(key, QVariant());
     // Note that in some rare cases, metadata can be lost, so cannot assert on canConvert()
     if (qvMetaData.canConvert<MetaData>())

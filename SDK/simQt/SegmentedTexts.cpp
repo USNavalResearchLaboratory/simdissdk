@@ -48,8 +48,8 @@ static const unsigned int MAX_PRECISION = 6;
 
   void SegmentedTexts::clearParts()
   {
-    Q_FOREACH(SegmentedText* part, segments_)
-      delete part;
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
+      delete *it;
     segments_.clear();
   }
 
@@ -69,8 +69,9 @@ static const unsigned int MAX_PRECISION = 6;
     if (pos == 0)
       return segments_.front();
 
-    Q_FOREACH(SegmentedText* part, segments_)
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
     {
+      auto part = *it;
       current += part->numberOfCharacters();
       // If at the end of a part, but it is a tabStop, then the cursor is in this part
       if ((current == pos) && part->tabStop())
@@ -86,12 +87,12 @@ static const unsigned int MAX_PRECISION = 6;
   {
     size_t current = 0;
 
-    Q_FOREACH(SegmentedText* part, segments_)
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
     {
-      if (inputPart == part)
+      if (inputPart == *it)
         return current;
 
-      current += part->numberOfCharacters();
+      current += (*it)->numberOfCharacters();
     }
 
     assert(false);
@@ -101,8 +102,9 @@ static const unsigned int MAX_PRECISION = 6;
   SegmentedText* SegmentedTexts::nextTabStop(const SegmentedText* inputPart) const
   {
     bool pending = false;
-    Q_FOREACH(SegmentedText* part, segments_)
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
     {
+      auto part = *it;
       if (inputPart == part)
         pending = true;
       else if (pending)
@@ -119,8 +121,9 @@ static const unsigned int MAX_PRECISION = 6;
   SegmentedText* SegmentedTexts::previousTabStop(const SegmentedText* inputPart) const
   {
     SegmentedText* lastStop = NULL;
-    Q_FOREACH(SegmentedText* part, segments_)
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
     {
+      auto part = *it;
       if (part == inputPart)
         return lastStop;  // Return the previous stop, if any
 
@@ -137,8 +140,8 @@ static const unsigned int MAX_PRECISION = 6;
   {
     // Put all the parts together to form a complete line
     QString rv;
-    Q_FOREACH(SegmentedText* part, segments_)
-      rv += part->text();
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
+      rv += (*it)->text();
 
     return rv;
   }
@@ -146,10 +149,10 @@ static const unsigned int MAX_PRECISION = 6;
   QValidator::State SegmentedTexts::setText(const QString& text)
   {
     size_t startLocation = 0;
-    Q_FOREACH(SegmentedText* part, segments_)
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
     {
       QValidator::State state;
-      startLocation = part->setText(text, startLocation, state);
+      startLocation = (*it)->setText(text, startLocation, state);
       if (state != QValidator::Acceptable)
       {
         assert(false);  // should not happen, since the line should be validated before setting
@@ -164,10 +167,10 @@ static const unsigned int MAX_PRECISION = 6;
   {
     size_t startLocation = 0;
     QValidator::State lastState = QValidator::Acceptable;
-    Q_FOREACH(SegmentedText* part, segments_)
+    for (auto it = segments_.begin(); it != segments_.end(); ++it)
     {
       QValidator::State state;
-      startLocation = part->validateText(text, startLocation, state);
+      startLocation = (*it)->validateText(text, startLocation, state);
 
       if (state == QValidator::Invalid)
         return state;  // give up on the first error

@@ -365,10 +365,10 @@ public:
   /** Searches children for one that has the layer provided, returning a row or NULL on failure */
   MapDataModel::Item* itemByLayer(const osgEarth::Layer* layer) const
   {
-    Q_FOREACH(MapDataModel::Item* child, children_)
+    for (auto it = children_.begin(); it != children_.end(); ++it)
     {
-      if (child->layerPtr().value<void*>() == layer)
-        return child;
+      if ((*it)->layerPtr().value<void*>() == layer)
+        return (*it);
     }
     return NULL;
   }
