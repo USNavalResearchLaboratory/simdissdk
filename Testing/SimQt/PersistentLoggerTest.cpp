@@ -118,8 +118,9 @@ int removeAllLogs(const QString& filePattern=WILDCARD_PATTERN)
   // Set up the search filter and remove the files
   path.setNameFilters(QStringList() << filePattern);
   int rv = 0;
-  Q_FOREACH(QString filename, path.entryList(QDir::Files))
-    rv += SDK_ASSERT(path.remove(filename));
+  auto entryList = path.entryList(QDir::Files);
+  for (auto it = entryList.begin(); it != entryList.end(); ++it)
+    rv += SDK_ASSERT(path.remove(*it));
   return rv;
 }
 
