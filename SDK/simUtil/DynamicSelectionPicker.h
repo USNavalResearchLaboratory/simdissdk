@@ -80,7 +80,11 @@ private:
   /** Special case calculation for CustomRenderings, called by calculateSquaredRange_() automatically, returning 0 on success */
   int calculateCustomRenderRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::CustomRenderingNode& customNode, double& rangeSquared) const;
   /** Convenience method to find the squared range from the cursor to the closest point within ecefVec, returning 0 on success */
-  int calculateScreenRange_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const;
+  int calculateScreenRangePoints_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const;
+  /** Convenience method to find the squared range from the cursor to the line segments formed by treating ecefVec as successive end points, returning 0 on success */
+  int calculateScreenRangeSegments_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const;
+  /** Finds the squared distance between point p and the closest point on the line described by a and b */
+  double lineSegmentDistanceSquared_(const osg::Vec2d& a, const osg::Vec2d& b, const osg::Vec2d& p) const;
 
   class RepickEventHandler;
 
