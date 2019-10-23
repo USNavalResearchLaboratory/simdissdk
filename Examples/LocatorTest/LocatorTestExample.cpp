@@ -26,8 +26,8 @@
  * A unit test program that validates the behavior of the Locator subsystem.
  */
 
+#include "osgEarth/LineDrawable"
 #include "osgEarth/StringUtils"
-#include "simVis/LineDrawable.h"
 #include "osgEarthSymbology/Style"
 #include "osgEarthUtil/LatLongFormatter"
 #include "osgEarthUtil/MGRSFormatter"
