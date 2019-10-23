@@ -23,9 +23,9 @@
 
 #include "osgEarth/Capabilities"
 #include "osgEarth/Horizon"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/Registry"
 #include "osgEarth/VirtualProgram"
-#include "simVis/LineDrawable.h"
 
 #include "simNotify/Notify.h"
 #include "simData/DataTable.h"

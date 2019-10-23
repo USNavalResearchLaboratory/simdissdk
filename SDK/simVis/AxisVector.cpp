@@ -20,7 +20,7 @@
  *
  */
 #include "osg/Geode"
-#include "simVis/LineDrawable.h"
+#include "osgEarth/LineDrawable"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"

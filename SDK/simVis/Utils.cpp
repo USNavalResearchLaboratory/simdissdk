@@ -38,6 +38,7 @@
 
 #include "osgEarth/Capabilities"
 #include "osgEarth/CullingUtils"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
 #include "osgEarth/Utils"
@@ -61,7 +62,6 @@
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
 #include "simVis/DisableDepthOnAlpha.h"
-#include "simVis/LineDrawable.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"

@@ -20,7 +20,7 @@
  *
  */
 #include "osgGA/GUIActionAdapter"
-#include "simVis/LineDrawable.h"
+#include "osgEarth/LineDrawable"
 #include "simVis/View.h"
 #include "simVis/Utils.h"
 #include "simUtil/ResizeViewManipulator.h"

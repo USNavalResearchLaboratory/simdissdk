@@ -19,7 +19,6 @@ set(SHADER_FILES
     DisableDepthOnAlpha.frag.glsl
     Flashing.frag.glsl
     GlowHighlight.frag.glsl
-    LineDrawable.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
     Picker.vert.glsl
@@ -80,7 +79,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
-    ${VIS_INC}LineDrawable.h
     ${VIS_INC}LobGroup.h
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
@@ -215,7 +213,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
     ${VIS_SRC}Laser.cpp
-    ${VIS_SRC}LineDrawable.cpp
     ${VIS_SRC}LobGroup.cpp
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp

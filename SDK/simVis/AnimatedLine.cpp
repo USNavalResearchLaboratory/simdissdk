@@ -25,7 +25,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarth/ECEF"
-#include "simVis/LineDrawable.h"
+#include "osgEarth/LineDrawable"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/CoordinateConverter.h"

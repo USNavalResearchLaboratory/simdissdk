@@ -21,11 +21,10 @@
  */
 #include "osg/Depth"
 #include "osgText/Text"
-#include "osgEarth/VirtualProgram"
-#include "osgEarth/ShaderGenerator"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/Registry"
-#include "simVis/LineDrawable.h"
-
+#include "osgEarth/ShaderGenerator"
+#include "osgEarth/VirtualProgram"
 #include "simCore/Calc/Angle.h"
 #include "simVis/Beam.h"
 #include "simVis/Gate.h"
