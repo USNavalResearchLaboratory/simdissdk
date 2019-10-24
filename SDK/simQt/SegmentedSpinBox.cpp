@@ -127,6 +127,7 @@ private:
     lineEdit()->setText(completeLine_->text());
     // The text may truncate the value, so keep a copy so that the exact value can be returned if the text does not change
     timeStamp_ = value;
+    lastEditedTime_ = value;
     timeString_ = completeLine_->text();
   }
 
