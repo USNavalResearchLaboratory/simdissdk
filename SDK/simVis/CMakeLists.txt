@@ -432,7 +432,7 @@ target_include_directories(simVis PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simVis PUBLIC simData simCore simNotify
-    ${OSG_ALL_LIBDEPENDENCIES} ${OSGEARTH_ALL_LIBDEPENDENCIES})
+    ${OSG_ALL_LIBDEPENDENCIES} OSGEARTH)
 target_link_libraries(simVis PRIVATE VSI::GL)
 
 if(SIMVIS_SHARED)
