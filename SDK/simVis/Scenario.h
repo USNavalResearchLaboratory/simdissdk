@@ -29,7 +29,6 @@
 #include "osg/Group"
 #include "osg/ref_ptr"
 #include "osg/View"
-#include "osgEarth/Version"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Revisioning"
 #include "simVis/ScenarioDataStoreAdapter.h"
@@ -455,11 +454,7 @@ protected:
   ScenarioLosCreator* losCreator_;
 
   /** Association between the EntityNode, the data store, and the entity's update slice */
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-  class EntityRecord : public osgEarth::Util::GeoObject
-#else
   class EntityRecord : public osg::Group
-#endif
   {
   public:
     /** Constructs a new entity record */

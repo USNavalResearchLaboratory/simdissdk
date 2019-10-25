@@ -26,7 +26,6 @@
 #include "osg/Geometry"
 #include "osgText/Text"
 
-#include "osgEarth/Version"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/Color"

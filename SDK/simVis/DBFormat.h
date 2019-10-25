@@ -26,11 +26,9 @@
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/URI"
-#include "osgEarth/Version"
 #include "simCore/Common/Common.h"
 #include "simCore/Common/Export.h"
 #include "simCore/Time/TimeClass.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 
 namespace simVis

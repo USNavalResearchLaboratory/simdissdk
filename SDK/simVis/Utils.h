@@ -45,7 +45,6 @@
 #include "osgEarth/Units"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderFactory"
-#include "osgEarth/Version"
 
 // MACROS to test for changes in protobuf properties.
 

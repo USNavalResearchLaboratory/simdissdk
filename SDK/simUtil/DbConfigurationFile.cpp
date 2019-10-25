@@ -25,13 +25,7 @@
 #include "osgDB/FileNameUtils"
 #include "osgEarth/ImageLayer"
 #include "osgEarth/Map"
-#include "osgEarth/Version"
-
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-  #include "osgEarthDrivers/engine_rex/RexTerrainEngineOptions"
-#else
-  #include "osgEarth/TerrainOptions"
-#endif
+#include "osgEarth/TerrainOptions"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
@@ -39,7 +33,6 @@
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/AlphaColorFilter.h"
 #include "simVis/DBOptions.h"
 #include "simVis/DBFormat.h"
@@ -114,15 +107,8 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     SAFETRYBEGIN;
     osg::ref_ptr<osgEarth::Map> map = simUtil::DbConfigurationFile::loadLegacyConfigFile(adjustedConfigFile, quiet);
 
-#if OSGEARTH_MIN_VERSION_REQUIRED(3,0,0)
     mapNode = new osgEarth::MapNode(map.get());
     simVis::SceneManager::initializeTerrainOptions(mapNode);
-#else
-    // Set up a map node with the supplied options
-    osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
-    simVis::SceneManager::initializeTerrainOptions(options);
-    mapNode = new osgEarth::MapNode(map.get(), options);
-#endif
 
     SAFETRYEND((std::string("legacy SIMDIS 9 .txt processing of file ") + configFile));
   }
@@ -139,11 +125,7 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
 
   // set the map's name
   if (mapNode->getMap() != NULL)
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     mapNode->getMap()->setMapName(osgDB::getSimpleFileName(adjustedConfigFile));
-#else
-    mapNode->getMap()->setName(osgDB::getSimpleFileName(adjustedConfigFile));
-#endif
   return 0;
 }
 
@@ -395,14 +377,8 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
 
           imageLayer->setOpacity(opacity);
           imageLayer->setVisible(active);
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
           imageLayer->setEnabled(active);
-#endif
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
           map->addLayer(imageLayer);
-#else
-          map->addImageLayer(imageLayer);
-#endif
         }
         if (altitudeSet)
         {
@@ -444,14 +420,8 @@ void DbConfigurationFile::parseCloudLayers_(const std::vector<std::string>& toke
       imageLayer->setName(layerName);
 
       imageLayer->setVisible(false);
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
       imageLayer->setEnabled(false);
-#endif
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
       map->addLayer(imageLayer);
-#else
-      map->addImageLayer(imageLayer);
-#endif
 
       // process the cloud processing thresholds
       const std::string opaqueStr = DbConfigurationFile::findTokenValue_(tokens, cloud_opaque_keyword);

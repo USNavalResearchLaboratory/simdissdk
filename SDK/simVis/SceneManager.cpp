@@ -30,6 +30,7 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Horizon"
+#include "osgEarth/HorizonClipPlane"
 #include "osgEarth/ModelLayer"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/ObjectIndex"
@@ -38,10 +39,6 @@
 #include "osgEarth/TerrainOptions"
 #include "osgEarth/Version"
 #include "osgEarth/VirtualProgram"
-
-#if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
-#include "osgEarth/HorizonClipPlane"
-#endif
 
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
@@ -209,15 +206,10 @@ void SceneManager::init_()
   // an empty map for starters
   osgEarth::Map* map = getMap();
   if (map)
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->setMapName("Empty Map");
-#else
-    map->setName("Empty Map");
-#endif
 
   setName("simVis::SceneManager");
 
-#if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
   // Install a clip node. This will activate and maintain our visible-horizon
   // clip plane for geometry (or whatever else we want clipped). Then, to activate
   // clipping on a graph, just enable the GL_CLIP_DISTANCE0+CLIPPLANE_VISIBLE_HORIZON
@@ -227,22 +219,6 @@ void SceneManager::init_()
   osgEarth::HorizonClipPlane* hcp = new osgEarth::HorizonClipPlane();
   hcp->setClipPlaneNumber(CLIPPLANE_VISIBLE_HORIZON);
   addCullCallback(hcp);
-#else // osgEarth 2.9 or older, use ClipToGeocentricHorizon object
-  // Install a clip node. This will activate and maintain our visible-horizon
-  // clip plane for geometry (or whatever else we want clipped). Then, to activate
-  // clipping on a graph, just enable the GL_CLIP_PLANE0 mode on its stateset; or
-  // you can use osgEarth symbology and use RenderSymbol::clipPlane() = 0 in
-  // conjunction with RenderSymbol::depthTest() = false.
-  osg::ClipNode*  clipNode = new osg::ClipNode();
-  osg::ClipPlane* horizonClipPlane = new osg::ClipPlane(CLIPPLANE_VISIBLE_HORIZON);
-  clipNode->addClipPlane(horizonClipPlane);
-  clipNode->addCullCallback(new osgEarth::ClipToGeocentricHorizon(getMap()->getSRS(), horizonClipPlane));
-  addChild(clipNode);
-  // Install shader snippet to activate clip planes in the shader
-  osgEarth::VirtualProgram* clipVp = osgEarth::VirtualProgram::getOrCreate(this->getOrCreateStateSet());
-  simVis::Shaders package;
-  package.load(clipVp, package.setClipVertex());
-#endif
 
   // Use the labeling render bin for our labels
   osgEarth::ScreenSpaceLayoutOptions screenOptions;
@@ -384,11 +360,7 @@ void SceneManager::setMap(osgEarth::Map* map)
   if (mapNode_.valid())
   {
     osgEarth::Map* currentMap = mapNode_->getMap();
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     currentMap->setMapName(map->getMapName());
-#else
-    currentMap->setName(map->getName());
-#endif
     updateImageLayers_(*map, currentMap);
     updateElevationLayers_(*map, currentMap);
     updateModelLayers_(*map, currentMap);
@@ -406,11 +378,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
   // first, figure out what layers we already have
   std::map<std::string, osgEarth::ImageLayer*> loadedLayerHash;
   osgEarth::ImageLayerVector currentLayers;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   currentMap->getLayers(currentLayers);
-#else
-  currentMap->getImageLayers(currentLayers);
-#endif
   for (osgEarth::ImageLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
   {
     std::string layerHash = getLayerHash_(iter->get());
@@ -419,11 +387,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
 
   // now figure out which layers we need to add
   osgEarth::ImageLayerVector newLayers;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   newMap.getLayers(newLayers);
-#else
-  newMap.getImageLayers(newLayers);
-#endif
   for (osgEarth::ImageLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
   {
     std::string layerHash = getLayerHash_(iter->get());
@@ -432,12 +396,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
     if (loadedLayerIter == loadedLayerHash.end())
     {
       if ((*iter)->getStatus().isOK())
-
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         currentMap->addLayer(iter->get());
-#else
-        currentMap->addImageLayer(iter->get());
-#endif
       else
       {
         SIM_ERROR << "Image Layer " << (*iter)->getName() << " could not be loaded" << std::endl;
@@ -454,13 +413,7 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
 
   // remove any layers leftover from currentMap not in the newMap
   for (std::map<std::string, osgEarth::ImageLayer*>::const_iterator iter = loadedLayerHash.begin(); iter != loadedLayerHash.end(); ++iter)
-  {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     currentMap->removeLayer(iter->second);
-#else
-    currentMap->removeImageLayer(iter->second);
-#endif
-  }
 }
 
 void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth::Map* currentMap)
@@ -468,11 +421,7 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
   // first, figure out what layers we already have
   std::map<std::string, osgEarth::ElevationLayer*> loadedLayerHash;
   osgEarth::ElevationLayerVector currentLayers;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   currentMap->getLayers(currentLayers);
-#else
-  currentMap->getElevationLayers(currentLayers);
-#endif
   for (osgEarth::ElevationLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
   {
     std::string layerHash = getLayerHash_(iter->get());
@@ -481,23 +430,14 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
 
   // now figure out which layers we need to add
   osgEarth::ElevationLayerVector newLayers;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   newMap.getLayers(newLayers);
-#else
-  newMap.getElevationLayers(newLayers);
-#endif
   for (osgEarth::ElevationLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
   {
     std::string layerHash = getLayerHash_(iter->get());
     if (loadedLayerHash.find(layerHash) == loadedLayerHash.end())
     {
       if ((*iter)->getStatus().isOK())
-
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         currentMap->addLayer(iter->get());
-#else
-        currentMap->addElevationLayer(iter.get());
-#endif
       else
       {
         SIM_ERROR << "Elevation Layer " << (*iter)->getName() << " could not be loaded" << std::endl;
@@ -509,49 +449,29 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
 
   // remove any layers leftover from currentMap not in the newMap
   for (std::map<std::string, osgEarth::ElevationLayer*>::const_iterator iter = loadedLayerHash.begin(); iter != loadedLayerHash.end(); ++iter)
-  {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     currentMap->removeLayer(iter->second);
-#else
-    currentMap->removeElevationLayer(iter->second);
-#endif
-  }
 }
 
 void SceneManager::updateModelLayers_(const osgEarth::Map& newMap, osgEarth::Map* currentMap)
 {
   // first, remove all current model layers
   osgEarth::ModelLayerVector currentLayers;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   currentMap->getLayers(currentLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
     currentMap->removeLayer(iter->get());
-#else
-  currentMap->getModelLayers(currentLayers);
-  for (osgEarth::ModelLayerVector::const_iterator iter = currentLayers.begin(); iter != currentLayers.end(); ++iter)
-    currentMap->removeModelLayer(iter->get());
-#endif
 
   // now add the new model layers
   osgEarth::ModelLayerVector newLayers;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   newMap.getLayers(newLayers);
   for (osgEarth::ModelLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
     currentMap->addLayer(iter->get());
-#else
-  newMap.getModelLayers(newLayers);
-  for (osgEarth::ModelLayerVector::const_iterator iter = newLayers.begin(); iter != newLayers.end(); ++iter)
-    currentMap->addModelLayer(iter->get());
-#endif
 }
 
 void SceneManager::applyImageLayerDisplaySettings_(const osgEarth::ImageLayer& sourceLayer, osgEarth::ImageLayer* destLayer) const
 {
   destLayer->setOpacity(sourceLayer.getOpacity());
   destLayer->setVisible(sourceLayer.getVisible());
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
   destLayer->setEnabled(sourceLayer.getEnabled());
-#endif
 }
 
 std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
@@ -560,23 +480,8 @@ std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
 
   // system will generate a cacheId. technically, this is not quite right, we need to remove everything that's
   // an image layer property and just use the tilesource properties.
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   const auto& layerOptions = layer->options();
-#else
-  const auto& layerOptions = layer->getTerrainLayerRuntimeOptions();
-#endif
-#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
-  osgEarth::Config layerConf  = layerOptions.getConfig(true);
-#else
-  osgEarth::Config layerConf  = layerOptions.getConfig();
-#endif
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-  osgEarth::Config driverConf = layerOptions.driver()->getConfig();
-  // remove everything from driverConf that also appears in layerConf
-  osgEarth::Config hashConf = driverConf - layerConf;
-#else
-  osgEarth::Config hashConf = layerConf;
-#endif
+  osgEarth::Config hashConf = layerOptions.getConfig();
   // remove cache-control properties before hashing.
   hashConf.remove("cache_only");
   hashConf.remove("cache_enabled");

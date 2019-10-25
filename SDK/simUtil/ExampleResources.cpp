@@ -27,7 +27,6 @@
 #include "osgEarth/MBTiles"
 #include "osgEarth/Registry"
 #include "osgEarth/TMS"
-#include "osgEarth/Version"
 #include "osgEarthDrivers/cache_filesystem/FileSystemCache"
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
 
@@ -35,7 +34,6 @@
 #include "simCore/String/Utils.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simData/DataStore.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/DBOptions.h"
 #include "simVis/Gl3Utils.h"
 #include "simVis/Registry.h"
@@ -52,27 +50,6 @@ const char PATH_SEP = '/';
 #endif
 
 using namespace osgEarth::Drivers;
-
-namespace {
-
-// Stub functions to replace deprecated add__Layer methods in Map
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-void addLayer(osgEarth::Map* map, osgEarth::Layer* layer)
-{
-  map->addLayer(layer);
-}
-#else
-void addLayer(osgEarth::Map* map, osgEarth::ImageLayer* layer)
-{
-  map->addImageLayer(layer);
-}
-void addLayer(osgEarth::Map* map, osgEarth::ElevationLayer* layer)
-{
-  map->addElevationLayer(layer);
-}
-#endif
-
-}
 
 /// true if argv contains the pattern string.
 bool simExamples::hasArg(const std::string& pattern, int argc, char** argv)
@@ -125,12 +102,12 @@ Map* simExamples::createRemoteWorldMap()
   TMSImageLayer* imagery = new TMSImageLayer();
   imagery->setName("simdis.imagery");
   imagery->setURL(EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS);
-  addLayer(map, imagery);
+  map->addLayer(imagery);
 
   TMSElevationLayer* elevation = new TMSElevationLayer();
   elevation->setName("simdis.elevation");
   elevation->setURL(EXAMPLE_ELEVATION_LAYER_TMS);
-  addLayer(map, elevation);
+  map->addLayer(elevation);
 
   return map;
 }
@@ -143,13 +120,13 @@ Map* simExamples::createWorldMapWithFlatOcean()
   TMSImageLayer* imagery = new TMSImageLayer();
   imagery->setName("simdis.imagery");
   imagery->setURL(EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS);
-  addLayer(map, imagery);
+  map->addLayer(imagery);
 
   TMSElevationLayer* elevation = new TMSElevationLayer();
   elevation->setName("simdis.elevation");
   elevation->setURL(EXAMPLE_ELEVATION_LAYER_TMS);
   elevation->setMinValidValue(-1.0);
-  addLayer(map, elevation);
+  map->addLayer(elevation);
 
   return map;
 }
@@ -180,21 +157,21 @@ Map* simExamples::createHawaiiMap()
   MBTilesImageLayer* baseLayer = new MBTilesImageLayer();
   baseLayer->setName("Whole Earth");
   baseLayer->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB);
-  addLayer(map, baseLayer);
+  map->addLayer(baseLayer);
 
   // the PDC Hawaii hi-res inset:
   MBTilesImageLayer* inset = new MBTilesImageLayer();
   inset->setName("Kauai Niihau");
   inset->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB);
   inset->setMinLevel(3u);
-  addLayer(map, inset);
+  map->addLayer(inset);
 
   // the USGS elevation data inset for Kauai
   MBTilesElevationLayer* elev = new MBTilesElevationLayer();
   elev->setName("Kauai Elevation");
   elev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB);
   elev->setMinLevel(7u);
-  addLayer(map, elev);
+  map->addLayer(elev);
 
   return map;
 }
@@ -213,25 +190,25 @@ Map* simExamples::createHawaiiMapLocalWithBathymetry()
   MBTilesImageLayer* baseLayer = new MBTilesImageLayer();
   baseLayer->setName("simdis.imagery.topo2");
   baseLayer->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB);
-  addLayer(map, baseLayer);
+  map->addLayer(baseLayer);
 
   // the PDC Hawaii hi-res inset:
   MBTilesImageLayer* pdc = new MBTilesImageLayer();
   pdc->setName("simdis.imagery.pdc");
   pdc->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB);
-  addLayer(map, pdc);
+  map->addLayer(pdc);
 
   // An elevation map for the Hawaii area
   GDALElevationLayer* baseElev = new GDALElevationLayer();
   baseElev->setName("simdis.elevation.hawaii-srtm30plus-bathy");
   baseElev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HAWAII_LOCAL_BATHYMETRY);
-  addLayer(map, baseElev);
+  map->addLayer(baseElev);
 
   // the USGS elevation data inset for Kauai
   MBTilesElevationLayer* insetElev = new MBTilesElevationLayer();
   insetElev->setName("simdis.elevation.usgs-elevation");
   insetElev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB);
-  addLayer(map, insetElev);
+  map->addLayer(insetElev);
 
   return map;
 }

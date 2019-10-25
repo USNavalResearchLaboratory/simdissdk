@@ -24,7 +24,6 @@
 #include <QIcon>
 #include "osgEarth/Map"
 #include "simCore/Calc/Math.h"
-#include "simVis/osgEarthVersion.h"
 #include "simQt/MapDataModel.h"
 
 namespace simQt {
@@ -58,36 +57,25 @@ MapReindexer::~MapReindexer()
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ImageLayerVector& imageLayers)
 {
   if (map != NULL)
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->getLayers(imageLayers);
-#else
-    map->getImageLayers(imageLayers);
-#endif
 }
 
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers)
 {
   if (map != NULL)
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->getLayers(elevationLayers);
-#else
-    map->getElevationLayers(elevationLayers);
-#endif
 }
 
 void MapReindexer::getLayers(osgEarth::Map* map, FeatureModelLayerVector& modelLayers)
 {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   if (map != NULL)
     map->getLayers(modelLayers);
-#endif
 }
 
 void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers)
 {
   if (map == NULL)
     return;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   osgEarth::VisibleLayerVector allLayers;
   map->getLayers(allLayers);
   // pass along only layers that are not image, elevation, or model
@@ -102,8 +90,6 @@ void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVect
       continue;
     otherLayers.push_back(*iter);
   }
-
-#endif
 }
 
 unsigned int MapReindexer::layerTypeIndex(osgEarth::ImageLayer* layer) const
@@ -1386,30 +1372,9 @@ QVariant MapDataModel::layerMapIndex_(osgEarth::Layer* layer) const
     return QVariant();
 
   unsigned int index = MapReindexer::INVALID_INDEX;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   osgEarth::LayerVector layers;
   map_->getLayers(layers);
   index = indexOf(layers, layer);
-#else
-  if (dynamic_cast<osgEarth::ImageLayer*>(layer))
-  {
-    osgEarth::ImageLayerVector images;
-    MapReindexer::getLayers(map_.get(), images);
-    index = indexOf(images, static_cast<osgEarth::ImageLayer*>(layer));
-  }
-  else if (dynamic_cast<osgEarth::ElevationLayer*>(layer))
-  {
-    osgEarth::ElevationLayerVector elevs;
-    MapReindexer::getLayers(map_.get(), elevs);
-    index = indexOf(elevs, static_cast<osgEarth::ElevationLayer*>(layer));
-  }
-  else if (dynamic_cast<osgEarth::FeatureModelLayer*>(layer))
-  {
-    FeatureModelLayerVector models;
-    MapReindexer::getLayers(map_.get(), models);
-    index = indexOf(models, static_cast<osgEarth::FeatureModelLayer*>(layer));
-  }
-#endif
 
   if (index != MapReindexer::INVALID_INDEX)
     return index;

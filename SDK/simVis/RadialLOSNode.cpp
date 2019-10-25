@@ -25,7 +25,6 @@
 #include "osgEarth/Terrain"
 #include "simNotify/Notify.h"
 #include "simVis/Constants.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/Utils.h"
 #include "simVis/RadialLOSNode.h"
 
@@ -52,9 +51,7 @@ RadialLOSNode::RadialLOSNode(osgEarth::MapNode* mapNode)
   drapeable_ = new osgEarth::DrapeableNode();
   getPositionAttitudeTransform()->addChild(drapeable_);
   drapeable_->addChild(geode_);
-#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
   drapeable_->setMapNode(mapNode);
-#endif
 
   setMapNode(mapNode);
 }
@@ -74,9 +71,7 @@ void RadialLOSNode::setMapNode(osgEarth::MapNode* mapNode)
     mapNode->getTerrain()->addTerrainCallback(callbackHook_.get());
 
   GeoPositionNode::setMapNode(mapNode);
-#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
   drapeable_->setMapNode(mapNode);
-#endif
 
   // re-apply the position
   setCoordinate(coord_);
@@ -192,11 +187,7 @@ void RadialLOSNode::updateDataModel(const osgEarth::GeoExtent& extent,
 {
   if (getMapNode())
   {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,8,0)
     osgEarth::GeoCircle circle = extent.computeBoundingGeoCircle();
-#else
-    const osgEarth::GeoCircle& circle = extent.getBoundingGeoCircle();
-#endif
     if (bound_.intersects(circle))
     {
       if (los_.update(getMapNode(), extent, patch))

@@ -28,7 +28,6 @@
 #include "osgEarth/GLUtils"
 #include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
-#include "osgEarth/Version"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Sky"
 
@@ -36,7 +35,6 @@
 #include "simCore/Calc/Calculations.h"
 #include "simNotify/Notify.h"
 
-#include "simVis/osgEarthVersion.h"
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
@@ -1469,9 +1467,7 @@ void View::enableOverheadMode(bool enableOverhead)
   if (updateCameraNodeVisitor_.valid() == false)
   {
     updateCameraNodeVisitor_ = new osg::NodeVisitor();
-#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,7,0)
     manip->setUpdateCameraNodeVisitor(updateCameraNodeVisitor_.get());
-#endif
   }
 
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();
@@ -1493,13 +1489,11 @@ void View::enableOverheadMode(bool enableOverhead)
     // is disabled later.
     if (orthoEnabled_ == false)
     {
-#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,6,0)
       // Only go into orthographic past 1.6 -- before then, the LDB would cause significant issues with platform and GOG display
       getCamera()->setProjectionMatrixAsOrtho(-1.0, 1.0, -1.0, 1.0, -5e6, 5e6);
       getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
       if (overheadNearFarCallback_->referenceCount() == 1)
         getCamera()->addCullCallback(overheadNearFarCallback_);
-#endif
     }
 
     // disable elevation rendering on the terrain surface
@@ -1507,8 +1501,7 @@ void View::enableOverheadMode(bool enableOverhead)
   }
   else
   {
-    // quitely revert to the perspective camera if necessary
-#if SDK_OSGEARTH_VERSION_GREATER_THAN(1,6,0)
+    // quietly revert to the perspective camera if necessary
     if (orthoEnabled_ == false)
     {
       const osg::Viewport* vp = getCamera()->getViewport();
@@ -1531,7 +1524,6 @@ void View::enableOverheadMode(bool enableOverhead)
       getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
       getCamera()->removeCullCallback(overheadNearFarCallback_);
     }
-#endif
 
     // remove elevation rendering override.
     cameraState->removeDefine("OE_TERRAIN_RENDER_ELEVATION");

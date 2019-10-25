@@ -22,7 +22,6 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarth/LineDrawable"
-#include "osgEarth/Version"
 #include "osgEarth/Ephemeris"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
@@ -165,12 +164,8 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
   osgEarth::LineDrawable* moonGeom = geomGroup_->getLineDrawable(VECTOR_MOON);
   if (prefs.drawmoonvec())
   {
-#if OSGEARTH_VERSION_LESS_THAN(2,10,0)
-    rebuildLine_(VECTOR_MOON, ephemeris_->getMoonPositionECEF(dateTime), lineLength);
-#else
     const osgEarth::CelestialBody& moon = ephemeris_->getMoonPosition(dateTime);
     rebuildLine_(moonGeom, moon.geocentric, lineLength);
-#endif
     moonGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);
   }
   else
@@ -180,12 +175,8 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
   osgEarth::LineDrawable* sunGeom = geomGroup_->getLineDrawable(VECTOR_SUN);
   if (prefs.drawsunvec())
   {
-#if OSGEARTH_VERSION_LESS_THAN(2,10,0)
-    rebuildLine_(sunGeom, ephemeris_->getSunPositionECEF(dateTime), lineLength);
-#else
     const osgEarth::CelestialBody& sun = ephemeris_->getSunPosition(dateTime);
     rebuildLine_(sunGeom, sun.geocentric, lineLength);
-#endif
     sunGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);
   }
   else

@@ -22,13 +22,11 @@
 #include "osg/Depth"
 #include "osg/BlendFunc"
 #include "osgUtil/CullVisitor"
-#include "osgEarth/Version"
 #include "osgEarth/StringUtils"
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/VirtualProgram"
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/Projector.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
@@ -54,10 +52,10 @@ simData::ObjectId ProjectorManager::ProjectorLayer::id() const
 }
 
 /**
- * Cull callback for a projector layer that will update the 
- * texture projection matrix. Since we need the inverse view 
+ * Cull callback for a projector layer that will update the
+ * texture projection matrix. Since we need the inverse view
  * matrix to properly transform from view coords to texture
- * coords, we have to install this each frame. Doing it in 
+ * coords, we have to install this each frame. Doing it in
  * the shader would cause precision loss and jittering.
  */
 class UpdateProjMatrix : public osgEarth::Layer::TraversalCallback
@@ -134,7 +132,6 @@ void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
     // reinitialize the projection system
     if (mapNode_.valid())
     {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
       // Get existing layers in the new map
       osgEarth::LayerVector currentLayers;
       osgEarth::Map* map = mapNode_->getMap();
@@ -161,7 +158,6 @@ void ProjectorManager::setMapNode(osgEarth::MapNode* mapNode)
           map->addLayer(piter->get());
       }
       map->addMapCallback(mapListener_.get());
-#endif
     }
   }
 }
@@ -174,7 +170,6 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
 
   projectors_.push_back(proj);
 
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   ProjectorLayer* layer = new ProjectorLayer(proj->getId());
   layer->setName("SIMSDK Projector");
   layer->setCullCallback(new UpdateProjMatrix(proj));
@@ -182,9 +177,6 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   projectorLayers_.push_back(layer);
 
   mapNode_->getMap()->addLayer(layer);
-#else
-  osg::StateSet* projStateSet = new osg::StateSet();
-#endif
 
   // shader code to render the projectors
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(projStateSet);
@@ -213,12 +205,10 @@ void ProjectorManager::unregisterProjector(const ProjectorNode* proj)
     ProjectorLayer* layer = i->get();
     if (layer->id() == proj->getId())
     {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
       // Remove it from the map:
       osg::ref_ptr<osgEarth::MapNode> mapNode;
       if (mapNode_.lock(mapNode))
         mapNode->getMap()->removeLayer(layer);
-#endif
 
       // Remove it from the local vector:
       projectorLayers_.erase(i);
@@ -232,7 +222,6 @@ void ProjectorManager::unregisterProjector(const ProjectorNode* proj)
 
 void ProjectorManager::clear()
 {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   // Remove it from the map:
   osg::ref_ptr<osgEarth::MapNode> mapNode;
   if (mapNode_.lock(mapNode))
@@ -243,10 +232,6 @@ void ProjectorManager::clear()
     }
   }
   projectorLayers_.clear();
-#else
-  groupMap_.clear();
-  removeChildren(0, getNumChildren());
-#endif
 
   projectors_.clear();
 }

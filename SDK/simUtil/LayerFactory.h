@@ -26,7 +26,6 @@
 #include <string>
 #include "osg/Vec4f"
 #include "simCore/Common/Common.h"
-#include "osgEarth/Version"
 #include "osgEarth/FeatureModelLayer"
 
 namespace osgEarth

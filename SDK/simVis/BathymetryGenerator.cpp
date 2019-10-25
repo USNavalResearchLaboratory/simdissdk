@@ -22,16 +22,8 @@
 #include "osgEarth/VirtualProgram"
 #include "osgEarth/ShaderLoader"
 #include "simNotify/Notify.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/Shaders.h"
 #include "simVis/BathymetryGenerator.h"
-
-// ModifyTileBoundingBoxCallback was added post-2.10, requiring osgEarth 0fb5647
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1, 10, 0)
-#define HAS_MODIFYTILEBOUNDINGBOXCALLBACK 1
-#else
-/* #undef HAS_MODIFYTILEBOUNDINGBOXCALLBACK */
-#endif
 
 namespace simVis {
 
@@ -48,12 +40,7 @@ static const char* OFFSET_UNIFORM = "simVis_BathymetryGenerator_offset";
  * The ModifyTileBoundingBoxCallback was added as part of osgEarth 0fb5647 and is only
  * available in the newest versions of osgEarth.
  */
-class BathymetryGenerator::AlterTileBBoxCB
-#ifdef HAS_MODIFYTILEBOUNDINGBOXCALLBACK
-  : public osgEarth::TerrainEngineNode::ModifyTileBoundingBoxCallback
-#else
-  : public osg::Referenced
-#endif
+class BathymetryGenerator::AlterTileBBoxCB : public osgEarth::TerrainEngineNode::ModifyTileBoundingBoxCallback
 {
 public:
   /** Constructor initializes the offset */
@@ -91,10 +78,8 @@ BathymetryGenerator::BathymetryGenerator()
   const float defaultOffset = -75.0f;
   seaLevelUniform_ = new osg::Uniform(SEA_LEVEL_UNIFORM, 0.1f);
   offsetUniform_ = new osg::Uniform(OFFSET_UNIFORM, defaultOffset);
-#ifdef HAS_MODIFYTILEBOUNDINGBOXCALLBACK
   alterTileBBoxCB_ = new AlterTileBBoxCB();
   alterTileBBoxCB_->setOffset(defaultOffset);
-#endif
 }
 
 BathymetryGenerator::~BathymetryGenerator()
@@ -115,9 +100,7 @@ void BathymetryGenerator::onInstall(osgEarth::TerrainEngineNode* engine)
     stateSet->addUniform(seaLevelUniform_.get());
     stateSet->addUniform(offsetUniform_.get());
 
-#ifdef HAS_MODIFYTILEBOUNDINGBOXCALLBACK
     engine->addModifyTileBoundingBoxCallback(alterTileBBoxCB_.get());
-#endif
   }
 }
 
@@ -125,9 +108,7 @@ void BathymetryGenerator::onUninstall(osgEarth::TerrainEngineNode* engine)
 {
   if (engine)
   {
-#ifdef HAS_MODIFYTILEBOUNDINGBOXCALLBACK
     engine->removeModifyTileBoundingBoxCallback(alterTileBBoxCB_.get());
-#endif
 
     osg::StateSet* stateSet = engine->getStateSet();
     if (stateSet)

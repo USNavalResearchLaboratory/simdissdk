@@ -23,7 +23,6 @@
 #include "osgEarth/FeatureModelLayer"
 #include "osgEarth/ImageLayer"
 #include "osgEarth/OGRFeatureSource"
-#include "osgEarth/Version"
 #include "simCore/Common/Exception.h"
 #include "simVis/Constants.h"
 #include "simVis/Types.h"

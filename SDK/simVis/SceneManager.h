@@ -36,16 +36,6 @@
 #include "simVis/Locator.h"
 #include "simVis/Types.h"
 
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-namespace osgEarth { namespace Drivers
-{
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  namespace MPTerrainEngine { class MPTerrainEngineOptions; }
-#endif
-  namespace RexTerrainEngine { class RexTerrainEngineOptions; }
-}}
-#endif // OSGEARTH_VERSION_LESS_THAN(3,0,0)
-
 namespace simVis
 {
   class CentroidManager;

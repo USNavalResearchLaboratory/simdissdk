@@ -19,11 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarth/Version"
 #include "osgEarth/Controls"
 #include "osgEarth/Color"
 #include "osgEarth/LabelNode"
-
 #include "osgEarth/ScreenSpaceLayout"
 
 #include "simCore/Calc/MathConstants.h"

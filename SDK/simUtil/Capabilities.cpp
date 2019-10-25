@@ -32,7 +32,6 @@
 #include "osgEarth/StringUtils"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
-#include "simVis/osgEarthVersion.h"
 #include "simUtil/Capabilities.h"
 
 #ifndef GL_CONTEXT_PROFILE_MASK
@@ -96,9 +95,7 @@ void Capabilities::init_()
   caps_.push_back(std::make_pair("Renderer", caps.getRenderer()));
   caps_.push_back(std::make_pair("OpenGL Version", caps.getVersion()));
   glVersion_ = extractGlVersion_(caps.getVersion());
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0)
   caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
-#endif
 
   // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
   // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
@@ -179,9 +176,7 @@ void Capabilities::init_(osg::GraphicsContext& gc)
     caps_.push_back(std::make_pair("Vendor", "Unknown"));
     caps_.push_back(std::make_pair("Renderer", "Unknown"));
     caps_.push_back(std::make_pair("OpenGL Version", "Unknown"));
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,9,0)
     caps_.push_back(std::make_pair("Core Profile", toString_(false)));
-#endif
     glVersion_ = 0.0;
     recordUsabilityConcern_(Capabilities::UNUSABLE, "Unable to activate context.");
     return;
