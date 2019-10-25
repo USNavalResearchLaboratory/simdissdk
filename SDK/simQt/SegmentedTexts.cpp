@@ -201,8 +201,11 @@ static const unsigned int MAX_PRECISION = 6;
     if (adjustedEnd_.secondsSinceRefYear() != simCore::ZERO_SECONDS)
     {
       const simCore::Seconds& secondsEnd = adjustedEnd_.secondsSinceRefYear();
-      // adjust the fraction representation to contain number of digits corresponding to precision
-      const int fraction = fractionFromField_(fractionToField_(secondsEnd), precision_);
+      const int scale = (precision_ >= 9) ? 1 : static_cast<int>(pow(10.0, 9 - precision_));
+      // convert time in number of nanoseconds to number of time units in the specified precision, using ceiling to round up
+      const int timeUnits = std::ceil(static_cast<double>(secondsEnd.getFractionLong()) / scale);
+      // convert the number of time units in the specified precision back to a number of nanoseconds (that is now ceilinged to the desired precision)
+      const int fraction = fractionFromField_(timeUnits, precision_);
       adjustedEnd_.setTime(adjustedEnd_.referenceYear(), simCore::Seconds(secondsEnd.getSeconds(), fraction));
     }
   }
