@@ -30,7 +30,7 @@
 #include "osgEarth/TerrainEngineNode"
 #include "osgEarth/Version"
 #include "osgEarth/CullingUtils"
-#include "osgEarthUtil/Sky"
+#include "osgEarth/Sky"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
@@ -624,7 +624,7 @@ View::View()
 
   // Install a viewport uniform on each camera, giving all shaders access
   // to the window size. The osgEarth::LineDrawable construct uses this.
-  thisCamera->addCullCallback(new osgEarth::InstallViewportSizeUniform());
+  thisCamera->addCullCallback(new osgEarth::InstallCameraUniform());
 
   // set global defaults for various scene elements
   osgEarth::GLUtils::setGlobalDefaults(thisCamera->getOrCreateStateSet());
@@ -1107,8 +1107,7 @@ void View::setSceneManager(simVis::SceneManager* node)
   if (oldManip)
   {
     Viewpoint oldVP = oldManip->getViewpoint();
-    osg::ref_ptr<osg::Node> oldTetherNode;
-    oldVP.getNode(oldTetherNode);
+    osg::ref_ptr<osg::Node> oldTetherNode = oldVP.getNode();
     oldManip->setTetherCallback(0L);
     simVis::EarthManipulator* newManip = new simVis::EarthManipulator();
     newManip->setName("Earth Manipulator");
@@ -1233,8 +1232,7 @@ void View::tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double dur
     // Set the focal point if needed (i.e. if there is no tether node)
     if (realTether == NULL && vp.nodeIsSet())
     {
-      osg::ref_ptr<osg::Node> oldTether;
-      vp.getNode(oldTether);
+      osg::ref_ptr<osg::Node> oldTether = vp.getNode();
       simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(oldTether.get());
       newVp.focalPoint()->set(osgEarth::SpatialReference::create("wgs84"),
         osg::Vec3d(lla.lon() * simCore::RAD2DEG, lla.lat() * simCore::RAD2DEG, lla.alt()),
@@ -1253,9 +1251,8 @@ osg::Node* View::getCameraTether() const
   if (manip)
   {
     Viewpoint vp = manip->getViewpoint();
-    osg::ref_ptr<osg::Node> node;
-    if (vp.getNode(node))
-      result = node.release();
+    osg::ref_ptr<osg::Node> node = vp.getNode();
+    result = node.release();
   }
   return result;
 }
@@ -1383,7 +1380,7 @@ simVis::Viewpoint View::getViewpoint() const
       else if (manipViewpoint.nodeIsSet())
       {
         osg::ref_ptr<osg::Node> tether;
-        manipViewpoint.getNode(tether);
+        tether = manipViewpoint.getNode();
         vp.setNode(tether.get());
       }
       else
@@ -1644,7 +1641,7 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
         if (manip && manip->isTethering())
         {
           osg::ref_ptr<osg::Node> tetherNode;
-          manip->getViewpoint().getNode(tetherNode);
+          tetherNode = manip->getViewpoint().getNode();
           simVis::Viewpoint untether;
           untether.setNode(NULL);
           // Set a focal point to force a clear-out of the node; this will get updated to a better place in updateWatchView_()
@@ -1856,7 +1853,7 @@ bool View::isOrthographicEnabled() const
 void View::attachSky_(simVis::SceneManager* sceneMgr)
 {
   // add a sky node if we need one:
-  osgEarth::Util::SkyNode* sky = sceneMgr->getSkyNode();
+  osgEarth::SkyNode* sky = sceneMgr->getSkyNode();
   if (sky)
     sky->attach(this);
 }

@@ -27,7 +27,8 @@
 #include "osg/ref_ptr"
 #include "simData/DataTypes.h"
 
-namespace osgEarth { namespace Annotation { class LabelNode; } }
+namespace osgEarth { class LabelNode; }
+
 namespace simVis
 {
 class Locator;
@@ -60,7 +61,7 @@ private:
   EntityLabelNode(const EntityLabelNode&);
 
   osg::ref_ptr<LocatorNode> locatorNode_; // optional locator node to position the label
-  osg::ref_ptr<osgEarth::Annotation::LabelNode> label_;  ///< The actual label
+  osg::ref_ptr<osgEarth::LabelNode> label_;  ///< The actual label
   simData::CommonPrefs lastCommonPrefs_;  ///< The last preferences to check for changes
   bool hasLastPrefs_; ///< Whether lastCommonPrefs_ has been set by prefs we received
   std::string lastText_; ///< The last text to check for change

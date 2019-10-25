@@ -34,8 +34,8 @@
 #include "osg/MatrixTransform"
 #include "osgGA/GUIEventHandler"
 #include "osgEarth/Revisioning"
-#include "osgEarthSymbology/Symbol"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Symbol"
+#include "osgEarth/Controls"
 
 namespace simVis
 {

@@ -27,12 +27,16 @@
 #include "osgEarth/DrapeableNode"
 #include "osgEarth/ImageLayer"
 #include "osgEarth/MapNode"
-#include "osgEarthUtil/Sky"
-#include "osgEarthUtil/Ocean"
+#include "osgEarth/Sky"
+#include "osgEarth/Version"
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
+#include "osgEarth/Ocean"
+#endif
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
 #include "simVis/Types.h"
 
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
 namespace osgEarth { namespace Drivers
 {
 #ifdef USE_DEPRECATED_SIMDISSDK_API
@@ -40,6 +44,7 @@ namespace osgEarth { namespace Drivers
 #endif
   namespace RexTerrainEngine { class RexTerrainEngineOptions; }
 }}
+#endif // OSGEARTH_VERSION_LESS_THAN(3,0,0)
 
 namespace simVis
 {
@@ -117,13 +122,7 @@ namespace simVis
     * The scene graph node that renders the sky
     * @return osgEarth::Util::SkyNode*
     */
-    osgEarth::Util::SkyNode* getSkyNode() { return skyNode_.get(); }
-
-    /**
-    * The scene graph node that renders the ocean surface
-    * @return osgEarth::Drivers::OceanSurfaceNode*
-    */
-    osgEarth::Util::OceanNode* getOceanNode() { return oceanNode_.get(); }
+    osgEarth::SkyNode* getSkyNode() { return skyNode_.get(); }
 
     /**
     * Gets the node to which a camera manipulator should attach.
@@ -154,13 +153,7 @@ namespace simVis
     * Set the SkyNode object for the scene.
     * @param skyNode the new sky node
     */
-    void setSkyNode(osgEarth::Util::SkyNode* skyNode);
-
-    /**
-    * Set the OceanSurfaceNode object for the scene
-    * @param oceanNode the new ocean surface node
-    */
-    void setOceanNode(osgEarth::Util::OceanNode* oceanNode);
+    void setSkyNode(osgEarth::SkyNode* skyNode);
 
     /** remove the current ocean node */
     void removeOceanNode();
@@ -171,13 +164,8 @@ namespace simVis
     /** Returns true if there is an engine driver problem */
     bool hasEngineDriverProblem() const;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-    /** Fills out an MPTerrainEngineOptions with good default values */
-    SDK_DEPRECATE(static void initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions& options), "Method will be removed in future SDK release.");
-#endif
-
-    /** Fills out an RexTerrainEngineOptions with good default values */
-    static void initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions& options);
+    /** Fills out the terrain options with good default values */
+    static void initializeTerrainOptions(osgEarth::MapNode* mapNode);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
@@ -204,7 +192,7 @@ namespace simVis
     SceneManager(const SceneManager&);
 
     /** Returns true if the sky node is SilverLining. */
-    bool isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const;
+    bool isSilverLining_(const osgEarth::SkyNode* skyNode) const;
 
     /** Contains the map node, child of the sky node.  See also @ref SceneManagerLayout */
     osg::ref_ptr<osg::Group> mapContainer_;
@@ -217,9 +205,7 @@ namespace simVis
     /** Contains the scene projectors, child of the sky node.  See also @ref SceneManagerLayout */
     osg::ref_ptr<ProjectorManager> projectorManager_;
     /** Child of the top level root, contains most of the scene because it applies various shading to scene elements.  See also @ref SceneManagerLayout */
-    osg::ref_ptr<osgEarth::Util::SkyNode> skyNode_;
-    /** Contains ocean surface graphics, child of the sky node.  See also @ref SceneManagerLayout */
-    osg::ref_ptr<osgEarth::Util::OceanNode> oceanNode_;
+    osg::ref_ptr<osgEarth::SkyNode> skyNode_;
     /** Uniform shader variable that changes the globe color where there is no opaque image layer */
     osg::ref_ptr<osg::Uniform> globeColor_;
     /** Parent node that permits draping of geometry */

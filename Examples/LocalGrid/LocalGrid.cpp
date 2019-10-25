@@ -26,7 +26,7 @@
  * various settings and testing the local grid code.
  */
 #include <sstream>
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"

@@ -22,7 +22,7 @@
 #ifndef SIMVIS_ALPHA_COLOR_FILTER_H
 #define SIMVIS_ALPHA_COLOR_FILTER_H
 
-#include <osgEarthUtil/Common>
+#include <osgEarth/Common>
 #include <osgEarth/ColorFilter>
 #include "simCore/Common/Export.h"
 

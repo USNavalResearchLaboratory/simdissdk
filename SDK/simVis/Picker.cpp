@@ -27,7 +27,7 @@
 #include "osgEarth/Registry"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/ObjectIndex"
-#include "osgEarthUtil/RTTPicker"
+#include "osgEarth/RTTPicker"
 #include "simVis/Scenario.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"

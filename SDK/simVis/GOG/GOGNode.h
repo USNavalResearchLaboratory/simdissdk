@@ -26,7 +26,7 @@
 #include <memory>
 #include <string>
 #include "osgEarth/GeoData"
-#include "osgEarthSymbology/Style"
+#include "osgEarth/Style"
 #include "osg/Group"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"

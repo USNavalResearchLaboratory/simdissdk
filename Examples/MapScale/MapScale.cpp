@@ -24,7 +24,7 @@
  * MapScale shows how to associate a map scale with a view and an inset.
  */
 
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Units.h"

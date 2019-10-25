@@ -19,10 +19,10 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarthSymbology/GeometryFactory"
-#include "osgEarthFeatures/GeometryCompiler"
-#include "osgEarthAnnotation/AnnotationUtils"
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/GeometryFactory"
+#include "osgEarth/GeometryCompiler"
+#include "osgEarth/AnnotationUtils"
+#include "osgEarth/LocalGeometryNode"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
@@ -43,7 +43,7 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
 {
   osgEarth::Distance radius(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_RADIUS, 1000.0)), osgEarth::Units::METERS);
 
-  osg::Vec4f color(osgEarth::Symbology::Color::White);
+  osg::Vec4f color(osgEarth::Color::White);
 
   float radius_m = radius.as(osgEarth::Units::METERS);
 
@@ -53,15 +53,15 @@ GogNodeInterface* Hemisphere::deserialize(const ParsedShape& parsedShape,
     SIM_WARN << "Cannot create hemisphere with no radius\n";
     return NULL;
   }
-  osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createHemisphere(
+  osg::Node* shape = osgEarth::AnnotationUtils::createHemisphere(
     radius_m, color);
   shape->setName("GOG Hemisphere");
 
-  osgEarth::Annotation::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = NULL;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
-    node = new osgEarth::Annotation::LocalGeometryNode();
+    node = new osgEarth::LocalGeometryNode();
     node->setMapNode(mapNode);
     node->setPosition(p.getMapPosition());
     node->getPositionAttitudeTransform()->addChild(shape);

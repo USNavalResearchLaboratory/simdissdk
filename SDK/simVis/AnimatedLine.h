@@ -187,27 +187,27 @@ namespace simVis
     unsigned short           stipple1_;
     unsigned short           stipple2_;
     double                   shiftsPerSecond_;
-    osgEarth::SimpleMutable<osg::Vec4> color1_;
-    osgEarth::SimpleMutable<osg::Vec4> color2_;
-    osgEarth::SimpleMutable<osg::Vec4> colorOverride_;
+    osgEarth::Util::SimpleMutable<osg::Vec4> color1_;
+    osgEarth::Util::SimpleMutable<osg::Vec4> color2_;
+    osgEarth::Util::SimpleMutable<osg::Vec4> colorOverride_;
     bool useOverrideColor_;
     float lineWidth_;
 
     osg::ref_ptr<const Locator> firstLocator_;
-    osgEarth::Revision          firstLocatorRevision_;
+    osgEarth::Util::Revision firstLocatorRevision_;
 
     osg::ref_ptr<const Locator> secondLocator_;
-    osgEarth::Revision          secondLocatorRevision_;
+    osgEarth::Util::Revision secondLocatorRevision_;
 
-    osgEarth::SimpleMutable<simCore::MultiFrameCoordinate> firstCoord_;
+    osgEarth::Util::SimpleMutable<simCore::MultiFrameCoordinate> firstCoord_;
     /**
      * Second Coordinate might be a relative coordinate (X-East).  This could be
      * associated with a (moving) locator instead of a static point, so we cannot
      * resolve it until later.  Because of this, we use a Coordinate and not a MFC.
      */
-    osgEarth::SimpleMutable<simCore::Coordinate> secondCoord_;
+    osgEarth::Util::SimpleMutable<simCore::Coordinate> secondCoord_;
     /** ... but we still save the most recently resolved MF coordinate, only set when drawing. */
-    osgEarth::SimpleMutable<simCore::MultiFrameCoordinate> secondCoordMF_;
+    osgEarth::Util::SimpleMutable<simCore::MultiFrameCoordinate> secondCoordMF_;
     /** Coordinate converter that is used to put secondCoord_ in a valid (Geo) frame */
     simCore::CoordinateConverter* coordinateConverter_;
 

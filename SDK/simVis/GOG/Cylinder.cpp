@@ -21,10 +21,10 @@
  */
 #include "osg/FrontFace"
 #include "osgEarth/MapNode"
-#include "osgEarthAnnotation/AnnotationUtils"
-#include "osgEarthAnnotation/LocalGeometryNode"
-#include "osgEarthSymbology/GeometryFactory"
-#include "osgEarthFeatures/GeometryCompiler"
+#include "osgEarth/AnnotationUtils"
+#include "osgEarth/LocalGeometryNode"
+#include "osgEarth/GeometryFactory"
+#include "osgEarth/GeometryCompiler"
 #include "simCore/Common/Common.h"
 #include "simNotify/Notify.h"
 #include "simVis/GOG/Cylinder.h"
@@ -33,8 +33,7 @@
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace osgEarth::Features;
-using namespace osgEarth::Annotation;
+using namespace osgEarth;
 
 namespace simVis { namespace GOG {
 
@@ -55,7 +54,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
   else if (parsedShape.hasValue(GOG_ANGLEEND))
     end = Angle(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ANGLEEND, 0.0)), Units::DEGREES);
 
-  osgEarth::Symbology::GeometryFactory gf;
+  osgEarth::GeometryFactory gf;
   osg::ref_ptr<Geometry> tgeom = start == end ? (Geometry*)new Ring() : (Geometry*)new LineString();
   osg::ref_ptr<Geometry> shape;
 
@@ -87,7 +86,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
 
     // Need to turn backface culling off for unfilled cylinders so the sides are visible
     if (!parsedShape.hasValue(GOG_FILLED))
-      style.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = false;
+      style.getOrCreateSymbol<osgEarth::RenderSymbol>()->backfaceCulling() = false;
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {

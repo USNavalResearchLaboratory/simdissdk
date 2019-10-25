@@ -46,6 +46,7 @@
 
 using namespace simVis_db;
 using namespace osgEarth;
+using namespace osgEarth::Contrib;
 
 // --------------------------------------------------------------------------
 
@@ -98,7 +99,7 @@ namespace
       pkey = pkey.createParentKey();
     }
 
-    out_faceIndex = osgEarth::UnifiedCubeProfile::getFace(key);
+    out_faceIndex = osgEarth::Contrib::UnifiedCubeProfile::getFace(key);
     out_nodeId = nodeId;
 
     double xMin = key.getExtent().xMin();
@@ -107,7 +108,7 @@ namespace
     double yMax = key.getExtent().yMax();
     int face;
 
-    osgEarth::CubeUtils::cubeToFace(xMin, yMin, xMax, yMax, face);
+    osgEarth::Contrib::CubeUtils::cubeToFace(xMin, yMin, xMax, yMax, face);
 
     out_fmin.set(xMin*gQsDMaxLength, yMin*gQsDMaxLength);
     out_fmax.set(xMax*gQsDMaxLength, yMax*gQsDMaxLength);
@@ -191,7 +192,7 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
         return Status::Error(Stringify() << "Failed to read metadata for " << pathname_);
       }
       // Set up as a unified cube:
-      Profile* profile = new osgEarth::UnifiedCubeProfile();
+      Profile* profile = new osgEarth::Contrib::UnifiedCubeProfile();
       // DB are expected to be wgs84, which Cube defaults to
       setProfile(profile);
 

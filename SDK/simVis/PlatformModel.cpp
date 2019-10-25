@@ -32,7 +32,7 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
-#include "osgEarthAnnotation/AnnotationUtils"
+#include "osgEarth/AnnotationUtils"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
@@ -52,8 +52,7 @@
 
 #define LC "[PlatformModel] "
 
-using namespace osgEarth::Symbology;
-using namespace osgEarth::Annotation;
+using namespace osgEarth;
 
 namespace simVis {
 

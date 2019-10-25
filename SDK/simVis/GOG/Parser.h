@@ -28,11 +28,11 @@
 #include <string>
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
+#include "simVis/Types.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GOGRegistry.h"
 #include "osgEarth/MapNode"
-#include "osgEarthSymbology/Style"
-#include "osgEarthSymbology/Color"
+#include "osgEarth/Style"
 
 namespace simCore { class UnitsRegistry; }
 
@@ -121,7 +121,7 @@ namespace simVis { namespace GOG
      * Sets a style that will override style information found in the GOG input.
      * @param[in ] style Override style
      */
-    void setStyle(const osgEarth::Symbology::Style& style) { style_ = style; }
+    void setStyle(const osgEarth::Style& style) { style_ = style; }
 
   public:
     /**
@@ -180,13 +180,13 @@ namespace simVis { namespace GOG
     * @param[in ] key   GOG key like color1, color2, red, black,...
     * @param[in ] color The color to use for the given key
     */
-    void addOverwriteColor(const std::string& key, osgEarth::Symbology::Color color);
+    void addOverwriteColor(const std::string& key, simVis::Color color);
 
     /**
      * Parses an input GOG stream into a vector of ParsedShape entries, and a parallel vector of GogMetaData.
      * The metadata contains attributes of the GOG shape that may be lost when converting to an osg::Node,
      * things like the GOG shape type (circle, polygon, etc.) and other information that is not in the node or its
-     * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.  Although
+     * osgEarth::Style. All relevant lines are stored in a single string for each GOG.  Although
      * this is a public method, it is lower level than loadGOGs(), which uses the configured Registry to
      * create instances of GogNodeInterface representing each OSG node for the GOG.
      * @param[in ] input GOG input data
@@ -205,10 +205,10 @@ namespace simVis { namespace GOG
     void initGogColors_();
 
     /**
-     * Converts an GOG color into an HTML osgEarth::Color
+     * Converts an GOG color into an HTML simVis::Color
      * @param[in ] c     GOG color
      * @param[in ] isHex If true than c is in Hex
-     * @return GOG color into an HTML osgEarth::Color
+     * @return GOG color into an HTML simVis::Color
      */
     std::string parseGogColor_(const std::string& c, bool isHex) const;
 
@@ -249,8 +249,8 @@ namespace simVis { namespace GOG
     osg::observer_ptr<osgEarth::MapNode> mapNode_;
     GOGRegistry                          registry_;
     GOGContext                           context_;
-    osgEarth::Symbology::Style           style_;
-    std::map<std::string, osgEarth::Symbology::Color> colors_; // Key is GOG color like color1, color2
+    osgEarth::Style           style_;
+    std::map<std::string, simVis::Color> colors_; // Key is GOG color like color1, color2
   };
 
 } } // namespace simVis::GOG

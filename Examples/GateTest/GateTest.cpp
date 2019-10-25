@@ -48,8 +48,8 @@
 /// paths to models
 #include "simUtil/ExampleResources.h"
 
+#include <osgEarth/Controls>
 #include <osgEarth/StringUtils>
-#include <osgEarthUtil/Controls>
 namespace ui = osgEarth::Util::Controls;
 
 //----------------------------------------------------------------------------

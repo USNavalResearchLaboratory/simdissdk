@@ -37,12 +37,12 @@
 #include "simVis/Utils.h"
 #include "simUtil/ExampleResources.h"
 
-#include "osgEarthUtil/Controls"
-#include "osgEarthSymbology/Geometry"
-#include "osgEarthFeatures/Feature"
-#include "osgEarthAnnotation/AnnotationEditing"
-#include "osgEarthAnnotation/FeatureNode"
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/Controls"
+#include "osgEarth/Draggers"
+#include "osgEarth/Geometry"
+#include "osgEarth/Feature"
+#include "osgEarth/FeatureNode"
+#include "osgEarth/LocalGeometryNode"
 
 //----------------------------------------------------------------------------
 
@@ -92,7 +92,7 @@ namespace
 
     osg::ref_ptr<simVis::RadialLOSNode> los;
     osg::ref_ptr<osgEarth::MapNode>     mapNode;
-    osg::ref_ptr<osgEarth::Annotation::FeatureNode> p2pFeature;
+    osg::ref_ptr<osgEarth::FeatureNode> p2pFeature;
 
     // Applies the UI control values to the Radial LOS data model.
     void apply()
@@ -131,7 +131,8 @@ namespace
         {
           p2pFeature->setNodeMask(~0);
           p2pFeature->getFeature()->getGeometry()->back() = p.vec3d();
-          p2pFeature->init();
+
+          p2pFeature->dirty();
 
           if (visible)
             p2p_result->setText("visible");
@@ -225,12 +226,12 @@ namespace
   /**
    * Adapter to fire off a point-to-point LOS test
    */
-  struct RunPointToPointLOSCallback : public osgEarth::Annotation::Dragger::PositionChangedCallback
+  struct RunPointToPointLOSCallback : public osgEarth::Dragger::PositionChangedCallback
   {
     AppData* app_;
     explicit RunPointToPointLOSCallback(AppData* app) : app_(app) { }
 
-    void onPositionChanged(const osgEarth::Annotation::Dragger* sender, const osgEarth::GeoPoint& position)
+    void onPositionChanged(const osgEarth::Dragger* sender, const osgEarth::GeoPoint& position)
     {
       if (sender->getDragging() == false)
       {
@@ -240,41 +241,42 @@ namespace
   };
 
 
+#if 0 // GW: replace with a simple dragger later
   /**
    * Creates the crosshairs that you can position to calculate a line of sight
    */
   osg::Node* createP2PGraphics(AppData* app, MapNode* mapNode)
   {
     // create a "crosshairs" cursor for positioning the LOS test:
-    osg::ref_ptr<osgEarth::Symbology::MultiGeometry> m = new osgEarth::Symbology::MultiGeometry();
+    osg::ref_ptr<osgEarth::MultiGeometry> m = new osgEarth::MultiGeometry();
 
-    osg::ref_ptr<osgEarth::Symbology::Geometry> line1 = m->add(new osgEarth::Symbology::LineString());
+    osg::ref_ptr<osgEarth::Geometry> line1 = m->add(new osgEarth::LineString());
     line1->push_back(osg::Vec3(-2000.0, 0.0, 0.0));
     line1->push_back(osg::Vec3(2000.0, 0.0, 0.0));
 
-    osg::ref_ptr<osgEarth::Symbology::Geometry> line2 = m->add(new osgEarth::Symbology::LineString());
+    osg::ref_ptr<osgEarth::Geometry> line2 = m->add(new osgEarth::LineString());
     line2->push_back(osg::Vec3(0.0, -2000.0, 0.0));
     line2->push_back(osg::Vec3(0.0,  2000.0, 0.0));
 
-    osgEarth::Symbology::Style style;
+    osgEarth::Style style;
 
-    osg::ref_ptr<osgEarth::Symbology::LineSymbol> line = style.getOrCreate<osgEarth::Symbology::LineSymbol>();
+    osg::ref_ptr<osgEarth::LineSymbol> line = style.getOrCreate<osgEarth::LineSymbol>();
     line->stroke()->color() = simVis::Color::Yellow;
     line->stroke()->width() = 5.0f;
 
-    osg::ref_ptr<osgEarth::Symbology::AltitudeSymbol> alt = style.getOrCreate<osgEarth::Symbology::AltitudeSymbol>();
-    alt->clamping() = osgEarth::Symbology::AltitudeSymbol::CLAMP_TO_TERRAIN;
-    alt->technique() = osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_DRAPE;
+    osg::ref_ptr<osgEarth::AltitudeSymbol> alt = style.getOrCreate<osgEarth::AltitudeSymbol>();
+    alt->clamping() = osgEarth::AltitudeSymbol::CLAMP_TO_TERRAIN;
+    alt->technique() = osgEarth::AltitudeSymbol::TECHNIQUE_DRAPE;
 
-    osg::ref_ptr<osgEarth::Annotation::LocalGeometryNode> node =
-        new osgEarth::Annotation::LocalGeometryNode(m.get(), style);
+    osg::ref_ptr<osgEarth::LocalGeometryNode> node =
+        new osgEarth::LocalGeometryNode(m.get(), style);
     node->setMapNode(mapNode);
 
     node->setPosition(GeoPoint(mapNode->getMapSRS(), RLOS_LON, RLOS_LAT));
 
     // create a dragger to move the crosshairs around:
     // Note that editor is returned to caller, and owned by caller
-    osgEarth::Annotation::GeoPositionNodeEditor* editor = new osgEarth::Annotation::GeoPositionNodeEditor(node.get());
+    osgEarth::GeoPositionNodeEditor* editor = new osgEarth::GeoPositionNodeEditor(node.get());
     editor->getPositionDragger()->setColor(simVis::Color::White);
     editor->getPositionDragger()->setPickColor(simVis::Color::Aqua);
     editor->addChild(node);
@@ -282,12 +284,12 @@ namespace
     editor->getPositionDragger()->addPositionChangedCallback(new RunPointToPointLOSCallback(app));
 
     // create a line feature to highlight the point-to-point LOS calculation
-    osg::ref_ptr<osgEarth::Symbology::LineString> p2pLine = new osgEarth::Symbology::LineString();
+    osg::ref_ptr<osgEarth::LineString> p2pLine = new osgEarth::LineString();
     p2pLine->push_back(osg::Vec3d(RLOS_LON, RLOS_LAT, RLOS_ALT));
     p2pLine->push_back(osg::Vec3d(RLOS_LON, RLOS_LAT, RLOS_ALT));
-    style.getOrCreate<osgEarth::Symbology::AltitudeSymbol>()->technique() == osgEarth::Symbology::AltitudeSymbol::TECHNIQUE_DRAPE;
-    osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(p2pLine.get(), mapNode->getMapSRS(), style);
-    app->p2pFeature = new osgEarth::Annotation::FeatureNode(feature.get());
+    style.getOrCreate<osgEarth::AltitudeSymbol>()->technique() == osgEarth::AltitudeSymbol::TECHNIQUE_DRAPE;
+    osg::ref_ptr<osgEarth::Feature> feature = new osgEarth::Feature(p2pLine.get(), mapNode->getMapSRS(), style);
+    app->p2pFeature = new osgEarth::FeatureNode(feature.get());
     app->p2pFeature->setMapNode(mapNode);
     app->p2pFeature->setNodeMask(0);
 
@@ -295,6 +297,7 @@ namespace
 
     return editor;
   }
+#endif
 }
 
 //----------------------------------------------------------------------------
@@ -335,7 +338,7 @@ int main(int argc, char **argv)
   scene->getScenario()->addChild(app.los);
 
   // Create a cursor for positioning a P2P LOS test:
-  scene->getScenario()->addChild(createP2PGraphics(&app, scene->getMapNode()));
+  //scene->getScenario()->addChild(createP2PGraphics(&app, scene->getMapNode()));
 
   // set the initial eye point
   viewer->getMainView()->setViewpoint(

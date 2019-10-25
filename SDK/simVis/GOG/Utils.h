@@ -28,11 +28,13 @@
 #include "simVis/GOG/GOGNode.h"
 #include "osgEarth/GeoData"
 #include "osgEarth/Units"
-#include "osgEarthSymbology/Geometry"
-#include "osgEarthAnnotation/AnnotationData"
-#include "osgEarthAnnotation/AnnotationNode"
+#include "osgEarth/Geometry"
+#include "osgEarth/AnnotationData"
+#include "osgEarth/AnnotationNode"
 
-namespace osgEarth { namespace Annotation { class LocalGeometryNode; } }
+namespace osgEarth {
+  class LocalGeometryNode;
+}
 
 /**
  * Utilities used internally by the GOG parsers.
@@ -62,7 +64,7 @@ namespace simVis { namespace GOG
       * @param nodeType indicates if GOG is hosted of geographic centered
       * @param ignoreOffset if true, get map position without any offset applied
       */
-      static void applyLocalGeometryOffsets(osgEarth::Annotation::LocalGeometryNode& node, ParserData& data, GOGNodeType nodeType, bool ignoreOffset = false);
+      static void applyLocalGeometryOffsets(osgEarth::LocalGeometryNode& node, ParserData& data, GOGNodeType nodeType, bool ignoreOffset = false);
 
       /**
       * Determines if the specified shape's geometry can be serialized directly into Overlay format. This is dependent on how the shapes
@@ -75,7 +77,7 @@ namespace simVis { namespace GOG
       * Get a vector of all the points in the Geometry. Handle the case where the geometry may be a MultiGeometry, for shapes like
       * line segs. Fills up the points param with all the point values, in standard osgEarth format, lon/lat/alt, units are deg/deg/meters
       */
-      static void getGeometryPoints(const osgEarth::Symbology::Geometry* geometry, std::vector<osg::Vec3d>& points);
+      static void getGeometryPoints(const osgEarth::Geometry* geometry, std::vector<osg::Vec3d>& points);
 
       /**
       * Returns the LineStyle based on the stipple value
@@ -93,21 +95,21 @@ namespace simVis { namespace GOG
 
       /**
       * Decrypt the geometry object to determine if it is a MultiGeometry, then serialize the position information
-      * from the osgEarth::Symbology::Geometry into a string in the standard GOG format
+      * from the osgEarth::Geometry into a string in the standard GOG format
       * @param geometry to serialize
       * @param relativeShape  true if these are relative positions, false for absolute
       * @param gogOutputStream  ostream that holds the serialized position information
       */
-      static void serializeShapeGeometry(const osgEarth::Symbology::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream);
+      static void serializeShapeGeometry(const osgEarth::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream);
 
       /**
-      * Serialize the position information from the osgEarth::Symbology::Geometry into a string in the standard GOG format.
+      * Serialize the position information from the osgEarth::Geometry into a string in the standard GOG format.
       * Applies the keyword 'xyz' if relative, 'lla otherwise
       * @param geometry to serialize
       * @param relativeShape  true if these are relative positions, false for absolute
       * @param gogOutputStream  ostream that holds the serialized position information
       */
-      static void serializeGeometry(const osgEarth::Symbology::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream);
+      static void serializeGeometry(const osgEarth::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream);
 
       /**
       * Serialize the osg color into a AGBR hex string
@@ -129,7 +131,7 @@ namespace simVis { namespace GOG
        * geometry will likely encounter Z-buffer issues, and therefore we
        * need to account for that.
        */
-      static bool isGeometry2D(const osgEarth::Symbology::Geometry* geom);
+      static bool isGeometry2D(const osgEarth::Geometry* geom);
 
       /**
        * If the geometry in this parser is "2D" (as determined by isGeometry2D)
@@ -137,7 +139,7 @@ namespace simVis { namespace GOG
        * You should call this after all the normal style and geometry parsing
        * has completed.
        */
-      static void configureStyleForClipping(osgEarth::Symbology::Style& style);
+      static void configureStyleForClipping(osgEarth::Style& style);
 
       /** Converts an annotation string to a displayable string, de-encoding newlines and underscores */
       static std::string decodeAnnotation(const std::string& anno);
@@ -244,7 +246,7 @@ namespace simVis { namespace GOG
      * @param[out] geom   Where to store the parsed points
      * @param[out] isLLA  Whether the output is lat/long/alt data
      */
-    void parsePoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Symbology::Geometry* geom, bool& isLLA);
+    void parsePoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
 
     /**
     * Accounts for the unique requirements of a line segment points
@@ -253,7 +255,7 @@ namespace simVis { namespace GOG
     * @param[out] geom   Where to store the parsed points
     * @param[out] isLLA  Whether the output is lat/long/alt data
     */
-    void parseLineSegmentPoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Symbology::Geometry* geom, bool& isLLA);
+    void parseLineSegmentPoints(const ParsedShape& parent, const UnitsState& us, osgEarth::Geometry* geom, bool& isLLA);
 
     /**
      * Parses a string containing a angular coordinate value. Supports
@@ -290,7 +292,7 @@ namespace simVis { namespace GOG
      * Reads the parsed position into (absolute or relative) into the
      * output coordinate.
      */
-    simCore::Coordinate getCoordinate(osgEarth::MapNode* mapNode, osgEarth::Symbology::Style& style) const;
+    simCore::Coordinate getCoordinate(osgEarth::MapNode* mapNode, osgEarth::Style& style) const;
 
     /**
      * Whether the current object has absolute (map coordinate) geometry
@@ -327,11 +329,11 @@ namespace simVis { namespace GOG
     osg::Vec3d xyzPositionToVec(const UnitsState& us, const PositionStrings& posStrings) const;
 
     GOGContext                           context_; ///< Context
-    osgEarth::Symbology::Style           style_; ///< Style
+    osgEarth::Style                      style_; ///< Style
     osgEarth::optional<osg::Vec3d>       refPointLLA_; ///< Reference point in LLA
     osgEarth::optional<osg::Vec3d>       centerXYZ_; ///< Center point in XXZ
     osgEarth::optional<osg::Vec3d>       centerLLA_; ///< Center point in LLA
-    osg::ref_ptr<osgEarth::Symbology::Geometry> geom_; ///< Geometry
+    osg::ref_ptr<osgEarth::Geometry>     geom_; ///< Geometry
     bool                                 geomIsLLA_; ///< If true than in LLA; if false in XYZ
     bool                                 geomIsRelative_; ///< If true than GOG is relative; if false GOG is absolute
     UnitsState                           units_; ///< Units for the GOG

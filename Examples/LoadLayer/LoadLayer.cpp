@@ -26,7 +26,7 @@
  */
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ModelLayer"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 #include "simNotify/Notify.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Common/Version.h"

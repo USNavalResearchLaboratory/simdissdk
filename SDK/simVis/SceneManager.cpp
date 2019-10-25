@@ -28,21 +28,19 @@
 #include "osg/ClipNode"
 #include "osg/ClipPlane"
 #include "osgDB/ReadFile"
-#include "osgEarth/Version"
-#include "osgEarth/TerrainEngineNode"
-#include "osgEarth/NodeUtils"
+#include "osgEarth/CullingUtils"
 #include "osgEarth/Horizon"
-#include "osgEarth/VirtualProgram"
 #include "osgEarth/ModelLayer"
+#include "osgEarth/NodeUtils"
 #include "osgEarth/ObjectIndex"
 #include "osgEarth/ScreenSpaceLayout"
-#include "osgEarthDrivers/engine_rex/RexTerrainEngineOptions"
-#include "osgEarthUtil/LODBlending"
+#include "osgEarth/TerrainEngineNode"
+#include "osgEarth/TerrainOptions"
+#include "osgEarth/Version"
+#include "osgEarth/VirtualProgram"
 
 #if OSGEARTH_MIN_VERSION_REQUIRED(2,10,0)
 #include "osgEarth/HorizonClipPlane"
-#else
-#include "osgEarth/CullingUtils" // for ClipToGeocentricHorizon
 #endif
 
 #include "simNotify/Notify.h"
@@ -58,8 +56,6 @@
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
 #include "simVis/SceneManager.h"
-
-#include "osgEarth/CullingUtils"
 
 #define LC "[SceneManager] "
 
@@ -203,10 +199,9 @@ void SceneManager::init_()
   if (!noAsyncLoad || strncmp(noAsyncLoad, "0", 1) == 0)
     addChild(simVis::Registry::instance()->modelCache()->asyncLoaderNode());
 
-  // Configure the default terrain options
-  osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
-  SceneManager::initializeTerrainOptions(options);
-  setMapNode(new osgEarth::MapNode(options));
+  osgEarth::MapNode* mapNode = new osgEarth::MapNode();
+  SceneManager::initializeTerrainOptions(mapNode);
+  setMapNode(mapNode);
 
   // TODO: Re-evaluate
   // getOrCreateStateSet()->setDefine("OE_TERRAIN_RENDER_NORMAL_MAP", osg::StateAttribute::OFF | osg::StateAttribute::OVERRIDE);
@@ -276,7 +271,7 @@ void SceneManager::setScenarioDisplayHints(const ScenarioDisplayHints& hints)
 }
 #endif /* USE_DEPRECATED_SIMDISSDK_API */
 
-void SceneManager::setSkyNode(osgEarth::Util::SkyNode* skyNode)
+void SceneManager::setSkyNode(osgEarth::SkyNode* skyNode)
 {
   // don't load sky model to minimize memory usage when checking memory
   if (simVis::Registry::instance()->isMemoryCheck())
@@ -306,7 +301,7 @@ void SceneManager::setSkyNode(osgEarth::Util::SkyNode* skyNode)
   }
 }
 
-bool SceneManager::isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const
+bool SceneManager::isSilverLining_(const osgEarth::SkyNode* skyNode) const
 {
   if (skyNode == NULL)
     return false;
@@ -331,6 +326,7 @@ bool SceneManager::isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const
   return false;
 }
 
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
 void SceneManager::setOceanNode(osgEarth::Util::OceanNode* oceanNode)
 {
   removeOceanNode();
@@ -351,6 +347,7 @@ void SceneManager::removeOceanNode()
     oceanNode_ = NULL;
   }
 }
+#endif
 
 void SceneManager::setScenarioDraping(bool value)
 {
@@ -377,6 +374,7 @@ void SceneManager::setMapNode(osgEarth::MapNode* mapNode)
 
     if (mapNode_.valid())
     {
+      mapNode_->open();
       parent->addChild(mapNode_.get());
       scenarioManager_->setMapNode(mapNode_.get());
 
@@ -412,9 +410,9 @@ void SceneManager::setMap(osgEarth::Map* map)
   }
   else
   {
-    osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions options;
-    SceneManager::initializeTerrainOptions(options);
-    setMapNode(new osgEarth::MapNode(map, options));
+    osgEarth::MapNode* mapNode = new osgEarth::MapNode();
+    SceneManager::initializeTerrainOptions(mapNode);
+    setMapNode(mapNode);
   }
 }
 
@@ -448,7 +446,8 @@ void SceneManager::updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map
 
     if (loadedLayerIter == loadedLayerHash.end())
     {
-      if ((*iter)->getTileSource() != NULL && (*iter)->getTileSource()->isOK())
+      if ((*iter)->getStatus().isOK())
+
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         currentMap->addLayer(iter->get());
 #else
@@ -507,7 +506,8 @@ void SceneManager::updateElevationLayers_(const osgEarth::Map& newMap, osgEarth:
     std::string layerHash = getLayerHash_(iter->get());
     if (loadedLayerHash.find(layerHash) == loadedLayerHash.end())
     {
-      if ((*iter)->getTileSource() != NULL && iter->get()->getTileSource()->isOK())
+      if ((*iter)->getStatus().isOK())
+
 #if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
         currentMap->addLayer(iter->get());
 #else
@@ -585,9 +585,13 @@ std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
 #else
   osgEarth::Config layerConf  = layerOptions.getConfig();
 #endif
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
   osgEarth::Config driverConf = layerOptions.driver()->getConfig();
   // remove everything from driverConf that also appears in layerConf
   osgEarth::Config hashConf = driverConf - layerConf;
+#else
+  osgEarth::Config hashConf = layerConf;
+#endif
   // remove cache-control properties before hashing.
   hashConf.remove("cache_only");
   hashConf.remove("cache_enabled");
@@ -642,14 +646,7 @@ void SceneManager::setGlobeColor(const simVis::Color& color)
   globeColor_->set(color);
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void SceneManager::initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions& options)
-{
-  SIM_WARN << "The MP Terrain engine is no longer supported.\n";
-}
-#endif
-
-void SceneManager::initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions& options)
+void SceneManager::initializeTerrainOptions(osgEarth::MapNode* mapNode)
 {
   // Default options for the Rex engine can be initialized here.
   // These options apply to the default map loaded on initialization.

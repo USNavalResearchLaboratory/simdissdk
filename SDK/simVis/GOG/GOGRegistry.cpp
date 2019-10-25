@@ -96,7 +96,7 @@ void GOGRegistry::add(const std::string& tag, Deserializer* functor)
 }
 
 GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const GOGNodeType& nodeType,
-  const osgEarth::Symbology::Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData,
+  const osgEarth::Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData,
   GogFollowData& followData) const
 {
   GogNodeInterface* result = NULL;

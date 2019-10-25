@@ -28,17 +28,16 @@
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Geometry.h"
+#include "simVis/Constants.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
 
-#include "osgEarthUtil/Controls"
-#include "osgEarthSymbology/Geometry"
-#include "osgEarthFeatures/Feature"
-#include "osgEarthAnnotation/FeatureNode"
-
-#include "simVis/Constants.h"
+#include "osgEarth/Controls"
+#include "osgEarth/Geometry"
+#include "osgEarth/Feature"
+#include "osgEarth/FeatureNode"
 
 //----------------------------------------------------------------------------
 
@@ -88,9 +87,9 @@ namespace
   }
 
   /// styles a feature
-  void styleAnnotation(osgEarth::Symbology::Style& style, bool valid)
+  void styleAnnotation(osgEarth::Style& style, bool valid)
   {
-    namespace sym = osgEarth::Symbology;
+    namespace sym = osgEarth;
     const simVis::Color color = valid ? simVis::Color::Yellow : simVis::Color::Red;
     style.getOrCreate<sym::PolygonSymbol>()->fill()->color() = simVis::Color(color, 0.5f);
     style.getOrCreate<sym::LineSymbol>()->stroke()->color() = simVis::Color::White;
@@ -108,7 +107,7 @@ namespace
   osg::Node* buildFenceAnnotation(const simCore::Vec3String& v, bool valid, osgEarth::MapNode* mapnode)
   {
     // convert it to an osgEarth geometry:
-    osg::ref_ptr<osgEarth::Symbology::Polygon> geom = new osgEarth::Symbology::Polygon();
+    osg::ref_ptr<osgEarth::Polygon> geom = new osgEarth::Polygon();
     for (unsigned i = 0; i < v.size(); ++i)
     {
       const simCore::Vec3 deg = v[i] * simCore::RAD2DEG;
@@ -117,11 +116,11 @@ namespace
     geom->open();
 
     // make and style a feature:
-    osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(geom.get(), mapnode->getMap()->getSRS());
+    osg::ref_ptr<osgEarth::Feature> feature = new osgEarth::Feature(geom.get(), mapnode->getMap()->getSRS());
     styleAnnotation(feature->style().mutable_value(), valid);
     feature->geoInterp() = osgEarth::GEOINTERP_GREAT_CIRCLE;
 
-    osgEarth::Annotation::FeatureNode* featureNode = new osgEarth::Annotation::FeatureNode(feature.get());
+    osgEarth::FeatureNode* featureNode = new osgEarth::FeatureNode(feature.get());
     featureNode->setMapNode(mapnode);
     return featureNode;
   }

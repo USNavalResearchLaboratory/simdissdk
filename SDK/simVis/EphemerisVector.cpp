@@ -23,7 +23,7 @@
 #include "osg/Geometry"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/Version"
-#include "osgEarthUtil/Ephemeris"
+#include "osgEarth/Ephemeris"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -33,8 +33,6 @@
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/EphemerisVector.h"
-
-using namespace osgEarth::Symbology;
 
 namespace simVis
 {
@@ -88,7 +86,7 @@ private:
 EphemerisVector::EphemerisVector(const simVis::Color& moonColor, const simVis::Color& sunColor, float lineWidth)
   : Group(),
     coordConvert_(new simCore::CoordinateConverter),
-    ephemeris_(new osgEarth::Util::Ephemeris),
+    ephemeris_(new osgEarth::Ephemeris),
     lastUpdateTime_(simCore::INFINITE_TIME_STAMP),
     hasLastPrefs_(false)
 {
@@ -170,7 +168,7 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
 #if OSGEARTH_VERSION_LESS_THAN(2,10,0)
     rebuildLine_(VECTOR_MOON, ephemeris_->getMoonPositionECEF(dateTime), lineLength);
 #else
-    const osgEarth::Util::CelestialBody& moon = ephemeris_->getMoonPosition(dateTime);
+    const osgEarth::CelestialBody& moon = ephemeris_->getMoonPosition(dateTime);
     rebuildLine_(moonGeom, moon.geocentric, lineLength);
 #endif
     moonGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);
@@ -185,7 +183,7 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
 #if OSGEARTH_VERSION_LESS_THAN(2,10,0)
     rebuildLine_(sunGeom, ephemeris_->getSunPositionECEF(dateTime), lineLength);
 #else
-    const osgEarth::Util::CelestialBody& sun = ephemeris_->getSunPosition(dateTime);
+    const osgEarth::CelestialBody& sun = ephemeris_->getSunPosition(dateTime);
     rebuildLine_(sunGeom, sun.geocentric, lineLength);
 #endif
     sunGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);

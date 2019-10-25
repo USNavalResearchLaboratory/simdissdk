@@ -26,9 +26,10 @@
 #include "osg/Geometry"
 #include "osgText/Text"
 
+#include "osgEarth/Version"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
-#include "osgEarthSymbology/Color"
+#include "osgEarth/Color"
 
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
@@ -688,8 +689,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
   const float x0 = -0.5f * span;
   const float y0 = -0.5f * span;
 
-  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
+  const osg::Vec4f& color = simVis::Color(prefs.gridcolor(), simVis::Color::RGBA);
+  const osg::Vec4f& subColor = simVis::Color(color * 0.5f, 1.0f);
 
   // first draw the subdivision lines
   for (int s = 0; s < numSubLines; ++s)
@@ -774,8 +775,8 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
   const int   numSubDivisions = prefs.gridsettings().numsubdivisions();
   const int numRings          = (numDivisions + 1) * (numSubDivisions + 1);
 
-  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
+  const osg::Vec4f& color = simVis::Color(prefs.gridcolor(), simVis::Color::RGBA);
+  const osg::Vec4f& subColor = simVis::Color(color * 0.5f, 1.0f);
 
   // rings:
   for (int i = 0; i < numRings; ++i)
@@ -827,8 +828,8 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
 // creates a speed-rings local grid with optional polar radials.
 void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* graphicsGroup, osg::Geode* labelGroup, bool drawSpeedLine) const
 {
-  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
+  const osg::Vec4f& color = simVis::Color(prefs.gridcolor(), simVis::Color::RGBA);
+  const osg::Vec4f& subColor = simVis::Color(color * 0.5f, 1.0f);
   const unsigned int numDivisions = prefs.gridsettings().numdivisions();
   const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
   const unsigned int numRings = (numDivisions + 1) * (numSubDivisions + 1);

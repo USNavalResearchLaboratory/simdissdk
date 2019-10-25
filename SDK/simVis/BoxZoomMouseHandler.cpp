@@ -20,8 +20,8 @@
  *
  */
 #include <cassert>
-#include "osgEarthUtil/EarthManipulator"
-#include "osgEarthUtil/ViewFitter"
+#include "osgEarth/EarthManipulator"
+#include "osgEarth/ViewFitter"
 #include "simVis/EarthManipulator.h"
 #include "simVis/BoxGraphic.h"
 #include "simVis/ModKeyHandler.h"

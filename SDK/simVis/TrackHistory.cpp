@@ -475,7 +475,7 @@ void TrackHistoryNode::updateFlatMode_(bool flatMode)
   flatModeUniform_->set(flatMode);
 }
 
-void TrackHistoryNode::setOverrideColor_(const osgEarth::Symbology::Color& color)
+void TrackHistoryNode::setOverrideColor_(const simVis::Color& color)
 {
   if (supportsShaders_ && !overrideColorUniform_.valid())
   {
@@ -546,12 +546,12 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
   // just started or color changed
   if (prefs.usetrackoverridecolor())
   {
-    const osgEarth::Symbology::Color color(simVis::Color(prefs.trackoverridecolor(), simVis::Color::RGBA));
+    const simVis::Color color(simVis::Color(prefs.trackoverridecolor(), simVis::Color::RGBA));
     setOverrideColor_(color);
   }
   else if (prefs.useplatformcolor())
   {
-    const osgEarth::Symbology::Color color(simVis::Color(platformPrefs.commonprefs().overridecolor(), simVis::Color::RGBA));
+    const simVis::Color color(simVis::Color(platformPrefs.commonprefs().overridecolor(), simVis::Color::RGBA));
     setOverrideColor_(color);
   }
   else if (prefs.multitrackcolor())

@@ -40,7 +40,7 @@
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
-#include "osgEarthAnnotation/AnnotationUtils"
+#include "osgEarth/AnnotationUtils"
 #include "simNotify/Notify.h"
 #include "simCore/String/Utils.h"
 #include "simVis/ClockOptions.h"
@@ -360,7 +360,7 @@ private:
 
     // For an image, build a "billboard" that will always face the user
     // and auto-scale to the screen.
-    using namespace osgEarth::Annotation;
+    using namespace osgEarth;
 
     osg::ref_ptr<osg::Image> image;
     // Avoid readRefImageFile() because in 3.6 it spams console, for LST and TMD files

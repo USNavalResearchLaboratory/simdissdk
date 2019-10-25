@@ -117,7 +117,7 @@ void EarthManipulator::zoom(double dx, double dy)
   {
     _distance = (dy < 0) ? -DISTANCE_CROSS_ZERO_THRESHOLD : DISTANCE_CROSS_ZERO_THRESHOLD;
   }
-  osgEarth::Util::EarthManipulator::zoom(dx, dy);
+  osgEarth::Util::EarthManipulator::zoom(dx, dy, NULL);
 }
 
 void EarthManipulator::handleMovementAction(const ActionType& type, double dx, double dy, osg::View* view)

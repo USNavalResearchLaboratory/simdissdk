@@ -32,7 +32,7 @@
 #include "osg/Depth"
 #include "osgGA/GUIActionAdapter"
 #include "osgDB/FileUtils"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simCore/LUT/LUT2.h"
 #include "simCore/Calc/Angle.h"

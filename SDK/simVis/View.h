@@ -25,8 +25,8 @@
 #include "osg/observer_ptr"
 #include "osgViewer/View"
 #include "osg/Camera"
-#include "osgEarthUtil/Controls"
-#include "osgEarthUtil/EarthManipulator"
+#include "osgEarth/Controls"
+#include "osgEarth/EarthManipulator"
 #include "osgEarth/Viewpoint"
 #include "simVis/Types.h"
 #include "simVis/ViewManager.h"
@@ -50,7 +50,7 @@ enum NavMode
 };
 
 /// A camera viewpoint configuration
-typedef osgEarth::Util::Viewpoint Viewpoint;
+typedef osgEarth::Viewpoint Viewpoint;
 
 /// Some routines can't handle 90 elevation/pitch so limit to a close value
 static const double MAX_ELEVATION_DEGREES = 89.8;

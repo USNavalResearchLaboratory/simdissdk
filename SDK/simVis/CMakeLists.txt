@@ -62,6 +62,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
+    ${VIS_INC}DBFormat.h
     ${VIS_INC}DBOptions.h
     ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
@@ -201,6 +202,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
+    ${VIS_SRC}DBFormat.cpp
     ${VIS_INC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
@@ -332,7 +334,7 @@ if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET)
     set(SDK_OSGEARTH_VERSION_PATCH 0)
 else()
     # Newer than 1.8.0 release adds GeodeticLabelingEngine file and getResolution()
-    check_osgearth_method_exists(HAVE_OSGEARTH_GEOLABELENGINE "osgEarthUtil/GeodeticLabelingEngine" "getResolution")
+    check_osgearth_method_exists(HAVE_OSGEARTH_GEOLABELENGINE "osgEarth/GeodeticLabelingEngine" "getResolution")
     if(HAVE_OSGEARTH_GEOLABELENGINE)
         # Next anticipated version is 1.9.0
         set(SDK_OSGEARTH_VERSION_MAJOR 1)

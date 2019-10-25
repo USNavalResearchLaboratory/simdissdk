@@ -26,6 +26,7 @@
 #include "osgText/Text"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/NodeUtils"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simUtil/HudPositionManager.h"
 #include "simUtil/MouseDispatcher.h"
@@ -39,11 +40,11 @@ static const osg::Vec4f SCREEN_BG_DIM_COLOR(0.f, 0.f, 0.f, 0.5f);
 /** Width of the outline around a window */
 static const float OUTLINE_WIDTH = 3.f;
 /** Color of the outline when not selected */
-static const osg::Vec4f OUTLINE_DEFAULT_COLOR = osgEarth::Symbology::Color::Gray;
+static const osg::Vec4f OUTLINE_DEFAULT_COLOR = simVis::Color::Gray;
 /** Stipple of the outline when not selected */
 static const GLushort OUTLINE_DEFAULT_STIPPLE = 0xf0f0;
 /** Color of the outline when selected */
-static const osg::Vec4f OUTLINE_SELECTED_COLOR = osgEarth::Symbology::Color::Lime;
+static const osg::Vec4f OUTLINE_SELECTED_COLOR = simVis::Color::Lime;
 /** Stipple of the outline when selected */
 static const GLushort OUTLINE_SELECTED_STIPPLE = 0xffff;
 /** Factor to apply to stipple of stippled outlines. */
@@ -61,7 +62,7 @@ static const std::string TITLE_FONT = "arialbd.ttf";
 /** Size of the title text */
 static const float TITLE_POINTSIZE = simVis::osgFontSize(16.f);
 /** Color for the title text */
-static const osg::Vec4f TITLE_COLOR = osgEarth::Symbology::Color::White;
+static const osg::Vec4f TITLE_COLOR = simVis::Color::White;
 
 /** Half of the width of the anchor diamond, in pixels */
 static const float ANCHOR_HALF_WIDTH = 6.f;

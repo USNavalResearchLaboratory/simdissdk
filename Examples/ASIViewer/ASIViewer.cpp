@@ -40,11 +40,11 @@
 #include "simVis/Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/Projector.h"
+#include "simVis/Types.h"
 #include "simUtil/ExampleResources.h"
 
+#include <osgEarth/Controls>
 #include <osgEarth/StringUtils>
-#include <osgEarthSymbology/Color>
-#include <osgEarthUtil/Controls>
 #include <osg/ImageStream>
 
 namespace ui = osgEarth::Util::Controls;
@@ -84,42 +84,40 @@ simData::GateProperties::GateType gateTypeFromString(const std::string &gateType
 
 uint32_t colorFromString(const std::string &colorString)
 {
-  using namespace osgEarth::Symbology;
-
   if (colorString[0] == '0' && colorString[1] == 'x')
   {
     // 0xAABBGGRR
-    return Color(colorString, Color::ABGR).as(Color::RGBA);
+    return simVis::Color(colorString, simVis::Color::ABGR).as(simVis::Color::RGBA);
   }
   else
   {
     // look for a color name
     if (simCore::caseCompare("blue", colorString))
-      return Color::Blue.as(Color::RGBA);
+      return simVis::Color::Blue.as(simVis::Color::RGBA);
     if (simCore::caseCompare("red", colorString))
-      return Color::Red.as(Color::RGBA);
+      return simVis::Color::Red.as(simVis::Color::RGBA);
     if (simCore::caseCompare("green", colorString))
-      return Color::Green.as(Color::RGBA);
+      return simVis::Color::Green.as(simVis::Color::RGBA);
     if (simCore::caseCompare("white", colorString))
-      return Color::White.as(Color::RGBA);
+      return simVis::Color::White.as(simVis::Color::RGBA);
     if (simCore::caseCompare("yellow", colorString))
-      return Color::Yellow.as(Color::RGBA);
+      return simVis::Color::Yellow.as(simVis::Color::RGBA);
     if (simCore::caseCompare("purple", colorString))
-      return Color::Purple.as(Color::RGBA);
+      return simVis::Color::Purple.as(simVis::Color::RGBA);
     if (simCore::caseCompare("magenta", colorString))
-      return Color::Magenta.as(Color::RGBA);
+      return simVis::Color::Magenta.as(simVis::Color::RGBA);
     if (simCore::caseCompare("cyan", colorString))
-      return Color::Cyan.as(Color::RGBA);
+      return simVis::Color::Cyan.as(simVis::Color::RGBA);
     if (simCore::caseCompare("black", colorString))
-      return Color::Black.as(Color::RGBA);
+      return simVis::Color::Black.as(simVis::Color::RGBA);
     if (simCore::caseCompare("brown", colorString))
-      return Color::Brown.as(Color::RGBA);
+      return simVis::Color::Brown.as(simVis::Color::RGBA);
     if (simCore::caseCompare("orange", colorString))
-      return Color::Orange.as(Color::RGBA);
+      return simVis::Color::Orange.as(simVis::Color::RGBA);
     if (simCore::caseCompare("gray", colorString))
-      return Color::Gray.as(Color::RGBA);
+      return simVis::Color::Gray.as(simVis::Color::RGBA);
   }
-  return Color::Red.as(Color::RGBA);
+  return simVis::Color::Red.as(simVis::Color::RGBA);
 }
 
 /// convert an ASI time string to seconds since reference year
@@ -952,7 +950,7 @@ int main(int argc, char **argv)
   /// add some stock OSG handlers
   viewer->installDebugHandlers();
 
-  viewer->getSceneManager()->setSkyNode(osgEarth::Util::SkyNode::create());
+  viewer->getSceneManager()->setSkyNode(osgEarth::SkyNode::create());
 
   double last_t = 0.0;
   while (!viewer->getViewer()->done())

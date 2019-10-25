@@ -104,7 +104,7 @@ void ThresholdColorProvider::install(osg::StateSet* stateset)
 {
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(stateset);
   simVis::Shaders package;
-  const std::string src = osgEarth::ShaderLoader::load(package.rfPropLossToColorThreshold(), package);
+  const std::string src = osgEarth::Util::ShaderLoader::load(package.rfPropLossToColorThreshold(), package);
   vp->setShader(LOSS_TO_COLOR_VERTEX, new osg::Shader(osg::Shader::VERTEX, src));
   vp->setShader(LOSS_TO_COLOR_FRAGMENT, new osg::Shader(osg::Shader::FRAGMENT, src));
   stateset->addUniform(belowColorUniform_.get());

@@ -19,9 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarthAnnotation/LocalGeometryNode"
-#include "osgEarthSymbology/GeometryFactory"
-#include "osgEarthFeatures/GeometryCompiler"
+#include "osgEarth/LocalGeometryNode"
+#include "osgEarth/GeometryFactory"
+#include "osgEarth/GeometryCompiler"
 #include "simCore/Common/Common.h"
 #include "simVis/GOG/Circle.h"
 #include "simVis/GOG/GogNodeInterface.h"
@@ -30,7 +30,7 @@
 #include "simVis/GOG/Utils.h"
 #include "simNotify/Notify.h"
 
-using namespace osgEarth::Features;
+using namespace osgEarth;
 
 namespace simVis { namespace GOG {
 
@@ -43,10 +43,10 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
 {
   Distance radius(p.units_.rangeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_RADIUS, 1000.)), Units::METERS);
 
-  osgEarth::Symbology::GeometryFactory gf;
+  osgEarth::GeometryFactory gf;
   Geometry* shape = gf.createCircle(osg::Vec3d(0, 0, 0), radius);
 
-  osgEarth::Annotation::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = NULL;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -54,7 +54,7 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
     if (p.geometryRequiresClipping())
       Utils::configureStyleForClipping(p.style_);
 
-    node = new osgEarth::Annotation::LocalGeometryNode(shape, p.style_);
+    node = new osgEarth::LocalGeometryNode(shape, p.style_);
     node->setMapNode(mapNode);
   }
   else

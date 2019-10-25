@@ -24,7 +24,7 @@
  * Demonstrates loading an osgEarth .earth file at runtime, showing how you
  * can swap terrain configurations on the fly.
  */
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"

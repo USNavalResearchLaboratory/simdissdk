@@ -29,7 +29,7 @@
 #include "osg/ref_ptr"
 #include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
-#include "osgEarthFeatures/FeatureModelLayer"
+#include "osgEarth/FeatureModelLayer"
 #include "simCore/Common/Export.h"
 
 namespace osgEarth {
@@ -38,7 +38,7 @@ namespace osgEarth {
   class TerrainLayer;
 }
 
-typedef std::vector<osg::ref_ptr<osgEarth::Features::FeatureModelLayer> > FeatureModelLayerVector;
+typedef std::vector<osg::ref_ptr<osgEarth::FeatureModelLayer> > FeatureModelLayerVector;
 
 namespace simQt {
 
@@ -74,7 +74,7 @@ public:
   /** Returns the layer index relative to other layers in getLayers(ElevationVector&) */
   unsigned int layerTypeIndex(osgEarth::ElevationLayer* layer) const;
   /** Returns the layer index relative to other layers in getLayers(FeatureModelVector&) */
-  unsigned int layerTypeIndex(osgEarth::Features::FeatureModelLayer* layer) const;
+  unsigned int layerTypeIndex(osgEarth::FeatureModelLayer* layer) const;
   /** Returns the layer index relative to other layers in getOtherLayers(VisibleLayerVector&) */
   unsigned int otherLayerTypeIndex(osgEarth::VisibleLayer* layer) const;
 
@@ -167,28 +167,28 @@ signals:
   /** Qt signal as described by the signal name */
   void elevationLayerAdded(osgEarth::ElevationLayer* layer);
   /** Qt signal as described by the signal name */
-  void featureLayerVisibleChanged(osgEarth::Features::FeatureModelLayer* layer);
+  void featureLayerVisibleChanged(osgEarth::FeatureModelLayer* layer);
   /** Qt signal as described by the signal name */
-  void featureLayerOpacityChanged(osgEarth::Features::FeatureModelLayer* layer);
+  void featureLayerOpacityChanged(osgEarth::FeatureModelLayer* layer);
   /** Qt signal as described by the signal name */
-  void featureLayerAdded(osgEarth::Features::FeatureModelLayer* layer);
+  void featureLayerAdded(osgEarth::FeatureModelLayer* layer);
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
    * Qt signal as described by the signal name
    * @deprecated Use featureLayerVisibleChanged() instead
    */
-  void modelLayerVisibleChanged(osgEarth::Features::FeatureModelLayer* layer);
+  void modelLayerVisibleChanged(osgEarth::FeatureModelLayer* layer);
   /**
   * Qt signal as described by the signal name
   * @deprecated Use featureLayerOpacityChanged() instead
   */
-  void modelLayerOpacityChanged(osgEarth::Features::FeatureModelLayer* layer);
+  void modelLayerOpacityChanged(osgEarth::FeatureModelLayer* layer);
   /**
   * Qt signal as described by the signal name
   * @deprecated Use featureLayerAdded() instead
   */
-  void modelLayerAdded(osgEarth::Features::FeatureModelLayer* layer);
+  void modelLayerAdded(osgEarth::FeatureModelLayer* layer);
 #endif
 
   /** Qt signal as described by the signal name */
@@ -219,7 +219,7 @@ private: // methods
   /** add an elevation layer */
   void addElevationLayer_(osgEarth::ElevationLayer* layer, unsigned int index);
   /** add a feature layer */
-  void addFeatureLayer_(osgEarth::Features::FeatureModelLayer* layer, unsigned int index);
+  void addFeatureLayer_(osgEarth::FeatureModelLayer* layer, unsigned int index);
   /** add a layer other than image, elevation, or feature */
   void addOtherLayer_(osgEarth::VisibleLayer* layer, unsigned int index);
 
@@ -259,7 +259,7 @@ private: // methods
   /** Maps of terrain layer callbacks */
   QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::ImageLayerCallback> > imageCallbacks_;
   QMap<osgEarth::ElevationLayer*, osg::ref_ptr<osgEarth::ElevationLayerCallback> > elevationCallbacks_;
-  QMap<osgEarth::Features::FeatureModelLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > featureCallbacks_;
+  QMap<osgEarth::FeatureModelLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > featureCallbacks_;
   QMap<osgEarth::VisibleLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > otherCallbacks_;
 
   /** Weak pointer back to the map */

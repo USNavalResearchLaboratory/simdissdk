@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <set>
 
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/LocalGeometryNode"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
@@ -43,7 +43,6 @@
 #include "simVis/Utils.h"
 
 using namespace osgEarth;
-using namespace osgEarth::Symbology;
 
 namespace
 {
@@ -117,7 +116,7 @@ std::string Parser::parseGogColor_(const std::string& c, bool isHex) const
   if (!isHex)
   {
     Color color;
-    std::map<std::string, osgEarth::Symbology::Color>::const_iterator it = colors_.find(simCore::lowerCase(c));
+    std::map<std::string, simVis::Color>::const_iterator it = colors_.find(simCore::lowerCase(c));
     if (it != colors_.end())
       color = it->second;
     else
@@ -144,7 +143,7 @@ std::string Parser::parseGogGeodeticAngle_(const std::string& input) const
   return "0.0";
 }
 
-void Parser::addOverwriteColor(const std::string& key, osgEarth::Symbology::Color color)
+void Parser::addOverwriteColor(const std::string& key, simVis::Color color)
 {
   if (key.empty())
     return;

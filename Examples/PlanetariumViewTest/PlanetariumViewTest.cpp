@@ -43,7 +43,7 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 namespace ui = osgEarth::Util::Controls;
 
 #define LC "[Planetarium Test] "

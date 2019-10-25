@@ -21,8 +21,8 @@
  */
 #include <limits>
 #include "osgEarth/NodeUtils"
-#include "osgEarthAnnotation/GeoPositionNode"
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/GeoPositionNode"
+#include "osgEarth/LocalGeometryNode"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -40,8 +40,6 @@
 #include "simVis/GOG/Utils.h"
 
 using namespace osgEarth;
-using namespace osgEarth::Annotation;
-using namespace osgEarth::Symbology;
 
 namespace {
 /// Same default priority as the simData.commonPrefs.labelPrefs.priority value
@@ -100,7 +98,7 @@ bool Utils::canSerializeGeometry_(simVis::GOG::GogShape shape)
   return false;
 }
 
-void Utils::getGeometryPoints(const osgEarth::Symbology::Geometry* geometry, std::vector<osg::Vec3d>& points)
+void Utils::getGeometryPoints(const osgEarth::Geometry* geometry, std::vector<osg::Vec3d>& points)
 {
   if (!geometry)
     return;
@@ -108,13 +106,13 @@ void Utils::getGeometryPoints(const osgEarth::Symbology::Geometry* geometry, std
   // if geometry is empty could be a MultiGeometry (for linesegs)
   if (geometry->empty())
   {
-    const osgEarth::Symbology::MultiGeometry* multiGeometry = dynamic_cast<const osgEarth::Symbology::MultiGeometry*>(geometry);
+    const osgEarth::MultiGeometry* multiGeometry = dynamic_cast<const osgEarth::MultiGeometry*>(geometry);
     if (multiGeometry)
     {
-      osgEarth::Symbology::GeometryCollection segs = multiGeometry->getComponents();
-      for (osgEarth::Symbology::GeometryCollection::const_iterator iter = segs.begin(); iter != segs.end(); ++iter)
+      osgEarth::GeometryCollection segs = multiGeometry->getComponents();
+      for (osgEarth::GeometryCollection::const_iterator iter = segs.begin(); iter != segs.end(); ++iter)
       {
-        for (osgEarth::Symbology::Geometry::const_iterator geoIter = (*iter)->begin(); geoIter != (*iter)->end(); ++geoIter)
+        for (osgEarth::Geometry::const_iterator geoIter = (*iter)->begin(); geoIter != (*iter)->end(); ++geoIter)
         {
           points.push_back(*geoIter);
         }
@@ -123,7 +121,7 @@ void Utils::getGeometryPoints(const osgEarth::Symbology::Geometry* geometry, std
   }
   else
   {
-    for (osgEarth::Symbology::Geometry::const_iterator geoIter = geometry->begin(); geoIter != geometry->end(); ++geoIter)
+    for (osgEarth::Geometry::const_iterator geoIter = geometry->begin(); geoIter != geometry->end(); ++geoIter)
     {
       points.push_back(*geoIter);
     }
@@ -156,7 +154,7 @@ unsigned short Utils::getStippleFromLineStyle(LineStyle lineStyle)
   return simVis::GOG::GogSolidStipple;
 }
 
-void Utils::serializeShapeGeometry(const osgEarth::Symbology::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream)
+void Utils::serializeShapeGeometry(const osgEarth::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream)
 {
   if (!geometry)
     return;
@@ -164,11 +162,11 @@ void Utils::serializeShapeGeometry(const osgEarth::Symbology::Geometry* geometry
   // if geometry is empty could be a MultiGeometry (for linesegs)
   if (geometry->empty())
   {
-    const osgEarth::Symbology::MultiGeometry* multiGeometry = dynamic_cast<const osgEarth::Symbology::MultiGeometry*>(geometry);
+    const osgEarth::MultiGeometry* multiGeometry = dynamic_cast<const osgEarth::MultiGeometry*>(geometry);
     if (multiGeometry)
     {
-      osgEarth::Symbology::GeometryCollection segs = multiGeometry->getComponents();
-      for (osgEarth::Symbology::GeometryCollection::const_iterator iter = segs.begin(); iter != segs.end(); ++iter)
+      osgEarth::GeometryCollection segs = multiGeometry->getComponents();
+      for (osgEarth::GeometryCollection::const_iterator iter = segs.begin(); iter != segs.end(); ++iter)
       {
         Utils::serializeGeometry(iter->get(), relativeShape, gogOutputStream);
       }
@@ -179,10 +177,10 @@ void Utils::serializeShapeGeometry(const osgEarth::Symbology::Geometry* geometry
 
 }
 
-void Utils::serializeGeometry(const osgEarth::Symbology::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream)
+void Utils::serializeGeometry(const osgEarth::Geometry* geometry, bool relativeShape, std::ostream& gogOutputStream)
 {
   // iterate through the geometry and serialize out the position information
-  for (osgEarth::Symbology::Geometry::const_iterator iter = geometry->begin(); iter != geometry->end(); ++iter)
+  for (osgEarth::Geometry::const_iterator iter = geometry->begin(); iter != geometry->end(); ++iter)
   {
     if (relativeShape)
       gogOutputStream << "xyz " << iter->x() << " " << iter->y() << " " << iter->z() << "\n";
@@ -193,7 +191,7 @@ void Utils::serializeGeometry(const osgEarth::Symbology::Geometry* geometry, boo
 
 std::string Utils::serializeOsgColor(const osg::Vec4f& colorVec)
 {
-  osgEarth::Symbology::Color color(colorVec);
+  simVis::Color color(colorVec);
   std::ostringstream os;
   os << "0x" << std::hex << std::setfill('0') << std::setw(8) << color.asRGBA();
   return os.str();
@@ -421,9 +419,9 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
     ts->priority() = priority;
 
     if (parsedShape.hasValue(GOG_TEXTOUTLINECOLOR))
-      ts->halo()->color() = osgEarth::Symbology::Color(parsedShape.stringValue(GOG_TEXTOUTLINECOLOR));
+      ts->halo()->color() = osgEarth::Color(parsedShape.stringValue(GOG_TEXTOUTLINECOLOR));
     else
-      ts->halo()->color() = osgEarth::Symbology::Color::Black;
+      ts->halo()->color() = osgEarth::Color::Black;
 
     // Print the priority for debugging purposes
     SIM_DEBUG << "GOG Annotation \"" << parsedShape.stringValue(GOG_TEXT, "<None>") << "\" priority: "

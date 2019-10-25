@@ -148,7 +148,7 @@ void PlatformAzimElevViewTool::onInstall(const ScenarioManager& scenario)
   family_.reset();
   family_.add(scenario, host_->getId());
 
-  root_->addCullCallback(new osgEarth::InstallViewportSizeUniform());
+  root_->addCullCallback(new osgEarth::InstallCameraUniform());
 
   // install all overrides
   applyOverrides_(true);

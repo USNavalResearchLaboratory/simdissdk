@@ -26,8 +26,8 @@
 #include "simCore/Calc/Vec3.h"
 #include "simVis/GOG/GOGNode.h"
 #include "osgEarth/MapNode"
-#include "osgEarthSymbology/Geometry"
-#include "osgEarthSymbology/Style"
+#include "osgEarth/Geometry"
+#include "osgEarth/Style"
 #include "osg/MixinVector"
 #include <vector>
 

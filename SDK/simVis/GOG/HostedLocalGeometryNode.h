@@ -22,7 +22,7 @@
 #ifndef SIMVIS_GOG_HOSTEDLOCALGEOMETRYNODE_H
 #define SIMVIS_GOG_HOSTEDLOCALGEOMETRYNODE_H
 
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/LocalGeometryNode"
 
 namespace simVis
 {
@@ -32,15 +32,15 @@ namespace simVis
  * for relative GOGs that attach to a host platform, because they need to be specified
  * with no map.  If a map were specified, then some features like extrusion won't work.
  */
-class /* HEADER-ONLY */ HostedLocalGeometryNode : public osgEarth::Annotation::LocalGeometryNode
+class /* HEADER-ONLY */ HostedLocalGeometryNode : public osgEarth::LocalGeometryNode
 {
 public:
-  HostedLocalGeometryNode(osgEarth::Symbology::Geometry* geometry, const osgEarth::Symbology::Style& style)
+  HostedLocalGeometryNode(osgEarth::Geometry* geometry, const osgEarth::Style& style)
     : LocalGeometryNode(geometry, style)
   {
   }
 
-  HostedLocalGeometryNode(osg::Node* node, const osgEarth::Symbology::Style& style)
+  HostedLocalGeometryNode(osg::Node* node, const osgEarth::Style& style)
     : LocalGeometryNode()
   {
       getPositionAttitudeTransform()->addChild(node);

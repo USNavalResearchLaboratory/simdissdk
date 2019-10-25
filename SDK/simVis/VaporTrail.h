@@ -21,11 +21,15 @@
  */
 #ifndef SIMVIS_VAPOR_TRAIL_H
 #define SIMVIS_VAPOR_TRAIL_H
+
+#include <deque>
 #include <map>
 #include <vector>
+#include "osg/observer_ptr"
 #include "osg/ref_ptr"
 #include "osg/MatrixTransform"
-#include "simCore/Common/Export.h"
+#include "simCore/Common/Common.h"
+#include "simCore/Calc/Vec3.h"
 
 namespace osg {
   class Geode;

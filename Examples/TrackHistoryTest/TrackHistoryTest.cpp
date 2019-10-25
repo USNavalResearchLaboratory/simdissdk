@@ -43,7 +43,7 @@
 #include "simUtil/ExampleResources.h"
 
 #include <osgEarth/StringUtils>
-#include <osgEarthUtil/Controls>
+#include <osgEarth/Controls>
 namespace ui = osgEarth::Util::Controls;
 
 namespace

@@ -25,8 +25,10 @@
  *
  * Demonstrates loading and displaying a SIMDIS 9 SQLite terrain or imagery .db file.
  */
-#include "osgEarth/Map"
+#include "osgEarth/DebugImageLayer"
 #include "osgEarth/ImageLayer"
+#include "osgEarth/Map"
+#include "osgEarth/Version"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simUtil/ExampleResources.h"
@@ -34,6 +36,7 @@
 #include "simVis/DBOptions.h"
 #include "simVis/osgEarthVersion.h"
 #include "simUtil/ExampleResources.h"
+#include "simVis/DBFormat.h"
 
 int main(int argc, char** argv)
 {
@@ -54,13 +57,7 @@ int main(int argc, char** argv)
     if (token == "--debug")
     {
       // Add the debug driver
-      simVis::DBOptions driverOptions;
-      driverOptions.setDriver("debug");
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-      map->addLayer(new osgEarth::ImageLayer("debug", driverOptions));
-#else
-      map->addImageLayer(new osgEarth::ImageLayer("debug", driverOptions));
-#endif
+      map->addLayer(new osgEarth::Util::DebugImageLayer());
 
       // advance the token
       continue;
@@ -79,20 +76,18 @@ int main(int argc, char** argv)
       token = argv[i];
     }
 
-    simVis::DBOptions driverOptions;
-    driverOptions.url() = token;
-
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     if (isElevation)
-      map->addLayer(new osgEarth::ElevationLayer(token, driverOptions));
+    {
+      simVis::DBElevationLayer* layer = new simVis::DBElevationLayer();
+      layer->setURL(token);
+      map->addLayer(layer);
+    }
     else
-      map->addLayer(new osgEarth::ImageLayer(token, driverOptions));
-#else
-    if (isElevation)
-      map->addElevationLayer(new osgEarth::ElevationLayer(token, driverOptions));
-    else
-      map->addImageLayer(new osgEarth::ImageLayer(token, driverOptions));
-#endif
+    {
+      simVis::DBImageLayer* layer = new simVis::DBImageLayer();
+      layer->setURL(token);
+      map->addLayer(layer);
+    }
   }
 
   // start up a SIMDIS viewer.

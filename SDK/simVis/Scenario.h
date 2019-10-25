@@ -29,9 +29,12 @@
 #include "osg/Group"
 #include "osg/ref_ptr"
 #include "osg/View"
+#include "osgEarth/Version"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Revisioning"
-#include "osgEarthUtil/SpatialData"
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
+#include "osgEarth/SpatialData"
+#endif
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/Types.h"
 #include "simVis/RFProp/RFPropagationManager.h"
@@ -119,6 +122,7 @@ public:
     osg::ref_ptr<osg::Group> group_;
   };
 
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
   /** Entity group that uses the osgEarth::Util::GeoGraph to organize entities */
   class SDKVIS_EXPORT GeoGraphEntityGraph : public AbstractEntityGraph
   {
@@ -135,8 +139,10 @@ public:
   private:
     ScenarioDisplayHints hints_;
     osg::ref_ptr<osg::Group> group_;
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
     osg::ref_ptr<osgEarth::Util::GeoGraph> graph_;
-  };
+#endif
+#endif
 
   /** Changes the strategy to use for grouping entities in the scene */
   void setEntityGraphStrategy(AbstractEntityGraph* strategy);
@@ -494,7 +500,11 @@ protected:
   ScenarioLosCreator* losCreator_;
 
   /** Association between the EntityNode, the data store, and the entity's update slice */
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
   class EntityRecord : public osgEarth::Util::GeoObject
+#else
+  class EntityRecord : public osg::Group
+#endif
   {
   public:
     /** Constructs a new entity record */

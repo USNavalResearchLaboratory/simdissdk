@@ -30,7 +30,7 @@
 #include "osgViewer/Viewer"
 #include "osgViewer/ViewerEventHandlers"
 
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 
 #include "simNotify/Notify.h"
 #include "simCore/String/ValidNumber.h"
@@ -106,6 +106,7 @@ namespace
     App& app_;
   };
 
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
   struct ToggleGeoGraph : public ui::ControlEventHandler
   {
     explicit ToggleGeoGraph(App& app) : app_(app) {}
@@ -127,6 +128,7 @@ namespace
     }
     App& app_;
   };
+#endif
 }
 
 
@@ -154,10 +156,12 @@ ui::Control* createUI(App& app, float duration)
   grid->setControl(0, r, new ui::LabelControl("Overhead:"));
   grid->setControl(1, r, new ui::CheckBoxControl(false, new ToggleOverhead(app)));
 
+#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
   ++r;
   // Turning on Geo Graph will improve cull for a lot of situations with lots of data
   grid->setControl(0, r, new ui::LabelControl("Geo Graph:"));
   grid->setControl(1, r, new ui::CheckBoxControl(false, new ToggleGeoGraph(app)));
+#endif
 
   return grid;
 }

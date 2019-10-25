@@ -21,7 +21,7 @@
 */
 #include <algorithm>
 #include <cassert>
-#include "osgEarthUtil/LogarithmicDepthBuffer"
+#include "osgEarth/LogarithmicDepthBuffer"
 #include "simVis/View.h"
 #include "simVis/ViewManager.h"
 #include "simVis/ViewManagerLogDbAdapter.h"

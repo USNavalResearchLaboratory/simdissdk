@@ -24,7 +24,7 @@
 
 #include "osg/observer_ptr"
 #include "osg/NodeCallback"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 #include "simCore/Common/Export.h"
 #include "simCore/Time/Clock.h"
 

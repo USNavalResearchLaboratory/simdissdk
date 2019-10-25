@@ -22,7 +22,7 @@
 #ifndef SIMVIS_EARTHMANIPULATOR_H
 #define SIMVIS_EARTHMANIPULATOR_H
 
-#include "osgEarthUtil/EarthManipulator"
+#include "osgEarth/EarthManipulator"
 #include "simCore/Common/Export.h"
 
 namespace simVis

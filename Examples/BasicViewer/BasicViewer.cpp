@@ -26,7 +26,6 @@
  * inset views, and how to change the motion model.
  */
 
-#include "osgEarthUtil/Controls"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
@@ -36,9 +35,8 @@
 #include "simVis/InsetViewEventHandler.h"
 #include "simVis/NavigationModes.h"
 #include "simUtil/ExampleResources.h"
-
-#include "osgEarthDrivers/gdal/GDALOptions"
 #include "osgDB/ReadFile"
+#include "osgEarth/Controls"
 
 #define LC "[BasicViewer demo] "
 
@@ -163,7 +161,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
 
         case 'l': // SKY LIGHTING
         {
-          osgEarth::Util::SkyNode* sky = viewer_->getSceneManager()->getSkyNode();
+          osgEarth::SkyNode* sky = viewer_->getSceneManager()->getSkyNode();
           if (sky)
           {
             osg::StateAttribute::OverrideValue ov = sky->getLighting();

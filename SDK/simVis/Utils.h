@@ -38,13 +38,14 @@
 #include "osgGA/GUIEventHandler"
 #include "osgText/Text"
 
+#include "osgEarth/Color"
 #include "osgEarth/GeoData"
 #include "osgEarth/MapNode"
 #include "osgEarth/SpatialReference"
 #include "osgEarth/Units"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderFactory"
-#include "osgEarthSymbology/Color"
+#include "osgEarth/Version"
 
 // MACROS to test for changes in protobuf properties.
 

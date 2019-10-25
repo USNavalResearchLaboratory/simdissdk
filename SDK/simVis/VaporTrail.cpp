@@ -22,6 +22,7 @@
 #include "osg/Billboard"
 #include "osg/CullFace"
 #include "osg/Depth"
+#include "osg/Geode"
 #include "osg/Geometry"
 #include "osg/Texture2D"
 #include "osgEarth/Registry"

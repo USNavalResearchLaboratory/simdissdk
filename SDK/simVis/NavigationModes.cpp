@@ -21,7 +21,7 @@
  */
 
 #include "osgGA/GUIEventAdapter"
-#include "osgEarthUtil/EarthManipulator"
+#include "osgEarth/EarthManipulator"
 
 #include "simVis/BoxZoomMouseHandler.h"
 #include "simVis/EarthManipulator.h"

@@ -19,93 +19,68 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
-#include "osgEarthDrivers/feature_ogr/OGRFeatureOptions"
-#include "osgEarthFeatures/FeatureModelLayer"
+#include "osgEarth/FeatureModelLayer"
+#include "osgEarth/ImageLayer"
+#include "osgEarth/OGRFeatureSource"
+#include "osgEarth/Version"
 #include "simCore/Common/Exception.h"
 #include "simVis/Constants.h"
+#include "simVis/Types.h"
 #include "simUtil/LayerFactory.h"
 
 namespace simUtil {
 
-osgEarth::ImageLayer* LayerFactory::newImageLayer(
-  const std::string& layerName,
-  const osgEarth::TileSourceOptions& options,
-  const osgEarth::Profile* mapProfile,
-  const osgEarth::CachePolicy* cachePolicy)
-{
-  SAFETRYBEGIN;
-  osgEarth::ImageLayerOptions ilOptions(layerName, options);
-  osgEarth::Config config = ilOptions.getConfig();
-  config.key() = "image";
-  ilOptions.mergeConfig(config);
-
-  if (cachePolicy)
-    ilOptions.cachePolicy() = *cachePolicy;
-
-  // Allocate the image layer with the provided options
-  osg::ref_ptr<osgEarth::ImageLayer> imageLayer = new osgEarth::ImageLayer(ilOptions);
-
-  // need to set the target profile hint to prevent crash for MBTiles, SIM-4171
-  imageLayer->setTargetProfileHint(mapProfile);
-  if (imageLayer->open().isError())
-    return imageLayer.release();
-
-  if (imageLayer->getTileSource() && imageLayer->getTileSource()->isOK())
+  osgEarth::ImageLayer* LayerFactory::newImageLayer(
+    const std::string& layerName,
+    const osgEarth::ConfigOptions& options,
+    const osgEarth::Profile* mapProfile,
+    const osgEarth::CachePolicy* cachePolicy)
   {
-    // Only return valid layers that have good tile sources
-    return imageLayer.release(); // decrement count, but do not delete
-  }
+    SAFETRYBEGIN;
+    osg::ref_ptr<osgEarth::ImageLayer> layer = new osgEarth::ImageLayer(options);
 
-  // Error encountered
-  SAFETRYEND("during LayerFactory::newImageLayer()");
-  return NULL;
-}
+    if (cachePolicy)
+      layer->setCachePolicy(*cachePolicy);
+
+    layer->open();
+
+    return layer.release();
+
+    // Error encountered
+    SAFETRYEND("during LayerFactory::newImageLayer()");
+    return NULL;
+  }
 
 osgEarth::ElevationLayer* LayerFactory::newElevationLayer(
   const std::string& layerName,
-  const osgEarth::TileSourceOptions& options,
+  const osgEarth::ConfigOptions& options,
   const osgEarth::CachePolicy* cachePolicy,
-  const osgEarth::ElevationLayerOptions* extraOptions)
+  const osgEarth::ConfigOptions* extraOptions)
 {
   SAFETRYBEGIN;
-
-  // Now instantiate an ElevationLayerOptions out of the TileSourceOptions
-  osgEarth::ElevationLayerOptions elOptions(layerName, options);
-  osgEarth::Config config = elOptions.getConfig();
-  config.key() = "elevation";
-  elOptions.mergeConfig(config);
-
-  // Set the cache policy if there is one
-  if (cachePolicy)
-    elOptions.cachePolicy() = *cachePolicy;
-
-  // Merge in the extra options if specified
+  osgEarth::ConfigOptions combined(options);
   if (extraOptions)
-    elOptions.merge(*extraOptions);
+    combined.merge(*extraOptions);
 
-  // Allocate the elevation layer now with the provided options
-  osg::ref_ptr<osgEarth::ElevationLayer> elevationLayer = new osgEarth::ElevationLayer(elOptions);
-  // Newer osgEarth requires an open() before retrieving tile source
-  if (!elevationLayer->open())
-    return elevationLayer.release();
+  osg::ref_ptr<osgEarth::ElevationLayer> layer = new osgEarth::ElevationLayer(combined);
 
-  if (elevationLayer->getTileSource() && elevationLayer->getTileSource()->isOK())
-  {
-    // Only return valid layers that have good tile sources
-    return elevationLayer.release(); // decrement count, but do not delete
-  }
+  if (cachePolicy)
+    layer->setCachePolicy(*cachePolicy);
+
+  layer->open();
+
+  return layer.release();
 
   // Error encountered
   SAFETRYEND("during LayerFactory::newElevationLayer()");
   return NULL;
 }
 
-osgEarth::Features::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::Features::FeatureModelLayerOptions& options)
+osgEarth::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::FeatureModelLayer::Options& options)
 {
   SAFETRYBEGIN;
-  osg::ref_ptr<osgEarth::Features::FeatureModelLayer> featureLayer = new osgEarth::Features::FeatureModelLayer(options);
+  osg::ref_ptr<osgEarth::FeatureModelLayer> featureLayer = new osgEarth::FeatureModelLayer(options);
 
   // Return layer regardless of if open() succeeds
   featureLayer->open();
@@ -119,14 +94,14 @@ osgEarth::Features::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEa
 /////////////////////////////////////////////////////////////////
 
 ShapeFileLayerFactory::ShapeFileLayerFactory()
-  : style_(new osgEarth::Symbology::Style)
+  : style_(new osgEarth::Style)
 {
   // Configure some defaults
-  setLineColor(osgEarth::Symbology::Color::Cyan);
+  setLineColor(simVis::Color::Cyan);
   setLineWidth(1.5f);
 
   // Configure the render symbol to render line shapes
-  osgEarth::Symbology::RenderSymbol* rs = style_->getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>();
+  osgEarth::RenderSymbol* rs = style_->getOrCreateSymbol<osgEarth::RenderSymbol>();
   rs->depthTest() = false;
   rs->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
   rs->order()->setLiteral(simVis::BIN_GOG_FLAT);
@@ -137,43 +112,50 @@ ShapeFileLayerFactory::~ShapeFileLayerFactory()
 {
 }
 
-osgEarth::Features::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url) const
+osgEarth::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url) const
 {
-  osgEarth::Features::FeatureModelLayerOptions layerOptions;
-  configureOptions(url, layerOptions);
-  return LayerFactory::newFeatureLayer(layerOptions);
+  osg::ref_ptr<osgEarth::FeatureModelLayer> layer = new osgEarth::FeatureModelLayer();
+  configureOptions(url, layer);
+
+  if (layer->getStatus().isError())
+  {
+    SIM_WARN << "ShapeFileLayerFactory::load(" << url << ") failed : " << layer->getStatus().message() << "\n";
+    layer = NULL;
+  }
+  return layer.release();
 }
 
-void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::Features::FeatureModelLayerOptions& driver) const
+void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::FeatureModelLayer* layer) const
 {
-  osgEarth::Drivers::OGRFeatureOptions ogr;
-  ogr.url() = url;
-
   // Configure the stylesheet that will be associated with the layer
-  osgEarth::Symbology::StyleSheet* stylesheet = new osgEarth::Symbology::StyleSheet;
+  osgEarth::StyleSheet* stylesheet = new osgEarth::StyleSheet;
   stylesheet->addStyle(*style_);
+  layer->setStyleSheet(stylesheet);
 
-  driver.featureSource() = ogr;
-  driver.styles() = stylesheet;
-  driver.alphaBlending() = true;
-  driver.enableLighting() = false;
+  osgEarth::OGRFeatureSource* ogr = new osgEarth::OGRFeatureSource();
+  ogr->setURL(url);
+  ogr->open(); // not error-checking here; caller can do that at the layer level
+  layer->setFeatureSource(ogr);
+
+  layer->setAlphaBlending(true);
+  layer->setEnableLighting(false);
 }
 
 void ShapeFileLayerFactory::setLineColor(const osg::Vec4f& color)
 {
-  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
   ls->stroke()->color() = color;
 }
 
 void ShapeFileLayerFactory::setLineWidth(float width)
 {
-  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
   ls->stroke()->width() = width;
 }
 
 void ShapeFileLayerFactory::setStipple(unsigned short pattern, unsigned int factor)
 {
-  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
   ls->stroke()->stipplePattern() = pattern;
   ls->stroke()->stippleFactor() = factor;
 }

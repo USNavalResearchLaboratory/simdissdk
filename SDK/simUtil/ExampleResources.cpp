@@ -21,13 +21,14 @@
  */
 #include <cstdlib>
 
-#include "osgEarth/Registry"
 #include "osgEarth/Capabilities"
+#include "osgEarth/GDAL"
 #include "osgEarth/ImageLayer"
+#include "osgEarth/MBTiles"
+#include "osgEarth/Registry"
+#include "osgEarth/TMS"
+#include "osgEarth/Version"
 #include "osgEarthDrivers/cache_filesystem/FileSystemCache"
-#include "osgEarthDrivers/mbtiles/MBTilesOptions"
-#include "osgEarthDrivers/tms/TMSOptions"
-#include "osgEarthDrivers/gdal/GDALOptions"
 #include "osgEarthDrivers/sky_simple/SimpleSkyOptions"
 
 #include "simNotify/Notify.h"
@@ -118,51 +119,37 @@ Map* simExamples::createDefaultExampleMap()
 
 Map* simExamples::createRemoteWorldMap()
 {
-  MapOptions mapOptions;
-  mapOptions.cachePolicy() = CachePolicy::NO_CACHE;
+  Map* map = new Map();
+  map->setCachePolicy(CachePolicy::NO_CACHE);
 
-  Map* map = new Map(mapOptions);
+  TMSImageLayer* imagery = new TMSImageLayer();
+  imagery->setName("simdis.imagery");
+  imagery->setURL(EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS);
+  addLayer(map, imagery);
 
-  // worldwide imagery layer:
-  {
-    TMSOptions options;
-    options.url() = EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS;
-    addLayer(map, new ImageLayer("simdis.imagery", options));
-  }
-
-  // global elevation layer
-  {
-    TMSOptions options;
-    options.url() = EXAMPLE_ELEVATION_LAYER_TMS;
-    addLayer(map, new ElevationLayer("simdis.elevation", options));
-  }
+  TMSElevationLayer* elevation = new TMSElevationLayer();
+  elevation->setName("simdis.elevation");
+  elevation->setURL(EXAMPLE_ELEVATION_LAYER_TMS);
+  addLayer(map, elevation);
 
   return map;
 }
 
 Map* simExamples::createWorldMapWithFlatOcean()
 {
-  MapOptions mapOptions;
-  mapOptions.cachePolicy() = CachePolicy::NO_CACHE;
+  Map* map = new Map();
+  map->setCachePolicy(CachePolicy::NO_CACHE);
 
-  Map* map = new Map(mapOptions);
+  TMSImageLayer* imagery = new TMSImageLayer();
+  imagery->setName("simdis.imagery");
+  imagery->setURL(EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS);
+  addLayer(map, imagery);
 
-  // worldwide imagery layer:
-  {
-    TMSOptions options;
-    options.url() = EXAMPLE_GLOBAL_IMAGERY_LAYER_TMS;
-    addLayer(map, new ImageLayer("simdis.imagery", options));
-  }
-
-  // global elevation layer (with no bathymetry)
-  {
-    TMSOptions options;
-    options.url() = EXAMPLE_ELEVATION_LAYER_TMS;
-#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
-    options.noDataMinValue() = -1.0;
-#endif
-    addLayer(map, new ElevationLayer("simdis.elevation.nobathy", options));
-  }
+  TMSElevationLayer* elevation = new TMSElevationLayer();
+  elevation->setName("simdis.elevation");
+  elevation->setURL(EXAMPLE_ELEVATION_LAYER_TMS);
+  elevation->setMinValidValue(-1.0);
+  addLayer(map, elevation);
 
   return map;
 }
@@ -180,55 +167,34 @@ Map* simExamples::createHawaiiTMSMap()
 }
 
 // A sample map that demonstrates SIMDIS .db format support (Hi-res Hawaii inset)
-
 Map* simExamples::createHawaiiMap()
 {
   // configure an EGM96 MSL globe.
-  ProfileOptions profileOptions;
-  profileOptions.vsrsString() = "egm96-meters";
+  const Profile* profile = Profile::create("wgs84", "egm96");
 
-  MapOptions mapOptions;
-  mapOptions.profile() = profileOptions;
-  mapOptions.cachePolicy() = CachePolicy::NO_CACHE;
-
-  Map* map = new Map(mapOptions);
+  Map* map = new Map();
+  map->setProfile(profile);
+  map->setCachePolicy(CachePolicy::NO_CACHE);
 
   // the SIMDIS etopo2 default imagery:
-  {
-    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
-    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB;
-    addLayer(map, new ImageLayer("Earth", sourceOptions));
-  }
+  MBTilesImageLayer* baseLayer = new MBTilesImageLayer();
+  baseLayer->setName("Whole Earth");
+  baseLayer->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB);
+  addLayer(map, baseLayer);
 
   // the PDC Hawaii hi-res inset:
-  {
-    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
-    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB;
-
-    ImageLayerOptions layerOptions("Kauai Niihau", sourceOptions);
-    layerOptions.minLevel() = 3;
-
-    addLayer(map, new ImageLayer(layerOptions));
-  }
-
-#if 0
-  // debug
-  ImageLayerOptions debugOptions("debug");
-  debugOptions.driver()->setDriver("debug");
-  debugOptions.maxLevel() = 9;
-  addLayer(map, new ImageLayer(debugOptions));
-#endif
+  MBTilesImageLayer* inset = new MBTilesImageLayer();
+  inset->setName("Kauai Niihau");
+  inset->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB);
+  inset->setMinLevel(3u);
+  addLayer(map, inset);
 
   // the USGS elevation data inset for Kauai
-  {
-    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
-    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB;
-
-    ElevationLayerOptions layerOptions("Kauai Elevation", sourceOptions);
-    //layerOptions.minLevel() = 7;
-
-    addLayer(map, new ElevationLayer(layerOptions));
-  }
+  MBTilesElevationLayer* elev = new MBTilesElevationLayer();
+  elev->setName("Kauai Elevation");
+  elev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB);
+  elev->setMinLevel(7u);
+  addLayer(map, elev);
 
   return map;
 }
@@ -237,53 +203,35 @@ Map* simExamples::createHawaiiMap()
 Map* simExamples::createHawaiiMapLocalWithBathymetry()
 {
   // configure an EGM96 MSL globe.
-  ProfileOptions profileOptions;
-  profileOptions.vsrsString() = "egm96";
+  const Profile* profile = Profile::create("wgs84", "egm96");
 
-  MapOptions mapOptions;
-  mapOptions.profile() = profileOptions;
-  mapOptions.cachePolicy() = CachePolicy::NO_CACHE;
-
-  Map* map = new Map(mapOptions);
+  Map* map = new Map();
+  map->setProfile(profile);
+  map->setCachePolicy(CachePolicy::NO_CACHE);
 
   // the SIMDIS etopo2 default imagery:
-  {
-    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
-    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB;
-    addLayer(map, new ImageLayer("simdis.imagery.topo2", sourceOptions));
-  }
+  MBTilesImageLayer* baseLayer = new MBTilesImageLayer();
+  baseLayer->setName("simdis.imagery.topo2");
+  baseLayer->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_GLOBAL_IMAGERY_LAYER_DB);
+  addLayer(map, baseLayer);
 
   // the PDC Hawaii hi-res inset:
-  {
-    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
-    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB;
-
-    ImageLayerOptions layerOptions("simdis.imagery.pdc", sourceOptions);
-    //layerOptions.minLevel() = 3;
-
-    addLayer(map, new ImageLayer(layerOptions));
-  }
+  MBTilesImageLayer* pdc = new MBTilesImageLayer();
+  pdc->setName("simdis.imagery.pdc");
+  pdc->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HIRES_INSET_LAYER_DB);
+  addLayer(map, pdc);
 
   // An elevation map for the Hawaii area
-  {
-    osgEarth::Drivers::GDALOptions sourceOptions;
-    sourceOptions.url() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HAWAII_LOCAL_BATHYMETRY;
-
-    ElevationLayerOptions layerOptions("simdis.elevation.hawaii-srtm30plus-bathy", sourceOptions);
-
-    addLayer(map, new ElevationLayer(layerOptions));
-  }
+  GDALElevationLayer* baseElev = new GDALElevationLayer();
+  baseElev->setName("simdis.elevation.hawaii-srtm30plus-bathy");
+  baseElev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_HAWAII_LOCAL_BATHYMETRY);
+  addLayer(map, baseElev);
 
   // the USGS elevation data inset for Kauai
-  {
-    osgEarth::Drivers::MBTilesTileSourceOptions sourceOptions;
-    sourceOptions.filename() = getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB;
-
-    ElevationLayerOptions layerOptions("simdis.elevation.usgs-elevation", sourceOptions);
-    //layerOptions.minLevel() = 7;
-
-    addLayer(map, new ElevationLayer(layerOptions));
-  }
+  MBTilesElevationLayer* insetElev = new MBTilesElevationLayer();
+  insetElev->setName("simdis.elevation.usgs-elevation");
+  insetElev->setURL(getSampleDataPath() + PATH_SEP + "terrain" + PATH_SEP + EXAMPLE_ELEVATION_LAYER_DB);
+  addLayer(map, insetElev);
 
   return map;
 }
@@ -482,7 +430,7 @@ void simExamples::addDefaultSkyNode(simVis::SceneManager* sceneMan)
     skyOptions.atmosphericLighting() = false;
     skyOptions.ambient() = 0.5f;
     skyOptions.exposure() = 2.0f;
-    sceneMan->setSkyNode(osgEarth::Util::SkyNode::create(osgEarth::ConfigOptions(skyOptions), sceneMan->getMapNode()));
+    sceneMan->setSkyNode(osgEarth::SkyNode::create(skyOptions));
   }
   else
     sceneMan->setSkyNode(new simUtil::NullSkyModel);
@@ -507,7 +455,7 @@ void simExamples::SkyNodeTimeUpdater::onSetTime(const simCore::TimeStamp &t, boo
   lastTime_ = t;
   if (sceneManager_.valid() && sceneManager_->getSkyNode() != NULL)
   {
-    sceneManager_->getSkyNode()->setDateTime(osgEarth::Util::DateTime(t.secondsSinceRefYear(1970) + simCore::Seconds(hoursOffset_ * simCore::SECPERHOUR)));
+    sceneManager_->getSkyNode()->setDateTime(osgEarth::DateTime(t.secondsSinceRefYear(1970) + simCore::Seconds(hoursOffset_ * simCore::SECPERHOUR)));
   }
 }
 
