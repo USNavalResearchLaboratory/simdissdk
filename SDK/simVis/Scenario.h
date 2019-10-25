@@ -32,9 +32,6 @@
 #include "osgEarth/Version"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Revisioning"
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-#include "osgEarth/SpatialData"
-#endif
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/Types.h"
 #include "simVis/RFProp/RFPropagationManager.h"
@@ -59,26 +56,6 @@ class PlatformTspiFilterManager;
 class ProjectorManager;
 class ProjectorNode;
 class ScenarioTool;
-
-/** Settings to configure the scenario manager for large numbers of entities */
-class ScenarioDisplayHints
-{
-public:
-  /** Constructs a new Display Hints */
-  ScenarioDisplayHints()
-    : maxRange_(1e10), maxPerCell_(std::numeric_limits<int>::max()), cellsX_(1), cellsY_(1)
-  {
-  }
-
-  /** Maximum range */
-  float maxRange_;
-  /** Maximum number of elements per cell */
-  float maxPerCell_;
-  /** X cells */
-  unsigned int cellsX_;
-  /** Y cells */
-  unsigned int cellsY_;
-};
 
 /**
 * Manages all scenario objects (platforms, beams, gates, etc) and their
@@ -121,28 +98,6 @@ public:
   private:
     osg::ref_ptr<osg::Group> group_;
   };
-
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-  /** Entity group that uses the osgEarth::Util::GeoGraph to organize entities */
-  class SDKVIS_EXPORT GeoGraphEntityGraph : public AbstractEntityGraph
-  {
-  public:
-    explicit GeoGraphEntityGraph(const ScenarioDisplayHints& hints = ScenarioDisplayHints());
-    virtual osg::Group* node() const;
-    virtual int addOrUpdate(EntityRecord* record);
-    virtual int removeEntity(EntityRecord* record);
-    virtual int clear();
-
-  protected:
-    virtual ~GeoGraphEntityGraph();
-
-  private:
-    ScenarioDisplayHints hints_;
-    osg::ref_ptr<osg::Group> group_;
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-    osg::ref_ptr<osgEarth::Util::GeoGraph> graph_;
-#endif
-#endif
 
   /** Changes the strategy to use for grouping entities in the scene */
   void setEntityGraphStrategy(AbstractEntityGraph* strategy);

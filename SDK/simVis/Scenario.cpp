@@ -226,58 +226,6 @@ int ScenarioManager::SimpleEntityGraph::clear()
 
 // -----------------------------------------------------------------------
 
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-
-ScenarioManager::GeoGraphEntityGraph::GeoGraphEntityGraph(const ScenarioDisplayHints& hints)
-  : hints_(hints),
-  group_(new osg::Group),
-  graph_(NULL)
-{
-  group_->setName("Entity Group");
-  // clear() will instantiate the graph
-  clear();
-}
-
-ScenarioManager::GeoGraphEntityGraph::~GeoGraphEntityGraph()
-{
-}
-
-osg::Group* ScenarioManager::GeoGraphEntityGraph::node() const
-{
-  return group_.get();
-}
-
-int ScenarioManager::GeoGraphEntityGraph::addOrUpdate(EntityRecord* record)
-{
-  const bool inGraph = (record->getGeoCell() != NULL);
-  if (inGraph)
-    return graph_->reindexObject(record) ? 0 : 1;
-  return graph_->insertObject(record) ? 0 : 1;
-}
-
-int ScenarioManager::GeoGraphEntityGraph::removeEntity(EntityRecord* record)
-{
-  return graph_->removeObject(record) ? 0 : 1;
-}
-
-int ScenarioManager::GeoGraphEntityGraph::clear()
-{
-  // NOTE: No way to clear out the GeoGraph, so we create a new one that's empty
-  if (graph_)
-    group_->removeChild(graph_);
-  // Reallocate graph_, destroying the old one in the process
-  graph_ = new osgEarth::Util::GeoGraph(
-    osgEarth::Registry::instance()->getGlobalGeodeticProfile()->getExtent(),
-    hints_.maxRange_, hints_.maxPerCell_, 2, 0.5f, hints_.cellsX_, hints_.cellsY_);
-  graph_->setName("GeoGraphEntityGraph GeoGraph");
-  group_->addChild(graph_);
-  return 0;
-}
-
-#endif
-
-// -----------------------------------------------------------------------
-
 /// Clamps a platform to the surface (terrain). Expects coordinates to be in LLA
 class ScenarioManager::SurfaceClamping : public PlatformTspiFilter
 {
