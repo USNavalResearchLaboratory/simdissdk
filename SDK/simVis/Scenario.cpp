@@ -165,6 +165,23 @@ bool ScenarioManager::EntityRecord::updateFromDataStore(bool force) const
 
 // -----------------------------------------------------------------------
 
+/** Entity group that stores all nodes in a flat osg::Group */
+class ScenarioManager::SimpleEntityGraph : public osg::Referenced
+{
+public:
+  SimpleEntityGraph();
+  virtual osg::Group* node() const;
+  virtual int addOrUpdate(EntityRecord* record);
+  virtual int removeEntity(EntityRecord* record);
+  virtual int clear();
+
+protected:
+  virtual ~SimpleEntityGraph();
+
+private:
+  osg::ref_ptr<osg::Group> group_;
+};
+
 ScenarioManager::SimpleEntityGraph::SimpleEntityGraph()
   : group_(new osg::Group)
 {
@@ -606,24 +623,6 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
     entities_.erase(i);
   }
   SAFETRYEND("removing entity from scenario");
-}
-
-void ScenarioManager::setEntityGraphStrategy(AbstractEntityGraph* strategy)
-{
-  if (strategy == NULL || strategy == entityGraph_)
-    return;
-  // Hold onto the old strategy so it doesn't get removed until we've added all the entities
-  osg::ref_ptr<AbstractEntityGraph> oldStrategy = entityGraph_;
-
-  root_->removeChild(entityGraph_->node());
-  entityGraph_ = strategy;
-  // Make sure the graph is clear so that we don't add extra entities
-  entityGraph_->clear();
-  root_->addChild(entityGraph_->node());
-
-  // Add each entity to the graph
-  for (EntityRepo::const_iterator i = entities_.begin(); i != entities_.end(); ++i)
-    entityGraph_->addOrUpdate(i->second.get());
 }
 
 void ScenarioManager::setMapNode(osgEarth::MapNode* map)

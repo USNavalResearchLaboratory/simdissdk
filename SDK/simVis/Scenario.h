@@ -63,43 +63,7 @@ class ScenarioTool;
 class SDKVIS_EXPORT ScenarioManager : public osgEarth::LODScaleGroup // osg::Group
 {
   friend class SceneManager;
-protected:
-  class EntityRecord;
-
 public:
-
-  /** Strategy for a class that contains all the scenario entity nodes */
-  class AbstractEntityGraph : public osg::Referenced
-  {
-  public:
-    virtual osg::Group* node() const = 0;
-    virtual int addOrUpdate(EntityRecord* record) = 0;
-    virtual int removeEntity(EntityRecord* record) = 0;
-    virtual int clear() = 0;
-
-  protected:
-    virtual ~AbstractEntityGraph() {}
-  };
-
-  /** Entity group that stores all nodes in a flat osg::Group */
-  class SDKVIS_EXPORT SimpleEntityGraph : public AbstractEntityGraph
-  {
-  public:
-    SimpleEntityGraph();
-    virtual osg::Group* node() const;
-    virtual int addOrUpdate(EntityRecord* record);
-    virtual int removeEntity(EntityRecord* record);
-    virtual int clear();
-
-  protected:
-    virtual ~SimpleEntityGraph();
-
-  private:
-    osg::ref_ptr<osg::Group> group_;
-  };
-
-  /** Changes the strategy to use for grouping entities in the scene */
-  void setEntityGraphStrategy(AbstractEntityGraph* strategy);
 
   /**
    * Binds this scenario manager to a DataStore.
@@ -419,9 +383,11 @@ protected:
   virtual ~ScenarioManager();
 
 protected:
-  class ScenarioLosCreator;
-  class SurfaceClamping;
   class AboveSurfaceClamping;
+  class EntityRecord;
+  class ScenarioLosCreator;
+  class SimpleEntityGraph;
+  class SurfaceClamping;
 
   /** Generates locators for entities */
   LocatorFactory*              locatorFactory_;
@@ -436,7 +402,7 @@ protected:
   /** Root node for the scenario */
   osg::ref_ptr<osg::Group>     root_;
   /** Strategy for grouping up entities into the scene graph */
-  osg::ref_ptr<AbstractEntityGraph> entityGraph_;
+  osg::ref_ptr<SimpleEntityGraph> entityGraph_;
   /** Holds a map of all named attachment points added through getOrCreateAttachPoint(). */
   std::map<std::string, osg::observer_ptr<osg::Group> > customAttachPoints_;
 
