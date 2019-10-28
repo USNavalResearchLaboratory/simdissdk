@@ -287,29 +287,6 @@ bool SceneManager::isSilverLining_(const osgEarth::SkyNode* skyNode) const
   return false;
 }
 
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-void SceneManager::setOceanNode(osgEarth::Util::OceanNode* oceanNode)
-{
-  removeOceanNode();
-
-  if (oceanNode != NULL)
-  {
-    oceanNode_ = oceanNode;
-    osg::Group* oceanParent = skyNode_.valid() ? skyNode_->asGroup() : this->asGroup();
-    oceanParent->addChild(oceanNode);
-  }
-}
-
-void SceneManager::removeOceanNode()
-{
-  if (oceanNode_ != NULL)
-  {
-    oceanNode_->getParent(0)->removeChild(oceanNode_.get());
-    oceanNode_ = NULL;
-  }
-}
-#endif
-
 void SceneManager::setScenarioDraping(bool value)
 {
   drapeableNode_->setDrapingEnabled(value);

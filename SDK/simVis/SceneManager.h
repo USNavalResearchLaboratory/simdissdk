@@ -29,9 +29,6 @@
 #include "osgEarth/MapNode"
 #include "osgEarth/Sky"
 #include "osgEarth/Version"
-#if OSGEARTH_VERSION_LESS_THAN(3,0,0)
-#include "osgEarth/Ocean"
-#endif
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
 #include "simVis/Types.h"
@@ -56,7 +53,6 @@ namespace simVis
    *       +-scenarioManager
    *       +-centroidManager
    *       +-projectorManager
-   *       +-oceanNode
    * </pre>
    */
   class SDKVIS_EXPORT SceneManager : public osg::Group,
@@ -134,9 +130,6 @@ namespace simVis
     * @param skyNode the new sky node
     */
     void setSkyNode(osgEarth::SkyNode* skyNode);
-
-    /** remove the current ocean node */
-    void removeOceanNode();
 
     /** Changes the underlying globe color for when no image layers are shown */
     void setGlobeColor(const simVis::Color& color);
