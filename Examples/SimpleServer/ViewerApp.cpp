@@ -68,10 +68,8 @@ static const std::string HELP_TEXT =
   "O : Toggle overhead mode\n"
   "p : Play/pause\n"
   "s : Cycle OSG statistics\n"
-#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
   "t : Toggle declutter technique\n"
   "T : Cycle callout line style\n"
-#endif
   "w : Toggle compass\n"
   "z : Toggle cockpit mode (if centered)\n"
   ;
@@ -127,16 +125,12 @@ public:
       case 'D':
         app_.toggleTextDeclutter();
         return true;
-
-#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
       case 't':
         app_.toggleDeclutterTechnique();
         return true;
       case 'T':
         app_.cycleCalloutLineStyle();
         return true;
-#endif
-
       }
     }
     return false;
@@ -491,7 +485,6 @@ void ViewerApp::toggleTextDeclutter()
   std::cout << "Decluttering " << (declutterOn_ ? "enabled" : "disabled") << "\n";
 }
 
-#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
 void ViewerApp::toggleDeclutterTechnique()
 {
   auto opts = osgEarth::ScreenSpaceLayout::getOptions();
@@ -541,6 +534,5 @@ void ViewerApp::cycleCalloutLineStyle()
   }
   osgEarth::ScreenSpaceLayout::setOptions(opts);
 }
-#endif // HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
 
 }

@@ -645,10 +645,8 @@ int main(int argc, char** argv)
     simVis::RTTPicker* rttPicker = new simVis::RTTPicker(viewMan.get(), scenarioManager, 256);
 
     // Add GOG to the pickable mask
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
     osgEarth::Util::RTTPicker* osgEarthPicker = rttPicker->rttPicker();
     osgEarthPicker->setCullMask(osgEarthPicker->getCullMask() | simVis::DISPLAY_MASK_GOG | simVis::DISPLAY_MASK_CUSTOM_RENDERING);
-#endif
     app.picker = rttPicker;
 
     // Make a view that lets us see what the picker sees for Main View

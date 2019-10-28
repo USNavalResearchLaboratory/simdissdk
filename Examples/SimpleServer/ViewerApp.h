@@ -69,11 +69,8 @@ public:
   void toggleCockpit();
   void playPause();
   void toggleTextDeclutter();
-
-#ifdef HAVE_OSGEARTH_SCREENSPACELAYOUT_TECHNIQUE
   void toggleDeclutterTechnique();
   void cycleCalloutLineStyle();
-#endif
 
 private:
   void init_(osg::ArgumentParser& args);

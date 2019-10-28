@@ -100,7 +100,6 @@ static simData::ObjectId     s_shipId;
 class PlatformBuoyancyCallback : public osg::NodeCallback
 {
 public:
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
   explicit PlatformBuoyancyCallback(osgEarth::Triton::TritonLayer* triton) :
     triton_(triton),
     enabled_(false),
@@ -164,12 +163,6 @@ public:
   osg::observer_ptr<osgEarth::Triton::TritonLayer> triton_;
   bool enabled_;
   bool reset_;
-
-#else
-  /** Simply adapt to the interface and provide no-ops */
-  explicit PlatformBuoyancyCallback(osgEarth::Triton::TritonLayer* triton) {}
-  void setEnabled(bool fl) {}
-#endif
 };
 #else
 // Provide a typedef for the callback since Triton isn't available
@@ -634,13 +627,11 @@ namespace
       slider->setValue(s_TritonSettings->godRaysFade()->value());
       grid->setControl(2, row, new LabelControl(slider, TEXT_SIZE, WHITE));
 
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
       // Platform Buoyancy
       ++row;
       grid->setControl(0, row, new LabelControl("Platform Buoyancy", TEXT_SIZE, WHITE));
       evtHandler = new ToggleBuoyancySimulation(buoyancyCallback);
       grid->setControl(1, row, new CheckBoxControl(false, evtHandler));
-#endif
     }
 #endif /* HAVE_TRITON_NODEKIT */
 

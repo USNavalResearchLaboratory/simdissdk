@@ -460,20 +460,6 @@ osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
     {
       if (decodeRaster_(rasterFormat_, (const char*)buf, currentRasterSize, result))
       {
-#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
-        // Resize if necessary:
-        if (options_.tileSize().isSet() && options_.tileSize().value() >= 0)
-        {
-          const int tileSize = options_.tileSize().value();
-          if (result->s() != tileSize || result->t() != tileSize)
-          {
-            osg::ref_ptr<osg::Image> resizedImage;
-            if (osgEarth::ImageUtils::resizeImage(result.get(), static_cast<unsigned int>(tileSize), static_cast<unsigned int>(tileSize), resizedImage))
-              result = resizedImage.get();
-          }
-        }
-#endif
-
         // If result is 1x1, skip border processing
         if (result->s() >= 1 && result->t() >= 1)
         {
