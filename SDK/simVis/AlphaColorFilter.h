@@ -56,7 +56,7 @@ namespace simVis
     * set using "c", 'opaque' is set using "o".
     * @param[in] conf the Config defining 'clear' and 'opaque'
     */
-    AlphaColorFilter(const osgEarth::Config& conf);
+    explicit AlphaColorFilter(const osgEarth::Config& conf);
 
     /**
     * Set the 'clear' and 'opaque' values using a Vec2f.  Expects the value at index 0 is 'clear',
@@ -108,11 +108,12 @@ namespace simVis
      */
     virtual osgEarth::Config getConfig() const;
 
-  private: // methods
+  protected:
     virtual ~AlphaColorFilter() {} // osg::Referenced object
+
+  private:
     void init_();
 
-  private: // data
     unsigned int instanceId_; /// local instance id counter
     osg::ref_ptr<osg::Uniform> alpha_; /// the local alpha 'clear' and 'opaque' values
   };

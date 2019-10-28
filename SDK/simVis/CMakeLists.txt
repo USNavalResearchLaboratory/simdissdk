@@ -54,7 +54,9 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}BillboardAutoTransform.h
     ${VIS_INC}BoxGraphic.h
     ${VIS_INC}BoxZoomMouseHandler.h
+    ${VIS_INC}BrightnessContrastColorFilter.h
     ${VIS_INC}CentroidManager.h
+    ${VIS_INC}ChromaKeyColorFilter.h
     ${VIS_INC}ClassificationBanner.h
     ${VIS_INC}ClockOptions.h
     ${VIS_INC}Compass.h
@@ -195,7 +197,9 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}BillboardAutoTransform.cpp
     ${VIS_SRC}BoxGraphic.cpp
     ${VIS_SRC}BoxZoomMouseHandler.cpp
+    ${VIS_SRC}BrightnessContrastColorFilter.cpp
     ${VIS_SRC}CentroidManager.cpp
+    ${VIS_SRC}ChromaKeyColorFilter.cpp
     ${VIS_SRC}ClassificationBanner.cpp
     ${VIS_SRC}ClockOptions.cpp
     ${VIS_SRC}Compass.cpp
@@ -203,7 +207,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
     ${VIS_SRC}DBFormat.cpp
-    ${VIS_INC}DisableDepthOnAlpha.cpp
+    ${VIS_SRC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
     ${VIS_SRC}ElevationQueryProxy.cpp
