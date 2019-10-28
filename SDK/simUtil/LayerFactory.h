@@ -50,40 +50,22 @@ namespace simUtil {
 class SDKUTIL_EXPORT LayerFactory
 {
 public:
-  /**
-   * Factory method for creating a new image layer.
-   * @param layerName Name of the layer.  Used to identify the layer in GUI.
-   * @param options Configuration options for the Tile Source.  Typically this is either a
-   *   directly allocated driver options like GDALOptions or DBOptions, but it could be set
-   *   up using an osgEarth::Config passed into an osgEarth::ConfigOptions constructor.
-   * @param mapProfile Contents of the osgEarth::Map->getProfile(), required for preventing
-   *   crashes when loading MBTiles.  See also SIM-4171.
-   * @param cachePolicy When non-NULL, sets the cache policy on the layer.
-   * @return Image layer on success; NULL on failure.  Caller responsible for memory.
-   *   (put in ref_ptr)
-   */
-  static osgEarth::ImageLayer* newImageLayer(
-    const std::string& layerName,
-    const osgEarth::ConfigOptions& options,
-    const osgEarth::Profile* mapProfile,
-    const osgEarth::CachePolicy* cachePolicy = NULL);
+  /** Returns an image layer properly configured for DB layer. */
+  osgEarth::ImageLayer* newDbImageLayer(const std::string& fullPath) const;
+  /** Returns an image layer properly configured for MBTiles layer. */
+  osgEarth::ImageLayer* newMbTilesImageLayer(const std::string& fullPath) const;
+  /** Returns an image layer properly configured for GDAL layer. */
+  osgEarth::ImageLayer* newGdalImageLayer(const std::string& fullPath) const;
 
-  /**
-   * Factory method for creating a new elevation layer.
-   * @param layerName Name of the layer.  Used to identify the layer in GUI.
-   * @param options Configuration options for the Tile Source.  Typically this is either a
-   *   directly allocated driver options like GDALOptions or DBOptions, but it could be set
-   *   up using an osgEarth::Config passed into an osgEarth::ConfigOptions constructor.
-   * @param cachePolicy When non-NULL, sets the cache policy on the layer.
-   * @param extraOptions Additional elevation layer options to merge in, such as noDataValue()
-   * @return Elevation layer on success; NULL on failure.  Caller responsible for memory.
-   *   (put in ref_ptr)
-   */
-  static osgEarth::ElevationLayer* newElevationLayer(
-    const std::string& layerName,
-    const osgEarth::ConfigOptions& options,
-    const osgEarth::CachePolicy* cachePolicy = NULL,
-    const osgEarth::ConfigOptions* extraOptions = NULL);
+  /** Returns an elevation layer properly configured for DB layer. */
+  osgEarth::ElevationLayer* newDbElevationLayer(const std::string& fullPath) const;
+  /** Returns an elevation layer properly configured for MBTiles layer. */
+  osgEarth::ElevationLayer* newMbTilesElevationLayer(const std::string& fullPath) const;
+  /** Returns an elevation layer properly configured for GDAL layer. */
+  osgEarth::ElevationLayer* newGdalElevationLayer(const std::string& fullPath) const;
+
+  /** Retrieves the complete base name (e.g. "filename" for "c:/tmp/filename.db") of a URL */
+  static std::string completeBaseName(const std::string& fullPath);
 
   /**
    * Factory method for creating a new feature model layer.

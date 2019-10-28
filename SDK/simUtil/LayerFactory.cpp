@@ -21,59 +21,143 @@
  */
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/FeatureModelLayer"
+#include "osgEarth/GDAL"
 #include "osgEarth/ImageLayer"
+#include "osgEarth/MBTiles"
 #include "osgEarth/OGRFeatureSource"
 #include "simCore/Common/Exception.h"
+#include "simCore/String/Format.h"
+#include "simCore/String/Utils.h"
 #include "simVis/Constants.h"
+#include "simVis/DBFormat.h"
 #include "simVis/Types.h"
 #include "simUtil/LayerFactory.h"
 
 namespace simUtil {
 
-  osgEarth::ImageLayer* LayerFactory::newImageLayer(
-    const std::string& layerName,
-    const osgEarth::ConfigOptions& options,
-    const osgEarth::Profile* mapProfile,
-    const osgEarth::CachePolicy* cachePolicy)
-  {
-    SAFETRYBEGIN;
-    osg::ref_ptr<osgEarth::ImageLayer> layer = new osgEarth::ImageLayer(options);
+/** Default cache time of one year */
+static const osgEarth::TimeSpan ONE_YEAR(365 * 86400);
 
-    if (cachePolicy)
-      layer->setCachePolicy(*cachePolicy);
-
-    layer->open();
-
-    return layer.release();
-
-    // Error encountered
-    SAFETRYEND("during LayerFactory::newImageLayer()");
-    return NULL;
-  }
-
-osgEarth::ElevationLayer* LayerFactory::newElevationLayer(
-  const std::string& layerName,
-  const osgEarth::ConfigOptions& options,
-  const osgEarth::CachePolicy* cachePolicy,
-  const osgEarth::ConfigOptions* extraOptions)
+osgEarth::ImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath) const
 {
-  SAFETRYBEGIN;
-  osgEarth::ConfigOptions combined(options);
-  if (extraOptions)
-    combined.merge(*extraOptions);
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
 
-  osg::ref_ptr<osgEarth::ElevationLayer> layer = new osgEarth::ElevationLayer(combined);
+  simVis::DBImageLayer::Options opts(config);
+  osg::ref_ptr<simVis::DBImageLayer> layer = new simVis::DBImageLayer(opts);
+  layer->setURL(fullPath);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
 
-  if (cachePolicy)
-    layer->setCachePolicy(*cachePolicy);
-
-  layer->open();
+  // set max age to 1 year (in secs)
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
 
   return layer.release();
+}
 
-  // Error encountered
-  SAFETRYEND("during LayerFactory::newElevationLayer()");
-  return NULL;
+osgEarth::ImageLayer* LayerFactory::newMbTilesImageLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::MBTilesImageLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::MBTilesImageLayer> layer = new osgEarth::MBTilesImageLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+  layer->setComputeLevels(false);
+
+  // mbtiles already have preprocessed data, no need to use cache
+  layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
+
+  return layer.release();
+}
+
+osgEarth::ImageLayer* LayerFactory::newGdalImageLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::GDALImageLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::GDALImageLayer> layer = new osgEarth::GDALImageLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
+
+  // SIM-8582 workaround: MrSID files should have interpolation set to nearest neighbor to prevent crash
+  const std::string suffixWithDot = simCore::getExtension(fullPath);
+  if (suffixWithDot == ".jp2" || suffixWithDot == ".sid")
+    layer->setInterpolation(osgEarth::INTERP_NEAREST);
+
+  return layer.release();
+}
+
+osgEarth::ElevationLayer* LayerFactory::newDbElevationLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  simVis::DBElevationLayer::Options opts(config);
+  osg::ref_ptr<simVis::DBElevationLayer> layer = new simVis::DBElevationLayer(opts);
+  layer->setURL(fullPath);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+
+  // set max age to 1 year (in secs)
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
+
+  return layer.release();
+}
+
+osgEarth::ElevationLayer* LayerFactory::newMbTilesElevationLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::MBTilesElevationLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::MBTilesElevationLayer> layer = new osgEarth::MBTilesElevationLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+  layer->setComputeLevels(false);
+
+  // mbtiles already have preprocessed data, no need to use cache
+  layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
+
+  return layer.release();
+}
+
+osgEarth::ElevationLayer* LayerFactory::newGdalElevationLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::GDALElevationLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::GDALElevationLayer> layer = new osgEarth::GDALElevationLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
+
+  // SIM-8582 workaround: MrSID files should have interpolation set to nearest neighbor to prevent crash
+  const std::string suffixWithDot = simCore::getExtension(fullPath);
+  if (suffixWithDot == ".jp2" || suffixWithDot == ".sid")
+    layer->setInterpolation(osgEarth::INTERP_NEAREST);
+
+  return layer.release();
+}
+
+std::string LayerFactory::completeBaseName(const std::string& fullPath)
+{
+  // Get the base name -- strip out extension, then strip out everything after last \\ or /
+  return simCore::StringUtils::beforeLast(
+    simCore::StringUtils::afterLast(
+      simCore::StringUtils::afterLast(fullPath, '/'), '\\'), '.');
 }
 
 osgEarth::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::FeatureModelLayer::Options& options)
