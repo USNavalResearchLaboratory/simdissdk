@@ -32,9 +32,17 @@ namespace osgEarth
 {
   class CachePolicy;
   class ElevationLayer;
-  class ImageLayer;
+  class GDALElevationLayer;
+  class GDALImageLayer;
+  class MBTilesElevationLayer;
+  class MBTilesImageLayer;
   class Profile;
   class Style;
+}
+namespace simVis
+{
+  class DBElevationLayer;
+  class DBImageLayer;
 }
 
 namespace simUtil {
@@ -51,18 +59,18 @@ class SDKUTIL_EXPORT LayerFactory
 {
 public:
   /** Returns an image layer properly configured for DB layer. */
-  osgEarth::ImageLayer* newDbImageLayer(const std::string& fullPath) const;
+  simVis::DBImageLayer* newDbImageLayer(const std::string& fullPath) const;
   /** Returns an image layer properly configured for MBTiles layer. */
-  osgEarth::ImageLayer* newMbTilesImageLayer(const std::string& fullPath) const;
+  osgEarth::MBTilesImageLayer* newMbTilesImageLayer(const std::string& fullPath) const;
   /** Returns an image layer properly configured for GDAL layer. */
-  osgEarth::ImageLayer* newGdalImageLayer(const std::string& fullPath) const;
+  osgEarth::GDALImageLayer* newGdalImageLayer(const std::string& fullPath) const;
 
   /** Returns an elevation layer properly configured for DB layer. */
-  osgEarth::ElevationLayer* newDbElevationLayer(const std::string& fullPath) const;
+  simVis::DBElevationLayer* newDbElevationLayer(const std::string& fullPath) const;
   /** Returns an elevation layer properly configured for MBTiles layer. */
-  osgEarth::ElevationLayer* newMbTilesElevationLayer(const std::string& fullPath) const;
+  osgEarth::MBTilesElevationLayer* newMbTilesElevationLayer(const std::string& fullPath) const;
   /** Returns an elevation layer properly configured for GDAL layer. */
-  osgEarth::ElevationLayer* newGdalElevationLayer(const std::string& fullPath) const;
+  osgEarth::GDALElevationLayer* newGdalElevationLayer(const std::string& fullPath) const;
 
   /** Retrieves the complete base name (e.g. "filename" for "c:/tmp/filename.db") of a URL */
   static std::string completeBaseName(const std::string& fullPath);

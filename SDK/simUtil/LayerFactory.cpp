@@ -38,7 +38,7 @@ namespace simUtil {
 /** Default cache time of one year */
 static const osgEarth::TimeSpan ONE_YEAR(365 * 86400);
 
-osgEarth::ImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath) const
+simVis::DBImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
   config.setReferrer(fullPath);
@@ -56,7 +56,7 @@ osgEarth::ImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath)
   return layer.release();
 }
 
-osgEarth::ImageLayer* LayerFactory::newMbTilesImageLayer(const std::string& fullPath) const
+osgEarth::MBTilesImageLayer* LayerFactory::newMbTilesImageLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
   config.setReferrer(fullPath);
@@ -73,7 +73,7 @@ osgEarth::ImageLayer* LayerFactory::newMbTilesImageLayer(const std::string& full
   return layer.release();
 }
 
-osgEarth::ImageLayer* LayerFactory::newGdalImageLayer(const std::string& fullPath) const
+osgEarth::GDALImageLayer* LayerFactory::newGdalImageLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
   config.setReferrer(fullPath);
@@ -95,7 +95,7 @@ osgEarth::ImageLayer* LayerFactory::newGdalImageLayer(const std::string& fullPat
   return layer.release();
 }
 
-osgEarth::ElevationLayer* LayerFactory::newDbElevationLayer(const std::string& fullPath) const
+simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
   config.setReferrer(fullPath);
@@ -113,7 +113,7 @@ osgEarth::ElevationLayer* LayerFactory::newDbElevationLayer(const std::string& f
   return layer.release();
 }
 
-osgEarth::ElevationLayer* LayerFactory::newMbTilesElevationLayer(const std::string& fullPath) const
+osgEarth::MBTilesElevationLayer* LayerFactory::newMbTilesElevationLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
   config.setReferrer(fullPath);
@@ -130,7 +130,7 @@ osgEarth::ElevationLayer* LayerFactory::newMbTilesElevationLayer(const std::stri
   return layer.release();
 }
 
-osgEarth::ElevationLayer* LayerFactory::newGdalElevationLayer(const std::string& fullPath) const
+osgEarth::GDALElevationLayer* LayerFactory::newGdalElevationLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
   config.setReferrer(fullPath);
