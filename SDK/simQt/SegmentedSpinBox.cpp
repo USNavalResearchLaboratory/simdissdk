@@ -117,7 +117,27 @@ private:
     // If the text string does not change then return the given time to prevent a truncated time
     if (timeString_ == completeLine_->text())
       return timeStamp_;
-    return completeLine_->timeStamp();
+
+    const simCore::TimeStamp& time = completeLine_->timeStamp();
+
+    // Due to precision the time can be slightly out of range, so range check if necessary
+    bool startLimit;
+    bool endLimit;
+    completeLine_->getEnforceLimits(startLimit, endLimit);
+    if (!startLimit && !endLimit)
+      return time;
+
+    simCore::TimeStamp startTime;
+    simCore::TimeStamp endTime;
+    int referencerYear;
+    completeLine_->timeRange(referencerYear, startTime, endTime);
+
+    if (startLimit && (time < startTime))
+      return startTime;
+    if (endLimit && (time > endTime))
+      return endTime;
+
+    return time;
   }
 
   void SegmentedSpinBox::setTimeStamp(const simCore::TimeStamp& value)

@@ -58,6 +58,17 @@ static const unsigned int MAX_PRECISION = 6;
     return precision_;
   }
 
+  void SegmentedTexts::setPrecision(unsigned int digits)
+  {
+    digits = simCore::sdkMin(MAX_PRECISION, digits);
+    if (digits == precision_)
+      return;
+
+    precision_ = digits;
+    adjustTimeRange_();
+    makeSegments_();
+  }
+
   void SegmentedTexts::addPart(SegmentedText* part)
   {
     segments_.push_back(part);
@@ -187,7 +198,11 @@ static const unsigned int MAX_PRECISION = 6;
     scenarioReferenceYear_ = scenarioReferenceYear;
     start_ = start;
     end_ = end;
+    adjustTimeRange_();
+  }
 
+  void SegmentedTexts::adjustTimeRange_()
+  {
     adjustedStart_ = start_;
     if (adjustedStart_.secondsSinceRefYear() != simCore::ZERO_SECONDS)
     {
@@ -593,16 +608,6 @@ static const unsigned int MAX_PRECISION = 6;
     }
   }
 
-  void SecondsTexts::setPrecision(unsigned int digits)
-  {
-    digits = simCore::sdkMin(MAX_PRECISION, digits);
-    if (digits == precision_)
-      return;
-
-    precision_ = digits;
-    makeSegments_();
-  }
-
   simCore::TimeStamp SecondsTexts::timeStamp() const
   {
     const int seconds = seconds_->value();
@@ -684,16 +689,6 @@ static const unsigned int MAX_PRECISION = 6;
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
     }
-  }
-
-  void MinutesTexts::setPrecision(unsigned int digits)
-  {
-    digits = simCore::sdkMin(MAX_PRECISION, digits);
-    if (digits == precision_)
-      return;
-
-    precision_ = digits;
-    makeSegments_();
   }
 
   simCore::TimeStamp MinutesTexts::timeStamp() const
@@ -784,16 +779,6 @@ static const unsigned int MAX_PRECISION = 6;
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
     }
-  }
-
-  void HoursTexts::setPrecision(unsigned int digits)
-  {
-    digits = simCore::sdkMin(MAX_PRECISION, digits);
-    if (digits == precision_)
-      return;
-
-    precision_ = digits;
-    makeSegments_();
   }
 
   simCore::TimeStamp HoursTexts::timeStamp() const
@@ -898,16 +883,6 @@ static const unsigned int MAX_PRECISION = 6;
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
     }
-  }
-
-  void OrdinalTexts::setPrecision(unsigned int digits)
-  {
-    digits = simCore::sdkMin(MAX_PRECISION, digits);
-    if (digits == precision_)
-      return;
-
-    precision_ = digits;
-    makeSegments_();
   }
 
   simCore::TimeStamp OrdinalTexts::timeStamp() const
@@ -1055,16 +1030,6 @@ static const unsigned int MAX_PRECISION = 6;
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
     }
-  }
-
-  void MonthDayYearTexts::setPrecision(unsigned int digits)
-  {
-    digits = simCore::sdkMin(MAX_PRECISION, digits);
-    if (digits == precision_)
-      return;
-
-    precision_ = digits;
-    makeSegments_();
   }
 
   simCore::TimeStamp MonthDayYearTexts::timeStamp() const
