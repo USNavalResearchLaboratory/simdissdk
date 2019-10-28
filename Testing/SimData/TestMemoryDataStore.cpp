@@ -25,7 +25,9 @@
 #include <vector>
 
 #include "simCore/Common/Version.h"
+#include "simCore/Time/ClockImpl.h"
 #include "simCore/Common/Common.h"
+#include "simData/LinearInterpolator.h"
 #include "simData/MemoryDataStore.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simUtil/DataStoreTestHelper.h"
@@ -1384,23 +1386,182 @@ int testScenarioDeleteCallback()
   return rv;
 }
 
+/** Counts the number of category changes */
+class CategoryChangeListener : public simData::DataStore::DefaultListener
+{
+public:
+  CategoryChangeListener()
+    : numberOfChanges_(0)
+  {
+  }
+
+  virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
+  {
+    ++numberOfChanges_;
+  }
+
+  bool checkAndClear(int expectedNumberOfChanges)
+  {
+    bool rv = (numberOfChanges_ == expectedNumberOfChanges);
+    numberOfChanges_ = 0;
+    return rv;
+  }
+
+private:
+  int numberOfChanges_;
+};
+/**
+ * Routine used to verify the updating the data store to previous times
+ * while in Live Mode would not adversely affect optimization.  The optimization
+ * flag are not externally visible so needed to step through the code to verify
+ * correct operation.
+ */
+int testUpdateToNonCurrentTime()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper* testHelper = new simUtil::DataStoreTestHelper;
+  simData::DataStore* ds = testHelper->dataStore();
+
+  // Put DataStore in Live Mode
+  simCore::ClockImpl clock;
+  clock.setMode(simCore::Clock::MODE_FREEWHEEL);
+  ds->bindToClock(&clock);
+
+  // Add Interpolator
+  simData::LinearInterpolator interpolator;
+  ds->setInterpolator(&interpolator);
+  ds->enableInterpolation(true);
+
+  std::shared_ptr<CategoryChangeListener> listener(new CategoryChangeListener);
+  ds->addListener(listener);
+
+  // Test Updates
+  uint64_t platId = testHelper->addPlatform();
+  testHelper->addPlatformUpdate(1, platId);
+  testHelper->addPlatformUpdate(2, platId);
+
+  auto slice = ds->platformUpdateSlice(platId);
+  rv += SDK_ASSERT(slice->current() == NULL);
+
+  // Time before first point
+  ds->update(0.0);
+  rv += SDK_ASSERT(slice->current() == NULL);
+  ds->update(2.0);
+  rv += SDK_ASSERT(slice->current() != NULL);
+  if (slice->current() != NULL)
+    rv += SDK_ASSERT(slice->current()->time() == 2.0);
+
+  // Go back in time
+  ds->update(1.0);
+  rv += SDK_ASSERT(slice->current() != NULL);
+  if (slice->current() != NULL)
+    rv += SDK_ASSERT(slice->current()->time() == 1.0);
+
+  // add future point
+  testHelper->addPlatformUpdate(3, platId);
+
+  // Continue back in time
+  ds->update(1.5);
+  rv += SDK_ASSERT(slice->current() != NULL);
+  if (slice->current() != NULL)
+    rv += SDK_ASSERT(slice->current()->time() == 1.5);
+
+  // Jump to before first point
+  ds->update(0.0);
+  rv += SDK_ASSERT(slice->current() == NULL);
+  ds->update(1.5);
+  rv += SDK_ASSERT(slice->current() != NULL);
+  if (slice->current() != NULL)
+    rv += SDK_ASSERT(slice->current()->time() == 1.5);
+  ds->update(1.7);
+  rv += SDK_ASSERT(slice->current() != NULL);
+  if (slice->current() != NULL)
+    rv += SDK_ASSERT(slice->current()->time() == 1.7);
+
+  // Finally pick up the last added point
+  ds->update(3.0);
+  rv += SDK_ASSERT(slice->current() != NULL);
+  if (slice->current() != NULL)
+    rv += SDK_ASSERT(slice->current()->time() == 3.0);
+
+  // Test Commands
+  simData::DataStore::Transaction trans;
+  auto prefs = ds->platformPrefs(platId, &trans);
+  rv += SDK_ASSERT(prefs->commonprefs().draw() == true);
+
+  simData::PlatformCommand cmd;
+  cmd.set_time(2.9);
+  cmd.mutable_updateprefs()->mutable_commonprefs()->set_draw(false);
+  testHelper->addPlatformCommand(cmd, platId);
+
+  ds->update(1.0);
+  rv += SDK_ASSERT(prefs->commonprefs().draw() == true);
+
+  ds->update(3.0);
+  rv += SDK_ASSERT(prefs->commonprefs().draw() == false);
+
+  ds->update(4.0);
+  rv += SDK_ASSERT(prefs->commonprefs().draw() == false);
+
+  // Go Back in time then add some future commands
+  ds->update(3.0);
+  rv += SDK_ASSERT(prefs->commonprefs().draw() == false);
+
+  cmd.set_time(4.9);
+  cmd.mutable_updateprefs()->mutable_commonprefs()->set_draw(true);
+  testHelper->addPlatformCommand(cmd, platId);
+
+  ds->update(3.0);
+  rv += SDK_ASSERT(prefs->commonprefs().draw() == false);
+  ds->update(5.0);
+  rv += SDK_ASSERT(prefs->commonprefs().draw() == true);
+
+  // Test Category Data
+  // Should start of cleared
+  rv += SDK_ASSERT(listener->checkAndClear(0) == true);
+
+  testHelper->addCategoryData(platId, "Cat1", "Val1", 1.0);
+  ds->update(1.0);
+  rv += SDK_ASSERT(listener->checkAndClear(1) == true);
+
+  testHelper->addCategoryData(platId, "Cat1", "Val3", 3.0);
+  ds->update(2.0);
+  rv += SDK_ASSERT(listener->checkAndClear(0) == true);
+  ds->update(0.0);
+  rv += SDK_ASSERT(listener->checkAndClear(1) == true);
+  ds->update(1.0);
+  rv += SDK_ASSERT(listener->checkAndClear(1) == true);
+  ds->update(2.0);
+  rv += SDK_ASSERT(listener->checkAndClear(0) == true);
+  ds->update(3.0);
+  rv += SDK_ASSERT(listener->checkAndClear(1) == true);
+
+  // No need to test Generic Data, Data Tables or the other entity types
+
+  delete testHelper;
+  return rv;
+}
+
 int TestMemoryDataStore(int argc, char* argv[])
 {
   simCore::checkVersionThrow();
 
   try
   {
+    int rv = 0;
     testPlatform_insert();
     testPlatform_insertStatic();
     testLobGroup_insert();
     testGenericData_insert();
-    int rv = testGenericData_update();
+    rv = testGenericData_update();
     rv += testGenericDataNoExpiration_update();
     rv += testGenericDataMixExpiration_update();
     rv += testCategoryData_insert();
     rv += testCategoryData_update();
     rv += testCategoryData_change();
     rv += testScenarioDeleteCallback();
+    rv += testUpdateToNonCurrentTime();
     return rv;
   }
   catch (AssertionException& e)
