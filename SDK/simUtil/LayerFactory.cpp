@@ -155,9 +155,13 @@ osgEarth::GDALElevationLayer* LayerFactory::newGdalElevationLayer(const std::str
 std::string LayerFactory::completeBaseName(const std::string& fullPath)
 {
   // Get the base name -- strip out extension, then strip out everything after last \\ or /
-  return simCore::StringUtils::beforeLast(
-    simCore::StringUtils::afterLast(
-      simCore::StringUtils::afterLast(fullPath, '/'), '\\'), '.');
+  std::string stripped = simCore::StringUtils::beforeLast(fullPath, '.');
+  if (stripped.find('/') != std::string::npos)
+    stripped = simCore::StringUtils::afterLast(stripped, '/');
+  if (stripped.find('\\') != std::string::npos)
+    stripped = simCore::StringUtils::afterLast(stripped, '\\');
+
+  return stripped;
 }
 
 osgEarth::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::FeatureModelLayer::Options& options)
