@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include <cmath>
 #include <algorithm>
 #include "simCore/Time/Utils.h"
@@ -26,6 +27,97 @@
 
 namespace simCore
 {
+
+void ClockWithObservers::registerTimeCallback(Clock::TimeObserverPtr p)
+{
+  std::vector<Clock::TimeObserverPtr>::const_iterator i = std::find(timeObservers_.begin(), timeObservers_.end(), p);
+  if (i == timeObservers_.end())
+    timeObservers_.push_back(p);
+}
+
+void ClockWithObservers::removeTimeCallback(Clock::TimeObserverPtr p)
+{
+  std::vector<Clock::TimeObserverPtr>::iterator i = std::find(timeObservers_.begin(), timeObservers_.end(), p);
+  if (i != timeObservers_.end())
+    timeObservers_.erase(i);
+}
+
+void ClockWithObservers::registerModeChangeCallback(Clock::ModeChangeObserverPtr p)
+{
+  std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = std::find(modeChangeObservers_.begin(), modeChangeObservers_.end(), p);
+  if (i == modeChangeObservers_.end())
+    modeChangeObservers_.push_back(p);
+}
+
+void ClockWithObservers::removeModeChangeCallback(Clock::ModeChangeObserverPtr p)
+{
+  std::vector<Clock::ModeChangeObserverPtr>::iterator i = std::find(modeChangeObservers_.begin(), modeChangeObservers_.end(), p);
+  if (i != modeChangeObservers_.end())
+    modeChangeObservers_.erase(i);
+}
+
+void ClockWithObservers::notifySetTime_(const simCore::TimeStamp& newTime, bool isJump)
+{
+  for (std::vector<Clock::TimeObserverPtr>::const_iterator i = timeObservers_.begin(); i != timeObservers_.end(); ++i)
+    (*i)->onSetTime(newTime, isJump);
+}
+
+void ClockWithObservers::notifyTimeLoop_()
+{
+  for (std::vector<Clock::TimeObserverPtr>::const_iterator i = timeObservers_.begin(); i != timeObservers_.end(); ++i)
+    (*i)->onTimeLoop();
+}
+
+void ClockWithObservers::notifyModeChange_(Clock::Mode newMode)
+{
+  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
+    (*i)->onModeChange(newMode);
+}
+
+void ClockWithObservers::notifyDirectionChange_(simCore::TimeDirection newDir)
+{
+  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
+    (*i)->onDirectionChange(newDir);
+}
+
+void ClockWithObservers::notifyScaleChange_(double newScale)
+{
+  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
+    (*i)->onScaleChange(newScale);
+}
+
+void ClockWithObservers::notifyBoundsChange_(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+{
+  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
+    (*i)->onBoundsChange(start, end);
+}
+
+void ClockWithObservers::notifyCanLoopChange_(bool canLoop)
+{
+  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
+    (*i)->onCanLoopChange(canLoop);
+}
+
+void ClockWithObservers::notifyUserEditable_(bool newUserEditable)
+{
+  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
+    (*i)->onUserEditableChanged(newUserEditable);
+}
+
+void ClockWithObservers::notifyAdjustTime_(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime)
+{
+  // Algorithm is "smallest change wins"
+  for (std::vector<Clock::TimeObserverPtr>::const_iterator i = timeObservers_.begin(); i != timeObservers_.end(); ++i)
+  {
+    simCore::TimeStamp verifyTime = newTime;
+    (*i)->adjustTime(oldTime, verifyTime);
+    // only accept a small adjustment to the time
+    if ((verifyTime > oldTime) && (verifyTime < newTime))
+      newTime = verifyTime;
+  }
+}
+
+//-----------------------------------------------------------------------------------
 
 /** Helper class that will monitor the "isUserEditable" flag and fire a notification when it changes on destruction. */
 class ClockImpl::ScopedUserEditableWatch
@@ -51,6 +143,7 @@ private:
   bool wasEditable_;
 };
 
+//-----------------------------------------------------------------------------------
 
 ClockImpl::ClockImpl()
   : currentTime_(simCore::MIN_TIME_STAMP),
@@ -464,22 +557,6 @@ void ClockImpl::addToTime_(double howMuch)
   setTimeNoThresholdCheck_(newTime, jump);
 }
 
-void ClockImpl::notifyAdjustTime_(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime)
-{
-  // first pass only support playing forward; when/if needed a future pass could add playing backwards
-  assert(direction_ != REVERSE);
-
-  // Algorithm is "smallest change wins"
-  for (std::vector<Clock::TimeObserverPtr>::const_iterator i = timeObservers_.begin(); i != timeObservers_.end(); ++i)
-  {
-    simCore::TimeStamp verifyTime = newTime;
-    (*i)->adjustTime(oldTime, verifyTime);
-    // only accept a small adjustment to the time
-    if ((verifyTime > oldTime) && (verifyTime < newTime))
-      newTime = verifyTime;
-  }
-}
-
 void ClockImpl::subtractFromTime_(double howMuch)
 {
   assert(howMuch >= 0.0);
@@ -508,80 +585,487 @@ void ClockImpl::subtractFromTime_(double howMuch)
   setTime_(newTime, jump);
 }
 
-void ClockImpl::registerTimeCallback(Clock::TimeObserverPtr p)
+//-----------------------------------------------------------------------------------
+
+/** Echo out the Clock::TimeObserver callbacks if using the data clock */
+class VisualizationClock::DataTimeObserver : public Clock::TimeObserver
 {
-  std::vector<Clock::TimeObserverPtr>::const_iterator i = std::find(timeObservers_.begin(), timeObservers_.end(), p);
-  if (i == timeObservers_.end())
-    timeObservers_.push_back(p);
+public:
+  explicit DataTimeObserver(VisualizationClock& parent)
+    : parent_(parent)
+  {
+  }
+
+  virtual void onSetTime(const TimeStamp &t, bool isJump)
+  {
+    if (parent_.lockToDataClock_)
+      parent_.notifySetTime_(t, isJump);
+  }
+
+  virtual void onTimeLoop()
+  {
+    // Dev error, visualization should be off during loop changes
+    assert(parent_.lockToDataClock_);
+
+    parent_.notifyTimeLoop_();
+  }
+
+  virtual void adjustTime(const TimeStamp &oldTime, TimeStamp& newTime)
+  {
+    if (parent_.lockToDataClock_)
+      parent_.notifyAdjustTime_(oldTime, newTime);
+  }
+
+private:
+  VisualizationClock& parent_;
+};
+
+//-----------------------------------------------------------------------------------
+
+/** Echo out the Clock::ModeChangeObserver callbacks if using the data clock */
+class VisualizationClock::DataModeObserver : public Clock::ModeChangeObserver
+{
+public:
+  explicit DataModeObserver(VisualizationClock& parent)
+    : parent_(parent)
+  {
+  }
+
+  virtual void onModeChange(Clock::Mode newMode)
+  {
+    // Dev error, visualization should be off during mode changes
+    assert(parent_.lockToDataClock_);
+
+    parent_.notifyModeChange_(newMode);
+  }
+
+  virtual void onDirectionChange(simCore::TimeDirection newDirection)
+  {
+    // If stopping turn off visualization if on
+    if ((newDirection == simCore::STOP) && !parent_.lockToDataClock_)
+      parent_.setLockedToDataClock(true);
+
+    // Dev error, visualization should be off during direction changes
+    assert(parent_.lockToDataClock_);
+
+    parent_.notifyDirectionChange_(newDirection);
+  }
+
+  virtual void onScaleChange(double newValue)
+  {
+    // Dev error, visualization should be off during scale changes
+    assert(parent_.lockToDataClock_);
+
+    parent_.notifyScaleChange_(newValue);
+  }
+
+  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+  {
+    if (parent_.lockToDataClock_)
+      parent_.notifyBoundsChange_(start, end);
+    else
+    {
+      parent_.localClock_->setStartTime(start);
+      parent_.localClock_->setEndTime(end);
+    }
+  }
+
+  virtual void onCanLoopChange(bool newVal)
+  {
+    // Dev error, visualization should be off during loop changes
+    assert(parent_.lockToDataClock_);
+
+    parent_.notifyCanLoopChange_(newVal);
+  }
+
+  virtual void onUserEditableChanged(bool userCanEdit)
+  {
+    // Dev error, visualization should be off during edit changes
+    assert(parent_.lockToDataClock_);
+
+    parent_.notifyUserEditable_(userCanEdit);
+  }
+
+private:
+  VisualizationClock& parent_;
+};
+
+//-----------------------------------------------------------------------------------
+
+/** Echo out the Clock::TimeObserver callbacks if using the local clock */
+class VisualizationClock::LocalTimeObserver : public Clock::TimeObserver
+{
+public:
+  explicit LocalTimeObserver(VisualizationClock& parent)
+    : parent_(parent)
+  {
+  }
+
+  virtual void onSetTime(const TimeStamp &t, bool isJump)
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifySetTime_(t, isJump);
+  }
+
+  virtual void onTimeLoop()
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifyTimeLoop_();
+  }
+
+  virtual void adjustTime(const TimeStamp &oldTime, TimeStamp& newTime)
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifyAdjustTime_(oldTime, newTime);
+  }
+
+private:
+  VisualizationClock& parent_;
+};
+
+//-----------------------------------------------------------------------------------
+
+/** Echo out the Clock::ModeChangeObserver callbacks if using the local clock */
+class VisualizationClock::LocalModeObserver : public Clock::ModeChangeObserver
+{
+public:
+  explicit LocalModeObserver(VisualizationClock& parent)
+    : parent_(parent)
+  {
+  }
+
+  virtual void onModeChange(Clock::Mode newMode)
+  {
+    // Dev error, should always be in Live Mode
+    assert(false);
+  }
+
+  virtual void onDirectionChange(simCore::TimeDirection newDirection)
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifyDirectionChange_(newDirection);
+  }
+
+  virtual void onScaleChange(double newValue)
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifyScaleChange_(newValue);
+  }
+
+  virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifyBoundsChange_(start, end);
+  }
+
+  virtual void onCanLoopChange(bool newVal)
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifyCanLoopChange_(newVal);
+  }
+
+  virtual void onUserEditableChanged(bool userCanEdit)
+  {
+    if (!parent_.lockToDataClock_)
+      parent_.notifyUserEditable_(userCanEdit);
+  }
+
+private:
+  VisualizationClock& parent_;
+};
+
+//-----------------------------------------------------------------------------------
+
+VisualizationClock::VisualizationClock(Clock& dataClock)
+  : dataClock_(dataClock),
+  localClock_(new ClockImpl),
+  lockToDataClock_(true)
+{
+  dataTimeObserver_.reset(new DataTimeObserver(*this));
+  dataClock_.registerTimeCallback(dataTimeObserver_);
+  dataModeObserver_.reset(new DataModeObserver(*this));
+  dataClock_.registerModeChangeCallback(dataModeObserver_);
+
+  Clock::TimeObserverPtr localTimeObserver;
+  localTimeObserver.reset(new LocalTimeObserver(*this));
+  localClock_->registerTimeCallback(localTimeObserver);
+  Clock::ModeChangeObserverPtr localModeObserver;
+  localModeObserver.reset(new LocalModeObserver(*this));
+  localClock_->registerModeChangeCallback(localModeObserver);
 }
 
-void ClockImpl::removeTimeCallback(Clock::TimeObserverPtr p)
+VisualizationClock::~VisualizationClock()
 {
-  std::vector<Clock::TimeObserverPtr>::iterator i = std::find(timeObservers_.begin(), timeObservers_.end(), p);
-  if (i != timeObservers_.end())
-    timeObservers_.erase(i);
+  dataClock_.removeTimeCallback(dataTimeObserver_);
+  dataClock_.removeModeChangeCallback(dataModeObserver_);
+
+  delete localClock_;
 }
 
-void ClockImpl::registerModeChangeCallback(Clock::ModeChangeObserverPtr p)
+void VisualizationClock::setLockedToDataClock(bool lock)
 {
-  std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = std::find(modeChangeObservers_.begin(), modeChangeObservers_.end(), p);
-  if (i == modeChangeObservers_.end())
-    modeChangeObservers_.push_back(p);
+  if (lock == lockToDataClock_)
+    return;
+
+  if (lock)
+  {
+    localClock_->stop();
+    localClock_->setControlsDisabled(true);
+
+    lockToDataClock_ = lock;
+  }
+  else
+  {
+    if (!dataClock_.isLiveMode())
+    {
+      // Dev error, Can only switch on visualization clock in Live Mode
+      assert(false);
+      return;
+    }
+
+    lockToDataClock_ = lock;
+
+    localClock_->setTime(dataClock_.currentTime());
+    localClock_->setStartTime(dataClock_.startTime());
+    localClock_->setEndTime(dataClock_.endTime());
+    localClock_->setControlsDisabled(false);
+  }
 }
 
-void ClockImpl::removeModeChangeCallback(Clock::ModeChangeObserverPtr p)
+bool VisualizationClock::isLockedToDataClock() const
 {
-  std::vector<Clock::ModeChangeObserverPtr>::iterator i = std::find(modeChangeObservers_.begin(), modeChangeObservers_.end(), p);
-  if (i != modeChangeObservers_.end())
-    modeChangeObservers_.erase(i);
+  return lockToDataClock_;
 }
 
-void ClockImpl::notifySetTime_(const simCore::TimeStamp& newTime, bool isJump)
+Clock::Mode VisualizationClock::mode() const
 {
-  for (std::vector<Clock::TimeObserverPtr>::const_iterator i = timeObservers_.begin(); i != timeObservers_.end(); ++i)
-    (*i)->onSetTime(newTime, isJump);
+  if (lockToDataClock_)
+    return dataClock_.mode();
+
+  return localClock_->mode();
 }
 
-void ClockImpl::notifyTimeLoop_()
+bool VisualizationClock::isLiveMode() const
 {
-  for (std::vector<Clock::TimeObserverPtr>::const_iterator i = timeObservers_.begin(); i != timeObservers_.end(); ++i)
-    (*i)->onTimeLoop();
+  if (lockToDataClock_)
+    return dataClock_.isLiveMode();
+
+  return localClock_->isLiveMode();
 }
 
-void ClockImpl::notifyModeChange_(Clock::Mode newMode)
+simCore::TimeStamp VisualizationClock::currentTime() const
 {
-  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
-    (*i)->onModeChange(newMode);
+  if (lockToDataClock_)
+    return dataClock_.currentTime();
+
+  return localClock_->currentTime();
 }
 
-void ClockImpl::notifyDirectionChange_(simCore::TimeDirection newDir)
+double VisualizationClock::timeScale() const
 {
-  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
-    (*i)->onDirectionChange(newDir);
+  if (lockToDataClock_)
+    return dataClock_.timeScale();
+
+  return localClock_->timeScale();
 }
 
-void ClockImpl::notifyScaleChange_(double newScale)
+bool VisualizationClock::realTime() const
 {
-  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
-    (*i)->onScaleChange(newScale);
+  if (lockToDataClock_)
+    return dataClock_.realTime();
+
+  return localClock_->realTime();
 }
 
-void ClockImpl::notifyBoundsChange_(const simCore::TimeStamp& start, const simCore::TimeStamp& end)
+simCore::TimeStamp VisualizationClock::startTime() const
 {
-  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
-    (*i)->onBoundsChange(start, end);
+  if (lockToDataClock_)
+    return dataClock_.startTime();
+
+  return localClock_->startTime();
 }
 
-void ClockImpl::notifyCanLoopChange_(bool canLoop)
+simCore::TimeStamp VisualizationClock::endTime() const
 {
-  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
-    (*i)->onCanLoopChange(canLoop);
+  if (lockToDataClock_)
+    return dataClock_.endTime();
+
+  return localClock_->endTime();
 }
 
-void ClockImpl::notifyUserEditable_(bool newUserEditable)
+bool VisualizationClock::canLoop() const
 {
-  for (std::vector<Clock::ModeChangeObserverPtr>::const_iterator i = modeChangeObservers_.begin(); i != modeChangeObservers_.end(); ++i)
-    (*i)->onUserEditableChanged(newUserEditable);
+  if (lockToDataClock_)
+    return dataClock_.canLoop();
+
+  return localClock_->canLoop();
+}
+
+bool VisualizationClock::isPlaying() const
+{
+  if (lockToDataClock_)
+    return dataClock_.isPlaying();
+
+  return localClock_->isPlaying();
+}
+
+simCore::TimeDirection VisualizationClock::timeDirection() const
+{
+  if (lockToDataClock_)
+    return dataClock_.timeDirection();
+
+  return localClock_->timeDirection();
+}
+
+bool VisualizationClock::controlsDisabled() const
+{
+  if (lockToDataClock_)
+    return dataClock_.controlsDisabled();
+
+  return localClock_->controlsDisabled();
+}
+
+bool VisualizationClock::isUserEditable() const
+{
+  if (lockToDataClock_)
+    return dataClock_.isUserEditable();
+
+  return localClock_->isUserEditable();
+}
+
+void VisualizationClock::setMode(Clock::Mode mode)
+{
+  if (lockToDataClock_)
+    dataClock_.setMode(mode);
+  else
+    localClock_->setMode(mode);
+}
+
+void VisualizationClock::setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime)
+{
+  if (lockToDataClock_)
+    dataClock_.setMode(mode);
+  else
+    localClock_->setMode(mode);
+}
+
+void VisualizationClock::setTime(const simCore::TimeStamp& timeVal)
+{
+  if (lockToDataClock_)
+    dataClock_.setTime(timeVal);
+  else if (!localClock_->isLiveMode())
+    localClock_->setTime(timeVal);
+}
+
+void VisualizationClock::setTimeScale(double scale)
+{
+  if (lockToDataClock_)
+    dataClock_.setTimeScale(scale);
+  else
+    localClock_->setTimeScale(scale);
+}
+
+void VisualizationClock::setRealTime(bool fl)
+{
+  if (lockToDataClock_)
+    dataClock_.setTimeScale(fl);
+  else
+    localClock_->setTimeScale(fl);
+}
+
+void VisualizationClock::setStartTime(const simCore::TimeStamp& timeVal)
+{
+  if (lockToDataClock_)
+    dataClock_.setStartTime(timeVal);
+  else
+    localClock_->setStartTime(timeVal);
+}
+
+void VisualizationClock::setEndTime(const simCore::TimeStamp& timeVal)
+{
+  if (lockToDataClock_)
+    dataClock_.setEndTime(timeVal);
+  else
+    localClock_->setEndTime(timeVal);
+}
+
+void VisualizationClock::setCanLoop(bool fl)
+{
+  if (lockToDataClock_)
+    dataClock_.setCanLoop(fl);
+  else
+    localClock_->setCanLoop(fl);
+}
+
+void VisualizationClock::setControlsDisabled(bool fl)
+{
+  if (lockToDataClock_)
+    dataClock_.setControlsDisabled(fl);
+  else
+    localClock_->setControlsDisabled(fl);
+}
+
+void VisualizationClock::decreaseScale()
+{
+  if (lockToDataClock_)
+    dataClock_.decreaseScale();
+  else
+    localClock_->decreaseScale();
+}
+
+void VisualizationClock::stepBackward()
+{
+  if (lockToDataClock_)
+    dataClock_.stepBackward();
+  else
+    localClock_->stepBackward();
+}
+
+void VisualizationClock::playReverse()
+{
+  if (lockToDataClock_)
+    dataClock_.playReverse();
+  else
+    localClock_->playReverse();
+}
+
+void VisualizationClock::stop()
+{
+  if (lockToDataClock_)
+    dataClock_.stop();
+  else
+    localClock_->stop();
+}
+
+void VisualizationClock::playForward()
+{
+  if (lockToDataClock_)
+    dataClock_.playForward();
+  else
+    localClock_->playForward();
+}
+
+void VisualizationClock::stepForward()
+{
+  if (lockToDataClock_)
+    dataClock_.stepForward();
+  else
+    localClock_->stepForward();
+}
+
+void VisualizationClock::increaseScale()
+{
+  if (lockToDataClock_)
+    dataClock_.increaseScale();
+  else
+    localClock_->increaseScale();
+}
+
+void VisualizationClock::idle()
+{
+  if (!lockToDataClock_)
+    localClock_->idle();
+  //TODO: SIM-10602 I don't think we want to call dataClock_.idle() here
 }
 
 }
