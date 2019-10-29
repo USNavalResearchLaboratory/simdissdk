@@ -86,26 +86,6 @@ void PosXPosYExtents::UnPack(const uint8_t* buffer)
   beread(buffer + sizeof(minX) + sizeof(maxX) + sizeof(minY), &maxY);
 }
 
-void PosXPosYExtents::UnPackHexChars(const char* hexChars)
-{
-  if (hexChars == NULL)
-    return;
-  uint8_t buffer[sizeof(PosXPosYExtents)];
-
-  uint32_t tmpInt;
-  char tmpHex[3];
-  tmpHex[2] = 0;
-
-  for (size_t i = 0; i < sizeof(PosXPosYExtents); ++i)
-  {
-    tmpHex[0] = hexChars[i * 2];
-    tmpHex[1] = hexChars[i * 2 + 1];
-    sscanf(tmpHex, "%x", &tmpInt);
-    buffer[i] = (uint8_t)tmpInt;
-  }
-  UnPack(buffer);
-}
-
 void PosXPosYExtents::Print()
 {
   std::cerr << "minX = " << minX << "\n";

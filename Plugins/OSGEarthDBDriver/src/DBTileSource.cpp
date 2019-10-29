@@ -41,16 +41,11 @@
 
 #define LC "[simVis::DBTileSource] "
 
-using namespace osgEarth;
-using namespace osgEarth::Contrib;
-
-// --------------------------------------------------------------------------
-
 namespace simVis_db {
 
 namespace
 {
-  bool convertTileKeyToQsKey(const TileKey& key, FaceIndexType& out_faceIndex, QSNodeId& out_nodeId,
+  bool convertTileKeyToQsKey(const osgEarth::TileKey& key, FaceIndexType& out_faceIndex, QSNodeId& out_nodeId,
     osg::Vec2d& out_fmin, osg::Vec2d& out_fmax)
   {
     QSNodeId zero(0);
@@ -60,7 +55,7 @@ namespace
 
     QSNodeId nodeId;
 
-    TileKey pkey = key;
+    osgEarth::TileKey pkey = key;
 
     for (unsigned int i = 0; i < maxLevel; ++i)
     {
@@ -125,7 +120,7 @@ namespace
 
 // --------------------------------------------------------------------------
 
-DBTileSource::DBTileSource(const TileSourceOptions& options)
+DBTileSource::DBTileSource(const osgEarth::TileSourceOptions& options)
   : osgEarth::TileSource(options),
   options_(options),
   db_(NULL),
@@ -150,7 +145,7 @@ DBTileSource::~DBTileSource()
   }
 }
 
-Status DBTileSource::initialize(const osgDB::Options* dbOptions)
+osgEarth::Status DBTileSource::initialize(const osgDB::Options* dbOptions)
 {
   if (options_.url().isSet())
   {
@@ -159,7 +154,7 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
     if (dbUtil_.OpenDataBaseFile(pathname_, &db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != QS_IS_OK)
     {
       db_ = NULL;
-      return Status::Error(Stringify() << "Failed to open DB file at " << options_.url()->full());
+      return osgEarth::Status::Error(osgEarth::Stringify() << "Failed to open DB file at " << options_.url()->full());
     }
     else
     {
@@ -187,15 +182,15 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
       {
         sqlite3_close(db_);
         db_ = NULL;
-        return Status::Error(Stringify() << "Failed to read metadata for " << pathname_);
+        return osgEarth::Status::Error(osgEarth::Stringify() << "Failed to read metadata for " << pathname_);
       }
       // Set up as a unified cube:
-      Profile* profile = new osgEarth::Contrib::UnifiedCubeProfile();
+      osgEarth::Profile* profile = new osgEarth::Contrib::UnifiedCubeProfile();
       // DB are expected to be wgs84, which Cube defaults to
       setProfile(profile);
 
       // Lat/long extents (for debugging)
-      GeoExtent llex[6];
+      osgEarth::GeoExtent llex[6];
 
       // Tell the engine how deep the data actually goes:
       for (unsigned int f = 0; f < 6; ++f)
@@ -207,19 +202,19 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
           const double y0 = extents_[f].minY / gQsDMaxLength;
           const double y1 = extents_[f].maxY / gQsDMaxLength;
 
-          GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
+          osgEarth::GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
 
           // Transform to lat/long for the debugging msgs
           cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
 
-          getDataExtents().push_back(DataExtent(cubeEx, shallowLevel_, deepLevel_));
+          getDataExtents().push_back(osgEarth::DataExtent(cubeEx, shallowLevel_, deepLevel_));
         }
       }
 
       // Set time value of image if a time was found in the db
       if (timeStamp_ != simCore::INFINITE_TIME_STAMP)
       {
-        const DateTime osgTime(timeStamp_.secondsSinceRefYear(1970).getSeconds());
+        const osgEarth::DateTime osgTime(timeStamp_.secondsSinceRefYear(1970).getSeconds());
         // Set time as a user value since config is not editable from here
         setUserValue("time", osgTime.asISO8601());
       }
@@ -246,7 +241,7 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
     }
   }
 
-  return STATUS_OK;
+  return osgEarth::STATUS_OK;
 }
 
 int DBTileSource::getPixelsPerTile() const
@@ -254,18 +249,18 @@ int DBTileSource::getPixelsPerTile() const
   return pixelLength_;
 }
 
-osg::Image* DBTileSource::createImage(const TileKey& key, ProgressCallback* progress)
+osg::Image* DBTileSource::createImage(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress)
 {
   return createImage_(key, false);
 }
 
-osg::HeightField* DBTileSource::createHeightField(const TileKey& key, ProgressCallback* progress)
+osg::HeightField* DBTileSource::createHeightField(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress)
 {
   if (!db_) return NULL;
 
   osg::ref_ptr<osg::HeightField> result;
 
-  // Convert TileKey into a QuadKeyID
+  // Convert osgEarth::TileKey into a QuadKeyID
   FaceIndexType faceId;
   QSNodeId      nodeId;
   osg::Vec2d    tileMin;
@@ -374,14 +369,14 @@ osg::HeightField* DBTileSource::createHeightField(const TileKey& key, ProgressCa
   return result.release();
 }
 
-osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
+osg::Image* DBTileSource::createImage_(const osgEarth::TileKey& key, bool isHeightField)
 {
   if (!db_)
     return NULL;
 
   osg::ref_ptr<osg::Image> result;
 
-  // Convert TileKey into a QuadKeyID
+  // Convert osgEarth::TileKey into a QuadKeyID
   FaceIndexType faceId;
   QSNodeId      nodeId;
   osg::Vec2d    tileMin;
