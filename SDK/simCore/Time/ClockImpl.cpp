@@ -850,7 +850,11 @@ bool VisualizationClock::isLiveMode() const
   if (lockToDataClock_)
     return dataClock_.isLiveMode();
 
-  return localClock_->isLiveMode();
+  // The local clock is in file mode, but need to keep a consistent
+  // response.  Replay only happens when dataClock is in Live Mode.
+  // This is enforced by setLockedToDataClock().
+  assert(dataClock_.isLiveMode());
+  return true;
 }
 
 simCore::TimeStamp VisualizationClock::currentTime() const
