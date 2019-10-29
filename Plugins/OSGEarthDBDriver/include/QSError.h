@@ -25,16 +25,10 @@
 
 #include <string>
 
-#ifndef USE_SIMDIS_SDK
-#include "inttypesc.h"
-#else
-#include "simCore/Common/Common.h"
-
 namespace simVis_db
 {
-#endif
   //===========================================================================
-  typedef int32_t QsErrorType;
+  typedef int QsErrorType;
   static const QsErrorType QS_IS_OK                                  = 0;
   static const QsErrorType QS_IS_COMMAND_LINE                        = 1;
   static const QsErrorType QS_IS_UNEXPECTED_NULL                     = 2;
@@ -82,8 +76,6 @@ namespace simVis_db
   //===========================================================================
   const char* GetErrorString(const QsErrorType&);
 
-#ifdef USE_SIMDIS_SDK
 } // namespace simVis_db
-#endif
 
 #endif /* QS_ERROR_H */

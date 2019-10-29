@@ -11,19 +11,15 @@ set(PROJECT_SRC
     src/QSNodeID96.cpp
     src/QSPosXYExtents.cpp
     src/SQLiteDataBaseReadUtil.cpp
-    src/Utils/Raster/RasterCommon.cpp
 )
 
 set(PROJECT_HEADERS
     include/DBTileSource.h
     include/QSCommon.h
-    include/QSCommonGeo.h
-    include/QSCommonIntTypes.h
     include/QSError.h
     include/QSNodeID96.h
     include/QSPosXYExtents.h
     include/SQLiteDataBaseReadUtil.h
-    include/Utils/Raster/RasterCommon.h
     include/swapbytes.h
 )
 

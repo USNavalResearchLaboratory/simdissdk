@@ -23,13 +23,12 @@
 #ifndef SIMDIS_PLUGIN_OSGEARTH_DB_DRIVER_H
 #define SIMDIS_PLUGIN_OSGEARTH_DB_DRIVER_H 1
 
+#include "sqlite3.h"
 #include "osgEarth/TileSource"
 #include "simCore/Time/Utils.h"
 #include "simVis/DBOptions.h"
-#include "simVis/osgEarthVersion.h"
-#include "sqlite3.h"
-#include "SQLiteDataBaseReadUtil.h"
 #include "QSPosXYExtents.h"
+#include "SQLiteDataBaseReadUtil.h"
 
 namespace simVis_db
 {

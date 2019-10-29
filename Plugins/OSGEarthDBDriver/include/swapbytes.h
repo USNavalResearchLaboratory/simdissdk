@@ -775,11 +775,6 @@ namespace simVis_db
 
 #endif
 
-  // backwards-compatability
-  // template <class T> inline void FIX_BIG_ENDIAN(T &foo) { make_big_endian(&foo, 1); }
-  // template <class T> inline void FIX_BIG_ENDIAN(T *foo, const size_t nelems) { make_big_endian(foo, nelems); }
-  // #define FIX_BIG_ENDIAN_ARRAY FIX_BIG_ENDIAN
-
 } // namespace simVis_db
 
 #endif /* SIMUTIL_SWAPBYTES_H */
