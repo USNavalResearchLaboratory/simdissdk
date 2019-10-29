@@ -12,6 +12,7 @@ set(SimQtTestsSourceList
     GradientTest.cpp
     SettingsTest.cpp
     PersistentLoggerTest.cpp
+    SegmentedTextsTest.cpp
 )
 if(TARGET simData)
     list(APPEND SimQtTestsSourceList
@@ -45,6 +46,7 @@ add_test(NAME ActionRegistryTest COMMAND SimQtTests ActionRegistryTest)
 add_test(NAME SettingsTest COMMAND SimQtTests SettingsTest)
 add_test(NAME PersistentLoggerTest COMMAND SimQtTests PersistentLoggerTest)
 add_test(NAME GradientTest COMMAND SimQtTests GradientTest)
+add_test(NAME SegmentedTextsTest COMMAND SimQtTests SegmentedTextsTest)
 if(TARGET simData)
     add_test(NAME RangeToRegExpTest COMMAND SimQtTests RangeToRegExpTest)
 endif()
