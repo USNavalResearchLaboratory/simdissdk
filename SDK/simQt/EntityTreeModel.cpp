@@ -422,17 +422,22 @@ void EntityTreeModel::removeEntity_(uint64_t id)
 
 void EntityTreeModel::removeAllEntities_()
 {
-  if (dataStore_)
-  {
-    beginResetModel();
+  if (!dataStore_)
+    return;
 
-    delete rootItem_;
-    rootItem_ = new EntityTreeItem(0, NULL);
-    delayedAdds_.clear();
-    itemsById_.clear();
+  delayedAdds_.clear();
 
-    endResetModel();
-  }
+  // no point in reseting an empty model
+  if ((rootItem_ != NULL) && (rootItem_->childCount() == 0))
+    return;
+
+  beginResetModel();
+
+  delete rootItem_;
+  rootItem_ = new EntityTreeItem(0, NULL);
+  itemsById_.clear();
+
+  endResetModel();
 }
 
 int EntityTreeModel::columnCount(const QModelIndex &parent) const
