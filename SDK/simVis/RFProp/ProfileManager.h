@@ -106,6 +106,13 @@ public:
   Profile* getProfileByBearing(double bearingR) const;
 
   /**
+  * Gets the profile at the specified index, intended to support simple iteration through all profiles.
+  * @param index of profile to return
+  * @return profile at specified index, or NULL if none
+  */
+  const Profile* getProfile(unsigned int index) const;
+
+  /**
    * Adds the Profile to the ProfileManager
    */
   void addProfile(Profile* profile);

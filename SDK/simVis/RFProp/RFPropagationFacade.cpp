@@ -250,7 +250,6 @@ int RFPropagationFacade::setSlotData(simRF::Profile* profile)
     return 1;
   }
   profileManager_->addProfile(profile);
-  profileList_.push_back(profile);
   return 0;
 }
 
@@ -512,7 +511,6 @@ int RFPropagationFacade::clearCache(bool reset)
 {
   setDisplay(false);
   arepsFilesetTimeMap_.clear();
-  profileList_.clear();
   // clear out old (data from) ProfileManager, create a new empty ProfileManager
   profileManager_ = new simRF::ProfileManager();
   return 0;
@@ -845,12 +843,12 @@ void RFPropagationFacade::setElevation(double elevation)
 
 unsigned int RFPropagationFacade::numProfiles() const
 {
-  return profileList_.size();
+  return (profileManager_) ? profileManager_->getNumChildren() : 0;
 }
 
 const simRF::Profile* RFPropagationFacade::getProfile(unsigned int index) const
 {
-  return (profileList_.size() > index) ? profileList_.at(index).get() : NULL;
+  return (profileManager_) ? profileManager_->getProfile(index) : NULL;
 }
 
 void RFPropagationFacade::setPosition(double latRad, double lonRad)

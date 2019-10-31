@@ -514,9 +514,6 @@ private:
   /// map of filesets loaded, keyed by the timestamp for which they were specified
   std::map<simCore::TimeStamp, std::vector<std::string> > arepsFilesetTimeMap_;
 
-  /// vector of all profiles available
-  std::vector<osg::ref_ptr<simRF::Profile> > profileList_;
-
   /// shared ptr to the POD Loss thresholds
   PODVectorPtr podLossThresholds_;
 
