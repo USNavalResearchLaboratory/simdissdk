@@ -1288,4 +1288,60 @@ osg::Matrixd PixelScaleHudTransform::computeMatrix_(osg::NodeVisitor* nv) const
   return invertedMvpw_;
 }
 
+//--------------------------------------------------------------------------
+
+PeriodicUpdateCallback::PeriodicUpdateCallback()
+  : enabled_(true),
+    interval_(60.)
+{
+  elapsedTime_.reset();
+}
+
+PeriodicUpdateCallback::PeriodicUpdateCallback(const PeriodicUpdateCallback& cb, const osg::CopyOp& copyop)
+  : Callback(cb, copyop),
+    enabled_(cb.enabled_),
+    interval_(cb.interval_),
+    elapsedTime_(cb.elapsedTime_)
+{
+}
+
+PeriodicUpdateCallback::~PeriodicUpdateCallback()
+{
+}
+
+bool PeriodicUpdateCallback::run(osg::Object* object, osg::Object* data)
+{
+  if (enabled_ && interval_ > 0. && elapsedTime_.elapsedTime() > interval_)
+  {
+    runPeriodicEvent(object, data);
+    elapsedTime_.reset();
+  }
+  return traverse(object, data);
+}
+
+void PeriodicUpdateCallback::setEnabled(bool enabled)
+{
+  enabled_ = enabled;
+}
+
+bool PeriodicUpdateCallback::isEnabled() const
+{
+  return enabled_;
+}
+
+void PeriodicUpdateCallback::setInterval(double interval)
+{
+  interval_ = interval;
+}
+
+double PeriodicUpdateCallback::interval() const
+{
+  return interval_;
+}
+
+void PeriodicUpdateCallback::resetTimer()
+{
+  elapsedTime_.reset();
+}
+
 }

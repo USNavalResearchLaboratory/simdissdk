@@ -38,6 +38,7 @@ namespace simVis
   class CentroidManager;
   class ProjectorManager;
   class ScenarioManager;
+  class LayerRefreshCallback;
 
   /**
    * @anchor SceneManagerLayout
@@ -183,6 +184,8 @@ namespace simVis
     osg::ref_ptr<osg::Uniform> globeColor_;
     /** Parent node that permits draping of geometry */
     osg::ref_ptr<osgEarth::DrapeableNode> drapeableNode_;
+    /** Responsible for refreshing the map if a layer has the refresh tag set */
+    osg::ref_ptr<LayerRefreshCallback> layerRefreshCallback_;
     /** Flags true if there are problems starting the map engine */
     bool hasEngineDriverProblem_;
 

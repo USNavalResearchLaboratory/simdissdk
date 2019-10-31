@@ -45,6 +45,7 @@
 #include "simVis/AlphaTest.h"
 #include "simVis/CentroidManager.h"
 #include "simVis/Constants.h"
+#include "simVis/LayerRefreshCallback.h"
 #include "simVis/ModelCache.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/ProjectorManager.h"
@@ -230,6 +231,11 @@ void SceneManager::init_()
 
   // Run the shader generator on this stateset
   osgEarth::Registry::shaderGenerator().run(this);
+
+  // Add the callback that manages the "refresh" tag in layers
+  layerRefreshCallback_ = new LayerRefreshCallback;
+  layerRefreshCallback_->setMapNode(mapNode_.get());
+  addUpdateCallback(layerRefreshCallback_.get());
 }
 
 void SceneManager::setSkyNode(osgEarth::SkyNode* skyNode)
@@ -326,6 +332,10 @@ void SceneManager::setMapNode(osgEarth::MapNode* mapNode)
     osgEarth::MapNodeReplacer replacer(mapNode);
     this->accept(replacer);
   }
+
+  // Update the callback explicitly, since it's not a node that gets hit by MapNodeReplacer.
+  if (layerRefreshCallback_.valid())
+    layerRefreshCallback_->setMapNode(mapNode_.get());
 }
 
 void SceneManager::setMap(osgEarth::Map* map)

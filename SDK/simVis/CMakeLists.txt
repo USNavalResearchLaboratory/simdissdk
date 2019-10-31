@@ -93,6 +93,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ObjectSelectionHandler.h
     ${VIS_INC}OverheadMode.h
     ${VIS_INC}OverrideColor.h
+    ${VIS_INC}LayerRefreshCallback.h
     ${VIS_INC}Picker.h
     ${VIS_INC}PlanetariumViewTool.h
     ${VIS_INC}Platform.h
@@ -228,6 +229,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}ModKeyHandler.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
+    ${VIS_SRC}LayerRefreshCallback.cpp
     ${VIS_SRC}Picker.cpp
     ${VIS_SRC}PlanetariumViewTool.cpp
     ${VIS_SRC}Platform.cpp

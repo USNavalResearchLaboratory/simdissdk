@@ -740,6 +740,50 @@ namespace simVis
     mutable osg::Matrixd invertedMvpw_;
   };
 
+  /**
+   * Callback that is intended to run a periodic event.  Override runPeriodicEvent() to
+   * execute code.  This method is called every [interval] seconds.
+   */
+  class SDKVIS_EXPORT PeriodicUpdateCallback : public osg::Callback
+  {
+  public:
+    PeriodicUpdateCallback();
+    explicit PeriodicUpdateCallback(const PeriodicUpdateCallback& cb, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+
+    /** Override this method to run the periodic event. */
+    virtual void runPeriodicEvent(osg::Object* object, osg::Object* data) = 0;
+
+    /** Override osg::Callback::run() to check timers and run the periodic event. */
+    virtual bool run(osg::Object* object, osg::Object* data);
+
+    /** Changes whether the periodic timer is enabled.  If disabled, runPeriodicEvent() is never called.  Does not cause a reset. */
+    void setEnabled(bool enabled);
+    /** Retrieves enabled flag */
+    bool isEnabled() const;
+
+    /** Change the period interval, in seconds.  This does not cause a reset.  Negative or 0.0 values disable the periodic timer. */
+    void setInterval(double interval);
+    /** Retrieves the current interval, in seconds */
+    double interval() const;
+
+    /** Resets the interval timer. */
+    void resetTimer();
+
+    // From osg::Object:
+    virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const PeriodicUpdateCallback*>(obj) != NULL; }
+    virtual const char* libraryName() const { return "simVis"; }
+    virtual const char* className() const { return "PeriodicUpdateCallback"; }
+
+  protected:
+    /** osg::Referenced-derived */
+    virtual ~PeriodicUpdateCallback();
+
+  private:
+    bool enabled_;
+    double interval_;
+    osg::ElapsedTime elapsedTime_;
+  };
+
 } // namespace simVis
 
 #endif // SIMVIS_UTILS_H

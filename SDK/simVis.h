@@ -96,6 +96,7 @@
 #include "simVis/osgEarthVersion.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/OverrideColor.h"
+#include "simVis/LayerRefreshCallback.h"
 #include "simVis/Picker.h"
 #include "simVis/PlanetariumViewTool.h"
 #include "simVis/Platform.h"
