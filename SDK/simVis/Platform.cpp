@@ -419,8 +419,9 @@ simData::ObjectId PlatformNode::getId() const
 
 bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
 {
-  // if assert fails, check whether prefs are initialized correctly when platform is created
-  assert(lastPrefsValid_);
+  // Do not assert on lastPrefsValid_; this routine can get called during platform creation.
+  if (!lastPrefsValid_)
+    return false;
 
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase);
   assert(updateSlice);
