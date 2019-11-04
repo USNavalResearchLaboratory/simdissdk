@@ -208,6 +208,10 @@ SettingsProxyModel::SettingsProxyModel(QAbstractItemModel* settingsModel, QWidge
   dataLevel_ = new SettingsDataLevelFilter(search_, parent);
   noEmptyFolders_ = new SettingsNoEmptyFoldersFilter(dataLevel_, parent);
   setSourceModel(noEmptyFolders_);
+
+  connect(settingsModel, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(refreshSettingsList()));
+  connect(settingsModel, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(refreshSettingsList()));
+  connect(settingsModel, SIGNAL(modelReset()), this, SLOT(refreshSettingsList()));
 }
 
 SettingsProxyModel::~SettingsProxyModel()
@@ -225,6 +229,14 @@ void SettingsProxyModel::setFilterText(const QString& filterText)
     noEmptyFolders_->invalidate();
     invalidateFilter();
   }
+}
+
+void SettingsProxyModel::invalidateAll_()
+{
+  search_->invalidate();
+  dataLevel_->invalidate();
+  noEmptyFolders_->invalidate();
+  invalidateFilter();
 }
 
 void SettingsProxyModel::setShowAdvanced(bool showAdvanced)
