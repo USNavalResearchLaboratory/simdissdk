@@ -209,9 +209,9 @@ SettingsProxyModel::SettingsProxyModel(QAbstractItemModel* settingsModel, QWidge
   noEmptyFolders_ = new SettingsNoEmptyFoldersFilter(dataLevel_, parent);
   setSourceModel(noEmptyFolders_);
 
-  connect(settingsModel, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(refreshSettingsList()));
-  connect(settingsModel, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(refreshSettingsList()));
-  connect(settingsModel, SIGNAL(modelReset()), this, SLOT(refreshSettingsList()));
+  connect(settingsModel, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(invalidateAll_()));
+  connect(settingsModel, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(invalidateAll_()));
+  connect(settingsModel, SIGNAL(modelReset()), this, SLOT(invalidateAll_()));
 }
 
 SettingsProxyModel::~SettingsProxyModel()
