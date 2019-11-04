@@ -388,8 +388,21 @@ void Profile::init2DHoriz_()
     return;
   }
 
+  // init the flag that indicates whether this profile has seen valid data
+  bool validDataStarted = false;
   for (unsigned int i = 0; i < numRanges; i++)
   {
+    const double value = data_->getValueByIndex(heightIndex, i);
+    // some profiles can have large patch of no-data at beginning
+    if (value <= AREPS_GROUND_VALUE)
+    {
+      // ignore no-data values until valid data is received
+      if (!validDataStarted)
+        continue;
+    }
+    else
+      validDataStarted = true;
+
     const double range = minRange + rangeStep * i;
     double height = height_;
     if (agl_ && !terrainHeights_.empty())
@@ -420,7 +433,6 @@ void Profile::init2DHoriz_()
     verts_->push_back(v0);
 
     heightIndex = osg::clampBetween(heightIndex, 0u, data_->getNumHeights() - 1);
-    const double value = data_->getValueByIndex(heightIndex, i);
     values_->push_back(value);
     values_->push_back(value);
   }
