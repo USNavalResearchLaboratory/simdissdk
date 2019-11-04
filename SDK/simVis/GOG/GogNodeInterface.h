@@ -667,6 +667,19 @@ private:
   void setColor_(const osg::Vec4f& color);
 };
 
+/**
+* Implementation of GogNodeInterface for a cone object. The cone's color is applied by a color
+* array internally in the osg::Geometry object, not through the Style, so the color setter has
+* to be implemented specially. The cone's color is defined by the fill color.
+*/
+class SDKVIS_EXPORT ConeNodeInterface : public LocalGeometryNodeInterface
+{
+public:
+  ConeNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData);
+  virtual ~ConeNodeInterface() {}
+  virtual void setFillColor(const osg::Vec4f& color);
+};
+
 }}
 
 #endif /* SIMVIS_GOG_GOGNODEINTERFACE_H */

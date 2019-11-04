@@ -191,7 +191,7 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
   const std::string& key = parent.shape();
   const simVis::GOG::GogShape gogShape = metaData_.shape;
   bool is3dShape = (gogShape == GOG_SPHERE || gogShape == GOG_ELLIPSOID || gogShape == GOG_HEMISPHERE ||
-    gogShape == GOG_CYLINDER || gogShape == GOG_LATLONALTBOX);
+    gogShape == GOG_CYLINDER || gogShape == GOG_LATLONALTBOX || gogShape == GOG_CONE);
 
   // do we need an ExtrusionSymbol? Note that 3D shapes cannot be extruded
   bool isExtruded = simCore::stringIsTrueToken(parent.stringValue(GOG_EXTRUDE)) && !is3dShape;
@@ -763,6 +763,7 @@ void GogNodeInterface::setExtrude(bool extrude)
   case simVis::GOG::GOG_CYLINDER:
   case simVis::GOG::GOG_HEMISPHERE:
   case simVis::GOG::GOG_SPHERE:
+  case simVis::GOG::GOG_CONE:
     return;
     // need to specify height for circular shapes
   case simVis::GOG::GOG_ARC:
@@ -1101,7 +1102,7 @@ void GogNodeInterface::applyBackfaceCulling()
   // Note that extruded lines are the only extruded symbol that need backface culling off (because it
   // extrudes to a filled polygon instead of a 3D shape).
 
-  bool isClosed3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX);
+  bool isClosed3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX || shape() == GOG_CONE);
   const bool isLine = (shape() == GOG_LINE || shape() == GOG_LINESEGS);
   if (isClosed3dShape || (extruded_ && !isLine))
     style_.getOrCreateSymbol<osgEarth::RenderSymbol>()->backfaceCulling() = true;
@@ -1158,6 +1159,7 @@ bool GogNodeInterface::isFillable_(simVis::GOG::GogShape shape) const
   case simVis::GOG::GOG_LINESEGS:
   case simVis::GOG::GOG_POINTS:
   case simVis::GOG::GOG_POLYGON:
+  case simVis::GOG::GOG_CONE:
     return true;
   default:
     break;
@@ -2101,6 +2103,31 @@ void SphericalNodeInterface::setStyle_(const osgEarth::Style& style)
     ss->setAttributeAndModes(new osg::PolygonOffset(-1, -1), 1);
     ss->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0, 1, false));
   }
+}
+
+ConeNodeInterface::ConeNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData)
+  : LocalGeometryNodeInterface(localNode, metaData)
+{
+}
+
+void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
+{
+  metaData_.setExplicitly(GOG_FILL_COLOR_SET);
+  fillColor_ = color;
+  // Need to dig down into the LocalGeometryNode to get the underlying Geometry object to set its color array
+  // NOTE: this assumes a specific implementation for cone nodes. May fail if that implementation changes
+  osg::Group* group = localNode_->getPositionAttitudeTransform();
+  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : NULL;
+  if (!node)
+    return;
+  osg::Geometry* geometry = node->asGeometry();
+  if (!geometry)
+    return;
+
+  // Update the color array
+  osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+  (*colorArray)[0] = color;
+  geometry->setColorArray(colorArray);
 }
 
 } }

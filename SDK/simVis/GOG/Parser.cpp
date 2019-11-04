@@ -385,7 +385,8 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       tokens[0] == "line"          ||
       tokens[0] == "poly"          ||
       tokens[0] == "polygon"       ||
-      tokens[0] == "linesegs"
+      tokens[0] == "linesegs"      ||
+      tokens[0] == "cone"
       )
     {
       if (currentMetaData.shape != GOG_UNKNOWN)
@@ -1118,6 +1119,8 @@ GogShape Parser::getShapeFromKeyword(const std::string& keyword)
     return GOG_LINESEGS;
   if (keyword == "latlonaltbox")
     return GOG_LATLONALTBOX;
+  if (keyword == "cone")
+    return GOG_CONE;
   return GOG_UNKNOWN;
 }
 
@@ -1151,6 +1154,8 @@ std::string Parser::getKeywordFromShape(GogShape shape)
     return "linesegs";
   case GOG_LATLONALTBOX:
     return "latlonaltbox";
+  case GOG_CONE:
+    return "cone";
   case GOG_UNKNOWN:
     return "";
   }

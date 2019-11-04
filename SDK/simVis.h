@@ -60,6 +60,7 @@
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/Arc.h"
 #include "simVis/GOG/Circle.h"
+#include "simVis/GOG/Cone.h"
 #include "simVis/GOG/Cylinder.h"
 #include "simVis/GOG/Ellipse.h"
 #include "simVis/GOG/Ellipsoid.h"

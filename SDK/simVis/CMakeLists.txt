@@ -164,6 +164,7 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Annotation.h
     ${VIS_INC}GOG/Arc.h
     ${VIS_INC}GOG/Circle.h
+    ${VIS_INC}GOG/Cone.h
     ${VIS_INC}GOG/Cylinder.h
     ${VIS_INC}GOG/Ellipse.h
     ${VIS_INC}GOG/Ellipsoid.h
@@ -297,6 +298,7 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Annotation.cpp
     ${VIS_SRC}GOG/Arc.cpp
     ${VIS_SRC}GOG/Circle.cpp
+    ${VIS_SRC}GOG/Cone.cpp
     ${VIS_SRC}GOG/Cylinder.cpp
     ${VIS_SRC}GOG/Ellipse.cpp
     ${VIS_SRC}GOG/Ellipsoid.cpp
