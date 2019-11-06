@@ -93,6 +93,7 @@ bool Utils::canSerializeGeometry_(simVis::GOG::GogShape shape)
   case simVis::GOG::GOG_UNKNOWN:
   case simVis::GOG::GOG_ANNOTATION:
   case simVis::GOG::GOG_LATLONALTBOX:
+  case simVis::GOG::GOG_CONE:
     break;
   }
   return false;
