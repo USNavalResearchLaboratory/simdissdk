@@ -1,4 +1,4 @@
-# Setup OSGEarth library
+# Setup osgEarth library
 # Setting the OSGEARTH_DIR environment variable will allow use of a custom built library
 
 # Cannot locate osgEarth without OSG due to requirement on knowing OSG version
@@ -7,7 +7,7 @@ if(NOT OSG_FOUND)
 endif()
 
 set(LIBRARYNAME OSGEARTH)
-set(VSI_OSGEARTH_VERSION 3.0_OSG-${OSG_VERSION})
+set(VSI_OSGEARTH_VERSION OSG-${OSG_VERSION})
 set(OSGEARTH_INSTALL_COMPONENT ThirdPartyLibs)
 # Install if INSTALL_THIRDPARTY_LIBRARIES is undefined, or if it is set to true
 set(OSGEARTH_SHOULD_INSTALL FALSE)
@@ -19,11 +19,11 @@ endif()
 initialize_ENV(${LIBRARYNAME}_DIR)
 set(INCLUDE_DIRS
     $ENV{${LIBRARYNAME}_DIR}/include
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/include
+    ${THIRD_DIR}/osgEarth/${VSI_OSGEARTH_VERSION}/include
 )
 set(LIB_DIRS
     $ENV{${LIBRARYNAME}_DIR}
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}
+    ${THIRD_DIR}/osgEarth/${VSI_OSGEARTH_VERSION}
 )
 
 # Configure the core osgEarth library
@@ -120,10 +120,10 @@ if(WIN32)
 endif()
 set(OS_PLUGIN_SUBDIR "${OS_PLUGIN_SUBDIR}/osgPlugins-${OSG_VERSION}")
 
-# Install OSGEarth plugins
+# Install osgEarth plugins
 set(PLUGIN_DIRS
     $ENV{OSGEARTH_DIR}
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}
+    ${THIRD_DIR}/osgEarth/${VSI_OSGEARTH_VERSION}
 )
 
 # Find the plugin location
