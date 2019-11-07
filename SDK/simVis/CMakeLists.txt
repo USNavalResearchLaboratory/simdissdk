@@ -187,6 +187,7 @@ set(VIS_HEADERS_GOG
 )
 
 set(VIS_SOURCES_CORE
+    ${VIS_SRC}AlphaColorFilter.cpp
     ${VIS_SRC}AlphaTest.cpp
     ${VIS_SRC}AnimatedLine.cpp
     ${VIS_SRC}Antenna.cpp
@@ -220,7 +221,9 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Gate.cpp
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
+    ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}Laser.cpp
+    ${VIS_SRC}LayerRefreshCallback.cpp
     ${VIS_SRC}LobGroup.cpp
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
@@ -228,9 +231,10 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Measurement.cpp
     ${VIS_SRC}ModelCache.cpp
     ${VIS_SRC}ModKeyHandler.cpp
+    ${VIS_SRC}NavigationModes.cpp
+    ${VIS_SRC}ObjectSelectionHandler.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
-    ${VIS_SRC}LayerRefreshCallback.cpp
     ${VIS_SRC}Picker.cpp
     ${VIS_SRC}PlanetariumViewTool.cpp
     ${VIS_SRC}Platform.cpp
@@ -262,11 +266,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}TrackChunkNode.cpp
     ${VIS_SRC}TrackHistory.cpp
     ${VIS_SRC}Utils.cpp
-    ${VIS_SRC}AlphaColorFilter.cpp
-    ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}View.cpp
-    ${VIS_SRC}NavigationModes.cpp
-    ${VIS_SRC}ObjectSelectionHandler.cpp
     ${VIS_SRC}VaporTrail.cpp
     ${VIS_SRC}VaporTrailStorage.cpp
     ${VIS_SRC}VelocityVector.cpp

@@ -110,7 +110,7 @@ public:
 
   virtual bool run(osg::Object* object, osg::Object* data)
   {
-    AreaHighlightNode* area = dynamic_cast<AreaHighlightNode*>(object);
+    CompositeHighlightNode* area = dynamic_cast<CompositeHighlightNode*>(object);
     // Scale down the radius by a small amount -- 80% -- to reduce highlight size
     if (area != NULL && platform_.valid())
       area->setRadius(VectorScaling::lineLength(platform_->getModel(), 0.8));
@@ -833,18 +833,20 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
 {
   if (prefsDraw && prefs.drawcirclehilight())
   {
-    if (!areaHighlight_.valid())
+    if (!highlight_.valid())
     {
-      areaHighlight_ = new AreaHighlightNode();
-      areaHighlight_->addUpdateCallback(new SetCircleRadiusCallback(this));
-      scaledInertialTransform_->addChild(areaHighlight_);
+      highlight_ = new CompositeHighlightNode(prefs.circlehilightshape());
+      highlight_->addUpdateCallback(new SetCircleRadiusCallback(this));
+      scaledInertialTransform_->addChild(highlight_.get());
     }
-    areaHighlight_->setColor(simVis::Color(prefs.circlehilightcolor(), simVis::Color::RGBA));
+    else
+      highlight_->setShape(prefs.circlehilightshape());
+    highlight_->setColor(simVis::Color(prefs.circlehilightcolor(), simVis::Color::RGBA));
   }
-  else if (areaHighlight_.valid()) // remove if present
+  else if (highlight_.valid()) // remove if present
   {
-    scaledInertialTransform_->removeChild(areaHighlight_);
-    areaHighlight_ = NULL;
+    scaledInertialTransform_->removeChild(highlight_);
+    highlight_ = NULL;
   }
 }
 

@@ -34,17 +34,17 @@ namespace simData { class DataStore; }
 namespace simVis
 {
 
-class AreaHighlightNode;
 class AxisVector;
+class CompositeHighlightNode;
 class EphemerisVector;
 class LocalGridNode;
 class PlatformInertialTransform;
 class PlatformModelNode;
 class PlatformTspiFilterManager;
+class ProjectorNode;
 class RadialLOSNode;
 class TrackHistoryNode;
 class VelocityVector;
-class ProjectorNode;
 
 /**
 * Interface for an object that will create LOS nodes as they're needed.
@@ -324,7 +324,7 @@ private:
   /// track history points
   osg::ref_ptr<TrackHistoryNode>  track_;
   osg::ref_ptr<LocalGridNode>     localGrid_;
-  osg::ref_ptr<AreaHighlightNode> areaHighlight_;
+  osg::ref_ptr<CompositeHighlightNode> highlight_;
   osg::ref_ptr<AxisVector>        bodyAxisVector_;
   osg::ref_ptr<AxisVector>        inertialAxisVector_;
   osg::ref_ptr<PlatformInertialTransform> scaledInertialTransform_;
