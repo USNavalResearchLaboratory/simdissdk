@@ -22,7 +22,6 @@
 #ifndef SIMVIS_RFPROP_ONEWAYPOWER_PROVIDER_H
 #define SIMVIS_RFPROP_ONEWAYPOWER_PROVIDER_H
 
-#include "simVis/RFProp/RadarParameters.h"
 #include "simVis/RFProp/FunctionalProfileDataProvider.h"
 
 namespace simRF

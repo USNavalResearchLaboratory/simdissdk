@@ -146,7 +146,7 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   podLossThresholds_ = PODVectorPtr(new std::vector<float>);
   setDefaultPODVector(podLossThresholds_);
 
-  radarParameters_ = RadarParametersPtr(new RadarParameters());
+  radarParameters_ = RadarParametersPtr(new simCore::RadarParameters());
 
   // set default transparency
   setTransparency(DEFAULT_TRANSPARENCY);
@@ -171,7 +171,7 @@ int RFPropagationFacade::setModelType()
   return 1;
 }
 
-int RFPropagationFacade::setRadarParams(const simRF::RadarParameters& radarParams)
+int RFPropagationFacade::setRadarParams(const simCore::RadarParameters& radarParams)
 {
   // copy the struct
   *radarParameters_ = radarParams;

@@ -32,7 +32,6 @@
 #include "simVis/RFProp/Profile.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
-#include "simVis/RFProp/RadarParameters.h"
 
 namespace osgEarth { class Map; }
 namespace simCore { class TimeStamp; }
@@ -66,7 +65,7 @@ public:
    * @param radarParams radar parameter structure
    * @return 0 on success, !0 on error
    */
-  int setRadarParams(const RadarParameters& radarParams);
+  int setRadarParams(const simCore::RadarParameters& radarParams);
 
   /**
   * Gets the  propagation model RADAR parameters for a given beam

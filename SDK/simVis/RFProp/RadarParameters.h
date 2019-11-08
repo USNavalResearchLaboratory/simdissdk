@@ -19,44 +19,26 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+// this is deprecated; use simCore::RadarParameters
+
 #ifndef SIMVIS_RFPROP_RADAR_PARAMETERS_H
 #define SIMVIS_RFPROP_RADAR_PARAMETERS_H
 
 #include <memory>
 
+namespace simCore { struct RadarParameters; }
 namespace simRF
-{
-
+{  
 /**
  * RadarParameters contains RF system parameter values used in RF Propagation calculations by One-Way, Two-Way and SNR data providers.
  */
-struct RadarParameters
-{
-  /** Frequency in MHz */
-  double freqMHz;
-  /** Antenna gain in dB */
-  double antennaGaindB;
-  /** Noise figure in dB */
-  double noiseFiguredB;
-  /** Pulse width in uSec */
-  double pulseWidth_uSec;
-  /** Noise power in dB, calculated from noiseFiguredB and pulseWidth_uSec */
-  double noisePowerdB;
-  /** System loss in dB */
-  double systemLossdB;
-  /** Transmit power in KW */
-  double xmtPowerKW;
-  /** Transmit power in W, calculated from xmtPowerKW */
-  double xmtPowerW;
-  /** Horizontal beam width in degrees */
-  double hbwD;
-};
+typedef simCore::RadarParameters RadarParameters;
 
 /** Shared pointer of a RadarParameters */
-typedef std::shared_ptr<struct RadarParameters> RadarParametersPtr;
+typedef std::shared_ptr<RadarParameters> RadarParametersPtr;
 
 }
 
 #endif /* SIMVIS_RFPROP_RADAR_PARAMETERS_H */
-
-
+#endif /* USE_DEPRECATED_SIMDISSDK_API */

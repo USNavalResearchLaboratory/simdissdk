@@ -36,14 +36,14 @@ double TwoWayPowerDataProvider::getValueByIndex(unsigned int heightIndex, unsign
 {
   double ppfdB = FunctionalProfileDataProvider::templateGetValueByIndex_(heightIndex, rangeIndex);
   return (ppfdB <= simCore::SMALL_DB_VAL) ? simCore::SMALL_DB_VAL :
-    getTwoWayPower_(ppfdB, FunctionalProfileDataProvider::getRange_(rangeIndex), radarParameters_->antennaGaindB, radarParameters_->antennaGaindB);
+    getTwoWayPower_(ppfdB, FunctionalProfileDataProvider::getRange_(rangeIndex), radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
 }
 
 double TwoWayPowerDataProvider::interpolateValue(double height, double range) const
 {
   double ppfdB = FunctionalProfileDataProvider::templateInterpolateValue_(height, range);
   return (ppfdB <= simCore::SMALL_DB_VAL) ? simCore::SMALL_DB_VAL :
-    getTwoWayPower_(ppfdB, range, radarParameters_->antennaGaindB, radarParameters_->antennaGaindB);
+    getTwoWayPower_(ppfdB, range, radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
 }
 
 double TwoWayPowerDataProvider::getTwoWayPower(double height, double range, double slantRangeM, double xmtGaindB, double rcvGaindB, double rcsSqm) const
