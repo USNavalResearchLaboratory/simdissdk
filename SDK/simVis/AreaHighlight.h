@@ -117,9 +117,11 @@ protected:
 private:
   /// Create the geometry of the highlight
   void init_();
+  /// Reset the number of lines, clear them, and set the mode
+  void resetLines_(size_t newLineCount, int glMode);
 
   osg::ref_ptr<osg::MatrixTransform> matrix_;
-  osg::ref_ptr<osgEarth::LineDrawable> line_;
+  std::vector<osg::ref_ptr<osgEarth::LineDrawable> > lines_;
 };
 
 /// Choose between different highlight nodes based on an enum

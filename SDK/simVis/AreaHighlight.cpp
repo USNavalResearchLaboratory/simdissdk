@@ -269,88 +269,115 @@ void LineDrawableHighlightNode::init_()
   matrix_->setName("Line Drawable Size Matrix");
   addChild(matrix_.get());
 
-  // Create the geometry
-  line_ = new osgEarth::LineDrawable(GL_LINE_LOOP);
-  line_->setName("Line Drawable Highlight Outline");
-  line_->setLineWidth(3.f);
-  line_->setLineSmooth(true);
-
   // Need some shape to start
   makeDiamond();
-  matrix_->addChild(line_.get());
 }
 
 void LineDrawableHighlightNode::makeDiamond()
 {
-  line_->clear();
-  line_->setMode(GL_LINE_LOOP);
+  resetLines_(1, GL_LINE_LOOP);
   // Make diamond the same size as square, so go out to sqrt(2)
   const float SQRT_2 = 1.4142136f;
-  line_->pushVertex(osg::Vec3f(0.f, SQRT_2, 0.f));
-  line_->pushVertex(osg::Vec3f(-SQRT_2, 0.f, 0.f));
-  line_->pushVertex(osg::Vec3f(0.f, -SQRT_2, 0.f));
-  line_->pushVertex(osg::Vec3f(SQRT_2, 0.f, 0.f));
-  line_->finish();
+  auto line = lines_[0];
+  line->pushVertex(osg::Vec3f(0.f, SQRT_2, 0.f));
+  line->pushVertex(osg::Vec3f(-SQRT_2, 0.f, 0.f));
+  line->pushVertex(osg::Vec3f(0.f, -SQRT_2, 0.f));
+  line->pushVertex(osg::Vec3f(SQRT_2, 0.f, 0.f));
+  line->finish();
 }
 
 void LineDrawableHighlightNode::makeSquare()
 {
-  line_->clear();
-  line_->setMode(GL_LINE_LOOP);
-  line_->pushVertex(osg::Vec3f(1.f, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, -1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(1.f, -1.f, 0.f));
-  line_->finish();
+  resetLines_(1, GL_LINE_LOOP);
+  auto line = lines_[0];
+  line->pushVertex(osg::Vec3f(1.f, 1.f, 0.f));
+  line->pushVertex(osg::Vec3f(-1.f, 1.f, 0.f));
+  line->pushVertex(osg::Vec3f(-1.f, -1.f, 0.f));
+  line->pushVertex(osg::Vec3f(1.f, -1.f, 0.f));
+  line->finish();
 }
 
 void LineDrawableHighlightNode::makeCircle()
 {
-  line_->clear();
-  line_->setMode(GL_LINE_LOOP);
+  resetLines_(1, GL_LINE_LOOP);
+  auto line = lines_[0];
   float inc = M_TWOPI / static_cast<float>(MIN_NUM_LINE_SEGMENTS);
   for (int j = MIN_NUM_LINE_SEGMENTS; j > 0; --j)
   {
     const float angle = inc * j;
     const float x = sin(angle);
     const float y = cos(angle);
-    line_->pushVertex(osg::Vec3(x, y, 0.f));
+    line->pushVertex(osg::Vec3(x, y, 0.f));
   }
-  line_->finish();
+  line->finish();
 }
 
 void LineDrawableHighlightNode::makeSquareReticle()
 {
-  line_->clear();
-  line_->setMode(GL_LINES);
+  resetLines_(4, GL_LINE_STRIP);
   // Measures from RET_SIDE to 1.0, how much the reticle is visible
   const float RET_SIDE = 0.5;
   // top right
-  line_->pushVertex(osg::Vec3f(RET_SIDE, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(1.f, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(1.f, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(1.f, RET_SIDE, 0.f));
+  lines_[0]->pushVertex(osg::Vec3f(RET_SIDE, 1.f, 0.f));
+  lines_[0]->pushVertex(osg::Vec3f(1.f, 1.f, 0.f));
+  lines_[0]->pushVertex(osg::Vec3f(1.f, RET_SIDE, 0.f));
+  lines_[0]->finish();
   // top left
-  line_->pushVertex(osg::Vec3f(-RET_SIDE, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, 1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, RET_SIDE, 0.f));
+  lines_[1]->pushVertex(osg::Vec3f(-RET_SIDE, 1.f, 0.f));
+  lines_[1]->pushVertex(osg::Vec3f(-1.f, 1.f, 0.f));
+  lines_[1]->pushVertex(osg::Vec3f(-1.f, RET_SIDE, 0.f));
+  lines_[1]->finish();
   // bottom left
-  line_->pushVertex(osg::Vec3f(-RET_SIDE, -1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, -1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, -1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(-1.f, -RET_SIDE, 0.f));
+  lines_[2]->pushVertex(osg::Vec3f(-RET_SIDE, -1.f, 0.f));
+  lines_[2]->pushVertex(osg::Vec3f(-1.f, -1.f, 0.f));
+  lines_[2]->pushVertex(osg::Vec3f(-1.f, -RET_SIDE, 0.f));
+  lines_[2]->finish();
   // bottom right
-  line_->pushVertex(osg::Vec3f(RET_SIDE, -1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(1.f, -1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(1.f, -1.f, 0.f));
-  line_->pushVertex(osg::Vec3f(1.f, -RET_SIDE, 0.f));
-  line_->finish();
+  lines_[3]->pushVertex(osg::Vec3f(RET_SIDE, -1.f, 0.f));
+  lines_[3]->pushVertex(osg::Vec3f(1.f, -1.f, 0.f));
+  lines_[3]->pushVertex(osg::Vec3f(1.f, -RET_SIDE, 0.f));
+  lines_[3]->finish();
+}
+
+void LineDrawableHighlightNode::resetLines_(size_t newLineCount, int glMode)
+{
+  // Remove excess lines
+  if (lines_.size() > newLineCount)
+  {
+    auto firstToDrop = lines_.begin() + newLineCount;
+    for (auto iter = firstToDrop; iter != lines_.end(); ++iter)
+      matrix_->removeChild(*iter);
+    lines_.erase(firstToDrop, lines_.end());
+  }
+
+  // Clear and reset all existing lines
+  for (auto iter = lines_.begin(); iter != lines_.end(); ++iter)
+  {
+    (*iter)->clear();
+    (*iter)->setMode(glMode);
+  }
+
+  // Add new lines as needed
+  while (lines_.size() < newLineCount)
+  {
+    osgEarth::LineDrawable* line = new osgEarth::LineDrawable(glMode);
+    line->setName("Line Drawable Highlight Outline");
+    line->setLineWidth(3.f);
+    line->setLineSmooth(true);
+    if (!lines_.empty())
+      line->setColor(lines_[0]->getColor());
+    matrix_->addChild(line);
+    lines_.push_back(line);
+  }
 }
 
 void LineDrawableHighlightNode::setColor(const osg::Vec4f& rgba)
 {
-  line_->setColor(rgba);
+  for (auto iter = lines_.begin(); iter != lines_.end(); ++iter)
+  {
+    (*iter)->setColor(rgba);
+    (*iter)->dirty();
+  }
 }
 
 void LineDrawableHighlightNode::setRadius(float radius)
