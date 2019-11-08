@@ -30,7 +30,7 @@
 #include "simData/DataStore.h"
 
 namespace osg {
-  class MatrixTransform;
+  class AutoTransform;
   class Uniform;
 }
 namespace osgEarth {
@@ -120,7 +120,7 @@ private:
   /// Reset the number of lines, clear them, and set the mode
   void resetLines_(size_t newLineCount, int glMode);
 
-  osg::ref_ptr<osg::MatrixTransform> matrix_;
+  osg::ref_ptr<osg::AutoTransform> billboard_;
   std::vector<osg::ref_ptr<osgEarth::LineDrawable> > lines_;
 };
 

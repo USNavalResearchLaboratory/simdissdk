@@ -20,10 +20,10 @@
  *
  */
 #include <cassert>
+#include "osg/AutoTransform"
 #include "osg/BlendFunc"
 #include "osg/Depth"
 #include "osg/Geometry"
-#include "osg/MatrixTransform"
 #include "osgEarth/LineDrawable"
 #include "simCore/Calc/Math.h"
 #include "simCore/String/Format.h"
@@ -264,10 +264,12 @@ void LineDrawableHighlightNode::init_()
   // Turn off backface culling
   stateSet->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
-  // Create the matrix that handles scaling
-  matrix_ = new osg::MatrixTransform();
-  matrix_->setName("Line Drawable Size Matrix");
-  addChild(matrix_.get());
+  // Billboard the shape
+  billboard_ = new osg::AutoTransform();
+  billboard_->setName("Line Drawable Billboard");
+  billboard_->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
+  billboard_->setAutoScaleToScreen(false);
+  addChild(billboard_.get());
 
   // Need some shape to start
   makeDiamond();
@@ -346,7 +348,7 @@ void LineDrawableHighlightNode::resetLines_(size_t newLineCount, int glMode)
   {
     auto firstToDrop = lines_.begin() + newLineCount;
     for (auto iter = firstToDrop; iter != lines_.end(); ++iter)
-      matrix_->removeChild(*iter);
+      billboard_->removeChild(*iter);
     lines_.erase(firstToDrop, lines_.end());
   }
 
@@ -366,7 +368,7 @@ void LineDrawableHighlightNode::resetLines_(size_t newLineCount, int glMode)
     line->setLineSmooth(true);
     if (!lines_.empty())
       line->setColor(lines_[0]->getColor());
-    matrix_->addChild(line);
+    billboard_->addChild(line);
     lines_.push_back(line);
   }
 }
@@ -382,7 +384,7 @@ void LineDrawableHighlightNode::setColor(const osg::Vec4f& rgba)
 
 void LineDrawableHighlightNode::setRadius(float radius)
 {
-  matrix_->setMatrix(osg::Matrix::scale(radius, radius, radius));
+  billboard_->setScale(osg::Vec3f(radius, radius, radius));
 }
 
 // --------------------------------------------------------------------------
