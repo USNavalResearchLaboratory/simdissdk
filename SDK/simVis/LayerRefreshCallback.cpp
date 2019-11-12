@@ -19,6 +19,8 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
+#include "osgEarth/MapNode"
 #include "osgEarth/TerrainEngineNode"
 #include "simNotify/Notify.h"
 #include "simVis/LayerRefreshCallback.h"
@@ -28,7 +30,7 @@ namespace simVis {
 /** Custom osgEarth tag for a layer, to indicate it should trigger automatic refreshes */
 static const std::string REFRESH_TAG = "refresh";
 
-/** Update callback associated with current map, triggers updateInterval() */
+/** Callback that notifies its parent of when to watch or forget a layer. */
 class LayerRefreshCallback::MapUpdatedCallback : public osgEarth::MapCallback
 {
 public:
@@ -37,61 +39,54 @@ public:
   {
   }
 
-  /** Fire off updateInterval() on relevant changes */
+  /** Watch a TerrainLayer when it's added */
   virtual void onLayerAdded(osgEarth::Layer* layer, unsigned index)
   {
-    fireUpdateInterval_(layer);
+    const osgEarth::TerrainLayer* terrainLayer = dynamic_cast<const osgEarth::TerrainLayer*>(layer);
+    if (terrainLayer != NULL)
+      parent_.watchLayer_(terrainLayer);
   }
 
+  /** Forget a TerrainLayer when it's removed */
   virtual void onLayerRemoved(osgEarth::Layer* layer, unsigned index)
   {
-    fireUpdateInterval_(layer);
+    const osgEarth::TerrainLayer* terrainLayer = dynamic_cast<const osgEarth::TerrainLayer*>(layer);
+    if (terrainLayer != NULL)
+      parent_.forgetLayer_(terrainLayer);
   }
 
-  /** Enabling or disabling a layer can change the interval */
+  /** Watch a TerrainLayer when it's enabled */
   virtual void onLayerEnabled(osgEarth::Layer* layer)
   {
-    fireUpdateInterval_(layer);
+    const osgEarth::TerrainLayer* terrainLayer = dynamic_cast<const osgEarth::TerrainLayer*>(layer);
+    if (terrainLayer != NULL)
+      parent_.watchLayer_(terrainLayer);
   }
 
+  /** Forget a TerrainLayer when it's disabled */
   virtual void onLayerDisabled(osgEarth::Layer* layer)
   {
-    fireUpdateInterval_(layer);
+    const osgEarth::TerrainLayer* terrainLayer = dynamic_cast<const osgEarth::TerrainLayer*>(layer);
+    if (terrainLayer != NULL)
+      parent_.forgetLayer_(terrainLayer);
   }
 
 private:
-  /** Fires off an updateInterval() if the passed-in layer has the "refresh" property set */
-  void fireUpdateInterval_(const osgEarth::Layer* layer)
-  {
-    if (hasRefreshProperty_(layer))
-    {
-      osg::ref_ptr<osgEarth::MapNode> mapNode;
-      if (parent_.mapNode_.lock(mapNode) && mapNode->getMap())
-        parent_.updateInterval(mapNode->getMap());
-    }
-  }
-
-  /** Returns true if the layer has the "refresh" property set */
-  bool hasRefreshProperty_(const osgEarth::Layer* layer) const
-  {
-    return layer != NULL && layer->getConfig().hasValue(REFRESH_TAG);
-  }
-
   LayerRefreshCallback& parent_;
 };
 
 //--------------------------------------------------------------------------
 
 LayerRefreshCallback::LayerRefreshCallback()
+  : enabled_(false)
 {
   mapUpdatedCallback_ = new MapUpdatedCallback(*this);
-  // Needs a map to become enabled
-  setEnabled(false);
 }
 
 LayerRefreshCallback::LayerRefreshCallback(const LayerRefreshCallback& rhs, const osg::CopyOp& copyop)
-  : PeriodicUpdateCallback(rhs, copyop),
-    mapNode_(rhs.mapNode_)
+  : osg::Callback(rhs, copyop),
+  enabled_(rhs.enabled_),
+  mapNode_(rhs.mapNode_)
 {
 }
 
@@ -110,94 +105,100 @@ void LayerRefreshCallback::setMapNode(osgEarth::MapNode* mapNode)
   if (mapNode_.lock(oldMap) && oldMap->getMap())
     oldMap->getMap()->removeMapCallback(mapUpdatedCallback_.get());
 
+  // Forget any previously watched layers
+  watchedLayers_.clear();
+
   // Add the map callback to the new node
   mapNode_ = mapNode;
-  if (mapNode && mapNode->getMap())
-    mapNode->getMap()->addMapCallback(mapUpdatedCallback_.get());
+  if (mapNode_.valid() && mapNode_->getMap())
+    mapNode_->getMap()->addMapCallback(mapUpdatedCallback_.get());
 
-  // Presume that map is up to date
-  resetTimer();
-  // Pull out the minimum refresh of current layers
-  if (mapNode)
-    updateInterval(mapNode->getMap());
-  else
-    setInterval(0);
+  enabled_ = (mapNode_ != NULL);
 }
 
-void LayerRefreshCallback::updateInterval(osgEarth::Map* map)
+bool LayerRefreshCallback::run(osg::Object* object, osg::Object* data)
 {
-  if (map)
-  {
-    setInterval(60.0 * getRefreshInMinutes_(*map));
-    setEnabled(true);
-  }
-  else
-  {
-    setEnabled(false);
-  }
+  runImpl_();
+  return traverse(object, data);
 }
 
-void LayerRefreshCallback::runPeriodicEvent(osg::Object* object, osg::Object* data)
+void LayerRefreshCallback::runImpl_()
 {
-  // Print debug text to the log.  This shouldn't run often, and users might need to figure out why map refreshes
-  SIM_DEBUG_FP << "LayerRefreshCallback::runPeriodicEvent() attempting to refresh map due to refreshing layer.\n";
+  if (!enabled_ || watchedLayers_.empty())
+    return;
 
   // Pull out the terrain engine
   osg::ref_ptr<osgEarth::MapNode> mapNode;
   if (!mapNode_.lock(mapNode) || !mapNode->getTerrainEngine() || !mapNode->getMap())
     return;
 
-  // Get all terrain layers; they are the ones with extents
-  std::vector<osg::ref_ptr<osgEarth::TerrainLayer> > allLayers;
-  mapNode->getMap()->getLayers(allLayers);
-
-  bool refreshedOne = false;
   osgEarth::TerrainEngineNode* terrainEngine = mapNode->getTerrainEngine();
-  // Loop through all layers
-  for (const auto& layer : allLayers)
+  // Loop through all watched layers
+  for (auto it = watchedLayers_.begin(); it != watchedLayers_.end(); ++it)
   {
-    // Must be enabled and visible, else we skip this round of updates
-    if (!layer.valid() || !layer->getVisible() || !layer->getEnabled())
+    osg::observer_ptr<const osgEarth::TerrainLayer> layer = (*it).layer;
+    if (!layer.valid() || !layer->getEnabled())
+    {
+      assert(0); // Should not be watching a NULL or disabled layer
+      continue;
+    }
+
+    // Ignore not visible layers
+    if (!layer->getVisible())
       continue;
 
-    // We cannot micromanage the refresh timer, so refresh all that have the tag
-    auto cfg = layer->getConfig();
-    if (!cfg.hasValue(REFRESH_TAG))
+    double interval = getIntervalForLayer_(layer.get());
+
+    // Skip layers that don't need refreshing
+    if (interval == 0. || it->elapsedTime.elapsedTime() <= interval)
       continue;
+
+    // Print debug text to the log.  This shouldn't run often, and users might need to figure out why map refreshes
+    SIM_DEBUG_FP << "simVis::LayerRefreshCallback::run() attempting to refresh layer \"" << layer->getName() << "\".\n";
+
     const auto extents = layer->getDataExtents();
     for (const auto& extent : extents)
-    {
-      terrainEngine->invalidateRegion(extent);
-      refreshedOne = true;
-    }
+      terrainEngine->invalidateLayerRegion(layer.get(), extent);
+
+    // Reset the timer for this layer
+    it->elapsedTime.reset();
   }
 
-  // Redoing the terrain can be expensive
-  if (refreshedOne)
-    terrainEngine->dirtyTerrain();
+  // NOTE: A call to terrainEngine->dirtyTerrain() is NOT required here
 }
 
-int LayerRefreshCallback::getRefreshInMinutes_(const osgEarth::Map& map) const
+void LayerRefreshCallback::watchLayer_(const osgEarth::TerrainLayer* layer)
 {
-  int minRefresh = std::numeric_limits<int>::max();
-  bool hasRefresh = false;
-  std::vector<osg::ref_ptr<osgEarth::TerrainLayer> > layers;
-  map.getLayers(layers);
-  for (const auto& layer : layers)
-  {
-    if (layer == NULL)
-      continue;
-    const auto& cfg = layer->getConfig();
-    int refreshValue = 0;
-    if (cfg.get(REFRESH_TAG, refreshValue))
-    {
-      minRefresh = osg::maximum(1, osg::minimum(refreshValue, minRefresh));
-      hasRefresh = true;
-    }
-  }
+  if (layer == NULL)
+    return;
 
-  // Return 0 if no layer has a refresh
-  return hasRefresh ? minRefresh : 0;
+  LayerInfo info;
+  info.layer = layer;
+  // No need to initialize info.elapsedTime (default constructor is sufficient)
+  watchedLayers_.push_back(info);
+}
+
+void LayerRefreshCallback::forgetLayer_(const osgEarth::TerrainLayer* layer)
+{
+  if (layer == NULL)
+    return;
+
+  for (auto it = watchedLayers_.begin(); it != watchedLayers_.end(); ++it)
+  {
+    if (layer != it->layer.get())
+      continue;
+    watchedLayers_.erase(it);
+    return;
+  }
+}
+
+double LayerRefreshCallback::getIntervalForLayer_(const osgEarth::Layer* layer) const
+{
+  int refreshValue = 0;
+  const auto& cfg = layer->getConfig();
+  if (!cfg.get(REFRESH_TAG, refreshValue))
+    return 0.0;
+  return refreshValue * 60.;
 }
 
 }

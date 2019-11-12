@@ -22,15 +22,15 @@
 #ifndef SIMVIS_LAYERREFRESHCALLBACK_H
 #define SIMVIS_LAYERREFRESHCALLBACK_H
 
+#include "osg/Callback"
 #include "simCore/Common/Common.h"
-#include "simVis/Utils.h"
 
 namespace simVis {
 
 /**
  * When attached to the scene and configured with a map node, this update callback
  * will monitor for layers that require refreshing and issue the invalidate and
- * dirty calls to refresh the map periodically as configured by the user.
+ * dirty calls to refresh each layer periodically as configured by the user.
  *
  * This gets enabled by setting the "refresh" tag on a layer to the number of minutes
  * between periodic refreshes.  For example:
@@ -41,24 +41,21 @@ namespace simVis {
  * ...
  * </map>
  *
- * Because there is no way to refresh only a single layer, multiple layers with various
- * refresh timers will refresh on the shortest timer.
+ * Note that all TerrainLayers (including those without refresh intervals) are monitored.
+ * This is to catch cases where a layer is given a refresh interval after being added.
  */
-class LayerRefreshCallback : public simVis::PeriodicUpdateCallback
+class LayerRefreshCallback : public osg::Callback
 {
 public:
   LayerRefreshCallback();
   LayerRefreshCallback(const LayerRefreshCallback& rhs, const osg::CopyOp& copyop);
   META_Object(simVis, LayerRefreshCallback);
 
-  /** Changes the map node.  This resets the refresh timer */
+  /** Changes the map node. Clears the list of watched layers */
   void setMapNode(osgEarth::MapNode* mapNode);
 
-  /** Given the map, search for minimum refresh and update the interval appropriately */
-  void updateInterval(osgEarth::Map* map);
-
-  /** When this triggers, the map needs a refresh.  Invalidate layers and dirty the map */
-  virtual void runPeriodicEvent(osg::Object* object, osg::Object* data);
+  /** Override osg::Callback::run() to check timers and refresh layers if needed */
+  virtual bool run(osg::Object* object, osg::Object* data);
 
 protected:
   /** osg::Referenced-derived */
@@ -67,11 +64,29 @@ protected:
 private:
   class MapUpdatedCallback;
 
-  /** Searches layers for a "refresh" tag, returning 0 if no layers have a refresh, else returns minimum refresh timeout in mintues. */
-  int getRefreshInMinutes_(const osgEarth::Map& map) const;
+  /** Groups a TerrainLayer pointer and the elapsed time since last its refresh */
+  struct LayerInfo
+  {
+    osg::observer_ptr<const osgEarth::TerrainLayer> layer;
+    osg::ElapsedTime elapsedTime;
+  };
 
+  /** Implementation of run() */
+  void runImpl_();
+
+  /** Watch the given layer and refresh it when required a refresh is due */
+  void watchLayer_(const osgEarth::TerrainLayer* layer);
+  /** Stop watching the given layer */
+  void forgetLayer_(const osgEarth::TerrainLayer* layer);
+
+  /** Get the interval for the given layer in seconds */
+  double getIntervalForLayer_(const osgEarth::Layer* layer) const;
+
+  bool enabled_;
   osg::ref_ptr<MapUpdatedCallback> mapUpdatedCallback_;
   osg::observer_ptr<osgEarth::MapNode> mapNode_;
+  /** Info about all enabled terrain layers */
+  std::vector<LayerInfo> watchedLayers_;
 };
 
 }
