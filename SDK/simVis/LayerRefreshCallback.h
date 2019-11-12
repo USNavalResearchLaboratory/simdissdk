@@ -25,6 +25,8 @@
 #include "osg/Callback"
 #include "simCore/Common/Common.h"
 
+namespace osgEarth { class MapNode; }
+
 namespace simVis {
 
 /**
