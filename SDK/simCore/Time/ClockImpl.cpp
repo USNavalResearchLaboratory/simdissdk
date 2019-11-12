@@ -972,9 +972,9 @@ void VisualizationClock::setTimeScale(double scale)
 void VisualizationClock::setRealTime(bool fl)
 {
   if (lockToDataClock_)
-    dataClock_.setTimeScale(fl);
+    dataClock_.setRealTime(fl);
   else
-    localClock_->setTimeScale(fl);
+    localClock_->setRealTime(fl);
 }
 
 void VisualizationClock::setStartTime(const simCore::TimeStamp& timeVal)
