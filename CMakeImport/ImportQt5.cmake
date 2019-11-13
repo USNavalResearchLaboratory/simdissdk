@@ -10,7 +10,7 @@
 
 # Initialize QT5_MODULES
 if(NOT DEFINED QT5_MODULES)
-    set(QT5_MODULES Concurrent Designer Network OpenGL Multimedia MultimediaWidgets Test UiPlugin Xml)
+    set(QT5_MODULES Concurrent Designer Network OpenGL Multimedia MultimediaWidgets Svg Test UiPlugin Xml)
 endif()
 # Initialize QT5_PLUGINS
 if(NOT DEFINED QT5_PLUGINS)
