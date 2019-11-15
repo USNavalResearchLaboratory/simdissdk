@@ -34,14 +34,14 @@ namespace simCore
   namespace LUT
   {
     /**
-    * Two dimensional look up table class
+    * Two-dimensional lookup table class
     */
     template <class Value = double>
     class LUT2
     {
     public:
       /**
-      * @brief Initializes size of internal two dimensional look up table
+      * @brief Initializes size of internal two-dimensional lookup table
       *
       * @param[in ] minX Minimum x value
       * @param[in ] maxX Maximum x value
@@ -54,13 +54,14 @@ namespace simCore
       */
       void initialize(double minX, double maxX, size_t numX, double minY, double maxY, size_t numY, Value value = Value())
       {
-        if (!numX || !numY || maxX <= minX || maxY <= minY)
+        if (!numX || !numY || maxX < minX || maxY <= minY)
           throw std::invalid_argument("simCore::LUT::LUT2::initialize");
 
         minX_ = minX;
         maxX_ = maxX;
         numX_ = numX;
-        stepX_ = (maxX - minX) / (numX - 1);
+        // when there is only a single x-value, support one-dim lookup table functionality
+        stepX_ = (maxX != minX && numX > 1) ? (maxX - minX) / (numX - 1) : 0;
         array_.resize(numX);
         minY_ = minY;
         maxY_ = maxY;
@@ -90,9 +91,9 @@ namespace simCore
       /** @return Number of Y dimension values */
       size_t numY() const { return numY_; }
       /**
-      * Performs look up at specified indices
-      * @param[in ] xIndex X location to perform look up
-      * @param[in ] yIndex Y location to perform look up
+      * Performs lookup at specified indices
+      * @param[in ] xIndex X location to perform lookup
+      * @param[in ] yIndex Y location to perform lookup
       * @return Const reference to value at specified indices
       * @throw std::out_of_range
       */
@@ -104,9 +105,9 @@ namespace simCore
         return array_[xIndex][yIndex];
       }
       /**
-      * Performs look up at specified indices
-      * @param[in ] xIndex X location to perform look up
-      * @param[in ] yIndex Y location to perform look up
+      * Performs lookup at specified indices
+      * @param[in ] xIndex X location to perform lookup
+      * @param[in ] yIndex Y location to perform lookup
       * @return Reference to value at specified indices
       * @throw std::out_of_range
       */
@@ -132,7 +133,7 @@ namespace simCore
 
     /**
     * Determines closest values in LUT to specified values
-    * @param[in ] lut2 Look up table to find index
+    * @param[in ] lut2 Lookup table to find index
     * @param[in ] exactX value to find closest x dimension index
     * @param[in ] exactY value to find closest y dimension index
     * @return closest values to specified value
@@ -145,7 +146,7 @@ namespace simCore
 
     /**
     * Determines nearest indices in LUT to specified values
-    * @param[in ] lut2 Look up table to find index
+    * @param[in ] lut2 Lookup table to find index
     * @param[in ] exactX value to find closest x dimension index
     * @param[in ] exactY value to find closest y dimension index
     * @return nearest indices to specified values
@@ -153,13 +154,13 @@ namespace simCore
     template <class Value>
     inline Value nearValue(const LUT2<Value> &lut2, double exactX, double exactY)
     {
-      std::pair<double, double> rv = index(lut2, exactX, exactY);
+      const std::pair<double, double>& rv = index(lut2, exactX, exactY);
       return lut2(static_cast<size_t>(rv.first + 0.5), static_cast<size_t>(rv.second + 0.5));
     }
 
     /**
     * Performs interpolation of the LUT using the specified values
-    * @param[in ] lut2 Look up table to find index and perform interpolation
+    * @param[in ] lut2 Lookup table to find index and perform interpolation
     * @param[in ] exactX value to find closest x dimension index
     * @param[in ] exactY value to find closest y dimension index
     * @param[in ] func Bilinear interpolation function to use
@@ -168,7 +169,7 @@ namespace simCore
     template <class Value, class Function>
     inline Value interpolate(const LUT2<Value> &lut2, double exactX, double exactY, Function func)
     {
-      std::pair<double, double> rv = index(lut2, exactX, exactY);
+      const std::pair<double, double>& rv = index(lut2, exactX, exactY);
 
       if (rv.first < 0 || rv.second < 0)
         throw std::out_of_range("simCore::LUT::interpolate");
@@ -191,17 +192,17 @@ namespace simCore
     /**
     * Writes the LUT to an output stream
     * @param[in ] out Output stream
-    * @param[in ] lut2 Look up table to write to output stream
+    * @param[in ] lut2 Lookup table to write to output stream
     */
     template <class Value>
     inline std::ostream &operator<<(std::ostream &out, const LUT2<Value> &lut2)
     {
       out << lut2.numX() << " " << lut2.minX() << " " << lut2.stepX() << " " << lut2.maxX() << std::endl;
       out << lut2.numY() << " " << lut2.minY() << " " << lut2.stepY() << " " << lut2.maxY() << std::endl;
-      const std::vector<std::vector <Value> > &array = lut2.array_;
+      const std::vector<std::vector <Value> >& array = lut2.array_;
       for (size_t i = 0; i < array.size(); ++i)
       {
-        const std::vector<Value> &vec = array[i];
+        const std::vector<Value>& vec = array[i];
         for (size_t j = 0; j < vec.size(); ++j)
         {
           out << i << " " << j << " = " << vec[j] << std::endl;
