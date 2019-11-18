@@ -322,73 +322,18 @@ set(VIS_ALL_HEADER
     ${VIS_INC}../simVis.h
 )
 
-# Detect the osgEarth version
-set(SDK_OSGEARTH_DEVEL 0)
 if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
     set(HAVE_TRITON_NODEKIT 1)
 endif()
 if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
     set(HAVE_SILVERLINING_NODEKIT 1)
 endif()
-include(CheckOSGEarthMethodExists)
 
-# Newer than 1.9.0 release adds PointDrawable::checkSharedStateSet() to osgEarth
-check_osgearth_method_exists(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET "osgEarth/PointDrawable" "checkSharedStateSet")
-if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET)
-    set(SDK_OSGEARTH_DEVEL 1)
-    # Next anticipated version is 1.10.0
-    set(SDK_OSGEARTH_VERSION_MAJOR 1)
-    set(SDK_OSGEARTH_VERSION_MINOR 10)
-    set(SDK_OSGEARTH_VERSION_PATCH 0)
-else()
-    # Newer than 1.8.0 release adds GeodeticLabelingEngine file and getResolution()
-    check_osgearth_method_exists(HAVE_OSGEARTH_GEOLABELENGINE "osgEarth/GeodeticLabelingEngine" "getResolution")
-    if(HAVE_OSGEARTH_GEOLABELENGINE)
-        # Next anticipated version is 1.9.0
-        set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 9)
-        set(SDK_OSGEARTH_VERSION_PATCH 0)
-    else()
-        # Newer than 1.7.0 release adds clear() to Profiler
-        check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
-        if(HAVE_OSGEARTH_PROFILER_CLEAR)
-            # Next anticipated version is 1.8.0
-            set(SDK_OSGEARTH_VERSION_MAJOR 1)
-            set(SDK_OSGEARTH_VERSION_MINOR 8)
-            set(SDK_OSGEARTH_VERSION_PATCH 0)
-        else()
-            # Newer than 1.6.0 release removes tileSize() from TileSource
-            check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
-            if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
-                set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                set(SDK_OSGEARTH_VERSION_MINOR 7)
-                set(SDK_OSGEARTH_VERSION_PATCH 0)
-            else()
-                # Version 1.6.0 changed Map's setName to setMapName
-                check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-                if(HAVE_OSGEARTH_MAP_SETMAPNAME)
-                    set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                    set(SDK_OSGEARTH_VERSION_MINOR 6)
-                    set(SDK_OSGEARTH_VERSION_PATCH 0)
-                else()
-                    # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
-                    set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                    set(SDK_OSGEARTH_VERSION_MINOR 5)
-                    set(SDK_OSGEARTH_VERSION_PATCH 0)
-                endif()
-            endif()
-        endif()
-    endif()
-endif()
+# We require osgEarth 3.0 and osgEarth from 1.11 and prior are not usable
+set(SDK_OSGEARTH_VERSION_MAJOR 1)
+set(SDK_OSGEARTH_VERSION_MINOR 12)
+set(SDK_OSGEARTH_VERSION_PATCH 0)
 
-# Configure the osgEarth versions file and print out the information to CMake
-if(VERBOSE)
-    if(SDK_OSGEARTH_DEVEL)
-        message(STATUS "Detected development osgEarth version.")
-    else()
-        message(STATUS "Detected osgEarth version osgearth-simdis-sdk-${SDK_OSGEARTH_VERSION_MAJOR}.${SDK_OSGEARTH_VERSION_MINOR}")
-    endif()
-endif()
 configure_file(${VIS_INC}osgEarthVersion.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/simVis/osgEarthVersion.h @ONLY)
 
 # Note that shaders do not go into simVis.h and header/cpp don't get installed
