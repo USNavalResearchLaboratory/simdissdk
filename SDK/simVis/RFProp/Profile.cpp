@@ -393,15 +393,17 @@ void Profile::init2DHoriz_()
   for (unsigned int i = 0; i < numRanges; i++)
   {
     const double value = data_->getValueByIndex(heightIndex, i);
-    // some profiles can have large patch of no-data at beginning
-    if (value <= AREPS_GROUND_VALUE)
+    if (!validDataStarted)
     {
-      // ignore no-data values until valid data is received
-      if (!validDataStarted)
+      // values <= AREPS_GROUND_VALUE are sentinel values, not actual values. some profiles can have long stretch of no-data, especially at low range.
+      if (value <= AREPS_GROUND_VALUE)
+      {
+        // ignore no-data values until valid data is received
         continue;
-    }
-    else
+      }
+      // once valid data has started, skipping no-data points might affect the triangle strip. in these cases, shaders will make those vertices transparent.
       validDataStarted = true;
+    }
 
     const double range = minRange + rangeStep * i;
     double height = height_;
@@ -461,11 +463,26 @@ const void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHei
     osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
     idx->reserve(2 * numRanges);
 
+    // init the flag that indicates whether this profile has seen valid data
+    bool validDataStarted = false;
+
     // Create row strips
     for (unsigned int r = 0; r < numRanges; ++r)
     {
       const unsigned int indexBottom = startIndex + (r * numHeights) + h;
       const unsigned int indexTop = indexBottom + 1;
+      if (!validDataStarted)
+      {
+        const double valueBottom = values->at(indexBottom);
+        const double valueTop = values->at(indexTop);
+        // some profiles can have large patch of no-data at beginning
+        if (valueBottom <= AREPS_GROUND_VALUE && valueTop <= AREPS_GROUND_VALUE)
+        {
+          // ignore no-data values until valid data is received
+          continue;
+        }
+        validDataStarted = true;
+      }
 
       idx->push_back(indexBottom);
       idx->push_back(indexTop);
@@ -989,6 +1006,11 @@ void Profile::init3DPoints_()
 
     for (unsigned int h = minHeightIndex; h <= maxHeightIndex; h++)
     {
+      const double value = data_->getValueByIndex(h, r);
+      // values <= AREPS_GROUND_VALUE are sentinel values, not actual values.
+      if (value <= AREPS_GROUND_VALUE)
+        continue;
+
       const double height = minHeight + heightStep * h;
       osg::Vec3 v(0, range, height);
       if (sphericalEarth_)
@@ -996,7 +1018,6 @@ void Profile::init3DPoints_()
         adjustSpherical_(v, lla, &tpSphereXYZ);
       }
       verts_->push_back(v);
-      const double value = data_->getValueByIndex(h, r);
       values_->push_back(value);
     }
   }
