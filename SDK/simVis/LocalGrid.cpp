@@ -653,7 +653,7 @@ void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
 void LocalGridNode::syncWithLocator()
 {
   // if not drawing, we don't need to update this
-  if (!host_.valid() || getNodeMask() != DISPLAY_MASK_LOCAL_GRID)
+  if (getNodeMask() != DISPLAY_MASK_LOCAL_GRID)
     return;
 
   // call the base class to update the matrix.
