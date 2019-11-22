@@ -205,13 +205,13 @@ protected:
   osg::Image* createImage_();
 
   /** Creates a voxel (volume pixel) at the given location */
-  const void buildVoxel_(const double* lla, const simCore::Vec3* tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry);
+  const void buildVoxel_(const simCore::Vec3& tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry);
 
   /** Fixes the orientation of the profile */
   void updateOrientation_();
 
   /** Adjusts based on spherical XYZ */
-  void adjustSpherical_(osg::Vec3& v, const double *lla, const simCore::Vec3 *tpSphereXYZ);
+  void adjustSpherical_(osg::Vec3& v, const simCore::Vec3& tpSphereXYZ);
 
   /** Retrieves the profile height at the given ground range in meters */
   float getTerrainHgt_(float gndRng) const;
@@ -250,11 +250,17 @@ protected:
   /** Draw mode */
   DrawMode mode_;
   /** Reference coordinate for placing the center of the profile */
-  osg::Vec3d refCoord_;
+  simCore::Vec3 refCoord_;
   /** Flags spherical vs flat earth */
   bool sphericalEarth_;
   /** Elevation angle in radians */
   double elevAngle_;
+
+  /** Profile's horizontal beam extents */
+  double cosTheta0_;
+  double sinTheta0_;
+  double cosTheta1_;
+  double sinTheta1_;
 
   /** Texture for the textured mode */
   osg::ref_ptr<osg::Texture> texture_;
