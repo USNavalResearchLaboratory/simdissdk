@@ -73,7 +73,7 @@ int VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
   setNodeMask(DISPLAY_MASK_PLATFORM);
   this->addChild(geode.get());
   return 0;
-};
+}
 
 void VelocityVector::setPrefs(bool draw, const simData::PlatformPrefs& prefs, bool force)
 {

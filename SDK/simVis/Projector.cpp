@@ -147,7 +147,7 @@ namespace
   private:
     osg::ref_ptr<simVis::ProjectorNode> proj_;
   };
-};
+}
 
 namespace simVis
 {

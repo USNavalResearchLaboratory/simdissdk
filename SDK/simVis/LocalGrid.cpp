@@ -510,7 +510,7 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
   // have to run ShaderGenerator after adding labels
   if (labelGroup_->getNumChildren() > 0)
     osgEarth::Registry::shaderGenerator().run(labelGroup_.get());
-};
+}
 
 void LocalGridNode::validatePrefs(const simData::LocalGridPrefs& prefs)
 {

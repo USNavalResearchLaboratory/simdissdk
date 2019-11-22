@@ -1165,7 +1165,7 @@ bool GogNodeInterface::isFillable_(simVis::GOG::GogShape shape) const
     break;
   }
   return false;
-};
+}
 
 bool GogNodeInterface::isLined_(simVis::GOG::GogShape shape) const
 {
@@ -1185,7 +1185,7 @@ bool GogNodeInterface::isLined_(simVis::GOG::GogShape shape) const
     break;
   }
   return false;
-};
+}
 
 bool GogNodeInterface::fillOnlyWhenExtruded_(simVis::GOG::GogShape shape) const
 {

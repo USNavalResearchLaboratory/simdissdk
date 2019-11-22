@@ -120,6 +120,6 @@ private:
   /// A flag to mark when projector layers need to be moved to ensure visibility
   bool needReorderProjectorLayers_;
 };
-};
+}
 
 #endif // SIMVIS_PROJECTOR_MANAGER_H
