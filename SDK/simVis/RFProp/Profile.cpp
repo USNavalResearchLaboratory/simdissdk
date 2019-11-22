@@ -381,17 +381,35 @@ void Profile::init2DHoriz_()
   const unsigned int startIndex = verts_->size();
   unsigned int heightIndex = data_->getHeightIndex(height_);
   // Error check the height index
-  if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX || heightIndex > (data_->getNumHeights() - 1))
   {
-    // Invalidly defined profile
+    // getHeightIndex guarantees to return either error condition (which indicates invalidly defined profile), or a valid height index
     assert(0);
     return;
   }
+
+  verts_->reserve(2 * numRanges);
+  values_->reserve(2 * numRanges);
 
   // init the flag that indicates whether this profile has seen valid data
   bool validDataStarted = false;
   for (unsigned int i = 0; i < numRanges; i++)
   {
+    const double range = minRange + rangeStep * i;
+    double height = height_;
+    if (agl_ && !terrainHeights_.empty())
+    {
+      height = height_ + getTerrainHgt_(static_cast<float>(range));
+      heightIndex = data_->getHeightIndex(height);
+      // Error check the height index
+      if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX  || heightIndex > (data_->getNumHeights() - 1))
+      {
+        // getHeightIndex guarantees to return either error condition (which indicates invalidly defined profile), or a valid height index
+        assert(0);
+        return;
+      }
+    }
+
     const double value = data_->getValueByIndex(heightIndex, i);
     if (!validDataStarted)
     {
@@ -403,21 +421,6 @@ void Profile::init2DHoriz_()
       }
       // once valid data has started, skipping no-data points might affect the triangle strip. in these cases, shaders will make those vertices transparent.
       validDataStarted = true;
-    }
-
-    const double range = minRange + rangeStep * i;
-    double height = height_;
-    if (agl_ && !terrainHeights_.empty())
-    {
-      height = height_ + getTerrainHgt_(static_cast<float>(range));
-      heightIndex = data_->getHeightIndex(height);
-      // Error check the height index
-      if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
-      {
-        // Invalidly defined profile
-        assert(0);
-        return;
-      }
     }
 
     // Left vert
@@ -433,8 +436,6 @@ void Profile::init2DHoriz_()
 
     verts_->push_back(v1);
     verts_->push_back(v0);
-
-    heightIndex = osg::clampBetween(heightIndex, 0u, data_->getNumHeights() - 1);
     values_->push_back(value);
     values_->push_back(value);
   }
