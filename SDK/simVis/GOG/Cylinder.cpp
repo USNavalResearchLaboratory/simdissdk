@@ -41,13 +41,13 @@ using namespace osgEarth;
 namespace {
 
 /** Returns the result of simCore::angFix2PI() on angle: [0,M_TWOPI) */
-const Angle& angFix2PI(Angle angle)
+Angle angFix2PI(Angle angle)
 {
   return Angle(simCore::angFix2PI(angle.as(Units::RADIANS)), Units::RADIANS);
 }
 
 /** Returns the result of fmod() on angle: (-denom,+denom) */
-const Angle& fmod(Angle angle, double denom = M_TWOPI)
+Angle fmod(Angle angle, double denom = M_TWOPI)
 {
   return Angle(::fmod(angle.as(Units::RADIANS), denom), Units::RADIANS);
 }
