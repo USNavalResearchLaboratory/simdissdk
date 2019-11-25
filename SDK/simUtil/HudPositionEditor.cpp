@@ -304,7 +304,7 @@ void HudEditorGui::reset()
 
   // Create all the sub-windows
   std::vector<std::string> names;
-  hud->getAllWindows(names);
+  hud->getAllWindows(names, true);
   for (auto i = names.begin(); i != names.end(); ++i)
     updatePosition(*i);
 }
@@ -435,7 +435,8 @@ void HudEditorGui::setVisible(bool flag)
 
   // Iterate and update each window in case it was created after us
   std::vector<std::string> names;
-  hud->getAllWindows(names);
+  // Always hide everything, but only show the active windows
+  hud->getAllWindows(names, flag);
   for (auto nameIter = names.begin(); nameIter != names.end(); ++nameIter)
     updatePosition(*nameIter);
 }
@@ -609,7 +610,7 @@ std::string HudEditorMouse::hudUnderMouse_(double xPx, double yPx, osg::Vec3d& m
 
   // Get all the windows to test
   std::vector<std::string> windows;
-  hud->getAllWindows(windows);
+  hud->getAllWindows(windows, true);
 
   // Use AHA (Dynamic Selection) algorithm
   double closestDistanceSq = 50.0 * 50.0;
@@ -709,22 +710,42 @@ void HudPositionEditor::addWindow(const std::string& name, const osg::Vec2d& def
   gui_->updatePosition(name);
 }
 
-void HudPositionEditor::setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
+int HudPositionEditor::removeWindow(const std::string& name)
 {
-  if (hud_->setSize(name, minXyPx, maxXyPx) == 0)
-    gui_->updateSize(name);
+  const int rv = hud_->removeWindow(name);
+  if (rv == 0)
+    gui_->reset();
+  return rv;
 }
 
-void HudPositionEditor::setPosition(const std::string& name, const osg::Vec2d& positionPct)
+int HudPositionEditor::setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
 {
-  if (hud_->setPosition(name, positionPct) == 0)
+  const int rv = hud_->setSize(name, minXyPx, maxXyPx);
+  if (rv == 0)
+    gui_->updateSize(name);
+  return rv;
+}
+
+int HudPositionEditor::setPosition(const std::string& name, const osg::Vec2d& positionPct)
+{
+  const int rv = hud_->setPosition(name, positionPct);
+  if (rv == 0)
     gui_->updatePosition(name);
+  return rv;
 }
 
 void HudPositionEditor::resetAllPositions()
 {
   hud_->resetAllPositions();
   gui_->reset();
+}
+
+int HudPositionEditor::resetPosition(const std::string& name)
+{
+  const int rv = hud_->resetPosition(name);
+  if (rv == 0)
+    gui_->updatePosition(name);
+  return rv;
 }
 
 }
