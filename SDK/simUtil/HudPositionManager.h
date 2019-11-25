@@ -125,7 +125,7 @@ public:
   /** Retrieves a list of all named windows that this GUI knows about.  Returns 0 on success, non-zero on error. */
   int getAllWindows(std::vector<std::string>& names) const;
 
-  /** Updates the expected size of the window, in pixels (not percentages).  Returns 0 on success, non-zero on error. */
+  /** Retrieves the expected size of the window, in pixels (not percentages).  Returns 0 on success, non-zero on error. */
   int getSize(const std::string& name, osg::Vec2d& minXyPx, osg::Vec2d& maxXyPx) const;
   /** Updates the expected size of the window, in pixels (not percentages).  Returns 0 on success, non-zero on error. */
   int setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
