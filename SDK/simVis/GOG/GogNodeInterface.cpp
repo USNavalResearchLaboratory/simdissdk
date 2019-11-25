@@ -2116,6 +2116,8 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
   fillColor_ = color;
   // Need to dig down into the LocalGeometryNode to get the underlying Geometry object to set its color array
   // NOTE: this assumes a specific implementation for cone nodes. May fail if that implementation changes
+
+  // Set the color on the cone body
   osg::Group* group = localNode_->getPositionAttitudeTransform();
   osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : NULL;
   if (!node)
@@ -2128,6 +2130,17 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
   osg::Vec4Array* colorArray = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   (*colorArray)[0] = color;
   geometry->setColorArray(colorArray);
+
+  // Set the color on the cone cap
+  osg::Node* capNode = group->getNumChildren() > 1 ? group->getChild(1) : NULL;
+  if (!capNode)
+    return;
+  osg::Geometry* capGeometry = capNode->asGeometry();
+  if (!capGeometry)
+    return;
+
+  // Update the color array
+  capGeometry->setColorArray(colorArray);
 }
 
 } }
