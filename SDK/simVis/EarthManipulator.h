@@ -25,6 +25,8 @@
 #include "osgEarth/EarthManipulator"
 #include "simCore/Common/Export.h"
 
+namespace osg { class View; }
+
 namespace simVis
 {
 
@@ -58,7 +60,7 @@ public:
   /** @see osgEarth::Util::EarthManipulator::rotate() */
   virtual void rotate(double dx, double dy);
   /** @see osgEarth::Util::EarthManipulator::zoom() */
-  virtual void zoom(double dx, double dy);
+  virtual void zoom(double dx, double dy, osg::View* view);
 
   /** @see osgEarth::Util::EarthManipulator::handleMovementAction() */
   virtual void handleMovementAction(const ActionType& type, double dx, double dy, osg::View* view);

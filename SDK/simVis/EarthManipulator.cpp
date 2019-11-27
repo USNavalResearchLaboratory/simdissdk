@@ -91,7 +91,7 @@ void EarthManipulator::rotate(double dx, double dy)
   osgEarth::Util::EarthManipulator::rotate(dx, dy);
 }
 
-void EarthManipulator::zoom(double dx, double dy)
+void EarthManipulator::zoom(double dx, double dy, osg::View* view)
 {
   if (_distance < DISTANCE_CROSS_ZERO_THRESHOLD && _distance > -DISTANCE_CROSS_ZERO_THRESHOLD)
   {
@@ -106,7 +106,9 @@ void EarthManipulator::zoom(double dx, double dy)
   {
     _distance = (dy < 0) ? -DISTANCE_CROSS_ZERO_THRESHOLD : DISTANCE_CROSS_ZERO_THRESHOLD;
   }
-  osgEarth::Util::EarthManipulator::zoom(dx, dy, NULL);
+  // recalculate the center since osgEarth no longer does this, SIM-10727
+  recalculateCenterFromLookVector();
+  osgEarth::Util::EarthManipulator::zoom(dx, dy, view);
 }
 
 void EarthManipulator::handleMovementAction(const ActionType& type, double dx, double dy, osg::View* view)
