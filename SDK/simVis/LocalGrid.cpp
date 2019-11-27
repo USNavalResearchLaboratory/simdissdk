@@ -836,6 +836,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   if (drawSpeedLine)
   {
     SpeedLine* speedLine = new SpeedLine();
+    speedLine->setDataVariance(osg::Object::DYNAMIC);
     speedLine->setColor(color);
     graphicsGroup->addDrawable(speedLine);
 
@@ -845,9 +846,11 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   else
   {
     Axis* majorAxis = new Axis(true);
+    majorAxis->setDataVariance(osg::Object::DYNAMIC);
     majorAxis->setColor(color);
     graphicsGroup->addDrawable(majorAxis);
     Axis* minorAxis = new Axis(false);
+    minorAxis->setDataVariance(osg::Object::DYNAMIC);
     minorAxis->setColor(color);
     graphicsGroup->addDrawable(minorAxis);
 
@@ -856,6 +859,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     if (sectorAngle > 0.0f)
     {
       RadialPoints* points = new RadialPoints(subColor, sectorAngle, numRings);
+      points->setDataVariance(osg::Object::DYNAMIC);
       graphicsGroup->addDrawable(points);
     }
   }
@@ -866,6 +870,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     if (!drawSpeedLine)
     {
       RangeRing* speedRing = new RangeRing(i);
+      speedRing->setDataVariance(osg::Object::DYNAMIC);
       speedRing->setColor(isMajorRing ? color : subColor);
       graphicsGroup->addDrawable(speedRing);
     }
