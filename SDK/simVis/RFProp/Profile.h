@@ -204,8 +204,10 @@ protected:
   /** Creates an image representing the loss values */
   osg::Image* createImage_();
 
+  struct VoxelParameters;
+
   /** Creates a voxel (volume pixel) at the given location */
-  const void buildVoxel_(const simCore::Vec3& tpSphereXYZ, unsigned int nearHeightIndex, unsigned int farHeightIndex, unsigned int rangeIndex, osg::Geometry* geometry);
+  const void buildVoxel_(const VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry);
 
   /** Fixes the orientation of the profile */
   void updateOrientation_();
