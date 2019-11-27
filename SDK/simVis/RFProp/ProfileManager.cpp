@@ -26,8 +26,9 @@
 #include "simVis/Constants.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
-#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/BearingProfileMap.h"
+#include "simVis/RFProp/ColorProvider.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
 
 namespace simRF {

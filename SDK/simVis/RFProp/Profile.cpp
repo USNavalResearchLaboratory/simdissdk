@@ -29,6 +29,7 @@
 #include "simVis/Constants.h"
 #include "simVis/PointSize.h"
 #include "simVis/Utils.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/Profile.h"
 
 namespace simRF {
@@ -56,6 +57,10 @@ Profile::Profile(CompositeProfileProvider* data)
   updateOrientation_();
 
   init_();
+}
+
+Profile::~Profile()
+{
 }
 
 void Profile::addProvider(ProfileDataProvider* provider)

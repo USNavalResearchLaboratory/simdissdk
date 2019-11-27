@@ -23,10 +23,10 @@
 #define SIMVIS_RFPROP_BEARING_PROFILE_MAP_H
 
 #include <map>
-#include "simVis/RFProp/Profile.h"
 
 namespace simRF
 {
+class Profile;
 
 /** A map from bearing to an RF Profile. */
 class SDKVIS_EXPORT BearingProfileMap

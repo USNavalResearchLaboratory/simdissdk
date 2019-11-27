@@ -28,8 +28,7 @@
 #include "simCore/Common/Export.h"
 #include "simData/ObjectId.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
-#include "simVis/RFProp/ProfileDataProvider.h"
-#include "simVis/RFProp/Profile.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 
@@ -39,7 +38,7 @@ namespace simVis { class LocatorNode; }
 
 namespace simRF
 {
-class CompositeProfileProvider;
+class Profile;
 
 /** Facade to the simRF module, managing RF data for a single beam. */
 class SDKVIS_EXPORT RFPropagationFacade

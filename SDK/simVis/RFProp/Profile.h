@@ -28,8 +28,8 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Calc/Math.h"
-#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/ColorProvider.h"
+#include "simVis/RFProp/ProfileDataProvider.h"
 
 namespace osg {
   class MatrixTransform;
@@ -38,6 +38,7 @@ namespace osg {
 
 namespace simRF
 {
+class CompositeProfileProvider;
 
 /** Responsible for rendering a single profile of data. */
 class SDKVIS_EXPORT Profile : public osg::Group
@@ -178,9 +179,8 @@ public:
   virtual const char* className() const { return "Profile"; }
 
 protected:
-
   /// osg::Referenced-derived
-  virtual ~Profile() {}
+  virtual ~Profile();
 
   /** Performs initialization at construction time */
   void init_();
@@ -268,7 +268,10 @@ protected:
   osg::ref_ptr<osg::Uniform> alphaUniform_;
 
 private:
-    /** Tesselate the 2D Vertical with tringle strip */
+  /** Copy constructor, not implemented or available. */
+  Profile(const Profile&);
+
+  /** Tesselate the 2D Vertical with tringle strip */
   const void tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry);
 };
 }

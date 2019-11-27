@@ -20,6 +20,7 @@
  *
  */
 #include "simCore/Calc/Angle.h"
+#include "simVis/RFProp/Profile.h"
 #include "simVis/RFProp/BearingProfileMap.h"
 
 namespace simRF

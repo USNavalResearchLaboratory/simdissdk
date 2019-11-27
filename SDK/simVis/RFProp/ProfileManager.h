@@ -24,11 +24,11 @@
 
 #include "osg/Group"
 #include "simVis/RFProp/Profile.h"
-#include "simVis/RFProp/ColorProvider.h"
 
 namespace simRF
 {
 class BearingProfileMap;
+class ColorProvider;
 
 /**
  * Manages a collection of Profiles
@@ -40,7 +40,6 @@ public:
    * Creates a new ProfileManager
    */
   ProfileManager();
-  virtual ~ProfileManager();
 
   /**
    * Create a new profile map for the given time
@@ -245,11 +244,13 @@ public:
   /** Return the class name */
   virtual const char* className() const { return "ProfileManager"; }
 
+protected:
+  virtual ~ProfileManager();
+
 private:
   void updateVisibility_();
   void initShaders_();
 
-private:
   osg::ref_ptr<ColorProvider> colorProvider_;
 
   std::map<double, BearingProfileMap*> timeBearingProfiles_; ///< map from time to profiles according to bearing
