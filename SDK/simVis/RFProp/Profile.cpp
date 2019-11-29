@@ -1133,6 +1133,41 @@ const int Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::Ve
   // determine return value: if either near or far edge voxel is drawn at max height, stop drawing successive voxels.
   const int rv = (htIndexNearTop == (vParams.numHeights - 1) || htIndexFarTop == (vParams.numHeights - 1)) ? 1 : 0;
 
+
+  // process values
+  //v0, v1
+  const double value01 = data_->getValueByIndex(htIndexNearBottom, minRangeIndex);
+  //v2, v3
+  const double value23 = data_->getValueByIndex(htIndexFarBottom, maxRangeIndex);
+  //v4, v5
+  const double value45 = data_->getValueByIndex(htIndexNearTop, minRangeIndex);
+  //v6, v7
+  const double value67 = data_->getValueByIndex(htIndexFarTop, maxRangeIndex);
+
+  if (value01 <= AREPS_GROUND_VALUE && value23 <= AREPS_GROUND_VALUE && value45 <= AREPS_GROUND_VALUE && value67 <= AREPS_GROUND_VALUE)
+  {
+    // voxel has no data
+    return rv;
+  }
+
+  //v0, v1
+  values_->push_back(value01);
+  values_->push_back(value01);
+
+  //v2, v3
+  values_->push_back(value23);
+  values_->push_back(value23);
+
+  //v4, v5
+  values_->push_back(value45);
+  values_->push_back(value45);
+
+  //v6, v7
+  values_->push_back(value67);
+  values_->push_back(value67);
+
+
+  // process vertices
   // Bottom verts
   osg::Vec3 v0(rNear * cosTheta0_, rNear * sinTheta0_, htValNearBottom); // Near right
   osg::Vec3 v1(rNear * cosTheta1_, rNear * sinTheta1_, htValNearBottom); // Near left
@@ -1159,7 +1194,6 @@ const int Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::Ve
 
   // TODO: design should allow for re-using 4 vertices and 4 values from previous range voxel
 
-
   unsigned int startIndex = verts_->size();
   const unsigned int i0 = startIndex++;
   const unsigned int i1 = startIndex++;
@@ -1178,26 +1212,6 @@ const int Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::Ve
   verts_->push_back(v5);
   verts_->push_back(v6);
   verts_->push_back(v7);
-
-  //v0, v1
-  double value = data_->getValueByIndex(htIndexNearBottom, minRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
-
-  //v2, v3
-  value = data_->getValueByIndex(htIndexFarBottom, maxRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
-
-  //v4, v5
-  value = data_->getValueByIndex(htIndexNearTop, minRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
-
-  //v6, v7
-  value = data_->getValueByIndex(htIndexFarTop, maxRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
 
   // Create a triangle strip set to wrap the voxel
   osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
