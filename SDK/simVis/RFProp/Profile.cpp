@@ -1083,45 +1083,41 @@ struct Profile::VoxelParameters
   unsigned int numHeights;
 };
 
-const void Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry)
+const int Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry)
 {
   // determine range values and indices
   const unsigned int minRangeIndex = rangeIndex;
   const unsigned int maxRangeIndex = simCore::sdkMin(minRangeIndex + 1, vParams.numRanges - 1);
   if (minRangeIndex >= (vParams.numRanges - 1) || maxRangeIndex > vParams.numRanges)
-    return;
+    return 1;
   const double rNear = vParams.minRange + (vParams.rangeStep * minRangeIndex);
   const double rFar = rNear + vParams.rangeStep;
 
 
   // calculate ht at near range and elev
-  double htValNearBottom = height_ + (rNear * heightRangeRatio);
+  double htValNearBottom = refCoord_.alt() + (rNear * heightRangeRatio);
   // find the nearest index for this calculated ht
   const unsigned int htIndexNearBottom = data_->getHeightIndex(htValNearBottom);
-  if (htIndexNearBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (htIndexNearBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || htIndexNearBottom >= vParams.numHeights)
   {
     // Invalidly defined profile
     assert(0);
-    return;
+    return 1;
   }
-  if (htIndexNearBottom >= vParams.numHeights)
-    return;
   // revise to use the value at the index
   htValNearBottom = vParams.minHeight + (vParams.heightStep * htIndexNearBottom);
 
 
   // calculate ht at far range and elev
-  double htValFarBottom = height_ + (rFar * heightRangeRatio);
+  double htValFarBottom = refCoord_.alt() + (rFar * heightRangeRatio);
   // find the nearest index for this calculated ht
   const unsigned int htIndexFarBottom = data_->getHeightIndex(htValFarBottom);
-  if (htIndexFarBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (htIndexFarBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || htIndexFarBottom >= vParams.numHeights)
   {
     // Invalidly defined profile
     assert(0);
-    return;
+    return 1;
   }
-  if (htIndexFarBottom >= vParams.numHeights)
-    return;
   // revise to use the value at the index
   htValFarBottom = vParams.minHeight + (vParams.heightStep * htIndexFarBottom);
 
@@ -1134,6 +1130,8 @@ const void Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::V
   const unsigned int htIndexFarTop = simCore::sdkMin(htIndexFarBottom + 1, vParams.numHeights - 1);
   const double htValFarTop = vParams.minHeight + vParams.heightStep * htIndexFarTop;
 
+  // determine return value: if either near or far edge voxel is drawn at max height, stop drawing successive voxels.
+  const int rv = (htIndexNearTop == (vParams.numHeights - 1) || htIndexFarTop == (vParams.numHeights - 1)) ? 1 : 0;
 
   // Bottom verts
   osg::Vec3 v0(rNear * cosTheta0_, rNear * sinTheta0_, htValNearBottom); // Near right
@@ -1226,6 +1224,7 @@ const void Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::V
   idx->push_back(i0); idx->push_back(i1);
 
   geometry->addPrimitiveSet(idx);
+  return rv;
 }
 
 void Profile::initRAE_()
@@ -1235,8 +1234,10 @@ void Profile::initRAE_()
   const VoxelParameters vParams(*(data_.get()));
   if (!vParams.isValid())
     return;
-  // using sin(elev) implies that range in the data is slant range; elev angle is asin(ht/slantRange)) or atan(ht/groundRange)
-  const double heightRangeRatio = sin(elevAngle_);
+
+  // interpret user-selected height_ as height at near range, determine elev angle to that height, use that elev angle to draw rae.
+  const double rangeToUse = (vParams.minRange > 0) ? vParams.minRange : vParams.minRange + vParams.rangeStep;
+  const double heightRangeRatio = height_ / rangeToUse;
 
   simCore::Vec3 tpSphereXYZ;
   simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
@@ -1252,7 +1253,9 @@ void Profile::initRAE_()
   for (unsigned int r = 0; r < (vParams.numRanges - 1); ++r)
   {
     // build voxel that spans from rangeIndex r to rangeIndex r+1
-    buildVoxel_(vParams, tpSphereXYZ, heightRangeRatio, r, geometry);
+    const int rv = buildVoxel_(vParams, tpSphereXYZ, heightRangeRatio, r, geometry);
+    if (rv != 0)
+      break;
   }
 
   geometry->setUseVertexBufferObjects(true);
