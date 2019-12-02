@@ -207,7 +207,7 @@ protected:
   struct VoxelParameters;
 
   /** Creates a voxel (volume pixel) at the given location */
-  const int buildVoxel_(const VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry);
+  int buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry);
 
   /** Fixes the orientation of the profile */
   void updateOrientation_();

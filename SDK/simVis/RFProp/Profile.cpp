@@ -1054,7 +1054,7 @@ osg::Image* Profile::createImage_()
 
 struct Profile::VoxelParameters
 {
-  VoxelParameters(simRF::CompositeProfileProvider& data)
+  explicit VoxelParameters(simRF::CompositeProfileProvider& data)
   {
     minRange = data.getMinRange();
     rangeStep = data.getRangeStep();
@@ -1062,6 +1062,7 @@ struct Profile::VoxelParameters
     minHeight = data.getMinHeight();
     heightStep = data.getHeightStep();
     numHeights = data.getNumHeights();
+    clearIndexCache();
   }
 
   bool isValid() const
@@ -1075,169 +1076,241 @@ struct Profile::VoxelParameters
     return true;
   }
 
+  void setIndexCache(unsigned int i2, unsigned int i3, unsigned int i6, unsigned int i7)
+  {
+    if (i2 == std::numeric_limits<unsigned int>::max() ||
+      i3 == std::numeric_limits<unsigned int>::max() ||
+      i6 == std::numeric_limits<unsigned int>::max() ||
+      i7 == std::numeric_limits<unsigned int>::max())
+    {
+      // developer error - indices must be valid
+      assert(0);
+      cachedIndicesAreValid_ = false;
+      return;
+    }
+
+    cached_i2 = i2;
+    cached_i3 = i3;
+    cached_i6 = i6;
+    cached_i7 = i7;
+    cachedIndicesAreValid_ = true;
+  }
+
+  void clearIndexCache()
+  {
+    cachedIndicesAreValid_ = false;
+    cached_i2 = std::numeric_limits<unsigned int>::max();
+    cached_i3 = std::numeric_limits<unsigned int>::max();
+    cached_i6 = std::numeric_limits<unsigned int>::max();
+    cached_i7 = std::numeric_limits<unsigned int>::max();
+  }
+
+  bool indexCacheIsValid() const
+  {
+    if (cachedIndicesAreValid_)
+    {
+      // setIndexCache guarantees these assertions
+      assert(cached_i2 != std::numeric_limits<unsigned int>::max());
+      assert(cached_i3 != std::numeric_limits<unsigned int>::max());
+      assert(cached_i6 != std::numeric_limits<unsigned int>::max());
+      assert(cached_i7 != std::numeric_limits<unsigned int>::max());
+      return true;
+    }
+    return false;
+  }
+
   double minRange;
   double rangeStep;
   unsigned int numRanges;
   double minHeight;
   double heightStep;
   unsigned int numHeights;
+
+  unsigned int cached_i2;
+  unsigned int cached_i3;
+  unsigned int cached_i6;
+  unsigned int cached_i7;
+private:
+  bool cachedIndicesAreValid_;
 };
 
-const int Profile::buildVoxel_(const VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry)
+int Profile::buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry)
 {
   // determine range values and indices
   const unsigned int minRangeIndex = rangeIndex;
   const unsigned int maxRangeIndex = simCore::sdkMin(minRangeIndex + 1, vParams.numRanges - 1);
   if (minRangeIndex >= (vParams.numRanges - 1) || maxRangeIndex > vParams.numRanges)
+  {
+    vParams.clearIndexCache();
     return 1;
+  }
   const double rNear = vParams.minRange + (vParams.rangeStep * minRangeIndex);
   const double rFar = rNear + vParams.rangeStep;
 
-
-  // calculate ht at near range and elev
-  double htValNearBottom = refCoord_.alt() + (rNear * heightRangeRatio);
-  // find the nearest index for this calculated ht
-  const unsigned int htIndexNearBottom = data_->getHeightIndex(htValNearBottom);
+  // calculate ht at near range and elev, then find the nearest index for the calculated ht
+  const unsigned int htIndexNearBottom = data_->getHeightIndex(refCoord_.alt() + (rNear * heightRangeRatio));
   if (htIndexNearBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || htIndexNearBottom >= vParams.numHeights)
   {
     // Invalidly defined profile
     assert(0);
+    vParams.clearIndexCache();
     return 1;
   }
-  // revise to use the value at the index
-  htValNearBottom = vParams.minHeight + (vParams.heightStep * htIndexNearBottom);
+  // clamp near-top height
+  const unsigned int htIndexNearTop = simCore::sdkMin(htIndexNearBottom + 1, vParams.numHeights - 1);
 
 
-  // calculate ht at far range and elev
-  double htValFarBottom = refCoord_.alt() + (rFar * heightRangeRatio);
-  // find the nearest index for this calculated ht
-  const unsigned int htIndexFarBottom = data_->getHeightIndex(htValFarBottom);
+  // calculate ht at far range and elev, then find the nearest index for the calculated ht
+  const unsigned int htIndexFarBottom = data_->getHeightIndex(refCoord_.alt() + (rFar * heightRangeRatio));
   if (htIndexFarBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || htIndexFarBottom >= vParams.numHeights)
   {
     // Invalidly defined profile
     assert(0);
+    vParams.clearIndexCache();
     return 1;
   }
-  // revise to use the value at the index
-  htValFarBottom = vParams.minHeight + (vParams.heightStep * htIndexFarBottom);
-
-  // clamp near-top height
-  const unsigned int htIndexNearTop = simCore::sdkMin(htIndexNearBottom + 1, vParams.numHeights - 1);
-  const double htValNearTop = vParams.minHeight + vParams.heightStep * htIndexNearTop;
-
-
   // clamp far-top height
   const unsigned int htIndexFarTop = simCore::sdkMin(htIndexFarBottom + 1, vParams.numHeights - 1);
-  const double htValFarTop = vParams.minHeight + vParams.heightStep * htIndexFarTop;
 
   // determine return value: if either near or far edge voxel is drawn at max height, stop drawing successive voxels.
   const int rv = (htIndexNearTop == (vParams.numHeights - 1) || htIndexFarTop == (vParams.numHeights - 1)) ? 1 : 0;
 
+  // determine if we have valid cached indices to optimize this voxel
+  const bool usingCachedIndices = vParams.indexCacheIsValid();
 
   // process values
   //v0, v1
-  const double value01 = data_->getValueByIndex(htIndexNearBottom, minRangeIndex);
+  const double value01 = usingCachedIndices ? (values_->asVector())[vParams.cached_i2] : data_->getValueByIndex(htIndexNearBottom, minRangeIndex);
   //v2, v3
   const double value23 = data_->getValueByIndex(htIndexFarBottom, maxRangeIndex);
   //v4, v5
-  const double value45 = data_->getValueByIndex(htIndexNearTop, minRangeIndex);
+  const double value45 = usingCachedIndices ? (values_->asVector())[vParams.cached_i6] : data_->getValueByIndex(htIndexNearTop, minRangeIndex);
   //v6, v7
   const double value67 = data_->getValueByIndex(htIndexFarTop, maxRangeIndex);
 
   if (value01 <= AREPS_GROUND_VALUE && value23 <= AREPS_GROUND_VALUE && value45 <= AREPS_GROUND_VALUE && value67 <= AREPS_GROUND_VALUE)
   {
     // voxel has no data
+    vParams.clearIndexCache();
     return rv;
   }
 
-  //v0, v1
-  values_->push_back(value01);
-  values_->push_back(value01);
+  unsigned int startIndex = verts_->size();
+
+  if (!usingCachedIndices)
+  {
+    //v0, v1
+    values_->push_back(value01);
+    values_->push_back(value01);
+
+    // process vertices
+    const double htValNearBottom = vParams.minHeight + (vParams.heightStep * htIndexNearBottom);
+    osg::Vec3 v0(rNear * cosTheta0_, rNear * sinTheta0_, htValNearBottom); // Near right
+    osg::Vec3 v1(rNear * cosTheta1_, rNear * sinTheta1_, htValNearBottom); // Near left
+    if (sphericalEarth_)
+    {
+      adjustSpherical_(v0, tpSphereXYZ);
+      adjustSpherical_(v1, tpSphereXYZ);
+    }
+    verts_->push_back(v0);
+    verts_->push_back(v1);
+  }
+  const unsigned int i0 = usingCachedIndices ? vParams.cached_i3 : startIndex++;
+  const unsigned int i1 = usingCachedIndices ? vParams.cached_i2 : startIndex++;
+
 
   //v2, v3
   values_->push_back(value23);
   values_->push_back(value23);
 
-  //v4, v5
-  values_->push_back(value45);
-  values_->push_back(value45);
+  const double htValFarBottom = vParams.minHeight + (vParams.heightStep * htIndexFarBottom);
+  osg::Vec3 v2(rFar * cosTheta1_, rFar * sinTheta1_, htValFarBottom); // Far left
+  osg::Vec3 v3(rFar * cosTheta0_, rFar * sinTheta0_, htValFarBottom); // Far right
+  if (sphericalEarth_)
+  {
+    adjustSpherical_(v2, tpSphereXYZ);
+    adjustSpherical_(v3, tpSphereXYZ);
+  }
+  verts_->push_back(v2);
+  verts_->push_back(v3);
+  const unsigned int i2 = startIndex++;
+  const unsigned int i3 = startIndex++;
+
+
+  if (!usingCachedIndices)
+  {
+    //v4, v5
+    values_->push_back(value45);
+    values_->push_back(value45);
+
+    const double htValNearTop = vParams.minHeight + (vParams.heightStep * htIndexNearTop);
+    osg::Vec3 v4(rNear * cosTheta0_, rNear * sinTheta0_, htValNearTop); // Near right
+    osg::Vec3 v5(rNear * cosTheta1_, rNear * sinTheta1_, htValNearTop); // Near left
+    if (sphericalEarth_)
+    {
+      adjustSpherical_(v4, tpSphereXYZ);
+      adjustSpherical_(v5, tpSphereXYZ);
+    }
+    verts_->push_back(v4);
+    verts_->push_back(v5);
+  }
+  const unsigned int i4 = usingCachedIndices ? vParams.cached_i7 : startIndex++;
+  const unsigned int i5 = usingCachedIndices ? vParams.cached_i6 : startIndex++;
+
 
   //v6, v7
   values_->push_back(value67);
   values_->push_back(value67);
 
-
-  // process vertices
-  // Bottom verts
-  osg::Vec3 v0(rNear * cosTheta0_, rNear * sinTheta0_, htValNearBottom); // Near right
-  osg::Vec3 v1(rNear * cosTheta1_, rNear * sinTheta1_, htValNearBottom); // Near left
-  osg::Vec3 v2(rFar * cosTheta1_, rFar * sinTheta1_, htValFarBottom); // Far left
-  osg::Vec3 v3(rFar * cosTheta0_, rFar * sinTheta0_, htValFarBottom); // Far right
-
-  // Top verts
-  osg::Vec3 v4(rNear * cosTheta0_, rNear * sinTheta0_, htValNearTop); // Near right
-  osg::Vec3 v5(rNear * cosTheta1_, rNear * sinTheta1_, htValNearTop); // Near left
+  const double htValFarTop = vParams.minHeight + (vParams.heightStep * htIndexFarTop);
   osg::Vec3 v6(rFar * cosTheta1_, rFar * sinTheta1_, htValFarTop); // Far left
   osg::Vec3 v7(rFar * cosTheta0_, rFar * sinTheta0_, htValFarTop); // Far right
-
   if (sphericalEarth_)
   {
-    adjustSpherical_(v0, tpSphereXYZ);
-    adjustSpherical_(v1, tpSphereXYZ);
-    adjustSpherical_(v2, tpSphereXYZ);
-    adjustSpherical_(v3, tpSphereXYZ);
-    adjustSpherical_(v4, tpSphereXYZ);
-    adjustSpherical_(v5, tpSphereXYZ);
     adjustSpherical_(v6, tpSphereXYZ);
     adjustSpherical_(v7, tpSphereXYZ);
   }
-
-  // TODO: design should allow for re-using 4 vertices and 4 values from previous range voxel
-
-  unsigned int startIndex = verts_->size();
-  const unsigned int i0 = startIndex++;
-  const unsigned int i1 = startIndex++;
-  const unsigned int i2 = startIndex++;
-  const unsigned int i3 = startIndex++;
-  const unsigned int i4 = startIndex++;
-  const unsigned int i5 = startIndex++;
+  verts_->push_back(v6);
+  verts_->push_back(v7);
   const unsigned int i6 = startIndex++;
   const unsigned int i7 = startIndex++;
 
-  verts_->push_back(v0);
-  verts_->push_back(v1);
-  verts_->push_back(v2);
-  verts_->push_back(v3);
-  verts_->push_back(v4);
-  verts_->push_back(v5);
-  verts_->push_back(v6);
-  verts_->push_back(v7);
 
   // Create a triangle strip set to wrap the voxel
   osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
   idx->reserve(14);
   // Back Bottom
-  idx->push_back(i3); idx->push_back(i2);
+  idx->push_back(i3);
+  idx->push_back(i2);
 
   // Back to top
-  idx->push_back(i7); idx->push_back(i6);
+  idx->push_back(i7);
+  idx->push_back(i6);
 
   // Top to left
-  idx->push_back(i5); idx->push_back(i2);
+  idx->push_back(i5);
+  idx->push_back(i2);
 
   // Left to bottom
-  idx->push_back(i1); idx->push_back(i3);
+  idx->push_back(i1);
+  idx->push_back(i3);
 
   // Bottom to right
-  idx->push_back(i0); idx->push_back(i7);
+  idx->push_back(i0);
+  idx->push_back(i7);
 
   // Right to top
-  idx->push_back(i4); idx->push_back(i5);
+  idx->push_back(i4);
+  idx->push_back(i5);
 
   // Top to front
-  idx->push_back(i0); idx->push_back(i1);
+  idx->push_back(i0);
+  idx->push_back(i1);
 
   geometry->addPrimitiveSet(idx);
+
+  // cache the far indices for next voxel segment
+  vParams.setIndexCache(i2, i3, i6, i7);
   return rv;
 }
 
@@ -1245,7 +1318,7 @@ void Profile::initRAE_()
 {
   assert(data_.valid() && data_->getActiveProvider() != NULL);
 
-  const VoxelParameters vParams(*(data_.get()));
+  VoxelParameters vParams(*(data_.get()));
   if (!vParams.isValid())
     return;
 
