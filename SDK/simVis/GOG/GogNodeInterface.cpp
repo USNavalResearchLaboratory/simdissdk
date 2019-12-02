@@ -375,6 +375,11 @@ simVis::GOG::GogShape GogNodeInterface::shape() const
   return metaData_.shape;
 }
 
+size_t GogNodeInterface::lineNumber() const
+{
+  return metaData_.lineNumber;
+}
+
 void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 {
   std::string metaData = metaData_.metadata;

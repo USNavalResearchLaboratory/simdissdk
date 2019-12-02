@@ -317,6 +317,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       validStartEndBlock = (tokens[0] == "start");
       currentMetaData.metadata.clear();
       currentMetaData.shape = GOG_UNKNOWN;
+      currentMetaData.lineNumber = lineNumber;
       currentMetaData.clearSetFields();
       current.reset();
       current.setLineNumber(lineNumber);
@@ -337,6 +338,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
           positionLines.clear();
           type = SHAPE_UNKNOWN;
           currentMetaData.shape = GOG_UNKNOWN;
+          currentMetaData.lineNumber = lineNumber;
           currentMetaData.clearSetFields();
           state.apply(current);
           output.push_back(current);

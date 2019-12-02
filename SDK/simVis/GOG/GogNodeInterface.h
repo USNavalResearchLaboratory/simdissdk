@@ -367,6 +367,9 @@ public:
    */
   simVis::GOG::GogShape shape() const;
 
+  /** Return the starting line number from the source GOG file*/
+  size_t lineNumber() const;
+
   /** Add the specified listener */
   void addGogNodeListener(GogNodeListenerPtr listener);
   /** Remove the specified listener */

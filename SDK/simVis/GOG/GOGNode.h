@@ -149,6 +149,7 @@ namespace simVis { namespace GOG
     std::string             metadata; ///< attributes of the GOG
     GogShape                shape; ///< identifying the exact shape type of the GOG
     LoadFormat              loadFormat; ///< indicate the original load format of the GOG
+    size_t                  lineNumber; ///< line number from the source GOG file
   public:
     GogMetaData();
     bool                    isSetExplicitly(GogSerializableField field) const; ///< determines if a field is explicitly set
