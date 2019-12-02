@@ -277,12 +277,12 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
     // never cross 0 with the osgEarth drawing algorithm.
     end = angFix2PI_(end);
 
-    // If the end and start are the same value, clear out the radius to draw nothing.  Cannot
+    // If the end and start are the same value, return NULL to draw nothing.  Cannot
     // use the angleend command to draw circles (use angledeg instead)
     if (simCore::areAnglesEqual(start.as(Units::RADIANS), end.as(Units::RADIANS)))
     {
-      radius = Distance(0, Units::METERS);
       context.errorHandler_->printError(lineNumber, "Arc AngleEnd cannot be same value as AngleStart");
+      return NULL;
     }
   }
 

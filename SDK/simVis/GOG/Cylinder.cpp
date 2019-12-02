@@ -100,6 +100,14 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
     // angFix2PI() forces end between [0,360).  Since start is in the same range, we'll
     // never cross 0 with the osgEarth drawing algorithm.
     end = angFix2PI(end);
+
+    // If the end and start are the same value, return NULL to draw nothing.  Cannot
+    // use the angleend command to draw circles (use angledeg instead)
+    if (simCore::areAnglesEqual(start.as(Units::RADIANS), end.as(Units::RADIANS)))
+    {
+      context.errorHandler_->printError(lineNumber, "Cylinder AngleEnd cannot be same value as AngleStart");
+      return NULL;
+    }
   }
 
   osgEarth::GeometryFactory gf;
