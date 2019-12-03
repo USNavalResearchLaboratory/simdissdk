@@ -337,24 +337,16 @@ double RFPropagationFacade::height() const
   return profileManager_->getHeight();
 }
 
-int RFPropagationFacade::setThicknessBySlots(int numSlots)
+int RFPropagationFacade::setThickness(unsigned int thickness)
 {
   if (profileManager_ == NULL)
     return 1;
 
-  return profileManager_->setThicknessBySlots(numSlots);
-}
-
-int RFPropagationFacade::setThickness(double thickness)
-{
-  if (profileManager_ == NULL)
-    return 1;
-
-  profileManager_->setDisplayThickness(static_cast<float>(thickness));
+  profileManager_->setDisplayThickness(thickness);
   return 0;
 }
 
-double RFPropagationFacade::thickness() const
+unsigned int RFPropagationFacade::thickness() const
 {
   if (profileManager_ == NULL)
     return 0.0;
@@ -819,6 +811,15 @@ float RFPropagationFacade::maxHeight() const
     return 0.0f;
   const simRF::CompositeProfileProvider* cProvider = profile->getDataProvider();
   return (cProvider != NULL) ? cProvider->getMaxHeight() : 0.0f;
+}
+
+unsigned int RFPropagationFacade::heightSteps() const
+{
+  const Profile* profile = getProfile(0);
+  if (profile == NULL)
+    return 0;
+  const simRF::CompositeProfileProvider* cProvider = profile->getDataProvider();
+  return (cProvider != NULL) ? cProvider->getNumHeights() : 0;
 }
 
 

@@ -459,7 +459,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
 
   profile.setBearing(bearingAngleRad);
   profile.setHalfBeamWidth(radarParameters.hbwD * simCore::DEG2RAD / 2.0);
-  profile.setDisplayThickness(maxHeight_);
+  profile.setDisplayThickness(numHeights_);
   return 0;
 }
 

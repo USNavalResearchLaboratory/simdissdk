@@ -77,11 +77,11 @@ public:
   /** Sets the DataProvider for this Profile */
   void setDataProvider(CompositeProfileProvider* dataProvider);
 
-  /** Gets the display thickness, in meters for this Profile. */
-  float getDisplayThickness() const;
+  /** Gets the display thickness, in # of height steps for this Profile. */
+  unsigned int getDisplayThickness() const;
 
-  /** Sets the display thickness, in meters for this Profile. This setting effects the DRAWMODE_3D DisplayMode, as well as 3D Points and 3D Texture. */
-  void setDisplayThickness(float displayThickness);
+  /** Sets the display thickness, in # of height steps for this Profile. This setting effects the DRAWMODE_3D DisplayMode, as well as 3D Points and 3D Texture. */
+  void setDisplayThickness(unsigned int displayThickness);
 
   /** Gets the alpha of this Profile */
   float getAlpha() const;
@@ -221,8 +221,8 @@ protected:
   /** Bearing of the profile in radians */
   double bearing_;
 
-  /** Profile display thickness */
-  float displayThickness_;
+  /** Profile display thickness, in # height steps */
+  unsigned int displayThickness_;
   /** Height of vertical slots */
   double height_;
   /** Half of the beam width in radians */

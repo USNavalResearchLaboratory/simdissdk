@@ -36,7 +36,7 @@ namespace simRF {
 
 Profile::Profile(CompositeProfileProvider* data)
  : bearing_(0),
-   displayThickness_(1000.0f),
+   displayThickness_(1),
    height_(0.0),
    halfBeamWidth_(0.0),
    data_(data),
@@ -226,12 +226,12 @@ void Profile::setAlpha(float alpha)
   }
 }
 
-float Profile::getDisplayThickness() const
+unsigned int Profile::getDisplayThickness() const
 {
   return displayThickness_;
 }
 
-void Profile::setDisplayThickness(float displayThickness)
+void Profile::setDisplayThickness(unsigned int displayThickness)
 {
   if (displayThickness_ != displayThickness)
   {
@@ -573,10 +573,8 @@ void Profile::init3D_()
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
   unsigned int minHeightIndex = data_->getHeightIndex(height_);
-  unsigned int maxHeightIndex = data_->getHeightIndex(height_ + displayThickness_);
   // Error check the height index
-  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX ||
-    maxHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
     // Invalidly defined profile
     assert(0);
@@ -584,7 +582,7 @@ void Profile::init3D_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  maxHeightIndex = osg::clampBetween(maxHeightIndex, 0u, numHeights - 1);
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
   //If we have no valid thickness assume they want to just display a single voxel
   if (minHeightIndex == maxHeightIndex)
   {
@@ -716,10 +714,8 @@ void Profile::init3DTexture_()
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
   unsigned int minHeightIndex = data_->getHeightIndex(height_);
-  unsigned int maxHeightIndex = data_->getHeightIndex(height_ + displayThickness_);
   // Error check the height index
-  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX ||
-    maxHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
     // Invalidly defined profile
     assert(0);
@@ -727,7 +723,7 @@ void Profile::init3DTexture_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  maxHeightIndex = osg::clampBetween(maxHeightIndex, 0u, numHeights - 1);
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
 
   // TODO: determine how to support spherical earth like other draw modes
   //simCore::Vec3 tpSphereXYZ;
@@ -957,10 +953,8 @@ void Profile::init3DPoints_()
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
   unsigned int minHeightIndex = data_->getHeightIndex(height_);
-  unsigned int maxHeightIndex = data_->getHeightIndex(height_ + displayThickness_);
   // Error check the height index
-  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX ||
-    maxHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
     // Invalidly defined profile
     assert(0);
@@ -968,7 +962,7 @@ void Profile::init3DPoints_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  maxHeightIndex = osg::clampBetween(maxHeightIndex, 0u, numHeights - 1);
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
   //If we have no valid thickness assume they want to just display a single voxel
   if (minHeightIndex == maxHeightIndex)
   {
