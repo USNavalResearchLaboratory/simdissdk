@@ -64,6 +64,16 @@ public:
   /** Retrieves the current pick mask. */
   osg::Node::NodeMask pickMask() const;
 
+  /**
+   * Sets a platform advantage in terms of ratio of the range.  A value of 0.0 indicates that platforms
+   * have no preference in picking.  A value closer to 1.0 indicates that platforms are more likely to
+   * get picked than other entity types.  As other entity types are introduced, such as LOB, they have a
+   * large picking surface and are easier to pick.  This conversely makes platforms harder to pick.
+   * Adjusting this value helps to give a slight advantage to platform picking.  The default is 0.7,
+   * indicating a 70%-of-range advantage to platforms over other entity types.
+   */
+  void setPlatformAdvantagePct(double platformAdvantage);
+
 protected:
   /** Derived from osg::Referenced, protect destructor */
   virtual ~DynamicSelectionPicker();
@@ -107,6 +117,8 @@ private:
   double maximumValidRange_;
   /** Picking mask */
   osg::Node::NodeMask pickMask_;
+  /** Percentage [0,1] of advantage given to platforms over other entity types. */
+  double platformAdvantagePct_;
 };
 
 }

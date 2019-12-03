@@ -97,7 +97,8 @@ DynamicSelectionPicker::DynamicSelectionPicker(simVis::ViewManager* viewManager,
     viewManager_(viewManager),
     scenario_(scenarioManager),
     maximumValidRange_(100.0), // pixels
-    pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL)
+    pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL),
+    platformAdvantagePct_(0.7)
 {
   // By default, only platforms are picked.  Gates are feasibly pickable though.
   guiEventHandler_ = new RepickEventHandler(*this);
@@ -118,6 +119,11 @@ DynamicSelectionPicker::~DynamicSelectionPicker()
   }
 }
 
+void DynamicSelectionPicker::setPlatformAdvantagePct(double platformAdvantage)
+{
+  platformAdvantagePct_ = osg::clampBetween(platformAdvantage, 0.0, 1.0);
+}
+
 void DynamicSelectionPicker::pickThisFrame_()
 {
   // Create a calculator for screen coordinates
@@ -129,7 +135,9 @@ void DynamicSelectionPicker::pickThisFrame_()
   scenario_->getAllEntities(allEntities);
 
   // We square the range to avoid sqrt() in a tight loop
-  double closestRangePx = osg::square(maximumValidRange_);
+  const double maximumValidRangeSquared = osg::square(maximumValidRange_);
+  double closestRangePx = maximumValidRangeSquared;
+  const double platformAdvantageSquared = osg::square(maximumValidRange_ * platformAdvantagePct_);
   simVis::EntityNode* closest = NULL;
 
   // Loop through all entities
@@ -142,6 +150,12 @@ void DynamicSelectionPicker::pickThisFrame_()
     double rangeSquared;
     if (calculateSquaredRange_(calc, *i->get(), rangeSquared) != 0)
       continue;
+
+    // Platforms get a small advantage in picking, so that it's easier to pick platforms than other entities
+    const bool isPlatform = (dynamic_cast<simVis::PlatformNode*>(i->get()) != NULL);
+    // Do not apply the advantage if platform is not already inside the picking area
+    if (isPlatform && rangeSquared < maximumValidRangeSquared)
+      rangeSquared -= platformAdvantageSquared;
 
     // Choose the closest object
     if (rangeSquared < closestRangePx)
