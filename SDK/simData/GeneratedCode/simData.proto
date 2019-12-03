@@ -757,10 +757,12 @@ message PlatformPrefs {
 
   /// Toggle velocity vector
   optional bool drawVelocityVec = 44 [default = false];
+  /// Color for the velocity vector line
+  optional fixed32 velVecColor = 72 [default = 0xFF8000FF];
+
   /// Toggle between static length and length based on time
   optional bool velVecUseStaticLength = 45 [default = true];
-
-  /// Sets the length of the velocity vector, in velVecSlUnits
+  /// Sets the length of the velocity vector, in velVecStaticLenUnits
   optional double velVecStaticLen = 46 [default = 0.5];
   /// Velocity vector length's distance units
   optional DistanceUnits velVecStaticLenUnits = 47 [default = UNITS_NAUTICAL_MILES];

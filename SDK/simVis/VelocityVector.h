@@ -23,7 +23,6 @@
 #define SIMVIS_VELOCITY_VECTOR_H
 
 #include <osg/Group>
-#include <osg/Vec4f>
 #include "simCore/Common/Common.h"
 #include "simData/DataTypes.h"
 #include "simVis/LocatorNode.h"
@@ -38,12 +37,11 @@ class SDKVIS_EXPORT VelocityVector : public simVis::LocatorNode
 {
 public:
   /**
-   * Construct a new velocity vector graphic.
+   * Construct a new velocity vector graphic.  Color will be pulled from prefs.
    * @param hostLocator location of host platform
-   * @param vectorColor color for velocity vector, in osg format: r,g,b,a values 0.0-1.0
    * @param lineWidth width of axis vector lines, in pixels
    */
-  VelocityVector(Locator* hostLocator, const osg::Vec4f& vectorColor, float lineWidth = 2.0);
+  explicit VelocityVector(Locator* hostLocator, float lineWidth = 2.0);
 
   /**
    * Sets new preferences for this object.
@@ -80,7 +78,6 @@ private: // methods
   simData::PlatformPrefs               lastPrefs_;          ///< last prefs update
   bool                                 forceRebuild_;       ///< flag to force a rebuild
   float                                lineWidth_;          ///< width of velocity vector lines
-  osg::Vec4f                           vectorColor_;        ///< color for velocity vector, in osg format: r,g,b,a values 0.0-1.0
   simData::PlatformUpdate              lastUpdate_;         ///< Platform location and velocity
 };
 
