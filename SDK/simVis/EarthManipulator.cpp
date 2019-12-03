@@ -107,7 +107,8 @@ void EarthManipulator::zoom(double dx, double dy, osg::View* view)
     _distance = (dy < 0) ? -DISTANCE_CROSS_ZERO_THRESHOLD : DISTANCE_CROSS_ZERO_THRESHOLD;
   }
   // recalculate the center since osgEarth no longer does this, SIM-10727
-  recalculateCenterFromLookVector();
+  if (!isTethering())
+    recalculateCenterFromLookVector();
   osgEarth::Util::EarthManipulator::zoom(dx, dy, view);
 }
 
