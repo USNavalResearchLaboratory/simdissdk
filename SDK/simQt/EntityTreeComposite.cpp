@@ -306,10 +306,8 @@ void EntityTreeComposite::removeExternalActions()
 
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {
-  // Give outside code a chance to update the menu before showing the menu
-  emit rightClickMenuRequested();
-
   QMenu* menu = new QMenu(composite_->treeView);
+  menu->connect(menu, SIGNAL(aboutToHide()), menu, SLOT(deleteLater()));
 
   menu->addAction(copyAction_);
   if (showCenterInMenu_)
@@ -320,7 +318,7 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
   if (!externalActions_.empty())
   {
     for (auto it = externalActions_.begin(); it != externalActions_.end(); ++it)
-        menu->addAction(*it);
+      menu->addAction(*it);
 
     menu->addSeparator();
   }
@@ -332,9 +330,11 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
     menu->addAction(expandAllAction_);
   }
 
+  // Give outside code a chance to update the menu before showing the menu
+  emit rightClickMenuRequested(menu);
+
   // Show the menu with exec(), making sure the position is correctly relative
   menu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
-  delete menu;
 }
 
 void EntityTreeComposite::addEntityFilter(EntityFilter* entityFilter)
