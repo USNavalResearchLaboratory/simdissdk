@@ -1047,7 +1047,7 @@ void Parser::updateMetaData_(const ModifierState& state, const std::string& refO
       currentMetaData.metadata += positionLines;
 }
 
-bool Parser::createGOGs_(const std::vector<ParsedShape>& parsedShapes, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::createGOGsFromShapes(const std::vector<ParsedShape>& parsedShapes, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
 {
   // add exception handling prior to passing data to renderer
   SAFETRYBEGIN;
@@ -1079,16 +1079,21 @@ bool Parser::createGOGs_(const std::vector<ParsedShape>& parsedShapes, const GOG
   return false;
 }
 
-bool Parser::createGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::createGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData, std::vector<ParsedShape>* parsedShapes, std::vector<GogMetaData>* metaData) const
 {
   // first, parse from GOG into Config
-  std::vector<ParsedShape> parsedShapes;
-  std::vector<GogMetaData> metaData;
-  if (!parse(input, parsedShapes, metaData))
+  std::vector<ParsedShape> parsedShapesLocal;
+  std::vector<GogMetaData> metaDataLocal;
+  if (!parse(input, parsedShapesLocal, metaDataLocal))
     return false;
 
   // then parse from Config into Annotation.
-  return createGOGs_(parsedShapes, nodeType, metaData, output, followData);
+  const bool rv = createGOGsFromShapes(parsedShapesLocal, nodeType, metaDataLocal, output, followData);
+  if (parsedShapes)
+    parsedShapes->swap(parsedShapesLocal);
+  if (metaData)
+    metaData->swap(metaDataLocal);
+  return rv;
 }
 
 GogShape Parser::getShapeFromKeyword(const std::string& keyword)
@@ -1164,9 +1169,9 @@ std::string Parser::getKeywordFromShape(GogShape shape)
   return "";
 }
 
-bool Parser::loadGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::loadGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData, std::vector<ParsedShape>* parsedShapes, std::vector<GogMetaData>* metaData) const
 {
-  return createGOGs(input, nodeType, output, followData);
+  return createGOGs(input, nodeType, output, followData, parsedShapes, metaData);
 }
 
 void Parser::printError_(size_t lineNumber, const std::string& errorText) const

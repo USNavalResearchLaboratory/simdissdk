@@ -135,17 +135,21 @@ namespace simVis { namespace GOG
 
     /**
      * Parses an input stream into a collection of GOG nodes.
-     * @param[in ] input      Input stream
-     * @param[in ] nodeType   Read GOGs as this type
-     * @param[out] output     Resulting GOG collection
-     * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[in ] input        Input stream
+     * @param[in ] nodeType     Read GOGs as this type
+     * @param[out] output       Resulting GOG collection
+     * @param[out] followData   Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[out] parsedShapes If supplied, is filled with the ParsedShapes parsed from the input stream
+     * @param[out] metaData     If supplied, is filled with the GogMetaData parsed from the input stream
      * @return True upon success, false upon failure
      */
     bool createGOGs(
-      std::istream&                input,
-      const GOGNodeType&           nodeType,
-      OverlayNodeVector&           output,
-      std::vector<GogFollowData>&  followData) const;
+      std::istream&               input,
+      const GOGNodeType&          nodeType,
+      OverlayNodeVector&          output,
+      std::vector<GogFollowData>& followData,
+      std::vector<ParsedShape>*   parsedShapes = NULL,
+      std::vector<GogMetaData>*   metaData = NULL) const;
 
     /**
     * Converts the GOG file shape keyword to a GogShape. Assumes keyword is all lower, does exact match
@@ -163,17 +167,21 @@ namespace simVis { namespace GOG
 
     /**
      * Parses data from an input stream into a collection of GOG nodes.
-     * @param[in ] input  stream containing the serialized GOG
-     * @param[in ] nodeType Read GOGs as this type
-     * @param[out] output   Resulting GOG collection
-     * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[in ] input        stream containing the serialized GOG
+     * @param[in ] nodeType     Read GOGs as this type
+     * @param[out] output       Resulting GOG collection
+     * @param[out] followData   Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[out] parsedShapes If supplied, is filled with the ParsedShapes parsed from the input stream
+     * @param[out] metaData     If supplied, is filled with the GogMetaData parsed from the input stream
      * @return True upon success, false upon failure
      */
     bool loadGOGs(
-      std::istream&                input,
-      const GOGNodeType&           nodeType,
-      OverlayNodeVector&           output,
-      std::vector<GogFollowData>&  followData) const;
+      std::istream&               input,
+      const GOGNodeType&          nodeType,
+      OverlayNodeVector&          output,
+      std::vector<GogFollowData>& followData,
+      std::vector<ParsedShape>*   parsedShapes = NULL,
+      std::vector<GogMetaData>*   metaData = NULL) const;
 
     /**
     * Add or overwrite a color key with a new color
@@ -195,6 +203,23 @@ namespace simVis { namespace GOG
      */
     bool parse(std::istream& input, std::vector<ParsedShape>& output,
       std::vector<GogMetaData>&  metaData) const;
+
+    /**
+     * Given an input vector of ParsedShapes and GogMetaData, create individual GogNodeInterface classes (using
+     * the configured Registry), and return a vector of those instances, for every item in the ParsedShape list.
+     * @param[in ] parsedShapes GOG data, deserialized as from parse()
+     * @param[in ] nodeType Read GOGs as this type
+     * @param[in ] metaData Meta data about the GOG that is lost in the osg::Node
+     * @param[out] output Resulting GOG collection
+     * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @return True upon success, false upon failure
+     */
+    bool createGOGsFromShapes(
+      const std::vector<ParsedShape>& parsedShapes,
+      const GOGNodeType&              nodeType,
+      const std::vector<GogMetaData>& metaData,
+      OverlayNodeVector&              output,
+      std::vector<GogFollowData>&     followData) const;
 
   private:
 
@@ -219,23 +244,6 @@ namespace simVis { namespace GOG
     * @return Parsed string in decimal degrees format
     */
     std::string parseGogGeodeticAngle_(const std::string& input) const;
-
-    /**
-     * Given an input vector of ParsedShapes and GogMetaData, create individual GogNodeInterface classes (using
-     * the configured Registry), and return a vector of those instances, for every item in the ParsedShape list.
-     * @param[in ] parsedShapes GOG data, deserialized as from parse()
-     * @param[in ] nodeType Read GOGs as this type
-     * @param[in ] metaData Meta data about the GOG that is lost in the osg::Node
-     * @param[out] output Resulting GOG collection
-     * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
-     * @return True upon success, false upon failure
-     */
-    bool createGOGs_(
-      const std::vector<ParsedShape>& parsedShapes,
-      const GOGNodeType&              nodeType,
-      const std::vector<GogMetaData>& metaData,
-      OverlayNodeVector&              output,
-      std::vector<GogFollowData>&     followData) const;
 
     /**
      * Prints any GOG parsing error to simNotify
