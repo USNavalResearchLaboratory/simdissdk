@@ -256,13 +256,12 @@ void LineDrawableHighlightNode::init_()
   osg::StateSet* stateSet = getOrCreateStateSet();
   // Disable lighting
   simVis::setLighting(stateSet, osg::StateAttribute::OFF);
-  // Places the highlight in a low-priority bin, and turn off depth writes to prevent it from covering other models
+  // Places the highlight in a low-priority bin
   stateSet->setRenderBinDetails(BIN_AREA_HIGHLIGHT, BIN_GLOBAL_SIMSDK);
-  stateSet->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0, 1, false));
-  // Tells OpenGL to use the default blend function
+  // Protect depth changes, since Overhead Mode does OVERRIDE on an osg::Depth.  Turn off depth read/writes
+  // since this appears on the overlay and shouldn't be obscured.
+  stateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
   stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
-  // Turn off backface culling
-  stateSet->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 
   // Billboard the shape
   billboard_ = new osg::AutoTransform();
