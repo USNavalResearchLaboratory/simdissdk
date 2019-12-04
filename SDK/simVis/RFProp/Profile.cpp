@@ -1046,22 +1046,35 @@ osg::Image* Profile::createImage_()
   return image;
 }
 
-struct Profile::VoxelParameters
+//----------------------------------------------------------------------------
+
+// VoxelProcessor for data provided as RAH, with height values in the height data structures of the profile provider
+class Profile::RahVoxelProcessor : public Profile::VoxelProcessor
 {
-  explicit VoxelParameters(simRF::CompositeProfileProvider& data)
+public:
+  RahVoxelProcessor(const simRF::CompositeProfileProvider& data, double height)
+    : data_(data)
   {
-    minRange = data.getMinRange();
-    rangeStep = data.getRangeStep();
-    numRanges = data.getNumRanges();
-    minHeight = data.getMinHeight();
-    heightStep = data.getHeightStep();
-    numHeights = data.getNumHeights();
+    minRange_ = data.getMinRange();
+    rangeStep_ = data.getRangeStep();
+    numRanges_ = data.getNumRanges();
+    minHeight_ = data.getMinHeight();
+    heightStep_ = data.getHeightStep();
+    numHeights_ = data.getNumHeights();
     clearIndexCache();
+
+    // interpret user-selected height_ as height at near range, determine elev angle to that height, use that elev angle to draw rae.
+    const double rangeToUse = (minRange_ > 0) ? minRange_ : minRange_ + rangeStep_;
+    heightRangeRatio_ = height / rangeToUse;
   }
 
-  bool isValid() const
+  virtual ~RahVoxelProcessor()
   {
-    if (numRanges < 2 || rangeStep <= 0.)
+  }
+
+  virtual bool isValid() const
+  {
+    if (numRanges_ < 2 || rangeStep_ <= 0.)
     {
       // if assert fails, check that init_ ensures that we have a valid provider
       assert(0);
@@ -1070,7 +1083,29 @@ struct Profile::VoxelParameters
     return true;
   }
 
-  void setIndexCache(unsigned int i2, unsigned int i3, unsigned int i6, unsigned int i7)
+  virtual int calculateVoxel(unsigned int rangeIndex, VoxelRange& voxelRange, VoxelHeight& nearHeight, VoxelHeight& farHeight) const
+  {
+    if (rangeIndex >= (numRanges_ - 1))
+    {
+      // developer error - check caller
+      assert(0);
+      return -1;
+    }
+    voxelRange.indexNear = rangeIndex;
+    voxelRange.indexFar = simCore::sdkMin(voxelRange.indexNear + 1, numRanges_ - 1);
+    voxelRange.valNear = minRange_ + (rangeStep_ * voxelRange.indexNear);
+    voxelRange.valFar = voxelRange.valNear + rangeStep_;
+
+    const int rvNear = calculateVoxelHeight_(voxelRange.valNear, nearHeight);
+    if (rvNear < 0)
+      return rvNear;
+    const int rvFar = calculateVoxelHeight_(voxelRange.valFar, farHeight);
+    if (rvFar < 0)
+      return rvFar;
+    return rvNear + rvFar;
+  }
+
+  virtual void setIndexCache(unsigned int i2, unsigned int i3, unsigned int i6, unsigned int i7)
   {
     if (i2 == std::numeric_limits<unsigned int>::max() ||
       i3 == std::numeric_limits<unsigned int>::max() ||
@@ -1083,109 +1118,167 @@ struct Profile::VoxelParameters
       return;
     }
 
-    cached_i2 = i2;
-    cached_i3 = i3;
-    cached_i6 = i6;
-    cached_i7 = i7;
+    cache_.i2 = i2;
+    cache_.i3 = i3;
+    cache_.i6 = i6;
+    cache_.i7 = i7;
     cachedIndicesAreValid_ = true;
   }
 
-  void clearIndexCache()
+  virtual void clearIndexCache()
   {
     cachedIndicesAreValid_ = false;
-    cached_i2 = std::numeric_limits<unsigned int>::max();
-    cached_i3 = std::numeric_limits<unsigned int>::max();
-    cached_i6 = std::numeric_limits<unsigned int>::max();
-    cached_i7 = std::numeric_limits<unsigned int>::max();
+    cache_.i2 = std::numeric_limits<unsigned int>::max();
+    cache_.i3 = std::numeric_limits<unsigned int>::max();
+    cache_.i6 = std::numeric_limits<unsigned int>::max();
+    cache_.i7 = std::numeric_limits<unsigned int>::max();
   }
 
-  bool indexCacheIsValid() const
+  virtual int indexCache(VoxelIndexCache& cache) const
   {
-    if (cachedIndicesAreValid_)
-    {
-      // setIndexCache guarantees these assertions
-      assert(cached_i2 != std::numeric_limits<unsigned int>::max());
-      assert(cached_i3 != std::numeric_limits<unsigned int>::max());
-      assert(cached_i6 != std::numeric_limits<unsigned int>::max());
-      assert(cached_i7 != std::numeric_limits<unsigned int>::max());
-      return true;
-    }
-    return false;
+    if (!cachedIndicesAreValid_)
+      return 1;
+    // setIndexCache guarantees these assertions
+    assert(cache_.i2 != std::numeric_limits<unsigned int>::max());
+    assert(cache_.i3 != std::numeric_limits<unsigned int>::max());
+    assert(cache_.i6 != std::numeric_limits<unsigned int>::max());
+    assert(cache_.i7 != std::numeric_limits<unsigned int>::max());
+    cache = cache_;
+    return 0;
   }
 
-  double minRange;
-  double rangeStep;
-  unsigned int numRanges;
-  double minHeight;
-  double heightStep;
-  unsigned int numHeights;
-
-  unsigned int cached_i2;
-  unsigned int cached_i3;
-  unsigned int cached_i6;
-  unsigned int cached_i7;
 private:
+  int calculateVoxelHeight_(double rangeVal, VoxelHeight& voxelHeight) const
+  {
+    // calculate ht at near range and elev
+    voxelHeight.valBottom = (rangeVal * heightRangeRatio_);
+    // find the nearest index for this calculated ht
+    voxelHeight.indexBottom = data_.getHeightIndex(voxelHeight.valBottom);
+    if (voxelHeight.indexBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || voxelHeight.indexBottom >= numHeights_)
+    {
+      // Invalidly defined profile
+      assert(0);
+      return -1;
+    }
+    voxelHeight.valBottom = minHeight_ + (heightStep_ * voxelHeight.indexBottom);
+    voxelHeight.indexTop = simCore::sdkMin(voxelHeight.indexBottom + 1, numHeights_ - 1);
+    voxelHeight.valTop = minHeight_ + (heightStep_ * voxelHeight.indexTop);
+
+    // return value indicates whether this voxel has reached the top of the data
+    return (voxelHeight.indexTop == (numHeights_ - 1)) ? 1 : 0;
+  }
+
+protected:
+  const simRF::CompositeProfileProvider& data_;
+  double heightRangeRatio_;
+  double minRange_;
+  double rangeStep_;
+  unsigned int numRanges_;
+  double minHeight_;
+  double heightStep_;
+  unsigned int numHeights_;
+  VoxelIndexCache cache_;
   bool cachedIndicesAreValid_;
 };
 
-int Profile::buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry)
+//----------------------------------------------------------------------------
+
+// VoxelProcessor for data provided as RAE, with elevation values in the height data structures of the profile provider
+class Profile::RaeVoxelProcessor : public Profile::RahVoxelProcessor
 {
-  // determine range values and indices
-  const unsigned int minRangeIndex = rangeIndex;
-  const unsigned int maxRangeIndex = simCore::sdkMin(minRangeIndex + 1, vParams.numRanges - 1);
-  if (minRangeIndex >= (vParams.numRanges - 1) || maxRangeIndex > vParams.numRanges)
+public:
+  RaeVoxelProcessor(const simRF::CompositeProfileProvider& data, double height)
+    : Profile::RahVoxelProcessor(data, height)
   {
-    vParams.clearIndexCache();
+    const double minEl = data.getMinHeight();
+    const double elStep = data.getHeightStep();
+
+    // user's height selection is actually an elevation angle
+    double elValBottom = height;
+    // nearest elev index to the elev selected by the user
+    elIndexBottom_ = data.getHeightIndex(elValBottom);
+    // reset to el value at that index
+    elValBottom = minEl + elStep * elIndexBottom_;
+    // note that sin here implies range is slant range; if ground range, then tan() is required
+    heightRangeRatio_ = sin(elValBottom * simCore::DEG2RAD);
+
+    elIndexTop_ = simCore::sdkMin(elIndexBottom_ + 1, numHeights_ - 1);
+    const double elValTop = minEl + elStep * elIndexTop_;
+    // note that sin here implies range is slant range; if ground range, then tan() is required
+    heightRangeRatioTop_ = sin(elValTop * simCore::DEG2RAD);
+  }
+
+  virtual ~RaeVoxelProcessor()
+  {
+  }
+
+  virtual int calculateVoxel(unsigned int rangeIndex, VoxelRange& voxelRange, VoxelHeight& nearHeight, VoxelHeight& farHeight) const
+  {
+    if (rangeIndex >= (numRanges_ - 1))
+    {
+      assert(0);
+      return -1;
+    }
+    voxelRange.indexNear = rangeIndex;
+    voxelRange.indexFar = simCore::sdkMin(voxelRange.indexNear + 1, numRanges_ - 1);
+    voxelRange.valNear = minRange_ + (rangeStep_ * voxelRange.indexNear);
+    voxelRange.valFar = voxelRange.valNear + rangeStep_;
+
+    // calculate ht at near range and elevIndex
+    nearHeight.valBottom = (voxelRange.valNear * heightRangeRatio_);
+    nearHeight.indexBottom = elIndexBottom_;
+    // calculate ht at far range and elev
+    farHeight.valBottom = (voxelRange.valFar * heightRangeRatio_);
+    farHeight.indexBottom = elIndexBottom_;
+
+    // calculate ht at near range and elevIndex
+    nearHeight.valTop = (voxelRange.valNear * heightRangeRatioTop_);
+    nearHeight.indexTop = elIndexTop_;
+    // calculate ht at far range and elev
+    farHeight.valTop = (voxelRange.valFar * heightRangeRatioTop_);
+    farHeight.indexTop = elIndexTop_;
+    return 0;
+  }
+
+protected:
+  unsigned int elIndexBottom_;
+  unsigned int elIndexTop_;
+  double heightRangeRatioTop_;
+};
+
+//----------------------------------------------------------------------------
+
+int Profile::buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphereXYZ, unsigned int rangeIndex, osg::Geometry* geometry)
+{
+  VoxelProcessor::VoxelRange voxelRange;
+  VoxelProcessor::VoxelHeight nearVoxelHeight;
+  VoxelProcessor::VoxelHeight farVoxelHeight;
+  const int rv = vProcessor.calculateVoxel(rangeIndex, voxelRange, nearVoxelHeight, farVoxelHeight);
+  if (rv < 0)
+  {
+    vProcessor.clearIndexCache();
     return 1;
   }
-  const double rNear = vParams.minRange + (vParams.rangeStep * minRangeIndex);
-  const double rFar = rNear + vParams.rangeStep;
-
-  // calculate ht at near range and elev, then find the nearest index for the calculated ht
-  const unsigned int htIndexNearBottom = data_->getHeightIndex(refCoord_.alt() + (rNear * heightRangeRatio));
-  if (htIndexNearBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || htIndexNearBottom >= vParams.numHeights)
-  {
-    // Invalidly defined profile
-    assert(0);
-    vParams.clearIndexCache();
-    return 1;
-  }
-  // clamp near-top height
-  const unsigned int htIndexNearTop = simCore::sdkMin(htIndexNearBottom + 1, vParams.numHeights - 1);
-
-
-  // calculate ht at far range and elev, then find the nearest index for the calculated ht
-  const unsigned int htIndexFarBottom = data_->getHeightIndex(refCoord_.alt() + (rFar * heightRangeRatio));
-  if (htIndexFarBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || htIndexFarBottom >= vParams.numHeights)
-  {
-    // Invalidly defined profile
-    assert(0);
-    vParams.clearIndexCache();
-    return 1;
-  }
-  // clamp far-top height
-  const unsigned int htIndexFarTop = simCore::sdkMin(htIndexFarBottom + 1, vParams.numHeights - 1);
-
-  // determine return value: if either near or far edge voxel is drawn at max height, stop drawing successive voxels.
-  const int rv = (htIndexNearTop == (vParams.numHeights - 1) || htIndexFarTop == (vParams.numHeights - 1)) ? 1 : 0;
+  // rv > 0 indicates: either near or far edge of this voxel is drawn at max height, stop drawing successive voxels.
 
   // determine if we have valid cached indices to optimize this voxel
-  const bool usingCachedIndices = vParams.indexCacheIsValid();
+  VoxelProcessor::VoxelIndexCache indexCache;
+  const bool usingCachedIndices = (0 == vProcessor.indexCache(indexCache));
 
   // process values
   //v0, v1
-  const double value01 = usingCachedIndices ? (values_->asVector())[vParams.cached_i2] : data_->getValueByIndex(htIndexNearBottom, minRangeIndex);
+  const double value01 = usingCachedIndices ? (values_->asVector())[indexCache.i2] : data_->getValueByIndex(nearVoxelHeight.indexBottom, voxelRange.indexNear);
   //v2, v3
-  const double value23 = data_->getValueByIndex(htIndexFarBottom, maxRangeIndex);
+  const double value23 = data_->getValueByIndex(farVoxelHeight.indexBottom, voxelRange.indexFar);
   //v4, v5
-  const double value45 = usingCachedIndices ? (values_->asVector())[vParams.cached_i6] : data_->getValueByIndex(htIndexNearTop, minRangeIndex);
+  const double value45 = usingCachedIndices ? (values_->asVector())[indexCache.i6] : data_->getValueByIndex(nearVoxelHeight.indexTop, voxelRange.indexNear);
   //v6, v7
-  const double value67 = data_->getValueByIndex(htIndexFarTop, maxRangeIndex);
+  const double value67 = data_->getValueByIndex(farVoxelHeight.indexTop, voxelRange.indexFar);
 
   if (value01 <= AREPS_GROUND_VALUE && value23 <= AREPS_GROUND_VALUE && value45 <= AREPS_GROUND_VALUE && value67 <= AREPS_GROUND_VALUE)
   {
     // voxel has no data
-    vParams.clearIndexCache();
+    vProcessor.clearIndexCache();
     return rv;
   }
 
@@ -1196,11 +1289,8 @@ int Profile::buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphere
     //v0, v1
     values_->push_back(value01);
     values_->push_back(value01);
-
-    // process vertices
-    const double htValNearBottom = vParams.minHeight + (vParams.heightStep * htIndexNearBottom);
-    osg::Vec3 v0(rNear * cosTheta0_, rNear * sinTheta0_, htValNearBottom); // Near right
-    osg::Vec3 v1(rNear * cosTheta1_, rNear * sinTheta1_, htValNearBottom); // Near left
+    osg::Vec3 v0(voxelRange.valNear * cosTheta0_, voxelRange.valNear * sinTheta0_, nearVoxelHeight.valBottom); // Near right
+    osg::Vec3 v1(voxelRange.valNear * cosTheta1_, voxelRange.valNear * sinTheta1_, nearVoxelHeight.valBottom); // Near left
     if (sphericalEarth_)
     {
       adjustSpherical_(v0, tpSphereXYZ);
@@ -1209,17 +1299,15 @@ int Profile::buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphere
     verts_->push_back(v0);
     verts_->push_back(v1);
   }
-  const unsigned int i0 = usingCachedIndices ? vParams.cached_i3 : startIndex++;
-  const unsigned int i1 = usingCachedIndices ? vParams.cached_i2 : startIndex++;
+  const unsigned int i0 = usingCachedIndices ? indexCache.i3 : startIndex++;
+  const unsigned int i1 = usingCachedIndices ? indexCache.i2 : startIndex++;
 
 
   //v2, v3
   values_->push_back(value23);
   values_->push_back(value23);
-
-  const double htValFarBottom = vParams.minHeight + (vParams.heightStep * htIndexFarBottom);
-  osg::Vec3 v2(rFar * cosTheta1_, rFar * sinTheta1_, htValFarBottom); // Far left
-  osg::Vec3 v3(rFar * cosTheta0_, rFar * sinTheta0_, htValFarBottom); // Far right
+  osg::Vec3 v2(voxelRange.valFar * cosTheta1_, voxelRange.valFar * sinTheta1_, farVoxelHeight.valBottom); // Far left
+  osg::Vec3 v3(voxelRange.valFar * cosTheta0_, voxelRange.valFar * sinTheta0_, farVoxelHeight.valBottom); // Far right
   if (sphericalEarth_)
   {
     adjustSpherical_(v2, tpSphereXYZ);
@@ -1236,10 +1324,8 @@ int Profile::buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphere
     //v4, v5
     values_->push_back(value45);
     values_->push_back(value45);
-
-    const double htValNearTop = vParams.minHeight + (vParams.heightStep * htIndexNearTop);
-    osg::Vec3 v4(rNear * cosTheta0_, rNear * sinTheta0_, htValNearTop); // Near right
-    osg::Vec3 v5(rNear * cosTheta1_, rNear * sinTheta1_, htValNearTop); // Near left
+    osg::Vec3 v4(voxelRange.valNear * cosTheta0_, voxelRange.valNear * sinTheta0_, nearVoxelHeight.valTop); // Near right
+    osg::Vec3 v5(voxelRange.valNear * cosTheta1_, voxelRange.valNear * sinTheta1_, nearVoxelHeight.valTop); // Near left
     if (sphericalEarth_)
     {
       adjustSpherical_(v4, tpSphereXYZ);
@@ -1248,17 +1334,15 @@ int Profile::buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphere
     verts_->push_back(v4);
     verts_->push_back(v5);
   }
-  const unsigned int i4 = usingCachedIndices ? vParams.cached_i7 : startIndex++;
-  const unsigned int i5 = usingCachedIndices ? vParams.cached_i6 : startIndex++;
+  const unsigned int i4 = usingCachedIndices ? indexCache.i7 : startIndex++;
+  const unsigned int i5 = usingCachedIndices ? indexCache.i6 : startIndex++;
 
 
   //v6, v7
   values_->push_back(value67);
   values_->push_back(value67);
-
-  const double htValFarTop = vParams.minHeight + (vParams.heightStep * htIndexFarTop);
-  osg::Vec3 v6(rFar * cosTheta1_, rFar * sinTheta1_, htValFarTop); // Far left
-  osg::Vec3 v7(rFar * cosTheta0_, rFar * sinTheta0_, htValFarTop); // Far right
+  osg::Vec3 v6(voxelRange.valFar * cosTheta1_, voxelRange.valFar * sinTheta1_, farVoxelHeight.valTop); // Far left
+  osg::Vec3 v7(voxelRange.valFar * cosTheta0_, voxelRange.valFar * sinTheta0_, farVoxelHeight.valTop); // Far right
   if (sphericalEarth_)
   {
     adjustSpherical_(v6, tpSphereXYZ);
@@ -1304,7 +1388,7 @@ int Profile::buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphere
   geometry->addPrimitiveSet(idx);
 
   // cache the far indices for next voxel segment
-  vParams.setIndexCache(i2, i3, i6, i7);
+  vProcessor.setIndexCache(i2, i3, i6, i7);
   return rv;
 }
 
@@ -1312,18 +1396,15 @@ void Profile::initRAE_()
 {
   assert(data_.valid() && data_->getActiveProvider() != NULL);
 
-  VoxelParameters vParams(*(data_.get()));
-  if (!vParams.isValid())
+  RahVoxelProcessor vProcessor(*(data_.get()), height_);
+  if (!vProcessor.isValid())
     return;
-
-  // interpret user-selected height_ as height at near range, determine elev angle to that height, use that elev angle to draw rae.
-  const double rangeToUse = (vParams.minRange > 0) ? vParams.minRange : vParams.minRange + vParams.rangeStep;
-  const double heightRangeRatio = height_ / rangeToUse;
 
   simCore::Vec3 tpSphereXYZ;
   simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
 
-  const size_t numVoxels = (vParams.numRanges - 1);
+  const unsigned int numRanges = data_->getNumRanges();
+  const size_t numVoxels = (numRanges - 1);
   const size_t vertsPerVoxel = 8;
   verts_->reserve(numVoxels * vertsPerVoxel);
   values_->reserve(numVoxels * vertsPerVoxel);
@@ -1331,10 +1412,10 @@ void Profile::initRAE_()
   osg::Geometry* geometry = new osg::Geometry();
 
   // create an RAE visualization by using elev angle and range data to generate height
-  for (unsigned int r = 0; r < (vParams.numRanges - 1); ++r)
+  for (unsigned int r = 0; r < (numRanges - 1); ++r)
   {
     // build voxel that spans from rangeIndex r to rangeIndex r+1
-    const int rv = buildVoxel_(vParams, tpSphereXYZ, heightRangeRatio, r, geometry);
+    const int rv = buildVoxel_(vProcessor, tpSphereXYZ, r, geometry);
     if (rv != 0)
       break;
   }

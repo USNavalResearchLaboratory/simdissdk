@@ -204,10 +204,12 @@ protected:
   /** Creates an image representing the loss values */
   osg::Image* createImage_();
 
-  struct VoxelParameters;
+  class VoxelProcessor;
+  class RahVoxelProcessor;
+  class RaeVoxelProcessor;
 
   /** Creates a voxel (volume pixel) at the given location */
-  int buildVoxel_(VoxelParameters& vParams, const simCore::Vec3& tpSphereXYZ, double heightRangeRatio, unsigned int rangeIndex, osg::Geometry* geometry);
+  int buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphereXYZ, unsigned int rangeIndex, osg::Geometry* geometry);
 
   /** Fixes the orientation of the profile */
   void updateOrientation_();
@@ -273,8 +275,74 @@ private:
   /** Copy constructor, not implemented or available. */
   Profile(const Profile&);
 
-  /** Tesselate the 2D Vertical with tringle strip */
+  /** Tesselate the 2D Vertical with triangle strip */
   const void tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry);
+};
+
+//----------------------------------------------------------------------------
+
+// Interface for VoxelProcessors that help generate DRAWMODE_RAE visualizations
+class Profile::VoxelProcessor
+{
+public:
+  struct VoxelRange
+  {
+    float valNear;
+    float valFar;
+    unsigned int indexNear;
+    unsigned int indexFar;
+  };
+  struct VoxelHeight
+  {
+    float valBottom;
+    float valTop;
+    unsigned int indexBottom;
+    unsigned int indexTop;
+  };
+  struct VoxelIndexCache
+  {
+    unsigned int i2;
+    unsigned int i3;
+    unsigned int i6;
+    unsigned int i7;
+  };
+
+  /**
+  * Determines if the data for this profile can be used to generate voxels
+  * @return profile is valid for voxel visualization
+  */
+  virtual bool isValid() const = 0;
+
+  /**
+  * Calculates the voxel parameters for the specified range index
+  * @param rangeIndex the index into the profile's range data
+  * @param voxelRange the range parameters for the voxel
+  * @param nearHeight the height parameters for the near edge of the voxel
+  * @param farHeight the height parameters for the far edge of the voxel
+  * @return -1 if not valid; 1 if valid voxel at that should be the last voxel drawn; otherwise, 0 for valid voxel
+  */
+  virtual int calculateVoxel(unsigned int rangeIndex, VoxelRange& voxelRange, VoxelHeight& nearHeight, VoxelHeight& farHeight) const = 0;
+
+  /**
+  * Sets the specified index values into the index cache for optimized generation of next voxel
+  * @param i2 the i2 index to cache
+  * @param i3 the i3 index to cache
+  * @param i6 the i6 index to cache
+  * @param i7 the i7 index to cache
+  */
+  virtual void setIndexCache(unsigned int i2, unsigned int i3, unsigned int i6, unsigned int i7) = 0;
+
+  /**
+  * Clears the index cache and marks its is invalid
+  */
+  virtual void clearIndexCache() = 0;
+
+  /**
+  * Returns the index cache if it is valid
+  * @param[out] if valid, cache struct filled with cached indices
+  * @return 0 if cache is valid, non-zero if not valid
+  */
+  virtual int indexCache(VoxelIndexCache& cache) const = 0;
 };
 }
 
