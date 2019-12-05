@@ -265,7 +265,11 @@ private:
   QAction* toggleTreeViewAction_;
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   std::vector<QAction*> externalActions_;
+#endif
+
   bool useCenterAction_;
   bool treeViewUsable_;
 
