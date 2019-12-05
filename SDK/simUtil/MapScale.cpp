@@ -265,6 +265,12 @@ void MapScale::setUnitsCharacterSize(float sizePx)
   }
 }
 
+void MapScale::setUnitsVisible(bool visible)
+{
+  unitsText_->setNodeMask(visible ? ~0 : 0);
+  recalculateHeight_();
+}
+
 void MapScale::setValuesColor(const osg::Vec4f& color)
 {
   valueTextPrototype_->setColor(color);
@@ -305,7 +311,10 @@ void MapScale::setBarColor2(const osg::Vec4f& color)
 
 void MapScale::recalculateHeight_()
 {
-  heightPx_ = 2 * BAR_BUFFER_PX + barHeightPx_ + unitsText_->getCharacterHeight() + valueTextPrototype_->getCharacterHeight();
+  heightPx_ = 2 * BAR_BUFFER_PX + barHeightPx_ + valueTextPrototype_->getCharacterHeight();
+  if (unitsText_->getNodeMask() != 0)
+    heightPx_ += unitsText_->getCharacterHeight();
+
   // Fix the height on the value text so it is positioned correctly
   valueTextPrototype_->setPosition(osg::Vec3f(0.f, heightPx_, 0.f));
   // Fix background box

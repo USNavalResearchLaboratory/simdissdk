@@ -97,6 +97,8 @@ public:
   void setUnitsFont(osgText::Font* font);
   /** Changes the character size (height) of the unit type text. */
   void setUnitsCharacterSize(float sizePx);
+  /** Sets the visible state for the unit text */
+  void setUnitsVisible(bool visible);
 
   /** Changes the color of the values text. */
   void setValuesColor(const osg::Vec4f& color);
