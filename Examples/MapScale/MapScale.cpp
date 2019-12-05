@@ -56,6 +56,7 @@ struct MonoColorHandler : public ui::ControlEventHandler
     mapScale_->setBarColor2(simVis::Color::White);
     mapScale_->setUnitsColor(simVis::Color::White);
     mapScale_->setValuesColor(simVis::Color::White);
+    mapScale_->setBackgroundColor(osg::Vec4f(1.f, 1.f, 1.f, 0.f));
   }
   osg::ref_ptr<simUtil::MapScale> mapScale_;
 };
@@ -70,6 +71,7 @@ struct AlphaColorHandler : public ui::ControlEventHandler
     mapScale_->setBarColor2(osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE));
     mapScale_->setUnitsColor(osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE));
     mapScale_->setValuesColor(osg::Vec4f(1.f, 1.f, 1.f, ALPHA_VALUE));
+    mapScale_->setBackgroundColor(osg::Vec4f(1.f, 1.f, 1.f, 0.f));
   }
   osg::ref_ptr<simUtil::MapScale> mapScale_;
 };
@@ -83,6 +85,7 @@ struct GrayColorHandler : public ui::ControlEventHandler
     mapScale_->setBarColor2(simVis::Color::Silver);
     mapScale_->setUnitsColor(simVis::Color::Silver);
     mapScale_->setValuesColor(simVis::Color::Silver);
+    mapScale_->setBackgroundColor(osg::Vec4f(1.f, 1.f, 1.f, 0.25f));
   }
   osg::ref_ptr<simUtil::MapScale> mapScale_;
 };
@@ -96,6 +99,7 @@ struct ColorfulColorHandler : public ui::ControlEventHandler
     mapScale_->setBarColor2(simVis::Color::Purple);
     mapScale_->setUnitsColor(simVis::Color::Yellow);
     mapScale_->setValuesColor(simVis::Color::Orange);
+    mapScale_->setBackgroundColor(osg::Vec4f(0.25f, 0.25f, 1.f, 0.25f));
   }
   osg::ref_ptr<simUtil::MapScale> mapScale_;
 };
@@ -108,6 +112,7 @@ struct HeightHandler : public ui::ControlEventHandler
     mapScale_->setBarHeight(8.f + 20.f * (scalar_ - 1));
     mapScale_->setUnitsCharacterSize(simVis::osgFontSize(12.f * scalar_));
     mapScale_->setValuesCharacterSize(simVis::osgFontSize(13.f * scalar_));
+    mapScale_->setPadding(10.f * scalar_, 10.f * scalar_, 5.f * scalar_, 5.f * scalar_);
   }
   osg::ref_ptr<simUtil::MapScale> mapScale_;
   float scalar_;
