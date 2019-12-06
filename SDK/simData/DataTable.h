@@ -557,6 +557,9 @@ public:
     virtual double interpolate(const TableColumn* column, double lowVal, double highVal, double tLow, double tVal, double tHigh) const = 0;
   };
 
+  /** Retrieves the ID of the table that owns this column. */
+  virtual TableId tableId() const = 0;
+
   /**
    * Retrieves the unique column identifier associated with this column.  Column identifiers
    * are unique to a given data table and should not change after construction, including

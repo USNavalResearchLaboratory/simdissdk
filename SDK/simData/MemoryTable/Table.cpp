@@ -250,7 +250,7 @@ TableStatus Table::addColumn(const std::string& columnName, VariableType storage
   if (emptyTable == NULL)
   {
     // Create an empty table with a new time container
-    emptyTable = new SubTable(new DoubleBufferTimeContainer());
+    emptyTable = new SubTable(new DoubleBufferTimeContainer(), tableId_);
     // Add the column; possible to roll back this operation
     TableStatus rv = emptyTable->addColumn(columnName, nextId_, storageType, unitType, &returnColumn);
     if (rv.isError())
