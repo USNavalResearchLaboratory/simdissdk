@@ -1906,6 +1906,7 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   treeView_->setAllColumnsShowFocus(true);
   treeView_->setHeaderHidden(true);
   treeView_->setModel(proxy_);
+  treeView_->setMouseTracking(true);
 
   simQt::CategoryTreeItemDelegate* itemDelegate = new simQt::CategoryTreeItemDelegate(this);
   treeView_->setItemDelegate(itemDelegate);
