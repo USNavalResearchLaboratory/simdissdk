@@ -1230,6 +1230,8 @@ message CustomRenderingPrefs {
    * Not all renderers support this field.
    */
   optional fixed32 historyOverrideColor = 7 [default = 0x19E500FF];
+  /// If true, show center axis inside the shape. Shape color must be semitransparent.  Not all renderers support this field.
+  optional bool centerAxis = 8 [default = false];
 };
 
 /// common update to Custom Rendering data
