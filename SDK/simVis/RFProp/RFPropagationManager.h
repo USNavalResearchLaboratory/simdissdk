@@ -23,6 +23,8 @@
 #define SIMVIS_RFPROPAGATIONMANAGER_H
 
 #include <memory>
+#include <string>
+#include <vector>
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"
 
@@ -49,6 +51,14 @@ public:
    * @return RFPropagationData object pointer, NULL if specified beamId is not a beam entity ID
    */
   virtual RFPropagationFacade* getOrCreateRFPropagation(simData::ObjectId beamId) = 0;
+
+  /**
+  * Loads the specified files for the specified beam entity, which must already exist
+  * @param beamId ID of a beam to receive RF Propagation data
+  * @param files vector of filenames to load
+  * @return 0 on success, !0 on error loading the files
+  */
+  virtual int loadFiles(simData::ObjectId beamId, const std::vector<std::string>& files) = 0;
 };
 
 typedef std::shared_ptr<simRF::RFPropagationManager> RFPropagationManagerPtr;
@@ -68,6 +78,10 @@ public:
   virtual simRF::RFPropagationFacade* getOrCreateRFPropagation(simData::ObjectId id)
   {
     return NULL;
+  }
+  virtual int loadFiles(simData::ObjectId beamId, const std::vector<std::string>& files)
+  {
+    return 1;
   }
 };
 
