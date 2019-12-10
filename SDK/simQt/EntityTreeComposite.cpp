@@ -309,7 +309,6 @@ void EntityTreeComposite::removeExternalActions()
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {
   QMenu* menu = new QMenu(composite_->treeView);
-  menu->connect(menu, SIGNAL(aboutToHide()), menu, SLOT(deleteLater()));
 
   menu->addAction(copyAction_);
   if (showCenterInMenu_)
@@ -339,6 +338,11 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 
   // Show the menu with exec(), making sure the position is correctly relative
   menu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
+
+  // Manually delete the menu, do not use SIGNAL(aboutToHide()).  The menu->execute() can call code
+  // that displays a progress dialog after the menu is hidden. The progress dialog can cause an
+  // event loop processing which will delete the hidden menu while it is still in use.
+  delete menu;
 }
 
 void EntityTreeComposite::addEntityFilter(EntityFilter* entityFilter)
