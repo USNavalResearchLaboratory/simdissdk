@@ -29,6 +29,7 @@
 #include "simVis/Entity.h"
 #include "simVis/Projector.h"
 
+#undef LC
 #define LC "[EntityNode] "
 
 /// The highest available Level of Detail from ElevationPool

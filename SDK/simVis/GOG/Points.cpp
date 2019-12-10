@@ -30,6 +30,7 @@
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
+#undef LC
 #define LC "[GOG::PointSet] "
 
 using namespace osgEarth;

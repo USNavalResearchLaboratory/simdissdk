@@ -44,6 +44,7 @@
 #include "simVis/Projector.h"
 #include "simVis/Shaders.h"
 
+#undef LC
 #define LC "[PlatformNode] "
 
 namespace simVis

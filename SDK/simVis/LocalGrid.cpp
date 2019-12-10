@@ -44,6 +44,7 @@
 #include "simVis/Utils.h"
 #include "simVis/LocalGrid.h"
 
+#undef LC
 #define LC "[LocalGrid] "
 
 namespace simVis

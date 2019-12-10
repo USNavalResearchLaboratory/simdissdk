@@ -40,6 +40,7 @@
 #include "simVis/GOG/Utils.h"
 #include "simVis/GOG/GOGRegistry.h"
 
+#undef LC
 #define LC "[GOG::GOGRegistry] "
 
 namespace simVis { namespace GOG {

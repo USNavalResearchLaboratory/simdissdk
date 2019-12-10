@@ -57,7 +57,7 @@ SilverLiningValue::~SilverLiningValue()
 
 /////////////////////////////////////////////////////////
 
-#define IMPL_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD) \
+#define SL_IMPL_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD) \
 CLASS::CLASS() : SilverLiningValueT<TYPE>(DEFAULT_VALUE) { } \
 CLASS::~CLASS() {} \
 void CLASS::initialize(osgEarth::SilverLining::Atmosphere& atmosphere) \
@@ -69,7 +69,7 @@ void CLASS::apply_(osgEarth::SilverLining::Atmosphere& atmosphere) \
   atmosphere.SET_METHOD; \
 }
 
-#define IMPL_SIMPLE_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD) IMPL_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD(value()))
+#define SL_IMPL_SIMPLE_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD) SL_IMPL_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD(value()))
 
 /** Local enumeration for precipitation type matching */
 enum PrecipitationType
@@ -82,18 +82,18 @@ enum PrecipitationType
 };
 
 // Various "simple" settings that all follow the same pattern
-IMPL_SIMPLE_SETTING(SilverLiningLensFlare, bool, false, EnableLensFlare);
-IMPL_SIMPLE_SETTING(SilverLiningVisibility, double, 30000, GetConditions().SetVisibility);
-IMPL_SETTING(SilverLiningRainRate, double, 0.0, GetConditions().SetPrecipitation(RAIN, value()));
-IMPL_SETTING(SilverLiningDrySnowRate, double, 0.0, GetConditions().SetPrecipitation(DRY_SNOW, value()));
-IMPL_SETTING(SilverLiningWetSnowRate, double, 0.0, GetConditions().SetPrecipitation(WET_SNOW, value()));
-IMPL_SETTING(SilverLiningSleetRate, double, 0.0, GetConditions().SetPrecipitation(SLEET, value()));
-IMPL_SIMPLE_SETTING(SilverLiningTurbidity, double, 2.2, GetConditions().SetTurbidity);
-IMPL_SIMPLE_SETTING(SilverLiningLightPollution, double, 0.0, GetConditions().SetLightPollution);
-IMPL_SIMPLE_SETTING(SilverLiningGamma, double, 1.8, SetGamma);
-IMPL_SIMPLE_SETTING(SilverLiningInfrared, bool, false, SetInfraRedMode);
-IMPL_SETTING(SilverLiningSkyModel, int, osgEarth::SilverLining::Atmosphere::PREETHAM, SetSkyModel(static_cast<osgEarth::SilverLining::Atmosphere::SkyModel>(value())));
-IMPL_SETTING(SilverLiningConditionPreset, int, osgEarth::SilverLining::AtmosphericConditions::PARTLY_CLOUDY,
+SL_IMPL_SIMPLE_SETTING(SilverLiningLensFlare, bool, false, EnableLensFlare);
+SL_IMPL_SIMPLE_SETTING(SilverLiningVisibility, double, 30000, GetConditions().SetVisibility);
+SL_IMPL_SETTING(SilverLiningRainRate, double, 0.0, GetConditions().SetPrecipitation(RAIN, value()));
+SL_IMPL_SETTING(SilverLiningDrySnowRate, double, 0.0, GetConditions().SetPrecipitation(DRY_SNOW, value()));
+SL_IMPL_SETTING(SilverLiningWetSnowRate, double, 0.0, GetConditions().SetPrecipitation(WET_SNOW, value()));
+SL_IMPL_SETTING(SilverLiningSleetRate, double, 0.0, GetConditions().SetPrecipitation(SLEET, value()));
+SL_IMPL_SIMPLE_SETTING(SilverLiningTurbidity, double, 2.2, GetConditions().SetTurbidity);
+SL_IMPL_SIMPLE_SETTING(SilverLiningLightPollution, double, 0.0, GetConditions().SetLightPollution);
+SL_IMPL_SIMPLE_SETTING(SilverLiningGamma, double, 1.8, SetGamma);
+SL_IMPL_SIMPLE_SETTING(SilverLiningInfrared, bool, false, SetInfraRedMode);
+SL_IMPL_SETTING(SilverLiningSkyModel, int, osgEarth::SilverLining::Atmosphere::PREETHAM, SetSkyModel(static_cast<osgEarth::SilverLining::Atmosphere::SkyModel>(value())));
+SL_IMPL_SETTING(SilverLiningConditionPreset, int, osgEarth::SilverLining::AtmosphericConditions::PARTLY_CLOUDY,
   GetConditions().SetPresetConditions(static_cast<osgEarth::SilverLining::AtmosphericConditions::ConditionPresets>(value()), atmosphere));
 
 /////////////////////////////////////////////////////////
@@ -372,7 +372,7 @@ SilverLiningWind* SilverLiningSettingsAdapter::wind() const
 
 /////////////////////////////////////////////////////////
 
-#define IMPL_EVTHANDLER(CLASS, SETTING, VALUETYPE, SETMETHOD) \
+#define SL_IMPL_EVTHANDLER(CLASS, SETTING, VALUETYPE, SETMETHOD) \
 CLASS::CLASS(SETTING* value) : value_(value) {} \
 CLASS::~CLASS() {} \
 void CLASS::onValueChanged(osgEarth::Util::Controls::Control* c, VALUETYPE value) { \
@@ -381,26 +381,26 @@ void CLASS::onValueChanged(osgEarth::Util::Controls::Control* c, VALUETYPE value
     refValue->SETMETHOD; \
 }
 
-#define IMPL_SIMPLE_EVTHANDLER(CLASS, SETTING, VALUETYPE) IMPL_EVTHANDLER(CLASS, SETTING, VALUETYPE, set(value))
+#define SL_IMPL_SIMPLE_EVTHANDLER(CLASS, SETTING, VALUETYPE) SL_IMPL_EVTHANDLER(CLASS, SETTING, VALUETYPE, set(value))
 
-IMPL_SIMPLE_EVTHANDLER(LensFlareEventHandler, SilverLiningLensFlare, bool);
-IMPL_SIMPLE_EVTHANDLER(GammaEventHandler, SilverLiningGamma, double);
-IMPL_SIMPLE_EVTHANDLER(InfraredEventHandler, SilverLiningInfrared, bool);
-IMPL_SIMPLE_EVTHANDLER(VisibilityEventHandler, SilverLiningVisibility, double);
-IMPL_SIMPLE_EVTHANDLER(TurbidityEventHandler, SilverLiningTurbidity, double);
-IMPL_SIMPLE_EVTHANDLER(LightPollutionEventHandler, SilverLiningLightPollution, double);
-IMPL_SIMPLE_EVTHANDLER(RainRateEventHandler, SilverLiningRainRate, double);
-IMPL_SIMPLE_EVTHANDLER(DrySnowRateEventHandler, SilverLiningDrySnowRate, double);
-IMPL_SIMPLE_EVTHANDLER(WetSnowRateEventHandler, SilverLiningWetSnowRate, double);
-IMPL_SIMPLE_EVTHANDLER(SleetRateEventHandler, SilverLiningSleetRate, double);
+SL_IMPL_SIMPLE_EVTHANDLER(LensFlareEventHandler, SilverLiningLensFlare, bool);
+SL_IMPL_SIMPLE_EVTHANDLER(GammaEventHandler, SilverLiningGamma, double);
+SL_IMPL_SIMPLE_EVTHANDLER(InfraredEventHandler, SilverLiningInfrared, bool);
+SL_IMPL_SIMPLE_EVTHANDLER(VisibilityEventHandler, SilverLiningVisibility, double);
+SL_IMPL_SIMPLE_EVTHANDLER(TurbidityEventHandler, SilverLiningTurbidity, double);
+SL_IMPL_SIMPLE_EVTHANDLER(LightPollutionEventHandler, SilverLiningLightPollution, double);
+SL_IMPL_SIMPLE_EVTHANDLER(RainRateEventHandler, SilverLiningRainRate, double);
+SL_IMPL_SIMPLE_EVTHANDLER(DrySnowRateEventHandler, SilverLiningDrySnowRate, double);
+SL_IMPL_SIMPLE_EVTHANDLER(WetSnowRateEventHandler, SilverLiningWetSnowRate, double);
+SL_IMPL_SIMPLE_EVTHANDLER(SleetRateEventHandler, SilverLiningSleetRate, double);
 
-IMPL_EVTHANDLER(SnowRateEventHandler, SilverLiningSnowRate, double, setRate(value));
-IMPL_EVTHANDLER(SnowIsWetEventHandler, SilverLiningSnowRate, bool, setWet(value));
+SL_IMPL_EVTHANDLER(SnowRateEventHandler, SilverLiningSnowRate, double, setRate(value));
+SL_IMPL_EVTHANDLER(SnowIsWetEventHandler, SilverLiningSnowRate, bool, setWet(value));
 
-IMPL_EVTHANDLER(SlWindDirectionDegEventHandler, SilverLiningWind, double, setDirection(value));
-IMPL_EVTHANDLER(SlWindSpeedEventHandler, SilverLiningWind, double, setSpeed(value));
+SL_IMPL_EVTHANDLER(SlWindDirectionDegEventHandler, SilverLiningWind, double, setDirection(value));
+SL_IMPL_EVTHANDLER(SlWindSpeedEventHandler, SilverLiningWind, double, setSpeed(value));
 
-IMPL_EVTHANDLER(HosekWilkieToggleEventHandler, SilverLiningSkyModel, bool,
+SL_IMPL_EVTHANDLER(HosekWilkieToggleEventHandler, SilverLiningSkyModel, bool,
   set(value ? osgEarth::SilverLining::Atmosphere::HOSEK_WILKIE : osgEarth::SilverLining::Atmosphere::PREETHAM));
 
 SetConditionPresetEventHandler::SetConditionPresetEventHandler(SilverLiningConditionPreset* preset, int value)

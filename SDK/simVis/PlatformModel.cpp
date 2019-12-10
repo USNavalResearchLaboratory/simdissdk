@@ -50,6 +50,7 @@
 #include "simVis/Utils.h"
 #include "simVis/PlatformModel.h"
 
+#undef LC
 #define LC "[PlatformModel] "
 
 using namespace osgEarth;

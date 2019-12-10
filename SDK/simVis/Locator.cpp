@@ -24,6 +24,7 @@
 #include "simVis/Utils.h"
 #include "simVis/Locator.h"
 
+#undef LC
 #define LC "[Locator] "
 
 namespace simVis

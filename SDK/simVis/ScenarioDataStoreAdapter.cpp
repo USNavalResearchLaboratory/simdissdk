@@ -25,6 +25,7 @@
 #include "simVis/LobGroup.h"
 #include "simVis/Scenario.h"
 
+#undef LC
 #define LC "[SimDataStoreAdapter] "
 
 // -----------------------------------------------------------------------

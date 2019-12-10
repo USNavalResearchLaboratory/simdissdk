@@ -55,6 +55,7 @@
 #include "simVis/Utils.h"
 #include "simVis/SceneManager.h"
 
+#undef LC
 #define LC "[SceneManager] "
 
 //------------------------------------------------------------------------

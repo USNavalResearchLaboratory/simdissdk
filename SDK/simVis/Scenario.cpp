@@ -59,6 +59,7 @@
 #include "simVis/View.h"
 #include "simVis/Scenario.h"
 
+#undef LC
 #define LC "[Scenario] "
 
 /// The highest available Level of Detail from ElevationPool

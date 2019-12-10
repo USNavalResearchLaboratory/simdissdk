@@ -32,6 +32,7 @@
 #include "simVis/Utils.h"
 #include "simVis/ProjectorManager.h"
 
+#undef LC
 #define LC "simVis::ProjectorManager "
 
 namespace simVis

@@ -39,6 +39,7 @@
 #include "simVis/Utils.h"
 #include "simVis/RCS.h"
 
+#undef LC
 #define LC "[simVis::RCSNode] "
 
 namespace simVis {

@@ -30,6 +30,7 @@
 #include "simVis/GOG/Utils.h"
 #include "simVis/Constants.h"
 
+#undef LC
 #define LC "[GOG::Line] "
 
 using namespace osgEarth;

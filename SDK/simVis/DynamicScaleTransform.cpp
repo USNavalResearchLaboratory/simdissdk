@@ -28,6 +28,7 @@
 #include "simVis/View.h"
 #include "simVis/DynamicScaleTransform.h"
 
+#undef LC
 #define LC "[DynamicScaleTransform] "
 
 namespace simVis {

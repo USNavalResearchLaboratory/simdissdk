@@ -48,6 +48,7 @@ static const float DEFAULT_LABEL_PRIORITY = 100.f;
 
 //------------------------------------------------------------------------
 
+#undef LC
 #define LC "[GOG::UnitsState] "
 
 namespace simVis { namespace GOG {

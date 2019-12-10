@@ -57,7 +57,7 @@ TritonValue::~TritonValue()
 
 /////////////////////////////////////////////////////////
 
-#define IMPL_SIMPLE_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD) \
+#define TRI_IMPL_SIMPLE_SETTING(CLASS, TYPE, DEFAULT_VALUE, SET_METHOD) \
 CLASS::CLASS() : TritonValueT<TYPE>(DEFAULT_VALUE) { } \
 CLASS::~CLASS() {} \
 void CLASS::initialize(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& ocean) \
@@ -70,12 +70,12 @@ void CLASS::apply_(osgEarth::Triton::Environment& env, osgEarth::Triton::Ocean& 
 }
 
 // Various "simple" settings that all follow the same pattern
-IMPL_SIMPLE_SETTING(TritonChoppiness, double, 1.6, ocean.SetChoppiness);
-IMPL_SIMPLE_SETTING(TritonSunIntensity, double, 1.0, env.SetSunIntensity);
-IMPL_SIMPLE_SETTING(TritonEnableSpray, bool, true, ocean.EnableSpray);
-IMPL_SIMPLE_SETTING(TritonEnableWireframe, bool, false, ocean.EnableWireframe);
-IMPL_SIMPLE_SETTING(TritonEnableGodRays, bool, false, ocean.EnableGodRays);
-IMPL_SIMPLE_SETTING(TritonGodRaysFade, double, 0.0, ocean.SetGodRaysFade);
+TRI_IMPL_SIMPLE_SETTING(TritonChoppiness, double, 1.6, ocean.SetChoppiness);
+TRI_IMPL_SIMPLE_SETTING(TritonSunIntensity, double, 1.0, env.SetSunIntensity);
+TRI_IMPL_SIMPLE_SETTING(TritonEnableSpray, bool, true, ocean.EnableSpray);
+TRI_IMPL_SIMPLE_SETTING(TritonEnableWireframe, bool, false, ocean.EnableWireframe);
+TRI_IMPL_SIMPLE_SETTING(TritonEnableGodRays, bool, false, ocean.EnableGodRays);
+TRI_IMPL_SIMPLE_SETTING(TritonGodRaysFade, double, 0.0, ocean.SetGodRaysFade);
 
 ////////////////////////////////////////////////////////////////////
 
@@ -246,7 +246,7 @@ TritonGodRaysFade* TritonSettingsAdapter::godRaysFade() const
 
 /////////////////////////////////////////////////////////
 
-#define IMPL_SIMPLE_EVTHANDLER(CLASS, SETTING, VALUETYPE) \
+#define TRI_IMPL_SIMPLE_EVTHANDLER(CLASS, SETTING, VALUETYPE) \
 CLASS::CLASS(SETTING* value) : value_(value) {} \
 CLASS::~CLASS() {} \
 void CLASS::onValueChanged(osgEarth::Util::Controls::Control* c, VALUETYPE value) { \
@@ -255,12 +255,12 @@ void CLASS::onValueChanged(osgEarth::Util::Controls::Control* c, VALUETYPE value
     refValue->set(value); \
 }
 
-IMPL_SIMPLE_EVTHANDLER(ChoppinessEventHandler, TritonChoppiness, double);
-IMPL_SIMPLE_EVTHANDLER(SunIntensityEventHandler, TritonSunIntensity, double);
-IMPL_SIMPLE_EVTHANDLER(EnableSprayEventHandler, TritonEnableSpray, bool);
-IMPL_SIMPLE_EVTHANDLER(EnableWireframeEventHandler, TritonEnableWireframe, bool);
-IMPL_SIMPLE_EVTHANDLER(EnableGodRaysEventHandler, TritonEnableGodRays, bool);
-IMPL_SIMPLE_EVTHANDLER(GodRaysFadeEventHandler, TritonGodRaysFade, double);
+TRI_IMPL_SIMPLE_EVTHANDLER(ChoppinessEventHandler, TritonChoppiness, double);
+TRI_IMPL_SIMPLE_EVTHANDLER(SunIntensityEventHandler, TritonSunIntensity, double);
+TRI_IMPL_SIMPLE_EVTHANDLER(EnableSprayEventHandler, TritonEnableSpray, bool);
+TRI_IMPL_SIMPLE_EVTHANDLER(EnableWireframeEventHandler, TritonEnableWireframe, bool);
+TRI_IMPL_SIMPLE_EVTHANDLER(EnableGodRaysEventHandler, TritonEnableGodRays, bool);
+TRI_IMPL_SIMPLE_EVTHANDLER(GodRaysFadeEventHandler, TritonGodRaysFade, double);
 
 //////////////////////////////////////////////////////
 

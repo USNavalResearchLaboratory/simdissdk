@@ -25,9 +25,9 @@
 
 namespace
 {
-  static OpenThreads::Atomic s_uniformNameGen;
+  static OpenThreads::Atomic s_ChromaUniformNameGen;
 
-  static const char* s_localShaderSource =
+  static const char* s_ChromaShaderSource =
 
     "#version 110\n"
 
@@ -46,9 +46,9 @@ namespace
 
 //---------------------------------------------------------------------------
 
-#define FUNCTION_PREFIX "osgearthutil_chromakeyColorFilter_"
-#define COLOR_UNIFORM_PREFIX  "osgearthutil_u_chromakey_color_"
-#define DISTANCE_UNIFORM_PREFIX  "osgearthutil_u_chromakey_distance_"
+#define CHROMA_FUNCTION_PREFIX "osgearthutil_chromakeyColorFilter_"
+#define CHROMA_COLOR_UNIFORM_PREFIX  "osgearthutil_u_chromakey_color_"
+#define CHROMA_DISTANCE_UNIFORM_PREFIX  "osgearthutil_u_chromakey_distance_"
 
 // This allows for serialization, inclusion in .earth files
 OSGEARTH_REGISTER_COLORFILTER(chroma_key, simVis::ChromaKeyColorFilter);
@@ -79,11 +79,11 @@ void ChromaKeyColorFilter::init_()
 {
   // Generate a unique name for this filter's uniform. This is necessary
   // so that each layer can have a unique uniform and entry point.
-  instanceId_ = (++s_uniformNameGen) - 1;
-  colorUniform_ = new osg::Uniform(osg::Uniform::FLOAT_VEC3, (osgEarth::Stringify() << COLOR_UNIFORM_PREFIX << instanceId_));
+  instanceId_ = (++s_ChromaUniformNameGen) - 1;
+  colorUniform_ = new osg::Uniform(osg::Uniform::FLOAT_VEC3, (osgEarth::Stringify() << CHROMA_COLOR_UNIFORM_PREFIX << instanceId_));
   //Default to black
   colorUniform_->set(osg::Vec3(0.0f, 0.0f, 0.0f));
-  distanceUniform_ = new osg::Uniform(osg::Uniform::FLOAT, (osgEarth::Stringify() << DISTANCE_UNIFORM_PREFIX << instanceId_));
+  distanceUniform_ = new osg::Uniform(osg::Uniform::FLOAT, (osgEarth::Stringify() << CHROMA_DISTANCE_UNIFORM_PREFIX << instanceId_));
   distanceUniform_->set(0.0f);
 }
 
@@ -113,7 +113,7 @@ float ChromaKeyColorFilter::getDistance() const
 
 std::string ChromaKeyColorFilter::getEntryPointFunctionName() const
 {
-  return (osgEarth::Stringify() << FUNCTION_PREFIX << instanceId_);
+  return (osgEarth::Stringify() << CHROMA_FUNCTION_PREFIX << instanceId_);
 }
 
 void ChromaKeyColorFilter::install(osg::StateSet* stateSet) const
@@ -127,8 +127,8 @@ void ChromaKeyColorFilter::install(osg::StateSet* stateSet) const
   {
     // build the local shader (unique per instance). We will
     // use a template with search and replace for this one.
-    std::string entryPoint = osgEarth::Stringify() << FUNCTION_PREFIX << instanceId_;
-    std::string code = s_localShaderSource;
+    std::string entryPoint = osgEarth::Stringify() << CHROMA_FUNCTION_PREFIX << instanceId_;
+    std::string code = s_ChromaShaderSource;
     osgEarth::replaceIn(code, "__COLOR_UNIFORM_NAME__", colorUniform_->getName());
     osgEarth::replaceIn(code, "__DISTANCE_UNIFORM_NAME__", distanceUniform_->getName());
     osgEarth::replaceIn(code, "__ENTRY_POINT__", entryPoint);

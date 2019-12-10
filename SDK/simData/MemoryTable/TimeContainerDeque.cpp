@@ -36,7 +36,7 @@ namespace
  * comparisons.  The alternative is to do the upper_bound/lower_bound with respect to
  * a std::pair<> rather than a time value, which is less intuitive and requires temporary values.
  */
-struct LessThan
+struct DoubleSizeLessThan
 {
   bool operator()(const std::pair<double, size_t>& lhs, const std::pair<double, size_t>& rhs) const
   {
@@ -362,7 +362,7 @@ simData::DelayedFlushContainerPtr TimeContainerDeque::flush()
 
 TimeContainerDeque::TimeIndexDeque::iterator TimeContainerDeque::lowerBound_(double timeValue, bool* exactMatch)
 {
-  LessThan lessThan;
+  DoubleSizeLessThan lessThan;
   TimeIndexDeque::iterator i = std::lower_bound(times_.begin(), times_.end(), timeValue, lessThan);
   if (exactMatch != NULL)
     *exactMatch = ((i != times_.end()) && (i->first == timeValue));
@@ -371,7 +371,7 @@ TimeContainerDeque::TimeIndexDeque::iterator TimeContainerDeque::lowerBound_(dou
 
 TimeContainerDeque::TimeIndexDeque::iterator TimeContainerDeque::upperBound_(double timeValue)
 {
-  LessThan lessThan;
+  DoubleSizeLessThan lessThan;
   TimeIndexDeque::iterator i = std::upper_bound(times_.begin(), times_.end(), timeValue, lessThan);
   return i;
 }

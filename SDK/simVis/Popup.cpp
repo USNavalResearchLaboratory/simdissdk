@@ -49,6 +49,7 @@
 #include "simVis/View.h"
 #include "simVis/Popup.h"
 
+#undef LC
 #define LC "simVis::Popup "
 
 // --------------------------------------------------------------------------

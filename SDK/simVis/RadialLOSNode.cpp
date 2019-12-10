@@ -28,6 +28,7 @@
 #include "simVis/Utils.h"
 #include "simVis/RadialLOSNode.h"
 
+#undef LC
 #define LC "[RadialLOSNode] "
 
 namespace simVis {

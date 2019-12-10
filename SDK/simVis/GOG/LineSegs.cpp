@@ -29,6 +29,7 @@
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
+#undef LC
 #define LC "[GOG::LineSegs] "
 
 using namespace osgEarth;
