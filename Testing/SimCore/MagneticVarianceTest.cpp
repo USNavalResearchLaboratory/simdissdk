@@ -27,7 +27,7 @@
 
 namespace
 {
-  int calculateMagneticVarianceTest2015()
+  int calculateMagneticVarianceTest()
   {
     simCore::WorldMagneticModel wmm;
     simCore::Vec3 lla;
@@ -95,6 +95,68 @@ namespace
     funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
     rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 69.01, 0.01) && funcRv == 0);
 
+    /////////////////////////////////
+    // Based on WMM2020testvalues.pdf
+    // Released Dec 10, 2019
+    year = 2020;
+    ordinalDay = 0;
+    alt = 0.;
+
+    // Declination (variance) values pulled from column 11: D (Deg)
+    lla.set(80.*simCore::DEG2RAD, 0., alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, -1.28, 0.01) && funcRv == 0);
+
+    lla.set(0., 120.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 0.16, 0.01) && funcRv == 0);
+
+    lla.set(-80.*simCore::DEG2RAD, 240.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 69.36, 0.01) && funcRv == 0);
+
+    alt = 100. * 1000.; // PDF value in km
+    lla.set(80.*simCore::DEG2RAD, 0., alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, -1.70, 0.01) && funcRv == 0);
+
+    lla.set(0., 120.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 0.16, 0.01) && funcRv == 0);
+
+    lla.set(-80.*simCore::DEG2RAD, 240.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 68.78, 0.01) && funcRv == 0);
+
+    // 2022.5 values
+    ordinalDay = 183;
+    year = 2022;
+    alt = 0.;
+    lla.set(80.*simCore::DEG2RAD, 0., alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 0.01, 0.01) && funcRv == 0);
+
+    lla.set(0., 120.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, -0.06, 0.01) && funcRv == 0);
+
+    lla.set(-80.*simCore::DEG2RAD, 240.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 69.13, 0.01) && funcRv == 0);
+
+    alt = 100. * 1000.; // PDF value in km
+    lla.set(80.*simCore::DEG2RAD, 0., alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, -0.41, 0.01) && funcRv == 0);
+
+    lla.set(0., 120.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, -0.05, 0.01) && funcRv == 0);
+
+    lla.set(-80.*simCore::DEG2RAD, 240.*simCore::DEG2RAD, alt);
+    funcRv = wmm.calculateMagneticVariance(lla, ordinalDay, year, varianceRad);
+    rv += SDK_ASSERT(simCore::areAnglesEqual(varianceRad*simCore::RAD2DEG, 68.55, 0.01) && funcRv == 0);
+
     return rv;
   }
 
@@ -104,7 +166,7 @@ int MagneticVarianceTest(int argc, char* argv[])
 {
   int rv = 0;
 
-  rv += calculateMagneticVarianceTest2015();
+  rv += calculateMagneticVarianceTest();
 
   std::cout << "MagneticVarianceTest " << ((rv == 0) ? "Passed" : "Failed") << std::endl;
 
