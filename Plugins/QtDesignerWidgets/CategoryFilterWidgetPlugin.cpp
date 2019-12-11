@@ -19,6 +19,8 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 #include <QtCore/QtPlugin>
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/MemoryDataStore.h"
@@ -118,3 +120,4 @@ QString CategoryFilterWidgetPlugin::includeFile() const
 {
   return "simQt/CategoryFilterWidget.h";
 }
+#endif // USE_DEPRECATED_SIMDISSDK_API

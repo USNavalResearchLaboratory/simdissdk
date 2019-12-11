@@ -19,6 +19,9 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+ // this is deprecated; use simQt::CategoryFilterWidget2 found in CategoryTreeModel2.h
+
 #include <QLabel>
 #include <QLineEdit>
 #include <QMetaType>
@@ -28,8 +31,9 @@
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simQt/SearchLineEdit.h"
-#include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
+#include "simQt/CategoryTreeModel2.h"
+#include "simQt/CategoryFilterWidget.h"
 
 namespace simQt {
 
@@ -205,4 +209,4 @@ void CategoryFilterWidget::expandDueToProxy_(const QModelIndex& parentIndex, int
 }
 
 }
-
+#endif

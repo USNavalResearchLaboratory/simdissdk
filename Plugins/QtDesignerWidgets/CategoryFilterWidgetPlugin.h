@@ -19,6 +19,8 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 #ifndef CATEGORY_FILTER_WIDGET_PLUGIN_H
 #define CATEGORY_FILTER_WIDGET_PLUGIN_H
 
@@ -56,4 +58,4 @@ private:
 };
 
 #endif // CATEGORY_FILTER_WIDGET_PLUGIN_H
-
+#endif // USE_DEPRECATED_SIMDISSDK_API

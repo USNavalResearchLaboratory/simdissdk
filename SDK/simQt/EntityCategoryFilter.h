@@ -32,7 +32,10 @@ namespace simData {
 
 namespace simQt {
 
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 class CategoryFilterWidget;
+#endif
 class CategoryFilterWidget2;
 class Settings;
 
@@ -91,8 +94,10 @@ public:
    * @param widget to be bound
    */
   void bindToWidget(CategoryFilterWidget2* widget) const;
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /** Category Filter Widget (legacy style) variant of bindToWidget() */
   void bindToWidget(CategoryFilterWidget* widget) const;
+#endif
 
   /** Retrieves the current category filter. */
   const simData::CategoryFilter& categoryFilter() const;

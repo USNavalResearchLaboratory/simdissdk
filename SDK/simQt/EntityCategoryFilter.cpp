@@ -64,11 +64,15 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
   }
   case SHOW_LEGACY_WIDGET:
   {
+#ifdef USE_DEPRECATED_SIMDISSDK_API
     CategoryFilterWidget* rv = new CategoryFilterWidget(newWidgetParent);
     rv->setProviders(categoryFilter_->getDataStore());
     rv->setFilter(*categoryFilter_);
     bindToWidget(rv);
     return rv;
+#else
+    return NULL;
+#endif
   }
   }
 
@@ -110,12 +114,14 @@ void EntityCategoryFilter::bindToWidget(CategoryFilterWidget2* widget) const
   connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), widget, SLOT(setFilter(simData::CategoryFilter)));
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void EntityCategoryFilter::bindToWidget(CategoryFilterWidget* widget) const
 {
   // connect to the signals/slots between the gui and the filter so changes to one will update the other
   connect(widget, SIGNAL(categoryFilterChanged(const simData::CategoryFilter&)), this, SLOT(setCategoryFilterFromGui_(const simData::CategoryFilter&)));
   connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), widget, SLOT(setFilter(simData::CategoryFilter)));
 }
+#endif
 
 void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& categoryFilter)
 {
