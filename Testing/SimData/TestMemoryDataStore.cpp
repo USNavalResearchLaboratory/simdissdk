@@ -33,50 +33,42 @@
 #include "simUtil/DataStoreTestHelper.h"
 
 namespace {
-class AssertionException : public std::exception
+class MemDataStoreAssertException : public std::exception
 {
 public:
-  AssertionException()
+  MemDataStoreAssertException()
   {
   }
 };
 
-void assertTrue(bool value)
-{
-  if (!value)
-  {
-    throw AssertionException();
-  }
-}
-
-template <class T> void assertEquals(const T& expected, const T& actual)
+template <class T> void mdsAssertEquals(const T& expected, const T& actual)
 {
   if (!(expected == actual))
   {
-    throw AssertionException();
+    throw MemDataStoreAssertException();
   }
 }
 
-void assertEquals(const std::string& expected, const std::string& actual)
+void mdsAssertEquals(const std::string& expected, const std::string& actual)
 {
   if (!(expected == actual))
   {
-    throw AssertionException();
+    throw MemDataStoreAssertException();
   }
 }
 
-template <class T> void assertNotEquals(const T& expected, const T& actual)
+template <class T> void mdsAssertNotEquals(const T& expected, const T& actual)
 {
   if (expected == actual)
   {
-    throw AssertionException();
+    throw MemDataStoreAssertException();
   }
 }
 
-class TestListener : public simData::DataStore::DefaultListener
+class MemDsTestListener : public simData::DataStore::DefaultListener
 {
 public:
-  TestListener()
+  MemDsTestListener()
   : remove_(0),
     delete_(0)
   {
@@ -152,29 +144,29 @@ void testPlatform_insert()
   pslice->visit(&psc);
 
   // verify number of data points
-  assertEquals(psc.updates.size(), (size_t)2);
+  mdsAssertEquals(psc.updates.size(), (size_t)2);
 
   // verify data point values
-  assertEquals(psc.updates[0].x(), 10.0);
-  assertEquals(psc.updates[0].y(), 11.0);
-  assertEquals(psc.updates[0].z(), 12.0);
+  mdsAssertEquals(psc.updates[0].x(), 10.0);
+  mdsAssertEquals(psc.updates[0].y(), 11.0);
+  mdsAssertEquals(psc.updates[0].z(), 12.0);
 
-  assertEquals(psc.updates[1].x(), 13.0);
-  assertEquals(psc.updates[1].y(), 14.0);
-  assertEquals(psc.updates[1].z(), 15.0);
+  mdsAssertEquals(psc.updates[1].x(), 13.0);
+  mdsAssertEquals(psc.updates[1].y(), 14.0);
+  mdsAssertEquals(psc.updates[1].z(), 15.0);
 
   // update current time
   ds->update(1.0);
   const simData::PlatformUpdate *c1 = pslice->current();
-  assertEquals(c1->x(), 10.0);
-  assertEquals(c1->y(), 11.0);
-  assertEquals(c1->z(), 12.0);
+  mdsAssertEquals(c1->x(), 10.0);
+  mdsAssertEquals(c1->y(), 11.0);
+  mdsAssertEquals(c1->z(), 12.0);
 
   ds->update(2.0);
   const simData::PlatformUpdate *c2 = pslice->current();
-  assertEquals(c2->x(), 13.0);
-  assertEquals(c2->y(), 14.0);
-  assertEquals(c2->z(), 15.0);
+  mdsAssertEquals(c2->x(), 13.0);
+  mdsAssertEquals(c2->y(), 14.0);
+  mdsAssertEquals(c2->z(), 15.0);
 }
 
 void testPlatform_insertStatic()
@@ -194,8 +186,8 @@ void testPlatform_insertStatic()
   testHelper.addPlatformUpdate(10, pID);
 
   std::pair<double, double> bounds = testHelper.dataStore()->timeBounds(0);
-  assertEquals(bounds.first, 10.0);
-  assertEquals(bounds.second, 10.0);
+  mdsAssertEquals(bounds.first, 10.0);
+  mdsAssertEquals(bounds.second, 10.0);
 }
 
 // callback when new lob is added
@@ -213,7 +205,7 @@ public:
     rv += SDK_ASSERT(props != NULL);
     transaction.complete(&props);
     if (rv != 0)
-      throw AssertionException();
+      throw MemDataStoreAssertException();
   }
 };
 
@@ -237,7 +229,7 @@ struct LobPrefListener : public simData::DataStore::DefaultListener
     transaction.complete(&prefs);
 
     if (rv != 0)
-      throw AssertionException();
+      throw MemDataStoreAssertException();
   }
 };
 
@@ -423,38 +415,38 @@ void testLobGroup_insert()
   lobPointSlice->visit(&lobSliceCopy);
 
   // verify number of data points
-  assertEquals(lobSliceCopy.updates.size(), (size_t)4);
+  mdsAssertEquals(lobSliceCopy.updates.size(), (size_t)4);
 
   // verify data point values
-  assertEquals(lobSliceCopy.updates[1].datapoints_size(), 2);
+  mdsAssertEquals(lobSliceCopy.updates[1].datapoints_size(), 2);
   rv += SDK_ASSERT(lobSliceCopy.updates[1].datapoints(0).azimuth() == 12.0 ||
     lobSliceCopy.updates[1].datapoints(0).azimuth() == 11.0);
-  assertEquals(lobSliceCopy.updates[1].datapoints(0).elevation(), 100.0);
-  assertEquals(lobSliceCopy.updates[1].datapoints(0).range(), 3000.0);
+  mdsAssertEquals(lobSliceCopy.updates[1].datapoints(0).elevation(), 100.0);
+  mdsAssertEquals(lobSliceCopy.updates[1].datapoints(0).range(), 3000.0);
   rv += SDK_ASSERT(lobSliceCopy.updates[1].datapoints(1).azimuth() == 11.0 ||
     lobSliceCopy.updates[1].datapoints(1).azimuth() == 12.0);
   rv += SDK_ASSERT(lobSliceCopy.updates[2].datapoints(0).azimuth() == 16.0 ||
     lobSliceCopy.updates[2].datapoints(0).azimuth() == 15.0);
   rv += SDK_ASSERT(lobSliceCopy.updates[2].datapoints(1).azimuth() == 16.0 ||
     lobSliceCopy.updates[2].datapoints(1).azimuth() == 15.0);
-  assertEquals(lobSliceCopy.updates[2].datapoints(0).elevation(), 150.0);
+  mdsAssertEquals(lobSliceCopy.updates[2].datapoints(0).elevation(), 150.0);
 
   // update to first time
   ds->update(0.0);
   const simData::LobGroupUpdate *c0 = lobPointSlice->current();
-  assertEquals(c0->datapoints_size(), 1);
+  mdsAssertEquals(c0->datapoints_size(), 1);
 
 
   // update current time
   ds->update(1.0);
   const simData::LobGroupUpdate *c1 = lobPointSlice->current();
-  assertEquals(c1->datapoints_size(), 3); // since only 1 second of data available, only 3 points from time 0.0 and 1.0
+  mdsAssertEquals(c1->datapoints_size(), 3); // since only 1 second of data available, only 3 points from time 0.0 and 1.0
   rv += SDK_ASSERT(c1->datapoints(1).azimuth() == 12.0 ||
     c1->datapoints(1).azimuth() == 11.0);
   rv += SDK_ASSERT(c1->datapoints(1).azimuth() == 11.0 ||
     c1->datapoints(2).azimuth() == 12.0);
-  assertEquals(c1->datapoints(1).elevation(), 100.0);
-  assertEquals(c1->datapoints(1).range(), 3000.0);
+  mdsAssertEquals(c1->datapoints(1).elevation(), 100.0);
+  mdsAssertEquals(c1->datapoints(1).range(), 3000.0);
 
   // test prefs
   const simData::LobGroupCommand* com1 = cslice->current();
@@ -468,18 +460,18 @@ void testLobGroup_insert()
 
   ds->update(2.0);
   const simData::LobGroupUpdate *c2 = lobPointSlice->current();
-  assertEquals(c2->datapoints_size(), 4); // only 2 seconds of data, and all point are within limits, so 4 points
+  mdsAssertEquals(c2->datapoints_size(), 4); // only 2 seconds of data, and all point are within limits, so 4 points
   rv += SDK_ASSERT(c2->datapoints(0).azimuth() == 11.0 ||
     c2->datapoints(0).azimuth() == 12.0);
-  assertEquals(c2->datapoints(0).elevation(), 100.0);
-  assertEquals(c2->datapoints(0).range(), 3000.0);
+  mdsAssertEquals(c2->datapoints(0).elevation(), 100.0);
+  mdsAssertEquals(c2->datapoints(0).range(), 3000.0);
   rv += SDK_ASSERT(c2->datapoints(1).azimuth() == 11.0 ||
     c2->datapoints(1).azimuth() == 12.0);
   rv += SDK_ASSERT(c2->datapoints(2).azimuth() == 15.0 ||
     c2->datapoints(2).azimuth() == 16.0);
   rv += SDK_ASSERT(c2->datapoints(3).azimuth() == 15.0 ||
     c2->datapoints(3).azimuth() == 16.0);
-  assertEquals(c2->datapoints(2).elevation(), 150.0);
+  mdsAssertEquals(c2->datapoints(2).elevation(), 150.0);
 
   // test prefs
   const simData::LobGroupCommand* com2 = cslice->current();
@@ -503,17 +495,17 @@ void testLobGroup_insert()
   }
   ds->update(2.0);
   const simData::LobGroupUpdate *c3 = lobPointSlice->current();
-  assertEquals(c3->datapoints_size(), 2); // only 1 data point time set, so should only have the 2 points at time 2.0
+  mdsAssertEquals(c3->datapoints_size(), 2); // only 1 data point time set, so should only have the 2 points at time 2.0
   rv += SDK_ASSERT(c3->datapoints(0).azimuth() == 15.0 ||
     c3->datapoints(0).azimuth() == 16.0);
 
   // update time
   ds->update(3.0);
   const simData::LobGroupUpdate *c4 = lobPointSlice->current();
-  assertEquals(c4->datapoints_size(), 3); // only 1 data point time set, so should only have the 3 points at time 3.0
-  assertEquals(c4->datapoints(0).time(), 3.0);
-  assertEquals(c4->datapoints(1).time(), 3.0); // note that point added with time 4.0 should now be 3.0
-  assertEquals(c4->datapoints(2).time(), 3.0);
+  mdsAssertEquals(c4->datapoints_size(), 3); // only 1 data point time set, so should only have the 3 points at time 3.0
+  mdsAssertEquals(c4->datapoints(0).time(), 3.0);
+  mdsAssertEquals(c4->datapoints(1).time(), 3.0); // note that point added with time 4.0 should now be 3.0
+  mdsAssertEquals(c4->datapoints(2).time(), 3.0);
   rv += SDK_ASSERT(c4->datapoints(0).azimuth() == 24.0 ||
    c4->datapoints(0).azimuth() == 25.0 ||
    c4->datapoints(0).azimuth() == 35.0);
@@ -541,17 +533,17 @@ void testLobGroup_insert()
 
   ds->update(3.0);
   const simData::LobGroupUpdate *c5a = lobPointSlice->current();
-  assertEquals(c5a->datapoints_size(), 7); //  should have data from [1.0, 3.0]
+  mdsAssertEquals(c5a->datapoints_size(), 7); //  should have data from [1.0, 3.0]
 
   ds->update(3.0 + FLT_EPSILON);
   const simData::LobGroupUpdate *c5 = lobPointSlice->current();
-  assertEquals(c5->datapoints_size(), 5); //  should have data from [1.0+epsilon, 3.0+epsilon]
+  mdsAssertEquals(c5->datapoints_size(), 5); //  should have data from [1.0+epsilon, 3.0+epsilon]
   // data should be time ordered
-  assertEquals(c5->datapoints(0).time(), 2.0);
-  assertEquals(c5->datapoints(1).time(), 2.0);
-  assertEquals(c5->datapoints(2).time(), 3.0);
-  assertEquals(c5->datapoints(3).time(), 3.0);
-  assertEquals(c5->datapoints(4).time(), 3.0);
+  mdsAssertEquals(c5->datapoints(0).time(), 2.0);
+  mdsAssertEquals(c5->datapoints(1).time(), 2.0);
+  mdsAssertEquals(c5->datapoints(2).time(), 3.0);
+  mdsAssertEquals(c5->datapoints(3).time(), 3.0);
+  mdsAssertEquals(c5->datapoints(4).time(), 3.0);
   rv += SDK_ASSERT(c5->datapoints(0).azimuth() == 15.0 ||
     c5->datapoints(0).azimuth() == 16.0);
   rv += SDK_ASSERT(c5->datapoints(1).azimuth() == 15.0 ||
@@ -581,16 +573,16 @@ void testLobGroup_insert()
   }
   ds->update(3.0);
   const simData::LobGroupUpdate *c6 = lobPointSlice->current();
-  assertEquals(c6->datapoints_size(), 8); //  should have data from time 0.0, 1.0, 2.0, and 3.0
+  mdsAssertEquals(c6->datapoints_size(), 8); //  should have data from time 0.0, 1.0, 2.0, and 3.0
   // data should be time ordered
-  assertEquals(c6->datapoints(0).time(), 0.0);
-  assertEquals(c6->datapoints(1).time(), 1.0);
-  assertEquals(c6->datapoints(2).time(), 1.0);
-  assertEquals(c6->datapoints(3).time(), 2.0);
-  assertEquals(c6->datapoints(4).time(), 2.0);
-  assertEquals(c6->datapoints(5).time(), 3.0);
-  assertEquals(c6->datapoints(6).time(), 3.0);
-  assertEquals(c6->datapoints(7).time(), 3.0);
+  mdsAssertEquals(c6->datapoints(0).time(), 0.0);
+  mdsAssertEquals(c6->datapoints(1).time(), 1.0);
+  mdsAssertEquals(c6->datapoints(2).time(), 1.0);
+  mdsAssertEquals(c6->datapoints(3).time(), 2.0);
+  mdsAssertEquals(c6->datapoints(4).time(), 2.0);
+  mdsAssertEquals(c6->datapoints(5).time(), 3.0);
+  mdsAssertEquals(c6->datapoints(6).time(), 3.0);
+  mdsAssertEquals(c6->datapoints(7).time(), 3.0);
 
   // test iterator
   simData::LobGroupUpdateSlice::Iterator iter = lobPointSlice->lower_bound(2.0);
@@ -599,7 +591,7 @@ void testLobGroup_insert()
   rv += SDK_ASSERT(lobUpdate->datapoints(0).azimuth() == 15 ||
                    lobUpdate->datapoints(1).azimuth() == 16);
 
-  TestListener *testListen = new TestListener;
+  MemDsTestListener *testListen = new MemDsTestListener;
   simData::DataStore::ListenerPtr testListenShared(testListen);
   ds->addListener(testListenShared);
   ds->removeEntity(platId1);
@@ -609,7 +601,7 @@ void testLobGroup_insert()
   rv += SDK_ASSERT(testListen->removeCount() == 3);
 
   if (rv != 0)
-    throw AssertionException();
+    throw MemDataStoreAssertException();
 }
 
 // Verifies that a generic key value pair appears only once
@@ -716,24 +708,24 @@ void testGenericData_insert()
   gdslice->visit(&sc);
 
    // verify number of data points
-  assertEquals(sc.entries.size(), static_cast<size_t>(4));
+  mdsAssertEquals(sc.entries.size(), static_cast<size_t>(4));
 
   // verify data point values
-  assertEquals(sc.entries[0].key(), "key1");
-  assertEquals(sc.entries[0].value(), "value1");
-  assertEquals(sc.entries[1].key(), "key2");
-  assertEquals(sc.entries[1].value(), "value2");
+  mdsAssertEquals(sc.entries[0].key(), "key1");
+  mdsAssertEquals(sc.entries[0].value(), "value1");
+  mdsAssertEquals(sc.entries[1].key(), "key2");
+  mdsAssertEquals(sc.entries[1].value(), "value2");
 
-  assertEquals(sc.entries[2].key(), "key3");
-  assertEquals(sc.entries[2].value(), "value3");
-  assertEquals(sc.entries[3].key(), "key4");
-  assertEquals(sc.entries[3].value(), "value4");
+  mdsAssertEquals(sc.entries[2].key(), "key3");
+  mdsAssertEquals(sc.entries[2].value(), "value3");
+  mdsAssertEquals(sc.entries[3].key(), "key4");
+  mdsAssertEquals(sc.entries[3].value(), "value4");
 
   // Do a flush and the visitor should come back empty
   ds->flush(platId, simData::DataStore::RECURSIVE);
   GenericDataSliceCopy sc2;
   gdslice->visit(&sc2);
-  assertEquals(sc2.entries.size(), static_cast<size_t>(0));
+  mdsAssertEquals(sc2.entries.size(), static_cast<size_t>(0));
 
   // Doing a visitor with NULL should not crash
   gdslice->visit(NULL);
@@ -955,7 +947,7 @@ int testGenericDataNoExpiration_update()
   // No new keys, but overwrite changes
   ds->update(10000000000.0);
   g2 = gdslice->current();
-  assertNotEquals(g2, (const simData::GenericData *)NULL);
+  mdsAssertNotEquals(g2, (const simData::GenericData *)NULL);
   rv += SDK_ASSERT(g2->entry().size() == 5);
   rv += SDK_ASSERT(findOnce(g1, "key1", "value1"));
   rv += SDK_ASSERT(findOnce(g1, "key2", "value2"));
@@ -1375,7 +1367,7 @@ int testScenarioDeleteCallback()
   simUtil::DataStoreTestHelper* testHelper = new simUtil::DataStoreTestHelper;
   simData::DataStore* ds = testHelper->dataStore();
 
-  TestListener *testListen = new TestListener;
+  MemDsTestListener *testListen = new MemDsTestListener;
   simData::DataStore::ListenerPtr testListenShared(testListen);
   ds->addListener(testListenShared);
 
@@ -1564,7 +1556,7 @@ int TestMemoryDataStore(int argc, char* argv[])
     rv += testUpdateToNonCurrentTime();
     return rv;
   }
-  catch (AssertionException& e)
+  catch (MemDataStoreAssertException& e)
   {
     std::cout << e.what() << std::endl;
     return 1;

@@ -544,7 +544,7 @@ namespace
     return rv;
   }
 
-  int testRound()
+  int testTimeRounding()
   {
     int rv = 0;
     rv += SDK_ASSERT(simCore::areEqual(simCore::Seconds(0.4).rounded(0).Double(), 0.0));
@@ -693,7 +693,7 @@ int TimeClassTest(int argc, char* argv[])
   rv += testMultiplicationSeconds();
   rv += testDivisionSeconds();
   rv += testInput();
-  rv += testRound();
+  rv += testTimeRounding();
   rv += testTimeStamp();
   rv += testTimeStampComparison();
 

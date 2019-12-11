@@ -32,7 +32,7 @@
 using namespace std;
 
 namespace {
-class AssertionException : public std::exception
+class InterpAssertionException : public std::exception
 {
 };
 
@@ -40,7 +40,7 @@ void assertTrue(bool value)
 {
   if (!value)
   {
-    throw AssertionException();
+    throw InterpAssertionException();
   }
 }
 
@@ -48,7 +48,7 @@ template <class T> void assertEquals(const T& expected, const T& actual)
 {
   if (!(expected == actual))
   {
-    throw AssertionException();
+    throw InterpAssertionException();
   }
 }
 
@@ -56,7 +56,7 @@ void assertEquals(const std::string& expected, const std::string& actual)
 {
   if (!(expected == actual))
   {
-    throw AssertionException();
+    throw InterpAssertionException();
   }
 }
 
@@ -64,7 +64,7 @@ template <class T> void assertNotEquals(const T& expected, const T& actual)
 {
   if (expected == actual)
   {
-    throw AssertionException();
+    throw InterpAssertionException();
   }
 }
 
@@ -428,7 +428,7 @@ int TestInterpolation(int argc, char* argv[])
 
     return 0;
   }
-  catch (AssertionException& e)
+  catch (InterpAssertionException& e)
   {
     cout << e.what() << endl;
     return 1;
