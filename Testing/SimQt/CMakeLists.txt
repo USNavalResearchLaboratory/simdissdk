@@ -14,6 +14,7 @@ set(SimQtTestsSourceList
     PersistentLoggerTest.cpp
     SegmentedTextsTest.cpp
 )
+set_source_files_properties(ActionRegistryTest.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 if(TARGET simData)
     list(APPEND SimQtTestsSourceList
         RangeToRegExpTest.cpp
