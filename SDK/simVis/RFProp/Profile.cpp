@@ -29,24 +29,26 @@
 #include "simVis/Constants.h"
 #include "simVis/PointSize.h"
 #include "simVis/Utils.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/Profile.h"
 
 namespace simRF {
 
 Profile::Profile(CompositeProfileProvider* data)
  : bearing_(0),
-   displayThickness_(1000.0f),
+   displayThickness_(1),
    height_(0.0),
-   halfBeamWidth_(osg::DegreesToRadians(5.0)),
+   halfBeamWidth_(0.0),
    data_(data),
    dirty_(true),
    alpha_(1.0),
    agl_(false),
    mode_(DRAWMODE_2D_HORIZONTAL),
-   refCoord_(0, 0, 0),
+   refCoord_(0., 0., 0.),
    sphericalEarth_(true),
    elevAngle_(0.0)
 {
+  setHalfBeamWidth(5.0 * simCore::DEG2RAD);
   alphaUniform_ = getOrCreateStateSet()->getOrCreateUniform("alpha", osg::Uniform::FLOAT);
   alphaUniform_->set(alpha_);
 
@@ -55,6 +57,10 @@ Profile::Profile(CompositeProfileProvider* data)
   updateOrientation_();
 
   init_();
+}
+
+Profile::~Profile()
+{
 }
 
 void Profile::addProvider(ProfileDataProvider* provider)
@@ -160,24 +166,24 @@ void Profile::setElevAngle(double elevAngleRad)
 
 double Profile::getRefLat() const
 {
-  return refCoord_.y();
+  return refCoord_.lat();
 }
 
 double Profile::getRefLon() const
 {
-  return refCoord_.x();
+  return refCoord_.lon();
 }
 
 double Profile::getRefAlt() const
 {
-  return refCoord_.z();
+  return refCoord_.alt();
 }
 
 void Profile::setRefCoord(double latRad, double lonRad, double alt)
 {
-  if (latRad != refCoord_.y() || lonRad != refCoord_.x() || alt != refCoord_.z())
+  if (latRad != refCoord_.lat() || lonRad != refCoord_.lon() || alt != refCoord_.alt())
   {
-    refCoord_.set(lonRad, latRad, alt);
+    refCoord_.set(latRad, lonRad, alt);
     dirty();
   }
 }
@@ -220,12 +226,12 @@ void Profile::setAlpha(float alpha)
   }
 }
 
-float Profile::getDisplayThickness() const
+unsigned int Profile::getDisplayThickness() const
 {
   return displayThickness_;
 }
 
-void Profile::setDisplayThickness(float displayThickness)
+void Profile::setDisplayThickness(unsigned int displayThickness)
 {
   if (displayThickness_ != displayThickness)
   {
@@ -258,16 +264,22 @@ void Profile::setHalfBeamWidth(double halfBeamWidth)
   if (halfBeamWidth_ != halfBeamWidth)
   {
     halfBeamWidth_ = halfBeamWidth;
+    const double dt0 = -halfBeamWidth_ + M_PI_2;
+    const double dt1 = halfBeamWidth_ + M_PI_2;
+    cosTheta0_ = cos(dt0);
+    sinTheta0_ = sin(dt0);
+    cosTheta1_ = cos(dt1);
+    sinTheta1_ = sin(dt1);
+
     dirty();
   }
 }
 
-void Profile::adjustSpherical_(osg::Vec3& v, const double *lla, const simCore::Vec3 *tpSphereXYZ)
+void Profile::adjustSpherical_(osg::Vec3& v, const simCore::Vec3& tpSphereXYZ)
 {
-  double pos[3] = { v[0], v[1], v[2] };
   simCore::Vec3 sphereXYZ;
-  simCore::tangentPlane2Sphere(simCore::Vec3(lla), simCore::Vec3(pos), sphereXYZ, tpSphereXYZ);
-  double alt = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
+  simCore::tangentPlane2Sphere(refCoord_, simCore::Vec3(v[0], v[1], v[2]), sphereXYZ, &tpSphereXYZ);
+  const double alt = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
   v.z() = v.z() - (alt - v.z()) + refCoord_.z();
 }
 
@@ -365,29 +377,24 @@ void Profile::init2DHoriz_()
   const double minRange = data_->getMinRange();
   const double rangeStep = data_->getRangeStep();
   const double numRanges = data_->getNumRanges();
-
-  const double dt0 = -halfBeamWidth_ + M_PI_2;
-  const double dt1 = halfBeamWidth_ + M_PI_2;
-
-  const double cosTheta0 = cos(dt0);
-  const double sinTheta0 = sin(dt0);
-  const double cosTheta1 = cos(dt1);
-  const double sinTheta1 = sin(dt1);
-
-  simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
-  const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };
-
   const unsigned int startIndex = verts_->size();
   unsigned int heightIndex = data_->getHeightIndex(height_);
   // Error check the height index
-  if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX || heightIndex > (data_->getNumHeights() - 1))
   {
-    // Invalidly defined profile
+    // getHeightIndex guarantees to return either error condition (which indicates invalidly defined profile), or a valid height index
     assert(0);
     return;
   }
 
+  verts_->reserve(2 * numRanges);
+  values_->reserve(2 * numRanges);
+
+  simCore::Vec3 tpSphereXYZ;
+  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+
+  // init the flag that indicates whether this profile has seen valid data
+  bool validDataStarted = false;
   for (unsigned int i = 0; i < numRanges; i++)
   {
     const double range = minRange + rangeStep * i;
@@ -397,30 +404,40 @@ void Profile::init2DHoriz_()
       height = height_ + getTerrainHgt_(static_cast<float>(range));
       heightIndex = data_->getHeightIndex(height);
       // Error check the height index
-      if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+      if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX  || heightIndex > (data_->getNumHeights() - 1))
       {
-        // Invalidly defined profile
+        // getHeightIndex guarantees to return either error condition (which indicates invalidly defined profile), or a valid height index
         assert(0);
         return;
       }
     }
 
+    const double value = data_->getValueByIndex(heightIndex, i);
+    if (!validDataStarted)
+    {
+      // values <= AREPS_GROUND_VALUE are sentinel values, not actual values. some profiles can have long stretch of no-data, especially at low range.
+      if (value <= AREPS_GROUND_VALUE)
+      {
+        // ignore no-data values until valid data is received
+        continue;
+      }
+      // once valid data has started, skipping no-data points might affect the triangle strip. in these cases, shaders will make those vertices transparent.
+      validDataStarted = true;
+    }
+
     // Left vert
-    osg::Vec3 v0(range * cosTheta0, range * sinTheta0, height);
+    osg::Vec3 v0(range * cosTheta0_, range * sinTheta0_, height);
     // Right vert
-    osg::Vec3 v1(range * cosTheta1, range * sinTheta1, height);
+    osg::Vec3 v1(range * cosTheta1_, range * sinTheta1_, height);
 
     if (sphericalEarth_)
     {
-      adjustSpherical_(v0, lla, &tpSphereXYZ);
-      adjustSpherical_(v1, lla, &tpSphereXYZ);
+      adjustSpherical_(v0, tpSphereXYZ);
+      adjustSpherical_(v1, tpSphereXYZ);
     }
 
     verts_->push_back(v1);
     verts_->push_back(v0);
-
-    heightIndex = osg::clampBetween(heightIndex, 0u, data_->getNumHeights() - 1);
-    const double value = data_->getValueByIndex(heightIndex, i);
     values_->push_back(value);
     values_->push_back(value);
   }
@@ -449,11 +466,26 @@ const void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHei
     osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
     idx->reserve(2 * numRanges);
 
+    // init the flag that indicates whether this profile has seen valid data
+    bool validDataStarted = false;
+
     // Create row strips
     for (unsigned int r = 0; r < numRanges; ++r)
     {
       const unsigned int indexBottom = startIndex + (r * numHeights) + h;
       const unsigned int indexTop = indexBottom + 1;
+      if (!validDataStarted)
+      {
+        const double valueBottom = values->at(indexBottom);
+        const double valueTop = values->at(indexTop);
+        // some profiles can have large patch of no-data at beginning
+        if (valueBottom <= AREPS_GROUND_VALUE && valueTop <= AREPS_GROUND_VALUE)
+        {
+          // ignore no-data values until valid data is received
+          continue;
+        }
+        validDataStarted = true;
+      }
 
       idx->push_back(indexBottom);
       idx->push_back(indexTop);
@@ -479,23 +511,26 @@ void Profile::init2DVert_()
   assert(numHeights > 0);
 
   simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
-  const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };
+  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
 
+  // 2DVert draw mode can be combined with 2DHorz mode; cache the starting point for vertices relevant to this draw mode
   const unsigned int startIndex = verts_->size();
+  const unsigned int numVerts = numHeights * numRanges;
+  verts_->reserve(numVerts + startIndex);
+  values_->reserve(numVerts + startIndex);
+
   for (unsigned int r = 0; r < numRanges; r++)
   {
-    const double x = 0;
-    const double y = minRange + rangeStep * r;
+    const double range = minRange + rangeStep * r;
 
     for (unsigned int h = 0; h < numHeights; h++)
     {
       const double height = minHeight + heightStep * h;
-      osg::Vec3 v(x, y, height);
+      osg::Vec3 v(0., range, height);
 
       if (sphericalEarth_)
       {
-        adjustSpherical_(v, lla, &tpSphereXYZ);
+        adjustSpherical_(v, tpSphereXYZ);
       }
 
       verts_->push_back(v);
@@ -538,10 +573,8 @@ void Profile::init3D_()
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
   unsigned int minHeightIndex = data_->getHeightIndex(height_);
-  unsigned int maxHeightIndex = data_->getHeightIndex(height_ + displayThickness_);
   // Error check the height index
-  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX ||
-    maxHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
     // Invalidly defined profile
     assert(0);
@@ -549,12 +582,7 @@ void Profile::init3D_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  maxHeightIndex = osg::clampBetween(maxHeightIndex, 0u, numHeights - 1);
-
-  simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
-  const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };
-
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
   //If we have no valid thickness assume they want to just display a single voxel
   if (minHeightIndex == maxHeightIndex)
   {
@@ -576,28 +604,22 @@ void Profile::init3D_()
     return;
   }
 
+  simCore::Vec3 tpSphereXYZ;
+  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+
   const unsigned int heightIndexCount = maxHeightIndex - minHeightIndex + 1;
   const unsigned int numVerts = 2 * heightIndexCount * numRanges;
-  //osg::Vec3Array* verts = new osg::Vec3Array();
   verts_->reserve(numVerts);
+  values_->reserve(numVerts);
 
   const unsigned int startIndex = verts_->size();
-
-  const double dt0 = -halfBeamWidth_ + M_PI_2;
-  const double dt1 = halfBeamWidth_ + M_PI_2;
-
-  const double cosTheta0 = cos(dt0);
-  const double sinTheta0 = sin(dt0);
-  const double cosTheta1 = cos(dt1);
-  const double sinTheta1 = sin(dt1);
-
   for (unsigned int r = 0; r < numRanges; r++)
   {
     const double range = minRange + rangeStep * r;
-    const double x0 = range * cosTheta0;
-    const double y0 = range * sinTheta0;
-    const double x1 = range * cosTheta1;
-    const double y1 = range * sinTheta1;
+    const double x0 = range * cosTheta0_;
+    const double y0 = range * sinTheta0_;
+    const double x1 = range * cosTheta1_;
+    const double y1 = range * sinTheta1_;
 
     for (unsigned int h = minHeightIndex; h <= maxHeightIndex; h++)
     {
@@ -609,14 +631,14 @@ void Profile::init3D_()
 
       if (sphericalEarth_)
       {
-        adjustSpherical_(v0, lla, &tpSphereXYZ);
-        adjustSpherical_(v1, lla, &tpSphereXYZ);
+        adjustSpherical_(v0, tpSphereXYZ);
+        adjustSpherical_(v1, tpSphereXYZ);
       }
 
       verts_->push_back(v0);
       verts_->push_back(v1);
 
-      double value = data_->getValueByIndex(h, r);
+      const double value = data_->getValueByIndex(h, r);
       values_->push_back(value);
       values_->push_back(value);
     }
@@ -643,7 +665,6 @@ void Profile::init3D_()
 
       osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
       idx->reserve(14);
-
       // Wrap the voxel with a triangle strip
       // Back Bottom
       idx->push_back(v5); idx->push_back(v4);
@@ -693,10 +714,8 @@ void Profile::init3DTexture_()
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
   unsigned int minHeightIndex = data_->getHeightIndex(height_);
-  unsigned int maxHeightIndex = data_->getHeightIndex(height_ + displayThickness_);
   // Error check the height index
-  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX ||
-    maxHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
     // Invalidly defined profile
     assert(0);
@@ -704,10 +723,11 @@ void Profile::init3DTexture_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  maxHeightIndex = osg::clampBetween(maxHeightIndex, 0u, numHeights - 1);
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
 
-  simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
+  // TODO: determine how to support spherical earth like other draw modes
+  //simCore::Vec3 tpSphereXYZ;
+  //simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
 
   //If we have no valid thickness assume they want to just display a single voxel
   if (minHeightIndex == maxHeightIndex)
@@ -737,15 +757,27 @@ void Profile::init3DTexture_()
   const float minT = (minSampledHeight - minHeight) / (maxHeight - minHeight);
   const float maxT = (maxSampledHeight - minHeight) / (maxHeight - minHeight);
 
-  const double dt0 = -halfBeamWidth_ + M_PI_2;
-  const double dt1 = halfBeamWidth_ + M_PI_2;
+  int lt = 0; // Left side top of cap
+  int lb = 0; // Left side bottom of cap
+  int rt = 0; // Right side top of cap
+  int rb = 0; // Right side bottom of cap
 
-  const double cosTheta0 = cos(dt0);
-  const double sinTheta0 = sin(dt0);
-  const double cosTheta1 = cos(dt1);
-  const double sinTheta1 = sin(dt1);
+  // Calculate length of step for tessellation
+  const double pieLength = simCore::sdkMin(maxRange, simVis::MAX_SEGMENT_LENGTH);
+  const unsigned int numSegs = simCore::sdkMax(simVis::MIN_NUM_SEGMENTS, simCore::sdkMin(simVis::MAX_NUM_SEGMENTS, static_cast<unsigned int>(maxRange / pieLength)));
+  const double maxRangeStep = maxRange / numSegs;
+  double texStep = 1.0 / numSegs;
 
+  std::vector<std::pair<int, int> > topVerts;
+  topVerts.reserve(numSegs); // Top side vertex pairs
+
+  std::vector<std::pair<int, int> > botVerts;
+  botVerts.reserve(numSegs); // Bottom side vertex pairs
+
+  const size_t numVerts = 2 + (numSegs * 2) + (numSegs * 2);
   osg::Vec2Array* tcoords = new osg::Vec2Array();
+  tcoords->reserve(numVerts);
+  verts_->reserve(numVerts);
 
   // The first two verts are the points at the start of the pie slice
   verts_->push_back(osg::Vec3(0, 0, minSampledHeight));  // 0
@@ -754,23 +786,11 @@ void Profile::init3DTexture_()
   verts_->push_back(osg::Vec3(0, 0, maxSampledHeight));  // 1
   tcoords->push_back(osg::Vec2(0, maxT));
 
-  int lt = 0; // Left side top of cap
-  int lb = 0; // Left side bottom of cap
-  int rt = 0; // Right side top of cap
-  int rb = 0; // Right side bottom of cap
-  std::vector<std::pair<int, int> > topVerts; // Top side vertex pairs
-  std::vector<std::pair<int, int> > botVerts; // Bottom side vertex pairs
-
-  // Calculate length of step for tessellation
-  const double pieLength = simCore::sdkMin(maxRange, simVis::MAX_SEGMENT_LENGTH);
-  const unsigned int numSegs = simCore::sdkMax(simVis::MIN_NUM_SEGMENTS, simCore::sdkMin(simVis::MAX_NUM_SEGMENTS, static_cast<unsigned int>(maxRange / pieLength)));
-  const double maxRangeStep = maxRange / numSegs;
-  double texStep = 1.0 / numSegs;
-
   int vertCount = 2; // Current vertex count, to keep track
 
   { // Right side (drawn in opposite order of left side, required to make triangles face out the correct way)
     osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    idx->reserve(2 + (2 * numSegs));
     // Add first two vertices
     idx->addElement(1);
     idx->addElement(0);
@@ -778,18 +798,18 @@ void Profile::init3DTexture_()
     // Add triangles, alternating between top and bottom vertices
     for (unsigned int i = 0; i < numSegs; ++i)
     {
-      double thisStep = maxRangeStep * (i + 1);
-      double thisTexStep = texStep * (i + 1);
+      const double thisStep = maxRangeStep * (i + 1);
+      const double thisTexStep = texStep * (i + 1);
 
       // Top vertex
-      verts_->push_back(osg::Vec3(thisStep * cosTheta0, thisStep * sinTheta0, maxSampledHeight)); // 3
+      verts_->push_back(osg::Vec3(thisStep * cosTheta0_, thisStep * sinTheta0_, maxSampledHeight)); // 3
       tcoords->push_back(osg::Vec2(thisTexStep, maxT));
       idx->addElement(vertCount);
       topVerts.push_back(std::pair<int, int>(vertCount, 0));
       ++vertCount;
 
       // Bottom vertex
-      verts_->push_back(osg::Vec3(thisStep * cosTheta0, thisStep * sinTheta0, minSampledHeight)); // 2
+      verts_->push_back(osg::Vec3(thisStep * cosTheta0_, thisStep * sinTheta0_, minSampledHeight)); // 2
       tcoords->push_back(osg::Vec2(thisTexStep, minT));
       idx->addElement(vertCount);
       botVerts.push_back(std::pair<int, int>(vertCount, 0));
@@ -812,6 +832,7 @@ void Profile::init3DTexture_()
 
   { // Left side (drawn in opposite order of right side, required to make triangles face out the correct way)
     osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    idx->reserve(2 + (2 * numSegs));
     // Add first two vertices
     idx->addElement(0);
     idx->addElement(1);
@@ -819,15 +840,15 @@ void Profile::init3DTexture_()
     // Add triangles, alternating between top and bottom vertices
     for (unsigned int i = 0; i < numSegs; ++i)
     {
-      double thisStep = maxRangeStep * (i + 1);
-      double thisTexStep = texStep * (i + 1);
-      verts_->push_back(osg::Vec3(thisStep * cosTheta1, thisStep * sinTheta1, minSampledHeight)); // 2
+      const double thisStep = maxRangeStep * (i + 1);
+      const double thisTexStep = texStep * (i + 1);
+      verts_->push_back(osg::Vec3(thisStep * cosTheta1_, thisStep * sinTheta1_, minSampledHeight)); // 2
       tcoords->push_back(osg::Vec2(thisTexStep, minT));
       idx->addElement(vertCount);
       botVerts[i].second = vertCount;
       ++vertCount;
 
-      verts_->push_back(osg::Vec3(thisStep * cosTheta1, thisStep * sinTheta1, maxSampledHeight)); // 3
+      verts_->push_back(osg::Vec3(thisStep * cosTheta1_, thisStep * sinTheta1_, maxSampledHeight)); // 3
       tcoords->push_back(osg::Vec2(thisTexStep, maxT));
       idx->addElement(vertCount);
       topVerts[i].second = vertCount;
@@ -850,6 +871,7 @@ void Profile::init3DTexture_()
 
   { // Top side (drawn in opposite order of bottom side, required to make triangles face out the correct way)
     osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    idx->reserve(3 + (2 * numSegs));
     // Add the first triangle
     idx->addElement(1); idx->addElement(topVerts[0].first); idx->addElement(topVerts[0].second);
     // Add the rest
@@ -871,6 +893,7 @@ void Profile::init3DTexture_()
 
   { // Bottom side (drawn in opposite order of top side, required to make triangles face out the correct way)
     osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
+    idx->reserve(3 + (2 * numSegs));
     // Add the first triangle
     idx->addElement(0); idx->addElement(botVerts[0].second); idx->addElement(botVerts[0].first);
     // Add the rest
@@ -930,10 +953,8 @@ void Profile::init3DPoints_()
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
   unsigned int minHeightIndex = data_->getHeightIndex(height_);
-  unsigned int maxHeightIndex = data_->getHeightIndex(height_ + displayThickness_);
   // Error check the height index
-  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX ||
-    maxHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
+  if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
     // Invalidly defined profile
     assert(0);
@@ -941,12 +962,7 @@ void Profile::init3DPoints_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  maxHeightIndex = osg::clampBetween(maxHeightIndex, 0u, numHeights - 1);
-
-  simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
-  const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };
-
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
   //If we have no valid thickness assume they want to just display a single voxel
   if (minHeightIndex == maxHeightIndex)
   {
@@ -968,8 +984,12 @@ void Profile::init3DPoints_()
     return;
   }
 
+  simCore::Vec3 tpSphereXYZ;
+  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+
   const unsigned int numVerts = (maxHeightIndex - minHeightIndex + 1) * numRanges;
   verts_->reserve(numVerts);
+  values_->reserve(numVerts);
 
   for (unsigned int r = 0; r < numRanges; r++)
   {
@@ -977,14 +997,18 @@ void Profile::init3DPoints_()
 
     for (unsigned int h = minHeightIndex; h <= maxHeightIndex; h++)
     {
+      const double value = data_->getValueByIndex(h, r);
+      // values <= AREPS_GROUND_VALUE are sentinel values, not actual values.
+      if (value <= AREPS_GROUND_VALUE)
+        continue;
+
       const double height = minHeight + heightStep * h;
       osg::Vec3 v(0, range, height);
       if (sphericalEarth_)
       {
-        adjustSpherical_(v, lla, &tpSphereXYZ);
+        adjustSpherical_(v, tpSphereXYZ);
       }
       verts_->push_back(v);
-      const double value = data_->getValueByIndex(h, r);
       values_->push_back(value);
     }
   }
@@ -1021,214 +1045,385 @@ osg::Image* Profile::createImage_()
   }
   return image;
 }
-const void Profile::buildVoxel_(const double *lla, const simCore::Vec3 *tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry)
+
+//----------------------------------------------------------------------------
+
+// VoxelProcessor for data provided as RAH, with height values in the height data structures of the profile provider
+class Profile::RahVoxelProcessor : public Profile::VoxelProcessor
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
-  const double minRange = data_->getMinRange();
-  const double rangeStep = data_->getRangeStep();
-  const unsigned int numRanges = data_->getNumRanges();
-  // if assert fails, check that init_ ensures that we have a valid provider
-  assert(numRanges > 0);
-
-  const double minHeight = data_->getMinHeight();
-  const double heightStep = data_->getHeightStep();
-  const unsigned int numHeights = data_->getNumHeights();
-  // if assert fails, check that init_ ensures that we have a valid provider
-  assert(numHeights > 0);
-
-  const unsigned int minHeightIndex = heightIndex;
-  const unsigned int maxHeightIndex = heightIndex + 1;
-
-  //Uncommenting this block clamps the RAE to the maximum height instead of just not drawing it.
-  /*
-  minHeightIndex = osg::clampBetween(minHeightIndex, 0u,numHeights-1);
-  maxHeightIndex = osg::clampBetween(maxHeightIndex, 0u,numHeights-1);
-
-  //If we have no valid thickness assume they want to just display a single voxel
-  if (minHeightIndex == maxHeightIndex)
+public:
+  RahVoxelProcessor(const simRF::CompositeProfileProvider& data, double height)
+    : data_(data)
   {
-  if (minHeightIndex == numHeights-1)
-  {
-  //The display height is set to the max height of the profile, so move the min height back one index
-  minHeightIndex = minHeightIndex -1;
-  }
-  else
-  {
-  //The display height is set to the max height of the profile, so move the min height back one index
-  maxHeightIndex = maxHeightIndex +1;
-  }
-  }
-  */
+    minRange_ = data.getMinRange();
+    rangeStep_ = data.getRangeStep();
+    numRanges_ = data.getNumRanges();
+    minHeight_ = data.getMinHeight();
+    heightStep_ = data.getHeightStep();
+    numHeights_ = data.getNumHeights();
+    clearIndexCache();
 
-  //Do nothing if the heights just aren't valid
-  if (minHeightIndex >= numHeights || maxHeightIndex >= numHeights)
-  {
-    return;
+    // interpret user-selected height_ as height at near range, determine elev angle to that height, use that elev angle to draw rae.
+    const double rangeToUse = (minRange_ > 0) ? minRange_ : minRange_ + rangeStep_;
+    heightRangeRatio_ = height / rangeToUse;
   }
 
-  const double h0 = minHeight + heightStep * minHeightIndex;
-  const double h1 = h0 + heightStep;
-
-  unsigned int minRangeIndex = rangeIndex;
-  unsigned int maxRangeIndex = minRangeIndex + 1;
-
-  minRangeIndex = osg::clampBetween(minRangeIndex, 0u, numRanges - 1);
-  maxRangeIndex = osg::clampBetween(maxRangeIndex, 0u, numRanges - 1);
-
-  //If we have no valid thickness assume they want to just display a single voxel
-  if (minRangeIndex == maxRangeIndex)
+  virtual ~RahVoxelProcessor()
   {
-    if (minRangeIndex == numRanges - 1)
+  }
+
+  virtual bool isValid() const
+  {
+    if (numRanges_ < 2 || rangeStep_ <= 0.)
     {
-      minRangeIndex = minRangeIndex - 1;
+      // if assert fails, check that init_ ensures that we have a valid provider
+      assert(0);
+      return false;
     }
-    else
+    return true;
+  }
+
+  virtual int calculateVoxel(unsigned int rangeIndex, VoxelRange& voxelRange, VoxelHeight& nearHeight, VoxelHeight& farHeight) const
+  {
+    if (rangeIndex >= (numRanges_ - 1))
     {
-      maxRangeIndex = maxRangeIndex + 1;
+      // developer error - check caller
+      assert(0);
+      return -1;
     }
+    voxelRange.indexNear = rangeIndex;
+    voxelRange.indexFar = simCore::sdkMin(voxelRange.indexNear + 1, numRanges_ - 1);
+    voxelRange.valNear = minRange_ + (rangeStep_ * voxelRange.indexNear);
+    voxelRange.valFar = voxelRange.valNear + rangeStep_;
+
+    const int rvNear = calculateVoxelHeight_(voxelRange.valNear, nearHeight);
+    if (rvNear < 0)
+      return rvNear;
+    const int rvFar = calculateVoxelHeight_(voxelRange.valFar, farHeight);
+    if (rvFar < 0)
+      return rvFar;
+    return rvNear + rvFar;
   }
 
-  //Do nothing if the ranges just aren't valid
-  if (minRangeIndex >= numRanges || maxRangeIndex >= numRanges)
+  virtual void setIndexCache(unsigned int i2, unsigned int i3, unsigned int i6, unsigned int i7)
   {
-    return;
+    if (i2 == std::numeric_limits<unsigned int>::max() ||
+      i3 == std::numeric_limits<unsigned int>::max() ||
+      i6 == std::numeric_limits<unsigned int>::max() ||
+      i7 == std::numeric_limits<unsigned int>::max())
+    {
+      // developer error - indices must be valid
+      assert(0);
+      cachedIndicesAreValid_ = false;
+      return;
+    }
+
+    cache_.i2 = i2;
+    cache_.i3 = i3;
+    cache_.i6 = i6;
+    cache_.i7 = i7;
+    cachedIndicesAreValid_ = true;
   }
 
-  const double r0 = minRange + rangeStep * minRangeIndex;
-  const double r1 = r0 + rangeStep;
-
-  const double dt0 = -halfBeamWidth_ + M_PI_2;
-  const double dt1 = halfBeamWidth_ + M_PI_2;
-
-  const double cosTheta0 = cos(dt0);
-  const double sinTheta0 = sin(dt0);
-  const double cosTheta1 = cos(dt1);
-  const double sinTheta1 = sin(dt1);
-
-  //Bottom verts
-  osg::Vec3 v0(r0 * cosTheta0, r0 * sinTheta0, h0); // Near right
-  osg::Vec3 v1(r0 * cosTheta1, r0 * sinTheta1, h0); // Near left
-  osg::Vec3 v2(r1 * cosTheta1, r1 * sinTheta1, h0); // Far left
-  osg::Vec3 v3(r1 * cosTheta0, r1 * sinTheta0, h0); // Far right
-
-  //Top verts
-  osg::Vec3 v4(r0 * cosTheta0, r0 * sinTheta0, h1); // Near right
-  osg::Vec3 v5(r0 * cosTheta1, r0 * sinTheta1, h1); // Near left
-  osg::Vec3 v6(r1 * cosTheta1, r1 * sinTheta1, h1); // Far left
-  osg::Vec3 v7(r1 * cosTheta0, r1 * sinTheta0, h1); // Far right
-
-  if (sphericalEarth_)
+  virtual void clearIndexCache()
   {
-    adjustSpherical_(v0, lla, tpSphereXYZ);
-    adjustSpherical_(v1, lla, tpSphereXYZ);
-    adjustSpherical_(v2, lla, tpSphereXYZ);
-    adjustSpherical_(v3, lla, tpSphereXYZ);
-    adjustSpherical_(v4, lla, tpSphereXYZ);
-    adjustSpherical_(v5, lla, tpSphereXYZ);
-    adjustSpherical_(v6, lla, tpSphereXYZ);
-    adjustSpherical_(v7, lla, tpSphereXYZ);
+    cachedIndicesAreValid_ = false;
+    cache_.i2 = std::numeric_limits<unsigned int>::max();
+    cache_.i3 = std::numeric_limits<unsigned int>::max();
+    cache_.i6 = std::numeric_limits<unsigned int>::max();
+    cache_.i7 = std::numeric_limits<unsigned int>::max();
+  }
+
+  virtual int indexCache(VoxelIndexCache& cache) const
+  {
+    if (!cachedIndicesAreValid_)
+      return 1;
+    // setIndexCache guarantees these assertions
+    assert(cache_.i2 != std::numeric_limits<unsigned int>::max());
+    assert(cache_.i3 != std::numeric_limits<unsigned int>::max());
+    assert(cache_.i6 != std::numeric_limits<unsigned int>::max());
+    assert(cache_.i7 != std::numeric_limits<unsigned int>::max());
+    cache = cache_;
+    return 0;
+  }
+
+private:
+  int calculateVoxelHeight_(double rangeVal, VoxelHeight& voxelHeight) const
+  {
+    // calculate ht at near range and elev
+    voxelHeight.valBottom = (rangeVal * heightRangeRatio_);
+    // find the nearest index for this calculated ht
+    voxelHeight.indexBottom = data_.getHeightIndex(voxelHeight.valBottom);
+    if (voxelHeight.indexBottom == CompositeProfileProvider::INVALID_HEIGHT_INDEX || voxelHeight.indexBottom >= numHeights_)
+    {
+      // Invalidly defined profile
+      assert(0);
+      return -1;
+    }
+    voxelHeight.valBottom = minHeight_ + (heightStep_ * voxelHeight.indexBottom);
+    voxelHeight.indexTop = simCore::sdkMin(voxelHeight.indexBottom + 1, numHeights_ - 1);
+    voxelHeight.valTop = minHeight_ + (heightStep_ * voxelHeight.indexTop);
+
+    // return value indicates whether this voxel has reached the top of the data
+    return (voxelHeight.indexTop == (numHeights_ - 1)) ? 1 : 0;
+  }
+
+protected:
+  const simRF::CompositeProfileProvider& data_;
+  double heightRangeRatio_;
+  double minRange_;
+  double rangeStep_;
+  unsigned int numRanges_;
+  double minHeight_;
+  double heightStep_;
+  unsigned int numHeights_;
+  VoxelIndexCache cache_;
+  bool cachedIndicesAreValid_;
+};
+
+//----------------------------------------------------------------------------
+
+// VoxelProcessor for data provided as RAE, with elevation values in the height data structures of the profile provider
+class Profile::RaeVoxelProcessor : public Profile::RahVoxelProcessor
+{
+public:
+  RaeVoxelProcessor(const simRF::CompositeProfileProvider& data, double height)
+    : Profile::RahVoxelProcessor(data, height)
+  {
+    const double minEl = data.getMinHeight();
+    const double elStep = data.getHeightStep();
+
+    // user's height selection is actually an elevation angle
+    double elValBottom = height;
+    // nearest elev index to the elev selected by the user
+    elIndexBottom_ = data.getHeightIndex(elValBottom);
+    // reset to el value at that index
+    elValBottom = minEl + elStep * elIndexBottom_;
+    // note that sin here implies range is slant range; if ground range, then tan() is required
+    heightRangeRatio_ = sin(elValBottom * simCore::DEG2RAD);
+
+    elIndexTop_ = simCore::sdkMin(elIndexBottom_ + 1, numHeights_ - 1);
+    const double elValTop = minEl + elStep * elIndexTop_;
+    // note that sin here implies range is slant range; if ground range, then tan() is required
+    heightRangeRatioTop_ = sin(elValTop * simCore::DEG2RAD);
+  }
+
+  virtual ~RaeVoxelProcessor()
+  {
+  }
+
+  virtual int calculateVoxel(unsigned int rangeIndex, VoxelRange& voxelRange, VoxelHeight& nearHeight, VoxelHeight& farHeight) const
+  {
+    if (rangeIndex >= (numRanges_ - 1))
+    {
+      assert(0);
+      return -1;
+    }
+    voxelRange.indexNear = rangeIndex;
+    voxelRange.indexFar = simCore::sdkMin(voxelRange.indexNear + 1, numRanges_ - 1);
+    voxelRange.valNear = minRange_ + (rangeStep_ * voxelRange.indexNear);
+    voxelRange.valFar = voxelRange.valNear + rangeStep_;
+
+    // calculate ht at near range and elevIndex
+    nearHeight.valBottom = (voxelRange.valNear * heightRangeRatio_);
+    nearHeight.indexBottom = elIndexBottom_;
+    // calculate ht at far range and elev
+    farHeight.valBottom = (voxelRange.valFar * heightRangeRatio_);
+    farHeight.indexBottom = elIndexBottom_;
+
+    // calculate ht at near range and elevIndex
+    nearHeight.valTop = (voxelRange.valNear * heightRangeRatioTop_);
+    nearHeight.indexTop = elIndexTop_;
+    // calculate ht at far range and elev
+    farHeight.valTop = (voxelRange.valFar * heightRangeRatioTop_);
+    farHeight.indexTop = elIndexTop_;
+    return 0;
+  }
+
+protected:
+  unsigned int elIndexBottom_;
+  unsigned int elIndexTop_;
+  double heightRangeRatioTop_;
+};
+
+//----------------------------------------------------------------------------
+
+int Profile::buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphereXYZ, unsigned int rangeIndex, osg::Geometry* geometry)
+{
+  VoxelProcessor::VoxelRange voxelRange;
+  VoxelProcessor::VoxelHeight nearVoxelHeight;
+  VoxelProcessor::VoxelHeight farVoxelHeight;
+  const int rv = vProcessor.calculateVoxel(rangeIndex, voxelRange, nearVoxelHeight, farVoxelHeight);
+  if (rv < 0)
+  {
+    vProcessor.clearIndexCache();
+    return 1;
+  }
+  // rv > 0 indicates: either near or far edge of this voxel is drawn at max height, stop drawing successive voxels.
+
+  // determine if we have valid cached indices to optimize this voxel
+  VoxelProcessor::VoxelIndexCache indexCache;
+  const bool usingCachedIndices = (0 == vProcessor.indexCache(indexCache));
+
+  // process values
+  //v0, v1
+  const double value01 = usingCachedIndices ? (values_->asVector())[indexCache.i2] : data_->getValueByIndex(nearVoxelHeight.indexBottom, voxelRange.indexNear);
+  //v2, v3
+  const double value23 = data_->getValueByIndex(farVoxelHeight.indexBottom, voxelRange.indexFar);
+  //v4, v5
+  const double value45 = usingCachedIndices ? (values_->asVector())[indexCache.i6] : data_->getValueByIndex(nearVoxelHeight.indexTop, voxelRange.indexNear);
+  //v6, v7
+  const double value67 = data_->getValueByIndex(farVoxelHeight.indexTop, voxelRange.indexFar);
+
+  if (value01 <= AREPS_GROUND_VALUE && value23 <= AREPS_GROUND_VALUE && value45 <= AREPS_GROUND_VALUE && value67 <= AREPS_GROUND_VALUE)
+  {
+    // voxel has no data
+    vProcessor.clearIndexCache();
+    return rv;
   }
 
   unsigned int startIndex = verts_->size();
-  const unsigned int i0 = startIndex++;
-  const unsigned int i1 = startIndex++;
+
+  if (!usingCachedIndices)
+  {
+    //v0, v1
+    values_->push_back(value01);
+    values_->push_back(value01);
+    osg::Vec3 v0(voxelRange.valNear * cosTheta0_, voxelRange.valNear * sinTheta0_, nearVoxelHeight.valBottom); // Near right
+    osg::Vec3 v1(voxelRange.valNear * cosTheta1_, voxelRange.valNear * sinTheta1_, nearVoxelHeight.valBottom); // Near left
+    if (sphericalEarth_)
+    {
+      adjustSpherical_(v0, tpSphereXYZ);
+      adjustSpherical_(v1, tpSphereXYZ);
+    }
+    verts_->push_back(v0);
+    verts_->push_back(v1);
+  }
+  const unsigned int i0 = usingCachedIndices ? indexCache.i3 : startIndex++;
+  const unsigned int i1 = usingCachedIndices ? indexCache.i2 : startIndex++;
+
+
+  //v2, v3
+  values_->push_back(value23);
+  values_->push_back(value23);
+  osg::Vec3 v2(voxelRange.valFar * cosTheta1_, voxelRange.valFar * sinTheta1_, farVoxelHeight.valBottom); // Far left
+  osg::Vec3 v3(voxelRange.valFar * cosTheta0_, voxelRange.valFar * sinTheta0_, farVoxelHeight.valBottom); // Far right
+  if (sphericalEarth_)
+  {
+    adjustSpherical_(v2, tpSphereXYZ);
+    adjustSpherical_(v3, tpSphereXYZ);
+  }
+  verts_->push_back(v2);
+  verts_->push_back(v3);
   const unsigned int i2 = startIndex++;
   const unsigned int i3 = startIndex++;
-  const unsigned int i4 = startIndex++;
-  const unsigned int i5 = startIndex++;
+
+
+  if (!usingCachedIndices)
+  {
+    //v4, v5
+    values_->push_back(value45);
+    values_->push_back(value45);
+    osg::Vec3 v4(voxelRange.valNear * cosTheta0_, voxelRange.valNear * sinTheta0_, nearVoxelHeight.valTop); // Near right
+    osg::Vec3 v5(voxelRange.valNear * cosTheta1_, voxelRange.valNear * sinTheta1_, nearVoxelHeight.valTop); // Near left
+    if (sphericalEarth_)
+    {
+      adjustSpherical_(v4, tpSphereXYZ);
+      adjustSpherical_(v5, tpSphereXYZ);
+    }
+    verts_->push_back(v4);
+    verts_->push_back(v5);
+  }
+  const unsigned int i4 = usingCachedIndices ? indexCache.i7 : startIndex++;
+  const unsigned int i5 = usingCachedIndices ? indexCache.i6 : startIndex++;
+
+
+  //v6, v7
+  values_->push_back(value67);
+  values_->push_back(value67);
+  osg::Vec3 v6(voxelRange.valFar * cosTheta1_, voxelRange.valFar * sinTheta1_, farVoxelHeight.valTop); // Far left
+  osg::Vec3 v7(voxelRange.valFar * cosTheta0_, voxelRange.valFar * sinTheta0_, farVoxelHeight.valTop); // Far right
+  if (sphericalEarth_)
+  {
+    adjustSpherical_(v6, tpSphereXYZ);
+    adjustSpherical_(v7, tpSphereXYZ);
+  }
+  verts_->push_back(v6);
+  verts_->push_back(v7);
   const unsigned int i6 = startIndex++;
   const unsigned int i7 = startIndex++;
 
-  verts_->push_back(v0);
-  verts_->push_back(v1);
-  verts_->push_back(v2);
-  verts_->push_back(v3);
-  verts_->push_back(v4);
-  verts_->push_back(v5);
-  verts_->push_back(v6);
-  verts_->push_back(v7);
-
-  //v0, v1
-  double value = data_->getValueByIndex(minHeightIndex, minRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
-
-  //v2, v3
-  value = data_->getValueByIndex(minHeightIndex, maxRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
-
-  //v4, v5
-  value = data_->getValueByIndex(maxHeightIndex, minRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
-
-  //v6, v7
-  value = data_->getValueByIndex(maxHeightIndex, maxRangeIndex);
-  values_->push_back(value);
-  values_->push_back(value);
 
   // Create a triangle strip set to wrap the voxel
   osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
-
+  idx->reserve(14);
   // Back Bottom
-  idx->push_back(i3); idx->push_back(i2);
+  idx->push_back(i3);
+  idx->push_back(i2);
 
   // Back to top
-  idx->push_back(i7); idx->push_back(i6);
+  idx->push_back(i7);
+  idx->push_back(i6);
 
   // Top to left
-  idx->push_back(i5); idx->push_back(i2);
+  idx->push_back(i5);
+  idx->push_back(i2);
 
   // Left to bottom
-  idx->push_back(i1); idx->push_back(i3);
+  idx->push_back(i1);
+  idx->push_back(i3);
 
   // Bottom to right
-  idx->push_back(i0); idx->push_back(i7);
+  idx->push_back(i0);
+  idx->push_back(i7);
 
   // Right to top
-  idx->push_back(i4); idx->push_back(i5);
+  idx->push_back(i4);
+  idx->push_back(i5);
 
   // Top to front
-  idx->push_back(i0); idx->push_back(i1);
+  idx->push_back(i0);
+  idx->push_back(i1);
 
   geometry->addPrimitiveSet(idx);
+
+  // cache the far indices for next voxel segment
+  vProcessor.setIndexCache(i2, i3, i6, i7);
+  return rv;
 }
 
 void Profile::initRAE_()
 {
   assert(data_.valid() && data_->getActiveProvider() != NULL);
-  const unsigned int numRanges = data_->getNumRanges();
-  // if assert fails, check that init_ ensures that we have a valid provider
-  assert(numRanges > 0);
 
-  const double rangeStep = data_->getRangeStep();
+  RahVoxelProcessor vProcessor(*(data_.get()), height_);
+  if (!vProcessor.isValid())
+    return;
 
   simCore::Vec3 tpSphereXYZ;
+  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+
+  const unsigned int numRanges = data_->getNumRanges();
+  const size_t numVoxels = (numRanges - 1);
+  const size_t vertsPerVoxel = 8;
+  verts_->reserve(numVoxels * vertsPerVoxel);
+  values_->reserve(numVoxels * vertsPerVoxel);
+
   osg::Geometry* geometry = new osg::Geometry();
-  const double lla[3] = { refCoord_.y(), refCoord_.x(), refCoord_.z() };
-  const double sinElevAngle = sin(elevAngle_);
-  simCore::geodeticToSpherical(refCoord_.y(), refCoord_.x(), refCoord_.z(), tpSphereXYZ);
-  for (unsigned int i = 0; i < numRanges - 1; ++i)
+
+  // create an RAE visualization by using elev angle and range data to generate height
+  for (unsigned int r = 0; r < (numRanges - 1); ++r)
   {
-    const double height = height_ + (i * rangeStep * sinElevAngle);
-    const unsigned int heightIndex = data_->getHeightIndex(height);
-    // Error check the height index
-    if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
-    {
-      // Invalidly defined profile
-      assert(0);
-      return;
-    }
-    buildVoxel_(lla, &tpSphereXYZ, heightIndex, i, geometry);
+    // build voxel that spans from rangeIndex r to rangeIndex r+1
+    const int rv = buildVoxel_(vProcessor, tpSphereXYZ, r, geometry);
+    if (rv != 0)
+      break;
   }
 
   geometry->setUseVertexBufferObjects(true);
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_.get());
-
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-
   geode_->addDrawable(geometry);
 }
 

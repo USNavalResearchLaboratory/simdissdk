@@ -29,13 +29,18 @@
 #include "simVis/Entity.h"
 #include "simVis/Projector.h"
 
+#undef LC
 #define LC "[EntityNode] "
+
+/// The highest available Level of Detail from ElevationPool
+static const unsigned int MAX_LOD = 23;
 
 //----------------------------------------------------------------------------
 namespace simVis
 {
 
 CoordSurfaceClamping::CoordSurfaceClamping()
+  : useMaxElevPrec_(false)
 {}
 
 CoordSurfaceClamping::~CoordSurfaceClamping()
@@ -44,7 +49,7 @@ CoordSurfaceClamping::~CoordSurfaceClamping()
 
 void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
 {
-  // nothing to do if we don't have a valid map node
+  // nothing to do if we don't have valid ways of accessing elevation
   if (!mapNode_.valid())
   {
     assert(0); // called this method without setting the map node
@@ -64,13 +69,27 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
   else
     llaCoord = coord;
 
-  double hamsl = 0.0; // not used
-  double hae = 0.0; // height above ellipsoid, the rough elevation
+  // If getting the elevation fails, default to 0 to clamp to sea level
+  double elevation = 0;
 
-  if (mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, &hamsl, &hae))
-    llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), hae);
+  // Both methods for getting terrain elevation have drawbacks that make them undesirable in certain situations. SIM-10423
+  // getHeight() can give inaccurate results depending on how much map data is loaded into the scene graph, while ElevationEnvelope can be prohibitively slow if there are many clamped entities
+  if (useMaxElevPrec_ && envelope_.valid())
+  {
+    double hae = envelope_->getElevation(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG);
+    if (hae != NO_DATA_VALUE)
+      elevation = hae;
+  }
   else
-    llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), 0.0);  // Assume over the ocean and clamp to zero
+  {
+    double hamsl = 0.0; // not used
+    double hae = 0.0; // height above ellipsoid, the rough elevation
+
+    if (mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, &hamsl, &hae))
+      elevation = hae;
+  }
+
+  llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), elevation);
 
   // convert back to ECEF if necessary
   if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
@@ -87,6 +106,26 @@ bool CoordSurfaceClamping::isValid() const
 void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 {
   mapNode_ = map;
+  if (mapNode_.valid() && useMaxElevPrec_)
+    envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
+  else
+    envelope_ = NULL;
+}
+
+void CoordSurfaceClamping::setUseMaxElevPrec(bool useMaxElevPrec)
+{
+  if (useMaxElevPrec_ == useMaxElevPrec)
+    return;
+
+  useMaxElevPrec_ = useMaxElevPrec;
+  if (useMaxElevPrec_ && mapNode_.valid())
+  {
+    // Envelope should not be valid if useMaxElevPrec was just turned on
+    assert(!envelope_.valid());
+    envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
+  }
+  else
+    envelope_ = NULL;
 }
 
 /////////////////////////////////////////////////////////////////////////////////

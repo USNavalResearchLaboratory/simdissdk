@@ -131,12 +131,12 @@ void TimeSliderClockBinding::valueChanged_(int sliderPos)
   assert(sender() == slider_); // Only valid sender of this signal is our slider
   if (clock_ == NULL)
     return;
-  simCore::Seconds deltaTime = clock_->endTime() - clock_->startTime();
+  const simCore::Seconds& deltaTime = clock_->endTime() - clock_->startTime();
   if (deltaTime == 0)
     return;
 
   // Calculate the new time based on slider min/max
-  double sliderSize = slider_->maximum() - slider_->minimum();
+  const double sliderSize = slider_->maximum() - slider_->minimum();
   const double newTime = ((sliderPos - slider_->minimum())/ sliderSize) * deltaTime + clock_->startTime().secondsSinceRefYear();
   // Block signals from the slider to prevent loopback
   simQt::ScopedSignalBlocker blockSignals(*slider_);
@@ -170,13 +170,12 @@ void TimeSliderClockBinding::updateSliderTime_(const simCore::TimeStamp &t)
   assert(clock_ != NULL); // Should not get this notification unless clock_ is non-NULL
   if (clock_ == NULL || clock_->endTime() == simCore::INFINITE_TIME_STAMP)
     return;
-  simCore::Seconds deltaTime = clock_->endTime() - clock_->startTime();
+  const simCore::Seconds& deltaTime = clock_->endTime() - clock_->startTime();
   if (deltaTime <= 0)
     return;
 
   // Calculate the percentage from 0.0 to 1.0 of time
-  const double currentTime = clock_->currentTime().secondsSinceRefYear(clock_->startTime().referenceYear()).Double();
-  const double percentTime = (currentTime - clock_->startTime().secondsSinceRefYear()) / deltaTime;
+  const double percentTime = (clock_->currentTime() - clock_->startTime()).Double() / deltaTime;
   // Block signals from the slider to prevent loopback
   simQt::ScopedSignalBlocker blockSignals(*slider_);
   slider_->setValue(static_cast<int>(percentTime * (slider_->maximum() - slider_->minimum()) + slider_->minimum()));

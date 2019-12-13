@@ -19,16 +19,16 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarthAnnotation/LocalGeometryNode"
-#include "osgEarthFeatures/GeometryCompiler"
-#include "osgEarthSymbology/GeometryFactory"
+#include "osgEarth/LocalGeometryNode"
+#include "osgEarth/GeometryCompiler"
+#include "osgEarth/GeometryFactory"
 #include "simVis/GOG/Ellipse.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace osgEarth::Features;
+using namespace osgEarth;
 
 namespace simVis { namespace GOG {
 
@@ -57,10 +57,10 @@ GogNodeInterface* Ellipse::deserialize(const ParsedShape& parsedShape,
   }
 
   const Angle rotation(0., Units::DEGREES); // Rotation handled by parameters in GOG_ORIENT
-  osgEarth::Symbology::GeometryFactory gf;
+  osgEarth::GeometryFactory gf;
   Geometry* shape = gf.createEllipse(osg::Vec3d(0, 0, 0), minorRadius, majorRadius, rotation);
 
-  osgEarth::Annotation::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = NULL;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -68,7 +68,7 @@ GogNodeInterface* Ellipse::deserialize(const ParsedShape& parsedShape,
     if (p.geometryRequiresClipping())
       Utils::configureStyleForClipping(p.style_);
 
-    node = new osgEarth::Annotation::LocalGeometryNode(shape, p.style_);
+    node = new osgEarth::LocalGeometryNode(shape, p.style_);
     node->setMapNode(mapNode);
   }
   else

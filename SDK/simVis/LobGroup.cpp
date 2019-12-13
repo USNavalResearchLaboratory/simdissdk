@@ -39,6 +39,7 @@
 #include "simVis/Utils.h"
 #include "simVis/LobGroup.h"
 
+#undef LC
 #define LC "[simVis::LobGroup] "
 
 namespace

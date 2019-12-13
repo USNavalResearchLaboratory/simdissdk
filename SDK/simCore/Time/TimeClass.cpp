@@ -31,6 +31,8 @@
 
 namespace simCore {
 
+static const unsigned int SECPERYEAR = SECPERDAY * 365; // seconds in a standard non-leap year: 31536000
+static const int MAX_FIX = MAX_TIME_YEAR - MIN_TIME_YEAR + 1;
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
@@ -38,11 +40,25 @@ namespace simCore {
 
 void Seconds::fix_()
 {
+  // ensure that fraction is within precision limits
   if ((fraction_ >= static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT)) ||
     (fraction_ <= -static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT)))
   {
     seconds_ += (fraction_ / static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT));
     fraction_ = fraction_ % static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT);
+  }
+
+  // ensure that Seconds has a single representation for all equivalent values.
+  // convention adopted here is: fix_() ensures that fraction is always positive.
+  // this entails that once fix_()'d:
+  //   Seconds::getSeconds() == floor(Seconds::Double())
+  //   for negative non-integer values: Seconds::getSeconds() != (int)Seconds::Double()
+  //   this might be unexpected behavior, especially for negative values.
+
+  if (fraction_ < 0)
+  {
+    seconds_--;
+    fraction_ += static_cast<int>(INPUT_CONV_FACTOR_PREC_LIMIT);
   }
 }
 
@@ -139,6 +155,20 @@ Seconds Seconds::operator / (const Seconds& time) const
   return Seconds(Double() / time.Double());
 }
 
+//------------------------------------------------------------------------
+
+TimeCompVal Seconds::compare(const Seconds& time) const
+{
+  if (seconds_ > time.seconds_)
+    return TCV_GREATER;
+  if (seconds_ < time.seconds_)
+    return TCV_LESS;
+  if (fraction_ > (time.fraction_ + 1))
+    return TCV_GREATER;
+  if ((fraction_ + 1) < time.fraction_)
+    return TCV_LESS;
+  return TCV_EQUAL;
+}
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
@@ -153,71 +183,107 @@ TimeStamp::TimeStamp()
 
 //------------------------------------------------------------------------
 
-TimeStamp::TimeStamp(int refYear, Seconds secondsSinceRefYear)
+TimeStamp::TimeStamp(int refYear, const Seconds& secondsSinceRefYear)
 {
   setTime(refYear, secondsSinceRefYear);
 }
 
 //------------------------------------------------------------------------
 
+int TimeStamp::fixRequired_() const
+{
+  const double secondsSinceRefYear = secondsSinceRefYear_.Double();
+  if (secondsSinceRefYear < 0.)
+    return 1;
+  const double secondsInRefYear = SECPERDAY * daysPerYear(referenceYear_);
+  return (secondsSinceRefYear < secondsInRefYear) ?  0 : 2;
+}
+
+//------------------------------------------------------------------------
+
 void TimeStamp::fix_()
 {
-  // Test for Infinite time
   if (referenceYear_ == INFINITE_TIME_YEAR)
   {
     secondsSinceRefYear_ = ZERO_SECONDS;
     return;
   }
-
-  double secondsPerYear = SECPERDAY * daysPerYear(referenceYear_);
-  const int MAX_FIX = MAX_TIME_YEAR - MIN_TIME_YEAR + 1;
-  int counter = 0;
-
-  while ((secondsSinceRefYear_ >= (Seconds)secondsPerYear) && (counter++ < MAX_FIX))
-  {
-    secondsSinceRefYear_ -= secondsPerYear;
-    secondsPerYear = SECPERDAY * daysPerYear(++referenceYear_);
-  }
-
-  while ((secondsSinceRefYear_ < ZERO_SECONDS) && (counter++ < MAX_FIX))
-  {
-    secondsPerYear = SECPERDAY * daysPerYear(--referenceYear_);
-    secondsSinceRefYear_ += secondsPerYear;
-  }
-
-  // Bad data made it in
-  if (counter >= MAX_FIX)
-  {
-    if (secondsSinceRefYear_ < ZERO_SECONDS)
-    {
-      *this = MIN_TIME_STAMP;
-    }
-    else
-    {
-      *this = MAX_TIME_STAMP;
-    }
-  }
-  else if (referenceYear_ < MIN_TIME_YEAR)
+  if (referenceYear_ < MIN_TIME_YEAR)
   {
     *this = MIN_TIME_STAMP;
+    return;
   }
-  else if (referenceYear_ > MAX_TIME_YEAR)
+  if (referenceYear_ > MAX_TIME_YEAR)
   {
     *this = MAX_TIME_STAMP;
+    return;
   }
+  if (secondsSinceRefYear_ == ZERO_SECONDS)
+    return;
+  if (0 == fixRequired_())
+    return;
+
+  // treat all intervening years as non-leap years
+  const double years = floor(secondsSinceRefYear_.Double() / SECPERYEAR);
+  if (fabs(years) > MAX_FIX)
+  {
+    if (years < 0)
+    {
+      *this = MIN_TIME_STAMP;
+      return;
+    }
+    *this = MAX_TIME_STAMP;
+    return;
+  }
+
+  const int64_t seconds = static_cast<int64_t>(years * SECPERYEAR);
+  secondsSinceRefYear_ -= Seconds(seconds, 0);
+  int newReferenceYear = referenceYear_ + static_cast<int>(years);
+  // now account for the leap days in those years
+  const int leapDays = simCore::leapDays(newReferenceYear - 1900) - simCore::leapDays(referenceYear_ - 1900);
+  secondsSinceRefYear_ -= Seconds(leapDays * SECPERDAY, 0);
+
+  // leap days calculation may result in reference year needing to be corrected +/- 1
+  const int validFixResult = fixRequired_();
+  if (validFixResult == 1)
+  {
+    newReferenceYear--;
+    const int secondsInRefYear = SECPERDAY * daysPerYear(newReferenceYear);
+    secondsSinceRefYear_ += Seconds(secondsInRefYear, 0);
+  }
+  else if (validFixResult == 2)
+  {
+    const int secondsInRefYear = SECPERDAY * daysPerYear(newReferenceYear);
+    newReferenceYear++;
+    secondsSinceRefYear_ += Seconds(secondsInRefYear, 0);
+  }
+  if (newReferenceYear < MIN_TIME_YEAR)
+  {
+    *this = MIN_TIME_STAMP;
+    return;
+  }
+  if (newReferenceYear > MAX_TIME_YEAR)
+  {
+    *this = MAX_TIME_STAMP;
+    return;
+  }
+  referenceYear_ = newReferenceYear;
+  return;
 }
 
 //------------------------------------------------------------------------
 
 Seconds TimeStamp::secondsSinceRefYear(int refYear) const
 {
-  TimeStamp ref(refYear, 0);
+  if (referenceYear_ == refYear)
+    return secondsSinceRefYear_;
+  const TimeStamp ref(refYear, ZERO_SECONDS);
   return *this - ref;
 }
 
 //------------------------------------------------------------------------
 
-void TimeStamp::setTime(int refYear, Seconds secondsSinceRefYear)
+void TimeStamp::setTime(int refYear, const Seconds& secondsSinceRefYear)
 {
   // In an attempt to catch parameter reversal problems, we are also checking the
   // actual year of the date.  It should generally be between 1900 and INFINITE_TIME_YEAR.  This is
@@ -259,21 +325,20 @@ Seconds TimeStamp::operator - (const TimeStamp& t) const
 
   int year = 0;
   Seconds secondsValue;
-  double dSecPerDay = SECPERDAY;
 
   if (yearDifference > 0)
   {
-    secondsValue = ((Seconds)(dSecPerDay * daysPerYear(t.referenceYear_))) - t.secondsSinceRefYear_;
+    secondsValue = Seconds(SECPERDAY * daysPerYear(t.referenceYear_), 0) - t.secondsSinceRefYear_;
     for (year = t.referenceYear_ + 1; year < referenceYear_; ++year)
-      secondsValue += dSecPerDay * daysPerYear(year);
+      secondsValue += Seconds(SECPERDAY * daysPerYear(year), 0);
     secondsValue += secondsSinceRefYear_;
   }
   else if (yearDifference < 0)
   {
-    secondsValue = (Seconds)(-1.0) * (t.secondsSinceRefYear_);
+    secondsValue = (Seconds(-1, 0) * t.secondsSinceRefYear_);
     for (year = t.referenceYear_ - 1; year > referenceYear_; --year)
-      secondsValue -= dSecPerDay * daysPerYear(year);
-    secondsValue -= (Seconds)(dSecPerDay * daysPerYear(referenceYear_)) - secondsSinceRefYear_;
+      secondsValue -= Seconds(SECPERDAY * daysPerYear(year), 0);
+    secondsValue -= (Seconds(SECPERDAY * daysPerYear(referenceYear_), 0) - secondsSinceRefYear_);
   }
   else
   {
@@ -287,29 +352,25 @@ Seconds TimeStamp::operator - (const TimeStamp& t) const
 
 TimeStamp TimeStamp::operator - (const Seconds& s) const
 {
-  TimeStamp tempTime(referenceYear_, secondsSinceRefYear_ - s);
-  tempTime.fix_();
-  return tempTime;
+  return TimeStamp(referenceYear_, secondsSinceRefYear_ - s);
 }
 
 //------------------------------------------------------------------------
 
 TimeStamp TimeStamp::operator + (const Seconds& s) const
 {
-  TimeStamp tempTime(referenceYear_, secondsSinceRefYear_ + s);
-  tempTime.fix_();
-  return tempTime;
+  return TimeStamp(referenceYear_, secondsSinceRefYear_ + s);
 }
 
 //------------------------------------------------------------------------
 
 TimeCompVal TimeStamp::compare_(const TimeStamp& time) const
 {
-  if (referenceYear_ > time.referenceYear_) return TCV_GREATER;
-  if (referenceYear_ < time.referenceYear_) return TCV_LESS;
-  if (simCore::areEqual(secondsSinceRefYear_, time.secondsSinceRefYear_, 1e-7))
-    return TCV_EQUAL;
-  return (secondsSinceRefYear_ > time.secondsSinceRefYear_) ? TCV_GREATER : TCV_LESS;
+  if (referenceYear_ > time.referenceYear_)
+    return TCV_GREATER;
+  if (referenceYear_ < time.referenceYear_)
+    return TCV_LESS;
+  return secondsSinceRefYear_.compare(time.secondsSinceRefYear_);
 }
 
 //------------------------------------------------------------------------
@@ -322,4 +383,22 @@ double getFactor(const TimeStamp &lowVal, const TimeStamp &exactVal, const TimeS
   return (exactVal - lowVal) / (highVal - lowVal);
 }
 
+//------------------------------------------------------------------------
+
+void TimeStamp::getTimeComponents(unsigned int& day, unsigned int& hour, unsigned int& min, unsigned int& sec) const
+{
+  int64_t time = secondsSinceRefYear().getSeconds();
+  // TimeStamp fix() always normalizes Seconds to a positive number.
+  assert(time >= 0);
+  day = static_cast<unsigned int>(time / simCore::SECPERDAY);
+
+  time -= (day*simCore::SECPERDAY);
+  hour = static_cast<unsigned int>(time / simCore::SECPERHOUR);
+
+  time -= (hour*simCore::SECPERHOUR);
+  min = static_cast<unsigned int>(time / simCore::SECPERMIN);
+
+  time -= (min*simCore::SECPERMIN);
+  sec = static_cast<unsigned int>(time);
+}
 }

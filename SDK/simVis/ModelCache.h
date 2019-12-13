@@ -160,7 +160,7 @@ private:
   osg::observer_ptr<SequenceTimeUpdater> sequenceTimeUpdater_;
 
   /// Typedef for Cache class instance
-  typedef osgEarth::LRUCache<std::string, Entry> Cache;
+  typedef osgEarth::Util::LRUCache<std::string, Entry> Cache;
   /// Maps string name to cache entry
   Cache cache_;
 

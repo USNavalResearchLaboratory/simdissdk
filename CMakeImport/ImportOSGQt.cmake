@@ -1,5 +1,5 @@
-# Setup OSGEarth library
-# Setting the OSGEARTH_DIR environment variable will allow use of a custom built library
+# Setup osgQt library
+# Setting the OSGQT_DIR environment variable will allow use of a custom built library
 
 set(OSGQT_FOUND FALSE)
 

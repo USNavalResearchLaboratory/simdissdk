@@ -19,10 +19,10 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarthSymbology/GeometryFactory"
-#include "osgEarthFeatures/GeometryCompiler"
-#include "osgEarthAnnotation/FeatureNode"
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/GeometryFactory"
+#include "osgEarth/GeometryCompiler"
+#include "osgEarth/FeatureNode"
+#include "osgEarth/LocalGeometryNode"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
@@ -30,10 +30,10 @@
 #include "simVis/GOG/Utils.h"
 #include "simVis/Constants.h"
 
+#undef LC
 #define LC "[GOG::Line] "
 
-using namespace osgEarth::Features;
-using namespace osgEarth::Annotation;
+using namespace osgEarth;
 
 namespace simVis { namespace GOG {
 
@@ -55,12 +55,12 @@ GogNodeInterface* Line::deserialize(const ParsedShape& parsedShape,
       Utils::configureStyleForClipping(p.style_);
 
     // force non-zero crease angle for extruded tesselated line, we want to only draw posts at actual vertices
-    if (p.style_.has<osgEarth::Symbology::LineSymbol>() &&
-      p.style_.getSymbol<osgEarth::Symbology::LineSymbol>()->tessellation() > 0 &&
-      p.style_.has<osgEarth::Symbology::ExtrusionSymbol>() &&
-      !p.style_.getSymbol<osgEarth::Symbology::LineSymbol>()->creaseAngle().isSet())
+    if (p.style_.has<osgEarth::LineSymbol>() &&
+      p.style_.getSymbol<osgEarth::LineSymbol>()->tessellation() > 0 &&
+      p.style_.has<osgEarth::ExtrusionSymbol>() &&
+      !p.style_.getSymbol<osgEarth::LineSymbol>()->creaseAngle().isSet())
     {
-      p.style_.getSymbol<osgEarth::Symbology::LineSymbol>()->creaseAngle() = 1.0f;
+      p.style_.getSymbol<osgEarth::LineSymbol>()->creaseAngle() = 1.0f;
     }
 
     if (p.hasAbsoluteGeometry())

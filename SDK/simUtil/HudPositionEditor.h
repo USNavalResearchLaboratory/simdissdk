@@ -210,13 +210,17 @@ public:
 
   /** Adds a window to the HUD Position Manager */
   void addWindow(const std::string& name, const osg::Vec2d& defaultPositionPct, HudPositionManager::RepositionCallback* reposCallback);
+  /** Removes a window from the HUD Position Manager */
+  int removeWindow(const std::string& name);
   /** Resizes a window in the HUD Position Manager */
-  void setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
+  int setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx);
 
   /** Changes a single window's position */
-  void setPosition(const std::string& name, const osg::Vec2d& positionPct);
+  int setPosition(const std::string& name, const osg::Vec2d& positionPct);
   /** Resets all windows to default locations */
   void resetAllPositions();
+  /** Resets the position of a single window */
+  int resetPosition(const std::string& name);
 
 private:
   osg::ref_ptr<simUtil::HudPositionManager> hud_;

@@ -22,7 +22,7 @@
 #include <limits>
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osgEarthSymbology/MeshConsolidator"
+#include "osgEarth/MeshConsolidator"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/EM/AntennaPattern.h"
@@ -632,7 +632,7 @@ void AntennaNode::render_()
   geode->addDrawable(antGeom);
 
   // optimize the geode:
-  osgEarth::Symbology::MeshConsolidator::run(*geode);
+  osgEarth::MeshConsolidator::run(*geode);
   addChild(geode);
   applyScale_();
 }

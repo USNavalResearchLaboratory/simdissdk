@@ -1,3 +1,4 @@
+# DB plugin no longer needed with osgEarth 3.x
 if(SQLITE3_LIBRARY_RELEASE_NAME)
     add_subdirectory(OSGEarthDBDriver)
 else()

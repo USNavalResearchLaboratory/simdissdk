@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <set>
 
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/LocalGeometryNode"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Exception.h"
@@ -43,7 +43,6 @@
 #include "simVis/Utils.h"
 
 using namespace osgEarth;
-using namespace osgEarth::Symbology;
 
 namespace
 {
@@ -117,7 +116,7 @@ std::string Parser::parseGogColor_(const std::string& c, bool isHex) const
   if (!isHex)
   {
     Color color;
-    std::map<std::string, osgEarth::Symbology::Color>::const_iterator it = colors_.find(simCore::lowerCase(c));
+    std::map<std::string, simVis::Color>::const_iterator it = colors_.find(simCore::lowerCase(c));
     if (it != colors_.end())
       color = it->second;
     else
@@ -144,7 +143,7 @@ std::string Parser::parseGogGeodeticAngle_(const std::string& input) const
   return "0.0";
 }
 
-void Parser::addOverwriteColor(const std::string& key, osgEarth::Symbology::Color color)
+void Parser::addOverwriteColor(const std::string& key, simVis::Color color)
 {
   if (key.empty())
     return;
@@ -318,6 +317,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       validStartEndBlock = (tokens[0] == "start");
       currentMetaData.metadata.clear();
       currentMetaData.shape = GOG_UNKNOWN;
+      currentMetaData.lineNumber = lineNumber;
       currentMetaData.clearSetFields();
       current.reset();
       current.setLineNumber(lineNumber);
@@ -338,6 +338,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
           positionLines.clear();
           type = SHAPE_UNKNOWN;
           currentMetaData.shape = GOG_UNKNOWN;
+          currentMetaData.lineNumber = lineNumber;
           currentMetaData.clearSetFields();
           state.apply(current);
           output.push_back(current);
@@ -386,7 +387,8 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       tokens[0] == "line"          ||
       tokens[0] == "poly"          ||
       tokens[0] == "polygon"       ||
-      tokens[0] == "linesegs"
+      tokens[0] == "linesegs"      ||
+      tokens[0] == "cone"
       )
     {
       if (currentMetaData.shape != GOG_UNKNOWN)
@@ -1045,7 +1047,7 @@ void Parser::updateMetaData_(const ModifierState& state, const std::string& refO
       currentMetaData.metadata += positionLines;
 }
 
-bool Parser::createGOGs_(const std::vector<ParsedShape>& parsedShapes, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::createGOGsFromShapes(const std::vector<ParsedShape>& parsedShapes, const GOGNodeType& nodeType, const std::vector<GogMetaData>& metaData, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
 {
   // add exception handling prior to passing data to renderer
   SAFETRYBEGIN;
@@ -1077,16 +1079,21 @@ bool Parser::createGOGs_(const std::vector<ParsedShape>& parsedShapes, const GOG
   return false;
 }
 
-bool Parser::createGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::createGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData, std::vector<ParsedShape>* parsedShapes, std::vector<GogMetaData>* metaData) const
 {
   // first, parse from GOG into Config
-  std::vector<ParsedShape> parsedShapes;
-  std::vector<GogMetaData> metaData;
-  if (!parse(input, parsedShapes, metaData))
+  std::vector<ParsedShape> parsedShapesLocal;
+  std::vector<GogMetaData> metaDataLocal;
+  if (!parse(input, parsedShapesLocal, metaDataLocal))
     return false;
 
   // then parse from Config into Annotation.
-  return createGOGs_(parsedShapes, nodeType, metaData, output, followData);
+  const bool rv = createGOGsFromShapes(parsedShapesLocal, nodeType, metaDataLocal, output, followData);
+  if (parsedShapes)
+    parsedShapes->swap(parsedShapesLocal);
+  if (metaData)
+    metaData->swap(metaDataLocal);
+  return rv;
 }
 
 GogShape Parser::getShapeFromKeyword(const std::string& keyword)
@@ -1119,6 +1126,8 @@ GogShape Parser::getShapeFromKeyword(const std::string& keyword)
     return GOG_LINESEGS;
   if (keyword == "latlonaltbox")
     return GOG_LATLONALTBOX;
+  if (keyword == "cone")
+    return GOG_CONE;
   return GOG_UNKNOWN;
 }
 
@@ -1152,15 +1161,17 @@ std::string Parser::getKeywordFromShape(GogShape shape)
     return "linesegs";
   case GOG_LATLONALTBOX:
     return "latlonaltbox";
+  case GOG_CONE:
+    return "cone";
   case GOG_UNKNOWN:
     return "";
   }
   return "";
 }
 
-bool Parser::loadGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData) const
+bool Parser::loadGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayNodeVector& output, std::vector<GogFollowData>& followData, std::vector<ParsedShape>* parsedShapes, std::vector<GogMetaData>* metaData) const
 {
-  return createGOGs(input, nodeType, output, followData);
+  return createGOGs(input, nodeType, output, followData, parsedShapes, metaData);
 }
 
 void Parser::printError_(size_t lineNumber, const std::string& errorText) const

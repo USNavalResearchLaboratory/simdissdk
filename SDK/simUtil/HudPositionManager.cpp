@@ -157,7 +157,7 @@ int HudPositionManager::removeWindow(const std::string& name)
   if (i == allWindows_.end())
     return 1;
   // Assertion failure means removal of a window that was already removed
-  assert(i->second->repositionCallback() == NULL);
+  assert(i->second->repositionCallback() != NULL);
   i->second->setRepositionCallback(NULL);
   return 0;
 }
@@ -201,11 +201,15 @@ void HudPositionManager::resetAllPositions()
     i->second->setPosition(i->second->defaultPosition());
 }
 
-int HudPositionManager::getAllWindows(std::vector<std::string>& names) const
+int HudPositionManager::getAllWindows(std::vector<std::string>& names, bool activeOnly) const
 {
   names.clear();
   for (auto i = allWindows_.begin(); i != allWindows_.end(); ++i)
-    names.push_back(i->first);
+  {
+    // Active callbacks have a reposition callback
+    if (!activeOnly || i->second->repositionCallback() != NULL)
+      names.push_back(i->first);
+  }
   return 0;
 }
 

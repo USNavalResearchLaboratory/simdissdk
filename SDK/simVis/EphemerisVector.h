@@ -22,7 +22,7 @@
 #ifndef SIMVIS_EPHEMERISVECTOR_H
 #define SIMVIS_EPHEMERISVECTOR_H
 
-#include "osgEarthUtil/Ephemeris"
+#include "osgEarth/Ephemeris"
 #include "simCore/Common/Common.h"
 #include "simCore/Time/TimeClass.h"
 #include "simData/DataTypes.h"
@@ -93,7 +93,7 @@ private:
 
   osg::ref_ptr<osgEarth::LineGroup> geomGroup_;
   osg::observer_ptr<const PlatformModelNode> modelNode_;
-  osg::ref_ptr<osgEarth::Util::Ephemeris> ephemeris_;
+  osg::ref_ptr<osgEarth::Ephemeris> ephemeris_;
 
   /// Last clock time when we rebuilt the line; detect time drift to rebuild line for entites that don't move
   simCore::TimeStamp lastUpdateTime_;

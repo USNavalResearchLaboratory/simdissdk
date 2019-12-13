@@ -19,7 +19,6 @@ set(SHADER_FILES
     DisableDepthOnAlpha.frag.glsl
     Flashing.frag.glsl
     GlowHighlight.frag.glsl
-    LineDrawable.glsl
     OverrideColor.frag.glsl
     OverheadMode.vert.glsl
     Picker.vert.glsl
@@ -55,7 +54,9 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}BillboardAutoTransform.h
     ${VIS_INC}BoxGraphic.h
     ${VIS_INC}BoxZoomMouseHandler.h
+    ${VIS_INC}BrightnessContrastColorFilter.h
     ${VIS_INC}CentroidManager.h
+    ${VIS_INC}ChromaKeyColorFilter.h
     ${VIS_INC}ClassificationBanner.h
     ${VIS_INC}ClockOptions.h
     ${VIS_INC}Compass.h
@@ -63,6 +64,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
+    ${VIS_INC}DBFormat.h
     ${VIS_INC}DBOptions.h
     ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
@@ -80,7 +82,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
-    ${VIS_INC}LineDrawable.h
     ${VIS_INC}LobGroup.h
     ${VIS_INC}LocalGrid.h
     ${VIS_INC}Locator.h
@@ -92,6 +93,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ObjectSelectionHandler.h
     ${VIS_INC}OverheadMode.h
     ${VIS_INC}OverrideColor.h
+    ${VIS_INC}LayerRefreshCallback.h
     ${VIS_INC}Picker.h
     ${VIS_INC}PlanetariumViewTool.h
     ${VIS_INC}Platform.h
@@ -162,6 +164,7 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Annotation.h
     ${VIS_INC}GOG/Arc.h
     ${VIS_INC}GOG/Circle.h
+    ${VIS_INC}GOG/Cone.h
     ${VIS_INC}GOG/Cylinder.h
     ${VIS_INC}GOG/Ellipse.h
     ${VIS_INC}GOG/Ellipsoid.h
@@ -184,6 +187,7 @@ set(VIS_HEADERS_GOG
 )
 
 set(VIS_SOURCES_CORE
+    ${VIS_SRC}AlphaColorFilter.cpp
     ${VIS_SRC}AlphaTest.cpp
     ${VIS_SRC}AnimatedLine.cpp
     ${VIS_SRC}Antenna.cpp
@@ -196,14 +200,17 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}BillboardAutoTransform.cpp
     ${VIS_SRC}BoxGraphic.cpp
     ${VIS_SRC}BoxZoomMouseHandler.cpp
+    ${VIS_SRC}BrightnessContrastColorFilter.cpp
     ${VIS_SRC}CentroidManager.cpp
+    ${VIS_SRC}ChromaKeyColorFilter.cpp
     ${VIS_SRC}ClassificationBanner.cpp
     ${VIS_SRC}ClockOptions.cpp
     ${VIS_SRC}Compass.cpp
     ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
-    ${VIS_INC}DisableDepthOnAlpha.cpp
+    ${VIS_SRC}DBFormat.cpp
+    ${VIS_SRC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
     ${VIS_SRC}ElevationQueryProxy.cpp
@@ -214,8 +221,9 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Gate.cpp
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
+    ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}Laser.cpp
-    ${VIS_SRC}LineDrawable.cpp
+    ${VIS_SRC}LayerRefreshCallback.cpp
     ${VIS_SRC}LobGroup.cpp
     ${VIS_SRC}LocalGrid.cpp
     ${VIS_SRC}Locator.cpp
@@ -223,6 +231,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Measurement.cpp
     ${VIS_SRC}ModelCache.cpp
     ${VIS_SRC}ModKeyHandler.cpp
+    ${VIS_SRC}NavigationModes.cpp
+    ${VIS_SRC}ObjectSelectionHandler.cpp
     ${VIS_SRC}OverheadMode.cpp
     ${VIS_SRC}OverrideColor.cpp
     ${VIS_SRC}Picker.cpp
@@ -256,11 +266,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}TrackChunkNode.cpp
     ${VIS_SRC}TrackHistory.cpp
     ${VIS_SRC}Utils.cpp
-    ${VIS_SRC}AlphaColorFilter.cpp
-    ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}View.cpp
-    ${VIS_SRC}NavigationModes.cpp
-    ${VIS_SRC}ObjectSelectionHandler.cpp
     ${VIS_SRC}VaporTrail.cpp
     ${VIS_SRC}VaporTrailStorage.cpp
     ${VIS_SRC}VelocityVector.cpp
@@ -292,6 +298,7 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Annotation.cpp
     ${VIS_SRC}GOG/Arc.cpp
     ${VIS_SRC}GOG/Circle.cpp
+    ${VIS_SRC}GOG/Cone.cpp
     ${VIS_SRC}GOG/Cylinder.cpp
     ${VIS_SRC}GOG/Ellipse.cpp
     ${VIS_SRC}GOG/Ellipsoid.cpp
@@ -315,73 +322,20 @@ set(VIS_ALL_HEADER
     ${VIS_INC}../simVis.h
 )
 
-# Detect the osgEarth version
-set(SDK_OSGEARTH_DEVEL 0)
 if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
     set(HAVE_TRITON_NODEKIT 1)
 endif()
 if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
     set(HAVE_SILVERLINING_NODEKIT 1)
 endif()
-include(CheckOSGEarthMethodExists)
 
-# Newer than 1.9.0 release adds PointDrawable::checkSharedStateSet() to osgEarth
-check_osgearth_method_exists(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET "osgEarth/PointDrawable" "checkSharedStateSet")
-if(HAVE_OSGEARTH_POINTDRAWABLE_CHECKSHAREDSTATESET)
-    set(SDK_OSGEARTH_DEVEL 1)
-    # Next anticipated version is 1.10.0
-    set(SDK_OSGEARTH_VERSION_MAJOR 1)
-    set(SDK_OSGEARTH_VERSION_MINOR 10)
-    set(SDK_OSGEARTH_VERSION_PATCH 0)
-else()
-    # Newer than 1.8.0 release adds GeodeticLabelingEngine file and getResolution()
-    check_osgearth_method_exists(HAVE_OSGEARTH_GEOLABELENGINE "osgEarthUtil/GeodeticLabelingEngine" "getResolution")
-    if(HAVE_OSGEARTH_GEOLABELENGINE)
-        # Next anticipated version is 1.9.0
-        set(SDK_OSGEARTH_VERSION_MAJOR 1)
-        set(SDK_OSGEARTH_VERSION_MINOR 9)
-        set(SDK_OSGEARTH_VERSION_PATCH 0)
-    else()
-        # Newer than 1.7.0 release adds clear() to Profiler
-        check_osgearth_method_exists(HAVE_OSGEARTH_PROFILER_CLEAR "osgEarth/Profiler" "clear")
-        if(HAVE_OSGEARTH_PROFILER_CLEAR)
-            # Next anticipated version is 1.8.0
-            set(SDK_OSGEARTH_VERSION_MAJOR 1)
-            set(SDK_OSGEARTH_VERSION_MINOR 8)
-            set(SDK_OSGEARTH_VERSION_PATCH 0)
-        else()
-            # Newer than 1.6.0 release removes tileSize() from TileSource
-            check_osgearth_method_exists(HAVE_OSGEARTH_TILESOURCE_TILESIZE "osgEarth/TileSource" "tileSize")
-            if(NOT HAVE_OSGEARTH_TILESOURCE_TILESIZE)
-                set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                set(SDK_OSGEARTH_VERSION_MINOR 7)
-                set(SDK_OSGEARTH_VERSION_PATCH 0)
-            else()
-                # Version 1.6.0 changed Map's setName to setMapName
-                check_osgearth_method_exists(HAVE_OSGEARTH_MAP_SETMAPNAME "osgEarth/Map" "setMapName")
-                if(HAVE_OSGEARTH_MAP_SETMAPNAME)
-                    set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                    set(SDK_OSGEARTH_VERSION_MINOR 6)
-                    set(SDK_OSGEARTH_VERSION_PATCH 0)
-                else()
-                    # Only support back to osgearth-simdis-sdk-1.5.0 (osgEarth 2.8)
-                    set(SDK_OSGEARTH_VERSION_MAJOR 1)
-                    set(SDK_OSGEARTH_VERSION_MINOR 5)
-                    set(SDK_OSGEARTH_VERSION_PATCH 0)
-                endif()
-            endif()
-        endif()
-    endif()
-endif()
+# TODO Once OSGEarth master hits 3.0, test properly.  For now, hardcode
+set(SDK_OSGEARTH_DEVEL 1)
+# We require osgEarth 3.0 and osgEarth from 1.11 and prior are not usable
+set(SDK_OSGEARTH_VERSION_MAJOR 1)
+set(SDK_OSGEARTH_VERSION_MINOR 12)
+set(SDK_OSGEARTH_VERSION_PATCH 0)
 
-# Configure the osgEarth versions file and print out the information to CMake
-if(VERBOSE)
-    if(SDK_OSGEARTH_DEVEL)
-        message(STATUS "Detected development osgEarth version.")
-    else()
-        message(STATUS "Detected osgEarth version osgearth-simdis-sdk-${SDK_OSGEARTH_VERSION_MAJOR}.${SDK_OSGEARTH_VERSION_MINOR}")
-    endif()
-endif()
 configure_file(${VIS_INC}osgEarthVersion.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/simVis/osgEarthVersion.h @ONLY)
 
 # Note that shaders do not go into simVis.h and header/cpp don't get installed
@@ -433,7 +387,7 @@ target_include_directories(simVis PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(simVis PUBLIC simData simCore simNotify
-    ${OSG_ALL_LIBDEPENDENCIES} ${OSGEARTH_ALL_LIBDEPENDENCIES})
+    ${OSG_ALL_LIBDEPENDENCIES} OSGEARTH)
 target_link_libraries(simVis PRIVATE VSI::GL)
 
 if(SIMVIS_SHARED)

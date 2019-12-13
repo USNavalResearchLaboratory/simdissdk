@@ -103,6 +103,9 @@ std::string GradientColorProvider::buildShader_()
   buf << "vec4 lossToColor(in float loss)\n";
   buf << "{\n";
 
+  // Special case, if the loss value is invalid/no-data
+  buf << "  if (loss < -32765.0) return vec4(0.0, 0.0, 0.0, 0.0);\n";
+
   // No colors? Always return white
   if (colors_.empty())
   {

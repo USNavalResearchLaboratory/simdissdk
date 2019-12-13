@@ -31,7 +31,7 @@
 #include "osgUtil/IntersectionVisitor"
 #include "osgUtil/LineSegmentIntersector"
 #include "osgViewer/View"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/String/Constants.h"
@@ -49,6 +49,7 @@
 #include "simVis/View.h"
 #include "simVis/Popup.h"
 
+#undef LC
 #define LC "simVis::Popup "
 
 // --------------------------------------------------------------------------

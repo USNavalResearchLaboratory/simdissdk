@@ -25,7 +25,7 @@
 #include <vector>
 #include <string>
 #include "osg/Referenced"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 #include "osgEarthTriton/TritonAPIWrapper"
 #include "osgEarthTriton/TritonCallback"
 #include "simCore/Common/Common.h"

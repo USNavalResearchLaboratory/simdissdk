@@ -25,7 +25,7 @@
 #include "simCore/String/Utils.h"
 #include "simQt/FileDialog.h"
 
-static const QString PRIVATE_PREFIX = "private/";
+static const QString PRIVATE_PREFIX = "Private/";
 
 namespace simQt
 {

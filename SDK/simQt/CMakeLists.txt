@@ -232,6 +232,7 @@ if(TARGET simVis)
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -wd4996)
     else()
         set_source_files_properties(CenterEntity.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+        set_source_files_properties(Gl3FormatGuesser.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
     endif()
 endif()
 
@@ -300,6 +301,10 @@ target_include_directories(simQt
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
+if(TARGET OSG)
+    # QtConversion.h depends on OSG, but not simVis
+    target_link_libraries(simQt PUBLIC OSG)
+endif()
 if(TARGET simData)
     target_include_directories(simQt PUBLIC
         $<BUILD_INTERFACE:${PROTOBUF_LIBRARY_INCLUDE_PATH}>

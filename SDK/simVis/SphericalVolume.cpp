@@ -29,12 +29,12 @@
 #include "osg/UserDataContainer"
 #include "osgUtil/Simplifier"
 #include "osgEarth/GLUtils"
+#include "osgEarth/LineDrawable"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"
-#include "simVis/LineDrawable.h"
 #include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/SphericalVolume.h"

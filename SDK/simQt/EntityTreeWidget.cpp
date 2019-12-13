@@ -539,10 +539,10 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
 
   // Iterate over each item in the list that is selected
   const QModelIndexList selectedItems = view_->selectionModel()->selectedRows();
-  Q_FOREACH(const QModelIndex index, selectedItems)
+  for (auto it = selectedItems.begin(); it != selectedItems.end(); ++it)
   {
     // Pull out the item from the index, which contains the ID
-    const QModelIndex index2 = proxyModel_->mapToSource(index);
+    const QModelIndex index2 = proxyModel_->mapToSource(*it);
     const AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
     if (item == NULL)
       continue;

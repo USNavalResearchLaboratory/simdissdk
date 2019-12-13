@@ -35,24 +35,18 @@
 #include "osgDB/FileUtils"
 #include "simVis/osgEarthVersion.h"
 #include "QSCommon.h"
-#include "SQLiteDataBaseReadUtil.h"
 #include "swapbytes.h"
+#include "SQLiteDataBaseReadUtil.h"
 #include "DBTileSource.h"
 
 #define LC "[simVis::DBTileSource] "
 
-//#define HF_HARD_TILE_SIZE 32
-//#define DUMP_HF 1
-
-using namespace simVis_db;
-using namespace osgEarth;
-
-// --------------------------------------------------------------------------
+namespace simVis_db {
 
 namespace
 {
-  bool convertTileKeyToQsKey(const TileKey& key, FaceIndexType& out_faceIndex, QSNodeId& out_nodeId,
-                             osg::Vec2d& out_fmin, osg::Vec2d& out_fmax)
+  bool convertTileKeyToQsKey(const osgEarth::TileKey& key, FaceIndexType& out_faceIndex, QSNodeId& out_nodeId,
+    osg::Vec2d& out_fmin, osg::Vec2d& out_fmax)
   {
     QSNodeId zero(0);
     QSNodeId one(1);
@@ -61,7 +55,7 @@ namespace
 
     QSNodeId nodeId;
 
-    TileKey pkey = key;
+    osgEarth::TileKey pkey = key;
 
     for (unsigned int i = 0; i < maxLevel; ++i)
     {
@@ -98,7 +92,7 @@ namespace
       pkey = pkey.createParentKey();
     }
 
-    out_faceIndex = osgEarth::UnifiedCubeProfile::getFace(key);
+    out_faceIndex = osgEarth::Contrib::UnifiedCubeProfile::getFace(key);
     out_nodeId = nodeId;
 
     double xMin = key.getExtent().xMin();
@@ -107,10 +101,10 @@ namespace
     double yMax = key.getExtent().yMax();
     int face;
 
-    osgEarth::CubeUtils::cubeToFace(xMin, yMin, xMax, yMax, face);
+    osgEarth::Contrib::CubeUtils::cubeToFace(xMin, yMin, xMax, yMax, face);
 
-    out_fmin.set(xMin*gQsDMaxLength, yMin*gQsDMaxLength);
-    out_fmax.set(xMax*gQsDMaxLength, yMax*gQsDMaxLength);
+    out_fmin.set(xMin * gQsDMaxLength, yMin * gQsDMaxLength);
+    out_fmax.set(xMax * gQsDMaxLength, yMax * gQsDMaxLength);
 
     return true;
   }
@@ -126,16 +120,16 @@ namespace
 
 // --------------------------------------------------------------------------
 
-DBTileSource::DBTileSource(const TileSourceOptions& options)
+DBTileSource::DBTileSource(const osgEarth::TileSourceOptions& options)
   : osgEarth::TileSource(options),
-    options_(options),
-    db_(NULL),
-    rasterFormat_(SPLIT_UNKNOWN),
-    pixelLength_(128),
-    shallowLevel_(0),
-    deepLevel_(32),
-    timeSpecified_(false),
-    timeStamp_(simCore::INFINITE_TIME_STAMP)
+  options_(options),
+  db_(NULL),
+  rasterFormat_(SPLIT_UNKNOWN),
+  pixelLength_(128),
+  shallowLevel_(0),
+  deepLevel_(32),
+  timeSpecified_(false),
+  timeStamp_(simCore::INFINITE_TIME_STAMP)
 {
   if (!options_.url().isSet() || options_.url()->empty())
   {
@@ -151,7 +145,7 @@ DBTileSource::~DBTileSource()
   }
 }
 
-Status DBTileSource::initialize(const osgDB::Options* dbOptions)
+osgEarth::Status DBTileSource::initialize(const osgDB::Options* dbOptions)
 {
   if (options_.url().isSet())
   {
@@ -160,7 +154,7 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
     if (dbUtil_.OpenDataBaseFile(pathname_, &db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != QS_IS_OK)
     {
       db_ = NULL;
-      return Status::Error(Stringify() << "Failed to open DB file at " << options_.url()->full());
+      return osgEarth::Status::Error(osgEarth::Stringify() << "Failed to open DB file at " << options_.url()->full());
     }
     else
     {
@@ -188,15 +182,15 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
       {
         sqlite3_close(db_);
         db_ = NULL;
-        return Status::Error(Stringify() << "Failed to read metadata for " << pathname_);
+        return osgEarth::Status::Error(osgEarth::Stringify() << "Failed to read metadata for " << pathname_);
       }
       // Set up as a unified cube:
-      Profile* profile = new osgEarth::UnifiedCubeProfile();
+      osgEarth::Profile* profile = new osgEarth::Contrib::UnifiedCubeProfile();
       // DB are expected to be wgs84, which Cube defaults to
       setProfile(profile);
 
       // Lat/long extents (for debugging)
-      GeoExtent llex[6];
+      osgEarth::GeoExtent llex[6];
 
       // Tell the engine how deep the data actually goes:
       for (unsigned int f = 0; f < 6; ++f)
@@ -208,19 +202,19 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
           const double y0 = extents_[f].minY / gQsDMaxLength;
           const double y1 = extents_[f].maxY / gQsDMaxLength;
 
-          GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
+          osgEarth::GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
 
           // Transform to lat/long for the debugging msgs
           cubeEx.transform(profile->getSRS()->getGeodeticSRS(), llex[f]);
 
-          getDataExtents().push_back(DataExtent(cubeEx, shallowLevel_, deepLevel_));
+          getDataExtents().push_back(osgEarth::DataExtent(cubeEx, shallowLevel_, deepLevel_));
         }
       }
 
       // Set time value of image if a time was found in the db
       if (timeStamp_ != simCore::INFINITE_TIME_STAMP)
       {
-        DateTime osgTime(timeStamp_.secondsSinceRefYear(1970));
+        const osgEarth::DateTime osgTime(timeStamp_.secondsSinceRefYear(1970).getSeconds());
         // Set time as a user value since config is not editable from here
         setUserValue("time", osgTime.asISO8601());
       }
@@ -228,9 +222,9 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
       OE_INFO << LC
         << "Table: " << options_.url()->full() << std::endl
         << "  Raster format = " << rasterFormat_ << std::endl
-        << "  Tile size     = " << pixelLength_  << std::endl
+        << "  Tile size     = " << pixelLength_ << std::endl
         << "  Shallow level = " << shallowLevel_ << std::endl
-        << "  Deep level    = " << deepLevel_    << std::endl
+        << "  Deep level    = " << deepLevel_ << std::endl
         << "  QS Extents    = " << std::endl
         << "    0: " << extents_[0].minX << "," << extents_[0].minY << "," << extents_[0].maxX << "," << extents_[0].maxY << "(" << (llex[0].isValid() ? llex[0].toString() : "empty") << ")\n"
         << "    1: " << extents_[1].minX << "," << extents_[1].minY << "," << extents_[1].maxX << "," << extents_[1].maxY << "(" << (llex[1].isValid() ? llex[1].toString() : "empty") << ")\n"
@@ -247,30 +241,26 @@ Status DBTileSource::initialize(const osgDB::Options* dbOptions)
     }
   }
 
-  return STATUS_OK;
+  return osgEarth::STATUS_OK;
 }
 
 int DBTileSource::getPixelsPerTile() const
 {
-#ifdef HF_HARD_TILE_SIZE
-  return HF_HARD_TILE_SIZE;
-#else
   return pixelLength_;
-#endif
 }
 
-osg::Image* DBTileSource::createImage(const TileKey& key, ProgressCallback* progress)
+osg::Image* DBTileSource::createImage(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress)
 {
   return createImage_(key, false);
 }
 
-osg::HeightField* DBTileSource::createHeightField(const TileKey& key, ProgressCallback* progress)
+osg::HeightField* DBTileSource::createHeightField(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress)
 {
   if (!db_) return NULL;
 
   osg::ref_ptr<osg::HeightField> result;
 
-  // Convert TileKey into a QuadKeyID
+  // Convert osgEarth::TileKey into a QuadKeyID
   FaceIndexType faceId;
   QSNodeId      nodeId;
   osg::Vec2d    tileMin;
@@ -286,8 +276,8 @@ osg::HeightField* DBTileSource::createHeightField(const TileKey& key, ProgressCa
 
   // Query the database
   TextureDataType* buf = NULL;
-  uint32_t bufSize =0;
-  uint32_t currentRasterSize =0;
+  uint32_t bufSize = 0;
+  uint32_t currentRasterSize = 0;
 
   QsErrorType err = dbUtil_.TsReadDataBuffer(
     db_,
@@ -308,33 +298,11 @@ osg::HeightField* DBTileSource::createHeightField(const TileKey& key, ProgressCa
       if (decodeRaster_(rasterFormat_, (const char*)buf, currentRasterSize, image))
       {
 
-#if DUMP_HF // Debugging - write out each raw image tile
-        static osgEarth::Threading::Mutex s_mutex;
-        s_mutex.lock();
-        std::string fn = "db_debug/" + key.str() + ".tif";
-        osgDB::makeDirectoryForFile(fn);
-        osgDB::writeImageFile(*image.get(), fn);
-        s_mutex.unlock();
-#endif
-
         // SIMDIS .db elevation data is y-inverted:
         image->flipVertical();
 
         osgEarth::ImageToHeightFieldConverter i2h;
         result = i2h.convert(image.get());
-
-#ifdef HF_HARD_TILE_SIZE
-        // For now, limit the elevation tile size to 32
-        int tileSize = osg::clampBelow(pixelLength_, HF_HARD_TILE_SIZE);
-        if (static_cast<int>(result->getNumColumns()) != tileSize ||
-          static_cast<int>(result->getNumRows())    != tileSize)
-        {
-          result = osgEarth::HeightFieldUtils::resampleHeightField(
-            result.get(),
-            key.getExtent(),
-            tileSize, tileSize);
-        }
-#endif
 
         // If result is 1x1, skip border processing
         if (result->getNumColumns() >= 1 && result->getNumRows() >= 1)
@@ -380,15 +348,6 @@ osg::HeightField* DBTileSource::createHeightField(const TileKey& key, ProgressCa
             }
           }
         }
-
-#if DUMP_HF // Debugging - write out each raw image tile
-        s_mutex.lock();
-        osg::ref_ptr<osg::Image> i2 = i2h.convert(result);
-        fn = "db_debug/" + key.str() + "_a.tif";
-        osgDB::makeDirectoryForFile(fn);
-        osgDB::writeImageFile(*i2.get(), fn);
-        s_mutex.unlock();
-#endif
       }
       else
       {
@@ -406,18 +365,18 @@ osg::HeightField* DBTileSource::createHeightField(const TileKey& key, ProgressCa
     OE_WARN << "Failed to read heightfield from " << key.str() << std::endl;
   }
 
-  delete [] buf;
+  delete[] buf;
   return result.release();
 }
 
-osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
+osg::Image* DBTileSource::createImage_(const osgEarth::TileKey& key, bool isHeightField)
 {
   if (!db_)
     return NULL;
 
   osg::ref_ptr<osg::Image> result;
 
-  // Convert TileKey into a QuadKeyID
+  // Convert osgEarth::TileKey into a QuadKeyID
   FaceIndexType faceId;
   QSNodeId      nodeId;
   osg::Vec2d    tileMin;
@@ -439,8 +398,8 @@ osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
 
   // Query the database
   TextureDataType* buf = NULL;
-  uint32_t bufSize =0;
-  uint32_t currentRasterSize =0;
+  uint32_t bufSize = 0;
+  uint32_t currentRasterSize = 0;
 
   QsErrorType err = dbUtil_.TsReadDataBuffer(
     db_,
@@ -459,20 +418,6 @@ osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
     {
       if (decodeRaster_(rasterFormat_, (const char*)buf, currentRasterSize, result))
       {
-#if SDK_OSGEARTH_VERSION_LESS_OR_EQUAL(1,6,0)
-        // Resize if necessary:
-        if (options_.tileSize().isSet() && options_.tileSize().value() >= 0)
-        {
-          const int tileSize = options_.tileSize().value();
-          if (result->s() != tileSize || result->t() != tileSize)
-          {
-            osg::ref_ptr<osg::Image> resizedImage;
-            if (osgEarth::ImageUtils::resizeImage(result.get(), static_cast<unsigned int>(tileSize), static_cast<unsigned int>(tileSize), resizedImage))
-              result = resizedImage.get();
-          }
-        }
-#endif
-
         // If result is 1x1, skip border processing
         if (result->s() >= 1 && result->t() >= 1)
         {
@@ -483,16 +428,8 @@ osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
           const double tileWidth = tileMax.x() - tileMin.x();
           const double tileHeight = tileMax.y() - tileMin.y();
 
-#ifdef TRIM_IMAGE_BORDER_PIXEL
-          // DB data contains a one-pixel border with undefined data. That border falls
-          // Within the reported extents. We have to fill that with "NO DATA".
-          // First, calculate the size of a pixel in QS units for this tile:
-          const double qppx = tileWidth / resultS;
-          const double qppy = tileHeight / resultT;
-#else
           const double qppx = 0.0;
           const double qppy = 0.0;
-#endif
           const double xMin = extents_[faceId].minX + qppx;
           const double xMax = extents_[faceId].maxX - qppx;
           const double yMin = extents_[faceId].minY + qppy;
@@ -541,7 +478,7 @@ osg::Image* DBTileSource::createImage_(const TileKey& key, bool isHeightField)
     OE_WARN << "Failed to read image from " << key.str() << std::endl;
   }
 
-  delete [] buf;
+  delete[] buf;
   return result.release();
 }
 
@@ -550,11 +487,11 @@ std::string DBTileSource::getExtension() const
   // Image formats with an alpha channel:
   if (
     rasterFormat_ == SPLIT_5551_ZLIB_COMPRESS ||
-    rasterFormat_ == SPLIT_5551_GZ            ||
+    rasterFormat_ == SPLIT_5551_GZ ||
     rasterFormat_ == SPLIT_RGBA_ZLIB_COMPRESS ||
     rasterFormat_ == SPLIT_INTA_ZLIB_COMPRESS ||
-    rasterFormat_ == SPLIT_SGI_RGBA           ||
-    rasterFormat_ == SPLIT_PNG                ||
+    rasterFormat_ == SPLIT_SGI_RGBA ||
+    rasterFormat_ == SPLIT_PNG ||
     rasterFormat_ == SPLIT_TIFF)
   {
     return "png";
@@ -577,13 +514,13 @@ std::string DBTileSource::getExtension() const
 
 template<typename T>
 void makeImage(int size, GLenum internalFormat, GLenum pixelFormat, GLenum type,
-               std::string& buf, osg::ref_ptr<osg::Image>& outImage)
+  std::string& buf, osg::ref_ptr<osg::Image>& outImage)
 {
   unsigned char* data = new unsigned char[buf.length()];
   std::copy(buf.begin(), buf.end(), data);
 
   // Be sure to cast here to get the right swap function:
-  make_big_endian((T*)data, size*size);
+  make_big_endian((T*)data, size * size);
 
   outImage = new osg::Image();
   outImage->setImage(size, size, 1, internalFormat, pixelFormat, type, data, osg::Image::USE_NEW_DELETE);
@@ -612,117 +549,119 @@ bool DBTileSource::decodeRaster_(int rasterFormat, const char* inputBuffer, int 
   {
   case SPLIT_5551_ZLIB_COMPRESS: // TESTED OK
   case SPLIT_5551_GZ:            // UNTESTED
+  {
+    std::string buf;
+    if (decompressZLIB(inputBuffer, inputBufferLen, buf))
     {
-      std::string buf;
-      if (decompressZLIB(inputBuffer, inputBufferLen, buf))
-      {
-        // Three component image (red, green, and blue channels)
-        makeImage<uint16_t>(
-          pixelLength_, GL_RGB5_A1, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, buf, outImage);
-        return true;
-      }
+      // Three component image (red, green, and blue channels)
+      makeImage<uint16_t>(
+        pixelLength_, GL_RGB5_A1, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, buf, outImage);
+      return true;
     }
-    break;
+  }
+  break;
 
   case SPLIT_8BIT_ZLIB_COMPRESS: // TESTED OK
   case SPLIT_8BIT_GZ:            // UNTESTED
+  {
+    std::string buf;
+    if (decompressZLIB(inputBuffer, inputBufferLen, buf))
     {
-      std::string buf;
-      if (decompressZLIB(inputBuffer, inputBufferLen, buf))
-      {
-        // Single component image (grayscale channel)
-        makeImage<unsigned char>(
-          pixelLength_, GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE, buf, outImage);
-        return true;
-      }
+      // Single component image (grayscale channel)
+      makeImage<unsigned char>(
+        pixelLength_, GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE, buf, outImage);
+      return true;
     }
-    break;
+  }
+  break;
   case SPLIT_INTA_ZLIB_COMPRESS: // TESTED OK
+  {
+    std::string buf;
+    if (decompressZLIB(inputBuffer, inputBufferLen, buf))
     {
-      std::string buf;
-      if (decompressZLIB(inputBuffer, inputBufferLen, buf))
-      {
-        // Two component image (grayscale w/alpha channel)
-        makeImage<unsigned char>(
-          pixelLength_, GL_LUMINANCE_ALPHA, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buf, outImage);
-        return true;
-      }
-      break;
-    }
-  case SPLIT_RGBA_ZLIB_COMPRESS: // TESTED OK
-    {
-      std::string buf;
-      if (decompressZLIB(inputBuffer, inputBufferLen, buf))
-      {
-        // Four component image (red, green, blue and alpha channels)
-        makeImage<unsigned char>(
-          pixelLength_, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, buf, outImage);
-        return true;
-      }
-      break;
-    }
-  case SPLIT_SGI_RGBA: // TESTED - OK (earthColorSGI.db)
-    {
-      if (rgbReader_.valid())
-        return readNativeImage(rgbReader_.get(), inputBuffer, inputBufferLen, outImage);
-      else
-        OE_WARN << LC << "SGI RGBA reader not available" << std::endl;
-    }
-    break;
-
-  case SPLIT_SGI_RGB: // UNTESTED
-    {
-      if (rgbReader_.valid())
-        return readNativeImage(rgbReader_.get(), inputBuffer, inputBufferLen, outImage);
-      else
-        OE_WARN << LC << "SGI RGB reader not available" << std::endl;
-    }
-    break;
-
-  case SPLIT_FLOAT32_ZLIB_COMPRESS: // TESTED OK;
-    {
-      // Single-channel 32-bit float elevation data
-      std::string buf;
-      if (decompressZLIB(inputBuffer, inputBufferLen, buf))
-      {
-        makeImage<float>(pixelLength_, GL_LUMINANCE32F_ARB, GL_LUMINANCE, GL_FLOAT, buf, outImage);
-        return true;
-      }
-    }
-    break;
-
-  case SPLIT_JPEG: // TESTED OK
-    {
-      if (jpgReader_.valid())
-        return readNativeImage(jpgReader_.get(), inputBuffer, inputBufferLen, outImage);
-      else
-        OE_WARN << LC << "JPEG reader not available" << std::endl;
-    }
-    break;
-
-  case SPLIT_PNG: // UNTESTED
-    {
-      if (pngReader_.valid())
-        return readNativeImage(pngReader_.get(), inputBuffer, inputBufferLen, outImage);
-      else
-        OE_WARN << LC << "PNG reader not available" << std::endl;
-    }
-    break;
-
-  case SPLIT_TIFF: // UNTESTED
-    {
-      if (tifReader_.valid())
-        return readNativeImage(tifReader_.get(), inputBuffer, inputBufferLen, outImage);
-      else
-        OE_WARN << LC << "TIFF reader not available" << std::endl;
-    }
-    break;
-
-  default:
-    {
-      OE_WARN << "Support for raster format " << rasterFormat << " not implemented" << std::endl;
+      // Two component image (grayscale w/alpha channel)
+      makeImage<unsigned char>(
+        pixelLength_, GL_LUMINANCE_ALPHA, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buf, outImage);
+      return true;
     }
     break;
   }
+  case SPLIT_RGBA_ZLIB_COMPRESS: // TESTED OK
+  {
+    std::string buf;
+    if (decompressZLIB(inputBuffer, inputBufferLen, buf))
+    {
+      // Four component image (red, green, blue and alpha channels)
+      makeImage<unsigned char>(
+        pixelLength_, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, buf, outImage);
+      return true;
+    }
+    break;
+  }
+  case SPLIT_SGI_RGBA: // TESTED - OK (earthColorSGI.db)
+  {
+    if (rgbReader_.valid())
+      return readNativeImage(rgbReader_.get(), inputBuffer, inputBufferLen, outImage);
+    else
+      OE_WARN << LC << "SGI RGBA reader not available" << std::endl;
+  }
+  break;
+
+  case SPLIT_SGI_RGB: // UNTESTED
+  {
+    if (rgbReader_.valid())
+      return readNativeImage(rgbReader_.get(), inputBuffer, inputBufferLen, outImage);
+    else
+      OE_WARN << LC << "SGI RGB reader not available" << std::endl;
+  }
+  break;
+
+  case SPLIT_FLOAT32_ZLIB_COMPRESS: // TESTED OK;
+  {
+    // Single-channel 32-bit float elevation data
+    std::string buf;
+    if (decompressZLIB(inputBuffer, inputBufferLen, buf))
+    {
+      makeImage<float>(pixelLength_, GL_LUMINANCE32F_ARB, GL_LUMINANCE, GL_FLOAT, buf, outImage);
+      return true;
+    }
+  }
+  break;
+
+  case SPLIT_JPEG: // TESTED OK
+  {
+    if (jpgReader_.valid())
+      return readNativeImage(jpgReader_.get(), inputBuffer, inputBufferLen, outImage);
+    else
+      OE_WARN << LC << "JPEG reader not available" << std::endl;
+  }
+  break;
+
+  case SPLIT_PNG: // UNTESTED
+  {
+    if (pngReader_.valid())
+      return readNativeImage(pngReader_.get(), inputBuffer, inputBufferLen, outImage);
+    else
+      OE_WARN << LC << "PNG reader not available" << std::endl;
+  }
+  break;
+
+  case SPLIT_TIFF: // UNTESTED
+  {
+    if (tifReader_.valid())
+      return readNativeImage(tifReader_.get(), inputBuffer, inputBufferLen, outImage);
+    else
+      OE_WARN << LC << "TIFF reader not available" << std::endl;
+  }
+  break;
+
+  default:
+  {
+    OE_WARN << "Support for raster format " << rasterFormat << " not implemented" << std::endl;
+  }
+  break;
+  }
   return false;
+}
+
 }

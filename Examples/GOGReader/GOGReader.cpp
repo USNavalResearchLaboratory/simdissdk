@@ -26,12 +26,12 @@
  * Demonstrates the loading and display of SIMDIS .gog format vector overlay data.
  */
 
+#include "osgEarth/Controls"
+#include "osgEarth/LabelNode"
+#include "osgEarth/MouseCoordsTool"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/optional"
-#include "osgEarthAnnotation/PlaceNode"
-#include "osgEarthAnnotation/LabelNode"
-#include "osgEarthUtil/Controls"
-#include "osgEarthUtil/MouseCoordsTool"
+#include "osgEarth/PlaceNode"
 
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
@@ -58,7 +58,6 @@ namespace ui = osgEarth::Util::Controls;
 using namespace osgEarth;
 using namespace osgEarth::Util;
 using namespace osgEarth::Util::Controls;
-using namespace osgEarth::Annotation;
 
 typedef std::shared_ptr<simVis::GOG::GogNodeInterface> GogNodeInterfacePtr;
 static std::vector<GogNodeInterfacePtr> s_overlayNodes;

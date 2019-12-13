@@ -69,7 +69,7 @@ public:
   GogNodeInterface* createGOG(
     const ParsedShape& parsedShape,
     const GOGNodeType& nodeType,
-    const osgEarth::Symbology::Style& style,
+    const osgEarth::Style& style,
     const GOGContext&  context,
     const GogMetaData& metaData,
     GogFollowData&     followData) const;

@@ -478,7 +478,7 @@ void MemoryDataStore::updatePlatforms_(double time)
 {
   // determine if we are in "file mode"
   // treat file mode as the default if no clock has been bound
-  const bool fileMode = (!boundClock_ || (boundClock_->mode()==simCore::Clock::MODE_STEP || boundClock_->mode() == simCore::Clock::MODE_REALTIME));
+  const bool fileMode = (!boundClock_ || !boundClock_->isLiveMode());
 
   for (Platforms::const_iterator iter = platforms_.begin(); iter != platforms_.end(); ++iter)
   {

@@ -24,7 +24,6 @@
 #include <iterator>
 #include "simNotify/Notify.h"
 #include "simVis/Gl3Utils.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/Registry.h"
 #include "simVis/ViewManager.h"
 #include "simVis/View.h"

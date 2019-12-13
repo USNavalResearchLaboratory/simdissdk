@@ -24,7 +24,6 @@
 #include <QIcon>
 #include "osgEarth/Map"
 #include "simCore/Calc/Math.h"
-#include "simVis/osgEarthVersion.h"
 #include "simQt/MapDataModel.h"
 
 namespace simQt {
@@ -58,36 +57,25 @@ MapReindexer::~MapReindexer()
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ImageLayerVector& imageLayers)
 {
   if (map != NULL)
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->getLayers(imageLayers);
-#else
-    map->getImageLayers(imageLayers);
-#endif
 }
 
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers)
 {
   if (map != NULL)
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     map->getLayers(elevationLayers);
-#else
-    map->getElevationLayers(elevationLayers);
-#endif
 }
 
 void MapReindexer::getLayers(osgEarth::Map* map, FeatureModelLayerVector& modelLayers)
 {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   if (map != NULL)
     map->getLayers(modelLayers);
-#endif
 }
 
 void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers)
 {
   if (map == NULL)
     return;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   osgEarth::VisibleLayerVector allLayers;
   map->getLayers(allLayers);
   // pass along only layers that are not image, elevation, or model
@@ -98,12 +86,10 @@ void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVect
       continue;
     if (dynamic_cast<const osgEarth::ElevationLayer*>(layer) != NULL)
       continue;
-    if (dynamic_cast<const osgEarth::Features::FeatureModelLayer*>(layer) != NULL)
+    if (dynamic_cast<const osgEarth::FeatureModelLayer*>(layer) != NULL)
       continue;
     otherLayers.push_back(*iter);
   }
-
-#endif
 }
 
 unsigned int MapReindexer::layerTypeIndex(osgEarth::ImageLayer* layer) const
@@ -128,7 +114,7 @@ unsigned int MapReindexer::layerTypeIndex(osgEarth::ElevationLayer* layer) const
   return indexOf(layers, layer);
 }
 
-unsigned int MapReindexer::layerTypeIndex(osgEarth::Features::FeatureModelLayer* layer) const
+unsigned int MapReindexer::layerTypeIndex(osgEarth::FeatureModelLayer* layer) const
 {
   // Must have a valid map
   assert(map_.valid());
@@ -365,10 +351,10 @@ public:
   /** Searches children for one that has the layer provided, returning a row or NULL on failure */
   MapDataModel::Item* itemByLayer(const osgEarth::Layer* layer) const
   {
-    Q_FOREACH(MapDataModel::Item* child, children_)
+    for (auto it = children_.begin(); it != children_.end(); ++it)
     {
-      if (child->layerPtr().value<void*>() == layer)
-        return child;
+      if ((*it)->layerPtr().value<void*>() == layer)
+        return (*it);
     }
     return NULL;
   }
@@ -527,7 +513,7 @@ class FeatureModelLayerItem : public LayerItem
 {
 public:
   /** Constructor */
-  FeatureModelLayerItem(Item *parent, osgEarth::Features::FeatureModelLayer *layer)
+  FeatureModelLayerItem(Item *parent, osgEarth::FeatureModelLayer *layer)
   : LayerItem(parent),
     layer_(layer)
   {
@@ -557,7 +543,7 @@ public:
   }
 
 private:
-  osgEarth::Features::FeatureModelLayer *layer_;
+  osgEarth::FeatureModelLayer *layer_;
 };
 
 /// Other layer
@@ -637,7 +623,7 @@ public:
       return;
     }
 
-    osgEarth::Features::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer);
+    osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
       MapReindexer reindex(dataModel_.map());
@@ -678,7 +664,7 @@ public:
       return;
     }
 
-    osgEarth::Features::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer);
+    osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
       moveLayer_(dataModel_.featureGroup_(), layer, newIndex < oldIndex);
@@ -712,7 +698,7 @@ public:
       return;
     }
 
-    osgEarth::Features::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer);
+    osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
       dataModel_.featureCallbacks_.remove(modelLayer);
@@ -868,7 +854,7 @@ public:
   /** Inherited from VisibleLayerCallback */
   virtual void onVisibleChanged(osgEarth::VisibleLayer *layer)
   {
-    osgEarth::Features::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer);
+    osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
       emit dataModel_.featureLayerVisibleChanged(modelLayer);
@@ -881,7 +867,7 @@ public:
   /** Inherited from ModelLayerCallback */
   virtual void onOpacityChanged(osgEarth::VisibleLayer *layer)
   {
-    osgEarth::Features::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer);
+    osgEarth::FeatureModelLayer* modelLayer = dynamic_cast<osgEarth::FeatureModelLayer*>(layer);
     if (modelLayer)
     {
       emit dataModel_.featureLayerOpacityChanged(modelLayer);
@@ -1138,7 +1124,7 @@ void MapDataModel::addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned 
   emit elevationLayerAdded(layer);
 }
 
-void MapDataModel::addFeatureLayer_(osgEarth::Features::FeatureModelLayer *layer, unsigned int index)
+void MapDataModel::addFeatureLayer_(osgEarth::FeatureModelLayer *layer, unsigned int index)
 {
   const QModelIndex parentIndex = createIndex(rootItem_->rowOfChild(featureGroup_()), 0, featureGroup_());
   beginInsertRows(parentIndex, index, index);
@@ -1363,7 +1349,7 @@ QModelIndex MapDataModel::layerIndex(const osgEarth::Layer* layer) const
     group = static_cast<GroupItem*>(imageGroup_());
   else if (dynamic_cast<const osgEarth::ElevationLayer*>(layer))
     group = static_cast<GroupItem*>(elevationGroup_());
-  else if (dynamic_cast<const osgEarth::Features::FeatureModelLayer*>(layer))
+  else if (dynamic_cast<const osgEarth::FeatureModelLayer*>(layer))
     group = static_cast<GroupItem*>(featureGroup_());
   else if (dynamic_cast<const osgEarth::VisibleLayer*>(layer))
     group = static_cast<GroupItem*>(otherGroup_());
@@ -1386,30 +1372,9 @@ QVariant MapDataModel::layerMapIndex_(osgEarth::Layer* layer) const
     return QVariant();
 
   unsigned int index = MapReindexer::INVALID_INDEX;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   osgEarth::LayerVector layers;
   map_->getLayers(layers);
   index = indexOf(layers, layer);
-#else
-  if (dynamic_cast<osgEarth::ImageLayer*>(layer))
-  {
-    osgEarth::ImageLayerVector images;
-    MapReindexer::getLayers(map_.get(), images);
-    index = indexOf(images, static_cast<osgEarth::ImageLayer*>(layer));
-  }
-  else if (dynamic_cast<osgEarth::ElevationLayer*>(layer))
-  {
-    osgEarth::ElevationLayerVector elevs;
-    MapReindexer::getLayers(map_.get(), elevs);
-    index = indexOf(elevs, static_cast<osgEarth::ElevationLayer*>(layer));
-  }
-  else if (dynamic_cast<osgEarth::Features::FeatureModelLayer*>(layer))
-  {
-    FeatureModelLayerVector models;
-    MapReindexer::getLayers(map_.get(), models);
-    index = indexOf(models, static_cast<osgEarth::Features::FeatureModelLayer*>(layer));
-  }
-#endif
 
   if (index != MapReindexer::INVALID_INDEX)
     return index;

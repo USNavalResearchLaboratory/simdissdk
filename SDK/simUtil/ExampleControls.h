@@ -23,7 +23,7 @@
 #define SIMDIS_UTIL_EXAMPLE_CONTROLS_H
 
 #include "simVis/View.h"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 
 namespace simData { class DataStore; }
 

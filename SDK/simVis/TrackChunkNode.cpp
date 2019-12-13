@@ -23,7 +23,7 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarth/GeoData"
-#include "simVis/LineDrawable.h"
+#include "osgEarth/LineDrawable"
 #include "simVis/Types.h"
 #include "simVis/TrackChunkNode.h"
 

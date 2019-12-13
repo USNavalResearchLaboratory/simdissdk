@@ -24,34 +24,59 @@
 #define SIMVIS_AREA_HIGHLIGHT_H
 
 #include "osg/ref_ptr"
-#include "osg/Geode"
+#include "osg/Group"
 #include "osg/Vec4f"
 #include "simCore/Common/Common.h"
+#include "simData/DataStore.h"
 
-namespace osg { class Uniform; }
+namespace osg {
+  class AutoTransform;
+  class Uniform;
+}
+namespace osgEarth {
+  class LineDrawable;
+}
 
 namespace simVis
 {
 
+/// Interface for a node that can set radius and color, used for highlighting
+class SDKVIS_EXPORT HighlightNode : public osg::Group
+{
+public:
+  /** Constructor */
+  HighlightNode();
+  /** OSG Copy constructor */
+  HighlightNode(const HighlightNode& rhs, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
+
+  /** Apply a color to the highlight */
+  virtual void setColor(const osg::Vec4f& rgba) = 0;
+  /** Changes the radius of the highlight in meters */
+  virtual void setRadius(float radius) = 0;
+
+  // From osg::Node:
+  virtual const char* libraryName() const { return "simVis"; }
+  virtual const char* className() const { return "HighlightNode"; }
+
+protected:
+  /// osg::Referenced-derived
+  virtual ~HighlightNode();
+};
+
 /// Attachment node for a circular highlight display.
-class SDKVIS_EXPORT AreaHighlightNode : public osg::Geode
+class SDKVIS_EXPORT AreaHighlightNode : public HighlightNode
 {
 public:
   /** Declare boilerplate code */
   META_Node(simVis, AreaHighlightNode);
-  /** Constructor */
   AreaHighlightNode();
-  /** OSG Copy constructor */
-  AreaHighlightNode(const AreaHighlightNode &rhs, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
+  AreaHighlightNode(const AreaHighlightNode& rhs, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
 
-  /** Apply a color to the highlight */
-  void setColor(const osg::Vec4f& rgba);
-
-  /** Changes the radius of the highlight in meters */
-  void setRadius(float radius);
+  // From HighlightNode:
+  virtual void setColor(const osg::Vec4f& rgba);
+  virtual void setRadius(float radius);
 
 protected:
-
   /// osg::Referenced-derived
   virtual ~AreaHighlightNode();
 
@@ -61,6 +86,69 @@ private:
 
   osg::ref_ptr<osg::Uniform> color_;
   osg::ref_ptr<osg::Uniform> radius_;
+};
+
+/// Draws a line around the area using a LineDrawable
+class SDKVIS_EXPORT LineDrawableHighlightNode : public HighlightNode
+{
+public:
+  /** Declare boilerplate code */
+  META_Node(simVis, LineDrawableHighlightNode);
+  LineDrawableHighlightNode();
+  LineDrawableHighlightNode(const LineDrawableHighlightNode& rhs, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
+
+  /** Draws a diamond around the area */
+  void makeDiamond();
+  /** Draws a square around the area */
+  void makeSquare();
+  /** Draws a circle around the area */
+  void makeCircle();
+  /** Draws a squared reticle around the area, like [ ] but with sides gone */
+  void makeSquareReticle();
+
+  // From HighlightNode:
+  virtual void setColor(const osg::Vec4f& rgba);
+  virtual void setRadius(float radius);
+
+protected:
+  /// osg::Referenced-derived
+  virtual ~LineDrawableHighlightNode();
+
+private:
+  /// Create the geometry of the highlight
+  void init_();
+  /// Reset the number of lines, clear them, and set the mode
+  void resetLines_(size_t newLineCount, int glMode);
+
+  osg::ref_ptr<osg::AutoTransform> billboard_;
+  std::vector<osg::ref_ptr<osgEarth::LineDrawable> > lines_;
+};
+
+/// Choose between different highlight nodes based on an enum
+class SDKVIS_EXPORT CompositeHighlightNode : public HighlightNode
+{
+public:
+  /** Declare boilerplate code */
+  META_Node(simVis, CompositeHighlightNode);
+  explicit CompositeHighlightNode(simData::CircleHilightShape shape=simData::CH_PULSING_CIRCLE);
+  CompositeHighlightNode(const CompositeHighlightNode& rhs, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
+
+  /** Sets the shape */
+  void setShape(simData::CircleHilightShape shape);
+
+  // From HighlightNode:
+  virtual void setColor(const osg::Vec4f& rgba);
+  virtual void setRadius(float radius);
+
+protected:
+  /// osg::Referenced-derived
+  virtual ~CompositeHighlightNode();
+
+private:
+  osg::ref_ptr<HighlightNode> child_;
+  simData::CircleHilightShape shape_;
+  osg::Vec4f rgba_;
+  float radius_;
 };
 
 } // namespace simVis

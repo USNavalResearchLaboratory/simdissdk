@@ -21,7 +21,7 @@
 */
 #include <limits>
 #include "osg/Depth"
-#include "osgEarthAnnotation/LabelNode"
+#include "osgEarth/LabelNode"
 #include "simCore/Calc/Math.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
@@ -78,12 +78,12 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
   if (!label_.valid())
   {
     // create a label node for the first time
-    osgEarth::Symbology::Style style;
-    style.getOrCreate<osgEarth::Symbology::TextSymbol>()->alignment() = static_cast<osgEarth::Symbology::TextSymbol::Alignment>(labelPrefs.alignment());
-    style.getOrCreate<osgEarth::Symbology::TextSymbol>()->pixelOffset() = osg::Vec2s(labelPrefs.offsetx(), labelPrefs.offsety());
-    style.getOrCreate<osgEarth::Symbology::TextSymbol>()->encoding() = osgEarth::Symbology::TextSymbol::ENCODING_UTF8;
+    osgEarth::Style style;
+    style.getOrCreate<osgEarth::TextSymbol>()->alignment() = static_cast<osgEarth::TextSymbol::Alignment>(labelPrefs.alignment());
+    style.getOrCreate<osgEarth::TextSymbol>()->pixelOffset() = osg::Vec2s(labelPrefs.offsetx(), labelPrefs.offsety());
+    style.getOrCreate<osgEarth::TextSymbol>()->encoding() = osgEarth::TextSymbol::ENCODING_UTF8;
 
-    label_ = new osgEarth::Annotation::LabelNode("", style);
+    label_ = new osgEarth::LabelNode("", style);
     label_->setDynamic(true);
     label_->setNodeMask(simVis::DISPLAY_MASK_LABEL);
     label_->setHorizonCulling(false);
@@ -145,15 +145,15 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
     // update the style:
     if (labelStylePrefsChanged || forceStyle)
     {
-      osgEarth::Symbology::Style style;
-      osgEarth::Symbology::TextSymbol* ts = style.getOrCreate<osgEarth::Symbology::TextSymbol>();
-      ts->alignment() = static_cast<osgEarth::Symbology::TextSymbol::Alignment>(labelPrefs.alignment());
+      osgEarth::Style style;
+      osgEarth::TextSymbol* ts = style.getOrCreate<osgEarth::TextSymbol>();
+      ts->alignment() = static_cast<osgEarth::TextSymbol::Alignment>(labelPrefs.alignment());
       ts->pixelOffset() = osg::Vec2s(labelPrefs.offsetx(), labelPrefs.offsety());
-      ts->encoding() = osgEarth::Symbology::TextSymbol::ENCODING_UTF8;
+      ts->encoding() = osgEarth::TextSymbol::ENCODING_UTF8;
 
       // text color:
       osg::Vec4 color = ColorUtils::RgbaToVec4(labelPrefs.color());
-      ts->fill() = osgEarth::Symbology::Fill(color.r(), color.g(), color.b(), color.a());
+      ts->fill() = osgEarth::Fill(color.r(), color.g(), color.b(), color.a());
 
       // outline:
       if (labelPrefs.textoutline() != simData::TO_NONE && labelPrefs.backdroptype() != simData::BDT_NONE && color.a() != 0)

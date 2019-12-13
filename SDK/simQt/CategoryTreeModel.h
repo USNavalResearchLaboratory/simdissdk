@@ -19,6 +19,9 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+ // this is deprecated; use simQt::CategoryTreeModel2
+
 #ifndef SIMQT_CATEGORY_TREE_MODEL_H
 #define SIMQT_CATEGORY_TREE_MODEL_H
 
@@ -77,36 +80,6 @@ protected:
   Qt::CheckState state_; ///< the check box state
   int numCheckedChildren_; ///< keep track of the number of checked children, to manage current check state
   QList<CategoryTreeItem*> childItems_;  ///< Children of item, if any.  If no children, than item is a category value
-};
-
-/// Used to sort and filter the CategoryTreeModel
-class SDKQT_EXPORT CategoryProxyModel : public QSortFilterProxyModel
-{
-  Q_OBJECT
-
-public:
-  /// constructor passes parent to QSortFilterProxyModel
-  CategoryProxyModel(QObject *parent = 0);
-  virtual ~CategoryProxyModel();
-
-  /** Override setSourceModel() to detect the "All Items" model type */
-  virtual void setSourceModel(QAbstractItemModel* sourceModel);
-
-public slots:
-  /// string to filter against
-  void setFilterText(const QString& filter);
-  /// Rests the filter by calling invalidateFilter
-  void resetFilter();
-
-protected:
-  /// filtering function
-  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
-
-private:
-  /// string to filter against
-  QString filter_;
-  /// Set true when "All Categories" is the root item (i.e. using CategoryTreeModel, not CategoryTreeModel2)
-  bool hasAllCategories_;
 };
 
 
@@ -193,5 +166,5 @@ private:
 }
 
 #endif
-
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
 

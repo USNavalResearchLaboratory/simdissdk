@@ -38,8 +38,7 @@ simCore::Vec3 ViewpointPositions::centerLla(const osgEarth::Viewpoint& vp)
   // Check the Tethered case first
   if (vp.nodeIsSet())
   {
-    osg::ref_ptr<osg::Node> node;
-    vp.getNode(node);
+    osg::ref_ptr<osg::Node> node = vp.getNode();
     if (node.valid())
       return simVis::computeNodeGeodeticPosition(node.get());
   }
@@ -102,7 +101,7 @@ simCore::Vec3 ViewpointPositions::eyeLla(const simVis::View& view)
 
   // Calculate the endpoint
   simCore::Vec3 llaEye;
-  simCore::calculateGeodeticEndPoint(llaOrigin, azToEye, elToEye, manipVp.getRange(), llaEye);
+  simCore::calculateGeodeticEndPoint(llaOrigin, azToEye, elToEye, manipVp.range()->as(osgEarth::Units::METERS), llaEye);
   return llaEye;
 }
 

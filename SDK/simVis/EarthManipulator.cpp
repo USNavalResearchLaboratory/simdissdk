@@ -20,7 +20,6 @@
  *
  */
 #include "simVis/Entity.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/View.h"
 #include "simVis/EarthManipulator.h"
 
@@ -38,24 +37,14 @@ EarthManipulator::EarthManipulator()
 
 double EarthManipulator::fovY() const
 {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
   return _lastKnownVFOV;
-#else
-  return _vfov;
-#endif
 }
 
 void EarthManipulator::setFovY(double fovy)
 {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
   if (_lastKnownVFOV == fovy)
     return;
   _lastKnownVFOV = fovy;
-#else
-  if (_vfov == fovy)
-    return;
-  _vfov = fovy;
-#endif
 }
 
 void EarthManipulator::setHeadingLocked(bool lockHeading)
@@ -102,7 +91,7 @@ void EarthManipulator::rotate(double dx, double dy)
   osgEarth::Util::EarthManipulator::rotate(dx, dy);
 }
 
-void EarthManipulator::zoom(double dx, double dy)
+void EarthManipulator::zoom(double dx, double dy, osg::View* view)
 {
   if (_distance < DISTANCE_CROSS_ZERO_THRESHOLD && _distance > -DISTANCE_CROSS_ZERO_THRESHOLD)
   {
@@ -117,7 +106,10 @@ void EarthManipulator::zoom(double dx, double dy)
   {
     _distance = (dy < 0) ? -DISTANCE_CROSS_ZERO_THRESHOLD : DISTANCE_CROSS_ZERO_THRESHOLD;
   }
-  osgEarth::Util::EarthManipulator::zoom(dx, dy);
+  // recalculate the center since osgEarth no longer does this, SIM-10727
+  if (!isTethering())
+    recalculateCenterFromLookVector();
+  osgEarth::Util::EarthManipulator::zoom(dx, dy, view);
 }
 
 void EarthManipulator::handleMovementAction(const ActionType& type, double dx, double dy, osg::View* view)

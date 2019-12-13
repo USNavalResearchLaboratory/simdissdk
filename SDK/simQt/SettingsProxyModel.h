@@ -133,6 +133,10 @@ public slots:
   /** Changes the filter text */
   void setFilterText(const QString& filterText);
 
+private slots:
+  /** Reacts to a change in the list of settings, such as when a new setting is registered */
+  void invalidateAll_();
+
 private:
   SettingsSearchFilter* search_;
   SettingsDataLevelFilter* dataLevel_;

@@ -359,8 +359,8 @@ int main(int argc, char** argv)
   superHUD->addOverlayControl(createHelp());
   mainView->getViewManager()->addView(superHUD);
 
-  // For osgEarth::LineDrawable to work on SuperHUD, need an InstallViewportSizeUniform
-  superHUD->getOrCreateHUD()->addCullCallback(new osgEarth::InstallViewportSizeUniform());
+  // For osgEarth::LineDrawable to work on SuperHUD, need an InstallCameraUniform
+  superHUD->getOrCreateHUD()->addCullCallback(new osgEarth::InstallCameraUniform());
   // Configure the HUD Editor properly
   hudEditor.bindAll(*superHUD->getOrCreateHUD(), mouseDispatcher, -100);
 

@@ -19,17 +19,10 @@
  * disclose, or release this software.
  *
  */
-
-#ifndef USE_SIMDIS_SDK
 #include "swapbytes.h"
-#else // used in SIMDIS SDK
-#include "swapbytes.h"
-using namespace simVis_db;
-#endif
-
 #include "QSNodeID96.h"
 
-using namespace std;
+namespace simVis_db {
 
 //===========================================================================
 QSNodeID96::QSNodeID96()
@@ -246,9 +239,9 @@ void QSNodeID96::UnPack(const uint8_t* buffer)
 }
 
 //---------------------------------------------------------------------------
-string QSNodeID96::FormatAsHex(bool bLeadingZeros) const
+std::string QSNodeID96::FormatAsHex(bool bLeadingZeros) const
 {
-  string returnValue;
+  std::string returnValue;
 
   char sTemp[64];
 
@@ -304,4 +297,6 @@ string QSNodeID96::FormatAsHex(bool bLeadingZeros) const
     returnValue = "0";
 
   return returnValue;
+}
+
 }

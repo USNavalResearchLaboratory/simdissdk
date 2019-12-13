@@ -26,7 +26,7 @@
 #include <memory>
 #include <string>
 #include "osgEarth/GeoData"
-#include "osgEarthSymbology/Style"
+#include "osgEarth/Style"
 #include "osg/Group"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"
@@ -124,7 +124,8 @@ namespace simVis { namespace GOG
     GOG_CYLINDER,
     GOG_SPHERE,
     GOG_HEMISPHERE,
-    GOG_LATLONALTBOX
+    GOG_LATLONALTBOX,
+    GOG_CONE
   };
 
   /** Describes the original load format of the shape */
@@ -148,6 +149,7 @@ namespace simVis { namespace GOG
     std::string             metadata; ///< attributes of the GOG
     GogShape                shape; ///< identifying the exact shape type of the GOG
     LoadFormat              loadFormat; ///< indicate the original load format of the GOG
+    size_t                  lineNumber; ///< line number from the source GOG file
   public:
     GogMetaData();
     bool                    isSetExplicitly(GogSerializableField field) const; ///< determines if a field is explicitly set

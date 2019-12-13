@@ -291,6 +291,7 @@ void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
   composite_->verticalLayout->layout()->setContentsMargins(left, top, right, bottom);
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void EntityTreeComposite::addExternalAction(QAction* action)
 {
   if ((action == NULL) || action->isSeparator())
@@ -303,12 +304,10 @@ void EntityTreeComposite::removeExternalActions()
 {
   externalActions_.clear();
 }
+#endif
 
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {
-  // Give outside code a chance to update the menu before showing the menu
-  emit rightClickMenuRequested();
-
   QMenu* menu = new QMenu(composite_->treeView);
 
   menu->addAction(copyAction_);
@@ -317,13 +316,15 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 
   menu->addSeparator();
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   if (!externalActions_.empty())
   {
     for (auto it = externalActions_.begin(); it != externalActions_.end(); ++it)
-        menu->addAction(*it);
+      menu->addAction(*it);
 
     menu->addSeparator();
   }
+#endif
 
   if (showTreeOptionsInMenu_)
   {
@@ -332,8 +333,15 @@ void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
     menu->addAction(expandAllAction_);
   }
 
+  // Give outside code a chance to update the menu before showing the menu
+  emit rightClickMenuRequested(menu);
+
   // Show the menu with exec(), making sure the position is correctly relative
   menu->exec(composite_->treeView->viewport()->mapToGlobal(pos));
+
+  // Manually delete the menu, do not use SIGNAL(aboutToHide()).  The menu->execute() can call code
+  // that displays a progress dialog after the menu is hidden. The progress dialog can cause an
+  // event loop processing which will delete the hidden menu while it is still in use.
   delete menu;
 }
 
@@ -634,13 +642,13 @@ void EntityTreeComposite::showFilters_()
   filterDialog_->setWindowFlags(filterDialog_->windowFlags() ^ Qt::WindowContextHelpButtonHint);
   QVBoxLayout* layout = new QVBoxLayout(filterDialog_);
   layout->setContentsMargins(2, 2, 2, 2);
-  Q_FOREACH(QWidget* widget, filterWidgets)
+  for (auto it = filterWidgets.begin(); it != filterWidgets.end(); ++it)
   {
     // create a label for each widget, using the widget WindowTitle as text
-    QGroupBox* groupBox = new QGroupBox(widget->windowTitle(), filterDialog_);
+    QGroupBox* groupBox = new QGroupBox((*it)->windowTitle(), filterDialog_);
     QVBoxLayout* gbLayout = new QVBoxLayout(groupBox);
     gbLayout->setContentsMargins(2, 2, 2, 2);
-    gbLayout->addWidget(widget);
+    gbLayout->addWidget(*it);
     groupBox->setLayout(gbLayout);
     layout->addWidget(groupBox);
   }
@@ -683,15 +691,10 @@ bool EntityTreeComposite::useCenterAction() const
 
 void EntityTreeComposite::setUseCenterAction(bool use, const QString& reason)
 {
-  if (use)
-    centerAction_->setText(tr("Center On Selection"));
+  if (!reason.isEmpty())
+    centerAction_->setText(tr("Center On Selection (%1)").arg(reason));
   else
-  {
-    if (!reason.isEmpty())
-      centerAction_->setText(tr("Center On Selection (%1)").arg(reason));
-    else
-      centerAction_->setText(tr("Center On Selection"));
-  }
+    centerAction_->setText(tr("Center On Selection"));
 
   if (use == useCenterAction_)
     return;
@@ -718,12 +721,12 @@ void EntityTreeComposite::copySelection_()
     return;
 
   QString clipboardText;
-  Q_FOREACH(uint64_t id, ids)
+  for (auto it = ids.begin(); it != ids.end(); ++it)
   {
     if (!clipboardText.isEmpty())
       clipboardText.append("\n");
 
-    QModelIndex index = model_->index(id);
+    QModelIndex index = model_->index(*it);
     clipboardText.append(model_->data(index, Qt::DisplayRole).toString());
   }
 

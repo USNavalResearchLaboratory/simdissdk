@@ -243,6 +243,49 @@ int timeStepTest()
   return rv;
 }
 
+int getLeapDayTest()
+{
+  int rv = 0;
+  rv += SDK_ASSERT(simCore::getLeapDay(4) == 5); // jan 01 1904 - friday
+  rv += SDK_ASSERT(simCore::getLeapDay(8) == 3); // jan 01 1908 - wednesday
+  rv += SDK_ASSERT(simCore::getLeapDay(95) == 3); // 1995 -> jan 01 1992 - wednesday
+  rv += SDK_ASSERT(simCore::getLeapDay(96) == 1); // jan 01 1996 - monday
+  rv += SDK_ASSERT(simCore::getLeapDay(97) == 1); // 1997 -> 1996
+  rv += SDK_ASSERT(simCore::getLeapDay(100) == 6); // jan 01 2000 - saturday
+  rv += SDK_ASSERT(simCore::getLeapDay(101) == 6); // 2001 -> 2000
+  rv += SDK_ASSERT(simCore::getLeapDay(196) == 0); // jan 01 2096 - sunday
+  rv += SDK_ASSERT(simCore::getLeapDay(200) == 5); // jan 01 2100 - friday
+  rv += SDK_ASSERT(simCore::getLeapDay(201) == 5); // 2101 -> 2000
+  // pattern changes at year 2104, due to the fact that 2100 is not a leap year
+  rv += SDK_ASSERT(simCore::getLeapDay(204) == 2); // jan 01 2104 - tuesday
+  return rv;
+}
+
+int getWeekDayTest()
+{
+  int rv = 0;
+  rv += SDK_ASSERT(simCore::getWeekDay(0, 0) == 1);
+  rv += SDK_ASSERT(simCore::getWeekDay(0, 1) == 2);
+  rv += SDK_ASSERT(simCore::getWeekDay(1, 0) == 2); // jan 01 1901 - tuesday
+  rv += SDK_ASSERT(simCore::getWeekDay(4, 0) == 5); // jan 01 1904 - friday
+  rv += SDK_ASSERT(simCore::getWeekDay(200, 0) == 5); // 2100
+  rv += SDK_ASSERT(simCore::getWeekDay(201, 0) == 6); // jan 1 2101 - saturday
+  rv += SDK_ASSERT(simCore::getWeekDay(204, 0) == 2); // jan 01 2104 - tuesday
+  return rv;
+}
+
+int leapDaysTest()
+{
+  int rv = 0;
+  rv += SDK_ASSERT(simCore::leapDays(0) == 0);
+  rv += SDK_ASSERT(simCore::leapDays(72) == 17);
+  rv += SDK_ASSERT(simCore::leapDays(73) == 18);
+  rv += SDK_ASSERT(simCore::leapDays(99) == 24);
+  rv += SDK_ASSERT(simCore::leapDays(100) == 24);
+  rv += SDK_ASSERT(simCore::leapDays(101) == 25);
+  rv += SDK_ASSERT(simCore::leapDays(119) == 29);
+  return rv;
+}
 }
 
 int TimeUtilsTest(int argc, char *argv[])
@@ -252,6 +295,9 @@ int TimeUtilsTest(int argc, char *argv[])
   rv += SDK_ASSERT(timeStructDifferenceTest() == 0);
   rv += SDK_ASSERT(testIsValidDMY() == 0);
   rv += SDK_ASSERT(timeStepTest() == 0);
+  rv += SDK_ASSERT(getLeapDayTest() == 0);
+  rv += SDK_ASSERT(getWeekDayTest() == 0);
+  rv += SDK_ASSERT(leapDaysTest() == 0);
 
   return rv;
 }

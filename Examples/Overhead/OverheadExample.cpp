@@ -26,7 +26,7 @@
  */
 
 #include "osgEarth/NodeUtils"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"

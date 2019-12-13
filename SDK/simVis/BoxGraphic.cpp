@@ -20,7 +20,7 @@
 ****************************************************************************
 *
 */
-#include "simVis/LineDrawable.h"
+#include "osgEarth/LineDrawable"
 #include "simVis/BoxGraphic.h"
 
 namespace simVis

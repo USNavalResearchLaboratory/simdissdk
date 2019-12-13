@@ -97,7 +97,8 @@ DynamicSelectionPicker::DynamicSelectionPicker(simVis::ViewManager* viewManager,
     viewManager_(viewManager),
     scenario_(scenarioManager),
     maximumValidRange_(100.0), // pixels
-    pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL)
+    pickMask_(simVis::DISPLAY_MASK_PLATFORM|simVis::DISPLAY_MASK_PLATFORM_MODEL),
+    platformAdvantagePct_(0.7)
 {
   // By default, only platforms are picked.  Gates are feasibly pickable though.
   guiEventHandler_ = new RepickEventHandler(*this);
@@ -118,6 +119,11 @@ DynamicSelectionPicker::~DynamicSelectionPicker()
   }
 }
 
+void DynamicSelectionPicker::setPlatformAdvantagePct(double platformAdvantage)
+{
+  platformAdvantagePct_ = osg::clampBetween(platformAdvantage, 0.0, 1.0);
+}
+
 void DynamicSelectionPicker::pickThisFrame_()
 {
   // Create a calculator for screen coordinates
@@ -129,7 +135,9 @@ void DynamicSelectionPicker::pickThisFrame_()
   scenario_->getAllEntities(allEntities);
 
   // We square the range to avoid sqrt() in a tight loop
-  double closestRangePx = osg::square(maximumValidRange_);
+  const double maximumValidRangeSquared = osg::square(maximumValidRange_);
+  double closestRangePx = maximumValidRangeSquared;
+  const double platformAdvantageSquared = osg::square(maximumValidRange_ * platformAdvantagePct_);
   simVis::EntityNode* closest = NULL;
 
   // Loop through all entities
@@ -142,6 +150,12 @@ void DynamicSelectionPicker::pickThisFrame_()
     double rangeSquared;
     if (calculateSquaredRange_(calc, *i->get(), rangeSquared) != 0)
       continue;
+
+    // Platforms get a small advantage in picking, so that it's easier to pick platforms than other entities
+    const bool isPlatform = (dynamic_cast<simVis::PlatformNode*>(i->get()) != NULL);
+    // Do not apply the advantage if platform is not already inside the picking area
+    if (isPlatform && rangeSquared < maximumValidRangeSquared)
+      rangeSquared -= platformAdvantageSquared;
 
     // Choose the closest object
     if (rangeSquared < closestRangePx)
@@ -197,7 +211,8 @@ int DynamicSelectionPicker::calculateLobSquaredRange_(simUtil::ScreenCoordinateC
   std::vector<osg::Vec3d> ecefVec;
   lobNode.getVisibleEndPoints(ecefVec);
 
-  return calculateScreenRange_(calc, ecefVec, rangeSquared);
+  // Check the distance from the whole line segment, not just the end points
+  return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
 }
 
 int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinateCalculator& calc, const simVis::CustomRenderingNode& customNode, double& rangeSquared) const
@@ -206,10 +221,10 @@ int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinat
   std::vector<osg::Vec3d> ecefVec;
   customNode.getPickingPoints(ecefVec);
 
-  return calculateScreenRange_(calc, ecefVec, rangeSquared);
+  return calculateScreenRangePoints_(calc, ecefVec, rangeSquared);
 }
 
-int DynamicSelectionPicker::calculateScreenRange_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const
+int DynamicSelectionPicker::calculateScreenRangePoints_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const
 {
   rangeSquared = std::numeric_limits<double>::max();
 
@@ -223,6 +238,56 @@ int DynamicSelectionPicker::calculateScreenRange_(simUtil::ScreenCoordinateCalcu
   }
 
   return (rangeSquared == std::numeric_limits<double>::max()) ? 1 : 0;
+}
+
+int DynamicSelectionPicker::calculateScreenRangeSegments_(simUtil::ScreenCoordinateCalculator& calc, const std::vector<osg::Vec3d>& ecefVec, double& rangeSquared) const
+{
+  const size_t numVerts = ecefVec.size();
+  if (numVerts < 2)
+    return 1;
+  rangeSquared = std::numeric_limits<double>::max();
+
+  osg::Vec3d ecefPoint = ecefVec.front();
+  simUtil::ScreenCoordinate point1 = calc.calculateEcef(simCore::Vec3(ecefPoint.x(), ecefPoint.y(), ecefPoint.z()));
+  for (unsigned int i = 1; i < numVerts; ++i)
+  {
+    osg::Vec3d ecefPoint = ecefVec[i];
+    simUtil::ScreenCoordinate point2 = calc.calculateEcef(simCore::Vec3(ecefPoint.x(), ecefPoint.y(), ecefPoint.z()));
+    rangeSquared = simCore::sdkMin(rangeSquared, lineSegmentDistanceSquared_(point1.position(), point2.position(), mouseXy_));
+    point1 = point2;
+  }
+
+  return (rangeSquared == std::numeric_limits<double>::max()) ? 1 : 0;
+}
+
+double DynamicSelectionPicker::lineSegmentDistanceSquared_(const osg::Vec2d& a, const osg::Vec2d& b, const osg::Vec2d& p) const
+{
+  /*
+  * Calculates the squared distance from point p to a line segment defined by (a,b).
+  * http://www.randygaul.net/2014/07/23/distance-point-to-line-segment/
+  */
+  const osg::Vec2d normalizedSegment = b - a;
+  const osg::Vec2d vecAtoP = a - p;
+
+  const float c1 = normalizedSegment * vecAtoP;
+  // Closest point is point a
+  if (c1 > 0.f)
+    return vecAtoP * vecAtoP;
+
+  const osg::Vec2d vecPtoB = p - b;
+  // Closest point is point b
+  if (normalizedSegment * vecPtoB > 0.f)
+    return vecPtoB * vecPtoB;
+
+  osg::Vec2d e;
+  if (b != a)
+    // Closest point is between a and b, find the projection onto that line
+    e = vecAtoP - normalizedSegment * (c1 / (normalizedSegment * normalizedSegment));
+  else
+    // Points are the same, no projection necessary (avoid divide-by-zero)
+    e = vecAtoP;
+
+  return e * e;
 }
 
 void DynamicSelectionPicker::setRange(double pixelsFromCenter)

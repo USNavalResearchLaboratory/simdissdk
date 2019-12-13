@@ -26,14 +26,7 @@
 #include <string>
 #include "sqlite3.h"
 #include "simCore/Time/TimeClass.h"
-
-#ifndef USE_SIMDIS_SDK
-#include "Raster/RasterCommon.h"
-#else
-#include "Utils/Raster/RasterCommon.h"
-#endif
-
-#include "QSCommonIntTypes.h"
+#include "QSCommon.h"
 #include "QSError.h"
 #include "QSNodeID96.h"
 #include "QSPosXYExtents.h"
@@ -56,10 +49,8 @@
 #define SQLITE_OPEN_FULLMUTEX        0x00010000
 #endif /* SQLITE_OPEN_READONLY */
 
-#ifdef USE_SIMDIS_SDK
 namespace simVis_db
 {
-#endif
   static const char* QS_TO_ID = "id";
 
   //=====================================================================================
@@ -77,10 +68,6 @@ namespace simVis_db
   static const char* QS_TSO_CLASSIFICATION = "c";
   static const char* QS_TSO_DESCRIPTION = "ds";
   static const char* QS_TSO_TIME_SPECIFIED = "ts";
-
-  //=====================================================================================
-  typedef std::vector<sqlite3*> vSqlite3;
-  void CloseSqliteDBs(vSqlite3*);
 
   //=====================================================================================
   class SQLiteDataBaseReadUtil
@@ -170,8 +157,6 @@ namespace simVis_db
     int tsInsertSetIdTimeValue_;
   };
 
-#ifdef USE_SIMDIS_SDK
 } // namespace simVis_db
-#endif
 
 #endif /* SQLITE_DATABASE_READ_UTIL_H */

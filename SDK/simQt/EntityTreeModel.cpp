@@ -120,10 +120,10 @@ simData::ObjectId EntityTreeItem::id() const
 
 void EntityTreeItem::getChildrenIds(std::vector<uint64_t>& ids) const
 {
-  Q_FOREACH(const EntityTreeItem* child, childItems_)
+  for (auto it = childItems_.begin(); it != childItems_.end(); ++it)
   {
-    ids.push_back(child->id());
-    child->getChildrenIds(ids);
+    ids.push_back((*it)->id());
+    (*it)->getChildrenIds(ids);
   }
 }
 
@@ -414,25 +414,30 @@ void EntityTreeModel::removeEntity_(uint64_t id)
   // remove the item
   itemsById_.erase(id);
   // now remove any children
-  Q_FOREACH(uint64_t deleteId, ids)
-    itemsById_.erase(deleteId);
+  for (auto it = ids.begin(); it != ids.end(); ++it)
+    itemsById_.erase(*it);
 
   endRemoveRows();
 }
 
 void EntityTreeModel::removeAllEntities_()
 {
-  if (dataStore_)
-  {
-    beginResetModel();
+  if (!dataStore_)
+    return;
 
-    delete rootItem_;
-    rootItem_ = new EntityTreeItem(0, NULL);
-    delayedAdds_.clear();
-    itemsById_.clear();
+  delayedAdds_.clear();
 
-    endResetModel();
-  }
+  // no point in reseting an empty model
+  if ((rootItem_ != NULL) && (rootItem_->childCount() == 0))
+    return;
+
+  beginResetModel();
+
+  delete rootItem_;
+  rootItem_ = new EntityTreeItem(0, NULL);
+  itemsById_.clear();
+
+  endResetModel();
 }
 
 int EntityTreeModel::columnCount(const QModelIndex &parent) const

@@ -18,11 +18,11 @@ function(PostBuildInstallSharedObjects TARGET)
     # Make sure the target directory exists
     add_custom_command(TARGET ${CMD_TARGET} PRE_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E make_directory ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/
+        ARGS -E make_directory ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/
     )
     # After the build, copy the library over
     add_custom_command(TARGET ${CMD_TARGET} POST_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_if_different $<TARGET_FILE:${TARGET}> ${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/
+        ARGS -E copy_if_different $<TARGET_FILE:${TARGET}> ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_SHARED_LIBRARY_DIR}/
     )
 endfunction()

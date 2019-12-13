@@ -37,7 +37,7 @@ LobGroupMemoryDataSlice::~LobGroupMemoryDataSlice()
 {
   // need to delete current_ since it is newed separately
   delete current_;
-};
+}
 
 
 void LobGroupMemoryDataSlice::update(double time)

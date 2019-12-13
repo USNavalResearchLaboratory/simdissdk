@@ -292,8 +292,9 @@ int BoundIntegerSetting::populateCombo_(const Settings::MetaData& metaData, QCom
 
   // At this point we can clear out the values and add our own
   comboBox->clear();
-  Q_FOREACH(QString value, enumValues.values())
-    comboBox->addItem(value);
+  auto values = enumValues.values();
+  for (auto it = values.begin(); it != values.end(); ++it)
+    comboBox->addItem(*it);
   return 0;
 }
 

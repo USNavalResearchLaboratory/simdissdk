@@ -21,9 +21,8 @@
  */
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "osgEarth/Version"
-#include "simVis/LineDrawable.h"
-#include "osgEarthUtil/Ephemeris"
+#include "osgEarth/LineDrawable"
+#include "osgEarth/Ephemeris"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Math.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -33,8 +32,6 @@
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/EphemerisVector.h"
-
-using namespace osgEarth::Symbology;
 
 namespace simVis
 {
@@ -70,8 +67,8 @@ public:
       assert(clock != NULL);
       if (clock != NULL)
       {
-        const simCore::TimeStamp now = clock->currentTime();
-        const simCore::Seconds delta = now - ephemeris->lastUpdateTime_;
+        const simCore::TimeStamp& now = clock->currentTime();
+        const simCore::Seconds& delta = now - ephemeris->lastUpdateTime_;
         if (fabs(delta.Double()) > maxDelta_)
           ephemeris->rebuild_(ephemeris->lastPrefs_);
       }
@@ -88,7 +85,7 @@ private:
 EphemerisVector::EphemerisVector(const simVis::Color& moonColor, const simVis::Color& sunColor, float lineWidth)
   : Group(),
     coordConvert_(new simCore::CoordinateConverter),
-    ephemeris_(new osgEarth::Util::Ephemeris),
+    ephemeris_(new osgEarth::Ephemeris),
     lastUpdateTime_(simCore::INFINITE_TIME_STAMP),
     hasLastPrefs_(false)
 {
@@ -150,9 +147,9 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
   }
 
   // Pull out the DateTime that we can then send to the Ephemeris calculations
-  const simCore::TimeStamp timeStamp = clock->currentTime();
+  const simCore::TimeStamp& timeStamp = clock->currentTime();
   lastUpdateTime_ = timeStamp;
-  const osgEarth::DateTime dateTime(timeStamp.secondsSinceRefYear(1970));
+  const osgEarth::DateTime dateTime(timeStamp.secondsSinceRefYear(1970).getSeconds());
 
   // Reset the coordinate conversion center point
   const simCore::Coordinate asEcef(simCore::COORD_SYS_ECEF, simCore::Vec3(lastUpdate_.x(), lastUpdate_.y(), lastUpdate_.z()));
@@ -167,12 +164,8 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
   osgEarth::LineDrawable* moonGeom = geomGroup_->getLineDrawable(VECTOR_MOON);
   if (prefs.drawmoonvec())
   {
-#if OSGEARTH_VERSION_LESS_THAN(2,10,0)
-    rebuildLine_(VECTOR_MOON, ephemeris_->getMoonPositionECEF(dateTime), lineLength);
-#else
-    const osgEarth::Util::CelestialBody& moon = ephemeris_->getMoonPosition(dateTime);
+    const osgEarth::CelestialBody& moon = ephemeris_->getMoonPosition(dateTime);
     rebuildLine_(moonGeom, moon.geocentric, lineLength);
-#endif
     moonGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);
   }
   else
@@ -182,12 +175,8 @@ void EphemerisVector::rebuild_(const simData::PlatformPrefs& prefs)
   osgEarth::LineDrawable* sunGeom = geomGroup_->getLineDrawable(VECTOR_SUN);
   if (prefs.drawsunvec())
   {
-#if OSGEARTH_VERSION_LESS_THAN(2,10,0)
-    rebuildLine_(sunGeom, ephemeris_->getSunPositionECEF(dateTime), lineLength);
-#else
-    const osgEarth::Util::CelestialBody& sun = ephemeris_->getSunPosition(dateTime);
+    const osgEarth::CelestialBody& sun = ephemeris_->getSunPosition(dateTime);
     rebuildLine_(sunGeom, sun.geocentric, lineLength);
-#endif
     sunGeom->setNodeMask(DISPLAY_MASK_EPHEMERIS);
   }
   else

@@ -25,6 +25,7 @@
 #include "simVis/Shaders.h"
 #include "simVis/OverrideColor.h"
 
+#undef LC
 #define LC "simVis::OverrideColor "
 
 namespace simVis

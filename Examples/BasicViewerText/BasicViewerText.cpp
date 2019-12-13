@@ -40,8 +40,6 @@
 #include "simUtil/Replaceables.h"
 #include "simUtil/StatusText.h"
 
-#include "osgEarthDrivers/gdal/GDALOptions"
-
 #define LC "[BasicViewerText demo] "
 
 namespace ui = osgEarth::Util::Controls;

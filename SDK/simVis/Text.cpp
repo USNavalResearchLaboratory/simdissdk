@@ -22,6 +22,7 @@
 #include "osg/Version"
 #include "simVis/Text.h"
 
+#undef LC
 #define LC "[Text] "
 
 #define SCREEN_COORDS_BUGFIX 1

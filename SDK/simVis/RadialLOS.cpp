@@ -30,6 +30,7 @@
 #include "osgEarth/Terrain"
 #include <cassert>
 
+#undef LC
 #define LC "[LOS] "
 
 namespace simVis {

@@ -99,7 +99,7 @@ protected:
 
 private: // data
   osg::ref_ptr<Locator> locator_;
-  osgEarth::Revision    matrixRevision_;
+  osgEarth::Util::Revision matrixRevision_;
   osg::ref_ptr<LocatorCallback> locatorCallback_;
 
   /// Sometimes bounds are computed without a node visitor and we need to know if in overhead mode; this flag caches that.

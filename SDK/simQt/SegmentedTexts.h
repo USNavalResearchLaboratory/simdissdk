@@ -203,7 +203,7 @@ public:
   /// A segment calls valueChanged when the value has changed via the user or by setTimeStamp
   virtual void valueChanged() = 0;
   /// Set the number if digits after the decimal point
-  virtual void setPrecision(unsigned int digits) = 0;
+  void setPrecision(unsigned int digits);
   /// Returns the number of digits after the decimal point
   unsigned int precision() const;
   /// Set the time zone to use when displaying time
@@ -251,12 +251,22 @@ signals:
   void timeChanged(const simCore::TimeStamp& time);
 
 protected:
+  /// Make the segments for the display type
+  virtual void makeSegments_() = 0;
   /// Returns true if current is within the time range of start to end as dictated by the flags
   bool inRange_(const simCore::TimeStamp& current, bool limitBeforeStart, bool limitAfterEnd) const;
-  /// Creates the faction part accounting for the precision.  Cannot be const.
+  /// Creates the fraction part accounting for the precision.  Cannot be const.
   NumberText* createFactionOfSeconds_(int precision);
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /// Replaces the fraction part with a new fraction part of the given precision.
-  NumberText* updateFactionOfSeconds_(int precision);
+  SDK_DEPRECATE(NumberText* updateFactionOfSeconds_(int precision), "Method will be removed in future SDK release.");
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
+
+  /// convert the fractional part of Seconds (# of ns) to a field representation
+  int fractionToField_(const simCore::Seconds& secondsRounded) const;
+  /// convert the field representation of the fraction to a # of ns
+  int fractionFromField_(int fractionFieldValue, int precision) const;
 
   simCore::TimeStamp start_;  ///< Start Time
   simCore::TimeStamp end_;  ///< End time
@@ -268,6 +278,9 @@ protected:
   bool limitAfterEnd_;  ///< If true times after the end time are rejected
 
 private:
+  /// Adjust the time range to account for the precision
+  void adjustTimeRange_();
+
   QList<SegmentedText*> segments_;  ///< A list of segments
 };
 
@@ -284,14 +297,14 @@ public:
   virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
-  virtual void setPrecision(unsigned int digits);
   // Seconds texts does not support timezone offset
   virtual void setTimeZone(simCore::TimeZone) { }
   virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
 
-private:
-  void makeSegments_();
+protected:
+  virtual void makeSegments_();
 
+private:
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
 };
@@ -309,14 +322,14 @@ public:
   virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
-  virtual void setPrecision(unsigned int digits);
   // Minutes texts does not support timezone offset
   virtual void setTimeZone(simCore::TimeZone) { }
   virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
 
-private:
-  void makeSegments_();
+protected:
+  virtual void makeSegments_();
 
+private:
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
   NumberText* fraction_;  // Displays the fraction
@@ -335,14 +348,14 @@ public:
   virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
-  virtual void setPrecision(unsigned int digits);
   // Hours texts does not support timezone offset
   virtual void setTimeZone(simCore::TimeZone) { }
   virtual simCore::TimeZone timeZone() const { return simCore::TIMEZONE_UTC; }
 
-private:
-  void makeSegments_();
+protected:
+  virtual void makeSegments_();
 
+private:
   NumberText* hours_;  // Displays the hours
   NumberText* minutes_; // Displays the minutes
   NumberText* seconds_;  // Displays the seconds
@@ -362,13 +375,13 @@ public:
   virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
-  virtual void setPrecision(unsigned int digits);
   virtual void setTimeZone(simCore::TimeZone zone);
   virtual simCore::TimeZone timeZone() const;
 
-private:
-  void makeSegments_();
+protected:
+  virtual void makeSegments_();
 
+private:
   NumberText* days_;  // Displays the day of year
   NumberText* years_;  // Displays the year
   NumberText* hours_;  // Displays the hours
@@ -391,13 +404,13 @@ public:
   virtual void valueEdited();
   virtual void valueChanged();
   virtual QValidator::State validateText(const QString& text) const;
-  virtual void setPrecision(unsigned int digits);
   virtual void setTimeZone(simCore::TimeZone zone);
   virtual simCore::TimeZone timeZone() const;
 
-private:
-  void makeSegments_();
+protected:
+  virtual void makeSegments_();
 
+private:
   MonthText* month_; // Displays the month
   NumberText* days_;  // Displays the day of year
   NumberText* years_;  // Displays the year

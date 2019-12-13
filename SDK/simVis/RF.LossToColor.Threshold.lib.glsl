@@ -10,6 +10,9 @@ uniform int mode;
 // Returns an above/below threshold value for loss
 vec4 lossToColor(in float loss)
 {
+  // Special case, if the loss value is invalid/no-data
+  if (loss < -32765.0)
+    return vec4(0.0, 0.0, 0.0, 0.0);
   if (mode == 2) // above and below
   {
     if (loss <= threshold) return belowColor;

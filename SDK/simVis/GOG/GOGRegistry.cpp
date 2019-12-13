@@ -23,6 +23,7 @@
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/Arc.h"
 #include "simVis/GOG/Circle.h"
+#include "simVis/GOG/Cone.h"
 #include "simVis/GOG/Cylinder.h"
 #include "simVis/GOG/Ellipse.h"
 #include "simVis/GOG/Ellipsoid.h"
@@ -39,6 +40,7 @@
 #include "simVis/GOG/Utils.h"
 #include "simVis/GOG/GOGRegistry.h"
 
+#undef LC
 #define LC "[GOG::GOGRegistry] "
 
 namespace simVis { namespace GOG {
@@ -70,6 +72,7 @@ GOGRegistry::GOGRegistry(osgEarth::MapNode* mapNode)
   add("annotation",   new SF<TextAnnotation>());
   add("arc",          new SF<Arc>());
   add("circle",       new SF<Circle>());
+  add("cone",         new SF<Cone>());
   add("cylinder",     new SF<Cylinder>());
   add("ellipse",      new SF<Ellipse>());
   add("ellipsoid",    new SF<Ellipsoid>());
@@ -96,7 +99,7 @@ void GOGRegistry::add(const std::string& tag, Deserializer* functor)
 }
 
 GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const GOGNodeType& nodeType,
-  const osgEarth::Symbology::Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData,
+  const osgEarth::Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData,
   GogFollowData& followData) const
 {
   GogNodeInterface* result = NULL;

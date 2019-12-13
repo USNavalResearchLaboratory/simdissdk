@@ -20,7 +20,6 @@
 *
 */
 #include "simCore/EM/Decibel.h"
-#include "simCore/EM/Propagation.h"
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 
 namespace simRF
@@ -36,14 +35,14 @@ double OneWayPowerDataProvider::getValueByIndex(unsigned int heightIndex, unsign
 {
   double ppfdB = FunctionalProfileDataProvider::templateGetValueByIndex_(heightIndex, rangeIndex);
   return (ppfdB <= simCore::SMALL_DB_VAL) ?
-    simCore::SMALL_DB_VAL : getOneWayPower_(ppfdB, FunctionalProfileDataProvider::getRange_(rangeIndex), radarParameters_->antennaGaindB, radarParameters_->antennaGaindB);
+    simCore::SMALL_DB_VAL : getOneWayPower_(ppfdB, FunctionalProfileDataProvider::getRange_(rangeIndex), radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
 }
 
 double OneWayPowerDataProvider::interpolateValue(double height, double range) const
 {
   double ppfdB = FunctionalProfileDataProvider::templateInterpolateValue_(height, range);
   return (ppfdB <= simCore::SMALL_DB_VAL) ?
-    simCore::SMALL_DB_VAL : getOneWayPower_(ppfdB, range, radarParameters_->antennaGaindB, radarParameters_->antennaGaindB);
+    simCore::SMALL_DB_VAL : getOneWayPower_(ppfdB, range, radarParameters_->antennaGaindBi, radarParameters_->antennaGaindBi);
 }
 
 double OneWayPowerDataProvider::getOneWayPower(double height, double range, double slantRangeM, double xmtGaindB, double rcvGaindB) const

@@ -29,6 +29,7 @@
 #include "simCore/Common/Time.h"
 #include "simCore/Time/Constants.h"
 #include "simCore/Time/Exception.h"
+#include "simCore/Time/TimeClass.h"
 #include "simCore/Time/Utils.h"
 
 //------------------------------------------------------------------------
@@ -36,15 +37,14 @@
 int simCore::currentYear()
 {
   struct timeval tp;
-  struct tm *pTime;
 
   // get the current system time, using timezone value of 0
   // returns UTC time
   gettimeofday(&tp, 0);
 
   // put system time into a tm struct
-  time_t t(tp.tv_sec);
-  pTime = gmtime(&t);
+  const time_t t(tp.tv_sec);
+  const struct tm* pTime = gmtime(&t);
 
   if (pTime == NULL)
     return std::numeric_limits<int>::max();
@@ -63,7 +63,7 @@ double simCore::getSystemTime()
   // returns UTC time
   gettimeofday(&tp, 0);
 
-  return static_cast<double>(tp.tv_sec) + (static_cast<double>(tp.tv_usec) * 1e-06);
+  return tp.tv_sec + tp.tv_usec * 1e-06;
 }
 
 //------------------------------------------------------------------------
@@ -77,14 +77,14 @@ double simCore::systemTimeToSecsBgnYr()
   gettimeofday(&tp, 0);
 
   // put system time into a tm struct
-  time_t t(tp.tv_sec);
-  struct tm* pTime = gmtime(&t);
+  const time_t t(tp.tv_sec);
+  const struct tm* pTime = gmtime(&t);
 
   if (pTime == NULL)
     return std::numeric_limits<double>::max();
 
   // assemble a UTC "system time"
-  unsigned int pSecs = static_cast<unsigned int>(pTime->tm_sec)  +
+  const unsigned int pSecs = static_cast<unsigned int>(pTime->tm_sec)  +
     ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
     ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR) +
     ((static_cast<unsigned int>(pTime->tm_yday)) * simCore::SECPERDAY);
@@ -103,8 +103,8 @@ void simCore::systemTimeToSecsBgnYr(unsigned int &pSecs, unsigned short &pMillis
   gettimeofday(&tp, 0);
 
   // put system time into a tm struct
-  time_t t(tp.tv_sec);
-  struct tm* pTime = gmtime(&t);
+  const time_t t(tp.tv_sec);
+  const struct tm* pTime = gmtime(&t);
 
   if (pTime == NULL)
   {
@@ -141,7 +141,7 @@ double simCore::systemTimeToSecsBgnDay()
     return std::numeric_limits<double>::max();
 
   // assemble a UTC "system time"
-  unsigned int pSecs = (static_cast<unsigned int>(pTime->tm_sec) +
+  const unsigned int pSecs = (static_cast<unsigned int>(pTime->tm_sec) +
     ((static_cast<unsigned int>(pTime->tm_min)) * simCore::SECPERMIN) +
     ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR));
 
@@ -152,12 +152,12 @@ double simCore::systemTimeToSecsBgnDay()
 
 void simCore::timeSinceJan1970ToSecsBgnYr(double timeSinceJan1970, unsigned int &pSecs, unsigned short &pMillisec, unsigned int &pRefyear)
 {
-  struct tm* pTime;
-  int seconds = static_cast<int>(floor(timeSinceJan1970));
+  // 64bit int required, since secs from 1970 - 2200 can overflow int
+  const int64_t seconds = static_cast<int64_t>(floor(timeSinceJan1970));
 
   // put system time into a tm struct
   time_t t(seconds);
-  pTime = gmtime(&t);
+  const struct tm* pTime = gmtime(&t);
 
   if (pTime == NULL)
   {
@@ -174,7 +174,7 @@ void simCore::timeSinceJan1970ToSecsBgnYr(double timeSinceJan1970, unsigned int 
     ((static_cast<unsigned int>(pTime->tm_hour)) * simCore::SECPERHOUR) +
     ((static_cast<unsigned int>(pTime->tm_yday)) * simCore::SECPERDAY);
 
-  pMillisec = static_cast<unsigned short>((timeSinceJan1970 - static_cast<double>(seconds)) * 1e+03);
+  pMillisec = static_cast<unsigned short>((timeSinceJan1970 - seconds) * 1e+03);
 
   // years are stored as values since 1900
   pRefyear = static_cast<unsigned int>(pTime->tm_year + 1900);
@@ -230,45 +230,82 @@ tm simCore::getTimeStruct(double secSinceBgnEpochTime, unsigned int yearsSince19
   if (secSinceBgnEpochTime < 0)
     throw simCore::TimeException(simCore::SECONDS_SINCE_EPOCHTIME_NOT_VALID, "simCore::getTimeStruct, The seconds since epoch time is < 0.");
 
-  if (secSinceBgnEpochTime > (1000.0 * 365.0 * 24.0 * 60.0 * 60.0))
+  if (secSinceBgnEpochTime > (1000.0 * 365.0 * simCore::SECPERDAY))
     throw simCore::TimeException(simCore::SECONDS_SINCE_EPOCHTIME_NOT_VALID, "simCore::getTimeStruct, The seconds since epoch time is > 1000 years.");
 
-  tm returnTime = {0};
+  const int refYear = 1900 + yearsSince1900;
+  if (refYear >= MIN_TIME_YEAR && refYear <= MAX_TIME_YEAR)
+  {
+    const simCore::TimeStamp timeStamp(refYear, secSinceBgnEpochTime);
+    // if normalized timeStamp is MIN_TIME_STAMP or MAX_TIME_STAMP,
+    //  possible that we are outside TimeStamp capability. fall back to old impl.
+    if (timeStamp != MIN_TIME_STAMP && timeStamp != MAX_TIME_STAMP)
+    {
+      return getTimeStruct(timeStamp);
+    }
+  }
+  tm returnTime = { 0 };
   returnTime.tm_year = yearsSince1900;
   double tmSec = floor(secSinceBgnEpochTime);
 
-  // figure out what the year is and update both
-  // returnTime.tm_sec and returnTime.tm_year accordingly
+  // calculate the year and update both tm_sec and returnTime.tm_year accordingly
   int daysPerCurrentYear = simCore::daysPerYear(yearsSince1900);
-  double secondsPerYear = static_cast<double>(daysPerCurrentYear) * simCore::SECPERDAY;
+  double secondsPerYear = daysPerCurrentYear * simCore::SECPERDAY;
   while (tmSec >= secondsPerYear)
   {
     tmSec -= secondsPerYear;
     daysPerCurrentYear = simCore::daysPerYear(++(returnTime.tm_year));
-    secondsPerYear = static_cast<double>(daysPerCurrentYear) * simCore::SECPERDAY;
+    secondsPerYear = daysPerCurrentYear * simCore::SECPERDAY;
   }
 
-  // figure out what the day of the year (returnTime.tm_yday)
-  // is and update returnTime.tm_sec accordingly
-  returnTime.tm_yday = static_cast<int>(floor(tmSec / static_cast<double>(simCore::SECPERDAY)));
+  // calculate the day of the year (returnTime.tm_yday) and update returnTime.tm_sec accordingly
+  returnTime.tm_yday = static_cast<int>(floor(tmSec / simCore::SECPERDAY));
   tmSec -= static_cast<double>(returnTime.tm_yday)*simCore::SECPERDAY;
 
-  // figure out what the hour of the day (returnTime.tm_hour)
-  // is and update returnTime.tm_sec accordingly
-  returnTime.tm_hour = static_cast<int>(floor(tmSec / static_cast<double>(simCore::SECPERHOUR)));
+  // calculate the hour of the day (returnTime.tm_hour) and update returnTime.tm_sec accordingly
+  returnTime.tm_hour = static_cast<int>(floor(tmSec / simCore::SECPERHOUR));
   tmSec -= static_cast<double>(returnTime.tm_hour)*simCore::SECPERHOUR;
 
-  // figure out what the minute of the hour (returnTime.tm_min)
-  // is and update returnTime.tm_sec accordingly
-  returnTime.tm_min = static_cast<int>(floor(tmSec / static_cast<double>(simCore::SECPERMIN)));
+  // calculate the minute of the hour (returnTime.tm_min) and update returnTime.tm_sec accordingly
+  returnTime.tm_min = static_cast<int>(floor(tmSec / simCore::SECPERMIN));
   tmSec -= static_cast<double>(returnTime.tm_min)*simCore::SECPERMIN;
   returnTime.tm_sec = static_cast<int>(tmSec);
 
-  // figure out the the month (returnTime.tm_mon) of the year
-  // and the day of the month (returnTime.tm_mday)
+  // calculate the month (returnTime.tm_mon) of the year and the day of the month (returnTime.tm_mday)
   simCore::getMonthAndDayOfMonth(returnTime.tm_mon, returnTime.tm_mday, returnTime.tm_year, returnTime.tm_yday);
 
-  // figure out the weekday (returnTime.tm_wday)
+  // calculate the weekday (returnTime.tm_wday)
+  returnTime.tm_wday = simCore::getWeekDay(returnTime.tm_year, returnTime.tm_yday);
+
+  return returnTime;
+}
+
+//------------------------------------------------------------------------
+
+tm simCore::getTimeStruct(const TimeStamp& timeStamp)
+{
+  tm returnTime = { 0 };
+
+  returnTime.tm_year = timeStamp.referenceYear() - 1900;
+  int64_t seconds = timeStamp.secondsSinceRefYear().getSeconds();
+
+  // calculate the day of the year (returnTime.tm_yday)
+  returnTime.tm_yday = static_cast<int>(floor(seconds / simCore::SECPERDAY));
+  seconds -= (returnTime.tm_yday * simCore::SECPERDAY);
+
+  // calculate the hour of the day (returnTime.tm_hour)
+  returnTime.tm_hour = static_cast<int>(floor(seconds / simCore::SECPERHOUR));
+  seconds -= (returnTime.tm_hour * simCore::SECPERHOUR);
+
+  // calculate the minute of the hour (returnTime.tm_min)
+  returnTime.tm_min = static_cast<int>(floor(seconds / simCore::SECPERMIN));
+  seconds -= (returnTime.tm_min * simCore::SECPERMIN);
+  returnTime.tm_sec = static_cast<int>(seconds);
+
+  // calculate the month (returnTime.tm_mon) of the year and the day of the month (returnTime.tm_mday)
+  simCore::getMonthAndDayOfMonth(returnTime.tm_mon, returnTime.tm_mday, returnTime.tm_year, returnTime.tm_yday);
+
+  // calculate the weekday (returnTime.tm_wday)
   returnTime.tm_wday = simCore::getWeekDay(returnTime.tm_year, returnTime.tm_yday);
 
   return returnTime;
@@ -304,22 +341,21 @@ double simCore::getTimeStructDifferenceInSeconds(const tm& epochTime, const tm& 
 
 //------------------------------------------------------------------------
 
-int simCore::getYearDay(int month, int monthDay, int yearsSince1900)
+int simCore::getYearDay(int month, int monthDay, int year)
 {
-  if (yearsSince1900 < 0)
+  if (year < 0)
     throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::getYearDay, The given year is not valid.");
   if ((month < 0) || (month >= simCore::MONPERYEAR))
     throw simCore::TimeException(simCore::MONTH_NOT_VALID, "simCore::getYearDay, The given month is not valid.");
-  if ((monthDay <= 0) || (monthDay > simCore::daysPerMonth(yearsSince1900, month)))
+  if ((monthDay <= 0) || (monthDay > simCore::daysPerMonth(year, month)))
     throw simCore::TimeException(simCore::MONTHDAY_NOT_VALID, "simCore::getYearDay, The given month day is not valid.");
 
   int yearDay = 0;
-  int currentMonth;
-  for (currentMonth = 0; currentMonth < simCore::MONPERYEAR; ++currentMonth)
+  for (int currentMonth = 0; currentMonth < simCore::MONPERYEAR; ++currentMonth)
   {
     if (month == currentMonth)
       return yearDay + (monthDay - 1);
-    yearDay += simCore::daysPerMonth(yearsSince1900, currentMonth);
+    yearDay += simCore::daysPerMonth(year, currentMonth);
   }
 
   return yearDay;
@@ -327,22 +363,21 @@ int simCore::getYearDay(int month, int monthDay, int yearsSince1900)
 
 //------------------------------------------------------------------------
 
-void simCore::getMonthAndDayOfMonth(int &month, int &monthDay, int yearsSince1900, int yearDay)
+void simCore::getMonthAndDayOfMonth(int &month, int &monthDay, int year, int yearDay)
 {
-  if (yearsSince1900 < 0)
+  if (year < 0)
     throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::getMonthAndDayOfMonth, The given year is not valid.");
-  if ((yearDay < 0) || (yearDay >= simCore::daysPerYear(yearsSince1900)))
+  if ((yearDay < 0) || (yearDay >= simCore::daysPerYear(year)))
     throw simCore::TimeException(simCore::YEARDAY_NOT_VALID, "simCore::getMonthAndDayOfMonth, The given year day is not valid.");
 
   int lastDayofCurrentMonthYearDay = -1;
-  int currentMonth;
-  for (currentMonth = 0; currentMonth < simCore::MONPERYEAR; ++currentMonth)
+  for (int currentMonth = 0; currentMonth < simCore::MONPERYEAR; ++currentMonth)
   {
-    lastDayofCurrentMonthYearDay += simCore::daysPerMonth(yearsSince1900, currentMonth);
+    lastDayofCurrentMonthYearDay += simCore::daysPerMonth(year, currentMonth);
     if (yearDay <= lastDayofCurrentMonthYearDay)
     {
       month = currentMonth;
-      monthDay = 1 + (yearDay - (lastDayofCurrentMonthYearDay - (simCore::daysPerMonth(yearsSince1900, currentMonth) - 1)));
+      monthDay = 1 + (yearDay - (lastDayofCurrentMonthYearDay - (simCore::daysPerMonth(year, currentMonth) - 1)));
       return;
     }
   }
@@ -361,12 +396,24 @@ int simCore::getWeekDay(int yearsSince1900, int yearDay)
   int currDay = 0;
 
   // set weekday based on closest leap year
-  currDay = simCore::getLeapDay(yearsSince1900);
+  if (yearsSince1900 >= 4)
+    currDay = simCore::getLeapDay(yearsSince1900);
+  else
+  {
+    // leap days started 1904. for [1900,1904), this ensures correct result
+    currDay = 0;
+  }
 
   // determine difference between current year and previous
   // leap year, the difference will match the exact weekday
   // for the current year of interest
-  if (simCore::isLeapYear(yearsSince1900) == false)
+  if (yearsSince1900 >= 200)
+  {
+    // 2100 is not a leap year, so the pattern is different
+    if (yearsSince1900 >= 201 && !simCore::isLeapYear(yearsSince1900))
+      leaps = (yearsSince1900 % 4);
+  }
+  else if (!simCore::isLeapYear(yearsSince1900))
   {
     // increment extra day due to previous leap year
     leaps = 1 + (yearsSince1900 % 4);
@@ -383,39 +430,54 @@ int simCore::getWeekDay(int yearsSince1900, int yearDay)
 
 int simCore::getLeapDay(int yearsSince1900)
 {
-  if (yearsSince1900 < 0)
+  if (yearsSince1900 < 4)
     throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::getLeapDay, The given year is not valid.");
 
   // The first day of the first leap year was a Friday (01.01.1904)
   // each successive leap year's first day is 5 days beyond that of
-  // previous leap year.
-  int leap = yearsSince1900 / 4;
+  // previous leap year, until 2104 (b/c 2100 is not a leap year).
+  const int leap = yearsSince1900 / 4;
 
-  // every 7 leap years, the cycle repeats itself
-  return (leap * 5) % 7;
+  // every 7 leap years, the cycle repeats itself, until 2104, when it restarts with a -1 offset
+  return (yearsSince1900 < 204) ? (leap * 5) % 7 : ((leap * 5) % 7) - 1;
 }
 
 //------------------------------------------------------------------------
 
-int simCore::daysPerYear(int yearsSince1900)
+unsigned int simCore::leapDays(int yearsSince1900)
 {
   if (yearsSince1900 < 0)
-    throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::daysPerYear, The given year is not valid.");
-
-  return simCore::isLeapYear(yearsSince1900) ? 366 : 365;
+  {
+    assert(0);
+    return 0;
+  }
+  // -1 means that a leap year (e.g., 1904) does not generate a count, whereas leap year+1 (.e.g. 1905) does.
+  const unsigned int normalLeapDays = (yearsSince1900 - 1) / 4;
+  // -1 means that 100-year (e.g., 2000) does not generate a count, whereas 100-year+1 (.e.g. 2001) does.
+  const unsigned int nonLeapDays100 = (yearsSince1900 - 1) / 100;
+  // +299 means that 400-year (e.g., 2000) does not generate a count, whereas 400-year+1 (.e.g. 2001) does.
+  const unsigned int leapDays400 = (yearsSince1900 + 299) / 400;
+  return normalLeapDays + leapDays400 - nonLeapDays100;
 }
 
 //------------------------------------------------------------------------
 
-int simCore::daysPerMonth(int yearsSince1900, int month)
+int simCore::daysPerYear(int year)
 {
-  if (yearsSince1900 < 0)
+  return simCore::isLeapYear(year) ? 366 : 365;
+}
+
+//------------------------------------------------------------------------
+
+int simCore::daysPerMonth(int year, int month)
+{
+  if (year < 0)
     throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::daysPerMonth, The given year is not valid.");
   if ((month < 0) || (month >= simCore::MONPERYEAR))
     throw simCore::TimeException(simCore::MONTH_NOT_VALID, "simCore::daysPerMonth, The given month is not valid.");
 
   // Month + 1 is used because DAYS_IN_MONTHS is a 13-element array
-  return simCore::DAYS_IN_MONTHS[isLeapYear(yearsSince1900) ? 1 : 0][month+1];
+  return simCore::DAYS_IN_MONTHS[isLeapYear(year) ? 1 : 0][month+1];
 }
 
 //------------------------------------------------------------------------
@@ -425,7 +487,7 @@ bool simCore::isLeapYear(int year)
   if (year < 0)
     throw simCore::TimeException(simCore::YEAR_NOT_VALID, "simCore::isLeapYear, The given year is not valid.");
 
-  int gregorianYear((year > 1900) ? year : year+1900);
+  const int gregorianYear((year > 1900) ? year : year+1900);
   // A year is a leap year if it is divisible by 4, but not by 100
   // except that years divisible by 400 are leap years.
   return ((gregorianYear % 4 == 0 && gregorianYear % 100 != 0) || gregorianYear % 400 == 0) ? true : false;
@@ -436,11 +498,11 @@ bool simCore::isLeapYear(int year)
 ///Breaks a time value referenced to a calendar year into individual components
 std::string simCore::getTimeComponents(double time, unsigned int *day, unsigned int *hour, unsigned int *min, unsigned int *sec, unsigned int *tenthSec, bool ordinal)
 {
-  unsigned int d = static_cast<unsigned int>(time/86400.0);
-  unsigned int h = static_cast<unsigned int>((time-d*86400)/3600);
-  unsigned int m = static_cast<unsigned int>((time-d*86400-h*3600)/60);
-  unsigned int s = static_cast<unsigned int>((time-d*86400-h*3600-m*60));
-  unsigned int t = static_cast<unsigned int>((time-d*86400-h*3600-m*60-s)*10);
+  unsigned int d = static_cast<unsigned int>(time / simCore::SECPERDAY);
+  const unsigned int h = static_cast<unsigned int>((time - d*simCore::SECPERDAY) / simCore::SECPERHOUR);
+  const unsigned int m = static_cast<unsigned int>((time - d*simCore::SECPERDAY - h*simCore::SECPERHOUR) / simCore::SECPERMIN);
+  const unsigned int s = static_cast<unsigned int>((time - d*simCore::SECPERDAY - h*simCore::SECPERHOUR - m*simCore::SECPERMIN));
+  const unsigned int t = static_cast<unsigned int>((time - d*simCore::SECPERDAY - h*simCore::SECPERHOUR - m*simCore::SECPERMIN - s) * 10);
   if (ordinal)
     ++d;
 
@@ -463,15 +525,23 @@ std::string simCore::getTimeComponents(double time, unsigned int *day, unsigned 
 }
 
 //------------------------------------------------------------------------
-
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void simCore::normalizeTime(int &refYear, double &secondsSinceRefYear)
 {
   assert(refYear > 1900);
+  if (refYear >= MIN_TIME_YEAR && refYear <= MAX_TIME_YEAR)
+  {
+    const simCore::TimeStamp timeStamp(refYear, secondsSinceRefYear);
+    refYear = timeStamp.referenceYear();
+    secondsSinceRefYear = timeStamp.secondsSinceRefYear().Double();
+    return;
+  }
+
   if (secondsSinceRefYear < 0)
   {
     // Do a sanity check
     if (secondsSinceRefYear < -100.0 * 365.0 * simCore::SECPERDAY)
-      throw simCore::TimeException(simCore::SECONDS_SINCE_EPOCHTIME_NOT_VALID, "simCore::normalizeTime, The seconds since epoch time is < 0.");
+      throw simCore::TimeException(simCore::SECONDS_SINCE_EPOCHTIME_NOT_VALID, "simCore::normalizeTime, The seconds since epoch time is < -100 years.");
     while (secondsSinceRefYear < 0)
     {
       refYear--;
@@ -493,13 +563,14 @@ void simCore::normalizeTime(int &refYear, double &secondsSinceRefYear)
     epochTime.tm_yday = 0;
     epochTime.tm_wday = simCore::getWeekDay(epochTime.tm_year, epochTime.tm_yday);
     epochTime.tm_isdst = 0;
-    struct tm timeval = simCore::getTimeStruct(secondsSinceRefYear, refYear - 1900);
+    const struct tm& timeval = simCore::getTimeStruct(secondsSinceRefYear, refYear - 1900);
     refYear = timeval.tm_year + 1900;
     epochTime.tm_year = timeval.tm_year;
     epochTime.tm_wday = simCore::getWeekDay(epochTime.tm_year, epochTime.tm_yday);
     secondsSinceRefYear = simCore::getTimeStructDifferenceInSeconds(epochTime, timeval);
   }
 }
+#endif
 
 double simCore::getNextTimeStep(bool faster, double lastStep)
 {

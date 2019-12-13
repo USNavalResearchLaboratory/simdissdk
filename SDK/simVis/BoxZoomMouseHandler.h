@@ -24,7 +24,7 @@
 
 #include "osg/ref_ptr"
 #include "osgGA/GUIEventHandler"
-#include "osgEarthUtil/EarthManipulator"
+#include "osgEarth/EarthManipulator"
 #include "simCore/Common/Common.h"
 #include "simVis/BoxGraphic.h"
 

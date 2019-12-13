@@ -53,7 +53,7 @@
 
 /// paths to models
 #include "simUtil/ExampleResources.h"
-#include "osgEarthUtil/Sky"
+#include "osgEarth/Sky"
 
 using namespace osgEarth;
 using namespace osgEarth::Util;
@@ -340,7 +340,7 @@ int main(int argc, char **argv)
   // add sky node
   simExamples::addDefaultSkyNode(viewer.get());
   if (scene->getSkyNode())
-    scene->getSkyNode()->setDateTime(osgEarth::Util::DateTime(2012, 0, 0, 11.0));
+    scene->getSkyNode()->setDateTime(osgEarth::DateTime(2012, 0, 0, 11.0));
 
   AppData app;
 

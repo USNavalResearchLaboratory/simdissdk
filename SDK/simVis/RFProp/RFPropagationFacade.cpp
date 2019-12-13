@@ -146,7 +146,7 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   podLossThresholds_ = PODVectorPtr(new std::vector<float>);
   setDefaultPODVector(podLossThresholds_);
 
-  radarParameters_ = RadarParametersPtr(new RadarParameters());
+  radarParameters_ = RadarParametersPtr(new simCore::RadarParameters());
 
   // set default transparency
   setTransparency(DEFAULT_TRANSPARENCY);
@@ -171,7 +171,7 @@ int RFPropagationFacade::setModelType()
   return 1;
 }
 
-int RFPropagationFacade::setRadarParams(const simRF::RadarParameters& radarParams)
+int RFPropagationFacade::setRadarParams(const simCore::RadarParameters& radarParams)
 {
   // copy the struct
   *radarParameters_ = radarParams;
@@ -250,7 +250,6 @@ int RFPropagationFacade::setSlotData(simRF::Profile* profile)
     return 1;
   }
   profileManager_->addProfile(profile);
-  profileList_.push_back(profile);
   return 0;
 }
 
@@ -338,24 +337,16 @@ double RFPropagationFacade::height() const
   return profileManager_->getHeight();
 }
 
-int RFPropagationFacade::setThicknessBySlots(int numSlots)
+int RFPropagationFacade::setThickness(unsigned int thickness)
 {
   if (profileManager_ == NULL)
     return 1;
 
-  return profileManager_->setThicknessBySlots(numSlots);
-}
-
-int RFPropagationFacade::setThickness(double thickness)
-{
-  if (profileManager_ == NULL)
-    return 1;
-
-  profileManager_->setDisplayThickness(static_cast<float>(thickness));
+  profileManager_->setDisplayThickness(thickness);
   return 0;
 }
 
-double RFPropagationFacade::thickness() const
+unsigned int RFPropagationFacade::thickness() const
 {
   if (profileManager_ == NULL)
     return 0.0;
@@ -512,7 +503,6 @@ int RFPropagationFacade::clearCache(bool reset)
 {
   setDisplay(false);
   arepsFilesetTimeMap_.clear();
-  profileList_.clear();
   // clear out old (data from) ProfileManager, create a new empty ProfileManager
   profileManager_ = new simRF::ProfileManager();
   return 0;
@@ -823,6 +813,15 @@ float RFPropagationFacade::maxHeight() const
   return (cProvider != NULL) ? cProvider->getMaxHeight() : 0.0f;
 }
 
+unsigned int RFPropagationFacade::heightSteps() const
+{
+  const Profile* profile = getProfile(0);
+  if (profile == NULL)
+    return 0;
+  const simRF::CompositeProfileProvider* cProvider = profile->getDataProvider();
+  return (cProvider != NULL) ? cProvider->getNumHeights() : 0;
+}
+
 
 double RFPropagationFacade::getBearing() const
 {
@@ -845,12 +844,12 @@ void RFPropagationFacade::setElevation(double elevation)
 
 unsigned int RFPropagationFacade::numProfiles() const
 {
-  return profileList_.size();
+  return (profileManager_) ? profileManager_->getNumChildren() : 0;
 }
 
 const simRF::Profile* RFPropagationFacade::getProfile(unsigned int index) const
 {
-  return (profileList_.size() > index) ? profileList_.at(index).get() : NULL;
+  return (profileManager_) ? profileManager_->getProfile(index) : NULL;
 }
 
 void RFPropagationFacade::setPosition(double latRad, double lonRad)

@@ -154,7 +154,7 @@ void DirectorySelectorWidget::setDirectory(const QString& dir)
 
 bool DirectorySelectorWidget::eventFilter(QObject* obj, QEvent* evt)
 {
-  if (obj == ui_->directoryText)
+  if (obj == ui_->directoryText && ui_->directoryText->isEnabled())
   {
     if (evt->type() == QEvent::MouseButtonDblClick)
     {

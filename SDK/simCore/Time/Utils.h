@@ -29,6 +29,8 @@
 
 namespace simCore
 {
+  class TimeStamp;
+
   //------------------------------------------------------------------------
   //
   // <time.h> struct tm definition
@@ -150,6 +152,15 @@ namespace simCore
   SDKCORE_EXPORT tm getTimeStruct(double secSinceBgnOfEpochTime, unsigned int yearsSince1900);
 
   /**
+  * Returns a tm time struct that corresponds to the input timeStamp.
+  * Note: the struct tm uses an int for storing the seconds value, so the tm struct that is returned
+  * by this function is less accurate a time than the input seconds since epoch time.
+  * @param[in ] timeStamp A timestamp containing reference year and seconds since that reference year.
+  * @return A tm time struct referenced to the input timeStamp.
+  */
+  SDKCORE_EXPORT tm getTimeStruct(const simCore::TimeStamp& timeStamp);
+
+  /**
   * Returns the difference in seconds between two tm time structs
   * @param[in ] epochTime A tm time struct containing the reference time.
   * @param[in ] compareTime A tm time struct containing the comparison time.
@@ -161,36 +172,34 @@ namespace simCore
   /**
   * Returns the # of days since the beginning of the Gregorian year ("calendrical year") that corresponds to the given month and monthDay values
   *   month values [0, 11]
-  *   monthDay values [1, DaysPerMonth(yearsSince1900, month)]
-  *   yearsSince1900 >= 0, i.e. 1999 would be represented as 99
+  *   monthDay values [1, DaysPerMonth(year, month)]
   * @param[in ] month An integer containing the month in the range of [0-11]
   * @param[in ] monthDay An integer containing the day of the month
-  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900.
+  * @param[in ] year Year value; values less than 1900 will be treated as 1900+year
   * @return integer containing the number of days since the beginning of the year for the specified input values.
   * @throw TimeException
   */
-  SDKCORE_EXPORT int getYearDay(int month, int monthDay, int yearsSince1900);
+  SDKCORE_EXPORT int getYearDay(int month, int monthDay, int year);
 
   /**
-  * Assigns the values of "month" and "monthDay" that correspond to the given years since 1900 and the associated Gregorian year day value.
+  * Assigns the values of "month" and "monthDay" that correspond to the given year and the associated Gregorian year day value.
   *   month values [0, 11]
-  *   monthDay values [1, DaysPerMonth(yearsSince1900, month)]
-  *   yearsSince1900 >= 0, i.e. 1999 would be represented as 99
-  *   yearDay values [0,DaysPerYear(yearsSince1900)]
+  *   monthDay values [1, DaysPerMonth(year, month)]
+  *   yearDay values [0,DaysPerYear(year)]
   * @param[out] month An integer that is assigned the month in the range of [0-11]
   * @param[out] monthDay An integer that is assigned the day of the month
-  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900.
+  * @param[in ] year Year value; values less than 1900 will be treated as 1900+year
   * @param[in ] yearDay An integer containing the number of days since the beginning of the specified Gregorian year [0-365]
   * @throw TimeException
   * @pre month and monthDay valid params
   */
-  SDKCORE_EXPORT void getMonthAndDayOfMonth(int &month, int &monthDay, int yearsSince1900, int yearDay);
+  SDKCORE_EXPORT void getMonthAndDayOfMonth(int &month, int &monthDay, int year, int yearDay);
 
   /**
-  * Returns the week day value [0-6] that corresponds to the given years since 1900 and the associated Gregorian year day value.
+  * Returns the week day value [0-6] mapping to [Sunday,...,Saturday] that corresponds to the given years since 1900 and the associated Gregorian year day value.
   *   yearsSince1900 >= 0, i.e. 1999 would be represented as 99
   *   yearDay values [0,DaysPerYear(yearsSince1900)]
-  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900.
+  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900, must be <= 200.
   * @param[in ] yearDay An integer containing the number of days since the beginning of the specified Gregorian year
   * @return integer containing the week day number [0-6] associated to the given input values.
   * @throw TimeException
@@ -198,10 +207,10 @@ namespace simCore
   SDKCORE_EXPORT int getWeekDay(int yearsSince1900, int yearDay);
 
   /**
-  * Returns the first week day value [0-6] of a leap year that corresponds to the given years since 1900.
+  * Returns the week day value [0-6] ([Sunday,...,Saturday]) for Jan 01 of the most recent leap year that corresponds to the given yearsSince1900.
   *   yearsSince1900 >= 0, i.e. 1999 would be represented as 99
-  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900.
-  * @return integer containing the week day [0-6] of a leap year that corresponds to the given years since 1900.
+  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900, must be <= 200.
+  * @return integer containing the week day [0-6] of the first day of the most recent leap year that corresponds to the given yearsSince1900.
   * @throw TimeException
   */
   SDKCORE_EXPORT int getLeapDay(int yearsSince1900);
@@ -216,25 +225,30 @@ namespace simCore
   SDKCORE_EXPORT bool isLeapYear(int year);
 
   /**
-  * Returns the number of days in the Gregorian year that corresponds to the given years since 1900.
-  *   yearsSince1900 >= 0, i.e. 1999 would be represented as 99
-  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900.
+  * Returns the number of leap days from 1900 up to (but not including) the year specified by yearsSince1900.
+  * @param[in ] yearsSince1900 An integer specifying the year, as a number of years since 1900.
+  * @return value indicating number of leap days since 1900 up to the year specified by yearsSince1900.
+  */
+  SDKCORE_EXPORT unsigned int leapDays(int yearsSince1900);
+
+  /**
+  * Returns the number of days in the Gregorian year that corresponds to the given year.
+  * @param[in ] year Year value; values less than 1900 will be treated as 1900+year
   * @return an integer containing the number of days in the Gregorian year that corresponds to the given years since 1900.
   * @throw TimeException
   */
-  SDKCORE_EXPORT int daysPerYear(int yearsSince1900);
+  SDKCORE_EXPORT int daysPerYear(int year);
 
   /**
   * Returns the number of days in the specified month for the associated Gregorian year.
   *   month values [0, 11]
-  *   monthDay values [1, DaysPerMonth(yearsSince1900, month)]
-  *   yearsSince1900 >= 0, i.e. 1999 would be represented as 99
-  * @param[in ] yearsSince1900 An integer containing the number of elapsed years since 1900.
+  *   monthDay values [1, DaysPerMonth(year, month)]
+  * @param[in ] year Year value; values less than 1900 will be treated as 1900+year
   * @param[in ] month An integer containing the month in the range of [0-11]
   * @return integer containing the number of days in the specified month for the associated Gregorian year.
   * @throw TimeException
   */
-  SDKCORE_EXPORT int daysPerMonth(int yearsSince1900, int month);
+  SDKCORE_EXPORT int daysPerMonth(int year, int month);
 
   /**
   * Breaks a time value referenced to a calendar year into individual components
@@ -256,9 +270,11 @@ namespace simCore
    * @param[in,out] secondsSinceRefYear A double in seconds referenced to the beginning of the given Gregorian year (or "calendrical year").
    * @throw TimeException
    * @pre refYear and secondsSinceRefYear valid params
+   * @deprecated
    */
-  SDKCORE_EXPORT void normalizeTime(int &refYear, double &secondsSinceRefYear);
-
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  SDK_DEPRECATE(SDKCORE_EXPORT void normalizeTime(int &refYear, double &secondsSinceRefYear), "Method will be removed in a future SDK release");
+#endif
   /**
    * Algorithm to get a new time step based on a step up or step down from a given step value
    * Calculates the proper step to use when stepping up or down from a time step

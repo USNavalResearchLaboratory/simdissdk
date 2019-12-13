@@ -23,6 +23,7 @@
 #include "simVis/Entity.h"
 #include "simVis/Scenario.h"
 
+#undef LC
 #define LC "[EntityFamily] "
 
 namespace simVis {

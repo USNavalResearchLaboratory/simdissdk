@@ -286,11 +286,12 @@ private:
 /////////////////////////////////////////////////////////////////
 
 /** Instantiates a new data column. */
-DataColumn::DataColumn(TimeContainer* timeContainer, const std::string& columnName, TableColumnId columnId, VariableType storageType, UnitType unitType)
+DataColumn::DataColumn(TimeContainer* timeContainer, const std::string& columnName, TableId tableId, TableColumnId columnId, VariableType storageType, UnitType unitType)
   : timeContainer_(timeContainer),
     freshData_(NULL),
     staleData_(NULL),
     name_(columnName),
+    tableId_(tableId),
     id_(columnId),
     variableType_(storageType),
     unitType_(unitType)
@@ -358,6 +359,11 @@ DelayedFlushContainerPtr DataColumn::flush()
   if (freshData_->empty() && staleData_->empty())
     return DelayedFlushContainerPtr();
   return DelayedFlushContainerPtr(new FlushContainer(*this));
+}
+
+TableId DataColumn::tableId() const
+{
+  return tableId_;
 }
 
 TableColumnId DataColumn::columnId() const

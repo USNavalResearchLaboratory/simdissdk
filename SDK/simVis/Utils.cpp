@@ -28,7 +28,6 @@
 #include "osg/MatrixTransform"
 #include "osg/NodeVisitor"
 #include "osg/PositionAttitudeTransform"
-#include "osg/Version"
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
 #include "osgSim/DOFTransform"
@@ -38,15 +37,12 @@
 
 #include "osgEarth/Capabilities"
 #include "osgEarth/CullingUtils"
+#include "osgEarth/Lighting"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/MapNode"
 #include "osgEarth/Terrain"
 #include "osgEarth/Utils"
 #include "osgEarth/VirtualProgram"
-#include "simVis/osgEarthVersion.h"
-
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
-#include "osgEarth/Lighting"
-#endif
 
 //#define USE_SIMCORE_CALC_MATH
 
@@ -61,7 +57,6 @@
 #include "simVis/AlphaTest.h"
 #include "simVis/Constants.h"
 #include "simVis/DisableDepthOnAlpha.h"
-#include "simVis/LineDrawable.h"
 #include "simVis/PlatformModel.h"
 #include "simVis/Registry.h"
 #include "simVis/Utils.h"
@@ -297,17 +292,11 @@ bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& ou
 {
   if (!stateset)
     return false;
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
   auto* definePair = stateset->getDefinePair(OE_LIGHTING_DEFINE);
   if (!definePair)
     return false;
   out_value = definePair->second;
   return out_value != osg::StateAttribute::INHERIT;
-#else
-  osg::StateAttribute::GLModeValue value = stateset->getMode(GL_LIGHTING);
-  out_value = stateset->getMode(value);
-  return out_value != osg::StateAttribute::INHERIT;
-#endif
 }
 
 
@@ -315,16 +304,10 @@ void setLighting(osg::StateSet* stateset, osg::StateAttribute::GLModeValue value
 {
   if (stateset)
   {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     stateset->setDefine(OE_LIGHTING_DEFINE, value);
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
     // GL_LIGHTING is deprecated in GL CORE builds
     stateset->setMode(GL_LIGHTING, value);
-#endif
-#else
-    osg::Uniform* u = osgEarth::Registry::shaderFactory()->createUniformForGLMode(GL_LIGHTING, value);
-    u->set((value & osg::StateAttribute::ON) != 0);
-    stateset->addUniform(u, value);
 #endif
   }
 }
@@ -336,14 +319,8 @@ void setLightingToInherit(osg::StateSet* stateset)
   // to properly query the name instead. -gw)
   if (stateset)
   {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,6,0)
     stateset->removeDefine(OE_LIGHTING_DEFINE);
     stateset->removeMode(GL_LIGHTING);
-#else
-    osg::ref_ptr<osg::Uniform> temp = osgEarth::Registry::shaderFactory()
-      ->createUniformForGLMode(GL_LIGHTING, 0);
-    stateset->removeUniform(temp->getName());
-#endif
   }
 }
 

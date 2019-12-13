@@ -24,7 +24,7 @@
 
 #include <memory>
 #include <string>
-#include "osgEarthUtil/EarthManipulator"
+#include "osgEarth/EarthManipulator"
 #include "simData/ObjectId.h"
 #include "simVis/View.h"
 

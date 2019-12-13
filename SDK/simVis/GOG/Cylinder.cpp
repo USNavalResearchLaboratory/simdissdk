@@ -21,20 +21,38 @@
  */
 #include "osg/FrontFace"
 #include "osgEarth/MapNode"
-#include "osgEarthAnnotation/AnnotationUtils"
-#include "osgEarthAnnotation/LocalGeometryNode"
-#include "osgEarthSymbology/GeometryFactory"
-#include "osgEarthFeatures/GeometryCompiler"
+#include "osgEarth/AnnotationUtils"
+#include "osgEarth/LocalGeometryNode"
+#include "osgEarth/GeometryFactory"
+#include "osgEarth/GeometryCompiler"
+#include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Common/Common.h"
 #include "simNotify/Notify.h"
 #include "simVis/GOG/Cylinder.h"
+#include "simVis/GOG/ErrorHandler.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Utils.h"
 
-using namespace osgEarth::Features;
-using namespace osgEarth::Annotation;
+using namespace osgEarth;
+
+namespace {
+
+/** Returns the result of simCore::angFix2PI() on angle: [0,M_TWOPI) */
+Angle angFix2PI(Angle angle)
+{
+  return Angle(simCore::angFix2PI(angle.as(Units::RADIANS)), Units::RADIANS);
+}
+
+/** Returns the result of fmod() on angle: (-denom,+denom) */
+Angle fmod(Angle angle, double denom = M_TWOPI)
+{
+  return Angle(::fmod(angle.as(Units::RADIANS), denom), Units::RADIANS);
+}
+
+}
 
 namespace simVis { namespace GOG {
 
@@ -49,14 +67,51 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
   Angle    rotation(0., Units::DEGREES); // Rotation handled by parameters in GOG_ORIENT
   Distance height(p.units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_HEIGHT, 1000.)), Units::METERS);
   Angle    start(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ANGLESTART, 0.)), Units::DEGREES);
-  Angle    end = start;
-  if (parsedShape.hasValue(GOG_ANGLEDEG))
-    end = start + Angle(parsedShape.doubleValue(GOG_ANGLEDEG, 90.0), Units::DEGREES);
-  else if (parsedShape.hasValue(GOG_ANGLEEND))
-    end = Angle(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ANGLEEND, 0.0)), Units::DEGREES);
+  // angFix() the start between 0,360.  osgEarth takes the direct path between two angles
+  // when drawing the arc.  Two angles (start+end) between [0,360) means no crossing 0
+  start = angFix2PI(start);
 
-  osgEarth::Symbology::GeometryFactory gf;
-  osg::ref_ptr<Geometry> tgeom = start == end ? (Geometry*)new Ring() : (Geometry*)new LineString();
+  Angle    end = start;
+  const size_t lineNumber = parsedShape.lineNumber();
+  if (parsedShape.hasValue(GOG_ANGLEDEG))
+  {
+    Angle sweep(parsedShape.doubleValue(GOG_ANGLEDEG, 90.0), Units::DEGREES);
+    const double sweepRadians = sweep.as(Units::RADIANS);
+
+    // If the sweep is 0, then clear out the radius to draw nothing.  Else an angledeg
+    // of 0 will end up drawing a circle incorrectly (note sweep of 360 is fine).
+    // Because of this, we use areEqual, NOT areAnglesEqual().
+    if (simCore::areEqual(sweepRadians, 0.0))
+    {
+      radius = Distance(0, Units::METERS);
+      context.errorHandler_->printError(lineNumber, "Cylinder AngleDeg cannot be 0");
+    }
+    else if (sweepRadians > M_TWOPI || sweepRadians < -M_TWOPI)
+    {
+      context.errorHandler_->printWarning(lineNumber, "Cylinder AngleDeg larger than 360 detected");
+    }
+
+    // Use fmod to keep the correct sign for correct sweep angle
+    end = start + fmod(sweep);
+  }
+  else if (parsedShape.hasValue(GOG_ANGLEEND))
+  {
+    end = Angle(p.units_.angleUnits_.convertTo(simCore::Units::DEGREES, parsedShape.doubleValue(GOG_ANGLEEND, 0.0)), Units::DEGREES);
+    // angFix2PI() forces end between [0,360).  Since start is in the same range, we'll
+    // never cross 0 with the osgEarth drawing algorithm.
+    end = angFix2PI(end);
+
+    // If the end and start are the same value, return NULL to draw nothing.  Cannot
+    // use the angleend command to draw circles (use angledeg instead)
+    if (simCore::areAnglesEqual(start.as(Units::RADIANS), end.as(Units::RADIANS)))
+    {
+      context.errorHandler_->printError(lineNumber, "Cylinder AngleEnd cannot be same value as AngleStart");
+      return NULL;
+    }
+  }
+
+  osgEarth::GeometryFactory gf;
+  osg::ref_ptr<Geometry> tgeom = simCore::areAnglesEqual(start.as(Units::RADIANS), end.as(Units::RADIANS)) ? dynamic_cast<Geometry*>(new Ring()) : dynamic_cast<Geometry*>(new LineString());
   osg::ref_ptr<Geometry> shape;
 
   if (parsedShape.hasValue(GOG_MAJORAXIS))
@@ -87,7 +142,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
 
     // Need to turn backface culling off for unfilled cylinders so the sides are visible
     if (!parsedShape.hasValue(GOG_FILLED))
-      style.getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>()->backfaceCulling() = false;
+      style.getOrCreateSymbol<osgEarth::RenderSymbol>()->backfaceCulling() = false;
 
     if (nodeType == GOGNODE_GEOGRAPHIC)
     {

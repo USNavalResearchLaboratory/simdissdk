@@ -25,17 +25,18 @@
 #include "simCore/Common/Common.h"
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
-#include "osgEarth/MapFrame"
 
 namespace osg {
   class Group;
   class Node;
 }
 namespace osgEarth {
-  class ElevationQuery;
   class GeoPoint;
   class Map;
   class MapNode;
+  namespace Util {
+    class ElevationQuery;
+  }
 }
 
 namespace simVis
@@ -67,7 +68,7 @@ public:
    * Returns the subject of the proxy.  Note that this pointer may become invalid
    * at any point when the Map changes; avoid caching the return value.
    */
-  osgEarth::ElevationQuery* q() const;
+  osgEarth::Util::ElevationQuery* q() const;
 
   /**
    * Gets the terrain elevation at a point, given a terrain resolution. For osgEarth API 3/2017 and forward, will call the ElevationPool::getElevation.
@@ -131,11 +132,9 @@ private:
   /// cache of the last resolution returned, only used with osgEarth API after 3/2017
   double lastResolution_;
   /// old elevation query, only used with osgEarth API prior to 3/2017
-  osgEarth::ElevationQuery* query_;
+  osgEarth::Util::ElevationQuery* query_;
   osg::observer_ptr<const osgEarth::Map> map_;
   osg::observer_ptr<osg::Group> scene_;
-  /// keep map in a MapFrame to avoid conflicts when accessing elevation pool
-  osgEarth::MapFrame mapf_;
 
   class MapChangeListener;
   /// listener to map changes, to update the map reference

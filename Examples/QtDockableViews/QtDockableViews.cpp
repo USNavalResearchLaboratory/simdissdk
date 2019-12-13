@@ -35,7 +35,7 @@
 #include "simVis/View.h"
 #include "simVis/SceneManager.h"
 
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 
 #include <QAction>
 #include <QApplication>

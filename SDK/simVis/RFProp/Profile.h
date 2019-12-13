@@ -28,8 +28,8 @@
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Calc/Math.h"
-#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/ColorProvider.h"
+#include "simVis/RFProp/ProfileDataProvider.h"
 
 namespace osg {
   class MatrixTransform;
@@ -38,6 +38,7 @@ namespace osg {
 
 namespace simRF
 {
+class CompositeProfileProvider;
 
 /** Responsible for rendering a single profile of data. */
 class SDKVIS_EXPORT Profile : public osg::Group
@@ -76,11 +77,11 @@ public:
   /** Sets the DataProvider for this Profile */
   void setDataProvider(CompositeProfileProvider* dataProvider);
 
-  /** Gets the display thickness, in meters for this Profile. */
-  float getDisplayThickness() const;
+  /** Gets the display thickness, in # of height steps for this Profile. */
+  unsigned int getDisplayThickness() const;
 
-  /** Sets the display thickness, in meters for this Profile. This setting effects the DRAWMODE_3D DisplayMode, as well as 3D Points and 3D Texture. */
-  void setDisplayThickness(float displayThickness);
+  /** Sets the display thickness, in # of height steps for this Profile. This setting effects the DRAWMODE_3D DisplayMode, as well as 3D Points and 3D Texture. */
+  void setDisplayThickness(unsigned int displayThickness);
 
   /** Gets the alpha of this Profile */
   float getAlpha() const;
@@ -178,9 +179,8 @@ public:
   virtual const char* className() const { return "Profile"; }
 
 protected:
-
   /// osg::Referenced-derived
-  virtual ~Profile() {}
+  virtual ~Profile();
 
   /** Performs initialization at construction time */
   void init_();
@@ -204,14 +204,18 @@ protected:
   /** Creates an image representing the loss values */
   osg::Image* createImage_();
 
+  class VoxelProcessor;
+  class RahVoxelProcessor;
+  class RaeVoxelProcessor;
+
   /** Creates a voxel (volume pixel) at the given location */
-  const void buildVoxel_(const double* lla, const simCore::Vec3* tpSphereXYZ, unsigned int heightIndex, unsigned int rangeIndex, osg::Geometry* geometry);
+  int buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphereXYZ, unsigned int rangeIndex, osg::Geometry* geometry);
 
   /** Fixes the orientation of the profile */
   void updateOrientation_();
 
   /** Adjusts based on spherical XYZ */
-  void adjustSpherical_(osg::Vec3& v, const double *lla, const simCore::Vec3 *tpSphereXYZ);
+  void adjustSpherical_(osg::Vec3& v, const simCore::Vec3& tpSphereXYZ);
 
   /** Retrieves the profile height at the given ground range in meters */
   float getTerrainHgt_(float gndRng) const;
@@ -219,8 +223,8 @@ protected:
   /** Bearing of the profile in radians */
   double bearing_;
 
-  /** Profile display thickness */
-  float displayThickness_;
+  /** Profile display thickness, in # height steps */
+  unsigned int displayThickness_;
   /** Height of vertical slots */
   double height_;
   /** Half of the beam width in radians */
@@ -250,11 +254,17 @@ protected:
   /** Draw mode */
   DrawMode mode_;
   /** Reference coordinate for placing the center of the profile */
-  osg::Vec3d refCoord_;
+  simCore::Vec3 refCoord_;
   /** Flags spherical vs flat earth */
   bool sphericalEarth_;
   /** Elevation angle in radians */
   double elevAngle_;
+
+  /** Profile's horizontal beam extents */
+  double cosTheta0_;
+  double sinTheta0_;
+  double cosTheta1_;
+  double sinTheta1_;
 
   /** Texture for the textured mode */
   osg::ref_ptr<osg::Texture> texture_;
@@ -262,8 +272,77 @@ protected:
   osg::ref_ptr<osg::Uniform> alphaUniform_;
 
 private:
-    /** Tesselate the 2D Vertical with tringle strip */
+  /** Copy constructor, not implemented or available. */
+  Profile(const Profile&);
+
+  /** Tesselate the 2D Vertical with triangle strip */
   const void tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry);
+};
+
+//----------------------------------------------------------------------------
+
+// Interface for VoxelProcessors that help generate DRAWMODE_RAE visualizations
+class Profile::VoxelProcessor
+{
+public:
+  struct VoxelRange
+  {
+    float valNear;
+    float valFar;
+    unsigned int indexNear;
+    unsigned int indexFar;
+  };
+  struct VoxelHeight
+  {
+    float valBottom;
+    float valTop;
+    unsigned int indexBottom;
+    unsigned int indexTop;
+  };
+  struct VoxelIndexCache
+  {
+    unsigned int i2;
+    unsigned int i3;
+    unsigned int i6;
+    unsigned int i7;
+  };
+
+  /**
+  * Determines if the data for this profile can be used to generate voxels
+  * @return profile is valid for voxel visualization
+  */
+  virtual bool isValid() const = 0;
+
+  /**
+  * Calculates the voxel parameters for the specified range index
+  * @param rangeIndex the index into the profile's range data
+  * @param voxelRange the range parameters for the voxel
+  * @param nearHeight the height parameters for the near edge of the voxel
+  * @param farHeight the height parameters for the far edge of the voxel
+  * @return -1 if not valid; 1 if valid voxel at that should be the last voxel drawn; otherwise, 0 for valid voxel
+  */
+  virtual int calculateVoxel(unsigned int rangeIndex, VoxelRange& voxelRange, VoxelHeight& nearHeight, VoxelHeight& farHeight) const = 0;
+
+  /**
+  * Sets the specified index values into the index cache for optimized generation of next voxel
+  * @param i2 the i2 index to cache
+  * @param i3 the i3 index to cache
+  * @param i6 the i6 index to cache
+  * @param i7 the i7 index to cache
+  */
+  virtual void setIndexCache(unsigned int i2, unsigned int i3, unsigned int i6, unsigned int i7) = 0;
+
+  /**
+  * Clears the index cache and marks its is invalid
+  */
+  virtual void clearIndexCache() = 0;
+
+  /**
+  * Returns the index cache if it is valid
+  * @param[out] if valid, cache struct filled with cached indices
+  * @return 0 if cache is valid, non-zero if not valid
+  */
+  virtual int indexCache(VoxelIndexCache& cache) const = 0;
 };
 }
 

@@ -28,7 +28,7 @@
 
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
-#include "osgEarthUtil/EarthManipulator"
+#include "osgEarth/EarthManipulator"
 #include "simCore/Common/Export.h"
 #include "simCore/Calc/Vec3.h"
 

@@ -211,8 +211,9 @@ void ButtonActions::updateEnabledState_()
   // Emit a signal to indicate that the state has changed
   if (toggleLoop_->isEnabled() != enable)
   {
-    Q_FOREACH(QAction* action, actions())
-      action->setEnabled(enable);
+    auto actionsList = actions();
+    for (auto it = actionsList.begin(); it != actionsList.end(); ++it)
+      (*it)->setEnabled(enable);
 
     // Toggle loop is enabled when controls are not disabled
     toggleLoop_->setEnabled(enable);

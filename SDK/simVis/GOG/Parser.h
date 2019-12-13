@@ -28,11 +28,11 @@
 #include <string>
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
+#include "simVis/Types.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GOGRegistry.h"
 #include "osgEarth/MapNode"
-#include "osgEarthSymbology/Style"
-#include "osgEarthSymbology/Color"
+#include "osgEarth/Style"
 
 namespace simCore { class UnitsRegistry; }
 
@@ -121,7 +121,7 @@ namespace simVis { namespace GOG
      * Sets a style that will override style information found in the GOG input.
      * @param[in ] style Override style
      */
-    void setStyle(const osgEarth::Symbology::Style& style) { style_ = style; }
+    void setStyle(const osgEarth::Style& style) { style_ = style; }
 
   public:
     /**
@@ -135,17 +135,21 @@ namespace simVis { namespace GOG
 
     /**
      * Parses an input stream into a collection of GOG nodes.
-     * @param[in ] input      Input stream
-     * @param[in ] nodeType   Read GOGs as this type
-     * @param[out] output     Resulting GOG collection
-     * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[in ] input        Input stream
+     * @param[in ] nodeType     Read GOGs as this type
+     * @param[out] output       Resulting GOG collection
+     * @param[out] followData   Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[out] parsedShapes If supplied, is filled with the ParsedShapes parsed from the input stream
+     * @param[out] metaData     If supplied, is filled with the GogMetaData parsed from the input stream
      * @return True upon success, false upon failure
      */
     bool createGOGs(
-      std::istream&                input,
-      const GOGNodeType&           nodeType,
-      OverlayNodeVector&           output,
-      std::vector<GogFollowData>&  followData) const;
+      std::istream&               input,
+      const GOGNodeType&          nodeType,
+      OverlayNodeVector&          output,
+      std::vector<GogFollowData>& followData,
+      std::vector<ParsedShape>*   parsedShapes = NULL,
+      std::vector<GogMetaData>*   metaData = NULL) const;
 
     /**
     * Converts the GOG file shape keyword to a GogShape. Assumes keyword is all lower, does exact match
@@ -163,30 +167,34 @@ namespace simVis { namespace GOG
 
     /**
      * Parses data from an input stream into a collection of GOG nodes.
-     * @param[in ] input  stream containing the serialized GOG
-     * @param[in ] nodeType Read GOGs as this type
-     * @param[out] output   Resulting GOG collection
-     * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[in ] input        stream containing the serialized GOG
+     * @param[in ] nodeType     Read GOGs as this type
+     * @param[out] output       Resulting GOG collection
+     * @param[out] followData   Vector of the follow orientation data for attached GOGs, parallel vector to the output
+     * @param[out] parsedShapes If supplied, is filled with the ParsedShapes parsed from the input stream
+     * @param[out] metaData     If supplied, is filled with the GogMetaData parsed from the input stream
      * @return True upon success, false upon failure
      */
     bool loadGOGs(
-      std::istream&                input,
-      const GOGNodeType&           nodeType,
-      OverlayNodeVector&           output,
-      std::vector<GogFollowData>&  followData) const;
+      std::istream&               input,
+      const GOGNodeType&          nodeType,
+      OverlayNodeVector&          output,
+      std::vector<GogFollowData>& followData,
+      std::vector<ParsedShape>*   parsedShapes = NULL,
+      std::vector<GogMetaData>*   metaData = NULL) const;
 
     /**
     * Add or overwrite a color key with a new color
     * @param[in ] key   GOG key like color1, color2, red, black,...
     * @param[in ] color The color to use for the given key
     */
-    void addOverwriteColor(const std::string& key, osgEarth::Symbology::Color color);
+    void addOverwriteColor(const std::string& key, simVis::Color color);
 
     /**
      * Parses an input GOG stream into a vector of ParsedShape entries, and a parallel vector of GogMetaData.
      * The metadata contains attributes of the GOG shape that may be lost when converting to an osg::Node,
      * things like the GOG shape type (circle, polygon, etc.) and other information that is not in the node or its
-     * osgEarth::Symbology::Style. All relevant lines are stored in a single string for each GOG.  Although
+     * osgEarth::Style. All relevant lines are stored in a single string for each GOG.  Although
      * this is a public method, it is lower level than loadGOGs(), which uses the configured Registry to
      * create instances of GogNodeInterface representing each OSG node for the GOG.
      * @param[in ] input GOG input data
@@ -195,30 +203,6 @@ namespace simVis { namespace GOG
      */
     bool parse(std::istream& input, std::vector<ParsedShape>& output,
       std::vector<GogMetaData>&  metaData) const;
-
-  private:
-
-    /** Applies all the specified data to the meta data as appropriate  */
-    void updateMetaData_(const ModifierState& state, const std::string& refOriginLine, const std::string& positionLines, bool relative, GogMetaData& currentMetaData) const;
-
-    /** Initialize the default GOG colors */
-    void initGogColors_();
-
-    /**
-     * Converts an GOG color into an HTML osgEarth::Color
-     * @param[in ] c     GOG color
-     * @param[in ] isHex If true than c is in Hex
-     * @return GOG color into an HTML osgEarth::Color
-     */
-    std::string parseGogColor_(const std::string& c, bool isHex) const;
-
-    /**
-    * Parses an angle string, which may be in DD, DDM, or DMS format, into a
-    * decimal degrees string.
-    * @param[in ] input String to be parsed
-    * @return Parsed string in decimal degrees format
-    */
-    std::string parseGogGeodeticAngle_(const std::string& input) const;
 
     /**
      * Given an input vector of ParsedShapes and GogMetaData, create individual GogNodeInterface classes (using
@@ -230,12 +214,36 @@ namespace simVis { namespace GOG
      * @param[out] followData Vector of the follow orientation data for attached GOGs, parallel vector to the output
      * @return True upon success, false upon failure
      */
-    bool createGOGs_(
+    bool createGOGsFromShapes(
       const std::vector<ParsedShape>& parsedShapes,
       const GOGNodeType&              nodeType,
       const std::vector<GogMetaData>& metaData,
       OverlayNodeVector&              output,
       std::vector<GogFollowData>&     followData) const;
+
+  private:
+
+    /** Applies all the specified data to the meta data as appropriate  */
+    void updateMetaData_(const ModifierState& state, const std::string& refOriginLine, const std::string& positionLines, bool relative, GogMetaData& currentMetaData) const;
+
+    /** Initialize the default GOG colors */
+    void initGogColors_();
+
+    /**
+     * Converts an GOG color into an HTML simVis::Color
+     * @param[in ] c     GOG color
+     * @param[in ] isHex If true than c is in Hex
+     * @return GOG color into an HTML simVis::Color
+     */
+    std::string parseGogColor_(const std::string& c, bool isHex) const;
+
+    /**
+    * Parses an angle string, which may be in DD, DDM, or DMS format, into a
+    * decimal degrees string.
+    * @param[in ] input String to be parsed
+    * @return Parsed string in decimal degrees format
+    */
+    std::string parseGogGeodeticAngle_(const std::string& input) const;
 
     /**
      * Prints any GOG parsing error to simNotify
@@ -249,8 +257,8 @@ namespace simVis { namespace GOG
     osg::observer_ptr<osgEarth::MapNode> mapNode_;
     GOGRegistry                          registry_;
     GOGContext                           context_;
-    osgEarth::Symbology::Style           style_;
-    std::map<std::string, osgEarth::Symbology::Color> colors_; // Key is GOG color like color1, color2
+    osgEarth::Style           style_;
+    std::map<std::string, simVis::Color> colors_; // Key is GOG color like color1, color2
   };
 
 } } // namespace simVis::GOG

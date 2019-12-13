@@ -22,8 +22,8 @@
 #include "osg/Depth"
 #include "osg/Geode"
 #include "osg/CullFace"
-#include "simVis/LineDrawable.h"
-#include "osgEarthAnnotation/AnnotationUtils"
+#include "osgEarth/LineDrawable"
+#include "osgEarth/AnnotationUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
 #include "simNotify/Notify.h"
@@ -283,7 +283,7 @@ void PlanetariumViewTool::updateDome_()
       root_->removeChild(dome_.get());
 
     // build a sphere
-    osg::Geometry* drawable = osgEarth::Annotation::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
+    osg::Geometry* drawable = osgEarth::AnnotationUtils::createEllipsoidGeometry(range_, range_, range_, domeColor_);
     osg::StateSet* stateSet = drawable->getOrCreateStateSet();
     stateSet->setMode(GL_BLEND, 1);
     stateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);

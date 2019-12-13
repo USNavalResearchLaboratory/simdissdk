@@ -40,12 +40,15 @@
 #include "simData/DataStore.h"
 #include "simQt/QtFormatting.h"
 #include "simQt/CategoryFilterCounter.h"
-#include "simQt/CategoryTreeModel.h"
 #include "simQt/EntityFilterLineEdit.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/Settings.h"
 #include "simQt/CategoryTreeModel2.h"
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+#include "simQt/CategoryTreeModel.h"
+#endif
 
 namespace simQt {
 
@@ -57,6 +60,11 @@ static const QColor CONTRIBUTING_BG_COLOR(195, 225, 240); // Light gray with a h
 static const QString LOCKED_SETTING = "LockedCategories";
 /** Locked settings meta data to define it as private */
 static const simQt::Settings::MetaData LOCKED_SETTING_METADATA(Settings::STRING_LIST, "", "", Settings::PRIVATE);
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+// Used to differentiate between the old and new CategoryTreeModel in CategoryProxyModel TODO Will be removed with the old model after December 2019
+static const QString ALL_CATEGORIES = "All Categories";
+#endif
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -892,6 +900,96 @@ public:
 private:
   CategoryTreeModel2& parent_;
 };
+
+/////////////////////////////////////////////////////////////////////////
+
+CategoryProxyModel::CategoryProxyModel(QObject *parent)
+  : QSortFilterProxyModel(parent),
+  hasAllCategories_(true)
+{
+}
+
+CategoryProxyModel::~CategoryProxyModel()
+{
+}
+
+void CategoryProxyModel::setSourceModel(QAbstractItemModel* sourceModel)
+{
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  // simQt::CategoryTreeModel has a top level "All Categories" item.  This item affects
+  // some of the way filtering works.  Detect whether we're using a CategoryTreeModel
+  // and change our internal flag appropriately.  Note that another possible choice
+  // is simQt::CategoryTreeModel2, which does not have an All Categories item.
+  hasAllCategories_ = (dynamic_cast<CategoryTreeModel*>(sourceModel) != NULL);
+#else
+  hasAllCategories_ = false;
+#endif
+  QSortFilterProxyModel::setSourceModel(sourceModel);
+}
+
+void CategoryProxyModel::resetFilter()
+{
+  invalidateFilter();
+}
+
+void CategoryProxyModel::setFilterText(const QString& filter)
+{
+  if (filter_ == filter)
+    return;
+
+  filter_ = filter;
+  invalidateFilter();
+}
+
+bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+{
+  if (filter_.isEmpty())
+    return true;
+
+  // Always accept top level "All Categories" item
+  if (hasAllCategories_ && !sourceParent.isValid())
+    return true;
+
+  const QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
+  const QString itemText = index.data(Qt::DisplayRole).toString();
+
+  // include items that pass the filter
+  if (itemText.contains(filter_, Qt::CaseInsensitive))
+    return true;
+
+  // include items whose parent passes the filter, but not if parent is root "All Categories" item
+  if (sourceParent.isValid())
+  {
+    const QString parentText = sourceParent.data(Qt::DisplayRole).toString();
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+    // We only care about matching "All Categories" for the old model type.  TODO Will be removed with the old model after December 2019
+    if (hasAllCategories_)
+    {
+      if (parentText != ALL_CATEGORIES && parentText.contains(filter_, Qt::CaseInsensitive))
+        return true;
+    }
+    else
+#endif
+    {
+      if (parentText.contains(filter_, Qt::CaseInsensitive))
+        return true;
+    }
+  }
+
+  // include items with any children that pass the filter
+  const int numChildren = sourceModel()->rowCount(index);
+  for (int ii = 0; ii < numChildren; ++ii)
+  {
+    const QModelIndex childIndex = sourceModel()->index(ii, 0, index);
+    // Assertion failure means rowCount() was wrong
+    assert(childIndex.isValid());
+    const QString childText = childIndex.data(Qt::DisplayRole).toString();
+    if (childText.contains(filter_, Qt::CaseInsensitive))
+      return true;
+  }
+  return false;
+}
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -1906,6 +2004,7 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   treeView_->setAllColumnsShowFocus(true);
   treeView_->setHeaderHidden(true);
   treeView_->setModel(proxy_);
+  treeView_->setMouseTracking(true);
 
   simQt::CategoryTreeItemDelegate* itemDelegate = new simQt::CategoryTreeItemDelegate(this);
   treeView_->setItemDelegate(itemDelegate);

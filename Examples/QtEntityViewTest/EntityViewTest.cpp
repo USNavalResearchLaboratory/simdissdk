@@ -169,12 +169,10 @@ void MainWindow::test_()
 {
   // attach a Custom Rendering entity to the selected platforms
   QList<uint64_t> selectedItems = entityTreeComposite_->selectedItems();
-  Q_FOREACH(uint64_t id, selectedItems)
+  for (auto it = selectedItems.begin(); it != selectedItems.end(); ++it)
   {
-    if (simData::DataStoreHelpers::typeFromId(id, dataStore_) == "P")
-    {
-      createCustomRendering(dataStore_, id, "Custom Rendering");
-    }
+    if (simData::DataStoreHelpers::typeFromId(*it, dataStore_) == "P")
+      createCustomRendering(dataStore_, *it, "Custom Rendering");
   }
 }
 
@@ -189,10 +187,8 @@ void MainWindow::itemDoubleClicked_(uint64_t id)
 void MainWindow::deleteEntity_()
 {
   QList<uint64_t> selectedItems = entityTreeComposite_->selectedItems();
-  Q_FOREACH(uint64_t id, selectedItems)
-  {
-    dataStore_->removeEntity(id);
-  }
+  for (auto it = selectedItems.begin(); it != selectedItems.end(); ++it)
+    dataStore_->removeEntity(*it);
 }
 
 //////////////////////////////////////////////////////////////

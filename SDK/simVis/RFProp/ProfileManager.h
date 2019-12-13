@@ -24,11 +24,11 @@
 
 #include "osg/Group"
 #include "simVis/RFProp/Profile.h"
-#include "simVis/RFProp/ColorProvider.h"
 
 namespace simRF
 {
 class BearingProfileMap;
+class ColorProvider;
 
 /**
  * Manages a collection of Profiles
@@ -40,7 +40,6 @@ public:
    * Creates a new ProfileManager
    */
   ProfileManager();
-  virtual ~ProfileManager();
 
   /**
    * Create a new profile map for the given time
@@ -106,6 +105,13 @@ public:
   Profile* getProfileByBearing(double bearingR) const;
 
   /**
+  * Gets the profile at the specified index, intended to support simple iteration through all profiles.
+  * @param index of profile to return
+  * @return profile at specified index, or NULL if none
+  */
+  const Profile* getProfile(unsigned int index) const;
+
+  /**
    * Adds the Profile to the ProfileManager
    */
   void addProfile(Profile* profile);
@@ -155,24 +161,15 @@ public:
   void setMode(Profile::DrawMode mode);
 
   /**
-   * Gets the display thickness, a height in meters
+   * Gets the display thickness, in # height steps
    */
-  float getDisplayThickness() const;
+  unsigned int getDisplayThickness() const;
 
   /**
    * Sets the display thickness, i.e., the altitude span for 3D displays
-   * @param displayThickness The display thickness in meters.  All Profiles managed by this ProfileManager will have this display thickness assigned to them.
+   * @param displayThickness The display thickness in # height steps.  All Profiles managed by this ProfileManager will have this display thickness assigned to them.
    */
-  void setDisplayThickness(float displayThickness);
-
-  /**
-   * Sets the display thickness in number of slots.  This call can fail if no profiles are loaded.
-   * The actual height is calculated based on the height of a slot in the current profile.  See
-   * also setDisplayThickness(float).
-   * @param numSlots Number of slots of height to visualize
-   * @return 0 on success; non-zero on failure, e.g. no profiles loaded
-   */
-  int setThicknessBySlots(int numSlots);
+  void setDisplayThickness(unsigned int displayThickness);
 
   /**
    * Gets the reference latitude in radians
@@ -238,11 +235,13 @@ public:
   /** Return the class name */
   virtual const char* className() const { return "ProfileManager"; }
 
+protected:
+  virtual ~ProfileManager();
+
 private:
   void updateVisibility_();
   void initShaders_();
 
-private:
   osg::ref_ptr<ColorProvider> colorProvider_;
 
   std::map<double, BearingProfileMap*> timeBearingProfiles_; ///< map from time to profiles according to bearing
@@ -251,7 +250,7 @@ private:
   double history_;          ///< number of bearing slices displayed
   double bearing_;          ///< current bearing of RF prop display
   double height_;           ///< 2D Horizontal display height
-  float displayThickness_;  ///< display thickness for 3D displays
+  unsigned int displayThickness_;  ///< display thickness for 3D displays, in # height steps
   bool agl_;                ///< whether height values for the 2D Horizontal display are referenced to height above ground level (AGL) or to mean sea level (MSL).
   bool displayOn_;          ///< whether the display is on or off
   float alpha_;             ///< Alpha value (1.0 opaque, 0.0 transparent)

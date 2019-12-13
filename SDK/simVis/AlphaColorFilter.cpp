@@ -22,8 +22,6 @@
 #include "OpenThreads/Atomic"
 #include "osg/Program"
 #include "osgEarth/VirtualProgram"
-#include "osgEarth/StringUtils"
-#include "osgEarth/ThreadingUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/Capabilities"
 #include "simVis/Shaders.h"

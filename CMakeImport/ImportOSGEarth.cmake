@@ -1,4 +1,4 @@
-# Setup OSGEarth library
+# Setup osgEarth library
 # Setting the OSGEARTH_DIR environment variable will allow use of a custom built library
 
 # Cannot locate osgEarth without OSG due to requirement on knowing OSG version
@@ -19,11 +19,11 @@ endif()
 initialize_ENV(${LIBRARYNAME}_DIR)
 set(INCLUDE_DIRS
     $ENV{${LIBRARYNAME}_DIR}/include
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}/include
+    ${THIRD_DIR}/osgEarth/${VSI_OSGEARTH_VERSION}/include
 )
 set(LIB_DIRS
     $ENV{${LIBRARYNAME}_DIR}
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}
+    ${THIRD_DIR}/osgEarth/${VSI_OSGEARTH_VERSION}
 )
 
 # Configure the core osgEarth library
@@ -41,7 +41,6 @@ mark_as_advanced(FORCE ${LIBRARYNAME}_LIBRARY_INCLUDE_PATH ${LIBRARYNAME}_LIBRAR
 if(TARGET GDAL)
     set(${LIBRARYNAME}_LINK_LIBRARIES GDAL)
 endif()
-set(SUBLIBRARY_NAMES Annotation Features Splat Symbology Util)
 if(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthDrivers/sky_silverlining/SilverLiningOptions")
     list(APPEND ${LIBRARYNAME}_COMPILE_DEFINITIONS HAVE_OSGEARTH_SILVERLINING)
     set(HAVE_OSGEARTH_SILVERLINING TRUE)
@@ -53,7 +52,12 @@ elseif(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthSilverLining/Silve
     list(APPEND SUBLIBRARY_NAMES SilverLining)
 endif()
 
-if(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthDrivers/ocean_triton/TritonOptions")
+if(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthTriton/TritonLayer")
+    list(APPEND ${LIBRARYNAME}_COMPILE_DEFINITIONS HAVE_OSGEARTH_TRITON)
+    set(HAVE_OSGEARTH_TRITON TRUE)
+    set(OSGEARTH_TRITON_SUPPORT NODEKIT)
+    list(APPEND SUBLIBRARY_NAMES Triton)
+elseif(EXISTS "${${LIBRARYNAME}_LIBRARY_INCLUDE_PATH}/osgEarthDrivers/ocean_triton/TritonOptions")
     list(APPEND ${LIBRARYNAME}_COMPILE_DEFINITIONS HAVE_OSGEARTH_TRITON)
     set(HAVE_OSGEARTH_TRITON TRUE)
     set(OSGEARTH_TRITON_SUPPORT PLUGIN)
@@ -116,10 +120,10 @@ if(WIN32)
 endif()
 set(OS_PLUGIN_SUBDIR "${OS_PLUGIN_SUBDIR}/osgPlugins-${OSG_VERSION}")
 
-# Install OSGEarth plugins
+# Install osgEarth plugins
 set(PLUGIN_DIRS
     $ENV{OSGEARTH_DIR}
-    ${THIRD_DIR}/OSGEarth/${VSI_OSGEARTH_VERSION}
+    ${THIRD_DIR}/osgEarth/${VSI_OSGEARTH_VERSION}
 )
 
 # Find the plugin location
@@ -182,10 +186,4 @@ if(OSGEARTH_SHOULD_INSTALL)
         FILES_MATCHING
             REGEX ${RELEASE_INSTALL_PATTERN}
             PATTERN "*billboard.*")
-endif()
-
-set(OSGEARTH_ALL_LIBDEPENDENCIES)
-if(OSGEARTH_PLUGIN_PATH)
-    set(OSGEARTH_ALL_LIBDEPENDENCIES OSGEARTH OSGEARTH_FEATURES OSGEARTH_SYMBOLOGY OSGEARTH_UTIL)
-    list(APPEND OSGEARTH_ALL_LIBDEPENDENCIES OSGEARTH_ANNOTATION)
 endif()

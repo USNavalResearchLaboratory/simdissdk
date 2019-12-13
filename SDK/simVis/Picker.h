@@ -26,7 +26,7 @@
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
 #include "osg/Referenced"
-#include "osgEarthUtil/RTTPicker"
+#include "osgEarth/RTTPicker"
 #include "simVis/ViewManager.h"
 
 namespace osg {

@@ -25,6 +25,7 @@
 #include "simVis/LocatorNode.h"
 #include "simVis/Utils.h"
 
+#undef LC
 #define LC "[LocatorNode] "
 
 namespace simVis

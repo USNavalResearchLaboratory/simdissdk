@@ -28,7 +28,6 @@
 #include "simCore/Calc/Calculations.h"
 #include "simCore/String/Format.h"
 #include "simVis/LocatorNode.h"
-#include "simVis/osgEarthVersion.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Scenario.h"
 #include "simVis/Shaders.h"
@@ -130,7 +129,6 @@ namespace
     int _count;
   };
 
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
   /**
    * Cull callback for ocean layers that will change the stateset
    * when in overhead mode
@@ -157,14 +155,13 @@ namespace
         cv->pushStateSet(_stateset.get());
         traverse(node, nv);
         cv->popStateSet();
-      }   
+      }
       else
       {
         traverse(node, nv);
       }
     }
   };
-#endif
 }
 
 void OverheadMode::install(osg::Node* root)
@@ -314,9 +311,7 @@ void OverheadMode::IndicatorCallback::operator()(osg::Node* node, osg::NodeVisit
 
 void OverheadMode::configureOceanLayer(osgEarth::Layer* layer)
 {
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,10,0)
   layer->setCullCallback(new OceanOverheadModeCallback());
-#endif
 }
 
 ///////////////////////////////////////////////////////////

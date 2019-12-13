@@ -58,10 +58,10 @@ void StartupLayoutManager::executeTasks(simQt::Settings& fromSettings)
 {
   // Retrieve the list of tasks that we should execute, as stated by registry
   QStringList tasksToExecute = fromSettings.value(STARTUP_TASKS, STARTUP_TASKS_METADATA).toStringList();
-  Q_FOREACH(QString taskName, tasksToExecute)
+  for (auto it = tasksToExecute.begin(); it != tasksToExecute.end(); ++it)
   {
     // Get the corresponding task by name from our registered tasks
-    StartupLayoutTaskPtr task = tasks_.value(taskName);
+    StartupLayoutTaskPtr task = tasks_.value(*it);
     // ... and execute it.
     if (task != NULL)
       task->execute();
@@ -72,12 +72,13 @@ void StartupLayoutManager::saveToSettings(simQt::Settings& toSettings)
 {
   // Gather a list of tasks to save
   QStringList tasksToSave;
-  Q_FOREACH(QString taskName, tasks_.keys())
+  auto keys = tasks_.keys();
+  for (auto it = keys.begin(); it != keys.end(); ++it)
   {
     // Task itself knows whether it ought to be saved
-    StartupLayoutTaskPtr task = tasks_.value(taskName);
+    StartupLayoutTaskPtr task = tasks_.value(*it);
     if (task != NULL && task->shouldExecuteOnNextStartup())
-      tasksToSave.push_back(taskName);
+      tasksToSave.push_back(*it);
   }
 
   // Save to the Settings

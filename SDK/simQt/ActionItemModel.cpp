@@ -121,9 +121,9 @@ public:
   {
     if (action != NULL && action->group() == name_)
     { // Search children
-      Q_FOREACH(TreeItem* child, children_)
+      for (auto it = children_.begin(); it != children_.end(); ++it)
       {
-        child = child->find(action);
+        TreeItem* child = (*it)->find(action);
         if (child != NULL)
           return child;
       }
@@ -167,12 +167,12 @@ public:
   TreeItem* findChild(const QString& name, int& rowIndex) const
   {
     int k = 0;
-    Q_FOREACH(TreeItem* t, children_)
+    for (auto it = children_.begin(); it != children_.end(); ++it)
     {
-      if (t->title() == name)
+      if ((*it)->title() == name)
       {
         rowIndex = k;
-        return t;
+        return *it;
       }
       k++;
     }
@@ -281,8 +281,8 @@ ActionItemModel::ActionItemModel(QObject* parent)
 ActionItemModel::~ActionItemModel()
 {
   disconnect_(registry_);
-  Q_FOREACH(TreeItem* item, groups_)
-    delete item;
+  for (auto it = groups_.begin(); it != groups_.end(); ++it)
+    delete *it;
 }
 
 void ActionItemModel::setRegistry(ActionRegistry* registry)
@@ -301,8 +301,9 @@ void ActionItemModel::setRegistry(ActionRegistry* registry)
   endResetModel();
   // Iterate through groups and emit signals
   int row = 0;
-  Q_FOREACH(GroupItem* item, groups_)
-    emit(groupAdded(createIndex(row++, 0, item)));
+  auto groupsCopy = groups_;
+  for (auto it = groupsCopy.begin(); it != groupsCopy.end(); ++it)
+    emit groupAdded(createIndex(row++, 0, *it));
 }
 
 QModelIndex ActionItemModel::index(int row, int column, const QModelIndex &parent) const
@@ -448,8 +449,9 @@ void ActionItemModel::createGroupedList_(QList<GroupItem*>& groups) const
   // Query the registry and sort into groups
   QList<Action*> actions = registry_->actions();
   QMap<QString, GroupItem*> sortedMap;
-  Q_FOREACH(Action* action, actions)
+  for (auto it = actions.begin(); it != actions.end(); ++it)
   {
+    Action* action = *it;
     QMap<QString, GroupItem*>::iterator iter = sortedMap.find(action->group());
     if (iter == sortedMap.end())
     {
@@ -468,11 +470,11 @@ void ActionItemModel::createGroupedList_(QList<GroupItem*>& groups) const
   }
 
   // Transfer from the sorted map into the list
-  Q_FOREACH(GroupItem* item, groups)
-    delete item;
+  for (auto it = groups.begin(); it != groups.end(); ++it)
+      delete *it;
   groups.clear();
-  Q_FOREACH(GroupItem* treeItem, sortedMap)
-    groups.push_back(treeItem);
+  for (auto it = sortedMap.begin(); it != sortedMap.end(); ++it)
+    groups.push_back(*it);
 }
 
 void ActionItemModel::actionAdded(Action* action)
@@ -543,10 +545,10 @@ void ActionItemModel::hotKeysChanged(Action* action)
 
 ActionItemModel::GroupItem* ActionItemModel::findGroup_(const QString& name) const
 {
-  Q_FOREACH(GroupItem* group, groups_)
+  for (auto it = groups_.begin(); it != groups_.end(); ++it)
   {
-    if (group->title() == name)
-      return group;
+    if ((*it)->title() == name)
+      return *it;
   }
   return NULL;
 }

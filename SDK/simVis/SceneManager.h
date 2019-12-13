@@ -27,26 +27,18 @@
 #include "osgEarth/DrapeableNode"
 #include "osgEarth/ImageLayer"
 #include "osgEarth/MapNode"
-#include "osgEarthUtil/Sky"
-#include "osgEarthUtil/Ocean"
+#include "osgEarth/Sky"
+#include "osgEarth/Version"
 #include "simCore/Common/Common.h"
 #include "simVis/Locator.h"
 #include "simVis/Types.h"
-
-namespace osgEarth { namespace Drivers
-{
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  namespace MPTerrainEngine { class MPTerrainEngineOptions; }
-#endif
-  namespace RexTerrainEngine { class RexTerrainEngineOptions; }
-}}
 
 namespace simVis
 {
   class CentroidManager;
   class ProjectorManager;
-  class ScenarioDisplayHints;
   class ScenarioManager;
+  class LayerRefreshCallback;
 
   /**
    * @anchor SceneManagerLayout
@@ -62,7 +54,6 @@ namespace simVis
    *       +-scenarioManager
    *       +-centroidManager
    *       +-projectorManager
-   *       +-oceanNode
    * </pre>
    */
   class SDKVIS_EXPORT SceneManager : public osg::Group,
@@ -117,13 +108,7 @@ namespace simVis
     * The scene graph node that renders the sky
     * @return osgEarth::Util::SkyNode*
     */
-    osgEarth::Util::SkyNode* getSkyNode() { return skyNode_.get(); }
-
-    /**
-    * The scene graph node that renders the ocean surface
-    * @return osgEarth::Drivers::OceanSurfaceNode*
-    */
-    osgEarth::Util::OceanNode* getOceanNode() { return oceanNode_.get(); }
+    osgEarth::SkyNode* getSkyNode() { return skyNode_.get(); }
 
     /**
     * Gets the node to which a camera manipulator should attach.
@@ -138,15 +123,6 @@ namespace simVis
     */
     osg::Group* getOrCreateAttachPoint(const std::string& name) const;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-    /**
-    * Applies display hints to assist with large-scale visualizations
-    * @param hints Display hints
-    * @deprecated Use ScenarioManager::setEntityGraphStrategy(new ScenarioManager::GeoGraphEntityGraph(hints)) instead.
-    */
-    SDK_DEPRECATE(void setScenarioDisplayHints(const ScenarioDisplayHints& hints), "Method will be removed in future SDK release.");
-#endif /* USE_DEPRECATED_SIMDISSDK_API */
-
     /** Turns scenario draping on and off, for use with overhead mode. */
     void setScenarioDraping(bool value);
 
@@ -154,16 +130,7 @@ namespace simVis
     * Set the SkyNode object for the scene.
     * @param skyNode the new sky node
     */
-    void setSkyNode(osgEarth::Util::SkyNode* skyNode);
-
-    /**
-    * Set the OceanSurfaceNode object for the scene
-    * @param oceanNode the new ocean surface node
-    */
-    void setOceanNode(osgEarth::Util::OceanNode* oceanNode);
-
-    /** remove the current ocean node */
-    void removeOceanNode();
+    void setSkyNode(osgEarth::SkyNode* skyNode);
 
     /** Changes the underlying globe color for when no image layers are shown */
     void setGlobeColor(const simVis::Color& color);
@@ -171,13 +138,8 @@ namespace simVis
     /** Returns true if there is an engine driver problem */
     bool hasEngineDriverProblem() const;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-    /** Fills out an MPTerrainEngineOptions with good default values */
-    SDK_DEPRECATE(static void initializeTerrainOptions(osgEarth::Drivers::MPTerrainEngine::MPTerrainEngineOptions& options), "Method will be removed in future SDK release.");
-#endif
-
-    /** Fills out an RexTerrainEngineOptions with good default values */
-    static void initializeTerrainOptions(osgEarth::Drivers::RexTerrainEngine::RexTerrainEngineOptions& options);
+    /** Fills out the terrain options with good default values */
+    static void initializeTerrainOptions(osgEarth::MapNode* mapNode);
 
     /** Return the proper library name */
     virtual const char* libraryName() const { return "simVis"; }
@@ -204,7 +166,7 @@ namespace simVis
     SceneManager(const SceneManager&);
 
     /** Returns true if the sky node is SilverLining. */
-    bool isSilverLining_(const osgEarth::Util::SkyNode* skyNode) const;
+    bool isSilverLining_(const osgEarth::SkyNode* skyNode) const;
 
     /** Contains the map node, child of the sky node.  See also @ref SceneManagerLayout */
     osg::ref_ptr<osg::Group> mapContainer_;
@@ -217,13 +179,13 @@ namespace simVis
     /** Contains the scene projectors, child of the sky node.  See also @ref SceneManagerLayout */
     osg::ref_ptr<ProjectorManager> projectorManager_;
     /** Child of the top level root, contains most of the scene because it applies various shading to scene elements.  See also @ref SceneManagerLayout */
-    osg::ref_ptr<osgEarth::Util::SkyNode> skyNode_;
-    /** Contains ocean surface graphics, child of the sky node.  See also @ref SceneManagerLayout */
-    osg::ref_ptr<osgEarth::Util::OceanNode> oceanNode_;
+    osg::ref_ptr<osgEarth::SkyNode> skyNode_;
     /** Uniform shader variable that changes the globe color where there is no opaque image layer */
     osg::ref_ptr<osg::Uniform> globeColor_;
     /** Parent node that permits draping of geometry */
     osg::ref_ptr<osgEarth::DrapeableNode> drapeableNode_;
+    /** Responsible for refreshing the map if a layer has the refresh tag set */
+    osg::ref_ptr<LayerRefreshCallback> layerRefreshCallback_;
     /** Flags true if there are problems starting the map engine */
     bool hasEngineDriverProblem_;
 

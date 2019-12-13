@@ -20,11 +20,12 @@
  *
  */
 #include "osg/CullFace"
-#include "osgEarthAnnotation/LocalGeometryNode"
-#include "osgEarthAnnotation/AnnotationUtils"
+#include "osgEarth/LocalGeometryNode"
+#include "osgEarth/AnnotationUtils"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
+#include "simVis/Types.h"
 #include "simVis/GOG/Ellipsoid.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
@@ -53,21 +54,21 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
       z_diam = x_diam;
   }
 
-  osg::Vec4f color(osgEarth::Symbology::Color::White);
+  osg::Vec4f color(simVis::Color::White);
 
   float x_radius_m = x_diam.as(osgEarth::Units::METERS) / 2.0;
   float y_radius_m = y_diam.as(osgEarth::Units::METERS) / 2.0;
   float z_radius_m = z_diam.as(osgEarth::Units::METERS) / 2.0;
 
-  osg::Node* shape = osgEarth::Annotation::AnnotationUtils::createEllipsoid(
+  osg::Node* shape = osgEarth::AnnotationUtils::createEllipsoid(
     y_radius_m, x_radius_m, z_radius_m, color);  // y, x, z order to match SIMDIS 9
   shape->setName("GOG Ellipsoid");
 
-  osgEarth::Annotation::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = NULL;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
-    node = new osgEarth::Annotation::LocalGeometryNode();
+    node = new osgEarth::LocalGeometryNode();
     node->getPositionAttitudeTransform()->addChild(shape);
     node->setStyle(p.style_);
     node->setMapNode(mapNode);

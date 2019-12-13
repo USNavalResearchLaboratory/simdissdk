@@ -140,7 +140,7 @@ public:
   /**
    * Sets the ability to use the context menu center action, which is disabled by default
    * @param use If true, then enable the center action
-   * @param reason If use is false the reason is appended to the end center action text
+   * @param reason The reason is appended to the end of the center action text
    */
   void setUseCenterAction(bool use, const QString& reason = "");
 
@@ -165,16 +165,18 @@ public:
     QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
 
-  /** Add an action to the right mouse click menu, separators are ignored */
-  void addExternalAction(QAction* action);
-  /** Remove all actions added by the addExternalAction() call */
-  void removeExternalActions();
 #ifdef USE_DEPRECATED_SIMDISSDK_API
+  /** DEPRECATED: Add an action to the right mouse click menu, separators are ignored */
+  SDK_DEPRECATE(void addExternalAction(QAction* action), "Method will be removed in a future SDK release");
+  /** DEPRECATED: Remove all actions added by the addExternalAction() call */
+  SDK_DEPRECATE(void removeExternalActions(), "Method will be removed in a future SDK release");
+
   /** DEPRECATED: Sets/clears the selected ID in the entity list */
   SDK_DEPRECATE(void setSelected(uint64_t id, bool selected), "Method will be removed in a future SDK release");
   /** DEPRECATED: Sets/clears selection for the IDs in 'list' */
   SDK_DEPRECATE(void setSelected(QList<uint64_t> list, bool selected), "Method will be removed in a future SDK release");
 #endif
+
 public slots:
   /** If true expand the tree on double click */
   void setExpandsOnDoubleClick(bool value);
@@ -209,8 +211,9 @@ signals:
    * @param settings Filters get data from the setting using a global unique key
    */
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
-  /** Fired before showing the right mouse click menu to allow external code to call addAction() and removeActions() */
-  void rightClickMenuRequested();
+
+  /** Fired before showing the right mouse click menu to allow external code to add and remove actions. */
+  void rightClickMenuRequested(QMenu* menu=NULL);
 
 protected slots:
   /** Receive notice of an inserted row */
@@ -262,7 +265,11 @@ private:
   QAction* toggleTreeViewAction_;
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   std::vector<QAction*> externalActions_;
+#endif
+
   bool useCenterAction_;
   bool treeViewUsable_;
 

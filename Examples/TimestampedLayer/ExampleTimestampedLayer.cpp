@@ -24,7 +24,7 @@
 #include "osgEarth/MapNode"
 #include "osgEarth/VisibleLayer"
 #include "osgEarth/DateTime"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simVis/SceneManager.h"

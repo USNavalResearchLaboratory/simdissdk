@@ -26,6 +26,7 @@
 #include "osgText/Text"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/NodeUtils"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simUtil/HudPositionManager.h"
 #include "simUtil/MouseDispatcher.h"
@@ -39,11 +40,11 @@ static const osg::Vec4f SCREEN_BG_DIM_COLOR(0.f, 0.f, 0.f, 0.5f);
 /** Width of the outline around a window */
 static const float OUTLINE_WIDTH = 3.f;
 /** Color of the outline when not selected */
-static const osg::Vec4f OUTLINE_DEFAULT_COLOR = osgEarth::Symbology::Color::Gray;
+static const osg::Vec4f OUTLINE_DEFAULT_COLOR = simVis::Color::Gray;
 /** Stipple of the outline when not selected */
 static const GLushort OUTLINE_DEFAULT_STIPPLE = 0xf0f0;
 /** Color of the outline when selected */
-static const osg::Vec4f OUTLINE_SELECTED_COLOR = osgEarth::Symbology::Color::Lime;
+static const osg::Vec4f OUTLINE_SELECTED_COLOR = simVis::Color::Lime;
 /** Stipple of the outline when selected */
 static const GLushort OUTLINE_SELECTED_STIPPLE = 0xffff;
 /** Factor to apply to stipple of stippled outlines. */
@@ -61,7 +62,7 @@ static const std::string TITLE_FONT = "arialbd.ttf";
 /** Size of the title text */
 static const float TITLE_POINTSIZE = simVis::osgFontSize(16.f);
 /** Color for the title text */
-static const osg::Vec4f TITLE_COLOR = osgEarth::Symbology::Color::White;
+static const osg::Vec4f TITLE_COLOR = simVis::Color::White;
 
 /** Half of the width of the anchor diamond, in pixels */
 static const float ANCHOR_HALF_WIDTH = 6.f;
@@ -303,7 +304,7 @@ void HudEditorGui::reset()
 
   // Create all the sub-windows
   std::vector<std::string> names;
-  hud->getAllWindows(names);
+  hud->getAllWindows(names, true);
   for (auto i = names.begin(); i != names.end(); ++i)
     updatePosition(*i);
 }
@@ -434,7 +435,8 @@ void HudEditorGui::setVisible(bool flag)
 
   // Iterate and update each window in case it was created after us
   std::vector<std::string> names;
-  hud->getAllWindows(names);
+  // Always hide everything, but only show the active windows
+  hud->getAllWindows(names, flag);
   for (auto nameIter = names.begin(); nameIter != names.end(); ++nameIter)
     updatePosition(*nameIter);
 }
@@ -608,7 +610,7 @@ std::string HudEditorMouse::hudUnderMouse_(double xPx, double yPx, osg::Vec3d& m
 
   // Get all the windows to test
   std::vector<std::string> windows;
-  hud->getAllWindows(windows);
+  hud->getAllWindows(windows, true);
 
   // Use AHA (Dynamic Selection) algorithm
   double closestDistanceSq = 50.0 * 50.0;
@@ -708,22 +710,42 @@ void HudPositionEditor::addWindow(const std::string& name, const osg::Vec2d& def
   gui_->updatePosition(name);
 }
 
-void HudPositionEditor::setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
+int HudPositionEditor::removeWindow(const std::string& name)
 {
-  if (hud_->setSize(name, minXyPx, maxXyPx) == 0)
-    gui_->updateSize(name);
+  const int rv = hud_->removeWindow(name);
+  if (rv == 0)
+    gui_->reset();
+  return rv;
 }
 
-void HudPositionEditor::setPosition(const std::string& name, const osg::Vec2d& positionPct)
+int HudPositionEditor::setSize(const std::string& name, const osg::Vec2d& minXyPx, const osg::Vec2d& maxXyPx)
 {
-  if (hud_->setPosition(name, positionPct) == 0)
+  const int rv = hud_->setSize(name, minXyPx, maxXyPx);
+  if (rv == 0)
+    gui_->updateSize(name);
+  return rv;
+}
+
+int HudPositionEditor::setPosition(const std::string& name, const osg::Vec2d& positionPct)
+{
+  const int rv = hud_->setPosition(name, positionPct);
+  if (rv == 0)
     gui_->updatePosition(name);
+  return rv;
 }
 
 void HudPositionEditor::resetAllPositions()
 {
   hud_->resetAllPositions();
   gui_->reset();
+}
+
+int HudPositionEditor::resetPosition(const std::string& name)
+{
+  const int rv = hud_->resetPosition(name);
+  if (rv == 0)
+    gui_->updatePosition(name);
+  return rv;
 }
 
 }

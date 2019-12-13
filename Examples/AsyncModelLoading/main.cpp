@@ -337,8 +337,8 @@ private: // data
   void tetherNext_() const
   {
     auto vp = app_.mainView->getViewpoint();
-    osg::ref_ptr<osg::Node> tether;
-    vp.getNode(tether);
+
+    osg::ref_ptr<osg::Node> tether = vp.getNode();
 
     // Entity -> async -> sync
     if (tether == app_.entityNode)

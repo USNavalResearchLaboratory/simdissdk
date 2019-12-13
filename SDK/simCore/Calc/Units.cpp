@@ -24,6 +24,7 @@
 #include "simCore/String/Format.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Units.h"
+#include "simCore/Time/Constants.h"
 
 namespace simCore {
 
@@ -46,9 +47,9 @@ const Units Units::SECONDS("seconds", "s", 1.0, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MILLISECONDS("milliseconds", "ms", 0.001, Units::ELAPSED_TIME_FAMILY);
 const Units Units::MICROSECONDS("microseconds", "us", 1e-6, Units::ELAPSED_TIME_FAMILY);
 const Units Units::NANOSECONDS("nanoseconds", "ns", 1e-9, Units::ELAPSED_TIME_FAMILY);
-const Units Units::MINUTES("minutes", "min", 60.0, Units::ELAPSED_TIME_FAMILY);
-const Units Units::HOURS("hours", "hr", 3600.0, Units::ELAPSED_TIME_FAMILY);
-const Units Units::DAYS("days", "d", 86400.0, Units::ELAPSED_TIME_FAMILY);
+const Units Units::MINUTES("minutes", "min", SECPERMIN, Units::ELAPSED_TIME_FAMILY);
+const Units Units::HOURS("hours", "hr", SECPERHOUR, Units::ELAPSED_TIME_FAMILY);
+const Units Units::DAYS("days", "d", SECPERDAY, Units::ELAPSED_TIME_FAMILY);
 
 const Units Units::RADIANS("radians", "rad", 1.0, Units::ANGLE_FAMILY);
 const Units Units::DEGREES("degrees", "deg", simCore::DEG2RAD, Units::ANGLE_FAMILY);

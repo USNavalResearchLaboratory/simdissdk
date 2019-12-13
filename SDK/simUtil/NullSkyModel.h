@@ -23,7 +23,7 @@
 #define SIMUTIL_NULLSKYMODEL_H
 
 #include "osg/Light"
-#include "osgEarthUtil/Sky"
+#include "osgEarth/Sky"
 
 namespace simUtil {
 
@@ -31,7 +31,7 @@ namespace simUtil {
  * Null Object pattern instance for a Sky Model.  Useful to prevent the Simple Sky
  * model from being used in views.
  */
-class /*SIMUTIL_EXPORT*/ NullSkyModel : public osgEarth::Util::SkyNode  // Header-only
+class /*SIMUTIL_EXPORT*/ NullSkyModel : public osgEarth::SkyNode  // Header-only
 {
 public:
   NullSkyModel()

@@ -26,6 +26,7 @@
 #include <memory>
 #include <vector>
 #include <QAbstractItemModel>
+#include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include "simCore/Common/Common.h"
 #include "simData/CategoryData/CategoryFilter.h"
@@ -42,7 +43,6 @@ namespace simData {
 namespace simQt {
 
 class AsyncCategoryCounter;
-class CategoryProxyModel;
 struct CategoryCountResults;
 class Settings;
 
@@ -81,6 +81,36 @@ private:
   typename std::map<T*, int> itemToIndex_;
 };
 
+/// Used to sort and filter the CategoryTreeModel
+class SDKQT_EXPORT CategoryProxyModel : public QSortFilterProxyModel
+{
+  Q_OBJECT
+
+public:
+  /// constructor passes parent to QSortFilterProxyModel
+  explicit CategoryProxyModel(QObject *parent = 0);
+  virtual ~CategoryProxyModel();
+
+  /** Override setSourceModel() to detect the "All Items" model type */
+  virtual void setSourceModel(QAbstractItemModel* sourceModel);
+
+public slots:
+  /// string to filter against
+  void setFilterText(const QString& filter);
+  /// Rests the filter by calling invalidateFilter
+  void resetFilter();
+
+protected:
+  /// filtering function
+  virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+
+private:
+  /// string to filter against
+  QString filter_;
+  /// Set true when "All Categories" is the root item (i.e. using CategoryTreeModel, not CategoryTreeModel2)
+  bool hasAllCategories_;
+};
+
 /** Single tier tree model that maintains and allows users to edit a simData::CategoryFilter. */
 class SDKQT_EXPORT CategoryTreeModel2 : public QAbstractItemModel
 {
@@ -114,6 +144,9 @@ public:
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
   virtual Qt::ItemFlags flags(const QModelIndex& index) const;
   virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
+
+  /// data role for obtaining names that are remapped to force "Unlisted Value" and "No Value" to the top
+  static const int SortRole = Qt::UserRole + 1;
 
 public slots:
   /** Changes the model state to match the values in the filter. */

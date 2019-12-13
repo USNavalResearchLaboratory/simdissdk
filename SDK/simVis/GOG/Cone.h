@@ -19,18 +19,33 @@
  * disclose, or release this software.
  *
  */
-#ifndef _STD_GL_H_
-#define _STD_GL_H_
+#ifndef SIMVIS_GOG_CONE_H
+#define SIMVIS_GOG_CONE_H
 
+#include "simVis/GOG/GOGNode.h"
 
-#ifdef WIN32
-#include <windows.h>
-#include "stdgl_windows.h"
-#include <GL/glu.h>
-#else
-#include "stdgl_linux.h"
-#endif
-#include "stdgl_constants.h"
+namespace osgEarth { class MapNode; }
 
-#endif  /* _STD_GL_H_ */
+namespace simVis { namespace GOG {
 
+class GogNodeInterface;
+class ParsedShape;
+class ParserData;
+
+/** Display GOG Cone */
+class SDKVIS_EXPORT Cone
+{
+public:
+  /** Create the cone from the parser data and GOG meta data */
+  GogNodeInterface* deserialize(
+    const ParsedShape&       parsedShape,
+    simVis::GOG::ParserData& p,
+    const GOGNodeType&       nodeType,
+    const GOGContext&        context,
+    const GogMetaData&       metaData,
+    osgEarth::MapNode*       mapNode);
+};
+
+} } // namespace simVis::GOG
+
+#endif // SIMVIS_GOG_CONE_H

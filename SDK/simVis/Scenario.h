@@ -31,7 +31,6 @@
 #include "osg/View"
 #include "osgEarth/CullingUtils"
 #include "osgEarth/Revisioning"
-#include "osgEarthUtil/SpatialData"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/Types.h"
 #include "simVis/RFProp/RFPropagationManager.h"
@@ -57,26 +56,6 @@ class ProjectorManager;
 class ProjectorNode;
 class ScenarioTool;
 
-/** Settings to configure the scenario manager for large numbers of entities */
-class ScenarioDisplayHints
-{
-public:
-  /** Constructs a new Display Hints */
-  ScenarioDisplayHints()
-    : maxRange_(1e10), maxPerCell_(std::numeric_limits<int>::max()), cellsX_(1), cellsY_(1)
-  {
-  }
-
-  /** Maximum range */
-  float maxRange_;
-  /** Maximum number of elements per cell */
-  float maxPerCell_;
-  /** X cells */
-  unsigned int cellsX_;
-  /** Y cells */
-  unsigned int cellsY_;
-};
-
 /**
 * Manages all scenario objects (platforms, beams, gates, etc) and their
 * visualization within the scene
@@ -84,62 +63,7 @@ public:
 class SDKVIS_EXPORT ScenarioManager : public osgEarth::LODScaleGroup // osg::Group
 {
   friend class SceneManager;
-protected:
-  class EntityRecord;
-
 public:
-
-  /** Strategy for a class that contains all the scenario entity nodes */
-  class AbstractEntityGraph : public osg::Referenced
-  {
-  public:
-    virtual osg::Group* node() const = 0;
-    virtual int addOrUpdate(EntityRecord* record) = 0;
-    virtual int removeEntity(EntityRecord* record) = 0;
-    virtual int clear() = 0;
-
-  protected:
-    virtual ~AbstractEntityGraph() {}
-  };
-
-  /** Entity group that stores all nodes in a flat osg::Group */
-  class SDKVIS_EXPORT SimpleEntityGraph : public AbstractEntityGraph
-  {
-  public:
-    SimpleEntityGraph();
-    virtual osg::Group* node() const;
-    virtual int addOrUpdate(EntityRecord* record);
-    virtual int removeEntity(EntityRecord* record);
-    virtual int clear();
-
-  protected:
-    virtual ~SimpleEntityGraph();
-
-  private:
-    osg::ref_ptr<osg::Group> group_;
-  };
-
-  /** Entity group that uses the osgEarth::Util::GeoGraph to organize entities */
-  class SDKVIS_EXPORT GeoGraphEntityGraph : public AbstractEntityGraph
-  {
-  public:
-    explicit GeoGraphEntityGraph(const ScenarioDisplayHints& hints = ScenarioDisplayHints());
-    virtual osg::Group* node() const;
-    virtual int addOrUpdate(EntityRecord* record);
-    virtual int removeEntity(EntityRecord* record);
-    virtual int clear();
-
-  protected:
-    virtual ~GeoGraphEntityGraph();
-
-  private:
-    ScenarioDisplayHints hints_;
-    osg::ref_ptr<osg::Group> group_;
-    osg::ref_ptr<osgEarth::Util::GeoGraph> graph_;
-  };
-
-  /** Changes the strategy to use for grouping entities in the scene */
-  void setEntityGraphStrategy(AbstractEntityGraph* strategy);
 
   /**
    * Binds this scenario manager to a DataStore.
@@ -414,6 +338,9 @@ public:
   /** Called internally when the platform size changes, to notify the beam so it can adjust to actual/visual size */
   void notifyBeamsOfNewHostSize(const PlatformNode& platform) const;
 
+  /** Set whether to use the most precise elevation sampling method for platform clamping.  Using max precision may cause performance hits. */
+  void setUseMaxElevClampPrec(bool useMaxPrec);
+
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simVis"; }
 
@@ -456,9 +383,11 @@ protected:
   virtual ~ScenarioManager();
 
 protected:
-  class ScenarioLosCreator;
-  class SurfaceClamping;
   class AboveSurfaceClamping;
+  class EntityRecord;
+  class ScenarioLosCreator;
+  class SimpleEntityGraph;
+  class SurfaceClamping;
 
   /** Generates locators for entities */
   LocatorFactory*              locatorFactory_;
@@ -473,7 +402,7 @@ protected:
   /** Root node for the scenario */
   osg::ref_ptr<osg::Group>     root_;
   /** Strategy for grouping up entities into the scene graph */
-  osg::ref_ptr<AbstractEntityGraph> entityGraph_;
+  osg::ref_ptr<SimpleEntityGraph> entityGraph_;
   /** Holds a map of all named attachment points added through getOrCreateAttachPoint(). */
   std::map<std::string, osg::observer_ptr<osg::Group> > customAttachPoints_;
 
@@ -491,7 +420,7 @@ protected:
   ScenarioLosCreator* losCreator_;
 
   /** Association between the EntityNode, the data store, and the entity's update slice */
-  class EntityRecord : public osgEarth::Util::GeoObject
+  class EntityRecord : public osg::Group
   {
   public:
     /** Constructs a new entity record */

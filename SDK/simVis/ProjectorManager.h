@@ -49,7 +49,7 @@ public:
   * Unregisters a projector.
   * @param proj Projector to remove.
   */
-  void unregisterProjector(ProjectorNode* proj);
+  void unregisterProjector(const ProjectorNode* proj);
 
   /**
   * Clear all projector nodes and group nodes from manager
@@ -120,6 +120,6 @@ private:
   /// A flag to mark when projector layers need to be moved to ensure visibility
   bool needReorderProjectorLayers_;
 };
-};
+}
 
 #endif // SIMVIS_PROJECTOR_MANAGER_H

@@ -94,6 +94,7 @@ MapScale::MapScale()
     barHeightPx_(8.f),
     barColor1_(0.f, 0.f, 0.f, 1.f),
     barColor2_(1.f, 1.f, 1.f, 1.f),
+    lrtbBgPadding_(10.f, 10.f, 5.f, 5.f),
     unitsProvider_(new MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::KILOMETERS, 10000.0))
 {
   getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
@@ -116,13 +117,46 @@ MapScale::MapScale()
   valueTextPrototype_->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
   valueTextPrototype_->setDataVariance(osg::Object::STATIC);
 
+  // Create the background
+  bgMatrix_ = new osg::MatrixTransform;
+  bgMatrix_->setName("Background Scale Matrix");
+  bgMatrix_->setDataVariance(osg::Object::DYNAMIC);
+  osg::Geometry* backgroundGeom = new osg::Geometry;
+  backgroundGeom->setName("Background");
+  backgroundGeom->setUseVertexBufferObjects(true);
+  bgMatrix_->addChild(backgroundGeom);
+
+  // Create vertices for background
+  osg::Vec3Array* bgVerts = new osg::Vec3Array(4);
+  (*bgVerts)[0].set(osg::Vec3f(0.f, 0.f, 0.f));
+  (*bgVerts)[1].set(osg::Vec3f(0.f, 1.f, 0.f));
+  (*bgVerts)[2].set(osg::Vec3f(1.f, 0.f, 0.f));
+  (*bgVerts)[3].set(osg::Vec3f(1.f, 1.f, 0.f));
+  backgroundGeom->setVertexArray(bgVerts);
+
+  // Create colors
+  bgColorArray_ = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
+  bgColorArray_->setDataVariance(osg::Object::DYNAMIC);
+  backgroundGeom->setColorArray(bgColorArray_);
+  // Note that setting the background color to 0.f alpha hides the background
+  setBackgroundColor(osg::Vec4f(0.f, 0.f, 0.f, 0.f));
+
+  // Create the primitive set
+  backgroundGeom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
   // Separate all the text into a separate group so the geode shader doesn't apply to it
   textGroup_ = new osg::Group;
+  textGroup_->setName("Demarcations");
   textGroup_->addChild(unitsText_);
   geode_ = new osg::Geode;
 
-  addChild(textGroup_);
-  addChild(geode_);
+  paddingGroup_ = new osg::MatrixTransform;
+  paddingGroup_->setName("Padding Adjustment");
+  paddingGroup_->setDataVariance(osg::Object::DYNAMIC);
+  paddingGroup_->addChild(textGroup_.get());
+  paddingGroup_->addChild(geode_.get());
+  addChild(bgMatrix_.get());
+  addChild(paddingGroup_.get());
 
   recalculateHeight_();
 
@@ -149,6 +183,7 @@ MapScale::MapScale(const MapScale& rhs, const osg::CopyOp& copyop)
     barHeightPx_(rhs.barHeightPx_),
     barColor1_(rhs.barColor1_),
     barColor2_(rhs.barColor2_),
+    lrtbBgPadding_(rhs.lrtbBgPadding_),
     view_(rhs.view_),
     unitsProvider_(rhs.unitsProvider_)
 {
@@ -191,17 +226,24 @@ MapScale::UnitsProvider* MapScale::unitsProvider() const
 
 float MapScale::height() const
 {
-  return heightPx_;
+  // Include padding in the returned value
+  return heightPx_ + lrtbBgPadding_[2] + lrtbBgPadding_[3];
 }
 
 void MapScale::setWidth(float widthPx)
 {
+  // Adjust widthPx to omit padding
+  widthPx -= (lrtbBgPadding_[0] + lrtbBgPadding_[1]);
+  if (widthPx_ == widthPx)
+    return;
   widthPx_ = widthPx;
+  fixBackgroundPosition_();
 }
 
 float MapScale::width() const
 {
-  return widthPx_;
+  // Include padding in the returned value
+  return widthPx_ + lrtbBgPadding_[0] + lrtbBgPadding_[1];
 }
 
 void MapScale::setUnitsColor(const osg::Vec4f& color)
@@ -221,6 +263,12 @@ void MapScale::setUnitsCharacterSize(float sizePx)
     unitsText_->setCharacterSize(sizePx);
     recalculateHeight_();
   }
+}
+
+void MapScale::setUnitsVisible(bool visible)
+{
+  unitsText_->setNodeMask(visible ? ~0 : 0);
+  recalculateHeight_();
 }
 
 void MapScale::setValuesColor(const osg::Vec4f& color)
@@ -263,9 +311,14 @@ void MapScale::setBarColor2(const osg::Vec4f& color)
 
 void MapScale::recalculateHeight_()
 {
-  heightPx_ = 2 * BAR_BUFFER_PX + barHeightPx_ + unitsText_->getCharacterHeight() + valueTextPrototype_->getCharacterHeight();
+  heightPx_ = 2 * BAR_BUFFER_PX + barHeightPx_ + valueTextPrototype_->getCharacterHeight();
+  if (unitsText_->getNodeMask() != 0)
+    heightPx_ += unitsText_->getCharacterHeight();
+
   // Fix the height on the value text so it is positioned correctly
   valueTextPrototype_->setPosition(osg::Vec3f(0.f, heightPx_, 0.f));
+  // Fix background box
+  fixBackgroundPosition_();
 }
 
 void MapScale::recalculatePixelDistance_()
@@ -431,6 +484,28 @@ void MapScale::setVisible_(bool isVisible)
   const unsigned int nodeMask = (isVisible ? ~0 : 0);
   geode_->setNodeMask(nodeMask);
   textGroup_->setNodeMask(nodeMask);
+}
+
+void MapScale::fixBackgroundPosition_()
+{
+  bgMatrix_->setMatrix(osg::Matrix::scale(width(), height(), 1.f));
+  paddingGroup_->setMatrix(osg::Matrix::translate(lrtbBgPadding_[0], lrtbBgPadding_[3], 0.f));
+}
+
+void MapScale::setBackgroundColor(const osg::Vec4f& color)
+{
+  (*bgColorArray_)[0] = color;
+  bgColorArray_->dirty();
+  bgMatrix_->setNodeMask(color[3] == 0.f ? 0 : ~0);
+}
+
+void MapScale::setPadding(float left, float right, float top, float bottom)
+{
+  lrtbBgPadding_[0] = left;
+  lrtbBgPadding_[1] = right;
+  lrtbBgPadding_[2] = top;
+  lrtbBgPadding_[3] = bottom;
+  fixBackgroundPosition_();
 }
 
 }

@@ -24,7 +24,7 @@
 
 #include <vector>
 #include "osg/ref_ptr"
-#include "osgEarthSymbology/Color"
+#include "osgEarth/Color"
 #include "simCore/Common/Common.h"
 
 namespace simVis
@@ -37,8 +37,8 @@ namespace simVis
    * Helpful aliases and typedefs
    */
 
-  /** Bring osgEarth::Symbology::Color into the simVis namespace */
-  typedef osgEarth::Symbology::Color Color;
+  /** Bring osgEarth::Color into the simVis namespace */
+  typedef osgEarth::Color Color;
 
   /** Vector of EntityNode ref_ptr */
   typedef std::vector< osg::ref_ptr<EntityNode> > EntityVector;

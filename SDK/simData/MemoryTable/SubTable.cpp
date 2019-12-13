@@ -143,7 +143,7 @@ private:
 
   SubTable* initializeNewTable_(const std::vector<DataColumn*>& startingColumns)
   {
-    return new SubTable(*subTable_.timeContainer_, startingColumns, timeStamp_);
+    return new SubTable(*subTable_.timeContainer_, startingColumns, timeStamp_, subTable_.tableId_);
   }
 
   void notifyObserver_(SubTable* newTable, const std::vector<DataColumn*>& startingColumns)
@@ -269,15 +269,17 @@ void SubTable::IteratorData::fillRow(TableRow& row) const
 
 /////////////////////////////////////////////////////////////////
 
-SubTable::SubTable(TimeContainer* newTimeContainer)
-  : timeContainer_(newTimeContainer)
+SubTable::SubTable(TimeContainer* newTimeContainer, TableId tableId)
+  : timeContainer_(newTimeContainer),
+  tableId_(tableId)
 {
   // Assertion failure means the caller gave us a bad time container to use
   assert(timeContainer_ != NULL && timeContainer_->size() == 0);
 }
 
-SubTable::SubTable(const TimeContainer& copyTimes, const std::vector<DataColumn*>& withColumns, double withoutTimeStamp)
-  : timeContainer_(copyTimes.clone())
+SubTable::SubTable(const TimeContainer& copyTimes, const std::vector<DataColumn*>& withColumns, double withoutTimeStamp, TableId tableId)
+  : timeContainer_(copyTimes.clone()),
+  tableId_(tableId)
 {
   TimeContainer::Iterator removeIter = timeContainer_->find(withoutTimeStamp);
   // Assertion failure means this is used for more than just split, or that split
@@ -324,7 +326,7 @@ TableStatus SubTable::addColumn(const std::string& columnName, TableColumnId col
 {
   if (!empty())
     return TableStatus::Error("Attempting to add column to a non-empty subtable, violates NULL-less state.");
-  DataColumn* newColumn = new DataColumn(timeContainer_, columnName, columnId, storageType, unitType);
+  DataColumn* newColumn = new DataColumn(timeContainer_, columnName, tableId_, columnId, storageType, unitType);
   columns_.push_back(newColumn);
   if (newCol != NULL) *newCol = newColumn;
 

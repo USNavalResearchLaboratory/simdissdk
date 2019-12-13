@@ -62,8 +62,10 @@ void RemovableFiles::calculate(const QDir& files, QStringList& removableFiles) c
   qint64 totalFileSize = 0;
   int totalFiles = 0;
 
-  Q_FOREACH(QFileInfo info, files.entryInfoList(QDir::Files))
+  auto infoList = files.entryInfoList(QDir::Files);
+  for (auto it = infoList.begin(); it != infoList.end(); ++it)
   {
+    QFileInfo info = *it;
     ++totalFiles;
     int timeDelta = info.lastModified().secsTo(startTime);
     if (enableMaxSeconds_ && (timeDelta >= maxSeconds_))
@@ -79,17 +81,18 @@ void RemovableFiles::calculate(const QDir& files, QStringList& removableFiles) c
   std::stable_sort(pending.begin(), pending.end(), compareByTime);
 
   // Now delete from oldest
-  Q_FOREACH(QFileInfo info, pending)
+  for (auto it = pending.begin(); it != pending.end(); ++it)
   {
+    QFileInfo info = *it;
     QString name = info.fileName();
     if (enableMaxSpace_ && (totalFileSize > maxSpace_))
     {
-      removableFiles.push_back(info.fileName());
+      removableFiles.push_back(name);
       totalFileSize -= info.size();
     }
     else if (enableMaxNumber_ && ((totalFiles - removableFiles.size()) > maxNumber_))
     {
-      removableFiles.push_back(info.fileName());
+      removableFiles.push_back(name);
     }
   }
 }

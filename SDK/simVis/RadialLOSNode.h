@@ -26,7 +26,7 @@
 
 #include "osgEarth/MapNode"
 #include "osgEarth/GeoData"
-#include "osgEarthAnnotation/GeoPositionNode"
+#include "osgEarth/GeoPositionNode"
 
 #include "osg/Geode"
 #include "osg/Geometry"
@@ -40,7 +40,7 @@ namespace simVis
  * Radial line-of-sight node renders an LOS display corresponding to
  * the data in a RadialLOS structure.
  */
-class SDKVIS_EXPORT RadialLOSNode : public osgEarth::Annotation::GeoPositionNode
+class SDKVIS_EXPORT RadialLOSNode : public osgEarth::GeoPositionNode
 {
 public:
   /**

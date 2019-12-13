@@ -1244,7 +1244,7 @@ int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
 {
   // Create a mini typedef to reduce typing
   typedef simData::MemoryTable::SubTable SubTable;
-  SubTable subTable(newTimeContainer);
+  SubTable subTable(newTimeContainer, 0);
   int rv = 0;
 
   // Create iterator on empty subtable and validate it

@@ -44,6 +44,7 @@
 #include "simVis/Projector.h"
 #include "simVis/Shaders.h"
 
+#undef LC
 #define LC "[PlatformNode] "
 
 namespace simVis
@@ -55,7 +56,6 @@ static const simVis::Color BODY_AXIS_Z_COLOR = simVis::Color::Aqua;
 static const simVis::Color INERTIAL_AXIS_X_COLOR = simVis::Color::Red;
 static const simVis::Color INERTIAL_AXIS_Y_COLOR = simVis::Color::Lime;
 static const simVis::Color INERTIAL_AXIS_Z_COLOR = simVis::Color::Blue;
-static const simVis::Color VELOCITY_VECTOR_COLOR = osg::Vec4f(1.0f, 0.5f, 0.0f, 1.0f); // SIMDIS_ORANGE
 static const simVis::Color MOON_VECTOR_COLOR = simVis::Color::White;
 static const simVis::Color SUN_VECTOR_COLOR = simVis::Color::Yellow;
 
@@ -110,7 +110,7 @@ public:
 
   virtual bool run(osg::Object* object, osg::Object* data)
   {
-    AreaHighlightNode* area = dynamic_cast<AreaHighlightNode*>(object);
+    CompositeHighlightNode* area = dynamic_cast<CompositeHighlightNode*>(object);
     // Scale down the radius by a small amount -- 80% -- to reduce highlight size
     if (area != NULL && platform_.valid())
       area->setRadius(VectorScaling::lineLength(platform_->getModel(), 0.8));
@@ -419,8 +419,9 @@ simData::ObjectId PlatformNode::getId() const
 
 bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
 {
-  // if assert fails, check whether prefs are initialized correctly when platform is created
-  assert(lastPrefsValid_);
+  // Do not assert on lastPrefsValid_; this routine can get called during platform creation.
+  if (!lastPrefsValid_)
+    return false;
 
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase);
   assert(updateSlice);
@@ -790,7 +791,7 @@ void PlatformNode::updateOrRemoveVelocityVector_(bool prefsDraw, const simData::
       velocityAxisVector_->setPrefs(prefs.drawvelocityvec(), prefs, PB_FIELD_CHANGED(&lastPrefs_, &prefs, drawvelocityvec));
     else
     {
-      velocityAxisVector_ = new VelocityVector(getLocator(), VELOCITY_VECTOR_COLOR);
+      velocityAxisVector_ = new VelocityVector(getLocator());
       addChild(velocityAxisVector_);
       // force rebuild
       velocityAxisVector_->update(lastUpdate_);
@@ -832,18 +833,20 @@ void PlatformNode::updateOrRemoveCircleHighlight_(bool prefsDraw, const simData:
 {
   if (prefsDraw && prefs.drawcirclehilight())
   {
-    if (!areaHighlight_.valid())
+    if (!highlight_.valid())
     {
-      areaHighlight_ = new AreaHighlightNode();
-      areaHighlight_->addUpdateCallback(new SetCircleRadiusCallback(this));
-      scaledInertialTransform_->addChild(areaHighlight_);
+      highlight_ = new CompositeHighlightNode(prefs.circlehilightshape());
+      highlight_->addUpdateCallback(new SetCircleRadiusCallback(this));
+      scaledInertialTransform_->addChild(highlight_.get());
     }
-    areaHighlight_->setColor(simVis::Color(prefs.circlehilightcolor(), simVis::Color::RGBA));
+    else
+      highlight_->setShape(prefs.circlehilightshape());
+    highlight_->setColor(simVis::Color(prefs.circlehilightcolor(), simVis::Color::RGBA));
   }
-  else if (areaHighlight_.valid()) // remove if present
+  else if (highlight_.valid()) // remove if present
   {
-    scaledInertialTransform_->removeChild(areaHighlight_);
-    areaHighlight_ = NULL;
+    scaledInertialTransform_->removeChild(highlight_);
+    highlight_ = NULL;
   }
 }
 

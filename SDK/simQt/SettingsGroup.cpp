@@ -387,8 +387,9 @@ public:
 
       // Loop through all values and save them
       const QStringList allNames = settings->allNames();
-      Q_FOREACH(const QString& variable, allNames)
+      for (auto it = allNames.begin(); it != allNames.end(); ++it)
       {
+        const QString& variable = *it;
         if (variable.startsWith(pathNoStartingSlash))
           values_[QString("/%1").arg(variable)] = settings->value(variable);
       }

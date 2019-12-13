@@ -51,7 +51,7 @@ class SDKDATA_EXPORT SubTable
 {
 public:
   /// Creates a sub table using the time container strategy provided
-  SubTable(TimeContainer* newTimeContainer);
+  SubTable(TimeContainer* newTimeContainer, TableId tableId);
   virtual ~SubTable();
 
   /** Number of rows in the time container of this subtable */
@@ -196,9 +196,11 @@ private:
   std::map<TableColumnId, DataColumn*> columnMap_;
   /// Orders the time values and deque contents
   TimeContainer* timeContainer_;
+  /// Owning Table ID, specified on construction
+  TableId tableId_;
 
   /// Initializes a subtable using the columns provided, with our time map (minus "withoutTimeStamp")
-  SubTable(const TimeContainer& copyTimes, const std::vector<DataColumn*>& withColumns, double withoutTimeStamp);
+  SubTable(const TimeContainer& copyTimes, const std::vector<DataColumn*>& withColumns, double withoutTimeStamp, TableId tableId);
 
   /// Finds a column based on ID, returning NULL if none
   DataColumn* findColumn_(TableColumnId columnId) const;

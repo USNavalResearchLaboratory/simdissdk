@@ -19,6 +19,9 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+ // this is deprecated; use simQt::CategoryFilterWidget2 found in CategoryTreeModel2.h
+
 #ifndef SIMQT_CATEGORY_FILTER_WIDGET_H
 #define SIMQT_CATEGORY_FILTER_WIDGET_H
 
@@ -115,4 +118,4 @@ private:
 
 
 #endif
-
+#endif

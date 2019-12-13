@@ -36,7 +36,7 @@
 #include "simQt/ViewManagerDataModel.h"
 #include "simQt/ViewWidget.h"
 
-#include "osgEarthUtil/Controls"
+#include "osgEarth/Controls"
 
 #include <QApplication>
 #include <QDialog>

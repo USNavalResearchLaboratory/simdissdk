@@ -23,6 +23,7 @@
 #include "simVis/Platform.h"
 #include "simVis/TargetDelegation.h"
 
+#undef LC
 #define LC "[TargetDelegation] "
 
 namespace simVis

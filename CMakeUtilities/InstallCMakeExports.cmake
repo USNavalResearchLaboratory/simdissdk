@@ -15,8 +15,7 @@ endif()
 set(SDK_LIB_CMAKE_PATH ${INSTALLSETTINGS_LIBRARY_DIR}/cmake)
 
 # Gather a list of all possible imported libraries
-set(IMPLIBS PROTOBUF OSGQT GDAL)
-list(APPEND IMPLIBS ${OSGEARTH_ALL_LIBDEPENDENCIES})
+set(IMPLIBS PROTOBUF OSGQT GDAL OSGEARTH)
 list(APPEND IMPLIBS ${OSG_ALL_LIBDEPENDENCIES})
 
 # Keep a list of all the properties that need to transfer from our imported

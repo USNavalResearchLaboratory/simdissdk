@@ -81,6 +81,8 @@ Control* createHelp()
   vbox->addControl(new LabelControl(s_title, 20, simVis::Color::Yellow));
 
   vbox->addControl(new LabelControl("1 : cycle through rotation types", 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl("2 : toggle highlight", 14, simVis::Color::Silver));
+  vbox->addControl(new LabelControl("3 : cycle through highlight styles", 14, simVis::Color::Silver));
   s_iconRotationLabel = new LabelControl("Currently viewing: " + IconRotation_Name(s_iconRotation),
     14, simVis::Color::Yellow);
   s_iconRotationLabel->setMargin(Gutter(0, 0, 10, 0));
@@ -118,40 +120,80 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
 
       case '1' : // cycle rotate mode
+      {
+
+        // Cycle the value
+        switch (s_iconRotation)
         {
-
-          // Cycle the value
-          switch (s_iconRotation)
-          {
-          case simData::IR_2D_UP:
-            s_iconRotation = simData::IR_2D_YAW;
-            break;
-          case simData::IR_2D_YAW:
-            s_iconRotation = simData::IR_3D_YPR;
-            break;
-          case simData::IR_3D_YPR:
-            s_iconRotation = simData::IR_3D_NORTH;
-            break;
-          case simData::IR_3D_NORTH:
-            s_iconRotation = simData::IR_3D_YAW;
-            break;
-          case simData::IR_3D_YAW:
-            s_iconRotation = simData::IR_2D_UP;
-            break;
-          }
-
-          // Apply the setting
-          simData::DataStore::Transaction txn;
-          simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
-          if (prefs)
-          {
-            prefs->set_rotateicons(s_iconRotation);
-            txn.complete(&prefs);
-          }
-
-          s_iconRotationLabel->setText("Currently viewing: " + IconRotation_Name(s_iconRotation));
+        case simData::IR_2D_UP:
+          s_iconRotation = simData::IR_2D_YAW;
+          break;
+        case simData::IR_2D_YAW:
+          s_iconRotation = simData::IR_3D_YPR;
+          break;
+        case simData::IR_3D_YPR:
+          s_iconRotation = simData::IR_3D_NORTH;
+          break;
+        case simData::IR_3D_NORTH:
+          s_iconRotation = simData::IR_3D_YAW;
+          break;
+        case simData::IR_3D_YAW:
+          s_iconRotation = simData::IR_2D_UP;
           break;
         }
+
+        // Apply the setting
+        simData::DataStore::Transaction txn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
+        if (prefs)
+        {
+          prefs->set_rotateicons(s_iconRotation);
+          txn.complete(&prefs);
+        }
+
+        s_iconRotationLabel->setText("Currently viewing: " + IconRotation_Name(s_iconRotation));
+        break;
+      }
+
+      case '2': // toggle circle highlight
+      {
+        simData::DataStore::Transaction txn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
+        if (!prefs)
+          break;
+        prefs->set_drawcirclehilight(!prefs->drawcirclehilight());
+        txn.complete(&prefs);
+        break;
+      }
+
+      case '3': // cycle circle highlight shape
+      {
+        simData::DataStore::Transaction txn;
+        simData::PlatformPrefs* prefs = dataStore_.mutable_platformPrefs(platId_, &txn);
+        if (!prefs)
+          break;
+        switch (prefs->circlehilightshape())
+        {
+        case simData::CH_PULSING_CIRCLE:
+          prefs->set_circlehilightshape(simData::CH_CIRCLE);
+          break;
+        case simData::CH_CIRCLE:
+          prefs->set_circlehilightshape(simData::CH_DIAMOND);
+          break;
+        case simData::CH_DIAMOND:
+          prefs->set_circlehilightshape(simData::CH_SQUARE);
+          break;
+        case simData::CH_SQUARE:
+          prefs->set_circlehilightshape(simData::CH_SQUARE_RETICLE);
+          break;
+        default:
+          prefs->set_circlehilightshape(simData::CH_PULSING_CIRCLE);
+          break;
+        }
+        txn.complete(&prefs);
+        break;
+      }
+
       }
     }
 

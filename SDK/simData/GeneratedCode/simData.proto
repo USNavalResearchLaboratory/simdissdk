@@ -203,6 +203,20 @@ enum PolygonMode {
   FILL = 0x1B02;    ///< GL_FILL
 };
 
+/// Circle highlight shape selection
+enum CircleHilightShape {
+  /// Filled-in semitransparent animated with a rotation and slight color pulse
+  CH_PULSING_CIRCLE = 0;
+  /// Circle outline; no animation
+  CH_CIRCLE = 1;
+  /// Diamond outline; no animation
+  CH_DIAMOND = 2;
+  /// Square outline; no animation
+  CH_SQUARE = 3;
+  /// Square outline with line sides cut off, looks like reticle; no animation
+  CH_SQUARE_RETICLE = 4;
+};
+
 /// Coordinate system definition for scenario and platforms
 message CoordinateFrame {
   /// Coordinate system flag.  SIMDIS SDK stores all data internally as ECEF; this is only descriptive for input/output
@@ -718,10 +732,12 @@ message PlatformPrefs {
   /// Angular detail of RCS pattern in degrees
   optional double rcsDetail = 34 [default = 1.0];
 
-  /// Draws a rotating circle highlight about the model position; useful for drawing attention to platforms
+  /// Draws a rotating "circle" highlight about the model position; useful for drawing attention to platforms
   optional bool drawCircleHilight = 35 [default = false];
-  /// Color value for the circular highlight; see drawCircleHilight
+  /// Color value for the "circular" highlight; see drawCircleHilight
   optional fixed32 circleHilightColor = 36 [default = 0xFFFFFFFF];
+  /// Shape for "circle" highlight
+  optional CircleHilightShape circleHilightShape = 71 [default = CH_PULSING_CIRCLE];
 
   /// Position values are interpolated between data points
   optional bool interpolatePos = 37 [default = true];
@@ -741,10 +757,12 @@ message PlatformPrefs {
 
   /// Toggle velocity vector
   optional bool drawVelocityVec = 44 [default = false];
+  /// Color for the velocity vector line
+  optional fixed32 velVecColor = 72 [default = 0xFF8000FF];
+
   /// Toggle between static length and length based on time
   optional bool velVecUseStaticLength = 45 [default = true];
-
-  /// Sets the length of the velocity vector, in velVecSlUnits
+  /// Sets the length of the velocity vector, in velVecStaticLenUnits
   optional double velVecStaticLen = 46 [default = 0.5];
   /// Velocity vector length's distance units
   optional DistanceUnits velVecStaticLenUnits = 47 [default = UNITS_NAUTICAL_MILES];
@@ -1212,6 +1230,8 @@ message CustomRenderingPrefs {
    * Not all renderers support this field.
    */
   optional fixed32 historyOverrideColor = 7 [default = 0x19E500FF];
+  /// If true, show center axis inside the shape. Shape color must be semitransparent.  Not all renderers support this field.
+  optional bool centerAxis = 8 [default = false];
 };
 
 /// common update to Custom Rendering data

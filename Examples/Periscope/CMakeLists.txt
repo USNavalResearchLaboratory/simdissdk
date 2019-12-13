@@ -16,7 +16,11 @@ set_target_properties(example_periscope PROPERTIES
 )
 vsi_install_target(example_periscope SDK_Examples)
 
-# Pass a variable to compiler if the Triton support is through the NodeKit interface
+# Pass a variable to compiler if the Triton and SilverLining support is through the NodeKit interface
 if(OSGEARTH_TRITON_SUPPORT STREQUAL NODEKIT)
     target_link_libraries(example_periscope PRIVATE OSGEARTH_TRITON)
 endif()
+if (OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
+    target_link_libraries(example_periscope PRIVATE OSGEARTH_SILVERLINING)
+endif()
+

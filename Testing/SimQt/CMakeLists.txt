@@ -12,7 +12,9 @@ set(SimQtTestsSourceList
     GradientTest.cpp
     SettingsTest.cpp
     PersistentLoggerTest.cpp
+    SegmentedTextsTest.cpp
 )
+set_source_files_properties(ActionRegistryTest.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 if(TARGET simData)
     list(APPEND SimQtTestsSourceList
         RangeToRegExpTest.cpp
@@ -45,6 +47,7 @@ add_test(NAME ActionRegistryTest COMMAND SimQtTests ActionRegistryTest)
 add_test(NAME SettingsTest COMMAND SimQtTests SettingsTest)
 add_test(NAME PersistentLoggerTest COMMAND SimQtTests PersistentLoggerTest)
 add_test(NAME GradientTest COMMAND SimQtTests GradientTest)
+add_test(NAME SegmentedTextsTest COMMAND SimQtTests SegmentedTextsTest)
 if(TARGET simData)
     add_test(NAME RangeToRegExpTest COMMAND SimQtTests RangeToRegExpTest)
 endif()

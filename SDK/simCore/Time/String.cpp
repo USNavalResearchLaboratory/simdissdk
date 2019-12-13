@@ -52,7 +52,7 @@ bool NullTimeFormatter::canConvert(const std::string& timeString) const
 
 int NullTimeFormatter::fromString(const std::string& timeString, simCore::TimeStamp& timeStamp, int referenceYear) const
 {
-  timeStamp = simCore::TimeStamp(1970, 0);
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -79,7 +79,7 @@ int SecondsTimeFormatter::fromString(const std::string& timeString, simCore::Tim
     timeStamp = simCore::TimeStamp(referenceYear, tmpVal);
     return 0;
   }
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -94,7 +94,7 @@ void SecondsTimeFormatter::toStream(std::ostream& os, const simCore::Seconds& se
 bool SecondsTimeFormatter::isStrictSecondsString(const std::string& timeString)
 {
   double seconds = 0;
-  return (isValidNumber(timeString, seconds, false) && seconds >= 0 && seconds < 60 && timeString[0] != '.');
+  return (isValidNumber(timeString, seconds, false) && seconds >= 0 && seconds < SECPERMIN && timeString[0] != '.');
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -127,11 +127,11 @@ int MinutesTimeFormatter::fromString(const std::string& timeString, simCore::Tim
     // Read and combine
     if (simCore::isValidNumber(vec[0], min) && simCore::isValidNumber(vec[1], sec))
     {
-      timeStamp = simCore::TimeStamp(referenceYear, min * 60 + sec);
+      timeStamp = simCore::TimeStamp(referenceYear, min * SECPERMIN + sec);
       return 0;
     }
   }
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -140,8 +140,8 @@ void MinutesTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, 
   const bool isNegative = (seconds < 0);
   seconds = fabs(seconds.rounded(precision));
   // Rely on static_cast<> to floor the value
-  int minutes = static_cast<int>(seconds.Double() / 60.0);
-  seconds -= minutes * 60.0;
+  const int minutes = static_cast<int>(seconds.Double() / SECPERMIN);
+  seconds -= minutes * SECPERMIN;
   // Account for the decimal spot when setting the width
   int numSpaces = precision + (precision == 0 ? 0 : 1);
   if (isNegative)
@@ -158,7 +158,7 @@ bool MinutesTimeFormatter::isStrictMinutesString(const std::string& timeString)
   int minutes = 0;
   return mmss.size() == 2 &&
     isValidNumber(mmss[0], minutes, false) &&
-    minutes >= 0 && minutes < 60 &&
+    minutes >= 0 && minutes < MINPERHOUR &&
     SecondsTimeFormatter::isStrictSecondsString(mmss[1]);
 }
 
@@ -173,7 +173,7 @@ std::string MinutesWrappedTimeFormatter::toString(const simCore::TimeStamp& time
 
 void MinutesWrappedTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision)
 {
-  const Seconds wrapped(seconds.getSeconds() % 3600, seconds.getFraction());
+  const Seconds wrapped(seconds.getSeconds() % SECPERHOUR, seconds.getFraction());
   MinutesTimeFormatter::toStream(os, wrapped, precision);
 }
 
@@ -195,7 +195,7 @@ bool HoursTimeFormatter::canConvert(const std::string& timeString) const
   return hhmmss.size() == 3 &&
     isValidNumber(hhmmss[0], hours) &&
     isValidNumber(hhmmss[1], minutes, false) &&
-    minutes >= 0 && minutes < 60 &&
+    minutes >= 0 && minutes < MINPERHOUR &&
     SecondsTimeFormatter::isStrictSecondsString(hhmmss[2]);
 }
 
@@ -207,7 +207,7 @@ int HoursTimeFormatter::fromString(const std::string& timeString, simCore::TimeS
     timeStamp = simCore::TimeStamp(referenceYear, seconds);
     return 0;
   }
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -225,7 +225,7 @@ int HoursTimeFormatter::fromString(const std::string& timeString, simCore::Secon
       simCore::isValidNumber(vec[1], min) &&
       simCore::isValidNumber(vec[2], sec))
     {
-      seconds = hours * 3600 + min * 60 + sec;
+      seconds = hours * SECPERHOUR + min * MINPERHOUR + sec;
       return 0;
     }
   }
@@ -238,8 +238,8 @@ void HoursTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, un
   const bool isNegative = (seconds < 0);
   seconds = fabs(seconds.rounded(precision));
   // Rely on static_cast<> to floor the value
-  int hours = static_cast<int>(seconds.Double() / 3600.0);
-  seconds -= hours * 3600.0;
+  int hours = static_cast<int>(seconds.Double() / SECPERHOUR);
+  seconds -= hours * SECPERHOUR;
   if (isNegative)
     os << "-";
   os << hours << ':' << std::setfill('0') << std::setw(2);
@@ -255,9 +255,9 @@ bool HoursTimeFormatter::isStrictHoursString(const std::string& timeString)
   int minutes = 0;
   return hhmmss.size() == 3 &&
     isValidNumber(hhmmss[0], hours, false) &&
-    hours >= 0 && hours < 24 &&
+    hours >= 0 && hours < HOURPERDAY &&
     isValidNumber(hhmmss[1], minutes, false) &&
-    minutes >= 0 && minutes < 60 &&
+    minutes >= 0 && minutes < MINPERHOUR &&
     SecondsTimeFormatter::isStrictSecondsString(hhmmss[2]);
 }
 
@@ -272,7 +272,7 @@ std::string HoursWrappedTimeFormatter::toString(const simCore::TimeStamp& timeSt
 
 void HoursWrappedTimeFormatter::toStream(std::ostream& os, simCore::Seconds seconds, unsigned short precision)
 {
-  const Seconds wrapped(seconds.getSeconds() % 86400, seconds.getFraction());
+  const Seconds wrapped(seconds.getSeconds() % SECPERDAY, seconds.getFraction());
   HoursTimeFormatter::toStream(os, wrapped, precision);
 }
 
@@ -287,7 +287,7 @@ std::string OrdinalTimeFormatter::toString(const simCore::TimeStamp& timeStamp, 
 
 bool OrdinalTimeFormatter::canConvert(const std::string& timeString) const
 {
-  const std::string cleanString = simCore::StringUtils::trim(simCore::removeQuotes(timeString));
+  const std::string& cleanString = simCore::StringUtils::trim(simCore::removeQuotes(timeString));
   if (cleanString.empty())
     return false;
   std::vector<std::string> dayYearHours;
@@ -328,14 +328,14 @@ int OrdinalTimeFormatter::fromString(const std::string& timeString, simCore::Tim
       simCore::Seconds seconds;
       if (HoursTimeFormatter::fromString(dayYearHours[2], seconds) == 0)
       {
-        timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds((day - 1) * 86400));
+        timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds((day - 1) * SECPERDAY, 0));
         return 0;
       }
     }
   }
 
   // Falling down to failure
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -343,8 +343,8 @@ void OrdinalTimeFormatter::toStream(std::ostream& os, const simCore::TimeStamp& 
 {
   const int refYear = timeStamp.referenceYear();
   const simCore::TimeStamp roundedStamp(refYear, timeStamp.secondsSinceRefYear(refYear).rounded(precision));
-  int days = static_cast<int>(roundedStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
-  simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
+  const int days = static_cast<int>(roundedStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
+  const simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
   os << std::setfill('0') << std::setw(3) << (days + 1) << " " << refYear << " " << std::setw(2);
   HoursTimeFormatter::toStream(os, seconds, precision);
 }
@@ -402,15 +402,15 @@ int MonthDayTimeFormatter::monthStringToInt(const std::string& monthString)
 
 std::string MonthDayTimeFormatter::monthIntToString(int monthValue)
 {
-  if (monthValue >= 0 && monthValue < 12)
+  if (monthValue >= 0 && monthValue < MONPERYEAR)
     return ABBREV_MONTH_NAME[monthValue];
   return "Unk";
 }
 
 int MonthDayTimeFormatter::getMonthComponents(const simCore::TimeStamp& timeStamp, int& month, int& monthDay, simCore::Seconds& secondsPastMidnight)
 {
-  int realYear = timeStamp.referenceYear();
-  int days = static_cast<int>(timeStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
+  const int realYear = timeStamp.referenceYear();
+  const int days = static_cast<int>(timeStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
   try
   {
     simCore::getMonthAndDayOfMonth(month, monthDay, realYear, days);
@@ -426,13 +426,13 @@ int MonthDayTimeFormatter::getMonthComponents(const simCore::TimeStamp& timeStam
   // Validate the output of getMonthAndDayOfMonth
   assert(month >= 0 && month < 12);
   assert(monthDay >= 1 && monthDay <= 31);
-  secondsPastMidnight = timeStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
+  secondsPastMidnight = timeStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
   return 0;
 }
 
 bool MonthDayTimeFormatter::canConvert(const std::string& timeString) const
 {
-  const std::string cleanString = simCore::StringUtils::trim(simCore::removeQuotes(timeString));
+  const std::string& cleanString = simCore::StringUtils::trim(simCore::removeQuotes(timeString));
   if (cleanString.empty())
     return false;
   std::vector<std::string> mdyh; // month, day, year, hours
@@ -489,8 +489,8 @@ int MonthDayTimeFormatter::fromString(const std::string& timeString, simCore::Ti
         simCore::Seconds seconds;
         if (HoursTimeFormatter::fromString(mdyh[3], seconds) == 0)
         {
-          int yearDay = getYearDay(month, monthDay, year - 1900);
-          timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds(yearDay * 86400));
+          const int yearDay = getYearDay(month, monthDay, year - 1900);
+          timeStamp = simCore::TimeStamp(year, seconds + simCore::Seconds(yearDay * SECPERDAY, 0));
           return 0;
         }
       }
@@ -502,7 +502,7 @@ int MonthDayTimeFormatter::fromString(const std::string& timeString, simCore::Ti
   }
 
   // Falling down to failure
-  timeStamp = simCore::TimeStamp();
+  timeStamp = simCore::MIN_TIME_STAMP;
   return 1;
 }
 
@@ -513,7 +513,7 @@ std::string DtgTimeFormatter::toString(const simCore::TimeStamp& timeStamp, int 
   std::stringstream ss;
   const int realYear = timeStamp.referenceYear();
   const simCore::TimeStamp roundedStamp(realYear, timeStamp.secondsSinceRefYear(realYear).rounded(precision));
-  int days = static_cast<int>(roundedStamp.secondsSinceRefYear().Double() / simCore::SECPERDAY);
+  const int days = static_cast<int>(roundedStamp.secondsSinceRefYear().getSeconds() / simCore::SECPERDAY);
   int month = 0; // Between 0-11
   int monthDay = 0; // Between 1-31
   try
@@ -531,18 +531,17 @@ std::string DtgTimeFormatter::toString(const simCore::TimeStamp& timeStamp, int 
   }
 
   // Validate the output of getMonthAndDayOfMonth
-  assert(month >= 0 && month < 12);
+  assert(month >= 0 && month < MONPERYEAR);
   assert(monthDay >= 1 && monthDay <= 31);
 
   // Avoid any possible out-of-bounds issues
   std::string monthName = "Unk"; // Unknown
-  if (month >= 0 && month < 12)
+  if (month >= 0 && month < MONPERYEAR)
     monthName = ABBREV_MONTH_NAME[month];
 
-  simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(static_cast<double>(days) * simCore::SECPERDAY);
-  // Rely on static_cast<> to floor the value
-  int hours = static_cast<int>(seconds.Double() / 3600.0);
-  seconds -= hours * 3600; // seconds now holds minutes+seconds past hour
+  simCore::Seconds seconds = roundedStamp.secondsSinceRefYear() - simCore::Seconds(days * simCore::SECPERDAY, 0);
+  const int hours = static_cast<int>(seconds.getSeconds() / SECPERHOUR);
+  seconds -= hours * SECPERHOUR; // seconds now holds minutes+seconds past hour
 
   // EG 061435:03.010 Z Apr07
   ss << std::setw(2) << std::setfill('0') << monthDay
@@ -554,7 +553,7 @@ std::string DtgTimeFormatter::toString(const simCore::TimeStamp& timeStamp, int 
 
 bool DtgTimeFormatter::canConvert(const std::string& timeString) const
 {
-  const std::string cleanString = simCore::StringUtils::trim(simCore::removeQuotes(timeString));
+  const std::string& cleanString = simCore::StringUtils::trim(simCore::removeQuotes(timeString));
   if (cleanString.empty())
     return false;
   std::vector<std::string> timesZoneMonth;
@@ -589,9 +588,9 @@ bool DtgTimeFormatter::canConvert(const std::string& timeString) const
       isValidNumber(times.substr(0, 2), dayOfMonth, false) &&
       dayOfMonth >= 1 && dayOfMonth <= simCore::daysPerMonth(year - 1900, month) &&
       isValidNumber(times.substr(2, 2), hours, false) &&
-      hours >= 0 && hours < 24 &&
+      hours >= 0 && hours < HOURPERDAY &&
       isValidNumber(times.substr(4, 2), minutes, false) &&
-      minutes >= 0 && minutes < 60;
+      minutes >= 0 && minutes < MINPERHOUR;
   }
   catch (const simCore::TimeException&)
   {
@@ -630,7 +629,7 @@ int DtgTimeFormatter::fromString(const std::string& timeString, simCore::TimeSta
     try
     {
       int yearDay = getYearDay(month, monthDay, year - 1900);
-      timeStamp = simCore::TimeStamp(year, yearDay * 86400 + hours * 3600 + minutes * 60 + seconds);
+      timeStamp = simCore::TimeStamp(year, yearDay * SECPERDAY + hours * SECPERHOUR + minutes * SECPERMIN + seconds);
       return 0;
     }
     catch (const simCore::TimeException& te)

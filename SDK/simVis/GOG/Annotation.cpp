@@ -19,7 +19,7 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarthAnnotation/LabelNode"
+#include "osgEarth/LabelNode"
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/ParsedShape.h"
@@ -27,7 +27,7 @@
 #include "simVis/Utils.h"
 #include "simVis/OverheadMode.h"
 
-using namespace osgEarth::Symbology;
+using namespace osgEarth;
 
 namespace simVis { namespace GOG {
 
@@ -44,8 +44,8 @@ GogNodeInterface* TextAnnotation::deserialize(
 
   p.parseGeometry<Geometry>(parsedShape);
   GogNodeInterface* rv = NULL;
-  osgEarth::Annotation::LabelNode* label = NULL;
-  label = new osgEarth::Annotation::LabelNode(text, p.style_);
+  osgEarth::LabelNode* label = NULL;
+  label = new osgEarth::LabelNode(text, p.style_);
   label->setName("GOG Label");
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {

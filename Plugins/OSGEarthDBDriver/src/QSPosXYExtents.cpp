@@ -20,25 +20,13 @@
  *
  */
 
-#ifndef USE_SIMDIS_SDK
-#include <assert.h>
-#include <stdlib.h>
-
-#include "simCore/Calc/Math.h"
-#include "stlstdlib.h"
-#include "iostreamc"
-#include "iomanipc"
-#include "swapbytes.h"
-#else // used in SIMDIS SDK
 #include <iostream>
 #include "simCore/Calc/Math.h"
 #include "swapbytes.h"
+#include "QSCommon.h"
+#include "QSPosXYExtents.h"
 
-using namespace simVis_db;
-
-#endif
-
-#include "QSCommonGeo.h"
+namespace simVis_db {
 
 //=====================================================================================
 PosXPosYExtents::PosXPosYExtents(QsPosType minXIn, QsPosType maxXIn, QsPosType minYIn, QsPosType maxYIn)
@@ -98,26 +86,6 @@ void PosXPosYExtents::UnPack(const uint8_t* buffer)
   beread(buffer + sizeof(minX) + sizeof(maxX) + sizeof(minY), &maxY);
 }
 
-void PosXPosYExtents::UnPackHexChars(const char* hexChars)
-{
-  if (hexChars == NULL)
-    return;
-  uint8_t buffer[sizeof(PosXPosYExtents)];
-
-  uint32_t tmpInt;
-  char tmpHex[3];
-  tmpHex[2] = 0;
-
-  for (size_t i = 0; i < sizeof(PosXPosYExtents); ++i)
-  {
-    tmpHex[0] = hexChars[i*2];
-    tmpHex[1] = hexChars[i*2 + 1];
-    sscanf(tmpHex, "%x", &tmpInt);
-    buffer[i] = (uint8_t)tmpInt;
-  }
-  UnPack(buffer);
-}
-
 void PosXPosYExtents::Print()
 {
   std::cerr << "minX = " << minX << "\n";
@@ -127,11 +95,7 @@ void PosXPosYExtents::Print()
 }
 
 //=====================================================================================
-#ifdef USE_SIMDIS_SDK
-bool simVis_db::equalTo(const PosXPosYExtents& a, const PosXPosYExtents& b)
-#else
 bool equalTo(const PosXPosYExtents& a, const PosXPosYExtents& b)
-#endif
 {
   if (a.minX != b.minX) return false;
   if (a.maxX != b.maxX) return false;
@@ -140,30 +104,18 @@ bool equalTo(const PosXPosYExtents& a, const PosXPosYExtents& b)
   return true;
 }
 
-#ifdef USE_SIMDIS_SDK
-bool simVis_db::operator==(const PosXPosYExtents& a, const PosXPosYExtents& b)
-#else
 bool operator==(const PosXPosYExtents& a, const PosXPosYExtents& b)
-#endif
 {
   return equalTo(a, b);
 }
 
 bool operator!=(const PosXPosYExtents& a, const PosXPosYExtents& b)
 {
-#ifdef USE_SIMDIS_SDK
   return !simVis_db::equalTo(a, b);
-#else
-  return !equalTo(a, b);
-#endif
 }
 
 //=====================================================================================
-#ifdef USE_SIMDIS_SDK
-void simVis_db::UpdateExtents(const QsPosType& posX, const QsPosType& posY, PosXPosYExtents* extents)
-#else
 void UpdateExtents(const QsPosType& posX, const QsPosType& posY, PosXPosYExtents* extents)
-#endif
 {
   if (extents == NULL)
     return;
@@ -174,11 +126,7 @@ void UpdateExtents(const QsPosType& posX, const QsPosType& posY, PosXPosYExtents
   extents->maxY = simCore::sdkMax(extents->maxY, posY);
 }
 
-#ifdef USE_SIMDIS_SDK
-bool simVis_db::Copy6Extents(const PosXPosYExtents* copyFrom, PosXPosYExtents* copyTo)
-#else
 bool Copy6Extents(const PosXPosYExtents* copyFrom, PosXPosYExtents* copyTo)
-#endif
 {
   if ((copyFrom == NULL) || (copyTo == NULL))
     return false;
@@ -190,39 +138,33 @@ bool Copy6Extents(const PosXPosYExtents* copyFrom, PosXPosYExtents* copyTo)
   return true;
 }
 
-#ifdef USE_SIMDIS_SDK
-bool simVis_db::AnyOverlap(const PosXPosYExtents& extA, const PosXPosYExtents& extB)
-#else
 bool AnyOverlap(const PosXPosYExtents& extA, const PosXPosYExtents& extB)
-#endif
 {
   if ((extA.Valid() == false) || (extB.Valid() == false))
     return false;
 
   // checks for no x overlap
   if ((extA.minX > extB.maxX) ||
-     (extA.maxX < extB.minX))
+    (extA.maxX < extB.minX))
     return false;
 
   // checks for no y overlap
   if ((extA.minY > extB.maxY) ||
-     (extA.maxY < extB.minY))
+    (extA.maxY < extB.minY))
     return false;
 
   return true;
 }
 
-#ifdef USE_SIMDIS_SDK
-bool simVis_db::AnyOverlap(const QsPosType& posX, const QsPosType& posY, const PosXPosYExtents& extents)
-#else
 bool AnyOverlap(const QsPosType& posX, const QsPosType& posY, const PosXPosYExtents& extents)
-#endif
 {
   if (extents.Valid() == false)
     return false;
 
   return ((posX < extents.minX) ||
-	  (posX > extents.maxX) ||
-	  (posY < extents.minY) ||
-	  (posY > extents.maxY)) ? false : true;
+    (posX > extents.maxX) ||
+    (posY < extents.minY) ||
+    (posY > extents.maxY)) ? false : true;
+}
+
 }

@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "simCore/Common/Common.h"
+#include "simCore/Time/Constants.h"
 
 namespace simCore
 {
@@ -193,6 +194,13 @@ namespace simCore
     */
     std::ostream& operator <<(std::ostream& out) const;
 
+    /// Boolean comparison to another Seconds class.
+    /**
+    * @param[in ] time Seconds
+    * @return The boolean comparison to the two Seconds classes
+    */
+    TimeCompVal compare(const Seconds& time) const;
+
   protected:
     int64_t seconds_;   /**< Whole second representation  */
     int fraction_;  /**< Fraction of second, nanosecond precision */
@@ -208,20 +216,6 @@ namespace simCore
 
     /// Verifies the precision and sign of stored time values
     void fix_();
-
-    /// Boolean comparison to another Seconds class.
-    /**
-    * @param[in ] time Seconds
-    * @return The boolean comparison to the two Seconds classes
-    */
-    TimeCompVal compare_(const Seconds& time) const
-    {
-      if (seconds_ > time.seconds_) return TCV_GREATER;
-      if (seconds_ < time.seconds_) return TCV_LESS;
-      if (fraction_ > time.fraction_) return TCV_GREATER;
-      if (fraction_ < time.fraction_) return TCV_LESS;
-      return TCV_EQUAL;
-    }
   };
 
   //------------------------------------------------------------------------
@@ -274,7 +268,7 @@ namespace simCore
     * @param[in ] refYear Initial reference year,  must be >= 1970
     * @param[in ] secs Initial seconds since beginning of reference year
     */
-    TimeStamp(int refYear, Seconds secs);
+    TimeStamp(int refYear, const Seconds& secs);
 
     /// Returns the reference year
     /** @return The saved reference year of this time stamp  */
@@ -288,7 +282,7 @@ namespace simCore
     /**
     * Return the saved seconds, relative to given reference year
     * @param[in ] refYear Reference year to compare; must be >= 1970
-    * @return Seconds since the given reference year
+    * @return Seconds since the given reference year.  This value might be negative.
     */
     Seconds secondsSinceRefYear(int refYear) const;
 
@@ -298,7 +292,7 @@ namespace simCore
     * @param[in ] refYear Initial reference year,  must be >= 1970
     * @param[in ] secs Initial seconds since beginning of reference year
     */
-    void setTime(int refYear, Seconds secs);
+    void setTime(int refYear, const Seconds& secs);
 
     /// Assignment
     /** @param[in ] time TimeStamp class to be assigned  */
@@ -307,11 +301,11 @@ namespace simCore
 
     /// Increment
     /** @return the updated result of the current TimeStamp plus one second */
-    TimeStamp& operator ++() {secondsSinceRefYear_ += 1; fix_(); return *this;}
+    TimeStamp& operator ++() {secondsSinceRefYear_ += Seconds(1, 0); fix_(); return *this;}
 
     /// Decrement
     /** @return the updated result of the current TimeStamp minus one second */
-    TimeStamp& operator --() {secondsSinceRefYear_ -= 1; fix_(); return *this;}
+    TimeStamp& operator --() {secondsSinceRefYear_ -= Seconds(1, 0); fix_(); return *this;}
 
     /// Addition
     //** @param[in ] t Seconds class to be added to existing TimeStamp value  */
@@ -386,10 +380,25 @@ namespace simCore
     */
     bool operator >=(const TimeStamp& t) const {return (compare_(t) != TCV_LESS);}
 
+    /// Breaks a TimeStamp value into individual components relative to the TimeStamp's reference year.
+    /**
+    * @param[out] day Computed number of days in the TimeStamp's reference year [0, 364/365] 365 only on leap years
+    * @param[out] hour Computed number of hours since midnight [0, 23]
+    * @param[out] min Computed number of minutes after the hour [0, 59]
+    * @param[out] sec Computed number of seconds after the minute [0, 59]
+    */
+    void getTimeComponents(unsigned int& day, unsigned int& hour, unsigned int& min, unsigned int& sec) const;
+
   protected:
 
     int referenceYear_;            /**< Reference Gregorian calendar year, such as 1970, 2000, etc.  Must be >= 1970 */
     Seconds secondsSinceRefYear_;  /**< Number of seconds relative to reference year */
+
+    /// Indicates whether secondsSinceRefYear_ requires fix_() processing
+    /**
+    * @return 0 if no fix()'ing required; 1 if negative, 2 if too large
+    */
+    int fixRequired_() const;
 
     /// Verifies the precision and sign of stored time values
     void fix_();
@@ -404,20 +413,20 @@ namespace simCore
 
   //------------------------------------------------------------------------
 
+  /** Static value representing zero seconds, shared for performance reasons. */
+  static const Seconds ZERO_SECONDS;
   /** Sentinel value for year that represents an infinite time value. */
   static const int INFINITE_TIME_YEAR = 16384;
   /** Sentinel value for simCore::TimeStamp that represents an infinite time value. */
-  static const TimeStamp INFINITE_TIME_STAMP(INFINITE_TIME_YEAR, 0.0);
+  static const TimeStamp INFINITE_TIME_STAMP(INFINITE_TIME_YEAR, ZERO_SECONDS);
   /** Sentinel value for minimum year supported by simCore::TimeStamp */
   static const int MIN_TIME_YEAR = 1970;
   /** Sentinel value for simCore::TimeStamp that represents the minimum valid time value. */
-  static const TimeStamp MIN_TIME_STAMP(MIN_TIME_YEAR, 0.0);
+  static const TimeStamp MIN_TIME_STAMP(MIN_TIME_YEAR, ZERO_SECONDS);
   /** Sentinel value for maximum year supported by simCore::TimeStamp */
   static const int MAX_TIME_YEAR = 2200;
   /** Sentinel value for simCore::TimeStamp that represents the maximum valid time value while maintaining microsecond resolution. */
-  static const TimeStamp MAX_TIME_STAMP(MAX_TIME_YEAR, Seconds(365 * 24 * 60 * 60 - 1, 999999));
-  /** Static value representing zero seconds, shared for performance reasons. */
-  static const Seconds ZERO_SECONDS;
+  static const TimeStamp MAX_TIME_STAMP(MAX_TIME_YEAR, Seconds(365 * SECPERDAY - 1, 999999));
 
   /**
   * Computes a scale factor [0,1] between a set of bounded TimeStamps at the specified value.

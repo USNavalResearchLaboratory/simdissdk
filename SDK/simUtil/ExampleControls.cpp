@@ -19,10 +19,9 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarthUtil/Controls"
-#include "osgEarthSymbology/Color"
-#include "osgEarthAnnotation/LabelNode"
-
+#include "osgEarth/Controls"
+#include "osgEarth/Color"
+#include "osgEarth/LabelNode"
 #include "osgEarth/ScreenSpaceLayout"
 
 #include "simCore/Calc/MathConstants.h"
@@ -34,8 +33,6 @@
 #include "simUtil/ExampleControls.h"
 
 using namespace osgEarth;
-using namespace osgEarth::Annotation;
-using namespace osgEarth::Symbology;
 using namespace osgEarth::Util::Controls;
 
 namespace

@@ -23,12 +23,13 @@
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "osgEarth/DepthOffset"
+#include "osgEarth/LineDrawable"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
 #include "osgEarth/StateSetCache"
-#include "osgEarthAnnotation/LabelNode"
-#include "osgEarthUtil/Controls"
+#include "osgEarth/LabelNode"
+#include "osgEarth/Controls"
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
@@ -44,7 +45,6 @@
 #include "simVis/Antenna.h"
 #include "simVis/Beam.h"
 #include "simVis/ElevationQueryProxy.h"
-#include "simVis/LineDrawable.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Platform.h"
@@ -59,7 +59,7 @@
 
 using namespace simVis;
 using namespace osgEarth::Util::Controls;
-using namespace osgEarth::Symbology;
+using namespace osgEarth;
 
 /// Minimum depth bias for offsetting in meters
 const int DEPTH_BUFFER_MIN_BIAS = 5000;
@@ -628,15 +628,15 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
     if (textOptions.showText_ == TextOptions::NONE)
       continue;
 
-    osgEarth::Annotation::LabelNode* text = NULL;
+    osgEarth::LabelNode* text = NULL;
     if (labelCount >= labels_->getNumChildren())
     {
-      osgEarth::Symbology::Style style;
-      osgEarth::Symbology::TextSymbol* ts = style.getOrCreate<osgEarth::Symbology::TextSymbol>();
-      ts->alignment() = osgEarth::Symbology::TextSymbol::ALIGN_CENTER_CENTER;
+      osgEarth::Style style;
+      osgEarth::TextSymbol* ts = style.getOrCreate<osgEarth::TextSymbol>();
+      ts->alignment() = osgEarth::TextSymbol::ALIGN_CENTER_CENTER;
       ts->pixelOffset() = osg::Vec2s(textOptions.xOffset_, textOptions.yOffset_);
       // Font color
-      ts->fill() = osgEarth::Symbology::Fill(textOptions.color_.r(), textOptions.color_.g(), textOptions.color_.b(), textOptions.color_.a());
+      ts->fill() = osgEarth::Fill(textOptions.color_.r(), textOptions.color_.g(), textOptions.color_.b(), textOptions.color_.a());
       // Outline
       if (textOptions.outlineType_ != TextOptions::OUTLINE_NONE &&  textOptions.outlineColor_.a() != 0)
       {
@@ -659,7 +659,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
           ts->font() = fileFullPath;
       }
       // Explicitly enable UTF-8 encoding
-      ts->encoding() = osgEarth::Symbology::TextSymbol::ENCODING_UTF8;
+      ts->encoding() = osgEarth::TextSymbol::ENCODING_UTF8;
 
 #if OSG_VERSION_GREATER_OR_EQUAL(3,6,0)
       // Font sizes changed at 3.6, so rescale to keep a constant size
@@ -668,7 +668,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       ts->size() = textOptions.fontSize_;
 #endif
 
-      text = new osgEarth::Annotation::LabelNode("", style);
+      text = new osgEarth::LabelNode("", style);
       text->setDynamic(true);
       text->setNodeMask(simVis::DISPLAY_MASK_LABEL);
       text->setHorizonCulling(false);
@@ -683,7 +683,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
       labels_->addChild(text);
     }
     else
-      text = static_cast<osgEarth::Annotation::LabelNode*>(labels_->getChild(labelCount));
+      text = static_cast<osgEarth::LabelNode*>(labels_->getChild(labelCount));
 
     labelCount++;
 

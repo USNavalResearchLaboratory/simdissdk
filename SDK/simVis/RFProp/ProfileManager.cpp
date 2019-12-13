@@ -26,8 +26,9 @@
 #include "simVis/Constants.h"
 #include "simVis/Shaders.h"
 #include "simVis/Utils.h"
-#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/BearingProfileMap.h"
+#include "simVis/RFProp/ColorProvider.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
 
 namespace simRF {
@@ -222,12 +223,12 @@ void ProfileManager::setMode(Profile::DrawMode mode)
   }
 }
 
-float ProfileManager::getDisplayThickness() const
+unsigned int ProfileManager::getDisplayThickness() const
 {
   return displayThickness_;
 }
 
-void ProfileManager::setDisplayThickness(float displayThickness)
+void ProfileManager::setDisplayThickness(unsigned int displayThickness)
 {
   if (displayThickness_ != displayThickness)
   {
@@ -237,24 +238,6 @@ void ProfileManager::setDisplayThickness(float displayThickness)
       itr->second->setDisplayThickness(displayThickness_);
     }
   }
-}
-
-int ProfileManager::setThicknessBySlots(int numSlots)
-{
-  // Fail if there are no profiles
-  if (currentProfileMap_ == NULL || currentProfileMap_->empty() || numSlots < 1)
-    return 1;
-
-  // Figure out the height step in the first profile
-  osg::ref_ptr<Profile> firstProfile = currentProfileMap_->begin()->second;
-  if (!firstProfile.valid())
-    return 1;
-  const CompositeProfileProvider* dataProvider = firstProfile->getDataProvider();
-  if (dataProvider == NULL)
-    return 1;
-  // Note that we subtract 1 in order to prevent an extra point from showing
-  setDisplayThickness((numSlots - 1) * dataProvider->getHeightStep());
-  return 0;
 }
 
 double ProfileManager::getBearing() const
@@ -353,6 +336,11 @@ void ProfileManager::setElevAngle(double elevAngleRad)
 Profile* ProfileManager::getProfileByBearing(double bearingR) const
 {
   return currentProfileMap_->getProfileByBearing(bearingR);
+}
+
+const Profile* ProfileManager::getProfile(unsigned int index) const
+{
+  return ((index < getNumChildren()) ? dynamic_cast<const Profile*>(getChild(index)) : NULL);
 }
 
 void ProfileManager::addProfile(Profile* profile)

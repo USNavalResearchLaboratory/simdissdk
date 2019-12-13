@@ -122,8 +122,9 @@ void FontWidget::setFontDir(const QString& fontDir)
   RemoveFontResourceEx(absPath.toStdString().c_str(), FR_PRIVATE, 0);
 #endif
 
-  Q_FOREACH(QFileInfo fontFile, fonts)
+  for (auto it = fonts.begin(); it != fonts.end(); ++it)
   {
+    const QFileInfo& fontFile = *it;
     // Only use getFriendlyFontName_() and QRawFont when we're able
     // to use SIMDIS fonts. Otherwise, just use the font file name. SDK-119
     QString fontName = fontFile.fileName();

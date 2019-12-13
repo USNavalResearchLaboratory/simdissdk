@@ -39,7 +39,7 @@ class DataColumn : public simData::TableColumn
 {
 public:
   /** Instantiates a new data column. */
-  DataColumn(TimeContainer* timeContainer, const std::string& columnName, TableColumnId columnId, VariableType storageType, UnitType unitType);
+  DataColumn(TimeContainer* timeContainer, const std::string& columnName, TableId tableId, TableColumnId columnId, VariableType storageType, UnitType unitType);
   /** Columns contain no dynamic memory */
   virtual ~DataColumn();
 
@@ -73,6 +73,8 @@ public:
   /** Returns true if there is no data in the data column */
   virtual bool empty() const;
 
+  /** Retrieves the ID of the table that owns this column. */
+  virtual TableId tableId() const;
   /** Retrieves the designated column ID for this data column. */
   virtual TableColumnId columnId() const;
   /** Retrieves the name of this column. */
@@ -142,6 +144,7 @@ private:
   DataContainer* staleData_;
 
   std::string name_;
+  TableId tableId_;
   TableColumnId id_;
   VariableType variableType_;
   UnitType unitType_;

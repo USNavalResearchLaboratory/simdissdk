@@ -117,7 +117,27 @@ private:
     // If the text string does not change then return the given time to prevent a truncated time
     if (timeString_ == completeLine_->text())
       return timeStamp_;
-    return completeLine_->timeStamp();
+
+    const simCore::TimeStamp& time = completeLine_->timeStamp();
+
+    // Due to precision the time can be slightly out of range, so range check if necessary
+    bool startLimit;
+    bool endLimit;
+    completeLine_->getEnforceLimits(startLimit, endLimit);
+    if (!startLimit && !endLimit)
+      return time;
+
+    simCore::TimeStamp startTime;
+    simCore::TimeStamp endTime;
+    int referencerYear;
+    completeLine_->timeRange(referencerYear, startTime, endTime);
+
+    if (startLimit && (time < startTime))
+      return startTime;
+    if (endLimit && (time > endTime))
+      return endTime;
+
+    return time;
   }
 
   void SegmentedSpinBox::setTimeStamp(const simCore::TimeStamp& value)
@@ -127,6 +147,7 @@ private:
     lineEdit()->setText(completeLine_->text());
     // The text may truncate the value, so keep a copy so that the exact value can be returned if the text does not change
     timeStamp_ = value;
+    lastEditedTime_ = completeLine_->timeStamp();
     timeString_ = completeLine_->text();
   }
 
@@ -247,8 +268,8 @@ private:
     // If apply was queued and something else triggers an apply first, don't bother applying again
     timer_->stop();
 
-    simCore::TimeStamp currentTime = completeLine_->timeStamp();
-    simCore::TimeStamp clampedTime = completeLine_->clampTime(currentTime);
+    const simCore::TimeStamp& currentTime = completeLine_->timeStamp();
+    const simCore::TimeStamp& clampedTime = completeLine_->clampTime(currentTime);
     if (currentTime != clampedTime)
     {
       // Range Limit the value, since the user can type in a value out of range

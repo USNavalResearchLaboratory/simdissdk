@@ -162,7 +162,7 @@ namespace simVis
     void removePointsOlderThan_(double oldestDrawTime);
 
     /// set override color; initialize shader programs if necessary
-    void setOverrideColor_(const osgEarth::Symbology::Color& color);
+    void setOverrideColor_(const simVis::Color& color);
 
     /**
     * Determines the time window that track history should display, then

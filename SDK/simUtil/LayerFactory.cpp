@@ -19,93 +19,155 @@
  * disclose, or release this software.
  *
  */
-#include "osgEarth/ImageLayer"
 #include "osgEarth/ElevationLayer"
-#include "osgEarthDrivers/feature_ogr/OGRFeatureOptions"
-#include "osgEarthFeatures/FeatureModelLayer"
+#include "osgEarth/FeatureModelLayer"
+#include "osgEarth/GDAL"
+#include "osgEarth/ImageLayer"
+#include "osgEarth/MBTiles"
+#include "osgEarth/OGRFeatureSource"
 #include "simCore/Common/Exception.h"
+#include "simCore/String/Format.h"
+#include "simCore/String/Utils.h"
 #include "simVis/Constants.h"
+#include "simVis/DBFormat.h"
+#include "simVis/Types.h"
 #include "simUtil/LayerFactory.h"
 
 namespace simUtil {
 
-osgEarth::ImageLayer* LayerFactory::newImageLayer(
-  const std::string& layerName,
-  const osgEarth::TileSourceOptions& options,
-  const osgEarth::Profile* mapProfile,
-  const osgEarth::CachePolicy* cachePolicy)
+/** Default cache time of one year */
+static const osgEarth::TimeSpan ONE_YEAR(365 * 86400);
+
+simVis::DBImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath) const
 {
-  SAFETRYBEGIN;
-  osgEarth::ImageLayerOptions ilOptions(layerName, options);
-  osgEarth::Config config = ilOptions.getConfig();
-  config.key() = "image";
-  ilOptions.mergeConfig(config);
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
 
-  if (cachePolicy)
-    ilOptions.cachePolicy() = *cachePolicy;
+  simVis::DBImageLayer::Options opts(config);
+  osg::ref_ptr<simVis::DBImageLayer> layer = new simVis::DBImageLayer(opts);
+  layer->setURL(fullPath);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
 
-  // Allocate the image layer with the provided options
-  osg::ref_ptr<osgEarth::ImageLayer> imageLayer = new osgEarth::ImageLayer(ilOptions);
+  // set max age to 1 year (in secs)
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
 
-  // need to set the target profile hint to prevent crash for MBTiles, SIM-4171
-  imageLayer->setTargetProfileHint(mapProfile);
-  if (imageLayer->open().isError())
-    return imageLayer.release();
-
-  if (imageLayer->getTileSource() && imageLayer->getTileSource()->isOK())
-  {
-    // Only return valid layers that have good tile sources
-    return imageLayer.release(); // decrement count, but do not delete
-  }
-
-  // Error encountered
-  SAFETRYEND("during LayerFactory::newImageLayer()");
-  return NULL;
+  return layer.release();
 }
 
-osgEarth::ElevationLayer* LayerFactory::newElevationLayer(
-  const std::string& layerName,
-  const osgEarth::TileSourceOptions& options,
-  const osgEarth::CachePolicy* cachePolicy,
-  const osgEarth::ElevationLayerOptions* extraOptions)
+osgEarth::MBTilesImageLayer* LayerFactory::newMbTilesImageLayer(const std::string& fullPath) const
 {
-  SAFETRYBEGIN;
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
 
-  // Now instantiate an ElevationLayerOptions out of the TileSourceOptions
-  osgEarth::ElevationLayerOptions elOptions(layerName, options);
-  osgEarth::Config config = elOptions.getConfig();
-  config.key() = "elevation";
-  elOptions.mergeConfig(config);
+  osgEarth::MBTilesImageLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::MBTilesImageLayer> layer = new osgEarth::MBTilesImageLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+  layer->setComputeLevels(false);
 
-  // Set the cache policy if there is one
-  if (cachePolicy)
-    elOptions.cachePolicy() = *cachePolicy;
+  // mbtiles already have preprocessed data, no need to use cache
+  layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
 
-  // Merge in the extra options if specified
-  if (extraOptions)
-    elOptions.merge(*extraOptions);
-
-  // Allocate the elevation layer now with the provided options
-  osg::ref_ptr<osgEarth::ElevationLayer> elevationLayer = new osgEarth::ElevationLayer(elOptions);
-  // Newer osgEarth requires an open() before retrieving tile source
-  if (!elevationLayer->open())
-    return elevationLayer.release();
-
-  if (elevationLayer->getTileSource() && elevationLayer->getTileSource()->isOK())
-  {
-    // Only return valid layers that have good tile sources
-    return elevationLayer.release(); // decrement count, but do not delete
-  }
-
-  // Error encountered
-  SAFETRYEND("during LayerFactory::newElevationLayer()");
-  return NULL;
+  return layer.release();
 }
 
-osgEarth::Features::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::Features::FeatureModelLayerOptions& options)
+osgEarth::GDALImageLayer* LayerFactory::newGdalImageLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::GDALImageLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::GDALImageLayer> layer = new osgEarth::GDALImageLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
+
+  // SIM-8582 workaround: MrSID files should have interpolation set to nearest neighbor to prevent crash
+  const std::string suffixWithDot = simCore::getExtension(fullPath);
+  if (suffixWithDot == ".jp2" || suffixWithDot == ".sid")
+    layer->setInterpolation(osgEarth::INTERP_NEAREST);
+
+  return layer.release();
+}
+
+simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  simVis::DBElevationLayer::Options opts(config);
+  osg::ref_ptr<simVis::DBElevationLayer> layer = new simVis::DBElevationLayer(opts);
+  layer->setURL(fullPath);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+
+  // set max age to 1 year (in secs)
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
+
+  return layer.release();
+}
+
+osgEarth::MBTilesElevationLayer* LayerFactory::newMbTilesElevationLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::MBTilesElevationLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::MBTilesElevationLayer> layer = new osgEarth::MBTilesElevationLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+  layer->setComputeLevels(false);
+
+  // mbtiles already have preprocessed data, no need to use cache
+  layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
+
+  return layer.release();
+}
+
+osgEarth::GDALElevationLayer* LayerFactory::newGdalElevationLayer(const std::string& fullPath) const
+{
+  osgEarth::Config config;
+  config.setReferrer(fullPath);
+
+  osgEarth::GDALElevationLayer::Options opts(config);
+  osg::ref_ptr<osgEarth::GDALElevationLayer> layer = new osgEarth::GDALElevationLayer(opts);
+  layer->setName(LayerFactory::completeBaseName(fullPath));
+  layer->setURL(fullPath);
+
+  osgEarth::CachePolicy cachePolicy = osgEarth::CachePolicy::USAGE_READ_WRITE;
+  cachePolicy.maxAge() = ONE_YEAR;
+  layer->setCachePolicy(cachePolicy);
+
+  // SIM-8582 workaround: MrSID files should have interpolation set to nearest neighbor to prevent crash
+  const std::string suffixWithDot = simCore::getExtension(fullPath);
+  if (suffixWithDot == ".jp2" || suffixWithDot == ".sid")
+    layer->setInterpolation(osgEarth::INTERP_NEAREST);
+
+  return layer.release();
+}
+
+std::string LayerFactory::completeBaseName(const std::string& fullPath)
+{
+  // Get the base name -- strip out extension, then strip out everything after last \\ or /
+  std::string stripped = simCore::StringUtils::beforeLast(fullPath, '.');
+  if (stripped.find('/') != std::string::npos)
+    stripped = simCore::StringUtils::afterLast(stripped, '/');
+  if (stripped.find('\\') != std::string::npos)
+    stripped = simCore::StringUtils::afterLast(stripped, '\\');
+
+  return stripped;
+}
+
+osgEarth::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEarth::FeatureModelLayer::Options& options)
 {
   SAFETRYBEGIN;
-  osg::ref_ptr<osgEarth::Features::FeatureModelLayer> featureLayer = new osgEarth::Features::FeatureModelLayer(options);
+  osg::ref_ptr<osgEarth::FeatureModelLayer> featureLayer = new osgEarth::FeatureModelLayer(options);
 
   // Return layer regardless of if open() succeeds
   featureLayer->open();
@@ -119,14 +181,14 @@ osgEarth::Features::FeatureModelLayer* LayerFactory::newFeatureLayer(const osgEa
 /////////////////////////////////////////////////////////////////
 
 ShapeFileLayerFactory::ShapeFileLayerFactory()
-  : style_(new osgEarth::Symbology::Style)
+  : style_(new osgEarth::Style)
 {
   // Configure some defaults
-  setLineColor(osgEarth::Symbology::Color::Cyan);
+  setLineColor(simVis::Color::Cyan);
   setLineWidth(1.5f);
 
   // Configure the render symbol to render line shapes
-  osgEarth::Symbology::RenderSymbol* rs = style_->getOrCreateSymbol<osgEarth::Symbology::RenderSymbol>();
+  osgEarth::RenderSymbol* rs = style_->getOrCreateSymbol<osgEarth::RenderSymbol>();
   rs->depthTest() = false;
   rs->clipPlane() = simVis::CLIPPLANE_VISIBLE_HORIZON;
   rs->order()->setLiteral(simVis::BIN_GOG_FLAT);
@@ -137,43 +199,50 @@ ShapeFileLayerFactory::~ShapeFileLayerFactory()
 {
 }
 
-osgEarth::Features::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url) const
+osgEarth::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url) const
 {
-  osgEarth::Features::FeatureModelLayerOptions layerOptions;
-  configureOptions(url, layerOptions);
-  return LayerFactory::newFeatureLayer(layerOptions);
+  osg::ref_ptr<osgEarth::FeatureModelLayer> layer = new osgEarth::FeatureModelLayer();
+  configureOptions(url, layer);
+
+  if (layer->getStatus().isError())
+  {
+    SIM_WARN << "ShapeFileLayerFactory::load(" << url << ") failed : " << layer->getStatus().message() << "\n";
+    layer = NULL;
+  }
+  return layer.release();
 }
 
-void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::Features::FeatureModelLayerOptions& driver) const
+void ShapeFileLayerFactory::configureOptions(const std::string& url, osgEarth::FeatureModelLayer* layer) const
 {
-  osgEarth::Drivers::OGRFeatureOptions ogr;
-  ogr.url() = url;
-
   // Configure the stylesheet that will be associated with the layer
-  osgEarth::Symbology::StyleSheet* stylesheet = new osgEarth::Symbology::StyleSheet;
+  osgEarth::StyleSheet* stylesheet = new osgEarth::StyleSheet;
   stylesheet->addStyle(*style_);
+  layer->setStyleSheet(stylesheet);
 
-  driver.featureSource() = ogr;
-  driver.styles() = stylesheet;
-  driver.alphaBlending() = true;
-  driver.enableLighting() = false;
+  osgEarth::OGRFeatureSource* ogr = new osgEarth::OGRFeatureSource();
+  ogr->setURL(url);
+  ogr->open(); // not error-checking here; caller can do that at the layer level
+  layer->setFeatureSource(ogr);
+
+  layer->setAlphaBlending(true);
+  layer->setEnableLighting(false);
 }
 
 void ShapeFileLayerFactory::setLineColor(const osg::Vec4f& color)
 {
-  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
   ls->stroke()->color() = color;
 }
 
 void ShapeFileLayerFactory::setLineWidth(float width)
 {
-  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
   ls->stroke()->width() = width;
 }
 
 void ShapeFileLayerFactory::setStipple(unsigned short pattern, unsigned int factor)
 {
-  osgEarth::Symbology::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+  osgEarth::LineSymbol* ls = style_->getOrCreateSymbol<osgEarth::LineSymbol>();
   ls->stroke()->stipplePattern() = pattern;
   ls->stroke()->stippleFactor() = factor;
 }

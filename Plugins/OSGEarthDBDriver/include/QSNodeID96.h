@@ -24,15 +24,10 @@
 #define QSNODEID96_H
 
 #include <bitset>
-
-#ifndef USE_SIMDIS_SDK
-#include "inttypesc.h"
-#else
 #include "simCore/Common/Common.h"
 
 namespace simVis_db
 {
-#endif
   class QSNodeID96
   {
   public:
@@ -64,8 +59,6 @@ namespace simVis_db
   //===========================================================================
   typedef QSNodeID96 QSNodeId;
 
-#ifdef USE_SIMDIS_SDK
 } // namespace simVis_db
-#endif
 
 #endif /* QSNODEID96_H */

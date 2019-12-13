@@ -30,9 +30,41 @@
 
 namespace simCore
 {
+  /** Adds callback support */
+  class SDKCORE_EXPORT ClockWithObservers : public Clock
+  {
+  public:
+    /**@name callback management
+    *@{
+    */
+    virtual void registerTimeCallback(Clock::TimeObserverPtr np);
+    virtual void removeTimeCallback(Clock::TimeObserverPtr np);
+
+    virtual void registerModeChangeCallback(Clock::ModeChangeObserverPtr p);
+    virtual void removeModeChangeCallback(Clock::ModeChangeObserverPtr p);
+    ///@}
+
+  protected:
+    // Observer notification functions
+    void notifySetTime_(const simCore::TimeStamp& newTime, bool isJump);
+    void notifyTimeLoop_();
+    void notifyModeChange_(Clock::Mode newMode);
+    void notifyDirectionChange_(simCore::TimeDirection newDir);
+    void notifyScaleChange_(double newScale);
+    void notifyBoundsChange_(const simCore::TimeStamp& start, const simCore::TimeStamp& end);
+    void notifyCanLoopChange_(bool canLoop);
+    void notifyUserEditable_(bool newUserEditable);
+    void notifyAdjustTime_(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime);
+
+  private:
+    /// List of all observers interested in time value changes
+    std::vector<Clock::TimeObserverPtr> timeObservers_;
+    /// List of all observers interested in changes not related to time value directly (mode, loop, etc.)
+    std::vector<Clock::ModeChangeObserverPtr> modeChangeObservers_;
+  };
 
   /** Implementation of clock controls (play rate, start/stop, etc) */
-  class SDKCORE_EXPORT ClockImpl : public Clock
+  class SDKCORE_EXPORT ClockImpl : public ClockWithObservers
   {
   public:
     ClockImpl();
@@ -77,16 +109,6 @@ namespace simCore
     virtual void increaseScale();
     ///@}
 
-    /**@name callback management
-    *@{
-    */
-    virtual void registerTimeCallback(Clock::TimeObserverPtr np);
-    virtual void removeTimeCallback(Clock::TimeObserverPtr np);
-
-    virtual void registerModeChangeCallback(Clock::ModeChangeObserverPtr p);
-    virtual void removeModeChangeCallback(Clock::ModeChangeObserverPtr p);
-    ///@}
-
     /// Called to update the current data time
     void idle();
 
@@ -105,17 +127,6 @@ namespace simCore
     void addToTime_(double howMuch);
     /// Decrements the current time by a given number of seconds
     void subtractFromTime_(double howMuch);
-
-    // Observer notification functions
-    void notifySetTime_(const simCore::TimeStamp& newTime, bool isJump);
-    void notifyTimeLoop_();
-    void notifyModeChange_(Clock::Mode newMode);
-    void notifyDirectionChange_(simCore::TimeDirection newDir);
-    void notifyScaleChange_(double newScale);
-    void notifyBoundsChange_(const simCore::TimeStamp& start, const simCore::TimeStamp& end);
-    void notifyCanLoopChange_(bool canLoop);
-    void notifyUserEditable_(bool newUserEditable);
-    void notifyAdjustTime_(const simCore::TimeStamp& oldTime, simCore::TimeStamp& newTime);
 
     /// current time in the simulation
     TimeStamp currentTime_;
@@ -141,15 +152,86 @@ namespace simCore
     /// Wall clock for keeping time in real-time modes
     simCore::TimeClock clock_;
 
-    /// List of all observers interested in time value changes
-    std::vector<Clock::TimeObserverPtr> timeObservers_;
-    /// List of all observers interested in changes not related to time value directly (mode, loop, etc.)
-    std::vector<Clock::ModeChangeObserverPtr> modeChangeObservers_;
-
     /// Utility class to send out notifications when user's permission to edit changes
     class ScopedUserEditableWatch;
   };
 
+  /**
+   * Implementation of clock controls that combines a data clock and a local clock.  This
+   * class is essentially a Proxy on top of a clock implementation.  The Proxy lets you pick whether
+   * you want to use the underlying implementation (the local clock) or the passed-in
+   * proxied class.  Use setLockedToDataClock() to swap between.  External clients of this
+   * class will be properly notified of time changes when swapping between clocks.
+   *
+   * This class is particularly useful for a visualization time that operates separately from the
+   * data clock.  This lets the visualization pause, rewind, play, etc. independently from
+   * the data time, then snap back to current data time when ready.
+   */
+  class SDKCORE_EXPORT VisualizationClock : public ClockWithObservers
+  {
+  public:
+    explicit VisualizationClock(Clock& dataClock);
+    virtual ~VisualizationClock();
+
+    /** If true the local clock matches the data clock, if false the local clock is independent of the data clock */
+    void setLockedToDataClock(bool lock);
+    bool isLockedToDataClock() const;
+
+    /**@name Accessors
+    *@{
+    */
+    virtual Clock::Mode mode() const;
+    virtual bool isLiveMode() const;
+    virtual simCore::TimeStamp currentTime() const;
+    virtual double timeScale() const;
+    virtual bool realTime() const;
+    virtual simCore::TimeStamp startTime() const;
+    virtual simCore::TimeStamp endTime() const;
+    virtual bool canLoop() const;
+    virtual bool isPlaying() const;
+    virtual simCore::TimeDirection timeDirection() const;
+    virtual bool controlsDisabled() const;
+    virtual bool isUserEditable() const;
+
+    virtual void setMode(Clock::Mode mode);
+    virtual void setMode(Clock::Mode mode, const simCore::TimeStamp& liveStartTime);
+    virtual void setTime(const simCore::TimeStamp& timeVal);
+    virtual void setTimeScale(double scale);
+    virtual void setRealTime(bool fl);
+    virtual void setStartTime(const simCore::TimeStamp& timeVal);
+    virtual void setEndTime(const simCore::TimeStamp& timeVal);
+    virtual void setCanLoop(bool fl);
+    virtual void setControlsDisabled(bool fl);
+    ///@}
+
+    /**@name controls
+    *@{
+    */
+    virtual void decreaseScale();
+    virtual void stepBackward();
+    virtual void playReverse();
+    virtual void stop();
+    virtual void playForward();
+    virtual void stepForward();
+    virtual void increaseScale();
+    ///@}
+
+    /// Called to update the current data time
+    void idle();
+
+  private:
+    class DataTimeObserver;
+    class DataModeObserver;
+    class LocalTimeObserver;
+    class LocalModeObserver;
+
+    Clock& dataClock_;
+    ClockImpl* localClock_;
+    bool lockToDataClock_;
+
+    Clock::TimeObserverPtr dataTimeObserver_;
+    Clock::ModeChangeObserverPtr dataModeObserver_;
+  };
 }
 
 #endif /* SIMCORE_TIME_CLOCKIMPL_H */

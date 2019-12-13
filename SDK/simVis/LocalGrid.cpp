@@ -28,7 +28,7 @@
 
 #include "osgEarth/Registry"
 #include "osgEarth/ShaderGenerator"
-#include "osgEarthSymbology/Color"
+#include "osgEarth/Color"
 
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
@@ -44,6 +44,7 @@
 #include "simVis/Utils.h"
 #include "simVis/LocalGrid.h"
 
+#undef LC
 #define LC "[LocalGrid] "
 
 namespace simVis
@@ -510,7 +511,7 @@ void LocalGridNode::rebuild_(const simData::LocalGridPrefs& prefs)
   // have to run ShaderGenerator after adding labels
   if (labelGroup_->getNumChildren() > 0)
     osgEarth::Registry::shaderGenerator().run(labelGroup_.get());
-};
+}
 
 void LocalGridNode::validatePrefs(const simData::LocalGridPrefs& prefs)
 {
@@ -653,7 +654,7 @@ void LocalGridNode::configureLocator_(const simData::LocalGridPrefs& prefs)
 void LocalGridNode::syncWithLocator()
 {
   // if not drawing, we don't need to update this
-  if (!host_.valid() || getNodeMask() != DISPLAY_MASK_LOCAL_GRID)
+  if (getNodeMask() != DISPLAY_MASK_LOCAL_GRID)
     return;
 
   // call the base class to update the matrix.
@@ -688,8 +689,8 @@ void LocalGridNode::createCartesian_(const simData::LocalGridPrefs& prefs, osg::
   const float x0 = -0.5f * span;
   const float y0 = -0.5f * span;
 
-  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
+  const osg::Vec4f& color = simVis::Color(prefs.gridcolor(), simVis::Color::RGBA);
+  const osg::Vec4f& subColor = simVis::Color(color * 0.5f, 1.0f);
 
   // first draw the subdivision lines
   for (int s = 0; s < numSubLines; ++s)
@@ -774,8 +775,8 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
   const int   numSubDivisions = prefs.gridsettings().numsubdivisions();
   const int numRings          = (numDivisions + 1) * (numSubDivisions + 1);
 
-  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
+  const osg::Vec4f& color = simVis::Color(prefs.gridcolor(), simVis::Color::RGBA);
+  const osg::Vec4f& subColor = simVis::Color(color * 0.5f, 1.0f);
 
   // rings:
   for (int i = 0; i < numRings; ++i)
@@ -827,8 +828,8 @@ void LocalGridNode::createRangeRings_(const simData::LocalGridPrefs& prefs, osg:
 // creates a speed-rings local grid with optional polar radials.
 void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* graphicsGroup, osg::Geode* labelGroup, bool drawSpeedLine) const
 {
-  const osg::Vec4f& color = osgEarth::Symbology::Color(prefs.gridcolor(), osgEarth::Symbology::Color::RGBA);
-  const osg::Vec4f& subColor = osgEarth::Symbology::Color(color * 0.5f, 1.0f);
+  const osg::Vec4f& color = simVis::Color(prefs.gridcolor(), simVis::Color::RGBA);
+  const osg::Vec4f& subColor = simVis::Color(color * 0.5f, 1.0f);
   const unsigned int numDivisions = prefs.gridsettings().numdivisions();
   const unsigned int numSubDivisions = prefs.gridsettings().numsubdivisions();
   const unsigned int numRings = (numDivisions + 1) * (numSubDivisions + 1);
@@ -836,6 +837,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   if (drawSpeedLine)
   {
     SpeedLine* speedLine = new SpeedLine();
+    speedLine->setDataVariance(osg::Object::DYNAMIC);
     speedLine->setColor(color);
     graphicsGroup->addDrawable(speedLine);
 
@@ -845,9 +847,11 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
   else
   {
     Axis* majorAxis = new Axis(true);
+    majorAxis->setDataVariance(osg::Object::DYNAMIC);
     majorAxis->setColor(color);
     graphicsGroup->addDrawable(majorAxis);
     Axis* minorAxis = new Axis(false);
+    minorAxis->setDataVariance(osg::Object::DYNAMIC);
     minorAxis->setColor(color);
     graphicsGroup->addDrawable(minorAxis);
 
@@ -856,6 +860,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     if (sectorAngle > 0.0f)
     {
       RadialPoints* points = new RadialPoints(subColor, sectorAngle, numRings);
+      points->setDataVariance(osg::Object::DYNAMIC);
       graphicsGroup->addDrawable(points);
     }
   }
@@ -866,6 +871,7 @@ void LocalGridNode::createSpeedRings_(const simData::LocalGridPrefs& prefs, osg:
     if (!drawSpeedLine)
     {
       RangeRing* speedRing = new RangeRing(i);
+      speedRing->setDataVariance(osg::Object::DYNAMIC);
       speedRing->setColor(isMajorRing ? color : subColor);
       graphicsGroup->addDrawable(speedRing);
     }

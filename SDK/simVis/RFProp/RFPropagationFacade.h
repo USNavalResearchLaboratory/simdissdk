@@ -28,11 +28,9 @@
 #include "simCore/Common/Export.h"
 #include "simData/ObjectId.h"
 #include "simVis/RFProp/CompositeColorProvider.h"
-#include "simVis/RFProp/ProfileDataProvider.h"
-#include "simVis/RFProp/Profile.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
-#include "simVis/RFProp/RadarParameters.h"
 
 namespace osgEarth { class Map; }
 namespace simCore { class TimeStamp; }
@@ -40,7 +38,7 @@ namespace simVis { class LocatorNode; }
 
 namespace simRF
 {
-class CompositeProfileProvider;
+class Profile;
 
 /** Facade to the simRF module, managing RF data for a single beam. */
 class SDKVIS_EXPORT RFPropagationFacade
@@ -66,7 +64,7 @@ public:
    * @param radarParams radar parameter structure
    * @return 0 on success, !0 on error
    */
-  int setRadarParams(const RadarParameters& radarParams);
+  int setRadarParams(const simCore::RadarParameters& radarParams);
 
   /**
   * Gets the  propagation model RADAR parameters for a given beam
@@ -192,34 +190,25 @@ public:
   int setHeight(double height);
 
   /**
-   * Returns the height in meters; the routine assumes the valid() returns true
+   * Returns the height in meters; the routine assumes that valid() returns true
    * @return The height in meters
    */
   double height() const;
 
  /**
    * Controls display of RF propagation data thickness.
-   * This option controls the 3D display thickness in meters and is only available when
+   * This option controls the 3D display thickness and is only available when
    * the propagation Draw Space is set to 3D, 3D Points, or 3D Texture.
-   * @param thickness 3D display thickness of the propagation data, in meters
+   * @param thickness 3D display thickness of the propagation data, in # height steps
    * @return 0 on success, !0 on error
    */
-  int setThickness(double thickness);
+  int setThickness(unsigned int thickness);
 
   /**
-   * Sets the display thickness in number of slots.  This call can fail if no profiles are loaded.
-   * The actual height is calculated based on the height of a slot in the current profile.  See
-   * also setThickness(double).
-   * @param numSlots Number of slots of height to visualize; minimum value of 1
-   * @return 0 on success; non-zero on failure, e.g. no profiles loaded
+   * Returns the thickness in # height steps; this routine assumes that valid() returns true
+   * @return The thickness, in # height steps
    */
-  int setThicknessBySlots(int numSlots);
-
-  /**
-   * Returns the thickness in meters; the routine assumes the valid() returns true
-   * @return The thickness in meters
-   */
-  double thickness() const;
+  unsigned int thickness() const;
 
   /**
    * Controls the number of bearing slices to display
@@ -442,6 +431,12 @@ public:
   float maxHeight() const;
 
   /**
+  * Gets the number of height steps in the data
+  * @return number of steps
+  */
+  unsigned int heightSteps() const;
+
+  /**
    * Gets the active bearing
    * @return current active bearing in radians
    */
@@ -513,9 +508,6 @@ private:
 
   /// map of filesets loaded, keyed by the timestamp for which they were specified
   std::map<simCore::TimeStamp, std::vector<std::string> > arepsFilesetTimeMap_;
-
-  /// vector of all profiles available
-  std::vector<osg::ref_ptr<simRF::Profile> > profileList_;
 
   /// shared ptr to the POD Loss thresholds
   PODVectorPtr podLossThresholds_;

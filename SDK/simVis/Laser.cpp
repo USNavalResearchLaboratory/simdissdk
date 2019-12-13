@@ -21,7 +21,7 @@
  */
 #include "osg/Geometry"
 #include "osgEarth/Horizon"
-#include "simVis/LineDrawable.h"
+#include "osgEarth/LineDrawable"
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 #include "simVis/EntityLabel.h"

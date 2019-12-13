@@ -221,13 +221,13 @@ public:
     }
 
     // Try to find an annotation node child and change its attributes
-    osgEarth::Annotation::AnnotationNode* anno =
-      osgEarth::findTopMostNodeOfType<osgEarth::Annotation::AnnotationNode>(app_.picker->pickedNode());
+    osgEarth::AnnotationNode* anno =
+      osgEarth::findTopMostNodeOfType<osgEarth::AnnotationNode>(app_.picker->pickedNode());
     if (!anno)
       return false;
 
     auto style = anno->getStyle();
-    auto lineSymbol = style.getOrCreateSymbol<osgEarth::Symbology::LineSymbol>();
+    auto lineSymbol = style.getOrCreateSymbol<osgEarth::LineSymbol>();
     // Change some line aspects to indicate we picked correctly
     lineSymbol->stroke()->color() = randomColor();
     lineSymbol->stroke()->width() = randomBetween(1.0, 7.0);
@@ -294,21 +294,21 @@ ui::Control* createUi(osg::ref_ptr<ui::LabelControl>& pickLabel, bool rttEnabled
   vbox->setPadding(10);
   vbox->setBackColor(0, 0, 0, 0.6);
   vbox->addControl(new ui::LabelControl("Picking Example", 20, simVis::Color::Yellow));
-  vbox->addControl(new ui::LabelControl("h: Toggle highlighting", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("p: Pause playback", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("v: Swap viewpoints", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("d: Delete inset", 14, osgEarth::Color::White));
-  vbox->addControl(new ui::LabelControl("t: Toggle inset", 14, osgEarth::Color::White));
+  vbox->addControl(new ui::LabelControl("h: Toggle highlighting", 14, simVis::Color::White));
+  vbox->addControl(new ui::LabelControl("O: Toggle overhead mode", 14, simVis::Color::White));
+  vbox->addControl(new ui::LabelControl("p: Pause playback", 14, simVis::Color::White));
+  vbox->addControl(new ui::LabelControl("v: Swap viewpoints", 14, simVis::Color::White));
+  vbox->addControl(new ui::LabelControl("d: Delete inset", 14, simVis::Color::White));
+  vbox->addControl(new ui::LabelControl("t: Toggle inset", 14, simVis::Color::White));
   if (rttEnabled)
   {
-    vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, osgEarth::Color::White));
-    vbox->addControl(new ui::LabelControl("2: Toggle RTT 2 display", 14, osgEarth::Color::White));
+    vbox->addControl(new ui::LabelControl("1: Toggle RTT 1 display", 14, simVis::Color::White));
+    vbox->addControl(new ui::LabelControl("2: Toggle RTT 2 display", 14, simVis::Color::White));
   }
 
   ui::Grid* grid = vbox->addControl(new ui::Grid);
-  grid->setControl(0, 0, new ui::LabelControl("Picked:", 14, osgEarth::Color::White));
-  pickLabel = grid->setControl(1, 0, new ui::LabelControl(NO_PICK, 14, osgEarth::Color::Lime));
+  grid->setControl(0, 0, new ui::LabelControl("Picked:", 14, simVis::Color::White));
+  pickLabel = grid->setControl(1, 0, new ui::LabelControl(NO_PICK, 14, simVis::Color::Lime));
 
   // Move it down just a bit
   vbox->setPosition(10, 10);
@@ -645,10 +645,8 @@ int main(int argc, char** argv)
     simVis::RTTPicker* rttPicker = new simVis::RTTPicker(viewMan.get(), scenarioManager, 256);
 
     // Add GOG to the pickable mask
-#if SDK_OSGEARTH_MIN_VERSION_REQUIRED(1,7,0)
     osgEarth::Util::RTTPicker* osgEarthPicker = rttPicker->rttPicker();
     osgEarthPicker->setCullMask(osgEarthPicker->getCullMask() | simVis::DISPLAY_MASK_GOG | simVis::DISPLAY_MASK_CUSTOM_RENDERING);
-#endif
     app.picker = rttPicker;
 
     // Make a view that lets us see what the picker sees for Main View
@@ -670,9 +668,9 @@ int main(int argc, char** argv)
   // Add a popup handler to demonstrate its use of the picker
   simVis::PopupHandler* popupHandler = new simVis::PopupHandler(app.picker.get(), superHud.get());
   popupHandler->setShowInCorner(true);
-  popupHandler->setBackColor(osgEarth::Color(0.f, 0.f, 0.f, 0.8f));
-  popupHandler->setBorderColor(osgEarth::Color::Green);
-  popupHandler->setTitleColor(osgEarth::Color::Lime);
+  popupHandler->setBackColor(simVis::Color(0.f, 0.f, 0.f, 0.8f));
+  popupHandler->setBorderColor(simVis::Color::Green);
+  popupHandler->setTitleColor(simVis::Color::Lime);
   popupHandler->setLimitVisibility(false);
   superHud->addEventHandler(popupHandler);
 

@@ -22,12 +22,17 @@
 #ifndef SIMVIS_RFPROP_FUNCTIONAL_PROFILE_DATA_PROVIDER_H
 #define SIMVIS_RFPROP_FUNCTIONAL_PROFILE_DATA_PROVIDER_H
 
+#include <memory>
 #include "osg/ref_ptr"
 #include "simCore/Common/Common.h"
+#include "simCore/EM/Propagation.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
 
 namespace simRF
 {
+/** Shared pointer of a RadarParameters */
+typedef std::shared_ptr<simCore::RadarParameters> RadarParametersPtr;
+
 /**
  * FunctionalProfileDataProvider is an adapter class to support creation of data providers that depend on other data providers.
  * It exists to be the base class for dependent data providers.

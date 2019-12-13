@@ -80,7 +80,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
 
   // Older versions of AREPS file had bearing embedding in filename
   double bearingAngleRad = getBearingAngle_(arepsFile);
-  RadarParameters radarParameters;
+  simCore::RadarParameters radarParameters;
   std::string st;
   while (simCore::getStrippedLine(inFile, st))
   {
@@ -98,8 +98,8 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
       {
         if ((tmpvec[0] == "AntGain") && vecLen >= 3)
         {
-          //# Antenna gain in dB
-          if (!simCore::isValidNumber(tmpvec[2], radarParameters.antennaGaindB))
+          //# Antenna gain in dBi
+          if (!simCore::isValidNumber(tmpvec[2], radarParameters.antennaGaindBi))
           {
             SIM_ERROR << "Could not determine antenna gain for AREPS file: " << arepsFile << std::endl;
             return 1;
@@ -459,7 +459,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
 
   profile.setBearing(bearingAngleRad);
   profile.setHalfBeamWidth(radarParameters.hbwD * simCore::DEG2RAD / 2.0);
-  profile.setDisplayThickness(maxHeight_);
+  profile.setDisplayThickness(numHeights_);
   return 0;
 }
 

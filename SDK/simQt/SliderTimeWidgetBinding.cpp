@@ -64,7 +64,7 @@ void SliderTimeWidgetBinding::setTimeWidgetValue_(int newValue)
     return;
 
   double seconds = newValue * (maxTime - minTime) / max + minTime;
-  simCore::TimeStamp newTime(referenceYear, seconds);
+  const simCore::TimeStamp newTime(referenceYear, seconds);
   if (newTime != timeWidget_->timeStamp())
     timeWidget_->setTimeStamp(newTime);
 }
