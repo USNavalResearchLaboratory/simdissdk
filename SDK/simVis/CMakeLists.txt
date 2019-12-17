@@ -365,6 +365,10 @@ set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${V
 
 # ----------------------------------------------------------------------
 
+# Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
+set_source_files_properties(${VIS_SRC}Utils.cpp ${VIS_SRC}GOG/Utils.cpp
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+
 set(VIS_PROJECT_FILES
     ${VIS_HEADERS} ${VIS_SOURCES} ${VIS_ALL_HEADER}
 )
