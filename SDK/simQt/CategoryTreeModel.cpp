@@ -44,7 +44,7 @@
 #include "simQt/RegExpImpl.h"
 #include "simQt/SearchLineEdit.h"
 #include "simQt/Settings.h"
-#include "simQt/CategoryTreeModel2.h"
+#include "simQt/CategoryTreeModel.h"
 
 namespace simQt {
 

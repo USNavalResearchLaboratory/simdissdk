@@ -26,7 +26,7 @@
 #endif
 #include "ColorWidgetPlugin.h"
 #include "CategoryDataBreadcrumbsPlugin.h"
-#include "CategoryFilterWidget2Plugin.h"
+#include "CategoryFilterWidgetPlugin.h"
 #include "DataTableComboBoxPlugin.h"
 #include "DirectorySelectorWidgetPlugin.h"
 #include "DockWidgetPlugin.h"

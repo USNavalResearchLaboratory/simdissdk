@@ -20,7 +20,7 @@
  *
  */
 #include "simData/CategoryData/CategoryFilter.h"
-#include "simQt/CategoryTreeModel2.h"
+#include "simQt/CategoryTreeModel.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/EntityCategoryFilter.h"
 

@@ -8,7 +8,7 @@ project(PLUGIN_SIMQT_DESIGNER_PLUGINS)
 set(PROJ_HEADERS
     simQtDesignerPlugins.h
     CategoryDataBreadcrumbsPlugin.h
-    CategoryFilterWidget2Plugin.h
+    CategoryFilterWidgetPlugin.h
     ColorButtonPlugin.h
     ColorWidgetPlugin.h
     DataTableComboBoxPlugin.h
@@ -30,7 +30,7 @@ set(PROJ_HEADERS
 # .cpp files
 set(PROJ_SOURCES
     CategoryDataBreadcrumbsPlugin.cpp
-    CategoryFilterWidget2Plugin.cpp
+    CategoryFilterWidgetPlugin.cpp
     ColorButtonPlugin.cpp
     ColorWidgetPlugin.cpp
     DataTableComboBoxPlugin.cpp

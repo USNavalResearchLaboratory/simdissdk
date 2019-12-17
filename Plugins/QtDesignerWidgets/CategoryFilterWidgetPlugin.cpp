@@ -23,8 +23,8 @@
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/MemoryDataStore.h"
-#include "simQt/CategoryTreeModel2.h"
-#include "CategoryFilterWidget2Plugin.h"
+#include "simQt/CategoryTreeModel.h"
+#include "CategoryFilterWidgetPlugin.h"
 
 CategoryFilterWidgetPlugin::CategoryFilterWidgetPlugin(QObject *parent)
   : QObject(parent),
