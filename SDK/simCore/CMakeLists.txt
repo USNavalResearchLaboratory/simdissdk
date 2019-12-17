@@ -168,6 +168,11 @@ source_group("" FILES ${CORE_ALL_HEADER})
 
 # ----------------------------------------------------------------------
 
+# Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
+set_source_files_properties(${CORE_STRING_SRC}Angle.cpp ${CORE_STRING_SRC}Utils.cpp
+    ${CORE_CALC_SRC}Angle.cpp ${CORE_TIME_SRC}Utils.cpp
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+
 set(CORE_PROJECT_FILES
     ${CORE_COMMON_HEADERS} ${CORE_COMMON_SOURCES}
     ${CORE_CALC_HEADERS} ${CORE_CALC_SOURCES}
