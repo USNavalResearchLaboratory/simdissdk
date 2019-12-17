@@ -19,8 +19,8 @@
 * disclose, or release this software.
 *
 */
-#ifndef SIMQT_CATEGORYTREEMODEL2_H
-#define SIMQT_CATEGORYTREEMODEL2_H
+#ifndef SIMQT_CATEGORYTREEMODEL_H
+#define SIMQT_CATEGORYTREEMODEL_H
 
 #include <map>
 #include <memory>
@@ -91,9 +91,6 @@ public:
   explicit CategoryProxyModel(QObject *parent = 0);
   virtual ~CategoryProxyModel();
 
-  /** Override setSourceModel() to detect the "All Items" model type */
-  virtual void setSourceModel(QAbstractItemModel* sourceModel);
-
 public slots:
   /// string to filter against
   void setFilterText(const QString& filter);
@@ -107,17 +104,15 @@ protected:
 private:
   /// string to filter against
   QString filter_;
-  /// Set true when "All Categories" is the root item (i.e. using CategoryTreeModel, not CategoryTreeModel2)
-  bool hasAllCategories_;
 };
 
 /** Single tier tree model that maintains and allows users to edit a simData::CategoryFilter. */
-class SDKQT_EXPORT CategoryTreeModel2 : public QAbstractItemModel
+class SDKQT_EXPORT CategoryTreeModel : public QAbstractItemModel
 {
   Q_OBJECT;
 public:
-  explicit CategoryTreeModel2(QObject* parent = NULL);
-  virtual ~CategoryTreeModel2();
+  explicit CategoryTreeModel(QObject* parent = NULL);
+  virtual ~CategoryTreeModel();
 
   /** Changes the data store, updating what categories and values are shown. */
   void setDataStore(simData::DataStore* dataStore);
@@ -203,10 +198,15 @@ private:
   QString settingsKey_;
 };
 
+// Typedef to CategoryTreeModel2 for backwards compatibility
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+typedef CategoryTreeModel CategoryTreeModel2;
+#endif
+
 /**
- * Item delegate that provides custom styling for a QTreeView with a CategoryTreeModel2.  This
+ * Item delegate that provides custom styling for a QTreeView with a CategoryTreeModel.  This
  * delegate is required in order to get "Unlisted Value" editing working properly with
- * CategoryTreeModel2.  The Unlisted Value editing is shown as an EXCLUDE flag on the category
+ * CategoryTreeModel.  The Unlisted Value editing is shown as an EXCLUDE flag on the category
  * itself, using a toggle switch to draw the on/off state.  Clicking on the toggle will change
  * the value in the tree model and therefore in the filter.
  *
@@ -273,16 +273,16 @@ private:
 /**
  * Widget that includes a QTreeView with a Category Tree Model and a Search Filter
  * widget that will display a given category filter.  This is an easy-to-use wrapper
- * around the CategoryTreeModel2 class that provides a view widget and search field.
+ * around the CategoryTreeModel class that provides a view widget and search field.
  */
-class SDKQT_EXPORT CategoryFilterWidget2 : public QWidget
+class SDKQT_EXPORT CategoryFilterWidget : public QWidget
 {
   Q_OBJECT;
   Q_PROPERTY(bool showEntityCount READ showEntityCount WRITE setShowEntityCount);
 
 public:
-  explicit CategoryFilterWidget2(QWidget* parent = 0);
-  virtual ~CategoryFilterWidget2();
+  explicit CategoryFilterWidget(QWidget* parent = 0);
+  virtual ~CategoryFilterWidget();
 
   /** Sets the data store, updating the category tree based on changes to that data store. */
   void setDataStore(simData::DataStore* dataStore);
@@ -340,7 +340,7 @@ private:
   /** The tree */
   QTreeView* treeView_;
   /** Hold the category data */
-  simQt::CategoryTreeModel2* treeModel_;
+  simQt::CategoryTreeModel* treeModel_;
   /** Provides sorting and filtering */
   simQt::CategoryProxyModel* proxy_;
   /** If true the category values are filtered; used to conditionally expand tree. */
@@ -361,6 +361,11 @@ private:
   bool countDirty_;
 };
 
+// Typedef to CategoryFilterWidget2 for backwards compatibility
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+typedef CategoryFilterWidget CategoryFilterWidget2;
+#endif
+
 }
 
-#endif /* SIMQT_CATEGORYTREEMODEL2_H */
+#endif /* SIMQT_CATEGORYTREEMODEL_H */

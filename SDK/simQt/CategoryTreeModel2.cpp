@@ -46,10 +46,6 @@
 #include "simQt/Settings.h"
 #include "simQt/CategoryTreeModel2.h"
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-#include "simQt/CategoryTreeModel.h"
-#endif
-
 namespace simQt {
 
 /** Lighter than lightGray, matches QPalette::Midlight */
@@ -60,11 +56,6 @@ static const QColor CONTRIBUTING_BG_COLOR(195, 225, 240); // Light gray with a h
 static const QString LOCKED_SETTING = "LockedCategories";
 /** Locked settings meta data to define it as private */
 static const simQt::Settings::MetaData LOCKED_SETTING_METADATA(Settings::STRING_LIST, "", "", Settings::PRIVATE);
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-// Used to differentiate between the old and new CategoryTreeModel in CategoryProxyModel TODO Will be removed with the old model after December 2019
-static const QString ALL_CATEGORIES = "All Categories";
-#endif
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -164,7 +155,7 @@ private:
 /////////////////////////////////////////////////////////////////////////
 
 /** Represents a group node in tree, showing a category name and containing children values. */
-class CategoryTreeModel2::CategoryItem : public TreeItem
+class CategoryTreeModel::CategoryItem : public TreeItem
 {
 public:
   CategoryItem(const simData::CategoryNameManager& nameManager, int nameInt);
@@ -222,7 +213,7 @@ private:
 /////////////////////////////////////////////////////////////////////////
 
 /** Represents a leaf node in tree, showing a category value. */
-class CategoryTreeModel2::ValueItem : public TreeItem
+class CategoryTreeModel::ValueItem : public TreeItem
 {
 public:
   ValueItem(const simData::CategoryNameManager& nameManager, int nameInt, int valueInt);
@@ -322,7 +313,7 @@ void TreeItem::addChild(TreeItem* item)
 
 /////////////////////////////////////////////////////////////////////////
 
-CategoryTreeModel2::CategoryItem::CategoryItem(const simData::CategoryNameManager& nameManager, int nameInt)
+CategoryTreeModel::CategoryItem::CategoryItem(const simData::CategoryNameManager& nameManager, int nameInt)
   : categoryName_(QString::fromStdString(nameManager.nameIntToString(nameInt))),
     nameInt_(nameInt),
     unlistedValue_(false),
@@ -332,32 +323,32 @@ CategoryTreeModel2::CategoryItem::CategoryItem(const simData::CategoryNameManage
 {
 }
 
-bool CategoryTreeModel2::CategoryItem::isUnlistedValueChecked() const
+bool CategoryTreeModel::CategoryItem::isUnlistedValueChecked() const
 {
   return unlistedValue_;
 }
 
-bool CategoryTreeModel2::CategoryItem::isRegExpApplied() const
+bool CategoryTreeModel::CategoryItem::isRegExpApplied() const
 {
   return !regExpString_.isEmpty();
 }
 
-int CategoryTreeModel2::CategoryItem::nameInt() const
+int CategoryTreeModel::CategoryItem::nameInt() const
 {
   return nameInt_;
 }
 
-QString CategoryTreeModel2::CategoryItem::categoryName() const
+QString CategoryTreeModel::CategoryItem::categoryName() const
 {
   return categoryName_;
 }
 
-Qt::ItemFlags CategoryTreeModel2::CategoryItem::flags() const
+Qt::ItemFlags CategoryTreeModel::CategoryItem::flags() const
 {
   return Qt::ItemIsEnabled;
 }
 
-QVariant CategoryTreeModel2::CategoryItem::data(int role) const
+QVariant CategoryTreeModel::CategoryItem::data(int role) const
 {
   switch (role)
   {
@@ -386,7 +377,7 @@ QVariant CategoryTreeModel2::CategoryItem::data(int role) const
   return QVariant();
 }
 
-bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
+bool CategoryTreeModel::CategoryItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
 {
   if (role == ROLE_EXCLUDE)
     return setExcludeData_(value, filter, filterChanged);
@@ -402,7 +393,7 @@ bool CategoryTreeModel2::CategoryItem::setData(const QVariant& value, int role, 
   return false;
 }
 
-bool CategoryTreeModel2::CategoryItem::setExcludeData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
+bool CategoryTreeModel::CategoryItem::setExcludeData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
 {
   filterChanged = false;
   // If value does not change, or if disabled, then return early
@@ -431,7 +422,7 @@ bool CategoryTreeModel2::CategoryItem::setExcludeData_(const QVariant& value, si
   return true;
 }
 
-bool CategoryTreeModel2::CategoryItem::setRegExpStringData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
+bool CategoryTreeModel::CategoryItem::setRegExpStringData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
 {
   // Check for easy no-op
   filterChanged = false;
@@ -459,7 +450,7 @@ bool CategoryTreeModel2::CategoryItem::setRegExpStringData_(const QVariant& valu
   return true;
 }
 
-bool CategoryTreeModel2::CategoryItem::recalcContributionTo(const simData::CategoryFilter& filter)
+bool CategoryTreeModel::CategoryItem::recalcContributionTo(const simData::CategoryFilter& filter)
 {
   // First check the regular expression.  If there's a regexp, then this category definitely contributes
   const bool newValue = filter.nameContributesToFilter(nameInt_);
@@ -469,12 +460,12 @@ bool CategoryTreeModel2::CategoryItem::recalcContributionTo(const simData::Categ
   return true;
 }
 
-void CategoryTreeModel2::CategoryItem::setFont(QFont* font)
+void CategoryTreeModel::CategoryItem::setFont(QFont* font)
 {
   font_ = font;
 }
 
-bool CategoryTreeModel2::CategoryItem::setChildChecks_(const simData::RegExpFilter* reFilter)
+bool CategoryTreeModel::CategoryItem::setChildChecks_(const simData::RegExpFilter* reFilter)
 {
   bool hasChange = false;
   const int count = childCount();
@@ -492,7 +483,7 @@ bool CategoryTreeModel2::CategoryItem::setChildChecks_(const simData::RegExpFilt
   return hasChange;
 }
 
-int CategoryTreeModel2::CategoryItem::updateTo(const simData::CategoryFilter& filter)
+int CategoryTreeModel::CategoryItem::updateTo(const simData::CategoryFilter& filter)
 {
   // Update the category if it has a RegExp
   const QString oldRegExp = regExpString_;
@@ -563,7 +554,7 @@ int CategoryTreeModel2::CategoryItem::updateTo(const simData::CategoryFilter& fi
   return hasChange ? 1 : 0;
 }
 
-void CategoryTreeModel2::CategoryItem::updateFilter_(const ValueItem& valueItem, simData::CategoryFilter& filter) const
+void CategoryTreeModel::CategoryItem::updateFilter_(const ValueItem& valueItem, simData::CategoryFilter& filter) const
 {
   const bool filterValue = (valueItem.isChecked() != unlistedValue_);
   // NO_VALUE is a special case
@@ -579,7 +570,7 @@ void CategoryTreeModel2::CategoryItem::updateFilter_(const ValueItem& valueItem,
   }
 }
 
-int CategoryTreeModel2::CategoryItem::updateValueItem_(ValueItem& valueItem, const simData::CategoryFilter::ValuesCheck& checks) const
+int CategoryTreeModel::CategoryItem::updateValueItem_(ValueItem& valueItem, const simData::CategoryFilter::ValuesCheck& checks) const
 {
   // NO VALUE is a special case unfortunately
   const auto i = checks.find(valueItem.valueInt());
@@ -617,7 +608,7 @@ int CategoryTreeModel2::CategoryItem::updateValueItem_(ValueItem& valueItem, con
   return 1;
 }
 
-bool CategoryTreeModel2::CategoryItem::updateCounts(const std::map<int, size_t>& valueToCountMap) const
+bool CategoryTreeModel::CategoryItem::updateCounts(const std::map<int, size_t>& valueToCountMap) const
 {
   const int numValues = childCount();
   bool haveChange = false;
@@ -650,7 +641,7 @@ bool CategoryTreeModel2::CategoryItem::updateCounts(const std::map<int, size_t>&
 
 /////////////////////////////////////////////////////////////////////////
 
-CategoryTreeModel2::ValueItem::ValueItem(const simData::CategoryNameManager& nameManager, int nameInt, int valueInt)
+CategoryTreeModel::ValueItem::ValueItem(const simData::CategoryNameManager& nameManager, int nameInt, int valueInt)
   : nameInt_(nameInt),
     valueInt_(valueInt),
     numMatches_(-1),
@@ -659,7 +650,7 @@ CategoryTreeModel2::ValueItem::ValueItem(const simData::CategoryNameManager& nam
 {
 }
 
-bool CategoryTreeModel2::ValueItem::isUnlistedValueChecked() const
+bool CategoryTreeModel::ValueItem::isUnlistedValueChecked() const
 {
   // Assertion failure means we have orphan value items
   assert(parent());
@@ -668,7 +659,7 @@ bool CategoryTreeModel2::ValueItem::isUnlistedValueChecked() const
   return parent()->isUnlistedValueChecked();
 }
 
-bool CategoryTreeModel2::ValueItem::isRegExpApplied() const
+bool CategoryTreeModel::ValueItem::isRegExpApplied() const
 {
   // Assertion failure means we have orphan value items
   assert(parent());
@@ -677,12 +668,12 @@ bool CategoryTreeModel2::ValueItem::isRegExpApplied() const
   return parent()->isRegExpApplied();
 }
 
-int CategoryTreeModel2::ValueItem::nameInt() const
+int CategoryTreeModel::ValueItem::nameInt() const
 {
   return nameInt_;
 }
 
-QString CategoryTreeModel2::ValueItem::categoryName() const
+QString CategoryTreeModel::ValueItem::categoryName() const
 {
   // Assertion failure means we have orphan value items
   assert(parent());
@@ -691,12 +682,12 @@ QString CategoryTreeModel2::ValueItem::categoryName() const
   return parent()->data(ROLE_CATEGORY_NAME).toString();
 }
 
-int CategoryTreeModel2::ValueItem::valueInt() const
+int CategoryTreeModel::ValueItem::valueInt() const
 {
   return valueInt_;
 }
 
-QString CategoryTreeModel2::ValueItem::valueString() const
+QString CategoryTreeModel::ValueItem::valueString() const
 {
   // "No Value" should return empty string here, not user-facing string
   if (valueInt_ == simData::CategoryNameManager::NO_CATEGORY_VALUE_AT_TIME)
@@ -704,14 +695,14 @@ QString CategoryTreeModel2::ValueItem::valueString() const
   return valueString_;
 }
 
-Qt::ItemFlags CategoryTreeModel2::ValueItem::flags() const
+Qt::ItemFlags CategoryTreeModel::ValueItem::flags() const
 {
   if (isRegExpApplied())
     return Qt::NoItemFlags;
   return Qt::ItemIsEnabled | Qt::ItemIsUserCheckable;
 }
 
-QVariant CategoryTreeModel2::ValueItem::data(int role) const
+QVariant CategoryTreeModel::ValueItem::data(int role) const
 {
   switch (role)
   {
@@ -763,7 +754,7 @@ QVariant CategoryTreeModel2::ValueItem::data(int role) const
   return QVariant();
 }
 
-bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
+bool CategoryTreeModel::ValueItem::setData(const QVariant& value, int role, simData::CategoryFilter& filter, bool& filterChanged)
 {
   // Internally handle check/uncheck value.  For ROLE_REGEXP and ROLE_LOCKED_STATE, rely on category parent
   if (role == Qt::CheckStateRole)
@@ -776,7 +767,7 @@ bool CategoryTreeModel2::ValueItem::setData(const QVariant& value, int role, sim
   return false;
 }
 
-bool CategoryTreeModel2::ValueItem::setCheckStateData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
+bool CategoryTreeModel::ValueItem::setCheckStateData_(const QVariant& value, simData::CategoryFilter& filter, bool& filterChanged)
 {
   filterChanged = false;
 
@@ -837,34 +828,34 @@ bool CategoryTreeModel2::ValueItem::setCheckStateData_(const QVariant& value, si
   return true;
 }
 
-void CategoryTreeModel2::ValueItem::setChecked(bool value)
+void CategoryTreeModel::ValueItem::setChecked(bool value)
 {
   checked_ = (value ? Qt::Checked : Qt::Unchecked);
 }
 
-bool CategoryTreeModel2::ValueItem::isChecked() const
+bool CategoryTreeModel::ValueItem::isChecked() const
 {
   return checked_ == Qt::Checked;
 }
 
-void CategoryTreeModel2::ValueItem::setNumMatches(int matches)
+void CategoryTreeModel::ValueItem::setNumMatches(int matches)
 {
   numMatches_ = matches;
 }
 
-int CategoryTreeModel2::ValueItem::numMatches() const
+int CategoryTreeModel::ValueItem::numMatches() const
 {
   return numMatches_;
 }
 
 /////////////////////////////////////////////////////////////////////////
 
-/// Monitors for category data changes, calling methods in CategoryTreeModel2.
-class CategoryTreeModel2::CategoryFilterListener : public simData::CategoryNameManager::Listener
+/// Monitors for category data changes, calling methods in CategoryTreeModel.
+class CategoryTreeModel::CategoryFilterListener : public simData::CategoryNameManager::Listener
 {
 public:
   /// Constructor
-  explicit CategoryFilterListener(CategoryTreeModel2& parent)
+  explicit CategoryFilterListener(CategoryTreeModel& parent)
     : parent_(parent)
   {
   }
@@ -898,33 +889,18 @@ public:
   }
 
 private:
-  CategoryTreeModel2& parent_;
+  CategoryTreeModel& parent_;
 };
 
 /////////////////////////////////////////////////////////////////////////
 
 CategoryProxyModel::CategoryProxyModel(QObject *parent)
-  : QSortFilterProxyModel(parent),
-  hasAllCategories_(true)
+  : QSortFilterProxyModel(parent)
 {
 }
 
 CategoryProxyModel::~CategoryProxyModel()
 {
-}
-
-void CategoryProxyModel::setSourceModel(QAbstractItemModel* sourceModel)
-{
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  // simQt::CategoryTreeModel has a top level "All Categories" item.  This item affects
-  // some of the way filtering works.  Detect whether we're using a CategoryTreeModel
-  // and change our internal flag appropriately.  Note that another possible choice
-  // is simQt::CategoryTreeModel2, which does not have an All Categories item.
-  hasAllCategories_ = (dynamic_cast<CategoryTreeModel*>(sourceModel) != NULL);
-#else
-  hasAllCategories_ = false;
-#endif
-  QSortFilterProxyModel::setSourceModel(sourceModel);
 }
 
 void CategoryProxyModel::resetFilter()
@@ -946,10 +922,6 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
   if (filter_.isEmpty())
     return true;
 
-  // Always accept top level "All Categories" item
-  if (hasAllCategories_ && !sourceParent.isValid())
-    return true;
-
   const QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
   const QString itemText = index.data(Qt::DisplayRole).toString();
 
@@ -962,19 +934,8 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
   {
     const QString parentText = sourceParent.data(Qt::DisplayRole).toString();
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-    // We only care about matching "All Categories" for the old model type.  TODO Will be removed with the old model after December 2019
-    if (hasAllCategories_)
-    {
-      if (parentText != ALL_CATEGORIES && parentText.contains(filter_, Qt::CaseInsensitive))
+    if (parentText.contains(filter_, Qt::CaseInsensitive))
         return true;
-    }
-    else
-#endif
-    {
-      if (parentText.contains(filter_, Qt::CaseInsensitive))
-        return true;
-    }
   }
 
   // include items with any children that pass the filter
@@ -993,7 +954,7 @@ bool CategoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
 
 /////////////////////////////////////////////////////////////////////////
 
-CategoryTreeModel2::CategoryTreeModel2(QObject* parent)
+CategoryTreeModel::CategoryTreeModel(QObject* parent)
   : QAbstractItemModel(parent),
     dataStore_(NULL),
     filter_(new simData::CategoryFilter(NULL)),
@@ -1007,7 +968,7 @@ CategoryTreeModel2::CategoryTreeModel2(QObject* parent)
   categoryFont_->setBold(true);
 }
 
-CategoryTreeModel2::~CategoryTreeModel2()
+CategoryTreeModel::~CategoryTreeModel()
 {
   categories_.deleteAll();
   categoryIntToItem_.clear();
@@ -1019,7 +980,7 @@ CategoryTreeModel2::~CategoryTreeModel2()
     dataStore_->categoryNameManager().removeListener(listener_);
 }
 
-QModelIndex CategoryTreeModel2::index(int row, int column, const QModelIndex &parent) const
+QModelIndex CategoryTreeModel::index(int row, int column, const QModelIndex &parent) const
 {
   if (!hasIndex(row, column, parent))
     return QModelIndex();
@@ -1033,7 +994,7 @@ QModelIndex CategoryTreeModel2::index(int row, int column, const QModelIndex &pa
   return createIndex(row, column, parentItem->child(row));
 }
 
-QModelIndex CategoryTreeModel2::parent(const QModelIndex &child) const
+QModelIndex CategoryTreeModel::parent(const QModelIndex &child) const
 {
   if (!child.isValid() || !child.internalPointer())
     return QModelIndex();
@@ -1046,7 +1007,7 @@ QModelIndex CategoryTreeModel2::parent(const QModelIndex &child) const
   return createIndex(categories_.indexOf(static_cast<CategoryItem*>(parentItem)), 0, parentItem);
 }
 
-int CategoryTreeModel2::rowCount(const QModelIndex &parent) const
+int CategoryTreeModel::rowCount(const QModelIndex &parent) const
 {
   if (parent.isValid())
   {
@@ -1058,12 +1019,12 @@ int CategoryTreeModel2::rowCount(const QModelIndex &parent) const
   return categories_.size();
 }
 
-int CategoryTreeModel2::columnCount(const QModelIndex &parent) const
+int CategoryTreeModel::columnCount(const QModelIndex &parent) const
 {
   return 1;
 }
 
-QVariant CategoryTreeModel2::data(const QModelIndex &index, int role) const
+QVariant CategoryTreeModel::data(const QModelIndex &index, int role) const
 {
   if (!index.isValid() || !index.internalPointer())
     return QVariant();
@@ -1071,7 +1032,7 @@ QVariant CategoryTreeModel2::data(const QModelIndex &index, int role) const
   return treeItem->data(role);
 }
 
-QVariant CategoryTreeModel2::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant CategoryTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
   if ((orientation == Qt::Horizontal) && (role == Qt::DisplayRole))
   {
@@ -1087,7 +1048,7 @@ QVariant CategoryTreeModel2::headerData(int section, Qt::Orientation orientation
   return QAbstractItemModel::headerData(section, orientation, role);
 }
 
-Qt::ItemFlags CategoryTreeModel2::flags(const QModelIndex& index) const
+Qt::ItemFlags CategoryTreeModel::flags(const QModelIndex& index) const
 {
   if (!index.isValid() || !index.internalPointer())
     return Qt::NoItemFlags;
@@ -1095,7 +1056,7 @@ Qt::ItemFlags CategoryTreeModel2::flags(const QModelIndex& index) const
   return item->flags();
 }
 
-bool CategoryTreeModel2::setData(const QModelIndex& index, const QVariant& value, int role)
+bool CategoryTreeModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
   // Ensure we have a valid index with a valid TreeItem pointer
   if (!index.isValid() || !index.internalPointer())
@@ -1146,7 +1107,7 @@ bool CategoryTreeModel2::setData(const QModelIndex& index, const QVariant& value
   return rv;
 }
 
-void CategoryTreeModel2::setFilter(const simData::CategoryFilter& filter)
+void CategoryTreeModel::setFilter(const simData::CategoryFilter& filter)
 {
   // Check the data store; if it's set in filter and different from ours, update
   if (filter.getDataStore() && filter.getDataStore() != dataStore_)
@@ -1199,14 +1160,14 @@ void CategoryTreeModel2::setFilter(const simData::CategoryFilter& filter)
   emit filterChanged(*filter_);
 }
 
-const simData::CategoryFilter& CategoryTreeModel2::categoryFilter() const
+const simData::CategoryFilter& CategoryTreeModel::categoryFilter() const
 {
   // Precondition of this method is that data store was set; filter must be non-NULL
   assert(filter_);
   return *filter_;
 }
 
-void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
+void CategoryTreeModel::setDataStore(simData::DataStore* dataStore)
 {
   if (dataStore_ == dataStore)
     return;
@@ -1277,7 +1238,7 @@ void CategoryTreeModel2::setDataStore(simData::DataStore* dataStore)
     emit filterChanged(*filter_);
 }
 
-void CategoryTreeModel2::setSettings(Settings* settings, const QString& settingsKeyPrefix)
+void CategoryTreeModel::setSettings(Settings* settings, const QString& settingsKeyPrefix)
 {
   settings_ = settings;
   settingsKey_ = settingsKeyPrefix + "/" + LOCKED_SETTING;
@@ -1293,7 +1254,7 @@ void CategoryTreeModel2::setSettings(Settings* settings, const QString& settings
   }
 }
 
-void CategoryTreeModel2::clearTree_()
+void CategoryTreeModel::clearTree_()
 {
   beginResetModel();
   categories_.deleteAll();
@@ -1303,7 +1264,7 @@ void CategoryTreeModel2::clearTree_()
   endResetModel();
 }
 
-void CategoryTreeModel2::addName_(int nameInt)
+void CategoryTreeModel::addName_(int nameInt)
 {
   assert(dataStore_ != NULL);
 
@@ -1338,21 +1299,21 @@ void CategoryTreeModel2::addName_(int nameInt)
   endInsertRows();
 }
 
-CategoryTreeModel2::CategoryItem* CategoryTreeModel2::findNameTree_(int nameInt) const
+CategoryTreeModel::CategoryItem* CategoryTreeModel::findNameTree_(int nameInt) const
 {
   auto i = categoryIntToItem_.find(nameInt);
   return (i == categoryIntToItem_.end()) ? NULL : i->second;
 }
 
-void CategoryTreeModel2::updateLockedState_(const QStringList& lockedCategories, CategoryItem& category)
+void CategoryTreeModel::updateLockedState_(const QStringList& lockedCategories, CategoryItem& category)
 {
   if (!lockedCategories.contains(category.categoryName()))
     return;
   bool wasChanged = false;
-  category.setData(true, CategoryTreeModel2::ROLE_LOCKED_STATE, *filter_, wasChanged);
+  category.setData(true, CategoryTreeModel::ROLE_LOCKED_STATE, *filter_, wasChanged);
 }
 
-void CategoryTreeModel2::addValue_(int nameInt, int valueInt)
+void CategoryTreeModel::addValue_(int nameInt, int valueInt)
 {
   // Find the parent item
   TreeItem* nameItem = findNameTree_(nameInt);
@@ -1378,7 +1339,7 @@ void CategoryTreeModel2::addValue_(int nameInt, int valueInt)
   endInsertRows();
 }
 
-void CategoryTreeModel2::processCategoryCounts(const simQt::CategoryCountResults& results)
+void CategoryTreeModel::processCategoryCounts(const simQt::CategoryCountResults& results)
 {
   const int numCategories = categories_.size();
   int firstRowChanged = -1;
@@ -1651,8 +1612,8 @@ void CategoryTreeItemDelegate::paintCategory_(QPainter* painter, QStyleOptionVie
     StyleOptionToggleSwitch switchOpt;
     ToggleSwitchPainter switchPainter;
     switchOpt.rect = r.excludeToggle;
-    switchOpt.locked = index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool();
-    switchOpt.value = (switchOpt.locked ? false : index.data(CategoryTreeModel2::ROLE_EXCLUDE).toBool());
+    switchOpt.locked = index.data(CategoryTreeModel::ROLE_LOCKED_STATE).toBool();
+    switchOpt.value = (switchOpt.locked ? false : index.data(CategoryTreeModel::ROLE_EXCLUDE).toBool());
     switchPainter.paint(switchOpt, painter);
   }
 
@@ -1728,7 +1689,7 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
       return false;
     }
     // Ignore event if category is locked
-    if (index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+    if (index.data(CategoryTreeModel::ROLE_LOCKED_STATE).toBool())
     {
       clickedIndex_ = QModelIndex();
       return true;
@@ -1750,7 +1711,7 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
   case QEvent::MouseButtonRelease:
   {
     // Ignore event if category is locked
-    if (index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+    if (index.data(CategoryTreeModel::ROLE_LOCKED_STATE).toBool())
     {
       clickedIndex_ = QModelIndex();
       return true;
@@ -1763,9 +1724,9 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
       // Toggle button should, well, toggle
       if (clickedElement_ == SE_EXCLUDE_TOGGLE)
       {
-        QVariant oldState = index.data(CategoryTreeModel2::ROLE_EXCLUDE);
+        QVariant oldState = index.data(CategoryTreeModel::ROLE_EXCLUDE);
         if (index.flags().testFlag(Qt::ItemIsEnabled))
-          model->setData(index, !oldState.toBool(), CategoryTreeModel2::ROLE_EXCLUDE);
+          model->setData(index, !oldState.toBool(), CategoryTreeModel::ROLE_EXCLUDE);
         clickedIndex_ = QModelIndex();
         return true;
       }
@@ -1783,7 +1744,7 @@ bool CategoryTreeItemDelegate::categoryEvent_(QEvent* evt, QAbstractItemModel* m
 
   case QEvent::MouseButtonDblClick:
     // Ignore event if category is locked
-    if (index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+    if (index.data(CategoryTreeModel::ROLE_LOCKED_STATE).toBool())
     {
       clickedIndex_ = QModelIndex();
       return true;
@@ -1867,7 +1828,7 @@ void CategoryTreeItemDelegate::calculateRects_(const QStyleOptionViewItem& optio
     rects.branch.setRight(rects.branch.left() + rects.branch.height());
 
     // Calculate the width given the rectangle of height, for the toggle switch
-    const bool haveRegExp = !index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString().isEmpty();
+    const bool haveRegExp = !index.data(CategoryTreeModel::ROLE_REGEXP_STRING).toString().isEmpty();
     if (haveRegExp)
     {
       rects.excludeToggle = QRect();
@@ -1946,10 +1907,10 @@ bool CategoryTreeItemDelegate::helpEvent(QHelpEvent* evt, QAbstractItemView* vie
 * Class that listens for entity events in the DataStore, and
 * informs the parent when they happen.
 */
-class CategoryFilterWidget2::DataStoreListener : public simData::DataStore::Listener
+class CategoryFilterWidget::DataStoreListener : public simData::DataStore::Listener
 {
 public:
-  explicit DataStoreListener(CategoryFilterWidget2& parent)
+  explicit DataStoreListener(CategoryFilterWidget& parent)
     : parent_(parent)
   {};
 
@@ -1974,12 +1935,12 @@ public:
   virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
 
 private:
-  CategoryFilterWidget2& parent_;
+  CategoryFilterWidget& parent_;
 };
 
 /////////////////////////////////////////////////////////////////////////
 
-CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
+CategoryFilterWidget::CategoryFilterWidget(QWidget* parent)
   : QWidget(parent),
     activeFiltering_(false),
     showEntityCount_(false),
@@ -1988,12 +1949,12 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
     countDirty_(true)
 {
   setWindowTitle("Category Data Filter");
-  setObjectName("CategoryFilterWidget2");
+  setObjectName("CategoryFilterWidget");
 
-  treeModel_ = new simQt::CategoryTreeModel2(this);
+  treeModel_ = new simQt::CategoryTreeModel(this);
   proxy_ = new simQt::CategoryProxyModel(this);
   proxy_->setSourceModel(treeModel_);
-  proxy_->setSortRole(simQt::CategoryTreeModel2::ROLE_SORT_STRING);
+  proxy_->setSortRole(simQt::CategoryTreeModel::ROLE_SORT_STRING);
   proxy_->sort(0);
 
   treeView_ = new QTreeView(this);
@@ -2075,16 +2036,16 @@ CategoryFilterWidget2::CategoryFilterWidget2(QWidget* parent)
   // Entity filtering is on by default
   setShowEntityCount(true);
 
-  dsListener_.reset(new CategoryFilterWidget2::DataStoreListener(*this));
+  dsListener_.reset(new CategoryFilterWidget::DataStoreListener(*this));
 }
 
-CategoryFilterWidget2::~CategoryFilterWidget2()
+CategoryFilterWidget::~CategoryFilterWidget()
 {
   if (categoryFilter().getDataStore())
     categoryFilter().getDataStore()->removeListener(dsListener_);
 }
 
-void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
+void CategoryFilterWidget::setDataStore(simData::DataStore* dataStore)
 {
   simData::DataStore* prevDataStore = categoryFilter().getDataStore();
   if (prevDataStore == dataStore)
@@ -2100,32 +2061,32 @@ void CategoryFilterWidget2::setDataStore(simData::DataStore* dataStore)
     dataStore->addListener(dsListener_);
 }
 
-void CategoryFilterWidget2::setSettings(Settings* settings, const QString& settingsKeyPrefix)
+void CategoryFilterWidget::setSettings(Settings* settings, const QString& settingsKeyPrefix)
 {
   treeModel_->setSettings(settings, settingsKeyPrefix);
 }
 
-const simData::CategoryFilter& CategoryFilterWidget2::categoryFilter() const
+const simData::CategoryFilter& CategoryFilterWidget::categoryFilter() const
 {
   return treeModel_->categoryFilter();
 }
 
-void CategoryFilterWidget2::setFilter(const simData::CategoryFilter& categoryFilter)
+void CategoryFilterWidget::setFilter(const simData::CategoryFilter& categoryFilter)
 {
   treeModel_->setFilter(categoryFilter);
 }
 
-void CategoryFilterWidget2::processCategoryCounts(const simQt::CategoryCountResults& results)
+void CategoryFilterWidget::processCategoryCounts(const simQt::CategoryCountResults& results)
 {
   treeModel_->processCategoryCounts(results);
 }
 
-bool CategoryFilterWidget2::showEntityCount() const
+bool CategoryFilterWidget::showEntityCount() const
 {
   return showEntityCount_;
 }
 
-void CategoryFilterWidget2::setShowEntityCount(bool fl)
+void CategoryFilterWidget::setShowEntityCount(bool fl)
 {
   if (fl == showEntityCount_)
     return;
@@ -2150,7 +2111,7 @@ void CategoryFilterWidget2::setShowEntityCount(bool fl)
   }
 }
 
-void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
+void CategoryFilterWidget::expandAfterFilterEdited_(const QString& filterText)
 {
   if (filterText.isEmpty())
   {
@@ -2170,7 +2131,7 @@ void CategoryFilterWidget2::expandAfterFilterEdited_(const QString& filterText)
   }
 }
 
-void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, int to, int from)
+void CategoryFilterWidget::expandDueToProxy_(const QModelIndex& parentIndex, int to, int from)
 {
   // Only expand when we're actively filtering, because we want
   // to see rows that match the active filter as they show up
@@ -2198,12 +2159,12 @@ void CategoryFilterWidget2::expandDueToProxy_(const QModelIndex& parentIndex, in
   }
 }
 
-void CategoryFilterWidget2::toggleExpanded_(const QModelIndex& proxyIndex)
+void CategoryFilterWidget::toggleExpanded_(const QModelIndex& proxyIndex)
 {
   treeView_->setExpanded(proxyIndex, !treeView_->isExpanded(proxyIndex));
 }
 
-void CategoryFilterWidget2::resetFilter_()
+void CategoryFilterWidget::resetFilter_()
 {
   // Create a new empty filter using same data store
   const simData::CategoryFilter newFilter(treeModel_->categoryFilter().getDataStore());
@@ -2214,15 +2175,15 @@ void CategoryFilterWidget2::resetFilter_()
   emit filterEdited(treeModel_->categoryFilter());
 }
 
-void CategoryFilterWidget2::showContextMenu_(const QPoint& point)
+void CategoryFilterWidget::showContextMenu_(const QPoint& point)
 {
   QMenu contextMenu(this);
   contextMenu.addActions(treeView_->actions());
 
   // Mark the RegExp and Lock actions enabled or disabled based on current state
   const QModelIndex idx = treeView_->indexAt(point);
-  const bool emptyRegExp = idx.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString().isEmpty();
-  const bool locked = idx.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool();
+  const bool emptyRegExp = idx.data(CategoryTreeModel::ROLE_REGEXP_STRING).toString().isEmpty();
+  const bool locked = idx.data(CategoryTreeModel::ROLE_LOCKED_STATE).toBool();
   if (locked && !emptyRegExp)
     assert(0); // Should not be possible to have a RegExp set on a locked category
   setRegExpAction_->setProperty("index", idx);
@@ -2248,7 +2209,7 @@ void CategoryFilterWidget2::showContextMenu_(const QPoint& point)
   toggleLockCategoryAction_->setProperty("index", QVariant());
 }
 
-void CategoryFilterWidget2::setRegularExpression_()
+void CategoryFilterWidget::setRegularExpression_()
 {
   // Make sure we have a sender and can pull out the index.  If not, return
   QObject* senderObject = sender();
@@ -2259,11 +2220,11 @@ void CategoryFilterWidget2::setRegularExpression_()
     showRegExpEditGui_(index);
 }
 
-void CategoryFilterWidget2::showRegExpEditGui_(const QModelIndex& index)
+void CategoryFilterWidget::showRegExpEditGui_(const QModelIndex& index)
 {
   // Grab category name and old regexp, then ask user for new value
-  const QString oldRegExp = index.data(CategoryTreeModel2::ROLE_REGEXP_STRING).toString();
-  const QString categoryName = index.data(CategoryTreeModel2::ROLE_CATEGORY_NAME).toString();
+  const QString oldRegExp = index.data(CategoryTreeModel::ROLE_REGEXP_STRING).toString();
+  const QString categoryName = index.data(CategoryTreeModel::ROLE_CATEGORY_NAME).toString();
 
   // pop up dialog with a entity filter line edit that supports formatting regexp
   QDialog optionsDialog(this);
@@ -2292,11 +2253,11 @@ void CategoryFilterWidget2::showRegExpEditGui_(const QModelIndex& index)
     // index.model() is const because changes to the model might invalidate indices.  Since we know this
     // and no longer use the index after this call, it is safe to use const_cast here to use setData().
     QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
-    model->setData(index, lineEdit->text(), CategoryTreeModel2::ROLE_REGEXP_STRING);
+    model->setData(index, lineEdit->text(), CategoryTreeModel::ROLE_REGEXP_STRING);
   }
 }
 
-void CategoryFilterWidget2::clearRegularExpression_()
+void CategoryFilterWidget::clearRegularExpression_()
 {
   // Make sure we have a sender and can pull out the index.  If not, return
   QObject* senderObject = sender();
@@ -2308,10 +2269,10 @@ void CategoryFilterWidget2::clearRegularExpression_()
   // index.model() is const because changes to the model might invalidate indices.  Since we know this
   // and no longer use the index after this call, it is safe to use const_cast here to use setData().
   QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
-  model->setData(index, QString(""), CategoryTreeModel2::ROLE_REGEXP_STRING);
+  model->setData(index, QString(""), CategoryTreeModel::ROLE_REGEXP_STRING);
 }
 
-void CategoryFilterWidget2::toggleLockCategory_()
+void CategoryFilterWidget::toggleLockCategory_()
 {
   // Make sure we have a sender and can pull out the index.  If not, return
   QObject* senderObject = sender();
@@ -2321,7 +2282,7 @@ void CategoryFilterWidget2::toggleLockCategory_()
   if (!index.isValid())
     return;
 
-  const bool locked = index.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool();
+  const bool locked = index.data(CategoryTreeModel::ROLE_LOCKED_STATE).toBool();
 
   if (!locked)
   {
@@ -2342,21 +2303,21 @@ void CategoryFilterWidget2::toggleLockCategory_()
   // and no longer use the index after this call, it is safe to use const_cast here to use setData().
   QAbstractItemModel* model = const_cast<QAbstractItemModel*>(index.model());
   // Unlock the category
-  model->setData(index, !locked, CategoryTreeModel2::ROLE_LOCKED_STATE);
+  model->setData(index, !locked, CategoryTreeModel::ROLE_LOCKED_STATE);
 }
 
-void CategoryFilterWidget2::expandUnlockedCategories_()
+void CategoryFilterWidget::expandUnlockedCategories_()
 {
   // Expand each category if it isn't locked
   for (int i = 0; i < proxy_->rowCount(); ++i)
   {
     const QModelIndex& idx = proxy_->index(i, 0);
-    if (!idx.data(CategoryTreeModel2::ROLE_LOCKED_STATE).toBool())
+    if (!idx.data(CategoryTreeModel::ROLE_LOCKED_STATE).toBool())
       treeView_->setExpanded(idx, true);
   }
 }
 
-void CategoryFilterWidget2::recountCategories_()
+void CategoryFilterWidget::recountCategories_()
 {
   if (countDirty_)
   {

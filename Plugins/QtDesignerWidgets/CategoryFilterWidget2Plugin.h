@@ -19,22 +19,22 @@
  * disclose, or release this software.
  *
  */
-#ifndef CATEGORY_FILTER_WIDGET2_PLUGIN_H
-#define CATEGORY_FILTER_WIDGET2_PLUGIN_H
+#ifndef CATEGORY_FILTER_WIDGET_PLUGIN_H
+#define CATEGORY_FILTER_WIDGET_PLUGIN_H
 
 #include <QDesignerCustomWidgetInterface>
 
 namespace simData { class DataStore; }
 
 // Wrapper class for the CategoryFilterWidget2 to provide QDesignerCustomWidgetInterface
-class CategoryFilterWidget2Plugin : public QObject, public QDesignerCustomWidgetInterface
+class CategoryFilterWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
 {
   Q_OBJECT
   Q_INTERFACES(QDesignerCustomWidgetInterface)
 
 public:
-  explicit CategoryFilterWidget2Plugin(QObject *parent = 0);
-  virtual ~CategoryFilterWidget2Plugin();
+  explicit CategoryFilterWidgetPlugin(QObject *parent = 0);
+  virtual ~CategoryFilterWidgetPlugin();
 
   bool isContainer() const;
   bool isInitialized() const;

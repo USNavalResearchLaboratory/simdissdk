@@ -26,33 +26,33 @@
 #include "simQt/CategoryTreeModel2.h"
 #include "CategoryFilterWidget2Plugin.h"
 
-CategoryFilterWidget2Plugin::CategoryFilterWidget2Plugin(QObject *parent)
+CategoryFilterWidgetPlugin::CategoryFilterWidgetPlugin(QObject *parent)
   : QObject(parent),
     dataStore_(NULL)
 {
 }
 
-CategoryFilterWidget2Plugin::~CategoryFilterWidget2Plugin()
+CategoryFilterWidgetPlugin::~CategoryFilterWidgetPlugin()
 {
   delete dataStore_;
 }
 
-void CategoryFilterWidget2Plugin::initialize(QDesignerFormEditorInterface *)
+void CategoryFilterWidgetPlugin::initialize(QDesignerFormEditorInterface *)
 {
   if (dataStore_)
     return;
   dataStore_ = new simData::MemoryDataStore;
-  CategoryFilterWidget2Plugin::createDefaultCategories(*dataStore_);
+  CategoryFilterWidgetPlugin::createDefaultCategories(*dataStore_);
 }
 
-bool CategoryFilterWidget2Plugin::isInitialized() const
+bool CategoryFilterWidgetPlugin::isInitialized() const
 {
   return dataStore_ != NULL;
 }
 
-QWidget *CategoryFilterWidget2Plugin::createWidget(QWidget *parent)
+QWidget *CategoryFilterWidgetPlugin::createWidget(QWidget *parent)
 {
-  simQt::CategoryFilterWidget2* rv = new simQt::CategoryFilterWidget2(parent);
+  simQt::CategoryFilterWidget* rv = new simQt::CategoryFilterWidget(parent);
   // Create the data store, adding default categories
   initialize(NULL);
   rv->setDataStore(dataStore_);
@@ -74,51 +74,51 @@ QWidget *CategoryFilterWidget2Plugin::createWidget(QWidget *parent)
   return rv;
 }
 
-QString CategoryFilterWidget2Plugin::name() const
+QString CategoryFilterWidgetPlugin::name() const
 {
-  return "simQt::CategoryFilterWidget2";
+  return "simQt::CategoryFilterWidget";
 }
 
-QString CategoryFilterWidget2Plugin::group() const
+QString CategoryFilterWidgetPlugin::group() const
 {
   return "simQt";
 }
 
-QIcon CategoryFilterWidget2Plugin::icon() const
+QIcon CategoryFilterWidgetPlugin::icon() const
 {
   return QIcon(":/SDKPlugins/images/Categorize.png");
 }
 
-QString CategoryFilterWidget2Plugin::toolTip() const
+QString CategoryFilterWidgetPlugin::toolTip() const
 {
   return "Filter entities by category";
 }
 
-QString CategoryFilterWidget2Plugin::whatsThis() const
+QString CategoryFilterWidgetPlugin::whatsThis() const
 {
   return toolTip();
 }
 
-bool CategoryFilterWidget2Plugin::isContainer() const
+bool CategoryFilterWidgetPlugin::isContainer() const
 {
   return false;
 }
 
-QString CategoryFilterWidget2Plugin::domXml() const
+QString CategoryFilterWidgetPlugin::domXml() const
 {
   return
-    "<ui language=\"c++\" displayname=\"Category Filter Widget 2\">"
-    "<widget class=\"simQt::CategoryFilterWidget2\" name=\"categoryFilterWidget\">\n"
+    "<ui language=\"c++\" displayname=\"Category Filter Widget\">"
+    "<widget class=\"simQt::CategoryFilterWidget\" name=\"categoryFilterWidget\">\n"
     "</widget>\n"
     "</ui>";
 }
 
-QString CategoryFilterWidget2Plugin::includeFile() const
+QString CategoryFilterWidgetPlugin::includeFile() const
 {
-  return "simQt/CategoryTreeModel2.h";
+  return "simQt/CategoryTreeModel.h";
 }
 
-void CategoryFilterWidget2Plugin::createDefaultCategories(simData::DataStore& dataStore)
+void CategoryFilterWidgetPlugin::createDefaultCategories(simData::DataStore& dataStore)
 {
   // Add some useful category names for display purposes
   simData::CategoryNameManager& nameManager = dataStore.categoryNameManager();

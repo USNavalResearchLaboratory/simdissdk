@@ -47,12 +47,12 @@ MainWindow::MainWindow(simData::DataStore* dataStore, QWidget *parent)
   connect(ui_->togglePushButton, SIGNAL(clicked()), this, SLOT(toggleState_()));
 
   // Configure the new Category Filter Widget
-  ui_->categoryFilterWidget2->setDataStore(dataStore);
-  connect(ui_->categoryFilterWidget2, SIGNAL(filterChanged(simData::CategoryFilter)),
+  ui_->categoryFilterWidget->setDataStore(dataStore);
+  connect(ui_->categoryFilterWidget, SIGNAL(filterChanged(simData::CategoryFilter)),
     ui_->breadcrumbs, SLOT(setFilter(simData::CategoryFilter)));
   connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
-    ui_->categoryFilterWidget2, SLOT(setFilter(simData::CategoryFilter)));
-  connect(ui_->categoryFilterWidget2, SIGNAL(filterChanged(simData::CategoryFilter)),
+    ui_->categoryFilterWidget, SLOT(setFilter(simData::CategoryFilter)));
+  connect(ui_->categoryFilterWidget, SIGNAL(filterChanged(simData::CategoryFilter)),
     this, SLOT(categoryFilterChanged_(simData::CategoryFilter)));
   connect(ui_->breadcrumbs, SIGNAL(filterEdited(simData::CategoryFilter)),
     this, SLOT(categoryFilterChanged_(simData::CategoryFilter)));
@@ -110,7 +110,7 @@ void MainWindow::toggleState_()
 {
   simData::CategoryFilter* filter = new simData::CategoryFilter(dataStore_, true);
   filter->updateAll(state_);
-  ui_->categoryFilterWidget2->setFilter(*filter);
+  ui_->categoryFilterWidget->setFilter(*filter);
   delete filter;
   state_ = !state_;
 }
