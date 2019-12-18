@@ -140,6 +140,7 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, textoutline) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, backdroptype) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, alignment) ||
+      PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, priority) ||
       PB_FIELD_CHANGED(&lastLabelPrefs, &labelPrefs, backdropimplementation);
 
     // update the style:
@@ -150,6 +151,9 @@ void EntityLabelNode::update(const simData::CommonPrefs& commonPrefs, const std:
       ts->alignment() = static_cast<osgEarth::TextSymbol::Alignment>(labelPrefs.alignment());
       ts->pixelOffset() = osg::Vec2s(labelPrefs.offsetx(), labelPrefs.offsety());
       ts->encoding() = osgEarth::TextSymbol::ENCODING_UTF8;
+
+      // Declutter is off if priority is negative
+      ts->declutter() = (labelPrefs.priority() >= 0);
 
       // text color:
       osg::Vec4 color = ColorUtils::RgbaToVec4(labelPrefs.color());
