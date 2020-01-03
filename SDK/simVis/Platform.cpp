@@ -37,6 +37,7 @@
 #include "simVis/PlatformModel.h"
 #include "simVis/RadialLOSNode.h"
 #include "simVis/Registry.h"
+#include "simVis/TimeTicks.h"
 #include "simVis/TrackHistory.h"
 #include "simVis/Utils.h"
 #include "simVis/VelocityVector.h"
@@ -160,6 +161,7 @@ lastUpdateTime_(-std::numeric_limits<float>::max()),
 firstHistoryTime_(std::numeric_limits<float>::max()),
 expireModeGroupAttach_(expireModeGroupAttach),
 track_(NULL),
+timeTicks_(NULL),
 localGrid_(NULL),
 bodyAxisVector_(NULL),
 inertialAxisVector_(NULL),
@@ -205,6 +207,9 @@ PlatformNode::~PlatformNode()
   if (track_.valid())
     expireModeGroup_->removeChild(track_);
   track_ = NULL;
+  if (timeTicks_.valid())
+    expireModeGroup_->removeChild(timeTicks_);
+  timeTicks_ = NULL;
 
   if (expireModeGroupAttach_.valid())
     expireModeGroupAttach_->removeChild(expireModeGroup_);
@@ -285,6 +290,8 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     {
       // normal processing: update the track history data
       track_->setPrefs(prefs, lastProps_);
+      if (timeTicks_.valid())
+        timeTicks_->setPrefs(prefs, lastProps_);
 
       // track_ cannot be valid without having had platform prefs set at least once;
       // if assert fails, check whether prefs are initialized correctly when platform is created
@@ -296,15 +303,25 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
         // track history is constrained by platform data limiting
         track_->reset();
         track_->update();
+        // time ticks follows data limiting same as track history
+        if (timeTicks_.valid())
+        {
+          timeTicks_->reset();
+          timeTicks_->update();
+        }
       }
-      if (track_.valid())
-        track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+      track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+      if (timeTicks_.valid())
+        timeTicks_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
     }
   }
   else
   {
     expireModeGroup_->removeChild(track_);
     track_ = NULL;
+    // time ticks is always hidden if track history is hidden
+    expireModeGroup_->removeChild(timeTicks_);
+    timeTicks_ = NULL;
   }
 
   // validate localgrid prefs changes that might provide user notifications
@@ -481,6 +498,8 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
 
   if (!updateSlice->hasChanged() && !force && !forceUpdateFromDataStore_)
   {
+    if (timeTicks_.valid())
+      timeTicks_->update();
     // Even if the platform has not changed, the label can still change - entity name could change as a result of category data, for example.
     updateLabel_(lastPrefs_);
     return false;
@@ -534,15 +553,28 @@ bool PlatformNode::updateFromDataStore(const simData::DataSliceBase* updateSlice
   {
     if (!track_.valid())
       createTrackHistoryNode_(lastPrefs_);
-    else if (timeChanged || updateSlice->hasChanged())
-      track_->update();
+    else
+    {
+      if (timeChanged || updateSlice->hasChanged())
+        track_->update();
+      // always update time ticks
+      if (timeTicks_.valid())
+        timeTicks_->update();
+    }
   }
-  else if (track_.valid())
+  else
   {
-    expireModeGroup_->removeChild(track_);
-    track_ = NULL;
+    if (track_.valid())
+    {
+      expireModeGroup_->removeChild(track_);
+      track_ = NULL;
+    }
+    if (timeTicks_.valid())
+    {
+      expireModeGroup_->removeChild(timeTicks_);
+      timeTicks_ = NULL;
+    }
   }
-
   // avoid applying a null update over and over
   if (!updateSlice->current() && getNodeMask() == DISPLAY_MASK_NONE && !valid_)
     return false;
@@ -605,8 +637,29 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   track_->setPrefs(prefs, lastProps_, true);
   updateHostBounds_(prefs.scale());
   track_->update();
+
   const bool prefsDraw = lastPrefs_.commonprefs().datadraw() && prefs.commonprefs().draw();
   track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+
+  // TODO: SIM-4428 draw time ticks will be controlled by a separate pref
+  //createTimeTicks_(prefs);
+
+  return true;
+}
+
+bool PlatformNode::createTimeTicks_(const simData::PlatformPrefs& prefs)
+{
+  // if assert fails, check that callers only call on !valid() condition
+  assert(!timeTicks_.valid());
+
+  timeTicks_ = new TimeTicks(ds_, getLocator()->getSRS(), platformTspiFilterManager_, getId());
+  expireModeGroup_->addChild(timeTicks_);
+  timeTicks_->setPrefs(prefs, lastProps_, true);
+  timeTicks_->update();
+
+  const bool prefsDraw = lastPrefs_.commonprefs().datadraw() && prefs.commonprefs().draw();
+  timeTicks_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
+
   return true;
 }
 
@@ -615,6 +668,8 @@ void PlatformNode::updateClockMode(const simCore::Clock* clock)
   // notify the track history of a change in time direction
   if (track_.valid())
     track_->updateClockMode(clock);
+  if (timeTicks_.valid())
+    timeTicks_->updateClockMode(clock);
 }
 
 void PlatformNode::flush()
