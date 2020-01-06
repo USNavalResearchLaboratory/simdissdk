@@ -185,13 +185,25 @@ void TimeTicks::addUpdate_(double tickTime)
   const simData::PlatformUpdate* prev = prevIter.previous();
   const simData::PlatformUpdate* update = iter.next();
   osg::Matrix hostMatrix;
-
   bool largeTick = false;
+
   // if first tick, get the current platform position
   if (chunkGroup_->getNumChildren() == 0)
   {
-    if (!getMatrix_(*update, hostMatrix))
-      return;
+    // special case for first point when going backwards
+    // need to get the possibly interpolated point to start since there may not be a point at the current location
+    if (timeDirection_ == simCore::REVERSE)
+    {
+      if (!hasPrevious)
+        return;
+      if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
+        return;
+    }
+    else
+    {
+      if (!getMatrix_(*update, hostMatrix))
+        return;
+    }
     // first tick is always large
     if (lastLargeTickTime_ == -1)
     {
