@@ -61,7 +61,7 @@ namespace
   static const int LABEL_FONT_SIZE = 30;
 
   // follow track history flat mode
-  static const std::string SIMVIS_TRACK_FLATMODE = "simvis_track_flatmode";
+  static const std::string SIMVIS_TIMETICKS_TRACK_FLATMODE = "simvis_track_flatmode";
 }
 
 
@@ -358,7 +358,7 @@ void TimeTicks::updateFlatMode_(bool flatMode)
       return;    // Does not exist and not needed so return;
 
     osg::StateSet* stateset = this->getOrCreateStateSet();
-    flatModeUniform_ = stateset->getOrCreateUniform(SIMVIS_TRACK_FLATMODE, osg::Uniform::BOOL);
+    flatModeUniform_ = stateset->getOrCreateUniform(SIMVIS_TIMETICKS_TRACK_FLATMODE, osg::Uniform::BOOL);
   }
 
   flatModeUniform_->set(flatMode);
