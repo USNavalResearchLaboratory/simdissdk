@@ -41,6 +41,7 @@
 #include "simVis/OverheadMode.h"
 #include "simVis/PlatformFilter.h"
 #include "simVis/PointSize.h"
+#include "simVis/Registry.h"
 #include "simVis/Shaders.h"
 #include "simVis/TimeTicksChunk.h"
 #include "simVis/Types.h"
@@ -53,11 +54,7 @@ namespace simVis
 namespace
 {
   // TODO: these will be prefs, SIM-4428
-  static const double TIME_INTERVAL_SMALL_SECS = 10;
-  static const double TIME_INTERVAL_LARGE_SECS = 6 * TIME_INTERVAL_SMALL_SECS;
-  static const int TICK_TYPE = 1; // 0 = point, 1 = line
   static const double TICK_WIDTH = 40;
-  static const double TICK_LINE_WIDTH = 2;
   static const int LABEL_FONT_SIZE = 30;
 
   // follow track history flat mode
@@ -76,6 +73,9 @@ TimeTicks::TimeTicks(const simData::DataStore& ds, const osgEarth::SpatialRefere
    lastDrawTime_(0.0),
    lastCurrentTime_(-1.0),
    lastLargeTickTime_(-1.0),
+   lastLabelTime_(-1.0),
+   largeTickInterval_(0.0),
+   labelInterval_(0.0),
    timeDirection_(simCore::FORWARD),
    chunkGroup_(NULL),
    labelGroup_(NULL),
@@ -122,6 +122,7 @@ void TimeTicks::reset()
   addChild(chunkGroup_);
   currentPointChunk_ = NULL;
   lastLargeTickTime_ = -1.0;
+  lastLabelTime_ = -1.0;
 }
 
 TimeTicksChunk* TimeTicks::getCurrentChunk_()
@@ -205,7 +206,7 @@ void TimeTicks::addUpdate_(double tickTime)
         return;
     }
     // first tick is always large
-    if (lastLargeTickTime_ == -1)
+    if (largeTickInterval_ > 0 && lastLargeTickTime_ == -1)
     {
       largeTick = true;
       lastLargeTickTime_ = tickTime;
@@ -217,7 +218,7 @@ void TimeTicks::addUpdate_(double tickTime)
     if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
       return;
     // check to see if it is time for the next large tick
-    if (lastLargeTickTime_ == -1.0 || abs(tickTime - lastLargeTickTime_) >= TIME_INTERVAL_LARGE_SECS)
+    if (largeTickInterval_ > 0 && (lastLargeTickTime_ == -1.0 || abs(tickTime - lastLargeTickTime_) >= largeTickInterval_))
     {
       lastLargeTickTime_ = tickTime;
       largeTick = true;
@@ -226,15 +227,18 @@ void TimeTicks::addUpdate_(double tickTime)
   else
     return;
 
-  // add label for large tick TODO: SIM-4428 this might be a separate pref to define label interval
-  if (largeTick)
+  // add label for large tick
+  if (labelInterval_ > 0 && (lastLabelTime_ == -1.0 || abs(tickTime - lastLabelTime_) >= labelInterval_))
   {
+    lastLabelTime_ = tickTime;
+
     int refYear = 1970;
     simData::DataStore::Transaction t;
     const simData::ScenarioProperties* sp = ds_.scenarioProperties(&t);
     if (sp)
       refYear = sp->referenceyear();
 
+    // TODO: SIM-4428 format label text based on pref
     simCore::TimeStamp textTime(refYear, tickTime);
     simCore::HoursTimeFormatter fmt;
     std::string labelText = fmt.toString(textTime, refYear, 0);
@@ -243,12 +247,17 @@ void TimeTicks::addUpdate_(double tickTime)
     osgText::Text* text = new osgText::Text();
     text->setPosition(osg::Vec3(0, 0, 0));
     text->setText(labelText);
-    text->setFont(osgEarth::Registry::instance()->getDefaultFont());
+    const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
+    std::string fileFullPath = simVis::Registry::instance()->findFontFile(timeTicks.labelfontname());
+    if (!fileFullPath.empty()) // only set if font file found, use default font otherwise
+      text->setFont(fileFullPath);
+    else
+      text->setFont(osgEarth::Registry::instance()->getDefaultFont());
     text->setAutoRotateToScreen(true);
     text->setCharacterSizeMode(osgText::TextBase::OBJECT_COORDS);
     text->setAlignment(osgText::TextBase::LEFT_BOTTOM);
     text->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
-    text->setCharacterSize(LABEL_FONT_SIZE);
+    text->setCharacterSize(timeTicks.labelfontpointsize());
     text->getOrCreateStateSet()->setRenderBinToInherit();
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
@@ -263,8 +272,9 @@ void TimeTicks::addUpdate_(double tickTime)
   if (!chunk)
   {
     // allocate a new chunk
-    TimeTicksChunk::Type type = ((TICK_TYPE == 0) ? TimeTicksChunk::POINT_TICKS : TimeTicksChunk::LINE_TICKS);
-    chunk = new TimeTicksChunk(chunkSize_, type, TICK_WIDTH, TICK_WIDTH * 2);
+    const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
+    TimeTicksChunk::Type type = ((timeTicks.drawstyle() == simData::TimeTickPrefs::POINT) ? TimeTicksChunk::POINT_TICKS : TimeTicksChunk::LINE_TICKS);
+    chunk = new TimeTicksChunk(chunkSize_, type, timeTicks.linelength() / 2, timeTicks.linewidth(), timeTicks.largesizefactor());
 
     // if there is a preceding chunk, duplicate its last point so there is no
     // discontinuity from previous chunk to this new chunk - this matters for line drawing mode
@@ -383,6 +393,8 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
   // force should be true in this case;
   // in any case, if force is set, we should not test on lastPlatformPrefs_
   const simData::TrackPrefs& lastPrefs = lastPlatformPrefs_.trackprefs();
+  const simData::TimeTickPrefs& timeTicks = prefs.timeticks();
+  const simData::TimeTickPrefs& lastTimeTicks = lastPrefs.timeticks();
 
   // platform should be deleting track when trackdrawmode turned off, this should never be called with trackdrawmode off
   // if assert fails, check platform setPrefs logic that processes prefs.trackprefs().trackdrawmode()
@@ -409,9 +421,36 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
     resetRequested = true;
   }
 
-  // TODO: SIM-4428 update linewidth and other time tick specific prefs
-  osg::StateSet* stateSet = this->getOrCreateStateSet();
-  osgEarth::LineDrawable::setLineWidth(stateSet, TICK_LINE_WIDTH);
+  if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, linewidth))
+  {
+    osg::StateSet* stateSet = this->getOrCreateStateSet();
+    osgEarth::LineDrawable::setLineWidth(stateSet, timeTicks.linewidth());
+  }
+
+  if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color))
+  {
+    color_ = simVis::Color(simVis::Color(timeTicks.color(), simVis::Color::RGBA));
+    resetRequested = true;
+  }
+
+  if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, interval) ||
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, largeintervalfactor) ||
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labelintervalfactor))
+  {
+    double interval = timeTicks.interval();
+    largeTickInterval_ = interval * timeTicks.largeintervalfactor();
+    labelInterval_ = interval * timeTicks.labelintervalfactor();
+    resetRequested = true;
+  }
+  // check on other changes that could force a redraw
+  if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, drawstyle) ||
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, linelength) ||
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, largesizefactor) ||
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labelfontname) ||
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labelfontpointsize))
+  {
+    resetRequested = true;
+  }
 
   lastPlatformPrefs_ = platformPrefs;
   lastPlatformProps_ = platformProps;
@@ -525,18 +564,19 @@ void TimeTicks::updateTrackData_(double currentTime, const simData::PlatformUpda
 
 void TimeTicks::backfillHistory_(double endTime, double beginTime)
 {
+  double interval = lastPlatformPrefs_.trackprefs().timeticks().interval();
   if (timeDirection_ == simCore::FORWARD)
   {
     double tickTime = beginTime;
     // if there is already a chunk, start counting from its end time
     simVis::TimeTicksChunk* lastChunk = getLastChunk_();
     if (lastChunk)
-      tickTime = lastChunk->getEndTime() + TIME_INTERVAL_SMALL_SECS;
+      tickTime = lastChunk->getEndTime() + interval;
 
     while (tickTime <= endTime)
     {
       addUpdate_(tickTime);
-      tickTime += TIME_INTERVAL_SMALL_SECS;
+      tickTime += interval;
     }
   }
   else
@@ -545,12 +585,12 @@ void TimeTicks::backfillHistory_(double endTime, double beginTime)
     // if there is already a chunk, start counting from its end time
     simVis::TimeTicksChunk* lastChunk = getLastChunk_();
     if (lastChunk)
-      tickTime = toDrawTime_(lastChunk->getEndTime()) - TIME_INTERVAL_SMALL_SECS;
+      tickTime = toDrawTime_(lastChunk->getEndTime()) - interval;
 
     while (tickTime >= beginTime)
     {
       addUpdate_(tickTime);
-      tickTime -= TIME_INTERVAL_SMALL_SECS;
+      tickTime -= interval;
     }
   }
 }
@@ -562,7 +602,7 @@ void TimeTicks::updateCurrentPoint_(const simData::PlatformUpdateSlice& updateSl
     currentPointChunk_->reset();
 
   // no current point if not line ticks
-  if (TICK_TYPE == 0)
+  if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::POINT)
     return;
 
   // only line, ribbon, and bridge draw modes require this processing,
@@ -573,7 +613,8 @@ void TimeTicks::updateCurrentPoint_(const simData::PlatformUpdateSlice& updateSl
   // create the special chunk for rendering the interpolated point, has two points to connect to rest of history for line mode
   if (currentPointChunk_ == NULL)
   {
-    currentPointChunk_ = new TimeTicksChunk(2, TimeTicksChunk::LINE, TICK_WIDTH, TICK_WIDTH * 2);
+    const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
+    currentPointChunk_ = new TimeTicksChunk(2, TimeTicksChunk::LINE, timeTicks.linelength() / 2, timeTicks.linewidth(), timeTicks.largesizefactor());
     if (currentPointChunk_ == NULL)
       return;
     addChild(currentPointChunk_);
@@ -669,7 +710,7 @@ bool TimeTicks::getMatrix_(const simData::PlatformUpdate& prevPoint, const simDa
   simCore::Coordinate ecefCoordCur(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate.x(), platformUpdate.y(), platformUpdate.z()));
 
   // for point ticks, only need the position
-  if (TICK_TYPE == 0)
+  if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::POINT)
   {
     locator_->setCoordinate(ecefCoordCur, time);
 

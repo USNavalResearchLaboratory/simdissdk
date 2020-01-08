@@ -284,6 +284,18 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   // remove or create track history
   if (showTrack_(prefs))
   {
+    // first check time ticks
+    if (prefs.trackprefs().timeticks().drawstyle() != simData::TimeTickPrefs::NONE)
+    {
+      if (!timeTicks_.valid())
+        createTimeTicks_(prefs);
+    }
+    else if (timeTicks_.valid())
+    {
+      expireModeGroup_->removeChild(timeTicks_);
+      timeTicks_ = NULL;
+    }
+
     if (!track_.valid())
       createTrackHistoryNode_(prefs);
     else
@@ -640,9 +652,6 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
 
   const bool prefsDraw = lastPrefs_.commonprefs().datadraw() && prefs.commonprefs().draw();
   track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
-
-  // TODO: SIM-4428 draw time ticks will be controlled by a separate pref
-  //createTimeTicks_(prefs);
 
   return true;
 }

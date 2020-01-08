@@ -31,15 +31,12 @@
 
 namespace simVis
 {
-// TODO: SIM-4428 these will likely be prefs, possibly derived from tick linewidth
-static const int POINT_SIZE = 4;
-static const int LARGE_POINT_SIZE = 8;
-
-TimeTicksChunk::TimeTicksChunk(unsigned int maxSize, Type type, double lineTickWidth, double largeLineTickWidth)
+TimeTicksChunk::TimeTicksChunk(unsigned int maxSize, Type type, double lineLength, double pointSize, unsigned int largeFactor)
   : TrackPointsChunk(maxSize),
     type_(type),
-    lineTickWidth_(lineTickWidth),
-    largeLineTickWidth_(largeLineTickWidth)
+    lineLength_(lineLength),
+    pointSize_(pointSize),
+    largeSizeFactor_(largeFactor)
 {
   allocate_();
 }
@@ -126,7 +123,7 @@ void TimeTicksChunk::allocate_()
     largePoint_->setColorArray(largeColors);
     largePoint_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
     addChild(largePoint_.get());
-    PointSize::setValues(largePoint_->getOrCreateStateSet(), LARGE_POINT_SIZE, osg::StateAttribute::ON);
+    PointSize::setValues(largePoint_->getOrCreateStateSet(), pointSize_ * largeSizeFactor_, osg::StateAttribute::ON);
 
     // points
     point_ = new osg::Geometry();
@@ -142,7 +139,7 @@ void TimeTicksChunk::allocate_()
     point_->setColorArray(colors);
     point_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
     addChild(point_.get());
-    PointSize::setValues(point_->getOrCreateStateSet(), POINT_SIZE, osg::StateAttribute::ON);
+    PointSize::setValues(point_->getOrCreateStateSet(), pointSize_, osg::StateAttribute::ON);
   }
   else if (type_ == LINE_TICKS)
   {
@@ -208,7 +205,7 @@ void TimeTicksChunk::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
     // hostBounds represents the xMin and xMax values of a bounding box respectively.
     const osg::Matrix posMatrix = matrix * world2local_;
 
-    double width = (large ? largeLineTickWidth_ : lineTickWidth_);
+    double width = lineLength_ * (large ? largeSizeFactor_ : 1);
 
     const osg::Vec3f left = osg::Vec3d(-width, 0.0, 0.0) * posMatrix;
     const osg::Vec3f right = osg::Vec3d(width, 0.0, 0.0) * posMatrix;

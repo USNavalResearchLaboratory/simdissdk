@@ -46,9 +46,12 @@ public:
   /**
   * Create a new chunk with a maximum size
   * @param maxSize maximum chunk size, in points
-  * @param drawPoints if true draw point ticks, otherwise draw line ticks
+  * @param type draw style for rendering ticks
+  * @param lineLength width in meters of line tick to draw
+  * @param pointSize pixel size of points tick to draw
+  * @param largeFactor large tick factor for line and point, multiple of lineLength for line, multiple of pointSize for point
   */
-  TimeTicksChunk(unsigned int maxSize, Type type, double lineTickWidth, double largeLineTickWidth);
+  TimeTicksChunk(unsigned int maxSize, Type type, double lineLength, double pointSize, unsigned int largeFactor);
 
   /**
   * Add a new point to the chunk
@@ -97,10 +100,12 @@ private:
 private:
   /// draw type
   Type type_;
-  /// line tick width
-  double lineTickWidth_;
-  /// large line tick width
-  double largeLineTickWidth_;
+  /// line tick length
+  double lineLength_;
+  /// point tick size
+  double pointSize_;
+  /// large tick size factor
+  double largeSizeFactor_;
   ///container for drawables
   osg::ref_ptr<osg::Geode> geode_;
   /// point graphic

@@ -199,6 +199,9 @@ private: // data
   double                 lastDrawTime_;
   double                 lastCurrentTime_;
   double                 lastLargeTickTime_;
+  double                 largeTickInterval_;
+  double                 lastLabelTime_;
+  double                 labelInterval_;
 
   // Playback direction (follows a datastore-bound Clock).
   simCore::TimeDirection timeDirection_;
