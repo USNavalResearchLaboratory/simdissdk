@@ -287,7 +287,7 @@ endif()
 add_library(simQt ${STATIC_OR_SHARED} ${SIMQT_PROJECT_FILES})
 set_target_properties(simQt PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Qt"
+    PROJECT_LABEL "simQt"
 )
 ApplySDKVersion(simQt)
 target_include_directories(simQt

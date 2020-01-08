@@ -132,7 +132,7 @@ endif()
 add_library(simUtil ${STATIC_OR_SHARED} ${UTIL_PROJECT_FILES})
 set_target_properties(simUtil PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Util"
+    PROJECT_LABEL "simUtil"
 )
 ApplySDKVersion(simUtil)
 target_include_directories(simUtil PUBLIC

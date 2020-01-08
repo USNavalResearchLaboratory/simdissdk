@@ -26,7 +26,7 @@ endif()
 target_include_directories(example_qtentityviewtest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qtentityviewtest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Qt Entity View Test"
+    PROJECT_LABEL "Qt Entity View Test"
 )
 vsi_install_target(example_qtentityviewtest SDK_Examples)
 

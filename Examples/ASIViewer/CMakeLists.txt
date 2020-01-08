@@ -12,6 +12,6 @@ add_executable(example_asiviewer ${PROJECT_FILES})
 target_link_libraries(example_asiviewer PRIVATE simVis simUtil)
 set_target_properties(example_asiviewer PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - ASI Simple Viewer"
+    PROJECT_LABEL "ASI Simple Viewer"
 )
 vsi_install_target(example_asiviewer SDK_Examples)

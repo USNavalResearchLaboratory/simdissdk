@@ -12,6 +12,6 @@ add_executable(example_gatetest ${PROJECT_FILES})
 target_link_libraries(example_gatetest PRIVATE simVis simUtil)
 set_target_properties(example_gatetest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Gates Test"
+    PROJECT_LABEL "Gates Test"
 )
 vsi_install_target(example_gatetest SDK_Examples)

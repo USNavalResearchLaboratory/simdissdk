@@ -33,7 +33,7 @@ add_executable(SimDataTests ${SimDataTestFiles})
 target_link_libraries(SimDataTests PRIVATE simData simUtil)
 set_target_properties(SimDataTests PROPERTIES
     FOLDER "Unit Tests"
-    PROJECT_LABEL "Unit Tests - SimData"
+    PROJECT_LABEL "simData Test"
 )
 
 # simQt is used in CategoryDataTest for its Regular Expression implementation

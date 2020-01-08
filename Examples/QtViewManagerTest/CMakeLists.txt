@@ -15,7 +15,7 @@ add_executable(example_qtviewmanagertest ${PROJECT_FILES})
 target_link_libraries(example_qtviewmanagertest PRIVATE simVis simUtil simQt)
 set_target_properties(example_qtviewmanagertest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Qt View Manager Test"
+    PROJECT_LABEL "Qt View Manager Test"
 )
 vsi_install_target(example_qtviewmanagertest SDK_Examples)
 

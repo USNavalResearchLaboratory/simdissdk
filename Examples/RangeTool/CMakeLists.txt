@@ -12,6 +12,6 @@ add_executable(example_rangetool ${PROJECT_FILES})
 target_link_libraries(example_rangetool PRIVATE simVis simUtil)
 set_target_properties(example_rangetool PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Range Tool"
+    PROJECT_LABEL "Range Tool"
 )
 vsi_install_target(example_rangetool SDK_Examples)

@@ -386,7 +386,7 @@ endif()
 add_library(simVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
 set_target_properties(simVis PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Vis"
+    PROJECT_LABEL "simVis"
 )
 ApplySDKVersion(simVis)
 target_include_directories(simVis PUBLIC

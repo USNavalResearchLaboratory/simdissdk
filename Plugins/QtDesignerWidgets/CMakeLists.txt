@@ -94,7 +94,7 @@ target_include_directories(simQtDesignerWidgets PRIVATE ${CMAKE_CURRENT_BINARY_D
 target_compile_definitions(simQtDesignerWidgets PRIVATE QDESIGNER_EXPORT_WIDGETS)
 set_target_properties(simQtDesignerWidgets PROPERTIES
     FOLDER "Qt Designer Plugins"
-    PROJECT_LABEL "Plugin - simQt Designer Widgets")
+    PROJECT_LABEL "simQt Designer Widgets")
 
 if(OSG_FOUND)
     target_compile_definitions(simQtDesignerWidgets PRIVATE HAVE_OSG)

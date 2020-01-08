@@ -45,7 +45,7 @@ if(TARGET simUtil)
 endif()
 set_target_properties(SimCoreTests PROPERTIES
     FOLDER "Unit Tests"
-    PROJECT_LABEL "Unit Tests - SimCore"
+    PROJECT_LABEL "simCore Test"
 )
 
 add_test(NAME VersionTest COMMAND SimCoreTests VersionTest)

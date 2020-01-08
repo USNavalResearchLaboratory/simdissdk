@@ -12,6 +12,6 @@ add_executable(example_timestampedlayer ${PROJECT_FILES})
 target_link_libraries(example_timestampedlayer PRIVATE simVis simUtil)
 set_target_properties(example_timestampedlayer PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Timestamped Layer"
+    PROJECT_LABEL "Timestamped Layer"
 )
 vsi_install_target(example_timestampedlayer SDK_Examples)

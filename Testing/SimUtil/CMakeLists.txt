@@ -13,7 +13,7 @@ add_executable(SimUtilTests ${SimUtilTestFiles})
 target_link_libraries(SimUtilTests PRIVATE simUtil)
 set_target_properties(SimUtilTests PROPERTIES
     FOLDER "Unit Tests"
-    PROJECT_LABEL "Unit Tests - SimUtil"
+    PROJECT_LABEL "simUtil Test"
 )
 
 add_test(NAME IdMapperTest COMMAND SimUtilTests IdMapperTest)
