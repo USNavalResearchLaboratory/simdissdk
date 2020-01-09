@@ -254,11 +254,11 @@ message CoordinateFrame {
 // preferences for the display of platform time ticks
 message TimeTickPrefs {
   enum DrawStyle {
-    NONE = 0; 
+    NONE = 0;
     POINT = 1; ///< draw ticks as points
     LINE = 2; ///< draw ticks as lines
   };
-  optional DrawStyle drawStyle = 1 [default = POINT];
+  optional DrawStyle drawStyle = 1 [default = NONE];
   /// default color is translucent white
   optional fixed32 color = 2 [default = 0xFFFFFF99];
   /// time tick interval in seconds

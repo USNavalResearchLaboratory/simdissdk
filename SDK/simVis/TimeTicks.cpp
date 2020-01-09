@@ -232,35 +232,55 @@ void TimeTicks::addUpdate_(double tickTime)
   {
     lastLabelTime_ = tickTime;
 
+    // get formatted time string
     int refYear = 1970;
     simData::DataStore::Transaction t;
     const simData::ScenarioProperties* sp = ds_.scenarioProperties(&t);
     if (sp)
       refYear = sp->referenceyear();
-
-    // TODO: SIM-4428 format label text based on pref
     simCore::TimeStamp textTime(refYear, tickTime);
-    simCore::HoursTimeFormatter fmt;
-    std::string labelText = fmt.toString(textTime, refYear, 0);
+    std::string labelText;
+    const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
+    const simData::ElapsedTimeFormat timeFormat = timeTicks.labeltimeformat();
+    // show HH:MM:SS
+    if (timeFormat == simData::ELAPSED_HOURS)
+    {
+      simCore::HoursWrappedTimeFormatter formatter;
+      labelText = formatter.toString(textTime, refYear, 0);
+    }
+
+    // show MM:SS
+    else if (timeFormat == simData::ELAPSED_MINUTES)
+    {
+      simCore::MinutesWrappedTimeFormatter formatter;
+      labelText = formatter.toString(textTime, refYear, 0);
+    }
+
+    // show SS
+    else
+    {
+      simCore::SecondsTimeFormatter formatter;
+      labelText = formatter.toString(textTime, refYear, 0);
+    }
 
     osg::MatrixTransform* xform = new osg::MatrixTransform();
     osgText::Text* text = new osgText::Text();
     text->setPosition(osg::Vec3(0, 0, 0));
     text->setText(labelText);
-    const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
     std::string fileFullPath = simVis::Registry::instance()->findFontFile(timeTicks.labelfontname());
     if (!fileFullPath.empty()) // only set if font file found, use default font otherwise
       text->setFont(fileFullPath);
     else
       text->setFont(osgEarth::Registry::instance()->getDefaultFont());
     text->setAutoRotateToScreen(true);
-    text->setCharacterSizeMode(osgText::TextBase::OBJECT_COORDS);
-    text->setAlignment(osgText::TextBase::LEFT_BOTTOM);
+    text->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS);
+    text->setAlignment(osgText::TextBase::RIGHT_BOTTOM);
     text->setBackdropType(osgText::Text::DROP_SHADOW_BOTTOM_RIGHT);
     text->setCharacterSize(timeTicks.labelfontpointsize());
     text->getOrCreateStateSet()->setRenderBinToInherit();
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
+    text->setColor(ColorUtils::RgbaToVec4(timeTicks.color()));
     xform->addChild(text);
     xform->setMatrix(hostMatrix);
     labelGroup_->addChild(xform);
@@ -425,6 +445,9 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
   {
     osg::StateSet* stateSet = this->getOrCreateStateSet();
     osgEarth::LineDrawable::setLineWidth(stateSet, timeTicks.linewidth());
+    // need to redraw points if line width changed
+    if (timeTicks.drawstyle() == simData::TimeTickPrefs::POINT)
+      resetRequested = true;
   }
 
   if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color))
@@ -447,7 +470,8 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
     PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, linelength) ||
     PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, largesizefactor) ||
     PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labelfontname) ||
-    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labelfontpointsize))
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labelfontpointsize) ||
+    PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, labeltimeformat))
   {
     resetRequested = true;
   }
