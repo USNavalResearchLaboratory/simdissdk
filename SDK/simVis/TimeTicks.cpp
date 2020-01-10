@@ -428,7 +428,7 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
   }
 
   // check for override color
-  if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, usetrackoverridecolor))
+  if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, usetrackoverridecolor) || PB_FIELD_CHANGED(&lastPrefs, &prefs, trackoverridecolor))
   {
     resetRequested = true;
     if (prefs.usetrackoverridecolor())
