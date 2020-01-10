@@ -280,7 +280,7 @@ void TimeTicks::addUpdate_(double tickTime)
     text->getOrCreateStateSet()->setRenderBinDetails(simVis::BIN_LABEL, simVis::BIN_TRAVERSAL_ORDER_SIMSDK);
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
-    text->setColor(ColorUtils::RgbaToVec4(timeTicks.color()));
+    text->setColor(color_);
     xform->addChild(text);
     xform->setMatrix(hostMatrix);
     labelGroup_->addChild(xform);
@@ -427,11 +427,22 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
     resetRequested = true;
   }
 
+  // check for override color
+  if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, usetrackoverridecolor))
+  {
+    resetRequested = true;
+    if (prefs.usetrackoverridecolor())
+      color_ = simVis::Color(prefs.trackoverridecolor(), simVis::Color::RGBA);
+    else
+      color_ = simVis::Color(timeTicks.color(), simVis::Color::RGBA);
+  }
+
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, flatmode))
   {
     updateFlatMode_(prefs.flatmode());
   }
 
+  // check for any clamping changes, which will redraw ticks
   if (force || PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, useclampalt) ||
       PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, clampvalaltmin) ||
       PB_FIELD_CHANGED(&lastPlatformPrefs_, &platformPrefs, clampvalaltmax) ||
@@ -450,9 +461,10 @@ void TimeTicks::setPrefs(const simData::PlatformPrefs& platformPrefs, const simD
       resetRequested = true;
   }
 
-  if (force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color))
+  // use tick color if not overridden by track color
+  if ((force || PB_FIELD_CHANGED(&lastTimeTicks, &timeTicks, color)) && !prefs.usetrackoverridecolor())
   {
-    color_ = simVis::Color(simVis::Color(timeTicks.color(), simVis::Color::RGBA));
+    color_ = simVis::Color(timeTicks.color(), simVis::Color::RGBA);
     resetRequested = true;
   }
 
