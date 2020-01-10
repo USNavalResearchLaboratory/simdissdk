@@ -32,6 +32,7 @@
 
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Time/TimeClass.h"
 #include "simCore/Time/String.h"
 #include "simData/DataTable.h"
@@ -188,23 +189,13 @@ void TimeTicks::addUpdate_(double tickTime)
   osg::Matrix hostMatrix;
   bool largeTick = false;
 
-  // if first tick, get the current platform position
-  if (chunkGroup_->getNumChildren() == 0)
+  // if tick is at first platform point, get the platform position at that time
+  if (!hasPrevious)
   {
     // special case for first point when going backwards
-    // need to get the possibly interpolated point to start since there may not be a point at the current location
-    if (timeDirection_ == simCore::REVERSE)
-    {
-      if (!hasPrevious)
-        return;
-      if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
-        return;
-    }
-    else
-    {
-      if (!getMatrix_(*update, hostMatrix))
-        return;
-    }
+    if (!getMatrix_(*update, hostMatrix))
+      return;
+
     // first tick is always large
     if (largeTickInterval_ > 0 && lastLargeTickTime_ == -1)
     {
@@ -212,8 +203,8 @@ void TimeTicks::addUpdate_(double tickTime)
       lastLargeTickTime_ = tickTime;
     }
   }
-  // not first tick, get the next position, possibly interpolated
-  else if (hasPrevious)
+  // not first tick, or not at fist platform position, get the next position, possibly interpolated
+  else
   {
     if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
       return;
@@ -224,8 +215,6 @@ void TimeTicks::addUpdate_(double tickTime)
       largeTick = true;
     }
   }
-  else
-    return;
 
   // add label for large tick
   if (labelInterval_ > 0 && (lastLabelTime_ == -1.0 || abs(tickTime - lastLabelTime_) >= labelInterval_))
@@ -585,6 +574,45 @@ void TimeTicks::updateTrackData_(double currentTime, const simData::PlatformUpda
           endTime = -FLT_EPSILON + toDrawTime_(lastDrawTime_);
         }
       }
+    }
+  }
+  // check last draw time again, since it may have been updated in the block above
+  if (!hasLastDrawTime_)
+  {
+    // time ticks should reference from scenario start time
+    double firstTime = ds_.timeBounds(0).first;
+    // update begin time to always count up to a valid draw time from first time in case data limiting is occurring
+    const double interval = lastPlatformPrefs_.trackprefs().timeticks().interval();
+    if (beginTime != firstTime)
+    {
+      const double beginSpan = beginTime - firstTime;
+      double numIntervals = floor(beginSpan / interval);
+      beginTime = firstTime + (numIntervals * interval);
+      beginTime += interval;
+
+      if (timeDirection_ == simCore::FORWARD)
+      {
+        // update last large tick time and labels to ensure they are always drawn consistently
+        numIntervals = floor(beginSpan / largeTickInterval_);
+        lastLargeTickTime_ = firstTime + (numIntervals * largeTickInterval_);
+        numIntervals = floor(beginSpan / labelInterval_);
+        lastLabelTime_ = firstTime + (numIntervals * labelInterval_);
+      }
+    }
+    if (timeDirection_ == simCore::REVERSE)
+    {
+      // set the end tick time to ensure it is at a valid interval from the first time
+      const double endSpan = endTime - firstTime;
+      double numIntervals = floor(endSpan / interval);
+      endTime = firstTime + (numIntervals * interval);
+
+      // update last large tick time and labels to ensure they are always drawn consistently, make sure they are one interval past the current valid end time
+      numIntervals = floor(endSpan / largeTickInterval_);
+      lastLargeTickTime_ = firstTime + (numIntervals * largeTickInterval_);
+      lastLargeTickTime_ += largeTickInterval_;
+      numIntervals = floor(endSpan / labelInterval_);
+      lastLabelTime_ = firstTime + (numIntervals * labelInterval_);
+      lastLabelTime_ += labelInterval_;
     }
   }
 
