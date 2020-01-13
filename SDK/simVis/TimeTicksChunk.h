@@ -39,8 +39,7 @@ public:
   enum Type
   {
     POINT_TICKS,
-    LINE_TICKS,
-    LINE
+    LINE_TICKS
   };
 
   /**

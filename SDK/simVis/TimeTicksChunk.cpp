@@ -147,22 +147,10 @@ void TimeTicksChunk::allocate_()
     geode_ = new osgEarth::LineGroup();
     addChild(geode_.get());
 
-    // center line (line mode)
-    line_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
+    // cross hatch line ticks
+    line_ = new osgEarth::LineDrawable(GL_LINES);
     line_->setDataVariance(osg::Object::DYNAMIC);
-    line_->allocate(4 * maxSize_);
-    geode_->addChild(line_.get());
-  }
-  else if (type_ == LINE)
-  {
-    // geode to hold all line geometry:
-    geode_ = new osgEarth::LineGroup();
-    addChild(geode_.get());
-
-    // center line (line mode)
-    line_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
-    line_->setDataVariance(osg::Object::DYNAMIC);
-    line_->allocate(maxSize_);
+    line_->allocate(2 * maxSize_);
     geode_->addChild(line_.get());
   }
 
@@ -201,27 +189,18 @@ void TimeTicksChunk::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
   }
   else if (type_ == LINE_TICKS)
   {
-    // add a new tick. The x value and y value for
-    // hostBounds represents the xMin and xMax values of a bounding box respectively.
+    // add a new cross hatch tick
     const osg::Matrix posMatrix = matrix * world2local_;
-
     double width = lineLength_ * (large ? largeSizeFactor_ : 1);
 
     const osg::Vec3f left = osg::Vec3d(-width, 0.0, 0.0) * posMatrix;
     const osg::Vec3f right = osg::Vec3d(width, 0.0, 0.0) * posMatrix;
 
-    line_->setVertex(4 * i, local);
-    line_->setVertex(4 * i + 1, left);
-    line_->setVertex(4 * i + 2, right);
-    line_->setVertex(4 * i + 3, local);
+    line_->setVertex(2 * i, left);
+    line_->setVertex(2 * i + 1, right);
 
-    for (unsigned int c = 0; c < 4; ++c)
-      line_->setColor(4 * i + c, color);
-  }
-  else if (type_ == LINE)
-  {
-    line_->setVertex(i, local);
-    line_->setColor(i, color);
+    for (unsigned int c = 0; c < 2; ++c)
+      line_->setColor(2 * i + c, color);
   }
 }
 
@@ -243,13 +222,8 @@ void TimeTicksChunk::updatePrimitiveSets_()
   }
   else if (type_ == LINE_TICKS)
   {
-    line_->setFirst(4 * offset_);
-    line_->setCount(4 * count_);
-  }
-  else if (type_ == LINE)
-  {
-    line_->setFirst(offset_);
-    line_->setCount(count_);
+    line_->setFirst(2 * offset_);
+    line_->setCount(2 * count_);
   }
 }
 

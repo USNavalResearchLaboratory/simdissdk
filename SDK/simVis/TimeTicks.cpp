@@ -621,9 +621,6 @@ void TimeTicks::updateTrackData_(double currentTime, const simData::PlatformUpda
 
   // update time ticks with points in the requested window
   backfillHistory_(endTime, beginTime);
-
-  // when the current point is interpolated, line mode requires special processing
-  updateCurrentPoint_(updateSlice, beginTime);
 }
 
 void TimeTicks::backfillHistory_(double endTime, double beginTime)
@@ -656,79 +653,6 @@ void TimeTicks::backfillHistory_(double endTime, double beginTime)
       addUpdate_(tickTime);
       tickTime -= interval;
     }
-  }
-}
-
-void TimeTicks::updateCurrentPoint_(const simData::PlatformUpdateSlice& updateSlice, double beginTime)
-{
-  // remove previous, will recreate if needed
-  if (currentPointChunk_ != NULL)
-    currentPointChunk_->reset();
-
-  // no current point if not line ticks
-  if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::POINT)
-    return;
-
-  // only line, ribbon, and bridge draw modes require this processing,
-  // but if there is not a previous point, there is nothing to do
-  if (chunkGroup_->getNumChildren() == 0)
-    return;
-
-  // create the special chunk for rendering the interpolated point, has two points to connect to rest of history for line mode
-  if (currentPointChunk_ == NULL)
-  {
-    const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
-    currentPointChunk_ = new TimeTicksChunk(2, TimeTicksChunk::LINE, timeTicks.linelength() / 2, timeTicks.linewidth(), timeTicks.largesizefactor());
-    if (currentPointChunk_ == NULL)
-      return;
-    addChild(currentPointChunk_);
-  }
-  // find the most current update, either whatever is current, or the last available update
-  const simData::PlatformUpdate* current = updateSlice.current();
-  if (current == NULL)
-  {
-    simData::PlatformUpdateSlice::Iterator iter = updateSlice.lower_bound(updateSlice.lastTime());
-    current = iter.next();
-  }
-  osg::Matrix curMatrix;
-
-  // if this fails, this platform node got created with no platform data
-  assert(current);
-
-  if (!getMatrix_(*current, curMatrix))
-  {
-    // failed to get the current position, check locator
-    assert(0);
-    return;
-  }
-
-  if (timeDirection_ == simCore::FORWARD)
-  {
-    TimeTicksChunk* curChunk = getLastChunk_();
-    // should have a last chunk if chunk group is not empty
-    assert(curChunk != NULL);
-    osg::Matrix end;
-    if (curChunk->getEndMatrix(end) == 0)
-      currentPointChunk_->addPoint(end, curChunk->getEndTime(), color_, false);
-    else
-      assert(0); // chunk is out of sync
-  }
-
-  // points must be added in order of increasing drawTime
-  currentPointChunk_->addPoint(curMatrix, toDrawTime_(beginTime), color_, false);
-
-  // duplicate the most recent (non-current) datapoint so that this chunk connects to the previous chunk
-  if (timeDirection_ == simCore::REVERSE)
-  {
-    TimeTicksChunk* curChunk = getLastChunk_();
-    curChunk = getFirstChunk_();
-    // should have a first chunk if chunk group is not empty
-    assert(curChunk != NULL);
-    osg::Matrix begin;
-    if (curChunk->getBeginMatrix(begin) == 0)
-      currentPointChunk_->addPoint(begin, curChunk->getBeginTime(), color_, false);
-    else
-      assert(0); // chunk is out of sync
   }
 }
 

@@ -150,13 +150,6 @@ private: // methods
   void backfillHistory_(double endTime, double beginTime);
 
   /**
-  * Update the time ticks visuals for the current point when drawing line ticks
-  * @param updateSlice platform update slice for associated platform
-  * @param beginTime earliest platform update time to use when going in reverse
-  */
-  void updateCurrentPoint_(const simData::PlatformUpdateSlice& updateSlice, double beginTime);
-
-  /**
   * Update the time ticks visuals with a point to correspond to the specified time
   * @param tickTime time to draw a tick
   */
