@@ -32,6 +32,7 @@
 #include "osg/TexEnv"
 #include "osg/TexEnvCombine"
 #include "osg/ValueObject"
+#include "osgDB/ReadFile"
 #include "osgSim/DOFTransform"
 #include "osgSim/LightPointNode"
 #include "osgSim/MultiSwitch"

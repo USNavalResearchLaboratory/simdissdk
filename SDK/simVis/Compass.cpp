@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osgDB/ReadFile"
 #include "osgEarth/NodeUtils"
 #include "osgEarth/AnnotationUtils"
 #include "simCore/Calc/Angle.h"
@@ -163,7 +164,7 @@ void CompassNode::initCompass_(const std::string& compassFilename)
       0,                           // texture image unit
       0.0,                         // heading
       image->s() / COMPASS_SIZE);  // scale, down to 128x128
-                            
+
     // Texture is likely GL_LUMINANCE or GL_LUMINANCE_ALPHA; fix it if so
     if (compass && compass->getStateSet())
     {

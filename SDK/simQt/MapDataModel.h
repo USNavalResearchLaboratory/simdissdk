@@ -35,7 +35,6 @@
 namespace osgEarth {
   class Layer;
   class Map;
-  class TerrainLayer;
 }
 
 typedef std::vector<osg::ref_ptr<osgEarth::FeatureModelLayer> > FeatureModelLayerVector;
