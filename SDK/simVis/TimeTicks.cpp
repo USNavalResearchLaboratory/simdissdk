@@ -192,28 +192,18 @@ void TimeTicks::addUpdate_(double tickTime)
   // if tick is at first platform point, get the platform position at that time
   if (!hasPrevious)
   {
-    // special case for first point when going backwards
     if (!getMatrix_(*update, hostMatrix))
       return;
-
-    // first tick is always large
-    if (largeTickInterval_ > 0 && lastLargeTickTime_ == -1)
-    {
-      largeTick = true;
-      lastLargeTickTime_ = tickTime;
-    }
   }
-  // not first tick, or not at fist platform position, get the next position, possibly interpolated
-  else
+  // not first tick, or not at first platform position, get the next position, possibly interpolated
+  else if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
+    return;
+
+  // check to see if it is time for the next large tick
+  if (largeTickInterval_ > 0 && (lastLargeTickTime_ == -1 || abs(tickTime - lastLargeTickTime_) >= largeTickInterval_))
   {
-    if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
-      return;
-    // check to see if it is time for the next large tick
-    if (largeTickInterval_ > 0 && (lastLargeTickTime_ == -1.0 || abs(tickTime - lastLargeTickTime_) >= largeTickInterval_))
-    {
-      lastLargeTickTime_ = tickTime;
-      largeTick = true;
-    }
+    lastLargeTickTime_ = tickTime;
+    largeTick = true;
   }
 
   // add label for large tick

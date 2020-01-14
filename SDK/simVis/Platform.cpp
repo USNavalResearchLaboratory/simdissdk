@@ -653,6 +653,10 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   const bool prefsDraw = lastPrefs_.commonprefs().datadraw() && prefs.commonprefs().draw();
   track_->setNodeMask(prefsDraw ? simVis::DISPLAY_MASK_TRACK_HISTORY : simVis::DISPLAY_MASK_NONE);
 
+  // check to see if we need to create time ticks, since time ticks, like track history, can be turned on before platform is actually valid
+  if ((prefs.trackprefs().timeticks().drawstyle() != simData::TimeTickPrefs::NONE) && !timeTicks_.valid())
+    createTimeTicks_(prefs);
+
   return true;
 }
 
