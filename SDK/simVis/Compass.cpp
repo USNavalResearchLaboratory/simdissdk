@@ -29,6 +29,7 @@
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 #include "simVis/Compass.h"
+#include "osgDB/ReadFile"
 
 namespace simVis
 {

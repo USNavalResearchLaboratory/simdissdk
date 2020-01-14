@@ -31,6 +31,7 @@
 #include "simVis/SceneManager.h"
 #include "simVis/Viewer.h"
 #include "simUtil/ExampleResources.h"
+#include "osgDB/ReadFile"
 
 namespace ui = osgEarth::Util::Controls;
 

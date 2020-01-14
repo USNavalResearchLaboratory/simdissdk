@@ -32,11 +32,11 @@
 
 namespace simVis_db
 {
-  class DBTileSource : public osgEarth::TileSource
+  class DBTileSource : public osgEarth::Contrib::TileSource
   {
   public:
     /** Constructs a new driver for reading .DB raster files */
-    DBTileSource(const osgEarth::TileSourceOptions& options);
+    DBTileSource(const osgEarth::Contrib::TileSourceOptions& options);
 
     /// TileSource interface
     virtual osgEarth::Status initialize(const osgDB::Options* dbOptions);

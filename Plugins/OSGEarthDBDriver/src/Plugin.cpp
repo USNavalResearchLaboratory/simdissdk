@@ -25,7 +25,7 @@
 #include <string>
 #include "DBTileSource.h"
 
-class SimSdkOSGEarthDBDriverPlugin : public osgEarth::TileSourceDriver
+class SimSdkOSGEarthDBDriverPlugin : public osgEarth::Contrib::TileSourceDriver
 {
 public:
   SimSdkOSGEarthDBDriverPlugin() { }
