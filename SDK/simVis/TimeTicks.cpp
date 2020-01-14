@@ -189,10 +189,18 @@ void TimeTicks::addUpdate_(double tickTime)
   osg::Matrix hostMatrix;
   bool largeTick = false;
 
-  // if tick is at first platform point, get the platform position at that time
+  // if tick is at first platform point, use that for position
   if (!hasPrevious)
   {
-    if (!getMatrix_(*update, hostMatrix))
+    // if only a single point, use it
+    const simData::PlatformUpdate* next = iter.next();
+    if (!next)
+    {
+      if (!getMatrix_(*update, hostMatrix))
+        return;
+    }
+    // use the next point to calculate the correct orientation for the first tick
+    else if (!getMatrix_(*next, *update, tickTime, hostMatrix))
       return;
   }
   // not first tick, or not at first platform position, get the next position, possibly interpolated
