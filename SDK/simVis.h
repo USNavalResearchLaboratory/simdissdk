@@ -43,7 +43,6 @@
 #include "simVis/CustomRendering.h"
 #include "simVis/CylinderGeode.h"
 #include "simVis/CylinderStorage.h"
-#include "simVis/DBOptions.h"
 #include "simVis/DisableDepthOnAlpha.h"
 #include "simVis/DynamicScaleTransform.h"
 #include "simVis/EarthManipulator.h"

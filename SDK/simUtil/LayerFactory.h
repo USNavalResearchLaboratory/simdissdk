@@ -58,15 +58,21 @@ namespace simUtil {
 class SDKUTIL_EXPORT LayerFactory
 {
 public:
+#ifdef SIM_HAVE_DB_SUPPORT
   /** Returns an image layer properly configured for DB layer. */
   simVis::DBImageLayer* newDbImageLayer(const std::string& fullPath) const;
+#endif
+
   /** Returns an image layer properly configured for MBTiles layer. */
   osgEarth::MBTilesImageLayer* newMbTilesImageLayer(const std::string& fullPath) const;
   /** Returns an image layer properly configured for GDAL layer. */
   osgEarth::GDALImageLayer* newGdalImageLayer(const std::string& fullPath) const;
 
+#ifdef SIM_HAVE_DB_SUPPORT
   /** Returns an elevation layer properly configured for DB layer. */
   simVis::DBElevationLayer* newDbElevationLayer(const std::string& fullPath) const;
+#endif
+
   /** Returns an elevation layer properly configured for MBTiles layer. */
   osgEarth::MBTilesElevationLayer* newMbTilesElevationLayer(const std::string& fullPath) const;
   /** Returns an elevation layer properly configured for GDAL layer. */

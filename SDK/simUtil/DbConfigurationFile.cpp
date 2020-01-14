@@ -34,7 +34,6 @@
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 #include "simVis/AlphaColorFilter.h"
-#include "simVis/DBOptions.h"
 #include "simVis/DBFormat.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Utils.h"

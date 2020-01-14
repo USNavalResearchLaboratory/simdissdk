@@ -33,7 +33,6 @@
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simUtil/ExampleResources.h"
 #include "simVis/Viewer.h"
-#include "simVis/DBOptions.h"
 #include "simVis/osgEarthVersion.h"
 #include "simUtil/ExampleResources.h"
 #include "simVis/DBFormat.h"

@@ -64,8 +64,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
-    ${VIS_INC}DBFormat.h
-    ${VIS_INC}DBOptions.h
     ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
     ${VIS_INC}EarthManipulator.h
@@ -137,6 +135,17 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ViewManager.h
     ${VIS_INC}ViewManagerLogDbAdapter.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/simVis/osgEarthVersion.h
+)
+
+set(VIS_HEADERS_DB
+    ${VIS_INC}DBFormat.h
+    ${VIS_INC}DB/QSCommon.h
+    ${VIS_INC}DB/QSError.h
+    ${VIS_INC}DB/QSNodeID96.h
+    ${VIS_INC}DB/QSPosXYExtents.h
+    ${VIS_INC}DB/RasterCommon.h
+    ${VIS_INC}DB/SQLiteDataBaseReadUtil.h
+    ${VIS_INC}DB/swapbytes.h
 )
 
 set(VIS_HEADERS_RFPROP
@@ -211,7 +220,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
-    ${VIS_SRC}DBFormat.cpp
     ${VIS_SRC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
@@ -277,6 +285,14 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Viewer.cpp
     ${VIS_SRC}ViewManager.cpp
     ${VIS_SRC}ViewManagerLogDbAdapter.cpp
+)
+
+set(VIS_SOURCES_DB
+    ${VIS_INC}DBFormat.cpp
+    ${VIS_INC}DB/QSError.cpp
+    ${VIS_INC}DB/QSNodeID96.cpp
+    ${VIS_INC}DB/QSPosXYExtents.cpp
+    ${VIS_INC}DB/SQLiteDataBaseReadUtil.cpp
 )
 
 set(VIS_SOURCES_RFPROP
@@ -367,6 +383,14 @@ source_group("" FILES ${VIS_ALL_HEADER})
 set(VIS_HEADERS ${VIS_HEADERS_CORE} ${VIS_HEADERS_RFPROP} ${VIS_HEADERS_GOG})
 set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${VIS_SHADER_FILES})
 
+if(SIM_HAVE_DB_SUPPORT)
+    source_group(Headers\\DB FILES ${VIS_HEADERS_DB})
+    source_group(Sources\\DB FILES ${VIS_SOURCES_DB})
+    
+    set(VIS_HEADERS ${VIS_HEADERS} ${VIS_HEADERS_DB})
+    set(VIS_SOURCES ${VIS_SOURCES} ${VIS_SOURCES_DB})
+endif()
+
 # ----------------------------------------------------------------------
 
 # Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
@@ -397,6 +421,10 @@ target_include_directories(simVis PUBLIC
 target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} OSGEARTH)
 target_link_libraries(simVis PRIVATE VSI::GL)
+
+if(SQLITE3_FOUND)
+    target_link_libraries(simVis PUBLIC SQLITE3)
+endif()
 
 if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
