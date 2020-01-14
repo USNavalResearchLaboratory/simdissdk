@@ -120,8 +120,8 @@ namespace
 
 // --------------------------------------------------------------------------
 
-DBTileSource::DBTileSource(const osgEarth::TileSourceOptions& options)
-  : osgEarth::TileSource(options),
+DBTileSource::DBTileSource(const osgEarth::Contrib::TileSourceOptions& options)
+  : osgEarth::Contrib::TileSource(options),
   options_(options),
   db_(NULL),
   rasterFormat_(SPLIT_UNKNOWN),

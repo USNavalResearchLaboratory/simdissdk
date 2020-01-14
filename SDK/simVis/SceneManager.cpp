@@ -462,9 +462,9 @@ void SceneManager::applyImageLayerDisplaySettings_(const osgEarth::ImageLayer& s
   destLayer->setEnabled(sourceLayer.getEnabled());
 }
 
-std::string SceneManager::getLayerHash_(osgEarth::TerrainLayer* layer) const
+std::string SceneManager::getLayerHash_(osgEarth::TileLayer* layer) const
 {
-  // This method mimics the logic in osgEarth::TerrainLayer::setCache for generating a unique id for the layer
+  // This method mimics the logic in osgEarth::TileLayer::setCache for generating a unique id for the layer
 
   // system will generate a cacheId. technically, this is not quite right, we need to remove everything that's
   // an image layer property and just use the tilesource properties.

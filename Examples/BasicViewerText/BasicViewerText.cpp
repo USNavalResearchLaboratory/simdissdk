@@ -39,6 +39,7 @@
 #include "simUtil/HudManager.h"
 #include "simUtil/Replaceables.h"
 #include "simUtil/StatusText.h"
+#include "osgDB/ReadFile"
 
 #define LC "[BasicViewerText demo] "
 

@@ -33,7 +33,7 @@ namespace simVis
 /**
  * Configuration options for the "DB" tile source driver.
  */
-class DBOptions : public osgEarth::TileSourceOptions // header-only (no export)
+class DBOptions : public osgEarth::Contrib::TileSourceOptions // header-only (no export)
 {
 public:
   /** Location of the DB file to load (mutable) */
@@ -65,7 +65,7 @@ public:
   // (override from osgEarth::TileSourceOptions)
   virtual osgEarth::Config getConfig() const
   {
-    osgEarth::Config conf = osgEarth::TileSourceOptions::getConfig();
+    osgEarth::Config conf = osgEarth::Contrib::TileSourceOptions::getConfig();
     conf.set("url", _url);
     conf.set("deepest_level", _deepestLevel);
     return conf;
@@ -76,7 +76,7 @@ protected:
   // (override from osgEarth::TileSourceOptions)
   virtual void mergeConfig(const osgEarth::Config& conf)
   {
-    osgEarth::TileSourceOptions::mergeConfig(conf);
+    osgEarth::Contrib::TileSourceOptions::mergeConfig(conf);
     fromConfig_(conf);
   }
 

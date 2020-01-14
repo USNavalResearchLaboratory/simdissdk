@@ -23,8 +23,8 @@
 #define SIMVIS_DBFORMAT_H
 
 #include <string>
-#include "osgEarth/ImageLayer"
-#include "osgEarth/ElevationLayer"
+#include "osgEarth/TileSourceImageLayer"
+#include "osgEarth/TileSourceElevationLayer"
 #include "osgEarth/URI"
 #include "simCore/Common/Common.h"
 #include "simCore/Common/Export.h"
@@ -37,20 +37,19 @@ namespace simVis
 // OE_OPTION uses unqualified optional<> type
 using osgEarth::optional;
 
-class SDKVIS_EXPORT DBImageLayer : public osgEarth::ImageLayer
+class SDKVIS_EXPORT DBImageLayer : public osgEarth::Contrib::TileSourceImageLayer
 {
 public: // serialization
-  class SDKVIS_EXPORT Options : public osgEarth::ImageLayer::Options {
+  class SDKVIS_EXPORT Options : public osgEarth::Contrib::TileSourceImageLayer::Options {
   public:
-    META_LayerOptions(simVis, Options, osgEarth::ImageLayer::Options);
-    OE_OPTION(simVis::DBOptions, driver);
+    META_LayerOptions(simVis, Options, osgEarth::Contrib::TileSourceImageLayer::Options);
     virtual osgEarth::Config getConfig() const;
   private:
     void fromConfig(const osgEarth::Config&);
   };
 
 public:
-  META_Layer(simVis, DBImageLayer, Options, osgEarth::ImageLayer, DBImage);
+  META_Layer(simVis, DBImageLayer, Options, osgEarth::Contrib::TileSourceImageLayer, DBImage);
 
 public:
   /// Base URL of TileCache endpoint
@@ -74,30 +73,28 @@ protected: // Layer
   /// Called by constructors
   virtual void init();
 
-  /// Create and return the underlying TileSource
-  virtual osgEarth::TileSource* createTileSource();
-
   /// Destructor
   virtual ~DBImageLayer() { }
+
+  simVis::DBOptions localCopyOfOptions_;
 };
 
 /**
   * Elevation layer connected to a DB file
   */
-class SDKVIS_EXPORT DBElevationLayer : public osgEarth::ElevationLayer
+class SDKVIS_EXPORT DBElevationLayer : public osgEarth::Contrib::TileSourceElevationLayer
 {
 public: // serialization
-  class SDKVIS_EXPORT Options : public osgEarth::ElevationLayer::Options {
+  class SDKVIS_EXPORT Options : public osgEarth::Contrib::TileSourceElevationLayer::Options {
   public:
-    META_LayerOptions(simVis, Options, osgEarth::ElevationLayer::Options);
-    OE_OPTION(simVis::DBOptions, driver);
+    META_LayerOptions(simVis, Options, osgEarth::Contrib::TileSourceElevationLayer::Options);
     virtual osgEarth::Config getConfig() const;
   private:
     void fromConfig(const osgEarth::Config&);
   };
 
 public:
-  META_Layer(simVis, DBElevationLayer, Options, osgEarth::ElevationLayer, DBElevation);
+  META_Layer(simVis, DBElevationLayer, Options, osgEarth::Contrib::TileSourceElevationLayer, DBElevation);
 
   /// URL of the database file
   void setURL(const osgEarth::URI& value);
@@ -117,14 +114,13 @@ public: // Layer
 
 protected: // Layer
 
-    /// Called by constructors
+  /// Called by constructors
   virtual void init();
-
-  /// Create and return the underlying TileSource
-  virtual osgEarth::TileSource* createTileSource();
 
   /// Destructor
   virtual ~DBElevationLayer() { }
+
+  simVis::DBOptions localCopyOfOptions_;
 };
 
 }
