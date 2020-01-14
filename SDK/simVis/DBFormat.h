@@ -37,19 +37,21 @@ namespace simVis
 // OE_OPTION uses unqualified optional<> type
 using osgEarth::optional;
 
-class SDKVIS_EXPORT DBImageLayer : public osgEarth::Contrib::TileSourceImageLayer
+class SDKVIS_EXPORT DBImageLayer : public osgEarth::ImageLayer
 {
 public: // serialization
-  class SDKVIS_EXPORT Options : public osgEarth::Contrib::TileSourceImageLayer::Options {
+  class SDKVIS_EXPORT Options : public osgEarth::ImageLayer::Options {
   public:
-    META_LayerOptions(simVis, Options, osgEarth::Contrib::TileSourceImageLayer::Options);
+    META_LayerOptions(simVis, Options, osgEarth::ImageLayer::Options);
+    OE_OPTION(osgEarth::URI, url);
+    OE_OPTION(unsigned, deepestLevel);
     virtual osgEarth::Config getConfig() const;
   private:
     void fromConfig(const osgEarth::Config&);
   };
 
 public:
-  META_Layer(simVis, DBImageLayer, Options, osgEarth::Contrib::TileSourceImageLayer, DBImage);
+  META_Layer(simVis, DBImageLayer, Options, osgEarth::ImageLayer, DBImage);
 
 public:
   /// Base URL of TileCache endpoint
@@ -74,27 +76,29 @@ protected: // Layer
   virtual void init();
 
   /// Destructor
-  virtual ~DBImageLayer() { }
+  virtual ~DBImageLayer();
 
-  simVis::DBOptions localCopyOfOptions_;
+  void* context_;
 };
 
 /**
   * Elevation layer connected to a DB file
   */
-class SDKVIS_EXPORT DBElevationLayer : public osgEarth::Contrib::TileSourceElevationLayer
+class SDKVIS_EXPORT DBElevationLayer : public osgEarth::ElevationLayer
 {
 public: // serialization
-  class SDKVIS_EXPORT Options : public osgEarth::Contrib::TileSourceElevationLayer::Options {
+  class SDKVIS_EXPORT Options : public osgEarth::ElevationLayer::Options {
   public:
-    META_LayerOptions(simVis, Options, osgEarth::Contrib::TileSourceElevationLayer::Options);
+    META_LayerOptions(simVis, Options, osgEarth::ElevationLayer::Options);
+    OE_OPTION(osgEarth::URI, url);
+    OE_OPTION(unsigned, deepestLevel);
     virtual osgEarth::Config getConfig() const;
   private:
     void fromConfig(const osgEarth::Config&);
   };
 
 public:
-  META_Layer(simVis, DBElevationLayer, Options, osgEarth::Contrib::TileSourceElevationLayer, DBElevation);
+  META_Layer(simVis, DBElevationLayer, Options, osgEarth::ElevationLayer, DBElevation);
 
   /// URL of the database file
   void setURL(const osgEarth::URI& value);
@@ -118,9 +122,9 @@ protected: // Layer
   virtual void init();
 
   /// Destructor
-  virtual ~DBElevationLayer() { }
+  virtual ~DBElevationLayer();
 
-  simVis::DBOptions localCopyOfOptions_;
+  void* context_;
 };
 
 }

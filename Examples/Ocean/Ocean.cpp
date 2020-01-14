@@ -42,7 +42,6 @@
 #include "simData/MemoryDataStore.h"
 
 #include "simVis/BathymetryGenerator.h"
-#include "simVis/DBOptions.h"
 #include "simVis/osgEarthVersion.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"

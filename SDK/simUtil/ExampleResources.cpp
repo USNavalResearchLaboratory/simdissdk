@@ -34,7 +34,6 @@
 #include "simCore/String/Utils.h"
 #include "simCore/Time/ClockImpl.h"
 #include "simData/DataStore.h"
-#include "simVis/DBOptions.h"
 #include "simVis/Gl3Utils.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"

@@ -18,7 +18,6 @@ set(UTIL_HEADERS
     ${UTIL_INC}Capabilities.h
     ${UTIL_INC}DataStoreTestHelper.h
     ${UTIL_INC}DatumConvert.h
-    ${UTIL_INC}DbConfigurationFile.h
     ${UTIL_INC}DefaultDataStoreValues.h
     ${UTIL_INC}ExampleControls.h
     ${UTIL_INC}ExampleResources.h
@@ -54,7 +53,6 @@ set(UTIL_SOURCES
     ${UTIL_SRC}Capabilities.cpp
     ${UTIL_SRC}DataStoreTestHelper.cpp
     ${UTIL_SRC}DatumConvert.cpp
-    ${UTIL_SRC}DbConfigurationFile.cpp
     ${UTIL_SRC}DefaultDataStoreValues.cpp
     ${UTIL_SRC}ExampleControls.cpp
     ${UTIL_SRC}ExampleResources.cpp
@@ -83,6 +81,12 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ViewpointMonitor.cpp
     ${UTIL_SRC}ViewpointPositions.cpp
 )
+
+if(SIM_HAVE_DB_SUPPORT)
+    set(UTIL_HEADERS ${UTIL_HEADERS} ${UTIL_INC}DbConfigurationFile.h)
+    set(UTIL_SOURCES ${UTIL_SOURCES} ${UTIL_SRC}DbConfigurationFile.cpp)
+endif()    
+
 set(UTIL_GENERATED_HEADERS)
 set(UTIL_GENERATED_SOURCES)
 

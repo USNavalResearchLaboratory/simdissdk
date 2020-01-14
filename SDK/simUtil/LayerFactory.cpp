@@ -29,7 +29,11 @@
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simVis/Constants.h"
+
+#ifdef SIM_HAVE_DB_SUPPORT
 #include "simVis/DBFormat.h"
+#endif
+
 #include "simVis/Types.h"
 #include "simUtil/LayerFactory.h"
 
@@ -38,6 +42,7 @@ namespace simUtil {
 /** Default cache time of one year */
 static const osgEarth::TimeSpan ONE_YEAR(365 * 86400);
 
+#ifdef SIM_HAVE_DB_SUPPORT
 simVis::DBImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
@@ -55,6 +60,7 @@ simVis::DBImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath)
 
   return layer.release();
 }
+#endif
 
 osgEarth::MBTilesImageLayer* LayerFactory::newMbTilesImageLayer(const std::string& fullPath) const
 {
@@ -95,6 +101,7 @@ osgEarth::GDALImageLayer* LayerFactory::newGdalImageLayer(const std::string& ful
   return layer.release();
 }
 
+#ifdef SIM_HAVE_DB_SUPPORT
 simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& fullPath) const
 {
   osgEarth::Config config;
@@ -112,6 +119,7 @@ simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& f
 
   return layer.release();
 }
+#endif
 
 osgEarth::MBTilesElevationLayer* LayerFactory::newMbTilesElevationLayer(const std::string& fullPath) const
 {
