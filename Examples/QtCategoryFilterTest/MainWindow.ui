@@ -20,7 +20,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="simQt::CategoryFilterWidget2" name="categoryFilterWidget2"/>
+      <widget class="simQt::CategoryFilterWidget" name="categoryFilterWidget"/>
      </item>
     </layout>
    </item>
@@ -65,9 +65,9 @@
    <header>simQt/CategoryDataBreadcrumbs.h</header>
   </customwidget>
   <customwidget>
-   <class>simQt::CategoryFilterWidget2</class>
+   <class>simQt::CategoryFilterWidget</class>
    <extends>QWidget</extends>
-   <header>simQt/CategoryTreeModel2.h</header>
+   <header>simQt/CategoryTreeModel.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

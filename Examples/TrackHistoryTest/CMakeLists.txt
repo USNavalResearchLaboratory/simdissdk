@@ -12,6 +12,6 @@ add_executable(example_trackhistorytest ${PROJECT_FILES})
 target_link_libraries(example_trackhistorytest PRIVATE simVis simUtil)
 set_target_properties(example_trackhistorytest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Track History Test"
+    PROJECT_LABEL "Track History Test"
 )
 vsi_install_target(example_trackhistorytest SDK_Examples)

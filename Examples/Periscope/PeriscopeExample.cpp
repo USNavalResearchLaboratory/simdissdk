@@ -42,6 +42,7 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/HudManager.h"
 
+#include "osgDB/ReadFile"
 #include "osgEarth/Controls"
 #include "osgEarth/SimpleOceanLayer"
 #include "osgEarth/Version"

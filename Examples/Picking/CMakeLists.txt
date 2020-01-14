@@ -13,6 +13,6 @@ add_executable(example_picking ${PROJECT_FILES})
 target_link_libraries(example_picking PRIVATE simVis simUtil)
 set_target_properties(example_picking PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Picking"
+    PROJECT_LABEL "Picking"
 )
 vsi_install_target(example_picking SDK_Examples)

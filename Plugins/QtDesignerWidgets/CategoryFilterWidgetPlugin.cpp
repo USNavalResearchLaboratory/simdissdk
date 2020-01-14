@@ -19,13 +19,11 @@
  * disclose, or release this software.
  *
  */
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-
 #include <QtCore/QtPlugin>
 #include "simData/CategoryData/CategoryFilter.h"
+#include "simData/CategoryData/CategoryNameManager.h"
 #include "simData/MemoryDataStore.h"
-#include "simQt/CategoryFilterWidget.h"
-#include "CategoryFilterWidget2Plugin.h"
+#include "simQt/CategoryTreeModel.h"
 #include "CategoryFilterWidgetPlugin.h"
 
 CategoryFilterWidgetPlugin::CategoryFilterWidgetPlugin(QObject *parent)
@@ -44,7 +42,7 @@ void CategoryFilterWidgetPlugin::initialize(QDesignerFormEditorInterface *)
   if (dataStore_)
     return;
   dataStore_ = new simData::MemoryDataStore;
-  CategoryFilterWidget2Plugin::createDefaultCategories(*dataStore_);
+  CategoryFilterWidgetPlugin::createDefaultCategories(*dataStore_);
 }
 
 bool CategoryFilterWidgetPlugin::isInitialized() const
@@ -55,10 +53,9 @@ bool CategoryFilterWidgetPlugin::isInitialized() const
 QWidget *CategoryFilterWidgetPlugin::createWidget(QWidget *parent)
 {
   simQt::CategoryFilterWidget* rv = new simQt::CategoryFilterWidget(parent);
-
   // Create the data store, adding default categories
   initialize(NULL);
-  rv->setProviders(dataStore_);
+  rv->setDataStore(dataStore_);
 
   // Create a filter for user to see
   simData::CategoryNameManager& nameManager = dataStore_->categoryNameManager();
@@ -118,6 +115,29 @@ QString CategoryFilterWidgetPlugin::domXml() const
 
 QString CategoryFilterWidgetPlugin::includeFile() const
 {
-  return "simQt/CategoryFilterWidget.h";
+  return "simQt/CategoryTreeModel.h";
 }
-#endif // USE_DEPRECATED_SIMDISSDK_API
+
+void CategoryFilterWidgetPlugin::createDefaultCategories(simData::DataStore& dataStore)
+{
+  // Add some useful category names for display purposes
+  simData::CategoryNameManager& nameManager = dataStore.categoryNameManager();
+  const int affinity = nameManager.addCategoryName("Affinity");
+  nameManager.addCategoryValue(affinity, "Friendly");
+  nameManager.addCategoryValue(affinity, "Hostile");
+  nameManager.addCategoryValue(affinity, "Neutral");
+  const int platformType = nameManager.addCategoryName("Platform Type");
+  nameManager.addCategoryValue(platformType, "Unknown");
+  nameManager.addCategoryValue(platformType, "Surface Ship");
+  nameManager.addCategoryValue(platformType, "Submarine");
+  nameManager.addCategoryValue(platformType, "Aircraft");
+  nameManager.addCategoryValue(platformType, "Satellite");
+  nameManager.addCategoryValue(platformType, "Helicopter");
+  nameManager.addCategoryValue(platformType, "Missile");
+  nameManager.addCategoryValue(platformType, "Decoy");
+  nameManager.addCategoryValue(platformType, "Buoy");
+  nameManager.addCategoryValue(platformType, "Reference Site");
+  nameManager.addCategoryValue(platformType, "Land Site");
+  nameManager.addCategoryValue(platformType, "Torpedo");
+  nameManager.addCategoryValue(platformType, "Contact");
+}

@@ -20,6 +20,7 @@
  *
  */
 
+#include "osgDB/ReadFile"
 #include "osgEarth/Map"
 #include "osgEarth/MapNode"
 #include "osgEarth/VisibleLayer"

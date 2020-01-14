@@ -20,8 +20,7 @@
  *
  */
 #include "simData/CategoryData/CategoryFilter.h"
-#include "simQt/CategoryFilterWidget.h"
-#include "simQt/CategoryTreeModel2.h"
+#include "simQt/CategoryTreeModel.h"
 #include "simQt/RegExpImpl.h"
 #include "simQt/EntityCategoryFilter.h"
 
@@ -55,24 +54,12 @@ QWidget* EntityCategoryFilter::widget(QWidget* newWidgetParent) const
     break;
   case SHOW_WIDGET:
   {
-    CategoryFilterWidget2* rv = new CategoryFilterWidget2(newWidgetParent);
+    CategoryFilterWidget* rv = new CategoryFilterWidget(newWidgetParent);
     rv->setDataStore(categoryFilter_->getDataStore());
     rv->setFilter(*categoryFilter_);
     rv->setSettings(settings_, settingsKeyPrefix_);
     bindToWidget(rv);
     return rv;
-  }
-  case SHOW_LEGACY_WIDGET:
-  {
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-    CategoryFilterWidget* rv = new CategoryFilterWidget(newWidgetParent);
-    rv->setProviders(categoryFilter_->getDataStore());
-    rv->setFilter(*categoryFilter_);
-    bindToWidget(rv);
-    return rv;
-#else
-    return NULL;
-#endif
   }
   }
 
@@ -104,7 +91,7 @@ void EntityCategoryFilter::setFilterSettings(const QMap<QString, QVariant>& sett
   }
 }
 
-void EntityCategoryFilter::bindToWidget(CategoryFilterWidget2* widget) const
+void EntityCategoryFilter::bindToWidget(CategoryFilterWidget* widget) const
 {
   // Whenever the filter updates in the GUI, update our internal filter,
   // which then in turn emits filterUpdated().
@@ -113,15 +100,6 @@ void EntityCategoryFilter::bindToWidget(CategoryFilterWidget2* widget) const
   // When internal filter gets changed, make the widget reflect those values.
   connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), widget, SLOT(setFilter(simData::CategoryFilter)));
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void EntityCategoryFilter::bindToWidget(CategoryFilterWidget* widget) const
-{
-  // connect to the signals/slots between the gui and the filter so changes to one will update the other
-  connect(widget, SIGNAL(categoryFilterChanged(const simData::CategoryFilter&)), this, SLOT(setCategoryFilterFromGui_(const simData::CategoryFilter&)));
-  connect(this, SIGNAL(categoryFilterChanged(simData::CategoryFilter)), widget, SLOT(setFilter(simData::CategoryFilter)));
-}
-#endif
 
 void EntityCategoryFilter::setCategoryFilter(const simData::CategoryFilter& categoryFilter)
 {

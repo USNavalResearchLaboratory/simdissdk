@@ -59,6 +59,7 @@
 /// paths to models
 #include "simUtil/ExampleResources.h"
 
+#include "osgDB/ReadFile"
 #include "osgEarth/LatLongFormatter"
 #include "osgEarth/MGRSFormatter"
 #include "osgEarth/StringUtils"

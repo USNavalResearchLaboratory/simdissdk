@@ -36,7 +36,7 @@ endif()
 add_library(simNotify ${STATIC_OR_SHARED} ${NOTIFY_PROJECT_FILES})
 set_target_properties(simNotify PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Notify"
+    PROJECT_LABEL "simNotify"
 )
 ApplySDKVersion(simNotify)
 target_include_directories(simNotify PUBLIC

@@ -9,7 +9,6 @@ set(PROJ_HEADERS
     simQtDesignerPlugins.h
     CategoryDataBreadcrumbsPlugin.h
     CategoryFilterWidgetPlugin.h
-    CategoryFilterWidget2Plugin.h
     ColorButtonPlugin.h
     ColorWidgetPlugin.h
     DataTableComboBoxPlugin.h
@@ -32,7 +31,6 @@ set(PROJ_HEADERS
 set(PROJ_SOURCES
     CategoryDataBreadcrumbsPlugin.cpp
     CategoryFilterWidgetPlugin.cpp
-    CategoryFilterWidget2Plugin.cpp
     ColorButtonPlugin.cpp
     ColorWidgetPlugin.cpp
     DataTableComboBoxPlugin.cpp
@@ -96,7 +94,7 @@ target_include_directories(simQtDesignerWidgets PRIVATE ${CMAKE_CURRENT_BINARY_D
 target_compile_definitions(simQtDesignerWidgets PRIVATE QDESIGNER_EXPORT_WIDGETS)
 set_target_properties(simQtDesignerWidgets PROPERTIES
     FOLDER "Qt Designer Plugins"
-    PROJECT_LABEL "Plugin - simQt Designer Widgets")
+    PROJECT_LABEL "simQt Designer Widgets")
 
 if(OSG_FOUND)
     target_compile_definitions(simQtDesignerWidgets PRIVATE HAVE_OSG)

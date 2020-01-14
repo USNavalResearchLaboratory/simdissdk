@@ -45,6 +45,6 @@ endif()
 set_target_properties(osgdb_osgearth_db PROPERTIES
     PREFIX ""
     FOLDER "OSG Plugins"
-    PROJECT_LABEL "Plugin - OSGEarth .db Driver"
+    PROJECT_LABEL "osgEarth .db Driver"
 )
 vsi_install_shared_library(osgdb_osgearth_db SDK_OSG_Plugins "${INSTALLSETTINGS_OSGPLUGIN_DIR}")

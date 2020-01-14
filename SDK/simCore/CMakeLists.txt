@@ -195,7 +195,7 @@ endif()
 add_library(simCore ${STATIC_OR_SHARED} ${CORE_PROJECT_FILES})
 set_target_properties(simCore PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Core"
+    PROJECT_LABEL "simCore"
 )
 ApplySDKVersion(simCore)
 target_include_directories(simCore PUBLIC

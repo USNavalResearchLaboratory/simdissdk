@@ -65,9 +65,7 @@ if(TARGET simData)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CategoryDataBreadcrumbs.h
         ${SIMQT_INC}CategoryFilterCounter.h
-        ${SIMQT_INC}CategoryFilterWidget.h
         ${SIMQT_INC}CategoryTreeModel.h
-        ${SIMQT_INC}CategoryTreeModel2.h
         ${SIMQT_INC}DataTableComboBox.h
         ${SIMQT_INC}DataTableModel.h
         ${SIMQT_INC}EntityCategoryFilter.h
@@ -187,9 +185,7 @@ if(TARGET simData)
     list(APPEND SIMQT_SOURCES
         ${SIMQT_SRC}CategoryDataBreadcrumbs.cpp
         ${SIMQT_SRC}CategoryFilterCounter.cpp
-        ${SIMQT_SRC}CategoryFilterWidget.cpp
         ${SIMQT_SRC}CategoryTreeModel.cpp
-        ${SIMQT_SRC}CategoryTreeModel2.cpp
         ${SIMQT_SRC}DataTableComboBox.cpp
         ${SIMQT_SRC}DataTableModel.cpp
         ${SIMQT_SRC}EntityCategoryFilter.cpp
@@ -291,7 +287,7 @@ endif()
 add_library(simQt ${STATIC_OR_SHARED} ${SIMQT_PROJECT_FILES})
 set_target_properties(simQt PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Qt"
+    PROJECT_LABEL "simQt"
 )
 ApplySDKVersion(simQt)
 target_include_directories(simQt

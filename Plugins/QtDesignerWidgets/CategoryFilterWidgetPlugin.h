@@ -19,8 +19,6 @@
  * disclose, or release this software.
  *
  */
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-
 #ifndef CATEGORY_FILTER_WIDGET_PLUGIN_H
 #define CATEGORY_FILTER_WIDGET_PLUGIN_H
 
@@ -28,7 +26,7 @@
 
 namespace simData { class DataStore; }
 
-// Wrapper class for the FileSelectorWidget to provide QDesignerCustomWidgetInterface
+// Wrapper class for the CategoryFilterWidget2 to provide QDesignerCustomWidgetInterface
 class CategoryFilterWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
 {
   Q_OBJECT
@@ -57,5 +55,5 @@ private:
   simData::DataStore* dataStore_;
 };
 
-#endif // CATEGORY_FILTER_WIDGET_PLUGIN_H
-#endif // USE_DEPRECATED_SIMDISSDK_API
+#endif // CATEGORY_FILTER_WIDGET2_PLUGIN_H
+

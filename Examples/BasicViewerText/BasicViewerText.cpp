@@ -24,7 +24,7 @@
  * BasicViewerText is the BasicViewer example with Help overlay removed and various HudManager HudText elements added.
  * It demonstrates HudText layout behaviors.
  */
-
+#include "osgDB/ReadFile"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"

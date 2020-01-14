@@ -35,7 +35,7 @@ target_link_libraries(example_qtthreadexample PRIVATE simCore simData simVis
 target_include_directories(example_qtthreadexample PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qtthreadexample PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Qt Thread Example"
+    PROJECT_LABEL "Qt Thread Example"
 )
 vsi_install_target(example_qtthreadexample SDK_Examples)
 

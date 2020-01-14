@@ -122,6 +122,8 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}SphericalVolume.h
     ${VIS_INC}TargetDelegation.h
     ${VIS_INC}Text.h
+    ${VIS_INC}TimeTicks.h
+    ${VIS_INC}TimeTicksChunk.h
     ${VIS_INC}Tool.h
     ${VIS_INC}TrackChunkNode.h
     ${VIS_INC}TrackHistory.h
@@ -263,6 +265,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}SphericalVolume.cpp
     ${VIS_SRC}TargetDelegation.cpp
     ${VIS_SRC}Text.cpp
+    ${VIS_SRC}TimeTicks.cpp
+    ${VIS_SRC}TimeTicksChunk.cpp
     ${VIS_SRC}TrackChunkNode.cpp
     ${VIS_SRC}TrackHistory.cpp
     ${VIS_SRC}Utils.cpp
@@ -382,7 +386,7 @@ endif()
 add_library(simVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
 set_target_properties(simVis PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Vis"
+    PROJECT_LABEL "simVis"
 )
 ApplySDKVersion(simVis)
 target_include_directories(simVis PUBLIC

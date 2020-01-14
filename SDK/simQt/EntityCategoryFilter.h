@@ -32,11 +32,7 @@ namespace simData {
 
 namespace simQt {
 
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 class CategoryFilterWidget;
-#endif
-class CategoryFilterWidget2;
 class Settings;
 
 /**
@@ -52,10 +48,8 @@ public:
   {
     /** widget() will return NULL, creating nothing when integrated into Qt. */
     NO_WIDGET,
-    /** widget() will return a CategoryFilterWidget2, the new style of category filtering. */
-    SHOW_WIDGET,
-    /** widget() will return a CategoryFilterWidget, the old legacy style of category filtering. */
-    SHOW_LEGACY_WIDGET
+    /** widget() will return a CategoryFilterWidget, the new style of category filtering. */
+    SHOW_WIDGET
   };
 
   /**
@@ -90,19 +84,15 @@ public:
   virtual void setFilterSettings(const QMap<QString, QVariant>& settings);
 
   /**
-   * Bind this filter to a CategoryFilterWidget2 so that changes to either widget updates the other widget.
+   * Bind this filter to a CategoryFilterWidget so that changes to either widget updates the other widget.
    * @param widget to be bound
    */
-  void bindToWidget(CategoryFilterWidget2* widget) const;
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** Category Filter Widget (legacy style) variant of bindToWidget() */
   void bindToWidget(CategoryFilterWidget* widget) const;
-#endif
 
   /** Retrieves the current category filter. */
   const simData::CategoryFilter& categoryFilter() const;
 
-  /** Set the settings object and key prefix that gets used by the CategoryFilterWidget2 */
+  /** Set the settings object and key prefix that gets used by the CategoryFilterWidget */
   void setSettings(Settings* settings, const QString& settingsKeyPrefix);
 
 public slots:

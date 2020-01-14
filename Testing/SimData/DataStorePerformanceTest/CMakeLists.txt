@@ -11,5 +11,5 @@ add_executable(DataStorePerformanceTest DataStorePerformanceTest.cpp)
 target_link_libraries(DataStorePerformanceTest PRIVATE simData simUtil)
 set_target_properties(DataStorePerformanceTest PROPERTIES
     FOLDER "Performance Tests"
-    PROJECT_LABEL "Performance Tests - DataStore"
+    PROJECT_LABEL "DataStore Test"
 )

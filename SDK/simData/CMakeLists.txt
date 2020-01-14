@@ -141,7 +141,7 @@ vsi_protobuf_generate(simData_protobuf_generation "${CMAKE_CURRENT_SOURCE_DIR}/G
     SIMDATA_PROTO_H SIMDATA_PROTO_CC =dllexport_decl=SDKDATA_EXPORT:.)
 set_target_properties(simData_protobuf_generation PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Data Protobuf Generation")
+    PROJECT_LABEL "simData Protobuf Generation")
 
 # ----------------------------------------------------------------------
 
@@ -159,7 +159,7 @@ endif()
 add_library(simData ${STATIC_OR_SHARED} ${DATA_PROJECT_FILES})
 set_target_properties(simData PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Data"
+    PROJECT_LABEL "simData"
 )
 ApplySDKVersion(simData)
 # Need binary path for generated CMake files

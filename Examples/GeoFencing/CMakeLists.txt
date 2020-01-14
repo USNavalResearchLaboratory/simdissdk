@@ -12,6 +12,6 @@ add_executable(example_geofencing ${PROJECT_FILES})
 target_link_libraries(example_geofencing PRIVATE simVis simUtil)
 set_target_properties(example_geofencing PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - GeoFencing"
+    PROJECT_LABEL "GeoFencing"
 )
 vsi_install_target(example_geofencing SDK_Examples)
