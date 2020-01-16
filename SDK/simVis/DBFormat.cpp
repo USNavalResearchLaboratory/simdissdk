@@ -20,13 +20,13 @@
  *
  */
 #include "osgDB/FileUtils"
+#include "osgEarth/Cube"
+#include "osgEarth/ImageToHeightFieldConverter"
+#include "simCore/Calc/Math.h"
 #include "simVis/DBFormat.h"
 #include "simVis/DB/QSCommon.h"
 #include "simVis/DB/swapbytes.h"
 #include "simVis/DB/SQLiteDataBaseReadUtil.h"
-#include "simCore/Calc/Math.h"
-#include "osgEarth/Cube"
-#include "osgEarth/ImageToHeightFieldConverter"
 
 using namespace simVis;
 using namespace simVis_db;
@@ -167,7 +167,7 @@ namespace
       outImage = new osg::Image();
       outImage->setImage(size, size, 1, internalFormat, pixelFormat, type, data, osg::Image::USE_NEW_DELETE);
     }
-    
+
     bool decodeRaster_(int rasterFormat, const char* inputBuffer, int inputBufferLen, osg::ref_ptr<osg::Image>& outImage)
     {
       switch (rasterFormat)
@@ -322,12 +322,12 @@ const osgEarth::URI& DBImageLayer::getURL() const
   return options().url().get();
 }
 
-void DBImageLayer::setDeepestLevel(const unsigned int& value)
+void DBImageLayer::setDeepestLevel(unsigned int value)
 {
   options().deepestLevel() = value;
 }
 
-const unsigned int& DBImageLayer::getDeepestLevel() const
+unsigned int DBImageLayer::getDeepestLevel() const
 {
   return options().deepestLevel().get();
 }
@@ -340,7 +340,7 @@ void DBImageLayer::init()
 
 DBImageLayer::~DBImageLayer()
 {
-  delete ((DBContext*)context_);
+  delete static_cast<DBContext*>(context_);
 }
 
 osgEarth::Status DBImageLayer::openImplementation()
@@ -349,7 +349,7 @@ osgEarth::Status DBImageLayer::openImplementation()
   if (parent.isError())
     return parent;
 
-  DBContext& cx = *(DBContext*)context_;
+  DBContext& cx = *static_cast<DBContext*>(context_);
 
   if (!options().url().isSet())
     return osgEarth::Status(osgEarth::Status::ConfigurationError, "Missing required URL");
@@ -390,7 +390,7 @@ osgEarth::Status DBImageLayer::openImplementation()
       sqlite3_close(cx.db_);
       cx.db_ = NULL;
       return osgEarth::Status(
-        osgEarth::Status::ResourceUnavailable, 
+        osgEarth::Status::ResourceUnavailable,
         osgEarth::Stringify() << "Failed to read metadata for " << cx.pathname_);
     }
 
@@ -454,7 +454,7 @@ osgEarth::Status DBImageLayer::openImplementation()
 
 osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const
 {
-  DBContext& cx = *(DBContext*)context_;
+  DBContext& cx = *static_cast<DBContext*>(context_);
 
   if (!cx.db_)
     return osgEarth::GeoImage::INVALID;
@@ -598,12 +598,12 @@ const osgEarth::URI& DBElevationLayer::getURL() const
   return options().url().get();
 }
 
-void DBElevationLayer::setDeepestLevel(const unsigned int& value)
+void DBElevationLayer::setDeepestLevel(unsigned int value)
 {
   options().deepestLevel() = value;
 }
 
-const unsigned int& DBElevationLayer::getDeepestLevel() const
+unsigned int DBElevationLayer::getDeepestLevel() const
 {
   return options().deepestLevel().get();
 }
@@ -616,7 +616,7 @@ void DBElevationLayer::init()
 
 DBElevationLayer::~DBElevationLayer()
 {
-  delete ((DBContext*)context_);
+  delete static_cast<DBContext*>(context_);
 }
 
 osgEarth::Status DBElevationLayer::openImplementation()
@@ -626,7 +626,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
     return parent;
 
 
-  DBContext& cx = *(DBContext*)context_;
+  DBContext& cx = *static_cast<DBContext*>(context_);
 
   if (!options().url().isSet())
     return osgEarth::Status(osgEarth::Status::ConfigurationError, "Missing required URL");
@@ -667,7 +667,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
       sqlite3_close(cx.db_);
       cx.db_ = NULL;
       return osgEarth::Status(
-        osgEarth::Status::ResourceUnavailable, 
+        osgEarth::Status::ResourceUnavailable,
         osgEarth::Stringify() << "Failed to read metadata for " << cx.pathname_);
     }
 
@@ -731,8 +731,8 @@ osgEarth::Status DBElevationLayer::openImplementation()
 
 osgEarth::GeoHeightField DBElevationLayer::createHeightFieldImplementation(const osgEarth::TileKey& key, osgEarth::ProgressCallback* progress) const
 {
-  DBContext& cx = *(DBContext*)context_;
-  
+  DBContext& cx = *static_cast<DBContext*>(context_);
+
   if (!cx.db_)
     return osgEarth::GeoHeightField::INVALID;
 

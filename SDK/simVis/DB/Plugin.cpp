@@ -19,10 +19,10 @@
 * disclose, or release this software.
 *
 */
-#include "osgEarth/TileSource"
+#include <string>
 #include "osgDB/FileNameUtils"
 #include "osgDB/Registry"
-#include <string>
+#include "osgEarth/TileSource"
 #include "DBTileSource.h"
 
 class SimSdkOSGEarthDBDriverPlugin : public osgEarth::Contrib::TileSourceDriver

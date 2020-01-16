@@ -44,7 +44,7 @@ public: // serialization
   public:
     META_LayerOptions(simVis, Options, osgEarth::ImageLayer::Options);
     OE_OPTION(osgEarth::URI, url);
-    OE_OPTION(unsigned, deepestLevel);
+    OE_OPTION(unsigned int, deepestLevel);
     virtual osgEarth::Config getConfig() const;
   private:
     void fromConfig(const osgEarth::Config&);
@@ -59,8 +59,8 @@ public:
   const osgEarth::URI& getURL() const;
 
   /// Maximum level to use in DB file
-  void setDeepestLevel(const unsigned int& value);
-  const unsigned int& getDeepestLevel() const;
+  void setDeepestLevel(unsigned int value);
+  unsigned int getDeepestLevel() const;
 
 public: // Layer
 
@@ -78,6 +78,8 @@ protected: // Layer
   /// Destructor
   virtual ~DBImageLayer();
 
+private:
+  /// DBContext instance, a struct that maintains per-DB parameters and persistent data
   void* context_;
 };
 
@@ -91,7 +93,7 @@ public: // serialization
   public:
     META_LayerOptions(simVis, Options, osgEarth::ElevationLayer::Options);
     OE_OPTION(osgEarth::URI, url);
-    OE_OPTION(unsigned, deepestLevel);
+    OE_OPTION(unsigned int, deepestLevel);
     virtual osgEarth::Config getConfig() const;
   private:
     void fromConfig(const osgEarth::Config&);
@@ -105,8 +107,8 @@ public:
   const osgEarth::URI& getURL() const;
 
   /// Maximum level to use in DB file
-  void setDeepestLevel(const unsigned int& value);
-  const unsigned int& getDeepestLevel() const;
+  void setDeepestLevel(unsigned int value);
+  unsigned int getDeepestLevel() const;
 
 public: // Layer
 
@@ -124,6 +126,8 @@ protected: // Layer
   /// Destructor
   virtual ~DBElevationLayer();
 
+private:
+  /// DBContext instance, a struct that maintains per-DB parameters and persistent data
   void* context_;
 };
 

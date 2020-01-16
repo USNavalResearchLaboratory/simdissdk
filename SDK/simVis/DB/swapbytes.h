@@ -19,9 +19,8 @@
  * disclose, or release this software.
  *
  */
-
-#ifndef SIMUTIL_SWAPBYTES_H
-#define SIMUTIL_SWAPBYTES_H
+#ifndef SIMVIS_DB_SWAPBYTES_H
+#define SIMVIS_DB_SWAPBYTES_H
 
 #include <algorithm>
 #include <iostream>
@@ -777,4 +776,4 @@ namespace simVis_db
 
 } // namespace simVis_db
 
-#endif /* SIMUTIL_SWAPBYTES_H */
+#endif /* SIMVIS_DB_SWAPBYTES_H */

@@ -35,8 +35,6 @@
 #include "simUtil/ExampleResources.h"
 #include "simUtil/PlatformSimulator.h"
 
-#include "osgDB/ReadFile"
-
 namespace
 {
 /// get time and platform removal notifications
