@@ -25,13 +25,10 @@
 #include "osg/ref_ptr"
 #include "osg/MatrixTransform"
 #include "osgEarth/LineDrawable"
+#include "osgEarth/PointDrawable"
 #include "simData/DataTypes.h"
 
-namespace osg {
-  class Geode;
-  class Geometry;
-}
-
+namespace osg { class Geode; }
 namespace osgEarth { class SpatialReference; }
 
 namespace simVis
@@ -184,7 +181,7 @@ private:
 private:
   osg::ref_ptr<osg::Geode>      geode_;
   osg::ref_ptr<osgEarth::LineDrawable> centerLine_;
-  osg::ref_ptr<osg::Geometry> centerPoints_;
+  osg::ref_ptr<osgEarth::PointDrawable> centerPoints_;
   osg::ref_ptr<osgEarth::LineDrawable> ribbon_;
   osg::ref_ptr<osgEarth::LineDrawable> drop_;
 
