@@ -336,7 +336,7 @@ public:
         if (osg::equivalent(static_cast<float>(fmod(static_cast<float>(i), RADIAL_VERTEX_FACTOR)), 0.f)) // don't overdraw the rings
           continue;
         // if assert fails, re-check algorithm for determining vertexCount in constructor
-        assert(index < vertexArray->getNumElements());
+        assert(index < points_->size());
         points_->setVertex(index, osg::Vec3f(x * radialVertexSpacing * i, y * radialVertexSpacing * i, 0.f));
         ++index;
       }
