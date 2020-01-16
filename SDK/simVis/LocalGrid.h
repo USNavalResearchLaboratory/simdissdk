@@ -89,13 +89,13 @@ namespace simVis
     void configureLocator_(const simData::LocalGridPrefs& prefs);
 
     /// create Cartesian grid display
-    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup) const;
+    void createCartesian_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Geode* labelGroup) const;
 
     /// create polar ring or range ring display
-    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const;
+    void createRangeRings_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Geode* labelGroup, bool includePolarRadials) const;
 
     /// create speed ring or speed line display
-    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Geode* geomGroup, osg::Geode* labelGroup, bool drawSpeedLine) const;
+    void createSpeedRings_(const simData::LocalGridPrefs& prefs, osg::Group* geomGroup, osg::Geode* labelGroup, bool drawSpeedLine) const;
 
     /// update the speed ring/line display for current data
     void updateSpeedRings_(const simData::LocalGridPrefs& prefs, double sizeM, double timeRadiusSeconds);
