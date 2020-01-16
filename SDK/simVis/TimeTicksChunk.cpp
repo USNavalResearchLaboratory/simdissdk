@@ -24,13 +24,15 @@
 #include "osg/Geometry"
 #include "osgText/Text"
 #include "osgEarth/GeoData"
+#include "osgEarth/GLUtils"
 #include "osgEarth/LineDrawable"
-#include "simVis/PointSize.h"
+#include "osgEarth/PointDrawable"
 #include "simVis/Types.h"
 #include "simVis/TimeTicksChunk.h"
 
 namespace simVis
 {
+
 TimeTicksChunk::TimeTicksChunk(unsigned int maxSize, Type type, double lineLength, double pointSize, unsigned int largeFactor)
   : TrackPointsChunk(maxSize),
     type_(type),
@@ -110,36 +112,26 @@ void TimeTicksChunk::allocate_()
   if (type_ == POINT_TICKS)
   {
     // large points
-    largePoint_ = new osg::Geometry();
-    largePoint_->setUseVertexBufferObjects(true);
-    largePoint_->setUseDisplayList(false);
+    largePoint_ = new osgEarth::PointDrawable();
     largePoint_->setDataVariance(osg::Object::DYNAMIC);
-    osg::Vec3Array* largeVerts = new osg::Vec3Array();
-    largeVerts->assign(maxSize_, osg::Vec3());
-    largePoint_->setVertexArray(largeVerts);
-    osg::Vec4Array* largeColors = new osg::Vec4Array();
-    largeColors->setBinding(osg::Array::BIND_PER_VERTEX);
-    largeColors->assign(maxSize_, osg::Vec4(0, 0, 0, 0));
-    largePoint_->setColorArray(largeColors);
-    largePoint_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
+    largePoint_->allocate(maxSize_);
+    largePoint_->setColor(osg::Vec4f(0.f, 0.f, 0.f, 0.f));
+    largePoint_->finish();
+    largePoint_->setFirst(offset_);
+    largePoint_->setCount(count_);
     addChild(largePoint_.get());
-    PointSize::setValues(largePoint_->getOrCreateStateSet(), pointSize_ * largeSizeFactor_, osg::StateAttribute::ON);
+    osgEarth::GLUtils::setPointSize(largePoint_->getOrCreateStateSet(), pointSize_ * largeSizeFactor_, osg::StateAttribute::ON);
 
     // points
-    point_ = new osg::Geometry();
-    point_->setUseVertexBufferObjects(true);
-    point_->setUseDisplayList(false);
+    point_ = new osgEarth::PointDrawable();
     point_->setDataVariance(osg::Object::DYNAMIC);
-    osg::Vec3Array* verts = new osg::Vec3Array();
-    verts->assign(maxSize_, osg::Vec3());
-    point_->setVertexArray(verts);
-    osg::Vec4Array* colors = new osg::Vec4Array();
-    colors->setBinding(osg::Array::BIND_PER_VERTEX);
-    colors->assign(maxSize_, simVis::Color::White);
-    point_->setColorArray(colors);
-    point_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
+    point_->allocate(maxSize_);
+    point_->setColor(simVis::Color::White);
+    point_->finish();
+    point_->setFirst(offset_);
+    point_->setCount(count_);
     addChild(point_.get());
-    PointSize::setValues(point_->getOrCreateStateSet(), pointSize_, osg::StateAttribute::ON);
+    osgEarth::GLUtils::setPointSize(point_->getOrCreateStateSet(), pointSize_, osg::StateAttribute::ON);
   }
   else if (type_ == LINE_TICKS)
   {
@@ -171,21 +163,11 @@ void TimeTicksChunk::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
   {
     if (large)
     {
-      osg::Vec3Array* largeVerts = static_cast<osg::Vec3Array*>(largePoint_->getVertexArray());
-      (*largeVerts)[i] = local;
-      largeVerts->dirty();
-      osg::Vec4Array* largeColors = static_cast<osg::Vec4Array*>(largePoint_->getColorArray());
-      (*largeColors)[i] = color;
-      largeColors->dirty();
-      largePoint_->dirtyBound();
+      largePoint_->setVertex(i, local);
+      largePoint_->setColor(i, color);
     }
-    osg::Vec3Array* pointVerts = static_cast<osg::Vec3Array*>(point_->getVertexArray());
-    (*pointVerts)[i] = local;
-    pointVerts->dirty();
-    osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(point_->getColorArray());
-    (*colors)[i] = color;
-    colors->dirty();
-    point_->dirtyBound();
+    point_->setVertex(i, local);
+    point_->setColor(i, color);
   }
   else if (type_ == LINE_TICKS)
   {
@@ -213,12 +195,10 @@ void TimeTicksChunk::updatePrimitiveSets_()
 {
   if (type_ == POINT_TICKS)
   {
-    osg::DrawArrays* pointSet = static_cast<osg::DrawArrays*>(point_->getPrimitiveSet(0));
-    pointSet->setFirst(offset_);
-    pointSet->setCount(count_);
-    osg::DrawArrays* largeSet = static_cast<osg::DrawArrays*>(largePoint_->getPrimitiveSet(0));
-    largeSet->setFirst(offset_);
-    largeSet->setCount(count_);
+    point_->setFirst(offset_);
+    point_->setCount(count_);
+    largePoint_->setFirst(offset_);
+    largePoint_->setCount(count_);
   }
   else if (type_ == LINE_TICKS)
   {
