@@ -23,6 +23,8 @@
 #include "osgEarth/Cube"
 #include "osgEarth/ImageToHeightFieldConverter"
 #include "simCore/Calc/Math.h"
+#include "simCore/Time/TimeClass.h"
+#include "simVis/DBOptions.h"
 #include "simVis/DBFormat.h"
 #include "simVis/DB/QSCommon.h"
 #include "simVis/DB/swapbytes.h"
@@ -93,8 +95,8 @@ namespace
 
     osgEarth::Contrib::CubeUtils::cubeToFace(xMin, yMin, xMax, yMax, face);
 
-    out_fmin.set(xMin * gQsDMaxLength, yMin * gQsDMaxLength);
-    out_fmax.set(xMax * gQsDMaxLength, yMax * gQsDMaxLength);
+    out_fmin.set(xMin * QS_MAX_LENGTH_DOUBLE, yMin * QS_MAX_LENGTH_DOUBLE);
+    out_fmax.set(xMax * QS_MAX_LENGTH_DOUBLE, yMax * QS_MAX_LENGTH_DOUBLE);
 
     return true;
   }
@@ -162,7 +164,7 @@ namespace
       std::copy(buf.begin(), buf.end(), data);
 
       // Be sure to cast here to get the right swap function:
-      make_big_endian((T*)data, size * size);
+      makeBigEndian((T*)data, size * size);
 
       outImage = new osg::Image();
       outImage->setImage(size, size, 1, internalFormat, pixelFormat, type, data, osg::Image::USE_NEW_DELETE);
@@ -356,7 +358,7 @@ osgEarth::Status DBImageLayer::openImplementation()
 
   cx.pathname_ = osgDB::findDataFile(options().url()->full(), getReadOptions());
 
-  if (cx.dbUtil_.OpenDataBaseFile(cx.pathname_, &cx.db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != QS_IS_OK)
+  if (cx.dbUtil_.openDatabaseFile(cx.pathname_, &cx.db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != simVis_db::QS_IS_OK)
   {
     cx.db_ = NULL;
     return osgEarth::Status(
@@ -365,7 +367,7 @@ osgEarth::Status DBImageLayer::openImplementation()
   }
   else
   {
-    QsErrorType err = cx.dbUtil_.TsGetSetFromListOfSetsTable(
+    QsErrorType err = cx.dbUtil_.getSetFromListOfSetsTable(
       cx.db_,
       "default",
       cx.rasterFormat_,
@@ -385,7 +387,7 @@ osgEarth::Status DBImageLayer::openImplementation()
       cx.deepLevel_ = simCore::sdkMin(cx.deepLevel_, static_cast<int>(options().deepestLevel().get()));
     }
 
-    if (err != QS_IS_OK)
+    if (err != simVis_db::QS_IS_OK)
     {
       sqlite3_close(cx.db_);
       cx.db_ = NULL;
@@ -407,10 +409,10 @@ osgEarth::Status DBImageLayer::openImplementation()
     {
       if (cx.extents_[f].minX < cx.extents_[f].maxX && cx.extents_[f].minY < cx.extents_[f].maxY)
       {
-        const double x0 = cx.extents_[f].minX / gQsDMaxLength;
-        const double x1 = cx.extents_[f].maxX / gQsDMaxLength;
-        const double y0 = cx.extents_[f].minY / gQsDMaxLength;
-        const double y1 = cx.extents_[f].maxY / gQsDMaxLength;
+        const double x0 = cx.extents_[f].minX / QS_MAX_LENGTH_DOUBLE;
+        const double x1 = cx.extents_[f].maxX / QS_MAX_LENGTH_DOUBLE;
+        const double y0 = cx.extents_[f].minY / QS_MAX_LENGTH_DOUBLE;
+        const double y1 = cx.extents_[f].maxY / QS_MAX_LENGTH_DOUBLE;
 
         osgEarth::GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
 
@@ -468,7 +470,7 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
   osg::Vec2d    tileMax;  // Tile extents in QS units
   convertTileKeyToQsKey(key, faceId, nodeId, tileMin, tileMax);
 
-  if (!cx.extents_[faceId].Valid())
+  if (!cx.extents_[faceId].isValid())
   {
     // no data on this face? return nothing
     return osgEarth::GeoImage::INVALID;
@@ -485,7 +487,7 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
   uint32_t bufSize = 0;
   uint32_t currentRasterSize = 0;
 
-  QsErrorType err = cx.dbUtil_.TsReadDataBuffer(
+  QsErrorType err = cx.dbUtil_.readDataBuffer(
     cx.db_,
     cx.pathname_,
     "default",
@@ -496,7 +498,7 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
     &currentRasterSize,
     false, true);             // AllowLocalDB: no, we created it ourselves
 
-  if (err == QS_IS_OK)
+  if (err == simVis_db::QS_IS_OK)
   {
     if (currentRasterSize > 0)
     {
@@ -558,7 +560,7 @@ osgEarth::GeoImage DBImageLayer::createImageImplementation(const osgEarth::TileK
   }
   else
   {
-    std::cerr << GetErrorString(err) << std::endl;
+    std::cerr << simVis_db::getErrorString(err) << std::endl;
     OE_WARN << "Failed to read image from " << key.str() << std::endl;
   }
 
@@ -633,7 +635,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
 
   cx.pathname_ = osgDB::findDataFile(options().url()->full(), getReadOptions());
 
-  if (cx.dbUtil_.OpenDataBaseFile(cx.pathname_, &cx.db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != QS_IS_OK)
+  if (cx.dbUtil_.openDatabaseFile(cx.pathname_, &cx.db_, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX) != simVis_db::QS_IS_OK)
   {
     cx.db_ = NULL;
     return osgEarth::Status(
@@ -642,7 +644,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
   }
   else
   {
-    QsErrorType err = cx.dbUtil_.TsGetSetFromListOfSetsTable(
+    QsErrorType err = cx.dbUtil_.getSetFromListOfSetsTable(
       cx.db_,
       "default",
       cx.rasterFormat_,
@@ -662,7 +664,7 @@ osgEarth::Status DBElevationLayer::openImplementation()
       cx.deepLevel_ = simCore::sdkMin(cx.deepLevel_, static_cast<int>(options().deepestLevel().get()));
     }
 
-    if (err != QS_IS_OK)
+    if (err != simVis_db::QS_IS_OK)
     {
       sqlite3_close(cx.db_);
       cx.db_ = NULL;
@@ -684,10 +686,10 @@ osgEarth::Status DBElevationLayer::openImplementation()
     {
       if (cx.extents_[f].minX < cx.extents_[f].maxX && cx.extents_[f].minY < cx.extents_[f].maxY)
       {
-        const double x0 = cx.extents_[f].minX / gQsDMaxLength;
-        const double x1 = cx.extents_[f].maxX / gQsDMaxLength;
-        const double y0 = cx.extents_[f].minY / gQsDMaxLength;
-        const double y1 = cx.extents_[f].maxY / gQsDMaxLength;
+        const double x0 = cx.extents_[f].minX / QS_MAX_LENGTH_DOUBLE;
+        const double x1 = cx.extents_[f].maxX / QS_MAX_LENGTH_DOUBLE;
+        const double y0 = cx.extents_[f].minY / QS_MAX_LENGTH_DOUBLE;
+        const double y1 = cx.extents_[f].maxY / QS_MAX_LENGTH_DOUBLE;
 
         osgEarth::GeoExtent cubeEx(profile->getSRS(), f + x0, y0, f + x1, y1);
 
@@ -745,7 +747,7 @@ osgEarth::GeoHeightField DBElevationLayer::createHeightFieldImplementation(const
   osg::Vec2d    tileMax; // Tile extents in QS units
   convertTileKeyToQsKey(key, faceId, nodeId, tileMin, tileMax);
 
-  if (!cx.extents_[faceId].Valid())
+  if (!cx.extents_[faceId].isValid())
   {
     // If there is no data on that face, return nothing.
     return osgEarth::GeoHeightField::INVALID;
@@ -756,7 +758,7 @@ osgEarth::GeoHeightField DBElevationLayer::createHeightFieldImplementation(const
   uint32_t bufSize = 0;
   uint32_t currentRasterSize = 0;
 
-  QsErrorType err = cx.dbUtil_.TsReadDataBuffer(
+  QsErrorType err = cx.dbUtil_.readDataBuffer(
     cx.db_,
     cx.pathname_,
     "default",
@@ -767,7 +769,7 @@ osgEarth::GeoHeightField DBElevationLayer::createHeightFieldImplementation(const
     &currentRasterSize,
     false);             // AllowLocalDB: no, we created it ourselves
 
-  if (err == QS_IS_OK)
+  if (err == simVis_db::QS_IS_OK)
   {
     if (currentRasterSize > 0)
     {

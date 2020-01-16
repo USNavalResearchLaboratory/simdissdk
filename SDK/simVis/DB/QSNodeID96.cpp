@@ -219,27 +219,27 @@ QSNodeID96 QSNodeID96::operator&(const QSNodeID96& value) const
 }
 
 //---------------------------------------------------------------------------
-void QSNodeID96::Pack(uint8_t* buffer) const
+void QSNodeID96::pack(uint8_t* buffer) const
 {
   if (buffer == NULL)
     return;
-  bewrite(buffer, &three_);
-  bewrite(buffer + sizeof(three_), &two_);
-  bewrite(buffer + sizeof(three_) + sizeof(two_), &one_);
+  beWrite(buffer, &three_);
+  beWrite(buffer + sizeof(three_), &two_);
+  beWrite(buffer + sizeof(three_) + sizeof(two_), &one_);
 }
 
 //---------------------------------------------------------------------------
-void QSNodeID96::UnPack(const uint8_t* buffer)
+void QSNodeID96::unpack(const uint8_t* buffer)
 {
   if (buffer == NULL)
     return;
-  beread(buffer, &three_);
-  beread(buffer + sizeof(three_), &two_);
-  beread(buffer + sizeof(three_) + sizeof(two_), &one_);
+  beRead(buffer, &three_);
+  beRead(buffer + sizeof(three_), &two_);
+  beRead(buffer + sizeof(three_) + sizeof(two_), &one_);
 }
 
 //---------------------------------------------------------------------------
-std::string QSNodeID96::FormatAsHex(bool bLeadingZeros) const
+std::string QSNodeID96::formatAsHex(bool bLeadingZeros) const
 {
   std::string returnValue;
 

@@ -27,9 +27,6 @@
 #include "osgEarth/TileSourceElevationLayer"
 #include "osgEarth/URI"
 #include "simCore/Common/Common.h"
-#include "simCore/Common/Export.h"
-#include "simCore/Time/TimeClass.h"
-#include "simVis/DBOptions.h"
 
 namespace simVis
 {

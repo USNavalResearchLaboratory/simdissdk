@@ -147,7 +147,6 @@ set(VIS_HEADERS_DB_PRIVATE
     ${VIS_INC}DB/QSError.h
     ${VIS_INC}DB/QSNodeID96.h
     ${VIS_INC}DB/QSPosXYExtents.h
-    ${VIS_INC}DB/RasterCommon.h
     ${VIS_INC}DB/SQLiteDataBaseReadUtil.h
     ${VIS_INC}DB/swapbytes.h
 )
@@ -440,6 +439,11 @@ else()
 endif()
 if(SIM_HAVE_DB_SUPPORT)
     target_compile_definitions(simVis PRIVATE SIM_HAVE_DB_SUPPORT)
+    if(SDK_BIG_ENDIAN)
+        target_compile_definitions(simVis PRIVATE SIM_BIG_ENDIAN)
+    else()
+        target_compile_definitions(simVis PRIVATE SIM_LITTLE_ENDIAN)
+    endif()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)

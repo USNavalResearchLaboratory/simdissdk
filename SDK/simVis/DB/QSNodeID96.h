@@ -19,9 +19,8 @@
  * disclose, or release this software.
  *
  */
-
-#ifndef QSNODEID96_H
-#define QSNODEID96_H
+#ifndef SIMVIS_DB_QSNODEID96_H
+#define SIMVIS_DB_QSNODEID96_H
 
 #include <bitset>
 #include "simCore/Common/Common.h"
@@ -45,10 +44,10 @@ namespace simVis_db
     QSNodeID96 operator<<(int numBitsToShift) const;
     QSNodeID96 operator&(const QSNodeID96& value) const;
 
-    int SizeOf() const {return 12;}
-    void Pack(uint8_t*) const;
-    void UnPack(const uint8_t*);
-    std::string FormatAsHex(bool bLeadingZeros=true) const;
+    int sizeOf() const {return 12;}
+    void pack(uint8_t*) const;
+    void unpack(const uint8_t*);
+    std::string formatAsHex(bool bLeadingZeros=true) const;
 
   protected:
     uint32_t one_;
@@ -61,4 +60,4 @@ namespace simVis_db
 
 } // namespace simVis_db
 
-#endif /* QSNODEID96_H */
+#endif /* SIMVIS_DB_QSNODEID96_H */

@@ -19,8 +19,8 @@
  * disclose, or release this software.
  *
  */
-#ifndef QS_COMMON_H
-#define QS_COMMON_H
+#ifndef SIMVIS_DB_QSCOMMON_H
+#define SIMVIS_DB_QSCOMMON_H
 
 #include "simCore/Common/Common.h"
 
@@ -47,4 +47,4 @@ namespace simVis_db
   static const RasterFormat SPLIT_TIFF = 14;
 } // namespace simVis_db
 
-#endif /* QS_COMMON_H */
+#endif /* SIMVIS_DB_QSCOMMON_H */

@@ -71,7 +71,7 @@ static const char* QS_IS_EMPTY_FILENAME_STR                        = "Empty file
 static const char* QS_IS_SET_CREATION_FAILED_STR                   = "Attempted raster set creation failed";
 static const char* QS_IS_NO_TIME_STAMP_STR                         = "Unable to obtain timestamp";
 
-const char* GetErrorString(const QsErrorType& errorValue)
+const char* getErrorString(const QsErrorType& errorValue)
 {
   switch (errorValue)
   {
