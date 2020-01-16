@@ -44,14 +44,13 @@ writeFooter()
 writeHeader simVis.h SIMVIS
 echo "#include \"simVis/Shaders.h\"" >> simVis.h.inc
 echo "#include \"simVis/osgEarthVersion.h\"" >> simVis.h.inc
-find simVis -name '*.h' | grep -v "simVis/Shaders.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simVis.h.inc
+find simVis -name '*.h' | sort -f | grep -v "simVis/Shaders.h" | grep -v "simVis/DBFormat.h" | grep -v "simVis/DBOptions.h" | grep -v "simVis/DB/" | sed 's/^/#include "/' | sed 's/$/"/' >> simVis.h.inc
 addIncludes simVis.h
 writeFooter simVis.h SIMVIS
 
-
 # simUtil
 writeHeader simUtil.h SIMUTIL
-find simUtil -name '*.h' | sort -f | sed 's/^/#include "/' | sed 's/$/"/' >> simUtil.h.inc
+find simUtil -name '*.h' | sort -f | grep -v "simUtil/DbConfigurationFile" | sed 's/^/#include "/' | sed 's/$/"/' >> simUtil.h.inc
 addIncludes simUtil.h
 writeFooter simUtil.h SIMUTIL
 
