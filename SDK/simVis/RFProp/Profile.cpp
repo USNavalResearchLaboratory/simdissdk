@@ -21,13 +21,14 @@
  */
 #include "osg/MatrixTransform"
 #include "osg/Texture2D"
+#include "osgEarth/GLUtils"
 #include "osgEarth/ImageUtils"
+#include "osgEarth/PointDrawable"
 #include "osgEarth/NodeUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simVis/Constants.h"
-#include "simVis/PointSize.h"
 #include "simVis/Utils.h"
 #include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/Profile.h"
@@ -988,8 +989,11 @@ void Profile::init3DPoints_()
   simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
 
   const unsigned int numVerts = (maxHeightIndex - minHeightIndex + 1) * numRanges;
-  verts_->reserve(numVerts);
   values_->reserve(numVerts);
+
+  osgEarth::PointDrawable* points = new osgEarth::PointDrawable();
+  points->setDataVariance(osg::Object::DYNAMIC);
+  points->reserve(numVerts);
 
   for (unsigned int r = 0; r < numRanges; r++)
   {
@@ -1008,21 +1012,15 @@ void Profile::init3DPoints_()
       {
         adjustSpherical_(v, tpSphereXYZ);
       }
-      verts_->push_back(v);
+      points->pushVertex(v);
       values_->push_back(value);
     }
   }
+  points->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
+  points->finish();
 
-  osg::Geometry* geometry = new osg::Geometry();
-  geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_.get());
-  geometry->setUseVertexBufferObjects(true);
-
-  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-
-  geometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, verts_->size()));
-  geode_->addDrawable(geometry);
-  simVis::PointSize::setValues(geode_->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
+  geode_->addChild(points);
+  osgEarth::GLUtils::setPointSize(geode_->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
 }
 
 osg::Image* Profile::createImage_()
