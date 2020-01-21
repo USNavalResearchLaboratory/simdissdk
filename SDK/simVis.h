@@ -106,7 +106,6 @@
 #include "simVis/PlatformFilter.h"
 #include "simVis/PlatformInertialTransform.h"
 #include "simVis/PlatformModel.h"
-#include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/Popup.h"
 #include "simVis/Projector.h"

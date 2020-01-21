@@ -41,7 +41,6 @@
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/PlatformFilter.h"
-#include "simVis/PointSize.h"
 #include "simVis/Registry.h"
 #include "simVis/Shaders.h"
 #include "simVis/TimeTicksChunk.h"
