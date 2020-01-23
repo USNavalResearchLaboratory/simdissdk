@@ -523,6 +523,50 @@ void AntennaPatternPedestal::minMaxGain(float *min, float *max, const AntennaGai
 
 
 /* ************************************************************************** */
+namespace
+{
+  /**
+  * @brief Convenience function that returns the gain for a specified angle from an antenna pattern lookup table, interpolating if necessary
+  * @param[in ] angle angle to lookup (rad)
+  * @param[in ] angle/gain lookup table
+  * @return table gain (dB), or SMALL_DB_VAL on invalid input
+  */
+  float gainAtAngle(float angle, const std::map<float, float>& table)
+  {
+    // gets the first element in map with an angle >= input angle
+    std::map<float, float>::const_iterator iter = table.lower_bound(angle);
+    if (iter != table.end())
+    {
+      // checks if the obtained element's angle is equal to the given angle,
+      // or if the obtained element is the first element in map
+      if ((iter->first == angle) || (iter == table.begin()))
+        return iter->second;
+
+      // the obtained element's angle is > the given angle and it is not
+      // the first element in the map, so an interpolated angle between
+      // the current element and the previous element will be used
+      const float hiGain = iter->second;
+      const float hiAng = iter->first;
+      --iter;
+      const float loGain = iter->second;
+      const float loAng = iter->first;
+      // linearInterpolate casts to double as needed to avoid loss of precision
+      return linearInterpolate(loGain, hiGain, loAng, angle, hiAng);
+    }
+
+    // if not found in table, double-check, possibly missed due to rounding errors due to casting
+    iter = table.begin();
+    if (areEqual(angle, iter->first))
+      return iter->second;
+
+    const std::map<float, float>::const_reverse_iterator riter = table.rbegin();
+    if (areEqual(angle, riter->first))
+      return riter->second;
+
+    return SMALL_DB_VAL;
+  }
+}
+
 /* This function returns the gain for lookup table-based antennaPatterns */
 
 float calculateGain(const std::map<float, float> *azimData,
@@ -547,13 +591,13 @@ float calculateGain(const std::map<float, float> *azimData,
   std::map<float, float>::const_iterator iter;
   if (applyWeight == false)
   {
-    iter = azimData->begin();
-    std::map<float, float>::const_reverse_iterator riter = azimData->rbegin();
+    iter = azimData->cbegin();
+    std::map<float, float>::const_reverse_iterator riter = azimData->crbegin();
     if (azim < iter->first || azim > riter->first)
       return SMALL_DB_VAL;
 
-    iter = elevData->begin();
-    riter = elevData->rbegin();
+    iter = elevData->cbegin();
+    riter = elevData->crbegin();
     if (elev < iter->first || elev > riter->first)
       return SMALL_DB_VAL;
   }
@@ -575,88 +619,8 @@ float calculateGain(const std::map<float, float> *azimData,
 
   const double azim_ang = applyWeight ? sdkMin(phi * hbw, M_PI) : azim;
   const double elev_ang = applyWeight ? sdkMin(phi * vbw, M_PI_2) : elev;
-  double az_gain = SMALL_DB_VAL;
-  double el_gain = SMALL_DB_VAL;
-
-  // Azimuth data
-  // gets the first element in map with an angle >= dazim
-  iter = azimData->lower_bound(static_cast<float>(azim_ang));
-
-  // checks if an element with a an angle >= azim_ang was found
-  if (iter != azimData->end())
-  {
-    // checks if the obtained element's angle is equal to the given angle,
-    // or if the obtained element is the first element in map
-    if ((iter->first == azim_ang) || (iter == azimData->begin()))
-    {
-      az_gain = iter->second;
-    }
-    else
-    {
-      // the obtained element's angle is > the given angle and it is not
-      // the first element in the map, so an interpolated angle between
-      // the current element and the previous element will be used
-      double hiGain = iter->second;
-      double hiAng = iter->first;
-      --iter;
-      double loGain = iter->second;
-      double loAng = iter->first;
-
-      az_gain = linearInterpolate(loGain, hiGain, loAng, azim_ang, hiAng);
-    }
-  }
-  else
-  {
-    // check for rounding errors due to casting
-    iter = azimData->begin();
-    std::map<float, float>::const_reverse_iterator riter = azimData->rbegin();
-    if (areEqual(azim_ang, iter->first))
-      az_gain = iter->second;
-    else if (areEqual(azim_ang, riter->first))
-      az_gain = riter->second;
-    else
-      az_gain = SMALL_DB_VAL;
-  }
-
-  // Elevation data
-  // gets the first element in map with an angle >= elev_ang
-  iter = elevData->lower_bound(static_cast<float>(elev_ang));
-
-  // checks if an element with a an angle >= elev_ang was found
-  if (iter != elevData->end())
-  {
-    // checks if the obtained element's angle is equal to the given angle,
-    // or if the obtained element is the first element in map
-    if ((iter->first == elev_ang) || (iter == elevData->begin()))
-    {
-      el_gain = iter->second;
-    }
-    else
-    {
-      // the obtained element's angle is > the given angle and it is not
-      // the first element in the map, so an interpolated angle between
-      // the current element and the previous element will be used
-      double hiGain = iter->second;
-      double hiAng = iter->first;
-      --iter;
-      double loGain = iter->second;
-      double loAng = iter->first;
-
-      el_gain = linearInterpolate(loGain, hiGain, loAng, elev_ang, hiAng);
-    }
-  }
-  else
-  {
-    // check for rounding errors due to casting
-    iter = elevData->begin();
-    std::map<float, float>::const_reverse_iterator riter = elevData->rbegin();
-    if (areEqual(elev_ang, iter->first))
-      el_gain = iter->second;
-    else if (areEqual(elev_ang, riter->first))
-      el_gain = riter->second;
-    else
-      el_gain = SMALL_DB_VAL;
-  }
+  const double az_gain = gainAtAngle(static_cast<float>(azim_ang), *azimData);
+  const double el_gain = gainAtAngle(static_cast<float>(elev_ang), *elevData);
 
   // Determine angles (alpha & beta) associated with normalized
   // azim / elev components.  They will be used to obtain a
@@ -840,23 +804,38 @@ int AntennaPatternTable::readPat(std::istream& fp)
   if (beamWidthType_)
     beamWidthType_ = false;
 
+  const float m_pi_2 = static_cast<float>(M_PI_2);
+
   // The antenna symmetry value indicates the number of tables the user is going to provide.
   switch (symmetry)
   {
-    // If the symmetry is 1, then the user will provide the [0, 180] azimuth table.
+    // If the symmetry is 1, then the user will provide one azimuth table.
+    // That table typically covers [0, 180], but that is not required.
     // This table will be reused for the other three tables.
+    // Elevation data [-PI/2, PI/2] will match azimuth data in [-PI/2, PI/2].
   case 1:
     {
       for (i = 0; i < tableSize[0]; i++)
       {
-        azim = static_cast<float>(angFixPI(value[0][i]));
-        elev = static_cast<float>(angFixPI2(value[0][i]));
-        azimData_[azim] = gain[0][i];
-        elevData_[elev] = gain[0][i];
-        // mirror missing data
-        azimData_[-azim] = gain[0][i];
-        elevData_[-elev] = gain[0][i];
+        const float angFixPi = static_cast<float>(angFixPI(value[0][i]));
+        const float gainVal = gain[0][i];
+        azimData_[angFixPi] = gainVal;
+        azimData_[-angFixPi] = gainVal;
+
+        // transfer only values within (-pi/2, pi/2) to elev table; do not clamp angle values outside of that into elev table.
+        if (angFixPi > -m_pi_2 && angFixPi < m_pi_2)
+        {
+          elevData_[angFixPi] = gainVal;
+          elevData_[-angFixPi] = gainVal;
+        }
       }
+      // ensure that elev table gets entries for -M_PI_2 and M_PI_2, if those values exist
+      float azGainVal = gainAtAngle(m_pi_2, azimData_);
+      if (azGainVal != SMALL_DB_VAL)
+        elevData_[m_pi_2] = azGainVal;
+      azGainVal = gainAtAngle(-m_pi_2, azimData_);
+      if (azGainVal != SMALL_DB_VAL)
+        elevData_[-m_pi_2] = azGainVal;
     }
     break;
 
@@ -874,10 +853,14 @@ int AntennaPatternTable::readPat(std::istream& fp)
       }
       for (i = 0; i < tableSize[1]; i++)
       {
-        elev = static_cast<float>(angFixPI2(value[1][i]));
-        elevData_[elev] = gain[1][i];
-        // mirror missing data
-        elevData_[-elev] = gain[1][i];
+        elev = static_cast<float>(angFixPI(value[1][i]));
+        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
+        if (elev >= -m_pi_2 && elev <= m_pi_2)
+        {
+          elevData_[elev] = gain[1][i];
+          // mirror missing data
+          elevData_[-elev] = gain[1][i];
+        }
       }
     }
     break;
@@ -887,23 +870,31 @@ int AntennaPatternTable::readPat(std::istream& fp)
     {
       for (i = 0; i < tableSize[0]; i++)
       {
+        // this table is supposed to contain the negative azim angle values, but not strictly enforced
         azim = static_cast<float>(angFixPI(value[0][i]));
         azimData_[azim] = gain[0][i];
       }
       for (i = 0; i < tableSize[1]; i++)
       {
+        // this table is supposed to contain the positive azim angle values, but not strictly enforced
         azim = static_cast<float>(angFixPI(value[1][i]));
         azimData_[azim] = gain[1][i];
       }
       for (i = 0; i < tableSize[2]; i++)
       {
-        elev = static_cast<float>(angFixPI2(value[2][i]));
-        elevData_[elev] = gain[2][i];
+        // this table is supposed to contain the negative elev angle values, but not strictly enforced
+        elev = static_cast<float>(angFixPI(value[2][i]));
+        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
+        if (elev >= -m_pi_2 && elev <= m_pi_2)
+          elevData_[elev] = gain[2][i];
       }
       for (i = 0; i < tableSize[3]; i++)
       {
-        elev = static_cast<float>(angFixPI2(value[3][i]));
-        elevData_[elev] = gain[3][i];
+        // this table is supposed to contain the positive elev angle values, but not strictly enforced
+        elev = static_cast<float>(angFixPI(value[3][i]));
+        // elevation angles outside of [-PI/2, PI/2] are not valid and are ignored
+        if (elev >= -m_pi_2 && elev <= m_pi_2)
+          elevData_[elev] = gain[3][i];
       }
     }
     break;
