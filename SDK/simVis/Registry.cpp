@@ -191,6 +191,13 @@ simVis::Registry::Registry()
   modelExtensions_.push_back("bmp");
   modelExtensions_.push_back("jpg");
 
+  // Known OSG and SIMDIS pseudo loaders
+  pseudoLoaderExtensions_.insert("osgs"); // encode OSG file as filename
+  pseudoLoaderExtensions_.insert("pse"); // EW symbology
+  pseudoLoaderExtensions_.insert("rot"); // rotate model
+  pseudoLoaderExtensions_.insert("scale"); // scale model
+  pseudoLoaderExtensions_.insert("trans"); // translate model
+
   // initialize the default NOTIFY level from the environment variable
   const std::string val = simCore::getEnvVar("SIM_NOTIFY_LEVEL");
   if (!val.empty())
@@ -292,6 +299,16 @@ void simVis::Registry::setModelSearchExtensions(const FileExtensionList& list)
   modelExtensions_ = list;
 }
 
+void simVis::Registry::getPseudoLoaderExtensions(std::set<std::string>& out_list) const
+{
+  out_list = pseudoLoaderExtensions_;
+}
+
+void simVis::Registry::setPseudoLoaderExtensions(const std::set<std::string>& list)
+{
+  pseudoLoaderExtensions_ = list;
+}
+
 void simVis::Registry::setShareArticulatedIconModels(bool value)
 {
   modelCache_->setShareArticulatedIconModels(value);
@@ -308,6 +325,14 @@ std::string simVis::Registry::findModelFile(const std::string& name) const
     if (it != modelFilenameCache_.end())
       return it->second;
 
+    // File extension might be in the pseudo-loader list, in which case we skip the search
+    const std::string& extension = osgDB::getFileExtension(name);
+    if (pseudoLoaderExtensions_.find(extension) != pseudoLoaderExtensions_.end())
+    {
+      modelFilenameCache_[name] = name;
+      return name;
+    }
+
     // First check the extension
     std::string fileSearchName = fileSearch_->findFile(name, simCore::FileSearch::MODEL);
     // Fall back on osgDB if it doesn't find it
@@ -322,7 +347,7 @@ std::string simVis::Registry::findModelFile(const std::string& name) const
     }
 
     // Now check via osgDB which has different search paths than fileSearch_
-    if (osgDB::getFileExtension(name).empty())
+    if (extension.empty())
     {
       // if the name has no extension, try tacking on extensions and trying to find the paths.
       for (FileExtensionList::const_iterator i = modelExtensions_.begin(); i != modelExtensions_.end(); ++i)

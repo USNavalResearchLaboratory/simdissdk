@@ -23,6 +23,7 @@
 #define SIMVIS_REGISTRY_H
 
 #include <list>
+#include <set>
 #include "OpenThreads/ReentrantMutex"
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
@@ -76,15 +77,27 @@ public:
 
   /**
   * Gets a copy of the list of extensions to look for when searching for a platform model.
-  * @param out_list List to populate with search extensions (output param)
+  * @param out_list List to populate with search extensions (output param); values do not have dots (e.g. "png")
   */
   void getModelSearchExtensions(FileExtensionList& out_list) const;
 
   /**
   * Sets the list of extensions to look for when searching for a platform model.
-  * @param list Model file extensions list
+  * @param list Model file extensions list; values do not have dots (e.g. "png")
   */
   void setModelSearchExtensions(const FileExtensionList& list);
+
+  /**
+  * Gets a copy of the list of extensions that are registered known pseudo-loader extensions, which might not represent a file on disk.
+  * @param out_list List to populate with pseudo loader extensions (output param); values do not have dots (e.g. "rot")
+  */
+  void getPseudoLoaderExtensions(std::set<std::string>& out_list) const;
+
+  /**
+  * Sets the list of extensions that are registered known pseudo-loader extensions, which might not represent a file on disk.
+  * @param list Pseudo loader file extensions list; values do not have dots (e.g. "rot")
+  */
+  void setPseudoLoaderExtensions(const std::set<std::string>& list);
 
   /**
   * Searches for the named model, using the model search path list and the extensions list.
@@ -206,6 +219,7 @@ private:
 
   FilePathList modelPaths_;
   FileExtensionList modelExtensions_;
+  std::set<std::string> pseudoLoaderExtensions_;
   ModelCache* modelCache_;
 
   // A mapping between the supplied file name and the actual file name
