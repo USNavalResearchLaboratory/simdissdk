@@ -588,18 +588,18 @@ float calculateGain(const std::map<float, float> *azimData,
     return SMALL_DB_VAL;
   }
 
-  std::map<float, float>::const_iterator iter;
-  if (applyWeight == false)
+  float gain = SMALL_DB_VAL;
+
+  if (!applyWeight)
   {
-    iter = azimData->cbegin();
-    std::map<float, float>::const_reverse_iterator riter = azimData->crbegin();
-    if (azim < iter->first || azim > riter->first)
+    const float az_gain = gainAtAngle(static_cast<float>(azim), *azimData);
+    if (az_gain == SMALL_DB_VAL)
+      return SMALL_DB_VAL;
+    const float el_gain = gainAtAngle(static_cast<float>(elev), *elevData);
+    if (el_gain == SMALL_DB_VAL)
       return SMALL_DB_VAL;
 
-    iter = elevData->cbegin();
-    riter = elevData->crbegin();
-    if (elev < iter->first || elev > riter->first)
-      return SMALL_DB_VAL;
+    gain = maxGain + (az_gain + el_gain) / 2.0f;
   }
 
   // Compute angular distance in normalized beam widths
@@ -617,50 +617,44 @@ float calculateGain(const std::map<float, float> *azimData,
   else
     lastLobe = ANTENNA_LOBE_BACK;
 
-  const double azim_ang = applyWeight ? sdkMin(phi * hbw, M_PI) : azim;
-  const double elev_ang = applyWeight ? sdkMin(phi * vbw, M_PI_2) : elev;
-  const double az_gain = gainAtAngle(static_cast<float>(azim_ang), *azimData);
-  const double el_gain = gainAtAngle(static_cast<float>(elev_ang), *elevData);
+  if (!applyWeight)
+    return gain;
+
+  const double azim_ang = sdkMin(phi * hbw, M_PI);
+  const float az_gain = gainAtAngle(static_cast<float>(azim_ang), *azimData);
+  if (az_gain == SMALL_DB_VAL)
+    return SMALL_DB_VAL;
+
+  const double elev_ang = sdkMin(phi * vbw, M_PI_2);
+  const float el_gain = gainAtAngle(static_cast<float>(elev_ang), *elevData);
+  if (el_gain == SMALL_DB_VAL)
+    return SMALL_DB_VAL;
 
   // Determine angles (alpha & beta) associated with normalized
   // azim / elev components.  They will be used to obtain a
   // 'weighted average' antenna loss value
+  if ((azim_bw == 0.0 && elev_bw == 0.0) || vbw == hbw)
+    return maxGain + (az_gain + el_gain) / 2.0f;
 
-  double gain;
-  if (applyWeight)
+  double alpha, beta;
+  if (azim_bw <= elev_bw)
   {
-    double alpha, beta;
-    if ((azim_bw == 0.0 && elev_bw == 0.0) || vbw == hbw)
-    {
-      gain = maxGain + (az_gain + el_gain) / 2.0;
-    }
-    else if (azim_bw <= elev_bw)
-    {
-      // since atan2 returns values between -pi and pi,
-      // alpha and beta should be in rad instead of deg
-      alpha = fabs(atan2(azim_bw, elev_bw));
-      if (alpha > M_PI_2)
-        alpha = M_PI - alpha;
-      beta = M_PI_2 - alpha;
-      gain = maxGain + (alpha * az_gain + beta * el_gain) / M_PI_2;
-    }
-    else
-    {
-      // since atan2 returns values between -pi and pi,
-      // alpha and beta should be in rad instead of deg
-      beta = fabs(atan2(elev_bw, azim_bw));
-      if (beta > M_PI_2)
-        beta = M_PI - beta;
-      alpha = M_PI_2 - beta;
-      gain = maxGain + (alpha * az_gain + beta * el_gain) / M_PI_2;
-    }
-  }
-  else
-  {
-    gain = maxGain + (az_gain + el_gain) / 2.0;
+    // since atan2 returns values between -pi and pi,
+    // alpha and beta should be in rad instead of deg
+    alpha = fabs(atan2(azim_bw, elev_bw));
+    if (alpha > M_PI_2)
+      alpha = M_PI - alpha;
+    beta = M_PI_2 - alpha;
+    return static_cast<float>(maxGain + (alpha * az_gain + beta * el_gain) / M_PI_2);
   }
 
-  return static_cast<float>(gain);
+  // since atan2 returns values between -pi and pi,
+  // alpha and beta should be in rad instead of deg
+  beta = fabs(atan2(elev_bw, azim_bw));
+  if (beta > M_PI_2)
+    beta = M_PI - beta;
+  alpha = M_PI_2 - beta;
+  return static_cast<float>(maxGain + (alpha * az_gain + beta * el_gain) / M_PI_2);
 }
 
 // ----------------------------------------------------------------------------
