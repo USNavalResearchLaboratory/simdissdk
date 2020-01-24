@@ -143,6 +143,8 @@ public:
    * @param reason The reason is appended to the end of the center action text
    */
   void setUseCenterAction(bool use, const QString& reason = "");
+  /** Toggle the tree/list view and update related UI component and action states if the tree view action is enabled */
+  void setTreeView(bool useTreeView);
 
   /** Class to store information about an Entity Tab Filter Configuration */
   class FilterConfiguration
@@ -214,6 +216,9 @@ signals:
 
   /** Fired before showing the right mouse click menu to allow external code to add and remove actions. */
   void rightClickMenuRequested(QMenu* menu=NULL);
+
+  /** Fired when entityTreeComposite toggles between tree and list view */
+  void treeViewChanged(bool useTreeView);
 
 protected slots:
   /** Receive notice of an inserted row */
