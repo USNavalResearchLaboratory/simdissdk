@@ -306,7 +306,7 @@ public: // methods
   {
     /**
      * Flush only the supplied entity and keep any static point
-     * Flushes Static points: Yes
+     * Flushes Static points: No
      * Flushes Commands: Yes
      * Flushes Data Tables: No
      * Flushes Generic Data: Yes
@@ -316,7 +316,7 @@ public: // methods
     NON_RECURSIVE,
     /**
     * Flush only the supplied entity and flush any static point
-    * Flushes Static points: No
+    * Flushes Static points: Yes
     * Flushes Commands: Yes
     * Flushes Data Tables: No
     * Flushes Generic Data: Yes
@@ -326,7 +326,7 @@ public: // methods
     NON_RECURSIVE_TSPI_STATIC,
     /**
      * Flush the supplied entity and any children and keep any static point
-     * Flushes Static points: Yes
+     * Flushes Static points: No
      * Flushes Commands: Yes
      * Flushes Data Tables: Yes
      * Flushes Generic Data: Yes
@@ -336,7 +336,7 @@ public: // methods
     RECURSIVE,
     /**
      * Flush TSPI only including static points, keep category data, generic data and data tables
-     * Flushes Static points: No
+     * Flushes Static points: Yes
      * Flushes Commands: No
      * Flushes Data Tables: No
      * Flushes Generic Data: No
@@ -345,10 +345,10 @@ public: // methods
     */
     NON_RECURSIVE_TSPI_ONLY,
     /**
-     * Flushes points, commands and data tables for the supplied entity.  Does not flush category data or generic data.
-     * Flushes Static points: No
+     * Flushes points and commands for the supplied entity.  Does not flush category data, generic data or data tables.
+     * Flushes Static points: Yes
      * Flushes Commands: Yes
-     * Flushes Data Tables: Yes
+     * Flushes Data Tables: No
      * Flushes Generic Data: No
      * Flushes Category Data: No
      * Applies same operation to Children: No

@@ -868,8 +868,8 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
     break;
   }
 
-  // Only recursive flush or non-recursive data deletes table data
-  if (recursive || (flushType == NON_RECURSIVE_DATA))
+  // Only recursive flush deletes table data
+  if (recursive)
     flushDataTables_(flushId);
 }
 
