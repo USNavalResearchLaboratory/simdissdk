@@ -594,8 +594,9 @@ void TimeTicks::updateTrackData_(double currentTime, const simData::PlatformUpda
   // check last draw time again, since it may have been updated in the block above
   if (!hasLastDrawTime_)
   {
-    // time ticks should reference from scenario start time
-    double firstTime = ds_.timeBounds(0).first;
+    // time ticks should all be referenced from 0:00:00.000
+    double firstTime = 0.0;
+
     // update begin time to always count up to a valid draw time from first time in case data limiting is occurring
     const double interval = lastPlatformPrefs_.trackprefs().timeticks().interval();
     if (beginTime != firstTime)
