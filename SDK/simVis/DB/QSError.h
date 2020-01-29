@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef QS_ERROR_H
-#define QS_ERROR_H
+#ifndef SIMVIS_DB_QSERROR_H
+#define SIMVIS_DB_QSERROR_H
 
 #include <string>
 
@@ -74,8 +74,8 @@ namespace simVis_db
   static const QsErrorType QS_IS_NO_TIME_STAMP                       = 42;
 
   //===========================================================================
-  const char* GetErrorString(const QsErrorType&);
+  const char* getErrorString(const QsErrorType&);
 
 } // namespace simVis_db
 
-#endif /* QS_ERROR_H */
+#endif /* SIMVIS_DB_QSERROR_H */

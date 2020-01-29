@@ -21,6 +21,7 @@
  */
 #include "simVis/GeoFence.h"
 
+#undef LC
 #define LC "[GeoFence] "
 
 namespace simVis {

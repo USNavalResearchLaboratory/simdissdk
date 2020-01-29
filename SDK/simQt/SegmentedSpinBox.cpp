@@ -292,9 +292,8 @@ private:
     if (lastEditedTime_ != completeLine_->timeStamp())
     {
       completeLine_->valueChanged();
-      // If we have focus assume the change was user initiated
-      if (hasFocus())
-        completeLine_->valueEdited();
+      // emit signal regardless of hasFocus() because this routine is only called by user initiated changes
+      completeLine_->valueEdited();
       lastEditedTime_ = completeLine_->timeStamp();
     }
   }

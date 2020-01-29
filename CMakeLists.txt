@@ -208,7 +208,6 @@ set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
 include(ImportSQLite)
 if (SQLITE3_FOUND)
     set(SIM_HAVE_DB_SUPPORT 1)
-    add_definitions(-DSIM_HAVE_DB_SUPPORT)
 endif()
 
 # subprojects

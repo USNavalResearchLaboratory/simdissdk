@@ -72,7 +72,10 @@ namespace simCore
   }
 
   /**
-  * Adjusts incoming angle to fit the range [-PI_2, PI_2]
+  * Clamps incoming angle to fit the range [-PI_2, PI_2]
+  * This is intended for use with latitude or elevation angle values that are already known to be valid.
+  * This routine does not ensure that inputs can be validly converted to [-PI_2, PI_2],
+  * and may have unintended outcomes if input is not validated before this is called.
   * @param[in ] in Input angle (rad)
   * @return equivalent angle between -PI_2 and PI_2 (rad)
   */
@@ -134,7 +137,10 @@ namespace simCore
   }
 
   /**
-  * Hard limits incoming angle to fit the range [-90, 90]
+  * Clamps incoming angle to fit the range [-90, 90]
+  * This is intended for use with latitude or elevation angle values that are already known to be valid.
+  * This routine does not ensure that inputs can be validly converted to [-90, 90],
+  * and may have unintended outcomes if input is not validated before this is called.
   * @param[in ] in angle (deg)
   * @return equivalent angle between -90 and 90 (deg)
   */

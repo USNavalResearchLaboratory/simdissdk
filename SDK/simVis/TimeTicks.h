@@ -186,6 +186,8 @@ private: // data
   osg::Vec4f          color_;
   unsigned int        totalPoints_;
 
+  /// keep track of the single point state which may initiate a reset
+  bool                singlePoint_;
   // "draw time" is the same as the clock's update time, but adjusted
   // for time direction. i.e. it will be negated in the case of simCore::REVERSE.
   bool                   hasLastDrawTime_;

@@ -49,8 +49,7 @@ struct SVData
     DRAW_MODE_SOLID   = 1 << 0, ///< solid (probably translucent)
     DRAW_MODE_STIPPLE = 1 << 1, ///< stippled (many small dots)
     DRAW_MODE_WIRE    = 1 << 2, ///< wireframe
-    DRAW_MODE_OUTLINE = 1 << 3, ///< outlines only
-    DRAW_MODE_POINTS  = 1 << 4  ///< points at the key locations
+    DRAW_MODE_OUTLINE = 1 << 3  ///< outlines only
   };
 
   /** Draw as a pyramid or cone */

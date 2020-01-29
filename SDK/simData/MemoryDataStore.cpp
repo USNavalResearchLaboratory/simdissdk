@@ -150,20 +150,21 @@ void updateSparseSlices(EntryListType& entries, double time)
 * @param id The entity to flush
 * @param catMap Category Data map
 * @param genMap Generic Data map
-* @param dataOnly If true only remove the data for the update slice
+* @param flushCommands If true remove commands
+* @param flushCdGd If true remove Category Data and Generic data
 * @param keepTspiStatic If true static TSPI points are not removed.
 */
 template <typename EntityMap>
-void flushEntityData(EntityMap& map, ObjectId id, MemoryDataStore::CategoryDataMap& catMap, MemoryDataStore::GenericDataMap& genMap, bool dataOnly, bool keepTspiStatic = true)
+void flushEntityData(EntityMap& map, ObjectId id, MemoryDataStore::CategoryDataMap& catMap, MemoryDataStore::GenericDataMap& genMap, bool flushCommands, bool flushCdGd, bool keepTspiStatic = true)
 {
   typename EntityMap::const_iterator i = map.find(id);
   if (i != map.end())
   {
     (*i).second->updates()->flush(keepTspiStatic);
-    if (!dataOnly)
+    if (flushCommands)
       (*i).second->commands()->flush();
   }
-  if (!dataOnly)
+  if (flushCdGd)
   {
     typename MemoryDataStore::CategoryDataMap::const_iterator ci = catMap.find(id);
     if (ci != catMap.end())
@@ -811,13 +812,14 @@ void MemoryDataStore::updateCustomRenderings_(double time)
 void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, FlushType flushType)
 {
   bool recursive = (flushType == RECURSIVE);
-  bool keepTspiStatic = ((flushType != NON_RECURSIVE_TSPI_STATIC) && (flushType != NON_RECURSIVE_TSPI_ONLY));
-  bool dataOnly = (flushType == NON_RECURSIVE_TSPI_ONLY);
+  bool keepTspiStatic = ((flushType != NON_RECURSIVE_TSPI_STATIC) && (flushType != NON_RECURSIVE_TSPI_ONLY) && (flushType != NON_RECURSIVE_DATA));
+  bool flushCommands = (flushType != NON_RECURSIVE_TSPI_ONLY);
+  bool flushCdGd = ((flushType != NON_RECURSIVE_TSPI_ONLY) && (flushType != NON_RECURSIVE_DATA));
   IdList ids;
   switch (type)
   {
   case PLATFORM:
-    flushEntityData(platforms_, flushId, categoryData_, genericData_, dataOnly, keepTspiStatic);
+    flushEntityData(platforms_, flushId, categoryData_, genericData_, flushCommands, flushCdGd, keepTspiStatic);
     if (recursive)
     {
       beamIdListForHost(flushId, &ids);
@@ -838,7 +840,7 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
     }
     break;
   case BEAM:
-    flushEntityData(beams_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(beams_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     if (recursive)
     {
       gateIdListForHost(flushId, &ids);
@@ -847,19 +849,19 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
     }
     break;
   case GATE:
-    flushEntityData(gates_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(gates_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case LASER:
-    flushEntityData(lasers_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(lasers_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case LOB_GROUP:
-    flushEntityData(lobGroups_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(lobGroups_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case PROJECTOR:
-    flushEntityData(projectors_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(projectors_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case CUSTOM_RENDERING:
-    flushEntityData(customRenderings_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(customRenderings_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case ALL:
   case NONE:

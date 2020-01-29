@@ -543,6 +543,7 @@ void AntennaNode::render_()
 
 
   // draw right and left sides of pattern
+  // if hRange == M_TWOPI, then there is no left or right side to be drawn - face comprises the complete graphic
   if (hRange < M_TWOPI)
   {
     // draw right side of pattern

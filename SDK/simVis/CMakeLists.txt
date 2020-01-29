@@ -24,7 +24,6 @@ set(SHADER_FILES
     Picker.vert.glsl
     Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
-    PointSize.vert.glsl
     PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl
@@ -99,7 +98,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}PlatformFilter.h
     ${VIS_INC}PlatformInertialTransform.h
     ${VIS_INC}PlatformModel.h
-    ${VIS_INC}PointSize.h
     ${VIS_INC}PolygonStipple.h
     ${VIS_INC}Popup.h
     ${VIS_INC}Projector.h
@@ -139,11 +137,14 @@ set(VIS_HEADERS_CORE
 
 set(VIS_HEADERS_DB
     ${VIS_INC}DBFormat.h
+    ${VIS_INC}DBOptions.h
+)
+
+set(VIS_HEADERS_DB_PRIVATE
     ${VIS_INC}DB/QSCommon.h
     ${VIS_INC}DB/QSError.h
     ${VIS_INC}DB/QSNodeID96.h
     ${VIS_INC}DB/QSPosXYExtents.h
-    ${VIS_INC}DB/RasterCommon.h
     ${VIS_INC}DB/SQLiteDataBaseReadUtil.h
     ${VIS_INC}DB/swapbytes.h
 )
@@ -252,7 +253,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}PlatformFilter.cpp
     ${VIS_SRC}PlatformInertialTransform.cpp
     ${VIS_SRC}PlatformModel.cpp
-    ${VIS_SRC}PointSize.cpp
     ${VIS_SRC}PolygonStipple.cpp
     ${VIS_SRC}Popup.cpp
     ${VIS_SRC}Projector.cpp
@@ -383,12 +383,15 @@ source_group("" FILES ${VIS_ALL_HEADER})
 set(VIS_HEADERS ${VIS_HEADERS_CORE} ${VIS_HEADERS_RFPROP} ${VIS_HEADERS_GOG})
 set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${VIS_SHADER_FILES})
 
+# Add DB Format support to right MSVC folders and headers for installation
 if(SIM_HAVE_DB_SUPPORT)
-    source_group(Headers\\DB FILES ${VIS_HEADERS_DB})
+    source_group(Headers FILES ${VIS_HEADERS_DB})
+    source_group(Headers\\DB FILES ${VIS_HEADERS_DB_PRIVATE})
     source_group(Sources\\DB FILES ${VIS_SOURCES_DB})
-    
-    set(VIS_HEADERS ${VIS_HEADERS} ${VIS_HEADERS_DB})
-    set(VIS_SOURCES ${VIS_SOURCES} ${VIS_SOURCES_DB})
+
+    list(APPEND VIS_HEADERS_CORE ${VIS_HEADERS_DB})
+    list(APPEND VIS_HEADERS ${VIS_HEADERS_DB} ${VIS_HEADERS_DB_PRIVATE})
+    list(APPEND VIS_SOURCES ${VIS_SOURCES_DB})
 endif()
 
 # ----------------------------------------------------------------------
@@ -423,13 +426,21 @@ target_link_libraries(simVis PUBLIC simData simCore simNotify
 target_link_libraries(simVis PRIVATE VSI::GL)
 
 if(SQLITE3_FOUND)
-    target_link_libraries(simVis PUBLIC SQLITE3)
+    target_link_libraries(simVis PRIVATE SQLITE3)
 endif()
 
 if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simVis PUBLIC simVis_LIB_EXPORT_STATIC)
+endif()
+if(SIM_HAVE_DB_SUPPORT)
+    target_compile_definitions(simVis PRIVATE SIM_HAVE_DB_SUPPORT)
+    if(SDK_BIG_ENDIAN)
+        target_compile_definitions(simVis PRIVATE SIM_BIG_ENDIAN)
+    else()
+        target_compile_definitions(simVis PRIVATE SIM_LITTLE_ENDIAN)
+    endif()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
