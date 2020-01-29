@@ -47,7 +47,6 @@
 #include "simVis/PlatformFilter.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
-#include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
@@ -464,7 +463,6 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   LobGroupNode::installShaderProgram(stateSet);
   OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);
-  PointSize::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
 }
 

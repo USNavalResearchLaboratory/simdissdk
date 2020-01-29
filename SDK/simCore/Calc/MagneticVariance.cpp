@@ -20,6 +20,7 @@
  *
  */
 #include <string.h>
+#include "simNotify/Notify.h"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Time/TimeClass.h"
@@ -428,7 +429,12 @@ private:
   double aor_, ar_, br_, bt_, bp_, bpp_;
   double otime_, oalt_, olat_, olon_;
   int oyear_;
+
+  /** Track if we've issued a warning about the WMM bounds */
+  static bool tooLateWarned_;
 };
+
+bool WorldMagneticModel::GeoMag::tooLateWarned_ = false;
 
 // // // // // // // // // // // // // // // // // // // // // // //
 
@@ -499,9 +505,6 @@ private:
 
 int WorldMagneticModel::GeoMag::calculateVariance(const simCore::Vec3& lla, int ordinalDay, int refYear, double& variance)
 {
-  // convert time to year decimal fraction
-  const double time = static_cast<double>(refYear)+static_cast<double>(ordinalDay) / 365.25;
-
   // determine appropriate epoch year
   if (refYear >= 1985 && refYear < 1990)
     epochYear_ = 1985;
@@ -521,6 +524,24 @@ int WorldMagneticModel::GeoMag::calculateVariance(const simCore::Vec3& lla, int 
     // default to last updated WMM
     epochYear_ = 2020;
 
+  // Warn users when their refYear is beyond the available model, but continue with the latest available year
+  const auto maxYear = (epochYear_ + 5);
+  if (refYear > maxYear || (refYear == maxYear && ordinalDay > 0))
+  {
+    if (!tooLateWarned_)
+    {
+      SIM_ERROR << "calculateVariance encountered a date (" << ordinalDay << " " << refYear << ") which is more than 5 years beyond the last available WMM (" <<
+        epochYear_ << "). Proceeding with date clamped to: 00 " << maxYear << std::endl;
+      tooLateWarned_ = true;
+    }
+    // Calculation extends to 5 years beyond the epoch date, so set day to zero and cap the year
+    refYear = maxYear;
+    ordinalDay = 0;
+  }
+
+  // convert time to year decimal fraction
+  const double time = static_cast<double>(refYear) + (static_cast<double>(ordinalDay) / 365.25);
+
   const double dt = time - static_cast<double>(epochYear_);
 
   // convert alt from m to km
@@ -536,12 +557,6 @@ int WorldMagneticModel::GeoMag::calculateVariance(const simCore::Vec3& lla, int 
   {
     variance = dec_;
     return 0;
-  }
-
-  if (time > epochYear_ + 5 || time < epochYear_)
-  {
-    variance = 0.0;
-    return 1;
   }
 
   double *p = SNORM_COEFF;

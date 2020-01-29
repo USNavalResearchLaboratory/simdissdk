@@ -31,6 +31,7 @@
 
 namespace simVis
 {
+
 /** Implementation of the TrackPointsChunk to draw track history time ticks */
 class SDKVIS_EXPORT TimeTicksChunk : public TrackPointsChunk
 {
@@ -108,9 +109,9 @@ private:
   ///container for drawables
   osg::ref_ptr<osg::Geode> geode_;
   /// point graphic
-  osg::ref_ptr<osg::Geometry> point_;
+  osg::ref_ptr<osgEarth::PointDrawable> point_;
   /// point graphic for large points
-  osg::ref_ptr<osg::Geometry> largePoint_;
+  osg::ref_ptr<osgEarth::PointDrawable> largePoint_;
   /// line graphic
   osg::ref_ptr<osgEarth::LineDrawable> line_;
   /// matrix to convert from world to local coords

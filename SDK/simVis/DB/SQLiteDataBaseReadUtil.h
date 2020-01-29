@@ -20,34 +20,17 @@
  *
  */
 
-#ifndef SQLITE_DATABASE_READ_UTIL_H
-#define SQLITE_DATABASE_READ_UTIL_H
+#ifndef SIMVIS_DB_SQLITEDATABASEREADUTIL_H
+#define SIMVIS_DB_SQLITEDATABASEREADUTIL_H
 
 #include <string>
 #include "sqlite3.h"
-#include "simCore/Time/TimeClass.h"
 #include "QSCommon.h"
 #include "QSError.h"
 #include "QSNodeID96.h"
 #include "QSPosXYExtents.h"
 
-// Temporary defines until we update sqlite
-#ifndef SQLITE_OPEN_READONLY
-#define SQLITE_OPEN_READONLY         0x00000001
-#define SQLITE_OPEN_READWRITE        0x00000002
-#define SQLITE_OPEN_CREATE           0x00000004
-#define SQLITE_OPEN_DELETEONCLOSE    0x00000008
-#define SQLITE_OPEN_EXCLUSIVE        0x00000010
-#define SQLITE_OPEN_MAIN_DB          0x00000100
-#define SQLITE_OPEN_TEMP_DB          0x00000200
-#define SQLITE_OPEN_TRANSIENT_DB     0x00000400
-#define SQLITE_OPEN_MAIN_JOURNAL     0x00000800
-#define SQLITE_OPEN_TEMP_JOURNAL     0x00001000
-#define SQLITE_OPEN_SUBJOURNAL       0x00002000
-#define SQLITE_OPEN_MASTER_JOURNAL   0x00004000
-#define SQLITE_OPEN_NOMUTEX          0x00008000
-#define SQLITE_OPEN_FULLMUTEX        0x00010000
-#endif /* SQLITE_OPEN_READONLY */
+namespace simCore { class TimeStamp; }
 
 namespace simVis_db
 {
@@ -55,19 +38,8 @@ namespace simVis_db
 
   //=====================================================================================
   static const char* QS_DEFAULT_SET_TABLE_NAME = "default";
-  static const char* SPLITTER_STRING_OUTPUTDB = "dbFile";
-  static const char* SIMQS_CONFIG_TABLENAME_KEYWORD = "tableName";
   static const char* QS_LIST_OF_TEXTURE_SETS_TABLE_NAME = "ListOfTextureSets";
   static const char* QS_TSO_NAME_OF_TEXTURE_SET_TABLE = "nt";
-  static const char* QS_TSO_OUTPUT_TYPE = "ot";
-  static const char* QS_TSO_PIXEL_LENGTH = "pl";
-  static const char* QS_TSO_SHALLOWEST_LEVEL = "sl";
-  static const char* QS_TSO_DEEPEST_LEVEL = "dl";
-  static const char* QS_TSO_EXTENTS = "ex";
-  static const char* QS_TSO_SOURCE = "s";
-  static const char* QS_TSO_CLASSIFICATION = "c";
-  static const char* QS_TSO_DESCRIPTION = "ds";
-  static const char* QS_TSO_TIME_SPECIFIED = "ts";
 
   //=====================================================================================
   class SQLiteDataBaseReadUtil
@@ -77,7 +49,7 @@ namespace simVis_db
     virtual ~SQLiteDataBaseReadUtil();
 
     /** Opens a database file */
-    QsErrorType OpenDataBaseFile(const std::string& dbFileName,
+    QsErrorType openDatabaseFile(const std::string& dbFileName,
                                   sqlite3** sqlite3Db,
                                   const int& flags) const;
 
@@ -98,7 +70,7 @@ namespace simVis_db
      * @param[out] timeStamp Loads a time value, if there is a valid timeStamp on the file
      * @return Returns 0 on success, otherwise returns an error value mapped to QsErrorType.
      */
-    QsErrorType TsGetSetFromListOfSetsTable(sqlite3* sqlite3Db,
+    QsErrorType getSetFromListOfSetsTable(sqlite3* sqlite3Db,
                                             const std::string& tableName,
                                             int& rasterFormat,
                                             int& pixelLength,
@@ -125,7 +97,7 @@ namespace simVis_db
      * @param[in] displayErrorMessage Determines whether to display error messages to console when failing
      * @return An error value, mapped to QsErrorType
      */
-    QsErrorType TsReadDataBuffer(sqlite3* sqlite3Db,
+    QsErrorType readDataBuffer(sqlite3* sqlite3Db,
                                   const std::string& dbFileName,
                                   const std::string& dataTableName,
                                   const FaceIndexType& faceIndex,
@@ -159,4 +131,4 @@ namespace simVis_db
 
 } // namespace simVis_db
 
-#endif /* SQLITE_DATABASE_READ_UTIL_H */
+#endif /* SIMVIS_DB_SQLITEDATABASEREADUTIL_H */

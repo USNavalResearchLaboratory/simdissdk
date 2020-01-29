@@ -109,40 +109,6 @@ function(create_plugin_install_properties TARGET)
 endfunction()
 
 
-# Used for SIMDIS SDK osg/osgEarth plug-ins (osgdb_osgearth_db)
-function(create_osg_plugin_install_properties TARGET)
-    # Separate ARGN into specific lists so that the INSTALLATION_COMPONENT can be removed from create_library arg list and iterated over
-    set(arglists "INSTALLATION_COMPONENT")
-    # Option names
-    set(options "RPATH")
-
-    # Get the argument lists
-    parse_arguments(ARG "${arglists}" "${options}" ${ARGN})
-
-    if(ARG_RPATH)
-        # Compute RPATH for lib directory containing dependencies relative to bin installation directory
-        set(LIBRARY_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_LIBRARY_DIR})
-        set(RUNTIME_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${INSTALLSETTINGS_OSGPLUGIN_DIR})
-        file(RELATIVE_PATH REL_INSTALL_PATH ${RUNTIME_INSTALL_PATH} ${LIBRARY_INSTALL_PATH})
-
-        # If the lib and bin paths were the same, an empty value will be returned
-        if(NOT REL_INSTALL_PATH)
-            set(REL_INSTALL_PATH ".")
-        endif()
-
-        # Set install RPATH variable
-        set_target_properties(${TARGET} PROPERTIES INSTALL_RPATH "\$ORIGIN/${REL_INSTALL_PATH}")
-    endif()
-
-    # Setup installation
-    foreach(COMPONENT ${ARG_INSTALLATION_COMPONENT})
-        install(TARGETS ${TARGET}
-            COMPONENT ${COMPONENT}
-            RUNTIME DESTINATION ${INSTALLSETTINGS_OSGPLUGIN_DIR}            # Windows DLL destination
-            LIBRARY DESTINATION ${INSTALLSETTINGS_OSGPLUGIN_DIR})           # UNIX shared object destination
-    endforeach()
-endfunction()
-
 # Include the code for post_build_install() command
 include(PostBuildInstall)
 

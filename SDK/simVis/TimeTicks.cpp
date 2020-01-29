@@ -41,7 +41,6 @@
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/PlatformFilter.h"
-#include "simVis/PointSize.h"
 #include "simVis/Registry.h"
 #include "simVis/Shaders.h"
 #include "simVis/TimeTicksChunk.h"
@@ -70,6 +69,7 @@ TimeTicks::TimeTicks(const simData::DataStore& ds, const osgEarth::SpatialRefere
    chunkSize_(64),  // keep this lowish or your app won't scale.
    color_(osg::Vec4f(1.0, 1.0, 1.0, 0.5)),
    totalPoints_(0),
+   singlePoint_(false),
    hasLastDrawTime_(false),
    lastDrawTime_(0.0),
    lastCurrentTime_(-1.0),
@@ -124,6 +124,7 @@ void TimeTicks::reset()
   currentPointChunk_ = NULL;
   lastLargeTickTime_ = -1.0;
   lastLabelTime_ = -1.0;
+  singlePoint_ = false;
 }
 
 TimeTicksChunk* TimeTicks::getCurrentChunk_()
@@ -189,15 +190,35 @@ void TimeTicks::addUpdate_(double tickTime)
   osg::Matrix hostMatrix;
   bool largeTick = false;
 
-  // if tick is at first platform point, get the platform position at that time
+  // if tick is at first platform point, use that for position
   if (!hasPrevious)
   {
-    if (!getMatrix_(*update, hostMatrix))
-      return;
+    // if only a single point, use it
+    const simData::PlatformUpdate* next = iter.next();
+    if (!next)
+    {
+      if (!getMatrix_(*update, hostMatrix))
+        return;
+      // if drawing line ticks, set singlePoint_ flag since orientation may not be correct and will need to update once next point comes in
+      // this may occur in live mode
+      if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::LINE)
+        singlePoint_ = true;
+    }
+    // use the next point to calculate the correct orientation for the first tick
+    else
+    {
+      if (!getMatrix_(*next, *update, tickTime, hostMatrix))
+        return;
+      singlePoint_ = false;
+    }
   }
   // not first tick, or not at first platform position, get the next position, possibly interpolated
-  else if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
-    return;
+  else
+  {
+    singlePoint_ = false;
+    if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
+      return;
+  }
 
   // check to see if it is time for the next large tick
   if (largeTickInterval_ > 0 && (lastLargeTickTime_ == -1 || abs(tickTime - lastLargeTickTime_) >= largeTickInterval_))
@@ -519,6 +540,10 @@ void TimeTicks::updateTrackData_(double currentTime, const simData::PlatformUpda
   int trackLength = lastPlatformPrefs_.trackprefs().tracklength();
   if (trackLength > 0 && (endTime - trackLength) > beginTime)
     beginTime = endTime - trackLength;
+
+  // first tick was built from a single point, so orientation may have been off, reset to ensure first tick is drawn with correct orientation
+  if (singlePoint_ && updateSlice.numItems() > 1)
+    reset();
 
   // if there is an existing time ticks, determine if we can add only new points; this should be the case for normal time movement
   if (hasLastDrawTime_)

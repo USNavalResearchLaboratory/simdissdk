@@ -21,14 +21,15 @@
  */
 #include <cassert>
 #include "osg/Geode"
-#include "osg/Geometry"
 #include "osgEarth/GeoData"
 #include "osgEarth/LineDrawable"
+#include "osgEarth/PointDrawable"
 #include "simVis/Types.h"
 #include "simVis/TrackChunkNode.h"
 
 namespace simVis
 {
+
 //----------------------------------------------------------------------------
 TrackPointsChunk::TrackPointsChunk(unsigned int maxSize)
   : maxSize_(maxSize)
@@ -185,18 +186,14 @@ void TrackChunkNode::allocate_()
   if (mode_ == simData::TrackPrefs_Mode_POINT)
   {
     // center line (point mode)
-    centerPoints_ = new osg::Geometry();
-    centerPoints_->setUseVertexBufferObjects(true);
-    centerPoints_->setUseDisplayList(false);
+    centerPoints_ = new osgEarth::PointDrawable();
     centerPoints_->setDataVariance(osg::Object::DYNAMIC);
-    osg::Vec3Array* verts = new osg::Vec3Array();
-    verts->assign(maxSize_, osg::Vec3());
-    centerPoints_->setVertexArray(verts);
-    osg::Vec4Array* colors = new osg::Vec4Array();
-    colors->setBinding(osg::Array::BIND_PER_VERTEX);
-    colors->assign(maxSize_, simVis::Color::White);
-    centerPoints_->setColorArray(colors);
-    centerPoints_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
+    centerPoints_->allocate(maxSize_);
+    centerPoints_->setColor(simVis::Color::White);
+    // finish() will create the primitive set, allowing us to micromanage first/count
+    centerPoints_->finish();
+    centerPoints_->setFirst(offset_);
+    centerPoints_->setCount(count_);
     this->addChild(centerPoints_.get());
   }
   else
@@ -244,13 +241,8 @@ void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
   if (mode_ == simData::TrackPrefs_Mode_POINT)
   {
     // and update the center points track as well:
-    osg::Vec3Array* centerPointsVerts = static_cast<osg::Vec3Array*>(centerPoints_->getVertexArray());
-    (*centerPointsVerts)[i] = local;
-    centerPointsVerts->dirty();
-    osg::Vec4Array* centerPointsColors = static_cast<osg::Vec4Array*>(centerPoints_->getColorArray());
-    (*centerPointsColors)[i] = color;
-    centerPointsColors->dirty();
-    centerPoints_->dirtyBound();
+    centerPoints_->setVertex(i, local);
+    centerPoints_->setColor(i, color);
     return;
   }
 
@@ -303,9 +295,8 @@ void TrackChunkNode::updatePrimitiveSets_()
 {
   if (mode_ == simData::TrackPrefs_Mode_POINT)
   {
-    osg::DrawArrays* centerPointsPrimSet = static_cast<osg::DrawArrays*>(centerPoints_->getPrimitiveSet(0));
-    centerPointsPrimSet->setFirst(offset_);
-    centerPointsPrimSet->setCount(count_);
+    centerPoints_->setFirst(offset_);
+    centerPoints_->setCount(count_);
     return;
   }
 
