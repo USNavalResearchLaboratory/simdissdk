@@ -47,8 +47,6 @@
 #include "osgEarth/SimpleOceanLayer"
 #include "osgEarth/Version"
 
-#include "osgDB/ReadFile"
-
 #ifdef HAVE_TRITON_NODEKIT
 #include "osgEarthTriton/TritonLayer"
 #endif

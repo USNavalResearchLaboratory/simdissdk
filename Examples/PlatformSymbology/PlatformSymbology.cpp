@@ -65,8 +65,6 @@
 #include "osgEarth/StringUtils"
 #include "osgEarth/Style"
 
-#include "osgDB/ReadFile"
-
 #include "google/protobuf/stubs/common.h"
 
 using namespace osgEarth;
