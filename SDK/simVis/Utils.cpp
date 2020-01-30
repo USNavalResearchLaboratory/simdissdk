@@ -32,7 +32,7 @@
 #include "osgDB/Registry"
 #include "osgSim/DOFTransform"
 #include "osgUtil/RenderBin"
-#include "osgUtil/TriStripVisitor"
+#include "osgUtil/MeshOptimizers"
 #include "osgViewer/ViewerEventHandlers"
 
 #include "osgEarth/Capabilities"
@@ -1166,8 +1166,8 @@ void FixDeprecatedDrawModes::apply(osg::Geometry& geom)
     if (primSet->getMode() == GL_POLYGON || primSet->getMode() == GL_QUADS || primSet->getMode() == GL_QUAD_STRIP)
     {
       // Turn deprecated geometry into tri-strips; affects whole geometry
-      osgUtil::TriStripVisitor triStrip;
-      triStrip.stripify(geom);
+      osgUtil::IndexMeshVisitor mesher;
+      geom.accept(mesher);
       break;
     }
   }

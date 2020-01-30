@@ -647,6 +647,8 @@ void Profile::init3D_()
 
   osg::Geometry* geometry = new osg::Geometry();
 
+  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
+
   //Now build the indices that will actually be rendered
   for (unsigned int r = 0; r < numRanges - 1; r++)
   {
@@ -664,33 +666,32 @@ void Profile::init3D_()
       const unsigned int v6 = v5 + 1; // back UR
       const unsigned int v7 = v6 + 1; // back UL
 
-      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
-      idx->reserve(14);
-      // Wrap the voxel with a triangle strip
-      // Back Bottom
-      idx->push_back(v5); idx->push_back(v4);
+      // Front face
+      idx->push_back(v1); idx->push_back(v0); idx->push_back(v3);
+      idx->push_back(v0); idx->push_back(v2); idx->push_back(v3);
 
-      // Back to top
-      idx->push_back(v6); idx->push_back(v7);
+      // Back face
+      idx->push_back(v6); idx->push_back(v4); idx->push_back(v5);
+      idx->push_back(v7); idx->push_back(v6); idx->push_back(v5);
 
-      // Top to left
-      idx->push_back(v3); idx->push_back(v5);
+      // Top face
+      idx->push_back(v3); idx->push_back(v2); idx->push_back(v7);
+      idx->push_back(v2); idx->push_back(v6); idx->push_back(v7);
 
-      // Left to bottom
-      idx->push_back(v1); idx->push_back(v4);
+      // Bottom face
+      idx->push_back(v1); idx->push_back(v5); idx->push_back(v4);
+      idx->push_back(v1); idx->push_back(v4); idx->push_back(v0);
 
-      // Bottom to right
-      idx->push_back(v0); idx->push_back(v6);
+      // Left face
+      idx->push_back(v5); idx->push_back(v1); idx->push_back(v7);
+      idx->push_back(v1); idx->push_back(v3); idx->push_back(v7);
 
-      // Right to top
-      idx->push_back(v2); idx->push_back(v3);
-
-      // Top to front
-      idx->push_back(v0); idx->push_back(v1);
-
-      geometry->addPrimitiveSet(idx);
+      // Right face
+      idx->push_back(v0); idx->push_back(v4); idx->push_back(v6);
+      idx->push_back(v0); idx->push_back(v6); idx->push_back(v2);
     }
   }
+  geometry->addPrimitiveSet(idx);
 
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_.get());
