@@ -620,8 +620,8 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
     {
       if (tokens.size() >= 2)
       {
-        currentMetaData.metadata += line + "\n";
         state.altitudeMode_ = tokens[1];
+        currentMetaData.setExplicitly(GOG_ALTITUDE_MODE_SET);
       }
       else
       {

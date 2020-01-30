@@ -539,6 +539,17 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   else if (metaData_.isSetExplicitly(GOG_TESSELLATE_SET))
     gogOutputStream << "tessellate false\n";
 
+  // altitude mode
+  simVis::GOG::AltitudeMode altMode;
+  getAltitudeMode(altMode);
+  if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
+    gogOutputStream << "altitudemode none\n";
+  else if (altMode == simVis::GOG::ALTITUDE_GROUND_RELATIVE)
+    gogOutputStream << "altitudemode relativetoground\n";
+  else if (altMode == simVis::GOG::ALTITUDE_GROUND_CLAMPED)
+    gogOutputStream << "altitudemode clamptoground\n";
+  // simVis::GOG::ALTITUDE_EXTRUDE is covered by the extrude keyword
+
   // Follow data is not currently serialized out
 }
 
@@ -679,6 +690,7 @@ int GogNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutl
 
 void GogNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  metaData_.setExplicitly(GOG_ALTITUDE_MODE_SET);
   if (altMode_ == altMode)
     return;
   altMode_ = altMode;
@@ -1504,6 +1516,7 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
 
 void FeatureNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  metaData_.setExplicitly(GOG_ALTITUDE_MODE_SET);
   if (altMode_ == altMode)
     return;
   altMode_ = altMode;
