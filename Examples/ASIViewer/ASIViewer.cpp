@@ -47,7 +47,6 @@
 #include "osgDB/ReadFile"
 #include "osgEarth/Controls"
 #include "osgEarth/StringUtils"
-#include "osgDB/ReadFile"
 
 namespace ui = osgEarth::Util::Controls;
 
