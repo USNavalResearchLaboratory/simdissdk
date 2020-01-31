@@ -331,7 +331,6 @@ MemoryDataStore::MemoryDataStore()
   hasChanged_(false),
   interpolationEnabled_(false),
   interpolator_(NULL),
-  timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
   newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
@@ -353,7 +352,6 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   hasChanged_(false),
   interpolationEnabled_(false),
   interpolator_(NULL),
-  timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
   newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
@@ -2655,7 +2653,6 @@ void MemoryDataStore::NewUpdateTransactionImpl<T, SliceType>::commit()
     dataStore_->hasChanged_ = true;
     if (isEntityUpdate_)
     {
-      dataStore_->newTimeBound_(updateTime);
       // Notify the data store's new-update callback
       dataStore_->newUpdatesListener().onEntityUpdate(dataStore_, id_, updateTime);
     }
@@ -2739,15 +2736,6 @@ MemoryDataStore::NewScenarioGenericUpdateTransactionImpl<T, SliceType>::~NewScen
 }
 
 //----------------------------------------------------------------------------
-// Updates the scenario time bounds with a new time
-void MemoryDataStore::newTimeBound_(double timeVal)
-{
-  if (timeVal < 0.0)
-    return;
-
-  timeBounds_.first = simCore::sdkMin(timeVal, timeBounds_.first);
-  timeBounds_.second = simCore::sdkMax(timeVal, timeBounds_.second);
-}
 
 /// Helper function to set a pair<> to min/max bounds for an XyzEntry; returns 0 when minMax is changed
 template <typename EntryType,            // PlatformEntry, BeamEntry, GateEntry, etc
@@ -2789,7 +2777,20 @@ std::pair<double, double> MemoryDataStore::timeBounds(ObjectId entityId) const
 
 std::pair<double, double> MemoryDataStore::timeBounds() const
 {
-  return timeBounds_;
+  double min = std::numeric_limits<double>::max();
+  double max = -std::numeric_limits<double>::max();
+
+  for (auto it = platforms_.begin(); it != platforms_.end(); ++it)
+  {
+    const auto updates = it->second->updates();
+    if ((updates->numItems() == 0) || (updates->firstTime() < 0.0))
+      continue;
+
+    min = simCore::sdkMin(min, updates->firstTime());
+    max = simCore::sdkMax(max, updates->lastTime());
+  }
+
+  return std::pair<double, double>(min, max);
 }
 
 }
