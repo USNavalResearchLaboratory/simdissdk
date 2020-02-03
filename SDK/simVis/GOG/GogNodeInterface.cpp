@@ -541,15 +541,16 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
 
   // altitude mode
   simVis::GOG::AltitudeMode altMode;
-  getAltitudeMode(altMode);
-  if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
-    gogOutputStream << "altitudemode none\n";
-  else if (altMode == simVis::GOG::ALTITUDE_GROUND_RELATIVE)
-    gogOutputStream << "altitudemode relativetoground\n";
-  else if (altMode == simVis::GOG::ALTITUDE_GROUND_CLAMPED)
-    gogOutputStream << "altitudemode clamptoground\n";
-  // simVis::GOG::ALTITUDE_EXTRUDE is covered by the extrude keyword
-
+  if (getAltitudeMode(altMode) == 0)
+  {
+    if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
+      gogOutputStream << "altitudemode none\n";
+    else if (altMode == simVis::GOG::ALTITUDE_GROUND_RELATIVE)
+      gogOutputStream << "altitudemode relativetoground\n";
+    else if (altMode == simVis::GOG::ALTITUDE_GROUND_CLAMPED)
+      gogOutputStream << "altitudemode clamptoground\n";
+    // simVis::GOG::ALTITUDE_EXTRUDE is covered by the extrude keyword
+  }
   // Follow data is not currently serialized out
 }
 
