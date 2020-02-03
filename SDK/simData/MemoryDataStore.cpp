@@ -1508,8 +1508,9 @@ void MemoryDataStore::removeEntity(ObjectId id)
   Beams::iterator bi = beams_.find(id);
   if (bi != beams_.end())
   {
-    // also delete any gates
+    // also delete any gates or projectors; projectorIdListForHost adds to the list
     gateIdListForHost(id, &ids);
+    projectorIdListForHost(id, &ids);
     // we will need to send notifications and recurse on them as well...
     for (IdList::const_iterator i = ids.begin(); i != ids.end(); ++i)
       removeEntity(*i);
