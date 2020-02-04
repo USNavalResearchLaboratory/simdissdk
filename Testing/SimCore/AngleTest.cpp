@@ -575,6 +575,38 @@ int testSim7284()
   return rv;
 }
 
+int test360()
+{
+  int rv = 0;
+
+  // test precision
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 0, simCore::DEG_SYM_NONE, 0, 0) == "0");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 1, simCore::DEG_SYM_NONE, 0, 0) == "0.0");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 2, simCore::DEG_SYM_NONE, 0, 0) == "0.00");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0.000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 4, simCore::DEG_SYM_NONE, 0, 0) == "0.0000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 5, simCore::DEG_SYM_NONE, 0, 0) == "0.00000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 6, simCore::DEG_SYM_NONE, 0, 0) == "0.000000");
+  rv += SDK_ASSERT(simCore::getAngleString(360.0 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 7, simCore::DEG_SYM_NONE, 0, 0) == "0.0000000");
+
+  // test degrees
+  rv += SDK_ASSERT(simCore::getAngleString(360.0005 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0.000");
+  rv += SDK_ASSERT(simCore::getAngleString(359.9995 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0.000");
+  rv += SDK_ASSERT(simCore::getAngleString(359.99949 * simCore::DEG2RAD, simCore::FMT_DEGREES, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "359.999");
+
+  // test degree-minutes
+  rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.9995, 0.0), simCore::FMT_DEGREES_MINUTES, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0 00.000");
+  rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.9995, 0.0), simCore::FMT_DEGREES_MINUTES, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0 00.000");
+  rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.99949, 0.0), simCore::FMT_DEGREES_MINUTES, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "359 59.999");
+
+  // test degree-minute-seconds
+  rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.0, 59.9995), simCore::FMT_DEGREES_MINUTES_SECONDS, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0 00 00.000");
+  rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.0, 59.9995), simCore::FMT_DEGREES_MINUTES_SECONDS, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "0 00 00.000");
+  rv += SDK_ASSERT(simCore::getAngleString(dmsAsRadian(359.0, 59.0, 59.99949), simCore::FMT_DEGREES_MINUTES_SECONDS, true, 3, simCore::DEG_SYM_NONE, 0, 0) == "359 59 59.999");
+
+  return rv;
+}
+
 }
 
 int AngleTest(int argc, char* argv[])
@@ -589,6 +621,7 @@ int AngleTest(int argc, char* argv[])
   rv += testSim2511();
   rv += testSim4481();
   rv += testSim7284();
+  rv += test360();
 
   return rv;
 }
