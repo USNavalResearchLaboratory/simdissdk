@@ -1058,15 +1058,15 @@ void calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *azim, doubl
     return;
   }
 
+  // compute an inertial pointing vector based on ENU vector
+  Vec3 pntVec;
+  calculateBodyUnitX(atan2(enuVec[0], enuVec[1]), atan2(enuVec[2], sqrt(square(enuVec[0]) + square(enuVec[1]))), pntVec);
+
   if (azim || elev)
   {
     // compute rotation matrix based on reference geodetic Euler angles
     double rotMat[3][3];
     d3EulertoDCM(refOri, rotMat);
-
-    // compute an inertial pointing vector based on ENU vector
-    Vec3 pntVec;
-    calculateBodyUnitX(atan2(enuVec[0], enuVec[1]), atan2(enuVec[2], sqrt(square(enuVec[0]) + square(enuVec[1]))), pntVec);
 
     // rotate inertial pointing vector to an body pointing vector
     Vec3 body;
@@ -1083,14 +1083,13 @@ void calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *azim, doubl
       *elev = el;
   }
 
-  // compute composite angle between an ENU and a reference vector
+  // compute composite angle between body pointing vector and inertial pointing vector
   if (cmp)
   {
-    Vec3 pntVec;
-    pntVec[0] = sin(refOri[0]);
-    pntVec[1] = cos(refOri[0]);
-    pntVec[2] = tan(refOri[1]);
-    *cmp = v3Angle(pntVec, enuVec);
+    Vec3 bodyPnt;
+    calculateBodyUnitX(refOri.yaw(), refOri.pitch(), bodyPnt);
+
+    *cmp = v3Angle(bodyPnt, pntVec);
   }
 }
 
@@ -1477,6 +1476,14 @@ void calculateVelocity(const double speed, const double heading, const double pi
  */
 void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoa)
 {
+  if (v3Length(enuVel) == 0.0)
+  {
+    if (aoa) *aoa = 0.0;
+    if (ss) *ss = 0.0;
+    if (totalAoa) *totalAoa = 0.0;
+    return;
+  }
+
   // aerodynamic version that accounts for roll
   Vec3 refOri = ypr;
   if (!useRoll)
