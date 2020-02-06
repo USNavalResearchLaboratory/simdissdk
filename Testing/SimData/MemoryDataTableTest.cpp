@@ -2114,6 +2114,41 @@ int doubleBufferTimeContainerTest()
   return rv;
 }
 
+int testPartialFlush()
+{
+  simData::MemoryDataStore ds;
+  simData::DataTableManager& mgr = ds.dataTableManager();
+  simData::DataTable* table = NULL;
+  int rv = 0;
+  rv += SDK_ASSERT(mgr.addDataTable(1, "Test Table", &table).isSuccess());
+  // Create two columns and add data to both
+  simData::TableColumn* column1;
+  simData::TableColumn* column2;
+  table->addColumn("Test Column 1", simData::VT_DOUBLE, 0, &column1);
+  table->addColumn("Test Column 2", simData::VT_DOUBLE, 0, &column2);
+  rv += SDK_ASSERT(table->columnCount() == 2);
+  rv += SDK_ASSERT(column1->empty());
+  rv += SDK_ASSERT(column2->empty());
+  for (double i = 0; i < 10; ++i)
+  {
+    simData::TableRow row;
+    row.setTime(i);
+    row.setValue(column1->columnId(), i);
+    row.setValue(column2->columnId(), i);
+    table->addRow(row);
+  }
+  rv += SDK_ASSERT(column1->size() == 10);
+  rv += SDK_ASSERT(column2->size() == 10);
+
+  // Flush only the first column
+  table->flush(column1->columnId());
+  rv += SDK_ASSERT(column1->size() == 0);
+  rv += SDK_ASSERT(column2->size() == 10);
+  rv += SDK_ASSERT(table->columnCount() == 2);
+
+  return rv;
+}
+
 }
 
 int MemoryDataTableTest(int argc, char* argv[])
@@ -2132,5 +2167,6 @@ int MemoryDataTableTest(int argc, char* argv[])
   rv += subTableIterationTest(new simData::MemoryTable::DoubleBufferTimeContainer());
   rv += testColumnIteration();
   rv += doubleBufferTimeContainerTest();
+  rv += testPartialFlush();
   return rv;
 }

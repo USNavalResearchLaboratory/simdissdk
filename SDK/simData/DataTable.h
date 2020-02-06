@@ -419,13 +419,14 @@ public:
   virtual TableStatus addRow(const TableRow& row) = 0;
 
   /**
-   * Deletes all the data in the data table columns, leaving the columns empty.
+   * Deletes all the data in the specified data table column, leaving the column empty.
+   * @param id Column ID of the column to flush or -1 to flush all columns in the table
    * @return Container to all of the dynamic memory stored in the table.  When the
    *   smart pointer falls out of scope, the data gets deleted.  This enables a
    *   delayed flush mechanism that can be used to flush in a thread for improved
    *   performance and decreased application latency.
    */
-  virtual DelayedFlushContainerPtr flush() = 0;
+  virtual DelayedFlushContainerPtr flush(TableColumnId id = -1) = 0;
 
 
   /**

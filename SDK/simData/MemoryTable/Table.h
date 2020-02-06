@@ -73,8 +73,8 @@ public:
   virtual void accept(DataTable::ColumnVisitor& visitor) const;
   /** Adds a row to the table. */
   virtual TableStatus addRow(const TableRow& row);
-  /** Clears data out of all columns */
-  virtual DelayedFlushContainerPtr flush();
+  /** Clears data out of the given column or all columns if given -1 */
+  virtual DelayedFlushContainerPtr flush(TableColumnId id = -1);
   /** Add an observer for notification when rows or columns are added or removed */
   virtual void addObserver(TableObserverPtr callback);
   /** Remove an observer */
