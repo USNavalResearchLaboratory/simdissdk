@@ -627,6 +627,20 @@ QModelIndex EntityTreeModel::index(uint64_t id) const
   return QModelIndex();
 }
 
+QModelIndex EntityTreeModel::index(uint64_t id)
+{
+  EntityTreeItem* item = findItem_(id);
+  if (item == NULL)
+  {
+    commitDelayedEntities_();
+    item = findItem_(id);
+    if (item == NULL)
+      return QModelIndex();
+  }
+
+  return createIndex(item->row(), 0, item);
+}
+
 uint64_t EntityTreeModel::uniqueId(const QModelIndex &index) const
 {
   if (!index.isValid())

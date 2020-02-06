@@ -80,6 +80,8 @@ public:
   virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
   /// Return the index for the given id
   virtual QModelIndex index(uint64_t id) const;
+  /// Return an Index based on the entity's ID; if necessary, process any pending adds
+  virtual QModelIndex index(uint64_t id);
   /// Return the index of the parent of the item given by index
   virtual QModelIndex parent(const QModelIndex &index) const;
   /// Return the number of rows in the data
