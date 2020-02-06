@@ -22,6 +22,9 @@
 #ifndef SIMCORE_CALC_COORDINATESYSTEM_H
 #define SIMCORE_CALC_COORDINATESYSTEM_H
 
+#include <string>
+#include "simCore/Common/Common.h"
+
 /// Container for enumerations and constants relating to coordinate system calculations and conversion
 namespace simCore
 {
@@ -72,6 +75,23 @@ namespace simCore
   const double EARTH_RADIUS = WGS_A;                    ///< (m) Spherical earth radius
   const double EARTH_ROTATION_RATE = 7292115.1467e-11;  ///< (rad/sec) Earth's rotation rate: International Astronomical Union (IAU) GRS 67
   const double LATLON_ERR_TOL_DOUBLE = 1.0e-10;         ///< floating point error tolerance for geodetic angle conversions
+
+  /**
+   * Given a coordinate system, returns an appropriate string constant.
+   * @param coordSystem Coordinate system to get string value; COORD_SYS_MAX and COORD_SYS_NONE not supported.
+   * @return String representation of the coordinate system
+   */
+  SDKCORE_EXPORT std::string coordinateSystemToString(simCore::CoordinateSystem coordSystem);
+
+  /**
+   * Given a coordinate system string constant, returns the appropriate system, returning 0 on success.
+   * Inverse of simCore::coordinateSystemToString(), accepting strings that it returns.
+   * @param str Coordinate string to process, from output of coordinateSystemToString().  Also accepts, for
+   *   legacy reasons, LLA_DMD and LLA_DMS, returning a valid COORD_SYS_LLA flag.
+   * @param outSystem Output parameter for the coordinate system string.
+   * @return 0 on success, non-zero on error.  In error conditions, outSystem is initialized to simCore::COORD_SYS_LLA.
+   */
+  SDKCORE_EXPORT int coordinateSystemFromString(const std::string& str, simCore::CoordinateSystem& outSystem);
 
 } // End of namespace simCore
 

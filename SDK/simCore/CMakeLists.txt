@@ -52,6 +52,7 @@ set(CORE_CALC_SOURCES
     ${CORE_CALC_SRC}Angle.cpp
     ${CORE_CALC_SRC}Calculations.cpp
     ${CORE_CALC_SRC}CoordinateConverter.cpp
+    ${CORE_CALC_SRC}CoordinateSystem.cpp
     ${CORE_CALC_SRC}DatumConvert.cpp
     ${CORE_CALC_SRC}Gars.cpp
     ${CORE_CALC_SRC}Geometry.cpp
