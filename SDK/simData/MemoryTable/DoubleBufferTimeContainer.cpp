@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <limits>
 #include <cassert>
+#include "simCore/Calc/Math.h"
 #include "simData/MemoryTable/DataColumn.h"
 #include "simData/MemoryTable/DoubleBufferTimeContainer.h"
 
@@ -700,18 +701,31 @@ void DoubleBufferTimeContainer::limitData(size_t maxPoints, double latestInvalid
 
 int DoubleBufferTimeContainer::getTimeRange(double& begin, double& end) const
 {
-  if (times_[BIN_FRESH]->empty()) // Need to have some times in the fresh bin
+  const auto* fresh = times_[BIN_FRESH];
+  const auto* stale = times_[BIN_STALE];
+
+  if (fresh->empty())
   {
-    begin = 0.0;
-    end = 0.0;
-    return 1;
+    if (stale->empty())
+    {
+      begin = 0.0;
+      end = 0.0;
+      return 1;
+    }
+    begin = stale->front().first;
+    end = stale->back().first;
+    return 0;
   }
 
-  begin = times_[BIN_FRESH]->front().first;
-  if (times_[BIN_STALE]->empty())
-    end = times_[BIN_FRESH]->back().first;
-  else
-    end = times_[BIN_STALE]->back().first;
+  if (stale->empty())
+  {
+    begin = fresh->front().first;
+    end = fresh->back().first;
+    return 0;
+  }
+
+  begin = simCore::sdkMin(fresh->front().first, stale->front().first);
+  end = simCore::sdkMax(fresh->back().first, stale->back().first);
   return 0;
 }
 

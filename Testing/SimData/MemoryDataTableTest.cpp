@@ -1240,6 +1240,111 @@ int dataLimitingTest()
   return rv;
 };
 
+int getTimeRangeTest()
+{
+  int rv = 0;
+
+  simUtil::DataStoreTestHelper testHelper;
+  simData::DataStore* ds = testHelper.dataStore();
+  uint64_t plat1 = testHelper.addPlatform();
+  ds->setDataLimiting(true);
+  simData::DataStore::Transaction t;
+  simData::PlatformPrefs* prefs = ds->mutable_platformPrefs(plat1, &t);
+  prefs->mutable_commonprefs()->set_datalimitpoints(6); // start out limiting to 6 points
+  t.commit();
+
+  simData::DataTable* table = NULL;
+  rv += SDK_ASSERT(ds->dataTableManager().addDataTable(plat1, "Data Limit Test Table", &table).isSuccess());
+
+  // Add a column
+  simData::TableColumn* column1 = NULL;
+  rv += SDK_ASSERT(table->addColumn("1", VT_INT32, 0, &column1).isSuccess());
+
+  // add some rows
+  simData::TableRow newRow;
+  newRow.setTime(1.0);
+  newRow.setValue(column1->columnId(), 40);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+  newRow.clear();
+  newRow.setTime(2.0);
+  newRow.setValue(column1->columnId(), 50);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+
+  // Verify expected results from getTimeRange() (all data in fresh)
+  double begin;
+  double end;
+  rv += SDK_ASSERT(column1->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 1.0);
+  rv += SDK_ASSERT(end == 2.0);
+
+  newRow.clear();
+  newRow.setTime(3.0);
+  newRow.setValue(column1->columnId(), 60);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+  // Verify expected results from getTimeRange() (all data in stale)
+  rv += SDK_ASSERT(column1->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 1.0);
+  rv += SDK_ASSERT(end == 3.0);
+
+  newRow.clear();
+  newRow.setTime(4.0);
+  newRow.setValue(column1->columnId(), 70);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+  newRow.clear();
+  newRow.setTime(5.0);
+  newRow.setValue(column1->columnId(), 80);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+
+  // Verify expected results from getTimeRange() (data split between fresh and stale)
+  rv += SDK_ASSERT(column1->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 1.0);
+  rv += SDK_ASSERT(end == 5.0);
+
+  // Test again, with data being added in reverse. Creates situation where the
+  // DoubleBufferTimeContainer's FRESH bin has earlier times than the STALE bin
+  simData::TableColumn* column2 = NULL;
+  rv += SDK_ASSERT(table->addColumn("2", VT_INT32, 0, &column2).isSuccess());
+
+  newRow.clear();
+  newRow.setTime(5.0);
+  newRow.setValue(column2->columnId(), 40);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+  newRow.clear();
+  newRow.setTime(4.0);
+  newRow.setValue(column2->columnId(), 50);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+
+  // Verify expected results from getTimeRange() (all data in fresh)
+  rv += SDK_ASSERT(column2->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 4.0);
+  rv += SDK_ASSERT(end == 5.0);
+
+  newRow.clear();
+  newRow.setTime(3.0);
+  newRow.setValue(column2->columnId(), 60);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+  // Verify expected results from getTimeRange() (all data in stale)
+  rv += SDK_ASSERT(column2->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 3.0);
+  rv += SDK_ASSERT(end == 5.0);
+
+  newRow.clear();
+  newRow.setTime(2.0);
+  newRow.setValue(column2->columnId(), 70);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+  newRow.clear();
+  newRow.setTime(1.0);
+  newRow.setValue(column2->columnId(), 80);
+  rv += SDK_ASSERT(table->addRow(newRow).isSuccess());
+
+  // Verify expected results from getTimeRange() (data split between fresh and stale)
+  rv += SDK_ASSERT(column2->getTimeRange(begin, end) == 0);
+  rv += SDK_ASSERT(begin == 1.0);
+  rv += SDK_ASSERT(end == 5.0);
+
+  return rv;
+}
+
 int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
 {
   // Create a mini typedef to reduce typing
@@ -2168,5 +2273,6 @@ int MemoryDataTableTest(int argc, char* argv[])
   rv += testColumnIteration();
   rv += doubleBufferTimeContainerTest();
   rv += testPartialFlush();
+  rv += getTimeRangeTest();
   return rv;
 }
