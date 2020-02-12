@@ -340,7 +340,7 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
       units_.altitudeUnits_.convertTo(simCore::Units::METERS, parsedShape.doubleValue(GOG_REF_ALT, 0.0)));
   }
 
-  // The centerLLA and centerXYZ doe not apply to points, lines, line segments and polygons
+  // The centerLLA and centerXYZ do not apply to points, lines, line segments and polygons
   if ((shape != GOG_POINTS) && (shape != GOG_POLYGON) && (shape != GOG_LINE) && (shape != GOG_LINESEGS))
   {
     if (parsedShape.hasValue(GOG_CENTERLL))
@@ -355,12 +355,11 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
         parseAngle(p.x, 0.0),  // latitude
         units_.altitudeUnits_.convertTo(simCore::Units::METERS, altitude));
     }
-
-    if (parsedShape.hasValue(GOG_CENTERXY))
+    else if (parsedShape.hasValue(GOG_CENTERXY))
     {
       const PositionStrings& p = parsedShape.positionValue(GOG_CENTERXY);
       // Convert Z value from string
-      double xyz[3] = {0.};
+      double xyz[3] = { 0. };
       simCore::isValidNumber(p.x, xyz[0]);
       simCore::isValidNumber(p.y, xyz[1]);
       simCore::isValidNumber(p.z, xyz[2]);
@@ -373,6 +372,9 @@ ParserData::ParserData(const ParsedShape& parsedShape, const GOGContext& context
       if (!refPointLLA_.isSet())
         refPointLLA_->set(context_.refPoint_->vec3d());
     }
+    // annotations have a single center point but don't use centerxyz keyword for relative shapes, so make sure the refPointLLA_ is set for relative annotations
+    else if (shape == GOG_ANNOTATION && !refPointLLA_.isSet() && parsedShape.pointType() == ParsedShape::XYZ)
+      refPointLLA_->set(context_.refPoint_->vec3d());
   }
 
   if (parsedShape.hasValue(GOG_LINEPROJECTION))
