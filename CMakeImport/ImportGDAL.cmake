@@ -2,7 +2,7 @@
 # Setting the GDAL_DIR environment variable will allow use of a custom built library
 
 set(LIBRARYNAME GDAL)
-set(${LIBRARYNAME}_VERSION 2.1.1)
+set(${LIBRARYNAME}_VERSION 2.4.4)
 set(${LIBRARYNAME}_INSTALL_COMPONENT ThirdPartyLibs)
 
 # Setup search paths based off GDAL_ROOT
@@ -23,11 +23,11 @@ find_path(${LIBRARYNAME}_LIBRARY_INCLUDE_PATH
     PATHS ${${LIBRARYNAME}_ROOT}/include NO_DEFAULT_PATH)
 # GDAL_LIBRARY_RELEASE_PATH
 find_library(${LIBRARYNAME}_LIBRARY_RELEASE_NAME
-    NAMES gdal gdal_i gdal201 gdal111
+    NAMES gdal gdal_i gdal204 gdal201 gdal111
     PATHS ${${LIBRARYNAME}_ROOT}/lib NO_DEFAULT_PATH)
 # GDAL_LIBRARY_DEBUG_PATH
 find_library(${LIBRARYNAME}_LIBRARY_DEBUG_NAME
-    NAMES gdal_d gdal201_d gdal111_d
+    NAMES gdal_d gdal204_d gdal201_d gdal111_d
     PATHS ${${LIBRARYNAME}_ROOT}/lib NO_DEFAULT_PATH)
 # Fall back on release library explicitly, only on Windows
 if(WIN32 AND ${LIBRARYNAME}_LIBRARY_RELEASE_NAME AND NOT ${LIBRARYNAME}_LIBRARY_DEBUG_NAME)
