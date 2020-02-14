@@ -344,7 +344,7 @@ int main(int argc, char** argv)
   viewer->getMainView()->setCameraManipulator(NULL);
 
   // apply the reticle overlay.
-  simUtil::HudManager hudManager(viewer->getMainView());
+  simUtil::HudManager hudManager(viewer->getMainView(), viewer->getMainView()->getOrCreateHUD());
   if (reticle.valid())
     hudManager.createImage(reticle.get(), 0, 0, 100, 100);
 
