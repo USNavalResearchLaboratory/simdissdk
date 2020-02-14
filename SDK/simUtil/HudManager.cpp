@@ -522,13 +522,13 @@ private:
 
 //-------------------------------------------------------------------------------------------------------
 
-HudManager::HudManager(simVis::View* view)
+HudManager::HudManager(osgViewer::View* view, osg::Group* parentNode)
   : renderLevel_(HUD_BASE_LEVEL),
-    view_(view)
+    view_(view),
+    parentNode_(parentNode)
 {
   group_ = new osg::Group();
-  hud_ = view_->getOrCreateHUD();
-  osg::StateSet* stateset = hud_->getOrCreateStateSet();
+  osg::StateSet* stateset = parentNode_->getOrCreateStateSet();
   simVis::setLighting(stateset, osg::StateAttribute::OFF);
 
   const osg::Viewport* vp = view->getCamera()->getViewport();
@@ -537,12 +537,12 @@ HudManager::HudManager(simVis::View* view)
 
   handler_ = new ResizeHandler(this);
   view_->addEventHandler(handler_);
-  hud_->addChild(group_);
+  parentNode_->addChild(group_);
 }
 
 HudManager::~HudManager()
 {
-  hud_->removeChild(group_);
+  parentNode_->removeChild(group_);
   view_->removeEventHandler(handler_);
 }
 
@@ -623,11 +623,6 @@ void HudManager::resize_(int width, int height)
     (*it)->resize(windowWidth_, windowHeight_);
   for (std::vector< osg::ref_ptr<HudImage> >::const_iterator it = imageVector_.begin(); it != imageVector_.end(); ++it)
     (*it)->resize(windowWidth_, windowHeight_);
-}
-
-osg::Camera* HudManager::hud() const
-{
-  return hud_.get();
 }
 
 void HudManager::setRenderLevel(HudRenderLevel renderLevel)
