@@ -648,6 +648,8 @@ void Profile::init3D_()
   osg::Geometry* geometry = new osg::Geometry();
 
   osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
+  const size_t idxSize = 36 * (maxHeightIndex - minHeightIndex) * (numRanges - 1);
+  idx->reserve(idxSize);
 
   //Now build the indices that will actually be rendered
   for (unsigned int r = 0; r < numRanges - 1; r++)
@@ -655,6 +657,7 @@ void Profile::init3D_()
     const unsigned int nextR = r + 1;
     for (unsigned int h = minHeightIndex; h < maxHeightIndex; h++)
     {
+      // 36 indices / cube
       //Compute the indices of the 8 corners of the cube
       const unsigned int v0 = startIndex + r * heightIndexCount * 2 + (h - minHeightIndex) * 2;  // front LR
       const unsigned int v1 = v0 + 1; // front LL
@@ -691,6 +694,8 @@ void Profile::init3D_()
       idx->push_back(v0); idx->push_back(v6); idx->push_back(v2);
     }
   }
+  // assertion fail means algorithm changed without correction to the reserve()
+  assert(idxSize == idx->size());
   geometry->addPrimitiveSet(idx);
 
   geometry->setDataVariance(osg::Object::DYNAMIC);
