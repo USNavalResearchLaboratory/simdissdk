@@ -162,7 +162,7 @@ public:
     /**@name callbacks for each event type
      *@{
      */
-    virtual void onModeChange(Clock::Mode newMode) = 0;
+    virtual void onModeChange(simCore::Clock::Mode newMode) = 0;
     virtual void onDirectionChange(simCore::TimeDirection newDirection) = 0;
     virtual void onScaleChange(double newValue) = 0;
     virtual void onBoundsChange(const simCore::TimeStamp& start, const simCore::TimeStamp& end) = 0;
