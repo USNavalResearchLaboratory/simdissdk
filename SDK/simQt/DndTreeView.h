@@ -24,6 +24,7 @@
 #define SIMQT_DND_TREE_VIEW_H
 
 #include <QTreeView>
+#include "simCore/Common/Export.h"
 
 namespace simQt {
 
