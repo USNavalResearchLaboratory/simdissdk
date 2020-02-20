@@ -25,7 +25,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QTreeView" name="treeView">
+    <widget class="simQt::DndTreeView" name="treeView">
      <property name="contextMenuPolicy">
       <enum>Qt::ActionsContextMenu</enum>
      </property>
@@ -236,6 +236,11 @@
    <class>simQt::EntityFilterLineEdit</class>
    <extends>QLineEdit</extends>
    <header>simQt/EntityFilterLineEdit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>simQt::DndTreeView</class>
+   <extends>QTreeView</extends>
+   <header>simQt/DndTreeView.h</header>
   </customwidget>
  </customwidgets>
  <resources>

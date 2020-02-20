@@ -40,6 +40,7 @@
 #include "simQt/DataTableComboBox.h"
 #include "simQt/DataTableModel.h"
 #include "simQt/DirectorySelectorWidget.h"
+#include "simQt/DndTreeView.h
 #include "simQt/DockWidget.h"
 #include "simQt/EntityCategoryFilter.h"
 #include "simQt/EntityFilter.h"

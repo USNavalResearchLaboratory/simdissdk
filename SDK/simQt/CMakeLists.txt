@@ -18,6 +18,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}ConsoleDataModel.h
     ${SIMQT_INC}ConsoleLogger.h
     ${SIMQT_INC}DirectorySelectorWidget.h
+    ${SIMQT_INC}DndTreeView.h
     ${SIMQT_INC}DockWidget.h
     ${SIMQT_INC}FileDescriptorReplacement.h
     ${SIMQT_INC}FileSelectorWidget.h
@@ -144,6 +145,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}ConsoleDataModel.cpp
     ${SIMQT_SRC}ConsoleLogger.cpp
     ${SIMQT_SRC}DirectorySelectorWidget.cpp
+    ${SIMQT_SRC}DndTreeView.cpp
     ${SIMQT_SRC}DockWidget.cpp
     ${SIMQT_SRC}FileDescriptorReplacement.cpp
     ${SIMQT_SRC}FileDialog.cpp
