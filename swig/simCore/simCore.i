@@ -38,6 +38,7 @@ typedef long int64_t;
 %ignore simCore::Vec3::operator=;
 %ignore simCore::Vec3::operator[];
 %ignore simCore::Coordinate::operator=;
+%ignore simCore::CoordinateConverter::operator=;
 
 // Note, order of inclusion matters
 
@@ -45,17 +46,54 @@ typedef long int64_t;
 // simCore/Common
 %include "simCore/Common/Exception.h"
 %include "simCore/Common/FileSearch.h"
-%include "simCore/Common/HighPerformanceGraphics.h"
 %include "simCore/Common/Time.h"
+
+/*
+ * TODO: Test this
+ * %include "simCore/Common/HighPerformanceGraphics.h"
+ */
+// Explicitly defining timezone struct so that it is wrapped successfully.
+struct timezone
+{
+  int tz_minuteswest; /**< the number of minutes west of GMT */
+  int tz_dsttime;     /**< If nonzero, daylight savings time applies during some part of the year */
+};
+
+// TODO: Support timespec struct. Might need to use typemap?
 
 ////////////////////////////////////////////////
 // simCore/Calc
 %include "simCore/Calc/Vec3.h"
+// TODO: Make tests using constants defined under #ifdef WIN32.
+%include "simCore/Calc/MathConstants.h"
 %include "simCore/Calc/Angle.h"
+
+// simCore::coordinateSystemFromString()
+%apply int& OUTPUT { simCore::CoordinateSystem& outSystem };
+
 %include "simCore/Calc/CoordinateSystem.h"
+
+// TODO: Implement typemap that allows simCore::Coordinate objects to be used as output parameters.
 %include "simCore/Calc/Coordinate.h"
 
+// Handling output parameter for toScientific() from simCore/calc/Math.cpp
+%apply int* OUTPUT { int* exp };
+
+// TODO: Create a test for v3Scale in Math.h, which requires finding a way to handle the Vec3& output parameter.
+%include "simCore/Calc/Math.h"
+%include "simCore/Calc/CoordinateConverter.h"
+
+%template(intSdkMax) simCore::sdkMax<int>;
+%template(intSdkMin) simCore::sdkMin<int>;
+%template(intSquare) simCore::square<int>;
+%template(intSign) simCore::sign<int>;
+%template(doubleSdkMax) simCore::sdkMax<double>;
+%template(doubleSdkMin) simCore::sdkMin<double>;
+%template(doubleSquare) simCore::square<double>;
+%template(doubleSign) simCore::sign<double>;
+
 // TODO: Add these and test them as you add them
+// Some of these may have to be added together, since they depend on eachother.
 /*
 %include "simCore/Calc/Calculations.h"
 %include "simCore/Calc/CoordinateConverter.h"
@@ -65,8 +103,6 @@ typedef long int64_t;
 %include "simCore/Calc/GogToGeoFence.h"
 %include "simCore/Calc/Interpolation.h"
 %include "simCore/Calc/MagneticVariance.h"
-%include "simCore/Calc/MathConstants.h"
-%include "simCore/Calc/Math.h"
 %include "simCore/Calc/Mgrs.h"
 %include "simCore/Calc/MultiFrameCoordinate.h"
 %include "simCore/Calc/NumericalAnalysis.h"
