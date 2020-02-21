@@ -220,10 +220,11 @@ void HudTextAdapter::update_()
         osgText->setDrawMode(osgText::TextBase::TEXT);
       else
       {
+        // set draw mode first, other changes depend on it
+        osgText->setDrawMode(osgText::TextBase::FILLEDBOUNDINGBOX | osgText::TextBase::TEXT);
         // Turn on the bounding box, which disables Halo
         osgText->setBackdropType(osgText::Text::NONE);
         osgText->setBoundingBoxColor(backgroundColor_);
-        osgText->setDrawMode(osgText::TextBase::FILLEDBOUNDINGBOX | osgText::TextBase::TEXT);
       }
     }
 
