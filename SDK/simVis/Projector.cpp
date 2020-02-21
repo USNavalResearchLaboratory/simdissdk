@@ -262,6 +262,26 @@ const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
   return hasLastUpdate_ ? &lastUpdate_ : NULL;
 }
 
+void ProjectorNode::addUniforms(osg::StateSet* stateSet) const
+{
+  stateSet->addUniform(projectorActive_.get());
+  stateSet->addUniform(projectorAlpha_.get());
+  stateSet->addUniform(texProjDirUniform_.get());
+  stateSet->addUniform(texProjPosUniform_.get());
+  stateSet->addUniform(useColorOverrideUniform_.get());
+  stateSet->addUniform(colorOverrideUniform_.get());
+}
+
+void ProjectorNode::removeUniforms(osg::StateSet* stateSet) const
+{
+  stateSet->removeUniform(projectorActive_.get());
+  stateSet->removeUniform(projectorAlpha_.get());
+  stateSet->removeUniform(texProjDirUniform_.get());
+  stateSet->removeUniform(texProjPosUniform_.get());
+  stateSet->removeUniform(useColorOverrideUniform_.get());
+  stateSet->removeUniform(colorOverrideUniform_.get());
+}
+
 std::string ProjectorNode::popupText() const
 {
   if (hasLastUpdate_ && hasLastPrefs_)
@@ -648,12 +668,7 @@ void ProjectorNode::addProjectionToNode(osg::Node* node)
   // Set texture from projector into state set
   stateSet->setTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
 
-  stateSet->addUniform(projectorActive_.get());
-  stateSet->addUniform(projectorAlpha_.get());
-  stateSet->addUniform(texProjDirUniform_.get());
-  stateSet->addUniform(texProjPosUniform_.get());
-  stateSet->addUniform(useColorOverrideUniform_.get());
-  stateSet->addUniform(colorOverrideUniform_.get());
+  addUniforms(stateSet);
 
   // to compute the texture generation matrix:
   node->addCullCallback(projectOnNodeCallback_.get());
@@ -680,12 +695,7 @@ void ProjectorNode::removeProjectionFromNode(osg::Node* node)
 
     stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
 
-    stateSet->removeUniform(projectorActive_.get());
-    stateSet->removeUniform(projectorAlpha_.get());
-    stateSet->removeUniform(texProjDirUniform_.get());
-    stateSet->removeUniform(texProjPosUniform_.get());
-    stateSet->removeUniform(useColorOverrideUniform_.get());
-    stateSet->removeUniform(colorOverrideUniform_.get());
+    removeUniforms(stateSet);
   }
 
   node->removeCullCallback(projectOnNodeCallback_.get());

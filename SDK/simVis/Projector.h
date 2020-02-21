@@ -111,6 +111,11 @@ public:
    */
   const simData::ProjectorUpdate* getLastUpdateFromDS() const;
 
+  /// Add projector uniforms to the given StateSet
+  void addUniforms(osg::StateSet* stateSet) const;
+  /// Remove projector uniforms to the given StateSet
+  void removeUniforms(osg::StateSet* stateSet) const;
+
 public: // EntityNode interface
   /**
   * Whether the entity is active within the scenario at the current time.
@@ -233,8 +238,6 @@ private:
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
 
   osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
-
-  friend class ProjectorManager; // manager wants access to the uniforms.
 
   void getMatrices_(
     osg::Matrixd& out_projection,

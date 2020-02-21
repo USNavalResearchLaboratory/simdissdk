@@ -193,12 +193,7 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   // Set texture from projector into state set
   projStateSet->setTextureAttribute(PROJECTOR_TEXTURE_UNIT, proj->getTexture());
 
-  projStateSet->addUniform(proj->projectorActive_.get());
-  projStateSet->addUniform(proj->projectorAlpha_.get());
-  projStateSet->addUniform(proj->texProjDirUniform_.get());
-  projStateSet->addUniform(proj->texProjPosUniform_.get());
-  projStateSet->addUniform(proj->useColorOverrideUniform_.get());
-  projStateSet->addUniform(proj->colorOverrideUniform_.get());
+  proj->addUniforms(projStateSet);
 }
 
 void ProjectorManager::unregisterProjector(const ProjectorNode* proj)
