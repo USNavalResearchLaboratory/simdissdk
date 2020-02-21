@@ -113,7 +113,7 @@ public:
 
   /// Add projector uniforms to the given StateSet
   void addUniforms(osg::StateSet* stateSet) const;
-  /// Remove projector uniforms to the given StateSet
+  /// Remove projector uniforms from the given StateSet
   void removeUniforms(osg::StateSet* stateSet) const;
 
 public: // EntityNode interface
