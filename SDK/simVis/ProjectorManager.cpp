@@ -197,6 +197,8 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   projStateSet->addUniform(proj->projectorAlpha_.get());
   projStateSet->addUniform(proj->texProjDirUniform_.get());
   projStateSet->addUniform(proj->texProjPosUniform_.get());
+  projStateSet->addUniform(proj->useColorOverrideUniform_.get());
+  projStateSet->addUniform(proj->colorOverrideUniform_.get());
 }
 
 void ProjectorManager::unregisterProjector(const ProjectorNode* proj)

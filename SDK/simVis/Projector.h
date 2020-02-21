@@ -229,6 +229,8 @@ private:
   osg::ref_ptr<osg::Uniform> texProjPosUniform_;
   osg::ref_ptr<osg::Uniform> texProjDirUniform_;
   osg::ref_ptr<osg::Uniform> texProjSamplerUniform_;
+  osg::ref_ptr<osg::Uniform> useColorOverrideUniform_;
+  osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
 
   osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
 
@@ -250,6 +252,8 @@ private:
 
   /// Update label
   void updateLabel_(const simData::ProjectorPrefs& prefs);
+  /// Update override color
+  void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
 };
 
 } //namespace simVis
