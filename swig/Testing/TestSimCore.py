@@ -45,13 +45,6 @@ def sleepWrapper():
 
 print("Sleeping for about a tenth of a second.")
 assert(timeit.timeit(sleepWrapper, number=1) >= .05)
-# Defined timezone struct in .i file so that it was exposed to python.
-timezone = simCore.timezone()
-assert(timezone is not None)
-timezone.tz_minuteswest = 1
-assert(timezone.tz_minuteswest == 1)
-timezone.tz_dsttime = 2
-assert(timezone.tz_dsttime == 2)
 # TODO: Support timespec_t typedef struct. It is currently missing from the .cxx generated wrapper class, might need to use a typemap?
 # timespec = simCore.timesepc_t()
 # assert(timespec is not None)
@@ -76,13 +69,9 @@ assert(v.y() == 2)
 assert(v.z() == 4)
 
 #############################
-# MathConstants.h
-assert(simCore.M_TWOPI == 6.28318530717958647692)
-
-#############################
 # Angle.h
 assert(simCore.angFix360(720) == 0)
-assert(simCore.areAnglesEqual(0, simCore.M_TWOPI) == True)
+assert(simCore.areAnglesEqual(0, math.pi * 2) == True)
 angleExtents = simCore.ANGLEEXTENTS_TWOPI
 assert(angleExtents is not None)
 assert(simCore.angFixDegrees(360, angleExtents) == 0)

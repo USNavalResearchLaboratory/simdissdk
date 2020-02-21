@@ -48,24 +48,9 @@ typedef long int64_t;
 %include "simCore/Common/FileSearch.h"
 %include "simCore/Common/Time.h"
 
-/*
- * TODO: Test this
- * %include "simCore/Common/HighPerformanceGraphics.h"
- */
-// Explicitly defining timezone struct so that it is wrapped successfully.
-struct timezone
-{
-  int tz_minuteswest; /**< the number of minutes west of GMT */
-  int tz_dsttime;     /**< If nonzero, daylight savings time applies during some part of the year */
-};
-
-// TODO: Support timespec struct. Might need to use typemap?
-
 ////////////////////////////////////////////////
 // simCore/Calc
 %include "simCore/Calc/Vec3.h"
-// TODO: Make tests using constants defined under #ifdef WIN32.
-%include "simCore/Calc/MathConstants.h"
 %include "simCore/Calc/Angle.h"
 
 // simCore::coordinateSystemFromString()
