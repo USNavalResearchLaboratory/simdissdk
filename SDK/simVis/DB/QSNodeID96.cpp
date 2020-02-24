@@ -132,7 +132,9 @@ QSNodeID96 QSNodeID96::operator>>(int numBitsToShift) const
     {
       returnValue.three_ = 0;
       returnValue.two_ = three_ >> (numBitsToShift-32);
-      returnValue.one_ = (two_ >> (numBitsToShift-32)) | (three_ << (64 - numBitsToShift));
+      // Number of bits to shift the third field by. Separated into a local var to avoid cppCheck false positive
+      int thirdFieldBits = 64 - numBitsToShift;
+      returnValue.one_ = (two_ >> (numBitsToShift-32)) | (three_ << thirdFieldBits);
     }
     else if (numBitsToShift < 96)
     {
@@ -187,7 +189,9 @@ QSNodeID96 QSNodeID96::operator<<(int numBitsToShift) const
     {
       returnValue.one_ = 0;
       returnValue.two_ = one_ << (numBitsToShift-32);
-      returnValue.three_ = (two_ << (numBitsToShift-32)) | (one_ >> (64 - numBitsToShift));
+      // Number of bits to shift the third field by. Separated into a local var to avoid cppCheck false positive
+      int thirdFieldBits = 64 - numBitsToShift;
+      returnValue.three_ = (two_ << (numBitsToShift-32)) | (one_ >> thirdFieldBits);
     }
     else if (numBitsToShift < 96)
     {
