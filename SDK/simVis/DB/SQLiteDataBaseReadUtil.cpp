@@ -182,13 +182,12 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
 
   // opens the database
   bool localDb = false;
-  QsErrorType tmpReturnValue;
   if (sqlite3Db == NULL)
   {
     if (allowLocalDB == false)
       return QS_IS_DB_NOT_INITIALIZED;
     localDb = true;
-    tmpReturnValue = openDatabaseFile(dbFileName, &sqlite3Db, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX);
+    QsErrorType tmpReturnValue = openDatabaseFile(dbFileName, &sqlite3Db, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX);
     if (tmpReturnValue != QS_IS_OK)
       return tmpReturnValue;
   }

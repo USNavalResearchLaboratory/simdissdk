@@ -1371,10 +1371,9 @@ QVariant MapDataModel::layerMapIndex_(osgEarth::Layer* layer) const
   if (layer == NULL || !map_.valid())
     return QVariant();
 
-  unsigned int index = MapReindexer::INVALID_INDEX;
   osgEarth::LayerVector layers;
   map_->getLayers(layers);
-  index = indexOf(layers, layer);
+  unsigned int index = indexOf(layers, layer);
 
   if (index != MapReindexer::INVALID_INDEX)
     return index;

@@ -134,6 +134,7 @@ namespace
       deepLevel_ = 32;
       timeSpecified_ = false;
       timeStamp_ = simCore::INFINITE_TIME_STAMP;
+      db_ = NULL;
     }
 
     int rasterFormat_;

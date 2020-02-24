@@ -252,14 +252,15 @@ class MemoryDataStore::MemoryInternalsMemento : public InternalsMemento
 public:
   /** Constructor for a memento for the MemoryDataStore */
   explicit MemoryInternalsMemento(const MemoryDataStore &ds)
+    : interpolator_(ds.interpolator_),
+      interpolationEnabled_(ds.interpolationEnabled_),
+      listeners_(ds.listeners_),
+      scenarioListeners_(ds.scenarioListeners_),
+      newUpdatesListener_(ds.newUpdatesListener_),
+      boundClock_(ds.boundClock_)
   {
     // fill in everything
-    interpolator_ = ds.interpolator_;
-    interpolationEnabled_ = ds.interpolationEnabled_;
 
-    listeners_ = ds.listeners_;
-    scenarioListeners_ = ds.scenarioListeners_;
-    newUpdatesListener_ = ds.newUpdatesListener_;
     ds.dataTableManager().getObservers(dtObservers_);
     ds.categoryNameManager().getListeners(catListeners_);
     defaultPlatformPrefs_.CopyFrom(ds.defaultPlatformPrefs_);
@@ -269,7 +270,6 @@ public:
     defaultLobGroupPrefs_.CopyFrom(ds.defaultLobGroupPrefs_);
     defaultProjectorPrefs_.CopyFrom(ds.defaultProjectorPrefs_);
     defaultCustomRenderingPrefs_.CopyFrom(ds.defaultCustomRenderingPrefs_);
-    boundClock_ = ds.boundClock_;
   }
 
   virtual ~MemoryInternalsMemento()

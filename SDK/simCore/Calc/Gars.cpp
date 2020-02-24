@@ -151,14 +151,11 @@ int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double&
   if (!Gars::isValidGars(gars, err, &lonBand, &latPrimaryIndex, &latSecondaryIndex, &quad15, &key5))
     return 1; // Error was set by isValidGars()
 
-  double lat = 0.;
-  double lon = 0.;
-
   // Convert from lonBand integer to longitude value
-  lon = (lonBand - 360 - 1) * 0.5;
+  double lon = (lonBand - 360 - 1) * 0.5;
 
   // Start latitude at -90
-  lat = -90.0;
+  double lat = -90.0;
   // Move it up 12 degrees per primary letter
   lat += (latPrimaryIndex * DEG_PER_PRIMARY_LETTER);
   // Move it up 0.5 degrees per secondary letter

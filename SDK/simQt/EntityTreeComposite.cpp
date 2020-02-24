@@ -127,6 +127,7 @@ public:
 private:
   /** Declared but not defined to keep cppCheck warning free */
   ButtonActions(const ButtonActions& rhs);
+  ButtonActions& operator=(ButtonActions& rhs);
 
   /** Sets the text and tooltip on the "Load" button */
   void setLoadTextAndTooltips_(const QString& filterName)

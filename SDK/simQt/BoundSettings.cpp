@@ -400,10 +400,7 @@ void BoundColorSetting::bindTo(simQt::ColorWidget* colorWidget, bool populateToo
   {
     Settings::MetaData metaData;
     if (settings_.metaData(variableName_, metaData) == 0)
-    {
-      if (populateToolTip)
-        colorWidget->setToolTip(metaData.toolTip());
-    }
+      colorWidget->setToolTip(metaData.toolTip());
   }
   colorWidget->setColor(value_);
   connect(this, SIGNAL(valueChanged(const QColor&)), colorWidget, SLOT(setColor(const QColor&)));

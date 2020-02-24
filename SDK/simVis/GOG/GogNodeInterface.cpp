@@ -1722,10 +1722,6 @@ int LabelNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* re
 
 int LabelNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const
 {
-  if (!style_.has<osgEarth::TextSymbol>())
-    return 1;
-  const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
-
   outlineColor = outlineColor_;
   outlineThickness = outlineThickness_;
   return 0;

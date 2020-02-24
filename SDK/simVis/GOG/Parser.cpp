@@ -670,7 +670,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
         printError_(lineNumber, "angleunits command requires 1 argument");
       }
     }
-    else if (tokens[0] == "verticaldatum" && tokens.size() >= 2)
+    else if (tokens[0] == "verticaldatum")
     {
       if (tokens.size() >= 2)
       {

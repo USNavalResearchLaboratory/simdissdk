@@ -62,7 +62,7 @@ simData::ObjectId ProjectorManager::ProjectorLayer::id() const
 class UpdateProjMatrix : public osgEarth::Layer::TraversalCallback
 {
 public:
-  UpdateProjMatrix(ProjectorNode* node) : proj_(node)
+  explicit UpdateProjMatrix(ProjectorNode* node) : proj_(node)
   {
     //nop
   }

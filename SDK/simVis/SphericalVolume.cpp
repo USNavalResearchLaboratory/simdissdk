@@ -559,8 +559,6 @@ namespace
 
   void svPyramidFactory::generateFaces_(osg::Geometry* faceGeom)
   {
-    std::vector<SVMeta>& vertexMetaData = metaContainer_->vertMeta_;
-
     // if we are drawing the face (not just the outline) add primitives that index into the vertex array
     const unsigned int numFaceElements = 2 * numPointsZ_;
 

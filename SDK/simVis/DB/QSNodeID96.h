@@ -31,7 +31,7 @@ namespace simVis_db
   {
   public:
     QSNodeID96();
-    QSNodeID96(const uint32_t& value);
+    explicit QSNodeID96(const uint32_t& value);
     ~QSNodeID96();
 
     bool operator==(const QSNodeID96& value) const;

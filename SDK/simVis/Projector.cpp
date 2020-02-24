@@ -128,7 +128,7 @@ namespace
   class UpdateProjMatrix : public osg::NodeCallback
   {
   public:
-    UpdateProjMatrix(simVis::ProjectorNode* node) : proj_(node)
+    explicit UpdateProjMatrix(simVis::ProjectorNode* node) : proj_(node)
     {
       //nop
     }
