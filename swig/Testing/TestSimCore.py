@@ -195,9 +195,6 @@ assert(coordinateObj.position() == llaVector)
 #############################
 # Gars.h
 # TODO: Test static methods to make sure output parameters work as intended.
-g = simCore.Gars()
-assert(g is not None)
-assert(g.GARS_30 is not None)
 
 #############################
 # Geometry.h
