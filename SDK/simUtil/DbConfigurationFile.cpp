@@ -377,6 +377,7 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
           imageLayer->setOpacity(opacity);
           imageLayer->setVisible(active);
           imageLayer->setEnabled(active);
+          imageLayer->setName(layerName);
           map->addLayer(imageLayer);
         }
         if (altitudeSet)
@@ -393,6 +394,7 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
             iStr >> noDataValue;
           }
           newLayer->setNoDataValue(noDataValue);
+          newLayer->setName(layerName);
         }
       }
     }
