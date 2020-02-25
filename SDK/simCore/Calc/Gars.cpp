@@ -43,7 +43,7 @@ namespace {
 namespace simCore
 {
 
-bool Gars::isValidGars(const std::string& gars, std::string* err, int* lonBand, int* latPimaryIdx, int* latSecondaryIdx, int* quad15, int* key5)
+bool Gars::isValidGars(const std::string& gars, std::string* err, int* lonBand, int* latPrimaryIdx, int* latSecondaryIdx, int* quad15, int* key5)
 {
   // Verify length of GARS coordinate
   if (gars.size() < 5 || gars.size() > 7)
@@ -130,8 +130,8 @@ bool Gars::isValidGars(const std::string& gars, std::string* err, int* lonBand, 
   // Assign values only on success
   if (lonBand)
     *lonBand = lonBandInt;
-  if (latPimaryIdx)
-    *latPimaryIdx = static_cast<int>(latPrimaryIndex);
+  if (latPrimaryIdx)
+    *latPrimaryIdx = static_cast<int>(latPrimaryIndex);
   if (latSecondaryIdx)
     *latSecondaryIdx = static_cast<int>(latSecondaryIndex);
 
@@ -188,7 +188,7 @@ int Gars::convertGarsToGeodetic(const std::string& gars, double& latRad, double&
   return 0;
 }
 
-int Gars::convertGeodeticToGars(double latRad, double lonRad, std::string& gars, Level level, std::string* err)
+int Gars::convertGeodeticToGars(double latRad, double lonRad, std::string& garsOut, Level level, std::string* err)
 {
   // Conversion algorithm below adapted from osgEarthUtil/GARSGraticule.cpp getGARSLabel()
 
@@ -262,7 +262,7 @@ int Gars::convertGeodeticToGars(double latRad, double lonRad, std::string& gars,
   }
 
 
-  gars = buf.str();
+  garsOut = buf.str();
   return 0;
 }
 

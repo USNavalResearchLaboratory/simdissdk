@@ -31,23 +31,13 @@ assert(e.line() == 37)
 e = None
 
 #############################
-# FileSearch.h
-assert(simCore.FileSearch.GOG is not None)
-# TODO: Test FileSearch::findFile(). This could involve creating a small definition for it (possibly using %inline in the .i file).
-# assert(simCore.FileSearch.findFile())
-
-#############################
 # Time.h
 # Wrapper function that sleeps for a second and takes no args, so that it can be passed through python's timeit() function easily.
 # Sleeping for more than a second, as function occasionally executes in slightly less than a tenth of a second if given 100 ms as a parameter.
 def sleepWrapper():
 	simCore.Sleep(100)
-
 print("Sleeping for about a tenth of a second.")
 assert(timeit.timeit(sleepWrapper, number=1) >= .05)
-# TODO: Support timespec_t typedef struct.
-# timespec = simCore.timesepc_t()
-# assert(timespec is not None)
 
 # simCore/Calc
 
@@ -86,10 +76,9 @@ assert(simCore.EARTH_ROTATION_RATE == 7292115.1467e-11)
 coordSystem = simCore.COORD_SYS_NED
 assert(coordSystem is not None)
 assert(simCore.coordinateSystemToString(coordSystem) == "Topo_NED")
-# TODO: Fix below test so that build errors are resolved.
-# rv, coordSystem = simCore.coordinateSystemFromString("Topo_NED")
-# assert(rv == 0)
-# assert(coordSystem == simCore.COORD_SYS_NED)
+rv, coordSystem = simCore.coordinateSystemFromString("Topo_NED")
+assert(rv == 0)
+assert(coordSystem == simCore.COORD_SYS_NED)
 
 #############################
 # Coordinate.h
@@ -133,17 +122,16 @@ assert(simCore.isFinite(v))
 v2 = simCore.Vec3(1, 2, 3)
 assert(v2 is not None)
 assert(simCore.v3Distance(v, v2) == math.sqrt(26))
-# TODO: Test v3Scale in Math.h. Will need to make a fix to handle the class output parameter in order for this to function.
-# v2 = simCore.v3Scale(2, v)
-# assert(v2.x() == 12)
-# assert(v2.y() == 4)
-# assert(v2.z() == 8)
+v2 = simCore.v3Scale(2, v)
+assert(v2.x() == 12)
+assert(v2.y() == 4)
+assert(v2.z() == 8)
 vecLen = simCore.v3Unit(v2)
 assert(vecLen is not None)
-assert(vecLen == math.sqrt(14))
-assert(v2.x() == 1 * 1/vecLen)
-assert(v2.y() == 2 * 1/vecLen)
-assert(v2.z() == 3 * 1/vecLen)
+assert(vecLen == math.sqrt(224))
+assert(v2.x() == 12 / vecLen)
+assert(v2.y() == 4 / vecLen)
+assert(v2.z() == 8 / vecLen)
 mantissa, numZeroes = simCore.toScientific(12345)
 assert(mantissa is not None)
 assert(numZeroes is not None)
@@ -194,7 +182,15 @@ assert(coordinateObj.position() == llaVector)
 
 #############################
 # Gars.h
-# TODO: Test static methods to make sure output parameters work as intended.
+isValid, err, lonBand, latPrimaryIdx, latSecondaryIdx, quad15, key5 = simCore.Gars.isValidGars("718KR45")
+assert(isValid is not None and err is not None and lonBand is not None and latPrimaryIdx is not None and latSecondaryIdx is not None
+	and quad15 is not None and key5 is not None)
+rv, latRad, lonRad, err = simCore.Gars.convertGarsToGeodetic("718KR45")
+assert(rv is not None and latRad is not None and lonRad is not None and err is not None)
+rv, gars, err = simCore.Gars.convertGeodeticToGars(1.0, 1.1, simCore.Gars.GARS_5)
+assert(rv is not None and gars is not None and err is not None)
+rv, gars, err = simCore.Gars.convertGeodeticToGars(1.0, 1.1)
+assert(rv is not None and gars is not None and err is not None)
 
 #############################
 # Geometry.h
@@ -215,18 +211,12 @@ assert(fence.contains(v4) is not None)
 assert(fence.contains(coordinateTwo) is not None)
 
 #############################
-# GogToGeoFence.h
-# TODO: Successfully test simCore::GogToGeoFence::getFences() using its complex input parameter.
-gogFence = simCore.GogToGeoFence()
-assert(gogFence is not None)
-
-#############################
 # Interpolation.h
-# TODO: Successfully test the overloaded simCore::linearInterpolate() that uses a generic output variable.
 assert(simCore.getFactor(10, 10, 10) is not None)
 assert(simCore.nearestNeighborInterpolate(10, 10, 10) is not None)
 outputVec = simCore.Vec3LinearInterpolate(v1, v2, 3, 4, 5)
 assert(outputVec is not None and outputVec.x() is not None)
+assert(simCore.DoubleLinearInterpolate(2.0, 4.0, 10.0, 25.0, 30.0) == 3.5)
 assert(simCore.linearInterpolateAngle(1, 2, 3, 4, 5) is not None)
 
 #############################
@@ -252,7 +242,6 @@ assert(retCoord.coordinateSystem() is not None)
 
 #############################
 # NumericalAnalysis.h
-# TODO: Test newtonInterp() and invLinearInterp().
 assert(simCore.SEARCH_MAX_ITER is not None)
 biSearch = simCore.BisectionSearch()
 assert(biSearch is not None)
@@ -263,6 +252,17 @@ liSearch = simCore.LinearSearch()
 assert(liSearch is not None)
 indicator, x = liSearch.searchX(1, 2, 3, 4, 5, simCore.SEARCH_INIT_X)
 assert(indicator is not None and x is not None)
+times = simCore.DoubleArray(3)
+values = simCore.DoubleArray(3)
+for k in range(0, 3):
+	times[k] = k
+	values[k] = k + 3
+rv, value = simCore.newtonInterp(1.0, times, values)
+assert(rv is not None)
+assert(value == 4.0)
+rv, value = simCore.invLinearInterp(4.5, times, values, 0.1)
+assert(rv is not None)
+assert(value == 1.5)
 
 # TODO: More testing here
 

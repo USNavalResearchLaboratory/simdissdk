@@ -45,7 +45,6 @@ typedef long int64_t;
 ////////////////////////////////////////////////
 // simCore/Common
 %include "simCore/Common/Exception.h"
-%include "simCore/Common/FileSearch.h"
 %include "simCore/Common/Time.h"
 
 ////////////////////////////////////////////////
@@ -64,12 +63,45 @@ typedef long int64_t;
 // Handling output parameter for toScientific() from simCore/calc/Math.cpp
 %apply int* OUTPUT { int* exp };
 
-// TODO: Create a test for v3Scale in Math.h, which requires finding a way to handle the Vec3& output parameter.
+// v3Scale() needs a custom wrapper for proper return value
+%rename("wrap_v3Scale") simCore::v3Scale;
 %include "simCore/Calc/Math.h"
+
+%pythoncode %{
+def v3Scale(scalar, inVec):
+  outVec = Vec3()
+  wrap_v3Scale(scalar, inVec, outVec)
+  return outVec
+%}
+
 %include "simCore/Calc/CoordinateConverter.h"
+
+// isValidGars()
+%apply std::string* OUTPUT { std::string* err };
+%apply int* OUTPUT { int* lonBand };
+%apply int* OUTPUT { int* latPrimaryIdx };
+%apply int* OUTPUT { int* latSecondaryIdx };
+%apply int* OUTPUT { int* quad15 };
+%apply int* OUTPUT { int* key5 };
+// convertGarsToGeodetic()
+%apply double& OUTPUT { double& latRad };
+%apply double& OUTPUT { double& lonRad };
+// convertGeodeticToGars()
+%apply std::string* OUTPUT { std::string* garsOut };
+%extend simCore::Gars {
+  // Fixes ordering of parameters for SWIG
+  static int convertGeodeticToGars(double latRad, double lonRad, simCore::Gars::Level level, std::string* garsOut, std::string* err) {
+    return simCore::Gars::convertGeodeticToGars(latRad, lonRad, *garsOut, level, err);
+  }
+  static int convertGeodeticToGars(double latRad, double lonRad, std::string* garsOut, std::string* err) {
+    return simCore::Gars::convertGeodeticToGars(latRad, lonRad, *garsOut, simCore::Gars::GARS_5, err);
+  }
+};
+%ignore simCore::Gars::convertGeodeticToGars; // Ignore the C++ header file version
+%warnfilter(509) simCore::Gars; // Ignore the overload warnings since they're treated as output parameters
 %include "simCore/Calc/Gars.h"
+
 %include "simCore/Calc/Geometry.h"
-%include "simCore/Calc/GogToGeoFence.h"
 %include "simCore/Calc/Interpolation.h"
 
 // simCore::WorldMagneticModel::calculateMagneticVariance()
@@ -85,7 +117,13 @@ typedef long int64_t;
 // simCore::BisectionSearch::searchX()
 %apply double& INOUT { double& x};
 %apply double& INOUT { double& xlo, double& xhi };
-
+// Required for double[3] in newtonInterp()
+%include "carrays.i"
+%array_class(double, DoubleArray);
+// newtonInterp()
+%apply double& OUTPUT { double& funcAtT0 };
+// invLinearInterp()
+%apply double& OUTPUT { double& t0 };
 %include "simCore/Calc/NumericalAnalysis.h"
 
 %template(intSdkMax) simCore::sdkMax<int>;
@@ -98,6 +136,7 @@ typedef long int64_t;
 %template(doubleSign) simCore::sign<double>;
 
 %template(Vec3LinearInterpolate) simCore::linearInterpolate<simCore::Vec3>;
+%template(DoubleLinearInterpolate) simCore::linearInterpolate<double>;
 
 // TODO: Add these and test them as you add them
 // Some of these may have to be added together, since they depend on eachother.

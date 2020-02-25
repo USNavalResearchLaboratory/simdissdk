@@ -25,8 +25,7 @@ if(NOT Python3_Interpreter_FOUND)
 endif()
 
 # Add the tests
-# Disabled test due to build errors.
-# add_test(NAME simCore_SWIG_Test COMMAND "${Python3_EXECUTABLE}" "TestSimCore.py" WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+add_test(NAME simCore_SWIG_Test COMMAND "${Python3_EXECUTABLE}" "TestSimCore.py" WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Windows insists on installing under a CONFIG directory under the runtime output directory
 if(WIN32)
@@ -35,8 +34,8 @@ else()
     set(PYTHON_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 endif()
 
-#set_tests_properties(
-#        simCore_SWIG_Test
-#    PROPERTIES
-#        ENVIRONMENT "PYTHONPATH=${PYTHON_PATH}"
-#)
+set_tests_properties(
+        simCore_SWIG_Test
+    PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${PYTHON_PATH}"
+)
