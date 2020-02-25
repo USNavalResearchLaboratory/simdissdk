@@ -67,7 +67,7 @@ int Mgrs::convertMgrsToGeodetic(const std::string& mgrs, double& lat, double& lo
   {
     double utmEasting;
     double utmNorthing;
-    if (convertMgrstoUtm(zone, gzdLetters, easting, northing, northPole, utmEasting, utmNorthing, err) != 0)
+    if (convertMgrsToUtm(zone, gzdLetters, easting, northing, northPole, utmEasting, utmNorthing, err) != 0)
       return 1;
     if (convertUtmToGeodetic(zone, northPole, utmEasting, utmNorthing, lat, lon, err) != 0)
       return 1;
@@ -186,7 +186,7 @@ int Mgrs::breakMgrsString(const std::string& mgrs, int& zone, std::string& gzdLe
   return 0;
 }
 
-int Mgrs::convertMgrstoUtm(int zone, const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
+int Mgrs::convertMgrsToUtm(int zone, const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
   bool &northPole, double& utmEasting, double& utmNorthing, std::string* err)
 {
   const double ONEHT = 100000.;
