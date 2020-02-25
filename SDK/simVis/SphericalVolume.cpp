@@ -959,7 +959,6 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   {
     // next, build the cone wall. we need out-facing normals.
     // yes this can be computed while we are building the faces but that is an optimization for later.
-    const int wallOffset = vptr;
 
     // ensure that cone is aligned to cap, since cap is drawn normally, but cone is drawn in alternating strips from bottom.
     bool evenSlice = ((numSlices % 2) == 0);
