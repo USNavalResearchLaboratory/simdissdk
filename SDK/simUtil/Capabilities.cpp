@@ -231,7 +231,7 @@ void Capabilities::init_(osg::GraphicsContext& gc)
     maxTextureCoords = maxTextureUnits;
 #endif
   }
-  else if (glVersion_ >= 1.3f || osg::isGLExtensionSupported(contextId, "GL_ARB_multitexture"))
+  else if (glVersion_ >= 1.3f || osg::isGLExtensionSupported(contextId, "GL_ARB_multitexture") || osg::isGLExtensionSupported(contextId, "GL_EXT_multitexture"))
   {
     // Fall back to multitexturing units for oldest OpenGL
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTextureUnits);
