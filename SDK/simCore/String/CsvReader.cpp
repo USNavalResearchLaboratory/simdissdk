@@ -27,14 +27,14 @@
 namespace simCore
 {
 
-CsvReader::CsvReader()
-  : commentChar_('#')
+CsvReader::CsvReader(std::istream& stream)
+  : stream_(stream),
+  commentChar_('#')
 {
 }
 
 CsvReader::~CsvReader()
 {
-  close();
 }
 
 void CsvReader::setCommentChar(char commentChar)
@@ -42,25 +42,11 @@ void CsvReader::setCommentChar(char commentChar)
   commentChar_ = commentChar;
 }
 
-int CsvReader::open(const std::string& filename)
-{
-  if (file_.is_open())
-    return 1;
-  file_.open(filename);
-  return file_.is_open() ? 0 : 1;
-}
-
-void CsvReader::close()
-{
-  if (file_.is_open())
-    file_.close();
-}
-
 int CsvReader::readLine(std::vector<std::string>& tokens)
 {
   tokens.clear();
   std::string line;
-  while (simCore::getStrippedLine(file_, line))
+  while (simCore::getStrippedLine(stream_, line))
   {
     // Ignore empty lines and comments
     if (line.empty() || line[0] == commentChar_)
