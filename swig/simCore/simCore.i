@@ -157,6 +157,15 @@ CoordinateConverter.convert = CoordConvert_convert
 %include "simCore/Calc/Random.h"
 %include "simCore/Calc/SquareMatrix.h"
 
+%include "simCore/Calc/Units.h"
+%include "simCore/Calc/VerticalDatum.h"
+
+// TODO: Implement after installing simCore/Time
+/*
+%include "simCore/Calc/DatumConvert.h"
+%include "simCore/Calc/UnitContext.h"
+*/
+
 %template(intSdkMax) simCore::sdkMax<int>;
 %template(intSdkMin) simCore::sdkMin<int>;
 %template(intSquare) simCore::square<int>;
@@ -169,18 +178,17 @@ CoordinateConverter.convert = CoordConvert_convert
 %template(Vec3LinearInterpolate) simCore::linearInterpolate<simCore::Vec3>;
 %template(DoubleLinearInterpolate) simCore::linearInterpolate<double>;
 
-// TODO: Add these and test them as you add them
-// Some of these may have to be added together, since they depend on eachother.
-/*
-%include "simCore/Calc/DatumConvert.h"
-%include "simCore/Calc/UnitContext.h"
-%include "simCore/Calc/Units.h"
-%include "simCore/Calc/VerticalDatum.h"
-
 ////////////////////////////////////////////////
 // simCore/EM
-%include "simCore/EM/AntennaPattern.h"
+
 %include "simCore/EM/Constants.h"
+
+// AntennaPattern::minMaxGain()
+%apply float* OUTPUT { float* min, float* max };
+%include "simCore/EM/AntennaPattern.h"
+
+// TODO: Add these and test them as you add them
+/*
 %include "simCore/EM/Decibel.h"
 %include "simCore/EM/ElectroMagRange.h"
 %include "simCore/EM/Propagation.h"

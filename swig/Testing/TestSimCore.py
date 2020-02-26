@@ -356,6 +356,95 @@ assert(sm.get(0, 0) == 0)
 assert(sm.data() is not None)
 assert(sm.add(simCore.SquareMatrix()) is not None)
 
+#############################
+# Units.h
+assert(simCore.Units.UNITLESS is not None)
+assert(simCore.Units.MIL is not None)
+assert(simCore.Units.DATA_MILES is not None)
+assert(simCore.Units.DATA_MILES_PER_HOUR is not None)
+assert(simCore.Units.NAUTICAL_MILES_PER_SECOND_SQUARED is not None)
+assert(simCore.Units.RANKINE is not None)
+assert(simCore.Units.REVOLUTIONS_PER_MINUTE is not None)
+assert(simCore.Units.TEASPOON is not None)
+assert(simCore.Units.PASCALS is not None)
+assert(simCore.Units.VOLUME_FAMILY is not None)
+assert(simCore.Units.FEET.name() is not None)
+assert(simCore.Units.FEET.abbreviation() is not None)
+assert(simCore.Units.FEET.family() is not None)
+assert(simCore.Units.FEET.canConvert(simCore.Units.METERS))
+assert(simCore.Units.FEET.convertTo(simCore.Units.METERS, 1) is not None)
+assert(simCore.Units.FEET == simCore.Units.FEET)
+assert(simCore.Units.FEET != simCore.Units.METERS)
+assert(simCore.Units.FEET.isValid())
+assert(simCore.Units.FEET.toBaseScalar() is not None)
+assert(simCore.Units.offsetThenScaleUnit("Yard", "yd", 0, 1.0 / 3, simCore.Units.LENGTH_FAMILY).name() == "Yard")
+ur = simCore.UnitsRegistry()
+assert(ur is not None)
+assert(ur.registerDefaultUnits() is None)
+assert(ur.registerUnits(simCore.Units.FEET) is not None)
+assert(ur.units(simCore.Units.LENGTH_FAMILY) is not None)
+# TODO: Fix
+# assert(ur.families() is not None)
+assert(ur.unitsByName("feet") == simCore.Units.FEET)
+assert(ur.unitsByAbbreviation("ft") == simCore.Units.FEET)
+
+#############################
+# VerticalDatum.h
+assert(simCore.VERTDATUM_WGS84 is not None)
+assert(simCore.VERTDATUM_MSL is not None)
+assert(simCore.VERTDATUM_USER is not None)
+
+# simCore/EM
+
+#############################
+# Constants.h
+assert(simCore.LIGHT_SPEED_VACUUM is not None)
+assert(simCore.RRE_CONSTANT is not None)
+assert(simCore.DEFAULT_ANTENNA_GAIN is not None)
+assert(simCore.POLARITY_RIGHTCIRC is not None)
+assert(simCore.POLARITY_STRING_UNKNOWN is not None)
+assert(simCore.POLARITY_STRING_LEFTCIRC is not None)
+assert(simCore.polarityString(simCore.POLARITY_LEFTCIRC) is not None)
+assert(simCore.polarityType(simCore.POLARITY_STRING_LEFTCIRC) is not None)
+assert(simCore.RCS_XPATCH is not None)
+assert(simCore.RCS_SYM_LUT_TYPE is not None)
+assert(simCore.RCS_LOG_NORMAL_FUNC is not None)
+assert(simCore.ANTENNA_LOBE_BACK is not None)
+assert(simCore.ANTENNA_ALGORITHM_SINXX is not None)
+assert(simCore.ANTENNA_FORMAT_EZNEC is not None)
+assert(simCore.ANTENNA_PATTERN_MONOPULSE is not None)
+assert(simCore.ANTENNA_STRING_ALGORITHM_SINXX is not None)
+assert(simCore.ANTENNA_STRING_FORMAT_MONOPULSE is not None)
+assert(simCore.ANTENNA_STRING_EXTENSION_MONOPULSE is not None)
+
+#############################
+# AntennaPattern.h
+assert(simCore.antennaPatternTypeString(simCore.ANTENNA_PATTERN_SINXX) is not None)
+assert(simCore.antennaPatternType(simCore.ANTENNA_STRING_ALGORITHM_SINXX) is not None)
+assert(simCore.loadPatternFile(simCore.ANTENNA_STRING_ALGORITHM_SINXX, 1) is not None)
+assert(simCore.AntennaGainParameters() is not None)
+apg = simCore.AntennaPatternGauss()
+assert(apg is not None)
+# TODO: Test
+# assert(apg.type() is not None)
+assert(apg.gain(simCore.AntennaGainParameters()) is not None)
+small, large = apg.minMaxGain(simCore.AntennaGainParameters())
+assert(small is not None and large is not None)
+# TODO: Implement
+# result, lastLobe = simCore.calculateGain({}, {}, 1, 2, 3, 4, 5. True)
+# assert(result is not None and lastLobe is not None)
+apt = simCore.AntennaPatternTable()
+assert(apt is not None)
+assert(apt.readPat("") is not None)
+assert(apt.setValid(False) is None)
+assert(apt.setFilename("") is None)
+assert(apt.setAzimData(100, 10) is None)
+# TODO: Test after installing LUT/InterpTable.h
+# success, symmetricAntennaPattern = simCore.readPattern("", "", 1)
+# assert(success is not None and symmetricAntennaPattern is not None)
+# success, symmetricGainAntPattern = simCore.readPattern("", "", 1)
+# assert(success is not None and symmetricAntennaPattern is not None)
+
 # TODO: More testing here
 
 print("Success!")
