@@ -157,8 +157,17 @@ void LayerRefreshCallback::runImpl_()
     SIM_DEBUG_FP << "simVis::LayerRefreshCallback::run() attempting to refresh layer \"" << layer->getName() << "\".\n";
 
     const auto extents = layer->getDataExtents();
+
+#ifdef HAVE_INVALIDATE_LAYER_REGION
     for (const auto& extent : extents)
       terrainEngine->invalidateLayerRegion(layer.get(), extent);
+#else
+    // New API as of osgEarth 3.0's 6dde49f410a, 2/21/20, merged/pushed 2/25/20
+    std::vector<const osgEarth::Layer*> layerVec;
+    layerVec.push_back(layer.get());
+    for (const auto& extent : extents)
+      terrainEngine->invalidateRegion(layerVec, extent);
+#endif
 
     // Reset the timer for this layer
     it->elapsedTime.reset();
