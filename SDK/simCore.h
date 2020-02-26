@@ -62,6 +62,7 @@
 #include "simCore/LUT/LUT2.h"
 #include "simCore/String/Angle.h"
 #include "simCore/String/Constants.h"
+#include "simCore/String/CsvReader.h"
 #include "simCore/String/FilePatterns.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/TextFormatter.h"

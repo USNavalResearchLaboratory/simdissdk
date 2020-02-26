@@ -108,6 +108,7 @@ set(CORE_STRING_SRC String/)
 set(CORE_STRING_HEADERS
     ${CORE_STRING_INC}Angle.h
     ${CORE_STRING_INC}Constants.h
+    ${CORE_STRING_INC}CsvReader.h
     ${CORE_STRING_INC}FilePatterns.h
     ${CORE_STRING_INC}Tokenizer.h
     ${CORE_STRING_INC}Format.h
@@ -119,6 +120,7 @@ set(CORE_STRING_HEADERS
 )
 set(CORE_STRING_SOURCES
     ${CORE_STRING_SRC}Angle.cpp
+    ${CORE_STRING_SRC}CsvReader.cpp
     ${CORE_STRING_SRC}Format.cpp
     ${CORE_STRING_SRC}Tokenizer.cpp
     ${CORE_STRING_SRC}TextFormatter.cpp
