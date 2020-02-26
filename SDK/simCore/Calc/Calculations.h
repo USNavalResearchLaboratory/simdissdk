@@ -538,22 +538,22 @@ namespace simCore
   /**
    * Calculates the angle of attack, side slip, and total angle of attack from a ENU
    * geodetic velocity vector and a set of geodetic Euler angles (yaw, pitch, roll)
-   * @param enuVel East, North, and Up geodetic velocity vector for the vehicle
-   * @param ypr Yaw, pitch, roll based geodetic Euler angles in radians
-   * @param useRoll Boolean, true: aerodynamic version, false: rocketry version (Air Ballistic Axis) that does not use roll
-   * @param aoa Vertical angle of attack for vehicle in radians; measure of difference between velocity and pointing direction
-   * @param ss Side slip angle for vehicle in radians; measure of difference between velocity and pointing direction
-   * @param totalAoA Total angle of attack for vehicle in radians
+   * @param[in ] enuVel East, North, and Up geodetic velocity vector for the vehicle
+   * @param[in ] ypr Yaw, pitch, roll based geodetic Euler angles in radians
+   * @param[in ] useRoll Boolean, true: aerodynamic version, false: rocketry version (Air Ballistic Axis) that does not use roll
+   * @param[out] aoa Vertical angle of attack for vehicle in radians; measure of difference between velocity and pointing direction
+   * @param[out] ss Side slip angle for vehicle in radians; measure of difference between velocity and pointing direction
+   * @param[out] totalAoA Total angle of attack for vehicle in radians
    */
   SDKCORE_EXPORT void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoA);
 
   /**
    * Returns the distance between a line segment and a point. The calculations are done in COORD_SYS_XEAST so the results are only approximate.
    * The code is taken from SIMDIS 9 code SimVisBeam::GetClosestPoint and generalized for WGS-84.
-   * @param startLla Start point of the line segment in (rad, rad, m) in WGS-84
-   * @param endLla End point of the line segment in (rad, rad, m) in WGS-84
-   * @param toLla The point for the distance calculation in (rad, rad, m) in WGS-84
-   * @param closestLla The point on the line segment closest to the toLla point
+   * @param[in ] startLla Start point of the line segment in (rad, rad, m) in WGS-84
+   * @param[in ] endLla End point of the line segment in (rad, rad, m) in WGS-84
+   * @param[in ] toLla The point for the distance calculation in (rad, rad, m) in WGS-84
+   * @param[out] closestLla The point on the line segment closest to the toLla point
    * @return The distance, in meters, between a line segment and the toLla point.
    */
   SDKCORE_EXPORT double getClosestPoint(const simCore::Vec3& startLla, const simCore::Vec3& endLla, const simCore::Vec3& toLla, simCore::Vec3& closestLla);

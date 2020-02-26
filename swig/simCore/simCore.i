@@ -39,6 +39,7 @@ typedef long int64_t;
 %ignore simCore::Vec3::operator[];
 %ignore simCore::Coordinate::operator=;
 %ignore simCore::CoordinateConverter::operator=;
+%ignore simCore::SquareMatrix::operator=;
 
 // Note, order of inclusion matters
 
@@ -112,7 +113,6 @@ CoordinateConverter.convert = CoordConvert_convert
 
 // simCore::WorldMagneticModel::calculateMagneticVariance()
 %apply double& OUTPUT { double& varianceRad };
-
 %include "simCore/Calc/MagneticVariance.h"
 
 %warnfilter(509) simCore::Mgrs; // Ignore the overload warnings since they're treated as output parameters
@@ -143,6 +143,20 @@ CoordinateConverter.convert = CoordConvert_convert
 %apply double& OUTPUT { double& t0 };
 %include "simCore/Calc/NumericalAnalysis.h"
 
+// simCore::calculateRelAzEl()
+%apply double* OUTPUT { double* azim, double* elev, double* cmp };
+// simCore::calculateGeodesicDRCR()
+%apply double* OUTPUT { double* downRng, double* crossRng };
+// simCore::calculateRelAng() and simCore::calculateRelAngToTrueAzEl()
+%apply double* OUTPUT { double* azim, double* elev, double* cmp };
+// TODO: calculateYawPitchFromBodyUnitX()
+// TODO: sodanoDirect()
+// TODO: sodanoInverse()
+%include "simCore/Calc/Calculations.h"
+
+%include "simCore/Calc/Random.h"
+%include "simCore/Calc/SquareMatrix.h"
+
 %template(intSdkMax) simCore::sdkMax<int>;
 %template(intSdkMin) simCore::sdkMin<int>;
 %template(intSquare) simCore::square<int>;
@@ -158,10 +172,7 @@ CoordinateConverter.convert = CoordConvert_convert
 // TODO: Add these and test them as you add them
 // Some of these may have to be added together, since they depend on eachother.
 /*
-%include "simCore/Calc/Calculations.h"
 %include "simCore/Calc/DatumConvert.h"
-%include "simCore/Calc/Random.h"
-%include "simCore/Calc/SquareMatrix.h"
 %include "simCore/Calc/UnitContext.h"
 %include "simCore/Calc/Units.h"
 %include "simCore/Calc/VerticalDatum.h"
