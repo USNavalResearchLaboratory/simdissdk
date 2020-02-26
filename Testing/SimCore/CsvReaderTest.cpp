@@ -168,6 +168,30 @@ int testCsvWithComments()
   return rv;
 }
 
+
+int testCsvLineNumber()
+{
+  int rv = 0;
+
+  std::istringstream stream("#col 1, col 2, col3\none,two\n \n \nthree,four,five\nsix,seven");
+
+  simCore::CsvReader reader(stream);
+  std::vector<std::string> tokens;
+
+  rv += SDK_ASSERT(reader.lineNumber() == 0);
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  // Skips comment line
+  rv += SDK_ASSERT(reader.lineNumber() == 2);
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  // Skips empty lines
+  rv += SDK_ASSERT(reader.lineNumber() == 5);
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(reader.lineNumber() == 6);
+  rv += SDK_ASSERT(reader.readLine(tokens) == 1);
+
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -177,6 +201,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testCsvReadLine() == 0);
   rv += SDK_ASSERT(testCsvReadLineTrimmed() == 0);
   rv += SDK_ASSERT(testCsvWithComments() == 0);
+  rv += SDK_ASSERT(testCsvLineNumber() == 0);
 
   return rv;
 }

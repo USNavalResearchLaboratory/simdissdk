@@ -29,12 +29,18 @@ namespace simCore
 
 CsvReader::CsvReader(std::istream& stream)
   : stream_(stream),
-  commentChar_('#')
+  commentChar_('#'),
+  lineNumber_(0)
 {
 }
 
 CsvReader::~CsvReader()
 {
+}
+
+size_t CsvReader::lineNumber() const
+{
+  return lineNumber_;
 }
 
 void CsvReader::setCommentChar(char commentChar)
@@ -48,6 +54,7 @@ int CsvReader::readLine(std::vector<std::string>& tokens)
   std::string line;
   while (simCore::getStrippedLine(stream_, line))
   {
+    lineNumber_++;
     // Ignore empty lines and comments
     if (line.empty() || line[0] == commentChar_)
       continue;

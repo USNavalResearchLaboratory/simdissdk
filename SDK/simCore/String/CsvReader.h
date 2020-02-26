@@ -42,6 +42,14 @@ public:
   explicit CsvReader(std::istream& stream);
   virtual ~CsvReader();
 
+  /**
+   * Get the line number of the most recently read line. Line number is incremented
+   * during line reading and never reset, so if the std::istream& supplied during class
+   * construction is modified externally to this class, this line number might not be correct.
+   * @return line number of most recently read line
+   */
+  size_t lineNumber() const;
+
   /** Set the char that denotes a comment line. Defaults to '#'. */
   void setCommentChar(char commentChar);
 
@@ -66,6 +74,7 @@ public:
 private:
   std::istream& stream_;
   char commentChar_;
+  size_t lineNumber_;
 };
 
 }
