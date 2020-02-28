@@ -225,15 +225,20 @@ CoordinateConverter.convert = CoordConvert_convert
 // TODO: BilinearLookup()
 // TODO: BilinearLookupNoException()
 
-// TODO: Add these and test them as you add them
-/*
-
 ////////////////////////////////////////////////
 // simCore/String
+%apply double& OUTPUT { double& ang };
 %include "simCore/String/Angle.h"
+
 %include "simCore/String/Constants.h"
 %include "simCore/String/FilePatterns.h"
 %include "simCore/String/Format.h"
+
+// TODO: join()
+// TODO: getStrippedLine()
+
+// TODO: Add these and test them as you add them
+/*
 %include "simCore/String/TextFormatter.h"
 %include "simCore/String/TextReplacer.h"
 %include "simCore/String/Tokenizer.h"

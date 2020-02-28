@@ -446,6 +446,41 @@ assert(dit is not None)
 assert(dit.initialize(1, 2, 1, 1, 2, 1) is None)
 assert(dit.lut() is not None)
 
+# simCore/String
+
+#############################
+# Angle.h
+assert(simCore.DEG_SYM_NONE is not None)
+assert(simCore.getDegreeSymbol(simCore.DEG_SYM_NONE) is not None)
+success, angle = simCore.getAngleFromDegreeString("20", True)
+assert(success is not None and angle is not None)
+assert(simCore.FMT_BAM is not None)
+assert(simCore.getAngleString(1, simCore.FMT_BAM, True, 1, simCore.DEG_SYM_NONE, 0, 0) is not None)
+assert(simCore.printLatitude(1, simCore.FMT_BAM, True, 1, simCore.DEG_SYM_NONE) is not None)
+assert(simCore.printLongitude(1, simCore.FMT_BAM, True, 1, simCore.DEG_SYM_NONE) is not None)
+
+#############################
+# Constants.h
+assert(simCore.STR_WHITE_SPACE_CHARS is not None)
+assert(simCore.STR_DEGREE_SYMBOL_ASCII is not None)
+assert(simCore.STR_DEGREE_SYMBOL_UNICODE is not None)
+assert(simCore.STR_DEGREE_SYMBOL_UTF8 is not None)
+
+#############################
+# FilePatterns.h
+assert(simCore.ALL_SIMDIS_FILE_PATTERNS is not None)
+assert(simCore.SIMDIS_FILE_PATTERNS is not None)
+assert(simCore.ALL_DATA_FILE_PATTERNS is not None)
+
+#############################
+# Format.h
+assert(simCore.caseCompare("a", "b") is not None)
+assert(simCore.lowerCase("APPLE") == "apple")
+assert(simCore.upperCase("apple") == "APPLE")
+assert(simCore.stringCaseFind("Apple", "A") == 0)
+assert(simCore.getExtension("hi.cpp") == ".cpp")
+assert(simCore.hasExtension("hi.cpp", ".cpp"))
+assert(simCore.buildString("hi", 1) is not None)
 # TODO: More testing here
 
 """
