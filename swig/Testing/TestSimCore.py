@@ -221,6 +221,8 @@ outputVec = simCore.Vec3LinearInterpolate(v1, v2, 3, 4, 5)
 assert(outputVec is not None and outputVec.x() is not None)
 assert(simCore.DoubleLinearInterpolate(2.0, 4.0, 10.0, 25.0, 30.0) == 3.5)
 assert(simCore.linearInterpolateAngle(1, 2, 3, 4, 5) is not None)
+assert(simCore.intBilinearInterpolate(1, 2, 3, 4, 5, 6) is not None)
+assert(simCore.doubleBilinearInterpolate(1, 2, 3, 4, 5, 6) is not None)
 
 #############################
 # MagneticVariance.h
@@ -394,6 +396,60 @@ assert(simCore.VERTDATUM_WGS84 is not None)
 assert(simCore.VERTDATUM_MSL is not None)
 assert(simCore.VERTDATUM_USER is not None)
 
+# simCore/LUT
+
+#############################
+# LUT1.h
+dLut = simCore.doubleLUT1()
+assert(dLut is not None)
+assert(dLut.initialize(1, 2, 1, 1) is None)
+iLut = simCore.intLUT1()
+assert(iLut is not None)
+assert(iLut.initialize(1, 2, 1, 1) is None)
+assert(iLut.minX() is not None)
+assert(iLut.numX() == 1)
+assert(iLut(0) is not None)
+assert(simCore.index(1, 1, 1) is not None)
+assert(simCore.intIndex(iLut, 1) is not None)
+assert(simCore.doubleIndex(dLut, 1) is not None)
+assert(simCore.intLowValue(iLut, 1) is not None)
+assert(simCore.doubleLowValue(dLut, 0) is not None)
+
+#############################
+# LUT2.h
+dLut2 = simCore.doubleLUT2()
+assert(dLut2 is not None)
+assert(dLut2.initialize(1, 2, 1, 1, 2, 1, 1) is None)
+iLut2 = simCore.intLUT2()
+assert(iLut2 is not None)
+assert(iLut2.initialize(1, 2, 1, 1, 2, 1, 1) is None)
+assert(iLut2.minX() is not None)
+assert(iLut2.numX() is not None)
+assert(iLut2(0, 0) is not None)
+
+#############################
+# InterpTable.h
+e = simCore.InterpTableException("InterpTableException test error message")
+assert(e is not None)
+assert(e.what() is not None)
+e = simCore.intInterpTableLimitException("InterpTableLimitException test error message", 1, 2, 3)
+assert(e is not None)
+assert(e.what() is not None)
+e = simCore.doubleInterpTableLimitException("InterpTableLimitException test error message", 1, 2, 3)
+assert(e is not None)
+iit = simCore.intInterpTable()
+assert(iit is not None)
+assert(iit.initialize(1, 2, 1, 1, 2, 1) is None)
+assert(iit(0, 0) is not None)
+dit = simCore.doubleInterpTable()
+assert(dit is not None)
+assert(dit.initialize(1, 2, 1, 1, 2, 1) is None)
+assert(dit.lut() is not None)
+
+# TODO: More testing here
+
+"""
+Not implemented due to MSVC 2019 errors.
 # simCore/EM
 
 #############################
@@ -444,7 +500,7 @@ assert(apt.setAzimData(100, 10) is None)
 # assert(success is not None and symmetricAntennaPattern is not None)
 # success, symmetricGainAntPattern = simCore.readPattern("", "", 1)
 # assert(success is not None and symmetricAntennaPattern is not None)
-
-# TODO: More testing here
+"""
 
 print("Success!")
+
