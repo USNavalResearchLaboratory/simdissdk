@@ -673,7 +673,7 @@ GeoPoint ParserData::getMapPosition(bool ignoreOffset) const
     // apply any xyz offset to the map position ref point if there is one
     simCore::CoordinateConverter cc;
     cc.setReferenceOrigin(refPointLLA_->y() * simCore::DEG2RAD, refPointLLA_->x() * simCore::DEG2RAD, refPointLLA_->z());
-    simCore::Coordinate coord(simCore::COORD_SYS_ENU, simCore::Vec3(xyz.x(), xyz.y(), xyz.z()));
+    simCore::Coordinate coord(simCore::COORD_SYS_XEAST, simCore::Vec3(xyz.x(), xyz.y(), xyz.z()));
     simCore::Coordinate outCoord;
     cc.convert(coord, outCoord, simCore::COORD_SYS_LLA);
 
