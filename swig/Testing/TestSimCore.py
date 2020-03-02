@@ -481,6 +481,37 @@ assert(simCore.stringCaseFind("Apple", "A") == 0)
 assert(simCore.getExtension("hi.cpp") == ".cpp")
 assert(simCore.hasExtension("hi.cpp", ".cpp"))
 assert(simCore.buildString("hi", 1) is not None)
+
+#############################
+# Tokenizer.h
+word, endWordPos = simCore.extractWord("Lots of words", 5)
+assert(word == "of" and endWordPos == 7)
+word, endWordPos = simCore.extractWordWithQuotes('Lots "of" words', 5)
+assert(word == '"of"' and endWordPos == 9)
+assert(simCore.getTerminateForStringPos("", 1) is not None)
+assert(simCore.getFirstCharPosAfterString("abc", 0, "b") == 2)
+assert(simCore.removeQuotes("'Too many quotes'") == "Too many quotes")
+err, tokenName, tokenValue = simCore.getNameAndValueFromToken("key=value")
+assert(err is not None and tokenName == "key" and tokenValue == "value")
+
+#############################
+# Utils.h
+assert(simCore.StringUtils.before("Testing function", " function") == "Testing")
+assert(simCore.StringUtils.before("Testing function", " ") == "Testing")
+assert(simCore.StringUtils.after("Testing function", "Testing ") == "function")
+assert(simCore.StringUtils.after("Testing function", " ") == "function")
+assert(simCore.StringUtils.beforeLast("Testing function", "ti") == "Testing func")
+assert(simCore.StringUtils.beforeLast("Testing function", "n") == "Testing functio")
+assert(simCore.StringUtils.afterLast("Testing function", "ti") == "on")
+assert(simCore.StringUtils.afterLast("Testing function", "t") == "ion")
+assert(simCore.StringUtils.substitute("Testing function", "t", "m") is not None)
+assert(simCore.StringUtils.addEscapeSlashes('"') == '\\\"')
+assert(simCore.StringUtils.removeEscapeSlashes('\\"') == '"')
+assert(simCore.StringUtils.trim('  test  ') == 'test')
+assert(simCore.toNativeSeparators("Users\person\Documents") is not None)
+assert(simCore.sanitizeFilename("<Documents>") == "Documents")
+assert(simCore.hasEnv("var") is not None)
+
 # TODO: More testing here
 
 """
