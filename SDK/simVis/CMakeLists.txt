@@ -356,9 +356,6 @@ set(SDK_OSGEARTH_VERSION_MAJOR 1)
 set(SDK_OSGEARTH_VERSION_MINOR 12)
 set(SDK_OSGEARTH_VERSION_PATCH 0)
 
-include(CheckOSGEarthMethodExists)
-check_osgearth_method_exists(HAVE_INVALIDATE_LAYER_REGION osgEarth/TerrainEngineNode invalidateLayerRegion)
-
 configure_file(${VIS_INC}osgEarthVersion.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/simVis/osgEarthVersion.h @ONLY)
 
 # Note that shaders do not go into simVis.h and header/cpp don't get installed
@@ -444,9 +441,6 @@ if(SIM_HAVE_DB_SUPPORT)
     else()
         target_compile_definitions(simVis PRIVATE SIM_LITTLE_ENDIAN)
     endif()
-endif()
-if(HAVE_INVALIDATE_LAYER_REGION)
-    target_compile_definitions(simVis PRIVATE HAVE_INVALIDATE_LAYER_REGION)
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)
