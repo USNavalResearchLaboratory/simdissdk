@@ -59,17 +59,21 @@ public:
    * configured comment char. Note that comment detection is rudimentary.
    * Inline comments or indented comments will not be detected.
    * @param[out] tokens  Vector filled with tokens from the next line
+   * @param[in] skipEmptyLines  If true, will skip empty lines when reading. If
+   *    false, will break on empty lines and return 0 with an empty tokens vector.
    * @return 0 on successful line read, 1 when the end of the file is reached
    */
-  int readLine(std::vector<std::string>& tokens);
+  int readLine(std::vector<std::string>& tokens, bool skipEmptyLines = true);
   /**
    * Reads the next line of the stream into the given vector. This method reads
    * identically to readLine(), but trims leading and trailing whitespace from
    * each token before returning.
    * @param[out] tokens  Vector filled with tokens from the next line
+   * @param[in] skipEmptyLines  If true, will skip empty lines when reading. If
+   *    false, will break on empty lines and return 0 with an empty tokens vector.
    * @return 0 on successful line read, 1 when the end of the file is reached
    */
-  int readLineTrimmed(std::vector<std::string>& tokens);
+  int readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyLines = true);
 
 private:
   std::istream& stream_;

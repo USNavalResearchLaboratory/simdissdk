@@ -192,6 +192,37 @@ int testCsvLineNumber()
   return rv;
 }
 
+int testReadEmptyLines()
+{
+  int rv = 0;
+
+  std::istringstream stream(" \n#col 1, col 2, col3\none,two\n \nthree,four,five\n \nsix,seven");
+
+  simCore::CsvReader reader(stream);
+  std::vector<std::string> tokens;
+
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(reader.lineNumber() == 3);
+  rv += SDK_ASSERT(tokens.size() == 2); // [one, two]
+
+  // Read line skipping empty lines, will skip line 4
+  rv += SDK_ASSERT(reader.readLine(tokens) == 0);
+  rv += SDK_ASSERT(reader.lineNumber() == 5);
+  rv += SDK_ASSERT(tokens.size() == 3); // [three, four, five]
+
+  // Read line without skipping empty lines
+  rv += SDK_ASSERT(reader.readLine(tokens, false) == 0);
+  rv += SDK_ASSERT(reader.lineNumber() == 6);
+  rv += SDK_ASSERT(tokens.empty()); // empty line
+
+  rv += SDK_ASSERT(reader.readLine(tokens, false) == 0);
+  rv += SDK_ASSERT(reader.lineNumber() == 7);
+  rv += SDK_ASSERT(tokens.size() == 2); // [six, seven]
+  rv += SDK_ASSERT(reader.readLine(tokens, false) == 1);
+
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -202,6 +233,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testCsvReadLineTrimmed() == 0);
   rv += SDK_ASSERT(testCsvWithComments() == 0);
   rv += SDK_ASSERT(testCsvLineNumber() == 0);
+  rv += SDK_ASSERT(testReadEmptyLines() == 0);
 
   return rv;
 }

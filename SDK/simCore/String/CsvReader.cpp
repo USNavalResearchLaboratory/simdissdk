@@ -48,15 +48,24 @@ void CsvReader::setCommentChar(char commentChar)
   commentChar_ = commentChar;
 }
 
-int CsvReader::readLine(std::vector<std::string>& tokens)
+int CsvReader::readLine(std::vector<std::string>& tokens, bool skipEmptyLines)
 {
   tokens.clear();
   std::string line;
   while (simCore::getStrippedLine(stream_, line))
   {
     lineNumber_++;
-    // Ignore empty lines and comments
-    if (line.empty() || line[0] == commentChar_)
+
+    if (line.empty())
+    {
+      if (skipEmptyLines)
+        continue;
+      // Not skipping empty lines, return successfully with empty tokens vector
+      return 0;
+    }
+
+    // Ignore comments
+    if (line[0] == commentChar_)
       continue;
 
     simCore::stringTokenizer(tokens, line, ",", true, false);
@@ -65,9 +74,9 @@ int CsvReader::readLine(std::vector<std::string>& tokens)
   return 1;
 }
 
-int CsvReader::readLineTrimmed(std::vector<std::string>& tokens)
+int CsvReader::readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyLines)
 {
-  const int rv = readLine(tokens);
+  const int rv = readLine(tokens, skipEmptyLines);
   if (rv != 0)
     return rv;
 
