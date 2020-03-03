@@ -784,23 +784,11 @@ NumericalSearchType calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw
     *crossRng = crsrng;
   }
 
-  // algorithm (delaz/err) assumes we can model the shape formed by points refPt, lat2lon2, latlon as a right triangle.
-  // where refpt->lat2lon2->latlon forms the right angle; the sum of the other two angles should then be 90.
-  // but in some cases, the assumption of a right triangle is is incorrect:
-  // when latlon and lat2lon2 are near a pole, sodanoInverse may return angles that cut across the pole and do not fit the assumption.
-  //   we can identify those cases when the sum of the two angles != 90.
-
-  // angle from lat2lon2, refpt, latlon
-  const double angle1 = (a2 - a1);
-
-  // angle from lat2lon2, latlon, refpt (where azb is the back azimuth from latlon to lat2lon2, corresponding to the calculated azf)
-  // angle2 = angFixPI(azb - a2);
-  // if we approximate azb = -(M_PI - azf), then we don't need to calculate azb at all
-  const double angle2 = (azf - M_PI) - a2;
-  const double angleSum = angFixPI(angle1 + angle2);
-
-  // for valid calcs, angleSum should approach +/- M_PI_2 as the err approaches 0
-  assert((type == SEARCH_FAILED) || simCore::areEqual(angleSum, M_PI_2, 0.04) || simCore::areEqual(angleSum, -M_PI_2, 0.04));
+  // Previous versions of this code incorrectly attempted to verify the calculations by summing up the 3 angles
+  // of the triangle and comparing the results to 180 degrees.  This is invalid for a triangle on the surface of
+  // a sphere.  The 3 angles of a triangle on a surface of a sphere is greater then 180 degrees and the larger
+  // the triangle the more the angles exceed 180 degrees.  See: https://en.wikipedia.org/wiki/Spherical_geometry
+  // for details.
 
   // note that SEARCH_FAILED may occur if tolerance is too tight: instead of iterating to max iterations, may be detected as failure
   if (type == SEARCH_FAILED)
@@ -810,15 +798,11 @@ NumericalSearchType calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw
     if (maxrng > 1e7)
       return type;
 
-    // only message on failures that do not involve the condition described above
-    if (simCore::areEqual(angleSum, M_PI_2, 0.04) || simCore::areEqual(angleSum, -M_PI_2, 0.04))
-    {
-      time_t currtime;
-      time(&currtime);
-      // notify when error occurred using current local time
-      SIM_ERROR << "calculateGeodesicDRCR linear search failed to converge to an answer @ " << ctime(&currtime) << std::endl;
-      // note that 15 decimal places may be necessary to reproduce a failing case
-    }
+    time_t currtime;
+    time(&currtime);
+    // notify when error occurred using current local time
+    SIM_ERROR << "calculateGeodesicDRCR linear search failed to converge to an answer @ " << ctime(&currtime) << std::endl;
+    // note that 15 decimal places may be necessary to reproduce a failing case
   }
   else if (type == SEARCH_MAX_ITER)
   {
