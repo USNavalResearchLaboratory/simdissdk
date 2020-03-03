@@ -218,7 +218,7 @@ ShapeFileLayerFactory::~ShapeFileLayerFactory()
 osgEarth::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url) const
 {
   osg::ref_ptr<osgEarth::FeatureModelLayer> layer = new osgEarth::FeatureModelLayer();
-  configureOptions(url, layer);
+  configureOptions(url, layer.get());
 
   if (layer->getStatus().isError())
   {

@@ -137,7 +137,7 @@ MapScale::MapScale()
   // Create colors
   bgColorArray_ = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
   bgColorArray_->setDataVariance(osg::Object::DYNAMIC);
-  backgroundGeom->setColorArray(bgColorArray_);
+  backgroundGeom->setColorArray(bgColorArray_.get());
   // Note that setting the background color to 0.f alpha hides the background
   setBackgroundColor(osg::Vec4f(0.f, 0.f, 0.f, 0.f));
 

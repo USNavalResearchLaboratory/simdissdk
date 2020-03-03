@@ -253,7 +253,7 @@ namespace
    */
   osg::Node* createP2PGraphics(AppData& app)
   {
-    MapNode* mapNode = app.mapNode;
+    MapNode* mapNode = app.mapNode.get();
     osgEarth::SphereDragger* dragger = new osgEarth::SphereDragger(mapNode);
     dragger->setPosition(GeoPoint(mapNode->getMapSRS(), RLOS_LON, RLOS_LAT));
     dragger->setColor(simVis::Color::White);
