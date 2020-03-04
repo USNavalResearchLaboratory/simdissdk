@@ -84,6 +84,8 @@ private:
   void recordUsabilityConcern_(Usability severity, const std::string& concern);
   /** Extracts the OpenGL version from the GL_VERSION string */
   double extractGlVersion_(const std::string& glVersionString) const;
+  /** Checks for usability concerns wrt vendor-specific OpenGL support */
+  void checkVendorOpenGlSupport_(const std::string& vendor, const std::string& glVersionString);
 
   /** Converts boolean to string */
   std::string toString_(bool val) const;

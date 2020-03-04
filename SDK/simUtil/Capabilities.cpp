@@ -30,7 +30,6 @@
 #include "osgEarth/Registry"
 #include "osgEarth/Capabilities"
 #include "osgEarth/StringUtils"
-#include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simUtil/Capabilities.h"
 
@@ -97,14 +96,6 @@ void Capabilities::init_()
   glVersion_ = extractGlVersion_(caps.getVersion());
   caps_.push_back(std::make_pair("Core Profile", toString_(caps.isCoreProfile())));
 
-  // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
-  // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
-  // acceleration, and do not necessarily imply software acceleration.
-  if (caps.getVendor().find("Microsoft") != std::string::npos)
-  {
-    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; possibly no 3D acceleration; performance concerns");
-  }
-
   // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
   // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
   // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
@@ -113,6 +104,8 @@ void Capabilities::init_()
   {
     recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
   }
+
+  checkVendorOpenGlSupport_(caps.getVendor(), caps.getVersion());
 
   caps_.push_back(std::make_pair("Max FFP texture units", toString_(caps.getMaxFFPTextureUnits())));
   caps_.push_back(std::make_pair("Max GPU texture units", toString_(caps.getMaxGPUTextureUnits())));
@@ -196,14 +189,6 @@ void Capabilities::init_(osg::GraphicsContext& gc)
   const bool isCoreProfile = (glVersion_ >= 3.2f && ((profileMask & GL_CONTEXT_CORE_PROFILE_BIT) != 0));
   caps_.push_back(std::make_pair("Core Profile", toString_(isCoreProfile)));
 
-  // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
-  // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
-  // acceleration, and do not necessarily imply software acceleration.
-  if (vendorString.find("Microsoft") != std::string::npos)
-  {
-    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; possibly no 3D acceleration; performance concerns");
-  }
-
   // OpenGL version must be usable.  OSG 3.6 with core profile support will not function
   // without support for VAO, which requires OpenGL 3.0, released in 2008.  Although we
   // require interface blocks from GLSL 3.3, we only absolutely require OpenGL features
@@ -212,6 +197,8 @@ void Capabilities::init_(osg::GraphicsContext& gc)
   {
     recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "OpenGL version below 3.0 (detected " << glVersion_ << ")");
   }
+
+  checkVendorOpenGlSupport_(vendorString, glVersionString);
 
 #if OSG_MIN_VERSION_REQUIRED(3,6,0)
   // OSG 3.6 auto-detects for us
@@ -322,6 +309,54 @@ double Capabilities::extractGlVersion_(const std::string& glVersionString) const
   return atof(glVersionString.c_str());
 }
 
+void Capabilities::checkVendorOpenGlSupport_(const std::string& vendor, const std::string& glVersionString)
+{
+  // Based on recommendation from https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_information_queries
+  // Note that Mesa, Gallium, and Direct3D renderers are all potentially backed by a hardware
+  // acceleration, and do not necessarily imply software acceleration.
+  if (vendor.find("Microsoft") != std::string::npos)
+  {
+    recordUsabilityConcern_(USABLE_WITH_ARTIFACTS, "Software renderer detected; possibly no 3D acceleration; performance concerns");
+    return;
+  }
+
+  if (vendor.find("NVIDIA") != std::string::npos)
+  {
+    // glVersionString is expected to look like: 3.3.0 NVIDIA major.minor
+    const std::string& nvidiaVersionStr = simCore::StringUtils::after(glVersionString, "NVIDIA");
+    const std::string& nvidiaMajorStr = simCore::StringUtils::before(nvidiaVersionStr, ".");
+    const std::string& nvidiaMinorStr = simCore::StringUtils::after(nvidiaVersionStr, ".");
+    if (nvidiaVersionStr.empty() || nvidiaMajorStr.empty() || nvidiaMinorStr.empty())
+    {
+      // nvidia driver that does not return version string as part of opengl version
+      // nothing to do
+      return;
+    }
+    const int nVidiaMajor = atoi(nvidiaMajorStr.c_str());
+    const int nVidiaMinor = atoi(nvidiaMinorStr.c_str());
+    // testing indicates that 304.125 and most drivers > 340 work
+    const bool usable = (nVidiaMajor >= 340) || (nVidiaMajor == 304 && nVidiaMinor >= 125);
+    if (usable)
+      return;
+    // testing indicates that:
+    // nvidia 331 drivers were not usable
+    // most drivers <= 340 had issues
+    const bool unusable = (nVidiaMajor == 331);
+    recordUsabilityConcern_((unusable ? UNUSABLE : USABLE_WITH_ARTIFACTS), osgEarth::Stringify() << "nVidia driver version " << nVidiaMajor << "." << nVidiaMinor);
+    return;
+  }
+
+  if (vendor.find("Intel") != std::string::npos)
+  {
+    if (glVersionString.find("9.18.10.3186") != std::string::npos)
+    {
+      // driver 9.18.10.3186 known to have issues
+      recordUsabilityConcern_(UNUSABLE, osgEarth::Stringify() << "Intel driver version 9.18.10.3186");
+    }
+    return;
+  }
+}
+
 Capabilities::Usability Capabilities::isUsable() const
 {
   return isUsable_;
@@ -331,5 +366,4 @@ std::vector<std::string> Capabilities::usabilityConcerns() const
 {
   return usabilityConcerns_;
 }
-
 }
