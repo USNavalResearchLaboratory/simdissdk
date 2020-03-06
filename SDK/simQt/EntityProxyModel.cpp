@@ -145,7 +145,9 @@ namespace simQt {
       return false;
     }
 
-    if (alwaysShow_ == id)
+    // Make sure alwaysShow_ is active before comparing; otherwise there is a conflict
+    // with the Scenario entry which uses an ID of 0.
+    if ((alwaysShow_ != 0) && (alwaysShow_ == id))
       return true;
 
     // check against all filters
