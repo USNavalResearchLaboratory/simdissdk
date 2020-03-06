@@ -105,9 +105,11 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     mapNode = NULL;
     SAFETRYBEGIN;
     osg::ref_ptr<osgEarth::Map> map = simUtil::DbConfigurationFile::loadLegacyConfigFile(adjustedConfigFile, quiet);
-
-    mapNode = new osgEarth::MapNode(map.get());
-    simVis::SceneManager::initializeTerrainOptions(mapNode.get());
+    if (map.valid())
+    {
+      mapNode = new osgEarth::MapNode(map.get());
+      simVis::SceneManager::initializeTerrainOptions(mapNode.get());
+    }
 
     SAFETRYEND((std::string("legacy SIMDIS 9 .txt processing of file ") + configFile));
   }
