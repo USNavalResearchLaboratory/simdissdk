@@ -1121,6 +1121,11 @@ void GogNodeInterface::applyBackfaceCulling()
   // extrudes to a filled polygon instead of a 3D shape).
 
   bool isClosed3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX || shape() == GOG_CONE);
+
+  // Semitransparent hemispheres without depth buffer need backface culling on else odd artifacts show through
+  if (shape() == GOG_HEMISPHERE && fillColor_.a() < 1.0 && !depthBuffer_)
+    isClosed3dShape = true;
+
   const bool isLine = (shape() == GOG_LINE || shape() == GOG_LINESEGS);
   if (isClosed3dShape || (extruded_ && !isLine))
     style_.getOrCreateSymbol<osgEarth::RenderSymbol>()->backfaceCulling() = true;
