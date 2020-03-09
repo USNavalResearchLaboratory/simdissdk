@@ -424,10 +424,10 @@ namespace simCore
   * Given the X component of the vehicle's body unit vector and a yaw-pitch-roll (1-2-3) rotation sequence
   * The yaw and pitch angles are computed
   * @param[in ] vecX Vec3 representing the X component of the body unit vector
-  * @param[out] yaw Yaw (psi) rotation in radians
-  * @param[out] pitch Pitch (theta) rotation in radians
+  * @param[out] yawOut Yaw (psi) rotation in radians
+  * @param[out] pitchOut Pitch (theta) rotation in radians
   */
-  SDKCORE_EXPORT void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, double &pitch);
+  SDKCORE_EXPORT void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yawOut, double &pitchOut);
 
   /**
   * @brief Calculates an ENU geodetic velocity vector based on a local (moving) tangent plane

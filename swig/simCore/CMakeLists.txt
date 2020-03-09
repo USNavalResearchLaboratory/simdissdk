@@ -2,6 +2,13 @@ vsi_require_target(PYTHON3)
 
 set(SIMCORE_FILES
     simCore.i
+    simCoreCalc.i
+    simCoreCommon.i
+    simCoreEM.i
+    simCore.i
+    simCoreLUT.i
+    simCoreString.i
+    simCoreTime.i
 )
 
 set_source_files_properties(simCore.i PROPERTIES

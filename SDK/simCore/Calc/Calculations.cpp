@@ -1138,7 +1138,7 @@ void calculateBodyUnitZ(const double yaw, const double pitch, const double roll,
 }
 
 /// Decomposes the X component of the unit body vector into yaw and pitch angles
-void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, double &pitch)
+void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yawOut, double &pitchOut)
 {
   // From Aircraft Control and Simulation 2nd Edition
   // B. Stevens & F. Lewis  2003
@@ -1149,21 +1149,21 @@ void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, double &pitch
   // magnitude greater than unity
   if (areEqual(vecX[2], 1.0))
   {
-    yaw = 0.0;
-    pitch = -M_PI_2;
+    yawOut = 0.0;
+    pitchOut = -M_PI_2;
   }
   else if (areEqual(vecX[2], -1.0))
   {
-    yaw = 0.0;
-    pitch = M_PI_2;
+    yawOut = 0.0;
+    pitchOut = M_PI_2;
   }
   else
   {
     // no gimbal lock
     // atan2 returns in the range -pi to pi
     // inverseSine returns in the range -pi/2 to pi/2
-    yaw = atan2(vecX[1], vecX[0]);
-    pitch = simCore::inverseSine(-vecX[2]);
+    yawOut = atan2(vecX[1], vecX[0]);
+    pitchOut = simCore::inverseSine(-vecX[2]);
   }
 }
 

@@ -22,13 +22,6 @@
 %rename("wrap_v3Scale") simCore::v3Scale;
 %include "simCore/Calc/Math.h"
 
-%pythoncode %{
-def v3Scale(scalar, inVec):
-  outVec = Vec3()
-  wrap_v3Scale(scalar, inVec, outVec)
-  return outVec
-%}
-
 %rename("wrap_convert") simCore::CoordinateConverter::convert;
 %include "simCore/Calc/CoordinateConverter.h"
 %pythoncode %{
@@ -105,7 +98,26 @@ CoordinateConverter.convert = CoordConvert_convert
 %apply double* OUTPUT { double* downRng, double* crossRng };
 // simCore::calculateRelAng() and simCore::calculateRelAngToTrueAzEl()
 %apply double* OUTPUT { double* azim, double* elev, double* cmp };
-// TODO: calculateYawPitchFromBodyUnitX()
+
+%rename("wrap_tangentPlane2Sphere") simCore::tangentPlane2Sphere;
+%rename("wrap_geodeticToSpherical") simCore::geodeticToSpherical;
+%rename("wrap_calculateBodyUnitX") simCore::calculateBodyUnitX;
+%rename("wrap_calculateBodyUnitY") simCore::calculateBodyUnitY;
+%rename("wrap_calculateBodyUnitZ") simCore::calculateBodyUnitZ;
+%rename("wrap_calculateVelFromGeodeticPos") simCore::calculateVelFromGeodeticPos;
+%rename("wrap_calculateVelOriFromPos") simCore::calculateVelOriFromPos;
+%rename("wrap_calculateGeodeticOriFromRelOri") simCore::calculateGeodeticOriFromRelOri;
+%rename("wrap_calculateGeodeticOffsetPos") simCore::calculateGeodeticOffsetPos;
+%rename("wrap_calculateGeodeticEndPoint") simCore::calculateGeodeticEndPoint;
+%rename("wrap_calculateFlightPathAngles") simCore::calculateFlightPathAngles;
+%rename("wrap_calculateVelocity") simCore::calculateVelocity;
+%rename("wrap_getClosestPoint") simCore::getClosestPoint;
+
+// simCore::calculateAoaSideslipTotalAoa()
+%apply double* OUTPUT { double* aoa, double* ss, double* totalAoA };
+// simCore::calculateYawPitchFromBodyUnitX()
+%apply double& OUTPUT { double& yawOut, double& pitchOut };
+
 // TODO: sodanoDirect()
 // TODO: sodanoInverse()
 %include "simCore/Calc/Calculations.h"
@@ -135,3 +147,65 @@ CoordinateConverter.convert = CoordConvert_convert
 %template(DoubleLinearInterpolate) simCore::linearInterpolate<double>;
 %template(intBilinearInterpolate) simCore::bilinearInterpolate<int>;
 %template(doubleBilinearInterpolate) simCore::bilinearInterpolate<double>;
+
+// Various Python overrides
+%pythoncode %{
+def v3Scale(scalar, inVec):
+  outVec = Vec3()
+  wrap_v3Scale(scalar, inVec, outVec)
+  return outVec
+def tangentPlane2Sphere(llaVec, tpVec):
+  sphereVec = Vec3()
+  sphereTpOrigin = Vec3()
+  wrap_tangentPlane2Sphere(llaVec, tpVec, sphereVec, sphereTpOrigin)
+  return sphereVec, sphereTpOrigin
+def geodeticToSpherical(lat, lon, alt):
+  point = Vec3()
+  wrap_geodeticToSpherical(lat, lon, alt, point)
+  return point
+def calculateBodyUnitX(yaw, pitch):
+  vecX = Vec3()
+  wrap_calculateBodyUnitX(yaw, pitch, vecX)
+  return vecX
+def calculateBodyUnitY(yaw, pitch, roll):
+  vecY = Vec3()
+  wrap_calculateBodyUnitY(yaw, pitch, roll, vecY)
+  return vecY
+def calculateBodyUnitZ(yaw, pitch, roll):
+  vecZ = Vec3()
+  wrap_calculateBodyUnitZ(yaw, pitch, roll, vecZ)
+  return vecZ
+def calculateVelFromGeodeticPos(currPos, prevPos, deltaTime):
+  velVec = Vec3()
+  wrap_calculateVelFromGeodeticPos(currPos, prevPos, deltaTime, velVec)
+  return velVec
+def calculateVelOriFromPos(currPos, prevPos, deltaTime, sysIn, refLLA, sysOut=COORD_SYS_XEAST):
+  velOut = Vec3()
+  oriOut = Vec3()
+  success = wrap_calculateVelOriFromPos(currPos, prevPos, deltaTime, sysIn, velOut, oriOut, refLLA, sysOut)
+  return success, velOut, oriOut
+def calculateGeodeticOriFromRelOri(hostYpr, relYpr):
+  ypr = Vec3()
+  wrap_calculateGeodeticOriFromRelOri(hostYpr, relYpr, ypr)
+  return ypr
+def calculateGeodeticOffsetPos(llaBgnPos, bodyOriOffset, bodyPosOffset):
+  offsetLla = Vec3()
+  wrap_calculateGeodeticOffsetPos(llaBgnPos, bodyOriOffset, bodyPosOffset, offsetLla)
+  return offsetLla
+def calculateGeodeticEndPoint(llaBgnPos, az, el, rng):
+  llaEndPos = Vec3()
+  wrap_calculateGeodeticEndPoint(llaBgnPos, az, el, rng, llaEndPos)
+  return llaEndPos
+def calculateFlightPathAngles(velVec):
+  fpa = Vec3()
+  wrap_calculateFlightPathAngles(velVec, fpa)
+  return fpa
+def calculateVelocity(speed, heading, pitch):
+  velVec = Vec3()
+  wrap_calculateVelocity(speed, heading, pitch, velVec)
+  return velVec
+def getClosestPoint(startLla, endLla, toLla):
+  closestLla = Vec3()
+  dist = wrap_getClosestPoint(startLla, endLla, toLla, closestLla)
+  return dist, closestLla
+%}
