@@ -270,7 +270,9 @@ public:
     if (!prefs.surfaceclamping() || !coordSurfaceClamping_.isValid())
       return PlatformTspiFilterManager::POINT_UNCHANGED;
 
-    coordSurfaceClamping_.clampCoordToMapSurface(llaCoord);
+    osgEarth::ElevationEnvelope::Context& context = lut_[props.id()];
+    
+    coordSurfaceClamping_.clampCoordToMapSurface(llaCoord, context);
 
     return PlatformTspiFilterManager::POINT_CHANGED;
   }
@@ -288,6 +290,7 @@ public:
 
 private:
   CoordSurfaceClamping coordSurfaceClamping_;
+  std::unordered_map<google::protobuf::uint64, osgEarth::ElevationEnvelope::Context> lut_;
 };
 
 
