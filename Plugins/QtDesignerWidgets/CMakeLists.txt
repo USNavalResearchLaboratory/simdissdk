@@ -15,7 +15,6 @@ set(PROJ_HEADERS
     DirectorySelectorWidgetPlugin.h
     DockWidgetPlugin.h
     EntityFilterLineEditPlugin.h
-    EntityLineEditPlugin.h
     EntityTreeCompositePlugin.h
     EntityTypeFilterWidgetPlugin.h
     FileSelectorWidgetPlugin.h
@@ -37,7 +36,6 @@ set(PROJ_SOURCES
     DirectorySelectorWidgetPlugin.cpp
     DockWidgetPlugin.cpp
     EntityFilterLineEditPlugin.cpp
-    EntityLineEditPlugin.cpp
     EntityTreeCompositePlugin.cpp
     EntityTypeFilterWidgetPlugin.cpp
     FileSelectorWidgetPlugin.cpp
@@ -53,6 +51,11 @@ set(PROJ_SOURCES
 if(OSG_FOUND)
     list(APPEND PROJ_HEADERS ColorGradientWidgetPlugin.h)
     list(APPEND PROJ_SOURCES ColorGradientWidgetPlugin.cpp)
+endif()
+
+if(TARGET simVis)
+    list(APPEND PROJ_HEADERS EntityLineEditPlugin.h)
+    list(APPEND PROJ_SOURCES EntityLineEditPlugin.cpp)
 endif()
 
 source_group(Headers FILES ${PROJ_HEADERS})
@@ -89,6 +92,7 @@ add_library(simQtDesignerWidgets SHARED ${PROJ_SOURCES} ${PROJ_HEADERS}
 target_link_libraries(simQtDesignerWidgets PRIVATE simQt simData)
 if(TARGET simVis)
      target_link_libraries(simQtDesignerWidgets PRIVATE simVis)
+     target_compile_definitions(simQtDesignerWidgets PRIVATE HAVE_SIMVIS)
 endif()
 target_include_directories(simQtDesignerWidgets PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(simQtDesignerWidgets PRIVATE QDESIGNER_EXPORT_WIDGETS)

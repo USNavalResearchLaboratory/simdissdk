@@ -30,7 +30,9 @@
 #include "DataTableComboBoxPlugin.h"
 #include "DirectorySelectorWidgetPlugin.h"
 #include "DockWidgetPlugin.h"
+#ifdef HAVE_SIMVIS
 #include "EntityLineEditPlugin.h"
+#endif
 #include "EntityTreeCompositePlugin.h"
 #include "EntityFilterLineEditPlugin.h"
 #include "EntityTypeFilterWidgetPlugin.h"
@@ -57,7 +59,9 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   widgetFactories_.append(new DirectorySelectorWidgetPlugin(this));
   widgetFactories_.append(new DockWidgetPlugin(this));
   widgetFactories_.append(new EntityFilterLineEditPlugin(this));
+#ifdef HAVE_SIMVIS
   widgetFactories_.append(new EntityLineEditPlugin(this));
+#endif
   widgetFactories_.append(new EntityTreeCompositePlugin(this));
   widgetFactories_.append(new EntityTypeFilterWidgetPlugin(this));
   widgetFactories_.append(new FileSelectorWidgetPlugin(this));
