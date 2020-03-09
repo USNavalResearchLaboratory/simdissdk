@@ -117,9 +117,13 @@ CoordinateConverter.convert = CoordConvert_convert
 %apply double* OUTPUT { double* aoa, double* ss, double* totalAoA };
 // simCore::calculateYawPitchFromBodyUnitX()
 %apply double& OUTPUT { double& yawOut, double& pitchOut };
+// simCore::sodanoDirect()
+%warnfilter(509) simCore::sodanoDirect;
+%apply double* OUTPUT { double *latOut, double *lonOut, double *azbck };
+// simCore::sodanoInverse()
+%warnfilter(509) simCore::sodanoInverse;
+%apply double* OUTPUT { double *azfwd, double *azbck };
 
-// TODO: sodanoDirect()
-// TODO: sodanoInverse()
 %include "simCore/Calc/Calculations.h"
 
 %include "simCore/Calc/Random.h"

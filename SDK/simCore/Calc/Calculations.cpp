@@ -479,14 +479,14 @@ double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &
 * longitude and latitude and back azimuth given a geodetic reference longitude
 * and latitude, a geodesic length, a forward azimuth  and an ellipsoid definition.
 */
-void sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *lat, double *lon, double *azbck)
+void sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *latOut, double *lonOut, double *azbck)
 {
   // Reference:
   // E. M. Sodano and T. A. Robinson,
   // "Direct and Inverse Solutions in Geodesics Technical Report 7"
   // U.S. Army Map Service, Washington, DC 1963 pp. 15-27.
-  assert(lat || lon || azbck);
-  if (!lat && !lon && !azbck)
+  assert(latOut || lonOut || azbck);
+  if (!latOut && !lonOut && !azbck)
   {
     SIM_ERROR << "sodanoDirect, invalid output params: " << __LINE__ << std::endl;
     return;
@@ -526,8 +526,8 @@ void sodanoDirect(const double refLat, const double refLon, const double refAlt,
   const double lamda = atan2((sdel*saz), (cbeta1*cdel - sbeta1*sdel*caz));
 
   // Set second latitude and longitude point
-  if (lat) *lat = atan2(reqtr*sbeta2, rpolr*cbeta2);
-  if (lon) *lon = refLon + lamda + length;
+  if (latOut) *latOut = atan2(reqtr*sbeta2, rpolr*cbeta2);
+  if (lonOut) *lonOut = refLon + lamda + length;
 
   // Back azimuth
   if (azbck) *azbck = atan2(-h, (sbeta1*sdel - g*cdel));

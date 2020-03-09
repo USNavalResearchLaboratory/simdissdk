@@ -308,12 +308,12 @@ namespace simCore
   * @param[in ] refAlt Height above ellipsoid of reference point (m)
   * @param[in ] dist Geodesic length from reference to second point along the forward azimuth (m)
   * @param[in ] azfwd Forward azimuth from reference to second point (rad)
-  * @param[out] lat Geodetic latitude of point 2 (rad)
-  * @param[out] lon Geodetic longitude of point 2 (rad)
+  * @param[out] latOut Geodetic latitude of point 2 (rad)
+  * @param[out] lonOut Geodetic longitude of point 2 (rad)
   * @param[out] azbck Backward azimuth from second point to reference (rad)
   * @pre one of the lat, lon or azbck params must be valid
   */
-  SDKCORE_EXPORT void sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *lat, double *lon, double *azbck=NULL);
+  SDKCORE_EXPORT void sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *latOut, double *lonOut, double *azbck=NULL);
 
   /**
   * @brief Calculates the geodesic length, forward and backward azimuth using Sodano's indirect solution

@@ -332,6 +332,19 @@ assert(simCore.positionInGate(v1, v2, 1, 2, 3, 4, 5, 6, simCore.WGS_84, coordCon
 assert(simCore.laserInGate(v1, v2, 1, 2, 3, 4, 5, 6, 7, 8, 9, simCore.WGS_84, coordConverter) is not None)
 yaw, pitch = simCore.calculateYawPitchFromBodyUnitX(v1)
 assert(yaw is not None and pitch is not None)
+lat, lon, azbck = simCore.sodanoDirect(1, 2, 3, 100.0, 3.14159)
+assert(lat is not None and lon is not None and azbck is not None)
+distance, azfwd, azbck, = simCore.sodanoInverse(1, 2, 3, 2, 3)
+assert(distance is not None and azfwd is not None and azbck is not None)
+assert(simCore.calculateEarthRadius(1.0) is not None)
+# assert(simCore.clampEcefPointToGeodeticSurface(v1) is not None)
+assert(simCore.calculateHorizonDist(v1) is not None)
+assert(simCore.calculateHorizonDist(v1, simCore.GEOMETRIC_HORIZON) is not None)
+assert(simCore.calculateHorizonDist(v1, simCore.GEOMETRIC_HORIZON, 1.06) is not None)
+assert(simCore.calculateHorizonDist(v1, simCore.GEOMETRIC_HORIZON, 1.06, 1.333) is not None)
+assert(simCore.positionInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, simCore.WGS_84, coordConverter) is not None)
+assert(simCore.laserInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, 1.5, 1.5, 2000.0, simCore.WGS_84, coordConverter) is not None)
+assert(simCore.laserInGate(v1, v2, 1.0, 0.0, 1.0, 1.0, 1000.0, 3000.0, 1.5, 1.5, 2000.0, simCore.WGS_84, coordConverter, 100) is not None)
 
 #############################
 # Random.h
