@@ -14,7 +14,7 @@ add_executable(SimVisTests ${SimVisTestFiles})
 target_link_libraries(SimVisTests PRIVATE simCore simVis)
 set_target_properties(SimVisTests PROPERTIES
     FOLDER "Unit Tests"
-    PROJECT_LABEL "Unit Tests - SimVis"
+    PROJECT_LABEL "simVis Test"
 )
 
 add_test(NAME LocatorTest COMMAND SimVisTests LocatorTest)

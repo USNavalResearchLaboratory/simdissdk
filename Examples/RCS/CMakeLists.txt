@@ -12,6 +12,6 @@ add_executable(example_rcs ${PROJECT_FILES})
 target_link_libraries(example_rcs PRIVATE simVis simUtil)
 set_target_properties(example_rcs PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - RCS"
+    PROJECT_LABEL "RCS"
 )
 vsi_install_target(example_rcs SDK_Examples)

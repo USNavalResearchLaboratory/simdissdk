@@ -98,6 +98,57 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
     coord = llaCoord;
 }
 
+void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, osgEarth::ElevationEnvelope::Context& context)
+{
+  // nothing to do if we don't have valid ways of accessing elevation
+  if (!mapNode_.valid())
+  {
+    assert(0); // called this method without setting the map node
+    return;
+  }
+  if (coord.coordinateSystem() != simCore::COORD_SYS_LLA && coord.coordinateSystem() != simCore::COORD_SYS_ECEF)
+  {
+    // coordinate type must be LLA to work with osgEarth elevation query
+    assert(0);
+    return;
+  }
+
+  // convert from ECEF to LLA if necessary, since osgEarth Terrain getHeight requires LLA
+  simCore::Coordinate llaCoord;
+  if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
+    simCore::CoordinateConverter::convertEcefToGeodetic(coord, llaCoord);
+  else
+    llaCoord = coord;
+
+  // If getting the elevation fails, default to 0 to clamp to sea level
+  double elevation = 0;
+
+  // Both methods for getting terrain elevation have drawbacks that make them undesirable in certain situations. SIM-10423
+  // getHeight() can give inaccurate results depending on how much map data is loaded into the scene graph, while ElevationEnvelope can be prohibitively slow if there are many clamped entities
+  if (useMaxElevPrec_ && envelope_.valid())
+  {
+    double hae = envelope_->getElevation(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, context);
+    if (hae != NO_DATA_VALUE)
+      elevation = hae;
+  }
+  else
+  {
+    double hamsl = 0.0; // not used
+    double hae = 0.0; // height above ellipsoid, the rough elevation
+
+    if (mapNode_->getTerrain()->getHeight(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, &hamsl, &hae))
+      elevation = hae;
+  }
+
+  llaCoord.setPositionLLA(llaCoord.lat(), llaCoord.lon(), elevation);
+
+  // convert back to ECEF if necessary
+  if (coord.coordinateSystem() == simCore::COORD_SYS_ECEF)
+    simCore::CoordinateConverter::convertGeodeticToEcef(llaCoord, coord);
+  else
+    coord = llaCoord;
+}
+
 bool CoordSurfaceClamping::isValid() const
 {
   return mapNode_.valid();

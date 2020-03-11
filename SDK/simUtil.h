@@ -25,7 +25,6 @@
 #include "simUtil/Capabilities.h"
 #include "simUtil/DataStoreTestHelper.h"
 #include "simUtil/DatumConvert.h"
-#include "simUtil/DbConfigurationFile.h"
 #include "simUtil/DefaultDataStoreValues.h"
 #include "simUtil/DynamicSelectionPicker.h"
 #include "simUtil/ExampleControls.h"

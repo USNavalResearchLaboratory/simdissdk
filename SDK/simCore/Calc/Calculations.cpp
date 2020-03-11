@@ -479,14 +479,14 @@ double calculateAspectAngle(const Vec3 &fromLla, const Vec3 &toLla, const Vec3 &
 * longitude and latitude and back azimuth given a geodetic reference longitude
 * and latitude, a geodesic length, a forward azimuth  and an ellipsoid definition.
 */
-void sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *lat, double *lon, double *azbck)
+void sodanoDirect(const double refLat, const double refLon, const double refAlt, const double dist, const double azfwd, double *latOut, double *lonOut, double *azbck)
 {
   // Reference:
   // E. M. Sodano and T. A. Robinson,
   // "Direct and Inverse Solutions in Geodesics Technical Report 7"
   // U.S. Army Map Service, Washington, DC 1963 pp. 15-27.
-  assert(lat || lon || azbck);
-  if (!lat && !lon && !azbck)
+  assert(latOut || lonOut || azbck);
+  if (!latOut && !lonOut && !azbck)
   {
     SIM_ERROR << "sodanoDirect, invalid output params: " << __LINE__ << std::endl;
     return;
@@ -526,8 +526,8 @@ void sodanoDirect(const double refLat, const double refLon, const double refAlt,
   const double lamda = atan2((sdel*saz), (cbeta1*cdel - sbeta1*sdel*caz));
 
   // Set second latitude and longitude point
-  if (lat) *lat = atan2(reqtr*sbeta2, rpolr*cbeta2);
-  if (lon) *lon = refLon + lamda + length;
+  if (latOut) *latOut = atan2(reqtr*sbeta2, rpolr*cbeta2);
+  if (lonOut) *lonOut = refLon + lamda + length;
 
   // Back azimuth
   if (azbck) *azbck = atan2(-h, (sbeta1*sdel - g*cdel));
@@ -784,23 +784,11 @@ NumericalSearchType calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw
     *crossRng = crsrng;
   }
 
-  // algorithm (delaz/err) assumes we can model the shape formed by points refPt, lat2lon2, latlon as a right triangle.
-  // where refpt->lat2lon2->latlon forms the right angle; the sum of the other two angles should then be 90.
-  // but in some cases, the assumption of a right triangle is is incorrect:
-  // when latlon and lat2lon2 are near a pole, sodanoInverse may return angles that cut across the pole and do not fit the assumption.
-  //   we can identify those cases when the sum of the two angles != 90.
-
-  // angle from lat2lon2, refpt, latlon
-  const double angle1 = (a2 - a1);
-
-  // angle from lat2lon2, latlon, refpt (where azb is the back azimuth from latlon to lat2lon2, corresponding to the calculated azf)
-  // angle2 = angFixPI(azb - a2);
-  // if we approximate azb = -(M_PI - azf), then we don't need to calculate azb at all
-  const double angle2 = (azf - M_PI) - a2;
-  const double angleSum = angFixPI(angle1 + angle2);
-
-  // for valid calcs, angleSum should approach +/- M_PI_2 as the err approaches 0
-  assert((type == SEARCH_FAILED) || simCore::areEqual(angleSum, M_PI_2, 0.04) || simCore::areEqual(angleSum, -M_PI_2, 0.04));
+  // Previous versions of this code incorrectly attempted to verify the calculations by summing up the 3 angles
+  // of the triangle and comparing the results to 180 degrees.  This is invalid for a triangle on the surface of
+  // a sphere.  The 3 angles of a triangle on a surface of a sphere is greater then 180 degrees and the larger
+  // the triangle the more the angles exceed 180 degrees.  See: https://en.wikipedia.org/wiki/Spherical_geometry
+  // for details.
 
   // note that SEARCH_FAILED may occur if tolerance is too tight: instead of iterating to max iterations, may be detected as failure
   if (type == SEARCH_FAILED)
@@ -810,15 +798,11 @@ NumericalSearchType calculateGeodesicDRCR(const Vec3 &fromLla, const double &yaw
     if (maxrng > 1e7)
       return type;
 
-    // only message on failures that do not involve the condition described above
-    if (simCore::areEqual(angleSum, M_PI_2, 0.04) || simCore::areEqual(angleSum, -M_PI_2, 0.04))
-    {
-      time_t currtime;
-      time(&currtime);
-      // notify when error occurred using current local time
-      SIM_ERROR << "calculateGeodesicDRCR linear search failed to converge to an answer @ " << ctime(&currtime) << std::endl;
-      // note that 15 decimal places may be necessary to reproduce a failing case
-    }
+    time_t currtime;
+    time(&currtime);
+    // notify when error occurred using current local time
+    SIM_ERROR << "calculateGeodesicDRCR linear search failed to converge to an answer @ " << ctime(&currtime) << std::endl;
+    // note that 15 decimal places may be necessary to reproduce a failing case
   }
   else if (type == SEARCH_MAX_ITER)
   {
@@ -1058,15 +1042,15 @@ void calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *azim, doubl
     return;
   }
 
+  // compute an inertial pointing vector based on ENU vector
+  Vec3 pntVec;
+  calculateBodyUnitX(atan2(enuVec[0], enuVec[1]), atan2(enuVec[2], sqrt(square(enuVec[0]) + square(enuVec[1]))), pntVec);
+
   if (azim || elev)
   {
     // compute rotation matrix based on reference geodetic Euler angles
     double rotMat[3][3];
     d3EulertoDCM(refOri, rotMat);
-
-    // compute an inertial pointing vector based on ENU vector
-    Vec3 pntVec;
-    calculateBodyUnitX(atan2(enuVec[0], enuVec[1]), atan2(enuVec[2], sqrt(square(enuVec[0]) + square(enuVec[1]))), pntVec);
 
     // rotate inertial pointing vector to an body pointing vector
     Vec3 body;
@@ -1083,14 +1067,13 @@ void calculateRelAng(const Vec3 &enuVec, const Vec3 &refOri, double *azim, doubl
       *elev = el;
   }
 
-  // compute composite angle between an ENU and a reference vector
+  // compute composite angle between body pointing vector and inertial pointing vector
   if (cmp)
   {
-    Vec3 pntVec;
-    pntVec[0] = sin(refOri[0]);
-    pntVec[1] = cos(refOri[0]);
-    pntVec[2] = tan(refOri[1]);
-    *cmp = v3Angle(pntVec, enuVec);
+    Vec3 bodyPnt;
+    calculateBodyUnitX(refOri.yaw(), refOri.pitch(), bodyPnt);
+
+    *cmp = v3Angle(bodyPnt, pntVec);
   }
 }
 
@@ -1155,7 +1138,7 @@ void calculateBodyUnitZ(const double yaw, const double pitch, const double roll,
 }
 
 /// Decomposes the X component of the unit body vector into yaw and pitch angles
-void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, double &pitch)
+void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yawOut, double &pitchOut)
 {
   // From Aircraft Control and Simulation 2nd Edition
   // B. Stevens & F. Lewis  2003
@@ -1166,21 +1149,21 @@ void calculateYawPitchFromBodyUnitX(const Vec3 &vecX, double &yaw, double &pitch
   // magnitude greater than unity
   if (areEqual(vecX[2], 1.0))
   {
-    yaw = 0.0;
-    pitch = -M_PI_2;
+    yawOut = 0.0;
+    pitchOut = -M_PI_2;
   }
   else if (areEqual(vecX[2], -1.0))
   {
-    yaw = 0.0;
-    pitch = M_PI_2;
+    yawOut = 0.0;
+    pitchOut = M_PI_2;
   }
   else
   {
     // no gimbal lock
     // atan2 returns in the range -pi to pi
     // inverseSine returns in the range -pi/2 to pi/2
-    yaw = atan2(vecX[1], vecX[0]);
-    pitch = simCore::inverseSine(-vecX[2]);
+    yawOut = atan2(vecX[1], vecX[0]);
+    pitchOut = simCore::inverseSine(-vecX[2]);
   }
 }
 
@@ -1477,6 +1460,14 @@ void calculateVelocity(const double speed, const double heading, const double pi
  */
 void calculateAoaSideslipTotalAoa(const Vec3& enuVel, const Vec3& ypr, const bool useRoll, double* aoa, double* ss, double* totalAoa)
 {
+  if (v3Length(enuVel) == 0.0)
+  {
+    if (aoa) *aoa = 0.0;
+    if (ss) *ss = 0.0;
+    if (totalAoa) *totalAoa = 0.0;
+    return;
+  }
+
   // aerodynamic version that accounts for roll
   Vec3 refOri = ypr;
   if (!useRoll)

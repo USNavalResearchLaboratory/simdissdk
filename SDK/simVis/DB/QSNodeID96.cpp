@@ -132,7 +132,9 @@ QSNodeID96 QSNodeID96::operator>>(int numBitsToShift) const
     {
       returnValue.three_ = 0;
       returnValue.two_ = three_ >> (numBitsToShift-32);
-      returnValue.one_ = (two_ >> (numBitsToShift-32)) | (three_ << (64 - numBitsToShift));
+      // Number of bits to shift the third field by. Separated into a local var to avoid cppCheck false positive
+      int thirdFieldBits = 64 - numBitsToShift;
+      returnValue.one_ = (two_ >> (numBitsToShift-32)) | (three_ << thirdFieldBits);
     }
     else if (numBitsToShift < 96)
     {
@@ -187,7 +189,9 @@ QSNodeID96 QSNodeID96::operator<<(int numBitsToShift) const
     {
       returnValue.one_ = 0;
       returnValue.two_ = one_ << (numBitsToShift-32);
-      returnValue.three_ = (two_ << (numBitsToShift-32)) | (one_ >> (64 - numBitsToShift));
+      // Number of bits to shift the third field by. Separated into a local var to avoid cppCheck false positive
+      int thirdFieldBits = 64 - numBitsToShift;
+      returnValue.three_ = (two_ << (numBitsToShift-32)) | (one_ >> thirdFieldBits);
     }
     else if (numBitsToShift < 96)
     {
@@ -219,27 +223,27 @@ QSNodeID96 QSNodeID96::operator&(const QSNodeID96& value) const
 }
 
 //---------------------------------------------------------------------------
-void QSNodeID96::Pack(uint8_t* buffer) const
+void QSNodeID96::pack(uint8_t* buffer) const
 {
   if (buffer == NULL)
     return;
-  bewrite(buffer, &three_);
-  bewrite(buffer + sizeof(three_), &two_);
-  bewrite(buffer + sizeof(three_) + sizeof(two_), &one_);
+  beWrite(buffer, &three_);
+  beWrite(buffer + sizeof(three_), &two_);
+  beWrite(buffer + sizeof(three_) + sizeof(two_), &one_);
 }
 
 //---------------------------------------------------------------------------
-void QSNodeID96::UnPack(const uint8_t* buffer)
+void QSNodeID96::unpack(const uint8_t* buffer)
 {
   if (buffer == NULL)
     return;
-  beread(buffer, &three_);
-  beread(buffer + sizeof(three_), &two_);
-  beread(buffer + sizeof(three_) + sizeof(two_), &one_);
+  beRead(buffer, &three_);
+  beRead(buffer + sizeof(three_), &two_);
+  beRead(buffer + sizeof(three_) + sizeof(two_), &one_);
 }
 
 //---------------------------------------------------------------------------
-std::string QSNodeID96::FormatAsHex(bool bLeadingZeros) const
+std::string QSNodeID96::formatAsHex(bool bLeadingZeros) const
 {
   std::string returnValue;
 

@@ -28,9 +28,7 @@
 #include "simQt/BoundSettings.h"
 #include "simQt/CategoryDataBreadcrumbs.h"
 #include "simQt/CategoryFilterCounter.h"
-#include "simQt/CategoryFilterWidget.h"
 #include "simQt/CategoryTreeModel.h"
-#include "simQt/CategoryTreeModel2.h"
 #include "simQt/CenterEntity.h"
 #include "simQt/ColorButton.h"
 #include "simQt/ColorGradient.h"
@@ -42,6 +40,7 @@
 #include "simQt/DataTableComboBox.h"
 #include "simQt/DataTableModel.h"
 #include "simQt/DirectorySelectorWidget.h"
+#include "simQt/DndTreeView.h
 #include "simQt/DockWidget.h"
 #include "simQt/EntityCategoryFilter.h"
 #include "simQt/EntityFilter.h"

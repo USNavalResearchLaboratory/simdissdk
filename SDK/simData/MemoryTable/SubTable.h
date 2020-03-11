@@ -139,7 +139,7 @@ public:
   /**
    * Removes all rows from the subtable.
    */
-  simData::DelayedFlushContainerPtr flush();
+  simData::DelayedFlushContainerPtr flush(TableColumnId id = -1, SplitObserverPtr splitObserver = SplitObserverPtr());
 
   /** Performs data limiting */
   void limitData(size_t maxPoints, double latestInvalidTime, DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers);
@@ -208,6 +208,8 @@ private:
   TableStatus removeColumn_(TableColumnId columnId);
   /// Fills a row with our contents (but does not set the time), at the specified time
   void fillRow_(const TimeContainer::IteratorData& timeIdxData, TableRow& row) const;
+  /// Takes ownership of a previously existing column
+  void takeColumn_(DataColumn* column);
 };
 
 } }

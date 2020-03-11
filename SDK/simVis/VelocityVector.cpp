@@ -67,7 +67,7 @@ int VelocityVector::rebuild_(const simData::PlatformPrefs& prefs)
   createVelocityVector_(prefs, geode.get());
 
   // disable lighting
-  osg::StateSet* stateSet = geode->getOrCreateStateSet();
+  simVis::setLighting(geode->getOrCreateStateSet(), osg::StateAttribute::OFF);
 
   setNodeMask(DISPLAY_MASK_PLATFORM);
   this->addChild(geode.get());

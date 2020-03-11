@@ -74,6 +74,9 @@ namespace simVis
     */
     void clampCoordToMapSurface(simCore::Coordinate& coord);
 
+    /** clampCoordToMapSurface() variation that accepts a context for optimization. */
+    void clampCoordToMapSurface(simCore::Coordinate& coord, osgEarth::ElevationEnvelope::Context& context);
+
     /** Return true if able to apply clamping, false otherwise */
     bool isValid() const;
 

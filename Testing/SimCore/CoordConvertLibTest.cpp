@@ -970,6 +970,56 @@ int testScaledFlatEarth()
   return rv;
 }
 
+int testStringFunctions()
+{
+  int rv = 0;
+
+  // To-string testing
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_NED) == "Topo_NED");
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_NWU) == "Topo_NWU");
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_ENU) == "Topo_ENU");
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_LLA) == "LLA_DD");
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_ECEF) == "ECEF_WGS84");
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_ECI) == "ECI_WGS84");
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_XEAST) == "TangentPlane_XEast");
+  rv += SDK_ASSERT(simCore::coordinateSystemToString(simCore::COORD_SYS_GTP) == "TangentPlane_Generic");
+
+  // From-string testing
+  simCore::CoordinateSystem coordSys;
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("Topo_NED", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_NED);
+  // Test capitalization
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("topo_ned", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_NED);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("TOPO_NED", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_NED);
+
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("Topo_NWU", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_NWU);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("Topo_ENU", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_ENU);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("LLA_DD", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_LLA);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("ECEF_WGS84", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_ECEF);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("ECI_WGS84", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_ECI);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("TangentPlane_XEast", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_XEAST);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("TangentPlane_Generic", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_GTP);
+
+  // Test the oddball LLA legacy strings
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("LLA_DMD", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_LLA);
+  rv += SDK_ASSERT(simCore::coordinateSystemFromString("LLA_DMS", coordSys) == 0);
+  rv += SDK_ASSERT(coordSys == simCore::COORD_SYS_LLA);
+
+  std::cout << std::endl << "String Functions test case: ";
+  std::cout << (rv==0 ? "PASSED" : "FAILED") << std::endl;
+  return rv;
+}
+
 }
 
 //===========================================================================
@@ -1038,5 +1088,6 @@ int CoordConvertLibTest(int _argc_, char *_argv_[])
   rv += testGtpRotation();
   rv += testScaledFlatEarthPole();
   rv += testScaledFlatEarth();
+  rv += testStringFunctions();
   return rv;
 }

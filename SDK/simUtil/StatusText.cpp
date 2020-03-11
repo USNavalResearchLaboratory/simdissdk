@@ -89,7 +89,12 @@ class StatusText::FrameEventHandler : public osgGA::GUIEventHandler
 {
 public:
   /** Constructor */
-  explicit FrameEventHandler(simUtil::StatusText* parent) : parent_(parent) {}
+  explicit FrameEventHandler(simUtil::StatusText* parent)
+  : parent_(parent),
+    widthPx_(-1),
+    heightPx_(-1)
+  {
+  }
   /** Handles frame updates and returns false so other handlers can process as well */
   bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa)
   {

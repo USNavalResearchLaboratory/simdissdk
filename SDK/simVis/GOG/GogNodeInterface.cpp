@@ -539,6 +539,18 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   else if (metaData_.isSetExplicitly(GOG_TESSELLATE_SET))
     gogOutputStream << "tessellate false\n";
 
+  // altitude mode
+  simVis::GOG::AltitudeMode altMode;
+  if (getAltitudeMode(altMode) == 0)
+  {
+    if (altMode == simVis::GOG::ALTITUDE_NONE && metaData_.isSetExplicitly(GOG_ALTITUDE_MODE_SET))
+      gogOutputStream << "altitudemode none\n";
+    else if (altMode == simVis::GOG::ALTITUDE_GROUND_RELATIVE)
+      gogOutputStream << "altitudemode relativetoground\n";
+    else if (altMode == simVis::GOG::ALTITUDE_GROUND_CLAMPED)
+      gogOutputStream << "altitudemode clamptoground\n";
+    // simVis::GOG::ALTITUDE_EXTRUDE is covered by the extrude keyword
+  }
   // Follow data is not currently serialized out
 }
 
@@ -679,6 +691,7 @@ int GogNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutl
 
 void GogNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  metaData_.setExplicitly(GOG_ALTITUDE_MODE_SET);
   if (altMode_ == altMode)
     return;
   altMode_ = altMode;
@@ -1108,6 +1121,11 @@ void GogNodeInterface::applyBackfaceCulling()
   // extrudes to a filled polygon instead of a 3D shape).
 
   bool isClosed3dShape = (shape() == GOG_SPHERE || shape() == GOG_ELLIPSOID || shape() == GOG_CYLINDER || shape() == GOG_LATLONALTBOX || shape() == GOG_CONE);
+
+  // Semitransparent hemispheres without depth buffer need backface culling on else odd artifacts show through
+  if (shape() == GOG_HEMISPHERE && fillColor_.a() < 1.0 && !depthBuffer_)
+    isClosed3dShape = true;
+
   const bool isLine = (shape() == GOG_LINE || shape() == GOG_LINESEGS);
   if (isClosed3dShape || (extruded_ && !isLine))
     style_.getOrCreateSymbol<osgEarth::RenderSymbol>()->backfaceCulling() = true;
@@ -1504,6 +1522,7 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
 
 void FeatureNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
+  metaData_.setExplicitly(GOG_ALTITUDE_MODE_SET);
   if (altMode_ == altMode)
     return;
   altMode_ = altMode;
@@ -1708,10 +1727,6 @@ int LabelNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* re
 
 int LabelNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const
 {
-  if (!style_.has<osgEarth::TextSymbol>())
-    return 1;
-  const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
-
   outlineColor = outlineColor_;
   outlineThickness = outlineThickness_;
   return 0;

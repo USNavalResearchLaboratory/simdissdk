@@ -35,7 +35,6 @@
 namespace osgEarth {
   class Layer;
   class Map;
-  class TerrainLayer;
 }
 
 typedef std::vector<osg::ref_ptr<osgEarth::FeatureModelLayer> > FeatureModelLayerVector;
@@ -155,12 +154,6 @@ signals:
   /** Qt signal as described by the signal name */
   void imageLayerOpacityChanged(osgEarth::ImageLayer* layer);
   /** Qt signal as described by the signal name */
-  void imageLayerColorFilterChanged(osgEarth::ImageLayer* layer);
-  /** Qt signal as described by the signal name */
-  void imageLayerVisibleRangeChanged(osgEarth::ImageLayer* layer);
-  /** Qt signal as described by the signal name */
-  void imageLayerAltitudeChanged(osgEarth::ImageLayer* layer);
-  /** Qt signal as described by the signal name */
   void imageLayerAdded(osgEarth::ImageLayer* layer);
   /** Qt signal as described by the signal name */
   void elevationLayerVisibleChanged(osgEarth::ElevationLayer* layer);
@@ -257,8 +250,8 @@ private: // methods
   QIcon otherIcon_;
 
   /** Maps of terrain layer callbacks */
-  QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::ImageLayerCallback> > imageCallbacks_;
-  QMap<osgEarth::ElevationLayer*, osg::ref_ptr<osgEarth::ElevationLayerCallback> > elevationCallbacks_;
+  QMap<osgEarth::ImageLayer*, osg::ref_ptr<osgEarth::TileLayerCallback> > imageCallbacks_;
+  QMap<osgEarth::ElevationLayer*, osg::ref_ptr<osgEarth::TileLayerCallback> > elevationCallbacks_;
   QMap<osgEarth::FeatureModelLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > featureCallbacks_;
   QMap<osgEarth::VisibleLayer*, osg::ref_ptr<osgEarth::VisibleLayerCallback> > otherCallbacks_;
 

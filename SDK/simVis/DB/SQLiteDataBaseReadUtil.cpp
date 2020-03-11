@@ -19,10 +19,9 @@
  * disclose, or release this software.
  *
  */
-
 #include <sstream>
 #include <iostream>
-#include "simCore/Time/Utils.h"
+#include "simCore/Time/TimeClass.h"
 #include "swapbytes.h"
 #include "QSCommon.h"
 #include "SQLiteDataBaseReadUtil.h"
@@ -33,7 +32,7 @@ namespace
 {
   //=====================================================================================
   template <class SomeClass>
-  void UnPackArray(SomeClass* givenArray, const uint8_t* givenBuffer, const uint32_t& numElements)
+  void unpackArray(SomeClass* givenArray, const uint8_t* givenBuffer, const uint32_t& numElements)
   {
     if ((givenArray == NULL) || (givenBuffer == NULL))
       return;
@@ -43,7 +42,7 @@ namespace
     for (i = 0; i < numElements; ++i)
     {
       memcpy(tmpBuffer, givenBuffer + (sizeof(SomeClass) * i), sizeof(SomeClass));
-      givenArray[i].UnPack(tmpBuffer);
+      givenArray[i].unpack(tmpBuffer);
     }
   }
 
@@ -111,7 +110,7 @@ SQLiteDataBaseReadUtil::SQLiteDataBaseReadUtil()
   tsInsertSetIdTimeValue_(11)
 {
   QSNodeId nodeID;
-  sizeOfIdBlob_ = sizeof(FaceIndexType) + nodeID.SizeOf();
+  sizeOfIdBlob_ = sizeof(FaceIndexType) + nodeID.sizeOf();
 
   // Creates the command for reading an image from a "texture set" table
   textureSetSelectFileCommand1_ = "SELECT * From \"";
@@ -133,7 +132,7 @@ SQLiteDataBaseReadUtil::~SQLiteDataBaseReadUtil()
 }
 
 //-------------------------------------------------------------------------------------
-QsErrorType SQLiteDataBaseReadUtil::OpenDataBaseFile(const std::string& dbFileName,
+QsErrorType SQLiteDataBaseReadUtil::openDatabaseFile(const std::string& dbFileName,
   sqlite3** sqlite3Db,
   const int& flags) const
 {
@@ -147,7 +146,7 @@ QsErrorType SQLiteDataBaseReadUtil::OpenDataBaseFile(const std::string& dbFileNa
     if ((errorCode == SQLITE_BUSY) ||
       (errorCode == SQLITE_LOCKED))
       return QS_IS_BUSY;
-    std::cerr << "OpenDataBaseFile sqlite3_open_v2 Error: " << dbFileName << "\n" << printExtendedErrorMessage(*sqlite3Db);
+    std::cerr << "openDatabaseFile sqlite3_open_v2 Error: " << dbFileName << "\n" << printExtendedErrorMessage(*sqlite3Db);
     return QS_IS_UNABLE_TO_OPEN_DB;
   }
   if (sqlite3_exec(*sqlite3Db, "PRAGMA CACHE_SIZE=100;", NULL, NULL, NULL) != SQLITE_OK)
@@ -160,7 +159,7 @@ QsErrorType SQLiteDataBaseReadUtil::OpenDataBaseFile(const std::string& dbFileNa
 }
 
 //-------------------------------------------------------------------------------------
-QsErrorType SQLiteDataBaseReadUtil::TsReadDataBuffer(sqlite3* sqlite3Db,
+QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
   const std::string& dbFileName,
   const std::string& dataTableName,
   const FaceIndexType& faceIndex,
@@ -183,13 +182,12 @@ QsErrorType SQLiteDataBaseReadUtil::TsReadDataBuffer(sqlite3* sqlite3Db,
 
   // opens the database
   bool localDb = false;
-  QsErrorType tmpReturnValue;
   if (sqlite3Db == NULL)
   {
     if (allowLocalDB == false)
       return QS_IS_DB_NOT_INITIALIZED;
     localDb = true;
-    tmpReturnValue = OpenDataBaseFile(dbFileName, &sqlite3Db, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX);
+    QsErrorType tmpReturnValue = openDatabaseFile(dbFileName, &sqlite3Db, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX);
     if (tmpReturnValue != QS_IS_OK)
       return tmpReturnValue;
   }
@@ -206,7 +204,7 @@ QsErrorType SQLiteDataBaseReadUtil::TsReadDataBuffer(sqlite3* sqlite3Db,
   {
     if (displayErrorMessage && (returnValue != SQLITE_BUSY && returnValue != SQLITE_LOCKED))
     {
-      std::cerr << "TsReadDataBuffer sqlite3_prepare_v2 Error(" << returnValue << "): " << dbFileName << "\n" << printExtendedErrorMessage(sqlite3Db);
+      std::cerr << "readDataBuffer sqlite3_prepare_v2 Error(" << returnValue << "): " << dbFileName << "\n" << printExtendedErrorMessage(sqlite3Db);
     }
     if (stmt != NULL) sqlite3_finalize(stmt);
     if (localDb) sqlite3_close(sqlite3Db);
@@ -218,12 +216,12 @@ QsErrorType SQLiteDataBaseReadUtil::TsReadDataBuffer(sqlite3* sqlite3Db,
 
   // binds id
   uint8_t* idBlob = new uint8_t[sizeOfIdBlob_];
-  bewrite(idBlob, &faceIndex);
-  nodeID.Pack(idBlob + sizeof(FaceIndexType));
+  beWrite(idBlob, &faceIndex);
+  nodeID.pack(idBlob + sizeof(FaceIndexType));
   returnValue = sqlite3_bind_blob(stmt, 1, idBlob, sizeOfIdBlob_, SQLITE_TRANSIENT);
   if (returnValue != SQLITE_OK && displayErrorMessage)
   {
-    std::cerr << "TsReadDataBuffer sqlite3_bind_blob Error(" << returnValue << "): " << dbFileName << "\n" << printExtendedErrorMessage(sqlite3Db);
+    std::cerr << "readDataBuffer sqlite3_bind_blob Error(" << returnValue << "): " << dbFileName << "\n" << printExtendedErrorMessage(sqlite3Db);
   }
   delete[] idBlob;
 
@@ -255,8 +253,8 @@ QsErrorType SQLiteDataBaseReadUtil::TsReadDataBuffer(sqlite3* sqlite3Db,
   {
     if (displayErrorMessage)
     {
-      std::cerr << "TsReadDataBuffer sqlite3_step Error(" << returnValue << "): " << dbFileName << "\n";
-      std::cerr << "not done (" << nodeID.FormatAsHex().c_str() << ") " << printExtendedErrorMessage(sqlite3Db);
+      std::cerr << "readDataBuffer sqlite3_step Error(" << returnValue << "): " << dbFileName << "\n";
+      std::cerr << "not done (" << nodeID.formatAsHex().c_str() << ") " << printExtendedErrorMessage(sqlite3Db);
     }
     otherReturnValue = QS_IS_UNABLE_TO_READ_DATA_BUFFER;
   }
@@ -267,14 +265,14 @@ QsErrorType SQLiteDataBaseReadUtil::TsReadDataBuffer(sqlite3* sqlite3Db,
     returnValue = sqlite3_close(sqlite3Db);
     if (returnValue != SQLITE_OK && displayErrorMessage)
     {
-      std::cerr << "TsReadDataBuffer localDb sqlite3_close Error(" << returnValue << "): " << dbFileName << "\n" << printExtendedErrorMessage(sqlite3Db);
+      std::cerr << "readDataBuffer localDb sqlite3_close Error(" << returnValue << "): " << dbFileName << "\n" << printExtendedErrorMessage(sqlite3Db);
     }
   }
   return otherReturnValue;
 }
 
 //-------------------------------------------------------------------------------------
-QsErrorType SQLiteDataBaseReadUtil::TsGetSetFromListOfSetsTable(sqlite3* sqlite3Db,
+QsErrorType SQLiteDataBaseReadUtil::getSetFromListOfSetsTable(sqlite3* sqlite3Db,
   const std::string& tableName,
   int& rasterFormat,
   int& pixelLength,
@@ -300,7 +298,7 @@ QsErrorType SQLiteDataBaseReadUtil::TsGetSetFromListOfSetsTable(sqlite3* sqlite3
   returnValue = sqlite3_prepare_v2(sqlite3Db, textureSetSelectCommand_.c_str(), static_cast<int>(textureSetSelectCommand_.length()), &stmt, NULL);
   if (returnValue != SQLITE_OK)
   {
-    std::cerr << "TsGetSetFromListOfSetsTable sqlite3_prepare_v2 Error(" << returnValue << ")\n" << printExtendedErrorMessage(sqlite3Db);
+    std::cerr << "getSetFromListOfSetsTable sqlite3_prepare_v2 Error(" << returnValue << ")\n" << printExtendedErrorMessage(sqlite3Db);
     if (stmt != NULL) sqlite3_finalize(stmt);
     return QS_IS_PREPARE_ERROR;
   }
@@ -309,14 +307,14 @@ QsErrorType SQLiteDataBaseReadUtil::TsGetSetFromListOfSetsTable(sqlite3* sqlite3
   returnValue = sqlite3_bind_text(stmt, 1, tableName.c_str(), int(tableName.length()), SQLITE_TRANSIENT);
   if (returnValue != SQLITE_OK)
   {
-    std::cerr << "TsGetSetFromListOfSetsTable sqlite3_bind_text Error(" << returnValue << ")\n" << printExtendedErrorMessage(sqlite3Db);
+    std::cerr << "getSetFromListOfSetsTable sqlite3_bind_text Error(" << returnValue << ")\n" << printExtendedErrorMessage(sqlite3Db);
   }
 
   // executes the statement
   returnValue = sqlite3_step(stmt);
   if (returnValue > SQLITE_OK&& returnValue < SQLITE_ROW)
   {
-    std::cerr << "TsGetSetFromListOfSetsTable sqlite3_step Error(" << returnValue << ")\n" << printExtendedErrorMessage(sqlite3Db);
+    std::cerr << "getSetFromListOfSetsTable sqlite3_step Error(" << returnValue << ")\n" << printExtendedErrorMessage(sqlite3Db);
   }
 
   if (returnValue == SQLITE_ROW)
@@ -326,7 +324,7 @@ QsErrorType SQLiteDataBaseReadUtil::TsGetSetFromListOfSetsTable(sqlite3* sqlite3
     pixelLength = sqlite3_column_int(stmt, tsInsertSetIdPixelLength_ - 1);
     shallowLevel = sqlite3_column_int(stmt, tsInsertSetIdShallowestLevel_ - 1);
     deepLevel = sqlite3_column_int(stmt, tsInsertSetIdDeepestLevel_ - 1);
-    UnPackArray(tmpExtents, (const uint8_t*)sqlite3_column_blob(stmt, tsInsertSetIdExtents_ - 1), 6);
+    unpackArray(tmpExtents, (const uint8_t*)sqlite3_column_blob(stmt, tsInsertSetIdExtents_ - 1), 6);
     source = (const char*)sqlite3_column_text(stmt, tsInsertSetIdSource_ - 1);
     classification = (const char*)sqlite3_column_text(stmt, tsInsertSetIdClassification_ - 1);
     description = (const char*)sqlite3_column_text(stmt, tsInsertSetIdDescription_ - 1);
@@ -340,9 +338,9 @@ QsErrorType SQLiteDataBaseReadUtil::TsGetSetFromListOfSetsTable(sqlite3* sqlite3
       int frac = 0;
 
       // read TimeStamp data members from buffer
-      beread(buffer, &refYear);
-      beread(buffer + sizeof(refYear), &(secs));
-      beread(buffer + sizeof(refYear) + sizeof(secs), &(frac));
+      beRead(buffer, &refYear);
+      beRead(buffer + sizeof(refYear), &(secs));
+      beRead(buffer + sizeof(refYear) + sizeof(secs), &(frac));
       simCore::Seconds secsSinceRefYear(secs, frac);
       timeStamp.setTime(refYear, secsSinceRefYear);
     }

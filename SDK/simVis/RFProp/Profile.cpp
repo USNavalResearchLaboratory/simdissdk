@@ -21,13 +21,14 @@
  */
 #include "osg/MatrixTransform"
 #include "osg/Texture2D"
+#include "osgEarth/GLUtils"
 #include "osgEarth/ImageUtils"
+#include "osgEarth/PointDrawable"
 #include "osgEarth/NodeUtils"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Interpolation.h"
 #include "simVis/Constants.h"
-#include "simVis/PointSize.h"
 #include "simVis/Utils.h"
 #include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/Profile.h"
@@ -646,12 +647,17 @@ void Profile::init3D_()
 
   osg::Geometry* geometry = new osg::Geometry();
 
+  osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLES);
+  const size_t idxSize = 36 * (maxHeightIndex - minHeightIndex) * (numRanges - 1);
+  idx->reserve(idxSize);
+
   //Now build the indices that will actually be rendered
   for (unsigned int r = 0; r < numRanges - 1; r++)
   {
     const unsigned int nextR = r + 1;
     for (unsigned int h = minHeightIndex; h < maxHeightIndex; h++)
     {
+      // 36 indices / cube
       //Compute the indices of the 8 corners of the cube
       const unsigned int v0 = startIndex + r * heightIndexCount * 2 + (h - minHeightIndex) * 2;  // front LR
       const unsigned int v1 = v0 + 1; // front LL
@@ -663,33 +669,34 @@ void Profile::init3D_()
       const unsigned int v6 = v5 + 1; // back UR
       const unsigned int v7 = v6 + 1; // back UL
 
-      osg::DrawElementsUInt* idx = new osg::DrawElementsUInt(GL_TRIANGLE_STRIP);
-      idx->reserve(14);
-      // Wrap the voxel with a triangle strip
-      // Back Bottom
-      idx->push_back(v5); idx->push_back(v4);
+      // Front face
+      idx->push_back(v1); idx->push_back(v0); idx->push_back(v3);
+      idx->push_back(v0); idx->push_back(v2); idx->push_back(v3);
 
-      // Back to top
-      idx->push_back(v6); idx->push_back(v7);
+      // Back face
+      idx->push_back(v6); idx->push_back(v4); idx->push_back(v5);
+      idx->push_back(v7); idx->push_back(v6); idx->push_back(v5);
 
-      // Top to left
-      idx->push_back(v3); idx->push_back(v5);
+      // Top face
+      idx->push_back(v3); idx->push_back(v2); idx->push_back(v7);
+      idx->push_back(v2); idx->push_back(v6); idx->push_back(v7);
 
-      // Left to bottom
-      idx->push_back(v1); idx->push_back(v4);
+      // Bottom face
+      idx->push_back(v1); idx->push_back(v5); idx->push_back(v4);
+      idx->push_back(v1); idx->push_back(v4); idx->push_back(v0);
 
-      // Bottom to right
-      idx->push_back(v0); idx->push_back(v6);
+      // Left face
+      idx->push_back(v5); idx->push_back(v1); idx->push_back(v7);
+      idx->push_back(v1); idx->push_back(v3); idx->push_back(v7);
 
-      // Right to top
-      idx->push_back(v2); idx->push_back(v3);
-
-      // Top to front
-      idx->push_back(v0); idx->push_back(v1);
-
-      geometry->addPrimitiveSet(idx);
+      // Right face
+      idx->push_back(v0); idx->push_back(v4); idx->push_back(v6);
+      idx->push_back(v0); idx->push_back(v6); idx->push_back(v2);
     }
   }
+  // assertion fail means algorithm changed without correction to the reserve()
+  assert(idxSize == idx->size());
+  geometry->addPrimitiveSet(idx);
 
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_.get());
@@ -988,8 +995,11 @@ void Profile::init3DPoints_()
   simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
 
   const unsigned int numVerts = (maxHeightIndex - minHeightIndex + 1) * numRanges;
-  verts_->reserve(numVerts);
   values_->reserve(numVerts);
+
+  osgEarth::PointDrawable* points = new osgEarth::PointDrawable();
+  points->setDataVariance(osg::Object::DYNAMIC);
+  points->reserve(numVerts);
 
   for (unsigned int r = 0; r < numRanges; r++)
   {
@@ -1008,21 +1018,15 @@ void Profile::init3DPoints_()
       {
         adjustSpherical_(v, tpSphereXYZ);
       }
-      verts_->push_back(v);
+      points->pushVertex(v);
       values_->push_back(value);
     }
   }
+  points->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
+  points->finish();
 
-  osg::Geometry* geometry = new osg::Geometry();
-  geometry->setDataVariance(osg::Object::DYNAMIC);
-  geometry->setVertexArray(verts_.get());
-  geometry->setUseVertexBufferObjects(true);
-
-  geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-
-  geometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, verts_->size()));
-  geode_->addDrawable(geometry);
-  simVis::PointSize::setValues(geode_->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
+  geode_->addChild(points);
+  osgEarth::GLUtils::setPointSize(geode_->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
 }
 
 osg::Image* Profile::createImage_()

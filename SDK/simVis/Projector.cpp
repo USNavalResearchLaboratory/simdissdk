@@ -128,7 +128,7 @@ namespace
   class UpdateProjMatrix : public osg::NodeCallback
   {
   public:
-    UpdateProjMatrix(simVis::ProjectorNode* node) : proj_(node)
+    explicit UpdateProjMatrix(simVis::ProjectorNode* node) : proj_(node)
     {
       //nop
     }
@@ -207,9 +207,12 @@ void ProjectorNode::init_()
   projectorAlpha_         = new osg::Uniform(osg::Uniform::FLOAT,      "projectorAlpha");
   texProjPosUniform_      = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "simProjPos");
   texProjDirUniform_      = new osg::Uniform(osg::Uniform::FLOAT_VEC3, "simProjDir");
+  useColorOverrideUniform_= new osg::Uniform(osg::Uniform::BOOL,       "projectorUseColorOverride");
+  colorOverrideUniform_   = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "projectorColorOverride");
 
   projectorActive_->set(false);
   projectorAlpha_->set(DEFAULT_ALPHA_VALUE);
+  useColorOverrideUniform_->set(false);
 
   // Set texture to default broken image
   texture_ = new osg::Texture2D(simVis::makeBrokenImage());
@@ -257,6 +260,26 @@ void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
 const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
 {
   return hasLastUpdate_ ? &lastUpdate_ : NULL;
+}
+
+void ProjectorNode::addUniforms(osg::StateSet* stateSet) const
+{
+  stateSet->addUniform(projectorActive_.get());
+  stateSet->addUniform(projectorAlpha_.get());
+  stateSet->addUniform(texProjDirUniform_.get());
+  stateSet->addUniform(texProjPosUniform_.get());
+  stateSet->addUniform(useColorOverrideUniform_.get());
+  stateSet->addUniform(colorOverrideUniform_.get());
+}
+
+void ProjectorNode::removeUniforms(osg::StateSet* stateSet) const
+{
+  stateSet->removeUniform(projectorActive_.get());
+  stateSet->removeUniform(projectorAlpha_.get());
+  stateSet->removeUniform(texProjDirUniform_.get());
+  stateSet->removeUniform(texProjPosUniform_.get());
+  stateSet->removeUniform(useColorOverrideUniform_.get());
+  stateSet->removeUniform(colorOverrideUniform_.get());
 }
 
 std::string ProjectorNode::popupText() const
@@ -332,6 +355,8 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
     projectorAlpha_->set(prefs.projectoralpha());
   }
 
+  updateOverrideColor_(prefs);
+
   // If override FOV changes, update the FOV with a sync-with-locator call
   bool syncAfterPrefsUpdate = false;
   if (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefs_, &prefs, overridefov) ||
@@ -347,6 +372,20 @@ void ProjectorNode::setPrefs(const simData::ProjectorPrefs& prefs)
   // Apply the sync after prefs are updated, so that overridden FOV can be retrieved correctly
   if (hasLastUpdate_ && syncAfterPrefsUpdate)
     syncWithLocator();
+}
+
+void ProjectorNode::updateOverrideColor_(const simData::ProjectorPrefs& prefs)
+{
+  if (hasLastPrefs_ &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, useoverridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, overridecolor) &&
+    !PB_SUBFIELD_CHANGED(&lastPrefs_, &prefs, commonprefs, color))
+    return;
+
+  // using an override color?
+  auto color = simVis::Color(prefs.commonprefs().overridecolor(), simVis::Color::RGBA);
+  colorOverrideUniform_->set(color);
+  useColorOverrideUniform_->set(prefs.commonprefs().useoverridecolor());
 }
 
 bool ProjectorNode::readVideoFile_(const std::string& filename)
@@ -629,10 +668,7 @@ void ProjectorNode::addProjectionToNode(osg::Node* node)
   // Set texture from projector into state set
   stateSet->setTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
 
-  stateSet->addUniform(projectorActive_.get());
-  stateSet->addUniform(projectorAlpha_.get());
-  stateSet->addUniform(texProjDirUniform_.get());
-  stateSet->addUniform(texProjPosUniform_.get());
+  addUniforms(stateSet);
 
   // to compute the texture generation matrix:
   node->addCullCallback(projectOnNodeCallback_.get());
@@ -659,10 +695,7 @@ void ProjectorNode::removeProjectionFromNode(osg::Node* node)
 
     stateSet->removeTextureAttribute(ProjectorManager::getTextureImageUnit(), getTexture());
 
-    stateSet->removeUniform(projectorActive_.get());
-    stateSet->removeUniform(projectorAlpha_.get());
-    stateSet->removeUniform(texProjDirUniform_.get());
-    stateSet->removeUniform(texProjPosUniform_.get());
+    removeUniforms(stateSet);
   }
 
   node->removeCullCallback(projectOnNodeCallback_.get());

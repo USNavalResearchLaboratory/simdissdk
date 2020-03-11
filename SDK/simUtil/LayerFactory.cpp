@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include "osgEarth/ElevationLayer"
 #include "osgEarth/FeatureModelLayer"
 #include "osgEarth/GDAL"
@@ -29,9 +30,12 @@
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simVis/Constants.h"
-#include "simVis/DBFormat.h"
 #include "simVis/Types.h"
 #include "simUtil/LayerFactory.h"
+
+#ifdef SIM_HAVE_DB_SUPPORT
+#include "simVis/DBFormat.h"
+#endif
 
 namespace simUtil {
 
@@ -40,6 +44,11 @@ static const osgEarth::TimeSpan ONE_YEAR(365 * 86400);
 
 simVis::DBImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath) const
 {
+#ifndef SIM_HAVE_DB_SUPPORT
+  // Likely developer error unintended
+  assert(0);
+  return NULL;
+#else
   osgEarth::Config config;
   config.setReferrer(fullPath);
 
@@ -54,6 +63,7 @@ simVis::DBImageLayer* LayerFactory::newDbImageLayer(const std::string& fullPath)
   layer->setCachePolicy(cachePolicy);
 
   return layer.release();
+#endif
 }
 
 osgEarth::MBTilesImageLayer* LayerFactory::newMbTilesImageLayer(const std::string& fullPath) const
@@ -97,6 +107,11 @@ osgEarth::GDALImageLayer* LayerFactory::newGdalImageLayer(const std::string& ful
 
 simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& fullPath) const
 {
+#ifndef SIM_HAVE_DB_SUPPORT
+  // Likely developer error unintended
+  assert(0);
+  return NULL;
+#else
   osgEarth::Config config;
   config.setReferrer(fullPath);
 
@@ -111,6 +126,7 @@ simVis::DBElevationLayer* LayerFactory::newDbElevationLayer(const std::string& f
   layer->setCachePolicy(cachePolicy);
 
   return layer.release();
+#endif
 }
 
 osgEarth::MBTilesElevationLayer* LayerFactory::newMbTilesElevationLayer(const std::string& fullPath) const
@@ -202,7 +218,7 @@ ShapeFileLayerFactory::~ShapeFileLayerFactory()
 osgEarth::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url) const
 {
   osg::ref_ptr<osgEarth::FeatureModelLayer> layer = new osgEarth::FeatureModelLayer();
-  configureOptions(url, layer);
+  configureOptions(url, layer.get());
 
   if (layer->getStatus().isError())
   {

@@ -83,7 +83,7 @@ public:
   * @param[out] err Optional pointer to error string
   * @return 0 if conversion is successful, non-zero otherwise
   */
-  static int convertMgrstoUtm(int zone, const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
+  static int convertMgrsToUtm(int zone, const std::string& gzdLetters, double mgrsEasting, double mgrsNorthing,
     bool& northPole, double& utmEasting, double& utmNorthing, std::string* err = NULL);
 
   /**

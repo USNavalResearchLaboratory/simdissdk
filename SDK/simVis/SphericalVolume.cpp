@@ -35,7 +35,6 @@
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Math.h"
 #include "simVis/Constants.h"
-#include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/SphericalVolume.h"
 #include "simVis/Types.h"
@@ -560,8 +559,6 @@ namespace
 
   void svPyramidFactory::generateFaces_(osg::Geometry* faceGeom)
   {
-    std::vector<SVMeta>& vertexMetaData = metaContainer_->vertMeta_;
-
     // if we are drawing the face (not just the outline) add primitives that index into the vertex array
     const unsigned int numFaceElements = 2 * numPointsZ_;
 
@@ -962,7 +959,6 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
   {
     // next, build the cone wall. we need out-facing normals.
     // yes this can be computed while we are building the faces but that is an optimization for later.
-    const int wallOffset = vptr;
 
     // ensure that cone is aligned to cap, since cap is drawn normally, but cone is drawn in alternating strips from bottom.
     bool evenSlice = ((numSlices % 2) == 0);
@@ -1059,13 +1055,6 @@ void SVFactory::createCone_(osg::Geode* geode, const SVData& d, const osg::Vec3&
     // asserting that we used all the vertices we expected to
     // if assert fails, check numVerts calculation
     assert(numVerts == vptr);
-
-    // highlights the face points for a visual effect:
-    if (SVData::DRAW_MODE_POINTS & d.drawMode_)
-    {
-      geom->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, wallOffset));
-      PointSize::setValues(geom->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
-    }
   }
 }
 

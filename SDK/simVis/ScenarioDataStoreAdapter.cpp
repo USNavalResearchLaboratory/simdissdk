@@ -63,7 +63,8 @@ public:
   /// entity with the given id and type will be removed after all notifications are processed
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
-    scenarioManager_->removeEntity(removedId);
+    if (scenarioManager_.valid())
+      scenarioManager_->removeEntity(removedId);
   }
 
   /// prefs for the given entity have been changed
@@ -87,7 +88,8 @@ public:
   /// current time has been changed
   virtual void onTimeChange(simData::DataStore *source)
   {
-    scenarioManager_->update(source);
+    if (scenarioManager_.valid())
+      scenarioManager_->update(source);
   }
 
   /// something has changed in the entity category data
@@ -105,7 +107,8 @@ public:
   /// entity's data was flushed, 0 means entire scenario was flushed
   virtual void onFlush(simData::DataStore *source, simData::ObjectId flushedId)
   {
-    scenarioManager_->flush(flushedId);
+    if (scenarioManager_.valid())
+      scenarioManager_->flush(flushedId);
   }
 
   /// The scenario is about to be deleted
@@ -117,6 +120,8 @@ public:
 private: // methods
   void addPlatform_(simData::DataStore &ds, simData::ObjectId newId) const
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::PlatformProperties props;
     simData::DataStore::Transaction xaction;
     const simData::PlatformProperties *liveProps = ds.platformProperties(newId, &xaction);
@@ -129,6 +134,8 @@ private: // methods
 
   void addBeam_(simData::DataStore &ds, simData::ObjectId newId) const
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::BeamProperties props;
 
     simData::DataStore::Transaction xaction;
@@ -142,6 +149,8 @@ private: // methods
 
   void addGate_(simData::DataStore &ds, simData::ObjectId newId) const
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::GateProperties props;
     simData::DataStore::Transaction xaction;
     const simData::GateProperties *liveProps = ds.gateProperties(newId, &xaction);
@@ -154,6 +163,8 @@ private: // methods
 
   void addProjector_(simData::DataStore &ds, simData::ObjectId newId) const
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::ProjectorProperties props;
     simData::DataStore::Transaction xaction;
     const simData::ProjectorProperties *liveProps = ds.projectorProperties(newId, &xaction);
@@ -166,6 +177,8 @@ private: // methods
 
   void addLaser_(simData::DataStore &ds, simData::ObjectId newId) const
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::LaserProperties props;
     simData::DataStore::Transaction xaction;
     const simData::LaserProperties *liveProps = ds.laserProperties(newId, &xaction);
@@ -178,6 +191,8 @@ private: // methods
 
   void addLobGroup_(simData::DataStore &ds, simData::ObjectId newId) const
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::LobGroupProperties props;
     simData::DataStore::Transaction xaction;
     const simData::LobGroupProperties *liveProps = ds.lobGroupProperties(newId, &xaction);
@@ -190,6 +205,8 @@ private: // methods
 
   void addCustomRendering_(simData::DataStore &ds, simData::ObjectId newId) const
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::CustomRenderingProperties props;
     simData::DataStore::Transaction xaction;
     const simData::CustomRenderingProperties *liveProps = ds.customRenderingProperties(newId, &xaction);
@@ -202,6 +219,8 @@ private: // methods
 
   void changePlatformPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::PlatformPrefs          prefs;
     simData::DataStore::Transaction xaction;
     const simData::PlatformPrefs* livePrefs = ds.platformPrefs(id, &xaction);
@@ -213,6 +232,8 @@ private: // methods
 
   void changeBeamPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::BeamPrefs              prefs;
     simData::DataStore::Transaction xaction;
     const simData::BeamPrefs* livePrefs = ds.beamPrefs(id, &xaction);
@@ -224,6 +245,8 @@ private: // methods
 
   void changeGatePrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::GatePrefs              prefs;
     simData::DataStore::Transaction xaction;
     const simData::GatePrefs* livePrefs = ds.gatePrefs(id, &xaction);
@@ -235,6 +258,8 @@ private: // methods
 
   void changeProjectorPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::ProjectorPrefs         prefs;
     simData::DataStore::Transaction xaction;
     const simData::ProjectorPrefs* livePrefs = ds.projectorPrefs(id, &xaction);
@@ -246,6 +271,8 @@ private: // methods
 
   void changeLaserPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::LaserPrefs             prefs;
     simData::DataStore::Transaction xaction;
     const simData::LaserPrefs* livePrefs = ds.laserPrefs(id, &xaction);
@@ -257,6 +284,8 @@ private: // methods
 
   void changeLobGroupPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::LobGroupPrefs            prefs;
     simData::DataStore::Transaction xaction;
     const simData::LobGroupPrefs* livePrefs = ds.lobGroupPrefs(id, &xaction);
@@ -268,6 +297,8 @@ private: // methods
 
   void changeCustomRenderingPrefs_(simData::DataStore &ds, simData::ObjectId id)
   {
+    if (!scenarioManager_.valid())
+      return;
     simData::CustomRenderingPrefs            prefs;
     simData::DataStore::Transaction xaction;
     const simData::CustomRenderingPrefs* livePrefs = ds.customRenderingPrefs(id, &xaction);
@@ -278,7 +309,7 @@ private: // methods
   }
 
 private: // data
-  simVis::ScenarioManager *scenarioManager_;
+  osg::observer_ptr<simVis::ScenarioManager> scenarioManager_;
 };
 
 // Observer for time clock mode changes

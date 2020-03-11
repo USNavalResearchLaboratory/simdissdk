@@ -352,6 +352,10 @@ int readNextTest(std::istream& fd, bool& doneReading)
     return 0;
   }
 
+  // Check for comments
+  if (test.compare(0, 1, "#") == 0)
+    return 0;
+
   int rv = 0;
   simCore::EarthModelCalculations earth = simCore::PERFECT_SPHERE;
   // set coordinate system / reference frame

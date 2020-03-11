@@ -150,20 +150,21 @@ void updateSparseSlices(EntryListType& entries, double time)
 * @param id The entity to flush
 * @param catMap Category Data map
 * @param genMap Generic Data map
-* @param dataOnly If true only remove the data for the update slice
+* @param flushCommands If true remove commands
+* @param flushCdGd If true remove Category Data and Generic data
 * @param keepTspiStatic If true static TSPI points are not removed.
 */
 template <typename EntityMap>
-void flushEntityData(EntityMap& map, ObjectId id, MemoryDataStore::CategoryDataMap& catMap, MemoryDataStore::GenericDataMap& genMap, bool dataOnly, bool keepTspiStatic = true)
+void flushEntityData(EntityMap& map, ObjectId id, MemoryDataStore::CategoryDataMap& catMap, MemoryDataStore::GenericDataMap& genMap, bool flushCommands, bool flushCdGd, bool keepTspiStatic = true)
 {
   typename EntityMap::const_iterator i = map.find(id);
   if (i != map.end())
   {
     (*i).second->updates()->flush(keepTspiStatic);
-    if (!dataOnly)
+    if (flushCommands)
       (*i).second->commands()->flush();
   }
-  if (!dataOnly)
+  if (flushCdGd)
   {
     typename MemoryDataStore::CategoryDataMap::const_iterator ci = catMap.find(id);
     if (ci != catMap.end())
@@ -251,14 +252,15 @@ class MemoryDataStore::MemoryInternalsMemento : public InternalsMemento
 public:
   /** Constructor for a memento for the MemoryDataStore */
   explicit MemoryInternalsMemento(const MemoryDataStore &ds)
+    : interpolator_(ds.interpolator_),
+      interpolationEnabled_(ds.interpolationEnabled_),
+      listeners_(ds.listeners_),
+      scenarioListeners_(ds.scenarioListeners_),
+      newUpdatesListener_(ds.newUpdatesListener_),
+      boundClock_(ds.boundClock_)
   {
     // fill in everything
-    interpolator_ = ds.interpolator_;
-    interpolationEnabled_ = ds.interpolationEnabled_;
 
-    listeners_ = ds.listeners_;
-    scenarioListeners_ = ds.scenarioListeners_;
-    newUpdatesListener_ = ds.newUpdatesListener_;
     ds.dataTableManager().getObservers(dtObservers_);
     ds.categoryNameManager().getListeners(catListeners_);
     defaultPlatformPrefs_.CopyFrom(ds.defaultPlatformPrefs_);
@@ -268,7 +270,6 @@ public:
     defaultLobGroupPrefs_.CopyFrom(ds.defaultLobGroupPrefs_);
     defaultProjectorPrefs_.CopyFrom(ds.defaultProjectorPrefs_);
     defaultCustomRenderingPrefs_.CopyFrom(ds.defaultCustomRenderingPrefs_);
-    boundClock_ = ds.boundClock_;
   }
 
   virtual ~MemoryInternalsMemento()
@@ -330,7 +331,6 @@ MemoryDataStore::MemoryDataStore()
   hasChanged_(false),
   interpolationEnabled_(false),
   interpolator_(NULL),
-  timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
   newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
@@ -352,7 +352,6 @@ MemoryDataStore::MemoryDataStore(const ScenarioProperties &properties)
   hasChanged_(false),
   interpolationEnabled_(false),
   interpolator_(NULL),
-  timeBounds_(std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()),
   newUpdatesListener_(new DefaultNewUpdatesListener),
   dataLimiting_(false),
   categoryNameManager_(new CategoryNameManager),
@@ -811,13 +810,14 @@ void MemoryDataStore::updateCustomRenderings_(double time)
 void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, FlushType flushType)
 {
   bool recursive = (flushType == RECURSIVE);
-  bool keepTspiStatic = ((flushType != NON_RECURSIVE_TSPI_STATIC) && (flushType != NON_RECURSIVE_TSPI_ONLY));
-  bool dataOnly = (flushType == NON_RECURSIVE_TSPI_ONLY);
+  bool keepTspiStatic = ((flushType != NON_RECURSIVE_TSPI_STATIC) && (flushType != NON_RECURSIVE_TSPI_ONLY) && (flushType != NON_RECURSIVE_DATA));
+  bool flushCommands = (flushType != NON_RECURSIVE_TSPI_ONLY);
+  bool flushCdGd = ((flushType != NON_RECURSIVE_TSPI_ONLY) && (flushType != NON_RECURSIVE_DATA));
   IdList ids;
   switch (type)
   {
   case PLATFORM:
-    flushEntityData(platforms_, flushId, categoryData_, genericData_, dataOnly, keepTspiStatic);
+    flushEntityData(platforms_, flushId, categoryData_, genericData_, flushCommands, flushCdGd, keepTspiStatic);
     if (recursive)
     {
       beamIdListForHost(flushId, &ids);
@@ -838,7 +838,7 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
     }
     break;
   case BEAM:
-    flushEntityData(beams_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(beams_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     if (recursive)
     {
       gateIdListForHost(flushId, &ids);
@@ -847,19 +847,19 @@ void MemoryDataStore::flushEntity_(ObjectId flushId, simData::ObjectType type, F
     }
     break;
   case GATE:
-    flushEntityData(gates_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(gates_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case LASER:
-    flushEntityData(lasers_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(lasers_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case LOB_GROUP:
-    flushEntityData(lobGroups_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(lobGroups_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case PROJECTOR:
-    flushEntityData(projectors_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(projectors_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case CUSTOM_RENDERING:
-    flushEntityData(customRenderings_, flushId, categoryData_, genericData_, dataOnly);
+    flushEntityData(customRenderings_, flushId, categoryData_, genericData_, flushCommands, flushCdGd);
     break;
   case ALL:
   case NONE:
@@ -1508,8 +1508,9 @@ void MemoryDataStore::removeEntity(ObjectId id)
   Beams::iterator bi = beams_.find(id);
   if (bi != beams_.end())
   {
-    // also delete any gates
+    // also delete any gates or projectors; projectorIdListForHost adds to the list
     gateIdListForHost(id, &ids);
+    projectorIdListForHost(id, &ids);
     // we will need to send notifications and recurse on them as well...
     for (IdList::const_iterator i = ids.begin(); i != ids.end(); ++i)
       removeEntity(*i);
@@ -2653,7 +2654,6 @@ void MemoryDataStore::NewUpdateTransactionImpl<T, SliceType>::commit()
     dataStore_->hasChanged_ = true;
     if (isEntityUpdate_)
     {
-      dataStore_->newTimeBound_(updateTime);
       // Notify the data store's new-update callback
       dataStore_->newUpdatesListener().onEntityUpdate(dataStore_, id_, updateTime);
     }
@@ -2737,15 +2737,6 @@ MemoryDataStore::NewScenarioGenericUpdateTransactionImpl<T, SliceType>::~NewScen
 }
 
 //----------------------------------------------------------------------------
-// Updates the scenario time bounds with a new time
-void MemoryDataStore::newTimeBound_(double timeVal)
-{
-  if (timeVal < 0.0)
-    return;
-
-  timeBounds_.first = simCore::sdkMin(timeVal, timeBounds_.first);
-  timeBounds_.second = simCore::sdkMax(timeVal, timeBounds_.second);
-}
 
 /// Helper function to set a pair<> to min/max bounds for an XyzEntry; returns 0 when minMax is changed
 template <typename EntryType,            // PlatformEntry, BeamEntry, GateEntry, etc
@@ -2787,7 +2778,20 @@ std::pair<double, double> MemoryDataStore::timeBounds(ObjectId entityId) const
 
 std::pair<double, double> MemoryDataStore::timeBounds() const
 {
-  return timeBounds_;
+  double min = std::numeric_limits<double>::max();
+  double max = -std::numeric_limits<double>::max();
+
+  for (auto it = platforms_.begin(); it != platforms_.end(); ++it)
+  {
+    const auto updates = it->second->updates();
+    if ((updates->numItems() == 0) || (updates->firstTime() < 0.0))
+      continue;
+
+    min = simCore::sdkMin(min, updates->firstTime());
+    max = simCore::sdkMax(max, updates->lastTime());
+  }
+
+  return std::pair<double, double>(min, max);
 }
 
 }

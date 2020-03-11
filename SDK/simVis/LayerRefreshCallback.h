@@ -69,7 +69,7 @@ private:
   /** Groups a TerrainLayer pointer and the elapsed time since last its refresh */
   struct LayerInfo
   {
-    osg::observer_ptr<const osgEarth::TerrainLayer> layer;
+    osg::observer_ptr<const osgEarth::TileLayer> layer;
     osg::ElapsedTime elapsedTime;
   };
 
@@ -77,9 +77,9 @@ private:
   void runImpl_();
 
   /** Watch the given layer and refresh it when required a refresh is due */
-  void watchLayer_(const osgEarth::TerrainLayer* layer);
+  void watchLayer_(const osgEarth::TileLayer* layer);
   /** Stop watching the given layer */
-  void forgetLayer_(const osgEarth::TerrainLayer* layer);
+  void forgetLayer_(const osgEarth::TileLayer* layer);
 
   /** Get the interval for the given layer in seconds */
   double getIntervalForLayer_(const osgEarth::Layer* layer) const;

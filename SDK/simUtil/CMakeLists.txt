@@ -18,7 +18,6 @@ set(UTIL_HEADERS
     ${UTIL_INC}Capabilities.h
     ${UTIL_INC}DataStoreTestHelper.h
     ${UTIL_INC}DatumConvert.h
-    ${UTIL_INC}DbConfigurationFile.h
     ${UTIL_INC}DefaultDataStoreValues.h
     ${UTIL_INC}ExampleControls.h
     ${UTIL_INC}ExampleResources.h
@@ -54,7 +53,6 @@ set(UTIL_SOURCES
     ${UTIL_SRC}Capabilities.cpp
     ${UTIL_SRC}DataStoreTestHelper.cpp
     ${UTIL_SRC}DatumConvert.cpp
-    ${UTIL_SRC}DbConfigurationFile.cpp
     ${UTIL_SRC}DefaultDataStoreValues.cpp
     ${UTIL_SRC}ExampleControls.cpp
     ${UTIL_SRC}ExampleResources.cpp
@@ -83,6 +81,12 @@ set(UTIL_SOURCES
     ${UTIL_SRC}ViewpointMonitor.cpp
     ${UTIL_SRC}ViewpointPositions.cpp
 )
+
+if(SIM_HAVE_DB_SUPPORT)
+    list(APPEND UTIL_HEADERS ${UTIL_INC}DbConfigurationFile.h)
+    list(APPEND UTIL_SOURCES ${UTIL_SRC}DbConfigurationFile.cpp)
+endif()
+
 set(UTIL_GENERATED_HEADERS)
 set(UTIL_GENERATED_SOURCES)
 
@@ -132,7 +136,7 @@ endif()
 add_library(simUtil ${STATIC_OR_SHARED} ${UTIL_PROJECT_FILES})
 set_target_properties(simUtil PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Util"
+    PROJECT_LABEL "simUtil"
 )
 ApplySDKVersion(simUtil)
 target_include_directories(simUtil PUBLIC
@@ -157,6 +161,9 @@ if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)
 endif()
 if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_SILVERLINING)
     target_link_libraries(simUtil PRIVATE OSGEARTH_SILVERLINING)
+endif()
+if(SIM_HAVE_DB_SUPPORT)
+    target_compile_definitions(simUtil PRIVATE SIM_HAVE_DB_SUPPORT)
 endif()
 
 if(INSTALL_SIMDIS_SDK_SHADERS)

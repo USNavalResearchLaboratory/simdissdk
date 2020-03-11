@@ -22,13 +22,15 @@
 #ifndef SIMCORE_CALC_MATH_CONSTANTS_H
 #define SIMCORE_CALC_MATH_CONSTANTS_H
 
-#include <cmath>
+// use <math.h> and not <cmath> here to get the Microsoft #defines consistently.
+#include <math.h>
 
 #ifdef WIN32
 #if !defined(_MATH_DEFINES_DEFINED)
 
-/* Support useful mathematical constants that maybe defined under windows
- * if the _USE_MATH_DEFINES macro is defined.
+/* Define useful mathematical constants, when they are not defined by Windows.
+ * Defining _USE_MATH_DEFINES tells Windows to define them;
+ * Windows defines _MATH_DEFINES_DEFINED to indicate that it has defined them.
  */
 
 #ifndef M_E
@@ -71,7 +73,7 @@
 #define M_SQRT1_2 0.707106781186547524401  /* sqrt(1/2) */
 #endif
 
-#endif /* _USE_MATH_DEFINES */
+#endif /* _MATH_DEFINES_DEFINED */
 #endif /* WIN32 */
 
 

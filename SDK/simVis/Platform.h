@@ -43,6 +43,7 @@ class PlatformModelNode;
 class PlatformTspiFilterManager;
 class ProjectorNode;
 class RadialLOSNode;
+class TimeTicks;
 class TrackHistoryNode;
 class VelocityVector;
 
@@ -295,6 +296,7 @@ private:
   void updateHostBounds_(double scale);
   void updateLabel_(const simData::PlatformPrefs& prefs);
   bool createTrackHistoryNode_(const simData::PlatformPrefs& prefs);
+  bool createTimeTicks_(const simData::PlatformPrefs& prefs);
   void updateOrRemoveBodyAxis_(bool prefsDraw, const simData::PlatformPrefs& prefs);
   void updateOrRemoveInertialAxis_(bool prefsDraw, const simData::PlatformPrefs& prefs);
   void updateOrRemoveVelocityVector_(bool prefsDraw, const simData::PlatformPrefs& prefs);
@@ -323,6 +325,7 @@ private:
   osg::observer_ptr<osg::Group> expireModeGroupAttach_;
   /// track history points
   osg::ref_ptr<TrackHistoryNode>  track_;
+  osg::ref_ptr<TimeTicks>         timeTicks_;
   osg::ref_ptr<LocalGridNode>     localGrid_;
   osg::ref_ptr<CompositeHighlightNode> highlight_;
   osg::ref_ptr<AxisVector>        bodyAxisVector_;

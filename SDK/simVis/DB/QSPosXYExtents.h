@@ -20,19 +20,21 @@
  *
  */
 
-#ifndef QS_POSXY_EXTENTS_H
-#define QS_POSXY_EXTENTS_H
+#ifndef SIMVIS_DB_POSXYEXTENTS_H
+#define SIMVIS_DB_POSXYEXTENTS_H
+
+#include "simCore/Common/Common.h"
 
 namespace simVis_db
 {
   typedef uint64_t QsPosType;
 
-#if defined Linux || defined Solaris
-  static const QsPosType gQsMaxLength = 4294967296LL;
+#ifndef WIN32
+  static const QsPosType QS_MAX_LENGTH_UINT64 = 4294967296LL;
 #else
-  static const QsPosType gQsMaxLength = 4294967296;
+  static const QsPosType QS_MAX_LENGTH_UINT64 = 4294967296;
 #endif
-  static const double gQsDMaxLength = 4294967296.0;
+  static const double QS_MAX_LENGTH_DOUBLE = 4294967296.0;
 
   /** A bounding rectangle of x/y extents */
   struct PosXPosYExtents
@@ -42,24 +44,21 @@ namespace simVis_db
       QsPosType minY;
       QsPosType maxY;
 
-      PosXPosYExtents(QsPosType minX=gQsMaxLength, QsPosType maxX=0, QsPosType minY=gQsMaxLength, QsPosType maxY=0);
+      PosXPosYExtents(QsPosType minX=QS_MAX_LENGTH_UINT64, QsPosType maxX=0, QsPosType minY=QS_MAX_LENGTH_UINT64, QsPosType maxY=0);
 
       /** Sets up invalid extents */
-      void Initialize();
+      void initialize();
 
       /** Confirms validity of extents */
-      bool Valid() const;
+      bool isValid() const;
 
       /** Sets the extents */
-      void SetAll(const PosXPosYExtents& given);
-      void SetAll(const QsPosType& minX, const QsPosType& maxX, const QsPosType& minY, const QsPosType& maxY);
+      void setAll(const PosXPosYExtents& given);
+      void setAll(const QsPosType& minX, const QsPosType& maxX, const QsPosType& minY, const QsPosType& maxY);
 
       /** Packs/unpacks the extents into or from a buffer */
-      void Pack(uint8_t*) const;
-      void UnPack(const uint8_t*);
-
-      /** Prints the extents to the console */
-      void Print();
+      void pack(uint8_t*) const;
+      void unpack(const uint8_t*);
   };
 
   //=====================================================================================
@@ -67,19 +66,6 @@ namespace simVis_db
   bool operator==(const PosXPosYExtents& a, const PosXPosYExtents& b);
   bool operator!=(const PosXPosYExtents& a, const PosXPosYExtents& b);
 
-  //=====================================================================================
-  /** Updates extents such that the given x/y is within the extents */
-  void UpdateExtents(const QsPosType& posX, const QsPosType& posY, PosXPosYExtents* extents);
-
-  /** Copies an array of 6 extents */
-  bool Copy6Extents(const PosXPosYExtents*, PosXPosYExtents*);
-
-  /** Checks for any overlap between two rectangles */
-  bool AnyOverlap(const PosXPosYExtents&, const PosXPosYExtents&);
-
-  /** Checks if the given x/y is within the given extents */
-  bool AnyOverlap(const QsPosType& posX, const QsPosType& posY, const PosXPosYExtents&);
-
 } // Namespace simVis_db
 
-#endif /* QS_POSXY_EXTENTS_H */
+#endif /* SIMVIS_DB_POSXYEXTENTS_H */

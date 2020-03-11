@@ -38,7 +38,7 @@ target_link_libraries(SimQtTests PRIVATE simQt simCore)
 target_include_directories(SimQtTests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(SimQtTests PROPERTIES
     FOLDER "Unit Tests"
-    PROJECT_LABEL "Unit Tests - SimQt"
+    PROJECT_LABEL "simQt Test"
 )
 
 VSI_QT_USE_MODULES(SimQtTests LINK_PRIVATE Widgets)

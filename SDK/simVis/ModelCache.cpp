@@ -32,6 +32,7 @@
 #include "osg/TexEnv"
 #include "osg/TexEnvCombine"
 #include "osg/ValueObject"
+#include "osgDB/ReadFile"
 #include "osgSim/DOFTransform"
 #include "osgSim/LightPointNode"
 #include "osgSim/MultiSwitch"
@@ -92,7 +93,9 @@ public:
   virtual void apply(osg::Node& node)
   {
     osg::StateSet* ss = node.getStateSet();
-    if (ss)
+    // Catch Creator's Superface/Subface condition, where they use POLYGONOFFSET and render bin
+    // to try to superimpose polygons.  Avoid clearing render bins in that particular case.
+    if (ss && !ss->getAttribute(osg::StateAttribute::POLYGONOFFSET))
     {
       // Fix regularly occuring alpha issues by negating explicit render bin assignments
       // in the loaded model

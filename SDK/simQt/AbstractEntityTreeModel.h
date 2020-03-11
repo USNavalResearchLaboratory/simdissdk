@@ -58,6 +58,9 @@ namespace simQt {
 
     /** Return an Index based on the entity's ID */
     virtual QModelIndex index(uint64_t id) const = 0;
+    /** Return an Index based on the entity's ID; if necessary, process any pending adds */
+    virtual QModelIndex index(uint64_t id) = 0;
+
     /** Return the entity's ID for a given index */
     virtual uint64_t uniqueId(const QModelIndex &index) const = 0;
 

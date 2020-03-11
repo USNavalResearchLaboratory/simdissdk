@@ -19,32 +19,45 @@
  * disclose, or release this software.
  *
  */
-#ifndef QS_COMMON_H
-#define QS_COMMON_H
+#ifndef SIMVIS_DB_QSNODEID96_H
+#define SIMVIS_DB_QSNODEID96_H
 
+#include <bitset>
 #include "simCore/Common/Common.h"
 
 namespace simVis_db
 {
-  typedef uint8_t FaceIndexType;
-  typedef uint8_t TextureDataType;
-  typedef uint8_t RasterFormat;
+  class QSNodeID96
+  {
+  public:
+    QSNodeID96();
+    explicit QSNodeID96(const uint32_t& value);
+    ~QSNodeID96();
 
-  /// Raster formats
-  static const RasterFormat SPLIT_UNKNOWN = 0;
-  static const RasterFormat SPLIT_SGI_RGB = 1;
-  static const RasterFormat SPLIT_SGI_RGBA = 2;
-  static const RasterFormat SPLIT_5551_GZ = 3;
-  static const RasterFormat SPLIT_5551_ZLIB_COMPRESS = 4;
-  static const RasterFormat SPLIT_RGBA_ZLIB_COMPRESS = 5;
-  static const RasterFormat SPLIT_INTA_ZLIB_COMPRESS = 6;
-  static const RasterFormat SPLIT_JPEG_2000 = 8;
-  static const RasterFormat SPLIT_8BIT_GZ = 9;   // GL_LUMINANCE
-  static const RasterFormat SPLIT_8BIT_ZLIB_COMPRESS = 10;
-  static const RasterFormat SPLIT_FLOAT32_ZLIB_COMPRESS = 11;
-  static const RasterFormat SPLIT_JPEG = 12;
-  static const RasterFormat SPLIT_PNG = 13;
-  static const RasterFormat SPLIT_TIFF = 14;
+    bool operator==(const QSNodeID96& value) const;
+    bool operator<(const QSNodeID96& value) const;
+    QSNodeID96& operator=(const QSNodeID96& value);
+    QSNodeID96 operator~() const;
+    QSNodeID96& operator|=(const QSNodeID96& value);
+    QSNodeID96& operator&=(const QSNodeID96& value);
+    QSNodeID96 operator>>(int numBitsToShift) const;
+    QSNodeID96 operator<<(int numBitsToShift) const;
+    QSNodeID96 operator&(const QSNodeID96& value) const;
+
+    int sizeOf() const {return 12;}
+    void pack(uint8_t*) const;
+    void unpack(const uint8_t*);
+    std::string formatAsHex(bool bLeadingZeros=true) const;
+
+  protected:
+    uint32_t one_;
+    uint32_t two_;
+    uint32_t three_;
+  };
+
+  //===========================================================================
+  typedef QSNodeID96 QSNodeId;
+
 } // namespace simVis_db
 
-#endif /* QS_COMMON_H */
+#endif /* SIMVIS_DB_QSNODEID96_H */

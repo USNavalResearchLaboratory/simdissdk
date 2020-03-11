@@ -114,13 +114,6 @@ private:
   static std::string findTokenValue_(const std::vector<std::string>& tokens, const std::string& keyword);
   /// convert QuadSphere levels to osgEarth levels
   static unsigned int getOsgEarthLevel_(unsigned int QSlevel);
-
-  /**
-  * Creates a default osgEarth::Map object with the EGM96 MSL globe
-  * Loads parts of a legacy .txt configuration file (typically consisting of .db files)
-  * @return the osgEarth::Map created
-  */
-  static osgEarth::Map* createDefaultMap_();
 };
 
 }

@@ -652,7 +652,6 @@ private:
   CustomRenderings   customRenderings_;
   GenericDataMap     genericData_;  // Map to hold references for GenericData update slice contained by the DataEntry object with the associated id
   CategoryDataMap    categoryData_; // Map to hold references for CategoryData update slice contained by the DataEntry object with the associated id
-  std::pair<double, double> timeBounds_;  // First and last time recorded in scenario; might change when adding points or data limiting
 
   // default prefs objects
   PlatformPrefs  defaultPlatformPrefs_;
@@ -662,9 +661,6 @@ private:
   LobGroupPrefs  defaultLobGroupPrefs_;
   ProjectorPrefs defaultProjectorPrefs_;
   CustomRenderingPrefs defaultCustomRenderingPrefs_;
-
-  // Updates the contents of timeBounds_
-  void newTimeBound_(double timeVal);
 
   /// Observers to receive notifications when things change
   ListenerList listeners_;

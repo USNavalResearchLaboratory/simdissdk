@@ -238,7 +238,7 @@ int HudPositionManager::setSize(const std::string& name, const osg::Vec2d& minXy
 class RepositionPixelsCallback::ResizeCallback : public osgGA::GUIEventHandler
 {
 public:
-  ResizeCallback(RepositionPixelsCallback* parent)
+  explicit ResizeCallback(RepositionPixelsCallback* parent)
     : windowSize_(0.0, 0.0),
       parent_(parent)
   {

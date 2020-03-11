@@ -139,10 +139,8 @@ void AxisVector::setPositionOrientation(const osg::Vec3f& pos, const osg::Vec3f&
 
 void AxisVector::createAxisVectors_(osg::Geode* geode) const
 {
-  osgEarth::LineDrawable* line = NULL;
-
   // draw x axis vector
-  line = new osgEarth::LineDrawable(GL_LINE_STRIP);
+  osgEarth::LineDrawable* line = new osgEarth::LineDrawable(GL_LINE_STRIP);
   line->setName("simVis::AxisVector");
   line->allocate(AXIS_NUM_POINTS_PER_LINE_STRIP);
   VectorScaling::generatePoints(*line, osg::Vec3(), osg::X_AXIS);

@@ -24,7 +24,6 @@ set(SHADER_FILES
     Picker.vert.glsl
     Picker.frag.glsl
     PlatformAzimElevViewTool.vert.glsl
-    PointSize.vert.glsl
     PolygonStipple.frag.glsl
     Projector.vert.glsl
     Projector.frag.glsl
@@ -64,8 +63,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}CustomRendering.h
     ${VIS_INC}CylinderGeode.h
     ${VIS_INC}CylinderStorage.h
-    ${VIS_INC}DBFormat.h
-    ${VIS_INC}DBOptions.h
     ${VIS_INC}DisableDepthOnAlpha.h
     ${VIS_INC}DynamicScaleTransform.h
     ${VIS_INC}EarthManipulator.h
@@ -101,7 +98,6 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}PlatformFilter.h
     ${VIS_INC}PlatformInertialTransform.h
     ${VIS_INC}PlatformModel.h
-    ${VIS_INC}PointSize.h
     ${VIS_INC}PolygonStipple.h
     ${VIS_INC}Popup.h
     ${VIS_INC}Projector.h
@@ -122,6 +118,8 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}SphericalVolume.h
     ${VIS_INC}TargetDelegation.h
     ${VIS_INC}Text.h
+    ${VIS_INC}TimeTicks.h
+    ${VIS_INC}TimeTicksChunk.h
     ${VIS_INC}Tool.h
     ${VIS_INC}TrackChunkNode.h
     ${VIS_INC}TrackHistory.h
@@ -135,6 +133,20 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}ViewManager.h
     ${VIS_INC}ViewManagerLogDbAdapter.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/simVis/osgEarthVersion.h
+)
+
+set(VIS_HEADERS_DB
+    ${VIS_INC}DBFormat.h
+    ${VIS_INC}DBOptions.h
+)
+
+set(VIS_HEADERS_DB_PRIVATE
+    ${VIS_INC}DB/QSCommon.h
+    ${VIS_INC}DB/QSError.h
+    ${VIS_INC}DB/QSNodeID96.h
+    ${VIS_INC}DB/QSPosXYExtents.h
+    ${VIS_INC}DB/SQLiteDataBaseReadUtil.h
+    ${VIS_INC}DB/swapbytes.h
 )
 
 set(VIS_HEADERS_RFPROP
@@ -209,7 +221,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}CustomRendering.cpp
     ${VIS_SRC}CylinderGeode.cpp
     ${VIS_SRC}CylinderStorage.cpp
-    ${VIS_SRC}DBFormat.cpp
     ${VIS_SRC}DisableDepthOnAlpha.cpp
     ${VIS_SRC}DynamicScaleTransform.cpp
     ${VIS_SRC}EarthManipulator.cpp
@@ -242,7 +253,6 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}PlatformFilter.cpp
     ${VIS_SRC}PlatformInertialTransform.cpp
     ${VIS_SRC}PlatformModel.cpp
-    ${VIS_SRC}PointSize.cpp
     ${VIS_SRC}PolygonStipple.cpp
     ${VIS_SRC}Popup.cpp
     ${VIS_SRC}Projector.cpp
@@ -263,6 +273,8 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}SphericalVolume.cpp
     ${VIS_SRC}TargetDelegation.cpp
     ${VIS_SRC}Text.cpp
+    ${VIS_SRC}TimeTicks.cpp
+    ${VIS_SRC}TimeTicksChunk.cpp
     ${VIS_SRC}TrackChunkNode.cpp
     ${VIS_SRC}TrackHistory.cpp
     ${VIS_SRC}Utils.cpp
@@ -273,6 +285,14 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Viewer.cpp
     ${VIS_SRC}ViewManager.cpp
     ${VIS_SRC}ViewManagerLogDbAdapter.cpp
+)
+
+set(VIS_SOURCES_DB
+    ${VIS_INC}DBFormat.cpp
+    ${VIS_INC}DB/QSError.cpp
+    ${VIS_INC}DB/QSNodeID96.cpp
+    ${VIS_INC}DB/QSPosXYExtents.cpp
+    ${VIS_INC}DB/SQLiteDataBaseReadUtil.cpp
 )
 
 set(VIS_SOURCES_RFPROP
@@ -363,7 +383,22 @@ source_group("" FILES ${VIS_ALL_HEADER})
 set(VIS_HEADERS ${VIS_HEADERS_CORE} ${VIS_HEADERS_RFPROP} ${VIS_HEADERS_GOG})
 set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${VIS_SHADER_FILES})
 
+# Add DB Format support to right MSVC folders and headers for installation
+if(SIM_HAVE_DB_SUPPORT)
+    source_group(Headers FILES ${VIS_HEADERS_DB})
+    source_group(Headers\\DB FILES ${VIS_HEADERS_DB_PRIVATE})
+    source_group(Sources\\DB FILES ${VIS_SOURCES_DB})
+
+    list(APPEND VIS_HEADERS_CORE ${VIS_HEADERS_DB})
+    list(APPEND VIS_HEADERS ${VIS_HEADERS_DB} ${VIS_HEADERS_DB_PRIVATE})
+    list(APPEND VIS_SOURCES ${VIS_SOURCES_DB})
+endif()
+
 # ----------------------------------------------------------------------
+
+# Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
+set_source_files_properties(${VIS_SRC}Utils.cpp ${VIS_SRC}GOG/Utils.cpp
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
 set(VIS_PROJECT_FILES
     ${VIS_HEADERS} ${VIS_SOURCES} ${VIS_ALL_HEADER}
@@ -378,7 +413,7 @@ endif()
 add_library(simVis ${STATIC_OR_SHARED} ${VIS_PROJECT_FILES})
 set_target_properties(simVis PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Vis"
+    PROJECT_LABEL "simVis"
 )
 ApplySDKVersion(simVis)
 target_include_directories(simVis PUBLIC
@@ -390,10 +425,22 @@ target_link_libraries(simVis PUBLIC simData simCore simNotify
     ${OSG_ALL_LIBDEPENDENCIES} OSGEARTH)
 target_link_libraries(simVis PRIVATE VSI::GL)
 
+if(SQLITE3_FOUND)
+    target_link_libraries(simVis PRIVATE SQLITE3)
+endif()
+
 if(SIMVIS_SHARED)
     target_compile_definitions(simVis PRIVATE simVis_LIB_EXPORT_SHARED)
 else()
     target_compile_definitions(simVis PUBLIC simVis_LIB_EXPORT_STATIC)
+endif()
+if(SIM_HAVE_DB_SUPPORT)
+    target_compile_definitions(simVis PRIVATE SIM_HAVE_DB_SUPPORT)
+    if(SDK_BIG_ENDIAN)
+        target_compile_definitions(simVis PRIVATE SIM_BIG_ENDIAN)
+    else()
+        target_compile_definitions(simVis PRIVATE SIM_LITTLE_ENDIAN)
+    endif()
 endif()
 
 if(INSTALL_SIMDIS_SDK_LIBRARIES)

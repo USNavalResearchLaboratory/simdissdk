@@ -34,7 +34,6 @@
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
 #include "simVis/AlphaColorFilter.h"
-#include "simVis/DBOptions.h"
 #include "simVis/DBFormat.h"
 #include "simVis/SceneManager.h"
 #include "simVis/Utils.h"
@@ -106,9 +105,11 @@ int DbConfigurationFile::load(osg::ref_ptr<osgEarth::MapNode>& mapNode, const st
     mapNode = NULL;
     SAFETRYBEGIN;
     osg::ref_ptr<osgEarth::Map> map = simUtil::DbConfigurationFile::loadLegacyConfigFile(adjustedConfigFile, quiet);
-
-    mapNode = new osgEarth::MapNode(map.get());
-    simVis::SceneManager::initializeTerrainOptions(mapNode);
+    if (map.valid())
+    {
+      mapNode = new osgEarth::MapNode(map.get());
+      simVis::SceneManager::initializeTerrainOptions(mapNode.get());
+    }
 
     SAFETRYEND((std::string("legacy SIMDIS 9 .txt processing of file ") + configFile));
   }
@@ -196,7 +197,7 @@ osgEarth::Map* DbConfigurationFile::loadLegacyConfigFile(const std::string& file
     gotValidFirstLine = true;
     if (!map)
     {
-      map = DbConfigurationFile::createDefaultMap_();
+      map = new osgEarth::Map();
       map->beginUpdate();
     }
 
@@ -378,6 +379,7 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
           imageLayer->setOpacity(opacity);
           imageLayer->setVisible(active);
           imageLayer->setEnabled(active);
+          imageLayer->setName(layerName);
           map->addLayer(imageLayer);
         }
         if (altitudeSet)
@@ -394,6 +396,7 @@ void DbConfigurationFile::parseLayers_(const std::vector<std::string>& tokens, o
             iStr >> noDataValue;
           }
           newLayer->setNoDataValue(noDataValue);
+          newLayer->setName(layerName);
         }
       }
     }
@@ -494,14 +497,6 @@ std::string DbConfigurationFile::findTokenValue_(const std::vector<std::string>&
       return simCore::StringUtils::after(*iter, '=');
   }
   return std::string();
-}
-
-osgEarth::Map* DbConfigurationFile::createDefaultMap_()
-{
-  // configure an EGM96 MSL globe.for the Map
-  osgEarth::Map* map = new osgEarth::Map();
-  map->setProfile(osgEarth::Profile::create("wgs84", "egm96"));
-  return map;
 }
 
 osg::Node* DbConfigurationFile::readEarthFile(std::istream& istream, const std::string& relativeTo)

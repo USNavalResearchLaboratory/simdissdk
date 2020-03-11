@@ -12,6 +12,6 @@ add_executable(example_locatortest ${PROJECT_FILES})
 target_link_libraries(example_locatortest PRIVATE simVis simUtil)
 set_target_properties(example_locatortest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Locator Test"
+    PROJECT_LABEL "Locator Test"
 )
 vsi_install_target(example_locatortest SDK_Examples)

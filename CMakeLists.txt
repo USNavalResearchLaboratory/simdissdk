@@ -206,6 +206,9 @@ include(ImportProtobuf)
 # --- SQLITE3 -----------------------------
 set(SQLITE3_DIR "" CACHE PATH "Sqlite3 root directory")
 include(ImportSQLite)
+if (SQLITE3_FOUND)
+    set(SIM_HAVE_DB_SUPPORT 1)
+endif()
 
 # subprojects
 add_subdirectory(SDK)

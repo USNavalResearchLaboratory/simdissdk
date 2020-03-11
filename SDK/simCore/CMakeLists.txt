@@ -52,6 +52,7 @@ set(CORE_CALC_SOURCES
     ${CORE_CALC_SRC}Angle.cpp
     ${CORE_CALC_SRC}Calculations.cpp
     ${CORE_CALC_SRC}CoordinateConverter.cpp
+    ${CORE_CALC_SRC}CoordinateSystem.cpp
     ${CORE_CALC_SRC}DatumConvert.cpp
     ${CORE_CALC_SRC}Gars.cpp
     ${CORE_CALC_SRC}Geometry.cpp
@@ -107,6 +108,7 @@ set(CORE_STRING_SRC String/)
 set(CORE_STRING_HEADERS
     ${CORE_STRING_INC}Angle.h
     ${CORE_STRING_INC}Constants.h
+    ${CORE_STRING_INC}CsvReader.h
     ${CORE_STRING_INC}FilePatterns.h
     ${CORE_STRING_INC}Tokenizer.h
     ${CORE_STRING_INC}Format.h
@@ -118,6 +120,7 @@ set(CORE_STRING_HEADERS
 )
 set(CORE_STRING_SOURCES
     ${CORE_STRING_SRC}Angle.cpp
+    ${CORE_STRING_SRC}CsvReader.cpp
     ${CORE_STRING_SRC}Format.cpp
     ${CORE_STRING_SRC}Tokenizer.cpp
     ${CORE_STRING_SRC}TextFormatter.cpp
@@ -168,6 +171,11 @@ source_group("" FILES ${CORE_ALL_HEADER})
 
 # ----------------------------------------------------------------------
 
+# Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
+set_source_files_properties(${CORE_STRING_SRC}Angle.cpp ${CORE_STRING_SRC}Utils.cpp
+    ${CORE_CALC_SRC}Angle.cpp ${CORE_TIME_SRC}Utils.cpp
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+
 set(CORE_PROJECT_FILES
     ${CORE_COMMON_HEADERS} ${CORE_COMMON_SOURCES}
     ${CORE_CALC_HEADERS} ${CORE_CALC_SOURCES}
@@ -190,7 +198,7 @@ endif()
 add_library(simCore ${STATIC_OR_SHARED} ${CORE_PROJECT_FILES})
 set_target_properties(simCore PROPERTIES
     FOLDER "SIMDIS SDK"
-    PROJECT_LABEL "SIMDIS SDK - Core"
+    PROJECT_LABEL "simCore"
 )
 ApplySDKVersion(simCore)
 target_include_directories(simCore PUBLIC

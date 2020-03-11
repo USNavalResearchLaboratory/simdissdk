@@ -777,7 +777,7 @@ private:
 };
 
 /** Watch for image layer changes */
-class MapDataModel::ImageLayerListener : public osgEarth::ImageLayerCallback
+class MapDataModel::ImageLayerListener : public osgEarth::TileLayerCallback
 {
 public:
   /** Constructor */
@@ -801,30 +801,12 @@ public:
       emit dataModel_.imageLayerOpacityChanged(imageLayer);
   }
 
-  /** Inherited from VisibleLayerCallback */
-  virtual void onVisibleRangeChanged(osgEarth::ImageLayer *layer)
-  {
-    emit dataModel_.imageLayerVisibleRangeChanged(layer);
-  }
-
-  /** Inherited from VisibleLayerCallback */
-  virtual void onColorFiltersChanged(osgEarth::ImageLayer *layer)
-  {
-    emit dataModel_.imageLayerColorFilterChanged(layer);
-  }
-
-  /** Inherited from ImageLayerCallback */
-  virtual void onAltitudeChanged(class osgEarth::ImageLayer *layer)
-  {
-    emit dataModel_.imageLayerAltitudeChanged(layer);
-  }
-
 private:
   MapDataModel& dataModel_;
 };
 
 /** Watch for elevation layer changes */
-class MapDataModel::ElevationLayerListener : public osgEarth::ElevationLayerCallback
+class MapDataModel::ElevationLayerListener : public osgEarth::TileLayerCallback
 {
 public:
   /** Constructor */
@@ -967,7 +949,10 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
   for (osgEarth::ImageLayerVector::const_iterator iter = imageLayers.begin(); iter != imageLayers.end(); ++iter)
   {
     if (imageCallbacks_.contains(iter->get()))
-      iter->get()->removeCallback(imageCallbacks_.find(iter->get())->get());
+    {
+      osgEarth::TileLayer* tileLayer = iter->get();
+      tileLayer->removeCallback(imageCallbacks_.find(iter->get())->get());
+    }
   }
   // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
   assert(imageCallbacks_.size() == static_cast<int>(imageLayers.size()));
@@ -980,7 +965,10 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
   for (osgEarth::ElevationLayerVector::const_iterator iter = elevationLayers.begin(); iter != elevationLayers.end(); ++iter)
   {
     if (elevationCallbacks_.contains(iter->get()))
-      iter->get()->removeCallback(elevationCallbacks_.find(iter->get())->get());
+    {
+      osgEarth::TileLayer* tileLayer = iter->get();
+      tileLayer->removeCallback(elevationCallbacks_.find(iter->get())->get());
+    }
   }
   // Assertion failure means that we were out of sync with map; not a one-to-one with callback-to-layer
   assert(elevationCallbacks_.size() == static_cast<int>(elevationLayers.size()));
@@ -1026,9 +1014,9 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
   for (osgEarth::ImageLayerVector::const_reverse_iterator iter = imageLayers.rbegin(); iter != imageLayers.rend(); ++iter)
   {
     imageGroup_()->insertChild(new ImageLayerItem(imageGroup_(), iter->get()), 0);
-    osg::ref_ptr<osgEarth::ImageLayerCallback> cb = new ImageLayerListener(*this);
+    osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
     imageCallbacks_[iter->get()] = cb.get();
-    (*iter)->addCallback(cb.get());
+    static_cast<osgEarth::TileLayer*>(*iter)->addCallback(cb.get());
   }
 
   osgEarth::ElevationLayerVector elevationLayers;
@@ -1037,9 +1025,9 @@ void MapDataModel::fillModel_(osgEarth::Map *map)
   for (osgEarth::ElevationLayerVector::const_reverse_iterator iter = elevationLayers.rbegin(); iter != elevationLayers.rend(); ++iter)
   {
     elevationGroup_()->insertChild(new ElevationLayerItem(elevationGroup_(), iter->get()), 0);
-    osg::ref_ptr<osgEarth::ElevationLayerCallback> cb = new ElevationLayerListener(*this);
+    osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ElevationLayerListener(*this);
     elevationCallbacks_[iter->get()] = cb.get();
-    (*iter)->addCallback(cb.get());
+    static_cast<osgEarth::TileLayer*>(*iter)->addCallback(cb.get());
   }
 
   FeatureModelLayerVector featureLayers;
@@ -1104,9 +1092,9 @@ void MapDataModel::addImageLayer_(osgEarth::ImageLayer *layer, unsigned int inde
   imageGroup_()->insertChild(new ImageLayerItem(imageGroup_(), layer), index);
   endInsertRows();
 
-  osg::ref_ptr<osgEarth::ImageLayerCallback> cb = new ImageLayerListener(*this);
+  osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ImageLayerListener(*this);
   imageCallbacks_[layer] = cb.get();
-  layer->addCallback(cb.get());
+  static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
   emit imageLayerAdded(layer);
 }
 
@@ -1118,9 +1106,9 @@ void MapDataModel::addElevationLayer_(osgEarth::ElevationLayer *layer, unsigned 
   elevationGroup_()->insertChild(new ElevationLayerItem(elevationGroup_(), layer), index);
   endInsertRows();
 
-  osg::ref_ptr<osgEarth::ElevationLayerCallback> cb = new ElevationLayerListener(*this);
+  osg::ref_ptr<osgEarth::TileLayerCallback> cb = new ElevationLayerListener(*this);
   elevationCallbacks_[layer] = cb.get();
-  layer->addCallback(cb.get());
+  static_cast<osgEarth::TileLayer*>(layer)->addCallback(cb.get());
   emit elevationLayerAdded(layer);
 }
 
@@ -1371,10 +1359,9 @@ QVariant MapDataModel::layerMapIndex_(osgEarth::Layer* layer) const
   if (layer == NULL || !map_.valid())
     return QVariant();
 
-  unsigned int index = MapReindexer::INVALID_INDEX;
   osgEarth::LayerVector layers;
   map_->getLayers(layers);
-  index = indexOf(layers, layer);
+  unsigned int index = indexOf(layers, layer);
 
   if (index != MapReindexer::INVALID_INDEX)
     return index;

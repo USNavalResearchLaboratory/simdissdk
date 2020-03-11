@@ -19,6 +19,7 @@
  * disclose, or release this software.
  *
  */
+#include "osgDB/ReadFile"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
 #include "simData/MemoryDataStore.h"

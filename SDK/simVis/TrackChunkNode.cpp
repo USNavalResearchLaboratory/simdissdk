@@ -21,9 +21,9 @@
  */
 #include <cassert>
 #include "osg/Geode"
-#include "osg/Geometry"
 #include "osgEarth/GeoData"
 #include "osgEarth/LineDrawable"
+#include "osgEarth/PointDrawable"
 #include "simVis/Types.h"
 #include "simVis/TrackChunkNode.h"
 
@@ -31,9 +31,91 @@ namespace simVis
 {
 
 //----------------------------------------------------------------------------
+TrackPointsChunk::TrackPointsChunk(unsigned int maxSize)
+  : maxSize_(maxSize)
+{
+}
+
+/// is this chunk full? i.e. no room for more points?
+bool TrackPointsChunk::isFull() const
+{
+  return (offset_ + count_) >= maxSize_;
+}
+
+/// how many points are rendered by this chunk?
+unsigned int TrackPointsChunk::size() const
+{
+  return count_;
+}
+
+
+/// remove the oldest point in this chunk.
+bool TrackPointsChunk::removeOldestPoint()
+{
+  if (count_ == 0)
+    return false;
+
+  offset_++;
+  count_--;
+  updatePrimitiveSets_();
+  // don't bother updating the bound.
+
+  fixGraphicsAfterRemoval_();
+  return true;
+}
+
+/// remove points from the tail; return the number of points removed.
+unsigned int TrackPointsChunk::removePointsBefore(double t)
+{
+  const unsigned int origOffset = offset_;
+  while (count_ > 0 && times_[offset_] < t)
+  {
+    offset_++;
+    count_--;
+  }
+
+  if (origOffset != offset_)
+  {
+    updatePrimitiveSets_();
+    // would normally dirtyBound(), but don't bother.
+
+    // this does dirtyBound if ribbon mode
+    fixGraphicsAfterRemoval_();
+  }
+
+  return offset_ - origOffset;
+}
+
+void TrackPointsChunk::reset()
+{
+  times_[0] = 0.0;
+  offset_ = 0;
+  count_ = 0;
+}
+
+/// time of the first point in this chunk
+double TrackPointsChunk::getBeginTime() const
+{
+  return count_ >= 1 ? times_[offset_] : -1.0;
+}
+
+/// time of the last point in this chunk
+double TrackPointsChunk::getEndTime() const
+{
+  return count_ >= 1 ? times_[offset_ + count_ - 1] : -1.0;
+}
+
+/// is this chunk empty?
+bool TrackPointsChunk::isEmpty_() const
+{
+  return count_ == 0;
+}
+
+
+//----------------------------------------------------------------------------
 /** Creates a new chunk with a maximum size. */
 TrackChunkNode::TrackChunkNode(unsigned int maxSize, const osgEarth::SpatialReference* srs, simData::TrackPrefs_Mode mode)
-  : maxSize_(maxSize),
+  : TrackPointsChunk(maxSize),
     srs_(srs),
     mode_(mode)
 {
@@ -48,18 +130,6 @@ TrackChunkNode::~TrackChunkNode()
   ribbon_ = NULL;
   drop_ = NULL;
   srs_ = NULL;
-}
-
-/// is this chunk full? i.e. no room for more points?
-bool TrackChunkNode::isFull() const
-{
-  return (offset_ + count_) >= maxSize_;
-}
-
-/// how many points are rendered by this chunk?
-unsigned int TrackChunkNode::size() const
-{
-  return count_;
 }
 
 /// add a new point to the chunk.
@@ -99,51 +169,6 @@ bool TrackChunkNode::getNewestData(osg::Matrix& out_matrix, double& out_time) co
   return true;
 }
 
-/// remove the oldest point in this chunk.
-bool TrackChunkNode::removeOldestPoint()
-{
-  if (count_ == 0)
-    return false;
-
-  offset_++;
-  count_--;
-  updatePrimitiveSets_();
-  // don't bother updating the bound.
-
-  // this does dirtyBound if ribbon mode
-  fixRibbon_();
-  return true;
-}
-
-/// remove points from the tail; return the number of points removed.
-unsigned int TrackChunkNode::removePointsBefore(double t)
-{
-  const unsigned int origOffset = offset_;
-  while (count_ > 0 && times_[offset_] < t)
-  {
-    offset_++;
-    count_--;
-  }
-
-  if (origOffset != offset_)
-  {
-    updatePrimitiveSets_();
-    // would normally dirtyBound(), but don't bother.
-
-    // this does dirtyBound if ribbon mode
-    fixRibbon_();
-  }
-
-  return offset_ - origOffset;
-}
-
-void TrackChunkNode::reset()
-{
-  times_[0] = 0.0;
-  offset_ = 0;
-  count_ = 0;
-}
-
 /// allocate the graphical elements for this chunk.
 void TrackChunkNode::allocate_()
 {
@@ -161,18 +186,14 @@ void TrackChunkNode::allocate_()
   if (mode_ == simData::TrackPrefs_Mode_POINT)
   {
     // center line (point mode)
-    centerPoints_ = new osg::Geometry();
-    centerPoints_->setUseVertexBufferObjects(true);
-    centerPoints_->setUseDisplayList(false);
+    centerPoints_ = new osgEarth::PointDrawable();
     centerPoints_->setDataVariance(osg::Object::DYNAMIC);
-    osg::Vec3Array* verts = new osg::Vec3Array();
-    verts->assign(maxSize_, osg::Vec3());
-    centerPoints_->setVertexArray(verts);
-    osg::Vec4Array* colors = new osg::Vec4Array();
-    colors->setBinding(osg::Array::BIND_PER_VERTEX);
-    colors->assign(maxSize_, simVis::Color::White);
-    centerPoints_->setColorArray(colors);
-    centerPoints_->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, offset_, count_));
+    centerPoints_->allocate(maxSize_);
+    centerPoints_->setColor(simVis::Color::White);
+    // finish() will create the primitive set, allowing us to micromanage first/count
+    centerPoints_->finish();
+    centerPoints_->setFirst(offset_);
+    centerPoints_->setCount(count_);
     this->addChild(centerPoints_.get());
   }
   else
@@ -207,41 +228,6 @@ void TrackChunkNode::allocate_()
   world2local_ = osg::Matrixd::identity();
 }
 
-/// time of the first point in this chunk
-double TrackChunkNode::getStartTime_() const
-{
-  return count_ >= 1 ? times_[offset_] : -1.0;
-}
-
-/// time of the last point in this chunk
-double TrackChunkNode::getEndTime_() const
-{
-  return count_ >= 1 ? times_[offset_+count_-1] : -1.0;
-}
-
-/// is this chunk empty?
-bool TrackChunkNode::isEmpty_() const
-{
-  return count_ == 0;
-}
-
-/// remove all the points in this chunk that occur after the timestamp
-unsigned int TrackChunkNode::removePointsAtAndBeyond_(double t)
-{
-  const unsigned int origCount = count_;
-  while (count_ > 0 && times_[offset_+count_-1] >= t)
-  {
-    count_--;
-  }
-
-  if (origCount != count_)
-  {
-    updatePrimitiveSets_();
-  }
-
-  return origCount - count_;
-}
-
 /// appends a new local point to each geometry set.
 void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, const osg::Vec2& hostBounds)
 {
@@ -255,13 +241,8 @@ void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, 
   if (mode_ == simData::TrackPrefs_Mode_POINT)
   {
     // and update the center points track as well:
-    osg::Vec3Array& centerPointsVerts = static_cast<osg::Vec3Array&>(*centerPoints_->getVertexArray());
-    centerPointsVerts[i] = local;
-    centerPointsVerts.dirty();
-    osg::Vec4Array& centerPointsColors = static_cast<osg::Vec4Array&>(*centerPoints_->getColorArray());
-    centerPointsColors[i] = color;
-    centerPointsColors.dirty();
-    centerPoints_->dirtyBound();
+    centerPoints_->setVertex(i, local);
+    centerPoints_->setColor(i, color);
     return;
   }
 
@@ -314,9 +295,8 @@ void TrackChunkNode::updatePrimitiveSets_()
 {
   if (mode_ == simData::TrackPrefs_Mode_POINT)
   {
-    osg::DrawArrays& centerPointsPrimSet = static_cast<osg::DrawArrays&>(*centerPoints_->getPrimitiveSet(0));
-    centerPointsPrimSet.setFirst(offset_);
-    centerPointsPrimSet.setCount(count_);
+    centerPoints_->setFirst(offset_);
+    centerPoints_->setCount(count_);
     return;
   }
 
@@ -338,7 +318,7 @@ void TrackChunkNode::updatePrimitiveSets_()
 }
 
 // only to be called when points are deleted, so that ribbon visual can be fixed to not show links to deleted point
-void TrackChunkNode::fixRibbon_()
+void TrackChunkNode::fixGraphicsAfterRemoval_()
 {
   if (mode_ == simData::TrackPrefs_Mode_RIBBON && !isEmpty_() && offset_ > 0)
   {

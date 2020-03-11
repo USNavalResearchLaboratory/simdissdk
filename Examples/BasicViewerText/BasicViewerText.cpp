@@ -24,7 +24,7 @@
  * BasicViewerText is the BasicViewer example with Help overlay removed and various HudManager HudText elements added.
  * It demonstrates HudText layout behaviors.
  */
-
+#include "osgDB/ReadFile"
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"
@@ -234,7 +234,7 @@ int main(int argc, char** argv)
   simVis::View* superHUD = new simVis::View();
   superHUD->setUpViewAsHUD(mainView);
   mainView->getViewManager()->addView(superHUD);
-  simUtil::HudManager hm(superHUD);
+  simUtil::HudManager hm(superHUD, superHUD->getOrCreateHUD());
 
   // Create a background for some of the text using a large hyphen
   osg::ref_ptr<simUtil::HudText> background1 = hm.createText("-", 130, 132, false, false);

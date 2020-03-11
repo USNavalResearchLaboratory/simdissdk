@@ -127,6 +127,7 @@ public:
 private:
   /** Declared but not defined to keep cppCheck warning free */
   ButtonActions(const ButtonActions& rhs);
+  ButtonActions& operator=(ButtonActions& rhs);
 
   /** Sets the text and tooltip on the "Load" button */
   void setLoadTextAndTooltips_(const QString& filterName)
@@ -705,6 +706,14 @@ void EntityTreeComposite::setUseCenterAction(bool use, const QString& reason)
     centerAction_->setEnabled(false);
 }
 
+void EntityTreeComposite::setTreeView(bool useTreeView)
+{
+  if (!treeViewUsable_)
+    return;
+
+  setTreeView_(useTreeView);
+}
+
 void EntityTreeComposite::onItemsChanged_(const QList<uint64_t>& ids)
 {
   bool empty = ids.isEmpty();
@@ -743,11 +752,17 @@ void EntityTreeComposite::centerOnSelection_()
 
 void EntityTreeComposite::setTreeView_(bool useTreeView)
 {
+  // Return early if nothing changed
+  if (entityTreeWidget_->isTreeView() == useTreeView && toggleTreeViewAction_->isChecked() == useTreeView)
+    return;
+
   // Toggle the tree view
   entityTreeWidget_->toggleTreeView(useTreeView);
   // Update related UI components
   toggleTreeViewAction_->setChecked(useTreeView);
   updateActionEnables_();
+
+  emit treeViewChanged(useTreeView);
 }
 
 void EntityTreeComposite::updateActionEnables_()

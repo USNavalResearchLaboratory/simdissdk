@@ -12,6 +12,6 @@ add_executable(example_projectors ${PROJECT_FILES})
 target_link_libraries(example_projectors PRIVATE simVis simUtil)
 set_target_properties(example_projectors PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Projectors"
+    PROJECT_LABEL "Projectors"
 )
 vsi_install_target(example_projectors SDK_Examples)

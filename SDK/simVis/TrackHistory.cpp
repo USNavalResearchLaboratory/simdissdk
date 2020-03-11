@@ -22,6 +22,7 @@
 #include <cassert>
 
 #include "osgEarth/Capabilities"
+#include "osgEarth/GLUtils"
 #include "osgEarth/Horizon"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/Registry"
@@ -33,7 +34,6 @@
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/PlatformFilter.h"
-#include "simVis/PointSize.h"
 #include "simVis/Shaders.h"
 #include "simVis/Types.h"
 #include "simVis/Utils.h"
@@ -576,7 +576,7 @@ void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, con
     const double lineWidth = osg::clampAbove(prefs.linewidth(), 1.0);
     osg::StateSet* stateSet = this->getOrCreateStateSet();
     osgEarth::LineDrawable::setLineWidth(stateSet, lineWidth);
-    PointSize::setValues(stateSet, lineWidth, osg::StateAttribute::ON);
+    osgEarth::GLUtils::setPointSize(stateSet, lineWidth, osg::StateAttribute::ON);
   }
 
   if (force || PB_FIELD_CHANGED(&lastPrefs, &prefs, tracklength))

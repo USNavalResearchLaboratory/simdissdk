@@ -195,8 +195,8 @@ namespace simVis
     void init_();
     /** Detects engine driver problems and sets internal state appropriately */
     void detectTerrainEngineDriverProblems_();
-    /** Returns the unique hash identifying the layer. Taken from osgEarth::TerrainLayer::setCache method */
-    std::string getLayerHash_(osgEarth::TerrainLayer* layer) const;
+    /** Returns the unique hash identifying the layer. Taken from osgEarth::TileLayer::setCache method */
+    std::string getLayerHash_(osgEarth::TileLayer* layer) const;
     /** Replace image layers in currentMap with image layers in newMap, unless the layer already exists in currentMap. Removes old layers not in newMap */
     void updateImageLayers_(const osgEarth::Map& newMap, osgEarth::Map* currentMap);
     /** Replace elevation layers in currentMap with image layers in newMap, unless the layer already exists in currentMap. Removes old layers not in newMap */

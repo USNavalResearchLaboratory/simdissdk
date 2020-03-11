@@ -44,8 +44,7 @@ GogNodeInterface* TextAnnotation::deserialize(
 
   p.parseGeometry<Geometry>(parsedShape);
   GogNodeInterface* rv = NULL;
-  osgEarth::LabelNode* label = NULL;
-  label = new osgEarth::LabelNode(text, p.style_);
+  osgEarth::LabelNode* label = new osgEarth::LabelNode(text, p.style_);
   label->setName("GOG Label");
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {

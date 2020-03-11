@@ -157,8 +157,11 @@ void MruList::fixActions_()
     action->setVisible(true);
     action->setEnabled(true);
 
-    // Text looks like: "&3 file.asi"
-    action->setText(tr("&%1 %2").arg(idx + 1).arg(fi.fileName()));
+    // Text looks like: "&3 file.asi"; can only specify shortcuts (&) for items numbered < 10.
+    if (idx < 9)
+      action->setText(tr("&%1 %2").arg(idx + 1).arg(fi.fileName()));
+    else
+      action->setText(tr("%1 %2").arg(idx + 1).arg(fi.fileName()));
 
     // We're showing an action, so we want to show the separators
     showSeparators = true;

@@ -218,6 +218,9 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
       }
     }
 
+    // degreeAngle was floor() above so just checking for 360 is OK
+    if (degreeAngle == 360.0)
+      degreeAngle = 0.0;
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDeg;
@@ -257,6 +260,9 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
       }
     }
 
+    // degreeAngle was floor() above so just checking for 360 is OK
+    if (degreeAngle == 360.0)
+      degreeAngle = 0.0;
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
 
     std::stringstream strDeg;
@@ -285,6 +291,9 @@ std::string getAngleString(double radianAngle, GeodeticFormat format, bool allNu
   case FMT_DEGREES:
   default:
   {
+    const double rounding = 5.0 / pow(10.0, precision + 1.0);
+    if ((degreeAngle + rounding > 360.0) || simCore::areEqual(degreeAngle + rounding, 360.0))
+      degreeAngle = 0.0;
     degreeAngle = (negative && printNegativeSign) ? -degreeAngle : degreeAngle;
     std::stringstream str;
     str.setf(std::ios::fixed, std::ios::floatfield);

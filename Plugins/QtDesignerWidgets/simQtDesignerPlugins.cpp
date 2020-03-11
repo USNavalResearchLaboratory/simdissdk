@@ -27,11 +27,12 @@
 #include "ColorWidgetPlugin.h"
 #include "CategoryDataBreadcrumbsPlugin.h"
 #include "CategoryFilterWidgetPlugin.h"
-#include "CategoryFilterWidget2Plugin.h"
 #include "DataTableComboBoxPlugin.h"
 #include "DirectorySelectorWidgetPlugin.h"
 #include "DockWidgetPlugin.h"
+#ifdef HAVE_SIMVIS
 #include "EntityLineEditPlugin.h"
+#endif
 #include "EntityTreeCompositePlugin.h"
 #include "EntityFilterLineEditPlugin.h"
 #include "EntityTypeFilterWidgetPlugin.h"
@@ -48,10 +49,7 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
 {
   // Add all plug-in widgets here
   widgetFactories_.append(new CategoryDataBreadcrumbsPlugin(this));
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   widgetFactories_.append(new CategoryFilterWidgetPlugin(this));
-#endif
-  widgetFactories_.append(new CategoryFilterWidget2Plugin(this));
   widgetFactories_.append(new ColorButtonPlugin(this));
 #ifdef HAVE_OSG
   widgetFactories_.append(new ColorGradientWidgetPlugin(this));
@@ -61,7 +59,9 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   widgetFactories_.append(new DirectorySelectorWidgetPlugin(this));
   widgetFactories_.append(new DockWidgetPlugin(this));
   widgetFactories_.append(new EntityFilterLineEditPlugin(this));
+#ifdef HAVE_SIMVIS
   widgetFactories_.append(new EntityLineEditPlugin(this));
+#endif
   widgetFactories_.append(new EntityTreeCompositePlugin(this));
   widgetFactories_.append(new EntityTypeFilterWidgetPlugin(this));
   widgetFactories_.append(new FileSelectorWidgetPlugin(this));

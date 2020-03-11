@@ -9,14 +9,12 @@ set(PROJ_HEADERS
     simQtDesignerPlugins.h
     CategoryDataBreadcrumbsPlugin.h
     CategoryFilterWidgetPlugin.h
-    CategoryFilterWidget2Plugin.h
     ColorButtonPlugin.h
     ColorWidgetPlugin.h
     DataTableComboBoxPlugin.h
     DirectorySelectorWidgetPlugin.h
     DockWidgetPlugin.h
     EntityFilterLineEditPlugin.h
-    EntityLineEditPlugin.h
     EntityTreeCompositePlugin.h
     EntityTypeFilterWidgetPlugin.h
     FileSelectorWidgetPlugin.h
@@ -32,14 +30,12 @@ set(PROJ_HEADERS
 set(PROJ_SOURCES
     CategoryDataBreadcrumbsPlugin.cpp
     CategoryFilterWidgetPlugin.cpp
-    CategoryFilterWidget2Plugin.cpp
     ColorButtonPlugin.cpp
     ColorWidgetPlugin.cpp
     DataTableComboBoxPlugin.cpp
     DirectorySelectorWidgetPlugin.cpp
     DockWidgetPlugin.cpp
     EntityFilterLineEditPlugin.cpp
-    EntityLineEditPlugin.cpp
     EntityTreeCompositePlugin.cpp
     EntityTypeFilterWidgetPlugin.cpp
     FileSelectorWidgetPlugin.cpp
@@ -55,6 +51,11 @@ set(PROJ_SOURCES
 if(OSG_FOUND)
     list(APPEND PROJ_HEADERS ColorGradientWidgetPlugin.h)
     list(APPEND PROJ_SOURCES ColorGradientWidgetPlugin.cpp)
+endif()
+
+if(TARGET simVis)
+    list(APPEND PROJ_HEADERS EntityLineEditPlugin.h)
+    list(APPEND PROJ_SOURCES EntityLineEditPlugin.cpp)
 endif()
 
 source_group(Headers FILES ${PROJ_HEADERS})
@@ -91,12 +92,13 @@ add_library(simQtDesignerWidgets SHARED ${PROJ_SOURCES} ${PROJ_HEADERS}
 target_link_libraries(simQtDesignerWidgets PRIVATE simQt simData)
 if(TARGET simVis)
      target_link_libraries(simQtDesignerWidgets PRIVATE simVis)
+     target_compile_definitions(simQtDesignerWidgets PRIVATE HAVE_SIMVIS)
 endif()
 target_include_directories(simQtDesignerWidgets PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(simQtDesignerWidgets PRIVATE QDESIGNER_EXPORT_WIDGETS)
 set_target_properties(simQtDesignerWidgets PROPERTIES
     FOLDER "Qt Designer Plugins"
-    PROJECT_LABEL "Plugin - simQt Designer Widgets")
+    PROJECT_LABEL "simQt Designer Widgets")
 
 if(OSG_FOUND)
     target_compile_definitions(simQtDesignerWidgets PRIVATE HAVE_OSG)

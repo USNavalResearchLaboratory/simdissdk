@@ -47,7 +47,6 @@
 #include "simVis/PlatformFilter.h"
 #include "simVis/Platform.h"
 #include "simVis/PlatformModel.h"
-#include "simVis/PointSize.h"
 #include "simVis/PolygonStipple.h"
 #include "simVis/Projector.h"
 #include "simVis/ProjectorManager.h"
@@ -271,7 +270,8 @@ public:
     if (!prefs.surfaceclamping() || !coordSurfaceClamping_.isValid())
       return PlatformTspiFilterManager::POINT_UNCHANGED;
 
-    coordSurfaceClamping_.clampCoordToMapSurface(llaCoord);
+    osgEarth::ElevationEnvelope::Context& context = lut_[props.id()];
+    coordSurfaceClamping_.clampCoordToMapSurface(llaCoord, context);
 
     return PlatformTspiFilterManager::POINT_CHANGED;
   }
@@ -282,13 +282,21 @@ public:
     coordSurfaceClamping_.setMapNode(map);
   }
 
+  /** Changes the flag for using maximum elevation precision */
   void setUseMaxElevPrec(bool useMaxElev)
   {
     coordSurfaceClamping_.setUseMaxElevPrec(useMaxElev);
   }
 
+  /** Removes an entity from the optimization look-up table */
+  void removeEntity(simData::ObjectId id)
+  {
+    lut_.erase(id);
+  }
+
 private:
   CoordSurfaceClamping coordSurfaceClamping_;
+  std::map<simData::ObjectId, osgEarth::ElevationEnvelope::Context> lut_;
 };
 
 
@@ -464,7 +472,6 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   LobGroupNode::installShaderProgram(stateSet);
   OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);
-  PointSize::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
 }
 
@@ -600,6 +607,9 @@ void ScenarioManager::removeEntity(simData::ObjectId id)
   {
     EntityNode* entity = record->getEntityNode();
     notifyToolsOfRemove_(entity);
+
+    // Remove it from the surface clamping algorithm
+    surfaceClamping_->removeEntity(id);
 
     // If this is a projector node, delete this from the projector manager
     if (entity->type() == simData::PROJECTOR)

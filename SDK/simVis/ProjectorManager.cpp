@@ -62,7 +62,7 @@ simData::ObjectId ProjectorManager::ProjectorLayer::id() const
 class UpdateProjMatrix : public osgEarth::Layer::TraversalCallback
 {
 public:
-  UpdateProjMatrix(ProjectorNode* node) : proj_(node)
+  explicit UpdateProjMatrix(ProjectorNode* node) : proj_(node)
   {
     //nop
   }
@@ -193,10 +193,7 @@ void ProjectorManager::registerProjector(ProjectorNode* proj)
   // Set texture from projector into state set
   projStateSet->setTextureAttribute(PROJECTOR_TEXTURE_UNIT, proj->getTexture());
 
-  projStateSet->addUniform(proj->projectorActive_.get());
-  projStateSet->addUniform(proj->projectorAlpha_.get());
-  projStateSet->addUniform(proj->texProjDirUniform_.get());
-  projStateSet->addUniform(proj->texProjPosUniform_.get());
+  proj->addUniforms(projStateSet);
 }
 
 void ProjectorManager::unregisterProjector(const ProjectorNode* proj)

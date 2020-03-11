@@ -12,6 +12,6 @@ add_executable(example_observermaker ${PROJECT_FILES})
 target_link_libraries(example_observermaker PRIVATE simVis)
 set_target_properties(example_observermaker PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Observer Maker"
+    PROJECT_LABEL "Observer Maker"
 )
 vsi_install_target(example_observermaker SDK_Examples)

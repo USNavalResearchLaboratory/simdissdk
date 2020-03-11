@@ -16,7 +16,7 @@ add_executable(SimNotifyTests ${SimNotifyTestFiles} NotifySupport.h NotifySuppor
 target_link_libraries(SimNotifyTests PRIVATE simNotify simCore)
 set_target_properties(SimNotifyTests PROPERTIES
     FOLDER "Unit Tests"
-    PROJECT_LABEL "Unit Tests - SimNotify"
+    PROJECT_LABEL "simNotify Test"
 )
 add_test(NAME TestNotify1 COMMAND SimNotifyTests TestNotify)
 add_test(NAME TestNotify2 COMMAND SimNotifyTests NotifyTest)

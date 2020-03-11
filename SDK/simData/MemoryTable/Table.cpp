@@ -504,11 +504,24 @@ void Table::limitData_(size_t numToKeep, double timeWindow)
   }
 }
 
-simData::DelayedFlushContainerPtr Table::flush()
+simData::DelayedFlushContainerPtr Table::flush(TableColumnId id)
 {
   DelayedFlushContainerComposite* deq = new DelayedFlushContainerComposite();
-  for (std::vector<SubTable*>::const_iterator i = subtables_.begin(); i != subtables_.end(); ++i)
-    deq->push_back((*i)->flush());
+  // If flushing all columns, iterate through all subtables
+  if (id == -1)
+  {
+    for (std::vector<SubTable*>::const_iterator i = subtables_.begin(); i != subtables_.end(); ++i)
+      deq->push_back((*i)->flush());
+  }
+  // If flushing only one column, send the flush only to the subtable containing that column.
+  // Note that the flush can't go straight to the column because the subtable may need to split
+  else
+  {
+    SubTable::SplitObserverPtr splitObserver(new MoveColumnsToNewSubTable(*this));
+    auto toFlush = columns_.find(id);
+    if (toFlush != columns_.end())
+      toFlush->second.first->flush(id, splitObserver);
+  }
   return DelayedFlushContainerPtr(deq);
 }
 

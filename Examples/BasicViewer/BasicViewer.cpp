@@ -25,7 +25,6 @@
  * map control. It shows how to adjust window appearance, how to add or remove
  * inset views, and how to change the motion model.
  */
-
 #include "simNotify/Notify.h"
 #include "simCore/Common/Version.h"
 #include "simCore/Common/HighPerformanceGraphics.h"

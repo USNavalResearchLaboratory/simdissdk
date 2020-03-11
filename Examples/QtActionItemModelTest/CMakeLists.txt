@@ -20,7 +20,7 @@ target_link_libraries(example_qtactionitemmodeltest PRIVATE simQt)
 target_include_directories(example_qtactionitemmodeltest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(example_qtactionitemmodeltest PROPERTIES
     FOLDER "Examples"
-    PROJECT_LABEL "Example - Qt Action Item Model Test"
+    PROJECT_LABEL "Qt Action Item Model Test"
 )
 vsi_install_target(example_qtactionitemmodeltest SDK_Examples)
 

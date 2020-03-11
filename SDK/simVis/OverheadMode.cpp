@@ -139,8 +139,8 @@ namespace
     osg::ref_ptr<osg::StateSet> _stateset;
 
     OceanOverheadModeCallback()
+      : _stateset(new osg::StateSet())
     {
-      _stateset = new osg::StateSet();
       // draw the ocean in the same render bin as the terrain
       _stateset->setRenderBinDetails(simVis::BIN_TERRAIN, simVis::BIN_GLOBAL_SIMSDK, osg::StateSet::OVERRIDE_RENDERBIN_DETAILS);
       // disable depth buffer writes

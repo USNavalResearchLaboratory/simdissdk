@@ -349,7 +349,7 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
     osgEarth::GeoPoint currGeoPoint(state.mapNode_->getMapSRS()->getGeographicSRS(), 0, 0, 0, osgEarth::ALTMODE_ABSOLUTE);
 
     // Iterate over the points, sampling the elevation at each until the target becomes invisible:
-    for (std::vector<simCore::Vec3>::const_iterator iter = points.begin(); iter != points.end(); iter++)
+    for (std::vector<simCore::Vec3>::const_iterator iter = points.begin(); iter != points.end(); ++iter)
     {
       currGeoPoint.x() = iter->lon() * simCore::RAD2DEG;
       currGeoPoint.y() = iter->lat() * simCore::RAD2DEG;

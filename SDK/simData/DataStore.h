@@ -304,10 +304,56 @@ public: // methods
   /// Types of flushes supported by the flush method
   enum FlushType
   {
-    NON_RECURSIVE,   ///< Flush only the supplied entity and keep any static point
-    NON_RECURSIVE_TSPI_STATIC, ///< Flush only the supplied PLATFORM and flush any static TSPI point
-    RECURSIVE, ///< Flush the supplied entity and any children and keep any static point
-    NON_RECURSIVE_TSPI_ONLY  ///< Flush TSPI only including static points, keep category data, generic data and data tables
+    /**
+     * Flush only the supplied entity and keep any static point
+     * Flushes Static points: No
+     * Flushes Commands: Yes
+     * Flushes Data Tables: No
+     * Flushes Generic Data: Yes
+     * Flushes Category Data: Yes
+     * Applies same operation to Children: No
+    */
+    NON_RECURSIVE,
+    /**
+    * Flush only the supplied entity and flush any static point
+    * Flushes Static points: Yes
+    * Flushes Commands: Yes
+    * Flushes Data Tables: No
+    * Flushes Generic Data: Yes
+    * Flushes Category Data: Yes
+    * Applies same operation to Children: No
+    */
+    NON_RECURSIVE_TSPI_STATIC,
+    /**
+     * Flush the supplied entity and any children and keep any static point
+     * Flushes Static points: No
+     * Flushes Commands: Yes
+     * Flushes Data Tables: Yes
+     * Flushes Generic Data: Yes
+     * Flushes Category Data: Yes
+     * Applies same operation to Children: Yes
+    */
+    RECURSIVE,
+    /**
+     * Flush TSPI only including static points, keep category data, generic data and data tables
+     * Flushes Static points: Yes
+     * Flushes Commands: No
+     * Flushes Data Tables: No
+     * Flushes Generic Data: No
+     * Flushes Category Data: No
+     * Applies same operation to Children: No
+    */
+    NON_RECURSIVE_TSPI_ONLY,
+    /**
+     * Flushes points and commands for the supplied entity.  Does not flush category data, generic data or data tables.
+     * Flushes Static points: Yes
+     * Flushes Commands: Yes
+     * Flushes Data Tables: No
+     * Flushes Generic Data: No
+     * Flushes Category Data: No
+     * Applies same operation to Children: No
+    */
+    NON_RECURSIVE_DATA
   };
 
   /**

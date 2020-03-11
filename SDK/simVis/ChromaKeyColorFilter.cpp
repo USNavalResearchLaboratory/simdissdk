@@ -70,8 +70,7 @@ ChromaKeyColorFilter::ChromaKeyColorFilter(const osgEarth::Config& conf)
   val[2] = conf.value("b", 0.0);
   setColor(val);
 
-  float distance = 0.0f;
-  distance = conf.value("distance", 0.0f);
+  float distance = conf.value("distance", 0.0f);
   setDistance(distance);
 }
 

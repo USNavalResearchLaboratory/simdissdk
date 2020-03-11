@@ -24,7 +24,7 @@
 #include <QList>
 #include "simQt/ConsoleDataModel.h"
 #ifdef HAVE_SIMDATA
-#include "simQt/EntityLineEdit.h"
+#include "simQt/EntityStateFilter.h"
 #include "simQt/EntityTreeComposite.h"
 #endif
 #include "simQt/SettingsModel.h"
