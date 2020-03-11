@@ -197,7 +197,7 @@ osgEarth::Map* DbConfigurationFile::loadLegacyConfigFile(const std::string& file
     gotValidFirstLine = true;
     if (!map)
     {
-      map = DbConfigurationFile::createDefaultMap_();
+      map = new osgEarth::Map();
       map->beginUpdate();
     }
 
@@ -497,14 +497,6 @@ std::string DbConfigurationFile::findTokenValue_(const std::vector<std::string>&
       return simCore::StringUtils::after(*iter, '=');
   }
   return std::string();
-}
-
-osgEarth::Map* DbConfigurationFile::createDefaultMap_()
-{
-  // configure an EGM96 MSL globe.for the Map
-  osgEarth::Map* map = new osgEarth::Map();
-  map->setProfile(osgEarth::Profile::create("wgs84", "egm96"));
-  return map;
 }
 
 osg::Node* DbConfigurationFile::readEarthFile(std::istream& istream, const std::string& relativeTo)
