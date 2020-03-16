@@ -363,7 +363,7 @@ QVariant CategoryTreeModel::CategoryItem::data(int role) const
     return regExpString_;
   case ROLE_LOCKED_STATE:
     return locked_;
-  case Qt::BackgroundColorRole:
+  case Qt::BackgroundRole:
     if (contributesToFilter_)
       return CONTRIBUTING_BG_COLOR;
     return MIDLIGHT_BG_COLOR;
@@ -1504,9 +1504,15 @@ QSize ToggleSwitchPainter::sizeHint(const StyleOptionToggleSwitch& option) const
   QFontMetrics fontMetrics(option.font);
   if (!option.on.text.isEmpty() || !option.off.text.isEmpty())
   {
+#if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
     const int onWidth = fontMetrics.width(option.on.text);
     const int offWidth = fontMetrics.width(option.off.text);
     const int lockWidth = fontMetrics.width(option.lock.text);
+#else
+    const int onWidth = fontMetrics.horizontalAdvance(option.on.text);
+    const int offWidth = fontMetrics.horizontalAdvance(option.off.text);
+    const int lockWidth = fontMetrics.horizontalAdvance(option.lock.text);
+#endif
     textWidth = qMax(onWidth, offWidth);
     textWidth = qMax(lockWidth, textWidth);
   }

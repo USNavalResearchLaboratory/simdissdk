@@ -132,22 +132,23 @@ void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity 
 bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
 {
   // Should only pass in a valid index
-  assert(index.model() != NULL);
+  const QAbstractItemModel* model = index.model();
+  assert(model != NULL);
   // Make sure pointers are valid
-  if ((index.model() == NULL) || (regExp_ == NULL))
+  if ((model == NULL) || (regExp_ == NULL))
     return false;
 
   // Check if this index passes the filter, return true if it does
-  QString name = index.model()->data(index).toString();
+  const QString name = model->data(index).toString();
   bool rv = regExp_->match(name.toStdString());
   if (rv)
     return rv;
 
   // Index didn't pass, check its children
-  int numChildren = index.model()->rowCount(index);
+  int numChildren = model->rowCount(index);
   for (int i = 0; i < numChildren; ++i)
   {
-    const QModelIndex& childIdx = index.child(i, 0);
+    const QModelIndex& childIdx = model->index(i, 0, index);
     // Check if this child index (or any of its children)
     // passes the filter, return true if any of them pass
     rv = acceptIndex_(childIdx);
