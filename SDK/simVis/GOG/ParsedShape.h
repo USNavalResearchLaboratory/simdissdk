@@ -159,6 +159,7 @@ enum ShapeParameter
   GOG_3D_OFFSETROLL,
   GOG_TEXTOUTLINECOLOR,
   GOG_TEXTOUTLINETHICKNESS,
+  GOG_ICON,
 
   // Set to non-empty when GOG is absolute
   GOG_ABSOLUTE = 200,

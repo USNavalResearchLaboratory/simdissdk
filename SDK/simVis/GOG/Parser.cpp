@@ -269,6 +269,10 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
     {
       // NOTE: this will only store comments within a start/end block
       currentMetaData.metadata += line + "\n";
+
+      // process special KML icon comment keywords
+      if (tokens.size () > 2 && tokens[1] == "kml_icon")
+        current.set(GOG_ICON, tokens[2]);
     }
     else if (tokens[0] == "version")
     {

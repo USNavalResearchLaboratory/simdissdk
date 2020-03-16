@@ -39,7 +39,6 @@ namespace osgEarth{
   class GeoPositionNode;
   class LabelNode;
   class LocalGeometryNode;
-  class GeoPositionNode;
   class PlaceNode;
 }
 
@@ -568,9 +567,7 @@ class SDKVIS_EXPORT LabelNodeInterface : public GogNodeInterface
 {
 public:
   /** Constructor */
-  LabelNodeInterface(osgEarth::LabelNode* labelNode, const simVis::GOG::GogMetaData& metaData);
-  /** Constructor */
-  LabelNodeInterface(osgEarth::PlaceNode* placeNode, const simVis::GOG::GogMetaData& metaData);
+  LabelNodeInterface(osgEarth::GeoPositionNode* labelNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~LabelNodeInterface() {}
   virtual int getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;

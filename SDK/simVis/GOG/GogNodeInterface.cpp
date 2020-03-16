@@ -25,18 +25,19 @@
 #include <limits>
 #include "osg/Depth"
 #include "osg/PolygonOffset"
+#include "osgDB/ReadFile"
+#include "osgEarth/AltitudeSymbol"
+#include "osgEarth/FeatureNode"
+#include "osgEarth/GeoPositionNode"
+#include "osgEarth/LabelNode"
+#include "osgEarth/LineSymbol"
+#include "osgEarth/LocalGeometryNode"
+#include "osgEarth/PlaceNode"
+#include "osgEarth/PolygonSymbol"
 #include "osgEarth/Units"
 #include "osgEarth/Style"
 #include "osgEarth/TextSymbol"
-#include "osgEarth/PolygonSymbol"
-#include "osgEarth/LineSymbol"
-#include "osgEarth/AltitudeSymbol"
 #include "osgEarth/RenderSymbol"
-#include "osgEarth/LabelNode"
-#include "osgEarth/PlaceNode"
-#include "osgEarth/GeoPositionNode"
-#include "osgEarth/LocalGeometryNode"
-#include "osgEarth/FeatureNode"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -1672,7 +1673,7 @@ void LocalGeometryNodeInterface::setStyle_(const osgEarth::Style& style)
 
 ///////////////////////////////////////////////////////////////////
 
-LabelNodeInterface::LabelNodeInterface(osgEarth::LabelNode* labelNode, const simVis::GOG::GogMetaData& metaData)
+LabelNodeInterface::LabelNodeInterface(osgEarth::GeoPositionNode* labelNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(labelNode, metaData),
     labelNode_(labelNode),
     outlineThickness_(simData::TO_THIN)
@@ -1688,24 +1689,6 @@ LabelNodeInterface::LabelNodeInterface(osgEarth::LabelNode* labelNode, const sim
 
   // override - labels should not be flattened in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(false, labelNode);
-}
-
-LabelNodeInterface::LabelNodeInterface(osgEarth::PlaceNode* placeNode, const simVis::GOG::GogMetaData& metaData)
-  : GogNodeInterface(placeNode, metaData),
-    labelNode_(placeNode),
-    outlineThickness_(simData::TO_THIN)
-{
-  if (labelNode_.valid())
-  {
-    style_ = labelNode_->getStyle();
-    initializeFromGeoPositionNode_(*placeNode);
-    initializeAltitudeSymbol_();
-  }
-  initializeFillColor_();
-  initializeLineColor_();
-
-  // override - places should not be flattened in overhead mode.
-  simVis::OverheadMode::enableGeometryFlattening(false, placeNode);
 }
 
 int LabelNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const
