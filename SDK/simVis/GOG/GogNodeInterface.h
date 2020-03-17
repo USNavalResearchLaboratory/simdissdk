@@ -429,7 +429,7 @@ protected: // methods
   */
   void setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, double altitudeAdjustment);
 
-  /** Helper method for initializeing hasMapNode_ and altitude_ from the specified GeoPosition node. */
+  /** Helper method for initializing hasMapNode_ and altitude_ from the specified GeoPosition node. */
   void initializeFromGeoPositionNode_(const osgEarth::GeoPositionNode& node);
 
 protected: // data
