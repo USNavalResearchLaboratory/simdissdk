@@ -37,6 +37,7 @@ namespace osgEarth{
   class FeatureNode;
   class GeometryNode;
   class GeoPositionNode;
+  class ImageOverlay;
   class LabelNode;
   class LocalGeometryNode;
   class PlaceNode;
@@ -678,6 +679,26 @@ public:
   ConeNodeInterface(osgEarth::LocalGeometryNode* localNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~ConeNodeInterface() {}
   virtual void setFillColor(const osg::Vec4f& color);
+};
+
+/**
+* Implementation of GogNodeInterface for an image overlay object, which is eqivalent to a KML ground overlay.
+* Basic implementation since editing KML objects is limited.
+*/
+class SDKVIS_EXPORT ImageOverlayInterface : public GogNodeInterface
+{
+public:
+  ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, const simVis::GOG::GogMetaData& metaData);
+  virtual ~ImageOverlayInterface() {}
+  virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
+
+protected:
+  virtual void adjustAltitude_();
+  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
+  virtual void setStyle_(const osgEarth::Style& style);
+
+private:
+  osg::observer_ptr<osgEarth::ImageOverlay> imageNode_;
 };
 
 }}

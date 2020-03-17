@@ -29,6 +29,7 @@
 #include "osgEarth/AltitudeSymbol"
 #include "osgEarth/FeatureNode"
 #include "osgEarth/GeoPositionNode"
+#include "osgEarth/ImageOverlay"
 #include "osgEarth/LabelNode"
 #include "osgEarth/LineSymbol"
 #include "osgEarth/LocalGeometryNode"
@@ -2144,6 +2145,40 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
 
   // Update the color array
   capGeometry->setColorArray(colorArray);
+}
+
+ImageOverlayInterface::ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, const simVis::GOG::GogMetaData& metaData)
+  : GogNodeInterface(imageNode, metaData),
+    imageNode_(imageNode)
+{
+}
+
+int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
+{
+  osg::Vec3d centerPoint = imageNode_->getBound().center();
+
+  const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
+  simCore::CoordinateConverter converter;
+  simCore::Coordinate llaCoord;
+  converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
+  position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
+
+  return 0;
+}
+
+void ImageOverlayInterface::adjustAltitude_()
+{
+  // no-op
+}
+
+void ImageOverlayInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
+{
+  // no-op since this is not officially supported in GOG format, the geometry will be part of the meta-data
+}
+
+void ImageOverlayInterface::setStyle_(const osgEarth::Style& style)
+{
+  // no-op, can't update style
 }
 
 } }

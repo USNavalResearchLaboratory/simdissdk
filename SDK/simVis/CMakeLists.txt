@@ -187,6 +187,7 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/GOGRegistry.h
     ${VIS_INC}GOG/Hemisphere.h
     ${VIS_INC}GOG/HostedLocalGeometryNode.h
+    ${VIS_INC}GOG/ImageOverlay.h
     ${VIS_INC}GOG/LatLonAltBox.h
     ${VIS_INC}GOG/Line.h
     ${VIS_INC}GOG/LineSegs.h
@@ -327,6 +328,7 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/GogNodeInterface.cpp
     ${VIS_SRC}GOG/GOGRegistry.cpp
     ${VIS_SRC}GOG/Hemisphere.cpp
+    ${VIS_SRC}GOG/ImageOverlay.cpp
     ${VIS_SRC}GOG/LatLonAltBox.cpp
     ${VIS_SRC}GOG/Line.cpp
     ${VIS_SRC}GOG/LineSegs.cpp

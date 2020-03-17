@@ -126,7 +126,8 @@ namespace simVis { namespace GOG
     GOG_SPHERE,
     GOG_HEMISPHERE,
     GOG_LATLONALTBOX,
-    GOG_CONE
+    GOG_CONE,
+    GOG_IMAGEOVERLAY
   };
 
   /** Describes the original load format of the shape */

@@ -160,6 +160,7 @@ enum ShapeParameter
   GOG_TEXTOUTLINECOLOR,
   GOG_TEXTOUTLINETHICKNESS,
   GOG_ICON,
+  GOG_LLABOX_ROT, // rotation used by KML ground overlay latlonbox
 
   // Set to non-empty when GOG is absolute
   GOG_ABSOLUTE = 200,
