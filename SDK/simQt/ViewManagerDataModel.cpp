@@ -255,7 +255,7 @@ QVariant ViewManagerDataModel::data(const QModelIndex &index, int role) const
     break;
 
   case VIEW_ROLE:
-    return qVariantFromValue(static_cast<void*>(view));
+    return QVariant::fromValue(static_cast<void*>(view));
   }
   return QVariant();
 }
