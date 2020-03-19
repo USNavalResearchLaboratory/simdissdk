@@ -134,12 +134,14 @@ macro(install_qtplugins dir)
     if(WIN32)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            OPTIONAL
             COMPONENT ThirdPartyLibs
             FILES_MATCHING PATTERN *.dll)
     else()
         # Note that Qt requires the Linux shared objects in the executable's subdirectory (e.g. bin)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            OPTIONAL
             COMPONENT ThirdPartyLibs
             FILES_MATCHING PATTERN *.so)
     endif()
@@ -159,6 +161,7 @@ if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
     # Each install needs platforms and image formats
     install_qtplugins(platforms)
     install_qtplugins(imageformats)
+    install_qtplugins(styles)
 endif()
 
 # At this point, the Widgets package is found -- find the others too
