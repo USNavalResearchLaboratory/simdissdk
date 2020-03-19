@@ -43,8 +43,7 @@ set_target_properties(SimQtTests PROPERTIES
 
 VSI_QT_USE_MODULES(SimQtTests LINK_PRIVATE Widgets)
 
-# Temporarily disabled for Qt 5.14
-# add_test(NAME ActionRegistryTest COMMAND SimQtTests ActionRegistryTest)
+add_test(NAME ActionRegistryTest COMMAND SimQtTests ActionRegistryTest)
 add_test(NAME SettingsTest COMMAND SimQtTests SettingsTest)
 add_test(NAME PersistentLoggerTest COMMAND SimQtTests PersistentLoggerTest)
 add_test(NAME GradientTest COMMAND SimQtTests GradientTest)
@@ -55,3 +54,10 @@ endif()
 if(TARGET simVis)
     add_test(NAME QColorTest COMMAND SimQtTests QColorTest)
 endif()
+
+# Set QT_PLUGIN_PATH, required for Qt 5.14 but not 5.9
+set_tests_properties(
+        ActionRegistryTest
+    PROPERTIES
+        ENVIRONMENT "QT_PLUGIN_PATH=${_qt5Gui_install_prefix}/plugins"
+)
