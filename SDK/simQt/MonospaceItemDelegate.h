@@ -42,8 +42,14 @@ public:
   /** Returns an appropriate size for the selected font */
   virtual QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
+  /** Set an integer offset to the size, e.g. -1 to shrink text by 1 point */
+  void setPointSizeOffset(int offset);
+  /** Retrieve the point size offset */
+  int pointSizeOffset() const;
+
 private:
   QFont* monospaceFont_;
+  int pointSizeOffset_;
 };
 
 }

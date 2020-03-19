@@ -26,7 +26,8 @@ namespace simQt {
 
 MonospaceItemDelegate::MonospaceItemDelegate(QObject* parent)
   : QStyledItemDelegate(parent),
-    monospaceFont_(new QFont("Monospace"))
+    monospaceFont_(new QFont("Monospace")),
+    pointSizeOffset_(0)
 {
   monospaceFont_->setStyleHint(QFont::TypeWriter);
 }
@@ -36,13 +37,23 @@ MonospaceItemDelegate::~MonospaceItemDelegate()
   delete monospaceFont_;
 }
 
+int MonospaceItemDelegate::pointSizeOffset() const
+{
+  return pointSizeOffset_;
+}
+
+void MonospaceItemDelegate::setPointSizeOffset(int offset)
+{
+  pointSizeOffset_ = offset;
+}
+
 void MonospaceItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
   QStyleOptionViewItem opt(option);
   // Adjust the pixel size based on the incoming pixel size
   if (option.font.pointSize() > 0)
   {
-    monospaceFont_->setPointSize(option.font.pointSize());
+    monospaceFont_->setPointSize(option.font.pointSize() + pointSizeOffset_);
   }
   opt.font = *monospaceFont_;
   QStyledItemDelegate::paint(painter, opt, index);
