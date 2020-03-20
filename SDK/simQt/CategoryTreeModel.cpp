@@ -1056,14 +1056,14 @@ Qt::ItemFlags CategoryTreeModel::flags(const QModelIndex& index) const
   return item->flags();
 }
 
-bool CategoryTreeModel::setData(const QModelIndex& index, const QVariant& value, int role)
+bool CategoryTreeModel::setData(const QModelIndex& idx, const QVariant& value, int role)
 {
   // Ensure we have a valid index with a valid TreeItem pointer
-  if (!index.isValid() || !index.internalPointer())
-    return QAbstractItemModel::setData(index, value, role);
+  if (!idx.isValid() || !idx.internalPointer())
+    return QAbstractItemModel::setData(idx, value, role);
 
   // NULL filter means the tree should be empty, so we shouldn't get setData()...
-  TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
+  TreeItem* item = static_cast<TreeItem*>(idx.internalPointer());
   assert(filter_ && item);
   bool wasEdited = false;
   const bool rv = item->setData(value, role, *filter_, wasEdited);
@@ -1084,15 +1084,16 @@ bool CategoryTreeModel::setData(const QModelIndex& index, const QVariant& value,
   if (rv)
   {
     // Update the GUI
-    emit dataChanged(index, index);
+    emit dataChanged(idx, idx);
 
     // Alert users who are listening
     if (wasEdited)
     {
       // Parent index, if it exists, is a category and might have updated its color data()
-      const QModelIndex parentIndex = index.parent();
+      const QModelIndex parentIndex = idx.parent();
       if (parentIndex.isValid())
         emit dataChanged(parentIndex, parentIndex);
+      emitChildrenDataChanged_(idx);
 
       emit filterChanged(*filter_);
       emit filterEdited(*filter_);
@@ -1100,7 +1101,8 @@ bool CategoryTreeModel::setData(const QModelIndex& index, const QVariant& value,
     else
     {
       // Should only happen in cases where EXCLUDE got changed, but no filter was edited
-      assert(!index.parent().isValid());
+      assert(!idx.parent().isValid());
+      emitChildrenDataChanged_(idx);
       emit excludeEdited(item->nameInt(), item->isUnlistedValueChecked());
     }
   }
@@ -1372,6 +1374,16 @@ void CategoryTreeModel::processCategoryCounts(const simQt::CategoryCountResults&
   // Emit data changed
   if (firstRowChanged != -1)
     emit dataChanged(index(firstRowChanged, 0), index(lastRowChanged, 0));
+}
+
+void CategoryTreeModel::emitChildrenDataChanged_(const QModelIndex& parent)
+{
+  // Change all children
+  const int numRows = rowCount(parent);
+  const int numCols = columnCount(parent);
+  if (numRows == 0 || numCols == 0)
+    return;
+  emit dataChanged(index(0, 0, parent), index(numRows - 1, numCols - 1, parent));
 }
 
 /////////////////////////////////////////////////////////////////////////

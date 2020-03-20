@@ -174,6 +174,8 @@ private:
   * This method should only be called on data that is updating, since it doesn't emit its own signal for a data change
   */
   void updateLockedState_(const QStringList& lockedCategories, CategoryItem& category);
+  /** Emits dataChanged() signal for all child entries (non-recursive) */
+  void emitChildrenDataChanged_(const QModelIndex& parent);
 
   /** Quick-search vector of category tree items */
   simQt::IndexedPointerContainer<CategoryItem> categories_;
