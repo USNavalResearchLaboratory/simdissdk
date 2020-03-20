@@ -240,7 +240,10 @@ void RegExpImpl::initializeQRegExp_()
   {
   case RegExp:
   {
-    QRegularExpression::PatternOptions patternOptions = QRegularExpression::DontCaptureOption | QRegularExpression::OptimizeOnFirstUsageOption;
+    QRegularExpression::PatternOptions patternOptions = QRegularExpression::DontCaptureOption;
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
+    patternOptions |= QRegularExpression::OptimizeOnFirstUsageOption;
+#endif
     if (caseSensitivity_ == CaseInsensitive)
       patternOptions |= QRegularExpression::CaseInsensitiveOption;
     fastRegex_ = new QRegularExpression(QString::fromStdString(exp_), patternOptions);
