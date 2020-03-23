@@ -43,7 +43,7 @@ namespace simQt
  *
  * This class also allows makeCurrentImplementation() to be blockable, with setClosing(true).
  */
-class GraphicsWindowQt : public osgQt::GraphicsWindowQt
+class SDKQT_EXPORT GraphicsWindowQt : public osgQt::GraphicsWindowQt
 {
 public:
   /** Constructor that takes a Traits instance */
