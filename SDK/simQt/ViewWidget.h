@@ -26,14 +26,40 @@
 #ifndef SIMQT_VIEW_WIDGET_H
 #define SIMQT_VIEW_WIDGET_H
 
+#include "osg/GraphicsContext"
 #include "osgQt/GraphicsWindowQt"
 #include "simCore/Common/Common.h"
 
-namespace osg { class GraphicsContext; }
 namespace osgViewer { class View; }
 
 namespace simQt
 {
+
+/**
+ * Implement a private version of GraphicsWindowQt that avoids the problem identified by
+ * the error message:
+ *
+ * QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined
+ *
+ * This class also allows makeCurrentImplementation() to be blockable, with setClosing(true).
+ */
+class GraphicsWindowQt : public osgQt::GraphicsWindowQt
+{
+public:
+  /** Constructor that takes a Traits instance */
+  explicit GraphicsWindowQt(osg::GraphicsContext::Traits* traits, QWidget* parent = NULL, const QGLWidget* shareWidget = NULL, Qt::WindowFlags f = 0);
+
+  /** Reimplement the swap implementation to avoid swap on non-exposed windows. */
+  virtual void swapBuffersImplementation();
+  /** Reimplement to avoid the call to makeCurrentImplementation when closing, to avoid crash. */
+  virtual bool makeCurrentImplementation();
+
+  /** Sets the is-closing flag, impacting whether makeCurrent() works or not */
+  void setClosing(bool closing);
+
+private:
+  bool isClosing_;
+};
 
 /**
  * A wrapper class to encapsulate an osgViewer::View (such as the simVis::View Main View) in a Qt widget.
