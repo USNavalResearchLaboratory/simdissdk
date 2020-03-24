@@ -39,6 +39,7 @@ class QAction;
 namespace simQt {
 
 class ColorWidget;
+class FileSelectorWidget;
 
 /**
  * Abstract base class for a number of bound settings, based on variable type.  The
@@ -295,6 +296,13 @@ public:
    * @param populateToolTip If true, replace the existing tool tip on the widget with the value from Settings MetaData
    */
   void bindTo(QLineEdit* lineEdit, bool populateToolTip=true);
+
+  /**
+   * Helper routine to bind a FileSelectorWidget to the BoundStringSetting.
+   * @param fileSelector FileSelectorWidget to bind to
+   * @param populateToolTip If true, replace the existing tool tip on the widget with the value from Settings MetaData
+   */
+  void bindTo(FileSelectorWidget* fileSelector, bool populateToolTip=true);
 
 public slots:
   /** Change the data value in Settings (and the cache); might emit valueChanged() */
