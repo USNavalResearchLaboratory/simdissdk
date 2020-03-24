@@ -37,38 +37,33 @@
 namespace simQt
 {
 
-GraphicsWindowQt::GraphicsWindowQt(osg::GraphicsContext::Traits* traits, QWidget* parent, const QGLWidget* shareWidget, Qt::WindowFlags f)
-  : osgQt::GraphicsWindowQt(traits, parent, shareWidget, f),
-    isClosing_(false)
+/**
+ * Implement a private version of GraphicsWindowQt that avoids the problem identified by
+ * the error message:
+ * QOpenGLContext::swapBuffers() called with non-exposed window, behavior is undefined
+ */
+class ExposedSwapGraphicsWindowQt : public osgQt::GraphicsWindowQt
 {
-}
-
-void GraphicsWindowQt::swapBuffersImplementation()
-{
-  const osgQt::GLWidget* widget = getGLWidget();
-  if (widget && widget->windowHandle())
+public:
+  /** Constructor that takes a Traits instance */
+  explicit ExposedSwapGraphicsWindowQt(osg::GraphicsContext::Traits* traits, QWidget* parent = NULL, const QGLWidget* shareWidget = NULL, Qt::WindowFlags f = 0)
+    : GraphicsWindowQt(traits, parent, shareWidget, f)
   {
-    // Avoid swapping on non-exposed windows
-    if (!widget->windowHandle()->isExposed())
-      return;
   }
-  if (isClosing_)
-    return;
-  osgQt::GraphicsWindowQt::swapBuffersImplementation();
-}
 
-bool GraphicsWindowQt::makeCurrentImplementation()
-{
-  // Make-current can fail if called when closing and certain resources are in the process of being destroyed.
-  if (isClosing_)
-    return false;
-  return osgQt::GraphicsWindowQt::makeCurrentImplementation();
-}
-
-void GraphicsWindowQt::setClosing(bool closing)
-{
-  isClosing_ = closing;
-}
+  /** Reimplement the swap implementation to avoid swap on non-exposed windows. */
+  virtual void swapBuffersImplementation()
+  {
+    const osgQt::GLWidget* widget = getGLWidget();
+    if (widget && widget->windowHandle())
+    {
+      // Avoid swapping on non-exposed windows
+      if (!widget->windowHandle()->isExposed())
+        return;
+    }
+    GraphicsWindowQt::swapBuffersImplementation();
+  }
+};
 
 ////////////////////////////////////////////////////////////////
 
@@ -83,9 +78,6 @@ ViewWidget::ViewWidget(osgViewer::View* view)
 
 ViewWidget::~ViewWidget()
 {
-  GraphicsWindowQt* window = dynamic_cast<GraphicsWindowQt*>(getGraphicsWindow());
-  if (window)
-    window->setClosing(true);
 }
 
 void ViewWidget::init_(osgViewer::View* view)
@@ -154,7 +146,7 @@ osg::GraphicsContext* ViewWidget::createGraphicsContext_()
 
   // Creates the graphics window Qt, telling it which traits were used to create it.  Note
   // the use of ExposedSwapGraphicsWindowQt to avoid Qt OpenGL swap warning.
-  return new GraphicsWindowQt(traits.get());
+  return new ExposedSwapGraphicsWindowQt(traits.get());
 }
 
 }
