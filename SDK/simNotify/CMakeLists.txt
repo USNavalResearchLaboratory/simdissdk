@@ -19,7 +19,7 @@ set( NOTIFY_ALL_HEADER
 )
 
 source_group( Headers FILES ${NOTIFY_HEADERS} )
-source_group( Sources FILES ${NOTIFY_SOURCES} )
+source_group( "Source Files" FILES ${NOTIFY_SOURCES} )
 source_group( "" FILES ${NOTIFY_ALL_HEADER} )
 
 set( NOTIFY_PROJECT_FILES

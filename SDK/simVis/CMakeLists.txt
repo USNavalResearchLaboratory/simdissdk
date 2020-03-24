@@ -372,13 +372,13 @@ configure_shaders(Shaders.cpp.in Shaders.cpp ${SHADER_FILES})
 source_group(Shaders FILES ${VIS_SHADER_FILES})
 
 source_group(Headers FILES ${VIS_HEADERS_CORE})
-source_group(Sources FILES ${VIS_SOURCES_CORE})
+source_group("Source Files" FILES ${VIS_SOURCES_CORE})
 
 source_group(Headers\\RFProp FILES ${VIS_HEADERS_RFPROP})
-source_group(Sources\\RFProp FILES ${VIS_SOURCES_RFPROP})
+source_group("Source Files\\RFProp" FILES ${VIS_SOURCES_RFPROP})
 
 source_group(Headers\\GOG FILES ${VIS_HEADERS_GOG})
-source_group(Sources\\GOG FILES ${VIS_SOURCES_GOG})
+source_group("Source Files\\GOG" FILES ${VIS_SOURCES_GOG})
 
 source_group("" FILES ${VIS_ALL_HEADER})
 
@@ -389,7 +389,7 @@ set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${V
 if(SIM_HAVE_DB_SUPPORT)
     source_group(Headers FILES ${VIS_HEADERS_DB})
     source_group(Headers\\DB FILES ${VIS_HEADERS_DB_PRIVATE})
-    source_group(Sources\\DB FILES ${VIS_SOURCES_DB})
+    source_group("Source Files\\DB" FILES ${VIS_SOURCES_DB})
 
     list(APPEND VIS_HEADERS_CORE ${VIS_HEADERS_DB})
     list(APPEND VIS_HEADERS ${VIS_HEADERS_DB} ${VIS_HEADERS_DB_PRIVATE})

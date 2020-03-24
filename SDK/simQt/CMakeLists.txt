@@ -241,7 +241,7 @@ if(OSG_FOUND)
     )
 endif()
 
-source_group(Sources FILES ${SIMQT_SOURCES})
+source_group("Source Files" FILES ${SIMQT_SOURCES})
 
 # .ui files
 set(SIMQT_FORMS

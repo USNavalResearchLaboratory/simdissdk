@@ -121,13 +121,13 @@ set(DATA_ALL_HEADER
 )
 
 source_group(Headers FILES ${DATA_HEADERS})
-source_group(Sources FILES ${DATA_SOURCES})
+source_group("Source Files" FILES ${DATA_SOURCES})
 source_group(Headers\\MemoryTable FILES ${MEMORYTABLE_HEADERS})
-source_group(Sources\\MemoryTable FILES ${MEMORYTABLE_SOURCES})
+source_group("Source Files\\MemoryTable" FILES ${MEMORYTABLE_SOURCES})
 source_group(Headers\\CategoryData FILES ${CATEGORY_DATA_HEADERS})
-source_group(Sources\\CategoryData FILES ${CATEGORY_DATA_SOURCES})
+source_group("Source Files\\CategoryData" FILES ${CATEGORY_DATA_SOURCES})
 source_group(Headers\\MessageVisitor FILES ${MESSAGEVISITOR_HEADERS})
-source_group(Sources\\MessageVisitor FILES ${MESSAGEVISITOR_SOURCES})
+source_group("Source Files\\MessageVisitor" FILES ${MESSAGEVISITOR_SOURCES})
 source_group(Headers\\GeneratedCode
     FILES
         ${DATA_GENERATED_HEADERS}
