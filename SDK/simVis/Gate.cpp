@@ -207,8 +207,9 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
   sv.nearRange_ = update->minrange();
   sv.farRange_ = update->maxrange();
 
-  // draw near face and sides/walls of gate when the gate has thickness
-  sv.drawCone_ = update->minrange() < update->maxrange();
+  // do not draw near-face and sides/walls of gate when:
+  //   the gate has no thickness, or is in FOOTPRINT drawmode
+  sv.drawCone_ = (update->minrange() < update->maxrange()) && (prefs->gatedrawmode() != simData::GatePrefs_DrawMode_FOOTPRINT);
 
   // coverage gates are sphere segments (absolute start/end degrees instead of
   // elevation and span)
@@ -849,7 +850,8 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
 
   if (newPrefs != NULL &&
     (PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, fillpattern) ||
-    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gatedrawmode) || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawoutline)))
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gatedrawmode) ||
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawoutline)))
   {
     return true;
   }
