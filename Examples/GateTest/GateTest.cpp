@@ -96,6 +96,7 @@ struct AppData
   osg::ref_ptr<ui::HSliderControl> colorSlider_;
   osg::ref_ptr<ui::LabelControl>   colorLabel_;
 
+  osg::ref_ptr<ui::CheckBoxControl> centroidCheck_;
   osg::ref_ptr<ui::CheckBoxControl> lightedCheck_;
   osg::ref_ptr<ui::CheckBoxControl> globalToggle_;
 
@@ -131,6 +132,7 @@ struct AppData
      elevLabel_(NULL),
      colorSlider_(NULL),
      colorLabel_(NULL),
+     centroidCheck_(NULL),
      lightedCheck_(NULL),
      ds_(NULL),
      hostId_(0),
@@ -141,9 +143,9 @@ struct AppData
     types_.push_back(std::make_pair(simData::GateProperties_GateType_ABSOLUTE_POSITION, "ABSOLUTE"));
     types_.push_back(std::make_pair(simData::GateProperties_GateType_BODY_RELATIVE,     "BODY RELATIVE"));
 
-    modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_ANGLE,    "ANGLE"));
-    modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_CLUTTER,  "CLUTTER"));
+    modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_RANGE,    "RANGE"));
     modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_COVERAGE, "COVERAGE"));
+    modes_.push_back(std::make_pair(simData::GatePrefs_DrawMode_FOOTPRINT, "FOOTPRINT"));
 
     fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_STIPPLE,  "STIPPLE"));
     fillPatterns_.push_back(std::make_pair(simData::GatePrefs_FillPattern_SOLID,    "SOLID"));
@@ -185,6 +187,7 @@ struct AppData
 
       prefs->set_gatedrawmode(modes_[modeIndex].first);
       prefs->set_gatelighting(lightedCheck_->getValue());
+      prefs->set_drawcentroid(centroidCheck_->getValue());
       xaction.complete(&prefs);
     }
 
@@ -298,8 +301,12 @@ ui::Control* createUI(AppData& app)
   app.colorLabel_  = grid->setControl(c+2, r, new ui::LabelControl());
 
   r++;
+  grid->setControl(c, r, new ui::LabelControl("Centroid"));
+  app.centroidCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(true, applyUI.get()));
+
+  r++;
   grid->setControl(c, r, new ui::LabelControl("Lighted"));
-  app.lightedCheck_ = grid->setControl(c + 1, r, new ui::CheckBoxControl(false, applyUI.get()));
+  app.lightedCheck_ = grid->setControl(c+1, r, new ui::CheckBoxControl(false, applyUI.get()));
 
   r++;
   grid->setControl(c, r, new ui::LabelControl("Global Gate Toggle"));
