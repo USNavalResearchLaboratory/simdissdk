@@ -91,11 +91,12 @@ namespace simCore
   SDKCORE_EXPORT bool getStrippedLine(std::istream& is, std::string& str);
 
   /**
-  * Returns the extension of incoming string (lower-case), including the '.'
+  * Returns the extension of incoming string (lower-case by default), including the '.'
   * @param[in ] inName Input file name
-  * @return Lower-case extension based value after last '.', including the '.' if found, otherwise an empty string
+  * @param[in ] toLower If true (default), return extension in all lowercase.  If false, then no case mangling is performed.
+  * @return Extension based value after last '.', including the '.' if found, otherwise an empty string.  For example, ".txt"
   */
-  SDKCORE_EXPORT std::string getExtension(const std::string &inName);
+  SDKCORE_EXPORT std::string getExtension(const std::string &inName, bool toLower=true);
 
   /**
   * Verifies the incoming string has the specified extension, including the '.'

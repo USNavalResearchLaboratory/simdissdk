@@ -8,33 +8,34 @@ endif()
 project(SimCore_UnitTests)
 
 create_test_sourcelist(SimCoreTestFiles SimCoreTests.cpp
-    TokenizerTest.cpp
-    StringUtilsTest.cpp
-    CoordConvertLibTest.cpp
-    VersionTest.cpp
-    CoreCommonTest.cpp
+    AngleTest.cpp
+    CalculateLibTest.cpp
     CalculationTest.cpp
+    CoordConvertLibTest.cpp
+    CoreCommonTest.cpp
+    CsvReaderTest.cpp
+    EMTest.cpp
     GarsTest.cpp
+    GeoFenceTest.cpp
+    GogToGeoFenceTest.cpp
+    InterpolationTest.cpp
+    MagneticVarianceTest.cpp
     MathTest.cpp
     MgrsTest.cpp
+    MultiFrameCoordTest.cpp
     SquareMatrixTest.cpp
+    StringFormatTest.cpp
+    StringUtilsTest.cpp
     TimeClassTest.cpp
     TimeManagerTest.cpp
     TimeStringTest.cpp
     TimeUtilsTest.cpp
     TimeJulianTest.cpp
-    InterpolationTest.cpp
-    EMTest.cpp
+    TokenizerTest.cpp
     ValidNumberTest.cpp
-    GeoFenceTest.cpp
-    MultiFrameCoordTest.cpp
-    AngleTest.cpp
+    VersionTest.cpp
     UnitsTest.cpp
     UnitsFormatter.cpp
-    GogToGeoFenceTest.cpp
-    CalculateLibTest.cpp
-    MagneticVarianceTest.cpp
-    CsvReaderTest.cpp
 )
 
 add_executable(SimCoreTests ${SimCoreTestFiles})
@@ -53,6 +54,7 @@ add_test(NAME VersionTest COMMAND SimCoreTests VersionTest)
 add_test(NAME TimeManager COMMAND SimCoreTests TimeManagerTest)
 add_test(NAME TokenizerTest COMMAND SimCoreTests TokenizerTest)
 add_test(NAME StringUtilsTest COMMAND SimCoreTests StringUtilsTest)
+add_test(NAME CoreStringFormatTest COMMAND SimCoreTests StringFormatTest)
 add_test(NAME CoordConvertLibTest COMMAND SimCoreTests CoordConvertLibTest)
 add_test(NAME CoreCommonTest COMMAND SimCoreTests CoreCommonTest)
 add_test(NAME CalculationTest COMMAND SimCoreTests CalculationTest)

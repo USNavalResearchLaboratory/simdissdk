@@ -24,12 +24,11 @@
 #include <string>
 #include <limits>
 #include "simCore/Common/SDKAssert.h"
+#include "simCore/Common/Version.h"
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/TextReplacer.h"
-#include "simCore/Common/Version.h"
-#include "simCore/Common/SDKAssert.h"
 
 using namespace std;
 

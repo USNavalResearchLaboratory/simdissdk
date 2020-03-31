@@ -82,14 +82,14 @@ bool getStrippedLine(std::istream& is, std::string& str)
   return true;
 }
 
-/// Returns the extension of incoming string (lower-case), including the '.'
-std::string getExtension(const std::string &inName)
+/// Returns the extension of incoming string (lower-case by default), including the '.'
+std::string getExtension(const std::string &inName, bool toLower)
 {
   if (inName.empty())
     return "";
 
   // convert to lower-case for insensitive comparison
-  std::string outString = lowerCase(inName);
+  std::string outString = toLower ? lowerCase(inName) : inName;
   size_t found = outString.find_last_of(".");
   return (found != std::string::npos) ? outString.substr(found) : "";
 }
