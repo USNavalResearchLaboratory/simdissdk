@@ -76,7 +76,7 @@ namespace simCore
   /**
   * Case insensitive string find for std::string
   * @param[in ] str1 First string
-  * @param[in ] str2 Content of this string is searched in str1
+  * @param[in ] str2 Content of this string is searched in str1; if empty, it will always be found, and the return value will always be 0
   * @return starting location of str2 in str1
   */
   SDKCORE_EXPORT size_t stringCaseFind(const std::string &str1, const std::string &str2);

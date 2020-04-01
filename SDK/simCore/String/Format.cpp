@@ -66,7 +66,7 @@ std::string upperCase(const std::string &in)
 /// Case insensitive string find for std::string
 size_t stringCaseFind(const std::string &str1, const std::string &str2)
 {
-  std::string upStr1 = upperCase(str1);
+  const std::string& upStr1 = upperCase(str1);
   return upStr1.find(upperCase(str2));
 }
 
