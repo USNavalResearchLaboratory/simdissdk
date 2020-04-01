@@ -69,7 +69,7 @@ GogNodeInterface* TextAnnotation::deserialize(
     // set the icon scale
     osgEarth::IconSymbol* icon = p.style_.getOrCreateSymbol<osgEarth::IconSymbol>();
     icon->scale() = PLACEMARK_ICON_SCALE;
-    label = new osgEarth::PlaceNode(text, p.style_, image);
+    label = new osgEarth::PlaceNode(text, p.style_, image.get());
   }
   else
     label = new osgEarth::LabelNode(text, p.style_);
