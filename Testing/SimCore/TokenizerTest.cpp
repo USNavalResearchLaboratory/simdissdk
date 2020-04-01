@@ -366,6 +366,57 @@ namespace
     rv += SDK_ASSERT(tokens[1] == "\"Middle \"Quoted\" token \"");
     rv += SDK_ASSERT(tokens[2] == "Token3");
 
+    const std::string allSingleQuotes = "'Token1' 'Token with spaces' 'Token3'";
+    simCore::escapeTokenize(tokens, allSingleQuotes, true, simCore::STR_WHITE_SPACE_CHARS, true, true);
+    rv += SDK_ASSERT(tokens.size() == 3);
+    rv += SDK_ASSERT(tokens[0] == "'Token1'");
+    rv += SDK_ASSERT(tokens[1] == "'Token with spaces'");
+    rv += SDK_ASSERT(tokens[2] == "'Token3'");
+
+    const std::string someSingleQuotes = "Token1 'Middle \\'Quoted\\' token '  Token3";
+    simCore::escapeTokenize(tokens, someSingleQuotes, true, simCore::STR_WHITE_SPACE_CHARS, true, true);
+    rv += SDK_ASSERT(tokens.size() == 3);
+    rv += SDK_ASSERT(tokens[0] == "Token1");
+    rv += SDK_ASSERT(tokens[1] == "'Middle 'Quoted' token '");
+    rv += SDK_ASSERT(tokens[2] == "Token3");
+
+    const std::string mixedQuotes = "'Single quoted \"token' \"Double quoted 'token\" 'Unterminated token";
+    simCore::escapeTokenize(tokens, mixedQuotes, true, simCore::STR_WHITE_SPACE_CHARS, true, true);
+    rv += SDK_ASSERT(tokens.size() == 3);
+    rv += SDK_ASSERT(tokens[0] == "'Single quoted \"token'");
+    rv += SDK_ASSERT(tokens[1] == "\"Double quoted 'token\"");
+    rv += SDK_ASSERT(tokens[2] == "'Unterminated token");
+
+    const std::string unterminatedDoubleQ = "\"Unterminated token";
+    simCore::escapeTokenize(tokens, unterminatedDoubleQ, true, simCore::STR_WHITE_SPACE_CHARS, true, true);
+    rv += SDK_ASSERT(tokens.size() == 1);
+    rv += SDK_ASSERT(tokens[0] == "\"Unterminated token");
+
+    const std::string commaDelim = "Token with spaces,'Single, quoted \"token',\"Double, quoted 'token\",'Unterminated, token";
+    simCore::escapeTokenize(tokens, commaDelim, true, ",", true, true);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "Token with spaces");
+    rv += SDK_ASSERT(tokens[1] == "'Single, quoted \"token'");
+    rv += SDK_ASSERT(tokens[2] == "\"Double, quoted 'token\"");
+    rv += SDK_ASSERT(tokens[3] == "'Unterminated, token");
+
+    const std::string dontSkipEmpty = "'Quoted  token spaces' Space  DoubleSpace";
+    simCore::escapeTokenize(tokens, dontSkipEmpty, true, simCore::STR_WHITE_SPACE_CHARS, false, true, false);
+    rv += SDK_ASSERT(tokens.size() == 4);
+    rv += SDK_ASSERT(tokens[0] == "'Quoted  token spaces'");
+    rv += SDK_ASSERT(tokens[1] == "Space");
+    rv += SDK_ASSERT(tokens[2] == "");
+    rv += SDK_ASSERT(tokens[3] == "DoubleSpace");
+
+    const std::string dontEndWithQuotes = "'Quoted token' Partially'quoted'token 'Quote'ToStart QuoteTo'End' Unterminated'Token";
+    simCore::escapeTokenize(tokens, dontEndWithQuotes, true, simCore::STR_WHITE_SPACE_CHARS, true, true, false);
+    rv += SDK_ASSERT(tokens.size() == 5);
+    rv += SDK_ASSERT(tokens[0] == "'Quoted token'");
+    rv += SDK_ASSERT(tokens[1] == "Partially'quoted'token");
+    rv += SDK_ASSERT(tokens[2] == "'Quote'ToStart");
+    rv += SDK_ASSERT(tokens[3] == "QuoteTo'End'");
+    rv += SDK_ASSERT(tokens[4] == "Unterminated'Token");
+
     return rv;
   }
 

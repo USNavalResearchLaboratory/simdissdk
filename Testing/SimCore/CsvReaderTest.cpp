@@ -223,6 +223,31 @@ int testReadEmptyLines()
   return rv;
 }
 
+// Cursory testing of quote-handling. TokenizerTest tests the related simCore functions
+int testReadQuotes()
+{
+  int rv = 0;
+
+  std::istringstream stream("aa,bb'b\"b',cc'c'c\"c\",dd'ddd,d',e\"ee");
+
+  simCore::CsvReader ignoreQuotes(stream);
+  ignoreQuotes.setParseQuotes(false);
+  std::vector<std::string> tokens;
+
+  rv += SDK_ASSERT(ignoreQuotes.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 6); // [aa, bb'b"b', cc'c'c"c", dd'ddd, d', e"ee]
+
+  // Reset the stream and clear eof flags
+  stream.str("aa,bb'b\"b',cc'c'c\"c\",dd'ddd,d',e\"ee");
+  stream.clear();
+
+  simCore::CsvReader parseQuotes(stream);
+  rv += SDK_ASSERT(parseQuotes.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 5); // [aa, bb'b"b', cc'c'c"c", dd'ddd,d', e"ee]
+
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -234,6 +259,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testCsvWithComments() == 0);
   rv += SDK_ASSERT(testCsvLineNumber() == 0);
   rv += SDK_ASSERT(testReadEmptyLines() == 0);
+  rv += SDK_ASSERT(testReadQuotes() == 0);
 
   return rv;
 }
