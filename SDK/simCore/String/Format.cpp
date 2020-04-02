@@ -70,15 +70,17 @@ size_t stringCaseFind(const std::string &str1, const std::string &str2)
   return upStr1.find(upperCase(str2));
 }
 
-/// Removes trailing white space from a string read from a stream
+/// Removes trailing white space from a line read from a stream
 bool getStrippedLine(std::istream& is, std::string& str)
 {
+  // strips newline and everything after
   if (!std::getline(is, str))
   {
     return false;
   }
-
-  str.erase(str.find_last_not_of(" \n\r\t") + 1);
+  assert(str.find("\n") == std::string::npos);
+  // strips trailing white space
+  str.erase(str.find_last_not_of(" \r\t") + 1);
   return true;
 }
 

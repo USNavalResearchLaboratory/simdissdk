@@ -133,6 +133,57 @@ int testStringCaseFind()
   return rv;
 }
 
+int testGetStrippedLine()
+{
+  int rv = 0;
+  std::stringstream ss;
+  std::istringstream is;
+  std::string out;
+
+  rv += SDK_ASSERT(!simCore::getStrippedLine(ss, out));
+  rv += SDK_ASSERT(!simCore::getStrippedLine(is, out));
+  ss << " ";
+  rv += SDK_ASSERT(!simCore::getStrippedLine(ss, out));
+  is = std::istringstream("\0");
+  rv += SDK_ASSERT(!simCore::getStrippedLine(is, out));
+  ss = std::stringstream("\0");
+  rv += SDK_ASSERT(!simCore::getStrippedLine(ss, out));
+
+  is = std::istringstream(" ");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out.empty());
+  ss = std::stringstream(" ");
+  rv += SDK_ASSERT(simCore::getStrippedLine(ss, out));
+  rv += SDK_ASSERT(out.empty());
+  is = std::istringstream(" \n\r\t");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out.empty());
+
+  is = std::istringstream("a \n\r\t");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a");
+  is = std::istringstream("a \n\r\ta");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a");
+  is = std::istringstream("a \r\ta");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a \r\ta");
+
+  is = std::istringstream("a a");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a a");
+  is = std::istringstream("a\ta");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a\ta");
+  is = std::istringstream("a \ra");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a \ra");
+  is = std::istringstream("a \na");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a");
+  return rv;
+}
+
 int testGetExtension()
 {
   int rv = 0;
@@ -153,6 +204,82 @@ int testGetExtension()
   return rv;
 }
 
+int testHasExtension()
+{
+  int rv = 0;
+  rv += SDK_ASSERT(simCore::hasExtension("", ""));
+  rv += SDK_ASSERT(simCore::hasExtension(".", "."));
+  rv += SDK_ASSERT(simCore::hasExtension(".t", ".t"));
+  rv += SDK_ASSERT(simCore::hasExtension("t.", "."));
+  rv += SDK_ASSERT(simCore::hasExtension("t. ", ". "));
+  rv += SDK_ASSERT(simCore::hasExtension("t. \n\r\t", ". \n\r\t"));
+  rv += SDK_ASSERT(simCore::hasExtension(" \n\r\t.txt", ".tXt"));
+
+  rv += SDK_ASSERT(!simCore::hasExtension(".", ""));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.", ""));
+  rv += SDK_ASSERT(!simCore::hasExtension("", "."));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.txt", ""));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.txt", "txt"));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.txt", ".tx"));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.txt", "..txt"));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.txt", ".txt."));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.txt", "test.txt"));
+
+  rv += SDK_ASSERT(simCore::hasExtension("tes.t.txt", ".txt"));
+  rv += SDK_ASSERT(!simCore::hasExtension("tes.t.txt", ".t.txt"));
+  rv += SDK_ASSERT(!simCore::hasExtension("test.txt.", ".txt"));
+  rv += SDK_ASSERT(simCore::hasExtension("test.txt.", "."));
+
+  rv += SDK_ASSERT(simCore::hasExtension("test.txt", ".TXT"));
+  rv += SDK_ASSERT(simCore::hasExtension("test.txt", ".tXt"));
+  rv += SDK_ASSERT(simCore::hasExtension("test.TxT", ".txt"));
+  rv += SDK_ASSERT(simCore::hasExtension("test.TxT", ".tXt"));
+  rv += SDK_ASSERT(simCore::hasExtension("test.TXT", ".txt"));
+  rv += SDK_ASSERT(simCore::hasExtension("test.TXT", ".tXt"));
+  rv += SDK_ASSERT(simCore::hasExtension("test.TXT", ".TXT"));
+
+  return rv;
+}
+
+int testBuildString()
+{
+  int rv = 0;
+
+  // field width, precision, and padZero tests
+  rv += SDK_ASSERT("123456789" == simCore::buildString("", 123456789.123456789, 0, 0));
+  rv += SDK_ASSERT("123456789" == simCore::buildString("", 123456789.123456789, 1, 0));
+  rv += SDK_ASSERT(" 123456789" == simCore::buildString("", 123456789.123456789, 10, 0));
+  rv += SDK_ASSERT("123456789.1" == simCore::buildString("", 123456789.123456789, 10, 1));
+  rv += SDK_ASSERT("0123456789" == simCore::buildString("", 123456789.123456789, 10, 0, "", true));
+  rv += SDK_ASSERT("123456789.1" == simCore::buildString("", 123456789.123456789, 10, 1, "", true));
+  rv += SDK_ASSERT("123456789.1" == simCore::buildString("", 123456789.123456789, 11, 1, "", true));
+  rv += SDK_ASSERT("0123456789.1" == simCore::buildString("", 123456789.123456789, 12, 1, "", true));
+
+  // rounding
+  rv += SDK_ASSERT("1" == simCore::buildString("", 0.5, 1, 0));
+  rv += SDK_ASSERT("0" == simCore::buildString("", 0.5 - std::numeric_limits<double>::epsilon(), 1, 0));
+  rv += SDK_ASSERT("1.0" == simCore::buildString("", 0.99, 1, 1));
+
+  // precision limits matter
+  rv += SDK_ASSERT("abcdefg123456789.1234567910" == simCore::buildString("abcdefg", 123456789.123456789, 10, 10));
+
+  // prefix and suffix
+  rv += SDK_ASSERT("abcdefg123456789.1" == simCore::buildString("abcdefg", 123456789.123456789, 1, 1));
+  rv += SDK_ASSERT(" \n\r\t123456789.1 \n\r\t" == simCore::buildString(" \n\r\t", 123456789.123456789, 1, 1, " \n\r\t"));
+  rv += SDK_ASSERT("abcdefg 123456789" == simCore::buildString("abcdefg", 123456789.123456789, 10, 0));
+  rv += SDK_ASSERT("abcdefg0123456789" == simCore::buildString("abcdefg", 123456789.123456789, 10, 0, "", true));
+
+  // scientific notation
+  rv += SDK_ASSERT("1" == simCore::buildString("", 1.0, 1, 0, "", false, 1., 1.));
+  rv += SDK_ASSERT("1.000000e+00" == simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.));
+  rv += SDK_ASSERT("1.0e+00" == simCore::buildString("", 1.0, 1, 1, "", false, 0., 1.));
+  rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1));
+  rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon()));
+  rv += SDK_ASSERT("1.23456789e+00" == simCore::buildString("", 1.23456789, 10, 8, "", false, 1., 1.));
+  rv += SDK_ASSERT("1.2345679e+00" == simCore::buildString("", 1.23456789, 10, 7, "", false, 1., 1.));
+
+  return rv;
+}
 }
 
 int StringFormatTest(int argc, char* argv[])
@@ -164,9 +291,10 @@ int StringFormatTest(int argc, char* argv[])
   rv += SDK_ASSERT(testLowerCase() == 0);
   rv += SDK_ASSERT(testUpperCase() == 0);
   rv += SDK_ASSERT(testStringCaseFind() == 0);
-
+  rv += SDK_ASSERT(testGetStrippedLine() == 0);
   rv += SDK_ASSERT(testGetExtension() == 0);
-
+  rv += SDK_ASSERT(testHasExtension() == 0);
+  rv += SDK_ASSERT(testBuildString() == 0);
   std::cout << "simCore StringFormatTest " << ((rv == 0) ? "passed" : "failed") << std::endl;
 
   return rv;

@@ -82,7 +82,7 @@ namespace simCore
   SDKCORE_EXPORT size_t stringCaseFind(const std::string &str1, const std::string &str2);
 
   /**
-  * Removes trailing white space from a string read from a stream
+  * Removes trailing white space from a line read from a stream
   * @param[in ] is Input stream
   * @param[out] str Content read from stream and placed into string
   * @return boolean, true if stream read was successful, false otherwise
@@ -99,7 +99,7 @@ namespace simCore
   SDKCORE_EXPORT std::string getExtension(const std::string &inName, bool toLower=true);
 
   /**
-  * Verifies the incoming string has the specified extension, including the '.'
+  * Verifies (case-insensitive) the incoming string has the specified extension, including the '.'
   * @param[in ] inName Input file name
   * @param[in ] newExt Extension to verify, including the '.'
   * @return boolean, true if found, false otherwise
@@ -112,7 +112,7 @@ namespace simCore
    * less-than the specified values.
    * @param prefix Text to print before the value in the return string.
    * @param value Double value to print as a string.
-   * @param width Number of characters to use as field width when printing value.
+   * @param width Minimum number of characters to use as field width when printing value.
    * @param precision Decimal precision to be used in formatting the value.
    * @param suffix Text to print after the value in the return string.
    * @param padZero If true, values to left of decimal (based on width) fill with '0'.
