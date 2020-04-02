@@ -150,6 +150,7 @@ int testGetStrippedLine()
   ss = std::stringstream("\0");
   rv += SDK_ASSERT(!simCore::getStrippedLine(ss, out));
 
+#ifdef WIN32
   is = std::istringstream(" ");
   rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
   rv += SDK_ASSERT(out.empty());
@@ -185,6 +186,7 @@ int testGetStrippedLine()
   is = std::istringstream("a \n\na");
   rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
   rv += SDK_ASSERT(out == "a");
+#endif
   return rv;
 }
 
