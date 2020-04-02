@@ -20,6 +20,7 @@
  *
  */
 #include <iostream>
+#include <limits>
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
 #include "simCore/String/Format.h"
