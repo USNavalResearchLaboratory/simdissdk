@@ -186,6 +186,13 @@ public:
   virtual int getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const;
 
   /**
+   * Get the declutter priority for text in the overlay, returning non-zero if Overlay does not have a declutter priority.
+   * @param[out] priority Priority values, where -1 is no-declutter, and lower non-negative values are less likely to be occluded than higher values.
+   * @return 0 if this Overlay has a priority set, non-zero otherwise
+   */
+  virtual int getDeclutterPriority(int& priority) const;
+
+  /**
    * Get the line attributes of the Overlay
    * @param outlineState  set to true if there is a line symbol
    * @param color  set to the color of the line in osg format (r,g,b,a) between 0.0 - 1.0
@@ -304,6 +311,9 @@ public:
   * @param color of the font
   */
   virtual void setFont(const std::string& fontName, int fontSize, const osg::Vec4f& color);
+
+  /** Sets the priority for decluttering priority; -1 for no declutter, lower non-negative values for higher priority */
+  virtual void setDeclutterPriority(int priority);
 
   /** Update the line color of the Overlay in osg format (r,g,b,a) between 0.0 - 1.0 */
   virtual void setLineColor(const osg::Vec4f& color);
@@ -573,8 +583,10 @@ public:
   virtual int getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const;
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
   virtual int getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const;
+  virtual int getDeclutterPriority(int& priority) const;
   virtual void setFont(const std::string& fontName, int fontSize, const osg::Vec4f& color);
   virtual void setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness);
+  virtual void setDeclutterPriority(int priority);
 
 protected:
   virtual void adjustAltitude_();

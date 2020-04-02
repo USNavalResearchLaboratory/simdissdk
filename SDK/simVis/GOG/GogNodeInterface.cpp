@@ -643,6 +643,12 @@ int GogNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f& 
   return 1;
 }
 
+int GogNodeInterface::getDeclutterPriority(int& priority) const
+{
+  // only applies to label nodes
+  return 1;
+}
+
 int GogNodeInterface::getLineState(bool& outlineState, osg::Vec4f& color, Utils::LineStyle& lineStyle, int& lineWidth) const
 {
   // only applies to certain shapes
@@ -915,6 +921,11 @@ void GogNodeInterface::setFillColor(const osg::Vec4f& color)
 }
 
 void GogNodeInterface::setFont(const std::string& fontName, int fontSize, const osg::Vec4f& color)
+{
+  // NOP only applies to label nodes
+}
+
+void GogNodeInterface::setDeclutterPriority(int priority)
 {
   // NOP only applies to label nodes
 }
@@ -1704,6 +1715,17 @@ int LabelNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f
   return 0;
 }
 
+int LabelNodeInterface::getDeclutterPriority(int& priority) const
+{
+  priority = -1;
+  if (!style_.has<osgEarth::TextSymbol>())
+    return 1;
+  const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
+  if (ts->declutter().get())
+    priority = ts->priority().get().eval();
+  return 0;
+}
+
 int LabelNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
 {
   return findLocalGeometryPosition(labelNode_.get(), referencePosition, position, true);
@@ -1737,6 +1759,24 @@ void LabelNodeInterface::setFont(const std::string& fontName, int fontSize, cons
     ts->font() = fileFullPath;
   ts->size() = simVis::osgFontSize(static_cast<float>(fontSize));
   ts->fill()->color() = colorVec;
+  setStyle_(style_);
+}
+
+void LabelNodeInterface::setDeclutterPriority(int priority)
+{
+  osgEarth::TextSymbol* ts = style_.getOrCreate<osgEarth::TextSymbol>();
+  if (!ts)
+    return;
+  if (priority < 0)
+  {
+    ts->declutter() = false;
+    ts->priority().clear();
+  }
+  else
+  {
+    ts->declutter() = true;
+    ts->priority() = priority;
+  }
   setStyle_(style_);
 }
 
