@@ -182,6 +182,9 @@ int testGetStrippedLine()
   is = std::istringstream("a \na");
   rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
   rv += SDK_ASSERT(out == "a");
+  is = std::istringstream("a \n\na");
+  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(out == "a");
   return rv;
 }
 
@@ -257,7 +260,12 @@ int testBuildString()
   rv += SDK_ASSERT("0123456789.1" == simCore::buildString("", 123456789.123456789, 12, 1, "", true));
 
   // rounding
+#ifdef WIN32
   rv += SDK_ASSERT("1" == simCore::buildString("", 0.5, 1, 0));
+#else
+  rv += SDK_ASSERT("0" == simCore::buildString("", 0.5, 1, 0));
+  rv += SDK_ASSERT("1" == simCore::buildString("", 0.5 + std::numeric_limits<double>::epsilon(), 1, 0));
+#endif
   rv += SDK_ASSERT("0" == simCore::buildString("", 0.5 - std::numeric_limits<double>::epsilon(), 1, 0));
   rv += SDK_ASSERT("1.0" == simCore::buildString("", 0.99, 1, 1));
 
@@ -271,11 +279,24 @@ int testBuildString()
   rv += SDK_ASSERT("abcdefg0123456789" == simCore::buildString("abcdefg", 123456789.123456789, 10, 0, "", true));
 
   // scientific notation
+  rv += SDK_ASSERT("0" == simCore::buildString("", 0.0, 1, 0, "", false, 1., 1.));
+  rv += SDK_ASSERT("0.0" == simCore::buildString("", 0.0, 1, 1, "", false, 1., 1.));
+  rv += SDK_ASSERT("1.0e-01" == simCore::buildString("", 0.1, 1, 1, "", false, 1., 1.));
+
   rv += SDK_ASSERT("1" == simCore::buildString("", 1.0, 1, 0, "", false, 1., 1.));
+
+  // windows and linux have different interpretations of 0 precision in scientific notation
+#ifdef WIN32
   rv += SDK_ASSERT("1.000000e+00" == simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.));
-  rv += SDK_ASSERT("1.0e+00" == simCore::buildString("", 1.0, 1, 1, "", false, 0., 1.));
   rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1));
   rv += SDK_ASSERT(" 1.000000e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon()));
+#else
+  rv += SDK_ASSERT("1e+00" == simCore::buildString("", 1.0, 1, 0, "", false, 0., 1.));
+  rv += SDK_ASSERT("        1e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1. - std::numeric_limits<double>::epsilon(), 1));
+  rv += SDK_ASSERT("        1e+00" == simCore::buildString("", 1.0, 13, 0, "", false, 1., 1. + std::numeric_limits<double>::epsilon()));
+#endif
+
+  rv += SDK_ASSERT("1.0e+00" == simCore::buildString("", 1.0, 1, 1, "", false, 0., 1.));
   rv += SDK_ASSERT("1.23456789e+00" == simCore::buildString("", 1.23456789, 10, 8, "", false, 1., 1.));
   rv += SDK_ASSERT("1.2345679e+00" == simCore::buildString("", 1.23456789, 10, 7, "", false, 1., 1.));
 

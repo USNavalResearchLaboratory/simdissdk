@@ -78,7 +78,6 @@ bool getStrippedLine(std::istream& is, std::string& str)
   {
     return false;
   }
-  assert(str.find("\n") == std::string::npos);
   // strips trailing white space
   str.erase(str.find_last_not_of(" \r\t") + 1);
   return true;
