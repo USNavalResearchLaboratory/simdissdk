@@ -134,59 +134,41 @@ int testStringCaseFind()
   return rv;
 }
 
+bool testGetStrippedStr(const std::string& inStr, std::string& outStr)
+{
+  // RHEL/CentOS 6 has issues with istream assignment, so each test needs its own std::istringstream
+  std::istringstream is(inStr);
+  return simCore::getStrippedLine(is, outStr);
+}
+
 int testGetStrippedLine()
 {
   int rv = 0;
-  std::stringstream ss;
-  std::istringstream is;
   std::string out;
 
-  rv += SDK_ASSERT(!simCore::getStrippedLine(ss, out));
-  rv += SDK_ASSERT(!simCore::getStrippedLine(is, out));
-  ss << " ";
-  rv += SDK_ASSERT(!simCore::getStrippedLine(ss, out));
-  is = std::istringstream("\0");
-  rv += SDK_ASSERT(!simCore::getStrippedLine(is, out));
-  ss = std::stringstream("\0");
-  rv += SDK_ASSERT(!simCore::getStrippedLine(ss, out));
+  rv += SDK_ASSERT(!testGetStrippedStr("", out));
+  rv += SDK_ASSERT(!testGetStrippedStr("\0", out));
 
-#ifdef WIN32
-  is = std::istringstream(" ");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr(" ", out));
   rv += SDK_ASSERT(out.empty());
-  ss = std::stringstream(" ");
-  rv += SDK_ASSERT(simCore::getStrippedLine(ss, out));
-  rv += SDK_ASSERT(out.empty());
-  is = std::istringstream(" \n\r\t");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr(" \n\r\t", out));
   rv += SDK_ASSERT(out.empty());
 
-  is = std::istringstream("a \n\r\t");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr("a \n\r\ta", out));
   rv += SDK_ASSERT(out == "a");
-  is = std::istringstream("a \n\r\ta");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
-  rv += SDK_ASSERT(out == "a");
-  is = std::istringstream("a \r\ta");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr("a \r\ta", out));
   rv += SDK_ASSERT(out == "a \r\ta");
-
-  is = std::istringstream("a a");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr("a a", out));
   rv += SDK_ASSERT(out == "a a");
-  is = std::istringstream("a\ta");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
-  rv += SDK_ASSERT(out == "a\ta");
-  is = std::istringstream("a \ra");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr("a \ta", out));
+  rv += SDK_ASSERT(out == "a \ta");
+  rv += SDK_ASSERT(testGetStrippedStr("a \ra", out));
   rv += SDK_ASSERT(out == "a \ra");
-  is = std::istringstream("a \na");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr("a \na", out));
   rv += SDK_ASSERT(out == "a");
-  is = std::istringstream("a \n\na");
-  rv += SDK_ASSERT(simCore::getStrippedLine(is, out));
+  rv += SDK_ASSERT(testGetStrippedStr("a \n\na", out));
   rv += SDK_ASSERT(out == "a");
-#endif
+
   return rv;
 }
 

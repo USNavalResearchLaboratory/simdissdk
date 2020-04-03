@@ -79,7 +79,7 @@ bool getStrippedLine(std::istream& is, std::string& str)
     return false;
   }
   // strips trailing white space
-  str.erase(str.find_last_not_of(" \n\r\t") + 1);
+  str.erase(str.find_last_not_of(" \r\t") + 1);
   return true;
 }
 
