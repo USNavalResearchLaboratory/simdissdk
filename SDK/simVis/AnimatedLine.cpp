@@ -402,16 +402,19 @@ void AnimatedLineNode::update_(double t)
 
   if (numShifts >= 1.0)
   {
+    // note: lines are tessellated end-to-start,
+    // so we bit-shift in the opposite direction to achieve
+    // propert stippling direction.
     const unsigned short bits = shortRound(numShifts);
     if (shiftsPerSecond_ > 0.0)
     {
-      ror(stipple1_, bits);
-      ror(stipple2_, bits);
+      rol(stipple1_, bits);
+      rol(stipple2_, bits);
     }
     else
     {
-      rol(stipple1_, bits);
-      rol(stipple2_, bits);
+      ror(stipple1_, bits);
+      ror(stipple2_, bits);
     }
 
     line1_->setStipplePattern(stipple1_);
