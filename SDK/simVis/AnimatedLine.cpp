@@ -404,7 +404,7 @@ void AnimatedLineNode::update_(double t)
   {
     // note: lines are tessellated end-to-start,
     // so we bit-shift in the opposite direction to achieve
-    // propert stippling direction.
+    // proper stippling direction.
     const unsigned short bits = shortRound(numShifts);
     if (shiftsPerSecond_ > 0.0)
     {
