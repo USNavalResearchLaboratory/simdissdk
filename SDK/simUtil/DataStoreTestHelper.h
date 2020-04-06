@@ -103,6 +103,15 @@ public:
   uint64_t addProjector(uint64_t hostId, uint64_t originalId = 0);
 
   /**
+  * Add a custom rendering
+  * Uses the id to construct a name of 'customRendering<id>_<hostId>'
+  * @param hostId platform host
+  * @param originalId Original ID to use for entity
+  * @return uint64_t  the id for the entity
+  */
+  uint64_t addCustomRendering(uint64_t hostId, uint64_t originalId = 0);
+
+  /**
   * Update platform prefs as with object specified, does a merge with prefs passed in
   * @param prefs  new prefs changes
   * @param id entity id

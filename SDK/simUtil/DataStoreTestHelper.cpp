@@ -145,6 +145,21 @@ uint64_t DataStoreTestHelper::addProjector(uint64_t hostId, uint64_t originalId)
   return projProps->id();
 }
 
+uint64_t DataStoreTestHelper::addCustomRendering(uint64_t hostId, uint64_t originalId)
+{
+  simData::DataStore::Transaction t;
+  simData::CustomRenderingProperties* props = dataStore_->addCustomRendering(&t);
+  props->set_hostid(hostId);
+  props->set_originalid(originalId);
+  t.commit();
+  simData::CustomRenderingPrefs* prefs = dataStore_->mutable_customRenderingPrefs(props->id(), &t);
+  std::ostringstream name;
+  name << "customRendering" << props->id() << "_" << hostId;
+  prefs->mutable_commonprefs()->set_name(name.str());
+  t.commit();
+  return props->id();
+}
+
 void DataStoreTestHelper::updatePlatformPrefs(const simData::PlatformPrefs& prefs, uint64_t id)
 {
   simData::DataStore::Transaction t;
