@@ -138,3 +138,19 @@ double simCore::angFixDegrees(double degreeAngle, simCore::AngleExtents extents)
   assert(0);
   return degreeAngle;
 }
+
+double simCore::angleDifference(double fromRad, double toRad)
+{
+  // Implementation drew from https://stackoverflow.com/questions/1878907
+
+  // Fix toRad and fromRad from [-PI,PI] inclusive before subtracting
+  const double subtracted = simCore::angFixPI(toRad) - simCore::angFixPI(fromRad);
+  // Note that we can't rely solely on angFixPI here due to inclusiveness of -PI
+  const double fixed = simCore::angFixPI(subtracted);
+  return (fixed <= -M_PI) ? (fixed + M_TWOPI) : fixed;
+}
+
+double simCore::angleDifferenceDeg(double fromDeg, double toDeg)
+{
+  return simCore::RAD2DEG * simCore::angleDifference(simCore::DEG2RAD * fromDeg, simCore::DEG2RAD * toDeg);
+}

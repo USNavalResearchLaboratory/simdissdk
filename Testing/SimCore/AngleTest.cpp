@@ -607,6 +607,63 @@ int test360()
   return rv;
 }
 
+int testAngleDifference()
+{
+  int rv = 0;
+  // Note that all tests are on angleDifferenceDeg(), not angleDifference().  That's OK because we know
+  // that the degree version simply calls into the radians version after comparison and it's easier to
+  // read.  Note also the use of areEqual() instead of areAnglesEqual() is intentional to ensure the range
+  // of output values is correct.
+
+  // Simple wrapping at 0
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(0.0, -360.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(0.0, 0.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(0.0, 360.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(0.0, 720.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(720.0, -360.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(720.0, 0.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(720.0, 360.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(720.0, 720.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(-1080.0, -360.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(-1080.0, 0.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(-1080.0, 360.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(-1080.0, 720.0), 0.0));
+
+  // Edge case testing at 90 degrees (result)
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, -181.0), 89.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, -180.0), 90.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, -179.0), 91.0));
+
+  // Edge case testing at 180 degrees (result)
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, -91.0), 179.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, -90.0), 180.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, -89.0), -179.0));
+
+  // Edge case testing at -90 degrees (result)
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, -1.0), -91.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 0.0), -90.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 1.0), -89.0));
+
+  // Edge case testing at 0 degrees (result)
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 89.0), -1.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 90.0), 0.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 91.0), 1.0));
+
+  // Edge case testing at 90 degrees (result), using different sign
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 179.0), 89.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 180.0), 90.0));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(90.0, 181.0), 91.0));
+
+  // Identified shortcoming from other code
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(359.0, 1.0), 2.0));
+
+  // Test documentation examples
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifference(0.4, 0.1), -0.3));
+  rv += SDK_ASSERT(simCore::areEqual(simCore::angleDifferenceDeg(4.0, 1.0), -3.0));
+
+  return rv;
+}
+
 }
 
 int AngleTest(int argc, char* argv[])
@@ -622,6 +679,7 @@ int AngleTest(int argc, char* argv[])
   rv += testSim4481();
   rv += testSim7284();
   rv += test360();
+  rv += testAngleDifference();
 
   return rv;
 }
