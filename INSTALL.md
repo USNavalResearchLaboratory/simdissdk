@@ -43,7 +43,7 @@ Third Party Dependencies
 The SIMDIS SDK depends on the following third party libraries:
 
 - [OpenSceneGraph 3.6+](http://www.openscenegraph.org)
-- [osgEarth 2.10+](http://www.osgearth.org)
+- [osgEarth 3.0+](http://www.osgearth.org)
 - [protobuf 2.6+](http://code.google.com/p/protobuf)
 - [Qt 5.5+](http://qt-project.org)
 - [SQLite 3.8+](http://www.sqlite.org)
