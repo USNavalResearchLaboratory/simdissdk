@@ -4,7 +4,7 @@ if(NOT ENABLE_CDASH_PROJECTS AND NOT ENABLE_UNIT_TESTING)
 endif()
 
 # Pull the version from CMakeImport/ImportPython3.cmake
-set(DESIRED_PYTHON_VERSION ${PYTHON3_MAJOR}.${PYTHON3_MINOR}.${PYTHON3_PATCH})
+set(DESIRED_PYTHON_VERSION ${Python3_VERSION})
 
 # FindPython3.cmake was added in 3.12 and is better than PythonInterp
 if(WIN32)
@@ -29,7 +29,7 @@ add_test(NAME simCore_SWIG_Test COMMAND "${Python3_EXECUTABLE}" "-B" "TestSimCor
 
 # Windows insists on installing under a CONFIG directory under the runtime output directory
 if(WIN32)
-    set(PYTHON_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}\;${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
+    set(PYTHON_PATH "${CMAKE_SWIG_OUTDIR}\;${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
 else()
     set(PYTHON_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 endif()

@@ -1,4 +1,10 @@
-vsi_require_target(PYTHON3)
+vsi_require_target(Python3::Python)
+
+if(MSVC)
+    # Windows MSVC creates a simCore.lib out of the Python file, and it conflicts with the
+    # one from the C++ simCore.  Remove output directory for this scope in order to fix.
+    unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+endif()
 
 set(SIMCORE_FILES
     simCore.i
@@ -27,7 +33,7 @@ set_source_files_properties(simCore.i PROPERTIES COMPILE_OPTIONS "-interface;_si
 set(UseSWIG_TARGET_NAME_PREFERENCE STANDARD)
 
 swig_add_library(SwigSimCore LANGUAGE python SOURCES simCore.i)
-target_link_libraries(SwigSimCore PRIVATE PYTHON3 simCore)
+target_link_libraries(SwigSimCore PRIVATE Python3::Python simCore)
 set_target_properties(SwigSimCore PROPERTIES
     FOLDER "SIMDIS SDK"
     PROJECT_LABEL "Python Wrapper - simCore"

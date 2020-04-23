@@ -221,6 +221,14 @@ if(ENABLE_UNIT_TESTING)
     add_subdirectory(Testing)
 endif()
 
+# Include SWIG for Python simCore module
+option(BUILD_SDK_SWIG "Build SIMDIS SDK SWIG module" OFF)
+if(BUILD_SDK_SWIG)
+    include(ImportSWIG)
+    find_package(Python3 COMPONENTS Development Interpreter)
+    add_subdirectory(swig)
+endif()
+
 # Add documentation files
 add_subdirectory(Doc)
 
