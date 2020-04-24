@@ -296,19 +296,6 @@ void TimeTicks::addUpdate_(double tickTime)
     TimeTicksChunk::Type type = ((timeTicks.drawstyle() == simData::TimeTickPrefs::POINT) ? TimeTicksChunk::POINT_TICKS : TimeTicksChunk::LINE_TICKS);
     chunk = new TimeTicksChunk(chunkSize_, type, timeTicks.linelength() / 2, timeTicks.linewidth(), timeTicks.largesizefactor());
 
-    // if there is a preceding chunk, duplicate its last point so there is no
-    // discontinuity from previous chunk to this new chunk - this matters for line drawing mode
-    int numc = chunkGroup_->getNumChildren();
-    if (numc > 0)
-    {
-      osg::Matrix last;
-      if (getLastChunk_()->getEndMatrix(last) == 0)
-      {
-        double last_t = getLastChunk_()->getEndTime();
-        chunk->addPoint(last, last_t, color_, largeTick);
-      }
-    }
-
     // add the new chunk and update its appearance
     chunkGroup_->addChild(chunk);
     chunk->addCullCallback(new osgEarth::HorizonCullCallback());
@@ -370,13 +357,8 @@ void TimeTicks::removePointsOlderThan_(double oldestDrawTime)
     if (oldest->size() == 0)
     {
       chunkGroup_->removeChild(0, 1);
-      if (chunkGroup_->getNumChildren() > 0)
-      {
-        // Last point was duplicated to prevent discontinuity, remove it
-        static_cast<TimeTicksChunk*>(chunkGroup_->getChild(0))->removeOldestPoint();
-      }
-      else // removal logic is faulty in chunk
-        assert(totalPoints_ == 0);
+      if (chunkGroup_->getNumChildren() == 0)
+        assert(totalPoints_ == 0); // removal logic is faulty in chunk
     }
     else
       break;
