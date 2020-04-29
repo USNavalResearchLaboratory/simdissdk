@@ -834,9 +834,9 @@ void VisualizationClock::setLockedToDataClock(bool lock)
 
     lockToDataClock_ = lock;
 
-    localClock_->setTime(dataClock_.currentTime());
     localClock_->setStartTime(dataClock_.startTime());
     localClock_->setEndTime(dataClock_.endTime());
+    localClock_->setTime(dataClock_.currentTime());
     localClock_->setControlsDisabled(false);
   }
 }
