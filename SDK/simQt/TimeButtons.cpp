@@ -54,7 +54,9 @@ public:
   /** @see simCore::Clock::ModeChangeObserver::onUserEditableChanged() */
   virtual void onUserEditableChanged(bool userCanEdit)
   {
-    // If time is not editable, then enable/disable changes
+    // A change in editable state could be the result of changing between data clock and visualization clock
+    w_->updateCheckedState_();
+    // Enable/disable changes
     w_->updateEnabledState_();
   }
 

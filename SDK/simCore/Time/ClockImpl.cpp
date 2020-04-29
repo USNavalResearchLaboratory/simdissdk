@@ -245,7 +245,10 @@ void ClockImpl::setStartTime(const simCore::TimeStamp& timeVal)
   else
     beginTime_ = timeVal;
   notifyBoundsChange_(startTime(), endTime());
-  setTime(clamp_(currentTime()));
+  // Check for time change
+  auto clampedTime = clamp_(currentTime());
+  if (clampedTime != currentTime())
+    setTime(clampedTime);
 }
 
 void ClockImpl::setEndTime(const simCore::TimeStamp& timeVal)
@@ -261,7 +264,10 @@ void ClockImpl::setEndTime(const simCore::TimeStamp& timeVal)
   else
     endTime_ = timeVal;
   notifyBoundsChange_(startTime(), endTime());
-  setTime(clamp_(currentTime()));
+  // Check for time change
+  auto clampedTime = clamp_(currentTime());
+  if (clampedTime != currentTime())
+    setTime(clampedTime);
 }
 
 void ClockImpl::setCanLoop(bool fl)
@@ -736,8 +742,11 @@ public:
 
   virtual void onModeChange(Clock::Mode newMode)
   {
-    // Dev error, should always be in Live Mode
-    assert(false);
+    // Dev error, should always be in File Mode
+    assert((newMode != MODE_FREEWHEEL) && (newMode != MODE_SIMULATION));
+
+    if (!parent_.lockToDataClock_)
+      parent_.notifyModeChange_(newMode);
   }
 
   virtual void onDirectionChange(simCore::TimeDirection newDirection)
@@ -1069,7 +1078,6 @@ void VisualizationClock::idle()
 {
   if (!lockToDataClock_)
     localClock_->idle();
-  //TODO: SIM-10602 I don't think we want to call dataClock_.idle() here
 }
 
 }
