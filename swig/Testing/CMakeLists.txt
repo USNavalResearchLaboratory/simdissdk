@@ -3,10 +3,12 @@ if(NOT ENABLE_CDASH_PROJECTS AND NOT ENABLE_UNIT_TESTING)
     return()
 endif()
 
+# FindPython3.cmake was added in 3.12 and is better than PythonInterp
+cmake_minimum_required(VERSION 3.12)
+
 # Pull the version from CMakeImport/ImportPython3.cmake
 set(DESIRED_PYTHON_VERSION ${Python3_VERSION})
 
-# FindPython3.cmake was added in 3.12 and is better than PythonInterp
 if(WIN32)
     # Need to match the version exactly on Windows for some reason or crash
     find_package(Python3 ${DESIRED_PYTHON_VERSION} EXACT COMPONENTS Interpreter QUIET)
