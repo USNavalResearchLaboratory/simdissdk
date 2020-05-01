@@ -24,16 +24,13 @@
 
 #include <map>
 #include <vector>
-#include "osg/ref_ptr"
-#include "osg/MatrixTransform"
-#include "simData/DataTypes.h"
 #include "simVis/TrackChunkNode.h"
 
 namespace simVis
 {
 
 /** Implementation of the TrackPointsChunk to draw track history time ticks */
-class SDKVIS_EXPORT TimeTicksChunk : public TrackPointsChunk
+class SDKVIS_EXPORT TimeTicksChunk : public TrackPointsChunk, public LocatorNode
 {
 public:
   /// Draw mode for the time ticks
@@ -55,27 +52,13 @@ public:
 
   /**
   * Add a new point to the chunk
-  * @param matrix the position matrix that corresponds to the platform position (may be interpolated)
+  * @param tickLocator the locator that contains point rotation, position, orientation (may be interpolated)
   * @param t time that corresponds to the platform update, seconds since scenario ref year
   * @param color color to render this chunk
   * @param large indicates if this is a large tick
   * @return true if point was added
   */
-  bool addPoint(const osg::Matrix& matrix, double t, const osg::Vec4& color, bool large);
-
-  /**
-  * Get the earliest position matrix added to the chunk, accounting for data limiting
-  * @param position matrix that corresponds to a platform position (may be interpolated)
-  * @return 0 on success, non-zero if chunk is empty
-  */
-  int getBeginMatrix(osg::Matrix& first) const;
-
-  /**
-  * Get the latest position matrix added to the chunk, accounting for data limiting
-  * @param position matrix that corresponds to a platform position (may be interpolated)
-  * @return 0 on success, non-zero if chunk is empty
-  */
-  int getEndMatrix(osg::Matrix& last) const;
+  bool addPoint(const Locator& tickLocator, double t, const osg::Vec4& color, bool large);
 
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simVis"; }
@@ -91,7 +74,7 @@ private:
   void allocate_();
 
   /// Appends a new local point to each geometry set.
-  void append_(const osg::Matrix& matrix, const osg::Vec4& color, bool large);
+  void append_(const osg::Matrixd& matrix, const osg::Vec4f& color, bool large);
 
   virtual void fixGraphicsAfterRemoval_();
   /// Update the offset and count on each primitive set to draw the proper data.
@@ -107,7 +90,7 @@ private:
   /// large tick size factor
   double largeSizeFactor_;
   ///container for drawables
-  osg::ref_ptr<osg::Geode> geode_;
+  osg::ref_ptr<osg::Group> lineGroup_;
   /// point graphic
   osg::ref_ptr<osgEarth::PointDrawable> point_;
   /// point graphic for large points

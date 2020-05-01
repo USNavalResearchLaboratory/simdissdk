@@ -276,7 +276,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   {
     if (prefs.ecidatamode())
     {
-      // for eci mode, platforms need to reparent their EntityNode locator to the scenario ECI locator
+      // for eci mode, platforms need to parent their EntityNode locator to the scenario ECI locator
       if (!getLocator()->getParentLocator())
         getLocator()->setParentLocator(eciLocator_);
     }
@@ -714,7 +714,16 @@ bool PlatformNode::createTimeTicks_(const simData::PlatformPrefs& prefs)
   // if assert fails, check that callers only call on !valid() condition
   assert(!timeTicks_.valid());
 
-  timeTicks_ = new TimeTicks(ds_, getLocator()->getSRS(), platformTspiFilterManager_, getId());
+  if (prefs.ecidatamode())
+  {
+    // dev error to construct a platform with a NULL locator argument
+    assert(eciLocator_);
+    if (eciLocator_)
+      timeTicks_ = new TimeTicks(ds_, eciLocator_, platformTspiFilterManager_, getId());
+  }
+  // for non-ECI platform use a new empty locator
+  if (!timeTicks_.valid())
+    timeTicks_ = new TimeTicks(ds_, new Locator(getLocator()->getSRS()), platformTspiFilterManager_, getId());
   expireModeGroup_->addChild(timeTicks_);
   timeTicks_->setPrefs(prefs, lastProps_, true);
   timeTicks_->update();
