@@ -144,7 +144,7 @@ public:
   * @param[in ] coord  World coordinates (must be ECEF, LLA, or ECI)
   * @param[in ] notify Whether to immediately notify listeners
   */
-  SDK_DEPRECATE(void setCoordinate(const simCore::Coordinate& coord, bool notify = true) , "Method will be removed in future SDK release.");
+  void setCoordinate(const simCore::Coordinate& coord, bool notify = true);
 #endif
 
   /**
