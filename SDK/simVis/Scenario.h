@@ -49,18 +49,33 @@ class CustomRenderingNode;
 class LabelContentManager;
 class LaserNode;
 class LobGroupNode;
-class LocatorFactory;
+class Locator;
 class PlatformNode;
 class PlatformTspiFilterManager;
 class ProjectorManager;
 class ProjectorNode;
 class ScenarioTool;
 
+//----------------------------------------------------------------------------
+/// Interface for an object that can create a new Locator
+class LocatorFactory
+{
+public:
+  virtual ~LocatorFactory() {}
+
+  /// create a new locator
+  virtual Locator* createLocator() const = 0;
+
+  /// create a new platform locator
+  virtual Locator* createEciLocator() const = 0;
+};
+//----------------------------------------------------------------------------
+
 /**
 * Manages all scenario objects (platforms, beams, gates, etc) and their
 * visualization within the scene
 */
-class SDKVIS_EXPORT ScenarioManager : public osgEarth::LODScaleGroup // osg::Group
+class SDKVIS_EXPORT ScenarioManager : public osgEarth::LODScaleGroup, public simVis::LocatorFactory
 {
   friend class SceneManager;
 public:
@@ -329,7 +344,7 @@ public:
   void getAllEntities(EntityVector& out_vector) const;
 
   /**
-   * Gets or creates a new attach point for adding data to the scene graph
+   * Gets or creates a new attach point for adding data to the scene graph, not subject to horizon culling
    * @param name Name of the attach point
    * @return     New osg group
    */
@@ -349,10 +364,16 @@ public:
 
 public: // package protected
 
-  /** Creates a new ScenarioManager with the given locator factory and projector manager */
-  ScenarioManager(
-    LocatorFactory*   factory,
-    ProjectorManager* projMan);
+  /** Creates a new ScenarioManager with the given projector manager */
+  explicit ScenarioManager(ProjectorManager* projMan);
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  /**
+   * Creates a new ScenarioManager with the given locator factory and projector manager
+   * @deprecated
+   */
+  SDK_DEPRECATE(ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan), "Method will be removed in a future SDK release");
+#endif
 
   /**
   * Check for scenario entity updates and applies them to the corresponding
@@ -377,6 +398,12 @@ public: // package protected
    * Sets map information
    */
   void setMapNode(osgEarth::MapNode* map);
+
+  public: // simVis::LocatorFactory interface
+    // internal - override
+    Locator* createLocator() const;
+    // internal - override
+    Locator* createEciLocator() const;
 
 protected:
   /// osg::Referenced-derived
@@ -468,6 +495,8 @@ protected:
   void notifyToolsOfAdd_(EntityNode* node);
   /// informs the scenario tools of an entity removal
   void notifyToolsOfRemove_(EntityNode* node);
+  /// locator that tracks earth rotation linked to sim time
+  osg::ref_ptr<Locator> scenarioEciLocator_;
 
 private:
   /// Copy constructor, not implemented or available.

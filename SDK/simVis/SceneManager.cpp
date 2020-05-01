@@ -61,28 +61,27 @@
 //------------------------------------------------------------------------
 namespace
 {
+/** Default map background color, when no terrain/imagery loaded; note: cannot currently be changed in osgEarth at runtime */
+static const osg::Vec4f MAP_COLOR(0.01f, 0.01f, 0.01f, 1.f); // off-black
 
-  /** Default map background color, when no terrain/imagery loaded; note: cannot currently be changed in osgEarth at runtime */
-  static const osg::Vec4f MAP_COLOR(0.01f, 0.01f, 0.01f, 1.f); // off-black
+/** setUserData() tag for the scenario's object ID */
+static const std::string SCENARIO_OBJECT_ID = "scenid";
 
-  /** setUserData() tag for the scenario's object ID */
-  static const std::string SCENARIO_OBJECT_ID = "scenid";
-
-  /** Debugging callback that will dump the culling results each frame -- useful for debugging render order */
-  struct DebugCallback : public osg::NodeCallback
+/** Debugging callback that will dump the culling results each frame -- useful for debugging render order */
+struct DebugCallback : public osg::NodeCallback
+{
+  void operator()(osg::Node* node, osg::NodeVisitor* nv)
   {
-    void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    traverse(node, nv);
+    osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+    if (cv)
     {
-      traverse(node, nv);
-      osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-      if (cv)
-      {
-        osgEarth::Config c = osgEarth::CullDebugger().dumpRenderBin(cv->getRenderStage());
-        OE_INFO << "FRAME " << cv->getFrameStamp()->getFrameNumber() << "-----------------------------------" << std::endl
-          << c.toJSON(true) << std::endl;
-      }
+      osgEarth::Config c = osgEarth::CullDebugger().dumpRenderBin(cv->getRenderStage());
+      OE_INFO << "FRAME " << cv->getFrameStamp()->getFrameNumber() << "-----------------------------------" << std::endl
+        << c.toJSON(true) << std::endl;
     }
-  };
+  }
+};
 }
 
 namespace simVis {
@@ -187,7 +186,7 @@ void SceneManager::init_()
   addChild(drapeableNode_.get());
 
   // updates scenario objects
-  scenarioManager_ = new ScenarioManager(this, projectorManager_.get());
+  scenarioManager_ = new ScenarioManager(projectorManager_.get());
   scenarioManager_->setName("Scenario");
   drapeableNode_->addChild(scenarioManager_.get());
 
@@ -483,20 +482,6 @@ osg::Node* SceneManager::getManipulatorAttachPoint() const
   return
     mapNode_.valid() ? mapNode_->getTerrainEngine() :
     mapContainer_.get();
-}
-
-Locator* SceneManager::createLocator() const
-{
-  return
-    mapNode_.valid() ? new Locator(mapNode_->getMap()->getProfile()->getSRS()) :
-    NULL;
-}
-
-CachingLocator* SceneManager::createCachingLocator() const
-{
-  return
-    mapNode_.valid() ? new CachingLocator(mapNode_->getMap()->getProfile()->getSRS()) :
-    NULL;
 }
 
 osg::Group* SceneManager::getOrCreateAttachPoint(const std::string& name) const

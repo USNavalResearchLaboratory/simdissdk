@@ -38,6 +38,7 @@
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
+#include "simVis/Locator.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/CustomRendering.h"

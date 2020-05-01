@@ -20,17 +20,15 @@
  *
  */
 #include <cassert>
-#include "osg/Geode"
 #include "osgEarth/GeoData"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/PointDrawable"
+#include "simVis/Locator.h"
 #include "simVis/Types.h"
 #include "simVis/TrackChunkNode.h"
 
 namespace simVis
 {
-
-//----------------------------------------------------------------------------
 TrackPointsChunk::TrackPointsChunk(unsigned int maxSize)
   : maxSize_(maxSize)
 {
@@ -111,46 +109,49 @@ bool TrackPointsChunk::isEmpty_() const
   return count_ == 0;
 }
 
-
 //----------------------------------------------------------------------------
+
 /** Creates a new chunk with a maximum size. */
-TrackChunkNode::TrackChunkNode(unsigned int maxSize, const osgEarth::SpatialReference* srs, simData::TrackPrefs_Mode mode)
+TrackChunkNode::TrackChunkNode(unsigned int maxSize, simData::TrackPrefs_Mode mode)
   : TrackPointsChunk(maxSize),
-    srs_(srs),
-    mode_(mode)
+  mode_(mode)
 {
   allocate_();
 }
 
 TrackChunkNode::~TrackChunkNode()
 {
-  geode_ = NULL;
+  lineGroup_ = NULL;
   centerLine_ = NULL;
   centerPoints_ = NULL;
   ribbon_ = NULL;
   drop_ = NULL;
-  srs_ = NULL;
 }
 
 /// add a new point to the chunk.
-bool TrackChunkNode::addPoint(const osg::Matrix& matrix, double t, const osg::Vec4& color, const osg::Vec2& hostBounds)
+bool TrackChunkNode::addPoint(const Locator& locator, double t, const osg::Vec4& color, const osg::Vec2& hostBounds)
 {
   // first make sure there's room.
   if (isFull())
     return false;
 
-  // if this is the first point added, set up the localization matrix.
-  if (offset_ == 0 && count_ == 0)
-  {
-    world2local_.invert(matrix);
-    this->setMatrix(matrix);
-  }
-
   // record the timestamp
   times_[offset_ + count_] = t;
 
-  // resolve the localized point and append it to the various geometries.
-  append_(matrix, color, hostBounds);
+  const bool isEci = locator.isEci();
+
+  // world2local_ must be recalculated if first point or if ECI
+  if ((offset_ + count_) == 0 || isEci)
+  {
+    // dev error if nodemask is not set; matrix will not be synced
+    assert(getNodeMask() != 0);
+    world2local_.invert(getMatrix());
+  }
+
+  if (isEci && (locator.getEciRotationTime() != 0.))
+    appendEci_(locator, color, hostBounds);
+  else
+    append_(locator, color, hostBounds);
 
   // advance the counter and update the psets.
   count_++;
@@ -198,29 +199,29 @@ void TrackChunkNode::allocate_()
   }
   else
   {
-    // geode to hold all line geometry:
-    geode_ = new osgEarth::LineGroup();
-    this->addChild(geode_.get());
+    // group to hold all line geometry:
+    lineGroup_ = new osgEarth::LineGroup();
+    this->addChild(lineGroup_.get());
 
     // center line (line mode)
     centerLine_ = new osgEarth::LineDrawable(GL_LINE_STRIP);
     centerLine_->setDataVariance(osg::Object::DYNAMIC);
     centerLine_->allocate(maxSize_);
-    geode_->addChild(centerLine_.get());
+    lineGroup_->addChild(centerLine_.get());
 
     if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
     {
       drop_ = new osgEarth::LineDrawable(GL_LINES);
       drop_->setDataVariance(osg::Object::DYNAMIC);
       drop_->allocate(2 * maxSize_);
-      geode_->addChild(drop_.get());
+      lineGroup_->addChild(drop_.get());
     }
     else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
     {
       ribbon_ = new osgEarth::LineDrawable(GL_LINES);
       ribbon_->setDataVariance(osg::Object::DYNAMIC);
       ribbon_->allocate(6 * maxSize_);
-      geode_->addChild(ribbon_.get());
+      lineGroup_->addChild(ribbon_.get());
     }
   }
 
@@ -228,66 +229,104 @@ void TrackChunkNode::allocate_()
   world2local_ = osg::Matrixd::identity();
 }
 
-/// appends a new local point to each geometry set.
-void TrackChunkNode::append_(const osg::Matrix& matrix, const osg::Vec4& color, const osg::Vec2& hostBounds)
+void TrackChunkNode::appendEci_(const Locator& locator, const osg::Vec4& color, const osg::Vec2& hostBounds)
 {
-  // calculate the local point.
-  const osg::Vec3d& world = matrix.getTrans();
+  const unsigned int i = offset_ + count_;
+  assert(locator.isEci());
+
+  // there is a non-zero ECI rotation: position must be obtained from matrix
+  assert (locator.getEciRotationTime() != 0.);
+  const osg::Matrixd& localMatrix = (i == 0) ? getMatrix() : locator.getLocatorMatrix();
+  const osg::Vec3d& world = localMatrix.getTrans();
+  const osg::Vec3f local = world * world2local_;
+  // correctness check: first point should always have zero local point
+  assert ((i != 0) || local == osg::Vec3f());
+
+  // always either a point or line drawn
+  appendPointLine_(i, local, color);
+
+  if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
+    appendBridge_(i, local, world, color);
+  else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
+    appendRibbon_(i, localMatrix, color, hostBounds);
+}
+
+void TrackChunkNode::append_(const Locator& locator, const osg::Vec4& color, const osg::Vec2& hostBounds)
+{
+  const unsigned int i = offset_ + count_;
+  simCore::Coordinate ecef;
+  locator.getCoordinate(&ecef);
+  const osg::Vec3d& world = osg::Vec3d(ecef.x(), ecef.y(), ecef.z());
   const osg::Vec3f local = world * world2local_;
 
-  // insertion index:
-  const unsigned int i = offset_ + count_;
+  // the two versions of position should match
+  assert(world == locator.getLocatorMatrix().getTrans());
 
+  // always either a point or line drawn
+  appendPointLine_(i, local, color);
+
+  if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
+    appendBridge_(i, local, world, color);
+  else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
+  {
+    const osg::Matrixd& localMatrix = (i == 0) ? getMatrix() : locator.getLocatorMatrix();
+    appendRibbon_(i, localMatrix, color, hostBounds);
+  }
+}
+
+void TrackChunkNode::appendPointLine_(unsigned int i, const osg::Vec3f& local, const osg::Vec4& color)
+{
   if (mode_ == simData::TrackPrefs_Mode_POINT)
   {
-    // and update the center points track as well:
     centerPoints_->setVertex(i, local);
     centerPoints_->setColor(i, color);
     return;
   }
-
-  // append to the centerline track (1 vert)
+  // all other modes draw the line
   centerLine_->setVertex(i, local);
   centerLine_->setColor(i, color);
+}
 
-  if (mode_ == simData::TrackPrefs_Mode_BRIDGE)
-  {
-    // draw a new drop line (2 verts)
-    osg::Vec3d up;
-    osgEarth::GeoPoint geo;
-    geo.fromWorld(srs_->getGeographicSRS(), world);
-    geo.createWorldUpVector(up);
-    up.normalize();
+void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, const osg::Vec3d& world, const osg::Vec4& color)
+{
+  // dev error if called with any other mode
+  assert (mode_ == simData::TrackPrefs_Mode_BRIDGE);
+  // draw a new drop line (2 verts)
+  osg::Vec3d up;
+  osgEarth::GeoPoint geo;
+  geo.fromWorld(getLocator()->getSRS()->getGeographicSRS(), world);
+  geo.createWorldUpVector(up);
+  up.normalize();
 
-    drop_->setVertex(2*i, local);
-    drop_->setVertex(2*i+1, (world - up*geo.alt()) * world2local_);
-    drop_->setColor(2*i, color);
-    drop_->setColor(2*i+1, color);
-  }
-  else if (mode_ == simData::TrackPrefs_Mode_RIBBON)
-  {
-    // add a new ribbon segment. A ribbon segment has 6 verts. The x value and y value for
-    // hostBounds represents the xMin and xMax values of a bounding box respectively.
-    const osg::Matrix posMatrix = matrix * world2local_;
-    const osg::Vec3f left  = osg::Vec3d(hostBounds.x(), 0.0, 0.0) * posMatrix;
-    const osg::Vec3f right = osg::Vec3d(hostBounds.y(), 0.0, 0.0) * posMatrix;
+  drop_->setVertex(2*i, local);
+  drop_->setVertex(2*i+1, (world - up*geo.alt()) * world2local_);
+  drop_->setColor(2*i, color);
+  drop_->setColor(2*i+1, color);
+}
 
-    const osg::Vec3& leftPrev  = count_ > 0 ? ribbon_->getVertex(6*i-2) : left;
-    const osg::Vec3& rightPrev = count_ > 0 ? ribbon_->getVertex(6*i-1) : right;
+void TrackChunkNode::appendRibbon_(unsigned int i, const osg::Matrixd& localMatrix, const osg::Vec4& color, const osg::Vec2& hostBounds)
+{
+  // dev error if called with any other mode
+  assert (mode_ == simData::TrackPrefs_Mode_RIBBON);
 
-    // add connector lines to previous sample
-    // TODO: account for previous chunk
-    ribbon_->setVertex(6*i, leftPrev);
-    ribbon_->setVertex(6*i+1, left);
-    ribbon_->setVertex(6*i+2, rightPrev);
-    ribbon_->setVertex(6*i+3, right);
-    // ..and the new sample:
-    ribbon_->setVertex(6*i+4, left);
-    ribbon_->setVertex(6*i+5, right);
+  const osg::Matrixd& posMatrix = localMatrix * world2local_;
+  const osg::Vec3f left  = osg::Vec3d(hostBounds.x(), 0.0, 0.0) * posMatrix;
+  const osg::Vec3f right = osg::Vec3d(hostBounds.y(), 0.0, 0.0) * posMatrix;
+  const osg::Vec3& leftPrev  = count_ > 0 ? ribbon_->getVertex(6*i-2) : left;
+  const osg::Vec3& rightPrev = count_ > 0 ? ribbon_->getVertex(6*i-1) : right;
 
-    for (unsigned int c = 0; c < 6; ++c)
-      ribbon_->setColor(6*i+c, color);
-  }
+  // add connector lines to previous sample
+  // TODO: account for previous chunk
+  ribbon_->setVertex(6*i, leftPrev);
+  ribbon_->setVertex(6*i+1, left);
+  ribbon_->setVertex(6*i+2, rightPrev);
+  ribbon_->setVertex(6*i+3, right);
+  // ..and the new sample:
+  ribbon_->setVertex(6*i+4, left);
+  ribbon_->setVertex(6*i+5, right);
+
+  for (unsigned int c = 0; c < 6; ++c)
+    ribbon_->setColor(6*i+c, color);
 }
 
 /// update the offset and count on each primitive set to draw the proper data.

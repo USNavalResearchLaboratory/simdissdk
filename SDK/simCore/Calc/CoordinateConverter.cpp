@@ -1967,7 +1967,7 @@ void CoordinateConverter::convertEciEcef_(const Coordinate &inCoord, Coordinate 
   assert(inCoord.coordinateSystem() != outCoord.coordinateSystem());
   assert(&inCoord != &outCoord);
 
-  // if converting to eci to ecef, then rotation is negative
+  // if converting from eci to ecef, then rotation is negative
   const double rotationRate = (outCoord.coordinateSystem() == COORD_SYS_ECEF) ? -EARTH_ROTATION_RATE : EARTH_ROTATION_RATE;
   // z axis rotation of omega
   const double eciRotation = angFix2PI(rotationRate * inCoord.elapsedEciTime());

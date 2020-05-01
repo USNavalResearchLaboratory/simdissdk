@@ -23,13 +23,10 @@
 #define SIMVIS_TRACK_CHUNK_NODE_H
 
 #include "osg/ref_ptr"
-#include "osg/MatrixTransform"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/PointDrawable"
 #include "simData/DataTypes.h"
-
-namespace osg { class Geode; }
-namespace osgEarth { class SpatialReference; }
+#include "simVis/LocatorNode.h"
 
 namespace simVis
 {
@@ -55,7 +52,7 @@ namespace simVis
  * it will possibly need, so if you have a large number of entities with track
  * histories, you can quickly run out of memory.
 */
-class SDKVIS_EXPORT TrackPointsChunk : public osg::MatrixTransform
+class SDKVIS_EXPORT TrackPointsChunk
 {
 public:
   /**
@@ -128,26 +125,25 @@ protected:
 };
 
 /** Implementation of the TrackPointsChunk for drawing track history update points */
-class SDKVIS_EXPORT TrackChunkNode : public TrackPointsChunk
+class SDKVIS_EXPORT TrackChunkNode : public TrackPointsChunk, public LocatorNode
 {
 public:
   /**
   * Create a new chunk with a maximum size
   * @param maxSize maximum chunk size, in points
-  * @param srs spatial reference that is being used for track data
   * @param mode track draw mode that this chunk will display
   */
-  TrackChunkNode(unsigned int maxSize, const osgEarth::SpatialReference* srs, simData::TrackPrefs_Mode mode = simData::TrackPrefs_Mode_POINT);
+  TrackChunkNode(unsigned int maxSize, simData::TrackPrefs_Mode mode = simData::TrackPrefs_Mode_POINT);
 
   /**
   * Add a new point to the chunk
-  * @param matrix the position matrix that corresponds to the platform update position
+  * @param locator provides point rotation/position/orientation information
   * @param t time that corresponds to the platform update
   * @param color color to render this chunk
   * @param hostBounds left and right boundaries of the host model
   * @return true if point was added
   */
-  bool addPoint(const osg::Matrix& matrix, double t, const osg::Vec4& color, const osg::Vec2& hostBounds);
+  bool addPoint(const Locator& locator, double t, const osg::Vec4& color, const osg::Vec2& hostBounds);
 
   /**
   * Get the matrix and time associated with the newest point in this chunk
@@ -175,21 +171,26 @@ protected:
 private:
   /// Allocate the graphical elements for this chunk.
   void allocate_();
-  /// Appends a new local point to each geometry set.
-  void append_(const osg::Matrix& matrix, const osg::Vec4& color, const osg::Vec2& hostBounds);
+  /// Appends a new local track element to each geometry set.
+  void append_(const Locator& locator, const osg::Vec4& color, const osg::Vec2& hostBounds);
+  /// Appends a new ECI local track element to each geometry set.
+  void appendEci_(const Locator& locator, const osg::Vec4& color, const osg::Vec2& hostBounds);
+  /// Appends a new point or line to each geometry set.
+  void appendPointLine_(unsigned int i, const osg::Vec3f& local, const osg::Vec4& color);
+  /// Appends a new bridge element to each geometry set.
+  void appendBridge_(unsigned int i, const osg::Vec3f& local, const osg::Vec3d& world, const osg::Vec4& color);
+  /// Appends a new ribbon element to each geometry set.
+  void appendRibbon_(unsigned int i, const osg::Matrixd& localMatrix, const osg::Vec4& color, const osg::Vec2& hostBounds);
 
 private:
-  osg::ref_ptr<osg::Geode>      geode_;
+  osg::ref_ptr<Locator> localLocator_;
+  osg::ref_ptr<osg::Group> lineGroup_;
   osg::ref_ptr<osgEarth::LineDrawable> centerLine_;
   osg::ref_ptr<osgEarth::PointDrawable> centerPoints_;
   osg::ref_ptr<osgEarth::LineDrawable> ribbon_;
   osg::ref_ptr<osgEarth::LineDrawable> drop_;
-
-  osg::ref_ptr<const osgEarth::SpatialReference> srs_;
-  osg::Matrixd                  world2local_;
-
-  ///  track draw mode that this chunk will display
-  simData::TrackPrefs_Mode      mode_;
+  osg::Matrixd world2local_;
+  simData::TrackPrefs_Mode mode_;  ///<  track draw mode that this chunk will display
 };
 
 } // namespace simVis
