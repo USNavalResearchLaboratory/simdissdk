@@ -854,6 +854,9 @@ message PlatformPrefs {
 
   /// Automatic animation of Degree-of-Freedom nodes is enabled or disabled
   optional bool animateDofNodes = 70 [default = false];
+
+  /// Toggles whether the platform data should be interpreted as Earth-Fixed or Inertial
+  optional bool eciDataMode = 73 [default = false];
 };
 
 /// timed update to platform prefs; commands override prefs
