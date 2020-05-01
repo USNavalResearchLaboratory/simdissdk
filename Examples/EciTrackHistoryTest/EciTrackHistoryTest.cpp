@@ -83,9 +83,10 @@ struct AppData
 
   AppData(simData::DataStore* ds, simData::ObjectId hostId)
    : modeSlider_(NULL),
+    timeTicksSlider_(NULL),
     modeLabel_(NULL),
     sizeLabel_(NULL),
-    timeTicksSlider_(NULL),
+    timeTicksLabel_(NULL),
     rewind1_(NULL),
     rewind2_(NULL),
     ff1_(NULL),
