@@ -34,7 +34,7 @@ int testFontSize()
   {
     const float asOsg = simVis::osgFontSize(k);
     const float backToSimdis = simVis::simdisFontSize(asOsg);
-    rv += SDK_ASSERT(simCore::areEqual(k, backToSimdis, 1.0));
+    rv += SDK_ASSERT(simCore::areEqual(k, backToSimdis));
   }
   return rv;
 }

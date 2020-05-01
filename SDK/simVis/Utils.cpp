@@ -449,8 +449,8 @@ float osgFontSize(float simFontSize)
 {
   // When comparing SIMDIS 9 text, considered the standard for text size for SIMDIS applications,
   // the OSG font size was typically about 3/4 the size of a SIMDIS string for the same font and
-  // same size.  To to convert the SIMDIS font size to OSG, we multiply by the inversion, 1.333f.
-  return simFontSize * 1.333f;
+  // same size.  To to convert the SIMDIS font size to OSG, we divide by 3/4 (0.75).
+  return simFontSize / 0.75f;
 }
 
 float simdisFontSize(float osgFontSize)

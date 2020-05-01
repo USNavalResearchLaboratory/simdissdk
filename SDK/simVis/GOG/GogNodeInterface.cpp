@@ -1710,7 +1710,7 @@ int LabelNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f
   const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
   if (ts->font()->size() > 0)
     fontFile = *(ts->font());
-  fontSize = static_cast<int>(simVis::simdisFontSize(static_cast<float>(ts->size()->eval())));
+  fontSize = static_cast<int>(simCore::round(simVis::simdisFontSize(static_cast<float>(ts->size()->eval()))));
   fontColor = ts->fill()->color();
   return 0;
 }
