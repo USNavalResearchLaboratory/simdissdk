@@ -48,7 +48,6 @@
 #include "simUtil/Replaceables.h"
 #include "simUtil/ResizeViewManipulator.h"
 #include "simUtil/ScreenCoordinateCalculator.h"
-#include "simUtil/Shaders.h"
 #include "simUtil/SilverLiningSettings.h"
 #include "simUtil/StatsHandler.h"
 #include "simUtil/StatsSizeFixer.h"
