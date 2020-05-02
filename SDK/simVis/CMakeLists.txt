@@ -326,6 +326,7 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/Cylinder.cpp
     ${VIS_SRC}GOG/Ellipse.cpp
     ${VIS_SRC}GOG/Ellipsoid.cpp
+    ${VIS_SRC}GOG/GenericGeometry.cpp
     ${VIS_SRC}GOG/GOG.cpp
     ${VIS_SRC}GOG/GOGNode.cpp
     ${VIS_SRC}GOG/GogNodeInterface.cpp
