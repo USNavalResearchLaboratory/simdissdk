@@ -141,7 +141,6 @@
 #include "simVis/Scenario.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/SceneManager.h"
-#include "simVis/Shaders.h"
 #include "simVis/SimdisMeasurement.h"
 #include "simVis/SimdisRangeToolState.h"
 #include "simVis/SphericalVolume.h"

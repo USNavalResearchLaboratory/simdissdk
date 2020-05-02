@@ -1,0 +1,40 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Geeks And Nerds Corporation
+ *               11247 South Memorial Parkway
+ *               Huntsville, AL 35758
+ *
+ * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+
+#ifndef SIMUTIL_SILVERLINING_H
+#define SIMUTIL_SILVERLINING_H
+
+/**
+ * @file SilverLining.h
+ *
+ * Provides a single header for including SilverLining based on system specs.  This header
+ * is generated during compilation/installation of the simUtil library.
+ *
+ */
+
+#cmakedefine SILVERLINING_ENABLE
+
+#ifdef SILVERLINING_ENABLE
+#include "simUtil/SilverLiningSettings.h"
+#endif
+
+#endif /* SIMUTIL_SILVERLINING_H */
+

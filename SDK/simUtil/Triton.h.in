@@ -1,0 +1,40 @@
+/* -*- mode: c++ -*- */
+/****************************************************************************
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Geeks And Nerds Corporation
+ *               11247 South Memorial Parkway
+ *               Huntsville, AL 35758
+ *
+ * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
+
+#ifndef SIMUTIL_TRITON_H
+#define SIMUTIL_TRITON_H
+
+/**
+ * @file Triton.h
+ *
+ * Provides a single header for including Triton ocean model based on system specs.  This header
+ * is generated during compilation/installation of the simUtil library.
+ *
+ */
+
+#cmakedefine TRITON_ENABLE
+
+#ifdef TRITON_ENABLE
+#include "simUtil/TritonSettings.h"
+#endif
+
+#endif /* SIMUTIL_TRITON_H */
+
