@@ -235,6 +235,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Gate.cpp
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
+    ${VIS_SRC}Headless.cpp
     ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}Laser.cpp
     ${VIS_SRC}LayerRefreshCallback.cpp

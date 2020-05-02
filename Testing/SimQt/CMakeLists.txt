@@ -34,7 +34,7 @@ create_test_sourcelist(SimQtTestFiles SimQtTests.cpp
 VSI_INCLUDE_QT_USE_FILE()
 
 add_executable(SimQtTests ${SimQtTestFiles})
-target_link_libraries(SimQtTests PRIVATE simQt simCore)
+target_link_libraries(SimQtTests PRIVATE simQt simCore simVis)
 target_include_directories(SimQtTests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(SimQtTests PROPERTIES
     FOLDER "Unit Tests"
