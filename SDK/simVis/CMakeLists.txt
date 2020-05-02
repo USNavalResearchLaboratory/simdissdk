@@ -76,6 +76,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}GeoFence.h
     ${VIS_INC}GlowHighlight.h
     ${VIS_INC}Gl3Utils.h
+    ${VIS_INC}Headless.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h

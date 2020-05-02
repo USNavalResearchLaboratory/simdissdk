@@ -23,13 +23,10 @@
 #include "simVis/GOG/Utils.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simCore/Calc/Math.h"
-#include "osgEarthFeatures/Feature"
-#include "osgEarthAnnotation/FeatureNode"
-#include "osgEarthAnnotation/LocalGeometryNode"
+#include "osgEarth/Feature"
+#include "osgEarth/FeatureNode"
+#include "osgEarth/LocalGeometryNode"
 
 using namespace osgEarth;
-using namespace osgEarth::Annotation;
-using namespace osgEarth::Features;
-using namespace osgEarth::Symbology;
 
 #define LC "[GOG::GenericGeometry] "
