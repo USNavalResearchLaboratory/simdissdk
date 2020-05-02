@@ -181,6 +181,7 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/Ellipse.h
     ${VIS_INC}GOG/Ellipsoid.h
     ${VIS_INC}GOG/ErrorHandler.h
+    ${VIS_INC}GOG/GenericGeometry.h
     ${VIS_INC}GOG/GOG.h
     ${VIS_INC}GOG/GOGNode.h
     ${VIS_INC}GOG/GogNodeInterface.h
