@@ -789,11 +789,10 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
     return;
 
   // create the special chunk for rendering the interpolated point, has two points to connect to rest of history
-  // for ribbon and bridge modes, SIMDIS 9 draws a center line from platform to first data point, use simData::TrackPrefs_Mode_LINE to duplicate that behavior
   osg::ref_ptr<Locator> currentChunkLocator;
   if (currentPointChunk_ == NULL)
   {
-    currentPointChunk_ = new TrackChunkNode(2, simData::TrackPrefs_Mode_LINE);
+    currentPointChunk_ = new TrackChunkNode(2, lastPlatformPrefs_.trackprefs().trackdrawmode());
     if (currentPointChunk_ == NULL)
       return;
     addChild(currentPointChunk_);
