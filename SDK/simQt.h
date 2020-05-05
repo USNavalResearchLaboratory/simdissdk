@@ -22,6 +22,12 @@
 #ifndef SIMDISSDK_SIMQT_H
 #define SIMDISSDK_SIMQT_H
 
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
+
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/ActionItemModel.h"
 #include "simQt/ActionRegistry.h"
@@ -40,7 +46,7 @@
 #include "simQt/DataTableComboBox.h"
 #include "simQt/DataTableModel.h"
 #include "simQt/DirectorySelectorWidget.h"
-#include "simQt/DndTreeView.h
+#include "simQt/DndTreeView.h"
 #include "simQt/DockWidget.h"
 #include "simQt/EntityCategoryFilter.h"
 #include "simQt/EntityFilter.h"

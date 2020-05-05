@@ -22,6 +22,13 @@
 #ifndef SIMDISSDK_SIMVIS_H
 #define SIMDISSDK_SIMVIS_H
 
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
+
+// simVis/Headless.h is intentionally omitted to avoid X11 symbols
 #include "simVis/AlphaColorFilter.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/AnimatedLine.h"
@@ -66,13 +73,13 @@
 #include "simVis/GOG/Ellipse.h"
 #include "simVis/GOG/Ellipsoid.h"
 #include "simVis/GOG/ErrorHandler.h"
-#include "simVis/GOG/GenericGeometry.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/GOGRegistry.h"
 #include "simVis/GOG/Hemisphere.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ImageOverlay.h"
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
@@ -141,7 +148,6 @@
 #include "simVis/Scenario.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/SceneManager.h"
-#include "simVis/Shaders.h"
 #include "simVis/SimdisMeasurement.h"
 #include "simVis/SimdisRangeToolState.h"
 #include "simVis/SphericalVolume.h"

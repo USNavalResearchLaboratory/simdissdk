@@ -22,6 +22,12 @@
 #ifndef SIMDISSDK_SIMNOTIFY_H
 #define SIMDISSDK_SIMNOTIFY_H
 
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
+
 #include "simNotify/Notify.h"
 #include "simNotify/NotifyHandler.h"
 #include "simNotify/NotifySeverity.h"

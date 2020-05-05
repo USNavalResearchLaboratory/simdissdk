@@ -26,6 +26,13 @@ writeHeader()
   echo "#ifndef SIMDISSDK_${2}_H" >> $1
   echo "#define SIMDISSDK_${2}_H" >> $1
   echo "" >> $1
+  echo "#ifdef _MSC_VER" >> $1
+  echo "#pragma message( __FILE__ \": warning <DEPR>: File is deprecated and will be removed in a future release.\" )" >> $1
+  echo "#else" >> $1
+  echo "#warning File is deprecated and will be removed in a future release." >> $1
+  echo "#endif" >> $1
+
+  echo "" >> $1
 }
 
 addIncludes()
@@ -42,7 +49,7 @@ writeFooter()
 
 # simVis
 writeHeader simVis.h SIMVIS
-echo "#include \"simVis/Shaders.h\"" >> simVis.h.inc
+echo "// simVis/Headless.h is intentionally omitted to avoid X11 symbols" >> simVis.h
 echo "#include \"simVis/osgEarthVersion.h\"" >> simVis.h.inc
 find simVis -name '*.h' | sort -f | grep -v "simVis/Shaders.h" | grep -v "simVis/DBFormat.h" | grep -v "simVis/DBOptions.h" | grep -v "simVis/DB/" | sed 's/^/#include "/' | sed 's/$/"/' >> simVis.h.inc
 addIncludes simVis.h
@@ -50,7 +57,9 @@ writeFooter simVis.h SIMVIS
 
 # simUtil
 writeHeader simUtil.h SIMUTIL
-find simUtil -name '*.h' | sort -f | grep -v "simUtil/DbConfigurationFile" | sed 's/^/#include "/' | sed 's/$/"/' >> simUtil.h.inc
+echo "// simUtil/SilverLiningSettings.h is intentionally omitted to avoid commonly missing 3rd party library" >> simUtil.h
+echo "// simUtil/TritonSettings.h is intentionally omitted to avoid commonly missing 3rd party library" >> simUtil.h
+find simUtil -name '*.h' | sort -f | grep -v "simUtil/DbConfigurationFile" | grep -v "simUtil/SilverLiningSettings.h" | grep -v "simUtil/TritonSettings.h" | sed 's/^/#include "/' | sed 's/$/"/' >> simUtil.h.inc
 addIncludes simUtil.h
 writeFooter simUtil.h SIMUTIL
 

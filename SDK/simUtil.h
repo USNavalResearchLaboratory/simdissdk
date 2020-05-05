@@ -22,6 +22,14 @@
 #ifndef SIMDISSDK_SIMUTIL_H
 #define SIMDISSDK_SIMUTIL_H
 
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
+
+// simUtil/SilverLiningSettings.h is intentionally omitted to avoid commonly missing 3rd party library
+// simUtil/TritonSettings.h is intentionally omitted to avoid commonly missing 3rd party library
 #include "simUtil/Capabilities.h"
 #include "simUtil/DataStoreTestHelper.h"
 #include "simUtil/DatumConvert.h"
@@ -49,12 +57,10 @@
 #include "simUtil/ResizeViewManipulator.h"
 #include "simUtil/ScreenCoordinateCalculator.h"
 #include "simUtil/Shaders.h"
-#include "simUtil/SilverLiningSettings.h"
 #include "simUtil/StatsHandler.h"
 #include "simUtil/StatsSizeFixer.h"
 #include "simUtil/StatusText.h"
 #include "simUtil/TerrainToggleEffect.h"
-#include "simUtil/TritonSettings.h"
 #include "simUtil/UnitTypeConverter.h"
 #include "simUtil/ViewpointMonitor.h"
 #include "simUtil/ViewpointPositions.h"

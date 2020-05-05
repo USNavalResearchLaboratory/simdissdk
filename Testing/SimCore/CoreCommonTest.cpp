@@ -22,7 +22,8 @@
 #include <cstdio>
 #include <cmath>
 #include <stdexcept>
-#include "simCore.h"
+#include "simCore/Common/Version.h"
+#include "simCore/Common/SDKAssert.h"
 
 namespace
 {

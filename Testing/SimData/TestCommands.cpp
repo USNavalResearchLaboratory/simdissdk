@@ -19,8 +19,7 @@
  * disclose, or release this software.
  *
  */
-#include "simCore.h"
-#include "simData.h"
+#include "simCore/Common/SDKAssert.h"
 #include "simUtil/DataStoreTestHelper.h"
 
 namespace {

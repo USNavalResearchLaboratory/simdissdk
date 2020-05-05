@@ -22,6 +22,12 @@
 #ifndef SIMDISSDK_SIMCORE_H
 #define SIMDISSDK_SIMCORE_H
 
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
+
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/Calculations.h"
 #include "simCore/Calc/Coordinate.h"

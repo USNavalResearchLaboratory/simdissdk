@@ -22,6 +22,12 @@
 #ifndef SIMDISSDK_SIMDATA_H
 #define SIMDISSDK_SIMDATA_H
 
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
+
 #include "simData/CategoryData/CategoryData.h"
 #include "simData/CategoryData/CategoryFilter.h"
 #include "simData/CategoryData/CategoryNameManager.h"

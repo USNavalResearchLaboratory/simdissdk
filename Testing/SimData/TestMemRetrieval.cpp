@@ -25,7 +25,7 @@
 #include "simCore/Time/Utils.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
-#include "simData.h"
+#include "simData/LinearInterpolator.h"
 #include "simUtil/DataStoreTestHelper.h"
 
 using namespace std;
