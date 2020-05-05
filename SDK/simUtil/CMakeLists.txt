@@ -96,15 +96,29 @@ set(UTIL_ALL_HEADER
 
 # Append TritonSettings if we have the osgEarth Triton nodekit
 if(OSGEARTH_TRITON_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_TRITON)
+    option(TRITON_ENABLE "Enable Triton" ON)
     list(APPEND UTIL_HEADERS ${UTIL_INC}TritonSettings.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}TritonSettings.cpp)
 endif()
 
+# Configure the include header for Triton appropriately
+configure_file(Triton.h.in Triton.h @ONLY)
+
+# Append generated header for SilverLining
+list(APPEND UTIL_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/Triton.h)
+
 # Append SilverLiningSettings if we have the osgEarth Triton nodekit
 if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL "NODEKIT" AND TARGET OSGEARTH_SILVERLINING)
+    option(SILVERLINING_ENABLE, "Enable SilverLining" ON)
     list(APPEND UTIL_HEADERS ${UTIL_INC}SilverLiningSettings.h)
     list(APPEND UTIL_SOURCES ${UTIL_SRC}SilverLiningSettings.cpp)
 endif()
+
+# Configure the include header for SilverLining appropriately
+configure_file(SilverLining.h.in SilverLining.h @ONLY)
+
+# Append generated header for SilverLining
+list(APPEND UTIL_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/SilverLining.h)
 
 # Note that shaders do not go into simUtil.h and header/cpp don't get installed
 set(UTIL_SHADER_FILES
