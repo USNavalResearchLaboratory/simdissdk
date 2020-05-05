@@ -261,10 +261,14 @@ public:
   void setTime(double timestamp, bool notify = true);
 
   /**
-   * Set the ECI reference time for the chain of locators. All locators use the same reference time.
-   * Will only be set if called by the top-level parent.
-   * @param[in] eciRefTime ECI reference time which is subtracted from the locator timestamp to find the elapsed ECI time
-   * @return True if the ECI reference time is set properly.
+   * Set the ECI reference time for a locator.
+   * The ECI reference time is subtracted from the locator timestamp to find the elapsed ECI time.
+   * It is expected that only one locator in an inheritance chain will specify an ECI reference time;
+   * and expected that that value applies to all locators in the chain.
+   * Nevertheless, any locator can set an ECI reference time.
+   * The ECI reference time for a locator is the first non-default value set for itself or by its parents.
+   * @param eciRefTime ECI reference time.
+   * @return True.
    */
   bool setEciRefTime(double eciRefTime);
 
@@ -273,12 +277,19 @@ public:
    */
   double getTime() const;
 
-  /** Returns the ECI reference time for this locator (is the same for all locators in the chain). */
+  /**
+   * Returns the ECI reference time for this locator.
+   * If not set by this locator, it will be retrieved from next parent locator that has a non-default value.
+   * @return the ECI reference time if found, 0. if the locator and all parents have the default/not-set value.
+   */
   double getEciRefTime() const;
 
   /**
-   * Returns the elapsed ECI time for this locator. If no timestamp has been set prior to calling
-   * this method, the time returned will be 0.
+   * Returns the elapsed ECI time for this locator.
+   * The elapsed ECI time of a locator is the difference of :
+   * the most recent timestamp of the locator that provides that ECI Reference time for this locator,
+   * and the ECI Reference time of this locator (see getEciRefTime()).
+   * If no timestamp has been set prior to calling this method, the time returned will be 0.
    */
   double getElapsedEciTime() const;
 
@@ -389,12 +400,6 @@ protected:
   virtual bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const;
 
   /**
-  * Returns the timestamp on this locator. If a valid timestamp is not found, it will attempt to
-  * find a valid timestamp in one of the parent locators. Used for ECI time functions.
-  */
-  double getTime_() const;
-
-  /**
   * Returns the input locator matrix with all local offsets (including those of parents) applied, as filtered by the specified inheritance components
   * @param[in,out] output matrix containing the new locator matrix with offsets applied
   * @param[in    ] comps inheritance components to use
@@ -439,7 +444,7 @@ private:
   bool hasRotation_;        ///< indicates if this locator has a rotation
   bool offsetsAreSet_;      ///< indicates if this locator has local offsets
   double timestamp_;        ///< the most recent sim time when this locator was updated
-  double eciRefTime_;       ///< the rotation offset for eci/ecef conversion
+  double eciRefTime_;       ///< the rotation offset for ECI/ECEF conversion
   double eciRotationTime_;  ///< the local earth rotation time offset specified for this locator
 };
 

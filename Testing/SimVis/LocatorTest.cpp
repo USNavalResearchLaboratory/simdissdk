@@ -163,11 +163,31 @@ int LocatorTest(int argc, char* argv[])
 
   // Create a SRS on WGS84
   osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
-  // Allocate a Locator for testing
-  osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(srs.get());
+  {
+    // Allocate a Locator for testing
+    osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(srs.get());
 
-  // Run tests
-  rv += testGetLocatorPositionOrientation(loc.get());
+    // Run tests
+    rv += testGetLocatorPositionOrientation(loc.get());
+  }
+
+  // same test with an caching locator
+  {
+    // Allocate a Locator for testing
+    osg::ref_ptr<simVis::Locator> loc = new simVis::CachingLocator(srs.get());
+
+    // Run tests
+    rv += testGetLocatorPositionOrientation(loc.get());
+  }
+
+  // same test with an "eci mode" locator, with no eci rotation
+  {
+    osg::ref_ptr<simVis::Locator> scenarioEciLocator = new simVis::Locator(srs.get());
+    scenarioEciLocator->setEciRotationTime(0., 0.);
+    osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(scenarioEciLocator);
+
+    rv += testGetLocatorPositionOrientation(loc.get());
+  }
 
   return rv;
 }

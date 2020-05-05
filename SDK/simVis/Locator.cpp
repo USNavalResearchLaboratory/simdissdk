@@ -40,7 +40,7 @@ Locator::Locator(const osgEarth::SpatialReference* mapSRS)
   hasRotation_(false),
   offsetsAreSet_(false),
   timestamp_(std::numeric_limits<double>::max()),
-  eciRefTime_(0.0),
+  eciRefTime_(std::numeric_limits<double>::max()),
   eciRotationTime_(0.)
 {
   if (!mapSRS_.valid())
@@ -56,7 +56,7 @@ Locator::Locator(Locator* parentLoc, unsigned int inheritMask)
   hasRotation_(false),
   offsetsAreSet_(false),
   timestamp_(std::numeric_limits<double>::max()),
-  eciRefTime_(0.0),
+  eciRefTime_(std::numeric_limits<double>::max()),
   eciRotationTime_(0.)
 {
   setParentLocator(parentLoc, inheritMask);
@@ -274,7 +274,6 @@ void Locator::resetToLocalTangentPlane(bool notify)
     notifyListeners_();
 }
 
-
 void Locator::endUpdate()
 {
   notifyListeners_();
@@ -288,46 +287,46 @@ void Locator::setTime(double stamp, bool notify)
 
 bool Locator::setEciRefTime(double eciRefTime)
 {
-  // Make sure the current locator is the top-level parent (i.e. has no parent)
-  if (!parentLoc_.valid())
-  {
-    eciRefTime_ = eciRefTime;
-    return true;
-  }
-  return false;
+  eciRefTime_ = eciRefTime;
+  return true;
 }
 
 double Locator::getTime() const
 {
-  // Get the parent's timestamp if it exists and check whether it's newer than the current one
-  if (parentLoc_.valid())
+  // if no valid timestamps, return 0.
+  double mostRecentTime = 0.;
+  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
   {
-    double parentTime = parentLoc_->getTime();
-    if (parentTime > timestamp_ && parentTime != std::numeric_limits<double>::max())
-      return parentTime;
+    const double locatorTime = loc->timestamp_;
+    if (locatorTime != std::numeric_limits<double>::max() && locatorTime > mostRecentTime)
+      mostRecentTime = locatorTime;
   }
-  // If the timestamp is still invalid at this point, default it to 0.
-  if (timestamp_ == std::numeric_limits<double>::max())
-    return 0.0;
-  return timestamp_;
-}
-
-double Locator::getTime_() const
-{
-  // If a timestamp isn't set, try getting a parent timestamp instead
-  return (timestamp_ == std::numeric_limits<double>::max() && parentLoc_.valid()) ? parentLoc_->getTime_() : timestamp_;
+  return mostRecentTime;
 }
 
 double Locator::getEciRefTime() const
 {
-  return parentLoc_.valid() ? parentLoc_->getEciRefTime() : eciRefTime_;
+  // traverse up through parents to find first set ECI reference time
+  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  {
+    if (loc->eciRefTime_ != std::numeric_limits<double>::max())
+      return loc->eciRefTime_;
+  }
+  return 0.;
 }
 
 double Locator::getElapsedEciTime() const
 {
-  // If no valid timestamp is found, just return 0
-  double timestamp = getTime_();
-  return timestamp != std::numeric_limits<double>::max() ? timestamp - getEciRefTime() : 0.0;
+  // find the first locator that has a set value for eci reference time
+  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  {
+    if (loc->eciRefTime_ != std::numeric_limits<double>::max())
+    {
+      // use loc's eci reference time, with the most recent time of loc or loc's parents
+      return (loc->getTime() - loc->eciRefTime_);
+    }
+  }
+  return getTime();
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
