@@ -76,6 +76,7 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}GeoFence.h
     ${VIS_INC}GlowHighlight.h
     ${VIS_INC}Gl3Utils.h
+    ${VIS_INC}Headless.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
@@ -233,6 +234,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}Gate.cpp
     ${VIS_SRC}GeoFence.cpp
     ${VIS_SRC}GlowHighlight.cpp
+    ${VIS_SRC}Headless.cpp
     ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}Laser.cpp
     ${VIS_SRC}LayerRefreshCallback.cpp
@@ -399,7 +401,7 @@ endif()
 # ----------------------------------------------------------------------
 
 # Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
-set_source_files_properties(${VIS_SRC}Utils.cpp ${VIS_SRC}GOG/Utils.cpp
+set_source_files_properties(${VIS_SRC}Utils.cpp ${VIS_SRC}Headless.cpp ${VIS_SRC}GOG/Utils.cpp
     PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
 set(VIS_PROJECT_FILES

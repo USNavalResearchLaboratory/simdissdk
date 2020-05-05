@@ -49,7 +49,6 @@ writeFooter()
 
 # simVis
 writeHeader simVis.h SIMVIS
-echo "// simVis/Headless.h is intentionally omitted to avoid X11 symbols" >> simVis.h
 echo "#include \"simVis/osgEarthVersion.h\"" >> simVis.h.inc
 find simVis -name '*.h' | sort -f | grep -v "simVis/Shaders.h" | grep -v "simVis/DBFormat.h" | grep -v "simVis/DBOptions.h" | grep -v "simVis/DB/" | sed 's/^/#include "/' | sed 's/$/"/' >> simVis.h.inc
 addIncludes simVis.h

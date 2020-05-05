@@ -19,24 +19,30 @@
  * disclose, or release this software.
  *
  */
-#ifndef SIMVIS_HEADLESS_H
-#define SIMVIS_HEADLESS_H
+#include "simVis/Headless.h"
 
-/** \file simVis/Headless.h
- * The purpose of this file is to provide the routine simVis::isHeadless().  This
- * routine will return true when running in a non-windowed environment, where
- * instantiating a window or windowed application would cause errors.  This is
- * most useful during unit testing, to prevent unit tests from failing in cases
- * where they need to instantiate a QApplication or other windowing structure.
- */
+#ifdef WIN32
 
-#include "simCore/Common/Common.h"
+bool simVis::isHeadless()
+{
+  // Windows is never headless
+  return false;
+}
 
-namespace simVis {
+#else
 
-/** Returns true when executing in a headless display environment */
-SDKVIS_EXPORT bool isHeadless();
+#include <X11/Xlib.h>
 
+bool simVis::isHeadless()
+{
+  // UNIX systems that cannot XOpenDisplay() are considered headless
+  Display* d = XOpenDisplay(NULL);
+  if (d != NULL)
+  {
+    XCloseDisplay(d);
+    return false;
+  }
+  return true;
 }
 
 #endif

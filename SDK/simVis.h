@@ -28,7 +28,6 @@
 #warning File is deprecated and will be removed in a future release.
 #endif
 
-// simVis/Headless.h is intentionally omitted to avoid X11 symbols
 #include "simVis/AlphaColorFilter.h"
 #include "simVis/AlphaTest.h"
 #include "simVis/AnimatedLine.h"
