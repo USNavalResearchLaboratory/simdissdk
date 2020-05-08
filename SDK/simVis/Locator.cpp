@@ -342,7 +342,7 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
     return false;
 
   osg::Matrix m;
-  if (!getLocatorMatrix(m))
+  if (!getLocatorMatrix(m, Locator::COMP_POSITION))
     return false;
   const osg::Vec3d& ecefPos = m.getTrans();
 
@@ -472,8 +472,7 @@ bool Locator::getLocatorMatrix(osg::Matrixd& output, unsigned int comps) const
   }
   else if (posFound)
   {
-    // if we only inherit (or find) a position, convert the matrix to a local tangent plane.
-    getSRS()->getEllipsoid()->computeLocalToWorldTransformFromXYZ(pos.x(), pos.y(), pos.z(), output);
+    computeLocalToWorldTransformFromXYZ_(pos, output);
   }
   applyOffsets_(output, comps);
   return true;
@@ -575,6 +574,30 @@ bool Locator::getOrientation_(osg::Matrixd& ori, unsigned int comps) const
     }
   }
   return false;
+}
+
+void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& output) const
+{
+  output.makeTranslate(ecefPos);
+
+  simCore::Vec3 llaPos;
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos);
+
+  double rotationMatrixENU_[3][3];
+  simCore::CoordinateConverter::setLocalToEarthMatrix(llaPos.lat(), llaPos.lon(), simCore::LOCAL_LEVEL_FRAME_ENU, rotationMatrixENU_);
+
+  // set matrix
+  output(0,0) = rotationMatrixENU_[0][0];
+  output(0,1) = rotationMatrixENU_[0][1];
+  output(0,2) = rotationMatrixENU_[0][2];
+
+  output(1,0) = rotationMatrixENU_[1][0];
+  output(1,1) = rotationMatrixENU_[1][1];
+  output(1,2) = rotationMatrixENU_[1][2];
+
+  output(2,0) = rotationMatrixENU_[2][0];
+  output(2,1) = rotationMatrixENU_[2][1];
+  output(2,2) = rotationMatrixENU_[2][2];
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API

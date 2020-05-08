@@ -430,6 +430,15 @@ private:
   */
   bool getRotation_(osg::Matrixd& rotation) const;
 
+  /**
+  * Returns an ENU local tangent plane at the specified position
+  * simCore equivalent of osg::computeLocalToWorldTransformFromXYZ()
+  * using simCore methods avoids dependency on SRS, and uses a more accurate ecef->lla conversion
+  * @param ecefPos specified position
+  * @param rotation ENU matrix at specified position
+  */
+  void computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& output) const;
+
   osg::ref_ptr<const osgEarth::SpatialReference> mapSRS_;
   osg::observer_ptr<Locator> parentLoc_;
   unsigned int componentsToInherit_; // Locator::Components mask
