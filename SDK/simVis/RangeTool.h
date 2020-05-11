@@ -26,7 +26,6 @@
 #include <sstream>
 
 #include "osg/Group"
-#include "osg/MatrixTransform"
 #include "osgEarth/Revisioning"
 
 #include "simCore/Common/Common.h"
@@ -45,6 +44,7 @@ namespace simRF { class RFPropagationFacade; }
 
 namespace simVis
 {
+class LocatorNode;
 
   /**
   * RangeTool is a subsystem for drawing range measurements.
@@ -389,13 +389,13 @@ namespace simVis
       /**
       * Gets the root node representing this association
       */
-      osg::Node* getNode() const { return xform_.get(); }
+      osg::Node* getNode() const;
 
     private:
       simData::ObjectId                  id1_, id2_;             // id's of the associated entities
       bool                               dirty_;                 // whether the scene geometry needs rebuilding
       bool                               visible_;               // whether to render the association
-      osg::ref_ptr<osg::MatrixTransform> xform_;                 // local-to-world transform
+      osg::ref_ptr<LocatorNode>          xform_;                 // local-to-world transform
       osg::Geode*                        geode_;                 // scene geometry
       osg::Group*                        labels_;                // label controls
       osg::observer_ptr<EntityNode>      obj1_obs_;              // cached pointer to first entity
