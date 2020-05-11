@@ -20,11 +20,11 @@
  *
  */
 #include <cassert>
-#include "osgEarth/GeoData"
 #include "osgEarth/LineDrawable"
 #include "osgEarth/PointDrawable"
 #include "simVis/Locator.h"
 #include "simVis/Types.h"
+#include "simVis/Utils.h"
 #include "simVis/TrackChunkNode.h"
 
 namespace simVis
@@ -292,14 +292,8 @@ void TrackChunkNode::appendBridge_(unsigned int i, const osg::Vec3f& local, cons
   // dev error if called with any other mode
   assert (mode_ == simData::TrackPrefs_Mode_BRIDGE);
   // draw a new drop line (2 verts)
-  osg::Vec3d up;
-  osgEarth::GeoPoint geo;
-  geo.fromWorld(getLocator()->getSRS()->getGeographicSRS(), world);
-  geo.createWorldUpVector(up);
-  up.normalize();
-
   drop_->setVertex(2*i, local);
-  drop_->setVertex(2*i+1, (world - up*geo.alt()) * world2local_);
+  drop_->setVertex(2*i+1, Math::ecefEarthPoint(convertToSim(world), world2local_));
   drop_->setColor(2*i, color);
   drop_->setColor(2*i+1, color);
 }

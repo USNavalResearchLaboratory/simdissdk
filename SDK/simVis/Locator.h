@@ -435,9 +435,9 @@ private:
   * simCore equivalent of osg::computeLocalToWorldTransformFromXYZ()
   * using simCore methods avoids dependency on SRS, and uses a more accurate ecef->lla conversion
   * @param ecefPos specified position
-  * @param rotation ENU matrix at specified position
+  * @param local2world ENU matrix at specified position
   */
-  void computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& output) const;
+  void computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const;
 
   osg::ref_ptr<const osgEarth::SpatialReference> mapSRS_;
   osg::observer_ptr<Locator> parentLoc_;

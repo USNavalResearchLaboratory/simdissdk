@@ -441,18 +441,7 @@ void TrackHistoryNode::updateAltModePositionAndAppearance_(const simCore::Coordi
   const osg::Matrixd& altModeMatrix = altModeXform_->getMatrix();
   osg::Matrixd world2local;
   world2local.invert(altModeMatrix);
-
-  // calculate the local point.
-  static const osg::Vec3d s_zero;
-  const osg::Vec3d& world = s_zero * altModeMatrix;
-
-  osg::Vec3d up;
-  osgEarth::GeoPoint geo;
-  geo.fromWorld(parentLocator_->getSRS()->getGeographicSRS(), world);
-  geo.createWorldUpVector(up);
-  up.normalize();
-
-  dropVertsDrawable_->setVertex(1, (world - up*geo.alt()) * world2local);
+  dropVertsDrawable_->setVertex(1, Math::ecefEarthPoint(ecefCoord.position(), world2local));
 }
 
 void TrackHistoryNode::setHostBounds(const osg::Vec2& bounds)

@@ -576,9 +576,9 @@ bool Locator::getOrientation_(osg::Matrixd& ori, unsigned int comps) const
   return false;
 }
 
-void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& output) const
+void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const
 {
-  output.makeTranslate(ecefPos);
+  local2world.makeTranslate(ecefPos);
 
   simCore::Vec3 llaPos;
   simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos);
@@ -587,17 +587,17 @@ void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, os
   simCore::CoordinateConverter::setLocalToEarthMatrix(llaPos.lat(), llaPos.lon(), simCore::LOCAL_LEVEL_FRAME_ENU, rotationMatrixENU_);
 
   // set matrix
-  output(0,0) = rotationMatrixENU_[0][0];
-  output(0,1) = rotationMatrixENU_[0][1];
-  output(0,2) = rotationMatrixENU_[0][2];
+  local2world(0,0) = rotationMatrixENU_[0][0];
+  local2world(0,1) = rotationMatrixENU_[0][1];
+  local2world(0,2) = rotationMatrixENU_[0][2];
 
-  output(1,0) = rotationMatrixENU_[1][0];
-  output(1,1) = rotationMatrixENU_[1][1];
-  output(1,2) = rotationMatrixENU_[1][2];
+  local2world(1,0) = rotationMatrixENU_[1][0];
+  local2world(1,1) = rotationMatrixENU_[1][1];
+  local2world(1,2) = rotationMatrixENU_[1][2];
 
-  output(2,0) = rotationMatrixENU_[2][0];
-  output(2,1) = rotationMatrixENU_[2][1];
-  output(2,2) = rotationMatrixENU_[2][2];
+  local2world(2,0) = rotationMatrixENU_[2][0];
+  local2world(2,1) = rotationMatrixENU_[2][1];
+  local2world(2,2) = rotationMatrixENU_[2][2];
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API

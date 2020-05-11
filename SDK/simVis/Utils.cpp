@@ -661,6 +661,19 @@ void Math::clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, os
   }
 }
 
+osg::Vec3d Math::ecefEarthPoint(const simCore::Vec3& ecefPos, const osg::Matrixd& world2local)
+{
+  simCore::Vec3 llaPos;
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefPos, llaPos);
+  const double cosLon = cos(llaPos.lon());
+  const double cosLat = cos(llaPos.lat());
+  const double sinLon = sin(llaPos.lon());
+  const double sinLat = sin(llaPos.lat());
+  osg::Vec3d up(cosLon*cosLat, sinLon*cosLat, sinLat);
+  up.normalize();
+  return (osg::Vec3d(ecefPos.x(), ecefPos.y(), ecefPos.z()) - up*llaPos.alt()) * world2local;
+}
+
 osg::Vec4f ColorUtils::RgbaToVec4(unsigned int color)
 {
   // Convert 0xRRGGBBAA to (R, G, B, A)

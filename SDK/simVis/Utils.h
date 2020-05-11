@@ -353,6 +353,15 @@ namespace simVis
     static void clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, osg::Vec3d& max_hpr_deg);
 
     /**
+    * Takes an ECEF position and return the projected position at altitude 0
+    * Similar to simCore::clampEcefPointToGeodeticSurface() but more efficient when matrix is already available
+    * @param ecefPos specified position
+    * @param local2world ENU matrix at specified position
+    * @return ECEF point at altitude 0
+    */
+    static osg::Vec3d ecefEarthPoint(const simCore::Vec3& ecefPos, const osg::Matrixd& world2local);
+
+    /**
     * Quaternion spherical linear interpolator - for sweeping one quat onto another
     * when creating 3D arcs (pie slices)
     */
