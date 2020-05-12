@@ -693,7 +693,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   {
     if (labelCount < originalLabelCount)
       labels_->removeChildren(labelCount, originalLabelCount - labelCount);
-    osgEarth::Registry::shaderGenerator().run(labels_, osgEarth::Registry::stateSetCache());
+    osgEarth::Registry::shaderGenerator().run(labels_);
   }
 }
 
