@@ -294,14 +294,14 @@ bool Locator::setEciRefTime(double eciRefTime)
 double Locator::getTime() const
 {
   // if no valid timestamps, return 0.
-  double mostRecentTime = 0.;
+  double mostRecentTime = -std::numeric_limits<double>::max();
   for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
   {
     const double locatorTime = loc->timestamp_;
     if (locatorTime != std::numeric_limits<double>::max() && locatorTime > mostRecentTime)
       mostRecentTime = locatorTime;
   }
-  return mostRecentTime;
+  return (mostRecentTime != -std::numeric_limits<double>::max()) ? mostRecentTime : 0.;
 }
 
 double Locator::getEciRefTime() const

@@ -152,10 +152,10 @@ public:
   * conversion to/from an ECI coordinate, the ECI reference time must either be provided or
   * have already been set; otherwise a reference time of 0 will be used. The ECI reference
   * time can only be set by the top-level parent.
-  * @param[in ] coord World coordinates (must be ECEF, LLA, or ECI)
-  * @param[in ] timestamp Updates the locator with this timestamp
-  * @param[in ] eciRefTime Reference time at which ECI and ECEF are equal
-  * @param[in ] notify Whether to immediately notify listeners
+  * @param coord World coordinates (must be ECEF, LLA, or ECI)
+  * @param timestamp Updates the locator with this timestamp
+  * @param eciRefTime Reference time at which ECI and ECEF are equal
+  * @param notify Whether to immediately notify listeners
   */
   void setCoordinate(const simCore::Coordinate& coord, double timestamp,
     double eciRefTime = std::numeric_limits<double>::max(), bool notify = true);
@@ -257,6 +257,8 @@ public:
   * Set timestamp associated with the locator. If converting to or from ECI, the
   * timestamp's offset from the ECI reference time (see setEciRefTime()) will be
   * used as the elapsed ECI time.
+  * @param timestamp time value to set; can be negative, zero or positive.
+  * @param[in ] notify Whether to immediately notify listeners
   */
   void setTime(double timestamp, bool notify = true);
 

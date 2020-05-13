@@ -67,17 +67,17 @@ int testOnePositionOrientation(simVis::Locator* loc, const simCore::Vec3& pos, c
   simCore::Vec3 outPosition;
   simCore::Vec3 outOrientation;
   loc->getLocatorPositionOrientation(&outPosition, &outOrientation, simCore::COORD_SYS_LLA);
-  double outTime = loc->getElapsedEciTime();
+  const double outTime = loc->getElapsedEciTime();
 
   // Check the position
-  rv += SDK_ASSERT(simCore::areAnglesEqual(outPosition.lat(), coordLla.lat(), 0.00001));
-  rv += SDK_ASSERT(simCore::areAnglesEqual(outPosition.lon(), coordLla.lon(), 0.00001));
-  rv += SDK_ASSERT(simCore::areEqual(outPosition.alt(), coordLla.alt(), 0.01));
+  rv += SDK_ASSERT(simCore::areAnglesEqual(outPosition.lat(), coordLla.lat()));
+  rv += SDK_ASSERT(simCore::areAnglesEqual(outPosition.lon(), coordLla.lon()));
+  rv += SDK_ASSERT(simCore::areEqual(outPosition.alt(), coordLla.alt()));
 
   // Check the orientation
-  rv += SDK_ASSERT(simCore::areAnglesEqual(outOrientation.yaw(), coordLla.yaw(), 0.00001));
-  rv += SDK_ASSERT(simCore::areAnglesEqual(outOrientation.pitch(), coordLla.pitch(), 0.00001));
-  rv += SDK_ASSERT(simCore::areAnglesEqual(outOrientation.roll(), coordLla.roll(), 0.00001));
+  rv += SDK_ASSERT(simCore::areAnglesEqual(outOrientation.yaw(), coordLla.yaw()));
+  rv += SDK_ASSERT(simCore::areAnglesEqual(outOrientation.pitch(), coordLla.pitch()));
+  rv += SDK_ASSERT(simCore::areAnglesEqual(outOrientation.roll(), coordLla.roll()));
 
   // Check the elapsed ECI time
   rv += SDK_ASSERT(simCore::areEqual(eciRefTime + outTime, timestamp));
@@ -152,6 +152,45 @@ int testGetLocatorPositionOrientation(simVis::Locator* loc)
   return rv;
 }
 
+int testStaticEci(osgEarth::SpatialReference* srs, double eciReferenceTime)
+{
+  int rv = 0;
+
+  const simCore::Vec3 staticEciPos(5646775.942, 1959614.906, 2223992.894);
+  simCore::Coordinate staticEci(simCore::COORD_SYS_ECI, staticEciPos);
+  osg::ref_ptr<simVis::Locator> eciRotationLocator = new simVis::Locator(srs);
+  osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(eciRotationLocator);
+
+  // artificially set timestamp to large negative number so that overall locator time
+  //  (and elapsed eci time) is determined by eciRotationLocator updates below
+  double pointTime = -1000.;
+  loc->setCoordinate(staticEci, pointTime, eciReferenceTime);
+
+  for (double time : {-10., -1., 0., 3., 13., 23., 33., 43., 53., 67., 57., 42., 31., 11., -27.})
+  {
+    simCore::Vec3 ecef;
+    simCore::Vec3 eci;
+    const double updateTime = eciReferenceTime + time;
+    eciRotationLocator->setEciRotationTime((updateTime - pointTime), updateTime);
+    rv += SDK_ASSERT(loc->getElapsedEciTime() == time);
+
+    // with each eci rotation, the ecef position changes and will not match the eci position
+    loc->getLocatorPosition(&ecef, simCore::COORD_SYS_ECEF);
+    if (time != 0.)
+      rv += SDK_ASSERT(!simCore::v3AreAnglesEqual(staticEciPos, ecef));
+    else
+    {
+      // ecef and eci match when update time = eci reference time, i.e., elapsed eci time is 0
+      rv += SDK_ASSERT(simCore::v3AreAnglesEqual(staticEciPos, ecef));
+    }
+
+    // but as long as elapsed time is correct, that ecef position will always convert back to the original ECI position
+    loc->getLocatorPosition(&eci, simCore::COORD_SYS_ECI);
+    rv += SDK_ASSERT(simCore::v3AreAnglesEqual(staticEciPos, eci));
+  }
+  return rv;
+}
+
 }
 
 int LocatorTest(int argc, char* argv[])
@@ -187,6 +226,13 @@ int LocatorTest(int argc, char* argv[])
     osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(scenarioEciLocator);
 
     rv += testGetLocatorPositionOrientation(loc.get());
+  }
+
+  // test behavior of a static point in ECI mode
+  {
+    rv += testStaticEci(srs.get(), 0.);
+    rv += testStaticEci(srs.get(), 10.);
+    rv += testStaticEci(srs.get(), -10.);
   }
 
   return rv;
