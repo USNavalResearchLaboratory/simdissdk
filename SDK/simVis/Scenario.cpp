@@ -85,6 +85,9 @@ struct SetHorizonCullCallback : public osg::NodeCallback
     {
       osg::ref_ptr<osgEarth::Horizon> horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
       horizon->setEye(nv->getViewPoint());
+      horizon->setName("simVis.ScenarioManager.SetHorizonCullCallback");
+      // SIM-11395: deep copy copies the scale (derived from the em) correctly,
+      //  but does not copy ellipsoid model itself; for our purposes, it is probably ok.
       horizon->put(*nv);
     }
     traverse(node, nv);

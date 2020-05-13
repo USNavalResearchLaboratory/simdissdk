@@ -358,7 +358,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   localGrid_ = new LocalGridNode(centroidLocator_.get(), host, referenceYear);
   addChild(localGrid_);
 
-  // horizon culling:
+  // horizon culling: entity culling based on bounding sphere
   addCullCallback( new osgEarth::HorizonCullCallback() );
 
   // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
@@ -369,9 +369,11 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   label_ = new EntityLabelNode();
   centroid_->addChild(label_);
 
+  // labels are culled based on centroid center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
+  // SIM-11395 - set default ellipsoid, when osgEarth supports it
+  //  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 

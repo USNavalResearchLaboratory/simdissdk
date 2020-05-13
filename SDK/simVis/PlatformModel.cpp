@@ -53,8 +53,6 @@
 #undef LC
 #define LC "[PlatformModel] "
 
-using namespace osgEarth;
-
 namespace simVis {
 
 /** OSG Mask for traversal (like the select type in SIMDIS 9) */
@@ -168,9 +166,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   imageIconXform_->setName("imageIconXform");
   imageIconXform_->dirty();
 
-  // Horizon culler for the platform. The culler is attached to this node,
+  // Horizon culler for the platform (and its label). The culler is attached to this node,
   // but uses the imageIconXform for the actual testing.
-  HorizonCullCallback* hcc = new HorizonCullCallback();
+  osgEarth::HorizonCullCallback* hcc = new osgEarth::HorizonCullCallback();
   hcc->setCullByCenterPointOnly(true);
   hcc->setProxyNode(imageIconXform_.get());
   hcc->setName("HorizonCullCallback");
@@ -178,7 +176,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
 
   // the following line is necessary prior to OSG 3.4, since we are unable
   // to pass the shared Horizon down from the ScenarioManager:
-  hcc->setHorizon(new Horizon(*locator->getSRS()->getEllipsoid()));
+  // SIM-11395 - set default ellipsoid, when osgEarth supports it
+  //hcc->setHorizon(new Horizon(*locator->getSRS()->getEllipsoid()));
 
   // used to apply both dynamic and static scaling to the model.
   dynamicXform_ = new simVis::DynamicScaleTransform();

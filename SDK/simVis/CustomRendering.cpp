@@ -67,12 +67,13 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
   label_ = new EntityLabelNode(getLocator());
   addChild(label_);
 
-  // horizon culling:
+  // horizon culling: entity culling based on bounding sphere
   addCullCallback(new osgEarth::HorizonCullCallback());
-
+  // labels are culled based on entity center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
+  // SIM-11395 - set default ellipsoid, when osgEarth supports it
+  //  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
