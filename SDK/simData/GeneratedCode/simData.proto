@@ -1264,7 +1264,7 @@ message CustomRenderingPrefs {
   optional fixed32 historyOverrideColor = 7 [default = 0x19E500FF];
   /// If true, show center axis inside the shape. Shape color must be semitransparent.  Not all renderers support this field.
   optional bool centerAxis = 8 [default = false];
-  /// Of true, show a lighted shape.  Not all renderers support this field
+  /// If true, show a lighted shape.  Not all renderers support this field
   optional bool showLighted = 9 [default = false];
 
 };
