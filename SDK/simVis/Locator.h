@@ -23,11 +23,12 @@
 #define SIMVIS_LOCATOR_H
 
 #include <limits>
+#include "osg/Referenced"
+#include "osg/Matrix"
+#include "osg/Vec3"
+#include "osgEarth/Revisioning"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
-#include "osg/MatrixTransform"
-#include "osgEarth/Revisioning"
-#include "osgEarth/SpatialReference"
 
 /// Container for classes relating to visualization
 namespace simVis
@@ -80,7 +81,7 @@ public: // data
 /**
  * Generates a positional matrix for an object.
  */
-class SDKVIS_EXPORT Locator : public osg::Referenced, public osgEarth::Revisioned
+class SDKVIS_EXPORT Locator : public osg::Referenced, public osgEarth::Util::Revisioned
 {
 public:
   /**
@@ -111,9 +112,8 @@ public:
 public:
   /**
   * Construct a locator.
-  * @param mapSRS Map spatial reference system under which this locator operates
   */
-  explicit Locator(const osgEarth::SpatialReference* mapSRS);
+  Locator();
 
   /**
   * Construct a derived locator.
@@ -244,15 +244,6 @@ public:
   virtual bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-  * Gets the matrix that xforms from the local ENU tangent plane to world coordinates.
-  * (This returns the same value as getPositionMatrix)
-  * @param out_matrix Result goes here upon success
-  * @return True upon success, false on failure
-  */
-  SDK_DEPRECATE(virtual bool getLocalTangentPlaneToWorldMatrix(osg::Matrixd& out_matrix) const, "Method will be removed in future SDK release.");
-#endif
   /**
   * Set timestamp associated with the locator. If converting to or from ECI, the
   * timestamp's offset from the ECI reference time (see setEciRefTime()) will be
@@ -333,12 +324,6 @@ public:
   unsigned int getComponentsToInherit() const { return componentsToInherit_; }
 
   /**
-  * Get the spatial reference system associated with this locator
-  * @return an SRS
-  */
-  const osgEarth::SpatialReference* getSRS() const { return mapSRS_.get(); }
-
-  /**
   * Whether the Locator or any of its parents contains a valid position, orientation or rotation.
   * @return true if the locator chain has position, orientation or rotation, else false
   */
@@ -367,12 +352,6 @@ public:
    * @param[in ] callback Callback to remove.
    */
   void removeCallback(LocatorCallback* callback);
-
-  /**
-   * Replaces the map SRS in this locator.
-   * @param[in ] srs New map SRS.
-   */
-  void setMapSRS(const osgEarth::SpatialReference* srs);
 
  /**
   * Gets the total ECI rotation time for this locator (including parents), where time is the measure of earth rotation.
@@ -441,7 +420,6 @@ private:
   */
   void computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const;
 
-  osg::ref_ptr<const osgEarth::SpatialReference> mapSRS_;
   osg::observer_ptr<Locator> parentLoc_;
   unsigned int componentsToInherit_; // Locator::Components mask
   RotationOrder rotOrder_;
@@ -465,8 +443,8 @@ private:
 class SDKVIS_EXPORT CachingLocator : public Locator
 {
 public:
-  /** Constructor; @see Locator(const osgEarth::SpatialReference*) */
-  explicit CachingLocator(const osgEarth::SpatialReference* mapSRS);
+  /** Constructor; @see Locator() */
+  CachingLocator();
   /** Constructor; @see Locator(Locator*, unsigned int) */
   explicit CachingLocator(Locator* parentLoc, unsigned int inheritMask = COMP_ALL);
 
@@ -501,9 +479,9 @@ protected:
 private:
   // cache frequently used LLA position and orientation
   mutable simCore::Vec3 llaPositionCache_;
-  mutable osgEarth::Revision llaPositionCacheRevision_;
+  mutable osgEarth::Util::Revision llaPositionCacheRevision_;
   mutable simCore::Vec3 llaOrientationCache_;
-  mutable osgEarth::Revision llaOrientationCacheRevision_;
+  mutable osgEarth::Util::Revision llaOrientationCacheRevision_;
 };
 
 /**
@@ -520,8 +498,8 @@ private:
 class SDKVIS_EXPORT ResolvedPositionOrientationLocator : public Locator
 {
 public:
-  /** Constructor; @see Locator(const osgEarth::SpatialReference*) */
-  explicit ResolvedPositionOrientationLocator(const osgEarth::SpatialReference* mapSRS);
+  /** Constructor; @see Locator() */
+  ResolvedPositionOrientationLocator();
   /** Constructor; @see Locator(Locator*, unsigned int) */
   ResolvedPositionOrientationLocator(Locator* parentLoc, unsigned int inheritMask);
 protected:
@@ -544,8 +522,8 @@ private:
 class SDKVIS_EXPORT ResolvedPositionLocator : public ResolvedPositionOrientationLocator
 {
 public:
-  /** Constructor; @see Locator(const osgEarth::SpatialReference*) */
-  explicit ResolvedPositionLocator(const osgEarth::SpatialReference* mapSRS);
+  /** Constructor; @see Locator() */
+  ResolvedPositionLocator();
   /** Constructor; @see Locator(Locator*, unsigned int) */
   ResolvedPositionLocator(Locator* parentLoc, unsigned int inheritMask);
 protected:

@@ -311,7 +311,7 @@ int VaporTrail::addFirstPuff_()
     simCore::Vec3(platformUpdate->psi(), platformUpdate->theta(), platformUpdate->phi()),
     simCore::Vec3(platformUpdate->vx(), platformUpdate->vy(), platformUpdate->vz()));
 
-  osg::ref_ptr<Locator> startTimeLocator = new Locator(locator_->getSRS());
+  osg::ref_ptr<Locator> startTimeLocator = new Locator();
   startTimeLocator->setCoordinate(coord, platformUpdate->time(), locator_->getEciRefTime());
   // add offset for wake to prevent wake from getting wet
   const double altOffset = (vaporTrailData_.isWake ? 0.1 : 0.0);

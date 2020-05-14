@@ -889,8 +889,7 @@ int main(int argc, char** argv)
   row++;
 
 
-  osg::ref_ptr<simVis::LocatorNode> rfLocator = new simVis::LocatorNode(
-      new simVis::Locator(viewer->getSceneManager()->getMap()->getSRS()));
+  osg::ref_ptr<simVis::LocatorNode> rfLocator = new simVis::LocatorNode(new simVis::Locator());
   rfLocator->getLocator()->setCoordinate(simCore::Coordinate(
       simCore::COORD_SYS_LLA,
       simCore::Vec3(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt)));

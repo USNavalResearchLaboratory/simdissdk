@@ -115,17 +115,14 @@ namespace simRF
 const int DEFAULT_TRANSPARENCY = 60;  // percentage, 0-100. 100 is fully transparent, 0 is opaque
 const int DEFAULT_HISTORY = 30; // degrees
 
-RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent, osgEarth::Map* map)
- : id_(id),
-   antennaHeightMeters_(0.0),
-   rfParamsSet_(false),
-   parent_(parent)
+RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent)
+  : id_(id),
+  antennaHeightMeters_(0.0),
+  rfParamsSet_(false),
+  parent_(parent)
 {
   // create locator
-  if (map)
-  {
-    locator_ = new simVis::LocatorNode( new simVis::Locator(map->getSRS()) );
-  }
+  locator_ = new simVis::LocatorNode(new simVis::Locator());
   // add locator to the parent node
   if (locator_.valid() && parent_.valid())
     parent_->addChild(locator_);

@@ -57,6 +57,7 @@ class ProjectorNode;
 class ScenarioTool;
 
 //----------------------------------------------------------------------------
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 /// Interface for an object that can create a new Locator
 class LocatorFactory
 {
@@ -69,13 +70,14 @@ public:
   /// create a new platform locator
   virtual Locator* createEciLocator() const = 0;
 };
+#endif
 //----------------------------------------------------------------------------
 
 /**
 * Manages all scenario objects (platforms, beams, gates, etc) and their
 * visualization within the scene
 */
-class SDKVIS_EXPORT ScenarioManager : public osgEarth::LODScaleGroup, public simVis::LocatorFactory
+class SDKVIS_EXPORT ScenarioManager : public osgEarth::LODScaleGroup
 {
   friend class SceneManager;
 public:
@@ -399,12 +401,6 @@ public: // package protected
    */
   void setMapNode(osgEarth::MapNode* map);
 
-  public: // simVis::LocatorFactory interface
-    // internal - override
-    Locator* createLocator() const;
-    // internal - override
-    Locator* createEciLocator() const;
-
 protected:
   /// osg::Referenced-derived
   virtual ~ScenarioManager();
@@ -416,8 +412,6 @@ protected:
   class SimpleEntityGraph;
   class SurfaceClamping;
 
-  /** Generates locators for entities */
-  LocatorFactory*              locatorFactory_;
   /** Provides capability to process platform TSPI points */
   PlatformTspiFilterManager*   platformTspiFilterManager_;
   /** PlatformTspiFilter that provides surface clamping capabilities */

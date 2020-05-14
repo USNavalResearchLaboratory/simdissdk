@@ -186,7 +186,7 @@ osg::Node* createNode(float s)
 
 void setup(App& app)
 {
-  app.root = new simVis::Locator(app.mapSRS);
+  app.root = new simVis::Locator();
   app.rootNode = new simVis::LocatorNode(app.root.get(), createNode(SCALE));
   app.rootNode->addChild(new LabelNode("root"));
   app.graph->addChild(app.rootNode.get());

@@ -433,7 +433,6 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   rfManager_(new simRF::NullRFPropagationManager()),
   losCreator_(new ScenarioLosCreator())
 {
-  locatorFactory_ = dynamic_cast<simVis::LocatorFactory*>(this);
   root_->setName("root");
   root_->addChild(entityGraph_->node());
   addChild(root_.get());
@@ -476,12 +475,13 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   OverrideColor::installShaderProgram(stateSet);
   PolygonStipple::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
+
+  scenarioEciLocator_ = new Locator();
 }
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
 ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan)
-  : locatorFactory_(factory),
-  platformTspiFilterManager_(new PlatformTspiFilterManager()),
+  : platformTspiFilterManager_(new PlatformTspiFilterManager()),
   surfaceClamping_(NULL),
   aboveSurfaceClamping_(NULL),
   lobSurfaceClamping_(NULL),
@@ -707,29 +707,6 @@ void ScenarioManager::setMapNode(osgEarth::MapNode* map)
   surfaceClamping_->setMapNode(mapNode_.get());
   aboveSurfaceClamping_->setMapNode(mapNode_.get());
   lobSurfaceClamping_->setMapNode(mapNode_.get());
-
-  if (mapNode_.valid())
-  {
-    // update all the entity locators with the new SRS.
-    for (EntityRepo::iterator i = entities_.begin(); i != entities_.end(); ++i)
-    {
-      EntityRecord* record = i->second.get();
-      if (record)
-      {
-        EntityNode* node = record->getEntityNode();
-
-        // SIM-11395: this does not cover all the possible locators that hold refptr to old SRS.
-        // TrackHistory, TimeTicks, rfprop, drawnobjectmanager, errorunitshape, vapor trail
-        // nor does it update any entityNode horizon culling for change in ellipsoid
-        node->getLocator()->setMapSRS(mapNode_->getMapSRS());
-      }
-    }
-
-    if (scenarioEciLocator_.get())
-      scenarioEciLocator_->setMapSRS(mapNode_->getMapSRS());
-    else
-      scenarioEciLocator_ = new Locator(mapNode_->getMapSRS());
-  }
   SAFETRYEND("setting map in scenario");
 }
 
@@ -741,7 +718,7 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
     dataStore,
     *platformTspiFilterManager_,
     root_.get(),
-    locatorFactory_->createEciLocator(),
+    new Locator(scenarioEciLocator_),
     dataStore.referenceYear());
   node->getModel()->addCallback(new BeamNoseFixer(this));
 
@@ -771,7 +748,7 @@ BeamNode* ScenarioManager::addBeam(const simData::BeamProperties& props, simData
     host = find<PlatformNode>(props.hostid());
 
   // make a locator, tying it to the host's locator if there is one
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   // put the beam into our entity db:
   BeamNode* node = new BeamNode(this, props, locator, host, dataStore.referenceYear());
@@ -810,7 +787,7 @@ GateNode* ScenarioManager::addGate(const simData::GateProperties& props, simData
     SIM_WARN << "ScenarioManager::addGate: a target gate requires a Beam host; gate will be ignored." << std::endl;
   }
 
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   GateNode* node = new GateNode(props, locator, host, dataStore.referenceYear());
 
@@ -839,7 +816,7 @@ LaserNode* ScenarioManager::addLaser(const simData::LaserProperties& props, simD
   if (props.has_hostid())
     host = find(props.hostid());
 
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   LaserNode* node = new LaserNode(props, locator, host, dataStore.referenceYear());
 
@@ -924,7 +901,7 @@ ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties&
   if (props.has_hostid())
     host = find(props.hostid());
 
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   ProjectorNode* node = new ProjectorNode(props, locator, host);
 
@@ -1390,17 +1367,4 @@ osg::Group* ScenarioManager::getOrCreateAttachPoint(const std::string& name)
   }
   return result;
 }
-
-Locator* ScenarioManager::createLocator() const
-{
-  return mapNode_.valid() ?
-    new Locator(mapNode_->getMap()->getProfile()->getSRS()) : NULL;
-}
-
-Locator* ScenarioManager::createEciLocator() const
-{
-  return (mapNode_.valid() && scenarioEciLocator_.valid()) ?
-    new Locator(scenarioEciLocator_.get()) : NULL;
-}
-
 }

@@ -48,9 +48,8 @@ public:
    * Construct an RF Propagation beam handler for the specified beam
    * @param beamId Beam to configure
    * @param parent node to which the visual display's locator is attached; if NULL, no display will be created
-   * @param map from the scene manager for creating the locator
    */
-  RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent, osgEarth::Map* map);
+  RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent);
   virtual ~RFPropagationFacade();
 
   /**

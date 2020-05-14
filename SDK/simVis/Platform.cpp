@@ -155,7 +155,7 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
                            osg::Group* expireModeGroupAttach,
                            Locator* eciLocator,
                            int referenceYear)
-  : EntityNode(simData::PLATFORM, new CachingLocator(eciLocator->getSRS())),
+  : EntityNode(simData::PLATFORM, new CachingLocator()),
   ds_(dataStore),
   platformTspiFilterManager_(manager),
   lastUpdateTime_(-std::numeric_limits<float>::max()),
@@ -692,7 +692,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
   }
   // trackhistory for platform in ecef datamode gets a new empty locator
   if (!track_.valid())
-    track_ = new TrackHistoryNode(ds_, new Locator(getLocator()->getSRS()), platformTspiFilterManager_, getId());
+    track_ = new TrackHistoryNode(ds_, new Locator(), platformTspiFilterManager_, getId());
 
   expireModeGroup_->addChild(track_);
   track_->setPrefs(prefs, lastProps_, true);
@@ -723,7 +723,7 @@ bool PlatformNode::createTimeTicks_(const simData::PlatformPrefs& prefs)
   }
   // for non-ECI platform use a new empty locator
   if (!timeTicks_.valid())
-    timeTicks_ = new TimeTicks(ds_, new Locator(getLocator()->getSRS()), platformTspiFilterManager_, getId());
+    timeTicks_ = new TimeTicks(ds_, new Locator(), platformTspiFilterManager_, getId());
   expireModeGroup_->addChild(timeTicks_);
   timeTicks_->setPrefs(prefs, lastProps_, true);
   timeTicks_->update();

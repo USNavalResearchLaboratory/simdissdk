@@ -31,9 +31,8 @@
 namespace simVis
 {
 
-Locator::Locator(const osgEarth::SpatialReference* mapSRS)
-  : mapSRS_(mapSRS),
-  componentsToInherit_(COMP_ALL),
+Locator::Locator()
+  : componentsToInherit_(COMP_ALL),
   rotOrder_(HPR),
   isEmpty_(true),
   ecefCoordIsSet_(false),
@@ -43,9 +42,6 @@ Locator::Locator(const osgEarth::SpatialReference* mapSRS)
   eciRefTime_(std::numeric_limits<double>::max()),
   eciRotationTime_(0.)
 {
-  if (!mapSRS_.valid())
-    osg::notify(osg::WARN) << "simVis::Locator: illegal, cannot create a Locator with a NULL map SRS." << std::endl;
-
   ecefCoord_.setCoordinateSystem(simCore::COORD_SYS_ECEF);
 }
 
@@ -61,16 +57,6 @@ Locator::Locator(Locator* parentLoc, unsigned int inheritMask)
 {
   setParentLocator(parentLoc, inheritMask);
   ecefCoord_.setCoordinateSystem(simCore::COORD_SYS_ECEF);
-}
-
-void Locator::setMapSRS(const osgEarth::SpatialReference* mapSRS)
-{
-  if (mapSRS && mapSRS != mapSRS_.get())
-  {
-    mapSRS_ = mapSRS;
-    if (!isEmpty_)
-      notifyListeners_();
-  }
 }
 
 bool Locator::isEmpty() const
@@ -106,14 +92,7 @@ void Locator::setParentLocator(Locator* newParent, unsigned int inheritMask, boo
   componentsToInherit_ = inheritMask;
 
   if (newParent)
-  {
-    mapSRS_ = newParent->getSRS();
     newParent->children_.insert(this);
-  }
-
-  if (!mapSRS_.valid())
-    osg::notify(osg::WARN) << "simVis::Locator: illegal, cannot create a Locator with a NULL map SRS."
-    << std::endl;
 
   if (notify)
     notifyListeners_();
@@ -600,22 +579,6 @@ void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, os
   local2world(2,2) = rotationMatrixENU_[2][2];
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-bool Locator::getLocalTangentPlaneToWorldMatrix(osg::Matrixd& output) const
-{
-  osg::Matrixd lm;
-  if (!getLocatorMatrix(lm))
-    return false;
-
-  const osg::Vec3d& ecef = lm.getTrans();
-  mapSRS_->getEllipsoid()->computeLocalToWorldTransformFromXYZ(
-    ecef.x(), ecef.y(), ecef.z(),
-    output);
-
-  return true;
-}
-#endif
-
 void Locator::addCallback(LocatorCallback* callback)
 {
   callbacks_.push_back(callback);
@@ -669,8 +632,8 @@ void Locator::notifyListeners_()
 
 //---------------------------------------------------------------------------
 
-CachingLocator::CachingLocator(const osgEarth::SpatialReference* mapSRS)
-  : Locator(mapSRS)
+CachingLocator::CachingLocator()
+  : Locator()
 {}
 
 CachingLocator::CachingLocator(Locator* parentLoc, unsigned int inheritMask)
@@ -730,8 +693,8 @@ bool CachingLocator::getLocatorPositionOrientation(simCore::Vec3* out_position, 
 
 //---------------------------------------------------------------------------
 
-ResolvedPositionOrientationLocator::ResolvedPositionOrientationLocator(const osgEarth::SpatialReference* mapSRS)
-  : Locator(mapSRS)
+ResolvedPositionOrientationLocator::ResolvedPositionOrientationLocator()
+  : Locator()
 {}
 
 ResolvedPositionOrientationLocator::ResolvedPositionOrientationLocator(Locator* parentLoc, unsigned int inheritMask)
@@ -761,8 +724,8 @@ void ResolvedPositionOrientationLocator::applyOffsets_(osg::Matrixd& output, uns
 
 //---------------------------------------------------------------------------
 
-ResolvedPositionLocator::ResolvedPositionLocator(const osgEarth::SpatialReference* mapSRS)
-  : ResolvedPositionOrientationLocator(mapSRS)
+ResolvedPositionLocator::ResolvedPositionLocator()
+  : ResolvedPositionOrientationLocator()
 {}
 
 ResolvedPositionLocator::ResolvedPositionLocator(Locator* parentLoc, unsigned int inheritMask)

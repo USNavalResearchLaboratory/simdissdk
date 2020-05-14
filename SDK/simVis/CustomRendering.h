@@ -34,7 +34,6 @@ namespace simVis
 class CustomLabelContentCallback;
 class EntityLabelNode;
 class LocalGridNode;
-class Locator;
 class OverrideColor;
 class ScenarioManager;
 

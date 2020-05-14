@@ -404,7 +404,7 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
     dropVertsDrawable_->setDataVariance(osg::Object::DYNAMIC);
     dropVertsDrawable_->dirty();
 
-    altModeXform_ = new LocatorNode(new Locator(parentLocator_->getSRS()));
+    altModeXform_ = new LocatorNode(new Locator());
     altModeXform_->addChild(dropVertsDrawable_.get());
 
     this->addChild(altModeXform_);

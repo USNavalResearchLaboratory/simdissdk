@@ -152,13 +152,13 @@ int testGetLocatorPositionOrientation(simVis::Locator* loc)
   return rv;
 }
 
-int testStaticEci(osgEarth::SpatialReference* srs, double eciReferenceTime)
+int testStaticEci(double eciReferenceTime)
 {
   int rv = 0;
 
   const simCore::Vec3 staticEciPos(5646775.942, 1959614.906, 2223992.894);
   simCore::Coordinate staticEci(simCore::COORD_SYS_ECI, staticEciPos);
-  osg::ref_ptr<simVis::Locator> eciRotationLocator = new simVis::Locator(srs);
+  osg::ref_ptr<simVis::Locator> eciRotationLocator = new simVis::Locator();
   osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(eciRotationLocator);
 
   // artificially set timestamp to large negative number so that overall locator time
@@ -200,11 +200,9 @@ int LocatorTest(int argc, char* argv[])
   // Check the SIMDIS SDK version
   simCore::checkVersionThrow();
 
-  // Create a SRS on WGS84
-  osg::ref_ptr<osgEarth::SpatialReference> srs = osgEarth::SpatialReference::create("wgs84");
   {
     // Allocate a Locator for testing
-    osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(srs.get());
+    osg::ref_ptr<simVis::Locator> loc = new simVis::Locator();
 
     // Run tests
     rv += testGetLocatorPositionOrientation(loc.get());
@@ -213,7 +211,7 @@ int LocatorTest(int argc, char* argv[])
   // same test with an caching locator
   {
     // Allocate a Locator for testing
-    osg::ref_ptr<simVis::Locator> loc = new simVis::CachingLocator(srs.get());
+    osg::ref_ptr<simVis::Locator> loc = new simVis::CachingLocator();
 
     // Run tests
     rv += testGetLocatorPositionOrientation(loc.get());
@@ -221,7 +219,7 @@ int LocatorTest(int argc, char* argv[])
 
   // same test with an "eci mode" locator, with no eci rotation
   {
-    osg::ref_ptr<simVis::Locator> scenarioEciLocator = new simVis::Locator(srs.get());
+    osg::ref_ptr<simVis::Locator> scenarioEciLocator = new simVis::Locator();
     scenarioEciLocator->setEciRotationTime(0., 0.);
     osg::ref_ptr<simVis::Locator> loc = new simVis::Locator(scenarioEciLocator);
 
@@ -230,9 +228,9 @@ int LocatorTest(int argc, char* argv[])
 
   // test behavior of a static point in ECI mode
   {
-    rv += testStaticEci(srs.get(), 0.);
-    rv += testStaticEci(srs.get(), 10.);
-    rv += testStaticEci(srs.get(), -10.);
+    rv += testStaticEci(0.);
+    rv += testStaticEci(10.);
+    rv += testStaticEci(-10.);
   }
 
   return rv;
