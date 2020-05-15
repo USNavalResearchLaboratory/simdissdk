@@ -673,7 +673,6 @@ int main(int argc, char** argv)
       osg::ref_ptr<simRF::Profile> profile = new simRF::Profile(cProvider.get());
       profile->setHalfBeamWidth(beamWidth / 2.0);
       profile->setBearing(bearingStep * i);
-      profile->setDisplayThickness(maxHeight);
       profile->setTerrainHeights(terrain);
       profileManager->addProfile(profile.get());
     }
@@ -708,6 +707,7 @@ int main(int argc, char** argv)
         {
           minHeight = provider->getMinHeight();
           maxHeight = provider->getMaxHeight();
+          numHeights = provider->getNumHeights();
         }
       }
     }
@@ -769,7 +769,7 @@ int main(int argc, char** argv)
 
   //Add a thickness slider; used for 3D
   s_controlGrid->setControl(0, row, new LabelControl("Thickness"));
-  osg::ref_ptr<HSliderControl> thicknessSlider = createSlider(0, maxHeight - minHeight, profileManager->getDisplayThickness());
+  osg::ref_ptr<HSliderControl> thicknessSlider = createSlider(1, numHeights, profileManager->getDisplayThickness());
   thicknessSlider->addEventHandler(new ThicknessHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, thicknessSlider.get());
   row++;

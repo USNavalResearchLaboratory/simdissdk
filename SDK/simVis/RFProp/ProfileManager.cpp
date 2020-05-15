@@ -38,7 +38,7 @@ ProfileManager::ProfileManager()
    history_(osg::DegreesToRadians(15.0)),
    bearing_(0),
    height_(0),
-   displayThickness_(1000.0f),
+   displayThickness_(1),
    agl_(false),
    displayOn_(false),
    alpha_(1.f),
