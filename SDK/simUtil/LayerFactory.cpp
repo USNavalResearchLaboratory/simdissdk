@@ -220,9 +220,13 @@ osgEarth::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url)
   osg::ref_ptr<osgEarth::FeatureModelLayer> layer = new osgEarth::FeatureModelLayer();
   configureOptions(url, layer.get());
 
-  if (layer->getStatus().isError())
+  // check the feature source's status for errors, since the layer's status will be ResourceUnavailable until it is opened
+  if (!layer->getFeatureSource())
+    return NULL;
+  osgEarth::Status status = layer->getFeatureSource()->getStatus();
+  if (status.isError())
   {
-    SIM_WARN << "ShapeFileLayerFactory::load(" << url << ") failed : " << layer->getStatus().message() << "\n";
+    SIM_WARN << "ShapeFileLayerFactory::load(" << url << ") failed : " << status.message() << "\n";
     layer = NULL;
   }
   return layer.release();
