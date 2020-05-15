@@ -23,8 +23,7 @@
 #define SIMVIS_RFPROP_PROFILE_H
 
 #include <map>
-#include "osg/Group"
-#include "osg/Geode"
+#include "osg/MatrixTransform"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"
 #include "simCore/Calc/Math.h"
@@ -32,7 +31,6 @@
 #include "simVis/RFProp/ProfileDataProvider.h"
 
 namespace osg {
-  class MatrixTransform;
   class DrawElementsUInt;
 }
 
@@ -41,7 +39,7 @@ namespace simRF
 class CompositeProfileProvider;
 
 /** Responsible for rendering a single profile of data. */
-class SDKVIS_EXPORT Profile : public osg::Group
+class SDKVIS_EXPORT Profile : public osg::MatrixTransform
 {
 public:
   /**
@@ -230,16 +228,13 @@ protected:
   /** Half of the beam width in radians */
   double halfBeamWidth_;
 
-  /** Transform for positioning the profile */
-  osg::MatrixTransform* transform_;
-
   /** Range vs terrain heights; TODO: Ask Glenn why this is cached instead of requesting the hgts from osgEarth */
   std::map<float, float> terrainHeights_;
 
   /** Array of vertices for the profile */
   osg::ref_ptr<osg::Vec3Array> verts_;
-  /** Holds the geode graphics */
-  osg::ref_ptr<osg::Geode> geode_;
+  /** Holds the graphics */
+  osg::ref_ptr<osg::Group> group_;
   /** Values for the profile */
   osg::ref_ptr<osg::FloatArray> values_;
 

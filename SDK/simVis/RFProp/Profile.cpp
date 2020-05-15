@@ -53,8 +53,6 @@ Profile::Profile(CompositeProfileProvider* data)
   alphaUniform_ = getOrCreateStateSet()->getOrCreateUniform("alpha", osg::Uniform::FLOAT);
   alphaUniform_->set(alpha_);
 
-  transform_ = new osg::MatrixTransform();
-  addChild(transform_);
   updateOrientation_();
 
   init_();
@@ -313,13 +311,13 @@ void Profile::setThresholdType(ProfileDataProvider::ThresholdType type)
 void Profile::init_()
 {
   // Remove all existing nodes
-  transform_->removeChildren(0, transform_->getNumChildren());
+  removeChildren(0, getNumChildren());
 
   // Clear out the original values
   verts_ = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   values_ = new osg::FloatArray(osg::Array::BIND_PER_VERTEX);
   values_->setNormalize(false);
-  geode_ = NULL;
+  group_ = NULL;
   if (mode_ != DRAWMODE_3D_TEXTURE)
   {
     // if assert fails, check that setMode nulls texture on mode change
@@ -329,7 +327,7 @@ void Profile::init_()
   // ensure that our provider is valid
   if (data_.valid() && data_->getActiveProvider() != NULL)
   {
-    geode_ = new osg::Geode;
+    group_ = new osg::Group;
     switch (mode_)
     {
       case DRAWMODE_2D_HORIZONTAL:
@@ -358,18 +356,14 @@ void Profile::init_()
         // if assert fails, a new type has been added, but this switch has not been updated
         assert(0);
     }
-    transform_->addChild(geode_);
+    addChild(group_);
   }
   dirty_ = false;
 }
 
 void Profile::updateOrientation_()
 {
-  if (transform_)
-  {
-    // TODO:  Z axis is flipped in order to correctly display RF prop data (SIMSDK-365)
-    transform_->setMatrix(osg::Matrixd::rotate(bearing_, osg::Vec3d(0, 0, -1)));
-  }
+  setMatrix(osg::Matrixd::rotate(bearing_, osg::Vec3d(0., 0., -1.)));
 }
 
 void Profile::init2DHoriz_()
@@ -456,7 +450,7 @@ void Profile::init2DHoriz_()
 
   geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, startIndex, count));
 
-  geode_->addDrawable(geometry);
+  group_->addChild(geometry);
 }
 
 // Used to tesselate the 2D Vertical with triangle strip
@@ -552,7 +546,7 @@ void Profile::init2DVert_()
   // Call to tesselate the 2D Vertical
   tesselate2DVert_(numRanges, numHeights, startIndex, values_, geometry);
 
-  geode_->addDrawable(geometry);
+  group_->addChild(geometry);
 }
 
 void Profile::init3D_()
@@ -704,7 +698,7 @@ void Profile::init3D_()
 
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
 
-  geode_->addDrawable(geometry);
+  group_->addChild(geometry);
 }
 
 void Profile::init3DTexture_()
@@ -830,7 +824,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
 
     // Save right end vertices for cap
     rb = vertCount - 1; // Right bottom
@@ -869,7 +863,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
 
     // Save left end vertices for cap
     lb = vertCount - 2; // Left bottom
@@ -895,7 +889,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
   }
 
   { // Bottom side (drawn in opposite order of top side, required to make triangles face out the correct way)
@@ -917,7 +911,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
   }
 
   { // Cap (end of the shape, the pie "crust")
@@ -930,7 +924,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
   }
 
   // Only create the texture if it doesn't already exist, otherwise you can just reuse it
@@ -942,7 +936,7 @@ void Profile::init3DTexture_()
     texture_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
     simVis::fixTextureForGlCoreProfile(texture_.get());
   }
-  geode_->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture_);
+  group_->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture_);
 }
 
 void Profile::init3DPoints_()
@@ -1025,8 +1019,8 @@ void Profile::init3DPoints_()
   points->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
   points->finish();
 
-  geode_->addChild(points);
-  osgEarth::GLUtils::setPointSize(geode_->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
+  group_->addChild(points);
+  osgEarth::GLUtils::setPointSize(points->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
 }
 
 osg::Image* Profile::createImage_()
@@ -1428,7 +1422,7 @@ void Profile::initRAE_()
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_.get());
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-  geode_->addDrawable(geometry);
+  group_->addChild(geometry);
 }
 
 void Profile::traverse(osg::NodeVisitor& nv)
