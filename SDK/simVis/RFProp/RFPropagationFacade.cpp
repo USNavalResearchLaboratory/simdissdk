@@ -738,6 +738,7 @@ int RFPropagationFacade::loadArepsFiles(const simCore::TimeStamp& time, const st
   const double timeAsDouble = time.secondsSinceRefYear().Double();
   profileManager_->addProfileMap(timeAsDouble);
   profileManager_->update(timeAsDouble);
+  profileManager_->setSphericalEarth(true);
   // TODO: we have to update the profileManager_ time to load data at specified time; should we restore previous time after load is completed?
 
   simRF::ArepsLoader arepsLoader(this);

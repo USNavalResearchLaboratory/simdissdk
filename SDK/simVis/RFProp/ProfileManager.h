@@ -195,12 +195,12 @@ public:
   void setRefCoord(double latRad, double lonRad, double alt);
 
   /**
-   * Get whether the Profiles should conform to a spherical earth
+   * Get whether the profile data are specified for spherical or WGS84 earth
    */
   bool getSphericalEarth() const;
 
   /**
-   * Set whether the Profiles should conform to a spherical earth
+   * Set whether the profile data are specified for spherical or WGS84 earth
    */
   void setSphericalEarth(bool sphericalEarth);
 
@@ -224,10 +224,7 @@ public:
    */
   void setThresholdType(ProfileDataProvider::ThresholdType type);
 
-  /**
-   * Notifies the ProfileManager that it needs to re-render it's Profiles b/c something change effecting the rendering.
-   */
-  void dirty();
+
 
   /** Return the proper library name */
   virtual const char* libraryName() const { return "simRF"; }
@@ -239,28 +236,23 @@ protected:
   virtual ~ProfileManager();
 
 private:
+  /**
+  * Notifies the ProfileManager that it needs to re-render its profiles b/c something changed affecting the rendering.
+  */
+  void dirty_();
+
   void updateVisibility_();
   void initShaders_();
 
   osg::ref_ptr<ColorProvider> colorProvider_;
-
+  osg::ref_ptr<osg::Uniform> alphaUniform_;    ///< Uniform shader value for adjusting the alpha
   std::map<double, BearingProfileMap*> timeBearingProfiles_; ///< map from time to profiles according to bearing
-  BearingProfileMap *currentProfileMap_; ///< profile map corresponding to the current time
-
+  BearingProfileMap *currentProfileMap_; ///< profile map corresponding to the current time; map does not own the profiles it contains
   double history_;          ///< number of bearing slices displayed
   double bearing_;          ///< current bearing of RF prop display
-  double height_;           ///< 2D Horizontal display height
-  unsigned int displayThickness_;  ///< display thickness for 3D displays, in # height steps
-  bool agl_;                ///< whether height values for the 2D Horizontal display are referenced to height above ground level (AGL) or to mean sea level (MSL).
-  bool displayOn_;          ///< whether the display is on or off
   float alpha_;             ///< Alpha value (1.0 opaque, 0.0 transparent)
-  Profile::DrawMode mode_;  ///< Type of display, e.g. 2D, 3D
-  osg::Vec3d refCoord_;     ///< Reference coordinate used for coordinate conversion used in the visualization
-  bool sphericalEarth_;     ///< whether the profile data are specified for spherical earth or not
-  double elevAngle_;        ///< elevation angle used in the current display
-  ProfileDataProvider::ThresholdType type_;  ///< threshold type selected for display, e.g., POD, SNR, CNR
+  std::shared_ptr<Profile::ProfileContext> profileContext_; ///< context shared by manager and each profile
 };
 }
 
 #endif /* SIMVIS_RFPROP_PROFILE_MANAGER_H */
-

@@ -32,28 +32,21 @@
 #include "simVis/RFProp/ProfileManager.h"
 
 namespace simRF {
-//----------------------------------------------------------------------------
+
 ProfileManager::ProfileManager()
- : osg::Group(),
-   history_(osg::DegreesToRadians(15.0)),
-   bearing_(0),
-   height_(0),
-   displayThickness_(1),
-   agl_(false),
-   displayOn_(false),
-   alpha_(1.f),
-   mode_(Profile::DRAWMODE_2D_HORIZONTAL),
-   refCoord_(0, 0, 0),
-   sphericalEarth_(true),
-   elevAngle_(0),
-   type_(simRF::ProfileDataProvider::THRESHOLDTYPE_NONE)
+ : history_(osg::DegreesToRadians(15.0)),
+  bearing_(0),
+  profileContext_(std::make_shared<Profile::ProfileContext>())
 {
-  // create the initial map
+  // Create initial map; ownership moves to timeBearingProfiles_
   currentProfileMap_ = new BearingProfileMap;
   timeBearingProfiles_[0] = currentProfileMap_;
 
   osg::StateSet* stateset = getOrCreateStateSet();
   stateset->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_TWO_PASS_ALPHA);
+
+  alphaUniform_ = stateset->getOrCreateUniform("alpha", osg::Uniform::FLOAT);
+  alphaUniform_->set(1.0f);
 
   // Turn off lighting; we do not set normals in profiles, so lighting will look bad
   simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
@@ -83,15 +76,15 @@ ProfileManager::ProfileManager()
 
 ProfileManager::~ProfileManager()
 {
-  for (std::map<double, BearingProfileMap*>::const_iterator i = timeBearingProfiles_.begin(); i != timeBearingProfiles_.end(); ++i)
-    delete i->second;
+  for (const auto& iter : timeBearingProfiles_)
+    delete iter.second;
 }
 
 void ProfileManager::initShaders_()
 {
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(getOrCreateStateSet());
   simVis::Shaders package;
-  if (mode_ == Profile::DRAWMODE_3D_TEXTURE)
+  if (profileContext_->mode_ == Profile::DRAWMODE_3D_TEXTURE)
   {
     package.load(vp, package.rfPropTextureBasedVertex());
     package.load(vp, package.rfPropTextureBasedFragment());
@@ -108,12 +101,9 @@ void ProfileManager::initShaders_()
 
 void ProfileManager::addProfileMap(double time)
 {
-  // check for an existing map at the given time
-  std::map<double, BearingProfileMap*>::const_iterator i = timeBearingProfiles_.find(time);
-  if (i != timeBearingProfiles_.end())
-    return;
-
-  timeBearingProfiles_[time] = new BearingProfileMap;
+  // only if there is no existing map at the given time
+  if (timeBearingProfiles_.find(time) == timeBearingProfiles_.end())
+    timeBearingProfiles_[time] = new BearingProfileMap;
 }
 
 void ProfileManager::removeProfileMap(double time)
@@ -126,7 +116,7 @@ void ProfileManager::update(double time)
   // get the map at time >= the given time
   std::map<double, BearingProfileMap*>::const_iterator i = timeBearingProfiles_.lower_bound(time);
 
-  // TODO: if there is a change in currentProfileMap_, update the ref_coord for the profile manager (and all its profiles)
+  // TODO: if there is a change in currentProfileMap_, update the refLLA for the profile manager (and all its profiles)
 
   // if requested time is after last map
   if (i == timeBearingProfiles_.end())
@@ -141,32 +131,32 @@ void ProfileManager::update(double time)
 
 void ProfileManager::setDisplay(bool onOff)
 {
-  if (displayOn_ == onOff)
+  if (profileContext_->displayOn_ == onOff)
     return;
-  displayOn_ = onOff;
-  // setThresholdType will turn the profiles off
-  setThresholdType(type_);
+  profileContext_->displayOn_ = onOff;
+
+  for (const auto& iter : *currentProfileMap_)
+  {
+    // send THRESHOLDTYPE_NONE to turn profiles off
+    iter.second->setThresholdType(profileContext_->displayOn_ ? profileContext_->type_ : ProfileDataProvider::THRESHOLDTYPE_NONE);
+  }
+
   updateVisibility_();
 }
 
 bool ProfileManager::display() const
 {
-  return displayOn_;
+  return profileContext_->displayOn_;
 }
 
 void ProfileManager::setAlpha(float alpha)
 {
+  alpha = osg::clampBetween(alpha, 0.0f, 1.0f);
   if (alpha_ == alpha)
     return;
   alpha_ = alpha;
-
-  // Loop through all times
-  for (auto allIter = timeBearingProfiles_.begin(); allIter != timeBearingProfiles_.end(); ++allIter)
-  {
-    // Loop through all bearings
-    for (auto profileIter = allIter->second->begin(); profileIter != allIter->second->end(); ++profileIter)
-      profileIter->second->setAlpha(alpha);
-  }
+  alphaUniform_->set(alpha_);
+  // dirty not required
 }
 
 float ProfileManager::getAlpha() const
@@ -190,53 +180,61 @@ void ProfileManager::setHistory(double history)
 
 bool ProfileManager::getAGL() const
 {
-  return agl_;
+  return profileContext_->agl_;
 }
 
 void ProfileManager::setAGL(bool agl)
 {
-  if (agl_ != agl)
+  if (profileContext_->agl_ != agl)
   {
-    agl_ = agl;
-    for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-    {
-      itr->second->setAGL(agl_);
-    }
+    profileContext_->agl_ = agl;
+    dirty_();
   }
 }
 
 Profile::DrawMode ProfileManager::getMode() const
 {
-  return mode_;
+  return profileContext_->mode_;
 }
 
 void ProfileManager::setMode(Profile::DrawMode mode)
 {
-  if (mode_ != mode)
+  if (profileContext_->mode_ != mode)
   {
-    mode_ = mode;
+    profileContext_->mode_ = mode;
     initShaders_();
-    for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
+    dirty_();
+  }
+}
+
+ProfileDataProvider::ThresholdType ProfileManager::getThresholdType() const
+{
+  return profileContext_->type_;
+}
+
+void ProfileManager::setThresholdType(ProfileDataProvider::ThresholdType type)
+{
+  if (profileContext_->type_ != type)
+  {
+    profileContext_->type_ = type;
+    for (const auto& iter : *currentProfileMap_)
     {
-      itr->second->setMode(mode_);
+      iter.second->setThresholdType(profileContext_->type_);
     }
   }
 }
 
 unsigned int ProfileManager::getDisplayThickness() const
 {
-  return displayThickness_;
+  return profileContext_->displayThickness_;
 }
 
 void ProfileManager::setDisplayThickness(unsigned int displayThickness)
 {
-  if (displayThickness_ != displayThickness)
+  if (profileContext_->displayThickness_ != displayThickness)
   {
-    displayThickness_ = displayThickness;
-    for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-    {
-      itr->second->setDisplayThickness(displayThickness_);
-    }
+    profileContext_->displayThickness_ = displayThickness;
+    dirty_();
   }
 }
 
@@ -256,80 +254,67 @@ void ProfileManager::setBearing(double bearing)
 
 double ProfileManager::getHeight() const
 {
-  return height_;
+  return profileContext_->heightM_;
 }
 
 void ProfileManager::setHeight(double height)
 {
-  if (height_ != height)
+  if (profileContext_->heightM_ != height)
   {
-    height_ = height;
-    for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-    {
-      itr->second->setHeight(height_);
-    }
+    profileContext_->heightM_ = height;
+    dirty_();
   }
 }
 
 double ProfileManager::getRefLat() const
 {
-  return refCoord_.y();
+  return profileContext_->refLLA_.lat();
 }
 
 double ProfileManager::getRefLon() const
 {
-  return refCoord_.x();
+  return profileContext_->refLLA_.lon();
 }
 
 double ProfileManager::getRefAlt() const
 {
-  return refCoord_.z();
+  return profileContext_->refLLA_.alt();
 }
 
 void ProfileManager::setRefCoord(double latRad, double lonRad, double alt)
 {
-  if (latRad != refCoord_.y() || lonRad != refCoord_.x() || alt != refCoord_.z())
+  if (latRad != profileContext_->refLLA_.lat() || lonRad != profileContext_->refLLA_.lon() || alt != profileContext_->refLLA_.alt())
   {
-
-    refCoord_.set(lonRad, latRad, alt);
-    for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-    {
-      itr->second->setRefCoord(refCoord_.y(), refCoord_.x(), refCoord_.z());
-    }
+    profileContext_->refLLA_.set(lonRad, latRad, alt);
+    dirty_();
   }
 }
 
 bool ProfileManager::getSphericalEarth() const
 {
-  return sphericalEarth_;
+  return profileContext_->sphericalEarth_;
 }
 
 void ProfileManager::setSphericalEarth(bool sphericalEarth)
 {
-  if (sphericalEarth_ != sphericalEarth)
+  if (profileContext_->sphericalEarth_ != sphericalEarth)
   {
-    sphericalEarth_ = sphericalEarth;
-    for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-    {
-      itr->second->setSphericalEarth(sphericalEarth_);
-    }
+    profileContext_->sphericalEarth_ = sphericalEarth;
+    dirty_();
   }
 }
 
 double ProfileManager::getElevAngle() const
 {
-  return elevAngle_;
+  return profileContext_->elevAngleR_;
 }
 
 void ProfileManager::setElevAngle(double elevAngleRad)
 {
-  if (elevAngle_ != elevAngleRad)
+  if (profileContext_->elevAngleR_ != elevAngleRad)
   {
-    elevAngle_ = elevAngleRad;
-    for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-    {
-      itr->second->setElevAngle(elevAngle_);
-    }
+    profileContext_->elevAngleR_ = elevAngleRad;
+    dirty_();
   }
 }
 
@@ -348,17 +333,9 @@ void ProfileManager::addProfile(Profile* profile)
   if (!profile)
     return;
 
-  profile->setHeight(height_);
-  profile->setMode(mode_);
-  profile->setAGL(agl_);
-  profile->setDisplayThickness(displayThickness_);
-  profile->setRefCoord(refCoord_.y(), refCoord_.x(), refCoord_.z());
-  profile->setSphericalEarth(sphericalEarth_);
-  profile->setElevAngle(elevAngle_);
-  profile->setThresholdType(displayOn_ ? type_ : ProfileDataProvider::THRESHOLDTYPE_NONE);
-  profile->setAlpha(alpha_);
+  profile->setProfileContext(profileContext_);
 
-  // old profile must match exactly
+  // check to see if the new profile is replacing an existing profile
   Profile *oldProfile = currentProfileMap_->getProfileByBearing(profile->getBearing());
   if (oldProfile)
     removeChild(oldProfile);
@@ -370,7 +347,7 @@ void ProfileManager::addProfile(Profile* profile)
 
 void ProfileManager::updateVisibility_()
 {
-  if (!displayOn_)
+  if (!profileContext_->displayOn_)
     return;
   // only changes in beam bearing or history require recalc of minbearing & maxBearing -> optimization possible here
   const double minBearing = currentProfileMap_->getSlotBearing(bearing_ - history_ / 2.0);
@@ -383,9 +360,9 @@ void ProfileManager::updateVisibility_()
     maxBearing += M_TWOPI;
   }
 
-  for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
+  for (const auto& iter : *currentProfileMap_)
   {
-    const double profileBearing = itr->first;
+    const double profileBearing = iter.first;
     bool visible = (profileBearing >= minBearing && profileBearing <= maxBearing);
     if (addTwoPi && !visible)
     {
@@ -393,7 +370,7 @@ void ProfileManager::updateVisibility_()
       const double profileBearingAddTwoPi = profileBearing + M_TWOPI;
       visible = (profileBearingAddTwoPi >= minBearing) && (profileBearingAddTwoPi <= maxBearing);
     }
-    itr->second->setNodeMask(visible ? simVis::DISPLAY_MASK_BEAM : simVis::DISPLAY_MASK_NONE);
+    iter.second->setNodeMask(visible ? simVis::DISPLAY_MASK_BEAM : simVis::DISPLAY_MASK_NONE);
   }
 }
 
@@ -422,27 +399,10 @@ void ProfileManager::setColorProvider(ColorProvider* colorProvider)
   }
 }
 
-ProfileDataProvider::ThresholdType ProfileManager::getThresholdType() const
+void ProfileManager::dirty_()
 {
-  return type_;
-}
-
-void ProfileManager::setThresholdType(ProfileDataProvider::ThresholdType type)
-{
-  type_ = type;
-  // when display is off, do not propagate the type to the profiles; instead use THRESHOLDTYPE_NONE to turn profiles off
-  for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-  {
-    itr->second->setThresholdType(displayOn_ ? type_ : ProfileDataProvider::THRESHOLDTYPE_NONE);
-  }
-}
-
-void ProfileManager::dirty()
-{
-  for (BearingProfileMap::iterator itr = currentProfileMap_->begin(); itr != currentProfileMap_->end(); ++itr)
-  {
-    itr->second->dirty();
-  }
+  for (const auto& iter : *currentProfileMap_)
+    iter.second->dirty();
 }
 
 }
