@@ -157,6 +157,23 @@ namespace simCore
   };
 
   /**
+   * Observer class specialization for observing visualization clock changes.  Implement this interface
+   * instead of ModeChangeObserver in order to be told by the live mode clock when the data clock
+   * comes unlocked from the visualization clock, i.e. entering REPLAY mode.  Continue to use
+   * Clock::registerModeChangeCallback() with this observer type and ClockImpl will call your
+   * derived method when appropriate.
+   */
+  class VisualizationClockObserver : public Clock::ModeChangeObserver
+  {
+  public:
+    /** Called when the clock changes lock state with the data clock */
+    virtual void onLockChanged(bool lock) = 0;
+  };
+
+  /// VisualizationClockObserver reference object
+  typedef std::shared_ptr<VisualizationClockObserver> VisualizationClockObserverPtr;
+
+  /**
    * Implementation of clock controls that combines a data clock and a local clock.  This
    * class is essentially a Proxy on top of a clock implementation.  The Proxy lets you pick whether
    * you want to use the underlying implementation (the local clock) or the passed-in
@@ -216,6 +233,10 @@ namespace simCore
     virtual void increaseScale();
     ///@}
 
+    // Intercept calls to process VisualizationClockObserver
+    virtual void registerModeChangeCallback(Clock::ModeChangeObserverPtr p);
+    virtual void removeModeChangeCallback(Clock::ModeChangeObserverPtr p);
+
     /// Called to update the current data time
     void idle();
 
@@ -231,6 +252,8 @@ namespace simCore
 
     Clock::TimeObserverPtr dataTimeObserver_;
     Clock::ModeChangeObserverPtr dataModeObserver_;
+    /// List of all observers interested Visualization changes
+    std::vector<VisualizationClockObserverPtr> visClockObservers_;
   };
 }
 

@@ -839,6 +839,9 @@ void VisualizationClock::setLockedToDataClock(bool lock)
     localClock_->setTime(dataClock_.currentTime());
     localClock_->setControlsDisabled(false);
   }
+
+  for (auto observer : visClockObservers_)
+    observer->onLockChanged(lockToDataClock_);
 }
 
 bool VisualizationClock::isLockedToDataClock() const
@@ -1072,6 +1075,30 @@ void VisualizationClock::increaseScale()
     dataClock_.increaseScale();
   else
     localClock_->increaseScale();
+}
+
+void VisualizationClock::registerModeChangeCallback(Clock::ModeChangeObserverPtr p)
+{
+  ClockWithObservers::registerModeChangeCallback(p);
+  auto replayPtr = std::dynamic_pointer_cast<VisualizationClockObserver>(p);
+  if (replayPtr != NULL)
+  {
+    auto i = std::find(visClockObservers_.begin(), visClockObservers_.end(), p);
+    if (i == visClockObservers_.end())
+      visClockObservers_.push_back(replayPtr);
+  }
+}
+
+void VisualizationClock::removeModeChangeCallback(Clock::ModeChangeObserverPtr p)
+{
+  ClockWithObservers::removeModeChangeCallback(p);
+  auto replayPtr = std::dynamic_pointer_cast<VisualizationClockObserver>(p);
+  if (replayPtr != NULL)
+  {
+    auto i = std::find(visClockObservers_.begin(), visClockObservers_.end(), replayPtr);
+    if (i != visClockObservers_.end())
+      visClockObservers_.erase(i);
+  }
 }
 
 void VisualizationClock::idle()
