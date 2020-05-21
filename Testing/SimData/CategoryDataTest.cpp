@@ -437,8 +437,8 @@ int testFilterSerialize()
   inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)"] = " ";
   // All values on simplifies to empty
   inputToOptimizedOutput["a(1)~Unlisted Value(1)~No Value(1)~Something(1)"] = " ";
-  // All values at default values simplifies to empty
-  inputToOptimizedOutput["a(1)~Unlisted Value(0)"] = " ";
+  // All values at default values simplifies to empty category values, but name sticks around
+  inputToOptimizedOutput["a(1)~Unlisted Value(0)"] = "a(1)";
   // Hand-edit case: 0 in category, non-zero values. Note that this should simplify to empty, since unchecked categories are skipped when deserializing, as they will be ignored in match()
   // See SIM-5259 for more information
   inputToOptimizedOutput["a(0)~SomeValue(1)~SomeOtherValue(1)~UnsetValue(0)"] = " ";
@@ -452,7 +452,7 @@ int testFilterSerialize()
   inputToOptimizedOutput["a(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(0)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)"] = "a(1)~Unlisted Value(1)~No Value(1)~Surface Ship(0)";
   // All values simplifies to empty string, with 2 categories
   inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Unlisted Value(1)"] = "a(1)~Unlisted Value(1)";
-  inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Unlisted Value(0)"] = " ";
+  inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Unlisted Value(0)"] = "a(1)";
   // One of the two categories isn't fully empty
   inputToOptimizedOutput["Platform Type(1)~Unlisted Value(1)~No Value(1)~Unknown(1)~Surface Ship(1)~Submarine(1)~Aircraft(1)~Satellite(1)~Helicopter(1)~Missile(1)~Decoy(1)~Buoy(1)~Reference Site(1)~Land Vehicle(1)~Land Site(1)~Torpedo(1)~Contact(1)`a(1)~Something(1)"] = "a(1)~Something(1)";
 
@@ -608,6 +608,15 @@ int testCategoryFilterRules()
     rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)", reFactory));
     rv += SDK_ASSERT(filter.match(PLATFORM_ID));
     rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)");
+
+    // Test second example, Filter with nothing positive is a useless filter
+    rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)", reFactory));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
+
+    rv += SDK_ASSERT(filter.deserialize("key2(1)", reFactory));
+    rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+    rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
 
     // Test second and third example: Unlisted Value(0) does not add value
     rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)~value3(0)~value4(1)", reFactory));
@@ -971,14 +980,15 @@ int testAddRemoveFunctions()
   rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
   rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  // Unlisted Value defaults off, so this simplifies to matching nothing
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
 
   // Ensure that we can remove an arbitrary invalid value and it correctly fails
   rv += SDK_ASSERT(0 != filter.removeValue(KEY3, VALUE2));
   rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
   rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
 
   // Remove the value key2, which will let us match
   rv += SDK_ASSERT(0 == filter.removeValue(KEY2, VALUE2));
@@ -1005,12 +1015,17 @@ int testAddRemoveFunctions()
   filter.clear();
   filter.setValue(KEY2, VALUE2, false);
   rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(0)");
+  // Filter will not match the platform
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
   filter.simplify();
-  rv += SDK_ASSERT(!hasCategoryName(filter, KEY2));
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
-  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  // After simplification, the filter STILL will not match the platform
+  rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
+  rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
+  std::string fdsa = filter.serialize(false);
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)");
 
   // Test getValues()
   rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)~value3(0)`key3(1)~No Value(1)~value2(1)", reFactory));
@@ -1144,17 +1159,17 @@ int testSimplify()
 
   // Unlisted Value, No Value: Missing, Missing
   rv += SDK_ASSERT(filter.deserialize("key2(1)", reFactory));
-  rv += SDK_ASSERT(filter.serialize(false) == " ");
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
   filter.simplify(KEY2);
-  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)");
 
   // Unlisted Value, No Value: Missing, 0
   rv += SDK_ASSERT(filter.deserialize("key2(1)~No Value(0)", reFactory));
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~No Value(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
   filter.simplify(KEY2);
-  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)");
 
   // Unlisted Value, No Value: Missing, 1
   rv += SDK_ASSERT(filter.deserialize("key2(1)~No Value(1)", reFactory));
@@ -1166,16 +1181,16 @@ int testSimplify()
   // Unlisted Value, No Value: 0, Missing
   rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)", reFactory));
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~Unlisted Value(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
   filter.simplify(KEY2);
-  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)");
 
   // Unlisted Value, No Value: 0, 0
   rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)~No Value(0)", reFactory));
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~Unlisted Value(0)~No Value(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
   filter.simplify(KEY2);
-  rv += SDK_ASSERT(filter.serialize(false) == " ");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)");
 
   // Unlisted Value, No Value: 0, 1
   rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(0)~No Value(1)", reFactory));
@@ -1217,25 +1232,25 @@ int testSimplify()
   rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~No Value(1)`key3(1)~value3(0)", reFactory));
   filter.simplify(KEY2);
   rv += SDK_ASSERT(filter.serialize(false) == "key3(1)~value3(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == " ");
+  rv += SDK_ASSERT(filter.serialize(true) == "key3(1)");
 
   // Test simplify of key2 with a simplify-able key3
   rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~No Value(1)~value2(1)~value3(0)`key3(1)~value3(0)", reFactory));
   filter.simplify(KEY2);
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)`key3(1)~value3(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)`key3(1)");
 
   // Test removal of key3 with a non-simplify-able key2
   rv += SDK_ASSERT(filter.deserialize("key2(1)~Unlisted Value(1)~No Value(1)~value3(0)`key3(1)~value3(0)", reFactory));
   filter.simplify(KEY3);
-  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)`key3(1)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~Unlisted Value(1)~No Value(1)~value3(0)`key3(1)");
 
   // Test removal of key3 with a simplify-able key2
   rv += SDK_ASSERT(filter.deserialize("key2(1)~value2(1)~value3(0)`key3(1)~value3(0)", reFactory));
   filter.simplify(KEY3);
-  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(1)~value3(0)");
-  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)");
+  rv += SDK_ASSERT(filter.serialize(false) == "key2(1)~value2(1)~value3(0)`key3(1)");
+  rv += SDK_ASSERT(filter.serialize(true) == "key2(1)~value2(1)`key3(1)");
 
   return rv;
 }

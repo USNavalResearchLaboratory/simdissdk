@@ -381,7 +381,7 @@ void CategoryFilter::setCategoryRegExp(int nameInt, const simData::RegExpFilterP
   if (regExp != NULL && !regExp->pattern().empty())
     nameIter->second = regExp;
   else
-    categoryRegExp_.erase(nameIter);
+    removeName(nameInt);
 }
 
 bool CategoryFilter::match(uint64_t entityId) const
@@ -417,13 +417,10 @@ bool CategoryFilter::matchData(const CurrentCategoryValues& curCategoryData) con
     // category is unchecked if and only if all children are unchecked
     const bool categoryIsChecked = catValues.first;
 
-    // no category values, move on
-    if (catValues.second.size() == 0 ||
-      checksIter->first == simData::CategoryNameManager::NO_CATEGORY_NAME ||
+    // Skip testing this category if it's unchecked (does not apply to matching), or if name is special no-name value
+    if (checksIter->first == simData::CategoryNameManager::NO_CATEGORY_NAME ||
       !categoryIsChecked)
-    {
       continue;
-    }
 
     // grab the pointer for ease of use
     const ValuesCheck* currentChecksValues = &(catValues.second);
@@ -577,8 +574,13 @@ std::string CategoryFilter::serialize(bool simplify) const
     if (regExpIter != categoryRegExpCopy.end())
       regExp = regExpIter->second->pattern();
 
-    if ((values.empty() && regExp.empty()) || (categoryName == simData::CategoryNameManager::NO_CATEGORY_NAME))
-      continue; // ignore if there are no values and no regExp, or the category name int value is not valid
+    // Ignore if the category name int value is not valid
+    if (categoryName == simData::CategoryNameManager::NO_CATEGORY_NAME)
+      continue;
+
+    // Note here that values.empty() and regExp.empty() is a valid state.  It means that the
+    // filter is set up so that the category matches, but Unlisted Values is unchecked (default).
+    // Therefore, all category matching will eventually fail on this filter.  But it is valid.
 
     std::string categoryNameString = catNameMgr.nameIntToString(categoryName);
     if (categoryNameString.empty())
@@ -795,6 +797,9 @@ void CategoryFilter::simplifyValues_(CategoryFilter::CategoryCheck& checks) cons
 
 void CategoryFilter::simplifyValues_(CategoryFilter::ValuesCheck& values) const
 {
+  if (values.empty())
+    return;
+
   // Get the value of the "Unlisted Value" entry
   ValuesCheck::const_iterator unlistedValueIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
   // "Unlisted Value" defaults to OFF
@@ -841,6 +846,10 @@ bool CategoryFilter::doesCategoryAffectFilter_(int nameInt, const CategoryFilter
     return false;
 
   const ValuesCheck& values = nameBoolAndChecks.second;
+
+  // if values is empty, then "Unlisted Value" defaults OFF, so nothing should match this filter, but it still is valid
+  if (values.empty())
+    return true;
 
   // Get the value of the "Unlisted Value" entry
   ValuesCheck::const_iterator unlistedIter = values.find(simData::CategoryNameManager::UNLISTED_CATEGORY_VALUE);
