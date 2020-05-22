@@ -67,6 +67,9 @@ public:
   /** @copydoc EntityFilter::setFilterSettings() */
   virtual void setFilterSettings(const QMap<QString, QVariant>& settings);
 
+  /** Returns the filter's QRegExp*/
+  QRegExp regExp() const;
+
   /** Connect to the specified widget for updating and receiving reg exp filter */
   void bindToWidget(EntityFilterLineEdit* widget);
 
