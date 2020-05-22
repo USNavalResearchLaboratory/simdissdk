@@ -36,6 +36,7 @@ namespace simRF {
 ProfileManager::ProfileManager()
  : history_(osg::DegreesToRadians(15.0)),
   bearing_(0),
+  alpha_(1.f),
   profileContext_(std::make_shared<Profile::ProfileContext>())
 {
   // Create initial map; ownership moves to timeBearingProfiles_
@@ -46,7 +47,7 @@ ProfileManager::ProfileManager()
   stateset->setRenderBinDetails(simVis::BIN_RFPROPAGATION, simVis::BIN_TWO_PASS_ALPHA);
 
   alphaUniform_ = stateset->getOrCreateUniform("alpha", osg::Uniform::FLOAT);
-  alphaUniform_->set(1.0f);
+  alphaUniform_->set(alpha_);
 
   // Turn off lighting; we do not set normals in profiles, so lighting will look bad
   simVis::setLighting(stateset, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
