@@ -92,6 +92,15 @@ namespace simCore
   */
   SDKCORE_EXPORT double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, double xmtrPwrWatts, double rcvrSensDbm, double* fsLossDb);
 
+  /**
+  * This function returns the power pattern propagation factor (dB)
+  * @param slantRange  range to target (m), must be > 0
+  * @param freqMhz  Transmitter frequency (MHz), must be > 0
+  * @param loss_dB  power pattern path loss (dB)
+  * @return power pattern propagation factor (dB)
+  */
+  SDKCORE_EXPORT double lossToPpf(double slantRange, double freqMHz, double loss_dB);
+
   /// As defined in https://en.wikipedia.org/wiki/Radio_spectrum
   enum FrequencyBandUsEcm
   {

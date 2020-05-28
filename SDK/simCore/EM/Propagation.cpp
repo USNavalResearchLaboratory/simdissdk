@@ -82,12 +82,31 @@ double getOneWayFreeSpaceRangeAndLoss(double xmtGaindB, double xmtFreqMhz, doubl
   const double esmRngKm = pow(10., ((xmtPwrDb + xmtGaindB - rcvrSensDbm + 27.5517) / 20.));
 
   // One-way free space loss equation from "Electronic Warfare and Radar Systems Handbook", NAWCWPNS TP 8347, Rev 2 April 1999, p 4-3.1
-  // 32.45 is the K1 term in the one way free-space loss equation when the range units are in km and freq in MHz
+  // 32.45 is the K1 term in the one way free-space loss equation when the range units are in km and freq in MHz and using LIGHT_SPEED_AIR
   if (fsLossDb)
     *fsLossDb = 20. * log10(xmtFreqMhz * esmRngKm) + 32.45;
 
   // Free-space detection range (m) for an ESM receiver
   return esmRngKm * 1000.0;
+}
+
+double lossToPpf(double slantRange, double freqMHz, double loss_dB)
+{
+  if (!finite(loss_dB) || loss_dB <= simCore::SMALL_DB_VAL)
+    return simCore::SMALL_DB_VAL;
+  if (slantRange <= 0.0 || freqMHz <= 0.0)
+  {
+    assert(0); // Should not receive <=0
+    return simCore::SMALL_DB_VAL;
+  }
+  // loss_db (power pattern path loss) and ppf_db (power pattern propagation factor) are related by:
+  // loss_db = one way free space loss - ppf_db
+  // one way free space loss: 20 * log10(2 * k0 * R)
+  // k0: vacuum wavenumber
+  const double vacuumWavenumber = (M_TWOPI * 1e6 * freqMHz) / simCore::LIGHT_SPEED_VACUUM;
+  const double fsLossDb = 20 * log10(2 * vacuumWavenumber * slantRange);
+  const double ppf_dB = fsLossDb - loss_dB;
+  return ppf_dB;
 }
 
 FrequencyBandUsEcm toUsEcm(double freqMhz)
