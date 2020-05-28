@@ -17,7 +17,8 @@ writeHeader()
   echo " *               4555 Overlook Ave." >> $1
   echo " *               Washington, D.C. 20375-5339" >> $1
   echo " *" >> $1
-  echo " * License for source code at https://simdis.nrl.navy.mil/License.aspx" >> $1
+  echo " * License for source code can be found at:" >> $1
+  echo " * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt" >> $1
   echo " *" >> $1
   echo " * The U.S. Government retains all rights to use, duplicate, distribute," >> $1
   echo " * disclose, or release this software." >> $1
