@@ -23,8 +23,9 @@
 #ifndef SIMVIS_RFPROP_RFPROPAGATIONFACADE_H
 #define SIMVIS_RFPROP_RFPROPAGATIONFACADE_H
 
-#include <vector>
+#include <map>
 #include <string>
+#include <vector>
 #include "osg/ref_ptr"
 #include "simCore/Common/Export.h"
 #include "simData/ObjectId.h"
@@ -33,7 +34,6 @@
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 
-namespace osgEarth { class Map; }
 namespace simCore { class TimeStamp; }
 namespace simVis { class LocatorNode; }
 
@@ -453,6 +453,12 @@ public:
    * @param elevation in radians
    */
   void setElevation(double elevation);
+
+  /**
+   * Set whether the data are specified for spherical or WGS84 earth
+   * @param sphericalEarth  true if data is spherical earth data, false if WGS84
+   */
+  void setSphericalEarth(bool sphericalEarth);
 
   /**
   * Gets the number of profiles available in the profile manager
