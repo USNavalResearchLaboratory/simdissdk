@@ -252,6 +252,7 @@ private:
   double history_;          ///< number of bearing slices displayed
   double bearing_;          ///< current bearing of RF prop display
   float alpha_;             ///< Alpha value (1.0 opaque, 0.0 transparent)
+  bool displayOn_;          ///< whether visualization is active or not
   std::shared_ptr<Profile::ProfileContext> profileContext_; ///< context shared by manager and each profile
 };
 }

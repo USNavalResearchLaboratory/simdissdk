@@ -68,7 +68,6 @@ public:
       displayThickness_(1),
       mode_(Profile::DRAWMODE_2D_HORIZONTAL),
       type_(simRF::ProfileDataProvider::THRESHOLDTYPE_NONE),
-      displayOn_(false),
       agl_(false),
       sphericalEarth_(true) // SIM-11515 - determine what data sources require this
     {}
@@ -79,7 +78,6 @@ public:
     unsigned int displayThickness_;  ///< display thickness for 3D displays, in # height steps
     Profile::DrawMode mode_;  ///< Type of display, e.g. 2D, 3D
     ProfileDataProvider::ThresholdType type_;  ///< threshold type selected for display, e.g., POD, SNR, CNR
-    bool displayOn_;          ///< whether the display is on or off
     bool agl_;                ///< whether height values for the 2D Horizontal display are referenced to height above ground level (AGL) or to mean sea level (MSL).
     bool sphericalEarth_;     ///< whether the profile data are specified for spherical or WGS84 earth
   };

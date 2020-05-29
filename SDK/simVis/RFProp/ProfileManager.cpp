@@ -38,6 +38,7 @@ ProfileManager::ProfileManager()
  : history_(osg::DegreesToRadians(15.0)),
   bearing_(0),
   alpha_(1.f),
+  displayOn_(false),
   profileContext_(std::make_shared<Profile::ProfileContext>())
 {
   // Create initial map; ownership moves to timeBearingProfiles_
@@ -133,14 +134,14 @@ void ProfileManager::update(double time)
 
 void ProfileManager::setDisplay(bool onOff)
 {
-  if (profileContext_->displayOn_ == onOff)
+  if (displayOn_ == onOff)
     return;
-  profileContext_->displayOn_ = onOff;
+  displayOn_ = onOff;
 
   for (const auto& iter : *currentProfileMap_)
   {
     // send THRESHOLDTYPE_NONE to turn profiles off
-    iter.second->setThresholdType(profileContext_->displayOn_ ? profileContext_->type_ : ProfileDataProvider::THRESHOLDTYPE_NONE);
+    iter.second->setThresholdType(displayOn_ ? profileContext_->type_ : ProfileDataProvider::THRESHOLDTYPE_NONE);
   }
 
   updateVisibility_();
@@ -148,7 +149,7 @@ void ProfileManager::setDisplay(bool onOff)
 
 bool ProfileManager::display() const
 {
-  return profileContext_->displayOn_;
+  return displayOn_;
 }
 
 void ProfileManager::setAlpha(float alpha)
@@ -349,7 +350,7 @@ void ProfileManager::addProfile(Profile* profile)
 
 void ProfileManager::updateVisibility_()
 {
-  if (!profileContext_->displayOn_)
+  if (!displayOn_)
     return;
   // only changes in beam bearing or history require recalc of minbearing & maxBearing -> optimization possible here
   const double minBearing = currentProfileMap_->getSlotBearing(bearing_ - history_ / 2.0);
