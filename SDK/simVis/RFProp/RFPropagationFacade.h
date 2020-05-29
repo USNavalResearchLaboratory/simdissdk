@@ -35,7 +35,6 @@
 #include "simVis/RFProp/PODProfileDataProvider.h"
 
 namespace simCore { class TimeStamp; }
-namespace simVis { class LocatorNode; }
 
 namespace simRF
 {
@@ -503,10 +502,7 @@ private:
   /// profile manager manages all the profiles that hold the rf prop data
   osg::ref_ptr<simRF::ProfileManager> profileManager_;
 
-  /// locator node to which display is attached, and which attaches display to scene graph
-  osg::ref_ptr<simVis::LocatorNode> locator_;
-
-  /// parent node in the scene graph of our locator
+  /// parent node in the scene graph of our profileManager
   osg::observer_ptr<osg::Group> parent_;
 
   /// color provider to manager which color

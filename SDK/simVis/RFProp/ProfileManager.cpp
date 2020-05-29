@@ -35,7 +35,8 @@
 namespace simRF {
 
 ProfileManager::ProfileManager()
- : history_(osg::DegreesToRadians(15.0)),
+ : simVis::LocatorNode(new simVis::Locator()),
+  history_(15.0 * simCore::DEG2RAD),
   bearing_(0),
   alpha_(1.f),
   displayOn_(false),
@@ -81,6 +82,18 @@ ProfileManager::~ProfileManager()
 {
   for (const auto& iter : timeBearingProfiles_)
     delete iter.second;
+}
+
+void ProfileManager::reset()
+{
+  for (const auto& iter : timeBearingProfiles_)
+    delete iter.second;
+  timeBearingProfiles_.clear();
+  profileContext_.reset();
+  history_ = 15.0 * simCore::DEG2RAD;
+  bearing_ = 0;
+  alpha_ = 1.f;
+  displayOn_ = false;
 }
 
 void ProfileManager::initShaders_()
@@ -286,6 +299,9 @@ double ProfileManager::getRefAlt() const
 
 void ProfileManager::setRefCoord(double latRad, double lonRad, double alt)
 {
+  getLocator()->setCoordinate(simCore::Coordinate(
+    simCore::COORD_SYS_LLA, simCore::Vec3(latRad, lonRad, alt)), 0.);
+
   if (latRad != profileContext_->refLLA_.lat() || lonRad != profileContext_->refLLA_.lon() || alt != profileContext_->refLLA_.alt())
   {
     profileContext_->refLLA_.set(lonRad, latRad, alt);
@@ -337,7 +353,11 @@ void ProfileManager::addProfile(Profile* profile)
     return;
 
   profile->setProfileContext(profileContext_);
-
+  if (!displayOn_)
+  {
+    // force the type to NONE to turn off
+    profile->setThresholdType(ProfileDataProvider::THRESHOLDTYPE_NONE);
+  }
   // check to see if the new profile is replacing an existing profile
   Profile *oldProfile = currentProfileMap_->getProfileByBearing(profile->getBearing());
   if (oldProfile)

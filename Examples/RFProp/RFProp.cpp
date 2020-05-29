@@ -45,8 +45,6 @@
 #include "simNotify/Notify.h"
 #include "simVis/Viewer.h"
 #include "simVis/Utils.h"
-#include "simVis/Locator.h"
-#include "simVis/LocatorNode.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/RFProp/ArepsLoader.h"
@@ -889,14 +887,8 @@ int main(int argc, char** argv)
   s_controlGrid->setControl(1, row, depthTestCheck.get());
   row++;
 
-
-  osg::ref_ptr<simVis::LocatorNode> rfLocator = new simVis::LocatorNode(new simVis::Locator());
-  rfLocator->getLocator()->setCoordinate(simCore::Coordinate(
-      simCore::COORD_SYS_LLA,
-      simCore::Vec3(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt)));
-  rfLocator->addChild(profileManager.get());
   profileManager->setRefCoord(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt);
-  root->addChild(rfLocator.get());
+  root->addChild(profileManager.get());
   profileManager->setDisplay(true);
 
 

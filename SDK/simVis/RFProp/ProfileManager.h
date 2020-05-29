@@ -23,7 +23,7 @@
 #ifndef SIMVIS_RFPROP_PROFILE_MANAGER_H
 #define SIMVIS_RFPROP_PROFILE_MANAGER_H
 
-#include "osg/Group"
+#include "simVis/LocatorNode.h"
 #include "simVis/RFProp/Profile.h"
 
 namespace simRF
@@ -34,13 +34,15 @@ class ColorProvider;
 /**
  * Manages a collection of Profiles
  */
-class SDKVIS_EXPORT ProfileManager : public osg::Group
+class SDKVIS_EXPORT ProfileManager : public simVis::LocatorNode
 {
 public:
   /**
    * Creates a new ProfileManager
    */
   ProfileManager();
+
+  void reset();
 
   /**
    * Create a new profile map for the given time

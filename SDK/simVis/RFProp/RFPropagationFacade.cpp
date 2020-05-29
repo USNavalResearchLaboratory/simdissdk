@@ -31,13 +31,13 @@
 #include "simVis/LocatorNode.h"
 #include "simVis/Types.h"
 #include "simVis/RFProp/ArepsLoader.h"
+#include "simVis/RFProp/CompositeColorProvider.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/Profile.h"
 #include "simVis/RFProp/SNRDataProvider.h"
-#include "simVis/RFProp/CompositeProfileProvider.h"
-#include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/GradientColorProvider.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 
@@ -123,11 +123,9 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   profileManager_(new simRF::ProfileManager()),
   parent_(parent)
 {
-  // create locator
-  locator_ = new simVis::LocatorNode(new simVis::Locator());
-  // add locator to the parent node
-  if (locator_.valid() && parent_.valid())
-    parent_->addChild(locator_);
+  // add profileManager_ to the parent node
+  if (profileManager_.valid() && parent_.valid())
+    parent_->addChild(profileManager_);
 
   initializeDefaultColors_();
   colorProvider_ = new CompositeColorProvider();
@@ -152,14 +150,12 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   setHistory(DEFAULT_HISTORY);
 
   setDisplay(false);
-  if (locator_)
-    locator_->addChild(profileManager_);
 }
 
 RFPropagationFacade::~RFPropagationFacade()
 {
-  if (parent_.valid() && locator_.valid())
-    parent_->removeChild(locator_.get());
+  if (parent_.valid() && profileManager_.valid())
+    parent_->removeChild(profileManager_.get());
 }
 
 int RFPropagationFacade::setModelType()
@@ -264,8 +260,6 @@ int RFPropagationFacade::getInputFiles(const simCore::TimeStamp& time, std::vect
 
 int RFPropagationFacade::setDisplay(bool onOff)
 {
-  if (locator_ == NULL)
-    return 1;
   profileManager_->setDisplay(onOff);
   return 0;
 }
@@ -447,7 +441,7 @@ int RFPropagationFacade::clearCache(bool reset)
   setDisplay(false);
   arepsFilesetTimeMap_.clear();
   // clear out old (data from) ProfileManager, create a new empty ProfileManager
-  profileManager_ = new simRF::ProfileManager();
+  profileManager_->reset();
   return 0;
 }
 
@@ -800,14 +794,6 @@ const simRF::Profile* RFPropagationFacade::getProfile(unsigned int index) const
 void RFPropagationFacade::setPosition(double latRad, double lonRad)
 {
   profileManager_->setRefCoord(latRad, lonRad, antennaHeight());
-
-  // locator takes lon/lat/alt, in degrees
-  if (locator_)
-  {
-    locator_->getLocator()->setCoordinate(simCore::Coordinate(
-        simCore::COORD_SYS_LLA,
-        simCore::Vec3(latRad, lonRad, antennaHeight())));
-  }
 }
 
 void RFPropagationFacade::initializeDefaultColors_()
