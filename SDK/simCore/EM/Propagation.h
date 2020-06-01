@@ -30,7 +30,7 @@ namespace simCore
   /**
   * RadarParameters contains RF system parameter values used in RF Propagation calculations.
   */
-  struct RadarParameters
+  struct SDKCORE_EXPORT RadarParameters
   {
     /** Frequency in MHz */
     double freqMHz;
@@ -50,6 +50,8 @@ namespace simCore
     double xmtPowerW;
     /** Horizontal beam width in degrees */
     double hbwD;
+
+    RadarParameters();
   };
 
   /**

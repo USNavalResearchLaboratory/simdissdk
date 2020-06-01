@@ -28,6 +28,19 @@
 namespace simCore
 {
 
+RadarParameters::RadarParameters()
+  : freqMHz(0.),
+  antennaGaindBi(0.),
+  noiseFiguredB(0.),
+  pulseWidth_uSec(0.),
+  noisePowerdB(0.),
+  systemLossdB(0.),
+  xmtPowerKW(0.),
+  xmtPowerW(0.),
+  hbwD(0.)
+{
+}
+
 double getRcvdPowerFreeSpace(double rngMeters, double freqMhz, double powerWatts, double xmtGaindB, double rcvGaindB, double rcsSqm, double systemLossdB, bool oneWay)
 {
   if (freqMhz == 0.0 || rngMeters == 0.0)

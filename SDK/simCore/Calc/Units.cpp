@@ -24,8 +24,8 @@
 #include <algorithm>
 #include "simCore/String/Format.h"
 #include "simCore/Calc/Angle.h"
-#include "simCore/Calc/Units.h"
 #include "simCore/Time/Constants.h"
+#include "simCore/Calc/Units.h"
 
 namespace simCore {
 
@@ -117,7 +117,7 @@ const Units Units::TEASPOON("teaspoons", "tsp", 0.00492838542, Units::VOLUME_FAM
 const Units Units::TABLESPOON("tablespoons", "tbsp", 0.01478515625, Units::VOLUME_FAMILY);
 
 // Pressure units
-const Units Units::MILLIBAR("millibar", "mbar", 1.0, Units::PRESSURE_FAMILY);
+const Units Units::MILLIBAR("millibar", "mbar", 1.0, Units::PRESSURE_FAMILY);  // Equivalent to a hectopascal
 const Units Units::BAR("bars", "bar", 1000, Units::PRESSURE_FAMILY);
 const Units Units::POUNDS_PER_SQUARE_INCH("pounds per square inch", "psia", 68.94757, Units::PRESSURE_FAMILY);
 const Units Units::ATMOSPHERE("atmospheres", "atm", 1013.247139776643, Units::PRESSURE_FAMILY);
