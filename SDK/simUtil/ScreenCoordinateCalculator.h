@@ -113,11 +113,6 @@ public:
   /** Retrieves a screen coordinate for a given ECEF coordinate */
   ScreenCoordinate calculateEcef(const simCore::Vec3& ecef);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** Retrieves a screen coordinate for a given LLA coordinate */
-  SDK_DEPRECATE(ScreenCoordinate calculate(const simCore::Vec3& lla), "Use calculateLla() instead.");
-#endif
-
 private:
   /** recalculates the VPW matrix if needed (if dirty); returns 0 on success */
   int recalculateVPW_();

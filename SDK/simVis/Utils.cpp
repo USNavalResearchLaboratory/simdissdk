@@ -390,15 +390,6 @@ bool isImageFile(const std::string& location)
   return false;
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-std::string findFontFile(const std::string& fontFile)
-{
-  // Note that findFontFile() is deprecated and only provided for
-  // compatibility reasons.  It may be removed in a future release.
-  return Registry::instance()->findFontFile(fontFile);
-}
-#endif
-
 osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
 {
     return

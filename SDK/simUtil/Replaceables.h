@@ -66,11 +66,6 @@ class SDKUTIL_EXPORT AzimuthVariable : public simCore::TextReplacer::Replaceable
 public:
   /** Constructor */
   AzimuthVariable(simVis::View* mainView);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  AzimuthVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -85,11 +80,6 @@ class SDKUTIL_EXPORT ElevationVariable : public simCore::TextReplacer::Replaceab
 public:
   /** Constructor */
   ElevationVariable(simVis::View* mainView);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  ElevationVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -104,11 +94,6 @@ class SDKUTIL_EXPORT LatitudeVariable : public simCore::TextReplacer::Replaceabl
 public:
   /** Constructor */
   LatitudeVariable(simVis::View* mainView, int precision=2);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  LatitudeVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -124,11 +109,6 @@ class SDKUTIL_EXPORT LongitudeVariable : public simCore::TextReplacer::Replaceab
 public:
   /** Constructor */
   LongitudeVariable(simVis::View* mainView, int precision=2);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  LongitudeVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -144,11 +124,6 @@ class SDKUTIL_EXPORT AltitudeVariable : public simCore::TextReplacer::Replaceabl
 public:
   /** Constructor */
   AltitudeVariable(simVis::View* mainView);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  AltitudeVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:

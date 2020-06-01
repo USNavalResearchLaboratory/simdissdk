@@ -243,19 +243,6 @@ namespace simVis
    */
   SDKVIS_EXPORT bool isImageFile(const std::string& location);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-  * Finds the full path of the font file, searching in SIMDIS installed fonts locations.
-  * Provided as a convenience method to simVis::Registry::instance()->findFontFile().
-  * This method is deprecated and may be removed in a future release.  Please use the
-  * Registry method instead.
-  * @param fontFile file name
-  * @return string  full path of file
-  * @deprecated Use simVis::Registry::findFontFile() instead.
-  */
-  SDK_DEPRECATE(SDKVIS_EXPORT std::string findFontFile(const std::string& fontFile), "Method will be removed in future SDK release.");
-#endif
-
   /**
    * Convert simData DistanceUnits to osgEarth::Units.
    */

@@ -349,18 +349,6 @@ simVis::View* InsetViewEventHandler::getView()
   return host_.get();
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void InsetViewEventHandler::setAddInsetMode(bool add)
-{
-  createInset_->setEnabled(add);
-}
-
-bool InsetViewEventHandler::isAddInsetMode() const
-{
-  return createInset_->isEnabled();
-}
-#endif
-
 void InsetViewEventHandler::setFocusActions(int mask)
 {
   focusActionsMask_ = mask;

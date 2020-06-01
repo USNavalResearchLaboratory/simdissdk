@@ -91,13 +91,6 @@ AzimuthVariable::AzimuthVariable(simVis::View* mainView)
 {
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-AzimuthVariable::AzimuthVariable(simVis::Viewer* viewer)
-  : mainView_(viewer == NULL ? NULL : viewer->getMainView())
-{
-}
-#endif
-
 std::string AzimuthVariable::getText() const
 {
   const simVis::View* view = getView(mainView_.get());
@@ -136,13 +129,6 @@ ElevationVariable::ElevationVariable(simVis::View* mainView)
   : mainView_(mainView)
 {
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-ElevationVariable::ElevationVariable(simVis::Viewer* viewer)
-  : mainView_(viewer == NULL ? NULL : viewer->getMainView())
-{
-}
-#endif
 
 std::string ElevationVariable::getText() const
 {
@@ -187,14 +173,6 @@ LatitudeVariable::LatitudeVariable(simVis::View* mainView, int precision)
 {
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-LatitudeVariable::LatitudeVariable(simVis::Viewer* viewer)
-  : mainView_(viewer == NULL ? NULL : viewer->getMainView()),
-    precision_(2)
-{
-}
-#endif
-
 std::string LatitudeVariable::getText() const
 {
   const simVis::View* view = getView(mainView_.get());
@@ -223,14 +201,6 @@ LongitudeVariable::LongitudeVariable(simVis::View* mainView, int precision)
 {
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-LongitudeVariable::LongitudeVariable(simVis::Viewer* viewer)
-  : mainView_(viewer == NULL ? NULL : viewer->getMainView()),
-    precision_(2)
-{
-}
-#endif
-
 std::string LongitudeVariable::getText() const
 {
   const simVis::View* view = getView(mainView_.get());
@@ -257,13 +227,6 @@ AltitudeVariable::AltitudeVariable(simVis::View* mainView)
   : mainView_(mainView)
 {
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-AltitudeVariable::AltitudeVariable(simVis::Viewer* viewer)
-  : mainView_(viewer == NULL ? NULL : viewer->getMainView())
-{
-}
-#endif
 
 std::string AltitudeVariable::getText() const
 {

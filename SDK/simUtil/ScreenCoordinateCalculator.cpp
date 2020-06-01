@@ -121,13 +121,6 @@ ScreenCoordinate ScreenCoordinateCalculator::calculate(const simVis::EntityNode&
   return matrixCalculate_(osg::Vec3d(ecefOut.x(), ecefOut.y(), ecefOut.z()));
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-ScreenCoordinate ScreenCoordinateCalculator::calculate(const simCore::Vec3& lla)
-{
-  return calculateLla(lla);
-}
-#endif
-
 ScreenCoordinate ScreenCoordinateCalculator::calculateLla(const simCore::Vec3& lla)
 {
   // Refresh the VPW if needed, returning invalid coordinate if needed
