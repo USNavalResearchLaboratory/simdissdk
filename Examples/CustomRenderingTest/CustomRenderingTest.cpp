@@ -225,7 +225,7 @@ public:
       host->getLocator()->getCoordinate(&coord);
       // In this example the custom rendering is tracking the host platform.  It is
       // possible to add offsets or to set a completely independent location.
-      node_->getLocator()->setCoordinate(coord);
+      node_->getLocator()->setCoordinate(coord, host->getLocator()->getTime());
       node_->dirtyBound();
     }
 

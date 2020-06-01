@@ -88,7 +88,7 @@ public:
     {
       simCore::Coordinate coord;
       host->getLocator()->getCoordinate(&coord);
-      node_->getLocator()->setCoordinate(coord);
+      node_->getLocator()->setCoordinate(coord, host->getLocator()->getTime());
       node_->dirtyBound();
     }
 
