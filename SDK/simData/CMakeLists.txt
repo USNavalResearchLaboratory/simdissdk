@@ -76,12 +76,6 @@ set (MEMORYTABLE_HEADERS
     ${DATA_INC}MemoryTable/DataLimitsProvider.h
 )
 
-if(ENABLE_DEPRECATED_SIMDISSDK_API)
-list(APPEND MEMORYTABLE_HEADERS
-    ${DATA_INC}MemoryTable/TimeContainerDeque.h
-)
-endif()
-
 set(MEMORYTABLE_SOURCES
     ${DATA_SRC}MemoryTable/TableManager.cpp
     ${DATA_SRC}MemoryTable/Table.cpp
@@ -89,12 +83,6 @@ set(MEMORYTABLE_SOURCES
     ${DATA_SRC}MemoryTable/DoubleBufferTimeContainer.cpp
     ${DATA_SRC}MemoryTable/DataColumn.cpp
 )
-
-if(ENABLE_DEPRECATED_SIMDISSDK_API)
-    list(APPEND MEMORYTABLE_SOURCES
-        ${DATA_INC}MemoryTable/TimeContainerDeque.cpp
-    )
-endif()
 
 set(MESSAGEVISITOR_HEADERS
     ${DATA_INC}MessageVisitor/Message.h
