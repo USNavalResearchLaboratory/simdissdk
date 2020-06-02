@@ -46,7 +46,6 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}UnitsComboBox.h
 )
 set(SIMQT_HEADERS
-    ${SIMQT_INC}ColorGradient.h
     ${SIMQT_INC}ConsoleChannel.h
     ${SIMQT_INC}FileDialog.h
     ${SIMQT_INC}FileUtilities.h
@@ -118,6 +117,7 @@ if(OSG_FOUND)
         ${SIMQT_INC}ColorGradientWidget.h
     )
     list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}ColorGradient.h
         ${SIMQT_INC}QtConversion.h
     )
 endif()

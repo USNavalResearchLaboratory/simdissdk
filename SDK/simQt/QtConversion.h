@@ -27,8 +27,8 @@
 * This file defines a number of conversions for common qt objects
 */
 
-#include <osg/Vec4f>
 #include <QColor>
+#include "osg/Vec4f"
 #include "simCore/Common/Export.h"
 
 namespace simQt {

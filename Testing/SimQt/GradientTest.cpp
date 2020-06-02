@@ -95,9 +95,9 @@ int testGradient()
   rv += SDK_ASSERT(grad.colorAt(1.) == darkGray);
 
   // Test setColors with points outside 0/1
-  std::map<double, QColor> colorMap;
-  colorMap[-1.] = Qt::white;
-  colorMap[2.] = Qt::white;
+  std::map<float, QColor> colorMap;
+  colorMap[-1.f] = Qt::white;
+  colorMap[2.f] = Qt::white;
   rv += SDK_ASSERT(grad.colors().size() == 2);
   grad.setColors(colorMap);
   rv += SDK_ASSERT(grad.colors().size() == 0);
@@ -106,12 +106,12 @@ int testGradient()
   rv += SDK_ASSERT(grad.colorAt(1.) == Qt::black);
 
   // Test constructor with outside-0/1 points
-  colorMap[0.5] = Qt::green;
-  grad = simQt::ColorGradient(colorMap);
-  rv += SDK_ASSERT(grad.colors().size() == 1);
-  rv += SDK_ASSERT(grad.colorAt(0.) == Qt::green);
-  rv += SDK_ASSERT(grad.colorAt(0.5) == Qt::green);
-  rv += SDK_ASSERT(grad.colorAt(1.) == Qt::green);
+  colorMap[0.5f] = Qt::green;
+  simQt::ColorGradient grad2(colorMap);
+  rv += SDK_ASSERT(grad2.colors().size() == 1);
+  rv += SDK_ASSERT(grad2.colorAt(0.) == Qt::green);
+  rv += SDK_ASSERT(grad2.colorAt(0.5) == Qt::green);
+  rv += SDK_ASSERT(grad2.colorAt(1.) == Qt::green);
 
   return rv;
 }
