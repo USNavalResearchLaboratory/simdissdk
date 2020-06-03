@@ -353,6 +353,9 @@ private:
   void dataLimit_(std::map<ObjectId, EntryMapType*>& entryMap, ObjectId id, const CommonPrefs* prefs);
   ///@}
 
+  /// Execute the onPostRemoveEntity callback
+  void fireOnPostRemoveEntity_(ObjectId id, ObjectType ot);
+
   /// Check to see if a Listener got removed during a callback
   void checkForRemoval_(ListenerList& list);
   /// The Listener, if any, that got removed during the last callback

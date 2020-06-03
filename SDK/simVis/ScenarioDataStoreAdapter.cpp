@@ -68,6 +68,12 @@ public:
       scenarioManager_->removeEntity(removedId);
   }
 
+  /// entity with the given id and type has been removed
+  virtual void onPostRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
+  {
+    // no-op
+  }
+
   /// prefs for the given entity have been changed
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
   {

@@ -1947,6 +1947,7 @@ public:
   }
 
   // Fulfill the interface
+  virtual void onPostRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) {}
   virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) {}
   virtual void onScenarioDelete(simData::DataStore* source) {}
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}

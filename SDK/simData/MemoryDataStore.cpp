@@ -1503,6 +1503,7 @@ void MemoryDataStore::removeEntity(ObjectId id)
 
     delete pi->second;
     platforms_.erase(pi);
+    fireOnPostRemoveEntity_(id, ot);
     return;
   }
 
@@ -1518,23 +1519,54 @@ void MemoryDataStore::removeEntity(ObjectId id)
 
     delete bi->second;
     beams_.erase(bi);
+    fireOnPostRemoveEntity_(id, ot);
     return;
   }
 
   if (deleteFromMap(gates_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(lasers_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(projectors_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(lobGroups_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(customRenderings_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
+}
+
+void MemoryDataStore::fireOnPostRemoveEntity_(ObjectId id, ObjectType ot)
+{
+  // Need to handle recursion so make a local copy
+  ListenerList localCopy = listeners_;
+  justRemoved_.clear();
+  for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
+  {
+    if (*i != NULL)
+    {
+      (**i).onPostRemoveEntity(this, id, ot);
+      checkForRemoval_(localCopy);
+    }
+  }
 }
 
 int MemoryDataStore::removeCategoryDataPoint(ObjectId id, double time, int catNameInt, int valueInt)
