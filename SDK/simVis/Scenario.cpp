@@ -719,7 +719,7 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
     dataStore,
     *platformTspiFilterManager_,
     root_.get(),
-    new Locator(scenarioEciLocator_),
+    new Locator(scenarioEciLocator_.get()),
     dataStore.referenceYear());
   node->getModel()->addCallback(new BeamNoseFixer(this));
 

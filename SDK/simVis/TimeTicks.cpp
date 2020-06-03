@@ -237,7 +237,7 @@ void TimeTicks::addUpdate_(double tickTime)
   if (addLabel || newChunk)
   {
     // these are the only two cases that require a new locator
-    newLocator = new Locator(parentLocator_);
+    newLocator = new Locator(parentLocator_.get());
     newLocator->setCoordinate(ecefTickCoord, tickTime);
     if (parentLocator_->isEci())
       newLocator->setEciRotationTime(-tickTime, tickTime, false);
@@ -291,7 +291,7 @@ void TimeTicks::addUpdate_(double tickTime)
     }
 
     // locator node syncs its matrix to locator immediately
-    LocatorNode* locNode = new LocatorNode(newLocator);
+    LocatorNode* locNode = new LocatorNode(newLocator.get());
     osgText::Text* text = new osgText::Text();
     text->setPosition(osg::Vec3(0.f, 0.f, 0.f));
     text->setText(labelText);
