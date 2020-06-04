@@ -51,6 +51,8 @@ set(PROJ_SOURCES
 if(OSG_FOUND)
     list(APPEND PROJ_HEADERS ColorGradientWidgetPlugin.h)
     list(APPEND PROJ_SOURCES ColorGradientWidgetPlugin.cpp)
+    list(APPEND PROJ_HEADERS ColorGradientWidget2Plugin.h)
+    list(APPEND PROJ_SOURCES ColorGradientWidget2Plugin.cpp)
 endif()
 
 if(TARGET simVis)

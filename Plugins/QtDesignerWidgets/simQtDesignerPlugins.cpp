@@ -24,6 +24,7 @@
 #include "ColorButtonPlugin.h"
 #ifdef HAVE_OSG
 #include "ColorGradientWidgetPlugin.h"
+#include "ColorGradientWidget2Plugin.h"
 #endif
 #include "ColorWidgetPlugin.h"
 #include "CategoryDataBreadcrumbsPlugin.h"
@@ -54,6 +55,7 @@ simQtDesignerPlugins::simQtDesignerPlugins(QObject* parent) : QObject(parent)
   widgetFactories_.append(new ColorButtonPlugin(this));
 #ifdef HAVE_OSG
   widgetFactories_.append(new ColorGradientWidgetPlugin(this));
+  widgetFactories_.append(new ColorGradientWidget2Plugin(this));
 #endif
   widgetFactories_.append(new ColorWidgetPlugin(this));
   widgetFactories_.append(new DataTableComboBoxPlugin(this));
