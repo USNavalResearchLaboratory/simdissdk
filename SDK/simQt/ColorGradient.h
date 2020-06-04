@@ -31,6 +31,11 @@
 
 namespace simQt {
 
+/** String template to format a QLinearGradient background like our UTILS::ColorGradient */
+static const QString GRADIENT_STR_TEMPLATE = "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, %1);";
+/** Format for each stop.  %1 is the percentage (0-1), %2 is a RGBA color string. */
+static const QString GRADIENT_STOP_TEMPLATE = "stop: %1 rgba(%2)";
+
 /**
  * Represents a color gradient between magnitude values 0 and 1.
  * Wraps osg::TransferFunction1D as underlying implementation.

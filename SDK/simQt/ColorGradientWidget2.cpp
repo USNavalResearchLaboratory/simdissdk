@@ -31,11 +31,6 @@
 
 namespace simQt {
 
-/** String template to format a QLinearGradient background like our UTILS::ColorGradient */
-static const QString GRADIENT_STR_TEMPLATE = "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, %1);";
-/** Format for each stop.  %1 is the percentage (0-1), %2 is a RGBA color string. */
-static const QString GRADIENT_STOP_TEMPLATE = "stop: %1 rgba(%2)";
-
 static const QString VALUE_TOOLTIP = QObject::tr("Value of the color stop, in the range [0,1].");
 static const QString COLOR_TOOLTIP = QObject::tr("Color of the stop, interpolated with adjacent stops to create gradient.");
 
