@@ -125,7 +125,7 @@ int testCsvReadLineTrimmed()
   rv += SDK_ASSERT(tokens[2] == "six");
   rv += SDK_ASSERT(reader.readLineTrimmed(tokens) == 1);
 
-  return 0;
+  return rv;
 }
 
 int testCsvWithComments()

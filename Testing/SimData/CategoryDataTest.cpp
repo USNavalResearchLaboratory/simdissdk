@@ -1024,7 +1024,6 @@ int testAddRemoveFunctions()
   // After simplification, the filter STILL will not match the platform
   rv += SDK_ASSERT(!filter.match(PLATFORM_ID));
   rv += SDK_ASSERT(hasCategoryName(filter, KEY2));
-  std::string fdsa = filter.serialize(false);
   rv += SDK_ASSERT(filter.serialize(true) == "key2(1)");
   rv += SDK_ASSERT(filter.serialize(false) == "key2(1)");
 

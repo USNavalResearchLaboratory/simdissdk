@@ -209,7 +209,6 @@ static ui::Control* createHelp(simUtil::MapScale* mapScale)
   widget = grid->setControl(3, row, new ui::ButtonControl("Nautical", new UnitsHandler(mapScale,
     new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::NAUTICAL_MILES, 18520.0))));
   widget->setFontSize(CONTROL_FONT_SIZE);
-  row++;
 
   return vbox;
 }
