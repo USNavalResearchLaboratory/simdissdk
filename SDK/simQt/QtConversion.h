@@ -53,7 +53,7 @@ SDKQT_EXPORT osg::Vec4f getOsgColorFromQt(const QColor& color);
  * Get an QColor from a QString, expected input str is as "R,G,B,A"
  * Int values expected in QString, ex: "255,128,0,255"
  * @param qstr  QString object
- * @return QColor  equivalent of qstr
+ * @return QColor  equivalent of qstr. Returns invalid QColor on error
  */
 SDKQT_EXPORT QColor getQColorFromQString(const QString& qstr);
 
