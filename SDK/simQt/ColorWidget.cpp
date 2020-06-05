@@ -20,7 +20,6 @@
  * disclose, or release this software.
  *
  */
-#include <QColorDialog>
 #include <QPushButton>
 #include <QLabel>
 #include "simQt/ColorWidget.h"
@@ -30,9 +29,9 @@ namespace simQt {
 
 // On Linux, avoid the native dialog due to popup stacking problems with System GUI (SIMDIS-2466)
 #ifndef WIN32
-static const QColorDialog::ColorDialogOption BASE_OPTIONS = QColorDialog::DontUseNativeDialog;
+  const QColorDialog::ColorDialogOption COLOR_DIALOG_OPTIONS = QColorDialog::DontUseNativeDialog;
 #else
-static const QColorDialog::ColorDialogOption BASE_OPTIONS = static_cast<QColorDialog::ColorDialogOption>(0x0);
+  const QColorDialog::ColorDialogOption COLOR_DIALOG_OPTIONS = static_cast<QColorDialog::ColorDialogOption>(0x0);
 #endif
 
 ColorWidget::ColorWidget(QWidget* parent)
@@ -148,9 +147,9 @@ void ColorWidget::showColorDialog_()
 
   QColor tempColor;
   if (showAlpha_)
-    tempColor = QColorDialog::getColor(color_, this, title_, BASE_OPTIONS | QColorDialog::ShowAlphaChannel);
+    tempColor = QColorDialog::getColor(color_, this, title_, COLOR_DIALOG_OPTIONS | QColorDialog::ShowAlphaChannel);
   else
-    tempColor = QColorDialog::getColor(color_, this, title_, BASE_OPTIONS);
+    tempColor = QColorDialog::getColor(color_, this, title_, COLOR_DIALOG_OPTIONS);
   if (tempColor.isValid())
   {
     color_ = tempColor;

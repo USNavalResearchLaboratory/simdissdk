@@ -21,8 +21,12 @@
  *
  */
 #include <cassert>
+#include <QColorDialog>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QSortFilterProxyModel>
+#include "simCore/Calc/Math.h"
+#include "simQt/ColorWidget.h"
 #include "simQt/QtConversion.h"
 #include "simQt/QtFormatting.h"
 #include "simQt/ScopedSignalBlocker.h"
@@ -38,10 +42,15 @@ static const QString COLOR_TOOLTIP = QObject::tr("Color of the stop, interpolate
 static const int STOP_SIZE_PX = 10;
 /** Line thickness of color stop handles, in pixels */
 static const int STOP_THICKNESS_PX = 2;
+/** Tolerance for the mouse to grab a stop handle, in pixels. Float for proper division */
+static const float STOP_TOLERANCE_PX = STOP_SIZE_PX + STOP_THICKNESS_PX;
 
 ////////////////////////////////////////////////////
 
-/** QAbstractTableModel that represents a customizable color gradient */
+/**
+ * QAbstractTableModel that represents a customizable
+ * color gradient with values in the range [0,1].
+ */
 class ColorGradientWidget2::ColorGradientModel : public QAbstractTableModel
 {
 public:
@@ -159,21 +168,23 @@ public:
       return false;
     }
 
-    auto iter = colorStops_.begin();
-    std::advance(iter, index.row());
-
+    auto iter = colorStops_.begin() + index.row();
     switch (static_cast<Column>(index.column()))
     {
     case COL_VALUE:
     {
+      const float val = value.toFloat();
+      // Block invalid or duplicate values
+      if (val < 0.f || val > 1.f || hasStop_(val))
+        return false;
       iter->first = value.toFloat();
-      emit dataChanged(createIndex(index.row(), COL_VALUE), createIndex(index.row(), COL_LAST - 1));
+      emit dataChanged(createIndex(index.row(), COL_VALUE), createIndex(index.row(), COL_VALUE));
       return true;
     }
     case COL_COLOR:
     {
       iter->second = value.value<QColor>();
-      emit dataChanged(createIndex(index.row(), COL_VALUE), createIndex(index.row(), COL_LAST - 1));
+      emit dataChanged(createIndex(index.row(), COL_COLOR), createIndex(index.row(), COL_COLOR));
       return true;
     }
     default:
@@ -218,7 +229,143 @@ public:
     emit endResetModel();
   }
 
+  /** Removes the color stop indicated by the given index */
+  void removeStop(const QModelIndex& index)
+  {
+    if (!index.isValid() || index.row() >= colorStops_.size())
+      return;
+
+    auto iter = colorStops_.begin() + index.row();
+    beginRemoveRows(QModelIndex(), index.row(), index.row());
+    colorStops_.erase(iter);
+    endRemoveRows();
+  }
+
+  /** Adds a new color stop with the given value, generating an appropriate color */
+  QModelIndex addStop(float value)
+  {
+    // Ignore invalid values
+    if (value < 0.f || value > 1.f)
+      return QModelIndex();
+
+    return addStop_(value, guessColor_(value));
+  }
+
+  /** Sets or creates the stop at the given value with the given color */
+  void setColor(float value, const QColor& color)
+  {
+    for (auto& stopIter = colorStops_.begin(); stopIter != colorStops_.end(); ++stopIter)
+    {
+      if (stopIter->first == value)
+      {
+        if (stopIter->second != color)
+        {
+          stopIter->second = color;
+          const int row = std::distance(colorStops_.begin(), stopIter);
+          const QModelIndex topLeft = index(row, 0);
+          const QModelIndex bottomRight = index(row, COL_LAST - 1);
+          emit dataChanged(topLeft, bottomRight);
+        }
+        return;
+      }
+    }
+
+    addStop_(value, color);
+  }
+
+  /**
+   * Updates the given persistent index to point to the stop closest
+   * to the given value within the defined range, if one exists.
+   * Returns true if a stop was found.
+   */
+  bool indexForValue(float trueValue, QPersistentModelIndex& stopIdx, float tolerance = 0.1f) const
+  {
+    stopIdx = QModelIndex();
+    bool stopFound = false;
+    for (auto stopIter = colorStops_.begin(); stopIter != colorStops_.end(); ++stopIter)
+    {
+      const float delta = fabs(stopIter->first - trueValue);
+      if (delta <= tolerance)
+      {
+        tolerance = delta;
+        stopIdx = index(std::distance(colorStops_.begin(), stopIter), COL_VALUE);
+        stopFound = true;
+        // Later stop could be closer, keep searching
+      }
+    }
+
+    return stopFound;
+  }
+
 private:
+  /** Convenience method to add a stop with proper signalling */
+  QModelIndex addStop_(float value, const QColor& color)
+  {
+    const int rowIdx = colorStops_.size();
+    emit beginInsertRows(QModelIndex(), rowIdx, rowIdx);
+    colorStops_.push_back(std::make_pair(value, color));
+    emit endInsertRows();
+
+    return index(rowIdx, COL_VALUE);
+  }
+
+  /** Returns true if there is a stop with the given value */
+  bool hasStop_(float value) const
+  {
+    for (const auto& colorStop : colorStops_)
+    {
+      if (colorStop.first == value)
+        return true;
+    }
+    return false;
+  }
+
+  /** Guesses at a default color for a new stop at the given value */
+  QColor guessColor_(float value) const
+  {
+    // Skip color guessing if we're empty
+    if (colorStops_.empty())
+      return Qt::black;
+
+    // Can't interpolate from one value
+    if (rowCount() == 1)
+      return colorStops_.begin()->second;
+
+    // Get the value less than new value
+    auto leftIter = colorStops_.rbegin();
+    while (leftIter != colorStops_.rend() && leftIter->first >= value)
+      ++leftIter;
+
+    // New value is new lowest, use color of previous lowest
+    if (leftIter == colorStops_.rend())
+    {
+      --leftIter;
+      return leftIter->second;
+    }
+
+    // Get the value greater than or equal to new value
+    auto rightIter = colorStops_.begin();
+    while (rightIter != colorStops_.end() && rightIter->first < value)
+      ++rightIter;
+
+    // New value is new highest, use color of previous highest
+    if (rightIter == colorStops_.end())
+    {
+      --rightIter;
+      return rightIter->second;
+    }
+
+    // Don't try to add duplicate values
+    if (rightIter->first == value)
+    {
+      assert(0); // Testing, shouldn't be able to duplicate values
+      return Qt::black;
+    }
+
+    // Get the interpolated color
+    return ColorGradient::interpolate(leftIter->second, rightIter->second, leftIter->first, value, rightIter->first);
+  }
+
   /** Unordered vector pairing values with corresponding colors */
   std::vector<std::pair<float, QColor> > colorStops_;
 };
@@ -234,11 +381,15 @@ class ColorGradientWidget2::GradientDisplayWidget : public QWidget
 public:
   explicit GradientDisplayWidget(ColorGradientModel& model, QWidget* parent = NULL)
     : QWidget(parent),
-    model_(model)
+    model_(model),
+    dragIndex_(QModelIndex())
   {
+    connect(&model_, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(update()));
+    connect(&model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(update()));
+    connect(&model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(update()));
   }
 
-  virtual void paintEvent(QPaintEvent* event)
+  virtual void paintEvent(QPaintEvent* event) override
   {
     QPainter painter(this);
     auto width = painter.device()->width();
@@ -267,6 +418,61 @@ public:
     }
   }
 
+
+  virtual void mousePressEvent(QMouseEvent* evt) override
+  {
+    if (evt->button() != Qt::RightButton
+      && evt->button() != Qt::LeftButton)
+      return;
+
+    if (!findStopForEvent_(evt, dragIndex_))
+      return;
+
+    if (evt->button() == Qt::RightButton)
+    {
+      model_.removeStop(dragIndex_);
+      dragIndex_ = QModelIndex();
+    }
+    // Left click has the index set, so it can handle drag
+  }
+
+  virtual void mouseReleaseEvent(QMouseEvent* evt) override
+  {
+    dragIndex_ = QModelIndex();
+  }
+
+  virtual void mouseMoveEvent(QMouseEvent* evt) override
+  {
+    if (!dragIndex_.isValid() | width() == 0)
+      return;
+
+    const float newVal = (static_cast<float>(evt->x()) / width());
+    assert(dragIndex_.column() == ColorGradientModel::COL_VALUE); // Dev Error: model should've given value index
+    model_.setData(dragIndex_, newVal);
+  }
+
+  virtual void mouseDoubleClickEvent(QMouseEvent* evt) override
+  {
+    if (evt->button() != Qt::LeftButton || width() == 0)
+      return;
+
+    // Have to re-find index, since we received a release
+    if (!findStopForEvent_(evt, dragIndex_))
+    {
+      // If we didn't doubleclick on a stop, create a new stop
+      const float newVal = (static_cast<float>(evt->x()) / width());
+      dragIndex_ = model_.addStop(newVal);
+    }
+
+    // Open color dialog to set the stop's color
+    const QModelIndex colorIdx = dragIndex_.sibling(dragIndex_.row(), ColorGradientModel::COL_COLOR);
+    QColor tempColor = model_.data(colorIdx).value<QColor>();
+    // TODO: Alpha channel property
+    tempColor = QColorDialog::getColor(tempColor, this, tr("Gradient Stop Color"), COLOR_DIALOG_OPTIONS | QColorDialog::ShowAlphaChannel);
+    if (tempColor.isValid())
+      model_.setData(colorIdx, QVariant(tempColor));
+  }
+
 private:
   /** Draws the rectangular handle used to control a color stop */
   void drawStopRect_(QPainter& painter, float value, int width, int height)
@@ -283,7 +489,25 @@ private:
     painter.restore();
   }
 
+  /**
+   * Updates the given index to the closest stop to the mouse event.
+   * Returns true if a stop was found in range, false otherwise.
+   */
+  bool findStopForEvent_(QMouseEvent* evt, QPersistentModelIndex& stopIdx) const
+  {
+    const int midY = (height() / 2);
+    // Ignore events outside the vertical center
+    if (width() == 0 || evt->y() < (midY - STOP_SIZE_PX)
+      || evt->y() > (midY + STOP_SIZE_PX))
+      return false;
+
+    const float trueVal = (static_cast<float>(evt->x()) / width());
+    const float maxDelta = (STOP_TOLERANCE_PX / width());
+    return model_.indexForValue(trueVal, stopIdx, maxDelta);
+  }
+
   ColorGradientModel& model_;
+  QPersistentModelIndex dragIndex_;
 };
 
 ////////////////////////////////////////////////////
@@ -312,6 +536,10 @@ ColorGradientWidget2::ColorGradientWidget2(QWidget* parent)
 
   // Configure using a default gradient
   setColorGradient(ColorGradient::newDefaultGradient());
+
+  connect(model_, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SIGNAL(gradientChanged()));
+  connect(model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SIGNAL(gradientChanged()));
+  connect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SIGNAL(gradientChanged()));
 }
 
 ColorGradientWidget2::~ColorGradientWidget2()
