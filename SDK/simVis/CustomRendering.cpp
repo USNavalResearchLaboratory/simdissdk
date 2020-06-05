@@ -45,6 +45,7 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
     lastProps_(props),
     hasLastPrefs_(false),
     customActive_(false),
+    isLine_(false),
     objectIndexTag_(0)
 {
   setName("CustomRenderingNode");
@@ -181,6 +182,16 @@ void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
 
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
+}
+
+bool CustomRenderingNode::isLine() const
+{
+  return isLine_;
+}
+
+void CustomRenderingNode::setIsLine(bool isLine)
+{
+  isLine_ = isLine;
 }
 
 void CustomRenderingNode::updateOverrideColor_(const simData::CustomRenderingPrefs& prefs)
