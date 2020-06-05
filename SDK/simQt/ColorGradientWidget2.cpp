@@ -232,7 +232,7 @@ public:
   /** Removes the color stop indicated by the given index */
   void removeStop(const QModelIndex& index)
   {
-    if (!index.isValid() || index.row() >= colorStops_.size())
+    if (!index.isValid() || index.row() >= rowCount())
       return;
 
     auto iter = colorStops_.begin() + index.row();
@@ -254,7 +254,7 @@ public:
   /** Sets or creates the stop at the given value with the given color */
   void setColor(float value, const QColor& color)
   {
-    for (auto& stopIter = colorStops_.begin(); stopIter != colorStops_.end(); ++stopIter)
+    for (auto stopIter = colorStops_.begin(); stopIter != colorStops_.end(); ++stopIter)
     {
       if (stopIter->first == value)
       {
@@ -443,7 +443,7 @@ public:
 
   virtual void mouseMoveEvent(QMouseEvent* evt) override
   {
-    if (!dragIndex_.isValid() | width() == 0)
+    if (!dragIndex_.isValid() || width() == 0)
       return;
 
     const float newVal = (static_cast<float>(evt->x()) / width());
