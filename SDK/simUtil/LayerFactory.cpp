@@ -76,7 +76,6 @@ osgEarth::MBTilesImageLayer* LayerFactory::newMbTilesImageLayer(const std::strin
   osg::ref_ptr<osgEarth::MBTilesImageLayer> layer = new osgEarth::MBTilesImageLayer(opts);
   layer->setName(LayerFactory::completeBaseName(fullPath));
   layer->setURL(fullPath);
-  layer->setComputeLevels(false);
 
   // mbtiles already have preprocessed data, no need to use cache
   layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
@@ -139,7 +138,6 @@ osgEarth::MBTilesElevationLayer* LayerFactory::newMbTilesElevationLayer(const st
   osg::ref_ptr<osgEarth::MBTilesElevationLayer> layer = new osgEarth::MBTilesElevationLayer(opts);
   layer->setName(LayerFactory::completeBaseName(fullPath));
   layer->setURL(fullPath);
-  layer->setComputeLevels(false);
 
   // mbtiles already have preprocessed data, no need to use cache
   layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
