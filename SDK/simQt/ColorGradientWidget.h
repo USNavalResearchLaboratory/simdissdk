@@ -29,6 +29,9 @@
 #include "simCore/Common/Export.h"
 #include "simQt/ColorGradient.h"
 
+class QGroupBox;
+class QSortFilterProxyModel;
+class QTreeView;
 class Ui_ColorGradientWidget;
 
 namespace simQt {
@@ -37,6 +40,11 @@ namespace simQt {
 class SDKQT_EXPORT ColorGradientWidget : public QWidget
 {
   Q_OBJECT;
+
+  /** Shows/hides the gradient stop list below the display widget */
+  Q_PROPERTY(bool ShowTable READ showTable WRITE setShowTable)
+  /** Show/hide alpha in displayed color selectors */
+  Q_PROPERTY(bool ShowAlpha READ showAlpha WRITE setShowAlpha)
 
 public:
   /** Constructor */
@@ -53,32 +61,44 @@ public:
   /** Removes all colors and stops. */
   void clear();
 
+  /** Returns true if the color stops table is displayed */
+  bool showTable() const;
+  /** Returns true if the color editors will show alpha values */
+  bool showAlpha() const;
+
+public slots:
+  /** Sets whether to display the color stops table */
+  void setShowTable(bool show);
+  /** Sets whether the color editors will allow editing of alpha values */
+  void setShowAlpha(bool show);
+
 signals:
-  /** Emitted when any change to the color gradient is made */
+  /** Emitted whenever a change is made to the stored color gradient */
   void gradientChanged(const simQt::ColorGradient& gradient);
 
 private slots:
-  /** Updates GUI to the values of the newly-selected gradient stop */
-  void setSelectedGradientIndex_(int index);
-  /** Updates the stored stop position and spinner value based on current slider position */
-  void storeGradientSliderPosition_(int sliderPos);
-  /** Updates the stored stop position and slider position based on current spinner value */
-  void storeGradientSpinnerPosition_(double spinPos);
-  /** Updates the stored stop color */
-  void storeGradientColor_(const QColor& color);
-  /** Creates a new stop */
-  void createColor_();
-  /** Deletes the current stop */
-  void deleteColor_();
+  /**
+   * Trigged by changes to the gradient, emits gradientChanged()
+   * with the appropriate ColorGradient object
+   */
+  void emitGradientChanged_();
 
 private:
-  /** Updates the color widget to show the current gradient and emits gradientChanged(). */
-  void applyGradient_();
-  /** Updates the enabled state of the editing widgets based on the current stops size */
-  void updateEnables_();
+  /** Creates or destroys the stops table based on showTable_ flag */
+  void showOrHideTable_();
 
-  Ui_ColorGradientWidget* ui_;
-  std::vector<std::pair<double, QColor> > stops_;
+  std::unique_ptr<Ui_ColorGradientWidget> ui_;
+  QGroupBox* tableGroup_;
+  QTreeView* treeView_;
+
+  class ColorGradientModel;
+  ColorGradientModel* model_;
+  QSortFilterProxyModel* proxyModel_;
+
+  class GradientDisplayWidget;
+
+  bool showTable_;
+  bool showAlpha_;
 };
 }
 
