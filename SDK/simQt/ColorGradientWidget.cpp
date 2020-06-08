@@ -22,7 +22,7 @@
  */
 #include <cassert>
 #include <QColorDialog>
-#include <QGroupbox>
+#include <QGroupBox>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QTreeView>
