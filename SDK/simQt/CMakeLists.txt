@@ -15,6 +15,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}BoundSettings.h
     ${SIMQT_INC}ColorButton.h
     ${SIMQT_INC}ColorWidget.h
+    ${SIMQT_INC}ColorWidgetDelegate.h
     ${SIMQT_INC}ConsoleDataModel.h
     ${SIMQT_INC}ConsoleLogger.h
     ${SIMQT_INC}DirectorySelectorWidget.h
@@ -141,6 +142,7 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
     ${SIMQT_SRC}ColorWidget.cpp
+    ${SIMQT_SRC}ColorWidgetDelegate.cpp
     ${SIMQT_SRC}ConsoleChannel.cpp
     ${SIMQT_SRC}ConsoleDataModel.cpp
     ${SIMQT_SRC}ConsoleLogger.cpp
