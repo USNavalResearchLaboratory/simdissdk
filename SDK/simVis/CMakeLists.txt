@@ -74,8 +74,9 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}EyePositionManager.h
     ${VIS_INC}Gate.h
     ${VIS_INC}GeoFence.h
-    ${VIS_INC}GlowHighlight.h
     ${VIS_INC}Gl3Utils.h
+    ${VIS_INC}GlDebugMessage.h
+    ${VIS_INC}GlowHighlight.h
     ${VIS_INC}Headless.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
@@ -233,6 +234,7 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}EphemerisVector.cpp
     ${VIS_SRC}Gate.cpp
     ${VIS_SRC}GeoFence.cpp
+    ${VIS_INC}GlDebugMessage.cpp
     ${VIS_SRC}GlowHighlight.cpp
     ${VIS_SRC}Headless.cpp
     ${VIS_SRC}InsetViewEventHandler.cpp
