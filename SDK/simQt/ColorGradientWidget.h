@@ -45,6 +45,8 @@ class SDKQT_EXPORT ColorGradientWidget : public QWidget
   Q_PROPERTY(bool ShowTable READ showTable WRITE setShowTable)
   /** Show/hide alpha in displayed color selectors */
   Q_PROPERTY(bool ShowAlpha READ showAlpha WRITE setShowAlpha)
+  /** Show/hide button to spawn help dialog */
+  Q_PROPERTY(bool ShowHelp READ showHelp WRITE setShowHelp)
 
 public:
   /** Constructor */
@@ -65,12 +67,16 @@ public:
   bool showTable() const;
   /** Returns true if the color editors will show alpha values */
   bool showAlpha() const;
+  /** Returns true if the button to spawn a help dialog is shown */
+  bool showHelp() const;
 
 public slots:
   /** Sets whether to display the color stops table */
   void setShowTable(bool show);
   /** Sets whether the color editors will allow editing of alpha values */
   void setShowAlpha(bool show);
+  /** Sets whether the button to spawn a help dialog is shown */
+  void setShowHelp(bool show);
 
 signals:
   /** Emitted whenever a change is made to the stored color gradient */
@@ -82,6 +88,8 @@ private slots:
    * with the appropriate ColorGradient object
    */
   void emitGradientChanged_();
+  /** Spawns a help dialog explaining the display widget */
+  void showHelpDialog_();
 
 private:
   /** Creates or destroys the stops table based on showTable_ flag */
@@ -99,6 +107,7 @@ private:
 
   bool showTable_;
   bool showAlpha_;
+  bool showHelp_;
 };
 }
 

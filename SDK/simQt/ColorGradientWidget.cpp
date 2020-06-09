@@ -23,8 +23,10 @@
 #include <cassert>
 #include <QColorDialog>
 #include <QGroupBox>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QToolTip>
 #include <QTreeView>
 #include <QSortFilterProxyModel>
 #include "simCore/Calc/Math.h"
@@ -54,6 +56,8 @@ static const float HANDLE_TOLERANCE_PX = HALF_HANDLE_PX + OUTLINE_THICKNESS_PX;
 static const QColor OUTLINE_COLOR = Qt::darkGray;
 static const QColor HANDLE_COLOR = Qt::lightGray;
 static const QColor HANDLE_PICK_COLOR = Qt::white;
+
+static const QString GRAD_WIDGET_TOOLTIP = QObject::tr("Left-click and drag to move a color stop, changing its value.<p>Double-click to add or edit a stop.<p>Right-click to remove a stop.");
 
 ////////////////////////////////////////////////////
 
@@ -417,6 +421,7 @@ public:
     connect(&model_, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(update()));
     connect(&model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(update()));
     connect(&model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(update()));
+    connect(&model_, SIGNAL(modelReset()), this, SLOT(update()));
   }
 
   virtual void paintEvent(QPaintEvent* event) override
@@ -496,9 +501,15 @@ public:
       }
       return;
     }
-    const float newVal = (static_cast<float>(evt->x()) / width());
+    // Clamp to [0,1] for tooltip purposes
+    const float newVal = simCore::sdkMin(1.f, simCore::sdkMax((static_cast<float>(evt->x()) / width()), 0.f));
     assert(dragIndex_.column() == ColorGradientModel::COL_VALUE); // Dev Error: model should've given value index
     model_.setData(dragIndex_, newVal, ColorGradientModel::DECIMAL_VALUE_ROLE);
+
+    QPoint ttPos = mapToGlobal(QPoint(evt->x(), y()));
+    QToolTip::showText(ttPos,
+      tr("Value: ") + QString::number(static_cast<int>(newVal * 100.f), 'f', 0) + QString("%"),
+      this);
   }
 
   virtual void mouseDoubleClickEvent(QMouseEvent* evt) override
@@ -581,7 +592,8 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   tableGroup_(NULL),
   treeView_(NULL),
   showTable_(true),
-  showAlpha_(true)
+  showAlpha_(true),
+  showHelp_(true)
 {
   model_ = new ColorGradientModel(this);
   proxyModel_ = new QSortFilterProxyModel(this);
@@ -598,10 +610,12 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   policy.setVerticalPolicy(QSizePolicy::Expanding);
   policy.setHorizontalStretch(10); // Arbitrary number larger than defaults of other items
   display->setSizePolicy(policy);
-  display->setToolTip(simQt::formatTooltip(tr("Color Gradient"),
-    tr("Left-click and drag to move a color stop, changing its value.<p>Double-click to add or edit a stop.<p>Right-click to remove a stop.")));
+  display->setToolTip(simQt::formatTooltip(tr("Color Gradient"), GRAD_WIDGET_TOOLTIP));
 
   ui_->gridLayout->addWidget(display, 0, 1);
+
+  ui_->helpButton->setVisible(showHelp_);
+  connect(ui_->helpButton, SIGNAL(clicked(bool)), this, SLOT(showHelpDialog_()));
 
   // Configure using a default gradient
   setColorGradient(ColorGradient::newDefaultGradient());
@@ -645,6 +659,11 @@ bool ColorGradientWidget::showAlpha() const
   return showAlpha_;
 }
 
+bool ColorGradientWidget::showHelp() const
+{
+  return showHelp_;
+}
+
 void ColorGradientWidget::setShowTable(bool show)
 {
   if (show == showTable_)
@@ -667,9 +686,25 @@ void ColorGradientWidget::setShowAlpha(bool show)
   }
 }
 
+void ColorGradientWidget::setShowHelp(bool show)
+{
+  if (show == showHelp_)
+    return;
+
+  showHelp_ = show;
+  ui_->helpButton->setVisible(showHelp_);
+}
+
 void ColorGradientWidget::emitGradientChanged_()
 {
   emit gradientChanged(getColorGradient());
+}
+
+void ColorGradientWidget::showHelpDialog_()
+{
+  QMessageBox msg(QMessageBox::Question, tr("Color Gradient"),
+    GRAD_WIDGET_TOOLTIP, QMessageBox::Close, this);
+  msg.exec();
 }
 
 void ColorGradientWidget::showOrHideTable_()
