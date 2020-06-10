@@ -13,16 +13,28 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
+#include "simCore/Common/Exception.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/DatumConvert.h"
 
 namespace simCore {
+
+class DatumConvertException : public simCore::Exception
+{
+public:
+  DatumConvertException(const std::string& name, const std::string& desc)
+    : simCore::Exception(name, desc, 0)
+  {
+    addName_();
+  }
+};
 
 MagneticDatumConvert::MagneticDatumConvert()
   : wmm_(new WorldMagneticModel)
@@ -74,11 +86,9 @@ double MagneticDatumConvert::convertVerticalDatum(const Vec3& lla, const TimeSta
   if (inputDatum == outputDatum)
     return lla.alt();
 
-  // Cannot convert into or out of MSL from flat earth
-  const bool isFlatEarth = (coordSystem == COORD_SYS_NED || coordSystem == COORD_SYS_ENU ||
-    coordSystem == COORD_SYS_NWU || coordSystem == COORD_SYS_XEAST || coordSystem == COORD_SYS_GTP);
-  if (isFlatEarth && (inputDatum == VERTDATUM_MSL || outputDatum == VERTDATUM_MSL))
-    return lla.alt();
+  // Does not support MSL, throw exception in that case
+  if (inputDatum == VERTDATUM_MSL || outputDatum == VERTDATUM_MSL)
+    throw simCore::DatumConvertException("MagneticDatumConvert: ", "MSL is not supported");
 
   // Datum conversions not supported for earth centered systems
   if (coordSystem == COORD_SYS_ECEF || coordSystem == COORD_SYS_ECI)

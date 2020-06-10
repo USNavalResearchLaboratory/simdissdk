@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -75,7 +76,6 @@ osgEarth::MBTilesImageLayer* LayerFactory::newMbTilesImageLayer(const std::strin
   osg::ref_ptr<osgEarth::MBTilesImageLayer> layer = new osgEarth::MBTilesImageLayer(opts);
   layer->setName(LayerFactory::completeBaseName(fullPath));
   layer->setURL(fullPath);
-  layer->setComputeLevels(false);
 
   // mbtiles already have preprocessed data, no need to use cache
   layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
@@ -138,7 +138,6 @@ osgEarth::MBTilesElevationLayer* LayerFactory::newMbTilesElevationLayer(const st
   osg::ref_ptr<osgEarth::MBTilesElevationLayer> layer = new osgEarth::MBTilesElevationLayer(opts);
   layer->setName(LayerFactory::completeBaseName(fullPath));
   layer->setURL(fullPath);
-  layer->setComputeLevels(false);
 
   // mbtiles already have preprocessed data, no need to use cache
   layer->setCachePolicy(osgEarth::CachePolicy::USAGE_NO_CACHE);
@@ -220,9 +219,13 @@ osgEarth::FeatureModelLayer* ShapeFileLayerFactory::load(const std::string& url)
   osg::ref_ptr<osgEarth::FeatureModelLayer> layer = new osgEarth::FeatureModelLayer();
   configureOptions(url, layer.get());
 
-  if (layer->getStatus().isError())
+  // check the feature source's status for errors, since the layer's status will be ResourceUnavailable until it is opened
+  if (!layer->getFeatureSource())
+    return NULL;
+  osgEarth::Status status = layer->getFeatureSource()->getStatus();
+  if (status.isError())
   {
-    SIM_WARN << "ShapeFileLayerFactory::load(" << url << ") failed : " << layer->getStatus().message() << "\n";
+    SIM_WARN << "ShapeFileLayerFactory::load(" << url << ") failed : " << status.message() << "\n";
     layer = NULL;
   }
   return layer.release();

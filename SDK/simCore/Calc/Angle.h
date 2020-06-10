@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -245,6 +246,29 @@ namespace simCore
    * @return Moduled angle in degrees based on requested output extents.
    */
   SDKCORE_EXPORT double angFixDegrees(double degreeAngle, AngleExtents extents);
+
+  /**
+   * Given two angles on a circle, calculates the angle difference between them.  The
+   * input values are projected onto a circle (i.e. wrapped), then compared.  The
+   * output is angle delta applied on "fromRad" to reach the equivalent angle "toRad",
+   * and will always be in the range (-PI,PI].  This method expects values in radians.
+   * @param fromRad From angle, in radians
+   * @param toRad To angle, in radians
+   * @return Radians value from (-PI,PI] that when added to fromRad will be an equivalent
+   *   angle to toRad.  For example, angleDifference(0.4, 0.1) == -0.3.
+   */
+  SDKCORE_EXPORT double angleDifference(double fromRad, double toRad);
+
+  /**
+   * Degrees-based convenience wrapper for angleDifference.  Calculates difference
+   * between two degree angles.
+   * @see simCore::angleDifference()
+   * @param fromDeg From angle, in degrees
+   * @param toDeg To angle, in degrees
+   * @return Degrees value from (-180,180] that when added to fromDeg will be an
+   *    equivalent angle to toDeg.  For example, angleDifferenceDeg(4.0, 1.0) == -3.0.
+   */
+  SDKCORE_EXPORT double angleDifferenceDeg(double fromDeg, double toDeg);
 
 } // End of namespace simCore
 

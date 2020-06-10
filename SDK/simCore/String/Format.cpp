@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -66,30 +67,31 @@ std::string upperCase(const std::string &in)
 /// Case insensitive string find for std::string
 size_t stringCaseFind(const std::string &str1, const std::string &str2)
 {
-  std::string upStr1 = upperCase(str1);
+  const std::string& upStr1 = upperCase(str1);
   return upStr1.find(upperCase(str2));
 }
 
-/// Removes trailing white space from a string read from a stream
+/// Removes trailing white space from a line read from a stream
 bool getStrippedLine(std::istream& is, std::string& str)
 {
+  // strips newline and everything after
   if (!std::getline(is, str))
   {
     return false;
   }
-
-  str.erase(str.find_last_not_of(" \n\r\t") + 1);
+  // strips trailing white space
+  str.erase(str.find_last_not_of(" \r\t") + 1);
   return true;
 }
 
-/// Returns the extension of incoming string (lower-case), including the '.'
-std::string getExtension(const std::string &inName)
+/// Returns the extension of incoming string (lower-case by default), including the '.'
+std::string getExtension(const std::string &inName, bool toLower)
 {
   if (inName.empty())
     return "";
 
   // convert to lower-case for insensitive comparison
-  std::string outString = lowerCase(inName);
+  std::string outString = toLower ? lowerCase(inName) : inName;
   size_t found = outString.find_last_of(".");
   return (found != std::string::npos) ? outString.substr(found) : "";
 }

@@ -53,4 +53,12 @@ if(TARGET simData)
 endif()
 if(TARGET simVis)
     add_test(NAME QColorTest COMMAND SimQtTests QColorTest)
+    target_link_libraries(SimQtTests PRIVATE simVis)
 endif()
+
+# Set QT_PLUGIN_PATH, required for Qt 5.14 but not 5.9
+set_tests_properties(
+        ActionRegistryTest
+    PROPERTIES
+        ENVIRONMENT "QT_PLUGIN_PATH=${_qt5Gui_install_prefix}/plugins"
+)

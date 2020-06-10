@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,13 +31,13 @@
 #include "simVis/LocatorNode.h"
 #include "simVis/Types.h"
 #include "simVis/RFProp/ArepsLoader.h"
+#include "simVis/RFProp/CompositeColorProvider.h"
+#include "simVis/RFProp/CompositeProfileProvider.h"
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/Profile.h"
 #include "simVis/RFProp/SNRDataProvider.h"
-#include "simVis/RFProp/CompositeProfileProvider.h"
-#include "simVis/RFProp/CompositeColorProvider.h"
 #include "simVis/RFProp/GradientColorProvider.h"
 #include "simVis/RFProp/RFPropagationFacade.h"
 
@@ -115,22 +116,16 @@ namespace simRF
 const int DEFAULT_TRANSPARENCY = 60;  // percentage, 0-100. 100 is fully transparent, 0 is opaque
 const int DEFAULT_HISTORY = 30; // degrees
 
-RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent, osgEarth::Map* map)
- : id_(id),
-   antennaHeightMeters_(0.0),
-   rfParamsSet_(false),
-   parent_(parent)
+RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent)
+  : id_(id),
+  antennaHeightMeters_(0.0),
+  rfParamsSet_(false),
+  profileManager_(new simRF::ProfileManager()),
+  parent_(parent)
 {
-  // create locator
-  if (map)
-  {
-    locator_ = new simVis::LocatorNode( new simVis::Locator(map->getSRS()) );
-  }
-  // add locator to the parent node
-  if (locator_.valid() && parent_.valid())
-    parent_->addChild(locator_);
-
-  profileManager_ = new simRF::ProfileManager();
+  // add profileManager_ to the parent node
+  if (profileManager_.valid() && parent_.valid())
+    parent_->addChild(profileManager_);
 
   initializeDefaultColors_();
   colorProvider_ = new CompositeColorProvider();
@@ -155,14 +150,12 @@ RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* paren
   setHistory(DEFAULT_HISTORY);
 
   setDisplay(false);
-  if (locator_)
-    locator_->addChild(profileManager_);
 }
 
 RFPropagationFacade::~RFPropagationFacade()
 {
-  if (parent_.valid() && locator_.valid())
-    parent_->removeChild(locator_.get());
+  if (parent_.valid() && profileManager_.valid())
+    parent_->removeChild(profileManager_.get());
 }
 
 int RFPropagationFacade::setModelType()
@@ -211,7 +204,7 @@ const PODVectorPtr RFPropagationFacade::getPODLossThreshold() const
 int RFPropagationFacade::setColorMap(simRF::ProfileDataProvider::ThresholdType type, const std::map<float, osg::Vec4>& colorMap)
 {
   bool updateColorProvider = false;
-  simRF::ProfileDataProvider::ThresholdType currentType = profileManager_ ? profileManager_->getThresholdType() : simRF::ProfileDataProvider::THRESHOLDTYPE_POD;
+  simRF::ProfileDataProvider::ThresholdType currentType = profileManager_->getThresholdType();
   switch (type)
   {
   // these types always share the same color map
@@ -231,7 +224,7 @@ int RFPropagationFacade::setColorMap(simRF::ProfileDataProvider::ThresholdType t
     colorMaps_[type] = colorMap;
     break;
   }
-  if (colorProvider_ == NULL || profileManager_ == NULL)
+  if (colorProvider_ == NULL)
     return 0;
 
   // update the color provider if the specified type is currently active
@@ -244,18 +237,13 @@ int RFPropagationFacade::setSlotData(simRF::Profile* profile)
 {
   if (profile == NULL)
     return 1;
-  if (profileManager_ == NULL)
-  {
-    assert(0);
-    return 1;
-  }
   profileManager_->addProfile(profile);
   return 0;
 }
 
 const simRF::Profile* RFPropagationFacade::getSlotData(double azRad) const
 {
-  return (profileManager_ == NULL) ? NULL : profileManager_->getProfileByBearing(azRad);
+  return profileManager_->getProfileByBearing(azRad);
 }
 
 int RFPropagationFacade::getInputFiles(const simCore::TimeStamp& time, std::vector<std::string>& filenames) const
@@ -272,8 +260,6 @@ int RFPropagationFacade::getInputFiles(const simCore::TimeStamp& time, std::vect
 
 int RFPropagationFacade::setDisplay(bool onOff)
 {
-  if (locator_ == NULL)
-    return 1;
   profileManager_->setDisplay(onOff);
   return 0;
 }
@@ -290,90 +276,61 @@ int RFPropagationFacade::setRangeTool(bool option)
 
 int RFPropagationFacade::setAglActive(bool aglActive)
 {
-  if (profileManager_ == NULL)
-    return 1;
   profileManager_->setAGL(aglActive);
   return 0;
 }
 
 bool RFPropagationFacade::aglActive() const
 {
-  if (profileManager_ == NULL)
-    return false;
-
   return profileManager_->getAGL();
 }
 
 int RFPropagationFacade::setDrawMode(simRF::Profile::DrawMode drawMode)
 {
-  if (profileManager_ == NULL)
-    return 1;
-
   profileManager_->setMode(drawMode);
   return 0;
 }
 
 simRF::Profile::DrawMode RFPropagationFacade::drawMode() const
 {
-  if (profileManager_ == NULL)
-    return Profile::DRAWMODE_2D_HORIZONTAL;
   return profileManager_->getMode();
 }
 
 int RFPropagationFacade::setHeight(double height)
 {
-  if (profileManager_ == NULL)
-    return 1;
-
   profileManager_->setHeight(height);
   return 0;
 }
 
 double RFPropagationFacade::height() const
 {
-  if (profileManager_ == NULL)
-    return 0.0;
-
   return profileManager_->getHeight();
 }
 
 int RFPropagationFacade::setThickness(unsigned int thickness)
 {
-  if (profileManager_ == NULL)
-    return 1;
-
   profileManager_->setDisplayThickness(thickness);
   return 0;
 }
 
 unsigned int RFPropagationFacade::thickness() const
 {
-  if (profileManager_ == NULL)
-    return 0.0;
-
   return profileManager_->getDisplayThickness();
 }
 
 int RFPropagationFacade::setHistory(int length)
 {
-  if (profileManager_ == NULL)
-    return 1;
-
-  profileManager_->setHistory(static_cast<double>(length) * simCore::DEG2RAD);
+  profileManager_->setHistory(length * simCore::DEG2RAD);
   return 0;
 }
 
 int RFPropagationFacade::history() const
 {
-  if (profileManager_ == NULL)
-    return 0;
-
   return static_cast<int>(simCore::rint(profileManager_->getHistory() * simCore::RAD2DEG));
 }
 
 int RFPropagationFacade::setTransparency(int transparency)
 {
-  if (profileManager_)
     profileManager_->setAlpha(1.f - transparency * 0.01f);
   return 0;
 }
@@ -381,15 +338,11 @@ int RFPropagationFacade::setTransparency(int transparency)
 int RFPropagationFacade::transparency() const
 {
   // Add 0.5f to round correctly; subtract from 1.f to convert alpha to transparency
-  if (profileManager_)
     return static_cast<int>(0.5f + 100.f * (1.f - profileManager_->getAlpha()));
-  return 0;
 }
 
 int RFPropagationFacade::setThresholdMode(simRF::ColorProvider::ColorMode mode)
 {
-  if (profileManager_ == NULL)
-    return 1;
   if (!colorProvider_)
   {
     assert(false);
@@ -402,16 +355,13 @@ int RFPropagationFacade::setThresholdMode(simRF::ColorProvider::ColorMode mode)
 
 simRF::ColorProvider::ColorMode RFPropagationFacade::thresholdMode() const
 {
-  if (profileManager_ == NULL || colorProvider_ == NULL)
+  if (colorProvider_ == NULL)
     return simRF::ColorProvider::COLORMODE_BELOW;
   return colorProvider_->getMode();
 }
 
 int RFPropagationFacade::setThresholdType(simRF::ProfileDataProvider::ThresholdType type)
 {
-  if (profileManager_ == NULL)
-    return 1;
-
   profileManager_->setThresholdType(type);
 
   setGradientByThresholdType_(type);
@@ -421,16 +371,11 @@ int RFPropagationFacade::setThresholdType(simRF::ProfileDataProvider::ThresholdT
 
 simRF::ProfileDataProvider::ThresholdType RFPropagationFacade::thresholdType() const
 {
-  if (profileManager_ == NULL)
-    return simRF::ProfileDataProvider::THRESHOLDTYPE_POD;
-
   return profileManager_->getThresholdType();
 }
 
 int RFPropagationFacade::setThresholdValue(int value)
 {
-  if (profileManager_ == NULL)
-    return 1;
   if (!colorProvider_)
   {
     assert(false);
@@ -442,15 +387,13 @@ int RFPropagationFacade::setThresholdValue(int value)
 
 int RFPropagationFacade::threshold() const
 {
-  if (profileManager_ == NULL || colorProvider_ == NULL)
+  if (colorProvider_ == NULL)
     return 0;
   return static_cast<int>(colorProvider_->getThreshold());
 }
 
 int RFPropagationFacade::setAboveColor(const osg::Vec4f& color)
 {
-  if (profileManager_ == NULL)
-    return 1;
   if (!colorProvider_)
   {
     assert(false);
@@ -462,8 +405,6 @@ int RFPropagationFacade::setAboveColor(const osg::Vec4f& color)
 
 int RFPropagationFacade::aboveColor(osg::Vec4f& color)
 {
-  if (profileManager_ == NULL)
-    return 1;
   if (!colorProvider_)
   {
     assert(false);
@@ -475,8 +416,6 @@ int RFPropagationFacade::aboveColor(osg::Vec4f& color)
 
 int RFPropagationFacade::setBelowColor(const osg::Vec4f& color)
 {
-  if (profileManager_ == NULL)
-    return 1;
   if (!colorProvider_)
   {
     assert(false);
@@ -488,8 +427,6 @@ int RFPropagationFacade::setBelowColor(const osg::Vec4f& color)
 
 int RFPropagationFacade::belowColor(osg::Vec4f& color)
 {
-  if (profileManager_ == NULL)
-    return 1;
   if (!colorProvider_)
   {
     assert(false);
@@ -504,7 +441,7 @@ int RFPropagationFacade::clearCache(bool reset)
   setDisplay(false);
   arepsFilesetTimeMap_.clear();
   // clear out old (data from) ProfileManager, create a new empty ProfileManager
-  profileManager_ = new simRF::ProfileManager();
+  profileManager_->reset();
   return 0;
 }
 
@@ -733,7 +670,7 @@ double RFPropagationFacade::getReceivedPower(double azimRad, double slantRngMete
 bool RFPropagationFacade::valid() const
 {
   // TODO: SPR-167: in SIMDIS 9, valid == (rfParametersSet && podVectorSet && colorMapSet);
-  return (profileManager_ != NULL && rfParamsSet_);
+  return rfParamsSet_;
 }
 
 int RFPropagationFacade::loadArepsFiles(const simCore::TimeStamp& time, const std::vector<std::string>& filenames)
@@ -741,6 +678,7 @@ int RFPropagationFacade::loadArepsFiles(const simCore::TimeStamp& time, const st
   const double timeAsDouble = time.secondsSinceRefYear().Double();
   profileManager_->addProfileMap(timeAsDouble);
   profileManager_->update(timeAsDouble);
+  profileManager_->setSphericalEarth(true);
   // TODO: we have to update the profileManager_ time to load data at specified time; should we restore previous time after load is completed?
 
   simRF::ArepsLoader arepsLoader(this);
@@ -825,44 +763,37 @@ unsigned int RFPropagationFacade::heightSteps() const
 
 double RFPropagationFacade::getBearing() const
 {
-  if (!profileManager_)
-    return 0.0;
   return profileManager_->getBearing();
 }
 
 void RFPropagationFacade::setBearing(double bearing)
 {
- if (profileManager_)
    profileManager_->setBearing(bearing);
 }
 
 void RFPropagationFacade::setElevation(double elevation)
 {
- if (profileManager_)
    profileManager_->setElevAngle(elevation);
+}
+
+void RFPropagationFacade::setSphericalEarth(bool sphericalEarth)
+{
+  profileManager_->setSphericalEarth(sphericalEarth);
 }
 
 unsigned int RFPropagationFacade::numProfiles() const
 {
-  return (profileManager_) ? profileManager_->getNumChildren() : 0;
+  return profileManager_->getNumChildren();
 }
 
 const simRF::Profile* RFPropagationFacade::getProfile(unsigned int index) const
 {
-  return (profileManager_) ? profileManager_->getProfile(index) : NULL;
+  return profileManager_->getProfile(index);
 }
 
 void RFPropagationFacade::setPosition(double latRad, double lonRad)
 {
   profileManager_->setRefCoord(latRad, lonRad, antennaHeight());
-
-  // locator takes lon/lat/alt, in degrees
-  if (locator_)
-  {
-    locator_->getLocator()->setCoordinate(simCore::Coordinate(
-        simCore::COORD_SYS_LLA,
-        simCore::Vec3(latRad, lonRad, antennaHeight())));
-  }
 }
 
 void RFPropagationFacade::initializeDefaultColors_()
@@ -930,8 +861,6 @@ void RFPropagationFacade::setGradientByThresholdType_(simRF::ProfileDataProvider
 
 void RFPropagationFacade::enableDepthBuffer(bool enable)
 {
-  if (!profileManager_.valid())
-    return;
   osg::StateSet* stateset = profileManager_->getOrCreateStateSet();
   if (enable)
     stateset->setMode(GL_DEPTH_TEST, osg::StateAttribute::ON);
@@ -941,8 +870,6 @@ void RFPropagationFacade::enableDepthBuffer(bool enable)
 
 bool RFPropagationFacade::isDepthBufferEnabled() const
 {
-  if (!profileManager_.valid())
-    return false;
   const osg::StateSet* stateset = profileManager_->getStateSet();
   if (!stateset)
     return false;

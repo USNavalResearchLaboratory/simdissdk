@@ -18,7 +18,7 @@ set(CORE_COMMON_SOURCES
     ${CORE_COMMON_SRC}Version.cpp
 )
 source_group(Headers\\Common FILES ${CORE_COMMON_HEADERS})
-source_group(Sources\\Common FILES ${CORE_COMMON_SOURCES})
+source_group("Source Files\\Common" FILES ${CORE_COMMON_SOURCES})
 
 # ----- simCore/Calc --------------------------------------------------------
 
@@ -69,7 +69,7 @@ set(CORE_CALC_SOURCES
     ${CORE_CALC_SRC}UnitContext.cpp
 )
 source_group(Headers\\Calc FILES ${CORE_CALC_HEADERS})
-source_group(Sources\\Calc FILES ${CORE_CALC_SOURCES})
+source_group("Source Files\\Calc" FILES ${CORE_CALC_SOURCES})
 
 # ----- simCore/Calc/LUT --------------------------------------------------------
 
@@ -99,7 +99,7 @@ set(CORE_EM_SOURCES
     ${CORE_EM_SRC}RadarCrossSection.cpp
 )
 source_group(Headers\\EM FILES ${CORE_EM_HEADERS})
-source_group(Sources\\EM FILES ${CORE_EM_SOURCES})
+source_group("Source Files\\EM" FILES ${CORE_EM_SOURCES})
 
 # ----- simCore/String --------------------------------------------------------
 
@@ -130,7 +130,7 @@ set(CORE_STRING_SOURCES
     ${CORE_STRING_SRC}ValidNumber.cpp
 )
 source_group(Headers\\String FILES ${CORE_STRING_HEADERS})
-source_group(Sources\\String FILES ${CORE_STRING_SOURCES})
+source_group("Source Files\\String" FILES ${CORE_STRING_SOURCES})
 
 # ----- simCore/Time --------------------------------------------------------
 
@@ -160,7 +160,7 @@ set(CORE_TIME_SOURCES
     ${CORE_TIME_SRC}Utils.cpp
 )
 source_group(Headers\\Time FILES ${CORE_TIME_HEADERS})
-source_group(Sources\\Time FILES ${CORE_TIME_SOURCES})
+source_group("Source Files\\Time" FILES ${CORE_TIME_SOURCES})
 
 # ----- simCore.h --------------------------------------------------------
 

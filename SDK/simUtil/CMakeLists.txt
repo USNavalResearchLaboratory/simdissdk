@@ -118,7 +118,7 @@ configure_shaders(Shaders.cpp.in Shaders.cpp ${SHADER_FILES})
 source_group(Shaders FILES ${UTIL_SHADER_FILES})
 
 source_group(Headers FILES ${UTIL_HEADERS})
-source_group(Sources FILES ${UTIL_SOURCES})
+source_group("Source Files" FILES ${UTIL_SOURCES})
 source_group("" FILES ${UTIL_ALL_HEADER})
 
 # ----------------------------------------------------------------------

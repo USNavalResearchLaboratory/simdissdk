@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -351,6 +352,9 @@ private:
   template <typename EntryMapType>
   void dataLimit_(std::map<ObjectId, EntryMapType*>& entryMap, ObjectId id, const CommonPrefs* prefs);
   ///@}
+
+  /// Execute the onPostRemoveEntity callback
+  void fireOnPostRemoveEntity_(ObjectId id, ObjectType ot);
 
   /// Check to see if a Listener got removed during a callback
   void checkForRemoval_(ListenerList& list);

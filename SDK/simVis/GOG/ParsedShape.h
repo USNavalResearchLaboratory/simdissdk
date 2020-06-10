@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -159,6 +160,8 @@ enum ShapeParameter
   GOG_3D_OFFSETROLL,
   GOG_TEXTOUTLINECOLOR,
   GOG_TEXTOUTLINETHICKNESS,
+  GOG_ICON,
+  GOG_LLABOX_ROT, // rotation used by KML ground overlay latlonbox
 
   // Set to non-empty when GOG is absolute
   GOG_ABSOLUTE = 200,

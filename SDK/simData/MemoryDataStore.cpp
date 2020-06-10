@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -1502,6 +1503,7 @@ void MemoryDataStore::removeEntity(ObjectId id)
 
     delete pi->second;
     platforms_.erase(pi);
+    fireOnPostRemoveEntity_(id, ot);
     return;
   }
 
@@ -1517,23 +1519,54 @@ void MemoryDataStore::removeEntity(ObjectId id)
 
     delete bi->second;
     beams_.erase(bi);
+    fireOnPostRemoveEntity_(id, ot);
     return;
   }
 
   if (deleteFromMap(gates_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(lasers_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(projectors_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(lobGroups_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
 
   if (deleteFromMap(customRenderings_, id))
+  {
+    fireOnPostRemoveEntity_(id, ot);
     return;
+  }
+}
+
+void MemoryDataStore::fireOnPostRemoveEntity_(ObjectId id, ObjectType ot)
+{
+  // Need to handle recursion so make a local copy
+  ListenerList localCopy = listeners_;
+  justRemoved_.clear();
+  for (ListenerList::const_iterator i = localCopy.begin(); i != localCopy.end(); ++i)
+  {
+    if (*i != NULL)
+    {
+      (**i).onPostRemoveEntity(this, id, ot);
+      checkForRemoval_(localCopy);
+    }
+  }
 }
 
 int MemoryDataStore::removeCategoryDataPoint(ObjectId id, double time, int catNameInt, int valueInt)

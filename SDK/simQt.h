@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -21,6 +22,12 @@
  */
 #ifndef SIMDISSDK_SIMQT_H
 #define SIMDISSDK_SIMQT_H
+
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
 
 #include "simQt/AbstractEntityTreeModel.h"
 #include "simQt/ActionItemModel.h"
@@ -34,13 +41,14 @@
 #include "simQt/ColorGradient.h"
 #include "simQt/ColorGradientWidget.h"
 #include "simQt/ColorWidget.h"
+#include "simQt/ColorWidgetDelegate.h"
 #include "simQt/ConsoleChannel.h"
 #include "simQt/ConsoleDataModel.h"
 #include "simQt/ConsoleLogger.h"
 #include "simQt/DataTableComboBox.h"
 #include "simQt/DataTableModel.h"
 #include "simQt/DirectorySelectorWidget.h"
-#include "simQt/DndTreeView.h
+#include "simQt/DndTreeView.h"
 #include "simQt/DockWidget.h"
 #include "simQt/EntityCategoryFilter.h"
 #include "simQt/EntityFilter.h"

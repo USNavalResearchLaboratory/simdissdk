@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,6 +31,7 @@
 #include "simCore/Calc/Math.h"
 #include "simNotify/Notify.h"
 #include "simQt/ColorWidget.h"
+#include "simQt/FileSelectorWidget.h"
 #include "simQt/BoundSettings.h"
 
 namespace simQt {
@@ -467,6 +469,15 @@ void BoundStringSetting::bindTo(QLineEdit* lineEdit, bool populateToolTip)
   lineEdit->setText(value());
   connect(lineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(setValue(const QString&)));
   connect(this, SIGNAL(valueChanged(const QString&)), lineEdit, SLOT(setText(const QString&)));
+}
+
+void BoundStringSetting::bindTo(FileSelectorWidget* fileSelector, bool populateToolTip)
+{
+  if (populateToolTip)
+    setToolTip_(fileSelector);
+  fileSelector->setFilename(value());
+  connect(fileSelector, SIGNAL(filenameChanged(QString)), this, SLOT(setValue(QString)));
+  connect(this, SIGNAL(valueChanged(QString)), fileSelector, SLOT(setFilename(QString)));
 }
 
 /** Sets a new value for the variable */

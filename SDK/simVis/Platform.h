@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -82,7 +83,7 @@ public:
     const simData::DataStore& dataStore,
     PlatformTspiFilterManager& manager,
     osg::Group* expireModeGroupAttach,
-    Locator* locator = NULL,
+    Locator* eciLocator = NULL,
     int referenceYear = 1970);
 
   /**
@@ -319,6 +320,8 @@ private:
   double                          lastUpdateTime_;
   /// the time of the earliest history point that still exists in the data slice
   double                          firstHistoryTime_;
+  /// the ECI locator, which supports ECI track history, and provides the SRS for non-ECI locators
+  osg::ref_ptr<Locator>           eciLocator_;
   /// container for trackHistory and vaporTrail, which must be different from the platform node to support expiremode
   osg::ref_ptr<osg::Group> expireModeGroup_;
   /// scenegraph parent to the expireModeGroup_

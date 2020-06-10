@@ -854,6 +854,9 @@ message PlatformPrefs {
 
   /// Automatic animation of Degree-of-Freedom nodes is enabled or disabled
   optional bool animateDofNodes = 70 [default = false];
+
+  /// Toggles whether the platform data should be interpreted as Earth-Fixed or Inertial
+  optional bool eciDataMode = 73 [default = false];
 };
 
 /// timed update to platform prefs; commands override prefs
@@ -1261,6 +1264,9 @@ message CustomRenderingPrefs {
   optional fixed32 historyOverrideColor = 7 [default = 0x19E500FF];
   /// If true, show center axis inside the shape. Shape color must be semitransparent.  Not all renderers support this field.
   optional bool centerAxis = 8 [default = false];
+  /// If true, show a lighted shape.  Not all renderers support this field
+  optional bool showLighted = 9 [default = false];
+
 };
 
 /// common update to Custom Rendering data

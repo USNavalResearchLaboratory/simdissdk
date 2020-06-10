@@ -1,42 +1,47 @@
 /* -*- mode: c++ -*- */
 /****************************************************************************
-*****                                                                  *****
-*****                   Classification: UNCLASSIFIED                   *****
-*****                    Classified By:                                *****
-*****                    Declassify On:                                *****
-*****                                                                  *****
-****************************************************************************
-*
-*
-* Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
-*               EW Modeling and Simulation, Code 5770
-*               4555 Overlook Ave.
-*               Washington, D.C. 20375-5339
-*
-* For more information please send email to simdis@enews.nrl.navy.mil
-*
-* The U.S. Government retains all rights to use, duplicate, distribute,
-* disclose, or release this software.
-****************************************************************************
-*
-*/
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * For more information please send email to simdis@enews.nrl.navy.mil
+ *
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ ****************************************************************************
+ *
+ */
 #include <cassert>
 #include <iostream>
 #include <limits>
 #include "osg/Depth"
 #include "osg/PolygonOffset"
+#include "osgDB/ReadFile"
+#include "osgEarth/AltitudeSymbol"
+#include "osgEarth/FeatureNode"
+#include "osgEarth/GeoPositionNode"
+#include "osgEarth/ImageOverlay"
+#include "osgEarth/LabelNode"
+#include "osgEarth/LineSymbol"
+#include "osgEarth/LocalGeometryNode"
+#include "osgEarth/PlaceNode"
+#include "osgEarth/PolygonSymbol"
 #include "osgEarth/Units"
 #include "osgEarth/Style"
 #include "osgEarth/TextSymbol"
-#include "osgEarth/PolygonSymbol"
-#include "osgEarth/LineSymbol"
-#include "osgEarth/AltitudeSymbol"
 #include "osgEarth/RenderSymbol"
-#include "osgEarth/LabelNode"
-#include "osgEarth/PlaceNode"
-#include "osgEarth/GeoPositionNode"
-#include "osgEarth/LocalGeometryNode"
-#include "osgEarth/FeatureNode"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -641,6 +646,12 @@ int GogNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f& 
   return 1;
 }
 
+int GogNodeInterface::getDeclutterPriority(int& priority) const
+{
+  // only applies to label nodes
+  return 1;
+}
+
 int GogNodeInterface::getLineState(bool& outlineState, osg::Vec4f& color, Utils::LineStyle& lineStyle, int& lineWidth) const
 {
   // only applies to certain shapes
@@ -913,6 +924,11 @@ void GogNodeInterface::setFillColor(const osg::Vec4f& color)
 }
 
 void GogNodeInterface::setFont(const std::string& fontName, int fontSize, const osg::Vec4f& color)
+{
+  // NOP only applies to label nodes
+}
+
+void GogNodeInterface::setDeclutterPriority(int priority)
 {
   // NOP only applies to label nodes
 }
@@ -1672,7 +1688,7 @@ void LocalGeometryNodeInterface::setStyle_(const osgEarth::Style& style)
 
 ///////////////////////////////////////////////////////////////////
 
-LabelNodeInterface::LabelNodeInterface(osgEarth::LabelNode* labelNode, const simVis::GOG::GogMetaData& metaData)
+LabelNodeInterface::LabelNodeInterface(osgEarth::GeoPositionNode* labelNode, const simVis::GOG::GogMetaData& metaData)
   : GogNodeInterface(labelNode, metaData),
     labelNode_(labelNode),
     outlineThickness_(simData::TO_THIN)
@@ -1690,24 +1706,6 @@ LabelNodeInterface::LabelNodeInterface(osgEarth::LabelNode* labelNode, const sim
   simVis::OverheadMode::enableGeometryFlattening(false, labelNode);
 }
 
-LabelNodeInterface::LabelNodeInterface(osgEarth::PlaceNode* placeNode, const simVis::GOG::GogMetaData& metaData)
-  : GogNodeInterface(placeNode, metaData),
-    labelNode_(placeNode),
-    outlineThickness_(simData::TO_THIN)
-{
-  if (labelNode_.valid())
-  {
-    style_ = labelNode_->getStyle();
-    initializeFromGeoPositionNode_(*placeNode);
-    initializeAltitudeSymbol_();
-  }
-  initializeFillColor_();
-  initializeLineColor_();
-
-  // override - places should not be flattened in overhead mode.
-  simVis::OverheadMode::enableGeometryFlattening(false, placeNode);
-}
-
 int LabelNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f& fontColor) const
 {
   if (!style_.has<osgEarth::TextSymbol>())
@@ -1715,8 +1713,19 @@ int LabelNodeInterface::getFont(std::string& fontFile, int& fontSize, osg::Vec4f
   const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
   if (ts->font()->size() > 0)
     fontFile = *(ts->font());
-  fontSize = static_cast<int>(simVis::simdisFontSize(static_cast<float>(ts->size()->eval())));
+  fontSize = static_cast<int>(simCore::round(simVis::simdisFontSize(static_cast<float>(ts->size()->eval()))));
   fontColor = ts->fill()->color();
+  return 0;
+}
+
+int LabelNodeInterface::getDeclutterPriority(int& priority) const
+{
+  priority = -1;
+  if (!style_.has<osgEarth::TextSymbol>())
+    return 1;
+  const osgEarth::TextSymbol* ts = style_.getSymbol<osgEarth::TextSymbol>();
+  if (ts->declutter().get())
+    priority = ts->priority().get().eval();
   return 0;
 }
 
@@ -1753,6 +1762,24 @@ void LabelNodeInterface::setFont(const std::string& fontName, int fontSize, cons
     ts->font() = fileFullPath;
   ts->size() = simVis::osgFontSize(static_cast<float>(fontSize));
   ts->fill()->color() = colorVec;
+  setStyle_(style_);
+}
+
+void LabelNodeInterface::setDeclutterPriority(int priority)
+{
+  osgEarth::TextSymbol* ts = style_.getOrCreate<osgEarth::TextSymbol>();
+  if (!ts)
+    return;
+  if (priority < 0)
+  {
+    ts->declutter() = false;
+    ts->priority().clear();
+  }
+  else
+  {
+    ts->declutter() = true;
+    ts->priority() = priority;
+  }
   setStyle_(style_);
 }
 
@@ -2161,6 +2188,40 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
 
   // Update the color array
   capGeometry->setColorArray(colorArray);
+}
+
+ImageOverlayInterface::ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, const simVis::GOG::GogMetaData& metaData)
+  : GogNodeInterface(imageNode, metaData),
+    imageNode_(imageNode)
+{
+}
+
+int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
+{
+  osg::Vec3d centerPoint = imageNode_->getBound().center();
+
+  const simCore::Coordinate ecefCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(centerPoint.x(), centerPoint.y(), centerPoint.z()));
+  simCore::CoordinateConverter converter;
+  simCore::Coordinate llaCoord;
+  converter.convert(ecefCoord, llaCoord, simCore::COORD_SYS_LLA);
+  position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
+
+  return 0;
+}
+
+void ImageOverlayInterface::adjustAltitude_()
+{
+  // no-op
+}
+
+void ImageOverlayInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
+{
+  // no-op since this is not officially supported in GOG format, the geometry will be part of the meta-data
+}
+
+void ImageOverlayInterface::setStyle_(const osgEarth::Style& style)
+{
+  // no-op, can't update style
 }
 
 } }

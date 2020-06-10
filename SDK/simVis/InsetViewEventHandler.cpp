@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -347,18 +348,6 @@ simVis::View* InsetViewEventHandler::getView()
 {
   return host_.get();
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void InsetViewEventHandler::setAddInsetMode(bool add)
-{
-  createInset_->setEnabled(add);
-}
-
-bool InsetViewEventHandler::isAddInsetMode() const
-{
-  return createInset_->isEnabled();
-}
-#endif
 
 void InsetViewEventHandler::setFocusActions(int mask)
 {

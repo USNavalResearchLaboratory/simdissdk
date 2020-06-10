@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -124,7 +125,7 @@ int testCsvReadLineTrimmed()
   rv += SDK_ASSERT(tokens[2] == "six");
   rv += SDK_ASSERT(reader.readLineTrimmed(tokens) == 1);
 
-  return 0;
+  return rv;
 }
 
 int testCsvWithComments()
@@ -223,6 +224,31 @@ int testReadEmptyLines()
   return rv;
 }
 
+// Cursory testing of quote-handling. TokenizerTest tests the related simCore functions
+int testReadQuotes()
+{
+  int rv = 0;
+
+  std::istringstream stream("aa,bb'b\"b',cc'c'c\"c\",dd'ddd,d',e\"ee");
+
+  simCore::CsvReader ignoreQuotes(stream);
+  ignoreQuotes.setParseQuotes(false);
+  std::vector<std::string> tokens;
+
+  rv += SDK_ASSERT(ignoreQuotes.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 6); // [aa, bb'b"b', cc'c'c"c", dd'ddd, d', e"ee]
+
+  // Reset the stream and clear eof flags
+  stream.str("aa,bb'b\"b',cc'c'c\"c\",dd'ddd,d',e\"ee");
+  stream.clear();
+
+  simCore::CsvReader parseQuotes(stream);
+  rv += SDK_ASSERT(parseQuotes.readLine(tokens) == 0);
+  rv += SDK_ASSERT(tokens.size() == 5); // [aa, bb'b"b', cc'c'c"c", dd'ddd,d', e"ee]
+
+  return rv;
+}
+
 }
 
 int CsvReaderTest(int argc, char *argv[])
@@ -234,6 +260,7 @@ int CsvReaderTest(int argc, char *argv[])
   rv += SDK_ASSERT(testCsvWithComments() == 0);
   rv += SDK_ASSERT(testCsvLineNumber() == 0);
   rv += SDK_ASSERT(testReadEmptyLines() == 0);
+  rv += SDK_ASSERT(testReadQuotes() == 0);
 
   return rv;
 }

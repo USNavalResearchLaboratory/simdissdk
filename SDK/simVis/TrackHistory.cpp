@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -98,32 +99,33 @@ private:
   TrackHistoryNode& parent_;
 };
 
+//----------------------------------------------------------------------------
 
-/// constructor.
-TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, const osgEarth::SpatialReference* srs, PlatformTspiFilterManager& platformTspiFilterManager, simData::ObjectId entityId)
+TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parentLocator, PlatformTspiFilterManager& platformTspiFilterManager, simData::ObjectId entityId)
   : ds_(ds),
-   supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
-   chunkSize_(64),  // keep this lowish or your app won't scale.
-   defaultColor_(simVis::Color(simData::PlatformPrefs::default_instance().trackprefs().trackcolor(), simVis::Color::RGBA)),
-   totalPoints_(0),
-   hasLastDrawTime_(false),
-   lastDrawTime_(0.0),
-   lastCurrentTime_(-1.0),
-   timeDirection_(simCore::FORWARD),
-   timeDirectionSign_(1.0),
-   chunkGroup_(NULL),
-   altModeXform_(NULL),
-   platformTspiFilterManager_(platformTspiFilterManager),
-   entityId_(entityId),
-   tableId_(0),
-   currentPointChunk_(NULL)
+  supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
+  chunkSize_(64),  // keep this lowish or your app won't scale.
+  defaultColor_(simVis::Color(simData::PlatformPrefs::default_instance().trackprefs().trackcolor(), simVis::Color::RGBA)),
+  totalPoints_(0),
+  hasLastDrawTime_(false),
+  lastDrawTime_(0.0),
+  lastCurrentTime_(-1.0),
+  timeDirection_(simCore::FORWARD),
+  timeDirectionSign_(1.0),
+  chunkGroup_(NULL),
+  altModeXform_(NULL),
+  platformTspiFilterManager_(platformTspiFilterManager),
+  entityId_(entityId),
+  tableId_(0),
+  currentPointChunk_(NULL),
+  parentLocator_(parentLocator)
 {
   updateSliceBase_ = ds_.platformUpdateSlice(entityId);
   assert(updateSliceBase_); // should be a valid update slice before track history is created
 
   activeColor_ = defaultColor_;
 
-  locator_ = new simVis::Locator(srs);
+  localLocator_ = new simVis::Locator(parentLocator_);
 
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
 
@@ -153,7 +155,8 @@ TrackHistoryNode::~TrackHistoryNode()
   }
   chunkGroup_ = NULL;
   currentPointChunk_ = NULL;
-  locator_ = NULL;
+  parentLocator_ = NULL;
+  localLocator_ = NULL;
 }
 
 // handle an explicit reset
@@ -281,27 +284,39 @@ double TrackHistoryNode::toDrawTime_(double updateTime) const
 // update the track given a new host update.
 void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simData::PlatformUpdate* prevUpdate)
 {
-  osg::Matrix hostMatrix;
-  if (!getMatrix_(u, hostMatrix))
+  simCore::Coordinate ecefCoord;
+  if (!getCoord_(u, ecefCoord))
     return;
 
-  // get a chunk to which to add the new point, creating a new one if necessary
+  // in most cases, use the localLocator to process/send this update to the chunk
+  osg::ref_ptr<Locator> newPtLocator = localLocator_;
+
   TrackChunkNode* chunk = getCurrentChunk_();
   if (!chunk)
   {
-    // allocate a new chunk
-    chunk = new TrackChunkNode(chunkSize_, locator_->getSRS(), lastPlatformPrefs_.trackprefs().trackdrawmode());
+    // new chunk needs a new locator
+    osg::ref_ptr<Locator> newChunkLocator = new Locator(parentLocator_);
+
+    chunk = new TrackChunkNode(chunkSize_, lastPlatformPrefs_.trackprefs().trackdrawmode());
+    // set the new chunk's locator - this will establish the position of the chunk
+    chunk->setLocator(newChunkLocator);
 
     // if there is a preceding chunk, duplicate its last point so there is no
-    // discontinuity from previous chunk to this new chunk - this matters for line, bridge drawing modes
-    int numc = chunkGroup_->getNumChildren();
-    if (numc > 0 && prevUpdate != NULL)
+    // discontinuity from previous chunk to this new chunk - this matters for line, ribbon and bridge drawing modes
+    // note that this extra point needs to be removed during data limiting
+    if (chunkGroup_->getNumChildren() > 0 && prevUpdate != NULL)
     {
-      osg::Matrix last;
-      double last_t = prevUpdate->time();
-      // Extra point needs to be removed during data limiting
-      if (getMatrix_(*prevUpdate, last))
-        chunk->addPoint(last, last_t, historyColorAtTime_(last_t), hostBounds_);
+      if (fillLocator_(*prevUpdate, newChunkLocator))
+      {
+        const double last_t = prevUpdate->time();
+        chunk->addPoint(*(newChunkLocator.get()), last_t, historyColorAtTime_(last_t), hostBounds_);
+      }
+    }
+    else
+    {
+      // the newChunkLocator was not used for the continuity point;
+      // need to use this locator when adding the first point in the chunk (below)
+      newPtLocator = newChunkLocator;
     }
 
     // add the new chunk and update its appearance
@@ -309,10 +324,14 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
     chunk->addCullCallback(new osgEarth::HorizonCullCallback());
   }
 
-  const double drawTime = toDrawTime_(u.time());
+  if (newPtLocator->isEci())
+    newPtLocator->setEciRotationTime(-u.time(), u.time(), false);
+  newPtLocator->setCoordinate(ecefCoord, u.time());
 
+  // now add the new point
+  const double drawTime = toDrawTime_(u.time());
   // add the point (along with its timestamp)
-  bool addSuccess = chunk->addPoint(hostMatrix, drawTime, historyColorAtTime_(drawTime), hostBounds_);
+  const bool addSuccess = chunk->addPoint(*(newPtLocator.get()), drawTime, historyColorAtTime_(drawTime), hostBounds_);
   if (!addSuccess)
   {
     // if assert fails, check that getCurrentChunk_ and previous code ensure that either chunk is not full, or new chunk created
@@ -386,7 +405,7 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
     dropVertsDrawable_->setDataVariance(osg::Object::DYNAMIC);
     dropVertsDrawable_->dirty();
 
-    altModeXform_ = new osg::MatrixTransform();
+    altModeXform_ = new LocatorNode(new Locator());
     altModeXform_->addChild(dropVertsDrawable_.get());
 
     this->addChild(altModeXform_);
@@ -394,44 +413,36 @@ void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdat
 
   if (altModeXform_)
   {
-    bool show = altmode;
     if (updateSlice.current() && altmode)
     {
-      osg::Matrix pos;
-      if (getMatrix_(*updateSlice.current(), pos))
-        updateAltModePositionAndAppearance_(pos, historyColorAtTime_(updateSlice.current()->time()));
+      altModeXform_->setNodeMask(DISPLAY_MASK_TRACK_HISTORY);
+      simCore::Coordinate ecefCoord;
+      if (getCoord_(*updateSlice.current(), ecefCoord))
+        updateAltModePositionAndAppearance_(ecefCoord, updateSlice.current()->time());
     }
     else // if there is no current data, then don't show the altimeter
-      show = false;
+      altModeXform_->setNodeMask(DISPLAY_MASK_NONE);
 
-    altModeXform_->setNodeMask(show ? DISPLAY_MASK_TRACK_HISTORY : DISPLAY_MASK_NONE);
     altModeXform_->dirtyBound();
   }
 }
 
-void TrackHistoryNode::updateAltModePositionAndAppearance_(const osg::Matrixd& mat, const osg::Vec4& color)
+void TrackHistoryNode::updateAltModePositionAndAppearance_(const simCore::Coordinate& ecefCoord, double time)
 {
   if (!altModeXform_)
+  {
+    assert(0);
     return;
+  }
+  altModeXform_->getLocator()->setCoordinate(ecefCoord, time);
+  // dev error: locatorNode must have nodemask in order to sync to its locator
+  assert(altModeXform_->getNodeMask() != 0);
+  dropVertsDrawable_->setColor(historyColorAtTime_(time));
 
-  altModeXform_->setMatrix(mat);
-
-  dropVertsDrawable_->setColor(color);
-
+  const osg::Matrixd& altModeMatrix = altModeXform_->getMatrix();
   osg::Matrixd world2local;
-  world2local.invert(mat);
-
-  // calculate the local point.
-  static const osg::Vec3d s_zero;
-  const osg::Vec3d world = s_zero * mat;
-
-  osg::Vec3d up;
-  osgEarth::GeoPoint geo;
-  geo.fromWorld(locator_->getSRS()->getGeographicSRS(), world);
-  geo.createWorldUpVector(up);
-  up.normalize();
-
-  dropVertsDrawable_->setVertex(1, (world - up*geo.alt()) * world2local);
+  world2local.invert(altModeMatrix);
+  dropVertsDrawable_->setVertex(1, Math::ecefEarthPoint(ecefCoord.position(), world2local));
 }
 
 void TrackHistoryNode::setHostBounds(const osg::Vec2& bounds)
@@ -500,7 +511,6 @@ void TrackHistoryNode::setOverrideColor_(const simVis::Color& color)
       enableOverrideColorUniform_->set(true);
     }
   }
-
 }
 
 void TrackHistoryNode::setPrefs(const simData::PlatformPrefs& platformPrefs, const simData::PlatformProperties& platformProps, bool force)
@@ -769,15 +779,18 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
     return;
 
   // create the special chunk for rendering the interpolated point, has two points to connect to rest of history
-  // for ribbon and bridge modes, SIMDIS 9 draws a center line from platform to first data point, use simData::TrackPrefs_Mode_LINE to duplicate that behavior
+  osg::ref_ptr<Locator> currentChunkLocator;
   if (currentPointChunk_ == NULL)
   {
-    currentPointChunk_ = new TrackChunkNode(2, locator_->getSRS(), simData::TrackPrefs_Mode_LINE);
+    currentPointChunk_ = new TrackChunkNode(2, lastPlatformPrefs_.trackprefs().trackdrawmode());
     if (currentPointChunk_ == NULL)
       return;
     addChild(currentPointChunk_);
+    currentChunkLocator = new Locator(parentLocator_);
+    currentPointChunk_->setLocator(currentChunkLocator.get());
   }
-  osg::Matrix hostMatrix;
+  else
+    currentChunkLocator = currentPointChunk_->getLocator();
 
   // find the most current update, either whatever is current, or the last available update
   const simData::PlatformUpdate* current = updateSlice.current();
@@ -789,11 +802,19 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
   // if this fails, this platform node got created with no platform data
   assert(current);
 
+  // the currentChunkLocator coordinate must be set from the first point added.
+  // for any points after that, need to use localLocator.
+  bool addedFirstPoint = false;
+
   // points must be added in order of increasing drawTime
-  if (timeDirection_ == simCore::REVERSE && getMatrix_(*current, hostMatrix))
+  if (timeDirection_ == simCore::REVERSE)
   {
-    const double drawTime = toDrawTime_(current->time());
-    currentPointChunk_->addPoint(hostMatrix, drawTime, historyColorAtTime_(drawTime), hostBounds_);
+    if (fillLocator_(*current, currentChunkLocator.get()))
+    {
+      const double drawTime = toDrawTime_(current->time());
+      currentPointChunk_->addPoint(*(currentChunkLocator.get()), drawTime, historyColorAtTime_(drawTime), hostBounds_);
+      addedFirstPoint = true;
+    }
   }
 
   // duplicate the most recent (non-current) datapoint so that this chunk connects to the previous chunk
@@ -801,42 +822,49 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
   assert(updateSlice.numItems() > 0);
   simData::PlatformUpdateSlice::Iterator iter = updateSlice.lower_bound(current->time());
   const simData::PlatformUpdate* u = iter.previous();
-  if (u && getMatrix_(*u, hostMatrix))
+  if (u)
   {
-    // this point should never be the current point; if assert fails, check to make sure we only process interpolated points
-    assert(u->time() < current->time());
-    currentPointChunk_->addPoint(hostMatrix, u->time(), historyColorAtTime_(u->time()), hostBounds_);
+    osg::ref_ptr<Locator> uLocator = (addedFirstPoint) ? localLocator_ : currentChunkLocator;
+    if (fillLocator_(*u, uLocator.get()))
+    {
+      // this point should never be the current point; if assert fails, check to make sure we only process interpolated points
+      assert(u->time() < current->time());
+      currentPointChunk_->addPoint(*(uLocator.get()), u->time(), historyColorAtTime_(u->time()), hostBounds_);
+      addedFirstPoint = true;
+    }
   }
 
-  if (timeDirection_ == simCore::FORWARD && getMatrix_(*current, hostMatrix))
+  if (timeDirection_ == simCore::FORWARD)
   {
-    currentPointChunk_->addPoint(hostMatrix, current->time(), historyColorAtTime_(current->time()), hostBounds_);
+    osg::ref_ptr<Locator> fLocator = (addedFirstPoint) ? localLocator_ : currentChunkLocator;
+    if (fillLocator_(*current, fLocator.get()))
+      currentPointChunk_->addPoint(*(fLocator.get()), current->time(), historyColorAtTime_(current->time()), hostBounds_);
   }
 }
 
-bool TrackHistoryNode::getMatrix_(const simData::PlatformUpdate& u, osg::Matrix& hostMatrix)
+bool TrackHistoryNode::getCoord_(const simData::PlatformUpdate& u, simCore::Coordinate& ecefCoord)
 {
   simData::PlatformUpdate update = u;
   if (platformTspiFilterManager_.filter(update, lastPlatformPrefs_, lastPlatformProps_) == PlatformTspiFilterManager::POINT_DROPPED)
     return false;
 
   // update our locator for the current update
-  simCore::Coordinate ecefCoord(
+  ecefCoord = simCore::Coordinate(
     simCore::COORD_SYS_ECEF,
     simCore::Vec3(update.x(), update.y(), update.z()),
     simCore::Vec3(update.psi(), update.theta(), update.phi()));
-
-  locator_->setCoordinate(ecefCoord, u.time());
-
-  // fetch the positioning matrix from the locator we are tracking
-  if (!locator_->getLocatorMatrix(hostMatrix))
-  {
-    // if assert fails, check that invalid platform updates are not being sent to track
-    assert(0);
-    return false;
-  }
-
   return true;
 }
 
+bool TrackHistoryNode::fillLocator_(const simData::PlatformUpdate& u, Locator* locator)
+{
+  simCore::Coordinate ecefCoord;
+  if (!getCoord_(u, ecefCoord))
+    return false;
+
+  if (locator->isEci())
+    locator->setEciRotationTime(-u.time(), u.time(), false);
+  locator->setCoordinate(ecefCoord, u.time());
+  return true;
+}
 }

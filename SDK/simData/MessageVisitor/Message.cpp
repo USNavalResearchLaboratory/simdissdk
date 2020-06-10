@@ -15,6 +15,11 @@
  *
  * For more information please send email to simdis@enews.nrl.navy.mil
  *
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ *
+ * U.S. Naval Research Laboratory.
+ *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  ****************************************************************************

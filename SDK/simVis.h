@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -21,6 +22,12 @@
  */
 #ifndef SIMDISSDK_SIMVIS_H
 #define SIMDISSDK_SIMVIS_H
+
+#ifdef _MSC_VER
+#pragma message( __FILE__ ": warning <DEPR>: File is deprecated and will be removed in a future release." )
+#else
+#warning File is deprecated and will be removed in a future release.
+#endif
 
 #include "simVis/AlphaColorFilter.h"
 #include "simVis/AlphaTest.h"
@@ -57,6 +64,7 @@
 #include "simVis/Gate.h"
 #include "simVis/GeoFence.h"
 #include "simVis/Gl3Utils.h"
+#include "simVis/GlDebugMessage.h"
 #include "simVis/GlowHighlight.h"
 #include "simVis/GOG/Annotation.h"
 #include "simVis/GOG/Arc.h"
@@ -66,13 +74,13 @@
 #include "simVis/GOG/Ellipse.h"
 #include "simVis/GOG/Ellipsoid.h"
 #include "simVis/GOG/ErrorHandler.h"
-#include "simVis/GOG/GenericGeometry.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/GOGRegistry.h"
 #include "simVis/GOG/Hemisphere.h"
 #include "simVis/GOG/HostedLocalGeometryNode.h"
+#include "simVis/GOG/ImageOverlay.h"
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
@@ -141,7 +149,6 @@
 #include "simVis/Scenario.h"
 #include "simVis/ScenarioDataStoreAdapter.h"
 #include "simVis/SceneManager.h"
-#include "simVis/Shaders.h"
 #include "simVis/SimdisMeasurement.h"
 #include "simVis/SimdisRangeToolState.h"
 #include "simVis/SphericalVolume.h"

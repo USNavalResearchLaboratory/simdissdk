@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,42 +31,13 @@
  * where they need to instantiate a QApplication or other windowing structure.
  */
 
-#ifdef WIN32
+#include "simCore/Common/Common.h"
 
-namespace simVis
-{
-  /** Returns true when executing in a headless display environment */
-  inline bool isHeadless()
-  { // Windows is never headless
-    return false;
-  }
+namespace simVis {
+
+/** Returns true when executing in a headless display environment */
+SDKVIS_EXPORT bool isHeadless();
+
 }
 
-#else
-
-#include <X11/Xlib.h>
-
-namespace simVis
-{
-  /** Returns true when executing in a headless display environment */
-  inline bool isHeadless()
-  { // UNIX systems that cannot XOpenDisplay() are considered headless
-    Display* d = XOpenDisplay(NULL);
-    if (d != NULL)
-    {
-      XCloseDisplay(d);
-      return false;
-    }
-    return true;
-  }
-}
-
-// Some versions of Xlib.h define None, which conflicts with various code
-#ifdef None
-#undef None
 #endif
-
-#endif
-
-#endif
-

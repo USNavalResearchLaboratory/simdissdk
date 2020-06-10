@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -63,31 +64,32 @@ namespace
 
 
 /// constructor.
-TimeTicks::TimeTicks(const simData::DataStore& ds, const osgEarth::SpatialReference* srs, PlatformTspiFilterManager& platformTspiFilterManager, simData::ObjectId entityId)
+TimeTicks::TimeTicks(const simData::DataStore& ds, Locator* parentLocator, PlatformTspiFilterManager& platformTspiFilterManager, simData::ObjectId entityId)
   : ds_(ds),
-   supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
-   chunkSize_(64),  // keep this lowish or your app won't scale.
-   color_(osg::Vec4f(1.0, 1.0, 1.0, 0.5)),
-   totalPoints_(0),
-   singlePoint_(false),
-   hasLastDrawTime_(false),
-   lastDrawTime_(0.0),
-   lastCurrentTime_(-1.0),
-   lastLargeTickTime_(-1.0),
-   largeTickInterval_(0.0),
-   lastLabelTime_(-1.0),
-   labelInterval_(0.0),
-   timeDirection_(simCore::FORWARD),
-   chunkGroup_(NULL),
-   labelGroup_(NULL),
-   platformTspiFilterManager_(platformTspiFilterManager),
-   entityId_(entityId),
-   currentPointChunk_(NULL)
+  supportsShaders_(osgEarth::Registry::capabilities().supportsGLSL(3.3f)),
+  chunkSize_(64),  // keep this lowish or your app won't scale.
+  color_(osg::Vec4f(1.f, 1.f, 1.f, 0.5f)),
+  totalPoints_(0),
+  singlePoint_(false),
+  hasLastDrawTime_(false),
+  lastDrawTime_(0.0),
+  lastCurrentTime_(-1.0),
+  lastLargeTickTime_(-1.0),
+  largeTickInterval_(0.0),
+  lastLabelTime_(-1.0),
+  labelInterval_(0.0),
+  timeDirection_(simCore::FORWARD),
+  chunkGroup_(NULL),
+  labelGroup_(NULL),
+  platformTspiFilterManager_(platformTspiFilterManager),
+  entityId_(entityId),
+  currentPointChunk_(NULL),
+  parentLocator_(parentLocator)
 {
   updateSliceBase_ = ds_.platformUpdateSlice(entityId);
   assert(updateSliceBase_); // should be a valid update slice before time tick is created
 
-  locator_ = new simVis::Locator(srs);
+  localLocator_ = new Locator(parentLocator);
 
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
 
@@ -105,7 +107,8 @@ TimeTicks::~TimeTicks()
   chunkGroup_ = NULL;
   labelGroup_ = NULL;
   currentPointChunk_ = NULL;
-  locator_ = NULL;
+  parentLocator_ = NULL;
+  localLocator_ = NULL;
 }
 
 void TimeTicks::reset()
@@ -185,9 +188,8 @@ void TimeTicks::addUpdate_(double tickTime)
 
   bool hasPrevious = iter.hasPrevious();
   auto prevIter = iter;
-  const simData::PlatformUpdate* prev = prevIter.previous();
   const simData::PlatformUpdate* update = iter.next();
-  osg::Matrix hostMatrix;
+  simCore::Coordinate ecefTickCoord;
   bool largeTick = false;
 
   // if tick is at first platform point, use that for position
@@ -197,7 +199,7 @@ void TimeTicks::addUpdate_(double tickTime)
     const simData::PlatformUpdate* next = iter.next();
     if (!next)
     {
-      if (!getMatrix_(*update, hostMatrix))
+      if (!getTickCoord_(*update, ecefTickCoord))
         return;
       // if drawing line ticks, set singlePoint_ flag since orientation may not be correct and will need to update once next point comes in
       // this may occur in live mode
@@ -207,7 +209,7 @@ void TimeTicks::addUpdate_(double tickTime)
     // use the next point to calculate the correct orientation for the first tick
     else
     {
-      if (!getMatrix_(*next, *update, tickTime, hostMatrix))
+      if (!getTickCoord_(*next, *update, tickTime, ecefTickCoord))
         return;
       singlePoint_ = false;
     }
@@ -215,30 +217,55 @@ void TimeTicks::addUpdate_(double tickTime)
   // not first tick, or not at first platform position, get the next position, possibly interpolated
   else
   {
+    const simData::PlatformUpdate* prev = prevIter.previous();
     singlePoint_ = false;
-    if (!getMatrix_(*prev, *update, tickTime, hostMatrix))
+    if (!getTickCoord_(*prev, *update, tickTime, ecefTickCoord))
       return;
   }
 
   // check to see if it is time for the next large tick
-  if (largeTickInterval_ > 0 && (lastLargeTickTime_ == -1 || abs(tickTime - lastLargeTickTime_) >= largeTickInterval_))
+  if (largeTickInterval_ > 0 && (lastLargeTickTime_ == -1 || fabs(tickTime - lastLargeTickTime_) >= largeTickInterval_))
   {
     lastLargeTickTime_ = tickTime;
     largeTick = true;
   }
 
-  // add label for large tick
-  if (labelInterval_ > 0 && (lastLabelTime_ == -1.0 || abs(tickTime - lastLabelTime_) >= labelInterval_))
+  // only need a new locator in two cases
+  const bool addLabel = (labelInterval_ > 0 && (lastLabelTime_ == -1.0 || fabs(tickTime - lastLabelTime_) >= labelInterval_));
+  const bool newChunk = (!getCurrentChunk_());
+  osg::ref_ptr<Locator> newLocator;
+  if (addLabel || newChunk)
   {
+    // these are the only two cases that require a new locator
+    newLocator = new Locator(parentLocator_);
+    newLocator->setCoordinate(ecefTickCoord, tickTime);
+    if (parentLocator_->isEci())
+      newLocator->setEciRotationTime(-tickTime, tickTime, false);
+  }
+  else
+  {
+    localLocator_->setCoordinate(ecefTickCoord, tickTime);
+    if (localLocator_->isEci())
+      localLocator_->setEciRotationTime(-tickTime, tickTime, false);
+  }
+
+  // add label for large tick
+  if (addLabel)
+  {
+    // code above guarantees this
+    assert(newLocator.get());
+
     lastLabelTime_ = tickTime;
 
     // get formatted time string
     int refYear = 1970;
-    simData::DataStore::Transaction t;
-    const simData::ScenarioProperties* sp = ds_.scenarioProperties(&t);
-    if (sp)
-      refYear = sp->referenceyear();
-    simCore::TimeStamp textTime(refYear, tickTime);
+    {
+      simData::DataStore::Transaction t;
+      const simData::ScenarioProperties* sp = ds_.scenarioProperties(&t);
+      if (sp)
+        refYear = sp->referenceyear();
+    }
+    const simCore::TimeStamp textTime(refYear, tickTime);
     std::string labelText;
     const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
     const simData::ElapsedTimeFormat timeFormat = timeTicks.labeltimeformat();
@@ -263,9 +290,10 @@ void TimeTicks::addUpdate_(double tickTime)
       labelText = formatter.toString(textTime, refYear, 0);
     }
 
-    osg::MatrixTransform* xform = new osg::MatrixTransform();
+    // locator node syncs its matrix to locator immediately
+    LocatorNode* locNode = new LocatorNode(newLocator);
     osgText::Text* text = new osgText::Text();
-    text->setPosition(osg::Vec3(0, 0, 0));
+    text->setPosition(osg::Vec3(0.f, 0.f, 0.f));
     text->setText(labelText);
     std::string fileFullPath = simVis::Registry::instance()->findFontFile(timeTicks.labelfontname());
     if (!fileFullPath.empty()) // only set if font file found, use default font otherwise
@@ -281,34 +309,24 @@ void TimeTicks::addUpdate_(double tickTime)
     osg::Depth* noDepthTest = new osg::Depth(osg::Depth::ALWAYS, 0, 1, false);
     text->getOrCreateStateSet()->setAttributeAndModes(noDepthTest, 1);
     text->setColor(color_);
-    xform->addChild(text);
-    xform->setMatrix(hostMatrix);
-    labelGroup_->addChild(xform);
-    labels_[toDrawTime_(tickTime)] = xform;
+    locNode->addChild(text);
+    labelGroup_->addChild(locNode);
+    labels_[toDrawTime_(tickTime)] = locNode;
   }
 
   // get a chunk to which to add the new point, creating a new one if necessary
   TimeTicksChunk* chunk = getCurrentChunk_();
   if (!chunk)
   {
+    // code above guarantees that newLocator created for this case
+    assert(newLocator.get());
+
     // allocate a new chunk
     const simData::TimeTickPrefs& timeTicks = lastPlatformPrefs_.trackprefs().timeticks();
     TimeTicksChunk::Type type = ((timeTicks.drawstyle() == simData::TimeTickPrefs::POINT) ? TimeTicksChunk::POINT_TICKS : TimeTicksChunk::LINE_TICKS);
     chunk = new TimeTicksChunk(chunkSize_, type, timeTicks.linelength() / 2, timeTicks.linewidth(), timeTicks.largesizefactor());
-
-    // if there is a preceding chunk, duplicate its last point so there is no
-    // discontinuity from previous chunk to this new chunk - this matters for line drawing mode
-    int numc = chunkGroup_->getNumChildren();
-    if (numc > 0)
-    {
-      osg::Matrix last;
-      if (getLastChunk_()->getEndMatrix(last) == 0)
-      {
-        double last_t = getLastChunk_()->getEndTime();
-        chunk->addPoint(last, last_t, color_, largeTick);
-      }
-    }
-
+    // set the new chunk's locator - this establishes the position of the chunk
+    chunk->setLocator(newLocator.get());
     // add the new chunk and update its appearance
     chunkGroup_->addChild(chunk);
     chunk->addCullCallback(new osgEarth::HorizonCullCallback());
@@ -317,7 +335,8 @@ void TimeTicks::addUpdate_(double tickTime)
   const double drawTime = toDrawTime_(tickTime);
 
   // add the point (along with its timestamp)
-  bool addSuccess = chunk->addPoint(hostMatrix, drawTime, color_, largeTick);
+  osg::ref_ptr<Locator> ptLocator = (newLocator.get()) ? newLocator : localLocator_;
+  const bool addSuccess = chunk->addPoint(*ptLocator, drawTime, color_, largeTick);
   if (!addSuccess)
   {
     // if assert fails, check that getCurrentChunk_ and previous code ensure that either chunk is not full, or new chunk created
@@ -331,7 +350,6 @@ void TimeTicks::addUpdate_(double tickTime)
   // in reverse mode, lastDrawTime_ represents the earliest time tick
   lastDrawTime_ = drawTime;
   hasLastDrawTime_ = true;
-
 }
 
 void TimeTicks::updateClockMode(const simCore::Clock* clock)
@@ -370,13 +388,8 @@ void TimeTicks::removePointsOlderThan_(double oldestDrawTime)
     if (oldest->size() == 0)
     {
       chunkGroup_->removeChild(0, 1);
-      if (chunkGroup_->getNumChildren() > 0)
-      {
-        // Last point was duplicated to prevent discontinuity, remove it
-        static_cast<TimeTicksChunk*>(chunkGroup_->getChild(0))->removeOldestPoint();
-      }
-      else // removal logic is faulty in chunk
-        assert(totalPoints_ == 0);
+      if (chunkGroup_->getNumChildren() == 0)
+        assert(totalPoints_ == 0); // removal logic is faulty in chunk
     }
     else
       break;
@@ -641,7 +654,7 @@ void TimeTicks::updateTrackData_(double currentTime, const simData::PlatformUpda
 
 void TimeTicks::backfillHistory_(double endTime, double beginTime)
 {
-  double interval = lastPlatformPrefs_.trackprefs().timeticks().interval();
+  const double interval = lastPlatformPrefs_.trackprefs().timeticks().interval();
   if (timeDirection_ == simCore::FORWARD)
   {
     double tickTime = beginTime;
@@ -672,32 +685,22 @@ void TimeTicks::backfillHistory_(double endTime, double beginTime)
   }
 }
 
-bool TimeTicks::getMatrix_(const simData::PlatformUpdate& u, osg::Matrix& hostMatrix)
+bool TimeTicks::getTickCoord_(const simData::PlatformUpdate& u, simCore::Coordinate& ecefTickCoord)
 {
   simData::PlatformUpdate update = u;
   if (platformTspiFilterManager_.filter(update, lastPlatformPrefs_, lastPlatformProps_) == PlatformTspiFilterManager::POINT_DROPPED)
     return false;
 
   // update our locator for the current update
-  simCore::Coordinate ecefCoord(
+  ecefTickCoord = simCore::Coordinate(
     simCore::COORD_SYS_ECEF,
     simCore::Vec3(update.x(), update.y(), update.z()),
     simCore::Vec3(update.psi(), update.theta(), update.phi()));
 
-  locator_->setCoordinate(ecefCoord, u.time());
-
-  // fetch the positioning matrix from the locator we are tracking
-  if (!locator_->getLocatorMatrix(hostMatrix))
-  {
-    // if assert fails, check that invalid platform updates are not being sent to track
-    assert(0);
-    return false;
-  }
-
   return true;
 }
 
-bool TimeTicks::getMatrix_(const simData::PlatformUpdate& prevPoint, const simData::PlatformUpdate& curPoint, double time, osg::Matrix& hostMatrix)
+bool TimeTicks::getTickCoord_(const simData::PlatformUpdate& prevPoint, const simData::PlatformUpdate& curPoint, double time, simCore::Coordinate& ecefTickCoord)
 {
   simData::PlatformUpdate prevUpdate = prevPoint;
   simData::PlatformUpdate curUpdate = curPoint;
@@ -706,31 +709,19 @@ bool TimeTicks::getMatrix_(const simData::PlatformUpdate& prevPoint, const simDa
     || platformTspiFilterManager_.filter(prevUpdate, lastPlatformPrefs_, lastPlatformProps_) == PlatformTspiFilterManager::POINT_DROPPED)
     return false;
 
-  simData::Interpolator* li = ds_.interpolator();
   simData::PlatformUpdate platformUpdate = curUpdate;
-  if (curUpdate.time() != time)
-    li->interpolate(time, prevUpdate, curUpdate, &platformUpdate);
-
-  simCore::Coordinate ecefCoordCur(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate.x(), platformUpdate.y(), platformUpdate.z()));
+  if (curUpdate.time() != time && ds_.interpolator())
+    ds_.interpolator()->interpolate(time, prevUpdate, curUpdate, &platformUpdate);
 
   // for point ticks, only need the position
   if (lastPlatformPrefs_.trackprefs().timeticks().drawstyle() == simData::TimeTickPrefs::POINT)
   {
-    locator_->setCoordinate(ecefCoordCur, time);
-
-    // fetch the positioning matrix from the locator we are tracking
-    if (locator_->getLocatorMatrix(hostMatrix))
-      return true;
-    else
-    {
-      // if assert fails, check that invalid platform updates are not being sent to track
-      assert(0);
-      return false;
-    }
+    ecefTickCoord = simCore::Coordinate(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate.x(), platformUpdate.y(), platformUpdate.z()));
+    return true;
   }
 
   // for line ticks, need to calculate the orientation as well as the position
-
+  simCore::Coordinate ecefCoordCur(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate.x(), platformUpdate.y(), platformUpdate.z()));
   simCore::Coordinate ecefCoordPrev(simCore::COORD_SYS_ECEF, simCore::Vec3(prevUpdate.x(), prevUpdate.y(), prevUpdate.z()));
   simCore::Coordinate llaCoordPrev;
   simCore::CoordinateConverter::convertEcefToGeodetic(ecefCoordPrev, llaCoordPrev);
@@ -741,19 +732,8 @@ bool TimeTicks::getMatrix_(const simData::PlatformUpdate& prevPoint, const simDa
   simCore::sodanoInverse(llaCoordPrev.lat(), llaCoordPrev.lon(), 0, llaCoordCur.lat(), llaCoordCur.lon(), &az);
   simCore::Vec3 ecefOri;
   simCore::CoordinateConverter::convertGeodeticOriToEcef(llaCoordCur.position(), simCore::Vec3(az, 0, 0), ecefOri);
-  // update our locator for the current update
-  simCore::Coordinate finalCoord(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate.x(), platformUpdate.y(), platformUpdate.z()), ecefOri);
 
-  locator_->setCoordinate(finalCoord, time);
-
-  // fetch the positioning matrix from the locator we are tracking
-  if (!locator_->getLocatorMatrix(hostMatrix))
-  {
-    // if assert fails, check that invalid platform updates are not being sent to track
-    assert(0);
-    return false;
-  }
+  ecefTickCoord = simCore::Coordinate(simCore::COORD_SYS_ECEF, simCore::Vec3(platformUpdate.x(), platformUpdate.y(), platformUpdate.z()), ecefOri);
   return true;
 }
-
 }

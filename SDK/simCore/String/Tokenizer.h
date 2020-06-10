@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -296,9 +297,14 @@ namespace simCore
   * @param[out] t STL container that supports push_back() and clear()
   * @param[in ] str String to tokenize
   * @param[in ] clear Clears the STL structure if true
+  * @param[in ] delims String listing all characters to use as token delimiters
+  * @param[in ] skipEmptyTokens If true, skips multiple delimiters encountered as a group
+  * @param[in ] testSingleQuote If true, single quotes will also prevent breaking into tokens
+  * @param[in ] endTokenWithQuotes If true, when a quoted string is closed it will end the token
   */
   template<class T>
-  inline void escapeTokenize(T& t, const std::string &str, bool clear = true)
+  inline void escapeTokenize(T& t, const std::string &str, bool clear = true, const std::string &delims = STR_WHITE_SPACE_CHARS,
+    bool skipEmptyTokens = true, bool testSingleQuote = false, bool endTokenWithQuotes = true)
   {
     if (clear)
       t.clear();
@@ -307,6 +313,7 @@ namespace simCore
     std::string curTok;
     bool inEscape = false; // \\ or \"
     bool inQuote  = false; // "quoted token"
+    bool inSingleQuote = false; // 'quoted token'
     for (; i != str.end(); ++i)
     {
       if (*i == '\\' && !inEscape)
@@ -336,25 +343,55 @@ namespace simCore
         if (inQuote)
         {
           // end
-          t.push_back(curTok);
-          curTok.clear();
+          if (endTokenWithQuotes)
+          {
+            t.push_back(curTok);
+            curTok.clear();
+          }
 
           inQuote = false;
         }
-        else // start
+        else if (!inSingleQuote) // Ignore double quotes inside 'quoted "token'
         {
+          // start "quoted token"
           inQuote = true;
         }
 
         continue;
       }
 
-      if (!inQuote && (*i == ' ' || *i == '\t' || *i == '\n' || *i == '\r'))
+      // Only care about single quotes when instructed
+      if (*i == '\'' && testSingleQuote)
       {
-        // whitespace
-        if (curTok.size())
+        // start or end of quoted token
+        curTok.append(1, *i);
+
+        if (inSingleQuote)
         {
-          // this prevents empty tokens from multiple adjacent whitespaces
+          // end
+          if (endTokenWithQuotes)
+          {
+            t.push_back(curTok);
+            curTok.clear();
+          }
+
+          inSingleQuote = false;
+        }
+        else if (!inQuote)  // Ignore single quotes inside "quoted 'token"
+        {
+          // start 'quoted token'
+          inSingleQuote = true;
+        }
+
+        continue;
+      }
+
+      // If we aren't in a quoted token, test if the current character is one of our delimiters
+      if (!inQuote && !inSingleQuote && (delims.find(*i) != std::string::npos))
+      {
+        // Found delimiter
+        if (!skipEmptyTokens || !curTok.empty())
+        {
           t.push_back(curTok);
           curTok.clear();
         }
@@ -364,7 +401,8 @@ namespace simCore
       curTok.append(1, *i);
     } //foreach char
 
-    if (curTok.size())
+    // Include any non-finished tokens when we hit the end of the string
+    if (!skipEmptyTokens || !curTok.empty())
       t.push_back(curTok);
   }
 

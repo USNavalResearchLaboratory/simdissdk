@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -25,8 +26,6 @@
 #include "simCore/Time/Clock.h"
 #include "simData/DataSlice.h"
 #include "simData/DataTable.h"
-#include "osg/Geode"
-#include "osg/MatrixTransform"
 #include "simVis/Types.h"
 
 //----------------------------------------------------------------------------
@@ -46,6 +45,7 @@ namespace simData
 namespace simVis
 {
 class Locator;
+class LocatorNode;
 class TimeTicksChunk;
 class PlatformTspiFilterManager;
 
@@ -55,7 +55,7 @@ class PlatformTspiFilterManager;
 class SDKVIS_EXPORT TimeTicks : public osg::Group
 {
 public:
-  TimeTicks(const simData::DataStore& ds, const osgEarth::SpatialReference* srs, PlatformTspiFilterManager& manager, simData::ObjectId entityId);
+  TimeTicks(const simData::DataStore& ds, Locator* parentLocator, PlatformTspiFilterManager& manager, simData::ObjectId entityId);
 
   /**
   * Reset the time ticks visualization, erasing everything that exists
@@ -169,10 +169,10 @@ private: // methods
   */
   double toDrawTime_(double updateTime) const;
 
-  /// utility function to get an OSG ENU matrix that corresponds to platform update's position and orientation
-  bool getMatrix_(const simData::PlatformUpdate& u, osg::Matrix& hostMatrix);
-  /// utility function to get an OSG ENU matrix that corresponds to the platform position at time, interpolated between the prevPoint and curPoint
-  bool getMatrix_(const simData::PlatformUpdate& prevPoint, const simData::PlatformUpdate& curPoint, double time, osg::Matrix& hostMatrix);
+  /// utility function to get a simCore::Coordinate that corresponds to platform update's position and orientation
+  bool getTickCoord_(const simData::PlatformUpdate& u, simCore::Coordinate& ecefTickCoord);
+  /// utility function to get a simCore::Coordinate that corresponds to the platform position at time, interpolated between the prevPoint and curPoint
+  bool getTickCoord_(const simData::PlatformUpdate& prevPoint, const simData::PlatformUpdate& curPoint, double time, simCore::Coordinate& tickCoord);
 
 private: // data
   /// data store for initializing data slice
@@ -190,13 +190,13 @@ private: // data
   bool                singlePoint_;
   // "draw time" is the same as the clock's update time, but adjusted
   // for time direction. i.e. it will be negated in the case of simCore::REVERSE.
-  bool                   hasLastDrawTime_;
-  double                 lastDrawTime_;
-  double                 lastCurrentTime_;
-  double                 lastLargeTickTime_;
-  double                 largeTickInterval_;
-  double                 lastLabelTime_;
-  double                 labelInterval_;
+  bool                 hasLastDrawTime_;
+  double               lastDrawTime_;
+  double               lastCurrentTime_;
+  double               lastLargeTickTime_;
+  double               largeTickInterval_;
+  double               lastLabelTime_;
+  double               labelInterval_;
 
   // Playback direction (follows a datastore-bound Clock).
   simCore::TimeDirection timeDirection_;
@@ -204,7 +204,7 @@ private: // data
   osg::ref_ptr<osg::Uniform>    flatModeUniform_;
   osg::ref_ptr<osg::Group>      chunkGroup_;
   osg::ref_ptr<osg::Group>      labelGroup_;
-  std::map<double, osg::MatrixTransform*> labels_;
+  std::map<double, LocatorNode*> labels_;
 
   const simData::DataSliceBase* updateSliceBase_;
   PlatformTspiFilterManager& platformTspiFilterManager_;
@@ -212,7 +212,10 @@ private: // data
   simData::ObjectId entityId_;
 
   osg::ref_ptr<TimeTicksChunk>  currentPointChunk_;
-  osg::ref_ptr<simVis::Locator> locator_;
+  /// locator to parent all chunk and label locators
+  osg::ref_ptr<simVis::Locator> parentLocator_;
+  /// locator for calculations
+  osg::ref_ptr<simVis::Locator> localLocator_;
 };
 
 } // namespace simVis

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -111,11 +112,6 @@ public:
   ScreenCoordinate calculateLla(const simCore::Vec3& lla);
   /** Retrieves a screen coordinate for a given ECEF coordinate */
   ScreenCoordinate calculateEcef(const simCore::Vec3& ecef);
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** Retrieves a screen coordinate for a given LLA coordinate */
-  SDK_DEPRECATE(ScreenCoordinate calculate(const simCore::Vec3& lla), "Use calculateLla() instead.");
-#endif
 
 private:
   /** recalculates the VPW matrix if needed (if dirty); returns 0 on success */

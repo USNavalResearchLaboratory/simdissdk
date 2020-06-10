@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -221,6 +222,10 @@ int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinat
   std::vector<osg::Vec3d> ecefVec;
   customNode.getPickingPoints(ecefVec);
 
+  // for lines, check the distance from the whole line segment
+  if (customNode.isLine())
+    return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
+  // otherwise just check distance from the picking points
   return calculateScreenRangePoints_(calc, ecefVec, rangeSquared);
 }
 

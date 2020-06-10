@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -176,7 +177,7 @@ protected:
 };
 
 LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode* host, CoordSurfaceClamping* surfaceClamping, simData::DataStore &ds)
-  : EntityNode(simData::LOB_GROUP, new CachingLocator(host->getLocator()->getSRS())), // lobgroup locator is independent of host locator
+  : EntityNode(simData::LOB_GROUP, new CachingLocator()), // lobgroup locator is independent of host locator
   lastProps_(props),
   hasLastUpdate_(false),
   lastPrefsValid_(false),
@@ -196,12 +197,13 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
   label_ = new EntityLabelNode(getLocator());
   this->addChild(label_);
 
-  // horizon culling:
-  this->addCullCallback( new osgEarth::HorizonCullCallback() );
-
+  // horizon culling: entity culling based on bounding sphere
+  addCullCallback( new osgEarth::HorizonCullCallback() );
+  // labels are culled based on entity center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
+  // SIM-11395 - set default ellipsoid, when osgEarth supports it
+  //  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 

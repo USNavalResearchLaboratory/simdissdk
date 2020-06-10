@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -37,85 +38,17 @@ namespace simRF {
 
 Profile::Profile(CompositeProfileProvider* data)
  : bearing_(0),
-   displayThickness_(1),
-   height_(0.0),
    halfBeamWidth_(0.0),
    data_(data),
-   dirty_(true),
-   alpha_(1.0),
-   agl_(false),
-   mode_(DRAWMODE_2D_HORIZONTAL),
-   refCoord_(0., 0., 0.),
-   sphericalEarth_(true),
-   elevAngle_(0.0)
+   dirty_(false)
 {
   setHalfBeamWidth(5.0 * simCore::DEG2RAD);
-  alphaUniform_ = getOrCreateStateSet()->getOrCreateUniform("alpha", osg::Uniform::FLOAT);
-  alphaUniform_->set(alpha_);
-
-  transform_ = new osg::MatrixTransform();
-  addChild(transform_);
   updateOrientation_();
-
   init_();
 }
 
 Profile::~Profile()
 {
-}
-
-void Profile::addProvider(ProfileDataProvider* provider)
-{
-  if (provider)
-    getDataProvider_()->addProvider(provider);
-}
-
-const CompositeProfileProvider* Profile::getDataProvider() const
-{
-  return data_.get();
-}
-
-CompositeProfileProvider* Profile::getDataProvider_()
-{
-  return data_.get();
-}
-
-void Profile::setDataProvider(CompositeProfileProvider* dataProvider)
-{
-  if (data_ != dataProvider)
-  {
-    data_ = dataProvider;
-    // if providers change, null the texture to force it to recreate (if necessary)
-    texture_ = NULL;
-    dirty();
-  }
-}
-
-Profile::DrawMode Profile::getMode() const
-{
-  return mode_;
-}
-
-void Profile::setMode(DrawMode mode)
-{
-  if (mode_ != mode)
-  {
-    mode_ = mode;
-    if (mode_ != DRAWMODE_3D_TEXTURE)
-    {
-      texture_ = NULL;
-    }
-    dirty();
-  }
-}
-
-void Profile::dirty()
-{
-  if (!dirty_)
-  {
-    ADJUST_UPDATE_TRAV_COUNT(this, 1);
-  }
-  dirty_ = true;
 }
 
 double Profile::getBearing() const
@@ -132,78 +65,26 @@ void Profile::setBearing(double bearing)
   }
 }
 
-bool Profile::getAGL() const
+double Profile::getHalfBeamWidth() const
 {
-  return agl_;
+  return halfBeamWidth_;
 }
 
-void Profile::setAGL(bool agl)
+void Profile::setHalfBeamWidth(double halfBeamWidth)
 {
-  if (agl_ != agl)
-  {
-    agl_ = agl;
-    dirty();
-  }
-}
+  // ensure that halfBeamWidth has a reasonable value
+  halfBeamWidth = osg::clampBetween(halfBeamWidth, -M_PI, M_PI);
+  if (halfBeamWidth_ == halfBeamWidth)
+    return;
+  halfBeamWidth_ = halfBeamWidth;
+  const double dt0 = -halfBeamWidth_ + M_PI_2;
+  const double dt1 = halfBeamWidth_ + M_PI_2;
+  cosTheta0_ = cos(dt0);
+  sinTheta0_ = sin(dt0);
+  cosTheta1_ = cos(dt1);
+  sinTheta1_ = sin(dt1);
 
-double Profile::getElevAngle() const
-{
-  return elevAngle_;
-}
-
-void Profile::setElevAngle(double elevAngleRad)
-{
-  if (elevAngle_ != elevAngleRad)
-  {
-    elevAngle_ = elevAngleRad;
-    if (mode_ == DRAWMODE_RAE)
-    {
-      // only RAE mode uses elev angle;
-      // if angle changes at all, and interpolation is on, this will mean a lot of reprocessing at every update
-      dirty();
-    }
-  }
-}
-
-double Profile::getRefLat() const
-{
-  return refCoord_.lat();
-}
-
-double Profile::getRefLon() const
-{
-  return refCoord_.lon();
-}
-
-double Profile::getRefAlt() const
-{
-  return refCoord_.alt();
-}
-
-void Profile::setRefCoord(double latRad, double lonRad, double alt)
-{
-  if (latRad != refCoord_.lat() || lonRad != refCoord_.lon() || alt != refCoord_.alt())
-  {
-    refCoord_.set(latRad, lonRad, alt);
-    dirty();
-  }
-}
-
-bool Profile::getSphericalEarth() const
-{
-  return sphericalEarth_;
-}
-
-/**
-*Set whether this Profile should conform to a spherical earth
-*/
-void Profile::setSphericalEarth(bool sphericalEarth)
-{
-  if (sphericalEarth_ != sphericalEarth)
-  {
-    sphericalEarth_ = sphericalEarth;
-    dirty();
-  }
+  dirty();
 }
 
 void Profile::setTerrainHeights(const std::map<float, float>& terrainHeights)
@@ -213,124 +94,90 @@ void Profile::setTerrainHeights(const std::map<float, float>& terrainHeights)
   dirty();
 }
 
-float Profile::getAlpha() const
+void Profile::addProvider(ProfileDataProvider* provider)
 {
-  return alpha_;
+  if (data_.valid() && provider)
+    data_->addProvider(provider);
 }
 
-void Profile::setAlpha(float alpha)
+const CompositeProfileProvider* Profile::getDataProvider() const
 {
-  if (alpha_ != alpha)
+  return data_.get();
+}
+
+void Profile::setDataProvider(CompositeProfileProvider* dataProvider)
+{
+  if (data_ != dataProvider)
   {
-    alpha_ = osg::clampBetween(alpha, 0.0f, 1.0f);
-    alphaUniform_->set(alpha);
-  }
-}
-
-unsigned int Profile::getDisplayThickness() const
-{
-  return displayThickness_;
-}
-
-void Profile::setDisplayThickness(unsigned int displayThickness)
-{
-  if (displayThickness_ != displayThickness)
-  {
-    displayThickness_ = displayThickness;
-    dirty();
-  }
-}
-
-void Profile::setHeight(double height)
-{
-  if (height_ != height)
-  {
-    height_ = height;
-    dirty();
-  }
-}
-
-double Profile::getHeight() const
-{
-  return height_;
-}
-
-double Profile::getHalfBeamWidth() const
-{
-  return halfBeamWidth_;
-}
-
-void Profile::setHalfBeamWidth(double halfBeamWidth)
-{
-  if (halfBeamWidth_ != halfBeamWidth)
-  {
-    halfBeamWidth_ = halfBeamWidth;
-    const double dt0 = -halfBeamWidth_ + M_PI_2;
-    const double dt1 = halfBeamWidth_ + M_PI_2;
-    cosTheta0_ = cos(dt0);
-    sinTheta0_ = sin(dt0);
-    cosTheta1_ = cos(dt1);
-    sinTheta1_ = sin(dt1);
-
-    dirty();
-  }
-}
-
-void Profile::adjustSpherical_(osg::Vec3& v, const simCore::Vec3& tpSphereXYZ)
-{
-  simCore::Vec3 sphereXYZ;
-  simCore::tangentPlane2Sphere(refCoord_, simCore::Vec3(v[0], v[1], v[2]), sphereXYZ, &tpSphereXYZ);
-  const double alt = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
-  v.z() = v.z() - (alt - v.z()) + refCoord_.z();
-}
-
-float Profile::getTerrainHgt_(float gndRng) const
-{
-  // initialize terrain hgt to default value in case interpolation fails
-  float value = 0.f;
-  simCore::linearInterpolate(terrainHeights_, gndRng, value);
-  return value;
-}
-
-ProfileDataProvider::ThresholdType Profile::getThresholdType() const
-{
-  const CompositeProfileProvider* provider = getDataProvider();
-  return (provider && provider->getActiveProvider()) ? provider->getActiveProvider()->getType() : ProfileDataProvider::THRESHOLDTYPE_NONE;
-}
-
-void Profile::setThresholdType(ProfileDataProvider::ThresholdType type)
-{
-  CompositeProfileProvider* provider = getDataProvider_();
-  if (provider)
-  {
-    provider->setActiveProvider(type);
+    data_ = dataProvider;
     // if providers change, null the texture to force it to recreate (if necessary)
     texture_ = NULL;
     dirty();
   }
 }
 
+void Profile::setProfileContext(std::shared_ptr<ProfileContext> profileContext)
+{
+  profileContext_ = profileContext;
+  if (profileContext_)
+  {
+    // ensure that this profile matches the shared context
+    setThresholdType(profileContext->type_);
+    dirty();
+  }
+}
+
+void Profile::setThresholdType(ProfileDataProvider::ThresholdType type)
+{
+  if (data_.valid())
+    data_->setActiveProvider(type);
+  // null the texture to force it to recreate
+  texture_ = NULL;
+  dirty();
+}
+
+void Profile::dirty()
+{
+  if (!dirty_)
+  {
+    ADJUST_UPDATE_TRAV_COUNT(this, 1);
+    dirty_ = true;
+  }
+}
+
+void Profile::traverse(osg::NodeVisitor& nv)
+{
+  if (nv.getVisitorType() == osg::NodeVisitor::UPDATE_VISITOR)
+  {
+    if (dirty_)
+      init_();
+    ADJUST_UPDATE_TRAV_COUNT(this, -1);
+  }
+  osg::Group::traverse(nv);
+}
+
 void Profile::init_()
 {
   // Remove all existing nodes
-  transform_->removeChildren(0, transform_->getNumChildren());
+  removeChildren(0, getNumChildren());
 
   // Clear out the original values
   verts_ = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
   values_ = new osg::FloatArray(osg::Array::BIND_PER_VERTEX);
   values_->setNormalize(false);
-  geode_ = NULL;
-  if (mode_ != DRAWMODE_3D_TEXTURE)
-  {
-    // if assert fails, check that setMode nulls texture on mode change
-    assert(texture_ == NULL);
-  }
+  group_ = NULL;
+
+  if (!profileContext_)
+    return;
+
+  if (profileContext_->mode_ != DRAWMODE_3D_TEXTURE)
+    texture_ = NULL;
 
   // ensure that our provider is valid
   if (data_.valid() && data_->getActiveProvider() != NULL)
   {
-    geode_ = new osg::Geode;
-    switch (mode_)
+    group_ = new osg::Group;
+    switch (profileContext_->mode_)
     {
       case DRAWMODE_2D_HORIZONTAL:
         init2DHoriz_();
@@ -358,28 +205,51 @@ void Profile::init_()
         // if assert fails, a new type has been added, but this switch has not been updated
         assert(0);
     }
-    transform_->addChild(geode_);
+    addChild(group_);
   }
   dirty_ = false;
 }
 
 void Profile::updateOrientation_()
 {
-  if (transform_)
+  setMatrix(osg::Matrixd::rotate(bearing_, osg::Vec3d(0., 0., -1.)));
+}
+
+float Profile::getTerrainHgt_(float gndRng) const
+{
+  // initialize terrain hgt to default value in case interpolation fails
+  float value = 0.f;
+  simCore::linearInterpolate(terrainHeights_, gndRng, value);
+  return value;
+}
+
+void Profile::adjustSpherical_(osg::Vec3& v, const simCore::Vec3& tpSphereXYZ)
+{
+  if (!profileContext_)
   {
-    // TODO:  Z axis is flipped in order to correctly display RF prop data (SIMSDK-365)
-    transform_->setMatrix(osg::Matrixd::rotate(bearing_, osg::Vec3d(0, 0, -1)));
+    // dev error; can't init a profile without a profileContext_
+    assert(0);
+    return;
   }
+  simCore::Vec3 sphereXYZ;
+  simCore::tangentPlane2Sphere(profileContext_->refLLA_, simCore::Vec3(v[0], v[1], v[2]), sphereXYZ, &tpSphereXYZ);
+  const double alt = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
+  v.z() = v.z() - (alt - v.z()) + profileContext_->refLLA_.alt();
 }
 
 void Profile::init2DHoriz_()
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
+  if (!data_.valid() || !data_->getActiveProvider() || !profileContext_)
+  {
+    // dev error; can't init a profile without valid active provider and profileContext_
+    assert(0);
+    return;
+  }
   const double minRange = data_->getMinRange();
   const double rangeStep = data_->getRangeStep();
   const double numRanges = data_->getNumRanges();
   const unsigned int startIndex = verts_->size();
-  unsigned int heightIndex = data_->getHeightIndex(height_);
+  unsigned int heightIndex = data_->getHeightIndex(profileContext_->heightM_);
   // Error check the height index
   if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX || heightIndex > (data_->getNumHeights() - 1))
   {
@@ -392,17 +262,17 @@ void Profile::init2DHoriz_()
   values_->reserve(2 * numRanges);
 
   simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+  simCore::geodeticToSpherical(profileContext_->refLLA_.lat(), profileContext_->refLLA_.lon(), profileContext_->refLLA_.alt(), tpSphereXYZ);
 
   // init the flag that indicates whether this profile has seen valid data
   bool validDataStarted = false;
   for (unsigned int i = 0; i < numRanges; i++)
   {
     const double range = minRange + rangeStep * i;
-    double height = height_;
-    if (agl_ && !terrainHeights_.empty())
+    double height = profileContext_->heightM_;
+    if (profileContext_->agl_ && !terrainHeights_.empty())
     {
-      height = height_ + getTerrainHgt_(static_cast<float>(range));
+      height += getTerrainHgt_(static_cast<float>(range));
       heightIndex = data_->getHeightIndex(height);
       // Error check the height index
       if (heightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX  || heightIndex > (data_->getNumHeights() - 1))
@@ -431,7 +301,7 @@ void Profile::init2DHoriz_()
     // Right vert
     osg::Vec3 v1(range * cosTheta1_, range * sinTheta1_, height);
 
-    if (sphericalEarth_)
+    if (profileContext_->sphericalEarth_)
     {
       adjustSpherical_(v0, tpSphereXYZ);
       adjustSpherical_(v1, tpSphereXYZ);
@@ -456,11 +326,11 @@ void Profile::init2DHoriz_()
 
   geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, startIndex, count));
 
-  geode_->addDrawable(geometry);
+  group_->addChild(geometry);
 }
 
 // Used to tesselate the 2D Vertical with triangle strip
-const void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry)
+void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry) const
 {
   for (unsigned int h = 0; h < numHeights - 1; ++h)
   {
@@ -498,7 +368,12 @@ const void Profile::tesselate2DVert_(unsigned int numRanges, unsigned int numHei
 
 void Profile::init2DVert_()
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
+  if (!data_.valid() || !data_->getActiveProvider() || !profileContext_)
+  {
+    // dev error; can't init a profile without valid active provider and profileContext_
+    assert(0);
+    return;
+  }
   const double minRange = data_->getMinRange();
   const double rangeStep = data_->getRangeStep();
   const unsigned int numRanges = data_->getNumRanges();
@@ -512,7 +387,7 @@ void Profile::init2DVert_()
   assert(numHeights > 0);
 
   simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+  simCore::geodeticToSpherical(profileContext_->refLLA_.lat(), profileContext_->refLLA_.lon(), profileContext_->refLLA_.alt(), tpSphereXYZ);
 
   // 2DVert draw mode can be combined with 2DHorz mode; cache the starting point for vertices relevant to this draw mode
   const unsigned int startIndex = verts_->size();
@@ -529,7 +404,7 @@ void Profile::init2DVert_()
       const double height = minHeight + heightStep * h;
       osg::Vec3 v(0., range, height);
 
-      if (sphericalEarth_)
+      if (profileContext_->sphericalEarth_)
       {
         adjustSpherical_(v, tpSphereXYZ);
       }
@@ -552,12 +427,17 @@ void Profile::init2DVert_()
   // Call to tesselate the 2D Vertical
   tesselate2DVert_(numRanges, numHeights, startIndex, values_, geometry);
 
-  geode_->addDrawable(geometry);
+  group_->addChild(geometry);
 }
 
 void Profile::init3D_()
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
+  if (!data_.valid() || !data_->getActiveProvider() || !profileContext_)
+  {
+    // dev error; can't init a profile without valid active provider and profileContext_
+    assert(0);
+    return;
+  }
   const double minRange = data_->getMinRange();
   const double rangeStep = data_->getRangeStep();
   const unsigned int numRanges = data_->getNumRanges();
@@ -573,7 +453,7 @@ void Profile::init3D_()
     return;
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
-  unsigned int minHeightIndex = data_->getHeightIndex(height_);
+  unsigned int minHeightIndex = data_->getHeightIndex(profileContext_->heightM_);
   // Error check the height index
   if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
@@ -583,7 +463,7 @@ void Profile::init3D_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + profileContext_->displayThickness_, numHeights - 1);
   //If we have no valid thickness assume they want to just display a single voxel
   if (minHeightIndex == maxHeightIndex)
   {
@@ -606,7 +486,7 @@ void Profile::init3D_()
   }
 
   simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+  simCore::geodeticToSpherical(profileContext_->refLLA_.lat(), profileContext_->refLLA_.lon(), profileContext_->refLLA_.alt(), tpSphereXYZ);
 
   const unsigned int heightIndexCount = maxHeightIndex - minHeightIndex + 1;
   const unsigned int numVerts = 2 * heightIndexCount * numRanges;
@@ -630,7 +510,7 @@ void Profile::init3D_()
       //Right vert
       osg::Vec3 v1(x1, y1, height);
 
-      if (sphericalEarth_)
+      if (profileContext_->sphericalEarth_)
       {
         adjustSpherical_(v0, tpSphereXYZ);
         adjustSpherical_(v1, tpSphereXYZ);
@@ -704,12 +584,17 @@ void Profile::init3D_()
 
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
 
-  geode_->addDrawable(geometry);
+  group_->addChild(geometry);
 }
 
 void Profile::init3DTexture_()
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
+  if (!data_.valid() || !data_->getActiveProvider() || !profileContext_)
+  {
+    // dev error; can't init a profile without valid active provider and profileContext_
+    assert(0);
+    return;
+  }
   const double maxRange = data_->getMaxRange();
 
   const double minHeight = data_->getMinHeight();
@@ -720,7 +605,7 @@ void Profile::init3DTexture_()
   assert(numHeights > 0);
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
-  unsigned int minHeightIndex = data_->getHeightIndex(height_);
+  unsigned int minHeightIndex = data_->getHeightIndex(profileContext_->heightM_);
   // Error check the height index
   if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
@@ -730,7 +615,7 @@ void Profile::init3DTexture_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + profileContext_->displayThickness_, numHeights - 1);
 
   // TODO: determine how to support spherical earth like other draw modes
   //simCore::Vec3 tpSphereXYZ;
@@ -830,7 +715,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
 
     // Save right end vertices for cap
     rb = vertCount - 1; // Right bottom
@@ -869,7 +754,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
 
     // Save left end vertices for cap
     lb = vertCount - 2; // Left bottom
@@ -895,7 +780,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
   }
 
   { // Bottom side (drawn in opposite order of top side, required to make triangles face out the correct way)
@@ -917,7 +802,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
   }
 
   { // Cap (end of the shape, the pie "crust")
@@ -930,7 +815,7 @@ void Profile::init3DTexture_()
     geometry->setUseVertexBufferObjects(true);
     geometry->setTexCoordArray(0, tcoords);
     geometry->addPrimitiveSet(idx);
-    geode_->addDrawable(geometry);
+    group_->addChild(geometry);
   }
 
   // Only create the texture if it doesn't already exist, otherwise you can just reuse it
@@ -942,12 +827,17 @@ void Profile::init3DTexture_()
     texture_->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
     simVis::fixTextureForGlCoreProfile(texture_.get());
   }
-  geode_->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture_);
+  group_->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture_);
 }
 
 void Profile::init3DPoints_()
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
+  if (!data_.valid() || !data_->getActiveProvider() || !profileContext_)
+  {
+    // dev error; can't init a profile without valid active provider and profileContext_
+    assert(0);
+    return;
+  }
   const double minRange = data_->getMinRange();
   const double rangeStep = data_->getRangeStep();
   const unsigned int numRanges = data_->getNumRanges();
@@ -959,7 +849,7 @@ void Profile::init3DPoints_()
   assert(numHeights > 0);
 
   //Build a 3D voxel representation of the profile.  The minimum height is specified by the height_ setting and the maximum height is the height_ + the display thickness
-  unsigned int minHeightIndex = data_->getHeightIndex(height_);
+  unsigned int minHeightIndex = data_->getHeightIndex(profileContext_->heightM_);
   // Error check the height index
   if (minHeightIndex == CompositeProfileProvider::INVALID_HEIGHT_INDEX)
   {
@@ -969,7 +859,7 @@ void Profile::init3DPoints_()
   }
 
   minHeightIndex = osg::clampBetween(minHeightIndex, 0u, numHeights - 1);
-  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + displayThickness_, numHeights - 1);
+  unsigned int maxHeightIndex = simCore::sdkMin(minHeightIndex + profileContext_->displayThickness_, numHeights - 1);
   //If we have no valid thickness assume they want to just display a single voxel
   if (minHeightIndex == maxHeightIndex)
   {
@@ -992,7 +882,7 @@ void Profile::init3DPoints_()
   }
 
   simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+  simCore::geodeticToSpherical(profileContext_->refLLA_.lat(), profileContext_->refLLA_.lon(), profileContext_->refLLA_.alt(), tpSphereXYZ);
 
   const unsigned int numVerts = (maxHeightIndex - minHeightIndex + 1) * numRanges;
   values_->reserve(numVerts);
@@ -1014,7 +904,7 @@ void Profile::init3DPoints_()
 
       const double height = minHeight + heightStep * h;
       osg::Vec3 v(0, range, height);
-      if (sphericalEarth_)
+      if (profileContext_->sphericalEarth_)
       {
         adjustSpherical_(v, tpSphereXYZ);
       }
@@ -1025,13 +915,18 @@ void Profile::init3DPoints_()
   points->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
   points->finish();
 
-  geode_->addChild(points);
-  osgEarth::GLUtils::setPointSize(geode_->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
+  group_->addChild(points);
+  osgEarth::GLUtils::setPointSize(points->getOrCreateStateSet(), 3.f, osg::StateAttribute::ON);
 }
 
 osg::Image* Profile::createImage_()
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
+  if (!data_.valid() || !data_->getActiveProvider())
+  {
+    // dev error; can't init a profile without valid active provider
+    assert(0);
+    return NULL;
+  }
   const unsigned int numRanges = data_->getNumRanges();
   const unsigned int numHeights = data_->getNumHeights();
 
@@ -1295,7 +1190,7 @@ int Profile::buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphe
     values_->push_back(value01);
     osg::Vec3 v0(voxelRange.valNear * cosTheta0_, voxelRange.valNear * sinTheta0_, nearVoxelHeight.valBottom); // Near right
     osg::Vec3 v1(voxelRange.valNear * cosTheta1_, voxelRange.valNear * sinTheta1_, nearVoxelHeight.valBottom); // Near left
-    if (sphericalEarth_)
+    if (profileContext_->sphericalEarth_)
     {
       adjustSpherical_(v0, tpSphereXYZ);
       adjustSpherical_(v1, tpSphereXYZ);
@@ -1312,7 +1207,7 @@ int Profile::buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphe
   values_->push_back(value23);
   osg::Vec3 v2(voxelRange.valFar * cosTheta1_, voxelRange.valFar * sinTheta1_, farVoxelHeight.valBottom); // Far left
   osg::Vec3 v3(voxelRange.valFar * cosTheta0_, voxelRange.valFar * sinTheta0_, farVoxelHeight.valBottom); // Far right
-  if (sphericalEarth_)
+  if (profileContext_->sphericalEarth_)
   {
     adjustSpherical_(v2, tpSphereXYZ);
     adjustSpherical_(v3, tpSphereXYZ);
@@ -1330,7 +1225,7 @@ int Profile::buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphe
     values_->push_back(value45);
     osg::Vec3 v4(voxelRange.valNear * cosTheta0_, voxelRange.valNear * sinTheta0_, nearVoxelHeight.valTop); // Near right
     osg::Vec3 v5(voxelRange.valNear * cosTheta1_, voxelRange.valNear * sinTheta1_, nearVoxelHeight.valTop); // Near left
-    if (sphericalEarth_)
+    if (profileContext_->sphericalEarth_)
     {
       adjustSpherical_(v4, tpSphereXYZ);
       adjustSpherical_(v5, tpSphereXYZ);
@@ -1347,7 +1242,7 @@ int Profile::buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphe
   values_->push_back(value67);
   osg::Vec3 v6(voxelRange.valFar * cosTheta1_, voxelRange.valFar * sinTheta1_, farVoxelHeight.valTop); // Far left
   osg::Vec3 v7(voxelRange.valFar * cosTheta0_, voxelRange.valFar * sinTheta0_, farVoxelHeight.valTop); // Far right
-  if (sphericalEarth_)
+  if (profileContext_->sphericalEarth_)
   {
     adjustSpherical_(v6, tpSphereXYZ);
     adjustSpherical_(v7, tpSphereXYZ);
@@ -1398,14 +1293,18 @@ int Profile::buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphe
 
 void Profile::initRAE_()
 {
-  assert(data_.valid() && data_->getActiveProvider() != NULL);
-
-  RahVoxelProcessor vProcessor(*(data_.get()), height_);
+  if (!data_.valid() || !data_->getActiveProvider() || !profileContext_)
+  {
+    // dev error; can't init a profile without valid active provider and profileContext_
+    assert(0);
+    return;
+  }
+  RahVoxelProcessor vProcessor(*(data_.get()), profileContext_->heightM_);
   if (!vProcessor.isValid())
     return;
 
   simCore::Vec3 tpSphereXYZ;
-  simCore::geodeticToSpherical(refCoord_.lat(), refCoord_.lon(), refCoord_.alt(), tpSphereXYZ);
+  simCore::geodeticToSpherical(profileContext_->refLLA_.lat(), profileContext_->refLLA_.lon(), profileContext_->refLLA_.alt(), tpSphereXYZ);
 
   const unsigned int numRanges = data_->getNumRanges();
   const size_t numVoxels = (numRanges - 1);
@@ -1428,20 +1327,7 @@ void Profile::initRAE_()
   geometry->setDataVariance(osg::Object::DYNAMIC);
   geometry->setVertexArray(verts_.get());
   geometry->setVertexAttribArray(osg::Drawable::ATTRIBUTE_6, values_.get());
-  geode_->addDrawable(geometry);
-}
-
-void Profile::traverse(osg::NodeVisitor& nv)
-{
-  if (nv.getVisitorType() == osg::NodeVisitor::UPDATE_VISITOR)
-  {
-    if (dirty_)
-    {
-      init_();
-    }
-    ADJUST_UPDATE_TRAV_COUNT(this, -1);
-  }
-  osg::Group::traverse(nv);
+  group_->addChild(geometry);
 }
 
 }

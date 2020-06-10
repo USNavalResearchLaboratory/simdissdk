@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -38,27 +39,15 @@ namespace simVis
 {
 
 CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props, const EntityNode* host, int referenceYear)
-  : EntityNode(simData::CUSTOM_RENDERING),
+  : EntityNode(simData::CUSTOM_RENDERING, new Locator()),
     scenario_(scenario),
     host_(host),
     lastProps_(props),
     hasLastPrefs_(false),
     customActive_(false),
+    isLine_(false),
     objectIndexTag_(0)
 {
-  if (host)
-  {
-    // Independent of the host like a LOB
-    setLocator(new Locator(host->getLocator()->getSRS()));
-  }
-  else if (scenario)
-    setLocator(new Locator(scenario->mapNode()->getMapSRS()));
-  else
-  {
-    // Must have valid scenario
-    assert(false);
-    setLocator(NULL);
-  }
   setName("CustomRenderingNode");
 
   localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
@@ -67,12 +56,13 @@ CustomRenderingNode::CustomRenderingNode(const ScenarioManager* scenario, const 
   label_ = new EntityLabelNode(getLocator());
   addChild(label_);
 
-  // horizon culling:
+  // horizon culling: entity culling based on bounding sphere
   addCullCallback(new osgEarth::HorizonCullCallback());
-
+  // labels are culled based on entity center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
+  // SIM-11395 - set default ellipsoid, when osgEarth supports it
+  //  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
@@ -192,6 +182,16 @@ void CustomRenderingNode::setPrefs(const simData::CustomRenderingPrefs& prefs)
 
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
+}
+
+bool CustomRenderingNode::isLine() const
+{
+  return isLine_;
+}
+
+void CustomRenderingNode::setIsLine(bool isLine)
+{
+  isLine_ = isLine;
 }
 
 void CustomRenderingNode::updateOverrideColor_(const simData::CustomRenderingPrefs& prefs)

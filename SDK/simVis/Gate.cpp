@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -207,8 +208,9 @@ osg::MatrixTransform* GateVolume::createNode_(const simData::GatePrefs* prefs, c
   sv.nearRange_ = update->minrange();
   sv.farRange_ = update->maxrange();
 
-  // draw near face and sides/walls of gate when the gate has thickness
-  sv.drawCone_ = update->minrange() < update->maxrange();
+  // do not draw near-face and sides/walls of gate when:
+  //   the gate has no thickness, or is in FOOTPRINT drawmode
+  sv.drawCone_ = (update->minrange() < update->maxrange()) && (prefs->gatedrawmode() != simData::GatePrefs_DrawMode_FOOTPRINT);
 
   // coverage gates are sphere segments (absolute start/end degrees instead of
   // elevation and span)
@@ -357,7 +359,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   localGrid_ = new LocalGridNode(centroidLocator_.get(), host, referenceYear);
   addChild(localGrid_);
 
-  // horizon culling:
+  // horizon culling: entity culling based on bounding sphere
   addCullCallback( new osgEarth::HorizonCullCallback() );
 
   // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
@@ -368,9 +370,11 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
   label_ = new EntityLabelNode();
   centroid_->addChild(label_);
 
+  // labels are culled based on centroid center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
-  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
+  // SIM-11395 - set default ellipsoid, when osgEarth supports it
+  //  callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
   callback->setProxyNode(this);
   label_->addCullCallback(callback);
 
@@ -849,7 +853,8 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
 
   if (newPrefs != NULL &&
     (PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, fillpattern) ||
-    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gatedrawmode) || PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawoutline)))
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gatedrawmode) ||
+    PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawoutline)))
   {
     return true;
   }

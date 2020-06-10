@@ -13,22 +13,37 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
-#ifndef SIMVIS_GOG_GENERIC_GEOM_H
-#define SIMVIS_GOG_GENERIC_GEOM_H
+#include "simVis/Headless.h"
 
-#include "simCore/Common/Common.h"
-#include "simCore/Calc/Vec3.h"
-#include "simVis/GOG/GOGNode.h"
-#include "osgEarth/MapNode"
-#include "osgEarth/Geometry"
-#include "osgEarth/Style"
-#include "osg/MixinVector"
-#include <vector>
+#ifdef WIN32
 
-#endif // SIMVIS_GOG_GENERIC_GEOM_H
+bool simVis::isHeadless()
+{
+  // Windows is never headless
+  return false;
+}
+
+#else
+
+#include <X11/Xlib.h>
+
+bool simVis::isHeadless()
+{
+  // UNIX systems that cannot XOpenDisplay() are considered headless
+  Display* d = XOpenDisplay(NULL);
+  if (d != NULL)
+  {
+    XCloseDisplay(d);
+    return false;
+  }
+  return true;
+}
+
+#endif

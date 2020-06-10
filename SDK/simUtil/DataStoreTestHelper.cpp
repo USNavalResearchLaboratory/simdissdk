@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -143,6 +144,21 @@ uint64_t DataStoreTestHelper::addProjector(uint64_t hostId, uint64_t originalId)
   projPrefs->mutable_commonprefs()->set_name(projName.str());
   t.commit();
   return projProps->id();
+}
+
+uint64_t DataStoreTestHelper::addCustomRendering(uint64_t hostId, uint64_t originalId)
+{
+  simData::DataStore::Transaction t;
+  simData::CustomRenderingProperties* props = dataStore_->addCustomRendering(&t);
+  props->set_hostid(hostId);
+  props->set_originalid(originalId);
+  t.commit();
+  simData::CustomRenderingPrefs* prefs = dataStore_->mutable_customRenderingPrefs(props->id(), &t);
+  std::ostringstream name;
+  name << "customRendering" << props->id() << "_" << hostId;
+  prefs->mutable_commonprefs()->set_name(name.str());
+  t.commit();
+  return props->id();
 }
 
 void DataStoreTestHelper::updatePlatformPrefs(const simData::PlatformPrefs& prefs, uint64_t id)

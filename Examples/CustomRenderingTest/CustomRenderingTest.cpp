@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -224,7 +225,7 @@ public:
       host->getLocator()->getCoordinate(&coord);
       // In this example the custom rendering is tracking the host platform.  It is
       // possible to add offsets or to set a completely independent location.
-      node_->getLocator()->setCoordinate(coord);
+      node_->getLocator()->setCoordinate(coord, host->getLocator()->getTime());
       node_->dirtyBound();
     }
 

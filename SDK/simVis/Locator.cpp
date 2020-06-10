@@ -13,13 +13,15 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/Utils.h"
 #include "simVis/Locator.h"
@@ -30,47 +32,44 @@
 namespace simVis
 {
 
-Locator::Locator(const osgEarth::SpatialReference* mapSRS) :
-  mapSRS_(mapSRS),
-  componentsToInherit_(COMP_ALL),
+Locator::Locator()
+  : componentsToInherit_(COMP_ALL),
   rotOrder_(HPR),
   isEmpty_(true),
   ecefCoordIsSet_(false),
+  hasRotation_(false),
   offsetsAreSet_(false),
   timestamp_(std::numeric_limits<double>::max()),
-  eciRefTime_(0.0)
+  eciRefTime_(std::numeric_limits<double>::max()),
+  eciRotationTime_(0.)
 {
-  if (!mapSRS_.valid())
-    osg::notify(osg::WARN) << "simVis::Locator: illegal, cannot create a Locator with a NULL map SRS." << std::endl;
-
   ecefCoord_.setCoordinateSystem(simCore::COORD_SYS_ECEF);
 }
 
-Locator::Locator(Locator* parentLoc, unsigned int inheritMask) :
-  rotOrder_(HPR),
+Locator::Locator(Locator* parentLoc, unsigned int inheritMask)
+  : rotOrder_(HPR),
   isEmpty_(false),
   ecefCoordIsSet_(false),
+  hasRotation_(false),
   offsetsAreSet_(false),
   timestamp_(std::numeric_limits<double>::max()),
-  eciRefTime_(0.0)
+  eciRefTime_(std::numeric_limits<double>::max()),
+  eciRotationTime_(0.)
 {
   setParentLocator(parentLoc, inheritMask);
   ecefCoord_.setCoordinateSystem(simCore::COORD_SYS_ECEF);
 }
 
-void Locator::setMapSRS(const osgEarth::SpatialReference* mapSRS)
-{
-  if (mapSRS && mapSRS != mapSRS_.get())
-  {
-    mapSRS_ = mapSRS;
-    if (!isEmpty_)
-      notifyListeners_();
-  }
-}
-
 bool Locator::isEmpty() const
 {
-  return parentLoc_.valid() ? parentLoc_->isEmpty() : isEmpty_;
+  // locator is empty when it and all parents are empty
+  return (isEmpty_ && (!parentLoc_.valid() || parentLoc_->isEmpty()));
+}
+
+bool Locator::isEci() const
+{
+  // locator is Eci when it or any parent has ECI rotation
+  return (hasRotation_ || (parentLoc_.valid() && parentLoc_->isEci()));
 }
 
 void Locator::setParentLocator(Locator* newParent, unsigned int inheritMask, bool notify)
@@ -94,14 +93,7 @@ void Locator::setParentLocator(Locator* newParent, unsigned int inheritMask, boo
   componentsToInherit_ = inheritMask;
 
   if (newParent)
-  {
-    mapSRS_ = newParent->getSRS();
     newParent->children_.insert(this);
-  }
-
-  if (!mapSRS_.valid())
-    osg::notify(osg::WARN) << "simVis::Locator: illegal, cannot create a Locator with a NULL map SRS."
-    << std::endl;
 
   if (notify)
     notifyListeners_();
@@ -114,7 +106,7 @@ void Locator::setComponentsToInherit(unsigned int value, bool notify)
   if (notify)
     notifyListeners_();
 }
-
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 void Locator::setCoordinate(const simCore::Coordinate& coord, bool notify)
 {
   if (coord.coordinateSystem() != simCore::COORD_SYS_ECEF)
@@ -136,6 +128,7 @@ void Locator::setCoordinate(const simCore::Coordinate& coord, bool notify)
   if (notify)
     notifyListeners_();
 }
+#endif
 
 void Locator::setCoordinate(const simCore::Coordinate& coord, double timestamp, double eciRefTime, bool notify)
 {
@@ -161,6 +154,16 @@ void Locator::setCoordinate(const simCore::Coordinate& coord, double timestamp, 
 
   ecefCoordIsSet_ = true;
 
+  if (notify)
+    notifyListeners_();
+}
+
+void Locator::setEciRotationTime(double rotationTime, double timestamp, bool notify)
+{
+  timestamp_ = timestamp;
+  hasRotation_ = true;
+  eciRotationTime_ = rotationTime;
+  isEmpty_ = false;
   if (notify)
     notifyListeners_();
 }
@@ -224,7 +227,7 @@ bool Locator::getCoordinate(simCore::Coordinate* out_coord, const simCore::Coord
 
 bool Locator::getLocalOffsets(simCore::Vec3& pos, simCore::Vec3& ori) const
 {
-  if (isEmpty() || !offsetsAreSet_)
+  if (!offsetsAreSet_ || isEmpty())
   {
     pos.set(0, 0, 0);
     ori.set(0, 0, 0);
@@ -251,7 +254,6 @@ void Locator::resetToLocalTangentPlane(bool notify)
     notifyListeners_();
 }
 
-
 void Locator::endUpdate()
 {
   notifyListeners_();
@@ -265,52 +267,54 @@ void Locator::setTime(double stamp, bool notify)
 
 bool Locator::setEciRefTime(double eciRefTime)
 {
-  // Make sure the current locator is the top-level parent (i.e. has no parent)
-  if (!parentLoc_.valid())
-  {
-    eciRefTime_ = eciRefTime;
-    return true;
-  }
-  return false;
+  eciRefTime_ = eciRefTime;
+  return true;
 }
 
 double Locator::getTime() const
 {
-  // Get the parent's timestamp if it exists and check whether it's newer than the current one
-  if (parentLoc_.valid())
+  // if no valid timestamps, return 0.
+  double mostRecentTime = -std::numeric_limits<double>::max();
+  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
   {
-    double parentTime = parentLoc_->getTime();
-    if (parentTime > timestamp_ && parentTime != std::numeric_limits<double>::max())
-      return parentTime;
+    const double locatorTime = loc->timestamp_;
+    if (locatorTime != std::numeric_limits<double>::max() && locatorTime > mostRecentTime)
+      mostRecentTime = locatorTime;
   }
-  // If the timestamp is still invalid at this point, default it to 0.
-  if (timestamp_ == std::numeric_limits<double>::max())
-    return 0.0;
-  return timestamp_;
-}
-
-double Locator::getTime_() const
-{
-  // If a timestamp isn't set, try getting a parent timestamp instead
-  return (timestamp_ == std::numeric_limits<double>::max() && parentLoc_.valid()) ? parentLoc_->getTime_() : timestamp_;
+  return (mostRecentTime != -std::numeric_limits<double>::max()) ? mostRecentTime : 0.;
 }
 
 double Locator::getEciRefTime() const
 {
-  return parentLoc_.valid() ? parentLoc_->getEciRefTime() : eciRefTime_;
+  // traverse up through parents to find first set ECI reference time
+  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  {
+    if (loc->eciRefTime_ != std::numeric_limits<double>::max())
+      return loc->eciRefTime_;
+  }
+  return 0.;
 }
 
 double Locator::getElapsedEciTime() const
 {
-  // If no valid timestamp is found, just return 0
-  double timestamp = getTime_();
-  return timestamp != std::numeric_limits<double>::max() ? timestamp - getEciRefTime() : 0.0;
+  // find the first locator that has a set value for eci reference time
+  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  {
+    if (loc->eciRefTime_ != std::numeric_limits<double>::max())
+    {
+      // use loc's eci reference time, with the most recent time of loc or loc's parents
+      return (loc->getTime() - loc->eciRefTime_);
+    }
+  }
+  return getTime();
 }
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 bool Locator::inherits_(unsigned int mask) const
 {
   return (componentsToInherit_ & mask) != COMP_NONE;
 }
+#endif
 
 bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::CoordinateSystem& coordsys) const
 {
@@ -318,7 +322,7 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
     return false;
 
   osg::Matrix m;
-  if (!getLocatorMatrix(m))
+  if (!getLocatorMatrix(m, Locator::COMP_POSITION))
     return false;
   const osg::Vec3d& ecefPos = m.getTrans();
 
@@ -436,14 +440,54 @@ bool Locator::getLocatorMatrix(osg::Matrixd& output, unsigned int comps) const
   {
     if (posFound)
       output.postMultTranslate(pos);
+
+    osg::Matrixd rotation;
+    if (getRotation_(rotation))
+      output.postMult(rotation);
+  }
+  else if (getRotation_(output))
+  {
+    if (posFound)
+      output.preMultTranslate(pos);
   }
   else if (posFound)
   {
-    // if we only inherit (or find) a position, convert the matrix to a local tangent plane.
-    getSRS()->getEllipsoid()->computeLocalToWorldTransformFromXYZ(pos.x(), pos.y(), pos.z(), output);
+    computeLocalToWorldTransformFromXYZ_(pos, output);
   }
-
   applyOffsets_(output, comps);
+  return true;
+}
+
+osg::Matrixd Locator::getLocatorMatrix(unsigned int comps) const
+{
+  osg::Matrixd output;
+  getLocatorMatrix(output, comps);
+  return output;
+}
+
+double Locator::getEciRotationTime() const
+{
+  if (isEmpty())
+    return 0.;
+
+  // sum all rotations of this and all parents
+  double rotationSum = 0.;
+  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  {
+    if (loc->hasRotation_)
+      rotationSum += loc->eciRotationTime_;
+  }
+  return rotationSum;
+}
+
+bool Locator::getRotation_(osg::Matrixd& rotationMatrix) const
+{
+  // get the sum all rotations of this and all parents
+  const double rotationSum = getEciRotationTime();
+  if (rotationSum == 0.)
+    return false;
+  const double eciRotation = simCore::angFix2PI(simCore::EARTH_ROTATION_RATE * rotationSum);
+  rotationMatrix *= osg::Matrixd::rotate(-eciRotation, osg::Z_AXIS);
   return true;
 }
 
@@ -468,15 +512,15 @@ bool Locator::getPosition_(osg::Vec3d& pos, unsigned int comps) const
   return false;
 }
 
-bool Locator::getOrientation_(osg::Matrixd& rot, unsigned int comps) const
+bool Locator::getOrientation_(osg::Matrixd& ori, unsigned int comps) const
 {
-  if (isEmpty() || (comps & COMP_ORIENTATION) == COMP_NONE)
+  if ((comps & COMP_ORIENTATION) == COMP_NONE || isEmpty())
     return false;
 
   if (!ecefCoordIsSet_)
   {
     if (getParentLocator())
-      return getParentLocator()->getOrientation_(rot, comps & getComponentsToInherit());
+      return getParentLocator()->getOrientation_(ori, comps & getComponentsToInherit());
   }
   else if (ecefCoord_.hasOrientation())
   {
@@ -484,7 +528,7 @@ bool Locator::getOrientation_(osg::Matrixd& rot, unsigned int comps) const
     if ((comps & COMP_ORIENTATION) == COMP_ORIENTATION)
     {
       // easy, use all orientation components
-      simVis::Math::ecefEulerToEnuRotMatrix(ecefCoord_.orientation(), rot);
+      simVis::Math::ecefEulerToEnuRotMatrix(ecefCoord_.orientation(), ori);
       return true;
     }
     else
@@ -505,25 +549,35 @@ bool Locator::getOrientation_(osg::Matrixd& rot, unsigned int comps) const
 
       simCore::Coordinate ecef;
       conv.convert(lla, ecef, simCore::COORD_SYS_ECEF);
-      simVis::Math::ecefEulerToEnuRotMatrix(ecef.orientation(), rot);
+      simVis::Math::ecefEulerToEnuRotMatrix(ecef.orientation(), ori);
       return true;
     }
   }
   return false;
 }
 
-bool Locator::getLocalTangentPlaneToWorldMatrix(osg::Matrixd& output) const
+void Locator::computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const
 {
-  osg::Matrixd lm;
-  if (!getLocatorMatrix(lm))
-    return false;
+  local2world.makeTranslate(ecefPos);
 
-  const osg::Vec3d& ecef = lm.getTrans();
-  mapSRS_->getEllipsoid()->computeLocalToWorldTransformFromXYZ(
-    ecef.x(), ecef.y(), ecef.z(),
-    output);
+  simCore::Vec3 llaPos;
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(simCore::Vec3(ecefPos.x(), ecefPos.y(), ecefPos.z()), llaPos);
 
-  return true;
+  double rotationMatrixENU_[3][3];
+  simCore::CoordinateConverter::setLocalToEarthMatrix(llaPos.lat(), llaPos.lon(), simCore::LOCAL_LEVEL_FRAME_ENU, rotationMatrixENU_);
+
+  // set matrix
+  local2world(0,0) = rotationMatrixENU_[0][0];
+  local2world(0,1) = rotationMatrixENU_[0][1];
+  local2world(0,2) = rotationMatrixENU_[0][2];
+
+  local2world(1,0) = rotationMatrixENU_[1][0];
+  local2world(1,1) = rotationMatrixENU_[1][1];
+  local2world(1,2) = rotationMatrixENU_[1][2];
+
+  local2world(2,0) = rotationMatrixENU_[2][0];
+  local2world(2,1) = rotationMatrixENU_[2][1];
+  local2world(2,2) = rotationMatrixENU_[2][2];
 }
 
 void Locator::addCallback(LocatorCallback* callback)
@@ -579,8 +633,8 @@ void Locator::notifyListeners_()
 
 //---------------------------------------------------------------------------
 
-CachingLocator::CachingLocator(const osgEarth::SpatialReference* mapSRS)
-  : Locator(mapSRS)
+CachingLocator::CachingLocator()
+  : Locator()
 {}
 
 CachingLocator::CachingLocator(Locator* parentLoc, unsigned int inheritMask)
@@ -640,8 +694,8 @@ bool CachingLocator::getLocatorPositionOrientation(simCore::Vec3* out_position, 
 
 //---------------------------------------------------------------------------
 
-ResolvedPositionOrientationLocator::ResolvedPositionOrientationLocator(const osgEarth::SpatialReference* mapSRS)
-  : Locator(mapSRS)
+ResolvedPositionOrientationLocator::ResolvedPositionOrientationLocator()
+  : Locator()
 {}
 
 ResolvedPositionOrientationLocator::ResolvedPositionOrientationLocator(Locator* parentLoc, unsigned int inheritMask)
@@ -671,8 +725,8 @@ void ResolvedPositionOrientationLocator::applyOffsets_(osg::Matrixd& output, uns
 
 //---------------------------------------------------------------------------
 
-ResolvedPositionLocator::ResolvedPositionLocator(const osgEarth::SpatialReference* mapSRS)
-  : ResolvedPositionOrientationLocator(mapSRS)
+ResolvedPositionLocator::ResolvedPositionLocator()
+  : ResolvedPositionOrientationLocator()
 {}
 
 ResolvedPositionLocator::ResolvedPositionLocator(Locator* parentLoc, unsigned int inheritMask)

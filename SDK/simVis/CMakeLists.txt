@@ -74,8 +74,10 @@ set(VIS_HEADERS_CORE
     ${VIS_INC}EyePositionManager.h
     ${VIS_INC}Gate.h
     ${VIS_INC}GeoFence.h
-    ${VIS_INC}GlowHighlight.h
     ${VIS_INC}Gl3Utils.h
+    ${VIS_INC}GlDebugMessage.h
+    ${VIS_INC}GlowHighlight.h
+    ${VIS_INC}Headless.h
     ${VIS_INC}InsetViewEventHandler.h
     ${VIS_INC}LabelContentManager.h
     ${VIS_INC}Laser.h
@@ -187,6 +189,7 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/GOGRegistry.h
     ${VIS_INC}GOG/Hemisphere.h
     ${VIS_INC}GOG/HostedLocalGeometryNode.h
+    ${VIS_INC}GOG/ImageOverlay.h
     ${VIS_INC}GOG/LatLonAltBox.h
     ${VIS_INC}GOG/Line.h
     ${VIS_INC}GOG/LineSegs.h
@@ -231,7 +234,9 @@ set(VIS_SOURCES_CORE
     ${VIS_SRC}EphemerisVector.cpp
     ${VIS_SRC}Gate.cpp
     ${VIS_SRC}GeoFence.cpp
+    ${VIS_INC}GlDebugMessage.cpp
     ${VIS_SRC}GlowHighlight.cpp
+    ${VIS_SRC}Headless.cpp
     ${VIS_SRC}InsetViewEventHandler.cpp
     ${VIS_SRC}Laser.cpp
     ${VIS_SRC}LayerRefreshCallback.cpp
@@ -327,6 +332,7 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/GogNodeInterface.cpp
     ${VIS_SRC}GOG/GOGRegistry.cpp
     ${VIS_SRC}GOG/Hemisphere.cpp
+    ${VIS_SRC}GOG/ImageOverlay.cpp
     ${VIS_SRC}GOG/LatLonAltBox.cpp
     ${VIS_SRC}GOG/Line.cpp
     ${VIS_SRC}GOG/LineSegs.cpp
@@ -370,13 +376,13 @@ configure_shaders(Shaders.cpp.in Shaders.cpp ${SHADER_FILES})
 source_group(Shaders FILES ${VIS_SHADER_FILES})
 
 source_group(Headers FILES ${VIS_HEADERS_CORE})
-source_group(Sources FILES ${VIS_SOURCES_CORE})
+source_group("Source Files" FILES ${VIS_SOURCES_CORE})
 
 source_group(Headers\\RFProp FILES ${VIS_HEADERS_RFPROP})
-source_group(Sources\\RFProp FILES ${VIS_SOURCES_RFPROP})
+source_group("Source Files\\RFProp" FILES ${VIS_SOURCES_RFPROP})
 
 source_group(Headers\\GOG FILES ${VIS_HEADERS_GOG})
-source_group(Sources\\GOG FILES ${VIS_SOURCES_GOG})
+source_group("Source Files\\GOG" FILES ${VIS_SOURCES_GOG})
 
 source_group("" FILES ${VIS_ALL_HEADER})
 
@@ -387,7 +393,7 @@ set(VIS_SOURCES ${VIS_SOURCES_CORE} ${VIS_SOURCES_RFPROP} ${VIS_SOURCES_GOG} ${V
 if(SIM_HAVE_DB_SUPPORT)
     source_group(Headers FILES ${VIS_HEADERS_DB})
     source_group(Headers\\DB FILES ${VIS_HEADERS_DB_PRIVATE})
-    source_group(Sources\\DB FILES ${VIS_SOURCES_DB})
+    source_group("Source Files\\DB" FILES ${VIS_SOURCES_DB})
 
     list(APPEND VIS_HEADERS_CORE ${VIS_HEADERS_DB})
     list(APPEND VIS_HEADERS ${VIS_HEADERS_DB} ${VIS_HEADERS_DB_PRIVATE})
@@ -397,7 +403,7 @@ endif()
 # ----------------------------------------------------------------------
 
 # Avoid false MSVC 2017/2019 MSB8027 warning from Unity build on Utils.cpp and Angle.cpp
-set_source_files_properties(${VIS_SRC}Utils.cpp ${VIS_SRC}GOG/Utils.cpp
+set_source_files_properties(${VIS_SRC}Utils.cpp ${VIS_SRC}Headless.cpp ${VIS_SRC}GOG/Utils.cpp
     PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
 set(VIS_PROJECT_FILES

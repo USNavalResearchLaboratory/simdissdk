@@ -1,24 +1,25 @@
 /* -*- mode: c++ -*- */
 /****************************************************************************
-*****                                                                  *****
-*****                   Classification: UNCLASSIFIED                   *****
-*****                    Classified By:                                *****
-*****                    Declassify On:                                *****
-*****                                                                  *****
-****************************************************************************
-*
-*
-* Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
-*               EW Modeling & Simulation, Code 5773
-*               4555 Overlook Ave.
-*               Washington, D.C. 20375-5339
-*
-* License for source code at https://simdis.nrl.navy.mil/License.aspx
-*
-* The U.S. Government retains all rights to use, duplicate, distribute,
-* disclose, or release this software.
-*
-*/
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
 #include <QAbstractItemView>
 #include <QAction>
 #include <QApplication>
@@ -363,7 +364,7 @@ QVariant CategoryTreeModel::CategoryItem::data(int role) const
     return regExpString_;
   case ROLE_LOCKED_STATE:
     return locked_;
-  case Qt::BackgroundColorRole:
+  case Qt::BackgroundRole:
     if (contributesToFilter_)
       return CONTRIBUTING_BG_COLOR;
     return MIDLIGHT_BG_COLOR;
@@ -1056,14 +1057,14 @@ Qt::ItemFlags CategoryTreeModel::flags(const QModelIndex& index) const
   return item->flags();
 }
 
-bool CategoryTreeModel::setData(const QModelIndex& index, const QVariant& value, int role)
+bool CategoryTreeModel::setData(const QModelIndex& idx, const QVariant& value, int role)
 {
   // Ensure we have a valid index with a valid TreeItem pointer
-  if (!index.isValid() || !index.internalPointer())
-    return QAbstractItemModel::setData(index, value, role);
+  if (!idx.isValid() || !idx.internalPointer())
+    return QAbstractItemModel::setData(idx, value, role);
 
   // NULL filter means the tree should be empty, so we shouldn't get setData()...
-  TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
+  TreeItem* item = static_cast<TreeItem*>(idx.internalPointer());
   assert(filter_ && item);
   bool wasEdited = false;
   const bool rv = item->setData(value, role, *filter_, wasEdited);
@@ -1084,15 +1085,16 @@ bool CategoryTreeModel::setData(const QModelIndex& index, const QVariant& value,
   if (rv)
   {
     // Update the GUI
-    emit dataChanged(index, index);
+    emit dataChanged(idx, idx);
 
     // Alert users who are listening
     if (wasEdited)
     {
       // Parent index, if it exists, is a category and might have updated its color data()
-      const QModelIndex parentIndex = index.parent();
+      const QModelIndex parentIndex = idx.parent();
       if (parentIndex.isValid())
         emit dataChanged(parentIndex, parentIndex);
+      emitChildrenDataChanged_(idx);
 
       emit filterChanged(*filter_);
       emit filterEdited(*filter_);
@@ -1100,7 +1102,8 @@ bool CategoryTreeModel::setData(const QModelIndex& index, const QVariant& value,
     else
     {
       // Should only happen in cases where EXCLUDE got changed, but no filter was edited
-      assert(!index.parent().isValid());
+      assert(!idx.parent().isValid());
+      emitChildrenDataChanged_(idx);
       emit excludeEdited(item->nameInt(), item->isUnlistedValueChecked());
     }
   }
@@ -1374,6 +1377,16 @@ void CategoryTreeModel::processCategoryCounts(const simQt::CategoryCountResults&
     emit dataChanged(index(firstRowChanged, 0), index(lastRowChanged, 0));
 }
 
+void CategoryTreeModel::emitChildrenDataChanged_(const QModelIndex& parent)
+{
+  // Change all children
+  const int numRows = rowCount(parent);
+  const int numCols = columnCount(parent);
+  if (numRows == 0 || numCols == 0)
+    return;
+  emit dataChanged(index(0, 0, parent), index(numRows - 1, numCols - 1, parent));
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 /** Style options for drawing a toggle switch */
@@ -1504,9 +1517,15 @@ QSize ToggleSwitchPainter::sizeHint(const StyleOptionToggleSwitch& option) const
   QFontMetrics fontMetrics(option.font);
   if (!option.on.text.isEmpty() || !option.off.text.isEmpty())
   {
+#if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
     const int onWidth = fontMetrics.width(option.on.text);
     const int offWidth = fontMetrics.width(option.off.text);
     const int lockWidth = fontMetrics.width(option.lock.text);
+#else
+    const int onWidth = fontMetrics.horizontalAdvance(option.on.text);
+    const int offWidth = fontMetrics.horizontalAdvance(option.off.text);
+    const int lockWidth = fontMetrics.horizontalAdvance(option.lock.text);
+#endif
     textWidth = qMax(onWidth, offWidth);
     textWidth = qMax(lockWidth, textWidth);
   }
@@ -1928,6 +1947,7 @@ public:
   }
 
   // Fulfill the interface
+  virtual void onPostRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot) {}
   virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) {}
   virtual void onScenarioDelete(simData::DataStore* source) {}
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}

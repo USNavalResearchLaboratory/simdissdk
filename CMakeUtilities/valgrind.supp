@@ -337,3 +337,26 @@
    fun:_dl_catch_error
    ...
 }
+
+{
+   Segemented Text leaks
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*simQt*SegmentedTexts*
+   fun:*simQt*SecondsTexts*
+   fun:*SegmentedTextsTest*
+   fun:main
+}
+
+{
+   Google protobuf leaks
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:*google*protobuf*internal*OnShutdown*
+   fun:_dl_init
+   obj:/lib64/ld-2.12.so
+   ...
+}
+

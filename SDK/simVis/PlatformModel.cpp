@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -52,8 +53,6 @@
 
 #undef LC
 #define LC "[PlatformModel] "
-
-using namespace osgEarth;
 
 namespace simVis {
 
@@ -139,11 +138,11 @@ private:
 
 PlatformModelNode::PlatformModelNode(Locator* locator)
   : LocatorNode(locator),
-    isImageModel_(false),
-    autoRotate_(false),
-    lastPrefsValid_(false),
-    brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
-    objectIndexTag_(0)
+  isImageModel_(false),
+  autoRotate_(false),
+  lastPrefsValid_(false),
+  brightnessUniform_(new osg::Uniform("osg_LightSource[0].ambient", DEFAULT_AMBIENT)),
+  objectIndexTag_(0)
 {
   // EntityLabelNode for platformModel is a special case - a locatorNode with no locator; it gets its location from parent, the platformmodelnode (which is a locatorNode).
   label_ = new EntityLabelNode();
@@ -168,9 +167,9 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
   imageIconXform_->setName("imageIconXform");
   imageIconXform_->dirty();
 
-  // Horizon culler for the platform. The culler is attached to this node,
+  // Horizon culler for the platform (and its label). The culler is attached to this node,
   // but uses the imageIconXform for the actual testing.
-  HorizonCullCallback* hcc = new HorizonCullCallback();
+  osgEarth::HorizonCullCallback* hcc = new osgEarth::HorizonCullCallback();
   hcc->setCullByCenterPointOnly(true);
   hcc->setProxyNode(imageIconXform_.get());
   hcc->setName("HorizonCullCallback");
@@ -178,7 +177,8 @@ PlatformModelNode::PlatformModelNode(Locator* locator)
 
   // the following line is necessary prior to OSG 3.4, since we are unable
   // to pass the shared Horizon down from the ScenarioManager:
-  hcc->setHorizon(new Horizon(*locator->getSRS()->getEllipsoid()));
+  // SIM-11395 - set default ellipsoid, when osgEarth supports it
+  //hcc->setHorizon(new Horizon(*locator->getSRS()->getEllipsoid()));
 
   // used to apply both dynamic and static scaling to the model.
   dynamicXform_ = new simVis::DynamicScaleTransform();

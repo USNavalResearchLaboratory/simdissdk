@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -38,27 +39,27 @@ LocatorNode::LocatorNode()
   // LocatorNode is valid without any locator; it functions as a group.
 }
 
-LocatorNode::LocatorNode(Locator* locator)
+LocatorNode::LocatorNode(Locator* locator, unsigned int componentsToTrack)
   : locatorCallback_(NULL),
-    overheadModeHint_(false)
+  componentsToTrack_(componentsToTrack),
+  overheadModeHint_(false)
 {
   setLocator(locator);
 }
 
 LocatorNode::LocatorNode(const LocatorNode& rhs, const osg::CopyOp& op)
   : osg::MatrixTransform(rhs, op),
-    matrixRevision_(rhs.matrixRevision_),
-    locatorCallback_(NULL),
-    overheadModeHint_(rhs.overheadModeHint_)
+  matrixRevision_(rhs.matrixRevision_),
+  locatorCallback_(NULL),
+  componentsToTrack_(rhs.componentsToTrack_),
+  overheadModeHint_(rhs.overheadModeHint_)
 {
   setLocator(locator_.get()); // to update the trav count
 }
 
 LocatorNode::LocatorNode(Locator* locator, osg::Node* child)
-  : locatorCallback_(NULL),
-    overheadModeHint_(false)
+  : LocatorNode(locator)
 {
-  setLocator(locator);
   if (child)
     this->addChild(child);
 }
@@ -69,13 +70,14 @@ LocatorNode::~LocatorNode()
     locator_->removeCallback(locatorCallback_.get());
 }
 
-void LocatorNode::setLocator(Locator* locator)
+void LocatorNode::setLocator(Locator* locator, unsigned int componentsToTrack)
 {
   if (locator_.valid() && locatorCallback_.valid())
     locator_->removeCallback(locatorCallback_.get());
 
   locator_ = locator;
   matrixRevision_.reset();
+  componentsToTrack_ = componentsToTrack;
 
   if (locator)
   {
@@ -163,7 +165,7 @@ void LocatorNode::syncWithLocator()
   {
     osg::Matrix matrix;
 
-    if (locator_->getLocatorMatrix(matrix) )
+    if (locator_->getLocatorMatrix(matrix, componentsToTrack_) )
     {
       this->setMatrix(matrix);
       locator_->sync(matrixRevision_);

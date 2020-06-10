@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -152,7 +153,6 @@ struct AppData
   osg::ref_ptr<ui::LabelControl> timeReadout_;
   simData::DataStore *ds_;
   simVis::View* view_;
-  simCore::Clock* clock_;
   double startTime_;
   double endTime_;
   double lastTime_;

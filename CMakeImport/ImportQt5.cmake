@@ -23,11 +23,7 @@ endif()
 # Figure out the expected version and expected folder based on VSI layout,
 # so that we can configure a good guess at the CMAKE_PREFIX_PATH required.
 # If your Qt is somewhere else, configure CMAKE_PREFIX_PATH appropriately.
-if(NOT MSVC10)
-    set(EXPECTED_QT5_VERSION 5.9.8)
-else()
-    set(EXPECTED_QT5_VERSION 5.5.1)
-endif()
+set(EXPECTED_QT5_VERSION 5.9.8)
 
 # VSI installs to a win64_vc-#.# subdirectory under c:/QtSDK.  By default, Qt is in /usr/local/Qt-* on both systems
 set(DEFAULT_QT_LOCATION "c:/QtSDK/${BUILD_SYSTEM_CANONICAL_NAME}/${EXPECTED_QT5_VERSION}")
@@ -138,13 +134,14 @@ macro(install_qtplugins dir)
     if(WIN32)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            OPTIONAL
             COMPONENT ThirdPartyLibs
-            FILES_MATCHING PATTERN *.dll
-            PATTERN *d.dll EXCLUDE)
+            FILES_MATCHING PATTERN *.dll)
     else()
         # Note that Qt requires the Linux shared objects in the executable's subdirectory (e.g. bin)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
+            OPTIONAL
             COMPONENT ThirdPartyLibs
             FILES_MATCHING PATTERN *.so)
     endif()
@@ -164,6 +161,7 @@ if(NOT DEFINED INSTALL_THIRDPARTY_LIBRARIES OR INSTALL_THIRDPARTY_LIBRARIES)
     # Each install needs platforms and image formats
     install_qtplugins(platforms)
     install_qtplugins(imageformats)
+    install_qtplugins(styles)
 endif()
 
 # At this point, the Widgets package is found -- find the others too

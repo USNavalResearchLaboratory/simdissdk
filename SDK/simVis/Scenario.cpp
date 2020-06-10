@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -85,6 +86,9 @@ struct SetHorizonCullCallback : public osg::NodeCallback
     {
       osg::ref_ptr<osgEarth::Horizon> horizon = osg::clone(_horizonProto.get(), osg::CopyOp::DEEP_COPY_ALL);
       horizon->setEye(nv->getViewPoint());
+      horizon->setName("simVis.ScenarioManager.SetHorizonCullCallback");
+      // SIM-11395: deep copy copies the scale (derived from the em) correctly,
+      //  but does not copy ellipsoid model itself; for our purposes, it is probably ok.
       horizon->put(*nv);
     }
     traverse(node, nv);
@@ -418,9 +422,67 @@ private:
 
 // -----------------------------------------------------------------------
 
+ScenarioManager::ScenarioManager(ProjectorManager* projMan)
+  : platformTspiFilterManager_(new PlatformTspiFilterManager()),
+  surfaceClamping_(NULL),
+  aboveSurfaceClamping_(NULL),
+  lobSurfaceClamping_(NULL),
+  root_(new osg::Group),
+  entityGraph_(new SimpleEntityGraph),
+  projectorManager_(projMan),
+  labelContentManager_(new NullLabelContentManager()),
+  rfManager_(new simRF::NullRFPropagationManager()),
+  losCreator_(new ScenarioLosCreator())
+{
+  root_->setName("root");
+  root_->addChild(entityGraph_->node());
+  addChild(root_.get());
+
+  // Install a callback that will convey the Horizon info
+  osg::EllipsoidModel em;
+  // 11km is rough depth of Mariana Trench; decrease radius to help horizon culling work underwater
+  em.setRadiusEquator(em.getRadiusEquator() - 11000.0);
+  em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
+  SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
+  root_->addCullCallback(setHorizon);
+
+  // Clamping requires a Group for MapNode changes
+  surfaceClamping_ = new SurfaceClamping();
+  aboveSurfaceClamping_ = new AboveSurfaceClamping();
+  lobSurfaceClamping_ = new CoordSurfaceClamping();
+
+  // set normal rescaling so that dynamically-scaled platforms have
+  // proper lighting. Note: once we move to using shaders we don't
+  // need this anymore
+  osg::StateSet* stateSet = getOrCreateStateSet();
+#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
+  // GL_RESCALE_NORMAL is deprecated in GL CORE builds
+  stateSet->setMode(GL_RESCALE_NORMAL, 1);
+#endif
+  // Lighting will be off for all objects under the Scenario,
+  // unless explicitly turned on further down the scene graph
+  simVis::setLighting(stateSet, osg::StateAttribute::OFF);
+
+  setName("simVis::ScenarioManager");
+
+  platformTspiFilterManager_->addFilter(surfaceClamping_);
+  platformTspiFilterManager_->addFilter(aboveSurfaceClamping_);
+
+  // Install shaders used by multiple entities at the scenario level
+  AlphaTest::installShaderProgram(stateSet);
+  BeamPulse::installShaderProgram(stateSet);
+  DisableDepthOnAlpha::installShaderProgram(stateSet);
+  LobGroupNode::installShaderProgram(stateSet);
+  OverrideColor::installShaderProgram(stateSet);
+  PolygonStipple::installShaderProgram(stateSet);
+  TrackHistoryNode::installShaderProgram(stateSet);
+
+  scenarioEciLocator_ = new Locator();
+}
+
+#ifdef USE_DEPRECATED_SIMDISSDK_API
 ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan)
-  : locatorFactory_(factory),
-  platformTspiFilterManager_(new PlatformTspiFilterManager()),
+  : platformTspiFilterManager_(new PlatformTspiFilterManager()),
   surfaceClamping_(NULL),
   aboveSurfaceClamping_(NULL),
   lobSurfaceClamping_(NULL),
@@ -474,6 +536,7 @@ ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* proj
   PolygonStipple::installShaderProgram(stateSet);
   TrackHistoryNode::installShaderProgram(stateSet);
 }
+#endif
 
 ScenarioManager::~ScenarioManager()
 {
@@ -645,20 +708,6 @@ void ScenarioManager::setMapNode(osgEarth::MapNode* map)
   surfaceClamping_->setMapNode(mapNode_.get());
   aboveSurfaceClamping_->setMapNode(mapNode_.get());
   lobSurfaceClamping_->setMapNode(mapNode_.get());
-
-  if (map)
-  {
-    // update all the entity locators with the new SRS.
-    for (EntityRepo::iterator i = entities_.begin(); i != entities_.end(); ++i)
-    {
-      EntityRecord* record = i->second.get();
-      if (record)
-      {
-        EntityNode* node = record->getEntityNode();
-        node->getLocator()->setMapSRS(mapNode_->getMapSRS());
-      }
-    }
-  }
   SAFETRYEND("setting map in scenario");
 }
 
@@ -666,7 +715,12 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
 {
   SAFETRYBEGIN;
   // create the OSG node representing this entity
-  PlatformNode* node = new PlatformNode(props, dataStore, *platformTspiFilterManager_, root_.get(), locatorFactory_->createCachingLocator(), dataStore.referenceYear());
+  PlatformNode* node = new PlatformNode(props,
+    dataStore,
+    *platformTspiFilterManager_,
+    root_.get(),
+    new Locator(scenarioEciLocator_),
+    dataStore.referenceYear());
   node->getModel()->addCallback(new BeamNoseFixer(this));
 
   // put it in the vis database.
@@ -695,7 +749,7 @@ BeamNode* ScenarioManager::addBeam(const simData::BeamProperties& props, simData
     host = find<PlatformNode>(props.hostid());
 
   // make a locator, tying it to the host's locator if there is one
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   // put the beam into our entity db:
   BeamNode* node = new BeamNode(this, props, locator, host, dataStore.referenceYear());
@@ -734,7 +788,7 @@ GateNode* ScenarioManager::addGate(const simData::GateProperties& props, simData
     SIM_WARN << "ScenarioManager::addGate: a target gate requires a Beam host; gate will be ignored." << std::endl;
   }
 
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   GateNode* node = new GateNode(props, locator, host, dataStore.referenceYear());
 
@@ -763,7 +817,7 @@ LaserNode* ScenarioManager::addLaser(const simData::LaserProperties& props, simD
   if (props.has_hostid())
     host = find(props.hostid());
 
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   LaserNode* node = new LaserNode(props, locator, host, dataStore.referenceYear());
 
@@ -848,7 +902,7 @@ ProjectorNode* ScenarioManager::addProjector(const simData::ProjectorProperties&
   if (props.has_hostid())
     host = find(props.hostid());
 
-  Locator* locator = host ? host->getLocator() : locatorFactory_->createLocator();
+  Locator* locator = host ? host->getLocator() : new Locator();
 
   ProjectorNode* node = new ProjectorNode(props, locator, host);
 
@@ -1201,6 +1255,10 @@ void ScenarioManager::notifyToolsOfRemove_(EntityNode* node)
 
 void ScenarioManager::update(simData::DataStore* ds, bool force)
 {
+  // update the base eci locator rotation
+  if (scenarioEciLocator_.get())
+    scenarioEciLocator_->setEciRotationTime(ds->updateTime(), ds->updateTime());
+
   EntityVector updates;
 
   SAFETRYBEGIN;

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -23,11 +24,12 @@
 #define SIMVIS_LOCATOR_H
 
 #include <limits>
+#include "osg/Referenced"
+#include "osg/Matrix"
+#include "osg/Vec3"
+#include "osgEarth/Revisioning"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Coordinate.h"
-#include "osg/MatrixTransform"
-#include "osgEarth/Revisioning"
-#include "osgEarth/SpatialReference"
 
 /// Container for classes relating to visualization
 namespace simVis
@@ -80,7 +82,7 @@ public: // data
 /**
  * Generates a positional matrix for an object.
  */
-class SDKVIS_EXPORT Locator : public osg::Referenced, public osgEarth::Revisioned
+class SDKVIS_EXPORT Locator : public osg::Referenced, public osgEarth::Util::Revisioned
 {
 public:
   /**
@@ -111,16 +113,15 @@ public:
 public:
   /**
   * Construct a locator.
-  * @param mapSRS Map spatial reference system under which this locator operates
   */
-  Locator(const osgEarth::SpatialReference* mapSRS);
+  Locator();
 
   /**
   * Construct a derived locator.
   * @param parent Locator from which to inherit components
   * @param compsToInherit Mask of components to inherit
   */
-  Locator(Locator* parent, unsigned int compsToInherit = COMP_ALL);
+  explicit Locator(Locator* parent, unsigned int compsToInherit = COMP_ALL);
 
 #ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
@@ -137,26 +138,36 @@ public:
   */
   void endUpdate();
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
   * @deprecated Interface changed to support ECI coordinates. Use other interface for setCoordinate instead.
   * Sets the world position, orientation, and velocity vector all at once.
   * @param[in ] coord  World coordinates (must be ECEF, LLA, or ECI)
   * @param[in ] notify Whether to immediately notify listeners
   */
-  void setCoordinate(const simCore::Coordinate& coord, bool notify = true);
+  SDK_DEPRECATE(void setCoordinate(const simCore::Coordinate& coord, bool notify = true), "Method will be removed in a future SDK release.");
+#endif
 
   /**
   * Sets the world position, orientation, and velocity vector all at once. To support
   * conversion to/from an ECI coordinate, the ECI reference time must either be provided or
   * have already been set; otherwise a reference time of 0 will be used. The ECI reference
   * time can only be set by the top-level parent.
-  * @param[in ] coord World coordinates (must be ECEF, LLA, or ECI)
-  * @param[in ] timestamp Updates the locator with this timestamp
-  * @param[in ] eciRefTime Reference time at which ECI and ECEF are equal
-  * @param[in ] notify Whether to immediately notify listeners
+  * @param coord World coordinates (must be ECEF, LLA, or ECI)
+  * @param timestamp Updates the locator with this timestamp
+  * @param eciRefTime Reference time at which ECI and ECEF are equal
+  * @param notify Whether to immediately notify listeners
   */
   void setCoordinate(const simCore::Coordinate& coord, double timestamp,
     double eciRefTime = std::numeric_limits<double>::max(), bool notify = true);
+
+  /**
+  * Sets the ECI rotation for this locator, using time as the measure of rotation.
+  * @param[in ] rotationTime  time in seconds of earth rotation
+  * @param[in ] timestamp Updates the locator with this timestamp/scenario time
+  * @param[in ] notify Whether to immediately notify listeners
+  */
+  void setEciRotationTime(double rotationTime, double timestamp, bool notify = true);
 
   /**
    * Sets the local offset position and orientation of this locator, relative to a
@@ -198,10 +209,16 @@ public:
   const simCore::Coordinate& getCoordinate() const { return ecefCoord_; }
 
   /**
-  * Gets a positioning matrix that combines aggregate position, local orientation, and
+  * Gets a positioning matrix that combines aggregate rotation, position, local orientation, and
   * offset position.
   */
   bool getLocatorMatrix(osg::Matrixd& output_mat, unsigned int components = COMP_ALL) const;
+
+  /**
+  * Gets a positioning matrix that combines aggregate rotation, position, local orientation, and
+  * offset position.
+  */
+  osg::Matrixd getLocatorMatrix(unsigned int components = COMP_ALL) const;
 
   /**
   * Gets the world position reflected by this Locator. This is just a convenience
@@ -229,25 +246,23 @@ public:
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
 
   /**
-  * Gets the matrix that xforms from the local ENU tangent plane to world coordinates.
-  * (This returns the same value as getPositionMatrix)
-  * @param out_matrix Result goes here upon success
-  * @return True upon success, false on failure
-  */
-  SDK_DEPRECATE(virtual bool getLocalTangentPlaneToWorldMatrix(osg::Matrixd& out_matrix) const, "Method will be removed in future SDK release.");
-
-  /**
   * Set timestamp associated with the locator. If converting to or from ECI, the
   * timestamp's offset from the ECI reference time (see setEciRefTime()) will be
   * used as the elapsed ECI time.
+  * @param timestamp time value to set; can be negative, zero or positive.
+  * @param[in ] notify Whether to immediately notify listeners
   */
   void setTime(double timestamp, bool notify = true);
 
   /**
-   * Set the ECI reference time for the chain of locators. All locators use the same reference time.
-   * Will only be set if called by the top-level parent.
-   * @param[in] eciRefTime ECI reference time which is subtracted from the locator timestamp to find the elapsed ECI time
-   * @return True if the ECI reference time is set properly.
+   * Set the ECI reference time for a locator.
+   * The ECI reference time is subtracted from the locator timestamp to find the elapsed ECI time.
+   * It is expected that only one locator in an inheritance chain will specify an ECI reference time;
+   * and expected that that value applies to all locators in the chain.
+   * Nevertheless, any locator can set an ECI reference time.
+   * The ECI reference time for a locator is the first non-default value set for itself or by its parents.
+   * @param eciRefTime ECI reference time.
+   * @return True.
    */
   bool setEciRefTime(double eciRefTime);
 
@@ -256,12 +271,19 @@ public:
    */
   double getTime() const;
 
-  /** Returns the ECI reference time for this locator (is the same for all locators in the chain). */
+  /**
+   * Returns the ECI reference time for this locator.
+   * If not set by this locator, it will be retrieved from next parent locator that has a non-default value.
+   * @return the ECI reference time if found, 0. if the locator and all parents have the default/not-set value.
+   */
   double getEciRefTime() const;
 
   /**
-   * Returns the elapsed ECI time for this locator. If no timestamp has been set prior to calling
-   * this method, the time returned will be 0.
+   * Returns the elapsed ECI time for this locator.
+   * The elapsed ECI time of a locator is the difference of :
+   * the most recent timestamp of the locator that provides that ECI Reference time for this locator,
+   * and the ECI Reference time of this locator (see getEciRefTime()).
+   * If no timestamp has been set prior to calling this method, the time returned will be 0.
    */
   double getElapsedEciTime() const;
 
@@ -269,9 +291,8 @@ public:
   * Set locator for this to follow in some way
   *
   * The optional parent locator.
-  * If a Locator has a parent, it inherits position and orientation from that
-  * parent as prescribed by the Components flags. Otherwise, the Locator
-  * is absolute.
+  * If a Locator has a parent, it inherits rotation, position and orientation from that
+  * parent as prescribed by the Components flags. Otherwise, the Locator is absolute.
   * @param parent Parent locator to set
   * @param componentsToInherit Mask of components to inherit from parent
   * @param notify If true, notifies when the compMask changes
@@ -304,22 +325,22 @@ public:
   unsigned int getComponentsToInherit() const { return componentsToInherit_; }
 
   /**
-  * Get the spatial reference system associated with this locator
-  * @return an SRS
-  */
-  const osgEarth::SpatialReference* getSRS() const { return mapSRS_.get(); }
-
-  /**
-  * Whether the Locator contains a valid position/orientation.
-  * @return true if the locator's valid, else false
+  * Whether the Locator or any of its parents contains a valid position, orientation or rotation.
+  * @return true if the locator chain has position, orientation or rotation, else false
   */
   bool isEmpty() const;
 
   /**
-  * Whether the Locator contains a valid position/orientation.
-  * @return true if the locator's valid, else false
+  * Whether the Locator or any of its parents contains a valid position, orientation or rotation.
+  * @return true if the locator chain has position, orientation or rotation, else false
   */
   bool isValid() const { return !isEmpty(); }
+
+  /**
+  * Whether the Locator supports ECI positioning.
+  * @return true if the locator supports ECI positioning, else false
+  */
+  bool isEci() const;
 
   /**
   * Adds a callback to this locator.
@@ -333,11 +354,12 @@ public:
    */
   void removeCallback(LocatorCallback* callback);
 
-  /**
-   * Replaces the map SRS in this locator.
-   * @param[in ] srs New map SRS.
-   */
-  void setMapSRS(const osgEarth::SpatialReference* srs);
+ /**
+  * Gets the total ECI rotation time for this locator (including parents), where time is the measure of earth rotation.
+  * @return  time in seconds of earth rotation
+  */
+  double getEciRotationTime() const;
+
 
 protected:
   /// osg::Referenced-derived
@@ -350,6 +372,7 @@ protected:
   * @return true if there is a non-trivial position to return
   */
   virtual bool getPosition_(osg::Vec3d& pos, unsigned int comps) const;
+
   /**
   * Returns the base orientation of this locator after specified inheritance components are applied to it
   * @param[out] ori matrix containing the orientation information
@@ -357,12 +380,6 @@ protected:
   * @return true if there is a non-trivial orientation to return
   */
   virtual bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const;
-
-  /**
-  * Returns the timestamp on this locator. If a valid timestamp is not found, it will attempt to
-  * find a valid timestamp in one of the parent locators. Used for ECI time functions.
-  */
-  double getTime_() const;
 
   /**
   * Returns the input locator matrix with all local offsets (including those of parents) applied, as filtered by the specified inheritance components
@@ -378,29 +395,47 @@ protected:
   */
   void applyLocalOffsets_(osg::Matrixd& output, unsigned int comps) const;
 
-private: // methods
+private:
+  /**
+  * Notifies all children and callbacks of a change to this locator
+  */
   void notifyListeners_();
 
-  bool inherits_(unsigned int mask) const;
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+  SDK_DEPRECATE(bool inherits_(unsigned int mask) const, "Method will be removed in future SDK release.");
+#endif
 
-private: // data
-  osg::ref_ptr<const osgEarth::SpatialReference> mapSRS_;
+  /**
+  * Returns the base rotation of this locator
+  * @param[out] rotation matrix with rotation
+  * @return true if there is a non-trivial rotation returned
+  */
+  bool getRotation_(osg::Matrixd& rotation) const;
+
+  /**
+  * Returns an ENU local tangent plane at the specified position
+  * simCore equivalent of osg::computeLocalToWorldTransformFromXYZ()
+  * using simCore methods avoids dependency on SRS, and uses a more accurate ecef->lla conversion
+  * @param ecefPos specified position
+  * @param local2world ENU matrix at specified position
+  */
+  void computeLocalToWorldTransformFromXYZ_(const osg::Vec3d& ecefPos, osg::Matrixd& local2world) const;
+
   osg::observer_ptr<Locator> parentLoc_;
   unsigned int componentsToInherit_; // Locator::Components mask
   RotationOrder rotOrder_;
-  bool isEmpty_;                // if false, this locator has some data, though possibly only a timestamp
   std::set< osg::observer_ptr<Locator> > children_;
   std::vector< osg::ref_ptr<LocatorCallback> > callbacks_;
-
-  simCore::Coordinate ecefCoord_;
-  bool                ecefCoordIsSet_;
-
-  simCore::Vec3       offsetPos_;
-  simCore::Vec3       offsetOri_;
-  bool                offsetsAreSet_;
-
-  double timestamp_;
-  double eciRefTime_;
+  simCore::Coordinate ecefCoord_; ///< the base position & orientation of this locator, possibly unset
+  simCore::Vec3 offsetPos_; ///< the local position offset of this locator, possibly unset
+  simCore::Vec3 offsetOri_; ///< the local orientation offset of this locator, possibly unset
+  bool isEmpty_;            ///< if false, this locator has some data, though possibly only a timestamp
+  bool ecefCoordIsSet_;     ///< indicates if this locator has position and/or orientation
+  bool hasRotation_;        ///< indicates if this locator has a rotation
+  bool offsetsAreSet_;      ///< indicates if this locator has local offsets
+  double timestamp_;        ///< the most recent sim time when this locator was updated
+  double eciRefTime_;       ///< the rotation offset for ECI/ECEF conversion
+  double eciRotationTime_;  ///< the local earth rotation time offset specified for this locator
 };
 
 /**
@@ -409,10 +444,10 @@ private: // data
 class SDKVIS_EXPORT CachingLocator : public Locator
 {
 public:
-  /** Constructor; @see Locator(const osgEarth::SpatialReference*) */
-  CachingLocator(const osgEarth::SpatialReference* mapSRS);
+  /** Constructor; @see Locator() */
+  CachingLocator();
   /** Constructor; @see Locator(Locator*, unsigned int) */
-  CachingLocator(Locator* parentLoc, unsigned int inheritMask = COMP_ALL);
+  explicit CachingLocator(Locator* parentLoc, unsigned int inheritMask = COMP_ALL);
 
   /**
   * Gets the world position reflected by this Locator. This is just a convenience
@@ -438,15 +473,17 @@ public:
   */
   virtual bool getLocatorPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     const simCore::CoordinateSystem& coordsys = simCore::COORD_SYS_ECEF) const;
+protected:
+  /// osg::Referenced-derived
+  virtual ~CachingLocator() {}
 
 private:
   // cache frequently used LLA position and orientation
   mutable simCore::Vec3 llaPositionCache_;
-  mutable osgEarth::Revision llaPositionCacheRevision_;
+  mutable osgEarth::Util::Revision llaPositionCacheRevision_;
   mutable simCore::Vec3 llaOrientationCache_;
-  mutable osgEarth::Revision llaOrientationCacheRevision_;
+  mutable osgEarth::Util::Revision llaOrientationCacheRevision_;
 };
-
 
 /**
 * ResolvedPositionOrientationLocator is a locator that generates a position-with-(base)-orientation from its parents,
@@ -462,10 +499,13 @@ private:
 class SDKVIS_EXPORT ResolvedPositionOrientationLocator : public Locator
 {
 public:
-  /** Constructor; @see Locator(const osgEarth::SpatialReference*) */
-  ResolvedPositionOrientationLocator(const osgEarth::SpatialReference* mapSRS);
+  /** Constructor; @see Locator() */
+  ResolvedPositionOrientationLocator();
   /** Constructor; @see Locator(Locator*, unsigned int) */
   ResolvedPositionOrientationLocator(Locator* parentLoc, unsigned int inheritMask);
+protected:
+  /// osg::Referenced-derived
+  virtual ~ResolvedPositionOrientationLocator() {}
 private:
   /** @copydoc Locator::getPosition_() */
   virtual bool getPosition_(osg::Vec3d& pos, unsigned int comps) const;
@@ -483,29 +523,17 @@ private:
 class SDKVIS_EXPORT ResolvedPositionLocator : public ResolvedPositionOrientationLocator
 {
 public:
-  /** Constructor; @see Locator(const osgEarth::SpatialReference*) */
-  ResolvedPositionLocator(const osgEarth::SpatialReference* mapSRS);
+  /** Constructor; @see Locator() */
+  ResolvedPositionLocator();
   /** Constructor; @see Locator(Locator*, unsigned int) */
   ResolvedPositionLocator(Locator* parentLoc, unsigned int inheritMask);
+protected:
+  /// osg::Referenced-derived
+  virtual ~ResolvedPositionLocator() {}
 private:
   /** @copydoc Locator::getOrientation_() */
   virtual bool getOrientation_(osg::Matrixd& ori, unsigned int comps) const;
 };
-
-//----------------------------------------------------------------------------
-/// Interface for an object that can create a new Locator
-class LocatorFactory
-{
-public:
-  virtual ~LocatorFactory() {}
-
-  /// create a new locator
-  virtual Locator* createLocator() const = 0;
-
-  /// create a new locator
-  virtual CachingLocator* createCachingLocator() const = 0;
-};
-
 }
 
 #endif // SIMVIS_LOCATOR_H

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -26,8 +27,8 @@
 * This file defines a number of conversions for common qt objects
 */
 
-#include <osg/Vec4f>
 #include <QColor>
+#include "osg/Vec4f"
 #include "simCore/Common/Export.h"
 
 namespace simQt {
@@ -52,7 +53,7 @@ SDKQT_EXPORT osg::Vec4f getOsgColorFromQt(const QColor& color);
  * Get an QColor from a QString, expected input str is as "R,G,B,A"
  * Int values expected in QString, ex: "255,128,0,255"
  * @param qstr  QString object
- * @return QColor  equivalent of qstr
+ * @return QColor  equivalent of qstr. Returns invalid QColor on error
  */
 SDKQT_EXPORT QColor getQColorFromQString(const QString& qstr);
 

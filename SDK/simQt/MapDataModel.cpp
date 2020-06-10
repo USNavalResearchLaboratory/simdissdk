@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -40,6 +41,16 @@ unsigned int indexOf(const V& vec, const T& item)
     return MapReindexer::INVALID_INDEX;
   return std::distance(vec.begin(), iter);
 }
+
+/** Returns true if the given status is "OK", or false if not OK, used for coloration of nodes. */
+bool isStatusOk(const osgEarth::Status& status)
+{
+  if (status.isOK())
+    return true;
+  // Might be false, but for our purposes we don't show an error when the layer is closed, since that's an intentional setting
+  return (status.code() == osgEarth::Status::ResourceUnavailable && status.message() == "Layer closed");
+}
+
 } // anon namespace
 
 //----------------------------------------------------------------------------
@@ -451,7 +462,7 @@ public:
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!layer_->getStatus().isOK())
+    if (!isStatusOk(layer_->getStatus()))
       return QColor(Qt::gray);
     return QVariant();
   }
@@ -489,7 +500,7 @@ public:
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!layer_->getStatus().isOK())
+    if (!isStatusOk(layer_->getStatus()))
       return QColor(Qt::gray);
     return QVariant();
   }
@@ -527,7 +538,7 @@ public:
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!layer_->getStatus().isOK())
+    if (!isStatusOk(layer_->getStatus()))
       return QColor(Qt::gray);
     return QVariant();
   }
@@ -565,7 +576,7 @@ public:
   /** @copydoc  MapDataModel::Item::color */
   virtual QVariant color() const
   {
-    if (!layer_->getStatus().isOK())
+    if (!isStatusOk(layer_->getStatus()))
       return QColor(Qt::gray);
     return QVariant();
   }

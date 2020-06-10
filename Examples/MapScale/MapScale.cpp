@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -208,7 +209,6 @@ static ui::Control* createHelp(simUtil::MapScale* mapScale)
   widget = grid->setControl(3, row, new ui::ButtonControl("Nautical", new UnitsHandler(mapScale,
     new simUtil::MapScaleTwoUnitsProvider(simCore::Units::METERS, simCore::Units::NAUTICAL_MILES, 18520.0))));
   widget->setFontSize(CONTROL_FONT_SIZE);
-  row++;
 
   return vbox;
 }

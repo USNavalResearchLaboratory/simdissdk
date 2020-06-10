@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,6 +31,7 @@
 #include "simVis/GOG/GOGNode.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/Hemisphere.h"
+#include "simVis/GOG/ImageOverlay.h"
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
@@ -84,6 +86,7 @@ GOGRegistry::GOGRegistry(osgEarth::MapNode* mapNode)
   add("polygon",      new SF<Polygon>());
   add("points",       new SF<Points>());
   add("sphere",       new SF<Sphere>());
+  add("imageoverlay", new SF<ImageOverlay>());
 }
 
 GOGRegistry::GOGRegistry(const GOGRegistry& rhs)

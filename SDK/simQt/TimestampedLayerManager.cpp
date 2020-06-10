@@ -1,24 +1,25 @@
 /* -*- mode: c++ -*- */
 /****************************************************************************
-*****                                                                  *****
-*****                   Classification: UNCLASSIFIED                   *****
-*****                    Classified By:                                *****
-*****                    Declassify On:                                *****
-*****                                                                  *****
-****************************************************************************
-*
-*
-* Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
-*               EW Modeling & Simulation, Code 5773
-*               4555 Overlook Ave.
-*               Washington, D.C. 20375-5339
-*
-* License for source code at https://simdis.nrl.navy.mil/License.aspx
-*
-* The U.S. Government retains all rights to use, duplicate, distribute,
-* disclose, or release this software.
-*
-*/
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling & Simulation, Code 5773
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ *
+ */
 
 #include <cassert>
 #include "osg/ValueObject"
@@ -389,7 +390,7 @@ void TimestampedLayerManager::restoreOriginalVisibility_()
   for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
   {
     // Then iterate through the layers within the groups
-    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.begin(); layerIter++)
+    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.end(); layerIter++)
     {
       if (layerIter->second.valid() && layerIter->second != groupIter->second->currentLayer)
       {
@@ -399,6 +400,9 @@ void TimestampedLayerManager::restoreOriginalVisibility_()
           layerIter->second->setVisible(originVisIter->second);
       }
     }
+
+    // Unset the group's current layer.  Prevents bad starting state when timed visibility is reactiviated
+    groupIter->second->currentLayer = NULL;
   }
 }
 
@@ -407,7 +411,7 @@ void TimestampedLayerManager::useTimedVisibility_()
   // Set all layers invisible as a base, then let setTime handle which (if any) should be visible
   for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
   {
-    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.begin(); layerIter++)
+    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.end(); layerIter++)
     {
       if (layerIter->second.valid())
       {

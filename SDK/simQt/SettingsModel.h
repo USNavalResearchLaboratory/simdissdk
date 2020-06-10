@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -58,6 +59,8 @@ public:
 
   /// Instantiates a new settings model from the provided parent
   SettingsModel(QObject* parent, QSettings& settings);
+  /// Instantiates new settings model with no dedicated filename; save() is a noop and fileName() is empty.
+  explicit SettingsModel(QObject* parent = NULL);
   virtual ~SettingsModel();
 
   // from  QAbstractItemModel
@@ -120,10 +123,10 @@ public:
   virtual void addObserver(ObserverPtr observer);
   virtual int removeObserver(ObserverPtr observer);
 
-  /// Retrieves the path to the underlying storage; on Windows if using NativeFormat, this could be a registry path and not a file path
+  /// Retrieves the path to the underlying storage; on Windows if using NativeFormat, this could be a registry path and not a file path; might be empty
   virtual QString fileName() const;
 
-  /// Creates a memento for saving and restoring state
+  /// Creates a memento for saving and restoring state (keys and values only)
   virtual Memento* createMemento() const;
 
   // Misc.
@@ -132,6 +135,11 @@ public:
   bool canUndo() const;
   ///@return True when there are items to redo
   bool canRedo() const;
+
+  ///@return True if read-only; read-only settings cannot save(), but can saveSettingsFileAs()
+  bool isReadOnly() const;
+  /// Change the read-only flag; read-only settings cannot save(), but can saveSettingsFileAs()
+  void setReadOnly(bool readOnly);
 
 signals:
   /// Indicates that settings are about to be saved to a file
@@ -157,7 +165,7 @@ public slots:
   /// Saves the settings to a file. If onlyDeltas is true, saves out only settings whose value differs from default value. Return 0 on success.
   int saveSettingsFileAs(const QString& path, bool onlyDeltas=false);
 
-  /// Saves out data to the default QSettings location
+  /// Saves out data to the default QSettings location; noop if isReadOnly() is true or no filename
   void save();
 
 private:
@@ -185,7 +193,7 @@ private:
   /// If an observer is pending for the specified name add it to the specified tree node
   void addPendingObserver_(const QString& name, TreeNode* node);
   /// Reloads model from a specific QSettings
-  void reloadModel_(QSettings& settings);
+  void reloadModel_(QSettings* settings);
   /// Returns all the leaf nodes names under node
   void allNames_(TreeNode* node, QStringList& all) const;
   /// Stores the changed leaf nodes under node to settings; store all leaf nodes if force is true
@@ -200,6 +208,8 @@ private:
   void storeMetaData_(QSettings& settings, TreeNode* node);
   /// Resets to default values for node and its children (recursive)
   void resetDefaults_(TreeNode* node);
+  /// Common initialization from both constructors
+  void init_();
 
   /// Root item describes the top of the tree
   TreeNode* rootNode_;
@@ -221,6 +231,9 @@ private:
   QIcon folderIcon_;
   /// Icon for leaf nodes
   QIcon noIcon_;
+
+  /// Indicates that save() should be a noop
+  bool readOnly_;
 };
 
 }

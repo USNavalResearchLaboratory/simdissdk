@@ -13,13 +13,14 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
  *
  */
-
+#include <algorithm>
 #include <cassert>
 #include <QMenu>
 #include <QMenuBar>
@@ -201,7 +202,7 @@ void WeightedMenuManager::insertBefore_(QWidget* widget, int weight, QAction* ac
 
   // Figure out the insert-before based on the weights
   QList<int> weights = menuWeights_(widget);
-  QList<int>::iterator insertBefore = qUpperBound(weights.begin(), weights.end(), weight);
+  QList<int>::iterator insertBefore = std::upper_bound(weights.begin(), weights.end(), weight);
 
   // Insert the action before other actions
   QAction* beforeAct = actionByIndex_(widget, std::distance(weights.begin(), insertBefore));
@@ -251,7 +252,7 @@ void WeightedMenuManager::insertBefore_(QWidget* menuOrBar, int weight, QMenu* m
 
   // Figure out the insert-before based on the weights
   QList<int> weights = menuWeights_(menuOrBar);
-  QList<int>::iterator insertBefore = qUpperBound(weights.begin(), weights.end(), weight);
+  QList<int>::iterator insertBefore = std::upper_bound(weights.begin(), weights.end(), weight);
 
   // Insert the action before other actions
   QAction* beforeAct = actionByIndex_(menuOrBar, std::distance(weights.begin(), insertBefore));
@@ -348,7 +349,7 @@ void WeightedMenuManager::insertWidgetBefore_(QWidget* parentWidget, int weight,
 
   // Figure out the insert-before based on the weights
   QList<int> weights = widgetWeights_(parentWidget);
-  const QList<int>::iterator insertBefore = qUpperBound(weights.begin(), weights.end(), weight);
+  const QList<int>::iterator insertBefore = std::upper_bound(weights.begin(), weights.end(), weight);
   const int indexOfInsertion = std::distance(weights.begin(), insertBefore);
 
   // Insert the widget before other widgets

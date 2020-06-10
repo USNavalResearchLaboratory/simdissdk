@@ -15,6 +15,7 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}BoundSettings.h
     ${SIMQT_INC}ColorButton.h
     ${SIMQT_INC}ColorWidget.h
+    ${SIMQT_INC}ColorWidgetDelegate.h
     ${SIMQT_INC}ConsoleDataModel.h
     ${SIMQT_INC}ConsoleLogger.h
     ${SIMQT_INC}DirectorySelectorWidget.h
@@ -46,7 +47,6 @@ set(SIMQT_HEADERS_TO_MOC
     ${SIMQT_INC}UnitsComboBox.h
 )
 set(SIMQT_HEADERS
-    ${SIMQT_INC}ColorGradient.h
     ${SIMQT_INC}ConsoleChannel.h
     ${SIMQT_INC}FileDialog.h
     ${SIMQT_INC}FileUtilities.h
@@ -118,6 +118,7 @@ if(OSG_FOUND)
         ${SIMQT_INC}ColorGradientWidget.h
     )
     list(APPEND SIMQT_HEADERS
+        ${SIMQT_INC}ColorGradient.h
         ${SIMQT_INC}QtConversion.h
     )
 endif()
@@ -139,8 +140,8 @@ set(SIMQT_SOURCES
     ${SIMQT_SRC}ActionItemModel.cpp
     ${SIMQT_SRC}BoundSettings.cpp
     ${SIMQT_SRC}ColorButton.cpp
-    ${SIMQT_SRC}ColorGradient.cpp
     ${SIMQT_SRC}ColorWidget.cpp
+    ${SIMQT_SRC}ColorWidgetDelegate.cpp
     ${SIMQT_SRC}ConsoleChannel.cpp
     ${SIMQT_SRC}ConsoleDataModel.cpp
     ${SIMQT_SRC}ConsoleLogger.cpp
@@ -236,12 +237,13 @@ endif()
 
 if(OSG_FOUND)
     list(APPEND SIMQT_SOURCES
+        ${SIMQT_SRC}ColorGradient.cpp
         ${SIMQT_SRC}ColorGradientWidget.cpp
         ${SIMQT_SRC}QtConversion.cpp
     )
 endif()
 
-source_group(Sources FILES ${SIMQT_SOURCES})
+source_group("Source Files" FILES ${SIMQT_SOURCES})
 
 # .ui files
 set(SIMQT_FORMS

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -22,7 +23,8 @@
 #include <cstdio>
 #include <cmath>
 #include <stdexcept>
-#include "simCore.h"
+#include "simCore/Common/Version.h"
+#include "simCore/Common/SDKAssert.h"
 
 namespace
 {

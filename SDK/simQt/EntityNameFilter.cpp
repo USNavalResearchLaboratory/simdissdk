@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -78,12 +79,6 @@ void EntityNameFilter::setFilterSettings(const QMap<QString, QVariant>& settings
       regExp_->patternSyntax() != RegExpImpl::simQtPatternSyntax(regExp.patternSyntax()) ||
       regExp_->caseSensitivity() != RegExpImpl::simQtCaseSensitivity(regExp.caseSensitivity()))
     {
-      // Update the GUI if it's valid
-      if (widget_ != NULL)
-      {
-        ScopedSignalBlocker block(*widget_);
-        widget_->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
-      }
       setRegExp(regExp);
     }
   }
@@ -104,7 +99,23 @@ void EntityNameFilter::setModel(AbstractEntityTreeModel* model)
 
 void EntityNameFilter::setRegExp(const QRegExp& regExp)
 {
+  // Update the GUI if it's valid
+  if (widget_ != NULL)
+  {
+    ScopedSignalBlocker block(*widget_);
+    widget_->configure(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
+  }
+
   setRegExpAttributes_(regExp.pattern(), regExp.caseSensitivity(), regExp.patternSyntax());
+}
+
+QRegExp EntityNameFilter::regExp() const
+{
+  QString pattern = QString::fromStdString(regExp_->pattern());
+  Qt::CaseSensitivity caseSensitivity = regExp_->caseSensitivity() == simQt::RegExpImpl::CaseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
+  QRegExp::PatternSyntax patternSyntax = RegExpImpl::qtPatternSyntax(regExp_->patternSyntax());
+
+  return QRegExp(pattern, caseSensitivity, patternSyntax);
 }
 
 void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity caseSensitive, QRegExp::PatternSyntax expression)
@@ -132,22 +143,23 @@ void EntityNameFilter::setRegExpAttributes_(QString filter, Qt::CaseSensitivity 
 bool EntityNameFilter::acceptIndex_(const QModelIndex& index) const
 {
   // Should only pass in a valid index
-  assert(index.model() != NULL);
+  const QAbstractItemModel* model = index.model();
+  assert(model != NULL);
   // Make sure pointers are valid
-  if ((index.model() == NULL) || (regExp_ == NULL))
+  if ((model == NULL) || (regExp_ == NULL))
     return false;
 
   // Check if this index passes the filter, return true if it does
-  QString name = index.model()->data(index).toString();
+  const QString name = model->data(index).toString();
   bool rv = regExp_->match(name.toStdString());
   if (rv)
     return rv;
 
   // Index didn't pass, check its children
-  int numChildren = index.model()->rowCount(index);
+  int numChildren = model->rowCount(index);
   for (int i = 0; i < numChildren; ++i)
   {
-    const QModelIndex& childIdx = index.child(i, 0);
+    const QModelIndex& childIdx = model->index(i, 0, index);
     // Check if this child index (or any of its children)
     // passes the filter, return true if any of them pass
     rv = acceptIndex_(childIdx);

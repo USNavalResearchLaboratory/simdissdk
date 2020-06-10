@@ -1,1 +1,48 @@
-The SIMDIS SDK is distributed under Distribution Statement A.  Please refer to https://simdis.nrl.navy.mil/License.aspx.
+AUTHORIZATION TO USE AND DISTRIBUTE
+
+I hereby agree to the following terms governing the use and redistribution
+of the SIMDIS software originally developed at the Naval Research
+Laboratory, Tactical Electronic Warfare Department.
+
+The modules of SIMDIS containing an attribution in their header files to
+the Naval Research Laboratory have been authored by federal and non-federal
+employees. To the extent that a federal employee is an author of a portion
+of this software or a derivative work thereof, no copyright is claimed by
+the United States Government, as represented by the Secretary of the Navy
+("GOVERNMENT") under Title 17, U.S. Code. All Other Rights Reserved. To the
+extent that a non-federal employee is an author of a portion of this
+software or a derivative work thereof, the work was funded in whole or in
+part by the U.S. Government, and is, therefore, subject to the following
+license: The Government is granted for itself and others acting on its
+behalf a paid-up, nonexclusive, irrevocable worldwide license in this work
+to reproduce, prepare derivative works, distribute copies to the public,
+and perform publicly and display publicly, by or on behalf of the
+Government. All other rights are reserved by the copyright owner.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met (1) source code distributions retain the above copyright notice, this
+list of conditions, and the following disclaimer in its entirety,
+(2) distributions including binary code include this paragraph in its
+entirety in the documentation or other materials provided with the
+distribution, and (3) all published research using this software display
+the following acknowledgment: "This work uses the software components
+contained within the NRL SIMDIS computer package written and developed
+by the Naval Research Laboratory, Tactical Electronic Warfare Div."
+
+Neither the name of NRL or its contributors, nor any entity of the United
+States Government may be used to endorse or promote products derived from
+this software, nor does the inclusion of the NRL written and developed
+software directly or indirectly suggest NRL's or the United States
+Government's endorsement of this product.
+
+THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Notice of Third Party Software Licenses
+
+This software contains open source software packages from third parties.
+These are available on an "as is" basis and subject to their individual
+license agreements.

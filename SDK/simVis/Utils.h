@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -242,19 +243,6 @@ namespace simVis
    */
   SDKVIS_EXPORT bool isImageFile(const std::string& location);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-  * Finds the full path of the font file, searching in SIMDIS installed fonts locations.
-  * Provided as a convenience method to simVis::Registry::instance()->findFontFile().
-  * This method is deprecated and may be removed in a future release.  Please use the
-  * Registry method instead.
-  * @param fontFile file name
-  * @return string  full path of file
-  * @deprecated Use simVis::Registry::findFontFile() instead.
-  */
-  SDK_DEPRECATE(SDKVIS_EXPORT std::string findFontFile(const std::string& fontFile), "Method will be removed in future SDK release.");
-#endif
-
   /**
    * Convert simData DistanceUnits to osgEarth::Units.
    */
@@ -351,6 +339,15 @@ namespace simVis
     * @param max_hpr_deg Maximum allowable Euler angles (HRP, degrees)
     */
     static void clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, osg::Vec3d& max_hpr_deg);
+
+    /**
+    * Takes an ECEF position and return the projected position at altitude 0
+    * Similar to simCore::clampEcefPointToGeodeticSurface() but more efficient when matrix is already available
+    * @param ecefPos specified position
+    * @param local2world ENU matrix at specified position
+    * @return ECEF point at altitude 0
+    */
+    static osg::Vec3d ecefEarthPoint(const simCore::Vec3& ecefPos, const osg::Matrixd& world2local);
 
     /**
     * Quaternion spherical linear interpolator - for sweeping one quat onto another

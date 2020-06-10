@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -269,6 +270,28 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
     {
       // NOTE: this will only store comments within a start/end block
       currentMetaData.metadata += line + "\n";
+
+      // process special KML icon comment keywords
+      if (tokens.size () > 2 && tokens[1] == "kml_icon")
+        current.set(GOG_ICON, tokens[2]);
+      if (tokens.size() > 1 && tokens[1] == "kml_groundoverlay")
+      {
+        currentMetaData.shape = GOG_IMAGEOVERLAY;
+        currentMetaData.loadFormat = FORMAT_KML;
+        current.setShape("imageoverlay");
+        type = SHAPE_ABSOLUTE;
+      }
+      if (tokens.size() > 1 && tokens[1] == "kml_latlonbox")
+      {
+        if (tokens.size() > 6)
+        {
+          current.set(GOG_LLABOX_N, tokens[2]);
+          current.set(GOG_LLABOX_S, tokens[3]);
+          current.set(GOG_LLABOX_E, tokens[4]);
+          current.set(GOG_LLABOX_W, tokens[5]);
+          current.set(GOG_LLABOX_ROT, tokens[6]);
+        }
+      }
     }
     else if (tokens[0] == "version")
     {
@@ -317,6 +340,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
       validStartEndBlock = (tokens[0] == "start");
       currentMetaData.metadata.clear();
       currentMetaData.shape = GOG_UNKNOWN;
+      currentMetaData.loadFormat = FORMAT_GOG;
       currentMetaData.lineNumber = lineNumber;
       currentMetaData.clearSetFields();
       current.reset();
@@ -1128,6 +1152,8 @@ GogShape Parser::getShapeFromKeyword(const std::string& keyword)
     return GOG_LATLONALTBOX;
   if (keyword == "cone")
     return GOG_CONE;
+  if (keyword == "imageoverlay")
+    return GOG_IMAGEOVERLAY;
   return GOG_UNKNOWN;
 }
 
@@ -1163,6 +1189,8 @@ std::string Parser::getKeywordFromShape(GogShape shape)
     return "latlonaltbox";
   case GOG_CONE:
     return "cone";
+  case GOG_IMAGEOVERLAY:
+    return "imageoverlay";
   case GOG_UNKNOWN:
     return "";
   }

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -29,6 +30,7 @@ namespace simCore
 
 CsvReader::CsvReader(std::istream& stream)
   : stream_(stream),
+  parseQuotes_(true),
   commentChar_('#'),
   lineNumber_(0)
 {
@@ -41,6 +43,11 @@ CsvReader::~CsvReader()
 size_t CsvReader::lineNumber() const
 {
   return lineNumber_;
+}
+
+void CsvReader::setParseQuotes(bool parseQuotes)
+{
+  parseQuotes_ = parseQuotes;
 }
 
 void CsvReader::setCommentChar(char commentChar)
@@ -68,7 +75,7 @@ int CsvReader::readLine(std::vector<std::string>& tokens, bool skipEmptyLines)
     if (line[0] == commentChar_)
       continue;
 
-    simCore::stringTokenizer(tokens, line, ",", true, false);
+    getTokens_(tokens, line);
     return 0;
   }
   return 1;
@@ -89,6 +96,25 @@ int CsvReader::readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyL
     tokens[i] = simCore::StringUtils::trim(tok);
   }
   return 0;
+}
+
+void CsvReader::getTokens_(std::vector<std::string>& tokens, const std::string& line) const
+{
+  auto delimPos = line.find_first_of(",");
+  if (delimPos == std::string::npos)
+  {
+    tokens.push_back(line);
+    return;
+  }
+
+  auto quotePos = line.find_first_of("'\"");
+  if (!parseQuotes_ || (quotePos == std::string::npos))
+  {
+    simCore::stringTokenizer(tokens, line, ",", true, false);
+    return;
+  }
+
+  simCore::escapeTokenize(tokens, line, true, ",", false, true, false);
 }
 
 }

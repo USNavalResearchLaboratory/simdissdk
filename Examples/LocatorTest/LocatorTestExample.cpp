@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -186,7 +187,7 @@ osg::Node* createNode(float s)
 
 void setup(App& app)
 {
-  app.root = new simVis::Locator(app.mapSRS);
+  app.root = new simVis::Locator();
   app.rootNode = new simVis::LocatorNode(app.root.get(), createNode(SCALE));
   app.rootNode->addChild(new LabelNode("root"));
   app.graph->addChild(app.rootNode.get());

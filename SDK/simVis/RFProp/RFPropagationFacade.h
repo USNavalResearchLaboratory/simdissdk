@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -22,8 +23,9 @@
 #ifndef SIMVIS_RFPROP_RFPROPAGATIONFACADE_H
 #define SIMVIS_RFPROP_RFPROPAGATIONFACADE_H
 
-#include <vector>
+#include <map>
 #include <string>
+#include <vector>
 #include "osg/ref_ptr"
 #include "simCore/Common/Export.h"
 #include "simData/ObjectId.h"
@@ -32,9 +34,7 @@
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 
-namespace osgEarth { class Map; }
 namespace simCore { class TimeStamp; }
-namespace simVis { class LocatorNode; }
 
 namespace simRF
 {
@@ -48,9 +48,8 @@ public:
    * Construct an RF Propagation beam handler for the specified beam
    * @param beamId Beam to configure
    * @param parent node to which the visual display's locator is attached; if NULL, no display will be created
-   * @param map from the scene manager for creating the locator
    */
-  RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent, osgEarth::Map* map);
+  RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent);
   virtual ~RFPropagationFacade();
 
   /**
@@ -455,6 +454,12 @@ public:
   void setElevation(double elevation);
 
   /**
+   * Set whether the data are specified for spherical or WGS84 earth
+   * @param sphericalEarth  true if data is spherical earth data, false if WGS84
+   */
+  void setSphericalEarth(bool sphericalEarth);
+
+  /**
   * Gets the number of profiles available in the profile manager
   * @return number of profiles
   */
@@ -497,10 +502,7 @@ private:
   /// profile manager manages all the profiles that hold the rf prop data
   osg::ref_ptr<simRF::ProfileManager> profileManager_;
 
-  /// locator node to which display is attached, and which attaches display to scene graph
-  osg::ref_ptr<simVis::LocatorNode> locator_;
-
-  /// parent node in the scene graph of our locator
+  /// parent node in the scene graph of our profileManager
   osg::observer_ptr<osg::Group> parent_;
 
   /// color provider to manager which color

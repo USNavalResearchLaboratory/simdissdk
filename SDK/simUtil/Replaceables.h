@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -65,11 +66,6 @@ class SDKUTIL_EXPORT AzimuthVariable : public simCore::TextReplacer::Replaceable
 public:
   /** Constructor */
   AzimuthVariable(simVis::View* mainView);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  AzimuthVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -84,11 +80,6 @@ class SDKUTIL_EXPORT ElevationVariable : public simCore::TextReplacer::Replaceab
 public:
   /** Constructor */
   ElevationVariable(simVis::View* mainView);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  ElevationVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -103,11 +94,6 @@ class SDKUTIL_EXPORT LatitudeVariable : public simCore::TextReplacer::Replaceabl
 public:
   /** Constructor */
   LatitudeVariable(simVis::View* mainView, int precision=2);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  LatitudeVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -123,11 +109,6 @@ class SDKUTIL_EXPORT LongitudeVariable : public simCore::TextReplacer::Replaceab
 public:
   /** Constructor */
   LongitudeVariable(simVis::View* mainView, int precision=2);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  LongitudeVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:
@@ -143,11 +124,6 @@ class SDKUTIL_EXPORT AltitudeVariable : public simCore::TextReplacer::Replaceabl
 public:
   /** Constructor */
   AltitudeVariable(simVis::View* mainView);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** @deprecated Constructor that takes a simVis::Viewer */
-  AltitudeVariable(simVis::Viewer* viewer);
-#endif
-
   virtual std::string getText() const;
   virtual std::string getVariableName() const;
 private:

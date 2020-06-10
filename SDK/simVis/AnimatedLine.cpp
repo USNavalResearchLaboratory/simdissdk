@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -402,16 +403,19 @@ void AnimatedLineNode::update_(double t)
 
   if (numShifts >= 1.0)
   {
+    // note: lines are tessellated end-to-start,
+    // so we bit-shift in the opposite direction to achieve
+    // proper stippling direction.
     const unsigned short bits = shortRound(numShifts);
     if (shiftsPerSecond_ > 0.0)
     {
-      ror(stipple1_, bits);
-      ror(stipple2_, bits);
+      rol(stipple1_, bits);
+      rol(stipple2_, bits);
     }
     else
     {
-      rol(stipple1_, bits);
-      rol(stipple2_, bits);
+      ror(stipple1_, bits);
+      ror(stipple2_, bits);
     }
 
     line1_->setStipplePattern(stipple1_);

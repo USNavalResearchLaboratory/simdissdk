@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -44,8 +45,6 @@
 #include "simNotify/Notify.h"
 #include "simVis/Viewer.h"
 #include "simVis/Utils.h"
-#include "simVis/Locator.h"
-#include "simVis/LocatorNode.h"
 #include "simVis/Scenario.h"
 #include "simVis/SceneManager.h"
 #include "simVis/RFProp/ArepsLoader.h"
@@ -673,7 +672,6 @@ int main(int argc, char** argv)
       osg::ref_ptr<simRF::Profile> profile = new simRF::Profile(cProvider.get());
       profile->setHalfBeamWidth(beamWidth / 2.0);
       profile->setBearing(bearingStep * i);
-      profile->setDisplayThickness(maxHeight);
       profile->setTerrainHeights(terrain);
       profileManager->addProfile(profile.get());
     }
@@ -708,6 +706,7 @@ int main(int argc, char** argv)
         {
           minHeight = provider->getMinHeight();
           maxHeight = provider->getMaxHeight();
+          numHeights = provider->getNumHeights();
         }
       }
     }
@@ -769,7 +768,7 @@ int main(int argc, char** argv)
 
   //Add a thickness slider; used for 3D
   s_controlGrid->setControl(0, row, new LabelControl("Thickness"));
-  osg::ref_ptr<HSliderControl> thicknessSlider = createSlider(0, maxHeight - minHeight, profileManager->getDisplayThickness());
+  osg::ref_ptr<HSliderControl> thicknessSlider = createSlider(1, numHeights, profileManager->getDisplayThickness());
   thicknessSlider->addEventHandler(new ThicknessHandler(profileManager.get()));
   s_controlGrid->setControl(1, row, thicknessSlider.get());
   row++;
@@ -888,15 +887,8 @@ int main(int argc, char** argv)
   s_controlGrid->setControl(1, row, depthTestCheck.get());
   row++;
 
-
-  osg::ref_ptr<simVis::LocatorNode> rfLocator = new simVis::LocatorNode(
-      new simVis::Locator(viewer->getSceneManager()->getMap()->getSRS()));
-  rfLocator->getLocator()->setCoordinate(simCore::Coordinate(
-      simCore::COORD_SYS_LLA,
-      simCore::Vec3(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt)));
-  rfLocator->addChild(profileManager.get());
   profileManager->setRefCoord(osg::DegreesToRadians(lat), osg::DegreesToRadians(lon), alt);
-  root->addChild(rfLocator.get());
+  root->addChild(profileManager.get());
   profileManager->setDisplay(true);
 
 

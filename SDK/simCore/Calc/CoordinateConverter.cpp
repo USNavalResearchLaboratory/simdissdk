@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -1967,7 +1968,7 @@ void CoordinateConverter::convertEciEcef_(const Coordinate &inCoord, Coordinate 
   assert(inCoord.coordinateSystem() != outCoord.coordinateSystem());
   assert(&inCoord != &outCoord);
 
-  // if converting to eci to ecef, then rotation is negative
+  // if converting from eci to ecef, then rotation is negative
   const double rotationRate = (outCoord.coordinateSystem() == COORD_SYS_ECEF) ? -EARTH_ROTATION_RATE : EARTH_ROTATION_RATE;
   // z axis rotation of omega
   const double eciRotation = angFix2PI(rotationRate * inCoord.elapsedEciTime());

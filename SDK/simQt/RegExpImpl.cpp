@@ -1,28 +1,29 @@
 /* -*- mode: c++ -*- */
 /****************************************************************************
-*****                                                                  *****
-*****                   Classification: UNCLASSIFIED                   *****
-*****                    Classified By:                                *****
-*****                    Declassify On:                                *****
-*****                                                                  *****
-****************************************************************************
-*
-*
-* Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
-*               EW Modeling and Simulation, Code 5770
-*               4555 Overlook Ave.
-*               Washington, D.C. 20375-5339
-*
-* For more information please send email to simdis@enews.nrl.navy.mil
-*
-* U.S. Naval Research Laboratory.
-*
-* The U.S. Government retains all rights to use, duplicate, distribute,
-* disclose, or release this software.
-****************************************************************************
-*
-*
-*/
+ *****                                                                  *****
+ *****                   Classification: UNCLASSIFIED                   *****
+ *****                    Classified By:                                *****
+ *****                    Declassify On:                                *****
+ *****                                                                  *****
+ ****************************************************************************
+ *
+ *
+ * Developed by: Naval Research Laboratory, Tactical Electronic Warfare Div.
+ *               EW Modeling and Simulation, Code 5770
+ *               4555 Overlook Ave.
+ *               Washington, D.C. 20375-5339
+ *
+ * For more information please send email to simdis@enews.nrl.navy.mil
+ *
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
+ *
+ * The U.S. Government retains all rights to use, duplicate, distribute,
+ * disclose, or release this software.
+ ****************************************************************************
+ *
+ *
+ */
 #include <cassert>
 #include <QRegExp>
 #include <QRegularExpression>
@@ -240,7 +241,10 @@ void RegExpImpl::initializeQRegExp_()
   {
   case RegExp:
   {
-    QRegularExpression::PatternOptions patternOptions = QRegularExpression::DontCaptureOption | QRegularExpression::OptimizeOnFirstUsageOption;
+    QRegularExpression::PatternOptions patternOptions = QRegularExpression::DontCaptureOption;
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
+    patternOptions |= QRegularExpression::OptimizeOnFirstUsageOption;
+#endif
     if (caseSensitivity_ == CaseInsensitive)
       patternOptions |= QRegularExpression::CaseInsensitiveOption;
     fastRegex_ = new QRegularExpression(QString::fromStdString(exp_), patternOptions);

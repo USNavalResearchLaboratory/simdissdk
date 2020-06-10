@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -45,7 +46,7 @@
 #include "simVis/Antenna.h"
 #include "simVis/Beam.h"
 #include "simVis/ElevationQueryProxy.h"
-#include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/Platform.h"
 #include "simVis/LobGroup.h" // Must come after Platform.h
@@ -56,10 +57,6 @@
 #include "simVis/Utils.h"
 
 #include "simVis/RangeTool.h"
-
-using namespace simVis;
-using namespace osgEarth::Util::Controls;
-using namespace osgEarth;
 
 /// Minimum depth bias for offsetting in meters
 const int DEPTH_BUFFER_MIN_BIAS = 5000;
@@ -337,7 +334,7 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   horizonCull->setCullByCenterPointOnly(true);
   labels_->setCullCallback(horizonCull);
 
-  xform_ = new osg::MatrixTransform();
+  xform_ = new LocatorNode();
   xform_->addChild(geode_);
   xform_->addChild(labels_);
   xform_->setName("Range Tool Association");
@@ -388,6 +385,8 @@ bool RangeTool::Association::update(const ScenarioManager& scenario, const simCo
     }
 
     obj1_obs_ = obj1.get();
+    // xform will automatically track position of this entity
+    xform_->setLocator(obj1_obs_->getLocator(), Locator::COMP_POSITION);
   }
 
   osg::ref_ptr<EntityNode> obj2 = obj2_obs_.get();
@@ -437,6 +436,11 @@ void RangeTool::Association::setDirty()
   osgEarth::DirtyNotifier::setDirty();
 }
 
+osg::Node* RangeTool::Association::getNode() const
+{
+  return xform_.get();
+}
+
 void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp)
 {
   int rv = state_->populateEntityState(scenario, obj0, state_->beginEntity_);
@@ -464,20 +468,14 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   // initialize coordinate system and converter to optimize repeated conversions and support other values (flat projections)
   state_->coordConv_.setReferenceOrigin(state_->beginEntity_->lla_);
 
-  // get entity ecef position
-  simCore::Vec3 ecef;
-  obj0->getPosition(&ecef);
+  // ensure that xform is synced with its locator
+  xform_->syncWithLocator();
 
-  // create a local ENU coordinate frame
-  state_->local2world_.makeTranslate(ecef.x(), ecef.y(), ecef.z());
-  osg::ref_ptr<const osgEarth::SpatialReference> srs = obj0->getLocator()->getSRS();
-  srs->getEllipsoid()->computeCoordinateFrame(state_->beginEntity_->lla_.lat(), state_->beginEntity_->lla_.lon(), state_->local2world_);
+  // localizes all geometry to the reference point of obj0, preventing precision jitter
+  state_->local2world_ = xform_->getMatrix();
 
   // invert to support ECEF->ENU conversions
   state_->world2local_.invert(state_->local2world_);
-
-  // localizes all geometry to the reference point of obj0, preventing precision jitter
-  xform_->setMatrix(state_->local2world_);
 
   state_->mapNode_ = scenario.mapNode();
 
@@ -696,7 +694,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
   {
     if (labelCount < originalLabelCount)
       labels_->removeChildren(labelCount, originalLabelCount - labelCount);
-    osgEarth::Registry::shaderGenerator().run(labels_, osgEarth::Registry::stateSetCache());
+    osgEarth::Registry::shaderGenerator().run(labels_);
   }
 }
 

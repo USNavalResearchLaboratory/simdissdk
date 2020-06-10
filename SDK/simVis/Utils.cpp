@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -389,15 +390,6 @@ bool isImageFile(const std::string& location)
   return false;
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-std::string findFontFile(const std::string& fontFile)
-{
-  // Note that findFontFile() is deprecated and only provided for
-  // compatibility reasons.  It may be removed in a future release.
-  return Registry::instance()->findFontFile(fontFile);
-}
-#endif
-
 osgEarth::Units convertUnitsToOsgEarth(const simData::DistanceUnits& input)
 {
     return
@@ -449,8 +441,8 @@ float osgFontSize(float simFontSize)
 {
   // When comparing SIMDIS 9 text, considered the standard for text size for SIMDIS applications,
   // the OSG font size was typically about 3/4 the size of a SIMDIS string for the same font and
-  // same size.  To to convert the SIMDIS font size to OSG, we multiply by the inversion, 1.333f.
-  return simFontSize * 1.333f;
+  // same size.  To convert the SIMDIS font size to OSG, we divide by 3/4 (0.75).
+  return simFontSize / 0.75f;
 }
 
 float simdisFontSize(float osgFontSize)
@@ -659,6 +651,19 @@ void Math::clampMatrixOrientation(osg::Matrixd& mat, osg::Vec3d& min_hpr_deg, os
     const osg::Quat& q = eulerDegToQuat(osg::Vec3d(delta[0], delta[1], delta[2]));
     mat.postMultRotate(q);
   }
+}
+
+osg::Vec3d Math::ecefEarthPoint(const simCore::Vec3& ecefPos, const osg::Matrixd& world2local)
+{
+  simCore::Vec3 llaPos;
+  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefPos, llaPos);
+  const double cosLon = cos(llaPos.lon());
+  const double cosLat = cos(llaPos.lat());
+  const double sinLon = sin(llaPos.lon());
+  const double sinLat = sin(llaPos.lat());
+  osg::Vec3d up(cosLon*cosLat, sinLon*cosLat, sinLat);
+  up.normalize();
+  return (osg::Vec3d(ecefPos.x(), ecefPos.y(), ecefPos.z()) - up*llaPos.alt()) * world2local;
 }
 
 osg::Vec4f ColorUtils::RgbaToVec4(unsigned int color)

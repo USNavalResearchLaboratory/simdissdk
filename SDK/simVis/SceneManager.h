@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -30,7 +31,6 @@
 #include "osgEarth/Sky"
 #include "osgEarth/Version"
 #include "simCore/Common/Common.h"
-#include "simVis/Locator.h"
 #include "simVis/Types.h"
 
 namespace simVis
@@ -56,8 +56,7 @@ namespace simVis
    *       +-projectorManager
    * </pre>
    */
-  class SDKVIS_EXPORT SceneManager : public osg::Group,
-                                     public simVis::LocatorFactory
+  class SDKVIS_EXPORT SceneManager : public osg::Group
   {
   public:
     /**
@@ -117,7 +116,7 @@ namespace simVis
     osg::Node* getManipulatorAttachPoint() const;
 
     /**
-    * Gets or creates a new attach point for adding data to the scene graph
+    * Gets or creates a new attach point for adding data to the scene graph, not subject to horizon culling
     * @param name Name of the attach point
     * @return     New osg group
     */
@@ -146,13 +145,6 @@ namespace simVis
 
     /** Return the class name */
     virtual const char* className() const { return "SceneManager"; }
-
-  public: // simVis::LocatorFactory
-
-    // internal - override
-    Locator* createLocator() const;
-    // internal - override
-    CachingLocator* createCachingLocator() const;
 
   protected:
     /// osg::Referenced-derived

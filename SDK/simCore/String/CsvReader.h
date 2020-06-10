@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -50,6 +51,13 @@ public:
    */
   size_t lineNumber() const;
 
+  /**
+   * Set whether or not to account for quote characters when getting tokens,
+   * preventing it from splitting an internal quoted string into multiple tokens.
+   * Parsing quotes is enabled by default.
+   */
+  void setParseQuotes(bool parseQuotes);
+
   /** Set the char that denotes a comment line. Defaults to '#'. */
   void setCommentChar(char commentChar);
 
@@ -76,7 +84,11 @@ public:
   int readLineTrimmed(std::vector<std::string>& tokens, bool skipEmptyLines = true);
 
 private:
+  /** Convenience method to handle the line based on the parseQuotes option */
+  void getTokens_(std::vector<std::string>& tokens, const std::string& line) const;
+
   std::istream& stream_;
+  bool parseQuotes_;
   char commentChar_;
   size_t lineNumber_;
 };

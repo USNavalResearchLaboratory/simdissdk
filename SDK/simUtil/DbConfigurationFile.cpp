@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -528,6 +529,42 @@ osg::Node* DbConfigurationFile::readEarthFile(const std::string& filename)
   if (!istream)
     return NULL;
   return DbConfigurationFile::readEarthFile(istream, filename);
+}
+
+int DbConfigurationFile::appendEarthFile(std::istream& istream, const std::string& relativeTo, osgEarth::Map& toMap)
+{
+  osg::ref_ptr<osgDB::ReaderWriter> readWrite = osgDB::Registry::instance()->getReaderWriterForExtension("earth");
+  if (!readWrite.valid())
+    return 1;
+
+  osg::ref_ptr<osgDB::Options> dbOptions = new osgDB::Options();
+  dbOptions->setDatabasePath(relativeTo);
+  dbOptions->setPluginStringData("osgEarth::URIContext::referrer", relativeTo);
+  osgDB::ReaderWriter::ReadResult result = readWrite->readNode(istream, dbOptions.get());
+
+  if (!result.success())
+    return 1;
+
+  osgEarth::MapNode* mapNode = osgEarth::MapNode::get(result.getNode());
+  if (!mapNode)
+    return 1;
+  osgEarth::Map* map = mapNode->getMap();
+  if (!map)
+    return 1;
+
+  std::vector<osg::ref_ptr<osgEarth::Layer> > layers;
+  map->getLayers(layers);
+  for (auto iter = layers.begin(); iter != layers.end(); ++iter)
+    toMap.addLayer((*iter).get());
+  return 0;
+}
+
+int DbConfigurationFile::appendEarthFile(const std::string& filename, osgEarth::Map& toMap)
+{
+  std::fstream ifs(filename.c_str(), std::ios::in);
+  if (!ifs)
+    return 1;
+  return DbConfigurationFile::appendEarthFile(ifs, filename, toMap);
 }
 
 }

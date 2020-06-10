@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -453,6 +454,26 @@ int testOneWayFreeSpaceRangeLoss()
   return 1;
 }
 
+int testLossToPpf()
+{
+  // simple test using values plucked from AREPS datafile myTest_APM_000_00_00.txt
+  // Height(7) = 84.611, lines 2061 and 10925; 1st range point
+  const double freqMHz = 3000.;
+  const double height = 84.611 - 69.494;
+  const double range = 631.364;
+  const short loss_cB = 1075;
+  const short ppf_cB = -95;
+  int rv = 0;
+
+  const double slantRange = sqrt(height*height + range*range);
+  const double LOSS_PPF_ACCURACY_DB = 0.04;
+  const double ppf_dB = simCore::lossToPpf(slantRange, freqMHz, loss_cB * .1);
+  rv += SDK_ASSERT(ppf_dB != simCore::SMALL_DB_VAL);
+  rv += SDK_ASSERT(simCore::areEqual(ppf_cB * 0.1, ppf_dB, LOSS_PPF_ACCURACY_DB));
+
+  return rv;
+}
+
 int antennaPatternTest(int argc, char* argv[])
 {
   std::string filepath;
@@ -666,6 +687,7 @@ int EMTest(int argc, char* argv[])
   rv += testTwoWayRcvdPowerFreeSpace();
   rv += testOneWayRcvdPowerFreeSpace();
   rv += testOneWayFreeSpaceRangeLoss();
+  rv += testLossToPpf();
   rv += antennaPatternTest(argc, argv);
 
   std::cout << "EMTests " << ((rv == 0) ? "Passed" : "Failed") << std::endl;

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -153,30 +154,32 @@ PlatformNode::PlatformNode(const simData::PlatformProperties& props,
                            const simData::DataStore& dataStore,
                            PlatformTspiFilterManager& manager,
                            osg::Group* expireModeGroupAttach,
-                           Locator* locator, int referenceYear) :
-EntityNode(simData::PLATFORM, locator),
-ds_(dataStore),
-platformTspiFilterManager_(manager),
-lastUpdateTime_(-std::numeric_limits<float>::max()),
-firstHistoryTime_(std::numeric_limits<float>::max()),
-expireModeGroupAttach_(expireModeGroupAttach),
-track_(NULL),
-timeTicks_(NULL),
-localGrid_(NULL),
-bodyAxisVector_(NULL),
-inertialAxisVector_(NULL),
-scaledInertialTransform_(new PlatformInertialTransform),
-velocityAxisVector_(NULL),
-ephemerisVector_(NULL),
-model_(NULL),
-losCreator_(NULL),
-opticalLosNode_(NULL),
-radioLosNode_(NULL),
-frontOffset_(0.0),
-valid_(false),
-lastPrefsValid_(false),
-forceUpdateFromDataStore_(false),
-queuedInvalidate_(false)
+                           Locator* eciLocator,
+                           int referenceYear)
+  : EntityNode(simData::PLATFORM, new CachingLocator()),
+  ds_(dataStore),
+  platformTspiFilterManager_(manager),
+  lastUpdateTime_(-std::numeric_limits<float>::max()),
+  firstHistoryTime_(std::numeric_limits<float>::max()),
+  eciLocator_(eciLocator),
+  expireModeGroupAttach_(expireModeGroupAttach),
+  track_(NULL),
+  timeTicks_(NULL),
+  localGrid_(NULL),
+  bodyAxisVector_(NULL),
+  inertialAxisVector_(NULL),
+  scaledInertialTransform_(new PlatformInertialTransform),
+  velocityAxisVector_(NULL),
+  ephemerisVector_(NULL),
+  model_(NULL),
+  losCreator_(NULL),
+  opticalLosNode_(NULL),
+  radioLosNode_(NULL),
+  frontOffset_(0.0),
+  valid_(false),
+  lastPrefsValid_(false),
+  forceUpdateFromDataStore_(false),
+  queuedInvalidate_(false)
 {
   // create a container for platform-related objects that can be rendered even when platform is no longer valid.
   // platform manages the visibility of the group.
@@ -185,7 +188,7 @@ queuedInvalidate_(false)
   if (expireModeGroupAttach_.valid())
     expireModeGroupAttach_->addChild(expireModeGroup_);
 
-  model_ = new PlatformModelNode(new Locator(locator));
+  model_ = new PlatformModelNode(new Locator(getLocator()));
   addChild(model_);
   model_->addCallback(new BoundsUpdater(this));
 
@@ -195,7 +198,7 @@ queuedInvalidate_(false)
 
   setNodeMask(simVis::DISPLAY_MASK_NONE);
 
-  localGrid_ = new LocalGridNode(locator, this, referenceYear);
+  localGrid_ = new LocalGridNode(getLocator(), this, referenceYear);
   addChild(localGrid_);
 
   scaledInertialTransform_->setLocator(getLocator());
@@ -267,6 +270,35 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   {
     model_->setPrefs(prefs);
     updateLabel_(prefs);
+  }
+
+  if (!lastPrefsValid_ ||
+    PB_FIELD_CHANGED((&lastPrefs_), (&prefs), ecidatamode))
+  {
+    if (prefs.ecidatamode())
+    {
+      // for eci mode, platforms need to parent their EntityNode locator to the scenario ECI locator
+      if (!getLocator()->getParentLocator())
+        getLocator()->setParentLocator(eciLocator_);
+    }
+    else if (getLocator()->getParentLocator() == eciLocator_)
+    {
+      // eci mode turned off, platform locator should not have a parent
+      getLocator()->setParentLocator(NULL);
+      getLocator()->setEciRotationTime(0., lastUpdateTime_, false);
+    }
+    // on change of eci data mode, track and timeticks need to be completely recreated
+    if (track_.valid())
+    {
+      expireModeGroup_->removeChild(track_);
+      track_ = NULL;
+    }
+    if (timeTicks_.valid())
+    {
+      expireModeGroup_->removeChild(timeTicks_);
+      timeTicks_ = NULL;
+    }
+    forceUpdateFromDataStore_ = true;
   }
 
   updateOrRemoveBodyAxis_(prefsDraw, prefs);
@@ -421,6 +453,12 @@ TrackHistoryNode* PlatformNode::getTrackHistory()
 
 void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 {
+  if (u.time() != -1.0 && lastPrefs_.ecidatamode())
+  {
+    // all non-static eci platforms get this corrective rotation; updates at current time should have a total rotation of 0
+    getLocator()->setEciRotationTime(-u.time(), u.time(), false);
+  }
+
   // static platforms by convention have elapsedEciTime 0
   const simCore::Coordinate coord(
         simCore::COORD_SYS_ECEF,
@@ -643,8 +681,20 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
 {
   // if assert fails, check that callers only call on !valid() condition
   assert(!track_.valid());
+
   // create the Track History "on demand" if requested
-  track_ = new TrackHistoryNode(ds_, getLocator()->getSRS(), platformTspiFilterManager_, getId());
+  if (prefs.ecidatamode())
+  {
+    // trackhistory for an ECI platform gets a locator derived from the scenario ECI locator
+    // dev error to construct a platform with a NULL locator
+    assert(eciLocator_);
+    if (eciLocator_)
+      track_ = new TrackHistoryNode(ds_, eciLocator_, platformTspiFilterManager_, getId());
+  }
+  // trackhistory for platform in ecef datamode gets a new empty locator
+  if (!track_.valid())
+    track_ = new TrackHistoryNode(ds_, new Locator(), platformTspiFilterManager_, getId());
+
   expireModeGroup_->addChild(track_);
   track_->setPrefs(prefs, lastProps_, true);
   updateHostBounds_(prefs.scale());
@@ -665,7 +715,16 @@ bool PlatformNode::createTimeTicks_(const simData::PlatformPrefs& prefs)
   // if assert fails, check that callers only call on !valid() condition
   assert(!timeTicks_.valid());
 
-  timeTicks_ = new TimeTicks(ds_, getLocator()->getSRS(), platformTspiFilterManager_, getId());
+  if (prefs.ecidatamode())
+  {
+    // dev error to construct a platform with a NULL locator argument
+    assert(eciLocator_);
+    if (eciLocator_)
+      timeTicks_ = new TimeTicks(ds_, eciLocator_, platformTspiFilterManager_, getId());
+  }
+  // for non-ECI platform use a new empty locator
+  if (!timeTicks_.valid())
+    timeTicks_ = new TimeTicks(ds_, new Locator(), platformTspiFilterManager_, getId());
   expireModeGroup_->addChild(timeTicks_);
   timeTicks_->setPrefs(prefs, lastProps_, true);
   timeTicks_->update();

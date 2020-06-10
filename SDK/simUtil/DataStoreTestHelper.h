@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -101,6 +102,15 @@ public:
   * @return uint64_t  the id for the entity
   */
   uint64_t addProjector(uint64_t hostId, uint64_t originalId = 0);
+
+  /**
+  * Add a custom rendering
+  * Uses the id to construct a name of 'customRendering<id>_<hostId>'
+  * @param hostId platform host
+  * @param originalId Original ID to use for entity
+  * @return uint64_t  the id for the entity
+  */
+  uint64_t addCustomRendering(uint64_t hostId, uint64_t originalId = 0);
 
   /**
   * Update platform prefs as with object specified, does a merge with prefs passed in

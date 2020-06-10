@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -487,7 +488,7 @@ public:
   virtual int restore(Settings& settings) const
   {
     for (auto iter = values_.begin(); iter != values_.end(); ++iter)
-      settings.setValue(iter->first, iter->second);
+      settings.setValue(iter->first, iter->second.value, iter->second.metaData.value<simQt::Settings::MetaData>());
     return 0;
   }
 
@@ -497,8 +498,10 @@ private:
   {
     if (node == NULL)
       return;
-    const QVariant value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
-    if (!node->isRootItem() && value.isValid())
+    ValueAndMetaData value;
+    value.value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
+    value.metaData = node->data(SettingsModel::MetaDataRole, TreeNode::COLUMN_VALUE);
+    if (!node->isRootItem() && value.value.isValid())
     {
       // Leaf item -- save data and return
       values_[node->fullPath()] = value;
@@ -511,36 +514,40 @@ private:
       saveNode_(node->child(ii));
   }
 
-  std::map<QString, QVariant> values_;
+  struct ValueAndMetaData
+  {
+    QVariant value;
+    QVariant metaData;
+  };
+  std::map<QString, ValueAndMetaData> values_;
 };
 
 ////////////////////////////////////////////////////////////////////////////
 
 SettingsModel::SettingsModel(QObject* parent, QSettings& settings)
   : QAbstractItemModel(parent),
-    rootNode_(NULL)
+    rootNode_(NULL),
+    readOnly_(false)
 {
-  // Register operators to avoid "Unable to load type" and "Unknown user type"
-  qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
-
-  // Note that QFileIconProvider requires QApplication and will crash with QCoreApplication
-  bool hasGuiApp = (qobject_cast<QApplication*>(QCoreApplication::instance()) != NULL);
-  if (hasGuiApp)
-  {
-    QFileIconProvider provider;
-    folderIcon_ = provider.icon(QFileIconProvider::Folder);
-  }
-  else
-    folderIcon_ = QIcon();
-  noIcon_ = QIcon();
+  init_();
 
   // reloadModel makes the tree and initMetaData adds to the tree
-  reloadModel_(settings);
+  reloadModel_(&settings);
   initMetaData_(settings);
 
   // No copy constructor for QSettings so capture the info to re-create for write out
   format_ = settings.format();
   filename_ = settings.fileName();
+}
+
+SettingsModel::SettingsModel(QObject* parent)
+  : QAbstractItemModel(parent),
+    rootNode_(NULL),
+    format_(QSettings::InvalidFormat),
+    readOnly_(true)
+{
+  init_();
+  reloadModel_(NULL);
 }
 
 SettingsModel::~SettingsModel()
@@ -555,8 +562,29 @@ SettingsModel::~SettingsModel()
   redoStack_.clear();
 }
 
+void SettingsModel::init_()
+{
+  // Register operators to avoid "Unable to load type" and "Unknown user type"
+  qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
+
+  // Note that QFileIconProvider requires QApplication and will crash with QCoreApplication
+  bool hasGuiApp = (qobject_cast<QApplication*>(QCoreApplication::instance()) != NULL);
+  if (hasGuiApp)
+  {
+    QFileIconProvider provider;
+    folderIcon_ = provider.icon(QFileIconProvider::Folder);
+  }
+  else
+    folderIcon_ = QIcon();
+  noIcon_ = QIcon();
+}
+
 void SettingsModel::save()
 {
+  // Attempt to detect user wanting to not save anything
+  if (filename_.isEmpty() || readOnly_)
+    return;
+
   QSettings settings(filename_, format_);
   // Create a settings file for output
   if (settings.isWritable())
@@ -567,7 +595,7 @@ void SettingsModel::save()
   }
 }
 
-void SettingsModel::reloadModel_(QSettings& settings)
+void SettingsModel::reloadModel_(QSettings* settings)
 {
   beginResetModel();
   delete rootNode_;
@@ -576,7 +604,8 @@ void SettingsModel::reloadModel_(QSettings& settings)
   QList<QVariant> rootData;
   rootData << HEADER_NAME << HEADER_VALUE;
   rootNode_ = new TreeNode(noIcon_, rootData);
-  initModelData_(settings, rootNode_, rootNode_->path(), false);
+  if (settings)
+    initModelData_(*settings, rootNode_, rootNode_->path(), false);
   endResetModel(); // calls reset() automatically
 }
 
@@ -1412,6 +1441,16 @@ QString SettingsModel::fileName() const
 Settings::Memento* SettingsModel::createMemento() const
 {
   return new MementoImpl(rootNode_);
+}
+
+bool SettingsModel::isReadOnly() const
+{
+  return readOnly_;
+}
+
+void SettingsModel::setReadOnly(bool readOnly)
+{
+  readOnly_ = readOnly;
 }
 
 }

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -98,6 +99,26 @@ public:
    * @return NULL on error, else newly allocated node from osgDB::ReaderWriter for earth files
    */
   static osg::Node* readEarthFile(std::istream& istream, const std::string& relativeTo);
+
+  /**
+   * Helper method to append a .earth file to an already-existing Map.  Returns 0 on successful
+   * read of the earth file.  Layers are appended to the end of the provided map.
+   * @param filename Name of .earth file to append to the map
+   * @param toMap Map to host the earth files
+   * @return 0 on successful load of file, non-zero on error
+   */
+  static int appendEarthFile(const std::string& filename, osgEarth::Map& toMap);
+
+  /**
+   * Stream-based version of appendEarthFile().  Appends the .earth file from an input stream, using
+   * the provided referrer (relativeTo) to help resolve relative paths.
+   * @param istream Input stream holding the .earth file contents
+   * @param relativeTo Absolute path to a location used to help resolve relative paths.  Sometimes called "referrer",
+   *   or the Database Path in OSG parlance.
+   * @param toMap Map to host the earth files
+   * @return 0 on successful load of file, non-zero on error
+   */
+  static int appendEarthFile(std::istream& istream, const std::string& relativeTo, osgEarth::Map& toMap);
 
 private:
   /// does some error checking on the parsed tokens, returns false on error

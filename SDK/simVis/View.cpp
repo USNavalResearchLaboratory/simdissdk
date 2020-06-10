@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -38,6 +39,7 @@
 #include "simVis/EarthManipulator.h"
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
+#include "simVis/Locator.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/CustomRendering.h"
@@ -135,11 +137,11 @@ struct SetNearFarCallback : public osg::NodeCallback
 {
 
   SetNearFarCallback()
+  : depthState_(new osg::StateSet())
   {
     // create a state set to turn off depth buffer when in overhead mode.
     // note: this will override the depth settings in the TwoPassAlphaRenderBin, and
     // that's OK because we don't care about TPA when the depth buffer is off.
-    depthState_ = new osg::StateSet();
     depthState_->setAttributeAndModes(new osg::Depth(osg::Depth::LESS, 0.0, 1.0, false),
       osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
   }

@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -208,16 +209,6 @@ public:
   */
   VaporTrailPuff(osg::Geode* graphic, const osg::Matrixd& matrix, double startTime);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-  * Construct a vapor trail puff.
-  * @param graphic the puff graphic.
-  * @param position ECEF position at which this puff will be located.
-  * @param startTime time that this puff is created.
-  */
-  SDK_DEPRECATE(VaporTrailPuff(osg::Geode* graphic, const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
-#endif
-
   /**
   * Update the puff representation for elapsing time.
   * @param currentTime current time.
@@ -248,15 +239,6 @@ public:
   * @param startTime time that this puff is created.
   */
   void set(const osg::Matrixd& matrix, double startTime);
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-  * Turns the puff back on with the given values
-  * @param position ECEF position at which this puff will be located.
-  * @param startTime time that this puff is created.
-  */
-  SDK_DEPRECATE(void set(const simCore::Vec3& position, double startTime), "Method will be removed in future SDK release.");
-#endif
 
 protected:
   /// osg::Referenced-derived

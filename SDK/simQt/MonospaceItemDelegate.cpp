@@ -13,7 +13,8 @@
  *               4555 Overlook Ave.
  *               Washington, D.C. 20375-5339
  *
- * License for source code at https://simdis.nrl.navy.mil/License.aspx
+ * License for source code can be found at:
+ * https://github.com/USNavalResearchLaboratory/simdissdk/blob/master/LICENSE.txt
  *
  * The U.S. Government retains all rights to use, duplicate, distribute,
  * disclose, or release this software.
@@ -26,7 +27,8 @@ namespace simQt {
 
 MonospaceItemDelegate::MonospaceItemDelegate(QObject* parent)
   : QStyledItemDelegate(parent),
-    monospaceFont_(new QFont("Monospace"))
+    monospaceFont_(new QFont("Monospace")),
+    pointSizeOffset_(0)
 {
   monospaceFont_->setStyleHint(QFont::TypeWriter);
 }
@@ -36,13 +38,23 @@ MonospaceItemDelegate::~MonospaceItemDelegate()
   delete monospaceFont_;
 }
 
+int MonospaceItemDelegate::pointSizeOffset() const
+{
+  return pointSizeOffset_;
+}
+
+void MonospaceItemDelegate::setPointSizeOffset(int offset)
+{
+  pointSizeOffset_ = offset;
+}
+
 void MonospaceItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
   QStyleOptionViewItem opt(option);
   // Adjust the pixel size based on the incoming pixel size
   if (option.font.pointSize() > 0)
   {
-    monospaceFont_->setPointSize(option.font.pointSize());
+    monospaceFont_->setPointSize(option.font.pointSize() + pointSizeOffset_);
   }
   opt.font = *monospaceFont_;
   QStyledItemDelegate::paint(painter, opt, index);
