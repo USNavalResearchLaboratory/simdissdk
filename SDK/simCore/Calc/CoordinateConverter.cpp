@@ -908,7 +908,7 @@ int CoordinateConverter::convert(const Coordinate &inCoord, Coordinate &outCoord
 
 /// convert geodetic projection (LLA) to flat earth projection (NED/NWU/ENU)
 ///@pre flatCoord valid, ref origin set, in coord is LLA, system is NED/NWU/ENU, llaCoord does not alias flatCoord
-int CoordinateConverter::convertGeodeticToFlat_(const Coordinate &llaCoord, Coordinate &flatCoord, CoordinateSystem system) const
+int CoordinateConverter::convertGeodeticToFlat_(const Coordinate& llaCoord, Coordinate& flatCoord, CoordinateSystem system) const
 {
   // Test for same input/output -- this function cannot handle case of llaCoord == flatCoord
   if (&llaCoord == &flatCoord)
@@ -953,14 +953,14 @@ int CoordinateConverter::convertGeodeticToFlat_(const Coordinate &llaCoord, Coor
   // input lat and lon in radians, alt in meters, output values in meters
   if (system == COORD_SYS_NED)
   {
-    Vec3 llaPos(llaCoord.position());
-    //  (North East Down system)
+    const Vec3& llaPos(llaCoord.position());
+    // meters (North East Down system)
     // +X is North, Latitude is North-South
-    double x = angFixPI2(llaPos.lat() - referenceOrigin_.lat()) * latRadius_;
+    const double x = angFixPI(llaPos.lat() - referenceOrigin_.lat()) * latRadius_;
     // +Y is East, Longitude is East-West
-    double y = angFixPI(llaPos.lon() - referenceOrigin_.lon()) * lonRadius_;
+    const double y = angFixPI(llaPos.lon() - referenceOrigin_.lon()) * lonRadius_;
     // +Z is down, Altitude (+Z) is up
-    double z = -(llaPos.alt() - referenceOrigin_.alt());
+    const double z = -(llaPos.alt() - referenceOrigin_.alt());
 
     flatCoord.setPosition(x, y, z);
 
@@ -982,14 +982,14 @@ int CoordinateConverter::convertGeodeticToFlat_(const Coordinate &llaCoord, Coor
   }
   else if (system == COORD_SYS_ENU)
   {
-    Vec3 llaPos(llaCoord.position());
+    const Vec3& llaPos(llaCoord.position());
     // meters (East North Up system)
     // +X is East, Longitude is East-West
-    double x = angFixPI(llaPos.lon() - referenceOrigin_.lon()) * lonRadius_;
+    const double x = angFixPI(llaPos.lon() - referenceOrigin_.lon()) * lonRadius_;
     // +Y is North, Latitude is North-South
-    double y = angFixPI2(llaPos.lat() - referenceOrigin_.lat()) * latRadius_;
+    const double y = angFixPI(llaPos.lat() - referenceOrigin_.lat()) * latRadius_;
     // +Z is up, Altitude (+Z) is up
-    double z =  llaPos.alt() - referenceOrigin_.alt();
+    const double z = llaPos.alt() - referenceOrigin_.alt();
 
     flatCoord.setPosition(x, y, z);
 
@@ -1006,14 +1006,14 @@ int CoordinateConverter::convertGeodeticToFlat_(const Coordinate &llaCoord, Coor
   }
   else if (system == COORD_SYS_NWU)
   {
-    Vec3 llaPos(llaCoord.position());
+    const Vec3& llaPos(llaCoord.position());
     // meters (North West Up system)
     // +X is North, Latitude is North-South
-    double x =  angFixPI2(llaPos.lat() - referenceOrigin_.lat()) * latRadius_;
+    const double x = angFixPI(llaPos.lat() - referenceOrigin_.lat()) * latRadius_;
     // +Y is West, Longitude is East-West
-    double y = -angFixPI(llaPos.lon() - referenceOrigin_.lon()) * lonRadius_;
+    const double y = -angFixPI(llaPos.lon() - referenceOrigin_.lon()) * lonRadius_;
     // +Z is up, Altitude (+Z) is up
-    double z =   llaPos.alt() - referenceOrigin_.alt();
+    const double z = llaPos.alt() - referenceOrigin_.alt();
 
     flatCoord.setPosition(x, y, z);
 
@@ -1041,7 +1041,7 @@ int CoordinateConverter::convertGeodeticToFlat_(const Coordinate &llaCoord, Coor
 ///@param[out] llaCoord output
 ///@return 0 on success, !0 on failure
 ///@pre llaCoord valid, ref origin calculated, in coord is NED/NWU/ENU, llaCoord does not alias flatCoord
-int CoordinateConverter::convertFlatToGeodetic_(const Coordinate &flatCoord, Coordinate &llaCoord) const
+int CoordinateConverter::convertFlatToGeodetic_(const Coordinate& flatCoord, Coordinate& llaCoord) const
 {
   // Test for same input/output -- this function cannot handle case of llaCoord == flatCoord
   if (&llaCoord == &flatCoord)
