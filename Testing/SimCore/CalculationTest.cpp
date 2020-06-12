@@ -1759,6 +1759,69 @@ int testBoresightAlphaBeta()
   return rv;
 }
 
+int testTangentPlane2Sphere()
+{
+  int rv = 0;
+
+  // with trivial tangent plane offset(ht only), at any lla point, spherical and wgs84 are trivially comparable
+  for (double lat : { 1., 10., 60.})
+  {
+    for (double lon : {3., 5., 13., 27., 53., 90.})
+    {
+      for (double alt : {30., 500., 1300., 2700., 5300., 9000.})
+      {
+        simCore::Vec3 refLla(lat, lon, alt);
+        simCore::Vec3 tpSphereXYZ;
+        simCore::geodeticToSpherical(refLla.lat(), refLla.lon(), refLla.alt(), tpSphereXYZ);
+
+        for (double z : { 10., 100., 1000., 10000., 100000.})
+        {
+          simCore::Vec3 sphereXYZ;
+          simCore::Vec3 tpVec(0., 0., z);
+          simCore::tangentPlane2Sphere(refLla, tpVec, sphereXYZ, &tpSphereXYZ);
+          const double altAboveSphere = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
+          rv += SDK_ASSERT(simCore::areEqual(z + refLla.alt(), altAboveSphere));
+        }
+      }
+    }
+  }
+
+  simCore::Vec3 refLla(0., 0., 0.);
+  simCore::Vec3 tpSphereXYZ;
+  simCore::geodeticToSpherical(refLla.lat(), refLla.lon(), refLla.alt(), tpSphereXYZ);
+  // with x,y offsets, things get interesting
+  for (double z : { 0., 10., 100., 1000., 10000., 100000.})
+  {
+    simCore::Vec3 sphereXYZ;
+    simCore::Vec3 tpVec(10000., 0., z);
+    simCore::tangentPlane2Sphere(refLla, tpVec, sphereXYZ, &tpSphereXYZ);
+    const double altAboveSphere = v3Length(sphereXYZ) - simCore::EARTH_RADIUS;
+
+    // this approximates the ht offset between the spherical earth and the ellipsoidal earth at a point dropped to the earth from the point on the tangent plane.
+    const double sphereToEllipsoidOffset = altAboveSphere - (refLla.alt() + z);
+    // the spherical earth is always bigger than wgs84 ellipsoid, except that they are the same size at the equator
+    rv += SDK_ASSERT(sphereToEllipsoidOffset >= 0);
+  }
+
+  // verify that spherical height is constant with respect to x/y distance from an arbitrary reflla
+  refLla = simCore::Vec3(10., 20., 50.);
+  simCore::geodeticToSpherical(refLla.lat(), refLla.lon(), refLla.alt(), tpSphereXYZ);
+  for (double i : { 10., 100., 1000., 10000., 100000.})
+  {
+    simCore::Vec3 sphereXYZ;
+
+    simCore::Vec3 t1(i, 100., 100.);
+    simCore::tangentPlane2Sphere(refLla, t1, sphereXYZ, &tpSphereXYZ);
+    const double alt1 = v3Length(sphereXYZ);
+
+    simCore::Vec3 t2(100., i, 100.);
+    simCore::tangentPlane2Sphere(refLla, t2, sphereXYZ, &tpSphereXYZ);
+    const double alt2 = v3Length(sphereXYZ);
+    rv += SDK_ASSERT(simCore::areEqual(alt1, alt2));
+  }
+  return rv;
+}
+
 }
 
 int CalculationTest(int argc, char* argv[])
@@ -1788,6 +1851,6 @@ int CalculationTest(int argc, char* argv[])
   rv += testTaos_intercept();
   rv += testAoaSideslipTotalAoa();
   rv += testBoresightAlphaBeta();
-
+  rv += testTangentPlane2Sphere();
   return rv;
 }
