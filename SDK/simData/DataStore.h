@@ -159,6 +159,9 @@ public:
     /// entity with the given id and type will be removed after all notifications are processed
     virtual void onRemoveEntity(DataStore *source, ObjectId removedId, simData::ObjectType ot) = 0;
 
+    /// entity with the given id and type has been removed
+    virtual void onPostRemoveEntity(DataStore *source, ObjectId removedId, simData::ObjectType ot) = 0;
+
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) = 0;
 
@@ -190,6 +193,9 @@ public:
 
     /// entity with the given id and type will be removed after all notifications are processed
     virtual void onRemoveEntity(DataStore *source, ObjectId removedId, simData::ObjectType ot) {}
+
+    /// entity with the given id and type has been removed
+    virtual void onPostRemoveEntity(DataStore *source, ObjectId removedId, ObjectType ot) {}
 
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) {}

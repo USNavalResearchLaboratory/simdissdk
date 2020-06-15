@@ -222,6 +222,10 @@ int DynamicSelectionPicker::calculateCustomRenderRange_(simUtil::ScreenCoordinat
   std::vector<osg::Vec3d> ecefVec;
   customNode.getPickingPoints(ecefVec);
 
+  // for lines, check the distance from the whole line segment
+  if (customNode.isLine())
+    return calculateScreenRangeSegments_(calc, ecefVec, rangeSquared);
+  // otherwise just check distance from the picking points
   return calculateScreenRangePoints_(calc, ecefVec, rangeSquared);
 }
 

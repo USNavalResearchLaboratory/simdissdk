@@ -153,7 +153,6 @@ struct AppData
   osg::ref_ptr<ui::LabelControl> timeReadout_;
   simData::DataStore *ds_;
   simVis::View* view_;
-  simCore::Clock* clock_;
   double startTime_;
   double endTime_;
   double lastTime_;

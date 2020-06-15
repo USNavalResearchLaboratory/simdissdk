@@ -75,6 +75,18 @@ public:
   void setPrefs(const simData::CustomRenderingPrefs& prefs);
 
   /**
+  * Returns true if the shape defined by this CustomRendering is a line
+  * @return true if shape is a line, false otherwise
+  */
+  bool isLine() const;
+
+  /**
+  * Set flag indicating if the shape defined by this CustomRendering is a line
+  * @paran isLine true if the shape should be treated as a line
+  */
+  void setIsLine(bool isLine);
+
+  /**
     * This callback allows the external code to determine if the entity should be displayed.
     * If update() returns true the entity continues to be processed for displaying
     */
@@ -262,6 +274,7 @@ private:
   simData::CustomRenderingPrefs lastPrefs_;
   bool hasLastPrefs_;
   bool customActive_;
+  bool isLine_;
   unsigned int objectIndexTag_;
 
   std::shared_ptr<AbstractPointPicker> pointPicker_;

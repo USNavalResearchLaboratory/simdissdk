@@ -91,7 +91,7 @@ private:
 /** Event handler to process user key presses */
 struct MenuHandler : public osgGA::GUIEventHandler
 {
-  MenuHandler(App& app)
+  explicit MenuHandler(App& app)
     : app_(app),
     tracking4_(false)
   {

@@ -40,6 +40,8 @@ osg::Vec4f getOsgColorFromQt(const QColor& color)
 QColor getQColorFromQString(const QString& qstr)
 {
   QStringList rgba = qstr.split(",");
+  if (rgba.size() != 4)
+    return QColor();
   return QColor(rgba[0].toInt(), rgba[1].toInt(), rgba[2].toInt(), rgba[3].toInt());
 }
 

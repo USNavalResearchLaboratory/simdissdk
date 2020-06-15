@@ -31,12 +31,16 @@
 
 namespace simQt {
 
+/** String template to format a QLinearGradient background like our UTILS::ColorGradient */
+static const QString GRADIENT_STR_TEMPLATE = "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, %1);";
+/** Format for each stop.  %1 is the percentage (0-1), %2 is a RGBA color string. */
+static const QString GRADIENT_STOP_TEMPLATE = "stop: %1 rgba(%2)";
+
 /**
  * Represents a color gradient between magnitude values 0 and 1.
- * Uses osg::TransferFunction1D as underlying implementation.
- * Protected inheritance is used to enforce the [0,1] range.
+ * Wraps osg::TransferFunction1D as underlying implementation.
  */
-class SDKQT_EXPORT ColorGradient : protected osg::TransferFunction1D
+class SDKQT_EXPORT ColorGradient
 {
 public:
   /** Creates a default gradient. */
@@ -44,9 +48,7 @@ public:
   /** Creates a gradient with colors in given range. Values outside [0,1] are discarded. */
   explicit ColorGradient(const std::map<float, QColor>& colors);
   /** Creates a gradient with colors in given range. Values outside [0,1] are discarded. */
-  explicit ColorGradient(const osg::TransferFunction1D::ColorMap& colors);
-  /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
-  ColorGradient(const ColorGradient& grad, const osg::CopyOp& copyOp = osg::CopyOp::SHALLOW_COPY);
+  explicit ColorGradient(const std::map<float, osg::Vec4>& colors);
 
   virtual ~ColorGradient();
 
@@ -60,19 +62,22 @@ public:
 
   /**
    * Retrieves the color mapping to the given value. Values range [0,1].
+   * Colors outside the configured min/max values will be clamped.
    * If no colors have been set, then black is returned.
-   * Uses the osg::TransferFunction1D::getColor() definition,
-   * interpolating between set colors and clamping outside values.
    */
   QColor colorAt(float zeroToOne) const;
 
+  /**
+   * Retrieves the color mapping to the given value. Values range [0,1].
+   * Colors outside the configured min/max values will be clamped.
+   * If no colors have been set, then black is returned.
+   */
+  osg::Vec4 osgColorAt(float zeroToOne) const;
+
   /** Adds a control color, returning 0 on success. Overwrites existing colors. */
   int setColor(float zeroToOne, const QColor& color);
-  /**
-   * Adds a control color, returning 0 on success. Overwrites existing colors.
-   * Replaces osg::TransferFunction1D::setColor() to discard values out of range.
-   */
-  int setColor(float zeroToOne, const osg::Vec4& color, bool updateImage = true);
+  /** Adds a control color, returning 0 on success. Overwrites existing colors. */
+  int setColor(float zeroToOne, const osg::Vec4& color);
 
   /** Removes a single control color, by its value. Returns 0 on success. */
   int removeColor(float zeroToOne);
@@ -83,24 +88,28 @@ public:
    */
   void clearColors();
 
-  /** Retrieves all color values */
+  /** Retrieves all color values, converted to QColors. */
   std::map<float, QColor> colors() const;
-  /** Retrieves all color values. Public re-implementation of base class method. */
-  osg::TransferFunction1D::ColorMap getColorMap() const;
+  /** Retrieves all color values. */
+  std::map<float, osg::Vec4> getColorMap() const;
+
+  /** Retrieves count of registered colors. */
+  int colorCount() const;
+  /** Returns true if the color map is empty. */
+  bool empty() const;
 
   /** Sets all control colors at once, replacing old values. Discards values outside [0,1]. */
   void setColors(const std::map<float, QColor>& colors);
-  /**
-   * Sets all control colors at once, replacing old values.
-   * Differs from osg::TransferFunction1D::assign() and
-   * setColorMap() by discarding any values outside [0,1].
-   */
-  void setColors(const osg::TransferFunction1D::ColorMap& colors);
+  /** Sets all control colors at once, replacing old values. Discards values outside [0,1]. */
+  void setColors(const std::map<float, osg::Vec4>& colors);
 
   /** Comparison operator */
   bool operator==(const ColorGradient& rhs) const;
   /** Inequality operator */
   bool operator!=(const ColorGradient& rhs) const;
+
+private:
+  osg::ref_ptr<osg::TransferFunction1D> function_;
 };
 
 }

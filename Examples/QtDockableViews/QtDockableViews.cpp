@@ -107,6 +107,8 @@ MyMainWindow::MyMainWindow(int framerate)
   // timer single shot to avoid infinite loop problems in Qt on MSVC11
   timer_->setSingleShot(true);
   connect(timer_, SIGNAL(timeout()), this, SLOT(update()));
+  if (framerate < 1)
+    framerate = 1;
   timer_->start(1000/framerate);
 
   // connect actions to our slots

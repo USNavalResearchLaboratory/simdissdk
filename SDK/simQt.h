@@ -41,6 +41,7 @@
 #include "simQt/ColorGradient.h"
 #include "simQt/ColorGradientWidget.h"
 #include "simQt/ColorWidget.h"
+#include "simQt/ColorWidgetDelegate.h"
 #include "simQt/ConsoleChannel.h"
 #include "simQt/ConsoleDataModel.h"
 #include "simQt/ConsoleLogger.h"

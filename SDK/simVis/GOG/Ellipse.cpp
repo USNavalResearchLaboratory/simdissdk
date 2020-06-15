@@ -78,12 +78,9 @@ GogNodeInterface* Ellipse::deserialize(const ParsedShape& parsedShape,
 
   Utils::applyLocalGeometryOffsets(*node, p, nodeType);
 
-  GogNodeInterface* rv = NULL;
-  if (node)
-  {
-    rv = new LocalGeometryNodeInterface(node, metaData);
-    rv->applyToStyle(parsedShape, p.units_);
-  }
+  GogNodeInterface* rv = new LocalGeometryNodeInterface(node, metaData);
+  rv->applyToStyle(parsedShape, p.units_);
+
   return rv;
 }
 

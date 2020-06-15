@@ -24,6 +24,7 @@
 #define SIMQT_COLORWIDGET_H
 
 #include <QColor>
+#include <QColorDialog>
 #include <QString>
 #include <QWidget>
 #include "simCore/Common/Export.h"
@@ -32,6 +33,9 @@ class Ui_ColorWidget;
 class QLabel;
 
 namespace simQt {
+
+/** Dialog flag that detects when to avoid the native dialog */
+extern const QColorDialog::ColorDialogOption COLOR_DIALOG_OPTIONS;
 
 class ColorButton;
 

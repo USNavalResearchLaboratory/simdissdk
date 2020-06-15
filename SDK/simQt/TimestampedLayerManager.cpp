@@ -390,7 +390,7 @@ void TimestampedLayerManager::restoreOriginalVisibility_()
   for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
   {
     // Then iterate through the layers within the groups
-    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.begin(); layerIter++)
+    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.end(); layerIter++)
     {
       if (layerIter->second.valid() && layerIter->second != groupIter->second->currentLayer)
       {
@@ -400,6 +400,9 @@ void TimestampedLayerManager::restoreOriginalVisibility_()
           layerIter->second->setVisible(originVisIter->second);
       }
     }
+
+    // Unset the group's current layer.  Prevents bad starting state when timed visibility is reactiviated
+    groupIter->second->currentLayer = NULL;
   }
 }
 
@@ -408,7 +411,7 @@ void TimestampedLayerManager::useTimedVisibility_()
   // Set all layers invisible as a base, then let setTime handle which (if any) should be visible
   for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
   {
-    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.begin(); layerIter++)
+    for (auto layerIter = groupIter->second->layers.begin(); layerIter != groupIter->second->layers.end(); layerIter++)
     {
       if (layerIter->second.valid())
       {
