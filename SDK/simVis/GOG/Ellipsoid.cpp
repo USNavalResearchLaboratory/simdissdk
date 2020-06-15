@@ -49,7 +49,7 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
 
   if (parsedShape.hasValue(GOG_RADIUS))
   {
-    x_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
+    x_diam.set(parsedShape.doubleValue(GOG_RADIUS, 0) * 2, osgEarth::Units::METERS);
     y_diam = x_diam;
     if (z_diam == 0.0)
       z_diam = x_diam;

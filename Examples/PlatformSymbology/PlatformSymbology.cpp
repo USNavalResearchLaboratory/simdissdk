@@ -897,8 +897,8 @@ struct MyPopupCallback : public simVis::PopupContentCallback
 
     return osgEarth::Stringify()
       << std::fixed
-      << "Lat: " << llf.format(pos.y(), 2) << '\n'
-      << "Lon: " << llf.format(pos.x(), 2) << '\n'
+      << "Lat: " << llf.format(osgEarth::Angle(pos.y(), srs_->getUnits()), 2) << '\n'
+      << "Lon: " << llf.format(osgEarth::Angle(pos.x(), srs_->getUnits()), 2) << '\n'
       << std::setprecision(altP) << "Alt: " << pos.z() << "m" << '\n'
       << "MGRS: " << mgrs.format(pos);
   }

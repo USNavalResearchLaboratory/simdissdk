@@ -339,8 +339,10 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
     double targetElev;
     simCore::calculateAbsAzEl(state.beginEntity_->lla_, state.endEntity_->lla_, NULL, &targetElev, NULL, state.earthModel_, &state.coordConv_);
 
+    // find the elevation pool and establish a local working set
+    // since we'll be doing multiple spatially-similar queries
     osg::ref_ptr<osgEarth::ElevationPool> pool = state.mapNode_->getMap()->getElevationPool();
-    osg::ref_ptr<osgEarth::ElevationEnvelope> envelope = pool->createEnvelope(state.mapNode_->getMapSRS(), 23);
+    osgEarth::ElevationPool::WorkingSet workingSet;
 
     // Use the los range resolution of the begin entity as the rangeDelta for getting intermediate points
     double rangeDelta = simdisState->platformHostNode_->getPrefs().losrangeresolution();
@@ -355,11 +357,11 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
       currGeoPoint.x() = iter->lon() * simCore::RAD2DEG;
       currGeoPoint.y() = iter->lat() * simCore::RAD2DEG;
 
-      float elevation = envelope->getElevation(currGeoPoint.x(), currGeoPoint.y());
-      if (elevation != NO_DATA_VALUE)
+      osgEarth::ElevationSample sample = pool->getSample(currGeoPoint, &workingSet);
+      if (sample.hasData())
       {
-        currGeoPoint.z() = elevation;
-        simCore::Vec3 currLLA(currGeoPoint.y() * simCore::DEG2RAD, currGeoPoint.x() * simCore::DEG2RAD, elevation);
+        currGeoPoint.z() = sample.elevation().as(osgEarth::Units::METERS);
+        simCore::Vec3 currLLA(currGeoPoint.y() * simCore::DEG2RAD, currGeoPoint.x() * simCore::DEG2RAD, currGeoPoint.z());
 
         double relativeElev;
         simCore::calculateAbsAzEl(state.beginEntity_->lla_, currLLA, NULL, &relativeElev, NULL, state.earthModel_, &state.coordConv_);

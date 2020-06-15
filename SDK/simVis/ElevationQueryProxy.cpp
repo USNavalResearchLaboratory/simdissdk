@@ -28,18 +28,18 @@
 
 namespace
 {
-bool getElevationFromSample(osgEarth::ElevationSample* sample,
+bool getElevationFromSample(osgEarth::RefElevationSample* sample,
                              double& out_elevation,
                              double* out_actualResolution)
 {
   if (sample != NULL)
   {
-    out_elevation = sample->elevation;
+    out_elevation = sample->elevation().as(osgEarth::Units::METERS);
     if (out_elevation ==  NO_DATA_VALUE)
       out_elevation = 0.0;
 
     if (out_actualResolution)
-      *out_actualResolution = sample->resolution;
+      *out_actualResolution = sample->resolution().getValue();
 
     return true;
   }
@@ -56,7 +56,7 @@ namespace simVis
 struct ElevationQueryProxy::PrivateData
 {
  /// Future object that monitors the status of the elevation query result
-  osgEarth::Threading::Future<osgEarth::ElevationSample> elevationResult_;
+  osgEarth::Threading::Future<osgEarth::RefElevationSample> elevationResult_;
 };
 
 /**
@@ -114,6 +114,7 @@ ElevationQueryProxy::ElevationQueryProxy(const osgEarth::Map* map, osg::Group* s
 {
   data_ = new PrivateData();
   query_ = new osgEarth::Util::ElevationQuery(map);
+  asyncSampler_ = new osgEarth::AsyncElevationSampler(map);
 
   if (scene_.valid())
   {
@@ -130,6 +131,12 @@ ElevationQueryProxy::~ElevationQueryProxy()
   query_ = NULL;
   delete data_;
   data_ = NULL;
+
+  if (asyncSampler_)
+  {
+    delete asyncSampler_;
+    asyncSampler_ = NULL;
+  }
 }
 
 osgEarth::Util::ElevationQuery* ElevationQueryProxy::q() const
@@ -143,12 +150,12 @@ bool ElevationQueryProxy::getPendingElevation(double& out_elevation, double* out
   if (!data_->elevationResult_.isAvailable())
     return false;
 
-  osg::ref_ptr<osgEarth::ElevationSample> sample = data_->elevationResult_.release();
+  osg::ref_ptr<osgEarth::RefElevationSample> sample = data_->elevationResult_.release();
   getElevationFromSample(sample.get(), out_elevation, out_actualResolution);
 
   // cache values
   lastElevation_ = out_elevation;
-  lastResolution_ = sample->resolution;
+  lastResolution_ = sample->resolution().getValue();
 
   return true;
 }
@@ -159,27 +166,32 @@ bool ElevationQueryProxy::getElevationFromPool_(const osgEarth::GeoPoint& point,
   if (!map_.lock(map))
     return false;
 
-  unsigned int lod = 23u; // use reasonable default value, same as osgEarth::ElevationQuery
-  if (desiredResolution > 0.0)
-  {
-    int level = map->getProfile()->getLevelOfDetailForHorizResolution(desiredResolution, 257);
-    if (level > 0)
-      lod = level;
-  }
+  // Assume the caller expressed the desired resolution in map units.
+  // A resolution or zero means "maximum available".
+  osgEarth::Distance resolution(desiredResolution, map->getSRS()->getUnits());
 
-  data_->elevationResult_ = map->getElevationPool()->getElevation(point, lod);
-  // if blocking, get elevation result immediately
   if (blocking)
   {
-    osg::ref_ptr<osgEarth::ElevationSample> sample = data_->elevationResult_.get();
-    bool rv = getElevationFromSample(sample.get(), out_elevation, out_actualResolution);
-    // cache values
-    lastElevation_ = out_elevation;
-    lastResolution_ = sample->resolution;
-    return rv;
+    // synchronous query - will not return until an answer is generated
+    osgEarth::ElevationSample sample = map->getElevationPool()->getSample(
+      point,
+      resolution,
+      &workingSet_);
+
+    if (sample.hasData())
+    {
+      lastElevation_ = sample.elevation().as(osgEarth::Units::METERS);
+      lastResolution_ = sample.resolution().getValue();
+    }
+  }
+  else // (!blocking)
+  {
+    // Start a new background query.
+    // Returns immediately but result not available until later.
+    data_->elevationResult_ = asyncSampler_->getSample(point, resolution);
   }
 
-  // return cached values while waiting for query to return
+  // if non-blocking, return last recorded values while waiting for result
   out_elevation = lastElevation_;
   if (out_actualResolution)
     *out_actualResolution = lastResolution_;
@@ -209,7 +221,15 @@ void ElevationQueryProxy::setMap(const osgEarth::Map* map)
 
   delete query_;
   query_ = new osgEarth::Util::ElevationQuery(map);
+
+  if (asyncSampler_)
+  {
+    delete asyncSampler_;
+  }
+  asyncSampler_ = new osgEarth::AsyncElevationSampler(map);
+
   map_ = map;
+
 }
 
 void ElevationQueryProxy::setMapNode(const osgEarth::MapNode* mapNode)

@@ -1523,7 +1523,7 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
         }
       }
     }
-    ls->tessellationSize() = tessellationSpacingM; // in meters
+    ls->tessellationSize()->set(tessellationSpacingM, osgEarth::Units::METERS); // in meters
   }
   else
   {
