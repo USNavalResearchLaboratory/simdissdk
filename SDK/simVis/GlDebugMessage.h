@@ -120,11 +120,9 @@ private:
   osg::observer_ptr<osg::GraphicsContext> gc_;
   bool register_;
 
-#ifndef GL_VERSION_4_3
   typedef void (APIENTRYP PFNGLDEBUGMESSAGECONTROLPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled);
   typedef void (APIENTRYP PFNGLDEBUGMESSAGEINSERTPROC) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* buf);
   typedef void (APIENTRYP PFNGLDEBUGMESSAGECALLBACKPROC) (GLDEBUGPROC callback, const void* userParam);
-#endif
 
   PFNGLDEBUGMESSAGECONTROLPROC glDebugMessageControl_;
   PFNGLDEBUGMESSAGEINSERTPROC glDebugMessageInsert_;
