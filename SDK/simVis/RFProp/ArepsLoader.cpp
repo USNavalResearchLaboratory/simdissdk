@@ -24,6 +24,7 @@
 #include "osgDB/FileUtils"
 #include "simCore/LUT/LUT2.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Common/Version.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Format.h"

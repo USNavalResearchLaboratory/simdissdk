@@ -24,6 +24,7 @@
 #define SIMVIS_RFPROP_RFPROPAGATIONFACADE_H
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 #include "osg/ref_ptr"
@@ -34,7 +35,11 @@
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 
-namespace simCore { class TimeStamp; }
+namespace simCore
+{
+  class TimeStamp;
+  class DatumConvert;
+}
 
 namespace simRF
 {
@@ -48,8 +53,9 @@ public:
    * Construct an RF Propagation beam handler for the specified beam
    * @param beamId Beam to configure
    * @param parent node to which the visual display's locator is attached; if NULL, no display will be created
+   * @param datumConvert converter for MSL heights
    */
-  RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent);
+  RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert);
   virtual ~RFPropagationFacade();
 
   /**

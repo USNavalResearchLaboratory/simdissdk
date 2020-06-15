@@ -171,7 +171,7 @@ int testCalculateGeodesicDRCR(double *from, double *to, simCore::EarthModelCalcu
 
   simCore::calculateGeodesicDRCR(simCore::Vec3(from), from[3], simCore::Vec3(to), &downRng, &crossRng);
 
-  if (almostEqual(downRng, result[0]) &&
+  if (almostEqual(downRng, result[0], 1.3) &&
     almostEqual(crossRng, result[1]))
   {
     std::cerr << "successful" << std::endl;

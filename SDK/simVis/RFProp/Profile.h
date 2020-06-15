@@ -27,14 +27,14 @@
 #include <memory>
 #include "osg/MatrixTransform"
 #include "simCore/Common/Common.h"
-#include "simCore/Calc/Vec3.h"
-#include "simCore/Calc/Math.h"
 #include "simVis/RFProp/ColorProvider.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
 
+namespace simCore { class DatumConvert; }
 namespace simRF
 {
 class CompositeProfileProvider;
+struct ProfileContext;
 
 /** Responsible for rendering a single profile of data. */
 class SDKVIS_EXPORT Profile : public osg::MatrixTransform
@@ -56,30 +56,6 @@ public:
     DRAWMODE_3D_TEXTURE,
     DRAWMODE_3D_POINTS,
     DRAWMODE_RAE,
-  };
-
-  /** Display context that all profiles share; owned by the ProfileManager */
-  struct ProfileContext
-  {
-    ProfileContext()
-      : refLLA_(0., 0., 0.),
-      heightM_(0),
-      elevAngleR_(0.),
-      displayThickness_(1),
-      mode_(Profile::DRAWMODE_2D_HORIZONTAL),
-      type_(simRF::ProfileDataProvider::THRESHOLDTYPE_NONE),
-      agl_(false),
-      sphericalEarth_(true) // SIM-11515 - determine what data sources require this
-    {}
-
-    simCore::Vec3 refLLA_;  ///< Reference coordinate used for coordinate conversion used in the visualization, in radians and meters
-    double heightM_;           ///< 2D Horizontal display height, in meters
-    double elevAngleR_;        ///< elevation angle used in the current display, in radians
-    unsigned int displayThickness_;  ///< display thickness for 3D displays, in # height steps
-    Profile::DrawMode mode_;  ///< Type of display, e.g. 2D, 3D
-    ProfileDataProvider::ThresholdType type_;  ///< threshold type selected for display, e.g., POD, SNR, CNR
-    bool agl_;                ///< whether height values for the 2D Horizontal display are referenced to height above ground level (AGL) or to mean sea level (MSL).
-    bool sphericalEarth_;     ///< whether the profile data are specified for spherical or WGS84 earth
   };
 
   /** Adds a ProfileDataProvider to our CompositeProfileProvider */
@@ -163,13 +139,13 @@ private:
   class RaeVoxelProcessor;
 
   /** Creates a voxel (volume pixel) at the given location */
-  int buildVoxel_(VoxelProcessor& vProcessor, const simCore::Vec3& tpSphereXYZ, unsigned int rangeIndex, osg::Geometry* geometry);
+  int buildVoxel_(VoxelProcessor& vProcessor, unsigned int rangeIndex, osg::Geometry* geometry);
 
   /** Fixes the orientation of the profile */
   void updateOrientation_();
 
-  /** Adjusts point height if it was originally based on spherical XYZ */
-  void adjustSpherical_(osg::Vec3& v, const simCore::Vec3& tpSphereXYZ);
+  /** Adjusts point height if it was originally based on spherical XYZ or MSL */
+  double adjustHeight_(double x, double y, double z) const;
 
   /** Tesselate the 2D Vertical with triangle strip */
   void tesselate2DVert_(unsigned int numRanges, unsigned int numHeights, unsigned int startIndex, osg::ref_ptr<osg::FloatArray> values, osg::Geometry* geometry) const;

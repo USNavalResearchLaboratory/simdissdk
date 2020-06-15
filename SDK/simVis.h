@@ -136,6 +136,7 @@
 #include "simVis/RFProp/OneWayPowerDataProvider.h"
 #include "simVis/RFProp/PODProfileDataProvider.h"
 #include "simVis/RFProp/Profile.h"
+#include "simVis/RFProp/ProfileContext.h"
 #include "simVis/RFProp/ProfileDataProvider.h"
 #include "simVis/RFProp/ProfileManager.h"
 #include "simVis/RFProp/RadarParameters.h"
