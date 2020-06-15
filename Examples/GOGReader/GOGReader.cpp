@@ -27,6 +27,7 @@
  * Demonstrates the loading and display of SIMDIS .gog format vector overlay data.
  */
 
+#include <vector>
 #include "osgEarth/Controls"
 #include "osgEarth/LabelNode"
 #include "osgEarth/MouseCoordsTool"
@@ -440,14 +441,23 @@ int main(int argc, char** argv)
   bool showElevation = ap.read("--showElevation");
   bool attach = ap.read("--attach");
 
+  // parse the remaining args
+  std::vector<std::string> gogFiles;
+  std::string iconFile = EXAMPLE_IMAGE_ICON;
+  for (int i = 1; i < argc; ++i)
+  {
+    std::string arg = argv[i];
+    if (arg == "--iconFile" && argc > i)
+      iconFile = argv[++i];
+    else
+      gogFiles.push_back(arg);
+  }
+
   osg::ref_ptr<osg::Image> pin;
   if (mark)
     pin = URI("http://www.osgearth.org/chrome/site/pushpin_yellow.png").getImage();
 
   GeoPoint go;
-
-  std::string iconFile = EXAMPLE_IMAGE_ICON;
-
   /// data source which will provide positions for the platform
   /// based on the simulation time.
   simData::MemoryDataStore dataStore;
@@ -460,15 +470,8 @@ int main(int argc, char** argv)
   osg::Group* group = new osg::Group();
 
   // add the gog file vector layers.
-  for (int i = 1; i < argc; ++i)
+  for (const std::string& gogFile : gogFiles)
   {
-    std::string arg = argv[i];
-    if (arg == "--iconFile" && argc > i)
-    {
-      iconFile = argv[++i];
-      continue;
-    }
-
     simVis::GOG::Parser::OverlayNodeVector gogs;
     std::vector<simVis::GOG::GogFollowData> followData;
     simVis::GOG::Parser parser(scene->getMapNode());
@@ -476,11 +479,11 @@ int main(int argc, char** argv)
     // sets a default reference location for relative GOGs:
     parser.setReferenceLocation(simVis::GOG::BSTUR);
 
-    std::ifstream is(arg.c_str());
+    std::ifstream is(gogFile.c_str());
     if (!is.is_open())
     {
-      std::string fileName(argv[i]);
-      SIM_ERROR <<"Could not open GOG file " << fileName << "\n";
+      std::string fileName(gogFile);
+      SIM_ERROR <<"Could not open GOG file " << gogFile << "\n";
       return 1;
     }
 
@@ -545,7 +548,7 @@ int main(int argc, char** argv)
     }
     else
     {
-      SIM_WARN << "Unable to load GOG data from \"" << argv[i] << "\"" << std::endl;
+      SIM_WARN << "Unable to load GOG data from \"" << gogFile << "\"" << std::endl;
     }
   }
 
