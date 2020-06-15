@@ -886,7 +886,7 @@ int testScaledFlatEarth()
   int rv = 0;
   simCore::CoordinateConverter cc;
   cc.setReferenceOriginDegrees(22.119439197, -159.91949881, 0.);
-  simCore::Coordinate ecefPos;
+  simCore::Coordinate enuPos;
   simCore::Coordinate llaPos;
   simCore::Coordinate sfePos;
 
@@ -965,6 +965,21 @@ int testScaledFlatEarth()
   rv += ccAqm.convert(posa, llaPos, simCore::COORD_SYS_LLA);
   rv += ccAqm.convert(llaPos, sfePos, simCore::COORD_SYS_NWU);
   rv += SDK_ASSERT(almostEqualCoord(posa, sfePos));
+
+
+  // SIM-11596, data fabricated to demonstrate issue
+  simCore::CoordinateConverter ccsim11596;
+  ccsim11596.setReferenceOriginDegrees(45, 161, 0.);
+  const simCore::Coordinate sim11596(simCore::COORD_SYS_LLA, simCore::Vec3(-45.1 * simCore::DEG2RAD, -162. * simCore::DEG2RAD, 100.));
+  // Validate conversion from and back to LLA works
+  rv += ccsim11596.convert(sim11596, enuPos, simCore::COORD_SYS_ENU);
+  rv += ccsim11596.convert(enuPos, sfePos, simCore::COORD_SYS_LLA);
+
+  // position-only comparison
+  rv += SDK_ASSERT(simCore::areAnglesEqual(sim11596.lat(), sfePos.lat()));
+  rv += SDK_ASSERT(simCore::areAnglesEqual(sim11596.lon(), sfePos.lon()));
+  rv += SDK_ASSERT(simCore::areEqual(sim11596.alt(), sfePos.alt()));
+
 
   std::cout << std::endl << "Scaled Flat Earth test case: ";
   std::cout << (rv==0 ? "PASSED" : "FAILED") << std::endl;

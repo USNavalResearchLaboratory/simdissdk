@@ -75,11 +75,12 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
 
   // Both methods for getting terrain elevation have drawbacks that make them undesirable in certain situations. SIM-10423
   // getHeight() can give inaccurate results depending on how much map data is loaded into the scene graph, while ElevationEnvelope can be prohibitively slow if there are many clamped entities
-  if (useMaxElevPrec_ && envelope_.valid())
+  if (useMaxElevPrec_)
   {
-    double hae = envelope_->getElevation(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG);
-    if (hae != NO_DATA_VALUE)
-      elevation = hae;
+    osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
+    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, &workingSet_);
+    if (sample.hasData())
+      elevation = sample.elevation().as(osgEarth::Units::METERS);
   }
   else
   {
@@ -99,7 +100,7 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
     coord = llaCoord;
 }
 
-void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, osgEarth::ElevationEnvelope::Context& context)
+void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, osgEarth::ElevationPool::WorkingSet& workingSet)
 {
   // nothing to do if we don't have valid ways of accessing elevation
   if (!mapNode_.valid())
@@ -126,11 +127,12 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, os
 
   // Both methods for getting terrain elevation have drawbacks that make them undesirable in certain situations. SIM-10423
   // getHeight() can give inaccurate results depending on how much map data is loaded into the scene graph, while ElevationEnvelope can be prohibitively slow if there are many clamped entities
-  if (useMaxElevPrec_ && envelope_.valid())
+  if (useMaxElevPrec_)
   {
-    double hae = envelope_->getElevation(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, context);
-    if (hae != NO_DATA_VALUE)
-      elevation = hae;
+    osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
+    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, &workingSet_);
+    if (sample.hasData())
+      elevation = sample.elevation().as(osgEarth::Units::METERS);
   }
   else
   {
@@ -158,10 +160,7 @@ bool CoordSurfaceClamping::isValid() const
 void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 {
   mapNode_ = map;
-  if (mapNode_.valid() && useMaxElevPrec_)
-    envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
-  else
-    envelope_ = NULL;
+  workingSet_._lru.clear(); // Probably unnecessary
 }
 
 void CoordSurfaceClamping::setUseMaxElevPrec(bool useMaxElevPrec)
@@ -170,14 +169,6 @@ void CoordSurfaceClamping::setUseMaxElevPrec(bool useMaxElevPrec)
     return;
 
   useMaxElevPrec_ = useMaxElevPrec;
-  if (useMaxElevPrec_ && mapNode_.valid())
-  {
-    // Envelope should not be valid if useMaxElevPrec was just turned on
-    assert(!envelope_.valid());
-    envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
-  }
-  else
-    envelope_ = NULL;
 }
 
 /////////////////////////////////////////////////////////////////////////////////

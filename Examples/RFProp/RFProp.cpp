@@ -594,7 +594,7 @@ int main(int argc, char** argv)
   simExamples::addDefaultSkyNode(viewer.get());
 
   osg::ref_ptr<osg::Group> root = new osg::Group();
-  osg::ref_ptr<simRF::ProfileManager> profileManager = new simRF::ProfileManager();
+  osg::ref_ptr<simRF::ProfileManager> profileManager = new simRF::ProfileManager(NULL);
 
   // min & max loss values for gradient color setting in dB; valid loss data is [0,300]
   const double minFSL = 0;

@@ -935,7 +935,7 @@ bool convertLocations(const Coordinate &fromState, const Coordinate &toState, co
 }
 
 /**
-* Converts the given perfect sphere earth XYZ values to ENU Tangent Plane values, given
+* Converts the given perfect sphere earth XYZ values to X-East Tangent Plane values, given
 * the tangent plane's latitude, longitude, and altitude.  Note: If tangent plane's perfect
 * sphere Earth XYZ values are available, they can be given for a faster calculation.
 */
@@ -962,20 +962,20 @@ void sphere2TangentPlane(const Vec3& llaVec, const Vec3& sphereVec, Vec3& tpVec,
   // get the delta spherical XYZ from the tangent plane to the given sphereVec point
   v3Subtract(sphereVec, tempSphereXYZ, tempSphereXYZ);
 
-  // figure out the the tangent plane ENU values if the tangent plane
+  // figure out the the X-East tangent plane values if the tangent plane
   // was at Lat = 0, Lon = 0
   tpVec[0] = -tempSphereXYZ[1];
   tpVec[1] = tempSphereXYZ[2];
   tpVec[2] = -tempSphereXYZ[0];
 
   // Correctly rotate at end of sphere2TangentPlane()
-  // adjusts the tangent plane ENU values based on the given tangent plane Lat and Lon values
+  // adjusts the X-East tangent plane values based on the given tangent plane Lat and Lon values
   v3RotY(tpVec, -llaVec[1], tpVec);
   v3RotX(tpVec,  llaVec[0], tpVec);
 }
 
 /**
-* Converts the given ENU Tangent Plane values to perfect sphere Earth XYZ values, given
+* Converts the given X-East Tangent Plane values to perfect sphere Earth XYZ values, given
 * the tangent planes latitude, longitude, and altitude.  Note: If tangent plane's perfect
 * sphere Earth XYZ values are available, they can be given for a faster calculation.
 */
@@ -989,7 +989,7 @@ void tangentPlane2Sphere(const Vec3 &llaVec, const Vec3 &tpVec, Vec3& sphereVec,
   }
   Vec3 tempTpENU(tpVec);
 
-  // move the given ENU values from the given tangent plane to the
+  // move the given X-East values from the given tangent plane to the
   //   tangent plane at Lat = 0, Lon = 0
   v3RotX(tempTpENU, -llaVec[0], tempTpENU);
   v3RotY(tempTpENU,  llaVec[1], tempTpENU);

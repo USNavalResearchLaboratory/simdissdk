@@ -164,6 +164,7 @@ set(VIS_HEADERS_RFPROP
     ${VIS_INC}RFProp/OneWayPowerDataProvider.h
     ${VIS_INC}RFProp/PODProfileDataProvider.h
     ${VIS_INC}RFProp/Profile.h
+    ${VIS_INC}RFProp/ProfileContext.h
     ${VIS_INC}RFProp/ProfileDataProvider.h
     ${VIS_INC}RFProp/ProfileManager.h
     ${VIS_INC}RFProp/RadarParameters.h
@@ -312,6 +313,7 @@ set(VIS_SOURCES_RFPROP
     ${VIS_SRC}RFProp/OneWayPowerDataProvider.cpp
     ${VIS_SRC}RFProp/PODProfileDataProvider.cpp
     ${VIS_SRC}RFProp/Profile.cpp
+    ${VIS_SRC}RFProp/ProfileContext.cpp
     ${VIS_SRC}RFProp/ProfileManager.cpp
     ${VIS_SRC}RFProp/RFPropagationFacade.cpp
     ${VIS_SRC}RFProp/SNRDataProvider.cpp

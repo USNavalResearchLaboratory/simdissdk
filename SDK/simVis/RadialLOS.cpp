@@ -85,17 +85,25 @@ RadialLOS::RadialLOS()
 }
 
 RadialLOS::RadialLOS(const RadialLOS& rhs)
-  : dirty_(rhs.dirty_),
-    radials_(rhs.radials_),
-    originMap_(rhs.originMap_),
-    range_max_(rhs.range_max_),
-    range_resolution_(rhs.range_resolution_),
-    azim_center_(rhs.azim_center_),
-    fov_(rhs.fov_),
-    azim_resolution_(rhs.azim_resolution_),
-    use_scene_graph_(rhs.use_scene_graph_)
 {
-  //nop
+  *this = rhs;
+}
+
+RadialLOS& RadialLOS::operator=(const RadialLOS& rhs)
+{
+  dirty_ = rhs.dirty_;
+  radials_ = rhs.radials_;
+  originMap_ = rhs.originMap_;
+  range_max_ = rhs.range_max_;
+  range_resolution_ = rhs.range_resolution_;
+  azim_center_ = rhs.azim_center_;
+  fov_ = rhs.fov_;
+  azim_resolution_ = rhs.azim_resolution_;
+  use_scene_graph_ = rhs.use_scene_graph_;
+  // nocopy: srs_
+  // nocopy: elevationWorkingSet_
+
+  return *this;
 }
 
 void RadialLOS::setMaxRange(const osgEarth::Distance& value)
@@ -157,16 +165,6 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
   // set up the localizer transforms:
   if (!convertCoordToGeoPoint(originCoord, originMap_, mapNode->getMapSRS()))
     return false;
-
-  if (!use_scene_graph_)
-  {
-    // create an elevation sampler on demand:
-    if (envelope_.valid() == false)
-    {
-      envelope_ = mapNode->getMap()->getElevationPool()->createEnvelope(
-          mapNode->getMapSRS(), 23);
-    }
-  }
 
   osg::Matrix local2world;
   originMap_.createLocalToWorld(local2world);
@@ -254,7 +252,8 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       }
       else
       {
-        hae = envelope_->getElevation(mapPoint.x(), mapPoint.y());
+        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, &elevationWorkingSet_);
+        hae = sample.elevation().as(osgEarth::Units::METERS);
         hamsl = hae;
         ok = (hae != NO_DATA_VALUE);
       }

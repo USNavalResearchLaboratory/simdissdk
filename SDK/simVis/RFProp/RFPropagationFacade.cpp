@@ -116,11 +116,11 @@ namespace simRF
 const int DEFAULT_TRANSPARENCY = 60;  // percentage, 0-100. 100 is fully transparent, 0 is opaque
 const int DEFAULT_HISTORY = 30; // degrees
 
-RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent)
+RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert)
   : id_(id),
   antennaHeightMeters_(0.0),
   rfParamsSet_(false),
-  profileManager_(new simRF::ProfileManager()),
+  profileManager_(new simRF::ProfileManager(datumConvert)),
   parent_(parent)
 {
   // add profileManager_ to the parent node
