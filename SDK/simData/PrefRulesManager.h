@@ -66,7 +66,8 @@ public:
   virtual ~PrefRulesManager() {}
 
   /**
-  * Load the rules in the specified pref rule file, adding them to the currently loaded rules
+  * Load the rules in the specified pref rule file, adding them to the currently loaded rules.  Rules are always
+  * force applied when added.
   * @param ruleFile the pref rule file to load
   * @return 0 on success, non-zero on error
   */
@@ -93,7 +94,7 @@ public:
   virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const = 0;
 
   /**
-  * Load the rules in the specified pref rule files.
+  * Load the rules in the specified pref rule files.  Rules are always force applied when added.
   * Note that the last file in the vector is the one saved to the scenario as the current pref rule file.
   * @param ruleFiles list of the pref rule files to load
   * @param removeOldRules  if true, all rules will be removed and replaced with those in the ruleFiles param
@@ -122,7 +123,7 @@ public:
   virtual int serializeRules(std::ostream& os) = 0;
 
   /**
-   * Deserializes the rules passed in the istream
+   * Deserializes the rules passed in the istream.  Rules are always force applied when added.
    * @param[in] rules  rules to deserialize
    * @return 0 on total success, non-zero if there were any problems loading rules. Note that non-zero return can still indicate partial success
    */
@@ -131,6 +132,7 @@ public:
   /**
    * Add a preference rule.  PrefRuleManager will deserialize the string into a pref rule, or multiple
    * rules if the pref rule is compound.  The latest version of the preference rules format is presumed.
+   * Rules are always force applied when added.
    * @param[out] rules that resulted from the serialized string (rule could be compound)
    * @param[in] serializedRule  a string representing a serialized pref rule
    * @param[in] fileFormatVersion  an int representing the pref .rul file format version the pref rule is formatted in
