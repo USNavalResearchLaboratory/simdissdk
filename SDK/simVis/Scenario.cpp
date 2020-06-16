@@ -274,8 +274,8 @@ public:
     if (!prefs.surfaceclamping() || !coordSurfaceClamping_.isValid())
       return PlatformTspiFilterManager::POINT_UNCHANGED;
 
-    osgEarth::ElevationEnvelope::Context& context = lut_[props.id()];
-    coordSurfaceClamping_.clampCoordToMapSurface(llaCoord, context);
+    osgEarth::ElevationPool::WorkingSet& ws = lut_[props.id()];
+    coordSurfaceClamping_.clampCoordToMapSurface(llaCoord, ws);
 
     return PlatformTspiFilterManager::POINT_CHANGED;
   }
@@ -300,7 +300,7 @@ public:
 
 private:
   CoordSurfaceClamping coordSurfaceClamping_;
-  std::map<simData::ObjectId, osgEarth::ElevationEnvelope::Context> lut_;
+  std::map<simData::ObjectId, osgEarth::ElevationPool::WorkingSet> lut_;
 };
 
 
@@ -335,12 +335,12 @@ public:
     // getHeight() can give inaccurate results depending on how much map data is loaded into the scene graph, while ElevationEnvelope can be prohibitively slow if there are many clamped entities
     double elevation = 0;
 
-    if (useMaxElevPrec_ && envelope_.valid())
+    if (useMaxElevPrec_)
     {
-      double terrainHeightHae = envelope_->getElevation(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG); // height above ellipsoid, the rough elevation
-      // If getting elevation fails, clamp above 0
-      if (terrainHeightHae != NO_DATA_VALUE)
-        elevation = terrainHeightHae;
+      osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
+      osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, NULL);
+      if (sample.hasData())
+        elevation = sample.elevation().as(osgEarth::Units::METERS);
     }
     else
     {
@@ -362,11 +362,7 @@ public:
   /** Sets the map pointer, required for proper clamping */
   void setMapNode(const osgEarth::MapNode* map)
   {
-    mapNode_ = map;
-    if (mapNode_.valid() && useMaxElevPrec_)
-      envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
-    else
-      envelope_ = NULL;
+    mapNode_ = map;    
   }
 
   void setUseMaxElevPrec(bool useMaxElevPrec)
@@ -375,19 +371,10 @@ public:
       return;
 
     useMaxElevPrec_ = useMaxElevPrec;
-    if (useMaxElevPrec_ && mapNode_.valid())
-    {
-      // Envelope should not be valid if useMaxElevPrec was just turned on
-      assert(!envelope_.valid());
-      envelope_ = mapNode_->getMap()->getElevationPool()->createEnvelope(mapNode_->getMapSRS(), MAX_LOD);
-    }
-    else
-      envelope_ = NULL;
   }
 
 private:
   osg::observer_ptr<const osgEarth::MapNode> mapNode_;
-  osg::ref_ptr<osgEarth::ElevationEnvelope> envelope_;
   bool useMaxElevPrec_;
 };
 
@@ -719,7 +706,7 @@ PlatformNode* ScenarioManager::addPlatform(const simData::PlatformProperties& pr
     dataStore,
     *platformTspiFilterManager_,
     root_.get(),
-    new Locator(scenarioEciLocator_),
+    new Locator(scenarioEciLocator_.get()),
     dataStore.referenceYear());
   node->getModel()->addCallback(new BeamNoseFixer(this));
 

@@ -93,6 +93,11 @@ public:
   virtual ~RadialLOS() { }
 
   /**
+   * Assignment
+   */
+  RadialLOS& operator = (const RadialLOS& rhs);
+
+  /**
    * Sets the maximum range of the sample
    * @param[in ] value Maximum range
    */
@@ -237,7 +242,7 @@ private:
   osgEarth::Angle     fov_;
   osgEarth::Angle     azim_resolution_;
   osg::ref_ptr<const osgEarth::SpatialReference> srs_;
-  osg::ref_ptr<osgEarth::ElevationEnvelope> envelope_;
+  osgEarth::ElevationPool::WorkingSet elevationWorkingSet_;
   bool use_scene_graph_;
 
   bool getBoundingRadials_(double azim_rad, const Radial*& out_r0, const Radial*& out_r1, double& out_mix) const;

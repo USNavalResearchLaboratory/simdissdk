@@ -137,6 +137,9 @@ private:
   osg::observer_ptr<const osgEarth::Map> map_;
   osg::observer_ptr<osg::Group> scene_;
 
+  osgEarth::AsyncElevationSampler* asyncSampler_;
+  osgEarth::ElevationPool::WorkingSet workingSet_;
+
   class MapChangeListener;
   /// listener to map changes, to update the map reference
   osg::ref_ptr<osg::Node> mapChangeListener_;

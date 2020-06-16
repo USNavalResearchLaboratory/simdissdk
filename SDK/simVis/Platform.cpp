@@ -279,7 +279,7 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
     {
       // for eci mode, platforms need to parent their EntityNode locator to the scenario ECI locator
       if (!getLocator()->getParentLocator())
-        getLocator()->setParentLocator(eciLocator_);
+        getLocator()->setParentLocator(eciLocator_.get());
     }
     else if (getLocator()->getParentLocator() == eciLocator_)
     {
@@ -689,7 +689,7 @@ bool PlatformNode::createTrackHistoryNode_(const simData::PlatformPrefs& prefs)
     // dev error to construct a platform with a NULL locator
     assert(eciLocator_);
     if (eciLocator_)
-      track_ = new TrackHistoryNode(ds_, eciLocator_, platformTspiFilterManager_, getId());
+      track_ = new TrackHistoryNode(ds_, eciLocator_.get(), platformTspiFilterManager_, getId());
   }
   // trackhistory for platform in ecef datamode gets a new empty locator
   if (!track_.valid())
@@ -720,7 +720,7 @@ bool PlatformNode::createTimeTicks_(const simData::PlatformPrefs& prefs)
     // dev error to construct a platform with a NULL locator argument
     assert(eciLocator_);
     if (eciLocator_)
-      timeTicks_ = new TimeTicks(ds_, eciLocator_, platformTspiFilterManager_, getId());
+      timeTicks_ = new TimeTicks(ds_, eciLocator_.get(), platformTspiFilterManager_, getId());
   }
   // for non-ECI platform use a new empty locator
   if (!timeTicks_.valid())

@@ -125,7 +125,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parent
 
   activeColor_ = defaultColor_;
 
-  localLocator_ = new simVis::Locator(parentLocator_);
+  localLocator_ = new simVis::Locator(parentLocator_.get());
 
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
 
@@ -295,18 +295,18 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
   if (!chunk)
   {
     // new chunk needs a new locator
-    osg::ref_ptr<Locator> newChunkLocator = new Locator(parentLocator_);
+    osg::ref_ptr<Locator> newChunkLocator = new Locator(parentLocator_.get());
 
     chunk = new TrackChunkNode(chunkSize_, lastPlatformPrefs_.trackprefs().trackdrawmode());
     // set the new chunk's locator - this will establish the position of the chunk
-    chunk->setLocator(newChunkLocator);
+    chunk->setLocator(newChunkLocator.get());
 
     // if there is a preceding chunk, duplicate its last point so there is no
     // discontinuity from previous chunk to this new chunk - this matters for line, ribbon and bridge drawing modes
     // note that this extra point needs to be removed during data limiting
     if (chunkGroup_->getNumChildren() > 0 && prevUpdate != NULL)
     {
-      if (fillLocator_(*prevUpdate, newChunkLocator))
+      if (fillLocator_(*prevUpdate, newChunkLocator.get()))
       {
         const double last_t = prevUpdate->time();
         chunk->addPoint(*(newChunkLocator.get()), last_t, historyColorAtTime_(last_t), hostBounds_);
@@ -786,7 +786,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
     if (currentPointChunk_ == NULL)
       return;
     addChild(currentPointChunk_);
-    currentChunkLocator = new Locator(parentLocator_);
+    currentChunkLocator = new Locator(parentLocator_.get());
     currentPointChunk_->setLocator(currentChunkLocator.get());
   }
   else
