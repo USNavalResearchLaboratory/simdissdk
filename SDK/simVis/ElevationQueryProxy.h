@@ -23,9 +23,10 @@
 #ifndef SIMVIS_ELEVATIONQUERYPROXY_H
 #define SIMVIS_ELEVATIONQUERYPROXY_H
 
-#include "simCore/Common/Common.h"
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
+#include "osgEarth/ElevationQuery"
+#include "simCore/Common/Common.h"
 
 namespace osg {
   class Group;
@@ -35,9 +36,6 @@ namespace osgEarth {
   class GeoPoint;
   class Map;
   class MapNode;
-  namespace Util {
-    class ElevationQuery;
-  }
 }
 
 namespace simVis
