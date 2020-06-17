@@ -48,7 +48,7 @@ public:
   /**
   * Apply this rule to the specified entity, if all conditions are met.
   * (Gathers all the required data from the DataStore in this call, which can be expensive.)
-  * @param[in] entityId id of the entity
+  * @param[in] entityId id of the entity.  0 is not a valid value and will not match any entities.
   * @param[in] ds handle to the data store
   * @return 0 on successful application, non-zero on error
   */
@@ -77,7 +77,7 @@ public:
   * Enforce the pref value specified by tagStack and entityType on the specified entity. This means that the pref value will
   * not be updated by normal processing. Only components with authority to override the pref value enforcement will do so.
   * This is useful for cases where a pref update from one source should be flagged to take priority over updates from other sources.
-  * @param id  the data store entity id
+  * @param id  the data store entity id. 0 is not a valid value and will not match any entities.
   * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
   * @param enforce If true, then turn on enforcing, preventing rules from changing the value.  If false, disables the enforcement,
   *   allowing preference rules to work with the value again.
@@ -87,7 +87,7 @@ public:
   /**
    * Returns true if the preference value is set to enforcing.  Enforced prefs cannot be changed by Preference Rules.  For
    * more details, see enforcePrefValue().
-   * @param id  the data store entity id
+   * @param id  the data store entity id. 0 is not a valid value and will not match any entities.
    * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
    * @return True if the value is marked for enforcement, false otherwise
    */
@@ -164,7 +164,7 @@ public:
 
   /**
    * Applies all the rules to the specified entity
-   * @param[in] id  the specified entity
+   * @param[in] id  the specified entity. 0 is not a valid value and will not match any entities.
    * @return 0 on success, non-zero on error
    */
   virtual int applyRules(uint64_t id) = 0;
