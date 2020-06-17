@@ -24,8 +24,8 @@
 #define SIMCORE_EM_DECIBEL_H
 
 #include <cassert>
-#include <cmath>
 #include <complex>
+#include "simCore/Calc/MathConstants.h"
 
 namespace simCore
 {
