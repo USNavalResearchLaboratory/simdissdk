@@ -133,6 +133,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parent
 
   // configure the local state set
   simVis::setLighting(getOrCreateStateSet(), 0);
+  getOrCreateStateSet()->setRenderBinDetails(BIN_TRACK_HISTORY, BIN_GLOBAL_SIMSDK);
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
