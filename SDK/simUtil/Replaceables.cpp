@@ -272,7 +272,7 @@ std::string CenteredVariable::getText() const
     const simVis::EntityNode* entityNode = NULL;
     if (focusedView->isWatchEnabled())
       entityNode = focusedView->getWatcherNode();
-    else if (focusedView->getCameraTether() != NULL)
+    else if ((focusedView->getCameraTether() != NULL) && !focusedView->getCameraTether()->getParents().empty())
       entityNode = dynamic_cast<simVis::EntityNode*>(focusedView->getCameraTether()->getParent(0));
 
     // Return the name
