@@ -94,14 +94,14 @@ void CenterEntity::bindTo(EntityTreeComposite& tree)
 }
 #endif
 
-void CenterEntity::centerOnEntity(uint64_t id)
+void CenterEntity::centerOnEntity(uint64_t id, bool force)
 {
   // Need the scenario and focus manager to continue
   if (!scenarioManager_ || !focusManager_)
     return;
 
   simVis::EntityNode* node = getViewCenterableNode(id);
-  if ((node != NULL) && node->isActive() && node->isVisible())
+  if ((node != NULL) && (force  || (node->isActive() && node->isVisible())))
   {
     if (focusManager_->getFocusedView() != NULL)
     {
@@ -120,22 +120,8 @@ simVis::EntityNode* CenterEntity::getViewCenterableNode(uint64_t id) const
   if (!scenarioManager_ || !focusManager_)
     return NULL;
 
-  simVis::EntityNode* node = scenarioManager_->find(id);
-
-  // tetherCamera works only with platforms, custom renderings and gates, so work up the chain until
-  // a platform, custom rendering or gate is found.
-  while ((node != NULL) && (dynamic_cast<simVis::PlatformNode*>(node) == NULL) &&
-    (dynamic_cast<simVis::GateNode*>(node) == NULL) &&
-    (dynamic_cast<simVis::CustomRenderingNode*>(node) == NULL))
-  {
-    uint64_t parentId;
-    if (node->getHostId(parentId))
-      node = scenarioManager_->find(parentId);
-    else
-      node = NULL;
-  }
-
-  return node;
+  auto node = focusManager_->getFocusedView()->getModelNodeForTether(scenarioManager_->find(id));
+  return focusManager_->getFocusedView()->getEntityNode(node);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -260,7 +246,8 @@ void BindCenterEntityToEntityTreeComposite::centerOnEntity_(uint64_t id)
   if ((newTime_ != -1.0) && (dataStore_.getBoundClock() != NULL) && !dataStore_.getBoundClock()->controlsDisabled() && !dataStore_.getBoundClock()->isLiveMode())
     dataStore_.getBoundClock()->setTime(simCore::TimeStamp(dataStore_.referenceYear(), newTime_));
 
-  centerEntity_.centerOnEntity(id);
+  // Need to force the center because the setTime has not been process so the entity may not yet be valid
+  centerEntity_.centerOnEntity(id, true);
 }
 
 double BindCenterEntityToEntityTreeComposite::getPlatformNearestTime_(uint64_t id) const

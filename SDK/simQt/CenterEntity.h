@@ -84,8 +84,12 @@ public:
   simVis::EntityNode* getViewCenterableNode(uint64_t id) const;
 
 public slots:
-  /** Center the current view port on the given entity Unique ID */
-  void centerOnEntity(uint64_t id);
+  /**
+   * Center the current view port on the given entity Unique ID
+   * @param id The entity to center on
+   * @param force Center on an invalid entity with the expectation it will soon become valid
+   */
+  void centerOnEntity(uint64_t id, bool force = false);
   /** Center the current view port on the given list of entity unique IDs */
   void centerOnSelection(const QList<uint64_t>& ids);
 

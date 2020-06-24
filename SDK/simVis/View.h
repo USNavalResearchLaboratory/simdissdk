@@ -613,12 +613,9 @@ public:
   ViewType type() const;
 
   /**
-   * Gets the entity node's model node if the specified node is an EntityNode.  Essentially
-   * returns either the simVis::EntityNode, or for platforms will find the PlatformModelNode
-   * under the provided EntityNode.  Tethering requires a PlatformModelNode for platforms,
-   * or the EntityNode for other entity types.
+   * Gets a node suitable for tethering.  The type of node varies based on the entity type.
    * @param node Either an EntityNode or PlatformModelNode representing the entity to tether.
-   * @return the entity node of the tether node, or the original node if not a Platform Model node
+   * @return A node suitable for tethering
    */
   osg::Node* getModelNodeForTether(osg::Node* node) const;
 

@@ -47,6 +47,7 @@
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
+#include "simVis/Scenario.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 
@@ -1992,23 +1993,44 @@ void View::fixCockpitFlag_(osg::Node* node, osgEarth::Util::EarthManipulator* ma
 osg::Node* View::getModelNodeForTether(osg::Node* node) const
 {
   EntityNode* entityNode = dynamic_cast<EntityNode*>(node);
-  if (entityNode)
+  if (!entityNode)
+    return NULL;
+
+  switch (entityNode->type())
   {
-    // Entity nodes typically have proxies (children) that we center on.
-    osg::Node* proxyNode = entityNode->findAttachment<PlatformModelNode>();
-    // Fall back to Gate centroids
-    if (!proxyNode)
-      proxyNode = entityNode->findAttachment<GateCentroid>();
+  case simData::PLATFORM:
+    return entityNode->findAttachment<PlatformModelNode>();
+  case simData::GATE:
+    return entityNode->findAttachment<GateCentroid>();
+  case simData::CUSTOM_RENDERING:
+    return static_cast<CustomRenderingNode*>(entityNode)->locatorNode();
 
-    if ((!proxyNode) && (entityNode->type() == simData::CUSTOM_RENDERING))
+  // Look for host platform
+  case simData::BEAM:
+  case simData::LASER:
+  case simData::PROJECTOR:
+  case simData::LOB_GROUP:
+  {
+    simData::ObjectId hostId;
+    while (entityNode->getHostId(hostId))
     {
-      auto customNode = static_cast<CustomRenderingNode*>(entityNode);
-      proxyNode = customNode->locatorNode();
+      entityNode = getSceneManager()->getScenario()->find(hostId);
+      if (!entityNode)
+        break;
+      if (entityNode->type() == simData::PLATFORM)
+        return entityNode->findAttachment<PlatformModelNode>();
     }
-
-    if (proxyNode)
-      node = proxyNode;
+    break;
   }
+
+  // Passed in an invalid node
+  case simData::NONE:
+  case simData::ALL:
+    return node;
+  }
+
+  // A new entity type was added and the code above was not updated
+  assert(false);
   return node;
 }
 
