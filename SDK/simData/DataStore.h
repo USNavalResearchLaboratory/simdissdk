@@ -148,7 +148,7 @@ public:
   };
 
   /// similar to Observer, but provides more info to the listener
-  class SDKDATA_EXPORT Listener
+  class Listener
   {
   public: // methods
     virtual ~Listener() {}
