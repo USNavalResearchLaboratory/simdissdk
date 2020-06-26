@@ -148,7 +148,7 @@ public:
   };
 
   /// similar to Observer, but provides more info to the listener
-  class Listener
+  class SDKDATA_EXPORT Listener
   {
   public: // methods
     virtual ~Listener() {}
@@ -166,7 +166,10 @@ public:
     virtual void onPrefsChange(DataStore *source, ObjectId id) = 0;
 
     /// current time has been changed
-    virtual void onTimeChange(DataStore *source) = 0;
+    SDK_DEPRECATE(virtual void onTimeChange(DataStore *source) {}, "Method has been replaced with onChange()");
+
+    /// data store has changed, this includes both time change and/or data change; called a max of once per frame
+    virtual void onChange(DataStore *source) = 0;
 
     /// something has changed in the entity category data
     virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) = 0;
@@ -200,8 +203,8 @@ public:
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) {}
 
-    /// current time has been changed
-    virtual void onTimeChange(DataStore *source) {}
+    /// data store has changed
+    virtual void onChange(DataStore *source) {}
 
     /// something has changed in the entity category data
     virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) {}

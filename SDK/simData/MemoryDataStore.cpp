@@ -963,7 +963,7 @@ void MemoryDataStore::update(double time)
   {
     if (*i != NULL)
     {
-      (**i).onTimeChange(this);
+      (**i).onChange(this);
       checkForRemoval_(localCopy);
     }
   }

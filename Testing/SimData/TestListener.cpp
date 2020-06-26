@@ -95,7 +95,7 @@ public:
     ++pref_;
   }
 
-  virtual void onTimeChange(simData::DataStore *source)
+  virtual void onChange(simData::DataStore *source)
   {
     ++time_;
   }
@@ -171,7 +171,7 @@ public:
     listener_.reset();
   }
 
-  virtual void onTimeChange(simData::DataStore *source)
+  virtual void onChange(simData::DataStore *source)
   {
     if ((listener_ != NULL) && (type_ == TimeChange))
       source->addListener(listener_);
@@ -248,7 +248,7 @@ public:
     }
   }
 
-  virtual void onTimeChange(simData::DataStore *source)
+  virtual void onChange(simData::DataStore *source)
   {
     if ((listener_ != NULL) && (type_ == TimeChange))
     {
@@ -309,7 +309,7 @@ public:
   {
   }
 
-  virtual void onTimeChange(simData::DataStore *source)
+  virtual void onChange(simData::DataStore *source)
   {
     if ((listener1_ != NULL) && (type_ == TimeChange))
     {

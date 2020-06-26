@@ -1951,7 +1951,7 @@ public:
   virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId) {}
   virtual void onScenarioDelete(simData::DataStore* source) {}
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id) {}
-  virtual void onTimeChange(simData::DataStore *source) {}
+  virtual void onChange(simData::DataStore *source) {}
   virtual void onFlush(simData::DataStore* source, simData::ObjectId id) {}
 
 private:

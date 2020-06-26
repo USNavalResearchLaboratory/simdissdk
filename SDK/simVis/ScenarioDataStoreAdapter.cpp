@@ -93,7 +93,7 @@ public:
   }
 
   /// current time has been changed
-  virtual void onTimeChange(simData::DataStore *source)
+  virtual void onChange(simData::DataStore *source)
   {
     if (scenarioManager_.valid())
       scenarioManager_->update(source);

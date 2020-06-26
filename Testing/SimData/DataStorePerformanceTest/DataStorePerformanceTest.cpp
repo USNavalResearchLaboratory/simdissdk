@@ -90,8 +90,8 @@ public:
     counters_->pref++;
   }
 
-  /// current time has been changed
-  virtual void onTimeChange(simData::DataStore *source)
+  /// data store has changed
+  virtual void onChange(simData::DataStore *source)
   {
     counters_->time++;
   }
