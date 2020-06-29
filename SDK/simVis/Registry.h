@@ -29,7 +29,7 @@
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
 #include "osgDB/FileUtils"
-#include "osgEarth/ThreadingUtils"
+#include "osgEarth/Threading"
 #include "simCore/Common/Common.h"
 #include "simCore/Common/FileSearch.h"
 
@@ -242,7 +242,7 @@ private:
   bool memoryChecking_;
 
   simCore::FileSearchPtr fileSearch_;
-  mutable OpenThreads::ReentrantMutex fileSearchMutex_;
+  mutable osgEarth::Threading::RecursiveMutex fileSearchMutex_;
 
   /// We maintain a callback method that blocks HTTP results, and uses our file search
   class ReadFileCallback;
