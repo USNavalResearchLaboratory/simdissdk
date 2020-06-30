@@ -266,6 +266,12 @@ public:
     if (!index.isValid() || index.row() >= rowCount())
       return;
 
+    if (rowCount() <= 2)
+    {
+      assert(0); // Dev error, minimum of two stops required
+      return;
+    }
+
     auto iter = colorStops_.begin() + index.row();
     beginRemoveRows(QModelIndex(), index.row(), index.row());
     colorStops_.erase(iter);
@@ -472,7 +478,8 @@ public:
 
     if (evt->button() == Qt::RightButton)
     {
-      model_.removeStop(pickIndex_);
+      if (model_.rowCount() > 2)
+        model_.removeStop(pickIndex_);
       pickIndex_ = QModelIndex();
     }
     // Left click has the index set, so it can handle drag

@@ -82,9 +82,8 @@ public:
   /** Removes a single control color, by its value. Returns 0 on success. */
   int removeColor(float zeroToOne);
   /**
-   * Removes all configured colors, leaving the map empty.
-   * Differs from osg::TransferFunction1D::clear() that
-   * clears all but the min/max values, which it sets to white.
+   * Removes all configured colors using osg::TransferFunction1D::clear()
+   * which sets two white stops at 0.f and 1.f.
    */
   void clearColors();
 
@@ -95,13 +94,17 @@ public:
 
   /** Retrieves count of registered colors. */
   int colorCount() const;
-  /** Returns true if the color map is empty. */
-  bool empty() const;
 
-  /** Sets all control colors at once, replacing old values. Discards values outside [0,1]. */
-  void setColors(const std::map<float, QColor>& colors);
-  /** Sets all control colors at once, replacing old values. Discards values outside [0,1]. */
-  void setColors(const std::map<float, osg::Vec4>& colors);
+  /**
+   * Sets all control colors at once, replacing old values. Discards values outside [0,1].
+   * New map should provide at least two valid stops. Returns 0 on success, non-zero on error.
+   */
+  int setColors(const std::map<float, QColor>& colors);
+  /**
+   * Sets all control colors at once, replacing old values. Discards values outside [0,1].
+   * New map should provide at least two valid stops. Returns 0 on success, non-zero on error.
+   */
+  int setColors(const std::map<float, osg::Vec4>& colors);
 
   /** Comparison operator */
   bool operator==(const ColorGradient& rhs) const;
