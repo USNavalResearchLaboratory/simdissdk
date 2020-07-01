@@ -240,12 +240,11 @@ public:
   /** Retrieves the current color gradient from the model */
   ColorGradient getColorGradient() const
   {
-    ColorGradient grad;
-    grad.clearColors();
-
+    std::map<float, QColor> colors;
     for (const auto& colorStop : colorStops_)
-      grad.setColor(colorStop.first, colorStop.second);
+      colors[colorStop.first] = colorStop.second;
 
+    ColorGradient grad(colors);
     return grad;
   }
 
@@ -265,12 +264,6 @@ public:
   {
     if (!index.isValid() || index.row() >= rowCount())
       return;
-
-    if (rowCount() <= 2)
-    {
-      assert(0); // Dev error, minimum of two stops required
-      return;
-    }
 
     auto iter = colorStops_.begin() + index.row();
     beginRemoveRows(QModelIndex(), index.row(), index.row());
@@ -478,8 +471,7 @@ public:
 
     if (evt->button() == Qt::RightButton)
     {
-      if (model_.rowCount() > 2)
-        model_.removeStop(pickIndex_);
+      model_.removeStop(pickIndex_);
       pickIndex_ = QModelIndex();
     }
     // Left click has the index set, so it can handle drag
@@ -669,6 +661,11 @@ bool ColorGradientWidget::showAlpha() const
 bool ColorGradientWidget::showHelp() const
 {
   return showHelp_;
+}
+
+bool ColorGradientWidget::gradientIsValid() const
+{
+  return model_->rowCount() >= 2;
 }
 
 void ColorGradientWidget::setShowTable(bool show)

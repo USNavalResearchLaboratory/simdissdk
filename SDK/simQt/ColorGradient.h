@@ -39,6 +39,7 @@ static const QString GRADIENT_STOP_TEMPLATE = "stop: %1 rgba(%2)";
 /**
  * Represents a color gradient between magnitude values 0 and 1.
  * Wraps osg::TransferFunction1D as underlying implementation.
+ * This class enforces a minimum of two color stops at all times.
  */
 class SDKQT_EXPORT ColorGradient
 {
@@ -98,11 +99,13 @@ public:
   /**
    * Sets all control colors at once, replacing old values. Discards values outside [0,1].
    * New map should provide at least two valid stops. Returns 0 on success, non-zero on error.
+   * If the given map is invalid, no changes are made to the gradient.
    */
   int setColors(const std::map<float, QColor>& colors);
   /**
    * Sets all control colors at once, replacing old values. Discards values outside [0,1].
    * New map should provide at least two valid stops. Returns 0 on success, non-zero on error.
+   * If the given map is invalid, no changes are made to the gradient.
    */
   int setColors(const std::map<float, osg::Vec4>& colors);
 

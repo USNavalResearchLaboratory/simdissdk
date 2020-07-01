@@ -70,6 +70,9 @@ public:
   /** Returns true if the button to spawn a help dialog is shown */
   bool showHelp() const;
 
+  /** Returns true if the gradient in the widget is currently valid */
+  bool gradientIsValid() const;
+
 public slots:
   /** Sets whether to display the color stops table */
   void setShowTable(bool show);
