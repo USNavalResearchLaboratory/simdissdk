@@ -71,7 +71,7 @@ public:
   bool layerIsTimed(const osgEarth::ImageLayer* layer) const;
 
   /// Gets the time group string from the given layer.  Returns empty string if layer is not timed
-  std::string getLayerTimeGroup(const osgEarth::ImageLayer* layer);
+  std::string getLayerTimeGroup(const osgEarth::ImageLayer* layer) const;
 
   /**
    * Returns the layer that has time value closest after the current time for the given time group.

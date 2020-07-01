@@ -424,7 +424,7 @@ void TimestampedLayerManager::useTimedVisibility_()
   setTime_(currTime_);
 }
 
-std::string TimestampedLayerManager::getLayerTimeGroup(const osgEarth::ImageLayer* layer)
+std::string TimestampedLayerManager::getLayerTimeGroup(const osgEarth::ImageLayer* layer) const
 {
   if (!layer || !layerIsTimed(layer))
     return "";
