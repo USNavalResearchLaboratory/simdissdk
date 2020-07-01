@@ -1917,9 +1917,9 @@ void CylinderNodeInterface::setStyle_(const osgEarth::Style& style)
   if (!filled_ && style_.has<osgEarth::LineSymbol>())
     sideStyle.getOrCreate<osgEarth::PolygonSymbol>()->fill()->color() = style_.getSymbol<osgEarth::LineSymbol>()->stroke()->color();
 
-  // If we are filled, then side's backface culling should be unset; if unfilled, then it should be set false
+  // If we are filled, then side's backface culling should be true; if unfilled, then it should be set false
   if (filled_)
-    sideStyle.getOrCreate<osgEarth::RenderSymbol>()->backfaceCulling().unset();
+    sideStyle.getOrCreate<osgEarth::RenderSymbol>()->backfaceCulling() = true;
   else
     sideStyle.getOrCreate<osgEarth::RenderSymbol>()->backfaceCulling() = false;
   sideNode_->setStyle(sideStyle);
