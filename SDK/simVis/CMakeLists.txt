@@ -357,6 +357,11 @@ if(OSGEARTH_SILVERLINING_SUPPORT STREQUAL NODEKIT)
     set(HAVE_SILVERLINING_NODEKIT 1)
 endif()
 
+# Detect the rename of osgEarth/ThreadingUtils to osgEarth/Threading
+if(EXISTS "${OSGEARTH_LIBRARY_INCLUDE_PATH}/osgEarth/Threading")
+    set(HAVE_OSGEARTH_THREADING 1)
+endif()
+
 # TODO Once OSGEarth master hits 3.0, test properly.  For now, hardcode
 set(SDK_OSGEARTH_DEVEL 1)
 # We require osgEarth 3.0 and osgEarth from 1.11 and prior are not usable

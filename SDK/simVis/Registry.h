@@ -29,9 +29,15 @@
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
 #include "osgDB/FileUtils"
-#include "osgEarth/Threading"
 #include "simCore/Common/Common.h"
 #include "simCore/Common/FileSearch.h"
+#include "simVis/osgEarthVersion.h"
+
+#ifdef HAVE_OSGEARTH_THREADING
+#include "osgEarth/Threading"
+#else
+#include "osgEarth/ThreadingUtils"
+#endif
 
 namespace osg { class FrameStamp; }
 namespace osgText { class Font; }
@@ -242,7 +248,11 @@ private:
   bool memoryChecking_;
 
   simCore::FileSearchPtr fileSearch_;
+#ifdef HAVE_OSGEARTH_THREADING
   mutable osgEarth::Threading::RecursiveMutex fileSearchMutex_;
+#else
+  mutable OpenThreads::ReentrantMutex fileSearchMutex_;
+#endif
 
   /// We maintain a callback method that blocks HTTP results, and uses our file search
   class ReadFileCallback;

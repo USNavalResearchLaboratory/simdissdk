@@ -317,7 +317,11 @@ void simVis::Registry::setShareArticulatedIconModels(bool value)
 
 std::string simVis::Registry::findModelFile(const std::string& name) const
 {
+#ifdef HAVE_OSGEARTH_THREADING
   osgEarth::Threading::ScopedRecursiveMutexLock lock(fileSearchMutex_);
+#else
+  osgEarth::Threading::ScopedMutexLock lock(fileSearchMutex_);
+#endif
 
   if (!name.empty())
   {
@@ -447,7 +451,11 @@ osgText::Font* simVis::Registry::getOrCreateFont(const std::string& name) const
 
 std::string simVis::Registry::findFontFile(const std::string& name) const
 {
+#ifdef HAVE_OSGEARTH_THREADING
   osgEarth::Threading::ScopedRecursiveMutexLock lock(fileSearchMutex_);
+#else
+  osgEarth::Threading::ScopedMutexLock lock(fileSearchMutex_);
+#endif
 
   if (!name.empty())
   {
@@ -531,7 +539,11 @@ simCore::Clock* simVis::Registry::getClock() const
 
 void simVis::Registry::setFileSearch(simCore::FileSearchPtr fileSearch)
 {
+#ifdef HAVE_OSGEARTH_THREADING
   osgEarth::Threading::ScopedRecursiveMutexLock lock(fileSearchMutex_);
+#else
+  osgEarth::Threading::ScopedMutexLock lock(fileSearchMutex_);
+#endif
 
   if (fileSearch == NULL)
     fileSearch_.reset(new simCore::NoSearchFileSearch());
@@ -541,7 +553,12 @@ void simVis::Registry::setFileSearch(simCore::FileSearchPtr fileSearch)
 
 std::string simVis::Registry::findFile_(const std::string& filename, simCore::FileSearch::SearchFileType fileType) const
 {
+#ifdef HAVE_OSGEARTH_THREADING
   osgEarth::Threading::ScopedRecursiveMutexLock lock(fileSearchMutex_);
+#else
+  osgEarth::Threading::ScopedMutexLock lock(fileSearchMutex_);
+#endif
+
   if (fileSearch_ == NULL)
     return "";
   return fileSearch_->findFile(filename, fileType);

@@ -23,8 +23,14 @@
 #include "osgEarth/MapNodeObserver"
 #include "osgEarth/ElevationPool"
 #include "osgEarth/ElevationQuery"
-#include "osgEarth/Threading"
+#include "simVis/osgEarthVersion.h"
 #include "simVis/ElevationQueryProxy.h"
+
+#ifdef HAVE_OSGEARTH_THREADING
+#include "osgEarth/Threading"
+#else
+#include "osgEarth/ThreadingUtils"
+#endif
 
 namespace
 {
