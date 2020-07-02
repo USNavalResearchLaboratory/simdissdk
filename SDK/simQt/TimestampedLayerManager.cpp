@@ -296,24 +296,11 @@ void TimestampedLayerManager::addLayerWithTime_(osgEarth::ImageLayer* newLayer)
 {
   if (!newLayer)
     return;
-  const osgEarth::Config& conf = newLayer->getConfig();
-  std::string iso8601 = conf.value("time");
-  // Fall back to "times" if possible
-  if (iso8601.empty())
-    iso8601 = conf.value("times");
-  /*
-   * Some image layer file types can have time values (e.g. db files).  Config values can't be
-   * changed at time of file read, so time is set as a user value of the layer in these cases.
-   * Config values take precedence of user values.
-   */
-  if (iso8601.empty())
-    newLayer->getUserValue("time", iso8601);
+  const simCore::TimeStamp& simTime = getLayerTime(newLayer);
   // If layer has no time, nothing to do with it
-  if (iso8601.empty())
+  if (simTime == simCore::INFINITE_TIME_STAMP)
     return;
 
-  osgEarth::DateTime osgTime(iso8601);
-  simCore::TimeStamp simTime = simCore::TimeStamp(1970, osgTime.asTimeStamp());
   originalVisibility_[newLayer] = newLayer->getVisible();
   std::string groupName = getLayerTimeGroup(newLayer);
   // If the group doesn't exist yet, create it and put it in the map
@@ -433,6 +420,30 @@ std::string TimestampedLayerManager::getLayerTimeGroup(const osgEarth::ImageLaye
   if (rv.empty())
     rv = DEFAULT_LAYER_TIME_GROUP;
   return rv;
+}
+
+simCore::TimeStamp TimestampedLayerManager::getLayerTime(const osgEarth::ImageLayer* layer) const
+{
+  if (!layer)
+    return simCore::INFINITE_TIME_STAMP;
+
+  const osgEarth::Config& conf = layer->getConfig();
+  std::string iso8601 = conf.value("time");
+  // Fall back to "times" if possible
+  if (iso8601.empty())
+    iso8601 = conf.value("times");
+
+  // Some image layer file types can have time values (e.g. db files).  Config values can't be
+  // changed at time of file read, so time is set as a user value of the layer in these cases.
+  // Config values take precedence over user values.
+  if (iso8601.empty())
+    layer->getUserValue("time", iso8601);
+  // If layer has no time, nothing to do with it
+  if (iso8601.empty())
+    return simCore::INFINITE_TIME_STAMP;
+
+  const osgEarth::DateTime osgTime(iso8601);
+  return simCore::TimeStamp(1970, osgTime.asTimeStamp());
 }
 
 }

@@ -72,6 +72,8 @@ public:
 
   /// Gets the time group string from the given layer.  Returns empty string if layer is not timed
   std::string getLayerTimeGroup(const osgEarth::ImageLayer* layer) const;
+  /** Returns the time associated with the given layer, if layer is timed.  Returns simCore::INFINITE_TIME_STAMP if not timed. */
+  simCore::TimeStamp getLayerTime(const osgEarth::ImageLayer* layer) const;
 
   /**
    * Returns the layer that has time value closest after the current time for the given time group.
