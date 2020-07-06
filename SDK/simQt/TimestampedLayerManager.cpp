@@ -74,8 +74,10 @@ public:
     std::map<std::string, TimeGroup*>& groups = parent_.groups_;
     auto groupIter = groups.find(timeGroup);
 
-    // If there's at least one timed layer in this group, the group needs to exist
-    assert(groupIter != groups.end());
+    // If there's at least one timed layer in this group, the group needs to exist.  However,
+    // this condition could happen in cases where a layer group gets multiple entries with the
+    // same time stamp, then the layers get removed.  This condition is rare enough that we
+    // just handle it by breaking out here.
     if (groupIter == groups.end())
       return;
 
