@@ -413,7 +413,7 @@ void TimestampedLayerManager::useTimedVisibility_()
 
 std::string TimestampedLayerManager::getLayerTimeGroup(const osgEarth::ImageLayer* layer) const
 {
-  if (!layer || !layerIsTimed(layer))
+  if (!layer || getLayerTime(layer) == simCore::INFINITE_TIME_STAMP)
     return "";
   const osgEarth::Config& conf = layer->getConfig();
   std::string rv = conf.value(TIME_GROUP_TAG);
