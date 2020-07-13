@@ -65,10 +65,10 @@ public:
   virtual ~LocatorFactory() {}
 
   /// create a new locator
-  virtual SDK_DEPRECATE(Locator* createLocator() const = 0, "LocatorFactory is deprecated.");
+  virtual SDK_DEPRECATE(Locator* createLocator() const, "LocatorFactory is deprecated.") = 0;
 
   /// create a new platform locator
-  virtual SDK_DEPRECATE(Locator* createEciLocator() const = 0, "LocatorFactory is deprecated.");
+  virtual SDK_DEPRECATE(Locator* createEciLocator() const, "LocatorFactory is deprecated.") = 0;
 };
 
 //----------------------------------------------------------------------------
