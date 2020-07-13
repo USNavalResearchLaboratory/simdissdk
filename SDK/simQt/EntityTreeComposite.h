@@ -173,11 +173,6 @@ public:
   SDK_DEPRECATE(void addExternalAction(QAction* action), "Method will be removed in a future SDK release");
   /** DEPRECATED: Remove all actions added by the addExternalAction() call */
   SDK_DEPRECATE(void removeExternalActions(), "Method will be removed in a future SDK release");
-
-  /** DEPRECATED: Sets/clears the selected ID in the entity list */
-  SDK_DEPRECATE(void setSelected(uint64_t id, bool selected), "Method will be removed in a future SDK release");
-  /** DEPRECATED: Sets/clears selection for the IDs in 'list' */
-  SDK_DEPRECATE(void setSelected(QList<uint64_t> list, bool selected), "Method will be removed in a future SDK release");
 #endif
 
 public slots:

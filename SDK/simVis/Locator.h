@@ -123,12 +123,6 @@ public:
   */
   explicit Locator(Locator* parent, unsigned int compsToInherit = COMP_ALL);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-   * @deprecated No longer has any function. Rotation order is always HPR.
-   */
-  SDK_DEPRECATE(void setRotationOrder(const RotationOrder& order, bool notify = true), "Method will be removed in a future SDK release");
-#endif
   /**
   * Notifies any listeners that properties of this Locator have changed.
   * Normally this happens automatically, but if you call any of the set*
@@ -179,11 +173,6 @@ public:
    */
   void setLocalOffsets(const simCore::Vec3& pos, const simCore::Vec3& ori,
     double timestamp = std::numeric_limits<double>::max(), bool notify = true);
-
-  /**
-   * @deprecated No longer has any function.
-   */
-  void resetToLocalTangentPlane(bool notify = true);
 
   /**
   * Gets the world coordinate that was set by a setCoordinate() operation for this locator

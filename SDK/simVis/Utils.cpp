@@ -283,12 +283,6 @@ namespace
 namespace simVis
 {
 
-bool useRexEngine()
-{
-  // The MP engine is no longer supported.  Always use rex.
-  return true;
-}
-
 bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value)
 {
   if (!stateset)

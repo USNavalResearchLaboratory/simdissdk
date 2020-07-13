@@ -128,10 +128,6 @@ public:
     CHILD_IMAGE = 0,
     CHILD_ELEVATION,
     CHILD_FEATURE,
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-    /// @deprecated Use CHILD_FEATURE instead
-    CHILD_MODEL = CHILD_FEATURE,
-#endif
     CHILD_OTHER,
     CHILD_NONE
   };
@@ -166,24 +162,6 @@ signals:
   void featureLayerOpacityChanged(osgEarth::FeatureModelLayer* layer);
   /** Qt signal as described by the signal name */
   void featureLayerAdded(osgEarth::FeatureModelLayer* layer);
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-   * Qt signal as described by the signal name
-   * @deprecated Use featureLayerVisibleChanged() instead
-   */
-  void modelLayerVisibleChanged(osgEarth::FeatureModelLayer* layer);
-  /**
-  * Qt signal as described by the signal name
-  * @deprecated Use featureLayerOpacityChanged() instead
-  */
-  void modelLayerOpacityChanged(osgEarth::FeatureModelLayer* layer);
-  /**
-  * Qt signal as described by the signal name
-  * @deprecated Use featureLayerAdded() instead
-  */
-  void modelLayerAdded(osgEarth::FeatureModelLayer* layer);
-#endif
 
   /** Qt signal as described by the signal name */
   void otherLayerVisibleChanged(osgEarth::VisibleLayer* layer);

@@ -390,19 +390,6 @@ int EntityTreeComposite::setSelected(const QList<uint64_t>& list)
   return entityTreeWidget_->setSelected(list);
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-/** Sets/clears the selected ID in the entity list */
-void EntityTreeComposite::setSelected(uint64_t id, bool selected)
-{
-  entityTreeWidget_->setSelected(id, selected);
-}
-
-void EntityTreeComposite::setSelected(QList<uint64_t> list, bool selected)
-{
-  entityTreeWidget_->setSelected(list, selected);
-}
-#endif
-
 void EntityTreeComposite::scrollTo(uint64_t id, QAbstractItemView::ScrollHint hint)
 {
   entityTreeWidget_->scrollTo(id, hint);

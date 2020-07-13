@@ -139,69 +139,6 @@ void EntityTreeWidget::clearSelection()
   selectionSet_.clear();
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void EntityTreeWidget::setSelected(uint64_t id, bool selected, bool signalItemsSelected)
-{
-  if (model_ == NULL)
-    return;
-
-  // Pull out the index from the proxy
-  QModelIndex index = proxyModel_->mapFromSource(model_->index(id));
-  // If it's invalid, break out
-  if (index == QModelIndex())
-  {
-    // Make sure the item is not in the selection list (can happen in swap to tree list if
-    // a gate was selected and beams were filtered)
-    if (selectionSet_.remove(id))
-      selectionList_.removeOne(id);
-    return;
-  }
-
-  // If the item is already selected/deselected, then ignore the request
-  if (view_->selectionModel()->isSelected(index) == selected)
-  {
-    // Validate that our cache is consistent with this request
-    assert(selectionSet_.contains(id) == selected);
-    return;
-  }
-
-  // For internal consistency, update the selection_ cache BEFORE changing selection
-  if (selected)
-  {
-    // It's possible that this check could fail if swapping between tree and list, because
-    // in some cases signals can be blocked and we don't get the update on selections
-    if (!selectionSet_.contains(id))
-    {
-      selectionSet_.insert(id);
-      selectionList_.append(id);
-    }
-  }
-  else
-  {
-    // Assertion failure means the model thinks we had a selection, but we didn't cache it
-    assert(selectionSet_.contains(id));
-    // Only remove from list, if remove from set succeeds
-    if (selectionSet_.remove(id))
-      selectionList_.removeOne(id);
-  }
-  // Update our flag to match the signalItemsSelected flag. Do this so that selectionModel()->select()
-  // properly tells the view_ to update graphically, but so that we don't unnecessarily update in selectionChanged_()
-  emitSelectionChanged_ = signalItemsSelected;
-  // Update the selection
-  QItemSelectionModel::SelectionFlags flags = QItemSelectionModel::Rows | (selected ? QItemSelectionModel::Select : QItemSelectionModel::Deselect);
-  view_->selectionModel()->select(index, flags);
-  view_->selectionModel()->setCurrentIndex(index, flags);
-  // Restore the flag to true, so that single selections work as expected
-  emitSelectionChanged_ = true;
-}
-
-void EntityTreeWidget::setSelected(QList<uint64_t> list, bool selected)
-{
-  for (int ii = 0; ii < list.count(); ii++)
-    setSelected(list[ii], selected, ii == (list.count()-1));  // cause a GUI update on the last selection
-}
-#endif
-
 int EntityTreeWidget::setSelected(uint64_t id)
 {
   if (model_ == NULL)

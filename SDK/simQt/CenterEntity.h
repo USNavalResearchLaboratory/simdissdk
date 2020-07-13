@@ -62,14 +62,6 @@ public:
   CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent=NULL);
   virtual ~CenterEntity();
 
-// use BindCenterEntityToEntityTreeComposite instead
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** Constructor for EntityTreeComposite parent with an automatic call to bindTo */
-  SDK_DEPRECATE(CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, EntityTreeComposite& tree), "Method will be removed in a future SDK release");
-  /** Auto configures the double click to center on platform and turns off the tree expansion on double click */
-  SDK_DEPRECATE(void bindTo(EntityTreeComposite& tree), "Method will be removed in a future SDK release");
-#endif
-
   /**
    * Sets the centroid manager for centering views
    * @param centroidManager the centroid manager for centering views

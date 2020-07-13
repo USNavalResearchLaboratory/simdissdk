@@ -239,21 +239,6 @@ bool Locator::getLocalOffsets(simCore::Vec3& pos, simCore::Vec3& ori) const
   return true;
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void Locator::setRotationOrder(const Locator::RotationOrder& order, bool notify)
-{
-  rotOrder_ = order;
-  if (notify)
-    notifyListeners_();
-}
-#endif
-
-void Locator::resetToLocalTangentPlane(bool notify)
-{
-  if (notify)
-    notifyListeners_();
-}
-
 void Locator::endUpdate()
 {
   notifyListeners_();

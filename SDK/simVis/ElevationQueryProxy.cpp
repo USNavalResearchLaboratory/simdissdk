@@ -210,15 +210,6 @@ bool ElevationQueryProxy::getElevation(const osgEarth::GeoPoint& point, double& 
   return getElevationFromPool_(point, out_elevation, desiredResolution, out_actualResolution, blocking);
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void ElevationQueryProxy::setMaxTilesToCache(int value)
-{
-  // After 10/2016 API, now uses map's elevation tile pool and this method is gone.
-  // If you really want to change it from default of 128, you can do so by
-  // calling map->getElevationPool()->setMaxEntries().
-}
-#endif
-
 void ElevationQueryProxy::setMap(const osgEarth::Map* map)
 {
   // Avoid expensive operations on re-do of same map

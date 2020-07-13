@@ -43,16 +43,6 @@ CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioM
 {
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-CenterEntity::CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, EntityTreeComposite& tree)
-  : QObject(&tree),
-    focusManager_(&focusManager),
-    scenarioManager_(&scenarioManager)
-{
-  bindTo(tree);
-}
-#endif
-
 CenterEntity::~CenterEntity()
 {
 }
@@ -85,14 +75,6 @@ void CenterEntity::centerOnSelection(const QList<uint64_t>& ids)
     centroidManager_->centerViewOn(nodes, focusManager_->getFocusedView());
   }
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void CenterEntity::bindTo(EntityTreeComposite& tree)
-{
-  connect(&tree, SIGNAL(itemDoubleClicked(uint64_t)), this, SLOT(centerOnEntity(uint64_t)));
-  tree.setExpandsOnDoubleClick(false); /// Turns off the tree expansion on double click.
-}
-#endif
 
 void CenterEntity::centerOnEntity(uint64_t id, bool force)
 {
