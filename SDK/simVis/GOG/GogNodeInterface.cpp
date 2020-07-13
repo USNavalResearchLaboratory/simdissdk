@@ -2239,6 +2239,24 @@ LatLonAltBoxInterface::LatLonAltBoxInterface(osg::Group* node, osgEarth::Feature
   : FeatureNodeInterface(node, topNode, metaData),
     bottomNode_(bottomNode)
 {
+  if (featureNode_.valid())
+    initAltitudes_(*featureNode_.get(), originalAltitude_);
+  if (bottomNode_.valid())
+    initAltitudes_(*bottomNode_.get(), bottomAltitude_);
+}
+
+void LatLonAltBoxInterface::setAltOffset(double altOffsetMeters)
+{
+  if (altOffsetMeters == altOffset_)
+    return;
+
+  metaData_.setExplicitly(GOG_THREE_D_OFFSET_ALT_SET);
+  altOffset_ = altOffsetMeters;
+
+  if (featureNode_.valid())
+    applyAltOffsets_(*featureNode_.get(), originalAltitude_);
+  if (bottomNode_.valid())
+    applyAltOffsets_(*bottomNode_.get(), bottomAltitude_);
 }
 
 void LatLonAltBoxInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
@@ -2257,6 +2275,41 @@ void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)
     bottomNode_->getFeature()->style() = style_;
     bottomNode_->dirty();
   }
+}
+
+void LatLonAltBoxInterface::initAltitudes_(osgEarth::FeatureNode& node, std::vector<double>& altitudes) const
+{
+  altitudes.clear();
+  // use GeometryIterator to get all the points, since it works on MultiGeometries
+  osgEarth::GeometryIterator iter(node.getFeature()->getGeometry(), false);
+  while (iter.hasMore())
+  {
+    osgEarth::Geometry* part = iter.next();
+    for (size_t i = 0; i < part->size(); ++i)
+      altitudes.push_back((*part)[i].z());
+  }
+}
+
+void LatLonAltBoxInterface::applyAltOffsets_(osgEarth::FeatureNode& node, const std::vector<double>& altitudes) const
+{
+  osgEarth::Geometry* geometry = node.getFeature()->getGeometry();
+  if (!geometry)
+    return;
+
+  // now apply the altitude offset to all of our position points, use the GeometryIterator which works on MultiGeometries
+  osgEarth::GeometryIterator iter(geometry, false);
+  size_t altIndex = 0;
+  while (iter.hasMore())
+  {
+    osgEarth::Geometry* part = iter.next();
+    for (size_t i = 0; i < part->size() && altIndex < altitudes.size(); ++i, ++altIndex)
+    {
+      // if this fails, the altitudes vector is out of sync with the corresponding node's geometry
+      assert(altIndex < altitudes.size());
+      (*part)[i].z() = altitudes.at(altIndex) + altOffset_;
+    }
+  }
+  node.dirty();
 }
 
 } }

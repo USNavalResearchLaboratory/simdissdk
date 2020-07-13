@@ -545,12 +545,12 @@ protected:
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
 
-private:
-  void init_();
-
   osg::observer_ptr<osgEarth::FeatureNode> featureNode_;
   /// cache the original altitude values, to apply altitude offset dynamically
   std::vector<double> originalAltitude_;
+
+private:
+  void init_();
 };
 
 /**
@@ -726,13 +726,22 @@ class SDKVIS_EXPORT LatLonAltBoxInterface : public FeatureNodeInterface
 public:
   LatLonAltBoxInterface(osg::Group* node, osgEarth::FeatureNode* topNode, osgEarth::FeatureNode* bottomNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~LatLonAltBoxInterface() {}
+  // handle the special case for MultiGeometry
+  virtual void setAltOffset(double altOffsetMeters);
 
 protected:
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
 
 private:
+  /// store the altitudes of the specified node into the specified altitudes vector, handles iterating through MultiGeometry
+  void initAltitudes_(osgEarth::FeatureNode& node, std::vector<double>& altitudes) const;
+  /// apply the altitude offsets, handles iterating through MultiGeometry
+  void applyAltOffsets_(osgEarth::FeatureNode& node, const std::vector<double>& altitudes) const;
+
   osg::observer_ptr<osgEarth::FeatureNode> bottomNode_;
+  /// original altitudes of the bottom node
+  std::vector<double> bottomAltitude_;
 };
 
 
