@@ -20,9 +20,11 @@
  * disclose, or release this software.
  *
  */
+#include "osg/FrontFace"
 #include "osgEarth/GeometryFactory"
 #include "osgEarth/GeometryCompiler"
 #include "osgEarth/FeatureNode"
+#include "simCore/Calc/CoordinateConverter.h"
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/ParsedShape.h"
@@ -127,42 +129,45 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
     // semi-transparent.  If you always want to see lines then remove this line.
     style.getOrCreateSymbol<osgEarth::RenderSymbol>()->backfaceCulling() = true;
 
-    // result geometry:
-    MultiGeometry* lines = new MultiGeometry();
-    Geometry* bottom = lines->add(new NoRewindRing());
+    // geometry for bottom/left/back
+    MultiGeometry* linesBottom = new MultiGeometry();
+    Geometry* bottom = linesBottom->add(new NoRewindRing());
     bottom->push_back(minPoint.vec3d());
     bottom->push_back(minPoint.x(), maxPoint.y(), minPoint.z());
     bottom->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
     bottom->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
 
-    Geometry* top = lines->add(new NoRewindRing());
+    // geometry for top/right/front
+    MultiGeometry* linesTop = new MultiGeometry();
+    Geometry* top = linesTop->add(new NoRewindRing());
     top->push_back(minPoint.x(), minPoint.y(), maxPoint.z());
     top->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
     top->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
     top->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
+    osgEarth::Geometry::Orientation ori2 = top->getOrientation();
 
     // Top and bottom are required for proper display above and below.  Sides are not required for 0-height.
     if (maxPoint.z() > minPoint.z())
     {
-      Geometry* left = lines->add(new NoRewindRing());
+      Geometry* left = linesBottom->add(new NoRewindRing());
       left->push_back(minPoint.x(), minPoint.y(), minPoint.z());
       left->push_back(minPoint.x(), minPoint.y(), maxPoint.z());
       left->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
       left->push_back(minPoint.x(), maxPoint.y(), minPoint.z());
 
-      Geometry* right = lines->add(new NoRewindRing());
+      Geometry* right = linesTop->add(new NoRewindRing());
       right->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
       right->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
       right->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
       right->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
 
-      Geometry* back = lines->add(new NoRewindRing());
+      Geometry* back = linesBottom->add(new NoRewindRing());
       back->push_back(minPoint.x(), maxPoint.y(), minPoint.z());
       back->push_back(minPoint.x(), maxPoint.y(), maxPoint.z());
       back->push_back(maxPoint.x(), maxPoint.y(), maxPoint.z());
       back->push_back(maxPoint.x(), maxPoint.y(), minPoint.z());
 
-      Geometry* front = lines->add(new NoRewindRing());
+      Geometry* front = linesTop->add(new NoRewindRing());
       front->push_back(minPoint.x(), minPoint.y(), minPoint.z());
       front->push_back(maxPoint.x(), minPoint.y(), minPoint.z());
       front->push_back(maxPoint.x(), minPoint.y(), maxPoint.z());
@@ -173,12 +178,25 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
     if (!parsedShape.hasValue(GOG_FILLED))
       style.remove<PolygonSymbol>();
 
-    Feature* feature = new Feature(lines, mapNode->getMapSRS(), style);
-    feature->setName("GOG LatLonAltBox Feature");
-    osgEarth::FeatureNode* node = new osgEarth::FeatureNode(feature);
-    node->setName("GOG LatLonAltBox");
-    node->setMapNode(mapNode);
-    GogNodeInterface* rv = new FeatureNodeInterface(node, metaData);
+    Feature* featureBottom = new Feature(linesBottom, mapNode->getMapSRS(), style);
+    featureBottom->setName("GOG LatLonAltBox Feature Bottom");
+    osgEarth::FeatureNode* nodeBottom = new osgEarth::FeatureNode(featureBottom);
+    nodeBottom->setName("GOG LatLonAltBox Bottom");
+    nodeBottom->setMapNode(mapNode);
+    // Set the node facing to clockwise, to solve winding issue with osgEarth
+    nodeBottom->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);
+
+    Feature* featureTop = new Feature(linesTop, mapNode->getMapSRS(), style);
+    featureTop->setName("GOG LatLonAltBox Feature Top");
+    osgEarth::FeatureNode* nodeTop = new osgEarth::FeatureNode(featureTop);
+    nodeTop->setName("GOG LatLonAltBox Top");
+    nodeTop->setMapNode(mapNode);
+
+    osg::Group* parent = new osg::Group();
+    parent->addChild(nodeBottom);
+    parent->addChild(nodeTop);
+
+    GogNodeInterface* rv = new LatLonAltBoxInterface(parent, nodeTop, nodeBottom, metaData);
     rv->applyToStyle(parsedShape, p.units_);
     return rv;
   }

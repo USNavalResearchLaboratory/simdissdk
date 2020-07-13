@@ -1328,20 +1328,14 @@ FeatureNodeInterface::FeatureNodeInterface(osgEarth::FeatureNode* featureNode, c
   : GogNodeInterface(featureNode, metaData),
     featureNode_(featureNode)
 {
-  if (featureNode_.valid() && featureNode_->getFeature())
-  {
-    style_ = *(featureNode_->getFeature()->style());
-    hasMapNode_ = true; // feature nodes always have a map node
-  }
-  initializeFillColor_();
-  initializeLineColor_();
+  init_();
+}
 
-  // initialize our original altitudes
-  osgEarth::Geometry* geometry = featureNode_->getFeature()->getGeometry();
-  for (size_t i = 0; i < geometry->size(); ++i)
-  {
-    originalAltitude_.push_back((*geometry)[i].z());
-  }
+FeatureNodeInterface::FeatureNodeInterface(osg::Group* node, osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData)
+  : GogNodeInterface(node, metaData),
+    featureNode_(featureNode)
+{
+  init_();
 }
 
 int FeatureNodeInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
@@ -1435,8 +1429,9 @@ int FeatureNodeInterface::getTessellation(TessellationStyle& tessellation) const
 
 void FeatureNodeInterface::setAltOffset(double altOffsetMeters)
 {
-  if (altOffsetMeters == altOffset_)
+  if (altOffsetMeters == altOffset_ || !featureNode_.valid())
     return;
+
   osgEarth::Geometry* geometry = featureNode_->getFeature()->getGeometry();
   if (!geometry)
     return;
@@ -1615,6 +1610,22 @@ void FeatureNodeInterface::setStyle_(const osgEarth::Style& style)
   }
 }
 
+void FeatureNodeInterface::init_()
+{
+  if (featureNode_.valid() && featureNode_->getFeature())
+  {
+    style_ = *(featureNode_->getFeature()->style());
+    hasMapNode_ = true; // feature nodes always have a map node
+    // initialize our original altitudes
+    const osgEarth::Geometry* geometry = featureNode_->getFeature()->getGeometry();
+    for (size_t i = 0; i < geometry->size(); ++i)
+    {
+      originalAltitude_.push_back((*geometry)[i].z());
+    }
+  }
+  initializeFillColor_();
+  initializeLineColor_();
+}
 
 ///////////////////////////////////////////////////////////////////
 
@@ -2222,6 +2233,30 @@ void ImageOverlayInterface::serializeGeometry_(bool relativeShape, std::ostream&
 void ImageOverlayInterface::setStyle_(const osgEarth::Style& style)
 {
   // no-op, can't update style
+}
+
+LatLonAltBoxInterface::LatLonAltBoxInterface(osg::Group* node, osgEarth::FeatureNode* topNode, osgEarth::FeatureNode* bottomNode, const simVis::GOG::GogMetaData& metaData)
+  : FeatureNodeInterface(node, topNode, metaData),
+    bottomNode_(bottomNode)
+{
+}
+
+void LatLonAltBoxInterface::serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const
+{
+  // no-op, LatLonAltBox corners are stored in the meta data
+}
+
+void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)
+{
+  FeatureNodeInterface::setStyle_(style);
+  if (&style != &style_)
+    style_ = style;
+  if (!deferringStyleUpdates_() && bottomNode_.valid())
+  {
+    bottomNode_->setStyle(style_);
+    bottomNode_->getFeature()->style() = style_;
+    bottomNode_->dirty();
+  }
 }
 
 } }

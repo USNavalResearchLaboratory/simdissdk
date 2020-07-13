@@ -530,6 +530,8 @@ class SDKVIS_EXPORT FeatureNodeInterface : public GogNodeInterface
 public:
   /** Constructor */
   FeatureNodeInterface(osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData);
+  /** Constructor with parent group node */
+  FeatureNodeInterface(osg::Group* node, osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~FeatureNodeInterface() {}
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
   virtual int getTessellation(TessellationStyle& style) const;
@@ -544,6 +546,8 @@ protected:
   virtual void setStyle_(const osgEarth::Style& style);
 
 private:
+  void init_();
+
   osg::observer_ptr<osgEarth::FeatureNode> featureNode_;
   /// cache the original altitude values, to apply altitude offset dynamically
   std::vector<double> originalAltitude_;
@@ -713,6 +717,24 @@ protected:
 private:
   osg::observer_ptr<osgEarth::ImageOverlay> imageNode_;
 };
+
+/**
+* Implementation of GogNodeInterface for a LatLonAltBox, which requires multiple FeatureNodes to display correctly
+*/
+class SDKVIS_EXPORT LatLonAltBoxInterface : public FeatureNodeInterface
+{
+public:
+  LatLonAltBoxInterface(osg::Group* node, osgEarth::FeatureNode* topNode, osgEarth::FeatureNode* bottomNode, const simVis::GOG::GogMetaData& metaData);
+  virtual ~LatLonAltBoxInterface() {}
+
+protected:
+  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
+  virtual void setStyle_(const osgEarth::Style& style);
+
+private:
+  osg::observer_ptr<osgEarth::FeatureNode> bottomNode_;
+};
+
 
 }}
 
