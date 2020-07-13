@@ -2264,6 +2264,11 @@ void LatLonAltBoxInterface::serializeGeometry_(bool relativeShape, std::ostream&
   // no-op, LatLonAltBox corners are stored in the meta data
 }
 
+void LatLonAltBoxInterface::serializeKeyword_(std::ostream& gogOutputStream) const
+{
+  // nothing to do, LLA box includes the keyword in their metadata as part of the corner LLAs
+}
+
 void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)
 {
   FeatureNodeInterface::setStyle_(style);
@@ -2303,11 +2308,7 @@ void LatLonAltBoxInterface::applyAltOffsets_(osgEarth::FeatureNode& node, const 
   {
     osgEarth::Geometry* part = iter.next();
     for (size_t i = 0; i < part->size() && altIndex < altitudes.size(); ++i, ++altIndex)
-    {
-      // if this fails, the altitudes vector is out of sync with the corresponding node's geometry
-      assert(altIndex < altitudes.size());
       (*part)[i].z() = altitudes.at(altIndex) + altOffset_;
-    }
   }
   node.dirty();
 }

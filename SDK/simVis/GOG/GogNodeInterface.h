@@ -731,6 +731,7 @@ public:
 
 protected:
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
+  virtual void serializeKeyword_(std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
 
 private:
