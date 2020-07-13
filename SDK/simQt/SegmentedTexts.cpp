@@ -278,7 +278,6 @@ static const unsigned int MAX_PRECISION = 6;
     return new NumberText(this, 0, maxValue, precision, true, 1.0/scale, true);
   }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   NumberText* SegmentedTexts::updateFactionOfSeconds_(int precision)
   {
     if (precision < 1)
@@ -292,7 +291,6 @@ static const unsigned int MAX_PRECISION = 6;
     addPart(fraction);
     return fraction;
   }
-#endif /* USE_DEPRECATED_SIMDISSDK_API */
 
   int SegmentedTexts::fractionToField_(const simCore::Seconds& secondsRounded) const
   {

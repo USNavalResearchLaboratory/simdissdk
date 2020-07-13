@@ -293,7 +293,6 @@ void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
   composite_->verticalLayout->layout()->setContentsMargins(left, top, right, bottom);
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 void EntityTreeComposite::addExternalAction(QAction* action)
 {
   if ((action == NULL) || action->isSeparator())
@@ -306,7 +305,6 @@ void EntityTreeComposite::removeExternalActions()
 {
   externalActions_.clear();
 }
-#endif
 
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {

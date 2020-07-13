@@ -58,7 +58,6 @@ class ProjectorNode;
 class ScenarioTool;
 
 //----------------------------------------------------------------------------
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 /// Interface for an object that can create a new Locator
 class LocatorFactory
 {
@@ -66,12 +65,12 @@ public:
   virtual ~LocatorFactory() {}
 
   /// create a new locator
-  virtual Locator* createLocator() const = 0;
+  virtual SDK_DEPRECATE(Locator* createLocator() const = 0, "LocatorFactory is deprecated.");
 
   /// create a new platform locator
-  virtual Locator* createEciLocator() const = 0;
+  virtual SDK_DEPRECATE(Locator* createEciLocator() const = 0, "LocatorFactory is deprecated.");
 };
-#endif
+
 //----------------------------------------------------------------------------
 
 /**
@@ -370,13 +369,11 @@ public: // package protected
   /** Creates a new ScenarioManager with the given projector manager */
   explicit ScenarioManager(ProjectorManager* projMan);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
    * Creates a new ScenarioManager with the given locator factory and projector manager
    * @deprecated
    */
   SDK_DEPRECATE(ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan), "Method will be removed in a future SDK release");
-#endif
 
   /**
   * Check for scenario entity updates and applies them to the corresponding

@@ -132,7 +132,6 @@ public:
   */
   void endUpdate();
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   /**
   * @deprecated Interface changed to support ECI coordinates. Use other interface for setCoordinate instead.
   * Sets the world position, orientation, and velocity vector all at once.
@@ -140,7 +139,6 @@ public:
   * @param[in ] notify Whether to immediately notify listeners
   */
   SDK_DEPRECATE(void setCoordinate(const simCore::Coordinate& coord, bool notify = true), "Method will be removed in a future SDK release.");
-#endif
 
   /**
   * Sets the world position, orientation, and velocity vector all at once. To support
@@ -390,9 +388,7 @@ private:
   */
   void notifyListeners_();
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   SDK_DEPRECATE(bool inherits_(unsigned int mask) const, "Method will be removed in future SDK release.");
-#endif
 
   /**
   * Returns the base rotation of this locator

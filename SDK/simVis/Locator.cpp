@@ -106,7 +106,7 @@ void Locator::setComponentsToInherit(unsigned int value, bool notify)
   if (notify)
     notifyListeners_();
 }
-#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 void Locator::setCoordinate(const simCore::Coordinate& coord, bool notify)
 {
   if (coord.coordinateSystem() != simCore::COORD_SYS_ECEF)
@@ -128,7 +128,6 @@ void Locator::setCoordinate(const simCore::Coordinate& coord, bool notify)
   if (notify)
     notifyListeners_();
 }
-#endif
 
 void Locator::setCoordinate(const simCore::Coordinate& coord, double timestamp, double eciRefTime, bool notify)
 {
@@ -294,12 +293,10 @@ double Locator::getElapsedEciTime() const
   return getTime();
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 bool Locator::inherits_(unsigned int mask) const
 {
   return (componentsToInherit_ & mask) != COMP_NONE;
 }
-#endif
 
 bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::CoordinateSystem& coordsys) const
 {

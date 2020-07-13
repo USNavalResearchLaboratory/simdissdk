@@ -168,12 +168,10 @@ public:
     QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   /** DEPRECATED: Add an action to the right mouse click menu, separators are ignored */
   SDK_DEPRECATE(void addExternalAction(QAction* action), "Method will be removed in a future SDK release");
   /** DEPRECATED: Remove all actions added by the addExternalAction() call */
   SDK_DEPRECATE(void removeExternalActions(), "Method will be removed in a future SDK release");
-#endif
 
 public slots:
   /** If true expand the tree on double click */
@@ -267,9 +265,7 @@ private:
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   std::vector<QAction*> externalActions_;
-#endif
 
   bool useCenterAction_;
   bool treeViewUsable_;
