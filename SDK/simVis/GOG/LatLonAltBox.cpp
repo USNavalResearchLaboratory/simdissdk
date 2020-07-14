@@ -178,7 +178,7 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
     if (!parsedShape.hasValue(GOG_FILLED))
       style.remove<PolygonSymbol>();
 
-    Feature* featureBottom = new Feature(linesBottom, mapNode->getMapSRS(), style);
+    Feature* featureBottom = new Feature(linesBottom, p.srs_.get(), style);
     featureBottom->setName("GOG LatLonAltBox Feature Bottom");
     osgEarth::FeatureNode* nodeBottom = new osgEarth::FeatureNode(featureBottom);
     nodeBottom->setName("GOG LatLonAltBox Bottom");
@@ -186,7 +186,7 @@ GogNodeInterface* LatLonAltBox::deserialize(const ParsedShape& parsedShape,
     // Set the node facing to clockwise, to solve winding issue with osgEarth
     nodeBottom->getOrCreateStateSet()->setAttributeAndModes(new osg::FrontFace(osg::FrontFace::CLOCKWISE), osg::StateAttribute::ON);
 
-    Feature* featureTop = new Feature(linesTop, mapNode->getMapSRS(), style);
+    Feature* featureTop = new Feature(linesTop, p.srs_.get(), style);
     featureTop->setName("GOG LatLonAltBox Feature Top");
     osgEarth::FeatureNode* nodeTop = new osgEarth::FeatureNode(featureTop);
     nodeTop->setName("GOG LatLonAltBox Top");

@@ -191,8 +191,8 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
   // for performance reasons, cache all style updates, apply once when done
   beginStyleUpdates_();
 
-  metaData_.allowSetExplicitly(false);  ///< setFields will incorrectly respond to defaults here, so cache the correct value and restore it at the end
-
+  metaData_.allowSetExplicitly(false);  // setFields will incorrectly respond to defaults here, so cache the correct value and restore it at the end
+  metaData_.altitudeUnits_ = units.altitudeUnits_; // need to cache altitude units here, since some altitude values can be changed
   const std::string& key = parent.shape();
   const simVis::GOG::GogShape gogShape = metaData_.shape;
   bool is3dShape = (gogShape == GOG_SPHERE || gogShape == GOG_ELLIPSOID || gogShape == GOG_HEMISPHERE ||
@@ -472,8 +472,15 @@ void GogNodeInterface::serializeToStream(std::ostream& gogOutputStream)
   // altoffset
   double altOffset = 0.0;
   if (getAltOffset(altOffset) == 0 && metaData_.isSetExplicitly(GOG_THREE_D_OFFSET_ALT_SET))
+  {
+    // if not serializing geometry, which always uses meters, convert to the stored altitude units
+    if (!serializeGeometry)
+    {
+      simCore::Units curUnits(simCore::Units::METERS);
+      altOffset = curUnits.convertTo(metaData_.altitudeUnits_, altOffset);
+    }
     gogOutputStream << "3d offsetalt " << altOffset << "\n";
-
+  }
   // font
   int fontSize;
   std::string fontFile;
