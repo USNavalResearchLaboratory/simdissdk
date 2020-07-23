@@ -86,7 +86,7 @@ public:
 
   // latitude in degrees
   double lat() const { return lastLat_; }
-  // logintude in degrees
+  // longitude in degrees
   double lon() const { return lastLon_; }
   // elevation in meters
   double elev() const { return lastElev_; }
@@ -412,6 +412,31 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore, const std::string& 
   return platformId;
 }
 
+/** Process changes on the opacity slider. */
+class OpacitySliderCallback : public ui::ControlEventHandler
+{
+public:
+  void setLabel(ui::LabelControl* label)
+  {
+    label_ = label;
+  }
+
+  virtual void onValueChanged(ui::Control* control, float value) override
+  {
+    // Write the percentage to the label
+    osg::ref_ptr<ui::LabelControl> label;
+    if (label_.lock(label))
+      label->setText(std::to_string(static_cast<int>((value * 100) + 0.5f)) + "%");
+
+    // Set the override color on all nodes based on the provided opacity
+    for (const auto& overlay : s_overlayNodes)
+      overlay->setOpacity(value);
+  }
+
+private:
+  osg::observer_ptr<ui::LabelControl> label_;
+};
+
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
@@ -458,8 +483,7 @@ int main(int argc, char** argv)
     pin = URI("http://www.osgearth.org/chrome/site/pushpin_yellow.png").getImage();
 
   GeoPoint go;
-  /// data source which will provide positions for the platform
-  /// based on the simulation time.
+  // data source that provides positions for the platform based on the simulation time
   simData::MemoryDataStore dataStore;
   scene->getScenario()->bind(&dataStore);
 
@@ -583,6 +607,20 @@ int main(int argc, char** argv)
   vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
   ui::LabelControl* statusLabel = new ui::LabelControl("STATUS", 14, simVis::Color::Silver);
   vbox->addControl(statusLabel);
+
+  // Add a section to control the opacity
+  vbox->addControl(new ui::LabelControl("Opacity:", 14));
+  OpacitySliderCallback* sliderCallback = new OpacitySliderCallback;
+  ui::HSliderControl* opacitySlider = new ui::HSliderControl(0.f, 1.f, 1.f, sliderCallback);
+  opacitySlider->setHorizFill(false);
+  opacitySlider->setWidth(250.f);
+  ui::LabelControl* opacityPercent = new ui::LabelControl("100%", 14);
+  sliderCallback->setLabel(opacityPercent);
+  ui::HBox* hbox = new ui::HBox();
+  hbox->addControl(opacitySlider);
+  hbox->addControl(opacityPercent);
+  vbox->addControl(hbox);
+
   mainView->addOverlayControl(vbox);
 
   // Install a handler to respond to the demo keys in this sample.
@@ -597,4 +635,3 @@ int main(int argc, char** argv)
   mainView->getCamera()->addEventCallback(mouseHandler);
   viewer->run();
 }
-

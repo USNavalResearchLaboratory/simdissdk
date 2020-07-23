@@ -243,6 +243,13 @@ public:
   virtual int getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const;
 
   /**
+  * Retrieves the opacity value assigned to the GOG object.  By default, this is 1.0 (opaque).
+  * @param opacity Opacity for the overlay; 0.0 for transparent, 1.0 for fully opaque.
+  * @return 0 if this overlay has an opacity value, non-zero otherwise.
+  */
+  int getOpacity(float& opacity) const;
+
+  /**
   * Get the underlying osg::Node that represents the Overlay in the scene graph
   * @return the Overlay osg::Node
   */
@@ -347,6 +354,14 @@ public:
   * @param outlineThickness thickness fo the outline
   */
   virtual void setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness);
+
+  /**
+   * Sets an overriding opacity value on the GOG object.  This opacity is multiplied against any other
+   * opacities for foreground color, outline, image alpha value, etc. and is efficient for applying
+   * an overarching transparency level for the GOG.
+   * @param opacity Alpha value from 0.0 (transparent) to 1.0 (opaque)
+   */
+  virtual void setOpacity(float opacity);
 
   /**
    * Indicates if the shape has a properly formatted AltitudeSymbol or an ExtrusionSymbol based
@@ -494,6 +509,9 @@ private:
 
   /** Range units specified by user in file */
   simCore::Units rangeUnits_;
+
+  /** cache the opacity value, for efficiency */
+  float opacity_;
 
   /** listeners for updates */
   std::vector<GogNodeListenerPtr> listeners_;
@@ -699,7 +717,7 @@ public:
 };
 
 /**
-* Implementation of GogNodeInterface for an image overlay object, which is eqivalent to a KML ground overlay.
+* Implementation of GogNodeInterface for an image overlay object, which is equivalent to a KML ground overlay.
 * Basic implementation since editing KML objects is limited.
 */
 class SDKVIS_EXPORT ImageOverlayInterface : public GogNodeInterface
@@ -708,6 +726,9 @@ public:
   ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~ImageOverlayInterface() {}
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
+
+  /** Override opacity, since the override color approach doesn't work */
+  virtual void setOpacity(float opacity) override;
 
 protected:
   virtual void adjustAltitude_();

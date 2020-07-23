@@ -38,10 +38,10 @@
 #include "osgEarth/LocalGeometryNode"
 #include "osgEarth/PlaceNode"
 #include "osgEarth/PolygonSymbol"
-#include "osgEarth/Units"
+#include "osgEarth/RenderSymbol"
 #include "osgEarth/Style"
 #include "osgEarth/TextSymbol"
-#include "osgEarth/RenderSymbol"
+#include "osgEarth/Units"
 #include "simNotify/Notify.h"
 #include "simCore/Calc/Angle.h"
 #include "simCore/Calc/CoordinateConverter.h"
@@ -49,10 +49,11 @@
 #include "simCore/String/Format.h"
 #include "simCore/String/Utils.h"
 #include "simCore/String/ValidNumber.h"
-#include "simVis/Types.h"
 #include "simVis/Constants.h"
-#include "simVis/Registry.h"
+#include "simVis/OverrideColor.h"
 #include "simVis/OverheadMode.h"
+#include "simVis/Registry.h"
+#include "simVis/Types.h"
 #include "simVis/Utils.h"
 #include "simVis/GOG/GOG.h"
 #include "simVis/GOG/GOGNode.h"
@@ -145,11 +146,16 @@ GogNodeInterface::GogNodeInterface(osg::Node* osgNode, const simVis::GOG::GogMet
     defaultFont_("arial.ttf"),
     defaultTextSize_(15),
     defaultTextColor_(simVis::Color::Red),
-    rangeUnits_(simCore::Units::YARDS)
+    rangeUnits_(simCore::Units::YARDS),
+    opacity_(1.f)
 {
   if (osgNode_.valid())
   {
     osgNode_->setNodeMask(simVis::DISPLAY_MASK_GOG);
+
+    // Initialize the override color
+    simVis::OverrideColor::setCombineMode(osgNode_->getOrCreateStateSet(), simVis::OverrideColor::MULTIPLY_COLOR);
+    simVis::OverrideColor::setColor(osgNode_->getOrCreateStateSet(), osg::Vec4f(1.f, 1.f, 1.f, 1.f));
 
     // flatten in overhead mode by default - subclass might change this
     simVis::OverheadMode::enableGeometryFlattening(true, osgNode_.get());
@@ -707,6 +713,12 @@ int GogNodeInterface::getTextOutline(osg::Vec4f& outlineColor, simData::TextOutl
   return 1;
 }
 
+int GogNodeInterface::getOpacity(float& opacity) const
+{
+  opacity = opacity_;
+  return 0;
+}
+
 void GogNodeInterface::setAltitudeMode(AltitudeMode altMode)
 {
   metaData_.setExplicitly(GOG_ALTITUDE_MODE_SET);
@@ -1031,6 +1043,15 @@ void GogNodeInterface::setTessellation(TessellationStyle style)
 void GogNodeInterface::setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness)
 {
   // NOP only applies to label nodes
+}
+
+void GogNodeInterface::setOpacity(float opacity)
+{
+  if (opacity == opacity_)
+    return;
+  opacity_ = opacity;
+  if (osgNode_.valid())
+    simVis::OverrideColor::setColor(osgNode_->getOrCreateStateSet(), osg::Vec4f(1.f, 1.f, 1.f, opacity_));
 }
 
 void GogNodeInterface::addGogNodeListener(GogNodeListenerPtr listener)
@@ -2212,6 +2233,8 @@ ImageOverlayInterface::ImageOverlayInterface(osgEarth::ImageOverlay* imageNode, 
   : GogNodeInterface(imageNode, metaData),
     imageNode_(imageNode)
 {
+  // Turn off the color shader, since it doesn't work for image overlay
+  simVis::OverrideColor::setCombineMode(imageNode_->getOrCreateStateSet(), simVis::OverrideColor::OFF);
 }
 
 int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition) const
@@ -2225,6 +2248,13 @@ int ImageOverlayInterface::getPosition(osg::Vec3d& position, osgEarth::GeoPoint*
   position = osg::Vec3d(llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, llaCoord.alt());
 
   return 0;
+}
+
+void ImageOverlayInterface::setOpacity(float opacity)
+{
+  GogNodeInterface::setOpacity(opacity);
+  if (imageNode_.valid())
+    imageNode_->setAlpha(opacity);
 }
 
 void ImageOverlayInterface::adjustAltitude_()
