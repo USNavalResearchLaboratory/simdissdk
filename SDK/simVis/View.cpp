@@ -40,6 +40,7 @@
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
 #include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/CustomRendering.h"
@@ -2004,9 +2005,10 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
     return entityNode->findAttachment<GateCentroid>();
   case simData::CUSTOM_RENDERING:
     return static_cast<CustomRenderingNode*>(entityNode)->locatorNode();
+  case simData::BEAM:
+    return entityNode->findAttachment<LocatorNode>();
 
   // Look for host platform
-  case simData::BEAM:
   case simData::LASER:
   case simData::PROJECTOR:
   case simData::LOB_GROUP:

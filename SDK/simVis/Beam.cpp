@@ -274,20 +274,21 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   setLocator(beamOrientationLocator_.get());
   setName("BeamNode");
 
-  localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
-  addChild(localGrid_);
-
-  // create the locator node that will parent our geometry and label
+  // create the locator node that will parent the geometry and label
   beamLocatorNode_ = new LocatorNode(getLocator());
   beamLocatorNode_->setName("Beam Locator");
   beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
-  addChild(beamLocatorNode_);
+  addChild(beamLocatorNode_.get());
+
+  // create localGrid_ after beamLocatorNode_ so beamLocatorNode_ is found in findAttachment() for tethering
+  localGrid_ = new LocalGridNode(getLocator(), host, referenceYear);
+  addChild(localGrid_.get());
 
   // will be parented to the beamLocatorNode_ when shown
   antenna_ = new simVis::AntennaNode(osg::Quat(M_PI_2, osg::Vec3d(0., 0., 1.)));
 
   label_ = new EntityLabelNode();
-  beamLocatorNode_->addChild(label_);
+  beamLocatorNode_->addChild(label_.get());
 
   // horizon culling: entity culling based on bounding sphere
   addCullCallback( new osgEarth::HorizonCullCallback() );
