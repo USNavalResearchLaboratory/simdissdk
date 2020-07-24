@@ -93,11 +93,13 @@ if(TARGET simVis)
     list(APPEND SIMQT_HEADERS_TO_MOC
         ${SIMQT_INC}CenterEntity.h
         ${SIMQT_INC}EntityLineEdit.h
-        ${SIMQT_INC}IncrementalCompileSettings.h
         ${SIMQT_INC}MapDataModel.h
         ${SIMQT_INC}TimestampedLayerManager.h
         ${SIMQT_INC}ViewManagerDataModel.h
     )
+    if(ENABLE_DEPRECATED_SIMDISSDK_API)
+        list(APPEND SIMQT_HEADERS_TO_MOC ${SIMQT_INC}IncrementalCompileSettings.h)
+    endif()
     list(APPEND SIMQT_HEADERS
         ${SIMQT_INC}FillItemModelWithNodeVisitor.h
     )
@@ -212,11 +214,13 @@ if(TARGET simVis)
         ${SIMQT_SRC}CenterEntity.cpp
         ${SIMQT_SRC}EntityLineEdit.cpp
         ${SIMQT_SRC}FillItemModelWithNodeVisitor.cpp
-        ${SIMQT_SRC}IncrementalCompileSettings.cpp
         ${SIMQT_SRC}MapDataModel.cpp
         ${SIMQT_SRC}TimestampedLayerManager.cpp
         ${SIMQT_SRC}ViewManagerDataModel.cpp
     )
+    if(ENABLE_DEPRECATED_SIMDISSDK_API)
+        list(APPEND SIMQT_SOURCES ${SIMQT_SRC}IncrementalCompileSettings.cpp)
+    endif()
 
     # Parts of simQt depend on both simVis and osgQt
     if (TARGET OSGQT)
