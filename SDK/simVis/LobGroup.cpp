@@ -220,6 +220,8 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
+  // SIM-10724: Labels need to not be flattened to be displayed in overhead mode
+  simVis::OverheadMode::enableGeometryFlattening(false, label_.get());
 
   // Add a tag for picking
   objectIndexTag_ = osgEarth::Registry::objectIndex()->tagNode(this, this);

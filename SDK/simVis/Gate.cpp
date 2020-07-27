@@ -383,6 +383,8 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
+  // SIM-10724: Labels need to not be flattened to be displayed in overhead mode
+  simVis::OverheadMode::enableGeometryFlattening(false, label_.get());
 }
 
 GateNode::~GateNode()
