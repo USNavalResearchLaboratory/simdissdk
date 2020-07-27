@@ -161,7 +161,7 @@ void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 {
   mapNode_ = map;
 #ifdef HAVE_WORKINGSET_STRONGLRU
-  workingSet_ = osgEarth::ElevationPool::WorkingSet();
+  workingSet_.clear();
 #else
   workingSet_._lru.clear();
 #endif
