@@ -105,13 +105,6 @@ namespace simVis
 {
   class PlatformModelNode;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-   * Whether to use the REX terrain engine.
-   */
-  SDK_DEPRECATE(SDKVIS_EXPORT bool useRexEngine(), "Method will be removed in a future SDK release.");
-#endif
-
   /**
    * Enable or disable lighting on a state set. We must set both the
    * FFP mode and the uniform to support shader-based and non-shader-based

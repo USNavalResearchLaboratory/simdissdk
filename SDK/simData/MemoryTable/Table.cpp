@@ -228,13 +228,13 @@ SubTable* Table::subTableForId_(TableColumnId columnId) const
 TableStatus Table::addColumn(const std::string& columnName, VariableType storageType, UnitType unitType, TableColumn** newColumn)
 {
   if (columnName.empty())
-    return TableStatus::Error("Unable to create table with empty name.");
+    return TableStatus::Error("Unable to create column with empty name.");
   // Check for existing name
   TableColumn* existing = column(columnName);
   if (existing)
   {
     if (newColumn) *newColumn = existing;
-    return TableStatus::Error("Table name already exists.");
+    return TableStatus::Error("Column name already exists.");
   }
 
   // Find an empty subtable to add the new column

@@ -78,10 +78,7 @@ public:
   /**
    * Returns the top level menu or menu bar (QMenu or QMenuBar) that
    * is used as the hierarchical parent of created menu items.  This
-   * is the first level for menus.  Derived classes should be returning
-   * either a QMenuBar or QMenu, that can be a parent to new QMenu instances.
-   *
-   * NOTE: DEPRECATED.  Please use setMenuBar() instead.
+   * is the first level for menus.
    */
   virtual QWidget* topLevelMenu();
 

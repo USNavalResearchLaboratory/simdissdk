@@ -467,63 +467,10 @@ ScenarioManager::ScenarioManager(ProjectorManager* projMan)
   scenarioEciLocator_ = new Locator();
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 ScenarioManager::ScenarioManager(LocatorFactory* factory, ProjectorManager* projMan)
-  : platformTspiFilterManager_(new PlatformTspiFilterManager()),
-  surfaceClamping_(NULL),
-  aboveSurfaceClamping_(NULL),
-  lobSurfaceClamping_(NULL),
-  root_(new osg::Group),
-  entityGraph_(new SimpleEntityGraph),
-  projectorManager_(projMan),
-  labelContentManager_(new NullLabelContentManager()),
-  rfManager_(new simRF::NullRFPropagationManager()),
-  losCreator_(new ScenarioLosCreator())
+  : ScenarioManager(projMan)
 {
-  root_->setName("root");
-  root_->addChild(entityGraph_->node());
-  addChild(root_.get());
-
-  // Install a callback that will convey the Horizon info
-  osg::EllipsoidModel em;
-  // 11km is rough depth of Mariana Trench; decrease radius to help horizon culling work underwater
-  em.setRadiusEquator(em.getRadiusEquator() - 11000.0);
-  em.setRadiusPolar(em.getRadiusPolar() - 11000.0);
-  SetHorizonCullCallback* setHorizon = new SetHorizonCullCallback(new osgEarth::Horizon(em));
-  root_->addCullCallback(setHorizon);
-
-  // Clamping requires a Group for MapNode changes
-  surfaceClamping_ = new SurfaceClamping();
-  aboveSurfaceClamping_ = new AboveSurfaceClamping();
-  lobSurfaceClamping_ = new CoordSurfaceClamping();
-
-  // set normal rescaling so that dynamically-scaled platforms have
-  // proper lighting. Note: once we move to using shaders we don't
-  // need this anymore
-  osg::StateSet* stateSet = getOrCreateStateSet();
-#ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
-  // GL_RESCALE_NORMAL is deprecated in GL CORE builds
-  stateSet->setMode(GL_RESCALE_NORMAL, 1);
-#endif
-  // Lighting will be off for all objects under the Scenario,
-  // unless explicitly turned on further down the scene graph
-  simVis::setLighting(stateSet, osg::StateAttribute::OFF);
-
-  setName("simVis::ScenarioManager");
-
-  platformTspiFilterManager_->addFilter(surfaceClamping_);
-  platformTspiFilterManager_->addFilter(aboveSurfaceClamping_);
-
-  // Install shaders used by multiple entities at the scenario level
-  AlphaTest::installShaderProgram(stateSet);
-  BeamPulse::installShaderProgram(stateSet);
-  DisableDepthOnAlpha::installShaderProgram(stateSet);
-  LobGroupNode::installShaderProgram(stateSet);
-  OverrideColor::installShaderProgram(stateSet);
-  PolygonStipple::installShaderProgram(stateSet);
-  TrackHistoryNode::installShaderProgram(stateSet);
 }
-#endif
 
 ScenarioManager::~ScenarioManager()
 {

@@ -297,9 +297,6 @@ void CreateInsetEventHandler::cancelNewInsetAction_()
 InsetViewEventHandler::InsetViewEventHandler(simVis::View* host)
   : focusActionsMask_(ACTION_HOVER),
     host_(host)
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  , createInset_(new CreateInsetEventHandler(host))
-#endif
 {
   // this callback will allow this object to listen to view events.
   focusDetector_ = new FocusDetector(host_->getFocusManager(), this);
@@ -361,15 +358,9 @@ int InsetViewEventHandler::getFocusActions() const
 
 bool InsetViewEventHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  const bool handled = createInset_->handle(ea, aa);
-#else
-  const bool handled = false;
-#endif
-  if (!handled && ea.getEventType() == ea.FRAME)
+  if (ea.getEventType() == ea.FRAME)
     ensureViewListenerInstalled_();
-
-  return handled;
+  return false;
 }
 
 }

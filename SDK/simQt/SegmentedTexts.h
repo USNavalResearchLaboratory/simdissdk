@@ -259,10 +259,8 @@ protected:
   /// Creates the fraction part accounting for the precision.  Cannot be const.
   NumberText* createFactionOfSeconds_(int precision);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   /// Replaces the fraction part with a new fraction part of the given precision.
   SDK_DEPRECATE(NumberText* updateFactionOfSeconds_(int precision), "Method will be removed in future SDK release.");
-#endif /* USE_DEPRECATED_SIMDISSDK_API */
 
   /// convert the fractional part of Seconds (# of ns) to a field representation
   int fractionToField_(const simCore::Seconds& secondsRounded) const;

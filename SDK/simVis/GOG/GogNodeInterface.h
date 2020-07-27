@@ -243,6 +243,13 @@ public:
   virtual int getTextOutline(osg::Vec4f& outlineColor, simData::TextOutline& outlineThickness) const;
 
   /**
+  * Retrieves the opacity value assigned to the GOG object.  By default, this is 1.0 (opaque).
+  * @param opacity Opacity for the overlay; 0.0 for transparent, 1.0 for fully opaque.
+  * @return 0 if this overlay has an opacity value, non-zero otherwise.
+  */
+  int getOpacity(float& opacity) const;
+
+  /**
   * Get the underlying osg::Node that represents the Overlay in the scene graph
   * @return the Overlay osg::Node
   */
@@ -347,6 +354,14 @@ public:
   * @param outlineThickness thickness fo the outline
   */
   virtual void setTextOutline(const osg::Vec4f& outlineColor, simData::TextOutline outlineThickness);
+
+  /**
+   * Sets an overriding opacity value on the GOG object.  This opacity is multiplied against any other
+   * opacities for foreground color, outline, image alpha value, etc. and is efficient for applying
+   * an overarching transparency level for the GOG.
+   * @param opacity Alpha value from 0.0 (transparent) to 1.0 (opaque)
+   */
+  virtual void setOpacity(float opacity);
 
   /**
    * Indicates if the shape has a properly formatted AltitudeSymbol or an ExtrusionSymbol based
@@ -495,6 +510,9 @@ private:
   /** Range units specified by user in file */
   simCore::Units rangeUnits_;
 
+  /** cache the opacity value, for efficiency */
+  float opacity_;
+
   /** listeners for updates */
   std::vector<GogNodeListenerPtr> listeners_;
 };
@@ -530,6 +548,8 @@ class SDKVIS_EXPORT FeatureNodeInterface : public GogNodeInterface
 public:
   /** Constructor */
   FeatureNodeInterface(osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData);
+  /** Constructor with parent group node */
+  FeatureNodeInterface(osg::Group* node, osgEarth::FeatureNode* featureNode, const simVis::GOG::GogMetaData& metaData);
   virtual ~FeatureNodeInterface() {}
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
   virtual int getTessellation(TessellationStyle& style) const;
@@ -543,10 +563,12 @@ protected:
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
   virtual void setStyle_(const osgEarth::Style& style);
 
-private:
   osg::observer_ptr<osgEarth::FeatureNode> featureNode_;
   /// cache the original altitude values, to apply altitude offset dynamically
   std::vector<double> originalAltitude_;
+
+private:
+  void init_();
 };
 
 /**
@@ -695,7 +717,7 @@ public:
 };
 
 /**
-* Implementation of GogNodeInterface for an image overlay object, which is eqivalent to a KML ground overlay.
+* Implementation of GogNodeInterface for an image overlay object, which is equivalent to a KML ground overlay.
 * Basic implementation since editing KML objects is limited.
 */
 class SDKVIS_EXPORT ImageOverlayInterface : public GogNodeInterface
@@ -705,6 +727,9 @@ public:
   virtual ~ImageOverlayInterface() {}
   virtual int getPosition(osg::Vec3d& position, osgEarth::GeoPoint* referencePosition = NULL) const;
 
+  /** Override opacity, since the override color approach doesn't work */
+  virtual void setOpacity(float opacity) override;
+
 protected:
   virtual void adjustAltitude_();
   virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
@@ -713,6 +738,34 @@ protected:
 private:
   osg::observer_ptr<osgEarth::ImageOverlay> imageNode_;
 };
+
+/**
+* Implementation of GogNodeInterface for a LatLonAltBox, which requires multiple FeatureNodes to display correctly
+*/
+class SDKVIS_EXPORT LatLonAltBoxInterface : public FeatureNodeInterface
+{
+public:
+  LatLonAltBoxInterface(osg::Group* node, osgEarth::FeatureNode* topNode, osgEarth::FeatureNode* bottomNode, const simVis::GOG::GogMetaData& metaData);
+  virtual ~LatLonAltBoxInterface() {}
+  // handle the special case for MultiGeometry
+  virtual void setAltOffset(double altOffsetMeters);
+
+protected:
+  virtual void serializeGeometry_(bool relativeShape, std::ostream& gogOutputStream) const;
+  virtual void serializeKeyword_(std::ostream& gogOutputStream) const;
+  virtual void setStyle_(const osgEarth::Style& style);
+
+private:
+  /// store the altitudes of the specified node into the specified altitudes vector, handles iterating through MultiGeometry
+  void initAltitudes_(osgEarth::FeatureNode& node, std::vector<double>& altitudes) const;
+  /// apply the altitude offsets, handles iterating through MultiGeometry
+  void applyAltOffsets_(osgEarth::FeatureNode& node, const std::vector<double>& altitudes) const;
+
+  osg::observer_ptr<osgEarth::FeatureNode> bottomNode_;
+  /// original altitudes of the bottom node
+  std::vector<double> bottomAltitude_;
+};
+
 
 }}
 

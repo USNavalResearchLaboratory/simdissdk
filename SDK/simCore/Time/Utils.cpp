@@ -526,7 +526,7 @@ std::string simCore::getTimeComponents(double time, unsigned int *day, unsigned 
 }
 
 //------------------------------------------------------------------------
-#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 void simCore::normalizeTime(int &refYear, double &secondsSinceRefYear)
 {
   assert(refYear > 1900);
@@ -571,7 +571,6 @@ void simCore::normalizeTime(int &refYear, double &secondsSinceRefYear)
     secondsSinceRefYear = simCore::getTimeStructDifferenceInSeconds(epochTime, timeval);
   }
 }
-#endif
 
 double simCore::getNextTimeStep(bool faster, double lastStep)
 {

@@ -20,6 +20,8 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 #include <cassert>
 #include <set>
 #include "osgUtil/IncrementalCompileOperation"
@@ -149,3 +151,5 @@ void IncrementalCompileSettings::setConservativeTimeRatio_(int percent)
 }
 
 }
+
+#endif /* USE_DEPRECATED_SIMDISSDK_API */

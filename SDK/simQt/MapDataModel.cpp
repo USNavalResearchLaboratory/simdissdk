@@ -851,9 +851,6 @@ public:
     if (modelLayer)
     {
       emit dataModel_.featureLayerVisibleChanged(modelLayer);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-      emit dataModel_.modelLayerVisibleChanged(modelLayer);
-#endif
     }
   }
 
@@ -864,9 +861,6 @@ public:
     if (modelLayer)
     {
       emit dataModel_.featureLayerOpacityChanged(modelLayer);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-      emit dataModel_.modelLayerOpacityChanged(modelLayer);
-#endif
     }
   }
 
@@ -1135,9 +1129,6 @@ void MapDataModel::addFeatureLayer_(osgEarth::FeatureModelLayer *layer, unsigned
   featureCallbacks_[layer] = cb.get();
   layer->addCallback(cb.get());
   emit featureLayerAdded(layer);
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  emit modelLayerAdded(layer);
-#endif
 }
 
 void MapDataModel::addOtherLayer_(osgEarth::VisibleLayer *layer, unsigned int index)

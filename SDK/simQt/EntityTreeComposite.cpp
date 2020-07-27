@@ -293,7 +293,6 @@ void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
   composite_->verticalLayout->layout()->setContentsMargins(left, top, right, bottom);
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 void EntityTreeComposite::addExternalAction(QAction* action)
 {
   if ((action == NULL) || action->isSeparator())
@@ -306,7 +305,6 @@ void EntityTreeComposite::removeExternalActions()
 {
   externalActions_.clear();
 }
-#endif
 
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {
@@ -389,19 +387,6 @@ int EntityTreeComposite::setSelected(const QList<uint64_t>& list)
 {
   return entityTreeWidget_->setSelected(list);
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-/** Sets/clears the selected ID in the entity list */
-void EntityTreeComposite::setSelected(uint64_t id, bool selected)
-{
-  entityTreeWidget_->setSelected(id, selected);
-}
-
-void EntityTreeComposite::setSelected(QList<uint64_t> list, bool selected)
-{
-  entityTreeWidget_->setSelected(list, selected);
-}
-#endif
 
 void EntityTreeComposite::scrollTo(uint64_t id, QAbstractItemView::ScrollHint hint)
 {

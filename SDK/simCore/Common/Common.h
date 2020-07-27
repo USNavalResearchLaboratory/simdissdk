@@ -51,26 +51,6 @@
 #define SDK_DEPRECATE(METHOD, TEXT) SDK_DEPRECATED_PRE(TEXT) METHOD SDK_DEPRECATED_POST(TEXT)
 
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-
-// set up define for whether member templates are supported by VisualStudio compilers.
-#ifdef _MSC_VER
-  #if(_MSC_VER >= 1300)
-    #define __STL_MEMBER_TEMPLATES
-  #endif
-#endif
-
-// Define NULL pointer value
-#ifndef NULL
-  #ifdef  __cplusplus
-    #define NULL    0
-  #else
-    #define NULL ((void *)0)
-  #endif
-#endif
-
-#endif /* USE_DEPRECATED_SIMDISSDK_API */
-
 #ifdef WIN32
   #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN

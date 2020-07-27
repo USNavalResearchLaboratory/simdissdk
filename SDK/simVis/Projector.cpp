@@ -261,7 +261,7 @@ void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
 
 const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
 {
-  return hasLastUpdate_ ? &lastUpdate_ : NULL;
+  return hasLastUpdate_ ? &lastUpdate_ : nullptr;
 }
 
 void ProjectorNode::addUniforms(osg::StateSet* stateSet) const
@@ -392,11 +392,11 @@ void ProjectorNode::updateOverrideColor_(const simData::ProjectorPrefs& prefs)
 
 bool ProjectorNode::readVideoFile_(const std::string& filename)
 {
-  osg::Node* result = NULL;
+  osg::Node* result = nullptr;
 
   // Make sure we have the clock which is needed for the video node.
   simCore::Clock* clock = simVis::Registry::instance()->getClock();
-  if (clock != NULL)
+  if (clock)
   {
     osg::ref_ptr<simVis::ClockOptions> options = new simVis::ClockOptions(clock);
     options->setPluginData("ProjectorTextureProvider", projectorTextureImpl_.get());
@@ -460,7 +460,7 @@ void ProjectorNode::loadRequestedFile_(const std::string& newFilename)
 void ProjectorNode::setImage(osg::Image* image)
 {
   // Reset video node if one is set.
-  imageProvider_ = NULL;
+  imageProvider_ = nullptr;
   texture_->setImage(image);
   simVis::fixTextureForGlCoreProfile(texture_.get());
 }
@@ -488,7 +488,7 @@ double ProjectorNode::getVFOV() const
   return DEFAULT_PROJECTOR_FOV_IN_DEG;
 }
 
-void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView)
+void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView) const
 {
   const double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
   projection.makePerspective(getVFOV(), ar, 1.0, 1e7);
@@ -581,7 +581,7 @@ bool ProjectorNode::updateFromDataStore(const simData::DataSliceBase* updateSlic
   if (updateSlice->hasChanged() || force ||hostChangedToActive || hostChangedToInactive)
   {
     const simData::ProjectorUpdate* current = updateSlice->current();
-    const bool projectorChangedToInactive = (current == NULL && hasLastUpdate_);
+    const bool projectorChangedToInactive = (!current && hasLastUpdate_);
 
     // do not apply update if host is not active
     if (current && (force || host_->isActive()))
