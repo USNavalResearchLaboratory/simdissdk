@@ -27,6 +27,7 @@
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 
+namespace osg { class MatrixTransform; }
 namespace simCore { class CoordinateConverter; }
 namespace simData {
   class DataStore;
@@ -206,6 +207,8 @@ private: // data
 
   /// Cache of lines drawn
   Cache *lineCache_;
+  /// the transform for this lobgroup that positions the entity label and supports tether
+  osg::ref_ptr<osg::MatrixTransform> xform_;
   /// the localgrid node for this lobgroup
   osg::ref_ptr<LocalGridNode> localGrid_;
 

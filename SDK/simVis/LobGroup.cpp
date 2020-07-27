@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include "osg/MatrixTransform"
 #include "osgEarth/GeoData"
 #include "osgEarth/Horizon"
 #include "osgEarth/ObjectIndex"
@@ -191,11 +192,21 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
   objectIndexTag_(0)
 {
   setName("LobGroup");
-  localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
-  addChild(localGrid_);
 
-  label_ = new EntityLabelNode(getLocator());
-  this->addChild(label_);
+  // locator node supports entity label and tether
+  xform_ = new osg::MatrixTransform();
+  addChild(xform_.get());
+
+  // lob group is off until prefs and update turn it on
+  setNodeMask(DISPLAY_MASK_NONE);
+
+  label_ = new EntityLabelNode();
+  // xform_ parents and positions the label
+  xform_->addChild(label_.get());
+
+  // create localGrid_ after xform_ so xform_ is found first in findAttachment() for tethering
+  localGrid_ = new LocalGridNode(getLocator(), host, ds.referenceYear());
+  addChild(localGrid_.get());
 
   // horizon culling: entity culling based on bounding sphere
   addCullCallback( new osgEarth::HorizonCullCallback() );
@@ -522,6 +533,9 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
       // Use position only, otherwise rendering will be adversely affected; locator notification is true now
       // note that if lob is clamped, localgrid will also be clamped
       getLocator()->setCoordinate(platformCoordPosOnly, time);
+
+      const osg::Vec3d& lobPos = convertToOSG(platformCoordPosOnly.position());
+      xform_->setMatrix(osg::Matrixd::translate(lobPos));
     }
   }
 }
