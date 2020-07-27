@@ -52,7 +52,7 @@ static const std::string SIMVIS_FLASHING_ENABLE = "simvis_flashing_enable";
 /** Determines whether the new prefs will require new geometry */
 bool prefsRequiresRebuild(const simData::LobGroupPrefs* a, const simData::LobGroupPrefs* b)
 {
-  if (a == NULL || b == NULL)
+  if (!a || !b)
     return false; // simple case
 
   if (PB_SUBFIELD_CHANGED(a, b, commonprefs, useoverridecolor))
@@ -185,8 +185,8 @@ LobGroupNode::LobGroupNode(const simData::LobGroupProperties &props, EntityNode*
   coordConverter_(new simCore::CoordinateConverter()),
   ds_(ds),
   hostId_(host->getId()),
-  lineCache_(new Cache),
-  label_(NULL),
+  lineCache_(new Cache()),
+  label_(nullptr),
   lastFlashingState_(false),
   objectIndexTag_(0)
 {
@@ -219,10 +219,10 @@ LobGroupNode::~LobGroupNode()
   osgEarth::Registry::objectIndex()->remove(objectIndexTag_);
 
   delete coordConverter_;
-  coordConverter_ = NULL;
+  coordConverter_ = nullptr;
   lineCache_->clearCache(this);
   delete lineCache_;
-  lineCache_ = NULL;
+  lineCache_ = nullptr;
 }
 
 void LobGroupNode::installShaderProgram(osg::StateSet* intoStateSet)
@@ -333,8 +333,8 @@ void LobGroupNode::setPrefs(const simData::LobGroupPrefs &prefs)
 
 void LobGroupNode::setLineDrawStyle_(double time, simVis::AnimatedLineNode& line, const simData::LobGroupPrefs& defaultValues)
 {
-  simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
-  if (table == NULL)
+  const simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
+  if (!table)
   {
     setLineValueFromPrefs_(line, defaultValues);
     return;
@@ -378,8 +378,8 @@ void LobGroupNode::setLineValueFromPrefs_(AnimatedLineNode& line, const simData:
 template <class T>
 int LobGroupNode::getColumnValue_(const std::string& columnName, const simData::DataTable& table, double time, T& value) const
 {
-  simData::TableColumn* column = table.column(columnName);
-  if (column == NULL)
+  const simData::TableColumn* column = table.column(columnName);
+  if (!column)
     return 1;
 
   simData::TableColumn::Iterator iter = column->findAtOrBeforeTime(time);
@@ -399,7 +399,7 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
 {
   const int numLines = update.datapoints_size();
   const simData::PlatformUpdateSlice *platformData = ds_.platformUpdateSlice(hostId_);
-  if ((numLines <= 0) || (platformData == NULL))
+  if ((numLines <= 0) || !platformData)
   {
     // no lines, clear out cache and remove all draw nodes
     lineCache_->clearCache(this);
@@ -436,7 +436,7 @@ void LobGroupNode::updateCache_(const simData::LobGroupUpdate &update, const sim
 
     // interpolation may be required for LOBs on a moving platform
     simData::PlatformUpdate interpolatedPlatformUpdate;
-    if (platformUpdate->time() != time && li != NULL && platformIter.hasNext())
+    if (platformUpdate->time() != time && li && platformIter.hasNext())
     {
       // defn of upper_bound previous()
       assert(platformUpdate->time() < time);
@@ -558,11 +558,11 @@ bool LobGroupNode::updateFromDataStore(const simData::DataSliceBase *updateSlice
   const simData::LobGroupUpdateSlice *updateSlice = static_cast<const simData::LobGroupUpdateSlice*>(updateSliceBase);
   assert(updateSlice);
   const simData::LobGroupUpdate* current = updateSlice->current();
-  const bool lobChangedToActive = (current != NULL && !hasLastUpdate_);
+  const bool lobChangedToActive = (current && !hasLastUpdate_);
 
   // Do any necessary flashing
-  simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
-  if (table != NULL)
+  const simData::DataTable* table = ds_.dataTableManager().findTable(getId(), simData::INTERNAL_LOB_DRAWSTYLE_TABLE);
+  if (table)
   {
     bool flashing = false;
     uint8_t state;

@@ -24,8 +24,8 @@
 #define SIMVIS_LOB_GROUP_H
 
 #include "simData/DataTypes.h"
-#include "simVis/Entity.h"
 #include "simVis/Constants.h"
+#include "simVis/Entity.h"
 
 namespace simCore { class CoordinateConverter; }
 namespace simData {
@@ -79,62 +79,6 @@ public:
   /** Retrieves the currently visible end points */
   void getVisibleEndPoints(std::vector<osg::Vec3d>& ecefVec) const;
 
-public: // EntityNode interface
-  /**
-  * Whether the entity is active within the scenario at the current time.
-  * The entity is considered active if it has a valid position update for the
-  * current scenario time, and has not received a command to turn off
-  * @return true if active; false if not
-  */
-  virtual bool isActive() const;
-
-  /**
-  * Returns the entity name. Can be used to get the actual name always or the
-  * actual/alias depending on the commonprefs.usealias flag.
-  * @param nameType  enum option to always return real/alias name or name based on
-  *            the commonprefs usealias flag.
-  * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
-  * @return    actual/alias entity name string
-  */
-  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
-
-  /// Returns the pop up text based on the label content callback, update and preference
-  virtual std::string popupText() const;
-  /// Returns the hook text based on the label content callback, update and preference
-  virtual std::string hookText() const;
-  /// Returns the legend text based on the label content callback, update and preference
-  virtual std::string legendText() const;
-
-  /**
-  * Gets the unique ID of the database entity underlying this node.
-  * @return The object ID
-  */
-  virtual simData::ObjectId getId() const;
-
-  /** Get the lob's host's ID */
-  virtual bool getHostId(simData::ObjectId& out_hostId) const;
-
-  /**
-  * Update this based on the slice from the data store.
-  * @param updateSlice  Data store update slice (could be NULL)
-  * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
-  * @return true if update applied, false if not
-  */
-  virtual bool updateFromDataStore(const simData::DataSliceBase *updateSlice, bool force=false);
-
-  /**
-  * Flushes all the entity's data point visualization
-  */
-  virtual void flush();
-
-  /**
-  * Returns a range value used for visualization.  Will return zero for platforms and projectors.
-  */
-  virtual double range() const;
-
-  /** This entity type is, at this time, unpickable. */
-  virtual unsigned int objectIndexTag() const;
-
   /**
   * Get the traversal mask for this node type
   * @return a traversal mask
@@ -147,11 +91,67 @@ public: // EntityNode interface
   */
   const simData::LobGroupUpdate* update() const { return &lastUpdate_; }
 
+public: // EntityNode interface
+  /**
+  * Whether the entity is active within the scenario at the current time.
+  * The entity is considered active if it has a valid position update for the
+  * current scenario time, and has not received a command to turn off
+  * @return true if active; false if not
+  */
+  virtual bool isActive() const override;
+
+  /**
+  * Returns the entity name. Can be used to get the actual name always or the
+  * actual/alias depending on the commonprefs.usealias flag.
+  * @param nameType  enum option to always return real/alias name or name based on
+  *            the commonprefs usealias flag.
+  * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
+  * @return    actual/alias entity name string
+  */
+  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
+
+  /// Returns the pop up text based on the label content callback, update and preference
+  virtual std::string popupText() const override;
+  /// Returns the hook text based on the label content callback, update and preference
+  virtual std::string hookText() const override;
+  /// Returns the legend text based on the label content callback, update and preference
+  virtual std::string legendText() const override;
+
+  /**
+  * Gets the unique ID of the database entity underlying this node.
+  * @return The object ID
+  */
+  virtual simData::ObjectId getId() const override;
+
+  /** Get the lob's host's ID */
+  virtual bool getHostId(simData::ObjectId& out_hostId) const override;
+
+  /**
+  * Update this based on the slice from the data store.
+  * @param updateSlice  Data store update slice (could be NULL)
+  * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
+  * @return true if update applied, false if not
+  */
+  virtual bool updateFromDataStore(const simData::DataSliceBase *updateSlice, bool force=false) override;
+
+  /**
+  * Flushes all the entity's data point visualization
+  */
+  virtual void flush() override;
+
+  /**
+  * Returns a range value used for visualization.  Will return zero for platforms and projectors.
+  */
+  virtual double range() const override;
+
+  /** This entity type is, at this time, unpickable. */
+  virtual unsigned int objectIndexTag() const override;
+
   /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
+  virtual const char* libraryName() const  override { return "simVis"; }
 
   /** Return the class name */
-  virtual const char* className() const { return "LobGroupNode"; }
+  virtual const char* className() const  override { return "LobGroupNode"; }
 
 private: // types
   class Cache;
@@ -217,8 +217,6 @@ private: // data
   /// Tag used for picking
   unsigned int objectIndexTag_;
 };
-
 }
 
 #endif // SIMVIS_LOB_GROUP_H
-
