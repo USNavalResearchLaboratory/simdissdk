@@ -160,11 +160,7 @@ bool CoordSurfaceClamping::isValid() const
 void CoordSurfaceClamping::setMapNode(const osgEarth::MapNode* map)
 {
   mapNode_ = map;
-#ifdef HAVE_WORKINGSET_STRONGLRU
-  workingSet_ = osgEarth::ElevationPool::WorkingSet();
-#else
-  workingSet_._lru.clear();
-#endif
+  workingSet_.clear();
 }
 
 void CoordSurfaceClamping::setUseMaxElevPrec(bool useMaxElevPrec)
