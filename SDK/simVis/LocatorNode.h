@@ -24,13 +24,15 @@
 #define SIMVIS_LOCATORNODE_H
 
 #include "osg/MatrixTransform"
+#include "osg/observer_ptr"
 #include "osgEarth/Revisioning"
 #include "simCore/Calc/CoordinateSystem.h"
 #include "simVis/Locator.h"
 
 namespace simVis
 {
-//----------------------------------------------------------------------------
+class EntityNode;
+
 /// Track the transform of a parent LocatorNode with a Locator
 class SDKVIS_EXPORT LocatorNode : public osg::MatrixTransform
 {
@@ -84,6 +86,12 @@ public:
   int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
 
+  /**
+  * Links the locatorNode to an entity such that the isActive() state of the entity determines whether this node is active
+  * @param entity entity to track
+  */
+  void setEntityToMonitor(EntityNode* entity);
+
 public:
   /// Synchronizes the transform matrix with the locator
   virtual void syncWithLocator();
@@ -100,7 +108,8 @@ private: // data
   osg::ref_ptr<Locator> locator_;
   osgEarth::Util::Revision matrixRevision_;
   osg::ref_ptr<LocatorCallback> locatorCallback_;
-  unsigned int componentsToTrack_; // Locator::Components mask
+  osg::observer_ptr<EntityNode> entityToMonitor_;  ///< if set, the entity whose isActive() state determines the active state of this locatorNode
+  unsigned int componentsToTrack_; ///< Locator::Components mask
 
   /// Sometimes bounds are computed without a node visitor and we need to know if in overhead mode; this flag caches that.
   bool overheadModeHint_;

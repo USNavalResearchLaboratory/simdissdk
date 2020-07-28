@@ -227,7 +227,6 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   : LocatorNode(locator)
 {
   setName("Centroid Locator");
-  setActive(false);
   geom_ = new osgEarth::LineDrawable(GL_LINES);
   geom_->setName("simVis::GateCentroid Geometry");
   geom_->setColor(simVis::Color::White);
@@ -245,12 +244,6 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
 
 GateCentroid::~GateCentroid()
 {
-}
-
-void GateCentroid::setActive(bool active)
-{
-  // the centroid's nodemask controls locatorNode activation/deactivation
-  setNodeMask(active ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
 }
 
 void GateCentroid::setVisible(bool visible)
@@ -364,6 +357,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
 
   // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
   centroid_ = new GateCentroid(centroidLocator_.get());
+  centroid_->setEntityToMonitor(this);
   addChild(centroid_);
 
   // centroid provides a persistent locatornode to parent our label node
@@ -553,7 +547,6 @@ void GateNode::flush()
 {
   hasLastUpdate_ = false;
   setNodeMask(DISPLAY_MASK_NONE);
-  centroid_->setActive(false);
   removeChild(gateVolume_);
   gateVolume_ = NULL;
 }
@@ -639,6 +632,8 @@ void GateNode::applyUpdateOverrides_(bool force)
   }
   // we have applied a valid update, and both lastUpdateApplied_ and lastUpdateFromDS_ are valid
   hasLastUpdate_ = true;
+  // ensure that the centroid is in sync with its locator; this will be a no-op if they are already in sync.
+  centroid_->syncWithLocator();
 }
 
 int GateNode::calculateTargetGate_(const simData::GateUpdate& update, simData::GateUpdate& targetGateUpdate)
@@ -750,8 +745,6 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, width) ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, height))))
   {
-    // make sure to activate the centroid locatorNode in case datadraw just turned on; updateLocator_ below will guarantee that locator node is sync'd to its locator
-    centroid_->setActive(true);
     // activeUpdate is always valid, and points to the new update if there is a new update, or the previous update otherwise
     centroid_->update(*activeUpdate);
   }

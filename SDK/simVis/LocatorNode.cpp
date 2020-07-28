@@ -21,6 +21,7 @@
  *
  */
 #include "simCore/Calc/Calculations.h"
+#include "simVis/Entity.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/LocatorNode.h"
@@ -96,6 +97,11 @@ int LocatorNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSys
     // this locatorNode is not active, and does not have a valid position
     return 2;
   }
+  if (entityToMonitor_.valid() && !entityToMonitor_->isActive())
+  {
+    // locatorNode is inactive: the locatorNode is tracking an entity, and that entity is inactive
+    return 3;
+  }
 
   const osg::Vec3d& locatorNodeEcef = getMatrix().getTrans();
   if (coordsys == simCore::COORD_SYS_LLA)
@@ -129,6 +135,11 @@ int LocatorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Ve
     // this locatorNode is not active, and does not have a valid position
     return 2;
   }
+  if (entityToMonitor_.valid() && !entityToMonitor_->isActive())
+  {
+    // locatorNode is inactive: the locatorNode is tracking an entity, and that entity is inactive
+    return 3;
+  }
 
   const osg::Matrixd& m = getMatrix();
   const osg::Vec3d& locatorNodeEcef = m.getTrans();
@@ -161,7 +172,17 @@ int LocatorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Ve
 
 void LocatorNode::syncWithLocator()
 {
-  if (getNodeMask() != 0 && locator_.valid() && locator_->outOfSyncWith(matrixRevision_))
+  if (getNodeMask() == 0 || !locator_.valid())
+  {
+    // this locatorNode is not active, and does not have a valid position
+    return;
+  }
+  if (entityToMonitor_.valid() && !entityToMonitor_->isActive())
+  {
+    // locatorNode is inactive: the locatorNode is tracking an entity, and that entity is inactive
+    return;
+  }
+  if (locator_->outOfSyncWith(matrixRevision_))
   {
     osg::Matrix matrix;
 
@@ -175,8 +196,6 @@ void LocatorNode::syncWithLocator()
 
 bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* nv) const
 {
-  if (getNodeMask() == 0)
-    return false;
   if (!locator_.valid())
   {
     // locatorNode with no locator has the position of its parent
@@ -209,6 +228,11 @@ void LocatorNode::setOverheadModeHint(bool overheadMode)
 bool LocatorNode::overheadModeHint() const
 {
   return overheadModeHint_;
+}
+
+void LocatorNode::setEntityToMonitor(EntityNode* entity)
+{
+  entityToMonitor_ = entity;
 }
 
 //---------------------------------------------------------------------------

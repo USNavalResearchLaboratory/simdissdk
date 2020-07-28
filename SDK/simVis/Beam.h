@@ -282,13 +282,6 @@ namespace simVis
     /** Copy constructor, not implemented or available. */
     BeamNode(const BeamNode&);
 
-    /**
-    * Activate/Deactivate this beam, to be applied when a transition in state of isActive() occurs.
-    * note that a beam can be active (datadraw) without being drawn
-    * @param active if true, beam will be activated; if false beam will be deactivated
-    */
-    void setActive_(bool active);
-
     /// update the geometry based on changes in update or preferences.
     void apply_(
       const simData::BeamUpdate*     update,

@@ -277,7 +277,7 @@ BeamNode::BeamNode(const ScenarioManager* scenario, const simData::BeamPropertie
   // create the locator node that will parent the geometry and label
   beamLocatorNode_ = new LocatorNode(getLocator());
   beamLocatorNode_->setName("Beam Locator");
-  beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
+  beamLocatorNode_->setEntityToMonitor(this);
   addChild(beamLocatorNode_.get());
 
   // create localGrid_ after beamLocatorNode_ so beamLocatorNode_ is found in findAttachment() for tethering
@@ -429,25 +429,6 @@ void BeamNode::setHostMissileOffset(double hostMissileOffset)
   }
 }
 
-void BeamNode::setActive_(bool active)
-{
-  // beam can be active (datadraw) without being drawn
-  if (active)
-  {
-    // activate the locator node
-    beamLocatorNode_->setNodeMask(DISPLAY_MASK_BEAM);
-  }
-  else
-  {
-    setNodeMask(DISPLAY_MASK_NONE);
-    // deactivate the locator node
-    beamLocatorNode_->setNodeMask(DISPLAY_MASK_NONE);
-    beamLocatorNode_->removeChild(antenna_);
-    beamLocatorNode_->removeChild(beamVolume_);
-    beamVolume_ = NULL;
-  }
-}
-
 bool BeamNode::isActive() const
 {
   return hasLastUpdate_ &&
@@ -533,7 +514,10 @@ bool BeamNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
 void BeamNode::flush()
 {
   hasLastUpdate_ = false;
-  setActive_(false);
+  setNodeMask(DISPLAY_MASK_NONE);
+  beamLocatorNode_->removeChild(antenna_);
+  beamLocatorNode_->removeChild(beamVolume_);
+  beamVolume_ = NULL;
 }
 
 double BeamNode::range() const
@@ -605,6 +589,8 @@ void BeamNode::applyUpdateOverrides_(bool force)
 
   // we have applied a valid update, and both lastUpdateApplied_ and lastUpdateFromDS_ are valid
   hasLastUpdate_ = true;
+  // ensure that the locator node is in sync with its locator; a no-op id they are already in sync.
+  beamLocatorNode_->syncWithLocator();
 }
 
 int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
@@ -684,10 +670,6 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
   force = force || !hasLastUpdate_ || !hasLastPrefs_ ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefsApplied_, newPrefs, commonprefs, datadraw));
-
-  // activate the locatorNode
-  if (force)
-    setActive_(true);
 
   if (activePrefs->drawtype() == simData::BeamPrefs_DrawType_ANTENNA_PATTERN)
   {
