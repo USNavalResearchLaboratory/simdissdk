@@ -2308,6 +2308,9 @@ void LatLonAltBoxInterface::serializeKeyword_(std::ostream& gogOutputStream) con
 
 void LatLonAltBoxInterface::setStyle_(const osgEarth::Style& style)
 {
+  // make sure backface culling is always on
+  style_.getOrCreateSymbol<osgEarth::RenderSymbol>()->backfaceCulling() = true;
+
   FeatureNodeInterface::setStyle_(style);
   if (&style != &style_)
     style_ = style;
