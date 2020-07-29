@@ -70,7 +70,7 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
   setNodeMask(DISPLAY_MASK_NONE);
   locatorNode_ = new LocatorNode(locator);
   locatorNode_->setName("Laser");
-  locatorNode_->setNodeMask(DISPLAY_MASK_NONE);
+  locatorNode_->setEntityToMonitor(this);
   addChild(locatorNode_);
   setName("LaserNode");
 
@@ -220,6 +220,8 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
       lastUpdate_ = *current;
       hasLastUpdate_ = true;
       updateApplied = true;
+      // ensure that the locator node is in sync with its locator; this will be a no-op if they are already in sync.
+      locatorNode_->syncWithLocator();
     }
     else if (laserChangedToInactive || hostChangedToInactive)
     {
@@ -240,7 +242,6 @@ void LaserNode::flush()
 {
   hasLastUpdate_ = false;
   setNodeMask(DISPLAY_MASK_NONE);
-  locatorNode_->setNodeMask(DISPLAY_MASK_NONE);
 }
 
 double LaserNode::range() const
@@ -289,8 +290,6 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   if (activePrefs->commonprefs().datadraw() == false)
   {
     setNodeMask(DISPLAY_MASK_NONE);
-    // deactivate the locatorNode
-    locatorNode_->setNodeMask(DISPLAY_MASK_NONE);
     return;
   }
 
@@ -313,8 +312,6 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
       locatorNode_->replaceChild(oldNode, node_);
     else
       locatorNode_->addChild(node_);
-    // activate the locatorNode
-    locatorNode_->setNodeMask(DISPLAY_MASK_LASER);
     dirtyBound();
   }
   else

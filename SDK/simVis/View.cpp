@@ -2006,25 +2006,11 @@ osg::Node* View::getModelNodeForTether(osg::Node* node) const
   case simData::CUSTOM_RENDERING:
     return static_cast<CustomRenderingNode*>(entityNode)->locatorNode();
   case simData::BEAM:
+  case simData::LASER:
   case simData::PROJECTOR:
     return entityNode->findAttachment<LocatorNode>();
   case simData::LOB_GROUP:
     return entityNode->findAttachment<osg::MatrixTransform>();
-
-  // Look for host platform
-  case simData::LASER:
-  {
-    simData::ObjectId hostId;
-    while (entityNode->getHostId(hostId))
-    {
-      entityNode = getSceneManager()->getScenario()->find(hostId);
-      if (!entityNode)
-        break;
-      if (entityNode->type() == simData::PLATFORM)
-        return entityNode->findAttachment<PlatformModelNode>();
-    }
-    break;
-  }
 
   // Passed in an invalid node
   case simData::NONE:
