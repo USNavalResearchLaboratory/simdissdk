@@ -22,17 +22,18 @@
  */
 #ifndef SIMVIS_PROJECTOR_H
 #define SIMVIS_PROJECTOR_H
-
+#include <memory>
 #include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 
 namespace osg { class Texture2D; }
-
+namespace osgEarth { namespace Util { class EllipsoidIntersector; } }
 namespace simVis
 {
 class EntityLabelNode;
 struct LocatorCallback;
+class LocatorNode;
 
 /** Projector video interface on the MediaPlayer2 side */
 class ProjectorTexture : public osg::Referenced
@@ -116,6 +117,9 @@ public:
   /// Remove projector uniforms from the given StateSet
   void removeUniforms(osg::StateSet* stateSet) const;
 
+  /// Set the calculator that can calculate the projector's ellipsoid intersection
+  void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
+
   /** Configure a node to accept the texture projected by this projector */
   void addProjectionToNode(osg::Node* node);
 
@@ -170,6 +174,13 @@ public: // EntityNode interface
 
   /** This entity type is, at this time, unpickable. */
   virtual unsigned int objectIndexTag() const override;
+
+  /** @copydoc EntityNode::getPosition() */
+  virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
+
+  /** @copydoc EntityNode::getPositionOrientation() */
+  virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+    simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
 
   /**
   * Get the object ID of the beam rendered by this node
@@ -231,14 +242,16 @@ private:
   void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
 
 
-  simData::ProjectorProperties lastProps_;
-  simData::ProjectorPrefs      lastPrefs_;
-  simData::ProjectorUpdate     lastUpdate_;
+  simData::ProjectorProperties  lastProps_;
+  simData::ProjectorPrefs       lastPrefs_;
+  simData::ProjectorUpdate      lastUpdate_;
   osg::observer_ptr<const EntityNode> host_;
-  osg::ref_ptr<LocatorCallback> locatorCallback_;
+  osg::observer_ptr<Locator>    hostLocator_; ///< locator that tracks the projector origin
+  osg::ref_ptr<LocatorCallback> locatorCallback_; ///< notifies when projector host (& origin) has moved
+  osg::ref_ptr<LocatorNode>     projectorLocatorNode_; ///< locator node that tracks the projector/ellipsoid intersection
   osg::ref_ptr<EntityLabelNode> label_;
-  bool                         hasLastUpdate_;
-  bool                         hasLastPrefs_;
+  bool                          hasLastUpdate_;
+  bool                          hasLastPrefs_;
 
   osg::Matrixd texGenMatrix_;
   osg::ref_ptr<osg::Texture2D> texture_;
@@ -257,6 +270,7 @@ private:
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
 
   osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
+  std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator_;
 };
 
 } //namespace simVis

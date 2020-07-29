@@ -28,9 +28,15 @@
 #include "simCore/Common/Common.h"
 #include "simData/ObjectId.h"
 
+namespace osgEarth
+{
+  namespace Util { class EllipsoidIntersector; }
+}
 namespace simVis
 {
 class ProjectorNode;
+
+//-------------------------------------------------------------------------
 
 /** Responsible for managing projectors in the scene */
 class ProjectorManager : public osg::Group, public osgEarth::MapNodeObserver
@@ -117,6 +123,9 @@ private:
   /// A listener to detect new image layers and force projectors to be visible over them
   class MapListener;
   osg::ref_ptr<MapListener> mapListener_;
+
+  /// A class that provides calculation services to projectors
+  std::shared_ptr<osgEarth::Util::EllipsoidIntersector> ellipsoidIntersector_;
 
   /// A flag to mark when projector layers need to be moved to ensure visibility
   bool needReorderProjectorLayers_;
