@@ -86,6 +86,9 @@ void ToolTipUpdater::updateToolTips_()
   for (auto it = pendingActions_.begin(); it != pendingActions_.end(); ++it)
   {
     QAction* action = (*it)->action();
+    if (!action)
+      continue;
+
     QString tt = action->property(ORIGINAL_TOOL_TIP_PROPERTY).toString(); // Get the original tool tip from the property
     if (tt.isEmpty())
     {
@@ -526,7 +529,7 @@ int ActionRegistry::removeAction(const QString& desc)
     aliases_.remove(*it);
 
   // Remove it from the main window's action list
-  if (mainWindow_)
+  if (mainWindow_ && action->action())
     mainWindow_->removeAction(action->action());
   emit(actionRemoved(action));
 
@@ -704,7 +707,8 @@ int ActionRegistry::setHotKeys(Action* action, const QList<QKeySequence>& hotkey
   }
 
   // Update the actual QAction
-  action->action()->setShortcuts(uniqueHotkeys);
+  if (action->action())
+    action->action()->setShortcuts(uniqueHotkeys);
   // Assertion failure means setShortcuts() failed in an unknown way
   assert(uniqueHotkeys == action->hotkeys());
   // Assertion failure means our hotkeys list lost sync with action-by-key map
@@ -759,7 +763,7 @@ void ActionRegistry::combineAndSetKeys_(Action* action, const QList<QKeySequence
 
 int ActionRegistry::removeBinding_(Action* fromAction, QKeySequence key, bool updateQAction)
 {
-  if (fromAction == NULL)
+  if (fromAction == NULL || !fromAction->action())
     return 1;
   QMap<QKeySequence, Action*>::iterator i = actionsByKey_.find(key);
   if (i != actionsByKey_.end())

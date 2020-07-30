@@ -23,11 +23,12 @@
 #ifndef SIMQT_ACTIONREGISTRY_H
 #define SIMQT_ACTIONREGISTRY_H
 
-#include <QObject>
-#include <QString>
+#include <QKeySequence>
 #include <QList>
 #include <QMap>
-#include <QKeySequence>
+#include <QObject>
+#include <QPointer>
+#include <QString>
 #include "simCore/Common/Common.h"
 
 class QAction;
@@ -95,7 +96,7 @@ private:
   ActionRegistry* registry_;
   QString group_;
   QString description_;
-  QAction* action_;
+  QPointer<QAction> action_;
 };
 
 /// Manager for all registered actions
