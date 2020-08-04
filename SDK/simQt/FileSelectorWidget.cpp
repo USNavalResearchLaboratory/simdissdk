@@ -211,8 +211,11 @@ void FileSelectorWidget::loadButton_()
 void FileSelectorWidget::setFilename(const QString& filename)
 {
   QString osFilename = QDir::toNativeSeparators(filename);
-  ui_->fileText->setText(osFilename);
-  emit filenameChanged(osFilename);
+  if (osFilename != ui_->fileText->text())
+  {
+    ui_->fileText->setText(osFilename);
+    emit filenameChanged(osFilename);
+  }
 }
 
 bool FileSelectorWidget::eventFilter(QObject* obj, QEvent* evt)
