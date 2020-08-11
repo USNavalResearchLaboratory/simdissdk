@@ -34,14 +34,14 @@ namespace simVis
 {
 
 LocatorNode::LocatorNode()
-  : locatorCallback_(NULL),
+  : locatorCallback_(nullptr),
     overheadModeHint_(false)
 {
   // LocatorNode is valid without any locator; it functions as a group.
 }
 
 LocatorNode::LocatorNode(Locator* locator, unsigned int componentsToTrack)
-  : locatorCallback_(NULL),
+  : locatorCallback_(nullptr),
   componentsToTrack_(componentsToTrack),
   overheadModeHint_(false)
 {
@@ -51,7 +51,7 @@ LocatorNode::LocatorNode(Locator* locator, unsigned int componentsToTrack)
 LocatorNode::LocatorNode(const LocatorNode& rhs, const osg::CopyOp& op)
   : osg::MatrixTransform(rhs, op),
   matrixRevision_(rhs.matrixRevision_),
-  locatorCallback_(NULL),
+  locatorCallback_(nullptr),
   componentsToTrack_(rhs.componentsToTrack_),
   overheadModeHint_(rhs.overheadModeHint_)
 {
@@ -203,9 +203,9 @@ bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* 
   }
   osg::Matrix matrix = getMatrix();
 
-  // It is possible that nv is NULL if calling computeBound(), which can happen during intersection
+  // It is possible that nv is nullptr if calling computeBound(), which can happen during intersection
   // visitor processing.  To address this, the overheadModeHint_ can be set.  If set and the Node
-  // visitor is NULL, then we do overhead mode calculations for bounding area.
+  // visitor is nullptr, then we do overhead mode calculations for bounding area.
   if (simVis::OverheadMode::isActive(nv) || (overheadModeHint_ && !nv))
   {
     simCore::Vec3 p( matrix(3,0), matrix(3,1), matrix(3,2) );

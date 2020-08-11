@@ -100,7 +100,7 @@ void RangeTool::RefreshGroup::traverse(osg::NodeVisitor& nv)
   if (nv.getVisitorType() == nv.UPDATE_VISITOR && tool_.valid())
   {
     // send a null scenario and invalid timestamp, these will be handled appropriately below
-    tool_->update(NULL, simCore::INFINITE_TIME_STAMP);
+    tool_->update(nullptr, simCore::INFINITE_TIME_STAMP);
     ADJUST_UPDATE_TRAV_COUNT(this, -1);
   }
   osg::Group::traverse(nv);
@@ -137,8 +137,8 @@ void RangeTool::onUninstall(const ScenarioManager& scenario)
   // remove all range tool state related to scenario
   associations_.clear();
   // scenario has already removed us from the scenegraph
-  root_ = NULL;
-  lastScenario_ = NULL;
+  root_ = nullptr;
+  lastScenario_ = nullptr;
 }
 
 void RangeTool::onUpdate(const ScenarioManager& scenario, const simCore::TimeStamp& timeStamp, const EntityVector& updates)
@@ -313,7 +313,7 @@ RangeTool::Association::Association(simData::ObjectId id1, simData::ObjectId id2
   : id1_(id1),
     id2_(id2),
     visible_(true),
-    xform_(NULL)
+    xform_(nullptr)
 {
   geode_ = new osg::Geode();
   osg::StateSet* s = geode_->getOrCreateStateSet();
@@ -626,7 +626,7 @@ void RangeTool::Association::refresh_(EntityNode* obj0, EntityNode* obj1, const 
     if (textOptions.showText_ == TextOptions::NONE)
       continue;
 
-    osgEarth::LabelNode* text = NULL;
+    osgEarth::LabelNode* text = nullptr;
     if (labelCount >= labels_->getNumChildren())
     {
       osgEarth::Style style;
@@ -729,9 +729,9 @@ void RangeTool::LineGraphic::createGeometry(osg::Vec3Array* verts, GLenum mode, 
 
 void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg::Vec3d startVec, osg::Vec3d endVec, double angle, osg::Geode* geode, RangeToolState& state)
 {
-  osg::Geometry*  arcEndVecGeom = NULL;
-  osg::Geometry*  startVecGeom  = NULL;
-  osg::Vec3Array* verts         = NULL;
+  osg::Geometry*  arcEndVecGeom = nullptr;
+  osg::Geometry*  startVecGeom  = nullptr;
+  osg::Vec3Array* verts         = nullptr;
 
   if (geode)
   {
@@ -846,7 +846,7 @@ void RangeTool::PieSliceGraphic::createGeometry(const osg::Vec3& originVec, osg:
 osg::Vec3 RangeTool::PieSliceGraphic::labelPos(RangeToolState& state)
 {
   if (!labelPos_.isSet())
-    render(NULL, state);
+    render(nullptr, state);
   return *labelPos_;
 }
 

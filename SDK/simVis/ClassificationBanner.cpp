@@ -58,7 +58,7 @@ void SetToClassificationTextCallback::onScenarioPropertiesChange(simData::DataSt
 static const float OUTLINE_THICKNESS = 0.03f;
 
 ClassificationLabelNode::ClassificationLabelNode()
-  : dataStore_(NULL)
+  : dataStore_(nullptr)
 {
   listener_.reset(new simVis::SetToClassificationTextCallback(this));
 
@@ -75,7 +75,7 @@ ClassificationLabelNode::ClassificationLabelNode()
 
 ClassificationLabelNode::ClassificationLabelNode(const ClassificationLabelNode& node, const osg::CopyOp& copyop)
   : Text(node, copyop),
-    dataStore_(NULL)
+    dataStore_(nullptr)
 {
   listener_.reset(new simVis::SetToClassificationTextCallback(this));
   bindTo(node.dataStore_);
@@ -189,8 +189,8 @@ ClassificationBanner::ClassificationBanner(simData::DataStore* dataStore, unsign
 
 ClassificationBanner::~ClassificationBanner()
 {
-  classLabelUpper_->bindTo(NULL);
-  classLabelLower_->bindTo(NULL);
+  classLabelUpper_->bindTo(nullptr);
+  classLabelLower_->bindTo(nullptr);
 }
 
 void ClassificationBanner::addToView(simVis::View* managedView)

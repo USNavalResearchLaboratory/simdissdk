@@ -118,8 +118,8 @@ void AnimatedLineNode::setEndPoints(const simCore::Coordinate& first, const simC
 {
   firstCoord_ = simCore::MultiFrameCoordinate(first);
   secondCoord_ = second;
-  firstLocator_ = NULL;
-  secondLocator_ = NULL;
+  firstLocator_ = nullptr;
+  secondLocator_ = nullptr;
   // Assertion failure means bad input from developer for setting initial endpoint
   assert(firstCoord_->isValid());
 }
@@ -128,7 +128,7 @@ void AnimatedLineNode::setEndPoints(const Locator* first, const simCore::Coordin
 {
   secondCoord_ = second;
   firstLocator_ = first;
-  secondLocator_ = NULL;
+  secondLocator_ = nullptr;
 }
 
 void AnimatedLineNode::setEndPoints(const Locator* first, const Locator* second)

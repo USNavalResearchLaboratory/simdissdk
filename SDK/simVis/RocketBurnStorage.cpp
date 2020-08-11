@@ -117,7 +117,7 @@ private:
 RocketBurnStorage::RocketBurnStorage(simData::DataStore &dataStore, simVis::ScenarioManager &scenarioManager)
   : scenarioManager_(scenarioManager),
   dataStore_(dataStore),
-  texture_(NULL)
+  texture_(nullptr)
 {
 }
 
@@ -143,7 +143,7 @@ void RocketBurnStorage::addBurnData(simData::ObjectId platId, uint64_t burnId, d
     }
 
     // lazy initialization of texture and other resources that are only needed if a rocketBurn is instantiated
-    if (texture_ == NULL)
+    if (texture_ == nullptr)
     {
       const std::string imageFile = simVis::Registry::instance()->findModelFile(BURN_TEXTURE_FILE);
       osg::ref_ptr<osg::Image> image;

@@ -122,11 +122,11 @@ TrackChunkNode::TrackChunkNode(unsigned int maxSize, simData::TrackPrefs_Mode mo
 
 TrackChunkNode::~TrackChunkNode()
 {
-  lineGroup_ = NULL;
-  centerLine_ = NULL;
-  centerPoints_ = NULL;
-  ribbon_ = NULL;
-  drop_ = NULL;
+  lineGroup_ = nullptr;
+  centerLine_ = nullptr;
+  centerPoints_ = nullptr;
+  ribbon_ = nullptr;
+  drop_ = nullptr;
 }
 
 /// add a new point to the chunk.

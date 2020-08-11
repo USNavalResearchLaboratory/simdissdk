@@ -63,11 +63,11 @@ void TargetDelegation::addOrUpdate(const PlatformNode* platform)
   // determine whether we're already tracking this platform:
   const TargetNodeMap::iterator t = targetNodes_.find(platform);
   const bool isTracked = t != targetNodes_.end();
-  osg::MatrixTransform* mt = isTracked? t->second.get() : NULL;
+  osg::MatrixTransform* mt = isTracked? t->second.get() : nullptr;
 
   // get the ECEF position of the target
   const simData::PlatformUpdate* update = platform->update();
-  if (update == NULL)
+  if (update == nullptr)
   {
     // this probably means the platform should have been removed
     assert(0);

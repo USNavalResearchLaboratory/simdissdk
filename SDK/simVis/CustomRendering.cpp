@@ -241,7 +241,7 @@ const std::string CustomRenderingNode::getEntityName(EntityNode::NameType nameTy
 
 bool CustomRenderingNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase, bool force)
 {
-  if (updateCallback_ == NULL)
+  if (updateCallback_ == nullptr)
     return false;
 
   if (updateCallback_->update(updateSliceBase, force))

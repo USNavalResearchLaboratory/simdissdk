@@ -57,14 +57,14 @@ RocketBurn::RocketBurn(PlatformNode &hostPlatform, osg::Texture2D& texture)
   simVis::DisableDepthOnAlpha::setAlphaThreshold(stateSet, 0.001f);
 
   // Add to the platform
-  if (hostPlatform.getModel() != NULL)
+  if (hostPlatform.getModel() != nullptr)
     hostPlatform.getModel()->addScaledChild(transform_.get());
 }
 
 RocketBurn::~RocketBurn()
 {
   removeFromScene_();
-  transform_ = NULL;
+  transform_ = nullptr;
 }
 
 // A RocketBurn visual is a series of poofs (textured quads).

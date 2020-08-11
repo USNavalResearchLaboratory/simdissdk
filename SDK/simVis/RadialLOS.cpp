@@ -153,7 +153,7 @@ void RadialLOS::setAzimuthalResolution(const osgEarth::Angle& value)
 
 bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& originCoord)
 {
-  assert(mapNode != NULL);
+  assert(mapNode != nullptr);
 
 #ifdef LOS_TIME_PROFILING
   osg::Timer_t startTime = osg::Timer::instance()->tick();
@@ -267,7 +267,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
         convertGeoPointToCoord(mapPoint, destCoord, mapNode);
 
         double elev;
-        simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), NULL, &elev, NULL, simCore::FLAT_EARTH, &cc);
+        simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), nullptr, &elev, nullptr, simCore::FLAT_EARTH, &cc);
 
         bool visible = false;
         if (elev >= maxElev)
@@ -367,7 +367,7 @@ bool RadialLOS::update(osgEarth::MapNode* mapNode, const osgEarth::GeoExtent& ex
           cc.setReferenceOrigin(originLlaCoord.lat(), originLlaCoord.lon(), originLlaCoord.alt());
 
           double elev;
-          simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), NULL, &elev, NULL, simCore::FLAT_EARTH, &cc);
+          simCore::calculateAbsAzEl(originLlaCoord.position(), destCoord.position(), nullptr, &elev, nullptr, simCore::FLAT_EARTH, &cc);
           sample.elev_rad_ = elev;
         }
 

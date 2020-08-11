@@ -49,7 +49,7 @@ namespace
   /// check for changes that require us to rebuild the entire beam.
   bool changeRequiresRebuild(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
   {
-    if (a == NULL || b == NULL)
+    if (a == nullptr || b == nullptr)
     {
       return false;
     }
@@ -85,7 +85,7 @@ namespace
 #ifdef BEAM_IN_PLACE_UPDATES
     return false;
 #else
-    if (a == NULL || b == NULL)
+    if (a == nullptr || b == nullptr)
       return false;
     return PB_FIELD_CHANGED(a, b, range);
 #endif
@@ -105,7 +105,7 @@ BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdat
 
   // if blended, use BIN_BEAM & TPA, otherwise use BIN_OPAQUE_BEAM & BIN_GLOBAL_SIMSDK
   osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(beamSV_.get());
-  if (solidGeometry != NULL)
+  if (solidGeometry != nullptr)
   {
     solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
       (prefs.blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
@@ -114,7 +114,7 @@ BeamVolume::BeamVolume(const simData::BeamPrefs& prefs, const simData::BeamUpdat
 
   // if there is a 2nd wireframe geode, it should be renderbin'd to BIN_OPAQUE_BEAM
   osg::Geode* wireframeGeode = simVis::SVFactory::opaqueGeode(beamSV_.get());
-  if (wireframeGeode != NULL)
+  if (wireframeGeode != nullptr)
   {
     // SphericalVolume code only adds the opaque geode when it is adding a geometry or lineGroup
     assert(wireframeGeode->getNumDrawables() > 0);
@@ -182,7 +182,7 @@ void BeamVolume::setBeamScale_(double beamScale)
 /// update prefs that can be updated without rebuilding the whole beam.
 void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const simData::BeamPrefs* b)
 {
-  if (a == NULL || b == NULL)
+  if (a == nullptr || b == nullptr)
     return;
 
   if (b->commonprefs().has_useoverridecolor() && b->commonprefs().useoverridecolor())
@@ -207,7 +207,7 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
   {
     // if blended, use BIN_BEAM & TPA, otherwise use BIN_OPAQUE_BEAM & BIN_GLOBAL_SIMSDK
     osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(beamSV_.get());
-    if (solidGeometry != NULL)
+    if (solidGeometry != nullptr)
     {
       solidGeometry->getOrCreateStateSet()->setRenderBinDetails(
         (b->blended() ? BIN_BEAM : BIN_OPAQUE_BEAM),
@@ -227,7 +227,7 @@ void BeamVolume::performInPlacePrefChanges(const simData::BeamPrefs* a, const si
 
 void BeamVolume::performInPlaceUpdates(const simData::BeamUpdate* a, const simData::BeamUpdate* b)
 {
-  if (a == NULL || b == NULL)
+  if (a == nullptr || b == nullptr)
     return;
 
 #ifdef BEAM_IN_PLACE_UPDATES
@@ -375,7 +375,7 @@ void BeamNode::setPrefs(const simData::BeamPrefs& prefs)
   if (lastProps_.type() == simData::BeamProperties_BeamType_TARGET &&
     (!hasLastPrefs_ || PB_FIELD_CHANGED(&lastPrefsApplied_, &prefs, targetid)))
   {
-    target_ = NULL;
+    target_ = nullptr;
   }
 
   applyPrefs_(prefs);
@@ -387,7 +387,7 @@ void BeamNode::applyPrefs_(const simData::BeamPrefs& prefs, bool force)
 {
   if (prefsOverrides_.size() == 0)
   {
-    apply_(NULL, &prefs, force);
+    apply_(nullptr, &prefs, force);
     lastPrefsApplied_ = prefs;
     hasLastPrefs_ = true;
   }
@@ -399,7 +399,7 @@ void BeamNode::applyPrefs_(const simData::BeamPrefs& prefs, bool force)
     {
       accumulated.MergeFrom(i->second);
     }
-    apply_(NULL, &accumulated, force);
+    apply_(nullptr, &accumulated, force);
     lastPrefsApplied_ = accumulated;
     hasLastPrefs_ = true;
   }
@@ -407,7 +407,7 @@ void BeamNode::applyPrefs_(const simData::BeamPrefs& prefs, bool force)
   // manage beam pulse animation, creating it when necessary
   if (prefs.animate())
   {
-    if (beamPulse_ == NULL)
+    if (beamPulse_ == nullptr)
       beamPulse_ = new simVis::BeamPulse(getOrCreateStateSet());
 
     beamPulse_->setEnabled(true);
@@ -415,7 +415,7 @@ void BeamNode::applyPrefs_(const simData::BeamPrefs& prefs, bool force)
     beamPulse_->setRate(static_cast<float>(prefs.pulserate()));
     beamPulse_->setStipplePattern(prefs.pulsestipple());
   }
-  else if (beamPulse_ != NULL)
+  else if (beamPulse_ != nullptr)
     beamPulse_->setEnabled(false);
 }
 
@@ -425,7 +425,7 @@ void BeamNode::setHostMissileOffset(double hostMissileOffset)
   {
     hostMissileOffset_ = hostMissileOffset;
     // force a complete refresh
-    apply_(NULL, NULL, true);
+    apply_(nullptr, nullptr, true);
   }
 }
 
@@ -517,7 +517,7 @@ void BeamNode::flush()
   setNodeMask(DISPLAY_MASK_NONE);
   beamLocatorNode_->removeChild(antenna_);
   beamLocatorNode_->removeChild(beamVolume_);
-  beamVolume_ = NULL;
+  beamVolume_ = nullptr;
 }
 
 double BeamNode::range() const
@@ -573,7 +573,7 @@ void BeamNode::applyUpdateOverrides_(bool force)
 {
   if (updateOverrides_.size() == 0)
   {
-    apply_(&lastUpdateFromDS_, NULL, force);
+    apply_(&lastUpdateFromDS_, nullptr, force);
     lastUpdateApplied_ = lastUpdateFromDS_;
   }
   else
@@ -583,7 +583,7 @@ void BeamNode::applyUpdateOverrides_(bool force)
     {
       accumulated.MergeFrom(i->second);
     }
-    apply_(&accumulated, NULL, force);
+    apply_(&accumulated, nullptr, force);
     lastUpdateApplied_ = accumulated;
   }
 
@@ -598,16 +598,16 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
   // this should only be called for target beams; if assert fails, check caller
   assert(lastProps_.type() == simData::BeamProperties_BeamType_TARGET);
 
-  // we should only receive non-NULL updates for target beams which have valid target ids; if assert fails check MemoryDataStore processing
+  // we should only receive non-nullptr updates for target beams which have valid target ids; if assert fails check MemoryDataStore processing
   assert(lastPrefsApplied_.targetid() > 0);
 
   // update our target reference, for new target, or after a prefs change in target ids occur
-  if (target_ == NULL || !target_.valid())
+  if (target_ == nullptr || !target_.valid())
   {
     if (scenario_.valid())
     {
       target_ = scenario_->find(lastPrefsApplied_.targetid());
-      // we should only receive an non-NULL update when target is valid; if assert fails check MemoryDataStore processing
+      // we should only receive an non-nullptr update when target is valid; if assert fails check MemoryDataStore processing
       assert(target_.valid());
     }
     if (!target_.valid())
@@ -632,8 +632,8 @@ int BeamNode::calculateTargetBeam_(simData::BeamUpdate& targetBeamUpdate)
   double azimuth;
   double elevation;
   // let the simCore::Calculations implementation do coordinate conversions; it guarantees that only one initialization occurs for both these calculations.
-  simCore::calculateAbsAzEl(sourceLla, targetLla, &azimuth, &elevation, NULL, simCore::TANGENT_PLANE_WGS_84, NULL);
-  const double range = simCore::calculateSlant(sourceLla, targetLla, simCore::TANGENT_PLANE_WGS_84, NULL);
+  simCore::calculateAbsAzEl(sourceLla, targetLla, &azimuth, &elevation, nullptr, simCore::TANGENT_PLANE_WGS_84, nullptr);
+  const double range = simCore::calculateSlant(sourceLla, targetLla, simCore::TANGENT_PLANE_WGS_84, nullptr);
   targetBeamUpdate.set_azimuth(azimuth);
   targetBeamUpdate.set_elevation(elevation);
   targetBeamUpdate.set_range(range);
@@ -693,7 +693,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
       if (beamVolume_)
       {
         beamLocatorNode_->removeChild(beamVolume_);
-        beamVolume_ = NULL;
+        beamVolume_ = nullptr;
       }
       beamLocatorNode_->addChild(antenna_);
       dirtyBound();
@@ -714,13 +714,13 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
     // if new geometry is required, build it:
     if (!beamVolume_ || refreshRequiresNewNode)
     {
-      // do not NULL antenna, it needs to persist to provide gain calcs
+      // do not nullptr antenna, it needs to persist to provide gain calcs
       beamLocatorNode_->removeChild(antenna_);
 
       if (beamVolume_)
       {
         beamLocatorNode_->removeChild(beamVolume_);
-        beamVolume_ = NULL;
+        beamVolume_ = nullptr;
       }
 
       beamVolume_ = new BeamVolume(*activePrefs, *activeUpdate);
@@ -757,7 +757,7 @@ void BeamNode::apply_(const simData::BeamUpdate* newUpdate, const simData::BeamP
   if (visible && (force || newPrefs))
   {
     // localgrid created in constructor. if assert fails, check for changes.
-    assert(localGrid_ != NULL);
+    assert(localGrid_ != nullptr);
     localGrid_->setPrefs(activePrefs->commonprefs().localgrid(), force);
   }
 }
@@ -829,7 +829,7 @@ void BeamNode::updateLocator_(const simData::BeamUpdate* newUpdate, const simDat
 
 const simData::BeamUpdate* BeamNode::getLastUpdateFromDS() const
 {
-  return hasLastUpdate_ ? &lastUpdateFromDS_ : NULL;
+  return hasLastUpdate_ ? &lastUpdateFromDS_ : nullptr;
 }
 
 void BeamNode::setPrefsOverride(const std::string& id, const simData::BeamPrefs& prefs)
@@ -882,7 +882,7 @@ double BeamNode::getClosestPoint(const simCore::Vec3& toLla, simCore::Vec3& clos
   simCore::calculateGeodeticEndPoint(startPosition, ori.yaw(), ori.pitch(), lastUpdateFromDS_.range(), endPosition);
 
   double distanceToBeam = simCore::getClosestPoint(startPosition, endPosition, toLla, closestLla);
-  const double distanceAlongBeam = simCore::sodanoInverse(startPosition.lat(), startPosition.lon(), startPosition.alt(), closestLla.lat(), closestLla.lon(), NULL, NULL);
+  const double distanceAlongBeam = simCore::sodanoInverse(startPosition.lat(), startPosition.lon(), startPosition.alt(), closestLla.lat(), closestLla.lon(), nullptr, nullptr);
 
   // Subtract the beam width from the distanceToBeam
   const double x = distanceAlongBeam * sin(0.5 * lastPrefsFromDS_.horizontalwidth()) * cos(ori.pitch());

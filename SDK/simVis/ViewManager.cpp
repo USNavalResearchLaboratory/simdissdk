@@ -66,7 +66,7 @@ namespace
       viewMan_(viewMan),
       width_(0),
       height_(0),
-      resizeView_(NULL)
+      resizeView_(nullptr)
       { }
 
     bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object* object, osg::NodeVisitor*)
@@ -85,7 +85,7 @@ namespace
       {
         viewMan_->handleResize(width_, height_);
         aa.requestRedraw();
-        resizeView_ = NULL;
+        resizeView_ = nullptr;
       }
       return false;
     }
@@ -182,7 +182,7 @@ void AddEventHandlerToViews::removeFromViews(const simVis::ViewManager& viewMana
 
 void AddEventHandlerToViews::operator()(simVis::View* inset, const EventType& e)
 {
-  if (guiEventHandler_ != NULL)
+  if (guiEventHandler_ != nullptr)
   {
     switch (e)
     {
@@ -268,7 +268,7 @@ unsigned int ViewManager::getNumViews() const
 
 simVis::View* ViewManager::getView(unsigned int index) const
 {
-  return index < getNumViews() ? dynamic_cast<simVis::View*>(viewer_->getView(index)) : NULL;
+  return index < getNumViews() ? dynamic_cast<simVis::View*>(viewer_->getView(index)) : nullptr;
 }
 
 
@@ -281,7 +281,7 @@ simVis::View* ViewManager::getViewByName(const std::string& name) const
     if ((*i)->getName() == name)
       return dynamic_cast<simVis::View*>(*i);
   }
-  return NULL;
+  return nullptr;
 }
 
 

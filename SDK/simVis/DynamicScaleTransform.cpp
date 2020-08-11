@@ -176,7 +176,7 @@ osg::Node* DynamicScaleTransform::getSizingNode_()
     return sizingNode_.get();
   if (getNumChildren() > 0)
     return getChild(0);
-  return NULL;
+  return nullptr;
 }
 
 void DynamicScaleTransform::setSizingNode(osg::Node* node)
@@ -280,7 +280,7 @@ void DynamicScaleTransform::clearOverrideScale()
 
 double DynamicScaleTransform::getSimulatedOrthoRange_(osgUtil::CullVisitor* cv) const
 {
-  // Check for NULL, such as invalid dynamic_cast<>
+  // Check for nullptr, such as invalid dynamic_cast<>
   if (!cv)
     return 0.0;
 

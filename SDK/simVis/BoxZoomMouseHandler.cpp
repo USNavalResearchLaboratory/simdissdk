@@ -94,7 +94,7 @@ bool BoxMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
 
     // Only proceed is there is a current focused view
     simVis::View* view = dynamic_cast<simVis::View*>(aa.asView());
-    if (view == NULL)
+    if (view == nullptr)
       return false;
     // Validate the view's suitability for use
     if (!validateView_(*view))
@@ -103,8 +103,8 @@ bool BoxMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     view_ = view;
 
     // view is unable to maintain watch or cockpit modes when box zooming
-    view_->enableWatchMode(NULL, NULL);
-    view_->enableCockpitMode(NULL);
+    view_->enableWatchMode(nullptr, nullptr);
+    view_->enableCockpitMode(nullptr);
 
     originX_ = ea.getX();
     originY_ = ea.getY();
@@ -136,7 +136,7 @@ bool BoxMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
     if (ext.isRatio_)
     {
       simVis::View* hostView = view_->getHostView();
-      if (hostView == NULL)
+      if (hostView == nullptr)
       {
         // There's a view that defines its extents as ratio of host, but has no host.
         // This can happen while creating a view, but should not happen by the time box zooming occurs.
@@ -178,9 +178,9 @@ bool BoxMouseHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionA
       return false;
     if (!box_.valid() || !view_.valid())
     {
-      // Need to reset values here to satisfy post-conditions of both being NULL when not dragging
-      box_ = NULL;
-      view_ = NULL;
+      // Need to reset values here to satisfy post-conditions of both being nullptr when not dragging
+      box_ = nullptr;
+      view_ = nullptr;
       return false;
     }
 
@@ -216,8 +216,8 @@ void BoxMouseHandler::stopDrag_()
   // Remove the box
   if (view_.valid() && box_.valid())
     view_->getOrCreateHUD()->removeChild(box_);
-  box_ = NULL;
-  view_ = NULL;
+  box_ = nullptr;
+  view_ = nullptr;
 }
 
 ////////////////////////////////////////////////////////////
@@ -267,7 +267,7 @@ void BoxZoomMouseHandler::calculateGeoPointFromScreenXY_(double x, double y, sim
 
 bool BoxZoomMouseHandler::validateView_(const simVis::View& view) const
 {
-  return (mapNodeForView_(view) != NULL);
+  return (mapNodeForView_(view) != nullptr);
 }
 
 void BoxZoomMouseHandler::processGeometry_(double originX, double originY, double widthPixels, double heightPixels)
@@ -297,7 +297,7 @@ void BoxZoomMouseHandler::processGeometry_(double originX, double originY, doubl
       vp.range()->set(newRange, osgEarth::Units::METERS);
     }
     // Break tether
-    vp.setNode(NULL);
+    vp.setNode(nullptr);
     view_->setViewpoint(vp, durationSec_);
     return;
   }
@@ -335,7 +335,7 @@ osgEarth::MapNode* BoxZoomMouseHandler::mapNodeForView_(const simVis::View& view
   simVis::SceneManager* sceneManager = view.getSceneManager();
   if (sceneManager)
     return sceneManager->getMapNode();
-  return NULL;
+  return nullptr;
 }
 
 }

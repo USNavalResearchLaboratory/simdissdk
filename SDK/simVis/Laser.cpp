@@ -39,14 +39,14 @@ namespace simVis
 LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator, const EntityNode* host, int referenceYear)
   : EntityNode(simData::LASER),
     hasLastUpdate_(false),
-    node_(NULL),
+    node_(nullptr),
     host_(host),
-    localGrid_(NULL),
+    localGrid_(nullptr),
     hasLastPrefs_(false),
-    label_(NULL)
+    label_(nullptr)
 {
   lastProps_ = props;
-  Locator* locator = NULL;
+  Locator* locator = nullptr;
 
   if (!props.has_azelrelativetohostori() || !props.azelrelativetohostori())
   {
@@ -62,7 +62,7 @@ LaserNode::LaserNode(const simData::LaserProperties& props, Locator* hostLocator
   {
     // in the azelrelativetohostori case, only a single locator is needed,
     // b/c position and orientation offsets are both relative to platform orientation.
-    laserXYZOffsetLocator_ = NULL;
+    laserXYZOffsetLocator_ = nullptr;
     locator = new ResolvedPositionOrientationLocator(hostLocator, Locator::COMP_ALL);
   }
 
@@ -160,7 +160,7 @@ void LaserNode::setPrefs(const simData::LaserPrefs& prefs)
   // validate localgrid prefs changes that might provide user notifications
   localGrid_->validatePrefs(prefs.commonprefs().localgrid());
 
-  refresh_(NULL, &prefs);
+  refresh_(nullptr, &prefs);
   updateLabel_(prefs);
   lastPrefs_ = prefs;
   hasLastPrefs_ = true;
@@ -173,7 +173,7 @@ bool LaserNode::isActive() const
 
 bool LaserNode::isVisible() const
 {
-  return getNodeMask() != DISPLAY_MASK_NONE && (node_ != NULL) && node_->getNodeMask() != DISPLAY_MASK_NONE;
+  return getNodeMask() != DISPLAY_MASK_NONE && (node_ != nullptr) && node_->getNodeMask() != DISPLAY_MASK_NONE;
 }
 
 simData::ObjectId LaserNode::getId() const
@@ -211,12 +211,12 @@ bool LaserNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBas
   if (updateSlice->hasChanged() || force || hostChangedToActive || hostChangedToInactive)
   {
     const simData::LaserUpdate* current = updateSlice->current();
-    const bool laserChangedToInactive = (current == NULL && hasLastUpdate_);
+    const bool laserChangedToInactive = (current == nullptr && hasLastUpdate_);
 
     // do not apply update if host platform is not active
     if (current && (force || host_->isActive()))
     {
-      refresh_(current, NULL);
+      refresh_(current, nullptr);
       lastUpdate_ = *current;
       hasLastUpdate_ = true;
       updateApplied = true;
@@ -254,7 +254,7 @@ double LaserNode::range() const
 
 const simData::LaserUpdate* LaserNode::getLastUpdateFromDS() const
 {
-  return hasLastUpdate_ ? &lastUpdate_ : NULL;
+  return hasLastUpdate_ ? &lastUpdate_ : nullptr;
 }
 
 int LaserNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
@@ -294,7 +294,7 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   }
 
   // force indicates that activePrefs and activeUpdate must be applied, the visual must be redrawn, and the locator updated
-  const bool force = !hasLastUpdate_ || !hasLastPrefs_ || node_ == NULL ||
+  const bool force = !hasLastUpdate_ || !hasLastPrefs_ || node_ == nullptr ||
     (newPrefs && PB_SUBFIELD_CHANGED(&lastPrefs_, newPrefs, commonprefs, datadraw));
 
   // if new geometry is required, build it
@@ -340,7 +340,7 @@ void LaserNode::refresh_(const simData::LaserUpdate* newUpdate, const simData::L
   // update the local grid prefs, if laser is being drawn
   if (visible && (force || newPrefs))
   {
-    assert(localGrid_ != NULL);
+    assert(localGrid_ != nullptr);
     localGrid_->setPrefs(activePrefs->commonprefs().localgrid(), force);
   }
 }
@@ -375,7 +375,7 @@ void LaserNode::updateLocator_(const simData::LaserUpdate* newUpdate, const simD
     if (!lastProps_.has_azelrelativetohostori() || !lastProps_.azelrelativetohostori())
     {
       // if assert fails, check that constructor creates this locator for non-relative lasers
-      assert(laserXYZOffsetLocator_ != NULL);
+      assert(laserXYZOffsetLocator_ != nullptr);
 
       // laser xyz offsets are relative to host platform orientation;
       laserXYZOffsetLocator_->setLocalOffsets(posOffset, simCore::Vec3(), activeUpdate->time(), false);
@@ -418,7 +418,7 @@ osg::Geode* LaserNode::createGeometry_(const simData::LaserPrefs &prefs)
 
 void LaserNode::updateLaser_(const simData::LaserPrefs &prefs)
 {
-  if (node_ == NULL || node_->getNumChildren() == 0)
+  if (node_ == nullptr || node_->getNumChildren() == 0)
     return;
   osgEarth::LineDrawable* geom = dynamic_cast<osgEarth::LineDrawable*>(node_->getChild(0));
   if (!geom)

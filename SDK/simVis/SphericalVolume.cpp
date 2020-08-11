@@ -144,7 +144,7 @@ namespace
     nearFaceOffset_(nearFaceOffset),
     drawWalls_(drawWalls)
   {
-    // svPyramid must provide a non-NULL vertex array
+    // svPyramid must provide a non-nullptr vertex array
     assert(vertexArray);
     setName("simVis::SphericalVolume::svPyramidOutline");
     xform.addChild(this);
@@ -405,13 +405,13 @@ namespace
         generateWalls_(solidGeometry_.get());
 
       // release our ref_ptr, we don't need it anymore
-      solidGeometry_ = NULL;
+      solidGeometry_ = nullptr;
     }
 
     const bool drawOutlines = (simVis::SVData::DRAW_MODE_OUTLINE & data.drawMode_) == simVis::SVData::DRAW_MODE_OUTLINE;
     if (drawOutlines)
     {
-      // must provide a non-NULL vertexArray to svPyramidOutline
+      // must provide a non-nullptr vertexArray to svPyramidOutline
       assert(vertexArray_);
       svPyramidOutline* outline = new svPyramidOutline(xform, vertexArray_.get(), numPointsX_, numPointsZ_, farFaceOffset_, nearFaceOffset_, drawWalls_);
       outline->setColor(color_);
@@ -1101,7 +1101,7 @@ void SVFactory::processWireframe_(osg::MatrixTransform* xform, int drawMode)
   if (SVData::DRAW_MODE_WIRE & drawMode)
   {
     osg::Geometry* solidGeom = SVFactory::solidGeometry(xform);
-    if (solidGeom == NULL || solidGeom->empty())
+    if (solidGeom == nullptr || solidGeom->empty())
     {
       assert(0);
       return;
@@ -1160,7 +1160,7 @@ void SVFactory::updateStippling(osg::MatrixTransform* xform, bool stippling)
 {
   // only the solid geometry can be stippled
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1173,7 +1173,7 @@ void SVFactory::updateLighting(osg::MatrixTransform* xform, bool lighting)
 {
   // lighting is only applied to the solid geometry
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1189,7 +1189,7 @@ void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
 {
   // blending is only applied to the solid geometry
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1203,7 +1203,7 @@ void SVFactory::updateBlending(osg::MatrixTransform* xform, bool blending)
 void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1227,7 +1227,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
 
   // if we have an 2nd (optional) geode, it is opaque; update its color, but remove transparency
   osg::Geode* opaqueGeode = SVFactory::opaqueGeode(xform);
-  if (opaqueGeode == NULL)
+  if (opaqueGeode == nullptr)
     return;
 
   // the opaque geode may be an svPyramidOutline; svPyramidOutline sets the opacity itself
@@ -1242,7 +1242,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
   if (opaqueGeode->getNumDrawables() == 1)
   {
     geom = opaqueGeode->getDrawable(0)->asGeometry();
-    if (geom == NULL)
+    if (geom == nullptr)
     {
       // Assertion failure means internal consistency error, or caller has inconsistent input
       assert(0);
@@ -1278,7 +1278,7 @@ void SVFactory::updateColor(osg::MatrixTransform* xform, const osg::Vec4f& color
 void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1290,7 +1290,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(meta);
-  if (verts == NULL || meta == NULL)
+  if (verts == nullptr || meta == nullptr)
     return;
 
   const std::vector<SVMeta>& m = meta->vertMeta_;
@@ -1309,7 +1309,7 @@ void SVFactory::updateNearRange(osg::MatrixTransform* xform, double nearRange)
 void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1321,7 +1321,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   // Assertion failure means internal consistency error, or caller has inconsistent input
   assert(meta);
-  if (verts == NULL || meta == NULL)
+  if (verts == nullptr || meta == nullptr)
     return;
 
   const std::vector<SVMeta>& m = meta->vertMeta_;
@@ -1340,7 +1340,7 @@ void SVFactory::updateFarRange(osg::MatrixTransform* xform, double farRange)
 void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1349,7 +1349,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
-  if (verts == NULL || meta == NULL || normals == NULL)
+  if (verts == nullptr || meta == nullptr || normals == nullptr)
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1492,7 +1492,7 @@ void SVFactory::updateHorizAngle(osg::MatrixTransform* xform, double oldAngle, d
 void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, double newAngle)
 {
   osg::Geometry* geom = SVFactory::solidGeometry(xform);
-  if (geom == NULL || geom->empty())
+  if (geom == nullptr || geom->empty())
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1501,7 +1501,7 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
   osg::Vec3Array* verts = static_cast<osg::Vec3Array*>(geom->getVertexArray());
   SVMetaContainer* meta = static_cast<SVMetaContainer*>(geom->getUserData());
   osg::Vec3Array* normals = static_cast<osg::Vec3Array*>(geom->getNormalArray());
-  if (verts == NULL || meta == NULL || normals == NULL)
+  if (verts == nullptr || meta == nullptr || normals == nullptr)
   {
     // Assertion failure means internal consistency error, or caller has inconsistent input
     assert(0);
@@ -1642,26 +1642,26 @@ void SVFactory::updateVertAngle(osg::MatrixTransform* xform, double oldAngle, do
 
 osg::Geometry* SVFactory::solidGeometry(osg::MatrixTransform* xform)
 {
-  if (xform == NULL || xform->getNumChildren() == 0)
-    return NULL;
+  if (xform == nullptr || xform->getNumChildren() == 0)
+    return nullptr;
   osg::Geode* geode = xform->getChild(0)->asGeode();
-  if (geode == NULL || geode->getNumDrawables() == 0)
-    return NULL;
+  if (geode == nullptr || geode->getNumDrawables() == 0)
+    return nullptr;
   return geode->getDrawable(0)->asGeometry();
 }
 
 // if the sv has a 2nd geode that adds outline or wireframe, it will be the MatrixTransform 2nd child
 osg::Geode* SVFactory::opaqueGeode(osg::MatrixTransform* xform)
 {
-  if (xform == NULL || xform->getNumChildren() < 2)
-    return NULL;
+  if (xform == nullptr || xform->getNumChildren() < 2)
+    return nullptr;
   return xform->getChild(1)->asGeode();
 }
 
 // dirty bounds for all geometries in the xform
 void SVFactory::dirtyBound_(osg::MatrixTransform* xform)
 {
-  if (xform == NULL || xform->getNumChildren() == 0)
+  if (xform == nullptr || xform->getNumChildren() == 0)
     return;
 
   // handle the geometries in the primary geode

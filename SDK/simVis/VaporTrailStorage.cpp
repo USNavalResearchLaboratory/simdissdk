@@ -64,7 +64,7 @@ VaporTrailStorage::~VaporTrailStorage()
   // remove the vaporTrails from the scene graph
   for (std::map<Key, osg::ref_ptr<simVis::VaporTrail> >::iterator it = vaporTrailsByKey_.begin(); it != vaporTrailsByKey_.end(); ++it)
   {
-    it->second = NULL;
+    it->second = nullptr;
   }
   vaporTrailsByKey_.clear();
   idsByPlatform_.clear();
@@ -112,7 +112,7 @@ int VaporTrailStorage::addVaporTrail(simData::ObjectId platId, unsigned int id, 
     return 1;
   }
 
-  if (dataStoreListener_ == NULL)
+  if (dataStoreListener_ == nullptr)
   {
     dataStoreListener_.reset(new DataStoreListener(*this));
     dataStore_.addListener(dataStoreListener_);

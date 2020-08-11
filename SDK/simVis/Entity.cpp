@@ -187,7 +187,7 @@ EntityNode::EntityNode(simData::ObjectType type, Locator* locator)
 
 EntityNode::~EntityNode()
 {
-  setLocator(NULL);
+  setLocator(nullptr);
 }
 
 bool EntityNode::isVisible() const
@@ -271,7 +271,7 @@ std::string EntityNode::getEntityName_(const simData::CommonPrefs& common, Entit
 
 void EntityNode::setLabelContentCallback(LabelContentCallback* cb)
 {
-  if (cb == NULL)
+  if (cb == nullptr)
     contentCallback_ = new NullEntityCallback();
   else
     contentCallback_ = cb;

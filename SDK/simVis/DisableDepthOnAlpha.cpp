@@ -58,7 +58,7 @@ void DisableDepthOnAlpha::installShaderProgram(osg::StateSet* intoStateSet)
 
 void DisableDepthOnAlpha::setValues(osg::StateSet* stateset, int value)
 {
-  if (stateset == NULL)
+  if (stateset == nullptr)
     return;
 
   int over = value & osg::StateAttribute::OVERRIDE;
@@ -73,7 +73,7 @@ void DisableDepthOnAlpha::setValues(osg::StateSet* stateset, int value)
 
 void DisableDepthOnAlpha::setAlphaThreshold(osg::StateSet* stateset, float alphaThreshold, int value)
 {
-  if (stateset != NULL)
+  if (stateset != nullptr)
     stateset->addUniform(new osg::Uniform(DEPTH_THRESHOLD.c_str(), alphaThreshold), value);
 }
 

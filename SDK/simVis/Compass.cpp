@@ -99,7 +99,7 @@ private:
 CompassFocusManagerAdapter::CompassFocusManagerAdapter(simVis::FocusManager* focusManager, simVis::CompassNode* compass)
  : focusManager_(focusManager),
    compass_(compass),
-   callback_(NULL)
+   callback_(nullptr)
 {
   callback_ = new FocusCallback(this);
   focusManager_->addCallback(callback_.get());
@@ -287,7 +287,7 @@ void CompassNode::updateCompass_()
   {
     // Figure out the camera heading; use EarthManipulator to account for tether mode rotations
     const osgEarth::Util::EarthManipulator* manip = dynamic_cast<const osgEarth::Util::EarthManipulator*>(view->getCameraManipulator());
-    if (manip != NULL)
+    if (manip != nullptr)
     {
       manip->getCompositeEulerAngles(&headingDeg);
       // Convert to degrees
@@ -397,8 +397,8 @@ public:
     if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
     {
       const osg::View* view = aa.asView();
-      const osg::Camera* camera = (view ? view->getCamera() : NULL);
-      const osg::Viewport* viewport = (camera ? camera->getViewport() : NULL);
+      const osg::Camera* camera = (view ? view->getCamera() : nullptr);
+      const osg::Viewport* viewport = (camera ? camera->getViewport() : nullptr);
       if (viewport)
       {
         osg::Vec2d newWh(viewport->width(), viewport->height());
@@ -434,7 +434,7 @@ Compass::~Compass()
 
 void Compass::setDrawView(simVis::View* drawView)
 {
-  if (drawView == NULL)
+  if (drawView == nullptr)
   {
     removeFromView();
     return;
@@ -472,7 +472,7 @@ void Compass::removeFromView()
     // stop callbacks for frame updates
     drawView_->removeEventHandler(repositionEventHandler_.get());
     drawView_->getOrCreateHUD()->removeChild(this);
-    drawView_ = NULL;
+    drawView_ = nullptr;
   }
 }
 

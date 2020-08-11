@@ -166,7 +166,7 @@ private:
 simVis::Registry::Registry()
   : modelCache_(new ModelCache),
     fileSearch_(new simCore::NoSearchFileSearch()),
-    sequenceTimeUpdater_(new simVis::SequenceTimeUpdater(NULL))
+    sequenceTimeUpdater_(new simVis::SequenceTimeUpdater(nullptr))
 {
   // Configure the model cache
   modelCache_->setSequenceTimeUpdater(sequenceTimeUpdater_.get());
@@ -226,21 +226,21 @@ simVis::Registry::Registry()
   // prime a default font which will be returned if the requested font cannot be found
   osgText::Font* defaultFont = getOrCreateFont(DEFAULT_FONT);
   osgEarth::Registry* osgEarthRegistry = osgEarth::Registry::instance();
-  if (osgEarthRegistry->getDefaultFont() == NULL)
+  if (osgEarthRegistry->getDefaultFont() == nullptr)
     osgEarthRegistry->setDefaultFont(defaultFont);
 }
 
 simVis::Registry::~Registry()
 {
   delete modelCache_;
-  modelCache_ = NULL;
+  modelCache_ = nullptr;
 }
 
 static OpenThreads::Mutex s_instMutex;
 
 simVis::Registry* simVis::Registry::instance()
 {
-  static Registry* s_inst = NULL;
+  static Registry* s_inst = nullptr;
   if (!s_inst)
   {
     OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_instMutex);
@@ -391,14 +391,14 @@ void simVis::Registry::clearModelCache()
 
 osg::Node* simVis::Registry::getOrCreateIconModel(const std::string& location, bool* pIsImage) const
 {
-  // if doing a memory check, return NULL to load in a box instead of a complex icon
+  // if doing a memory check, return nullptr to load in a box instead of a complex icon
   if (memoryChecking_)
-    return NULL;
+    return nullptr;
 
   // Attempt to locate the filename
   std::string uri = findModelFile(location);
   if (uri.empty())
-    return NULL;
+    return nullptr;
   return modelCache_->getOrCreateIconModel(uri, pIsImage);
 }
 
@@ -524,7 +524,7 @@ osg::Referenced* simVis::Registry::getObject(const std::string& key) const
   if (i != weakObjectCache_.end())
     return i->second.get();
   else
-    return NULL;
+    return nullptr;
 }
 
 void simVis::Registry::setClock(simCore::Clock* clock)
@@ -545,7 +545,7 @@ void simVis::Registry::setFileSearch(simCore::FileSearchPtr fileSearch)
   osgEarth::Threading::ScopedMutexLock lock(fileSearchMutex_);
 #endif
 
-  if (fileSearch == NULL)
+  if (fileSearch == nullptr)
     fileSearch_.reset(new simCore::NoSearchFileSearch());
   else
     fileSearch_ = fileSearch;
@@ -559,7 +559,7 @@ std::string simVis::Registry::findFile_(const std::string& filename, simCore::Fi
   osgEarth::Threading::ScopedMutexLock lock(fileSearchMutex_);
 #endif
 
-  if (fileSearch_ == NULL)
+  if (fileSearch_ == nullptr)
     return "";
   return fileSearch_->findFile(filename, fileType);
 }

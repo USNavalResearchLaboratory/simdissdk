@@ -38,7 +38,7 @@ bool getElevationFromSample(osgEarth::RefElevationSample* sample,
                              double& out_elevation,
                              double* out_actualResolution)
 {
-  if (sample != NULL)
+  if (sample != nullptr)
   {
     out_elevation = sample->elevation().as(osgEarth::Units::METERS);
     if (out_elevation ==  NO_DATA_VALUE)
@@ -114,7 +114,7 @@ private:
 ElevationQueryProxy::ElevationQueryProxy(const osgEarth::Map* map, osg::Group* scene)
   : lastElevation_(NO_DATA_VALUE),
     lastResolution_(NO_DATA_VALUE),
-    query_(NULL),
+    query_(nullptr),
     map_(map),
     scene_(scene)
 {
@@ -134,14 +134,14 @@ ElevationQueryProxy::~ElevationQueryProxy()
   if (scene_.valid())
     scene_->removeChild(mapChangeListener_);
   delete query_;
-  query_ = NULL;
+  query_ = nullptr;
   delete data_;
-  data_ = NULL;
+  data_ = nullptr;
 
   if (asyncSampler_)
   {
     delete asyncSampler_;
-    asyncSampler_ = NULL;
+    asyncSampler_ = nullptr;
   }
 }
 
@@ -231,8 +231,8 @@ void ElevationQueryProxy::setMap(const osgEarth::Map* map)
 
 void ElevationQueryProxy::setMapNode(const osgEarth::MapNode* mapNode)
 {
-  if (mapNode == NULL)
-    setMap(NULL);
+  if (mapNode == nullptr)
+    setMap(nullptr);
   else
     setMap(mapNode->getMap());
 }
