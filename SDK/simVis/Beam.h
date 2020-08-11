@@ -87,8 +87,8 @@ namespace simVis
     * @param host This beam's host entity
     * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
     */
-    BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* locator = NULL,
-      const simVis::EntityNode* host = NULL, int referenceYear = 1970);
+    BeamNode(const ScenarioManager* scenario, const simData::BeamProperties& props, Locator* locator = nullptr,
+      const simVis::EntityNode* host = nullptr, int referenceYear = 1970);
 
     /**
     * Access the properties object currently representing this beam.
@@ -147,7 +147,7 @@ namespace simVis
     void removeUpdateOverride(const std::string& id);
 
     /**
-     * Gets a pointer to the last data store update, or NULL if
+     * Gets a pointer to the last data store update, or nullptr if
      * none have been applied.
      */
     const simData::BeamUpdate* getLastUpdateFromDS() const;
@@ -221,7 +221,7 @@ namespace simVis
 
     /**
     * Updates the entity based on the bound data store.
-    * @param updateSlice  Data store update slice (could be NULL)
+    * @param updateSlice  Data store update slice (could be nullptr)
     * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
     * @return true if update applied, false if not
     */
@@ -243,7 +243,7 @@ namespace simVis
     /**
     * Gets the world position for this beam's origin. This is a convenience
     * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */
@@ -252,8 +252,8 @@ namespace simVis
     /**
     * Gets the world position & orientation for this beam's origin. This is a convenience
     * function that extracts the Position information and rotation from the underlying locatorNode matrix.
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
-    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not nullptr, resulting orientation stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */

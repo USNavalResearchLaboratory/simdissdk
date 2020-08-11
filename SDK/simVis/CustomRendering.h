@@ -52,7 +52,7 @@ public:
   * @param referenceYear The calculation for the Speed Rings Fixed Time preference needs the scenario reference year
   */
   CustomRenderingNode(const ScenarioManager* scenario, const simData::CustomRenderingProperties& props,
-    const simVis::EntityNode* host = NULL, int referenceYear = 1970);
+    const simVis::EntityNode* host = nullptr, int referenceYear = 1970);
 
   /**
   * Access the properties object currently representing this custom.
@@ -165,7 +165,7 @@ public:
 
   /**
   * Updates the entity based on the bound data store.
-  * @param updateSlice  Data store update slice (could be NULL)
+  * @param updateSlice  Data store update slice (could be nullptr)
   * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
   * @return true if update applied, false if not
   */
@@ -183,7 +183,7 @@ public:
   /**
   * Gets the world position for this custom's origin. This is a convenience
   * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
-  * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+  * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
@@ -192,8 +192,8 @@ public:
   /**
   * Gets the world position & orientation for this custom's origin. This is a convenience
   * function that extracts the Position information and rotation from the underlying locatorNode matrix.
-  * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
-  * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+  * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
+  * @param[out] out_orientation If not nullptr, resulting orientation stored here, in coordinate system as specified by coordsys
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
@@ -215,7 +215,7 @@ public:
   // Expose the locator node so an outside source can add graphics.
   LocatorNode* locatorNode() const;
 
-  /// Returns the host.  May be NULL if hosted under the scenario with no parent
+  /// Returns the host.  May be nullptr if hosted under the scenario with no parent
   const EntityNode* host() const;
 
   /*

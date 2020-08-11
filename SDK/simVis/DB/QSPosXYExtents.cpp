@@ -68,7 +68,7 @@ void PosXPosYExtents::setAll(const QsPosType& minXIn, const QsPosType& maxXIn, c
 
 void PosXPosYExtents::pack(uint8_t* buffer) const
 {
-  if (buffer == NULL)
+  if (buffer == nullptr)
     return;
   beWrite(buffer, &minX);
   beWrite(buffer + sizeof(minX), &maxX);
@@ -78,7 +78,7 @@ void PosXPosYExtents::pack(uint8_t* buffer) const
 
 void PosXPosYExtents::unpack(const uint8_t* buffer)
 {
-  if (buffer == NULL)
+  if (buffer == nullptr)
     return;
   beRead(buffer, &minX);
   beRead(buffer + sizeof(minX), &maxX);

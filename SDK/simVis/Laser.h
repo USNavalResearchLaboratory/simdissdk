@@ -51,8 +51,8 @@ namespace simVis
     */
     LaserNode(
       const simData::LaserProperties& props,
-      Locator*                        locator = NULL,
-      const simVis::EntityNode*       host = NULL,
+      Locator*                        locator = nullptr,
+      const simVis::EntityNode*       host = nullptr,
       int                             referenceYear = 1970);
 
     /**
@@ -118,7 +118,7 @@ namespace simVis
 
     /**
     * Updates the entity based on the bound data store.
-    * @param updateSlice  Data store update slice (could be NULL)
+    * @param updateSlice  Data store update slice (could be nullptr)
     * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
     * @return true if update applied, false if not
     */
@@ -138,7 +138,7 @@ namespace simVis
     virtual unsigned int objectIndexTag() const;
 
     /**
-     * Gets a pointer to the last data store update, or NULL if
+     * Gets a pointer to the last data store update, or nullptr if
      * none have been applied.
      */
     const simData::LaserUpdate* getLastUpdateFromDS() const;
@@ -146,7 +146,7 @@ namespace simVis
     /**
     * Gets the world position for this laser's origin. This is a convenience
     * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */
@@ -155,8 +155,8 @@ namespace simVis
     /**
     * Gets the world position & orientation for this laser. This is a convenience
     * function that extracts the Position information and rotation from the underlying locatorNode matrix.
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
-    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not nullptr, resulting orientation stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */
@@ -187,8 +187,8 @@ namespace simVis
 
     /**
     * Updates the locator if required, based on specified arguments
-    * @param newUpdate new update data (could be NULL)
-    * @param newPrefs new prefs settings (could be NULL)
+    * @param newUpdate new update data (could be nullptr)
+    * @param newPrefs new prefs settings (could be nullptr)
     * @param force  true to force locator update regardless of other params
     */
     void updateLocator_(const simData::LaserUpdate* newUpdate, const simData::LaserPrefs* newPrefs, bool force);

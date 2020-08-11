@@ -45,7 +45,7 @@ GogNodeInterface* simVis::GOG::Polygon::deserialize(const ParsedShape& parsedSha
                                   osgEarth::MapNode*       mapNode)
 {
   p.parseGeometry<osgEarth::Polygon>(parsedShape);
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
     // Try to prevent terrain z-fighting.

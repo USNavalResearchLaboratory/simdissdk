@@ -184,7 +184,7 @@ public:
   virtual std::string insetString(simVis::View *viewport) { return ""; }
   virtual void cycleEyeView(simVis::View *viewport, bool forwardCycle) { }
   // Treated as an opaque pointer by consumers
-  virtual simVis::EyePosition* eyePositionByName(const std::string &eyePositionName) { return NULL; }
+  virtual simVis::EyePosition* eyePositionByName(const std::string &eyePositionName) { return nullptr; }
   virtual void applyEyePositionToPort(simVis::EyePosition *eyePosition, simVis::View *viewport) { }
   virtual void removeEyePosition(simVis::EyePosition *eyePosition) { }
   virtual void removeEyePosition(const std::string& name) { }

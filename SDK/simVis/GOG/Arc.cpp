@@ -278,12 +278,12 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
     // never cross 0 with the osgEarth drawing algorithm.
     end = angFix2PI_(end);
 
-    // If the end and start are the same value, return NULL to draw nothing.  Cannot
+    // If the end and start are the same value, return nullptr to draw nothing.  Cannot
     // use the angleend command to draw circles (use angledeg instead)
     if (simCore::areAnglesEqual(start.as(Units::RADIANS), end.as(Units::RADIANS)))
     {
       context.errorHandler_->printError(lineNumber, "Arc AngleEnd cannot be same value as AngleStart");
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -314,8 +314,8 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
     filledShape = createArc(osg::Vec3d(0, 0, 0), radius, start + rotation, end + rotation, hasInnerRadius, iRadius, true, filledShape, gf);
   }
 
-  osgEarth::LocalGeometryNode* shapeNode = NULL;
-  osgEarth::LocalGeometryNode* fillNode = NULL;
+  osgEarth::LocalGeometryNode* shapeNode = nullptr;
+  osgEarth::LocalGeometryNode* fillNode = nullptr;
   osg::Group* g = new osg::Group();
 
   // remove the polygon symbol for the shape, since it should only exist in the fillNode
@@ -348,7 +348,7 @@ GogNodeInterface* Arc::deserialize(const ParsedShape& parsedShape, simVis::GOG::
   shapeNode->setName("Arc Outline Node");
   fillNode->setName("Arc Fill Node");
 
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (shapeNode)
   {
     Utils::applyLocalGeometryOffsets(*shapeNode, p, nodeType);

@@ -47,7 +47,7 @@ GogNodeInterface* Line::deserialize(const ParsedShape& parsedShape,
 {
   p.parseGeometry<LineString>(parsedShape);
 
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {

@@ -53,8 +53,8 @@ GogNodeInterface* TextAnnotation::deserialize(
   const std::string text = Utils::decodeAnnotation(parsedShape.stringValue(GOG_TEXT));
 
   p.parseGeometry<Geometry>(parsedShape);
-  GogNodeInterface* rv = NULL;
-  osgEarth::GeoPositionNode* label = NULL;
+  GogNodeInterface* rv = nullptr;
+  osgEarth::GeoPositionNode* label = nullptr;
 
   if (parsedShape.hasValue(GOG_ICON))
   {
@@ -83,7 +83,7 @@ GogNodeInterface* TextAnnotation::deserialize(
   else
   {
     osg::PositionAttitudeTransform* trans = label->getPositionAttitudeTransform();
-    if (trans != NULL)
+    if (trans != nullptr)
       trans->setPosition(p.getLTPOffset());
   }
   label->setDynamic(true);

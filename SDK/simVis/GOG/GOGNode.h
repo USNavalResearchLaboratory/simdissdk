@@ -90,7 +90,7 @@ namespace simVis { namespace GOG
     const simCore::UnitsRegistry* unitsRegistry_;
 
     GOGContext()
-      : unitsRegistry_(NULL)
+      : unitsRegistry_(nullptr)
     {
     }
   };

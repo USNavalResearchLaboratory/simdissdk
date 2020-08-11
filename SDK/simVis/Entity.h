@@ -104,7 +104,7 @@ namespace simVis
     * @param type Type of entity node to alleviate the need for dynamic casting
     * @param locator Locator that will position this node
     */
-    EntityNode(simData::ObjectType type, Locator* locator = NULL);
+    EntityNode(simData::ObjectType type, Locator* locator = nullptr);
 
   public:
     /** Enumerates different name types for the label */
@@ -144,10 +144,10 @@ namespace simVis
 
     /**
     * Sets a custom callback that will be used to generate the string that goes in the label.
-    * @param callback Callback that will generate content; if NULL will only display entity name/alias
+    * @param callback Callback that will generate content; if nullptr will only display entity name/alias
     */
     void setLabelContentCallback(LabelContentCallback* callback);
-    /// Returns current content callback; guaranteed non-NULL
+    /// Returns current content callback; guaranteed non-nullptr
     LabelContentCallback& labelContentCallback() const;
 
     /// Returns the pop up text based on the label content callback, update and preference
@@ -165,7 +165,7 @@ namespace simVis
     * function that extracts the Position information (not rotation) from the
     * Entity's underlying locator or locatorNode.
     *
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */
@@ -176,8 +176,8 @@ namespace simVis
     * function that extracts the Position information and rotation from the
     * locatorNode matrix.
     *
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
-    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not nullptr, resulting orientation stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */
@@ -217,7 +217,7 @@ namespace simVis
         if (dynamic_cast<T*>(node))
           return static_cast<T*>(node);
       }
-      return NULL;
+      return nullptr;
     }
 
     /**
@@ -233,7 +233,7 @@ namespace simVis
         if (dynamic_cast<T*>(node))
           return static_cast<T*>(node);
       }
-      return NULL;
+      return nullptr;
     }
 
     /**
@@ -271,7 +271,7 @@ namespace simVis
     /**
     * Updates the entity based on the bound data store. The implementation class
     * must provide this method.
-    * @param updateSlice  Data store update slice (could be NULL)
+    * @param updateSlice  Data store update slice (could be nullptr)
     * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
     * @return true if update applied, false if not
     */

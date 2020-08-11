@@ -129,7 +129,7 @@ namespace simVis
      * @param scene Scene under which this object operates
      * @param view View on which to show the popup
      */
-    explicit PopupHandler(SceneManager* scene, View* view = NULL);
+    explicit PopupHandler(SceneManager* scene, View* view = nullptr);
 
     /// set whether pop-ups are enabled (or not)
     void enable(bool v = true);

@@ -47,7 +47,7 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
   osgEarth::GeometryFactory gf;
   Geometry* shape = gf.createCircle(osg::Vec3d(0, 0, 0), radius);
 
-  osgEarth::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = nullptr;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -62,7 +62,7 @@ GogNodeInterface* Circle::deserialize(const ParsedShape& parsedShape,
     node = new HostedLocalGeometryNode(shape, p.style_);
   node->setName("GOG Circle Position");
 
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (node)
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);

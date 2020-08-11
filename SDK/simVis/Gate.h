@@ -114,8 +114,8 @@ namespace simVis
     */
     explicit GateNode(
       const simData::GateProperties& props,
-      Locator*                       locator = NULL,
-      const simVis::EntityNode*      host = NULL,
+      Locator*                       locator = nullptr,
+      const simVis::EntityNode*      host = nullptr,
       int                            referenceYear = 1970);
 
     /**
@@ -211,7 +211,7 @@ namespace simVis
 
     /**
     * Updates the entity based on the bound data store.
-    * @param updateSlice  Data store update slice (could be NULL)
+    * @param updateSlice  Data store update slice (could be nullptr)
     * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
     * @return true if update applied, false if not
     */
@@ -233,7 +233,7 @@ namespace simVis
     /**
     * Gets the world position for this gate's centroid. This is a convenience
     * function that extracts the Position information (not rotation) from the underlying locatorNode matrix.
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */
@@ -242,8 +242,8 @@ namespace simVis
     /**
     * Gets the world position & orientation for this gate's centroid. This is a convenience
     * function that extracts the Position information and rotation from the underlying locatorNode matrix.
-    * @param[out] out_position If not NULL, resulting position stored here, in coordinate system as specified by coordsys
-    * @param[out] out_orientation If not NULL, resulting orientation stored here, in coordinate system as specified by coordsys
+    * @param[out] out_position If not nullptr, resulting position stored here, in coordinate system as specified by coordsys
+    * @param[out] out_orientation If not nullptr, resulting orientation stored here, in coordinate system as specified by coordsys
     * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
     * @return 0 if the output parameter is populated successfully, nonzero on failure
     */
@@ -257,7 +257,7 @@ namespace simVis
     static unsigned int getMask() { return simVis::DISPLAY_MASK_GATE; }
 
     /**
-     * Gets a pointer to the last data store update, or NULL if
+     * Gets a pointer to the last data store update, or nullptr if
      * none have been applied.
      */
     const simData::GateUpdate* getLastUpdateFromDS() const;

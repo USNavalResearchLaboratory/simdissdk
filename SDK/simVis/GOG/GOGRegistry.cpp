@@ -105,14 +105,14 @@ GogNodeInterface* GOGRegistry::createGOG(const ParsedShape& parsedShape, const G
   const osgEarth::Style& overrideStyle, const GOGContext& context, const GogMetaData& metaData,
   GogFollowData& followData) const
 {
-  GogNodeInterface* result = NULL;
+  GogNodeInterface* result = nullptr;
   std::string key = osgEarth::toLower(parsedShape.shape());
 
   // don't allow attached GOGs with absolute values
   if (nodeType == GOGNODE_HOSTED && parsedShape.hasValue(GOG_ABSOLUTE))
   {
     SIM_WARN << "Attempting to load attached GOG with absolute points\n";
-    return NULL;
+    return nullptr;
   }
   DeserializerTable::const_iterator i = deserializers_.find(key);
   if (i != deserializers_.end())

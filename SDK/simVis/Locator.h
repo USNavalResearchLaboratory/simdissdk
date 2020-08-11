@@ -212,7 +212,7 @@ public:
   * function that extracts the Position information (not rotation) from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
@@ -224,8 +224,8 @@ public:
   * function that extracts the Position information and rotation from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
-  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
+  * @param[out] out_orientation If not nullptr, resulting orientation stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
@@ -288,13 +288,13 @@ public:
 
   /**
   * Get the parent locator.
-  * @return Locator, or NULL if no parent exists
+  * @return Locator, or nullptr if no parent exists
   */
   Locator* getParentLocator() { return parentLoc_.get(); }
 
   /**
   * Get the parent locator (tail const version)
-  * @return Locator, or NULL if no parent exists
+  * @return Locator, or nullptr if no parent exists
   */
   const Locator* getParentLocator() const { return parentLoc_.get(); }
 
@@ -439,7 +439,7 @@ public:
   * function that extracts the Position information (not rotation) from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */
@@ -451,8 +451,8 @@ public:
   * function that extracts the Position information and rotation from the
   * locator matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
-  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
+  * @param[out] out_orientation If not nullptr, resulting orientation stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return True if the output parameter is populated successfully
   */

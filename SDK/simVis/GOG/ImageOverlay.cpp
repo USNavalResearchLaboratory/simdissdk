@@ -41,7 +41,7 @@ GogNodeInterface* ImageOverlay::deserialize(
                             const GogMetaData&       metaData,
                             osgEarth::MapNode*       mapNode)
 {
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
 
   if (!parsedShape.hasValue(GOG_ICON))
     return rv;

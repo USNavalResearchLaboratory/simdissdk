@@ -57,7 +57,7 @@ public:
   /// set the Locator for this LocatorNode, recalculates the transform matrix
   void setLocator(Locator *locator, unsigned int componentsToTrack = Locator::COMP_ALL);
 
-  /// Turns on or off a flag to hint to use Overhead Mode for bounds computation when NodeVisitor is NULL
+  /// Turns on or off a flag to hint to use Overhead Mode for bounds computation when NodeVisitor is nullptr
   void setOverheadModeHint(bool overheadMode);
   /// Retrieves a previously set overhead mode hint, used for bounds computation in intersection visitors
   bool overheadModeHint() const;
@@ -67,7 +67,7 @@ public:
   * function that extracts the Position information (not rotation) from the
   * locatorNode matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
@@ -78,8 +78,8 @@ public:
   * function that extracts the Position information and rotation from the
   * locatorNode matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
-  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
+  * @param[out] out_orientation If not nullptr, resulting orientation stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */

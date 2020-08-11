@@ -87,7 +87,7 @@ namespace {
     if (!node || (!referencePosition && !node->getPosition().isValid()))
       return 1;
     // use reference point if it's valid, otherwise use the node's position
-    osgEarth::GeoPoint refPosition = referencePosition != NULL ? *referencePosition : node->getPosition();
+    osgEarth::GeoPoint refPosition = referencePosition != nullptr ? *referencePosition : node->getPosition();
 
     osg::Vec3d centerPoint;
 
@@ -105,8 +105,8 @@ namespace {
       centerPoint = node->getBound().center();
 
     simCore::Coordinate llaCoord;
-    // apply the offset to the ref position if using the local offset or if the map node is NULL which indicates this is a hosted node (relative to ref position)
-    if (useLocalOffset || node->getMapNode() == NULL)
+    // apply the offset to the ref position if using the local offset or if the map node is nullptr which indicates this is a hosted node (relative to ref position)
+    if (useLocalOffset || node->getMapNode() == nullptr)
     {
       // if the offsets are non-zero, apply the offsets to our reference position
       simCore::CoordinateConverter converter;
@@ -1121,7 +1121,7 @@ void GogNodeInterface::setGeoPositionAltitude_(osgEarth::GeoPositionNode& node, 
 
 void GogNodeInterface::initializeFromGeoPositionNode_(const osgEarth::GeoPositionNode& node)
 {
-  hasMapNode_ = (node.getMapNode() != NULL);
+  hasMapNode_ = (node.getMapNode() != nullptr);
   // use node position if there is a map node
   if (hasMapNode_)
     altitude_ = node.getPosition().alt();
@@ -1139,7 +1139,7 @@ bool GogNodeInterface::hasValidAltitudeMode() const
 
   // check for an AltitudeSymbol
   const osgEarth::AltitudeSymbol* alt = style_.getSymbol<osgEarth::AltitudeSymbol>();
-  if (alt == NULL)
+  if (alt == nullptr)
     return false;
 
   // check for altitude mode ALTITUDE_NONE
@@ -1533,10 +1533,10 @@ void FeatureNodeInterface::setTessellation(TessellationStyle style)
 
     // adjust tessellation based on feature dimension
     const osgEarth::Feature* feature = featureNode_->getFeature();
-    if (feature != NULL)
+    if (feature != nullptr)
     {
       const osgEarth::SpatialReference* srs = feature->getSRS();
-      if (srs != NULL)
+      if (srs != nullptr)
       {
         osg::BoundingSphered boundS;
         if (feature->getWorldBound(srs->getGeocentricSRS(), boundS))
@@ -2108,7 +2108,7 @@ void SphericalNodeInterface::setColor_(const osg::Vec4f& color)
   // need to dig down into the LocalGeometryNode to get the underlying Geometry object to set its color array
   // NOTE: this assumes a specific implementation for spherical nodes. May fail if that implementation changes
   osg::Group* group = localNode_->getPositionAttitudeTransform();
-  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : NULL;
+  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : nullptr;
   if (!node)
     return;
   osg::Geode* geode = node->asGeode();
@@ -2135,7 +2135,7 @@ void SphericalNodeInterface::setStyle_(const osgEarth::Style& style)
 
   // Find the internal node
   osg::Group* group = localNode_->getPositionAttitudeTransform();
-  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : NULL;
+  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : nullptr;
   if (!node)
     return;
 
@@ -2205,7 +2205,7 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
 
   // Set the color on the cone body
   osg::Group* group = localNode_->getPositionAttitudeTransform();
-  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : NULL;
+  osg::Node* node = group->getNumChildren() > 0 ? group->getChild(0) : nullptr;
   if (!node)
     return;
   osg::Geometry* geometry = node->asGeometry();
@@ -2218,7 +2218,7 @@ void ConeNodeInterface::setFillColor(const osg::Vec4f& color)
   geometry->setColorArray(colorArray);
 
   // Set the color on the cone cap
-  osg::Node* capNode = group->getNumChildren() > 1 ? group->getChild(1) : NULL;
+  osg::Node* capNode = group->getNumChildren() > 1 ? group->getChild(1) : nullptr;
   if (!capNode)
     return;
   osg::Geometry* capGeometry = capNode->asGeometry();

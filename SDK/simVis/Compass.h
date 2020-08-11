@@ -49,7 +49,7 @@ public:
   virtual ~CompassFocusManagerAdapter();
 
   /**
-  * Tell our compass to focus this view, which may be NULL
+  * Tell our compass to focus this view, which may be nullptr
   * @param focusedView Swap the compass to report values from this view (make it active)
   */
   void focusView(simVis::View* focusedView);
@@ -197,7 +197,7 @@ public:
    * Display the Compass node as an overlay in the specified view
    * @param drawView View on which the compass is drawn (in lower right corner).  May
    *   be different than the active view, which feeds the heading values for compass.
-   *   Passing in NULL is equivalent to calling removeFromView().
+   *   Passing in nullptr is equivalent to calling removeFromView().
    */
   void setDrawView(simVis::View* drawView);
 
@@ -207,7 +207,7 @@ public:
    */
   void removeFromView();
 
-  /** Retrieves the current draw view (may be NULL) */
+  /** Retrieves the current draw view (may be nullptr) */
   simVis::View* drawView() const;
 
   /// Override traverse() to adjust the active view in some cases

@@ -129,7 +129,7 @@ public: // EntityNode interface
 
   /**
   * Update this based on the slice from the data store.
-  * @param updateSlice  Data store update slice (could be NULL)
+  * @param updateSlice  Data store update slice (could be nullptr)
   * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
   * @return true if update applied, false if not
   */

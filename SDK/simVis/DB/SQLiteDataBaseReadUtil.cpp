@@ -35,7 +35,7 @@ namespace
   template <class SomeClass>
   void unpackArray(SomeClass* givenArray, const uint8_t* givenBuffer, const uint32_t& numElements)
   {
-    if ((givenArray == NULL) || (givenBuffer == NULL))
+    if ((givenArray == nullptr) || (givenBuffer == nullptr))
       return;
 
     size_t i;
@@ -137,11 +137,11 @@ QsErrorType SQLiteDataBaseReadUtil::openDatabaseFile(const std::string& dbFileNa
   sqlite3** sqlite3Db,
   const int& flags) const
 {
-  if (dbFileName.empty() || (sqlite3Db == NULL))
+  if (dbFileName.empty() || (sqlite3Db == nullptr))
     return QS_IS_UNABLE_TO_OPEN_DB;
 
   // Attempts to open the database file
-  int errorCode = sqlite3_open_v2(dbFileName.c_str(), sqlite3Db, flags, NULL);
+  int errorCode = sqlite3_open_v2(dbFileName.c_str(), sqlite3Db, flags, nullptr);
   if ((*sqlite3Db == 0) || (errorCode != SQLITE_OK))
   {
     if ((errorCode == SQLITE_BUSY) ||
@@ -150,7 +150,7 @@ QsErrorType SQLiteDataBaseReadUtil::openDatabaseFile(const std::string& dbFileNa
     std::cerr << "openDatabaseFile sqlite3_open_v2 Error: " << dbFileName << "\n" << printExtendedErrorMessage(*sqlite3Db);
     return QS_IS_UNABLE_TO_OPEN_DB;
   }
-  if (sqlite3_exec(*sqlite3Db, "PRAGMA CACHE_SIZE=100;", NULL, NULL, NULL) != SQLITE_OK)
+  if (sqlite3_exec(*sqlite3Db, "PRAGMA CACHE_SIZE=100;", nullptr, nullptr, nullptr) != SQLITE_OK)
   {
     std::cerr << "Unable to set SQLite cache size " << dbFileName << "\n";
     std::cerr << printExtendedErrorMessage(*sqlite3Db);
@@ -173,7 +173,7 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
 {
   int returnValue;
 
-  if ((buffer == NULL) || (bufferSize == NULL) || (currentRasterSize == NULL))
+  if ((buffer == nullptr) || (bufferSize == nullptr) || (currentRasterSize == nullptr))
     return QS_IS_UNEXPECTED_NULL;
 
   *currentRasterSize = 0;
@@ -183,7 +183,7 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
 
   // opens the database
   bool localDb = false;
-  if (sqlite3Db == NULL)
+  if (sqlite3Db == nullptr)
   {
     if (allowLocalDB == false)
       return QS_IS_DB_NOT_INITIALIZED;
@@ -200,14 +200,14 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
 
   // prepares the statement
   sqlite3_stmt* stmt = 0;
-  returnValue = sqlite3_prepare_v2(sqlite3Db, sqlCommand.c_str(), static_cast<int>(sqlCommand.length()), &stmt, NULL);
+  returnValue = sqlite3_prepare_v2(sqlite3Db, sqlCommand.c_str(), static_cast<int>(sqlCommand.length()), &stmt, nullptr);
   if (returnValue != SQLITE_OK)
   {
     if (displayErrorMessage && (returnValue != SQLITE_BUSY && returnValue != SQLITE_LOCKED))
     {
       std::cerr << "readDataBuffer sqlite3_prepare_v2 Error(" << returnValue << "): " << dbFileName << "\n" << printExtendedErrorMessage(sqlite3Db);
     }
-    if (stmt != NULL) sqlite3_finalize(stmt);
+    if (stmt != nullptr) sqlite3_finalize(stmt);
     if (localDb) sqlite3_close(sqlite3Db);
     if ((returnValue == SQLITE_BUSY) ||
       (returnValue == SQLITE_LOCKED))
@@ -237,7 +237,7 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
     {
       if (*currentRasterSize > (*bufferSize))
       {
-        if ((*buffer) != NULL)
+        if ((*buffer) != nullptr)
           delete[] * buffer;
         *buffer = new uint8_t[*currentRasterSize];
         *bufferSize = (*currentRasterSize);
@@ -260,7 +260,7 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
     otherReturnValue = QS_IS_UNABLE_TO_READ_DATA_BUFFER;
   }
 
-  if (stmt != NULL) sqlite3_finalize(stmt);
+  if (stmt != nullptr) sqlite3_finalize(stmt);
   if (localDb)
   {
     returnValue = sqlite3_close(sqlite3Db);
@@ -286,7 +286,7 @@ QsErrorType SQLiteDataBaseReadUtil::getSetFromListOfSetsTable(sqlite3* sqlite3Db
   bool& timeSpecified,
   simCore::TimeStamp& timeStamp) const
 {
-  if (sqlite3Db == NULL)
+  if (sqlite3Db == nullptr)
     return QS_IS_DB_NOT_INITIALIZED;
   if (tableName.empty())
     return QS_IS_EMPTY_TABLE_NAME;
@@ -296,11 +296,11 @@ QsErrorType SQLiteDataBaseReadUtil::getSetFromListOfSetsTable(sqlite3* sqlite3Db
 
   // prepares the statement
   sqlite3_stmt* stmt = 0;
-  returnValue = sqlite3_prepare_v2(sqlite3Db, textureSetSelectCommand_.c_str(), static_cast<int>(textureSetSelectCommand_.length()), &stmt, NULL);
+  returnValue = sqlite3_prepare_v2(sqlite3Db, textureSetSelectCommand_.c_str(), static_cast<int>(textureSetSelectCommand_.length()), &stmt, nullptr);
   if (returnValue != SQLITE_OK)
   {
     std::cerr << "getSetFromListOfSetsTable sqlite3_prepare_v2 Error(" << returnValue << ")\n" << printExtendedErrorMessage(sqlite3Db);
-    if (stmt != NULL) sqlite3_finalize(stmt);
+    if (stmt != nullptr) sqlite3_finalize(stmt);
     return QS_IS_PREPARE_ERROR;
   }
 
@@ -356,7 +356,7 @@ QsErrorType SQLiteDataBaseReadUtil::getSetFromListOfSetsTable(sqlite3* sqlite3Db
     otherReturnValue = QS_IS_TS_NOT_FOUND;
   }
 
-  if (stmt != NULL) sqlite3_finalize(stmt);
+  if (stmt != nullptr) sqlite3_finalize(stmt);
   return otherReturnValue;
 }
 

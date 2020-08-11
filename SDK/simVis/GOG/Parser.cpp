@@ -180,12 +180,12 @@ GogNodeInterface* Parser::createGOG(const std::vector<std::string>& lines, const
 
   std::istringstream input(buf.str());
 
-  GogNodeInterface* result = NULL;
+  GogNodeInterface* result = nullptr;
   OverlayNodeVector output;
   std::vector<GogFollowData> followDataVec;
   if (createGOGs(input, nodeType, output, followDataVec))
   {
-    result = output.size() > 0 ? output.front() : NULL;
+    result = output.size() > 0 ? output.front() : nullptr;
   }
   if (!followDataVec.empty())
     followData = followDataVec.front();
@@ -1205,7 +1205,7 @@ bool Parser::loadGOGs(std::istream& input, const GOGNodeType& nodeType, OverlayN
 void Parser::printError_(size_t lineNumber, const std::string& errorText) const
 {
   // Assertion failure means Null Object pattern failed
-  assert(context_.errorHandler_ != NULL);
+  assert(context_.errorHandler_ != nullptr);
   if (context_.errorHandler_)
     context_.errorHandler_->printError(lineNumber, errorText);
 }

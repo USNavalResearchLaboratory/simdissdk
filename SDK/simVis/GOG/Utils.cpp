@@ -69,7 +69,7 @@ void Utils::applyLocalGeometryOffsets(LocalGeometryNode& node, ParserData& data,
   {
     // if this is a hosted node, it will need to set any offsets in the attitude transform's position, since it's position is ignored
     osg::PositionAttitudeTransform* trans = node.getPositionAttitudeTransform();
-    if (trans != NULL)
+    if (trans != nullptr)
       trans->setPosition(data.getLTPOffset());
     // hosted nodes don't set orientation offsets directly, they are instead applied through a Locator attached to the host
   }
