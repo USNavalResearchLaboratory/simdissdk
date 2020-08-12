@@ -67,9 +67,9 @@ public:
 
   /** Activates a single exclusive manipulator, deactivating all other mutually exclusive manipulators. */
   int activateExclusive(MouseManipulatorPtr manipulator);
-  /** Deactivates an exclusive manipulator.  If it was active, then the active exclusive manipulator is set to NULL. */
+  /** Deactivates an exclusive manipulator.  If it was active, then the active exclusive manipulator is set to nullptr. */
   int deactivateExclusive(MouseManipulatorPtr manipulator);
-  /** Retrieves the currently active exclusive manipulator; might be NULL */
+  /** Retrieves the currently active exclusive manipulator; might be nullptr */
   MouseManipulatorPtr activeExclusiveManipulator() const;
 
   /** Observable events on the Mouse Dispatcher */
@@ -77,7 +77,7 @@ public:
   {
   public:
     virtual ~Observer() {}
-    /** Manipulator has changed.  May be NULL. */
+    /** Manipulator has changed.  May be nullptr. */
     virtual void activeExclusiveManipulatorChanged(MouseManipulatorPtr active, MouseManipulatorPtr oldActive) = 0;
   };
 

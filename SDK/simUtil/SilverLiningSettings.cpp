@@ -224,8 +224,8 @@ unsigned long SLAlwaysRealTime::getMilliseconds() const
 unsigned long SLRegistryClockTime::getMilliseconds() const
 {
   const simCore::Clock* clock = simVis::Registry::instance()->getClock();
-  // Fall back to default dispaly if clock is NULL
-  if (clock == NULL)
+  // Fall back to default dispaly if clock is nullptr
+  if (clock == nullptr)
     return 0;
   // Avoid negative values
   const simCore::Seconds& elapsed = clock->currentTime() - clock->startTime();

@@ -147,7 +147,7 @@ private:
     /** Retrieves the (immutable) name */
     std::string name() const;
 
-    /** Sets the reposition callback for the window.  May be NULL. */
+    /** Sets the reposition callback for the window.  May be nullptr. */
     void setRepositionCallback(HudPositionManager::RepositionCallback* callback);
     /** Retrieves the current reposition callback */
     HudPositionManager::RepositionCallback* repositionCallback() const;

@@ -100,7 +100,7 @@ LineGraphic::~LineGraphic()
 void LineGraphic::set(const simUtil::Position* origin, const simUtil::Position* destination, const std::string& labelString)
 {
   // Update the positions
-  if (origin != NULL && destination != NULL && origin->isValid() && destination->isValid())
+  if (origin != nullptr && destination != nullptr && origin->isValid() && destination->isValid())
   {
     set(origin->lla(), destination->lla(), labelString);
   }
@@ -287,7 +287,7 @@ EntityNodePosition::~EntityNodePosition()
 
 bool EntityNodePosition::isValid() const
 {
-  if (node_ == NULL)
+  if (node_ == nullptr)
     return false;
 
   return node_->getNodeMask() != 0;
@@ -295,7 +295,7 @@ bool EntityNodePosition::isValid() const
 
 const simCore::Vec3& EntityNodePosition::lla() const
 {
-  if (node_ != NULL)
+  if (node_ != nullptr)
     node_->getPosition(&lla_, simCore::COORD_SYS_LLA);
 
   return lla_;
@@ -303,7 +303,7 @@ const simCore::Vec3& EntityNodePosition::lla() const
 
 simData::ObjectId EntityNodePosition::id() const
 {
-  if (node_ == NULL)
+  if (node_ == nullptr)
     return 0;
 
   return node_->getId();
@@ -311,7 +311,7 @@ simData::ObjectId EntityNodePosition::id() const
 
 std::string EntityNodePosition::entityName() const
 {
-  if (node_ == NULL)
+  if (node_ == nullptr)
     return "";
 
   return node_->getEntityName(simVis::EntityNode::DISPLAY_NAME);
@@ -320,7 +320,7 @@ std::string EntityNodePosition::entityName() const
 bool EntityNodePosition::operator==(const Position& other) const
 {
   const EntityNodePosition* pp = dynamic_cast<const EntityNodePosition*>(&other);
-  return (pp != NULL && (pp->id() == this->id()));
+  return (pp != nullptr && (pp->id() == this->id()));
 }
 
 bool EntityNodePosition::operator!=(const Position& other) const

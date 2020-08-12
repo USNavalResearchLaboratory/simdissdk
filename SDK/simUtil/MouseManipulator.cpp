@@ -36,49 +36,49 @@ MouseManipulatorAdapter::~MouseManipulatorAdapter()
 
 int MouseManipulatorAdapter::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (handler_ == NULL)
+  if (handler_ == nullptr)
     return 0;
   return handler_->handle(ea, aa);
 }
 
 int MouseManipulatorAdapter::release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (handler_ == NULL)
+  if (handler_ == nullptr)
     return 0;
   return handler_->handle(ea, aa);
 }
 
 int MouseManipulatorAdapter::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (handler_ == NULL)
+  if (handler_ == nullptr)
     return 0;
   return handler_->handle(ea, aa);
 }
 
 int MouseManipulatorAdapter::drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (handler_ == NULL)
+  if (handler_ == nullptr)
     return 0;
   return handler_->handle(ea, aa);
 }
 
 int MouseManipulatorAdapter::doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (handler_ == NULL)
+  if (handler_ == nullptr)
     return 0;
   return handler_->handle(ea, aa);
 }
 
 int MouseManipulatorAdapter::scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (handler_ == NULL)
+  if (handler_ == nullptr)
     return 0;
   return handler_->handle(ea, aa);
 }
 
 int MouseManipulatorAdapter::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (handler_ == NULL)
+  if (handler_ == nullptr)
     return 0;
   return handler_->handle(ea, aa);
 }
@@ -116,49 +116,49 @@ MouseManipulatorProxy::MouseManipulatorProxy(const MouseManipulatorPtr& realMani
 
 int MouseManipulatorProxy::push(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (manipulator_ == NULL)
+  if (manipulator_ == nullptr)
     return 0;
   return manipulator_->push(ea, aa);
 }
 
 int MouseManipulatorProxy::release(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (manipulator_ == NULL)
+  if (manipulator_ == nullptr)
     return 0;
   return manipulator_->release(ea, aa);
 }
 
 int MouseManipulatorProxy::move(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (manipulator_ == NULL)
+  if (manipulator_ == nullptr)
     return 0;
   return manipulator_->move(ea, aa);
 }
 
 int MouseManipulatorProxy::drag(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (manipulator_ == NULL)
+  if (manipulator_ == nullptr)
     return 0;
   return manipulator_->drag(ea, aa);
 }
 
 int MouseManipulatorProxy::doubleClick(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (manipulator_ == NULL)
+  if (manipulator_ == nullptr)
     return 0;
   return manipulator_->doubleClick(ea, aa);
 }
 
 int MouseManipulatorProxy::scroll(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (manipulator_ == NULL)
+  if (manipulator_ == nullptr)
     return 0;
   return manipulator_->scroll(ea, aa);
 }
 
 int MouseManipulatorProxy::frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-  if (manipulator_ == NULL)
+  if (manipulator_ == nullptr)
     return 0;
   return manipulator_->frame(ea, aa);
 }

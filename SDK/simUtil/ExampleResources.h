@@ -143,7 +143,7 @@ namespace simExamples
   {
   public:
     /** Constructor */
-    SkyNodeTimeUpdater(simVis::SceneManager* mgr=NULL);
+    SkyNodeTimeUpdater(simVis::SceneManager* mgr=nullptr);
     /** Changes the scene manager */
     void setSceneManager(simVis::SceneManager* mgr);
     /** Update the scene manager's sky node with current clock time */

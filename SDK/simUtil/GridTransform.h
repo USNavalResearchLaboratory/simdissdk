@@ -245,9 +245,9 @@ public:
   int rowOfChild(const GridCell* item) const;
   /** Returns -1 if child not found */
   int columnOfChild(const GridCell* item) const;
-  /** Returns child at index, or NULL if none */
+  /** Returns child at index, or nullptr if none */
   const GridCell* childAt(int row, int column) const;
-  /** Returns child at index, or NULL if none */
+  /** Returns child at index, or nullptr if none */
   GridCell* childAt(int row, int column);
 
   /** Override to update layout */
