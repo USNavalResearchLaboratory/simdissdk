@@ -35,7 +35,7 @@ class SDKQT_EXPORT EntityTreeItem : public simQt::AbstractEntityTreeItem
 {
 public:
   /// constructor
-  EntityTreeItem(simData::ObjectId id, EntityTreeItem *parent=NULL);
+  EntityTreeItem(simData::ObjectId id, EntityTreeItem *parent=nullptr);
   virtual ~EntityTreeItem();
 
   virtual uint64_t id() const;

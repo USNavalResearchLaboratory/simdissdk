@@ -50,7 +50,7 @@ class SDKQT_EXPORT ColorGradientWidget : public QWidget
 
 public:
   /** Constructor */
-  explicit ColorGradientWidget(QWidget* parent = NULL);
+  explicit ColorGradientWidget(QWidget* parent = nullptr);
   virtual ~ColorGradientWidget();
 
   /**

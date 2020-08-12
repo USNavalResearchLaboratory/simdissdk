@@ -112,7 +112,7 @@ public:
 private:
   /** Helper method to add a row to the given parent */
   QList<QStandardItem*> appendRow_(QStandardItem& parent, const QString& column1, const QString& column2, const QString& column3) const;
-  /** Factory method for a QStandardItem that is not editable. If parent is non-NULL, add to parent. */
+  /** Factory method for a QStandardItem that is not editable. If parent is non-nullptr, add to parent. */
   QStandardItem* newStandardItem_(QStandardItem* parent, const QString& title) const;
   /** Finds or creates an item child with the given name, always adding to parent if not existing. */
   QStandardItem* getOrCreateStandardItem_(QStandardItem& parent, const QString& title) const;

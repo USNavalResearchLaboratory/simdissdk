@@ -47,7 +47,7 @@ public:
   /** Enumeration of different ways we can create/display a widget for this filter. */
   enum WidgetType
   {
-    /** widget() will return NULL, creating nothing when integrated into Qt. */
+    /** widget() will return nullptr, creating nothing when integrated into Qt. */
     NO_WIDGET,
     /** widget() will return a CategoryFilterWidget, the new style of category filtering. */
     SHOW_WIDGET
@@ -72,8 +72,8 @@ public:
   virtual bool acceptEntity(simData::ObjectId id) const;
 
   /**
-   * Inherited from EntityFilter, returns a new instance of the widget to be displayed, otherwise returns NULL
-   * @param newWidgetParent QWidget parent, useful for memory management purposes; may be NULL if desired
+   * Inherited from EntityFilter, returns a new instance of the widget to be displayed, otherwise returns nullptr
+   * @param newWidgetParent QWidget parent, useful for memory management purposes; may be nullptr if desired
    * @return QWidget used for changing filter settings
    */
   virtual QWidget* widget(QWidget* newWidgetParent) const;

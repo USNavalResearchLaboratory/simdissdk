@@ -60,7 +60,7 @@ public:
   /// Instantiates a new settings model from the provided parent
   SettingsModel(QObject* parent, QSettings& settings);
   /// Instantiates new settings model with no dedicated filename; save() is a noop and fileName() is empty.
-  explicit SettingsModel(QObject* parent = NULL);
+  explicit SettingsModel(QObject* parent = nullptr);
   virtual ~SettingsModel();
 
   // from  QAbstractItemModel
@@ -176,7 +176,7 @@ private:
   /// Implementation of Settings::Memento
   class MementoImpl;
 
-  /// Returns the node for the given string; returns NULL if name does not exist
+  /// Returns the node for the given string; returns nullptr if name does not exist
   TreeNode* getNode_(const QString& name) const;
   /// Fires off the given observer list for the given name and value
   void fireObservers_(const QList<ObserverPtr>& observers, const QString& name, const QVariant& value, ObserverPtr skipThisObserver = simQt::Settings::ObserverPtr());

@@ -38,7 +38,7 @@ class SDKQT_EXPORT ButtonActions : public QObject
   Q_OBJECT;
 public:
   /** Constructor */
-  ButtonActions(QWidget *parent = NULL);
+  ButtonActions(QWidget *parent = nullptr);
   virtual ~ButtonActions();
 
   /** Returns step decrease action */
@@ -110,7 +110,7 @@ class SDKQT_EXPORT TimeButtons : public QWidget
 
 public:
   /** Constructor */
-  TimeButtons(QWidget *parent = NULL);
+  TimeButtons(QWidget *parent = nullptr);
   virtual ~TimeButtons();
 
   /** Binds the button to the action */

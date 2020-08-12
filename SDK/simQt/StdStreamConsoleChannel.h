@@ -39,7 +39,7 @@ class SDKQT_EXPORT StdStreamConsoleChannel : public QObject
   Q_OBJECT;
 public:
   /** Constructor */
-  StdStreamConsoleChannel(QObject* parent = NULL);
+  StdStreamConsoleChannel(QObject* parent = nullptr);
   virtual ~StdStreamConsoleChannel();
 
   /** Binds the streams to the console data model provided */

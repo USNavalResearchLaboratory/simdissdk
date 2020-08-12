@@ -92,7 +92,7 @@ public:
   };
 
   /** Constructor */
-  ConsoleDataModel(QObject* parent=NULL);
+  ConsoleDataModel(QObject* parent=nullptr);
   virtual ~ConsoleDataModel();
 
   /** From QAbstractItemModel::data */

@@ -41,7 +41,7 @@ class SDKQT_EXPORT ActionItemModel : public QAbstractItemModel
   Q_OBJECT;
 public:
   /// constructor
-  explicit ActionItemModel(QObject* parent=NULL);
+  explicit ActionItemModel(QObject* parent=nullptr);
   virtual ~ActionItemModel();
 
   /// Changes the registry that is represented in the item model
@@ -106,7 +106,7 @@ class SDKQT_EXPORT KeySequenceEdit : public QLineEdit
   Q_OBJECT;
 public:
   /// constructor
-  explicit KeySequenceEdit(QWidget* parent=NULL);
+  explicit KeySequenceEdit(QWidget* parent=nullptr);
   virtual ~KeySequenceEdit();
 
   ///@return most recent key set by this widget
@@ -154,7 +154,7 @@ class SDKQT_EXPORT ActionItemModelDelegate : public QStyledItemDelegate
   Q_OBJECT;
 public:
   /// constructor
-  explicit ActionItemModelDelegate(QObject* parent=NULL);
+  explicit ActionItemModelDelegate(QObject* parent=nullptr);
   virtual ~ActionItemModelDelegate();
 
   /// Override createEditor() to return our KeySequenceEdit

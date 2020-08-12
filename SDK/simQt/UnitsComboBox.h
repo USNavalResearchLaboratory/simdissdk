@@ -137,7 +137,7 @@ class SDKQT_EXPORT UnitsSelectorComboBox : public QComboBox
   Q_PROPERTY(simCore::Units units READ units WRITE setUnits)
 
 public:
-  explicit UnitsSelectorComboBox(QWidget* parent=NULL);
+  explicit UnitsSelectorComboBox(QWidget* parent=nullptr);
   virtual ~UnitsSelectorComboBox();
 
   /** Change the registry.  Call this before setting units.  Registry should outlive this class. */

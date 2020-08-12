@@ -99,7 +99,7 @@ public:
   explicit MapDataModel(QObject* parent=0);
   virtual ~MapDataModel();
 
-  /// Changes the underlying Map pointer (NULL is tolerated)
+  /// Changes the underlying Map pointer (nullptr is tolerated)
   void bindTo(osgEarth::Map* map);
   /// Retrieve the underlying map pointer
   osgEarth::Map* map() const;
@@ -132,7 +132,7 @@ public:
     CHILD_NONE
   };
 
-  /** data() returns the pointer to the layer, or NULL */
+  /** data() returns the pointer to the layer, or nullptr */
   static const int LAYER_POINTER_ROLE = Qt::UserRole + 0;
   /** data() returns the type of node: image, elevation, feature, or none for top level MAP selection */
   static const int LAYER_TYPE_ROLE = Qt::UserRole + 1;
@@ -195,7 +195,7 @@ private: // methods
   /** add a layer other than image, elevation, or feature */
   void addOtherLayer_(osgEarth::VisibleLayer* layer, unsigned int index);
 
-  /** return the Item for the given index (NULL if it can't be represented) */
+  /** return the Item for the given index (nullptr if it can't be represented) */
   Item* itemAt_(const QModelIndex &index) const;
 
   /** return the Item for the imagery group */

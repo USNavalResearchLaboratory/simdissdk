@@ -59,7 +59,7 @@ class SDKQT_EXPORT CenterEntity : public QObject
 
 public:
   /** Constructor for a generic parent */
-  CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent=NULL);
+  CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent=nullptr);
   virtual ~CenterEntity();
 
   /**
@@ -71,7 +71,7 @@ public:
   /**
    * Returns the view center-able node for the given id
    * @param id The entity to get a view center-able node
-   * @return A node that a view can be centered on; returns NULL on error.
+   * @return A node that a view can be centered on; returns nullptr on error.
    */
   simVis::EntityNode* getViewCenterableNode(uint64_t id) const;
 
@@ -100,7 +100,7 @@ class SDKQT_EXPORT BindCenterEntityToEntityTreeComposite : public QObject
   Q_OBJECT;
 
 public:
-  BindCenterEntityToEntityTreeComposite(CenterEntity& centerEntity, EntityTreeComposite& tree, simData::DataStore& dataStore, QObject* parent = NULL);
+  BindCenterEntityToEntityTreeComposite(CenterEntity& centerEntity, EntityTreeComposite& tree, simData::DataStore& dataStore, QObject* parent = nullptr);
   virtual ~BindCenterEntityToEntityTreeComposite();
 
   /**

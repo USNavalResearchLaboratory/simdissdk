@@ -58,7 +58,7 @@ public:
    * supply a clock instance to bind the slider.  Note that the memory
    * is managed by the parent/child relationship of this class to QSlider
    */
-  TimeSliderClockBinding(QSlider* parent, simCore::Clock* clock=NULL, DisabledMode disabledMode=HIDE_AND_DISABLE);
+  TimeSliderClockBinding(QSlider* parent, simCore::Clock* clock=nullptr, DisabledMode disabledMode=HIDE_AND_DISABLE);
   /** Automatically unbinds the clock as needed */
   virtual ~TimeSliderClockBinding();
 

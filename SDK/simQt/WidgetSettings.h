@@ -75,28 +75,28 @@ public:
   static void loadWidget(simQt::Settings& settings, QWidget* widget);
 
 private:
-  /// Saves splitter info at the specified path; returns 0 if splitter is non-NULL and 1 if someone else needs to process it
+  /// Saves splitter info at the specified path; returns 0 if splitter is non-nullptr and 1 if someone else needs to process it
   static int saveQSplitter_(simQt::Settings& settings, const QString& path, const QSplitter *splitter);
-  /// Saves tree view info at the specified path; returns 0 if view is non-NULL and 1 if someone else needs to process it
+  /// Saves tree view info at the specified path; returns 0 if view is non-nullptr and 1 if someone else needs to process it
   static int saveQTreeView_(simQt::Settings& settings, const QString& path, const QTreeView *view);
-  /// Saves column view info at the specified path; returns 0 if view is non-NULL and 1 if someone else needs to process it
+  /// Saves column view info at the specified path; returns 0 if view is non-nullptr and 1 if someone else needs to process it
   static int saveQColumnView_(simQt::Settings& settings, const QString& path, const QColumnView *view);
-  /// Saves table view info at the specified path; returns 0 if view is non-NULL and 1 if someone else needs to process it
+  /// Saves table view info at the specified path; returns 0 if view is non-nullptr and 1 if someone else needs to process it
   static int saveQTableView_(simQt::Settings& settings, const QString& path, const QTableView *view);
-  /// Saves dialog info at the specified path; returns 0 if dialog is non-NULL and 1 if someone else needs to process it
+  /// Saves dialog info at the specified path; returns 0 if dialog is non-nullptr and 1 if someone else needs to process it
   static int saveQDialog_(simQt::Settings& settings, const QString& path, const QDialog* dialog);
   /// Recursively searches object for savable widgets and stores the info starting at path
   static void saveWindowGeometry_(simQt::Settings& settings, const QString& path, const QObject *object);
 
-  /// Loads splitter info from the specified path; returns 0 if splitter is non-NULL and 1 if someone else needs to process it
+  /// Loads splitter info from the specified path; returns 0 if splitter is non-nullptr and 1 if someone else needs to process it
   static int loadQSplitter_(simQt::Settings& settings, const QString& path, QSplitter *splitter);
-  /// Loads tree view info from the specified path; returns 0 if view is non-NULL and 1 if someone else needs to process it
+  /// Loads tree view info from the specified path; returns 0 if view is non-nullptr and 1 if someone else needs to process it
   static int loadQTreeView_(simQt::Settings& settings, const QString& path, QTreeView *view);
-  /// Loads column view info from the specified path; returns 0 if view is non-NULL and 1 if someone else needs to process it
+  /// Loads column view info from the specified path; returns 0 if view is non-nullptr and 1 if someone else needs to process it
   static int loadQColumnView_(simQt::Settings& settings, const QString& path, QColumnView *view);
-  /// Loads table view info from the specified path; returns 0 if view is non-NULL and 1 if someone else needs to process it
+  /// Loads table view info from the specified path; returns 0 if view is non-nullptr and 1 if someone else needs to process it
   static int loadQTableView_(simQt::Settings& settings, const QString& path, QTableView *view);
-  /// Loads dialog info from the specified path; returns 0 if dialog is non-NULL and 1 if someone else needs to process it
+  /// Loads dialog info from the specified path; returns 0 if dialog is non-nullptr and 1 if someone else needs to process it
   static int loadQDialog_(simQt::Settings& settings, const QString& path, QDialog* dialog);
   /// Recursively searches object for loadable widgets and gets the info starting at path
   static void loadWindowGeometry_(simQt::Settings& settings, const QString& path, QObject *object);

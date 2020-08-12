@@ -46,7 +46,7 @@ class ToolTipUpdater : public QObject
 {
   Q_OBJECT
 public:
-  explicit ToolTipUpdater(QObject* parent = NULL);
+  explicit ToolTipUpdater(QObject* parent = nullptr);
 public slots:
   /** Add an action to the list of actions waiting to have their tool tip updated. */
   void addPending(simQt::Action* action);

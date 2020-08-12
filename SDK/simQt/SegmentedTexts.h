@@ -229,12 +229,12 @@ public:
   size_t getFirstCharacterLocation(const SegmentedText* inputPart) const;
   /** Calculates the next tab stop after the given Line Segment
   * @param[in] inputPart Given line segment
-  * @return The next tab stop after inputPart, can return NULL if walked off the end
+  * @return The next tab stop after inputPart, can return nullptr if walked off the end
   */
   SegmentedText* nextTabStop(const SegmentedText* inputPart) const;
   /** Calculates the previous tab stop after the given Line Segment
   * @param[in] inputPart Given line segment
-  * @return The previous tab stop after inputPart, can return NULL if walked off the front
+  * @return The previous tab stop after inputPart, can return nullptr if walked off the front
   */
   SegmentedText* previousTabStop(const SegmentedText* inputPart) const;
 

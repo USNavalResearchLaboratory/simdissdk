@@ -56,8 +56,8 @@ public:
   virtual bool acceptEntity(simData::ObjectId id) const;
 
   /**
-  * Inherited from EntityFilter, always returns NULL, as this class currently doesn't create a widget
-  * @param newWidgetParent QWidget parent, useful for memory management purposes; may be NULL if desired
+  * Inherited from EntityFilter, always returns nullptr, as this class currently doesn't create a widget
+  * @param newWidgetParent QWidget parent, useful for memory management purposes; may be nullptr if desired
   * @return QWidget used for changing filter settings
   */
   virtual QWidget* widget(QWidget* newWidgetParent) const;

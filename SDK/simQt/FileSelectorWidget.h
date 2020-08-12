@@ -67,7 +67,7 @@ class SDKQT_EXPORT FileSelectorWidget : public QWidget
 
 public:
   /** Constructor */
-  FileSelectorWidget(QWidget* parent=NULL);
+  FileSelectorWidget(QWidget* parent=nullptr);
   virtual ~FileSelectorWidget();
 
   /** Declare options for the file selector */

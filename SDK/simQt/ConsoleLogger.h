@@ -76,7 +76,7 @@ class SDKQT_EXPORT ConsoleLogger : public QObject
   Q_OBJECT;
 public:
   /** Constructor */
-  ConsoleLogger(const QString& filePrefix="SIMDIS_SDK", QObject* parent=NULL);
+  ConsoleLogger(const QString& filePrefix="SIMDIS_SDK", QObject* parent=nullptr);
   virtual ~ConsoleLogger();
 
   /**

@@ -50,7 +50,7 @@ class SDKQT_EXPORT FilterDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  explicit FilterDialog(QWidget* parent = NULL);
+  explicit FilterDialog(QWidget* parent = nullptr);
   virtual ~FilterDialog(){};
 
   /** Override the QDialog close event to emit the closedGui signal */
@@ -209,7 +209,7 @@ signals:
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
 
   /** Fired before showing the right mouse click menu to allow external code to add and remove actions. */
-  void rightClickMenuRequested(QMenu* menu=NULL);
+  void rightClickMenuRequested(QMenu* menu=nullptr);
 
   /** Fired when entityTreeComposite toggles between tree and list view */
   void treeViewChanged(bool useTreeView);

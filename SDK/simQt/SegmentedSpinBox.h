@@ -43,7 +43,7 @@ class SDKQT_EXPORT SegmentedSpinBox : public QSpinBox
 
 public:
   /// constructor
-  SegmentedSpinBox(QWidget* parent=NULL);
+  SegmentedSpinBox(QWidget* parent=nullptr);
   virtual ~SegmentedSpinBox();
 
   /// Get Time value

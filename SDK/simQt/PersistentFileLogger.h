@@ -65,7 +65,7 @@ class SDKQT_EXPORT PersistentFileLogger : public QObject
   Q_OBJECT;
 public:
   /** Constructor */
-  PersistentFileLogger(const QString& prefix, QObject* parent=NULL);
+  PersistentFileLogger(const QString& prefix, QObject* parent=nullptr);
   virtual ~PersistentFileLogger();
 
   /** Returns true if the file is open */

@@ -42,7 +42,7 @@ class SDKQT_EXPORT DataTableComboBox : public QWidget
 Q_OBJECT;
 public:
   /** Constructor */
-  explicit DataTableComboBox(QWidget* parent = NULL);
+  explicit DataTableComboBox(QWidget* parent = nullptr);
 
   /** Destructor */
   virtual ~DataTableComboBox();
@@ -67,7 +67,7 @@ public:
 
 signals:
   /**
-  * Emitted when a new table is selected.  Will pass NULL if combo box becomes empty
+  * Emitted when a new table is selected.  Will pass nullptr if combo box becomes empty
   * @param table  current selected table
   */
   void dataTableSelected(simData::DataTable* table);

@@ -36,7 +36,7 @@ class SDKQT_EXPORT SettingsColorItemDelegate : public QStyledItemDelegate
   Q_OBJECT;
 public:
   /** Constructor */
-  SettingsColorItemDelegate(QObject* parent = NULL);
+  SettingsColorItemDelegate(QObject* parent = nullptr);
 
   /** Paints a box with the color against a black and a white background. */
   virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -70,7 +70,7 @@ class SDKQT_EXPORT SettingsDirectorySelectorDelegate : public QStyledItemDelegat
   Q_OBJECT;
 public:
   /** Constructor */
-  SettingsDirectorySelectorDelegate(QObject* parent = NULL);
+  SettingsDirectorySelectorDelegate(QObject* parent = nullptr);
   virtual ~SettingsDirectorySelectorDelegate();
 
   /** Creates a color editor window */
@@ -92,7 +92,7 @@ class SDKQT_EXPORT SettingsIntegerSpinBoxDelegate : public QStyledItemDelegate
 {
 public:
   /** Constructor */
-  SettingsIntegerSpinBoxDelegate(QObject* parent = NULL);
+  SettingsIntegerSpinBoxDelegate(QObject* parent = nullptr);
 
   /** Creates an integer spin box editor window */
   virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -107,7 +107,7 @@ class SDKQT_EXPORT SettingsDoubleSpinBoxDelegate : public QStyledItemDelegate
 {
  public:
    /** Constructor */
-  SettingsDoubleSpinBoxDelegate(QObject* parent = NULL);
+  SettingsDoubleSpinBoxDelegate(QObject* parent = nullptr);
 
   /** Creates a double spin box editor window */
   virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -123,7 +123,7 @@ class SDKQT_EXPORT SettingsFileSelectorDelegate : public QStyledItemDelegate
   Q_OBJECT;
  public:
    /** Constructor */
-  SettingsFileSelectorDelegate(QObject* parent = NULL);
+  SettingsFileSelectorDelegate(QObject* parent = nullptr);
   virtual ~SettingsFileSelectorDelegate();
 
   /** Creates a file selector editor window */
@@ -146,7 +146,7 @@ class SDKQT_EXPORT SettingsEnumerationDelegate : public QStyledItemDelegate
   Q_OBJECT;
  public:
    /** Constructor */
-  SettingsEnumerationDelegate(QObject* parent = NULL);
+  SettingsEnumerationDelegate(QObject* parent = nullptr);
 
   /** Creates a file selector editor window */
   virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -166,7 +166,7 @@ class SDKQT_EXPORT SettingsFontSelectorDelegate : public QStyledItemDelegate
   Q_OBJECT;
  public:
    /** Constructor */
-  SettingsFontSelectorDelegate(QObject* parent = NULL);
+  SettingsFontSelectorDelegate(QObject* parent = nullptr);
   virtual ~SettingsFontSelectorDelegate();
 
   /** Creates a file selector editor window */
@@ -188,7 +188,7 @@ class SDKQT_EXPORT SettingsHexEditDelegate : public QStyledItemDelegate
 {
 public:
   /** Constructor */
-  SettingsHexEditDelegate(QObject* parent = NULL);
+  SettingsHexEditDelegate(QObject* parent = nullptr);
 
   /** Creates an hex formatted line edit editor window */
   virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -207,7 +207,7 @@ private:
 class SettingsHexEditValidator : public QValidator
 {
 public:
-  SettingsHexEditValidator(unsigned int min, unsigned int max, QObject* parent=NULL);
+  SettingsHexEditValidator(unsigned int min, unsigned int max, QObject* parent=nullptr);
   virtual ~SettingsHexEditValidator();
   virtual void fixup(QString& input) const;
   virtual QValidator::State validate(QString& input, int& pos) const;
@@ -221,7 +221,7 @@ class SDKQT_EXPORT SettingsItemDelegate : public QStyledItemDelegate
 {
 public:
   /** Constructor */
-  SettingsItemDelegate(QObject* parent = NULL);
+  SettingsItemDelegate(QObject* parent = nullptr);
   virtual ~SettingsItemDelegate();
 
   /** Overrides QStyledItemDelegate::paint() to delegate to proper data type delegate. */
@@ -239,7 +239,7 @@ public:
   virtual bool eventFilter(QObject *object, QEvent *event);
 
 private:
-  /** Returns the appropriate delegate, or NULL if none */
+  /** Returns the appropriate delegate, or nullptr if none */
   const QStyledItemDelegate* findDelegate_(const QModelIndex& index) const;
 
   /** Delegate for COLOR values */
