@@ -245,12 +245,7 @@ int testBuildString()
   rv += SDK_ASSERT("0123456789.1" == simCore::buildString("", 123456789.123456789, 12, 1, "", true));
 
   // rounding
-#ifdef WIN32
-  rv += SDK_ASSERT("1" == simCore::buildString("", 0.5, 1, 0));
-#else
-  rv += SDK_ASSERT("0" == simCore::buildString("", 0.5, 1, 0));
-  rv += SDK_ASSERT("1" == simCore::buildString("", 0.5 + std::numeric_limits<double>::epsilon(), 1, 0));
-#endif
+  rv += SDK_ASSERT("2" == simCore::buildString("", 1.5, 1, 0));
   rv += SDK_ASSERT("0" == simCore::buildString("", 0.5 - std::numeric_limits<double>::epsilon(), 1, 0));
   rv += SDK_ASSERT("1.0" == simCore::buildString("", 0.99, 1, 1));
 

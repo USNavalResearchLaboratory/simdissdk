@@ -408,8 +408,8 @@ int testDoubles(const simCore::TextFormatter* fmt, simCore::UnitContextAdapter* 
   int rv = 0;
   rv += SDK_ASSERT(fmt->formatDouble(0.0) == "0");
   rv += SDK_ASSERT(fmt->formatDouble(-0.4) == "0");
-  rv += SDK_ASSERT(fmt->formatDouble(-0.50000001) == "-1");
-  rv += SDK_ASSERT(fmt->formatDouble(0.50000001) == "1");
+  rv += SDK_ASSERT(fmt->formatDouble(-1.50000001) == "-2");
+  rv += SDK_ASSERT(fmt->formatDouble(1.50000001) == "2");
   rv += SDK_ASSERT(fmt->formatDouble(1234567890123.05) == "1234567890123");
   units->setGenericPrecision(2);
   rv += SDK_ASSERT(fmt->formatDouble(0.001) == "0.00");
