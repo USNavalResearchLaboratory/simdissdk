@@ -526,8 +526,9 @@ public:
 
   virtual void leaveEvent(QEvent* event) override
   {
-    // We should not get this event type while dragging
-    assert(dragIndex_ == QModelIndex());
+    // Don't worry about dragIndex_. Leaving while dragging will not trigger this,
+    // but it will be triggered when a doubleClick spawns the dialog.
+    // Fortunately, mouseDoubleClickEvent() will clear the indices when it's finished
     pickIndex_ = QModelIndex();
     update();
   }
