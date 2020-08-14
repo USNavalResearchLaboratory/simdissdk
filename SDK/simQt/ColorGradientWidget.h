@@ -107,6 +107,7 @@ private:
   QSortFilterProxyModel* proxyModel_;
 
   class GradientDisplayWidget;
+  GradientDisplayWidget* display_;
 
   bool showTable_;
   bool showAlpha_;

@@ -412,7 +412,9 @@ public:
   explicit GradientDisplayWidget(ColorGradientModel& model, QWidget* parent = NULL)
     : QWidget(parent),
     model_(model),
-    dragIndex_(QModelIndex())
+    showAlpha_(true),
+    dragIndex_(QModelIndex()),
+    pickIndex_(QModelIndex())
   {
     setMinimumHeight(HANDLE_SIZE_PX + HANDLE_THICKNESS_PX + OUTLINE_THICKNESS_PX);
     // Enable mouse tracking so we get move events with no buttons pressed
@@ -421,6 +423,11 @@ public:
     connect(&model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(update()));
     connect(&model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(update()));
     connect(&model_, SIGNAL(modelReset()), this, SLOT(update()));
+  }
+
+  void setShowAlpha(bool showAlpha)
+  {
+    showAlpha_ = showAlpha;
   }
 
   virtual void paintEvent(QPaintEvent* event) override
@@ -481,6 +488,12 @@ public:
   virtual void mouseReleaseEvent(QMouseEvent* evt) override
   {
     dragIndex_ = QModelIndex();
+    // If we start a drag inside, but release it outside, clear our pick
+    if (!underMouse())
+    {
+      pickIndex_ = QModelIndex();
+      update();
+    }
   }
 
   virtual void mouseMoveEvent(QMouseEvent* evt) override
@@ -509,6 +522,14 @@ public:
     QToolTip::showText(ttPos,
       tr("Value: ") + QString::number(static_cast<int>(newVal * 100.f), 'f', 0) + QString("%"),
       this);
+  }
+
+  virtual void leaveEvent(QEvent* event) override
+  {
+    // We should not get this event type while dragging
+    assert(dragIndex_ == QModelIndex());
+    pickIndex_ = QModelIndex();
+    update();
   }
 
   virtual void mouseDoubleClickEvent(QMouseEvent* evt) override
@@ -603,15 +624,15 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   // Sort by the edit role to avoid "string order"
   proxyModel_->setSortRole(Qt::EditRole);
 
-  auto display = new GradientDisplayWidget(*model_);
+  display_ = new GradientDisplayWidget(*model_);
   QSizePolicy policy;
   policy.setHorizontalPolicy(QSizePolicy::Expanding);
   policy.setVerticalPolicy(QSizePolicy::Expanding);
   policy.setHorizontalStretch(10); // Arbitrary number larger than defaults of other items
-  display->setSizePolicy(policy);
-  display->setToolTip(simQt::formatTooltip(tr("Color Gradient"), GRAD_WIDGET_TOOLTIP));
+  display_->setSizePolicy(policy);
+  display_->setToolTip(simQt::formatTooltip(tr("Color Gradient"), GRAD_WIDGET_TOOLTIP));
 
-  ui_->gridLayout->addWidget(display, 0, 1);
+  ui_->gridLayout->addWidget(display_, 0, 1);
 
   ui_->helpButton->setVisible(showHelp_);
   connect(ui_->helpButton, SIGNAL(clicked(bool)), this, SLOT(showHelpDialog_()));
@@ -628,6 +649,7 @@ ColorGradientWidget::ColorGradientWidget(QWidget* parent)
 
 ColorGradientWidget::~ColorGradientWidget()
 {
+  // unique_ptr and Qt parenting take care of memory
 }
 
 void ColorGradientWidget::setColorGradient(const ColorGradient& gradient)
@@ -688,6 +710,9 @@ void ColorGradientWidget::setShowAlpha(bool show)
     treeView_->itemDelegateForColumn(ColorGradientModel::COL_COLOR)->deleteLater();
     treeView_->setItemDelegateForColumn(ColorGradientModel::COL_COLOR, new ColorWidgetDelegate(showAlpha_, this));
   }
+
+  assert(display_); // Dev Error: Should've created at instantiation
+  display_->setShowAlpha(showAlpha_);
 }
 
 void ColorGradientWidget::setShowHelp(bool show)
