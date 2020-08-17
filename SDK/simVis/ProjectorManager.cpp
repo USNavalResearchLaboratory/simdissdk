@@ -72,9 +72,12 @@ public:
 
   void operator()(osg::Node* node, osg::NodeVisitor* nv) const
   {
+    osg::ref_ptr<ProjectorNode> proj;
+    if (!proj_.lock(proj) || !proj.valid())
+      return;
     osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
     osg::ref_ptr<osg::StateSet> ss = new osg::StateSet();
-    osg::Matrixf projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj_->getTexGenMatrix();
+    const osg::Matrixf& projMat = cv->getCurrentCamera()->getInverseViewMatrix() * proj->getTexGenMatrix();
     ss->addUniform(new osg::Uniform("simProjTexGenMat", projMat));
     cv->pushStateSet(ss.get());
     traverse(node, nv);
@@ -82,7 +85,7 @@ public:
   }
 
 private:
-  osg::ref_ptr<ProjectorNode> proj_;
+  osg::observer_ptr<ProjectorNode> proj_;
 };
 
 //-------------------------------------------------------------------------
