@@ -66,7 +66,7 @@ public:
   virtual MagneticVariance magneticVariance() const = 0;
   virtual VerticalDatum verticalDatum() const = 0;
   virtual int referenceYear() const = 0;
-  /** Note that return value may be NULL */
+  /** Note that return value may be nullptr */
   virtual simCore::DatumConvertPtr datumConvert() const = 0;
   ///@}
 

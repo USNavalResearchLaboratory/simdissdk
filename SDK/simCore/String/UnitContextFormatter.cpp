@@ -36,7 +36,7 @@ namespace simCore {
 UnitContextFormatter::UnitContextFormatter(const UnitContext* unitsProvider)
   : unitsProvider_(unitsProvider)
 {
-  // If units provider is NULL, nothing in this class works
+  // If units provider is nullptr, nothing in this class works
   assert(unitsProvider_);
 }
 
@@ -84,7 +84,7 @@ std::string UnitContextFormatter::formatAngle(double val, AngleExtents angleForm
 
 double UnitContextFormatter::rawAzimuth(const Vec3& lla, const simCore::TimeStamp& timeStamp, double az, CoordinateSystem coordSystem, double offset) const
 {
-  if (unitsProvider_->datumConvert() != NULL)
+  if (unitsProvider_->datumConvert() != nullptr)
     return unitsProvider_->datumConvert()->convertMagneticDatum(lla, timeStamp, az, coordSystem, MAGVAR_TRUE, unitsProvider_->magneticVariance(), offset);
   return az;
 }
@@ -109,7 +109,7 @@ std::string UnitContextFormatter::formatAltitude(double alt) const
 
 double UnitContextFormatter::rawAltitude(const Vec3& lla, const TimeStamp& timeStamp, CoordinateSystem coordSystem, double offset, VerticalDatum outputDatum) const
 {
-  if (unitsProvider_->datumConvert() != NULL)
+  if (unitsProvider_->datumConvert() != nullptr)
     return unitsProvider_->datumConvert()->convertVerticalDatum(lla, timeStamp, coordSystem, VERTDATUM_WGS84, outputDatum, offset);
   return lla.alt();
 }

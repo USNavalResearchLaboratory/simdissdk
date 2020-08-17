@@ -1082,7 +1082,7 @@ void VisualizationClock::registerModeChangeCallback(Clock::ModeChangeObserverPtr
 {
   ClockWithObservers::registerModeChangeCallback(p);
   auto replayPtr = std::dynamic_pointer_cast<VisualizationClockObserver>(p);
-  if (replayPtr != NULL)
+  if (replayPtr != nullptr)
   {
     auto i = std::find(visClockObservers_.begin(), visClockObservers_.end(), p);
     if (i == visClockObservers_.end())
@@ -1094,7 +1094,7 @@ void VisualizationClock::removeModeChangeCallback(Clock::ModeChangeObserverPtr p
 {
   ClockWithObservers::removeModeChangeCallback(p);
   auto replayPtr = std::dynamic_pointer_cast<VisualizationClockObserver>(p);
-  if (replayPtr != NULL)
+  if (replayPtr != nullptr)
   {
     auto i = std::find(visClockObservers_.begin(), visClockObservers_.end(), replayPtr);
     if (i != visClockObservers_.end())

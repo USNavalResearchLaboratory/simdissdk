@@ -323,7 +323,7 @@ void calculateDRCRDownValue(const Vec3 &fromLla, const double &yaw, const Vec3 &
   // get the true azimuth and elevation from "fromLla" to "toLla"
   double trueAzimuth = 0;
   double trueElevation = 0;
-  calculateAbsAzEl(fromLla, toLla, &trueAzimuth, &trueElevation, NULL, model, &cc);
+  calculateAbsAzEl(fromLla, toLla, &trueAzimuth, &trueElevation, nullptr, model, &cc);
 
   // get the down value
   if (downValue)
@@ -410,7 +410,7 @@ double calculateRangeRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const Vec
   }
 
   double bearing = 0;
-  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, &cc);
+  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, nullptr, nullptr, model, &cc);
   return v3Length(fromVel) * cos(fromOriLla[0] - bearing) - (v3Length(toVel) * cos(toOriLla[0] - bearing));
 }
 
@@ -430,7 +430,7 @@ double calculateBearingRate(const Vec3 &fromLla, const Vec3 &fromOriLla, const V
   }
 
   double bearing = 0;
-  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, NULL, NULL, model, &cc);
+  calculateRelAzEl(fromLla, fromOriLla, toLla, &bearing, nullptr, nullptr, model, &cc);
 
   const double range = calculateGroundDist(fromLla, toLla, model, &cc);
   const double tspd  = v3Length(toVel);
@@ -1558,7 +1558,7 @@ bool positionInGate(const simCore::Vec3& gateHostLLA, const simCore::Vec3& posit
   double rae[3];
 
   // gets the azimuth, elevation, and length from the host platform to the position of interest
-  simCore::calculateAbsAzEl(gateHostLLA, positionLLA, &rae[1], &rae[2], NULL, earthModel, &cc);
+  simCore::calculateAbsAzEl(gateHostLLA, positionLLA, &rae[1], &rae[2], nullptr, earthModel, &cc);
   rae[0] = simCore::calculateSlant(gateHostLLA, positionLLA, earthModel, &cc);
 
   const double halfW = widthRad / 2.0;

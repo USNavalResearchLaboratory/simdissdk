@@ -44,7 +44,7 @@ MagneticDatumConvert::MagneticDatumConvert()
 MagneticDatumConvert::~MagneticDatumConvert()
 {
   delete wmm_;
-  wmm_ = NULL;
+  wmm_ = nullptr;
 }
 
 double MagneticDatumConvert::convertMagneticDatum(const Vec3& lla, const TimeStamp& timeStamp, double bearingRad,

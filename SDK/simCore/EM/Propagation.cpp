@@ -237,9 +237,9 @@ void getFreqMhzRange(FrequencyBandUsEcm usEcm, double* minFreqMhz, double* maxFr
     break;
   }
 
-  if (minFreqMhz != NULL)
+  if (minFreqMhz != nullptr)
     *minFreqMhz = minFreq;
-  if (maxFreqMhz != NULL)
+  if (maxFreqMhz != nullptr)
     *maxFreqMhz = maxFreq;
 
   return;
@@ -367,9 +367,9 @@ void getFreqMhzRange(FrequencyBandIEEE ieeeEcm, double* minFreqMhz, double* maxF
     break;
   }
 
-  if (minFreqMhz != NULL)
+  if (minFreqMhz != nullptr)
     *minFreqMhz = minFreq;
-  if (maxFreqMhz != NULL)
+  if (maxFreqMhz != nullptr)
     *maxFreqMhz = maxFreq;
 
   return;

@@ -200,7 +200,7 @@ namespace simCore
    * Breaks up value into a mantissa (or significand) and exponent value, for base 10
    * values.  Returns mantissa such that mantissa * pow(10.0, exp) == value.
    * @param value Argument to represent in scientific notation.
-   * @param exp If non-NULL, will receive the exponent portion of the value.
+   * @param exp If not nullptr, will receive the exponent portion of the value.
    * @return Mantissa value.  Will be 0.0 for input of 0.0.  Otherwise, is a value with
    *   an absolute value between [+1.0, +10.0) with a sign set appropriately.  Negative
    *   input values result in a negative return value.

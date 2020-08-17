@@ -51,7 +51,7 @@ namespace simCore
     */
     explicit Vec3(const double v[3])
     {
-      if (v == NULL)
+      if (v == nullptr)
       {
         zero();
         return;
@@ -101,7 +101,7 @@ namespace simCore
     /// Copy contents to a double[3] pointer
     void toD3(double dVec[3]) const
     {
-      if (dVec == NULL) return;
+      if (dVec == nullptr) return;
       dVec[0] = v[0]; dVec[1] = v[1]; dVec[2] = v[2];
     }
 

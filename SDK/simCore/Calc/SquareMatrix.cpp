@@ -149,7 +149,7 @@ std::vector<double> SquareMatrix::column(unsigned int col) const
 const double* SquareMatrix::data() const
 {
   if (dimension_ < 2)
-    return NULL;
+    return nullptr;
 
   return matrix_.data();
 }

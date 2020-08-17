@@ -678,14 +678,14 @@ TimeFormatterRegistry::~TimeFormatterRegistry()
 
 void TimeFormatterRegistry::registerCustomFormatter(TimeFormatterPtr formatter)
 {
-  if (formatter != NULL)
+  if (formatter != nullptr)
     foreignFormatters_.push_back(formatter);
 }
 
 const TimeFormatter& TimeFormatterRegistry::formatter(simCore::TimeFormat format) const
 {
   std::map<int, TimeFormatterPtr>::const_iterator i = knownFormatters_.find(format);
-  if (i != knownFormatters_.end() && i->second != NULL)
+  if (i != knownFormatters_.end() && i->second != nullptr)
     return *i->second;
   return *nullFormatter_;
 }

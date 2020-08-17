@@ -41,7 +41,7 @@ int simCore::julianDay()
   time_t t(tp.tv_sec);
   pTime = gmtime(&t);
 
-  if (pTime == NULL)
+  if (pTime == nullptr)
     return std::numeric_limits<int>::max();
 
   // tm struct year days range from 0 to 365, Julian days are 1 to 366
