@@ -125,7 +125,7 @@ private:
       return;
     // Find the appropriate subtable for the column
     SubTable* subTable = owner_.subTableForId_(columnId);
-    if (subTable == NULL)
+    if (subTable == nullptr)
     {
       visitStatus_ = TableStatus::Error("Table column ID not found.");
       return;
@@ -205,7 +205,7 @@ TableColumn* Table::column(TableColumnId id) const
   std::map<TableColumnId, TableToColumn>::const_iterator i = columns_.find(id);
   if (i != columns_.end())
     return i->second.second;
-  return NULL;
+  return nullptr;
 }
 
 TableColumn* Table::column(const std::string& name) const
@@ -214,14 +214,14 @@ TableColumn* Table::column(const std::string& name) const
   if (i != columnsByName_.end())
     return i->second;
 
-  return NULL;
+  return nullptr;
 }
 
 SubTable* Table::subTableForId_(TableColumnId columnId) const
 {
   std::map<TableColumnId, TableToColumn>::const_iterator i = columns_.find(columnId);
   if (i == columns_.end())
-    return NULL;
+    return nullptr;
   return i->second.first;
 }
 
@@ -238,17 +238,17 @@ TableStatus Table::addColumn(const std::string& columnName, VariableType storage
   }
 
   // Find an empty subtable to add the new column
-  SubTable* emptyTable = NULL;
+  SubTable* emptyTable = nullptr;
   for (std::vector<SubTable*>::const_iterator i = subtables_.begin();
-    i != subtables_.end() && emptyTable == NULL; ++i)
+    i != subtables_.end() && emptyTable == nullptr; ++i)
   {
     if ((*i)->empty())
       emptyTable = *i;
   }
 
   // Create the subtable if we have to
-  TableColumn* returnColumn = NULL;
-  if (emptyTable == NULL)
+  TableColumn* returnColumn = nullptr;
+  if (emptyTable == nullptr)
   {
     // Create an empty table with a new time container
     emptyTable = new SubTable(new DoubleBufferTimeContainer(), tableId_);
@@ -272,12 +272,12 @@ TableStatus Table::addColumn(const std::string& columnName, VariableType storage
   }
 
   // At this point, we've used nextId_ and we have a valid column
-  assert(returnColumn != NULL);
+  assert(returnColumn != nullptr);
   // Save the column, and do any callbacks
   columns_[nextId_++] = std::make_pair(emptyTable, returnColumn);
   columnsByName_[columnName] = returnColumn;
   // Assertion failure means we somehow forgot to set newColumn return value
-  assert(newColumn == NULL || *newColumn == returnColumn);
+  assert(newColumn == nullptr || *newColumn == returnColumn);
   // notify observers of new column
   fireOnAddColumn_(*returnColumn);
   return TableStatus::Success();
@@ -292,7 +292,7 @@ TableStatus Table::removeColumn(const std::string& columnName)
   TableColumn* column = colByNameIter->second;
   if (!column)
   {
-    // Shouldn't be storing a NULL column
+    // Shouldn't be storing a nullptr column
     assert(0);
     return TableStatus::Error("Column \"" + columnName + "\" does not exist.");
   }
@@ -308,7 +308,7 @@ TableStatus Table::removeColumn(const std::string& columnName)
   auto subtable = columnsIter->second.first;
   if (!subtable)
   {
-    // Shouldn't be storing a NULL subtable pointer
+    // Shouldn't be storing a nullptr subtable pointer
     assert(0);
     return TableStatus::Error("Column \"" + columnName + "\" does not exist.");
   }
@@ -480,7 +480,7 @@ TableStatus Table::addRow(const TableRow& row)
   // Do data limiting when rows are added
   // TODO: This could feasibly be optimized across the data store with a parallel for-each
   //   that does data limiting at preset intervals
-  if (dataLimits_ != NULL)
+  if (dataLimits_ != nullptr)
   {
     size_t pointsLimit = 0;
     double secondsLimit = 0.0;

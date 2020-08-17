@@ -28,7 +28,7 @@ namespace
   template <typename T>
   bool compute(double time, const T &prev, const T &next, T *result)
   {
-    assert(result != NULL && prev.time() <= time && time <= next.time());
+    assert(result != nullptr && prev.time() <= time && time <= next.time());
 
     double midPoint = (next.time() + prev.time()) / 2.0;
     if (time < midPoint)

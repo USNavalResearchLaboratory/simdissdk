@@ -37,7 +37,7 @@ namespace MemorySliceHelper
 {
 template<typename T>
 SafeDequeIterator<T>::SafeDequeIterator()
-: deque_(NULL),
+: deque_(nullptr),
   val_(0)
 {
 }
@@ -52,7 +52,7 @@ SafeDequeIterator<T>::SafeDequeIterator(typename std::deque<T>* deque, typename 
 template<typename T>
 void SafeDequeIterator<T>::invalidate()
 {
-  if (deque_ != NULL)
+  if (deque_ != nullptr)
     val_ = static_cast<typename std::deque<T>::difference_type>(deque_->size());
   else
     val_ = 0;
@@ -61,7 +61,7 @@ void SafeDequeIterator<T>::invalidate()
 template<typename T>
 typename std::deque<T>::iterator SafeDequeIterator<T>::get() const
 {
-  if (deque_ == NULL)
+  if (deque_ == nullptr)
     return typename std::deque<T>::iterator();
 
   if (val_ > static_cast<typename std::deque<T>::difference_type>(deque_->size()))
@@ -145,7 +145,7 @@ template <class T>
 const T* const VectorIterator<T>::next()
 {
   if (!hasNext())
-    return NULL;
+    return nullptr;
 
   return (*vec_)[nextIndex_++];
 }
@@ -154,7 +154,7 @@ template <class T>
 const T* const VectorIterator<T>::peekNext() const
 {
   if (!hasNext())
-    return NULL;
+    return nullptr;
 
   return (*vec_)[nextIndex_];
 }
@@ -163,7 +163,7 @@ template <class T>
 const T* const VectorIterator<T>::previous()
 {
   if (!hasPrevious())
-    return NULL;
+    return nullptr;
 
   return (*vec_)[--nextIndex_];
 }
@@ -172,7 +172,7 @@ template <class T>
 const T* const VectorIterator<T>::peekPrevious() const
 {
   if (!hasPrevious())
-    return NULL;
+    return nullptr;
   return (*vec_)[(nextIndex_ - 1)];
 }
 
@@ -219,9 +219,9 @@ template<typename T>
 MemoryDataSlice<T>::MemoryDataSlice()
 : mdsHasChanged_(false),
   dirty_(false),
-  current_(NULL),
+  current_(nullptr),
   interpolated_(false),
-  bounds_(static_cast<T*>(NULL), static_cast<T*>(NULL)),
+  bounds_(static_cast<T*>(nullptr), static_cast<T*>(nullptr)),
   fastUpdate_(&updates_, updates_.end())
 {
 }
@@ -236,7 +236,7 @@ template<typename T>
 void MemoryDataSlice<T>::flush(bool keepStatic)
 {
   if (MemorySliceHelper::flush(updates_, keepStatic) == 0)
-    current_ = NULL;
+    current_ = nullptr;
   dirty_ = true;
 }
 
@@ -356,7 +356,7 @@ void MemoryDataSlice<T>::update(double time)
   clearChanged();
 
   // early out when there are no changes to this slice
-  if (!dirty_ && (current_ != NULL) && ((current_->time() == time) || (current_->time() == -1.0)))
+  if (!dirty_ && (current_ != nullptr) && ((current_->time() == time) || (current_->time() == -1.0)))
     return;
 
   dirty_ = false;
@@ -366,7 +366,7 @@ void MemoryDataSlice<T>::update(double time)
   if (fastUpdate_.get() != updates_.end())
     setCurrent(*fastUpdate_.get());
   else
-    setCurrent(NULL);
+    setCurrent(nullptr);
 }
 
 template<typename T>
@@ -376,7 +376,7 @@ void MemoryDataSlice<T>::update(double time, Interpolator *interpolator)
   clearChanged();
 
   // early out when there are no changes to this slice
-  if (!dirty_ && (current_ != NULL) && ((current_->time() == time) || (current_->time() == -1.0)))
+  if (!dirty_ && (current_ != nullptr) && ((current_->time() == time) || (current_->time() == -1.0)))
     return;
 
   // update is processing the changes to the slice, clear the flag
@@ -405,7 +405,7 @@ void MemoryDataSlice<T>::insert(T *data)
       {
         // NULL the current ptr, if we are replacing the update it aliases; current will become valid upon update
         if (current_ == *iter)
-          setCurrent(NULL);
+          setCurrent(nullptr);
 
         delete *iter;
         *iter = data;
@@ -520,7 +520,7 @@ const CommandType* MemoryCommandSlice<CommandType, PrefType>::current() const
   typename std::deque<CommandType*>::const_iterator i =
     std::upper_bound(updates_.begin(), updates_.end(), lastUpdateTime_, UpdateComp<CommandType>());
 
-  return (i != updates_.begin()) ? *(i-1) : NULL;
+  return (i != updates_.begin()) ? *(i-1) : nullptr;
 }
 
 template<class CommandType, class PrefType>
@@ -656,9 +656,9 @@ void MemoryCommandSlice<CommandType, PrefType>::update(DataStore *ds, ObjectId i
 
   // process all command updates in one prefs transaction
   DataStore::Transaction t;
-  PrefType* prefs = NULL;
+  PrefType* prefs = nullptr;
   simData::getPreference(ds, id, &prefs, &t);
-  if (prefs == NULL)
+  if (prefs == nullptr)
     return;
 
   const CommandType *lastCommand = current();

@@ -203,7 +203,7 @@ private:
   /// Initializes a subtable using the columns provided, with our time map (minus "withoutTimeStamp")
   SubTable(const TimeContainer& copyTimes, const std::vector<DataColumn*>& withColumns, double withoutTimeStamp, TableId tableId);
 
-  /// Finds a column based on ID, returning NULL if none
+  /// Finds a column based on ID, returning nullptr if none
   DataColumn* findColumn_(TableColumnId columnId) const;
   /// Removes but does not delete, used in splits to maintain null-less table
   TableStatus removeColumn_(TableColumnId columnId);

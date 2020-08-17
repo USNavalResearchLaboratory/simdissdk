@@ -428,8 +428,8 @@ bool MemoryGenericDataSlice::update(double time)
 void MemoryGenericDataSlice::insert(GenericData* data, bool ignoreDuplicates)
 {
   // Should always pass data in
-  assert(data != NULL);
-  if (data == NULL)
+  assert(data != nullptr);
+  if (data == nullptr)
     return;
 
   for (int k = 0; k < data->entry_size(); ++k)
@@ -486,7 +486,7 @@ bool MemoryGenericDataSlice::isDirty() const
 
 void MemoryGenericDataSlice::visit(Visitor *visitor) const
 {
-  if (visitor == NULL)
+  if (visitor == nullptr)
     return;
 
   if (genericData_.empty())
