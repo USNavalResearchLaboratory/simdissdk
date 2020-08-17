@@ -72,8 +72,8 @@ SplashScreen::~SplashScreen()
 void SplashScreen::addToWindowsTaskbar_()
 {
   // Note that as of Qt 4.8.2, setWindowFlags() MAY work to do this, but fails
-  // due to parent() being NULL; a call in setWindowFlags() accesses parent()
-  // directly without checking NULL, causing a crash.  So we must use Windows API
+  // due to parent() being nullptr; a call in setWindowFlags() accesses parent()
+  // directly without checking nullptr, causing a crash.  So we must use Windows API
 
 #ifdef WIN32
   // Pull out the HWND for the splash window

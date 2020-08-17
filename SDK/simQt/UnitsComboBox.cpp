@@ -246,30 +246,30 @@ void UnitsComboBox::addUnitsItem_(QComboBox& comboBox, const simCore::Units& uni
 
 UnitsSelectorComboBox::UnitsSelectorComboBox(QWidget* parent)
   : QComboBox(parent),
-    registry_(NULL),
+    registry_(nullptr),
     registryOwned_(true)
 {
-  setUnitsRegistry(NULL);
+  setUnitsRegistry(nullptr);
   connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(emitUnitsOnCurrentChange_(int)));
 }
 
 void UnitsSelectorComboBox::setUnitsRegistry(const simCore::UnitsRegistry* registry)
 {
-  if (registry != NULL && registry == registry_)
+  if (registry != nullptr && registry == registry_)
     return;
 
   if (registryOwned_)
     delete registry_;
-  registry_ = NULL;
+  registry_ = nullptr;
 
-  if (registry != NULL)
+  if (registry != nullptr)
   {
     registry_ = registry;
     registryOwned_ = false;
     return;
   }
 
-  // Always have a non-NULL units registry
+  // Always have a non-nullptr units registry
   simCore::UnitsRegistry* nonConst = new simCore::UnitsRegistry;
   nonConst->registerDefaultUnits();
   registry_ = nonConst;

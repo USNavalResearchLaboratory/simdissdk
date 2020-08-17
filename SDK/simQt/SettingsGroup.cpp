@@ -183,7 +183,7 @@ void SettingsGroup::setValue(const QString& name, const QVariant& value, Observe
       settings_->setValue(name, value, skipThisObserver);
     else
     {
-      if (skipThisObserver == NULL)
+      if (skipThisObserver == nullptr)
         settings_->setValue(getFullPath_(name), value);
       else
       {
@@ -277,7 +277,7 @@ int SettingsGroup::addObserver(const QString& name, ObserverPtr observer)
 {
   if (settings_)
   {
-    if (observer != NULL)
+    if (observer != nullptr)
     {
       if (!path_.isEmpty())
       {
@@ -298,7 +298,7 @@ int SettingsGroup::removeObserver(const QString& name, ObserverPtr observer)
 {
   if (settings_)
   {
-    if (observer != NULL)
+    if (observer != nullptr)
     {
       if (!path_.isEmpty())
       {

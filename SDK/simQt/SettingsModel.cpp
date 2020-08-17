@@ -101,7 +101,7 @@ public:
   static const int COLUMN_VALUE = 1;
 
   /// Root item constructor
-  TreeNode(QIcon& icon, const QList<QVariant> &data, TreeNode *parent=NULL)
+  TreeNode(QIcon& icon, const QList<QVariant> &data, TreeNode *parent=nullptr)
     : icon_(icon),
       itemData_(data),
       parentItem_(parent),
@@ -179,7 +179,7 @@ public:
       if (childAtK->path() == name)
         return childAtK;
     }
-    return NULL;
+    return nullptr;
   }
 
   /// Number of children for this item
@@ -302,14 +302,14 @@ public:
   UserEditCommand* setValue(const QVariant& oldValue, const QVariant& toValue)
   {
     if (oldValue == toValue)
-      return NULL; // noop
+      return nullptr; // noop
     return new UserEditCommand(fullPath(), oldValue, toValue);
   }
 
   /// Indicates that this is the root / top level item
   bool isRootItem() const
   {
-    return parentItem_ == NULL;
+    return parentItem_ == nullptr;
   }
 
   const Settings::MetaData& metaData() const
@@ -364,7 +364,7 @@ public:
     for (auto it = observers_.begin(); it != observers_.end(); ++it)
     {
       const ObserverPtr& ptr = *it;
-      if (ptr != skipObserver && ptr != NULL)
+      if (ptr != skipObserver && ptr != nullptr)
       {
         ptr->onSettingChange(name, value);
       }
@@ -373,8 +373,8 @@ public:
 
   void addObserver(ObserverPtr observer)
   {
-    // Don't add NULL pointers
-    if (observer == NULL)
+    // Don't add nullptrs
+    if (observer == nullptr)
       return;
 
     // Check for existence of the observer first
@@ -496,7 +496,7 @@ private:
   /** Recursively save the value and iterate through children */
   void saveNode_(TreeNode* node)
   {
-    if (node == NULL)
+    if (node == nullptr)
       return;
     ValueAndMetaData value;
     value.value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
@@ -526,7 +526,7 @@ private:
 
 SettingsModel::SettingsModel(QObject* parent, QSettings& settings)
   : QAbstractItemModel(parent),
-    rootNode_(NULL),
+    rootNode_(nullptr),
     readOnly_(false)
 {
   init_();
@@ -542,12 +542,12 @@ SettingsModel::SettingsModel(QObject* parent, QSettings& settings)
 
 SettingsModel::SettingsModel(QObject* parent)
   : QAbstractItemModel(parent),
-    rootNode_(NULL),
+    rootNode_(nullptr),
     format_(QSettings::InvalidFormat),
     readOnly_(true)
 {
   init_();
-  reloadModel_(NULL);
+  reloadModel_(nullptr);
 }
 
 SettingsModel::~SettingsModel()
@@ -555,7 +555,7 @@ SettingsModel::~SettingsModel()
   save();
 
   delete rootNode_;
-  rootNode_ = NULL;
+  rootNode_ = nullptr;
   qDeleteAll(undoStack_);
   undoStack_.clear();
   qDeleteAll(redoStack_);
@@ -568,7 +568,7 @@ void SettingsModel::init_()
   qRegisterMetaTypeStreamOperators<simQt::Settings::MetaData>("simQt::Settings::MetaData");
 
   // Note that QFileIconProvider requires QApplication and will crash with QCoreApplication
-  bool hasGuiApp = (qobject_cast<QApplication*>(QCoreApplication::instance()) != NULL);
+  bool hasGuiApp = (qobject_cast<QApplication*>(QCoreApplication::instance()) != nullptr);
   if (hasGuiApp)
   {
     QFileIconProvider provider;
@@ -620,7 +620,7 @@ QModelIndex SettingsModel::addKeyToTree_(const QString& key)
   }
   TreeNode* fromNode = rootNode_;
   // Assertion failure means this was called prior to finish of construction
-  assert(fromNode != NULL);
+  assert(fromNode != nullptr);
 
   QStringList directories = key.split('/');
   // Assertion failure means that key.isEmpty(), indicates something deeper wrong
@@ -640,7 +640,7 @@ QModelIndex SettingsModel::addKeyToTree_(const QString& key)
 
     TreeNode* child = fromNode->findChild(directory);
     // Create the child if it's not found
-    if (child == NULL)
+    if (child == nullptr)
     {
       child = new TreeNode(folderIcon_, directory, fromNode, forceToPrivate);
 
@@ -658,7 +658,7 @@ QModelIndex SettingsModel::addKeyToTree_(const QString& key)
 
   // Assertion failure means above for loop has logic failure and ended with a fromNode
   // that isn't really correct
-  assert(fromNode != NULL);
+  assert(fromNode != nullptr);
 
   int newRow = fromNode->childCount();
   TreeNode* child = new TreeNode(noIcon_, endKeyName, QVariant(), fromNode, forceToPrivate);
@@ -824,7 +824,7 @@ bool SettingsModel::setData(const QModelIndex& index, const QVariant& value, int
     editCommand = item->setValue(oldValue, (value == Qt::Checked));
   else
     editCommand = item->setValue(oldValue, value);
-  if (editCommand == NULL)
+  if (editCommand == nullptr)
     return false; // error
 
   // Put it into the redo stack, then redo it
@@ -836,7 +836,7 @@ bool SettingsModel::setData(const QModelIndex& index, const QVariant& value, int
 SettingsModel::TreeNode* SettingsModel::treeNode_(const QModelIndex& index) const
 {
   if (!index.isValid())
-    return NULL;
+    return nullptr;
   // TreeNode is stored in the internalPointer()
   return static_cast<TreeNode*>(index.internalPointer());
 }
@@ -922,7 +922,7 @@ QModelIndex SettingsModel::findKey_(const QString& relativeKey, const QModelInde
     QModelIndex idx = index(row, 0, fromParent);
     TreeNode* treeNode = treeNode_(idx);
     // If the path() portion matches our portion, continue recursing
-    if (treeNode != NULL && treeNode->path() == dir)
+    if (treeNode != nullptr && treeNode->path() == dir)
       return findKey_(underDir, idx);
   }
   // No match found
@@ -1021,7 +1021,7 @@ int SettingsModel::saveSettingsFileAs(const QString& path, bool onlyDeltas)
 
 void SettingsModel::storeNodes_(QSettings& settings, TreeNode* node, bool force) const
 {
-  if (node == NULL)
+  if (node == nullptr)
     return;
 
   QVariant value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
@@ -1042,7 +1042,7 @@ void SettingsModel::storeNodes_(QSettings& settings, TreeNode* node, bool force)
 
 void SettingsModel::storeNodesDeltas_(QSettings& settings, TreeNode* node) const
 {
-  if (node == NULL)
+  if (node == nullptr)
     return;
 
   QVariant value = node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
@@ -1081,7 +1081,7 @@ void SettingsModel::resetDefaults()
 void SettingsModel::resetDefaults(const QString& name)
 {
   TreeNode* rootNode = getNode_(name);
-  if (rootNode != NULL)
+  if (rootNode != nullptr)
     resetDefaults_(rootNode);
   else
   {
@@ -1092,7 +1092,7 @@ void SettingsModel::resetDefaults(const QString& name)
 
 void SettingsModel::resetDefaults_(TreeNode* node)
 {
-  if (node == NULL)
+  if (node == nullptr)
     return;
 
   int size = node->childCount();
@@ -1119,7 +1119,7 @@ SettingsModel::TreeNode* SettingsModel::getNode_(const QString& name) const
 {
   QModelIndex idx = findKey_(name, QModelIndex());
   if (!idx.isValid())
-    return NULL;
+    return nullptr;
 
   return static_cast<TreeNode*>(idx.internalPointer());
 }
@@ -1134,7 +1134,7 @@ void SettingsModel::setValue(const QString& name, const QVariant& value, const M
   bool fire = true;
 
   TreeNode* node = getNode_(name);
-  if (node == NULL)
+  if (node == nullptr)
   {
     QModelIndex idx = addKeyToTree_(name);
     node = static_cast<TreeNode*>(idx.internalPointer());
@@ -1168,7 +1168,7 @@ void SettingsModel::setValue(const QString& name, const QVariant& value, const M
 void SettingsModel::setValue(const QString& name, const QVariant& value, ObserverPtr skipThisObserver)
 {
   TreeNode* node = getNode_(name);
-  if (node != NULL)
+  if (node != nullptr)
   {
     if (node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE) != value)
     {
@@ -1185,7 +1185,7 @@ void SettingsModel::setValue(const QString& name, const QVariant& value, Observe
 QVariant SettingsModel::value(const QString& name) const
 {
   TreeNode* node = getNode_(name);
-  if (node != NULL)
+  if (node != nullptr)
     return node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
 
   return QVariant();
@@ -1194,7 +1194,7 @@ QVariant SettingsModel::value(const QString& name) const
 QVariant SettingsModel::value(const QString& name, const MetaData& metaData, ObserverPtr observer)
 {
   TreeNode* node = getNode_(name);
-  if (node != NULL)
+  if (node != nullptr)
   {
     node->addObserver(observer);
     if (node->setMetaData(metaData) == 0)
@@ -1215,7 +1215,7 @@ QVariant SettingsModel::value(const QString& name, const MetaData& metaData, Obs
 QVariant SettingsModel::value(const QString& name, ObserverPtr observer)
 {
   TreeNode* node = getNode_(name);
-  if (node != NULL)
+  if (node != nullptr)
   {
     addObserver(name, observer);
     return node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
@@ -1226,7 +1226,7 @@ QVariant SettingsModel::value(const QString& name, ObserverPtr observer)
 
 bool SettingsModel::contains(const QString& name) const
 {
-  return getNode_(name) != NULL;
+  return getNode_(name) != nullptr;
 }
 
 QStringList SettingsModel::allNames() const
@@ -1238,7 +1238,7 @@ QStringList SettingsModel::allNames() const
 
 void SettingsModel::allNames_(TreeNode* node, QStringList& all) const
 {
-  if (node == NULL)
+  if (node == nullptr)
     return;
 
   int size = node->childCount();
@@ -1259,7 +1259,7 @@ void SettingsModel::allNames_(TreeNode* node, QStringList& all) const
 int SettingsModel::setMetaData(const QString& name, const SettingsModel::MetaData& metaData)
 {
   TreeNode* node = getNode_(name);
-  if (node == NULL)
+  if (node == nullptr)
     return 1;  // Did not find it so error out
 
   node->setMetaData(metaData);
@@ -1269,7 +1269,7 @@ int SettingsModel::setMetaData(const QString& name, const SettingsModel::MetaDat
 int SettingsModel::metaData(const QString& name, MetaData& metaData) const
 {
   TreeNode* node = getNode_(name);
-  if (node == NULL)
+  if (node == nullptr)
     return 1;  // Did not find it so error out
 
   // Does it begin with our special _MetaData tag?  If so, return PRIVATE metadata
@@ -1286,13 +1286,13 @@ int SettingsModel::metaData(const QString& name, MetaData& metaData) const
 int SettingsModel::addObserver(const QString& name, ObserverPtr observer)
 {
   TreeNode* node = getNode_(name);
-  if (node == NULL)
+  if (node == nullptr)
   {
     // did not find setting, so queue up observer
     pendingObservers_.insert(std::make_pair(name, observer));
     return 0;
   }
-  if (observer == NULL)
+  if (observer == nullptr)
     return 0;
 
   node->addObserver(observer);
@@ -1307,7 +1307,7 @@ int SettingsModel::removeObserver(const QString& name, ObserverPtr observer)
   // first remove any pending observers for this setting
   const auto range = pendingObservers_.equal_range(name);
   if (range.first != range.second)
-    assert(node == NULL); // likely pending observer did not get removed when setting node was created
+    assert(node == nullptr); // likely pending observer did not get removed when setting node was created
   bool foundPending = false;
   for (PendingMap::iterator iter = range.first; iter != range.second; ++iter)
   {
@@ -1320,11 +1320,11 @@ int SettingsModel::removeObserver(const QString& name, ObserverPtr observer)
     }
   }
 
-  // if node is NULL, return failure if observer was not in pending list
-  if (node == NULL)
+  // if node is nullptr, return failure if observer was not in pending list
+  if (node == nullptr)
     return foundPending ? 0 : 1;
 
-  if (observer == NULL)
+  if (observer == nullptr)
     return 0;
 
   return node->removeObserver(observer);
@@ -1332,8 +1332,8 @@ int SettingsModel::removeObserver(const QString& name, ObserverPtr observer)
 
 void SettingsModel::addObserver(ObserverPtr observer)
 {
-  // Don't add NULL pointers
-  if (observer == NULL)
+  // Don't add nullptrs
+  if (observer == nullptr)
     return;
 
   // Check for existence of the observer first
@@ -1391,7 +1391,7 @@ void SettingsModel::initMetaData_(QSettings& settings)
     {
       TreeNode* node = getNode_(key);
       // set the meta data, but do not override
-      if (node != NULL)
+      if (node != nullptr)
         node->setMetaData(qvMetaData.value<MetaData>(), false);
     }
   }
@@ -1408,7 +1408,7 @@ void SettingsModel::storeMetaData_(QSettings& settings)
 
 void SettingsModel::storeMetaData_(QSettings& settings, TreeNode* node)
 {
-  if (node == NULL)
+  if (node == nullptr)
     return;
 
   int size = node->childCount();

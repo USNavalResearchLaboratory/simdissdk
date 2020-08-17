@@ -67,25 +67,25 @@ MapReindexer::~MapReindexer()
 
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ImageLayerVector& imageLayers)
 {
-  if (map != NULL)
+  if (map != nullptr)
     map->getLayers(imageLayers);
 }
 
 void MapReindexer::getLayers(osgEarth::Map* map, osgEarth::ElevationLayerVector& elevationLayers)
 {
-  if (map != NULL)
+  if (map != nullptr)
     map->getLayers(elevationLayers);
 }
 
 void MapReindexer::getLayers(osgEarth::Map* map, FeatureModelLayerVector& modelLayers)
 {
-  if (map != NULL)
+  if (map != nullptr)
     map->getLayers(modelLayers);
 }
 
 void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVector& otherLayers)
 {
-  if (map == NULL)
+  if (map == nullptr)
     return;
   osgEarth::VisibleLayerVector allLayers;
   map->getLayers(allLayers);
@@ -93,11 +93,11 @@ void MapReindexer::getOtherLayers(osgEarth::Map* map, osgEarth::VisibleLayerVect
   for (auto iter = allLayers.begin(); iter != allLayers.end(); ++iter)
   {
     const osgEarth::VisibleLayer* layer = (*iter).get();
-    if (dynamic_cast<const osgEarth::ImageLayer*>(layer) != NULL)
+    if (dynamic_cast<const osgEarth::ImageLayer*>(layer) != nullptr)
       continue;
-    if (dynamic_cast<const osgEarth::ElevationLayer*>(layer) != NULL)
+    if (dynamic_cast<const osgEarth::ElevationLayer*>(layer) != nullptr)
       continue;
-    if (dynamic_cast<const osgEarth::FeatureModelLayer*>(layer) != NULL)
+    if (dynamic_cast<const osgEarth::FeatureModelLayer*>(layer) != nullptr)
       continue;
     otherLayers.push_back(*iter);
   }
@@ -359,7 +359,7 @@ public:
     children_.removeOne(c);
   }
 
-  /** Searches children for one that has the layer provided, returning a row or NULL on failure */
+  /** Searches children for one that has the layer provided, returning a row or nullptr on failure */
   MapDataModel::Item* itemByLayer(const osgEarth::Layer* layer) const
   {
     for (auto it = children_.begin(); it != children_.end(); ++it)
@@ -367,7 +367,7 @@ public:
       if ((*it)->layerPtr().value<void*>() == layer)
         return (*it);
     }
-    return NULL;
+    return nullptr;
   }
 
 private:
@@ -418,7 +418,7 @@ public:
   /** @copydoc  MapDataModel::Item::childAt */
   virtual Item* childAt(int row)
   {
-    return NULL;
+    return nullptr;
   }
 
   /** @copydoc  MapDataModel::Item::rowOfChild */
@@ -896,7 +896,7 @@ private:
 //----------------------------------------------------------------------------
 MapDataModel::MapDataModel(QObject* parent)
   : QAbstractItemModel(parent),
-    rootItem_(new MapItem(NULL)),
+    rootItem_(new MapItem(nullptr)),
     imageIcon_(":/simQt/images/Globe.png"),
     elevationIcon_(":/simQt/images/Image.png"),
     featureIcon_(":/simQt/images/Building Corporation.png")
@@ -1010,7 +1010,7 @@ void MapDataModel::removeAllCallbacks_(osgEarth::Map* map)
 void MapDataModel::fillModel_(osgEarth::Map *map)
 {
   // assume begin/end reset model surrounds this function
-  if (map == NULL)
+  if (map == nullptr)
     return;
 
   osgEarth::ImageLayerVector imageLayers;
@@ -1148,7 +1148,7 @@ void MapDataModel::addOtherLayer_(osgEarth::VisibleLayer *layer, unsigned int in
 MapDataModel::Item* MapDataModel::itemAt_(const QModelIndex &index) const
 {
   if (!index.isValid())
-    return NULL;
+    return nullptr;
 
   Item *const ret = static_cast<Item*>(index.internalPointer());
   assert(ret); // internal pointer should always be valid
@@ -1185,9 +1185,9 @@ QModelIndex MapDataModel::parent(const QModelIndex &child) const
     return QModelIndex();
 
   Item *const parentsParent = parentItem->parent();
-  if (parentsParent == NULL)
+  if (parentsParent == nullptr)
   {
-    // This means that the parent's item is NULL yet we're not dealing with the Map
+    // This means that the parent's item is nullptr yet we're not dealing with the Map
     assert(parentItem == rootItem_);
     return createIndex(0, 0, rootItem_);
   }
@@ -1288,7 +1288,7 @@ void MapDataModel::refreshText()
 
   const Item* imageGroup = imageGroup_();
   // Only need to emit data changed for the image group if there are images
-  if (imageGroup != NULL && imageGroup->rowCount() > 0)
+  if (imageGroup != nullptr && imageGroup->rowCount() > 0)
   {
     const QModelIndex imageItem = index(0, 0, mapItem);
     // Assertion failure means the tree structure changed and this wasn't updated
@@ -1298,7 +1298,7 @@ void MapDataModel::refreshText()
 
   const Item* elevationGroup = elevationGroup_();
   // Only need to emit data changed for the elevation group if there are elevation layers
-  if (elevationGroup != NULL && elevationGroup->rowCount() > 0)
+  if (elevationGroup != nullptr && elevationGroup->rowCount() > 0)
   {
     const QModelIndex elevItem = index(1, 0, mapItem);
     // Assertion failure means the tree structure changed and this wasn't updated
@@ -1308,7 +1308,7 @@ void MapDataModel::refreshText()
 
   const Item* featureGroup = featureGroup_();
   // Only need to emit data changed for the model group if there are model layers
-  if (featureGroup != NULL && featureGroup->rowCount() > 0)
+  if (featureGroup != nullptr && featureGroup->rowCount() > 0)
   {
     const QModelIndex featureItem = index(2, 0, mapItem);
     // Assertion failure means the tree structure changed and this wasn't updated
@@ -1318,7 +1318,7 @@ void MapDataModel::refreshText()
 
   const Item* otherGroup = otherGroup_();
   // Only need to emit data changed for the other group if there are other layers
-  if (otherGroup != NULL && otherGroup->rowCount() > 0)
+  if (otherGroup != nullptr && otherGroup->rowCount() > 0)
   {
     const QModelIndex otherItem = index(3, 0, mapItem);
     // Assertion failure means the tree structure changed and this wasn't updated
@@ -1329,11 +1329,11 @@ void MapDataModel::refreshText()
 
 QModelIndex MapDataModel::layerIndex(const osgEarth::Layer* layer) const
 {
-  if (layer == NULL)
+  if (layer == nullptr)
     return QModelIndex();
 
   // Find the appropriate group item based on the item type
-  GroupItem* group = NULL;
+  GroupItem* group = nullptr;
   QModelIndex parentIndex;
   if (dynamic_cast<const osgEarth::ImageLayer*>(layer))
     group = static_cast<GroupItem*>(imageGroup_());
@@ -1351,14 +1351,14 @@ QModelIndex MapDataModel::layerIndex(const osgEarth::Layer* layer) const
 
   // Return by calling createIndex with valid values, if the item exists
   Item* itemByLayer = group->itemByLayer(layer);
-  if (itemByLayer == NULL)
+  if (itemByLayer == nullptr)
     return QModelIndex();
   return createIndex(group->rowOfChild(itemByLayer), 0, itemByLayer);
 }
 
 QVariant MapDataModel::layerMapIndex_(osgEarth::Layer* layer) const
 {
-  if (layer == NULL || !map_.valid())
+  if (layer == nullptr || !map_.valid())
     return QVariant();
 
   osgEarth::LayerVector layers;

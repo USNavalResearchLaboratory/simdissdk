@@ -28,15 +28,15 @@ namespace simQt
 
 StartupLayoutTask::StartupLayoutTask()
   : QObject(),
-    widget_(NULL)
+    widget_(nullptr)
 {
 }
 
 StartupLayoutTask::StartupLayoutTask(QObject* receiver, const char* method)
   : QObject(),
-    widget_(NULL)
+    widget_(nullptr)
 {
-  if (receiver != NULL && method != NULL)
+  if (receiver != nullptr && method != nullptr)
     connect(this, SIGNAL(executed()), receiver, method);
 }
 
@@ -46,7 +46,7 @@ StartupLayoutTask::~StartupLayoutTask()
 
 bool StartupLayoutTask::shouldExecuteOnNextStartup() const
 {
-  return widget_ != NULL && widget_->isVisible();
+  return widget_ != nullptr && widget_->isVisible();
 }
 
 void StartupLayoutTask::execute()
@@ -61,7 +61,7 @@ void StartupLayoutTask::setWidget(QWidget* widget)
   clearWidget();
   widget_ = widget;
   // Tie into the destroyed() signal so we never get into an invalid state
-  if (widget_ != NULL)
+  if (widget_ != nullptr)
   {
     connect(widget_, SIGNAL(destroyed()), this, SLOT(clearWidget()));
   }
@@ -69,9 +69,9 @@ void StartupLayoutTask::setWidget(QWidget* widget)
 
 void StartupLayoutTask::clearWidget()
 {
-  if (widget_ != NULL)
+  if (widget_ != nullptr)
     disconnect(widget_, SIGNAL(destroyed()), this, SLOT(clearWidget()));
-  widget_ = NULL;
+  widget_ = nullptr;
 }
 
 }

@@ -52,8 +52,8 @@ class NoDisabledStyle : public QProxyStyle
 
 SearchLineEdit::SearchLineEdit(QWidget* parent)
   : QLineEdit(parent),
-  searchTimer_(NULL),
-  iconAction_(NULL),
+  searchTimer_(nullptr),
+  iconAction_(nullptr),
   iconEnabled_(true)
 {
   // Configure the timer
@@ -89,11 +89,11 @@ SearchLineEdit::SearchLineEdit(QWidget* parent)
 SearchLineEdit::~SearchLineEdit()
 {
   delete searchTimer_;
-  searchTimer_ = NULL;
+  searchTimer_ = nullptr;
   delete iconAction_;
-  iconAction_ = NULL;
+  iconAction_ = nullptr;
   delete proxyStyle_;
-  proxyStyle_ = NULL;
+  proxyStyle_ = nullptr;
 }
 
 const QPixmap* SearchLineEdit::searchPixmap() const

@@ -37,8 +37,8 @@ RegExpImpl::RegExpImpl(const std::string& exp, CaseSensitivity caseSense, Patter
   : exp_(exp),
   caseSensitivity_(caseSense),
   patternSyntax_(patternSyntax),
-  qRegExp_(NULL),
-  fastRegex_(NULL)
+  qRegExp_(nullptr),
+  fastRegex_(nullptr)
 {
   initializeQRegExp_();
 }
@@ -48,8 +48,8 @@ RegExpImpl::RegExpImpl(const RegExpImpl& other)
   : exp_(other.exp_),
   caseSensitivity_(other.caseSensitivity_),
   patternSyntax_(other.patternSyntax_),
-  qRegExp_(NULL),
-  fastRegex_(NULL)
+  qRegExp_(nullptr),
+  fastRegex_(nullptr)
 {
   initializeQRegExp_();
 }
@@ -140,9 +140,9 @@ void RegExpImpl::setPatternSyntax(RegExpImpl::PatternSyntax patternSyntax)
 //------------------------------------------------------------
 bool RegExpImpl::isValid() const
 {
-  if (fastRegex_ != NULL)
+  if (fastRegex_ != nullptr)
     return fastRegex_->isValid();
-  if (qRegExp_ != NULL)
+  if (qRegExp_ != nullptr)
     return qRegExp_->isValid();
   return false;
 }
@@ -150,9 +150,9 @@ bool RegExpImpl::isValid() const
 //------------------------------------------------------------
 std::string RegExpImpl::errors() const
 {
-  if (fastRegex_ != NULL)
+  if (fastRegex_ != nullptr)
     return fastRegex_->errorString().toStdString();
-  if (qRegExp_ != NULL)
+  if (qRegExp_ != nullptr)
     return qRegExp_->errorString().toStdString();
   return "";
 }
@@ -251,7 +251,7 @@ void RegExpImpl::initializeQRegExp_()
     if (!fastRegex_->isValid())
     {
       delete fastRegex_;
-      fastRegex_ = NULL;
+      fastRegex_ = nullptr;
     }
     break;
   }
@@ -314,7 +314,7 @@ simData::RegExpFilterPtr RegExpFilterFactoryImpl::createRegExpFilter(const std::
   {
     SIM_ERROR << "Failed to create regular expression: " << newRegExp->errors() << "\n";
     delete newRegExp;
-    newRegExp = NULL;
+    newRegExp = nullptr;
   }
   return simData::RegExpFilterPtr(newRegExp);
 }

@@ -722,7 +722,7 @@ const QStyledItemDelegate* SettingsItemDelegate::findDelegate_(const QModelIndex
       break; // All other cases handled through default painting/editing
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 }

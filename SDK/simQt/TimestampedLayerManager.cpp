@@ -49,7 +49,7 @@ public:
   virtual void onLayerAdded(osgEarth::Layer *layer, unsigned int index)
   {
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
-    if (imageLayer == NULL)
+    if (imageLayer == nullptr)
       return;
     parent_.addLayerWithTime_(imageLayer);
     parent_.setTime_(parent_.currTime_);
@@ -58,7 +58,7 @@ public:
   virtual void onLayerRemoved(osgEarth::Layer *layer, unsigned int index)
   {
     osgEarth::ImageLayer* imageLayer = dynamic_cast<osgEarth::ImageLayer*>(layer);
-    if (imageLayer == NULL)
+    if (imageLayer == nullptr)
       return;
     if (!parent_.layerIsTimed(imageLayer))
       return;
@@ -167,7 +167,7 @@ public:
   /* Reimplemented from MapNodeObserver */
   virtual osgEarth::MapNode* getMapNode()
   {
-    return (map_.valid() ? map_.get() : NULL);
+    return (map_.valid() ? map_.get() : nullptr);
   }
 
   /** Return the proper library name */
@@ -234,7 +234,7 @@ void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
   if (!timingActive_)
     return;
 
-  osgEarth::ImageLayer* oldLayer = NULL;
+  osgEarth::ImageLayer* oldLayer = nullptr;
 
   // Update the current layer for each group
   for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
@@ -274,8 +274,8 @@ void TimestampedLayerManager::setTime_(const simCore::TimeStamp& stamp)
         currentLayer->setVisible(false);
         oldLayer = currentLayer.get();
       }
-      currentLayer = NULL;
-      emit currentTimedLayerChanged(NULL, oldLayer);
+      currentLayer = nullptr;
+      emit currentTimedLayerChanged(nullptr, oldLayer);
     }
   }
 }
@@ -291,7 +291,7 @@ const osgEarth::ImageLayer* TimestampedLayerManager::getCurrentTimedLayer(const 
   auto groupIter = groups_.find(timeGroup);
   if (groupIter != groups_.end())
     return groupIter->second->currentLayer.get();
-  return NULL;
+  return nullptr;
 }
 
 void TimestampedLayerManager::addLayerWithTime_(osgEarth::ImageLayer* newLayer)
@@ -346,7 +346,7 @@ void TimestampedLayerManager::setMapNode_(osgEarth::MapNode* mapNode)
     map->getLayers(vec);
     for (auto i = vec.begin(); i != vec.end(); i++)
     {
-      osgEarth::ImageLayer* newLayer = NULL;
+      osgEarth::ImageLayer* newLayer = nullptr;
       if (i->valid())
         newLayer = dynamic_cast<osgEarth::ImageLayer*>(i->get());
       addLayerWithTime_(newLayer);
@@ -391,7 +391,7 @@ void TimestampedLayerManager::restoreOriginalVisibility_()
     }
 
     // Unset the group's current layer.  Prevents bad starting state when timed visibility is reactiviated
-    groupIter->second->currentLayer = NULL;
+    groupIter->second->currentLayer = nullptr;
   }
 }
 

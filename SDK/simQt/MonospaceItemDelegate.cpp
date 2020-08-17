@@ -93,7 +93,7 @@ QSize MonospaceItemDelegate::sizeHint(const QStyleOptionViewItem& option, const 
 
   // Pull out the widget, containing extra info for calculating size
   const QStyleOptionViewItemV3* v3 = qstyleoption_cast<const QStyleOptionViewItemV3*>(&option);
-  const QWidget* widget = v3 ? v3->widget : NULL;
+  const QWidget* widget = v3 ? v3->widget : nullptr;
   // Get the appropriate style and ask it to give us a size
   QStyle* style = widget ? widget->style() : QApplication::style();
   return style->sizeFromContents(QStyle::CT_ItemViewItem, &opt, QSize(), widget);

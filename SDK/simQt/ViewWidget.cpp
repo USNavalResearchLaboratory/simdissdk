@@ -48,7 +48,7 @@ class ExposedSwapGraphicsWindowQt : public osgQt::GraphicsWindowQt
 {
 public:
   /** Constructor that takes a Traits instance */
-  explicit ExposedSwapGraphicsWindowQt(osg::GraphicsContext::Traits* traits, QWidget* parent = NULL, const QGLWidget* shareWidget = NULL, Qt::WindowFlags f = 0)
+  explicit ExposedSwapGraphicsWindowQt(osg::GraphicsContext::Traits* traits, QWidget* parent = nullptr, const QGLWidget* shareWidget = nullptr, Qt::WindowFlags f = 0)
     : GraphicsWindowQt(traits, parent, shareWidget, f)
   {
   }

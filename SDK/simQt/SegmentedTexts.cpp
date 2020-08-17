@@ -127,12 +127,12 @@ static const unsigned int MAX_PRECISION = 6;
     }
 
     // Walked off the end which is OK
-    return NULL;
+    return nullptr;
   }
 
   SegmentedText* SegmentedTexts::previousTabStop(const SegmentedText* inputPart) const
   {
-    SegmentedText* lastStop = NULL;
+    SegmentedText* lastStop = nullptr;
     for (auto it = segments_.begin(); it != segments_.end(); ++it)
     {
       auto part = *it;
@@ -145,7 +145,7 @@ static const unsigned int MAX_PRECISION = 6;
 
     // Did not find the inputPart, so something is wrong
     assert(false);
-    return NULL;
+    return nullptr;
   }
 
   QString SegmentedTexts::text() const
@@ -597,10 +597,10 @@ static const unsigned int MAX_PRECISION = 6;
     if (precision_ != 0)
       fraction_ = createFactionOfSeconds_(precision_);
     else
-      fraction_ = NULL;
+      fraction_ = nullptr;
 
     addPart(seconds_);
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
     {
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
@@ -611,7 +611,7 @@ static const unsigned int MAX_PRECISION = 6;
   {
     const int seconds = seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    const int fraction = (fraction_ == NULL) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
     return simCore::TimeStamp(scenarioReferenceYear_, simCore::Seconds(seconds, fraction));
   }
 
@@ -626,7 +626,7 @@ static const unsigned int MAX_PRECISION = 6;
     // SecondsTexts fields are always relative to scenarioReferenceYear_: they do not reset to 0 if year rolls over.
     const simCore::Seconds& secondsSinceScenarioRefYear = stamp.secondsSinceRefYear(scenarioReferenceYear_);
     seconds_->setValue(static_cast<int>(secondsSinceScenarioRefYear.getSeconds()));
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
       fraction_->setValue(fractionToField_(secondsSinceScenarioRefYear));
   }
 
@@ -678,12 +678,12 @@ static const unsigned int MAX_PRECISION = 6;
     if (precision_ != 0)
       fraction_ = createFactionOfSeconds_(precision_);
     else
-      fraction_ = NULL;
+      fraction_ = nullptr;
 
     addPart(minutes_);
     addPart(new SeparatorText(":", false));
     addPart(seconds_);
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
     {
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
@@ -694,7 +694,7 @@ static const unsigned int MAX_PRECISION = 6;
   {
     const int seconds = (minutes_->value() * 60) + seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    const int fraction = (fraction_ == NULL) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
     return simCore::TimeStamp(scenarioReferenceYear_, simCore::Seconds(seconds, fraction));
   }
 
@@ -712,7 +712,7 @@ static const unsigned int MAX_PRECISION = 6;
     const int minutes = static_cast<int>(secondsSinceRefYear / simCore::SECPERMIN);
     minutes_->setValue(minutes);
     seconds_->setValue(static_cast<int>(secondsSinceRefYear - (minutes*simCore::SECPERMIN)));
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
       fraction_->setValue(fractionToField_(secondsSinceScenarioRefYear));
   }
 
@@ -766,14 +766,14 @@ static const unsigned int MAX_PRECISION = 6;
     if (precision_ != 0)
       fraction_ = createFactionOfSeconds_(precision_);
     else
-      fraction_ = NULL;
+      fraction_ = nullptr;
 
     addPart(hours_);
     addPart(new SeparatorText(":", false));
     addPart(minutes_);
     addPart(new SeparatorText(":", false));
     addPart(seconds_);
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
     {
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
@@ -784,7 +784,7 @@ static const unsigned int MAX_PRECISION = 6;
   {
     const int64_t seconds = (((hours_->value() * 60) + minutes_->value()) * 60) + seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    const int fraction = (fraction_ == NULL) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
     return simCore::TimeStamp(scenarioReferenceYear_, simCore::Seconds(seconds, fraction));
   }
 
@@ -807,7 +807,7 @@ static const unsigned int MAX_PRECISION = 6;
     hours_->setValue(hours);
     minutes_->setValue(minutes);
     seconds_->setValue(static_cast<int>(secondsSinceRefYear));
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
       fraction_->setValue(fractionToField_(secondsSinceScenarioRefYear));
   }
 
@@ -866,7 +866,7 @@ static const unsigned int MAX_PRECISION = 6;
     if (precision_ != 0)
       fraction_ = createFactionOfSeconds_(precision_);
     else
-      fraction_ = NULL;
+      fraction_ = nullptr;
 
     addPart(days_);
     addPart(new SeparatorText(" ", false));
@@ -877,7 +877,7 @@ static const unsigned int MAX_PRECISION = 6;
     addPart(minutes_);
     addPart(new SeparatorText(":", false));
     addPart(seconds_);
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
     {
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
@@ -893,7 +893,7 @@ static const unsigned int MAX_PRECISION = 6;
     seconds *= 60;
     seconds += seconds_->value();
     // Need to scale based on the number of digits after the decimal point.
-    const int fraction = (fraction_ == NULL) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
     simCore::TimeStamp stamp(years_->value(), simCore::Seconds(seconds, fraction));
 
     // Remove the timezone offset that was introduced by setTimestamp()
@@ -937,7 +937,7 @@ static const unsigned int MAX_PRECISION = 6;
     hours_->setValue(static_cast<int>(hour));
     minutes_->setValue(static_cast<int>(min));
     seconds_->setValue(static_cast<int>(sec));
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
       fraction_->setValue(fractionToField_(stamp.secondsSinceRefYear()));
   }
 
@@ -1011,7 +1011,7 @@ static const unsigned int MAX_PRECISION = 6;
     if (precision_ != 0)
       fraction_ = createFactionOfSeconds_(precision_);
     else
-      fraction_ = NULL;
+      fraction_ = nullptr;
 
     addPart(month_);
     addPart(new SeparatorText(" ", false));
@@ -1024,7 +1024,7 @@ static const unsigned int MAX_PRECISION = 6;
     addPart(minutes_);
     addPart(new SeparatorText(":", false));
     addPart(seconds_);
-    if (fraction_ != NULL)
+    if (fraction_ != nullptr)
     {
       addPart(new SeparatorText(".", true));
       addPart(fraction_);
@@ -1036,7 +1036,7 @@ static const unsigned int MAX_PRECISION = 6;
     const int yearDay = simCore::getYearDay(month_->intValue(), days_->value(), years_->value());
     const int64_t secondsIntoYear = yearDay*simCore::SECPERDAY + hours_->value()*simCore::SECPERHOUR + minutes_->value()*simCore::SECPERMIN + seconds_->value();
 
-    const int fraction = (fraction_ == NULL) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
+    const int fraction = (fraction_ == nullptr) ? 0 : fractionFromField_(fraction_->value(), fraction_->text().size());
     simCore::TimeStamp stamp(years_->value(), simCore::Seconds(secondsIntoYear, fraction));
 
     if (zone_ == simCore::TIMEZONE_LOCAL)
@@ -1087,7 +1087,7 @@ static const unsigned int MAX_PRECISION = 6;
       days_->setValue(dayInMonth);
       years_->setValue(stamp.referenceYear());
       month_->setIntValue(month);
-      if (fraction_ != NULL)
+      if (fraction_ != nullptr)
         fraction_->setValue(fractionToField_(stamp.secondsSinceRefYear()));
     }
     catch (const simCore::TimeException &)
