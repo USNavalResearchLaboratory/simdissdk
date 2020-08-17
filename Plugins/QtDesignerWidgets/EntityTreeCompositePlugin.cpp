@@ -46,7 +46,7 @@ bool EntityTreeCompositePlugin::isInitialized() const
 QWidget *EntityTreeCompositePlugin::createWidget(QWidget *parent)
 {
   simQt::EntityTreeComposite* rv = new simQt::EntityTreeComposite(parent);
-  rv->setModel(new QtDesignerDisplayTree(NULL));
+  rv->setModel(new QtDesignerDisplayTree(nullptr));
   return rv;
 }
 

@@ -45,7 +45,7 @@ bool EntityLineEditPlugin::isInitialized() const
 
 QWidget *EntityLineEditPlugin::createWidget(QWidget *parent)
 {
-  simQt::EntityLineEdit* rv = new simQt::EntityLineEdit(parent, NULL);
+  simQt::EntityLineEdit* rv = new simQt::EntityLineEdit(parent, nullptr);
   return rv;
 }
 

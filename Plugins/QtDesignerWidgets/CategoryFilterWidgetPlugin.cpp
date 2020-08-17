@@ -29,7 +29,7 @@
 
 CategoryFilterWidgetPlugin::CategoryFilterWidgetPlugin(QObject *parent)
   : QObject(parent),
-    dataStore_(NULL)
+    dataStore_(nullptr)
 {
 }
 
@@ -48,14 +48,14 @@ void CategoryFilterWidgetPlugin::initialize(QDesignerFormEditorInterface *)
 
 bool CategoryFilterWidgetPlugin::isInitialized() const
 {
-  return dataStore_ != NULL;
+  return dataStore_ != nullptr;
 }
 
 QWidget *CategoryFilterWidgetPlugin::createWidget(QWidget *parent)
 {
   simQt::CategoryFilterWidget* rv = new simQt::CategoryFilterWidget(parent);
   // Create the data store, adding default categories
-  initialize(NULL);
+  initialize(nullptr);
   rv->setDataStore(dataStore_);
 
   // Create a filter for user to see
