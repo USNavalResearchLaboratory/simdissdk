@@ -291,7 +291,7 @@ bool CloseableItemDelegate::editorEvent(QEvent* evt, QAbstractItemModel* model, 
 {
   // We only care about mouse events
   QMouseEvent* mouseEvent = dynamic_cast<QMouseEvent*>(evt);
-  if (mouseEvent == NULL)
+  if (mouseEvent == nullptr)
     return false;
 
   // Farm off to helper functions
@@ -360,7 +360,7 @@ private:
 
 CategoryDataBreadcrumbs::CategoryDataBreadcrumbs(QWidget* parent)
   : QWidget(parent),
-    filter_(NULL),
+    filter_(nullptr),
     minimumGroupSize_(3),
     hideWhenEmpty_(true),
     emptyText_(tr("No active category filter")),
@@ -600,8 +600,8 @@ QString CategoryDataBreadcrumbs::buildValuesHtmlList_(const simData::CategoryNam
 
 void CategoryDataBreadcrumbs::addNameToList_(int nameIndex, bool useAltFillColor)
 {
-  // Break out to avoid NULL problems
-  if (filter_ == NULL || filter_->getDataStore() == NULL)
+  // Break out to avoid nullptr problems
+  if (filter_ == nullptr || filter_->getDataStore() == nullptr)
     return;
 
   // Initialize by getting the name manager, name, and current set of checks
@@ -752,7 +752,7 @@ void CategoryDataBreadcrumbs::clearFilter()
 
   // Clear out content
   delete filter_;
-  filter_ = NULL;
+  filter_ = nullptr;
   listWidget_->clear();
 
   // Resize
@@ -1052,7 +1052,7 @@ void CategoryDataBreadcrumbs::synchronizeToSenderFilter_()
   simQt::EntityCategoryFilter* from = dynamic_cast<simQt::EntityCategoryFilter*>(sender());
   // Assertion failure means that this method was called by something that wasn't an entity category
   // filter, which shouldn't be possible because it's a private slot.
-  assert(from != NULL);
+  assert(from != nullptr);
   setFilter(from->categoryFilter());
 }
 

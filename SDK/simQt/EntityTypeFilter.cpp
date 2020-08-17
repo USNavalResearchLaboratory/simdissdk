@@ -56,7 +56,7 @@ namespace simQt {
       connect(this, SIGNAL(entityTypesChanged(unsigned int)), rv, SLOT(setSelections(unsigned int)));
       return rv;
     }
-    return NULL;
+    return nullptr;
   }
 
   void EntityTypeFilter::getFilterSettings(QMap<QString, QVariant>& settings) const

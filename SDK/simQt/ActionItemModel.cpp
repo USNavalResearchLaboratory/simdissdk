@@ -105,7 +105,7 @@ public:
   /**@name tree actions
    *@{
    */
-  virtual TreeItem* parent() const { return NULL; }
+  virtual TreeItem* parent() const { return nullptr; }
   virtual TreeItem* child(int row) const { return children_[row]; }
   virtual int indexOf(TreeItem* child) const { return children_.indexOf(child); }
   virtual int numChildren() const { return children_.size(); }
@@ -120,16 +120,16 @@ public:
   /// find an item corresponding to the given action
   virtual TreeItem* find(const Action* action) const
   {
-    if (action != NULL && action->group() == name_)
+    if (action != nullptr && action->group() == name_)
     { // Search children
       for (auto it = children_.begin(); it != children_.end(); ++it)
       {
         TreeItem* child = (*it)->find(action);
-        if (child != NULL)
+        if (child != nullptr)
           return child;
       }
     }
-    return NULL;
+    return nullptr;
   }
 
   //--- local functions
@@ -163,7 +163,7 @@ public:
    * Finds the child with the given name
    *@param name name to match
    *@param rowIndex row containing the match (-1 on no match)
-   *@return the item corresponding to the given name, will return NULL on no match
+   *@return the item corresponding to the given name, will return nullptr on no match
    */
   TreeItem* findChild(const QString& name, int& rowIndex) const
   {
@@ -178,7 +178,7 @@ public:
       k++;
     }
     rowIndex = -1;
-    return NULL;
+    return nullptr;
   }
 
 private:
@@ -210,7 +210,7 @@ public:
   }
   virtual QVariant decoration(int col) const
   {
-    if (col == 0 && action_->action() != NULL)
+    if (col == 0 && action_->action() != nullptr)
     {
       return action_->action()->icon();
     }
@@ -256,7 +256,7 @@ public:
    *@{
    */
   virtual TreeItem* parent() const { return parent_; }
-  virtual TreeItem* child(int row) const { return NULL; }
+  virtual TreeItem* child(int row) const { return nullptr; }
   virtual int indexOf(TreeItem* child) const { return -1; }
   virtual int numChildren() const { return 0; }
 
@@ -264,7 +264,7 @@ public:
   ///@}
 
   /// find an item corresponding to the given action
-  virtual TreeItem* find(const Action* action) const { return (action == action_) ? const_cast<ActionItem*>(this) : NULL; }
+  virtual TreeItem* find(const Action* action) const { return (action == action_) ? const_cast<ActionItem*>(this) : nullptr; }
 
 private:
   ActionItemModel::GroupItem* parent_;
@@ -274,7 +274,7 @@ private:
 //////////////////////////////////////////////////////////////////////
 ActionItemModel::ActionItemModel(QObject* parent)
   : QAbstractItemModel(parent),
-    registry_(NULL),
+    registry_(nullptr),
     readOnly_(false)
 {
 }
@@ -315,7 +315,7 @@ QModelIndex ActionItemModel::index(int row, int column, const QModelIndex &paren
     return createIndex(row, column, groups_[row]);
   TreeItem* parentItem = static_cast<TreeItem*>(parent.internalPointer());
   // Item was not made correctly, check index()
-  assert(parentItem != NULL);
+  assert(parentItem != nullptr);
   return createIndex(row, column, parentItem->child(row));
 }
 
@@ -326,12 +326,12 @@ QModelIndex ActionItemModel::parent(const QModelIndex &child) const
 
   TreeItem *childItem = static_cast<TreeItem*>(child.internalPointer());
   // Item was not made correctly, check index()
-  assert(childItem != NULL);
-  if (childItem == NULL)
+  assert(childItem != nullptr);
+  if (childItem == nullptr)
     return QModelIndex();
   // parentItem should be pointing to a group item
   GroupItem *parentItem = dynamic_cast<GroupItem*>(childItem->parent());
-  if (parentItem == NULL)
+  if (parentItem == nullptr)
     return QModelIndex();
   return createIndex(groups_.indexOf(parentItem), 0, parentItem);
 }
@@ -343,7 +343,7 @@ int ActionItemModel::rowCount(const QModelIndex &parent) const
     if (parent.column() != 0)
       return 0;
     TreeItem* parentItem = static_cast<TreeItem*>(parent.internalPointer());
-    return (parentItem == NULL) ? 0 : parentItem->numChildren();
+    return (parentItem == nullptr) ? 0 : parentItem->numChildren();
   }
   return groups_.size();
 }
@@ -380,7 +380,7 @@ Qt::ItemFlags ActionItemModel::flags(const QModelIndex& index) const
   if (index.isValid())
   {
     TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
-    if (item != NULL)
+    if (item != nullptr)
     {
       Qt::ItemFlags rv = item->flags(index.column());
       // Remove the editable flag if needed
@@ -398,7 +398,7 @@ bool ActionItemModel::setData(const QModelIndex& index, const QVariant& value, i
   if (index.isValid() && role == Qt::EditRole)
   {
     TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
-    if (item != NULL)
+    if (item != nullptr)
       return item->setData(index.column(), value);
   }
   return QAbstractItemModel::setData(index, value, role);
@@ -426,7 +426,7 @@ QVariant ActionItemModel::headerData(int section, Qt::Orientation orientation, i
 
 void ActionItemModel::connect_(ActionRegistry* newRegistry)
 {
-  if (newRegistry == NULL)
+  if (newRegistry == nullptr)
     return;
   connect(newRegistry, SIGNAL(actionAdded(simQt::Action*)), this, SLOT(actionAdded(simQt::Action*)));
   connect(newRegistry, SIGNAL(actionRemoved(const simQt::Action*)), this, SLOT(actionRemoved(const simQt::Action*)));
@@ -435,7 +435,7 @@ void ActionItemModel::connect_(ActionRegistry* newRegistry)
 
 void ActionItemModel::disconnect_(ActionRegistry* oldRegistry)
 {
-  if (oldRegistry == NULL)
+  if (oldRegistry == nullptr)
     return;
   disconnect(oldRegistry, SIGNAL(actionAdded(simQt::Action*)), this, SLOT(actionAdded(simQt::Action*)));
   disconnect(oldRegistry, SIGNAL(actionRemoved(const simQt::Action*)), this, SLOT(actionRemoved(const simQt::Action*)));
@@ -444,7 +444,7 @@ void ActionItemModel::disconnect_(ActionRegistry* oldRegistry)
 
 void ActionItemModel::createGroupedList_(QList<GroupItem*>& groups) const
 {
-  if (registry_ == NULL)
+  if (registry_ == nullptr)
     return;
 
   // Query the registry and sort into groups
@@ -480,11 +480,11 @@ void ActionItemModel::createGroupedList_(QList<GroupItem*>& groups) const
 
 void ActionItemModel::actionAdded(Action* action)
 {
-  if (action == NULL)
+  if (action == nullptr)
     return;
   GroupItem* group = findGroup_(action->group());
   // New group to create?
-  if (group == NULL)
+  if (group == nullptr)
   {
     // Find newPosition, the index pointing to the alphabetical insertion point
     int newPosition;
@@ -515,7 +515,7 @@ void ActionItemModel::actionAdded(Action* action)
 void ActionItemModel::actionRemoved(const Action* action)
 {
   TreeItem* item = findAction_(action);
-  if (item == NULL || item->parent() == NULL)
+  if (item == nullptr || item->parent() == nullptr)
     return;
   // Case 1: last item in the list, let's just remove the whole group
   TreeItem* parent = item->parent();
@@ -551,21 +551,21 @@ ActionItemModel::GroupItem* ActionItemModel::findGroup_(const QString& name) con
     if ((*it)->title() == name)
       return *it;
   }
-  return NULL;
+  return nullptr;
 }
 
 ActionItemModel::TreeItem* ActionItemModel::findAction_(const Action* action) const
 {
-  if (action == NULL)
-    return NULL;
+  if (action == nullptr)
+    return nullptr;
   GroupItem* group = findGroup_(action->group());
-  return (group == NULL) ? NULL : group->find(action);
+  return (group == nullptr) ? nullptr : group->find(action);
 }
 
 QModelIndex ActionItemModel::indexOfAction_(Action* action) const
 {
   TreeItem* treeItem = findAction_(action);
-  if (treeItem != NULL)
+  if (treeItem != nullptr)
     return createIndex(treeItem->row(), 0, treeItem);
   return QModelIndex();
 }
@@ -692,7 +692,7 @@ ActionItemModelDelegate::~ActionItemModelDelegate()
 void ActionItemModelDelegate::closeAndCommitEditor_()
 {
   KeySequenceEdit* editor = qobject_cast<KeySequenceEdit*>(sender());
-  assert(editor != NULL);
+  assert(editor != nullptr);
   emit commitData(editor);
   emit closeEditor(editor);
 }
@@ -710,7 +710,7 @@ void ActionItemModelDelegate::setEditorData(QWidget* editWidget, const QModelInd
   if (!index.isValid())
     return;
   KeySequenceEdit* editor = qobject_cast<KeySequenceEdit*>(editWidget);
-  assert(editor != NULL);
+  assert(editor != nullptr);
   // Pull out the QVariant data from the data model
   QVariant itemData = index.model()->data(index, Qt::DisplayRole);
   if (itemData.isValid())
@@ -724,7 +724,7 @@ void ActionItemModelDelegate::setModelData(QWidget* editWidget, QAbstractItemMod
     return;
   // Set the data in the model from our data
   KeySequenceEdit* editor = qobject_cast<KeySequenceEdit*>(editWidget);
-  assert(editor != NULL);
+  assert(editor != nullptr);
   model->setData(index, editor->key(), Qt::EditRole);
 }
 
@@ -734,8 +734,8 @@ bool ActionItemModelDelegate::eventFilter(QObject* editor, QEvent* evt)
   {
     const QKeyEvent* keyEvent = static_cast<const QKeyEvent*>(evt);
     KeySequenceEdit* edit = qobject_cast<KeySequenceEdit*>(editor);
-    assert(edit != NULL);
-    if (edit != NULL)
+    assert(edit != nullptr);
+    if (edit != nullptr)
     {
       // Preprocess the key; don't give the filters a chance to handle the key.
       // This prevents weird focus problems with keys like Tab, and avoids issues

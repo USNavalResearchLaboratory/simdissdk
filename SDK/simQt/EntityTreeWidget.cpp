@@ -56,8 +56,8 @@ private:
 EntityTreeWidget::EntityTreeWidget(QTreeView* view)
   : QObject(view),
     view_(view),
-    model_(NULL),
-    proxyModel_(NULL),
+    model_(nullptr),
+    proxyModel_(nullptr),
     settings_(SettingsPtr()),
     treeView_(false),
     pendingSendNumItems_(false),
@@ -104,7 +104,7 @@ QList<QWidget*> EntityTreeWidget::filterWidgets(QWidget* newWidgetParent) const
 
 void EntityTreeWidget::setModel(AbstractEntityTreeModel* model)
 {
-  if (model_ != NULL)
+  if (model_ != nullptr)
   {
     disconnect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(delaySend_()));
     disconnect(model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(delaySend_()));
@@ -141,7 +141,7 @@ void EntityTreeWidget::clearSelection()
 
 int EntityTreeWidget::setSelected(uint64_t id)
 {
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return 1;
 
   if ((selectionList_.size() == 1) && (selectionList_.front() == id))
@@ -178,7 +178,7 @@ int EntityTreeWidget::setSelected(uint64_t id)
 
 int EntityTreeWidget::setSelected(const QList<uint64_t>& list)
 {
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return 1;
 
   QSet<uint64_t> newSet;  ///< Use new set to detected changes with selectionSet_
@@ -388,7 +388,7 @@ void EntityTreeWidget::setToTreeView()
   if (treeView_)
     return;
   treeView_ = true;
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   QList<uint64_t> entities = selectedItems();
@@ -405,7 +405,7 @@ void EntityTreeWidget::setToListView()
   if (!treeView_)
     return;
   treeView_ = false;
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   QList<uint64_t> entities = selectedItems();
@@ -428,7 +428,7 @@ void EntityTreeWidget::toggleTreeView(bool useTree)
   static const int LIST_INDENT = 4;
   view_->setIndentation(useTree ? TREE_INDENT : LIST_INDENT);
 
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   QList<uint64_t> entities = selectedItems();
@@ -444,7 +444,7 @@ void EntityTreeWidget::toggleTreeView(bool useTree)
 
 void EntityTreeWidget::forceRefresh()
 {
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   model_->forceRefresh();
@@ -482,7 +482,7 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
     // Pull out the item from the index, which contains the ID
     const QModelIndex index2 = proxyModel_->mapToSource(*it);
     const AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
-    if (item == NULL)
+    if (item == nullptr)
       continue;
     // Add the ID to both lists
     const uint64_t id = item->id();
@@ -502,7 +502,7 @@ void EntityTreeWidget::doubleClicked_(const QModelIndex& index)
 {
   QModelIndex index2 = proxyModel_->mapToSource(index);
   AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
-  if (item != NULL)
+  if (item != nullptr)
     emit itemDoubleClicked(item->id());
 }
 
@@ -524,7 +524,7 @@ void EntityTreeWidget::emitSend_()
 
 void EntityTreeWidget::sendNumFilteredItems_()
 {
-  if ((proxyModel_ != NULL) && (model_ != NULL))
+  if ((proxyModel_ != nullptr) && (model_ != nullptr))
     emit numFilteredItemsChanged(proxyModel_->rowCount(), model_->rowCount());
 }
 

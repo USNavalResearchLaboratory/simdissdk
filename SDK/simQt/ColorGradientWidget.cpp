@@ -68,7 +68,7 @@ static const QString GRAD_WIDGET_TOOLTIP = QObject::tr("Left-click and drag to m
 class ColorGradientWidget::ColorGradientModel : public QAbstractTableModel
 {
 public:
-  explicit ColorGradientModel(QObject* parent = NULL)
+  explicit ColorGradientModel(QObject* parent = nullptr)
     : QAbstractTableModel(parent)
   {}
 
@@ -409,7 +409,7 @@ private:
 class ColorGradientWidget::GradientDisplayWidget : public QWidget
 {
 public:
-  explicit GradientDisplayWidget(ColorGradientModel& model, QWidget* parent = NULL)
+  explicit GradientDisplayWidget(ColorGradientModel& model, QWidget* parent = nullptr)
     : QWidget(parent),
     model_(model),
     showAlpha_(true),
@@ -610,8 +610,8 @@ private:
 ColorGradientWidget::ColorGradientWidget(QWidget* parent)
   : QWidget(parent),
   ui_(new Ui_ColorGradientWidget),
-  tableGroup_(NULL),
-  treeView_(NULL),
+  tableGroup_(nullptr),
+  treeView_(nullptr),
   showTable_(true),
   showAlpha_(true),
   showHelp_(true)
@@ -742,9 +742,9 @@ void ColorGradientWidget::showOrHideTable_()
   if (!showTable_)
   {
     delete tableGroup_;
-    tableGroup_ = NULL;
+    tableGroup_ = nullptr;
     // treeView_ will be deleted by Qt parentage
-    treeView_ = NULL;
+    treeView_ = nullptr;
     return;
   }
 

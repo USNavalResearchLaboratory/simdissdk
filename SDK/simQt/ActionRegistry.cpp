@@ -72,7 +72,7 @@ ToolTipUpdater::ToolTipUpdater(QObject* parent)
 
 void ToolTipUpdater::addPending(simQt::Action* action)
 {
-  if (action == NULL)
+  if (action == nullptr)
     return;
 
   pendingActions_.push_back(action);
@@ -299,7 +299,7 @@ private:
       if (!visitedDescs.contains(i.key()))
       {
         // Failure of assertion means visitedDesc got constructed improperly
-        assert(registry.findWithoutAliases_(i.key()) == NULL);
+        assert(registry.findWithoutAliases_(i.key()) == nullptr);
         if (i.value().empty())
         {
           // Save empty unknown values so that empty hotkeys can work fine
@@ -329,7 +329,7 @@ private:
     {
       Action* action = registry.findWithoutAliases_(i.key());
 
-      if (action == NULL)
+      if (action == nullptr)
       {
         // The action does not exist; add a new one (will show up as Unknown)
         if (i.value().empty())
@@ -383,7 +383,7 @@ ActionRegistry::~ActionRegistry()
     delete *it;
 
   delete toolTipUpdater_;
-  toolTipUpdater_ = NULL;
+  toolTipUpdater_ = nullptr;
 }
 
 Action* ActionRegistry::registerAction(const QString &group, const QString &description, QAction *action)
@@ -391,7 +391,7 @@ Action* ActionRegistry::registerAction(const QString &group, const QString &desc
   assertActionsByKeyValid_();
 
   Action* newAct = findWithoutAliases_(description);
-  if (newAct != NULL)
+  if (newAct != nullptr)
   {
     // This occurs when more than one action has the same name.  The description must be
     // unique, so this means you have duplicates and need to resolve this issue.
@@ -432,7 +432,7 @@ Action* ActionRegistry::registerAction(const QString &group, const QString &desc
 int ActionRegistry::registerAlias(const QString& actionDesc, const QString& alias)
 {
   Action* action = findWithoutAliases_(actionDesc);
-  if (action == NULL)
+  if (action == nullptr)
     return 1;
 
   if (aliases_.find(alias) != aliases_.end())
@@ -463,7 +463,7 @@ void ActionRegistry::assertActionsByKeyValid_() const
   for (auto it = keys.begin(); it != keys.end(); ++it)
   {
     const Action* action = actionsByKey_.value(*it);
-    assert(action != NULL && action->hotkeys().contains(*it));
+    assert(action != nullptr && action->hotkeys().contains(*it));
   }
 
   // Loop through the hotkeys in all known actions and make sure there's an entry and it's us
@@ -471,7 +471,7 @@ void ActionRegistry::assertActionsByKeyValid_() const
   for (auto it = actions.begin(); it != actions.end(); ++it)
   {
     const Action* action = *it;
-    assert(action != NULL);
+    assert(action != nullptr);
     auto hotkeys = action->hotkeys();
     for (auto hotkeyIt = hotkeys.begin(); hotkeyIt != hotkeys.end(); ++hotkeyIt)
     {
@@ -487,7 +487,7 @@ int ActionRegistry::removeAction(const QString& desc)
   assertActionsByKeyValid_();
 
   Action* action = findWithoutAliases_(desc);
-  if (action == NULL)
+  if (action == nullptr)
     return 1;
 
   // Remove from actions maps
@@ -557,26 +557,26 @@ Action* ActionRegistry::findAction(const QString& desc) const
 {
   assertActionsByKeyValid_();
   Action* action = findWithoutAliases_(desc);
-  if (action != NULL)
+  if (action != nullptr)
     return action;
 
   QMap<QString, QString>::const_iterator it = aliases_.find(desc);
   if (it != aliases_.end())
     return findWithoutAliases_(*it);
 
-  return NULL;
+  return nullptr;
 }
 
 Action* ActionRegistry::findWithoutAliases_(const QString& desc) const
 {
   QMap<QString, Action*>::const_iterator i = actionsByDesc_.find(desc);
-  return (i == actionsByDesc_.end()) ? NULL : *i;
+  return (i == actionsByDesc_.end()) ? nullptr : *i;
 }
 
 Action* ActionRegistry::findAction(QKeySequence hotKey) const
 {
   QMap<QKeySequence, Action*>::const_iterator i = actionsByKey_.find(hotKey);
-  return (i == actionsByKey_.end()) ? NULL : *i;
+  return (i == actionsByKey_.end()) ? nullptr : *i;
 }
 
 QList<Action*> ActionRegistry::actions() const
@@ -590,7 +590,7 @@ QList<Action*> ActionRegistry::actions() const
 
 int ActionRegistry::removeHotKey(Action* action, unsigned int bindingNum)
 {
-  if (action == NULL)
+  if (action == nullptr)
     return 1;
   QList<QKeySequence> newKeys = action->hotkeys();
   if (bindingNum < static_cast<unsigned int>(newKeys.size()))
@@ -604,7 +604,7 @@ int ActionRegistry::removeHotKey(Action* action, unsigned int bindingNum)
 
 int ActionRegistry::setHotKey(Action* action, QKeySequence hotkey)
 {
-  if (action == NULL)
+  if (action == nullptr)
     return 1;
   QList<QKeySequence> newKeys;
   newKeys += hotkey;
@@ -614,7 +614,7 @@ int ActionRegistry::setHotKey(Action* action, QKeySequence hotkey)
 int ActionRegistry::addHotKey(const QString& actionDesc, QKeySequence hotkey)
 {
   Action* action = findAction(actionDesc);
-  if (action != NULL)
+  if (action != nullptr)
   {
     QList<QKeySequence> newKeys = action->hotkeys();
     newKeys += hotkey;
@@ -647,7 +647,7 @@ int ActionRegistry::addHotKey(const QString& actionDesc, QKeySequence hotkey)
 
   // Save as an unknown action, store hotkey for later
   QMap<QString, UnknownAction*>::const_iterator i = unknownActions_.find(actionDesc);
-  UnknownAction* unknown = NULL;
+  UnknownAction* unknown = nullptr;
   if (i == unknownActions_.end())
   {
     unknown = new UnknownAction;
@@ -668,7 +668,7 @@ int ActionRegistry::addHotKey(const QString& actionDesc, QKeySequence hotkey)
 
 int ActionRegistry::setHotKeys(Action* action, const QList<QKeySequence>& hotkeys)
 {
-  if (action == NULL)
+  if (action == nullptr)
     return 1;
   const QList<QKeySequence> uniqueHotkeys = makeUnique_(hotkeys);
 
@@ -686,7 +686,7 @@ int ActionRegistry::setHotKeys(Action* action, const QList<QKeySequence>& hotkey
     QKeySequence key = *it;
     // We do not need to remove the binding for our own action (no-op)
     Action* oldAction = findAction(key);
-    if (oldAction != NULL && action != oldAction)
+    if (oldAction != nullptr && action != oldAction)
       removeBinding_(oldAction, key, true);
     // Store association of binding to new action (unconditionally)
     actionsByKey_[key] = action;
@@ -763,7 +763,7 @@ void ActionRegistry::combineAndSetKeys_(Action* action, const QList<QKeySequence
 
 int ActionRegistry::removeBinding_(Action* fromAction, QKeySequence key, bool updateQAction)
 {
-  if (fromAction == NULL || !fromAction->action())
+  if (fromAction == nullptr || !fromAction->action())
     return 1;
   QMap<QKeySequence, Action*>::iterator i = actionsByKey_.find(key);
   if (i != actionsByKey_.end())

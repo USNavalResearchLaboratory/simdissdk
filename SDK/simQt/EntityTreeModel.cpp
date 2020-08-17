@@ -146,9 +146,9 @@ int EntityTreeItem::row() const
 
 EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
   : AbstractEntityTreeModel(parent),
-    rootItem_(NULL),
+    rootItem_(nullptr),
     treeView_(false),
-    dataStore_(NULL),
+    dataStore_(nullptr),
     platformIcon_(":/simQt/images/platform.png"),
     beamIcon_(":/simQt/images/beam.png"),
     customRenderingIcon_(":/simQt/images/CustomRender.png"),
@@ -171,7 +171,7 @@ EntityTreeModel::EntityTreeModel(QObject *parent, simData::DataStore* dataStore)
 
 EntityTreeModel::~EntityTreeModel()
 {
-  setDataStore(NULL);
+  setDataStore(nullptr);
   delete rootItem_;
 }
 
@@ -298,14 +298,14 @@ void EntityTreeModel::forceRefresh()
 
     // clean up tree widget
     delete rootItem_;
-    rootItem_ = new EntityTreeItem(0, NULL); // has no parent
+    rootItem_ = new EntityTreeItem(0, nullptr); // has no parent
     delayedAdds_.clear();  // clear any delayed entities since building from the data store
     itemsById_.clear();
 
     // Get platform objects from DataStore
     simData::DataStore::IdList platformList;
     dataStore_->idList(&platformList, simData::PLATFORM);
-    buildTree_(simData::PLATFORM, dataStore_, platformList, NULL);
+    buildTree_(simData::PLATFORM, dataStore_, platformList, nullptr);
     if (customAsTopLevel_)
     {
       // Get custom rendering objects from DataStore
@@ -319,7 +319,7 @@ void EntityTreeModel::forceRefresh()
         if (hostId == 0)
           topLevelCrList.push_back(*it);
       }
-      buildTree_(simData::CUSTOM_RENDERING, dataStore_, topLevelCrList, NULL);
+      buildTree_(simData::CUSTOM_RENDERING, dataStore_, topLevelCrList, nullptr);
     }
     endResetModel();
   }
@@ -331,12 +331,12 @@ EntityTreeItem* EntityTreeModel::findItem_(uint64_t entityId) const
   if (it != itemsById_.end())
     return it->second;
 
-  return NULL;
+  return nullptr;
 }
 
 void EntityTreeModel::setIncludeScenario(bool showScenario)
 {
-  bool currentShow = (findItem_(0) != NULL);
+  bool currentShow = (findItem_(0) != nullptr);
   if (currentShow == showScenario)
     return;  // nothing changed
 
@@ -350,8 +350,8 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
 {
   EntityTreeItem* found = findItem_(id);
   // adding a duplicate
-  assert(found == NULL);
-  if (found != NULL)
+  assert(found == nullptr);
+  if (found != nullptr)
     return;
 
   EntityTreeItem* parentItem;
@@ -384,7 +384,7 @@ void EntityTreeModel::addTreeItem_(uint64_t id, simData::ObjectType type, uint64
 void EntityTreeModel::removeEntity_(uint64_t id)
 {
   EntityTreeItem* found = findItem_(id);
-  if (found == NULL)
+  if (found == nullptr)
   {
     // slight chance it might be delayed
     std::vector<simData::ObjectId>::iterator it = std::find(delayedAdds_.begin(), delayedAdds_.end(), id);
@@ -430,13 +430,13 @@ void EntityTreeModel::removeAllEntities_()
   delayedAdds_.clear();
 
   // no point in reseting an empty model
-  if ((rootItem_ != NULL) && (rootItem_->childCount() == 0))
+  if ((rootItem_ != nullptr) && (rootItem_->childCount() == 0))
     return;
 
   beginResetModel();
 
   delete rootItem_;
-  rootItem_ = new EntityTreeItem(0, NULL);
+  rootItem_ = new EntityTreeItem(0, nullptr);
   itemsById_.clear();
 
   endResetModel();
@@ -453,7 +453,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
     return QVariant();
 
   EntityTreeItem *item = static_cast<EntityTreeItem*>(index.internalPointer());
-  if (item == NULL)
+  if (item == nullptr)
     return QVariant();
 
   switch (role)
@@ -535,7 +535,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 #ifdef HAVE_SIMVIS
       simData::DataStore::Transaction transaction;
       const simData::PlatformPrefs* prefs = dataStore_->platformPrefs(item->id(), &transaction);
-      if (prefs == NULL)
+      if (prefs == nullptr)
         return toolTip;
 
       const std::string model = simVis::Registry::instance()->findModelFile(prefs->icon());
@@ -621,7 +621,7 @@ QModelIndex EntityTreeModel::index(int row, int column, const QModelIndex &paren
 QModelIndex EntityTreeModel::index(uint64_t id) const
 {
   EntityTreeItem* item = findItem_(id);
-  if (item != NULL)
+  if (item != nullptr)
   {
     return createIndex(item->row(), 0, item);
   }
@@ -632,11 +632,11 @@ QModelIndex EntityTreeModel::index(uint64_t id) const
 QModelIndex EntityTreeModel::index(uint64_t id)
 {
   EntityTreeItem* item = findItem_(id);
-  if (item == NULL)
+  if (item == nullptr)
   {
     commitDelayedEntities_();
     item = findItem_(id);
-    if (item == NULL)
+    if (item == nullptr)
       return QModelIndex();
   }
 
@@ -649,7 +649,7 @@ uint64_t EntityTreeModel::uniqueId(const QModelIndex &index) const
     return 0;
 
   EntityTreeItem *childItem = static_cast<EntityTreeItem*>(index.internalPointer());
-  if (childItem == NULL)
+  if (childItem == nullptr)
     return 0;
 
   return childItem->id();
@@ -661,12 +661,12 @@ QModelIndex EntityTreeModel::parent(const QModelIndex &index) const
     return QModelIndex();
 
   EntityTreeItem *childItem = static_cast<EntityTreeItem*>(index.internalPointer());
-  if (childItem == NULL)
+  if (childItem == nullptr)
     return QModelIndex();
 
   EntityTreeItem *parentItem = childItem->parent();
 
-  if (parentItem == NULL)
+  if (parentItem == nullptr)
     return QModelIndex();
 
   if (parentItem == rootItem_)

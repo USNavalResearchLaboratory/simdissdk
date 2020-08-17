@@ -58,7 +58,7 @@ FileDescriptorReplacement::ReadInLoop::~ReadInLoop()
   teeToFd_ = -1;
 
   delete[] buffer_;
-  buffer_ = NULL;
+  buffer_ = nullptr;
   SAFETRYEND("destroying file descriptor reading loop");
 }
 
@@ -93,7 +93,7 @@ void FileDescriptorReplacement::ReadInLoop::selectLoop_()
     timeVal.tv_sec = 0;
     timeVal.tv_usec = 100000; // 100 milliseconds
 
-    int rv = select(fd_ + 1, &fdSet, NULL, NULL, &timeVal);
+    int rv = select(fd_ + 1, &fdSet, nullptr, nullptr, &timeVal);
     if (rv < 0)
     {
       stop();
@@ -151,7 +151,7 @@ int FileDescriptorReplacement::ReadInLoop::readBuffer_()
   int rv = read(fd_, buffer_, FD_BUFFER_SIZE);
 #endif
 
-  // Don't write single NULL characters, and don't write errors
+  // Don't write single nullptr characters, and don't write errors
   if (rv > 0 && (rv > 1 || buffer_[0] != '\0'))
   {
     // Send the output to the original destination if required
@@ -188,7 +188,7 @@ int FileDescriptorReplacement::ReadInLoop::readBuffer_()
 
 FileDescriptorReplacement::FileDescriptorReplacement(int whichFd, bool teeToOriginalDest, QObject* parent)
   : QObject(parent),
-    reader_(NULL),
+    reader_(nullptr),
     replacedFd_(whichFd),
     savedDupFd_(-1),
     pipeReadFd_(-1),
@@ -319,9 +319,9 @@ int FileDescriptorReplacement::install_(int toFd, int& copyOfOldFd, int& pipeRea
   // buffered on write, causing reads to block until the stream decides to flush.  This
   // is for buffered output (e.g. printf, fprintf, cout, etc.) and not FD-based write().
   if (toFd == STDOUT_FILENO)
-    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stdout, nullptr, _IONBF, 0);
   else if (toFd == STDERR_FILENO)
-    setvbuf(stderr, NULL, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
 
   // Also on Windows set the default handle buffer as needed
   if (setStdHandle_(toFd, pipeWriteEnd) != 0)
@@ -356,7 +356,7 @@ int FileDescriptorReplacement::setStdHandle_(int toFd, int writeFd) const
 
 void FileDescriptorReplacement::startThread_()
 {
-  if (reader_ != NULL)
+  if (reader_ != nullptr)
     return;
   QThread *thread = new QThread;
   thread->setObjectName(tr("FDReplacement %1 Thread").arg(replacedFd_));
@@ -377,18 +377,18 @@ void FileDescriptorReplacement::startThread_()
 
 void FileDescriptorReplacement::setReaderToNull_()
 {
-  // The purpose of this slot is to set reader_ to NULL.  It's possible
+  // The purpose of this slot is to set reader_ to nullptr.  It's possible
   // that the reader_ will decide on its own when to stop running, due to
   // an invalid handle for example (this can happen with the use of the
   // windows API FreeConsole()).  Avoid dereferencing stale pointers when
-  // this happens by setting reader_ to NULL.
-  reader_ = NULL;
+  // this happens by setting reader_ to nullptr.
+  reader_ = nullptr;
 }
 
 void FileDescriptorReplacement::stopThread_()
 {
   SAFETRYBEGIN;
-  if (reader_ != NULL)
+  if (reader_ != nullptr)
   {
     reader_->stop();
 
@@ -406,7 +406,7 @@ void FileDescriptorReplacement::stopThread_()
   SAFETRYEND("while stopping FileDescriptorReplacement thread");
 
   // reader_ gets deleted automatically with deleteLater() signal
-  reader_ = NULL;
+  reader_ = nullptr;
 }
 
 }

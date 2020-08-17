@@ -84,7 +84,7 @@ private:
 //----------------------------------------------------------------------------
 DataTableModel::DataTableModel(QObject *parent, simData::DataTable* dataTable)
 :QAbstractItemModel(parent),
-dataTable_(NULL),
+dataTable_(nullptr),
 genericPrecision_(3)
 {
   setDataTable(dataTable);
@@ -96,7 +96,7 @@ DataTableModel::~DataTableModel()
 
 QVariant DataTableModel::data(const QModelIndex &index, int role) const
 {
-  if (!index.isValid() || dataTable_ == NULL)
+  if (!index.isValid() || dataTable_ == nullptr)
     return QVariant();
   if (!(columns_.size() > index.column()) || !(rows_.size() > index.row()))
     return QVariant();
@@ -119,7 +119,7 @@ QVariant DataTableModel::data(const QModelIndex &index, int role) const
     if (!cell.hasNext())
       return EMPTY_CELL;
 
-    // return NULL if we found no data at this time
+    // return nullptr if we found no data at this time
     if (cell.peekNext()->time() != time)
       return EMPTY_CELL;
 
@@ -139,7 +139,7 @@ QVariant DataTableModel::data(const QModelIndex &index, int role) const
     if (!cell.hasNext())
       return EMPTY_CELL;
 
-    // return NULL if we found no data at this time
+    // return nullptr if we found no data at this time
     if (cell.peekNext()->time() != time)
       return EMPTY_CELL;
 
@@ -153,7 +153,7 @@ QVariant DataTableModel::data(const QModelIndex &index, int role) const
       return Qt::AlignLeft;
     const simData::TableColumn* col = columns_[index.column()];
     simData::TableColumn::Iterator cell = col->findAtOrBeforeTime(time);
-    // this is a NULL block, left align
+    // this is a nullptr block, left align
     if (cell.next()->time() != time)
       return Qt::AlignLeft;
 
@@ -233,7 +233,7 @@ void DataTableModel::setDataTable(simData::DataTable* dataTable)
   dataTable_ = dataTable;
 
   // no table, update layout and return
-  if (dataTable_ == NULL)
+  if (dataTable_ == nullptr)
   {
     endResetModel();
     return;
@@ -252,7 +252,7 @@ void DataTableModel::setDataTable(simData::DataTable* dataTable)
   // use size() instead of size() - 1 because of the time column
   const int lastColIndex = cv.columns().size();
   beginInsertColumns(QModelIndex(), 0, lastColIndex);
-  columns_.push_back(NULL); // time column
+  columns_.push_back(nullptr); // time column
   columns_ += cv.columns();
   endInsertColumns();
 

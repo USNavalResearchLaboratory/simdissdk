@@ -104,7 +104,7 @@ QWidget* EntityStateFilter::widget(QWidget* newWidgetParent) const
     connect(this, SIGNAL(entityStateChanged(int)), rv, SLOT(setCurrentIndex(int)));
     return rv;
   }
-  return NULL;
+  return nullptr;
 }
 
 void EntityStateFilter::getFilterSettings(QMap<QString, QVariant>& settings) const

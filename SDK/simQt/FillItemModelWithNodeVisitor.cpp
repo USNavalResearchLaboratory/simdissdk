@@ -232,12 +232,12 @@ std::string StateSetVisitor::uniformToString(const osg::Uniform& uniform)
 FillTreeStateSetVisitor::FillTreeStateSetVisitor(QStandardItem& parent, osg::NodeVisitor::TraversalMode tm)
   : StateSetVisitor(tm),
     parent_(parent),
-    modes_(NULL),
-    attributes_(NULL),
-    textureModes_(NULL),
-    textureAttributes_(NULL),
-    uniforms_(NULL),
-    defines_(NULL)
+    modes_(nullptr),
+    attributes_(nullptr),
+    textureModes_(nullptr),
+    textureAttributes_(nullptr),
+    uniforms_(nullptr),
+    defines_(nullptr)
 {
 }
 
@@ -325,9 +325,9 @@ void FillTreeStateSetVisitor::applyDefine(osg::StateSet& stateSet, const std::st
 QList<QStandardItem*> FillTreeStateSetVisitor::appendRow_(QStandardItem& parent, const QString& column1, const QString& column2, const QString& column3) const
 {
   QList<QStandardItem*> row;
-  row.push_back(newStandardItem_(NULL, column1));
-  row.push_back(newStandardItem_(NULL, column2));
-  row.push_back(newStandardItem_(NULL, column3));
+  row.push_back(newStandardItem_(nullptr, column1));
+  row.push_back(newStandardItem_(nullptr, column2));
+  row.push_back(newStandardItem_(nullptr, column3));
   parent.appendRow(row);
   return row;
 }

@@ -73,7 +73,7 @@ private:
 DataTableComboBox::DataTableComboBox(QWidget* parent)
 :QWidget(parent),
 entityId_(0),
-dataStore_(NULL)
+dataStore_(nullptr)
 {
   ui_ = new Ui_DataTableComboBox;
   ui_->setupUi(this);
@@ -84,7 +84,7 @@ dataStore_(NULL)
 
 DataTableComboBox::~DataTableComboBox()
 {
-  if (dataStore_ != NULL)
+  if (dataStore_ != nullptr)
     dataStore_->dataTableManager().removeObserver(observer_);
   delete ui_;
 }
@@ -92,7 +92,7 @@ DataTableComboBox::~DataTableComboBox()
 simData::DataTable* DataTableComboBox::currentSelection() const
 {
   if (ui_->TableComboBox->count() == 0)
-    return NULL;
+    return nullptr;
   return (simData::DataTable*)(ui_->TableComboBox->itemData(ui_->TableComboBox->currentIndex()).toLongLong());
 }
 
@@ -100,11 +100,11 @@ void DataTableComboBox::setEntity(simData::ObjectId entityId)
 {
   entityId_ = entityId;
   ui_->TableComboBox->clear();
-  if (dataStore_ == NULL)
+  if (dataStore_ == nullptr)
     return;
   // get the table list for all tables owned by this entity
   const simData::TableList* tableList = dataStore_->dataTableManager().tablesForOwner(entityId_);
-  if (tableList == NULL)
+  if (tableList == nullptr)
     return;
   // visit the table list to populate the combo box with data tables
   TableListVisitor listVisitor(ui_->TableComboBox);
@@ -114,10 +114,10 @@ void DataTableComboBox::setEntity(simData::ObjectId entityId)
 void DataTableComboBox::setProviders(simData::DataStore* dataStore)
 {
   // remove observer if replacing data store
-  if (dataStore_ != NULL)
+  if (dataStore_ != nullptr)
     dataStore_->dataTableManager().removeObserver(observer_);
   dataStore_ = dataStore;
-  if (dataStore_ == NULL)
+  if (dataStore_ == nullptr)
     return;
   // now register new observer
   dataStore_->dataTableManager().addObserver(observer_);
@@ -152,7 +152,7 @@ void DataTableComboBox::removeTable_(simData::DataTable* table)
     }
   }
   if (ui_->TableComboBox->count() == 0)
-    emit(dataTableSelected(NULL));
+    emit(dataTableSelected(nullptr));
 }
 
 }

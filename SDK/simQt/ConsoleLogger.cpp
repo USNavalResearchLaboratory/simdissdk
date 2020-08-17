@@ -124,7 +124,7 @@ ConsoleLogger::ConsoleLogger(const QString& filePrefix, QObject* parent)
 ConsoleLogger::~ConsoleLogger()
 {
   delete fileLogger_;
-  fileLogger_ = NULL;
+  fileLogger_ = nullptr;
 }
 
 int ConsoleLogger::clean(const DetermineRemovable& removable) const

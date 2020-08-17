@@ -93,7 +93,7 @@ QString FileDialog::saveFile(QWidget* owner, const QString& caption, const QStri
   // If the caller did not provide a selected filter, attempt to find a matching filter
   QString* localPointer = selectedFilter;
   QString localSelectedFilter;
-  if (localPointer == NULL)
+  if (localPointer == nullptr)
   {
     QString ext = QString::fromStdString(simCore::getExtension(directory.toStdString()));
     if (!ext.isEmpty())

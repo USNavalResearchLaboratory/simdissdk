@@ -36,7 +36,7 @@ void ChannelNotifyHandler::setChannel(ConsoleChannelPtr channel)
 
 void ChannelNotifyHandler::notify(const std::string& message)
 {
-  if (channel_ == NULL)
+  if (channel_ == nullptr)
     return;
 
   lockMutex_();
