@@ -691,13 +691,19 @@ bool ResolvedPositionOrientationLocator::getPosition_(osg::Vec3d& pos, unsigned 
   // resolved position is not modified by children's inheritance orientation components
   if (getParentLocator() && getParentLocator()->getLocatorMatrix(mat, getComponentsToInherit()))
   {
-    // strip out orientation and scale
+    // strip out orientation and scale; does not strip out rotation.
     pos = mat.getTrans();
     return true;
   }
   return false;
 }
-// only apply our local offsets
+bool ResolvedPositionOrientationLocator::getRotation_(osg::Matrixd& rotationMatrix) const
+{
+  // rotation already included by getPosition_
+  return false;
+}
+
+// only apply local offsets
 // do not apply parent offsets, since they have already been processed to produce the resolved position
 void ResolvedPositionOrientationLocator::applyOffsets_(osg::Matrixd& output, unsigned int comps) const
 {
