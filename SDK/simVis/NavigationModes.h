@@ -351,6 +351,43 @@ class View;
     osg::ref_ptr<BoxZoomMouseHandler> boxZoom_;
   };
 
+  /**
+  * BuilderNavigationMode provides a similar navigation mode to Builder.
+  * Pass an instance of BuilderNavigationMode to
+  * EarthManipulator::applySettings in order to enable this navigation mode.<p>
+  * The mappings are:
+  * <ul>
+  * <li>Left mouse button: pan</li>
+  * <li>Left mouse button + shift: rotation</li>
+  * <li>Middle mouse button: zoom</li>
+  * <li>Right mouse button: rotation</li>
+  * <li>Scroll wheel: zoom</li>
+  * <li>Arrow keys: pan</li>
+  * <li>Arrow keys + ctrl: zoom</li>
+  * <li>Arrow keys + ctrl + shift: rotate</li>
+  * </ul>
+  */
+  class SDKVIS_EXPORT BuilderNavigationMode : public NavigationMode
+  {
+  public:
+    /**
+    * Initialize the Builder navigation mode.
+    * @param enableOverhead true to create the navigation mode with
+    * overhead enabled, false to create with perspective mode
+    * @param watchMode if true, no rotate actions will be applied, as
+    * rotation is disabled in watchMode
+    */
+    BuilderNavigationMode(bool enableOverhead, bool watchMode);
+
+  protected:
+    /// osg::Referenced-derived
+    virtual ~BuilderNavigationMode();
+
+  private:
+    /** Initializes the bindings given the parameters. */
+    void init_(bool enableOverhead, bool watchMode);
+  };
+
 }
 
 #endif // SIMVIS_UI_NAVIGATION_MODES

@@ -47,7 +47,8 @@ enum NavMode
   NAVMODE_GLOBESPIN,
   NAVMODE_ZOOM,
   NAVMODE_CENTERVIEW,
-  NAVMODE_GIS
+  NAVMODE_GIS,
+  NAVMODE_BUILDER
 };
 
 /// A camera viewpoint configuration
