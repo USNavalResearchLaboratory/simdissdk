@@ -25,6 +25,7 @@
  *
  */
 #include <QGLFormat>
+#include <QKeyEvent>
 #include <QWindow>
 #include "osg/Camera"
 #include "osg/DisplaySettings"
@@ -69,6 +70,35 @@ public:
 
 ////////////////////////////////////////////////////////////////
 
+AutoRepeatFilter::AutoRepeatFilter(QObject* parent)
+  : QObject(parent),
+  enabled_(true)
+{
+}
+
+bool AutoRepeatFilter::eventFilter(QObject* obj, QEvent* evt)
+{
+  if (enabled_ && evt && evt->type() == QEvent::KeyPress)
+  {
+    const QKeyEvent* keyEvt = dynamic_cast<const QKeyEvent*>(evt);
+    if (keyEvt && keyEvt->isAutoRepeat())
+      return true;
+  }
+  return QObject::eventFilter(obj, evt);
+}
+
+void AutoRepeatFilter::setEnabled(bool enabled)
+{
+  enabled_ = enabled;
+}
+
+bool AutoRepeatFilter::isEnabled() const
+{
+  return enabled_;
+}
+
+////////////////////////////////////////////////////////////////
+
 ViewWidget::ViewWidget(osgViewer::View* view)
   : osgQt::GLWidget(simQt::Gl3FormatGuesser::getFormat())
 {
@@ -84,6 +114,10 @@ ViewWidget::~ViewWidget()
 
 void ViewWidget::init_(osgViewer::View* view)
 {
+  // Install an event handler to "eat" auto-repeat key events, avoiding keyboard navigation errors
+  autoRepeatFilter_ = new AutoRepeatFilter(this);
+  installEventFilter(autoRepeatFilter_);
+
   if (!view)
     return;
 
@@ -149,6 +183,16 @@ osg::GraphicsContext* ViewWidget::createGraphicsContext_()
   // Creates the graphics window Qt, telling it which traits were used to create it.  Note
   // the use of ExposedSwapGraphicsWindowQt to avoid Qt OpenGL swap warning.
   return new ExposedSwapGraphicsWindowQt(traits.get());
+}
+
+void ViewWidget::setAllowAutoRepeatKeys(bool allowAutoRepeat)
+{
+  autoRepeatFilter_->setEnabled(!allowAutoRepeat);
+}
+
+bool ViewWidget::allowAutoRepeatKeys() const
+{
+  return !autoRepeatFilter_->isEnabled();
 }
 
 }
