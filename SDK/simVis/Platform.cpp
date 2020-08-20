@@ -275,18 +275,6 @@ void PlatformNode::setPrefs(const simData::PlatformPrefs& prefs)
   if (!lastPrefsValid_ ||
     PB_FIELD_CHANGED((&lastPrefs_), (&prefs), ecidatamode))
   {
-    if (prefs.ecidatamode())
-    {
-      // for eci mode, platforms need to parent their EntityNode locator to the scenario ECI locator
-      if (!getLocator()->getParentLocator())
-        getLocator()->setParentLocator(eciLocator_.get());
-    }
-    else if (getLocator()->getParentLocator() == eciLocator_)
-    {
-      // eci mode turned off, platform locator should not have a parent
-      getLocator()->setParentLocator(nullptr);
-      getLocator()->setEciRotationTime(0., lastUpdateTime_, false);
-    }
     // on change of eci data mode, track and timeticks need to be completely recreated
     if (track_.valid())
     {
@@ -453,12 +441,6 @@ TrackHistoryNode* PlatformNode::getTrackHistory()
 
 void PlatformNode::updateLocator_(const simData::PlatformUpdate& u)
 {
-  if (u.time() != -1.0 && lastPrefs_.ecidatamode())
-  {
-    // all non-static eci platforms get this corrective rotation; updates at current time should have a total rotation of 0
-    getLocator()->setEciRotationTime(-u.time(), u.time(), false);
-  }
-
   // static platforms by convention have elapsedEciTime 0
   const simCore::Coordinate coord(
         simCore::COORD_SYS_ECEF,
