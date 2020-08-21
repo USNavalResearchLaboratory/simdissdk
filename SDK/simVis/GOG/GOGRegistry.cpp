@@ -35,6 +35,7 @@
 #include "simVis/GOG/LatLonAltBox.h"
 #include "simVis/GOG/Line.h"
 #include "simVis/GOG/LineSegs.h"
+#include "simVis/GOG/Orbit.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Points.h"
 #include "simVis/GOG/Polygon.h"
@@ -87,6 +88,7 @@ GOGRegistry::GOGRegistry(osgEarth::MapNode* mapNode)
   add("points",       new SF<Points>());
   add("sphere",       new SF<Sphere>());
   add("imageoverlay", new SF<ImageOverlay>());
+  add("orbit",        new SF<Orbit>());
 }
 
 GOGRegistry::GOGRegistry(const GOGRegistry& rhs)

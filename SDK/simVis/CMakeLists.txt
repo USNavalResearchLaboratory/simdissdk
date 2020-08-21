@@ -194,6 +194,7 @@ set(VIS_HEADERS_GOG
     ${VIS_INC}GOG/LatLonAltBox.h
     ${VIS_INC}GOG/Line.h
     ${VIS_INC}GOG/LineSegs.h
+    ${VIS_INC}GOG/Orbit.h
     ${VIS_INC}GOG/ParsedShape.h
     ${VIS_INC}GOG/Parser.h
     ${VIS_INC}GOG/Points.h
@@ -338,6 +339,7 @@ set(VIS_SOURCES_GOG
     ${VIS_SRC}GOG/LatLonAltBox.cpp
     ${VIS_SRC}GOG/Line.cpp
     ${VIS_SRC}GOG/LineSegs.cpp
+    ${VIS_SRC}GOG/Orbit.cpp
     ${VIS_SRC}GOG/ParsedShape.cpp
     ${VIS_SRC}GOG/Parser.cpp
     ${VIS_SRC}GOG/Points.cpp

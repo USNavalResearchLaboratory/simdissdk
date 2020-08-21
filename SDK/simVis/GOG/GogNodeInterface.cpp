@@ -208,7 +208,7 @@ void GogNodeInterface::applyToStyle(const ParsedShape& parent, const UnitsState&
   bool isExtruded = simCore::stringIsTrueToken(parent.stringValue(GOG_EXTRUDE)) && !is3dShape;
 
   // do we need a PolygonSymbol?
-  bool isFillable = isExtruded || key == "poly" || key == "polygon" || key == "ellipse" || key == "circle" || key == "arc" || is3dShape;
+  bool isFillable = isExtruded || key == "poly" || key == "polygon" || key == "ellipse" || key == "circle" || key == "arc" || key == "orbit" || is3dShape;
   bool isFilled   = isFillable && simCore::stringIsTrueToken(parent.stringValue(GOG_FILLED));
 
   // do we need a LineSymbol?
@@ -1227,6 +1227,7 @@ bool GogNodeInterface::isFillable_(simVis::GOG::GogShape shape) const
   case simVis::GOG::GOG_POINTS:
   case simVis::GOG::GOG_POLYGON:
   case simVis::GOG::GOG_CONE:
+  case simVis::GOG::GOG_ORBIT:
     return true;
   default:
     break;
@@ -1247,6 +1248,7 @@ bool GogNodeInterface::isLined_(simVis::GOG::GogShape shape) const
   case simVis::GOG::GOG_LINESEGS:
   case simVis::GOG::GOG_POINTS:
   case simVis::GOG::GOG_POLYGON:
+  case simVis::GOG::GOG_ORBIT:
     return true;
   default:
     break;
