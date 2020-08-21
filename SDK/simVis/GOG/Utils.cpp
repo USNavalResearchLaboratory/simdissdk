@@ -97,6 +97,7 @@ bool Utils::canSerializeGeometry_(simVis::GOG::GogShape shape)
   case simVis::GOG::GOG_LATLONALTBOX:
   case simVis::GOG::GOG_CONE:
   case simVis::GOG::GOG_IMAGEOVERLAY:
+  case simVis::GOG::GOG_ORBIT:
     break;
   }
   return false;
