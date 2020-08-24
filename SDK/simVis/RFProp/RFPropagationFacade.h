@@ -52,7 +52,7 @@ public:
   /**
    * Construct an RF Propagation beam handler for the specified beam
    * @param beamId Beam to configure
-   * @param parent node to which the visual display's locator is attached; if NULL, no display will be created
+   * @param parent node to which the visual display's locator is attached; if nullptr, no display will be created
    * @param datumConvert converter for MSL heights
    */
   RFPropagationFacade(simData::ObjectId beamId, osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert);
@@ -407,7 +407,7 @@ public:
   /**
   * Gets the composite provider for the specified azimuth the antenna height that will be used for the display
   * @param azimRad Azimuth angle referenced to True North in radians
-  * @return the composite provider , or NULL if no provider exists at the specified azimuth
+  * @return the composite provider, or nullptr if no provider exists at the specified azimuth
   */
   const simRF::CompositeProfileProvider* getProfileProvider(double azimRad) const;
 
@@ -473,7 +473,7 @@ public:
 
   /**
   * Gets the profiles at the specified index
-  * @return requested profile, or NULL if the index was not valid
+  * @return requested profile, or nullptr if the index was not valid
   */
   const simRF::Profile* getProfile(unsigned int index) const;
 

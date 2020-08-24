@@ -341,7 +341,7 @@ Profile* ProfileManager::getProfileByBearing(double bearingR) const
 
 const Profile* ProfileManager::getProfile(unsigned int index) const
 {
-  return ((index < getNumChildren()) ? dynamic_cast<const Profile*>(getChild(index)) : NULL);
+  return ((index < getNumChildren()) ? dynamic_cast<const Profile*>(getChild(index)) : nullptr);
 }
 
 void ProfileManager::addProfile(Profile* profile)

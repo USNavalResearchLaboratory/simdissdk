@@ -74,7 +74,7 @@ double BearingProfileMap::getSlotBearing(double bearingR) const
 Profile* BearingProfileMap::getProfileByBearing(double bearingR) const
 {
   BearingProfileMap::const_iterator itr = getSlot_(bearingR);
-  return (itr != profiles_.end()) ? itr->second.get() : NULL;
+  return (itr != profiles_.end()) ? itr->second.get() : nullptr;
 }
 
 BearingProfileMap::const_iterator BearingProfileMap::getSlot_(double bearingR) const

@@ -108,7 +108,7 @@ GogNodeInterface* Orbit::deserialize(
     if (!parsedShape.hasValue(GOG_CENTERLL) || !parsedShape.hasValue(GOG_CENTERLL2))
     {
       context.errorHandler_->printError(lineNumber, "Orbit must have both center points, [centerll,centerlla,centerlatlon] and centerll2");
-      return NULL;
+      return nullptr;
     }
 
     // if center points are not set, the hasValue() checks above were implemented incorrectly
@@ -121,7 +121,7 @@ GogNodeInterface* Orbit::deserialize(
     // find azimuth and length of orbit
     double azimuth = 0.;
     double length = simCore::sodanoInverse(ctr1.y() * simCore::DEG2RAD, ctr1.x() * simCore::DEG2RAD, ctr1.z(),
-      ctr2.y() * simCore::DEG2RAD, ctr2.x() * simCore::DEG2RAD, &azimuth, NULL);
+      ctr2.y() * simCore::DEG2RAD, ctr2.x() * simCore::DEG2RAD, &azimuth, nullptr);
     osgEarth::Geometry* geom = createOrbit(azimuth, length, radius, ctr1.z());
 
     osgEarth::Style style(p.style_);

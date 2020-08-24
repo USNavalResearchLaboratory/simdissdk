@@ -185,7 +185,7 @@ void CompositeColorProvider::install(osg::StateSet* stateset)
 
 void CompositeColorProvider::uninstall(osg::StateSet* stateset)
 {
-  lastStateSet_ = NULL;
+  lastStateSet_ = nullptr;
   if (colorMode_ == COLORMODE_GRADIENT)
     gradientProvider_->uninstall(stateset);
   else

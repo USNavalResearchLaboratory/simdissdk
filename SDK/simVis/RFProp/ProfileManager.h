@@ -107,14 +107,14 @@ public:
   /**
    * Gets the profile at the given bearing
    * @param bearingR bearing in radians
-   * @return profile at specified bearing, or NULL if none
+   * @return profile at specified bearing, or nullptr if none
    */
   Profile* getProfileByBearing(double bearingR) const;
 
   /**
   * Gets the profile at the specified index, intended to support simple iteration through all profiles.
   * @param index of profile to return
-  * @return profile at specified index, or NULL if none
+  * @return profile at specified index, or nullptr if none
   */
   const Profile* getProfile(unsigned int index) const;
 
