@@ -602,7 +602,7 @@ bool Parser::parse(std::istream& input, std::vector<ParsedShape>& output, std::v
         printError_(lineNumber, "centerll/centerlla/centerlatlon command requires at least 2 arguments");
       }
     }
-    else if (tokens[0] == "centerll2")
+    else if (tokens[0] == "centerll2" || tokens[0] == "centerlatlon2")
     {
       if (tokens.size() >= 3)
       {
