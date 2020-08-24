@@ -75,7 +75,7 @@ struct FrameRateAction : public QAction
 // custom action for File->Exit menu :)
 struct ExitAction : public QAction
 {
-  explicit ExitAction(QMainWindow* win) : QAction(tr("Exit"), NULL), win_(win)
+  explicit ExitAction(QMainWindow* win) : QAction(tr("Exit"), nullptr), win_(win)
   {
     connect(this, SIGNAL(triggered()), win_, SLOT(close()));
   }

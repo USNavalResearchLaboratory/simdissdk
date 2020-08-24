@@ -194,10 +194,10 @@ public:
         if (app_.insetRttView)
         {
           app_.mainView->removeInset(app_.insetRttView.get());
-          app_.insetRttView = NULL;
+          app_.insetRttView = nullptr;
         }
         app_.mainView->removeInset(app_.insetView.get());
-        app_.insetView = NULL;
+        app_.insetView = nullptr;
       }
       break;
 

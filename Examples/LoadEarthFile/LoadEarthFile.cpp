@@ -139,12 +139,12 @@ struct MenuHandler : public osgGA::GUIEventHandler
   MenuHandler(simVis::Viewer* viewer, simVis::CreateInsetEventHandler* handler, LabelControl* elevationLabel, simUtil::MouseDispatcher* mouseDispatcher)
    : viewer_(viewer),
      handler_(handler),
-     latLonElevListener_(NULL),
+     latLonElevListener_(nullptr),
      showLatLonElevation_(false)
   {
     latLonElevListener_ = new LatLonElevationListener(elevationLabel);
     mouseDispatcher_ = mouseDispatcher;
-    mouseDispatcher_->setViewManager(NULL);
+    mouseDispatcher_->setViewManager(nullptr);
     setUpMouseManip_(viewer_.get());
   }
 

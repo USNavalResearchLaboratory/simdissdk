@@ -70,16 +70,16 @@ namespace
   struct AppData
   {
     AppData()
-     : altitude(NULL),
-       azim_center(NULL),
-       fov(NULL),
-       azim_res(NULL),
-       range_max(NULL),
-       range_res(NULL),
-       p2p_result(NULL),
-       los(NULL),
-       mapNode(NULL),
-       p2pFeature(NULL)
+     : altitude(nullptr),
+       azim_center(nullptr),
+       fov(nullptr),
+       azim_res(nullptr),
+       range_max(nullptr),
+       range_res(nullptr),
+       p2p_result(nullptr),
+       los(nullptr),
+       mapNode(nullptr),
+       p2pFeature(nullptr)
     {
     }
 

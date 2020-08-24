@@ -125,7 +125,7 @@ public:
   explicit FindNodeByName(const std::string& name)
     : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
       searchFor_(name),
-      node_(NULL)
+      node_(nullptr)
   {
   }
 
@@ -137,7 +137,7 @@ public:
       traverse(node);
   }
 
-  /** Retrieves the node from visitation, possibly NULL */
+  /** Retrieves the node from visitation, possibly nullptr */
   osg::Node* node() const
   {
     return node_.get();
@@ -155,8 +155,8 @@ class TankNode
 {
 public:
   TankNode()
-    : gun_(NULL),
-      turret_(NULL)
+    : gun_(nullptr),
+      turret_(nullptr)
   {
   }
   virtual ~TankNode()
@@ -187,48 +187,48 @@ public:
 
   void setGunPitch(double pitchDeg)
   {
-    if (gun_ != NULL)
+    if (gun_ != nullptr)
       gun_->updateCurrentHPR(osg::Vec3f(0.0f, simCore::DEG2RAD * pitchDeg, 0.0f));
   }
   float gunPitch() const
   {
-    if (gun_ != NULL)
+    if (gun_ != nullptr)
       return simCore::RAD2DEG * gun_->getCurrentHPR().y();
     return 0.0f;
   }
   float gunMinimumPitch() const
   {
-    if (gun_ != NULL)
+    if (gun_ != nullptr)
       return simCore::RAD2DEG * gun_->getMinHPR().y();
     return 0.0f;
   }
   float gunMaximumPitch() const
   {
-    if (gun_ != NULL)
+    if (gun_ != nullptr)
       return simCore::RAD2DEG * gun_->getMaxHPR().y();
     return 0.0f;
   }
 
   void setTurretYaw(double yawDeg)
   {
-    if (turret_ != NULL)
+    if (turret_ != nullptr)
       turret_->updateCurrentHPR(osg::Vec3f(simCore::DEG2RAD * yawDeg, 0.0f, 0.0f));
   }
   float turretYaw() const
   {
-    if (turret_ != NULL)
+    if (turret_ != nullptr)
       return simCore::RAD2DEG * turret_->getCurrentHPR().x();
     return 0.0f;
   }
   float turretMinimumYaw() const
   {
-    if (turret_ != NULL)
+    if (turret_ != nullptr)
       return simCore::RAD2DEG * turret_->getMinHPR().x();
     return 0.0f;
   }
   float turretMaximumYaw() const
   {
-    if (turret_ != NULL)
+    if (turret_ != nullptr)
       return simCore::RAD2DEG * turret_->getMaxHPR().x();
     return 0.0f;
   }

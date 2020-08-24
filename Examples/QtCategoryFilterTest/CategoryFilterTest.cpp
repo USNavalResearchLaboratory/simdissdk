@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
   QApplication app(argc, argv);
 
   simData::MemoryDataStore* dataStore = new simData::MemoryDataStore();
-  MainWindow* window = new MainWindow(dataStore, NULL);
+  MainWindow* window = new MainWindow(dataStore, nullptr);
   window->show();
 
   int rv = app.exec();

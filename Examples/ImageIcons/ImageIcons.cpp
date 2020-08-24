@@ -65,10 +65,10 @@ static simData::IconRotation s_iconRotation = simData::IR_2D_YAW;
 static const std::string s_title = "Image Icons Example";
 
 /// keep a handle, for toggling
-static osg::ref_ptr<Control> s_helpControl = NULL;
+static osg::ref_ptr<Control> s_helpControl = nullptr;
 
 /// label displaying the name of the current calculation
-static osg::ref_ptr<LabelControl> s_iconRotationLabel = NULL;
+static osg::ref_ptr<LabelControl> s_iconRotationLabel = nullptr;
 
 
 //----------------------------------------------------------------------------

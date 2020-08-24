@@ -219,7 +219,7 @@ public:
 
     // Adjust the coordinates of the locator to match that of the host
     auto host = node_->host();
-    if (host != NULL)
+    if (host != nullptr)
     {
       simCore::Coordinate coord;
       host->getLocator()->getCoordinate(&coord);
@@ -319,7 +319,7 @@ public:
 
     // Pick out the node from the scene (created by the ScenarioDataStoreAdapter automatically)
     simVis::CustomRenderingNode* node = manager_->find<simVis::CustomRenderingNode>(newId);
-    if (node != NULL)
+    if (node != nullptr)
     {
       // A real render engine would need to account for multiple Custom Rendering nodes here,
       // either by creating a separate updater per entity, or configuring the updater to

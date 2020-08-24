@@ -135,7 +135,7 @@ double getBearingAngle(const std::string& infilename)
   return simCore::angFix2PI(bearing * simCore::DEG2RAD);
 }
 
-static osg::ref_ptr<Grid> s_controlGrid = NULL;
+static osg::ref_ptr<Grid> s_controlGrid = nullptr;
 static bool s_autoBearing = false;
 static float s_alphaValue = 1.f;
 
@@ -594,7 +594,7 @@ int main(int argc, char** argv)
   simExamples::addDefaultSkyNode(viewer.get());
 
   osg::ref_ptr<osg::Group> root = new osg::Group();
-  osg::ref_ptr<simRF::ProfileManager> profileManager = new simRF::ProfileManager(NULL);
+  osg::ref_ptr<simRF::ProfileManager> profileManager = new simRF::ProfileManager(nullptr);
 
   // min & max loss values for gradient color setting in dB; valid loss data is [0,300]
   const double minFSL = 0;

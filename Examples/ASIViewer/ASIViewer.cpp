@@ -162,7 +162,7 @@ struct AppData
   osgEarth::DateTime refDateTime_;
 
   explicit AppData(simData::DataStore *ds, simVis::View* view)
-  : timeSlider_(NULL),
+  : timeSlider_(nullptr),
     ds_(ds),
     view_(view),
     startTime_(0.0),

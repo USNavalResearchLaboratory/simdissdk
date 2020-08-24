@@ -40,7 +40,7 @@ class UnitsComboBoxTest : public QWidget
 {
   Q_OBJECT;
 public:
-  explicit UnitsComboBoxTest(QWidget* parent = NULL);
+  explicit UnitsComboBoxTest(QWidget* parent = nullptr);
   virtual ~UnitsComboBoxTest();
 
 private slots:

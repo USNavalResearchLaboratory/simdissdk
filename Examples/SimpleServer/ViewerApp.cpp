@@ -144,11 +144,11 @@ private:
 //////////////////////////////////////////////////////////////////
 
 ViewerApp::ViewerApp(osg::ArgumentParser& args)
-  : clock_(NULL),
+  : clock_(nullptr),
     textReplacer_(new simCore::TextReplacer),
-    dataStore_(NULL),
-    interpolator_(NULL),
-    timeVariable_(NULL),
+    dataStore_(nullptr),
+    interpolator_(nullptr),
+    timeVariable_(nullptr),
     declutterOn_(false),
     colorIndex_(0)
 {
@@ -157,7 +157,7 @@ ViewerApp::ViewerApp(osg::ArgumentParser& args)
 
 ViewerApp::~ViewerApp()
 {
-  engine_ = NULL;
+  engine_ = nullptr;
   delete dataStore_;
 }
 
@@ -362,7 +362,7 @@ void ViewerApp::centerNext()
   simVis::View* view = viewManager_->getView(0);
   simVis::EntityNode* tetherNode = view->getEntityNode(view->getCameraTether());
   simData::ObjectId lastTetherId = 0;
-  if (tetherNode != NULL)
+  if (tetherNode != nullptr)
   {
     lastTetherId = tetherNode->getId();
   }
@@ -390,7 +390,7 @@ void ViewerApp::toggleCockpit()
   // Figure out what the current tether node is
   simVis::View* view = viewManager_->getView(0);
   simVis::EntityNode* tetherNode = view->getEntityNode(view->getCameraTether());
-  if (tetherNode == NULL)
+  if (tetherNode == nullptr)
     return;
 
   if (view->getCameraTether() && !view->isCockpitEnabled())
@@ -404,7 +404,7 @@ void ViewerApp::toggleCockpit()
     view->setViewpoint(vp);
     return;
   }
-  view->enableCockpitMode(NULL);
+  view->enableCockpitMode(nullptr);
 }
 
 void ViewerApp::playPause()
@@ -433,7 +433,7 @@ void ViewerApp::toggleLogDb()
 
 void ViewerApp::cycleTimeFormat()
 {
-  if (timeVariable_ == NULL)
+  if (timeVariable_ == nullptr)
     return;
   timeVariable_->cycleFormat();
 }

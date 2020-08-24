@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 {
   QApplication app(argc, argv);
 
-  TestFileSelectorWidget fileSelectorWidget(NULL);
+  TestFileSelectorWidget fileSelectorWidget(nullptr);
   fileSelectorWidget.show();
 
   return app.exec();
