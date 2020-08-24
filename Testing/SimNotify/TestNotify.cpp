@@ -396,8 +396,8 @@ void testStandardNotifyHandler()
   memset(stdoutBuf, '\0', sizeof(stdoutBuf));
 
   // Reset stdout and stderr
-  setbuf(stdout, NULL);
-  setbuf(stderr, NULL);
+  setbuf(stdout, nullptr);
+  setbuf(stderr, nullptr);
 
   // Reset notify handlers to default
   simNotify::setNotifyLevel(simNotify::defaultNotifyLevel());
@@ -437,7 +437,7 @@ void testStdoutNotifyHandler()
   }
 
   // Reset stdout and stderr
-  setbuf(stdout, NULL);
+  setbuf(stdout, nullptr);
 
   // Reset notify handlers to default
   simNotify::setNotifyHandlers(simNotify::defaultNotifyHandler());
@@ -469,7 +469,7 @@ void testStderrNotifyHandler()
   }
 
   // Reset stdout and stderr
-  setbuf(stderr, NULL);
+  setbuf(stderr, nullptr);
 
   // Reset notify handlers to default
   simNotify::setNotifyHandlers(simNotify::defaultNotifyHandler());

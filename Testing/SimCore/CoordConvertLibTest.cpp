@@ -168,7 +168,7 @@ static int checkValues(int uniqueID, const char* whichTest,
 //
 static void createTestCases(vTestCases* testCases)
 {
-  if (testCases == NULL)
+  if (testCases == nullptr)
     return;
   TestCase* tempTestCase;
 
@@ -1057,7 +1057,7 @@ int CoordConvertLibTest(int _argc_, char *_argv_[])
        ++testCaseIterator)
   {
     TestCase* temp = *testCaseIterator;
-    if (temp != NULL)
+    if (temp != nullptr)
     {
       simCore::Coordinate inTSPI(temp->InputCoordinateSystem_,
           temp->InputPosition_, temp->InputEul_, temp->InputVelocity_, temp->InputAcc_);

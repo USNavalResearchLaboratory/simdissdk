@@ -411,21 +411,21 @@ int testDeleteEntity(simData::DataStore& ds)
   simUtil::DataStoreTestHelper helper(&ds);
   uint64_t plat100 = helper.addPlatform();
   helper.addCategoryData(plat100, "Plat100", "100", -1.0);
-  rv += SDK_ASSERT(ds.categoryDataSlice(plat100) != NULL);
-  rv += SDK_ASSERT(ds.categoryDataSlice(plat100+1) == NULL); // random sanity check
+  rv += SDK_ASSERT(ds.categoryDataSlice(plat100) != nullptr);
+  rv += SDK_ASSERT(ds.categoryDataSlice(plat100+1) == nullptr); // random sanity check
   // Validate that removing the entity removes its category data slice too
   ds.removeEntity(plat100);
-  rv += SDK_ASSERT(ds.categoryDataSlice(plat100) == NULL);
+  rv += SDK_ASSERT(ds.categoryDataSlice(plat100) == nullptr);
 
   // Same test, recursive on a LOB
   uint64_t plat101 = helper.addPlatform();
   uint64_t lob102 = helper.addLOB(plat101);
   helper.addCategoryData(lob102, "LOB102", "102", -1.0);
-  rv += SDK_ASSERT(ds.categoryDataSlice(lob102) != NULL); // random sanity check
+  rv += SDK_ASSERT(ds.categoryDataSlice(lob102) != nullptr); // random sanity check
   // Remove it and double check
   ds.removeEntity(plat101);
-  rv += SDK_ASSERT(ds.categoryDataSlice(plat101) == NULL);
-  rv += SDK_ASSERT(ds.categoryDataSlice(lob102) == NULL);
+  rv += SDK_ASSERT(ds.categoryDataSlice(plat101) == nullptr);
+  rv += SDK_ASSERT(ds.categoryDataSlice(lob102) == nullptr);
   return rv;
 }
 
@@ -767,7 +767,7 @@ int testIsDuplicateValue()
 
   ds.setDataLimiting(false); // Needs to be false to avoid triggering duplicate values
   const simData::MemoryCategoryDataSlice* cd = dynamic_cast<const simData::MemoryCategoryDataSlice*>(ds.categoryDataSlice(id));
-  rv += SDK_ASSERT(cd != NULL);
+  rv += SDK_ASSERT(cd != nullptr);
   rv += SDK_ASSERT(cd->numItems() == 0);
   // No items, no duplicates
   rv += SDK_ASSERT(!cd->isDuplicateValue(10, "key", "value"));
@@ -1389,16 +1389,16 @@ int testRegExpSimplify()
   rv += SDK_ASSERT(checks.size() == 1);
 
   // Test getRegExp()/getRegExpPattern()
-  rv += SDK_ASSERT(filter.getRegExp(KEY2) != NULL);
+  rv += SDK_ASSERT(filter.getRegExp(KEY2) != nullptr);
   rv += SDK_ASSERT(filter.getRegExp(KEY2)->pattern() == "e3");
   rv += SDK_ASSERT(filter.getRegExpPattern(KEY2) == "e3");
-  rv += SDK_ASSERT(filter.getRegExp(KEY3) == NULL);
+  rv += SDK_ASSERT(filter.getRegExp(KEY3) == nullptr);
   rv += SDK_ASSERT(filter.getRegExpPattern(KEY3).empty());
   // Test a different pattern
   rv += SDK_ASSERT(filter.deserialize("key3(1)^^e2$", reFactory));
-  rv += SDK_ASSERT(filter.getRegExp(KEY2) == NULL);
+  rv += SDK_ASSERT(filter.getRegExp(KEY2) == nullptr);
   rv += SDK_ASSERT(filter.getRegExpPattern(KEY2).empty());
-  rv += SDK_ASSERT(filter.getRegExp(KEY3) != NULL);
+  rv += SDK_ASSERT(filter.getRegExp(KEY3) != nullptr);
   rv += SDK_ASSERT(filter.getRegExp(KEY3)->pattern() == "^e2$");
   rv += SDK_ASSERT(filter.getRegExpPattern(KEY3) == "^e2$");
 

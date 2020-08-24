@@ -251,13 +251,13 @@ int testDataTableCollection()
   simData::DataTableManager& dtm = ds->dataTableManager();
   simData::DataTable* table0;
   rv += SDK_ASSERT(dtm.addDataTable(0, "Table 0", &table0).isSuccess());
-  rv += SDK_ASSERT(table0 != NULL);
+  rv += SDK_ASSERT(table0 != nullptr);
   simData::DataTable* table1;
   rv += SDK_ASSERT(dtm.addDataTable(plat1, "Table 1", &table1).isSuccess());
-  rv += SDK_ASSERT(table1 != NULL);
+  rv += SDK_ASSERT(table1 != nullptr);
   simData::DataTable* table2;
   rv += SDK_ASSERT(dtm.addDataTable(plat2, "Table 2", &table2).isSuccess());
-  rv += SDK_ASSERT(table2 != NULL);
+  rv += SDK_ASSERT(table2 != nullptr);
 
   // Create the table columns; plat1 gets 2 columns, rest get 1 column
   simData::TableColumn* col0_1;
@@ -412,7 +412,7 @@ int testDataStoreProxy()
   const auto& ds2UpdatesListener = ds2->newUpdatesListener();
   rv += SDK_ASSERT(&ds2->newUpdatesListener() == &ds2UpdatesListener);
   proxy.reset(ds2);
-  ds1 = NULL; // reset() will delete it
+  ds1 = nullptr; // reset() will delete it
   // Listener should have changed
   rv += SDK_ASSERT(&ds2->newUpdatesListener() == &ds1UpdatesListener);
   rv += SDK_ASSERT(&ds2->newUpdatesListener() != &ds2UpdatesListener);
@@ -435,7 +435,7 @@ int testDataStoreProxy()
   const auto& ds3UpdatesListener = ds3->newUpdatesListener();
   rv += SDK_ASSERT(&ds3->newUpdatesListener() == &ds3UpdatesListener);
   proxy.reset(ds3);
-  ds2 = NULL; // reset() will delete it
+  ds2 = nullptr; // reset() will delete it
   // Listener should have changed
   rv += SDK_ASSERT(&ds3->newUpdatesListener() == timeCollector.get());
   rv += SDK_ASSERT(&ds3->newUpdatesListener() != &ds3UpdatesListener);

@@ -152,56 +152,56 @@ public:
 
   virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    if ((listener_ != NULL) && (type_ == AddEntity))
+    if ((listener_ != nullptr) && (type_ == AddEntity))
       source->addListener(listener_);
     listener_.reset();
   }
 
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
-    if ((listener_ != NULL) && (type_ == RemoveEntity))
+    if ((listener_ != nullptr) && (type_ == RemoveEntity))
       source->addListener(listener_);
     listener_.reset();
   }
 
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
   {
-    if ((listener_ != NULL) && (type_ == PrefsChange))
+    if ((listener_ != nullptr) && (type_ == PrefsChange))
       source->addListener(listener_);
     listener_.reset();
   }
 
   virtual void onChange(simData::DataStore *source)
   {
-    if ((listener_ != NULL) && (type_ == TimeChange))
+    if ((listener_ != nullptr) && (type_ == TimeChange))
       source->addListener(listener_);
     listener_.reset();
   }
 
   virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
-    if ((listener_ != NULL) && (type_ == CategoryDataChange))
+    if ((listener_ != nullptr) && (type_ == CategoryDataChange))
       source->addListener(listener_);
     listener_.reset();
   }
 
   virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId)
   {
-    if ((listener_ != NULL) && (type_ == NameChange))
+    if ((listener_ != nullptr) && (type_ == NameChange))
       source->addListener(listener_);
     listener_.reset();
   }
 
   virtual void onFlush(simData::DataStore *source, simData::ObjectId flushedId)
   {
-    if ((listener_ != NULL) && (type_ == Flush))
+    if ((listener_ != nullptr) && (type_ == Flush))
       source->addListener(listener_);
     listener_.reset();
   }
 
   virtual void onScenarioDelete(simData::DataStore* source)
   {
-    if ((listener_ != NULL) && (type_ == ScenarioDelete))
+    if ((listener_ != nullptr) && (type_ == ScenarioDelete))
       source->addListener(listener_);
     listener_.reset();
   }
@@ -223,7 +223,7 @@ public:
 
   virtual void onAddEntity(simData::DataStore *source, simData::ObjectId newId, simData::ObjectType ot)
   {
-    if ((listener_ != NULL) && (type_ == AddEntity))
+    if ((listener_ != nullptr) && (type_ == AddEntity))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -232,7 +232,7 @@ public:
 
   virtual void onRemoveEntity(simData::DataStore *source, simData::ObjectId removedId, simData::ObjectType ot)
   {
-    if ((listener_ != NULL) && (type_ == RemoveEntity))
+    if ((listener_ != nullptr) && (type_ == RemoveEntity))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -241,7 +241,7 @@ public:
 
   virtual void onPrefsChange(simData::DataStore *source, simData::ObjectId id)
   {
-    if ((listener_ != NULL) && (type_ == PrefsChange))
+    if ((listener_ != nullptr) && (type_ == PrefsChange))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -250,7 +250,7 @@ public:
 
   virtual void onChange(simData::DataStore *source)
   {
-    if ((listener_ != NULL) && (type_ == TimeChange))
+    if ((listener_ != nullptr) && (type_ == TimeChange))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -259,7 +259,7 @@ public:
 
   virtual void onCategoryDataChange(simData::DataStore *source, simData::ObjectId changedId, simData::ObjectType ot)
   {
-    if ((listener_ != NULL) && (type_ == CategoryDataChange))
+    if ((listener_ != nullptr) && (type_ == CategoryDataChange))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -268,7 +268,7 @@ public:
 
   virtual void onNameChange(simData::DataStore *source, simData::ObjectId changeId)
   {
-    if ((listener_ != NULL) && (type_ == NameChange))
+    if ((listener_ != nullptr) && (type_ == NameChange))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -277,7 +277,7 @@ public:
 
   virtual void onFlush(simData::DataStore *source, simData::ObjectId flushedId)
   {
-    if ((listener_ != NULL) && (type_ == Flush))
+    if ((listener_ != nullptr) && (type_ == Flush))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -286,7 +286,7 @@ public:
 
   virtual void onScenarioDelete(simData::DataStore* source)
   {
-    if ((listener_ != NULL) && (type_ == ScenarioDelete))
+    if ((listener_ != nullptr) && (type_ == ScenarioDelete))
     {
       source->removeListener(listener_);
       listener_.reset();
@@ -311,7 +311,7 @@ public:
 
   virtual void onChange(simData::DataStore *source)
   {
-    if ((listener1_ != NULL) && (type_ == TimeChange))
+    if ((listener1_ != nullptr) && (type_ == TimeChange))
     {
       source->removeListener(listener1_);
       source->removeListener(listener2_);

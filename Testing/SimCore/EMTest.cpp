@@ -72,7 +72,7 @@ int rcsTest(int argc, char* argv[])
   }
 
   simCore::RadarCrossSection* rcsData_ = simCore::RcsFileParser::loadRCSFile(filepath);
-  rv += SDK_ASSERT(rcsData_!=NULL);
+  rv += SDK_ASSERT(rcsData_!=nullptr);
 
   simCore::PolarityType polarity;
   float freqHz;
@@ -503,11 +503,11 @@ int antennaPatternTest(int argc, char* argv[])
   antennaGainParameters.freq_ = 3e+9f;
 
 
-  simCore::AntennaPattern* pattern = NULL;
+  simCore::AntennaPattern* pattern = nullptr;
   const std::string bilinear = filepath + "bilinear.apbf";
   {
     pattern = simCore::loadPatternFile(bilinear, 3.0e+003);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
     {
       float min, max;
@@ -519,37 +519,37 @@ int antennaPatternTest(int argc, char* argv[])
       rv += SDK_ASSERT(simCore::areEqual(gain, -31.4724312f));
       delete pattern;
     }
-    pattern = NULL;
+    pattern = nullptr;
   }
   {
     pattern = simCore::loadPatternFile(bilinear, 2.51e+003);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
       delete pattern;
-    pattern = NULL;
+    pattern = nullptr;
   }
   {
     pattern = simCore::loadPatternFile(bilinear, 3.49e+003);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
       delete pattern;
-    pattern = NULL;
+    pattern = nullptr;
   }
   // successful test will output ERROR message to console
   {
     pattern = simCore::loadPatternFile(bilinear, 2.5e+003);
-    rv += SDK_ASSERT(NULL == pattern);
+    rv += SDK_ASSERT(nullptr == pattern);
   }
   // successful test will output ERROR message to console
   {
     pattern = simCore::loadPatternFile(bilinear, 3.5e+003);
-    rv += SDK_ASSERT(NULL == pattern);
+    rv += SDK_ASSERT(nullptr == pattern);
   }
 
   const std::string monopulse = filepath + "monopulse.apmf";
   {
     pattern = simCore::loadPatternFile(monopulse, 3.0e+003);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     {
       float min, max;
       pattern->minMaxGain(&min, &max, antennaGainParameters);
@@ -560,37 +560,37 @@ int antennaPatternTest(int argc, char* argv[])
       rv += SDK_ASSERT(simCore::areEqual(gain, -31.4642982f));
       delete pattern;
     }
-    pattern = NULL;
+    pattern = nullptr;
   }
   {
     pattern = simCore::loadPatternFile(monopulse, 2.51e+003);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
       delete pattern;
-    pattern = NULL;
+    pattern = nullptr;
   }
   {
     pattern = simCore::loadPatternFile(monopulse, 3.49e+003);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
       delete pattern;
-    pattern = NULL;
+    pattern = nullptr;
   }
   // successful test will output ERROR message to console
   {
     pattern = simCore::loadPatternFile(monopulse, 2.5e+003);
-    rv += SDK_ASSERT(NULL == pattern);
+    rv += SDK_ASSERT(nullptr == pattern);
   }
   // successful test will output ERROR message to console
   {
     pattern = simCore::loadPatternFile(monopulse, 3.5e+003);
-    rv += SDK_ASSERT(NULL == pattern);
+    rv += SDK_ASSERT(nullptr == pattern);
   }
 
 
   {
     pattern = simCore::loadPatternFile(filepath + "umts.aprf", -0.0);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
     {
       // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
@@ -602,12 +602,12 @@ int antennaPatternTest(int argc, char* argv[])
       rv += SDK_ASSERT(simCore::areEqual(gain, -2.80341649f));
       delete pattern;
     }
-    pattern = NULL;
+    pattern = nullptr;
   }
 
   {
     pattern = simCore::loadPatternFile(filepath + "24032g.nsm", -0.0);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
     {
       // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
@@ -619,12 +619,12 @@ int antennaPatternTest(int argc, char* argv[])
       rv += SDK_ASSERT(simCore::areEqual(gain, -300.f));
       delete pattern;
     }
-    pattern = NULL;
+    pattern = nullptr;
   }
 
   {
     pattern = simCore::loadPatternFile(filepath + "dipoleXFDTD.uan", -0.0);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
     {
       // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
@@ -636,12 +636,12 @@ int antennaPatternTest(int argc, char* argv[])
       rv += SDK_ASSERT(simCore::areEqual(gain, 0.920442045f));
       delete pattern;
     }
-    pattern = NULL;
+    pattern = nullptr;
   }
 
   {
     pattern = simCore::loadPatternFile(filepath + "ant_sidelobes.aptf", -0.0);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
     {
       // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
@@ -653,12 +653,12 @@ int antennaPatternTest(int argc, char* argv[])
       rv += SDK_ASSERT(simCore::areEqual(gain, -55.7457581f));
       delete pattern;
     }
-    pattern = NULL;
+    pattern = nullptr;
   }
 
   {
     pattern = simCore::loadPatternFile(filepath + "cardioid_az.txt", -0.0);
-    rv += SDK_ASSERT(NULL != pattern);
+    rv += SDK_ASSERT(nullptr != pattern);
     if (pattern)
     {
       // these tests verify that same result continues to be returned; not testing validity of calc, not based on gold data.
@@ -670,7 +670,7 @@ int antennaPatternTest(int argc, char* argv[])
       rv += SDK_ASSERT(simCore::areEqual(gain, 2.88438296f));
       delete pattern;
     }
-    pattern = NULL;
+    pattern = nullptr;
   }
 
 
