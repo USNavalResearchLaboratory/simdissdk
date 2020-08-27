@@ -22,8 +22,9 @@
  */
 #include <cassert>
 #include <limits>
-#include <QFont>
 #include <QCheckBox>
+#include <QFont>
+#include <QLabel>
 #include <QLineEdit>
 #include <QSpinBox>
 #include "simQt/ColorWidget.h"
