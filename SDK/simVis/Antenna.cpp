@@ -335,14 +335,14 @@ void AntennaNode::render_()
   antGeom->setDataVariance(osg::Object::DYNAMIC);
   antGeom->setUseVertexBufferObjects(true);
 
-  osg::Vec3Array* verts = new osg::Vec3Array();
-  antGeom->setVertexArray(verts);
+  osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array();
+  antGeom->setVertexArray(verts.get());
 
-  osg::Vec3Array* norms = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
-  antGeom->setNormalArray(norms);
+  osg::ref_ptr<osg::Vec3Array> norms = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  antGeom->setNormalArray(norms.get());
 
-  osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
-  antGeom->setColorArray(colors);
+  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
+  antGeom->setColorArray(colors.get());
 
   // expected range for vRange is (0, M_PI]
   const double vRange = osg::clampBetween(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_PI);

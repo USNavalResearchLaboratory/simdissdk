@@ -45,7 +45,7 @@ class RCSNode;
 class SDKVIS_EXPORT PlatformModelNode : public LocatorNode
 {
 public:
-  static const int TRAVERSAL_MASK;
+  static const unsigned int TRAVERSAL_MASK;
 
   /** Interface for activity callbacks. */
   class Callback : public osg::Referenced

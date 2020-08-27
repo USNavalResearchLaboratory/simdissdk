@@ -57,7 +57,7 @@
 namespace simVis {
 
 /** OSG Mask for traversal (like the select type in SIMDIS 9) */
-const int PlatformModelNode::TRAVERSAL_MASK = simVis::DISPLAY_MASK_PLATFORM_MODEL;
+const unsigned int PlatformModelNode::TRAVERSAL_MASK = simVis::DISPLAY_MASK_PLATFORM_MODEL;
 /** Conversion factor to convert a brightness pref value (0-100) to an ambient light value (from S9) */
 static const float BRIGHTNESS_TO_AMBIENT = 0.022f;
 /** Default brightness ambient value; 36 brightness is the default value */
