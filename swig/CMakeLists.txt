@@ -4,6 +4,7 @@ endif()
 
 # Avoid making SWIG targets with older CMake, to avoid extra complications
 if("${CMAKE_VERSION}" VERSION_LESS 3.13)
+    message(STATUS "Skipping SIMDIS SDK SWIG module, CMake 3.13 or newer required.")
     return()
 endif()
 
