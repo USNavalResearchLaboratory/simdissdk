@@ -24,10 +24,10 @@
 #ifndef SIMQT_VALUEMERGE_H
 #define SIMQT_VALUEMERGE_H
 
+#include <QColor>
 #include "simCore/Common/Export.h"
 
 class QCheckBox;
-class QColor;
 class QLabel;
 class QLineEdit;
 class QSpinBox;
