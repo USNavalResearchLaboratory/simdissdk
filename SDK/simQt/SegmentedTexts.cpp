@@ -413,7 +413,7 @@ static const unsigned int MAX_PRECISION = 6;
   void NumberText::stepBy(int amount)
   {
     // The timeScaleFactor is 1 for seconds, 60 for minutes, 3600 for hours, 0.1 for tenths, etc.
-    double modfIntPart;
+    double modfIntPart = 0.0;
     const double timeScaleFactorFractionPart = std::modf(timeScaleFactor_, &modfIntPart);
     const int timeScaleFactorIntPart = static_cast<int>(modfIntPart);
     const int timeScaleNanoSeconds = timeScaleFactorFractionPart * 1e09;

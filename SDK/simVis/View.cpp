@@ -1473,7 +1473,8 @@ void View::enableOverheadMode(bool enableOverhead)
   if (updateCameraNodeVisitor_.valid() == false)
   {
     updateCameraNodeVisitor_ = new osg::NodeVisitor();
-    manip->setUpdateCameraNodeVisitor(updateCameraNodeVisitor_.get());
+    if (manip)
+      manip->setUpdateCameraNodeVisitor(updateCameraNodeVisitor_.get());
   }
 
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();

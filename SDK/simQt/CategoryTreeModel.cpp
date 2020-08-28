@@ -823,7 +823,8 @@ bool CategoryTreeModel::ValueItem::setCheckStateData_(const QVariant& value, sim
 
   // Update the parent too, which fixes the GUI for whether it contributes
   CategoryItem* parentTree = dynamic_cast<CategoryItem*>(parent());
-  parentTree->recalcContributionTo(filter);
+  if (parentTree)
+    parentTree->recalcContributionTo(filter);
 
   filterChanged = true;
   return true;

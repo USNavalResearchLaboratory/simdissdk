@@ -127,7 +127,8 @@ ConsoleDataModel::~ConsoleDataModel()
   {
     ChannelImpl* impl = dynamic_cast<ChannelImpl*>((*it).get());
     // Clear out the pointer to "this", in case it survives beyond us
-    impl->setConsoleDataModel(nullptr);
+    if (impl)
+      impl->setConsoleDataModel(nullptr);
   }
 }
 

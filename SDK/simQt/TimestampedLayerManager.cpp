@@ -219,9 +219,13 @@ TimestampedLayerManager::~TimestampedLayerManager()
     attachPoint_->removeChild(mapChangeObserver_);
   clock_.removeTimeCallback(clockListener_);
   clockListener_.reset();
-  osgEarth::MapNode* mapNode = dynamic_cast<MapChangeObserver*>(mapChangeObserver_.get())->getMapNode();
-  if (mapNode && mapNode->getMap())
-    mapNode->getMap()->removeMapCallback(mapListener_.get());
+  auto* mco = dynamic_cast<MapChangeObserver*>(mapChangeObserver_.get());
+  if (mco)
+  {
+    osgEarth::MapNode* mapNode = mco->getMapNode();
+    if (mapNode && mapNode->getMap())
+      mapNode->getMap()->removeMapCallback(mapListener_.get());
+  }
   restoreOriginalVisibility_();
   for (auto groupIter = groups_.begin(); groupIter != groups_.end(); groupIter++)
     delete groupIter->second;
