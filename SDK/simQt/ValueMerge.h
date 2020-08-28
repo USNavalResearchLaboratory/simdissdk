@@ -27,6 +27,7 @@
 #include "simCore/Common/Export.h"
 
 class QCheckBox;
+class QColor;
 class QLabel;
 class QLineEdit;
 class QSpinBox;
