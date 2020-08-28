@@ -451,7 +451,7 @@ static const unsigned int MAX_PRECISION = 6;
       else
         state = QValidator::Invalid;
 
-      return count;
+      return static_cast<size_t>(count);
     }
 
     while ((count < text.size()) && (text[count] >= '0') && (text[count] <= '9') && ((static_cast<size_t>(count)-startLocation) < maxDigits_))
@@ -469,7 +469,7 @@ static const unsigned int MAX_PRECISION = 6;
     else
       state = QValidator::Invalid;
 
-    return count;
+    return static_cast<size_t>(count);
   }
 
   QString NumberText::toString_(int value) const

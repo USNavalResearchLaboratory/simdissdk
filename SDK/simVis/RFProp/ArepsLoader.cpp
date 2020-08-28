@@ -432,13 +432,15 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
   const simRF::ProfileDataProvider* ppfProvider = profile.getDataProvider()->getProvider(ProfileDataProvider::THRESHOLDTYPE_FACTOR);
   if (beamHandler_ != nullptr && ppfProvider)
   {
-    profile.addProvider(new OneWayPowerDataProvider(ppfProvider, beamHandler_->radarParams()));
+    osg::ref_ptr<OneWayPowerDataProvider> oneWayPowerDataProvider = new OneWayPowerDataProvider(ppfProvider, beamHandler_->radarParams());
+    profile.addProvider(oneWayPowerDataProvider.get());
 
     osg::ref_ptr<TwoWayPowerDataProvider> twoWayPowerDataProvider = new TwoWayPowerDataProvider(ppfProvider, beamHandler_->radarParams());
     profile.addProvider(twoWayPowerDataProvider.get());
 
     // SNRDataProvider depends on TwoWayPowerDataProvider
-    profile.addProvider(new SNRDataProvider(twoWayPowerDataProvider.get(), beamHandler_->radarParams()));
+    osg::ref_ptr<SNRDataProvider> snrDataProvider = new SNRDataProvider(twoWayPowerDataProvider.get(), beamHandler_->radarParams());
+    profile.addProvider(snrDataProvider.get());
   }
   else if (!ppfProvider)
   {

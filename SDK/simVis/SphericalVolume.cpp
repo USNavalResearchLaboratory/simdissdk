@@ -453,7 +453,7 @@ namespace
 
     // Calculate the number of vertices for performance hotspot fix in push_back()
     // vertices will be added in this order: gate origin, far face, near face (if drawn), cone bottom, then cone right (if drawn), cone top (if drawn), cone left (if drawn)
-    const unsigned int loop = hasNear_ ? 2 : 1;
+    const unsigned int loop = hasNear_ ? 2u : 1u;
     reserveSizeFace_ = 1 + (loop * numPointsX_ * numPointsZ_);
     reserveSizeCone_ = 0;
     drawFaces_ = (data.drawMode_ != simVis::SVData::DRAW_MODE_OUTLINE);
