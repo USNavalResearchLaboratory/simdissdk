@@ -34,7 +34,9 @@ namespace simVis
 {
 
 BoxMouseHandler::BoxMouseHandler()
-  : buttonMask_(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON),
+  : originX_(0.0),
+  originY_(0.0),
+  buttonMask_(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON),
   modKeys_(new ModKeyHandler()),
   cancelDragKey_(osgGA::GUIEventAdapter::KEY_Escape)
 {

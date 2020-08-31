@@ -52,7 +52,8 @@ void ColorWidgetDelegate::setEditorData(QWidget* editor, const QModelIndex& inde
   simQt::ColorWidget* button = dynamic_cast<simQt::ColorWidget*>(editor);
   // Somehow got an editor other than the one defined in createEditor()
   assert(button);
-  button->setColor(dataVar.value<QColor>());
+  if (button)
+    button->setColor(dataVar.value<QColor>());
 }
 
 void ColorWidgetDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const

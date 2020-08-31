@@ -101,7 +101,7 @@ const QPixmap* SearchLineEdit::searchPixmap() const
   QLabel* label = dynamic_cast<QLabel*>(iconAction_->defaultWidget());
   // The QWidgetAction should only have QLabel
   assert(label);
-  return label->pixmap();
+  return label ? label->pixmap() : nullptr;
 }
 
 int SearchLineEdit::searchDelayInterval() const
@@ -119,7 +119,8 @@ void SearchLineEdit::setSearchPixmap(const QPixmap& pixmap)
   QLabel* label = dynamic_cast<QLabel*>(iconAction_->defaultWidget());
   // The QWidgetAction should only have QLabel
   assert(label);
-  label->setPixmap(pixmap);
+  if (label)
+    label->setPixmap(pixmap);
 }
 
 void SearchLineEdit::setSearchDelayInterval(int msec)

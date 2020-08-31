@@ -20,6 +20,7 @@
  * disclose, or release this software.
  *
  */
+#include <cassert>
 #include "OpenThreads/Mutex"
 #include "OpenThreads/ScopedLock"
 #include "osg/Version"
@@ -221,6 +222,8 @@ simVis::Registry::Registry()
   if (cantFindFont->getStateSet())
     cantFindFont->getStateSet()->removeAttribute(osg::StateAttribute::PROGRAM);
 #endif
+  // Should not be possible that this entry exists; note, this doesn't leak in either case.
+  assert(fontCache_.find(CANT_FIND_FONT) == fontCache_.end());
   fontCache_[CANT_FIND_FONT] = cantFindFont;
 
   // prime a default font which will be returned if the requested font cannot be found

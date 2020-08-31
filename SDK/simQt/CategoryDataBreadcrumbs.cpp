@@ -1053,7 +1053,8 @@ void CategoryDataBreadcrumbs::synchronizeToSenderFilter_()
   // Assertion failure means that this method was called by something that wasn't an entity category
   // filter, which shouldn't be possible because it's a private slot.
   assert(from != nullptr);
-  setFilter(from->categoryFilter());
+  if (from)
+    setFilter(from->categoryFilter());
 }
 
 }
