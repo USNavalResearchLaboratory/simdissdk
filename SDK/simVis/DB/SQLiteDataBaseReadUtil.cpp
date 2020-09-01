@@ -180,6 +180,12 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
 
   if (dataTableName.empty() || dbFileName.empty())
     return QS_IS_EMPTY_TABLE_NAME;
+  // Reject names with quotes to avoid injections
+  if (dataTableName.find('"') != std::string::npos)
+  {
+    std::cerr << "readDataBuffer invalid table name (" << dataTableName << ")\n";
+    return QS_IS_PREPARE_ERROR;
+  }
 
   // opens the database
   bool localDb = false;
@@ -193,6 +199,8 @@ QsErrorType SQLiteDataBaseReadUtil::readDataBuffer(sqlite3* sqlite3Db,
       return tmpReturnValue;
   }
 
+  // Note that injection is not possible here due to quotes in configuration string,
+  // and rejection of strings with quotes.  SQLite permits nearly any table name.
   std::string sqlCommand;
   sqlCommand = textureSetSelectFileCommand1_;
   sqlCommand.append(dataTableName);
