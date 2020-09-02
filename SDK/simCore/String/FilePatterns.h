@@ -313,7 +313,7 @@ static const std::string PLOT_SETTINGS_FILE_PATTERNS =
 
 /** Combination of all data file patterns */
 static const std::string ALL_DATA_FILE_PATTERNS = ALL_SIMDIS_FILE_PATTERNS +
-  std::string(",.prefs,.rul,.view,.rcs,.hdf5,") +
+  std::string(",*.prefs,*.rul,*.view,*.svml,*.rcs,*.hdf5,") +
   ALL_GOG_FILE_PATTERNS + std::string(",") +
   ALL_SIMDIS_TEXTURE_FILE_PATTERNS + std::string(",") +
   ALL_MEDIA_FILE_PATTERNS + std::string(",") +
