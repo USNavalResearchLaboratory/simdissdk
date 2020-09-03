@@ -1198,7 +1198,17 @@ QVariant SettingsModel::value(const QString& name, const MetaData& metaData, Obs
   {
     node->addObserver(observer);
     if (node->setMetaData(metaData) == 0)
+    {
+      // Set to the default value in metadata
+      const auto& defaultValue = metaData.defaultValue();
+      if (defaultValue.isValid() && !node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE).isValid())
+      {
+        node->setDataValue(defaultValue);
+        fireObservers_(observers_, name, defaultValue, observer);
+        node->fireSettingChange();
+      }
       refreshKey_(name);
+    }
     return node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
   }
 
@@ -1221,7 +1231,11 @@ QVariant SettingsModel::value(const QString& name, ObserverPtr observer)
     return node->data(Qt::DisplayRole, TreeNode::COLUMN_VALUE);
   }
 
-  return value(name, MetaData(), observer);
+  QModelIndex idx = addKeyToTree_(name);
+  node = static_cast<TreeNode*>(idx.internalPointer());
+  node->addObserver(observer);
+  refreshKey_(name);
+  return QVariant();
 }
 
 bool SettingsModel::contains(const QString& name) const
