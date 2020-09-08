@@ -357,7 +357,7 @@ double HorizonMeasurement::calcAboveHorizon_(RangeToolState& state, simCore::Hor
       currGeoPoint.x() = iter->lon() * simCore::RAD2DEG;
       currGeoPoint.y() = iter->lat() * simCore::RAD2DEG;
 
-      osgEarth::ElevationSample sample = pool->getSample(currGeoPoint, &workingSet);
+      osgEarth::ElevationSample sample = pool->getSample(currGeoPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), &workingSet);
       if (sample.hasData())
       {
         currGeoPoint.z() = sample.elevation().as(osgEarth::Units::METERS);

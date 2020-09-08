@@ -78,7 +78,7 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord)
   if (useMaxElevPrec_)
   {
     osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
-    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, &workingSet_);
+    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, osgEarth::Distance(1.0, osgEarth::Units::METERS), &workingSet_);
     if (sample.hasData())
       elevation = sample.elevation().as(osgEarth::Units::METERS);
   }
@@ -130,7 +130,7 @@ void CoordSurfaceClamping::clampCoordToMapSurface(simCore::Coordinate& coord, os
   if (useMaxElevPrec_)
   {
     osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
-    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, &workingSet_);
+    osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, osgEarth::Distance(1.0, osgEarth::Units::METERS), &workingSet_);
     if (sample.hasData())
       elevation = sample.elevation().as(osgEarth::Units::METERS);
   }

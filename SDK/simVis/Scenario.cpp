@@ -338,7 +338,7 @@ public:
     if (useMaxElevPrec_)
     {
       osgEarth::GeoPoint point(mapNode_->getMapSRS(), llaCoord.lon()*simCore::RAD2DEG, llaCoord.lat()*simCore::RAD2DEG, 0, osgEarth::ALTMODE_ABSOLUTE);
-      osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, nullptr);
+      osgEarth::ElevationSample sample = mapNode_->getMap()->getElevationPool()->getSample(point, osgEarth::Distance(1.0, osgEarth::Units::METERS), nullptr);
       if (sample.hasData())
         elevation = sample.elevation().as(osgEarth::Units::METERS);
     }
@@ -362,7 +362,7 @@ public:
   /** Sets the map pointer, required for proper clamping */
   void setMapNode(const osgEarth::MapNode* map)
   {
-    mapNode_ = map;    
+    mapNode_ = map;
   }
 
   void setUseMaxElevPrec(bool useMaxElevPrec)

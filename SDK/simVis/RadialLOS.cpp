@@ -252,7 +252,7 @@ bool RadialLOS::compute(osgEarth::MapNode* mapNode, const simCore::Coordinate& o
       }
       else
       {
-        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, &elevationWorkingSet_);
+        osgEarth::ElevationSample sample = mapNode->getMap()->getElevationPool()->getSample(mapPoint, osgEarth::Distance(1.0, osgEarth::Units::METERS), &elevationWorkingSet_);
         hae = sample.elevation().as(osgEarth::Units::METERS);
         hamsl = hae;
         ok = (hae != NO_DATA_VALUE);
