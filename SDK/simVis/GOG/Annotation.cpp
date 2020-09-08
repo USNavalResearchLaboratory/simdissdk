@@ -56,7 +56,13 @@ GogNodeInterface* TextAnnotation::deserialize(
   GogNodeInterface* rv = nullptr;
   osgEarth::GeoPositionNode* label = nullptr;
 
-  if (parsedShape.hasValue(GOG_ICON))
+  // Turning on Callouts disables PlaceNodes with icons.  To try to help avoid that error, we detect
+  // the current technique in screen space layout, and if it's callouts, we don't show the icon
+  const auto& technique = osgEarth::ScreenSpaceLayout::getOptions().technique();
+  const bool hasCallouts = technique.isSet() && technique.get() == osgEarth::ScreenSpaceLayoutOptions::TECHNIQUE_CALLOUTS;
+
+  // Only start with the icon, if callouts are disabled
+  if (parsedShape.hasValue(GOG_ICON) && !hasCallouts)
   {
     std::string iconFile = parsedShape.stringValue(GOG_ICON);
     osg::ref_ptr<osg::Image> image = osgDB::readImageFile(simCore::StringUtils::trim(iconFile, "\""));
