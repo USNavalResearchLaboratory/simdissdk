@@ -319,7 +319,9 @@ int VaporTrail::addFirstPuff_()
   startTimeLocator->setLocalOffsets(simCore::Vec3(0.0, -vaporTrailData_.metersBehindCurrentPosition, altOffset), simCore::Vec3());
 
   simCore::Vec3 hostOffsetPosition;
-  startTimeLocator->getLocatorPosition(&hostOffsetPosition);
+  simCore::Vec3 ori;
+  // need to call method that includes orientation when applying local position offsets
+  startTimeLocator->getLocatorPositionOrientation(&hostOffsetPosition, &ori);
   addPuff_(hostOffsetPosition, platformUpdate->time());
 
   return 0;
@@ -340,7 +342,9 @@ void VaporTrail::addNewPuffs_(double time)
     {
       // there are no previous puffs, just add a puff for current time
       simCore::Vec3 hostOffsetPosition;
-      locator_->getLocatorPosition(&hostOffsetPosition);
+      simCore::Vec3 ori;
+      // need to call method that includes orientation when applying local position offsets
+      locator_->getLocatorPositionOrientation(&hostOffsetPosition, &ori);
       addPuff_(hostOffsetPosition, time);
       return;
     }
@@ -372,7 +376,9 @@ void VaporTrail::addNewPuffs_(double time)
 
     const simCore::Vec3& prevPuffPosition = puffs_.back()->position();
     simCore::Vec3 hostOffsetPosition;
-    locator_->getLocatorPosition(&hostOffsetPosition);
+    simCore::Vec3 ori;
+    // need to call method that includes orientation when applying local position offsets
+    locator_->getLocatorPositionOrientation(&hostOffsetPosition, &ori);
 
     // distance between host and last puff determines how many puffs are required
     const double distanceSinceLastPuff = simCore::v3Distance(hostOffsetPosition, prevPuffPosition);
