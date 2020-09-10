@@ -304,7 +304,7 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
     return false;
 
   osg::Matrix m;
-  if (!getLocatorMatrix(m, Locator::COMP_POSITION))
+  if (!getLocatorMatrix(m))
     return false;
   const osg::Vec3d& ecefPos = m.getTrans();
 
