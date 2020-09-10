@@ -41,7 +41,8 @@ FileSelectorWidget::FileSelectorWidget(QWidget* parent)
     flags_(FileSelectorWidget::FileLoad),
     filterOption_(FileSelectorWidget::SIMDIS_ASI_FILE_PATTERNS),
     customFileFilter_(tr("All Files (*)")),
-    iconBeforeText_(false)
+    iconBeforeText_(false),
+    isValid_(true)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -213,6 +214,24 @@ void FileSelectorWidget::setFilename(const QString& filename)
   QString osFilename = QDir::toNativeSeparators(filename);
   ui_->fileText->setText(osFilename);
   emit filenameChanged(osFilename);
+}
+
+bool FileSelectorWidget::isValid() const
+{
+  return isValid_;
+}
+
+void FileSelectorWidget::setValid(bool valid)
+{
+  if (isValid_ == valid)
+    return;
+
+  isValid_ = valid;
+
+  if (isValid_)
+    ui_->fileText->setStyleSheet("");
+  else
+    ui_->fileText->setStyleSheet("QLineEdit {color: red}");
 }
 
 bool FileSelectorWidget::eventFilter(QObject* obj, QEvent* evt)
