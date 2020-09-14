@@ -326,7 +326,7 @@ int main(int argc, char **argv)
   // Make the lines:
   addAnimatedLines(node1.get(), node2.get(), scene->getScenario(), scene->getMapNode());
   addAnimatedLines(node3.get(), node4.get(), scene->getScenario(), scene->getMapNode());
-  addAnimatedLines(NULL, NULL, scene->getScenario(), scene->getMapNode());
+  addAnimatedLines(nullptr, nullptr, scene->getScenario(), scene->getMapNode());
 
   // tick the sim
   dataStore.update(0);

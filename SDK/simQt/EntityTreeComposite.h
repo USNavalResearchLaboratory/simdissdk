@@ -50,7 +50,7 @@ class SDKQT_EXPORT FilterDialog : public QDialog
   Q_OBJECT;
 public:
   /** Constructor */
-  explicit FilterDialog(QWidget* parent = NULL);
+  explicit FilterDialog(QWidget* parent = nullptr);
   virtual ~FilterDialog(){};
 
   /** Override the QDialog close event to emit the closedGui signal */
@@ -168,17 +168,10 @@ public:
     QMap<QString, QVariant> configuration_; ///< Map of all filter configuration settings
   };
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   /** DEPRECATED: Add an action to the right mouse click menu, separators are ignored */
   SDK_DEPRECATE(void addExternalAction(QAction* action), "Method will be removed in a future SDK release");
   /** DEPRECATED: Remove all actions added by the addExternalAction() call */
   SDK_DEPRECATE(void removeExternalActions(), "Method will be removed in a future SDK release");
-
-  /** DEPRECATED: Sets/clears the selected ID in the entity list */
-  SDK_DEPRECATE(void setSelected(uint64_t id, bool selected), "Method will be removed in a future SDK release");
-  /** DEPRECATED: Sets/clears selection for the IDs in 'list' */
-  SDK_DEPRECATE(void setSelected(QList<uint64_t> list, bool selected), "Method will be removed in a future SDK release");
-#endif
 
 public slots:
   /** If true expand the tree on double click */
@@ -216,7 +209,7 @@ signals:
   void filterSettingsChanged(const QMap<QString, QVariant>& settings);
 
   /** Fired before showing the right mouse click menu to allow external code to add and remove actions. */
-  void rightClickMenuRequested(QMenu* menu=NULL);
+  void rightClickMenuRequested(QMenu* menu=nullptr);
 
   /** Fired when entityTreeComposite toggles between tree and list view */
   void treeViewChanged(bool useTreeView);
@@ -272,9 +265,7 @@ private:
   QAction* collapseAllAction_;
   QAction* expandAllAction_;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   std::vector<QAction*> externalActions_;
-#endif
 
   bool useCenterAction_;
   bool treeViewUsable_;

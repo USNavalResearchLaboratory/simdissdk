@@ -59,7 +59,7 @@ GogNodeInterface* LineSegs::deserialize(const ParsedShape& parsedShape,
   }
   p.geom_ = m;
 
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
     // Try to prevent terrain z-fighting.

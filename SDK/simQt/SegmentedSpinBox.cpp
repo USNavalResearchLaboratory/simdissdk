@@ -85,10 +85,10 @@ private:
 
   SegmentedSpinBox::SegmentedSpinBox(QWidget* parent)
     : QSpinBox(parent),
-      completeLine_(NULL),
+      completeLine_(nullptr),
       lastEditedTime_(1970, 0),
       colorCode_(true),
-      segmentedEventFilter_(NULL),
+      segmentedEventFilter_(nullptr),
       timer_(new QTimer(this)),
       applyInterval_(500)
   {
@@ -114,7 +114,7 @@ private:
 
   simCore::TimeStamp SegmentedSpinBox::timeStamp() const
   {
-    assert(completeLine_ != NULL);
+    assert(completeLine_ != nullptr);
     // If the text string does not change then return the given time to prevent a truncated time
     if (timeString_ == completeLine_->text())
       return timeStamp_;
@@ -143,7 +143,7 @@ private:
 
   void SegmentedSpinBox::setTimeStamp(const simCore::TimeStamp& value)
   {
-    assert(completeLine_ != NULL);
+    assert(completeLine_ != nullptr);
     completeLine_->setTimeStamp(value);
     lineEdit()->setText(completeLine_->text());
     // The text may truncate the value, so keep a copy so that the exact value can be returned if the text does not change
@@ -154,7 +154,7 @@ private:
 
   void SegmentedSpinBox::setTimeRange(int scenarioReferenceYear, const simCore::TimeStamp& start, const simCore::TimeStamp& end)
   {
-    assert(completeLine_ != NULL);
+    assert(completeLine_ != nullptr);
     int originalYear;
     simCore::TimeStamp originalStart;
     simCore::TimeStamp originalEnd;
@@ -201,7 +201,7 @@ private:
     delete completeLine_;
     completeLine_ = line;
 
-    if (completeLine_ == NULL)
+    if (completeLine_ == nullptr)
       return;
 
     // install a new event filter to capture mouse clicks for selecting the appropriate segment in the spin box
@@ -230,7 +230,7 @@ private:
           int location = lineEdit()->cursorPosition();
           SegmentedText* part = completeLine_->locatePart(static_cast<size_t>(location));
           SegmentedText* previousTabStop = completeLine_->previousTabStop(part);
-          if (previousTabStop != NULL)
+          if (previousTabStop != nullptr)
           {
             // Did not walk off the front to process the key event
             int pos = static_cast<int>(completeLine_->getFirstCharacterLocation(previousTabStop));
@@ -244,7 +244,7 @@ private:
         int location = lineEdit()->cursorPosition();
         SegmentedText* part = completeLine_->locatePart(static_cast<size_t>(location));
         SegmentedText* nextPart = completeLine_->nextTabStop(part);
-        if (nextPart != NULL)
+        if (nextPart != nullptr)
         {
           // Did not work off the end to process the key event
           int pos = static_cast<int>(completeLine_->getFirstCharacterLocation(nextPart));
@@ -345,7 +345,7 @@ private:
     }
 
     // Make the change
-    if (part != NULL)
+    if (part != nullptr)
     {
       part->stepBy(steps);
     }
@@ -356,7 +356,7 @@ private:
     validate(text, pos);
     QSpinBox::stepBy(steps);
 
-    if (part != NULL)
+    if (part != nullptr)
     {
       // select the new segment text
       int startLocation = static_cast<int>(completeLine_->getFirstCharacterLocation(part));

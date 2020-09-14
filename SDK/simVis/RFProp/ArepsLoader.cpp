@@ -24,6 +24,7 @@
 #include "osgDB/FileUtils"
 #include "simCore/LUT/LUT2.h"
 #include "simCore/Calc/Angle.h"
+#include "simCore/Calc/Math.h"
 #include "simCore/Common/Version.h"
 #include "simCore/String/Tokenizer.h"
 #include "simCore/String/Format.h"
@@ -416,7 +417,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
 
   // PODProfileDataProvider depends on the loss provider
   const simRF::ProfileDataProvider* lossProvider = profile.getDataProvider()->getProvider(ProfileDataProvider::THRESHOLDTYPE_LOSS);
-  if (beamHandler_ != NULL && lossProvider)
+  if (beamHandler_ != nullptr && lossProvider)
   {
     osg::ref_ptr<PODProfileDataProvider> podProvider = new PODProfileDataProvider(lossProvider, beamHandler_->getPODLossThreshold());
     profile.addProvider(podProvider.get());
@@ -429,15 +430,17 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
 
   // create providers that depend on the PPF provider
   const simRF::ProfileDataProvider* ppfProvider = profile.getDataProvider()->getProvider(ProfileDataProvider::THRESHOLDTYPE_FACTOR);
-  if (beamHandler_ != NULL && ppfProvider)
+  if (beamHandler_ != nullptr && ppfProvider)
   {
-    profile.addProvider(new OneWayPowerDataProvider(ppfProvider, beamHandler_->radarParams()));
+    osg::ref_ptr<OneWayPowerDataProvider> oneWayPowerDataProvider = new OneWayPowerDataProvider(ppfProvider, beamHandler_->radarParams());
+    profile.addProvider(oneWayPowerDataProvider.get());
 
     osg::ref_ptr<TwoWayPowerDataProvider> twoWayPowerDataProvider = new TwoWayPowerDataProvider(ppfProvider, beamHandler_->radarParams());
     profile.addProvider(twoWayPowerDataProvider.get());
 
     // SNRDataProvider depends on TwoWayPowerDataProvider
-    profile.addProvider(new SNRDataProvider(twoWayPowerDataProvider.get(), beamHandler_->radarParams()));
+    osg::ref_ptr<SNRDataProvider> snrDataProvider = new SNRDataProvider(twoWayPowerDataProvider.get(), beamHandler_->radarParams());
+    profile.addProvider(snrDataProvider.get());
   }
   else if (!ppfProvider)
   {
@@ -446,7 +449,7 @@ int ArepsLoader::loadFile(const std::string& arepsFile, simRF::Profile& profile,
   }
 
   // determine if CNR data is available
-  if (profile.getDataProvider()->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_CNR) == NULL)
+  if (profile.getDataProvider()->getProvider(simRF::ProfileDataProvider::THRESHOLDTYPE_CNR) == nullptr)
   {
     missingData += missingData.empty() ? "CNR" : ", CNR";
     missingCalcs += missingCalcs.empty() ? "CNR" : ", CNR";

@@ -23,9 +23,10 @@
 #ifndef SIMVIS_ELEVATIONQUERYPROXY_H
 #define SIMVIS_ELEVATIONQUERYPROXY_H
 
-#include "simCore/Common/Common.h"
 #include "osg/observer_ptr"
 #include "osg/ref_ptr"
+#include "osgEarth/ElevationQuery"
+#include "simCore/Common/Common.h"
 
 namespace osg {
   class Group;
@@ -35,9 +36,6 @@ namespace osgEarth {
   class GeoPoint;
   class Map;
   class MapNode;
-  namespace Util {
-    class ElevationQuery;
-  }
 }
 
 namespace simVis
@@ -105,18 +103,6 @@ public:
   */
   bool getPendingElevation(double& out_elevation, double* out_actualResolution = 0L);
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-   * @deprecated
-   * Sets the maximum cache size for elevation tiles.  Forwards to ElevationQuery::setMaxTilesToCache().
-   * Newer versions of osgEarth do not implement this method, as the ElevationQuery will instead use
-   * the pool from the Map.  If you really need to increase the maximum tiles to cache, call the
-   * Map method map->getElevationPool()->setMaxEntries().
-   * @param value Number of tiles to cache
-   */
-  SDK_DEPRECATE(void setMaxTilesToCache(int value), "Method is removed in newer osgEarth.");
-#endif
-
   /** Changes the MapNode that is associated with the query. */
   void setMap(const osgEarth::Map* map);
   /** Changes the MapNode that is associated with the query.  Calls setMap(osgEarth::Map*) appropriately. */
@@ -136,6 +122,9 @@ private:
   osgEarth::Util::ElevationQuery* query_;
   osg::observer_ptr<const osgEarth::Map> map_;
   osg::observer_ptr<osg::Group> scene_;
+
+  osgEarth::AsyncElevationSampler* asyncSampler_;
+  osgEarth::ElevationPool::WorkingSet workingSet_;
 
   class MapChangeListener;
   /// listener to map changes, to update the map reference

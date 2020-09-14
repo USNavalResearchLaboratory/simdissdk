@@ -45,7 +45,7 @@ class RCSNode;
 class SDKVIS_EXPORT PlatformModelNode : public LocatorNode
 {
 public:
-  static const int TRAVERSAL_MASK;
+  static const unsigned int TRAVERSAL_MASK;
 
   /** Interface for activity callbacks. */
   class Callback : public osg::Referenced
@@ -71,7 +71,7 @@ public:
    * Constructs a new platform model node.
    * @param locator Parent locator from which to inherit position/orientation
    */
-  PlatformModelNode(Locator* locator = NULL);
+  PlatformModelNode(Locator* locator = nullptr);
 
   /**
   * Gets the bounds of the 3D model, possible scaled

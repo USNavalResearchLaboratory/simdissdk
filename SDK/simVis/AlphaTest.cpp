@@ -59,7 +59,7 @@ void AlphaTest::installShaderProgram(osg::StateSet* intoStateSet)
 
 void AlphaTest::setValues(osg::StateSet* stateset, float threshold, int value)
 {
-  if (stateset == NULL)
+  if (stateset == nullptr)
     return;
 
   // Need GLSL 3.3 to use alpha test shader, else fall back to FFP and hope for compatibility mode

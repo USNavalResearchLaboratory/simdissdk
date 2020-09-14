@@ -133,7 +133,7 @@ void MruList::clear()
 void MruList::openRecentFile_()
 {
   QAction* action = qobject_cast<QAction*>(sender());
-  if (action != NULL)
+  if (action != nullptr)
     emit(fileSelected(action->data().toString()));
 }
 
@@ -178,8 +178,8 @@ void MruList::fixActions_()
     action->setEnabled(false);
   }
 
-  // Get rid of NULLs that might be introduced by deleted menus
-  separators_.removeAll(NULL);
+  // Get rid of nullptrs that might be introduced by deleted menus
+  separators_.removeAll(nullptr);
   // Hide or show separators based on whether any actions are shown
   for (auto it = separators_.begin(); it != separators_.end(); ++it)
     (*it)->setVisible(showSeparators);

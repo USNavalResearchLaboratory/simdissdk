@@ -60,13 +60,13 @@ public:
 
   void onAddTable(simData::DataTable* table)
   {
-    if ((table != NULL) && (table->ownerId() == parent_.entityId_) && (table->tableName() == simData::INTERNAL_TRACK_HISTORY_TABLE))
+    if ((table != nullptr) && (table->ownerId() == parent_.entityId_) && (table->tableName() == simData::INTERNAL_TRACK_HISTORY_TABLE))
       parent_.initializeTableId_();
   }
 
   void onPreRemoveTable(simData::DataTable* table)
   {
-    if (table != NULL && table->tableId() == parent_.tableId_)
+    if (table != nullptr && table->tableId() == parent_.tableId_)
     {
       parent_.tableId_ = 0;
       table->removeObserver(parent_.colorChangeObserver_);
@@ -112,12 +112,12 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parent
   lastCurrentTime_(-1.0),
   timeDirection_(simCore::FORWARD),
   timeDirectionSign_(1.0),
-  chunkGroup_(NULL),
-  altModeXform_(NULL),
+  chunkGroup_(nullptr),
+  altModeXform_(nullptr),
   platformTspiFilterManager_(platformTspiFilterManager),
   entityId_(entityId),
   tableId_(0),
-  currentPointChunk_(NULL),
+  currentPointChunk_(nullptr),
   parentLocator_(parentLocator)
 {
   updateSliceBase_ = ds_.platformUpdateSlice(entityId);
@@ -125,7 +125,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parent
 
   activeColor_ = defaultColor_;
 
-  localLocator_ = new simVis::Locator(parentLocator_);
+  localLocator_ = new simVis::Locator(parentLocator_.get());
 
   setNodeMask(simVis::DISPLAY_MASK_TRACK_HISTORY);
 
@@ -133,6 +133,7 @@ TrackHistoryNode::TrackHistoryNode(const simData::DataStore& ds, Locator* parent
 
   // configure the local state set
   simVis::setLighting(getOrCreateStateSet(), 0);
+  getOrCreateStateSet()->setRenderBinDetails(BIN_TRACK_HISTORY, BIN_GLOBAL_SIMSDK);
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
@@ -150,13 +151,13 @@ TrackHistoryNode::~TrackHistoryNode()
   if (tableId_ > 0)
   {
     simData::DataTable* table = ds_.dataTableManager().getTable(tableId_);
-    if (table != NULL)
+    if (table != nullptr)
       table->removeObserver(colorChangeObserver_);
   }
-  chunkGroup_ = NULL;
-  currentPointChunk_ = NULL;
-  parentLocator_ = NULL;
-  localLocator_ = NULL;
+  chunkGroup_ = nullptr;
+  currentPointChunk_ = nullptr;
+  parentLocator_ = nullptr;
+  localLocator_ = nullptr;
 }
 
 // handle an explicit reset
@@ -167,16 +168,16 @@ void TrackHistoryNode::reset()
   hasLastDrawTime_   = false;
   lastCurrentTime_   = -1.0;
   totalPoints_       = 0;
-  altModeXform_      = NULL;
+  altModeXform_      = nullptr;
   chunkGroup_ = new osg::Group();
   this->addChild(chunkGroup_);
-  currentPointChunk_ = NULL;
+  currentPointChunk_ = nullptr;
 }
 
 void TrackHistoryNode::checkColorHistoryChange_(const simData::DataTable& table, const simData::TableRow& row)
 {
   simData::TableColumn* col = table.column(simData::INTERNAL_TRACK_HISTORY_COLOR_COLUMN);
-  if (col == NULL)
+  if (col == nullptr)
   {
     assert(0); // if the table exists, the column should exist
     return;
@@ -188,7 +189,7 @@ void TrackHistoryNode::checkColorHistoryChange_(const simData::DataTable& table,
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase_);
 
   // there might be no current data after a flush, if a color command is added before any new update data
-  if (updateSlice == NULL || updateSlice->current() == NULL)
+  if (updateSlice == nullptr || updateSlice->current() == nullptr)
     return;
 
   // if this row is not in the span of our slice, don't bother to reset
@@ -203,7 +204,7 @@ void TrackHistoryNode::checkColorHistoryChange_(const simData::DataTable& table,
 }
 
 /**
-* Return a chunk to which you can add a new point, or NULL if one needs to be created for that addition.
+* Return a chunk to which you can add a new point, or nullptr if one needs to be created for that addition.
 */
 TrackChunkNode* TrackHistoryNode::getCurrentChunk_()
 {
@@ -218,7 +219,7 @@ TrackChunkNode* TrackHistoryNode::getCurrentChunk_()
       return chunk;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 osg::Vec4f TrackHistoryNode::historyColorAtTime_(double time)
@@ -237,13 +238,13 @@ osg::Vec4f TrackHistoryNode::historyColorAtTime_(double time)
   // use the tableId_ if we have it
   simData::DataTable* table = ds_.dataTableManager().getTable(tableId_);
   // no color history table, simply return the default color
-  if (table == NULL)
+  if (table == nullptr)
   {
     assert(0); // table id is no longer valid, somehow the table got removed
     return defaultColor_;
   }
   simData::TableColumn* column = table->column(simData::INTERNAL_TRACK_HISTORY_COLOR_COLUMN);
-  if (column == NULL)
+  if (column == nullptr)
   {
     assert(0); // found the table, but missing the expected data column
     return defaultColor_;
@@ -268,7 +269,7 @@ void TrackHistoryNode::initializeTableId_()
   if (tableId_ != 0)
     return;
   simData::DataTable* table = ds_.dataTableManager().findTable(entityId_, simData::INTERNAL_TRACK_HISTORY_TABLE);
-  if (table == NULL)
+  if (table == nullptr)
     return;
   tableId_ = table->tableId();
   assert(tableId_ > 0); // a table was created with an invalid table id
@@ -295,18 +296,18 @@ void TrackHistoryNode::addUpdate_(const simData::PlatformUpdate& u, const simDat
   if (!chunk)
   {
     // new chunk needs a new locator
-    osg::ref_ptr<Locator> newChunkLocator = new Locator(parentLocator_);
+    osg::ref_ptr<Locator> newChunkLocator = new Locator(parentLocator_.get());
 
     chunk = new TrackChunkNode(chunkSize_, lastPlatformPrefs_.trackprefs().trackdrawmode());
     // set the new chunk's locator - this will establish the position of the chunk
-    chunk->setLocator(newChunkLocator);
+    chunk->setLocator(newChunkLocator.get());
 
     // if there is a preceding chunk, duplicate its last point so there is no
     // discontinuity from previous chunk to this new chunk - this matters for line, ribbon and bridge drawing modes
     // note that this extra point needs to be removed during data limiting
-    if (chunkGroup_->getNumChildren() > 0 && prevUpdate != NULL)
+    if (chunkGroup_->getNumChildren() > 0 && prevUpdate != nullptr)
     {
-      if (fillLocator_(*prevUpdate, newChunkLocator))
+      if (fillLocator_(*prevUpdate, newChunkLocator.get()))
       {
         const double last_t = prevUpdate->time();
         chunk->addPoint(*(newChunkLocator.get()), last_t, historyColorAtTime_(last_t), hostBounds_);
@@ -397,7 +398,7 @@ void TrackHistoryNode::updateVisibility_(const simData::TrackPrefs& prefs)
 void TrackHistoryNode::updateAltMode_(bool altmode, const simData::PlatformUpdateSlice& updateSlice)
 {
   // create the altmode group if necessary:
-  if (altmode && altModeXform_ == NULL)
+  if (altmode && altModeXform_ == nullptr)
   {
     dropVertsDrawable_ = new osgEarth::LineDrawable(GL_LINES);
     dropVertsDrawable_->setColor(simVis::Color::White);
@@ -634,7 +635,7 @@ void TrackHistoryNode::update()
     return;
 
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase_);
-  if (updateSlice == NULL)
+  if (updateSlice == nullptr)
   {
     // a valid/active platform must have an updateSlice - if assert fails, ensure that track history is not being updated for a non valid platform
     assert(0);
@@ -642,7 +643,7 @@ void TrackHistoryNode::update()
   }
 
   // if the current is not valid, and scenario is prior to first update time, nothing to do
-  if (updateSlice->current() == NULL && ds_.updateTime() < updateSlice->firstTime())
+  if (updateSlice->current() == nullptr && ds_.updateTime() < updateSlice->firstTime())
   {
     // platform is not valid, this should only occur during platform creation
     return;
@@ -726,7 +727,7 @@ void TrackHistoryNode::updateTrackData_(double currentTime, double firstTime)
 void TrackHistoryNode::backfillTrackHistory_(double endTime, double beginTime)
 {
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase_);
-  if (updateSlice == NULL)
+  if (updateSlice == nullptr)
   {
     // a valid/active platform must have an updateSlice - if assert fails, ensure that track history is not being updated for a non valid platform
     assert(0);
@@ -768,7 +769,7 @@ void TrackHistoryNode::backfillTrackHistory_(double endTime, double beginTime)
 void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& updateSlice)
 {
   // remove previous, will recreate if needed
-  if (currentPointChunk_ != NULL)
+  if (currentPointChunk_ != nullptr)
     currentPointChunk_->reset();
 
   // only line, ribbon, and bridge draw modes require this processing,
@@ -780,13 +781,13 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
 
   // create the special chunk for rendering the interpolated point, has two points to connect to rest of history
   osg::ref_ptr<Locator> currentChunkLocator;
-  if (currentPointChunk_ == NULL)
+  if (currentPointChunk_ == nullptr)
   {
     currentPointChunk_ = new TrackChunkNode(2, lastPlatformPrefs_.trackprefs().trackdrawmode());
-    if (currentPointChunk_ == NULL)
+    if (currentPointChunk_ == nullptr)
       return;
     addChild(currentPointChunk_);
-    currentChunkLocator = new Locator(parentLocator_);
+    currentChunkLocator = new Locator(parentLocator_.get());
     currentPointChunk_->setLocator(currentChunkLocator.get());
   }
   else
@@ -794,7 +795,7 @@ void TrackHistoryNode::updateCurrentPoint_(const simData::PlatformUpdateSlice& u
 
   // find the most current update, either whatever is current, or the last available update
   const simData::PlatformUpdate* current = updateSlice.current();
-  if (current == NULL)
+  if (current == nullptr)
   {
     simData::PlatformUpdateSlice::Iterator iter = updateSlice.lower_bound(updateSlice.lastTime());
     current = iter.next();

@@ -24,8 +24,12 @@
 #include <string>
 #include <vector>
 #include "simNotify/Notify.h"
+#include "simCore/Calc/Math.h"
+#include "simCore/Calc/Units.h"
 #include "simCore/Common/SDKAssert.h"
 #include "simCore/Common/Version.h"
+#include "simCore/String/Format.h"
+#include "simCore/String/Tokenizer.h"
 #include "simVis/GOG/GogNodeInterface.h"
 #include "simVis/GOG/ParsedShape.h"
 #include "simVis/GOG/Parser.h"
@@ -416,6 +420,114 @@ int testParseMetaData()
   return rv;
 }
 
+
+bool findTokenValue(std::stringstream& ss, const std::string& token, const std::string& value)
+{
+  std::vector<std::string> tokens;
+  std::string line;
+  while (simCore::getStrippedLine(ss, line))
+  {
+    simCore::quoteTokenizer(tokens, line);
+    line = simCore::lowerCase(line);
+    // 3d is a special case that represents a GOG keyword made up of multiple tokens
+    if (tokens[0] == "3d")
+    {
+      if (tokens.size() < 3)
+        return false;
+      if ((tokens[0] + " " + tokens[1]) == token)
+        return tokens[2] == value;
+    }
+    else if (tokens[0] == token)
+    {
+      if (tokens.size() < 1)
+        return false;
+      return tokens[1] == value;
+    }
+  }
+  return false;
+}
+
+int testAltitudeUnits()
+{
+  int rv = 0;
+
+  simVis::GOG::Parser parser;
+  // loaded GOG shape nodes
+  simVis::GOG::Parser::OverlayNodeVector gogs;
+  // follow data for attached GOGs
+  std::vector<simVis::GOG::GogFollowData> followData;
+
+  std::stringstream input;
+
+  // Test loading line with altitude units specified
+  std::string lineGog = FILE_VERSION +
+    "start\n line\n lla 22.1 - 159.7 2\n lla 22.1 - 159.3 2\n 3d offsetalt 2\n altitudeUnits km\n end\n";
+  input << lineGog;
+  bool parsedGog = parser.loadGOGs(input, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData);
+  rv += SDK_ASSERT(parsedGog); // verify parsing worked
+  rv += SDK_ASSERT(gogs.size() == 1);
+  if (!gogs.empty())
+  {
+    double altOffset = 0.;
+    rv += SDK_ASSERT(gogs.front()->getAltOffset(altOffset) == 0);
+    rv += SDK_ASSERT(altOffset == 2000); // value is in meters, verify it still matches 2 km
+
+    std::stringstream serializedLine;
+    gogs.front()->serializeToStream(serializedLine);
+    // line should always serialize out altitude units as meters, despite input
+    rv += SDK_ASSERT(findTokenValue(serializedLine, "altitudeunits", "meters"));
+  }
+  clearItems(gogs, followData, input);
+
+  // Test loading circle with altitude units specified
+  std::string circleGog = FILE_VERSION +
+    "start\n circle\n centerlla 22.1 - 159.7 2\n radius 200\n 3d offsetalt 2\n altitudeUnits km\n end\n";
+  input << circleGog;
+  parsedGog = parser.loadGOGs(input, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData);
+  rv += SDK_ASSERT(parsedGog); // verify parsing worked
+  rv += SDK_ASSERT(gogs.size() == 1);
+  if (!gogs.empty())
+  {
+    double altOffset = 0.;
+    rv += SDK_ASSERT(gogs.front()->getAltOffset(altOffset) == 0);
+    rv += SDK_ASSERT(altOffset == 2000); // value is in meters, verify it still matches 2 km
+
+    std::stringstream serializedCircle;
+    gogs.front()->serializeToStream(serializedCircle);
+    // circle should serialize out to the same units it went in as
+    rv += SDK_ASSERT(findTokenValue(serializedCircle, "altitudeunits", "km"));
+  }
+  clearItems(gogs, followData, input);
+
+  // Test loading LatLonAltBox with no altitude units specified, altitude units default to ft
+  std::string llabGog = FILE_VERSION +
+    "start\n LatLonAltBox 21.945 22.0 -159.454 -159.41 1. 4.\n 3d offsetalt 2000\n  end\n";
+  input << llabGog;
+  parsedGog = parser.loadGOGs(input, simVis::GOG::GOGNODE_GEOGRAPHIC, gogs, followData);
+  rv += SDK_ASSERT(parsedGog); // verify parsing worked
+  rv += SDK_ASSERT(gogs.size() == 1);
+  if (!gogs.empty())
+  {
+    double altOffset = 0.;
+    rv += SDK_ASSERT(gogs.front()->getAltOffset(altOffset) == 0);
+    simCore::Units altMeters(simCore::Units::METERS);
+    simCore::Units altFeet(simCore::Units::FEET);
+    // alt offset is in meters, verify it is equivalent to 2000 ft
+    rv += SDK_ASSERT(simCore::areEqual(altOffset, altFeet.convertTo(altMeters, 2000)));
+
+    // now update altitude offset to 3000 ft
+    gogs.front()->setAltOffset(altFeet.convertTo(altMeters, 3000));
+
+    std::stringstream serializedLlab;
+    gogs.front()->serializeToStream(serializedLlab);
+    // verify that altitude offset serializes out as 3000 ft
+    rv += SDK_ASSERT(findTokenValue(serializedLlab, "3d offsetalt", "3000"));
+  }
+  clearItems(gogs, followData, input);
+
+  return rv;
+}
+
 }
 
 int GogTest(int argc, char* argv[])
@@ -428,6 +540,7 @@ int GogTest(int argc, char* argv[])
   // Run tests
   rv += testLoadRelativeAndAbsolute();
   rv += testParseMetaData();
+  rv += testAltitudeUnits();
 
   // Shut down protobuf lib for valgrind testing
   google::protobuf::ShutdownProtobufLibrary();

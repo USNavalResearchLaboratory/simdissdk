@@ -99,7 +99,7 @@ private:
 CompassFocusManagerAdapter::CompassFocusManagerAdapter(simVis::FocusManager* focusManager, simVis::CompassNode* compass)
  : focusManager_(focusManager),
    compass_(compass),
-   callback_(NULL)
+   callback_(nullptr)
 {
   callback_ = new FocusCallback(this);
   focusManager_->addCallback(callback_.get());
@@ -180,18 +180,18 @@ void CompassNode::initCompass_(const std::string& compassFilename)
   compassImageXform_->setMatrix(osg::Matrix::translate(osg::Vec3f(0.f, 0.f, -0.01f)));
 
   // Add a red line (tristrip) to indicate the pointing angle
-  osg::Geometry* pointer = new osg::Geometry;
-  osg::Vec3Array* points = new osg::Vec3Array;
+  osg::ref_ptr<osg::Geometry> pointer = new osg::Geometry;
+  osg::ref_ptr<osg::Vec3Array> points = new osg::Vec3Array;
   points->push_back(osg::Vec3(-0.5f, POS_POINTING_MIN_Y, 0.f));
   points->push_back(osg::Vec3(0.5f, POS_POINTING_MIN_Y, 0.f));
   points->push_back(osg::Vec3(-0.5f, POS_POINTING_MAX_Y, 0.f));
   points->push_back(osg::Vec3(0.5f, POS_POINTING_MAX_Y, 0.f));
-  osg::Vec4Array* colors = new osg::Vec4Array;
+  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
   colors->push_back(POINTING_LINE_COLOR);
-  pointer->setVertexArray(points);
-  pointer->setColorArray(colors, osg::Array::BIND_OVERALL);
+  pointer->setVertexArray(points.get());
+  pointer->setColorArray(colors.get(), osg::Array::BIND_OVERALL);
   pointer->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-  addChild(pointer);
+  addChild(pointer.get());
 }
 
 void CompassNode::initWindVane_()
@@ -287,7 +287,7 @@ void CompassNode::updateCompass_()
   {
     // Figure out the camera heading; use EarthManipulator to account for tether mode rotations
     const osgEarth::Util::EarthManipulator* manip = dynamic_cast<const osgEarth::Util::EarthManipulator*>(view->getCameraManipulator());
-    if (manip != NULL)
+    if (manip != nullptr)
     {
       manip->getCompositeEulerAngles(&headingDeg);
       // Convert to degrees
@@ -397,8 +397,8 @@ public:
     if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
     {
       const osg::View* view = aa.asView();
-      const osg::Camera* camera = (view ? view->getCamera() : NULL);
-      const osg::Viewport* viewport = (camera ? camera->getViewport() : NULL);
+      const osg::Camera* camera = (view ? view->getCamera() : nullptr);
+      const osg::Viewport* viewport = (camera ? camera->getViewport() : nullptr);
       if (viewport)
       {
         osg::Vec2d newWh(viewport->width(), viewport->height());
@@ -434,7 +434,7 @@ Compass::~Compass()
 
 void Compass::setDrawView(simVis::View* drawView)
 {
-  if (drawView == NULL)
+  if (drawView == nullptr)
   {
     removeFromView();
     return;
@@ -472,7 +472,7 @@ void Compass::removeFromView()
     // stop callbacks for frame updates
     drawView_->removeEventHandler(repositionEventHandler_.get());
     drawView_->getOrCreateHUD()->removeChild(this);
-    drawView_ = NULL;
+    drawView_ = nullptr;
   }
 }
 

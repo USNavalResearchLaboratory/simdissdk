@@ -55,7 +55,7 @@ public:
    * but not for the tertiary sort column, then the tertiary sort column
    * effectively becomes a secondary sort column.
    */
-  explicit SortFilterProxyModel(QObject* parent = NULL,
+  explicit SortFilterProxyModel(QObject* parent = nullptr,
       int secondarySortColumn = SORT_COLUMN_NOT_USED,
       int tertiarySortColumn = SORT_COLUMN_NOT_USED);
 

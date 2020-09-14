@@ -41,7 +41,7 @@ static const QString& SPLITTER_DATA = "/Splitter Data";
 
 void WidgetSettings::saveWidget(simQt::Settings& settings, QWidget* widget)
 {
-  if (widget == NULL)
+  if (widget == nullptr)
     return;
 
   WidgetSettings::saveWindowGeometry_(settings, WINDOWS_SETTINGS, widget);
@@ -49,7 +49,7 @@ void WidgetSettings::saveWidget(simQt::Settings& settings, QWidget* widget)
 
 void WidgetSettings::loadWidget(simQt::Settings& settings, QWidget* widget)
 {
-  if (widget == NULL)
+  if (widget == nullptr)
     return;
 
   WidgetSettings::loadWindowGeometry_(settings, WINDOWS_SETTINGS, widget);
@@ -57,7 +57,7 @@ void WidgetSettings::loadWidget(simQt::Settings& settings, QWidget* widget)
 
 int WidgetSettings::saveQSplitter_(simQt::Settings& settings, const QString& path, const QSplitter* splitter)
 {
-  if (splitter == NULL)
+  if (splitter == nullptr)
     return 1;
 
   if (splitter->objectName().isEmpty())
@@ -75,7 +75,7 @@ int WidgetSettings::saveQSplitter_(simQt::Settings& settings, const QString& pat
 
 int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& path, const QTreeView* view)
 {
-  if (view == NULL)
+  if (view == nullptr)
     return 1;
 
   if (view->objectName().isEmpty())
@@ -92,7 +92,7 @@ int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& pat
   {
     int columns = model->columnCount();
     // Ignore the last column if it stretches across
-    if (view->header() != NULL && view->header()->stretchLastSection())
+    if (view->header() != nullptr && view->header()->stretchLastSection())
       --columns;
     if (columns > 0)
     {
@@ -109,7 +109,7 @@ int WidgetSettings::saveQTreeView_(simQt::Settings& settings, const QString& pat
 
 int WidgetSettings::saveQColumnView_(simQt::Settings& settings, const QString& path, const QColumnView* view)
 {
-  if (view == NULL)
+  if (view == nullptr)
     return 1;
 
   if (view->objectName().isEmpty())
@@ -129,7 +129,7 @@ int WidgetSettings::saveQColumnView_(simQt::Settings& settings, const QString& p
 
 int WidgetSettings::saveQTableView_(simQt::Settings& settings, const QString& path, const QTableView* view)
 {
-  if (view == NULL)
+  if (view == nullptr)
     return 1;
 
   if (view->objectName().isEmpty())
@@ -148,7 +148,7 @@ int WidgetSettings::saveQTableView_(simQt::Settings& settings, const QString& pa
   {
     int columns = model->columnCount();
     // Ignore the last column if it stretches across
-    if (view->horizontalHeader() != NULL && view->horizontalHeader()->stretchLastSection())
+    if (view->horizontalHeader() != nullptr && view->horizontalHeader()->stretchLastSection())
       --columns;
     if (columns > 0)
     {
@@ -165,7 +165,7 @@ int WidgetSettings::saveQTableView_(simQt::Settings& settings, const QString& pa
 
 int WidgetSettings::saveQDialog_(simQt::Settings& settings, const QString& path, const QDialog* dialog)
 {
-  if (dialog == NULL)
+  if (dialog == nullptr)
     return 1;
 
   if (dialog->objectName().isEmpty())
@@ -213,7 +213,7 @@ void WidgetSettings::saveWindowGeometry_(simQt::Settings& settings, const QStrin
     if (rv != 0)
     {
       const QTabWidget* tab = dynamic_cast<const QTabWidget*>(object);
-      if (tab != NULL)
+      if (tab != nullptr)
       {
         for (int ii = 0; ii < tab->count(); ++ii)
           WidgetSettings::saveWindowGeometry_(settings, newPath + "/", tab->widget(ii));
@@ -228,7 +228,7 @@ void WidgetSettings::saveWindowGeometry_(simQt::Settings& settings, const QStrin
 
 int WidgetSettings::loadQSplitter_(simQt::Settings& settings, const QString& path, QSplitter *splitter)
 {
-  if (splitter == NULL)
+  if (splitter == nullptr)
     return 1;
 
   if (splitter->objectName().isEmpty())
@@ -248,7 +248,7 @@ int WidgetSettings::loadQSplitter_(simQt::Settings& settings, const QString& pat
 
 int WidgetSettings::loadQTreeView_(simQt::Settings& settings, const QString& path, QTreeView *view)
 {
-  if (view == NULL)
+  if (view == nullptr)
     return 1;
 
   if (view->objectName().isEmpty())
@@ -277,7 +277,7 @@ int WidgetSettings::loadQTreeView_(simQt::Settings& settings, const QString& pat
 
 int WidgetSettings::loadQColumnView_(simQt::Settings& settings, const QString& path, QColumnView *view)
 {
-  if (view == NULL)
+  if (view == nullptr)
     return 1;
 
   if (view->objectName().isEmpty())
@@ -297,7 +297,7 @@ int WidgetSettings::loadQColumnView_(simQt::Settings& settings, const QString& p
 
 int WidgetSettings::loadQTableView_(simQt::Settings& settings, const QString& path, QTableView *view)
 {
-  if (view == NULL)
+  if (view == nullptr)
     return 1;
 
   if (view->objectName().isEmpty())
@@ -326,7 +326,7 @@ int WidgetSettings::loadQTableView_(simQt::Settings& settings, const QString& pa
 
 int WidgetSettings::loadQDialog_(simQt::Settings& settings, const QString& path, QDialog* dialog)
 {
-  if (dialog == NULL)
+  if (dialog == nullptr)
     return 1;
 
   if (dialog->objectName().isEmpty())
@@ -386,7 +386,7 @@ void WidgetSettings::loadWindowGeometry_(simQt::Settings& settings, const QStrin
     if (rv != 0)
     {
       const QTabWidget* tab = dynamic_cast<const QTabWidget*>(object);
-      if (tab != NULL)
+      if (tab != nullptr)
       {
         for (int ii = 0; ii < tab->count(); ++ii)
           WidgetSettings::loadWindowGeometry_(settings, newPath + "/", tab->widget(ii));

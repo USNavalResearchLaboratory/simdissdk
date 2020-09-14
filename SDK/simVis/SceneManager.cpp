@@ -106,7 +106,7 @@ void SceneManager::detectTerrainEngineDriverProblems_()
   // Try to detect the osgearth_engine_rex driver; if not present, we will likely fail to render anything useful
   osgDB::Registry* registry = osgDB::Registry::instance();
   const std::string engineDriverExtension = "osgearth_engine_rex";
-  if (registry->getReaderWriterForExtension(engineDriverExtension) != NULL)
+  if (registry->getReaderWriterForExtension(engineDriverExtension) != nullptr)
   {
     hasEngineDriverProblem_ = false;
     return;
@@ -258,10 +258,10 @@ void SceneManager::setSkyNode(osgEarth::SkyNode* skyNode)
       skyNodeParent->removeChild(skyNode_.get());
     }
   }
-  skyNode_ = NULL;
+  skyNode_ = nullptr;
 
   // install a new one.
-  if (skyNode != NULL)
+  if (skyNode != nullptr)
   {
     // insert the sky between this node and its children.
     skyNode_ = skyNode;
@@ -271,14 +271,14 @@ void SceneManager::setSkyNode(osgEarth::SkyNode* skyNode)
 
 bool SceneManager::isSilverLining_(const osgEarth::SkyNode* skyNode) const
 {
-  if (skyNode == NULL)
+  if (skyNode == nullptr)
     return false;
   try
   {
     // Attempt to use RTTI to determine if sky node is from SilverLining.  While not
     // ideal, there is no other way to automatically determine.
     const char* typeName = typeid(*skyNode).name();
-    if (typeName == NULL)
+    if (typeName == nullptr)
       return false;
 
     // Search for the name SilverLining in the type ID
@@ -342,7 +342,7 @@ void SceneManager::setMapNode(osgEarth::MapNode* mapNode)
 void SceneManager::setMap(osgEarth::Map* map)
 {
   // Swaps out the layers of underlying mapNode_ with layers in map.
-  if (map == NULL)
+  if (map == nullptr)
     return;
 
   if (mapNode_.valid())
@@ -488,7 +488,7 @@ osg::Node* SceneManager::getManipulatorAttachPoint() const
 osg::Group* SceneManager::getOrCreateAttachPoint(const std::string& name) const
 {
   // Assertion failure means this method was called before init_()
-  assert(scenarioManager_ != NULL);
+  assert(scenarioManager_ != nullptr);
   return scenarioManager_->getOrCreateAttachPoint(name);
 }
 

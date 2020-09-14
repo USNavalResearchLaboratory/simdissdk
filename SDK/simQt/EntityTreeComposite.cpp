@@ -169,7 +169,7 @@ public:
 
   virtual void onSettingChange(const QString& name, const QVariant& value)
   {
-    ButtonActions* actions = NULL;
+    ButtonActions* actions = nullptr;
     for (size_t index = 0; index < parent_.buttonActions_.size(); ++index)
     {
       if (parent_.buttonActions_[index]->settingsKey() == name)
@@ -195,11 +195,11 @@ private:
 
 EntityTreeComposite::EntityTreeComposite(QWidget* parent)
 : QWidget(parent),
-  composite_(NULL),
-  entityTreeWidget_(NULL),
-  model_(NULL),
-  nameFilter_(NULL),
-  filterDialog_(NULL),
+  composite_(nullptr),
+  entityTreeWidget_(nullptr),
+  model_(nullptr),
+  nameFilter_(nullptr),
+  filterDialog_(nullptr),
   useCenterAction_(false),
   treeViewUsable_(true),
   useEntityIcons_(true),
@@ -219,7 +219,7 @@ EntityTreeComposite::EntityTreeComposite(QWidget* parent)
   connect(entityTreeWidget_, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>)), this, SIGNAL(filterSettingsChanged(QMap<QString, QVariant>))); // Echo out the signal
 
   // model is null at startup. Will be updated in the name filter in the call to setModel()
-  nameFilter_ = new EntityNameFilter(NULL);
+  nameFilter_ = new EntityNameFilter(nullptr);
   nameFilter_->bindToWidget(composite_->lineEdit);
   addEntityFilter(nameFilter_);
 
@@ -293,10 +293,9 @@ void EntityTreeComposite::setMargins(int left, int top, int right, int bottom)
   composite_->verticalLayout->layout()->setContentsMargins(left, top, right, bottom);
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 void EntityTreeComposite::addExternalAction(QAction* action)
 {
-  if ((action == NULL) || action->isSeparator())
+  if ((action == nullptr) || action->isSeparator())
     return;
 
   externalActions_.push_back(action);
@@ -306,7 +305,6 @@ void EntityTreeComposite::removeExternalActions()
 {
   externalActions_.clear();
 }
-#endif
 
 void EntityTreeComposite::makeAndDisplayMenu_(const QPoint& pos)
 {
@@ -364,7 +362,7 @@ void EntityTreeComposite::addEntityFilter(EntityFilter* entityFilter)
 void EntityTreeComposite::setModel(AbstractEntityTreeModel* model)
 {
   // Must pass in a valid model
-  assert(model != NULL);
+  assert(model != nullptr);
 
   // SDK-120: If useEntityIcons_ is set, then apply it to the model
   model_ = model;
@@ -389,19 +387,6 @@ int EntityTreeComposite::setSelected(const QList<uint64_t>& list)
 {
   return entityTreeWidget_->setSelected(list);
 }
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-/** Sets/clears the selected ID in the entity list */
-void EntityTreeComposite::setSelected(uint64_t id, bool selected)
-{
-  entityTreeWidget_->setSelected(id, selected);
-}
-
-void EntityTreeComposite::setSelected(QList<uint64_t> list, bool selected)
-{
-  entityTreeWidget_->setSelected(list, selected);
-}
-#endif
 
 void EntityTreeComposite::scrollTo(uint64_t id, QAbstractItemView::ScrollHint hint)
 {
@@ -524,14 +509,14 @@ void EntityTreeComposite::setSettings(SettingsPtr settings)
   }
 
   // Can only set the setting once
-  assert(settings_ == NULL);
+  assert(settings_ == nullptr);
 
   settings_ = settings;
 
-  if (settings_ == NULL)
+  if (settings_ == nullptr)
     return;
 
-  if (observer_ == NULL)
+  if (observer_ == nullptr)
     observer_.reset(new Observer(*this));
 
   // Filter configuration buttons use signal mappers to convey index
@@ -596,7 +581,7 @@ void EntityTreeComposite::saveFilterConfig_(int index)
   FilterConfiguration newConfig(desc, variantMap);
   action->setFilterConfiguration(newConfig);
   // Save the value also to settings
-  if (settings_ != NULL)
+  if (settings_ != nullptr)
   {
     QVariant value;
     value.setValue(action->filterConfiguration());
@@ -609,7 +594,7 @@ void EntityTreeComposite::clearFilterConfig_(int index)
   ButtonActions* action = buttonActions_[index];
   FilterConfiguration emptyConfig;
   action->setFilterConfiguration(emptyConfig);
-  if (settings_ != NULL)
+  if (settings_ != nullptr)
   {
     QVariant value;
     value.setValue(action->filterConfiguration());
@@ -631,7 +616,7 @@ void EntityTreeComposite::rowsInserted_(const QModelIndex & parent, int start, i
 
 void EntityTreeComposite::showFilters_()
 {
-  if (filterDialog_ != NULL)
+  if (filterDialog_ != nullptr)
   {
     filterDialog_->show();
     return;
@@ -667,7 +652,7 @@ void EntityTreeComposite::closeFilters_()
   {
     filterDialog_->hide();
     filterDialog_->deleteLater();
-    filterDialog_ = NULL;
+    filterDialog_ = nullptr;
   }
 }
 
@@ -727,7 +712,7 @@ void EntityTreeComposite::copySelection_()
 {
   QList<uint64_t> ids =  entityTreeWidget_->selectedItems();
 
-  if (ids.isEmpty() || (model_ == NULL))
+  if (ids.isEmpty() || (model_ == nullptr))
     return;
 
   QString clipboardText;

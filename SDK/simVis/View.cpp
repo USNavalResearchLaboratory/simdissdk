@@ -40,6 +40,7 @@
 #include "simVis/Entity.h"
 #include "simVis/Gate.h"
 #include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/NavigationModes.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/CustomRendering.h"
@@ -47,6 +48,7 @@
 #include "simVis/Popup.h"
 #include "simVis/Registry.h"
 #include "simVis/SceneManager.h"
+#include "simVis/Scenario.h"
 #include "simVis/Utils.h"
 #include "simVis/View.h"
 
@@ -225,18 +227,18 @@ void InsetChange::operator()(simVis::View* inset, const EventType& e)
 
 FocusManager::FocusManager(simVis::View* host)
  : host_(host),
-   viewman_(NULL),
-   focused_(NULL),
+   viewman_(nullptr),
+   focused_(nullptr),
    borderIdle_(simVis::Color::White,  2),
    borderFocus_(simVis::Color::Yellow, 3)
 {
-  if (host != NULL)
+  if (host != nullptr)
     host->setBorderProperties(borderIdle_);
 }
 
 FocusManager::~FocusManager()
 {
-  setViewManager(NULL);
+  setViewManager(nullptr);
 }
 
 void FocusManager::setViewManager(simVis::ViewManager* viewman)
@@ -247,7 +249,7 @@ void FocusManager::setViewManager(simVis::ViewManager* viewman)
   if (viewman_.valid())
   {
     viewman_->removeCallback(viewManagerCB_.get());
-    viewManagerCB_ = NULL;
+    viewManagerCB_ = nullptr;
 
     for (std::map< simVis::View*, osg::ref_ptr<InsetChange> >::const_iterator it = insets_.begin(); it != insets_.end(); ++it)
       it->first->removeCallback(it->second.get());
@@ -313,7 +315,7 @@ void FocusManager::focus(simVis::View* view)
 {
   if (!view)
   {
-    // There should be no callback unless there is a non-NULL value
+    // There should be no callback unless there is a non-nullptr value
     assert(0);
     return;
   }
@@ -376,7 +378,7 @@ void FocusManager::setUnfocusedBorderProperties(const simVis::View::BorderProper
 
 void FocusManager::applyBorderProperties(simVis::View* view) const
 {
-  if (view != NULL)
+  if (view != nullptr)
   {
     if (view == focused_.get())
       view->setBorderProperties(borderFocus_);
@@ -431,8 +433,8 @@ void FocusManager::clearFocus()
     for (unsigned int i = 0; i < insets.size(); ++i)
       insets[i]->setBorderProperties(borderIdle_);
   }
-  focused_ = NULL;
-  fireCallbacks_(NULL, Callback::VIEW_FOCUSED);
+  focused_ = nullptr;
+  fireCallbacks_(nullptr, Callback::VIEW_FOCUSED);
 }
 
 void FocusManager::reFocus()
@@ -458,7 +460,7 @@ void FocusManager::removeCallback(FocusManager::Callback* callback)
 
 void FocusManager::fireCallbacks_(simVis::View* view, const FocusManager::Callback::EventType& e)
 {
-  if (view == NULL)
+  if (view == nullptr)
     view = host_.get();
   for (Callbacks::const_iterator i = callbacks_.begin(); i != callbacks_.end(); ++i)
     (*i)->operator()(view, e);
@@ -515,13 +517,13 @@ public:
   /// Process the change-of-tether event
   void operator()(osg::Node* node)
   {
-    // if node is NULL, tether is broken
-    if (node == NULL && view_.valid())
+    // if node is nullptr, tether is broken
+    if (node == nullptr && view_.valid())
     {
       if (view_->isWatchEnabled())
-        view_->enableWatchMode(NULL, NULL);
+        view_->enableWatchMode(nullptr, nullptr);
       if (view_->isCockpitEnabled())
-        view_->enableCockpitMode(NULL);
+        view_->enableCockpitMode(nullptr);
 
       // Note that the mouse azim/elev locks associated with Watch or Cockpit mode are
       // not unlocked here.  They are conditionally unlocked in either the enableWatchMode()
@@ -553,7 +555,7 @@ View::View()
    viewType_(VIEW_TOPLEVEL),
    useOverheadClamping_(true),
    overheadNearFarCallback_(new SetNearFarCallback),
-   updateCameraNodeVisitor_(NULL)
+   updateCameraNodeVisitor_(nullptr)
 {
   // start out displaying all things.
   setDisplayMask(simVis::DISPLAY_MASK_ALL);
@@ -773,7 +775,7 @@ bool View::setUpViewAsInset_(simVis::View* host)
     osg::Camera* bordercamera = this->getOrCreateHUD();
     simVis::FocusManager* focusManager = host->getFocusManager();
     borderNode_ = new BorderNode();
-    if (focusManager != NULL)
+    if (focusManager != nullptr)
       focusManager->applyBorderProperties(this);
     bordercamera->addChild(borderNode_.get());
 
@@ -841,7 +843,7 @@ bool View::isValidNewInsetName(const std::string& newName, const simVis::View* v
 
   // No duplicates
   simVis::View* potentialDuplicate = getInsetByName(newName);
-  if (potentialDuplicate != NULL)
+  if (potentialDuplicate != nullptr)
     return potentialDuplicate == view;  // If both point to the same view then do duplicate
 
   return true;
@@ -919,7 +921,7 @@ int View::getIndexOfInset(simVis::View* view) const
 
 simVis::View* View::getInset(unsigned int index) const
 {
-  return index < getNumInsets() ? insets_[index].get() : NULL;
+  return index < getNumInsets() ? insets_[index].get() : nullptr;
 }
 
 simVis::View* View::getInsetByName(const std::string& name) const
@@ -929,7 +931,7 @@ simVis::View* View::getInsetByName(const std::string& name) const
     if (i->get()->getName() == name)
       return i->get();
   }
-  return NULL;
+  return nullptr;
 }
 
 bool View::setExtents(const Extents& e)
@@ -1230,7 +1232,7 @@ void View::tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double dur
     newVp.setNode(realTether);
 
     // Set the focal point if needed (i.e. if there is no tether node)
-    if (realTether == NULL && vp.nodeIsSet())
+    if (realTether == nullptr && vp.nodeIsSet())
     {
       osg::ref_ptr<osg::Node> oldTether = vp.getNode();
       simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(oldTether.get());
@@ -1246,7 +1248,7 @@ void View::tetherCamera(osg::Node *node, const simVis::Viewpoint& vp, double dur
 
 osg::Node* View::getCameraTether() const
 {
-  osg::Node* result = NULL;
+  osg::Node* result = nullptr;
   const simVis::EarthManipulator* manip = dynamic_cast<const simVis::EarthManipulator*>(getCameraManipulator());
   if (manip)
   {
@@ -1440,6 +1442,8 @@ void View::setNavigationMode(const NavMode& mode)
     manip->applySettings(new CenterViewNavigationMode(overheadEnabled_, watchEnabled_));
   else if (mode == NAVMODE_GIS)
     manip->applySettings(new GisNavigationMode(this, overheadEnabled_, watchEnabled_));
+  else if (mode == NAVMODE_BUILDER)
+    manip->applySettings(new BuilderNavigationMode(overheadEnabled_, watchEnabled_));
 
   // Restore the retained settings
   manip->getSettings()->setArcViewpointTransitions(arcTransitions);
@@ -1469,7 +1473,8 @@ void View::enableOverheadMode(bool enableOverhead)
   if (updateCameraNodeVisitor_.valid() == false)
   {
     updateCameraNodeVisitor_ = new osg::NodeVisitor();
-    manip->setUpdateCameraNodeVisitor(updateCameraNodeVisitor_.get());
+    if (manip)
+      manip->setUpdateCameraNodeVisitor(updateCameraNodeVisitor_.get());
   }
 
   osg::StateSet* cameraState = getCamera()->getOrCreateStateSet();
@@ -1478,7 +1483,7 @@ void View::enableOverheadMode(bool enableOverhead)
     // Disable watch mode if needed
     if (isWatchEnabled())
     {
-      enableWatchMode(NULL, NULL);
+      enableWatchMode(nullptr, nullptr);
     }
     // always have north up in overhead mode
     simVis::Viewpoint vp = getViewpoint();
@@ -1637,7 +1642,7 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
           osg::ref_ptr<osg::Node> tetherNode;
           tetherNode = manip->getViewpoint().getNode();
           simVis::Viewpoint untether;
-          untether.setNode(NULL);
+          untether.setNode(nullptr);
           // Set a focal point to force a clear-out of the node; this will get updated to a better place in updateWatchView_()
           simCore::Vec3 lla = simVis::computeNodeGeodeticPosition(tetherNode.get());
           untether.focalPoint()->set(osgEarth::SpatialReference::create("wgs84"),
@@ -1665,7 +1670,7 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
         // Assert various post-conditions of enabling watch mode.  Failing any of
         // these assertions will jump us out of watch mode immediately on next frame.
         assert(isWatchEnabled());
-        assert(manip != NULL);
+        assert(manip != nullptr);
         assert(watcherNode_.valid());
         assert(watchedNode_.valid());
         assert(!manip->isTethering());
@@ -1673,7 +1678,7 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
       }
     }
   }
-  else if (watcherNode_ == NULL && !watchEnabled_)
+  else if (watcherNode_ == nullptr && !watchEnabled_)
     return;
 
   // Reset the eye azim/elev/range to what it was before we started monkeying with it.  In
@@ -1685,8 +1690,8 @@ void View::enableWatchMode(osg::Node* watched, osg::Node* watcher)
   resetVp.setNode(getModelNodeForTether(watcherNode_.get()));
 
   // Clear out watch values so that our observer doesn't pick up anything
-  watcherNode_ = NULL;
-  watchedNode_ = NULL;
+  watcherNode_ = nullptr;
+  watchedNode_ = nullptr;
   watchEnabled_ = false;
 
   // Swap the view back to what we had before, tethered to the watcher.
@@ -1713,14 +1718,14 @@ simVis::EntityNode* View::getWatcherNode() const
 {
   if (isWatchEnabled())
     return watcherNode_.get();
-  return NULL;
+  return nullptr;
 }
 
 simVis::EntityNode* View::getWatchedNode() const
 {
   if (isWatchEnabled())
     return watchedNode_.get();
-  return NULL;
+  return nullptr;
 }
 
 void View::updateWatchView_()
@@ -1733,7 +1738,7 @@ void View::updateWatchView_()
   // Jump out of watch mode if we're tethering, or if one of the watch nodes is invalid
   if (!manip || !watcherNode_.valid() || !watchedNode_.valid() || manip->isTethering())
   {
-    enableWatchMode(NULL, NULL);
+    enableWatchMode(nullptr, nullptr);
     return;
   }
 
@@ -1741,7 +1746,7 @@ void View::updateWatchView_()
   simVis::EntityNode* watchedEntityNode = getWatchedNode();
   if (!watchedEntityNode)
   {
-    enableWatchMode(NULL, NULL);
+    enableWatchMode(nullptr, nullptr);
     return;
   }
 
@@ -1808,7 +1813,7 @@ void View::updateWatchView_()
   // Now that we know where the eye is, calculate the orientation to the watched node
   double azR;
   double elR;
-  simCore::calculateAbsAzEl(realEyeLla, watchedLla, &azR, &elR, NULL, simCore::WGS_84, NULL);
+  simCore::calculateAbsAzEl(realEyeLla, watchedLla, &azR, &elR, nullptr, simCore::WGS_84, nullptr);
   updatedViewpoint.heading()->set(azR, osgEarth::Units::RADIANS);
   updatedViewpoint.pitch()->set(elR, osgEarth::Units::RADIANS);
 
@@ -1932,7 +1937,7 @@ void simVis::View::fixProjectionForNewViewport_(double nx, double ny, double nw,
 {
   // Avoid divide-by-0
   osg::Camera* camera = getCamera();
-  if (camera == NULL)
+  if (camera == nullptr)
     return;
   // nw and nh should not be 0.  If they are, someone upstream is giving incorrect values.
   // Fix those cases regardless here.
@@ -1992,23 +1997,32 @@ void View::fixCockpitFlag_(osg::Node* node, osgEarth::Util::EarthManipulator* ma
 osg::Node* View::getModelNodeForTether(osg::Node* node) const
 {
   EntityNode* entityNode = dynamic_cast<EntityNode*>(node);
-  if (entityNode)
+  if (!entityNode)
+    return nullptr;
+
+  switch (entityNode->type())
   {
-    // Entity nodes typically have proxies (children) that we center on.
-    osg::Node* proxyNode = entityNode->findAttachment<PlatformModelNode>();
-    // Fall back to Gate centroids
-    if (!proxyNode)
-      proxyNode = entityNode->findAttachment<GateCentroid>();
+  case simData::PLATFORM:
+    return entityNode->findAttachment<PlatformModelNode>();
+  case simData::GATE:
+    return entityNode->findAttachment<GateCentroid>();
+  case simData::CUSTOM_RENDERING:
+    return static_cast<CustomRenderingNode*>(entityNode)->locatorNode();
+  case simData::BEAM:
+  case simData::LASER:
+  case simData::PROJECTOR:
+    return entityNode->findAttachment<LocatorNode>();
+  case simData::LOB_GROUP:
+    return entityNode->findAttachment<osg::MatrixTransform>();
 
-    if ((!proxyNode) && (entityNode->type() == simData::CUSTOM_RENDERING))
-    {
-      auto customNode = static_cast<CustomRenderingNode*>(entityNode);
-      proxyNode = customNode->locatorNode();
-    }
-
-    if (proxyNode)
-      node = proxyNode;
+  // Passed in an invalid node
+  case simData::NONE:
+  case simData::ALL:
+    return node;
   }
+
+  // A new entity type was added and the code above was not updated
+  assert(false);
   return node;
 }
 
@@ -2024,10 +2038,10 @@ simVis::EntityNode* View::getEntityNode(osg::Node* node) const
   {
     simVis::EntityNode* entityNode = dynamic_cast<simVis::EntityNode*>(node->getParent(0));
     // If assert triggers, there's some weird unexpected hierarchy; investigate and resolve weirdness
-    assert(entityNode != NULL);
+    assert(entityNode != nullptr);
     return entityNode;
   }
-  return NULL;
+  return nullptr;
 }
 
 simVis::EarthManipulator* View::getEarthManipulator()

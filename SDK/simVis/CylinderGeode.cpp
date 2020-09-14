@@ -44,14 +44,14 @@ CylinderGeode::CylinderGeode(PlatformNode &hostPlatform)
   stateSet->setRenderBinDetails(BIN_CYLINDER, BIN_TWO_PASS_ALPHA);
 
   // Add to the platform
-  if (hostPlatform.getModel() != NULL)
+  if (hostPlatform.getModel() != nullptr)
     hostPlatform.getModel()->addScaledChild(transform_.get());
 }
 
 CylinderGeode::~CylinderGeode()
 {
   removeFromScene_();
-  transform_ = NULL;
+  transform_ = nullptr;
 }
 
 void CylinderGeode::rebuild_()

@@ -122,7 +122,7 @@ public:
   {
 #ifndef OSG_GL_FIXED_FUNCTION_AVAILABLE
     // osgSim::LightPointNode is not supported in GLCORE, turn it off to prevent warning spam from OSG
-    if (dynamic_cast<osgSim::LightPointNode*>(&node) != NULL)
+    if (dynamic_cast<osgSim::LightPointNode*>(&node) != nullptr)
       node.setNodeMask(0);
 
     osg::StateSet* ss = node.getStateSet();
@@ -130,22 +130,22 @@ public:
     {
       // GLCORE does not support TexEnv.  Remove unnecessary ones
       osg::TexEnv* texEnv = dynamic_cast<osg::TexEnv*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXENV));
-      if (texEnv != NULL && texEnv->getMode() == osg::TexEnv::MODULATE)
+      if (texEnv != nullptr && texEnv->getMode() == osg::TexEnv::MODULATE)
         ss->removeTextureAttribute(0, texEnv);
-      else if (texEnv != NULL)
+      else if (texEnv != nullptr)
       {
         SIM_WARN << "Unexpected TexEnv mode: 0x" << std::hex << texEnv->getMode() << "\n";
       }
 
       // GLCORE does not support TexEnvCombine; drop it; see SIMDIS-3227
       osg::TexEnvCombine* texEnvCombine = dynamic_cast<osg::TexEnvCombine*>(ss->getTextureAttribute(0, osg::StateAttribute::TEXENV));
-      if (texEnvCombine != NULL)
+      if (texEnvCombine != nullptr)
         ss->removeTextureAttribute(0, texEnvCombine);
 
       // GLCORE does not support ShadeModel.  Only smooth shading is supported.  Many SIMDIS
       // models in sites/ use flat shading, but don't seem to need it.  Drop the attribute.
       osg::ShadeModel* shadeModel = dynamic_cast<osg::ShadeModel*>(ss->getAttribute(osg::StateAttribute::SHADEMODEL));
-      if (shadeModel != NULL)
+      if (shadeModel != nullptr)
         ss->removeAttribute(shadeModel);
 
       // GLCORE does not support mode GL_TEXTURE_2D.  But we still need the texture attribute, so just remove mode.
@@ -153,7 +153,7 @@ public:
 
       // GLCORE does not support LightModel; drop it; see SIMDIS-3089
       osg::LightModel* lightModel = dynamic_cast<osg::LightModel*>(ss->getAttribute(osg::StateAttribute::LIGHTMODEL));
-      if (lightModel != NULL)
+      if (lightModel != nullptr)
         ss->removeAttribute(lightModel);
 
       // Fix textures that have GL_LUMINANCE or GL_LUMINANCE_ALPHA
@@ -177,7 +177,7 @@ public:
       // Some older models that use an FFP Material default to using the diffuse
       // material color as the active color, but this only works under FFP. Without
       // a color array, state leakage can occur.
-      if (geom->getColorArray() == NULL)
+      if (geom->getColorArray() == nullptr)
       {
         osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_OVERALL, 1);
         (*colors)[0].set(1, 1, 1, 1);
@@ -201,7 +201,7 @@ public:
   ModelCacheLoaderOptions()
     : boxWhenNotFound(false),
       addLodNode(true),
-      clock(NULL)
+      clock(nullptr)
   {
     optimizeFlags = osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS |
       osgUtil::Optimizer::VERTEX_POSTTRANSFORM |
@@ -471,7 +471,7 @@ public:
 
   /** Initializes the Loader Node */
   LoaderNode()
-    : cache_(NULL)
+    : cache_(nullptr)
   {
   }
 
@@ -553,7 +553,7 @@ public:
       if (proxy->getNumChildren())
       {
         osg::ref_ptr<osg::Node> loaded = proxy->getChild(0);
-        // Shouldn't be able to have NULLs here.  Investigate what to do if this triggers.
+        // Shouldn't be able to have nullptrs here.  Investigate what to do if this triggers.
         assert(loaded.valid());
         std::string uri;
         if (!proxy->getUserValue("uri", uri))
@@ -634,7 +634,7 @@ private:
 ModelCache::ModelCache()
   : shareArticulatedModels_(false),
     addLodNode_(true),
-    clock_(NULL),
+    clock_(nullptr),
     cache_(false, 30), // No need for thread safety, max of 30 elements
     asyncLoader_(new LoaderNode)
 {
@@ -659,7 +659,7 @@ ModelCache::~ModelCache()
 {
   // Clear the cache in the loader to avoid stale pointers
   asyncLoader_->clear();
-  asyncLoader_->setCache(NULL);
+  asyncLoader_->setCache(nullptr);
 }
 
 osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsImage)
@@ -691,7 +691,7 @@ osg::Node* ModelCache::getOrCreateIconModel(const std::string& uri, bool* pIsIma
   // Farm off to the pseudo-loader
   osg::ref_ptr<osg::Node> result = osgDB::readRefNodeFile(uri + "." + MODEL_LOADER_EXT, opts.get());
   if (!result)
-    return NULL;
+    return nullptr;
 
   // Synchronous load needs to run the shader generator here
   osg::ref_ptr<osgEarth::StateSetCache> stateCache = new osgEarth::StateSetCache();
@@ -819,7 +819,7 @@ bool ModelCache::isArticulated(osg::Node* node)
   osgSim::MultiSwitch* ms = osgEarth::findTopMostNodeOfType<osgSim::MultiSwitch>(node);
   if (ms)
     return true;
-  return osgEarth::findTopMostNodeOfType<osg::Sequence>(node) != NULL;
+  return osgEarth::findTopMostNodeOfType<osg::Sequence>(node) != nullptr;
 }
 
 osg::Node* ModelCache::asyncLoaderNode() const

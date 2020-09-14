@@ -142,10 +142,6 @@ private:
   osg::ref_ptr<osgGA::GUIEventHandler> focusDetector_;
   osg::ref_ptr<ViewManager::Callback> viewListener_;
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  osg::ref_ptr<CreateInsetEventHandler> createInset_;
-#endif
-
   /** Adds the listener to any views as required */
   void ensureViewListenerInstalled_();
 };

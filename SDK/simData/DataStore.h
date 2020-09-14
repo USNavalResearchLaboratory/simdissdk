@@ -105,7 +105,7 @@ public:
    * committed or has gone out of scope.  An attempt to enforce this behavior
    * has been made by requiring the reference to the object associated with the
    * transaction to be provided as an argument when releasing or canceling a
-   * transaction, so that it may be set to NULL.
+   * transaction, so that it may be set to nullptr.
    */
   class SDKDATA_EXPORT Transaction
   {
@@ -130,9 +130,9 @@ public:
     template <typename T>
     void release(T **operand)
     {
-      assert(transaction_.get() != NULL);
+      assert(transaction_.get() != nullptr);
       transaction_->release();
-      *operand = NULL;
+      *operand = nullptr;
     }
 
     /// complete the transaction by committing it and releasing it; equivalent to commit followed by release
@@ -166,7 +166,10 @@ public:
     virtual void onPrefsChange(DataStore *source, ObjectId id) = 0;
 
     /// current time has been changed
-    virtual void onTimeChange(DataStore *source) = 0;
+    SDK_DEPRECATE(virtual void onTimeChange(DataStore *source) {}, "Method has been replaced with onChange()");
+
+    /// data store has changed, this includes both time change and/or data change; called a max of once per frame
+    virtual void onChange(DataStore *source) = 0;
 
     /// something has changed in the entity category data
     virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) = 0;
@@ -200,8 +203,8 @@ public:
     /// prefs for the given entity have been changed
     virtual void onPrefsChange(DataStore *source, ObjectId id) {}
 
-    /// current time has been changed
-    virtual void onTimeChange(DataStore *source) {}
+    /// data store has changed
+    virtual void onChange(DataStore *source) {}
 
     /// something has changed in the entity category data
     virtual void onCategoryDataChange(DataStore *source, ObjectId changedId, simData::ObjectType ot) {}
@@ -394,7 +397,7 @@ public: // methods
   /// Specify the interpolator to use
   virtual void setInterpolator(Interpolator *interpolator) = 0;
 
-  /// Get the current interpolator (NULL if disabled)
+  /// Get the current interpolator (nullptr if disabled)
   virtual Interpolator* interpolator() const = 0;
   ///@}
 
@@ -439,14 +442,14 @@ public: // methods
   ///@}
 
   /**@name Scenario Properties
-   * @note should always return a valid object (never NULL)
+   * @note should always return a valid object (never nullptr)
    * @{
    */
   virtual const  ScenarioProperties*          scenarioProperties(Transaction *transaction) const = 0;
   virtual        ScenarioProperties*  mutable_scenarioProperties(Transaction *transaction) = 0;
 
   /**@name Object Properties
-   * @note will return NULL if no object is associated with the specified id
+   * @note will return nullptr if no object is associated with the specified id
    * @{
    */
   virtual const  PlatformProperties*          platformProperties(ObjectId id, Transaction *transaction) const = 0;
@@ -466,7 +469,7 @@ public: // methods
   ///@}
 
   /**@name Object Preferences
-   * @note will return NULL if no object is associated with the specified id
+   * @note will return nullptr if no object is associated with the specified id
    * @{
    */
   virtual const  PlatformPrefs*          platformPrefs(ObjectId id, Transaction *transaction) const = 0;
@@ -549,7 +552,7 @@ public: // methods
   virtual int removeGenericDataTag(ObjectId id, const std::string& tag) = 0;
 
   /**@name Add data update, command, generic data, or category data
-   *@note Returns NULL if platform for specified ID does not exist
+   *@note Returns nullptr if platform for specified ID does not exist
    * @{
    */
   virtual  PlatformUpdate *   addPlatformUpdate(ObjectId id, Transaction *transaction) = 0;
@@ -626,7 +629,7 @@ public: // methods
   /**@name NewUpdatesListener
   * @{
   */
-  /// Sets a listener for when entity updates are added; use NULL to remove.
+  /// Sets a listener for when entity updates are added; use nullptr to remove.
   virtual void setNewUpdatesListener(NewUpdatesListenerPtr callback) = 0;
   ///@}
 

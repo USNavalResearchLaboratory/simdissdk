@@ -31,9 +31,9 @@ namespace simVis {
 
 GlDebugMessage::GlDebugMessage(osg::GraphicsContext* gc)
   : register_(false),
-  glDebugMessageControl_(NULL),
-  glDebugMessageInsert_(NULL),
-  glDebugMessageCallback_(NULL)
+  glDebugMessageControl_(nullptr),
+  glDebugMessageInsert_(nullptr),
+  glDebugMessageCallback_(nullptr)
 {
   setGraphicsContext(gc);
 }
@@ -41,7 +41,7 @@ GlDebugMessage::GlDebugMessage(osg::GraphicsContext* gc)
 GlDebugMessage::~GlDebugMessage()
 {
   // Disable callbacks
-  setGraphicsContext(NULL);
+  setGraphicsContext(nullptr);
 }
 
 void GlDebugMessage::setGraphicsContext(osg::GraphicsContext* gc)
@@ -54,11 +54,11 @@ void GlDebugMessage::setGraphicsContext(osg::GraphicsContext* gc)
   if (gc_.lock(oldGc) && oldGc->makeCurrent())
   {
     if (glDebugMessageCallback_)
-      glDebugMessageCallback_(NULL, NULL);
+      glDebugMessageCallback_(nullptr, nullptr);
   }
-  glDebugMessageControl_ = NULL;
-  glDebugMessageInsert_ = NULL;
-  glDebugMessageCallback_ = NULL;
+  glDebugMessageControl_ = nullptr;
+  glDebugMessageInsert_ = nullptr;
+  glDebugMessageCallback_ = nullptr;
 
   // Pull out the new function pointers
   gc_ = gc;
@@ -88,7 +88,7 @@ void GlDebugMessage::registerCallbacks(bool registerWithGl)
   if (registerWithGl)
     glDebugMessageCallback_(&GlDebugMessage::processMessage_, this);
   else
-    glDebugMessageCallback_(NULL, NULL);
+    glDebugMessageCallback_(nullptr, nullptr);
 }
 
 void GlDebugMessage::setDebugOutputMode(osg::StateSet& stateSet, osg::StateAttribute::GLMode mode) const

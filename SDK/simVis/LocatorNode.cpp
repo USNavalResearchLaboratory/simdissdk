@@ -21,6 +21,7 @@
  *
  */
 #include "simCore/Calc/Calculations.h"
+#include "simVis/Entity.h"
 #include "simVis/Locator.h"
 #include "simVis/OverheadMode.h"
 #include "simVis/LocatorNode.h"
@@ -33,14 +34,14 @@ namespace simVis
 {
 
 LocatorNode::LocatorNode()
-  : locatorCallback_(NULL),
+  : locatorCallback_(nullptr),
     overheadModeHint_(false)
 {
   // LocatorNode is valid without any locator; it functions as a group.
 }
 
 LocatorNode::LocatorNode(Locator* locator, unsigned int componentsToTrack)
-  : locatorCallback_(NULL),
+  : locatorCallback_(nullptr),
   componentsToTrack_(componentsToTrack),
   overheadModeHint_(false)
 {
@@ -50,7 +51,7 @@ LocatorNode::LocatorNode(Locator* locator, unsigned int componentsToTrack)
 LocatorNode::LocatorNode(const LocatorNode& rhs, const osg::CopyOp& op)
   : osg::MatrixTransform(rhs, op),
   matrixRevision_(rhs.matrixRevision_),
-  locatorCallback_(NULL),
+  locatorCallback_(nullptr),
   componentsToTrack_(rhs.componentsToTrack_),
   overheadModeHint_(rhs.overheadModeHint_)
 {
@@ -96,6 +97,11 @@ int LocatorNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSys
     // this locatorNode is not active, and does not have a valid position
     return 2;
   }
+  if (entityToMonitor_.valid() && !entityToMonitor_->isActive())
+  {
+    // locatorNode is inactive: the locatorNode is tracking an entity, and that entity is inactive
+    return 3;
+  }
 
   const osg::Vec3d& locatorNodeEcef = getMatrix().getTrans();
   if (coordsys == simCore::COORD_SYS_LLA)
@@ -129,6 +135,11 @@ int LocatorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Ve
     // this locatorNode is not active, and does not have a valid position
     return 2;
   }
+  if (entityToMonitor_.valid() && !entityToMonitor_->isActive())
+  {
+    // locatorNode is inactive: the locatorNode is tracking an entity, and that entity is inactive
+    return 3;
+  }
 
   const osg::Matrixd& m = getMatrix();
   const osg::Vec3d& locatorNodeEcef = m.getTrans();
@@ -161,7 +172,17 @@ int LocatorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Ve
 
 void LocatorNode::syncWithLocator()
 {
-  if (getNodeMask() != 0 && locator_.valid() && locator_->outOfSyncWith(matrixRevision_))
+  if (getNodeMask() == 0 || !locator_.valid())
+  {
+    // this locatorNode is not active, and does not have a valid position
+    return;
+  }
+  if (entityToMonitor_.valid() && !entityToMonitor_->isActive())
+  {
+    // locatorNode is inactive: the locatorNode is tracking an entity, and that entity is inactive
+    return;
+  }
+  if (locator_->outOfSyncWith(matrixRevision_))
   {
     osg::Matrix matrix;
 
@@ -175,8 +196,6 @@ void LocatorNode::syncWithLocator()
 
 bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* nv) const
 {
-  if (getNodeMask() == 0)
-    return false;
   if (!locator_.valid())
   {
     // locatorNode with no locator has the position of its parent
@@ -184,9 +203,9 @@ bool LocatorNode::computeLocalToWorldMatrix(osg::Matrix& out, osg::NodeVisitor* 
   }
   osg::Matrix matrix = getMatrix();
 
-  // It is possible that nv is NULL if calling computeBound(), which can happen during intersection
+  // It is possible that nv is nullptr if calling computeBound(), which can happen during intersection
   // visitor processing.  To address this, the overheadModeHint_ can be set.  If set and the Node
-  // visitor is NULL, then we do overhead mode calculations for bounding area.
+  // visitor is nullptr, then we do overhead mode calculations for bounding area.
   if (simVis::OverheadMode::isActive(nv) || (overheadModeHint_ && !nv))
   {
     simCore::Vec3 p( matrix(3,0), matrix(3,1), matrix(3,2) );
@@ -209,6 +228,11 @@ void LocatorNode::setOverheadModeHint(bool overheadMode)
 bool LocatorNode::overheadModeHint() const
 {
   return overheadModeHint_;
+}
+
+void LocatorNode::setEntityToMonitor(EntityNode* entity)
+{
+  entityToMonitor_ = entity;
 }
 
 //---------------------------------------------------------------------------

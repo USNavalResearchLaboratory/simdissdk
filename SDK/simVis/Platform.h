@@ -83,7 +83,7 @@ public:
     const simData::DataStore& dataStore,
     PlatformTspiFilterManager& manager,
     osg::Group* expireModeGroupAttach,
-    Locator* eciLocator = NULL,
+    Locator* eciLocator = nullptr,
     int referenceYear = 1970);
 
   /**
@@ -100,13 +100,13 @@ public:
 
   /**
   * The track history trail node
-  * @return track history node, or NULL if it doesn't exists yet
+  * @return track history node, or nullptr if it doesn't exists yet
   */
   TrackHistoryNode* getTrackHistory();
 
   /**
-  * Returns the Radar Cross Section of the platform.  Can be NULL.
-  * @return the Radar Cross Section of the platform.  Can be NULL.
+  * Returns the Radar Cross Section of the platform.  Can be nullptr.
+  * @return the Radar Cross Section of the platform.  Can be nullptr.
   */
   simCore::RadarCrossSectionPtr getRcs() const;
 
@@ -172,7 +172,7 @@ public: // EntityNode interface
 
   /**
   * Updates the entity based on the bound data store.
-  * @param updateSlice  Data store update slice (could be NULL
+  * @param updateSlice  Data store update slice (could be nullptr
   * @param force true to force the update to be applied; false only apply if logic dictates
   * @return true if update applied, false if not
   */
@@ -233,14 +233,14 @@ public: // EntityNode interface
 
   /**
   * Returns the last update for the platform; note this update has been filtered e.g. clamping has been applied
-  * @return the last update for the platform, or NULL if platform has no valid update
+  * @return the last update for the platform, or nullptr if platform has no valid update
   */
   const simData::PlatformUpdate* update() const;
 
   /**
   * Returns the update valid for displaying current values in labels, which could be the actual values from the last unfiltered update,
   * or the filtered values, depending on the label prefs useValues field
-  * @return the current update for the platform, or NULL if platform has no valid update
+  * @return the current update for the platform, or nullptr if platform has no valid update
   */
   const simData::PlatformUpdate* labelUpdate() const;
 

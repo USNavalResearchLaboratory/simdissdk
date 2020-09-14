@@ -31,6 +31,7 @@
 #include "osg/Group"
 #include "simCore/Common/Common.h"
 #include "simCore/Calc/Vec3.h"
+#include "simCore/Calc/Units.h"
 
 namespace simCore { class UnitsRegistry; }
 
@@ -89,7 +90,7 @@ namespace simVis { namespace GOG
     const simCore::UnitsRegistry* unitsRegistry_;
 
     GOGContext()
-      : unitsRegistry_(NULL)
+      : unitsRegistry_(nullptr)
     {
     }
   };
@@ -128,7 +129,8 @@ namespace simVis { namespace GOG
     GOG_HEMISPHERE,
     GOG_LATLONALTBOX,
     GOG_CONE,
-    GOG_IMAGEOVERLAY
+    GOG_IMAGEOVERLAY,
+    GOG_ORBIT
   };
 
   /** Describes the original load format of the shape */
@@ -153,6 +155,7 @@ namespace simVis { namespace GOG
     GogShape                shape; ///< identifying the exact shape type of the GOG
     LoadFormat              loadFormat; ///< indicate the original load format of the GOG
     size_t                  lineNumber; ///< line number from the source GOG file
+    simCore::Units          altitudeUnits_; ///< altitude units specified in the GOG file
   public:
     GogMetaData();
     bool                    isSetExplicitly(GogSerializableField field) const; ///< determines if a field is explicitly set

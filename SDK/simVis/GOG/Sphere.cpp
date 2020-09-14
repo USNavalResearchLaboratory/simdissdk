@@ -51,13 +51,13 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
   if (radius_m <= 0.f)
   {
     SIM_WARN << "Cannot create sphere with no radius\n";
-    return NULL;
+    return nullptr;
   }
   osg::Node* shape = osgEarth::AnnotationUtils::createSphere(
     radius_m, color);
   shape->setName("GOG Sphere");
 
-  osgEarth::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = nullptr;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -72,7 +72,7 @@ GogNodeInterface* Sphere::deserialize(const ParsedShape& parsedShape,
   }
   node->setName("GOG Sphere Position");
 
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (node)
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);

@@ -740,12 +740,12 @@ WorldMagneticModel::WorldMagneticModel()
 WorldMagneticModel::~WorldMagneticModel()
 {
   delete geomag_;
-  geomag_ = NULL;
+  geomag_ = nullptr;
 }
 
 int WorldMagneticModel::calculateMagneticVariance(const simCore::Vec3& lla, int ordinalDay, int year, double& varianceRad)
 {
-  if (geomag_ == NULL)
+  if (geomag_ == nullptr)
     return 1;
   return geomag_->calculateVariance(lla, ordinalDay, year, varianceRad);
 }

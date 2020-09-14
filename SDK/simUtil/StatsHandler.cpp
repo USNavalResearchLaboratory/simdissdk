@@ -44,7 +44,7 @@ StatsHandler::StatsHandler()
 
 void StatsHandler::setStatsType(StatsHandler::StatsType statsType, osgViewer::View* onWhichView)
 {
-  if (onWhichView == NULL)
+  if (onWhichView == nullptr)
     return;
 
   // Due to the way osgViewer::StatsHandler is written, we must iterate through each

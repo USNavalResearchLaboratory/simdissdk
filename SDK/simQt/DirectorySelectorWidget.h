@@ -53,7 +53,7 @@ class SDKQT_EXPORT DirectorySelectorWidget : public QWidget
 
 public:
   /** Constructor */
-  DirectorySelectorWidget(QWidget* parent=NULL);
+  DirectorySelectorWidget(QWidget* parent=nullptr);
   virtual ~DirectorySelectorWidget();
 
   /** Sets the registry key for saving/loading files; defaults to SETTINGS/file */

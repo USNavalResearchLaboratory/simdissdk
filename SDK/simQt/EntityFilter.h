@@ -43,7 +43,7 @@ namespace simQt {
   * the filter happens in this method.
   * The implementation must also provide a means for EntityProxyModel to obtain a QWidget for this filter
   * by implementing the widget() method.  The caller is responsible for memory of the newly created widget.
-  * Implementations should create the widget if they want it to be shown, otherwise, return NULL.
+  * Implementations should create the widget if they want it to be shown, otherwise, return nullptr.
   *
   * Implementations should emit the filterUpdated signal when the filter has changed, in case the user wants
   * to re-apply the filter to its model
@@ -65,8 +65,8 @@ namespace simQt {
 
     /**
     * Returns a new widget for this filter.  If the filter has no widget, or does not wish it to be shown,
-    * this will return NULL.  The memory for this new widget is now owned by the caller
-    * @param newWidgetParent QWidget parent, useful for memory management purposes; may be NULL if desired
+    * this will return nullptr.  The memory for this new widget is now owned by the caller
+    * @param newWidgetParent QWidget parent, useful for memory management purposes; may be nullptr if desired
     * @return QWidget used for changing filter settings
     */
     virtual QWidget* widget(QWidget* newWidgetParent) const = 0;

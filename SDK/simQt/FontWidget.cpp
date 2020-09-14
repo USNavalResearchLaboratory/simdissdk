@@ -42,7 +42,7 @@ namespace simQt {
 FontWidget::FontWidget(QWidget* parent)
   : QWidget(parent),
     fontDir_(new QDir()),
-    ui_(NULL),
+    ui_(nullptr),
     useFriendlyFontName_(true)
 {
 
@@ -181,7 +181,9 @@ void FontWidget::setFontColor(const QColor& fontColor)
 
 void FontWidget::setFontSize(int fontSize)
 {
-  ui_->fontSizeSpinBox->setValue(fontSize);
+  // Check for equality to avoid trampling user edits with programmatic updates
+  if (ui_->fontSizeSpinBox->value() != fontSize)
+    ui_->fontSizeSpinBox->setValue(fontSize);
 }
 
 void FontWidget::setShowFontColor(bool showColor)

@@ -70,48 +70,28 @@ int testGradient()
   rv += SDK_ASSERT(grad.colors().size() == 5);
   rv += SDK_ASSERT(grad.colorAt(0.125f) != Qt::darkYellow);
 
-  // Test 0 control points, and outside-0 points
+  // Test a "cleared" gradient
   grad.clearColors();
-  rv += SDK_ASSERT(grad.colors().size() == 0);
-  rv += SDK_ASSERT(grad.colorAt(0.f) == Qt::black);
-  rv += SDK_ASSERT(grad.colorAt(1.f) == Qt::black);
-  const QColor midGray = qRgba(128, 128, 128, 255);
-  rv += SDK_ASSERT(grad.setColor(0.5f, midGray) == 0);
-  rv += SDK_ASSERT(grad.colors().size() == 1);
-  rv += SDK_ASSERT(grad.colorAt(0.f) == midGray);
-  rv += SDK_ASSERT(grad.colorAt(0.4f) == midGray);
-  rv += SDK_ASSERT(grad.colorAt(0.5f) == midGray);
-  rv += SDK_ASSERT(grad.colorAt(0.6f) == midGray);
-  rv += SDK_ASSERT(grad.colorAt(1.f) == midGray);
-
-  // Add one at 0.75
-  const QColor darkGray = qRgba(192, 192, 192, 255);
-  rv += SDK_ASSERT(grad.setColor(0.75f, darkGray) == 0);
-  rv += SDK_ASSERT(grad.colorAt(0.f) == midGray);
-  rv += SDK_ASSERT(grad.colorAt(0.4f) == midGray);
-  rv += SDK_ASSERT(grad.colorAt(0.5f) == midGray);
-  rv += SDK_ASSERT(grad.colorAt(0.75f) == darkGray);
-  rv += SDK_ASSERT(grad.colorAt(0.85f) == darkGray);
-  rv += SDK_ASSERT(grad.colorAt(1.f) == darkGray);
+  rv += SDK_ASSERT(grad.colors().size() == 2);
+  rv += SDK_ASSERT(grad.colorAt(0.f) == Qt::white);
+  rv += SDK_ASSERT(grad.colorAt(1.f) == Qt::white);
 
   // Test setColors with points outside 0/1
   std::map<float, QColor> colorMap;
   colorMap[-1.f] = Qt::white;
+  colorMap[0.2f] = Qt::red;
+  colorMap[0.8f] = Qt::green;
   colorMap[2.f] = Qt::white;
   rv += SDK_ASSERT(grad.colors().size() == 2);
   grad.setColors(colorMap);
-  rv += SDK_ASSERT(grad.colors().size() == 0);
-  rv += SDK_ASSERT(grad.colorAt(0.f) == Qt::black);
-  rv += SDK_ASSERT(grad.colorAt(0.5f) == Qt::black);
-  rv += SDK_ASSERT(grad.colorAt(1.f) == Qt::black);
-
-  // Test constructor with outside-0/1 points
-  colorMap[0.5f] = Qt::green;
-  simQt::ColorGradient grad2(colorMap);
-  rv += SDK_ASSERT(grad2.colors().size() == 1);
-  rv += SDK_ASSERT(grad2.colorAt(0.f) == Qt::green);
-  rv += SDK_ASSERT(grad2.colorAt(0.5f) == Qt::green);
-  rv += SDK_ASSERT(grad2.colorAt(1.f) == Qt::green);
+  rv += SDK_ASSERT(grad.colors().size() == 2);
+  rv += SDK_ASSERT(grad.colorAt(0.f) == Qt::red);
+  QColor mid = grad.colorAt(0.5f);
+  rv += SDK_ASSERT(mid.red() == 127);
+  rv += SDK_ASSERT(mid.green() == 127);
+  rv += SDK_ASSERT(mid.blue() == 0);
+  rv += SDK_ASSERT(mid.alpha() == 255);
+  rv += SDK_ASSERT(grad.colorAt(1.f) == Qt::green);
 
   return rv;
 }

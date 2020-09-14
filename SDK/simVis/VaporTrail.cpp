@@ -97,11 +97,11 @@ VaporTrail::~VaporTrail()
   recyclePuffs_.clear();
   if (expireModeGroup_.valid())
     expireModeGroup_->removeChild(vaporTrailGroup_);
-  vaporTrailGroup_ = NULL;
-  hostPlatform_ = NULL;
+  vaporTrailGroup_ = nullptr;
+  hostPlatform_ = nullptr;
 
   textures_.clear();
-  locator_ = NULL;
+  locator_ = nullptr;
 }
 
 void VaporTrail::update(double time)
@@ -296,7 +296,7 @@ int VaporTrail::addFirstPuff_()
   // interpolation may be required
   simData::PlatformUpdate interpolatedPlatformUpdate;
   simData::Interpolator* li = dataStore_.interpolator();
-  if (platformUpdate->time() != time && li != NULL && platformIter.hasNext())
+  if (platformUpdate->time() != time && li != nullptr && platformIter.hasNext())
   {
     // defn of upper_bound previous()
     assert(platformUpdate->time() < time);

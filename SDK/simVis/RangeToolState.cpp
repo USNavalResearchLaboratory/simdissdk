@@ -30,8 +30,8 @@ RangeToolState::RangeToolState(EntityState* beginEntity, EntityState* endEntity)
   endEntity_(endEntity)
 {
   // Must pass in entities
-  assert(beginEntity_ != NULL);
-  assert(endEntity_ != NULL);
+  assert(beginEntity_ != nullptr);
+  assert(endEntity_ != nullptr);
 }
 
 RangeToolState::~RangeToolState()
@@ -239,8 +239,8 @@ osg::Vec3d RangeToolState::coord(RangeToolState::Coord which)
       earthModel_,
       &coordConv_,
       &downRng,
-      NULL,
-      NULL);
+      nullptr,
+      nullptr);
     coord_[which] = osg::Vec3d(downRng*sin(fpa[0]), downRng*cos(fpa[0]), 0.0);
   }
   break;

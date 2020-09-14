@@ -123,7 +123,7 @@ int validateGateColor(simData::DataStore* ds, simData::ObjectId id, double time,
     ds->update(time);
   simData::DataStore::Transaction t;
   const simData::GatePrefs *prefs = ds->gatePrefs(id, &t);
-  if (prefs == NULL)
+  if (prefs == nullptr)
     return 1;
 
   if (prefs->commonprefs().color() != color)
@@ -136,7 +136,7 @@ int addGateColor(simData::DataStore* ds, simData::ObjectId id, double time, uint
 {
   simData::DataStore::Transaction t;
   simData::GateCommand *command = ds->addGateCommand(id, &t);
-  if (command == NULL)
+  if (command == nullptr)
     return 1;
 
   command->set_time(time);
@@ -152,7 +152,7 @@ int addGateOverrideColor(simData::DataStore* ds, simData::ObjectId id, double ti
 {
   simData::DataStore::Transaction t;
   simData::GateCommand *command = ds->addGateCommand(id, &t);
-  if (command == NULL)
+  if (command == nullptr)
     return 1;
 
   command->set_time(time);
@@ -249,7 +249,7 @@ int validateBeamColor(simData::DataStore* ds, simData::ObjectId id, double time,
     ds->update(time);
   simData::DataStore::Transaction t;
   const simData::BeamPrefs *prefs = ds->beamPrefs(id, &t);
-  if (prefs == NULL)
+  if (prefs == nullptr)
     return 1;
 
   if (prefs->commonprefs().color() != color)
@@ -262,7 +262,7 @@ int addBeamColor(simData::DataStore* ds, simData::ObjectId id, double time, uint
 {
   simData::DataStore::Transaction t;
   simData::BeamCommand *command = ds->addBeamCommand(id, &t);
-  if (command == NULL)
+  if (command == nullptr)
     return 1;
 
   command->set_time(time);
@@ -278,7 +278,7 @@ int addBeamOverrideColor(simData::DataStore* ds, simData::ObjectId id, double ti
 {
   simData::DataStore::Transaction t;
   simData::BeamCommand *command = ds->addBeamCommand(id, &t);
-  if (command == NULL)
+  if (command == nullptr)
     return 1;
 
   command->set_time(time);
@@ -365,7 +365,7 @@ int validatePlatformColor(simData::DataStore* ds, simData::ObjectId id, double t
     ds->update(time);
   simData::DataStore::Transaction t;
   const simData::PlatformPrefs *prefs = ds->platformPrefs(id, &t);
-  if (prefs == NULL)
+  if (prefs == nullptr)
     return 1;
 
   if (prefs->commonprefs().color() != color)
@@ -378,7 +378,7 @@ int addPlatformColor(simData::DataStore* ds, simData::ObjectId id, double time, 
 {
   simData::DataStore::Transaction t;
   simData::PlatformCommand *command = ds->addPlatformCommand(id, &t);
-  if (command == NULL)
+  if (command == nullptr)
     return 1;
 
   command->set_time(time);
@@ -394,7 +394,7 @@ int addPlatformOverrideColor(simData::DataStore* ds, simData::ObjectId id, doubl
 {
   simData::DataStore::Transaction t;
   simData::PlatformCommand *command = ds->addPlatformCommand(id, &t);
-  if (command == NULL)
+  if (command == nullptr)
     return 1;
 
   command->set_time(time);

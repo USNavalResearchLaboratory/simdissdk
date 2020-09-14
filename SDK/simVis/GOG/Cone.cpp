@@ -84,7 +84,7 @@ GogNodeInterface* Cone::deserialize(const ParsedShape& parsedShape,
   coneGeom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, coneVerts->size()));
   capGeom->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, capVerts->size()));
 
-  osgEarth::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = nullptr;
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
     node = new osgEarth::LocalGeometryNode();

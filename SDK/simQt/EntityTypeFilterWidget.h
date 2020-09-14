@@ -39,7 +39,7 @@ namespace simQt {
    Q_OBJECT;
   public:
     /** Constructor */
-    EntityTypeFilterWidget(QWidget* parent = NULL, unsigned int types = simData::ALL);
+    EntityTypeFilterWidget(QWidget* parent = nullptr, unsigned int types = simData::ALL);
 
     /** Destructor */
     virtual ~EntityTypeFilterWidget();

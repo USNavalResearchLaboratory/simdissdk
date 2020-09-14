@@ -64,7 +64,7 @@ void StartupLayoutManager::executeTasks(simQt::Settings& fromSettings)
     // Get the corresponding task by name from our registered tasks
     StartupLayoutTaskPtr task = tasks_.value(*it);
     // ... and execute it.
-    if (task != NULL)
+    if (task != nullptr)
       task->execute();
   }
 }
@@ -78,7 +78,7 @@ void StartupLayoutManager::saveToSettings(simQt::Settings& toSettings)
   {
     // Task itself knows whether it ought to be saved
     StartupLayoutTaskPtr task = tasks_.value(*it);
-    if (task != NULL && task->shouldExecuteOnNextStartup())
+    if (task != nullptr && task->shouldExecuteOnNextStartup())
       tasksToSave.push_back(*it);
   }
 

@@ -71,15 +71,15 @@ CentroidManager::~CentroidManager()
 
 AveragePositionNode* CentroidManager::createCentroid(const std::vector<EntityNode*>& inNodes, View* view)
 {
-  // Nothing to do with an empty node vector or a NULL view
+  // Nothing to do with an empty node vector or a nullptr view
   if (!view || inNodes.empty())
-    return NULL;
+    return nullptr;
 
-  // Remove NULL nodes
+  // Remove nullptr nodes
   std::vector<EntityNode*> nodes(inNodes);
-  nodes.erase(std::remove(nodes.begin(), nodes.end(), static_cast<EntityNode*>(NULL)), nodes.end());
+  nodes.erase(std::remove(nodes.begin(), nodes.end(), static_cast<EntityNode*>(nullptr)), nodes.end());
   if (nodes.empty())
-    return NULL;
+    return nullptr;
 
   CentroidInfo info;
   auto viewIter = centroids_.find(view);
@@ -91,7 +91,7 @@ AveragePositionNode* CentroidManager::createCentroid(const std::vector<EntityNod
     {
       // View is not valid, so remove from the map.
       centroids_.erase(viewIter);
-      return NULL;
+      return nullptr;
     }
     else
     {
@@ -123,7 +123,7 @@ AveragePositionNode* CentroidManager::createCentroid(const std::vector<EntityNod
 
 void CentroidManager::centerViewOn(const std::vector<EntityNode*>& nodes, View* view)
 {
-  // Nothing to do with an empty node vector or a NULL view
+  // Nothing to do with an empty node vector or a nullptr view
   if (!view || nodes.empty())
     return;
 

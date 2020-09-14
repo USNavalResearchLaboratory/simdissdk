@@ -20,6 +20,8 @@
  * disclose, or release this software.
  *
  */
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 #include <cassert>
 #include <set>
 #include "osgUtil/IncrementalCompileOperation"
@@ -78,17 +80,17 @@ IncrementalCompileSettings::IncrementalCompileSettings(simQt::Settings& settings
 IncrementalCompileSettings::~IncrementalCompileSettings()
 {
   delete conservativeTimeRatio_;
-  conservativeTimeRatio_ = NULL;
+  conservativeTimeRatio_ = nullptr;
   delete flushTimeRatio_;
-  flushTimeRatio_ = NULL;
+  flushTimeRatio_ = nullptr;
   delete maxCompilesPerFrame_;
-  maxCompilesPerFrame_ = NULL;
+  maxCompilesPerFrame_ = nullptr;
   delete minimumTimeForCompileUS_;
-  minimumTimeForCompileUS_ = NULL;
+  minimumTimeForCompileUS_ = nullptr;
   delete targetRate_;
-  targetRate_ = NULL;
+  targetRate_ = nullptr;
   delete icoEnabled_;
-  icoEnabled_ = NULL;
+  icoEnabled_ = nullptr;
 }
 
 void IncrementalCompileSettings::initialize_()
@@ -105,7 +107,7 @@ void IncrementalCompileSettings::setIncrementalEnabled_(bool enabled)
 {
   if (!viewer_.valid())
     return;
-  viewer_->setIncrementalCompileOperation(enabled ? ico_.get() : NULL);
+  viewer_->setIncrementalCompileOperation(enabled ? ico_.get() : nullptr);
 
   // Iterate through all views and grab their database pagers
   osgViewer::ViewerBase::Views views;
@@ -113,13 +115,13 @@ void IncrementalCompileSettings::setIncrementalEnabled_(bool enabled)
   std::set<osgDB::DatabasePager*> pagers;
   for (osgViewer::ViewerBase::Views::const_iterator i = views.begin(); i != views.end(); ++i)
   {
-    if (*i != NULL && (*i)->getDatabasePager() != NULL)
+    if (*i != nullptr && (*i)->getDatabasePager() != nullptr)
       pagers.insert((*i)->getDatabasePager());
   }
   // Apply the ICO to each database pager we found (likely only one shared amongst views)
   for (std::set<osgDB::DatabasePager*>::const_iterator i = pagers.begin(); i != pagers.end(); ++i)
   {
-    (*i)->setIncrementalCompileOperation(enabled ? ico_.get() : NULL);
+    (*i)->setIncrementalCompileOperation(enabled ? ico_.get() : nullptr);
   }
 }
 
@@ -149,3 +151,5 @@ void IncrementalCompileSettings::setConservativeTimeRatio_(int percent)
 }
 
 }
+
+#endif /* USE_DEPRECATED_SIMDISSDK_API */

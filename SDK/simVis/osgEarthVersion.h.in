@@ -31,6 +31,9 @@
 #cmakedefine HAVE_TRITON_NODEKIT
 #cmakedefine HAVE_SILVERLINING_NODEKIT
 
+// osgEarth post-3.0 1f5f57c1d9c renamed headers and classes
+#cmakedefine HAVE_OSGEARTH_THREADING
+
 /** Detected osgearth-simdis-sdk version */
 
 #define SDK_OSGEARTH_VERSION_MAJOR @SDK_OSGEARTH_VERSION_MAJOR@

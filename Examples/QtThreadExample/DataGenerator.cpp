@@ -28,7 +28,7 @@ namespace SdkQThreadExample
 
 DataGenerator::DataGenerator()
   : QObject(),
-    timer_(NULL),
+    timer_(nullptr),
     done_(false),
     lat_(0.0),
     lon_(0.0),
@@ -67,7 +67,7 @@ void DataGenerator::update_()
     // Stop the timer
     timer_->stop();
     delete timer_;
-    timer_ = NULL;
+    timer_ = nullptr;
     // Send out signal indicating the thread is done
     emit finished();
     return;

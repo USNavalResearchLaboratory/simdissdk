@@ -50,10 +50,10 @@
 // MACROS to test for changes in protobuf properties.
 
 #define PB_HAS_FIELD(a, field) ( \
-  ((a)!=NULL) && ((a)->has_##field()) )
+  ((a)!=nullptr) && ((a)->has_##field()) )
 
 #define PB_DOESNT_HAVE_FIELD(a, field) ( \
-  ((a)==NULL) || (!(a)->has_##field()) )
+  ((a)==nullptr) || (!(a)->has_##field()) )
 
 #define PB_FIELD_APPEARED(a, b, field) ( \
   PB_DOESNT_HAVE_FIELD((a), field) && \
@@ -104,13 +104,6 @@ namespace osgViewer {
 namespace simVis
 {
   class PlatformModelNode;
-
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /**
-   * Whether to use the REX terrain engine.
-   */
-  SDK_DEPRECATE(SDKVIS_EXPORT bool useRexEngine(), "Method will be removed in a future SDK release.");
-#endif
 
   /**
    * Enable or disable lighting on a state set. We must set both the
@@ -165,7 +158,7 @@ namespace simVis
   /**
    * Utility template method to find the first Update Callback of the given type.
    * @param node Node to search the update callback chain of
-   * @return First update callback that is of type T, or NULL if none is found.
+   * @return First update callback that is of type T, or nullptr if none is found.
    */
   template <typename T>
   T* findUpdateCallbackOfType(osg::Node* node)
@@ -178,7 +171,7 @@ namespace simVis
         return asType;
       callback = callback->getNestedCallback();
     }
-    return NULL;
+    return nullptr;
   }
 
   /// convert a simCore::Coordinate to a GeoPoint, if possible

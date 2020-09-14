@@ -346,8 +346,8 @@ void UnitContextProxy::setSubject(UnitContext* newSubject)
   if (newSubject == subject_)
     return;
 
-  // The new context (subject) must be non-NULL; refuse
-  assert(newSubject != NULL);
+  // The new context (subject) must be non-nullptr; refuse
+  assert(newSubject != nullptr);
 
   // First disconnect all signals from the old subject
   if (subject_)
@@ -376,8 +376,8 @@ void UnitContextProxy::setSubject(UnitContext* newSubject)
   UnitContext* oldSubject = subject_;
   subject_ = newSubject;
 
-  // Try to safely deal with subject_ being NULL by returning (assert should trigger above in debug mode)
-  if (subject_ == NULL)
+  // Try to safely deal with subject_ being nullptr by returning (assert should trigger above in debug mode)
+  if (subject_ == nullptr)
     return;
 
   // Next, connect to the new subject (context)
@@ -403,92 +403,92 @@ void UnitContextProxy::setSubject(UnitContext* newSubject)
 
   // Detect changes in any of the fields from the old context to the new context
   bool foundChange = false;
-  if (oldSubject == NULL || oldSubject->timeFormat() != subject_->timeFormat())
+  if (oldSubject == nullptr || oldSubject->timeFormat() != subject_->timeFormat())
   {
     foundChange = true;
     emit timeFormatChanged(subject_->timeFormat());
   }
-  if (oldSubject == NULL || oldSubject->timePrecision() != subject_->timePrecision())
+  if (oldSubject == nullptr || oldSubject->timePrecision() != subject_->timePrecision())
   {
     foundChange = true;
     emit timePrecisionChanged(subject_->timePrecision());
   }
-  if (oldSubject == NULL || oldSubject->geodeticFormat() != subject_->geodeticFormat())
+  if (oldSubject == nullptr || oldSubject->geodeticFormat() != subject_->geodeticFormat())
   {
     foundChange = true;
     emit geodeticFormatChanged(subject_->geodeticFormat());
   }
-  if (oldSubject == NULL || oldSubject->geodeticPrecision() != subject_->geodeticPrecision())
+  if (oldSubject == nullptr || oldSubject->geodeticPrecision() != subject_->geodeticPrecision())
   {
     foundChange = true;
     emit geodeticPrecisionChanged(subject_->geodeticPrecision());
   }
-  if (oldSubject == NULL || oldSubject->distanceUnits() != subject_->distanceUnits())
+  if (oldSubject == nullptr || oldSubject->distanceUnits() != subject_->distanceUnits())
   {
     foundChange = true;
     emit distanceUnitsChanged(subject_->distanceUnits());
   }
-  if (oldSubject == NULL || oldSubject->distancePrecision() != subject_->distancePrecision())
+  if (oldSubject == nullptr || oldSubject->distancePrecision() != subject_->distancePrecision())
   {
     foundChange = true;
     emit distancePrecisionChanged(subject_->distancePrecision());
   }
-  if (oldSubject == NULL || oldSubject->altitudeUnits() != subject_->altitudeUnits())
+  if (oldSubject == nullptr || oldSubject->altitudeUnits() != subject_->altitudeUnits())
   {
     foundChange = true;
     emit altitudeUnitsChanged(subject_->altitudeUnits());
   }
-  if (oldSubject == NULL || oldSubject->altitudePrecision() != subject_->altitudePrecision())
+  if (oldSubject == nullptr || oldSubject->altitudePrecision() != subject_->altitudePrecision())
   {
     foundChange = true;
     emit altitudePrecisionChanged(subject_->altitudePrecision());
   }
-  if (oldSubject == NULL || oldSubject->angleUnits() != subject_->angleUnits())
+  if (oldSubject == nullptr || oldSubject->angleUnits() != subject_->angleUnits())
   {
     foundChange = true;
     emit angleUnitsChanged(subject_->angleUnits());
   }
-  if (oldSubject == NULL || oldSubject->anglePrecision() != subject_->anglePrecision())
+  if (oldSubject == nullptr || oldSubject->anglePrecision() != subject_->anglePrecision())
   {
     foundChange = true;
     emit anglePrecisionChanged(subject_->anglePrecision());
   }
-  if (oldSubject == NULL || oldSubject->speedUnits() != subject_->speedUnits())
+  if (oldSubject == nullptr || oldSubject->speedUnits() != subject_->speedUnits())
   {
     foundChange = true;
     emit speedUnitsChanged(subject_->speedUnits());
   }
-  if (oldSubject == NULL || oldSubject->speedPrecision() != subject_->speedPrecision())
+  if (oldSubject == nullptr || oldSubject->speedPrecision() != subject_->speedPrecision())
   {
     foundChange = true;
     emit speedPrecisionChanged(subject_->speedPrecision());
   }
-  if (oldSubject == NULL || oldSubject->genericPrecision() != subject_->genericPrecision())
+  if (oldSubject == nullptr || oldSubject->genericPrecision() != subject_->genericPrecision())
   {
     foundChange = true;
     emit genericPrecisionChanged(subject_->genericPrecision());
   }
-  if (oldSubject == NULL || oldSubject->coordinateSystem() != subject_->coordinateSystem())
+  if (oldSubject == nullptr || oldSubject->coordinateSystem() != subject_->coordinateSystem())
   {
     foundChange = true;
     emit coordinateSystemChanged(subject_->coordinateSystem());
   }
-  if (oldSubject == NULL || oldSubject->magneticVariance() != subject_->magneticVariance())
+  if (oldSubject == nullptr || oldSubject->magneticVariance() != subject_->magneticVariance())
   {
     foundChange = true;
     emit magneticVarianceChanged(subject_->magneticVariance());
   }
-  if (oldSubject == NULL || oldSubject->verticalDatum() != subject_->verticalDatum())
+  if (oldSubject == nullptr || oldSubject->verticalDatum() != subject_->verticalDatum())
   {
     foundChange = true;
     emit verticalDatumChanged(subject_->verticalDatum());
   }
-  if (oldSubject == NULL || oldSubject->referenceYear() != subject_->referenceYear())
+  if (oldSubject == nullptr || oldSubject->referenceYear() != subject_->referenceYear())
   {
     foundChange = true;
     emit referenceYearChanged(subject_->referenceYear());
   }
-  if (oldSubject == NULL || oldSubject->datumConvert() != subject_->datumConvert())
+  if (oldSubject == nullptr || oldSubject->datumConvert() != subject_->datumConvert())
   {
     foundChange = true;
     emit datumConvertPtrChanged(subject_->datumConvert());

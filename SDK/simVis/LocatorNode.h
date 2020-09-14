@@ -24,13 +24,15 @@
 #define SIMVIS_LOCATORNODE_H
 
 #include "osg/MatrixTransform"
+#include "osg/observer_ptr"
 #include "osgEarth/Revisioning"
 #include "simCore/Calc/CoordinateSystem.h"
 #include "simVis/Locator.h"
 
 namespace simVis
 {
-//----------------------------------------------------------------------------
+class EntityNode;
+
 /// Track the transform of a parent LocatorNode with a Locator
 class SDKVIS_EXPORT LocatorNode : public osg::MatrixTransform
 {
@@ -55,7 +57,7 @@ public:
   /// set the Locator for this LocatorNode, recalculates the transform matrix
   void setLocator(Locator *locator, unsigned int componentsToTrack = Locator::COMP_ALL);
 
-  /// Turns on or off a flag to hint to use Overhead Mode for bounds computation when NodeVisitor is NULL
+  /// Turns on or off a flag to hint to use Overhead Mode for bounds computation when NodeVisitor is nullptr
   void setOverheadModeHint(bool overheadMode);
   /// Retrieves a previously set overhead mode hint, used for bounds computation in intersection visitors
   bool overheadModeHint() const;
@@ -65,7 +67,7 @@ public:
   * function that extracts the Position information (not rotation) from the
   * locatorNode matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
@@ -76,13 +78,19 @@ public:
   * function that extracts the Position information and rotation from the
   * locatorNode matrix.
   *
-  * @param[out] out_position If not NULL, resulting position stored here
-  * @param[out] out_orientation If not NULL, resulting orientation stored here
+  * @param[out] out_position If not nullptr, resulting position stored here
+  * @param[out] out_orientation If not nullptr, resulting orientation stored here
   * @param[in ] coordsys Requested coord sys of the output position (only LLA, ECEF, or ECI supported)
   * @return 0 if the output parameter is populated successfully, nonzero on failure
   */
   int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
     simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const;
+
+  /**
+  * Links the locatorNode to an entity such that the isActive() state of the entity determines whether this node is active
+  * @param entity entity to track
+  */
+  void setEntityToMonitor(EntityNode* entity);
 
 public:
   /// Synchronizes the transform matrix with the locator
@@ -100,7 +108,8 @@ private: // data
   osg::ref_ptr<Locator> locator_;
   osgEarth::Util::Revision matrixRevision_;
   osg::ref_ptr<LocatorCallback> locatorCallback_;
-  unsigned int componentsToTrack_; // Locator::Components mask
+  osg::observer_ptr<EntityNode> entityToMonitor_;  ///< if set, the entity whose isActive() state determines the active state of this locatorNode
+  unsigned int componentsToTrack_; ///< Locator::Components mask
 
   /// Sometimes bounds are computed without a node visitor and we need to know if in overhead mode; this flag caches that.
   bool overheadModeHint_;

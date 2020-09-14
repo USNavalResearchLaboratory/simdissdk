@@ -484,15 +484,15 @@ public:
   /** Checks for resize events */
   bool virtual handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa, osg::Object*, osg::NodeVisitor*)
   {
-    if (manager_ == NULL)
+    if (manager_ == nullptr)
       return false;
 
     // this handler does not (always?) receive RESIZE events, so check it manually.
     if (ea.getEventType() == osgGA::GUIEventAdapter::FRAME)
     {
       const osg::View* view = aa.asView();
-      const osg::Camera* camera = (view) ? view->getCamera() : NULL;
-      const osg::Viewport* viewport = (camera) ? camera->getViewport() : NULL;
+      const osg::Camera* camera = (view) ? view->getCamera() : nullptr;
+      const osg::Viewport* viewport = (camera) ? camera->getViewport() : nullptr;
       if (viewport)
       {
         int width = static_cast<int>(viewport->width());
@@ -777,13 +777,13 @@ void HudRowText::positionText_(int index, osgText::Text* text)
     float width = 0.f;
     osgText::Font* font = const_cast<osgText::Font*>(text->getFont());
     // Assertion failure means we don't have a font yet
-    assert(font != NULL);
+    assert(font != nullptr);
     if (!font)
       return;
     for (osgText::String::const_iterator i = text->getText().begin(); i != text->getText().end(); ++i)
     {
       osgText::Glyph* glyph = font->getGlyph(osgText::FontResolution(text->getFontWidth(), text->getFontHeight()), *i);
-      if (glyph != NULL)
+      if (glyph != nullptr)
         width += glyph->getHorizontalAdvance();
     }
 

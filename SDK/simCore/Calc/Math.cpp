@@ -87,9 +87,9 @@ void simCore::d3MMmult(const double a[][3], const double b[][3], double c[][3])
   assert(b);
   assert(c);
 
-  if ((a == NULL) || (b == NULL) || (c == NULL))
+  if ((a == nullptr) || (b == nullptr) || (c == nullptr))
   {
-    if (c != NULL)
+    if (c != nullptr)
     {
       for (size_t ii = 0; ii < 3; ++ii)
       {
@@ -126,7 +126,7 @@ void simCore::d3Mv3Mult(const double a[][3], const Vec3 &u, Vec3 &v)
   }
 
   assert(a);
-  if (a == NULL)
+  if (a == nullptr)
   {
     v.zero();
     return;
@@ -148,7 +148,7 @@ void simCore::d3MTv3Mult(const double a[][3], const Vec3 &u, Vec3 &v)
   }
 
   assert(a);
-  if (a == NULL)
+  if (a == nullptr)
   {
     v.zero();
     return;
@@ -166,9 +166,9 @@ void simCore::d3MMTmult(const double a[][3], const double b[][3], double c[][3])
   assert(b);
   assert(c);
 
-  if ((a == NULL) || (b == NULL) || (c == NULL))
+  if ((a == nullptr) || (b == nullptr) || (c == nullptr))
   {
-    if (c != NULL)
+    if (c != nullptr)
     {
       for (size_t ii = 0; ii < 3; ++ii)
       {
@@ -265,7 +265,7 @@ void simCore::d3DCMtoEuler(const double dcm[][3], Vec3 &ea)
   //   asin returns in the range -pi/2 to pi/2
 
   assert(dcm);
-  if (dcm == NULL)
+  if (dcm == nullptr)
   {
     ea.zero();
     return;
@@ -311,7 +311,7 @@ void simCore::d3EulertoDCM(const Vec3 &ea, double dcm[][3])
   // theta, and finally a rotation about the body z through the yaw angle psi.
 
   assert(dcm);
-  if (dcm == NULL)
+  if (dcm == nullptr)
     return;
 
   // psi/yaw components
@@ -361,7 +361,7 @@ void simCore::d3EulertoQ(const Vec3 &ea, double q[4])
   // Results verified by Matlab: http://www.mathworks.com/matlabcentral/fileexchange/27653
 
   assert(q);
-  if (q == NULL)
+  if (q == nullptr)
     return;
 
   // psi/yaw components
@@ -406,7 +406,7 @@ void simCore::d3QtoEuler(const double q[4], Vec3 &ea)
   // Function expects a normalized quaternion in the form:  q0 + q1i + q2j + q3k
 
   assert(q);
-  if (q == NULL)
+  if (q == nullptr)
   {
     ea.zero();
     return;

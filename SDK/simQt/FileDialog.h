@@ -64,54 +64,54 @@ public:
 
   /**
    * Displays a dialog box suitable for saving a file
-   * @param owner Widget owner for stacking order; NULL to show with no parent
+   * @param owner Widget owner for stacking order; nullptr to show with no parent
    * @param caption Top level window text title
    * @param registryDir Registry directory to load/save last directory, such as "SETTINGS/LastDir" or "DirectorySettings/ImportantFiles"
    * @param filter Newline separated list of filters, like "Text Files (*.txt,*.ascii)\nAll Files (*)"
-   * @param selectedFilter If non-NULL, the input value will select the default filter, the output value will contain the text of
-   *   the filter that was selected by the user when file was opened.  If NULL the code will use the extension of the last saved
+   * @param selectedFilter If non-nullptr, the input value will select the default filter, the output value will contain the text of
+   *   the filter that was selected by the user when file was opened.  If nullptr the code will use the extension of the last saved
    *   file to set the default filter.
    * @param options Qt options for the file dialog, such as QFileDialog::ShowDirsOnly.  See QFileDialog documentation for all options
    * @return Name of file selected by user for saving
    */
-  static QString saveFile(QWidget* owner=NULL, const QString& caption="", const QString& registryDir="",
-    const QString& filter="All Files (*)", QString* selectedFilter=NULL, QFileDialog::Options options=0);
+  static QString saveFile(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
+    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=0);
 
   /**
    * Displays a dialog box suitable for loading a single file
-   * @param owner Widget owner for stacking order; NULL to show with no parent
+   * @param owner Widget owner for stacking order; nullptr to show with no parent
    * @param caption Top level window text title
    * @param registryDir Registry directory to load/save last directory, such as "SETTINGS/LastDir" or "DirectorySettings/ImportantFiles"
    * @param filter Newline separated list of filters, like "Text Files (*.txt,*.ascii)\nAll Files (*)"
-   * @param selectedFilter If non-NULL, will contain the text of the filter that was selected by the user when file was opened
+   * @param selectedFilter If non-nullptr, will contain the text of the filter that was selected by the user when file was opened
    * @param options Qt options for the file dialog, such as QFileDialog::ShowDirsOnly.  See QFileDialog documentation for all options
    * @return Name of file selected by user for loading
    */
-  static QString loadFile(QWidget* owner=NULL, const QString& caption="", const QString& registryDir="",
-    const QString& filter="All Files (*)", QString* selectedFilter=NULL, QFileDialog::Options options=0);
+  static QString loadFile(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
+    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=0);
 
   /**
    * Displays a dialog box suitable for loading a multiple files
-   * @param owner Widget owner for stacking order; NULL to show with no parent
+   * @param owner Widget owner for stacking order; nullptr to show with no parent
    * @param caption Top level window text title
    * @param registryDir Registry directory to load/save last directory, such as "SETTINGS/LastDir" or "DirectorySettings/ImportantFiles"
    * @param filter Newline separated list of filters, like "Text Files (*.txt,*.ascii)\nAll Files (*)"
-   * @param selectedFilter If non-NULL, will contain the text of the filter that was selected by the user when file was opened
+   * @param selectedFilter If non-nullptr, will contain the text of the filter that was selected by the user when file was opened
    * @param options Qt options for the file dialog, such as QFileDialog::ShowDirsOnly.  See QFileDialog documentation for all options
    * @return Names of files selected by user for loading
    */
-  static QStringList loadFiles(QWidget* owner=NULL, const QString& caption="", const QString& registryDir="",
-    const QString& filter="All Files (*)", QString* selectedFilter=NULL, QFileDialog::Options options=0);
+  static QStringList loadFiles(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
+    const QString& filter="All Files (*)", QString* selectedFilter=nullptr, QFileDialog::Options options=0);
 
   /**
    * Displays a dialog box suitable for browsing for a directory
-   * @param owner Widget owner for stacking order; NULL to show with no parent
+   * @param owner Widget owner for stacking order; nullptr to show with no parent
    * @param caption Top level window text title
    * @param registryDir Registry directory to load/save last directory, such as "SETTINGS/LastDir" or "DirectorySettings/ImportantFiles"
    * @param options Qt options for the file dialog, such as QFileDialog::ShowDirsOnly.  See QFileDialog documentation for all options
    * @return Name of directory selected by user
    */
-  static QString findDirectory(QWidget* owner=NULL, const QString& caption="", const QString& registryDir="",
+  static QString findDirectory(QWidget* owner=nullptr, const QString& caption="", const QString& registryDir="",
     QFileDialog::Options options=0);
 
 

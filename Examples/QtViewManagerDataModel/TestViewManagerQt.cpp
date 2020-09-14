@@ -234,7 +234,7 @@ void MainWindow::removeView()
 {
   QVariant data = topTreeView_->model()->data(topTreeView_->currentIndex(), simQt::ViewManagerDataModel::VIEW_ROLE);
   simVis::View* selectedView = static_cast<simVis::View*>(data.value<void*>());
-  if (selectedView == NULL || mainViews_.empty())
+  if (selectedView == nullptr || mainViews_.empty())
     return;
 
   simVis::View* hostView = selectedView->getHostView();

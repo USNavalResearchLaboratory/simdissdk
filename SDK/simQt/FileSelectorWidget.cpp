@@ -34,14 +34,15 @@ namespace simQt {
 FileSelectorWidget::FileSelectorWidget(QWidget* parent)
   : QWidget(parent),
     registryKey_("Private/file"),
-    labelWidget_(NULL),
+    labelWidget_(nullptr),
     includeLabel_(false),
     label_(tr("File")),
     browserTitle_(tr("Load Data File")),
     flags_(FileSelectorWidget::FileLoad),
     filterOption_(FileSelectorWidget::SIMDIS_ASI_FILE_PATTERNS),
     customFileFilter_(tr("All Files (*)")),
-    iconBeforeText_(false)
+    iconBeforeText_(false),
+    isValid_(true)
 {
   ResourceInitializer::initialize();  // Needs to be here so that Qt Designer works.
 
@@ -78,18 +79,18 @@ void FileSelectorWidget::setIconBeforeText(bool alignLeft)
   iconBeforeText_ = alignLeft;
   QPushButton* fileButton = ui_->fileButton;
   ui_->horizontalLayout->removeWidget(fileButton);
-  if (labelWidget_ != NULL)
+  if (labelWidget_ != nullptr)
     ui_->horizontalLayout->removeWidget(labelWidget_);
 
   if (alignLeft)
   {
     ui_->horizontalLayout->insertWidget(0, fileButton);
-    if (labelWidget_ != NULL)
+    if (labelWidget_ != nullptr)
       ui_->horizontalLayout->addWidget(labelWidget_);
   }
   else
   {
-    if (labelWidget_ != NULL)
+    if (labelWidget_ != nullptr)
       ui_->horizontalLayout->insertWidget(0, labelWidget_);
     ui_->horizontalLayout->addWidget(fileButton);
   }
@@ -120,7 +121,7 @@ void FileSelectorWidget::setIncludeLabel(bool value)
 {
   if (value == true)
   {
-    if (labelWidget_ == NULL)
+    if (labelWidget_ == nullptr)
     {
       labelWidget_ = new QLabel(label_);
     }
@@ -133,7 +134,7 @@ void FileSelectorWidget::setIncludeLabel(bool value)
   {
     ui_->horizontalLayout->removeWidget(labelWidget_);
     delete labelWidget_;
-    labelWidget_ = NULL;
+    labelWidget_ = nullptr;
   }
 
   includeLabel_ = value;
@@ -213,6 +214,24 @@ void FileSelectorWidget::setFilename(const QString& filename)
   QString osFilename = QDir::toNativeSeparators(filename);
   ui_->fileText->setText(osFilename);
   emit filenameChanged(osFilename);
+}
+
+bool FileSelectorWidget::isValid() const
+{
+  return isValid_;
+}
+
+void FileSelectorWidget::setValid(bool valid)
+{
+  if (isValid_ == valid)
+    return;
+
+  isValid_ = valid;
+
+  if (isValid_)
+    ui_->fileText->setStyleSheet("");
+  else
+    ui_->fileText->setStyleSheet("QLineEdit {color: red}");
 }
 
 bool FileSelectorWidget::eventFilter(QObject* obj, QEvent* evt)

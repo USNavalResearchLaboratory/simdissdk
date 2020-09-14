@@ -193,7 +193,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
       case '0':
       {
         osg::observer_ptr<simVis::PlatformNode> ship = scene_->getScenario()->find<simVis::PlatformNode>(s_shipId);
-        if (ship != NULL)
+        if (ship != nullptr)
         {
           viewer_->getMainView()->tetherCamera(ship.get());
           viewer_->getMainView()->setFocalOffsets(0, -10.0, 20000.0, 2.5);
@@ -205,7 +205,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         break;
       }
       case '1':
-        viewer_->getMainView()->tetherCamera(NULL);
+        viewer_->getMainView()->tetherCamera(nullptr);
         break;
       case 'h':
         if (menuControl_)

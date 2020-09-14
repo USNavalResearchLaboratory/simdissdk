@@ -67,7 +67,7 @@ public:
    * Constructor
    * @param parent  parent widget
    */
-  explicit FontWidget(QWidget* parent = NULL);
+  explicit FontWidget(QWidget* parent = nullptr);
 
   /** Destructor */
   virtual ~FontWidget();

@@ -55,7 +55,7 @@ public:
    * @param[out] key5 Optional int pointer set to 5 minute key specified in the GARS coordinate, if available
    * @return true if valid GARS coordinate string, false otherwise
    */
-  static bool isValidGars(const std::string& gars, std::string* err = NULL, int* lonBand = NULL, int* latPrimaryIdx = NULL, int* latSecondaryIdx = NULL, int* quad15 = NULL, int* key5 = NULL);
+  static bool isValidGars(const std::string& gars, std::string* err = nullptr, int* lonBand = nullptr, int* latPrimaryIdx = nullptr, int* latSecondaryIdx = nullptr, int* quad15 = nullptr, int* key5 = nullptr);
 
   /**
    * Converts a GARS coordinate to geodetic coordinates. The resulting latitude/longitude
@@ -66,7 +66,7 @@ public:
    * @param[out] err Optional pointer to error string
    * @return 0 if conversion is successful, non-zero otherwise
    */
-  static int convertGarsToGeodetic(const std::string& gars, double& latRad, double& lonRad, std::string* err = NULL);
+  static int convertGarsToGeodetic(const std::string& gars, double& latRad, double& lonRad, std::string* err = nullptr);
 
   /**
    * Converts geodetic goordinates to a GARS coordinate.
@@ -77,7 +77,7 @@ public:
    * @param[out] err Optional pointer to error string
    * @return 0 if conversion is successful, non-zero otherwise
    */
-  static int convertGeodeticToGars(double latRad, double lonRad, std::string& garsOut, Level level = GARS_5, std::string* err = NULL);
+  static int convertGeodeticToGars(double latRad, double lonRad, std::string& garsOut, Level level = GARS_5, std::string* err = nullptr);
 };
 
 }

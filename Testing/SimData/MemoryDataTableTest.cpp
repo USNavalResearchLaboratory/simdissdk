@@ -227,9 +227,9 @@ int managerTest(DataTableManager& mgr)
 {
   int rv = 0;
   // Initial check
-  rv += SDK_ASSERT(mgr.getTable(1) == NULL);
+  rv += SDK_ASSERT(mgr.getTable(1) == nullptr);
   rv += SDK_ASSERT(mgr.tableCount() == 0);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) == NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) == nullptr);
 
   // add observer to test ManagerObserver
   // NOTE, since this has been wrapped in shared ptr we don't have to delete explicitly
@@ -237,26 +237,26 @@ int managerTest(DataTableManager& mgr)
   mgr.addObserver(simData::DataTableManager::ManagerObserverPtr(testObserver));
 
   // Add a single table
-  simData::DataTable* table10Foo = NULL;
+  simData::DataTable* table10Foo = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(10, "Foo", &table10Foo).isSuccess());
-  rv += SDK_ASSERT(table10Foo != NULL);
+  rv += SDK_ASSERT(table10Foo != nullptr);
   rv += SDK_ASSERT(mgr.findTable(10, "Foo") == table10Foo);
-  rv += SDK_ASSERT(mgr.findTable(11, "Foo") == NULL);
+  rv += SDK_ASSERT(mgr.findTable(11, "Foo") == nullptr);
   rv += SDK_ASSERT(mgr.tableCount() == 1);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) != NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) != nullptr);
   rv += SDK_ASSERT(mgr.tablesForOwner(10)->tableCount() == 1);
 
   // Add 2 more tables
   testObserver->setExpectedTableName("Bar");
-  simData::DataTable* table10Bar = NULL;
+  simData::DataTable* table10Bar = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(10, "Bar", &table10Bar).isSuccess());
-  simData::DataTable* table10Baz = NULL;
+  simData::DataTable* table10Baz = nullptr;
   testObserver->setExpectedTableName("Baz");
   rv += SDK_ASSERT(mgr.addDataTable(10, "Baz", &table10Baz).isSuccess());
-  rv += SDK_ASSERT(table10Bar != NULL);
-  rv += SDK_ASSERT(table10Baz != NULL);
+  rv += SDK_ASSERT(table10Bar != nullptr);
+  rv += SDK_ASSERT(table10Baz != nullptr);
   rv += SDK_ASSERT(mgr.tableCount() == 3);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) != NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) != nullptr);
   rv += SDK_ASSERT(mgr.tablesForOwner(10)->tableCount() == 3);
   // They should all be different tables ...
   rv += SDK_ASSERT(table10Foo != table10Bar);
@@ -268,41 +268,41 @@ int managerTest(DataTableManager& mgr)
   rv += SDK_ASSERT(table10Foo->tableId() != table10Baz->tableId());
 
   // Add a duplicate table name; should return error, but also return valid pointer
-  simData::DataTable* table10FooDupe = NULL;
+  simData::DataTable* table10FooDupe = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(10, "Foo", &table10FooDupe).isError());
-  simData::DataTable* table10BarDupe = NULL;
+  simData::DataTable* table10BarDupe = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(10, "Bar", &table10BarDupe).isError());
-  simData::DataTable* table10BazDupe = NULL;
+  simData::DataTable* table10BazDupe = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(10, "Baz", &table10BazDupe).isError());
   rv += SDK_ASSERT(table10FooDupe == table10Foo);
   rv += SDK_ASSERT(table10BarDupe == table10Bar);
   rv += SDK_ASSERT(table10BazDupe == table10Baz);
   rv += SDK_ASSERT(mgr.tableCount() == 3);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) != NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) != nullptr);
   rv += SDK_ASSERT(mgr.tablesForOwner(10)->tableCount() == 3);
 
   // Add empty string
   testObserver->setExpectedTableName("");
-  simData::DataTable* emptyStringDT = NULL;
+  simData::DataTable* emptyStringDT = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(10, "", &emptyStringDT).isError());
-  rv += SDK_ASSERT(emptyStringDT == NULL);
+  rv += SDK_ASSERT(emptyStringDT == nullptr);
   rv += SDK_ASSERT(mgr.tableCount() == 3);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) != NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) != nullptr);
   rv += SDK_ASSERT(mgr.tablesForOwner(10)->tableCount() == 3);
 
   // Add 2 tables to another ID
   testObserver->setExpectedTableName("Foo");
-  simData::DataTable* table11Foo = NULL;
+  simData::DataTable* table11Foo = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(11, "Foo", &table11Foo).isSuccess());
   testObserver->setExpectedTableName("Bar");
-  simData::DataTable* table11Bar = NULL;
+  simData::DataTable* table11Bar = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(11, "Bar", &table11Bar).isSuccess());
-  rv += SDK_ASSERT(table11Foo != NULL);
-  rv += SDK_ASSERT(table11Bar != NULL);
+  rv += SDK_ASSERT(table11Foo != nullptr);
+  rv += SDK_ASSERT(table11Bar != nullptr);
   rv += SDK_ASSERT(mgr.tableCount() == 5);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) != NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) != nullptr);
   rv += SDK_ASSERT(mgr.tablesForOwner(10)->tableCount() == 3);
-  rv += SDK_ASSERT(mgr.tablesForOwner(11) != NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(11) != nullptr);
   rv += SDK_ASSERT(mgr.tablesForOwner(11)->tableCount() == 2);
 
   // Test getTable()
@@ -317,7 +317,7 @@ int managerTest(DataTableManager& mgr)
   rv += SDK_ASSERT(mgr.findTable(10, "Baz") == table10Baz);
   rv += SDK_ASSERT(mgr.findTable(11, "Foo") == table11Foo);
   rv += SDK_ASSERT(mgr.findTable(11, "Bar") == table11Bar);
-  rv += SDK_ASSERT(mgr.findTable(11, "Baz") == NULL);
+  rv += SDK_ASSERT(mgr.findTable(11, "Baz") == nullptr);
   // Now's a good time to test owner IDs
   rv += SDK_ASSERT(table10Foo->ownerId() == 10);
   rv += SDK_ASSERT(table10Bar->ownerId() == 10);
@@ -329,15 +329,15 @@ int managerTest(DataTableManager& mgr)
   const TableList* table10List = mgr.tablesForOwner(10);
   const TableList* table11List = mgr.tablesForOwner(11);
   const TableList* table12List = mgr.tablesForOwner(12);
-  rv += SDK_ASSERT(table10List != NULL);
-  rv += SDK_ASSERT(table11List != NULL);
-  rv += SDK_ASSERT(table12List == NULL);
+  rv += SDK_ASSERT(table10List != nullptr);
+  rv += SDK_ASSERT(table11List != nullptr);
+  rv += SDK_ASSERT(table12List == nullptr);
   rv += SDK_ASSERT(table10List->findTable("Foo") == table10Foo);
   rv += SDK_ASSERT(table10List->findTable("Bar") == table10Bar);
   rv += SDK_ASSERT(table10List->findTable("Baz") == table10Baz);
   rv += SDK_ASSERT(table11List->findTable("Foo") == table11Foo);
   rv += SDK_ASSERT(table11List->findTable("Bar") == table11Bar);
-  rv += SDK_ASSERT(table11List->findTable("Baz") == NULL);
+  rv += SDK_ASSERT(table11List->findTable("Baz") == nullptr);
   rv += SDK_ASSERT(table10List->ownerId() == 10);
   rv += SDK_ASSERT(table11List->ownerId() == 11);
   rv += SDK_ASSERT(table10List->tableCount() == 3);
@@ -350,14 +350,14 @@ int managerTest(DataTableManager& mgr)
   testObserver->setExpectedTableName("Bar"); // set observer to prepare for Bar delete
   rv += SDK_ASSERT(mgr.deleteTable(table10BarId).isSuccess());
   rv += SDK_ASSERT(mgr.tableCount() == 4);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) != NULL);
-  rv += SDK_ASSERT(mgr.tablesForOwner(11) != NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) != nullptr);
+  rv += SDK_ASSERT(mgr.tablesForOwner(11) != nullptr);
   rv += SDK_ASSERT(table10List->tableCount() == 2);
   rv += SDK_ASSERT(table11List->tableCount() == 2);
   rv += SDK_ASSERT(table10Foo->tableId() == table10FooId);
   rv += SDK_ASSERT(table10Baz->tableId() == table10BazId);
   rv += SDK_ASSERT(mgr.getTable(table10FooId) == table10Foo);
-  rv += SDK_ASSERT(mgr.getTable(table10BarId) == NULL);
+  rv += SDK_ASSERT(mgr.getTable(table10BarId) == nullptr);
   rv += SDK_ASSERT(mgr.getTable(table10BazId) == table10Baz);
 
   // set owner id for deleteTablesByOwner test
@@ -366,13 +366,13 @@ int managerTest(DataTableManager& mgr)
   // Test deleteByOwner
   mgr.deleteTablesByOwner(11);
   rv += SDK_ASSERT(mgr.tableCount() == 2);
-  rv += SDK_ASSERT(mgr.tablesForOwner(10) != NULL);
-  rv += SDK_ASSERT(mgr.tablesForOwner(11) == NULL);
+  rv += SDK_ASSERT(mgr.tablesForOwner(10) != nullptr);
+  rv += SDK_ASSERT(mgr.tablesForOwner(11) == nullptr);
   rv += SDK_ASSERT(table10List->tableCount() == 2);
   rv += SDK_ASSERT(table10Foo->tableId() == table10FooId);
   rv += SDK_ASSERT(table10Baz->tableId() == table10BazId);
   rv += SDK_ASSERT(mgr.getTable(table10FooId) == table10Foo);
-  rv += SDK_ASSERT(mgr.getTable(table10BarId) == NULL);
+  rv += SDK_ASSERT(mgr.getTable(table10BarId) == nullptr);
   rv += SDK_ASSERT(mgr.getTable(table10BazId) == table10Baz);
 
   // Test a double delete
@@ -591,9 +591,9 @@ int timeContainerTest(MemoryTable::TimeContainer& times)
 int tableTest(simData::DataTable& table)
 {
   int rv = 0;
-  simData::TableColumn* column1 = NULL;
-  simData::TableColumn* column2 = NULL;
-  simData::TableColumn* column3 = NULL;
+  simData::TableColumn* column1 = nullptr;
+  simData::TableColumn* column2 = nullptr;
+  simData::TableColumn* column3 = nullptr;
 
   // create test observer. NOTE: since this is wrapped in a shared ptr, don't need to delete explicitly
   TestTableObserver* testObserver = new TestTableObserver(table);
@@ -602,10 +602,10 @@ int tableTest(simData::DataTable& table)
   // Empty column name is an error
   rv += SDK_ASSERT(table.columnCount() == 0);
   rv += SDK_ASSERT(table.addColumn("", VT_INT32, 0, &column1).isError());
-  rv += SDK_ASSERT(column1 == NULL);
+  rv += SDK_ASSERT(column1 == nullptr);
   testObserver->setExpectedColumnName("1");
   rv += SDK_ASSERT(table.addColumn("1", VT_INT32, 0, &column1).isSuccess());
-  rv += SDK_ASSERT(column1 != NULL);
+  rv += SDK_ASSERT(column1 != nullptr);
   // Duplicate name is an error
   rv += SDK_ASSERT(table.addColumn("1", VT_INT32, 0, &column2).isError());
   rv += SDK_ASSERT(column2 == column1); // Should point to column 1, even though there's an error
@@ -613,7 +613,7 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(table.addColumn("2", VT_INT32, 0, &column2).isSuccess());
   // Sanity checks
   rv += SDK_ASSERT(column2 != column1);
-  rv += SDK_ASSERT(column2 != NULL);
+  rv += SDK_ASSERT(column2 != nullptr);
   rv += SDK_ASSERT(column1->columnId() != column2->columnId());
   rv += SDK_ASSERT(column1->name() == "1");
   rv += SDK_ASSERT(column2->name() == "2");
@@ -621,17 +621,17 @@ int tableTest(simData::DataTable& table)
 
   rv += SDK_ASSERT(table.column("1") == column1);
   rv += SDK_ASSERT(table.column("2") == column2);
-  rv += SDK_ASSERT(table.column("3") == NULL);
+  rv += SDK_ASSERT(table.column("3") == nullptr);
   rv += SDK_ASSERT(table.column(column1->columnId()) == column1);
   rv += SDK_ASSERT(table.column(column2->columnId()) == column2);
-  rv += SDK_ASSERT(table.column(500) == NULL); // Should be unique
+  rv += SDK_ASSERT(table.column(500) == nullptr); // Should be unique
 
   // Add another column
   testObserver->setExpectedColumnName("3");
   rv += SDK_ASSERT(table.addColumn("3", VT_INT32, 0, &column3).isSuccess());
   rv += SDK_ASSERT(column3 != column1);
   rv += SDK_ASSERT(column3 != column2);
-  rv += SDK_ASSERT(column3 != NULL);
+  rv += SDK_ASSERT(column3 != nullptr);
   // Store the column IDs to check that they don't change over the next few tests
   simData::TableColumnId col1Id = column1->columnId();
   simData::TableColumnId col2Id = column2->columnId();
@@ -643,8 +643,8 @@ int tableTest(simData::DataTable& table)
   testObserver->setExpectedColumnName("2");
   rv += SDK_ASSERT(table.removeColumn("2").isSuccess());
   // Verify that the column is in fact removed
-  rv += SDK_ASSERT(table.column(col2Id) == NULL);
-  rv += SDK_ASSERT(table.column("2") == NULL);
+  rv += SDK_ASSERT(table.column(col2Id) == nullptr);
+  rv += SDK_ASSERT(table.column("2") == nullptr);
 
   // Removing a column should not affect the other columns
   rv += SDK_ASSERT(col1Id == column1->columnId());
@@ -659,7 +659,7 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(table.addColumn("2", VT_INT32, 0, &column2).isSuccess());
   rv += SDK_ASSERT(column2 != column1);
   rv += SDK_ASSERT(column2 != column3);
-  rv += SDK_ASSERT(column2 != NULL);
+  rv += SDK_ASSERT(column2 != nullptr);
   // Should not reuse the ID of removed column
   rv += SDK_ASSERT(col2Id != column2->columnId());
   col2Id = column2->columnId();
@@ -722,54 +722,54 @@ int tableTest(simData::DataTable& table)
 
   // Check interpolate on given values
   double value = 0;
-  rv += SDK_ASSERT(column1->interpolate(value, 10.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column1->interpolate(value, 10.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 1001.0));
-  rv += SDK_ASSERT(column1->interpolate(value, 20.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column1->interpolate(value, 20.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2001.0));
-  rv += SDK_ASSERT(column1->interpolate(value, 30.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column1->interpolate(value, 30.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 3001.0));
   // Actually interpolate
-  rv += SDK_ASSERT(column1->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column1->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2501.0));
   // Check that extrapolation fails before time, and succeeds with current value after time
-  rv += SDK_ASSERT(column1->interpolate(value, 5.0, NULL).isError());
-  rv += SDK_ASSERT(column1->interpolate(value, 35.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column1->interpolate(value, 5.0, nullptr).isError());
+  rv += SDK_ASSERT(column1->interpolate(value, 35.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 3001.0));
 
   // Now with column 2
-  rv += SDK_ASSERT(column2->interpolate(value, 10.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column2->interpolate(value, 10.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 1002.0));
-  rv += SDK_ASSERT(column2->interpolate(value, 20.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column2->interpolate(value, 20.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2002.0));
-  rv += SDK_ASSERT(column2->interpolate(value, 30.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column2->interpolate(value, 30.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 3002.0));
   // Actually interpolate
-  rv += SDK_ASSERT(column2->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column2->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2502.0));
   // Check that extrapolation fails before time, and succeeds with current value after time
-  rv += SDK_ASSERT(column2->interpolate(value, 5.0, NULL).isError());
-  rv += SDK_ASSERT(column2->interpolate(value, 35.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column2->interpolate(value, 5.0, nullptr).isError());
+  rv += SDK_ASSERT(column2->interpolate(value, 35.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 3002.0));
 
   // Now with column 3
-  rv += SDK_ASSERT(column3->interpolate(value, 10.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column3->interpolate(value, 10.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 1003.0));
-  rv += SDK_ASSERT(column3->interpolate(value, 20.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column3->interpolate(value, 20.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2003.0));
-  rv += SDK_ASSERT(column3->interpolate(value, 30.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column3->interpolate(value, 30.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 3003.0));
   // Actually interpolate
-  rv += SDK_ASSERT(column3->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column3->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2503.0));
   // Check that extrapolation fails before time, and succeeds with current value after time
-  rv += SDK_ASSERT(column3->interpolate(value, 5.0, NULL).isError());
-  rv += SDK_ASSERT(column3->interpolate(value, 35.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column3->interpolate(value, 5.0, nullptr).isError());
+  rv += SDK_ASSERT(column3->interpolate(value, 35.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 3003.0));
 
   // Add 3 new columns
-  simData::TableColumn* column4 = NULL;
-  simData::TableColumn* column5 = NULL;
-  simData::TableColumn* column6 = NULL;
+  simData::TableColumn* column4 = nullptr;
+  simData::TableColumn* column5 = nullptr;
+  simData::TableColumn* column6 = nullptr;
   testObserver->setExpectedColumnName("4");
   rv += SDK_ASSERT(table.addColumn("4", VT_UINT32, 0, &column4).isSuccess());
   testObserver->setExpectedColumnName("5");
@@ -799,17 +799,17 @@ int tableTest(simData::DataTable& table)
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
 
   // Spot check interpolation on all columns at time 25
-  rv += SDK_ASSERT(column1->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column1->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2501.0));
-  rv += SDK_ASSERT(column2->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column2->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2502.0));
-  rv += SDK_ASSERT(column3->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column3->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2503.0));
-  rv += SDK_ASSERT(column4->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column4->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2504.0));
-  rv += SDK_ASSERT(column5->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column5->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2505.0));
-  rv += SDK_ASSERT(column6->interpolate(value, 25.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column6->interpolate(value, 25.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 2506.0));
 
   // Store column IDs to check for changes in later steps
@@ -821,8 +821,8 @@ int tableTest(simData::DataTable& table)
   testObserver->setExpectedColumnName("3");
   rv += SDK_ASSERT(table.removeColumn("3").isSuccess());
   // Verify that the column is in fact removed
-  rv += SDK_ASSERT(table.column(col3Id) == NULL);
-  rv += SDK_ASSERT(table.column("3") == NULL);
+  rv += SDK_ASSERT(table.column(col3Id) == nullptr);
+  rv += SDK_ASSERT(table.column("3") == nullptr);
 
   // Check that other columns are not affected, especially columns 1 and 2 which are in the same subtable at this point
   rv += SDK_ASSERT(col1Id == column1->columnId());
@@ -855,9 +855,9 @@ int tableTest(simData::DataTable& table)
   testObserver->setExpectedRowTime(85.0);
   rv += SDK_ASSERT(table.addRow(row).isSuccess());
   // Now check those values...
-  rv += SDK_ASSERT(column1->interpolate(value, 80.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column1->interpolate(value, 80.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 123.0));
-  rv += SDK_ASSERT(column4->interpolate(value, 85.0, NULL).isSuccess());
+  rv += SDK_ASSERT(column4->interpolate(value, 85.0, nullptr).isSuccess());
   rv += SDK_ASSERT(simCore::areEqual(value, 321.0));
 
   // did our observer get any errors?
@@ -902,7 +902,7 @@ int flushTest(simData::DataTable& table)
   numDataValues.clear();
 
   // This could fail if the container does not implement delayed flush
-  rv += SDK_ASSERT(delayedFlush.get() != NULL);
+  rv += SDK_ASSERT(delayedFlush.get() != nullptr);
 
   // Clear out the memory and make sure it's still all 0
   delayedFlush.reset();
@@ -910,7 +910,7 @@ int flushTest(simData::DataTable& table)
   rv += SDK_ASSERT(numDataValues.numColumns() == table.columnCount());
   rv += SDK_ASSERT(numDataValues.size() == 0);
   numDataValues.clear();
-  rv += SDK_ASSERT(delayedFlush.get() == NULL);
+  rv += SDK_ASSERT(delayedFlush.get() == nullptr);
   return rv;
 }
 
@@ -927,12 +927,12 @@ int dataLimitSecondsTest()
   prefs->mutable_commonprefs()->set_datalimittime(5.0); // limiting to 5 seconds
   t.commit();
 
-  simData::DataTable* table = NULL;
+  simData::DataTable* table = nullptr;
   rv += SDK_ASSERT(ds->dataTableManager().addDataTable(plat1, "Data Limit Test Table", &table).isSuccess());
 
   // add some columns
-  simData::TableColumn* column1 = NULL;
-  simData::TableColumn* column2 = NULL;
+  simData::TableColumn* column1 = nullptr;
+  simData::TableColumn* column2 = nullptr;
   rv += SDK_ASSERT(table->addColumn("1", VT_INT32, 0, &column1).isSuccess());
   rv += SDK_ASSERT(table->addColumn("2", VT_INT64, 0, &column2).isSuccess());
 
@@ -1058,7 +1058,7 @@ int dataLimitingTest()
   // algorithm that is employed in the double buffer time container.
   t.commit();
 
-  simData::DataTable* table = NULL;
+  simData::DataTable* table = nullptr;
   rv += SDK_ASSERT(ds->dataTableManager().addDataTable(plat1, "Data Limit Test Table", &table).isSuccess());
 
   // create test observer. NOTE: since this is wrapped in a shared ptr, don't need to delete explicitly (but we do want to test removeObserver()
@@ -1067,8 +1067,8 @@ int dataLimitingTest()
   table->addObserver(testObserverPtr);
 
   // add some columns
-  simData::TableColumn* column1 = NULL;
-  simData::TableColumn* column2 = NULL;
+  simData::TableColumn* column1 = nullptr;
+  simData::TableColumn* column2 = nullptr;
   testObserver->setExpectedColumnName("1");
   rv += SDK_ASSERT(table->addColumn("1", VT_INT32, 0, &column1).isSuccess());
   testObserver->setExpectedColumnName("2");
@@ -1209,8 +1209,8 @@ int dataLimitingTest()
   // Stale: 2, 5, 6; Fresh: 5.5, 5.75
 
   // add some more columns so we can cause a split
-  simData::TableColumn* column3 = NULL;
-  simData::TableColumn* column4 = NULL;
+  simData::TableColumn* column3 = nullptr;
+  simData::TableColumn* column4 = nullptr;
   testObserver->setExpectedColumnName("3");
   rv += SDK_ASSERT(table->addColumn("3", VT_INT8, 0, &column3).isSuccess());
   testObserver->setExpectedColumnName("4");
@@ -1251,11 +1251,11 @@ int getTimeRangeTest()
   prefs->mutable_commonprefs()->set_datalimitpoints(6); // start out limiting to 6 points
   t.commit();
 
-  simData::DataTable* table = NULL;
+  simData::DataTable* table = nullptr;
   rv += SDK_ASSERT(ds->dataTableManager().addDataTable(plat1, "Data Limit Test Table", &table).isSuccess());
 
   // Add a column
-  simData::TableColumn* column1 = NULL;
+  simData::TableColumn* column1 = nullptr;
   rv += SDK_ASSERT(table->addColumn("1", VT_INT32, 0, &column1).isSuccess());
 
   // add some rows
@@ -1300,7 +1300,7 @@ int getTimeRangeTest()
 
   // Test again, with data being added in reverse. Creates situation where the
   // DoubleBufferTimeContainer's FRESH bin has earlier times than the STALE bin
-  simData::TableColumn* column2 = NULL;
+  simData::TableColumn* column2 = nullptr;
   rv += SDK_ASSERT(table->addColumn("2", VT_INT32, 0, &column2).isSuccess());
 
   newRow.clear();
@@ -1359,9 +1359,9 @@ int subTableIterationTest(simData::MemoryTable::TimeContainer* newTimeContainer)
   rv += SDK_ASSERT(!invalidIter.hasPrevious());
 
   // Add 5 rows of data for 3 columns; start column numbering at 4 (random)
-  rv += SDK_ASSERT(subTable.addColumn("C4", 4, simData::VT_INT32, 0, NULL).isSuccess());
-  rv += SDK_ASSERT(subTable.addColumn("C5", 5, simData::VT_STRING, 0, NULL).isSuccess());
-  rv += SDK_ASSERT(subTable.addColumn("C6", 6, simData::VT_FLOAT, 0, NULL).isSuccess());
+  rv += SDK_ASSERT(subTable.addColumn("C4", 4, simData::VT_INT32, 0, nullptr).isSuccess());
+  rv += SDK_ASSERT(subTable.addColumn("C5", 5, simData::VT_STRING, 0, nullptr).isSuccess());
+  rv += SDK_ASSERT(subTable.addColumn("C6", 6, simData::VT_FLOAT, 0, nullptr).isSuccess());
   // Create a helper class to ensure we don't split
   class NoSplit : public SubTable::SplitObserver
   {
@@ -1754,9 +1754,9 @@ int testColumnIteration(simData::DataTable& table)
 
   // Create a data table with some null values
   rv += SDK_ASSERT(table.columnCount() == 0);
-  simData::TableColumn* c1 = NULL;
-  simData::TableColumn* c2 = NULL;
-  simData::TableColumn* c3 = NULL;
+  simData::TableColumn* c1 = nullptr;
+  simData::TableColumn* c2 = nullptr;
+  simData::TableColumn* c3 = nullptr;
   rv += SDK_ASSERT(table.addColumn("C1", simData::VT_UINT32, 0, &c1).isSuccess());
   rv += SDK_ASSERT(table.addColumn("C2", simData::VT_INT32, 0, &c2).isSuccess());
   rv += SDK_ASSERT(table.addColumn("C3", simData::VT_UINT64, 0, &c3).isSuccess());
@@ -1973,10 +1973,10 @@ int tableTest()
 {
   simData::MemoryDataStore ds;
   simData::DataTableManager& mgr = ds.dataTableManager();
-  simData::DataTable* table = NULL;
+  simData::DataTable* table = nullptr;
   int rv = 0;
   rv += SDK_ASSERT(mgr.addDataTable(1, "Test Table", &table).isSuccess());
-  rv += SDK_ASSERT(table != NULL);
+  rv += SDK_ASSERT(table != nullptr);
   rv += SDK_ASSERT(tableTest(*table) == 0);
   rv += SDK_ASSERT(flushTest(*table) == 0);
   return rv;
@@ -1996,49 +1996,49 @@ int removeEntityTest()
   mgr.addObserver(simData::DataTableManager::ManagerObserverPtr(testObserver));
 
   testObserver->setExpectedTableName("Plat1Table1");
-  rv += SDK_ASSERT(mgr.addDataTable(plat1, "Plat1Table1", NULL).isSuccess());
+  rv += SDK_ASSERT(mgr.addDataTable(plat1, "Plat1Table1", nullptr).isSuccess());
   testObserver->setExpectedTableName("Plat1Table2");
-  rv += SDK_ASSERT(mgr.addDataTable(plat1, "Plat1Table2", NULL).isSuccess());
+  rv += SDK_ASSERT(mgr.addDataTable(plat1, "Plat1Table2", nullptr).isSuccess());
   testObserver->setExpectedTableName("Plat2Table1");
-  rv += SDK_ASSERT(mgr.addDataTable(plat2, "Plat2Table1", NULL).isSuccess());
+  rv += SDK_ASSERT(mgr.addDataTable(plat2, "Plat2Table1", nullptr).isSuccess());
   testObserver->setExpectedTableName("Plat2Table2");
-  rv += SDK_ASSERT(mgr.addDataTable(plat2, "Plat2Table2", NULL).isSuccess());
+  rv += SDK_ASSERT(mgr.addDataTable(plat2, "Plat2Table2", nullptr).isSuccess());
   rv += SDK_ASSERT(mgr.tableCount() == 4);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") != NULL);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table2") != NULL);
-  rv += SDK_ASSERT(mgr.findTable(plat2, "Plat1Table1") == NULL); // random sanity check
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") != nullptr);
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table2") != nullptr);
+  rv += SDK_ASSERT(mgr.findTable(plat2, "Plat1Table1") == nullptr); // random sanity check
 
   // Removing the entity should automatically remove its tables
   testObserver->setExpectedOwnerId(plat1);
   testHelper.dataStore()->removeEntity(plat1);
   rv += SDK_ASSERT(mgr.tableCount() == 2);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") == NULL);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table2") == NULL);
-  rv += SDK_ASSERT(mgr.findTable(plat2, "Plat1Table1") == NULL);
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") == nullptr);
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table2") == nullptr);
+  rv += SDK_ASSERT(mgr.findTable(plat2, "Plat1Table1") == nullptr);
 
   // Re-add the platform to make sure there's no funny business
   plat1 = testHelper.addPlatform();
   rv += SDK_ASSERT(mgr.tableCount() == 2);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") == NULL);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table2") == NULL);
-  rv += SDK_ASSERT(mgr.findTable(plat2, "Plat1Table1") == NULL);
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") == nullptr);
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table2") == nullptr);
+  rv += SDK_ASSERT(mgr.findTable(plat2, "Plat1Table1") == nullptr);
   testObserver->setExpectedTableName("Plat1Table3");
-  rv += SDK_ASSERT(mgr.addDataTable(plat1, "Plat1Table3", NULL).isSuccess());
+  rv += SDK_ASSERT(mgr.addDataTable(plat1, "Plat1Table3", nullptr).isSuccess());
   rv += SDK_ASSERT(mgr.tableCount() == 3);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") == NULL);
-  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table3") != NULL);
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table1") == nullptr);
+  rv += SDK_ASSERT(mgr.findTable(plat1, "Plat1Table3") != nullptr);
 
   // Try it with a non-platform entity
   uint64_t beam4 = testHelper.addBeam(plat1);
   uint64_t gate5 = testHelper.addGate(beam4);
   testObserver->setExpectedTableName("Gate5Table1");
-  rv += SDK_ASSERT(mgr.addDataTable(gate5, "Gate5Table1", NULL).isSuccess());
+  rv += SDK_ASSERT(mgr.addDataTable(gate5, "Gate5Table1", nullptr).isSuccess());
   rv += SDK_ASSERT(mgr.tableCount() == 4);
-  rv += SDK_ASSERT(mgr.findTable(gate5, "Gate5Table1") != NULL);
+  rv += SDK_ASSERT(mgr.findTable(gate5, "Gate5Table1") != nullptr);
   testObserver->setExpectedOwnerId(gate5);
   testHelper.dataStore()->removeEntity(beam4); // should recursively kill gate5
   rv += SDK_ASSERT(mgr.tableCount() == 3);
-  rv += SDK_ASSERT(mgr.findTable(gate5, "Gate5Table1") == NULL);
+  rv += SDK_ASSERT(mgr.findTable(gate5, "Gate5Table1") == nullptr);
 
   rv += testObserver->numErrors();
   testObserver->setActive(false);
@@ -2049,8 +2049,8 @@ int removeEntityTest()
 int testColumnIteration()
 {
   int rv = 0;
-  simData::MemoryTable::TableManager mgr(NULL);
-  simData::DataTable* memoryTable = NULL;
+  simData::MemoryTable::TableManager mgr(nullptr);
+  simData::DataTable* memoryTable = nullptr;
   rv += SDK_ASSERT(mgr.addDataTable(0, "Table", &memoryTable).isSuccess());
   rv += SDK_ASSERT(testColumnIteration(*memoryTable) == 0);
   return rv;
@@ -2105,7 +2105,7 @@ int doubleBufferTimeContainerTest()
 
   // Do a swap, and redo the searches
   std::vector<DataTable::TableObserverPtr> noObservers;
-  tc.swapFreshStaleData(NULL, noObservers);
+  tc.swapFreshStaleData(nullptr, noObservers);
   rv += SDK_ASSERT(tc.begin().hasNext());
   rv += SDK_ASSERT(tc.begin().next().index() == 0);
   rv += SDK_ASSERT(tc.lower_bound(5).next().index() == 0);
@@ -2197,7 +2197,7 @@ int doubleBufferTimeContainerTest()
 
   // Swap, we should only have two times (15 and 25), because others were swapped+cleared
   rv += SDK_ASSERT(tc.size() == 6);
-  tc.swapFreshStaleData(NULL, noObservers);
+  tc.swapFreshStaleData(nullptr, noObservers);
   rv += SDK_ASSERT(tc.size() == 2);
   iter = tc.begin();
   value = iter.next();
@@ -2217,7 +2217,7 @@ int testPartialFlush()
 {
   simData::MemoryDataStore ds;
   simData::DataTableManager& mgr = ds.dataTableManager();
-  simData::DataTable* table = NULL;
+  simData::DataTable* table = nullptr;
   int rv = 0;
   rv += SDK_ASSERT(mgr.addDataTable(1, "Test Table", &table).isSuccess());
   // Create two columns and add data to both

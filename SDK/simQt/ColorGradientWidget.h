@@ -50,7 +50,7 @@ class SDKQT_EXPORT ColorGradientWidget : public QWidget
 
 public:
   /** Constructor */
-  explicit ColorGradientWidget(QWidget* parent = NULL);
+  explicit ColorGradientWidget(QWidget* parent = nullptr);
   virtual ~ColorGradientWidget();
 
   /**
@@ -69,6 +69,9 @@ public:
   bool showAlpha() const;
   /** Returns true if the button to spawn a help dialog is shown */
   bool showHelp() const;
+
+  /** Returns true if the gradient in the widget is currently valid */
+  bool gradientIsValid() const;
 
 public slots:
   /** Sets whether to display the color stops table */
@@ -104,6 +107,7 @@ private:
   QSortFilterProxyModel* proxyModel_;
 
   class GradientDisplayWidget;
+  GradientDisplayWidget* display_;
 
   bool showTable_;
   bool showAlpha_;

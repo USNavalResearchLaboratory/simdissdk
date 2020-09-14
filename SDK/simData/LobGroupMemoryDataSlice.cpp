@@ -95,13 +95,13 @@ void LobGroupMemoryDataSlice::update(double time)
   // only pass in the currentUpdate if it has data points
   if (currentUpdate->datapoints_size())
   {
-    current_ = NULL;
+    current_ = nullptr;
     setCurrent(currentUpdate);
   }
-  else // set current to NULL, need to call setCurrent to trigger update flag
+  else // set current to nullptr, need to call setCurrent to trigger update flag
   {
     delete currentUpdate;
-    setCurrent(NULL);
+    setCurrent(nullptr);
   }
 }
 
@@ -110,7 +110,7 @@ void LobGroupMemoryDataSlice::flush(bool keepStatic)
   if (MemorySliceHelper::flush(updates_, keepStatic) == 0)
   {
     delete current_;
-    current_ = NULL;
+    current_ = nullptr;
   }
   dirty_ = true;
 }

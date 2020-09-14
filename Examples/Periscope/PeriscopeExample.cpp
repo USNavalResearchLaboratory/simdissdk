@@ -342,7 +342,7 @@ int main(int argc, char** argv)
 
   // remove the default manipulator; we will set the camera manually
   viewer->getMainView()->setUpViewInWindow(20, 20, width, height, 0);
-  viewer->getMainView()->setCameraManipulator(NULL);
+  viewer->getMainView()->setCameraManipulator(nullptr);
 
   // apply the reticle overlay.
   simUtil::HudManager hudManager(viewer->getMainView(), viewer->getMainView()->getOrCreateHUD());

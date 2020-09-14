@@ -124,7 +124,7 @@ osgEarth::Util::Controls::LabelControl* EntityPopup::contentLabel() const
 
 // --------------------------------------------------------------------------
 
-/** Finds the first non-NULL instance of type T in the node path provided */
+/** Finds the first non-nullptr instance of type T in the node path provided */
 template<typename T>
 T* findNodeInPath(const osg::NodePath& path)
 {
@@ -133,13 +133,13 @@ T* findNodeInPath(const osg::NodePath& path)
     if (dynamic_cast<T*>(*i))
       return static_cast<T*>(*i);
   }
-  return NULL;
+  return nullptr;
 }
 
 // --------------------------------------------------------------------------
 
 PopupHandler::PopupHandler(SceneManager* scene, View* view)
-  : scenario_(scene ? scene->getScenario() : NULL),
+  : scenario_(scene ? scene->getScenario() : nullptr),
     view_(view)
 {
   init_();
@@ -185,12 +185,12 @@ void PopupHandler::clear()
 {
   if (currentEntity_.valid())
   {
-    currentEntity_ = NULL;
+    currentEntity_ = nullptr;
     if (popup_.valid() && (view_.valid()))
     {
       view_->removeOverlayControl(popup_.get());
     }
-    popup_ = NULL;
+    popup_ = nullptr;
     entityLocatorRev_.reset();
   }
 }
@@ -363,7 +363,7 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
     {
       view_->removeOverlayControl(popup_.get());
     }
-    popup_ = NULL;
+    popup_ = nullptr;
     currentEntity_ = entity;
     entityLocatorRev_.reset();
   }
@@ -386,7 +386,7 @@ void PopupHandler::updatePopupFromView(simVis::View* currentView)
     {
       auto platform = dynamic_cast<simVis::PlatformNode*>(currentEntity_.get());
       // Prefer the content callback over the entity's method
-      if (contentCallback_.valid() && platform != NULL)
+      if (contentCallback_.valid() && platform != nullptr)
       {
         popup_->setContent(contentCallback_->createString(platform));
       }

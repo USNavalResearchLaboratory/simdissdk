@@ -36,7 +36,7 @@ static const QString USAGE_STR = QObject::tr("<p>To edit, mouse click into a fie
 TimeFormatContainer::TimeFormatContainer(simCore::TimeFormat timeFormat, const QString& name)
   : timeFormat_(timeFormat),
   name_(name),
-  action_(NULL)
+  action_(nullptr)
 {
 }
 

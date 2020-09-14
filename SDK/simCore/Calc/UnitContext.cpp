@@ -228,7 +228,7 @@ void UnitContextAdapter::setReferenceYear(int refYear)
 
 void UnitContextAdapter::setDatumConvert(simCore::DatumConvertPtr datumConvert)
 {
-  if (datumConvert == NULL)
+  if (datumConvert == nullptr)
     datumConvert_.reset(new MagneticDatumConvert);
   else
     datumConvert_ = datumConvert;

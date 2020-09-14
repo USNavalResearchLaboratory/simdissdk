@@ -103,29 +103,29 @@ struct AppData
   osg::ref_ptr<simUtil::SimulatorEventHandler> simHandler_;
 
   AppData(simData::DataStore* ds, simData::ObjectId hostId)
-   : modeSlider_(NULL),
-     sizeSlider_(NULL),
-     colorSlider_(NULL),
-     overrideColorSlider_(NULL),
-     maxLengthSlider_(NULL),
-     multiColorCheck_(NULL),
-     platformColorCheck_(NULL),
-     generateColorCommandsCheck_(NULL),
-     modeLabel_(NULL),
-     sizeLabel_(NULL),
-     colorLabel_(NULL),
-     overrideColorLabel_(NULL),
-     maxLengthLabel_(NULL),
-     rewind1_(NULL),
-     rewind2_(NULL),
-     ff1_(NULL),
-     ff2_(NULL),
-     timeSlider_(NULL),
-     tether_(NULL),
+   : modeSlider_(nullptr),
+     sizeSlider_(nullptr),
+     colorSlider_(nullptr),
+     overrideColorSlider_(nullptr),
+     maxLengthSlider_(nullptr),
+     multiColorCheck_(nullptr),
+     platformColorCheck_(nullptr),
+     generateColorCommandsCheck_(nullptr),
+     modeLabel_(nullptr),
+     sizeLabel_(nullptr),
+     colorLabel_(nullptr),
+     overrideColorLabel_(nullptr),
+     maxLengthLabel_(nullptr),
+     rewind1_(nullptr),
+     rewind2_(nullptr),
+     ff1_(nullptr),
+     ff2_(nullptr),
+     timeSlider_(nullptr),
+     tether_(nullptr),
      ds_(ds),
      hostId_(hostId),
-     view_(NULL),
-     platformModel_(NULL)
+     view_(nullptr),
+     platformModel_(nullptr)
   {
     modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_OFF,    "OFF"));
     modes_.push_back(std::make_pair(simData::TrackPrefs_Mode_POINT,  "POINT"));
@@ -220,7 +220,7 @@ struct AppData
 
   void tether()
   {
-    view_->tetherCamera(NULL);
+    view_->tetherCamera(nullptr);
     view_->tetherCamera(platformModel_.get());
     view_->setFocalOffsets(45, -45, 2e4);
   }
@@ -231,12 +231,12 @@ private:
     simData::DataTable* table = ds_->dataTableManager().findTable(hostId_, simData::INTERNAL_TRACK_HISTORY_TABLE);
     simData::TableColumnId colId = 0;
     bool foundColumn = false;
-    if (table == NULL)
+    if (table == nullptr)
     {
       simData::TableStatus status =  ds_->dataTableManager().addDataTable(hostId_, simData::INTERNAL_TRACK_HISTORY_TABLE, &table);
       if (!status.isError())
       {
-        simData::TableColumn* newColumn = NULL;
+        simData::TableColumn* newColumn = nullptr;
         if (!table->addColumn(simData::INTERNAL_TRACK_HISTORY_COLOR_COLUMN, simData::VT_UINT32, 0, &newColumn).isError())
         {
           colId = newColumn->columnId();
@@ -277,7 +277,7 @@ private:
   void removeColorCommands_()
   {
     simData::DataTable* table = ds_->dataTableManager().findTable(hostId_, simData::INTERNAL_TRACK_HISTORY_TABLE);
-    if (table != NULL)
+    if (table != nullptr)
       ds_->dataTableManager().deleteTable(table->tableId());
   }
 

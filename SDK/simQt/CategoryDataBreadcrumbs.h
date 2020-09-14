@@ -79,7 +79,7 @@ public:
   };
 
   /** Constructor and destructor */
-  explicit CloseableItemDelegate(QObject* parent=NULL);
+  explicit CloseableItemDelegate(QObject* parent=nullptr);
   virtual ~CloseableItemDelegate();
 
   /** Overrides from QStyledItemDelegate */
@@ -155,7 +155,7 @@ class SDKQT_EXPORT CategoryDataBreadcrumbs : public QWidget
   Q_PROPERTY(QString emptyText READ emptyText WRITE setEmptyText);
 
 public:
-  explicit CategoryDataBreadcrumbs(QWidget* parent=NULL);
+  explicit CategoryDataBreadcrumbs(QWidget* parent=nullptr);
   virtual ~CategoryDataBreadcrumbs();
 
   /** Override to return a reasonable minimum height based on content */

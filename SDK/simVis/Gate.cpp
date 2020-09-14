@@ -62,7 +62,7 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   // if outline is on, it should be written (separately) to BIN_OPAQUE_GATE
 
   osg::Geometry* solidGeometry = simVis::SVFactory::solidGeometry(gateSV_.get());
-  if (solidGeometry != NULL)
+  if (solidGeometry != nullptr)
   {
     const bool isOpaque = prefs->fillpattern() == simData::GatePrefs_FillPattern_WIRE ||
                           prefs->fillpattern() == simData::GatePrefs_FillPattern_SOLID ||
@@ -74,7 +74,7 @@ GateVolume::GateVolume(simVis::Locator* locator, const simData::GatePrefs* prefs
   }
 
   osg::Geode* outlineGeode = simVis::SVFactory::opaqueGeode(gateSV_.get());
-  if (outlineGeode != NULL)
+  if (outlineGeode != nullptr)
   {
     // SphericalVolume code only adds the opaque geode when it is adding a geometry or lineGroup
     assert(outlineGeode->getNumDrawables() > 0);
@@ -89,7 +89,7 @@ GateVolume::~GateVolume()
 /// prefs that can be applied without rebuilding the whole gate
 void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a, const simData::GatePrefs* b)
 {
-  if (a == NULL || b == NULL)
+  if (a == nullptr || b == nullptr)
     return;
 
   if (b->commonprefs().useoverridecolor())
@@ -118,7 +118,7 @@ void GateVolume::performInPlacePrefChanges(const simData::GatePrefs* a, const si
 /// updates that can be updated without rebuilding the whole gate
 void GateVolume::performInPlaceUpdates(const simData::GateUpdate* a, const simData::GateUpdate* b)
 {
-  if (a == NULL || b == NULL)
+  if (a == nullptr || b == nullptr)
     return;
 
 #ifdef GATE_IN_PLACE_UPDATES
@@ -227,7 +227,6 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
   : LocatorNode(locator)
 {
   setName("Centroid Locator");
-  setActive(false);
   geom_ = new osgEarth::LineDrawable(GL_LINES);
   geom_->setName("simVis::GateCentroid Geometry");
   geom_->setColor(simVis::Color::White);
@@ -245,12 +244,6 @@ GateCentroid::GateCentroid(simVis::Locator* locator)
 
 GateCentroid::~GateCentroid()
 {
-}
-
-void GateCentroid::setActive(bool active)
-{
-  // the centroid's nodemask controls locatorNode activation/deactivation
-  setNodeMask(active ? DISPLAY_MASK_GATE : DISPLAY_MASK_NONE);
 }
 
 void GateCentroid::setVisible(bool visible)
@@ -313,7 +306,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
 
   // gates can be hosted by platforms or beams
   const BeamNode* beam = dynamic_cast<const BeamNode*>(host_.get());
-  if (beam != NULL && hostLocator)
+  if (beam != nullptr && hostLocator)
   {
     // body and range gates are positioned relative to beam origin, but never relative to beam orientation.
     // in some cases, the locator that beam provides via getLocator() (beamOrientationLocator_) strips out platform orientation;
@@ -364,6 +357,7 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
 
   // Create the centroid - gate tethering depends on the centroid, so it must always exist (when gate exists) even if centroid is not drawn
   centroid_ = new GateCentroid(centroidLocator_.get());
+  centroid_->setEntityToMonitor(this);
   addChild(centroid_);
 
   // centroid provides a persistent locatornode to parent our label node
@@ -383,6 +377,8 @@ GateNode::GateNode(const simData::GateProperties& props, Locator* hostLocator, c
 
   // flatten in overhead mode.
   simVis::OverheadMode::enableGeometryFlattening(true, this);
+  // SIM-10724: Labels need to not be flattened to be displayed in overhead mode
+  simVis::OverheadMode::enableGeometryFlattening(false, label_.get());
 }
 
 GateNode::~GateNode()
@@ -461,7 +457,7 @@ void GateNode::applyPrefs_(const simData::GatePrefs& prefs, bool force)
 {
   if (prefsOverrides_.size() == 0)
   {
-    apply_(NULL, &prefs, force);
+    apply_(nullptr, &prefs, force);
     lastPrefsApplied_ = prefs;
     hasLastPrefs_ = true;
   }
@@ -473,7 +469,7 @@ void GateNode::applyPrefs_(const simData::GatePrefs& prefs, bool force)
     {
       accumulated.MergeFrom(i->second);
     }
-    apply_(NULL, &accumulated, force);
+    apply_(nullptr, &accumulated, force);
     lastPrefsApplied_ = accumulated;
     hasLastPrefs_ = true;
   }
@@ -523,7 +519,7 @@ bool GateNode::updateFromDataStore(const simData::DataSliceBase* updateSliceBase
   if (updateSlice->hasChanged() || force || hostChangedToActive || hostChangedToInactive)
   {
     const simData::GateUpdate* current = updateSlice->current();
-    const bool gateChangedToInactive = (current == NULL && hasLastUpdate_);
+    const bool gateChangedToInactive = (current == nullptr && hasLastUpdate_);
 
     // do not apply update if host is not active
     if (current && (force || host_->isActive()))
@@ -551,9 +547,8 @@ void GateNode::flush()
 {
   hasLastUpdate_ = false;
   setNodeMask(DISPLAY_MASK_NONE);
-  centroid_->setActive(false);
   removeChild(gateVolume_);
-  gateVolume_ = NULL;
+  gateVolume_ = nullptr;
 }
 
 double GateNode::range() const
@@ -577,7 +572,7 @@ int GateNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3*
 
 const simData::GateUpdate* GateNode::getLastUpdateFromDS() const
 {
-  return hasLastUpdate_ ? &lastUpdateFromDS_ : NULL;
+  return hasLastUpdate_ ? &lastUpdateFromDS_ : nullptr;
 }
 
 // This method applies the datastore update to the gate, and
@@ -602,7 +597,7 @@ void GateNode::applyDataStoreUpdate_(const simData::GateUpdate& update, bool for
   if (lastUpdateFromDS_.height() <= 0.0 || lastUpdateFromDS_.width() <= 0.0)
   {
     const BeamNode* beam = dynamic_cast<const BeamNode*>(host_.get());
-    if (beam != NULL)
+    if (beam != nullptr)
     {
       if (lastUpdateFromDS_.height() <= 0.0)
         lastUpdateFromDS_.set_height(beam->getPrefs().verticalwidth());
@@ -621,7 +616,7 @@ void GateNode::applyUpdateOverrides_(bool force)
   if (updateOverrides_.size() == 0)
   {
     // apply the new update with no overrides.
-    apply_(&lastUpdateFromDS_, NULL, force);
+    apply_(&lastUpdateFromDS_, nullptr, force);
     lastUpdateApplied_ = lastUpdateFromDS_;
   }
   else
@@ -632,11 +627,13 @@ void GateNode::applyUpdateOverrides_(bool force)
     {
       accumulated.MergeFrom(i->second);
     }
-    apply_(&accumulated, NULL, force);
+    apply_(&accumulated, nullptr, force);
     lastUpdateApplied_ = accumulated;
   }
   // we have applied a valid update, and both lastUpdateApplied_ and lastUpdateFromDS_ are valid
   hasLastUpdate_ = true;
+  // ensure that the centroid is in sync with its locator; this will be a no-op if they are already in sync.
+  centroid_->syncWithLocator();
 }
 
 int GateNode::calculateTargetGate_(const simData::GateUpdate& update, simData::GateUpdate& targetGateUpdate)
@@ -651,16 +648,16 @@ int GateNode::calculateTargetGate_(const simData::GateUpdate& update, simData::G
     return 1;
   }
   const BeamNode* beam = dynamic_cast<const BeamNode*>(host_.get());
-  if (beam == NULL)
+  if (beam == nullptr)
   {
     // target gate require a host beam; host is not a beam, so exit.
     return 1;
   }
 
   assert(beam->getProperties().type() == simData::BeamProperties_BeamType_TARGET);
-  // the target beam should have the correct RAE; will be NULL if target beam could not calculate
+  // the target beam should have the correct RAE; will be nullptr if target beam could not calculate
   const simData::BeamUpdate* beamUpdate = beam->getLastUpdateFromDS();
-  if (beamUpdate == NULL)
+  if (beamUpdate == nullptr)
     return 1;
 
   targetGateUpdate.set_time(update.time());
@@ -691,8 +688,8 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   const simData::GateUpdate* activeUpdate = newUpdate ? newUpdate : &lastUpdateApplied_;
 
   // if assert fails, check that   if ((!newUpdate && !hasLastUpdate_) || (!newPrefs && !hasLastPrefs_))  test at top of this routine has not been changed
-  assert(activePrefs != NULL);
-  assert(activeUpdate != NULL);
+  assert(activePrefs != nullptr);
+  assert(activeUpdate != nullptr);
 
   // if datadraw is off, we do not need to do any processing
   if (activePrefs->commonprefs().datadraw() == false)
@@ -712,7 +709,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
     if (gateVolume_)
     {
       removeChild(gateVolume_);
-      gateVolume_ = NULL;
+      gateVolume_ = nullptr;
     }
 
     if (activePrefs->fillpattern() != simData::GatePrefs_FillPattern_CENTROID)
@@ -748,8 +745,6 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, width) ||
       PB_FIELD_CHANGED(&lastUpdateApplied_, newUpdate, height))))
   {
-    // make sure to activate the centroid locatorNode in case datadraw just turned on; updateLocator_ below will guarantee that locator node is sync'd to its locator
-    centroid_->setActive(true);
     // activeUpdate is always valid, and points to the new update if there is a new update, or the previous update otherwise
     centroid_->update(*activeUpdate);
   }
@@ -767,7 +762,7 @@ void GateNode::apply_(const simData::GateUpdate* newUpdate, const simData::GateP
   if (visible && (force || newPrefs))
   {
     // localgrid created in constructor. if assert fails, check for changes.
-    assert(localGrid_ != NULL);
+    assert(localGrid_ != nullptr);
     localGrid_->setPrefs(activePrefs->commonprefs().localgrid(), force);
   }
 }
@@ -851,7 +846,7 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
   // this can only be called when prefs and updates are already set; if assert fails, check callers
   assert(hasLastUpdate_ && hasLastPrefs_);
 
-  if (newPrefs != NULL &&
+  if (newPrefs != nullptr &&
     (PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, fillpattern) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, gatedrawmode) ||
     PB_FIELD_CHANGED(&lastPrefsApplied_, newPrefs, drawoutline)))
@@ -859,7 +854,7 @@ bool GateNode::changeRequiresRebuild_(const simData::GateUpdate* newUpdate, cons
     return true;
   }
 
-  if (newUpdate != NULL)
+  if (newUpdate != nullptr)
   {
 #ifdef GATE_IN_PLACE_UPDATES
     // changing a gate minrange to/from 0.0 requires a rebuild due to simplified shape

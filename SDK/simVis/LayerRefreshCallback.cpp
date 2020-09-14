@@ -44,7 +44,7 @@ public:
   virtual void onLayerAdded(osgEarth::Layer* layer, unsigned index)
   {
     const osgEarth::TileLayer* terrainLayer = dynamic_cast<const osgEarth::TileLayer*>(layer);
-    if (terrainLayer != NULL)
+    if (terrainLayer != nullptr)
       parent_.watchLayer_(terrainLayer);
   }
 
@@ -52,7 +52,7 @@ public:
   virtual void onLayerRemoved(osgEarth::Layer* layer, unsigned index)
   {
     const osgEarth::TileLayer* terrainLayer = dynamic_cast<const osgEarth::TileLayer*>(layer);
-    if (terrainLayer != NULL)
+    if (terrainLayer != nullptr)
       parent_.forgetLayer_(terrainLayer);
   }
 
@@ -60,7 +60,7 @@ public:
   virtual void onLayerEnabled(osgEarth::Layer* layer)
   {
     const osgEarth::TileLayer* terrainLayer = dynamic_cast<const osgEarth::TileLayer*>(layer);
-    if (terrainLayer != NULL)
+    if (terrainLayer != nullptr)
       parent_.watchLayer_(terrainLayer);
   }
 
@@ -68,7 +68,7 @@ public:
   virtual void onLayerDisabled(osgEarth::Layer* layer)
   {
     const osgEarth::TileLayer* terrainLayer = dynamic_cast<const osgEarth::TileLayer*>(layer);
-    if (terrainLayer != NULL)
+    if (terrainLayer != nullptr)
       parent_.forgetLayer_(terrainLayer);
   }
 
@@ -93,7 +93,7 @@ LayerRefreshCallback::LayerRefreshCallback(const LayerRefreshCallback& rhs, cons
 
 LayerRefreshCallback::~LayerRefreshCallback()
 {
-  setMapNode(NULL);
+  setMapNode(nullptr);
 }
 
 void LayerRefreshCallback::setMapNode(osgEarth::MapNode* mapNode)
@@ -114,7 +114,7 @@ void LayerRefreshCallback::setMapNode(osgEarth::MapNode* mapNode)
   if (mapNode_.valid() && mapNode_->getMap())
     mapNode_->getMap()->addMapCallback(mapUpdatedCallback_.get());
 
-  enabled_ = (mapNode_ != NULL);
+  enabled_ = (mapNode_ != nullptr);
 }
 
 bool LayerRefreshCallback::run(osg::Object* object, osg::Object* data)
@@ -140,7 +140,7 @@ void LayerRefreshCallback::runImpl_()
     osg::observer_ptr<const osgEarth::TileLayer> layer = (*it).layer;
     if (!layer.valid() || !layer->getEnabled())
     {
-      assert(0); // Should not be watching a NULL or disabled layer
+      assert(0); // Should not be watching a nullptr or disabled layer
       continue;
     }
 
@@ -172,7 +172,7 @@ void LayerRefreshCallback::runImpl_()
 
 void LayerRefreshCallback::watchLayer_(const osgEarth::TileLayer* layer)
 {
-  if (layer == NULL)
+  if (layer == nullptr)
     return;
 
   LayerInfo info;
@@ -183,7 +183,7 @@ void LayerRefreshCallback::watchLayer_(const osgEarth::TileLayer* layer)
 
 void LayerRefreshCallback::forgetLayer_(const osgEarth::TileLayer* layer)
 {
-  if (layer == NULL)
+  if (layer == nullptr)
     return;
 
   for (auto it = watchedLayers_.begin(); it != watchedLayers_.end(); ++it)

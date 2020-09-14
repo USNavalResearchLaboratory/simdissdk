@@ -36,7 +36,7 @@ class SDKQT_EXPORT ColorWidgetDelegate : public QStyledItemDelegate
 {
   Q_OBJECT;
 public:
-  explicit ColorWidgetDelegate(bool showAlpha, QObject* parent = NULL);
+  explicit ColorWidgetDelegate(bool showAlpha, QObject* parent = nullptr);
 
   /** Creates the ColorWidget the user can interact with to change the color */
   virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;

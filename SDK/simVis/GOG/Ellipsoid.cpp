@@ -49,7 +49,7 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
 
   if (parsedShape.hasValue(GOG_RADIUS))
   {
-    x_diam = parsedShape.doubleValue(GOG_RADIUS, 0) * 2;
+    x_diam.set(parsedShape.doubleValue(GOG_RADIUS, 0) * 2, osgEarth::Units::METERS);
     y_diam = x_diam;
     if (z_diam == 0.0)
       z_diam = x_diam;
@@ -65,7 +65,7 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
     y_radius_m, x_radius_m, z_radius_m, color);  // y, x, z order to match SIMDIS 9
   shape->setName("GOG Ellipsoid");
 
-  osgEarth::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = nullptr;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {
@@ -78,7 +78,7 @@ GogNodeInterface* Ellipsoid::deserialize(const ParsedShape& parsedShape,
     node = new HostedLocalGeometryNode(shape, p.style_);
   node->setName("GOG Ellipsoid Position");
 
-  GogNodeInterface* rv = NULL;
+  GogNodeInterface* rv = nullptr;
   if (node)
   {
     Utils::applyLocalGeometryOffsets(*node, p, nodeType);

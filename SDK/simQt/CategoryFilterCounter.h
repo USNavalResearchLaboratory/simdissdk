@@ -58,7 +58,7 @@ class SDKQT_EXPORT CategoryFilterCounter : public QObject
   Q_OBJECT;
 public:
   /** Default constructor */
-  explicit CategoryFilterCounter(QObject* parent = NULL);
+  explicit CategoryFilterCounter(QObject* parent = nullptr);
 
   /** Sets the category filter to use */
   void setFilter(const simData::CategoryFilter& filter);
@@ -129,7 +129,7 @@ class SDKQT_EXPORT AsyncCategoryCounter : public QObject
   Q_OBJECT;
 public:
   /** Default constructor */
-  explicit AsyncCategoryCounter(QObject* parent = NULL);
+  explicit AsyncCategoryCounter(QObject* parent = nullptr);
 
   virtual ~AsyncCategoryCounter();
 

@@ -48,8 +48,8 @@ public:
   {
   }
 
-  /// current time has been changed
-  virtual void onTimeChange(simData::DataStore *source)
+  /// data store has changed
+  virtual void onChange(simData::DataStore *source)
   {
     rbStorage_.update(source->updateTime());
     vtStorage_.update(source->updateTime());

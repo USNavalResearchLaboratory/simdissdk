@@ -61,7 +61,7 @@ GogNodeInterface* Ellipse::deserialize(const ParsedShape& parsedShape,
   osgEarth::GeometryFactory gf;
   Geometry* shape = gf.createEllipse(osg::Vec3d(0, 0, 0), minorRadius, majorRadius, rotation);
 
-  osgEarth::LocalGeometryNode* node = NULL;
+  osgEarth::LocalGeometryNode* node = nullptr;
 
   if (nodeType == GOGNODE_GEOGRAPHIC)
   {

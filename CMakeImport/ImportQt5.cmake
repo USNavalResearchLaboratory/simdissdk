@@ -136,7 +136,8 @@ macro(install_qtplugins dir)
             DESTINATION ${INSTALLSETTINGS_RUNTIME_DIR}/
             OPTIONAL
             COMPONENT ThirdPartyLibs
-            FILES_MATCHING PATTERN *.dll)
+            FILES_MATCHING PATTERN *.dll
+            PATTERN *d.dll EXCLUDE)
     else()
         # Note that Qt requires the Linux shared objects in the executable's subdirectory (e.g. bin)
         INSTALL(DIRECTORY ${_qt5Gui_install_prefix}/plugins/${dir}

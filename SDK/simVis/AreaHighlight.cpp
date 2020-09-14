@@ -421,7 +421,7 @@ void CompositeHighlightNode::setShape(simData::CircleHilightShape shape)
 
   // Clear out child_, but hold onto it for the scope of this function
   osg::ref_ptr<HighlightNode> oldNode = child_;
-  child_ = NULL;
+  child_ = nullptr;
 
   // Most types are line geometry; try to cast up to avoid deleting
   LineDrawableHighlightNode* asLineDrawable = dynamic_cast<LineDrawableHighlightNode*>(oldNode.get());

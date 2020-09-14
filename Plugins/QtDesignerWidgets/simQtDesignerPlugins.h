@@ -36,7 +36,7 @@ class simQtDesignerPlugins : public QObject, public QDesignerCustomWidgetCollect
 #endif
 
 public:
-  explicit simQtDesignerPlugins(QObject* parent = NULL);
+  explicit simQtDesignerPlugins(QObject* parent = nullptr);
 
 public: // QDesignerCustomWidgetCollectionInterface API
   virtual QList<QDesignerCustomWidgetInterface*> customWidgets() const;

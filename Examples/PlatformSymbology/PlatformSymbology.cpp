@@ -160,7 +160,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
   )
   : scenario_(scenario),
     view_(view),
-    tetherNode_(NULL),
+    tetherNode_(nullptr),
     labelPos_(0),
     beamMode_(0),
     platformId_(platformId),
@@ -639,7 +639,7 @@ struct MenuHandler : public osgGA::GUIEventHandler
         {
           // save the current tether for restoration
           tetherNode_ = view_->getCameraTether();
-          view_->tetherCamera(NULL);
+          view_->tetherCamera(nullptr);
           s_action->setText(Stringify() << "Tether OFF");
         }
         else
@@ -897,8 +897,8 @@ struct MyPopupCallback : public simVis::PopupContentCallback
 
     return osgEarth::Stringify()
       << std::fixed
-      << "Lat: " << llf.format(pos.y(), 2) << '\n'
-      << "Lon: " << llf.format(pos.x(), 2) << '\n'
+      << "Lat: " << llf.format(osgEarth::Angle(pos.y(), srs_->getUnits()), 2) << '\n'
+      << "Lon: " << llf.format(osgEarth::Angle(pos.x(), srs_->getUnits()), 2) << '\n'
       << std::setprecision(altP) << "Alt: " << pos.z() << "m" << '\n'
       << "MGRS: " << mgrs.format(pos);
   }

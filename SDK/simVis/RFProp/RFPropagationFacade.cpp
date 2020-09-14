@@ -116,11 +116,11 @@ namespace simRF
 const int DEFAULT_TRANSPARENCY = 60;  // percentage, 0-100. 100 is fully transparent, 0 is opaque
 const int DEFAULT_HISTORY = 30; // degrees
 
-RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent)
+RFPropagationFacade::RFPropagationFacade(simData::ObjectId id, osg::Group* parent, std::shared_ptr<simCore::DatumConvert> datumConvert)
   : id_(id),
   antennaHeightMeters_(0.0),
   rfParamsSet_(false),
-  profileManager_(new simRF::ProfileManager()),
+  profileManager_(new simRF::ProfileManager(datumConvert)),
   parent_(parent)
 {
   // add profileManager_ to the parent node
@@ -224,7 +224,7 @@ int RFPropagationFacade::setColorMap(simRF::ProfileDataProvider::ThresholdType t
     colorMaps_[type] = colorMap;
     break;
   }
-  if (colorProvider_ == NULL)
+  if (colorProvider_ == nullptr)
     return 0;
 
   // update the color provider if the specified type is currently active
@@ -235,7 +235,7 @@ int RFPropagationFacade::setColorMap(simRF::ProfileDataProvider::ThresholdType t
 
 int RFPropagationFacade::setSlotData(simRF::Profile* profile)
 {
-  if (profile == NULL)
+  if (profile == nullptr)
     return 1;
   profileManager_->addProfile(profile);
   return 0;
@@ -355,7 +355,7 @@ int RFPropagationFacade::setThresholdMode(simRF::ColorProvider::ColorMode mode)
 
 simRF::ColorProvider::ColorMode RFPropagationFacade::thresholdMode() const
 {
-  if (colorProvider_ == NULL)
+  if (colorProvider_ == nullptr)
     return simRF::ColorProvider::COLORMODE_BELOW;
   return colorProvider_->getMode();
 }
@@ -387,7 +387,7 @@ int RFPropagationFacade::setThresholdValue(int value)
 
 int RFPropagationFacade::threshold() const
 {
-  if (colorProvider_ == NULL)
+  if (colorProvider_ == nullptr)
     return 0;
   return static_cast<int>(colorProvider_->getThreshold());
 }
@@ -719,7 +719,7 @@ const simRF::CompositeProfileProvider* RFPropagationFacade::getProfileProvider(d
   const simRF::Profile *profile = getSlotData(azimRad);
   if (profile)
     return dynamic_cast<const simRF::CompositeProfileProvider*>(profile->getDataProvider());
-  return NULL;
+  return nullptr;
 }
 
 void RFPropagationFacade::setAntennaHeight(float antennaHeightM)
@@ -736,28 +736,28 @@ float RFPropagationFacade::antennaHeight() const
 float RFPropagationFacade::minHeight() const
 {
   const Profile* profile = getProfile(0);
-  if (profile == NULL)
+  if (profile == nullptr)
     return 0.0f;
   const simRF::CompositeProfileProvider* cProvider = profile->getDataProvider();
-  return (cProvider != NULL) ? cProvider->getMinHeight() : 0.0f;
+  return (cProvider != nullptr) ? cProvider->getMinHeight() : 0.0f;
 }
 
 float RFPropagationFacade::maxHeight() const
 {
   const Profile* profile = getProfile(0);
-  if (profile == NULL)
+  if (profile == nullptr)
     return 0.0f;
   const simRF::CompositeProfileProvider* cProvider = profile->getDataProvider();
-  return (cProvider != NULL) ? cProvider->getMaxHeight() : 0.0f;
+  return (cProvider != nullptr) ? cProvider->getMaxHeight() : 0.0f;
 }
 
 unsigned int RFPropagationFacade::heightSteps() const
 {
   const Profile* profile = getProfile(0);
-  if (profile == NULL)
+  if (profile == nullptr)
     return 0;
   const simRF::CompositeProfileProvider* cProvider = profile->getDataProvider();
-  return (cProvider != NULL) ? cProvider->getNumHeights() : 0;
+  return (cProvider != nullptr) ? cProvider->getNumHeights() : 0;
 }
 
 
@@ -849,7 +849,7 @@ void RFPropagationFacade::initializeDefaultColors_()
 
 void RFPropagationFacade::setGradientByThresholdType_(simRF::ProfileDataProvider::ThresholdType type)
 {
-  if (colorProvider_ == NULL)
+  if (colorProvider_ == nullptr)
     return;
   // apply the appropriate color map, or the default if we don't have one specified for this type
   std::map<simRF::ProfileDataProvider::ThresholdType, simRF::GradientColorProvider::ColorMap>::const_iterator foundColor = colorMaps_.find(type);

@@ -102,12 +102,12 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
     // never cross 0 with the osgEarth drawing algorithm.
     end = angFix2PI(end);
 
-    // If the end and start are the same value, return NULL to draw nothing.  Cannot
+    // If the end and start are the same value, return nullptr to draw nothing.  Cannot
     // use the angleend command to draw circles (use angledeg instead)
     if (simCore::areAnglesEqual(start.as(Units::RADIANS), end.as(Units::RADIANS)))
     {
       context.errorHandler_->printError(lineNumber, "Cylinder AngleEnd cannot be same value as AngleStart");
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -133,7 +133,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
   float heightValue = height.as(Units::METERS);
 
   // first the extruded side shape:
-  LocalGeometryNode* sideNode = NULL;
+  LocalGeometryNode* sideNode = nullptr;
   {
     Style style(p.style_);
     style.getOrCreate<ExtrusionSymbol>()->height() = heightValue;
@@ -160,7 +160,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
   }
 
   // next the top cap:
-  LocalGeometryNode* topCapNode = NULL;
+  LocalGeometryNode* topCapNode = nullptr;
   {
     Style style(p.style_);
 
@@ -202,7 +202,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
   }
 
   // next the bottom cap:
-  LocalGeometryNode* bottomCapNode = NULL;
+  LocalGeometryNode* bottomCapNode = nullptr;
   {
     Style style(p.style_);
 
@@ -228,7 +228,7 @@ GogNodeInterface* Cylinder::deserialize(const ParsedShape& parsedShape,
     g->addChild(bottomCapNode);
   }
 
-  CylinderNodeInterface* rv = NULL;
+  CylinderNodeInterface* rv = nullptr;
   if (sideNode && topCapNode && bottomCapNode)
   {
     rv = new CylinderNodeInterface(g.get(), sideNode, topCapNode, bottomCapNode, metaData);

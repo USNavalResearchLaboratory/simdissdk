@@ -50,11 +50,11 @@ public:
   virtual bool update(const simData::DataSliceBase* updateSlice, bool force = false)
   {
     // Break out if the node isn't currently valid
-    if (node_ == NULL)
+    if (node_ == nullptr)
       return false;
 
     // Create the geometry if it hasn't been created yet
-    if (transform_ == NULL)
+    if (transform_ == nullptr)
     {
       simVis::LocatorNode* locatorNode = node_->locatorNode();
       locatorNode->removeChildren(0, locatorNode->getNumChildren());
@@ -84,7 +84,7 @@ public:
 
     // Adjust the coordinates of the locator to match that of the host
     const simVis::EntityNode* host = node_->host();
-    if (host != NULL)
+    if (host != nullptr)
     {
       simCore::Coordinate coord;
       host->getLocator()->getCoordinate(&coord);
@@ -169,7 +169,7 @@ public:
 
     // Pick out the node from the scene (created by the ScenarioDataStoreAdapter automatically)
     simVis::CustomRenderingNode* node = manager_->find<simVis::CustomRenderingNode>(newId);
-    if (node != NULL)
+    if (node != nullptr)
     {
       // A real render engine would need to account for multiple Custom Render nodes here,
       // either by creating a separate updater per entity, or configuring the updater to

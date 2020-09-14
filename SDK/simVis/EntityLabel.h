@@ -42,7 +42,7 @@ public:
   /// constructor for (most) entity that provides a locatorNode to parent/position the label
   EntityLabelNode();
 
-  /// constructor for (lob & projector) entity that does not provide a locatorNode to parent/position the label
+  /// constructor for (custom rendering) entity that does not provide a transform-derived parent to position the label
   explicit EntityLabelNode(simVis::Locator* locator);
 
   /// Update the label with the given preferences and text

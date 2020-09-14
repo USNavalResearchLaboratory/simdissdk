@@ -286,7 +286,7 @@ void PolygonStipple::setFfpStipplePattern_(osg::StateSet* stateSet, unsigned int
 
 void PolygonStipple::setValues(osg::StateSet* stateset, bool enabled, unsigned int patternIndex)
 {
-  if (stateset == NULL)
+  if (stateset == nullptr)
     return;
 
   // Limit the pattern index

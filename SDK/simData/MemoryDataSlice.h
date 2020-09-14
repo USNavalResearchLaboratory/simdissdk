@@ -257,7 +257,7 @@ public:
   /** The time delta between the given time and the data point before the given time; return -1 if no previous point */
   virtual double deltaTime(double time) const;
 
-  /** Retrieves the current interpolated T, or NULL if none */
+  /** Retrieves the current interpolated T, or nullptr if none */
   T* currentInterpolated();
 
 protected:

@@ -46,7 +46,7 @@ namespace simQt {
     * @param parent
     * @param dataTable data for the model
     */
-    DataTableModel(QObject *parent = NULL, simData::DataTable* dataTable = NULL);
+    DataTableModel(QObject *parent = nullptr, simData::DataTable* dataTable = nullptr);
 
     /** Destructor */
     virtual ~DataTableModel();
@@ -79,7 +79,7 @@ namespace simQt {
     */
     void setDataTable(simData::DataTable* dataTable);
 
-    /** Returns the current data table; can be NULL */
+    /** Returns the current data table; can be nullptr */
     simData::DataTable* dataTable() const;
 
   public slots:

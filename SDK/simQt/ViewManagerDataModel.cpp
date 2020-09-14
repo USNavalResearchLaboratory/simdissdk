@@ -39,8 +39,8 @@ public:
     : Callback(),
       dataModel_(dataModel)
   {
-    // NULL Data model is not supported (doesn't make sense here)
-    assert(dataModel_ != NULL);
+    // nullptr Data model is not supported (doesn't make sense here)
+    assert(dataModel_ != nullptr);
   }
   virtual void operator()(simVis::View* inset, const EventType& e)
   {
@@ -73,8 +73,8 @@ public:
     : Callback(),
       dataModel_(dataModel)
   {
-    // NULL Data model is not supported (doesn't make sense here)
-    assert(dataModel_ != NULL);
+    // nullptr Data model is not supported (doesn't make sense here)
+    assert(dataModel_ != nullptr);
   }
   virtual void operator()(simVis::View* view, const EventType& e)
   {
@@ -116,7 +116,7 @@ ViewManagerDataModel::~ViewManagerDataModel()
 
 void ViewManagerDataModel::bindTo(simVis::ViewManager* viewManager)
 {
-  if (viewManager == NULL)
+  if (viewManager == nullptr)
   {
     unbind();
     return;
@@ -156,12 +156,12 @@ void ViewManagerDataModel::unbind()
   userViews_.clear();
 
   viewManager_->removeCallback(viewManagerCB_.get());
-  // If old view manager is non-NULL, remove callback
+  // If old view manager is non-nullptr, remove callback
   viewManager_->removeCallback(viewManagerCB_.get());
   for (unsigned int k = 0; k < viewManager_->getNumViews(); ++k)
     viewManager_->getView(k)->removeCallback(viewParamCB_.get());
 
-  viewManager_ = NULL;
+  viewManager_ = nullptr;
   endResetModel();
 }
 
@@ -189,7 +189,7 @@ QModelIndex ViewManagerDataModel::index(int row, int column, const QModelIndex &
 
   // Must be an inset view; pull out the view host from "parent"
   const simVis::View* hostView = viewFromIndex_(parent);
-  if (hostView == NULL)
+  if (hostView == nullptr)
   {
     return QModelIndex();
   }
@@ -202,8 +202,8 @@ QModelIndex ViewManagerDataModel::parent(const QModelIndex &child) const
   if (!child.isValid() || !viewManager_.valid() || !isHierarchical())
     return QModelIndex();
   const simVis::View* childView = viewFromIndex_(child);
-  // If view is NULL then there is no parent
-  if (childView == NULL)
+  // If view is nullptr then there is no parent
+  if (childView == nullptr)
     return QModelIndex();
   // Get the first level parent from the child
   simVis::View* parentView = childView->getHostView();
@@ -223,7 +223,7 @@ int ViewManagerDataModel::rowCount(const QModelIndex &parent) const
   if (!parent.isValid())
     return topLevelViews_.count();
   const simVis::View* view = viewFromIndex_(parent);
-  return view != NULL ? view->getNumInsets() : 0;
+  return view != nullptr ? view->getNumInsets() : 0;
 }
 
 int ViewManagerDataModel::columnCount(const QModelIndex &parent) const
@@ -240,7 +240,7 @@ QVariant ViewManagerDataModel::data(const QModelIndex &index, int role) const
   {
   case Qt::DisplayRole:
   case Qt::EditRole:
-    if (view != NULL)
+    if (view != nullptr)
     {
       std::string name = view->getName();
       if (name.empty() && role == Qt::DisplayRole)
@@ -251,7 +251,7 @@ QVariant ViewManagerDataModel::data(const QModelIndex &index, int role) const
 
   case Qt::CheckStateRole:
     // Only show check state for views that are not top level
-    if (view != NULL && view->getHostView() != NULL && isUserCheckable())
+    if (view != nullptr && view->getHostView() != nullptr && isUserCheckable())
       return view->isVisible() ? Qt::Checked : Qt::Unchecked;
     break;
 
@@ -275,7 +275,7 @@ Qt::ItemFlags ViewManagerDataModel::flags(const QModelIndex& index) const
     const simVis::View* view = viewFromIndex_(index);
     Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     // Only insets can be turned on and off or have its name edited
-    if (view != NULL && view->getHostView() != NULL && isUserCheckable())
+    if (view != nullptr && view->getHostView() != nullptr && isUserCheckable())
       flags |= (Qt::ItemIsEditable | Qt::ItemIsUserCheckable);
     return flags;
   }
@@ -285,12 +285,12 @@ Qt::ItemFlags ViewManagerDataModel::flags(const QModelIndex& index) const
 bool ViewManagerDataModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
   simVis::View* view = viewFromIndex_(index);
-  if (!index.isValid() || view == NULL)
+  if (!index.isValid() || view == nullptr)
     return QAbstractItemModel::setData(index, value, role);
 
   if (role == Qt::EditRole)
   {
-    if (view->getHostView() != NULL)
+    if (view->getHostView() != nullptr)
     {
       // Use the trimmed name
       const std::string trimmed = value.toString().trimmed().toStdString();
@@ -323,7 +323,7 @@ void ViewManagerDataModel::notifyViewRemoved_(simVis::View* view)
   }
 
   // See if it's in the list of top level views and sync if so
-  if (view->getHostView() == NULL && isHierarchical())
+  if (view->getHostView() == nullptr && isHierarchical())
   {
     int idx = topLevelViews_.indexOf(ViewObserverPtr(view));
     // Assertion failure means we are out of sync in the list
@@ -353,7 +353,7 @@ void ViewManagerDataModel::notifyViewRemoved_(simVis::View* view)
 
 QModelIndex ViewManagerDataModel::createIndex_(simVis::View* view) const
 {
-  if (view == NULL)
+  if (view == nullptr)
     return QModelIndex();
   // In flat mode we query the view manager directly
   if (!isHierarchical())
@@ -361,9 +361,9 @@ QModelIndex ViewManagerDataModel::createIndex_(simVis::View* view) const
 
   simVis::View* parent = view->getHostView();
 
-  // Case 1 is that the parent is NULL (e.g. view is top level)
+  // Case 1 is that the parent is nullptr (e.g. view is top level)
   int idx = -1;
-  if (parent == NULL)
+  if (parent == nullptr)
     idx = topLevelViews_.indexOf(ViewObserverPtr(view));
   else
     idx = parent->getIndexOfInset(view);
@@ -382,7 +382,7 @@ void ViewManagerDataModel::notifyViewAdded_(simVis::View* view)
     userViews_.push_back(ViewObserverPtr(view));
 
   // Is it top level?  If so, sync our topLevelViews_
-  if (view->getHostView() == NULL && isHierarchical())
+  if (view->getHostView() == nullptr && isHierarchical())
   {
     beginInsertRows(QModelIndex(), topLevelViews_.count(), topLevelViews_.count());
     topLevelViews_.push_back(ViewObserverPtr(view));
@@ -451,9 +451,9 @@ simVis::View* ViewManagerDataModel::viewFromIndex_(const QModelIndex& index) con
   // Non-hierarchical views cannot do the same, because they use begin/endRemoveRows().
   // Because of the way View Manager is structured, we can't know exactly which index
   // was removed, so we instead just do the lookup by index (row)
-  if (index.internalPointer() != NULL)
+  if (index.internalPointer() != nullptr)
     return userViews_.at(index.row()).get();
-  return NULL;
+  return nullptr;
 }
 
 

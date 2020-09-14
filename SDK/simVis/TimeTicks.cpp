@@ -79,11 +79,11 @@ TimeTicks::TimeTicks(const simData::DataStore& ds, Locator* parentLocator, Platf
   lastLabelTime_(-1.0),
   labelInterval_(0.0),
   timeDirection_(simCore::FORWARD),
-  chunkGroup_(NULL),
-  labelGroup_(NULL),
+  chunkGroup_(nullptr),
+  labelGroup_(nullptr),
   platformTspiFilterManager_(platformTspiFilterManager),
   entityId_(entityId),
-  currentPointChunk_(NULL),
+  currentPointChunk_(nullptr),
   parentLocator_(parentLocator)
 {
   updateSliceBase_ = ds_.platformUpdateSlice(entityId);
@@ -104,11 +104,11 @@ TimeTicks::TimeTicks(const simData::DataStore& ds, Locator* parentLocator, Platf
 
 TimeTicks::~TimeTicks()
 {
-  chunkGroup_ = NULL;
-  labelGroup_ = NULL;
-  currentPointChunk_ = NULL;
-  parentLocator_ = NULL;
-  localLocator_ = NULL;
+  chunkGroup_ = nullptr;
+  labelGroup_ = nullptr;
+  currentPointChunk_ = nullptr;
+  parentLocator_ = nullptr;
+  localLocator_ = nullptr;
 }
 
 void TimeTicks::reset()
@@ -124,7 +124,7 @@ void TimeTicks::reset()
   labelGroup_ = new osg::Group();
   addChild(labelGroup_);
   addChild(chunkGroup_);
-  currentPointChunk_ = NULL;
+  currentPointChunk_ = nullptr;
   lastLargeTickTime_ = -1.0;
   lastLabelTime_ = -1.0;
   singlePoint_ = false;
@@ -143,7 +143,7 @@ TimeTicksChunk* TimeTicks::getCurrentChunk_()
       return chunk;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 TimeTicksChunk* TimeTicks::getLastChunk_()
@@ -154,7 +154,7 @@ TimeTicksChunk* TimeTicks::getLastChunk_()
     TimeTicksChunk* chunk = static_cast<TimeTicksChunk*>(chunkGroup_->getChild(num - 1));
     return chunk;
   }
-  return NULL;
+  return nullptr;
 }
 
 TimeTicksChunk* TimeTicks::getFirstChunk_()
@@ -165,7 +165,7 @@ TimeTicksChunk* TimeTicks::getFirstChunk_()
     TimeTicksChunk* chunk = static_cast<TimeTicksChunk*>(chunkGroup_->getChild(0));
     return chunk;
   }
-  return NULL;
+  return nullptr;
 }
 
 double TimeTicks::toDrawTime_(double updateTime) const
@@ -176,7 +176,7 @@ double TimeTicks::toDrawTime_(double updateTime) const
 void TimeTicks::addUpdate_(double tickTime)
 {
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase_);
-  if (updateSlice == NULL)
+  if (updateSlice == nullptr)
   {
     // a valid/active platform must have an updateSlice - if assert fails, ensure that time ticks is not being updated for a non valid platform
     assert(0);
@@ -237,7 +237,7 @@ void TimeTicks::addUpdate_(double tickTime)
   if (addLabel || newChunk)
   {
     // these are the only two cases that require a new locator
-    newLocator = new Locator(parentLocator_);
+    newLocator = new Locator(parentLocator_.get());
     newLocator->setCoordinate(ecefTickCoord, tickTime);
     if (parentLocator_->isEci())
       newLocator->setEciRotationTime(-tickTime, tickTime, false);
@@ -291,7 +291,7 @@ void TimeTicks::addUpdate_(double tickTime)
     }
 
     // locator node syncs its matrix to locator immediately
-    LocatorNode* locNode = new LocatorNode(newLocator);
+    LocatorNode* locNode = new LocatorNode(newLocator.get());
     osgText::Text* text = new osgText::Text();
     text->setPosition(osg::Vec3(0.f, 0.f, 0.f));
     text->setText(labelText);
@@ -519,7 +519,7 @@ void TimeTicks::update()
     return;
 
   const simData::PlatformUpdateSlice* updateSlice = static_cast<const simData::PlatformUpdateSlice*>(updateSliceBase_);
-  if (updateSlice == NULL)
+  if (updateSlice == nullptr)
   {
     // a valid/active platform must have an updateSlice - if assert fails, ensure that time ticks is not being updated for a non valid platform
     assert(0);
@@ -527,7 +527,7 @@ void TimeTicks::update()
   }
 
   // if the current is not valid, and scenario is prior to first update time, nothing to do
-  if (updateSlice->current() == NULL && ds_.updateTime() < updateSlice->firstTime())
+  if (updateSlice->current() == nullptr && ds_.updateTime() < updateSlice->firstTime())
   {
     // platform is not valid, this should only occur during platform creation
     return;

@@ -44,7 +44,7 @@ class MyMainWindow : public QMainWindow
 
 public:
   explicit MyMainWindow(simVis::ViewManager* viewMan)
-    : glWindow_(NULL)
+    : glWindow_(nullptr)
   {
     viewMan_ = viewMan;
 

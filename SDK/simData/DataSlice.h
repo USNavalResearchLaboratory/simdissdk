@@ -186,9 +186,9 @@ public:
   /**
    * Retrieve the bounds used to compute the interpolated value
    * The bounds are represented as a std::pair containing const pointers
-   * If the value is not interpolated, the values in the pair could be NULL
+   * If the value is not interpolated, the values in the pair could be nullptr
    */
-  virtual Bounds interpolationBounds() const { return Bounds(static_cast<T*>(NULL), static_cast<T*>(NULL)); }
+  virtual Bounds interpolationBounds() const { return Bounds(static_cast<T*>(nullptr), static_cast<T*>(nullptr)); }
 
   /// Earliest time in the update slice, or DBL_MAX if none
   virtual double firstTime() const = 0;

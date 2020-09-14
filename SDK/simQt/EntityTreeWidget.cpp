@@ -56,8 +56,8 @@ private:
 EntityTreeWidget::EntityTreeWidget(QTreeView* view)
   : QObject(view),
     view_(view),
-    model_(NULL),
-    proxyModel_(NULL),
+    model_(nullptr),
+    proxyModel_(nullptr),
     settings_(SettingsPtr()),
     treeView_(false),
     pendingSendNumItems_(false),
@@ -104,7 +104,7 @@ QList<QWidget*> EntityTreeWidget::filterWidgets(QWidget* newWidgetParent) const
 
 void EntityTreeWidget::setModel(AbstractEntityTreeModel* model)
 {
-  if (model_ != NULL)
+  if (model_ != nullptr)
   {
     disconnect(model_, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(delaySend_()));
     disconnect(model_, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(delaySend_()));
@@ -139,72 +139,9 @@ void EntityTreeWidget::clearSelection()
   selectionSet_.clear();
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void EntityTreeWidget::setSelected(uint64_t id, bool selected, bool signalItemsSelected)
-{
-  if (model_ == NULL)
-    return;
-
-  // Pull out the index from the proxy
-  QModelIndex index = proxyModel_->mapFromSource(model_->index(id));
-  // If it's invalid, break out
-  if (index == QModelIndex())
-  {
-    // Make sure the item is not in the selection list (can happen in swap to tree list if
-    // a gate was selected and beams were filtered)
-    if (selectionSet_.remove(id))
-      selectionList_.removeOne(id);
-    return;
-  }
-
-  // If the item is already selected/deselected, then ignore the request
-  if (view_->selectionModel()->isSelected(index) == selected)
-  {
-    // Validate that our cache is consistent with this request
-    assert(selectionSet_.contains(id) == selected);
-    return;
-  }
-
-  // For internal consistency, update the selection_ cache BEFORE changing selection
-  if (selected)
-  {
-    // It's possible that this check could fail if swapping between tree and list, because
-    // in some cases signals can be blocked and we don't get the update on selections
-    if (!selectionSet_.contains(id))
-    {
-      selectionSet_.insert(id);
-      selectionList_.append(id);
-    }
-  }
-  else
-  {
-    // Assertion failure means the model thinks we had a selection, but we didn't cache it
-    assert(selectionSet_.contains(id));
-    // Only remove from list, if remove from set succeeds
-    if (selectionSet_.remove(id))
-      selectionList_.removeOne(id);
-  }
-  // Update our flag to match the signalItemsSelected flag. Do this so that selectionModel()->select()
-  // properly tells the view_ to update graphically, but so that we don't unnecessarily update in selectionChanged_()
-  emitSelectionChanged_ = signalItemsSelected;
-  // Update the selection
-  QItemSelectionModel::SelectionFlags flags = QItemSelectionModel::Rows | (selected ? QItemSelectionModel::Select : QItemSelectionModel::Deselect);
-  view_->selectionModel()->select(index, flags);
-  view_->selectionModel()->setCurrentIndex(index, flags);
-  // Restore the flag to true, so that single selections work as expected
-  emitSelectionChanged_ = true;
-}
-
-void EntityTreeWidget::setSelected(QList<uint64_t> list, bool selected)
-{
-  for (int ii = 0; ii < list.count(); ii++)
-    setSelected(list[ii], selected, ii == (list.count()-1));  // cause a GUI update on the last selection
-}
-#endif
-
 int EntityTreeWidget::setSelected(uint64_t id)
 {
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return 1;
 
   if ((selectionList_.size() == 1) && (selectionList_.front() == id))
@@ -241,7 +178,7 @@ int EntityTreeWidget::setSelected(uint64_t id)
 
 int EntityTreeWidget::setSelected(const QList<uint64_t>& list)
 {
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return 1;
 
   QSet<uint64_t> newSet;  ///< Use new set to detected changes with selectionSet_
@@ -451,7 +388,7 @@ void EntityTreeWidget::setToTreeView()
   if (treeView_)
     return;
   treeView_ = true;
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   QList<uint64_t> entities = selectedItems();
@@ -468,7 +405,7 @@ void EntityTreeWidget::setToListView()
   if (!treeView_)
     return;
   treeView_ = false;
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   QList<uint64_t> entities = selectedItems();
@@ -491,7 +428,7 @@ void EntityTreeWidget::toggleTreeView(bool useTree)
   static const int LIST_INDENT = 4;
   view_->setIndentation(useTree ? TREE_INDENT : LIST_INDENT);
 
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   QList<uint64_t> entities = selectedItems();
@@ -507,7 +444,7 @@ void EntityTreeWidget::toggleTreeView(bool useTree)
 
 void EntityTreeWidget::forceRefresh()
 {
-  if (model_ == NULL)
+  if (model_ == nullptr)
     return;
 
   model_->forceRefresh();
@@ -545,7 +482,7 @@ void EntityTreeWidget::selectionChanged_(const QItemSelection& selected, const Q
     // Pull out the item from the index, which contains the ID
     const QModelIndex index2 = proxyModel_->mapToSource(*it);
     const AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
-    if (item == NULL)
+    if (item == nullptr)
       continue;
     // Add the ID to both lists
     const uint64_t id = item->id();
@@ -565,7 +502,7 @@ void EntityTreeWidget::doubleClicked_(const QModelIndex& index)
 {
   QModelIndex index2 = proxyModel_->mapToSource(index);
   AbstractEntityTreeItem *item = static_cast<AbstractEntityTreeItem*>(index2.internalPointer());
-  if (item != NULL)
+  if (item != nullptr)
     emit itemDoubleClicked(item->id());
 }
 
@@ -587,7 +524,7 @@ void EntityTreeWidget::emitSend_()
 
 void EntityTreeWidget::sendNumFilteredItems_()
 {
-  if ((proxyModel_ != NULL) && (model_ != NULL))
+  if ((proxyModel_ != nullptr) && (model_ != nullptr))
     emit numFilteredItemsChanged(proxyModel_->rowCount(), model_->rowCount());
 }
 

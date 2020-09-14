@@ -51,7 +51,7 @@ class SDKQT_EXPORT GanttChartView : public QAbstractItemView
 
 public:
   /** Constructor */
-  explicit GanttChartView(QWidget* parent = NULL);
+  explicit GanttChartView(QWidget* parent = nullptr);
   /** Destructor */
   virtual ~GanttChartView();
 

@@ -41,7 +41,7 @@ class SDKUTIL_EXPORT DataStoreTestHelper
 {
 public:
   /** Will create a data store if none is passed in; passed-in memory still belongs to caller */
-  DataStoreTestHelper(simData::DataStore* dataStore = NULL);
+  DataStoreTestHelper(simData::DataStore* dataStore = nullptr);
   /** Deletes data store if data store was created inside constructor */
   virtual ~DataStoreTestHelper();
 

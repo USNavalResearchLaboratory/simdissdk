@@ -61,7 +61,7 @@ public:
    *   receive no text from stdout unless teeToOriginalDest is true.
    * @param parent QObject parent for automatic deletion
    */
-  FileDescriptorReplacement(int whichFd, bool teeToOriginalDest, QObject* parent=NULL);
+  FileDescriptorReplacement(int whichFd, bool teeToOriginalDest, QObject* parent=nullptr);
   /** Replaces the descriptor so regular output will continue */
   virtual ~FileDescriptorReplacement();
 
@@ -71,7 +71,7 @@ public:
    *   a signal.  The console will receive no text from stdout unless teeToStdOut is true.
    * @param parent QObject parent for automatic deletion
    */
-  static FileDescriptorReplacement* replaceStdout(bool teeToStdOut, QObject* parent = NULL);
+  static FileDescriptorReplacement* replaceStdout(bool teeToStdOut, QObject* parent = nullptr);
 
   /**
    * Factory method to replace stderr.  Useful because STDERR_FILENO is not universally defined.
@@ -79,7 +79,7 @@ public:
    *   a signal.  The console will receive no text from stderr unless teeToStdErr is true.
    * @param parent QObject parent for automatic deletion
    */
-  static FileDescriptorReplacement* replaceStderr(bool teeToStdErr, QObject* parent = NULL);
+  static FileDescriptorReplacement* replaceStderr(bool teeToStdErr, QObject* parent = nullptr);
 
 signals:
   /** Text has been read on the specified file descriptor */

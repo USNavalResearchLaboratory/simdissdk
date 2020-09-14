@@ -289,8 +289,8 @@ private:
 /** Instantiates a new data column. */
 DataColumn::DataColumn(TimeContainer* timeContainer, const std::string& columnName, TableId tableId, TableColumnId columnId, VariableType storageType, UnitType unitType)
   : timeContainer_(timeContainer),
-    freshData_(NULL),
-    staleData_(NULL),
+    freshData_(nullptr),
+    staleData_(nullptr),
     name_(columnName),
     tableId_(tableId),
     id_(columnId),
@@ -298,14 +298,14 @@ DataColumn::DataColumn(TimeContainer* timeContainer, const std::string& columnNa
     unitType_(unitType)
 {
   // Assertion failure means invalid precondition
-  assert(timeContainer_ != NULL);
+  assert(timeContainer_ != nullptr);
   freshData_ = newDataContainer_(variableType_);
   staleData_ = newDataContainer_(variableType_);
   // Assertion means we didn't make a data container, which would only happen if
   // someone added a new variable type.  Note this would show up as a Linux
   // compile time warning as well, as long as switch() doesn't have a default case.
-  assert(freshData_ != NULL);
-  assert(staleData_ != NULL);
+  assert(freshData_ != nullptr);
+  assert(staleData_ != nullptr);
 }
 
 /** Columns contain no dynamic memory */
@@ -346,8 +346,8 @@ public:
   {
     delete freshData_;
     delete staleData_;
-    freshData_ = NULL;
-    staleData_ = NULL;
+    freshData_ = nullptr;
+    staleData_ = nullptr;
   }
 private:
   DataContainer* freshData_;
@@ -447,7 +447,7 @@ TableStatus DataColumn::interpolate(double& value, double time, const Interpolat
 void DataColumn::replaceTimeContainer(TimeContainer* newTimes)
 {
   // Assertion failure means invalid precondition
-  assert(newTimes != NULL);
+  assert(newTimes != nullptr);
   timeContainer_ = newTimes;
 }
 
@@ -505,7 +505,7 @@ DataContainer* DataColumn::newDataContainer_(simData::VariableType variableType)
   case VT_DOUBLE: return new DataContainerT<double>();
   case VT_STRING: return new DataContainerT<std::string>();
   }
-  return NULL;
+  return nullptr;
 }
 
 void DataColumn::swapFreshStaleData()

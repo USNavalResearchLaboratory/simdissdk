@@ -213,7 +213,7 @@ void MapScale::bindToFocusManager(simVis::FocusManager* focusManager)
 
 void MapScale::setUnitsProvider(UnitsProvider* unitsProvider)
 {
-  // Fall back to a reasonable implementation rather than setting to NULL
+  // Fall back to a reasonable implementation rather than setting to nullptr
   if (unitsProvider)
     unitsProvider_ = unitsProvider;
   else

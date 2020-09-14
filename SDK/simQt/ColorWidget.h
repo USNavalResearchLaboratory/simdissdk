@@ -63,7 +63,7 @@ class SDKQT_EXPORT ColorWidget : public QWidget  // QDESIGNER_WIDGET_EXPORT
 
 public:
   /** Constructor */
-  ColorWidget(QWidget* parent = NULL);
+  ColorWidget(QWidget* parent = nullptr);
   virtual ~ColorWidget();
 
   /** returns the current color selection */

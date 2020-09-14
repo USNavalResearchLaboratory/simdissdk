@@ -22,6 +22,7 @@
  */
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstring>
 #include <cstdlib>
 #include <iomanip>
@@ -125,15 +126,22 @@ std::string buildString(const std::string &prefix, double value, size_t width, s
     const size_t realPrecision = simCore::sdkMin(precision, static_cast<size_t>(16));
     // scientific notation limit
     const double sciNoteGT2 = simCore::sdkMin(1e+80, sciNoteGT);
-    if ((value > sciNoteGT2) || (value < -sciNoteGT2) ||
-      (value != 0.0 && value < sciNoteLT && value > -sciNoteLT))
-    {
+    const bool useScientific = (value > sciNoteGT2) || (value < -sciNoteGT2) ||
+      (value != 0.0 && value < sciNoteLT&& value > -sciNoteLT);
+    if (useScientific)
       strVal.setf(std::ios::scientific, std::ios::floatfield);
-    }
     else
-    {
       strVal.setf(std::ios::fixed, std::ios::floatfield);
+
+#if defined(NDEBUG) && defined(_MSC_VER) && _MSC_VER > 1922
+    // Avoid processing in https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/printf-printf-l-wprintf-wprintf-l?view=vs-2019
+    // due to bug reported in https://developercommunity.visualstudio.com/content/problem/1085732/different-printf-double-rounding-behaviour-between.html
+    if (!useScientific)
+    {
+      const double multFactor = std::pow(10.0, realPrecision);
+      value = simCore::rint(value * multFactor) / multFactor;
     }
+#endif
 
     if (padZero)
       strVal << std::setfill('0') << std::setw(width) << std::setprecision(realPrecision) << value;

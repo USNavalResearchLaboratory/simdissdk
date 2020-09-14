@@ -22,17 +22,18 @@
  */
 #ifndef SIMVIS_PROJECTOR_H
 #define SIMVIS_PROJECTOR_H
-
+#include <memory>
 #include "simData/DataTypes.h"
 #include "simVis/Constants.h"
 #include "simVis/Entity.h"
 
 namespace osg { class Texture2D; }
-
+namespace osgEarth { namespace Util { class EllipsoidIntersector; } }
 namespace simVis
 {
-  class EntityLabelNode;
-  struct LocatorCallback;
+class EntityLabelNode;
+struct LocatorCallback;
+class LocatorNode;
 
 /** Projector video interface on the MediaPlayer2 side */
 class ProjectorTexture : public osg::Referenced
@@ -77,10 +78,9 @@ public:
   /**
   * Construct a new node that projects an image or video on to the terrain.
   */
-  ProjectorNode(
-    const simData::ProjectorProperties& props,
-    simVis::Locator*                    hostLocator,
-    const simVis::EntityNode*           host = NULL);
+  ProjectorNode(const simData::ProjectorProperties& props,
+    simVis::Locator* hostLocator,
+    const simVis::EntityNode* host = nullptr);
 
   /**
   * Gets the last known properties of this object
@@ -107,7 +107,7 @@ public:
   const osg::Matrixd& getTexGenMatrix() const { return texGenMatrix_; }
 
   /**
-   * Gets a pointer to the last data store update, or NULL if
+   * Gets a pointer to the last data store update, or nullptr if
    * none have been applied.
    */
   const simData::ProjectorUpdate* getLastUpdateFromDS() const;
@@ -117,66 +117,8 @@ public:
   /// Remove projector uniforms from the given StateSet
   void removeUniforms(osg::StateSet* stateSet) const;
 
-public: // EntityNode interface
-  /**
-  * Whether the entity is active within the scenario at the current time.
-  * The entity is considered active if it has a valid position update for the
-  * current scenario time, and has not received a command to turn off
-  * @return true if active; false if not
-  */
-  virtual bool isActive() const;
-
-  /**
-  * Whether this entity is visible.
-  */
-  virtual bool isVisible() const;
-
-  /**
-  * Get the object ID of the beam rendered by this node
-  * @return object ID
-  */
-  virtual simData::ObjectId getId() const;
-
-  /** Get the projector's host's ID */
-  virtual bool getHostId(simData::ObjectId& out_hostId) const;
-
-  /**
-  * Returns the entity name. Can be used to get the actual name always or the
-  * actual/alias depending on the commonprefs.usealias flag.
-  * @param nameType  enum option to always return real/alias name or name based on
-  *            the commonprefs usealias flag.
-  * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
-  * @return    actual/alias entity name string
-  */
-  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const;
-
-  /// Returns the pop up text based on the label content callback, update and preference
-  virtual std::string popupText() const;
-  /// Returns the hook text based on the label content callback, update and preference
-  virtual std::string hookText() const;
-  /// Returns the legend text based on the label content callback, update and preference
-  virtual std::string legendText() const;
-
-  /**
-  * Updates the entity based on the bound data store.
-  * @param updateSlice  Data store update slice (could be NULL)
-  * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
-  * @return true if update applied, false if not
-  */
-  virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force = false);
-
-  /**
-  * Flushes all the entity's data point visualization.
-  */
-  virtual void flush();
-
-  /**
-  * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
-  */
-  virtual double range() const;
-
-  /** This entity type is, at this time, unpickable. */
-  virtual unsigned int objectIndexTag() const;
+  /// Set the calculator that can calculate the projector's ellipsoid intersection
+  void setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator);
 
   /** Configure a node to accept the texture projected by this projector */
   void addProjectionToNode(osg::Node* node);
@@ -190,12 +132,6 @@ public: // EntityNode interface
   */
   static unsigned int getMask() { return simVis::DISPLAY_MASK_PROJECTOR; }
 
-  /** Return the proper library name */
-  virtual const char* libraryName() const { return "simVis"; }
-  /** Return the class name */
-  virtual const char* className() const { return "ProjectorNode"; }
-
-public:
   /**
   * Updates the projection uniforms. This called automatically when the locator moves; you
   * do not need to call it directly.
@@ -203,7 +139,80 @@ public:
   void syncWithLocator();
 
   /** Traverse the node during visitor pattern */
-  virtual void traverse(osg::NodeVisitor& nv);
+  virtual void traverse(osg::NodeVisitor& nv) override;
+
+public: // EntityNode interface
+  /**
+  * Whether the entity is active within the scenario at the current time.
+  * The entity is considered active if it has a valid position update for the
+  * current scenario time, and has not received a command to turn off
+  * @return true if active; false if not
+  */
+  virtual bool isActive() const override;
+
+  /**
+  * Whether this entity is visible.
+  */
+  virtual bool isVisible() const override;
+
+  /**
+  * Returns the entity name. Can be used to get the actual name always or the
+  * actual/alias depending on the commonprefs.usealias flag.
+  * @param nameType  enum option to always return real/alias name or name based on
+  *            the commonprefs usealias flag.
+  * @param allowBlankAlias If true DISPLAY_NAME will return blank if usealias is true and alias is blank
+  * @return    actual/alias entity name string
+  */
+  virtual const std::string getEntityName(EntityNode::NameType nameType, bool allowBlankAlias = false) const override;
+
+  /// Returns the pop up text based on the label content callback, update and preference
+  virtual std::string popupText() const override;
+  /// Returns the hook text based on the label content callback, update and preference
+  virtual std::string hookText() const override;
+  /// Returns the legend text based on the label content callback, update and preference
+  virtual std::string legendText() const override;
+
+  /** This entity type is, at this time, unpickable. */
+  virtual unsigned int objectIndexTag() const override;
+
+  /** @copydoc EntityNode::getPosition() */
+  virtual int getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
+
+  /** @copydoc EntityNode::getPositionOrientation() */
+  virtual int getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation,
+    simCore::CoordinateSystem coordsys = simCore::COORD_SYS_ECEF) const override;
+
+  /**
+  * Get the object ID of the beam rendered by this node
+  * @return object ID
+  */
+  virtual simData::ObjectId getId() const override;
+
+  /** Get the projector's host's ID */
+  virtual bool getHostId(simData::ObjectId& out_hostId) const override;
+
+  /**
+  * Updates the entity based on the bound data store.
+  * @param updateSlice  Data store update slice (could be nullptr)
+  * @param force true to force the update to be applied; false allows entity to use its own internal logic to decide whether the update should be applied
+  * @return true if update applied, false if not
+  */
+  virtual bool updateFromDataStore(const simData::DataSliceBase* updateSlice, bool force = false) override;
+
+  /**
+  * Flushes all the entity's data point visualization.
+  */
+  virtual void flush() override;
+
+  /**
+  * Returns a range value (meters) used for visualization.  Will return zero for platforms and projectors.
+  */
+  virtual double range() const override;
+
+  /** Return the proper library name */
+  virtual const char* libraryName() const override { return "simVis"; }
+  /** Return the class name */
+  virtual const char* className() const override { return "ProjectorNode"; }
 
 protected:
   /// osg::Referenced-derived; destructor body needs to be in the .cpp
@@ -213,14 +222,36 @@ private:
   /** Copy constructor, not implemented or available. */
   ProjectorNode(const ProjectorNode&);
 
-  simData::ProjectorProperties lastProps_;
-  simData::ProjectorPrefs      lastPrefs_;
-  simData::ProjectorUpdate     lastUpdate_;
+  void getMatrices_(
+    osg::Matrixd& out_projection,
+    osg::Matrixd& out_locator,
+    osg::Matrixd& out_modelView) const;
+
+  void init_();
+
+  /// Read video file
+  bool readVideoFile_(const std::string& filename);
+  /// Read raster file
+  bool readRasterFile_(const std::string& filename);
+  /// Load new file
+  void loadRequestedFile_(const std::string& newFilename);
+
+  /// Update label
+  void updateLabel_(const simData::ProjectorPrefs& prefs);
+  /// Update override color
+  void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
+
+
+  simData::ProjectorProperties  lastProps_;
+  simData::ProjectorPrefs       lastPrefs_;
+  simData::ProjectorUpdate      lastUpdate_;
   osg::observer_ptr<const EntityNode> host_;
-  osg::ref_ptr<LocatorCallback> locatorCallback_;
+  osg::observer_ptr<Locator>    hostLocator_; ///< locator that tracks the projector origin
+  osg::ref_ptr<LocatorCallback> locatorCallback_; ///< notifies when projector host (& origin) has moved
+  osg::ref_ptr<LocatorNode>     projectorLocatorNode_; ///< locator node that tracks the projector/ellipsoid intersection
   osg::ref_ptr<EntityLabelNode> label_;
-  bool                         hasLastUpdate_;
-  bool                         hasLastPrefs_;
+  bool                          hasLastUpdate_;
+  bool                          hasLastPrefs_;
 
   osg::Matrixd texGenMatrix_;
   osg::ref_ptr<osg::Texture2D> texture_;
@@ -239,25 +270,7 @@ private:
   osg::ref_ptr<osg::Uniform> colorOverrideUniform_;
 
   osg::ref_ptr<osg::NodeCallback> projectOnNodeCallback_;
-
-  void getMatrices_(
-    osg::Matrixd& out_projection,
-    osg::Matrixd& out_locator,
-    osg::Matrixd& out_modelView);
-
-  void init_();
-
-  /// Read video file
-  bool readVideoFile_(const std::string& filename);
-  /// Read raster file
-  bool readRasterFile_(const std::string& filename);
-  /// Load new file
-  void loadRequestedFile_(const std::string& newFilename);
-
-  /// Update label
-  void updateLabel_(const simData::ProjectorPrefs& prefs);
-  /// Update override color
-  void updateOverrideColor_(const simData::ProjectorPrefs& prefs);
+  std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator_;
 };
 
 } //namespace simVis

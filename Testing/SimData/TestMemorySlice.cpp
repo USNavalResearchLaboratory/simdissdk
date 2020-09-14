@@ -160,33 +160,33 @@ int testStaticPlatformUpdates()
   // Verify that only the first update results in slice hasChanged
   ds->update(1.0);
   rv += SDK_ASSERT(slice->hasChanged());
-  rv += SDK_ASSERT(slice->current() != NULL);
+  rv += SDK_ASSERT(slice->current() != nullptr);
   rv += SDK_ASSERT(slice->current()->time() == -1.0);
 
   ds->update(1.1);
   rv += SDK_ASSERT(!slice->hasChanged());
-  rv += SDK_ASSERT(slice->current() != NULL);
+  rv += SDK_ASSERT(slice->current() != nullptr);
   rv += SDK_ASSERT(slice->current()->time() == -1.0);
 
   ds->update(2.0);
   rv += SDK_ASSERT(!slice->hasChanged());
-  rv += SDK_ASSERT(slice->current() != NULL);
+  rv += SDK_ASSERT(slice->current() != nullptr);
   rv += SDK_ASSERT(slice->current()->time() == -1.0);
 
   ds->update(10.0);
   rv += SDK_ASSERT(!slice->hasChanged());
-  rv += SDK_ASSERT(slice->current() != NULL);
+  rv += SDK_ASSERT(slice->current() != nullptr);
   rv += SDK_ASSERT(slice->current()->time() == -1.0);
 
   ds->update(1.0);
   rv += SDK_ASSERT(!slice->hasChanged());
-  rv += SDK_ASSERT(slice->current() != NULL);
+  rv += SDK_ASSERT(slice->current() != nullptr);
   rv += SDK_ASSERT(slice->current()->time() == -1.0);
 
   ds->flush(staticID);
   ds->update(1.0);
   rv += SDK_ASSERT(!slice->hasChanged());
-  rv += SDK_ASSERT(slice->current() != NULL);
+  rv += SDK_ASSERT(slice->current() != nullptr);
   rv += SDK_ASSERT(slice->current()->time() == -1.0);
 
   return rv;

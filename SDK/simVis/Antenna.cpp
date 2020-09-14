@@ -87,7 +87,7 @@ namespace simVis
 //        Geometry - contains the antenna primitives
 
 AntennaNode::AntennaNode(const osg::Quat& rot)
-  : antennaPattern_(NULL),
+  : antennaPattern_(nullptr),
     loadedOK_(false),
     beamRange_(1.0f),
     beamScale_(1.0f),
@@ -172,7 +172,7 @@ bool AntennaNode::setPrefs(const simData::BeamPrefs& prefs)
     // Frequency must be > 0, if <= 0 use default value
     const double freq = prefs.frequency() > 0 ? prefs.frequency() : simCore::DEFAULT_FREQUENCY;
     antennaPattern_ = simCore::loadPatternFile(patternFile_, freq);
-    loadedOK_ = (antennaPattern_ != NULL);
+    loadedOK_ = (antennaPattern_ != nullptr);
   }
 
   polarity_ = static_cast<simCore::PolarityType>(prefs.polarity());
@@ -335,14 +335,14 @@ void AntennaNode::render_()
   antGeom->setDataVariance(osg::Object::DYNAMIC);
   antGeom->setUseVertexBufferObjects(true);
 
-  osg::Vec3Array* verts = new osg::Vec3Array();
-  antGeom->setVertexArray(verts);
+  osg::ref_ptr<osg::Vec3Array> verts = new osg::Vec3Array();
+  antGeom->setVertexArray(verts.get());
 
-  osg::Vec3Array* norms = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
-  antGeom->setNormalArray(norms);
+  osg::ref_ptr<osg::Vec3Array> norms = new osg::Vec3Array(osg::Array::BIND_PER_VERTEX);
+  antGeom->setNormalArray(norms.get());
 
-  osg::Vec4Array* colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
-  antGeom->setColorArray(colors);
+  osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
+  antGeom->setColorArray(colors.get());
 
   // expected range for vRange is (0, M_PI]
   const double vRange = osg::clampBetween(lastPrefs_->fieldofview(), std::numeric_limits<double>::min(), M_PI);

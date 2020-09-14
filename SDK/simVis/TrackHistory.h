@@ -128,7 +128,7 @@ private: // methods
 
   /**
   * Return a chunk to which you can add a new point
-  * @return chunk that can accept a new point, or NULL if a new one needs to be created
+  * @return chunk that can accept a new point, or nullptr if a new one needs to be created
   */
   TrackChunkNode* getCurrentChunk_();
 

@@ -33,7 +33,7 @@ FunctionalProfileDataProvider::FunctionalProfileDataProvider(const ProfileDataPr
 
 FunctionalProfileDataProvider::~FunctionalProfileDataProvider()
 {
-  templateProvider_ = NULL;
+  templateProvider_ = nullptr;
 }
 
 unsigned int FunctionalProfileDataProvider::getNumRanges() const

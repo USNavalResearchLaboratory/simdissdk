@@ -82,7 +82,7 @@ int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon
 
   // update the eye position's focal point
   simVis::Viewpoint eyePos = view->getViewpoint();
-  eyePos.setNode(NULL);
+  eyePos.setNode(nullptr);
   eyePos.focalPoint() = osgEarth::GeoPoint(
     osgEarth::SpatialReference::create("wgs84"),
     osg::Vec3d(centerLla.lon() * simCore::RAD2DEG, centerLla.lat() * simCore::RAD2DEG, 0.0));
@@ -92,7 +92,8 @@ int RecenterEyeOnArea::centerOn(double lowerLat, double upperLat, double leftLon
   eyePos.pitch()->set(-90.0, osgEarth::Units::DEGREES);
   // Clamp the distance between the close and far eye distances, so that we don't
   // hit our eyeball on the surface, or zoom out to a pinpoint of an earth
-  eyePos.setRange(simCore::sdkMin(maxEyeDistance_, simCore::sdkMax(minEyeDistance_, distance)));
+  osgEarth::Distance range(simCore::sdkMin(maxEyeDistance_, simCore::sdkMax(minEyeDistance_, distance)), osgEarth::Units::METERS);
+  eyePos.setRange(range);
   view->setViewpoint(eyePos, transitionSec);
   return 0;
 }

@@ -38,8 +38,8 @@ SliderTimeWidgetBinding::SliderTimeWidgetBinding(QSlider* slider, TimeWidget* ti
     timeWidget_(timeWidget)
 {
   // Must pass in slider and time widget
-  assert(slider_ != NULL);
-  assert(timeWidget_ != NULL);
+  assert(slider_ != nullptr);
+  assert(timeWidget_ != nullptr);
 
   slider_->setRange(0, MAX_RANGE);
   connect(slider_, SIGNAL(valueChanged(int)), this, SLOT(setTimeWidgetValue_(int)));

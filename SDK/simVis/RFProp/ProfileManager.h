@@ -23,13 +23,16 @@
 #ifndef SIMVIS_RFPROP_PROFILE_MANAGER_H
 #define SIMVIS_RFPROP_PROFILE_MANAGER_H
 
+#include <memory>
 #include "simVis/LocatorNode.h"
 #include "simVis/RFProp/Profile.h"
 
+namespace simCore { class DatumConvert; }
 namespace simRF
 {
 class BearingProfileMap;
 class ColorProvider;
+struct ProfileContext;
 
 /**
  * Manages a collection of Profiles
@@ -39,8 +42,9 @@ class SDKVIS_EXPORT ProfileManager : public simVis::LocatorNode
 public:
   /**
    * Creates a new ProfileManager
+   * @param datumConvert converter for MSL heights
    */
-  ProfileManager();
+  explicit ProfileManager(std::shared_ptr<simCore::DatumConvert> datumConvert);
 
   void reset();
 
@@ -103,14 +107,14 @@ public:
   /**
    * Gets the profile at the given bearing
    * @param bearingR bearing in radians
-   * @return profile at specified bearing, or NULL if none
+   * @return profile at specified bearing, or nullptr if none
    */
   Profile* getProfileByBearing(double bearingR) const;
 
   /**
   * Gets the profile at the specified index, intended to support simple iteration through all profiles.
   * @param index of profile to return
-  * @return profile at specified index, or NULL if none
+  * @return profile at specified index, or nullptr if none
   */
   const Profile* getProfile(unsigned int index) const;
 
@@ -255,7 +259,7 @@ private:
   double bearing_;          ///< current bearing of RF prop display
   float alpha_;             ///< Alpha value (1.0 opaque, 0.0 transparent)
   bool displayOn_;          ///< whether visualization is active or not
-  std::shared_ptr<Profile::ProfileContext> profileContext_; ///< context shared by manager and each profile
+  std::shared_ptr<ProfileContext> profileContext_; ///< context shared by manager and each profile
 };
 }
 

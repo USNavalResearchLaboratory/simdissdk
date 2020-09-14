@@ -61,7 +61,7 @@ LUT1ProfileDataProvider::LUT1ProfileDataProvider(simCore::LUT::LUT1<short> *lut,
 {
   // LUT1ProfileDataProvider is taking ownership of the lut
   assert(lut);
-  if (lut == NULL)
+  if (lut == nullptr)
   {
     SIM_ERROR << "Attempting to assign a NULL LUT to the LUT1ProfileDataProvider" << std::endl;
   }
@@ -73,7 +73,7 @@ LUT1ProfileDataProvider::LUT1ProfileDataProvider(simCore::LUT::LUT1<short> *lut,
 {
   // LUT1ProfileDataProvider is taking ownership of the lut
   assert(lut);
-  if (lut == NULL)
+  if (lut == nullptr)
   {
     SIM_ERROR << "Attempting to assign a NULL LUT to the LUT1ProfileDataProvider" << std::endl;
   }

@@ -82,7 +82,7 @@ void Locator::setParentLocator(Locator* newParent, unsigned int inheritMask, boo
     return;
   }
 
-  if (newParent == NULL)
+  if (newParent == nullptr)
   {
     // remove me from my old parent's child list:
     if (parentLoc_.valid())
@@ -106,7 +106,7 @@ void Locator::setComponentsToInherit(unsigned int value, bool notify)
   if (notify)
     notifyListeners_();
 }
-#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 void Locator::setCoordinate(const simCore::Coordinate& coord, bool notify)
 {
   if (coord.coordinateSystem() != simCore::COORD_SYS_ECEF)
@@ -128,7 +128,6 @@ void Locator::setCoordinate(const simCore::Coordinate& coord, bool notify)
   if (notify)
     notifyListeners_();
 }
-#endif
 
 void Locator::setCoordinate(const simCore::Coordinate& coord, double timestamp, double eciRefTime, bool notify)
 {
@@ -239,21 +238,6 @@ bool Locator::getLocalOffsets(simCore::Vec3& pos, simCore::Vec3& ori) const
   return true;
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-void Locator::setRotationOrder(const Locator::RotationOrder& order, bool notify)
-{
-  rotOrder_ = order;
-  if (notify)
-    notifyListeners_();
-}
-#endif
-
-void Locator::resetToLocalTangentPlane(bool notify)
-{
-  if (notify)
-    notifyListeners_();
-}
-
 void Locator::endUpdate()
 {
   notifyListeners_();
@@ -275,7 +259,7 @@ double Locator::getTime() const
 {
   // if no valid timestamps, return 0.
   double mostRecentTime = -std::numeric_limits<double>::max();
-  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  for (const Locator* loc = this; loc != nullptr; loc = loc->getParentLocator())
   {
     const double locatorTime = loc->timestamp_;
     if (locatorTime != std::numeric_limits<double>::max() && locatorTime > mostRecentTime)
@@ -287,7 +271,7 @@ double Locator::getTime() const
 double Locator::getEciRefTime() const
 {
   // traverse up through parents to find first set ECI reference time
-  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  for (const Locator* loc = this; loc != nullptr; loc = loc->getParentLocator())
   {
     if (loc->eciRefTime_ != std::numeric_limits<double>::max())
       return loc->eciRefTime_;
@@ -298,7 +282,7 @@ double Locator::getEciRefTime() const
 double Locator::getElapsedEciTime() const
 {
   // find the first locator that has a set value for eci reference time
-  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  for (const Locator* loc = this; loc != nullptr; loc = loc->getParentLocator())
   {
     if (loc->eciRefTime_ != std::numeric_limits<double>::max())
     {
@@ -309,12 +293,10 @@ double Locator::getElapsedEciTime() const
   return getTime();
 }
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
 bool Locator::inherits_(unsigned int mask) const
 {
   return (componentsToInherit_ & mask) != COMP_NONE;
 }
-#endif
 
 bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::CoordinateSystem& coordsys) const
 {
@@ -322,7 +304,7 @@ bool Locator::getLocatorPosition(simCore::Vec3* out_position, const simCore::Coo
     return false;
 
   osg::Matrix m;
-  if (!getLocatorMatrix(m, Locator::COMP_POSITION))
+  if (!getLocatorMatrix(m))
     return false;
   const osg::Vec3d& ecefPos = m.getTrans();
 
@@ -472,7 +454,7 @@ double Locator::getEciRotationTime() const
 
   // sum all rotations of this and all parents
   double rotationSum = 0.;
-  for (const Locator* loc = this; loc != NULL; loc = loc->getParentLocator())
+  for (const Locator* loc = this; loc != nullptr; loc = loc->getParentLocator())
   {
     if (loc->hasRotation_)
       rotationSum += loc->eciRotationTime_;
@@ -709,13 +691,19 @@ bool ResolvedPositionOrientationLocator::getPosition_(osg::Vec3d& pos, unsigned 
   // resolved position is not modified by children's inheritance orientation components
   if (getParentLocator() && getParentLocator()->getLocatorMatrix(mat, getComponentsToInherit()))
   {
-    // strip out orientation and scale
+    // strip out orientation and scale; does not strip out rotation.
     pos = mat.getTrans();
     return true;
   }
   return false;
 }
-// only apply our local offsets
+bool ResolvedPositionOrientationLocator::getRotation_(osg::Matrixd& rotationMatrix) const
+{
+  // rotation already included by getPosition_
+  return false;
+}
+
+// only apply local offsets
 // do not apply parent offsets, since they have already been processed to produce the resolved position
 void ResolvedPositionOrientationLocator::applyOffsets_(osg::Matrixd& output, unsigned int comps) const
 {

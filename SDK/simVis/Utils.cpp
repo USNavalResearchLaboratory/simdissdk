@@ -172,7 +172,7 @@ namespace
         haveInit_(false)
     {
       setName(simVis::BIN_TWO_PASS_ALPHA);
-      setStateSet(NULL);
+      setStateSet(nullptr);
 
       // Note! We do not protect the depth settings here, because this then allows us to
       // disable the depth buffer at a higher level (e.g. when enabling Overhead mode).
@@ -282,12 +282,6 @@ namespace
 
 namespace simVis
 {
-
-bool useRexEngine()
-{
-  // The MP engine is no longer supported.  Always use rex.
-  return true;
-}
 
 bool getLighting(osg::StateSet* stateset, osg::StateAttribute::OverrideValue& out_value)
 {
@@ -827,7 +821,7 @@ osg::Matrix computeLocalToWorld(const osg::Node* node)
 
 simCore::Vec3 computeNodeGeodeticPosition(const osg::Node* node)
 {
-  if (node == NULL)
+  if (node == nullptr)
     return simCore::Vec3();
   const osg::Vec3d& ecefPos = computeLocalToWorld(node).getTrans();
   simCore::Vec3 llaPos;
@@ -1162,9 +1156,9 @@ void FixDeprecatedDrawModes::apply(osg::Geometry& geom)
   const unsigned int numPrimSets = geom.getNumPrimitiveSets();
   for (unsigned int k = 0; k < numPrimSets; ++k)
   {
-    // Only care about non-NULL primitive sets
+    // Only care about non-nullptr primitive sets
     const osg::PrimitiveSet* primSet = geom.getPrimitiveSet(k);
-    if (primSet == NULL)
+    if (primSet == nullptr)
       continue;
 
     // Search for modes that are deprecated in GL3
@@ -1287,7 +1281,7 @@ bool PixelScaleHudTransform::computeWorldToLocalMatrix(osg::Matrix& matrix, osg:
 
 osg::Matrixd PixelScaleHudTransform::computeMatrix_(osg::NodeVisitor* nv) const
 {
-  osg::CullStack* cs = nv ? nv->asCullStack() : NULL;
+  osg::CullStack* cs = nv ? nv->asCullStack() : nullptr;
   if (cs)
     invertedMvpw_ = osg::Matrix::inverse(*cs->getMVPW());
   return invertedMvpw_;

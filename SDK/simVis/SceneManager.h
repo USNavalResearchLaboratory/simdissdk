@@ -82,7 +82,7 @@ namespace simVis
     * The map displayed in this scene.
     * @return the Map
     */
-    osgEarth::Map* getMap() { return mapNode_.valid() ? mapNode_->getMap() : NULL; }
+    osgEarth::Map* getMap() { return mapNode_.valid() ? mapNode_->getMap() : nullptr; }
 
     /**
     * Sets the Map. This method actually will copy the layers from the provided

@@ -40,26 +40,26 @@ int testGetField()
   {
     std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> out;
     rv += SDK_ASSERT(0 == simData::protobuf::getField(platPrefs, out, "brightness"));
-    rv += SDK_ASSERT(out.first != NULL && out.second != NULL);
+    rv += SDK_ASSERT(out.first != nullptr && out.second != nullptr);
   }
   // valid field
   {
     std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> out;
     rv += SDK_ASSERT(0 == simData::protobuf::getField(platPrefs, out, "icon"));
-    rv += SDK_ASSERT(out.first != NULL && out.second != NULL);
+    rv += SDK_ASSERT(out.first != nullptr && out.second != nullptr);
   }
   // valid submessage
   {
     std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> out;
     rv += SDK_ASSERT(0 == simData::protobuf::getField(platPrefs, out, "commonPrefs"));
-    rv += SDK_ASSERT(out.first != NULL);
-    rv += SDK_ASSERT(out.second == NULL);
+    rv += SDK_ASSERT(out.first != nullptr);
+    rv += SDK_ASSERT(out.second == nullptr);
   }
   // valid field in submessage
   {
     std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> out;
     rv += SDK_ASSERT(0 == simData::protobuf::getField(platPrefs, out, "commonPrefs.dataDraw"));
-    rv += SDK_ASSERT(out.first != NULL && out.second != NULL);
+    rv += SDK_ASSERT(out.first != nullptr && out.second != nullptr);
   }
 
 
@@ -82,14 +82,14 @@ int testGetField()
   {
     std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> out;
     rv += SDK_ASSERT(0 == simData::protobuf::getField(platPrefs, out, "trackPrefs"));
-    rv += SDK_ASSERT(out.first != NULL);
-    rv += SDK_ASSERT(out.second == NULL);
+    rv += SDK_ASSERT(out.first != nullptr);
+    rv += SDK_ASSERT(out.second == nullptr);
   }
   // valid field in submessage
   {
     std::pair<google::protobuf::Message*, const google::protobuf::FieldDescriptor*> out;
     rv += SDK_ASSERT(0 == simData::protobuf::getField(platPrefs, out, "trackPrefs.trackDrawMode"));
-    rv += SDK_ASSERT(out.first != NULL && out.second != NULL);
+    rv += SDK_ASSERT(out.first != nullptr && out.second != nullptr);
   }
 
 

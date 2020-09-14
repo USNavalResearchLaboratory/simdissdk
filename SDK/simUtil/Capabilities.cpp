@@ -162,7 +162,7 @@ void Capabilities::init_()
 
 void Capabilities::init_(osg::GraphicsContext& gc)
 {
-  osg::GLExtensions* ext = NULL;
+  osg::GLExtensions* ext = nullptr;
   if (gc.makeCurrent() && gc.getState())
     ext = osg::GLExtensions::Get(gc.getState()->getContextID(), true);
 

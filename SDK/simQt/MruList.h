@@ -53,7 +53,7 @@ class SDKQT_EXPORT MruList : public QObject
   Q_OBJECT;
 public:
   /** Constructor */
-  explicit MruList(int maxFiles, QObject* parent=NULL);
+  explicit MruList(int maxFiles, QObject* parent=nullptr);
   virtual ~MruList();
 
   /** Retrieves the maximum number of entries in this list */
@@ -70,7 +70,7 @@ public:
    * Inserts the MRU list and optional separators into the menu provided.  Separators
    * added will hide automatically.
    * @param menu Menu into which to add our MRU
-   * @param beforeAction Insert MRU before this action; if NULL, MRU is appended to list
+   * @param beforeAction Insert MRU before this action; if nullptr, MRU is appended to list
    * @param separatorBefore If true, include a menu separator before the MRU.  Note that the
    *   separator is hidden automatically when the MRU is empty.
    * @param separatorAfter If true, include a menu separator after the MRU.  Note that the

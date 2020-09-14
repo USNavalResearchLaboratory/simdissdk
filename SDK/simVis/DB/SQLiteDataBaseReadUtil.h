@@ -87,7 +87,7 @@ namespace simVis_db
     /**
      * Reads a node's data buffer from a sets table; caller is responsible for deleting buffer
      * @param[in] sqlite3Db Pointer to a SQLite database object
-     * @param[in] dbFileName Name of a SQLite database file, used to fetch a database if sqlite3Db == NULL
+     * @param[in] dbFileName Name of a SQLite database file, used to fetch a database if sqlite3Db == nullptr
      * @param[in] dataTableName Name of the table to access within the given database
      * @param[in] faceIndex Mapping to a face index/orientation, used to create a SQLite idBlob
      * @param[in] nodeID Used to fill the idBlob

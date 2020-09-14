@@ -57,7 +57,7 @@
 namespace simVis {
 
 /** OSG Mask for traversal (like the select type in SIMDIS 9) */
-const int PlatformModelNode::TRAVERSAL_MASK = simVis::DISPLAY_MASK_PLATFORM_MODEL;
+const unsigned int PlatformModelNode::TRAVERSAL_MASK = simVis::DISPLAY_MASK_PLATFORM_MODEL;
 /** Conversion factor to convert a brightness pref value (0-100) to an ambient light value (from S9) */
 static const float BRIGHTNESS_TO_AMBIENT = 0.022f;
 /** Default brightness ambient value; 36 brightness is the default value */
@@ -100,7 +100,7 @@ private:
  * this => dynamicXform_ => imageIconXform_ <=> imageAlignmentXform_ => offsetXform_ => model_
  *                                           \= other scaled children
  *
- * model_ is the representative for the 3D model or 2D image, and may be set to NULL at times.
+ * model_ is the representative for the 3D model or 2D image, and may be set to nullptr at times.
  * It is set from the call to simVis::Registry::instance()->getOrCreateIconModel().
  *
  * The offsetXform_ handles transforms provided by the end user to orient and translate the model
@@ -234,14 +234,14 @@ bool PlatformModelNode::addScaledChild(osg::Node* node)
 {
   // Scaled children go into the imageIconXform_, so that the orientation fixes
   // for the model do not accidentally swap the location/orientation of attachments
-  if (imageIconXform_ == NULL)
+  if (imageIconXform_ == nullptr)
     return false;
   return imageIconXform_->addChild(node);
 }
 
 bool PlatformModelNode::removeScaledChild(osg::Node* node)
 {
-  if (imageIconXform_ == NULL)
+  if (imageIconXform_ == nullptr)
     return false;
   return imageIconXform_->removeChild(node);
 }
@@ -269,7 +269,7 @@ bool PlatformModelNode::updateModel_(const simData::PlatformPrefs& prefs)
 
   const simVis::Registry* registry = simVis::Registry::instance();
   if (prefs.icon().empty())
-    setModel(NULL, false);
+    setModel(nullptr, false);
   else if (!registry->isMemoryCheck())
   {
     // Find the fully qualified URI
@@ -301,7 +301,7 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   if (lastSetModelCallback_.valid())
   {
     lastSetModelCallback_->ignoreResult();
-    lastSetModelCallback_ = NULL;
+    lastSetModelCallback_ = nullptr;
   }
 
   isImageModel_ = isImage;
@@ -311,13 +311,13 @@ void PlatformModelNode::setModel(osg::Node* newModel, bool isImage)
   {
     offsetXform_->removeChild(model_);
     alphaVolumeGroup_->removeChild(model_);
-    model_ = NULL;
-    dynamicXform_->setSizingNode(NULL);
+    model_ = nullptr;
+    dynamicXform_->setSizingNode(nullptr);
   }
 
   // if the new properties say "no model", we're done
   model_ = newModel;
-  if (newModel != NULL)
+  if (newModel != nullptr)
   {
     // Set render order by setting render bin.  We set the OVERRIDE flag in case the model has renderbins set inside of it.
     // Note that osg::Depth settings are not changed here, but are instead dealt with inside updateImageDepth_() call below.
@@ -527,7 +527,7 @@ bool PlatformModelNode::updateScale_(const simData::PlatformPrefs& prefs)
 
 bool PlatformModelNode::updateScaleXyz_(const simData::PlatformPrefs& prefs)
 {
-  // By default scalexyz is NULL. It is used to override the scale preference which is defaulted to 1. When uninitialized, it should not override the scale pref.
+  // By default scalexyz is nullptr. It is used to override the scale preference which is defaulted to 1. When uninitialized, it should not override the scale pref.
   if (!prefs.has_scalexyz() || (lastPrefsValid_ &&
       !PB_FIELD_CHANGED(&lastPrefs_, &prefs, scalexyz)))
     return false;
@@ -650,7 +650,7 @@ void PlatformModelNode::updateRCS_(const simData::PlatformPrefs& prefs)
   {
     // remove it
     imageIconXform_->removeChild(rcs_.get());
-    rcs_ = NULL;
+    rcs_ = nullptr;
   }
 
   if (rcs_.valid())

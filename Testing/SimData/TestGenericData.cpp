@@ -97,10 +97,10 @@ int testDataLimiting()
 int testCurrentValues(simData::DataStore& ds, const std::string& tag, const std::string& value)
 {
   const simData::GenericDataSlice* gd = ds.genericDataSlice(0);
-  if (gd == NULL)
+  if (gd == nullptr)
     return 1;
   const simData::GenericData* current = gd->current();
-  if (current == NULL)
+  if (current == nullptr)
     return 1;
 
   bool foundTag = false;
@@ -124,10 +124,10 @@ int testCurrentValues(simData::DataStore& ds, const std::string& tag, const std:
 int testShouldBeEmpty(simData::DataStore& ds)
 {
   const simData::GenericDataSlice* gd = ds.genericDataSlice(0);
-  if (gd == NULL)
+  if (gd == nullptr)
     return 1;
   const simData::GenericData* current = gd->current();
-  if (current == NULL)
+  if (current == nullptr)
     return 1;
 
   return current->entry_size();
@@ -414,7 +414,7 @@ void test_5743()
     std::vector<simData::GenericData_Entry> entries;
     virtual void operator()(const simData::GenericData *update)
     {
-      if (update == NULL)
+      if (update == nullptr)
         return;
       for (int k = 0; k < update->entry_size(); ++k)
         entries.push_back(update->entry(k));

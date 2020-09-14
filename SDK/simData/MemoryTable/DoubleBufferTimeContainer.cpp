@@ -71,8 +71,8 @@ class DoubleBufferTimeContainer::FlushContainer : public DelayedFlushContainer
 public:
   /** Construct a new FlushContainer */
   FlushContainer(TimeIndexDeque& timesA, TimeIndexDeque& timesB)
-    : timesA_(NULL),
-      timesB_(NULL)
+    : timesA_(nullptr),
+      timesB_(nullptr)
   {
     // Optimize the case where vectors are empty
     if (!timesA.empty())
@@ -89,9 +89,9 @@ public:
   virtual ~FlushContainer()
   {
     delete timesA_;
-    timesA_ = NULL;
+    timesA_ = nullptr;
     delete timesB_;
-    timesB_ = NULL;
+    timesB_ = nullptr;
   }
 private:
   TimeIndexDeque* timesA_;
@@ -114,7 +114,7 @@ public:
   DoubleBufferIterator()
     : binIndex_(BIN_INVALID)
   {
-    ownerBins_[BIN_STALE] = ownerBins_[BIN_FRESH] = NULL;
+    ownerBins_[BIN_STALE] = ownerBins_[BIN_FRESH] = nullptr;
     // Order here doesn't really matter since the bins are invalid
     iter_[BIN_STALE] = &iterA_;
     iter_[BIN_FRESH] = &iterB_;
@@ -235,7 +235,7 @@ public:
     // Make a copy of iterators to prevent change
     TimeIndexDeque::iterator freshIter = freshIter_();
     TimeIndexDeque::iterator staleIter = staleIter_();
-    return previous_(freshIter, staleIter, NULL);
+    return previous_(freshIter, staleIter, nullptr);
   }
 
   /** Resets the iterator to the front of the data structure, before the first element */
@@ -317,7 +317,7 @@ private:
 
   bool isValid_() const
   {
-    return staleTimes_() != NULL && freshTimes_() != NULL &&
+    return staleTimes_() != nullptr && freshTimes_() != nullptr &&
       (binIndex_ == BIN_STALE || binIndex_ == BIN_FRESH);
   }
   size_t otherBin_() const
@@ -578,7 +578,7 @@ TimeContainer::Iterator DoubleBufferTimeContainer::findOrAddTime(double timeValu
 void DoubleBufferTimeContainer::erase(TimeContainer::Iterator iter, TimeContainer::EraseBehavior eraseBehavior)
 {
   DoubleBufferIterator* dbIter = dynamic_cast<DoubleBufferIterator*>(iter.impl());
-  if (dbIter != NULL)
+  if (dbIter != nullptr)
     dbIter->erase(eraseBehavior);
 }
 
@@ -607,7 +607,7 @@ DoubleBufferTimeContainer::TimeIndexDeque::iterator DoubleBufferTimeContainer::l
 {
   LessThan lessThan;
   TimeIndexDeque::iterator i = std::lower_bound(deq.begin(), deq.end(), timeValue, lessThan);
-  if (exactMatch != NULL)
+  if (exactMatch != nullptr)
     *exactMatch = ((i != deq.end()) && (i->first == timeValue));
   return i;
 }
@@ -640,7 +640,7 @@ DoubleBufferTimeContainer::TimeIndexDeque& DoubleBufferTimeContainer::staleTimes
 void DoubleBufferTimeContainer::swapFreshStaleData(DataTable* table, const std::vector<DataTable::TableObserverPtr>& observers)
 {
   // Before clearing out the stale bin, announce that all those times are being removed
-  if (table != NULL && !times_[BIN_STALE]->empty())
+  if (table != nullptr && !times_[BIN_STALE]->empty())
   {
     // Loop through each observer
     for (std::vector<DataTable::TableObserverPtr>::const_iterator oiter = observers.begin(); oiter != observers.end(); ++oiter)

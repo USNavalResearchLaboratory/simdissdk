@@ -26,6 +26,7 @@
 #include "osg/Notify"
 #include "osgDB/ReadFile"
 #include "osgUtil/CullVisitor"
+#include "osgEarth/EllipsoidIntersector"
 #include "osgEarth/Horizon"
 
 #include "simNotify/Notify.h"
@@ -36,6 +37,7 @@
 #include "simVis/EntityLabel.h"
 #include "simVis/LabelContentManager.h"
 #include "simVis/Locator.h"
+#include "simVis/LocatorNode.h"
 #include "simVis/Platform.h"
 #include "simVis/ProjectorManager.h"
 #include "simVis/Registry.h"
@@ -44,11 +46,11 @@
 #include "simVis/Utils.h"
 #include "simVis/Projector.h"
 
+namespace
+{
 static const double DEFAULT_PROJECTOR_FOV_IN_DEG = 45.0;
 static const float DEFAULT_ALPHA_VALUE = 0.1f;
 
-namespace
-{
   // draws the geometry of the projection frustum.
   // (NOTE: some of this code is borrowed from OSG's osgthirdpersonview example)
   void makeFrustum(const osg::Matrixd& proj, const osg::Matrixd& mv, osg::MatrixTransform* mt)
@@ -174,29 +176,37 @@ void ProjectorTextureImpl::setTexture(osg::Texture2D *texture)
 //-------------------------------------------------------------------
 
 ProjectorNode::ProjectorNode(const simData::ProjectorProperties& props, simVis::Locator* hostLocator, const simVis::EntityNode* host)
-  : EntityNode(simData::PROJECTOR, hostLocator),
-    lastProps_(props),
-    host_(host),
-    hasLastUpdate_(false),
-    hasLastPrefs_(false),
-    projectorTextureImpl_(new ProjectorTextureImpl())
+  : EntityNode(simData::PROJECTOR, new Locator()),
+  lastProps_(props),
+  host_(host),
+  hostLocator_(hostLocator),
+  hasLastUpdate_(false),
+  hasLastPrefs_(false),
+  projectorTextureImpl_(new ProjectorTextureImpl())
 {
   init_();
 }
 
 ProjectorNode::~ProjectorNode()
 {
-  getLocator()->removeCallback(locatorCallback_.get());
+  if (hostLocator_.valid())
+    hostLocator_.get()->removeCallback(locatorCallback_.get());
 }
 
 void ProjectorNode::init_()
 {
-  // listen for locator changes so we can update the matrices
-  locatorCallback_ = new simVis::SyncLocatorCallback<ProjectorNode>(this);
-  getLocator()->addCallback(locatorCallback_.get());
+  // create the locator node that will support tethering and host/position the label.
+  projectorLocatorNode_ = new LocatorNode(getLocator());
+  projectorLocatorNode_->setEntityToMonitor(this);
+  addChild(projectorLocatorNode_);
 
-  // Set this node to be active
-  setNodeMask(DISPLAY_MASK_PROJECTOR);
+  // projector is inactive until prefs and updates make it active
+  setNodeMask(DISPLAY_MASK_NONE);
+
+  // listen for host locator changes so we can update the matrices
+  locatorCallback_ = new simVis::SyncLocatorCallback<ProjectorNode>(this);
+  if (hostLocator_.valid())
+    hostLocator_.get()->addCallback(locatorCallback_.get());
 
   // Create matrix transform node that houses graphics frustum and set the node mask to off
   graphics_ = new osg::MatrixTransform();
@@ -225,14 +235,13 @@ void ProjectorNode::init_()
 
   projectorTextureImpl_->setTexture(texture_.get());
 
-  label_ = new EntityLabelNode(getLocator());
-  addChild(label_);
-  // labels are culled based on entity center point
+  label_ = new EntityLabelNode();
+  projectorLocatorNode_->addChild(label_);
+  // labels are positioned on ellipsoid, culled based on label center point
   osgEarth::HorizonCullCallback* callback = new osgEarth::HorizonCullCallback();
   callback->setCullByCenterPointOnly(true);
   // SIM-11395 - set default ellipsoid, when osgEarth supports it
   //callback->setHorizon(new osgEarth::Horizon(*getLocator()->getSRS()->getEllipsoid()));
-  callback->setProxyNode(this);
   label_->addCullCallback(callback);
 }
 
@@ -255,13 +264,14 @@ void ProjectorNode::updateLabel_(const simData::ProjectorPrefs& prefs)
     label += text;
   }
 
-  const float zOffset = 0.0f;
+  // projector label is typically set to intersection of projector with ellipsoid, so an offset is needed
+  const float zOffset = 1.0f;
   label_->update(prefs.commonprefs(), label, zOffset);
 }
 
 const simData::ProjectorUpdate* ProjectorNode::getLastUpdateFromDS() const
 {
-  return hasLastUpdate_ ? &lastUpdate_ : NULL;
+  return hasLastUpdate_ ? &lastUpdate_ : nullptr;
 }
 
 void ProjectorNode::addUniforms(osg::StateSet* stateSet) const
@@ -392,11 +402,11 @@ void ProjectorNode::updateOverrideColor_(const simData::ProjectorPrefs& prefs)
 
 bool ProjectorNode::readVideoFile_(const std::string& filename)
 {
-  osg::Node* result = NULL;
+  osg::Node* result = nullptr;
 
   // Make sure we have the clock which is needed for the video node.
   simCore::Clock* clock = simVis::Registry::instance()->getClock();
-  if (clock != NULL)
+  if (clock)
   {
     osg::ref_ptr<simVis::ClockOptions> options = new simVis::ClockOptions(clock);
     options->setPluginData("ProjectorTextureProvider", projectorTextureImpl_.get());
@@ -460,7 +470,7 @@ void ProjectorNode::loadRequestedFile_(const std::string& newFilename)
 void ProjectorNode::setImage(osg::Image* image)
 {
   // Reset video node if one is set.
-  imageProvider_ = NULL;
+  imageProvider_ = nullptr;
   texture_->setImage(image);
   simVis::fixTextureForGlCoreProfile(texture_.get());
 }
@@ -488,11 +498,19 @@ double ProjectorNode::getVFOV() const
   return DEFAULT_PROJECTOR_FOV_IN_DEG;
 }
 
-void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView)
+void ProjectorNode::getMatrices_(osg::Matrixd& projection, osg::Matrixd& locatorMat, osg::Matrixd& modelView) const
 {
   const double ar = static_cast<double>(texture_->getImage()->s()) / texture_->getImage()->t();
   projection.makePerspective(getVFOV(), ar, 1.0, 1e7);
-  getLocator()->getLocatorMatrix(locatorMat);
+  if (hostLocator_.valid())
+  {
+    hostLocator_.get()->getLocatorMatrix(locatorMat);
+  }
+  else
+  {
+    // it is believed that the host locator cannot go missing
+    assert(0);
+  }
   modelView.invert(locatorMat);
 }
 
@@ -507,16 +525,16 @@ void ProjectorNode::syncWithLocator()
   // which means the projector will point straight down by default (since the view vector
   // is -Z in view space). We want the projector to point along the entity vector, so
   // we create a view matrix that rotates the view to point along the +Y axis.
-  const osg::Matrix viewMat = osg::Matrix::rotate(-osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0));
+  const osg::Matrix& viewMat = osg::Matrix::rotate(-osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0));
 
   // flip the image if it's upside down
   const double flip = texture_->getImage()->getOrigin() == osg::Image::TOP_LEFT ? -1.0 : 1.0;
 
   // construct the model view matrix:
-  const osg::Matrix modelViewMat = modelMat * viewMat;
+  const osg::Matrix& modelViewMat = modelMat * viewMat;
 
   // the coordinate generator for our projected texture -
-  // during traversal, multiple the inverse view matrix by this
+  // during traversal, multiply the inverse view matrix by this
   // matrix to set a texture projection uniform that transform
   // verts from view space to texture space
   texGenMatrix_ =
@@ -531,12 +549,44 @@ void ProjectorNode::syncWithLocator()
   texProjPosUniform_->set(osg::Vec3f(eye));
   texProjDirUniform_->set(osg::Vec3f(cen-eye));
 
+  // determine the best available position for the projector
+  double eciRefTime = 0.;
+  double time = 0.;
+  simCore::Vec3 hostPos;
+  // obtain current time and eci ref time from host
+  if (hostLocator_.valid())
+  {
+    const Locator* loc = hostLocator_.get();
+    eciRefTime = loc->getEciRefTime();
+    time = loc->getTime();
+  }
+  // if ellipsoid intersection can be calculated, use that result as the projector position
+  osg::Vec3d ellipsoidIntersection;
+  if (calculator_->intersectLine(eye, cen, ellipsoidIntersection))
+  {
+    const simCore::Vec3& intersection = convertToSim(ellipsoidIntersection);
+    const simCore::Coordinate projPosition(simCore::COORD_SYS_ECEF, intersection);
+    getLocator()->setCoordinate(projPosition, time, eciRefTime);
+  }
+  else
+  {
+    // default to "Null Island" if ellipsoid intersection is not calculable; but use host position if it is available
+    simCore::Vec3 hostPosEcef(simCore::EARTH_RADIUS, 0., 0.);
+    if (hostLocator_.valid())
+      hostLocator_->getLocatorPosition(&hostPosEcef);
+    const simCore::Coordinate projPosition(simCore::COORD_SYS_ECEF, hostPosEcef);
+    getLocator()->setCoordinate(projPosition, time, eciRefTime);
+  }
+
   // update the frustum geometry
   makeFrustum(projectionMat, modelViewMat, graphics_);
 }
 
 bool ProjectorNode::isActive() const
 {
+  // Projector is "active" when it has datadraw, and a valid update,
+  // and can be active even if draw is off;
+  // that means: projector maintains valid internal state even if draw is off.
   return hasLastUpdate_ && hasLastPrefs_ && lastPrefs_.commonprefs().datadraw();
 }
 
@@ -581,7 +631,7 @@ bool ProjectorNode::updateFromDataStore(const simData::DataSliceBase* updateSlic
   if (updateSlice->hasChanged() || force ||hostChangedToActive || hostChangedToInactive)
   {
     const simData::ProjectorUpdate* current = updateSlice->current();
-    const bool projectorChangedToInactive = (current == NULL && hasLastUpdate_);
+    const bool projectorChangedToInactive = (!current && hasLastUpdate_);
 
     // do not apply update if host is not active
     if (current && (force || host_->isActive()))
@@ -633,6 +683,20 @@ double ProjectorNode::range() const
   return 0.0;
 }
 
+int ProjectorNode::getPosition(simCore::Vec3* out_position, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return projectorLocatorNode_->getPosition(out_position, coordsys);
+}
+
+int ProjectorNode::getPositionOrientation(simCore::Vec3* out_position, simCore::Vec3* out_orientation, simCore::CoordinateSystem coordsys) const
+{
+  if (!isActive())
+    return 1;
+  return projectorLocatorNode_->getPositionOrientation(out_position, out_orientation, coordsys);
+}
+
 void ProjectorNode::traverse(osg::NodeVisitor& nv)
 {
   EntityNode::traverse(nv);
@@ -642,6 +706,11 @@ unsigned int ProjectorNode::objectIndexTag() const
 {
   // Not supported for projectors
   return 0;
+}
+
+void ProjectorNode::setCalculator(std::shared_ptr<osgEarth::Util::EllipsoidIntersector> calculator)
+{
+  calculator_ = calculator;
 }
 
 void ProjectorNode::addProjectionToNode(osg::Node* node)
@@ -678,7 +747,8 @@ void ProjectorNode::addProjectionToNode(osg::Node* node)
 
 void ProjectorNode::removeProjectionFromNode(osg::Node* node)
 {
-  if (!node) return;
+  if (!node)
+    return;
 
   osg::StateSet* stateSet = node->getStateSet();
   if (stateSet)

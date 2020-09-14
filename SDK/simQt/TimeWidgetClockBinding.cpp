@@ -92,13 +92,13 @@ ReferenceYearCache::ReferenceYearCache(simData::DataStore* dataStore)
   : QObject(),
     refYear_(1970)
 {
-  if (dataStore != NULL)
+  if (dataStore != nullptr)
     refYear_ = dataStore->referenceYear();
 }
 
 void ReferenceYearCache::onScenarioPropertiesChange(simData::DataStore* source)
 {
-  if (source != NULL)
+  if (source != nullptr)
   {
     int newYear = source->referenceYear();
     if (refYear_ != newYear)
@@ -119,20 +119,20 @@ int ReferenceYearCache::referenceYear() const
 TimeWidgetClockBinding::TimeWidgetClockBinding(simQt::TimeWidget* parent)
  : QObject(parent),
    timeWidget_(parent),
-   clock_(NULL),
-   dataStore_(NULL),
+   clock_(nullptr),
+   dataStore_(nullptr),
    respectLiveModeEndTime_(true)
 {
-  assert(parent != NULL); // must pass in simQt::TimeWidget in constructor
+  assert(parent != nullptr); // must pass in simQt::TimeWidget in constructor
   timeObserver_.reset(new TimeObserver(this));
   modeObserver_.reset(new ModeObserver(this));
-  ReferenceYearCache* cache = new ReferenceYearCache(NULL);
+  ReferenceYearCache* cache = new ReferenceYearCache(nullptr);
   refYearCache_.reset(cache);
   connect(timeWidget_, SIGNAL(timeEdited(const simCore::TimeStamp&)),
     this, SLOT(setClockTime_(const simCore::TimeStamp&)));
   connect(cache, SIGNAL(referenceYearChanged(int)), this, SLOT(passRefYearToChildren_()));
-  bindClock(NULL);
-  bindDataStore(NULL);
+  bindClock(nullptr);
+  bindDataStore(nullptr);
 }
 
 TimeWidgetClockBinding::~TimeWidgetClockBinding()
@@ -163,7 +163,7 @@ void TimeWidgetClockBinding::bindClock(simCore::Clock* clock, bool bindCurrentTi
   // Set the initial state
   updateDisabledState_();
   updateWidgetBounds_(false);
-  if (clock_ != NULL)
+  if (clock_ != nullptr)
     updateWidgetTime_(clock_->currentTime());
 }
 
@@ -174,7 +174,7 @@ void TimeWidgetClockBinding::unbindClock()
     clock_->removeTimeCallback(timeObserver_);
     clock_->removeModeChangeCallback(modeObserver_);
   }
-  clock_ = NULL;
+  clock_ = nullptr;
 }
 
 void TimeWidgetClockBinding::bindDataStore(simData::DataStore* dataStore)
@@ -196,19 +196,19 @@ void TimeWidgetClockBinding::unbindDataStore()
   {
     dataStore_->removeScenarioListener(refYearCache_);
   }
-  dataStore_ = NULL;
+  dataStore_ = nullptr;
 }
 
 void TimeWidgetClockBinding::setClockTime_(const simCore::TimeStamp& clockTime)
 {
-  if (bindCurrentTime_ && clock_ != NULL && clock_->currentTime() != clockTime && clock_->isUserEditable())
+  if (bindCurrentTime_ && clock_ != nullptr && clock_->currentTime() != clockTime && clock_->isUserEditable())
     clock_->setTime(clockTime);
 }
 
 void TimeWidgetClockBinding::updateDisabledState_()
 {
   if (bindCurrentTime_)
-    timeWidget_->setEnabled(clock_ != NULL && clock_->isUserEditable());
+    timeWidget_->setEnabled(clock_ != nullptr && clock_->isUserEditable());
 }
 
 void TimeWidgetClockBinding::updateWidgetTime_(const simCore::TimeStamp &t)
@@ -224,8 +224,8 @@ void TimeWidgetClockBinding::updateWidgetBounds_(bool notifyTimeChange)
     return;
   ReferenceYearCache* cache = dynamic_cast<ReferenceYearCache*>(refYearCache_.get());
   // Programming error or dynamic_cast<> RTTI failure can cause assert
-  assert(cache != NULL);
-  if (cache != NULL)
+  assert(cache != nullptr);
+  if (cache != nullptr)
   {
     // Pull out the cache value, but fall back to a valid value if cache isn't right due to no DataStore
     int refYear = cache->referenceYear();

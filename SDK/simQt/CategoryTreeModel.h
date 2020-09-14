@@ -112,7 +112,7 @@ class SDKQT_EXPORT CategoryTreeModel : public QAbstractItemModel
 {
   Q_OBJECT;
 public:
-  explicit CategoryTreeModel(QObject* parent = NULL);
+  explicit CategoryTreeModel(QObject* parent = nullptr);
   virtual ~CategoryTreeModel();
 
   /** Changes the data store, updating what categories and values are shown. */
@@ -222,7 +222,7 @@ class SDKQT_EXPORT CategoryTreeItemDelegate : public QStyledItemDelegate
 {
   Q_OBJECT;
 public:
-  explicit CategoryTreeItemDelegate(QObject* parent = NULL);
+  explicit CategoryTreeItemDelegate(QObject* parent = nullptr);
   virtual ~CategoryTreeItemDelegate();
 
   /** Overrides from QStyledItemDelegate */

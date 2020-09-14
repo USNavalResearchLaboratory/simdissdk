@@ -131,7 +131,7 @@ AntennaPatternType antennaPatternType(const std::string& antPatStr)
 AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
 {
   if (filename.empty())
-    return NULL;
+    return nullptr;
 
   // algorithm keywords are all uppercase
   const std::string& algorithm = upperCase(filename);
@@ -154,7 +154,7 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (antTable->readPat(filename) == 0)
       return antTable;
     delete antTable;
-    return NULL;
+    return nullptr;
   }
   if (extension == ANTENNA_STRING_EXTENSION_RELATIVE)
   {
@@ -162,7 +162,7 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (antTable->readPat(filename) == 0)
       return antTable;
     delete antTable;
-    return NULL;
+    return nullptr;
   }
   if (extension == ANTENNA_STRING_EXTENSION_BILINEAR)
   {
@@ -170,7 +170,7 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (bilinear->readPat(filename, (freqMHz*1e6)) == 0)
       return bilinear;
     delete bilinear;
-    return NULL;
+    return nullptr;
   }
   if (extension == ANTENNA_STRING_EXTENSION_CRUISE)
   {
@@ -178,7 +178,7 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (antTable->readPat(filename) == 0)
       return antTable;
     delete antTable;
-    return NULL;
+    return nullptr;
   }
   if (extension == ANTENNA_STRING_EXTENSION_MONOPULSE)
   {
@@ -186,7 +186,7 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (monopulse->readPat(filename, (freqMHz*1e6)) == 0)
       return monopulse;
     delete monopulse;
-    return NULL;
+    return nullptr;
   }
   if (extension == ANTENNA_STRING_EXTENSION_NSMA)
   {
@@ -194,7 +194,7 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (antTable->readPat(filename) == 0)
       return antTable;
     delete antTable;
-    return NULL;
+    return nullptr;
   }
   if (extension == ANTENNA_STRING_EXTENSION_EZNEC)
   {
@@ -202,7 +202,7 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (antTable->readPat(filename) == 0)
       return antTable;
     delete antTable;
-    return NULL;
+    return nullptr;
   }
   if (extension == ANTENNA_STRING_EXTENSION_XFDTD)
   {
@@ -210,9 +210,9 @@ AntennaPattern* loadPatternFile(const std::string& filename, float freqMHz)
     if (antTable->readPat(filename) == 0)
       return antTable;
     delete antTable;
-    return NULL;
+    return nullptr;
   }
-  return NULL;
+  return nullptr;
   }
 
 // ----------------------------------------------------------------------------
@@ -1209,9 +1209,9 @@ AntennaPatternCRUISE::AntennaPatternCRUISE()
   elevMin_(0),
   azimStep_(0),
   elevStep_(0),
-  freqData_(NULL),
-  azimData_(NULL),
-  elevData_(NULL)
+  freqData_(nullptr),
+  azimData_(nullptr),
+  elevData_(nullptr)
 {}
 
 void AntennaPatternCRUISE::reset_()
@@ -1238,9 +1238,9 @@ void AntennaPatternCRUISE::reset_()
   elevMin_= 0;
   azimStep_= 0;
   elevStep_= 0;
-  freqData_ = NULL;
-  azimData_ = NULL;
-  elevData_ = NULL;
+  freqData_ = nullptr;
+  azimData_ = nullptr;
+  elevData_ = nullptr;
   minGain_ = -SMALL_DB_VAL;
   maxGain_ = SMALL_DB_VAL;
 }

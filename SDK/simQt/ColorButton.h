@@ -42,7 +42,7 @@ class SDKQT_EXPORT ColorButton : public QPushButton
 
 public:
   /// Constructor
-  ColorButton(QWidget* parent = NULL);
+  ColorButton(QWidget* parent = nullptr);
   virtual ~ColorButton();
 
   /** returns the current color selection */
@@ -68,7 +68,7 @@ public slots:
 
 signals:
   /** Emitted when double clicked */
-  void doubleClicked(QMouseEvent* evt=NULL);
+  void doubleClicked(QMouseEvent* evt=nullptr);
 
 protected:
   /** Override the paint event to draw the gradient blending alpha if necessary */

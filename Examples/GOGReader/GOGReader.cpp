@@ -27,6 +27,7 @@
  * Demonstrates the loading and display of SIMDIS .gog format vector overlay data.
  */
 
+#include <vector>
 #include "osgEarth/Controls"
 #include "osgEarth/LabelNode"
 #include "osgEarth/MouseCoordsTool"
@@ -85,7 +86,7 @@ public:
 
   // latitude in degrees
   double lat() const { return lastLat_; }
-  // logintude in degrees
+  // longitude in degrees
   double lon() const { return lastLon_; }
   // elevation in meters
   double elev() const { return lastElev_; }
@@ -128,7 +129,7 @@ public:
   {
     centeredGogIndex_.init(0);
     mouseDispatcher_.reset(new simUtil::MouseDispatcher);
-    mouseDispatcher_->setViewManager(NULL);
+    mouseDispatcher_->setViewManager(nullptr);
     latLonElevListener_.reset(new LatLonElevListener());
     setUpMouseManip_(viewer_.get());
     updateStatusAndLabel_();
@@ -201,9 +202,9 @@ private:
       simVis::Viewpoint eyePos = focusedView->getViewpoint();
 
       // update the eye position's focal point
-      focusedView->tetherCamera(NULL);
+      focusedView->tetherCamera(nullptr);
       eyePos.focalPoint() = osgEarth::GeoPoint(osgEarth::SpatialReference::create("wgs84"), position);
-      eyePos.setNode(NULL);
+      eyePos.setNode(nullptr);
 
       focusedView->setViewpoint(eyePos);
       updateStatusAndLabel_();
@@ -321,7 +322,7 @@ private:
 
   void setUpMouseManip_(simVis::Viewer* viewer)
   {
-    if (viewer == NULL || viewer->getSceneManager() == NULL || !mouseDispatcher_)
+    if (viewer == nullptr || viewer->getSceneManager() == nullptr || !mouseDispatcher_)
       return;
     mouseManip_.reset(new simUtil::MousePositionManipulator(viewer->getSceneManager()->getMapNode(), viewer->getSceneManager()->getOrCreateAttachPoint("Map Callbacks")));
     mouseManip_->setTerrainResolution(0.0001);
@@ -411,6 +412,31 @@ simData::ObjectId addPlatform(simData::DataStore &dataStore, const std::string& 
   return platformId;
 }
 
+/** Process changes on the opacity slider. */
+class OpacitySliderCallback : public ui::ControlEventHandler
+{
+public:
+  void setLabel(ui::LabelControl* label)
+  {
+    label_ = label;
+  }
+
+  virtual void onValueChanged(ui::Control* control, float value) override
+  {
+    // Write the percentage to the label
+    osg::ref_ptr<ui::LabelControl> label;
+    if (label_.lock(label))
+      label->setText(std::to_string(static_cast<int>((value * 100) + 0.5f)) + "%");
+
+    // Set the override color on all nodes based on the provided opacity
+    for (const auto& overlay : s_overlayNodes)
+      overlay->setOpacity(value);
+  }
+
+private:
+  osg::observer_ptr<ui::LabelControl> label_;
+};
+
 int main(int argc, char** argv)
 {
   simCore::checkVersionThrow();
@@ -440,16 +466,24 @@ int main(int argc, char** argv)
   bool showElevation = ap.read("--showElevation");
   bool attach = ap.read("--attach");
 
+  // parse the remaining args
+  std::vector<std::string> gogFiles;
+  std::string iconFile = EXAMPLE_IMAGE_ICON;
+  for (int i = 1; i < argc; ++i)
+  {
+    std::string arg = argv[i];
+    if (arg == "--iconFile" && argc > i)
+      iconFile = argv[++i];
+    else
+      gogFiles.push_back(arg);
+  }
+
   osg::ref_ptr<osg::Image> pin;
   if (mark)
     pin = URI("http://www.osgearth.org/chrome/site/pushpin_yellow.png").getImage();
 
   GeoPoint go;
-
-  std::string iconFile = EXAMPLE_IMAGE_ICON;
-
-  /// data source which will provide positions for the platform
-  /// based on the simulation time.
+  // data source that provides positions for the platform based on the simulation time
   simData::MemoryDataStore dataStore;
   scene->getScenario()->bind(&dataStore);
 
@@ -460,15 +494,8 @@ int main(int argc, char** argv)
   osg::Group* group = new osg::Group();
 
   // add the gog file vector layers.
-  for (int i = 1; i < argc; ++i)
+  for (const std::string& gogFile : gogFiles)
   {
-    std::string arg = argv[i];
-    if (arg == "--iconFile" && argc > i)
-    {
-      iconFile = argv[++i];
-      continue;
-    }
-
     simVis::GOG::Parser::OverlayNodeVector gogs;
     std::vector<simVis::GOG::GogFollowData> followData;
     simVis::GOG::Parser parser(scene->getMapNode());
@@ -476,11 +503,11 @@ int main(int argc, char** argv)
     // sets a default reference location for relative GOGs:
     parser.setReferenceLocation(simVis::GOG::BSTUR);
 
-    std::ifstream is(arg.c_str());
+    std::ifstream is(gogFile.c_str());
     if (!is.is_open())
     {
-      std::string fileName(argv[i]);
-      SIM_ERROR <<"Could not open GOG file " << fileName << "\n";
+      std::string fileName(gogFile);
+      SIM_ERROR <<"Could not open GOG file " << gogFile << "\n";
       return 1;
     }
 
@@ -545,7 +572,7 @@ int main(int argc, char** argv)
     }
     else
     {
-      SIM_WARN << "Unable to load GOG data from \"" << argv[i] << "\"" << std::endl;
+      SIM_WARN << "Unable to load GOG data from \"" << gogFile << "\"" << std::endl;
     }
   }
 
@@ -580,6 +607,20 @@ int main(int argc, char** argv)
   vbox->addControl(new ui::LabelControl(s_help, 14, simVis::Color::Silver));
   ui::LabelControl* statusLabel = new ui::LabelControl("STATUS", 14, simVis::Color::Silver);
   vbox->addControl(statusLabel);
+
+  // Add a section to control the opacity
+  vbox->addControl(new ui::LabelControl("Opacity:", 14));
+  OpacitySliderCallback* sliderCallback = new OpacitySliderCallback;
+  ui::HSliderControl* opacitySlider = new ui::HSliderControl(0.f, 1.f, 1.f, sliderCallback);
+  opacitySlider->setHorizFill(false);
+  opacitySlider->setWidth(250.f);
+  ui::LabelControl* opacityPercent = new ui::LabelControl("100%", 14);
+  sliderCallback->setLabel(opacityPercent);
+  ui::HBox* hbox = new ui::HBox();
+  hbox->addControl(opacitySlider);
+  hbox->addControl(opacityPercent);
+  vbox->addControl(hbox);
+
   mainView->addOverlayControl(vbox);
 
   // Install a handler to respond to the demo keys in this sample.
@@ -589,9 +630,8 @@ int main(int argc, char** argv)
       statusLabel,
       dataStore,
       showElevation,
-      attach ? platform.get() : NULL);
+      attach ? platform.get() : nullptr);
 
   mainView->getCamera()->addEventCallback(mouseHandler);
   viewer->run();
 }
-

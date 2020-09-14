@@ -23,6 +23,8 @@
 #ifndef SIMQT_INCREMENTALCOMPILESETTINGS_H
 #define SIMQT_INCREMENTALCOMPILESETTINGS_H
 
+#ifdef USE_DEPRECATED_SIMDISSDK_API
+
 #include <QObject>
 #include "osg/ref_ptr"
 #include "osg/observer_ptr"
@@ -36,12 +38,23 @@ class Settings;
 class BoundBooleanSetting;
 class BoundIntegerSetting;
 
-/** Manages settings for incremental compilation in OpenGL using an osgViewer::ViewerBase */
+/**
+ * @deprecated
+ *
+ * Manages settings for incremental compilation in OpenGL using an osgViewer::ViewerBase.
+ *
+ * This class is deprecated because incremental compilation in OpenSceneGraph 3.6.5+ causes
+ * intermittent problems, especially with text displays.  Incremental Compilation (ICO) has
+ * been tracked to cause flickering red squares with incrementally compiled text objects,
+ * including osgEarth MGRS/UTM/GARS grids.  It has also been tracked to an intermittent
+ * issue where textures are reported as immutable, causing runtime GL errors and possibly
+ * display anomalies.  As a result of the instability of ICO, this class is deprecated.
+ */
 class SDKQT_EXPORT IncrementalCompileSettings : public QObject
 {
   Q_OBJECT;
 public:
-  IncrementalCompileSettings(simQt::Settings& settings, osgViewer::ViewerBase* viewer, QObject* parent=NULL);
+  IncrementalCompileSettings(simQt::Settings& settings, osgViewer::ViewerBase* viewer, QObject* parent=nullptr);
   virtual ~IncrementalCompileSettings();
 
 private slots:
@@ -73,5 +86,7 @@ private:
 };
 
 }
+
+#endif /* USE_DEPRECATED_SIMDISSDK_API */
 
 #endif /* SIMQT_INCREMENTALCOMPILESETTINGS_H */

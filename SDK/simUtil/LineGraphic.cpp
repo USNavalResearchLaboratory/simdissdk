@@ -100,7 +100,7 @@ LineGraphic::~LineGraphic()
 void LineGraphic::set(const simUtil::Position* origin, const simUtil::Position* destination, const std::string& labelString)
 {
   // Update the positions
-  if (origin != NULL && destination != NULL && origin->isValid() && destination->isValid())
+  if (origin != nullptr && destination != nullptr && origin->isValid() && destination->isValid())
   {
     set(origin->lla(), destination->lla(), labelString);
   }
@@ -275,71 +275,6 @@ bool StaticPosition::operator!=(const Position& other) const
 
 ///////////////////////////////////////////////////////////////////////
 
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-
-/** Position based off a platform's location */
-PlatformPosition::PlatformPosition(const simData::DataStore& dataStore, simData::ObjectId platformId)
-  : dataStore_(dataStore),
-  platformId_(platformId)
-{
-}
-
-PlatformPosition::~PlatformPosition()
-{
-}
-
-bool PlatformPosition::isValid() const
-{
-  const simData::PlatformUpdateSlice* slice = dataStore_.platformUpdateSlice(platformId_);
-  if (slice == NULL)
-    return false;
-  return slice->current() != NULL;
-}
-
-const simCore::Vec3& PlatformPosition::lla() const
-{
-  pullFromDataStore_(lla_);
-  return lla_;
-}
-
-simData::ObjectId PlatformPosition::platformId() const
-{
-  return platformId_;
-}
-
-int PlatformPosition::pullFromDataStore_(simCore::Vec3& outLla) const
-{
-  // Get the current item out of the slice
-  const simData::PlatformUpdateSlice* slice = dataStore_.platformUpdateSlice(platformId_);
-  if (slice == NULL)
-    return 1;
-  const simData::PlatformUpdate* current = slice->current();
-  if (current == NULL)
-    return 1;
-  // Pull out and convert position
-  simCore::Vec3 ecefV3;
-  current->position(ecefV3);
-  simCore::CoordinateConverter::convertEcefToGeodeticPos(ecefV3, outLla);
-  return 0;
-}
-
-bool PlatformPosition::operator==(const Position& other) const
-{
-  const PlatformPosition* pp = dynamic_cast<const PlatformPosition*>(&other);
-  return pp != NULL &&
-    (pp->platformId_ == this->platformId_) &&
-    (&pp->dataStore_ == &this->dataStore_);
-}
-
-bool PlatformPosition::operator!=(const Position& other) const
-{
-  return !operator==(other);
-}
-
-#endif /* USE_DEPRECATED_SIMDISSDK_API */
-
-///////////////////////////////////////////////////////////////////////
-
 /** Position based off a node's locator LLA coordinate location */
 EntityNodePosition::EntityNodePosition(simVis::EntityNode* node)
   : node_(node)
@@ -352,7 +287,7 @@ EntityNodePosition::~EntityNodePosition()
 
 bool EntityNodePosition::isValid() const
 {
-  if (node_ == NULL)
+  if (node_ == nullptr)
     return false;
 
   return node_->getNodeMask() != 0;
@@ -360,7 +295,7 @@ bool EntityNodePosition::isValid() const
 
 const simCore::Vec3& EntityNodePosition::lla() const
 {
-  if (node_ != NULL)
+  if (node_ != nullptr)
     node_->getPosition(&lla_, simCore::COORD_SYS_LLA);
 
   return lla_;
@@ -368,7 +303,7 @@ const simCore::Vec3& EntityNodePosition::lla() const
 
 simData::ObjectId EntityNodePosition::id() const
 {
-  if (node_ == NULL)
+  if (node_ == nullptr)
     return 0;
 
   return node_->getId();
@@ -376,7 +311,7 @@ simData::ObjectId EntityNodePosition::id() const
 
 std::string EntityNodePosition::entityName() const
 {
-  if (node_ == NULL)
+  if (node_ == nullptr)
     return "";
 
   return node_->getEntityName(simVis::EntityNode::DISPLAY_NAME);
@@ -385,7 +320,7 @@ std::string EntityNodePosition::entityName() const
 bool EntityNodePosition::operator==(const Position& other) const
 {
   const EntityNodePosition* pp = dynamic_cast<const EntityNodePosition*>(&other);
-  return (pp != NULL && (pp->id() == this->id()));
+  return (pp != nullptr && (pp->id() == this->id()));
 }
 
 bool EntityNodePosition::operator!=(const Position& other) const

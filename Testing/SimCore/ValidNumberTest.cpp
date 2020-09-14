@@ -34,7 +34,7 @@ namespace
 
 /** Returns true when testString conversion to type T worked as expectedValid dictates. */
 template <typename T>
-bool validateValueNoCompare(const std::string& testString, bool expectedValid, T* convertedValue=NULL, bool allowPlusSign=true)
+bool validateValueNoCompare(const std::string& testString, bool expectedValid, T* convertedValue=nullptr, bool allowPlusSign=true)
 {
   bool rv = true; // Return value defaults to good
 
@@ -54,7 +54,7 @@ bool validateValueNoCompare(const std::string& testString, bool expectedValid, T
     std::cerr << "isValidNumber<" << typeid(T).name() << "> failed with input: " << testString << std::endl;
     rv = false;
   }
-  if (convertedValue != NULL)
+  if (convertedValue != nullptr)
     *convertedValue = val;
   return rv;
 }

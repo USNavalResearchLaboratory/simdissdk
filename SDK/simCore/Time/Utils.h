@@ -273,9 +273,7 @@ namespace simCore
    * @pre refYear and secondsSinceRefYear valid params
    * @deprecated
    */
-#ifdef USE_DEPRECATED_SIMDISSDK_API
   SDK_DEPRECATE(SDKCORE_EXPORT void normalizeTime(int &refYear, double &secondsSinceRefYear), "Method will be removed in a future SDK release");
-#endif
   /**
    * Algorithm to get a new time step based on a step up or step down from a given step value
    * Calculates the proper step to use when stepping up or down from a time step

@@ -49,7 +49,7 @@ public:
   static const int VIEW_ROLE = Qt::UserRole;
 
   /** Constructor */
-  explicit ViewManagerDataModel(QObject* parent=NULL);
+  explicit ViewManagerDataModel(QObject* parent=nullptr);
   virtual ~ViewManagerDataModel();
 
   /// Binds to a given view manager

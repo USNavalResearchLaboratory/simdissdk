@@ -59,16 +59,8 @@ class SDKQT_EXPORT CenterEntity : public QObject
 
 public:
   /** Constructor for a generic parent */
-  CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent=NULL);
+  CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, QObject* parent=nullptr);
   virtual ~CenterEntity();
-
-// use BindCenterEntityToEntityTreeComposite instead
-#ifdef USE_DEPRECATED_SIMDISSDK_API
-  /** Constructor for EntityTreeComposite parent with an automatic call to bindTo */
-  SDK_DEPRECATE(CenterEntity(simVis::FocusManager& focusManager, simVis::ScenarioManager& scenarioManager, EntityTreeComposite& tree), "Method will be removed in a future SDK release");
-  /** Auto configures the double click to center on platform and turns off the tree expansion on double click */
-  SDK_DEPRECATE(void bindTo(EntityTreeComposite& tree), "Method will be removed in a future SDK release");
-#endif
 
   /**
    * Sets the centroid manager for centering views
@@ -79,13 +71,17 @@ public:
   /**
    * Returns the view center-able node for the given id
    * @param id The entity to get a view center-able node
-   * @return A node that a view can be centered on; returns NULL on error.
+   * @return A node that a view can be centered on; returns nullptr on error.
    */
   simVis::EntityNode* getViewCenterableNode(uint64_t id) const;
 
 public slots:
-  /** Center the current view port on the given entity Unique ID */
-  void centerOnEntity(uint64_t id);
+  /**
+   * Center the current view port on the given entity Unique ID
+   * @param id The entity to center on
+   * @param force Center on an invalid entity with the expectation it will soon become valid
+   */
+  void centerOnEntity(uint64_t id, bool force = false);
   /** Center the current view port on the given list of entity unique IDs */
   void centerOnSelection(const QList<uint64_t>& ids);
 
@@ -104,7 +100,7 @@ class SDKQT_EXPORT BindCenterEntityToEntityTreeComposite : public QObject
   Q_OBJECT;
 
 public:
-  BindCenterEntityToEntityTreeComposite(CenterEntity& centerEntity, EntityTreeComposite& tree, simData::DataStore& dataStore, QObject* parent = NULL);
+  BindCenterEntityToEntityTreeComposite(CenterEntity& centerEntity, EntityTreeComposite& tree, simData::DataStore& dataStore, QObject* parent = nullptr);
   virtual ~BindCenterEntityToEntityTreeComposite();
 
   /**

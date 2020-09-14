@@ -534,7 +534,7 @@ private: // data
 //----------------------------------------------------------------------------
 MemoryCategoryDataSlice::MemoryCategoryDataSlice(double timeStamp)
   : lastUpdateTime_(timeStamp),
-  categoryNameManager_(NULL),
+  categoryNameManager_(nullptr),
   sliceSize_(0)
 {
 }

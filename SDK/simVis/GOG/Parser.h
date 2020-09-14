@@ -78,7 +78,7 @@ namespace simVis { namespace GOG
      *  that if the map node changes, the Parser will not pick up on the change and could cause problems
      *  in parsed items.  So it is recommended that the GOG parser be instantiated on demand.
      */
-    Parser(osgEarth::MapNode* mapNode = NULL);
+    Parser(osgEarth::MapNode* mapNode = nullptr);
 
     /**
      * Constructs a GOG parser.
@@ -149,8 +149,8 @@ namespace simVis { namespace GOG
       const GOGNodeType&          nodeType,
       OverlayNodeVector&          output,
       std::vector<GogFollowData>& followData,
-      std::vector<ParsedShape>*   parsedShapes = NULL,
-      std::vector<GogMetaData>*   metaData = NULL) const;
+      std::vector<ParsedShape>*   parsedShapes = nullptr,
+      std::vector<GogMetaData>*   metaData = nullptr) const;
 
     /**
     * Converts the GOG file shape keyword to a GogShape. Assumes keyword is all lower, does exact match
@@ -181,8 +181,8 @@ namespace simVis { namespace GOG
       const GOGNodeType&          nodeType,
       OverlayNodeVector&          output,
       std::vector<GogFollowData>& followData,
-      std::vector<ParsedShape>*   parsedShapes = NULL,
-      std::vector<GogMetaData>*   metaData = NULL) const;
+      std::vector<ParsedShape>*   parsedShapes = nullptr,
+      std::vector<GogMetaData>*   metaData = nullptr) const;
 
     /**
     * Add or overwrite a color key with a new color

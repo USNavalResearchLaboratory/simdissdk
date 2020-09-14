@@ -44,9 +44,9 @@ class SDKUTIL_EXPORT RecenterEyeOnArea
 public:
   /**
    * Initialize, optionally with a view to use when recentering.
-   * @param view Inset view to use when updating viewpoints.  If NULL, then setView() must be called before recentering.
+   * @param view Inset view to use when updating viewpoints.  If nullptr, then setView() must be called before recentering.
    */
-  RecenterEyeOnArea(simVis::View* view=NULL);
+  RecenterEyeOnArea(simVis::View* view=nullptr);
   /**
    * Initialize using the current focus of a FocusManager for recentering.
    * @param focusManager Focus manager whose currently focused inset view will be used for updating viewpoints.

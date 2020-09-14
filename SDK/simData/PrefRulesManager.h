@@ -48,7 +48,7 @@ public:
   /**
   * Apply this rule to the specified entity, if all conditions are met.
   * (Gathers all the required data from the DataStore in this call, which can be expensive.)
-  * @param[in] entityId id of the entity
+  * @param[in] entityId id of the entity.  0 is not a valid value and will not match any entities.
   * @param[in] ds handle to the data store
   * @return 0 on successful application, non-zero on error
   */
@@ -66,7 +66,8 @@ public:
   virtual ~PrefRulesManager() {}
 
   /**
-  * Load the rules in the specified pref rule file, adding them to the currently loaded rules
+  * Load the rules in the specified pref rule file, adding them to the currently loaded rules.  Rules are always
+  * force applied when added.
   * @param ruleFile the pref rule file to load
   * @return 0 on success, non-zero on error
   */
@@ -76,7 +77,7 @@ public:
   * Enforce the pref value specified by tagStack and entityType on the specified entity. This means that the pref value will
   * not be updated by normal processing. Only components with authority to override the pref value enforcement will do so.
   * This is useful for cases where a pref update from one source should be flagged to take priority over updates from other sources.
-  * @param id  the data store entity id
+  * @param id  the data store entity id. 0 is not a valid value and will not match any entities.
   * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
   * @param enforce If true, then turn on enforcing, preventing rules from changing the value.  If false, disables the enforcement,
   *   allowing preference rules to work with the value again.
@@ -86,14 +87,14 @@ public:
   /**
    * Returns true if the preference value is set to enforcing.  Enforced prefs cannot be changed by Preference Rules.  For
    * more details, see enforcePrefValue().
-   * @param id  the data store entity id
+   * @param id  the data store entity id. 0 is not a valid value and will not match any entities.
    * @param tagStack  the protobuf message field numbers that identify the pref (fully qualified from PlatformPrefs, BeamPrefs, etc.)
    * @return True if the value is marked for enforcement, false otherwise
    */
   virtual bool isPrefValueEnforced(simData::ObjectId id, const std::deque<int>& tagStack) const = 0;
 
   /**
-  * Load the rules in the specified pref rule files.
+  * Load the rules in the specified pref rule files.  Rules are always force applied when added.
   * Note that the last file in the vector is the one saved to the scenario as the current pref rule file.
   * @param ruleFiles list of the pref rule files to load
   * @param removeOldRules  if true, all rules will be removed and replaced with those in the ruleFiles param
@@ -122,7 +123,7 @@ public:
   virtual int serializeRules(std::ostream& os) = 0;
 
   /**
-   * Deserializes the rules passed in the istream
+   * Deserializes the rules passed in the istream.  Rules are always force applied when added.
    * @param[in] rules  rules to deserialize
    * @return 0 on total success, non-zero if there were any problems loading rules. Note that non-zero return can still indicate partial success
    */
@@ -131,6 +132,7 @@ public:
   /**
    * Add a preference rule.  PrefRuleManager will deserialize the string into a pref rule, or multiple
    * rules if the pref rule is compound.  The latest version of the preference rules format is presumed.
+   * Rules are always force applied when added.
    * @param[out] rules that resulted from the serialized string (rule could be compound)
    * @param[in] serializedRule  a string representing a serialized pref rule
    * @param[in] fileFormatVersion  an int representing the pref .rul file format version the pref rule is formatted in
@@ -162,7 +164,7 @@ public:
 
   /**
    * Applies all the rules to the specified entity
-   * @param[in] id  the specified entity
+   * @param[in] id  the specified entity. 0 is not a valid value and will not match any entities.
    * @return 0 on success, non-zero on error
    */
   virtual int applyRules(uint64_t id) = 0;

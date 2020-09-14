@@ -30,17 +30,18 @@
 #include "simVis/RFProp/BearingProfileMap.h"
 #include "simVis/RFProp/ColorProvider.h"
 #include "simVis/RFProp/CompositeProfileProvider.h"
+#include "simVis/RFProp/ProfileContext.h"
 #include "simVis/RFProp/ProfileManager.h"
 
 namespace simRF {
 
-ProfileManager::ProfileManager()
+ProfileManager::ProfileManager(std::shared_ptr<simCore::DatumConvert> datumConvert)
  : simVis::LocatorNode(new simVis::Locator()),
   history_(15.0 * simCore::DEG2RAD),
-  bearing_(0),
+  bearing_(0.),
   alpha_(1.f),
   displayOn_(false),
-  profileContext_(std::make_shared<Profile::ProfileContext>())
+  profileContext_(std::make_shared<ProfileContext>(datumConvert))
 {
   // Create initial map; ownership moves to timeBearingProfiles_
   currentProfileMap_ = new BearingProfileMap;
@@ -100,7 +101,7 @@ void ProfileManager::initShaders_()
 {
   osgEarth::VirtualProgram* vp = osgEarth::VirtualProgram::getOrCreate(getOrCreateStateSet());
   simVis::Shaders package;
-  if (profileContext_->mode_ == Profile::DRAWMODE_3D_TEXTURE)
+  if (profileContext_->mode == Profile::DRAWMODE_3D_TEXTURE)
   {
     package.load(vp, package.rfPropTextureBasedVertex());
     package.load(vp, package.rfPropTextureBasedFragment());
@@ -154,7 +155,7 @@ void ProfileManager::setDisplay(bool onOff)
   for (const auto& iter : *currentProfileMap_)
   {
     // send THRESHOLDTYPE_NONE to turn profiles off
-    iter.second->setThresholdType(displayOn_ ? profileContext_->type_ : ProfileDataProvider::THRESHOLDTYPE_NONE);
+    iter.second->setThresholdType(displayOn_ ? profileContext_->type : ProfileDataProvider::THRESHOLDTYPE_NONE);
   }
 
   updateVisibility_();
@@ -196,28 +197,28 @@ void ProfileManager::setHistory(double history)
 
 bool ProfileManager::getAGL() const
 {
-  return profileContext_->agl_;
+  return profileContext_->agl;
 }
 
 void ProfileManager::setAGL(bool agl)
 {
-  if (profileContext_->agl_ != agl)
+  if (profileContext_->agl != agl)
   {
-    profileContext_->agl_ = agl;
+    profileContext_->agl = agl;
     dirty_();
   }
 }
 
 Profile::DrawMode ProfileManager::getMode() const
 {
-  return profileContext_->mode_;
+  return profileContext_->mode;
 }
 
 void ProfileManager::setMode(Profile::DrawMode mode)
 {
-  if (profileContext_->mode_ != mode)
+  if (profileContext_->mode != mode)
   {
-    profileContext_->mode_ = mode;
+    profileContext_->mode = mode;
     initShaders_();
     dirty_();
   }
@@ -225,31 +226,31 @@ void ProfileManager::setMode(Profile::DrawMode mode)
 
 ProfileDataProvider::ThresholdType ProfileManager::getThresholdType() const
 {
-  return profileContext_->type_;
+  return profileContext_->type;
 }
 
 void ProfileManager::setThresholdType(ProfileDataProvider::ThresholdType type)
 {
-  if (profileContext_->type_ != type)
+  if (profileContext_->type != type)
   {
-    profileContext_->type_ = type;
+    profileContext_->type = type;
     for (const auto& iter : *currentProfileMap_)
     {
-      iter.second->setThresholdType(profileContext_->type_);
+      iter.second->setThresholdType(profileContext_->type);
     }
   }
 }
 
 unsigned int ProfileManager::getDisplayThickness() const
 {
-  return profileContext_->displayThickness_;
+  return profileContext_->displayThickness;
 }
 
 void ProfileManager::setDisplayThickness(unsigned int displayThickness)
 {
-  if (profileContext_->displayThickness_ != displayThickness)
+  if (profileContext_->displayThickness != displayThickness)
   {
-    profileContext_->displayThickness_ = displayThickness;
+    profileContext_->displayThickness = displayThickness;
     dirty_();
   }
 }
@@ -270,69 +271,65 @@ void ProfileManager::setBearing(double bearing)
 
 double ProfileManager::getHeight() const
 {
-  return profileContext_->heightM_;
+  return profileContext_->heightM;
 }
 
 void ProfileManager::setHeight(double height)
 {
-  if (profileContext_->heightM_ != height)
+  if (profileContext_->heightM != height)
   {
-    profileContext_->heightM_ = height;
+    profileContext_->heightM = height;
     dirty_();
   }
 }
 
 double ProfileManager::getRefLat() const
 {
-  return profileContext_->refLLA_.lat();
+  return profileContext_->refLla.lat();
 }
 
 double ProfileManager::getRefLon() const
 {
-  return profileContext_->refLLA_.lon();
+  return profileContext_->refLla.lon();
 }
 
 double ProfileManager::getRefAlt() const
 {
-  return profileContext_->refLLA_.alt();
+  return profileContext_->refLla.alt();
 }
 
 void ProfileManager::setRefCoord(double latRad, double lonRad, double alt)
 {
-  getLocator()->setCoordinate(simCore::Coordinate(
-    simCore::COORD_SYS_LLA, simCore::Vec3(latRad, lonRad, alt)), 0.);
-
-  if (latRad != profileContext_->refLLA_.lat() || lonRad != profileContext_->refLLA_.lon() || alt != profileContext_->refLLA_.alt())
-  {
-    profileContext_->refLLA_.set(lonRad, latRad, alt);
-    dirty_();
-  }
+  const simCore::Vec3 refLla(latRad, lonRad, alt);
+  getLocator()->setCoordinate(simCore::Coordinate(simCore::COORD_SYS_LLA, refLla), 0.);
+  profileContext_->setRefLla(refLla);
+  dirty_();
 }
 
 bool ProfileManager::getSphericalEarth() const
 {
-  return profileContext_->sphericalEarth_;
+  return profileContext_->sphericalEarth;
 }
 
 void ProfileManager::setSphericalEarth(bool sphericalEarth)
 {
-  if (profileContext_->sphericalEarth_ != sphericalEarth)
+  if (profileContext_->sphericalEarth != sphericalEarth)
   {
-    profileContext_->sphericalEarth_ = sphericalEarth;
+    profileContext_->sphericalEarth = sphericalEarth;
     dirty_();
   }
 }
 
 double ProfileManager::getElevAngle() const
 {
-  return profileContext_->elevAngleR_;
+  return profileContext_->elevAngleR;
 }
 
 void ProfileManager::setElevAngle(double elevAngleRad)
 {
-  if (profileContext_->elevAngleR_ != elevAngleRad)
+  if (profileContext_->elevAngleR != elevAngleRad)
   {
-    profileContext_->elevAngleR_ = elevAngleRad;
+    profileContext_->elevAngleR = elevAngleRad;
     dirty_();
   }
 }
@@ -344,7 +341,7 @@ Profile* ProfileManager::getProfileByBearing(double bearingR) const
 
 const Profile* ProfileManager::getProfile(unsigned int index) const
 {
-  return ((index < getNumChildren()) ? dynamic_cast<const Profile*>(getChild(index)) : NULL);
+  return ((index < getNumChildren()) ? dynamic_cast<const Profile*>(getChild(index)) : nullptr);
 }
 
 void ProfileManager::addProfile(Profile* profile)

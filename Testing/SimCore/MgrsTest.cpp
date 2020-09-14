@@ -137,7 +137,7 @@ int mgrsToLla()
 
   // White box test on the pointer
   rv += SDK_ASSERT(simCore::Mgrs::convertMgrsToGeodetic("31NBA2", lat, lon, &err) != 0);
-  rv += SDK_ASSERT(simCore::Mgrs::convertMgrsToGeodetic("31NBA2", lat, lon, NULL) != 0);
+  rv += SDK_ASSERT(simCore::Mgrs::convertMgrsToGeodetic("31NBA2", lat, lon, nullptr) != 0);
   return rv;
 }
 
